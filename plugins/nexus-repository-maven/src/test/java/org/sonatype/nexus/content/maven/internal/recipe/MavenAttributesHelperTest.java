@@ -14,6 +14,7 @@ package org.sonatype.nexus.content.maven.internal.recipe;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
@@ -94,7 +95,7 @@ public class MavenAttributesHelperTest
   @Test
   public void shouldPutComponentAttributesInAMap() {
     mockComponent();
-    MavenAttributesHelper.setMavenAttributes(componentStore, fluentComponent, coordinates, 1);
+    MavenAttributesHelper.setMavenAttributes(componentStore, fluentComponent, coordinates, Optional.empty(), 1);
 
     verify(fluentComponent).attributes(eq(OVERLAY), eq(NAME), attributesValueCaptor.capture());
     verify(componentStore, only()).updateBaseVersion(componentDataValueCaptor.capture());
@@ -123,14 +124,16 @@ public class MavenAttributesHelperTest
 
   @Test
   public void shouldAddPomAttributesToExistingAttributes() {
+    when(mavenPath.getCoordinates()).thenReturn(coordinates);
+    mockComponent();
     mockModel();
     when(fluentComponent.attributes(NAME)).thenReturn(aNestedAttributesMap());
 
-    MavenAttributesHelper.setPomAttributes(fluentComponent, model);
+    MavenAttributesHelper.setMavenAttributes(componentStore, fluentComponent, coordinates, Optional.of(model), 1);
 
     verify(fluentComponent).attributes(eq(OVERLAY), eq(NAME), attributesValueCaptor.capture());
     Map<String, String> map = attributesValueCaptor.getValue();
-    assertThat(map.entrySet(), hasSize(3));
+    assertThat(map.entrySet(), hasSize(7));
     assertThat(map, hasEntry(P_PACKAGING, PACKAGING));
     assertThat(map, hasEntry(P_POM_NAME, POM_NAME));
     assertThat(map, hasEntry(P_POM_DESCRIPTION, POM_DESCRIPTION));
@@ -138,9 +141,11 @@ public class MavenAttributesHelperTest
 
   @Test
   public void shouldNotSetPomNameAndDescriptionWhenModelIsNull() {
+    mockComponent();
+    when(mavenPath.getCoordinates()).thenReturn(coordinates);
     when(fluentComponent.attributes(NAME)).thenReturn(aNestedAttributesMap());
 
-    MavenAttributesHelper.setPomAttributes(fluentComponent, model);
+    MavenAttributesHelper.setMavenAttributes(componentStore, fluentComponent, coordinates, Optional.of(model), 1);
 
     verify(fluentComponent).attributes(eq(OVERLAY), eq(NAME), attributesValueCaptor.capture());
     Map<String, String> map = attributesValueCaptor.getValue();
@@ -150,9 +155,11 @@ public class MavenAttributesHelperTest
 
   @Test
   public void packagingShouldBeJarWhenModelIsNull() {
+    mockComponent();
+    when(mavenPath.getCoordinates()).thenReturn(coordinates);
     when(fluentComponent.attributes(NAME)).thenReturn(aNestedAttributesMap());
 
-    MavenAttributesHelper.setPomAttributes(fluentComponent, model);
+    MavenAttributesHelper.setMavenAttributes(componentStore, fluentComponent, coordinates, Optional.of(model), 1);
 
     verify(fluentComponent).attributes(eq(OVERLAY), eq(NAME), attributesValueCaptor.capture());
     Map<String, String> map = attributesValueCaptor.getValue();

@@ -61,9 +61,7 @@ import org.apache.maven.model.Model;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenArchetypeCatalogFacetImpl.MAVEN_ARCHETYPE_KIND;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.assetKind;
-import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.getPackaging;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.setMavenAttributes;
-import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.setPomAttributes;
 import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW;
 import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW_ONCE;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_INDEX;
@@ -208,23 +206,34 @@ public class MavenContentFacetImpl
   private Content save(final MavenPath mavenPath, final Payload content, final TempBlob blob) throws IOException {
     FluentComponent component = null;
     if (mavenPath.getCoordinates() != null) {
-      component = createOrGetComponent(mavenPath);
-      maybeUpdateComponentAttributesFromModel(component, mavenPath, blob);
+      Optional<Model> model = maybeReadMavenModel(mavenPath, blob);
+      component = createOrGetComponent(mavenPath, model);
     }
     return createOrUpdateAsset(mavenPath, component, content, blob);
   }
 
-  private FluentComponent createOrGetComponent(final MavenPath mavenPath)
+  private FluentComponent createOrGetComponent(final MavenPath mavenPath, final Optional<Model> model)
   {
+    Optional<String> optionalKind = model.map(MavenAttributesHelper::getPackaging);
     Coordinates coordinates = mavenPath.getCoordinates();
+
     FluentComponent component = components()
         .name(coordinates.getArtifactId())
         .namespace(coordinates.getGroupId())
         .version(coordinates.getVersion())
+        .kind(optionalKind)
         .getOrCreate();
-    if (isNewRepositoryContent(component)) {
-      MavenAttributesHelper.setMavenAttributes(
-          (Maven2ComponentStore) stores().componentStore, component, coordinates, contentRepositoryId());
+
+    boolean isNew = isNewRepositoryContent(component);
+    MavenAttributesHelper.setMavenAttributes(
+          (Maven2ComponentStore) stores().componentStore, component, coordinates, model, contentRepositoryId());
+
+    if (isNew) {
+      publishEvents(component);
+    }
+    else {
+      // kind isn't set for existing components
+      optionalKind.ifPresent(component::kind);
     }
     return component;
   }
@@ -233,18 +242,7 @@ public class MavenContentFacetImpl
     return repositoryContent.attributes().isEmpty();
   }
 
-  private void maybeUpdateComponentAttributesFromModel(
-      final FluentComponent component, final MavenPath mavenPath,
-      final TempBlob blob) throws IOException
-  {
-    Model model = maybeReadMavenModel(mavenPath, blob);
-    if (model != null) {
-      component.kind(getPackaging(model));
-      setPomAttributes(component, model);
-      publishEvents(component);
-    }
-  }
-
+  @Override
   public void maybeUpdateComponentAttributes(final MavenPath mavenPath) throws IOException
   {
     if (mavenPath.isPom()) {
@@ -252,9 +250,7 @@ public class MavenContentFacetImpl
       if (optAsset.isPresent()) {
         FluentAsset asset = optAsset.get();
         Model model = readModel(asset.download().openInputStream());
-        FluentComponent component = createOrGetComponent(mavenPath);
-        component.kind(getPackaging(model));
-        setPomAttributes(component, model);
+        FluentComponent component = createOrGetComponent(mavenPath, Optional.ofNullable(model));
         publishEvents(component);
       }
     }
@@ -266,7 +262,7 @@ public class MavenContentFacetImpl
     }
   }
 
-  private Model maybeReadMavenModel(final MavenPath mavenPath, final TempBlob blob) throws IOException
+  private Optional<Model> maybeReadMavenModel(final MavenPath mavenPath, final TempBlob blob) throws IOException
   {
     Model model = null;
     if (mavenPath.isPom()) {
@@ -275,7 +271,7 @@ public class MavenContentFacetImpl
         log.warn("Could not parse POM: {} @ {}", getRepository().getName(), assetPath(mavenPath));
       }
     }
-    return model;
+    return Optional.ofNullable(model);
   }
 
   private Content createOrUpdateAsset(
