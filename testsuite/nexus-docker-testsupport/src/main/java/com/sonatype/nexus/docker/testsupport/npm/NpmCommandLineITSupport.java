@@ -18,7 +18,6 @@ import java.util.Optional;
 import com.sonatype.nexus.docker.testsupport.ContainerCommandLineITSupport;
 import com.sonatype.nexus.docker.testsupport.framework.DockerContainerConfig;
 
-import static com.sonatype.nexus.docker.testsupport.npm.NpmFactory.createNodeConfig;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 
@@ -33,34 +32,6 @@ public class NpmCommandLineITSupport
   private static final String CMD_NPM = "npm ";
 
   private static final String LOGIN_SH = "/login.sh";
-
-  /**
-   * Constructor that uses the default configuration of {@link NpmCommandLineConfig}
-   *
-   * @see #NpmCommandLineITSupport(NpmCommandLineConfig)
-   */
-  public NpmCommandLineITSupport() {
-    this(NpmCommandLineConfig.builder().build());
-  }
-
-  /**
-   * Constructor that takes the {@link NpmCommandLineConfig} and uses the {@link DockerContainerConfig} created
-   * by the factory method {@link NpmFactory#createNodeConfig(NpmCommandLineConfig)}
-   *
-   * @param config {@link NpmCommandLineConfig}
-   */
-  public NpmCommandLineITSupport(NpmCommandLineConfig config) {
-    super(createNodeConfig(config));
-  }
-
-  /**
-   * Constructor that uses the default configuration of {@link NpmCommandLineConfig}
-   * and runs in a specified image
-   * @param image specify the image to use, e.g. node:8.6. Unspecified assumes the latest
-   */
-  public NpmCommandLineITSupport(final String image) {
-    super(image);
-  }
 
   /**
    * Constructor.
