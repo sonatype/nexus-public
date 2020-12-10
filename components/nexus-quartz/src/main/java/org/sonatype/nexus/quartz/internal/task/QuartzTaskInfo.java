@@ -30,6 +30,7 @@ import org.sonatype.nexus.scheduling.events.TaskDeletedEvent;
 import org.sonatype.nexus.scheduling.schedule.Manual;
 import org.sonatype.nexus.scheduling.schedule.Schedule;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.quartz.JobKey;
 import org.quartz.SchedulerException;
 
@@ -47,6 +48,7 @@ import static org.sonatype.nexus.scheduling.TaskState.WAITING;
  *
  * @since 3.0
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class QuartzTaskInfo
     extends ComponentSupport
     implements TaskInfo

@@ -22,6 +22,8 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.logging.task.TaskLogInfo;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import org.joda.time.DateTime;
@@ -54,6 +56,7 @@ import static com.google.common.base.Preconditions.checkState;
  *
  * @since 3.0
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class TaskConfiguration
     implements TaskLogInfo
 {
@@ -89,6 +92,7 @@ public class TaskConfiguration
 
   static final String EXPOSED_KEY = ".exposed";
 
+  @JsonProperty("configuration")
   private final Map<String, String> configuration;
 
   public TaskConfiguration() {

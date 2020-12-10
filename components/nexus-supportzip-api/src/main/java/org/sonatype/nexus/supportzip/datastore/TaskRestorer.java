@@ -25,37 +25,35 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
-import org.sonatype.nexus.supportzip.ImportData;
+import org.sonatype.nexus.supportzip.ImportTaskData;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.Integer.MAX_VALUE;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.RESTORE;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 import static org.sonatype.nexus.supportzip.datastore.RestoreHelper.FILE_SUFFIX;
 
 /**
- * Restore {@link org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type#CONFIG} and
- * {@link org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type#SECURITY} data from JSON files.
+ * Restore Task's related data from JSON file(s).
  *
  * @since 3.next
  */
 @Named
 @Singleton
-@Priority(MAX_VALUE)
-@ManagedLifecycle(phase = RESTORE)
-public class SupportRestorer
+@Priority(0) // allow all default tasks to be loaded at first.
+@ManagedLifecycle(phase = TASKS)
+public class TaskRestorer
     extends StateGuardLifecycleSupport
 {
   private final RestoreHelper restoreHelper;
 
-  private final Map<String, ImportData> importDataByName;
+  private final Map<String, ImportTaskData> importTaskByName;
 
   @Inject
-  public SupportRestorer(
+  public TaskRestorer(
       final RestoreHelper restoreHelper,
-      final Map<String, ImportData> importDataByName)
+      final Map<String, ImportTaskData> importTaskByName)
   {
     this.restoreHelper = checkNotNull(restoreHelper);
-    this.importDataByName = checkNotNull(importDataByName);
+    this.importTaskByName = checkNotNull(importTaskByName);
   }
 
   @Override
@@ -65,12 +63,12 @@ public class SupportRestorer
 
   private void maybeRestore() throws IOException {
     Path dbDir = restoreHelper.getDbPath();
-    for (Entry<String, ImportData> importerEntry : importDataByName.entrySet()) {
-      String fileName = importerEntry.getKey() + FILE_SUFFIX;
+    for (Entry<String, ImportTaskData> exporterEntry : importTaskByName.entrySet()) {
+      String fileName = exporterEntry.getKey() + FILE_SUFFIX;
       File file = dbDir.resolve(fileName).toFile();
-      ImportData importer = importerEntry.getValue();
+      ImportTaskData importTask = exporterEntry.getValue();
       if (file.exists()) {
-        importer.restore(file);
+        importTask.restore(file);
       }
       else {
         log.warn("Can't find {} file to restore data", file);
