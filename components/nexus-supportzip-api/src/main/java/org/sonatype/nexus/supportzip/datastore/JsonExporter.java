@@ -33,7 +33,6 @@ import org.sonatype.nexus.common.io.SanitizingJsonOutputStream;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
@@ -42,6 +41,8 @@ import com.google.common.io.ByteStreams;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 
+import static com.fasterxml.jackson.databind.SerializationFeature.FAIL_ON_EMPTY_BEANS;
+import static com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS;
 import static org.sonatype.nexus.supportzip.PasswordSanitizing.REPLACEMENT;
 import static org.sonatype.nexus.supportzip.PasswordSanitizing.SENSITIVE_FIELD_NAMES;
 
@@ -64,7 +65,8 @@ public class JsonExporter
     OBJECT_MAPPER.registerModule(new JavaTimeModule());
     OBJECT_MAPPER.registerModule(new JodaModule());
     OBJECT_MAPPER.registerModule(new Jdk8Module());
-    OBJECT_MAPPER.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    OBJECT_MAPPER.disable(WRITE_DATES_AS_TIMESTAMPS);
+    OBJECT_MAPPER.disable(FAIL_ON_EMPTY_BEANS);
   }
 
   /**
