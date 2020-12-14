@@ -99,16 +99,15 @@ public class IndexYamlAbsoluteUrlRewriterSupport
     }
   }
 
-  public Optional<String> getFirstUrl(final Content indexYaml, final String chartName, final String chartVersion) {
-    checkNotNull(chartName);
-    checkNotNull(chartVersion);
+  public Optional<String> getFirstUrl(final Content indexYaml, final String filename) {
+    checkNotNull(filename);
 
     try (InputStream inputStream = indexYaml.openInputStream()) {
       ChartIndex chartIndex = objectMapper.readValue(inputStream, ChartIndex.class);
       return chartIndex.getEntries().values().stream()
           .flatMap(Collection::stream)
-          .filter(chart -> chartName.equals(chart.getName()))
-          .filter(chart -> chartVersion.equals(chart.getVersion()))
+          .filter(chart -> filename.startsWith(chart.getName() + "-"))
+          .filter(chart -> getChartVersion(filename, chart.getName()).equals(chart.getVersion()))
           .flatMap(chart -> chart.getUrls().stream())
           .findFirst();
     }
@@ -116,5 +115,9 @@ public class IndexYamlAbsoluteUrlRewriterSupport
       log.error("Error reading index.yaml");
       throw new UncheckedIOException(e);
     }
+  }
+
+  private String getChartVersion(final String filename, final String chartName) {
+    return FilenameUtils.removeExtension(filename).replace(chartName + "-", "");
   }
 }

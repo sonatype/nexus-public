@@ -59,7 +59,15 @@ public class HelmPathUtilsTest
   public void testContentFileUrl() throws IOException {
     Content content = mock(Content.class);
     when(content.openInputStream()).thenReturn(getClass().getResourceAsStream("indexresult.yaml"));
-    String url = underTest.contentFileUrl(FILENAME, content);
+    String url = underTest.contentFileUrl(FILENAME, content).get();
     assertThat(url, is(equalTo("mongodb-0.5.2.tgz")));
+  }
+
+  @Test
+  public void testContentFileUrlWithDashes() throws IOException {
+    Content content = mock(Content.class);
+    when(content.openInputStream()).thenReturn(getClass().getResourceAsStream("indexWithDashes.yaml"));
+    String url = underTest.contentFileUrl("cert-manager-v1.1.0-alpha.1.tgz", content).get();
+    assertThat(url, is(equalTo("charts/cert-manager-v1.1.0-alpha.1.tgz")));
   }
 }

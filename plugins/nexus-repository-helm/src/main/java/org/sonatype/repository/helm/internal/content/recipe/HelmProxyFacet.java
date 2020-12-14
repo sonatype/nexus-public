@@ -34,7 +34,7 @@ import org.sonatype.repository.helm.internal.metadata.IndexYamlAbsoluteUrlRewrit
 import org.sonatype.repository.helm.internal.util.HelmPathUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-
+import static org.apache.commons.lang3.StringUtils.removeStart;
 
 /**
  * @since 3.28
@@ -116,10 +116,14 @@ public class HelmProxyFacet
           return null;
         }
         String filename = helmPathUtils.filename(matcherState);
-        return helmPathUtils.contentFileUrl(filename, indexOpt.get());
+        return helmPathUtils.contentFileUrl(filename, indexOpt.get()).orElse(getRequestUrl(context));
       default:
         throw new IllegalStateException("Received an invalid AssetKind of type: " + assetKind.name());
     }
+  }
+
+  private String getRequestUrl(@Nonnull final Context context) {
+    return removeStart(context.getRequest().getPath(), "/");
   }
 
   private Optional<Content> fetchIndexYamlContext(@Nonnull final Context context)

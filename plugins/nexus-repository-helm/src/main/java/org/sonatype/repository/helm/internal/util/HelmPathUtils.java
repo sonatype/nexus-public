@@ -12,7 +12,8 @@
  */
 package org.sonatype.repository.helm.internal.util;
 
-import javax.annotation.Nullable;
+import java.util.Optional;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -22,8 +23,6 @@ import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher.State;
 import org.sonatype.repository.helm.internal.metadata.IndexYamlAbsoluteUrlRewriter;
-
-import org.apache.commons.io.FilenameUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -59,26 +58,11 @@ public class HelmPathUtils
     return isForwardingSlash ? String.format("/%s", filename) : filename;
   }
 
-  @Nullable
-  public String contentFileUrl(
+  public Optional<String> contentFileUrl(
       final String filename,
       final Content indexYaml)
   {
-    String chartName = getChartName(filename);
-    String chartVersion = getChartVersion(filename);
-    return urlRewriter.getFirstUrl(indexYaml, chartName, chartVersion).orElse(null);
-  }
-
-  public String getChartName(final String filename) {
-    String filenameWithoutExt = FilenameUtils.removeExtension(filename);
-    int index = filenameWithoutExt.lastIndexOf('-');
-    return filenameWithoutExt.substring(0, index);
-  }
-
-  public String getChartVersion(final String filename) {
-    String filenameWithoutExt = FilenameUtils.removeExtension(filename);
-    int index = filenameWithoutExt.lastIndexOf('-');
-    return filenameWithoutExt.substring(index + 1);
+    return urlRewriter.getFirstUrl(indexYaml, filename);
   }
 
   public String extension(final State state) {
