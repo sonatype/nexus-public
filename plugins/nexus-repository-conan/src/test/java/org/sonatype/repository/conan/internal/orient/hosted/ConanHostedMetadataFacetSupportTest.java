@@ -29,9 +29,6 @@ import static org.sonatype.repository.conan.internal.AssetKind.CONAN_INFO;
 import static org.sonatype.repository.conan.internal.AssetKind.CONAN_MANIFEST;
 import static org.sonatype.repository.conan.internal.AssetKind.CONAN_PACKAGE;
 
-/**
- * @author Maksim Lukaretskiy
- */
 public class ConanHostedMetadataFacetSupportTest
     extends TestSupport
 {
