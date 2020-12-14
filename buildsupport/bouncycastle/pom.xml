@@ -28,7 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <bouncycastle.version>1.64</bouncycastle.version>
+    <bouncycastle.version>1.67</bouncycastle.version>
   </properties>
 
   <dependencyManagement>
