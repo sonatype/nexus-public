@@ -69,8 +69,6 @@ public class MavenProxyRecipe
 
   private final Provider<MavenContentProxyIndexFacet> mavenProxyIndexFacet;
 
-  private final Provider<MavenMaintenanceFacet> mavenMaintenanceFacet;
-
   @Inject
   public MavenProxyRecipe(
       @Named(ProxyType.NAME) final Type type,
@@ -81,8 +79,7 @@ public class MavenProxyRecipe
       final Provider<PurgeUnusedFacet> purgeUnusedFacet,
       final NegativeCacheHandler negativeCacheHandler,
       final ProxyHandler proxyHandler,
-      final Provider<MavenContentProxyIndexFacet> mavenProxyIndexFacet,
-      final Provider<MavenMaintenanceFacet> mavenMaintenanceFacet)
+      final Provider<MavenContentProxyIndexFacet> mavenProxyIndexFacet)
   {
     super(type, format);
     this.httpClientFacet = checkNotNull(httpClientFacet);
@@ -92,7 +89,6 @@ public class MavenProxyRecipe
     this.negativeCacheHandler = checkNotNull(negativeCacheHandler);
     this.proxyHandler = checkNotNull(proxyHandler);
     this.mavenProxyIndexFacet = checkNotNull(mavenProxyIndexFacet);
-    this.mavenMaintenanceFacet = checkNotNull(mavenMaintenanceFacet);
   }
 
 
@@ -109,7 +105,7 @@ public class MavenProxyRecipe
     repository.attach(getSearchFacet().get());
     repository.attach(getBrowseFacet().get());
     repository.attach(mavenProxyIndexFacet.get());
-    repository.attach(mavenMaintenanceFacet.get());
+    repository.attach(getMavenMaintenanceFacet().get());
   }
 
   private ViewFacet configure(final ConfigurableViewFacet facet) {
