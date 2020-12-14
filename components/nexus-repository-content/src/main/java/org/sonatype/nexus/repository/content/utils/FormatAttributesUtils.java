@@ -12,8 +12,10 @@
  */
 package org.sonatype.nexus.repository.content.utils;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import org.sonatype.nexus.repository.content.RepositoryContent;
@@ -26,6 +28,14 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponent;
  */
 public class FormatAttributesUtils
 {
+  public static Map<String, Object> getFormatAttributes(final FluentAsset fluent) {
+    return getFormatAttributes(fluent.repository().getFormat().getValue(), fluent);
+  }
+
+  public static Map<String, Object> getFormatAttributes(final FluentComponent fluent) {
+    return getFormatAttributes(fluent.repository().getFormat().getValue(), fluent);
+  }
+
   public static void setFormatAttributes(final FluentAsset fluent, final Map<String, Object> values) {
     setFormatAttributes(fluent.repository().getFormat().getValue(), fluent, fluent, values);
   }
@@ -37,15 +47,55 @@ public class FormatAttributesUtils
   public static void setFormatAttributes(final FluentAsset fluent, final String key, final Object value) {
     setFormatAttributes(
         fluent,
-        new HashMap<String, Object>()
-        {{
-          put(key, value);
-        }}
+        Collections.singletonMap(key, value)
     );
   }
 
   public static void setFormatAttributes(final FluentComponent fluent, final Map<String, Object> values) {
     setFormatAttributes(fluent.repository().getFormat().getValue(), fluent, fluent, values);
+  }
+
+  public static void removeFormatAttributes(final FluentComponent fluent, final Set<String> keys) {
+    removeFormatAttributes(
+        fluent.repository().getFormat().getValue(),
+        fluent,
+        fluent,
+        keys
+    );
+  }
+
+  public static void removeFormatAttributes(final FluentAsset fluent, final Set<String> keys) {
+    removeFormatAttributes(
+        fluent.repository().getFormat().getValue(),
+        fluent,
+        fluent,
+        keys
+    );
+  }
+
+  public static void removeFormatAttributes(final FluentComponent fluent, final String key) {
+    removeFormatAttributes(
+        fluent,
+        Collections.singleton(key)
+    );
+  }
+
+  public static void removeFormatAttributes(final FluentAsset fluent, final String key) {
+    removeFormatAttributes(
+        fluent,
+        Collections.singleton(key)
+    );
+  }
+
+  private static Map<String, Object> getFormatAttributes(
+      final String formatName,
+      final RepositoryContent repositoryContent)
+  {
+    @SuppressWarnings("unchecked")
+    Map<String, Object> attributes = (Map<String, Object>) repositoryContent
+        .attributes()
+        .get(formatName, new HashMap<>());
+    return attributes;
   }
 
   private static void setFormatAttributes(
@@ -54,11 +104,19 @@ public class FormatAttributesUtils
       final FluentAttributes attributes,
       final Map<String, Object> values)
   {
-    @SuppressWarnings("unchecked")
-    Map<String, Object> formatAttributes = (Map<String, Object>) repositoryContent
-        .attributes()
-        .get(formatName, new HashMap<>());
+    Map<String, Object> formatAttributes = getFormatAttributes(formatName, repositoryContent);
     formatAttributes.putAll(values);
+    attributes.withAttribute(formatName, formatAttributes);
+  }
+
+  private static void removeFormatAttributes(
+      final String formatName,
+      final RepositoryContent repositoryContent,
+      final FluentAttributes attributes,
+      final Set<String> keys)
+  {
+    Map<String, Object> formatAttributes = getFormatAttributes(formatName, repositoryContent);
+    keys.forEach(key -> formatAttributes.remove(key));
     attributes.withAttribute(formatName, formatAttributes);
   }
 }
