@@ -177,8 +177,9 @@ public class PyPiHostedFacet
 
   protected FluentAsset createRootIndexAsset() {
     return facet(PypiContentFacet.class).assets()
-        .path(indexPath()).getOrCreate()
-        .kind(ROOT_INDEX.name());
+        .path(indexPath())
+        .kind(ROOT_INDEX.name())
+        .getOrCreate();
   }
 
   protected Collection<PyPiLink> findAllLinks() {
