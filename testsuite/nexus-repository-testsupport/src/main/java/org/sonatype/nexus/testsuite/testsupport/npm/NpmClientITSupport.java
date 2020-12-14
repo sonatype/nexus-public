@@ -149,11 +149,19 @@ public abstract class NpmClientITSupport
   protected void initializeNpmrc(final String registryUrl, final String username, final String password) throws Exception {
     npmCli = new NpmCommandLineITSupport(createTestConfig());
     npmCli.execNpmConfig("registry ", registryUrl);
-    npmCli.execNpmConfig("email", "my@example.com");
-    npmCli.execNpmConfig("always-auth", "true");
+    configureRegistryAuthentication(registryUrl, username, password);
+  }
 
-    String auth = Base64.getUrlEncoder().encodeToString((username + ":" + password).getBytes());
-    npmCli.execNpmConfig("_auth",  auth);
+  protected void configureRegistryAuthentication(
+      final String registryUrl,
+      final String username,
+      final String password)
+  {
+    String registryPrefix = registryUrl.replaceFirst("^http[s]?:", "");
+    npmCli.execNpmConfig(registryPrefix + ":email", "my@example.com");
+    npmCli.execNpmConfig(registryPrefix + ":always-auth", "true");
+    npmCli.execNpmConfig(registryPrefix + ":username", username);
+    npmCli.execNpmConfig(registryPrefix + ":_password", Base64.getUrlEncoder().encodeToString(password.getBytes()));
   }
 
   protected void configureAndPublish(final Repository repository,
