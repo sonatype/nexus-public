@@ -39,7 +39,7 @@ import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PR
 import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 
 /**
- * @since 3.next
+ * @since 3.29
  */
 @FeatureFlag(name = "nexus.datastore.enabled")
 @Named(Maven2Format.NAME)

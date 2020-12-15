@@ -153,7 +153,7 @@ public class RoutingRulesResource
   }
 
   /**
-   * @since 3.next
+   * @since 3.29
    */
   @GET
   @Path("/{name}")

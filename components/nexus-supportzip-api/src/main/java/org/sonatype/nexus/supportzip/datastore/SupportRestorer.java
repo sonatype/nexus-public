@@ -36,7 +36,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.RESTORE;
  * Restore {@link org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type#CONFIG} and
  * {@link org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type#SECURITY} data from JSON files.
  *
- * @since 3.next
+ * @since 3.29
  */
 @Named
 @Singleton

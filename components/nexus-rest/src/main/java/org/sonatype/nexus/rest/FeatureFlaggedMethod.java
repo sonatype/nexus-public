@@ -23,7 +23,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 /**
  * Flags REST methods that should only respond when the named system property is {@code true}.
  *
- * @since 3.next
+ * @since 3.29
  */
 @NameBinding
 @Retention(RUNTIME)

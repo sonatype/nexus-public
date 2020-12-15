@@ -19,7 +19,7 @@ import java.io.IOException;
  * Should be used by the Support ZIP to export
  * {@link org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type#SECURITY} DB data.
  *
- * @since 3.next
+ * @since 3.29
  */
 public interface ExportSecurityData
 {

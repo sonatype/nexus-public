@@ -29,7 +29,7 @@ import org.sonatype.nexus.supportzip.datastore.JsonExporter;
 /**
  * Write/Read {@link CPrivilege} data to/from a JSON file.
  *
- * @since 3.next
+ * @since 3.29
  */
 @Named("privilegeExport")
 @Singleton
