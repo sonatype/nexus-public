@@ -76,7 +76,7 @@ import static org.sonatype.nexus.cleanup.storage.CleanupPolicyReleaseType.PREREL
 import static org.sonatype.nexus.rest.APIConstants.INTERNAL_API_PREFIX;
 
 /**
- * @since 3.next
+ * @since 3.29
  */
 @Named
 @Singleton

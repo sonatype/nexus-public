@@ -41,7 +41,7 @@ import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VER
 import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.metadataPath;
 
 /**
- * @since 3.next
+ * @since 3.29
  */
 @Named
 public class MavenMaintenanceFacet

@@ -187,7 +187,7 @@ public interface AssetDAO
    * @param repositoryId the repository containing the assets
    * @param paths        a list of asset paths
    * @return {@code true} if any assets were deleted
-   * @since 3.next
+   * @since 3.29
    */
   boolean deleteAssetsByPaths(@Param("repositoryId") int repositoryId, @Param("paths") List<String> paths);
 

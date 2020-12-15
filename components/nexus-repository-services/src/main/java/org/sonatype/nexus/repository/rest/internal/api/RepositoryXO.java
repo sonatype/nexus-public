@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository.rest.internal.api;
 
 /**
- * @since 3.next
+ * @since 3.29
  */
 public class RepositoryXO
 {

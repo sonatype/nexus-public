@@ -35,7 +35,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Add {@link SupportBundle} to export {@link Type#SECURITY} data to serialized files.
  *
- * @since 3.next
+ * @since 3.29
  */
 @Named
 @Singleton
