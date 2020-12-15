@@ -36,7 +36,7 @@ import static org.sonatype.nexus.validation.constraint.NamePatternConstants.MESS
 import static org.sonatype.nexus.validation.constraint.NamePatternConstants.REGEX;
 
 /**
- * @since 3.next
+ * @since 3.29
  */
 public class CleanupPolicyXO
 {

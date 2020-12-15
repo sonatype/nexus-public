@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 /**
  * {@link Time} in seconds deserializer.
  *
- * @since 3.next
+ * @since 3.29
  */
 public class SecondsDeserializer
     extends StdDeserializer<Time>

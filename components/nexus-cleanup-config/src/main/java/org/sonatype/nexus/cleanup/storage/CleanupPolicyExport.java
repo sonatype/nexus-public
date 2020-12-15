@@ -28,7 +28,7 @@ import org.sonatype.nexus.supportzip.datastore.JsonExporter;
 /**
  * Write/Read {@link CleanupPolicy} data to/from a JSON file.
  *
- * @since 3.next
+ * @since 3.29
  */
 @Named("cleanupPolicyExport")
 @Singleton

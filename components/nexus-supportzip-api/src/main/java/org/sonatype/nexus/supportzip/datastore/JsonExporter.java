@@ -49,7 +49,7 @@ import static org.sonatype.nexus.supportzip.PasswordSanitizing.SENSITIVE_FIELD_N
 /**
  * Export/Import data to/from the JSON by replacing sensitive data.
  *
- * @since 3.next
+ * @since 3.29
  */
 @Named
 @Singleton
