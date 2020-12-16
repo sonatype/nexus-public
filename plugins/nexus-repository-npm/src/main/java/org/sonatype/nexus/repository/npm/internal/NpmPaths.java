@@ -36,6 +36,8 @@ import static org.sonatype.nexus.repository.http.HttpMethods.POST;
  */
 public final class NpmPaths
 {
+  public static final String NPM_V1_SECURITY_AUDITS = "/-/npm/v1/security/audits";
+
   public static final String T_TOKEN = "token";
 
   public static final String T_PACKAGE_NAME = "packageName";
@@ -229,7 +231,7 @@ public final class NpmPaths
     return new Builder().matcher(
         LogicMatchers.and(
             new ActionMatcher(POST),
-            new LiteralMatcher("/-/npm/v1/security/audits") // is used while npm audit
+            new LiteralMatcher(NPM_V1_SECURITY_AUDITS) // is used while npm audit
         )
     );
   }

@@ -18,6 +18,8 @@ import javax.inject.Named;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.SecurityFacetSupport;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
+import org.sonatype.nexus.repository.view.Request;
+import org.sonatype.nexus.security.BreadActions;
 
 /**
  * npm format security facet.
@@ -34,5 +36,16 @@ public class NpmSecurityFacet
                           final ContentPermissionChecker contentPermissionChecker)
   {
     super(securityContributor, variableResolverAdapter, contentPermissionChecker);
+  }
+
+  /**
+   * Returns BREAD action for request action.
+   */
+  @Override
+  protected String action(final Request request) {
+    if (request.getPath().startsWith(NpmPaths.NPM_V1_SECURITY_AUDITS)) {
+      return BreadActions.READ;
+    }
+    return super.action(request);
   }
 }
