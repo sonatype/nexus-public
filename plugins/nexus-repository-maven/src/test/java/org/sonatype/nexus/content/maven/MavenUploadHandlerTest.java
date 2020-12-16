@@ -28,6 +28,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.fluent.FluentBlobs;
+import org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.VersionPolicy;
@@ -115,7 +116,7 @@ public class MavenUploadHandlerTest
   TempBlob tempBlob;
 
   @Mock
-  MavenMetadataRebuildContentFacet mavenMetadataRebuildFacet;
+  MavenMetadataRebuildFacet mavenMetadataRebuildFacet;
 
   @Mock
   private ContentPermissionChecker contentPermissionChecker;
@@ -141,7 +142,7 @@ public class MavenUploadHandlerTest
     when(repository.getName()).thenReturn(REPO_NAME);
     when(repository.getFormat()).thenReturn(new Maven2Format());
     when(repository.facet(MavenContentFacet.class)).thenReturn(mavenFacet);
-    when(repository.facet(MavenMetadataRebuildContentFacet.class)).thenReturn(mavenMetadataRebuildFacet);
+    when(repository.facet(MavenMetadataRebuildFacet.class)).thenReturn(mavenMetadataRebuildFacet);
 
     FluentBlobs blobs = mock(FluentBlobs.class);
     when(mavenFacet.blobs()).thenReturn(blobs);

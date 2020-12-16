@@ -19,10 +19,10 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.content.maven.MavenContentFacet;
-import org.sonatype.nexus.content.maven.MavenMetadataRebuildContentFacet;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
+import org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.internal.MavenModels;
 import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataRebuilder;
@@ -40,9 +40,9 @@ import static org.sonatype.nexus.repository.maven.internal.Constants.METADATA_FI
  * @since 3.26
  */
 @Named
-public class MavenMetadataRebuildContentFacetImpl
+public class MavenMetadataRebuildFacetImpl
     extends FacetSupport
-    implements MavenMetadataRebuildContentFacet
+    implements MavenMetadataRebuildFacet
 {
   private MavenContentFacet mavenContentFacet;
 
@@ -51,7 +51,7 @@ public class MavenMetadataRebuildContentFacetImpl
   private static final ThreadLocal<Boolean> rebuilding = new ThreadLocal<>();
 
   @Inject
-  public MavenMetadataRebuildContentFacetImpl(final MetadataRebuilder metadataRebuilder)
+  public MavenMetadataRebuildFacetImpl(final MetadataRebuilder metadataRebuilder)
   {
     this.metadataRebuilder = checkNotNull(metadataRebuilder);
   }

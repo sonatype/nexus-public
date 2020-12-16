@@ -17,8 +17,8 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.content.maven.MavenMetadataRebuildContentFacet;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
@@ -43,7 +43,7 @@ public class MavenMetadataRebuildHandler
     String method = context.getRequest().getAction();
     Repository repository = context.getRepository();
     if ((GET.equals(method) || HEAD.equals(method)) && isNotProxy(repository)) {
-      repository.facet(MavenMetadataRebuildContentFacet.class)
+      repository.facet(MavenMetadataRebuildFacet.class)
           .maybeRebuildMavenMetadata(context.getRequest().getPath(), false, true);
     }
     return context.proceed();

@@ -27,6 +27,7 @@ import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
+import org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
@@ -88,7 +89,7 @@ public class MavenUploadHandler
 
   private void updateMetadata(final Repository repository, final Coordinates coordinates) {
     if (coordinates != null) {
-      repository.facet(MavenMetadataRebuildContentFacet.class)
+      repository.facet(MavenMetadataRebuildFacet.class)
           .rebuildMetadata(coordinates.getGroupId(), coordinates.getArtifactId(), coordinates.getVersion(),
               false, false);
     }

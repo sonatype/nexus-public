@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.maven;
 
+import java.io.IOException;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.Facet;
@@ -23,6 +25,8 @@ import org.sonatype.nexus.repository.Facet;
 public interface MavenMetadataRebuildFacet
     extends Facet
 {
+  String METADATA_REBUILD_KEY = "forceRebuild";
+
   /**
    * Rebuilds/updates Maven metadata. The parameters depend each on previous, and if any of those are set (ie. G, GA or
    * GAV), the metadata will be updated. Rebuild is possible only against repository as whole, not a sub-part of it.
@@ -56,4 +60,24 @@ public interface MavenMetadataRebuildFacet
                        @Nullable String baseVersion,
                        boolean rebuildChecksums,
                        boolean update);
+
+  /**
+   * Rebuilds/updates Maven metadata if an asset is available at {@code path} which has an associated
+   * blob.
+   *
+   * @param path
+   * @param update
+   * @param rebuildChecksums
+   * @throws IOException
+   *
+   * @since 3.next
+   */
+  default void maybeRebuildMavenMetadata(
+      String path,
+      boolean update,
+      boolean rebuildChecksums)
+      throws IOException
+  {
+    // do nothing by default
+  }
 }

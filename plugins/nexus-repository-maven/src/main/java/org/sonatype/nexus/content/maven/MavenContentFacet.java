@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.sonatype.nexus.repository.Facet;
+import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
@@ -77,4 +78,8 @@ public interface MavenContentFacet
    * @param path for which the corresponding component attributes may be updated
    */
   void maybeUpdateComponentAttributes(MavenPath path) throws IOException;
+
+  int deleteComponents(int[] componentIds);
+
+  Set<String> deleteMetadata(Component component);
 }
