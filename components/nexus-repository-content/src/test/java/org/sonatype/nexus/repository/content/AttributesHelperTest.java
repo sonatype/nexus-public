@@ -31,11 +31,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.sonatype.nexus.repository.content.AttributeChange.APPEND;
-import static org.sonatype.nexus.repository.content.AttributeChange.OVERLAY;
-import static org.sonatype.nexus.repository.content.AttributeChange.PREPEND;
-import static org.sonatype.nexus.repository.content.AttributeChange.REMOVE;
-import static org.sonatype.nexus.repository.content.AttributeChange.SET;
+import static org.sonatype.nexus.repository.content.AttributeOperation.APPEND;
+import static org.sonatype.nexus.repository.content.AttributeOperation.OVERLAY;
+import static org.sonatype.nexus.repository.content.AttributeOperation.PREPEND;
+import static org.sonatype.nexus.repository.content.AttributeOperation.REMOVE;
+import static org.sonatype.nexus.repository.content.AttributeOperation.SET;
 import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttributeChange;
 
 /**

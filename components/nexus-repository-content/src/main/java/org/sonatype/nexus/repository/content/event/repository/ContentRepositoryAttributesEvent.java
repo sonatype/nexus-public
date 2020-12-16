@@ -16,7 +16,7 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.repository.content.AttributeChange;
+import org.sonatype.nexus.repository.content.AttributeOperation;
 import org.sonatype.nexus.repository.content.ContentRepository;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -30,7 +30,7 @@ import static java.util.Optional.ofNullable;
 public class ContentRepositoryAttributesEvent
     extends ContentRepositoryUpdatedEvent
 {
-  private final AttributeChange change;
+  private final AttributeOperation change;
 
   private final String key;
 
@@ -39,7 +39,7 @@ public class ContentRepositoryAttributesEvent
 
   public ContentRepositoryAttributesEvent(
       final ContentRepository contentRepository,
-      final AttributeChange change,
+      final AttributeOperation change,
       final String key,
       @Nullable final Object value)
   {
@@ -49,7 +49,7 @@ public class ContentRepositoryAttributesEvent
     this.value = value;
   }
 
-  public AttributeChange getChange() {
+  public AttributeOperation getChange() {
     return change;
   }
 

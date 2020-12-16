@@ -21,6 +21,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.content.Asset;
+import org.sonatype.nexus.repository.content.AttributeChangeSet;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
@@ -135,4 +136,9 @@ public interface FluentAsset
    * @since 3.29
    */
   void lastUpdated(OffsetDateTime lastUpdated);
+
+  /**
+   * Applies the given change to the current attributes.
+   */
+  FluentAsset attributes(AttributeChangeSet changeset);
 }
