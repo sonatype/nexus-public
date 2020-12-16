@@ -28,7 +28,6 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.time.DateHelper;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
-import org.sonatype.nexus.content.maven.MavenMetadataRebuildContentFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
@@ -37,6 +36,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.maintenance.ContentMaintenanceFacet;
 import org.sonatype.nexus.repository.content.store.InternalIds;
+import org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
@@ -150,7 +150,7 @@ public class DataStoreMavenTestHelper
       final boolean rebuildChecksums,
       final boolean update)
   {
-    repository.facet(MavenMetadataRebuildContentFacet.class)
+    repository.facet(MavenMetadataRebuildFacet.class)
         .rebuildMetadata(groupId, artifactId, baseVersion, rebuildChecksums, update);
   }
 

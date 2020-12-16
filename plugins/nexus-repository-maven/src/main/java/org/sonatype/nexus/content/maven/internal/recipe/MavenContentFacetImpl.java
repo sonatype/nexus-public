@@ -13,6 +13,8 @@
 package org.sonatype.nexus.content.maven.internal.recipe;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +41,7 @@ import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
-import org.sonatype.nexus.repository.content.maintenance.ContentMaintenanceFacet;
+import org.sonatype.nexus.repository.content.store.ComponentStore;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.maven.LayoutPolicy;
 import org.sonatype.nexus.repository.maven.MavenPath;
@@ -48,6 +50,7 @@ import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.sonatype.nexus.repository.maven.VersionPolicy;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
+import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataRebuilder;
 import org.sonatype.nexus.repository.maven.internal.validation.MavenMetadataContentValidator;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
@@ -59,15 +62,21 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.Model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
+import static org.apache.commons.lang3.StringUtils.prependIfMissing;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenArchetypeCatalogFacetImpl.MAVEN_ARCHETYPE_KIND;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.assetKind;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.setMavenAttributes;
 import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW;
 import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW_ONCE;
+import static org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet.METADATA_REBUILD_KEY;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_INDEX;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Constants.METADATA_FILENAME;
 import static org.sonatype.nexus.repository.maven.internal.MavenModels.readModel;
+import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.metadataPath;
 
 /**
  * A {@link MavenContentFacet} that persists to a {@link ContentFacet}.
@@ -95,6 +104,8 @@ public class MavenContentFacetImpl
 
   private MavenPathParser mavenPathParser;
 
+  private MetadataRebuilder metadataRebuilder;
+
   static class Config
   {
     @NotNull(groups = {HostedType.ValidationGroup.class, ProxyType.ValidationGroup.class})
@@ -116,12 +127,14 @@ public class MavenContentFacetImpl
   public MavenContentFacetImpl(
       @Named(Maven2Format.NAME) final FormatStoreManager formatStoreManager,
       final Map<String, MavenPathParser> mavenPathParsers,
+      final MetadataRebuilder metadataRebuilder,
       final MavenMetadataContentValidator metadataValidator,
       final EventManager eventManager,
       @Named("${nexus.maven.metadata.validation.enabled:-true}") final boolean metadataValidationEnabled)
   {
     super(formatStoreManager);
     this.mavenPathParsers = checkNotNull(mavenPathParsers);
+    this.metadataRebuilder = checkNotNull(metadataRebuilder);
     this.metadataValidator = metadataValidator;
     this.eventManager = eventManager;
     this.metadataValidationEnabled = metadataValidationEnabled;
@@ -356,7 +369,85 @@ public class MavenContentFacetImpl
     if (component.assets().isEmpty()) {
       component.delete();
       publishEvents(component);
-      ((MavenMaintenanceFacet) repository().facet(ContentMaintenanceFacet.class)).deleteMetadata(component);
+      deleteMetadata(component);
     }
+  }
+
+  @Override
+  public int deleteComponents(final int[] componentIds) {
+    ContentFacetSupport contentFacet = (ContentFacetSupport) facet(ContentFacet.class);
+    ComponentStore<?> componentStore = contentFacet.stores().componentStore;
+    Set<List<String>> gavs = collectGavs(componentIds);
+
+    int deletedCount = componentStore.purge(contentFacet.contentRepositoryId(), componentIds);
+
+    if (!gavs.isEmpty()) {
+      List<String[]> metadataLocations = gavs.stream()
+          .flatMap(gav -> getMetadataLocations(gav.get(0), gav.get(1), gav.get(2)).stream())
+          .collect(toList());
+
+      metadataRebuilder.deleteMetadata(getRepository(), metadataLocations);
+    }
+    return deletedCount;
+  }
+
+  @Override
+  public Set<String> deleteMetadata(final Component component) {
+    String[] gav = collectGav(component);
+    return metadataRebuilder.deleteMetadata(getRepository(), getMetadataLocations(gav[0], gav[1], gav[2]));
+  }
+
+  private Set<List<String>> collectGavs(final int[] componentIds) {
+    ContentFacetSupport contentFacet = (ContentFacetSupport) facet(ContentFacet.class);
+    ComponentStore<?> componentStore = contentFacet.stores().componentStore;
+    return Arrays.stream(componentIds)
+        .mapToObj(componentStore::readComponent)
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .map(this::collectGav)
+        .map(Arrays::asList)
+        .collect(toSet());
+  }
+
+  private String[] collectGav(Component component) {
+    return new String[]{
+        component.namespace(), component.name(),
+        component.attributes(Maven2Format.NAME).get(P_BASE_VERSION, String.class)
+    };
+  }
+
+  private List<String[]> getMetadataLocations(
+      final String groupId,
+      final String artifactId,
+      final String baseVersion)
+  {
+    Repository repository = getRepository();
+    ContentFacet contentFacet = repository.facet(ContentFacet.class);
+
+    List<String[]> metadataCoordinates = new ArrayList<>();
+    metadataCoordinates.add(new String[]{groupId, artifactId, baseVersion});
+
+    boolean isGroupArtifactEmpty = contentFacet.components().versions(groupId, artifactId).isEmpty();
+    if (isGroupArtifactEmpty) {
+      metadataCoordinates.add(new String[]{groupId, artifactId, null});
+    }
+    else {
+      contentFacet.assets()
+          .path(prependIfMissing(metadataPath(groupId, artifactId, null).getPath(), "/"))
+          .find()
+          .ifPresent(asset -> asset.withAttribute(METADATA_REBUILD_KEY, true));
+    }
+
+    boolean isGroupEmpty = contentFacet.components().names(groupId).isEmpty();
+    if (isGroupEmpty) {
+      metadataCoordinates.add(new String[]{groupId, null, null});
+    }
+    else {
+      contentFacet.assets()
+          .path(prependIfMissing(metadataPath(groupId, null, null).getPath(), "/"))
+          .find()
+          .ifPresent(asset -> asset.withAttribute(METADATA_REBUILD_KEY, true));
+    }
+    return metadataCoordinates;
   }
 }

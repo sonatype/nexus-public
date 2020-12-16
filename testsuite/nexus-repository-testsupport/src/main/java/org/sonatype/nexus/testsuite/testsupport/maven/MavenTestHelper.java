@@ -25,9 +25,9 @@ import javax.inject.Named;
 import org.sonatype.goodies.testsupport.TestData;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
-import org.sonatype.nexus.content.maven.MavenMetadataRebuildContentFacet;
 import org.sonatype.nexus.pax.exam.NexusPaxExamSupport;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.view.Payload;
 
@@ -56,8 +56,8 @@ public abstract class MavenTestHelper
 
   public Payload read(final Repository repository, final String path) throws IOException {
     MavenContentFacet mavenFacet = repository.facet(MavenContentFacet.class);
-    Optional<MavenMetadataRebuildContentFacet> metadataRebuildFacet =
-        repository.optionalFacet(MavenMetadataRebuildContentFacet.class);
+    Optional<MavenMetadataRebuildFacet> metadataRebuildFacet =
+        repository.optionalFacet(MavenMetadataRebuildFacet.class);
     if (metadataRebuildFacet.isPresent()) {
       metadataRebuildFacet.get().maybeRebuildMavenMetadata(path, false, true);
     }

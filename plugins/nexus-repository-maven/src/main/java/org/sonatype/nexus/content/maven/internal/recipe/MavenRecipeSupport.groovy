@@ -17,13 +17,13 @@ import javax.inject.Provider
 
 import org.sonatype.nexus.content.maven.MavenArchetypeCatalogFacet
 import org.sonatype.nexus.content.maven.MavenContentFacet
-import org.sonatype.nexus.content.maven.MavenMetadataRebuildContentFacet
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.RecipeSupport
 import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.content.browse.BrowseFacet
 import org.sonatype.nexus.repository.content.search.SearchFacet
 import org.sonatype.nexus.repository.http.PartialFetchHandler
+import org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet
 import org.sonatype.nexus.repository.maven.MavenPathParser
 import org.sonatype.nexus.repository.maven.internal.MavenSecurityFacet
 import org.sonatype.nexus.repository.maven.internal.VersionPolicyHandler
@@ -108,7 +108,7 @@ abstract class MavenRecipeSupport
   Provider<MavenArchetypeCatalogFacet> mavenArchetypeCatalogFacet
 
   @Inject
-  Provider<MavenMetadataRebuildContentFacet> mavenMetadataRebuildFacet
+  Provider<MavenMetadataRebuildFacet> mavenMetadataRebuildFacet
 
   @Inject
   Provider<MavenMaintenanceFacet> mavenMaintenanceFacet
