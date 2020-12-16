@@ -70,7 +70,7 @@ import static org.apache.commons.lang3.StringUtils.startsWith;
 import static org.apache.commons.lang3.StringUtils.substring;
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.CONTENT_DATASTORE_NAME;
-import static org.sonatype.nexus.repository.content.AttributeChange.OVERLAY;
+import static org.sonatype.nexus.repository.content.AttributeOperation.OVERLAY;
 
 @Named
 @Singleton

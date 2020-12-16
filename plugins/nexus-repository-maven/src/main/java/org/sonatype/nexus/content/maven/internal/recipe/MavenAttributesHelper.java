@@ -28,7 +28,7 @@ import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.apache.maven.model.Model;
 
 import static java.util.Optional.ofNullable;
-import static org.sonatype.nexus.repository.content.AttributeChange.OVERLAY;
+import static org.sonatype.nexus.repository.content.AttributeOperation.OVERLAY;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_ARTIFACT_ID;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_CLASSIFIER;

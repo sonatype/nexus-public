@@ -24,7 +24,6 @@ import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.RepositoryTaskSupport;
 import org.sonatype.nexus.repository.attributes.AttributesFacet;
-import org.sonatype.nexus.repository.content.AttributeChange;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.npm.NpmContentFacet;
 import org.sonatype.nexus.repository.npm.internal.NpmFormatAttributesExtractor;
@@ -114,7 +113,7 @@ public class DatastoreReindexNpmRepositoryTask
 
         NestedAttributesMap attributes = new NestedAttributesMap(null, new HashMap<>());
         formatAttributesExtractor.copyFormatAttributes(attributes);
-        attributes.entries().forEach(entry -> asset.attributes(AttributeChange.SET, entry.getKey(), entry.getValue()));
+        attributes.entries().forEach(entry -> asset.withAttribute(entry.getKey(), entry.getValue()));
       }
     }
     catch (Exception e) {
