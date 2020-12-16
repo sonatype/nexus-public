@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.rest;
+package org.sonatype.nexus.coreui.internal.blobstore;
 
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
@@ -18,32 +18,23 @@ import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-/**
- * @since 3.19
- */
-public class GenericBlobStoreApiResponse
-    extends BlobStoreApiModel
+public class InternalBlobStoreApiResponse
 {
-  private String name;
+  private final String name;
 
-  private String type;
+  private final String type;
 
-  private boolean unavailable;
+  private final boolean unavailable;
 
-  private long blobCount;
+  private final long blobCount;
 
-  private long totalSizeInBytes;
+  private final long totalSizeInBytes;
 
-  private long availableSpaceInBytes;
+  private final long availableSpaceInBytes;
 
-  @SuppressWarnings("unused") // Required for ITs
-  public GenericBlobStoreApiResponse()
-  {
-    super();
-  }
+  private final boolean unlimited;
 
-  public GenericBlobStoreApiResponse(final BlobStore blobStore) {
-    super(blobStore.getBlobStoreConfiguration());
+  public InternalBlobStoreApiResponse(final BlobStore blobStore) {
     BlobStoreConfiguration configuration = blobStore.getBlobStoreConfiguration();
 
     if (blobStore.isStarted()) {
@@ -52,57 +43,45 @@ public class GenericBlobStoreApiResponse
       blobCount = metrics.getBlobCount();
       totalSizeInBytes = metrics.getTotalSize();
       availableSpaceInBytes = metrics.getAvailableSpace();
+      unlimited = metrics.isUnlimited();
+    }
+    else {
+      unavailable = true;
+      blobCount = 0;
+      totalSizeInBytes = 0;
+      availableSpaceInBytes = 0;
+      unlimited = false;
     }
 
     name = checkNotNull(configuration.getName());
-    setType(checkNotNull(configuration.getType()));
+    type = checkNotNull(configuration.getType());
   }
 
   public String getName() {
     return name;
   }
 
-  public void setName(final String name) {
-    this.name = name;
-  }
-
   public String getType() {
     return type;
-  }
-
-  public void setType(final String type) {
-    this.type = type;
   }
 
   public boolean isUnavailable() {
     return unavailable;
   }
 
-  public void setUnavailable(final boolean unavailable) {
-    this.unavailable = unavailable;
-  }
-
   public long getBlobCount() {
     return blobCount;
-  }
-
-  public void setBlobCount(final long blobCount) {
-    this.blobCount = blobCount;
   }
 
   public long getTotalSizeInBytes() {
     return totalSizeInBytes;
   }
 
-  public void setTotalSizeInBytes(final long totalSizeInBytes) {
-    this.totalSizeInBytes = totalSizeInBytes;
-  }
-
   public long getAvailableSpaceInBytes() {
     return availableSpaceInBytes;
   }
 
-  public void setAvailableSpaceInBytes(final long availableSpaceInBytes) {
-    this.availableSpaceInBytes = availableSpaceInBytes;
+  public boolean isUnlimited() {
+    return unlimited;
   }
 }

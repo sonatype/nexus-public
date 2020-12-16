@@ -12,6 +12,7 @@
     "@fortawesome/react-fontawesome": "=0.1.4",
     "@sonatype/react-shared-components": "=2.0.6",
     "classnames": "=2.2.6",
+    "file-size": "=1.0.0",
     "ramda": "=0.27.1"
   },
   "peerDependencies": {

@@ -14,10 +14,10 @@ package org.sonatype.nexus.repository.content.fluent;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.repository.content.AttributeChange;
+import org.sonatype.nexus.repository.content.AttributeOperation;
 
-import static org.sonatype.nexus.repository.content.AttributeChange.REMOVE;
-import static org.sonatype.nexus.repository.content.AttributeChange.SET;
+import static org.sonatype.nexus.repository.content.AttributeOperation.REMOVE;
+import static org.sonatype.nexus.repository.content.AttributeOperation.SET;
 
 /**
  * Fluent API for repository content attributes.
@@ -43,5 +43,6 @@ public interface FluentAttributes<A extends FluentAttributes<A>>
   /**
    * Applies the given change to the current attributes.
    */
-  A attributes(AttributeChange change, String key, @Nullable Object value);
+  A attributes(AttributeOperation change, String key, @Nullable Object value);
+
 }

@@ -33,6 +33,41 @@ export default {
     }
   },
 
+  BLOB_STORES: {
+    MENU: {
+      text: 'Blob Stores',
+      description: 'Configure local and cloud blob storage'
+    },
+
+    LIST: {
+      CREATE_BUTTON: 'Create Blob Store',
+      COLUMNS: {
+        NAME: 'Name',
+        TYPE: 'Type',
+        STATE: 'State',
+        COUNT: 'Blob Count',
+        SIZE: 'Total Size',
+        SPACE: 'Available Space'
+      },
+      FILTER_PLACEHOLDER: 'Filter by name',
+      EMPTY_LIST: 'There are no blob stores available',
+      HELP: {
+        TITLE: 'What is a blob store?',
+        TEXT: `\
+The binary assets you download via proxy repositories, or publish to hosted repositories, are stored in \
+the blob store attached to those repositories. In traditional, single node NXRM deployments, blob stores \
+are typically associated with a local filesystem directory, usually within the sonatype-work directory. \
+For more information, check \
+<a href="http://links.sonatype.com/products/nxrm3/docs/blob-store" target="_blank" rel="noopener noreferrer">\
+the documentation</a>.`
+      },
+      AVAILABLE: 'Started',
+      UNAVAILABLE: 'Failed',
+      UNKNOWN: 'Unavailable',
+      UNLIMITED: 'Unlimited'
+    }
+  },
+
   CONTENT_SELECTORS: {
     MENU: {
       text: 'Content Selectors'

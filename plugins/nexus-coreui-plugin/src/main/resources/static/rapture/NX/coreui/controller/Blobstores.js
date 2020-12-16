@@ -80,7 +80,9 @@ Ext.define('NX.coreui.controller.Blobstores', {
         variants: ['x16', 'x32']
       },
       visible: function() {
-        return NX.Permissions.check('nexus:blobstores:read') && !Ext.isEmpty(NX.State.getUser());
+        return NX.Permissions.check('nexus:blobstores:read') &&
+            !Ext.isEmpty(NX.State.getUser()) &&
+            !NX.State.getValue('nexus.react.blobstores', false);
       }
     };
 

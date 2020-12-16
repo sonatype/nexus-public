@@ -10,37 +10,22 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content;
+import React from 'react';
 
-/**
- * Different ways content attributes can be updated.
- *
- * @since 3.21
- */
-public enum AttributeChange
-{
-  /**
-   * Sets the attribute under the key, overwriting any existing value.
-   */
-  SET,
+import {Detail, Master, MasterDetail} from 'nexus-ui-plugin';
 
-  /**
-   * Removes the attribute under the key.
-   */
-  REMOVE,
+import BlobStoresList from './BlobStoresList';
+import BlobStoresForm from './BlobStoresForm';
 
-  /**
-   * Appends a value to the attribute list under the key.
-   */
-  APPEND,
+import './BlobStores.scss';
 
-  /**
-   * Prepends a value to the attribute list under the key.
-   */
-  PREPEND,
-
-  /**
-   * Overlays a value onto the attribute map under the key.
-   */
-  OVERLAY
+export default function BlobStores() {
+  return <MasterDetail path="admin/repository/blobstores-new">
+    <Master>
+      <BlobStoresList/>
+    </Master>
+    <Detail>
+      <BlobStoresForm/>
+    </Detail>
+  </MasterDetail>;
 }

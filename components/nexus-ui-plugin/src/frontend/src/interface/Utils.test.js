@@ -155,6 +155,20 @@ describe('Utils', () => {
 
       expect(sortedData).toStrictEqual([{name: 'c'}, {name: 'b'}, {name: 'a'}]);
     });
+
+    it('does no sorting on equal values', () => {
+      expect(Utils.sortDataByFieldAndDirection({
+        sortField: 'blobCount',
+        sortDirection: Utils.DESC,
+        data: [{name: 'a', blobCount: 0}, {name: 'b', blobCount: 0}, {name: 'c', blobCount: 0}]
+      })).toStrictEqual([{name: 'a', blobCount: 0}, {name: 'b', blobCount: 0}, {name: 'c', blobCount: 0}])
+
+      expect(Utils.sortDataByFieldAndDirection({
+        sortField: 'blobCount',
+        sortDirection: Utils.ASC,
+        data: [{name: 'a', blobCount: 0}, {name: 'b', blobCount: 0}, {name: 'c', blobCount: 0}]
+      })).toStrictEqual([{name: 'a', blobCount: 0}, {name: 'b', blobCount: 0}, {name: 'c', blobCount: 0}])
+    })
   });
 });
 

@@ -12,6 +12,7 @@
  */
 import ContentSelectors from './components/pages/admin/ContentSelectors/ContentSelectors';
 import AnonymousSettings from './components/pages/admin/AnonymousSettings/AnonymousSettings';
+import BlobStores from './components/pages/admin/BlobStores/BlobStores';
 import LoggingConfiguration from './components/pages/admin/LoggingConfiguration/LoggingConfiguration';
 import LogViewer from "./components/pages/admin/LogViewer/LogViewer";
 import RoutingRules from "./components/pages/admin/RoutingRules/RoutingRules";
@@ -35,6 +36,17 @@ window.plugins.push({
   id: 'nexus-coreui-plugin',
 
   features: [
+    {
+      mode: 'admin',
+      path: '/Repository/Blobstores-new',
+      ...UIStrings.BLOB_STORES.MENU,
+      view: BlobStores,
+      iconCls: 'x-fa fa-server',
+      visibility: {
+        featureFlags: [{key: 'nexus.react.blobstores', defaultValue: false}],
+        permissions: ['nexus:blobstores:read']
+      }
+    },
     {
       mode: 'admin',
       path: '/Repository/Selectors',

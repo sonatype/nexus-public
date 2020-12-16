@@ -14,6 +14,7 @@ import {assign, Machine} from "xstate";
 import ExtJS from "./ExtJS";
 import UIStrings from "../constants/UIStrings";
 import {equals} from 'ramda';
+import fileSize from 'file-size';
 
 const FIELD_ID = 'FIELD ';
 const PARAMETER_ID = 'PARAMETER ';
@@ -395,7 +396,7 @@ export default class Utils {
       },
 
       services: {
-        fetchData: () => Promise.resolve({data: {}})
+        fetchData: () => Promise.resolve({data: []})
       }
     };
 
@@ -484,6 +485,9 @@ export default class Utils {
   static sortDataByFieldAndDirection({sortField, sortDirection, data}) {
     return (data.slice().sort((a, b) => {
       const dir = sortDirection === Utils.ASC ? 1 : -1;
+      if (a[sortField] === b[sortField]) {
+        return 0;
+      }
       return a[sortField] > b[sortField] ? dir : -dir;
     }));
   }
@@ -501,5 +505,17 @@ export default class Utils {
     else {
       return null;
     }
+  }
+
+  /**
+   * Convert a size in bytes to a human readable string
+   * @param bytes
+   * @return {*}
+   */
+  static bytesToString(bytes) {
+    if (bytes < 0) {
+      return UIStrings.UNAVAILABLE;
+    }
+    return fileSize(bytes).human('jedec');
   }
 }
