@@ -28,7 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <bouncycastle.version>1.65</bouncycastle.version>
+    <bouncycastle.version>1.67</bouncycastle.version>
     <apache-shiro.version>1.6.0</apache-shiro.version>
   </properties>
 
