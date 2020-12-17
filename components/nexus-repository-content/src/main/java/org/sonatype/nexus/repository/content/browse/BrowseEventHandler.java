@@ -289,8 +289,9 @@ public class BrowseEventHandler
 
         Iterator<Repository> itr = repositoriesToTrim.iterator();
         while (itr.hasNext()) {
-          itr.next().optionalFacet(BrowseFacet.class).ifPresent(BrowseFacet::trimBrowseNodes);
-          itr.remove();
+          Repository nextRepository = itr.next();
+          itr.remove(); //do the removal first so other threads can add the same repository to the set to trim
+          nextRepository.optionalFacet(BrowseFacet.class).ifPresent(BrowseFacet::trimBrowseNodes);
         }
       }
     }
