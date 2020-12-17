@@ -108,7 +108,7 @@ extends DirectComponentSupport
       X509Certificate x509Certificate = (X509Certificate) certificate
 
       Map<String, String> subjectRdns = CertificateUtil.getSubjectRdns(x509Certificate)
-      Map<String, String> issuerRdns = CertificateUtil.getSubjectRdns(x509Certificate)
+      Map<String, String> issuerRdns = CertificateUtil.getIssuerRdns(x509Certificate)
 
       return new CertificateXO(
           id: fingerprint,
