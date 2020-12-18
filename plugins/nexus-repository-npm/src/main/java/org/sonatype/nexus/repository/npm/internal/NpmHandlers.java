@@ -21,6 +21,7 @@ import javax.annotation.Nonnull;
 import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.group.GroupWriteDenyException;
 import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexFacet;
 import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchFacet;
 import org.sonatype.nexus.repository.view.Context;
@@ -55,6 +56,16 @@ public final class NpmHandlers
     public Response handle(@Nonnull final Context context) throws Exception {
       try {
         return context.proceed();
+      }
+      catch (GroupWriteDenyException e) {
+        Response error = NpmResponses.forbidden(e.getMessage());
+        log.warn("Error: {} {}: {} - {}",
+            context.getRequest().getAction(),
+            context.getRequest().getPath(),
+            error.getStatus(),
+            e.getMessage(),
+            e);
+        return error;
       }
       catch (IllegalOperationException | IllegalArgumentException e) {
         Response error = NpmResponses.badRequest(e.getMessage());
