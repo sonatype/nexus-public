@@ -23,7 +23,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentAttributes;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * @since 3.next
+ * @since 3.29
  */
 public class AttributeChangeSet
     implements FluentAttributes<AttributeChangeSet>

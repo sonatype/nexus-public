@@ -53,7 +53,7 @@ public class AttributesHelper
   /**
    * Apply a change request to the given {@link AttributesMap}.
    *
-   * @since 3.next
+   * @since 3.29
    */
   public static boolean applyAttributeChange(final AttributesMap attributes, final AttributeChange change) {
     return applyAttributeChange(attributes, change.getOperation(), change.getKey(), change.getValue());
