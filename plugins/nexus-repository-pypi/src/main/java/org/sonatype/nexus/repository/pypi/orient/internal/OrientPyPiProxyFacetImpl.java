@@ -61,8 +61,8 @@ import com.google.common.base.Throwables;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
-import org.apache.http.entity.InputStreamEntity;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
@@ -268,10 +268,10 @@ public class OrientPyPiProxyFacetImpl
     // If we're doing a search operation, we have to proxy the content of the XML-RPC POST request to the PyPI server...
     if (isSearchRequest(request)) {
       Payload payload = checkNotNull(request.getPayload());
-      try {
+      try (InputStream inputStream = payload.openInputStream()) {
         ContentType contentType = ContentType.parse(payload.getContentType());
         HttpPost post = new HttpPost(uri);
-        post.setEntity(new InputStreamEntity(payload.openInputStream(), payload.getSize(), contentType));
+        post.setEntity(new ByteArrayEntity(IOUtils.toByteArray(inputStream), contentType));
         return post;
       }
       catch (IOException e) {

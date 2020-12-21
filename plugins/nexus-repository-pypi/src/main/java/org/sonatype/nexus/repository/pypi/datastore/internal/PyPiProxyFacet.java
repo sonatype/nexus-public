@@ -27,11 +27,11 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.template.TemplateHelper;
-import org.sonatype.nexus.repository.pypi.datastore.PypiContentFacet;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.content.facet.ContentProxyFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.pypi.datastore.PypiContentFacet;
 import org.sonatype.nexus.repository.pypi.internal.AssetKind;
 import org.sonatype.nexus.repository.pypi.internal.PyPiFileUtils;
 import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
@@ -51,15 +51,15 @@ import com.google.common.base.Throwables;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
-import org.apache.http.entity.InputStreamEntity;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonMap;
+import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.pypi.datastore.internal.ContentPypiPathUtils.indexPath;
 import static org.sonatype.nexus.repository.pypi.datastore.internal.ContentPypiPathUtils.indexUriPath;
-import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.pypi.datastore.internal.PyPiDataUtils.setLastModified;
 import static org.sonatype.nexus.repository.pypi.internal.AssetKind.INDEX;
 import static org.sonatype.nexus.repository.pypi.internal.AssetKind.PACKAGE;
@@ -196,7 +196,7 @@ public class PyPiProxyFacet
         String type = checkNotNull(payload.getContentType());
         ContentType contentType = ContentType.parse(type);
         HttpPost post = new HttpPost(uri);
-        post.setEntity(new InputStreamEntity(inputStream, payload.getSize(), contentType));
+        post.setEntity(new ByteArrayEntity(IOUtils.toByteArray(inputStream), contentType));
         return post;
       }
       catch (IOException e) {
