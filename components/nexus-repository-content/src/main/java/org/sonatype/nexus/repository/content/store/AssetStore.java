@@ -86,22 +86,22 @@ public class AssetStore<T extends AssetDAO>
    * Browse all assets in the given repository in a paged fashion.
    *
    * @param repositoryId the repository to browse
-   * @param limit maximum number of assets to return
    * @param continuationToken optional token to continue from a previous request
    * @param kind optional kind of assets to return
    * @param filter optional filter to apply
    * @param filterParams parameter map for the optional filter
+   * @param limit maximum number of assets to return
    * @return collection of assets and the next continuation token
    *
    * @see Continuation#nextContinuationToken()
    */
   @Transactional
   public Continuation<Asset> browseAssets(final int repositoryId,
-                                          final int limit,
                                           @Nullable final String continuationToken,
                                           @Nullable final String kind,
                                           @Nullable final String filter,
-                                          @Nullable final Map<String, Object> filterParams)
+                                          @Nullable final Map<String, Object> filterParams,
+                                          final int limit)
   {
     return dao().browseAssets(repositoryId, limit, continuationToken, kind, filter, filterParams);
   }
@@ -111,8 +111,11 @@ public class AssetStore<T extends AssetDAO>
    * by asset id in ascending order.
    *
    * @param repositoryIds     the repositories to browse
-   * @param limit             maximum number of assets to return
    * @param continuationToken optional token to continue from a previous request
+   * @param kind optional kind of assets to return
+   * @param filter optional filter to apply
+   * @param filterParams parameter map for the optional filter
+   * @param limit             maximum number of assets to return
    * @return collection of assets and the next continuation token
    * @see Continuation#nextContinuationToken()
    *
@@ -121,10 +124,13 @@ public class AssetStore<T extends AssetDAO>
   @Transactional
   public Continuation<Asset> browseAssets(
       final Set<Integer> repositoryIds,
-      final int limit,
-      @Nullable final String continuationToken)
+      @Nullable final String continuationToken,
+      @Nullable final String kind,
+      @Nullable final String filter,
+      @Nullable final Map<String, Object> filterParams,
+      final int limit)
   {
-    return dao().browseAssetsInRepositories(repositoryIds, limit, continuationToken);
+    return dao().browseAssetsInRepositories(repositoryIds, continuationToken, kind, filter, filterParams, limit);
   }
 
   /**

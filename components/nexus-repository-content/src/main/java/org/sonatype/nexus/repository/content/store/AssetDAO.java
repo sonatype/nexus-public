@@ -83,16 +83,22 @@ public interface AssetDAO
    * by asset id in ascending order.
    *
    * @param repositoryIds the ids of the repositories to browse
-   * @param limit maximum number of assets to return
    * @param continuationToken optional token to continue from a previous request
+   * @param kind optional kind of assets to return
+   * @param filter optional filter to apply
+   * @param filterParams parameter map for the optional filter
+   * @param limit maximum number of assets to return
    * @return collection of assets from the specified repositories and the next continuation token
    *
    * @see Continuation#nextContinuationToken()
    */
   Continuation<Asset> browseAssetsInRepositories(
       @Param("repositoryIds") Set<Integer> repositoryIds,
-      @Param("limit") int limit,
-      @Nullable @Param("continuationToken") String continuationToken);
+      @Nullable @Param("continuationToken") String continuationToken,
+      @Nullable @Param("kind") String kind,
+      @Nullable @Param("filter") String filter,
+      @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams,
+      @Param("limit") int limit);
 
   /**
    * Browse all assets associated with the given logical component.

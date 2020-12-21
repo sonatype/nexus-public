@@ -105,6 +105,8 @@
         #{repositoryId}
       </foreach>
       <if test="continuationToken != null"> AND asset_id > #{continuationToken}</if>
+      <if test="kind != null"> AND kind = #{kind}</if>
+      <if test="filter != null"> AND ${filter}</if>
     ORDER BY asset_id LIMIT #{limit};
   </select>
 
