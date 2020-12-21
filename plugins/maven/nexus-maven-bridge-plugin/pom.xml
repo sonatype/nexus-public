@@ -44,6 +44,12 @@
       <groupId>org.sonatype.sisu</groupId>
       <artifactId>sisu-maven-bridge</artifactId>
       <version>3.1</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.sonatype.plexus</groupId>
+          <artifactId>plexus-cipher</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>

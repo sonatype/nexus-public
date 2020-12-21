@@ -59,7 +59,7 @@
     </dependency>
 
     <dependency>
-      <groupId>org.sonatype.plexus</groupId>
+      <groupId>org.codehaus.plexus</groupId>
       <artifactId>plexus-cipher</artifactId>
     </dependency>
 

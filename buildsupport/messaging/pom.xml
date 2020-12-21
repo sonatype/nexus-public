@@ -28,7 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <apache-activemq.version>5.9.1</apache-activemq.version>
+    <apache-activemq.version>5.16.0</apache-activemq.version>
     <apache-camel.version>2.17.7</apache-camel.version>
     <spring.version>4.3.16.RELEASE</spring.version>
   </properties>
