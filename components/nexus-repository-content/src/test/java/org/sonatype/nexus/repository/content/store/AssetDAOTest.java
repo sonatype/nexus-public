@@ -37,6 +37,7 @@ import org.junit.Test;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
+import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.summingInt;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.allOf;
@@ -832,13 +833,15 @@ public class AssetDAOTest
       AssetDAO dao = session.access(TestAssetDAO.class);
 
       assertThat(
-          dao.browseAssetsInRepositories(newHashSet(repositoryId, anotherRepositoryId), 10, null),
+          dao.browseAssetsInRepositories(newHashSet(repositoryId, anotherRepositoryId), null,
+              null, null, emptyMap(), 10),
           emptyIterable());
 
       dao.createAsset(asset1);
 
       assertThat(
-          dao.browseAssetsInRepositories(newHashSet(repositoryId, anotherRepositoryId), 10, null),
+          dao.browseAssetsInRepositories(newHashSet(repositoryId, anotherRepositoryId), null,
+              null, null, emptyMap(), 10),
           contains(allOf(samePath(asset1), sameAttributes(asset1))));
 
       dao.createAsset(asset2);
@@ -847,7 +850,8 @@ public class AssetDAOTest
 
       //browse all assets
       assertThat(
-          dao.browseAssetsInRepositories(newHashSet(repositoryId, anotherRepositoryId), 10, null),
+          dao.browseAssetsInRepositories(newHashSet(repositoryId, anotherRepositoryId),  null,
+              null, null, emptyMap(), 10),
           contains(allOf(samePath(asset1), sameAttributes(asset1)), allOf(samePath(asset2), sameAttributes(asset2)),
               allOf(samePath(asset3), sameAttributes(asset3)), allOf(samePath(asset4), sameAttributes(asset4))));
 
