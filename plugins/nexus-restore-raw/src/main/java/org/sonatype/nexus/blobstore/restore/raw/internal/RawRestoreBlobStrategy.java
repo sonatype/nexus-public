@@ -34,12 +34,13 @@ import org.sonatype.nexus.repository.view.payloads.BlobPayload;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
+import static org.sonatype.nexus.common.app.FeatureFlags.EARLY_ACCESS_DATASTORE;
 
 /**
  * @since 3.29
  */
 @Named("raw")
-@FeatureFlag(name = "nexus.datastore.enabled")
+@FeatureFlag(name = EARLY_ACCESS_DATASTORE)
 @Singleton
 public class RawRestoreBlobStrategy
     extends BaseRestoreBlobStrategy<RestoreBlobData>

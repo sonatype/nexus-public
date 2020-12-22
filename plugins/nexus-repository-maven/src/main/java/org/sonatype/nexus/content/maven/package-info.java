@@ -10,8 +10,10 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-@FeatureFlag(name = "nexus.datastore.enabled")
+@FeatureFlag(name = EARLY_ACCESS_DATASTORE)
 
 package org.sonatype.nexus.content.maven;
 
 import org.sonatype.nexus.common.app.FeatureFlag;
+
+import static org.sonatype.nexus.common.app.FeatureFlags.EARLY_ACCESS_DATASTORE;

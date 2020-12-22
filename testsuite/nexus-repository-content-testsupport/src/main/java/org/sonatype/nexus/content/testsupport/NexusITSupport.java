@@ -121,7 +121,7 @@ public abstract class NexusITSupport
         editConfigurationFileExtend(SYSTEM_PROPERTIES_FILE, "nexus.loadAsOSS", "true"),
         editConfigurationFileExtend(SYSTEM_PROPERTIES_FILE, "nexus.security.randompassword", "false"),
         editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.scripts.allowCreation", "true"),
-        editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.orient.enabled", "false"),
+        editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.earlyAccess.datastore.developer", "true"),
         // install common test-support features
         nexusFeature("org.sonatype.nexus.testsuite", "nexus-repository-content-testsupport"),
         wrappedBundle(maven("org.awaitility", "awaitility").versionAsInProject()).overwriteManifest(MERGE).imports("*")

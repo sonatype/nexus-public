@@ -513,12 +513,14 @@ public abstract class NexusPaxExamSupport
           .waitingFor(Wait.forLogMessage(".*database system is ready to accept connections.*", 1));
 
         return combine(null,
-            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.orient.enabled", "false"),
+            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.earlyAccess.datastore.enabled", "true"),
+            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.earlyAccess.datastore.developer", "true"),
             systemProperty(TEST_JDBC_URL_PROPERTY).value(configurePostgres())
         );
       case H2:
         return combine(null,
-            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.orient.enabled", "false")
+            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.earlyAccess.datastore.enabled", "true"),
+            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.earlyAccess.datastore.developer", "true")
         );
       case ORIENT:
         return new Option[0];
