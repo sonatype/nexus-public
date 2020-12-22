@@ -24,13 +24,16 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.scheduling.schedule.Manual;
 import org.sonatype.nexus.scheduling.schedule.Schedule;
+import org.sonatype.nexus.scheduling.schedule.ScheduleDeserializer;
+import org.sonatype.nexus.scheduling.schedule.ScheduleSerializer;
 import org.sonatype.nexus.supportzip.ExportConfigData;
 import org.sonatype.nexus.supportzip.ImportTaskData;
 import org.sonatype.nexus.supportzip.datastore.JsonExporter;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 /**
  * Write/Read {@link TaskInfo} data to/from a JSON file.
@@ -66,8 +69,7 @@ public class TaskExport
     defaultTasks.forEach(TaskInfo::remove);
 
     List<TaskInfoData> tasks = importFromJson(file, TaskInfoData.class);
-    Manual manual = taskScheduler.getScheduleFactory().manual();
-    tasks.forEach(task -> taskScheduler.scheduleTask(task.getConfiguration(), manual));
+    tasks.forEach(task -> taskScheduler.scheduleTask(task.getConfiguration(), task.getSchedule()));
   }
 
   // this class is used only for Serialization/Deserialization
@@ -76,6 +78,10 @@ public class TaskExport
       implements TaskInfo
   {
     private TaskConfiguration configuration;
+
+    @JsonSerialize(using = ScheduleSerializer.class)
+    @JsonDeserialize(using = ScheduleDeserializer.class)
+    private Schedule schedule;
 
     private Object lastResult;
 
@@ -112,7 +118,11 @@ public class TaskExport
 
     @Override
     public Schedule getSchedule() {
-      return null;
+      return schedule;
+    }
+
+    public void setSchedule(final Schedule schedule) {
+      this.schedule = schedule;
     }
 
     @Override
