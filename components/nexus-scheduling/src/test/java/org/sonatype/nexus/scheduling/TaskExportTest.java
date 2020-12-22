@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.UUID;
 
 import org.sonatype.nexus.scheduling.TaskExport.TaskInfoData;
+import org.sonatype.nexus.scheduling.schedule.Daily;
+import org.sonatype.nexus.scheduling.schedule.Schedule;
 import org.sonatype.nexus.supportzip.datastore.JsonExporter;
 
 import com.google.common.collect.ImmutableList;
@@ -27,6 +29,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -53,9 +56,11 @@ public class TaskExportTest
 
   @Test
   public void testExportImportToJson() throws Exception {
+    Date date = new Date();
+    Schedule daily = new Daily(date);
     List<TaskInfo> tasks = ImmutableList.of(
-        createTask("task1"),
-        createTask("task2"));
+        createTask("task1", daily),
+        createTask("task2", daily));
 
     TaskScheduler taskScheduler = mock(TaskScheduler.class);
     when(taskScheduler.listsTasks()).thenReturn(tasks);
@@ -73,12 +78,17 @@ public class TaskExportTest
       assertThat(configuration.getTypeId(), is("typeId"));
       assertThat(configuration.getTypeName(), is("Task type"));
       assertThat(configuration.getString("repositoryName"), is("test-repo"));
+
+      assertThat(importedTaskInfo.getSchedule(), instanceOf(Daily.class));
+      Daily deserializedDaily = (Daily) importedTaskInfo.getSchedule();
+      assertThat(deserializedDaily.getStartAt(), is(date));
     }
   }
 
-  private TaskInfo createTask(final String name) {
+  private TaskInfo createTask(final String name, final Schedule schedule) {
     TaskInfoData taskInfo = new TaskInfoData();
     taskInfo.setConfiguration(createTaskConfiguration(name));
+    taskInfo.setSchedule(schedule);
     return taskInfo;
   }
 
