@@ -27,6 +27,8 @@ import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.supportzip.ImportTaskData;
 
+import org.apache.commons.io.FileUtils;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 import static org.sonatype.nexus.supportzip.datastore.RestoreHelper.FILE_SUFFIX;
@@ -69,6 +71,7 @@ public class TaskRestorer
       ImportTaskData importTask = exporterEntry.getValue();
       if (file.exists()) {
         importTask.restore(file);
+        FileUtils.deleteQuietly(file);
       }
       else {
         log.warn("Can't find {} file to restore data", file);

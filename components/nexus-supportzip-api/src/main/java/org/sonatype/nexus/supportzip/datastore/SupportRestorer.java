@@ -27,6 +27,8 @@ import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.supportzip.ImportData;
 
+import org.apache.commons.io.FileUtils;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Integer.MAX_VALUE;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.RESTORE;
@@ -71,6 +73,7 @@ public class SupportRestorer
       ImportData importer = importerEntry.getValue();
       if (file.exists()) {
         importer.restore(file);
+        FileUtils.deleteQuietly(file);
       }
       else {
         log.warn("Can't find {} file to restore data", file);

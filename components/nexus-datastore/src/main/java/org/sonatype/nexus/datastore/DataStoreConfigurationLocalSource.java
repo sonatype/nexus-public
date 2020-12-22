@@ -28,6 +28,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.property.PropertiesFile;
 import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
+import org.sonatype.nexus.datastore.api.DataStoreManager;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -187,6 +188,16 @@ public class DataStoreConfigurationLocalSource
   }
 
   /**
+   * Get location of the datastore properties file.
+   *
+   * @param storeName the sore name, see {@link DataStoreManager}
+   * @return the datastore properties {@link File}
+   */
+  public File getPropertiesFile(final String storeName) {
+    return new File(fabricWorkDirectory, storeName + STORE_PROPERTIES_SUFFIX);
+  }
+
+  /**
    * Checks the cache for the named properties file, initializing it from system properties if new.
    */
   private PropertiesFile findStoreProperties(final String storeName) {
@@ -198,8 +209,7 @@ public class DataStoreConfigurationLocalSource
    * from system properties may be overloaded by the actual properties file.
    */
   private PropertiesFile initializeStoreProperties(final String storeName) {
-    PropertiesFile storeProperties = new PropertiesFile(
-        new File(fabricWorkDirectory, storeName + STORE_PROPERTIES_SUFFIX));
+    PropertiesFile storeProperties = new PropertiesFile(getPropertiesFile(storeName));
 
     String systemPrefix = SYSTEM_PROPERTY_PREFIX + storeName + '.';
     System.getProperties().stringPropertyNames().stream()
