@@ -17,6 +17,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -43,6 +44,7 @@ import org.apache.commons.lang.StringUtils;
 
 import static com.fasterxml.jackson.databind.SerializationFeature.FAIL_ON_EMPTY_BEANS;
 import static com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.supportzip.PasswordSanitizing.REPLACEMENT;
 import static org.sonatype.nexus.supportzip.PasswordSanitizing.SENSITIVE_FIELD_NAMES;
 
@@ -57,6 +59,8 @@ public class JsonExporter
     extends ComponentSupport
 {
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+  private static final String EMPTY_JSON = "{}";
 
   static {
     OBJECT_MAPPER.registerModule(new SimpleModule()
@@ -77,7 +81,11 @@ public class JsonExporter
    * @throws IOException for any issue during writing a file.
    */
   public <T> void exportToJson(final List<T> objects, final File file) throws IOException {
-    if (objects != null && !objects.isEmpty()) {
+    checkNotNull(file);
+    if (objects == null || objects.isEmpty()) {
+      writeEmptyJson(file);
+    }
+    else {
       try (ByteArrayInputStream is = new ByteArrayInputStream(OBJECT_MAPPER.writeValueAsBytes(objects));
            OutputStream os = new BufferedOutputStream(new FileOutputStream(file));
            SanitizingJsonOutputStream stream = new SanitizingJsonOutputStream(os, SENSITIVE_FIELD_NAMES, REPLACEMENT)) {
@@ -94,7 +102,11 @@ public class JsonExporter
    * @throws IOException for any issue during writing a file.
    */
   public <T> void exportObjectToJson(final T object, final File file) throws IOException {
-    if (object != null) {
+    checkNotNull(file);
+    if (object == null) {
+      writeEmptyJson(file);
+    }
+    else {
       try (ByteArrayInputStream is = new ByteArrayInputStream(OBJECT_MAPPER.writeValueAsBytes(object));
            OutputStream os = new BufferedOutputStream(new FileOutputStream(file));
            SanitizingJsonOutputStream stream = new SanitizingJsonOutputStream(os, SENSITIVE_FIELD_NAMES, REPLACEMENT)) {
@@ -112,9 +124,11 @@ public class JsonExporter
    * @throws IOException for any issue during reading a file.
    */
   public <T> List<T> importFromJson(final File file, final Class<T> clazz) throws IOException {
+    checkNotNull(file);
+    checkNotNull(clazz);
     try (FileInputStream inputStream = new FileInputStream(file)) {
       String jsonData = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-      if (StringUtils.isNotBlank(jsonData)) {
+      if (StringUtils.isNotBlank(jsonData) && !jsonData.equals(EMPTY_JSON)) {
         JavaType type = OBJECT_MAPPER.getTypeFactory().constructCollectionType(List.class, clazz);
         return OBJECT_MAPPER.readValue(jsonData, type);
       }
@@ -132,12 +146,20 @@ public class JsonExporter
    * @throws IOException for any issue during reading a file.
    */
   public <T> Optional<T> importObjectFromJson(final File file, final Class<T> clazz) throws IOException {
+    checkNotNull(file);
+    checkNotNull(clazz);
     try (FileInputStream inputStream = new FileInputStream(file)) {
       String jsonData = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-      if (StringUtils.isNotBlank(jsonData)) {
+      if (StringUtils.isNotBlank(jsonData) && !jsonData.equals(EMPTY_JSON)) {
         return Optional.of(OBJECT_MAPPER.readValue(jsonData, clazz));
       }
     }
     return Optional.empty();
+  }
+
+  private void writeEmptyJson(final File file) throws IOException {
+    try (FileWriter fileWriter = new FileWriter(file)) {
+      fileWriter.write(EMPTY_JSON);
+    }
   }
 }
