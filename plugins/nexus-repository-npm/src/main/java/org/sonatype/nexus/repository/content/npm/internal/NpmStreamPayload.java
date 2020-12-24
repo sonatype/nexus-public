@@ -31,7 +31,6 @@ import static com.fasterxml.jackson.databind.SerializationFeature.FLUSH_AFTER_WR
 import static java.util.Collections.emptyList;
 import static java.util.Objects.nonNull;
 import static org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils.errorInputStream;
-import static org.sonatype.nexus.repository.view.ContentTypes.APPLICATION_JSON;
 
 /**
  * NPM Specific {@link StreamPayload} that implements its own {@link #copy(InputStream, OutputStream)} method
@@ -52,9 +51,9 @@ public class NpmStreamPayload
 
   private InputStreamFunction<MissingAssetBlobException> missingBlobInputStreamSupplier;
 
-  public NpmStreamPayload(final InputStreamSupplier supplier)
+  public NpmStreamPayload(final InputStreamSupplier supplier, final String contentType)
   {
-    super(supplier, UNKNOWN_SIZE, APPLICATION_JSON);
+    super(supplier, UNKNOWN_SIZE, contentType);
   }
 
   public NpmStreamPayload packageId(final String packageId) {
