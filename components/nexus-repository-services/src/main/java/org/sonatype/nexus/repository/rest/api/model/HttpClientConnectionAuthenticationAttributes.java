@@ -13,8 +13,8 @@
 package org.sonatype.nexus.repository.rest.api.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import io.swagger.annotations.ApiModelProperty;
 import org.hibernate.validator.constraints.NotEmpty;
 
@@ -23,7 +23,6 @@ import org.hibernate.validator.constraints.NotEmpty;
  *
  * @since 3.20
  */
-@JsonIgnoreProperties(value = {"password"}, allowSetters = true)
 public class HttpClientConnectionAuthenticationAttributes
 {
   @ApiModelProperty(value = "Authentication type", allowableValues = "username,ntlm")
@@ -33,7 +32,7 @@ public class HttpClientConnectionAuthenticationAttributes
   @ApiModelProperty
   protected final String username;
 
-  @ApiModelProperty
+  @ApiModelProperty(access = "writeOnly")
   protected final String password;
 
   @ApiModelProperty
@@ -46,7 +45,7 @@ public class HttpClientConnectionAuthenticationAttributes
   public HttpClientConnectionAuthenticationAttributes(
       @JsonProperty("type") final String type,
       @JsonProperty("username") final String username,
-      @JsonProperty("password") final String password,
+      @JsonProperty(value = "password", access = Access.WRITE_ONLY) final String password,
       @JsonProperty("ntlmHost") final String ntlmHost,
       @JsonProperty("ntlmDomain") final String ntlmDomain)
   {
