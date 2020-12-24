@@ -194,7 +194,7 @@ public class NpmContentProxyFacet
   }
 
   private NpmContent createNpmContent(final TempBlob tempBlob, final Content content) {
-    return new NpmContent(new NpmStreamPayload(tempBlob::get), content);
+    return new NpmContent(new NpmStreamPayload(tempBlob::get, content.getContentType()), content);
   }
 
   private Content putTarball(
@@ -405,7 +405,8 @@ public class NpmContentProxyFacet
     packageRoot.remove(META_ID);
     packageRoot.remove("_attachments");
     Date date = maintainTime(packageRoot).toDate();
-    NpmStreamPayload payload = new NpmStreamPayload(() -> new ByteArrayInputStream(bytes(packageRoot)));
+    NpmStreamPayload payload = new NpmStreamPayload(() -> new ByteArrayInputStream(bytes(packageRoot)),
+        content.getContentType());
     return contentFacet().put(packageId, new NpmContent(payload, content)).withAttribute(P_NPM_LAST_MODIFIED, date);
   }
 

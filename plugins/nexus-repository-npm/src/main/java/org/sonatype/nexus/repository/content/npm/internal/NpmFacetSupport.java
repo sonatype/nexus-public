@@ -278,7 +278,7 @@ public abstract class NpmFacetSupport
    */
   protected static NpmContent toNpmContent(final Content content)
   {
-    NpmStreamPayload payload = new NpmStreamPayload(content::openInputStream);
+    NpmStreamPayload payload = new NpmStreamPayload(content::openInputStream, content.getContentType());
     return new NpmContent(payload, content);
   }
 
