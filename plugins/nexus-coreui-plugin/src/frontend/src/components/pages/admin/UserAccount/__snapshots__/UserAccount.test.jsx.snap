@@ -47,10 +47,10 @@ exports[`UserAccount renders correctly 1`] = `
         class="nxrm-section nx-tile"
       >
         <div
-          class="field-wrapper"
+          class="nx-form-group"
         >
           <label
-            class="field-wrapper-label nx-label"
+            class="nx-label"
             for="userId"
           >
             <span
@@ -111,10 +111,10 @@ exports[`UserAccount renders correctly 1`] = `
           </div>
         </div>
         <div
-          class="field-wrapper"
+          class="nx-form-group"
         >
           <label
-            class="field-wrapper-label nx-label"
+            class="nx-label"
             for="firstName"
           >
             <span
@@ -124,7 +124,7 @@ exports[`UserAccount renders correctly 1`] = `
             </span>
           </label>
           <div
-            class="nx-text-input valid"
+            class="nx-text-input pristine valid"
           >
             <div
               class="nx-text-input__box"
@@ -173,10 +173,10 @@ exports[`UserAccount renders correctly 1`] = `
           </div>
         </div>
         <div
-          class="field-wrapper"
+          class="nx-form-group"
         >
           <label
-            class="field-wrapper-label nx-label"
+            class="nx-label"
             for="lastName"
           >
             <span
@@ -186,7 +186,7 @@ exports[`UserAccount renders correctly 1`] = `
             </span>
           </label>
           <div
-            class="nx-text-input valid"
+            class="nx-text-input pristine valid"
           >
             <div
               class="nx-text-input__box"
@@ -235,10 +235,10 @@ exports[`UserAccount renders correctly 1`] = `
           </div>
         </div>
         <div
-          class="field-wrapper"
+          class="nx-form-group"
         >
           <label
-            class="field-wrapper-label nx-label"
+            class="nx-label"
             for="email"
           >
             <span
@@ -248,7 +248,7 @@ exports[`UserAccount renders correctly 1`] = `
             </span>
           </label>
           <div
-            class="nx-text-input valid"
+            class="nx-text-input pristine valid"
           >
             <div
               class="nx-text-input__box"
@@ -297,7 +297,7 @@ exports[`UserAccount renders correctly 1`] = `
           </div>
         </div>
         <div
-          class="nxrm-section-footer nx-tile-footer"
+          class="nxrm-footer nx-footer"
         >
           <button
             class="nx-btn disabled nx-btn--primary"
@@ -317,10 +317,10 @@ exports[`UserAccount renders correctly 1`] = `
         class="nxrm-section nx-tile"
       >
         <div
-          class="field-wrapper"
+          class="nx-form-group"
         >
           <label
-            class="field-wrapper-label nx-label"
+            class="nx-label"
             for="passwordCurrent"
           >
             <span
@@ -330,7 +330,7 @@ exports[`UserAccount renders correctly 1`] = `
             </span>
           </label>
           <div
-            class="nx-text-input valid"
+            class="nx-text-input pristine valid"
           >
             <div
               class="nx-text-input__box"
@@ -379,10 +379,10 @@ exports[`UserAccount renders correctly 1`] = `
           </div>
         </div>
         <div
-          class="field-wrapper"
+          class="nx-form-group"
         >
           <label
-            class="field-wrapper-label nx-label"
+            class="nx-label"
             for="passwordNew"
           >
             <span
@@ -392,7 +392,7 @@ exports[`UserAccount renders correctly 1`] = `
             </span>
           </label>
           <div
-            class="nx-text-input valid"
+            class="nx-text-input pristine valid"
           >
             <div
               class="nx-text-input__box"
@@ -441,10 +441,10 @@ exports[`UserAccount renders correctly 1`] = `
           </div>
         </div>
         <div
-          class="field-wrapper"
+          class="nx-form-group"
         >
           <label
-            class="field-wrapper-label nx-label"
+            class="nx-label"
             for="passwordNewConfirm"
           >
             <span
@@ -454,7 +454,7 @@ exports[`UserAccount renders correctly 1`] = `
             </span>
           </label>
           <div
-            class="nx-text-input valid"
+            class="nx-text-input pristine valid"
           >
             <div
               class="nx-text-input__box"
@@ -503,7 +503,7 @@ exports[`UserAccount renders correctly 1`] = `
           </div>
         </div>
         <div
-          class="nxrm-section-footer nx-tile-footer"
+          class="nxrm-footer nx-footer"
         >
           <button
             class="nx-btn disabled nx-btn--primary"
@@ -573,10 +573,10 @@ exports[`UserAccount renders correctly for an external user: externalUser 1`] = 
         class="nxrm-section nx-tile"
       >
         <div
-          class="field-wrapper"
+          class="nx-form-group"
         >
           <label
-            class="field-wrapper-label nx-label"
+            class="nx-label"
             for="userId"
           >
             <span
@@ -637,10 +637,10 @@ exports[`UserAccount renders correctly for an external user: externalUser 1`] = 
           </div>
         </div>
         <div
-          class="field-wrapper"
+          class="nx-form-group"
         >
           <label
-            class="field-wrapper-label nx-label"
+            class="nx-label"
             for="firstName"
           >
             <span
@@ -650,7 +650,7 @@ exports[`UserAccount renders correctly for an external user: externalUser 1`] = 
             </span>
           </label>
           <div
-            class="nx-text-input valid disabled"
+            class="nx-text-input pristine valid disabled"
           >
             <div
               class="nx-text-input__box"
@@ -701,10 +701,10 @@ exports[`UserAccount renders correctly for an external user: externalUser 1`] = 
           </div>
         </div>
         <div
-          class="field-wrapper"
+          class="nx-form-group"
         >
           <label
-            class="field-wrapper-label nx-label"
+            class="nx-label"
             for="lastName"
           >
             <span
@@ -714,7 +714,7 @@ exports[`UserAccount renders correctly for an external user: externalUser 1`] = 
             </span>
           </label>
           <div
-            class="nx-text-input valid disabled"
+            class="nx-text-input pristine valid disabled"
           >
             <div
               class="nx-text-input__box"
@@ -765,10 +765,10 @@ exports[`UserAccount renders correctly for an external user: externalUser 1`] = 
           </div>
         </div>
         <div
-          class="field-wrapper"
+          class="nx-form-group"
         >
           <label
-            class="field-wrapper-label nx-label"
+            class="nx-label"
             for="email"
           >
             <span
@@ -778,7 +778,7 @@ exports[`UserAccount renders correctly for an external user: externalUser 1`] = 
             </span>
           </label>
           <div
-            class="nx-text-input valid disabled"
+            class="nx-text-input pristine valid disabled"
           >
             <div
               class="nx-text-input__box"
@@ -829,7 +829,7 @@ exports[`UserAccount renders correctly for an external user: externalUser 1`] = 
           </div>
         </div>
         <div
-          class="nxrm-section-footer nx-tile-footer"
+          class="nxrm-footer nx-footer"
         >
           <button
             class="nx-btn disabled nx-btn--primary"

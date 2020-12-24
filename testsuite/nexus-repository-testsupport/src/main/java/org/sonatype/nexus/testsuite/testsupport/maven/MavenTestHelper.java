@@ -12,27 +12,27 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.maven;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.util.Optional;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.goodies.testsupport.TestData;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
+import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.pax.exam.NexusPaxExamSupport;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet;
+import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.view.Payload;
 
 import com.google.common.base.Strings;
 import org.apache.commons.compress.utils.IOUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.maven.artifact.repository.metadata.Metadata;
@@ -55,36 +55,14 @@ public abstract class MavenTestHelper
   private CloseableHttpClient client = HttpClientBuilder.create().build();
 
   public Payload read(final Repository repository, final String path) throws IOException {
-    HttpGet get = new HttpGet(url(repository, path));
-    try (CloseableHttpResponse response = client.execute(get)) {
-      if (response.getStatusLine().getStatusCode() >= 300) {
-        return null;
-      }
-
-      HttpEntity entity = response.getEntity();
-      try (InputStream in = entity.getContent()) {
-        byte[] content = IOUtils.toByteArray(in);
-        String contentType = entity.getContentType().toString();
-
-        return new Payload()
-        {
-          @Override
-          public InputStream openInputStream() throws IOException {
-            return new ByteArrayInputStream(content);
-          }
-
-          @Override
-          public long getSize() {
-            return content.length;
-          }
-
-          @Override
-          public String getContentType() {
-            return contentType;
-          }
-        };
-      }
+    MavenContentFacet mavenFacet = repository.facet(MavenContentFacet.class);
+    Optional<MavenMetadataRebuildFacet> metadataRebuildFacet =
+        repository.optionalFacet(MavenMetadataRebuildFacet.class);
+    if (metadataRebuildFacet.isPresent()) {
+      metadataRebuildFacet.get().maybeRebuildMavenMetadata(path, false, true);
     }
+    MavenPath mavenPath = mavenFacet.getMavenPathParser().parsePath(path);
+    return mavenFacet.get(mavenPath).orElse(null);
   }
 
   public abstract void write(final Repository repository, final String path, final Payload payload) throws IOException;
@@ -113,7 +91,7 @@ public abstract class MavenTestHelper
         new URL(nexusUrl, "/repository/" + deployRepositoryName));
   }
 
-  protected void mvnDeploy(
+  public void mvnDeploy(
       final TestData testData,
       final String project,
       final String group,

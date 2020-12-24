@@ -12,7 +12,9 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import java.time.OffsetDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -25,7 +27,7 @@ import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
-import org.sonatype.nexus.repository.content.AttributeChange;
+import org.sonatype.nexus.repository.content.AttributeChangeSet;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.event.asset.AssetAttributesEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent;
@@ -37,6 +39,7 @@ import org.sonatype.nexus.repository.content.event.asset.AssetPrePurgeEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetPurgedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetUploadedEvent;
 import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryDeletedEvent;
+import org.sonatype.nexus.repository.content.fluent.internal.FluentAssetImpl;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.inject.assistedinject.Assisted;
@@ -83,22 +86,22 @@ public class AssetStore<T extends AssetDAO>
    * Browse all assets in the given repository in a paged fashion.
    *
    * @param repositoryId the repository to browse
-   * @param limit maximum number of assets to return
    * @param continuationToken optional token to continue from a previous request
    * @param kind optional kind of assets to return
    * @param filter optional filter to apply
    * @param filterParams parameter map for the optional filter
+   * @param limit maximum number of assets to return
    * @return collection of assets and the next continuation token
    *
    * @see Continuation#nextContinuationToken()
    */
   @Transactional
   public Continuation<Asset> browseAssets(final int repositoryId,
-                                          final int limit,
                                           @Nullable final String continuationToken,
                                           @Nullable final String kind,
                                           @Nullable final String filter,
-                                          @Nullable final Map<String, Object> filterParams)
+                                          @Nullable final Map<String, Object> filterParams,
+                                          final int limit)
   {
     return dao().browseAssets(repositoryId, limit, continuationToken, kind, filter, filterParams);
   }
@@ -108,8 +111,11 @@ public class AssetStore<T extends AssetDAO>
    * by asset id in ascending order.
    *
    * @param repositoryIds     the repositories to browse
-   * @param limit             maximum number of assets to return
    * @param continuationToken optional token to continue from a previous request
+   * @param kind optional kind of assets to return
+   * @param filter optional filter to apply
+   * @param filterParams parameter map for the optional filter
+   * @param limit             maximum number of assets to return
    * @return collection of assets and the next continuation token
    * @see Continuation#nextContinuationToken()
    *
@@ -118,10 +124,13 @@ public class AssetStore<T extends AssetDAO>
   @Transactional
   public Continuation<Asset> browseAssets(
       final Set<Integer> repositoryIds,
-      final int limit,
-      @Nullable final String continuationToken)
+      @Nullable final String continuationToken,
+      @Nullable final String kind,
+      @Nullable final String filter,
+      @Nullable final Map<String, Object> filterParams,
+      final int limit)
   {
-    return dao().browseAssetsInRepositories(repositoryIds, limit, continuationToken);
+    return dao().browseAssetsInRepositories(repositoryIds, continuationToken, kind, filter, filterParams, limit);
   }
 
   /**
@@ -191,18 +200,20 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public void updateAssetAttributes(final Asset asset,
-                                    final AttributeChange change,
-                                    final String key,
-                                    final @Nullable Object value)
+                                    final AttributeChangeSet changeSet)
   {
     // reload latest attributes, apply change, then update database if necessary
     dao().readAssetAttributes(asset).ifPresent(attributes -> {
       ((AssetData) asset).setAttributes(attributes);
 
-      if (applyAttributeChange(attributes, change, key, value)) {
+      boolean changesApplied = changeSet.getChanges().stream()
+          .map(change -> applyAttributeChange(attributes, change))
+          .reduce((a, b) -> a || b)
+          .orElse(false);
+      if (changesApplied) {
         dao().updateAssetAttributes(asset);
 
-        postCommitEvent(() -> new AssetAttributesEvent(asset, change, key, value));
+        postCommitEvent(() -> new AssetAttributesEvent(asset, changeSet.getChanges()));
       }
     });
   }
@@ -260,6 +271,18 @@ public class AssetStore<T extends AssetDAO>
   }
 
   /**
+   * Deletes the assets located at the given paths in the content data store.
+   *
+   * @param repositoryId the repository containing the assets
+   * @param paths the paths of the assets to delete
+   * @return {@code true} if any of the assets were deleted
+   */
+  @Transactional
+  public boolean deleteAssetsByPaths(final int repositoryId, final List<String> paths) {
+    return dao().deleteAssetsByPaths(repositoryId, paths);
+  }
+
+  /**
    * Deletes all assets in the given repository from the content data store.
    *
    * Events will not be sent for these deletes, instead listen for {@link ContentRepositoryDeletedEvent}.
@@ -310,5 +333,41 @@ public class AssetStore<T extends AssetDAO>
       commitChangesSoFar();
     }
     return purged;
+  }
+
+  /**
+   * Generally it is recommended that this method not be called and let stores manage this value automatically.
+   *
+   * Sets the created time of the asset associated with the ID to the specified time.
+   *
+   * @since 3.29
+   */
+  @Transactional
+  public void created(final FluentAssetImpl asset, final OffsetDateTime created) {
+    dao().created(InternalIds.internalAssetId(asset), created);
+  }
+
+  /**
+   * Generally it is recommended that this method not be called and let stores manage this value automatically.
+   *
+   * Sets the last download time of the asset associated with the ID to the specified time.
+   *
+   * @since 3.29
+   */
+  @Transactional
+  public void lastDownloaded(final Asset asset, final OffsetDateTime lastDownloaded) {
+    dao().lastDownloaded(InternalIds.internalAssetId(asset), lastDownloaded);
+  }
+
+  /**
+   * Generally it is recommended that this method not be called and let stores manage this value automatically.
+   *
+   * Sets the last updated time of the asset associated with the ID to the specified time.
+   *
+   * @since 3.29
+   */
+  @Transactional
+  public void lastUpdated(final Asset asset, final OffsetDateTime lastUpdated) {
+    dao().lastUpdated(InternalIds.internalAssetId(asset), lastUpdated);
   }
 }

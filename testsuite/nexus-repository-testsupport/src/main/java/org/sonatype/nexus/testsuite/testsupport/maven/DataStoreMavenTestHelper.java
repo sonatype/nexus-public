@@ -28,14 +28,15 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.time.DateHelper;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
-import org.sonatype.nexus.content.maven.MavenMetadataRebuildFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.maintenance.ContentMaintenanceFacet;
 import org.sonatype.nexus.repository.content.store.InternalIds;
+import org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
@@ -104,8 +105,11 @@ public class DataStoreMavenTestHelper
     for (HashType hashType : HashType.values()) {
       String expectedHashContent = expectedHashCodes.get(hashType.getHashAlgorithm().name());
       Optional<Content> maybeStoredHashContent = mavenContentFacet.get(mavenPath.hash(hashType));
+      // Maven deployer does not create these hashes by default yet but we are storing the calculated values in the asset attributes
+      if(!maybeStoredHashContent.isPresent() && (hashType  == HashType.SHA256 ||  hashType  == HashType.SHA512) ) {
+        continue;
+      }
       assertTrue(maybeStoredHashContent.isPresent());
-
       try (InputStream inputStream = maybeStoredHashContent.get().openInputStream()) {
         String storedHashContent = IOUtils.toString(new InputStreamReader(inputStream, UTF_8));
         assertThat(storedHashContent, equalTo(expectedHashContent));
@@ -155,7 +159,10 @@ public class DataStoreMavenTestHelper
     MavenContentFacet mavenContentFacet = repository.facet(MavenContentFacet.class);
     List<FluentComponent> components = findComponents(mavenContentFacet, version).collect(Collectors.toList());
     assertThat(components, hasSize(expectedNumber));
-    components.stream().map(FluentComponent::assets).forEach(assets -> deleteAll(mavenContentFacet, assets));
+    ContentMaintenanceFacet contentMaintenanceFacet = repository.facet(ContentMaintenanceFacet.class);
+    for (FluentComponent component : components) {
+      contentMaintenanceFacet.deleteComponent(component);
+    }
   }
 
   @Override

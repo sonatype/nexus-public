@@ -54,6 +54,7 @@ import static java.util.Collections.singletonMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -353,5 +354,23 @@ public class ProxyFacetSupportTest
     verifyStatic();
     HttpClientUtils.closeQuietly(httpResponse);
     verifyNoMoreInteractions(HttpClientUtils.class);
+  }
+
+  @Test
+  public void normalizeURLPath() throws Exception {
+    assertEquals(
+        URI.create("https://remoteserver/com/foo/this%20is%20a%20space/"),
+        underTest.normalizeURLPath(URI.create("https://remoteserver/com/foo/this%20is%20a%20space/"))
+    );
+
+    assertEquals(
+        URI.create("https://remoteserver/com/foo/this%20is%20a%20space/"),
+        underTest.normalizeURLPath(URI.create("https://remoteserver/com/foo/this%20is%20a%20space"))
+    );
+
+    assertEquals(
+        URI.create("https://remoteserver/com/foo/thisisaspace/"),
+        underTest.normalizeURLPath(URI.create("https://remoteserver/com/foo/thisisaspace"))
+    );
   }
 }

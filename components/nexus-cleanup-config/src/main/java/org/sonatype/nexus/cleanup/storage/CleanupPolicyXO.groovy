@@ -12,21 +12,11 @@
  */
 package org.sonatype.nexus.cleanup.storage
 
-import javax.validation.Valid
-import javax.validation.constraints.Pattern
-
-import org.sonatype.nexus.cleanup.storage.config.UniqueCleanupPolicyName
-import org.sonatype.nexus.repository.FormatExists
-import org.sonatype.nexus.validation.group.Create
 
 import groovy.transform.ToString
 import groovy.transform.builder.Builder
-import org.hibernate.validator.constraints.NotBlank
-import org.hibernate.validator.constraints.NotEmpty
 
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicy.ALL_CLEANUP_POLICY_FORMAT
-import static org.sonatype.nexus.validation.constraint.NamePatternConstants.MESSAGE
-import static org.sonatype.nexus.validation.constraint.NamePatternConstants.REGEX
 
 /**
  * Cleanup Policy exchange object.
@@ -39,21 +29,14 @@ class CleanupPolicyXO
 {
   public static final String ALL_CLEANUP_POLICY_XO_FORMAT = "(All Formats)"
 
-  @Pattern(regexp = REGEX, message = MESSAGE)
-  @UniqueCleanupPolicyName(groups = Create)
-  @NotEmpty
   String name
 
-  @NotBlank
-  @FormatExists
   String format
 
-  @NotBlank
   String mode
 
   String notes
 
-  @Valid
   CleanupPolicyCriteria criteria
 
   /**

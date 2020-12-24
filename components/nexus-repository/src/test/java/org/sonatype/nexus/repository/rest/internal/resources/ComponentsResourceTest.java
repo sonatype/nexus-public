@@ -18,6 +18,7 @@ import java.util.Collections;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
 
 import org.sonatype.nexus.common.entity.ContinuationTokenHelper;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
@@ -29,7 +30,7 @@ import org.sonatype.nexus.repository.query.QueryOptions;
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
 import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO;
-import org.sonatype.nexus.repository.rest.cma.ComponentUploadExtension;
+import org.sonatype.nexus.repository.rest.ComponentUploadExtension;
 import org.sonatype.nexus.repository.rest.cma.ComponentsResourceExtension;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
@@ -190,7 +191,7 @@ public class ComponentsResourceTest
 
     underTest = new ComponentsResource(repositoryManagerRESTAdapter, browseService, componentEntityAdapter,
         maintenanceService, continuationTokenHelper, uploadManager, uploadConfiguration,
-        new ComponentXOFactory(emptySet()), ImmutableSet.of(componentsResourceExtension));
+        new ComponentXOFactory(emptySet()), ImmutableSet.of(componentsResourceExtension), null);
   }
 
   @Test
@@ -271,6 +272,7 @@ public class ComponentsResourceTest
   @Test
   public void uploadComponent() throws Exception {
     HttpServletRequest request = mock(HttpServletRequest.class);
+    when(request.getContentType()).thenReturn(MediaType.MULTIPART_FORM_DATA);
 
     UploadResponse uploadResponse = new UploadResponse(new DetachedEntityId(COMPONENT_ID), emptyList());
     when(uploadManager.handle(mavenReleases, request)).thenReturn(uploadResponse);

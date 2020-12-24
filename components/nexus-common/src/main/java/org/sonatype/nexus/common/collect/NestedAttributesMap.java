@@ -16,6 +16,7 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 
@@ -33,10 +34,16 @@ public class NestedAttributesMap
   @VisibleForTesting
   static final String SEPARATOR = "::";
 
+  @JsonProperty
   @Nullable
-  private final NestedAttributesMap parent;
+  private NestedAttributesMap parent;
 
-  private final String key;
+  @JsonProperty
+  private String key;
+
+  public NestedAttributesMap() {
+    super();
+  }
 
   public NestedAttributesMap(final String key, final Map<String, Object> backing) {
     this(null, key, backing);

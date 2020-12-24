@@ -22,4 +22,10 @@ public interface FeatureFlags
 {
   /* Go (hosted) repository is experimental. Available values: true, false. Default value: false */
   String FEATURE_GOLANG_HOSTED = "nexus.golang.hosted";
+
+  /* Experimental early access to database externalization. Available values: true, false. Default value: false */
+  String EARLY_ACCESS_DATASTORE = "nexus.earlyAccess.datastore.enabled";
+
+  /* Early access developers only. Available values: true, false. Default value: false */
+  String EARLY_ACCESS_DATASTORE_DEVELOPER = "nexus.earlyAccess.datastore.developer";
 }

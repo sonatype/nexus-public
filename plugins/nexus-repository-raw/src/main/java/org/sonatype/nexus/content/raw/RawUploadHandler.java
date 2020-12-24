@@ -66,7 +66,7 @@ public class RawUploadHandler
     for (Entry<String,PartPayload> entry : pathToPayload.entrySet()) {
       String path = entry.getKey();
 
-      Content content = new Content(facet.put(path, entry.getValue()));
+      Content content = facet.put(path, entry.getValue());
 
       responseContents.add(content);
     }
@@ -78,8 +78,8 @@ public class RawUploadHandler
       throws IOException
   {
     RawContentFacet facet = repository.facet(RawContentFacet.class);
-    return new Content(facet.put(path, new StreamPayload(() -> new FileInputStream(content), Files.size(contentPath),
-        Files.probeContentType(contentPath))));
+    return facet.put(path, new StreamPayload(() -> new FileInputStream(content), Files.size(contentPath),
+        Files.probeContentType(contentPath)));
   }
 
   @Override

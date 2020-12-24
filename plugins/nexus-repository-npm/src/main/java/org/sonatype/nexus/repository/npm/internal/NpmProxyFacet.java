@@ -12,33 +12,22 @@
  */
 package org.sonatype.nexus.repository.npm.internal;
 
-import java.io.IOException;
-
 import javax.annotation.Nonnull;
 
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.cache.CacheControllerHolder;
 import org.sonatype.nexus.repository.cache.CacheControllerHolder.CacheType;
-import org.sonatype.nexus.repository.cache.CacheInfo;
-import org.sonatype.nexus.repository.view.Content;
-import org.sonatype.nexus.repository.view.Context;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 @Facet.Exposed
-public interface NpmProxyFacet extends Facet
+public interface NpmProxyFacet
+    extends Facet
 {
-  void setCacheInfo(final Content content, final CacheInfo cacheInfo) throws IOException;
-
-  Content getPackageRoot(final Context context, final NpmPackageId packageId) throws IOException;
-
-  Content getTarball(final NpmPackageId packageId, final String tarballName) throws IOException;
-
-  Content getRepositoryRoot() throws IOException;
 
   void invalidateProxyCaches();
 
-  public enum ProxyTarget
+  enum ProxyTarget
   {
     SEARCH_INDEX(CacheControllerHolder.METADATA),
     SEARCH_V1_RESULTS(CacheControllerHolder.METADATA),

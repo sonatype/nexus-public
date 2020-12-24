@@ -55,7 +55,7 @@ public class NpmParserTest
   public void testParsing() throws IOException {
     PackageLock packageLock =
         PackageLockParser.parse(Resources.toString(getResource(NPM_AUDIT_JSON), Charsets.UTF_8));
-    Set<AuditComponent> components = packageLock.getComponents();
+    Set<AuditComponent> components = packageLock.getComponents(packageLock.getRoot().getApplicationId());
     assertFalse(components.isEmpty());
     assertEquals(expectedComponents, components);
   }
@@ -64,7 +64,7 @@ public class NpmParserTest
   public void testComplexParsing() throws IOException {
     PackageLock packageLock =
         PackageLockParser.parse(Resources.toString(getResource(NPM_AUDIT_COMPLEX_JSON), Charsets.UTF_8));
-    Set<AuditComponent> components = packageLock.getComponents();
+    Set<AuditComponent> components = packageLock.getComponents(packageLock.getRoot().getApplicationId());
     assertFalse(components.isEmpty());
     assertEquals(expectedComplexComponents, components);
   }

@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 import javax.inject.Named;
@@ -56,9 +57,10 @@ import com.google.common.base.Charsets;
 import com.google.common.hash.HashCode;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.client.utils.DateUtils;
+import org.apache.commons.lang3.time.DateFormatUtils;
 
 import static java.util.Collections.singletonList;
+import static org.apache.http.protocol.HttpDateGenerator.PATTERN_RFC1123;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
@@ -180,12 +182,18 @@ public class AptHostedFacet
     aptFacet.put(releaseIndexName(RELEASE_GPG), new BytesPayload(releaseGpg, AptMimeTypes.SIGNATURE));
   }
 
-  private String buildReleaseFile(final String distribution, final Collection<String> architectures, final String md5, final String sha256) {
+  private String buildReleaseFile(
+      final String distribution,
+      final Collection<String> architectures,
+      final String md5,
+      final String sha256)
+  {
+    String date = DateFormatUtils.format(new Date(), PATTERN_RFC1123, TimeZone.getTimeZone("GMT"));
     Paragraph p = new Paragraph(Arrays.asList(
         new ControlFile.ControlField("Suite", distribution),
         new ControlFile.ControlField("Codename", distribution), new ControlFile.ControlField("Components", "main"),
-        new ControlFile.ControlField("Date", DateUtils.formatDate(new Date())),
-        new ControlFile.ControlField("Architectures", architectures.stream().collect(Collectors.joining(" "))),
+        new ControlFile.ControlField("Date", date),
+        new ControlFile.ControlField("Architectures", String.join(" ", architectures)),
         new ControlFile.ControlField("SHA256", sha256), new ControlFile.ControlField("MD5Sum", md5)));
     return p.toString();
   }

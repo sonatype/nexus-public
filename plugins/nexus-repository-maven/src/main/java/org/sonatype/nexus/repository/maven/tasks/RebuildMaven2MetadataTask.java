@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.RepositoryTaskSupport;
 import org.sonatype.nexus.repository.Type;
-import org.sonatype.nexus.repository.maven.MavenHostedFacet;
+import org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.scheduling.Cancelable;
@@ -56,7 +56,7 @@ public class RebuildMaven2MetadataTask
 
   @Override
   protected void execute(final Repository repository) {
-    MavenHostedFacet mavenHostedFacet = repository.facet(MavenHostedFacet.class);
+    MavenMetadataRebuildFacet mavenHostedFacet = repository.facet(MavenMetadataRebuildFacet.class);
     mavenHostedFacet.rebuildMetadata(
         getConfiguration().getString(GROUPID_FIELD_ID),
         getConfiguration().getString(ARTIFACTID_FIELD_ID),

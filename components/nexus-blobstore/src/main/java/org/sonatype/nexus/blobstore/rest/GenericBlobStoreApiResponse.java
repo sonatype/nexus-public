@@ -28,6 +28,8 @@ public class GenericBlobStoreApiResponse
 
   private String type;
 
+  private boolean unavailable;
+
   private long blobCount;
 
   private long totalSizeInBytes;
@@ -46,6 +48,7 @@ public class GenericBlobStoreApiResponse
 
     if (blobStore.isStarted()) {
       BlobStoreMetrics metrics = blobStore.getMetrics();
+      unavailable = metrics.isUnavailable();
       blobCount = metrics.getBlobCount();
       totalSizeInBytes = metrics.getTotalSize();
       availableSpaceInBytes = metrics.getAvailableSpace();
@@ -69,6 +72,14 @@ public class GenericBlobStoreApiResponse
 
   public void setType(final String type) {
     this.type = type;
+  }
+
+  public boolean isUnavailable() {
+    return unavailable;
+  }
+
+  public void setUnavailable(final boolean unavailable) {
+    this.unavailable = unavailable;
   }
 
   public long getBlobCount() {

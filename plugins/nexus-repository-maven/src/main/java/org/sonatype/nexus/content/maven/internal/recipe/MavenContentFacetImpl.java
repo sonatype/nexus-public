@@ -13,6 +13,8 @@
 package org.sonatype.nexus.content.maven.internal.recipe;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -24,9 +26,10 @@ import javax.inject.Named;
 import javax.validation.constraints.NotNull;
 
 import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.content.maven.internal.event.RebuildMavenArchetypeCatalogEvent;
+import org.sonatype.nexus.content.maven.store.Maven2ComponentStore;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.config.WritePolicy;
@@ -38,6 +41,7 @@ import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.store.ComponentStore;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.maven.LayoutPolicy;
 import org.sonatype.nexus.repository.maven.MavenPath;
@@ -54,22 +58,19 @@ import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.Model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Collections.singletonList;
-import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
-import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
-import static org.sonatype.nexus.content.maven.MavenMetadataRebuildFacet.METADATA_REBUILD_KEY;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
+import static org.apache.commons.lang3.StringUtils.prependIfMissing;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenArchetypeCatalogFacetImpl.MAVEN_ARCHETYPE_KIND;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.assetKind;
-import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.getPackaging;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.setMavenAttributes;
-import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.setPomAttributes;
 import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW;
 import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW_ONCE;
+import static org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet.METADATA_REBUILD_KEY;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_INDEX;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
@@ -90,8 +91,6 @@ public class MavenContentFacetImpl
   private static final char ASSET_PATH_PREFIX = '/';
 
   private static final String CONFIG_KEY = "maven";
-
-  private static final List<HashAlgorithm> HASHING = ImmutableList.of(SHA1, MD5);
 
   private final Map<String, MavenPathParser> mavenPathParsers;
 
@@ -128,17 +127,17 @@ public class MavenContentFacetImpl
   public MavenContentFacetImpl(
       @Named(Maven2Format.NAME) final FormatStoreManager formatStoreManager,
       final Map<String, MavenPathParser> mavenPathParsers,
+      final MetadataRebuilder metadataRebuilder,
       final MavenMetadataContentValidator metadataValidator,
       final EventManager eventManager,
-      @Named("${nexus.maven.metadata.validation.enabled:-true}") final boolean metadataValidationEnabled,
-      final MetadataRebuilder metadataRebuilder)
+      @Named("${nexus.maven.metadata.validation.enabled:-true}") final boolean metadataValidationEnabled)
   {
     super(formatStoreManager);
     this.mavenPathParsers = checkNotNull(mavenPathParsers);
+    this.metadataRebuilder = checkNotNull(metadataRebuilder);
     this.metadataValidator = metadataValidator;
     this.eventManager = eventManager;
     this.metadataValidationEnabled = metadataValidationEnabled;
-    this.metadataRebuilder = checkNotNull(metadataRebuilder);
   }
 
   @Override
@@ -194,7 +193,7 @@ public class MavenContentFacetImpl
   public Content put(final MavenPath mavenPath, final Payload content) throws IOException {
     log.debug("PUT {} : {}", getRepository().getName(), mavenPath);
 
-    try (TempBlob blob = blobs().ingest(content, HASHING)) {
+    try (TempBlob blob = blobs().ingest(content, HashType.ALGORITHMS)) {
       if (isMetadataAndValidationEnabled(mavenPath)) {
         validate(mavenPath, blob);
       }
@@ -220,22 +219,34 @@ public class MavenContentFacetImpl
   private Content save(final MavenPath mavenPath, final Payload content, final TempBlob blob) throws IOException {
     FluentComponent component = null;
     if (mavenPath.getCoordinates() != null) {
-      component = createOrGetComponent(mavenPath);
-      maybeUpdateComponentAttributesFromModel(component, mavenPath, blob);
+      Optional<Model> model = maybeReadMavenModel(mavenPath, blob);
+      component = createOrGetComponent(mavenPath, model);
     }
     return createOrUpdateAsset(mavenPath, component, content, blob);
   }
 
-  private FluentComponent createOrGetComponent(final MavenPath mavenPath)
+  private FluentComponent createOrGetComponent(final MavenPath mavenPath, final Optional<Model> model)
   {
+    Optional<String> optionalKind = model.map(MavenAttributesHelper::getPackaging);
     Coordinates coordinates = mavenPath.getCoordinates();
+
     FluentComponent component = components()
         .name(coordinates.getArtifactId())
         .namespace(coordinates.getGroupId())
         .version(coordinates.getVersion())
+        .kind(optionalKind)
         .getOrCreate();
-    if (isNewRepositoryContent(component)) {
-      MavenAttributesHelper.setMavenAttributes(component, coordinates);
+
+    boolean isNew = isNewRepositoryContent(component);
+    MavenAttributesHelper.setMavenAttributes(
+          (Maven2ComponentStore) stores().componentStore, component, coordinates, model, contentRepositoryId());
+
+    if (isNew) {
+      publishEvents(component);
+    }
+    else {
+      // kind isn't set for existing components
+      optionalKind.ifPresent(component::kind);
     }
     return component;
   }
@@ -244,15 +255,17 @@ public class MavenContentFacetImpl
     return repositoryContent.attributes().isEmpty();
   }
 
-  private void maybeUpdateComponentAttributesFromModel(
-      final FluentComponent component, final MavenPath mavenPath,
-      final TempBlob blob) throws IOException
+  @Override
+  public void maybeUpdateComponentAttributes(final MavenPath mavenPath) throws IOException
   {
-    Model model = maybeReadMavenModel(mavenPath, blob);
-    if (model != null) {
-      component.kind(getPackaging(model));
-      setPomAttributes(component, model);
-      publishEvents(component);
+    if (mavenPath.isPom()) {
+      Optional<FluentAsset> optAsset = assets().path(assetPath(mavenPath)).find();
+      if (optAsset.isPresent()) {
+        FluentAsset asset = optAsset.get();
+        Model model = readModel(asset.download().openInputStream());
+        FluentComponent component = createOrGetComponent(mavenPath, Optional.ofNullable(model));
+        publishEvents(component);
+      }
     }
   }
 
@@ -262,7 +275,7 @@ public class MavenContentFacetImpl
     }
   }
 
-  private Model maybeReadMavenModel(final MavenPath mavenPath, final TempBlob blob) throws IOException
+  private Optional<Model> maybeReadMavenModel(final MavenPath mavenPath, final TempBlob blob) throws IOException
   {
     Model model = null;
     if (mavenPath.isPom()) {
@@ -271,7 +284,7 @@ public class MavenContentFacetImpl
         log.warn("Could not parse POM: {} @ {}", getRepository().getName(), assetPath(mavenPath));
       }
     }
-    return model;
+    return Optional.ofNullable(model);
   }
 
   private Content createOrUpdateAsset(
@@ -308,6 +321,13 @@ public class MavenContentFacetImpl
       maybeDeleteComponent(mavenPath.getCoordinates());
     }
     return assetIsDeleted;
+  }
+
+  @Override
+  public boolean delete(final List<String> paths) {
+    Repository repository = getRepository();
+    log.trace("DELETE {} assets at {}", repository.getName(), paths);
+    return stores().assetStore.deleteAssetsByPaths(contentRepositoryId(), paths);
   }
 
   @Override
@@ -349,38 +369,85 @@ public class MavenContentFacetImpl
     if (component.assets().isEmpty()) {
       component.delete();
       publishEvents(component);
-      deleteMetadataAndAddRebuildFlagOrDeleteParentMetadata(component.namespace(), component.name(),
-          component.attributes(Maven2Format.NAME).get(P_BASE_VERSION, String.class));
+      deleteMetadata(component);
     }
   }
 
-  private void deleteMetadataAndAddRebuildFlagOrDeleteParentMetadata(
+  @Override
+  public int deleteComponents(final int[] componentIds) {
+    ContentFacetSupport contentFacet = (ContentFacetSupport) facet(ContentFacet.class);
+    ComponentStore<?> componentStore = contentFacet.stores().componentStore;
+    Set<List<String>> gavs = collectGavs(componentIds);
+
+    int deletedCount = componentStore.purge(contentFacet.contentRepositoryId(), componentIds);
+
+    if (!gavs.isEmpty()) {
+      List<String[]> metadataLocations = gavs.stream()
+          .flatMap(gav -> getMetadataLocations(gav.get(0), gav.get(1), gav.get(2)).stream())
+          .collect(toList());
+
+      metadataRebuilder.deleteMetadata(getRepository(), metadataLocations);
+    }
+    return deletedCount;
+  }
+
+  @Override
+  public Set<String> deleteMetadata(final Component component) {
+    String[] gav = collectGav(component);
+    return metadataRebuilder.deleteMetadata(getRepository(), getMetadataLocations(gav[0], gav[1], gav[2]));
+  }
+
+  private Set<List<String>> collectGavs(final int[] componentIds) {
+    ContentFacetSupport contentFacet = (ContentFacetSupport) facet(ContentFacet.class);
+    ComponentStore<?> componentStore = contentFacet.stores().componentStore;
+    return Arrays.stream(componentIds)
+        .mapToObj(componentStore::readComponent)
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .map(this::collectGav)
+        .map(Arrays::asList)
+        .collect(toSet());
+  }
+
+  private String[] collectGav(Component component) {
+    return new String[]{
+        component.namespace(), component.name(),
+        component.attributes(Maven2Format.NAME).get(P_BASE_VERSION, String.class)
+    };
+  }
+
+  private List<String[]> getMetadataLocations(
       final String groupId,
       final String artifactId,
       final String baseVersion)
   {
-    metadataRebuilder.deleteMetadata(getRepository(), singletonList(new String[]{groupId, artifactId, baseVersion}));
+    Repository repository = getRepository();
+    ContentFacet contentFacet = repository.facet(ContentFacet.class);
 
-    boolean isGroupArtifactEmpty = components().versions(groupId, artifactId).isEmpty();
+    List<String[]> metadataCoordinates = new ArrayList<>();
+    metadataCoordinates.add(new String[]{groupId, artifactId, baseVersion});
+
+    boolean isGroupArtifactEmpty = contentFacet.components().versions(groupId, artifactId).isEmpty();
     if (isGroupArtifactEmpty) {
-      metadataRebuilder.deleteMetadata(getRepository(), singletonList(new String[]{groupId, artifactId, null}));
+      metadataCoordinates.add(new String[]{groupId, artifactId, null});
     }
     else {
-      assets()
-          .path(assetPath(metadataPath(groupId, artifactId, null)))
+      contentFacet.assets()
+          .path(prependIfMissing(metadataPath(groupId, artifactId, null).getPath(), "/"))
           .find()
           .ifPresent(asset -> asset.withAttribute(METADATA_REBUILD_KEY, true));
     }
 
-    boolean isGroupEmpty = components().names(groupId).isEmpty();
+    boolean isGroupEmpty = contentFacet.components().names(groupId).isEmpty();
     if (isGroupEmpty) {
-      metadataRebuilder.deleteMetadata(getRepository(), singletonList(new String[]{groupId, null, null}));
+      metadataCoordinates.add(new String[]{groupId, null, null});
     }
     else {
-      assets()
-          .path(assetPath(metadataPath(groupId, null, null)))
+      contentFacet.assets()
+          .path(prependIfMissing(metadataPath(groupId, null, null).getPath(), "/"))
           .find()
           .ifPresent(asset -> asset.withAttribute(METADATA_REBUILD_KEY, true));
     }
+    return metadataCoordinates;
   }
 }

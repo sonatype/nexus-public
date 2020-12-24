@@ -59,8 +59,14 @@ public class FluentComponentBuilderImpl
   }
 
   @Override
-  public FluentComponentBuilder kind(String kind) {
+  public FluentComponentBuilder kind(final String kind) {
     this.kind = checkNotNull(kind);
+    return this;
+  }
+
+  @Override
+  public FluentComponentBuilder kind(final Optional<String> optionalKind) {
+    optionalKind.ifPresent(k -> this.kind = k);
     return this;
   }
 

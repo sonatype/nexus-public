@@ -33,7 +33,7 @@ import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.view.matchers.logic.LogicMatchers.and;
 
 /**
- * @since 3.next
+ * @since 3.28
  */
 @Named
 @Singleton

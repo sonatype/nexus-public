@@ -17,7 +17,7 @@ import {NxTextInput} from '@sonatype/react-shared-components';
 /**
  * @since 3.21
  */
-export default function Textfield({id, name, type = "text", onChange, ...attrs}) {
+export default function Textfield({id, name, type = "text", onChange, isPristine = false, validatable = true, ...attrs}) {
   function handleChange(value) {
     if (onChange) {
       onChange({
@@ -36,8 +36,8 @@ export default function Textfield({id, name, type = "text", onChange, ...attrs})
     id: id || name,
     name,
     type: type === 'number' ? 'text' : type,
-    isPristine: false,
-    validatable: true,
+    isPristine,
+    validatable,
     onChange: handleChange
   };
 

@@ -60,7 +60,7 @@ public class SecurityRule
 
   private final Set<Privilege> privileges = new HashSet<>();
 
-  private final Set<Role> roles = new HashSet<>();
+  private final Set<String> roles = new HashSet<>();
 
   private final Set<User> users = new HashSet<>();
 
@@ -95,12 +95,12 @@ public class SecurityRule
         log.debug("Failed to cleanup user: {}", user.getUserId(), e);
       }
     });
-    roles.forEach(role -> {
+    roles.forEach(roleId -> {
       try {
-        securitySystemProvider.get().getAuthorizationManager(DEFAULT_SOURCE).deleteRole(role.getRoleId());
+        securitySystemProvider.get().getAuthorizationManager(DEFAULT_SOURCE).deleteRole(roleId);
       }
       catch (Exception e) { //NOSONAR
-        log.debug("Failed to cleanup role: {}", role.getRoleId(), e);
+        log.debug("Failed to cleanup role: {}", roleId, e);
       }
     });
     privileges.forEach(privilege -> {
@@ -235,7 +235,7 @@ public class SecurityRule
 
     try {
       securitySystemProvider.get().getAuthorizationManager(DEFAULT_SOURCE).addRole(role);
-      roles.add(role);
+      roles.add(role.getRoleId());
       return role;
     }
     catch (NoSuchAuthorizationManagerException e) {
@@ -335,5 +335,9 @@ public class SecurityRule
     configuration.setUserId(originalAnonymousConfiguration.getUserId());
 
     anonymousManager.setConfiguration(configuration);
+  }
+
+  public void manageRole(final String roleId) {
+    roles.add(roleId);
   }
 }

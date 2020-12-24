@@ -38,6 +38,7 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.sql.DataSource;
 
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.entity.Continuation;
@@ -144,6 +145,8 @@ public class MyBatisDataStore
 
   private static final Pattern MAPPER_BODY = compile(".*<mapper[^>]*>(.*)</mapper>", DOTALL);
 
+  private static final int DEFAULT_CONTENT_STORE_MAX_POOL_SIZE = 100;
+
   private final Iterable<? extends BeanEntry<Named, Class<DataAccess>>> declaredAccessTypes;
 
   private final Set<Class<?>> registeredAccessTypes = new HashSet<>();
@@ -203,18 +206,16 @@ public class MyBatisDataStore
 
   @Override
   protected void doStart(final String storeName, final Map<String, String> attributes) throws Exception {
-    boolean isContentStore = !CONFIG_DATASTORE_NAME.equalsIgnoreCase(storeName);
-
     dataSource = new HikariDataSource(configureHikari(storeName, attributes));
     Environment environment = new Environment(storeName, new JdbcTransactionFactory(), dataSource);
     mybatisConfig = configureMyBatis(environment);
 
-    registerCommonTypeHandlers(isContentStore);
+    registerCommonTypeHandlers(isContentStore(storeName));
 
     if (beanLocator != null) {
       // register the appropriate type handlers with the store
       beanLocator.watch(TYPE_HANDLER_KEY,
-          isContentStore ? CONTENT_TYPE_HANDLER_MEDIATOR : CONFIG_TYPE_HANDLER_MEDIATOR, this);
+          isContentStore(storeName) ? CONTENT_TYPE_HANDLER_MEDIATOR : CONFIG_TYPE_HANDLER_MEDIATOR, this);
     }
   }
 
@@ -266,6 +267,12 @@ public class MyBatisDataStore
     return dataSource.getConnection();
   }
 
+  @Guarded(by = STARTED)
+  @Override
+  public DataSource getDataSource() {
+    return dataSource;
+  }
+
   @Override
   public void freeze() {
     frozenMarker.set(true);
@@ -309,6 +316,10 @@ public class MyBatisDataStore
       properties.put("driverClassName", "org.postgresql.Driver");
       // workaround https://github.com/pgjdbc/pgjdbc/issues/265
       properties.put("dataSource.stringtype", "unspecified");
+
+      if(isContentStore(storeName)) {
+        properties.put("maximumPoolSize", DEFAULT_CONTENT_STORE_MAX_POOL_SIZE);
+      }
     }
 
     // Parse and unflatten advanced attributes
@@ -323,6 +334,10 @@ public class MyBatisDataStore
     }
 
     return new HikariConfig(properties);
+  }
+
+  private boolean isContentStore(final String storeName) {
+    return !CONFIG_DATASTORE_NAME.equalsIgnoreCase(storeName);
   }
 
   /**
@@ -550,7 +565,7 @@ public class MyBatisDataStore
       XMLMapperBuilder xmlParser = new XMLMapperBuilder(
           new ByteArrayInputStream(xml.getBytes(UTF_8)),
           mybatisConfig,
-          mapperXmlPath(templateType) + "${" + placeholder + '=' + prefix + '}',
+          accessType.getName(),
           mybatisConfig.getSqlFragments(),
           accessType.getName());
 

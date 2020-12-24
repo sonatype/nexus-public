@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.search
 
+import java.util.function.Supplier
+
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.common.entity.DetachedEntityId
 import org.sonatype.nexus.common.entity.EntityBatchEvent
@@ -30,7 +32,6 @@ import org.sonatype.nexus.repository.storage.ComponentUpdatedEvent
 import org.sonatype.nexus.repository.storage.StorageFacet
 import org.sonatype.nexus.repository.storage.StorageTx
 
-import com.google.common.base.Suppliers
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -105,7 +106,7 @@ class IndexRequestProcessorTest
     when(repositoryManager.get('testRepo')).thenReturn(repository)
     when(repository.optionalFacet(SearchFacet)).thenReturn(Optional.of(searchFacet))
     when(repository.facet(StorageFacet)).thenReturn(storageFacet)
-    when(storageFacet.txSupplier()).thenReturn(Suppliers.ofInstance(storageTx))
+    when(storageFacet.txSupplier()).thenReturn({ storageTx } as Supplier<StorageTx>)
   }
 
   def mockEntityEvent(eventType, componentId) {

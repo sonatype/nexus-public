@@ -14,14 +14,13 @@ package org.sonatype.nexus.repository.mime;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.mime.MimeRulesSource;
 import org.sonatype.nexus.repository.InvalidContentException;
-
-import com.google.common.base.Supplier;
 
 /**
  * Content validator interface.

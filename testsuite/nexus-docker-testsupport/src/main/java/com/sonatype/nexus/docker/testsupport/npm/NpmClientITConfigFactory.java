@@ -25,7 +25,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  */
 public class NpmClientITConfigFactory
 {
-  private static final String IMAGE = "node";
+  private static final String IMAGE = "docker-all.repo.sonatype.com/node";
 
   private NpmClientITConfigFactory() {
   }

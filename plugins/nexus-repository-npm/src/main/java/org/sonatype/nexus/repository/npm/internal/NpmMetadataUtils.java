@@ -14,25 +14,38 @@ package org.sonatype.nexus.repository.npm.internal;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.function.BiFunction;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.view.Content;
+import org.sonatype.nexus.repository.view.Context;
+import org.sonatype.nexus.repository.view.Request;
+import org.sonatype.nexus.repository.view.Response;
+import org.sonatype.nexus.repository.view.ViewFacet;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Lists.newArrayList;
+import static org.sonatype.nexus.repository.http.HttpMethods.GET;
+import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.P_NAME;
 import static org.sonatype.nexus.repository.npm.internal.NpmVersionComparator.versionComparator;
 
 /**
@@ -387,5 +400,80 @@ public final class NpmMetadataUtils
 
   public static String getLatestVersionFromPackageRoot(final NestedAttributesMap pkg) {
     return pkg.child(DIST_TAGS).get(LATEST, String.class);
+  }
+
+  /**
+   * This method MUST NOT be called from within a TX, as it dispatches a new request! It fails with
+   * {@code java.lang.IllegalStateException}: "Transaction already in progress" otherwise!
+   */
+  public static NestedAttributesMap retrievePackageRoot(
+      final NpmPackageId packageId,
+      final Context context,
+      final Repository repository)
+      throws IOException
+  {
+    try {
+      Request getRequest = new Request.Builder().action(GET).path("/" + packageId.id()).build();
+      Response response = repository.facet(ViewFacet.class).dispatch(getRequest, context);
+      if (response.getPayload() == null) {
+        throw new IOException("Could not retrieve package " + packageId);
+      }
+      final InputStream packageRootIn = response.getPayload().openInputStream();
+      return NpmJsonUtils.parse(() -> packageRootIn);
+    }
+    catch (IOException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
+      throw new IOException(e);
+    }
+  }
+
+  public static List<String> findCachedVersionsRemovedFromRemote(
+      final NestedAttributesMap cachedRoot,
+      final NestedAttributesMap newPackageRoot,
+      final BiFunction<NpmPackageId, String, Boolean> componentExists)
+  {
+    List<String> cachedVersionsRemovedFromRemote = new ArrayList<>();
+    Set<String> newVersions = newPackageRoot.child(VERSIONS).keys();
+    NpmPackageId packageId = NpmPackageId.parse((String) checkNotNull(newPackageRoot.get(P_NAME)));
+
+    for (String version : cachedRoot.child(VERSIONS).keys()) {
+      if (!newVersions.contains(version)
+          && componentExists.apply(packageId, version)) {
+
+        cachedVersionsRemovedFromRemote.add(version);
+      }
+    }
+    return cachedVersionsRemovedFromRemote;
+  }
+
+  public static NestedAttributesMap mergePackageRoots(
+      final NestedAttributesMap newPackageRoot,
+      final NestedAttributesMap existingPackageRoot, final List<String> cachedVersions)
+  {
+    NestedAttributesMap mergedRoot = newPackageRoot;
+    if (!cachedVersions.isEmpty()) {
+      mergedRoot = merge(existingPackageRoot.getKey(), ImmutableList.of(existingPackageRoot, newPackageRoot));
+
+      removeVersionsNotCachedAndNotInNewRoot(mergedRoot, existingPackageRoot, cachedVersions);
+    }
+    return mergedRoot;
+  }
+
+  /*
+   * If a version exists in the old root but not in the new root then we need to check whether it is cached in NXRM, if
+   * not then it should be removed from the metadata.
+   */
+  public static void removeVersionsNotCachedAndNotInNewRoot(final NestedAttributesMap newPackageRoot,
+                                                             final NestedAttributesMap existingPackageRoot,
+                                                             final List<String> cachedVersions)
+  {
+    for (String version : newPackageRoot.child(VERSIONS).keys()) {
+      if (!cachedVersions.contains(version) && !existingPackageRoot.child(VERSIONS).keys().contains(version)) {
+        newPackageRoot.child(VERSIONS).remove(version);
+      }
+    }
   }
 }

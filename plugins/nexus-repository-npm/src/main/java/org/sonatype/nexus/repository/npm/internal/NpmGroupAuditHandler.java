@@ -38,6 +38,6 @@ public class NpmGroupAuditHandler
   {
     NpmAuditFacet npmAuditFacet = context.getRepository().facet(NpmAuditFacet.class);
     context.getAttributes().set(QUICK_AUDIT_ATTR_NAME, false);
-    return NpmResponses.ok(npmAuditFacet.audit(context.getRequest().getPayload()));
+    return NpmResponses.ok(npmAuditFacet.audit(context.getRequest().getPayload(), context));
   }
 }

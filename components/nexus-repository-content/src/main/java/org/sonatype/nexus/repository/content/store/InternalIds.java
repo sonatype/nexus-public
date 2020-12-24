@@ -82,7 +82,12 @@ public class InternalIds
   }
 
   public static OptionalInt internalComponentId(final Asset asset) {
-    return ofNullable(((AssetData) unwrap(asset)).componentId).map(OptionalInt::of).orElse(empty());
+    AssetData assetData = (AssetData) unwrap(asset);
+    return ofNullable(assetData.componentId).map(OptionalInt::of).orElseGet(() ->
+        assetData.component()
+            .map(InternalIds::internalComponentId)
+            .map(OptionalInt::of)
+            .orElse(empty()));
   }
 
   public static OptionalInt internalAssetBlobId(final Asset asset) {

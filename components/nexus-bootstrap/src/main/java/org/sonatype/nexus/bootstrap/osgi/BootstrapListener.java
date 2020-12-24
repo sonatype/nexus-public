@@ -103,7 +103,7 @@ public class BootstrapListener
         }
       }
 
-      selectDbFeature(properties);
+      selectEarlyAccessFeature(properties);
 
       // pass bootstrap properties to embedded servlet listener
       servletContext.setAttribute("nexus.properties", properties);
@@ -229,6 +229,20 @@ public class BootstrapListener
     }
   }
 
+  private static void selectEarlyAccessFeature(final Properties properties) {
+    // early-access datastore developer mode includes early-access datastore user mode
+    if (parseBoolean(properties.getProperty("nexus.earlyAccess.datastore.developer", "false"))) {
+      properties.setProperty("nexus.earlyAccess.datastore.enabled", "true");
+    }
+
+    // early-access datastore mode disables orient
+    if (parseBoolean(properties.getProperty("nexus.earlyAccess.datastore.enabled", "false"))) {
+      properties.setProperty("nexus.orient.enabled", "false");
+    }
+
+    selectDbFeature(properties);
+  }
+
   private static void selectDbFeature(final Properties properties) {
     if (parseBoolean(properties.getProperty("nexus.orient.enabled", "true"))) {
       properties.setProperty(NEXUS_DB_FEATURE, "nexus-orient");
@@ -240,7 +254,7 @@ public class BootstrapListener
       properties.setProperty("nexus.quartz.jobstore.jdbc", "true");
       if (NEXUS_OSS_EDITION.equals(properties.getProperty(NEXUS_EDITION))) {
         properties.setProperty("nexus-exclude-features",
-            "nexus-cma-feature,nexus-cma-community," + properties.getProperty("nexus-exclude-features", ""));
+            "nexus-cma-feature," + properties.getProperty("nexus-exclude-features", ""));
       }
     }
   }

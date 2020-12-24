@@ -44,6 +44,7 @@ import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.http.HttpStatus.NOT_FOUND;
@@ -138,6 +139,11 @@ public class ContentSelectorsApiResourceTest
   public void updateContentSelectorThrowsBadRequestForInvalidExpression() throws Exception {
     ContentSelectorApiUpdateRequest request = new ContentSelectorApiUpdateRequest();
     request.setExpression("invalid-expression");
+
+    SelectorConfiguration selectorConfiguration = mock(SelectorConfiguration.class);
+    when(selectorConfiguration.getType()).thenReturn(CselSelector.TYPE);
+    when(selectorManager.findByName("any")).thenReturn(Optional.of(selectorConfiguration));
+
     doThrow(new ConstraintViolationException("", emptySet())).when(selectorFactory)
         .validateSelector(CselSelector.TYPE, request.getExpression());
 
@@ -167,6 +173,7 @@ public class ContentSelectorsApiResourceTest
 
     SelectorConfiguration selector = new OrientSelectorConfiguration();
     selector.setName("test");
+    selector.setType(CselSelector.TYPE);
     when(selectorManager.findByName(selector.getName())).thenReturn(Optional.of(selector));
 
     underTest.updateContentSelector(selector.getName(), request);

@@ -24,7 +24,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static com.google.common.io.Files.createTempDir;
+import static java.nio.file.Files.createTempDirectory;
 import static org.apache.commons.io.FileUtils.deleteQuietly;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -48,7 +48,7 @@ public class TaskLogCleanupTest
 
   @BeforeClass
   public static void init() throws IOException {
-    tempTaskFolder = createTempDir();
+    tempTaskFolder = createTempDirectory("tmp-task-folder").toFile();
   }
 
   @AfterClass

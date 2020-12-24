@@ -105,7 +105,7 @@ describe('MetricHealth', function() {
 
     await wait(() => expect(loadingMask()).not.toBeInTheDocument());
 
-    expect(container.querySelector('td.nx-error')).toHaveTextContent('Error');
+    expect(container.querySelector('.nx-cell--meta-info')).toHaveTextContent('Error');
     expect(container).toMatchSnapshot();
   });
 });

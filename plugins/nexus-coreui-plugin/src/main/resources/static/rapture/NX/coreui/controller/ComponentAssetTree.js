@@ -803,7 +803,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
           NX.I18n.get('FolderInfo_Delete_Title'),
           NX.I18n.format('FolderInfo_Delete_Text', Ext.htmlEncode(model.folderName)),
           function() {
-            NX.direct.coreui_Component.deleteFolder(decodeURIComponent(model.path), model.repositoryName,
+            NX.direct.coreui_Component.deleteFolder(decodeURIComponent(model.path.replace(/\+/g, ' ')), model.repositoryName,
                 function(response) {
                   if (Ext.isObject(response) && response.success) {
                     NX.Messages.success(NX.I18n.format('FolderInfo_Delete_Success'));
@@ -838,54 +838,6 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
 
   fetchComponentModelFromView: function() {
     return this.getComponentInfo().componentModel;
-  },
-
-  /**
-   * Analyze a component using the AHC service
-   *
-   * @private
-   */
-  analyzeAsset: function(button) {
-    var me = this,
-        componentInfo = me.getComponentInfo(),
-        win,
-        form,
-        formValues,
-        repositoryName,
-        assetId;
-
-    if (componentInfo) {
-      win = button.up('window');
-      form = button.up('form');
-      formValues = form.getForm().getValues();
-      repositoryName = componentInfo.componentModel.get('repositoryName');
-      assetId = form.down('combo[name="asset"]').getValue();
-      NX.direct.ahc_Component.analyzeAsset(repositoryName, assetId, formValues.emailAddress, formValues.password,
-          formValues.proprietaryPackages, formValues.reportLabel, function (response) {
-            if (Ext.isObject(response) && response.success) {
-              win.close();
-              NX.Messages.success(NX.I18n.get('ComponentDetails_Analyze_Success'));
-            }
-          });
-    }
-  },
-
-  /**
-   * When app changes, update the reportName as well
-   */
-  selectedApplicationChanged: function(combo) {
-    var me = this,
-        componentInfo = me.getComponentInfo(),
-        labelField;
-
-    if (componentInfo) {
-      labelField = me.getAnalyzeApplicationWindow().down('textfield[name="reportLabel"]');
-      if (!labelField.isDirty()) {
-        //I am setting the original value so it won't be marked dirty unless user touches it
-        labelField.originalValue = combo.getRawValue();
-        labelField.setValue(combo.getRawValue());
-      }
-    }
   },
 
   removeNodeFromTree: function(node) {

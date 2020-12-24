@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
@@ -33,7 +34,6 @@ import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
-import org.sonatype.nexus.repository.content.AttributeChange;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponentBuilder;
@@ -53,6 +53,8 @@ import org.sonatype.nexus.repository.view.payloads.StreamPayload;
 import org.sonatype.nexus.repository.view.payloads.StreamPayload.InputStreamSupplier;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
+import org.slf4j.Logger;
+
 import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.repository.http.HttpStatus.OK;
@@ -62,7 +64,7 @@ import static org.sonatype.nexus.repository.view.ContentTypes.APPLICATION_JSON;
 import static org.sonatype.nexus.repository.view.Status.success;
 
 /**
- * @since 3.next
+ * @since 3.28
  */
 public abstract class NpmFacetSupport
     extends FacetSupport
@@ -135,8 +137,10 @@ public abstract class NpmFacetSupport
   /**
    * Returns the package root JSON content by parsing it. It also decorates the JSON document with some fields.
    */
-  protected Optional<NestedAttributesMap> loadPackageRoot(final NpmPackageId packageId) throws IOException {
-    Optional<Content> content = content().get(packageId);
+  protected static Optional<NestedAttributesMap> loadPackageRoot(
+      final NpmPackageId packageId,
+      final NpmContentFacet npmContentFacet) throws IOException {
+    Optional<Content> content = npmContentFacet.get(packageId);
     if (!content.isPresent()) {
       return Optional.empty();
     }
@@ -185,7 +189,7 @@ public abstract class NpmFacetSupport
 
     byte[] bytes = NpmJsonUtils.bytes(packageRoot);
     FluentAsset asset = content().put(packageId, new StreamPayload(() -> new ByteArrayInputStream(bytes), bytes.length, MediaType.APPLICATION_JSON));
-    asset.attributes(AttributeChange.SET, NpmAttributes.P_NPM_LAST_MODIFIED, date);
+    asset.withAttribute(NpmAttributes.P_NPM_LAST_MODIFIED, date);
   }
 
   protected Iterable<String> findPackageTarballComponents(final NpmPackageId packageId) {
@@ -199,7 +203,7 @@ public abstract class NpmFacetSupport
   /**
    * Converts the tags to a {@link Content} containing the tags as a json object
    */
-  protected Content distTagsToContent(final NestedAttributesMap distTags) throws IOException {
+  static Content distTagsToContent(final NestedAttributesMap distTags) throws IOException {
     final byte[] bytes = mapper.writeValueAsBytes(distTags.backing());
     return new Content(new BytesPayload(bytes, APPLICATION_JSON));
   }
@@ -212,7 +216,7 @@ public abstract class NpmFacetSupport
       final String tag,
       final Object version) throws IOException
   {
-    Optional<NestedAttributesMap> optPackageRoot = loadPackageRoot(packageId);
+    Optional<NestedAttributesMap> optPackageRoot = loadPackageRoot(packageId, content());
     if (optPackageRoot.isPresent()) {
       NestedAttributesMap packageRoot = optPackageRoot.get();
 
@@ -227,7 +231,7 @@ public abstract class NpmFacetSupport
    * Deletes the {@param tag} from the packageRoot
    */
   protected void deleteDistTags(final NpmPackageId packageId, final String tag) throws IOException {
-    Optional<NestedAttributesMap> optPackageRoot = loadPackageRoot(packageId);
+    Optional<NestedAttributesMap> optPackageRoot = loadPackageRoot(packageId, content());
     if (!optPackageRoot.isPresent()) {
       return;
     }
@@ -268,13 +272,11 @@ public abstract class NpmFacetSupport
   }
 
   /**
-   * Convert an {@link Asset} representing a package root to a {@link Content} via a {@link StreamPayload}.
+   * Converts a Content to an NpmContent.
    *
-   * @param repository       {@link Repository} to look up package root from.
-   * @param packageRootAsset {@link Asset} associated with blob holding package root.
-   * @return Content of asset blob
+   * @return A NpmContent
    */
-  protected static NpmContent toContent(final Content content)
+  protected static NpmContent toNpmContent(final Content content)
   {
     NpmStreamPayload payload = new NpmStreamPayload(content::openInputStream);
     return new NpmContent(payload, content);
@@ -305,7 +307,20 @@ public abstract class NpmFacetSupport
     return getRepository().facet(NpmContentFacet.class);
   }
 
-  protected Map<String, Object> maybeExtractFormatAttributes(final String packageId, final String version, final TempBlob blob) {
+  protected Map<String, Object> maybeExtractFormatAttributes(
+      final String packageId,
+      final String version,
+      final TempBlob blob)
+  {
+    return formatAttributeExtractor(packageId, version, blob).apply(npmPackageParser, log);
+  }
+
+  static BiFunction<NpmPackageParser, Logger, Map<String, Object>> formatAttributeExtractor(
+      final String packageId,
+      final String version,
+      final TempBlob blob)
+  {
+    return (npmPackageParser, log) -> {
       Map<String, Object> formatAttributes = npmPackageParser.parsePackageJson(blob::get);
       if (formatAttributes.isEmpty()) {
         log.warn("No format attributes found in package.json for npm package ID {} version {}, will not be searchable",
@@ -318,5 +333,6 @@ public abstract class NpmFacetSupport
         formatAttributesExtractor.copyFormatAttributes(attributes);
         return attributes.backing();
       }
+    };
   }
 }

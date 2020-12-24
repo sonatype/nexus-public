@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.r.internal.util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
@@ -35,7 +36,6 @@ import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.BlobPayload;
 
-import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 
 import static java.util.Collections.singletonList;
@@ -50,7 +50,7 @@ import static org.sonatype.nexus.repository.storage.Query.builder;
 /**
  * Shared code between R facets.
  *
- * @since 3.next
+ * @since 3.28
  */
 public final class RFacetUtils
 {

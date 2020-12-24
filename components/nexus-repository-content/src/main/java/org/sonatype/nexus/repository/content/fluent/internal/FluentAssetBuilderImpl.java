@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.fluent.internal;
 
+import java.time.OffsetDateTime;
 import java.util.Optional;
 
 import org.sonatype.nexus.common.time.UTC;
@@ -83,8 +84,11 @@ public class FluentAssetBuilderImpl
     asset.setKind(kind);
     asset.setComponent(component);
 
+    OffsetDateTime now = UTC.now();
+    asset.setLastUpdated(now);
+
     if (ProxyFacetSupport.isDownloading()) {
-      asset.setLastDownloaded(UTC.now());
+      asset.setLastDownloaded(now);
     }
 
     assetStore.createAsset(asset);

@@ -28,6 +28,8 @@ import org.sonatype.nexus.repository.maven.internal.recipes.Maven2GroupRecipe
 import org.sonatype.nexus.repository.maven.internal.recipes.Maven2HostedRecipe
 import org.sonatype.nexus.repository.maven.internal.recipes.Maven2ProxyRecipe
 
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.DATA_STORE_NAME
+
 /**
  * Provide default hosted and proxy repositories for Maven.
  *
@@ -48,6 +50,10 @@ class MavenDefaultRepositoriesContributor
 
   @Inject
   RepositoryManager repositoryManager
+
+  @Inject
+  @Named('${nexus.datastore.enabled:-false}')
+  boolean dataStoreEnabled
 
   @Override
   List<Configuration> getRepositoryConfigurations() {
@@ -127,8 +133,17 @@ class MavenDefaultRepositoriesContributor
       repositoryName = map.repositoryName
       recipeName = map.recipeName
       online = map.online
-      attributes = map.attributes as Map
+      attributes = getAttributes(map)
     }
     return config
+  }
+
+  private Map getAttributes(Map map) {
+    Map attributes = map.attributes as Map
+    if (isDataStoreEnabled()) {
+      Map storage = attributes.get('storage') as Map
+      storage.put(DATA_STORE_NAME, 'content')
+    }
+    attributes
   }
 }

@@ -256,8 +256,11 @@ public class Asset
     final NestedAttributesMap checksumAttributes = attributes().child(CHECKSUM);
     final Map<HashAlgorithm, HashCode> hashCodes = Maps.newHashMap();
     for (HashAlgorithm algorithm : hashAlgorithms) {
-      final HashCode hashCode = HashCode.fromString(checksumAttributes.require(algorithm.name(), String.class));
-      hashCodes.put(algorithm, hashCode);
+      String hash = checksumAttributes.get(algorithm.name(), String.class);
+      if(hash != null) {
+        final HashCode hashCode = HashCode.fromString(hash);
+        hashCodes.put(algorithm, hashCode);
+      }
     }
     return hashCodes;
   }

@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.npm.internal;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -26,9 +27,9 @@ import org.sonatype.nexus.mime.MimeRulesSource;
 import org.sonatype.nexus.repository.mime.ContentValidator;
 import org.sonatype.nexus.repository.mime.DefaultContentValidator;
 
-import com.google.common.base.Supplier;
-
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.view.ContentTypes.APPLICATION_GZIP;
+import static org.sonatype.nexus.repository.view.ContentTypes.APPLICATION_JSON;
 
 /**
  * npm specific {@link ContentValidator} that "hints" default content validator for npm metadata and format
@@ -57,13 +58,24 @@ public class NpmContentValidator
                                      @Nullable final String contentName,
                                      @Nullable final String declaredContentType) throws IOException
   {
-    String name = contentName;
-    // if not tgz it is json package root
-    if (name != null && !name.endsWith(".tgz")) {
-      name += ".json";
-    }
+    String name = restoreFileExtension(contentName, declaredContentType);
     return defaultContentValidator.determineContentType(
         strictContentTypeValidation, contentSupplier, mimeRulesSource, name, declaredContentType
     );
+  }
+
+  @Nullable
+  private String restoreFileExtension(final String name, final String declaredContentType) {
+    if (name == null) {
+      return null;
+    }
+    if (!name.endsWith(".tgz") && APPLICATION_GZIP.equals(declaredContentType)) {
+      return name + ".tgz";
+    }
+    else if (!name.endsWith(".json") && APPLICATION_JSON.equals(declaredContentType)) {
+      // json package root
+      return name + ".json";
+    }
+    return name;
   }
 }

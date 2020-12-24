@@ -17,7 +17,6 @@ import java.io.IOException;
 import javax.inject.Named;
 
 import org.sonatype.nexus.repository.FacetSupport;
-import org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmProxyFacet.ProxyTarget;
 import org.sonatype.nexus.repository.proxy.ProxyFacet;
 import org.sonatype.nexus.repository.view.Content;
@@ -37,12 +36,14 @@ public class NpmSearchFacetProxy
     extends FacetSupport
     implements NpmSearchFacet
 {
+  private static final String REPOSITORY_SEARCH_ASSET = "-/v1/search";
+
   @Override
   public Content searchV1(final Parameters parameters) throws IOException {
     try {
       final Request getRequest = new Request.Builder()
           .action(GET)
-          .path("/" + NpmFacetUtils.REPOSITORY_SEARCH_ASSET)
+          .path("/" + REPOSITORY_SEARCH_ASSET)
           .parameters(parameters)
           .build();
       Context context = new Context(getRepository(), getRequest);

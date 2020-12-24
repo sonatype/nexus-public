@@ -14,6 +14,7 @@ package org.sonatype.repository.conan.internal.orient.proxy.v1;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -49,7 +50,6 @@ import org.sonatype.repository.conan.internal.metadata.ConanCoords;
 import org.sonatype.repository.conan.internal.orient.metadata.ConanHashVerifier;
 import org.sonatype.repository.conan.internal.orient.metadata.ConanUrlIndexer;
 
-import com.google.common.base.Supplier;
 import com.google.common.hash.HashCode;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -69,7 +69,7 @@ import static org.sonatype.repository.conan.internal.orient.utils.ConanFacetUtil
 import static org.sonatype.repository.conan.internal.orient.utils.ConanFacetUtils.findComponent;
 
 /**
- * @since 3.next
+ * @since 3.28
  */
 @Named
 public class ConanProxyFacet

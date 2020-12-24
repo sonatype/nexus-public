@@ -23,8 +23,8 @@ import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.pypi.internal.PyPiAttributes;
 import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
-import org.sonatype.nexus.repository.pypi.internal.orient.OrientPyPiHostedFacet;
-import org.sonatype.nexus.repository.pypi.internal.orient.OrientPyPiHostedFacetImpl;
+import org.sonatype.nexus.repository.pypi.orient.internal.OrientPyPiHostedFacet;
+import org.sonatype.nexus.repository.pypi.orient.internal.OrientPyPiHostedFacetImpl;
 import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.internal.SimpleVariableResolverAdapter;
@@ -61,7 +61,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.repository.pypi.internal.orient.OrientPyPiDataUtils.HASH_ALGORITHMS;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiStorageUtils.HASH_ALGORITHMS;
 import static org.sonatype.nexus.repository.upload.UploadFieldDefinition.Type.STRING;
 
 public class OrientPyPiUploadHandlerTest

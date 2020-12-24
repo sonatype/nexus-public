@@ -15,14 +15,12 @@ package org.sonatype.nexus.testsuite.testsupport.utility;
 import java.util.List;
 import java.util.Map;
 
-import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
-import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.pax.exam.NexusPaxExamSupport;
 import org.sonatype.nexus.repository.Repository;
@@ -32,10 +30,8 @@ import org.sonatype.nexus.repository.search.query.SearchQueryService;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-@FeatureFlag(name = "nexus.orient.store.content")
 @Named
 @Singleton
-@Priority(Integer.MAX_VALUE)
 public class SearchTestHelper
 {
   @Inject

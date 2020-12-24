@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.plugins</groupId>
     <artifactId>nexus-plugins</artifactId>
-    <version>3.28.0-SNAPSHOT</version>
+    <version>3.30.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-coreui-plugin</artifactId>
@@ -150,16 +150,6 @@
         <groupId>com.github.eirslett</groupId>
         <artifactId>frontend-maven-plugin</artifactId>
 
-        <configuration>
-          <nodeVersion>${node.version}</nodeVersion>
-          <yarnVersion>${yarn.version}</yarnVersion>
-          <workingDirectory>${project.basedir}</workingDirectory>
-          <installDirectory>${project.build.directory}</installDirectory>
-          <environmentVariables>
-            <CI>true</CI>
-          </environmentVariables>
-        </configuration>
-
         <executions>
           <execution>
             <id>install node and yarn</id>
@@ -196,11 +186,6 @@
             </goals>
             <phase>test</phase>
             <configuration>
-              <environmentVariables>
-                <JEST_SUITE_NAME>React-Tests</JEST_SUITE_NAME>
-                <JEST_JUNIT_OUTPUT_NAME>TEST-react-jest.xml</JEST_JUNIT_OUTPUT_NAME>
-                <JEST_JUNIT_OUTPUT_DIR>${project.build.directory}/jest-reports/</JEST_JUNIT_OUTPUT_DIR>
-              </environmentVariables>
               <arguments>test --reporters=jest-junit --reporters=default</arguments>
               <skip>${npm.skipTests}</skip>
             </configuration>

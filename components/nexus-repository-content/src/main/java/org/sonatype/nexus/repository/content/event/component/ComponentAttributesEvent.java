@@ -16,7 +16,7 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.repository.content.AttributeChange;
+import org.sonatype.nexus.repository.content.AttributeOperation;
 import org.sonatype.nexus.repository.content.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -30,7 +30,7 @@ import static java.util.Optional.ofNullable;
 public class ComponentAttributesEvent
     extends ComponentUpdatedEvent
 {
-  private final AttributeChange change;
+  private final AttributeOperation change;
 
   private final String key;
 
@@ -39,7 +39,7 @@ public class ComponentAttributesEvent
 
   public ComponentAttributesEvent(
       final Component component,
-      final AttributeChange change,
+      final AttributeOperation change,
       final String key,
       @Nullable final Object value)
   {
@@ -49,7 +49,7 @@ public class ComponentAttributesEvent
     this.value = value;
   }
 
-  public AttributeChange getChange() {
+  public AttributeOperation getChange() {
     return change;
   }
 
@@ -60,5 +60,14 @@ public class ComponentAttributesEvent
   @SuppressWarnings("unchecked")
   public <T> Optional<T> getValue() {
     return ofNullable((T) value);
+  }
+
+  @Override
+  public String toString() {
+    return "ComponentAttributesEvent{" +
+        "change=" + change +
+        ", key='" + key + '\'' +
+        ", value=" + value +
+        "} " + super.toString();
   }
 }

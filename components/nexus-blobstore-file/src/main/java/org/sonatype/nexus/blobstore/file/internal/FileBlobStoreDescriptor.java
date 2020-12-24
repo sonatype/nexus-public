@@ -70,14 +70,18 @@ public class FileBlobStoreDescriptor
 
   private final BlobStoreUtil blobStoreUtil;
 
+  private final FileBlobStorePathValidator pathValidator;
+
   @Inject
   public FileBlobStoreDescriptor(final BlobStoreQuotaService quotaService,
                                  final ApplicationDirectories applicationDirectories,
-                                 final BlobStoreUtil blobStoreUtil)
+                                 final BlobStoreUtil blobStoreUtil,
+                                 final FileBlobStorePathValidator pathValidator)
   {
     super(quotaService);
     this.applicationDirectories = applicationDirectories;
     this.blobStoreUtil = blobStoreUtil;
+    this.pathValidator = pathValidator;
     this.path = new StringTextFormField(
         PATH_KEY,
         messages.pathLabel(),
@@ -105,6 +109,8 @@ public class FileBlobStoreDescriptor
         .map(s -> Paths.get(s))
         .orElseThrow(() -> new ValidationErrorsException(
             format("The maximum name length for any folder in the path is %d.", MAX_NAME_LENGTH)));
+
+    pathValidator.validatePathUniqueConstraint(config);
 
     try {
       if (!path.isAbsolute()) {

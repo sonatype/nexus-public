@@ -21,6 +21,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.authz.AuthorizationConfigurationChanged;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
@@ -50,6 +51,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Named("default")
 @Singleton
 public class AuthorizationManagerImpl
+    extends ComponentSupport
     implements AuthorizationManager
 {
   public static final String SOURCE = "default";
@@ -186,6 +188,7 @@ public class AuthorizationManagerImpl
 
     configuration.createRole(secRole);
 
+    log.info("Added role {}", role.getName());
     eventManager.post(new RoleCreatedEvent(role));
 
     // notify any listeners that the config changed
@@ -213,6 +216,7 @@ public class AuthorizationManagerImpl
     Role role = getRole(roleId);
     configuration.deleteRole(roleId);
 
+    log.info("Removed role {}", role.getName());
     eventManager.post(new RoleDeletedEvent(role));
 
     // notify any listeners that the config changed
@@ -245,6 +249,7 @@ public class AuthorizationManagerImpl
     final CPrivilege secPriv = this.convert(privilege);
     configuration.createPrivilege(secPriv);
 
+    log.info("Added privilege {}", privilege.getName());
     eventManager.post(new PrivilegeCreatedEvent(privilege));
 
     // notify any listeners that the config changed
@@ -272,6 +277,7 @@ public class AuthorizationManagerImpl
     Privilege privilege = getPrivilege(privilegeId);
     configuration.deletePrivilege(privilegeId);
 
+    log.info("Removed privilege {}", privilege.getName());
     eventManager.post(new PrivilegeDeletedEvent(privilege));
 
     // notify any listeners that the config changed

@@ -111,5 +111,5 @@ public interface BlobStoreManager
    * @param srcBlobStore
    * @param destBlobStore
    */
-  void moveBlob(final BlobId blobId, final BlobStore srcBlobStore, final BlobStore destBlobStore);
+  Blob moveBlob(final BlobId blobId, final BlobStore srcBlobStore, final BlobStore destBlobStore);
 }

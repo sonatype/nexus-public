@@ -69,6 +69,11 @@ export default Machine(
             }
           }
         }
+      },
+      on: {
+        RETRY: {
+          target: 'idle'
+        }
       }
     },
     {

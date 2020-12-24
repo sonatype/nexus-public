@@ -171,7 +171,11 @@ public abstract class NexusPaxExamSupport
   @Inject
   protected TaskScheduler taskScheduler;
 
-  private static final String POSTGRES_IMAGE = "postgres:12.3";
+  @Inject
+  @Named("nexus.orient.enabled")
+  private Boolean orientEnabled;
+
+  private static final String POSTGRES_IMAGE = "docker-all.repo.sonatype.com/postgres:12.3";
 
   private static final int POSTGRES_PORT = 5432;
 
@@ -509,12 +513,14 @@ public abstract class NexusPaxExamSupport
           .waitingFor(Wait.forLogMessage(".*database system is ready to accept connections.*", 1));
 
         return combine(null,
-            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.orient.enabled", "false"),
+            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.earlyAccess.datastore.enabled", "true"),
+            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.earlyAccess.datastore.developer", "true"),
             systemProperty(TEST_JDBC_URL_PROPERTY).value(configurePostgres())
         );
       case H2:
         return combine(null,
-            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.orient.enabled", "false")
+            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.earlyAccess.datastore.enabled", "true"),
+            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.earlyAccess.datastore.developer", "true")
         );
       case ORIENT:
         return new Option[0];
@@ -668,6 +674,10 @@ public abstract class NexusPaxExamSupport
       //fallback to ORIENT if it is invalid
       return TestDatabase.ORIENT;
     }
+  }
+
+  protected boolean isNewDb() {
+    return !orientEnabled;
   }
 
   // -------------------------------------------------------------------------

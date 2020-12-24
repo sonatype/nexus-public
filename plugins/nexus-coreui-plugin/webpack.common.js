@@ -55,7 +55,8 @@ module.exports = {
         test: /\.(png)$/,
         loader: 'file-loader',
         options: {
-          name: 'img/[name].[ext]'
+          name: 'img/[name].[ext]',
+          emitFile: false
         }
       },
       {

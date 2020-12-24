@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.store;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -34,13 +35,17 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static com.google.common.collect.Sets.newHashSet;
+import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
+import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.summingInt;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyIterable;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -149,6 +154,7 @@ public class AssetDAOTest
       duplicate.setPath(asset1.path());
       duplicate.setKind(asset1.kind());
       duplicate.setAttributes(newAttributes("duplicate"));
+      duplicate.setLastUpdated(OffsetDateTime.now());
       dao.createAsset(duplicate);
 
       session.getTransaction().commit();
@@ -635,6 +641,41 @@ public class AssetDAOTest
   }
 
   @Test
+  public void testReadPathTest() {
+    TestAssetData asset1 = randomAsset(repositoryId);
+    TestAssetData asset2 = randomAsset(repositoryId);
+    asset2.setPath(asset1.path() + "/2"); // make sure paths are different
+
+    try (DataSession<?> session = sessionRule.openSession("content")) {
+      TestAssetDAO dao = session.access(TestAssetDAO.class);
+
+      // our bespoke schema will be applied automatically via 'extendSchema'...
+
+      dao.createAsset(asset1);
+      dao.createAsset(asset2);
+
+      asset2.setTestFlag(true);
+      dao.updateAssetFlag(asset2);
+
+      TestAssetData test1 = dao.readPathTest(repositoryId, asset1.path()).orElse(null);
+      TestAssetData test2 = dao.readPathTest(repositoryId, asset2.path()).orElse(null);
+      assertThat(test1, notNullValue());
+      assertThat(test1.getTestFlag(), equalTo(false));
+      assertThat(test2, notNullValue());
+      assertThat(test2.getTestFlag(), equalTo(true));
+
+      Continuation<Asset> continuation = dao.browseFlaggedAssets(repositoryId, 10, null);
+      assertThat(continuation.size(), equalTo(1));
+      TestAssetData test3 = continuation.stream()
+          .filter(obj -> obj instanceof TestAssetData)
+          .map(obj -> (TestAssetData) obj)
+          .findFirst()
+          .orElseThrow(() -> new IllegalStateException("Expect asset not found"));
+      assertThat(test3.getTestFlag(), equalTo(true));
+    }
+  }
+
+  @Test
   public void testDeleteAllAssets() {
 
     // scatter components and assets
@@ -665,6 +706,42 @@ public class AssetDAOTest
       dao.deleteAssets(repositoryId, -1);
 
       assertThat(browseAssets(dao, repositoryId, null, 100, null).size(), is(0));
+    }
+  }
+
+  @Test
+  public void testDeletePaths() {
+
+    AssetData asset1 = randomAsset(repositoryId);
+    AssetData asset2 = randomAsset(repositoryId);
+    AssetData asset3 = randomAsset(repositoryId);
+    AssetData asset4 = randomAsset(repositoryId);
+    AssetData asset5 = randomAsset(repositoryId);
+
+    // make sure paths are different
+    asset2.setPath(asset1.path() + "/2");
+    asset3.setPath(asset1.path() + "/3");
+    asset4.setPath(asset1.path() + "/4");
+    asset5.setPath(asset1.path() + "/5");
+
+    try (DataSession<?> session = sessionRule.openSession("content")) {
+      AssetDAO dao = session.access(TestAssetDAO.class);
+
+      dao.createAsset(asset1);
+      dao.createAsset(asset2);
+      dao.createAsset(asset3);
+      dao.createAsset(asset4);
+      dao.createAsset(asset5);
+
+      assertThat(countAssets(dao, repositoryId), is(5));
+
+      dao.deleteAssetsByPaths(repositoryId, asList(asset1.path(), asset2.path(), asset3.path()));
+
+      assertThat(browseAssets(dao, repositoryId, null, 5, null).size(), is(2));
+
+      dao.deleteAssetsByPaths(repositoryId, asList(asset4.path(), asset5.path()));
+
+      assertThat(browseAssets(dao, repositoryId, null, 5, null).size(), is(0));
     }
   }
 
@@ -756,13 +833,15 @@ public class AssetDAOTest
       AssetDAO dao = session.access(TestAssetDAO.class);
 
       assertThat(
-          dao.browseAssetsInRepositories(newHashSet(repositoryId, anotherRepositoryId), 10, null),
+          dao.browseAssetsInRepositories(newHashSet(repositoryId, anotherRepositoryId), null,
+              null, null, emptyMap(), 10),
           emptyIterable());
 
       dao.createAsset(asset1);
 
       assertThat(
-          dao.browseAssetsInRepositories(newHashSet(repositoryId, anotherRepositoryId), 10, null),
+          dao.browseAssetsInRepositories(newHashSet(repositoryId, anotherRepositoryId), null,
+              null, null, emptyMap(), 10),
           contains(allOf(samePath(asset1), sameAttributes(asset1))));
 
       dao.createAsset(asset2);
@@ -771,11 +850,42 @@ public class AssetDAOTest
 
       //browse all assets
       assertThat(
-          dao.browseAssetsInRepositories(newHashSet(repositoryId, anotherRepositoryId), 10, null),
+          dao.browseAssetsInRepositories(newHashSet(repositoryId, anotherRepositoryId),  null,
+              null, null, emptyMap(), 10),
           contains(allOf(samePath(asset1), sameAttributes(asset1)), allOf(samePath(asset2), sameAttributes(asset2)),
               allOf(samePath(asset3), sameAttributes(asset3)), allOf(samePath(asset4), sameAttributes(asset4))));
 
       session.getTransaction().commit();
+    }
+  }
+
+  @Test
+  public void testSetLastDownloaded() {
+    AssetData asset1 = randomAsset(repositoryId);
+
+    try (DataSession<?> session = sessionRule.openSession("content")) {
+      AssetDAO dao = session.access(TestAssetDAO.class);
+      dao.createAsset(asset1);
+
+      OffsetDateTime dateTime = OffsetDateTime.now(ZoneOffset.UTC).minusDays(1);
+      dao.lastDownloaded(asset1.assetId, dateTime);
+
+      assertThat(dao.readAsset(asset1.assetId).get().lastDownloaded().orElse(null), is(dateTime));
+    }
+  }
+
+  @Test
+  public void testLastUpdated() {
+    AssetData asset1 = randomAsset(repositoryId);
+
+    try (DataSession<?> session = sessionRule.openSession("content")) {
+      AssetDAO dao = session.access(TestAssetDAO.class);
+      dao.createAsset(asset1);
+
+      OffsetDateTime dateTime = OffsetDateTime.now(ZoneOffset.UTC).minusDays(1);
+      dao.lastUpdated(asset1.assetId, dateTime);
+
+      assertThat(dao.readAsset(asset1.assetId).get().lastUpdated(), is(dateTime));
     }
   }
 

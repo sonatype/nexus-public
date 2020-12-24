@@ -25,4 +25,9 @@ public class AssetCreatedEvent
   public AssetCreatedEvent(final Asset asset) {
     super(asset);
   }
+
+  @Override
+  public String toString() {
+    return "AssetCreatedEvent{} " + super.toString();
+  }
 }

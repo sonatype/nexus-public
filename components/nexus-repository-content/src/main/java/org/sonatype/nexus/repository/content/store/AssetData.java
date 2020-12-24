@@ -95,6 +95,13 @@ public class AssetData
   }
 
   /**
+   * Set the internal reference to the blob
+   */
+  public void setAssetBlobId(final Integer assetBlobId) {
+    this.assetBlobId = assetBlobId;
+  }
+
+  /**
    * Sets the asset path; asset paths must start with a slash.
    */
   public void setPath(final String path) {
@@ -137,6 +144,11 @@ public class AssetData
     this.assetBlob = assetBlob;
   }
 
+  @Override
+  public boolean hasBlob() {
+    return assetBlobId != null;
+  }
+
   /**
    * Sets the (optional) last downloaded time.
    */
@@ -161,5 +173,19 @@ public class AssetData
   @Override
   public String nextContinuationToken() {
     return Integer.toString(assetId);
+  }
+
+  @Override
+  public String toString() {
+    return "AssetData{" +
+        "assetId=" + assetId +
+        ", path='" + path + '\'' +
+        ", kind='" + kind + '\'' +
+        ", componentId=" + componentId +
+        ", component=" + component +
+        ", assetBlobId=" + assetBlobId +
+        ", assetBlob=" + assetBlob +
+        ", lastDownloaded=" + lastDownloaded +
+        "} " + super.toString();
   }
 }

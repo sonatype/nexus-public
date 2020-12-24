@@ -13,7 +13,7 @@
 import {assign, Machine} from 'xstate';
 import Axios from 'axios';
 
-import {ExtJS} from 'nexus-ui-plugin';
+import {ExtJS, Utils} from 'nexus-ui-plugin';
 
 import UIStrings from "../../../../constants/UIStrings";
 
@@ -28,7 +28,7 @@ export default Machine(
         data: [],
         pristineData: [],
         sortField: 'name',
-        sortDirection: ASC,
+        sortDirection: Utils.ASC,
         filter: '',
         error: ''
       },
@@ -114,26 +114,11 @@ export default Machine(
 
         setSortByName: assign({
           sortField: 'name',
-          sortDirection: ({sortField, sortDirection}) => {
-            if (sortField !== 'name') {
-              return ASC;
-            }
-            else {
-              return sortDirection === ASC ? DESC : ASC
-            }
-          }
+          sortDirection: Utils.nextSortDirection('name')
         }),
-
         setSortByLevel: assign({
           sortField: 'level',
-          sortDirection: ({sortField, sortDirection}) => {
-            if (sortField !== 'level') {
-              return ASC;
-            }
-            else {
-              return sortDirection === ASC ? DESC : ASC
-            }
-          }
+          sortDirection: Utils.nextSortDirection('level')
         }),
 
         setFilter: assign({
@@ -147,9 +132,7 @@ export default Machine(
         }),
 
         sortData: assign({
-          data: ({sortField, sortDirection, data}) => (data.slice().sort((a, b) => {
-            return a[sortField] > b[sortField] ? sortDirection : -sortDirection;
-          }))
+          data: Utils.sortDataByFieldAndDirection
         }),
 
         showResetError: (_, {data}) => {

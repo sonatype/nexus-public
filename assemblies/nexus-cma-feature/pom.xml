@@ -19,7 +19,7 @@
   <parent>
     <groupId>org.sonatype.nexus.assemblies</groupId>
     <artifactId>nexus-assemblies</artifactId>
-    <version>3.28.0-SNAPSHOT</version>
+    <version>3.30.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-cma-feature</artifactId>
@@ -27,13 +27,6 @@
   <packaging>feature</packaging>
 
   <dependencies>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-blobstore-tasks</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
 
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
@@ -76,6 +69,13 @@
       <classifier>features</classifier>
       <type>xml</type>
     </dependency>
+    
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-repository-helm</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+    </dependency>
 
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
@@ -101,6 +101,13 @@
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-restore-apt</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-restore-helm</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
     </dependency>

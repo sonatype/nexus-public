@@ -68,6 +68,13 @@ public abstract class MavenITSupport
     return resolveBaseFile("target/" + getClass().getSimpleName() + "-" + testName.getMethodName() + "/" + project);
   }
 
+  public void mvnDeploy(final String project, final String version, final Repository repo)
+      throws Exception
+  {
+    mvnDeploy(project, version, repo.getName());
+  }
+
+
   public void mvnDeploy(final String project, final String version, final String deployRepositoryName)
       throws Exception
   {
@@ -201,10 +208,15 @@ public abstract class MavenITSupport
     Repository proxy = repositoryManager.get(repositoryName);
     checkNotNull(proxy);
     checkArgument(ProxyType.NAME.equals(proxy.getType().getValue()));
-    org.sonatype.nexus.repository.config.Configuration proxyConfiguration = proxy.getConfiguration();
+    org.sonatype.nexus.repository.config.Configuration proxyConfiguration = proxy.getConfiguration().copy();
     proxyConfiguration.attributes("proxy").set("remoteUrl", remoteUrl);
     proxyConfiguration.attributes(STORAGE).set(STRICT_CONTENT_TYPE_VALIDATION, true);
     return repositoryManager.update(proxyConfiguration);
+  }
+
+  @Nonnull
+  protected Maven2Client createAdminMaven2Client(final Repository repo) throws Exception {
+    return createAdminMaven2Client(repo.getName());
   }
 
   @Nonnull

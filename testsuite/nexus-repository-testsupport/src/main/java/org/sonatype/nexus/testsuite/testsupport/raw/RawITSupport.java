@@ -20,11 +20,8 @@ import javax.inject.Inject;
 import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpStatus;
-import org.sonatype.nexus.orient.raw.RawContentFacet;
-import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.testsuite.testsupport.RepositoryITSupport;
-import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.io.Files;
 import org.apache.http.entity.ContentType;
@@ -47,19 +44,15 @@ public class RawITSupport
   @Inject
   protected LogManager logManager;
 
+  @Inject
+  protected RawTestHelper rawTestHelper;
+
   public RawITSupport() {
     testData.addDirectory(resolveBaseFile("target/it-resources/raw"));
   }
 
   protected Content read(final Repository repository, final String path) throws IOException {
-    RawContentFacet rawFacet = repository.facet(RawContentFacet.class);
-    UnitOfWork.begin(repository.facet(StorageFacet.class).txSupplier());
-    try {
-      return rawFacet.get(path);
-    }
-    finally {
-      UnitOfWork.end();
-    }
+    return rawTestHelper.read(repository, path);
   }
 
   protected void assertReadable(final Repository repository, final String... paths) throws IOException {

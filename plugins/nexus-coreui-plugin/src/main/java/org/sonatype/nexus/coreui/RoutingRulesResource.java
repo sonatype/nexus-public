@@ -152,6 +152,19 @@ public class RoutingRulesResource
     }
   }
 
+  /**
+   * @since 3.29
+   */
+  @GET
+  @Path("/{name}")
+  public RoutingRuleXO getRoutingRule(@PathParam("name") final String name) {
+    routingRuleHelper.ensureUserHasPermissionToRead();
+    RoutingRuleXO routingRule = RoutingRulesResource.toXO(routingRuleStore.getByName(name));
+    Map<EntityId, List<Repository>> assignedRepositories = routingRuleHelper.calculateAssignedRepositories();
+    populateAssignedRepositoryNames(assignedRepositories, routingRule);
+    return routingRule;
+  }
+
   @PUT
   @Path("/{name}")
   @RequiresAuthentication
@@ -270,5 +283,17 @@ public class RoutingRulesResource
     routingRuleXO.setMode(routingRule.mode());
     routingRuleXO.setMatchers(routingRule.matchers());
     return routingRuleXO;
+  }
+
+  private void populateAssignedRepositoryNames(Map<EntityId, List<Repository>> assignedRepositories, RoutingRuleXO routingRule) {
+    List<Repository> repositories = assignedRepositories.computeIfAbsent(id(routingRule.getId()), id -> emptyList());
+    List<String> repositoryNames = repositoryPermissionChecker
+        .userHasRepositoryAdminPermission(repositories, BreadActions.READ).stream()
+        .map(Repository::getName)
+        .sorted(String.CASE_INSENSITIVE_ORDER)
+        .collect(toList());
+
+    routingRule.setAssignedRepositoryCount(repositoryNames.size());
+    routingRule.setAssignedRepositoryNames(repositoryNames);
   }
 }

@@ -40,6 +40,7 @@ import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.rest.SearchResourceExtension;
 import org.sonatype.nexus.repository.rest.api.AssetXO;
+import org.sonatype.nexus.repository.rest.api.AssetXODescriptor;
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
 import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO;
@@ -102,6 +103,8 @@ public class SearchResource
 
   private final Set<SearchResourceExtension> searchResourceExtensions;
 
+  private final Map<String, AssetXODescriptor> assetDescriptors;
+
   private int pageSize = 50;
 
   @Inject
@@ -110,7 +113,8 @@ public class SearchResource
                         final SearchQueryService searchQueryService,
                         final TokenEncoder tokenEncoder,
                         final ComponentXOFactory componentXOFactory,
-                        final Set<SearchResourceExtension> searchResourceExtensions)
+                        final Set<SearchResourceExtension> searchResourceExtensions,
+                        @Nullable final Map<String, AssetXODescriptor> assetDescriptors)
   {
     this.searchUtils = checkNotNull(searchUtils);
     this.assetMapUtils = checkNotNull(assetMapUtils);
@@ -118,6 +122,7 @@ public class SearchResource
     this.tokenEncoder = checkNotNull(tokenEncoder);
     this.componentXOFactory = checkNotNull(componentXOFactory);
     this.searchResourceExtensions = checkNotNull(searchResourceExtensions);
+    this.assetDescriptors = assetDescriptors;
   }
 
   @GET
@@ -159,7 +164,7 @@ public class SearchResource
     List<Map<String, Object>> assets = (List<Map<String, Object>>) componentMap.get(ASSETS);
     if (assets != null) {
       componentXO.setAssets(assets.stream()
-          .map(assetMap -> AssetXO.fromElasticSearchMap(assetMap, repository))
+          .map(assetMap -> AssetXO.fromElasticSearchMap(assetMap, repository, assetDescriptors))
           .collect(toList()));
     }
     else {
@@ -276,7 +281,7 @@ public class SearchResource
 
     return assets.stream()
         .filter(assetMap -> assetMapUtils.filterAsset(assetMap, assetParams))
-        .map(assetMap -> AssetXO.fromElasticSearchMap(assetMap, repository));
+        .map(assetMap -> AssetXO.fromElasticSearchMap(assetMap, repository, assetDescriptors));
   }
 
   @VisibleForTesting

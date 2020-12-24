@@ -328,6 +328,8 @@ public class OrientMetadataRebuilder
               metadataBuilder.addArtifactVersion(mavenPath);
               if (rebuildChecksums) {
                 mayUpdateChecksum(mavenPath, HashType.SHA1);
+                mayUpdateChecksum(mavenPath, HashType.SHA256);
+                mayUpdateChecksum(mavenPath, HashType.SHA512);
                 mayUpdateChecksum(mavenPath, HashType.MD5);
               }
               final String packaging = component.formatAttributes().get(Attributes.P_PACKAGING, String.class);
@@ -349,7 +351,7 @@ public class OrientMetadataRebuilder
   }
 
   @Override
-  public void deleteMetadata(final Repository repository, final List<String []> gavs) {
+  public Set<String> deleteMetadata(final Repository repository, final List<String []> gavs) {
     checkNotNull(repository);
     checkNotNull(gavs);
 
@@ -359,7 +361,7 @@ public class OrientMetadataRebuilder
     }
 
     try {
-      MavenFacetUtils.deleteWithHashes(repository.facet(OrientMavenFacet.class), pathBatch);
+      return MavenFacetUtils.deleteWithHashes(repository.facet(OrientMavenFacet.class), pathBatch);
     }
     catch (IOException e) {
       log.warn("Error encountered when deleting metadata: repository={}", repository);

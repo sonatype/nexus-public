@@ -70,6 +70,7 @@
   </sql>
 
   <resultMap id="assetResult" type="AssetData">
+    <result property="assetBlobId" column="asset_blob_id"/>
     <association property="component" column="component_id" select="fetchComponent" fetchType="lazy"/>
     <association property="assetBlob" column="asset_blob_id" select="fetchAssetBlob" fetchType="lazy"/>
   </resultMap>
@@ -89,7 +90,7 @@
   </select>
 
   <select id="browseAssets" resultMap="assetResult">
-    SELECT * FROM ${format}_asset WHERE repository_id = #{repositoryId}
+    SELECT * FROM ${format}_asset as asset WHERE repository_id = #{repositoryId}
         <if test="continuationToken != null"> AND asset_id > #{continuationToken}</if>
         <if test="kind != null"> AND kind = #{kind}</if>
         <if test="filter != null"> AND ${filter}</if>
@@ -104,6 +105,8 @@
         #{repositoryId}
       </foreach>
       <if test="continuationToken != null"> AND asset_id > #{continuationToken}</if>
+      <if test="kind != null"> AND kind = #{kind}</if>
+      <if test="filter != null"> AND ${filter}</if>
     ORDER BY asset_id LIMIT #{limit};
   </select>
 
@@ -120,9 +123,16 @@
   </select>
 
   <insert id="createAsset" useGeneratedKeys="true" keyProperty="assetId" parameterType="AssetData">
-    INSERT INTO ${format}_asset (repository_id, path, kind, component_id, asset_blob_id, last_downloaded, attributes)
-        VALUES (#{repositoryId}, #{path}, #{kind}, #{componentId}, #{assetBlobId}, #{lastDownloaded}, #{attributes});
+    INSERT INTO ${format}_asset (repository_id, path, kind, component_id, asset_blob_id, last_updated, last_downloaded,
+                                 attributes)
+        VALUES (#{repositoryId}, #{path}, #{kind}, #{componentId}, #{assetBlobId}, #{lastUpdated}, #{lastDownloaded},
+                #{attributes});
   </insert>
+
+  <update id="created">
+    UPDATE ${format}_asset SET created = #{created}
+     WHERE <include refid="assetMatch"/>;
+  </update>
 
   <select id="readAsset" resultMap="assetResult">
     SELECT * FROM ${format}_asset WHERE <include refid="assetMatch"/>;
@@ -156,6 +166,16 @@
         WHERE <include refid="assetMatch"/>;
   </update>
 
+  <update id="lastDownloaded">
+    UPDATE ${format}_asset SET last_downloaded = #{lastDownloaded}
+     WHERE <include refid="assetMatch"/>;
+  </update>
+
+  <update id="lastUpdated">
+    UPDATE ${format}_asset SET last_updated = #{lastUpdated}
+     WHERE <include refid="assetMatch"/>;
+  </update>
+
   <delete id="deleteAsset" parameterType="AssetData">
     DELETE FROM ${format}_asset WHERE <include refid="assetMatch"/>;
   </delete>
@@ -171,6 +191,13 @@
         <if test="limit gt 0"> asset_id IN (SELECT asset_id FROM ${format}_asset WHERE </if>
         repository_id = #{repositoryId}
         <if test="limit gt 0"> LIMIT #{limit})</if>;
+  </delete>
+
+  <delete id="deleteAssetsByPaths">
+    DELETE FROM ${format}_asset WHERE repository_id = #{repositoryId} AND path IN
+    <foreach item="path" index="index" collection="paths" open="(" separator="," close=")">
+      #{path}
+    </foreach>;
   </delete>
 
   <select id="selectNotRecentlyDownloaded" resultType="int">

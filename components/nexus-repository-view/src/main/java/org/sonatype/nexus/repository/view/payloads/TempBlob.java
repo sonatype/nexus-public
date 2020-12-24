@@ -17,11 +17,12 @@ import java.io.InputStream;
 import java.util.Map;
 
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 
-import com.google.common.base.Supplier;
+import java.util.function.Supplier;
 import com.google.common.hash.HashCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,6 +68,13 @@ public class TempBlob
     return blob;
   }
 
+  public BlobRef getBlobRef(final String node) {
+    return new BlobRef(
+        node,
+        blobStore.getBlobStoreConfiguration().getName(),
+        getBlob().getId().asUniqueString());
+  }
+
   /**
    * Exact hashes for the blob. Typically calculated by storage subsystem while blob was getting saved, but sometimes
    * provided based on precalculated or known values.
@@ -88,7 +96,7 @@ public class TempBlob
       return;
     }
     try {
-      blobStore.deleteHard(blob.getId());
+      blobStore.asyncDelete(blob.getId());
       deleted = true;
     }
     catch (BlobStoreException e) {

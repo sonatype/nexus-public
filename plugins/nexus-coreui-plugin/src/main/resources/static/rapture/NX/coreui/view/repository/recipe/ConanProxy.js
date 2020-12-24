@@ -15,7 +15,7 @@
 /**
  * Repository "Settings" form for a Conan Proxy repository
  *
- * @since 3.next
+ * @since 3.28
  */
 Ext.define('NX.coreui.view.repository.recipe.ConanProxy', {
   extend: 'NX.coreui.view.repository.RepositorySettingsForm',

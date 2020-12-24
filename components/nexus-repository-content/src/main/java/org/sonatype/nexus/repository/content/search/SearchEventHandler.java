@@ -150,6 +150,32 @@ public class SearchEventHandler
     }
   }
 
+  /**
+   * Request update search indexes based on component id
+   * @param format        The repository format
+   * @param componentId   The component id
+   * @param repository    The repository
+   */
+  public void requestIndex(final String format, final int componentId, final Repository repository) {
+    if (componentId > 0) {
+      markComponentAsPending(requestKey(format, componentId), repoTag(INDEX, repository));
+      maybeTriggerAsyncFlush();
+    }
+  }
+
+  /**
+   * Request purge search indexes based on component id
+   * @param format        The repository format
+   * @param componentId   The component id
+   * @param repository    The repository
+   */
+  public void requestPurge(final String format, final int componentId, final Repository repository) {
+    if (componentId > 0) {
+      markComponentAsPending(requestKey(format, componentId), repoTag(PURGE, repository));
+      maybeTriggerAsyncPurge();
+    }
+  }
+
   @AllowConcurrentEvents
   @Subscribe
   public void on(final ComponentCreatedEvent event) {
@@ -213,20 +239,6 @@ public class SearchEventHandler
 
   private void requestIndex(final AssetEvent event) {
     requestIndex(event.getFormat(), internalComponentId(event.getAsset()).orElse(-1), event.getRepository());
-  }
-
-  private void requestIndex(final String format, final int componentId, final Repository repository) {
-    if (componentId > 0) {
-      markComponentAsPending(requestKey(format, componentId), repoTag(INDEX, repository));
-      maybeTriggerAsyncFlush();
-    }
-  }
-
-  private void requestPurge(final String format, final int componentId, final Repository repository) {
-    if (componentId > 0) {
-      markComponentAsPending(requestKey(format, componentId), repoTag(PURGE, repository));
-      maybeTriggerAsyncPurge();
-    }
   }
 
   private void markComponentAsPending(final String requestKey, final String repoTag) {

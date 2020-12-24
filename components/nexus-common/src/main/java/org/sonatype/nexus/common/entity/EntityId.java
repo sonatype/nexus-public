@@ -14,11 +14,14 @@ package org.sonatype.nexus.common.entity;
 
 import javax.annotation.Nonnull;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
 /**
  * Entity identifier.
  *
  * @since 3.0
  */
+@JsonDeserialize(as=EntityUUID.class)
 public interface EntityId
 {
   /**

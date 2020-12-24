@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.config.internal;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,20 +25,13 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.HasEntityId;
 import org.sonatype.nexus.common.entity.HasName;
-import org.sonatype.nexus.common.io.SanitizingJsonOutputStream;
 import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.supportzip.PasswordSanitizing;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
-import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.collect.Maps;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.String.format;
-import static org.sonatype.nexus.common.text.Strings2.mask;
 
 /**
  * {@link Configuration} data.
@@ -50,14 +41,10 @@ import static org.sonatype.nexus.common.text.Strings2.mask;
 public class ConfigurationData
     implements HasEntityId, HasName, Configuration
 {
-  private static final Logger log = LoggerFactory.getLogger(ConfigurationData.class);
+  private static final PasswordSanitizing<Map<String, Map<String, Object>>> SANITIZING = new PasswordSanitizing<>();
 
-  private static final TypeReference<Map<String, Map<String, Object>>> ATTRIBUTES_TYPE_REF = new TypeReference<Map<String, Map<String, Object>>>() {};
-
-  private static final ObjectWriter ATTRIBUTES_JSON_WRITER = new ObjectMapper().writerFor(ATTRIBUTES_TYPE_REF);
-
-  private static final ObjectReader ATTRIBUTES_JSON_READER = new ObjectMapper().readerFor(ATTRIBUTES_TYPE_REF);
-
+  // do not serialize EntityId, it can be generated on the fly. Is not used as reference.
+  @JsonIgnore
   private EntityId id;
 
   private String name;
@@ -81,6 +68,7 @@ public class ConfigurationData
   }
 
   @Override
+  @JsonIgnore
   public EntityId getRepositoryId() {
     return getId(); // alias repositoryId to id
   }
@@ -160,11 +148,7 @@ public class ConfigurationData
       attributes = Maps.newHashMap();
     }
 
-    Map<String, Object> map = attributes.get(key);
-    if (map == null) {
-      map = Maps.newHashMap();
-      attributes.put(key, map);
-    }
+    Map<String, Object> map = attributes.computeIfAbsent(key, k -> Maps.newHashMap());
 
     return new NestedAttributesMap(key, map);
   }
@@ -174,28 +158,8 @@ public class ConfigurationData
     return getClass().getSimpleName() + "{" +
         "repositoryName='" + name + '\'' +
         ", recipeName='" + recipeName + '\'' +
-        ", attributes=" + obfuscatedAttributes() +
+        ", attributes=" + SANITIZING.transform(attributes) +
         '}';
-  }
-
-  /**
-   * @return string representation with sensitive data (passwords) obfuscated
-   */
-  private String obfuscatedAttributes() {
-    try (ByteArrayOutputStream obfuscatedAttrs = new ByteArrayOutputStream()) {
-      try (SanitizingJsonOutputStream sanitizer = new SanitizingJsonOutputStream(obfuscatedAttrs,
-          SENSITIVE_FIELD_NAMES,
-          mask("password"))) {
-        sanitizer.write(ATTRIBUTES_JSON_WRITER.writeValueAsBytes(attributes));
-      }
-
-      Object result = ATTRIBUTES_JSON_READER.readValue(obfuscatedAttrs.toByteArray());
-      return result != null ? result.toString() : "";
-    }
-    catch (IOException e) {
-      log.error("Error obfuscating attributes", e);
-      return format("<<Unable to obfuscate attributes. Exception was '%s'>>", e.getMessage());
-    }
   }
 
   /**

@@ -30,13 +30,13 @@ import {
   PageHeader,
   PageTitle,
   Section,
-  SectionToolbar
+  SectionToolbar,
+  Utils
 } from 'nexus-ui-plugin';
 
-import LoggingConfigurationListMachine, {ASC} from './LoggingConfigurationListMachine';
+import LoggingConfigurationListMachine from './LoggingConfigurationListMachine';
 
 import UIStrings from '../../../../constants/UIStrings';
-import './LoggingConfigurationList.scss';
 
 export default function LoggingConfigurationList({onCreate, onEdit}) {
   const [current, send] = useMachine(LoggingConfigurationListMachine, {devTools: true});
@@ -45,15 +45,8 @@ export default function LoggingConfigurationList({onCreate, onEdit}) {
   const filterText = current.context.filter;
   const error = current.context.error;
 
-  function getSortDirection(fieldName, sortField, sortDirection) {
-    if (sortField !== fieldName) {
-      return null;
-    }
-    return sortDirection === ASC ? 'asc' : 'desc';
-  }
-
-  const nameSortDir = getSortDirection('name', current.context.sortField, current.context.sortDirection);
-  const levelSortDir = getSortDirection('level', current.context.sortField, current.context.sortDirection);
+  const nameSortDir = Utils.getSortDirection('name', current.context);
+  const levelSortDir = Utils.getSortDirection('level', current.context);
 
   function filter(value) {
     send('FILTER', {filter: value});
@@ -79,7 +72,7 @@ export default function LoggingConfigurationList({onCreate, onEdit}) {
     <ContentBody>
       <Section className="nxrm-logging-configuration-list">
         <SectionToolbar>
-          <div className="spacer" />
+          <div className="nxrm-spacer" />
           <NxFilterInput
               inputId="filter"
               onChange={filter}

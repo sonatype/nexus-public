@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-components</artifactId>
-    <version>3.28.0-SNAPSHOT</version>
+    <version>3.30.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-scheduling</artifactId>
@@ -61,6 +61,11 @@
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-thread</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-supportzip-api</artifactId>
     </dependency>
 
     <dependency>

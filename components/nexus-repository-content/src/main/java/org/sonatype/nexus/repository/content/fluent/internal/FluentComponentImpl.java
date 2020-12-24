@@ -14,10 +14,11 @@ package org.sonatype.nexus.repository.content.fluent.internal;
 
 import java.time.OffsetDateTime;
 import java.util.Collection;
+import java.util.Objects;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.content.AttributeChange;
+import org.sonatype.nexus.repository.content.AttributeOperation;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
@@ -87,7 +88,7 @@ public class FluentComponentImpl
   }
 
   @Override
-  public FluentComponent attributes(final AttributeChange change, final String key, final Object value) {
+  public FluentComponent attributes(final AttributeOperation change, final String key, final Object value) {
     facet.stores().componentStore.updateComponentAttributes(component, change, key, value);
     return this;
   }
@@ -105,8 +106,10 @@ public class FluentComponentImpl
 
   @Override
   public FluentComponent kind(final String kind) {
-    ((ComponentData) component).setKind(kind);
-    facet.stores().componentStore.updateComponentKind(component);
+    if (!Objects.equals(kind, component.kind())) {
+      ((ComponentData) component).setKind(kind);
+      facet.stores().componentStore.updateComponentKind(component);
+    }
     return this;
   }
 

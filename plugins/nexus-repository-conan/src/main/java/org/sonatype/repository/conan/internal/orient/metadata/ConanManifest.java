@@ -26,7 +26,7 @@ import org.slf4j.Logger;
 /**
  * A conan manifest file contains md5 values for subsequent files
  *
- * @since 3.next
+ * @since 3.28
  */
 public class ConanManifest
 {

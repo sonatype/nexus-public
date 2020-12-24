@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.rest.internal.resources;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.Nullable;
@@ -46,6 +47,7 @@ import org.sonatype.nexus.repository.browse.BrowseService;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.query.PageResult;
 import org.sonatype.nexus.repository.query.QueryOptions;
+import org.sonatype.nexus.repository.rest.api.AssetXODescriptor;
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
 import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO;
@@ -108,6 +110,8 @@ public class ComponentsResource
 
   private final Set<ComponentsResourceExtension> componentsResourceExtensions;
 
+  private final Map<String, AssetXODescriptor> assetDescriptors;
+
   @Inject
   public ComponentsResource(final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter,
                             final BrowseService browseService,
@@ -117,7 +121,8 @@ public class ComponentsResource
                             final UploadManager uploadManager,
                             final UploadConfiguration uploadConfiguration,
                             final ComponentXOFactory componentXOFactory,
-                            final Set<ComponentsResourceExtension> componentsResourceExtensions)
+                            final Set<ComponentsResourceExtension> componentsResourceExtensions,
+                            @Nullable final Map<String, AssetXODescriptor> assetDescriptors)
   {
     this.repositoryManagerRESTAdapter = checkNotNull(repositoryManagerRESTAdapter);
     this.browseService = checkNotNull(browseService);
@@ -128,6 +133,7 @@ public class ComponentsResource
     this.uploadConfiguration = checkNotNull(uploadConfiguration);
     this.componentXOFactory = checkNotNull(componentXOFactory);
     this.componentsResourceExtensions = checkNotNull(componentsResourceExtensions);
+    this.assetDescriptors = assetDescriptors;
   }
 
   @Override
@@ -170,7 +176,7 @@ public class ComponentsResource
         .setAssets(browseService.browseComponentAssets(repository, component.getEntityMetadata().getId().getValue())
             .getResults()
             .stream()
-            .map(asset -> fromAsset(asset, repository))
+            .map(asset -> fromAsset(asset, repository, this.assetDescriptors))
             .collect(toList()));
 
     componentXO.setGroup(component.group());
@@ -242,6 +248,10 @@ public class ComponentsResource
   {
     if (!uploadConfiguration.isEnabled()) {
       throw new WebApplicationException(NOT_FOUND);
+    }
+    if (request.getContentType() == null || !request.getContentType().startsWith("multipart/")) {
+      throw new WebApplicationMessageException(Status.BAD_REQUEST, "\"Expected multipart Content-Type\"",
+          MediaType.APPLICATION_JSON);
     }
 
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryId);

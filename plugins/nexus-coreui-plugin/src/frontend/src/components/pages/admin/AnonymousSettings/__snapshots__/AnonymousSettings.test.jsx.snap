@@ -47,10 +47,10 @@ exports[`AnonymousSettings renders correctly 1`] = `
         class="nxrm-section nx-tile"
       >
         <div
-          class="field-wrapper"
+          class="nx-form-group"
         >
           <label
-            class="field-wrapper-label nx-label"
+            class="nx-label"
           >
             <span
               class="nx-label__text"
@@ -59,16 +59,16 @@ exports[`AnonymousSettings renders correctly 1`] = `
             </span>
           </label>
           <label
-            class="nx-checkbox tm-checked"
+            class="nx-radio-checkbox nx-checkbox tm-checked"
           >
             <input
               checked=""
-              class="nx-checkbox__input"
+              class="nx-radio-checkbox__input nx-checkbox__input"
               id="enabled"
               type="checkbox"
             />
             <span
-              class="nx-checkbox__box"
+              class="nx-radio-checkbox__control nx-checkbox__box"
             >
               <svg
                 aria-hidden="true"
@@ -87,17 +87,17 @@ exports[`AnonymousSettings renders correctly 1`] = `
               </svg>
             </span>
             <span
-              class="nx-checkbox__content"
+              class="nx-radio-checkbox__content nx-checkbox__content"
             >
               Allow anonymous users to access the server
             </span>
           </label>
         </div>
         <div
-          class="field-wrapper"
+          class="nx-form-group"
         >
           <label
-            class="field-wrapper-label nx-label"
+            class="nx-label"
             for="userId"
           >
             <span
@@ -107,7 +107,7 @@ exports[`AnonymousSettings renders correctly 1`] = `
             </span>
           </label>
           <div
-            class="nx-text-input valid"
+            class="nx-text-input pristine valid"
           >
             <div
               class="nx-text-input__box"
@@ -156,10 +156,10 @@ exports[`AnonymousSettings renders correctly 1`] = `
           </div>
         </div>
         <div
-          class="field-wrapper"
+          class="nx-form-group"
         >
           <label
-            class="field-wrapper-label nx-label"
+            class="nx-label"
             for="realmName"
           >
             <span
@@ -186,7 +186,7 @@ exports[`AnonymousSettings renders correctly 1`] = `
           </select>
         </div>
         <div
-          class="nxrm-section-footer nx-tile-footer"
+          class="nxrm-footer nx-footer"
         >
           <button
             class="nx-btn disabled nx-btn--primary"

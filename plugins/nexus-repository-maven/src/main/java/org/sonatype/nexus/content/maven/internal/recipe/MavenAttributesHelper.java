@@ -14,7 +14,11 @@ package org.sonatype.nexus.content.maven.internal.recipe;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
+import org.sonatype.nexus.content.maven.store.Maven2ComponentData;
+import org.sonatype.nexus.content.maven.store.Maven2ComponentStore;
+import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.maven.MavenPath;
@@ -24,11 +28,7 @@ import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.apache.maven.model.Model;
 
 import static java.util.Optional.ofNullable;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.ARTIFACT;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.ARTIFACT_SUBORDINATE;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.OTHER;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_INDEX;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
+import static org.sonatype.nexus.repository.content.AttributeOperation.OVERLAY;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_ARTIFACT_ID;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_CLASSIFIER;
@@ -38,6 +38,11 @@ import static org.sonatype.nexus.repository.maven.internal.Attributes.P_PACKAGIN
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_POM_DESCRIPTION;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_POM_NAME;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_VERSION;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.ARTIFACT;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.ARTIFACT_SUBORDINATE;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.OTHER;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_INDEX;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
 import static org.sonatype.nexus.repository.maven.internal.Maven2Format.NAME;
 
 /**
@@ -53,13 +58,27 @@ final class MavenAttributesHelper
     //no-op
   }
 
-  static void setMavenAttributes(final FluentComponent component, final Coordinates coordinates) {
+  static void setMavenAttributes(
+      final Maven2ComponentStore componentStore,
+      final FluentComponent component,
+      final Coordinates coordinates,
+      final Optional<Model> optionalModel,
+      final int repositoryId)
+  {
     Map<String, String> mavenAttributes = new HashMap<>();
     mavenAttributes.put(P_GROUP_ID, coordinates.getGroupId());
     mavenAttributes.put(P_ARTIFACT_ID, coordinates.getArtifactId());
     mavenAttributes.put(P_VERSION, coordinates.getVersion());
     mavenAttributes.put(P_BASE_VERSION, coordinates.getBaseVersion());
-    component.withAttribute(NAME, mavenAttributes);
+
+    optionalModel.ifPresent(model -> {
+      mavenAttributes.put(P_PACKAGING, getPackaging(model));
+      ofNullable(model.getName()).ifPresent(name -> mavenAttributes.put(P_POM_NAME, name));
+      ofNullable(model.getDescription()).ifPresent(desc -> mavenAttributes.put(P_POM_DESCRIPTION, desc));
+    });
+
+    component.attributes(OVERLAY, NAME, mavenAttributes);
+    fillInBaseVersionColumn(componentStore, component, repositoryId, coordinates.getBaseVersion());
   }
 
   static void setMavenAttributes(final FluentAsset asset, final MavenPath mavenPath) {
@@ -73,18 +92,10 @@ final class MavenAttributesHelper
       ofNullable(coordinates.getClassifier()).ifPresent(value -> mavenAttributes.put(P_CLASSIFIER, value));
       mavenAttributes.put(P_EXTENSION, coordinates.getExtension());
     }
-    asset.withAttribute(NAME, mavenAttributes);
+    asset.attributes(OVERLAY, NAME, mavenAttributes);
   }
 
-  static void setPomAttributes(final FluentComponent component, final Model model) {
-    Map<String, Object> pomAttributes = new HashMap<>(component.attributes(NAME).backing());
-    pomAttributes.put(P_PACKAGING, getPackaging(model));
-    ofNullable(model.getName()).ifPresent(name -> pomAttributes.put(P_POM_NAME, name));
-    ofNullable(model.getDescription()).ifPresent(desc -> pomAttributes.put(P_POM_DESCRIPTION, desc));
-    component.withAttribute(NAME, pomAttributes);
-  }
-
-  static String getPackaging(Model model) {
+  static String getPackaging(final Model model) {
     String packaging = model.getPackaging();
     return packaging == null ? JAR : packaging;
   }
@@ -112,5 +123,22 @@ final class MavenAttributesHelper
     else {
       return OTHER.name();
     }
+  }
+
+  /**
+   * base_version column can be used to improve query speed and memory usage in some maven tasks.
+   */
+  private static void fillInBaseVersionColumn(final Maven2ComponentStore componentStore,
+                                              final Component component,
+                                              final int repositoryId,
+                                              final String baseVersion)
+  {
+    Maven2ComponentData componentData = new Maven2ComponentData();
+    componentData.setNamespace(component.namespace());
+    componentData.setName(component.name());
+    componentData.setVersion(component.version());
+    componentData.setRepositoryId(repositoryId);
+    componentData.setBaseVersion(baseVersion);
+    componentStore.updateBaseVersion(componentData);
   }
 }

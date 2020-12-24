@@ -14,6 +14,7 @@ package org.sonatype.repository.conan.internal.orient.hosted.v1;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.function.Supplier;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -49,7 +50,6 @@ import org.sonatype.repository.conan.internal.orient.hosted.ConanHostedMetadataF
 import org.sonatype.repository.conan.internal.orient.utils.ConanFacetUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.base.Supplier;
 import org.apache.commons.lang3.StringUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -68,7 +68,7 @@ import static org.sonatype.repository.conan.internal.orient.utils.ConanFacetUtil
 import static org.sonatype.repository.conan.internal.orient.utils.ConanFacetUtils.findComponent;
 
 /**
- * @since 3.next
+ * @since 3.28
  */
 @Exposed
 @Named

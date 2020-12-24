@@ -21,7 +21,7 @@ import org.sonatype.nexus.mime.internal.DefaultMimeSupport;
 import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.mime.DefaultContentValidator;
 
-import com.google.common.base.Supplier;
+import java.util.function.Supplier;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

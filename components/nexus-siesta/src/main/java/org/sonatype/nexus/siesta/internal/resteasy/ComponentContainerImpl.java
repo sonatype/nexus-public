@@ -74,8 +74,10 @@ public class ComponentContainerImpl
 
     super.init(servletConfig);
 
+    ResteasyProviderFactory providerFactory = getDispatcher().getProviderFactory();
+    providerFactory.getContainerRequestFilterRegistry().registerClass(FeatureFlaggedMethodRequestFilter.class);
+
     if (log.isDebugEnabled()) {
-      ResteasyProviderFactory providerFactory = getDispatcher().getProviderFactory();
       log.debug("Provider factory: {}", providerFactory);
       log.debug("Configuration: {}", providerFactory.getConfiguration());
       log.debug("Runtime type: {}", providerFactory.getRuntimeType());

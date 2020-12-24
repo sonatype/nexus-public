@@ -58,7 +58,7 @@ public interface UserApiResourceDoc
       @ApiParam("A representation of the user to update.") @NotNull @Valid ApiUser user);
 
   @ApiOperation("Delete a user.")
-  @ApiResponses(value = {@ApiResponse(code = 400, message = PASSWORD_REQUIRED),
+  @ApiResponses(value = {@ApiResponse(code = 400, message = NexusSecurityApiConstants.NON_LOCAL_USER_CANNOT_BE_DELETED),
       @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
       @ApiResponse(code = 404, message = NexusSecurityApiConstants.USER_OR_SOURCE_NOT_FOUND)})
   void deleteUser(@ApiParam(value = USER_ID_DESCRIPTION) String userId);

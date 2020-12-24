@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>3.28.0-SNAPSHOT</version>
+    <version>3.30.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-testing</artifactId>
@@ -62,7 +62,7 @@
       <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
-        <version>4.12</version>
+        <version>4.13.1</version>
       </dependency>
       
       <dependency>
@@ -136,18 +136,6 @@
         <groupId>org.littleshoot</groupId>
         <artifactId>littleproxy</artifactId>
         <version>1.1.0</version>
-      </dependency>   
-
-      <dependency>
-        <groupId>com.sonatype.nexus</groupId>
-        <artifactId>nexus-db-migrator</artifactId>
-        <version>3.22.1-01</version>
-        <exclusions>
-          <exclusion>
-            <groupId>*</groupId>
-            <artifactId>*</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
 
       <!--
@@ -249,7 +237,7 @@
       <dependency>
         <groupId>org.keycloak</groupId>
         <artifactId>keycloak-admin-client</artifactId>
-        <version>11.0.0</version>
+        <version>11.0.3</version>
         <exclusions>
           <exclusion>
             <groupId>org.bouncycastle</groupId>

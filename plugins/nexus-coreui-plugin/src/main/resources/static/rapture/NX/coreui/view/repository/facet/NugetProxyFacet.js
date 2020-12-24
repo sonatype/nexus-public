@@ -42,6 +42,34 @@ Ext.define('NX.coreui.view.repository.facet.NugetProxyFacet', {
 
         items: [
           {
+            xtype: 'radiogroup',
+            fieldLabel: NX.I18n.get('Repository_Facet_NugetProxyFacet_ProtocolVersion'),
+            columns: 1,
+            vertical: true,
+            items: [
+              {
+                boxLabel: NX.I18n.get('Repository_Facet_NugetProxyFacet_V2'),
+                name: 'attributes.nugetProxy.nugetVersion',
+                inputValue: 'V2'
+              },
+              {
+                boxLabel: NX.I18n.get('Repository_Facet_NugetProxyFacet_V3'),
+                name: 'attributes.nugetProxy.nugetVersion',
+                inputValue: 'V3'
+              }
+            ],
+            listeners: {
+              afterrender: function(radioGroupForm) {
+                if (Ext.Object.isEmpty(radioGroupForm.getValue())) {
+                  var defaultValue = {
+                    'attributes.nugetProxy.nugetVersion': 'V3'
+                  };
+                  radioGroupForm.setValue(defaultValue);
+                }
+              }
+            }
+          },
+          {
             xtype: 'numberfield',
             name: 'attributes.nugetProxy.queryCacheItemMaxAge',
             fieldLabel: NX.I18n.get('Repository_Facet_NugetProxyFacet_ItemMaxAge_FieldLabel'),

@@ -40,7 +40,7 @@ public class DecoratorUtils
   @Nullable
   @SuppressWarnings("unchecked")
   public static <T> T getDecoratedEntity(final Object decoratedObject, final Class<T> clazz) {
-    if (decoratedObject.getClass().isAssignableFrom(clazz)) {
+    if (clazz.isAssignableFrom(decoratedObject.getClass())) {
       // the object itself is the one we are looking for
       return (T) decoratedObject;
     }
@@ -50,10 +50,10 @@ public class DecoratorUtils
       return null;
     }
 
-    Object wrappedObject = ((DecoratedObject<T>) decoratedObject).getWrappedObject();
-    if (wrappedObject.getClass().isAssignableFrom(clazz)) {
+    T wrappedObject = ((DecoratedObject<T>) decoratedObject).getWrappedObject();
+    if (clazz.isAssignableFrom(wrappedObject.getClass())) {
       // wrapped object is the one we are looking for
-      return (T) wrappedObject;
+      return wrappedObject;
     }
 
     if (wrappedObject instanceof DecoratedObject) {

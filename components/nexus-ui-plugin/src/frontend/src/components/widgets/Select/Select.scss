@@ -17,12 +17,14 @@
 @import '~@sonatype/react-shared-components/scss-shared/nx-variables';
 
 .nxrm-select {
-  color: $nx-text-color-light;
+  color: $nx-text-color;
   font-size: $nx-font-size;
   line-height: $nx-line-height;
   border-radius: $nx-border-radius;
   padding: $nx-spacing-xs $nx-spacing-l $nx-spacing-xs $nx-spacing-md;
+  margin-bottom: 28px;  // Aligns a select with other combobox elements that have a validation message below
   width: $nx-form-element-width-normal;
+  margin-right: $nx-spacing-md;
 
   -moz-appearance: none;
   -webkit-appearance: none;

@@ -25,7 +25,7 @@ import org.sonatype.nexus.repository.view.payloads.TempBlob;
 /**
  * Utility methods for working with Jar (Jar Binks, worst character) files
  *
- * @since 3.next
+ * @since 3.28
  */
 public abstract class JarExtractor<T>
 {

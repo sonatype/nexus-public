@@ -82,4 +82,14 @@ public abstract class AbstractRepositoryContent
   public void setLastUpdated(final OffsetDateTime lastUpdated) {
     this.lastUpdated = checkNotNull(lastUpdated);
   }
+
+  @Override
+  public String toString() {
+    return "AbstractRepositoryContent{" +
+        "repositoryId=" + repositoryId +
+        ", attributes=" + attributes +
+        ", created=" + created +
+        ", lastUpdated=" + lastUpdated +
+        '}';
+  }
 }

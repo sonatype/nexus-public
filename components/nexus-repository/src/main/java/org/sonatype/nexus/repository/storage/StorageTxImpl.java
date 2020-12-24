@@ -34,6 +34,7 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuard;
 import org.sonatype.nexus.common.stateguard.StateGuardAware;
@@ -50,7 +51,7 @@ import org.sonatype.nexus.repository.move.RepositoryMoveService;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.transaction.RetryController;
 
-import com.google.common.base.Supplier;
+import java.util.function.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
@@ -121,6 +122,8 @@ public class StorageTxImpl
 
   private final Provider<RepositoryMoveService> repositoryMoveStoreProvider;
 
+  private final NodeAccess nodeAccess;
+
   private int retries = 0;
 
   private String reason = DEFAULT_REASON;
@@ -139,7 +142,8 @@ public class StorageTxImpl
                        final ContentValidator contentValidator,
                        final MimeRulesSource mimeRulesSource,
                        final ComponentFactory componentFactory,
-                       final Provider<RepositoryMoveService> repositoryMoveStoreProvider)
+                       final Provider<RepositoryMoveService> repositoryMoveStoreProvider,
+                       final NodeAccess nodeAccess)
   {
     this.createdBy = checkNotNull(createdBy);
     this.createdByIp = checkNotNull(createdByIp);
@@ -156,6 +160,7 @@ public class StorageTxImpl
     this.mimeRulesSource = checkNotNull(mimeRulesSource);
     this.componentFactory = checkNotNull(componentFactory);
     this.repositoryMoveStoreProvider = checkNotNull(repositoryMoveStoreProvider);
+    this.nodeAccess = checkNotNull(nodeAccess);
 
     // This is only here for now to yell in case of nested TX
     // To be discussed in future, or at the point when we will have need for nested TX
@@ -713,12 +718,25 @@ public class StorageTxImpl
 
     Map<String, String> storageHeadersMap = buildStorageHeaders(blobName, originalBlob, headers, declaredContentType,
         skipContentVerification);
-    return blobTx.createByCopying(
-        originalBlob.getBlob().getId(),
-        storageHeadersMap,
-        originalBlob.getHashes(),
-        originalBlob.getHashesVerified()
-    );
+    try {
+      return blobTx.createByCopying(
+          originalBlob.getBlobRef(nodeAccess.getId()),
+          storageHeadersMap,
+          originalBlob.getHashes(),
+          originalBlob.getHashesVerified()
+      );
+    }
+    catch (MissingBlobException e) {
+      log.info("Blob {} no longer in blob store, attempting to copy cross-blob store", originalBlob.getBlobRef(nodeAccess.getId()));
+      try (InputStream inputStream = originalBlob.get()) {
+        return blobTx.create(
+          inputStream,
+          storageHeadersMap,
+          originalBlob.getHashes().keySet(),
+          storageHeadersMap.get(BlobStore.CONTENT_TYPE_HEADER)
+        );
+      }
+    }
   }
 
   private Map<String, String> buildStorageHeaders(final String blobName,

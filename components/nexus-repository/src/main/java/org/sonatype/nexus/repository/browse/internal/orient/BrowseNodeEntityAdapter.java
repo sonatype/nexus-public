@@ -30,7 +30,6 @@ import org.sonatype.nexus.orient.entity.AttachedEntityId;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.browse.node.BrowsePath;
-import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.ossindex.PackageUrlService;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
@@ -40,6 +39,7 @@ import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -85,6 +85,8 @@ public class BrowseNodeEntityAdapter
 
   private static final String LIMIT = "limit";
 
+  private static final String KEY = "key";
+
   private static final String I_REPOSITORY_NAME_PARENT_PATH_NAME = new OIndexNameBuilder()
       .type(DB_CLASS)
       .property(P_REPOSITORY_NAME)
@@ -103,16 +105,16 @@ public class BrowseNodeEntityAdapter
       .build();
 
   private static final String FIND_BY_PARENT_PATH = String.format(
-      "select expand(rid) from index:%s where key=[:%s,:%s,:%s] limit 1",
-      I_REPOSITORY_NAME_PARENT_PATH_NAME, P_REPOSITORY_NAME, P_PARENT_PATH, P_NAME);
+      "select expand(rid) from index:%s where key=:%s limit 1",
+      I_REPOSITORY_NAME_PARENT_PATH_NAME, KEY);
 
   private static final String FIND_CHILDREN = String.format(
       "select from %s where (%s=:%s and %s=:%s)",
       DB_CLASS, P_REPOSITORY_NAME, P_REPOSITORY_NAME, P_PARENT_PATH, BASE_PATH);
 
   private static final String CHILD_COUNT = String.format(
-      "select rid from `index:%s` where key=[:%s, :%s] limit :%s",
-      I_REPOSITORY_NAME_PARENT_PATH_NAME, P_REPOSITORY_NAME, BASE_PATH, LIMIT);
+      "select rid from `index:%s` where key=:%s limit :%s",
+      I_REPOSITORY_NAME_PARENT_PATH_NAME, KEY, LIMIT);
 
   private static final String FIND_BY_COMPONENT = String.format(
       "select from %s where %s=:%s",
@@ -357,11 +359,12 @@ public class BrowseNodeEntityAdapter
   private static ODocument findNodeRecord(final ODatabaseDocumentTx db, final OrientBrowseNode node) {
     return getFirst(
         db.command(new OCommandSQL(FIND_BY_PARENT_PATH)).execute(
-            ImmutableMap.of(
-                P_REPOSITORY_NAME, node.getRepositoryName(),
-                P_PARENT_PATH, node.getParentPath(),
-                P_NAME, node.getName())),
+            ImmutableMap.of(KEY, indexKey(node.getRepositoryName(), node.getParentPath(), node.getName()))),
         null);
+  }
+
+  private static OCompositeKey indexKey(final String... keys) {
+    return new OCompositeKey((Object[]) keys);
   }
 
   /**
@@ -464,9 +467,9 @@ public class BrowseNodeEntityAdapter
   private void maybeDeleteParents(final ODatabaseDocumentTx db, final String repositoryName, final String parentPath) {
     //count of 1 meaning the node we are currently deleting
     if (!"/".equals(parentPath) && childCountEqualTo(db, repositoryName, parentPath, 1)) {
-      ODocument parent = getFirst(db.command(new OCommandSQL(FIND_BY_PARENT_PATH)).execute(ImmutableMap
-          .of(P_REPOSITORY_NAME, repositoryName, P_PARENT_PATH, previousParentPath(parentPath), P_NAME,
-              previousParentName(parentPath))), null);
+      ODocument parent = getFirst(db.command(new OCommandSQL(FIND_BY_PARENT_PATH)).execute(ImmutableMap.of(
+              KEY, indexKey(repositoryName, previousParentPath(parentPath), previousParentName(parentPath)))),
+          null);
 
       if (parent != null && parent.field(P_COMPONENT_ID) == null && parent.field(P_ASSET_ID) == null) {
         maybeDeleteParents(db, repositoryName, parent.field(P_PARENT_PATH));
@@ -537,7 +540,7 @@ public class BrowseNodeEntityAdapter
                                     final String repositoryName, final String basePath, final long expected)
   {
     List<ODocument> docs = db.command(new OCommandSQL(CHILD_COUNT)).execute(
-        ImmutableMap.of(P_REPOSITORY_NAME, repositoryName, BASE_PATH, basePath, LIMIT, expected + 1));
+        ImmutableMap.of(KEY, indexKey(repositoryName, basePath), LIMIT, expected + 1));
     return docs.size() == expected;
   }
 }

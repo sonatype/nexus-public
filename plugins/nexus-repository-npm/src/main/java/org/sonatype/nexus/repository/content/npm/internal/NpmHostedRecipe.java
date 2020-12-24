@@ -63,7 +63,7 @@ import static org.sonatype.nexus.repository.npm.internal.NpmPaths.*;
 /**
  * npm hosted repository recipe.
  *
- * @since 3.next
+ * @since 3.28
  */
 @Named(NpmHostedRecipe.NAME)
 @Singleton
@@ -77,10 +77,6 @@ public class NpmHostedRecipe
   private final Provider<NpmSearchIndexFacetHosted> npmSearchIndexFacetProvider;
 
   private final Provider<NpmSearchFacetHosted> npmSearchFacetProvider;
-
-  private final NpmWhoamiHandler npmWhoamiHandler;
-
-  private final NpmPingHandler pingHandler;
 
   @Inject
   public NpmHostedRecipe(
@@ -97,7 +93,7 @@ public class NpmHostedRecipe
       final Provider<NpmHostedFacet> npmHostedFacet,
       final Provider<NpmSearchIndexFacetHosted> npmSearchIndexFacet,
       final Provider<NpmSearchFacetHosted> npmSearchFacet,
-      final Provider<LastAssetMaintenanceFacet> lastAssetMaintenanceFacet,
+      final Provider<NpmHostedMaintenanceFacet> maintenanceFacetProvider,
       final ExceptionHandler exceptionHandler,
       final TimingHandler timingHandler,
       final IndexHtmlForwardHandler indexHtmlForwardHandler,
@@ -116,13 +112,11 @@ public class NpmHostedRecipe
     super(type, format, securityFacet, viewFacet, contentFacet, searchFacet, browseFacet, exceptionHandler,
         timingHandler, indexHtmlForwardHandler, securityHandler, partialFetchHandler, conditionalRequestHandler,
         contentHeadersHandler, lastDownloadedHandler, handlerContributor, tokenFacet, npmAuditFacetProvider,
-        npmAuditTarballFacetProvider, lastAssetMaintenanceFacet, routingHandler, auditErrorHandler,
-        auditAnalyticsHandler);
+        npmAuditTarballFacetProvider, maintenanceFacetProvider, routingHandler, auditErrorHandler,
+        auditAnalyticsHandler, npmWhoamiHandler, pingHandler);
     this.npmHostedFacetProvider = npmHostedFacet;
     this.npmSearchIndexFacetProvider = npmSearchIndexFacet;
     this.npmSearchFacetProvider = npmSearchFacet;
-    this.npmWhoamiHandler = npmWhoamiHandler;
-    this.pingHandler = pingHandler;
   }
 
   @Override
@@ -135,7 +129,7 @@ public class NpmHostedRecipe
     repository.attach(npmSearchIndexFacetProvider.get());
     repository.attach(npmSearchFacetProvider.get());
     repository.attach(contentFacet.get());
-    repository.attach(lastAssetMaintenanceFacet.get());
+    repository.attach(contentMaintenanceFacetProvider.get());
   }
 
   /**

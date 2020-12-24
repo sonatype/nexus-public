@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.rest.internal.resources;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -38,6 +39,7 @@ import org.sonatype.nexus.repository.browse.BrowseService;
 import org.sonatype.nexus.repository.rest.api.AssetXO;
 import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
+import org.sonatype.nexus.repository.rest.api.AssetXODescriptor;
 import org.sonatype.nexus.repository.rest.internal.resources.doc.AssetsResourceDoc;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.query.PageResult;
@@ -84,18 +86,22 @@ public class AssetsResource
 
   private final ContinuationTokenHelper continuationTokenHelper;
 
+  private final Map<String, AssetXODescriptor> assetDescriptors;
+
   @Inject
   public AssetsResource(final BrowseService browseService,
                         final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter,
                         final AssetEntityAdapter assetEntityAdapter,
                         final MaintenanceService maintenanceService,
-                        @Named("asset") final ContinuationTokenHelper continuationTokenHelper)
+                        @Named("asset") final ContinuationTokenHelper continuationTokenHelper,
+                        final Map<String, AssetXODescriptor> assetDescriptors)
   {
     this.browseService = checkNotNull(browseService);
     this.repositoryManagerRESTAdapter = checkNotNull(repositoryManagerRESTAdapter);
     this.assetEntityAdapter = checkNotNull(assetEntityAdapter);
     this.maintenanceService = checkNotNull(maintenanceService);
     this.continuationTokenHelper = checkNotNull(continuationTokenHelper);
+    this.assetDescriptors = assetDescriptors;
   }
 
 
@@ -109,8 +115,9 @@ public class AssetsResource
         repository,
         new QueryOptions(null, "id", "asc", 0, 10, lastIdFromContinuationToken(continuationToken)));
 
+
     List<AssetXO> assetXOs = assetBrowseResult.getResults().stream()
-        .map(asset -> fromAsset(asset, repository))
+        .map(asset -> fromAsset(asset, repository, this.assetDescriptors))
         .collect(toList());
     return new Page<>(assetXOs, assetBrowseResult.getTotal() > assetBrowseResult.getResults().size() ?
         continuationTokenHelper.getTokenFromId(getLast(assetBrowseResult.getResults())) : null);
@@ -135,7 +142,7 @@ public class AssetsResource
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryItemIDXO.getRepositoryId());
 
     Asset asset = getAsset(id, repository, new DetachedEntityId(repositoryItemIDXO.getId()));
-    return fromAsset(asset, repository);
+    return fromAsset(asset, repository, this.assetDescriptors);
   }
 
   @DELETE

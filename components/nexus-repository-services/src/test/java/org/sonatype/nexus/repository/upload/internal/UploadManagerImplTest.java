@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.upload.internal;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +30,7 @@ import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.types.VirtualType;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
+import org.sonatype.nexus.repository.upload.UploadProcessor;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadHandler;
 import org.sonatype.nexus.repository.upload.UploadResponse;
@@ -89,6 +91,9 @@ public class UploadManagerImplTest
   @Mock
   ValidatingComponentUpload validatingComponentUpload;
 
+  @Mock
+  UploadProcessor uploadComponentProcessor;
+
   @Captor
   ArgumentCaptor<ComponentUpload> componentUploadCaptor;
 
@@ -111,7 +116,8 @@ public class UploadManagerImplTest
     handlers.put("a", handlerA);
     handlers.put("b", handlerB);
 
-    underTest = new UploadManagerImpl(handlers, blobStoreAwareMultipartHelper);
+    underTest = new UploadManagerImpl(handlers, blobStoreAwareMultipartHelper, uploadComponentProcessor,
+        Collections.emptySet());
   }
 
   @Test

@@ -43,8 +43,14 @@ public interface Asset
 
   /**
    * Current blob attached to this asset; proxy repositories may have assets whose blobs have not been fetched yet.
+   * If checking for existence please use {@code hasBlob()} which is less expensive.
    */
   Optional<AssetBlob> blob();
+
+  /**
+   * Indicates whether the asset has a blob, may be faster than {@code blob()} due to lazy loading.
+   */
+  boolean hasBlob();
 
   /**
    * If/when this asset was last downloaded.

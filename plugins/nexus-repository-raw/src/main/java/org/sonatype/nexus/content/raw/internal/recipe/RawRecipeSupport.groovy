@@ -26,11 +26,11 @@ import org.sonatype.nexus.repository.http.PartialFetchHandler
 import org.sonatype.nexus.repository.raw.internal.RawSecurityFacet
 import org.sonatype.nexus.repository.security.SecurityHandler
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
+import org.sonatype.nexus.repository.view.handlers.BrowseUnsupportedHandler
 import org.sonatype.nexus.repository.view.handlers.ConditionalRequestHandler
 import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler
 import org.sonatype.nexus.repository.view.handlers.ExceptionHandler
 import org.sonatype.nexus.repository.view.handlers.HandlerContributor
-import org.sonatype.nexus.repository.view.handlers.IndexHtmlForwardHandler
 import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler
 import org.sonatype.nexus.repository.view.handlers.TimingHandler
 
@@ -65,7 +65,7 @@ abstract class RawRecipeSupport
   TimingHandler timingHandler
 
   @Inject
-  IndexHtmlForwardHandler indexHtmlForwardHandler
+  RawIndexHtmlForwardHandler indexHtmlForwardHandler
 
   @Inject
   SecurityHandler securityHandler
@@ -84,6 +84,9 @@ abstract class RawRecipeSupport
 
   @Inject
   LastDownloadedHandler lastDownloadedHandler
+
+  @Inject
+  BrowseUnsupportedHandler browseUnsupportedHandler
 
   @Inject
   HandlerContributor handlerContributor

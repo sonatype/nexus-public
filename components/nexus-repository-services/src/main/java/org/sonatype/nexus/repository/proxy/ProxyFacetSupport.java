@@ -182,11 +182,17 @@ public abstract class ProxyFacetSupport
     );
 
     // normalize URL path to contain trailing slash
-    if (!config.remoteUrl.getPath().endsWith("/")) {
-      config.remoteUrl = config.remoteUrl.resolve(config.remoteUrl.getPath() + "/");
-    }
+    config.remoteUrl = normalizeURLPath(config.remoteUrl);
 
     log.debug("Config: {}", config);
+  }
+
+  protected URI normalizeURLPath(final URI remoteURI) {
+    String path = remoteURI.getPath();
+    if (!path.endsWith("/")) {
+      return remoteURI.resolve(remoteURI.getRawPath() + "/");
+    }
+    return remoteURI;
   }
 
   @Override
@@ -437,7 +443,15 @@ public abstract class ProxyFacetSupport
 
     mayThrowBypassHttpErrorException(response);
 
-    final CacheInfo cacheInfo = getCacheController(context).current();
+    final CacheInfo cacheInfo;
+
+    try {
+      cacheInfo = getCacheController(context).current();
+    } catch (Exception e) {
+      log.trace("Exception getting cache controller for context", e);
+      HttpClientUtils.closeQuietly(response);
+      throw e;
+    }
 
     if (status.getStatusCode() == HttpStatus.SC_OK) {
       HttpEntity entity = response.getEntity();

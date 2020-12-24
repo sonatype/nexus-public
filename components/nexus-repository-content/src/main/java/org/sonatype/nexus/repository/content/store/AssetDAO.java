@@ -12,7 +12,9 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import java.time.OffsetDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -81,16 +83,22 @@ public interface AssetDAO
    * by asset id in ascending order.
    *
    * @param repositoryIds the ids of the repositories to browse
-   * @param limit maximum number of assets to return
    * @param continuationToken optional token to continue from a previous request
+   * @param kind optional kind of assets to return
+   * @param filter optional filter to apply
+   * @param filterParams parameter map for the optional filter
+   * @param limit maximum number of assets to return
    * @return collection of assets from the specified repositories and the next continuation token
    *
    * @see Continuation#nextContinuationToken()
    */
   Continuation<Asset> browseAssetsInRepositories(
       @Param("repositoryIds") Set<Integer> repositoryIds,
-      @Param("limit") int limit,
-      @Nullable @Param("continuationToken") String continuationToken);
+      @Nullable @Param("continuationToken") String continuationToken,
+      @Nullable @Param("kind") String kind,
+      @Nullable @Param("filter") String filter,
+      @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams,
+      @Param("limit") int limit);
 
   /**
    * Browse all assets associated with the given logical component.
@@ -180,6 +188,16 @@ public interface AssetDAO
   boolean deleteAssets(@Param("repositoryId") int repositoryId, @Param("limit") int limit);
 
   /**
+   * Deletes assets with at the specified paths in the given repository from the content data store.
+   *
+   * @param repositoryId the repository containing the assets
+   * @param paths        a list of asset paths
+   * @return {@code true} if any assets were deleted
+   * @since 3.29
+   */
+  boolean deleteAssetsByPaths(@Param("repositoryId") int repositoryId, @Param("paths") List<String> paths);
+
+  /**
    * Selects assets without a component in the given repository last downloaded more than given number of days ago.
    *
    * @param repositoryId the repository to check
@@ -216,4 +234,31 @@ public interface AssetDAO
    * @since 3.26
    */
   int purgeSelectedAssets(@Param("assetIds") Integer[] assetIds);
+
+  /**
+   * Generally it is recommended that this method not be called and let stores manage this value automatically.
+   *
+   * Sets the created time of the asset associated with the ID to the specified time.
+   *
+   * @since 3.29
+   */
+  void created(@Param("assetId") int assetId, @Param("created") OffsetDateTime created);
+
+  /**
+   * Generally it is recommended that this method not be called and let stores manage this value automatically.
+   *
+   * Sets the last download time of the asset associated with the ID to the specified time.
+   *
+   * @since 3.29
+   */
+  void lastDownloaded(@Param("assetId") int assetId, @Param("lastDownloaded") OffsetDateTime lastDownloaded);
+
+  /**
+   * Generally it is recommended that this method not be called and let stores manage this value automatically.
+   *
+   * Sets the last updated time of the asset associated with the ID to the specified time.
+   *
+   * @since 3.29
+   */
+  void lastUpdated(@Param("assetId") int assetId, @Param("lastUpdated") OffsetDateTime lastUpdated);
 }

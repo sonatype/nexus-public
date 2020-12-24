@@ -27,7 +27,6 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.text.Strings2;
-import org.sonatype.nexus.repository.content.AttributeChange;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.npm.NpmContentFacet;
@@ -56,7 +55,7 @@ import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.META_R
 import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.selectVersionByTarballName;
 
 /**
- * @since 3.next
+ * @since 3.28
  */
 @Named
 public class NpmHostedFacetImpl
@@ -102,7 +101,7 @@ public class NpmHostedFacetImpl
   {
     checkNotNull(packageId);
 
-    Optional<NestedAttributesMap> oldPackageRoot = loadPackageRoot(packageId);
+    Optional<NestedAttributesMap> oldPackageRoot = loadPackageRoot(packageId, content());
     if (revision != null) {
       oldPackageRoot.ifPresent(attr -> checkArgument(revision.equals(attr.get(META_REV, String.class))));
 
@@ -166,7 +165,7 @@ public class NpmHostedFacetImpl
     log.debug("Getting package: {}", packageId);
 
     try {
-      NestedAttributesMap packageRoot = loadPackageRoot(packageId).orElse(null);
+      NestedAttributesMap packageRoot = loadPackageRoot(packageId, content()).orElse(null);
 
       if (packageRoot == null) {
         return Optional.empty();
@@ -184,7 +183,7 @@ public class NpmHostedFacetImpl
   @Override
   public Optional<Content> getPackage(final NpmPackageId packageId) throws IOException {
     return content().get(packageId)
-        .map(NpmFacetSupport::toContent)
+        .map(NpmFacetSupport::toNpmContent)
         .map(content -> content.fieldMatchers(asList(
             missingRevFieldMatcher(() -> "1"),// TODO unclear when this situation might occur
             rewriteTarballUrlMatcher(getRepository().getName(), packageId.id()))))
@@ -254,7 +253,7 @@ public class NpmHostedFacetImpl
   {
     boolean update = false;
     NestedAttributesMap packageRoot = newPackageRoot;
-    NestedAttributesMap oldPackageRoot = loadPackageRoot(packageId).orElse(null);
+    NestedAttributesMap oldPackageRoot = loadPackageRoot(packageId, content()).orElse(null);
 
     if (oldPackageRoot != null) {
       String rev = revision;
@@ -329,10 +328,10 @@ public class NpmHostedFacetImpl
         final boolean deprecated = !Strings2.isBlank(deprecationMessage);
         if (deprecated && !deprecationMessage
             .equals(tarballComponent.attributes().get(NpmAttributes.P_DEPRECATED, String.class))) {
-          tarballComponent.attributes(AttributeChange.SET, NpmAttributes.P_DEPRECATED, deprecationMessage);
+          tarballComponent.withAttribute(NpmAttributes.P_DEPRECATED, deprecationMessage);
         }
         else if (!deprecated && tarballComponent.attributes().contains(NpmAttributes.P_DEPRECATED)) {
-          tarballComponent.attributes(AttributeChange.REMOVE, NpmAttributes.P_DEPRECATED, null);
+          tarballComponent.withoutAttribute(NpmAttributes.P_DEPRECATED);
         }
       });
     }

@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.testsuite</groupId>
     <artifactId>nexus-testsuite</artifactId>
-    <version>3.28.0-SNAPSHOT</version>
+    <version>3.30.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-repository-testsupport</artifactId>
@@ -76,6 +76,12 @@
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-repository-raw</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-repository-pypi</artifactId>
       <scope>provided</scope>
     </dependency>
 
@@ -191,6 +197,12 @@
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>org.quartz-scheduler</groupId>
+      <artifactId>quartz</artifactId>
+    </dependency>
+
   </dependencies>
 
   <build>
@@ -241,6 +253,7 @@
               org.sonatype.nexus.repository.yum.*;resolution:=optional,
               org.sonatype.nexus.repository.search.*;resolution:=optional,
               org.sonatype.nexus.repository.storage.*;resolution:=optional,
+              org.sonatype.nexus.repository.attributes.*;resolution:=optional,
               org.sonatype.nexus.repository.vulnerability.*;resolution:=optional,
               org.sonatype.nexus.testsuite.testsupport.cleanup.*;resolution:=optional,
               *

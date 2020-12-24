@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>3.28.0-SNAPSHOT</version>
+    <version>3.30.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-rest</artifactId>
@@ -28,9 +28,9 @@
   <packaging>pom</packaging>
 
   <properties>
-    <jackson2.version>2.11.1</jackson2.version>
+    <jackson2.version>2.11.2</jackson2.version>
     <jaxb.version>2.3.3</jaxb.version>
-    <resteasy.version>3.12.1.Final</resteasy.version>
+    <resteasy.version>3.13.0.Final</resteasy.version>
     <swagger.version>1.6.2</swagger.version>
     <snakeyaml.version>1.26</snakeyaml.version>
   </properties>
@@ -68,7 +68,7 @@
       <dependency>
         <groupId>com.thoughtworks.xstream</groupId>
         <artifactId>xstream</artifactId>
-        <version>1.4.12</version>
+        <version>1.4.15</version>
         <exclusions>
           <exclusion>
             <groupId>xmlpull</groupId>

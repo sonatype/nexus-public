@@ -39,6 +39,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponentBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 import org.sonatype.nexus.repository.maven.MavenPath;
+import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.view.Content;
@@ -213,10 +214,10 @@ public class DatastoreMetadataRebuilderTest
 
     MavenPath mavenPath1 = mock(MavenPath.class);
     when(mavenPath1.getPath()).thenReturn(path1_noSlash);
-    when(mavenPath1.hash(Matchers.any())).thenCallRealMethod();
+    when(mavenPath1.hash(Matchers.any(HashType.class))).thenCallRealMethod();
     MavenPath mavenPath2 = mock(MavenPath.class);
     when(mavenPath2.getPath()).thenReturn(path2_noSlash);
-    when(mavenPath2.hash(Matchers.any())).thenCallRealMethod();
+    when(mavenPath2.hash(Matchers.any(HashType.class))).thenCallRealMethod();
 
     FluentAssetBuilder assetBuilder1 = mock(FluentAssetBuilder.class);
     when(assetBuilder1.find()).thenReturn(Optional.of(asset1));

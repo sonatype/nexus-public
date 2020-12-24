@@ -24,7 +24,6 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.cache.NegativeCacheFacet;
 import org.sonatype.nexus.repository.cache.NegativeCacheHandler;
-import org.sonatype.nexus.repository.content.maintenance.LastAssetMaintenanceFacet;
 import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
@@ -70,8 +69,6 @@ public class MavenProxyRecipe
 
   private final Provider<MavenContentProxyIndexFacet> mavenProxyIndexFacet;
 
-  private final Provider<LastAssetMaintenanceFacet> lastAssetMaintenanceFacet;
-
   @Inject
   public MavenProxyRecipe(
       @Named(ProxyType.NAME) final Type type,
@@ -82,8 +79,7 @@ public class MavenProxyRecipe
       final Provider<PurgeUnusedFacet> purgeUnusedFacet,
       final NegativeCacheHandler negativeCacheHandler,
       final ProxyHandler proxyHandler,
-      final Provider<MavenContentProxyIndexFacet> mavenProxyIndexFacet,
-      final Provider<LastAssetMaintenanceFacet> lastAssetMaintenanceFacet)
+      final Provider<MavenContentProxyIndexFacet> mavenProxyIndexFacet)
   {
     super(type, format);
     this.httpClientFacet = checkNotNull(httpClientFacet);
@@ -93,7 +89,6 @@ public class MavenProxyRecipe
     this.negativeCacheHandler = checkNotNull(negativeCacheHandler);
     this.proxyHandler = checkNotNull(proxyHandler);
     this.mavenProxyIndexFacet = checkNotNull(mavenProxyIndexFacet);
-    this.lastAssetMaintenanceFacet = checkNotNull(lastAssetMaintenanceFacet);
   }
 
 
@@ -110,7 +105,7 @@ public class MavenProxyRecipe
     repository.attach(getSearchFacet().get());
     repository.attach(getBrowseFacet().get());
     repository.attach(mavenProxyIndexFacet.get());
-    repository.attach(lastAssetMaintenanceFacet.get());
+    repository.attach(getMavenMaintenanceFacet().get());
   }
 
   private ViewFacet configure(final ConfigurableViewFacet facet) {

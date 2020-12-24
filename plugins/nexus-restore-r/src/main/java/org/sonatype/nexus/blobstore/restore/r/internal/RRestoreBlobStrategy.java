@@ -24,8 +24,8 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
-import org.sonatype.nexus.blobstore.restore.BaseRestoreBlobStrategy;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
+import org.sonatype.nexus.blobstore.restore.orient.OrientBaseRestoreBlobStrategy;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
@@ -43,12 +43,12 @@ import static org.eclipse.aether.util.StringUtils.isEmpty;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 
 /**
- * @since 3.next
+ * @since 3.28
  */
 @Named(RFormat.NAME)
 @Singleton
 public class RRestoreBlobStrategy
-    extends BaseRestoreBlobStrategy<RRestoreBlobData>
+    extends OrientBaseRestoreBlobStrategy<RRestoreBlobData>
 {
   @Inject
   public RRestoreBlobStrategy(

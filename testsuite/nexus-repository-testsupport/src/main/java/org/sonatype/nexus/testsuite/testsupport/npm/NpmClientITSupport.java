@@ -14,6 +14,7 @@ package org.sonatype.nexus.testsuite.testsupport.npm;
 
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
@@ -38,8 +39,10 @@ import org.junit.After;
 import org.junit.Before;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 
 /**
@@ -140,11 +143,25 @@ public abstract class NpmClientITSupport
   }
 
   protected void initializeNpmrc(final String registryUrl) throws Exception {
+    initializeNpmrc(registryUrl, "admin", "admin123");
+  }
+
+  protected void initializeNpmrc(final String registryUrl, final String username, final String password) throws Exception {
     npmCli = new NpmCommandLineITSupport(createTestConfig());
     npmCli.execNpmConfig("registry ", registryUrl);
-    npmCli.execNpmConfig("email", "my@example.com");
-    npmCli.execNpmConfig("always-auth", "true");
-    npmCli.execNpmConfig("_auth",  "YWRtaW46YWRtaW4xMjM=");
+    configureRegistryAuthentication(registryUrl, username, password);
+  }
+
+  protected void configureRegistryAuthentication(
+      final String registryUrl,
+      final String username,
+      final String password)
+  {
+    String registryPrefix = registryUrl.replaceFirst("^http[s]?:", "");
+    npmCli.execNpmConfig(registryPrefix + ":email", "my@example.com");
+    npmCli.execNpmConfig(registryPrefix + ":always-auth", "true");
+    npmCli.execNpmConfig(registryPrefix + ":username", username);
+    npmCli.execNpmConfig(registryPrefix + ":_password", Base64.getUrlEncoder().encodeToString(password.getBytes()));
   }
 
   protected void configureAndPublish(final Repository repository,
@@ -165,7 +182,7 @@ public abstract class NpmClientITSupport
     List<String> results = npmCli.publish(directory);
 
     assertThat(results.size(), is(greaterThan(0)));
-    assertThat(results.stream().anyMatch(s -> s.contains("+ " + name + "@" + version)), is(true));
+    assertThat(results, hasItem(containsString("+ " + name + "@" + version)));
   }
 
   protected void configurePackageJson(
@@ -235,29 +252,27 @@ public abstract class NpmClientITSupport
   }
 
   protected void verifyInstalled(final List<String> results, final String packageName) {
-    assertThat(results.size(), is(greaterThan(0)));
-    assertThat(results.stream().anyMatch(s -> s.contains("+ " + packageName)), is(true));
-    assertThat(results.stream().anyMatch(s -> s.contains("added 1 package")), is(true));
+    assertThat(results, hasItem(containsString("added")));
+
+    final List<String> ls = npmCli.ls(packageName).get();
+    assertThat(ls, hasItem(containsString(packageName)));
   }
 
   protected void verifyAudit(final List<String> results, final String verifyText) {
-    assertThat(results.size(), is(greaterThan(0)));
-    assertThat(results.stream().anyMatch(s -> s.contains(verifyText)), is(true));
+    assertThat(results, hasItem(containsString(verifyText)));
   }
 
   protected void verifyUpdated(final List<String> results, final String packageName) {
-    assertThat(results.size(), is(greaterThan(0)));
-    assertThat(results.stream().anyMatch(s -> s.contains("+ " + packageName)), is(true));
-    assertThat(results.stream().anyMatch(s -> s.contains("updated 1 package")), is(true));
+    assertThat(results, hasItem(containsString("+ " + packageName)));
+    assertThat(results, hasItem(containsString("updated 1 package")));
   }
 
   protected void verifyNotUpdated(final List<String> results, final String packageName) {
-    assertThat(results.size(), is(greaterThan(0)));
-    assertThat(results.stream().anyMatch(s -> s.contains("No matching version found for " + packageName)), is(true));
+    assertThat(results, hasItem(containsString("No matching version found for " + packageName)));
   }
 
   protected void verifyNotFound(final List<String> results) {
-    assertThat(results.stream().anyMatch(s -> s.contains("npm ERR! code E404")), is(true));
+    assertThat(results, hasItem(containsString("npm ERR! code E404")));
   }
 
   protected void verifyDeprecation(final String repository,

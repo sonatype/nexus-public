@@ -20,14 +20,18 @@ import org.sonatype.goodies.testsupport.TestSupport;
 
 import com.google.common.net.HttpHeaders;
 import org.apache.shiro.authz.UnauthorizedException;
+import org.apache.shiro.session.Session;
+import org.apache.shiro.subject.Subject;
+import org.apache.shiro.util.ThreadContext;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -36,18 +40,24 @@ import static org.mockito.Mockito.when;
 public class AntiCsrfHelperTest
   extends TestSupport
 {
-  private static final String BROWSER_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36";
-
-  private static final String CLIENT_UA = "npm/6.4.3 node/8.11.0 Linux amd64";
-
   private AntiCsrfHelper underTest;
 
   @Mock
   HttpServletRequest httpServletRequest;
 
+  @Mock
+  Subject subject;
+
   @Before
   public void setup() {
-    underTest = new AntiCsrfHelper(true, "");
+    underTest = new AntiCsrfHelper(true);
+
+    ThreadContext.bind(subject);
+  }
+
+  @After
+  public void teardown() {
+    ThreadContext.unbindSubject();
   }
 
   /*
@@ -55,7 +65,7 @@ public class AntiCsrfHelperTest
    */
   @Test
   public void testRequireValidToken_Disabled() {
-    underTest = new AntiCsrfHelper(false, "");
+    underTest = new AntiCsrfHelper(false);
     underTest.requireValidToken(httpServletRequest, "a-token");
     verifyZeroInteractions(httpServletRequest);
   }
@@ -65,7 +75,7 @@ public class AntiCsrfHelperTest
    */
   @Test(expected = UnauthorizedException.class)
   public void testRequireValidToken_Session_NoToken() {
-    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT)).thenReturn(BROWSER_UA);
+    setupBrowserSubject();
     underTest.requireValidToken(httpServletRequest, null);
   }
 
@@ -76,7 +86,7 @@ public class AntiCsrfHelperTest
   public void testRequireValidToken_NoSessionAndNoReferrer() {
     underTest.requireValidToken(httpServletRequest, null);
 
-    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT)).thenReturn(CLIENT_UA);
+    setupClientSubject();
     try {
       underTest.requireValidToken(httpServletRequest, null);
     }
@@ -90,7 +100,7 @@ public class AntiCsrfHelperTest
    */
   @Test
   public void testRequireValidToken() {
-    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT)).thenReturn(BROWSER_UA);
+    setupBrowserSubject();
     when(httpServletRequest.getCookies())
         .thenReturn(new Cookie[] { new Cookie(AntiCsrfHelper.ANTI_CSRF_TOKEN_NAME, "a-value") });
     try {
@@ -106,7 +116,7 @@ public class AntiCsrfHelperTest
    */
   @Test(expected = UnauthorizedException.class)
   public void testRequireValidToken_tokenMismatch() {
-    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT)).thenReturn(BROWSER_UA);
+    setupBrowserSubject();
     when(httpServletRequest.getCookies())
         .thenReturn(new Cookie[] { new Cookie(AntiCsrfHelper.ANTI_CSRF_TOKEN_NAME, "a-value") });
     underTest.requireValidToken(httpServletRequest, "a-different-value");
@@ -117,7 +127,7 @@ public class AntiCsrfHelperTest
    */
   @Test
   public void testIsAccessAllowed_Disabled() {
-    underTest = new AntiCsrfHelper(false, "");
+    underTest = new AntiCsrfHelper(false);
     assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
     verifyZeroInteractions(httpServletRequest);
   }
@@ -139,7 +149,7 @@ public class AntiCsrfHelperTest
    */
   @Test
   public void testIsAccessAllowed_UnsafeMethodsBlocked() {
-    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT)).thenReturn(BROWSER_UA);
+    setupBrowserSubject();
     when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
     assertThat(underTest.isAccessAllowed(httpServletRequest), is(false));
 
@@ -160,7 +170,7 @@ public class AntiCsrfHelperTest
     assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
 
     when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
-    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT)).thenReturn(CLIENT_UA);
+    setupClientSubject();
     assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
   }
 
@@ -179,52 +189,11 @@ public class AntiCsrfHelperTest
   }
 
   @Test
-  public void shouldGrantAccessWhenUserAgentIsWhiteListed() {
-    underTest = new AntiCsrfHelper(true, "foo");
-
-    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT))
-        .thenReturn("Mozilla/5.0 (Windows NT; Windows NT 10.0; en-CA) foo/5.1.17134.590");
-    assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
-
-    underTest = new AntiCsrfHelper(true, "foo,bar");
-    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT))
-        .thenReturn("Mozilla/5.0 (Windows NT; Windows NT 10.0; en-CA) foo/5.1.17134.590");
-    assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
-
-    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT))
-        .thenReturn("Mozilla/5.0 (Windows NT; Windows NT 10.0; en-CA) bar/5.1.17134.590");
-    assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
-  }
-
-  @Test
-  public void shouldAllowAccessWhenUserAgentIsNull() {
-    underTest = new AntiCsrfHelper(true, EMPTY);
+  public void shouldAllowAccessWhenMissingSubject() {
+    ThreadContext.unbindSubject();
+    underTest = new AntiCsrfHelper(true);
 
     assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
-  }
-
-  /*
-   * PowerShell inexplicably includes a UserAgent pretending to be a browser, this ensures our whitelist allows it.
-   */
-  @Test
-  public void shouldAlwaysAllowAccessForWindowsPowerShell() {
-    underTest = new AntiCsrfHelper(true, EMPTY);
-
-    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT))
-        .thenReturn("Mozilla/5.0 (Windows NT; Windows NT 10.0; en-CA) WindowsPowerShell/5.1.17134.590")
-        .thenReturn("Mozilla/5.0 (Windows NT; Windows NT 10.0; en-CA) PowerShell/6.2.55342.442");
-
-    assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
-    assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
-  }
-
-  @Test
-  public void shouldDenyAccessWhenUserAgentIsNotWhiteListed() {
-    underTest = new AntiCsrfHelper(true, "foo");
-
-    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT))
-        .thenReturn("Mozilla/5.0 (Windows NT; Windows NT 10.0; en-CA) bar/5.1.17134.590");
-    assertThat(underTest.isAccessAllowed(httpServletRequest), is(false));
   }
 
   /*
@@ -233,7 +202,7 @@ public class AntiCsrfHelperTest
   @Test
   public void testIsAccessAllowed_ValidCsrfToken() {
     when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
-    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT)).thenReturn(BROWSER_UA);
+    setupBrowserSubject();
     when(httpServletRequest.getHeader("NX-ANTI-CSRF-TOKEN")).thenReturn("avalue");
     when(httpServletRequest.getCookies()).thenReturn(new Cookie[] { new Cookie("NX-ANTI-CSRF-TOKEN", "avalue") });
 
@@ -249,7 +218,7 @@ public class AntiCsrfHelperTest
   @Test
   public void testIsAccessAllowed_MissingCsrfCookie() {
     when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
-    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT)).thenReturn(BROWSER_UA);
+    setupBrowserSubject();
     when(httpServletRequest.getHeader("NX-ANTI-CSRF-TOKEN")).thenReturn("avalue");
 
     assertThat(underTest.isAccessAllowed(httpServletRequest), is(false));
@@ -263,7 +232,7 @@ public class AntiCsrfHelperTest
    */
   @Test
   public void testIsAccessAllowed_MissingCsrfHeader() {
-    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT)).thenReturn(BROWSER_UA);
+    setupBrowserSubject();
     when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
     // NX-ANTI-CSRF-TOKEN header not set
     when(httpServletRequest.getCookies()).thenReturn(new Cookie[] { new Cookie("NX-ANTI-CSRF-TOKEN", "avalue") });
@@ -279,7 +248,7 @@ public class AntiCsrfHelperTest
    */
   @Test
   public void testIsAccessAllowed_MismatchedCsrfToken() {
-    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT)).thenReturn(BROWSER_UA);
+    setupBrowserSubject();
     when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
     when(httpServletRequest.getHeader(HttpHeaders.REFERER)).thenReturn("referrer");
     when(httpServletRequest.getHeader("NX-ANTI-CSRF-TOKEN")).thenReturn("some-value");
@@ -290,5 +259,14 @@ public class AntiCsrfHelperTest
 
     // simple validation, we expect the code to access the cookies once
     verify(httpServletRequest, times(1)).getCookies();
+  }
+
+  private void setupBrowserSubject() {
+    Session session = mock(Session.class);
+    when(subject.getSession(false)).thenReturn(session);
+  }
+
+  private void setupClientSubject() {
+    when(subject.getSession(false)).thenReturn(null);
   }
 }

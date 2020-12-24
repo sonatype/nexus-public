@@ -14,9 +14,12 @@ package org.sonatype.nexus.content.maven.internal.recipe;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.content.maven.store.Maven2ComponentData;
+import org.sonatype.nexus.content.maven.store.Maven2ComponentStore;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.maven.MavenPath;
@@ -29,13 +32,17 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.content.AttributeOperation.OVERLAY;
 import static org.sonatype.nexus.repository.maven.MavenPath.SignatureType.GPG;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_ARTIFACT_ID;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
@@ -50,8 +57,6 @@ import static org.sonatype.nexus.repository.maven.internal.Maven2Format.NAME;
 public class MavenAttributesHelperTest
     extends TestSupport
 {
-  private static final String ARTIFACT = "ARTIFACT";
-
   private static final String PACKAGING = "PACKAGING";
 
   private static final String POM_NAME = "aPom";
@@ -60,6 +65,9 @@ public class MavenAttributesHelperTest
 
   @Captor
   private ArgumentCaptor<Map<String, String>> attributesValueCaptor;
+
+  @Captor
+  private ArgumentCaptor<Maven2ComponentData> componentDataValueCaptor;
 
   @Mock
   private FluentComponent fluentComponent;
@@ -73,6 +81,9 @@ public class MavenAttributesHelperTest
   @Mock
   private Model model;
 
+  @Mock
+  private Maven2ComponentStore componentStore;
+
   private Coordinates coordinates;
 
   @Before
@@ -83,10 +94,17 @@ public class MavenAttributesHelperTest
 
   @Test
   public void shouldPutComponentAttributesInAMap() {
+    mockComponent();
+    MavenAttributesHelper.setMavenAttributes(componentStore, fluentComponent, coordinates, Optional.empty(), 1);
 
-    MavenAttributesHelper.setMavenAttributes(fluentComponent, coordinates);
+    verify(fluentComponent).attributes(eq(OVERLAY), eq(NAME), attributesValueCaptor.capture());
+    verify(componentStore, only()).updateBaseVersion(componentDataValueCaptor.capture());
 
-    verify(fluentComponent).withAttribute(eq(NAME), attributesValueCaptor.capture());
+    Maven2ComponentData componentData = componentDataValueCaptor.getValue();
+    assertEquals(coordinates.getGroupId(), componentData.namespace());
+    assertEquals(coordinates.getArtifactId(), componentData.name());
+    assertEquals(coordinates.getVersion(), componentData.version());
+    assertEquals(coordinates.getBaseVersion(), componentData.getBaseVersion());
 
     assertGroupArtifactVersionSet(4, attributesValueCaptor.getValue());
   }
@@ -97,7 +115,7 @@ public class MavenAttributesHelperTest
 
     MavenAttributesHelper.setMavenAttributes(fluentAsset, mavenPath);
 
-    verify(fluentAsset).withAttribute(eq(NAME), attributesValueCaptor.capture());
+    verify(fluentAsset).attributes(eq(OVERLAY), eq(NAME), attributesValueCaptor.capture());
     Map<String, String> map = attributesValueCaptor.getValue();
     assertGroupArtifactVersionSet(6, map);
     assertThat(map, hasEntry(P_CLASSIFIER, coordinates.getClassifier()));
@@ -106,14 +124,16 @@ public class MavenAttributesHelperTest
 
   @Test
   public void shouldAddPomAttributesToExistingAttributes() {
+    when(mavenPath.getCoordinates()).thenReturn(coordinates);
+    mockComponent();
     mockModel();
     when(fluentComponent.attributes(NAME)).thenReturn(aNestedAttributesMap());
 
-    MavenAttributesHelper.setPomAttributes(fluentComponent, model);
+    MavenAttributesHelper.setMavenAttributes(componentStore, fluentComponent, coordinates, Optional.of(model), 1);
 
-    verify(fluentComponent).withAttribute(eq(NAME), attributesValueCaptor.capture());
+    verify(fluentComponent).attributes(eq(OVERLAY), eq(NAME), attributesValueCaptor.capture());
     Map<String, String> map = attributesValueCaptor.getValue();
-    assertGroupArtifactVersionSet(7, map);
+    assertThat(map.entrySet(), hasSize(7));
     assertThat(map, hasEntry(P_PACKAGING, PACKAGING));
     assertThat(map, hasEntry(P_POM_NAME, POM_NAME));
     assertThat(map, hasEntry(P_POM_DESCRIPTION, POM_DESCRIPTION));
@@ -121,11 +141,13 @@ public class MavenAttributesHelperTest
 
   @Test
   public void shouldNotSetPomNameAndDescriptionWhenModelIsNull() {
+    mockComponent();
+    when(mavenPath.getCoordinates()).thenReturn(coordinates);
     when(fluentComponent.attributes(NAME)).thenReturn(aNestedAttributesMap());
 
-    MavenAttributesHelper.setPomAttributes(fluentComponent, model);
+    MavenAttributesHelper.setMavenAttributes(componentStore, fluentComponent, coordinates, Optional.of(model), 1);
 
-    verify(fluentComponent).withAttribute(eq(NAME), attributesValueCaptor.capture());
+    verify(fluentComponent).attributes(eq(OVERLAY), eq(NAME), attributesValueCaptor.capture());
     Map<String, String> map = attributesValueCaptor.getValue();
     assertFalse(map.containsKey(P_POM_NAME));
     assertFalse(map.containsKey(P_POM_DESCRIPTION));
@@ -133,11 +155,13 @@ public class MavenAttributesHelperTest
 
   @Test
   public void packagingShouldBeJarWhenModelIsNull() {
+    mockComponent();
+    when(mavenPath.getCoordinates()).thenReturn(coordinates);
     when(fluentComponent.attributes(NAME)).thenReturn(aNestedAttributesMap());
 
-    MavenAttributesHelper.setPomAttributes(fluentComponent, model);
+    MavenAttributesHelper.setMavenAttributes(componentStore, fluentComponent, coordinates, Optional.of(model), 1);
 
-    verify(fluentComponent).withAttribute(eq(NAME), attributesValueCaptor.capture());
+    verify(fluentComponent).attributes(eq(OVERLAY), eq(NAME), attributesValueCaptor.capture());
     Map<String, String> map = attributesValueCaptor.getValue();
     assertThat(map, hasEntry(P_PACKAGING, "jar"));
   }
@@ -163,5 +187,11 @@ public class MavenAttributesHelperTest
     map.put(P_VERSION, coordinates.getVersion());
     map.put(P_BASE_VERSION, coordinates.getBaseVersion());
     return new NestedAttributesMap(NAME, map);
+  }
+
+  private void mockComponent() {
+    when(fluentComponent.namespace()).thenReturn(coordinates.getGroupId());
+    when(fluentComponent.name()).thenReturn(coordinates.getArtifactId());
+    when(fluentComponent.version()).thenReturn(coordinates.getVersion());
   }
 }

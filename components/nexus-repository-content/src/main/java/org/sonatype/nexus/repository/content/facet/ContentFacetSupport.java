@@ -34,7 +34,7 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.config.WritePolicy;
 import org.sonatype.nexus.repository.content.Asset;
-import org.sonatype.nexus.repository.content.AttributeChange;
+import org.sonatype.nexus.repository.content.AttributeOperation;
 import org.sonatype.nexus.repository.content.ContentRepository;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.content.fluent.FluentBlobs;
@@ -239,7 +239,7 @@ public abstract class ContentFacetSupport
   }
 
   @Override
-  public final ContentFacet attributes(final AttributeChange change, final String key, final Object value) {
+  public final ContentFacet attributes(final AttributeOperation change, final String key, final Object value) {
     stores.contentRepositoryStore.updateContentRepositoryAttributes(contentRepository(), change, key, value);
     return this;
   }
@@ -281,7 +281,7 @@ public abstract class ContentFacetSupport
   }
 
   public final void checkAttachAllowed(final Asset asset) {
-    if (!asset.blob().isPresent()) {
+    if (!asset.hasBlob()) {
       if (!writePolicy(asset).checkCreateAllowed()) {
         throwNotAllowed(asset, " is read-only");
       }
@@ -292,7 +292,7 @@ public abstract class ContentFacetSupport
   }
 
   public final void checkDeleteAllowed(final Asset asset) {
-    if (asset.blob().isPresent() && !writePolicy(asset).checkDeleteAllowed()) {
+    if (asset.hasBlob() && !writePolicy(asset).checkDeleteAllowed()) {
       throwNotAllowed(asset, " cannot be deleted");
     }
   }

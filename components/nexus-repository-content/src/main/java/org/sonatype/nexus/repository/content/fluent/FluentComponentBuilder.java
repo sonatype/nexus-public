@@ -34,6 +34,13 @@ public interface FluentComponentBuilder
   FluentComponentBuilder kind(String kind);
 
   /**
+   * Set {@code kind} only if a value is present.
+   *
+   * @since 3.29
+   */
+  FluentComponentBuilder kind(Optional<String> optionalKind);
+
+  /**
    * Continue building the component using the given version.
    */
   FluentComponentBuilder version(String version);

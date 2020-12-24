@@ -29,7 +29,7 @@ import org.sonatype.nexus.repository.storage.StorageFacet
 import org.sonatype.nexus.repository.storage.StorageTx
 import org.sonatype.nexus.repository.tools.orient.OrientDeadBlobFinder
 
-import com.google.common.base.Supplier
+import java.util.function.Supplier
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx
 import org.apache.tika.io.IOUtils
 import org.joda.time.DateTime

@@ -18,7 +18,7 @@ import org.sonatype.nexus.mime.internal.DefaultMimeSupport
 import org.sonatype.nexus.repository.InvalidContentException
 import org.sonatype.nexus.repository.view.ContentTypes
 
-import com.google.common.base.Supplier
+import java.util.function.Supplier
 import org.junit.Test
 
 import static org.hamcrest.CoreMatchers.equalTo

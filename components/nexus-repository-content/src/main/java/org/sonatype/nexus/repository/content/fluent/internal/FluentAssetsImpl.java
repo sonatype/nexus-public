@@ -91,12 +91,12 @@ public class FluentAssetsImpl
     if (isGroupRepository(facet.repository())) {
       Set<Integer> leafRepositoryIds = getLeafRepositoryIds(facet.repository());
       if (!leafRepositoryIds.isEmpty()) {
-        return new FluentContinuation<>(assetStore.browseAssets(leafRepositoryIds, limit, continuationToken),
-            this::with);
+        return new FluentContinuation<>(assetStore.browseAssets(leafRepositoryIds,
+            continuationToken, kind, filter, filterParams, limit), this::with);
       }
     }
     return new FluentContinuation<>(assetStore.browseAssets(facet.contentRepositoryId(),
-        limit, continuationToken, kind, filter, filterParams), this::with);
+        continuationToken, kind, filter, filterParams, limit), this::with);
   }
 
   @Override

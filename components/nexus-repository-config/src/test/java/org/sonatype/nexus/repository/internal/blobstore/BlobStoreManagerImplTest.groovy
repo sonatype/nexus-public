@@ -19,6 +19,7 @@ import org.sonatype.nexus.blobstore.BlobStoreDescriptor
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
+import org.sonatype.nexus.blobstore.api.ChangeRepositoryBlobstoreDataService
 import org.sonatype.nexus.common.app.FreezeService
 import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.common.node.NodeAccess
@@ -30,6 +31,7 @@ import org.hamcrest.Matchers
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.ExpectedException
 import org.junit.rules.TemporaryFolder
 import org.mockito.ArgumentCaptor
 import org.mockito.Mock
@@ -62,7 +64,7 @@ class BlobStoreManagerImplTest
 
   @Mock
   BlobStoreConfigurationStore store
-  
+
   @Mock
   BlobStoreDescriptor descriptor
 
@@ -78,6 +80,9 @@ class BlobStoreManagerImplTest
   @Mock
   NodeAccess nodeAccess
 
+  @Mock
+  ChangeRepositoryBlobstoreDataService changeRepositoryBlobstoreDataService
+
   BlobStoreManagerImpl underTest
 
   @Before
@@ -89,7 +94,7 @@ class BlobStoreManagerImplTest
   private BlobStoreManagerImpl newBlobStoreManager(Boolean provisionDefaults = null) {
     spy(new BlobStoreManagerImpl(eventManager, store, [test: descriptor, File: descriptor],
         [test: provider, File: provider], freezeService, { -> repositoryManager } as Provider,
-         nodeAccess, provisionDefaults))
+         nodeAccess, provisionDefaults, changeRepositoryBlobstoreDataService))
   }
 
   @Test
@@ -167,7 +172,7 @@ class BlobStoreManagerImplTest
     BlobStore blobStore = mock(BlobStore)
     when(provider.get()).thenReturn(blobStore)
     BlobStoreConfiguration configuration = createConfig('test')
-    
+
     BlobStore createdBlobStore = underTest.create(configuration)
 
     assert createdBlobStore == blobStore
@@ -184,9 +189,9 @@ class BlobStoreManagerImplTest
     doReturn(blobStore).when(underTest).blobStore('test')
     when(store.list()).thenReturn([configuration])
     when(blobStore.getBlobStoreConfiguration()).thenReturn(configuration)
-    
+
     underTest.delete(configuration.getName())
-    
+
     verify(blobStore).shutdown()
     verify(store).delete(configuration)
     verify(freezeService).checkWritable("Unable to delete a BlobStore while database is frozen.")
@@ -206,6 +211,19 @@ class BlobStoreManagerImplTest
     verify(blobStore).shutdown()
     verify(store).delete(configuration)
     verify(freezeService).checkWritable("Unable to delete a BlobStore while database is frozen.")
+  }
+
+  @Test(expected = IllegalStateException.class)
+  void 'Can not delete an existing BlobStore used in a move task'() {
+    BlobStoreConfiguration configuration = createConfig('test')
+    BlobStore blobStore = mock(BlobStore)
+    doReturn(blobStore).when(underTest).blobStore('test')
+    doThrow(InvalidStateException).when(blobStore).stop()
+    when(store.list()).thenReturn([configuration])
+    when(blobStore.getBlobStoreConfiguration()).thenReturn(configuration)
+    when(changeRepositoryBlobstoreDataService.changeRepoTaskUsingBlobstoreCount("test")).thenReturn(1);
+
+    underTest.delete(configuration.getName())
   }
 
   @Test
@@ -241,7 +259,7 @@ class BlobStoreManagerImplTest
   void 'Can successfully create new blob stores concurrently'() {
     // avoid newBlobStoreManager method because it returns a spy that throws NPE accessing the stores field
     underTest = new BlobStoreManagerImpl(eventManager, store, [test: descriptor, File: descriptor],
-        [test: provider, File: provider], freezeService, { -> repositoryManager } as Provider, nodeAccess, true)
+        [test: provider, File: provider], freezeService, { -> repositoryManager } as Provider, nodeAccess, true, changeRepositoryBlobstoreDataService)
 
     BlobStore blobStore = mock(BlobStore)
     when(provider.get()).thenReturn(blobStore)
@@ -307,6 +325,20 @@ class BlobStoreManagerImplTest
     when(blobStore.getBlobStoreConfiguration()).thenReturn(new MockBlobStoreConfiguration(name: blobStoreName))
     when(store.findParent(blobStoreName)).thenReturn(Optional.empty())
     assert !underTest.isPromotable(blobStoreName)
+  }
+
+  @Test
+  void 'It is not promotable when the store is in use by a task'() {
+    def blobStoreName = 'child'
+    def blobStore = mock(BlobStore)
+    underTest.track(blobStoreName, blobStore)
+    when(changeRepositoryBlobstoreDataService.changeRepoTaskUsingBlobstoreCount('child')).thenReturn(1)
+    when(blobStore.isGroupable()).thenReturn(true)
+    when(blobStore.isWritable()).thenReturn(true)
+    when(blobStore.getBlobStoreConfiguration()).thenReturn(new MockBlobStoreConfiguration(name: blobStoreName))
+    when(store.findParent(blobStoreName)).thenReturn(Optional.empty())
+    assert !underTest.isPromotable(blobStoreName)
+
   }
 
   @Test

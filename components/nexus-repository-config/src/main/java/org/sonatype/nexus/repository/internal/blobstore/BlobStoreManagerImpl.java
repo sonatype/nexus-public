@@ -38,6 +38,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreNotFoundException;
 import org.sonatype.nexus.blobstore.api.BlobStoreUpdatedEvent;
+import org.sonatype.nexus.blobstore.api.ChangeRepositoryBlobstoreDataService;
 import org.sonatype.nexus.blobstore.file.FileBlobStoreConfigurationBuilder;
 import org.sonatype.nexus.common.app.FreezeService;
 import org.sonatype.nexus.common.event.EventAware;
@@ -90,6 +91,8 @@ public class BlobStoreManagerImpl
 
   private final Provider<RepositoryManager> repositoryManagerProvider;
 
+  private final ChangeRepositoryBlobstoreDataService changeRepositoryBlobstoreDataService;
+
   @Inject
   public BlobStoreManagerImpl(final EventManager eventManager, //NOSONAR
                               final BlobStoreConfigurationStore store,
@@ -98,7 +101,8 @@ public class BlobStoreManagerImpl
                               final FreezeService freezeService,
                               final Provider<RepositoryManager> repositoryManagerProvider,
                               final NodeAccess nodeAccess,
-                              @Nullable @Named("${nexus.blobstore.provisionDefaults}") final Boolean provisionDefaults)
+                              @Nullable @Named("${nexus.blobstore.provisionDefaults}") final Boolean provisionDefaults,
+                              @Nullable final ChangeRepositoryBlobstoreDataService changeRepositoryBlobstoreDataService)
   {
     this.eventManager = checkNotNull(eventManager);
     this.store = checkNotNull(store);
@@ -106,6 +110,7 @@ public class BlobStoreManagerImpl
     this.blobStorePrototypes = checkNotNull(blobStorePrototypes);
     this.freezeService = checkNotNull(freezeService);
     this.repositoryManagerProvider = checkNotNull(repositoryManagerProvider);
+    this.changeRepositoryBlobstoreDataService = changeRepositoryBlobstoreDataService;
 
     if (provisionDefaults != null) {
       // explicit true/false setting, so honour that
@@ -286,12 +291,22 @@ public class BlobStoreManagerImpl
   @Guarded(by = STARTED)
   public void delete(final String name) throws Exception {
     checkNotNull(name);
-    if (!repositoryManagerProvider.get().isBlobstoreUsed(name)) {
+    if (blobstoreInChangeRepoTaskCount(name) > 0) {
+      throw new IllegalStateException("BlobStore " + name + " is in use by a Change Repository Blob Store task");
+    }
+    else if (!repositoryManagerProvider.get().isBlobstoreUsed(name)) {
       forceDelete(name);
     }
     else {
       throw new IllegalStateException("BlobStore " + name + " is in use and cannot be deleted");
     }
+  }
+
+  private int blobstoreInChangeRepoTaskCount(final String blobStoreName) {
+    if (changeRepositoryBlobstoreDataService != null) {
+      return changeRepositoryBlobstoreDataService.changeRepoTaskUsingBlobstoreCount(blobStoreName);
+    }
+    return 0;
   }
 
   @Override
@@ -379,7 +394,8 @@ public class BlobStoreManagerImpl
   public boolean isPromotable(final String blobStoreName) {
     BlobStore blobStore = get(blobStoreName);
     return blobStore != null && blobStore.isGroupable() && blobStore.isWritable() &&
-        !store.findParent(blobStore.getBlobStoreConfiguration().getName()).isPresent();
+        !store.findParent(blobStore.getBlobStoreConfiguration().getName()).isPresent() &&
+        blobstoreInChangeRepoTaskCount(blobStoreName) == 0;
   }
 
   @Override
@@ -399,7 +415,7 @@ public class BlobStoreManagerImpl
   }
 
   @Override
-  public void moveBlob(final BlobId blobId, final BlobStore srcBlobStore, final BlobStore destBlobStore) {
+  public Blob moveBlob(final BlobId blobId, final BlobStore srcBlobStore, final BlobStore destBlobStore) {
     checkNotNull(srcBlobStore);
     checkNotNull(destBlobStore);
 
@@ -408,19 +424,20 @@ public class BlobStoreManagerImpl
 
     Map<String, String> headers = srcBlobAttributes.getHeaders();
     InputStream srcInputStream = inputStreamOfBlob(srcBlobStore, blobId);
-    destBlobStore.create(srcInputStream, headers, blobId);
+    Blob newBlob = destBlobStore.create(srcInputStream, headers, blobId);
     destBlobStore.setBlobAttributes(blobId, srcBlobAttributes);
 
     ensureDeletedStateTransferred(blobId, srcBlobStore, destBlobStore, isSrcDelted);
-    log.info("Created blobId {} in blob store '{}'", blobId, destBlobStore.getBlobStoreConfiguration().getName());
+    log.debug("Created blobId {} in blob store '{}'", blobId, destBlobStore.getBlobStoreConfiguration().getName());
 
     try {
       srcBlobStore.deleteHard(blobId);
-      log.info("Removed blobId {} from blob store '{}'", blobId, srcBlobStore.getBlobStoreConfiguration().getName());
+      log.debug("Removed blobId {} from blob store '{}'", blobId, srcBlobStore.getBlobStoreConfiguration().getName());
     }
     catch (BlobStoreException e) {
       log.warn("Failed to remove blobId {} from blob store '{}'", blobId, srcBlobStore.getBlobStoreConfiguration().getName(), e);
     }
+    return newBlob;
   }
 
   /**

@@ -38,4 +38,14 @@ public interface ContentMaintenanceFacet
    * @return path(s) of deleted asset(s)
    */
   Set<String> deleteAsset(Asset asset);
+
+  /**
+   * Delete a batch of components.
+   *
+   * @param componentIds  the componentIds to delete
+   * @return number of components purged
+   *
+   * @since 3.29
+   */
+  int deleteComponents(int[] componentIds);
 }

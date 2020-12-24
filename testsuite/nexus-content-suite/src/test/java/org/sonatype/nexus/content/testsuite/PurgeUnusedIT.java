@@ -178,7 +178,9 @@ public class PurgeUnusedIT
     AssetData assetData = new AssetData();
     assetData.setRepositoryId(contentFacet.contentRepositoryId());
     assetData.setPath(path);
+    assetData.setCreated(lastDownloaded);
     assetData.setLastDownloaded(lastDownloaded);
+    assetData.setLastUpdated(lastDownloaded);
     assetData.setKind(ASSET_KIND);
     return assetData;
   }

@@ -16,8 +16,10 @@ import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 import javax.xml.XMLConstants;
@@ -32,12 +34,15 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import org.sonatype.nexus.common.io.SafeXml;
+import org.sonatype.nexus.repository.search.query.SearchQueryService;
+import org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -49,6 +54,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_NAME;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_SUMMARY;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REPOSITORY_NAME;
+import static org.sonatype.nexus.repository.search.query.RepositoryQueryBuilder.unrestricted;
 
 /**
  * Utility methods for working with PyPI search requests and responses.
@@ -149,6 +155,22 @@ public final class PyPiSearchUtils
 
       query.should(QueryBuilders.wildcardQuery(parameterName, parameterValue));
     }
+  }
+
+  public static List<PyPiSearchResult> pypiSearch(QueryBuilder query, SearchQueryService searchQueryService) {
+    List<PyPiSearchResult> results = new ArrayList<>();
+    for (SearchHit hit : searchQueryService.browse(unrestricted(query))) {
+      Map<String, Object> source = hit.getSource();
+      Map<String, Object> formatAttributes = (Map<String, Object>) source.getOrDefault(
+          MetadataNodeEntityAdapter.P_ATTRIBUTES, Collections.emptyMap());
+      Map<String, Object> pypiAttributes = (Map<String, Object>) formatAttributes.getOrDefault(PyPiFormat.NAME,
+          Collections.emptyMap());
+      String name = Strings.nullToEmpty((String) pypiAttributes.get(PyPiAttributes.P_NAME));
+      String version = Strings.nullToEmpty((String) pypiAttributes.get(PyPiAttributes.P_VERSION));
+      String summary = Strings.nullToEmpty((String) pypiAttributes.get(PyPiAttributes.P_SUMMARY));
+      results.add(new PyPiSearchResult(name, version, summary));
+    }
+    return results;
   }
 
   /**

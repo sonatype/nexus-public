@@ -45,4 +45,12 @@ public class ContentStoreEvent
     checkState(this.repository == null, "Repository is already set");
     this.repository = checkNotNull(repository);
   }
+
+  @Override
+  public String toString() {
+    return "ContentStoreEvent{" +
+        "contentRepositoryId=" + contentRepositoryId +
+        ", repository=" + repository +
+        '}';
+  }
 }

@@ -67,5 +67,4 @@ public class RepoTargetComboFormField
   public Map<String, String> getStoreFilters() {
     return null;
   }
-
 }

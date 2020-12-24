@@ -83,7 +83,7 @@ exports[`LoggingConfigurationList renders a loading spinner 1`] = `
           class="nxrm-section-toolbar"
         >
           <div
-            class="spacer"
+            class="nxrm-spacer"
           />
           <div
             class="nx-filter-input"
@@ -131,7 +131,7 @@ exports[`LoggingConfigurationList renders a loading spinner 1`] = `
                   Logger Name
                 </span>
                 <span
-                  class="nx-cell__sort-icons fa-layers fa-fw"
+                  class="nx-cell__sort-icons fa-layers"
                 >
                   <svg
                     aria-hidden="true"
@@ -172,7 +172,7 @@ exports[`LoggingConfigurationList renders a loading spinner 1`] = `
                   Logger Level
                 </span>
                 <span
-                  class="nx-cell__sort-icons fa-layers fa-fw"
+                  class="nx-cell__sort-icons fa-layers"
                 >
                   <svg
                     aria-hidden="true"
@@ -201,7 +201,7 @@ exports[`LoggingConfigurationList renders a loading spinner 1`] = `
               class="nx-table-row"
             >
               <td
-                class="nx-cell nx-cell--empty"
+                class="nx-cell nx-cell--meta-info"
                 colspan="3"
               >
                 <div
@@ -319,7 +319,7 @@ exports[`LoggingConfigurationList renders an error message 1`] = `
           class="nxrm-section-toolbar"
         >
           <div
-            class="spacer"
+            class="nxrm-spacer"
           />
           <div
             class="nx-filter-input"
@@ -367,7 +367,7 @@ exports[`LoggingConfigurationList renders an error message 1`] = `
                   Logger Name
                 </span>
                 <span
-                  class="nx-cell__sort-icons fa-layers fa-fw"
+                  class="nx-cell__sort-icons fa-layers"
                 >
                   <svg
                     aria-hidden="true"
@@ -408,7 +408,7 @@ exports[`LoggingConfigurationList renders an error message 1`] = `
                   Logger Level
                 </span>
                 <span
-                  class="nx-cell__sort-icons fa-layers fa-fw"
+                  class="nx-cell__sort-icons fa-layers"
                 >
                   <svg
                     aria-hidden="true"
@@ -437,27 +437,39 @@ exports[`LoggingConfigurationList renders an error message 1`] = `
               class="nx-table-row"
             >
               <td
-                class="nx-cell nx-error"
+                class="nx-cell nx-cell--meta-info"
                 colspan="3"
               >
-                <span>
+                <div
+                  class="nx-alert nx-alert--error nx-alert--load-error"
+                >
                   <svg
                     aria-hidden="true"
-                    class="svg-inline--fa fa-exclamation-triangle fa-w-18 fa-fw nx-icon"
-                    data-icon="exclamation-triangle"
+                    class="svg-inline--fa fa-exclamation-circle fa-w-16 nx-icon"
+                    data-icon="exclamation-circle"
                     data-prefix="fas"
                     focusable="false"
                     role="img"
-                    viewBox="0 0 576 512"
+                    viewBox="0 0 512 512"
                     xmlns="http://www.w3.org/2000/svg"
                   >
                     <path
-                      d="M569.517 440.013C587.975 472.007 564.806 512 527.94 512H48.054c-36.937 0-59.999-40.055-41.577-71.987L246.423 23.985c18.467-32.009 64.72-31.951 83.154 0l239.94 416.028zM288 354c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
+                      d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
                       fill="currentColor"
                     />
                   </svg>
-                  Error
-                </span>
+                  <div
+                    class="nx-alert__content"
+                  >
+                    <span
+                      class="nx-load-error__message"
+                    >
+                      An error occurred loading data.
+                       
+                      Error
+                    </span>
+                  </div>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -551,7 +563,7 @@ exports[`LoggingConfigurationList renders the resolved data 1`] = `
           class="nxrm-section-toolbar"
         >
           <div
-            class="spacer"
+            class="nxrm-spacer"
           />
           <div
             class="nx-filter-input"
@@ -599,7 +611,7 @@ exports[`LoggingConfigurationList renders the resolved data 1`] = `
                   Logger Name
                 </span>
                 <span
-                  class="nx-cell__sort-icons fa-layers fa-fw"
+                  class="nx-cell__sort-icons fa-layers"
                 >
                   <svg
                     aria-hidden="true"
@@ -640,7 +652,7 @@ exports[`LoggingConfigurationList renders the resolved data 1`] = `
                   Logger Level
                 </span>
                 <span
-                  class="nx-cell__sort-icons fa-layers fa-fw"
+                  class="nx-cell__sort-icons fa-layers"
                 >
                   <svg
                     aria-hidden="true"

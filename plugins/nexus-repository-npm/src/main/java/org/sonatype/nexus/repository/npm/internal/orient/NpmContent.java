@@ -29,7 +29,7 @@ import static java.util.Collections.singletonList;
 public class NpmContent
     extends Content
 {
-  private NpmStreamPayload payload;
+  private final NpmStreamPayload payload;
 
   public NpmContent(final NpmStreamPayload payload) {
     super(payload);
@@ -60,5 +60,9 @@ public class NpmContent
   {
     payload.missingBlobInputStreamSupplier(missingBlobInputStreamSupplier);
     return this;
+  }
+
+  public List<NpmFieldMatcher> getFieldMatchers() {
+    return payload.getFieldMatchers();
   }
 }

@@ -114,7 +114,7 @@ public class SearchResourceTest
     setupResponse();
 
     underTest = new SearchResource(searchUtils, assetMapUtils, searchQueryService, new TokenEncoder(),
-        new ComponentXOFactory(emptySet()), ImmutableSet.of(searchResourceExtension));
+        new ComponentXOFactory(emptySet()), ImmutableSet.of(searchResourceExtension), null);
   }
 
   private void setupResponse() {

@@ -12,9 +12,14 @@
  */
 package org.sonatype.nexus.testsuite.helpers;
 
+import java.io.InputStream;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
 
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 
 import org.joda.time.DateTime;
@@ -44,7 +49,7 @@ public interface ComponentAssetTestHelper
    * @param repository the containing repository
    * @param path the path of the asset
    */
-  DateTime getUpdatedTime(Repository repository, String path);
+  DateTime getBlobUpdatedTime(Repository repository, String path);
 
   /**
    * Get the last downloaded time for a path in the given repository.
@@ -89,6 +94,11 @@ public interface ComponentAssetTestHelper
   /**
    * Verify that a component with the given name and version exists for the specified repository.
    */
+  boolean componentExists(Repository repository, String name);
+
+  /**
+   * Verify that a component with the given name and version exists for the specified repository.
+   */
   boolean componentExists(Repository repository, String name, String version);
 
   /**
@@ -97,9 +107,19 @@ public interface ComponentAssetTestHelper
   boolean componentExists(Repository repository, String namespace, String name, String version);
 
   /**
+   * Verify that a component with an asset that matches the path exists.
+   */
+  boolean componentExistsWithAssetPathMatching(Repository repository, Predicate<String> pathMatcher);
+
+  /**
    * Retrieve content type for a path within the repository.
    */
   String contentTypeFor(final String repositoryName, final String path);
+
+  /**
+   * Count the number of assets in the given repository.
+   */
+  int countAssets(Repository repository);
 
   /**
    * Count the number of components in the given repository.
@@ -117,11 +137,52 @@ public interface ComponentAssetTestHelper
   NestedAttributesMap componentAttributes(Repository repository, String namespace, String name, String version);
 
   /**
+   * Retrieve the attributes for the component.
+   *
+   * NOTE: this is intended for formats which do not have versions (e.g. raw)
+   */
+  NestedAttributesMap componentAttributes(Repository repository, String namespace, String name);
+
+  /**
+   * Set the last downloaded time for all assets in a repository.
+   */
+  void setLastDownloadedTime(Repository repository, int minusSeconds);
+
+  /**
+   * Set the last downloaded time for any asset matching the pathMatcher in the given repository.
+   */
+  void setLastDownloadedTime(Repository repository, int minusSeconds, Predicate<String> pathMatcher);
+
+  /**
    * Adjust {@code path} for differences between Orient and Datastore
    */
   String adjustedPath(final String path);
 
-  static class AssetNotFoundException
+  /**
+   * Read an asset from the specified repository.
+   */
+  Optional<InputStream> read(Repository repository, String path);
+
+  /**
+   * Delete the blob associated with the asset with the specified path.
+   */
+  void deleteAssetBlob(Repository repository, String assetPath);
+
+  /**
+   * Obtains a blob ref of an asset in the given repo with the specified path.
+   */
+  BlobRef getBlobRefOfAsset(Repository repository, String path);
+
+  /**
+   * Gets the id of the component associated with the specified asset and repository.
+   */
+  EntityId getComponentId(Repository repository, String assetPath);
+
+  NestedAttributesMap getAttributes(Repository repository);
+
+  void modifyAttributes(final Repository repository, String child1, final String child2, final int value);
+
+  class AssetNotFoundException
       extends RuntimeException
   {
     AssetNotFoundException(final Repository repository, final String path) {
@@ -129,7 +190,7 @@ public interface ComponentAssetTestHelper
     }
   }
 
-  static class ComponentNotFoundException
+  class ComponentNotFoundException
       extends RuntimeException
   {
     ComponentNotFoundException(

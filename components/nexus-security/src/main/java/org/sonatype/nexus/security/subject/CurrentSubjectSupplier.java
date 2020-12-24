@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.security.subject;
 
-import com.google.common.base.Supplier;
+import java.util.function.Supplier;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 

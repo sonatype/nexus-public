@@ -25,4 +25,9 @@ public class AssetDeletedEvent
   public AssetDeletedEvent(final Asset asset) {
     super(asset);
   }
+
+  @Override
+  public String toString() {
+    return "AssetDeletedEvent{} " + super.toString();
+  }
 }

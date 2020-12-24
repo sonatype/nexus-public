@@ -165,7 +165,10 @@ public class DataStoreConfigurationLocalSourceTest
       fail("Expected IllegalArgumentException");
     }
     catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), containsString("is for a different data store"));
+      String errorMsg = String.format(
+          "Incorrect data store configuration in the %s Should be [custom] but found [example]",
+          customStorePropertiesFile.getAbsolutePath());
+      assertThat(e.getMessage(), containsString(errorMsg));
     }
   }
 

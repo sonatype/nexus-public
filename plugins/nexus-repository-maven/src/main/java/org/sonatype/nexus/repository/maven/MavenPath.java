@@ -26,8 +26,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Maven repository path. Every item in repository may have hashes, stored on paths with proper
- * suffixes, and artifact paths have non-null coordinates.
+ * Maven repository path. Every item in repository may have hashes, stored on paths with proper suffixes, and artifact
+ * paths have non-null coordinates.
  *
  * @since 3.0
  */
@@ -37,14 +37,15 @@ public class MavenPath
   public enum HashType
   {
     SHA1("sha1", HashAlgorithm.SHA1),
-
+    SHA256("sha256", HashAlgorithm.SHA256),
+    SHA512("sha512", HashAlgorithm.SHA512),
     MD5("md5", HashAlgorithm.MD5);
 
     /**
      * {@link HashAlgorithm}s corresponding to {@link HashType}s.
      */
     public static final List<HashAlgorithm> ALGORITHMS = ImmutableList
-        .of(SHA1.getHashAlgorithm(), MD5.getHashAlgorithm());
+        .of(SHA1.getHashAlgorithm(), MD5.getHashAlgorithm(), SHA256.getHashAlgorithm(), SHA512.getHashAlgorithm());
 
     private final String ext;
 
@@ -101,16 +102,17 @@ public class MavenPath
 
     private final SignatureType signatureType;
 
-    public Coordinates(final boolean snapshot,
-                       final String groupId,
-                       final String artifactId,
-                       final String version,
-                       @Nullable final Long timestamp,
-                       @Nullable final Integer buildNumber,
-                       final String baseVersion,
-                       @Nullable final String classifier,
-                       final String extension,
-                       final SignatureType signatureType)
+    public Coordinates(
+        final boolean snapshot,
+        final String groupId,
+        final String artifactId,
+        final String version,
+        @Nullable final Long timestamp,
+        @Nullable final Integer buildNumber,
+        final String baseVersion,
+        @Nullable final String classifier,
+        final String extension,
+        final SignatureType signatureType)
     {
       this.snapshot = snapshot;
       this.groupId = checkNotNull(groupId);
@@ -321,8 +323,24 @@ public class MavenPath
    */
   @Nonnull
   public MavenPath hash(final HashType hashType) {
-    checkNotNull(hashType);
-    checkArgument(this.hashType == null, "This path is already a hash: %s", this);
+    return hash(hashType.getExt());
+  }
+
+  /**
+   * Returns path of passed in hash type that is subordinate of this path. This path cannot be hash.
+   */
+  @Nonnull
+  public MavenPath hash(final HashAlgorithm hashType) {
+    return hash(hashType.name());
+  }
+
+  /**
+   * Returns path of passed in hash type that is subordinate of this path. This path cannot be hash.
+   */
+  @Nonnull
+  private MavenPath hash(final String hashExtension) {
+    checkNotNull(hashExtension);
+    checkArgument(hashType == null, "This path is already a hash: %s", this);
     Coordinates hashCoordinates = null;
     if (coordinates != null) {
       hashCoordinates = new Coordinates(
@@ -334,19 +352,18 @@ public class MavenPath
           coordinates.getBuildNumber(),
           coordinates.getBaseVersion(),
           coordinates.getClassifier(),
-          coordinates.getExtension() + "." + hashType.getExt(),
+          coordinates.getExtension() + "." + hashExtension,
           coordinates.getSignatureType()
       );
     }
     return new MavenPath(
-        path + "." + hashType.getExt(),
+        path + "." + hashExtension,
         hashCoordinates
     );
   }
 
   /**
-   * Returns path of passed in signature type that is subordinate of this path. This path cannot be
-   * hash nor signature.
+   * Returns path of passed in signature type that is subordinate of this path. This path cannot be hash nor signature.
    */
   @Nonnull
   public MavenPath signature(final SignatureType signatureType) {
@@ -411,8 +428,8 @@ public class MavenPath
   }
 
   /**
-   * Returns path pointing to POM within this same GAV. Only usable for artifact
-   * paths, those having non-null {@link #getCoordinates()}.
+   * Returns path pointing to POM within this same GAV. Only usable for artifact paths, those having non-null {@link
+   * #getCoordinates()}.
    */
   @Nonnull
   public MavenPath locatePom() {
@@ -420,8 +437,8 @@ public class MavenPath
   }
 
   /**
-   * Returns path pointing to non-classifier artifact within this same GAV. Only usable for artifact
-   * paths, those having non-null {@link #getCoordinates()}.
+   * Returns path pointing to non-classifier artifact within this same GAV. Only usable for artifact paths, those having
+   * non-null {@link #getCoordinates()}.
    */
   @Nonnull
   public MavenPath locateMainArtifact(final String extension) {

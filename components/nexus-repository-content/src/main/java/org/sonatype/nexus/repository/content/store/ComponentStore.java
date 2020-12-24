@@ -23,7 +23,7 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
-import org.sonatype.nexus.repository.content.AttributeChange;
+import org.sonatype.nexus.repository.content.AttributeOperation;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.event.component.ComponentAttributesEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentCreatedEvent;
@@ -111,7 +111,7 @@ public class ComponentStore<T extends ComponentDAO>
    */
   @Transactional
   public Continuation<Component> browseComponents(
-      Set<Integer> repositoryIds,
+      final Set<Integer> repositoryIds,
       final int limit,
       @Nullable final String continuationToken)
   {
@@ -218,7 +218,7 @@ public class ComponentStore<T extends ComponentDAO>
    */
   @Transactional
   public void updateComponentAttributes(final Component component,
-                                        final AttributeChange change,
+                                        final AttributeOperation change,
                                         final String key,
                                         final @Nullable Object value)
   {
@@ -305,19 +305,40 @@ public class ComponentStore<T extends ComponentDAO>
       if (componentIds.length == 0) {
         break; // nothing left to purge
       }
-      if ("H2".equals(thisSession().sqlDialect())) {
-        // workaround lack of primitive array support in H2 (should be fixed in H2 1.4.201?)
-        purged += dao().purgeSelectedComponents(stream(componentIds).boxed().toArray(Integer[]::new));
-      }
-      else {
-        purged += dao().purgeSelectedComponents(componentIds);
-      }
-
-      preCommitEvent(() -> new ComponentPrePurgeEvent(repositoryId, componentIds));
-      postCommitEvent(() -> new ComponentPurgedEvent(repositoryId, componentIds));
+      purged += purge(repositoryId, componentIds);
 
       commitChangesSoFar();
     }
+    return purged;
+  }
+
+  /**
+   * Purge the specified components in the given repository
+   *
+   * @param repositoryId the repository to check
+   * @param componentIds ids of the components to purge
+   * @return number of purged components
+   *
+   * @since 3.29
+   */
+  @Transactional
+  public int purge(final int repositoryId, final int[] componentIds) {
+    int purged = 0;
+
+    if (componentIds.length == 0) {
+      return purged; // nothing to purge
+    }
+    if ("H2".equals(thisSession().sqlDialect())) {
+      // workaround lack of primitive array support in H2 (should be fixed in H2 1.4.201?)
+      purged += dao().purgeSelectedComponents(stream(componentIds).boxed().toArray(Integer[]::new));
+    }
+    else {
+      purged += dao().purgeSelectedComponents(componentIds);
+    }
+
+    preCommitEvent(() -> new ComponentPrePurgeEvent(repositoryId, componentIds));
+    postCommitEvent(() -> new ComponentPurgedEvent(repositoryId, componentIds));
+
     return purged;
   }
 }

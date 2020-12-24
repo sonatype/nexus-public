@@ -50,7 +50,7 @@ import org.sonatype.nexus.security.ClientInfoProvider;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Supplier;
+import java.util.function.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.hibernate.validator.constraints.NotEmpty;
@@ -309,7 +309,8 @@ public class StorageFacetImpl
             contentValidatorSelector.validator(getRepository()),
             mimeRulesSourceSelector.ruleSource(getRepository()),
             componentFactory,
-            repositoryMoveStoreProvider
+            repositoryMoveStoreProvider,
+            nodeAccess
         )
     );
   }

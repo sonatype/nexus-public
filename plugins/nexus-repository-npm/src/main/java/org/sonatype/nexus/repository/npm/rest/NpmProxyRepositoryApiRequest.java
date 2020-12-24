@@ -31,6 +31,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class NpmProxyRepositoryApiRequest
     extends ProxyRepositoryApiRequest
 {
+  private final NpmAttributes npm;
+
   @JsonCreator
   @SuppressWarnings("squid:S00107") // suppress constructor parameter count
   public NpmProxyRepositoryApiRequest(
@@ -41,8 +43,14 @@ public class NpmProxyRepositoryApiRequest
       @JsonProperty("proxy") final ProxyAttributes proxy,
       @JsonProperty("negativeCache") final NegativeCacheAttributes negativeCache,
       @JsonProperty("httpClient") final HttpClientAttributes httpClient,
-      @JsonProperty("routingRule") final String routingRule)
+      @JsonProperty("routingRule") final String routingRule,
+      @JsonProperty("npm") final NpmAttributes npm)
   {
     super(name, NpmFormat.NAME, online, storage, cleanup, proxy, negativeCache, httpClient, routingRule);
+    this.npm = npm;
+  }
+
+  public NpmAttributes getNpm() {
+    return npm;
   }
 }

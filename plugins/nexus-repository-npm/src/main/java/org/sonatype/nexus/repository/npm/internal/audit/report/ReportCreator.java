@@ -51,14 +51,15 @@ public class ReportCreator
 {
   private static final String N_A = "N/A";
 
-  private static final String APP_ID_ADVICE = "Please specify APP_ID in package-lock.json"
+  private static final String APP_ID_ADVICE = "Please specify an APP_ID following the instructions"
       + lineSeparator() + "https://links.sonatype.com/npm-audit";
 
   private static final Logger log = LoggerFactory.getLogger(ReportCreator.class);
 
   public ResponseReport buildResponseReport(
       final ComponentsVulnerability report,
-      final PackageLock packageLock)
+      final PackageLock packageLock,
+      final String applicationId)
   {
     List<Action> actions = new ArrayList<>();
     Map<String, Advisory> advisories = new HashMap<>();
@@ -80,7 +81,8 @@ public class ReportCreator
 
         String patchedVersion =
             StringUtils.isBlank(vulnerability.getPatchedIn()) ? N_A : vulnerability.getPatchedIn();
-        boolean isAppIdAvailable = isNotBlank(packageLock.getRoot().getApplicationId());
+
+        boolean isAppIdAvailable = isNotBlank(applicationId);
 
         List<String> paths = resolvesForOneComponent.stream()
             .map(Resolve::getPath)
@@ -96,15 +98,17 @@ public class ReportCreator
     }
 
     VulnerabilityReport vulnerabilityReport = createVulnerabilityReport(new ArrayList<>(advisories.values()));
-    Metadata metadata = createMetadata(vulnerabilityReport, packageLock);
+    Metadata metadata = createMetadata(vulnerabilityReport, packageLock, applicationId);
     return new ResponseReport(actions, advisories, muted, metadata);
   }
 
-  private Metadata createMetadata(final VulnerabilityReport vulnerabilityReport, final PackageLock packageLock) {
+  private Metadata createMetadata(final VulnerabilityReport vulnerabilityReport,
+                                  final PackageLock packageLock,
+                                  final String applicationId) {
     int dependencies = 0;
     int devDependencies = 0;
     int optionalDependencies = 0;
-    for (AuditComponent component : packageLock.getComponents()) {
+    for (AuditComponent component : packageLock.getComponents(applicationId)) {
       for (PackageLockNode node : packageLock.getNodes(component.getName(), component.getVersion())) {
         if (!node.isDev()) {
           dependencies++;

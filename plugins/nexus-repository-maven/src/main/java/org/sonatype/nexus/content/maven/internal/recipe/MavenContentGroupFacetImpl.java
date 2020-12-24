@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -55,6 +56,7 @@ import org.sonatype.nexus.repository.view.ContentTypes;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.payloads.BlobPayload;
 import org.sonatype.nexus.repository.view.payloads.BytesPayload;
+import org.sonatype.nexus.repository.view.payloads.StringPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.thread.io.StreamCopier;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
@@ -69,6 +71,8 @@ import static com.google.common.io.ByteStreams.toByteArray;
 import static java.lang.String.valueOf;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
+import static org.apache.commons.lang3.StringUtils.prependIfMissing;
+import static org.sonatype.nexus.repository.view.ContentTypes.TEXT_PLAIN;
 
 /**
  * Maven2 specific implementation of {@link GroupFacetImpl} using the content store.
@@ -80,8 +84,8 @@ public class MavenContentGroupFacetImpl
     extends GroupFacetImpl
     implements MavenGroupFacet, EventAware.Asynchronous
 {
-
   private final RepositoryMetadataMerger repositoryMetadataMerger;
+
   private final ArchetypeCatalogMerger archetypeCatalogMerger;
 
   @Inject
@@ -101,16 +105,33 @@ public class MavenContentGroupFacetImpl
   public Content getCached(final MavenPath mavenPath) throws IOException {
     checkMergeHandled(mavenPath);
 
+    final String path = prependIfMissing(mavenPath.getPath(), "/");
+
+    log.trace("Checking cache for {}", path);
+
     Optional<FluentAsset> fluentAsset = getRepository()
         .facet(ContentFacet.class)
         .assets()
-        .path(mavenPath.getPath())
+        .path(path)
         .find();
 
-    if(!fluentAsset.isPresent() || fluentAsset.get().isStale(cacheController)){
+    if (!fluentAsset.isPresent()) {
+      log.trace("cache miss for {}", path);
       return null;
     }
 
+    // hashes are recalculated whenever metadata is merged, so they're always fresh
+    if (mavenPath.isHash()) {
+      log.trace("Cache hit for hash {}", path);
+      return new Content(fluentAsset.get().download());
+    }
+
+    if (fluentAsset.get().isStale(cacheController)) {
+      log.trace("Cache stale hit for {}", path);
+      return null;
+    }
+
+    log.trace("Cache fresh hit for {}", path);
     return new Content(fluentAsset.get().download());
   }
 
@@ -145,31 +166,39 @@ public class MavenContentGroupFacetImpl
   /**
    * Attempts to cache the merged content, falling back to temporary uncached result if necessary.
    */
-  private Content cache(final MavenPath mavenPath,
-                        final TempBlob tempBlob,
-                        final String contentType) throws IOException {
-
-    AttributesMap attributesMap = new AttributesMap();
-    maintainCacheInfo(attributesMap);
-    mayAddETag(attributesMap, tempBlob.getHashes());
-
+  private Content cache(
+      final MavenPath mavenPath,
+      final TempBlob tempBlob,
+      final String contentType)
+  {
     Content content = null;
     try {
       content = new Content(getRepository().facet(MavenContentFacet.class)
           .put(mavenPath, new BlobPayload(tempBlob.getBlob(), contentType)));
-    } catch (Exception e) {
+
+      maintainCacheInfo(content.getAttributes());
+      mayAddETag(content.getAttributes(), tempBlob.getHashes());
+
+      for (Entry<HashAlgorithm, HashCode> entry : tempBlob.getHashes().entrySet()) {
+        getRepository().facet(MavenContentFacet.class)
+            .put(mavenPath.hash(entry.getKey()), new StringPayload(entry.getValue().toString(), TEXT_PLAIN));
+      }
+    }
+    catch (Exception e) {
       log.warn("Problem caching merged content {} : {}",
           getRepository().getName(), mavenPath.getPath(), e);
     }
 
-    getRepository().facet(ContentFacet.class).assets().path(mavenPath.getPath()).find().ifPresent(FluentAsset::markAsStale);
+    getRepository().facet(ContentFacet.class).assets().path(prependIfMissing(mavenPath.getPath(), "/")).find()
+        .ifPresent(FluentAsset::markAsStale);
     return content;
   }
 
-  private <T> T merge(final MetadataMerger merger,
-                      final MavenPath mavenPath,
-                      final LinkedHashMap<Repository, Content> contents,
-                      final Function<InputStream, T> streamFunction)
+  private <T> T merge(
+      final MetadataMerger merger,
+      final MavenPath mavenPath,
+      final LinkedHashMap<Repository, Content> contents,
+      final Function<InputStream, T> streamFunction)
   {
     return new StreamCopier<>(
         outputStream -> merger.merge(outputStream, mavenPath, contents),
@@ -197,10 +226,11 @@ public class MavenContentGroupFacetImpl
   }
 
   @Nullable
-  private <T extends Closeable> Content merge(final MavenPath mavenPath,
-                                              final Map<Repository, Response> responses,
-                                              final Function<InputStream, T> streamFunction,
-                                              final ContentFunction<T> contentFunction)
+  private <T extends Closeable> Content merge(
+      final MavenPath mavenPath,
+      final Map<Repository, Response> responses,
+      final Function<InputStream, T> streamFunction,
+      final ContentFunction<T> contentFunction)
       throws IOException
   {
     checkMergeHandled(mavenPath);
@@ -252,8 +282,10 @@ public class MavenContentGroupFacetImpl
    * Adds {@link Content#CONTENT_ETAG} content attribute if not present. In case of hosted repositories, this is safe
    * and even good thing to do, as the content is hosted here only and NX is content authority.
    */
-  private void mayAddETag(final AttributesMap attributesMap,
-                          final Map<HashAlgorithm, HashCode> hashCodes) {
+  private void mayAddETag(
+      final AttributesMap attributesMap,
+      final Map<HashAlgorithm, HashCode> hashCodes)
+  {
     if (attributesMap.contains(Content.CONTENT_ETAG)) {
       return;
     }
@@ -283,7 +315,7 @@ public class MavenContentGroupFacetImpl
   @AllowConcurrentEvents
   public void onAssetPurgedEvent(final AssetPurgedEvent event) {
     Repository repository = event.getRepository();
-    for (int assetId: event.getAssetIds()) {
+    for (int assetId : event.getAssetIds()) {
       repository.facet(ContentFacet.class)
           .assets()
           .find(new DetachedEntityId(valueOf(assetId)))
@@ -292,11 +324,11 @@ public class MavenContentGroupFacetImpl
   }
 
   private void maybeEvict(final Repository repository, final Asset asset, final boolean delete) {
+    log.trace("Maybe evicting memberRepo:{} assetPath:{} shouldDelete:{}", repository.getName(), asset.path(), delete);
     if (!asset.component().isPresent() && member(repository)) {
       final String path = asset.path();
       final MavenPath mavenPath = getRepository().facet(MavenContentFacet.class).getMavenPathParser().parsePath(path);
-
-      // only trigger eviction on main metadata artifact (which may go on to evict its hashes)
+      // only trigger eviction on a fresh main metadata artifact (which may go on to evict its hashes)
       if (!mavenPath.isHash()) {
         if (delete) {
           try {
@@ -308,7 +340,8 @@ public class MavenContentGroupFacetImpl
                 getRepository().getName(), mavenPath.getPath(), e);
           }
         }
-        getRepository().facet(ContentFacet.class).assets().with(asset).markAsStale();
+        getRepository().facet(ContentFacet.class).assets().path(mavenPath.main().getPath()).find()
+            .ifPresent(FluentAsset::markAsStale);
       }
     }
   }

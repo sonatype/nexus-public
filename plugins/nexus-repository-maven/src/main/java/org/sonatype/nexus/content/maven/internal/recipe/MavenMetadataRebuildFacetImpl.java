@@ -19,16 +19,17 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.content.maven.MavenContentFacet;
-import org.sonatype.nexus.content.maven.MavenMetadataRebuildFacet;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
+import org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.internal.MavenModels;
 import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataRebuilder;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.view.Payload;
 
+import com.google.common.base.Strings;
 import org.apache.maven.artifact.repository.metadata.Metadata;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -92,6 +93,19 @@ public class MavenMetadataRebuildFacetImpl
     String groupId = Optional.ofNullable(metadata).map(Metadata::getGroupId).orElse(null);
     String artifactId = Optional.ofNullable(metadata).map(Metadata::getArtifactId).orElse(null);
     String baseVersion = Optional.ofNullable(metadata).map(Metadata::getVersion).orElse(null);
+    rebuildMetadata(groupId, artifactId, baseVersion, rebuildChecksums, update);
+  }
+
+  @Override
+  public void rebuildMetadata(
+      final String groupId,
+      final String artifactId,
+      final String baseVersion,
+      final boolean rebuildChecksums)
+  {
+    final boolean update = !Strings.isNullOrEmpty(groupId)
+        || !Strings.isNullOrEmpty(artifactId)
+        || !Strings.isNullOrEmpty(baseVersion);
     rebuildMetadata(groupId, artifactId, baseVersion, rebuildChecksums, update);
   }
 

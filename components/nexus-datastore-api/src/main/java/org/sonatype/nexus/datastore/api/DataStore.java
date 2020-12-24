@@ -15,6 +15,8 @@ package org.sonatype.nexus.datastore.api;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import javax.sql.DataSource;
+
 import org.sonatype.goodies.lifecycle.Lifecycle;
 import org.sonatype.nexus.transaction.TransactionalStore;
 
@@ -57,6 +59,11 @@ public interface DataStore<S extends DataSession<?>>
    * @throws UnsupportedOperationException if this store doesn't support JDBC
    */
   Connection openConnection() throws SQLException;
+
+  /**
+   * @since 3.29
+   */
+  DataSource getDataSource();
 
   /**
    * Permanently stops this data store.
