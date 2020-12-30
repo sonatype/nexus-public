@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.sonatype.nexus.plugins</groupId>
     <artifactId>nexus-plugins-maven</artifactId>
-    <version>2.14.19-01</version>
+    <version>2.14.20-02</version>
   </parent>
 
   <artifactId>nexus-maven-bridge-plugin</artifactId>
@@ -44,6 +44,12 @@
       <groupId>org.sonatype.sisu</groupId>
       <artifactId>sisu-maven-bridge</artifactId>
       <version>3.1</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.sonatype.plexus</groupId>
+          <artifactId>plexus-cipher</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
