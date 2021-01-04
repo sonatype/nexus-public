@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -279,9 +280,9 @@ public class CleanupPolicyResource
     handleCriteria(cleanupFormatConfiguration, criteriaMap, REGEX_KEY, cleanupPolicyXO.getCriteriaAssetRegex(),
         "Asset name regex", cleanupPolicyXO.getFormat());
     handleCriteria(cleanupFormatConfiguration, criteriaMap, LAST_BLOB_UPDATED_KEY,
-        cleanupPolicyXO.getCriteriaLastBlobUpdated(), "Published before", cleanupPolicyXO.getFormat());
+        toSeconds(cleanupPolicyXO.getCriteriaLastBlobUpdated()), "Published before", cleanupPolicyXO.getFormat());
     handleCriteria(cleanupFormatConfiguration, criteriaMap, LAST_DOWNLOADED_KEY,
-        cleanupPolicyXO.getCriteriaLastDownloaded(), "Last downloaded before", cleanupPolicyXO.getFormat());
+        toSeconds(cleanupPolicyXO.getCriteriaLastDownloaded()), "Last downloaded before", cleanupPolicyXO.getFormat());
     if (cleanupPolicyXO.getCriteriaReleaseType() != null) {
       handleCriteria(cleanupFormatConfiguration, criteriaMap, IS_PRERELEASE_KEY,
           PRERELEASES.equals(cleanupPolicyXO.getCriteriaReleaseType()), "Release type", cleanupPolicyXO.getFormat());
@@ -309,4 +310,14 @@ public class CleanupPolicyResource
       }
     }
   }
+
+  private static Integer toSeconds(final Integer days) {
+    if (days == null) {
+      return null;
+    }
+    else {
+      return (int) TimeUnit.DAYS.toSeconds(days);
+    }
+  }
 }
+
