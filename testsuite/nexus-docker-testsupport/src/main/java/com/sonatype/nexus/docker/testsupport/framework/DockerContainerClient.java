@@ -37,6 +37,7 @@ import com.spotify.docker.client.messages.ImageInfo;
 import com.spotify.docker.client.messages.PortBinding;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.io.output.TeeOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -242,15 +243,19 @@ public class DockerContainerClient
       final ExecCreation execCreation = dockerClient
           .execCreate(containerId, cmd(commands), attachStdin(), attachStdout(), attachStderr());
 
+      ByteArrayOutputStream branchOutputStream = new ByteArrayOutputStream();
+      TeeOutputStream teeOutputStream = new TeeOutputStream(outputStream, branchOutputStream);
       try (final LogStream stream = dockerClient.execStart(execCreation.id())) {
         // pretend to be a command line, by printing command to run
         log.debug("$ " + commands);
 
         // Why read each, instead attaching to out and err stream? Mostly because
         // Logstream preserves order of written out and err if/when they get written.
-        stream.forEachRemaining(logMessage -> write(outputStream, logMessage));
+        stream.forEachRemaining(logMessage -> write(teeOutputStream, logMessage));
       }
 
+      log.debug("Output of command '{}' in container '{}' for image '{}' was:\n{}", commands, shortId, image,
+          branchOutputStream.toString());
       log.info("Successfully exec commands '{}' in container '{}' for image '{}'", commands, shortId, image);
 
       return true;
