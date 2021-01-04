@@ -311,12 +311,12 @@ public class CleanupPolicyResource
     }
   }
 
-  private static Integer toSeconds(final Integer days) {
+  private static Long toSeconds(final Long days) {
     if (days == null) {
       return null;
     }
     else {
-      return (int) TimeUnit.DAYS.toSeconds(days);
+      return TimeUnit.DAYS.toSeconds(days);
     }
   }
 }

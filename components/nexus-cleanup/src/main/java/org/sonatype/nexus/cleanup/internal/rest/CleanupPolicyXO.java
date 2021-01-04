@@ -52,9 +52,9 @@ public class CleanupPolicyXO
 
   private String notes;
 
-  private Integer criteriaLastBlobUpdated; // days
+  private Long criteriaLastBlobUpdated; // days
 
-  private Integer criteriaLastDownloaded; // days
+  private Long criteriaLastDownloaded; // days
 
   private CleanupPolicyReleaseType criteriaReleaseType;
 
@@ -79,11 +79,11 @@ public class CleanupPolicyXO
     return criteriaReleaseType;
   }
 
-  public Integer getCriteriaLastBlobUpdated() {
+  public Long getCriteriaLastBlobUpdated() {
     return criteriaLastBlobUpdated;
   }
 
-  public Integer getCriteriaLastDownloaded() {
+  public Long getCriteriaLastDownloaded() {
     return criteriaLastDownloaded;
   }
 
@@ -111,11 +111,11 @@ public class CleanupPolicyXO
     this.criteriaAssetRegex = criteriaAssetRegex;
   }
 
-  public void setCriteriaLastBlobUpdated(final Integer criteriaLastBlobUpdated) {
+  public void setCriteriaLastBlobUpdated(final Long criteriaLastBlobUpdated) {
     this.criteriaLastBlobUpdated = criteriaLastBlobUpdated;
   }
 
-  public void setCriteriaLastDownloaded(final Integer criteriaLastDownloaded) {
+  public void setCriteriaLastDownloaded(final Long criteriaLastDownloaded) {
     this.criteriaLastDownloaded = criteriaLastDownloaded;
   }
 
@@ -133,21 +133,21 @@ public class CleanupPolicyXO
     xo.setFormat(cleanupPolicy.getFormat().equals(ALL_CLEANUP_POLICY_FORMAT) ? ALL_FORMATS : cleanupPolicy.getFormat());
     xo.setNotes(cleanupPolicy.getNotes());
     xo.setCriteriaAssetRegex(cleanupPolicy.getCriteria().get(REGEX_KEY));
-    xo.setCriteriaLastBlobUpdated(toDays(getNullableInteger(cleanupPolicy.getCriteria(), LAST_BLOB_UPDATED_KEY)));
-    xo.setCriteriaLastDownloaded(toDays(getNullableInteger(cleanupPolicy.getCriteria(), LAST_DOWNLOADED_KEY)));
+    xo.setCriteriaLastBlobUpdated(toDays(getNullableLong(cleanupPolicy.getCriteria(), LAST_BLOB_UPDATED_KEY)));
+    xo.setCriteriaLastDownloaded(toDays(getNullableLong(cleanupPolicy.getCriteria(), LAST_DOWNLOADED_KEY)));
     xo.setCriteriaReleaseType(getNullableReleaseType(cleanupPolicy.getCriteria()));
     xo.setInUseCount(inUseCount);
     return xo;
   }
 
-  private static Integer getNullableInteger(final Map<String, String> map, final String key) {
+  private static Long getNullableLong(final Map<String, String> map, final String key) {
     String value = map.get(key);
 
     if (value == null) {
       return null;
     }
 
-    return Integer.valueOf(value);
+    return Long.valueOf(value);
   }
 
   private static CleanupPolicyReleaseType getNullableReleaseType(final Map<String, String> map) {
@@ -160,12 +160,12 @@ public class CleanupPolicyXO
     return Boolean.parseBoolean(value) ? PRERELEASES : RELEASES;
   }
 
-  private static Integer toDays(final Integer seconds) {
+  private static Long toDays(final Long seconds) {
     if (seconds == null) {
       return null;
     }
     else {
-      return (int) TimeUnit.SECONDS.toDays(seconds);
+      return TimeUnit.SECONDS.toDays(seconds);
     }
   }
 }
