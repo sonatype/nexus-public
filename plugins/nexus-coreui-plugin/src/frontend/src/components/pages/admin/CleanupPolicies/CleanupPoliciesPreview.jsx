@@ -103,7 +103,7 @@ export default function CleanupPoliciesPreview({policyData}) {
           </NxTableRow>
         </NxTableHead>
         <NxTableBody isLoading={isLoadingPreview} error={error}>
-          {!hasData && <NxTableRow><NxTableCell isEmpty>{UIStrings.CLEANUP_POLICIES.PREVIEW.EMPTY}</NxTableCell></NxTableRow>}
+          {!hasData && <NxTableRow><NxTableCell>{UIStrings.CLEANUP_POLICIES.PREVIEW.EMPTY}</NxTableCell></NxTableRow>}
           {hasData && data?.map(({name, group, version}) =>
               <NxTableRow key={name}>
                 <NxTableCell>{name}</NxTableCell>

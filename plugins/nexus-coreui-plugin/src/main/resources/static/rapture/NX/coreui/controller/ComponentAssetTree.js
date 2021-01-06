@@ -145,12 +145,6 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
         'nx-coreui-component-componentfolderinfo button[action=deleteFolder]': {
           click: me.deleteFolder
         },
-        'nx-coreui-component-analyze-window button[action=analyze]': {
-          click: me.analyzeAsset
-        },
-        'nx-coreui-component-analyze-window combobox[name="asset"]': {
-          select: me.selectedApplicationChanged
-        },
         'nx-coreui-componentassettreefeature button[action=upload]': {
           click: me.onClickUploadButton
         },

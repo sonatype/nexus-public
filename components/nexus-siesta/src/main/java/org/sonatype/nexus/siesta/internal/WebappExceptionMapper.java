@@ -12,13 +12,13 @@
  */
 package org.sonatype.nexus.siesta.internal;
 
+import org.sonatype.nexus.rest.ExceptionMapperSupport;
+
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
-
-import org.sonatype.nexus.rest.ExceptionMapperSupport;
 
 /**
  * Standard {@link WebApplicationException} exception mapper.
@@ -31,10 +31,15 @@ import org.sonatype.nexus.rest.ExceptionMapperSupport;
 @Singleton
 @Provider
 public class WebappExceptionMapper
-  extends ExceptionMapperSupport<WebApplicationException>
+        extends ExceptionMapperSupport<WebApplicationException>
 {
-  @Override
-  protected Response convert(final WebApplicationException exception, final String id) {
-    return exception.getResponse();
-  }
+    @Override
+    protected Response convert(final WebApplicationException exception, final String id) {
+        // build new response to avoid potential information disclosure (CVE-2020-25633)
+        Response response = exception.getResponse();
+        Object entity = response.getEntity();
+        log.debug("(ID {}) Response: [{}], entity: {}",
+                id, response.getStatus(), entity == null ? "(no entity/body)" : String.format("'%s'", entity), exception);
+        return Response.status(response.getStatus()).build();
+    }
 }

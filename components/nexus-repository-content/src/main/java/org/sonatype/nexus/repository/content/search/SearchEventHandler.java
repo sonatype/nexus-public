@@ -113,6 +113,8 @@ public class SearchEventHandler
 
   private PeriodicJob flushTask;
 
+  private boolean processEvents = true;
+
   @Inject
   public SearchEventHandler(
       final RepositoryManager repositoryManager,
@@ -151,13 +153,22 @@ public class SearchEventHandler
   }
 
   /**
+   * Allow event processing to be disabled.
+   *
+   * @since 3.next
+   */
+  public void setProcessEvents(final boolean processEvents) {
+    this.processEvents = processEvents;
+  }
+
+  /**
    * Request update search indexes based on component id
    * @param format        The repository format
    * @param componentId   The component id
    * @param repository    The repository
    */
   public void requestIndex(final String format, final int componentId, final Repository repository) {
-    if (componentId > 0) {
+    if (processEvents && componentId > 0) {
       markComponentAsPending(requestKey(format, componentId), repoTag(INDEX, repository));
       maybeTriggerAsyncFlush();
     }
@@ -170,7 +181,7 @@ public class SearchEventHandler
    * @param repository    The repository
    */
   public void requestPurge(final String format, final int componentId, final Repository repository) {
-    if (componentId > 0) {
+    if (processEvents && componentId > 0) {
       markComponentAsPending(requestKey(format, componentId), repoTag(PURGE, repository));
       maybeTriggerAsyncPurge();
     }
