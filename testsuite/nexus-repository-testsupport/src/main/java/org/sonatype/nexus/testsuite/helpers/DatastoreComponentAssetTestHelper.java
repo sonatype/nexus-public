@@ -190,12 +190,12 @@ public class DatastoreComponentAssetTestHelper
 
   @Override
   public int countAssets(final Repository repository) {
-    return repository.facet(ContentFacet.class).assets().browse(Integer.MAX_VALUE, null).size();
+    return repository.facet(ContentFacet.class).assets().count();
   }
 
   @Override
   public int countComponents(final Repository repository) {
-    return repository.facet(ContentFacet.class).components().browse(Integer.MAX_VALUE, null).size();
+    return repository.facet(ContentFacet.class).components().count();
   }
 
   @Override
