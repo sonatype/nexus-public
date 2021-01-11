@@ -198,9 +198,7 @@ public class BlobStoreManagerImpl
     checkNotNull(configuration);
     log.debug("Creating BlobStore: {} with attributes: {}", configuration.getName(),
         configuration.getAttributes());
-    BlobStoreDescriptor blobStoreDescriptor = blobStoreDescriptors.get(configuration.getType());
-    blobStoreDescriptor.sanitizeConfig(configuration);
-    blobStoreDescriptor.validateConfig(configuration);
+    validateConfiguration(configuration, true);
 
     BlobStore blobStore = blobStorePrototypes.get(configuration.getType()).get();
     blobStore.init(configuration);
@@ -240,8 +238,7 @@ public class BlobStoreManagerImpl
 
     log.debug("Updating BlobStore: {} with attributes: {}", configuration.getName(),
         configuration.getAttributes());
-    BlobStoreDescriptor blobStoreDescriptor = blobStoreDescriptors.get(configuration.getType());
-    blobStoreDescriptor.validateConfig(configuration);
+    validateConfiguration(configuration, false);
 
     BlobStoreConfiguration currentConfig = blobStore.getBlobStoreConfiguration();
 
@@ -407,6 +404,15 @@ public class BlobStoreManagerImpl
   @Override
   public BlobStoreConfiguration newConfiguration() {
     return store.newConfiguration();
+  }
+
+  @Override
+  public void validateConfiguration(final BlobStoreConfiguration configuration, final boolean sanitize) {
+    BlobStoreDescriptor blobStoreDescriptor = blobStoreDescriptors.get(configuration.getType());
+    if (sanitize) {
+      blobStoreDescriptor.sanitizeConfig(configuration);
+    }
+    blobStoreDescriptor.validateConfig(configuration);
   }
 
   @Override
