@@ -25,8 +25,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.Matchers.startsWith;
 
 /**
  * Test the {@link ConfigStoreConnectionProvider}.
@@ -55,7 +56,12 @@ public class ConfigStoreConnectionProviderTest
   @Test
   public void testCanOpenConnection() throws SQLException {
     try (Connection connection = underTest.getConnection()) {
-      assertThat(connection.getMetaData().getURL(), is("jdbc:h2:mem:config"));
+      if (System.getProperty("test.postgres") != null) {
+        assertThat(connection.getMetaData().getURL(), startsWith("jdbc:postgresql:"));
+      }
+      else {
+        assertThat(connection.getMetaData().getURL(), is("jdbc:h2:mem:config"));
+      }
     }
   }
 }
