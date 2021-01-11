@@ -100,13 +100,21 @@ public interface BlobStoreManager
 
   /**
    * @return an empty {@link BlobStoreConfiguration} for use with this manager
-   *
    * @since 3.20
    */
   BlobStoreConfiguration newConfiguration();
 
   /**
+   * Validates {@link BlobStoreConfiguration}
+   *
+   * @param configuration config
+   * @param sanitize      set true to sanitize configuration before validation
+   */
+  void validateConfiguration(final BlobStoreConfiguration configuration, final boolean sanitize);
+
+  /**
    * Moves a blob from one blobstore to another
+   *
    * @param blobId
    * @param srcBlobStore
    * @param destBlobStore
