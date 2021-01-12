@@ -7,4 +7,43 @@
       <password>${env.RSO_SNAPSHOTS_CIRCLECI_PASSWORD_TOKEN}</password>
     </server>
   </servers>
+  <mirrors>
+    <mirror>
+      <id>sonatype-public-grid</id>
+      <mirrorOf>*</mirrorOf>
+      <url>https://repository.sonatype.org/content/groups/sonatype-public-grid/</url>
+    </mirror>
+  </mirrors>
+  <profiles>
+    <profile>
+      <id>nexus</id>
+      <repositories>
+        <repository>
+          <id>central</id>
+          <url>http://central</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+          </snapshots>
+        </repository>
+      </repositories>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>central</id>
+          <url>http://central</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+          </snapshots>
+        </pluginRepository>
+      </pluginRepositories>
+    </profile>
+  </profiles>
+  <activeProfiles>
+    <activeProfile>nexus</activeProfile>
+  </activeProfiles>
 </settings>
