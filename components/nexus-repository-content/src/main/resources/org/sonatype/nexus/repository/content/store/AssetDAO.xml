@@ -142,6 +142,13 @@
     SELECT * FROM ${format}_asset WHERE <include refid="assetPathMatch"/>;
   </select>
 
+  <select id="readPathsFromRepository" resultMap="assetResult">
+    SELECT * FROM ${format}_asset WHERE repository_id = #{repositoryId} AND path IN
+    <foreach item="path" index="index" collection="paths" open="(" separator="," close=")">
+      #{path}
+    </foreach>;
+  </select>
+
   <update id="updateAssetKind" parameterType="AssetData">
     UPDATE ${format}_asset SET kind = #{kind}, last_updated = CURRENT_TIMESTAMP
         WHERE <include refid="assetMatch"/> AND kind != #{kind};

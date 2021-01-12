@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -278,8 +279,18 @@ public class AssetStore<T extends AssetDAO>
    * @return {@code true} if any of the assets were deleted
    */
   @Transactional
-  public boolean deleteAssetsByPaths(final int repositoryId, final List<String> paths) {
-    return dao().deleteAssetsByPaths(repositoryId, paths);
+  public int deleteAssetsByPaths(final int repositoryId, final List<String> paths) {
+    Collection<Asset> assets = dao().readPathsFromRepository(repositoryId, paths);
+
+    if(assets.isEmpty()){
+      return 0;
+    }
+
+    int[] assetIds = assets.stream().mapToInt(InternalIds::internalAssetId).toArray();
+    preCommitEvent(() -> new AssetPrePurgeEvent(repositoryId, assetIds));
+    postCommitEvent(() -> new AssetPurgedEvent(repositoryId, assetIds));
+
+    return purgeAssets(assetIds);
   }
 
   /**
@@ -319,13 +330,7 @@ public class AssetStore<T extends AssetDAO>
       if (assetIds.length == 0) {
         break; // nothing left to purge
       }
-      if ("H2".equals(thisSession().sqlDialect())) {
-        // workaround lack of primitive array support in H2 (should be fixed in H2 1.4.201?)
-        purged += dao().purgeSelectedAssets(stream(assetIds).boxed().toArray(Integer[]::new));
-      }
-      else {
-        purged += dao().purgeSelectedAssets(assetIds);
-      }
+      purged += purgeAssets(assetIds);
 
       preCommitEvent(() -> new AssetPrePurgeEvent(repositoryId, assetIds));
       postCommitEvent(() -> new AssetPurgedEvent(repositoryId, assetIds));
@@ -369,5 +374,15 @@ public class AssetStore<T extends AssetDAO>
   @Transactional
   public void lastUpdated(final Asset asset, final OffsetDateTime lastUpdated) {
     dao().lastUpdated(InternalIds.internalAssetId(asset), lastUpdated);
+  }
+
+  private int purgeAssets(final int[] assetIds) {
+    if ("H2".equals(thisSession().sqlDialect())) {
+      // workaround lack of primitive array support in H2 (should be fixed in H2 1.4.201?)
+      return dao().purgeSelectedAssets(stream(assetIds).boxed().toArray(Integer[]::new));
+    }
+    else {
+      return dao().purgeSelectedAssets(assetIds);
+    }
   }
 }

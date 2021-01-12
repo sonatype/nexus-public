@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.content.store;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -710,7 +711,7 @@ public class AssetDAOTest
   }
 
   @Test
-  public void testDeletePaths() {
+  public void testReadPaths() {
 
     AssetData asset1 = randomAsset(repositoryId);
     AssetData asset2 = randomAsset(repositoryId);
@@ -735,13 +736,14 @@ public class AssetDAOTest
 
       assertThat(countAssets(dao, repositoryId), is(5));
 
-      dao.deleteAssetsByPaths(repositoryId, asList(asset1.path(), asset2.path(), asset3.path()));
+      Collection<Asset> assets =
+          dao.readPathsFromRepository(repositoryId, asList(asset1.path(), asset2.path(), asset3.path()));
 
-      assertThat(browseAssets(dao, repositoryId, null, 5, null).size(), is(2));
+      assertThat(assets.size(), is(3));
 
-      dao.deleteAssetsByPaths(repositoryId, asList(asset4.path(), asset5.path()));
+      assets = dao.readPathsFromRepository(repositoryId, asList(asset4.path(), asset5.path()));
 
-      assertThat(browseAssets(dao, repositoryId, null, 5, null).size(), is(0));
+      assertThat(assets.size(), is(2));
     }
   }
 
