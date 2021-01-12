@@ -72,7 +72,7 @@ Ext.define('NX.coreui.controller.FirewallRepositoryColumn', {
         }
       },
       component: {
-        'nx-coreui-repository-list': {
+        'nx-coreui-repository-list-template': {
           afterrender: me.bindFirewallColumn
         }
       }
@@ -144,7 +144,17 @@ Ext.define('NX.coreui.controller.FirewallRepositoryColumn', {
    */
   bindFirewallColumn: function(grid) {
     var me = this;
-    me.addFirewallColumn(grid);
+    grid.mon(
+        NX.Conditions.and(
+            NX.Conditions.watchState('user'),
+            NX.Conditions.isPermitted("nexus:iq-violation-summary:read")
+        ),
+        {
+          satisfied: Ext.pass(me.addFirewallColumn, grid),
+          unsatisfied: Ext.pass(me.removeFirewallColumn, grid),
+          scope: me
+        }
+    );
   },
 
   /**
@@ -176,6 +186,22 @@ Ext.define('NX.coreui.controller.FirewallRepositoryColumn', {
       view.refresh();
     }
   },
+
+  /**
+   * Remove Firewall column from repository grid
+   *
+   * @private
+   * @param {NX.coreui.view.repository.RepositoryList}
+   */
+  removeFirewallColumn: function(grid) {
+    var column = grid.firewallColumn;
+    if (column) {
+      grid.headerCt.remove(column);
+      grid.getView().refresh();
+      delete grid.firewallColumn;
+    }
+  },
+
 
   /**
    * Render Firewall column based on corresponding {NX.coreui.model.FirewallRepositoryStatus}.
