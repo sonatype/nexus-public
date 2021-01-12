@@ -48,19 +48,25 @@ public class HttpClientConnectionAttributes
   @ApiModelProperty(value = "Whether to allow cookies to be stored and used", example = "false")
   protected final Boolean enableCookies;
 
+  @ApiModelProperty(value = "Use certificates stored in the Nexus Repository Manager truststore to connect to external systems",
+      example = "false")
+  protected final Boolean useTrustStore;
+
   @JsonCreator
   public HttpClientConnectionAttributes(
       @JsonProperty("retries") final Integer retries,
       @JsonProperty("userAgentSuffix") final String userAgentSuffix,
       @JsonProperty("timeout") final Integer timeout,
       @JsonProperty("enableCircularRedirects") final Boolean enableCircularRedirects,
-      @JsonProperty("enableCookies") final Boolean enableCookies)
+      @JsonProperty("enableCookies") final Boolean enableCookies,
+      @JsonProperty("useTrustStore") final Boolean useTrustStore)
   {
     this.retries = retries;
     this.userAgentSuffix = userAgentSuffix;
     this.timeout = timeout;
     this.enableCircularRedirects = enableCircularRedirects;
     this.enableCookies = enableCookies;
+    this.useTrustStore = useTrustStore;
   }
 
   public Integer getRetries() {
@@ -81,5 +87,9 @@ public class HttpClientConnectionAttributes
 
   public Boolean getEnableCookies() {
     return enableCookies;
+  }
+
+  public Boolean getUseTrustStore() {
+    return useTrustStore;
   }
 }

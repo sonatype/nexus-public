@@ -32,6 +32,7 @@ import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 import com.google.common.collect.Sets;
 
 import static java.util.Objects.nonNull;
+import static org.sonatype.nexus.httpclient.HttpSchemes.HTTPS;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.BLOB_STORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STRICT_CONTENT_TYPE_VALIDATION;
@@ -69,7 +70,7 @@ public class ProxyRepositoryApiRequestToConfigurationConverter<T extends ProxyRe
       httpClientConfiguration.set("autoBlock", httpClient.getAutoBlock());
       HttpClientConnectionAttributes connection = httpClient.getConnection();
       NestedAttributesMap connectionConfiguration = httpClientConfiguration.child("connection");
-      convertConnection(connection, connectionConfiguration);
+      convertConnection(connection, connectionConfiguration, request.getProxy().getRemoteUrl().startsWith(HTTPS));
       convertAuthentication(httpClient, httpClientConfiguration);
     }
   }
@@ -91,14 +92,20 @@ public class ProxyRepositoryApiRequestToConfigurationConverter<T extends ProxyRe
 
   private void convertConnection(
       final HttpClientConnectionAttributes connection,
-      final NestedAttributesMap connectionConfiguration)
+      final NestedAttributesMap connectionConfiguration,
+      final boolean isHttps)
   {
     if (nonNull(connection)) {
+      if (Boolean.TRUE.equals(connection.getUseTrustStore()) && !isHttps) {
+        throw new IllegalArgumentException("TrustStore is available only with HTTPS remote URLs");
+      }
+
       connectionConfiguration.set("retries", connection.getRetries());
       connectionConfiguration.set("userAgentSuffix", connection.getUserAgentSuffix());
       connectionConfiguration.set("timeout", connection.getTimeout());
       connectionConfiguration.set("enableCircularRedirects", connection.getEnableCircularRedirects());
       connectionConfiguration.set("enableCookies", connection.getEnableCookies());
+      connectionConfiguration.set("useTrustStore", connection.getUseTrustStore());
     }
   }
 
