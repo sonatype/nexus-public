@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -34,6 +35,8 @@ import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetDownloadedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetKindEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetPreDeleteEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetPrePurgeEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetPurgedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetUpdatedEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentAttributesEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentCreatedEvent;
@@ -58,6 +61,7 @@ import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -175,6 +179,7 @@ public class FormatStoreManagerTest
     component.setName("testComponent");
     component.setKind("aKind");
     component.setVersion("1.0");
+    component.setLastUpdated(OffsetDateTime.now());
     componentStore.createComponent(component);
 
     AssetData asset = new AssetData();
@@ -183,6 +188,7 @@ public class FormatStoreManagerTest
     asset.setComponent(component);
     asset.setPath("/path/to/asset");
     asset.setKind("test");
+    asset.setLastUpdated(OffsetDateTime.now());
     assetStore.createAsset(asset);
 
     AssetBlobData assetBlob = new AssetBlobData();
@@ -248,6 +254,7 @@ public class FormatStoreManagerTest
     asset.setRepositoryId(repository.repositoryId);
     asset.setPath("/path/to/asset");
     asset.setKind("test");
+    asset.setLastUpdated(OffsetDateTime.now());
     assetStore.createAsset(asset);
 
     assertThat(assetStore.browseFlaggedAssets(repository.repositoryId, 10, null), is(emptyIterable()));
@@ -283,6 +290,7 @@ public class FormatStoreManagerTest
     component.setName("testComponent");
     component.setKind("aKind");
     component.setVersion("1.0");
+    component.setLastUpdated(OffsetDateTime.now());
     componentStore.createComponent(component);
 
     AssetData asset = new AssetData();
@@ -291,6 +299,92 @@ public class FormatStoreManagerTest
     asset.setComponent(component);
     asset.setPath("/path/to/asset");
     asset.setKind("test");
+    asset.setLastUpdated(OffsetDateTime.now());
+    assetStore.createAsset(asset);
+
+    AssetBlobData assetBlob = new AssetBlobData();
+    assetBlob.setBlobRef(new BlobRef("local", "default", "testBlob"));
+    assetBlob.setBlobSize(0);
+    assetBlob.setContentType("text/plain");
+    assetBlob.setChecksums(ImmutableMap.of());
+    assetBlob.setBlobCreated(UTC.now());
+    assetBlobStore.createAssetBlob(assetBlob);
+
+    asset.setKind("jar");
+    asset.setAssetBlob(assetBlob);
+
+    assetStore.updateAssetAttributes(asset, new AttributeChangeSet(SET, "test-key", "test-asset"));
+    assetStore.updateAssetKind(asset);
+    assetStore.updateAssetBlobLink(asset);
+    assetStore.markAsDownloaded(asset);
+
+    component.setKind("pom");
+
+    componentStore.updateComponentAttributes(component, SET, "test-key", "test-component");
+    componentStore.updateComponentKind(component);
+    assetStore.deleteAsset(asset);
+    componentStore.deleteComponent(component);
+    contentRepositoryStore.deleteContentRepository(repository);
+
+    ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
+
+    verify(eventManager, times(15)).post(eventCaptor.capture());
+
+    List<Object> events = eventCaptor.getAllValues();
+
+    assertThat(events.get(0), instanceOf(ContentRepositoryCreatedEvent.class));
+    assertThat(events.get(1), instanceOf(ComponentCreatedEvent.class));
+    assertThat(events.get(2), instanceOf(AssetCreatedEvent.class));
+    assertThat(events.get(3), instanceOf(AssetAttributesEvent.class));
+    assertThat(events.get(4), instanceOf(AssetKindEvent.class));
+    assertThat(events.get(5), instanceOf(AssetUpdatedEvent.class));
+    assertThat(events.get(6), instanceOf(AssetDownloadedEvent.class));
+    assertThat(events.get(7), instanceOf(ComponentAttributesEvent.class));
+    assertThat(events.get(8), instanceOf(ComponentKindEvent.class));
+    assertThat(events.get(9), instanceOf(AssetPreDeleteEvent.class));
+    assertThat(events.get(10), instanceOf(AssetDeletedEvent.class));
+    assertThat(events.get(11), instanceOf(ComponentPreDeleteEvent.class));
+    assertThat(events.get(12), instanceOf(ComponentDeletedEvent.class));
+    assertThat(events.get(13), instanceOf(ContentRepositoryPreDeleteEvent.class));
+    assertThat(events.get(14), instanceOf(ContentRepositoryDeletedEvent.class));
+
+    verifyNoMoreInteractions(eventManager);
+  }
+
+  @Test
+  public void testPurgeEvent() {
+    Injector injector =
+        Guice.createInjector(new WireModule(new TestPlainStoreModule(), new SessionModule(), new TransactionModule()));
+
+    FormatStoreManager underTest = injector.getInstance(Key.get(FormatStoreManager.class, Names.named("test")));
+
+    ContentRepositoryStore<?> contentRepositoryStore = underTest.contentRepositoryStore("content");
+    ComponentStore<?> componentStore = underTest.componentStore("content");
+    AssetStore<?> assetStore = underTest.assetStore("content");
+    AssetBlobStore<?> assetBlobStore = underTest.assetBlobStore("content");
+
+    ContentRepositoryData repository = new ContentRepositoryData();
+    repository.setAttributes(new NestedAttributesMap("attributes", new HashMap<>()));
+    repository.setConfigRepositoryId(new EntityUUID(combUUID()));
+    contentRepositoryStore.createContentRepository(repository);
+
+    ComponentData component = new ComponentData();
+    component.setAttributes(new NestedAttributesMap("attributes", new HashMap<>()));
+    component.setRepositoryId(repository.repositoryId);
+    component.setNamespace("");
+    component.setName("testComponent");
+    component.setKind("aKind");
+    component.setVersion("1.0");
+    component.setLastUpdated(OffsetDateTime.now());
+    componentStore.createComponent(component);
+
+    AssetData asset = new AssetData();
+    asset.setAttributes(new NestedAttributesMap("attributes", new HashMap<>()));
+    asset.setRepositoryId(repository.repositoryId);
+    asset.setComponent(component);
+    asset.setPath("/path/to/asset");
+    asset.setKind("test");
+    asset.setLastUpdated(OffsetDateTime.now());
     assetStore.createAsset(asset);
 
     AssetBlobData assetBlob = new AssetBlobData();
@@ -314,7 +408,8 @@ public class FormatStoreManagerTest
     componentStore.updateComponentAttributes(component, SET, "test-key", "test-component");
     componentStore.updateComponentKind(component);
 
-    assetStore.deleteAsset(asset);
+    assetStore.deleteAssetsByPaths(repository.repositoryId, Lists.newArrayList(asset.path()));
+
     componentStore.deleteComponent(component);
     contentRepositoryStore.deleteContentRepository(repository);
 
@@ -333,8 +428,8 @@ public class FormatStoreManagerTest
     assertThat(events.get(6), instanceOf(AssetDownloadedEvent.class));
     assertThat(events.get(7), instanceOf(ComponentAttributesEvent.class));
     assertThat(events.get(8), instanceOf(ComponentKindEvent.class));
-    assertThat(events.get(9), instanceOf(AssetPreDeleteEvent.class));
-    assertThat(events.get(10), instanceOf(AssetDeletedEvent.class));
+    assertThat(events.get(9), instanceOf(AssetPrePurgeEvent.class));
+    assertThat(events.get(10), instanceOf(AssetPurgedEvent.class));
     assertThat(events.get(11), instanceOf(ComponentPreDeleteEvent.class));
     assertThat(events.get(12), instanceOf(ComponentDeletedEvent.class));
     assertThat(events.get(13), instanceOf(ContentRepositoryPreDeleteEvent.class));

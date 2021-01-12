@@ -133,6 +133,16 @@ public interface AssetDAO
   Optional<Asset> readPath(@Param("repositoryId") int repositoryId, @Param("path") String path);
 
   /**
+   * Retrieves a collection of assets located specific paths in the given repository.
+   *
+   * @param repositoryId the repository containing the assets
+   * @param paths        a list of asset paths
+   * @return collection of assets if found
+   * @since 3.next
+   */
+  Collection<Asset> readPathsFromRepository(@Param("repositoryId") int repositoryId, @Param("paths") List<String> paths);
+
+  /**
    * Updates the kind of the given asset in the content data store.
    *
    * @param asset the asset to update
@@ -186,16 +196,6 @@ public interface AssetDAO
    * @return {@code true} if any assets were deleted
    */
   boolean deleteAssets(@Param("repositoryId") int repositoryId, @Param("limit") int limit);
-
-  /**
-   * Deletes assets with at the specified paths in the given repository from the content data store.
-   *
-   * @param repositoryId the repository containing the assets
-   * @param paths        a list of asset paths
-   * @return {@code true} if any assets were deleted
-   * @since 3.29
-   */
-  boolean deleteAssetsByPaths(@Param("repositoryId") int repositoryId, @Param("paths") List<String> paths);
 
   /**
    * Selects assets without a component in the given repository last downloaded more than given number of days ago.

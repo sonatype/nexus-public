@@ -327,7 +327,7 @@ public class MavenContentFacetImpl
   public boolean delete(final List<String> paths) {
     Repository repository = getRepository();
     log.trace("DELETE {} assets at {}", repository.getName(), paths);
-    return stores().assetStore.deleteAssetsByPaths(contentRepositoryId(), paths);
+    return stores().assetStore.deleteAssetsByPaths(contentRepositoryId(), paths) > 0;
   }
 
   @Override
