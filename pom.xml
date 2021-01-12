@@ -1467,6 +1467,72 @@
     </profile>
 
     <profile>
+      <id>orient-h2-unit-tests</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration combine.children="override">
+              <excludedGroups>
+                org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup,
+                org.sonatype.goodies.testsupport.group.Unstable,
+                org.sonatype.goodies.testsupport.group.Perf,
+                org.sonatype.goodies.testsupport.group.External
+              </excludedGroups>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration combine.children="override">
+              <excludedGroups>
+                org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup,
+                org.sonatype.goodies.testsupport.group.Unstable,
+                org.sonatype.goodies.testsupport.group.Perf,
+                org.sonatype.goodies.testsupport.group.External
+              </excludedGroups>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>postgres-unit-tests</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration combine.children="override">
+              <excludedGroups>
+                org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,
+                org.sonatype.nexus.content.testsuite.groups.H2TestGroup,
+                org.sonatype.goodies.testsupport.group.Unstable,
+                org.sonatype.goodies.testsupport.group.Perf,
+                org.sonatype.goodies.testsupport.group.External
+              </excludedGroups>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration combine.children="override">
+              <excludedGroups>
+                org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,
+                org.sonatype.nexus.content.testsuite.groups.H2TestGroup,
+                org.sonatype.goodies.testsupport.group.Unstable,
+                org.sonatype.goodies.testsupport.group.Perf,
+                org.sonatype.goodies.testsupport.group.External
+              </excludedGroups>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
       <id>h2-integration-tests</id>
       <build>
         <plugins>
