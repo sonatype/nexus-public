@@ -26,7 +26,6 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationConstants;
 import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
 import org.sonatype.nexus.repository.rest.api.model.CleanupPolicyAttributes;
-import org.sonatype.nexus.repository.rest.api.model.GroupAttributes;
 import org.sonatype.nexus.repository.rest.api.model.GroupDeployAttributes;
 import org.sonatype.nexus.repository.rest.api.model.HostedStorageAttributes;
 import org.sonatype.nexus.repository.rest.api.model.HttpClientAttributes;
@@ -184,9 +183,10 @@ public class SimpleApiRepositoryAdapter
       Integer timeout = toInt(connectionMap.get("timeout", Number.class));
       Boolean enableCircularRedirects = connectionMap.get("enableCircularRedirects", Boolean.class, Boolean.FALSE);
       Boolean enableCookies = connectionMap.get("enableCookies", Boolean.class, Boolean.FALSE);
+      Boolean useTrustStore = connectionMap.get("useTrustStore", Boolean.class, Boolean.FALSE);
 
       connection =
-          new HttpClientConnectionAttributes(retries, userAgentSuffix, timeout, enableCircularRedirects, enableCookies);
+          new HttpClientConnectionAttributes(retries, userAgentSuffix, timeout, enableCircularRedirects, enableCookies, useTrustStore);
     }
 
     return new HttpClientAttributes(blocked, autoBlock, connection, authentication);

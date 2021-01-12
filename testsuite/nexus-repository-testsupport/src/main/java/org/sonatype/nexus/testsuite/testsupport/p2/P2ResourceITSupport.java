@@ -114,7 +114,7 @@ public class P2ResourceITSupport extends RepositoryITSupport
     ProxyAttributes proxy = new ProxyAttributes(REMOTE_URL, 1, 2);
     NegativeCacheAttributes negativeCache = new NegativeCacheAttributes(false, 1440);
     HttpClientConnectionAttributes connection =
-        new HttpClientConnectionAttributes(1, null, 5, false, false);
+        new HttpClientConnectionAttributes(1, null, 5, false, false, false);
     HttpClientAttributes httpClient = new HttpClientAttributes(false, true, connection, null);
 
     // SET YOUR FORMAT DATA
