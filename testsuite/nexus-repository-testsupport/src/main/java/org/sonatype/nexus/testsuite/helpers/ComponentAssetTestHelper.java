@@ -149,6 +149,11 @@ public interface ComponentAssetTestHelper
   void setLastDownloadedTime(Repository repository, int minusSeconds);
 
   /**
+   * Set null to the last downloaded time column for all assets in a repository.
+   */
+  void setLastDownloadedTimeNull(Repository repository);
+
+  /**
    * Set the last downloaded time for any asset matching the pathMatcher in the given repository.
    */
   void setLastDownloadedTime(Repository repository, int minusSeconds, Predicate<String> pathMatcher);

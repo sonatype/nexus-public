@@ -22,6 +22,7 @@ import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.http.HttpMethods
+import org.sonatype.nexus.repository.maven.PurgeUnusedSnapshotsFacet
 import org.sonatype.nexus.repository.maven.internal.Maven2Format
 import org.sonatype.nexus.repository.maven.internal.hosted.MavenHostedIndexFacet
 import org.sonatype.nexus.repository.maven.internal.matcher.MavenArchetypeCatalogMatcher
@@ -52,6 +53,9 @@ class MavenHostedRecipe
   Provider<MavenHostedIndexFacet> mavenIndexFacet
 
   @Inject
+  Provider<PurgeUnusedSnapshotsFacet> mavenPurgeSnapshotsFacet
+
+  @Inject
   MavenHostedRecipe(@Named(HostedType.NAME) final Type type, @Named(Maven2Format.NAME) final Format format) {
     super(type, format)
   }
@@ -67,6 +71,7 @@ class MavenHostedRecipe
     repository.attach(mavenArchetypeCatalogFacet.get())
     repository.attach(mavenIndexFacet.get())
     repository.attach(mavenMaintenanceFacet.get())
+    repository.attach(mavenPurgeSnapshotsFacet.get())
   }
 
   private ViewFacet configure(final ConfigurableViewFacet facet) {

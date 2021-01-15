@@ -13,7 +13,12 @@
 
 package org.sonatype.nexus.content.maven.store;
 
+import java.time.LocalDate;
+import java.util.Collection;
+
 import org.sonatype.nexus.repository.content.store.ComponentDAO;
+
+import org.apache.ibatis.annotations.Param;
 
 /**
  * @since 3.25
@@ -32,4 +37,16 @@ public interface Maven2ComponentDAO
    * @param component the component to update
    */
   void updateBaseVersion(Maven2ComponentData component);
+
+  /**
+   * Selects snapshot components ids last used before provided date
+   *
+   * @param repositoryId the repository to select from
+   * @param olderThan    selects component before this date
+   * @param limit        limit the selection
+   * @return snapshot components last used before provided date
+   */
+  Collection<Integer> selectUnusedSnapshots(@Param("repositoryId") int repositoryId,
+                                            @Param("olderThan") LocalDate olderThan,
+                                            @Param("limit") long limit);
 }

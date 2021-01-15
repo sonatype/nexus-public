@@ -16,18 +16,24 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.annotation.Priority;
+import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
+import org.sonatype.nexus.orient.DatabaseInstance;
+import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenFacet;
@@ -51,6 +57,10 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 import com.google.common.collect.Lists;
 import com.google.common.hash.HashCode;
 import com.google.common.io.CharStreams;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.joda.time.DateTime;
 
 import static java.util.Collections.singletonList;
@@ -70,6 +80,10 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 public class OrientMavenTestHelper
     extends MavenTestHelper
 {
+  @Inject
+  @Named(DatabaseInstanceNames.COMPONENT)
+  public Provider<DatabaseInstance> databaseInstanceProvider;
+
   @Override
   public void verifyHashesExistAndCorrect(final Repository repository, final String path) throws Exception {
     OrientMavenFacet mavenFacet = repository.facet(OrientMavenFacet.class);
@@ -239,5 +253,82 @@ public class OrientMavenTestHelper
       storageTx.commit();
       return EntityHelper.id(component).getValue();
     }
+  }
+
+  @Override
+  public void updateBlobCreated(final Repository repository, final Date date) {
+    String sql = "UPDATE asset SET blob_created = :blobCreated WHERE bucket.repository_name = :repositoryName";
+    HashMap<String, Object> sqlParams = new HashMap<>();
+    sqlParams.put("repositoryName", repository.getName());
+    sqlParams.put("blobCreated", date);
+    ODatabaseDocumentTx tx = databaseInstanceProvider.get().acquire();
+    tx.begin();
+    tx.command(new OCommandSQL(sql)).execute(sqlParams);
+    tx.commit();
+    tx.close();
+  }
+
+  @Override
+  public List<String> findComponents(final Repository repository) {
+    String sql = "SELECT name, attributes['maven2']['baseVersion'] AS baseVersion FROM component " +
+        "WHERE bucket.repository_name = :repositoryName";
+    HashMap<String, Object> sqlParams = new HashMap<>();
+    sqlParams.put("repositoryName", repository.getName());
+
+    ODatabaseDocumentTx tx = databaseInstanceProvider.get().acquire();
+    tx.begin();
+    List<ODocument> results = tx.command(new OCommandSQL(sql)).execute(sqlParams);
+    tx.commit();
+    tx.close();
+
+    return results.stream()
+        .map(document -> document.field("name") + ":" + document.field("baseVersion"))
+        .collect(Collectors.toList());
+  }
+
+  @Override
+  public List<String> findAssets(final Repository repository) {
+    String sql = "SELECT name FROM asset WHERE bucket.repository_name = :repositoryName";
+    HashMap<String, Object> sqlParams = new HashMap<>();
+    sqlParams.put("repositoryName", repository.getName());
+
+    ODatabaseDocumentTx tx = databaseInstanceProvider.get().acquire();
+    tx.begin();
+    List<ODocument> results = tx.command(new OCommandSQL(sql)).execute(sqlParams);
+    tx.commit();
+    tx.close();
+
+    return results.stream()
+        .map(document -> "/" + document.field("name"))
+        .collect(Collectors.toList());
+  }
+
+  @Override
+  public List<String> findAssetsExcludingFlaggedForRebuild(final Repository repository) {
+    String sql = "SELECT name, attributes FROM asset WHERE bucket.repository_name = :repositoryName";
+    HashMap<String, Object> sqlParams = new HashMap<>();
+    sqlParams.put("repositoryName", repository.getName());
+
+    ODatabaseDocumentTx tx = databaseInstanceProvider.get().acquire();
+    tx.begin();
+    List<ODocument> results = tx.command(new OCommandSQL(sql)).execute(sqlParams);
+    tx.commit();
+    tx.close();
+
+    return results.stream()
+        .filter(this::isNotFlaggedForRebuild)
+        .map(document -> "/" + document.field("name"))
+        .collect(Collectors.toList());
+  }
+
+  private boolean isNotFlaggedForRebuild(final ODocument document) {
+    Map<String, Object> attributes = document.field("attributes", OType.EMBEDDEDMAP);
+    if (attributes != null) {
+      Map<String, Object> maven2Attributes = (Map<String, Object>) attributes.get("maven2");
+      if (maven2Attributes != null) {
+        return !Boolean.TRUE.equals(maven2Attributes.get("forceRebuild"));
+      }
+    }
+    return true;
   }
 }

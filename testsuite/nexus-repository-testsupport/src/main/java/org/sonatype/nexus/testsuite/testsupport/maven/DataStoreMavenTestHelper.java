@@ -15,7 +15,9 @@ package org.sonatype.nexus.testsuite.testsupport.maven;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.time.ZoneOffset;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -26,6 +28,7 @@ import javax.annotation.Nonnull;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.time.DateHelper;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
@@ -213,5 +216,52 @@ public class DataStoreMavenTestHelper
             .getOrCreate())
         .getOrCreate();
     return InternalIds.toExternalId(InternalIds.internalComponentId(asset).getAsInt()).getValue();
+  }
+
+  @Override
+  public void updateBlobCreated(final Repository repository, final Date date) {
+    MavenContentFacet mavenContentFacet = repository.facet(MavenContentFacet.class);
+    mavenContentFacet.assets()
+        .browse(Integer.MAX_VALUE, null)
+        .forEach(asset -> asset.blobCreated(date.toInstant().atOffset(ZoneOffset.UTC)));
+  }
+
+  @Override
+  public List<String> findComponents(final Repository repository) {
+    MavenContentFacet mavenContentFacet = repository.facet(MavenContentFacet.class);
+    return mavenContentFacet.components()
+        .browse(Integer.MAX_VALUE, null)
+        .stream()
+        .map(component -> component.name() + ":" + component.attributes("maven2").get("baseVersion"))
+        .collect(Collectors.toList());
+  }
+
+  @Override
+  public List<String> findAssets(final Repository repository) {
+    MavenContentFacet mavenContentFacet = repository.facet(MavenContentFacet.class);
+    return mavenContentFacet.assets()
+        .browse(Integer.MAX_VALUE, null)
+        .stream()
+        .map(Asset::path)
+        .collect(Collectors.toList());
+  }
+
+  @Override
+  public List<String> findAssetsExcludingFlaggedForRebuild(final Repository repository) {
+    MavenContentFacet mavenContentFacet = repository.facet(MavenContentFacet.class);
+    return mavenContentFacet.assets()
+        .browse(Integer.MAX_VALUE, null)
+        .stream()
+        .filter(this::isNotFlaggedForRebuild)
+        .map(Asset::path)
+        .collect(Collectors.toList());
+  }
+
+  private boolean isNotFlaggedForRebuild(final FluentAsset asset) {
+    NestedAttributesMap attributesMap = asset.attributes("maven2");
+    if (attributesMap.contains("forceRebuild")) {
+      return attributesMap.get("forceRebuild", boolean.class) != true;
+    }
+    return true;
   }
 }

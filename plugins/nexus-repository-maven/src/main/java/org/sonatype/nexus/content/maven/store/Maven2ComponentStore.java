@@ -13,6 +13,9 @@
 
 package org.sonatype.nexus.content.maven.store;
 
+import java.time.LocalDate;
+import java.util.Collection;
+
 import javax.inject.Inject;
 
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
@@ -43,5 +46,21 @@ public class Maven2ComponentStore
   public void updateBaseVersion(final Maven2ComponentData component)
   {
     dao().updateBaseVersion(component);
+  }
+
+  /**
+   * Selects snapshot components ids last used before provided date
+   *
+   * @param repositoryId the repository to select from
+   * @param olderThan    selects component before this date
+   * @param limit        limit the selection
+   * @return snapshot components last used before provided date
+   */
+  @Transactional
+  public Collection<Integer> selectUnusedSnapshots(final int repositoryId,
+                                                   final LocalDate olderThan,
+                                                   final long limit)
+  {
+    return dao().selectUnusedSnapshots(repositoryId, olderThan, limit);
   }
 }
