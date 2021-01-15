@@ -28,4 +28,17 @@
     WHERE<include refid="componentCoordinateMatch"/>;
   </update>
 
+  <select id="selectUnusedSnapshots" resultType="Integer">
+    SELECT maven2_component.component_id
+    FROM maven2_component
+           INNER JOIN maven2_asset ON maven2_component.component_id = maven2_asset.component_id
+           LEFT JOIN maven2_asset_blob ON maven2_asset.asset_blob_id = maven2_asset_blob.asset_blob_id
+    WHERE maven2_component.repository_id = #{repositoryId}
+      AND maven2_component.base_version LIKE '%%SNAPSHOT'
+    GROUP BY maven2_component.component_id
+    HAVING max(coalesce(maven2_asset.last_downloaded, maven2_asset_blob.blob_created)) &lt; #{olderThan}
+    ORDER BY maven2_component.component_id
+    LIMIT #{limit}
+  </select>
+
 </mapper>

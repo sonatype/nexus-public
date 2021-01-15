@@ -20,6 +20,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -347,6 +348,28 @@ public class DatastoreComponentAssetTestHelper
         PreparedStatement stmt = connection.prepareStatement("UPDATE " + repository.getFormat().getValue() + "_asset "
             + "SET last_downloaded = ? WHERE repository_id = ?")) {
       stmt.setTimestamp(1, time);
+      stmt.setInt(2, repositoryId);
+      stmt.execute();
+      if(stmt.getWarnings() != null) {
+        throw new RuntimeException("Failed to set download time: " + stmt.getWarnings());
+      }
+    }
+    catch (SQLException e) {
+      throw new RuntimeException(e);
+    }
+
+    repository.facet(ContentFacet.class).assets().browse(Integer.MAX_VALUE, null).stream()
+        .forEach(asset -> sendEvent(repository, asset));
+  }
+
+  @Override
+  public void setLastDownloadedTimeNull(final Repository repository) {
+    int repositoryId = ((ContentFacetSupport) repository.facet(ContentFacet.class)).contentRepositoryId();
+
+    try (Connection connection = sessionSupplier.openConnection(CONTENT_DATASTORE_NAME);
+         PreparedStatement stmt = connection.prepareStatement("UPDATE " + repository.getFormat().getValue() + "_asset "
+             + "SET last_downloaded = ? WHERE repository_id = ?")) {
+      stmt.setNull(1, Types.TIMESTAMP);
       stmt.setInt(2, repositoryId);
       stmt.execute();
       if(stmt.getWarnings() != null) {

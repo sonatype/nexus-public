@@ -332,6 +332,11 @@ public class OrientComponentAssetTestHelper
   }
 
   @Override
+  public void setLastDownloadedTimeNull(final Repository repository) {
+    updateAssets(repository, asset -> asset.lastDownloaded(null));
+  }
+
+  @Override
   public void setLastDownloadedTime(
       final Repository repository,
       final int minusSeconds,
