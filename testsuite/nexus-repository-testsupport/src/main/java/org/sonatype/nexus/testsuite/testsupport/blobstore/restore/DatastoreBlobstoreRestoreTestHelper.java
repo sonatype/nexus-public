@@ -17,6 +17,7 @@ import java.util.Optional;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobStore;
@@ -51,6 +52,7 @@ import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAG
 import static org.sonatype.nexus.scheduling.TaskState.OK;
 
 @FeatureFlag(name = "nexus.datastore.enabled")
+@Singleton
 @Named
 public class DatastoreBlobstoreRestoreTestHelper
     implements BlobstoreRestoreTestHelper
@@ -114,7 +116,7 @@ public class DatastoreBlobstoreRestoreTestHelper
 
   @Override
   public void runRestoreMetadataTask() {
-    runRestoreMetadataTaskWithTimeout(10, false);
+    runRestoreMetadataTaskWithTimeout(60, false);
   }
 
   private FluentAssets assets(final Repository repo) {

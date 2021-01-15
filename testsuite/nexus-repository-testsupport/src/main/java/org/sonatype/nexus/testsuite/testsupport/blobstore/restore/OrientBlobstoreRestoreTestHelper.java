@@ -19,6 +19,7 @@ import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobStore;
@@ -59,6 +60,7 @@ import static org.sonatype.nexus.scheduling.TaskState.OK;
  */
 @FeatureFlag(name = "nexus.orient.store.content")
 @Priority(Integer.MAX_VALUE)
+@Singleton
 @Named
 public class OrientBlobstoreRestoreTestHelper
     implements BlobstoreRestoreTestHelper
