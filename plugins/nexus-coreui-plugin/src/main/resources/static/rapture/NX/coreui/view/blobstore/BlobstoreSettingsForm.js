@@ -149,7 +149,7 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
     Ext.override(me.getForm(), {
       getValues: function() {
         var values = this.callParent(arguments);
-        var type = values['type'].toLowerCase();
+        var type = (values['type'] || "").toLowerCase();
         values.attributes = {};
         values.attributes[type] = me.down('nx-coreui-formfield-settingsfieldset').exportProperties(values);
         var customForm = me.down('#blobstore-custom-form');
