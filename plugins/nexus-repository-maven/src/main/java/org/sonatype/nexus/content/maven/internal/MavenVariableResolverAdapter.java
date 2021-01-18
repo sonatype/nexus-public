@@ -17,11 +17,12 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.nexus.repository.content.fluent.FluentAsset;
+import org.sonatype.nexus.repository.content.security.AssetVariableResolverSupport;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.maven.internal.utils.MavenVariableResolverAdapterUtil;
-import org.sonatype.nexus.repository.security.VariableResolverAdapterSupport;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.selector.VariableSourceBuilder;
 
@@ -36,7 +37,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Named(Maven2Format.NAME)
 public class MavenVariableResolverAdapter
-    extends VariableResolverAdapterSupport
+    extends AssetVariableResolverSupport
 {
   private final MavenPathParser mavenPathParser;
 
@@ -57,6 +58,11 @@ public class MavenVariableResolverAdapter
       final Map<String, Object> asset)
   {
     addMavenCoordinates(builder, (String) asset.get(NAME));
+  }
+
+  @Override
+  protected void addFromAsset(final VariableSourceBuilder builder, final FluentAsset asset) {
+    addMavenCoordinates(builder, asset.path());
   }
 
   /**
