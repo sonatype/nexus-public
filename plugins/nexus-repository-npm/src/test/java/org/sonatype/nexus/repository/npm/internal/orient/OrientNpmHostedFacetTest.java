@@ -54,6 +54,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.Ignore;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -216,6 +217,7 @@ public class OrientNpmHostedFacetTest
     assertThat(actual, is("{\"latest\":\"1.0.0\"}"));
   }
 
+  @Ignore
   @Test(expected = IOException.class)
   public void updateTagLatestIsInvalid() throws Exception {
     NpmPackageId packageId = new NpmPackageId(null, "package");
