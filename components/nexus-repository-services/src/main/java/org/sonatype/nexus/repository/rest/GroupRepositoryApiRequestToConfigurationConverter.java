@@ -20,7 +20,10 @@ import org.sonatype.nexus.repository.rest.api.model.GroupAttributes;
 import org.sonatype.nexus.repository.rest.api.model.GroupDeployAttributes;
 import org.sonatype.nexus.repository.rest.api.model.GroupRepositoryApiRequest;
 
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.BLOB_STORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.GROUP_WRITE_MEMBER;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.STRICT_CONTENT_TYPE_VALIDATION;
 
 /**
  * @since 3.20
@@ -31,9 +34,12 @@ public class GroupRepositoryApiRequestToConfigurationConverter<T extends GroupRe
 {
   public Configuration convert(final T request) {
     Configuration configuration = super.convert(request);
-    configuration.attributes("storage").set("blobStoreName", request.getStorage().getBlobStoreName());
-    configuration.attributes("storage")
-        .set("strictContentTypeValidation", request.getStorage().getStrictContentTypeValidation());
+
+    configuration.attributes(STORAGE).set(BLOB_STORE_NAME, request.getStorage().getBlobStoreName());
+    configuration.attributes(STORAGE)
+        .set(STRICT_CONTENT_TYPE_VALIDATION, request.getStorage().getStrictContentTypeValidation());
+    maybeAddDataStoreName(configuration);
+
     configuration.attributes("group").set("memberNames", request.getGroup().getMemberNames());
 
     GroupAttributes group = request.getGroup();

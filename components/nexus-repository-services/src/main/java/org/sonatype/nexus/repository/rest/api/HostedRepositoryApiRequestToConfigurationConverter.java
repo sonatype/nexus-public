@@ -35,10 +35,13 @@ public class HostedRepositoryApiRequestToConfigurationConverter<T extends Hosted
 {
   public Configuration convert(final T request) {
     Configuration configuration = super.convert(request);
+
     configuration.attributes(STORAGE).set(BLOB_STORE_NAME, request.getStorage().getBlobStoreName());
     configuration.attributes(STORAGE)
         .set(STRICT_CONTENT_TYPE_VALIDATION, request.getStorage().getStrictContentTypeValidation());
     configuration.attributes(STORAGE).set(WRITE_POLICY, request.getStorage().getWritePolicy());
+    maybeAddDataStoreName(configuration);
+
     if (request.getCleanup() != null) {
       configuration.attributes(CLEANUP_ATTRIBUTES_KEY)
           .set(CLEANUP_NAME_KEY, Sets.newHashSet(request.getCleanup().getPolicyNames()));
