@@ -31,8 +31,4 @@ public class NullSecurityEmailer
     log.error("No SecurityEmailer, user will not be notified.");
   }
 
-  public void sendResetPassword(String email, String password) {
-    log.error("No SecurityEmailer, user will not be notified.");
-  }
-
 }

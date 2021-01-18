@@ -147,7 +147,6 @@ import org.sonatype.security.rest.model.RoleResourceRequest;
 import org.sonatype.security.rest.model.RoleResourceResponse;
 import org.sonatype.security.rest.model.UserChangePasswordRequest;
 import org.sonatype.security.rest.model.UserChangePasswordResource;
-import org.sonatype.security.rest.model.UserForgotPasswordRequest;
 import org.sonatype.security.rest.model.UserForgotPasswordResource;
 import org.sonatype.security.rest.model.UserListResourceResponse;
 import org.sonatype.security.rest.model.UserResource;
@@ -1265,21 +1264,6 @@ public class TestMarshalUnmarchal
     this.marshalUnmarchalThenCompare(resourceResponse);
     this.validateXmlHasNoPackageNames(resourceResponse);
   }
-
-  @Test
-  public void testUserForgotPasswordRequest() {
-    UserForgotPasswordRequest request = new UserForgotPasswordRequest();
-
-    UserForgotPasswordResource resource = new UserForgotPasswordResource();
-    resource.setEmail("email");
-    resource.setUserId("userId");
-
-    request.setData(resource);
-
-    this.marshalUnmarchalThenCompare(request);
-    this.validateXmlHasNoPackageNames(request);
-  }
-
   @Test
   public void testUserChangePasswordRequest() {
     UserChangePasswordRequest request = new UserChangePasswordRequest();

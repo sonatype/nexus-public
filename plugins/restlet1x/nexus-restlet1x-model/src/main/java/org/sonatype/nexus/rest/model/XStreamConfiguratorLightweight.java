@@ -41,7 +41,6 @@ import org.sonatype.security.rest.model.RoleResource;
 import org.sonatype.security.rest.model.RoleResourceRequest;
 import org.sonatype.security.rest.model.RoleResourceResponse;
 import org.sonatype.security.rest.model.UserChangePasswordRequest;
-import org.sonatype.security.rest.model.UserForgotPasswordRequest;
 import org.sonatype.security.rest.model.UserListResourceResponse;
 import org.sonatype.security.rest.model.UserResource;
 import org.sonatype.security.rest.model.UserResourceRequest;
@@ -247,7 +246,6 @@ public class XStreamConfiguratorLightweight
     xstream.processAnnotations(UserResourceResponse.class);
     xstream.processAnnotations(UserListResourceResponse.class);
     xstream.processAnnotations(UserResourceRequest.class);
-    xstream.processAnnotations(UserForgotPasswordRequest.class);
     xstream.processAnnotations(UserChangePasswordRequest.class);
     xstream.registerLocalConverter(UserResource.class, "roles", new AliasingListConverter(String.class, "role"));
     xstream.registerLocalConverter(UserListResourceResponse.class, "data", new AliasingListConverter(

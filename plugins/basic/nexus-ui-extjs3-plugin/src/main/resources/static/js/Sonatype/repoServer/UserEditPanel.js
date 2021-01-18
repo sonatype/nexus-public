@@ -35,11 +35,6 @@ NX.define('Sonatype.repoServer.UserEditPanel', {
     this.sp = Sonatype.lib.Permissions;
 
     this.actions = {
-      resetPasswordAction : {
-        text : 'Reset Password',
-        scope : this,
-        handler : this.resetPasswordHandler
-      },
       changePasswordAction : {
         text : 'Set Password',
         scope : this,
@@ -350,43 +345,6 @@ NX.define('Sonatype.repoServer.UserEditPanel', {
     }
   },
 
-  resetPasswordHandler : function(rec) {
-    if (rec.data.resourceURI != 'new') {
-      Sonatype.utils.defaultToNo();
-
-      Sonatype.MessageBox.show({
-        animEl : this.gridPanel.getEl(),
-        title : 'Reset user password?',
-        msg : 'Reset the ' + rec.get('userId') + ' user password?',
-        buttons : Sonatype.MessageBox.YESNO,
-        scope : this,
-        icon : Sonatype.MessageBox.QUESTION,
-        fn : function(btnName) {
-          if (btnName == 'yes' || btnName == 'ok') {
-            Ext.Ajax.request({
-              callback : this.resetPasswordCallback,
-              cbPassThru : {
-                resourceId : rec.id
-              },
-              scope : this,
-              method : 'DELETE',
-              url : Sonatype.config.repos.urls.usersReset + '/' + rec.data.userId
-            });
-          }
-        }
-      });
-    }
-  },
-
-  resetPasswordCallback : function(options, isSuccess, response) {
-    if (isSuccess) {
-      Sonatype.MessageBox.alert('Password Reset', 'The password has been reset.');
-    }
-    else {
-      Sonatype.utils.connectionError(response, 'The server did not reset the password.');
-    }
-  },
-
   searchByUrl : function() {
     this.clearAll();
     if (this.warningLabel) {
@@ -499,10 +457,6 @@ NX.define('Sonatype.repoServer.UserEditPanel', {
           ) {
 
       if (userRecord.data.resourceURI.substring(0, 4) != 'new_') {
-        if (this.sp.checkPermission('security:usersreset', this.sp.DELETE)) {
-          menu.add(this.actions.resetPasswordAction);
-        }
-
         if (this.sp.checkPermission('security:users', this.sp.EDIT)) {
           menu.add(this.actions.changePasswordAction);
         }

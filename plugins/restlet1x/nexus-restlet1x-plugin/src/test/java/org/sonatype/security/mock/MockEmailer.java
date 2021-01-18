@@ -35,9 +35,4 @@ public class MockEmailer
 
   }
 
-  public void sendResetPassword(String arg0, String arg1) {
-    // TODO Auto-generated method stub
-
-  }
-
 }

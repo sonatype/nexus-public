@@ -415,28 +415,6 @@
         </class>
 
         <class>
-            <name>UserForgotPasswordRequest</name>
-            <version>1.0.0+</version>
-            <description>REST Request to reset a user's password.</description>
-            <annotations>
-                <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( "user-forgotpw" )</annotation>
-                <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "user-forgotpw" )</annotation>
-                <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
-            </annotations>
-            <fields>
-                <field>
-                    <name>data</name>
-                    <version>1.0.0+</version>
-                    <association>
-                        <type>UserForgotPasswordResource</type>
-                    </association>
-                    <required>true</required>
-                    <description>Details needed to reset a users's password.</description>
-                </field>
-            </fields>
-        </class>
-
-        <class>
             <name>UserChangePasswordRequest</name>
             <version>1.0.0+</version>
             <description>REST Request to change a user's password.</description>

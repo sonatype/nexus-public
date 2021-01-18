@@ -25,11 +25,6 @@ public interface SecurityEmailer
   void sendNewUserCreated(String email, String userid, String password);
 
   /**
-   * Send an email to the user telling them their password has changed.
-   */
-  void sendResetPassword(String email, String password);
-
-  /**
    * Send an email to the user reminding them of their username.
    */
   void sendForgotUsername(String email, List<String> userIds);

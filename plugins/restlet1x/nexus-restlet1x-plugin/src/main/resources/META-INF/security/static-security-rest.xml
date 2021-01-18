@@ -259,22 +259,6 @@
             </properties>
         </privilege>
         <privilege>
-            <id>59</id>
-            <type>method</type>
-            <name>User Reset Password - (delete,read)</name>
-            <description>Give permission to reset any user's password.</description>
-            <properties>
-                <property>
-                    <key>method</key>
-                    <value>delete,read</value>
-                </property>
-                <property>
-                    <key>permission</key>
-                    <value>security:usersreset</value>
-                </property>
-            </properties>
-        </privilege>
-        <privilege>
             <id>64</id>
             <type>method</type>
             <name>User Change Password - (create,read)</name>

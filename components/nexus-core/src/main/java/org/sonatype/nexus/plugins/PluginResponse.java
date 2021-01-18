@@ -17,6 +17,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 
 import org.sonatype.plugin.metadata.GAVCoordinate;
+import org.sonatype.sisu.goodies.common.Throwables2;
 
 /**
  * Describes a response from a Nexus plugin concerning a {@link PluginActivationRequest}.
@@ -83,7 +84,7 @@ public final class PluginResponse
     buf.append("... ").append(gav);
     buf.append(" :: action=").append(request).append(" result=").append(result).append(LS);
     if (!isSuccessful() && null != reason) {
-      buf.append("       Reason: ").append(reason.getLocalizedMessage()).append(LS);
+      buf.append("       Reason: ").append(Throwables2.explain(reason)).append(LS);
       if (detailed) {
         final Writer writer = new StringWriter();
         reason.printStackTrace(new PrintWriter(writer));

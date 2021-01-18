@@ -632,32 +632,6 @@ public class DefaultSecuritySystem
 
   }
 
-  public void forgotPassword(String userId, String email)
-      throws UserNotFoundException, InvalidConfigurationException
-  {
-    UserSearchCriteria criteria = new UserSearchCriteria();
-    criteria.setEmail(email);
-    criteria.setUserId(userId);
-
-    Set<User> users = this.searchUsers(criteria);
-
-    boolean found = false;
-
-    for (User user : users) {
-      // TODO: criteria does not do exact matching
-      if (user.getUserId().equalsIgnoreCase(userId.trim()) && user.getEmailAddress().equals(email)) {
-        found = true;
-        break;
-      }
-    }
-
-    if (!found) {
-      throw new UserNotFoundException(email);
-    }
-
-    resetPassword(userId);
-  }
-
   public void forgotUsername(String email)
       throws UserNotFoundException
   {
@@ -682,20 +656,6 @@ public class DefaultSecuritySystem
     else {
       throw new UserNotFoundException(email);
     }
-
-  }
-
-  public void resetPassword(String userId)
-      throws UserNotFoundException, InvalidConfigurationException
-  {
-    String newClearTextPassword = this.generatePassword();
-
-    User user = this.getUser(userId);
-
-    this.changePassword(userId, newClearTextPassword);
-
-    // send email
-    this.getSecurityEmailer().sendResetPassword(user.getEmailAddress(), newClearTextPassword);
 
   }
 

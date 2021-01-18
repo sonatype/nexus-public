@@ -768,13 +768,6 @@
             <description>Give permission to request that a username be emailed to a certain email address.</description>
         </applicationPrivilege>
         <applicationPrivilege>
-            <id>59</id>
-            <name>User Reset Password - (delete,read)</name>
-            <method>delete,read</method>
-            <permission>nexus:usersreset</permission>
-            <description>Give permission to reset any user's password.</description>
-        </applicationPrivilege>
-        <applicationPrivilege>
             <id>64</id>
             <name>User Change Password - (create,read)</name>
             <method>create,read</method>
