@@ -142,6 +142,7 @@ public class ProxyRepositoryApiRequestToConfigurationConverter<T extends ProxyRe
       NestedAttributesMap storageConfiguration = configuration.attributes(STORAGE);
       storageConfiguration.set(BLOB_STORE_NAME, storage.getBlobStoreName());
       storageConfiguration.set(STRICT_CONTENT_TYPE_VALIDATION, storage.getStrictContentTypeValidation());
+      maybeAddDataStoreName(configuration);
     }
   }
 

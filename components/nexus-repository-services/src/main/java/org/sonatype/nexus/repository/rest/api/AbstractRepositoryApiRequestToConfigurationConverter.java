@@ -13,10 +13,15 @@
 package org.sonatype.nexus.repository.rest.api;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.repository.rest.api.model.AbstractRepositoryApiRequest;
+
+import static org.sonatype.nexus.datastore.api.DataStoreManager.CONTENT_DATASTORE_NAME;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.DATA_STORE_NAME;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 
 /**
  * @since 3.20
@@ -25,6 +30,16 @@ public abstract class AbstractRepositoryApiRequestToConfigurationConverter<T ext
 {
   @Inject
   protected ConfigurationStore configurationStore;
+
+  @Named("nexus.orient.enabled")
+  @Inject
+  protected boolean orientEnabled;
+
+  protected void maybeAddDataStoreName(final Configuration configuration) {
+    if (!orientEnabled) {
+      configuration.attributes(STORAGE).set(DATA_STORE_NAME, CONTENT_DATASTORE_NAME);
+    }
+  }
 
   public Configuration convert(final T request) {
     Configuration configuration = configurationStore.newConfiguration();
