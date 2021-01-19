@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.content.webhooks
 
+import java.util.function.Function
+
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
@@ -30,9 +32,7 @@ import org.sonatype.nexus.repository.content.event.asset.AssetUpdatedEvent
 import org.sonatype.nexus.repository.content.store.InternalIds
 import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO
 import org.sonatype.nexus.repository.webhooks.RepositoryWebhook
-import org.sonatype.nexus.webhooks.Webhook
 import org.sonatype.nexus.webhooks.WebhookPayload
-import org.sonatype.nexus.webhooks.WebhookRequest
 
 import com.google.common.eventbus.AllowConcurrentEvents
 import com.google.common.eventbus.Subscribe
@@ -112,32 +112,37 @@ class RepositoryAssetWebhook
     }
   }
 
-  private RepositoryAssetWebhookPayload getPayload(final Repository repository, final EventAction eventAction) {
+  private RepositoryAssetWebhookPayload getPayload(final String repositoryName, final EventAction eventAction) {
     new RepositoryAssetWebhookPayload(
         nodeId: nodeAccess.getId(),
         timestamp: new Date(),
         initiator: initiatorProvider.get(),
-        repositoryName: repository.name,
+        repositoryName: repositoryName,
         action: eventAction
     )
   }
 
   private RepositoryAssetWebhookPayload getPayload(final AssetEvent event, final EventAction eventAction) {
-    Repository repository = event.repository
+    Optional<Repository> repository = event.repository
+    String repositoryName = repository.map({ it.name } as Function).orElse(null)
+    String format = repository.map({ it.format.value } as Function).orElse(null)
+
     Asset asset = event.asset
     EntityId assetId = InternalIds.toExternalId(InternalIds.internalAssetId(asset))
-    def payload = getPayload(repository, eventAction)
+    def payload = getPayload(repositoryName, eventAction)
     payload.asset = new RepositoryAssetWebhookPayload.RepositoryAsset(
         id: assetId.value,
-        assetId: new RepositoryItemIDXO(repository.name, assetId.value).value,
-        format: repository.format,
+        assetId: new RepositoryItemIDXO(repositoryName, assetId.value).value,
+        format: format,
         name: asset.path()
     )
     return payload
   }
 
   private RepositoryAssetWebhookPayload getPayload(final AssetPurgedEvent event, final EventAction eventAction) {
-    def payload = getPayload(event.repository, eventAction)
+    Optional<Repository> repository = event.repository
+    String repositoryName = repository.map({ it.name } as Function).orElse(null)
+    def payload = getPayload(repositoryName, eventAction)
     payload.assets = event.assetIds.collect {InternalIds.toExternalId(it).value }
     return payload
   }

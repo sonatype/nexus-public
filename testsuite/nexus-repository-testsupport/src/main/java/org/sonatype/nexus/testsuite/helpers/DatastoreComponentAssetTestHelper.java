@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -443,9 +444,9 @@ public class DatastoreComponentAssetTestHelper
     try {
       asset.component().isPresent(); // prime it
       AssetDownloadedEvent event = new AssetDownloadedEvent(asset);
-      Method method = ContentStoreEvent.class.getDeclaredMethod("setRepository", Repository.class);
+      Method method = ContentStoreEvent.class.getDeclaredMethod("setRepositorySupplier", Supplier.class);
       method.setAccessible(true);
-      method.invoke(event, repository);
+      method.invoke(event, (Supplier<Optional<Repository>>) () -> Optional.of(repository));
       eventManager.post(event);
     }
     catch (Exception e) {

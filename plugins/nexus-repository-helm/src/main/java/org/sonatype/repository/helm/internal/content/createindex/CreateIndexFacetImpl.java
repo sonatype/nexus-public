@@ -28,8 +28,8 @@ import org.sonatype.nexus.repository.content.event.asset.AssetEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetPurgedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetUpdatedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetUploadedEvent;
+import org.sonatype.nexus.repository.content.store.ContentStoreEvent;
 import org.sonatype.nexus.repository.manager.RepositoryCreatedEvent;
-import org.sonatype.nexus.repository.manager.RepositoryDeletedEvent;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.repository.helm.internal.content.HelmContentFacet;
 import org.sonatype.repository.helm.internal.content.recipe.HelmHostedFacet;
@@ -83,7 +83,7 @@ public class CreateIndexFacetImpl
   @Subscribe
   @Guarded(by = STARTED)
   @AllowConcurrentEvents
-  public void on(RepositoryCreatedEvent createdEvent) {
+  public void on(final RepositoryCreatedEvent createdEvent) {
     // at repository creation time, create index.yaml with empty entries
     log.debug("Initializing index.yaml for hosted repository {}", getRepository().getName());
     if (getRepository().getName().equals(createdEvent.getRepository().getName())) {
@@ -94,7 +94,7 @@ public class CreateIndexFacetImpl
   @Subscribe
   @Guarded(by = STARTED)
   @AllowConcurrentEvents
-  public void on(AssetCreatedEvent created) {
+  public void on(final AssetCreatedEvent created) {
     log.debug(UPDATING_INDEX_LOG, getRepository().getName());
     maybeInvalidateIndex(created);
   }
@@ -110,7 +110,7 @@ public class CreateIndexFacetImpl
   @Subscribe
   @Guarded(by = STARTED)
   @AllowConcurrentEvents
-  public void on(AssetUpdatedEvent updated) {
+  public void on(final AssetUpdatedEvent updated) {
     log.debug(UPDATING_INDEX_LOG, getRepository().getName());
     maybeInvalidateIndex(updated);
   }
@@ -118,7 +118,7 @@ public class CreateIndexFacetImpl
   @Subscribe
   @Guarded(by = STARTED)
   @AllowConcurrentEvents
-  public void on(AssetUploadedEvent uploaded) {
+  public void on(final AssetUploadedEvent uploaded) {
     log.debug(UPDATING_INDEX_LOG, getRepository().getName());
     maybeInvalidateIndex(uploaded);
   }
@@ -126,18 +126,24 @@ public class CreateIndexFacetImpl
   @Subscribe
   @Guarded(by = STARTED)
   @AllowConcurrentEvents
-  public void on(AssetPurgedEvent purged) {
+  public void on(final AssetPurgedEvent purged) {
     log.debug(UPDATING_INDEX_LOG, getRepository().getName());
-    if (getRepository().getName().equals(purged.getRepository().getName())) {
+    if (isRelevantEvent(purged)) {
       invalidateIndex();
     }
   }
 
   private void maybeInvalidateIndex(final AssetEvent event) {
-    if (event.getAsset().kind().equals(HELM_PACKAGE.toString()) &&
-        (getRepository().getName().equals(event.getRepository().getName()))) {
+    if (isRelevantEvent(event) && event.getAsset().kind().equals(HELM_PACKAGE.toString())) {
       invalidateIndex();
     }
+  }
+
+  private boolean isRelevantEvent(final ContentStoreEvent event) {
+    return event.getRepository()
+        .map(Repository::getName)
+        .map(name -> name.equals(getRepository().getName()))
+        .orElse(false);
   }
 
   @Subscribe
