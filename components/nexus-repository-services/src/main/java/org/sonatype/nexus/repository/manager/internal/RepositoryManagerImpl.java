@@ -61,6 +61,7 @@ import org.sonatype.nexus.repository.view.ViewFacet;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.eventbus.Subscribe;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -530,7 +531,7 @@ public class RepositoryManagerImpl
         .map(Configuration::getAttributes)
         .map(attributes -> attributes.get(CLEANUP_ATTRIBUTES_KEY))
         .filter(Objects::nonNull)
-        .map(cleanupPolicyMap -> (Set) cleanupPolicyMap.get(CLEANUP_NAME_KEY))
+        .map(cleanupPolicyMap -> (Collection) cleanupPolicyMap.get(CLEANUP_NAME_KEY))
         .filter(Objects::nonNull)
         .filter(cleanupPolicies -> cleanupPolicies.contains(cleanupPolicyName))
         .isPresent();

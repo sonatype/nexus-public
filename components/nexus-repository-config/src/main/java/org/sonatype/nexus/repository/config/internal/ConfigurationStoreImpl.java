@@ -64,12 +64,18 @@ public class ConfigurationStoreImpl
   @Override
   public void create(final Configuration configuration) {
     dao().create((ConfigurationData) configuration);
+
+    dao().read(configuration.getRepositoryId())
+        .ifPresent(persisted -> configuration.setAttributes(persisted.getAttributes()));
   }
 
   @Transactional
   @Override
   public void update(final Configuration configuration) {
     dao().update((ConfigurationData) configuration);
+
+    dao().read(configuration.getRepositoryId())
+        .ifPresent(persisted -> configuration.setAttributes(persisted.getAttributes()));
   }
 
   @Override
