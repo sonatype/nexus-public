@@ -58,9 +58,10 @@ public class ContentStoreEvent
 
   @Override
   public String toString() {
+    Optional<Repository> repository = repositorySupplier == null ? null : repositorySupplier.get();
     return "ContentStoreEvent{" +
         "contentRepositoryId=" + contentRepositoryId +
-        ", repository=" + repositorySupplier.get() +
+        ", repository=" + repository +
         '}';
   }
 }
