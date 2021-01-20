@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.content.search;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -226,10 +227,15 @@ public class SearchEventHandler
   @AllowConcurrentEvents
   @Subscribe
   public void on(final ComponentPurgedEvent event) {
-    Repository repository = event.getRepository();
+    Optional<Repository> repository = event.getRepository();
 
-    String format = repository.getFormat().getValue();
-    String repoTag = repoTag(PURGE, repository);
+    if (!repository.isPresent()) {
+      log.debug("Unable to determine repository for event {}", event);
+      return;
+    }
+
+    String format = repository.get().getFormat().getValue();
+    String repoTag = repoTag(PURGE, repository.get());
 
     for (int componentId : event.getComponentIds()) {
       markComponentAsPending(requestKey(format, componentId), repoTag);
@@ -241,15 +247,36 @@ public class SearchEventHandler
   // no need to watch for AssetPurgeEvent because that's only sent when purging assets without components
 
   private void requestIndex(final ComponentEvent event) {
-    requestIndex(event.getFormat(), internalComponentId(event.getComponent()), event.getRepository());
+    Optional<Repository> repository = event.getRepository();
+
+    if (!repository.isPresent()) {
+      log.debug("Unable to determine repository for event {}", event);
+      return;
+    }
+
+    requestIndex(event.getFormat(), internalComponentId(event.getComponent()), repository.get());
   }
 
   private void requestPurge(final ComponentDeletedEvent event) {
-    requestPurge(event.getFormat(), internalComponentId(event.getComponent()), event.getRepository());
+    Optional<Repository> repository = event.getRepository();
+
+    if (!repository.isPresent()) {
+      log.debug("Unable to determine repository for event {}", event);
+      return;
+    }
+
+    requestPurge(event.getFormat(), internalComponentId(event.getComponent()), repository.get());
   }
 
   private void requestIndex(final AssetEvent event) {
-    requestIndex(event.getFormat(), internalComponentId(event.getAsset()).orElse(-1), event.getRepository());
+    Optional<Repository> repository = event.getRepository();
+
+    if (!repository.isPresent()) {
+      log.debug("Unable to determine repository for event {}", event);
+      return;
+    }
+
+    requestIndex(event.getFormat(), internalComponentId(event.getAsset()).orElse(-1), repository.get());
   }
 
   private void markComponentAsPending(final String requestKey, final String repoTag) {

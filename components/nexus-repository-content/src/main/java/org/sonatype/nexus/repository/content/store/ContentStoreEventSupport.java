@@ -67,14 +67,12 @@ public abstract class ContentStoreEventSupport<T extends ContentDataAccess>
 
   private void postEvent(final Supplier<ContentStoreEvent> eventSupplier) {
     ContentStoreEvent event = eventSupplier.get();
-    Optional<Repository> repository = contentFacetFinder.findRepository(format, event.contentRepositoryId);
-    if (repository.isPresent()) {
-      event.setRepository(repository.get());
-      eventManager.post(event);
-    }
-    else {
-      log.warn("Could not find repository for {}, ignoring event", event);
-    }
+    event.setRepositorySupplier(repositorySupplierFor(event));
+    eventManager.post(event);
+  }
+
+  private Supplier<Optional<Repository>> repositorySupplierFor(final ContentStoreEvent event) {
+    return () -> contentFacetFinder.findRepository(format, event.contentRepositoryId);
   }
 
   /**

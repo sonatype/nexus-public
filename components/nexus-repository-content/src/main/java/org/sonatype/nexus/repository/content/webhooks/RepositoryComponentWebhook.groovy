@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.content.webhooks
 
+import java.util.function.Function
+
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
@@ -30,9 +32,7 @@ import org.sonatype.nexus.repository.content.event.component.ComponentUpdatedEve
 import org.sonatype.nexus.repository.content.store.InternalIds
 import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO
 import org.sonatype.nexus.repository.webhooks.RepositoryWebhook
-import org.sonatype.nexus.webhooks.Webhook
 import org.sonatype.nexus.webhooks.WebhookPayload
-import org.sonatype.nexus.webhooks.WebhookRequest
 
 import com.google.common.eventbus.AllowConcurrentEvents
 import com.google.common.eventbus.Subscribe
@@ -118,25 +118,28 @@ class RepositoryComponentWebhook
     }
   }
 
-  private RepositoryComponentWebhookPayload getPayload(final Repository repository, final EventAction eventAction) {
+  private RepositoryComponentWebhookPayload getPayload(final String repositoryName, final EventAction eventAction) {
     new RepositoryComponentWebhookPayload(
         nodeId: nodeAccess.getId(),
         timestamp: new Date(),
         initiator: initiatorProvider.get(),
-        repositoryName: repository.name,
+        repositoryName: repositoryName,
         action: eventAction
     )
   }
 
   private RepositoryComponentWebhookPayload getPayload(final ComponentEvent event, final EventAction eventAction) {
-    Repository repository = event.repository
+    Optional<Repository> repository = event.repository
+    String repositoryName = repository.map({ it.name } as Function).orElse(null)
+    String format = repository.map({ it.format } as Function).orElse(null)
+
     Component component = event.component
     EntityId componentId = InternalIds.toExternalId(InternalIds.internalComponentId(component))
-    def payload = getPayload(repository, eventAction)
+    def payload = getPayload(repositoryName, eventAction)
     payload.component = new RepositoryComponentWebhookPayload.RepositoryComponent(
         id: componentId.value,
-        componentId: new RepositoryItemIDXO(repository.name, componentId.value).value,
-        format: repository.format,
+        componentId: new RepositoryItemIDXO(repositoryName, componentId.value).value,
+        format: format,
         name: component.name(),
         group: component.namespace(),
         version: component.version()
@@ -148,7 +151,9 @@ class RepositoryComponentWebhook
       final ComponentPurgedEvent event,
       final EventAction eventAction)
   {
-    def payload = getPayload(event.repository, eventAction)
+    String repositoryName = event.repository.map({ it.name } as Function).orElse(null)
+
+    def payload = getPayload(repositoryName, eventAction)
     payload.components = event.componentIds.collect {InternalIds.toExternalId(it).value }
     return payload
   }

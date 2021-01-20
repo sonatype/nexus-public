@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.content.browse;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -181,9 +182,13 @@ public class BrowseEventHandler
    * Marks asset as requiring updating in its browse tree.
    */
   private void markAssetAsPending(final AssetEvent event) {
-
+    Optional<Repository> repository = event.getRepository();
+    if (!repository.isPresent()) {
+      log.debug("Missing repository for event {}", event);
+      return;
+    }
     // bump count if this is the first time we've seen this request key in this batch
-    if (pendingAssets.put(requestKey(event), event.getRepository()) == null) {
+    if (pendingAssets.put(requestKey(event), repository.get()) == null) {
       pendingCount.getAndIncrement();
     }
 
@@ -198,7 +203,12 @@ public class BrowseEventHandler
    * Marks repository as requiring trimming of its browse tree.
    */
   private void markRepositoryForTrimming(final ContentStoreEvent event) {
-    repositoriesToTrim.add(event.getRepository());
+    Optional<Repository> repository = event.getRepository();
+    if (!repository.isPresent()) {
+      log.debug("Unable to determine repository for trimming for event {}", event);
+      return;
+    }
+    repositoriesToTrim.add(repository.get());
     needsTrim.set(true);
 
     if (noPurgeDelay) {

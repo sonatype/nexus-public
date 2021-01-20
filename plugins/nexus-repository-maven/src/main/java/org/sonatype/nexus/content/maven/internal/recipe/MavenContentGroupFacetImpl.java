@@ -297,30 +297,31 @@ public class MavenContentGroupFacetImpl
 
   @Subscribe
   @AllowConcurrentEvents
-  public void onAssetUploadedEvent(AssetUploadedEvent event) {
+  public void onAssetUploadedEvent(final AssetUploadedEvent event) {
     handleAssetEvent(event, false);
   }
 
   @Subscribe
   @AllowConcurrentEvents
-  public void onAssetDeletedEvent(AssetDeletedEvent event) {
+  public void onAssetDeletedEvent(final AssetDeletedEvent event) {
     handleAssetEvent(event, true);
   }
 
-  private void handleAssetEvent(AssetEvent event, boolean delete) {
-    maybeEvict(event.getRepository(), event.getAsset(), delete);
+  private void handleAssetEvent(final AssetEvent event, final boolean delete) {
+    event.getRepository().ifPresent(repository -> maybeEvict(repository, event.getAsset(), delete));
   }
 
   @Subscribe
   @AllowConcurrentEvents
   public void onAssetPurgedEvent(final AssetPurgedEvent event) {
-    Repository repository = event.getRepository();
-    for (int assetId : event.getAssetIds()) {
-      repository.facet(ContentFacet.class)
-          .assets()
-          .find(new DetachedEntityId(valueOf(assetId)))
-          .ifPresent(asset -> maybeEvict(repository, asset, true));
-    }
+    event.getRepository().ifPresent(repository -> {
+      for (int assetId : event.getAssetIds()) {
+        repository.facet(ContentFacet.class)
+        .assets()
+        .find(new DetachedEntityId(valueOf(assetId)))
+        .ifPresent(asset -> maybeEvict(repository, asset, true));
+      }
+    });
   }
 
   private void maybeEvict(final Repository repository, final Asset asset, final boolean delete) {

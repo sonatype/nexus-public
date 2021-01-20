@@ -21,6 +21,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditorSupport;
 import org.sonatype.nexus.common.event.EventAware;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.event.component.ComponentAttributesEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentCreatedEvent;
@@ -32,8 +33,6 @@ import org.sonatype.nexus.repository.content.event.component.ComponentUpdatedEve
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
-
-import static java.lang.String.format;
 
 /**
  * Repository component auditor.
@@ -64,13 +63,15 @@ public class ComponentAuditor
   @AllowConcurrentEvents
   public void on(final ComponentPurgedEvent event) {
     if (isRecording()) {
+      String repositoryName =  event.getRepository().map(Repository::getName).orElse("Unknown");
+
       AuditData data = new AuditData();
       data.setDomain(DOMAIN);
       data.setType(type(event.getClass()));
-      data.setContext(event.getRepository().getName());
+      data.setContext(repositoryName);
 
       Map<String, Object> attributes = data.getAttributes();
-      attributes.put("repository.name", event.getRepository().getName());
+      attributes.put("repository.name", repositoryName);
       attributes.put("componentIds", Arrays.toString(event.getComponentIds()));
 
       record(data);
@@ -89,7 +90,7 @@ public class ComponentAuditor
       data.setContext(component.name());
 
       Map<String, Object> attributes = data.getAttributes();
-      attributes.put("repository.name", event.getRepository().getName());
+      attributes.put("repository.name", event.getRepository().map(Repository::getName).orElse("Unknown"));
       attributes.put("name", component.name());
       attributes.put("kind", component.kind());
       attributes.put("namespace", component.namespace());
