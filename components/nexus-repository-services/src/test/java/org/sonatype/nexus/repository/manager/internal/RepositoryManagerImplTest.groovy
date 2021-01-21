@@ -218,6 +218,10 @@ class RepositoryManagerImplTest
     setupGroupRepository(parentGroupRepository, parentGroupConfiguration, groupRepository)
     setupGroupRepository(cycleGroupA, cycleGroupAConfiguration, cycleGroupB, apacheSnapshotsRepository)
     setupGroupRepository(cycleGroupB, cycleGroupBConfiguration, cycleGroupA, apacheSnapshotsRepository)
+
+    setupConfigurationCopy(mavenCentralConfiguration, apacheSnapshotsConfiguration, thirdPartyConfiguration,
+      groupConfiguration, parentGroupConfiguration, cycleGroupAConfiguration, cycleGroupBConfiguration,
+      ungroupedRepoConfiguration)
   }
 
   private void setupGroupRepository(Repository repository, Configuration configuration, Repository... members) {
@@ -273,6 +277,10 @@ class RepositoryManagerImplTest
 
   private void blobstoreProvisionDefaults(final boolean provisionDefaults, final boolean clustered) {
     when(blobStoreManager.exists(DEFAULT_BLOBSTORE_NAME)).thenReturn(provisionDefaults || !clustered)
+  }
+
+  private void setupConfigurationCopy(Configuration... configurations) {
+    configurations.each { when(it.copy()).thenReturn(it) }
   }
 
   @Test

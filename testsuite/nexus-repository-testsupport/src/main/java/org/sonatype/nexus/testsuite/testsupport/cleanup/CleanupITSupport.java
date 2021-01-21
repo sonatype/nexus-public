@@ -23,6 +23,7 @@ import javax.inject.Inject;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.security.subject.FakeAlmightySubject;
 import org.sonatype.nexus.testsuite.testsupport.RepositoryITSupport;
@@ -188,8 +189,8 @@ public class CleanupITSupport
   }
 
   protected void addPolicyToRepository(final String policyName, final Repository repository) throws Exception {
-
-    Map<String, Map<String, Object>> attributes = repository.getConfiguration().getAttributes();
+    Configuration configuration = repository.getConfiguration().copy();
+    Map<String, Map<String, Object>> attributes = configuration.getAttributes();
     Map<String, Object> cleanup = attributes.get(CLEANUP_KEY);
 
     if (nonNull(cleanup)) {
@@ -214,7 +215,7 @@ public class CleanupITSupport
       attributes.put(CLEANUP_KEY, ImmutableMap.of(POLICY_NAME_KEY, policies));
     }
 
-    repositoryManager.update(repository.getConfiguration());
+    repositoryManager.update(configuration.copy());
   }
 
   protected void setLastDownloadedTimes(final String repositoryName, final int minusSeconds) {

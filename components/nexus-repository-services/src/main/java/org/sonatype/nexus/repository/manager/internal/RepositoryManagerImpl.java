@@ -404,7 +404,7 @@ public class RepositoryManagerImpl
     log.info("Deleting repository: {}", name);
 
     Repository repository = repository(name);
-    Configuration configuration = repository.getConfiguration();
+    Configuration configuration = repository.getConfiguration().copy();
 
     removeRepositoryFromAllGroups(repository);
 
@@ -449,9 +449,10 @@ public class RepositoryManagerImpl
   }
 
   private void removeRepositoryFromGroup(final Repository repositoryToRemove, final Repository group) throws Exception {
-    NestedAttributesMap groupAttributes = group.getConfiguration().attributes("group");
+    Configuration configuration = group.getConfiguration().copy();
+    NestedAttributesMap groupAttributes = configuration.attributes("group");
     groupAttributes.get("memberNames", Collection.class).remove(repositoryToRemove.getName());
-    update(group.getConfiguration());
+    update(configuration);
   }
 
   private Stream<Object> blobstoreUsageStream(final String blobStoreName) {
