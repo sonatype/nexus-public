@@ -65,7 +65,9 @@ public class MavenApiRepositoryAdapterTest
   public void testAdapt_groupRepository() throws Exception {
     // No maven specific props so simple smoke test
     Repository repository = createRepository(new GroupType());
-    repository.getConfiguration().attributes("group").set("memberNames", Arrays.asList("a", "b"));
+    Configuration configuration = repository.getConfiguration();
+    configuration.attributes("group").set("memberNames", Arrays.asList("a", "b"));
+    repository.update(configuration);
 
     SimpleApiGroupRepository groupRepository = (SimpleApiGroupRepository) underTest.adapt(repository);
     assertRepository(groupRepository, "group", true);

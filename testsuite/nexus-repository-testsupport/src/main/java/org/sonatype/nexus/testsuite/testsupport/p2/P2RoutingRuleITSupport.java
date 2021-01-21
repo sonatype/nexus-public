@@ -46,7 +46,7 @@ public class P2RoutingRuleITSupport extends P2ITSupport
   }
 
   protected void attachRuleToRepository(final Repository repository, final EntityId routingRuleId) throws Exception {
-    org.sonatype.nexus.repository.config.Configuration configuration = repository.getConfiguration();
+    org.sonatype.nexus.repository.config.Configuration configuration = repository.getConfiguration().copy();
     configuration.setRoutingRuleId(routingRuleId);
     repositoryManager.update(configuration);
   }

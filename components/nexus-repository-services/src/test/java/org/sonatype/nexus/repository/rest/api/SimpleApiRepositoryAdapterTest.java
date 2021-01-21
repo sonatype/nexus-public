@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.rest.api;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import javax.annotation.Nullable;
@@ -76,7 +77,8 @@ public class SimpleApiRepositoryAdapterTest
   @Test
   public void testAdapt_groupRepository() throws Exception {
     Repository repository = createRepository(new GroupType());
-    repository.getConfiguration().attributes("group").set("memberNames", Arrays.asList("a", "b"));
+    modifyConfiguration(repository,
+        configuration -> configuration.attributes("group").set("memberNames", Arrays.asList("a", "b")));
 
     SimpleApiGroupRepository groupRepository = (SimpleApiGroupRepository) underTest.adapt(repository);
     assertRepository(groupRepository, "group", true);
@@ -117,9 +119,10 @@ public class SimpleApiRepositoryAdapterTest
   @Test
   public void testAdapt_proxyRepository() throws Exception {
     Repository repository = createRepository(new ProxyType());
-
-    NestedAttributesMap proxy = repository.getConfiguration().attributes("proxy");
-    proxy.set("remoteUrl", "https://repo1.maven.org/maven2/");
+    modifyConfiguration(repository, configuration -> {
+      NestedAttributesMap proxy = configuration.attributes("proxy");
+      proxy.set("remoteUrl", "https://repo1.maven.org/maven2/");
+    });
 
     SimpleApiProxyRepository proxyRepository = (SimpleApiProxyRepository) underTest.adapt(repository);
     assertRepository(proxyRepository, "proxy", true);
@@ -131,12 +134,15 @@ public class SimpleApiRepositoryAdapterTest
     assertThat(proxyRepository.getHttpClient().getBlocked(), is(false));
 
     // Test specified values
-    proxy.set("contentMaxAge", 1000.0); // specifically a double here to ensure exceptions not thrown
-    proxy.set("metadataMaxAge", 1000.0); // specifically a double here to ensure exceptions not thrown
+    modifyConfiguration(repository, configuration -> {
+      NestedAttributesMap proxy = configuration.attributes("proxy");
+      proxy.set("contentMaxAge", 1000.0); // specifically a double here to ensure exceptions not thrown
+      proxy.set("metadataMaxAge", 1000.0); // specifically a double here to ensure exceptions not thrown
 
-    NestedAttributesMap httpclient = repository.getConfiguration().attributes("httpclient");
-    httpclient.set("autoBlock", true);
-    httpclient.set("blocked", true);
+      NestedAttributesMap httpclient = configuration.attributes("httpclient");
+      httpclient.set("autoBlock", true);
+      httpclient.set("blocked", true);
+    });
 
     proxyRepository = (SimpleApiProxyRepository) underTest.adapt(repository);
 
@@ -155,9 +161,11 @@ public class SimpleApiRepositoryAdapterTest
     assertThat(proxyRepository.getNegativeCache().getTimeToLive(), is(Time.hours(24).toMinutesI()));
 
     // Test specified values
-    NestedAttributesMap negativeCache = repository.getConfiguration().attributes("negativeCache");
-    negativeCache.set("enabled", false);
-    negativeCache.set("timeToLive", 23.0); // specifically a double here to ensure exceptions not thrown
+    modifyConfiguration(repository, configuration -> {
+      NestedAttributesMap negativeCache = configuration.attributes("negativeCache");
+      negativeCache.set("enabled", false);
+      negativeCache.set("timeToLive", 23.0); // specifically a double here to ensure exceptions not thrown
+    });
 
     proxyRepository = (SimpleApiProxyRepository) underTest.adapt(repository);
     assertThat(proxyRepository.getNegativeCache().getEnabled(), is(false));
@@ -167,8 +175,10 @@ public class SimpleApiRepositoryAdapterTest
   @Test
   public void testAdapt_proxyRepositoryRoutingRule() throws Exception {
     Repository repository = createRepository(new ProxyType());
-    EntityId entityId = mock(EntityId.class);
-    repository.getConfiguration().setRoutingRuleId(entityId);
+    modifyConfiguration(repository, configuration -> {
+      EntityId entityId = mock(EntityId.class);
+      configuration.setRoutingRuleId(entityId);
+    });
 
     SimpleApiProxyRepository proxyRepository = (SimpleApiProxyRepository) underTest.adapt(repository);
     assertThat(proxyRepository.getRoutingRuleName(), nullValue());
@@ -206,10 +216,12 @@ public class SimpleApiRepositoryAdapterTest
     assertThat(proxyRepository.getHttpClient().getAuthentication(), nullValue());
 
     // username
-    NestedAttributesMap httpclient = repository.getConfiguration().attributes("httpclient").child("authentication");
-    httpclient.set("type", "username");
-    httpclient.set("username", "jsmith");
-    httpclient.set("password", "p4ssw0rd");
+    modifyConfiguration(repository, configuration -> {
+      NestedAttributesMap httpclient = configuration.attributes("httpclient").child("authentication");
+      httpclient.set("type", "username");
+      httpclient.set("username", "jsmith");
+      httpclient.set("password", "p4ssw0rd");
+    });
 
     proxyRepository = (SimpleApiProxyRepository) underTest.adapt(repository);
     assertThat(proxyRepository.getHttpClient().getAuthentication().getType(), is("username"));
@@ -219,11 +231,14 @@ public class SimpleApiRepositoryAdapterTest
     assertThat(proxyRepository.getHttpClient().getAuthentication().getNtlmHost(), nullValue());
 
     // ntlm
-    httpclient.set("type", "ntlm");
-    httpclient.set("username", "jsmith");
-    httpclient.set("password", "p4ssw0rd");
-    httpclient.set("ntlmDomain", "sona");
-    httpclient.set("ntlmHost", "sonatype.com");
+    modifyConfiguration(repository, configuration -> {
+      NestedAttributesMap httpclient = configuration.attributes("httpclient").child("authentication");
+      httpclient.set("type", "ntlm");
+      httpclient.set("username", "jsmith");
+      httpclient.set("password", "p4ssw0rd");
+      httpclient.set("ntlmDomain", "sona");
+      httpclient.set("ntlmHost", "sonatype.com");
+    });
 
     proxyRepository = (SimpleApiProxyRepository) underTest.adapt(repository);
     assertThat(proxyRepository.getHttpClient().getAuthentication().getType(), is("ntlm"));
@@ -242,17 +257,20 @@ public class SimpleApiRepositoryAdapterTest
     assertThat(proxyRepository.getHttpClient().getConnection(), nullValue());
 
     // test empty connection
-    NestedAttributesMap connection = repository.getConfiguration().attributes("httpclient").child("connection");
+    modifyConfiguration(repository, configuration -> configuration.attributes("httpclient").child("connection"));
     proxyRepository = (SimpleApiProxyRepository) underTest.adapt(repository);
     assertConnection(proxyRepository.getHttpClient().getConnection(), /* circular redirects */ false,
         /* cookies */ false, /* retries */ null, /* timeout */ null, null);
 
     // populate values
-    connection.set("enableCircularRedirects", true);
-    connection.set("enableCookies", true);
-    connection.set("retries", 9.0);
-    connection.set("timeout", 7.0);
-    connection.set("userAgentSuffix", "hi-yall");
+    modifyConfiguration(repository, configuration -> {
+      NestedAttributesMap connection = configuration.attributes("httpclient").child("connection");
+      connection.set("enableCircularRedirects", true);
+      connection.set("enableCookies", true);
+      connection.set("retries", 9.0);
+      connection.set("timeout", 7.0);
+      connection.set("userAgentSuffix", "hi-yall");
+    });
 
     proxyRepository = (SimpleApiProxyRepository) underTest.adapt(repository);
     assertConnection(proxyRepository.getHttpClient().getConnection(), /* circular redirects */ true, /* cookies */ true,
@@ -305,16 +323,18 @@ public class SimpleApiRepositoryAdapterTest
       final Repository repository,
       final String blobStoreName,
       final Boolean strictContentTypeValidation,
-      final String writePolicy)
+      final String writePolicy) throws Exception
   {
-    NestedAttributesMap storage = repository.getConfiguration().attributes(ConfigurationConstants.STORAGE);
-    storage.set(ConfigurationConstants.BLOB_STORE_NAME, blobStoreName);
-    if (strictContentTypeValidation != null) {
-      storage.set(ConfigurationConstants.STRICT_CONTENT_TYPE_VALIDATION, strictContentTypeValidation);
-    }
-    if (writePolicy != null) {
-      storage.set(ConfigurationConstants.WRITE_POLICY, writePolicy);
-    }
+    modifyConfiguration(repository, configuration -> {
+      NestedAttributesMap storage = configuration.attributes(ConfigurationConstants.STORAGE);
+      storage.set(ConfigurationConstants.BLOB_STORE_NAME, blobStoreName);
+      if (strictContentTypeValidation != null) {
+        storage.set(ConfigurationConstants.STRICT_CONTENT_TYPE_VALIDATION, strictContentTypeValidation);
+      }
+      if (writePolicy != null) {
+        storage.set(ConfigurationConstants.WRITE_POLICY, writePolicy);
+      }
+    });
   }
 
   private void testCleanup(
@@ -324,11 +344,22 @@ public class SimpleApiRepositoryAdapterTest
     AbstractApiRepository restRepository = underTest.adapt(repository);
     assertThat(cleanupFn.apply(restRepository), nullValue());
 
-    NestedAttributesMap storage = repository.getConfiguration().attributes("cleanup");
-    storage.set("policyName", Collections.singleton("policy-a"));
+    modifyConfiguration(repository, configuration -> {
+      NestedAttributesMap storage = configuration.attributes("cleanup");
+      storage.set("policyName", Collections.singleton("policy-a"));
+    });
 
     restRepository = underTest.adapt(repository);
     assertThat(cleanupFn.apply(restRepository).getPolicyNames(), contains("policy-a"));
+  }
+
+  private static void modifyConfiguration(
+      final Repository repository,
+      final Consumer<Configuration> modifier) throws Exception
+  {
+    Configuration configuration = repository.getConfiguration().copy();
+    modifier.accept(configuration);
+    repository.update(configuration);
   }
 
   private static class SimpleConfiguration

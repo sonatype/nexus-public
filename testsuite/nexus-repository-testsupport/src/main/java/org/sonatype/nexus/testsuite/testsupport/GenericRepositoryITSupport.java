@@ -306,7 +306,7 @@ public abstract class GenericRepositoryITSupport<RR extends RepositoryRule>
                                              final int contentMaxAge,
                                              final int metadataMaxAge) throws Exception
   {
-    Configuration configuration = proxyRepository.getConfiguration();
+    Configuration configuration = proxyRepository.getConfiguration().copy();
     configuration.attributes("proxy").set("contentMaxAge", Integer.toString(contentMaxAge));
     configuration.attributes("proxy").set("metadataMaxAge", Integer.toString(metadataMaxAge));
     repositoryManager.update(configuration);
