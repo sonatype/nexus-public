@@ -10,6 +10,29 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+import { inspect } from '@xstate/inspect';
+
+export default function configurePlugins() {
+  // Declare an initial (empty) array for plugin configurations
+  window.plugins = [];
+  window.ReactComponents = {};
+
+  // A function for the ExtJS codebase to call to register React plugins
+  window.onStart = function() {
+    window.plugins.forEach((plugin) => {
+      if (plugin.features) {
+        plugin.features.forEach(registerFeature);
+      }
+    })
+  };
+
+  if (window.location.search.startsWith('?debug')) {
+    console.log('initialize xstate inspector');
+    inspect({
+      iframe: false
+    });
+  }
+}
 
 /**
  * @param feature - {
@@ -37,7 +60,7 @@
  *   }
  * }
  */
-export default function registerFeature(feature) {
+export function registerFeature(feature) {
   console.log(`Register feature`, feature);
   const reactViewController = Ext.getApplication().getController('NX.coreui.controller.react.ReactViewController');
   Ext.getApplication().getFeaturesController().registerFeature({

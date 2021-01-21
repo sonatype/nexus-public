@@ -10,12 +10,13 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import exposeDependencies from './exposeDependencies';
-import configureAxios from './configureAxios';
-import configurePlugins from './configurePlugins';
-import configureDebug from './configureDebug.js';
+import {inspect} from "@xstate/inspect";
 
-exposeDependencies();
-configureAxios();
-configurePlugins()
-configureDebug();
+export default function configureDebug() {
+  if (window.location.search.startsWith('?debug')) {
+    console.log('initialize xstate inspector');
+    inspect({
+      iframe: false
+    });
+  }
+}

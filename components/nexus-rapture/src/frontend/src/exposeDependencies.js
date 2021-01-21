@@ -10,12 +10,16 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import exposeDependencies from './exposeDependencies';
-import configureAxios from './configureAxios';
-import configurePlugins from './configurePlugins';
-import configureDebug from './configureDebug.js';
+import axios from 'axios';
+import * as nxrmUiPlugin from 'nexus-ui-plugin';
+import React from 'react';
+import ReactDOM from 'react-dom';
+import * as xstate from 'xstate';
 
-exposeDependencies();
-configureAxios();
-configurePlugins()
-configureDebug();
+export default function exposeDependencies() {
+  window.axios = axios;
+  window.react = React;
+  window.ReactDOM = ReactDOM;
+  window.xstate = xstate;
+  window.nxrmUiPlugin = nxrmUiPlugin;
+}
