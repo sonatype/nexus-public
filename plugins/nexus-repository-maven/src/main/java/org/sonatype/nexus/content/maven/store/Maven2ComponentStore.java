@@ -10,11 +10,12 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-
 package org.sonatype.nexus.content.maven.store;
 
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 import javax.inject.Inject;
 
@@ -46,6 +47,26 @@ public class Maven2ComponentStore
   public void updateBaseVersion(final Maven2ComponentData component)
   {
     dao().updateBaseVersion(component);
+  }
+
+  @Transactional
+  public Set<GAV> findGavsWithSnaphots(final int repositoryId, final int minimumRetained) {
+    return dao().findGavsWithSnaphots(repositoryId, minimumRetained);
+  }
+
+  @Transactional
+  public List<Maven2ComponentData> findComponentsForGav(final int repositoryId,
+                                                        final String name,
+                                                        final String group,
+                                                        final String baseVersion,
+                                                        final String releaseVersion)
+  {
+    return dao().findComponentsForGav(repositoryId, name, group, baseVersion, releaseVersion);
+  }
+
+  @Transactional
+  public int[] selectSnapshotsAfterRelease(final int repositoryId, final int gracePeriod) {
+    return dao().selectSnapshotsAfterRelease(gracePeriod, repositoryId);
   }
 
   /**

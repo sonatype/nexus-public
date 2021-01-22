@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.sonatype.nexus.content.maven.store.GAV;
+import org.sonatype.nexus.content.maven.store.Maven2ComponentData;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
@@ -82,4 +84,39 @@ public interface MavenContentFacet
   int deleteComponents(int[] componentIds);
 
   Set<String> deleteMetadata(Component component);
+
+
+  /**
+   * Find Snapshot Group Artifact Version(GAVs)
+   *
+   * @param minimumRetained The minimum number of snapshots to keep.
+   *
+   * @since 3.next
+   */
+  Set<GAV> findGavsWithSnaphots(int minimumRetained);
+
+  /**
+   * Find Components by Group Artifact Version(GAVs)
+   *
+   * @param name artifact name
+   * @param group artifact group
+   * @param baseVersion artifact base version
+   * @param releaseVersion artifact release version
+   *
+   * @since 3.next
+   */
+  List<Maven2ComponentData> findComponentsForGav(final String name,
+                                                 final String group,
+                                                 final String baseVersion,
+                                                 final String releaseVersion);
+
+  /**
+   * Find snapshots to delete for which a release version exists
+   *
+   * @param gracePeriod an optional period to keep snapshots around.
+   * @return array of snapshot components IDs to delete for which a release version exists
+   *
+   * @since 3.next
+   */
+  int[] selectSnapshotsAfterRelease(final int gracePeriod);
 }

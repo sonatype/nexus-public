@@ -17,9 +17,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
-import java.util.Optional;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -240,6 +240,8 @@ public abstract class MavenTestHelper
       final String groupId,
       final String artifactId,
       final String version);
+
+  public abstract List<MavenTestComponent> loadComponents(final Repository repository);
 
   public abstract void updateBlobCreated(final Repository repository, final Date date);
 

@@ -28,6 +28,31 @@
     WHERE<include refid="componentCoordinateMatch"/>;
   </update>
 
+  <select id="findGavsWithSnaphots" resultType="org.sonatype.nexus.content.maven.store.GAV">
+    SELECT namespace as "group", name, base_version, COUNT(*) AS count FROM maven2_component
+    WHERE repository_id = #{repositoryId} AND base_version LIKE '%-SNAPSHOT'
+    GROUP BY namespace, name, base_version
+    HAVING COUNT(*) &gt; #{minimumRetained};
+  </select>
+
+  <select id="findComponentsForGav" resultType="Maven2ComponentData">
+    SELECT * FROM maven2_component
+    WHERE (name = #{name} AND namespace = #{group})
+    AND ((repository_id = #{repositoryId} AND base_version = #{baseVersion}) OR base_version = #{releaseVersion})
+    AND base_version LIKE '%-SNAPSHOT'
+    ORDER BY version DESC;
+  </select>
+
+  <select id="selectSnapshotsAfterRelease" resultType="int">
+  SELECT DISTINCT(snapshots.component_id) FROM maven2_component snapshots, maven2_component releases
+  WHERE snapshots.repository_id = #{repositoryId}
+  AND snapshots.name = releases.name
+  AND snapshots.namespace = releases.namespace
+  AND snapshots.base_version LIKE '%-SNAPSHOT'
+  AND snapshots.last_updated &lt;= (CURRENT_TIMESTAMP - CAST(#{gracePeriod} AS INT) * INTERVAL '1' DAY)
+  AND releases.base_version = REPLACE(snapshots.base_version, '-SNAPSHOT', '');
+  </select>
+
   <select id="selectUnusedSnapshots" resultType="Integer">
     SELECT maven2_component.component_id
     FROM maven2_component

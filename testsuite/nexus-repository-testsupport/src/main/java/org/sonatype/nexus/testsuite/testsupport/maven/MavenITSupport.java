@@ -16,6 +16,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Date;
+import java.util.List;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -262,5 +264,13 @@ public abstract class MavenITSupport
 
   protected void verifyHashesExistAndCorrect(final Repository repository, final String path) throws Exception {
     mavenTestHelper.verifyHashesExistAndCorrect(repository, path);
+  }
+
+  protected List<MavenTestComponent> loadComponents(final Repository repository) {
+    return mavenTestHelper.loadComponents(repository);
+  }
+
+  protected void updateLastUpdated(final Repository repository, final Date date) {
+    componentAssetTestHelper.setComponentLastUpdatedTime(repository, date);
   }
 }

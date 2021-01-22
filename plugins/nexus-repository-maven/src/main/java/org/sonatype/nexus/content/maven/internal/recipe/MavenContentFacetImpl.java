@@ -28,6 +28,8 @@ import javax.validation.constraints.NotNull;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.content.maven.internal.event.RebuildMavenArchetypeCatalogEvent;
+import org.sonatype.nexus.content.maven.store.GAV;
+import org.sonatype.nexus.content.maven.store.Maven2ComponentData;
 import org.sonatype.nexus.content.maven.store.Maven2ComponentStore;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
@@ -449,5 +451,23 @@ public class MavenContentFacetImpl
           .ifPresent(asset -> asset.withAttribute(METADATA_REBUILD_KEY, true));
     }
     return metadataCoordinates;
+  }
+
+  public Set<GAV> findGavsWithSnaphots(final int minimumRetained) {
+    Maven2ComponentStore componentStore = (Maven2ComponentStore)stores().componentStore;
+    return componentStore.findGavsWithSnaphots(contentRepositoryId(), minimumRetained);
+  }
+
+  public List<Maven2ComponentData> findComponentsForGav(final String name,
+                                                       final String group,
+                                                       final String baseVersion,
+                                                       final String releaseVersion) {
+    Maven2ComponentStore componentStore = (Maven2ComponentStore) stores().componentStore;
+    return componentStore.findComponentsForGav(contentRepositoryId(), name, group, baseVersion, releaseVersion);
+  }
+
+  public int[] selectSnapshotsAfterRelease(final int gracePeriod) {
+    Maven2ComponentStore componentStore = (Maven2ComponentStore) stores().componentStore;
+    return componentStore.selectSnapshotsAfterRelease(gracePeriod, contentRepositoryId());
   }
 }
