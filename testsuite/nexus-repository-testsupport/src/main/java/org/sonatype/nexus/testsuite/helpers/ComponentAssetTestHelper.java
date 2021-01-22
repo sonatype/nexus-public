@@ -13,6 +13,7 @@
 package org.sonatype.nexus.testsuite.helpers;
 
 import java.io.InputStream;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -147,6 +148,11 @@ public interface ComponentAssetTestHelper
    * Set the last downloaded time for all assets in a repository.
    */
   void setLastDownloadedTime(Repository repository, int minusSeconds);
+
+  /**
+   * Set the last downloaded time for all assets in a repository.
+   */
+  void setComponentLastUpdatedTime(Repository repository, final Date date);
 
   /**
    * Set null to the last downloaded time column for all assets in a repository.

@@ -26,6 +26,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -80,6 +81,8 @@ public class DatastoreComponentAssetTestHelper
     implements ComponentAssetTestHelper
 {
   private static final String SNAPSHOT_VERSION_SUFFIX = "-SNAPSHOT";
+  
+  private static final String UPDATE_TIME_ERROR_MESSAGE = "Failed to set download time: ";
 
   private static final DateTimeFormatter YEAR_MONTH_DAY_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
 
@@ -352,7 +355,7 @@ public class DatastoreComponentAssetTestHelper
       stmt.setInt(2, repositoryId);
       stmt.execute();
       if(stmt.getWarnings() != null) {
-        throw new RuntimeException("Failed to set download time: " + stmt.getWarnings());
+        throw new RuntimeException(UPDATE_TIME_ERROR_MESSAGE + stmt.getWarnings());
       }
     }
     catch (SQLException e) {
@@ -361,6 +364,25 @@ public class DatastoreComponentAssetTestHelper
 
     repository.facet(ContentFacet.class).assets().browse(Integer.MAX_VALUE, null).stream()
         .forEach(asset -> sendEvent(repository, asset));
+  }
+
+  @Override
+  public void setComponentLastUpdatedTime(Repository repository, final Date date) {
+    int repositoryId = ((ContentFacetSupport) repository.facet(ContentFacet.class)).contentRepositoryId();
+
+    try (Connection connection = sessionSupplier.openConnection(CONTENT_DATASTORE_NAME);
+         PreparedStatement stmt = connection.prepareStatement("UPDATE " + repository.getFormat().getValue() + "_component "
+                 + "SET last_updated = ? WHERE repository_id = ?")) {
+      stmt.setTimestamp(1, Timestamp.from(date.toInstant()));
+      stmt.setInt(2, repositoryId);
+      stmt.execute();
+      if (stmt.getWarnings() != null) {
+        throw new RuntimeException("Failed to set updated time: " + stmt.getWarnings());
+      }
+    }
+    catch (SQLException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
@@ -374,13 +396,12 @@ public class DatastoreComponentAssetTestHelper
       stmt.setInt(2, repositoryId);
       stmt.execute();
       if(stmt.getWarnings() != null) {
-        throw new RuntimeException("Failed to set download time: " + stmt.getWarnings());
+        throw new RuntimeException(UPDATE_TIME_ERROR_MESSAGE + stmt.getWarnings());
       }
     }
     catch (SQLException e) {
       throw new RuntimeException(e);
     }
-
     repository.facet(ContentFacet.class).assets().browse(Integer.MAX_VALUE, null).stream()
         .forEach(asset -> sendEvent(repository, asset));
   }
@@ -412,7 +433,7 @@ public class DatastoreComponentAssetTestHelper
 
         stmt.execute();
         if(stmt.getWarnings() != null) {
-          throw new RuntimeException("Failed to set download time: " + stmt.getWarnings());
+          throw new RuntimeException(UPDATE_TIME_ERROR_MESSAGE + stmt.getWarnings());
         }
       }
     }

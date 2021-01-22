@@ -27,10 +27,8 @@ public class RemoveSnapshotsConfig
 
   private final int gracePeriod;
 
-  RemoveSnapshotsConfig(final int minimumRetained,
-                        final int snapshotRetentionDays,
-                        final boolean removeIfReleased,
-                        final int gracePeriod)
+  public RemoveSnapshotsConfig(
+      final int minimumRetained, final int snapshotRetentionDays, final boolean removeIfReleased, final int gracePeriod)
   {
     this.minimumRetained = minimumRetained;
     this.snapshotRetentionDays = snapshotRetentionDays;

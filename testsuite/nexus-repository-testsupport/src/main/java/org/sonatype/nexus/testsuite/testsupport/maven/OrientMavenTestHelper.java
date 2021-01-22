@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -253,6 +254,22 @@ public class OrientMavenTestHelper
       storageTx.commit();
       return EntityHelper.id(component).getValue();
     }
+  }
+
+  @Override
+  public List<MavenTestComponent> loadComponents(final Repository repository) {
+    StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get();
+    tx.begin();
+    ArrayList<Component> components = Lists.newArrayList(tx.browseComponents(tx.findBucket(repository)));
+    tx.close();
+
+    List<MavenTestComponent> result = new ArrayList<>();
+    for (Component component : components) {
+      result.add(new MavenTestComponent(component.name(),
+          component.attributes().child("maven2").get("baseVersion").toString(), component.version(),
+          component.lastUpdated()));
+    }
+    return result;
   }
 
   @Override

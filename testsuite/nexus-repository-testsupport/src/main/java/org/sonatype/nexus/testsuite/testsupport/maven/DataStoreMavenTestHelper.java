@@ -15,6 +15,7 @@ package org.sonatype.nexus.testsuite.testsupport.maven;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.Date;
@@ -29,6 +30,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.time.DateHelper;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
@@ -216,6 +218,19 @@ public class DataStoreMavenTestHelper
             .getOrCreate())
         .getOrCreate();
     return InternalIds.toExternalId(InternalIds.internalComponentId(asset).getAsInt()).getValue();
+  }
+
+  @Override
+  public List<MavenTestComponent> loadComponents(final Repository repository) {
+    List<MavenTestComponent> components = new ArrayList<>();
+    MavenContentFacet mavenContentFacet = repository.facet(MavenContentFacet.class);
+    Continuation<FluentComponent> fluentComponents = mavenContentFacet.components().browse(Integer.MAX_VALUE, null);
+    for (FluentComponent fluentComponent : fluentComponents) {
+      components.add(new MavenTestComponent(fluentComponent.name(),
+          fluentComponent.attributes().child("maven2").get("baseVersion").toString(), fluentComponent.version(),
+          new DateTime(Date.from(fluentComponent.lastUpdated().toInstant()))));
+    }
+    return components;
   }
 
   @Override

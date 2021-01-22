@@ -25,6 +25,7 @@ import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.group.GroupHandler
 import org.sonatype.nexus.repository.http.HttpMethods
 import org.sonatype.nexus.repository.maven.PurgeUnusedSnapshotsFacet
+import org.sonatype.nexus.repository.maven.RemoveSnapshotsFacet
 import org.sonatype.nexus.repository.maven.internal.Maven2Format
 import org.sonatype.nexus.repository.maven.internal.group.MavenGroupFacet
 import org.sonatype.nexus.repository.maven.internal.group.MergingGroupHandler
@@ -60,6 +61,9 @@ class MavenGroupRecipe
   Provider<MavenGroupFacet> mavenGroupFacet
 
   @Inject
+  Provider<RemoveSnapshotsFacet> removeSnapshotsFacet
+
+  @Inject
   Provider<PurgeUnusedSnapshotsFacet> mavenPurgeSnapshotsFacet
 
   @Inject
@@ -88,6 +92,7 @@ class MavenGroupRecipe
     repository.attach(mavenPurgeSnapshotsFacet.get())
     repository.attach(configure(viewFacet.get()))
     repository.attach(mavenMaintenanceFacet.get())
+    repository.attach(removeSnapshotsFacet.get())
   }
 
   private ViewFacet configure(final ConfigurableViewFacet facet) {

@@ -14,6 +14,8 @@ package org.sonatype.nexus.testsuite.helpers;
 
 import java.io.InputStream;
 import java.time.format.DateTimeFormatter;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -329,6 +331,19 @@ public class OrientComponentAssetTestHelper
   @Override
   public void setLastDownloadedTime(final Repository repository, final int minusSeconds) {
     updateAssets(repository, asset -> asset.lastDownloaded(org.joda.time.DateTime.now().minusSeconds(minusSeconds)));
+  }
+
+  @Override
+  public void setComponentLastUpdatedTime(Repository repository, final Date date) {
+    String sql = "UPDATE component SET last_updated = :lastUpdated WHERE bucket.repository_name = :repositoryName";
+    HashMap<String, Object> sqlParams = new HashMap<>();
+    sqlParams.put("repositoryName", repository.getName());
+    sqlParams.put("lastUpdated", date);
+    ODatabaseDocumentTx tx = databaseInstanceProvider.get().acquire();
+    tx.begin();
+    tx.command(new OCommandSQL(sql)).execute(sqlParams);
+    tx.commit();
+    tx.close();
   }
 
   @Override
