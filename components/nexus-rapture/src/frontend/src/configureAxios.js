@@ -10,12 +10,23 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import exposeDependencies from './exposeDependencies';
-import configureAxios from './configureAxios';
-import configurePlugins from './configurePlugins';
-import configureDebug from './configureDebug.js';
+import axios from 'axios';
 
-exposeDependencies();
-configureAxios();
-configurePlugins()
-configureDebug();
+export default function configureAxios() {
+  // Configure axios
+  axios.defaults.xsrfCookieName = axios.defaults.xsrfHeaderName = 'NX-ANTI-CSRF-TOKEN';
+  axios.defaults.baseURL = NX.app.baseUrl;
+  const axiosAdapter = axios.defaults.adapter;
+  axios.defaults.adapter = function(config) {
+    // Generate a new cache buster for each request
+    const timestamp = new Date().getTime();
+    if (config.url.indexOf('?') !== -1) {
+      config.url += '&_dc=' + timestamp;
+    }
+    else {
+      config.url += '?_dc=' + timestamp;
+    }
+
+    return axiosAdapter(config);
+  };
+}
