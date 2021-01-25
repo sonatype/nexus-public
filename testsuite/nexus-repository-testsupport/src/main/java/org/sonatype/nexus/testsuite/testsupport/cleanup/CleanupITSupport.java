@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.cleanup;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -195,7 +196,7 @@ public class CleanupITSupport
 
     if (nonNull(cleanup)) {
       @SuppressWarnings("unchecked")
-      Set<String> policies = (Set<String>) cleanup.get(POLICY_NAME_KEY);
+      Collection<String> policies = (Collection<String>) cleanup.get(POLICY_NAME_KEY);
 
       if (isNull(policies)) {
         policies = newLinkedHashSet();
