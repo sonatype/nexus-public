@@ -30,7 +30,7 @@
   <properties>
     <orientdb.version>2.2.36</orientdb.version>
     <hazelcast.version>3.12.11</hazelcast.version>
-    <hazelcast-aws.version>2.2</hazelcast-aws.version>
+    <hazelcast-aws.version>2.4</hazelcast-aws.version>
   </properties>
 
   <dependencyManagement>
