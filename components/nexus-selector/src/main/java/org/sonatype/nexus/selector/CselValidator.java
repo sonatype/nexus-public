@@ -14,6 +14,8 @@ package org.sonatype.nexus.selector;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -112,7 +114,13 @@ class CselValidator
    */
   @Override
   protected Object visit(final ASTERNode node, final Object data) {
-    return node.childrenAccept(this, data);
+    try {
+      Pattern.compile(node.jjtGetChild(1).toString());
+      return node.childrenAccept(this, data);
+    }
+    catch (PatternSyntaxException e) {
+      throw new JexlException(node, e.getDescription());
+    }
   }
 
   /**
