@@ -63,6 +63,11 @@ public class CselValidatorTest
     validateExpression("format == '\"'");
   }
 
+  @Test(expected = JexlException.class)
+  public void failsToValidateInvalidRegex() throws Exception {
+    validateExpression("path =~ '*foo*'");
+  }
+
   public static File resolveBaseFile(final String path) {
     return resolveBasePath(path).toFile();
   }
