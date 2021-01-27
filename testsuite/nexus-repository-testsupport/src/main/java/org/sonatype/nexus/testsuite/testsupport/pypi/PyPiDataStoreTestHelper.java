@@ -34,6 +34,6 @@ public class PyPiDataStoreTestHelper
 
   @Override
   public boolean isRootIndexExist(final Repository repository) {
-    return repository.facet(PypiContentFacet.class).getAsset("simple/").isPresent();
+    return repository.facet(PypiContentFacet.class).getAsset("/simple/").isPresent();
   }
 }
