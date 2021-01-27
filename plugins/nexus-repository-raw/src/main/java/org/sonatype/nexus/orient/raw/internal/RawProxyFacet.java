@@ -50,7 +50,7 @@ public class RawProxyFacet
 
   @Override
   protected String getUrl(@Nonnull final Context context) {
-    return componentPath(context);
+    return componentPath(context).replaceAll(":", "%3A");
   }
 
   /**
