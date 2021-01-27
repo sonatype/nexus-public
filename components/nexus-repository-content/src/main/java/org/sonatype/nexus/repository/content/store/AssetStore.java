@@ -276,10 +276,14 @@ public class AssetStore<T extends AssetDAO>
    *
    * @param repositoryId the repository containing the assets
    * @param paths the paths of the assets to delete
-   * @return {@code true} if any of the assets were deleted
+   * @return number of assets deleted
    */
   @Transactional
   public int deleteAssetsByPaths(final int repositoryId, final List<String> paths) {
+    if (paths.isEmpty()) {
+      return 0;
+    }
+
     Collection<Asset> assets = dao().readPathsFromRepository(repositoryId, paths);
 
     if(assets.isEmpty()){
