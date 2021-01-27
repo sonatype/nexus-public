@@ -185,7 +185,7 @@ public class PyPiGroupFacet
   private void handleAssetEvent(final AssetEvent event, final boolean delete) {
     event.getRepository().ifPresent(repository -> {
       if (member(repository) && ROOT_INDEX.name().equals(event.getAsset().kind())) {
-        doInvalidateCache(repository, event.getAsset(), delete);
+        doInvalidateCache(event.getAsset(), delete);
       }
     });
   }
@@ -201,14 +201,14 @@ public class PyPiGroupFacet
       for (int assetId : event.getAssetIds()) {
         contentFacet.assets()
         .find(new DetachedEntityId(valueOf(assetId)))
-        .ifPresent(asset -> doInvalidateCache(repository, asset, true));
+        .ifPresent(asset -> doInvalidateCache(asset, true));
       }
     });
   }
 
-  protected void doInvalidateCache(final Repository repository, final Asset asset, final boolean delete) {
+  protected void doInvalidateCache(final Asset asset, final boolean delete) {
     log.info("Invalidating cached content {} from {}", asset.path(), getRepository().getName());
-    Optional<FluentAsset> fluentAssetOpt = repository.facet(PypiContentFacet.class).getAsset(asset.path());
+    Optional<FluentAsset> fluentAssetOpt = getRepository().facet(PypiContentFacet.class).getAsset(asset.path());
     fluentAssetOpt.ifPresent(fluentAsset -> {
       if (delete) {
         fluentAsset.delete();
