@@ -60,11 +60,11 @@ import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.Model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.lang3.StringUtils.prependIfMissing;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenArchetypeCatalogFacetImpl.MAVEN_ARCHETYPE_KIND;
@@ -382,21 +382,15 @@ public class MavenContentFacetImpl
     Set<List<String>> gavs = collectGavs(componentIds);
 
     int deletedCount = componentStore.purge(contentFacet.contentRepositoryId(), componentIds);
+    gavs.forEach(gav -> deleteMetadataOrFlagForRebuild(gav.get(0), gav.get(1), gav.get(2)));
 
-    if (!gavs.isEmpty()) {
-      List<String[]> metadataLocations = gavs.stream()
-          .flatMap(gav -> getMetadataLocations(gav.get(0), gav.get(1), gav.get(2)).stream())
-          .collect(toList());
-
-      metadataRebuilder.deleteMetadata(getRepository(), metadataLocations);
-    }
     return deletedCount;
   }
 
   @Override
   public Set<String> deleteMetadata(final Component component) {
-    String[] gav = collectGav(component);
-    return metadataRebuilder.deleteMetadata(getRepository(), getMetadataLocations(gav[0], gav[1], gav[2]));
+    String[] gabv = collectGabv(component);
+    return deleteMetadataOrFlagForRebuild(gabv[0], gabv[1], gabv[2]);
   }
 
   private Set<List<String>> collectGavs(final int[] componentIds) {
@@ -406,51 +400,67 @@ public class MavenContentFacetImpl
         .mapToObj(componentStore::readComponent)
         .filter(Optional::isPresent)
         .map(Optional::get)
-        .map(this::collectGav)
+        .map(this::collectGabv)
         .map(Arrays::asList)
         .collect(toSet());
   }
 
-  private String[] collectGav(Component component) {
+  private String[] collectGabv(Component component) {
     return new String[]{
         component.namespace(), component.name(),
         component.attributes(Maven2Format.NAME).get(P_BASE_VERSION, String.class)
     };
   }
 
-  private List<String[]> getMetadataLocations(
+  /**
+   * @return set of deleted metadata assets' paths
+   */
+  private Set<String> deleteMetadataOrFlagForRebuild(
       final String groupId,
       final String artifactId,
       final String baseVersion)
   {
-    Repository repository = getRepository();
-    ContentFacet contentFacet = repository.facet(ContentFacet.class);
+    checkNotNull(groupId);
+    checkNotNull(artifactId);
+    checkNotNull(baseVersion);
 
-    List<String[]> metadataCoordinates = new ArrayList<>();
-    metadataCoordinates.add(new String[]{groupId, artifactId, baseVersion});
+    List<String[]> metadataCoordinatesToDelete = new ArrayList<>();
+    ImmutableMap<String, Object> gabvQueryParameters =
+        ImmutableMap.of("groupId", groupId, "artifactId", artifactId, "baseVersion", baseVersion);
+    boolean gNonEmpty = components().byFilter("namespace = #{filterParams.groupId}", gabvQueryParameters).count() > 0;
+    boolean gaNonEmpty = components()
+        .byFilter("namespace = #{filterParams.groupId} AND name = #{filterParams.artifactId}", gabvQueryParameters)
+        .count() > 0;
+    boolean gabvNonEmpty = components().byFilter(
+        "namespace = #{filterParams.groupId} AND name = #{filterParams.artifactId} AND base_version = #{filterParams.baseVersion}",
+        gabvQueryParameters).count() > 0;
 
-    boolean isGroupArtifactEmpty = contentFacet.components().versions(groupId, artifactId).isEmpty();
-    if (isGroupArtifactEmpty) {
-      metadataCoordinates.add(new String[]{groupId, artifactId, null});
+    if (gabvNonEmpty) {
+      flagForMetadataRebuild(groupId, artifactId, baseVersion);
+    }
+    else if (gaNonEmpty) {
+      metadataCoordinatesToDelete.add(new String[]{groupId, artifactId, baseVersion});
+      flagForMetadataRebuild(groupId, artifactId, null);
+    }
+    else if (gNonEmpty) {
+      metadataCoordinatesToDelete.add(new String[]{groupId, artifactId, baseVersion});
+      metadataCoordinatesToDelete.add(new String[]{groupId, artifactId, null});
+      flagForMetadataRebuild(groupId, null, null);
     }
     else {
-      contentFacet.assets()
-          .path(prependIfMissing(metadataPath(groupId, artifactId, null).getPath(), "/"))
-          .find()
-          .ifPresent(asset -> asset.withAttribute(METADATA_REBUILD_KEY, true));
+      metadataCoordinatesToDelete.add(new String[]{groupId, artifactId, baseVersion});
+      metadataCoordinatesToDelete.add(new String[]{groupId, artifactId, null});
+      metadataCoordinatesToDelete.add(new String[]{groupId, null, null});
     }
 
-    boolean isGroupEmpty = contentFacet.components().names(groupId).isEmpty();
-    if (isGroupEmpty) {
-      metadataCoordinates.add(new String[]{groupId, null, null});
-    }
-    else {
-      contentFacet.assets()
-          .path(prependIfMissing(metadataPath(groupId, null, null).getPath(), "/"))
-          .find()
-          .ifPresent(asset -> asset.withAttribute(METADATA_REBUILD_KEY, true));
-    }
-    return metadataCoordinates;
+    return metadataRebuilder.deleteMetadata(getRepository(), metadataCoordinatesToDelete);
+  }
+
+  private void flagForMetadataRebuild(final String groupId, final String artifactId, final String baseVersion) {
+    assets()
+        .path(prependIfMissing(metadataPath(groupId, artifactId, baseVersion).getPath(), "/"))
+        .find()
+        .ifPresent(asset -> asset.withAttribute(METADATA_REBUILD_KEY, true));
   }
 
   public Set<GAV> findGavsWithSnaphots(final int minimumRetained) {

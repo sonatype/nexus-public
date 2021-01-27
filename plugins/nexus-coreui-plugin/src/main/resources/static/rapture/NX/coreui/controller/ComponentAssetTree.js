@@ -745,7 +745,8 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
           if (Ext.isObject(response) && response.success && Ext.isArray(response.data)) {
             me.removeNodeFromTree(selectedNode);
             Ext.each(response.data, function (nodeId) {
-              var node = treePanel.getStore().findNode('id', nodeId);
+              var nodePath = nodeId.charAt(0) === '/' ? nodeId.substring(1) : nodeId;
+              var node = treePanel.getStore().findNode('id', nodePath);
               if (node) {
                 me.removeNodeFromTree(node);
               }
