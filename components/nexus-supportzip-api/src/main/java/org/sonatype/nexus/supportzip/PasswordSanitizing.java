@@ -49,7 +49,8 @@ public class PasswordSanitizing<T extends Map<String, ?>>
       "secretAccessKey",
       "sessionToken",
       "aptSigning",
-      "bearerToken");
+      "bearerToken",
+      "yumSigning");
 
   public static final String REPLACEMENT = "**REDACTED**";
 

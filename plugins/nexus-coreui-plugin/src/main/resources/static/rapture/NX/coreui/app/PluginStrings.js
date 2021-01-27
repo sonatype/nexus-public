@@ -409,6 +409,13 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_Raw_ContentDisposition_HelpText: 'Add Content-Disposition header as \'Attachment\' to disable some content from being inline in a browser.',
     Repository_Facet_Raw_ContentDisposition_Inline: 'Inline',
     Repository_Facet_Raw_ContentDisposition_Attachment: 'Attachment',
+    Repository_Facet_YumSigningFacet_Title: 'Yum Settings',
+    Repository_Facet_YumSigningFacet_Hint: '<em style="font-size: 12px">Verifying of Yum repodata files can use GPG keys. ' +
+        'Read our <a href="http://links.sonatype.com/products/nxrm3/docs/gpg-signatures-for-yum-proxy-group" target="_blank">documentation</a>' +
+        ' for more details.</em>',
+    Repository_Facet_YumSigningFacet_GPG_Keypair_FieldLabel: 'Signing Key',
+    Repository_Facet_YumSigningFacet_GPG_Keypair_HelpText: 'PGP signing key pair (armored private key e.g. gpg --export-secret-key --armor <Name or ID>)',
+    Repository_Facet_YumSigningFacet_GPG_Passphrase_FieldLabel: 'Passphrase',
     Repository_Facet_StorageFacet_Title: 'Storage',
     Repository_Facet_StorageFacetHosted_Title: 'Hosted',
     Repository_Facet_RoutingRuleFacet_Title: 'Routing Rule',

@@ -12,10 +12,10 @@
  */
 package org.sonatype.nexus.repository.apt.internal.gpg;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Iterator;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 import javax.inject.Named;
 import javax.validation.constraints.NotNull;
@@ -26,30 +26,21 @@ import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.apt.internal.AptMimeTypes;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
+import org.sonatype.nexus.repository.security.GpgUtils;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.payloads.BytesPayload;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Charsets;
+import org.apache.commons.io.IOUtils;
 import org.bouncycastle.bcpg.ArmoredOutputStream;
 import org.bouncycastle.bcpg.BCPGOutputStream;
-import org.bouncycastle.openpgp.PGPException;
-import org.bouncycastle.openpgp.PGPPrivateKey;
 import org.bouncycastle.openpgp.PGPPublicKey;
-import org.bouncycastle.openpgp.PGPSecretKey;
-import org.bouncycastle.openpgp.PGPSecretKeyRing;
-import org.bouncycastle.openpgp.PGPSecretKeyRingCollection;
-import org.bouncycastle.openpgp.PGPSignature;
-import org.bouncycastle.openpgp.PGPSignatureGenerator;
-import org.bouncycastle.openpgp.PGPSignatureSubpacketGenerator;
-import org.bouncycastle.openpgp.PGPUtil;
-import org.bouncycastle.openpgp.operator.jcajce.JcaKeyFingerprintCalculator;
-import org.bouncycastle.openpgp.operator.jcajce.JcaPGPContentSignerBuilder;
-import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyDecryptorBuilder;
 
 /**
+ * Signs an Apt metadata by using PGP signing key pair.
+ *
  * @since 3.17
  */
 @Named
@@ -93,8 +84,7 @@ public class AptSigningFacet
 
   public Content getPublicKey() throws IOException {
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-    PGPSecretKey signKey = readSecretKey();
-    PGPPublicKey publicKey = signKey.getPublicKey();
+    PGPPublicKey publicKey = GpgUtils.getPublicKey(config.keypair);
     try (BCPGOutputStream os = new BCPGOutputStream(new ArmoredOutputStream(buffer))) {
       publicKey.encode(os);
     }
@@ -103,92 +93,12 @@ public class AptSigningFacet
   }
 
   public byte[] signInline(final String input) throws IOException {
-    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-    try {
-      PGPSecretKey signKey = readSecretKey();
-      PGPPrivateKey privKey = signKey.extractPrivateKey(
-          new JcePBESecretKeyDecryptorBuilder().setProvider("BC").build(config.passphrase.toCharArray()));
-      PGPSignatureGenerator sigGenerator = new PGPSignatureGenerator(
-          new JcaPGPContentSignerBuilder(signKey.getPublicKey().getAlgorithm(), PGPUtil.SHA256).setProvider("BC"));
-      sigGenerator.init(PGPSignature.CANONICAL_TEXT_DOCUMENT, privKey);
-
-      Iterator<String> userIds = signKey.getUserIDs();
-      if (userIds.hasNext()) {
-        PGPSignatureSubpacketGenerator sigSubpacketGenerator = new PGPSignatureSubpacketGenerator();
-        sigSubpacketGenerator.setSignerUserID(false, userIds.next());
-        sigGenerator.setHashedSubpackets(sigSubpacketGenerator.generate());
-      }
-
-      String[] lines = input.split("\r?\n");
-      try (ArmoredOutputStream aOut = new ArmoredOutputStream(buffer)) {
-        aOut.beginClearText(PGPUtil.SHA256);
-
-        boolean firstLine = true;
-        for (String line : lines) {
-          String sigLine = (firstLine ? "" : "\r\n") + line.replaceAll("\\s*$", "");
-          sigGenerator.update(sigLine.getBytes(Charsets.UTF_8));
-          aOut.write((line + "\n").getBytes(Charsets.UTF_8));
-          firstLine = false;
-        }
-        aOut.endClearText();
-
-        BCPGOutputStream bOut = new BCPGOutputStream(aOut);
-        sigGenerator.generate().encode(bOut);
-      }
-    }
-    catch (PGPException ex) {
-      throw new RuntimeException(ex);
-    }
-    return buffer.toByteArray();
+    return GpgUtils.signInline(input, config.keypair, config.passphrase);
   }
 
   public byte[] signExternal(final String input) throws IOException {
-    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-    try {
-      PGPSecretKey signKey = readSecretKey();
-      PGPPrivateKey privKey = signKey.extractPrivateKey(
-          new JcePBESecretKeyDecryptorBuilder().setProvider("BC").build(config.passphrase.toCharArray()));
-      PGPSignatureGenerator sigGenerator = new PGPSignatureGenerator(
-          new JcaPGPContentSignerBuilder(signKey.getPublicKey().getAlgorithm(), PGPUtil.SHA256).setProvider("BC"));
-      sigGenerator.init(PGPSignature.BINARY_DOCUMENT, privKey);
-
-      try (ArmoredOutputStream aOut = new ArmoredOutputStream(buffer)) {
-        BCPGOutputStream bOut = new BCPGOutputStream(aOut);
-        sigGenerator.update(input.getBytes(Charsets.UTF_8));
-        sigGenerator.generate().encode(bOut);
-      }
+    try (InputStream is = IOUtils.toInputStream(input, StandardCharsets.UTF_8)) {
+      return GpgUtils.signExternal(is, config.keypair, config.passphrase);
     }
-    catch (PGPException ex) {
-      throw new RuntimeException(ex);
-    }
-
-    return buffer.toByteArray();
-  }
-
-  private PGPSecretKey readSecretKey() throws IOException {
-    try {
-      PGPSecretKeyRingCollection pgpSec = new PGPSecretKeyRingCollection(
-          PGPUtil.getDecoderStream(new ByteArrayInputStream(config.keypair.getBytes(Charsets.UTF_8))),
-          new JcaKeyFingerprintCalculator());
-
-      Iterator<PGPSecretKeyRing> keyRings = pgpSec.getKeyRings();
-      while (keyRings.hasNext()) {
-        PGPSecretKeyRing keyRing = keyRings.next();
-
-        Iterator<PGPSecretKey> keys = keyRing.getSecretKeys();
-        while (keys.hasNext()) {
-          PGPSecretKey key = keys.next();
-
-          if (key.isSigningKey()) {
-            return key;
-          }
-        }
-      }
-    }
-    catch (PGPException ex) {
-      throw new RuntimeException(ex);
-    }
-
-    throw new IllegalStateException("Can't find signing key in key ring.");
   }
 }
