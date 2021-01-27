@@ -83,10 +83,9 @@ class BlobStoreGroupTest
       config.attributes = [group: [members: [], fillPolicy: 'test']]
       blobStore.init(config)
       blobStore.doStart()
-      BlobId blobId = new BlobId('doesntexist')
 
     when: 'get called for non-existant blob'
-      def foundBlob = blobStore.get(blobId)
+      def foundBlob = blobStore.get(new BlobId('doesntexist'))
 
     then: 'no blob is found'
       foundBlob == null

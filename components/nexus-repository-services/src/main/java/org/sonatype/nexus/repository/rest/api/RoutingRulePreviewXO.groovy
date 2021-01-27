@@ -26,7 +26,7 @@ import org.hibernate.validator.constraints.NotBlank
 @CompileStatic
 @Builder
 @ToString(includePackage = false, includeNames = true)
-@EqualsAndHashCode(includes = ['text'])
+@EqualsAndHashCode
 class RoutingRulePreviewXO
 {
   @NotBlank
