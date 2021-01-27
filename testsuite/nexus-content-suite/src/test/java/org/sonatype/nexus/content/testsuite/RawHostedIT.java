@@ -81,6 +81,7 @@ public class RawHostedIT
 
     HttpResponse response = rawClient.put(TEST_CONTENT, testEntity);
     MatcherAssert.assertThat(response.getStatusLine().getStatusCode(), Matchers.is(HttpStatus.BAD_REQUEST));
+    assertThat(response.getStatusLine().getReasonPhrase(), Matchers.containsString("is read-only"));
   }
 
   @Test
@@ -98,6 +99,7 @@ public class RawHostedIT
 
     response = rawClient.delete(TEST_CONTENT);
     MatcherAssert.assertThat(response.getStatusLine().getStatusCode(), Matchers.is(HttpStatus.BAD_REQUEST));
+    assertThat(response.getStatusLine().getReasonPhrase(), Matchers.containsString("cannot be deleted"));
   }
 
   @Test
@@ -111,6 +113,7 @@ public class RawHostedIT
 
     response = rawClient.put(TEST_CONTENT, testEntity);
     MatcherAssert.assertThat(response.getStatusLine().getStatusCode(), Matchers.is(HttpStatus.BAD_REQUEST));
+    assertThat(response.getStatusLine().getReasonPhrase(), Matchers.containsString("cannot be updated"));
   }
 
   @Test
@@ -167,6 +170,8 @@ public class RawHostedIT
 
     HttpResponse response = rawClient.put("path/to/content.jpg", testEntity);
     MatcherAssert.assertThat(response.getStatusLine().getStatusCode(), Matchers.is(HttpStatus.BAD_REQUEST));
+    assertThat(response.getStatusLine().getReasonPhrase(),
+        Matchers.containsString("Detected content type [text/html], but expected [image/jpeg]"));
   }
 
   @Test

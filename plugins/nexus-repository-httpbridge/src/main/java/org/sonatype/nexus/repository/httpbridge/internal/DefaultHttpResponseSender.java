@@ -57,15 +57,13 @@ public class DefaultHttpResponseSender
     Status status = response.getStatus();
     String statusMessage = status.getMessage();
     try (Payload payload = response.getPayload()) {
+      if (statusMessage == null) {
+        httpResponse.setStatus(status.getCode());
+      }
+      else {
+        httpResponse.setStatus(status.getCode(), statusMessage);
+      }
       if (status.isSuccessful() || payload != null) {
-
-        if (statusMessage == null) {
-          httpResponse.setStatus(status.getCode());
-        }
-        else {
-          httpResponse.setStatus(status.getCode(), statusMessage);
-        }
-
         if (payload != null) {
           log.trace("Attaching payload: {}", payload);
 
