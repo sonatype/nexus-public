@@ -325,7 +325,7 @@ public class NpmContentProxyFacet
     log.warn("Unable to find blob {} for {}, will check remote", e.getBlobRef(), getUrl(context));
 
     try {
-      return doGet(context, null).openInputStream();
+      return get(context, null).openInputStream();
     }
     catch (IOException ex) {
       log.error("Unable to check remote for missing blob {} at {}", e.getBlobRef(), getUrl(context), ex);

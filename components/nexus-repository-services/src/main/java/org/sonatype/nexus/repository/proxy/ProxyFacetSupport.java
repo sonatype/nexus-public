@@ -236,11 +236,19 @@ public abstract class ProxyFacetSupport
     if (!isStale(context, content)) {
       return content;
     }
+    return get(context, content);
+  }
+
+  /**
+   * Attempt to retrieve from the remote using proxy co-operation
+   */
+  protected Content get(final Context context, @Nullable final Content staleContent) throws IOException {
     if (proxyCooperation == null) {
-      return doGet(context, content);
+      return doGet(context, staleContent);
     }
+
     return proxyCooperation.cooperate(getRequestKey(context), failover -> {
-      Content latestContent = content;
+      Content latestContent = staleContent;
       if (failover) {
         // re-check cache when failing over to new thread
         latestContent = proxyCooperation.join(() -> maybeGetCachedContent(context));

@@ -32,6 +32,8 @@ import groovy.transform.builder.Builder
 abstract class DecoratedComponentXO
     implements ComponentXO, DecoratedObject<ComponentXO>
 {
+  String id
+
   @Delegate
   protected final ComponentXO componentXO
 

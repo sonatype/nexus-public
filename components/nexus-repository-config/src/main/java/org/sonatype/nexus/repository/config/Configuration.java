@@ -31,7 +31,7 @@ public interface Configuration
     extends Cloneable
 {
   List<String> SENSITIVE_FIELD_NAMES = newArrayList("applicationPassword", "password",
-      "systemPassword", "secret");
+      "systemPassword", "secret", "yumSigning", "aptSigning");
 
   static void addSensitiveFieldName(String sensitiveFieldName) {
     SENSITIVE_FIELD_NAMES.add(sensitiveFieldName);

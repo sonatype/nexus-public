@@ -33,8 +33,8 @@ import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.npm.internal.NonCatalogedVersionHelper;
 import org.sonatype.nexus.repository.npm.internal.NonResolvableTarballNameException;
-import org.sonatype.nexus.repository.npm.internal.NpmFieldMatcher;
 import org.sonatype.nexus.repository.npm.internal.NpmAuditFacet;
+import org.sonatype.nexus.repository.npm.internal.NpmFieldMatcher;
 import org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageId;
 import org.sonatype.nexus.repository.npm.internal.NpmPaths;
@@ -510,7 +510,7 @@ public class OrientNpmProxyFacet
 
     return Transactional.operation.withDb(facet(StorageFacet.class).txSupplier()).call(() -> {
       try {
-        return doGet(context, null).openInputStream();
+        return get(context, null).openInputStream();
       }
       catch (IOException e1) {
         log.error("Unable to check remote for missing blob {} at {}", e.getBlobRef(), getUrl(context), e1);

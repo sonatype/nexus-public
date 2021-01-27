@@ -200,8 +200,8 @@ class DataStoreManagerImplTest
 
     underTest.stop()
 
-    assert testStore.empty()
-    assert exampleStore.empty()
+    assert !testStore.isPresent()
+    assert !exampleStore.isPresent()
 
     def testConfig = newDataStoreConfiguration('test')
     def exampleConfig = newDataStoreConfiguration('example')
@@ -230,7 +230,7 @@ class DataStoreManagerImplTest
     exampleStore = underTest.get('example')
     underTest.stop()
 
-    assert testStore.empty()
+    assert !testStore.isPresent()
 
     verify(exampleStore.get(), times(1)).start()
     verify(configurationManager, times(2)).save(exampleConfig)
@@ -244,8 +244,8 @@ class DataStoreManagerImplTest
     exampleStore = underTest.get('example')
     underTest.stop()
 
-    assert testStore.empty()
-    assert exampleStore.empty()
+    assert !testStore.isPresent()
+    assert !exampleStore.isPresent()
   }
 
   @Test

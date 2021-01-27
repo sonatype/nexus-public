@@ -168,7 +168,7 @@ class RemoveSnapshotsFacetImplTest
 
       1 * facet.processRepository(_, _)
       gavs == candidates as HashSet
-      candidates.sum { it.count - 1 } * tx.deleteComponent(_) // leave one per GAV
+      expectedDeleteCount * tx.deleteComponent(_) // leave one per GAV
       expectedCommitCount * tx.commit() // 1 commit/begin per involved GAV + 1 for every 2 deletions 
       expectedCommitCount * tx.begin()
       0 * _  // no other interactions on Mocks/Spies

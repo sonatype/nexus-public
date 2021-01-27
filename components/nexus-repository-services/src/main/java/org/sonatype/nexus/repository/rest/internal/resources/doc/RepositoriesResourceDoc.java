@@ -20,12 +20,14 @@ import org.sonatype.nexus.repository.rest.internal.resources.RepositoriesResourc
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
+import static org.sonatype.nexus.rest.ApiDocConstants.API_REPOSITORY_MANAGEMENT;
+
 /**
  * Swagger documentation for {@link RepositoriesResource}
  *
  * @since 3.9
  */
-@Api(value = "Repositories")
+@Api(value = API_REPOSITORY_MANAGEMENT)
 public interface RepositoriesResourceDoc
 {
   @ApiOperation("List repositories")

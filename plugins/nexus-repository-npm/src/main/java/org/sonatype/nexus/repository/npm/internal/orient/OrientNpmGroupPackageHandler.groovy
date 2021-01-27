@@ -26,11 +26,12 @@ import org.sonatype.nexus.repository.view.Status
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher.State
 import org.sonatype.nexus.transaction.Transactional
 
-import static NpmFacetUtils.errorInputStream
 import static java.util.Objects.isNull
 import static org.sonatype.nexus.repository.http.HttpStatus.OK
 import static org.sonatype.nexus.repository.npm.internal.NpmResponses.notFound
 import static org.sonatype.nexus.repository.npm.internal.NpmResponses.ok
+import static org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils.errorInputStream
+
 /**
  * Merge metadata results from all member repositories.
  *
