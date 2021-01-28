@@ -191,12 +191,6 @@
       </dependency>
 
       <dependency>
-        <groupId>com.opentable.components</groupId>
-        <artifactId>otj-pg-embedded</artifactId>
-        <version>0.13.3</version>
-      </dependency>
-
-      <dependency>
         <groupId>org.flywaydb</groupId>
         <artifactId>flyway-core</artifactId>
         <version>7.1.1</version>
