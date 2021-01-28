@@ -198,11 +198,6 @@ public class S3BlobStore
     this.forceHardDelete = forceHardDelete;
     this.preferAsyncCleanup = preferAsyncCleanup;
 
-    if (this.preferAsyncCleanup) {
-      this.executorService = newFixedThreadPool(8,
-          new NexusThreadFactory("s3-blobstore", "async-ops"));
-    }
-
     MetricRegistry registry = SharedMetricRegistries.getOrCreate("nexus");
 
     existsTimer = registry.timer(MetricRegistry.name(S3BlobStore.class, METRIC_NAME, "exists"));
@@ -231,6 +226,11 @@ public class S3BlobStore
     storeMetrics.setS3(s3);
     storeMetrics.setBlobStore(this);
     storeMetrics.start();
+
+    if (this.preferAsyncCleanup && executorService == null) {
+      this.executorService = newFixedThreadPool(8,
+          new NexusThreadFactory("s3-blobstore", "async-ops"));
+    }
   }
 
   @Override
@@ -238,6 +238,7 @@ public class S3BlobStore
     liveBlobs = null;
     if (executorService != null) {
       executorService.shutdown();
+      executorService = null;
     }
     storeMetrics.stop();
   }
