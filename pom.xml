@@ -719,11 +719,8 @@
           <artifactId>animal-sniffer-maven-plugin</artifactId>
           <version>1.16</version>
           <configuration>
-            <!--
-            TODO: Replace with signature from project after fixed: https://github.com/mojohaus/animal-sniffer/issues/1
-            -->
             <signature>
-              <groupId>org.kaazing.mojo.signature</groupId>
+              <groupId>org.codehaus.mojo.signature</groupId>
               <artifactId>java18</artifactId>
               <version>1.0</version>
             </signature>
