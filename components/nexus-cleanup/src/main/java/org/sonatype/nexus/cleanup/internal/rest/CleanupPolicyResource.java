@@ -88,6 +88,8 @@ public class CleanupPolicyResource
     extends ComponentSupport
     implements Resource
 {
+  private static final int PREVIEW_ITEM_COUNT = 50;
+
   protected static final String RESOURCE_URI = INTERNAL_API_PREFIX + "/cleanup-policies";
 
   protected static final String ALL_FORMATS = "*";
@@ -247,7 +249,7 @@ public class CleanupPolicyResource
     xo.getCriteria().setReleaseType(request.getCriteriaReleaseType());
     xo.getCriteria().setRegex(request.getCriteriaAssetRegex());
 
-    QueryOptions options = new QueryOptions(null, "name", "asc", 0, 10);
+    QueryOptions options = new QueryOptions(null, "name", "asc", 0, PREVIEW_ITEM_COUNT);
 
     PagedResponse<ComponentXO> response = cleanupPreviewHelper.get().getSearchResults(xo, repository, options);
 
