@@ -24,6 +24,7 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.mime.MimeRulesSource;
 import org.sonatype.nexus.repository.InvalidContentException;
+import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.mime.ContentValidator;
 import org.sonatype.nexus.repository.mime.DefaultContentValidator;
 
@@ -65,7 +66,7 @@ public class MavenContentValidator
             strictContentTypeValidation, contentSupplier, mimeRulesSource, contentName + ".xml", declaredContentType
         );
       }
-      else if (contentName.endsWith(".sha1") || contentName.endsWith(".md5")) {
+      else if (isHashContentType(contentName)) {
         if (strictContentTypeValidation) {
           // hashes are small/simple, do it directly
           try (InputStream is = contentSupplier.get()) {
@@ -85,5 +86,10 @@ public class MavenContentValidator
     return defaultContentValidator.determineContentType(
         strictContentTypeValidation, contentSupplier, mimeRulesSource, contentName, declaredContentType
     );
+  }
+
+  private boolean isHashContentType(final String contentName) {
+    return MavenPath.HashType.ALGORITHMS.stream()
+        .anyMatch(algorithm -> contentName.endsWith(algorithm.name()));
   }
 }
