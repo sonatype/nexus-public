@@ -216,13 +216,6 @@ public class OrientNpmHostedFacetTest
     assertThat(actual, is("{\"latest\":\"1.0.0\"}"));
   }
 
-  @Test(expected = IOException.class)
-  public void updateTagLatestIsInvalid() throws Exception {
-    NpmPackageId packageId = new NpmPackageId(null, "package");
-
-    underTest.putDistTags(packageId, "latest", null);
-  }
-
   private void mockPackageMetadata() {
     Asset packageAssetRoot = mock(Asset.class);
     when(packageAssetRoot.name()).thenReturn("@foo/bar");
