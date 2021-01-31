@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.npm.internal.orient;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -23,7 +22,6 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import com.google.common.collect.ImmutableList;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityHelper;
@@ -61,7 +59,10 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.util.Arrays.asList;
 import static org.sonatype.nexus.repository.npm.internal.NpmFieldFactory.missingRevFieldMatcher;
 import static org.sonatype.nexus.repository.npm.internal.NpmFieldFactory.rewriteTarballUrlMatcher;
-import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.*;
+import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.DIST_TAGS;
+import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.META_ID;
+import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.META_REV;
+import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.selectVersionByTarballName;
 import static org.sonatype.nexus.repository.npm.internal.NpmVersionComparator.extractAlwaysPackageVersion;
 import static org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils.findPackageRootAsset;
 import static org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils.findPackageTarballComponent;
@@ -273,9 +274,8 @@ public class OrientNpmHostedFacetImpl
         update = true;
       }
       else {
-        // Update the latest
-        packageRoot = merge(oldPackageRoot.getKey(), ImmutableList.of(oldPackageRoot, newPackageRoot));
-        removeVersionsNotCachedAndNotInNewRoot(packageRoot, oldPackageRoot, new ArrayList<>(oldPackageRoot.child(VERSIONS).keys()));
+        // if no revision present, snippet is being sent, overlay it (if old exists)
+        packageRoot = NpmMetadataUtils.overlay(oldPackageRoot, packageRoot);
       }
     }
 
@@ -458,6 +458,7 @@ public class OrientNpmHostedFacetImpl
     checkNotNull(packageId);
     checkNotNull(tag);
     log.debug("Updating distTags: {}", packageId);
+
 
     String version = parseVersionToTag(packageId, tag, payload);
     doPutDistTags(packageId, tag, version);
