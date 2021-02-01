@@ -36,7 +36,7 @@ public class LastAssetMaintenanceFacet
     if (component.isPresent()) {
       FluentComponent componentToDelete = contentFacet().components().with(component.get());
       if (componentToDelete.assets().size() <= 1) {
-        return super.deleteComponent(componentToDelete);
+        return deleteComponent(componentToDelete);
       }
     }
 
