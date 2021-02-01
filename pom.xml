@@ -639,6 +639,11 @@
               HACK: Exclude npm sources due to ASL license from contributor
               -->
               <exclude>plugins/npm/**</exclude>
+
+              <!--
+              JS files will include the extjs specific header, see header-extjs profile below
+              -->
+              <exclude>**/*.js</exclude>
             </excludes>
           </configuration>
         </plugin>
@@ -1035,6 +1040,51 @@
       <properties>
         <nexus-plugin.type>jar</nexus-plugin.type>
       </properties>
+    </profile>
+
+    <!--
+    Support for specialized header for js files, that includes the extjs agreement
+    -->
+    <profile>
+      <id>header-extjs</id>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>com.mycila</groupId>
+              <artifactId>license-maven-plugin</artifactId>
+              <version>2.11</version>
+              <configuration>
+                <header>${basedir}/header-extjs.txt</header>
+                <includes>**/*.js</includes>
+                <excludes combine.self="override">
+                  <exclude>**/target/**</exclude>
+                  <exclude>**/docs/js/libs/**</exclude>
+                  <!-- owasp stuff -->
+                  <exclude>**/csrfguard.js</exclude>
+                  <!--
+                  Exclude optional private bits.
+                  -->
+                  <exclude>private/**</exclude>
+
+                  <!--
+                  Exclude third-party resources.
+                  -->
+                  <exclude>**/nexus-ui-extjs3-plugin/src/main/resources/static/ext-3.*/**</exclude>
+                  <exclude>**/nexus-ui-extjs3-plugin/src/main/resources/static/ext-3.*/**</exclude>
+                  <exclude>**/nexus-ui-extjs3-plugin/src/main/resources/static/js/ext/ux/**</exclude>
+                  <exclude>**/nexus-ui-extjs3-plugin/src/main/resources/static/css/ext/ux/**</exclude>
+                  <exclude>**/nexus-ui-extjs3-plugin/src/main/js-lib/**</exclude>
+                  <!--
+                  Exclude npm sources due to ASL license from contributor
+                  -->
+                  <exclude>**/plugins/npm/**</exclude>
+                </excludes>
+              </configuration>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
     </profile>
 
     <!--
