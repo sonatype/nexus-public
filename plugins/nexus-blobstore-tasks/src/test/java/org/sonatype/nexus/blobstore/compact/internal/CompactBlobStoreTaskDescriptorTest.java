@@ -37,6 +37,6 @@ public class CompactBlobStoreTaskDescriptorTest
   @Test
   public void initializeConfiguration() throws Exception {
     underTest.initializeConfiguration(taskConfiguration);
-    assertThat(taskConfiguration.getBoolean(MULTINODE_KEY, false), is(true));
+    assertThat(taskConfiguration.getBoolean(MULTINODE_KEY, false), is(false));
   }
 }

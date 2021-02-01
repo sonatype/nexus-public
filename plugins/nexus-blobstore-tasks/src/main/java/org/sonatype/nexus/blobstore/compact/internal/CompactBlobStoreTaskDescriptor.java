@@ -17,7 +17,6 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.formfields.ComboboxFormField;
-import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 import static org.sonatype.nexus.formfields.FormField.MANDATORY;
@@ -50,10 +49,5 @@ public class CompactBlobStoreTaskDescriptor
             MANDATORY
         ).withStoreApi("coreui_Blobstore.read").withIdMapping("name")
     );
-  }
-
-  @Override
-  public void initializeConfiguration(final TaskConfiguration configuration) {
-    configuration.setBoolean(MULTINODE_KEY, true);
   }
 }
