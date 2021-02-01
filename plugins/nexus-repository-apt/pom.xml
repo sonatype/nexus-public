@@ -59,6 +59,11 @@
 
     <dependency>
       <groupId>org.bouncycastle</groupId>
+      <artifactId>bcprov-jdk15to18</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
       <artifactId>bcpg-jdk15to18</artifactId>
     </dependency>
 
@@ -76,28 +81,12 @@
     </dependency>
   </dependencies>
 
-
   <build>
     <plugins>
       <plugin>
         <groupId>org.apache.karaf.tooling</groupId>
         <artifactId>karaf-maven-plugin</artifactId>
       </plugin>
-
-      <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
-        <configuration>
-          <instructions>
-            <Embed-Directory>lib</Embed-Directory>
-            <Embed-Dependency>
-              bcpg-jdk15to18|bcprov-jdk15to18
-            </Embed-Dependency>
-            <Embed-Transitive>true</Embed-Transitive>
-          </instructions>
-        </configuration>
-      </plugin>
     </plugins>
   </build>
-
 </project>
