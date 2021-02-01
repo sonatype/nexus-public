@@ -31,7 +31,7 @@ public class MavenMaintenanceFacet
 {
   @Override
   public Set<String> deleteComponent(final Component component) {
-    return Sets.union(super.deleteComponent(component), mavenContentFacet().deleteMetadata(component));
+    return Sets.union(super.deleteComponent(component), mavenContentFacet().deleteMetadataOrFlagForRebuild(component));
   }
 
   @Override

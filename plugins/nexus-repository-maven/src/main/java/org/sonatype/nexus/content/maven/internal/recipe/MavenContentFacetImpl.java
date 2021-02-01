@@ -371,7 +371,7 @@ public class MavenContentFacetImpl
     if (component.assets().isEmpty()) {
       component.delete();
       publishEvents(component);
-      deleteMetadata(component);
+      deleteMetadataOrFlagForRebuild(component);
     }
   }
 
@@ -385,12 +385,6 @@ public class MavenContentFacetImpl
     gavs.forEach(gav -> deleteMetadataOrFlagForRebuild(gav.get(0), gav.get(1), gav.get(2)));
 
     return deletedCount;
-  }
-
-  @Override
-  public Set<String> deleteMetadata(final Component component) {
-    String[] gabv = collectGabv(component);
-    return deleteMetadataOrFlagForRebuild(gabv[0], gabv[1], gabv[2]);
   }
 
   private Set<List<String>> collectGavs(final int[] componentIds) {
@@ -410,6 +404,12 @@ public class MavenContentFacetImpl
         component.namespace(), component.name(),
         component.attributes(Maven2Format.NAME).get(P_BASE_VERSION, String.class)
     };
+  }
+
+  @Override
+  public Set<String> deleteMetadataOrFlagForRebuild(final Component component) {
+    String[] gav = collectGabv(component);
+    return deleteMetadataOrFlagForRebuild(gav[0], gav[1], gav[2]);
   }
 
   /**

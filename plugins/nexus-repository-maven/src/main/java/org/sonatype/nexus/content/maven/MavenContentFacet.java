@@ -83,7 +83,14 @@ public interface MavenContentFacet
 
   int deleteComponents(int[] componentIds);
 
-  Set<String> deleteMetadata(Component component);
+  /**
+   * Delete metadata, when no more components of same coordinates; or
+   * Flag metadata for rebuild, when other components share same GAbV (snapshots)
+   *
+   * @param component for which metadata should be deleted or flagged for rebuild
+   * @return paths of deleted assets; empty when just flagging for rebuild
+   */
+  Set<String> deleteMetadataOrFlagForRebuild(Component component);
 
 
   /**
