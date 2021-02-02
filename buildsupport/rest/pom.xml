@@ -277,6 +277,19 @@
         <artifactId>jackson-datatype-guava</artifactId>
         <version>${jackson2.version}</version>
       </dependency>
+
+      <dependency>
+        <groupId>com.fasterxml.jackson.datatype</groupId>
+        <artifactId>jackson-datatype-jsr310</artifactId>
+        <version>${jackson2.version}</version>
+      </dependency>
+
+      <!-- serialize/deserialize Java 8 data types like Optional -->
+      <dependency>
+        <groupId>com.fasterxml.jackson.datatype</groupId>
+        <artifactId>jackson-datatype-jdk8</artifactId>
+        <version>${jackson2.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
