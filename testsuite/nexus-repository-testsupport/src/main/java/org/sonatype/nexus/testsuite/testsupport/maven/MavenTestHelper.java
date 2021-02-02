@@ -19,18 +19,14 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.goodies.testsupport.TestData;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
-import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.pax.exam.NexusPaxExamSupport;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet;
-import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.view.Payload;
 
 import com.google.common.base.Strings;
@@ -56,16 +52,7 @@ public abstract class MavenTestHelper
 
   private CloseableHttpClient client = HttpClientBuilder.create().build();
 
-  public Payload read(final Repository repository, final String path) throws IOException {
-    MavenContentFacet mavenFacet = repository.facet(MavenContentFacet.class);
-    Optional<MavenMetadataRebuildFacet> metadataRebuildFacet =
-        repository.optionalFacet(MavenMetadataRebuildFacet.class);
-    if (metadataRebuildFacet.isPresent()) {
-      metadataRebuildFacet.get().maybeRebuildMavenMetadata(path, false, true);
-    }
-    MavenPath mavenPath = mavenFacet.getMavenPathParser().parsePath(path);
-    return mavenFacet.get(mavenPath).orElse(null);
-  }
+  public abstract Payload read(Repository repository, String path) throws IOException;
 
   public abstract void write(final Repository repository, final String path, final Payload payload) throws IOException;
 

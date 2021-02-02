@@ -79,6 +79,18 @@ public class DataStoreMavenTestHelper
   }
 
   @Override
+  public Payload read(final Repository repository, final String path) throws IOException {
+    MavenContentFacet mavenFacet = repository.facet(MavenContentFacet.class);
+    Optional<MavenMetadataRebuildFacet> metadataRebuildFacet =
+        repository.optionalFacet(MavenMetadataRebuildFacet.class);
+    if (metadataRebuildFacet.isPresent()) {
+      metadataRebuildFacet.get().maybeRebuildMavenMetadata(path, false, true);
+    }
+    MavenPath mavenPath = mavenFacet.getMavenPathParser().parsePath(path);
+    return mavenFacet.get(mavenPath).orElse(null);
+  }
+
+  @Override
   public void writeWithoutValidation(final Repository repository, final String path, final Payload payload) {
     MavenContentFacet mavenContentFacet = repository.facet(MavenContentFacet.class);
     MavenPath mavenPath = mavenContentFacet.getMavenPathParser().parsePath(path);
