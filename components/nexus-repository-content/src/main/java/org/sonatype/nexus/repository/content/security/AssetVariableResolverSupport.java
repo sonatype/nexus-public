@@ -39,5 +39,14 @@ public abstract class AssetVariableResolverSupport
     return builder.build();
   }
 
+  @Override
+  public VariableSource fromPath(final String path, final String format) {
+    VariableSourceBuilder builder = new VariableSourceBuilder();
+    builder.addResolver(new ConstantVariableResolver(stripStart(path, "/"), PATH));
+    builder.addResolver(new ConstantVariableResolver(format, FORMAT));
+
+    return builder.build();
+  }
+
   protected abstract void addFromAsset(VariableSourceBuilder builder, FluentAsset asset);
 }
