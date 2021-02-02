@@ -28,7 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <jackson2.version>2.11.2</jackson2.version>
+    <jackson2.version>2.11.4</jackson2.version>
     <jaxb.version>2.3.3</jaxb.version>
     <resteasy.version>3.14.0.Final</resteasy.version>
     <swagger.version>1.6.2</swagger.version>

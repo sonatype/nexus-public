@@ -16,7 +16,6 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.selector.internal.SandboxJexlUberspect;
 
 import org.apache.commons.jexl3.JexlBuilder;
@@ -44,9 +43,6 @@ public class JexlEngine
 
   private static final Pattern JEXL_CONDENSED_INFO_HEADER = compile("Selector@\\d+(?::\\d+)?(?:![\\d+,\\d+]:)? *");
 
-  private static final boolean TRIM_LEADING_SLASHES =
-      SystemPropertiesHelper.getBoolean("nexus.orient.store.content", true);
-
   public JexlEngine() {
     super(new JexlBuilder().uberspect(new SandboxJexlUberspect()));
   }
@@ -64,9 +60,7 @@ public class JexlEngine
    */
   public JexlExpression buildExpression(final String expression) {
     ASTJexlScript script = parseExpression(expression);
-    if (TRIM_LEADING_SLASHES) {
-      script = trimLeadingSlashes(script);
-    }
+    script = trimLeadingSlashes(script);
     return new JexlExpression(this, expression, script);
   }
 
