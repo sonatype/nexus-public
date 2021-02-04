@@ -21,7 +21,7 @@ import org.junit.Test;
 
 import static java.util.regex.Pattern.compile;
 import static org.hamcrest.Matchers.endsWith;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.sonatype.nexus.repository.date.DateTimeUtils.formatDateTime;
 

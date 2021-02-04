@@ -42,7 +42,7 @@ import org.mockito.Mock
 
 import static java.util.Collections.emptySet
 import static org.hamcrest.CoreMatchers.is
-import static org.junit.Assert.assertThat
+import static org.hamcrest.MatcherAssert.assertThat
 import static org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule.inFilesystem
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES
 

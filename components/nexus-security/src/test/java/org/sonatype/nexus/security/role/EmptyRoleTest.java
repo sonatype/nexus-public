@@ -38,7 +38,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * Tests adding, updating, searching, authc, and authz a user that has an empty role (a role that does not contain any

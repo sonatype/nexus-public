@@ -38,7 +38,7 @@ import spock.lang.Unroll
 import static java.lang.Boolean.FALSE
 import static java.lang.Boolean.TRUE
 import static org.hamcrest.Matchers.equalTo
-import static org.junit.Assert.assertThat
+import static org.hamcrest.MatcherAssert.assertThat
 import static org.sonatype.nexus.repository.npm.internal.NonCatalogedVersionHelper.CACHE_NAME
 import static org.sonatype.nexus.repository.npm.internal.NonCatalogedVersionHelper.REMOVE_NON_CATALOGED_KEY
 import static org.sonatype.nexus.repository.npm.internal.NpmFormat.NAME

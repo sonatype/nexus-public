@@ -26,7 +26,7 @@ import org.junit.experimental.categories.Category;
 
 import static org.apache.http.entity.ContentType.TEXT_PLAIN;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.sonatype.nexus.content.testsupport.FormatClientSupport.bytes;
 import static org.sonatype.nexus.content.testsupport.FormatClientSupport.status;
 import static org.sonatype.nexus.repository.http.HttpStatus.NOT_FOUND;

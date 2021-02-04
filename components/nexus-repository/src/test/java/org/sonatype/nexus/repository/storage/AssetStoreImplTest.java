@@ -31,7 +31,7 @@ import org.junit.Test;
 
 import static java.util.Collections.emptySet;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 import static org.sonatype.nexus.repository.storage.StorageTestUtil.createAsset;
 import static org.sonatype.nexus.repository.storage.StorageTestUtil.createComponent;

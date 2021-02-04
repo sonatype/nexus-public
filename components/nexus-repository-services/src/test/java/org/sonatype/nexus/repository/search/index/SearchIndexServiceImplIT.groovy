@@ -50,7 +50,7 @@ import static org.elasticsearch.index.query.QueryBuilders.boolQuery
 import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery
 import static org.elasticsearch.index.query.QueryBuilders.queryStringQuery
 import static org.hamcrest.Matchers.is
-import static org.junit.Assert.assertThat
+import static org.hamcrest.MatcherAssert.assertThat
 import static org.mockito.Mockito.any
 import static org.mockito.Mockito.mock
 import static org.mockito.Mockito.when

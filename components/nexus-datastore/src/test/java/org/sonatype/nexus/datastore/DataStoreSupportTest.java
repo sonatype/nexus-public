@@ -37,7 +37,7 @@ import org.mockito.ArgumentCaptor;
 import static com.google.inject.Guice.createInjector;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasEntry;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Matchers.eq;

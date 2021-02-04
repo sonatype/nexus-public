@@ -29,7 +29,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ComponentDatabaseUpgrade_1_11Test // NOSONAR
     extends TestSupport

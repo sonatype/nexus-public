@@ -62,7 +62,7 @@ import org.slf4j.LoggerFactory;
 
 import static java.lang.Thread.sleep;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;

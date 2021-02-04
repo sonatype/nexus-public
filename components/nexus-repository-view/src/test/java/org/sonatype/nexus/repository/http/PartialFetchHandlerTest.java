@@ -41,7 +41,7 @@ import static java.util.Collections.singletonList;
 import static org.apache.commons.lang.ArrayUtils.subarray;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.core.IsSame.sameInstance;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;

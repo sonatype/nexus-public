@@ -18,7 +18,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.sonatype.nexus.logging.task.TaskLogType.BOTH;
 import static org.sonatype.nexus.logging.task.TaskLogType.NEXUS_LOG_ONLY;

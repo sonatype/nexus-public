@@ -30,7 +30,7 @@ import org.junit.Test
 
 import static org.hamcrest.Matchers.equalTo
 import static org.hamcrest.Matchers.notNullValue
-import static org.junit.Assert.assertThat
+import static org.hamcrest.MatcherAssert.assertThat
 
 /**
  * Tests {@link ComponentDatabaseUpgrade_1_1} with an in-memory database to ensure the update query behaves as expected.

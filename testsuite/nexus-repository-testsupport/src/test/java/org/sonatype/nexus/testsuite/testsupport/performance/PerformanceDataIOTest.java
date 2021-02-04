@@ -25,7 +25,7 @@ import org.junit.Test;
 import org.junit.rules.TestName;
 
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * Tests {@link PerformanceDataIO}

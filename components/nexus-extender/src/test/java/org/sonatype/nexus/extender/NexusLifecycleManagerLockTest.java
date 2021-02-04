@@ -39,7 +39,7 @@ import org.osgi.framework.BundleContext;
 
 import static com.google.inject.name.Names.named;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 
 /**
