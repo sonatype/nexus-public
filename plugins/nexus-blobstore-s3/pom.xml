@@ -113,7 +113,7 @@
     </dependency>
 
     <dependency>
-      <groupId>software.amazon.ion</groupId>
+      <groupId>com.amazon.ion</groupId>
       <artifactId>ion-java</artifactId>
       <scope>provided</scope>
     </dependency>
