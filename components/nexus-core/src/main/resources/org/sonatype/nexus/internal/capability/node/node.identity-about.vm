@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  *###
 <p>
-  Provides the unique identity for a Nexus server.
+  Provides the unique identity for a Nexus Repository Manager server.
 </p>
 <p>
   This capability is generally configured once and never changed.
