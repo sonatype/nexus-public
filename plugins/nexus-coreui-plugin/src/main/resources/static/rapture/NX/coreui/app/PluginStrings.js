@@ -1314,9 +1314,9 @@ Ext.define('NX.coreui.app.PluginStrings', {
 
     // HTTP Request section
     System_HttpRequestSettings_UserAgentCustomization_FieldLabel: 'User-agent customization',
-    System_HttpRequestSettings_UserAgentCustomization_HelpText: 'Custom fragment to append to "User-Agent" header in HTTP requests.',
+    System_HttpRequestSettings_UserAgentCustomization_HelpText: 'Custom fragment to append to "User-Agent" header in HTTP requests',
     System_HttpRequestSettings_Timeout_FieldLabel: 'Connection/Socket timeout',
-    System_HttpRequestSettings_Timeout_HelpText: 'Seconds to wait for activity before stopping and retrying the connection.',
+    System_HttpRequestSettings_Timeout_HelpText: 'Seconds to wait for activity before stopping and retrying the connection',
     System_HttpRequestSettings_Attempts_FieldLabel: 'Connection/Socket retry attempts',
     System_HttpRequestSettings_Attempts_HelpText: 'Total retries if the initial connection attempt suffers a timeout',
 
