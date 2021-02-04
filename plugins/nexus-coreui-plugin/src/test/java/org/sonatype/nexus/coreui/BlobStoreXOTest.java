@@ -27,7 +27,7 @@ import org.junit.Test;
 
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class BlobStoreXOTest
 {

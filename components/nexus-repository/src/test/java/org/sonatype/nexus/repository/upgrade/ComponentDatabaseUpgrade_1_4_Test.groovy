@@ -24,7 +24,7 @@ import org.junit.Rule
 import org.junit.Test
 
 import static org.hamcrest.Matchers.containsInAnyOrder
-import static org.junit.Assert.assertThat
+import static org.hamcrest.MatcherAssert.assertThat
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_COMPONENT
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME
 import static org.sonatype.nexus.repository.upgrade.ComponentDatabaseUpgrade_1_4.ASSET_CLASS

@@ -27,7 +27,7 @@ import org.mockito.Mock
 import org.mockito.runners.MockitoJUnitRunner
 
 import static org.hamcrest.Matchers.equalTo
-import static org.junit.Assert.assertThat
+import static org.hamcrest.MatcherAssert.assertThat
 import static org.mockito.Mockito.when
 import static org.sonatype.nexus.repository.upgrade.ConfigDatabaseUpgrade_1_4.C_HEALTHCHECKCONFIG
 import static org.sonatype.nexus.repository.upgrade.ConfigDatabaseUpgrade_1_4.PROPERTY_QUERY

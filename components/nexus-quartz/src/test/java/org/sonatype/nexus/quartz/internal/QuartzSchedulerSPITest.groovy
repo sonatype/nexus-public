@@ -68,7 +68,7 @@ import org.quartz.spi.OperableTrigger
 import static junit.framework.TestCase.assertEquals
 import static org.hamcrest.Matchers.equalTo
 import static org.hamcrest.Matchers.hasSize
-import static org.junit.Assert.assertThat
+import static org.hamcrest.MatcherAssert.assertThat
 import static org.mockito.Matchers.any
 import static org.mockito.Matchers.anyObject
 import static org.mockito.Matchers.eq

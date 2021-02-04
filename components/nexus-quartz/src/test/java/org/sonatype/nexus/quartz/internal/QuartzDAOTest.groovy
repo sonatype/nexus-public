@@ -46,7 +46,7 @@ import static org.hamcrest.Matchers.equalTo
 import static org.hamcrest.Matchers.hasSize
 import static org.hamcrest.Matchers.notNullValue
 import static org.hamcrest.collection.IsEmptyCollection.empty
-import static org.junit.Assert.assertThat
+import static org.hamcrest.MatcherAssert.assertThat
 import static org.quartz.JobBuilder.newJob
 import static org.quartz.TriggerBuilder.newTrigger
 import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE_NAME

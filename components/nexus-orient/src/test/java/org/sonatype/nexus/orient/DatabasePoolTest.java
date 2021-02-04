@@ -27,7 +27,7 @@ import static java.lang.Thread.State.WAITING;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.generate;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 
 /**

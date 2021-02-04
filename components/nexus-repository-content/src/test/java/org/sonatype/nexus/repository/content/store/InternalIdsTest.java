@@ -35,7 +35,7 @@ import org.mockito.Mock;
 import static java.util.OptionalInt.empty;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetBlobId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetId;

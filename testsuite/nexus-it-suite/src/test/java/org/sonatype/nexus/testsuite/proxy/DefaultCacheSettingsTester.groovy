@@ -31,7 +31,7 @@ import org.ehcache.config.ResourceType
 import org.ehcache.jsr107.Eh107Configuration
 
 import static org.hamcrest.Matchers.is
-import static org.junit.Assert.assertThat
+import static org.hamcrest.MatcherAssert.assertThat
 
 /**
  * Ensure that cache configuration is as expected based on the defaults of the system.

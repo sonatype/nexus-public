@@ -26,7 +26,7 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 
 import static org.hamcrest.Matchers.contains;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 
 public class IterableEntityAdapterTest
