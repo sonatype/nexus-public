@@ -27,13 +27,13 @@ import org.sonatype.nexus.testsuite.proxy.DefaultCacheSettingsTester;
 import org.sonatype.nexus.testsuite.testsupport.raw.RawClient;
 import org.sonatype.nexus.testsuite.testsupport.raw.RawITSupport;
 
-import com.google.common.io.Files;
 import org.apache.http.HttpResponse;
 import org.apache.http.entity.ContentType;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import static org.apache.commons.io.FileUtils.readFileToByteArray;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -90,7 +90,18 @@ public class RawProxyOfHostedIT
     final File testFile = resolveTestFile(TEST_CONTENT);
     hostedClient.put(TEST_PATH, ContentType.TEXT_PLAIN, testFile);
 
-    assertThat(bytes(proxyClient.get(TEST_PATH)), is(Files.toByteArray(testFile)));
+    assertThat(bytes(proxyClient.get(TEST_PATH)), is(readFileToByteArray(testFile)));
+  }
+
+  @Test
+  public void fetchFromRemoteWithEncodedFileName() throws Exception {
+    File testFile = resolveTestFile("%252B%2520.txt");
+    hostedClient.put(testFile.getName(), ContentType.TEXT_PLAIN, testFile);
+
+    HttpResponse httpResponse = proxyClient.get(testFile.getName());
+
+    assertThat(status(httpResponse), is(HttpStatus.OK));
+    assertThat(bytes(httpResponse), is(readFileToByteArray(testFile)));
   }
 
   @Test
@@ -100,7 +111,7 @@ public class RawProxyOfHostedIT
 
     HttpResponse response = proxyClient.get(TEST_PATH);
     assertThat(status(response), is(HttpStatus.OK));
-    assertThat(bytes(response), is(Files.toByteArray(testFile)));
+    assertThat(bytes(response), is(readFileToByteArray(testFile)));
     assertThat(getLastDownloadedTime(proxyRepo, TEST_PATH).isBeforeNow(), is(equalTo(true)));
   }
 
