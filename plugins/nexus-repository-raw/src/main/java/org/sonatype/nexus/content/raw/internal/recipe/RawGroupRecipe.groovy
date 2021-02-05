@@ -77,6 +77,7 @@ class RawGroupRecipe
     builder.route(new Route.Builder()
         .matcher(new TokenMatcher('{path:/.+}'))
         .handler(timingHandler)
+        .handler(contentDispositionHandler)
         .handler(securityHandler)
         .handler(exceptionHandler)
         .handler(handlerContributor)

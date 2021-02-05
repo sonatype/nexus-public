@@ -19,7 +19,7 @@ import javax.inject.Named
 import javax.inject.Provider
 import javax.inject.Singleton
 
-import org.sonatype.nexus.content.raw.internal.recipe.ContentDispositionHandler
+import org.sonatype.nexus.repository.raw.ContentDispositionHandler
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.RecipeSupport
 import org.sonatype.nexus.repository.Repository

@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import static org.sonatype.nexus.content.raw.internal.recipe.ContentDisposition.ATTACHMENT;
+import static org.sonatype.nexus.repository.raw.ContentDisposition.ATTACHMENT;
 
 /**
  * @since 3.24

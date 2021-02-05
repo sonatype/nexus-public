@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.raw.rest;
 
-import org.sonatype.nexus.content.raw.internal.recipe.ContentDisposition;
+import org.sonatype.nexus.repository.raw.ContentDisposition;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
