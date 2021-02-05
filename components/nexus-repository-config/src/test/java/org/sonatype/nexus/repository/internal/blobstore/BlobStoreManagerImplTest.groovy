@@ -19,6 +19,7 @@ import org.sonatype.nexus.blobstore.BlobStoreDescriptor
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
+import org.sonatype.nexus.blobstore.api.BlobStoreException
 import org.sonatype.nexus.blobstore.api.ChangeRepositoryBlobstoreDataService
 import org.sonatype.nexus.common.app.FreezeService
 import org.sonatype.nexus.common.event.EventManager
@@ -209,6 +210,23 @@ class BlobStoreManagerImplTest
     underTest.delete(configuration.getName())
 
     verify(blobStore).shutdown()
+    verify(store).delete(configuration)
+    verify(freezeService).checkWritable("Unable to delete a BlobStore while database is frozen.")
+  }
+
+  @Test
+  void 'Can delete an existing BlobStore that fails on remove'() {
+    BlobStoreConfiguration configuration = createConfig('test')
+    BlobStore blobStore = mock(BlobStore)
+    doReturn(blobStore).when(underTest).blobStore('test')
+    when(store.list()).thenReturn([configuration])
+    when(blobStore.getBlobStoreConfiguration()).thenReturn(configuration)
+    doThrow(BlobStoreException).when(blobStore).remove()
+
+    underTest.delete(configuration.getName())
+
+    verify(blobStore).shutdown()
+    verify(blobStore).remove()
     verify(store).delete(configuration)
     verify(freezeService).checkWritable("Unable to delete a BlobStore while database is frozen.")
   }

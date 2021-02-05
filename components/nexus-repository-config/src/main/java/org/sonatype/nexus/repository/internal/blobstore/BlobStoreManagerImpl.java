@@ -314,8 +314,13 @@ public class BlobStoreManagerImpl
 
     BlobStore blobStore = blobStore(name);
     log.debug("Deleting BlobStore: {}", name);
-    blobStore.shutdown();
-    blobStore.remove();
+    try {
+      blobStore.shutdown();
+      blobStore.remove();
+    }
+    catch (Exception e) {
+      log.error("Error cleaning up blobStore {} while attempting to delete", name, e);
+    }
     untrack(name);
     if (!EventHelper.isReplicating()) {
       store.delete(blobStore.getBlobStoreConfiguration());
