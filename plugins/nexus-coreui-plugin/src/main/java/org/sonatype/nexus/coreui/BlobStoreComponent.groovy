@@ -159,7 +159,7 @@ class BlobStoreComponent
   @ExceptionMetered
   @RequiresPermissions('nexus:blobstores:read')
   List<BlobStoreTypeXO> readTypes() {
-    blobStoreDescriptors.collect { key, descriptor ->
+    List<BlobStoreTypeXO> readTypes = blobStoreDescriptors.collect { key, descriptor ->
       new BlobStoreTypeXO(
           id: key,
           name: descriptor.name,
@@ -169,6 +169,14 @@ class BlobStoreComponent
           isEnabled: descriptor.isEnabled()
       )
     }
+    readTypes.add(new BlobStoreTypeXO(
+        id: "",
+        name: "",
+        customFormName: "",
+        isModifiable: false,
+        isEnabled: true
+    ))
+    return readTypes;
   }
 
   @DirectMethod
