@@ -599,6 +599,9 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Blobstore_BlobstoreSettingsForm_SoftQuota_HelpText: 'A soft quota provides warnings when a limit is violated.  It never causes an operation to be rejected',
     Blobstore_BlobstoreSettingsForm_QuotaType_FieldLabel: 'Type of Quota',
     Blobstore_BlobstoreSettingsForm_QuotaLimit_FieldLabel: 'Quota Limit in MB',
+    Blobstore_BlobstoreSettingsForm_Test_Connection_Button: 'Test Connection',
+    Blobstore_BlobstoreSettingsForm_Test_Error_Message: 'Connection failed, check the logs for more information',
+    Blobstore_BlobstoreSettingsForm_Test_Success_Message: 'Connection successful',
 
     // Admin -> Repository -> Selectors
     Selectors_Text: 'Content Selectors',

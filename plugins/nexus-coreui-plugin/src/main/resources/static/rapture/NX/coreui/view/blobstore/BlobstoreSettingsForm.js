@@ -75,13 +75,26 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
           }
           var blobstoreTypeModel = NX.getApplication().getStore('BlobstoreType').getById(value);
           settingsFieldSet.importProperties(null, blobstoreTypeModel.get('formFields'), me.editableCondition);
-
+          me.remove(me.down('#testConnectionButton'));
           me.remove('blobstore-custom-form');
           var customFormName = blobstoreTypeModel.get('customFormName');
+          var isConnectionTestable = blobstoreTypeModel.get('isConnectionTestable');
+
           if (customFormName) {
             me.add({
               id: 'blobstore-custom-form',
               xtype: customFormName
+            });
+          }
+
+          if (isConnectionTestable == true) {
+            me.add({
+              xtype: 'button',
+              id: 'testConnectionButton',
+              text: NX.I18n.get('Blobstore_BlobstoreSettingsForm_Test_Connection_Button'),
+              listeners: {
+                click: me.testConnection
+              }
             });
           }
         }
@@ -252,5 +265,22 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
         me.down(f).setReadOnly(readOnly);
       });
     }
+  },
+  testConnection: function(button) {
+    var me = this;
+    var settingsForm = me.up('form');
+
+    Ext.Ajax.request({
+      url: NX.util.Url.baseUrl + '/service/rest/v1/blobstores/test-connection',
+      method: 'POST',
+      scope: me,
+      jsonData: settingsForm.getForm().getValues(),
+      success: function() {
+        NX.Messages.success(NX.I18n.get('Blobstore_BlobstoreSettingsForm_Test_Success_Message'));
+      },
+      failure: function (response) {
+        NX.Messages.error(NX.I18n.get('Blobstore_BlobstoreSettingsForm_Test_Error_Message'));
+      }
+    });
   }
 });

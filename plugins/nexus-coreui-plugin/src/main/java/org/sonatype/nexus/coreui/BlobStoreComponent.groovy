@@ -166,6 +166,7 @@ class BlobStoreComponent
           formFields: descriptor.formFields.collect { FormFieldXO.create(it) },
           customFormName: descriptor.customFormName(),
           isModifiable: descriptor.isModifiable(),
+          isConnectionTestable: descriptor.isConnectionTestable(),
           isEnabled: descriptor.isEnabled()
       )
     }

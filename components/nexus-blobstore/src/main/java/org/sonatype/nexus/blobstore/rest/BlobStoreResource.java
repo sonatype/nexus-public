@@ -13,21 +13,27 @@
 package org.sonatype.nexus.blobstore.rest;
 
 import java.util.List;
+import java.util.Map;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.blobstore.ConnectionChecker;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaResult;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.rest.Resource;
+import org.sonatype.nexus.validation.Validate;
 
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -38,6 +44,7 @@ import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 
 /**
  * @since 3.14
@@ -52,10 +59,16 @@ public class BlobStoreResource
 
   private final BlobStoreQuotaService quotaService;
 
-  public BlobStoreResource(final BlobStoreManager blobStoreManager, final BlobStoreQuotaService quotaService)
+  private final Map<String, ConnectionChecker> connectionCheckers;
+
+  public BlobStoreResource(
+      final BlobStoreManager blobStoreManager,
+      final BlobStoreQuotaService quotaService,
+      final Map<String, ConnectionChecker> connectionCheckers)
   {
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.quotaService = checkNotNull(quotaService);
+    this.connectionCheckers = connectionCheckers;
   }
 
   @Override
@@ -94,5 +107,22 @@ public class BlobStoreResource
     BlobStoreQuotaResult result = quotaService.checkQuota(blobStore);
 
     return result != null ? BlobStoreQuotaResultXO.asQuotaXO(result) : BlobStoreQuotaResultXO.asNoQuotaXO(name);
+  }
+
+  @Override
+  @POST
+  @Path("test-connection")
+  @RequiresAuthentication
+  @RequiresPermissions("nexus:blobstores:read")
+  @Validate
+  public void verifyConnection(final @NotNull @Valid BlobStoreConnectionXO blobStoreConnectionXO) {
+    try {
+      ConnectionChecker conChecker = checkNotNull(connectionCheckers.get(blobStoreConnectionXO.getType()));
+      conChecker.verifyConnection(blobStoreConnectionXO.getAttributes());
+    }
+    catch (Exception e) {
+      log.warn("Can't connect to {} blob store", blobStoreConnectionXO.getType(), e);
+      throw new WebApplicationException("Can't connect to blob store", BAD_REQUEST);
+    }
   }
 }

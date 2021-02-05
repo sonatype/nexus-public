@@ -12,12 +12,15 @@
  */
 package org.sonatype.nexus.blobstore.rest;
 
+import java.util.Map;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response.Status;
 
+import org.sonatype.nexus.blobstore.ConnectionChecker;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
@@ -45,9 +48,10 @@ public class BlobStoreResourceBeta
 
   @Inject
   public BlobStoreResourceBeta(final BlobStoreManager blobStoreManager,
-                               final BlobStoreQuotaService quotaService)
+                               final BlobStoreQuotaService quotaService,
+                               final Map<String, ConnectionChecker> connectionCheckers)
   {
-    super(blobStoreManager, quotaService);
+    super(blobStoreManager, quotaService, connectionCheckers);
   }
 
   @Override
