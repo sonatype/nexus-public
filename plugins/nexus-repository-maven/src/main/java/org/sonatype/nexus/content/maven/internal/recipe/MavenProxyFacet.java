@@ -13,13 +13,19 @@
 package org.sonatype.nexus.content.maven.internal.recipe;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 import javax.inject.Named;
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
 
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.cache.CacheController;
+import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.content.facet.ContentProxyFacetSupport;
 import org.sonatype.nexus.repository.maven.LayoutPolicy;
 import org.sonatype.nexus.repository.maven.MavenPath;
@@ -27,6 +33,12 @@ import org.sonatype.nexus.repository.maven.internal.Constants;
 import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
+import org.sonatype.nexus.validation.ConstraintViolationFactory;
+
+import com.google.common.collect.ImmutableSet;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 
 /**
  * Maven specific implementation of {@link ProxyFacetSupport}.
@@ -37,6 +49,39 @@ import org.sonatype.nexus.repository.view.Context;
 public class MavenProxyFacet
     extends ContentProxyFacetSupport
 {
+  final ConstraintViolationFactory constraintViolationFactory;
+
+  @Inject
+  public MavenProxyFacet(final ConstraintViolationFactory constraintViolationFactory) {
+    this.constraintViolationFactory = checkNotNull(constraintViolationFactory);
+  }
+
+  @Override
+  protected void doValidate(final Configuration configuration) throws Exception {
+    super.doValidate(configuration);
+    validatePreemptiveAuth(configuration);
+  }
+
+  /**
+   * Pre-emptive authentication is limited only to Maven Proxy using HTTPS protocol.
+   */
+  private void validatePreemptiveAuth(final Configuration configuration) {
+    NestedAttributesMap httpclient = configuration.attributes("httpclient");
+    if (Objects.nonNull(httpclient.get("authentication"))) {
+      boolean isPreemptive =
+          configuration.attributes("httpclient").child("authentication").get("preemptive", Boolean.class, false);
+      if (isPreemptive) {
+        String remoteUrl = configuration.attributes("proxy").get("remoteUrl", String.class, "");
+        if (!remoteUrl.startsWith("https://")) {
+          ConstraintViolation<?> violation = constraintViolationFactory
+              .createViolation(P_ATTRIBUTES + ".httpclient.authentication.preemptive",
+                  "Pre-emptive authentication is allowed only when using HTTPS remote URL");
+          throw new ConstraintViolationException(ImmutableSet.of(violation));
+        }
+      }
+    }
+  }
+
   @Override
   protected Content getCachedContent(final Context context) throws IOException {
     return content()

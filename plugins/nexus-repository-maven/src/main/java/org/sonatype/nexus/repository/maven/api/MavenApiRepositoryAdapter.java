@@ -15,10 +15,15 @@ package org.sonatype.nexus.repository.maven.api;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
+import org.sonatype.nexus.repository.maven.rest.HttpClientAttributesWithPreemptiveAuth;
+import org.sonatype.nexus.repository.maven.rest.HttpClientConnectionAuthenticationAttributesWithPreemptive;
 import org.sonatype.nexus.repository.rest.api.SimpleApiRepositoryAdapter;
 import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
+import org.sonatype.nexus.repository.rest.api.model.HttpClientAttributes;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
@@ -61,5 +66,23 @@ public class MavenApiRepositoryAdapter
     String versionPolicy = repository.getConfiguration().attributes("maven").get("versionPolicy", String.class);
     String layoutPolicy = repository.getConfiguration().attributes("maven").get("layoutPolicy", String.class);
     return new MavenAttributes(versionPolicy, layoutPolicy);
+  }
+
+  @Override
+  protected HttpClientAttributesWithPreemptiveAuth getHttpClientAttributes(final Repository repository) {
+    HttpClientAttributes httpClientAttributes = super.getHttpClientAttributes(repository);
+    HttpClientConnectionAuthenticationAttributesWithPreemptive authentication = null;
+
+    Configuration configuration = repository.getConfiguration();
+    NestedAttributesMap httpclient = configuration.attributes("httpclient");
+    if (httpclient.contains("authentication")) {
+      NestedAttributesMap authenticationMap = httpclient.child("authentication");
+      Boolean preemptive = authenticationMap.get("preemptive", Boolean.class);
+
+      authentication = new HttpClientConnectionAuthenticationAttributesWithPreemptive(httpClientAttributes.getAuthentication(),
+          preemptive);
+    }
+
+    return new HttpClientAttributesWithPreemptiveAuth(httpClientAttributes, authentication);
   }
 }

@@ -49,6 +49,8 @@ public abstract class AuthenticationConfiguration
 
   private final String type;
 
+  private boolean preemptive;
+
   public AuthenticationConfiguration(final String type) {
     this.type = checkNotNull(type);
   }
@@ -57,7 +59,13 @@ public abstract class AuthenticationConfiguration
     return type;
   }
 
-  // TODO: preemptive?
+  public boolean isPreemptive() {
+    return preemptive;
+  }
+
+  public void setPreemptive(final boolean preemptive) {
+    this.preemptive = preemptive;
+  }
 
   public AuthenticationConfiguration copy() {
     try {

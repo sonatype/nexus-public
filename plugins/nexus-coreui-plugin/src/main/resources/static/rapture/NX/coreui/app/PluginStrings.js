@@ -1314,6 +1314,10 @@ Ext.define('NX.coreui.app.PluginStrings', {
     System_AuthenticationSettings_WindowsNtlmDomain_FieldLabel: 'Windows NTLM domain',
     System_AuthenticationSettings_Bearer_Token_FieldLabel: 'Token',
     System_AuthenticationSettings_Bearer_Token_HelpText: 'Include only the token value, not the Bearer prefix.',
+    System_AuthenticationSettings_Preemptive_FieldLabel: 'Use pre-emptive authentication',
+    System_AuthenticationSettings_Preemptive_HelpText: '<strong>Caution!</strong> Use this only when absolutely ' +
+        'necessary. Enabling this option means configured authentication credentials will be sent to the remote URL ' +
+        'regardless of whether the remote server has asked for them or not.',
 
     // HTTP Request section
     System_HttpRequestSettings_UserAgentCustomization_FieldLabel: 'User-agent customization',

@@ -112,6 +112,7 @@ public class HttpClientAuditor
         attributes.put(key(prefix, "authentication.domain"), nrlm.getDomain());
         // omit password
       }
+      attributes.put(key(prefix, "authentication.preemptive"), auth.isPreemptive());
     }
   }
 }

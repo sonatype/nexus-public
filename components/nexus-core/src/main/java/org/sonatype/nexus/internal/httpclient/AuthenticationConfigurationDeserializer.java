@@ -69,6 +69,7 @@ public class AuthenticationConfigurationDeserializer
     Class<? extends AuthenticationConfiguration> type = TYPES.get(typeName);
     checkState(type != null, "Unknown %s type: %s", AuthenticationConfiguration.class.getSimpleName(), typeName);
     AuthenticationConfiguration configuration = parser.getCodec().treeToValue(node, type);
+    configuration.setPreemptive(configuration.isPreemptive());
     if (UsernameAuthenticationConfiguration.class.equals(type)) {
       UsernameAuthenticationConfiguration upc = (UsernameAuthenticationConfiguration) configuration;
       upc.setUsername(upc.getUsername());
