@@ -82,6 +82,7 @@ public class AuthenticationConfigurationSerializer
   private void serialize(final AuthenticationConfiguration value, final JsonGenerator jgen) throws IOException {
     jgen.writeStartObject();
     jgen.writeStringField("type", value.getType());
+    jgen.writeBooleanField("preemptive", value.isPreemptive());
     if (value instanceof UsernameAuthenticationConfiguration) {
       UsernameAuthenticationConfiguration upc = (UsernameAuthenticationConfiguration) value;
       jgen.writeStringField("username", upc.getUsername());

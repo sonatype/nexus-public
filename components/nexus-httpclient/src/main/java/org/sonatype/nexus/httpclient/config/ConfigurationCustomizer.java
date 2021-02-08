@@ -28,6 +28,7 @@ import javax.annotation.Nullable;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.httpclient.HttpClientPlan;
+import org.sonatype.nexus.httpclient.PreemptiveAuthHttpRequestInterceptor;
 import org.sonatype.nexus.httpclient.SSLContextSelector;
 import org.sonatype.nexus.httpclient.internal.NexusHttpRoutePlanner;
 
@@ -286,6 +287,10 @@ public class ConfigurationCustomizer
       else {
         plan.addCredentials(AuthScope.ANY, credentials);
         plan.getRequest().setTargetPreferredAuthSchemes(authSchemes);
+      }
+
+      if (authentication.isPreemptive()) {
+        plan.getClient().addInterceptorFirst(new PreemptiveAuthHttpRequestInterceptor());
       }
     }
   }
