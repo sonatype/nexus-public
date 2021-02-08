@@ -41,7 +41,6 @@ import org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageId;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageParser;
 import org.sonatype.nexus.repository.npm.internal.NpmProxyFacet;
-import org.sonatype.nexus.repository.npm.orient.internal.search.legacy.NpmSearchIndexInvalidatedEvent;
 import org.sonatype.nexus.repository.proxy.ProxyFacet;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
@@ -65,6 +64,7 @@ import static org.sonatype.nexus.repository.content.npm.internal.NpmFacetSupport
 import static org.sonatype.nexus.repository.content.npm.internal.NpmFacetSupport.formatAttributeExtractor;
 import static org.sonatype.nexus.repository.content.npm.internal.NpmFacetSupport.tarballAssetName;
 import static org.sonatype.nexus.repository.content.npm.internal.NpmFacetSupport.toNpmContent;
+import static org.sonatype.nexus.repository.content.npm.internal.NpmUtils.errorInputStream;
 import static org.sonatype.nexus.repository.npm.NpmCoordinateUtil.extractVersion;
 import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.P_NPM_LAST_MODIFIED;
 import static org.sonatype.nexus.repository.npm.internal.NpmFieldFactory.rewriteTarballUrlMatcher;
@@ -83,7 +83,6 @@ import static org.sonatype.nexus.repository.npm.internal.NpmPaths.tarballName;
 import static org.sonatype.nexus.repository.npm.internal.NpmProxyFacet.ProxyTarget.PACKAGE;
 import static org.sonatype.nexus.repository.npm.internal.NpmProxyFacet.ProxyTarget.SEARCH_INDEX;
 import static org.sonatype.nexus.repository.npm.internal.NpmProxyFacet.ProxyTarget.SEARCH_V1_RESULTS;
-import static org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils.errorInputStream;
 import static org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexFilter.filterModifiedSince;
 
 /**
@@ -189,7 +188,6 @@ public class NpmContentProxyFacet
 
   private Content putRepositoryRoot(final TempBlob tempBlob, final Content content) {
     Content result = contentFacet().putRepositoryRoot(createNpmContent(tempBlob, content));
-    getEventManager().post(new NpmSearchIndexInvalidatedEvent(getRepository()));
     return result;
   }
 

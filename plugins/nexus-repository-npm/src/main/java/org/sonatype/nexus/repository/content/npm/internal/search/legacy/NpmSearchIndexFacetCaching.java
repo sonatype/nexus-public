@@ -26,7 +26,6 @@ import org.sonatype.nexus.repository.content.npm.internal.NpmFacetSupport;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageParser;
 import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexFacet;
 import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexFilter;
-import org.sonatype.nexus.repository.npm.orient.internal.search.legacy.NpmSearchIndexInvalidatedEvent;
 import org.sonatype.nexus.repository.view.Content;
 
 import org.joda.time.DateTime;
@@ -107,11 +106,7 @@ public abstract class NpmSearchIndexFacetCaching
 
   protected void deleteAsset() {
     log.debug("Invalidating cached npm index of {}", getRepository().getName());
-    findRepositoryRootAsset().ifPresent(asset -> {
-      if (asset.delete()) {
-        eventManager.post(new NpmSearchIndexInvalidatedEvent(getRepository()));
-      }
-    });
+    findRepositoryRootAsset().ifPresent(FluentAsset::delete);
   }
 
   /**
