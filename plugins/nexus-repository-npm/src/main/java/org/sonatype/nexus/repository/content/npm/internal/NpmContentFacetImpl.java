@@ -210,9 +210,7 @@ public class NpmContentFacetImpl
       assetBuilder = assetBuilder.component(component);
     }
 
-    FluentAsset asset = assetBuilder.getOrCreate()
-        .attach(blob)
-        .markAsCached(content);
+    FluentAsset asset = assetBuilder.blob(blob).save().markAsCached(content);
 
     if (npmAttributes != null && !npmAttributes.isEmpty()) {
       asset.withAttribute(NpmFormat.NAME, npmAttributes);

@@ -12,9 +12,15 @@
  */
 package org.sonatype.nexus.repository.content.fluent;
 
+import java.util.Map;
 import java.util.Optional;
 
+import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
+
+import com.google.common.hash.HashCode;
 
 /**
  * Fluent API to create/find an asset; at this point we already know the asset path.
@@ -36,9 +42,26 @@ public interface FluentAssetBuilder
   FluentAssetBuilder component(Component component);
 
   /**
-   * Gets the full asset using the details built so far; if it doesn't exist then it is created.
+   * Continue building this asset by converting a temporary blob into a permanent blob and attaching it to this asset.
+   *
+   * @since 3.next
    */
-  FluentAsset getOrCreate();
+  FluentAssetBuilder blob(TempBlob blob);
+
+  /**
+   * Continue building this asset by attaching an existing blob to this asset.
+   *
+   * @since 3.next
+   */
+  FluentAssetBuilder blob(Blob blob, Map<HashAlgorithm, HashCode> checksums);
+
+  /**
+   * Save the asset using details built so far. If the asset doesn't exist it is created otherwise the blob reference
+   * is updated.
+   *
+   * @since 3.next
+   */
+  FluentAsset save();
 
   /**
    * Find if an asset exists using the details built so far.

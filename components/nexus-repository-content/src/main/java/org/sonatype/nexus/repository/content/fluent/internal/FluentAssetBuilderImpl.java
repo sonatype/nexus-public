@@ -13,19 +13,40 @@
 package org.sonatype.nexus.repository.content.fluent.internal;
 
 import java.time.OffsetDateTime;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 
+import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobMetrics;
+import org.sonatype.nexus.blobstore.api.BlobRef;
+import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.repository.content.Asset;
+import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
+import org.sonatype.nexus.repository.content.fluent.FluentAssetBlobAttach;
 import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
+import org.sonatype.nexus.repository.content.store.AssetBlobData;
 import org.sonatype.nexus.repository.content.store.AssetData;
 import org.sonatype.nexus.repository.content.store.AssetStore;
 import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
+
+import com.google.common.collect.ImmutableMap;
+import com.google.common.hash.HashCode;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
+import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
+import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
+import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_IP_HEADER;
+import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
+import static org.sonatype.nexus.common.time.DateHelper.toOffsetDateTime;
 
 /**
  * {@link FluentAssetBuilder} implementation.
@@ -33,66 +54,169 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.24
  */
 public class FluentAssetBuilderImpl
-    implements FluentAssetBuilder
+    implements FluentAssetBuilder, FluentAssetBlobAttach
 {
   private final ContentFacetSupport facet;
 
   private final AssetStore<?> assetStore;
 
-  private final String path;
+  private final AssetData assetData;
 
-  private String kind = "";
+  private Supplier<Blob> blobSupplier;
 
-  private Component component;
+  private Map<HashAlgorithm, HashCode> checksums;
+
+  private Blob blob;
 
   public FluentAssetBuilderImpl(final ContentFacetSupport facet, final AssetStore<?> assetStore, final String path) {
     this.facet = checkNotNull(facet);
     this.assetStore = checkNotNull(assetStore);
-    this.path = checkNotNull(path);
+    assetData = new AssetData();
+    assetData.setRepositoryId(facet.contentRepositoryId());
+    assetData.setPath(checkNotNull(path));
+    assetData.setKind(EMPTY);
+  }
+
+  public FluentAssetBuilderImpl(final ContentFacetSupport facet, final AssetStore<?> assetStore, final Asset asset) {
+    this.facet = checkNotNull(facet);
+    this.assetStore = checkNotNull(assetStore);
+    this.assetData = (AssetData) checkNotNull(asset);
   }
 
   @Override
   public FluentAssetBuilder kind(final String kind) {
-    this.kind = checkNotNull(kind);
+    assetData.setKind(checkNotNull(kind));
     return this;
   }
 
   @Override
   public FluentAssetBuilder component(final Component component) {
-    this.component = checkNotNull(component);
+    assetData.setComponent(checkNotNull(component));
     return this;
   }
 
   @Override
-  public FluentAsset getOrCreate() {
-    return new FluentAssetImpl(facet, assetStore.getOrCreate(this::findAsset, this::createAsset));
+  public FluentAssetBuilder blob(final TempBlob tempBlob) {
+    blobSupplier = () -> makePermanent(tempBlob.getBlob());
+    checksums = tempBlob.getHashes();
+    return this;
+  }
+
+  @Override
+  public FluentAssetBuilder blob(final Blob blob, final Map<HashAlgorithm, HashCode> checksums) {
+    blobSupplier = () -> blob;
+    this.checksums = checksums;
+    return this;
+  }
+
+  @Override
+  public FluentAsset save() {
+    if (blobSupplier != null) {
+      facet.checkAttachAllowed(findAsset().orElse(assetData));
+      blob = blobSupplier.get();
+    }
+    return new FluentAssetImpl(facet, assetStore.save(this::findAsset, this::createAsset, this::updateAssetBlob));
   }
 
   @Override
   public Optional<FluentAsset> find() {
-    return findAsset().map(asset -> new FluentAssetImpl(facet, asset));
+    return findAsset().map(theAsset -> new FluentAssetImpl(facet, theAsset));
   }
 
   private Optional<Asset> findAsset() {
-    return assetStore.readPath(facet.contentRepositoryId(), path);
+    return assetStore.readPath(facet.contentRepositoryId(), assetData.path());
   }
 
   private Asset createAsset() {
-    AssetData asset = new AssetData();
-    asset.setRepositoryId(facet.contentRepositoryId());
-    asset.setPath(path);
-    asset.setKind(kind);
-    asset.setComponent(component);
-
-    OffsetDateTime now = UTC.now();
-    asset.setLastUpdated(now);
-
-    if (ProxyFacetSupport.isDownloading()) {
-      asset.setLastDownloaded(now);
+    if (blob != null) {
+      assetData.setAssetBlob(getOrCreateAssetBlob(blob, checksums));
     }
 
-    assetStore.createAsset(asset);
+    OffsetDateTime now = UTC.now();
+    assetData.setLastUpdated(now);
 
+    if (ProxyFacetSupport.isDownloading()) {
+      assetData.setLastDownloaded(now);
+    }
+
+    assetStore.createAsset(assetData);
+
+    return assetData;
+  }
+
+  private Asset updateAssetBlob(Asset asset) {
+    if (blob != null) {
+      ((AssetData) asset).setAssetBlob(getOrCreateAssetBlob(blob, checksums));
+      facet.stores().assetStore.updateAssetBlobLink(asset);
+    }
     return asset;
+  }
+
+  private Blob makePermanent(final Blob tempBlob) {
+    ImmutableMap.Builder<String, String> headerBuilder = ImmutableMap.builder();
+
+    Map<String, String> tempHeaders = tempBlob.getHeaders();
+    headerBuilder.put(REPO_NAME_HEADER, tempHeaders.get(REPO_NAME_HEADER));
+    headerBuilder.put(BLOB_NAME_HEADER, assetData.path());
+    headerBuilder.put(CREATED_BY_HEADER, tempHeaders.get(CREATED_BY_HEADER));
+    headerBuilder.put(CREATED_BY_IP_HEADER, tempHeaders.get(CREATED_BY_IP_HEADER));
+    headerBuilder.put(CONTENT_TYPE_HEADER, facet.checkContentType(assetData, tempBlob));
+
+    return facet.stores().blobStore.copy(tempBlob.getId(), headerBuilder.build());
+  }
+
+  private AssetBlob getOrCreateAssetBlob(final Blob blob, final Map<HashAlgorithm, HashCode> checksums) {
+
+    BlobRef blobRef = blobRef(blob);
+    return facet.stores().assetBlobStore.readAssetBlob(blobRef)
+        .orElseGet(() -> createAssetBlob(blobRef, blob, checksums));
+  }
+
+  private AssetBlobData createAssetBlob(final BlobRef blobRef,
+                                        final Blob blob,
+                                        final Map<HashAlgorithm, HashCode> checksums)
+  {
+    BlobMetrics metrics = blob.getMetrics();
+    Map<String, String> headers = blob.getHeaders();
+
+    AssetBlobData assetBlob = new AssetBlobData();
+    assetBlob.setBlobRef(blobRef);
+    assetBlob.setBlobSize(metrics.getContentSize());
+    assetBlob.setContentType(headers.get(CONTENT_TYPE_HEADER));
+
+    assetBlob.setChecksums(checksums.entrySet().stream().collect(
+        toImmutableMap(
+            e -> e.getKey().name(),
+            e -> e.getValue().toString())));
+
+    assetBlob.setBlobCreated(toOffsetDateTime(metrics.getCreationTime()));
+    assetBlob.setCreatedBy(headers.get(CREATED_BY_HEADER));
+    assetBlob.setCreatedByIp(headers.get(CREATED_BY_IP_HEADER));
+
+    facet.stores().assetBlobStore.createAssetBlob(assetBlob);
+
+    return assetBlob;
+  }
+
+  private BlobRef blobRef(final Blob blob) {
+    return new BlobRef(facet.nodeName(), facet.stores().blobStoreName, blob.getId().asUniqueString());
+  }
+
+  @Override
+  public FluentAsset attach(final TempBlob tempBlob) {
+    facet.checkAttachAllowed(assetData);
+    blob = makePermanent(tempBlob.getBlob());
+    checksums = tempBlob.getHashes();
+    updateAssetBlob(assetData);
+    return new FluentAssetImpl(facet, assetData);
+  }
+
+  @Override
+  public FluentAsset attach(final Blob blob, final Map<HashAlgorithm, HashCode> checksums) {
+    facet.checkAttachAllowed(assetData);
+    this.blob = blob;
+    this.checksums = checksums;
+    updateAssetBlob(assetData);
+    return new FluentAssetImpl(facet, assetData);
   }
 }

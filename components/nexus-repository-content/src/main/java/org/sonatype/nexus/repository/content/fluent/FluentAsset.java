@@ -13,10 +13,7 @@
 package org.sonatype.nexus.repository.content.fluent;
 
 import java.time.OffsetDateTime;
-import java.util.Map;
 
-import org.sonatype.nexus.blobstore.api.Blob;
-import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheInfo;
@@ -24,9 +21,6 @@ import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AttributeChangeSet;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
-import org.sonatype.nexus.repository.view.payloads.TempBlob;
-
-import com.google.common.hash.HashCode;
 
 /**
  * Fluent API for a particular asset.
@@ -34,7 +28,7 @@ import com.google.common.hash.HashCode;
  * @since 3.21
  */
 public interface FluentAsset
-    extends Asset, FluentAttributes<FluentAsset>
+    extends Asset, FluentAttributes<FluentAsset>, FluentAssetBlobAttach
 {
   /**
    * The repository containing this asset.
@@ -43,17 +37,7 @@ public interface FluentAsset
    */
   Repository repository();
 
-  /**
-   * Converts a temporary blob into a permanent blob and attaches it to this asset.
-   */
-  FluentAsset attach(TempBlob blob);
-
-  /**
-   * Attaches an existing blob to this asset.
-   */
-  FluentAsset attach(Blob blob, Map<HashAlgorithm, HashCode> checksums);
-
-  /**
+   /**
    * Downloads this asset.
    */
   Content download();

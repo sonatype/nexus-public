@@ -30,7 +30,7 @@ import static com.fasterxml.jackson.core.JsonGenerator.Feature.AUTO_CLOSE_TARGET
 import static com.fasterxml.jackson.databind.SerializationFeature.FLUSH_AFTER_WRITE_VALUE;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.nonNull;
-import static org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils.errorInputStream;
+import static org.sonatype.nexus.repository.content.npm.internal.NpmUtils.errorInputStream;
 
 /**
  * NPM Specific {@link StreamPayload} that implements its own {@link #copy(InputStream, OutputStream)} method

@@ -38,14 +38,16 @@ public interface PypiContentFacet
 
   boolean delete(final String path);
 
-  FluentAsset findOrCreateAsset(
+  FluentAsset saveAsset(
       final String packagePath,
       final FluentComponent component,
-      final String assetKind);
+      final String assetKind,
+      final TempBlob tempBlob);
 
-  FluentAsset findOrCreateAsset(
+  FluentAsset saveAsset(
       final String packagePath,
-      final String assetKind);
+      final String assetKind,
+      final TempBlob tempBlob);
 
   boolean isComponentExists(final String name);
 

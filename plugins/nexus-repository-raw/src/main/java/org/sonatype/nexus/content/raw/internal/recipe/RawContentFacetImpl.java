@@ -67,8 +67,8 @@ public class RawContentFacetImpl
               .name(path)
               .namespace(RawCoordinatesHelper.getGroup(path))
               .getOrCreate())
-          .getOrCreate()
-          .attach(blob)
+          .blob(blob)
+          .save()
           .markAsCached(content)
           .download();
     }

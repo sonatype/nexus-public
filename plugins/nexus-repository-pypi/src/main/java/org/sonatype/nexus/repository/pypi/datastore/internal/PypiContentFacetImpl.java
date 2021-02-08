@@ -23,12 +23,12 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.hash.HashAlgorithm;
-import org.sonatype.nexus.repository.pypi.datastore.PypiContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentQuery;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
+import org.sonatype.nexus.repository.pypi.datastore.PypiContentFacet;
 import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
@@ -77,34 +77,36 @@ public class PypiContentFacetImpl
   }
 
   @Override
-  public FluentAsset findOrCreateAsset(
+  public FluentAsset saveAsset(
       final String packagePath,
       final FluentComponent component,
-      final String assetKind)
+      final String assetKind,
+      final TempBlob tempBlob)
   {
     checkNotNull(packagePath);
     checkNotNull(component);
     checkNotNull(assetKind);
+    checkNotNull(tempBlob);
 
     return assets()
         .path(packagePath)
         .kind(assetKind)
         .component(component)
-        .getOrCreate();
+        .blob(tempBlob)
+        .save();
   }
 
   @Override
-  public FluentAsset findOrCreateAsset(
-      final String packagePath,
-      final String assetKind)
-  {
+  public FluentAsset saveAsset(final String packagePath, final String assetKind, final TempBlob tempBlob) {
     checkNotNull(packagePath);
     checkNotNull(assetKind);
+    checkNotNull(tempBlob);
 
     return assets()
         .path(packagePath)
         .kind(assetKind)
-        .getOrCreate();
+        .blob(tempBlob)
+        .save();
   }
 
   @Override

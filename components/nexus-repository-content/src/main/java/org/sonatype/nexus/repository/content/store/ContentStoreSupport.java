@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.content.store;
 
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
@@ -106,5 +107,15 @@ public abstract class ContentStoreSupport<T extends ContentDataAccess>
   @Transactional(retryOn = DuplicateKeyException.class)
   public <D> D getOrCreate(final Supplier<Optional<D>> find, final Supplier<D> create) {
     return find.get().orElseGet(create);
+  }
+
+  /**
+   * Helper to find content in this store before creating or updating it with the given suppliers.
+   *
+   * @since 3.next
+   */
+  @Transactional(retryOn = DuplicateKeyException.class)
+  public <D> D save(final Supplier<Optional<D>> find, final Supplier<D> create, final UnaryOperator<D> update) {
+    return find.get().map(update).orElseGet(create);
   }
 }

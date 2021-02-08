@@ -34,7 +34,6 @@ import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAttributes;
-import org.sonatype.nexus.repository.content.store.AssetBlobData;
 import org.sonatype.nexus.repository.content.store.AssetData;
 import org.sonatype.nexus.repository.content.store.WrappedContent;
 import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
@@ -48,13 +47,6 @@ import com.google.common.hash.HashCode;
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.ImmutableMap.toImmutableMap;
-import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
-import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
-import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
-import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_IP_HEADER;
-import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
-import static org.sonatype.nexus.common.time.DateHelper.toOffsetDateTime;
 import static org.sonatype.nexus.repository.cache.CacheInfo.CACHE;
 import static org.sonatype.nexus.repository.cache.CacheInfo.CACHE_TOKEN;
 import static org.sonatype.nexus.repository.cache.CacheInfo.INVALIDATED;
@@ -148,15 +140,13 @@ public class FluentAssetImpl
   }
 
   @Override
-  public FluentAsset attach(final TempBlob tempBlob) {
-    facet.checkAttachAllowed(asset);
-    return doAttach(makePermanent(tempBlob.getBlob()), tempBlob.getHashes());
+  public FluentAsset attach(final TempBlob blob) {
+    return new FluentAssetBuilderImpl(facet, facet.stores().assetStore, asset).attach(blob);
   }
 
   @Override
   public FluentAsset attach(final Blob blob, final Map<HashAlgorithm, HashCode> checksums) {
-    facet.checkAttachAllowed(asset);
-    return doAttach(blob, checksums);
+    return new FluentAssetBuilderImpl(facet, facet.stores().assetStore, asset).attach(blob, checksums);
   }
 
   @Override
@@ -254,61 +244,6 @@ public class FluentAssetImpl
   @Override
   public Asset unwrap() {
     return asset;
-  }
-
-  private AssetBlobData createAssetBlob(final BlobRef blobRef,
-                                        final Blob blob,
-                                        final Map<HashAlgorithm, HashCode> checksums)
-  {
-    BlobMetrics metrics = blob.getMetrics();
-    Map<String, String> headers = blob.getHeaders();
-
-    AssetBlobData assetBlob = new AssetBlobData();
-    assetBlob.setBlobRef(blobRef);
-    assetBlob.setBlobSize(metrics.getContentSize());
-    assetBlob.setContentType(headers.get(CONTENT_TYPE_HEADER));
-
-    assetBlob.setChecksums(checksums.entrySet().stream().collect(
-        toImmutableMap(
-            e -> e.getKey().name(),
-            e -> e.getValue().toString())));
-
-    assetBlob.setBlobCreated(toOffsetDateTime(metrics.getCreationTime()));
-    assetBlob.setCreatedBy(headers.get(CREATED_BY_HEADER));
-    assetBlob.setCreatedByIp(headers.get(CREATED_BY_IP_HEADER));
-
-    facet.stores().assetBlobStore.createAssetBlob(assetBlob);
-
-    return assetBlob;
-  }
-
-  private BlobRef blobRef(final Blob blob) {
-    return new BlobRef(facet.nodeName(), facet.stores().blobStoreName, blob.getId().asUniqueString());
-  }
-
-  private Blob makePermanent(final Blob tempBlob) {
-    ImmutableMap.Builder<String, String> headerBuilder = ImmutableMap.builder();
-
-    Map<String, String> tempHeaders = tempBlob.getHeaders();
-    headerBuilder.put(REPO_NAME_HEADER, tempHeaders.get(REPO_NAME_HEADER));
-    headerBuilder.put(BLOB_NAME_HEADER, asset.path());
-    headerBuilder.put(CREATED_BY_HEADER, tempHeaders.get(CREATED_BY_HEADER));
-    headerBuilder.put(CREATED_BY_IP_HEADER, tempHeaders.get(CREATED_BY_IP_HEADER));
-    headerBuilder.put(CONTENT_TYPE_HEADER, facet.checkContentType(asset, tempBlob));
-
-    return facet.stores().blobStore.copy(tempBlob.getId(), headerBuilder.build());
-  }
-
-  private FluentAsset doAttach(final Blob blob, final Map<HashAlgorithm, HashCode> checksums) {
-
-    BlobRef blobRef = blobRef(blob);
-    AssetBlob assetBlob = facet.stores().assetBlobStore.readAssetBlob(blobRef)
-        .orElseGet(() -> createAssetBlob(blobRef, blob, checksums));
-
-    ((AssetData) asset).setAssetBlob(assetBlob);
-    facet.stores().assetStore.updateAssetBlobLink(asset);
-
-    return this;
   }
 
   /**

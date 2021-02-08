@@ -95,8 +95,8 @@ public class HelmContentFacetImpl
         assets()
             .path(path)
             .kind(assetKind.name())
-            .getOrCreate()
-            .attach(blob)
+            .blob(blob)
+            .save()
             .markAsCached(content);
       return indexYamlRewriter.removeUrlsFromIndexYaml(blob, content.getAttributes());
     }
@@ -120,8 +120,8 @@ public class HelmContentFacetImpl
               .name(helmAttributes.getName())
               .version(helmAttributes.getVersion())
               .getOrCreate())
-          .getOrCreate()
-          .attach(blob)
+          .blob(blob)
+          .save()
           .markAsCached(content)
           .withAttribute(HelmFormat.NAME, helmAttributes)
           .download();
@@ -143,8 +143,8 @@ public class HelmContentFacetImpl
             .name(helmAttributes.getName())
             .version(helmAttributes.getVersion())
             .getOrCreate())
-        .getOrCreate()
-        .attach(tempBlob)
+        .blob(tempBlob)
+        .save()
         .markAsCached(content)
         .withAttribute(HelmFormat.NAME, helmAttributes)
         .download();
