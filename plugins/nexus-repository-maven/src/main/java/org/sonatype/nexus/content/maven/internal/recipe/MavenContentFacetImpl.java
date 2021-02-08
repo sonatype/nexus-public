@@ -224,7 +224,7 @@ public class MavenContentFacetImpl
       Optional<Model> model = maybeReadMavenModel(mavenPath, blob);
       component = createOrGetComponent(mavenPath, model);
     }
-    return createOrUpdateAsset(mavenPath, component, content, blob);
+    return saveAsset(mavenPath, component, content, blob);
   }
 
   private FluentComponent createOrGetComponent(final MavenPath mavenPath, final Optional<Model> model)
@@ -289,7 +289,7 @@ public class MavenContentFacetImpl
     return Optional.ofNullable(model);
   }
 
-  private Content createOrUpdateAsset(
+  private Content saveAsset(
       final MavenPath mavenPath,
       final Component component,
       final Payload content,
@@ -301,12 +301,13 @@ public class MavenContentFacetImpl
       assetBuilder = assetBuilder.component(component);
     }
 
-    FluentAsset asset = assetBuilder.getOrCreate();
+    FluentAsset asset = assetBuilder.blob(blob).save();
+
     if (isNewRepositoryContent(asset)) {
       setMavenAttributes(asset, mavenPath);
     }
 
-    return asset.attach(blob)
+    return asset
         .markAsCached(content)
         .download();
   }

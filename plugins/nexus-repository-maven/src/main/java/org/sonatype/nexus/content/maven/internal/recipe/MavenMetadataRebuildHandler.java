@@ -24,6 +24,7 @@ import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Response;
 
+import static org.apache.commons.lang3.StringUtils.prependIfMissing;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
 
@@ -36,6 +37,8 @@ public class MavenMetadataRebuildHandler
     extends ComponentSupport
     implements Handler
 {
+  private static final String PATH_PREFIX = "/";
+
   @Nonnull
   @Override
   public Response handle(@Nonnull final Context context) throws Exception
@@ -44,7 +47,7 @@ public class MavenMetadataRebuildHandler
     Repository repository = context.getRepository();
     if ((GET.equals(method) || HEAD.equals(method)) && isNotProxy(repository)) {
       repository.facet(MavenMetadataRebuildFacet.class)
-          .maybeRebuildMavenMetadata(context.getRequest().getPath(), false, true);
+          .maybeRebuildMavenMetadata(prependIfMissing(context.getRequest().getPath(), PATH_PREFIX), false, true);
     }
     return context.proceed();
   }

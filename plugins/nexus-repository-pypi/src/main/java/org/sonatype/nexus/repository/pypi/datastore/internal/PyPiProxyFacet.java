@@ -239,8 +239,7 @@ public class PyPiProxyFacet
       component.withAttribute(P_SUMMARY, summary);
     }
 
-    return content().findOrCreateAsset(path, component, assetKind.name())
-        .attach(tempBlob)
+    return content().saveAsset(path, component, assetKind.name(), tempBlob)
         .markAsCached(content)
         .withAttribute(PyPiFormat.NAME, attributes)
         .download();
@@ -281,9 +280,8 @@ public class PyPiProxyFacet
     try (ByteArrayInputStream stream = new ByteArrayInputStream(indexPage.getBytes(UTF_8))) {
       TempBlob tempBlob = content().getTempBlob(stream, content.getContentType());
       setLastModified(content);
-      return content().findOrCreateAsset(indexPathPrefix, rootIndex.name())
+      return content().saveAsset(indexPathPrefix, rootIndex.name(), tempBlob)
           .withAttribute(PyPiFormat.NAME, singletonMap(P_ASSET_KIND, rootIndex.name()))
-          .attach(tempBlob)
           .markAsCached(content)
           .download();
     }

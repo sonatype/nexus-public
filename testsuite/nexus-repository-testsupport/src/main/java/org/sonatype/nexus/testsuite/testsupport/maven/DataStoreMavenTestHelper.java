@@ -15,8 +15,8 @@ package org.sonatype.nexus.testsuite.testsupport.maven;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -56,6 +56,7 @@ import org.joda.time.DateTime;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyMap;
+import static org.apache.commons.lang3.StringUtils.prependIfMissing;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -68,7 +69,7 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 public class DataStoreMavenTestHelper
     extends MavenTestHelper
 {
-  private static final char ASSET_PATH_PREFIX = '/';
+  private static final String ASSET_PATH_PREFIX = "/";
 
   @Override
   public void write(final Repository repository, final String path, final Payload payload) throws IOException
@@ -84,7 +85,7 @@ public class DataStoreMavenTestHelper
     Optional<MavenMetadataRebuildFacet> metadataRebuildFacet =
         repository.optionalFacet(MavenMetadataRebuildFacet.class);
     if (metadataRebuildFacet.isPresent()) {
-      metadataRebuildFacet.get().maybeRebuildMavenMetadata(path, false, true);
+      metadataRebuildFacet.get().maybeRebuildMavenMetadata(prependIfMissing(path, ASSET_PATH_PREFIX), false, true);
     }
     MavenPath mavenPath = mavenFacet.getMavenPathParser().parsePath(path);
     return mavenFacet.get(mavenPath).orElse(null);
@@ -98,8 +99,8 @@ public class DataStoreMavenTestHelper
     try (TempBlob blob = mavenContentFacet.blobs().ingest(payload, ImmutableList.of(SHA1, MD5))) {
       mavenContentFacet.assets()
           .path(ASSET_PATH_PREFIX + mavenPath.getPath())
-          .getOrCreate()
-          .attach(blob);
+          .blob(blob)
+          .save();
     }
   }
 
@@ -228,7 +229,7 @@ public class DataStoreMavenTestHelper
             .name(path)
             .namespace(RawCoordinatesHelper.getGroup(path))
             .getOrCreate())
-        .getOrCreate();
+        .save();
     return InternalIds.toExternalId(InternalIds.internalComponentId(asset).getAsInt()).getValue();
   }
 

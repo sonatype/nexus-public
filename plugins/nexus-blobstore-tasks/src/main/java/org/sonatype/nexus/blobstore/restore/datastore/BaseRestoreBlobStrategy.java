@@ -28,6 +28,7 @@ import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.commons.lang3.StringUtils.prependIfMissing;
 
 /**
  * Provides the common logic for metadata restoration from a blob. Subclasses will implement the format-specific
@@ -39,6 +40,8 @@ public abstract class BaseRestoreBlobStrategy<T extends RestoreBlobData>
     extends ComponentSupport
     implements RestoreBlobStrategy
 {
+  private static final String ASSET_PATH_PREFIX = "/";
+
   private final DryRunPrefix dryRunPrefix;
 
   protected BaseRestoreBlobStrategy(final DryRunPrefix dryRunPrefix)
@@ -63,7 +66,7 @@ public abstract class BaseRestoreBlobStrategy<T extends RestoreBlobData>
       return;
     }
 
-    String assetPath = getAssetPath(restoreData);
+    String assetPath = prependIfMissing(getAssetPath(restoreData), ASSET_PATH_PREFIX);
 
     try {
       Optional<FluentAsset> asset =

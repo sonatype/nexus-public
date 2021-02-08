@@ -56,7 +56,7 @@ public class ExampleContentFacetImpl
   @Override
   public Content put(final String path, final Payload content) throws IOException {
     try (TempBlob blob = blobs().ingest(content, HASHING)) {
-      return assets().path(path).getOrCreate().attach(blob).markAsCached(content).download();
+      return assets().path(path).blob(blob).save().markAsCached(content).download();
     }
   }
 

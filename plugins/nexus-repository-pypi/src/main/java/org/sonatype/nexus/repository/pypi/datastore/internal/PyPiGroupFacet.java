@@ -264,8 +264,8 @@ public class PyPiGroupFacet
       return contentFacet.assets()
           .path(name)
           .kind(INDEX.name())
-          .getOrCreate()
-          .attach(tempBlob)
+          .blob(tempBlob)
+          .save()
           .markAsCached(content)
           .download();
     }
