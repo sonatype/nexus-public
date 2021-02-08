@@ -10,32 +10,23 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.coreui
-
-import groovy.transform.ToString
-import org.hibernate.validator.constraints.NotBlank
+package org.sonatype.nexus.repository.raw;
 
 /**
- * BlobStore Type exchange object.
- *
- * @since 3.6
+ * @since 3.25
  */
-@ToString(includePackage = false, includeNames = true)
-class BlobStoreTypeXO
+public enum ContentDisposition
 {
-  @NotBlank
-  String id
+  INLINE("inline"),
+  ATTACHMENT("attachment");
 
-  @NotBlank
-  String name
+  private final String value;
 
-  List<FormFieldXO> formFields
+  ContentDisposition(final String value) {
+    this.value = value;
+  }
 
-  String customFormName
-
-  boolean isModifiable
-
-  boolean isEnabled
-
-  boolean isConnectionTestable
+  public String getValue() {
+    return value;
+  }
 }

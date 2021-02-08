@@ -92,4 +92,13 @@ public interface BlobStoreDescriptor
   default boolean configHasDependencyOn(BlobStoreConfiguration config, String blobStoreName) {
     return false;
   }
+
+  /**
+   * @return true if the the blob store has a connection to be tested by the backend.
+   *
+   * @since 3.next
+   */
+  default boolean isConnectionTestable() {
+    return false;
+  }
 }

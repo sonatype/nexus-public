@@ -23,6 +23,7 @@ import org.sonatype.nexus.repository.content.browse.BrowseFacet
 import org.sonatype.nexus.repository.content.maintenance.SingleAssetMaintenanceFacet
 import org.sonatype.nexus.repository.content.search.SearchFacet
 import org.sonatype.nexus.repository.http.PartialFetchHandler
+import org.sonatype.nexus.repository.raw.ContentDispositionHandler
 import org.sonatype.nexus.repository.raw.internal.RawSecurityFacet
 import org.sonatype.nexus.repository.security.SecurityHandler
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
@@ -90,6 +91,9 @@ abstract class RawRecipeSupport
 
   @Inject
   HandlerContributor handlerContributor
+
+  @Inject
+  ContentDispositionHandler contentDispositionHandler
 
   protected RawRecipeSupport(final Type type, final Format format)
   {

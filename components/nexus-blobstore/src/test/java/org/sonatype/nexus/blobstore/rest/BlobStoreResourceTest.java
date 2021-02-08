@@ -12,7 +12,13 @@
  */
 package org.sonatype.nexus.blobstore.rest;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.ws.rs.WebApplicationException;
+
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.blobstore.ConnectionChecker;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaResult;
@@ -24,7 +30,9 @@ import org.mockito.Mock;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -36,6 +44,9 @@ public class BlobStoreResourceTest
 
   @Mock
   BlobStoreQuotaService quotaService;
+
+  @Mock
+  ConnectionChecker connectionChecker;
 
   @Mock
   BlobStore noQuota;
@@ -58,7 +69,10 @@ public class BlobStoreResourceTest
     when(manager.get(eq("noQuota"))).thenReturn(noQuota);
     when(manager.get(eq("failing"))).thenReturn(failing);
 
-    resource = new BlobStoreResource(manager, quotaService);
+    Map<String, ConnectionChecker> connectionCheckers = new HashMap<>();
+    connectionCheckers.put("azure cloud storage", connectionChecker);
+
+    resource = new BlobStoreResource(manager, quotaService, connectionCheckers);
   }
 
   @Test
@@ -80,5 +94,30 @@ public class BlobStoreResourceTest
     BlobStoreQuotaResultXO resultXO = resource.quotaStatus("noQuota");
     assertFalse(resultXO.getIsViolation());
     assertEquals(resultXO.getBlobStoreName(), "noQuota");
+  }
+
+  @Test
+  public void verifyConnectionTest() {
+    when(connectionChecker.verifyConnection(any(Map.class))).thenReturn(true);
+    resource.verifyConnection(getBlobStoreConnectionXO());
+  }
+
+  @Test(expected = WebApplicationException.class)
+  public void verifyConnectionTestFail() {
+    when(connectionChecker.verifyConnection(any(Map.class))).thenThrow(new RuntimeException("Fake unsuccessful connection Exception"));
+      resource.verifyConnection(getBlobStoreConnectionXO());
+  }
+
+  private BlobStoreConnectionXO getBlobStoreConnectionXO() {
+    Map<String, Object> connectionDetails = new HashMap<>();
+    connectionDetails.put("accountName", "some account name");
+    connectionDetails.put("accountKey", "some account key");
+    connectionDetails.put("containerName", "some container name");
+    Map<String, Map<String, Object>> attributes = new HashMap<>();
+    attributes.put("azure cloud storage", connectionDetails);
+    BlobStoreConnectionXO blobStoreConnectionXO = new BlobStoreConnectionXO();
+    blobStoreConnectionXO.setType("azure cloud storage");
+    blobStoreConnectionXO.setAttributes(attributes);
+    return blobStoreConnectionXO;
   }
 }

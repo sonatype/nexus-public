@@ -29,6 +29,7 @@ Ext.define('NX.coreui.model.BlobstoreType', {
     {name: 'formFields', type: 'auto' /*object*/},
     {name: 'customFormName', type: 'string', sortType: 'asUCText'},
     {name: 'isModifiable', type: 'boolean'},
-    {name: 'isEnabled', type: 'boolean'}
+    {name: 'isEnabled', type: 'boolean'},
+    {name: 'isConnectionTestable', type: 'boolean'}
   ]
 });

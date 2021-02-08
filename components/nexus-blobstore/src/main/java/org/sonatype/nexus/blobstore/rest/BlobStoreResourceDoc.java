@@ -14,9 +14,21 @@ package org.sonatype.nexus.blobstore.rest;
 
 import java.util.List;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.http.HttpStatus.SC_FORBIDDEN;
+import static org.apache.http.HttpStatus.SC_NO_CONTENT;
+import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
+import static org.sonatype.nexus.rest.ApiDocConstants.AUTHENTICATION_REQUIRED;
+import static org.sonatype.nexus.rest.ApiDocConstants.INSUFFICIENT_PERMISSIONS;
 
 /**
  * REST facade for {@link BlobStoreResource}
@@ -34,4 +46,13 @@ public interface BlobStoreResourceDoc
 
   @ApiOperation("Get quota status for a given blob store")
   BlobStoreQuotaResultXO quotaStatus(String id);
+
+  @ApiOperation(value = "Verify connection using supplied Blob Store settings", hidden = true)
+  @ApiResponses(value = {
+      @ApiResponse(code = SC_NO_CONTENT, message = "Blob Store connection was successful"),
+      @ApiResponse(code = SC_BAD_REQUEST, message = "Blob Store connection failed"),
+      @ApiResponse(code = SC_UNAUTHORIZED, message = AUTHENTICATION_REQUIRED),
+      @ApiResponse(code = SC_FORBIDDEN, message = INSUFFICIENT_PERMISSIONS)
+  })
+  void verifyConnection(final @NotNull @Valid BlobStoreConnectionXO blobStoreConnectionXO);
 }

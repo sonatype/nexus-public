@@ -10,23 +10,14 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.content.raw.internal.recipe;
+package org.sonatype.nexus.blobstore;
+
+import java.util.Map;
 
 /**
- * @since 3.25
+ * @since 3.next
  */
-public enum ContentDisposition
+public interface ConnectionChecker
 {
-  INLINE("inline"),
-  ATTACHMENT("attachment");
-
-  private final String value;
-
-  ContentDisposition(final String value) {
-    this.value = value;
-  }
-
-  public String getValue() {
-    return value;
-  }
+  boolean verifyConnection(Map<String, Map<String, Object>> blobStoreAttributes);
 }

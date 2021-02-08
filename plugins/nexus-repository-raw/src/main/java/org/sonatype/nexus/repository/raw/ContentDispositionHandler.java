@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.content.raw.internal.recipe;
+package org.sonatype.nexus.repository.raw;
 
 import javax.annotation.Nonnull;
 import javax.inject.Named;
@@ -32,6 +32,8 @@ import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 public class ContentDispositionHandler
     implements Handler
 {
+  public static final String CONTENT_DISPOSITION_CONFIG_KEY = "contentDisposition";
+
   @Nonnull
   @Override
   public Response handle(@Nonnull final Context context) throws Exception {
@@ -39,7 +41,7 @@ public class ContentDispositionHandler
     String action = context.getRequest().getAction();
     if (GET.equals(action)) {
       String contentDisposition = context.getRepository().getConfiguration().attributes("raw")
-          .get("contentDisposition", String.class, ContentDisposition.INLINE.name());
+          .get(CONTENT_DISPOSITION_CONFIG_KEY, String.class, ContentDisposition.INLINE.name());
       response.getHeaders().replace("Content-Disposition", ContentDisposition.valueOf(contentDisposition).getValue());
     }
     return response;

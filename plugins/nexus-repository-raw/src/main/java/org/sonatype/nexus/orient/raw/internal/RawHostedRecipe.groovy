@@ -19,7 +19,6 @@ import javax.inject.Named
 import javax.inject.Provider
 import javax.inject.Singleton
 
-import org.sonatype.nexus.content.raw.internal.recipe.ContentDispositionHandler
 import org.sonatype.nexus.content.raw.internal.recipe.RawIndexHtmlForwardHandler
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.RecipeSupport
@@ -29,6 +28,7 @@ import org.sonatype.nexus.repository.attributes.AttributesFacet
 import org.sonatype.nexus.repository.http.HttpHandlers
 import org.sonatype.nexus.repository.http.HttpMethods
 import org.sonatype.nexus.repository.http.PartialFetchHandler
+import org.sonatype.nexus.repository.raw.ContentDispositionHandler
 import org.sonatype.nexus.repository.raw.internal.RawFormat
 import org.sonatype.nexus.repository.raw.internal.RawSecurityFacet
 import org.sonatype.nexus.repository.search.SearchFacet

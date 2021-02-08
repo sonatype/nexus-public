@@ -599,6 +599,9 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Blobstore_BlobstoreSettingsForm_SoftQuota_HelpText: 'A soft quota provides warnings when a limit is violated.  It never causes an operation to be rejected',
     Blobstore_BlobstoreSettingsForm_QuotaType_FieldLabel: 'Type of Quota',
     Blobstore_BlobstoreSettingsForm_QuotaLimit_FieldLabel: 'Quota Limit in MB',
+    Blobstore_BlobstoreSettingsForm_Test_Connection_Button: 'Test Connection',
+    Blobstore_BlobstoreSettingsForm_Test_Error_Message: 'Connection failed, check the logs for more information',
+    Blobstore_BlobstoreSettingsForm_Test_Success_Message: 'Connection successful',
 
     // Admin -> Repository -> Selectors
     Selectors_Text: 'Content Selectors',
@@ -1314,9 +1317,9 @@ Ext.define('NX.coreui.app.PluginStrings', {
 
     // HTTP Request section
     System_HttpRequestSettings_UserAgentCustomization_FieldLabel: 'User-agent customization',
-    System_HttpRequestSettings_UserAgentCustomization_HelpText: 'Custom fragment to append to "User-Agent" header in HTTP requests.',
+    System_HttpRequestSettings_UserAgentCustomization_HelpText: 'Custom fragment to append to "User-Agent" header in HTTP requests',
     System_HttpRequestSettings_Timeout_FieldLabel: 'Connection/Socket timeout',
-    System_HttpRequestSettings_Timeout_HelpText: 'Seconds to wait for activity before stopping and retrying the connection.',
+    System_HttpRequestSettings_Timeout_HelpText: 'Seconds to wait for activity before stopping and retrying the connection',
     System_HttpRequestSettings_Attempts_FieldLabel: 'Connection/Socket retry attempts',
     System_HttpRequestSettings_Attempts_HelpText: 'Total retries if the initial connection attempt suffers a timeout',
 

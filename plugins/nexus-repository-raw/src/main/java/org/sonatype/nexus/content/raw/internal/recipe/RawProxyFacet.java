@@ -16,6 +16,7 @@ import java.io.IOException;
 
 import javax.inject.Named;
 
+import org.sonatype.nexus.common.encoding.EncodingUtil;
 import org.sonatype.nexus.content.raw.RawContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentProxyFacetSupport;
 import org.sonatype.nexus.repository.view.Content;
@@ -43,7 +44,7 @@ public class RawProxyFacet
 
   @Override
   protected String getUrl(final Context context) {
-    return removeSlashPrefix(assetPath(context));
+    return EncodingUtil.urlEncode(removeSlashPrefix(assetPath(context)));
   }
 
   private RawContentFacet content() {

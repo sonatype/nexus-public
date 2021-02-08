@@ -12,11 +12,14 @@
  */
 package org.sonatype.nexus.blobstore.rest;
 
+import java.util.Map;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.Path;
 
+import org.sonatype.nexus.blobstore.ConnectionChecker;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 
@@ -37,9 +40,10 @@ public class BlobStoreResourceV1
   static final String RESOURCE_URI = V1_API_PREFIX + "/blobstores";
 
   @Inject
-  public BlobStoreResourceV1(final BlobStoreManager blobStoreManager,
-                             final BlobStoreQuotaService quotaService)
+  public BlobStoreResourceV1(
+      final BlobStoreManager blobStoreManager,
+      final BlobStoreQuotaService quotaService, final Map<String, ConnectionChecker> connectionCheckers)
   {
-    super(blobStoreManager, quotaService);
+    super(blobStoreManager, quotaService, connectionCheckers);
   }
 }

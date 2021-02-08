@@ -118,6 +118,7 @@ class RawProxyRecipe
     builder.route(new Route.Builder()
         .matcher(new TokenMatcher('{' + PATH_NAME + ':/.+}'))
         .handler(timingHandler)
+        .handler(contentDispositionHandler)
         .handler(securityHandler)
         .handler(routingRuleHandler)
         .handler(exceptionHandler)

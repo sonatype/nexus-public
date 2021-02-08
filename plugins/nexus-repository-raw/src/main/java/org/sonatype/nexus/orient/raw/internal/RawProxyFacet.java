@@ -17,9 +17,10 @@ import java.io.IOException;
 import javax.annotation.Nonnull;
 import javax.inject.Named;
 
+import org.sonatype.nexus.common.encoding.EncodingUtil;
+import org.sonatype.nexus.orient.raw.RawContentFacet;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
-import org.sonatype.nexus.orient.raw.RawContentFacet;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
@@ -50,7 +51,7 @@ public class RawProxyFacet
 
   @Override
   protected String getUrl(@Nonnull final Context context) {
-    return componentPath(context);
+    return EncodingUtil.urlEncode(componentPath(context));
   }
 
   /**

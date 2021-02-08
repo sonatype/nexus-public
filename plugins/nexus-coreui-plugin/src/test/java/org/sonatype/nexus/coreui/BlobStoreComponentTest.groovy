@@ -62,7 +62,7 @@ class BlobStoreComponentTest
       def types = blobStoreComponent.readTypes()
 
     then: 'The descriptor information is returned'
-      types.collect{[it.id, it.name, it.formFields]} == [['MyType', 'MyType', []]]
+      types.collect{[it.id, it.name, it.formFields]} == [['MyType', 'MyType', []], ['', '', null]]
   }
 
   def 'Create blobstore creates and returns new blobstore'() {
