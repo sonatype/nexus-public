@@ -48,7 +48,7 @@ public class H2BackupTaskDescriptor
             MANDATORY
         ).withStoreApi("coreui_Datastore.readH2").withIdMapping("name").withNameMapping("name"),
         new StringTextFormField(LOCATION, "Location",
-            "The full path for the database backup zip. May use {datetime} to have the present time included",
+            "The full path including filename for the database backup zip. May use {datetime} to have the present time included.",
             MANDATORY));
   }
 }
