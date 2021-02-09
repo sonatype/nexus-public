@@ -19,6 +19,7 @@ import AnonymousSettings from './components/pages/admin/AnonymousSettings/Anonym
 import BlobStores from './components/pages/admin/BlobStores/BlobStores';
 import LoggingConfiguration from './components/pages/admin/LoggingConfiguration/LoggingConfiguration';
 import LogViewer from "./components/pages/admin/LogViewer/LogViewer";
+import Repositories from './components/pages/admin/Repositories/Repositories';
 import RoutingRules from "./components/pages/admin/RoutingRules/RoutingRules";
 import SystemInformation from './components/pages/admin/SystemInformation/SystemInformation';
 import SupportRequest from './components/pages/admin/SupportRequest/SupportRequest';
@@ -49,6 +50,17 @@ window.plugins.push({
       visibility: {
         featureFlags: [{key: 'nexus.react.blobstores', defaultValue: false}],
         permissions: ['nexus:blobstores:read']
+      }
+    },
+    {
+      mode: 'admin',
+      path: '/Repository/Repositories-new',
+      ...UIStrings.REPOSITORIES.MENU,
+      view: Repositories,
+      iconCls: 'x-fa fa-database',
+      visibility: {
+        featureFlags: [{key: 'nexus.react.repositories', defaultValue: false}],
+        permissions: ['nexus:repository-admin:*:*:read']
       }
     },
     {

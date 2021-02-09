@@ -182,6 +182,38 @@ For more information, <a href="http://links.sonatype.com/products/nxrm3/docs/con
     MARK_PLACEHOLDER: 'Marker to insert into log'
   },
 
+  REPOSITORIES: {
+    MENU: {
+      text: 'Repositories',
+      description: 'Configure repositories'
+    },
+
+    LIST: {
+      CREATE_BUTTON: 'Create repository',
+      COLUMNS: {
+        NAME: 'Name',
+        TYPE: 'Type',
+        FORMAT: 'Format',
+        STATUS: 'Status',
+        URL: 'URL',
+        HEALTH_CHECK: 'Health check',
+        IQ: 'IQ Policy Violations'
+      },
+      FILTER_PLACEHOLDER: 'Filter by name',
+      EMPTY_LIST: 'There are no repositories available',
+      HELP: {
+        TITLE: 'What is a repository?',
+        TEXT: `\
+A repository is a storage location where components, such as packages, libraries, binaries, and containers, \
+are retrieved so they can be installed or used. Creating and managing repositories is an essential part of \
+your Nexus Repository Manager configuration since it allows you to expose content to your end users as well \
+as provide a location for them to store more content. For more information, check \
+<a href="http://links.sonatype.com/products/nxrm3/docs/repository" target="_blank" rel="noopener noreferrer">\
+the documentation</a>.`
+      },
+    }
+  },
+
   ROUTING_RULES: {
     MENU: {
       text: 'Routing Rules',

@@ -27,9 +27,13 @@ import javax.ws.rs.QueryParam;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Format;
+import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
+import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositorySelector;
+import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.rest.Resource;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -62,15 +66,19 @@ public class RepositoryInternalResource
 
   private final RepositoryPermissionChecker repositoryPermissionChecker;
 
+  private final ProxyType proxyType;
+
   @Inject
   public RepositoryInternalResource(
       final List<Format> formats,
       final RepositoryManager repositoryManager,
-      final RepositoryPermissionChecker repositoryPermissionChecker)
+      final RepositoryPermissionChecker repositoryPermissionChecker,
+      final ProxyType proxyType)
   {
     this.formats = checkNotNull(formats);
     this.repositoryManager = checkNotNull(repositoryManager);
     this.repositoryPermissionChecker = checkNotNull(repositoryPermissionChecker);
+    this.proxyType = checkNotNull(proxyType);
   }
 
   @GET
@@ -100,5 +108,33 @@ public class RepositoryInternalResource
     result.addAll(repositories);
 
     return result;
+  }
+
+  @GET
+  @Path("/details")
+  public List<RepositoryDetailXO> getRepositoryDetails()
+  {
+    return stream(repositoryManager.browse())
+        .filter(repositoryPermissionChecker::userCanBrowseRepository)
+        .map(this::asRepositoryDetail)
+        .collect(toList());
+  }
+
+  private RepositoryDetailXO asRepositoryDetail(final Repository repository) {
+    boolean online = repository.getConfiguration().isOnline();
+    String description = null;
+    String reason = null;
+    if (proxyType.equals(repository.getType())) {
+      HttpClientFacet httpClientFacet = repository.facet(HttpClientFacet.class);
+      RemoteConnectionStatus remoteConnectionStatus = httpClientFacet.getStatus();
+      description = remoteConnectionStatus.getDescription();
+      reason = remoteConnectionStatus.getReason();
+    }
+    return new RepositoryDetailXO(
+      repository.getName(),
+      repository.getType().toString(),
+      repository.getFormat().toString(),
+      repository.getUrl(),
+      new RepositoryStatusXO(online, description, reason));
   }
 }
