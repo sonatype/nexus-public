@@ -24,6 +24,7 @@ import org.sonatype.nexus.repository.content.maintenance.SingleAssetMaintenanceF
 import org.sonatype.nexus.repository.content.search.SearchFacet
 import org.sonatype.nexus.repository.http.PartialFetchHandler
 import org.sonatype.nexus.repository.raw.ContentDispositionHandler
+import org.sonatype.nexus.repository.raw.internal.RawIndexHtmlForwardHandler
 import org.sonatype.nexus.repository.raw.internal.RawSecurityFacet
 import org.sonatype.nexus.repository.security.SecurityHandler
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet

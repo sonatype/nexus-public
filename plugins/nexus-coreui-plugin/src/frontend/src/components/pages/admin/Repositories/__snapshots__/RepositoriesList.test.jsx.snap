@@ -1,0 +1,849 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`RepositoriesList matches a snapshot 1`] = `
+<div>
+  <main
+    class="nx-page-main nxrm-repositories"
+  >
+    <div
+      class="nxrm-page-header"
+    >
+      <div
+        class="nx-page-title"
+      >
+        <h1
+          class="nx-h1 nx-feature-name"
+        >
+          <svg
+            aria-hidden="true"
+            class="svg-inline--fa fa-database fa-w-14 nx-page-title__page-icon nx-icon"
+            data-icon="database"
+            data-prefix="fas"
+            focusable="false"
+            role="img"
+            viewBox="0 0 448 512"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M448 73.143v45.714C448 159.143 347.667 192 224 192S0 159.143 0 118.857V73.143C0 32.857 100.333 0 224 0s224 32.857 224 73.143zM448 176v102.857C448 319.143 347.667 352 224 352S0 319.143 0 278.857V176c48.125 33.143 136.208 48.572 224 48.572S399.874 209.143 448 176zm0 160v102.857C448 479.143 347.667 512 224 512S0 479.143 0 438.857V336c48.125 33.143 136.208 48.572 224 48.572S399.874 369.143 448 336z"
+              fill="currentColor"
+            />
+          </svg>
+          <span>
+            Repositories
+          </span>
+        </h1>
+        <p
+          class="nx-page-title__description nx-feature-description"
+        >
+          Configure repositories
+        </p>
+      </div>
+      <div
+        class="nxrm-page-actions"
+      >
+        <button
+          class="nx-btn nx-btn--primary"
+        >
+          Create repository
+        </button>
+      </div>
+    </div>
+    <div
+      class="nxrm-content-body nxrm-repositories-list"
+    >
+      <div
+        class="nxrm-section nx-tile"
+      >
+        <div
+          class="nxrm-section-toolbar"
+        >
+          <div
+            class="nxrm-spacer"
+          />
+          <div
+            class="nx-filter-input"
+          >
+            <div
+              class="nx-text-input__box"
+            >
+              <svg
+                aria-hidden="true"
+                class="svg-inline--fa fa-filter fa-w-16 nx-icon--filter-icons nx-icon"
+                data-icon="filter"
+                data-prefix="fas"
+                focusable="false"
+                role="img"
+                viewBox="0 0 512 512"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M487.976 0H24.028C2.71 0-8.047 25.866 7.058 40.971L192 225.941V432c0 7.831 3.821 15.17 10.237 19.662l80 55.98C298.02 518.69 320 507.493 320 487.98V225.941l184.947-184.97C520.021 25.896 509.338 0 487.976 0z"
+                  fill="currentColor"
+                />
+              </svg>
+              <input
+                autocomplete="off"
+                class="nx-text-input__input nx-filter-text-input"
+                id="filter"
+                placeholder="Filter by name"
+                type="text"
+                value=""
+              />
+            </div>
+          </div>
+        </div>
+        <table
+          class="nx-table"
+        >
+          <thead>
+            <tr
+              class="nx-table-row nx-table-row--header"
+            >
+              <th
+                class="nx-cell nx-cell--header nx-cell--sortable"
+              >
+                <span>
+                  Name
+                </span>
+                <span
+                  class="nx-cell__sort-icons fa-layers"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="svg-inline--fa fa-sort-down fa-w-10 nx-icon"
+                    data-icon="sort-down"
+                    data-prefix="fas"
+                    focusable="false"
+                    role="img"
+                    viewBox="0 0 320 512"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                  <svg
+                    aria-hidden="true"
+                    class="svg-inline--fa fa-sort-up fa-w-10 nx-icon"
+                    data-icon="sort-up"
+                    data-prefix="fas"
+                    focusable="false"
+                    role="img"
+                    viewBox="0 0 320 512"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </span>
+              </th>
+              <th
+                class="nx-cell nx-cell--header nx-cell--sortable"
+              >
+                <span>
+                  Type
+                </span>
+                <span
+                  class="nx-cell__sort-icons fa-layers"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="svg-inline--fa fa-sort fa-w-10 nx-icon"
+                    data-icon="sort"
+                    data-prefix="fas"
+                    focusable="false"
+                    role="img"
+                    viewBox="0 0 320 512"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </span>
+              </th>
+              <th
+                class="nx-cell nx-cell--header nx-cell--sortable"
+              >
+                <span>
+                  Format
+                </span>
+                <span
+                  class="nx-cell__sort-icons fa-layers"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="svg-inline--fa fa-sort fa-w-10 nx-icon"
+                    data-icon="sort"
+                    data-prefix="fas"
+                    focusable="false"
+                    role="img"
+                    viewBox="0 0 320 512"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </span>
+              </th>
+              <th
+                class="nx-cell nx-cell--header nx-cell--sortable"
+              >
+                <span>
+                  Status
+                </span>
+                <span
+                  class="nx-cell__sort-icons fa-layers"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="svg-inline--fa fa-sort fa-w-10 nx-icon"
+                    data-icon="sort"
+                    data-prefix="fas"
+                    focusable="false"
+                    role="img"
+                    viewBox="0 0 320 512"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </span>
+              </th>
+              <th
+                class="nx-cell nx-cell--header"
+              >
+                <span>
+                  URL
+                </span>
+              </th>
+              <th
+                class="nx-cell nx-cell--header nx-cell--icon"
+              />
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              class="nx-table-row nx-clickable"
+            >
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  maven-central
+                </span>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  proxy
+                </span>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  maven2
+                </span>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <div>
+                  <span>
+                    Online
+                  </span>
+                  <span>
+                     - 
+                    Ready to Connect
+                  </span>
+                </div>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  <button
+                    class="nx-btn nx-btn--icon-only"
+                    title="Copy URL to Clipboard"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-copy fa-w-14 nx-icon"
+                      data-icon="copy"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 448 512"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M320 448v40c0 13.255-10.745 24-24 24H24c-13.255 0-24-10.745-24-24V120c0-13.255 10.745-24 24-24h72v296c0 30.879 25.121 56 56 56h168zm0-344V0H152c-13.255 0-24 10.745-24 24v368c0 13.255 10.745 24 24 24h272c13.255 0 24-10.745 24-24V128H344c-13.2 0-24-10.8-24-24zm120.971-31.029L375.029 7.029A24 24 0 0 0 358.059 0H352v96h96v-6.059a24 24 0 0 0-7.029-16.97z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </button>
+                  http://localhost:8081/repository/maven-central/
+                </span>
+              </td>
+              <td
+                class="nx-cell nx-cell--icon"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="svg-inline--fa fa-chevron-right fa-w-10 nx-icon"
+                  data-icon="chevron-right"
+                  data-prefix="fas"
+                  focusable="false"
+                  role="img"
+                  viewBox="0 0 320 512"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </td>
+            </tr>
+            <tr
+              class="nx-table-row nx-clickable"
+            >
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  maven-public
+                </span>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  group
+                </span>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  maven2
+                </span>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <div>
+                  <span>
+                    Online
+                  </span>
+                </div>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  <button
+                    class="nx-btn nx-btn--icon-only"
+                    title="Copy URL to Clipboard"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-copy fa-w-14 nx-icon"
+                      data-icon="copy"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 448 512"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M320 448v40c0 13.255-10.745 24-24 24H24c-13.255 0-24-10.745-24-24V120c0-13.255 10.745-24 24-24h72v296c0 30.879 25.121 56 56 56h168zm0-344V0H152c-13.255 0-24 10.745-24 24v368c0 13.255 10.745 24 24 24h272c13.255 0 24-10.745 24-24V128H344c-13.2 0-24-10.8-24-24zm120.971-31.029L375.029 7.029A24 24 0 0 0 358.059 0H352v96h96v-6.059a24 24 0 0 0-7.029-16.97z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </button>
+                  http://localhost:8081/repository/maven-public/
+                </span>
+              </td>
+              <td
+                class="nx-cell nx-cell--icon"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="svg-inline--fa fa-chevron-right fa-w-10 nx-icon"
+                  data-icon="chevron-right"
+                  data-prefix="fas"
+                  focusable="false"
+                  role="img"
+                  viewBox="0 0 320 512"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </td>
+            </tr>
+            <tr
+              class="nx-table-row nx-clickable"
+            >
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  maven-releases
+                </span>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  hosted
+                </span>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  maven2
+                </span>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <div>
+                  <span>
+                    Online
+                  </span>
+                </div>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  <button
+                    class="nx-btn nx-btn--icon-only"
+                    title="Copy URL to Clipboard"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-copy fa-w-14 nx-icon"
+                      data-icon="copy"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 448 512"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M320 448v40c0 13.255-10.745 24-24 24H24c-13.255 0-24-10.745-24-24V120c0-13.255 10.745-24 24-24h72v296c0 30.879 25.121 56 56 56h168zm0-344V0H152c-13.255 0-24 10.745-24 24v368c0 13.255 10.745 24 24 24h272c13.255 0 24-10.745 24-24V128H344c-13.2 0-24-10.8-24-24zm120.971-31.029L375.029 7.029A24 24 0 0 0 358.059 0H352v96h96v-6.059a24 24 0 0 0-7.029-16.97z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </button>
+                  http://localhost:8081/repository/maven-releases/
+                </span>
+              </td>
+              <td
+                class="nx-cell nx-cell--icon"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="svg-inline--fa fa-chevron-right fa-w-10 nx-icon"
+                  data-icon="chevron-right"
+                  data-prefix="fas"
+                  focusable="false"
+                  role="img"
+                  viewBox="0 0 320 512"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </td>
+            </tr>
+            <tr
+              class="nx-table-row nx-clickable"
+            >
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  maven-snapshots
+                </span>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  hosted
+                </span>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  maven2
+                </span>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <div>
+                  <span>
+                    Offline
+                  </span>
+                </div>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  <button
+                    class="nx-btn nx-btn--icon-only"
+                    title="Copy URL to Clipboard"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-copy fa-w-14 nx-icon"
+                      data-icon="copy"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 448 512"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M320 448v40c0 13.255-10.745 24-24 24H24c-13.255 0-24-10.745-24-24V120c0-13.255 10.745-24 24-24h72v296c0 30.879 25.121 56 56 56h168zm0-344V0H152c-13.255 0-24 10.745-24 24v368c0 13.255 10.745 24 24 24h272c13.255 0 24-10.745 24-24V128H344c-13.2 0-24-10.8-24-24zm120.971-31.029L375.029 7.029A24 24 0 0 0 358.059 0H352v96h96v-6.059a24 24 0 0 0-7.029-16.97z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </button>
+                  http://localhost:8081/repository/maven-snapshots/
+                </span>
+              </td>
+              <td
+                class="nx-cell nx-cell--icon"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="svg-inline--fa fa-chevron-right fa-w-10 nx-icon"
+                  data-icon="chevron-right"
+                  data-prefix="fas"
+                  focusable="false"
+                  role="img"
+                  viewBox="0 0 320 512"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </td>
+            </tr>
+            <tr
+              class="nx-table-row nx-clickable"
+            >
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  nuget-group
+                </span>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  group
+                </span>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  nuget
+                </span>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <div>
+                  <span>
+                    Online
+                  </span>
+                </div>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  <button
+                    class="nx-btn nx-btn--icon-only"
+                    title="Copy URL to Clipboard"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-copy fa-w-14 nx-icon"
+                      data-icon="copy"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 448 512"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M320 448v40c0 13.255-10.745 24-24 24H24c-13.255 0-24-10.745-24-24V120c0-13.255 10.745-24 24-24h72v296c0 30.879 25.121 56 56 56h168zm0-344V0H152c-13.255 0-24 10.745-24 24v368c0 13.255 10.745 24 24 24h272c13.255 0 24-10.745 24-24V128H344c-13.2 0-24-10.8-24-24zm120.971-31.029L375.029 7.029A24 24 0 0 0 358.059 0H352v96h96v-6.059a24 24 0 0 0-7.029-16.97z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </button>
+                  http://localhost:8081/repository/nuget-group/
+                </span>
+              </td>
+              <td
+                class="nx-cell nx-cell--icon"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="svg-inline--fa fa-chevron-right fa-w-10 nx-icon"
+                  data-icon="chevron-right"
+                  data-prefix="fas"
+                  focusable="false"
+                  role="img"
+                  viewBox="0 0 320 512"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </td>
+            </tr>
+            <tr
+              class="nx-table-row nx-clickable"
+            >
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  nuget-hosted
+                </span>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  hosted
+                </span>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  nuget
+                </span>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <div>
+                  <span>
+                    Online
+                  </span>
+                </div>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  <button
+                    class="nx-btn nx-btn--icon-only"
+                    title="Copy URL to Clipboard"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-copy fa-w-14 nx-icon"
+                      data-icon="copy"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 448 512"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M320 448v40c0 13.255-10.745 24-24 24H24c-13.255 0-24-10.745-24-24V120c0-13.255 10.745-24 24-24h72v296c0 30.879 25.121 56 56 56h168zm0-344V0H152c-13.255 0-24 10.745-24 24v368c0 13.255 10.745 24 24 24h272c13.255 0 24-10.745 24-24V128H344c-13.2 0-24-10.8-24-24zm120.971-31.029L375.029 7.029A24 24 0 0 0 358.059 0H352v96h96v-6.059a24 24 0 0 0-7.029-16.97z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </button>
+                  http://localhost:8081/repository/nuget-hosted/
+                </span>
+              </td>
+              <td
+                class="nx-cell nx-cell--icon"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="svg-inline--fa fa-chevron-right fa-w-10 nx-icon"
+                  data-icon="chevron-right"
+                  data-prefix="fas"
+                  focusable="false"
+                  role="img"
+                  viewBox="0 0 320 512"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </td>
+            </tr>
+            <tr
+              class="nx-table-row nx-clickable"
+            >
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  nuget.org-proxy
+                </span>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  proxy
+                </span>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  nuget
+                </span>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <div>
+                  <span>
+                    Online
+                  </span>
+                  <span>
+                     - 
+                    Remote Auto Blocked and Unavailable
+                  </span>
+                  <div>
+                    <i>
+                      java.net.UnknownHostException: api.example.org: nodename nor servname provided, or not known
+                    </i>
+                  </div>
+                </div>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  <button
+                    class="nx-btn nx-btn--icon-only"
+                    title="Copy URL to Clipboard"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-copy fa-w-14 nx-icon"
+                      data-icon="copy"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 448 512"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M320 448v40c0 13.255-10.745 24-24 24H24c-13.255 0-24-10.745-24-24V120c0-13.255 10.745-24 24-24h72v296c0 30.879 25.121 56 56 56h168zm0-344V0H152c-13.255 0-24 10.745-24 24v368c0 13.255 10.745 24 24 24h272c13.255 0 24-10.745 24-24V128H344c-13.2 0-24-10.8-24-24zm120.971-31.029L375.029 7.029A24 24 0 0 0 358.059 0H352v96h96v-6.059a24 24 0 0 0-7.029-16.97z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </button>
+                  http://localhost:8081/repository/nuget.org-proxy/
+                </span>
+              </td>
+              <td
+                class="nx-cell nx-cell--icon"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="svg-inline--fa fa-chevron-right fa-w-10 nx-icon"
+                  data-icon="chevron-right"
+                  data-prefix="fas"
+                  focusable="false"
+                  role="img"
+                  viewBox="0 0 320 512"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div
+        class="nxrm-help-tile nx-tile"
+      >
+        <h3>
+          <svg
+            aria-hidden="true"
+            class="svg-inline--fa fa-info-circle fa-w-16 nx-icon"
+            data-icon="info-circle"
+            data-prefix="fas"
+            focusable="false"
+            role="img"
+            viewBox="0 0 512 512"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 110c23.196 0 42 18.804 42 42s-18.804 42-42 42-42-18.804-42-42 18.804-42 42-42zm56 254c0 6.627-5.373 12-12 12h-88c-6.627 0-12-5.373-12-12v-24c0-6.627 5.373-12 12-12h12v-64h-12c-6.627 0-12-5.373-12-12v-24c0-6.627 5.373-12 12-12h64c6.627 0 12 5.373 12 12v100h12c6.627 0 12 5.373 12 12v24z"
+              fill="currentColor"
+            />
+          </svg>
+          <span>
+            What is a repository?
+          </span>
+        </h3>
+        <p>
+          A repository is a storage location where components, such as packages, libraries, binaries, and containers, are retrieved so they can be installed or used. Creating and managing repositories is an essential part of your Nexus Repository Manager configuration since it allows you to expose content to your end users as well as provide a location for them to store more content. For more information, check 
+          <a
+            href="http://links.sonatype.com/products/nxrm3/docs/repository"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            the documentation
+          </a>
+          .
+        </p>
+      </div>
+    </div>
+  </main>
+</div>
+`;
