@@ -167,7 +167,10 @@ Ext.define('NX.coreui.controller.Repositories', {
         'nx-coreui-repository-selectrecipe': {
           cellclick: me.showAddRepositoryPanel
         },
-        'nx-coreui-repository-feature #remoteUrl' : {
+        'nx-coreui-repository-feature #remoteUrl': {
+          change: me.disablePreEmptiveAuthCheckboxIfNotHttps
+        },
+        'nx-coreui-repository-feature checkbox[name=authEnabled]': {
           change: me.disablePreEmptiveAuthCheckboxIfNotHttps
         },
         'nx-coreui-repository-feature #attributes_httpclient_authentication_preemptive': {
@@ -182,8 +185,11 @@ Ext.define('NX.coreui.controller.Repositories', {
   disablePreEmptiveAuthCheckboxIfNotHttps: function(el) {
     var form = el.up('form'),
         remoteUrl = form.down('#remoteUrl').getValue(),
+        authenticationCheckbox = form.down('checkbox[name=authEnabled]'),
         preemptiveCheckbox = form.down('checkbox#attributes_httpclient_authentication_preemptive');
-    if (preemptiveCheckbox) {
+
+    if (preemptiveCheckbox && preemptiveCheckbox.isVisible()
+        && authenticationCheckbox && authenticationCheckbox.getValue()) {
       preemptiveCheckbox.setDisabled(!remoteUrl.startsWith('https://'));
     }
   },
