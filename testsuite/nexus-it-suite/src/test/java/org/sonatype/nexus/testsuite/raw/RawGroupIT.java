@@ -13,13 +13,13 @@
 package org.sonatype.nexus.testsuite.raw;
 
 import java.io.File;
+import java.nio.file.Files;
 
 import org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup;
 import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.testsuite.testsupport.raw.RawClient;
 import org.sonatype.nexus.testsuite.testsupport.raw.RawITSupport;
 
-import com.google.common.io.Files;
 import org.apache.http.HttpResponse;
 import org.apache.http.entity.ContentType;
 import org.junit.Before;
@@ -75,7 +75,7 @@ public class RawGroupIT
     File testFile = resolveTestFile(TEST_CONTENT);
     hosted1.put(TEST_PATH, ContentType.TEXT_PLAIN, testFile);
 
-    assertThat(bytes(groupClient.get(TEST_PATH)), is(Files.toByteArray(testFile)));
+    assertThat(bytes(groupClient.get(TEST_PATH)), is(Files.readAllBytes(testFile.toPath())));
   }
 
   /**
@@ -87,7 +87,7 @@ public class RawGroupIT
     hosted1.put(TEST_PATH, ContentType.TEXT_PLAIN, testFile);
     hosted2.put(TEST_PATH, ContentType.TEXT_PLAIN, resolveTestFile(TEST_CONTENT2));
 
-    assertThat(bytes(groupClient.get(TEST_PATH)), is(Files.toByteArray(testFile)));
+    assertThat(bytes(groupClient.get(TEST_PATH)), is(Files.readAllBytes(testFile.toPath())));
   }
 
   /**
@@ -100,6 +100,6 @@ public class RawGroupIT
     // Only the second repository has any content
     hosted2.put(TEST_PATH, ContentType.TEXT_PLAIN, resolveTestFile(TEST_CONTENT));
 
-    assertThat(bytes(groupClient.get(TEST_PATH)), is(Files.toByteArray(testFile)));
+    assertThat(bytes(groupClient.get(TEST_PATH)), is(Files.readAllBytes(testFile.toPath())));
   }
 }

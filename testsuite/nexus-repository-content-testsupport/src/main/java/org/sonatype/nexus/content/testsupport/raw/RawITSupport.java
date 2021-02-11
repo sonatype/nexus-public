@@ -14,6 +14,7 @@ package org.sonatype.nexus.content.testsupport.raw;
 
 import java.io.File;
 import java.net.URL;
+import java.nio.file.Files;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -25,7 +26,6 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 
-import com.google.common.io.Files;
 import org.apache.http.entity.ContentType;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -72,12 +72,12 @@ public class RawITSupport
     );
   }
 
-  protected void uploadAndDownload(RawClient rawClient, String file) throws Exception {
+  protected void uploadAndDownload(final RawClient rawClient, final String file) throws Exception {
     final File testFile = resolveTestFile(file);
     final int response = rawClient.put(file, ContentType.TEXT_PLAIN, testFile);
     MatcherAssert.assertThat(response, Matchers.is(HttpStatus.CREATED));
 
-    MatcherAssert.assertThat(FormatClientSupport.bytes(rawClient.get(file)), is(Files.toByteArray(testFile)));
+    MatcherAssert.assertThat(FormatClientSupport.bytes(rawClient.get(file)), is(Files.readAllBytes(testFile.toPath())));
 
     MatcherAssert.assertThat(FormatClientSupport.status(rawClient.delete(file)), Matchers.is(HttpStatus.NO_CONTENT));
 
