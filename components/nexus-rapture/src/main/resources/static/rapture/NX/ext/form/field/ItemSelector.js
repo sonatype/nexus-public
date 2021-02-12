@@ -168,16 +168,18 @@ Ext.define('NX.ext.form.field.ItemSelector', {
    * @override
    */
   setValue: function(value) {
-    if (this.valueAsString) {
-      if (Array.isArray(value)) {
-        this.callParent(arguments);
+    if (this.store) {
+      if (this.valueAsString) {
+        if (Array.isArray(value)) {
+          this.callParent(arguments);
+        }
+        else {
+          this.callParent(value ? [value.split(',')] : undefined);
+        }
       }
       else {
-        this.callParent(value ? [value.split(',')] : undefined);
+        this.callParent(arguments);
       }
-    }
-    else {
-      this.callParent(arguments);
     }
 
     // HACK: force original value to reset, to prevent always dirty forms when store has not loaded when form initially sets values.
@@ -235,6 +237,14 @@ Ext.define('NX.ext.form.field.ItemSelector', {
       me.store.un('load', me.populateFromStore, me);
     }
     this.callParent();
+  },
+
+  getRecordsForValue: function () {
+    var me = this;
+    if (!me.store) {
+      return [];
+    }
+    return this.callParent(arguments);
   },
 
   onEnable: function() {
