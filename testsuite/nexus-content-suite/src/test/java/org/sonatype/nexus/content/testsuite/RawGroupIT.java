@@ -13,20 +13,20 @@
 package org.sonatype.nexus.content.testsuite;
 
 import java.io.File;
+import java.nio.file.Files;
 
 import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.content.testsupport.raw.RawClient;
 import org.sonatype.nexus.content.testsupport.raw.RawITSupport;
 
-import com.google.common.io.Files;
 import org.apache.http.HttpResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import static org.apache.http.entity.ContentType.TEXT_PLAIN;
-import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.sonatype.nexus.content.testsupport.FormatClientSupport.bytes;
 import static org.sonatype.nexus.content.testsupport.FormatClientSupport.status;
 import static org.sonatype.nexus.repository.http.HttpStatus.NOT_FOUND;
@@ -75,7 +75,7 @@ public class RawGroupIT
     rawHostedClient1.put(TEST_PATH_1, TEXT_PLAIN, testFile);
     rawHostedClient2.put(TEST_PATH_1, TEXT_PLAIN, resolveTestFile(TEST_CONTENT_2));
 
-    assertThat(bytes(groupClient.get(TEST_PATH_1)), is(Files.toByteArray(testFile)));
+    assertThat(bytes(groupClient.get(TEST_PATH_1)), is(Files.readAllBytes(testFile.toPath())));
     rawHostedClient1.delete(TEST_PATH_1);
     rawHostedClient2.delete(TEST_PATH_1);
   }
@@ -90,7 +90,7 @@ public class RawGroupIT
     // Only the second repository has any content
     rawHostedClient2.put(TEST_PATH_1, TEXT_PLAIN, resolveTestFile(TEST_CONTENT_1));
 
-    assertThat(bytes(groupClient.get(TEST_PATH_1)), is(Files.toByteArray(testFile)));
+    assertThat(bytes(groupClient.get(TEST_PATH_1)), is(Files.readAllBytes(testFile.toPath())));
   }
 
   @Test
@@ -101,8 +101,8 @@ public class RawGroupIT
     rawHostedClient1.put(TEST_CONTENT_1, TEXT_PLAIN, testFile1);
     rawHostedClient2.put(TEST_CONTENT_2, TEXT_PLAIN, testFile2);
 
-    assertThat(bytes(groupClient.get(TEST_CONTENT_1)), is(Files.toByteArray(testFile1)));
-    assertThat(bytes(groupClient.get(TEST_CONTENT_2)), is(Files.toByteArray(testFile2)));
+    assertThat(bytes(groupClient.get(TEST_CONTENT_1)), is(Files.readAllBytes(testFile1.toPath())));
+    assertThat(bytes(groupClient.get(TEST_CONTENT_2)), is(Files.readAllBytes(testFile2.toPath())));
 
     rawHostedClient1.delete(TEST_CONTENT_1);
     rawHostedClient2.delete(TEST_CONTENT_2);

@@ -14,6 +14,7 @@ package org.sonatype.nexus.content.testsuite;
 
 import java.io.File;
 import java.net.URL;
+import java.nio.file.Files;
 
 import org.sonatype.goodies.httpfixture.server.fluent.Behaviours;
 import org.sonatype.goodies.httpfixture.server.fluent.Server;
@@ -23,7 +24,6 @@ import org.sonatype.nexus.content.testsupport.raw.RawITSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpStatus;
 
-import com.google.common.io.Files;
 import org.apache.http.HttpResponse;
 import org.apache.http.entity.ContentType;
 import org.junit.Before;
@@ -85,7 +85,7 @@ public class RawProxyIT
     HttpResponse httpResponse = proxyClient.get(TEST_PATH);
 
     assertThat(status(httpResponse), is(HttpStatus.OK));
-    assertThat(bytes(httpResponse), is(Files.toByteArray(testFile)));
+    assertThat(bytes(httpResponse), is(Files.readAllBytes(testFile.toPath())));
   }
 
   @Test

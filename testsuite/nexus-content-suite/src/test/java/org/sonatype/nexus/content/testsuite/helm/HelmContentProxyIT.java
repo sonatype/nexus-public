@@ -13,6 +13,7 @@
 package org.sonatype.nexus.content.testsuite.helm;
 
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 
 import org.sonatype.goodies.httpfixture.server.fluent.Server;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
@@ -22,7 +23,6 @@ import org.sonatype.nexus.content.testsupport.helm.HelmContentITSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpStatus;
 
-import com.google.common.io.Files;
 import org.apache.http.HttpResponse;
 import org.junit.After;
 import org.junit.Before;
@@ -77,6 +77,6 @@ public class HelmContentProxyIT
     HttpResponse httpResponse = client.fetch(MONGO_PKG_FILE_NAME_600_TGZ, CONTENT_TYPE_TGZ);
 
     assertThat(status(httpResponse), is(HttpStatus.OK));
-    assertThat(bytes(httpResponse), is(Files.toByteArray(testData.resolveFile(MONGO_PKG_FILE_NAME_600_TGZ))));
+    assertThat(bytes(httpResponse), is(Files.readAllBytes(testData.resolveFile(MONGO_PKG_FILE_NAME_600_TGZ).toPath())));
   }
 }

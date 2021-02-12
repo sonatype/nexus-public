@@ -14,6 +14,7 @@ package org.sonatype.nexus.testsuite.testsupport.raw;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 
 import javax.inject.Inject;
 
@@ -23,7 +24,6 @@ import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.testsuite.testsupport.RepositoryITSupport;
 
-import com.google.common.io.Files;
 import org.apache.http.entity.ContentType;
 import org.junit.experimental.categories.Category;
 
@@ -67,12 +67,12 @@ public class RawITSupport
     }
   }
 
-  protected void uploadAndDownload(RawClient rawClient, String file) throws Exception {
+  protected void uploadAndDownload(final RawClient rawClient, final String file) throws Exception {
     final File testFile = resolveTestFile(file);
     final int response = rawClient.put(file, ContentType.TEXT_PLAIN, testFile);
     assertThat(response, is(HttpStatus.CREATED));
 
-    assertThat(bytes(rawClient.get(file)), is(Files.toByteArray(testFile)));
+    assertThat(bytes(rawClient.get(file)), is(Files.readAllBytes(testFile.toPath())));
 
     assertThat(status(rawClient.delete(file)), is(HttpStatus.NO_CONTENT));
 

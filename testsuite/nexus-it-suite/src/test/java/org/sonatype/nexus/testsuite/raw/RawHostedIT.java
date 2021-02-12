@@ -13,6 +13,7 @@
 package org.sonatype.nexus.testsuite.raw;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.time.Duration;
 import java.util.function.BiConsumer;
 
@@ -35,7 +36,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import static com.google.common.io.Files.toByteArray;
 import static java.lang.Thread.sleep;
 import static org.apache.http.entity.ContentType.TEXT_PLAIN;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -110,7 +110,7 @@ public class RawHostedIT
     HttpResponse response = rawClient.get(TEST_CONTENT);
 
     assertThat(status(response), is(OK));
-    assertThat(bytes(response), is(toByteArray(testFile)));
+    assertThat(bytes(response), is(Files.readAllBytes(testFile.toPath())));
     assertThat(getLastDownloadedTime(repository, testFile.getName()).isBeforeNow(), is(equalTo(true)));
   }
 

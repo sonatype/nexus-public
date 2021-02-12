@@ -13,6 +13,7 @@
 package org.sonatype.nexus.content.testsuite.helm;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
@@ -23,7 +24,6 @@ import org.sonatype.nexus.content.testsupport.helm.HelmContentITSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpStatus;
 
-import com.google.common.io.Files;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.entity.ByteArrayEntity;
@@ -64,20 +64,20 @@ public class HelmContentHostedIT
     HttpResponse httpResponse = client.fetch(MONGO_PKG_FILE_NAME_600_TGZ, CONTENT_TYPE_TGZ);
 
     assertThat(status(httpResponse), is(HttpStatus.OK));
-    assertThat(bytes(httpResponse), is(Files.toByteArray(testData.resolveFile(MONGO_PKG_FILE_NAME_600_TGZ))));
+    assertThat(bytes(httpResponse), is(Files.readAllBytes(testData.resolveFile(MONGO_PKG_FILE_NAME_600_TGZ).toPath())));
   }
 
-  private void uploadPackages(String... names) throws IOException {
+  private void uploadPackages(final String... names) throws IOException {
     for (String name : names) {
       client.put(name, fileToHttpEntity(name));
     }
   }
 
-  private Path getFilePathByName(String fileName) {
+  private Path getFilePathByName(final String fileName) {
     return Paths.get(testData.resolveFile(fileName).getAbsolutePath());
   }
 
-  protected HttpEntity fileToHttpEntity(String name) throws IOException {
+  protected HttpEntity fileToHttpEntity(final String name) throws IOException {
     return new ByteArrayEntity(java.nio.file.Files.readAllBytes(getFilePathByName(name)));
   }
 }

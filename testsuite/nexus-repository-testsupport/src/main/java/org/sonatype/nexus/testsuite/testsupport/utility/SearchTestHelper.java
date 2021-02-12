@@ -90,4 +90,24 @@ public class SearchTestHelper
     Map<String, Object> map = response.readEntity(Map.class);
     return (List<Map<String, Object>>) map.get("items");
   }
+
+  @SuppressWarnings("unchecked")
+  public List<Map<String, Object>> searchByTag(
+      final WebTarget nexusSearchUrl,
+      final String repository,
+      final String tag)
+      throws Exception
+  {
+    waitForSearch();
+
+    Response response = nexusSearchUrl
+        .queryParam("repository", repository)
+        .queryParam("tag", tag)
+        .request()
+        .buildGet()
+        .invoke();
+
+    Map<String, Object> map = response.readEntity(Map.class);
+    return (List<Map<String, Object>>) map.get("items");
+  }
 }
