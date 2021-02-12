@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.maven.rest;
 
+import java.util.Objects;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -37,9 +39,9 @@ public class MavenProxyRepositoryApiRequestToConfigurationConverter
     Configuration configuration = super.convert(request);
     configuration.attributes("maven").set("versionPolicy", request.getMaven().getVersionPolicy());
     configuration.attributes("maven").set("layoutPolicy", request.getMaven().getLayoutPolicy());
-    NestedAttributesMap authentication = configuration.attributes("httpclient").child("authentication");
-    if (authentication != null) {
-      authentication.set("preemptive", request.getHttpClient().getAuthentication().isPreemptive());
+    NestedAttributesMap httpclient = configuration.attributes("httpclient");
+    if (Objects.nonNull(httpclient.get("authentication"))) {
+      httpclient.child("authentication").set("preemptive", request.getHttpClient().getAuthentication().isPreemptive());
     }
     return configuration;
   }
