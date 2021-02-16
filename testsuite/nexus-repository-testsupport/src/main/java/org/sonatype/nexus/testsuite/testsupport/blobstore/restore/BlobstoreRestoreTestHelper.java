@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.blobstore.restore;
 
-import javax.annotation.Nullable;
-
 import org.sonatype.nexus.repository.Repository;
 
 /**

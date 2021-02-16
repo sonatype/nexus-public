@@ -99,10 +99,30 @@ public class FluentBlobsImpl
       return ((TempBlobPartPayload) payload).getTempBlob();
     }
     try (InputStream in = payload.openInputStream()) {
-      return ingest(in, payload.getContentType(), hashing);
+      return ingest(in, cleanupContentType(payload.getContentType()), hashing);
     }
     catch (IOException e) {
       throw new UncheckedIOException(e);
+    }
+  }
+
+  /**
+   * We often use Content-Type and MIME type interchangeably throughout NXRM.
+   * https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type
+   * This method transforms the content type into the mime type that we expect
+   * @param contentType
+   * @return just the mime type, which is what we mean when we say content type
+   */
+  private String cleanupContentType(final String contentType) {
+    if (contentType == null) {
+      return null;
+    }
+
+    int semicolonIndex = contentType.indexOf(';');
+    if (semicolonIndex == -1) {
+      return contentType;
+    } else {
+      return contentType.substring(0, semicolonIndex);
     }
   }
 

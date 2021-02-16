@@ -19,6 +19,7 @@ import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 
 import org.sonatype.nexus.common.app.BaseUrlHolder;
+import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.content.testsupport.helm.HelmClient;
 import org.sonatype.nexus.content.testsupport.helm.HelmContentITSupport;
 import org.sonatype.nexus.repository.Repository;
@@ -29,12 +30,14 @@ import org.apache.http.HttpResponse;
 import org.apache.http.entity.ByteArrayEntity;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.sonatype.nexus.content.testsupport.FormatClientSupport.bytes;
 import static org.sonatype.nexus.content.testsupport.FormatClientSupport.status;
 
+@Category(SQLTestGroup.class)
 public class HelmContentHostedIT
     extends HelmContentITSupport
 {

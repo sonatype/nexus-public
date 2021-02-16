@@ -63,6 +63,11 @@ public interface ComponentAssetTestHelper
   void deleteComponent(Repository repository, String namespace, String name, String version);
 
   /**
+   * Delete a component in a repository from the database.
+   */
+  void deleteComponent(Repository repository, String name, String version);
+
+  /**
    * Remove an asset from a repository using ComponentMaintenance or similar.
    */
   void removeAsset(final Repository repository, final String path);

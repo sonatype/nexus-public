@@ -10,20 +10,23 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.restore.helm.internal;
+package org.sonatype.nexus.blobstore.restore.helm.internal.orient;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
+import org.sonatype.nexus.blobstore.restore.helm.internal.HelmRestoreBlobData;
 import org.sonatype.nexus.blobstore.restore.orient.OrientBaseRestoreBlobStrategy;
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
@@ -45,16 +48,18 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
 /**
  * @since 3.28
  */
+@FeatureFlag(name = "nexus.orient.store.content")
+@Priority(Integer.MAX_VALUE)
 @Named(HelmFormat.NAME)
 @Singleton
-public class HelmRestoreBlobStrategy
+public class OrientHelmRestoreBlobStrategy
     extends OrientBaseRestoreBlobStrategy<HelmRestoreBlobData>
 {
   @Inject
-  public HelmRestoreBlobStrategy(final NodeAccess nodeAccess,
-                                 final RepositoryManager repositoryManager,
-                                 final BlobStoreManager blobStoreManager,
-                                 final DryRunPrefix dryRunPrefix)
+  public OrientHelmRestoreBlobStrategy(final NodeAccess nodeAccess,
+                                       final RepositoryManager repositoryManager,
+                                       final BlobStoreManager blobStoreManager,
+                                       final DryRunPrefix dryRunPrefix)
   {
     super(nodeAccess, repositoryManager, blobStoreManager, dryRunPrefix);
   }
@@ -79,8 +84,8 @@ public class HelmRestoreBlobStrategy
   }
 
   @Override
-  protected String getAssetPath(@Nonnull final HelmRestoreBlobData HelmRestoreBlobData) {
-    return HelmRestoreBlobData.getBlobData().getBlobName();
+  protected String getAssetPath(@Nonnull final HelmRestoreBlobData helmRestoreBlobData) {
+    return helmRestoreBlobData.getBlobData().getBlobName();
   }
 
   @Override
@@ -91,11 +96,11 @@ public class HelmRestoreBlobStrategy
 
   @Override
   protected void createAssetFromBlob(@Nonnull final AssetBlob assetBlob,
-                                     @Nonnull final HelmRestoreBlobData HelmRestoreBlobData)
+                                     @Nonnull final HelmRestoreBlobData helmRestoreBlobData)
       throws IOException
   {
-    HelmRestoreFacet facet = getRestoreFacet(HelmRestoreBlobData);
-    final String path = getAssetPath(HelmRestoreBlobData);
+    HelmRestoreFacet facet = getRestoreFacet(helmRestoreBlobData);
+    final String path = getAssetPath(helmRestoreBlobData);
 
     facet.restore(assetBlob, path);
   }
@@ -126,8 +131,8 @@ public class HelmRestoreBlobStrategy
     return data.getBlobData().getRepository();
   }
 
-  private HelmRestoreFacet getRestoreFacet(@Nonnull final HelmRestoreBlobData HelmRestoreBlobData) {
-    final Repository repository = getRepository(HelmRestoreBlobData);
+  private HelmRestoreFacet getRestoreFacet(@Nonnull final HelmRestoreBlobData helmRestoreBlobData) {
+    final Repository repository = getRepository(helmRestoreBlobData);
 
     return repository.facet(HelmRestoreFacet.class);
   }

@@ -10,17 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.restore.helm.internal;
+@FeatureFlag(name = "nexus.orient.store.content")
+package org.sonatype.nexus.blobstore.restore.internal.orient;
 
-import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
-import org.sonatype.nexus.blobstore.restore.RestoreBlobDataSupport;
-
-/**
- * @since 3.28
- */
-public class HelmRestoreBlobData extends RestoreBlobDataSupport
-{
-  public HelmRestoreBlobData(final RestoreBlobData blobData) {
-    super(blobData);
-  }
-}
+import org.sonatype.nexus.common.app.FeatureFlag;

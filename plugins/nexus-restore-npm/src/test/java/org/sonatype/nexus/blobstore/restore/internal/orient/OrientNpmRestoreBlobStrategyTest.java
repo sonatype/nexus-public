@@ -10,10 +10,9 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.restore.internal;
+package org.sonatype.nexus.blobstore.restore.internal.orient;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -47,9 +46,12 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class NpmRestoreBlobStrategyTest
+public class OrientNpmRestoreBlobStrategyTest
     extends TestSupport
 {
   private static final String TEST_BLOB_STORE_NAME = "test";
@@ -58,7 +60,7 @@ public class NpmRestoreBlobStrategyTest
 
   private static final String TEST_TARBALL_NAME = "query-string-1.0.0.tgz";
 
-  NpmRestoreBlobStrategy underTest;
+  OrientNpmRestoreBlobStrategy underTest;
 
   @Mock
   NodeAccess nodeAccess;
@@ -105,8 +107,8 @@ public class NpmRestoreBlobStrategyTest
   byte[] blobBytes = "blobbytes".getBytes();
 
   @Before
-  public void setup() throws IOException {
-    underTest = new NpmRestoreBlobStrategy(nodeAccess, repositoryManager, blobStoreManager, new DryRunPrefix("dryrun"),
+  public void setup() {
+    underTest = new OrientNpmRestoreBlobStrategy(nodeAccess, repositoryManager, blobStoreManager, new DryRunPrefix("dryrun"),
         npmRepairPackageRootComponent);
 
     packageProps.setProperty("@BlobStore.blob-name", TEST_PACKAGE_NAME);
@@ -155,32 +157,31 @@ public class NpmRestoreBlobStrategyTest
 
     underTest.restore(packageProps, blob, blobStore, false);
 
-    Mockito.verify(npmFacet).putPackageRoot(Matchers.eq(TEST_PACKAGE_NAME), assetBlobCaptor.capture(), Matchers.eq(null));
+    verify(npmFacet).putPackageRoot(eq(TEST_PACKAGE_NAME), assetBlobCaptor.capture(), eq(null));
     assertEquals("asset hashes do not match blob", expectedHashes, assetBlobCaptor.getValue().getHashes());
   }
 
   @Test
   public void testPackageRestore() throws Exception {
     underTest.restore(packageProps, blob, blobStore, false);
-    Mockito.verify(npmFacet).findPackageRootAsset(Matchers.eq(TEST_PACKAGE_NAME));
-    Mockito.verify(npmFacet).putPackageRoot(Matchers.eq(TEST_PACKAGE_NAME), Matchers.any(AssetBlob.class), Matchers.eq(null));
+    verify(npmFacet).findPackageRootAsset(TEST_PACKAGE_NAME);
+    verify(npmFacet).putPackageRoot(eq(TEST_PACKAGE_NAME), any(AssetBlob.class), eq(null));
     Mockito.verifyNoMoreInteractions(npmFacet);
   }
 
   @Test
   public void testTarballRestore() throws Exception {
     underTest.restore(tarballProps, blob, blobStore, false);
-    Mockito.verify(npmFacet).findTarballAsset(Matchers.eq(TEST_PACKAGE_NAME), Matchers.eq(TEST_TARBALL_NAME));
-    Mockito.verify(npmFacet).putTarball(Matchers.eq(TEST_PACKAGE_NAME), Matchers.eq(TEST_TARBALL_NAME), Matchers.any(AssetBlob.class), Matchers
-        .eq(null));
+    verify(npmFacet).findTarballAsset(TEST_PACKAGE_NAME, TEST_TARBALL_NAME);
+    verify(npmFacet).putTarball(eq(TEST_PACKAGE_NAME), eq(TEST_TARBALL_NAME), any(AssetBlob.class), eq(null));
     Mockito.verifyNoMoreInteractions(npmFacet);
   }
 
   @Test
   public void testRootRestore() throws Exception {
     underTest.restore(repoRootProps, blob, blobStore, false);
-    Mockito.verify(npmFacet).findRepositoryRootAsset();
-    Mockito.verify(npmFacet).putRepositoryRoot(Matchers.any(AssetBlob.class), Matchers.eq(null));
+    verify(npmFacet).findRepositoryRootAsset();
+    verify(npmFacet).putRepositoryRoot(any(AssetBlob.class), eq(null));
     Mockito.verifyNoMoreInteractions(npmFacet);
   }
 
@@ -194,33 +195,33 @@ public class NpmRestoreBlobStrategyTest
 
   @Test
   public void testRestoreSkipExistingPackage() throws Exception {
-    Mockito.when(npmFacet.findPackageRootAsset(Matchers.eq(TEST_PACKAGE_NAME))).thenReturn(Mockito.mock(Asset.class));
+    Mockito.when(npmFacet.findPackageRootAsset(TEST_PACKAGE_NAME)).thenReturn(Mockito.mock(Asset.class));
 
     underTest.restore(packageProps, blob, blobStore, false);
-    Mockito.verify(npmFacet).findPackageRootAsset(Matchers.eq(TEST_PACKAGE_NAME));
-    Mockito.verify(npmFacet, Mockito.never()).putPackageRoot(Matchers.any(), Matchers.any(), Matchers.any());
+    verify(npmFacet).findPackageRootAsset(TEST_PACKAGE_NAME);
+    verify(npmFacet, Mockito.never()).putPackageRoot(any(), any(), any());
     Mockito.verifyNoMoreInteractions(npmFacet);
   }
 
   @Test
   public void testRestoreDryRun() throws Exception {
     underTest.restore(packageProps, blob, blobStore, true);
-    Mockito.verify(npmFacet).findPackageRootAsset(Matchers.eq(TEST_PACKAGE_NAME));
-    Mockito.verify(npmFacet, Mockito.never()).putPackageRoot(Matchers.any(), Matchers.any(), Matchers.any());
+    verify(npmFacet).findPackageRootAsset(TEST_PACKAGE_NAME);
+    verify(npmFacet, Mockito.never()).putPackageRoot(any(), any(), any());
     Mockito.verifyNoMoreInteractions(npmFacet);
   }
 
   @Test
-  public void runNpmRepairComponentAfter() throws Exception {
+  public void runNpmRepairComponentAfter() {
     underTest.after(true, repository);
     
-    Mockito.verify(npmRepairPackageRootComponent).repairRepository(repository);
+    verify(npmRepairPackageRootComponent).repairRepository(repository);
   }
 
   @Test
-  public void doNotRunNpmRepairComponentAfterWhenUpdatingAssetsDisabled() throws Exception {
+  public void doNotRunNpmRepairComponentAfterWhenUpdatingAssetsDisabled() {
     underTest.after(false, repository);
 
-    Mockito.verify(npmRepairPackageRootComponent, Mockito.never()).repairRepository(repository);
+    verify(npmRepairPackageRootComponent, Mockito.never()).repairRepository(repository);
   }
 }
