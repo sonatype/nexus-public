@@ -81,7 +81,7 @@ public final class MavenModels
     try (InputStream is = inputStream) {
       return METADATA_READER.read(is, false);
     }
-    catch (XmlPullParserException e) {
+    catch (XmlPullParserException | EOFException e ) {
       log.debug("Could not parse XML into Metadata", e);
       return null;
     }
@@ -107,7 +107,7 @@ public final class MavenModels
     try (InputStream is = inputStream) {
       return ARCHETYPE_CATALOG_READER.read(is, false);
     }
-    catch (XmlPullParserException e) {
+    catch (XmlPullParserException | EOFException e) {
       log.debug("Could not parse XML into ArchetypeCatalog", e);
       return null;
     }

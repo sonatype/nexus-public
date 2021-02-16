@@ -16,6 +16,7 @@ import java.io.ByteArrayInputStream;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 
+import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.apache.maven.model.Model;
 import org.junit.Test;
 
@@ -37,5 +38,12 @@ public class MavenModelsTest
   public void testReadModel_NotXmlIsNull() throws Exception {
     Model model = MavenModels.readModel(new ByteArrayInputStream(notXml.getBytes()));
     assertThat(model, nullValue());
+  }
+
+  @Test
+  public void testReadModel_WithoutClosingTagsIsNull() throws Exception {
+    Metadata metadata = MavenModels.readMetadata(
+        getClass().getResourceAsStream("/org/sonatype/nexus/repository/maven/metadataWithoutClosingTags.xml"));
+    assertThat(metadata, nullValue());
   }
 }
