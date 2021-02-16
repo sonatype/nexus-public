@@ -1596,6 +1596,94 @@
       </build>
     </profile>
 
+    <profile>
+      <id>h2-external-resources</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration combine.children="override">
+              <groups>
+                org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
+                org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup,
+                org.sonatype.nexus.content.testsuite.groups.H2TestGroup,
+                org.sonatype.goodies.testsupport.group.External
+              </groups>
+              <excludedGroups>
+                org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,
+                org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup,
+                org.sonatype.goodies.testsupport.group.Unstable,
+                org.sonatype.goodies.testsupport.group.Perf
+              </excludedGroups>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration combine.children="override">
+              <groups>
+                org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
+                org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup,
+                org.sonatype.nexus.content.testsuite.groups.H2TestGroup,
+                org.sonatype.goodies.testsupport.group.External
+              </groups>
+              <excludedGroups>
+                org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,
+                org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup,
+                org.sonatype.goodies.testsupport.group.Unstable,
+                org.sonatype.goodies.testsupport.group.Perf
+              </excludedGroups>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>postgres-external-resources</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration combine.children="override">
+              <groups>
+                org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
+                org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup,
+                org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup,
+                org.sonatype.goodies.testsupport.group.External
+              </groups>
+              <excludedGroups>
+                org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,
+                org.sonatype.nexus.content.testsuite.groups.H2TestGroup,
+                org.sonatype.goodies.testsupport.group.Unstable,
+                org.sonatype.goodies.testsupport.group.Perf
+              </excludedGroups>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration combine.children="override">
+              <groups>
+                org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
+                org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup,
+                org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup,
+                org.sonatype.goodies.testsupport.group.External
+              </groups>
+              <excludedGroups>
+                org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,
+                org.sonatype.nexus.content.testsuite.groups.H2TestGroup,
+                org.sonatype.goodies.testsupport.group.Unstable,
+                org.sonatype.goodies.testsupport.group.Perf
+              </excludedGroups>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
     <!--
     Includes building of testsuite modules when the sources are present and tests aren't skipped.
     -->

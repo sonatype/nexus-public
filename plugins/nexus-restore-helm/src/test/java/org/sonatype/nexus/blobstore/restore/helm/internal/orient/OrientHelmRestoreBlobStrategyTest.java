@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.restore.helm.internal;
+package org.sonatype.nexus.blobstore.restore.helm.internal.orient;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -23,6 +23,7 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
+import org.sonatype.nexus.blobstore.restore.helm.internal.HelmRestoreBlobData;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.Repository;
@@ -53,7 +54,7 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
 /**
  * @since 3.28
  */
-public class HelmRestoreBlobStrategyTest
+public class OrientHelmRestoreBlobStrategyTest
     extends TestSupport
 {
   private static final String TEST_BLOB_STORE_NAME = "test";
@@ -100,11 +101,11 @@ public class HelmRestoreBlobStrategyTest
 
   private Properties properties = new Properties();
 
-  private HelmRestoreBlobStrategy restoreBlobStrategy;
+  private OrientHelmRestoreBlobStrategy restoreBlobStrategy;
 
   @Before
   public void setup() throws IOException {
-    restoreBlobStrategy = new HelmRestoreBlobStrategy(nodeAccess, repositoryManager, blobStoreManager, new DryRunPrefix("dryrun"));
+    restoreBlobStrategy = new OrientHelmRestoreBlobStrategy(nodeAccess, repositoryManager, blobStoreManager, new DryRunPrefix("dryrun"));
 
     when(repositoryManager.get(anyString())).thenReturn(repository);
     when(repository.facet(HelmRestoreFacet.class)).thenReturn(helmRestoreFacet);

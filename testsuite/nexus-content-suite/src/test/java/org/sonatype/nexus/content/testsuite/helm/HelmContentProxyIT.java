@@ -17,6 +17,7 @@ import java.nio.file.Files;
 
 import org.sonatype.goodies.httpfixture.server.fluent.Server;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
+import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.content.testsupport.FormatClientSupport;
 import org.sonatype.nexus.content.testsupport.helm.HelmClient;
 import org.sonatype.nexus.content.testsupport.helm.HelmContentITSupport;
@@ -27,6 +28,7 @@ import org.apache.http.HttpResponse;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -36,6 +38,7 @@ import static org.sonatype.goodies.httpfixture.server.fluent.Behaviours.file;
 import static org.sonatype.nexus.content.testsupport.FormatClientSupport.bytes;
 import static org.sonatype.nexus.content.testsupport.FormatClientSupport.status;
 
+@Category(SQLTestGroup.class)
 public class HelmContentProxyIT
     extends HelmContentITSupport
 {

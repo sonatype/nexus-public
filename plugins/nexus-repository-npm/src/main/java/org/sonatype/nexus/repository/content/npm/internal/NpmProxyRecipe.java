@@ -140,7 +140,7 @@ public class NpmProxyRecipe
       final Provider<LastAssetMaintenanceFacet> lastAssetMaintenanceFacet,
       final RoutingRuleHandler routingHandler,
       final NpmAuditErrorHandler auditErrorHandler,
-      @Nullable final Handler auditAnalyticsHandler,
+      @Named("nexus.analytics.npmAuditHandler") @Nullable final Handler auditAnalyticsHandler,
       final Provider<HttpClientFacet> httpClientFacet,
       final Provider<NegativeCacheFacet> negativeCacheFacet,
       final Provider<NpmContentProxyFacet> proxyFacet,

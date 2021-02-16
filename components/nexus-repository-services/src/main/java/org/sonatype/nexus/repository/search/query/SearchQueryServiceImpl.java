@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.search.query;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -41,9 +40,6 @@ import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.security.SecurityHelper;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
-import com.google.common.collect.Collections2;
-import org.elasticsearch.action.admin.indices.validate.query.QueryExplanation;
 import org.elasticsearch.action.admin.indices.validate.query.ValidateQueryRequestBuilder;
 import org.elasticsearch.action.admin.indices.validate.query.ValidateQueryResponse;
 import org.elasticsearch.action.search.ClearScrollRequest;
@@ -69,6 +65,7 @@ import org.elasticsearch.search.sort.SortBuilder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.joining;
 import static org.elasticsearch.index.query.QueryBuilders.scriptQuery;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.TYPE;
 import static org.sonatype.nexus.repository.search.query.RepositoryQueryBuilder.repositoryQuery;
@@ -299,15 +296,9 @@ public class SearchQueryServiceImpl
       ValidateQueryResponse validateQueryResponse = validateRequest.execute().actionGet();
       if (!validateQueryResponse.isValid()) {
         if (log.isDebugEnabled()) {
-          Collection<String> explanations = Collections2.transform(validateQueryResponse.getQueryExplanation(),
-              new Function<QueryExplanation, String>()
-              {
-                @Nullable
-                @Override
-                public String apply(final QueryExplanation input) {
-                  return input.getExplanation() != null ? input.getExplanation() : input.getError();
-                }
-              });
+          String explanations = validateQueryResponse.getQueryExplanation().stream()
+              .map(input -> input.getExplanation() != null ? input.getExplanation() : input.getError())
+              .collect(joining());
           log.debug("Invalid query explanation: {}", explanations);
         }
         throw new IllegalArgumentException("Invalid query");

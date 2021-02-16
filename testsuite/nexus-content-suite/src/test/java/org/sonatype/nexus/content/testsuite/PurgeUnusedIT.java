@@ -22,6 +22,7 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.content.raw.internal.store.RawAssetDAO;
 import org.sonatype.nexus.content.raw.internal.store.RawComponentDAO;
+import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.content.testsupport.raw.RawITSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Component;
@@ -38,18 +39,20 @@ import org.sonatype.nexus.repository.raw.internal.RawFormat;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.collection.IsIterableWithSize.iterableWithSize;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.collection.IsIterableWithSize.iterableWithSize;
 import static org.sonatype.nexus.content.matcher.AssetMatcher.path;
 import static org.sonatype.nexus.content.matcher.ComponentMatcher.name;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.CONTENT_DATASTORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.DATA_STORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 
+@Category(SQLTestGroup.class)
 public class PurgeUnusedIT
     extends RawITSupport
 {

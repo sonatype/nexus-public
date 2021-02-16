@@ -10,20 +10,23 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.restore.internal;
+package org.sonatype.nexus.blobstore.restore.internal.orient;
 
 import java.io.IOException;
 import java.util.Optional;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
-import org.sonatype.nexus.blobstore.restore.orient.OrientBaseRestoreBlobStrategy;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
+import org.sonatype.nexus.blobstore.restore.internal.NpmRestoreBlobData;
 import org.sonatype.nexus.blobstore.restore.internal.NpmRestoreBlobData.NpmType;
+import org.sonatype.nexus.blobstore.restore.internal.NpmRestoreBlobDataFactory;
+import org.sonatype.nexus.blobstore.restore.orient.OrientBaseRestoreBlobStrategy;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.Repository;
@@ -50,17 +53,18 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
  */
 @Named("npm")
 @Singleton
-public class NpmRestoreBlobStrategy
+@Priority(Integer.MAX_VALUE)
+public class OrientNpmRestoreBlobStrategy
     extends OrientBaseRestoreBlobStrategy<NpmRestoreBlobData>
 {
   private final NpmRepairPackageRootComponent npmRepairPackageRootComponent;
 
   @Inject
-  public NpmRestoreBlobStrategy(final NodeAccess nodeAccess,
-                                final RepositoryManager repositoryManager,
-                                final BlobStoreManager blobStoreManager,
-                                final DryRunPrefix dryRunPrefix,
-                                final NpmRepairPackageRootComponent npmRepairPackageRootComponent)
+  public OrientNpmRestoreBlobStrategy(final NodeAccess nodeAccess,
+                                      final RepositoryManager repositoryManager,
+                                      final BlobStoreManager blobStoreManager,
+                                      final DryRunPrefix dryRunPrefix,
+                                      final NpmRepairPackageRootComponent npmRepairPackageRootComponent)
   {
     super(nodeAccess, repositoryManager, blobStoreManager, dryRunPrefix);
     this.npmRepairPackageRootComponent = checkNotNull(npmRepairPackageRootComponent);
@@ -134,10 +138,12 @@ public class NpmRestoreBlobStrategy
     }
   }
 
+  @Override
   protected boolean componentRequired(final NpmRestoreBlobData data) throws IOException {
     return data.getType() == NpmType.TARBALL;
   }
 
+  @Override
   protected Query getComponentQuery(final NpmRestoreBlobData data) {
     String version = extractVersion(data.getTarballName());
 

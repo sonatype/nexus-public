@@ -17,19 +17,13 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 
 import javax.annotation.Nonnull;
 
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.Component;
-import org.sonatype.nexus.repository.storage.StorageFacet;
-import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.testsuite.testsupport.FormatClientSupport;
 import org.sonatype.nexus.testsuite.testsupport.RepositoryITSupport;
 
-import org.apache.commons.collections.IteratorUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -42,7 +36,6 @@ import org.junit.experimental.categories.Category;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
-import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
 /**
  * Support class for Helm ITs.
@@ -50,12 +43,14 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
  * @since 3.28
  */
 @Category(HelmTestGroup.class)
-public class HelmITSupport
+public abstract class HelmITSupport
     extends RepositoryITSupport
 {
   public static final String HELM_FORMAT_NAME = "helm";
 
   public static final String MONGO_PKG_NAME = "mongodb";
+  
+  public static final String MONGO_PKG_GROUP = "mongodb";
 
   public static final String YAML_NAME = "index";
 
@@ -98,7 +93,7 @@ public class HelmITSupport
 
   public static final String YAML_MONGO_728_VERSION = "version: 7.2.8";
 
-  public HelmITSupport() {
+  protected HelmITSupport() {
     testData.addDirectory(resolveBaseFile("target/it-resources/helm"));
   }
 
@@ -146,20 +141,6 @@ public class HelmITSupport
     return Paths.get(testData.resolveFile(fileName).getAbsolutePath());
   }
 
-  protected List<Asset> findAssetsByComponent(final Repository repository, final Component component) {
-    try (StorageTx tx = getStorageTx(repository)) {
-      tx.begin();
-      return IteratorUtils.toList(tx.browseAssets(component).iterator());
-    }
-  }
-
-  protected static Component findComponent(final Repository repo, final String name) {
-    try (StorageTx tx = getStorageTx(repo)) {
-      tx.begin();
-      return tx.findComponentWithProperty(P_NAME, name, tx.findBucket(repo));
-    }
-  }
-
   protected void assertGetResponseStatus(
       final FormatClientSupport client,
       final Repository repository,
@@ -172,9 +153,5 @@ public class HelmITSupport
           statusLine.getStatusCode(),
           is(responseCode));
     }
-  }
-
-  protected static StorageTx getStorageTx(final Repository repository) {
-    return repository.facet(StorageFacet.class).txSupplier().get();
   }
 }

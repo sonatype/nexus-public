@@ -68,9 +68,6 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 public class OrientComponentAssetTestHelper
     implements ComponentAssetTestHelper
 {
-  private static final String DELETE_COMPONENT_SQL =
-      "delete from component where group = ? and name = ? and version = ?";
-
   private static final DateTimeFormatter YEAR_MONTH_DAY_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
 
   private static final String SNAPSHOT_VERSION_SUFFIX = "-SNAPSHOT";
@@ -117,11 +114,28 @@ public class OrientComponentAssetTestHelper
       final String name,
       final String version)
   {
-    try (StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get()) {
-      tx.begin();
-      tx.getDb().command(new OCommandSQL(DELETE_COMPONENT_SQL)).execute(namespace, name, version);
-      tx.commit();
-    }
+    findComponent(repository,namespace, name, version).ifPresent( component -> {
+      try (StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get()) {
+        tx.begin();
+        tx.deleteComponent(component);
+        tx.commit();
+      }
+    });
+  }
+
+  @Override
+  public void deleteComponent(
+      final Repository repository,
+      final String name,
+      final String version)
+  {
+    findComponent(repository, null, name, version).ifPresent( component -> {
+      try (StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get()) {
+        tx.begin();
+        tx.deleteComponent(component);
+        tx.commit();
+      }
+    });
   }
 
   @Override
@@ -312,7 +326,7 @@ public class OrientComponentAssetTestHelper
       final String version)
   {
     return findComponents(repository).stream()
-        .filter(c -> Objects.equals(namespace, c.group()))
+        .filter(c -> namespace == null || namespace.equals(c.group()))
         .filter(c -> name.equals(c.name()))
         .filter(c -> version == null || version.equals(c.version()))
         .findAny();
