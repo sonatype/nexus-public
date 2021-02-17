@@ -82,7 +82,7 @@ public class DataStoreConfiguration
   /**
    * Redact output using a blacklist of potentially sensitive key patterns.
    */
-  public Map<String, String> redact(final Map<String, String> attributes) {
+  protected Map<String, String> redact(final Map<String, String> attributes) {
     return transformEntries(attributes, (k, v) -> SENSITIVE_KEYS.test(k) ? "**REDACTED**" : v);
   }
 }

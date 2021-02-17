@@ -13,6 +13,7 @@
 package org.sonatype.nexus.internal.atlas.customizers
 
 import org.sonatype.goodies.testsupport.TestSupport
+import org.sonatype.nexus.internal.atlas.customizers.InstallConfigurationCustomizer.SanitizedDataStoreFileSource
 import org.sonatype.nexus.internal.atlas.customizers.InstallConfigurationCustomizer.SanitizedHazelcastFileSource
 import org.sonatype.nexus.internal.atlas.customizers.InstallConfigurationCustomizer.SanitizedJettyFileSource
 
@@ -214,5 +215,34 @@ class InstallConfigurationCustomizerTest
         .build()
 
     assertFalse(diff.toString(), diff.hasDifferences())
+  }
+
+  @Test
+  void 'SanitizedDataStoreFileSource can correctly remove password from own field and jdbcUrl'() {
+
+    File temp = File.createTempFile("test", "-store.properties")
+    temp.deleteOnExit()
+
+    temp << '''name=config
+password=secret
+type=jdbc
+jdbcUrl=jdbc\\:postgresql\\://localhost\\:5432/postgres?password=secret&password=secret
+username=postgres'''
+
+    SanitizedDataStoreFileSource source = new SanitizedDataStoreFileSource(CONFIG, 'test/file', temp, DEFAULT)
+    source.prepare()
+
+    final String expected = '''password=**REDACTED**
+name=config
+type=jdbc
+jdbcUrl=jdbc\\:postgresql\\://localhost\\:5432/postgres?password\\=**REDACTED**&password\\=**REDACTED**
+username=postgres'''
+
+    // Skip the timestamp line at the top of the file
+    def reader = new InputStreamReader(source.content)
+    def lines = reader.readLines()
+    def actual = lines.subList(1, lines.size()).join(System.lineSeparator())
+
+    assert actual == expected
   }
 }
