@@ -53,6 +53,10 @@ public class DigestExtractorTest
               "DCAB 88FC 2A04 3C24 79A6  DE67 6A2F 8179 E9EA 2167     pom.xml",
               "dcab88fc2a043c2479a6de676a2f8179e9ea2167"
           },
+          {
+            "f34c7a1713f8fdf823a79de7ed76c8dd034d04769f591dc3df44a0cffe82d8a75001ae033570db45a03641281cb4a7e09a961f580426b798d50e8fbfcd7506aa",
+            "f34c7a1713f8fdf823a79de7ed76c8dd034d04769f591dc3df44a0cffe82d8a75001ae033570db45a03641281cb4a7e09a961f580426b798d50e8fbfcd7506aa"
+          },
       };
 
   private InputStream stream(String string) throws IOException

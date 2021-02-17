@@ -35,7 +35,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class DigestExtractor
 {
-  private static final int MAX_CHARS_NEEDED = 120;
+  private static final int MAX_CHARS_NEEDED = 128;
 
   private DigestExtractor() {
   }
