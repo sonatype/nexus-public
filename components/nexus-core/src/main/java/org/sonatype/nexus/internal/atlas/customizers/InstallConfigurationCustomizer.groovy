@@ -18,13 +18,15 @@ import javax.inject.Singleton
 
 import org.sonatype.goodies.common.ComponentSupport
 import org.sonatype.nexus.common.app.ApplicationDirectories
+import org.sonatype.nexus.common.property.PropertiesFile
 import org.sonatype.nexus.supportzip.FileContentSourceSupport
 import org.sonatype.nexus.supportzip.SanitizedXmlSourceSupport
 import org.sonatype.nexus.supportzip.SupportBundle
 import org.sonatype.nexus.supportzip.SupportBundleCustomizer
-import org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type
 
 import static com.google.common.base.Preconditions.checkNotNull
+import static org.sonatype.nexus.supportzip.PasswordSanitizing.REPLACEMENT
+import static org.sonatype.nexus.supportzip.PasswordSanitizing.SENSITIVE_FIELD_NAMES
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority.DEFAULT
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority.HIGH
@@ -59,6 +61,9 @@ class InstallConfigurationCustomizer
         }
         else if (file.name == 'hazelcast.xml' || file.name == 'hazelcast-network.xml') {
           supportBundle << new SanitizedHazelcastFileSource(CONFIG, "$prefix/${file.name}", file, priority)
+        }
+        else if (file.name.endsWith('store.properties')) {
+          supportBundle << new SanitizedDataStoreFileSource(CONFIG, "$prefix/${file.name}", file, priority)
         }
         else {
           supportBundle << new FileContentSourceSupport(CONFIG, "$prefix/${file.name}", file, priority)
@@ -180,6 +185,70 @@ class InstallConfigurationCustomizer
 
     SanitizedHazelcastFileSource(final Type type, final String path, final File file, final Priority priority) {
       super(type, path, file, priority, STYLESHEET)
+    }
+  }
+
+  /**
+   * Removes JDBC credentials from *-store.properties, if present.
+   */
+  static class SanitizedDataStoreFileSource
+      extends FileContentSourceSupport
+  {
+
+    SanitizedDataStoreFileSource(final Type type, final String path, final File file, final Priority priority) {
+      super(CONFIG, path, file, priority)
+    }
+
+    @Override
+    InputStream getContent() throws Exception {
+      def dataStoreConfiguration = new PropertiesFile(file)
+      dataStoreConfiguration.load()
+      dataStoreConfiguration.each { key, value ->
+        if (SENSITIVE_FIELD_NAMES.contains(key)) {
+          dataStoreConfiguration.replace(key, REPLACEMENT)
+        }
+      }
+      dataStoreConfiguration.computeIfPresent('jdbcUrl', { k, v -> redactPasswordWithinJdbcUrl(v as String) })
+      def outputStream = new ByteArrayOutputStream()
+      dataStoreConfiguration.store(outputStream, null)
+      return new ByteArrayInputStream(outputStream.toByteArray())
+    }
+
+    @Override
+    void cleanup() throws Exception {
+      super.cleanup()
+    }
+
+    private String redactPasswordWithinJdbcUrl(final String jdbcUrl) {
+      String[] urlParts = jdbcUrl.split("\\?");
+      StringBuilder result = new StringBuilder(urlParts[0]);
+      try {
+        if (urlParts.length == 2) {
+          result.append("?");
+          String[] paramsParts = urlParts[1].split("&");
+          for (String param : paramsParts) {
+            String[] values = param.split("=");
+            String name = values[0];
+            result.append(name);
+            result.append("=");
+            if (SENSITIVE_FIELD_NAMES.contains(name)) {
+              result.append(REPLACEMENT);
+            }
+            else {
+              String value = values.length == 2 ? values[1] : "";
+              result.append(value);
+            }
+            result.append("&");
+          }
+          result.delete(result.length() - 1, result.length());
+        }
+      }
+      catch (Exception e) {
+        log.error("Can't parse jdbcUrl: {}", jdbcUrl, e);
+        return urlParts[0] + "?cant_parse_parameters";
+      }
+
+      return result.toString();
     }
   }
 }
