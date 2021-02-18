@@ -235,9 +235,22 @@ public class BootstrapListener
       properties.setProperty("nexus.earlyAccess.datastore.enabled", "true");
     }
 
-    // early-access datastore mode disables orient
     if (parseBoolean(properties.getProperty("nexus.earlyAccess.datastore.enabled", "false"))) {
+      // early-access datastore mode disables orient
       properties.setProperty("nexus.orient.enabled", "false");
+
+      // early-access datastore mode, but not developer mode
+      if (!parseBoolean(properties.getProperty("nexus.earlyAccess.datastore.developer", "false"))) {
+        // exclude unfinished format features
+        properties.setProperty("nexus-exclude-features",
+            "nexus-repository-helm," +
+                "nexus-repository-npm," +
+                "nexus-repository-pypi," +
+                "nexus-repository-docker," +
+                "nexus-repository-nuget," +
+                "nexus-repository-yum," +
+                properties.getProperty("nexus-exclude-features", ""));
+      }
     }
 
     selectDbFeature(properties);

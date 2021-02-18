@@ -92,6 +92,13 @@ public class DataStoreMavenTestHelper
   }
 
   @Override
+  public boolean delete(final Repository repository, final String path) throws Exception {
+    MavenContentFacet mavenFacet = repository.facet(MavenContentFacet.class);
+    MavenPath mavenPath = mavenFacet.getMavenPathParser().parsePath(path);
+    return mavenFacet.delete(mavenPath);
+  }
+
+  @Override
   public void writeWithoutValidation(final Repository repository, final String path, final Payload payload) {
     MavenContentFacet mavenContentFacet = repository.facet(MavenContentFacet.class);
     MavenPath mavenPath = mavenContentFacet.getMavenPathParser().parsePath(path);

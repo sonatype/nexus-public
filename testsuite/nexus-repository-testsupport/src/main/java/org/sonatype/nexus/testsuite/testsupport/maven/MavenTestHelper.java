@@ -69,6 +69,8 @@ public abstract class MavenTestHelper
     }
   }
 
+  public abstract boolean delete(Repository repository, String path) throws Exception;
+
   public void mvnDeploy(
       final TestData testData,
       final String project,

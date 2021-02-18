@@ -221,6 +221,19 @@ public class OrientMavenTestHelper
   }
 
   @Override
+  public boolean delete(final Repository repository, final String path) throws Exception {
+    OrientMavenFacet mavenFacet = repository.facet(OrientMavenFacet.class);
+    MavenPath mavenPath = mavenFacet.getMavenPathParser().parsePath(path);
+    UnitOfWork.begin(repository.facet(StorageFacet.class).txSupplier());
+    try {
+      return !mavenFacet.delete(mavenPath).isEmpty();
+    }
+    finally {
+      UnitOfWork.end();
+    }
+  }
+
+  @Override
   public DateTime getLastDownloadedTime(final Repository repository, final String assetPath) {
     MavenFacet mavenFacet = repository.facet(MavenFacet.class);
     MavenPath mavenPath = mavenFacet.getMavenPathParser().parsePath(assetPath);
