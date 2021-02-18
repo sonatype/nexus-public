@@ -13,7 +13,7 @@
 import React from 'react';
 import {fireEvent, wait} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
-import TestUtils from 'nexus-ui-plugin/src/frontend/src/interface/TestUtils';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import Axios from 'axios';
 import UserAccount from './UserAccount';
@@ -35,13 +35,13 @@ const mockExternalUserAccount = {
   external: true
 };
 
-jest.mock('nexus-ui-plugin', () => {
+jest.mock('@sonatype/nexus-ui-plugin', () => {
   return {
-    ...jest.requireActual('nexus-ui-plugin'),
+    ...jest.requireActual('@sonatype/nexus-ui-plugin'),
     ExtJS: {
       showSuccessMessage: jest.fn(),
       showErrorMessage: jest.fn(),
-      setDirtyStatus: jest.requireActual('nexus-ui-plugin').ExtJS.setDirtyStatus
+      setDirtyStatus: jest.requireActual('@sonatype/nexus-ui-plugin').ExtJS.setDirtyStatus
     }
   }
 });

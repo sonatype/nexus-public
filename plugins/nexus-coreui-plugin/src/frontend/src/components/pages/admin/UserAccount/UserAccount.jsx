@@ -15,7 +15,7 @@ import {useMachine} from '@xstate/react';
 import UserAccountSettings from './UserAccountSettings';
 import PasswordChangeForm from './PasswordChangeForm';
 import {faUser} from '@fortawesome/free-solid-svg-icons';
-import {ContentBody, Page, PageHeader, PageTitle} from 'nexus-ui-plugin';
+import {ContentBody, Page, PageHeader, PageTitle} from '@sonatype/nexus-ui-plugin';
 
 import './UserAccount.scss';
 import UserAccountMachine from './UserAccountMachine';

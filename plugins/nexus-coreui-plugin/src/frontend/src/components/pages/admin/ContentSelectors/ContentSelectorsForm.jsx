@@ -30,7 +30,7 @@ import {
   Textarea,
   Textfield,
   Utils
-} from 'nexus-ui-plugin';
+} from '@sonatype/nexus-ui-plugin';
 
 import ContentSelectorsFormMachine from './ContentSelectorsFormMachine';
 

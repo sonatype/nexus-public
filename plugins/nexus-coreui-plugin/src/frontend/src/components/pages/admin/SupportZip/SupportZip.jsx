@@ -13,7 +13,7 @@
 import React from 'react';
 import {useMachine} from '@xstate/react';
 import UIStrings from '../../../../constants/UIStrings';
-import {ContentBody, ExtJS, NxLoadWrapper, Page, PageHeader, PageTitle, Section} from 'nexus-ui-plugin';
+import {ContentBody, ExtJS, NxLoadWrapper, Page, PageHeader, PageTitle, Section} from '@sonatype/nexus-ui-plugin';
 
 import SupportZipForm from './SupportZipForm';
 import SupportZipResponse from './SupportZipResponse';

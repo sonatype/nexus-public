@@ -18,7 +18,7 @@ import {useMachine} from "@xstate/react";
 import AnalyzeApplicationMachine from "./AnalyzeApplicationMachine";
 import HealthCheckEula from "../HealthCheck/HealthCheckEula";
 import AnalyzeApplicationModal from "./AnalyzeApplicationModal";
-import {NxLoadWrapper} from 'nexus-ui-plugin';
+import {NxLoadWrapper} from '@sonatype/nexus-ui-plugin';
 
 export default function AnalyzeApplication(props) {
   const [state, send] = useMachine(AnalyzeApplicationMachine, {

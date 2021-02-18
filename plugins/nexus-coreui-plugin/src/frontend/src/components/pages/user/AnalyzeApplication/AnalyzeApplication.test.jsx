@@ -12,7 +12,7 @@
  */
 import React from 'react';
 import Axios from 'axios';
-import TestUtils from "nexus-ui-plugin/src/frontend/src/interface/TestUtils";
+import TestUtils from "@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils";
 import AnalyzeApplication from "./AnalyzeApplication";
 import {wait} from "@testing-library/react";
 import '@testing-library/jest-dom/extend-expect';
@@ -26,9 +26,9 @@ jest.mock('axios', () => {
   };
 });
 
-jest.mock('nexus-ui-plugin', () => {
+jest.mock('@sonatype/nexus-ui-plugin', () => {
   return {
-    ...jest.requireActual('nexus-ui-plugin'),
+    ...jest.requireActual('@sonatype/nexus-ui-plugin'),
     ExtJS: {
       urlOf: jest.fn()
     }

@@ -17,7 +17,7 @@
 import {assign} from 'xstate';
 import Axios from 'axios';
 import UIStrings from '../../../../constants/UIStrings';
-import {ExtJS, Utils} from "nexus-ui-plugin";
+import {ExtJS, Utils} from "@sonatype/nexus-ui-plugin";
 import {applicationHealthCheckUrl} from "./AnalyzeApplicationMachine";
 
 export default Utils.buildFormMachine({

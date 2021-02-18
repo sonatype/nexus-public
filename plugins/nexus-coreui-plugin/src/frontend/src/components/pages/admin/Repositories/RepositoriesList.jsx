@@ -32,7 +32,7 @@ import {
   Section,
   SectionToolbar,
   Utils
-} from 'nexus-ui-plugin';
+} from '@sonatype/nexus-ui-plugin';
 import {
   faChevronRight,
   faCopy,

@@ -12,7 +12,7 @@
  */
 import React from 'react';
 import {useMachine} from '@xstate/react';
-import {NxButton, NxLoadWrapper, Page, PageHeader, PageTitle, Section, SectionFooter, ContentBody} from 'nexus-ui-plugin';
+import {NxButton, NxLoadWrapper, Page, PageHeader, PageTitle, Section, SectionFooter, ContentBody} from '@sonatype/nexus-ui-plugin';
 import {NxFontAwesomeIcon} from '@sonatype/react-shared-components';
 import {faKey, faLock} from '@fortawesome/free-solid-svg-icons';
 

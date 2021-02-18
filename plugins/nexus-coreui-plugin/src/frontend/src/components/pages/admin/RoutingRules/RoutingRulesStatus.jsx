@@ -15,7 +15,7 @@ import {faCheckCircle, faTimesCircle} from '@fortawesome/free-solid-svg-icons';
 
 import {
   NxFontAwesomeIcon
-} from 'nexus-ui-plugin';
+} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 

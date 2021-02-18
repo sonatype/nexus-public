@@ -15,7 +15,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import {assign, Machine} from 'xstate';
-import {ExtJS, Utils} from 'nexus-ui-plugin';
+import {ExtJS, Utils} from '@sonatype/nexus-ui-plugin';
 import Axios from "axios";
 
 import UIStrings from '../../../../constants/UIStrings';

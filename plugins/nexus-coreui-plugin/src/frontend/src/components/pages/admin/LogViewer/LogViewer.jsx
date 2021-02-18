@@ -28,7 +28,7 @@ import {
   Section,
   SectionToolbar,
   Textfield
-} from 'nexus-ui-plugin';
+} from '@sonatype/nexus-ui-plugin';
 
 import {faScroll, faStamp} from '@fortawesome/free-solid-svg-icons';
 

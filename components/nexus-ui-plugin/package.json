@@ -1,5 +1,5 @@
 {
-  "name": "nexus-ui-plugin",
+  "name": "@sonatype/nexus-ui-plugin",
   "version": "0.1.0",
   "main": "dist/index.js",
   "files": [

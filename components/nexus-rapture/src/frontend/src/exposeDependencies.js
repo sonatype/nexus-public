@@ -15,7 +15,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import axios from 'axios';
-import * as nxrmUiPlugin from 'nexus-ui-plugin';
+import * as nxrmUiPlugin from '@sonatype/nexus-ui-plugin';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import * as xstate from 'xstate';

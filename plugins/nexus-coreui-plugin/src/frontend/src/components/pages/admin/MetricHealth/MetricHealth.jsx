@@ -30,7 +30,7 @@ import {
   PageTitle,
   Section,
   Utils
-} from 'nexus-ui-plugin';
+} from '@sonatype/nexus-ui-plugin';
 
 import MetricHealthMachine from './MetricHealthMachine';
 
