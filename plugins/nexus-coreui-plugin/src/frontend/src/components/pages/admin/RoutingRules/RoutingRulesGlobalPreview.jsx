@@ -32,7 +32,7 @@ import {
   Section,
   SectionToolbar,
   Select
-} from 'nexus-ui-plugin';
+} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 import RoutingRulesPreview from './RoutingRulesFormPreview';

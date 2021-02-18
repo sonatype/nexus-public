@@ -22,7 +22,7 @@ import {
   PageHeader,
   PageTitle,
   Utils
-} from 'nexus-ui-plugin';
+} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 import SystemInformationBody from './SystemInformationBody';

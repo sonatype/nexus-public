@@ -17,7 +17,7 @@
 
 import Axios from 'axios';
 import {assign} from 'xstate';
-import {Utils} from 'nexus-ui-plugin';
+import {Utils} from '@sonatype/nexus-ui-plugin';
 
 export default Utils.buildListMachine({
   id: 'RepositoriesListMachine',

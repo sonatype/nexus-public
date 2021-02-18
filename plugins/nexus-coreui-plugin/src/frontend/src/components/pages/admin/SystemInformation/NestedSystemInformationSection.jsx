@@ -12,7 +12,7 @@
  */
 import React from 'react';
 
-import {Information, Section} from 'nexus-ui-plugin';
+import {Information, Section} from '@sonatype/nexus-ui-plugin';
 
 /**
  * @since 3.24

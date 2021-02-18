@@ -16,7 +16,7 @@
  */
 import Axios from 'axios';
 
-import {ExtJS, TokenMachine} from 'nexus-ui-plugin';
+import {ExtJS, TokenMachine} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 

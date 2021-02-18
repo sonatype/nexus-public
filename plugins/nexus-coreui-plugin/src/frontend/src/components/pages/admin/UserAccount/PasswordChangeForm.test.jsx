@@ -13,14 +13,14 @@
 import React from 'react';
 import {fireEvent, wait} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
-import TestUtils from 'nexus-ui-plugin/src/frontend/src/interface/TestUtils';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import PasswordChangeForm from './PasswordChangeForm';
 import UIStrings from '../../../../constants/UIStrings';
 import Axios from 'axios';
 
-jest.mock('nexus-ui-plugin', () => {
+jest.mock('@sonatype/nexus-ui-plugin', () => {
   return {
-    ...jest.requireActual('nexus-ui-plugin'),
+    ...jest.requireActual('@sonatype/nexus-ui-plugin'),
     ExtJS: {
       showSuccessMessage: jest.fn(),
       fetchAuthenticationToken: jest.fn(() => Promise.resolve({data: 'fakeToken'})),

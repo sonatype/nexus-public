@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {ContentBody, NxButton, NxFontAwesomeIcon, Page, PageHeader, PageTitle, Section} from 'nexus-ui-plugin';
+import {ContentBody, NxButton, NxFontAwesomeIcon, Page, PageHeader, PageTitle, Section} from '@sonatype/nexus-ui-plugin';
 import {faExternalLinkAlt, faUserCircle} from '@fortawesome/free-solid-svg-icons';
 
 import UIStrings from '../../../../constants/UIStrings';

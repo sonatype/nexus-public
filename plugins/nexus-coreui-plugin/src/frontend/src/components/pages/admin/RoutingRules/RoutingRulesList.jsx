@@ -33,7 +33,7 @@ import {
   Section,
   SectionToolbar,
   Utils
-} from 'nexus-ui-plugin';
+} from '@sonatype/nexus-ui-plugin';
 
 import RoutingRulesGlobalPreview from './RoutingRulesGlobalPreview';
 import RoutingRulesListMachine from './RoutingRulesListMachine';

@@ -26,7 +26,7 @@ import {
   Section, SectionToolbar,
   Select,
   Utils
-} from 'nexus-ui-plugin';
+} from '@sonatype/nexus-ui-plugin';
 import UIStrings from "../../../../constants/UIStrings";
 
 import ContentSelectorsPreviewMachine from './ContentSelectorsPreviewMachine';

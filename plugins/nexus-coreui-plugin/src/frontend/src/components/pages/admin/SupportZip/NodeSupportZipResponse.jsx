@@ -12,7 +12,7 @@
  */
 import React from 'react';
 import UIStrings from '../../../../constants/UIStrings';
-import {FieldWrapper, NxButton, NxFontAwesomeIcon, SectionFooter, Textfield} from "nexus-ui-plugin";
+import {FieldWrapper, NxButton, NxFontAwesomeIcon, SectionFooter, Textfield} from '@sonatype/nexus-ui-plugin';
 import {faDownload} from '@fortawesome/free-solid-svg-icons';
 
 export default function NodeSupportZipResponse({response, download}) {

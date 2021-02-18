@@ -17,7 +17,7 @@
 import {assign, cancel, Machine} from 'xstate';
 import Axios from 'axios';
 
-import {ExtJS} from 'nexus-ui-plugin';
+import {ExtJS} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from "../../../../constants/UIStrings";
 

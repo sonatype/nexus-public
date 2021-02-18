@@ -23,7 +23,7 @@ import {
   SectionFooter,
   Textfield,
   Utils
-} from 'nexus-ui-plugin';
+} from '@sonatype/nexus-ui-plugin';
 import UIStrings from '../../../../constants/UIStrings';
 
 export default function UserAccountSettings({service}) {

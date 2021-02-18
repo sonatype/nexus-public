@@ -12,7 +12,7 @@
  */
 import React from 'react';
 
-import {Detail, Master, MasterDetail} from 'nexus-ui-plugin';
+import {Detail, Master, MasterDetail} from '@sonatype/nexus-ui-plugin';
 
 import RepositoriesList from './RepositoriesList';
 import RepositoriesForm from './RepositoriesForm';

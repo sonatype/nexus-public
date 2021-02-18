@@ -13,9 +13,9 @@
 import React from 'react';
 import {fireEvent, wait, waitForElement, waitForElementToBeRemoved, screen} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
-import TestUtils from 'nexus-ui-plugin/src/frontend/src/interface/TestUtils';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import axios from 'axios';
-import {ExtJS} from 'nexus-ui-plugin';
+import {ExtJS} from '@sonatype/nexus-ui-plugin';
 
 import RoutingRulesForm from './RoutingRulesForm';
 
@@ -29,15 +29,15 @@ jest.mock('axios', () => ({
   delete: jest.fn()
 }));
 
-jest.mock('nexus-ui-plugin', () => ({
-  ...jest.requireActual('nexus-ui-plugin'),
+jest.mock('@sonatype/nexus-ui-plugin', () => ({
+  ...jest.requireActual('@sonatype/nexus-ui-plugin'),
   ExtJS: {
     requestConfirmation: jest.fn(),
     showErrorMessage: jest.fn()
   },
   Utils: {
     buildFormMachine: function(args) {
-      const machine = jest.requireActual('nexus-ui-plugin').Utils.buildFormMachine(args);
+      const machine = jest.requireActual('@sonatype/nexus-ui-plugin').Utils.buildFormMachine(args);
       return machine.withConfig({
         actions: {
           logSaveSuccess: jest.fn(),
@@ -46,11 +46,11 @@ jest.mock('nexus-ui-plugin', () => ({
         }
       })
     },
-    isInvalid: jest.requireActual('nexus-ui-plugin').Utils.isInvalid,
-    isBlank: jest.requireActual('nexus-ui-plugin').Utils.isBlank,
-    notBlank: jest.requireActual('nexus-ui-plugin').Utils.notBlank,
-    fieldProps: jest.requireActual('nexus-ui-plugin').Utils.fieldProps,
-    saveTooltip: jest.requireActual('nexus-ui-plugin').Utils.saveTooltip
+    isInvalid: jest.requireActual('@sonatype/nexus-ui-plugin').Utils.isInvalid,
+    isBlank: jest.requireActual('@sonatype/nexus-ui-plugin').Utils.isBlank,
+    notBlank: jest.requireActual('@sonatype/nexus-ui-plugin').Utils.notBlank,
+    fieldProps: jest.requireActual('@sonatype/nexus-ui-plugin').Utils.fieldProps,
+    saveTooltip: jest.requireActual('@sonatype/nexus-ui-plugin').Utils.saveTooltip
   }
 }));
 

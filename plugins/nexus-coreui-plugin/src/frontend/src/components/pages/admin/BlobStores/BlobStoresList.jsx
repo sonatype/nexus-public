@@ -31,7 +31,7 @@ import {
   Section,
   SectionToolbar,
   Utils
-} from 'nexus-ui-plugin';
+} from '@sonatype/nexus-ui-plugin';
 import {
   faCheckCircle,
   faChevronRight,

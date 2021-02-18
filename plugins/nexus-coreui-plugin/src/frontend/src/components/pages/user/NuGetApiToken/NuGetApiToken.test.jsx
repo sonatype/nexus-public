@@ -15,7 +15,7 @@ import Axios from 'axios';
 import {act} from 'react-dom/test-utils';
 import {fireEvent, wait} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
-import TestUtils from 'nexus-ui-plugin/src/frontend/src/interface/TestUtils';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import NuGetApiToken from './NuGetApiToken';
 import UIStrings from '../../../../constants/UIStrings';
@@ -26,9 +26,9 @@ const mockTokenB64 = 'ZmFrZVRva2Vu'
 // TODO: come up with a better solution to this
 window.NX = { Messages: { success: () => {} } };
 
-jest.mock('nexus-ui-plugin', () => {
+jest.mock('@sonatype/nexus-ui-plugin', () => {
   return {
-    ...jest.requireActual('nexus-ui-plugin'),
+    ...jest.requireActual('@sonatype/nexus-ui-plugin'),
     ExtJS: {
       requestAuthenticationToken: jest.fn(() => Promise.resolve(mockToken)),
       urlOf: jest.fn(() => 'http://localhost:4242/repository/fakeUrl')

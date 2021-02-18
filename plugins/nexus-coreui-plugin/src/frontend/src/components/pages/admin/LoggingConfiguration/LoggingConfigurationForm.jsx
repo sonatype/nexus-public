@@ -29,7 +29,7 @@ import {
   Select,
   Textfield,
   Utils
-} from 'nexus-ui-plugin';
+} from '@sonatype/nexus-ui-plugin';
 
 import LoggingConfigurationFormMachine from './LoggingConfigurationFormMachine';
 
