@@ -49,11 +49,11 @@ export default function RoutingRulesList() {
   const {error, filter, preview, path, repositories, selectedRule, selectedRowDetails} = current.context;
 
   function updateRepositories(event) {
-    send({type: 'UPDATE', name: 'repositories', value: event.target.value});
+    send({type: 'UPDATE_AND_CLEAR', name: 'repositories', value: event.target.value});
   }
 
   function updatePath(event) {
-    send({type: 'UPDATE', name: 'path', value: event.target.value});
+    send({type: 'UPDATE_AND_CLEAR', name: 'path', value: event.target.value});
   }
 
   function updateFilter(value) {
