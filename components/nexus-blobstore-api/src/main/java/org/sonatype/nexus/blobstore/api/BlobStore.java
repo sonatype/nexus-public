@@ -298,4 +298,7 @@ public interface BlobStore
   default Future<Boolean> asyncDelete(BlobId blobId) {
     return CompletableFuture.completedFuture(deleteHard(blobId));
   }
+
+  default void validateCanCreateAndUpdate() throws Exception {
+  }
 }
