@@ -51,9 +51,14 @@ export default Machine(
               actions: ['toggle'],
               internal: false
             },
-            UPDATE: {
+            UPDATE_AND_CLEAR: {
               target: 'idle',
               actions: ['update', 'clearPreview'],
+              internal: false
+            },
+            UPDATE: {
+              target: 'idle',
+              actions: ['update'],
               internal: false
             }
           }
@@ -105,13 +110,18 @@ export default Machine(
           pristinePreview: () => []
         }),
         filter: assign({
-          preview: ({pristinePreview, filter}) => pristinePreview.filter(
-              ({repository, type, format, rule}) =>
-                  repository.toLowerCase().indexOf(filter.toLowerCase()) !== -1 ||
-                  type.toLowerCase().indexOf(filter.toLowerCase()) !== -1 ||
-                  format.toLowerCase().indexOf(filter.toLowerCase()) !== -1 ||
-                  rule.toLowerCase().indexOf(filter.toLowerCase()) !== -1
-          )
+          preview: ({pristinePreview, filter}) => {
+            const filterByText = ({repository, type, format, rule}) =>
+                repository?.toLowerCase().includes(filter.toLowerCase()) ||
+                type?.toLowerCase().includes(filter.toLowerCase()) ||
+                format?.toLowerCase().includes(filter.toLowerCase()) ||
+                rule?.toLowerCase().includes(filter.toLowerCase());
+
+            return pristinePreview.map((row) => ({
+              ...row,
+              children: row.children?.filter(filterByText)
+            })).filter(filterByText);
+          }
         }),
         setPreview: assign({
           preview: (_, event) => event.data.data.children,
