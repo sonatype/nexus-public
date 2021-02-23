@@ -68,6 +68,15 @@ Ext.define('NX.coreui.view.repository.facet.StorageFacetHosted', {
             ],
             value: me.writePolicy,
             queryMode: 'local'
+          },
+          {
+            xtype: 'checkbox',
+            name: 'attributes.component.proprietaryComponents',
+            itemId: 'proprietaryComponents',
+            fieldLabel: NX.I18n.get('Repository_Facet_StorageFacetHosted_Proprietary_Components_FieldLabel'),
+            helpText: NX.I18n.get('Repository_Facet_StorageFacetHosted_Proprietary_Components_HelpText'),
+            editable: true,
+            value: false
           }
         ]
       }
