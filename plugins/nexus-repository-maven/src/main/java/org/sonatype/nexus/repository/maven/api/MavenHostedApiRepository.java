@@ -16,7 +16,6 @@ import javax.validation.constraints.NotNull;
 
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.rest.api.model.CleanupPolicyAttributes;
-import org.sonatype.nexus.repository.rest.api.model.ComponentAttributes;
 import org.sonatype.nexus.repository.rest.api.model.HostedStorageAttributes;
 import org.sonatype.nexus.repository.rest.api.model.SimpleApiHostedRepository;
 
@@ -43,10 +42,9 @@ public class MavenHostedApiRepository
       @JsonProperty("online") final Boolean online,
       @JsonProperty("storage") final HostedStorageAttributes storage,
       @JsonProperty("cleanup") final CleanupPolicyAttributes cleanup,
-      @JsonProperty("maven") final MavenAttributes maven,
-      @JsonProperty("component") final ComponentAttributes component)
+      @JsonProperty("maven") final MavenAttributes maven)
   {
-    super(name, Maven2Format.NAME, url, online, storage, cleanup, component);
+    super(name, Maven2Format.NAME, url, online, storage, cleanup);
     this.maven = maven;
   }
 

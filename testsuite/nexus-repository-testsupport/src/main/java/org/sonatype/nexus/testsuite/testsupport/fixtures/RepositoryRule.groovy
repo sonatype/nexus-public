@@ -41,7 +41,7 @@ class RepositoryRule
   }
 
   @Override
-  public void after() {
+  protected void after() {
     def repositoryManager = repositoryManagerProvider.get()
     repositories.each { Repository repository ->
       if (repositoryManager.exists(repository.name)) {

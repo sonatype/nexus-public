@@ -37,7 +37,6 @@ import static org.apache.commons.io.FileUtils.readFileToByteArray;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.containsString;
 import static org.sonatype.goodies.httpfixture.server.fluent.Behaviours.content;
 import static org.sonatype.nexus.testsuite.testsupport.FormatClientSupport.bytes;
 import static org.sonatype.nexus.testsuite.testsupport.FormatClientSupport.status;
@@ -49,13 +48,9 @@ import static org.sonatype.nexus.testsuite.testsupport.FormatClientSupport.statu
 public class RawProxyOfHostedIT
     extends RawITSupport
 {
-  private static final String INDEX_HTML = "index.html";
+  public static final String TEST_PATH = "alphabet.txt";
 
-  private static final String TEST_PATH = "alphabet.txt";
-
-  private static final String TEST_CONTENT = "alphabet.txt";
-
-  private static final String REPO_BROWSE_ERROR = "repository is not directly browseable at this URL.";
+  public static final String TEST_CONTENT = "alphabet.txt";
 
   private RawClient hostedClient;
 
@@ -155,50 +150,6 @@ public class RawProxyOfHostedIT
   @Test
   public void status503ViaProxyProduces503() throws Exception {
     responseViaProxyProduces(HttpStatus.SERVICE_UNAVAILABLE, HttpStatus.SERVICE_UNAVAILABLE);
-  }
-
-  @Test
-  public void remoteHasNoContent() throws Exception {
-    Server server = Server.withPort(0)
-        .serve("/*").withBehaviours(Behaviours.error(HttpStatus.NOT_FOUND))
-        .start();
-    try {
-      proxyClient = rawClient(repos.createRawProxy(testName.getMethodName(), server.getUrl().toExternalForm()));
-      assertThat(status(proxyClient.get(TEST_PATH)), is(HttpStatus.NOT_FOUND));
-      assertThat(new String(bytes(proxyClient.get(""))), containsString(REPO_BROWSE_ERROR));
-    }
-    finally {
-      server.stop();
-    }
-  }
-
-  @Test
-  public void hostedHasNoContent() throws Exception {
-    assertThat(status(hostedClient.get(TEST_PATH)), is(HttpStatus.NOT_FOUND));
-    assertThat(new String(bytes(hostedClient.get(TEST_PATH + "/"))), containsString(REPO_BROWSE_ERROR));
-    assertThat(new String(bytes(hostedClient.get(""))), containsString(REPO_BROWSE_ERROR));
-  }
-
-  @Test
-  public void rootShouldServeRemoteIndexHtmlContentIfPresent() throws Exception {
-    final File testFile = resolveTestFile(INDEX_HTML);
-    hostedClient.put(INDEX_HTML, ContentType.TEXT_PLAIN, testFile);
-
-    HttpResponse response = proxyClient.get("");
-    assertThat(status(response), is(HttpStatus.OK));
-    assertThat(bytes(response), is(readFileToByteArray(testFile)));
-    assertThat(getLastDownloadedTime(proxyRepo, ".").isBeforeNow(), is(equalTo(true)));
-  }
-
-  @Test
-  public void rootShouldServeRemoteIndexHtmContentIfPresent() throws Exception {
-    final File testFile = resolveTestFile(INDEX_HTML);
-    hostedClient.put("index.htm", ContentType.TEXT_PLAIN, testFile);
-
-    HttpResponse response = proxyClient.get("");
-    assertThat(status(response), is(HttpStatus.OK));
-    assertThat(bytes(response), is(readFileToByteArray(testFile)));
-    assertThat(getLastDownloadedTime(proxyRepo, ".").isBeforeNow(), is(equalTo(true)));
   }
 
   private void responseViaProxyProduces(final int upstreamStatus, final int downstreamStatus) throws Exception {

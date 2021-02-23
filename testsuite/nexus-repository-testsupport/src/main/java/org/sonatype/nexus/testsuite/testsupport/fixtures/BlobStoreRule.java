@@ -15,10 +15,7 @@ package org.sonatype.nexus.testsuite.testsupport.fixtures;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Provider;
-import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
@@ -37,8 +34,6 @@ import static org.sonatype.nexus.blobstore.file.FileBlobStore.PATH_KEY;
 /**
  * @since 3.20
  */
-@Named
-@Singleton
 public class BlobStoreRule
     extends ExternalResource
 {
@@ -54,12 +49,7 @@ public class BlobStoreRule
     this.blobStoreManagerProvider = blobStoreManagerProvider;
   }
 
-  @Inject
-  public BlobStoreRule(final BlobStoreManager blobStoreManager) {
-    this.blobStoreManagerProvider = () -> blobStoreManager;
-  }
-
-  public BlobStore createFile(final String name) throws Exception {
+  public BlobStore createFile(String name) throws Exception {
     BlobStoreConfiguration config = blobStoreManagerProvider.get().newConfiguration();
     config.setName(name);
     config.setType(FileBlobStore.TYPE);
@@ -69,7 +59,7 @@ public class BlobStoreRule
     return blobStore;
   }
 
-  public BlobStore createGroup(final String name, final String... members) throws Exception {
+  public BlobStore createGroup(String name, String... members) throws Exception {
     BlobStoreConfiguration config = blobStoreManagerProvider.get().newConfiguration();
     config.setName(name);
     config.setType(BlobStoreGroup.TYPE);
@@ -80,7 +70,7 @@ public class BlobStoreRule
     return blobStore;
   }
 
-  public void cleanBlobstore(final String name) {
+  public void cleanBlobstore(String name) {
     BlobStore blobStore = blobStoreManagerProvider.get().get(name);
     blobStore.getBlobIdStream().forEach(blobId -> {
       blobStore.deleteHard(blobId);
@@ -88,7 +78,7 @@ public class BlobStoreRule
   }
 
   @Override
-  public void after() {
+  protected void after() {
     blobStoreGroupNames.forEach(blobStoreGroupName -> {
       try {
         blobStoreManagerProvider.get().delete(blobStoreGroupName);

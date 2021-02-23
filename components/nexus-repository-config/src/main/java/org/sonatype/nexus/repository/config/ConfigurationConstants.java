@@ -32,8 +32,4 @@ public interface ConfigurationConstants
   String STRICT_CONTENT_TYPE_VALIDATION = "strictContentTypeValidation";
 
   String GROUP_WRITE_MEMBER = "groupWriteMember";
-
-  String COMPONENT = "component";
-
-  String PROPRIETARY_COMPONENTS = "proprietaryComponents";
 }

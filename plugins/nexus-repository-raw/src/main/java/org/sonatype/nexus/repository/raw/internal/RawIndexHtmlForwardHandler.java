@@ -35,12 +35,9 @@ public class RawIndexHtmlForwardHandler
   @Nonnull
   @Override
   public Response handle(@Nonnull final Context context) throws Exception {
-    Response response = forward(context, context.getRequest().getPath() + ".");
+    Response response = super.handle(context);
     if (HttpStatus.NOT_FOUND == response.getStatus().getCode()) {
-      response = super.handle(context);
-      if (HttpStatus.NOT_FOUND == response.getStatus().getCode()) {
-        return context.proceed();
-      }
+      return context.proceed();
     }
 
     return response;

@@ -249,7 +249,7 @@ public class CleanupPolicyResource
     xo.getCriteria().setReleaseType(request.getCriteriaReleaseType());
     xo.getCriteria().setRegex(request.getCriteriaAssetRegex());
 
-    QueryOptions options = new QueryOptions(request.getFilter(), "name", "asc", 0, PREVIEW_ITEM_COUNT);
+    QueryOptions options = new QueryOptions(null, "name", "asc", 0, PREVIEW_ITEM_COUNT);
 
     PagedResponse<ComponentXO> response = cleanupPreviewHelper.get().getSearchResults(xo, repository, options);
 

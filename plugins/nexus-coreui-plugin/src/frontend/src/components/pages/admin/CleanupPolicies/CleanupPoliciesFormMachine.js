@@ -29,13 +29,15 @@ function isEdit({name}) {
 }
 
 function validateNameField(field) {
+  const validRegex = /^[a-zA-Z0-9\-]{1}[a-zA-Z0-9_\-\.]*$/;
+
   if (Utils.isBlank(field)) {
     return UIStrings.ERROR.FIELD_REQUIRED;
   }
   else if (field.length > 255) {
     return UIStrings.ERROR.MAX_CHARS(255);
   }
-  else if (!Utils.isName(field)) {
+  else if (!validRegex.test(field)) {
     return UIStrings.ERROR.INVALID_NAME_CHARS;
   }
 

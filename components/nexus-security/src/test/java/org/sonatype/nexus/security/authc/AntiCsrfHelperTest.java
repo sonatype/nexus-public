@@ -20,7 +20,6 @@ import org.sonatype.goodies.testsupport.TestSupport;
 
 import com.google.common.net.HttpHeaders;
 import org.apache.shiro.authz.UnauthorizedException;
-import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.ThreadContext;
@@ -44,9 +43,6 @@ public class AntiCsrfHelperTest
   private AntiCsrfHelper underTest;
 
   @Mock
-  SecurityManager securityManager;
-
-  @Mock
   HttpServletRequest httpServletRequest;
 
   @Mock
@@ -56,14 +52,12 @@ public class AntiCsrfHelperTest
   public void setup() {
     underTest = new AntiCsrfHelper(true);
 
-    ThreadContext.bind(securityManager);
     ThreadContext.bind(subject);
   }
 
   @After
   public void teardown() {
     ThreadContext.unbindSubject();
-    ThreadContext.unbindSecurityManager();
   }
 
   /*

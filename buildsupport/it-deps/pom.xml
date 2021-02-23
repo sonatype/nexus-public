@@ -19,7 +19,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>3.30.1-01</version>
+    <version>3.31.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-it-deps</artifactId>
@@ -61,6 +61,12 @@
       <groupId>org.ops4j.pax.swissbox</groupId>
       <artifactId>pax-swissbox-extender</artifactId>
       <version>1.8.3</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.geronimo.specs</groupId>
+      <artifactId>geronimo-atinject_1.0_spec</artifactId>
+      <version>1.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>

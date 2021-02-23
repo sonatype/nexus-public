@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>3.30.1-01</version>
+    <version>3.31.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-security</artifactId>
@@ -53,6 +53,14 @@
         <groupId>org.bouncycastle</groupId>
         <artifactId>bcpkix-jdk15to18</artifactId>
         <version>${bouncycastle.version}</version>
+      </dependency>
+
+      <!-- geronimo -->
+
+      <dependency>
+        <groupId>org.apache.geronimo.framework</groupId>
+        <artifactId>geronimo-crypto</artifactId>
+        <version>2.2.1</version>
       </dependency>
 
       <!-- shiro -->

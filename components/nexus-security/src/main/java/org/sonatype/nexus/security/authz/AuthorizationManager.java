@@ -85,8 +85,4 @@ public interface AuthorizationManager
    * Removes a Privilege in this AuthorizationManager.
    */
   void deletePrivilege(String privilegeId) throws NoSuchPrivilegeException;
-
-  default String getRealmName() {
-    return null;
-  }
 }

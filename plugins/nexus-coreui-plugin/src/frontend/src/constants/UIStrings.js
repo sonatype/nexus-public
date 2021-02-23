@@ -107,7 +107,6 @@ For more information, <a href="http://links.sonatype.com/products/nxrm3/docs/con
 
     MESSAGES: {
       DUPLICATE_ERROR: (name) => `Another content selector named ${name} already exists`,
-      NAME_TOO_LONG: 'The name of this content selector is too long, please use a shorter name',
       SAVE_ERROR: 'An error occurred while saving the content selector',
       DELETE_ERROR: (name) => `Content selector ${name} is in use and cannot be deleted`,
 
@@ -516,7 +515,6 @@ Once created, a cleanup policy must be assigned to a repository from \
       TITLE: 'Cleanup policy preview',
       REPOSITORY_LABEL: 'Preview Repository',
       REPOSITORY_DESCRIPTION: 'Select a repository to preview what might get cleaned up if this policy was applied',
-      INVALID_QUERY: 'The filter is invalid so results could not be retrieved.',
       BUTTON: 'Preview',
       RESULTS: 'Preview Results',
       NAME_COLUMN: 'Name',

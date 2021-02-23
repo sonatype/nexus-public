@@ -34,8 +34,6 @@ public class PreviewRequestXO
   @CleanupPolicyAssetNamePattern
   private String criteriaAssetRegex;
 
-  private String filter;
-
   public String getRepository() {
     return repository;
   }
@@ -74,13 +72,5 @@ public class PreviewRequestXO
 
   public void setCriteriaReleaseType(final CleanupPolicyReleaseType criteriaReleaseType) {
     this.criteriaReleaseType = criteriaReleaseType;
-  }
-
-  public String getFilter() {
-    return filter;
-  }
-
-  public void setFilter(final String filter) {
-    this.filter = filter;
   }
 }

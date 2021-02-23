@@ -43,7 +43,6 @@
     "file-loader": "=6.0.0",
     "jest": "=24.8.0",
     "jest-junit": "=7.0.0",
-    "jest-when": "=3.1.0",
     "mini-css-extract-plugin": "=0.7.0",
     "@sonatype/nexus-ui-plugin": "0.1.0",
     "node-sass": "=4.12.0",

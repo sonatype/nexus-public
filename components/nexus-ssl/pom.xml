@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-components</artifactId>
-    <version>3.30.1-01</version>
+    <version>3.31.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-ssl</artifactId>
@@ -36,6 +36,15 @@
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-crypto</artifactId>
+    </dependency>
+
+    <!--
+    TODO: Investigate update geronimo-crypto 3.0.1+
+    -->
+
+    <dependency>
+      <groupId>org.apache.geronimo.framework</groupId>
+      <artifactId>geronimo-crypto</artifactId>
     </dependency>
 
     <dependency>

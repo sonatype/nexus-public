@@ -23,12 +23,10 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.Response.Status;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.wonderland.AuthTicketService;
 import org.sonatype.nexus.rest.Resource;
-import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
 import org.sonatype.nexus.security.anonymous.AnonymousManager;
@@ -98,10 +96,6 @@ public class UserResource
       throws UserNotFoundException, NoSuchUserManagerException
   {
     User user = getCurrentUser();
-    if (!user.getUserId().equals(xo.getUserId())) {
-      throw new WebApplicationMessageException(Status.BAD_REQUEST,
-          "Mismatch between authenticated user and user to update.");
-    }
     user.setFirstName(xo.getFirstName());
     user.setLastName(xo.getLastName());
     user.setEmailAddress(xo.getEmail());
@@ -120,13 +114,12 @@ public class UserResource
   {
     if (authTickets.redeemTicket(xo.getAuthToken())) {
       if (isAnonymousUser(userId)) {
-        throw new WebApplicationMessageException(Status.BAD_REQUEST,
-            "Password cannot be changed for user " + userId + ", as it is configured as the Anonymous user");
+        throw new Exception("Password cannot be changed for user ${userId}, since is marked as the Anonymous user");
       }
       securitySystem.changePassword(userId, xo.getPassword());
     }
     else {
-      throw new WebApplicationMessageException(Status.FORBIDDEN, "Invalid authentication ticket");
+      throw new IllegalAccessException("Invalid authentication ticket");
     }
   }
 

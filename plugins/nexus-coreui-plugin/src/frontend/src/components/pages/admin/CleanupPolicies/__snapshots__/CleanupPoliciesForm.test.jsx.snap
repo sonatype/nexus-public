@@ -110,7 +110,7 @@ exports[`CleanupPoliciesForm renders the resolved data 1`] = `
                 id="name"
                 name="name"
                 type="text"
-                value="test"
+                value="test name"
               />
               <svg
                 aria-hidden="true"
@@ -735,11 +735,6 @@ exports[`CleanupPoliciesForm renders the resolved data 1`] = `
               value=""
             >
               Select a repository...
-            </option>
-            <option
-              value="maven-central"
-            >
-              maven-central
             </option>
           </select>
           <button

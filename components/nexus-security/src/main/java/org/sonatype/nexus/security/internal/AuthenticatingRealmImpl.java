@@ -40,24 +40,21 @@ import org.eclipse.sisu.Description;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static  org.sonatype.nexus.security.internal.DefaultRealmConstants.DEFAULT_REALM_NAME;
-import static  org.sonatype.nexus.security.internal.DefaultRealmConstants.DESCRIPTION;
-
 /**
  * Default {@link AuthenticatingRealm}.
  *
  * This realm ONLY handles authentication.
  */
 @Singleton
-@Named(DEFAULT_REALM_NAME)
-@Description(DESCRIPTION)
+@Named(AuthenticatingRealmImpl.NAME)
+@Description("Local Authenticating Realm")
 public class AuthenticatingRealmImpl
     extends AuthenticatingRealm
     implements Realm
 {
   private static final Logger logger = LoggerFactory.getLogger(AuthenticatingRealmImpl.class);
 
-  public static final String NAME = DEFAULT_REALM_NAME;
+  public static final String NAME = "NexusAuthenticatingRealm";
 
   private static final int MAX_LEGACY_PASSWORD_LENGTH = 40;
 
@@ -76,7 +73,7 @@ public class AuthenticatingRealmImpl
     PasswordMatcher passwordMatcher = new PasswordMatcher();
     passwordMatcher.setPasswordService(this.passwordService);
     setCredentialsMatcher(passwordMatcher);
-    setName(DEFAULT_REALM_NAME);
+    setName(NAME);
     setAuthenticationCachingEnabled(true);
   }
 
@@ -181,6 +178,6 @@ public class AuthenticatingRealmImpl
    * Exposed to support flushing authc cache for a specific user
    */
   protected void clearCache(final String userId) {
-    clearCache(new SimplePrincipalCollection(userId, DEFAULT_REALM_NAME));
+    clearCache(new SimplePrincipalCollection(userId, NAME));
   }
 }

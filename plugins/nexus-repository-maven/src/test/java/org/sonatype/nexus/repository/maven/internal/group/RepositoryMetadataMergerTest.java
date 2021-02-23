@@ -153,21 +153,6 @@ public class RepositoryMetadataMergerTest
   }
 
   @Test
-  public void metadataWithNullAndEmptyAreEqual() throws Exception {
-    final Metadata nullClassifier = v("org.foo", "some-project", "v-", "20150324121700", 1);
-    final Metadata emptyClassifier = v("org.foo", "some-project", "v-", "20150324121700", 1);
-    final Metadata spaceClassifier = v("org.foo", "some-project", "v-", "20150324121700", 1);
-
-    nullClassifier.getVersioning().getSnapshotVersions().get(0).setClassifier(null);
-    emptyClassifier.getVersioning().getSnapshotVersions().get(0).setClassifier("");
-    spaceClassifier.getVersioning().getSnapshotVersions().get(0).setClassifier("   ");
-
-    assertThat(merger.metadataEquals(nullClassifier, emptyClassifier), is(true));
-    assertThat(merger.metadataEquals(emptyClassifier, spaceClassifier), is(true));
-    assertThat(merger.metadataEquals(spaceClassifier, nullClassifier), is(true));
-  }
-
-  @Test
   public void groupLevelMd() throws Exception {
     final Metadata m1 = g("foo");
     final Metadata m2 = g("foo", "bar");

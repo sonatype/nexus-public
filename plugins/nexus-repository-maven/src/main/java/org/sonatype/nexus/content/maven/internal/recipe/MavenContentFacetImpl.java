@@ -15,7 +15,6 @@ package org.sonatype.nexus.content.maven.internal.recipe;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -381,15 +380,12 @@ public class MavenContentFacetImpl
   public int deleteComponents(final int[] componentIds) {
     ContentFacetSupport contentFacet = (ContentFacetSupport) facet(ContentFacet.class);
     ComponentStore<?> componentStore = contentFacet.stores().componentStore;
-    if (!ProxyType.NAME.equals(repository().getType().getValue())) {
-      Set<List<String>> gavs = collectGavs(componentIds);
-      int deletedCount = componentStore.purge(contentFacet.contentRepositoryId(), componentIds);
-      gavs.forEach(gav -> deleteMetadataOrFlagForRebuild(gav.get(0), gav.get(1), gav.get(2)));
-      return deletedCount;
-    }
-    else {
-      return componentStore.purge(contentFacet.contentRepositoryId(), componentIds);
-    }
+    Set<List<String>> gavs = collectGavs(componentIds);
+
+    int deletedCount = componentStore.purge(contentFacet.contentRepositoryId(), componentIds);
+    gavs.forEach(gav -> deleteMetadataOrFlagForRebuild(gav.get(0), gav.get(1), gav.get(2)));
+
+    return deletedCount;
   }
 
   private Set<List<String>> collectGavs(final int[] componentIds) {
@@ -413,11 +409,8 @@ public class MavenContentFacetImpl
 
   @Override
   public Set<String> deleteMetadataOrFlagForRebuild(final Component component) {
-    if (!ProxyType.NAME.equals(repository().getType().getValue())) {
-      String[] gav = collectGabv(component);
-      return deleteMetadataOrFlagForRebuild(gav[0], gav[1], gav[2]);
-    }
-    return Collections.emptySet();
+    String[] gav = collectGabv(component);
+    return deleteMetadataOrFlagForRebuild(gav[0], gav[1], gav[2]);
   }
 
   /**

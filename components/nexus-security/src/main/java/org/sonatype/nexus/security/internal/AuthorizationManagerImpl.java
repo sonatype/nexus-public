@@ -44,19 +44,17 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static  org.sonatype.nexus.security.internal.DefaultRealmConstants.DEFAULT_USER_SOURCE;
-import static  org.sonatype.nexus.security.internal.DefaultRealmConstants.DEFAULT_REALM_NAME;
 
 /**
  * Default {@link AuthorizationManager}.
  */
-@Named(DEFAULT_USER_SOURCE)
+@Named("default")
 @Singleton
 public class AuthorizationManagerImpl
     extends ComponentSupport
     implements AuthorizationManager
 {
-  public static final String SOURCE = DEFAULT_USER_SOURCE;
+  public static final String SOURCE = "default";
 
   private final SecurityConfigurationManager configuration;
 
@@ -76,12 +74,7 @@ public class AuthorizationManagerImpl
 
   @Override
   public String getSource() {
-    return DEFAULT_USER_SOURCE;
-  }
-
-  @Override
-  public String getRealmName() {
-    return DEFAULT_REALM_NAME;
+    return SOURCE;
   }
 
   private Role convert(final CRole source) {
@@ -89,7 +82,7 @@ public class AuthorizationManagerImpl
     target.setRoleId(source.getId());
     target.setVersion(source.getVersion());
     target.setName(source.getName());
-    target.setSource(DEFAULT_USER_SOURCE);
+    target.setSource(SOURCE);
     target.setDescription(source.getDescription());
     target.setReadOnly(source.isReadOnly());
     target.setPrivileges(Sets.newHashSet(source.getPrivileges()));

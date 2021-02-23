@@ -85,8 +85,6 @@ Ext.define('NX.ext.form.field.ItemSelector', {
       up: 'x-fa fa-angle-up',
       add: 'x-fa fa-angle-right',
       remove: 'x-fa fa-angle-left',
-      addAll: 'x-fa fa-angle-double-right',
-      removeAll: 'x-fa fa-angle-double-left',
       down: 'x-fa fa-angle-down',
       bottom: 'x-fa fa-angle-double-down'
     };
@@ -160,20 +158,6 @@ Ext.define('NX.ext.form.field.ItemSelector', {
       },
       tbar: tbar
     });
-  },
-
-  onAddAllBtnClick:function() {
-    var me = this, items = me.fromField.getStore().getData().items;
-    while (items.length > 0) {
-      me.moveRec(true, items[0])
-    }
-  },
-
-  onRemoveAllBtnClick:function() {
-    var me = this, items = me.toField.getStore().getData().items;
-    while (items.length > 0) {
-      me.moveRec(false, items[0])
-    }
   },
 
   /**

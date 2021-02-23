@@ -47,15 +47,9 @@ public class AptApiRepositoryAdapter
 
     switch (repository.getType().toString()) {
       case HostedType.NAME:
-        return new AptHostedApiRepository(
-            name,
-            url,
-            online,
-            getHostedStorageAttributes(repository),
-            getCleanupPolicyAttributes(repository),
-            createAptHostedRepositoriesAttributes(repository),
-            createAptSigningRepositoriesAttributes(repository),
-            getComponentAttributes(repository));
+        return new AptHostedApiRepository(name, url, online, getHostedStorageAttributes(repository),
+            getCleanupPolicyAttributes(repository), createAptHostedRepositoriesAttributes(repository),
+            createAptSigningRepositoriesAttributes(repository));
       case ProxyType.NAME:
         return new AptProxyApiRepository(name, url, online, getHostedStorageAttributes(repository),
             getCleanupPolicyAttributes(repository), createAptProxyRepositoriesAttributes(repository),

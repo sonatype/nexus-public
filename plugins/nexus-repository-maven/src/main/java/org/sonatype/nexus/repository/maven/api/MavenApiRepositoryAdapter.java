@@ -50,14 +50,8 @@ public class MavenApiRepositoryAdapter
 
     switch (repository.getType().toString()) {
       case HostedType.NAME:
-        return new MavenHostedApiRepository(
-            name,
-            url,
-            online,
-            getHostedStorageAttributes(repository),
-            getCleanupPolicyAttributes(repository),
-            createMavenAttributes(repository),
-            getComponentAttributes(repository));
+        return new MavenHostedApiRepository(name, url, online, getHostedStorageAttributes(repository),
+            getCleanupPolicyAttributes(repository), createMavenAttributes(repository));
       case ProxyType.NAME:
         return new MavenProxyApiRepository(name, url, online, getHostedStorageAttributes(repository),
             getCleanupPolicyAttributes(repository), getProxyAttributes(repository),

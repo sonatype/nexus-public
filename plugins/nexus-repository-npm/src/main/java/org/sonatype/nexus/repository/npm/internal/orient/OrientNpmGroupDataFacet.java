@@ -307,26 +307,6 @@ public class OrientNpmGroupDataFacet
                                                             final Context context,
                                                             final MissingAssetBlobException e) throws IOException
   {
-    Content content;
-    if (packageRootCooperation == null) {
-      // no cooperation, just handle the missing blob
-      content = doBuildMergedPackageRootOnMissingBlob(responses, context, e);
-    }
-    else {
-      // cooperate on the handling of the missing blob
-      content = packageRootCooperation.cooperate(getRequestPath(context) + ":handleMissingBlob",
-          failover ->  doBuildMergedPackageRootOnMissingBlob(responses, context, e));
-    }
-
-    // it should never be null, but we are being kind and return an error stream.
-    return nonNull(content) ? content.openInputStream() :
-        errorInputStream("Unable to retrieve merged package root on recovery for missing blob");
-  }
-
-  protected Content doBuildMergedPackageRootOnMissingBlob(final Map<Repository, Response> responses,
-                                                              final Context context,
-                                                              final MissingAssetBlobException e) throws IOException
-  {
     if (log.isTraceEnabled()) {
       log.info("Missing blob {} containing cached metadata {}, deleting asset and triggering rebuild.",
           e.getBlobRef(), e.getAsset(), e);
@@ -338,7 +318,10 @@ public class OrientNpmGroupDataFacet
 
     cleanupPackageRootAssetOnlyFromCache(e.getAsset());
 
-    return buildMergedPackageRoot(responses, context);
+    Content content = buildMergedPackageRoot(responses, context);
+    // it should never be null, but we are being kind and return an error stream.
+    return nonNull(content) ? content.openInputStream() :
+        errorInputStream("Unable to retrieve merged package root on recovery for missing blob");
   }
 
   @Transactional

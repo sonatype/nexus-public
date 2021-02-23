@@ -49,8 +49,7 @@ public class NpmRedirectStrategy
     boolean isRedirected = isRedirected(httpRequest, httpResponse, httpContext);
     if (isRedirected) {
       URI locationURI = createLocationURI(httpResponse.getFirstHeader(HttpHeaders.LOCATION).getValue());
-      String query = locationURI.getQuery();
-      if (query != null && query.contains(AMAZON_CREDENTIAL_PARAM)) {
+      if (locationURI.getQuery().contains(AMAZON_CREDENTIAL_PARAM)) {
         httpRequest.removeHeaders(HttpHeaders.AUTHORIZATION);
       }
     }

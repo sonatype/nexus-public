@@ -59,8 +59,8 @@ Ext.define('NX.coreui.view.clm.ClmSettingsTestResults', {
       xtype: 'grid',
       emptyText: NX.I18n.get('Clm_SettingsTestResults_EmptyText'),
       columns: [
-        { header: NX.I18n.get('Clm_SettingsTestResults_Id_Header'), dataIndex: 'id', flex: 1, renderer: Ext.htmlEncode },
-        { header: NX.I18n.get('Clm_SettingsTestResults_Name_Header'), dataIndex: 'name', flex: 1, renderer: Ext.htmlEncode }
+        { header: NX.I18n.get('Clm_SettingsTestResults_Id_Header'), dataIndex: 'id', flex: 1 },
+        { header: NX.I18n.get('Clm_SettingsTestResults_Name_Header'), dataIndex: 'name', flex: 1 }
       ],
       store: Ext.create('Ext.data.JsonStore', {
         fields: ['id', 'name'],

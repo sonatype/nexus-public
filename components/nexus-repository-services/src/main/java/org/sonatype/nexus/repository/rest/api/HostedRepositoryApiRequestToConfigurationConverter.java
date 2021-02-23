@@ -20,8 +20,6 @@ import org.sonatype.nexus.repository.rest.api.model.HostedRepositoryApiRequest;
 import com.google.common.collect.Sets;
 
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.BLOB_STORE_NAME;
-import static org.sonatype.nexus.repository.config.ConfigurationConstants.COMPONENT;
-import static org.sonatype.nexus.repository.config.ConfigurationConstants.PROPRIETARY_COMPONENTS;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STRICT_CONTENT_TYPE_VALIDATION;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.WRITE_POLICY;
@@ -42,12 +40,6 @@ public class HostedRepositoryApiRequestToConfigurationConverter<T extends Hosted
     configuration.attributes(STORAGE)
         .set(STRICT_CONTENT_TYPE_VALIDATION, request.getStorage().getStrictContentTypeValidation());
     configuration.attributes(STORAGE).set(WRITE_POLICY, request.getStorage().getWritePolicy());
-
-    if (request.getComponent() != null) {
-      configuration.attributes(COMPONENT)
-          .set(PROPRIETARY_COMPONENTS, request.getComponent().getProprietaryComponents());
-    }
-
     maybeAddDataStoreName(configuration);
 
     if (request.getCleanup() != null) {

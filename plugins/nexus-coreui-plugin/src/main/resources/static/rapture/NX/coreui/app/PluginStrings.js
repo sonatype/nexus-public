@@ -442,7 +442,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_StorageFacetHosted_Deployment_DisableLatestItem: 'Allow redeploy only on \'latest\' tag',
     Repository_Facet_StorageFacetHosted_Deployment_DisableLatestItemHelpText: 'Allow redeploying the \'latest\' tag but defer to the Deployment Policy for all other tags',
     Repository_Facet_StorageFacetHosted_Deployment_ReadOnlyItem: 'Read-only',
-    Repository_Facet_StorageFacetHosted_Proprietary_Components_HelpText: 'Components in this repository count as proprietary for namespace conflict attacks (requires Sonatype Nexus Firewall)',
+    Repository_Facet_StorageFacetHosted_Proprietary_Components_HelpText: 'Components in this repository count as proprietary for dependency confusion attacks (requires Sonatype Firewall)',
     Repository_Facet_StorageFacetHosted_Proprietary_Components_FieldLabel: 'Proprietary Components',
     Repository_Facet_ProxyFacet_Remote_FieldLabel: 'Remote storage',
     Repository_Facet_ProxyFacet_Remote_HelpText: 'Location of the remote repository being proxied',
@@ -667,15 +667,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SelectorPreviewWindow_EmptyText_Filter: 'No assets matched "$filter"',
     SelectorPreviewWindow_Name_Column: 'Name',
     SelectorPreviewWindow_Preview_Button: 'Preview',
-
-    // Admin -> Repository -> Proprietary Repositories
-    ProprietaryRepositories_Text: 'Proprietary Repositories',
-    ProprietaryRepositories_Field_Label: 'Proprietary Repositories Configuration',
-    ProprietaryRepositories_Description: 'Manage the set of hosted repositories that contain proprietary components',
-    ProprietaryRepositories_Update_Error: 'You do not have permission to proprietary repositories',
-    ProprietaryRepositories_Update_Success: 'Proprietary repositories settings $action',
-    ProprietaryRepositories_Available_FromTitle: 'Generic Hosted Repositories',
-    ProprietaryRepositories_Available_ToTitle: 'Proprietary Hosted Repositories',
 
     // Admin -> Security
     FeatureGroups_Security_Title: 'Security',

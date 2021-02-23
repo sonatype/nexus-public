@@ -13,11 +13,9 @@
 import React from 'react';
 import {fireEvent, wait, waitForElement, waitForElementToBeRemoved} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
-import {when} from 'jest-when';
-
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import axios from 'axios';
-import {ExtJS, Utils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS} from '@sonatype/nexus-ui-plugin';
 
 import CleanupPoliciesForm from './CleanupPoliciesForm';
 
@@ -31,40 +29,39 @@ jest.mock('axios', () => ({
   delete: jest.fn()
 }));
 
-jest.spyOn(ExtJS, 'requestConfirmation').mockImplementation(jest.fn());
-jest.spyOn(ExtJS, 'showErrorMessage').mockImplementation(jest.fn());
-jest.spyOn(ExtJS, 'showSuccessMessage').mockImplementation(jest.fn());
-
-jest.spyOn(Utils, 'buildFormMachine').mockImplementation((args) => {
-  const machine = jest.requireActual('@sonatype/nexus-ui-plugin').Utils.buildFormMachine(args);
-  // Disable the default logSaveSuccess etc methods to avoid extjs calls
-  return machine.withConfig({
-    actions: {
-      logSaveSuccess: jest.fn(),
-      logSaveError: jest.fn(),
-      logLoadError: jest.fn()
-    }
-  })
-});
-
-const EDIT_URL = (itemId) => `/service/rest/internal/cleanup-policies/${itemId}`;
-const FORMATS_URL = '/service/rest/internal/cleanup-policies/criteria/formats';
-const REPOSITORIES_URL = '/service/rest/internal/ui/repositories';
-const PREVIEW_URL = '/service/rest/internal/cleanup-policies/preview/components';
+jest.mock('@sonatype/nexus-ui-plugin', () => ({
+  ...jest.requireActual('@sonatype/nexus-ui-plugin'),
+  ExtJS: {
+    requestConfirmation: jest.fn(),
+    showErrorMessage: jest.fn()
+  },
+  Utils: {
+    buildFormMachine: function(args) {
+      const machine = jest.requireActual('@sonatype/nexus-ui-plugin').Utils.buildFormMachine(args);
+      return machine.withConfig({
+        actions: {
+          logSaveSuccess: jest.fn(),
+          logSaveError: jest.fn(),
+          logLoadError: jest.fn()
+        }
+      })
+    },
+    buildListMachine: function(args) {
+      return jest.requireActual('@sonatype/nexus-ui-plugin').Utils.buildListMachine(args);
+    },
+    isInvalid: jest.requireActual('@sonatype/nexus-ui-plugin').Utils.isInvalid,
+    isBlank: jest.requireActual('@sonatype/nexus-ui-plugin').Utils.isBlank,
+    notBlank: jest.requireActual('@sonatype/nexus-ui-plugin').Utils.notBlank,
+    fieldProps: jest.requireActual('@sonatype/nexus-ui-plugin').Utils.fieldProps,
+    saveTooltip: jest.requireActual('@sonatype/nexus-ui-plugin').Utils.saveTooltip,
+    nextSortDirection: jest.requireActual('@sonatype/nexus-ui-plugin').Utils.nextSortDirection,
+    getSortDirection: jest.requireActual('@sonatype/nexus-ui-plugin').Utils.getSortDirection
+  }
+}));
 
 describe('CleanupPoliciesForm', function() {
   const CONFIRM = Promise.resolve();
   const onDone = jest.fn();
-
-  const EDITABLE_ITEM = {
-    'name' : 'test',
-    'format' : 'testformat',
-    'notes' : 'test notes',
-    'criteriaLastBlobUpdated' : 7,
-    'criteriaLastDownloaded' : 8,
-    'criteriaReleaseType' : 'RELEASES',
-    'criteriaAssetRegex' : '.*'
-  };
 
   function renderEditView(itemId) {
     return renderView(<CleanupPoliciesForm itemId={itemId} onDone={onDone}/>);
@@ -75,7 +72,7 @@ describe('CleanupPoliciesForm', function() {
   }
 
   function renderView(view) {
-    return TestUtils.render(view, ({queryByLabelText, queryByText, queryByPlaceholderText, loadingMask}) => ({
+    return TestUtils.render(view, ({queryByLabelText, queryByText}) => ({
       name: () => queryByLabelText(UIStrings.CLEANUP_POLICIES.NAME_LABEL),
       format: () => queryByLabelText(UIStrings.CLEANUP_POLICIES.FORMAT_LABEL),
       notes: () => queryByLabelText(UIStrings.CLEANUP_POLICIES.NOTES_LABEL),
@@ -85,33 +82,9 @@ describe('CleanupPoliciesForm', function() {
       criteriaAssetRegex: () => queryByLabelText(UIStrings.CLEANUP_POLICIES.ASSET_NAME_LABEL),
       saveButton: () => queryByText(UIStrings.SETTINGS.SAVE_BUTTON_LABEL),
       cancelButton: () => queryByText(UIStrings.SETTINGS.CANCEL_BUTTON_LABEL),
-      deleteButton: () => queryByText(UIStrings.SETTINGS.DELETE_BUTTON_LABEL),
-      previewButton: () => queryByText(UIStrings.CLEANUP_POLICIES.PREVIEW.BUTTON),
-      previewRepositories: () => queryByLabelText(UIStrings.CLEANUP_POLICIES.PREVIEW.REPOSITORY_LABEL),
-      previewFilterText: () => queryByPlaceholderText(UIStrings.CLEANUP_POLICIES.FILTER_PLACEHOLDER)
+      deleteButton: () => queryByText(UIStrings.SETTINGS.DELETE_BUTTON_LABEL)
     }));
   }
-
-  beforeEach(() => {
-    when(axios.get).calledWith(REPOSITORIES_URL).mockResolvedValue({
-      data:  [{
-        'id': 'maven-central',
-        'name': 'maven-central'
-      }]
-    });
-
-    when(axios.get).calledWith(EDIT_URL(EDITABLE_ITEM.name)).mockResolvedValue({
-      data: EDITABLE_ITEM
-    });
-
-    when(axios.get).calledWith(FORMATS_URL).mockResolvedValue({
-      data: [{
-        'id' : 'testformat',
-        'name' : 'Test Format',
-        'availableCriteria' : ['lastBlobUpdated', 'lastDownloaded', 'isPrerelease', 'regex']
-      }]
-    });
-  });
 
   it('renders a loading spinner', async function() {
     axios.get.mockImplementation(() => new Promise(() => {}));
@@ -124,6 +97,33 @@ describe('CleanupPoliciesForm', function() {
   });
 
   it('renders the resolved data', async function() {
+    const itemId = 'test';
+
+    axios.get.mockImplementation((url) => {
+      if (url === `/service/rest/internal/cleanup-policies/${itemId}`) {
+        return Promise.resolve({
+          data: {
+            'name' : 'test name',
+            'format' : 'testformat',
+            'notes' : 'test notes',
+            'criteriaLastBlobUpdated' : 7,
+            'criteriaLastDownloaded' : 8,
+            'criteriaReleaseType' : 'RELEASES',
+            'criteriaAssetRegex' : '.*'
+          }
+        });
+      }
+      else if (url === '/service/rest/internal/cleanup-policies/criteria/formats') {
+        return Promise.resolve({
+          data: [{
+            'id' : 'testformat',
+            'name' : 'Test Format',
+            'availableCriteria' : ['lastBlobUpdated', 'lastDownloaded', 'isPrerelease', 'regex']
+          }]
+        });
+      }
+    });
+
     const {container,
       loadingMask,
       name,
@@ -133,11 +133,11 @@ describe('CleanupPoliciesForm', function() {
       criteriaLastDownloaded,
       criteriaReleaseType,
       criteriaAssetRegex,
-      saveButton} = renderEditView(EDITABLE_ITEM.name);
+      saveButton} = renderEditView(itemId);
 
     await waitForElementToBeRemoved(loadingMask);
 
-    expect(name()).toHaveValue('test');
+    expect(name()).toHaveValue('test name');
     expect(format()).toHaveValue('testformat');
     expect(notes()).toHaveValue('test notes');
     expect(criteriaLastBlobUpdated()).toHaveValue('7');
@@ -159,6 +159,21 @@ describe('CleanupPoliciesForm', function() {
   });
 
   it('requires the name and format fields when creating a new cleanup policy', async function() {
+    axios.get.mockImplementation((url) => {
+      if (url === '/service/rest/internal/cleanup-policies') {
+        return Promise.resolve({data: []});
+      }
+      else if (url === '/service/rest/internal/cleanup-policies/criteria/formats') {
+        return Promise.resolve({
+          data: [{
+            'id' : '*',
+            'name' : 'All Formats',
+            'availableCriteria' : ['lastBlobUpdated', 'lastDownloaded']
+          }]
+        });
+      }
+    });
+
     const {loadingMask, name, format, saveButton} = renderCreateView();
 
     await waitForElementToBeRemoved(loadingMask);
@@ -167,7 +182,7 @@ describe('CleanupPoliciesForm', function() {
     await TestUtils.changeField(name, 'name');
     expect(saveButton()).toHaveClass('disabled');
 
-    await TestUtils.changeField(format, 'testformat')
+    await TestUtils.changeField(format, '*')
     expect(saveButton()).not.toHaveClass('disabled');
   });
 
@@ -183,15 +198,31 @@ describe('CleanupPoliciesForm', function() {
 
   it('requests confirmation when delete is requested', async function() {
     const itemId = 'test';
-    when(axios.get).calledWith(EDIT_URL(itemId)).mockResolvedValue({
-      data: {
-        'name' : 'test',
-        'format' : 'testformat',
-        'notes' : 'test notes',
-        'criteriaLastBlobUpdated' : '7',
-        'criteriaLastDownloaded' : '8',
-        'criteriaReleaseType' : 'RELEASES',
-        'criteriaAssetRegex' : '.*'
+    axios.get.mockImplementation((url) => {
+      if (url === '/service/rest/internal/cleanup-policies') {
+        return Promise.resolve({data: []});
+      }
+      else if (url === `/service/rest/internal/cleanup-policies/${itemId}`) {
+        return Promise.resolve({
+          data: {
+            'name' : 'test',
+            'format' : 'testformat',
+            'notes' : 'test notes',
+            'criteriaLastBlobUpdated' : '7',
+            'criteriaLastDownloaded' : '8',
+            'criteriaReleaseType' : 'RELEASES',
+            'criteriaAssetRegex' : '.*'
+          }
+        });
+      }
+      else if (url === '/service/rest/internal/cleanup-policies/criteria/formats') {
+        return Promise.resolve({
+          data: [{
+            'id' : 'testformat',
+            'name' : 'Test Format',
+            'availableCriteria' : ['lastBlobUpdated', 'lastDownloaded', 'isPrerelease', 'regex']
+          }]
+        });
       }
     });
 
@@ -206,12 +237,24 @@ describe('CleanupPoliciesForm', function() {
     ExtJS.requestConfirmation.mockReturnValue(CONFIRM);
     fireEvent.click(deleteButton());
 
-    await wait(() => expect(axios.delete).toBeCalledWith(EDIT_URL(itemId)));
+    await wait(() => expect(axios.delete).toBeCalledWith(`/service/rest/internal/cleanup-policies/${itemId}`));
     expect(onDone).toBeCalled();
   });
 
   it('saves', async function() {
     axios.post.mockReturnValue(Promise.resolve());
+
+    axios.get.mockImplementation((url) => {
+      if (url === '/service/rest/internal/cleanup-policies/criteria/formats') {
+        return Promise.resolve({
+          data: [{
+            'id' : 'testformat',
+            'name' : 'Test Format',
+            'availableCriteria' : ['lastBlobUpdated', 'lastDownloaded', 'isPrerelease', 'regex']
+          }]
+        });
+      }
+    });
 
     const {loadingMask, name, format, notes, saveButton} = renderCreateView();
 
@@ -233,63 +276,5 @@ describe('CleanupPoliciesForm', function() {
         {name: 'test', format: 'testformat', notes: 'notes'}
     ));
     expect(window.dirty).toEqual([]);
-  });
-
-  describe('preview', function() {
-    it('submits the filter text to the backend', async function() {
-      const {loadingMask, previewButton, previewFilterText, previewRepositories, queryByText} = renderEditView(EDITABLE_ITEM.name);
-
-      await waitForElementToBeRemoved(loadingMask);
-
-      await TestUtils.changeField(previewRepositories, 'maven-central');
-
-      when(axios.post).calledWith(PREVIEW_URL, {
-        criteriaLastBlobUpdated: EDITABLE_ITEM.criteriaLastBlobUpdated,
-        criteriaLastDownloaded: EDITABLE_ITEM.criteriaLastDownloaded,
-        criteriaReleaseType: EDITABLE_ITEM.criteriaReleaseType,
-        criteriaAssetRegex: EDITABLE_ITEM.criteriaAssetRegex,
-        filter: '',
-        repository: 'maven-central'
-      }).mockResolvedValueOnce({
-        data: {
-          total: 1,
-          results: [{
-            id: null,
-            repository: 'maven-central',
-            format: 'maven2',
-            group: 'org.apache.maven',
-            name: 'maven-aether-provider',
-            version: '3.0',
-            assets: null
-          }]
-        }
-      });
-
-      fireEvent.click(previewButton());
-
-      await waitForElementToBeRemoved(loadingMask);
-
-      expect(queryByText('maven-aether-provider')).toBeInTheDocument();
-
-      when(axios.post).calledWith(PREVIEW_URL, {
-        criteriaLastBlobUpdated: EDITABLE_ITEM.criteriaLastBlobUpdated,
-        criteriaLastDownloaded: EDITABLE_ITEM.criteriaLastDownloaded,
-        criteriaReleaseType: EDITABLE_ITEM.criteriaReleaseType,
-        criteriaAssetRegex: EDITABLE_ITEM.criteriaAssetRegex,
-        filter: 'test',
-        repository: 'maven-central'
-      }).mockResolvedValueOnce({
-        data: {
-          total: 0,
-          results: []
-        }
-      });
-
-      await TestUtils.changeField(previewFilterText, 'test');
-
-      await waitForElementToBeRemoved(() => queryByText('maven-aether-provider'));
-
-      expect(queryByText('No assets in repository matched the criteria')).toBeInTheDocument();
-    });
   });
 });

@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.npm.rest;
 
 import org.sonatype.nexus.repository.npm.internal.NpmFormat;
 import org.sonatype.nexus.repository.rest.api.model.CleanupPolicyAttributes;
-import org.sonatype.nexus.repository.rest.api.model.ComponentAttributes;
 import org.sonatype.nexus.repository.rest.api.model.HostedRepositoryApiRequest;
 import org.sonatype.nexus.repository.rest.api.model.HostedStorageAttributes;
 
@@ -34,10 +33,9 @@ public class NpmHostedRepositoryApiRequest
       @JsonProperty("name") final String name,
       @JsonProperty("online") final Boolean online,
       @JsonProperty("storage") final HostedStorageAttributes storage,
-      @JsonProperty("cleanup") final CleanupPolicyAttributes cleanup,
-      @JsonProperty("component") final ComponentAttributes componentAttributes
+      @JsonProperty("cleanup") final CleanupPolicyAttributes cleanup
   )
   {
-    super(name, NpmFormat.NAME, online, storage, cleanup, componentAttributes);
+    super(name, NpmFormat.NAME, online, storage, cleanup);
   }
 }

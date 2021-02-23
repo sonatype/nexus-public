@@ -12,13 +12,9 @@
  */
 package org.sonatype.nexus.common.template;
 
-import java.util.stream.Stream;
-
 import org.sonatype.nexus.common.encoding.EncodingUtil;
 
 import org.apache.commons.lang.StringEscapeUtils;
-
-import static java.util.stream.Collectors.joining;
 
 /**
  * Helper to escape values.
@@ -74,10 +70,6 @@ public class EscapeHelper
 
   public String uri(final Object value) {
     return uri(String.valueOf(value));
-  }
-
-  public String uriSegments(final String value) {
-    return Stream.of(value.split("/")).map(this::uri).collect(joining("/"));
   }
 
   /**

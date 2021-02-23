@@ -80,13 +80,6 @@ export default class Utils {
   }
 
   /**
-   * Match the regex from components/nexus-validation/src/main/java/org/sonatype/nexus/validation/constraint/NamePatternConstants.java
-   */
-  static isName(name) {
-    return name.match(/^[a-zA-Z0-9\-]{1}[a-zA-Z0-9_\-\.]*$/);
-  }
-
-  /**
    * Builds a new xstate machine used to handle forms.
    * Typically the validation action, fetchData service, and saveData service should be implemented in withConfig.
    *
@@ -444,7 +437,7 @@ export default class Utils {
     }
     return {
       name,
-      value: String(data && data[name] || defaultValue),
+      value: (data && data[name]) || defaultValue,
       isPristine: name in isTouched ? !isTouched[name] : true,
       validatable: true,
       validationErrors: errors

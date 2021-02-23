@@ -16,7 +16,6 @@ import javax.validation.constraints.NotNull;
 
 import org.sonatype.nexus.repository.apt.internal.AptFormat;
 import org.sonatype.nexus.repository.rest.api.model.CleanupPolicyAttributes;
-import org.sonatype.nexus.repository.rest.api.model.ComponentAttributes;
 import org.sonatype.nexus.repository.rest.api.model.HostedStorageAttributes;
 import org.sonatype.nexus.repository.rest.api.model.SimpleApiHostedRepository;
 
@@ -47,10 +46,9 @@ public class AptHostedApiRepository
       @JsonProperty("storage") final HostedStorageAttributes storage,
       @JsonProperty("cleanup") final CleanupPolicyAttributes cleanup,
       @JsonProperty("apt") final AptHostedRepositoriesAttributes apt,
-      @JsonProperty("aptSigning") final AptSigningRepositoriesAttributes aptSigning,
-      @JsonProperty("component") final ComponentAttributes component)
+      @JsonProperty("aptSigning") final AptSigningRepositoriesAttributes aptSigning)
   {
-    super(name, AptFormat.NAME, url, online, storage, cleanup, component);
+    super(name, AptFormat.NAME, url, online, storage, cleanup);
     this.apt = apt;
     this.aptSigning = aptSigning;
   }

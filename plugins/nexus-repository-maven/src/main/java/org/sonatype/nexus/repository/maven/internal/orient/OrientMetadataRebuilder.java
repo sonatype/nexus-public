@@ -37,8 +37,6 @@ import org.sonatype.nexus.repository.maven.internal.Attributes;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.maven.internal.hosted.metadata.AbstractMetadataRebuilder;
 import org.sonatype.nexus.repository.maven.internal.hosted.metadata.AbstractMetadataUpdater;
-import org.sonatype.nexus.repository.maven.internal.hosted.metadata.Maven2Metadata;
-import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataBuilder;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
@@ -53,23 +51,17 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.hash.HashCode;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.apache.commons.lang3.StringUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
-import static java.util.Arrays.stream;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.StreamSupport.stream;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.P_PACKAGING;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.P_POM_NAME;
 import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.metadataPath;
-import static org.sonatype.nexus.repository.maven.internal.orient.MavenFacetUtils.findAsset;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_BUCKET;
@@ -126,22 +118,8 @@ public class OrientMetadataRebuilder
       @Nullable final String baseVersion)
   {
     checkNotNull(repository);
-    return new OrientWorker(repository, update, rebuildChecksums, groupId, artifactId, baseVersion, bufferSize,
+    return new Worker(repository, update, rebuildChecksums, groupId, artifactId, baseVersion, bufferSize,
         timeoutSeconds, new OrientMetadataUpdater(update, repository)).rebuildMetadata();
-  }
-
-  @Override
-  public boolean refreshInTransaction(
-      final Repository repository,
-      final boolean update,
-      final boolean rebuildChecksums,
-      @Nullable final String groupId,
-      @Nullable final String artifactId,
-      @Nullable final String baseVersion)
-  {
-    checkNotNull(repository);
-    return new OrientWorker(repository, update, rebuildChecksums, groupId, artifactId, baseVersion, bufferSize,
-        timeoutSeconds, new OrientMetadataUpdater(update, repository)).refreshMetadata();
   }
 
   @Override
@@ -188,8 +166,8 @@ public class OrientMetadataRebuilder
   /**
    * Inner class that encapsulates the work, as metadata builder is stateful.
    */
-  protected static class OrientWorker
-      extends Worker
+  protected static class Worker
+      extends AbstractMetadataRebuilder.Worker
   {
     private final Map<String, Object> sqlParams;
 
@@ -197,7 +175,7 @@ public class OrientMetadataRebuilder
 
     private final OrientMavenFacet mavenFacet;
 
-    public OrientWorker(
+    public Worker(
         final Repository repository, // NOSONAR
         final boolean update,
         final boolean rebuildChecksums,
@@ -314,65 +292,10 @@ public class OrientMetadataRebuilder
       metadataBuilder.onEnterArtifactId(artifactId);
       for (final String baseVersion : baseVersions) {
         checkCancellation();
-        TransactionalStoreBlob.operation
-            .run(() -> this.rebuildBaseVersion(groupId, artifactId, baseVersion, tx, failures));
-      }
-      Maven2Metadata artifactMetadata = metadataBuilder.onExitArtifactId();
-      processMetadata(metadataPath(groupId, artifactId, null), artifactMetadata, failures);
-    }
+        metadataBuilder.onEnterBaseVersion(baseVersion);
 
-    @Override
-    protected boolean refreshArtifact(
-        final String groupId,
-        final String artifactId,
-        final Set<String> baseVersions,
-        final MultipleFailures failures)
-    {
-      final StorageTx tx = UnitOfWork.currentTx();
-
-      MavenPath metadataPath = metadataPath(groupId, artifactId, null);
-
-      metadataBuilder.onEnterArtifactId(artifactId);
-      boolean rebuiltAtLeastOneVersion = baseVersions.stream()
-          .map(v -> {
-            checkCancellation();
-            return TransactionalStoreBlob.operation.call(() -> this.refreshVersion(groupId, artifactId, v, tx, failures));
-          })
-          .reduce(Boolean::logicalOr)
-          .orElse(false);
-      Maven2Metadata newMetadata = metadataBuilder.onExitArtifactId();
-
-      /**
-       * The rebuild flag on the requested asset may have been cleared before we were invoked.
-       * So we check a special case to always rebuild the metadata for the g:a:v that we were initialized with
-       */
-      boolean isRequestedVersion = StringUtils.equals(this.groupId, groupId) &&
-          StringUtils.equals(this.artifactId, artifactId) &&
-          StringUtils.equals(baseVersion, null);
-
-      if (rebuiltAtLeastOneVersion || isRequestedVersion || requiresRebuild(tx, metadataPath)) {
-        processMetadata(metadataPath, newMetadata, failures);
-        return true;
-      }
-      else {
-        log.debug("Skipping {}:{} for rebuild", groupId, artifactId);
-        return false;
-      }
-    }
-
-    private boolean requiresRebuild(final StorageTx tx, final MavenPath metadataPath) {
-      Bucket bucket = tx.findBucket(repository);
-      Asset existingMetadata = findAsset(tx, bucket, metadataPath);
-      return existingMetadata == null || OrientMetadataUtils.requiresRebuild(existingMetadata);
-    }
-
-    private Iterable<Component> fetchComponents(
-        final String groupId,
-        final String artifactId,
-        final String baseVersion,
-        final StorageTx tx)
-    {
-      Bucket bucket = tx.findBucket(repository);
+        TransactionalStoreBlob.operation.run(() -> {
+          Bucket bucket = tx.findBucket(repository);
 
           Query query = builder()
               .where(P_GROUP).eq(groupId)
@@ -388,85 +311,42 @@ public class OrientMetadataRebuilder
             
             More information and metrics can be found here: https://issues.sonatype.org/browse/NEXUS-17696 
            */
-      return stream(tx.browseComponents(query, bucket).spliterator(), false).filter(component -> {
-        String thisVersion = (String) component.formatAttributes().get(P_BASE_VERSION);
-        return baseVersion.equals(thisVersion);
-      }).collect(toList());
-    }
+          Iterable<Component> filteredComponents = Iterables.filter(tx.browseComponents(query, bucket), (component) -> {
+            String thisVersion = (String) component.formatAttributes().get(P_BASE_VERSION);
+            return baseVersion.equals(thisVersion);
+          });
 
-    private void rebuildBaseVersion(
-        final String groupId,
-        final String artifactId,
-        final String baseVersion,
-        final StorageTx tx,
-        final MultipleFailures failures)
-    {
-      metadataBuilder.onEnterBaseVersion(baseVersion);
-      collectComponentAssetInformation(groupId, artifactId, baseVersion, tx, metadataBuilder);
-      Maven2Metadata baseVersionMetadata = metadataBuilder.onExitBaseVersion();
-      processMetadata(metadataPath(groupId, artifactId, baseVersion), baseVersionMetadata, failures);
-    }
+          for (Component component : filteredComponents) {
+            checkCancellation();
 
-    private void collectComponentAssetInformation(
-        final String groupId,
-        final String artifactId,
-        final String version,
-        final StorageTx tx,
-        final MetadataBuilder builder)
-    {
-      for (Component component : fetchComponents(groupId, artifactId, version, tx)) {
-        checkCancellation();
-
-        for (Asset asset : tx.browseAssets(component)) {
-          checkCancellation();
-          final MavenPath mavenPath = mavenPathParser.parsePath(asset.name());
-          if (mavenPath.isSubordinate()) {
-            continue;
+            for (Asset asset : tx.browseAssets(component)) {
+              checkCancellation();
+              final MavenPath mavenPath = mavenPathParser.parsePath(asset.name());
+              if (mavenPath.isSubordinate()) {
+                continue;
+              }
+              metadataBuilder.addArtifactVersion(mavenPath);
+              if (rebuildChecksums) {
+                mayUpdateChecksum(mavenPath, HashType.SHA1);
+                mayUpdateChecksum(mavenPath, HashType.SHA256);
+                mayUpdateChecksum(mavenPath, HashType.SHA512);
+                mayUpdateChecksum(mavenPath, HashType.MD5);
+              }
+              final String packaging = component.formatAttributes().get(Attributes.P_PACKAGING, String.class);
+              log.debug("POM packaging: {}", packaging);
+              if ("maven-plugin".equals(packaging)) {
+                metadataBuilder.addPlugin(getPluginPrefix(mavenPath.locateMainArtifact("jar")), artifactId,
+                    component.formatAttributes().get(Attributes.P_POM_NAME, String.class));
+              }
+            }
           }
 
-          builder.addArtifactVersion(mavenPath);
-          if (rebuildChecksums) {
-            stream(HashType.values()).forEach(hashType -> mayUpdateChecksum(mavenPath, hashType));
-          }
-          final String packaging = component.formatAttributes().get(P_PACKAGING, String.class);
-          log.debug("POM packaging: {}", packaging);
-          if ("maven-plugin".equals(packaging)) {
-            metadataBuilder.addPlugin(getPluginPrefix(mavenPath.locateMainArtifact("jar")), artifactId,
-                component.formatAttributes().get(P_POM_NAME, String.class));
-          }
-        }
+          processMetadata(metadataPath(groupId, artifactId, baseVersion), metadataBuilder.onExitBaseVersion(),
+              failures);
+        });
       }
-    }
 
-    private boolean refreshVersion(
-        final String groupId,
-        final String artifactId,
-        final String version,
-        final StorageTx tx,
-        final MultipleFailures failures)
-    {
-      MavenPath metadataPath = metadataPath(groupId, artifactId, version);
-
-      metadataBuilder.onEnterBaseVersion(version);
-      collectComponentAssetInformation(groupId, artifactId, version, tx, metadataBuilder);
-      Maven2Metadata newMetadata = metadataBuilder.onExitBaseVersion();
-
-      /**
-       * The rebuild flag on the requested asset may have been cleared before we were invoked.
-       * So we check a special case to always rebuild the metadata for the g:a:v that we were initialized with
-       */
-      boolean isRequestedVersion = StringUtils.equals(this.groupId, groupId) &&
-          StringUtils.equals(this.artifactId, artifactId) &&
-          StringUtils.equals(baseVersion, version);
-
-      if (isRequestedVersion || requiresRebuild(tx, metadataPath)) {
-        processMetadata(metadataPath, newMetadata, failures);
-        return true;
-      }
-      else {
-        log.debug("Skipping {}:{}:{} for rebuild", groupId, artifactId, version);
-        return false;
-      }
+      processMetadata(metadataPath(groupId, artifactId, null), metadataBuilder.onExitArtifactId(), failures);
     }
   }
 
