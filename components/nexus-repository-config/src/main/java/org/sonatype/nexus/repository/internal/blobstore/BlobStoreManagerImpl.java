@@ -232,10 +232,9 @@ public class BlobStoreManagerImpl
   @Guarded(by = STARTED)
   public BlobStore update(final BlobStoreConfiguration configuration) throws Exception {
     checkNotNull(configuration);
-
     BlobStore blobStore = get(configuration.getName());
     checkNotNull(blobStore);
-
+    blobStore.validateCanCreateAndUpdate();
     log.debug("Updating BlobStore: {} with attributes: {}", configuration.getName(),
         configuration.getAttributes());
     validateConfiguration(configuration, false);
