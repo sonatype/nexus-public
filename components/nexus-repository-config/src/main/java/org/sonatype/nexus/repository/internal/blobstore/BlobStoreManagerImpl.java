@@ -202,6 +202,8 @@ public class BlobStoreManagerImpl
 
     BlobStore blobStore = blobStorePrototypes.get(configuration.getType()).get();
     blobStore.init(configuration);
+    
+    blobStore.validateCanCreateAndUpdate();
 
     if (!EventHelper.isReplicating()) {
       try {
