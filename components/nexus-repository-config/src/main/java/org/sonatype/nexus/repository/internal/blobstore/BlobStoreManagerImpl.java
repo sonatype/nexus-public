@@ -28,6 +28,7 @@ import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
+import org.sonatype.nexus.blobstore.api.BlobInputStreamException;
 import org.sonatype.nexus.blobstore.api.BlobSession;
 import org.sonatype.nexus.blobstore.api.BlobSessionSupplier;
 import org.sonatype.nexus.blobstore.api.BlobStore;
@@ -472,13 +473,18 @@ public class BlobStoreManagerImpl
   }
 
   private InputStream inputStreamOfBlob(final BlobStore blobStore, final BlobId blobId) {
-    return Optional.of(blobId)
-        .map(r -> blobStore.get(r, true))
-        .map(Blob::getInputStream)
-        .orElseThrow(() ->
-            new IllegalStateException(format("Unable to get input stream from source %S with blobId: %s",
-                blobStore.getBlobStoreConfiguration().getName(),
-                blobId)));
+    try {
+      return Optional.of(blobId)
+          .map(r -> blobStore.get(r, true))
+          .map(Blob::getInputStream)
+          .orElseThrow(() ->
+              new IllegalStateException(format("Unable to get input stream from source %S with blobId: %s",
+                  blobStore.getBlobStoreConfiguration().getName(),
+                  blobId)));
+    }
+    catch (BlobStoreException ex) {
+      throw new BlobInputStreamException(ex, ex.getBlobId());
+    }
   }
 
 }
