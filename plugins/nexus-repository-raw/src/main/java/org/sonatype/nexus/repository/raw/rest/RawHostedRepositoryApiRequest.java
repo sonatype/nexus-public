@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.raw.rest;
 
 import org.sonatype.nexus.repository.raw.internal.RawFormat;
 import org.sonatype.nexus.repository.rest.api.model.CleanupPolicyAttributes;
+import org.sonatype.nexus.repository.rest.api.model.ComponentAttributes;
 import org.sonatype.nexus.repository.rest.api.model.HostedRepositoryApiRequest;
 import org.sonatype.nexus.repository.rest.api.model.HostedStorageAttributes;
 
@@ -38,9 +39,10 @@ public class RawHostedRepositoryApiRequest
       @JsonProperty("online") final Boolean online,
       @JsonProperty("storage") final HostedStorageAttributes storage,
       @JsonProperty("cleanup") final CleanupPolicyAttributes cleanup,
-      @JsonProperty("raw") final RawAttributes raw)
+      @JsonProperty("raw") final RawAttributes raw,
+      @JsonProperty("component") final ComponentAttributes componentAttributes)
   {
-    super(name, RawFormat.NAME, online, storage, cleanup);
+    super(name, RawFormat.NAME, online, storage, cleanup, componentAttributes);
     this.raw = raw != null ? raw : new RawAttributes(ATTACHMENT);
   }
 
