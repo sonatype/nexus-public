@@ -57,6 +57,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.COMPONENT;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.PROPRIETARY_COMPONENTS;
 
 public class SimpleApiRepositoryAdapterTest
     extends TestSupport
@@ -84,7 +86,6 @@ public class SimpleApiRepositoryAdapterTest
     assertRepository(groupRepository, "group", true);
     assertThat(groupRepository.getGroup().getMemberNames(), contains("a", "b"));
     assertThat(groupRepository.getStorage().getStrictContentTypeValidation(), is(true));
-
     setStorageAttributes(repository, "default", /* non-default */ false, null);
     groupRepository = (SimpleApiGroupRepository) underTest.adapt(repository);
     assertThat(groupRepository.getStorage().getBlobStoreName(), is("default"));
@@ -94,11 +95,13 @@ public class SimpleApiRepositoryAdapterTest
   @Test
   public void testAdapt_hostedRepository() throws Exception {
     Repository repository = createRepository(new HostedType());
+    repository.getConfiguration().attributes(COMPONENT).set(PROPRIETARY_COMPONENTS, true);
 
     SimpleApiHostedRepository hostedRepository = (SimpleApiHostedRepository) underTest.adapt(repository);
     assertRepository(hostedRepository, "hosted", true);
     assertThat(hostedRepository.getStorage().getStrictContentTypeValidation(), is(true));
     assertThat(hostedRepository.getStorage().getWritePolicy(), is("ALLOW"));
+    assertThat(hostedRepository.getComponent().getProprietaryComponents(), is(true));
 
     // set some values
     setStorageAttributes(repository, "default", /* non-default */ false, "DENY");

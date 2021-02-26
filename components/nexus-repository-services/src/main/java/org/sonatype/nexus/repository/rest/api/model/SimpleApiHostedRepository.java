@@ -34,6 +34,8 @@ public class SimpleApiHostedRepository
 
   protected final CleanupPolicyAttributes cleanup;
 
+  protected final ComponentAttributes component;
+
   @JsonCreator
   public SimpleApiHostedRepository(
       @JsonProperty("name") final String name,
@@ -41,11 +43,13 @@ public class SimpleApiHostedRepository
       @JsonProperty("url") final String url,
       @JsonProperty("online") final Boolean online,
       @JsonProperty("storage") final HostedStorageAttributes storage,
-      @JsonProperty("cleanup") final CleanupPolicyAttributes cleanup)
+      @JsonProperty("cleanup") final CleanupPolicyAttributes cleanup,
+      @JsonProperty("component") final ComponentAttributes component)
   {
     super(name, format, HostedType.NAME, url, online);
     this.storage = storage;
     this.cleanup = cleanup;
+    this.component = component;
   }
 
   public CleanupPolicyAttributes getCleanup() {
@@ -54,5 +58,9 @@ public class SimpleApiHostedRepository
 
   public HostedStorageAttributes getStorage() {
     return storage;
+  }
+
+  public ComponentAttributes getComponent() {
+    return component;
   }
 }

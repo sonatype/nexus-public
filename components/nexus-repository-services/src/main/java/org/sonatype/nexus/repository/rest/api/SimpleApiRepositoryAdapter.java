@@ -26,6 +26,7 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationConstants;
 import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
 import org.sonatype.nexus.repository.rest.api.model.CleanupPolicyAttributes;
+import org.sonatype.nexus.repository.rest.api.model.ComponentAttributes;
 import org.sonatype.nexus.repository.rest.api.model.GroupDeployAttributes;
 import org.sonatype.nexus.repository.rest.api.model.HostedStorageAttributes;
 import org.sonatype.nexus.repository.rest.api.model.HttpClientAttributes;
@@ -46,7 +47,9 @@ import org.sonatype.nexus.repository.types.ProxyType;
 import com.google.common.reflect.TypeToken;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.COMPONENT;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.GROUP_WRITE_MEMBER;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.PROPRIETARY_COMPONENTS;
 
 /**
  * @since 3.20
@@ -74,8 +77,15 @@ public class SimpleApiRepositoryAdapter
         return new SimpleApiGroupRepository(name, format, url, online, getStorageAttributes(repository),
             getGroupAttributes(repository));
       case HostedType.NAME:
-        return new SimpleApiHostedRepository(name, format, url, online, getHostedStorageAttributes(repository),
-            getCleanupPolicyAttributes(repository));
+        return new SimpleApiHostedRepository(
+            name,
+            format,
+            url,
+            online,
+            getHostedStorageAttributes(repository),
+            getCleanupPolicyAttributes(repository),
+            getComponentAttributes(repository)
+        );
       case ProxyType.NAME:
         return new SimpleApiProxyRepository(name, format, url, online, getStorageAttributes(repository),
             getCleanupPolicyAttributes(repository), getProxyAttributes(repository),
@@ -84,6 +94,11 @@ public class SimpleApiRepositoryAdapter
       default:
         return null;
     }
+  }
+
+  protected ComponentAttributes getComponentAttributes(final Repository repository) {
+    return new ComponentAttributes(
+        repository.getConfiguration().attributes(COMPONENT).get(PROPRIETARY_COMPONENTS, Boolean.class,false));
   }
 
   protected String getRoutingRuleName(final Repository repository) {
