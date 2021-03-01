@@ -64,6 +64,7 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import com.google.common.collect.ImmutableMap;
 import org.joda.time.DateTime;
 
+import static com.google.common.base.Strings.nullToEmpty;
 import static java.time.LocalDate.now;
 import static org.apache.commons.lang.StringUtils.stripStart;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
@@ -155,7 +156,7 @@ public class DatastoreComponentAssetTestHelper
   {
     return repository.facet(ContentFacet.class).components()
         .name(name)
-        .namespace(namespace)
+        .namespace(nullToEmpty(namespace))
         .version(version)
         .find()
         .orElseThrow(() -> new ComponentNotFoundException(repository, namespace, name, version));
@@ -168,7 +169,7 @@ public class DatastoreComponentAssetTestHelper
   {
     return repository.facet(ContentFacet.class).components()
         .name(name)
-        .namespace(namespace)
+        .namespace(nullToEmpty(namespace))
         .find()
         .orElseThrow(() -> new ComponentNotFoundException(repository, namespace, name, null));
   }
