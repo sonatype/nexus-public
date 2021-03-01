@@ -25,7 +25,9 @@ public interface FeatureFlags
 
   /* Experimental early access to database externalization. Available values: true, false. Default value: false */
   String EARLY_ACCESS_DATASTORE = "nexus.earlyAccess.datastore.enabled";
+  String EARLY_ACCESS_DATASTORE_NAMED = "${nexus.earlyAccess.datastore.enabled:-false}";
 
   /* Early access developers only. Available values: true, false. Default value: false */
   String EARLY_ACCESS_DATASTORE_DEVELOPER = "nexus.earlyAccess.datastore.developer";
+  String EARLY_ACCESS_DATASTORE_DEVELOPER_NAMED = "${nexus.earlyAccess.datastore.developer:-false}";
 }

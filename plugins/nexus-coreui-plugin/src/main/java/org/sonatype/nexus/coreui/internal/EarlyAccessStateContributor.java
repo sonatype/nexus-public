@@ -23,6 +23,10 @@ import org.sonatype.nexus.rapture.StateContributor;
 
 import com.google.common.collect.ImmutableMap;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.EARLY_ACCESS_DATASTORE;
+import static org.sonatype.nexus.common.app.FeatureFlags.EARLY_ACCESS_DATASTORE_DEVELOPER_NAMED;
+import static org.sonatype.nexus.common.app.FeatureFlags.EARLY_ACCESS_DATASTORE_NAMED;
+
 @Singleton
 @Named
 public class EarlyAccessStateContributor
@@ -34,8 +38,8 @@ public class EarlyAccessStateContributor
 
   @Inject
   public EarlyAccessStateContributor(
-      @Named("${nexus.earlyAccess.datastore.enabled:-false}") boolean earlyAccessDatastoreEnabled,
-      @Named("${nexus.earlyAccess.datastore.developer:-false}") boolean earlyAccessDatastoreDeveloper)
+      @Named(EARLY_ACCESS_DATASTORE_NAMED) boolean earlyAccessDatastoreEnabled,
+      @Named(EARLY_ACCESS_DATASTORE_DEVELOPER_NAMED) boolean earlyAccessDatastoreDeveloper)
   {
     this.earlyAccessDatastoreEnabled = earlyAccessDatastoreEnabled;
     this.earlyAccessDatastoreDeveloper = earlyAccessDatastoreDeveloper;
@@ -44,7 +48,7 @@ public class EarlyAccessStateContributor
   @Override
   public Map<String, Object> getState() {
     return ImmutableMap.of(
-        FeatureFlags.EARLY_ACCESS_DATASTORE, earlyAccessDatastoreEnabled,
+        EARLY_ACCESS_DATASTORE, earlyAccessDatastoreEnabled,
         FeatureFlags.EARLY_ACCESS_DATASTORE_DEVELOPER, earlyAccessDatastoreDeveloper
     );
   }
