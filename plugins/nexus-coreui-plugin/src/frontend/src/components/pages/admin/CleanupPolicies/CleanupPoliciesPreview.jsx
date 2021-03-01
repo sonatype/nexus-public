@@ -32,14 +32,16 @@ import UIStrings from "../../../../constants/UIStrings";
 import CleanupPoliciesPreviewMachine from './CleanupPoliciesPreviewMachine';
 
 export default function CleanupPoliciesPreview({policyData}) {
-  const [current, send] = useMachine(CleanupPoliciesPreviewMachine, {devTools: true});
-  const {repositories, data, error, repository} = current.context;
-  const filterText = current.context.filter;
+  const [current, send] = useMachine(CleanupPoliciesPreviewMachine, {
+    devTools: true
+  });
+
+  const {repositories, data, filter : filterText, formError, previewError, repository} = current.context;
   const previewUnavailable = Utils.isBlank(repository) || (Utils.isBlank(policyData.criteriaLastBlobUpdated) &&
       Utils.isBlank(policyData.criteriaLastDownloaded) && Utils.isBlank(policyData.criteriaReleaseType) &&
       Utils.isBlank(policyData.criteriaAssetRegex));
-  const isLoading = current.matches('loadingRepositories');
-  const isLoadingPreview = current.matches('loading');
+  const isLoadingForm = current.matches('form.loading');
+  const isLoadingPreview = current.matches('preview.loading');
   const hasData = data?.length > 0;
 
   const nameSortDir = Utils.getSortDirection('name', current.context);
@@ -47,72 +49,68 @@ export default function CleanupPoliciesPreview({policyData}) {
   const versionSortDir = Utils.getSortDirection('version', current.context);
 
   const repositoryChangeHandler = (event) => send({type: 'SET_REPOSITORY', repository: event.target.value});
-  const previewHandler = () => send({type: 'PREVIEW', repository: repository,
-    criteriaLastBlobUpdated: policyData.criteriaLastBlobUpdated,
-    criteriaLastDownloaded: policyData.criteriaLastDownloaded,
-    criteriaReleaseType: policyData.criteriaReleaseType,
-    criteriaAssetRegex: policyData.criteriaAssetRegex,
-  });
-
-  current.context.criteriaLastBlobUpdated = policyData.criteriaLastBlobUpdated;
-  current.context.criteriaLastDownloaded = policyData.criteriaLastDownloaded;
-  current.context.criteriaReleaseType = policyData.criteriaReleaseType;
-  current.context.criteriaAssetRegex = policyData.criteriaAssetRegex;
+  const previewHandler = () => send({type: 'PREVIEW', policyData});
 
   function filter(value) {
-    send({type: 'FILTER', filter: value});
+    send({type: 'FILTER', filter: value, policyData});
   }
 
-  function retry() {
-    send({type: 'RETRY'});
+  function retryForm() {
+    send({type: 'RETRY_FORM'});
+  }
+
+  function retryPreview() {
+    send({type: 'RETRY_PREVIEW'});
   }
 
   return <Section className="nxrm-cleanup-policies-preview">
     <h2>{UIStrings.CLEANUP_POLICIES.TITLE}</h2>
-    <NxLoadWrapper isLoading={isLoading} error={error} retryHandler={retry}>
-      <FieldWrapper labelText={UIStrings.CLEANUP_POLICIES.PREVIEW.REPOSITORY_LABEL}
-                    descriptionText={UIStrings.CLEANUP_POLICIES.PREVIEW.REPOSITORY_DESCRIPTION}>
-        <Select name="repository" onChange={repositoryChangeHandler}>
-          <option value="">{UIStrings.CLEANUP_POLICIES.REPOSITORY_SELECT}</option>
-          {repositories.map(({id, name}) =>
-              <option key={id} value={id}>{name}</option>
-          )}
-        </Select>
-        <NxButton disabled={previewUnavailable} onClick={previewHandler}>{UIStrings.CLEANUP_POLICIES.PREVIEW.BUTTON}</NxButton>
-      </FieldWrapper>
-      <SectionToolbar>
-        <div className="nxrm-spacer" />
-        <NxFilterInput
-            inputId="filter"
-            onChange={filter}
-            value={filterText}
-            placeholder={UIStrings.CLEANUP_POLICIES.FILTER_PLACEHOLDER}/>
-      </SectionToolbar>
-      <NxTable>
-        <NxTableHead>
-          <NxTableRow>
-            <NxTableCell onClick={() => send({type: 'SORT_BY_NAME'})} isSortable sortDir={nameSortDir}>
-              {UIStrings.CLEANUP_POLICIES.PREVIEW.NAME_COLUMN}
-            </NxTableCell>
-            <NxTableCell onClick={() => send({type: 'SORT_BY_GROUP'})} isSortable sortDir={groupSortDir}>
-              {UIStrings.CLEANUP_POLICIES.PREVIEW.GROUP_COLUMN}
-            </NxTableCell>
-            <NxTableCell onClick={() => send({type: 'SORT_BY_VERSION'})} isSortable sortDir={versionSortDir}>
-              {UIStrings.CLEANUP_POLICIES.PREVIEW.VERSION_COLUMN}
-            </NxTableCell>
-          </NxTableRow>
-        </NxTableHead>
-        <NxTableBody isLoading={isLoadingPreview} error={error}>
-          {!hasData && <NxTableRow><NxTableCell>{UIStrings.CLEANUP_POLICIES.PREVIEW.EMPTY}</NxTableCell></NxTableRow>}
-          {hasData && data?.map(({name, group, version}) =>
-              <NxTableRow key={name}>
-                <NxTableCell>{name}</NxTableCell>
-                <NxTableCell>{group}</NxTableCell>
-                <NxTableCell>{version}</NxTableCell>
-              </NxTableRow>
-          )}
-        </NxTableBody>
-      </NxTable>
+    <NxLoadWrapper loading={isLoadingForm} error={formError} retryHandler={retryForm}>
+      {() => <>
+        <FieldWrapper labelText={UIStrings.CLEANUP_POLICIES.PREVIEW.REPOSITORY_LABEL}
+                      descriptionText={UIStrings.CLEANUP_POLICIES.PREVIEW.REPOSITORY_DESCRIPTION}>
+          <Select name="repository" onChange={repositoryChangeHandler}>
+            <option value="">{UIStrings.CLEANUP_POLICIES.REPOSITORY_SELECT}</option>
+            {repositories.map(({id, name}) =>
+                <option key={id} value={id}>{name}</option>
+            )}
+          </Select>
+          <NxButton disabled={previewUnavailable} onClick={previewHandler}>{UIStrings.CLEANUP_POLICIES.PREVIEW.BUTTON}</NxButton>
+        </FieldWrapper>
+        <SectionToolbar>
+          <div className="nxrm-spacer" />
+          <NxFilterInput
+              inputId="filter"
+              onChange={filter}
+              value={filterText}
+              placeholder={UIStrings.CLEANUP_POLICIES.FILTER_PLACEHOLDER}/>
+        </SectionToolbar>
+        <NxTable>
+          <NxTableHead>
+            <NxTableRow>
+              <NxTableCell onClick={() => send({type: 'SORT_BY_NAME'})} isSortable sortDir={nameSortDir}>
+                {UIStrings.CLEANUP_POLICIES.PREVIEW.NAME_COLUMN}
+              </NxTableCell>
+              <NxTableCell onClick={() => send({type: 'SORT_BY_GROUP'})} isSortable sortDir={groupSortDir}>
+                {UIStrings.CLEANUP_POLICIES.PREVIEW.GROUP_COLUMN}
+              </NxTableCell>
+              <NxTableCell onClick={() => send({type: 'SORT_BY_VERSION'})} isSortable sortDir={versionSortDir}>
+                {UIStrings.CLEANUP_POLICIES.PREVIEW.VERSION_COLUMN}
+              </NxTableCell>
+            </NxTableRow>
+          </NxTableHead>
+          <NxTableBody isLoading={isLoadingPreview} error={previewError} retryHandler={retryPreview}>
+            {!hasData && <NxTableRow><NxTableCell>{UIStrings.CLEANUP_POLICIES.PREVIEW.EMPTY}</NxTableCell></NxTableRow>}
+            {hasData && data?.map(({name, group, version, repository}) =>
+                <NxTableRow key={`${name}${group}${version}${repository}`}>
+                  <NxTableCell>{name}</NxTableCell>
+                  <NxTableCell>{group}</NxTableCell>
+                  <NxTableCell>{version}</NxTableCell>
+                </NxTableRow>
+            )}
+          </NxTableBody>
+        </NxTable>
+      </>}
     </NxLoadWrapper>
   </Section>;
 }
