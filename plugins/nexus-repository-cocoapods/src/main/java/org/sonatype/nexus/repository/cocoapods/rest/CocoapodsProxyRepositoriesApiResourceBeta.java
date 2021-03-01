@@ -16,6 +16,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.Path;
 
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.repository.rest.api.RepositoriesApiResourceBeta;
 import org.sonatype.nexus.rest.APIConstants;
 
@@ -28,6 +29,7 @@ import static org.sonatype.nexus.repository.cocoapods.rest.CocoapodsProxyReposit
  * @deprecated the 'beta' prefix is being phased out, prefer starting new APIs with {@link APIConstants#V1_API_PREFIX}
  * instead. Support backward compatibility.
  */
+@FeatureFlag(name = "nexus.orient.store.content")
 @Api(hidden = true)
 @Named
 @Singleton

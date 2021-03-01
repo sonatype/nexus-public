@@ -16,6 +16,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.Path;
 
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.repository.rest.api.RepositoriesApiResourceV1;
 
 import static org.sonatype.nexus.repository.golang.rest.GolangGroupRepositoriesApiResourceV1.RESOURCE_URI;
@@ -23,6 +24,7 @@ import static org.sonatype.nexus.repository.golang.rest.GolangGroupRepositoriesA
 /**
  * @since 3.26
  */
+@FeatureFlag(name = "nexus.orient.store.content")
 @Named
 @Singleton
 @Path(RESOURCE_URI)

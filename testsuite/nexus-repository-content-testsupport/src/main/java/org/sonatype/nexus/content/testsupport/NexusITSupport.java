@@ -80,6 +80,7 @@ import static org.ops4j.pax.exam.CoreOptions.maven;
 import static org.ops4j.pax.exam.CoreOptions.wrappedBundle;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFileExtend;
 import static org.ops4j.pax.exam.options.WrappedUrlProvisionOption.OverwriteMode.MERGE;
+import static org.sonatype.nexus.common.app.FeatureFlags.EARLY_ACCESS_DATASTORE_DEVELOPER;
 
 /**
  * Support for Nexus integration tests.
@@ -121,7 +122,7 @@ public abstract class NexusITSupport
         editConfigurationFileExtend(SYSTEM_PROPERTIES_FILE, "nexus.loadAsOSS", "true"),
         editConfigurationFileExtend(SYSTEM_PROPERTIES_FILE, "nexus.security.randompassword", "false"),
         editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.scripts.allowCreation", "true"),
-        editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.earlyAccess.datastore.developer", "true"),
+        editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, EARLY_ACCESS_DATASTORE_DEVELOPER, "true"),
         // install common test-support features
         nexusFeature("org.sonatype.nexus.testsuite", "nexus-repository-content-testsupport"),
         wrappedBundle(maven("org.awaitility", "awaitility").versionAsInProject()).overwriteManifest(MERGE).imports("*")

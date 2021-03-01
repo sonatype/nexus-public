@@ -40,6 +40,8 @@ import static java.lang.Boolean.parseBoolean;
 import static java.util.prefs.Preferences.userRoot;
 import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshBundles;
 import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshManagedBundles;
+import static org.sonatype.nexus.common.app.FeatureFlags.EARLY_ACCESS_DATASTORE;
+import static org.sonatype.nexus.common.app.FeatureFlags.EARLY_ACCESS_DATASTORE_DEVELOPER;
 
 /**
  * {@link ServletContextListener} that bootstraps an OSGi-based application.
@@ -49,7 +51,6 @@ import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshMana
 public class BootstrapListener
     implements ServletContextListener
 {
-
   private static final String NEXUS_LOAD_AS_OSS_PROP_NAME = "nexus.loadAsOSS";
 
   private static final String EDITION_PRO = "edition_pro";
@@ -231,16 +232,16 @@ public class BootstrapListener
 
   private static void selectEarlyAccessFeature(final Properties properties) {
     // early-access datastore developer mode includes early-access datastore user mode
-    if (parseBoolean(properties.getProperty("nexus.earlyAccess.datastore.developer", "false"))) {
-      properties.setProperty("nexus.earlyAccess.datastore.enabled", "true");
+    if (parseBoolean(properties.getProperty(EARLY_ACCESS_DATASTORE_DEVELOPER, "false"))) {
+      properties.setProperty(EARLY_ACCESS_DATASTORE, "true");
     }
 
-    if (parseBoolean(properties.getProperty("nexus.earlyAccess.datastore.enabled", "false"))) {
+    if (parseBoolean(properties.getProperty(EARLY_ACCESS_DATASTORE, "false"))) {
       // early-access datastore mode disables orient
       properties.setProperty("nexus.orient.enabled", "false");
 
       // early-access datastore mode, but not developer mode
-      if (!parseBoolean(properties.getProperty("nexus.earlyAccess.datastore.developer", "false"))) {
+      if (!parseBoolean(properties.getProperty(EARLY_ACCESS_DATASTORE_DEVELOPER, "false"))) {
         // exclude unfinished format features
         properties.setProperty("nexus-exclude-features",
             "nexus-repository-helm," +
