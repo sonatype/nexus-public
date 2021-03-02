@@ -1051,6 +1051,16 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Capability_CapabilitySummary_Notes_HelpText: 'Optional notes about configured capability',
     Capability_CapabilityStatus_EmptyText: 'This capability does not provide any status',
 
+
+    // Admin -> System -> Proprietary Repositories
+    ProprietaryRepositories_Text: 'Proprietary Repositories',
+    ProprietaryRepositories_Field_Label: 'Proprietary Repositories Configuration',
+    ProprietaryRepositories_Description: 'Manage the set of hosted repositories that contain proprietary components',
+    ProprietaryRepositories_Update_Error: 'You do not have permission to proprietary repositories',
+    ProprietaryRepositories_Update_Success: 'Proprietary repositories settings $action',
+    ProprietaryRepositories_Available_FromTitle: 'Generic Hosted Repositories',
+    ProprietaryRepositories_Available_ToTitle: 'Proprietary Hosted Repositories',
+
     // Admin -> System -> Cleanup Policies
     CleanupPolicies_Text: 'Cleanup Policies',
     CleanupPolicies_Description: 'Manage component removal configuration',
