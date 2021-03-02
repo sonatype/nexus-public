@@ -43,9 +43,9 @@ public class HostedRepositoryApiRequestToConfigurationConverter<T extends Hosted
         .set(STRICT_CONTENT_TYPE_VALIDATION, request.getStorage().getStrictContentTypeValidation());
     configuration.attributes(STORAGE).set(WRITE_POLICY, request.getStorage().getWritePolicy());
 
-    if (request.getComponentAttributes() != null) {
+    if (request.getComponent() != null) {
       configuration.attributes(COMPONENT)
-          .set(PROPRIETARY_COMPONENTS, request.getComponentAttributes().getProprietaryComponents());
+          .set(PROPRIETARY_COMPONENTS, request.getComponent().getProprietaryComponents());
     }
 
     maybeAddDataStoreName(configuration);
