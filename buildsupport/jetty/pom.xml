@@ -28,7 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <eclipse-jetty.version>9.4.36.v20210114</eclipse-jetty.version>
+    <eclipse-jetty.version>9.4.38.v20210224</eclipse-jetty.version>
   </properties>
 
   <dependencyManagement>
