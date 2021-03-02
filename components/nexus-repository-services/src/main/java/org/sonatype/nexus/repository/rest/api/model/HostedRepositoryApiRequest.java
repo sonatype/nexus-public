@@ -36,7 +36,7 @@ public class HostedRepositoryApiRequest
   private final CleanupPolicyAttributes cleanup;
 
   @Valid
-  private final ComponentAttributes componentAttributes;
+  private final ComponentAttributes component;
 
   @JsonCreator
   public HostedRepositoryApiRequest(
@@ -50,7 +50,7 @@ public class HostedRepositoryApiRequest
     super(name, format, HostedType.NAME, online);
     this.storage = storage;
     this.cleanup = cleanup;
-    this.componentAttributes = componentAttributes;
+    this.component = componentAttributes;
   }
 
   public HostedStorageAttributes getStorage() {
@@ -61,7 +61,7 @@ public class HostedRepositoryApiRequest
     return cleanup;
   }
 
-  public ComponentAttributes getComponentAttributes() {
-    return componentAttributes;
+  public ComponentAttributes getComponent() {
+    return component;
   }
 }
