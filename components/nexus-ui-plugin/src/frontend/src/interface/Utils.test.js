@@ -19,6 +19,17 @@ import UIStrings from '../constants/UIStrings';
 
 describe('Utils', () => {
   describe('fieldProps', () => {
+    it('converts the value to a string', () => {
+      const {value} = Utils.fieldProps('test', makeContext({data: {test: 1}}));
+      expect(value).toBe('1');
+    });
+
+    it('converts the default value to a string', () => {
+      const defaultValue = 1;
+      const {value} = Utils.fieldProps('test', makeContext({data: {}}), defaultValue);
+      expect(value).toBe('1');
+    });
+
     it('sets validation errors from save errors', () => {
       const {validationErrors} = Utils.fieldProps('test', makeContext({
         saveErrors: {

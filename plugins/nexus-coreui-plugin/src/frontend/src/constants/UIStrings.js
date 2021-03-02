@@ -515,6 +515,7 @@ Once created, a cleanup policy must be assigned to a repository from \
       TITLE: 'Cleanup policy preview',
       REPOSITORY_LABEL: 'Preview Repository',
       REPOSITORY_DESCRIPTION: 'Select a repository to preview what might get cleaned up if this policy was applied',
+      INVALID_QUERY: 'The filter is invalid so results could not be retrieved.',
       BUTTON: 'Preview',
       RESULTS: 'Preview Results',
       NAME_COLUMN: 'Name',

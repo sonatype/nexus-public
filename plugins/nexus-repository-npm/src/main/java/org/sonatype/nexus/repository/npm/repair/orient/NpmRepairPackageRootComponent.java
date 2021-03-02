@@ -105,17 +105,22 @@ public class NpmRepairPackageRootComponent
   }
 
   private void maybeUpdateAsset(final Repository repository, final Asset asset, final Blob blob) {
-    Map<String, Object> packageJson = npmPackageParser.parsePackageJson(blob::getInputStream);
+    try {
+      Map<String, Object> packageJson = npmPackageParser.parsePackageJson(blob::getInputStream);
 
-    NestedAttributesMap updatedMetadata = createFullPackageMetadata(
-        new NestedAttributesMap("metadata", packageJson),
-        repository.getName(),
-        blob.getMetrics().getSha1Hash(),
-        repository,
-        extractPackageRootVersionUnlessEmpty);
+      NestedAttributesMap updatedMetadata = createFullPackageMetadata(
+          new NestedAttributesMap("metadata", packageJson),
+          repository.getName(),
+          blob.getMetrics().getSha1Hash(),
+          repository,
+          extractPackageRootVersionUnlessEmpty);
 
-    updatePackageRootIfShaIncorrect(repository, asset, blob, updatedMetadata,
-        NpmPackageId.parse((String) packageJson.get(P_NAME)), (String) packageJson.get(P_VERSION));
+      updatePackageRootIfShaIncorrect(repository, asset, blob, updatedMetadata,
+          NpmPackageId.parse((String) packageJson.get(P_NAME)), (String) packageJson.get(P_VERSION));
+    }
+    catch (Exception e) {
+      log.error("Failed to update asset {} in repository {}", asset.name(), repository.getName(), e);
+    }
   }
 
   private void updatePackageRootIfShaIncorrect(final Repository repository,

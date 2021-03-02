@@ -437,7 +437,7 @@ export default class Utils {
     }
     return {
       name,
-      value: (data && data[name]) || defaultValue,
+      value: String(data && data[name] || defaultValue),
       isPristine: name in isTouched ? !isTouched[name] : true,
       validatable: true,
       validationErrors: errors
