@@ -128,7 +128,7 @@
       <dependency>
         <groupId>com.sonatype.insight.brain</groupId>
         <artifactId>insight-rm-common</artifactId>
-        <version>${insight-brain.version}</version>
+        <version>1.106.0-01</version>
         <exclusions>
           <exclusion>
             <groupId>commons-logging</groupId>
@@ -173,6 +173,10 @@
           <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-all</artifactId>
           </exclusion>
         </exclusions>
       </dependency>

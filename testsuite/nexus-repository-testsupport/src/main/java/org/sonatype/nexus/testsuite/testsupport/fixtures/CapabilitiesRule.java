@@ -47,6 +47,7 @@ public class CapabilitiesRule
   protected void after() {
     capabilitiesToRemove.stream()
         .map(this::find)
+        .filter(Optional::isPresent)
         .map(Optional::get)
         .map(CapabilityReference::context)
         .map(CapabilityContext::id)
@@ -54,6 +55,7 @@ public class CapabilitiesRule
 
     capabilitiesToDisable.stream()
         .map(this::find)
+        .filter(Optional::isPresent)
         .map(Optional::get)
         .map(CapabilityReference::context)
         .map(CapabilityContext::id)
@@ -81,6 +83,24 @@ public class CapabilitiesRule
       capabilityRegistryProvider.get().add(CapabilityType.capabilityType(capabilityType), true, null, properties);
       capabilitiesToRemove.add(capabilityType);
     }
+  }
+
+  /**
+   * Disables a capability, please note that original state will not be restored.
+   */
+  protected void disable(final String capabilityType) {
+    // We don't handle missing capabilities here intentionally
+    capabilityRegistryProvider.get().disable(find(capabilityType).get().context().id());
+  }
+
+  /**
+   * Removes a capability, please note that state will not be restored.
+   */
+  protected void remove(final String capabilityType) {
+    find(capabilityType)
+        .map(CapabilityReference::context)
+        .map(CapabilityContext::id)
+        .ifPresent(capabilityRegistryProvider.get()::remove);
   }
 
   private Optional<? extends CapabilityReference> find(final String capabilityType) {
