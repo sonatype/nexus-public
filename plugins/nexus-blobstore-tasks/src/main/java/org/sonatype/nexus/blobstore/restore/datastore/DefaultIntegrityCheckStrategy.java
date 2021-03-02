@@ -30,7 +30,6 @@ import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.common.entity.Continuation;
-import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
@@ -45,7 +44,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
-import static org.sonatype.nexus.repository.storage.Asset.CHECKSUM;
 
 /**
  * Default {@link IntegrityCheckStrategy} which checks name and SHA1 checksum
@@ -240,12 +238,13 @@ public class DefaultIntegrityCheckStrategy
    */
   private boolean checkName(final BlobAttributes blobAttributes, final Asset asset) {
     String blobName = getBlobName(blobAttributes);
+    String assetName = getAssetName(asset);
 
     checkArgument(blobName != null, BLOB_NAME_MISSING);
-    checkArgument(asset.path() != null, ASSET_NAME_MISSING);
+    checkArgument(assetName != null, ASSET_NAME_MISSING);
 
-    if (!StringUtils.equals(asset.path(), blobName)) {
-      log.error(NAME_MISMATCH, blobName, asset.path());
+    if (!StringUtils.equals(assetName, blobName)) {
+      log.error(NAME_MISMATCH, blobName, assetName);
       return false;
     }
 
@@ -263,6 +262,13 @@ public class DefaultIntegrityCheckStrategy
     catch (Exception e) { // NOSONAR
       return false;
     }
+  }
+
+  /**
+   * Get the name from the {@link Asset}
+   */
+  protected String getAssetName(final Asset asset) {
+    return asset.path();
   }
 
   /**

@@ -22,6 +22,7 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
+import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
 
 /**
@@ -60,6 +61,10 @@ public class RestoreBlobData
 
   public String getBlobName() {
     return getProperty(HEADER_PREFIX + BLOB_NAME_HEADER);
+  }
+
+  public String getBlobType() {
+    return getProperty(HEADER_PREFIX + CONTENT_TYPE_HEADER);
   }
 
   public BlobStore getBlobStore() {
