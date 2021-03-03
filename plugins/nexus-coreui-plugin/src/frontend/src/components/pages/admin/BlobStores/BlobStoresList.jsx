@@ -102,7 +102,7 @@ export default function BlobStoresList({onCreate, onEdit}) {
           <NxTableBody isLoading={isLoading} error={error} emptyMessage={BLOB_STORES.LIST.EMPTY_LIST}>
             {data.map(
                 ({name, type, available, unavailable, blobCount, totalSizeInBytes, availableSpaceInBytes, unlimited}) => (
-                    <NxTableRow key={name} onClick={() => onEdit(name)} isClickable>
+                    <NxTableRow key={name} onClick={() => onEdit(`${type.toLowerCase()}/${name}`)} isClickable>
                       <NxTableCell>{name}</NxTableCell>
                       <NxTableCell>{type}</NxTableCell>
                       <NxTableCell>

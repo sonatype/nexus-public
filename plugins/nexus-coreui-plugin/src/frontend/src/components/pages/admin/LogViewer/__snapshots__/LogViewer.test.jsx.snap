@@ -143,62 +143,68 @@ exports[`LogViewer renders the log into the text area 1`] = `
           <div
             class="nxrm-select-action"
           >
-            <select
+            <div
               class="nxrm-select"
-              id="period"
-              name="period"
             >
-              <option
-                value="0"
+              <select
+                id="period"
+                name="period"
               >
-                Manual
-              </option>
-              <option
-                value="20"
-              >
-                Every 20 seconds
-              </option>
-              <option
-                value="60"
-              >
-                Every minute
-              </option>
-              <option
-                value="120"
-              >
-                Every 2 minutes
-              </option>
-              <option
-                value="300"
-              >
-                Every 5 minutes
-              </option>
-            </select>
+                <option
+                  value="0"
+                >
+                  Manual
+                </option>
+                <option
+                  value="20"
+                >
+                  Every 20 seconds
+                </option>
+                <option
+                  value="60"
+                >
+                  Every minute
+                </option>
+                <option
+                  value="120"
+                >
+                  Every 2 minutes
+                </option>
+                <option
+                  value="300"
+                >
+                  Every 5 minutes
+                </option>
+              </select>
+            </div>
           </div>
           <div
             class="nxrm-select-action"
           >
-            <select
+            <div
               class="nxrm-select"
-              id="size"
-              name="size"
             >
-              <option
-                value="25"
+              <select
+                id="size"
+                name="size"
               >
-                Last 25KB
-              </option>
-              <option
-                value="50"
-              >
-                Last 50KB
-              </option>
-              <option
-                value="100"
-              >
-                Last 100KB
-              </option>
-            </select>
+                <option
+                  value="25"
+                >
+                  Last 25KB
+                </option>
+                <option
+                  value="50"
+                >
+                  Last 50KB
+                </option>
+                <option
+                  value="100"
+                >
+                  Last 100KB
+                </option>
+              </select>
+            </div>
           </div>
         </div>
         <textarea

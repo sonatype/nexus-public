@@ -17,34 +17,38 @@
 @import '~@sonatype/react-shared-components/scss-shared/nx-variables';
 
 .nxrm-select {
-  color: $nx-text-color;
-  font-size: $nx-font-size;
-  line-height: $nx-line-height;
-  border-radius: $nx-border-radius;
-  padding: $nx-spacing-xs $nx-spacing-l $nx-spacing-xs $nx-spacing-md;
+  height: 66px;
   margin-bottom: 28px;  // Aligns a select with other combobox elements that have a validation message below
-  width: $nx-form-element-width-normal;
-  margin-right: $nx-spacing-md;
 
-  -moz-appearance: none;
-  -webkit-appearance: none;
-  appearance: none;
-  background: no-repeat 100% 50% url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0Ljk1IDEwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWF4WU1pZCI+PGRlZnM+PHN0eWxlPi5jbHMtMXtmaWxsOiNmZmY7fS5jbHMtMntmaWxsOiM0NDQ7fTwvc3R5bGU+PC9kZWZzPjx0aXRsZT5hcnJvd3M8L3RpdGxlPjxyZWN0IGNsYXNzPSJjbHMtMSIgd2lkdGg9IjQuOTUiIGhlaWdodD0iMTAiLz48cG9seWdvbiBjbGFzcz0iY2xzLTIiIHBvaW50cz0iMS40MSA0LjY3IDIuNDggMy4xOCAzLjU0IDQuNjcgMS40MSA0LjY3Ii8+PHBvbHlnb24gY2xhc3M9ImNscy0yIiBwb2ludHM9IjMuNTQgNS4zMyAyLjQ4IDYuODIgMS40MSA1LjMzIDMuNTQgNS4zMyIvPjwvc3ZnPg==);
+  select {
+    border-radius: $nx-border-radius;
+    color: $nx-text-color;
+    font-size: $nx-font-size;
+    line-height: $nx-line-height;
+    margin-right: $nx-spacing-md;
+    padding: $nx-spacing-xs $nx-spacing-l $nx-spacing-xs $nx-spacing-md;
+    width: $nx-form-element-width-normal;
+
+    -moz-appearance: none;
+    -webkit-appearance: none;
+    appearance: none;
+    background: no-repeat 100% 50% url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0Ljk1IDEwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWF4WU1pZCI+PGRlZnM+PHN0eWxlPi5jbHMtMXtmaWxsOiNmZmY7fS5jbHMtMntmaWxsOiM0NDQ7fTwvc3R5bGU+PC9kZWZzPjx0aXRsZT5hcnJvd3M8L3RpdGxlPjxyZWN0IGNsYXNzPSJjbHMtMSIgd2lkdGg9IjQuOTUiIGhlaWdodD0iMTAiLz48cG9seWdvbiBjbGFzcz0iY2xzLTIiIHBvaW50cz0iMS40MSA0LjY3IDIuNDggMy4xOCAzLjU0IDQuNjcgMS40MSA0LjY3Ii8+PHBvbHlnb24gY2xhc3M9ImNscy0yIiBwb2ludHM9IjMuNTQgNS4zMyAyLjQ4IDYuODIgMS40MSA1LjMzIDMuNTQgNS4zMyIvPjwvc3ZnPg==);
+  }
 
   &::-ms-expand {
     /* Hide dropdown button on ie11 */
     display: none;
   }
 
-  &:focus, &:active {
+  &:focus select, &:active select {
     border-color: #43cbf5;
   }
 
-  &.invalid {
+  &.invalid select {
     border-color: $nx-invalid-color;
   }
 
-  &:disabled {
+  &:disabled select {
     pointer-events: none;
     color: $nxrm-input-disabled-color;
     border-top-color: $nxrm-input-disabled-dark;

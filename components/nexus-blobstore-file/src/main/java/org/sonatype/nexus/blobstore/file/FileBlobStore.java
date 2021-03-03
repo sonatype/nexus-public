@@ -110,8 +110,7 @@ public class FileBlobStore
 
   @VisibleForTesting
   public static final String CONFIG_KEY = "file";
-
-  @VisibleForTesting
+  
   public static final String PATH_KEY = "path";
 
   @VisibleForTesting

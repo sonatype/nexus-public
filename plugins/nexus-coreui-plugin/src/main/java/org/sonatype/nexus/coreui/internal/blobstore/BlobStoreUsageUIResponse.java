@@ -10,20 +10,24 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
-import {render} from '@testing-library/react';
-import '@testing-library/jest-dom/extend-expect';
+package org.sonatype.nexus.coreui.internal.blobstore;
 
-import FieldErrorMessage from "./FieldErrorMessage";
+public class BlobStoreUsageUIResponse
+{
+  private final long repositoryUsage;
 
-describe('FieldErrorMessage', () => {
-  it('renders correctly', () => {
-    const {container} = render(<FieldErrorMessage/>);
-    expect(container).toMatchSnapshot();
-  });
+  private final long blobStoreUsage;
 
-  it('renders correctly with an error message', () => {
-    const {container} = render(<FieldErrorMessage message={"A custom error message"}/>);
-    expect(container).toMatchSnapshot();
-  });
-});
+  public BlobStoreUsageUIResponse(final long repositoryUsage, final long blobStoreUsage) {
+    this.repositoryUsage = repositoryUsage;
+    this.blobStoreUsage = blobStoreUsage;
+  }
+
+  public long getRepositoryUsage() {
+    return repositoryUsage;
+  }
+
+  public long getBlobStoreUsage() {
+    return blobStoreUsage;
+  }
+}

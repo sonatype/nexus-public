@@ -14,9 +14,7 @@ import classNames from 'classnames';
 import React from 'react';
 
 import './Select.scss';
-import FieldErrorMessage from "../FieldErrorMessage/FieldErrorMessage";
 import PropTypes from "prop-types";
-import Textfield from "../Textfield/Textfield";
 import {getFirstValidationError, hasValidationErrors} from "@sonatype/react-shared-components/util/validationUtil";
 
 /**
@@ -25,15 +23,16 @@ import {getFirstValidationError, hasValidationErrors} from "@sonatype/react-shar
 export default function Select({value, children, className, name, id, isPristine, validatable, validationErrors, ...rest}) {
   const isInvalid = hasValidationErrors(validationErrors);
   const classes = classNames('nxrm-select', className, {
-    'invalid': isInvalid
+    'invalid': isInvalid && !isPristine
   });
 
-  return <>
-    <select id={id || name} name={name} className={classes} value={value} {...rest}>
+  return <div className={classes}>
+    <select id={id || name} name={name} value={value} {...rest}>
       {children}
     </select>
-    {!isPristine && validatable && isInvalid ? <FieldErrorMessage message={getFirstValidationError(validationErrors)}/> : null}
-  </>;
+    {!isPristine && validatable && isInvalid ?
+        <div className="nx-text-input__invalid-message">{getFirstValidationError(validationErrors)}</div> : null}
+  </div>;
 }
 
 Select.propTypes = {

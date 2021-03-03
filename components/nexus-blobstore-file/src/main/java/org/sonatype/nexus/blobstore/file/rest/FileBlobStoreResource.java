@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.file.rest;
 
+import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -27,6 +28,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.blobstore.rest.BlobStoreResourceUtil;
 import org.sonatype.nexus.rest.Resource;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.validation.Validate;
 
@@ -48,6 +50,7 @@ public class FileBlobStoreResource
 {
   private BlobStoreManager blobStoreManager;
 
+  @Inject
   public FileBlobStoreResource(final BlobStoreManager blobStoreManager) {
     this.blobStoreManager = checkNotNull(blobStoreManager);
   }
@@ -60,6 +63,10 @@ public class FileBlobStoreResource
   @Validate
   public void createFileBlobStore(@Valid final FileBlobStoreApiCreateRequest request) throws Exception {
     BlobStoreConfiguration configuration = request.toBlobStoreConfiguration(blobStoreManager.newConfiguration());
+
+    if (blobStoreManager.exists(request.getName())) {
+      throw new ValidationErrorsException("name", "Name is already used, must be unique (ignoring case)");
+    }
 
     blobStoreManager.create(configuration);
   }

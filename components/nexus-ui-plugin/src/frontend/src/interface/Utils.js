@@ -17,7 +17,7 @@
 import {assign, Machine} from "xstate";
 import ExtJS from "./ExtJS";
 import UIStrings from "../constants/UIStrings";
-import {equals} from 'ramda';
+import {hasPath, join, path, pathOr, whereEq} from 'ramda';
 import fileSize from 'file-size';
 
 const FIELD_ID = 'FIELD ';
@@ -64,19 +64,28 @@ export default class Utils {
   }
 
   static isInRange({value, min = -Infinity, max = Infinity}) {
-    if (isNaN(value)) {
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    if (typeof (value) === 'string' && this.isBlank(value)) {
+        return null;
+    }
+
+    const number = Number(value);
+    if (isNaN(number)) {
       return UIStrings.ERROR.NAN
     }
 
-    const number = parseInt(value, 10);
     if (min > number) {
       return UIStrings.ERROR.MIN(min);
     }
     else if (max < number) {
       return UIStrings.ERROR.MAX(max);
     }
-
-    return null;
+    else {
+      return null;
+    }
   }
 
   /**
@@ -103,7 +112,14 @@ export default class Utils {
    * @param config [optional] a function used to change the config of the machine
    * @return {StateMachine<any, any, AnyEventObject>}
    */
-  static buildFormMachine({id, initial = 'loading', stateAfterSave = 'loaded', config = (config) => config, options = (options) => options}) {
+  static buildFormMachine({
+                            id,
+                            initial = 'loading',
+                            stateAfterSave = 'loaded',
+                            config = (config) => config,
+                            options = (options) => options
+                          })
+  {
     const DEFAULT_CONFIG = {
       id,
       initial,
@@ -115,6 +131,8 @@ export default class Utils {
         saveError: null,
         saveErrorData: {},
         validationErrors: {},
+        data: {},
+        pristineData: {}
       },
 
       states: {
@@ -134,7 +152,7 @@ export default class Utils {
         },
 
         loaded: {
-          entry: ['validate', 'setDirtyFlag', 'setIsPristine'],
+          entry: ['validate', 'setDirtyFlag', 'setIsPristine', 'onLoadedEntry'],
 
           on: {
             UPDATE: {
@@ -149,6 +167,10 @@ export default class Utils {
             RESET: {
               target: 'loaded',
               actions: ['reset', 'clearSaveError']
+            },
+            CONFIRM_DELETE: {
+              target: 'confirmDelete',
+              cond: 'canDelete'
             }
           }
         },
@@ -172,6 +194,27 @@ export default class Utils {
 
         loadError: {
           type: 'final'
+        },
+
+        confirmDelete: {
+          invoke: {
+            src: 'confirmDelete',
+            onDone: 'delete',
+            onError: 'loaded'
+          }
+        },
+        delete: {
+          invoke: {
+            src: 'delete',
+            onDone: {
+              target: 'loaded',
+              actions: 'onDeleteSuccess'
+            },
+            onError: {
+              target: 'loaded',
+              actions: 'onDeleteError'
+            }
+          }
         }
       },
       on: {
@@ -187,7 +230,8 @@ export default class Utils {
           data: (_, event) => event.data?.data,
           pristineData: (_, event) => event.data?.data
         }),
-        postProcessData: () => {},
+        postProcessData: () => {
+        },
         setDirtyFlag: ({isPristine}) => ExtJS.setDirtyStatus(id, !isPristine),
         clearDirtyFlag: () => ExtJS.setDirtyStatus(id, false),
 
@@ -253,24 +297,30 @@ export default class Utils {
         }),
 
         setIsPristine: assign({
-          isPristine: ({data, pristineData}) => Object.keys(pristineData).every(
-              key => equals(pristineData[key], data[key]))
+          isPristine: ({data, pristineData}) => whereEq(pristineData)(data)
         }),
 
         setSavedData: assign({
           pristineData: ({data}) => data,
           isTouched: () => ({})
-        })
+        }),
+
+        onLoadedEntry: () => {
+          /* hook for users to override on entry to the loaded state */
+        }
       },
 
       guards: {
         canSave: ({isPristine, validationErrors}) => {
           const isValid = !Utils.isInvalid(validationErrors);
           return !isPristine && isValid;
-        }
+        },
+        canDelete: () => false
       },
 
       services: {
+        confirmDelete: () => Promise.reject('unimplemented'),
+        delete: () => Promise.reject('unimplemented'),
         fetchData: () => Promise.resolve({data: {}})
       }
     };
@@ -323,7 +373,14 @@ export default class Utils {
    * @param options [optional] a function used to change the options of the machine
    * @return {StateMachine<any, any, AnyEventObject>}
    */
-  static buildListMachine({id, initial = 'loading', sortField = 'name', config = (config) => config, options = (options) => options}) {
+  static buildListMachine({
+                            id,
+                            initial = 'loading',
+                            sortField = 'name',
+                            config = (config) => config,
+                            options = (options) => options
+                          })
+  {
     const DEFAULT_CONFIG = {
       id,
       initial: initial,
@@ -392,7 +449,8 @@ export default class Utils {
           filter: () => ''
         }),
 
-        filterData: () => {},
+        filterData: () => {
+        },
 
         sortData: assign({
           data: Utils.sortDataByFieldAndDirection
@@ -416,7 +474,18 @@ export default class Utils {
     if (errors === null || errors === undefined) {
       return false;
     }
-    return Object.values(errors).findIndex((e) => e !== null && e !== undefined && e.length > 0) !== -1;
+
+    return Boolean(Object.values(errors).find(error => {
+      if (error === null || error === undefined) {
+        return false;
+      }
+      else if (error.length > 0) {
+        return true;
+      }
+      else {
+        return this.isInvalid(error);
+      }
+    }));
   }
 
   /**
@@ -428,20 +497,48 @@ export default class Utils {
    */
   static fieldProps(name, current, defaultValue = '') {
     const {data = {}, isTouched = {}, validationErrors = {}, saveErrors = {}, saveErrorData = {}} = current.context;
+
+    if (!Array.isArray(name)) {
+      name = [name];
+    }
+
     let errors = null;
-    if (name in isTouched && validationErrors[name]) {
-      errors = validationErrors[name];
+    if (path(name, isTouched) && path(name, validationErrors)) {
+      errors = path(name, validationErrors);
     }
-    else if (saveErrors[name] && saveErrorData[name] === data[name]) {
-      errors = saveErrors[name];
+    else if (path(name, saveErrors) && path(name, saveErrorData) === path(name, data)) {
+      errors = path(name, saveErrors);
     }
+
     return {
-      name,
-      value: String(data && data[name] || defaultValue),
-      isPristine: name in isTouched ? !isTouched[name] : true,
+      name: join('.', name),
+      value: String(pathOr(defaultValue, name, data)),
+      isPristine: hasPath(name, isTouched) ? !path(name, isTouched) : true,
       validatable: true,
-      validationErrors: errors
+      validationErrors: errors || null
     };
+  }
+
+  /**
+   * Generate common props for checkbox fields
+   * @param name
+   * @param current a form machine generated by buildFormMachine
+   * @param defaultValue if the machine did not provide a value for the checkbox (defaults to false)
+   * @return {{name: string, isChecked: boolean}}
+   */
+  static checkboxProps(name, current, defaultValue = false) {
+    const {data = {}} = current.context;
+
+    if (!Array.isArray(name)) {
+      name = [name];
+    }
+
+    return {
+      checkboxId: String(join('.', name)),
+      name: String(join('.', name)),
+      isChecked: Boolean(pathOr(defaultValue, name, data))
+    };
+
   }
 
   /**

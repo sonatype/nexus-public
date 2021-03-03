@@ -1,9 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`AnonymousSettings renders correctly 1`] = `
+exports[`BlobStoresForm renders the form and buttons when the File type is selected 1`] = `
 <div>
   <main
-    class="nx-page-main"
+    class="nx-page-main nxrm-blob-stores"
   >
     <div
       class="nxrm-page-header"
@@ -14,34 +14,14 @@ exports[`AnonymousSettings renders correctly 1`] = `
         <h1
           class="nx-h1 nx-feature-name"
         >
-          <svg
-            aria-hidden="true"
-            class="svg-inline--fa fa-user fa-w-14 nx-page-title__page-icon nx-icon"
-            data-icon="user"
-            data-prefix="fas"
-            focusable="false"
-            role="img"
-            viewBox="0 0 448 512"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M224 256c70.7 0 128-57.3 128-128S294.7 0 224 0 96 57.3 96 128s57.3 128 128 128zm89.6 32h-16.7c-22.2 10.2-46.9 16-72.9 16s-50.6-5.8-72.9-16h-16.7C60.2 288 0 348.2 0 422.4V464c0 26.5 21.5 48 48 48h352c26.5 0 48-21.5 48-48v-41.6c0-74.2-60.2-134.4-134.4-134.4z"
-              fill="currentColor"
-            />
-          </svg>
           <span>
-            Anonymous Access
+            Create Blob Store
           </span>
         </h1>
-        <p
-          class="nx-page-title__description nx-feature-description"
-        >
-          Configure anonymous access to server contents
-        </p>
       </div>
     </div>
     <div
-      class="nxrm-content-body nxrm-anonymous-settings"
+      class="nxrm-content-body nxrm-blob-stores-form"
     >
       <div
         class="nxrm-section nx-tile"
@@ -51,59 +31,43 @@ exports[`AnonymousSettings renders correctly 1`] = `
         >
           <label
             class="nx-label"
+            for="type"
           >
             <span
               class="nx-label__text"
             >
-              Access:
+              Type
             </span>
           </label>
-          <label
-            class="nx-radio-checkbox nx-checkbox tm-checked"
+          <div
+            class="nxrm-select"
           >
-            <input
-              checked=""
-              class="nx-radio-checkbox__input nx-checkbox__input"
-              id="enabled"
-              type="checkbox"
-            />
-            <span
-              class="nx-radio-checkbox__control nx-checkbox__box"
+            <select
+              id="type"
+              name="type"
             >
-              <svg
-                aria-hidden="true"
-                class="svg-inline--fa fa-check fa-w-16 "
-                data-icon="check"
-                data-prefix="fas"
-                focusable="false"
-                role="img"
-                viewBox="0 0 512 512"
-                xmlns="http://www.w3.org/2000/svg"
+              <option
+                value=""
+              />
+              <option
+                value="File"
               >
-                <path
-                  d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"
-                  fill="currentColor"
-                />
-              </svg>
-            </span>
-            <span
-              class="nx-radio-checkbox__content nx-checkbox__content"
-            >
-              Allow anonymous users to access the server
-            </span>
-          </label>
+                File
+              </option>
+            </select>
+          </div>
         </div>
         <div
           class="nx-form-group"
         >
           <label
             class="nx-label"
-            for="userId"
+            for="name"
           >
             <span
               class="nx-label__text"
             >
-              Username:
+              Name
             </span>
           </label>
           <div
@@ -114,10 +78,10 @@ exports[`AnonymousSettings renders correctly 1`] = `
             >
               <input
                 class="nx-text-input__input"
-                id="userId"
-                name="userId"
+                id="name"
+                name="name"
                 type="text"
-                value="testUser"
+                value=""
               />
               <svg
                 aria-hidden="true"
@@ -160,33 +124,106 @@ exports[`AnonymousSettings renders correctly 1`] = `
         >
           <label
             class="nx-label"
-            for="realmName"
+            for="path"
           >
             <span
               class="nx-label__text"
             >
-              Realm:
+              Path
             </span>
           </label>
-          <div
-            class="nxrm-select"
+          <p
+            class="nx-p"
           >
-            <select
-              id="realmName"
-              name="realmName"
+            An absolute path or a path relative to &lt;data-directory&gt;/blobs
+          </p>
+          <div
+            class="nx-text-input nx-text-input--long pristine valid"
+          >
+            <div
+              class="nx-text-input__box"
             >
-              <option
-                value="r1"
+              <input
+                class="nx-text-input__input"
+                id="path"
+                name="path"
+                type="text"
+                value="/<data-directory>/blobs/"
+              />
+              <svg
+                aria-hidden="true"
+                class="svg-inline--fa fa-check fa-w-16 nx-icon nx-icon--valid nx-icon"
+                data-icon="check"
+                data-prefix="fas"
+                focusable="false"
+                role="img"
+                viewBox="0 0 512 512"
+                xmlns="http://www.w3.org/2000/svg"
               >
-                Realm One
-              </option>
-              <option
-                value="r2"
+                <path
+                  d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"
+                  fill="currentColor"
+                />
+              </svg>
+              <svg
+                aria-hidden="true"
+                class="svg-inline--fa fa-exclamation-circle fa-w-16 nx-icon nx-icon--invalid nx-icon"
+                data-icon="exclamation-circle"
+                data-prefix="fas"
+                focusable="false"
+                role="img"
+                viewBox="0 0 512 512"
+                xmlns="http://www.w3.org/2000/svg"
               >
-                Realm Two
-              </option>
-            </select>
+                <path
+                  d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
+                  fill="currentColor"
+                />
+              </svg>
+            </div>
+            <div
+              class="nx-text-input__invalid-message"
+            />
           </div>
+        </div>
+        <div
+          class="nx-form-group"
+        >
+          <label
+            class="nx-label"
+            for="softQuota.enabled"
+          >
+            <span
+              class="nx-label__text"
+            >
+              Soft Quota
+            </span>
+          </label>
+          <p
+            class="nx-p"
+          >
+            Raises an alert when the blob store exceeds a constraint
+          </p>
+          <label
+            class="nx-radio-checkbox nx-checkbox tm-unchecked"
+            name="softQuota.enabled"
+          >
+            <input
+              class="nx-radio-checkbox__input nx-checkbox__input"
+              id="softQuota.enabled"
+              type="checkbox"
+            />
+            <span
+              class="nx-radio-checkbox__control nx-checkbox__box"
+            >
+               
+            </span>
+            <span
+              class="nx-radio-checkbox__content nx-checkbox__content"
+            >
+              Enabled
+            </span>
+          </label>
         </div>
         <div
           class="nxrm-footer nx-footer"
@@ -194,15 +231,16 @@ exports[`AnonymousSettings renders correctly 1`] = `
           <button
             class="nx-btn disabled nx-btn--primary"
             title="There are no changes"
+            type="submit"
           >
             Save
           </button>
           <button
-            class="nx-btn disabled"
-            title="There are no changes"
+            class="nx-btn"
           >
-            Discard
+            Cancel
           </button>
+          
         </div>
       </div>
     </div>

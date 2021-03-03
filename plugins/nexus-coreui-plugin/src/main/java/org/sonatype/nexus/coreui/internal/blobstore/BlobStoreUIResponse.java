@@ -18,7 +18,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class InternalBlobStoreApiResponse
+public class BlobStoreUIResponse
 {
   private final String name;
 
@@ -34,7 +34,7 @@ public class InternalBlobStoreApiResponse
 
   private final boolean unlimited;
 
-  public InternalBlobStoreApiResponse(final BlobStore blobStore) {
+  public BlobStoreUIResponse(final BlobStore blobStore) {
     BlobStoreConfiguration configuration = blobStore.getBlobStoreConfiguration();
 
     if (blobStore.isStarted()) {

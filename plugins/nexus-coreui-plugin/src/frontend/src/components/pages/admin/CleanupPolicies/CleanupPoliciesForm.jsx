@@ -167,7 +167,7 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
                   onChange={update}
                   value={data.format}>
                 <option value="">{UIStrings.CLEANUP_POLICIES.FORMAT_SELECT}</option>
-                {criteriaByFormat.map(formatCriteria =>
+                {criteriaByFormat?.map(formatCriteria =>
                     <option key={formatCriteria.id} value={formatCriteria.id}>{formatCriteria.name}</option>
                 )}
               </Select>
@@ -260,7 +260,7 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
           </>}
         </NxLoadWrapper>
       </Section>
-      {!loadError && hasData && <CleanupPoliciesPreview policyData={data}/>}
+      {!isLoading && !loadError && hasData && <CleanupPoliciesPreview policyData={data}/>}
     </ContentBody>
   </Page>;
 }
