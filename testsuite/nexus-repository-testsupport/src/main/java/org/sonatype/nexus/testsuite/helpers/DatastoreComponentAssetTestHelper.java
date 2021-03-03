@@ -26,13 +26,16 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -56,6 +59,7 @@ import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.fluent.FluentComponentBuilder;
 import org.sonatype.nexus.repository.content.maintenance.ContentMaintenanceFacet;
 import org.sonatype.nexus.repository.content.store.ContentStoreEvent;
 import org.sonatype.nexus.repository.content.store.InternalIds;
@@ -150,7 +154,7 @@ public class DatastoreComponentAssetTestHelper
 
   private static FluentComponent findComponent(
       final Repository repository,
-      final String namespace,
+      @Nullable final String namespace,
       final String name,
       final String version)
   {
@@ -194,6 +198,11 @@ public class DatastoreComponentAssetTestHelper
   }
 
   @Override
+  public String assetKind(final Repository repository, final String path) {
+    return findAssetByPathNotNull(repository, path).kind();
+  }
+
+  @Override
   public String contentTypeFor(final String repositoryName, final String path) {
     throw new UnsupportedOperationException();
   }
@@ -217,6 +226,12 @@ public class DatastoreComponentAssetTestHelper
   @Override
   public NestedAttributesMap attributes(final Repository repository, final String path) {
     return findAssetByPathNotNull(repository, path).attributes();
+  }
+
+  @Override
+  public Map<String, String> checksums(final Repository repository, final String path) {
+    Optional<AssetBlob> blob = findAssetByPathNotNull(repository, path).blob();
+    return blob.isPresent() ? blob.get().checksums() : Collections.emptyMap();
   }
 
   @Override
@@ -332,7 +347,7 @@ public class DatastoreComponentAssetTestHelper
   @Override
   public NestedAttributesMap componentAttributes(
       final Repository repository,
-      final String namespace,
+      @Nullable final String namespace,
       final String name,
       final String version)
   {
