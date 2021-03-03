@@ -15,6 +15,7 @@ package org.sonatype.nexus.testsuite.helpers;
 import java.io.InputStream;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -76,6 +77,13 @@ public interface ComponentAssetTestHelper
    * Retrieve the paths for all assets in a repository.
    */
   List<String> findAssetPaths(final String repositoryName);
+
+  String assetKind(Repository repository, String path);
+
+  /**
+   * Retrieve the asset checksums.
+   */
+  Map<String, String> checksums(Repository repository, String path);
 
   /**
    * Verify that an asset at the given path exists for the specified repository.

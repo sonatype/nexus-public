@@ -17,11 +17,15 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
 import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -196,6 +200,18 @@ public class OrientComponentAssetTestHelper
   }
 
   @Override
+  public String assetKind(final Repository repository, final String path) {
+    return findAssetByNameNotNull(repository, path).attributes().child(repository.getFormat().toString())
+        .get("asset_kind", String.class);
+  }
+
+  @Override
+  public Map<String, String> checksums(final Repository repository, final String path) {
+    return findAssetByNameNotNull(repository, path).attributes().child("checksum").backing().entrySet().stream().collect(
+        Collectors.toMap(Entry::getKey, entry -> entry.getValue().toString()));
+  }
+
+  @Override
   public boolean assetExists(final Repository repository, final String path) {
     return findAssetByName(repository, path).isPresent();
   }
@@ -302,7 +318,7 @@ public class OrientComponentAssetTestHelper
   @Override
   public NestedAttributesMap componentAttributes(
       final Repository repository,
-      final String namespace,
+      @Nullable final String namespace,
       final String name,
       final String version)
   {
@@ -321,7 +337,7 @@ public class OrientComponentAssetTestHelper
 
   private Optional<Component> findComponent(
       final Repository repository,
-      final String namespace,
+      @Nullable final String namespace,
       final String name,
       final String version)
   {
