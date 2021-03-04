@@ -45,7 +45,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.EARLY_ACCESS_DATASTORE_
 
 /**
  * {@link ServletContextListener} that bootstraps an OSGi-based application.
- * 
+ *
  * @since 3.0
  */
 public class BootstrapListener
@@ -80,7 +80,7 @@ public class BootstrapListener
     log.info("Initializing");
 
     ServletContext servletContext = event.getServletContext();
-    
+
     try {
       Properties properties = System.getProperties();
       if (properties == null) {
@@ -250,6 +250,8 @@ public class BootstrapListener
                 "nexus-repository-docker," +
                 "nexus-repository-nuget," +
                 "nexus-repository-yum," +
+                "nexus-restore-nuget," +
+                "nexus-restore-docker," +
                 properties.getProperty("nexus-exclude-features", ""));
       }
     }
