@@ -10,7 +10,7 @@
     "@fortawesome/fontawesome-svg-core": "=1.2.25",
     "@fortawesome/free-solid-svg-icons": "=5.11.2",
     "@fortawesome/react-fontawesome": "=0.1.4",
-    "@sonatype/react-shared-components": "=2.0.6",
+    "@sonatype/react-shared-components": "=3.5.2",
     "classnames": "=2.2.6",
     "file-size": "=1.0.0",
     "ramda": "=0.27.1"

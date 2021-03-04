@@ -58,221 +58,276 @@ exports[`CleanupPoliciesList renders a loading spinner 1`] = `
         class="nxrm-section nx-tile nxrm-cleanup-policies-list"
       >
         <div
-          class="nxrm-section-toolbar"
+          class="nx-tile-content"
         >
           <div
-            class="nxrm-spacer"
-          />
-          <div
-            class="nx-filter-input"
+            class="nxrm-section-toolbar"
           >
             <div
-              class="nx-text-input__box"
+              class="nxrm-spacer"
+            />
+            <div
+              class="nx-text-input nx-filter-input"
             >
-              <svg
-                aria-hidden="true"
-                class="svg-inline--fa fa-filter fa-w-16 nx-icon--filter-icons nx-icon"
-                data-icon="filter"
-                data-prefix="fas"
-                focusable="false"
-                role="img"
-                viewBox="0 0 512 512"
-                xmlns="http://www.w3.org/2000/svg"
+              <div
+                class="nx-text-input__box"
               >
-                <path
-                  d="M487.976 0H24.028C2.71 0-8.047 25.866 7.058 40.971L192 225.941V432c0 7.831 3.821 15.17 10.237 19.662l80 55.98C298.02 518.69 320 507.493 320 487.98V225.941l184.947-184.97C520.021 25.896 509.338 0 487.976 0z"
-                  fill="currentColor"
+                <svg
+                  aria-hidden="true"
+                  class="svg-inline--fa fa-filter fa-w-16 nx-icon--filter-icons nx-icon"
+                  data-icon="filter"
+                  data-prefix="fas"
+                  focusable="false"
+                  role="img"
+                  viewBox="0 0 512 512"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M487.976 0H24.028C2.71 0-8.047 25.866 7.058 40.971L192 225.941V432c0 7.831 3.821 15.17 10.237 19.662l80 55.98C298.02 518.69 320 507.493 320 487.98V225.941l184.947-184.97C520.021 25.896 509.338 0 487.976 0z"
+                    fill="currentColor"
+                  />
+                </svg>
+                <input
+                  aria-errormessage="nx-text-input-invalid-message-11111111"
+                  class="nx-text-input__input"
+                  id="filter"
+                  placeholder="Filter"
+                  type="text"
+                  value=""
                 />
-              </svg>
-              <input
-                autocomplete="off"
-                class="nx-text-input__input nx-filter-text-input"
-                id="filter"
-                placeholder="Filter"
-                type="text"
-                value=""
+                <svg
+                  aria-hidden="true"
+                  class="svg-inline--fa fa-check fa-w-16 nx-icon nx-icon--valid nx-icon"
+                  data-icon="check"
+                  data-prefix="fas"
+                  focusable="false"
+                  role="img"
+                  viewBox="0 0 512 512"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"
+                    fill="currentColor"
+                  />
+                </svg>
+                <svg
+                  aria-hidden="true"
+                  class="svg-inline--fa fa-exclamation-circle fa-w-16 nx-icon nx-icon--invalid nx-icon"
+                  data-icon="exclamation-circle"
+                  data-prefix="fas"
+                  focusable="false"
+                  role="img"
+                  viewBox="0 0 512 512"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </div>
+              <div
+                class="nx-text-input__invalid-message"
+                id="nx-text-input-invalid-message-11111111"
+                role="alert"
               />
             </div>
           </div>
-        </div>
-        <table
-          class="nx-table"
-        >
-          <thead>
-            <tr
-              class="nx-table-row nx-table-row--header"
-            >
-              <th
-                class="nx-cell nx-cell--header nx-cell--sortable"
+          <table
+            class="nx-table"
+          >
+            <thead>
+              <tr
+                class="nx-table-row nx-table-row--header"
               >
-                <span>
-                  Name
-                </span>
-                <span
-                  class="nx-cell__sort-icons fa-layers"
+                <th
+                  aria-label="Name ascending"
+                  aria-sort="ascending"
+                  class="nx-cell nx-cell--header nx-cell--sortable"
+                  tabindex="0"
+                  title="Name ascending"
                 >
-                  <svg
-                    aria-hidden="true"
-                    class="svg-inline--fa fa-sort-down fa-w-10 nx-icon"
-                    data-icon="sort-down"
-                    data-prefix="fas"
-                    focusable="false"
-                    role="img"
-                    viewBox="0 0 320 512"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                  <svg
-                    aria-hidden="true"
-                    class="svg-inline--fa fa-sort-up fa-w-10 nx-icon"
-                    data-icon="sort-up"
-                    data-prefix="fas"
-                    focusable="false"
-                    role="img"
-                    viewBox="0 0 320 512"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                </span>
-              </th>
-              <th
-                class="nx-cell nx-cell--header nx-cell--sortable"
-              >
-                <span>
-                  Format
-                </span>
-                <span
-                  class="nx-cell__sort-icons fa-layers"
-                >
-                  <svg
-                    aria-hidden="true"
-                    class="svg-inline--fa fa-sort fa-w-10 nx-icon"
-                    data-icon="sort"
-                    data-prefix="fas"
-                    focusable="false"
-                    role="img"
-                    viewBox="0 0 320 512"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                </span>
-              </th>
-              <th
-                class="nx-cell nx-cell--header nx-cell--sortable"
-              >
-                <span>
-                  Notes
-                </span>
-                <span
-                  class="nx-cell__sort-icons fa-layers"
-                >
-                  <svg
-                    aria-hidden="true"
-                    class="svg-inline--fa fa-sort fa-w-10 nx-icon"
-                    data-icon="sort"
-                    data-prefix="fas"
-                    focusable="false"
-                    role="img"
-                    viewBox="0 0 320 512"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                </span>
-              </th>
-              <th
-                class="nx-cell nx-cell--header nx-cell--icon"
-              />
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              class="nx-table-row"
-            >
-              <td
-                class="nx-cell nx-cell--meta-info"
-                colspan="4"
-              >
-                <div
-                  class="nx-loading-spinner"
-                >
-                  <svg
-                    aria-hidden="true"
-                    class="svg-inline--fa fa-circle-notch fa-w-16 fa-spin nx-loading-spinner__icon nx-icon"
-                    data-icon="circle-notch"
-                    data-prefix="fas"
-                    focusable="false"
-                    role="img"
-                    viewBox="0 0 512 512"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M288 39.056v16.659c0 10.804 7.281 20.159 17.686 23.066C383.204 100.434 440 171.518 440 256c0 101.689-82.295 184-184 184-101.689 0-184-82.295-184-184 0-84.47 56.786-155.564 134.312-177.219C216.719 75.874 224 66.517 224 55.712V39.064c0-15.709-14.834-27.153-30.046-23.234C86.603 43.482 7.394 141.206 8.003 257.332c.72 137.052 111.477 246.956 248.531 246.667C393.255 503.711 504 392.788 504 256c0-115.633-79.14-212.779-186.211-240.236C302.678 11.889 288 23.456 288 39.056z"
-                      fill="currentColor"
-                    />
-                  </svg>
                   <span>
-                    Loading…
+                    Name
                   </span>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                  <span
+                    class="nx-cell__sort-icons fa-layers"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-sort-down fa-w-10 nx-icon"
+                      data-icon="sort-down"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 320 512"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-sort-up fa-w-10 nx-icon"
+                      data-icon="sort-up"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 320 512"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </span>
+                </th>
+                <th
+                  aria-label="Format unsorted"
+                  aria-sort="none"
+                  class="nx-cell nx-cell--header nx-cell--sortable"
+                  tabindex="0"
+                  title="Format unsorted"
+                >
+                  <span>
+                    Format
+                  </span>
+                  <span
+                    class="nx-cell__sort-icons fa-layers"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-sort fa-w-10 nx-icon"
+                      data-icon="sort"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 320 512"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </span>
+                </th>
+                <th
+                  aria-label="Notes unsorted"
+                  aria-sort="none"
+                  class="nx-cell nx-cell--header nx-cell--sortable"
+                  tabindex="0"
+                  title="Notes unsorted"
+                >
+                  <span>
+                    Notes
+                  </span>
+                  <span
+                    class="nx-cell__sort-icons fa-layers"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-sort fa-w-10 nx-icon"
+                      data-icon="sort"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 320 512"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </span>
+                </th>
+                <th
+                  class="nx-cell nx-cell--header nx-cell--icon"
+                />
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                class="nx-table-row"
+              >
+                <td
+                  class="nx-cell nx-cell--meta-info"
+                  colspan="4"
+                >
+                  <div
+                    class="nx-loading-spinner"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-circle-notch fa-w-16 fa-spin nx-loading-spinner__icon nx-icon"
+                      data-icon="circle-notch"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 512 512"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M288 39.056v16.659c0 10.804 7.281 20.159 17.686 23.066C383.204 100.434 440 171.518 440 256c0 101.689-82.295 184-184 184-101.689 0-184-82.295-184-184 0-84.47 56.786-155.564 134.312-177.219C216.719 75.874 224 66.517 224 55.712V39.064c0-15.709-14.834-27.153-30.046-23.234C86.603 43.482 7.394 141.206 8.003 257.332c.72 137.052 111.477 246.956 248.531 246.667C393.255 503.711 504 392.788 504 256c0-115.633-79.14-212.779-186.211-240.236C302.678 11.889 288 23.456 288 39.056z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    <span>
+                      Loading…
+                    </span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
       <div
         class="nxrm-help-tile nx-tile"
       >
-        <h3>
-          <svg
-            aria-hidden="true"
-            class="svg-inline--fa fa-info-circle fa-w-16 nx-icon"
-            data-icon="info-circle"
-            data-prefix="fas"
-            focusable="false"
-            role="img"
-            viewBox="0 0 512 512"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 110c23.196 0 42 18.804 42 42s-18.804 42-42 42-42-18.804-42-42 18.804-42 42-42zm56 254c0 6.627-5.373 12-12 12h-88c-6.627 0-12-5.373-12-12v-24c0-6.627 5.373-12 12-12h12v-64h-12c-6.627 0-12-5.373-12-12v-24c0-6.627 5.373-12 12-12h64c6.627 0 12 5.373 12 12v100h12c6.627 0 12 5.373 12 12v24z"
-              fill="currentColor"
-            />
-          </svg>
-          What is a cleanup policy?
-        </h3>
-        <p>
-          Cleanup policies can be used to remove content from your repositories. These policies will execute at the configured frequency. Once created, a cleanup policy must be assigned to a repository from 
-          <a
-            href="#admin/repository/repositories"
-          >
-            the repository configuration screen
-          </a>
-          . For more information, check 
-          <a
-            href="http://links.sonatype.com/products/nxrm3/docs/cleanup-policy"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            the documentation
-          </a>
-          .
-        </p>
+        <div
+          class="nx-tile-content"
+        >
+          <h3>
+            <svg
+              aria-hidden="true"
+              class="svg-inline--fa fa-info-circle fa-w-16 nx-icon"
+              data-icon="info-circle"
+              data-prefix="fas"
+              focusable="false"
+              role="img"
+              viewBox="0 0 512 512"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 110c23.196 0 42 18.804 42 42s-18.804 42-42 42-42-18.804-42-42 18.804-42 42-42zm56 254c0 6.627-5.373 12-12 12h-88c-6.627 0-12-5.373-12-12v-24c0-6.627 5.373-12 12-12h12v-64h-12c-6.627 0-12-5.373-12-12v-24c0-6.627 5.373-12 12-12h64c6.627 0 12 5.373 12 12v100h12c6.627 0 12 5.373 12 12v24z"
+                fill="currentColor"
+              />
+            </svg>
+            What is a cleanup policy?
+          </h3>
+          <p>
+            Cleanup policies can be used to remove content from your repositories. These policies will execute at the configured frequency. Once created, a cleanup policy must be assigned to a repository from 
+            <a
+              href="#admin/repository/repositories"
+            >
+              the repository configuration screen
+            </a>
+            . For more information, check 
+            <a
+              href="http://links.sonatype.com/products/nxrm3/docs/cleanup-policy"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              the documentation
+            </a>
+            .
+          </p>
+        </div>
       </div>
     </div>
   </main>
@@ -337,229 +392,287 @@ exports[`CleanupPoliciesList renders an error message 1`] = `
         class="nxrm-section nx-tile nxrm-cleanup-policies-list"
       >
         <div
-          class="nxrm-section-toolbar"
+          class="nx-tile-content"
         >
           <div
-            class="nxrm-spacer"
-          />
-          <div
-            class="nx-filter-input"
+            class="nxrm-section-toolbar"
           >
             <div
-              class="nx-text-input__box"
+              class="nxrm-spacer"
+            />
+            <div
+              class="nx-text-input nx-filter-input"
             >
-              <svg
-                aria-hidden="true"
-                class="svg-inline--fa fa-filter fa-w-16 nx-icon--filter-icons nx-icon"
-                data-icon="filter"
-                data-prefix="fas"
-                focusable="false"
-                role="img"
-                viewBox="0 0 512 512"
-                xmlns="http://www.w3.org/2000/svg"
+              <div
+                class="nx-text-input__box"
               >
-                <path
-                  d="M487.976 0H24.028C2.71 0-8.047 25.866 7.058 40.971L192 225.941V432c0 7.831 3.821 15.17 10.237 19.662l80 55.98C298.02 518.69 320 507.493 320 487.98V225.941l184.947-184.97C520.021 25.896 509.338 0 487.976 0z"
-                  fill="currentColor"
+                <svg
+                  aria-hidden="true"
+                  class="svg-inline--fa fa-filter fa-w-16 nx-icon--filter-icons nx-icon"
+                  data-icon="filter"
+                  data-prefix="fas"
+                  focusable="false"
+                  role="img"
+                  viewBox="0 0 512 512"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M487.976 0H24.028C2.71 0-8.047 25.866 7.058 40.971L192 225.941V432c0 7.831 3.821 15.17 10.237 19.662l80 55.98C298.02 518.69 320 507.493 320 487.98V225.941l184.947-184.97C520.021 25.896 509.338 0 487.976 0z"
+                    fill="currentColor"
+                  />
+                </svg>
+                <input
+                  aria-errormessage="nx-text-input-invalid-message-22222222"
+                  class="nx-text-input__input"
+                  id="filter"
+                  placeholder="Filter"
+                  type="text"
+                  value=""
                 />
-              </svg>
-              <input
-                autocomplete="off"
-                class="nx-text-input__input nx-filter-text-input"
-                id="filter"
-                placeholder="Filter"
-                type="text"
-                value=""
+                <svg
+                  aria-hidden="true"
+                  class="svg-inline--fa fa-check fa-w-16 nx-icon nx-icon--valid nx-icon"
+                  data-icon="check"
+                  data-prefix="fas"
+                  focusable="false"
+                  role="img"
+                  viewBox="0 0 512 512"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"
+                    fill="currentColor"
+                  />
+                </svg>
+                <svg
+                  aria-hidden="true"
+                  class="svg-inline--fa fa-exclamation-circle fa-w-16 nx-icon nx-icon--invalid nx-icon"
+                  data-icon="exclamation-circle"
+                  data-prefix="fas"
+                  focusable="false"
+                  role="img"
+                  viewBox="0 0 512 512"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </div>
+              <div
+                class="nx-text-input__invalid-message"
+                id="nx-text-input-invalid-message-22222222"
+                role="alert"
               />
             </div>
           </div>
-        </div>
-        <table
-          class="nx-table"
-        >
-          <thead>
-            <tr
-              class="nx-table-row nx-table-row--header"
-            >
-              <th
-                class="nx-cell nx-cell--header nx-cell--sortable"
+          <table
+            class="nx-table"
+          >
+            <thead>
+              <tr
+                class="nx-table-row nx-table-row--header"
               >
-                <span>
-                  Name
-                </span>
-                <span
-                  class="nx-cell__sort-icons fa-layers"
+                <th
+                  aria-label="Name ascending"
+                  aria-sort="ascending"
+                  class="nx-cell nx-cell--header nx-cell--sortable"
+                  tabindex="0"
+                  title="Name ascending"
                 >
-                  <svg
-                    aria-hidden="true"
-                    class="svg-inline--fa fa-sort-down fa-w-10 nx-icon"
-                    data-icon="sort-down"
-                    data-prefix="fas"
-                    focusable="false"
-                    role="img"
-                    viewBox="0 0 320 512"
-                    xmlns="http://www.w3.org/2000/svg"
+                  <span>
+                    Name
+                  </span>
+                  <span
+                    class="nx-cell__sort-icons fa-layers"
                   >
-                    <path
-                      d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                  <svg
-                    aria-hidden="true"
-                    class="svg-inline--fa fa-sort-up fa-w-10 nx-icon"
-                    data-icon="sort-up"
-                    data-prefix="fas"
-                    focusable="false"
-                    role="img"
-                    viewBox="0 0 320 512"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                </span>
-              </th>
-              <th
-                class="nx-cell nx-cell--header nx-cell--sortable"
-              >
-                <span>
-                  Format
-                </span>
-                <span
-                  class="nx-cell__sort-icons fa-layers"
-                >
-                  <svg
-                    aria-hidden="true"
-                    class="svg-inline--fa fa-sort fa-w-10 nx-icon"
-                    data-icon="sort"
-                    data-prefix="fas"
-                    focusable="false"
-                    role="img"
-                    viewBox="0 0 320 512"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                </span>
-              </th>
-              <th
-                class="nx-cell nx-cell--header nx-cell--sortable"
-              >
-                <span>
-                  Notes
-                </span>
-                <span
-                  class="nx-cell__sort-icons fa-layers"
-                >
-                  <svg
-                    aria-hidden="true"
-                    class="svg-inline--fa fa-sort fa-w-10 nx-icon"
-                    data-icon="sort"
-                    data-prefix="fas"
-                    focusable="false"
-                    role="img"
-                    viewBox="0 0 320 512"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                </span>
-              </th>
-              <th
-                class="nx-cell nx-cell--header nx-cell--icon"
-              />
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              class="nx-table-row"
-            >
-              <td
-                class="nx-cell nx-cell--meta-info"
-                colspan="4"
-              >
-                <div
-                  class="nx-alert nx-alert--error nx-alert--load-error"
-                >
-                  <svg
-                    aria-hidden="true"
-                    class="svg-inline--fa fa-exclamation-circle fa-w-16 nx-icon"
-                    data-icon="exclamation-circle"
-                    data-prefix="fas"
-                    focusable="false"
-                    role="img"
-                    viewBox="0 0 512 512"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                  <div
-                    class="nx-alert__content"
-                  >
-                    <span
-                      class="nx-load-error__message"
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-sort-down fa-w-10 nx-icon"
+                      data-icon="sort-down"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 320 512"
+                      xmlns="http://www.w3.org/2000/svg"
                     >
-                      An error occurred loading data.
-                       
-                      Error
-                    </span>
+                      <path
+                        d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-sort-up fa-w-10 nx-icon"
+                      data-icon="sort-up"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 320 512"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </span>
+                </th>
+                <th
+                  aria-label="Format unsorted"
+                  aria-sort="none"
+                  class="nx-cell nx-cell--header nx-cell--sortable"
+                  tabindex="0"
+                  title="Format unsorted"
+                >
+                  <span>
+                    Format
+                  </span>
+                  <span
+                    class="nx-cell__sort-icons fa-layers"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-sort fa-w-10 nx-icon"
+                      data-icon="sort"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 320 512"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </span>
+                </th>
+                <th
+                  aria-label="Notes unsorted"
+                  aria-sort="none"
+                  class="nx-cell nx-cell--header nx-cell--sortable"
+                  tabindex="0"
+                  title="Notes unsorted"
+                >
+                  <span>
+                    Notes
+                  </span>
+                  <span
+                    class="nx-cell__sort-icons fa-layers"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-sort fa-w-10 nx-icon"
+                      data-icon="sort"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 320 512"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </span>
+                </th>
+                <th
+                  class="nx-cell nx-cell--header nx-cell--icon"
+                />
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                class="nx-table-row"
+              >
+                <td
+                  class="nx-cell nx-cell--meta-info"
+                  colspan="4"
+                >
+                  <div
+                    aria-atomic="true"
+                    class="nx-alert nx-alert--error nx-alert--load-error"
+                    role="alert"
+                  >
+                    <svg
+                      aria-hidden="false"
+                      aria-label="Error"
+                      class="svg-inline--fa fa-exclamation-circle fa-w-16 nx-icon"
+                      data-icon="exclamation-circle"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 512 512"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    <div
+                      class="nx-alert__content"
+                    >
+                      <span
+                        class="nx-load-error__message"
+                      >
+                        An error occurred loading data.
+                         
+                        Error
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
       <div
         class="nxrm-help-tile nx-tile"
       >
-        <h3>
-          <svg
-            aria-hidden="true"
-            class="svg-inline--fa fa-info-circle fa-w-16 nx-icon"
-            data-icon="info-circle"
-            data-prefix="fas"
-            focusable="false"
-            role="img"
-            viewBox="0 0 512 512"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 110c23.196 0 42 18.804 42 42s-18.804 42-42 42-42-18.804-42-42 18.804-42 42-42zm56 254c0 6.627-5.373 12-12 12h-88c-6.627 0-12-5.373-12-12v-24c0-6.627 5.373-12 12-12h12v-64h-12c-6.627 0-12-5.373-12-12v-24c0-6.627 5.373-12 12-12h64c6.627 0 12 5.373 12 12v100h12c6.627 0 12 5.373 12 12v24z"
-              fill="currentColor"
-            />
-          </svg>
-          What is a cleanup policy?
-        </h3>
-        <p>
-          Cleanup policies can be used to remove content from your repositories. These policies will execute at the configured frequency. Once created, a cleanup policy must be assigned to a repository from 
-          <a
-            href="#admin/repository/repositories"
-          >
-            the repository configuration screen
-          </a>
-          . For more information, check 
-          <a
-            href="http://links.sonatype.com/products/nxrm3/docs/cleanup-policy"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            the documentation
-          </a>
-          .
-        </p>
+        <div
+          class="nx-tile-content"
+        >
+          <h3>
+            <svg
+              aria-hidden="true"
+              class="svg-inline--fa fa-info-circle fa-w-16 nx-icon"
+              data-icon="info-circle"
+              data-prefix="fas"
+              focusable="false"
+              role="img"
+              viewBox="0 0 512 512"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 110c23.196 0 42 18.804 42 42s-18.804 42-42 42-42-18.804-42-42 18.804-42 42-42zm56 254c0 6.627-5.373 12-12 12h-88c-6.627 0-12-5.373-12-12v-24c0-6.627 5.373-12 12-12h12v-64h-12c-6.627 0-12-5.373-12-12v-24c0-6.627 5.373-12 12-12h64c6.627 0 12 5.373 12 12v100h12c6.627 0 12 5.373 12 12v24z"
+                fill="currentColor"
+              />
+            </svg>
+            What is a cleanup policy?
+          </h3>
+          <p>
+            Cleanup policies can be used to remove content from your repositories. These policies will execute at the configured frequency. Once created, a cleanup policy must be assigned to a repository from 
+            <a
+              href="#admin/repository/repositories"
+            >
+              the repository configuration screen
+            </a>
+            . For more information, check 
+            <a
+              href="http://links.sonatype.com/products/nxrm3/docs/cleanup-policy"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              the documentation
+            </a>
+            .
+          </p>
+        </div>
       </div>
     </div>
   </main>
@@ -624,278 +737,335 @@ exports[`CleanupPoliciesList renders the resolved data 1`] = `
         class="nxrm-section nx-tile nxrm-cleanup-policies-list"
       >
         <div
-          class="nxrm-section-toolbar"
+          class="nx-tile-content"
         >
           <div
-            class="nxrm-spacer"
-          />
-          <div
-            class="nx-filter-input"
+            class="nxrm-section-toolbar"
           >
             <div
-              class="nx-text-input__box"
+              class="nxrm-spacer"
+            />
+            <div
+              class="nx-text-input nx-filter-input"
             >
-              <svg
-                aria-hidden="true"
-                class="svg-inline--fa fa-filter fa-w-16 nx-icon--filter-icons nx-icon"
-                data-icon="filter"
-                data-prefix="fas"
-                focusable="false"
-                role="img"
-                viewBox="0 0 512 512"
-                xmlns="http://www.w3.org/2000/svg"
+              <div
+                class="nx-text-input__box"
               >
-                <path
-                  d="M487.976 0H24.028C2.71 0-8.047 25.866 7.058 40.971L192 225.941V432c0 7.831 3.821 15.17 10.237 19.662l80 55.98C298.02 518.69 320 507.493 320 487.98V225.941l184.947-184.97C520.021 25.896 509.338 0 487.976 0z"
-                  fill="currentColor"
+                <svg
+                  aria-hidden="true"
+                  class="svg-inline--fa fa-filter fa-w-16 nx-icon--filter-icons nx-icon"
+                  data-icon="filter"
+                  data-prefix="fas"
+                  focusable="false"
+                  role="img"
+                  viewBox="0 0 512 512"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M487.976 0H24.028C2.71 0-8.047 25.866 7.058 40.971L192 225.941V432c0 7.831 3.821 15.17 10.237 19.662l80 55.98C298.02 518.69 320 507.493 320 487.98V225.941l184.947-184.97C520.021 25.896 509.338 0 487.976 0z"
+                    fill="currentColor"
+                  />
+                </svg>
+                <input
+                  aria-errormessage="nx-text-input-invalid-message-00000000"
+                  class="nx-text-input__input"
+                  id="filter"
+                  placeholder="Filter"
+                  type="text"
+                  value=""
                 />
-              </svg>
-              <input
-                autocomplete="off"
-                class="nx-text-input__input nx-filter-text-input"
-                id="filter"
-                placeholder="Filter"
-                type="text"
-                value=""
+                <svg
+                  aria-hidden="true"
+                  class="svg-inline--fa fa-check fa-w-16 nx-icon nx-icon--valid nx-icon"
+                  data-icon="check"
+                  data-prefix="fas"
+                  focusable="false"
+                  role="img"
+                  viewBox="0 0 512 512"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"
+                    fill="currentColor"
+                  />
+                </svg>
+                <svg
+                  aria-hidden="true"
+                  class="svg-inline--fa fa-exclamation-circle fa-w-16 nx-icon nx-icon--invalid nx-icon"
+                  data-icon="exclamation-circle"
+                  data-prefix="fas"
+                  focusable="false"
+                  role="img"
+                  viewBox="0 0 512 512"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </div>
+              <div
+                class="nx-text-input__invalid-message"
+                id="nx-text-input-invalid-message-00000000"
+                role="alert"
               />
             </div>
           </div>
+          <table
+            class="nx-table"
+          >
+            <thead>
+              <tr
+                class="nx-table-row nx-table-row--header"
+              >
+                <th
+                  aria-label="Name ascending"
+                  aria-sort="ascending"
+                  class="nx-cell nx-cell--header nx-cell--sortable"
+                  tabindex="0"
+                  title="Name ascending"
+                >
+                  <span>
+                    Name
+                  </span>
+                  <span
+                    class="nx-cell__sort-icons fa-layers"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-sort-down fa-w-10 nx-icon"
+                      data-icon="sort-down"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 320 512"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-sort-up fa-w-10 nx-icon"
+                      data-icon="sort-up"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 320 512"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </span>
+                </th>
+                <th
+                  aria-label="Format unsorted"
+                  aria-sort="none"
+                  class="nx-cell nx-cell--header nx-cell--sortable"
+                  tabindex="0"
+                  title="Format unsorted"
+                >
+                  <span>
+                    Format
+                  </span>
+                  <span
+                    class="nx-cell__sort-icons fa-layers"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-sort fa-w-10 nx-icon"
+                      data-icon="sort"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 320 512"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </span>
+                </th>
+                <th
+                  aria-label="Notes unsorted"
+                  aria-sort="none"
+                  class="nx-cell nx-cell--header nx-cell--sortable"
+                  tabindex="0"
+                  title="Notes unsorted"
+                >
+                  <span>
+                    Notes
+                  </span>
+                  <span
+                    class="nx-cell__sort-icons fa-layers"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-sort fa-w-10 nx-icon"
+                      data-icon="sort"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 320 512"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </span>
+                </th>
+                <th
+                  class="nx-cell nx-cell--header nx-cell--icon"
+                />
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                class="nx-table-row nx-clickable"
+                tabindex="0"
+              >
+                <td
+                  class="nx-cell"
+                >
+                  <span>
+                    cleanup
+                  </span>
+                </td>
+                <td
+                  class="nx-cell"
+                >
+                  <span>
+                    testformat
+                  </span>
+                </td>
+                <td
+                  class="nx-cell"
+                >
+                  <span>
+                    cleanup-description
+                  </span>
+                </td>
+                <td
+                  class="nx-cell nx-cell--icon"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="svg-inline--fa fa-chevron-right fa-w-10 nx-icon"
+                    data-icon="chevron-right"
+                    data-prefix="fas"
+                    focusable="false"
+                    role="img"
+                    viewBox="0 0 320 512"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </td>
+              </tr>
+              <tr
+                class="nx-table-row nx-clickable"
+                tabindex="0"
+              >
+                <td
+                  class="nx-cell"
+                >
+                  <span>
+                    test
+                  </span>
+                </td>
+                <td
+                  class="nx-cell"
+                >
+                  <span>
+                    testformat
+                  </span>
+                </td>
+                <td
+                  class="nx-cell"
+                >
+                  <span>
+                    notes
+                  </span>
+                </td>
+                <td
+                  class="nx-cell nx-cell--icon"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="svg-inline--fa fa-chevron-right fa-w-10 nx-icon"
+                    data-icon="chevron-right"
+                    data-prefix="fas"
+                    focusable="false"
+                    role="img"
+                    viewBox="0 0 320 512"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <table
-          class="nx-table"
-        >
-          <thead>
-            <tr
-              class="nx-table-row nx-table-row--header"
-            >
-              <th
-                class="nx-cell nx-cell--header nx-cell--sortable"
-              >
-                <span>
-                  Name
-                </span>
-                <span
-                  class="nx-cell__sort-icons fa-layers"
-                >
-                  <svg
-                    aria-hidden="true"
-                    class="svg-inline--fa fa-sort-down fa-w-10 nx-icon"
-                    data-icon="sort-down"
-                    data-prefix="fas"
-                    focusable="false"
-                    role="img"
-                    viewBox="0 0 320 512"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                  <svg
-                    aria-hidden="true"
-                    class="svg-inline--fa fa-sort-up fa-w-10 nx-icon"
-                    data-icon="sort-up"
-                    data-prefix="fas"
-                    focusable="false"
-                    role="img"
-                    viewBox="0 0 320 512"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                </span>
-              </th>
-              <th
-                class="nx-cell nx-cell--header nx-cell--sortable"
-              >
-                <span>
-                  Format
-                </span>
-                <span
-                  class="nx-cell__sort-icons fa-layers"
-                >
-                  <svg
-                    aria-hidden="true"
-                    class="svg-inline--fa fa-sort fa-w-10 nx-icon"
-                    data-icon="sort"
-                    data-prefix="fas"
-                    focusable="false"
-                    role="img"
-                    viewBox="0 0 320 512"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                </span>
-              </th>
-              <th
-                class="nx-cell nx-cell--header nx-cell--sortable"
-              >
-                <span>
-                  Notes
-                </span>
-                <span
-                  class="nx-cell__sort-icons fa-layers"
-                >
-                  <svg
-                    aria-hidden="true"
-                    class="svg-inline--fa fa-sort fa-w-10 nx-icon"
-                    data-icon="sort"
-                    data-prefix="fas"
-                    focusable="false"
-                    role="img"
-                    viewBox="0 0 320 512"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                </span>
-              </th>
-              <th
-                class="nx-cell nx-cell--header nx-cell--icon"
-              />
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              class="nx-table-row nx-clickable"
-            >
-              <td
-                class="nx-cell"
-              >
-                <span>
-                  cleanup
-                </span>
-              </td>
-              <td
-                class="nx-cell"
-              >
-                <span>
-                  testformat
-                </span>
-              </td>
-              <td
-                class="nx-cell"
-              >
-                <span>
-                  cleanup-description
-                </span>
-              </td>
-              <td
-                class="nx-cell nx-cell--icon"
-              >
-                <svg
-                  aria-hidden="true"
-                  class="svg-inline--fa fa-chevron-right fa-w-10 nx-icon"
-                  data-icon="chevron-right"
-                  data-prefix="fas"
-                  focusable="false"
-                  role="img"
-                  viewBox="0 0 320 512"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z"
-                    fill="currentColor"
-                  />
-                </svg>
-              </td>
-            </tr>
-            <tr
-              class="nx-table-row nx-clickable"
-            >
-              <td
-                class="nx-cell"
-              >
-                <span>
-                  test
-                </span>
-              </td>
-              <td
-                class="nx-cell"
-              >
-                <span>
-                  testformat
-                </span>
-              </td>
-              <td
-                class="nx-cell"
-              >
-                <span>
-                  notes
-                </span>
-              </td>
-              <td
-                class="nx-cell nx-cell--icon"
-              >
-                <svg
-                  aria-hidden="true"
-                  class="svg-inline--fa fa-chevron-right fa-w-10 nx-icon"
-                  data-icon="chevron-right"
-                  data-prefix="fas"
-                  focusable="false"
-                  role="img"
-                  viewBox="0 0 320 512"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z"
-                    fill="currentColor"
-                  />
-                </svg>
-              </td>
-            </tr>
-          </tbody>
-        </table>
       </div>
       <div
         class="nxrm-help-tile nx-tile"
       >
-        <h3>
-          <svg
-            aria-hidden="true"
-            class="svg-inline--fa fa-info-circle fa-w-16 nx-icon"
-            data-icon="info-circle"
-            data-prefix="fas"
-            focusable="false"
-            role="img"
-            viewBox="0 0 512 512"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 110c23.196 0 42 18.804 42 42s-18.804 42-42 42-42-18.804-42-42 18.804-42 42-42zm56 254c0 6.627-5.373 12-12 12h-88c-6.627 0-12-5.373-12-12v-24c0-6.627 5.373-12 12-12h12v-64h-12c-6.627 0-12-5.373-12-12v-24c0-6.627 5.373-12 12-12h64c6.627 0 12 5.373 12 12v100h12c6.627 0 12 5.373 12 12v24z"
-              fill="currentColor"
-            />
-          </svg>
-          What is a cleanup policy?
-        </h3>
-        <p>
-          Cleanup policies can be used to remove content from your repositories. These policies will execute at the configured frequency. Once created, a cleanup policy must be assigned to a repository from 
-          <a
-            href="#admin/repository/repositories"
-          >
-            the repository configuration screen
-          </a>
-          . For more information, check 
-          <a
-            href="http://links.sonatype.com/products/nxrm3/docs/cleanup-policy"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            the documentation
-          </a>
-          .
-        </p>
+        <div
+          class="nx-tile-content"
+        >
+          <h3>
+            <svg
+              aria-hidden="true"
+              class="svg-inline--fa fa-info-circle fa-w-16 nx-icon"
+              data-icon="info-circle"
+              data-prefix="fas"
+              focusable="false"
+              role="img"
+              viewBox="0 0 512 512"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 110c23.196 0 42 18.804 42 42s-18.804 42-42 42-42-18.804-42-42 18.804-42 42-42zm56 254c0 6.627-5.373 12-12 12h-88c-6.627 0-12-5.373-12-12v-24c0-6.627 5.373-12 12-12h12v-64h-12c-6.627 0-12-5.373-12-12v-24c0-6.627 5.373-12 12-12h64c6.627 0 12 5.373 12 12v100h12c6.627 0 12 5.373 12 12v24z"
+                fill="currentColor"
+              />
+            </svg>
+            What is a cleanup policy?
+          </h3>
+          <p>
+            Cleanup policies can be used to remove content from your repositories. These policies will execute at the configured frequency. Once created, a cleanup policy must be assigned to a repository from 
+            <a
+              href="#admin/repository/repositories"
+            >
+              the repository configuration screen
+            </a>
+            . For more information, check 
+            <a
+              href="http://links.sonatype.com/products/nxrm3/docs/cleanup-policy"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              the documentation
+            </a>
+            .
+          </p>
+        </div>
       </div>
     </div>
   </main>

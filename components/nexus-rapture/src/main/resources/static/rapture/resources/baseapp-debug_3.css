@@ -6965,14 +6965,14 @@ tr.x-grid-subtable-row {
     padding: 2px 5px 0 5px;
 }
 
-.nx-footer {
+.nxrm-footer {
     /**
  * @class NX.view.footer.Panel
  */
     background-color: #444;
 }
 
-.nx-footer .copyright {
+.nxrm-footer .copyright {
     color: #cbcbcb;
     font-size: 8px;
     text-align: right;

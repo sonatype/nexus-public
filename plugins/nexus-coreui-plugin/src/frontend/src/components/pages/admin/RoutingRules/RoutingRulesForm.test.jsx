@@ -124,11 +124,11 @@ describe('RoutingRulesForm', function() {
   });
 
   it('renders an error message when saving an invalid field', async function() {
-    const {container, loadingMask, name, matcher, createButton, getByText, savingMask} = renderCreateView();
+    const {loadingMask, name, matcher, createButton, getByText, savingMask} = renderCreateView();
 
     await waitForElementToBeRemoved(loadingMask);
 
-    await TestUtils.changeField(name, '');
+    await TestUtils.changeField(name, 'newValue');
     await TestUtils.changeField(() => matcher(0), '.*');
 
     axios.post.mockRejectedValue({
@@ -136,7 +136,7 @@ describe('RoutingRulesForm', function() {
         data: [
           {
             "id": "name",
-            "message": "some name error"
+            "message": "A rule with the same name already exists. Name must be unique."
           }
         ]
       }
@@ -145,7 +145,7 @@ describe('RoutingRulesForm', function() {
 
     await waitForElementToBeRemoved(savingMask);
 
-    expect(getByText('some name error')).toBeInTheDocument();
+    expect(getByText('A rule with the same name already exists. Name must be unique.')).toBeInTheDocument();
   });
 
   it('requires the name, description, and at least one matcher', async function() {

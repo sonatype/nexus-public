@@ -68,7 +68,7 @@ export default function ContentSelectorsList({onCreate, onEdit}) {
         <SectionToolbar>
           <div className="nxrm-spacer" />
           <NxFilterInput
-              inputId="filter"
+              id="filter"
               onChange={filter}
               value={filterText}
               placeholder={UIStrings.CONTENT_SELECTORS.FILTER_PLACEHOLDER}/>

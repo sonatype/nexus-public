@@ -224,7 +224,31 @@ describe('Utils', () => {
         sortDirection: Utils.ASC,
         data: [{name: 'a', blobCount: 0}, {name: 'b', blobCount: 0}, {name: 'c', blobCount: 0}]
       })).toStrictEqual([{name: 'a', blobCount: 0}, {name: 'b', blobCount: 0}, {name: 'c', blobCount: 0}])
-    })
+    });
+
+    it('sorts properly with null values', () => {
+      function sort(data, dir) {
+        return Utils.sortDataByFieldAndDirection({
+          sortField: 'name',
+          sortDirection: dir,
+          data: data
+        });
+      }
+
+      let data = [{name: null}, {name: 'a'}, {name: 'b'}];
+
+      data = sort(data, Utils.DESC);
+
+      expect(data).toStrictEqual([{name: 'b'}, {name: 'a'}, {name: null}]);
+
+      data = sort(data, Utils.ASC);
+
+      expect(data).toStrictEqual([{name: null}, {name: 'a'}, {name: 'b'}]);
+
+      data = sort(data, Utils.DESC);
+
+      expect(data).toStrictEqual([{name: 'b'}, {name: 'a'}, {name: null}]);
+    });
   });
 
   describe('isInvalid', () => {

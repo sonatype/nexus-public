@@ -68,7 +68,7 @@ export default function CleanupPoliciesList({onCreate, onEdit}) {
         <SectionToolbar>
           <div className="nxrm-spacer" />
           <NxFilterInput
-              inputId="filter"
+              id="filter"
               onChange={filter}
               value={filterText}
               placeholder={UIStrings.CLEANUP_POLICIES.FILTER_PLACEHOLDER}/>

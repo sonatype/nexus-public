@@ -33,6 +33,8 @@ exports[`SupportZipResponse renders support zip response 1`] = `
           class="nx-text-input__box"
         >
           <input
+            aria-errormessage="nx-text-input-invalid-message-00000000"
+            aria-invalid="false"
             class="nx-text-input__input"
             disabled=""
             id="name"
@@ -73,6 +75,8 @@ exports[`SupportZipResponse renders support zip response 1`] = `
         </div>
         <div
           class="nx-text-input__invalid-message"
+          id="nx-text-input-invalid-message-00000000"
+          role="alert"
         />
       </div>
     </div>
@@ -96,6 +100,8 @@ exports[`SupportZipResponse renders support zip response 1`] = `
           class="nx-text-input__box"
         >
           <input
+            aria-errormessage="nx-text-input-invalid-message-11111111"
+            aria-invalid="false"
             class="nx-text-input__input"
             disabled=""
             id="size"
@@ -136,6 +142,8 @@ exports[`SupportZipResponse renders support zip response 1`] = `
         </div>
         <div
           class="nx-text-input__invalid-message"
+          id="nx-text-input-invalid-message-11111111"
+          role="alert"
         />
       </div>
     </div>
@@ -159,6 +167,8 @@ exports[`SupportZipResponse renders support zip response 1`] = `
           class="nx-text-input__box"
         >
           <input
+            aria-errormessage="nx-text-input-invalid-message-22222222"
+            aria-invalid="false"
             class="nx-text-input__input"
             disabled=""
             id="file"
@@ -199,11 +209,13 @@ exports[`SupportZipResponse renders support zip response 1`] = `
         </div>
         <div
           class="nx-text-input__invalid-message"
+          id="nx-text-input-invalid-message-22222222"
+          role="alert"
         />
       </div>
     </div>
     <div
-      class="nxrm-footer nx-footer"
+      class="nx-footer"
     >
       <button
         class="nx-btn nx-btn--primary"

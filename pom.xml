@@ -1023,6 +1023,16 @@
               <phase>generate-resources</phase>
             </execution>
             <execution>
+              <id>yarn cache clean</id>
+              <goals>
+                <goal>yarn</goal>
+              </goals>
+              <phase>generate-resources</phase>
+              <configuration>
+                <arguments>cache clean</arguments>
+              </configuration>
+            </execution>
+            <execution>
               <id>yarn install</id>
               <goals>
                 <goal>yarn</goal>

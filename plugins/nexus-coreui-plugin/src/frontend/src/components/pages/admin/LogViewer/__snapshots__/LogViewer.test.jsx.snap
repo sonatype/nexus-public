@@ -58,161 +58,169 @@ exports[`LogViewer renders the log into the text area 1`] = `
         class="nxrm-section nx-tile"
       >
         <div
-          class="nxrm-section-toolbar"
+          class="nx-tile-content"
         >
           <div
-            class="nx-text-input nxrm-log-viewer-mark-text pristine valid"
+            class="nxrm-section-toolbar"
           >
             <div
-              class="nx-text-input__box"
+              class="nx-text-input nxrm-log-viewer-mark-text pristine"
             >
-              <input
-                class="nx-text-input__input"
-                id="mark"
-                name="mark"
-                placeholder="Marker to insert into log"
-                type="text"
-                value=""
+              <div
+                class="nx-text-input__box"
+              >
+                <input
+                  aria-errormessage="nx-text-input-invalid-message-00000000"
+                  aria-invalid="false"
+                  class="nx-text-input__input"
+                  id="mark"
+                  name="mark"
+                  placeholder="Marker to insert into log"
+                  type="text"
+                  value=""
+                />
+                <svg
+                  aria-hidden="true"
+                  class="svg-inline--fa fa-check fa-w-16 nx-icon nx-icon--valid nx-icon"
+                  data-icon="check"
+                  data-prefix="fas"
+                  focusable="false"
+                  role="img"
+                  viewBox="0 0 512 512"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"
+                    fill="currentColor"
+                  />
+                </svg>
+                <svg
+                  aria-hidden="true"
+                  class="svg-inline--fa fa-exclamation-circle fa-w-16 nx-icon nx-icon--invalid nx-icon"
+                  data-icon="exclamation-circle"
+                  data-prefix="fas"
+                  focusable="false"
+                  role="img"
+                  viewBox="0 0 512 512"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </div>
+              <div
+                class="nx-text-input__invalid-message"
+                id="nx-text-input-invalid-message-00000000"
+                role="alert"
               />
-              <svg
-                aria-hidden="true"
-                class="svg-inline--fa fa-check fa-w-16 nx-icon nx-icon--valid nx-icon"
-                data-icon="check"
-                data-prefix="fas"
-                focusable="false"
-                role="img"
-                viewBox="0 0 512 512"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"
-                  fill="currentColor"
-                />
-              </svg>
-              <svg
-                aria-hidden="true"
-                class="svg-inline--fa fa-exclamation-circle fa-w-16 nx-icon nx-icon--invalid nx-icon"
-                data-icon="exclamation-circle"
-                data-prefix="fas"
-                focusable="false"
-                role="img"
-                viewBox="0 0 512 512"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
-                  fill="currentColor"
-                />
-              </svg>
             </div>
+            <button
+              class="nx-btn"
+              id="insertMark"
+            >
+              <svg
+                aria-hidden="true"
+                class="svg-inline--fa fa-stamp fa-w-16 nx-icon"
+                data-icon="stamp"
+                data-prefix="fas"
+                focusable="false"
+                role="img"
+                viewBox="0 0 512 512"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M32 512h448v-64H32v64zm384-256h-66.56c-16.26 0-29.44-13.18-29.44-29.44v-9.46c0-27.37 8.88-53.41 21.46-77.72 9.11-17.61 12.9-38.39 9.05-60.42-6.77-38.78-38.47-70.7-77.26-77.45C212.62-9.04 160 37.33 160 96c0 14.16 3.12 27.54 8.69 39.58C182.02 164.43 192 194.7 192 226.49v.07c0 16.26-13.18 29.44-29.44 29.44H96c-53.02 0-96 42.98-96 96v32c0 17.67 14.33 32 32 32h448c17.67 0 32-14.33 32-32v-32c0-53.02-42.98-96-96-96z"
+                  fill="currentColor"
+                />
+              </svg>
+              <span>
+                Insert Mark
+              </span>
+            </button>
             <div
-              class="nx-text-input__invalid-message"
+              class="nxrm-spacer"
             />
-          </div>
-          <button
-            class="nx-btn"
-            id="insertMark"
-          >
-            <svg
-              aria-hidden="true"
-              class="svg-inline--fa fa-stamp fa-w-16 nx-icon"
-              data-icon="stamp"
-              data-prefix="fas"
-              focusable="false"
-              role="img"
-              viewBox="0 0 512 512"
-              xmlns="http://www.w3.org/2000/svg"
+            <label
+              for="period"
             >
-              <path
-                d="M32 512h448v-64H32v64zm384-256h-66.56c-16.26 0-29.44-13.18-29.44-29.44v-9.46c0-27.37 8.88-53.41 21.46-77.72 9.11-17.61 12.9-38.39 9.05-60.42-6.77-38.78-38.47-70.7-77.26-77.45C212.62-9.04 160 37.33 160 96c0 14.16 3.12 27.54 8.69 39.58C182.02 164.43 192 194.7 192 226.49v.07c0 16.26-13.18 29.44-29.44 29.44H96c-53.02 0-96 42.98-96 96v32c0 17.67 14.33 32 32 32h448c17.67 0 32-14.33 32-32v-32c0-53.02-42.98-96-96-96z"
-                fill="currentColor"
-              />
-            </svg>
-            <span>
-              Insert Mark
-            </span>
-          </button>
-          <div
-            class="nxrm-spacer"
-          />
-          <label
-            for="period"
-          >
-            Refresh Interval
-          </label>
-          <div
-            class="nxrm-select-action"
-          >
+              Refresh Interval
+            </label>
             <div
-              class="nxrm-select"
+              class="nxrm-select-action"
             >
-              <select
-                id="period"
-                name="period"
+              <div
+                class="nxrm-select"
               >
-                <option
-                  value="0"
+                <select
+                  id="period"
+                  name="period"
                 >
-                  Manual
-                </option>
-                <option
-                  value="20"
+                  <option
+                    value="0"
+                  >
+                    Manual
+                  </option>
+                  <option
+                    value="20"
+                  >
+                    Every 20 seconds
+                  </option>
+                  <option
+                    value="60"
+                  >
+                    Every minute
+                  </option>
+                  <option
+                    value="120"
+                  >
+                    Every 2 minutes
+                  </option>
+                  <option
+                    value="300"
+                  >
+                    Every 5 minutes
+                  </option>
+                </select>
+              </div>
+            </div>
+            <div
+              class="nxrm-select-action"
+            >
+              <div
+                class="nxrm-select"
+              >
+                <select
+                  id="size"
+                  name="size"
                 >
-                  Every 20 seconds
-                </option>
-                <option
-                  value="60"
-                >
-                  Every minute
-                </option>
-                <option
-                  value="120"
-                >
-                  Every 2 minutes
-                </option>
-                <option
-                  value="300"
-                >
-                  Every 5 minutes
-                </option>
-              </select>
+                  <option
+                    value="25"
+                  >
+                    Last 25KB
+                  </option>
+                  <option
+                    value="50"
+                  >
+                    Last 50KB
+                  </option>
+                  <option
+                    value="100"
+                  >
+                    Last 100KB
+                  </option>
+                </select>
+              </div>
             </div>
           </div>
-          <div
-            class="nxrm-select-action"
+          <textarea
+            class="nxrm-code"
+            readonly=""
           >
-            <div
-              class="nxrm-select"
-            >
-              <select
-                id="size"
-                name="size"
-              >
-                <option
-                  value="25"
-                >
-                  Last 25KB
-                </option>
-                <option
-                  value="50"
-                >
-                  Last 50KB
-                </option>
-                <option
-                  value="100"
-                >
-                  Last 100KB
-                </option>
-              </select>
-            </div>
-          </div>
+            log data
+          </textarea>
         </div>
-        <textarea
-          class="nxrm-code"
-          readonly=""
-        >
-          log data
-        </textarea>
       </div>
     </div>
   </main>
