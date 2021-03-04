@@ -375,22 +375,25 @@ exports[`RoutingRulesForm renders the resolved data 1`] = `
               Mode
             </span>
           </label>
-          <select
+          <div
             class="nxrm-select"
-            id="mode"
-            name="mode"
           >
-            <option
-              value="ALLOW"
+            <select
+              id="mode"
+              name="mode"
             >
-              Allow
-            </option>
-            <option
-              value="BLOCK"
-            >
-              Block
-            </option>
-          </select>
+              <option
+                value="ALLOW"
+              >
+                Allow
+              </option>
+              <option
+                value="BLOCK"
+              >
+                Block
+              </option>
+            </select>
+          </div>
           <span>
             requests when their path matches any of the following matchers
           </span>

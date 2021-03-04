@@ -39,7 +39,7 @@ export { default as PageTitle } from './components/layout/common/PageTitle/PageT
 export { default as Alert } from './components/widgets/Alert/Alert';
 export { default as CheckboxControlledWrapper } from './components/widgets/CheckboxControlledWrapper/CheckboxControlledWrapper';
 export { default as Code } from './components/widgets/Code/Code';
-export { default as FieldErrorMessage } from './components/widgets/FieldErrorMessage/FieldErrorMessage';
+export { default as DynamicFormField } from './components/widgets/DynamicFormField/DynamicFormField';
 export { default as FieldWrapper } from './components/widgets/FieldWrapper/FieldWrapper';
 export { default as HelpTile } from './components/widgets/HelpTile/HelpTile';
 export { default as Information } from './components/widgets/Information/Information';
@@ -72,5 +72,6 @@ export {
   NxTableCell,
   NxTableHead,
   NxTableRow,
-  NxTooltip
+  NxTooltip,
+  NxWarningAlert,
 } from '@sonatype/react-shared-components';

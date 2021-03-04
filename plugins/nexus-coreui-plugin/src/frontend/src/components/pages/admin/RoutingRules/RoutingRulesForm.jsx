@@ -155,7 +155,7 @@ export default function RoutingRulesForm({itemId, onDone}) {
               </div>
               <p id="matchers-description" className="nx-p">{ROUTING_RULES.FORM.MATCHERS_DESCRIPTION}</p>
 
-              {data.matchers.map((value, index) =>
+              {data.matchers?.map((value, index) =>
                   <div className="nx-form-row" key={`matcher-${index}`}>
                     <div className="nx-form-group">
                       {/*This nx-label is required to ensure the button is at the correct height*/}

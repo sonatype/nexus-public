@@ -1,4 +1,4 @@
-/**
+/*
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
  * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
@@ -10,17 +10,28 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/**
- * @since 3.21
- */
-@import '../../../styles/colors';
+package org.sonatype.nexus.coreui.internal.blobstore;
 
-.nxrm-error-message {
-  align-items: center;
-  color: $red;
-  display: flex;
+import java.util.Map;
 
-  .nxrm-error-message-text {
-    padding: 2px 0 0 2px;
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuota;
+
+public class BlobStoreQuotaTypesUIResponse
+{
+  private final String id;
+
+  private final String name;
+
+  public BlobStoreQuotaTypesUIResponse(final Map.Entry<String, BlobStoreQuota> entry) {
+    this.id = entry.getKey();
+    this.name = entry.getValue().getDisplayName();
+  }
+
+  public String getId() {
+    return id;
+  }
+
+  public String getName() {
+    return name;
   }
 }

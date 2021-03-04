@@ -196,42 +196,45 @@ exports[`LoggingConfigurationForm renders the resolved data 1`] = `
               Logger Level
             </span>
           </label>
-          <select
+          <div
             class="nxrm-select"
-            id="level"
-            name="level"
           >
-            <option
-              value="OFF"
+            <select
+              id="level"
+              name="level"
             >
-              OFF
-            </option>
-            <option
-              value="ERROR"
-            >
-              ERROR
-            </option>
-            <option
-              value="WARN"
-            >
-              WARN
-            </option>
-            <option
-              value="INFO"
-            >
-              INFO
-            </option>
-            <option
-              value="DEBUG"
-            >
-              DEBUG
-            </option>
-            <option
-              value="TRACE"
-            >
-              TRACE
-            </option>
-          </select>
+              <option
+                value="OFF"
+              >
+                OFF
+              </option>
+              <option
+                value="ERROR"
+              >
+                ERROR
+              </option>
+              <option
+                value="WARN"
+              >
+                WARN
+              </option>
+              <option
+                value="INFO"
+              >
+                INFO
+              </option>
+              <option
+                value="DEBUG"
+              >
+                DEBUG
+              </option>
+              <option
+                value="TRACE"
+              >
+                TRACE
+              </option>
+            </select>
+          </div>
         </div>
         <div
           class="nxrm-footer nx-footer"
@@ -381,42 +384,45 @@ exports[`LoggingConfigurationForm requires the name field when creating a new lo
               Logger Level
             </span>
           </label>
-          <select
+          <div
             class="nxrm-select"
-            id="level"
-            name="level"
           >
-            <option
-              value="OFF"
+            <select
+              id="level"
+              name="level"
             >
-              OFF
-            </option>
-            <option
-              value="ERROR"
-            >
-              ERROR
-            </option>
-            <option
-              value="WARN"
-            >
-              WARN
-            </option>
-            <option
-              value="INFO"
-            >
-              INFO
-            </option>
-            <option
-              value="DEBUG"
-            >
-              DEBUG
-            </option>
-            <option
-              value="TRACE"
-            >
-              TRACE
-            </option>
-          </select>
+              <option
+                value="OFF"
+              >
+                OFF
+              </option>
+              <option
+                value="ERROR"
+              >
+                ERROR
+              </option>
+              <option
+                value="WARN"
+              >
+                WARN
+              </option>
+              <option
+                value="INFO"
+              >
+                INFO
+              </option>
+              <option
+                value="DEBUG"
+              >
+                DEBUG
+              </option>
+              <option
+                value="TRACE"
+              >
+                TRACE
+              </option>
+            </select>
+          </div>
         </div>
         <div
           class="nxrm-footer nx-footer"

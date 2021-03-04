@@ -166,22 +166,25 @@ exports[`CleanupPoliciesForm renders the resolved data 1`] = `
           >
             The format that this cleanup policy can be applied to
           </p>
-          <select
+          <div
             class="nxrm-select"
-            id="format"
-            name="format"
           >
-            <option
-              value=""
+            <select
+              id="format"
+              name="format"
             >
-              Select a format...
-            </option>
-            <option
-              value="testformat"
-            >
-              Test Format
-            </option>
-          </select>
+              <option
+                value=""
+              >
+                Select a format...
+              </option>
+              <option
+                value="testformat"
+              >
+                Test Format
+              </option>
+            </select>
+          </div>
         </div>
         <div
           class="nx-form-group"
@@ -533,27 +536,30 @@ exports[`CleanupPoliciesForm renders the resolved data 1`] = `
                 >
                   Remove components that are of the following release type:
                 </p>
-                <select
+                <div
                   class="nxrm-select"
-                  id="criteriaReleaseType"
-                  name="criteriaReleaseType"
                 >
-                  <option
-                    value=""
+                  <select
+                    id="criteriaReleaseType"
+                    name="criteriaReleaseType"
                   >
-                    Select a release type...
-                  </option>
-                  <option
-                    value="RELEASES"
-                  >
-                    Release Versions
-                  </option>
-                  <option
-                    value="PRERELEASES"
-                  >
-                    Pre-Release / Snapshot Versions
-                  </option>
-                </select>
+                    <option
+                      value=""
+                    >
+                      Select a release type...
+                    </option>
+                    <option
+                      value="RELEASES"
+                    >
+                      Release Versions
+                    </option>
+                    <option
+                      value="PRERELEASES"
+                    >
+                      Pre-Release / Snapshot Versions
+                    </option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
@@ -726,22 +732,25 @@ exports[`CleanupPoliciesForm renders the resolved data 1`] = `
           >
             Select a repository to preview what might get cleaned up if this policy was applied
           </p>
-          <select
+          <div
             class="nxrm-select"
-            id="repository"
-            name="repository"
           >
-            <option
-              value=""
+            <select
+              id="repository"
+              name="repository"
             >
-              Select a repository...
-            </option>
-            <option
-              value="maven-central"
-            >
-              maven-central
-            </option>
-          </select>
+              <option
+                value=""
+              >
+                Select a repository...
+              </option>
+              <option
+                value="maven-central"
+              >
+                maven-central
+              </option>
+            </select>
+          </div>
           <button
             class="nx-btn"
             disabled=""

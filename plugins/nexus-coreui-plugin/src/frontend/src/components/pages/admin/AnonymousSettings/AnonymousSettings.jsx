@@ -70,7 +70,7 @@ export default function AnonymousSettings() {
             <FieldWrapper labelText={UIStrings.ANONYMOUS_SETTINGS.ENABLED_CHECKBOX_LABEL}>
               <NxCheckbox
                   checkboxId='enabled'
-                  isChecked={data.enabled}
+                  isChecked={data.enabled || false}
                   onChange={handleInputChange}
               >
                 {UIStrings.ANONYMOUS_SETTINGS.ENABLED_CHECKBOX_DESCRIPTION}
@@ -89,7 +89,7 @@ export default function AnonymousSettings() {
                   onChange={handleInputChange}
               >
                 {
-                  realms.map((realm) =>
+                  realms?.map((realm) =>
                       <option key={realm.id} value={realm.id}>{realm.name}</option>
                   )
                 }

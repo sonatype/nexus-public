@@ -86,11 +86,14 @@ exports[`ContentSelectorsForm renders a loading spinner 1`] = `
           >
             Select a repository to evaluate the content selector and see the content that would be available
           </p>
-          <select
+          <div
             class="nxrm-select"
-            id="repository"
-            name="repository"
-          />
+          >
+            <select
+              id="repository"
+              name="repository"
+            />
+          </div>
           <button
             class="nx-btn"
             disabled=""
@@ -510,11 +513,14 @@ exports[`ContentSelectorsForm renders the resolved data 1`] = `
           >
             Select a repository to evaluate the content selector and see the content that would be available
           </p>
-          <select
+          <div
             class="nxrm-select"
-            id="repository"
-            name="repository"
-          />
+          >
+            <select
+              id="repository"
+              name="repository"
+            />
+          </div>
           <button
             class="nx-btn"
           >

@@ -10,22 +10,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
-import classNames from 'classnames';
-import {NxFontAwesomeIcon} from "@sonatype/react-shared-components";
-import {faExclamationCircle} from '@fortawesome/free-solid-svg-icons';
+import React from "react";
+import Textfield from "../Textfield/Textfield";
 
-import './FieldErrorMessage.scss';
-
-import UIStrings from '../../../constants/UIStrings';
-
-/**
- * @since 3.21
- */
-export default function FieldErrorMessage({message, className}) {
-  const classes = classNames('nxrm-error-message', className);
-  return <span className={classes}>
-    <NxFontAwesomeIcon icon={faExclamationCircle}/>
-    <span className='nxrm-error-message-text' tabIndex="-1"> {message || UIStrings.ERROR.FIELD_REQUIRED} </span>
-  </span>;
+export default function DynamicFormField({dynamicProps, ...fieldProps}) {
+  if (dynamicProps.type == 'string') {
+    const className = dynamicProps.attributes.long ? 'nx-text-input--long' : '';
+    return <Textfield {...fieldProps}
+                      className={className}
+                      disabled={dynamicProps.disabled}
+                      readOnly={dynamicProps.readOnly}/>
+  }
+  else {
+    console.warn(`form field type=${dynamicProps.type} is unknown`);
+    return <div/>;
+  }
 }

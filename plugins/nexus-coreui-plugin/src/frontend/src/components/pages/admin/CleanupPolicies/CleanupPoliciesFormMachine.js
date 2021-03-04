@@ -88,9 +88,6 @@ export default Utils.buildFormMachine({
         ...config.states.loaded,
         on: {
           ...config.states.loaded.on,
-          CONFIRM_DELETE: {
-            target: 'confirmDelete'
-          },
           SET_CRITERIA_LAST_DOWNLOADED_ENABLED: {
             target: 'loaded',
             actions: ['setCriteriaLastDownloadedEnabled']
@@ -106,26 +103,6 @@ export default Utils.buildFormMachine({
           SET_CRITERIA_ASSET_REGEX_ENABLED: {
             target: 'loaded',
             actions: ['setCriteriaAssetRegexEnabled']
-          }
-        }
-      },
-      confirmDelete: {
-        invoke: {
-          src: 'confirmDelete',
-          onDone: 'delete',
-          onError: 'loaded'
-        }
-      },
-      delete: {
-        invoke: {
-          src: 'delete',
-          onDone: {
-            target: 'loaded',
-            actions: 'onDeleteSuccess'
-          },
-          onError: {
-            target: 'loaded',
-            actions: 'onDeleteError'
           }
         }
       }
@@ -173,7 +150,8 @@ export default Utils.buildFormMachine({
     onDeleteError: ({data}) => ExtJS.showErrorMessage(UIStrings.CLEANUP_POLICIES.MESSAGES.DELETE_ERROR(data.name))
   },
   guards: {
-    isEdit: ({pristineData}) => isEdit(pristineData)
+    isEdit: ({pristineData}) => isEdit(pristineData),
+    canDelete: () => true
   },
   services: {
     fetchCriteriaByFormat: () => {

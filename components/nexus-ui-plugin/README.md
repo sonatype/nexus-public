@@ -23,7 +23,7 @@ project the nexus-ui-plugin should be added to the child project as a file refer
 
 Finally, just import the component from nexus-ui-plugin as a named ES6 import.
 
-```import { Button } from 'nexus-ui-plugin'```
+```import { Button } from '@sonatype/nexus-ui-plugin'```
 
 ## Watching for Changes
 

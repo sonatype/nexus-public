@@ -43,6 +43,22 @@ export default {
       description: 'Configure local and cloud blob storage'
     },
 
+    MESSAGES: {
+      CONFIRM_SAVE: {
+        TITLE: 'Update Blob Store',
+        MESSAGE: 'Warning: The blob store will be temporarily unavailable for a short period.  This function does not migrate data to a new location.',
+        YES: 'Update',
+        NO: 'Cancel'
+      },
+      CONFIRM_DELETE: {
+        TITLE: 'Delete Blob Store',
+        YES: 'Delete',
+        NO: 'Cancel'
+      },
+      CANNOT_DELETE: (repositoryUsage, blobStoreUsage) =>
+          `This blob store is in use by ${repositoryUsage} repositories and ${blobStoreUsage} blob stores`
+    },
+
     LIST: {
       CREATE_BUTTON: 'Create Blob Store',
       COLUMNS: {
@@ -69,6 +85,38 @@ the documentation</a>.`
       UNAVAILABLE: 'Failed',
       UNKNOWN: 'Unavailable',
       UNLIMITED: 'Unlimited'
+    },
+
+    FORM: {
+      CREATE_TITLE: 'Create Blob Store',
+      EDIT_WARNING: '\
+        Updating the blob store configuration will cause it to be temporarily unavailble for a short period of time. \
+        Edits to configuration may also leave the blob store in a non-functional state. \
+        Use caution when changing values.\
+      ',
+      EDIT_TILE: (name) => `Edit ${name}`,
+      EDIT_DESCRIPTION: (type) => `${type} Blob Store`,
+      PROMOTE_BUTTON: 'Promote to Group',
+      TYPE: {
+        label: 'Type',
+        sublabel: 'Select the type of the blob store'
+      },
+      NAME: {
+        label: 'Name'
+      },
+      SOFT_QUOTA: {
+        ENABLED: {
+          label: 'Soft Quota',
+          sublabel: 'Raises an alert when the blob store exceeds a constraint',
+          text: 'Enabled'
+        },
+        TYPE: {
+          label: 'Constraint Type'
+        },
+        LIMIT: {
+          label: 'Constraint Limit (in MB)'
+        }
+      }
     }
   },
 
