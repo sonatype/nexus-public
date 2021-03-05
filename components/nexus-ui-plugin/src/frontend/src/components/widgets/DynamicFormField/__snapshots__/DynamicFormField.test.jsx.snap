@@ -9,6 +9,8 @@ exports[`DynamicFormField renders the string type renders 1`] = `
       class="nx-text-input__box"
     >
       <input
+        aria-errormessage="nx-text-input-invalid-message-00000000"
+        aria-invalid="false"
         class="nx-text-input__input"
         id="test"
         name="test"
@@ -48,6 +50,8 @@ exports[`DynamicFormField renders the string type renders 1`] = `
     </div>
     <div
       class="nx-text-input__invalid-message"
+      id="nx-text-input-invalid-message-00000000"
+      role="alert"
     />
   </div>
 </div>
@@ -62,6 +66,8 @@ exports[`DynamicFormField renders the string type renders a long field 1`] = `
       class="nx-text-input__box"
     >
       <input
+        aria-errormessage="nx-text-input-invalid-message-11111111"
+        aria-invalid="false"
         class="nx-text-input__input"
         id="test"
         name="test"
@@ -101,6 +107,8 @@ exports[`DynamicFormField renders the string type renders a long field 1`] = `
     </div>
     <div
       class="nx-text-input__invalid-message"
+      id="nx-text-input-invalid-message-11111111"
+      role="alert"
     />
   </div>
 </div>

@@ -9,6 +9,8 @@ exports[`Textfield renders correctly without an error message 1`] = `
       class="nx-text-input__box"
     >
       <input
+        aria-errormessage="nx-text-input-invalid-message-00000000"
+        aria-invalid="false"
         class="nx-text-input__input"
         type="text"
         value=""
@@ -46,6 +48,8 @@ exports[`Textfield renders correctly without an error message 1`] = `
     </div>
     <div
       class="nx-text-input__invalid-message"
+      id="nx-text-input-invalid-message-00000000"
+      role="alert"
     />
   </div>
 </div>
@@ -60,6 +64,8 @@ exports[`Textfield renders with a single error message 1`] = `
       class="nx-text-input__box"
     >
       <input
+        aria-errormessage="nx-text-input-invalid-message-11111111"
+        aria-invalid="true"
         class="nx-text-input__input"
         type="text"
         value=""
@@ -97,6 +103,8 @@ exports[`Textfield renders with a single error message 1`] = `
     </div>
     <div
       class="nx-text-input__invalid-message"
+      id="nx-text-input-invalid-message-11111111"
+      role="alert"
     >
       This field is required
     </div>
