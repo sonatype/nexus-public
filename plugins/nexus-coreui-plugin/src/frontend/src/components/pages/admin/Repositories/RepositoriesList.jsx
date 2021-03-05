@@ -75,7 +75,7 @@ export default function RepositoriesList({onCreate, onEdit, copyUrl = doCopyUrl}
         <SectionToolbar>
           <div className="nxrm-spacer"/>
           <NxFilterInput
-              inputId="filter"
+              id="filter"
               onChange={filter}
               value={filterText}
               placeholder={REPOSITORIES.LIST.FILTER_PLACEHOLDER}/>

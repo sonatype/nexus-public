@@ -89,7 +89,7 @@ export default function RoutingRulesList({onCreate, onEdit}) {
         <SectionToolbar>
           <div className="nxrm-spacer" />
           <NxFilterInput
-              inputId="filter"
+              id="filter"
               onChange={filter}
               value={filterText}
               placeholder={UIStrings.FILTER}/>

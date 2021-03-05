@@ -242,13 +242,12 @@ public class DefaultOrientIntegrityCheckStrategy
     return asset.name();
   }
 
-  private Iterable<Asset> getAssets(final Repository repository) {
+  protected Iterable<Asset> getAssets(final Repository repository) {
     return Transactional.operation
         .withDb(repository.facet(StorageFacet.class).txSupplier())
         .call(() -> {
           final StorageTx tx = UnitOfWork.currentTx();
           return tx.browseAssets(tx.findBucket(repository));
         });
-
   }
 }

@@ -101,7 +101,7 @@ export default function RoutingRulesList() {
         <SectionToolbar>
           <div className="nxrm-spacer"/>
           <NxFilterInput
-              inputId="filter"
+              id="filter"
               onChange={updateFilter}
               value={filter}
               placeholder={ROUTING_RULES.PREVIEW.FILTER}/>

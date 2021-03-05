@@ -3,7 +3,7 @@
 exports[`SectionFooter renders correctly 1`] = `
 <div>
   <div
-    class="nxrm-footer nx-footer"
+    class="nx-footer"
   >
     footer
   </div>

@@ -19,9 +19,12 @@ import classNames from "classnames";
 /**
  * @since 3.29
  */
-export default function HelpTile({className, ...attrs}) {
-  const classes = classNames('nxrm-help-tile', 'nx-tile', className);
-  return <div className={classes} {...attrs}/>;
+export default function HelpTile({className, children, ...attrs}) {
+  return <div className={classNames('nxrm-help-tile', 'nx-tile', className)} {...attrs}>
+    <div className="nx-tile-content">
+      {children}
+    </div>
+  </div>;
 }
 
 HelpTile.propTypes = {

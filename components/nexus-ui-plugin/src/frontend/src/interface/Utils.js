@@ -589,7 +589,8 @@ export default class Utils {
       if (a[sortField] === b[sortField]) {
         return 0;
       }
-      return a[sortField] > b[sortField] ? dir : -dir;
+
+      return (a[sortField] || '') > (b[sortField] || '') ? dir : -dir;
     }));
   }
 

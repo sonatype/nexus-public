@@ -78,7 +78,7 @@ export default function BlobStoresList({onCreate, onEdit}) {
         <SectionToolbar>
           <div className="nxrm-spacer"/>
           <NxFilterInput
-              inputId="filter"
+              id="filter"
               onChange={filter}
               value={filterText}
               placeholder={BLOB_STORES.LIST.FILTER_PLACEHOLDER}/>

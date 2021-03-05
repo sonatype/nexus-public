@@ -27,220 +27,236 @@ exports[`BlobStoresForm renders the form and buttons when the File type is selec
         class="nxrm-section nx-tile"
       >
         <div
-          class="nx-form-group"
+          class="nx-tile-content"
         >
-          <label
-            class="nx-label"
-            for="type"
-          >
-            <span
-              class="nx-label__text"
-            >
-              Type
-            </span>
-          </label>
           <div
-            class="nxrm-select"
+            class="nx-form-group"
           >
-            <select
-              id="type"
-              name="type"
+            <label
+              class="nx-label"
+              for="type"
             >
-              <option
-                value=""
-              />
-              <option
-                value="File"
+              <span
+                class="nx-label__text"
               >
-                File
-              </option>
-            </select>
-          </div>
-        </div>
-        <div
-          class="nx-form-group"
-        >
-          <label
-            class="nx-label"
-            for="name"
-          >
-            <span
-              class="nx-label__text"
-            >
-              Name
-            </span>
-          </label>
-          <div
-            class="nx-text-input pristine valid"
-          >
+                Type
+              </span>
+            </label>
             <div
-              class="nx-text-input__box"
+              class="nxrm-select"
+            >
+              <select
+                id="type"
+                name="type"
+              >
+                <option
+                  value=""
+                />
+                <option
+                  value="File"
+                >
+                  File
+                </option>
+              </select>
+            </div>
+          </div>
+          <div
+            class="nx-form-group"
+          >
+            <label
+              class="nx-label"
+              for="name"
+            >
+              <span
+                class="nx-label__text"
+              >
+                Name
+              </span>
+            </label>
+            <div
+              class="nx-text-input pristine"
+            >
+              <div
+                class="nx-text-input__box"
+              >
+                <input
+                  aria-errormessage="nx-text-input-invalid-message-00000000"
+                  aria-invalid="false"
+                  class="nx-text-input__input"
+                  id="name"
+                  name="name"
+                  type="text"
+                  value=""
+                />
+                <svg
+                  aria-hidden="true"
+                  class="svg-inline--fa fa-check fa-w-16 nx-icon nx-icon--valid nx-icon"
+                  data-icon="check"
+                  data-prefix="fas"
+                  focusable="false"
+                  role="img"
+                  viewBox="0 0 512 512"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"
+                    fill="currentColor"
+                  />
+                </svg>
+                <svg
+                  aria-hidden="true"
+                  class="svg-inline--fa fa-exclamation-circle fa-w-16 nx-icon nx-icon--invalid nx-icon"
+                  data-icon="exclamation-circle"
+                  data-prefix="fas"
+                  focusable="false"
+                  role="img"
+                  viewBox="0 0 512 512"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </div>
+              <div
+                class="nx-text-input__invalid-message"
+                id="nx-text-input-invalid-message-00000000"
+                role="alert"
+              />
+            </div>
+          </div>
+          <div
+            class="nx-form-group"
+          >
+            <label
+              class="nx-label"
+              for="path"
+            >
+              <span
+                class="nx-label__text"
+              >
+                Path
+              </span>
+            </label>
+            <p
+              class="nx-p"
+            >
+              An absolute path or a path relative to &lt;data-directory&gt;/blobs
+            </p>
+            <div
+              class="nx-text-input nx-text-input--long pristine"
+            >
+              <div
+                class="nx-text-input__box"
+              >
+                <input
+                  aria-errormessage="nx-text-input-invalid-message-11111111"
+                  aria-invalid="false"
+                  class="nx-text-input__input"
+                  id="path"
+                  name="path"
+                  type="text"
+                  value="/<data-directory>/blobs/"
+                />
+                <svg
+                  aria-hidden="true"
+                  class="svg-inline--fa fa-check fa-w-16 nx-icon nx-icon--valid nx-icon"
+                  data-icon="check"
+                  data-prefix="fas"
+                  focusable="false"
+                  role="img"
+                  viewBox="0 0 512 512"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"
+                    fill="currentColor"
+                  />
+                </svg>
+                <svg
+                  aria-hidden="true"
+                  class="svg-inline--fa fa-exclamation-circle fa-w-16 nx-icon nx-icon--invalid nx-icon"
+                  data-icon="exclamation-circle"
+                  data-prefix="fas"
+                  focusable="false"
+                  role="img"
+                  viewBox="0 0 512 512"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </div>
+              <div
+                class="nx-text-input__invalid-message"
+                id="nx-text-input-invalid-message-11111111"
+                role="alert"
+              />
+            </div>
+          </div>
+          <div
+            class="nx-form-group"
+          >
+            <label
+              class="nx-label"
+              for="softQuota.enabled"
+            >
+              <span
+                class="nx-label__text"
+              >
+                Soft Quota
+              </span>
+            </label>
+            <p
+              class="nx-p"
+            >
+              Raises an alert when the blob store exceeds a constraint
+            </p>
+            <label
+              class="nx-radio-checkbox nx-checkbox tm-unchecked"
+              name="softQuota.enabled"
             >
               <input
-                class="nx-text-input__input"
-                id="name"
-                name="name"
-                type="text"
-                value=""
+                class="nx-radio-checkbox__input nx-checkbox__input"
+                id="softQuota.enabled"
+                type="checkbox"
               />
-              <svg
-                aria-hidden="true"
-                class="svg-inline--fa fa-check fa-w-16 nx-icon nx-icon--valid nx-icon"
-                data-icon="check"
-                data-prefix="fas"
-                focusable="false"
-                role="img"
-                viewBox="0 0 512 512"
-                xmlns="http://www.w3.org/2000/svg"
+              <span
+                class="nx-radio-checkbox__control nx-checkbox__box"
               >
-                <path
-                  d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"
-                  fill="currentColor"
-                />
-              </svg>
-              <svg
-                aria-hidden="true"
-                class="svg-inline--fa fa-exclamation-circle fa-w-16 nx-icon nx-icon--invalid nx-icon"
-                data-icon="exclamation-circle"
-                data-prefix="fas"
-                focusable="false"
-                role="img"
-                viewBox="0 0 512 512"
-                xmlns="http://www.w3.org/2000/svg"
+                 
+              </span>
+              <span
+                aria-label=""
+                class="nx-radio-checkbox__content nx-checkbox__content"
+                title=""
               >
-                <path
-                  d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
-                  fill="currentColor"
-                />
-              </svg>
-            </div>
-            <div
-              class="nx-text-input__invalid-message"
-            />
+                Enabled
+              </span>
+            </label>
           </div>
-        </div>
-        <div
-          class="nx-form-group"
-        >
-          <label
-            class="nx-label"
-            for="path"
-          >
-            <span
-              class="nx-label__text"
-            >
-              Path
-            </span>
-          </label>
-          <p
-            class="nx-p"
-          >
-            An absolute path or a path relative to &lt;data-directory&gt;/blobs
-          </p>
           <div
-            class="nx-text-input nx-text-input--long pristine valid"
+            class="nx-footer"
           >
-            <div
-              class="nx-text-input__box"
+            <button
+              aria-disabled="true"
+              aria-label="There are no changes"
+              class="nx-btn disabled nx-btn--primary"
+              title="There are no changes"
+              type="submit"
             >
-              <input
-                class="nx-text-input__input"
-                id="path"
-                name="path"
-                type="text"
-                value="/<data-directory>/blobs/"
-              />
-              <svg
-                aria-hidden="true"
-                class="svg-inline--fa fa-check fa-w-16 nx-icon nx-icon--valid nx-icon"
-                data-icon="check"
-                data-prefix="fas"
-                focusable="false"
-                role="img"
-                viewBox="0 0 512 512"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"
-                  fill="currentColor"
-                />
-              </svg>
-              <svg
-                aria-hidden="true"
-                class="svg-inline--fa fa-exclamation-circle fa-w-16 nx-icon nx-icon--invalid nx-icon"
-                data-icon="exclamation-circle"
-                data-prefix="fas"
-                focusable="false"
-                role="img"
-                viewBox="0 0 512 512"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
-                  fill="currentColor"
-                />
-              </svg>
-            </div>
-            <div
-              class="nx-text-input__invalid-message"
-            />
+              Save
+            </button>
+            <button
+              class="nx-btn"
+            >
+              Cancel
+            </button>
+            
           </div>
-        </div>
-        <div
-          class="nx-form-group"
-        >
-          <label
-            class="nx-label"
-            for="softQuota.enabled"
-          >
-            <span
-              class="nx-label__text"
-            >
-              Soft Quota
-            </span>
-          </label>
-          <p
-            class="nx-p"
-          >
-            Raises an alert when the blob store exceeds a constraint
-          </p>
-          <label
-            class="nx-radio-checkbox nx-checkbox tm-unchecked"
-            name="softQuota.enabled"
-          >
-            <input
-              class="nx-radio-checkbox__input nx-checkbox__input"
-              id="softQuota.enabled"
-              type="checkbox"
-            />
-            <span
-              class="nx-radio-checkbox__control nx-checkbox__box"
-            >
-               
-            </span>
-            <span
-              class="nx-radio-checkbox__content nx-checkbox__content"
-            >
-              Enabled
-            </span>
-          </label>
-        </div>
-        <div
-          class="nxrm-footer nx-footer"
-        >
-          <button
-            class="nx-btn disabled nx-btn--primary"
-            title="There are no changes"
-            type="submit"
-          >
-            Save
-          </button>
-          <button
-            class="nx-btn"
-          >
-            Cancel
-          </button>
-          
         </div>
       </div>
     </div>

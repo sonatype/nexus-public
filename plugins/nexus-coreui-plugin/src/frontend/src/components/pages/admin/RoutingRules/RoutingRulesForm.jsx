@@ -59,7 +59,7 @@ export default function RoutingRulesForm({itemId, onDone}) {
     devTools: true
   });
 
-  const {isPristine, isTouched, data, loadError, path, saveError, testError, testResult, validationErrors} = current.context;
+  const {isPristine, data, loadError, path, saveError, testError, testResult, validationErrors} = current.context;
   const isLoading = current.matches('loading');
   const isSaving = current.matches('saving');
   const isTesting = current.matches('testing');

@@ -48,7 +48,9 @@ exports[`SupportZipForm renders support zip form 1`] = `
         </svg>
       </span>
       <span
+        aria-label=""
         class="nx-radio-checkbox__content nx-checkbox__content"
+        title=""
       >
         System information report
       </span>
@@ -68,7 +70,9 @@ exports[`SupportZipForm renders support zip form 1`] = `
          
       </span>
       <span
+        aria-label=""
         class="nx-radio-checkbox__content nx-checkbox__content"
+        title=""
       >
         JVM thread-dump
       </span>
@@ -103,7 +107,9 @@ exports[`SupportZipForm renders support zip form 1`] = `
         </svg>
       </span>
       <span
+        aria-label=""
         class="nx-radio-checkbox__content nx-checkbox__content"
+        title=""
       >
         Configuration files
       </span>
@@ -123,7 +129,9 @@ exports[`SupportZipForm renders support zip form 1`] = `
          
       </span>
       <span
+        aria-label=""
         class="nx-radio-checkbox__content nx-checkbox__content"
+        title=""
       >
         Security configuration files
       </span>
@@ -158,7 +166,9 @@ exports[`SupportZipForm renders support zip form 1`] = `
         </svg>
       </span>
       <span
+        aria-label=""
         class="nx-radio-checkbox__content nx-checkbox__content"
+        title=""
       >
         Log files
       </span>
@@ -178,7 +188,9 @@ exports[`SupportZipForm renders support zip form 1`] = `
          
       </span>
       <span
+        aria-label=""
         class="nx-radio-checkbox__content nx-checkbox__content"
+        title=""
       >
         Task log files
       </span>
@@ -213,7 +225,9 @@ exports[`SupportZipForm renders support zip form 1`] = `
         </svg>
       </span>
       <span
+        aria-label=""
         class="nx-radio-checkbox__content nx-checkbox__content"
+        title=""
       >
         Audit log files
       </span>
@@ -233,7 +247,9 @@ exports[`SupportZipForm renders support zip form 1`] = `
          
       </span>
       <span
+        aria-label=""
         class="nx-radio-checkbox__content nx-checkbox__content"
+        title=""
       >
         System and component metrics
       </span>
@@ -268,7 +284,9 @@ exports[`SupportZipForm renders support zip form 1`] = `
         </svg>
       </span>
       <span
+        aria-label=""
         class="nx-radio-checkbox__content nx-checkbox__content"
+        title=""
       >
         JMX information
       </span>
@@ -297,7 +315,9 @@ exports[`SupportZipForm renders support zip form 1`] = `
          
       </span>
       <span
+        aria-label=""
         class="nx-radio-checkbox__content nx-checkbox__content"
+        title=""
       >
         Limit files in the ZIP archive to 30 MB apiece
       </span>
@@ -332,7 +352,9 @@ exports[`SupportZipForm renders support zip form 1`] = `
         </svg>
       </span>
       <span
+        aria-label=""
         class="nx-radio-checkbox__content nx-checkbox__content"
+        title=""
       >
         Limit the ZIP archive to 20 MB
       </span>

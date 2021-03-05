@@ -22,6 +22,7 @@
 
   .nxrm-log-viewer-mark-text {
     min-width: 216px;
+    margin-bottom: 0 !important;
 
     .nx-text-input__invalid-message {
       display: none;
@@ -30,15 +31,22 @@
 
   .nxrm-select-action {
     margin-left: $nx-spacing-xxs;
+    select {
+      margin-bottom: 0px;
+    }
   }
 
   .nxrm-content-body {
-    height: calc(100% - 95px);
+    height: calc(100% - 128px);
 
     .nxrm-section {
       height: 100%;
-      display: flex;
-      flex-direction: column;
+
+      .nx-tile-content {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
     }
   }
 

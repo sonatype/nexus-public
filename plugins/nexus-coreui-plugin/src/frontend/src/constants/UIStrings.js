@@ -307,7 +307,12 @@ rel="noopener noreferrer">check the documentation</a>.
       },
       NO_RULE: 'None',
       EMPTY_PREVIEW: 'No results found or preview was not yet submitted',
-      DETAILS_TITLE: (ruleName) => `Routing Rule Details for ${ruleName}`
+      DETAILS_TITLE: (ruleName) => `Routing Rule Details for ${ruleName}`,
+      TYPE_FILTER: {
+        any: 'any',
+        group: 'group',
+        proxy: 'proxy'
+      }
     },
 
     FORM: {
