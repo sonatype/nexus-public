@@ -18,8 +18,6 @@ import org.sonatype.nexus.selector.ConstantVariableResolver;
 import org.sonatype.nexus.selector.VariableSource;
 import org.sonatype.nexus.selector.VariableSourceBuilder;
 
-import static org.apache.commons.lang3.StringUtils.stripStart;
-
 /**
  * Adapts persisted assets to variable resolvers.
  *
@@ -32,7 +30,7 @@ public abstract class AssetVariableResolverSupport
   @Override
   public VariableSource fromAsset(final FluentAsset asset) {
     VariableSourceBuilder builder = new VariableSourceBuilder();
-    builder.addResolver(new ConstantVariableResolver(stripStart(asset.path(), "/"), PATH));
+    builder.addResolver(new ConstantVariableResolver(asset.path(), PATH));
     builder.addResolver(new ConstantVariableResolver(asset.repository().getFormat().getValue(), FORMAT));
     addFromAsset(builder, asset);
 
@@ -42,7 +40,7 @@ public abstract class AssetVariableResolverSupport
   @Override
   public VariableSource fromPath(final String path, final String format) {
     VariableSourceBuilder builder = new VariableSourceBuilder();
-    builder.addResolver(new ConstantVariableResolver(stripStart(path, "/"), PATH));
+    builder.addResolver(new ConstantVariableResolver(path, PATH));
     builder.addResolver(new ConstantVariableResolver(format, FORMAT));
 
     return builder.build();

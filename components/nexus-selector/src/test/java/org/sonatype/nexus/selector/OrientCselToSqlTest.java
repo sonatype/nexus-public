@@ -164,7 +164,7 @@ public class OrientCselToSqlTest
     builder.propertyPrefix(assetPrefix + "attributes." + format + ".");
     builder.parameterPrefix(":");
     builder.parameterNamePrefix(parameterPrefix);
-    cselToOrientSql.transformCselToSql(engine.buildExpression(expression).getSyntaxTree(), builder);
+    cselToOrientSql.transformCselToSql(engine.buildExpression(expression, true).getSyntaxTree(), builder);
     return builder;
   }
 }

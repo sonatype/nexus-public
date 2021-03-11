@@ -178,7 +178,7 @@ public class OrientBrowseNodeStoreTest
     when(jexl.getType()).thenReturn(JexlSelector.TYPE);
 
     ConstraintViolationFactory violationFactory = mock(ConstraintViolationFactory.class);
-    SelectorFactory selectorFactory = new SelectorFactory(violationFactory, new OrientCselToSql());
+    SelectorFactory selectorFactory = new SelectorFactory(violationFactory, new OrientCselToSql(), true);
 
     doAnswer(invocation -> {
       SelectorConfiguration config = (SelectorConfiguration) invocation.getArguments()[0];

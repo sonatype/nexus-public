@@ -14,6 +14,9 @@ package org.sonatype.nexus.repository.security;
 
 import java.util.Map;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.selector.ConstantVariableResolver;
@@ -37,10 +40,15 @@ public abstract class VariableResolverAdapterSupport
   protected static final String PATH = "path";
   protected static final String FORMAT = "format";
 
+  @Inject
+  @Named("nexus.orient.enabled")
+  public Boolean orientEnabled;
+
   @Override
   public VariableSource fromRequest(final Request request, final Repository repository) {
     VariableSourceBuilder builder = new VariableSourceBuilder();
-    builder.addResolver(new ConstantVariableResolver(request.getPath().substring(1), PATH));
+    String path = orientEnabled ? request.getPath().substring(1) : request.getPath();
+    builder.addResolver(new ConstantVariableResolver(path, PATH));
     builder.addResolver(new ConstantVariableResolver(repository.getFormat().getValue(), FORMAT));
     addFromRequest(builder, request);
 

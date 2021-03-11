@@ -25,6 +25,7 @@ import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import com.google.inject.Binder;
+import com.google.inject.name.Names;
 import org.eclipse.sisu.space.BeanScanning;
 import org.junit.Rule;
 import org.junit.Test;
@@ -58,6 +59,7 @@ public class SelectorComponentTest
 
   @Override
   public void configure(final Binder binder) {
+    binder.bind(Boolean.class).annotatedWith(Names.named("nexus.orient.enabled")).toInstance(true);
     ConstraintViolationFactory constraintViolationFactory = mock(ConstraintViolationFactory.class);
     ConstraintViolation constraintViolation = mock(ConstraintViolation.class);
     SecuritySystem securitySystem = mock(SecuritySystem.class);
