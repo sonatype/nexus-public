@@ -58,9 +58,11 @@ public class JexlEngine
   /**
    * Builds a new {@link JexlExpression} from the given string.
    */
-  public JexlExpression buildExpression(final String expression) {
+  public JexlExpression buildExpression(final String expression, final boolean shouldTrimLeadingSlash) {
     ASTJexlScript script = parseExpression(expression);
-    script = trimLeadingSlashes(script);
+    if (shouldTrimLeadingSlash) {
+      script = trimLeadingSlashes(script);
+    }
     return new JexlExpression(this, expression, script);
   }
 

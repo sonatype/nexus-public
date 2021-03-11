@@ -73,7 +73,7 @@ class OrientSelectorPathExpressionTest
 
   @Before
   void setUp() throws Exception {
-    selectorFactory = new SelectorFactory(violationFactory, new OrientCselToSql())
+    selectorFactory = new SelectorFactory(violationFactory, new OrientCselToSql(), true)
 
     ComponentFactory componentFactory = new ComponentFactory(emptySet())
 

@@ -74,6 +74,7 @@ public class OrientMavenVariableResolverAdapterTest
 
   @Before
   public void setup() throws Exception {
+    mavenVariableResolverAdapter.orientEnabled = true;
     when(repository.getName()).thenReturn("OrientMavenVariableResolverAdapterTest");
     when(repository.getFormat()).thenReturn(new Format(Maven2Format.NAME) { });
   }

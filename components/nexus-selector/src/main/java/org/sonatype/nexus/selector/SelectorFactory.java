@@ -45,11 +45,15 @@ public class SelectorFactory
 
   private final CselToSql cselToSql;
 
+  private boolean orientEnabled;
+
   @Inject
   public SelectorFactory(final ConstraintViolationFactory constraintViolationFactory,
-                         final CselToSql cselToSql) {
+                         final CselToSql cselToSql,
+                         @Named("nexus.orient.enabled") final boolean orientEnabled) {
     this.constraintViolationFactory = checkNotNull(constraintViolationFactory);
     this.cselToSql = checkNotNull(cselToSql);
+    this.orientEnabled = orientEnabled;
   }
 
   /**
@@ -85,11 +89,12 @@ public class SelectorFactory
    * Creates a new {@link Selector} for the given expression and type.
    */
   public Selector createSelector(final String type, final String expression) {
+    boolean shouldTrimLeadingSlash = orientEnabled;
     switch (type) {
       case JexlSelector.TYPE:
-        return new JexlSelector(jexlEngine.buildExpression(expression));
+        return new JexlSelector(jexlEngine.buildExpression(expression, shouldTrimLeadingSlash));
       case CselSelector.TYPE:
-        return new CselSelector(cselToSql, jexlEngine.buildExpression(expression));
+        return new CselSelector(cselToSql, jexlEngine.buildExpression(expression, shouldTrimLeadingSlash));
       default:
         throw new IllegalArgumentException("Unknown selector type: " + type);
     }

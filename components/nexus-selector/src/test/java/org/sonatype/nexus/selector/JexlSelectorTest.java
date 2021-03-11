@@ -176,6 +176,6 @@ public class JexlSelectorTest
   }
 
   private JexlSelector buildSelector(final String expression) {
-    return new JexlSelector(engine.buildExpression(expression));
+    return new JexlSelector(engine.buildExpression(expression, true));
   }
 }

@@ -68,6 +68,7 @@ public class SimpleVariableResolverAdapterTest
     when(repository.getName()).thenReturn("SimpleVariableResolverAdapterTest");
     when(repository.getFormat()).thenReturn(new Format(TEST_FORMAT) { });
     SimpleVariableResolverAdapter simpleVariableResolverAdapter = new SimpleVariableResolverAdapter();
+    simpleVariableResolverAdapter.orientEnabled = true;
     VariableSource source = simpleVariableResolverAdapter.fromRequest(request, repository);
 
     assertThat(source.getVariableSet(), containsInAnyOrder(FORMAT_VARIABLE, PATH_VARIABLE));
@@ -81,6 +82,7 @@ public class SimpleVariableResolverAdapterTest
     when(document.field(FORMAT_VARIABLE, String.class)).thenReturn(TEST_FORMAT);
 
     SimpleVariableResolverAdapter simpleVariableResolverAdapter = new SimpleVariableResolverAdapter();
+    simpleVariableResolverAdapter.orientEnabled = true;
     VariableSource source = simpleVariableResolverAdapter.fromDocument(document);
 
     assertThat(source.getVariableSet(), containsInAnyOrder(FORMAT_VARIABLE, PATH_VARIABLE));
@@ -94,6 +96,7 @@ public class SimpleVariableResolverAdapterTest
     when(asset.format()).thenReturn(TEST_FORMAT);
 
     SimpleVariableResolverAdapter simpleVariableResolverAdapter = new SimpleVariableResolverAdapter();
+    simpleVariableResolverAdapter.orientEnabled = true;
     VariableSource source = simpleVariableResolverAdapter.fromAsset(asset);
 
     assertThat(source.getVariableSet(), containsInAnyOrder(FORMAT_VARIABLE, PATH_VARIABLE));
@@ -107,6 +110,7 @@ public class SimpleVariableResolverAdapterTest
     when(sourceLookup.get("format")).thenReturn(TEST_FORMAT);
 
     SimpleVariableResolverAdapter simpleVariableResolverAdapter = new SimpleVariableResolverAdapter();
+    simpleVariableResolverAdapter.orientEnabled = true;
     VariableSource source = simpleVariableResolverAdapter.fromSourceLookup(sourceLookup, sourceLookupAsset);
 
     assertThat(source.getVariableSet(), containsInAnyOrder(FORMAT_VARIABLE, PATH_VARIABLE));
