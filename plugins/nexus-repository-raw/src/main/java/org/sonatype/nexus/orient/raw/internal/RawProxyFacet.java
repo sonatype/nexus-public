@@ -17,7 +17,7 @@ import java.io.IOException;
 import javax.annotation.Nonnull;
 import javax.inject.Named;
 
-import org.sonatype.nexus.common.encoding.EncodingUtil;
+import org.sonatype.nexus.common.template.EscapeHelper;
 import org.sonatype.nexus.orient.raw.RawContentFacet;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
@@ -51,7 +51,7 @@ public class RawProxyFacet
 
   @Override
   protected String getUrl(@Nonnull final Context context) {
-    return EncodingUtil.urlEncode(componentPath(context));
+    return new EscapeHelper().uriSegments(componentPath(context));
   }
 
   /**
