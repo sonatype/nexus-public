@@ -15,7 +15,7 @@ package org.sonatype.nexus.scheduling.schedule;
 /**
  * Constants for the schedule properties.
  *
- * @since 3.next
+ * @since 3.30
  */
 public class ScheduleConstants
 {

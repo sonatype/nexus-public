@@ -23,7 +23,7 @@ import com.google.common.hash.HashCode;
 /**
  * Encapsulates methods for updating a {@link FluentAsset} with a new blob.
  *
- * @since 3.next
+ * @since 3.30
  */
 public interface FluentAssetBlobAttach
 {

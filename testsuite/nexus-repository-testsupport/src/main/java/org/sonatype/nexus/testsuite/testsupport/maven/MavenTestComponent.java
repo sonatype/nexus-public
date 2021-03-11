@@ -15,7 +15,7 @@ package org.sonatype.nexus.testsuite.testsupport.maven;
 import org.joda.time.DateTime;
 
 /**
- * @since 3.next
+ * @since 3.30
  */
 public class MavenTestComponent
 {

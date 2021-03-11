@@ -49,7 +49,7 @@ import static org.bouncycastle.openpgp.PGPSignature.CANONICAL_TEXT_DOCUMENT;
 /**
  * GnuPG utils to sign data.
  *
- * @since 3.next
+ * @since 3.30
  */
 public class GpgUtils
 {

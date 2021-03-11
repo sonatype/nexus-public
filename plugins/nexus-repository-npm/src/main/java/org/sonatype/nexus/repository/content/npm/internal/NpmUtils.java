@@ -23,7 +23,7 @@ import static com.google.common.collect.Maps.newHashMap;
 /**
  * Shared code for npm.
  *
- * @since 3.next
+ * @since 3.30
  */
 public final class NpmUtils
 {

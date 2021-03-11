@@ -38,7 +38,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 /**
  * Write/Read {@link TaskInfo} data to/from a JSON file.
  *
- * @since 3.next
+ * @since 3.30
  */
 @Named("taskExport")
 @Singleton

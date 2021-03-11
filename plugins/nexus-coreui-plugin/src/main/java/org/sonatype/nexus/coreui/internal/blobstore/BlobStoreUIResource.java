@@ -38,7 +38,7 @@ import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.coreui.internal.blobstore.BlobStoreUIResource.RESOURCE_PATH;
 
 /**
- * @since 3.next
+ * @since 3.30
  */
 @Named
 @Singleton

@@ -19,7 +19,7 @@
 /**
  * Proprietary Repositories controller.
  *
- * @since 3.next
+ * @since 3.30
  */
 Ext.define('NX.coreui.controller.ProprietaryRepositories', {
   extend: 'NX.app.Controller',

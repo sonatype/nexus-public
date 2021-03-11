@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * @since 3.next
+ * @since 3.30
  */
 public class ProprietaryContentRequest
 {

@@ -98,7 +98,7 @@ public interface MavenContentFacet
    *
    * @param minimumRetained The minimum number of snapshots to keep.
    *
-   * @since 3.next
+   * @since 3.30
    */
   Set<GAV> findGavsWithSnaphots(int minimumRetained);
 
@@ -110,7 +110,7 @@ public interface MavenContentFacet
    * @param baseVersion artifact base version
    * @param releaseVersion artifact release version
    *
-   * @since 3.next
+   * @since 3.30
    */
   List<Maven2ComponentData> findComponentsForGav(final String name,
                                                  final String group,
@@ -123,7 +123,7 @@ public interface MavenContentFacet
    * @param gracePeriod an optional period to keep snapshots around.
    * @return array of snapshot components IDs to delete for which a release version exists
    *
-   * @since 3.next
+   * @since 3.30
    */
   int[] selectSnapshotsAfterRelease(final int gracePeriod);
 }

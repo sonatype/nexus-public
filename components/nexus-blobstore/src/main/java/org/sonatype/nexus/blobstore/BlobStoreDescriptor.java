@@ -96,7 +96,7 @@ public interface BlobStoreDescriptor
   /**
    * @return true if the the blob store has a connection to be tested by the backend.
    *
-   * @since 3.next
+   * @since 3.30
    */
   default boolean isConnectionTestable() {
     return false;

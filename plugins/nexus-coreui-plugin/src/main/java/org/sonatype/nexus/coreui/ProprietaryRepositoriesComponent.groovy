@@ -38,7 +38,7 @@ import static org.sonatype.nexus.repository.config.ConfigurationConstants.PROPRI
 /**
  * Proprietary Repositories Settings {@link DirectComponent}.
  *
- * @since 3.next
+ * @since 3.30
  */
 @Named
 @Singleton

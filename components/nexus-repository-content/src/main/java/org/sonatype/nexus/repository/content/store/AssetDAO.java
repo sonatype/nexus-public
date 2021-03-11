@@ -138,7 +138,7 @@ public interface AssetDAO
    * @param repositoryId the repository containing the assets
    * @param paths        a list of asset paths
    * @return collection of assets if found
-   * @since 3.next
+   * @since 3.30
    */
   Collection<Asset> readPathsFromRepository(@Param("repositoryId") int repositoryId, @Param("paths") List<String> paths);
 

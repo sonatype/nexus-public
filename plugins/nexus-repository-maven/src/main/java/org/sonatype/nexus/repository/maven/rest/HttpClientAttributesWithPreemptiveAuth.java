@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * REST API model for describing HTTP connection properties for proxy repositories supporting preemptive
  * authentication.
  *
- * @since 3.next
+ * @since 3.30
  */
 public class HttpClientAttributesWithPreemptiveAuth
     extends HttpClientAttributes

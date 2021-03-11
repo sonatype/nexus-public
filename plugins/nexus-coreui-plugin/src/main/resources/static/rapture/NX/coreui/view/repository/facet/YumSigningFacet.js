@@ -17,7 +17,7 @@
 /**
  * Configuration specific to content signing of YUM repositories.
  *
- * @since 3.next
+ * @since 3.30
  */
 Ext.define('NX.coreui.view.repository.facet.YumSigningFacet', {
   extend: 'Ext.form.FieldContainer',

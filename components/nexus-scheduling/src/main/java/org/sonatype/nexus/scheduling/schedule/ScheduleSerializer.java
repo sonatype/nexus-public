@@ -27,7 +27,7 @@ import static org.sonatype.nexus.scheduling.schedule.ScheduleConstants.TIME_ZONE
 /**
  * Serializer for the {@link Schedule} class.
  *
- * @since 3.next
+ * @since 3.30
  */
 public class ScheduleSerializer
     extends StdSerializer<Schedule>

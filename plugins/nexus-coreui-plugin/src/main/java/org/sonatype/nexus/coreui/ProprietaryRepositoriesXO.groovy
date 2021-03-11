@@ -17,7 +17,7 @@ import groovy.transform.ToString
 /**
  * Proprietary Repositories Settings exchange object.
  *
- * @since 3.next
+ * @since 3.30
  */
 @ToString(includePackage = false, includeNames = true)
 class ProprietaryRepositoriesXO

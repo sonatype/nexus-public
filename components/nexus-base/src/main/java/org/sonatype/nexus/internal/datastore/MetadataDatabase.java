@@ -39,7 +39,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Add {@link SupportBundle} to export information about database.
  *
- * @since 3.next
+ * @since 3.30
  */
 @Named
 @Singleton

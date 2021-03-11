@@ -43,7 +43,7 @@ import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.PROGRESS;
 /**
  * Facet handling the removal of snapshots from a repository.
  *
- * @since 3.next
+ * @since 3.30
  */
 @Named
 public class RemoveSnapshotsFacetImpl

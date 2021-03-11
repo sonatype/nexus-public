@@ -47,7 +47,7 @@ public interface Maven2ComponentDAO
    * @param minimumRetained the minimum number of snapshots to keep.
    * @return all GAVs that qualify for deletion
    *
-   * @since 3.next
+   * @since 3.30
    */
   Set<GAV> findGavsWithSnaphots(@Param("repositoryId") final int repositoryId,
                                 @Param("minimumRetained") final int minimumRetained);
@@ -62,7 +62,7 @@ public interface Maven2ComponentDAO
    * @param releaseVersion artifact releaseVersion
    * @return all components by Group Artifact Version(GAVs)
    *
-   * @since 3.next
+   * @since 3.30
    */
   List<Maven2ComponentData> findComponentsForGav(@Param("repositoryId") final int repositoryId,
                                                  @Param("name") final String name,
@@ -77,7 +77,7 @@ public interface Maven2ComponentDAO
    * @param gracePeriod an optional period to keep snapshots around
    * @return array of snapshot components IDs to delete for which a release version exists
    *
-   * @since 3.next
+   * @since 3.30
    */
   int[] selectSnapshotsAfterRelease(@Param("repositoryId") final int repositoryId,
                                    @Param("gracePeriod") final int gracePeriod);
@@ -89,7 +89,7 @@ public interface Maven2ComponentDAO
    * @param limit        limit the selection
    * @return snapshot components last used before provided date
    *
-   * @since 3.next
+   * @since 3.30
    */
   Collection<Integer> selectUnusedSnapshots(@Param("repositoryId") int repositoryId,
                                             @Param("olderThan") LocalDate olderThan,
