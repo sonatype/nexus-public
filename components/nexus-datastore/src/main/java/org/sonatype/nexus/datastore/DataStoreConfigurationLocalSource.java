@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -43,6 +44,7 @@ import static java.util.Arrays.stream;
 import static org.sonatype.nexus.datastore.DataStoreConfigurationLocalSource.LOCAL;
 import static org.sonatype.nexus.datastore.DataStoreConfigurationSourceSupport.VALID_NAME_PATTERN;
 import static org.sonatype.nexus.datastore.DataStoreConfigurationSourceSupport.checkName;
+import static org.sonatype.nexus.datastore.api.DataStoreConfiguration.isSensitiveKey;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE_NAME;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.CONTENT_DATASTORE_NAME;
 
@@ -123,6 +125,7 @@ public class DataStoreConfigurationLocalSource
       try {
         if (storeProperties.exists()) {
           storeProperties.load();
+          maybeTrimProperties(storeProperties);
 
           // quick sanity check that the filename matches the content
           String dsNameProperty = storeProperties.getProperty(NAME_KEY);
@@ -150,6 +153,18 @@ public class DataStoreConfigurationLocalSource
       configuration.setSource(LOCAL);
 
       return configuration;
+    }
+  }
+
+  private static void maybeTrimProperties(final PropertiesFile propertiesFile) {
+    for (Entry<Object, Object> entry : propertiesFile.entrySet()) {
+      if (!isSensitiveKey(entry.getKey().toString())) {
+        String value = entry.getValue().toString();
+        String trimmedValue = value.trim();
+        if (!trimmedValue.equals(value)) {
+          entry.setValue(trimmedValue);
+        }
+      }
     }
   }
 

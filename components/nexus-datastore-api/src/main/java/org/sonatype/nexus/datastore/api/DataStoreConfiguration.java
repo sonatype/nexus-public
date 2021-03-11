@@ -69,6 +69,13 @@ public class DataStoreConfiguration
     this.attributes = checkNotNull(attributes);
   }
 
+  /**
+   * @since 3.next
+   */
+  public static boolean isSensitiveKey(final String key) {
+    return SENSITIVE_KEYS.test(key);
+  }
+
   @Override
   public String toString() {
     return "{" +
@@ -83,6 +90,6 @@ public class DataStoreConfiguration
    * Redact output using a blacklist of potentially sensitive key patterns.
    */
   protected Map<String, String> redact(final Map<String, String> attributes) {
-    return transformEntries(attributes, (k, v) -> SENSITIVE_KEYS.test(k) ? "**REDACTED**" : v);
+    return transformEntries(attributes, (k, v) -> isSensitiveKey(k) ? "**REDACTED**" : v);
   }
 }
