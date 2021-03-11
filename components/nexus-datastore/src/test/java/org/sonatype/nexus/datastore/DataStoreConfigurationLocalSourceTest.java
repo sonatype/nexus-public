@@ -204,4 +204,20 @@ public class DataStoreConfigurationLocalSourceTest
     underTest.delete(testConfig);
     assertThat(testStorePropertiesFile.exists(), is(false));
   }
+
+  @Test
+  public void defaultStoresTrimsAttributes() throws IOException {
+    File configStorePropertiesFile = temporaryFolder.newFile("config-store.properties");
+    write(configStorePropertiesFile.toPath(),
+        ImmutableList.of("name=config ", "type=customFile ", "user=admin ", "user.pass=admin! "));
+
+    DataStoreConfiguration config = underTest.load("config");
+
+    assertThat(config.getName(), is("config"));
+    assertThat(config.getSource(), is(LOCAL));
+    assertThat(config.getType(), is("customFile"));
+    assertThat(config.getAttributes().keySet(), hasSize(2));
+    assertThat(config.getAttributes(), hasEntry("user", "admin"));
+    assertThat(config.getAttributes(), hasEntry("user.pass", "admin! "));
+  }
 }

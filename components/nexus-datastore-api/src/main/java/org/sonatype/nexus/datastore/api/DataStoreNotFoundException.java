@@ -23,6 +23,6 @@ public class DataStoreNotFoundException
   private static final long serialVersionUID = -7516739829244823213L;
 
   public DataStoreNotFoundException(final String storeName) {
-    super("Data store not found: " + storeName);
+    super("Data store not found: '" + storeName + "'");
   }
 }
