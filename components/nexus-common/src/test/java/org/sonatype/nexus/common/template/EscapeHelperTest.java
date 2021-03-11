@@ -47,4 +47,9 @@ public class EscapeHelperTest
     String result = underTest.stripJavaEl(test);
     assertThat(result, is("{badstuffinhere}"));
   }
+
+  @Test
+  public void testUriSegmentsEncoding() {
+    assertThat(underTest.uriSegments("foo/bar+baz"), is("foo/bar%2Bbaz"));
+  }
 }
