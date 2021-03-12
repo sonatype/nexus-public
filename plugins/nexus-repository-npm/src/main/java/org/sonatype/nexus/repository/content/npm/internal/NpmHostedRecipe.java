@@ -22,7 +22,6 @@ import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.content.browse.BrowseFacet;
-import org.sonatype.nexus.repository.content.maintenance.LastAssetMaintenanceFacet;
 import org.sonatype.nexus.repository.content.npm.NpmContentFacet;
 import org.sonatype.nexus.repository.content.npm.internal.search.legacy.NpmSearchIndexFacetHosted;
 import org.sonatype.nexus.repository.content.search.SearchFacet;
@@ -130,6 +129,7 @@ public class NpmHostedRecipe
     repository.attach(npmSearchFacetProvider.get());
     repository.attach(contentFacet.get());
     repository.attach(contentMaintenanceFacetProvider.get());
+    repository.attach(browseFacet.get());
   }
 
   /**

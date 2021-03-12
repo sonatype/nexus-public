@@ -189,6 +189,7 @@ public class NpmProxyRecipe
     repository.attach(npmAuditFacetProvider.get());
     repository.attach(npmAuditTarballFacetProvider.get());
     repository.attach(npmProxyCacheInvalidatorFacet.get());
+    repository.attach(browseFacet.get());
   }
 
   /**
