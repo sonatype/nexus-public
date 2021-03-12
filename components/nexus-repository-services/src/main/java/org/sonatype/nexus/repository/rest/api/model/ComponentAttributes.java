@@ -19,7 +19,7 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * REST API model for attributes applying to components.
  *
- * @since 3.next
+ * @since 3.30
  */
 public class ComponentAttributes
 {

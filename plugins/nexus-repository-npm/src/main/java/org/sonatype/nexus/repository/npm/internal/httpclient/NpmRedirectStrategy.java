@@ -32,7 +32,7 @@ import org.apache.http.protocol.HttpContext;
  * GitHub Package Repository uses a HTTP 302 response + Location header to tell npm CLI, that tarball is on an AWS server.
  * AWS does not allow to use both the Authorization Bearer token and the X-Amz-Credential parameter.
  *
- * @since 3.next
+ * @since 3.30
  */
 @Named(NpmFormat.NAME)
 @Singleton

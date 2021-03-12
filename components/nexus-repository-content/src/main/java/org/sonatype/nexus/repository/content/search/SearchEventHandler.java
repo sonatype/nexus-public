@@ -156,7 +156,7 @@ public class SearchEventHandler
   /**
    * Allow event processing to be disabled.
    *
-   * @since 3.next
+   * @since 3.30
    */
   public void setProcessEvents(final boolean processEvents) {
     this.processEvents = processEvents;

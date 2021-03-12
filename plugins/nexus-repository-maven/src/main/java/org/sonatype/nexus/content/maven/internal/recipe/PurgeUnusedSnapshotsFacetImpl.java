@@ -38,7 +38,7 @@ import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
  * Implementation of {@link PurgeUnusedSnapshotsFacet} for the NewDB. The implementation assumes that this facet will
  * only be used with hosted and group repositories.
  *
- * @since 3.next
+ * @since 3.30
  */
 @Named
 public class PurgeUnusedSnapshotsFacetImpl

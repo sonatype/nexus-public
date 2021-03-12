@@ -70,7 +70,7 @@ public interface MavenMetadataRebuildFacet
    * @param rebuildChecksums
    * @throws IOException
    *
-   * @since 3.next
+   * @since 3.30
    */
   default void maybeRebuildMavenMetadata(
       String path,

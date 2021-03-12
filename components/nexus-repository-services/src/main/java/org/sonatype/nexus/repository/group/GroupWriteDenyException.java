@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.group;
 /**
  * Thrown in the case of a group repository member is the read-only policy.
  *
- * @since 3.next
+ * @since 3.30
  */
 public class GroupWriteDenyException
     extends RuntimeException

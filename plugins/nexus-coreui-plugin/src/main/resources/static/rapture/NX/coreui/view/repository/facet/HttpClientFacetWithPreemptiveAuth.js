@@ -19,7 +19,7 @@
 /**
  * Configuration specific to HTTP connections for Maven2 Proxy repositories including preemptive authentication support.
  *
- * @since 3.next
+ * @since 3.30
  */
 Ext.define('NX.coreui.view.repository.facet.HttpClientFacetWithPreemptiveAuth', {
   extend: 'NX.coreui.view.repository.facet.HttpClientFacet',

@@ -36,7 +36,7 @@ import static org.sonatype.nexus.supportzip.datastore.RestoreHelper.FILE_SUFFIX;
 /**
  * Restore Task's related data from JSON file(s).
  *
- * @since 3.next
+ * @since 3.30
  */
 @Named
 @Singleton

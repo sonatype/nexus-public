@@ -23,7 +23,7 @@ import io.swagger.annotations.ApiModelProperty;
  * REST API model for describing authentication for HTTP connections used by a proxy repository supporting preemptive
  * authentication.
  *
- * @since 3.next
+ * @since 3.30
  */
 public class HttpClientConnectionAuthenticationAttributesWithPreemptive
     extends HttpClientConnectionAuthenticationAttributes

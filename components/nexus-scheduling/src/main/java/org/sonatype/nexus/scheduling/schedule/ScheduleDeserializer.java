@@ -38,7 +38,7 @@ import static org.sonatype.nexus.scheduling.schedule.ScheduleConstants.TIME_ZONE
 /**
  * Deserializer for the {@link Schedule} class.
  *
- * @since 3.next
+ * @since 3.30
  */
 public class ScheduleDeserializer
     extends StdDeserializer<Schedule>

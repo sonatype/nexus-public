@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.rest.internal.api;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * @since 3.next
+ * @since 3.30
  */
 public class RepositoryDetailXO
 {

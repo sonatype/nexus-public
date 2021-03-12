@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.rest.internal.api;
 import javax.annotation.Nullable;
 
 /**
- * @since 3.next
+ * @since 3.30
  */
 public class RepositoryStatusXO {
 

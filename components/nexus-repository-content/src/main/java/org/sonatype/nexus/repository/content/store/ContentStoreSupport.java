@@ -112,7 +112,7 @@ public abstract class ContentStoreSupport<T extends ContentDataAccess>
   /**
    * Helper to find content in this store before creating or updating it with the given suppliers.
    *
-   * @since 3.next
+   * @since 3.30
    */
   @Transactional(retryOn = DuplicateKeyException.class)
   public <D> D save(final Supplier<Optional<D>> find, final Supplier<D> create, final UnaryOperator<D> update) {

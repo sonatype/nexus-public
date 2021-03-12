@@ -15,7 +15,7 @@ package org.sonatype.nexus.blobstore;
 import java.util.Map;
 
 /**
- * @since 3.next
+ * @since 3.30
  */
 public interface ConnectionChecker
 {

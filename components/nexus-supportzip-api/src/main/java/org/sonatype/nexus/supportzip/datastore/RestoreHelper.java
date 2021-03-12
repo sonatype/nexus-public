@@ -26,7 +26,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Restore Helper class.
  *
- * @since 3.next
+ * @since 3.30
  */
 @Named
 @Singleton

@@ -19,7 +19,7 @@ import com.google.common.base.Objects;
  *
  * Struct to track GAV we need to request metadata rebuild due to deletion.
  *
- * @since 3.next
+ * @since 3.30
  */
 public class GAV
 {

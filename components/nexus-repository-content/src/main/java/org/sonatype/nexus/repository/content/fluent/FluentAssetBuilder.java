@@ -44,14 +44,14 @@ public interface FluentAssetBuilder
   /**
    * Continue building this asset by converting a temporary blob into a permanent blob and attaching it to this asset.
    *
-   * @since 3.next
+   * @since 3.30
    */
   FluentAssetBuilder blob(TempBlob blob);
 
   /**
    * Continue building this asset by attaching an existing blob to this asset.
    *
-   * @since 3.next
+   * @since 3.30
    */
   FluentAssetBuilder blob(Blob blob, Map<HashAlgorithm, HashCode> checksums);
 
@@ -59,7 +59,7 @@ public interface FluentAssetBuilder
    * Save the asset using details built so far. If the asset doesn't exist it is created otherwise the blob reference
    * is updated.
    *
-   * @since 3.next
+   * @since 3.30
    */
   FluentAsset save();
 

@@ -19,7 +19,7 @@
 /**
  * Proprietary Repositories model.
  *
- * @since 3.next
+ * @since 3.30
  */
 Ext.define('NX.coreui.store.ProprietaryRepositories', {
   extend: 'Ext.data.Store',

@@ -30,7 +30,7 @@ import static org.sonatype.nexus.orient.DatabaseInstanceNames.CONFIG;
 /**
  * Update compact blobstore task to set multinode to false.
  *
- * @since 3.next
+ * @since 3.30
  */
 @Named
 @Singleton
