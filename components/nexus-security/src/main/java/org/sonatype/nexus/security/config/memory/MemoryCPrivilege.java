@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.security.config.memory;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.sonatype.nexus.security.config.CPrivilege;
@@ -155,5 +156,68 @@ public class MemoryCPrivilege
         ", readOnly=" + readOnly +
         ", version='" + version + '\'' +
         '}';
+  }
+
+  public static class MemoryCPrivilegeBuilder {
+    private final String id;
+
+    private String description;
+
+    private String name;
+
+    private final Map<String, String> properties = new HashMap<>();
+
+    private boolean readOnly = false;
+
+    private String type;
+
+    private int version;
+
+    public MemoryCPrivilegeBuilder(final String id) {
+      this.id = id;
+    }
+
+    public MemoryCPrivilegeBuilder description(final String description) {
+      this.description = description;
+      return this;
+    }
+
+    public MemoryCPrivilegeBuilder name(final String name) {
+      this.name = name;
+      return this;
+    }
+
+    public MemoryCPrivilegeBuilder readOnly(final boolean readOnly) {
+      this.readOnly = readOnly;
+      return this;
+    }
+
+    public MemoryCPrivilegeBuilder type(final String type) {
+      this.type = type;
+      return this;
+    }
+
+    public MemoryCPrivilegeBuilder version(final int version) {
+      this.version = version;
+      return this;
+    }
+
+    public MemoryCPrivilegeBuilder property(final String key, final String value) {
+      properties.put(key, value);
+      return this;
+    }
+
+    public MemoryCPrivilege build() {
+      MemoryCPrivilege privilege = new MemoryCPrivilege();
+      privilege.setId(id);
+      privilege.setDescription(description);
+      privilege.setName(name);
+      privilege.setProperties(properties);
+      privilege.setReadOnly(readOnly);
+      privilege.setType(type);
+      privilege.setVersion(version);
+
+      return privilege;
+    }
   }
 }
