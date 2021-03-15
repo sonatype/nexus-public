@@ -23,7 +23,7 @@ import io.swagger.annotations.ApiModelProperty;
  */
 public class ComponentAttributes
 {
-  @ApiModelProperty(value = "Components in this repository count as proprietary for dependency confusion attacks (requires Sonatype Firewall)")
+  @ApiModelProperty(value = "Components in this repository count as proprietary for namespace conflict attacks (requires Sonatype Nexus Firewall)")
   protected Boolean proprietaryComponents;
 
   @JsonCreator
