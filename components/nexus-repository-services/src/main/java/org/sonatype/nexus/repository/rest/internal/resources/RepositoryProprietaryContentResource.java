@@ -34,6 +34,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.rest.api.AuthorizingRepositoryManager;
+import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.validation.Validate;
@@ -97,6 +98,7 @@ public class RepositoryProprietaryContentResource
         .map(repositoryManager::getRepositoryWithAdmin)
         .filter(Optional::isPresent)
         .map(Optional::get)
+        .filter(this::isHostedRepository)
         .forEach(repository -> {
           Configuration configuration = repository.getConfiguration().copy();
           configuration.attributes(COMPONENT).set(PROPRIETARY_COMPONENTS, true);
@@ -116,6 +118,7 @@ public class RepositoryProprietaryContentResource
         .map(repositoryManager::getRepositoryWithAdmin)
         .filter(Optional::isPresent)
         .map(Optional::get)
+        .filter(this::isHostedRepository)
         .forEach(repository -> {
           Configuration configuration = repository.getConfiguration().copy();
           configuration.attributes(COMPONENT).set(PROPRIETARY_COMPONENTS, false);
@@ -135,5 +138,14 @@ public class RepositoryProprietaryContentResource
       throw new WebApplicationMessageException(Status.INTERNAL_SERVER_ERROR,
           "\"Problem updating following repositories: " + Joiner.on(", ").join(failed) + "\"", APPLICATION_JSON);
     }
+  }
+
+  private boolean isHostedRepository(final Repository repository) {
+    if(!HostedType.NAME.equals(repository.getType().getValue())){
+      log.warn("Repository {} is not a hosted repository, proprietary component flag is not valid for non-hosted repositories", repository.getName());
+      return false;
+    }
+
+    return true;
   }
 }
