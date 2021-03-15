@@ -29,7 +29,7 @@ Ext.define('NX.coreui.controller.ProprietaryRepositories', {
   ],
 
   views: [
-    'system.ProprietaryRepositories'
+    'repository.ProprietaryRepositories'
   ],
 
   stores: [
@@ -39,11 +39,11 @@ Ext.define('NX.coreui.controller.ProprietaryRepositories', {
   refs: [
     {
       ref: 'panel',
-      selector: 'nx-coreui-system-proprietary-repositories'
+      selector: 'nx-coreui-repository-proprietary-repositories'
     },
     {
       ref: 'form',
-      selector: 'nx-coreui-system-proprietary-repositories nx-settingsform'
+      selector: 'nx-coreui-repository-proprietary-repositories nx-settingsform'
     }
   ],
 
@@ -55,8 +55,8 @@ Ext.define('NX.coreui.controller.ProprietaryRepositories', {
 
     me.getApplication().getFeaturesController().registerFeature({
       mode: 'admin',
-      path: '/System/Proprietary',
-      view: { xtype: 'nx-coreui-system-proprietary-repositories' },
+      path: '/Repository/Proprietary',
+      view: { xtype: 'nx-coreui-repository-proprietary-repositories' },
       text: NX.I18n.get('ProprietaryRepositories_Text'),
       description: NX.I18n.get('ProprietaryRepositories_Description'),
       iconConfig: {
@@ -75,7 +75,7 @@ Ext.define('NX.coreui.controller.ProprietaryRepositories', {
         }
       },
       component: {
-        'nx-coreui-system-proprietary-repositories': {
+        'nx-coreui-repository-proprietary-repositories': {
           beforerender: me.loadProprietaryRepositories
         }
       }
