@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.pypi.rest;
 
-import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
+import org.sonatype.nexus.repository.pypi.PyPiFormat;
 import org.sonatype.nexus.repository.rest.api.model.GroupAttributes;
 import org.sonatype.nexus.repository.rest.api.model.GroupRepositoryApiRequest;
 import org.sonatype.nexus.repository.rest.api.model.StorageAttributes;

@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
 
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
+import org.sonatype.nexus.repository.pypi.PyPiPathUtils;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;

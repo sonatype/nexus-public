@@ -10,29 +10,34 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.restore.pypi.internal;
+package org.sonatype.nexus.repository.pypi;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 
-import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
-import org.sonatype.nexus.blobstore.restore.RestoreBlobDataSupport;
+import org.sonatype.nexus.repository.cache.CacheControllerHolder;
+import org.sonatype.nexus.repository.cache.CacheControllerHolder.CacheType;
 
 /**
- * @since 3.14
+ * Asset kinds for PyPI.
+ *
+ * @since 3.1
  */
-public class PyPiRestoreBlobData
-    extends RestoreBlobDataSupport
+public enum AssetKind
 {
-  private final String version;
+  ROOT_INDEX(CacheControllerHolder.METADATA),
+  INDEX(CacheControllerHolder.METADATA),
+  PACKAGE(CacheControllerHolder.CONTENT),
+  SEARCH(CacheControllerHolder.METADATA),
+  PACKAGE_SIGNATURE(CacheControllerHolder.METADATA);
 
-  public PyPiRestoreBlobData(final RestoreBlobData blobData, @Nullable final String version)
-  {
-    super(blobData);
-    this.version = version;
+  private final CacheType cacheType;
+
+  AssetKind(final CacheType cacheType) {
+    this.cacheType = cacheType;
   }
 
-  @Nullable
-  public String getVersion() {
-    return version;
+  @Nonnull
+  public CacheType getCacheType() {
+    return cacheType;
   }
 }

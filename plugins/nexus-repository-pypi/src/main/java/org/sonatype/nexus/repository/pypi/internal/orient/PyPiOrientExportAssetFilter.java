@@ -17,7 +17,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.filter.export.OrientExportAssetFilter;
 import org.sonatype.nexus.repository.pypi.internal.PyPiExportAssetFilterSupport;
-import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
+import org.sonatype.nexus.repository.pypi.PyPiFormat;
 import org.sonatype.nexus.repository.storage.Asset;
 
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;

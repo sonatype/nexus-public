@@ -23,7 +23,7 @@ import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.group.GroupHandler;
 import org.sonatype.nexus.repository.http.HttpResponses;
-import org.sonatype.nexus.repository.pypi.internal.AssetKind;
+import org.sonatype.nexus.repository.pypi.AssetKind;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Response;
@@ -31,9 +31,9 @@ import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.pypi.datastore.internal.ContentPypiPathUtils.indexPath;
-import static org.sonatype.nexus.repository.pypi.internal.AssetKind.ROOT_INDEX;
+import static org.sonatype.nexus.repository.pypi.AssetKind.ROOT_INDEX;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiGroupUtils.lazyMergeResult;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.name;
+import static org.sonatype.nexus.repository.pypi.PyPiPathUtils.name;
 
 /**
  * Support for merging PyPI simple indexes together.

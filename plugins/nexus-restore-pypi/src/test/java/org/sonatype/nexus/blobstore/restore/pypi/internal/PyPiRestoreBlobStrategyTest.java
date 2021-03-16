@@ -10,9 +10,11 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.restore.pypi.internal.orient;
+package org.sonatype.nexus.blobstore.restore.pypi.internal;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -20,57 +22,46 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
-import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
+import org.sonatype.nexus.blobstore.restore.pypi.internal.orient.PyPiRestoreBlobData;
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.log.DryRunPrefix;
-import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.content.facet.ContentFacet;
+import org.sonatype.nexus.repository.content.fluent.FluentAsset;
+import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
+import org.sonatype.nexus.repository.content.fluent.FluentAssets;
+import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.pypi.orient.PyPiFacet;
-import org.sonatype.nexus.repository.pypi.orient.repair.OrientPyPiRepairIndexComponent;
-import org.sonatype.nexus.repository.storage.AssetBlob;
-import org.sonatype.nexus.repository.storage.Bucket;
-import org.sonatype.nexus.repository.storage.StorageFacet;
-import org.sonatype.nexus.repository.storage.StorageTx;
+import org.sonatype.nexus.repository.pypi.datastore.PypiContentFacet;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.io.Resources;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
-import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
-import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
 
-public class OrientPyPiRestoreBlobStrategyTest
+public class PyPiRestoreBlobStrategyTest
     extends TestSupport
 {
   private static final String TEST_BLOB_STORE_NAME = "test";
 
-  public static final String PACKAGE_PATH = "packages/sampleproject/1.2.0/sampleproject-1.2.0.tar.gz";
+  public static final String PACKAGE_PATH = "/packages/sampleproject/1.2.0/sampleproject-1.2.0.tar.gz";
 
-  public static final String INDEX_PATH = "simple/peppercorn/";
+  public static final String INDEX_PATH = "/simple/peppercorn/";
 
-  OrientPyPiRestoreBlobStrategy underTest;
-
-  @Mock
-  NodeAccess nodeAccess;
+  PyPiRestoreBlobStrategy underTest;
 
   @Mock
   RepositoryManager repositoryManager;
-
-  @Mock
-  BlobStoreManager blobStoreManager;
 
   @Mock
   Blob blob;
@@ -79,28 +70,16 @@ public class OrientPyPiRestoreBlobStrategyTest
   Repository repository;
 
   @Mock
-  StorageFacet storageFacet;
+  PypiContentFacet pypiContentFacet;
 
   @Mock
-  PyPiFacet pyPiFacet;
-
-  @Mock
-  StorageTx storageTx;
-
-  @Mock
-  Bucket bucket;
+  ContentFacet contentFacet;
 
   @Mock
   BlobStore blobStore;
 
   @Mock
   BlobStoreConfiguration blobStoreConfiguration;
-
-  @Mock
-  OrientPyPiRepairIndexComponent pyPiRepairIndexComponent;
-
-  @Mock
-  PyPiRestoreBlobDataFactory pyPiRestoreBlobDataFactory;
 
   @Mock
   PyPiRestoreBlobData pyPiRestoreBlobData;
@@ -112,16 +91,10 @@ public class OrientPyPiRestoreBlobStrategyTest
 
   Properties indexProps = new Properties();
 
-  byte[] blobBytes = "blobbytes".getBytes();
 
   @Before
-  public void setup() {
-    underTest = new OrientPyPiRestoreBlobStrategy(nodeAccess,
-        repositoryManager,
-        blobStoreManager,
-        new DryRunPrefix("dryrun"),
-        pyPiRepairIndexComponent,
-        pyPiRestoreBlobDataFactory);
+  public void setup() throws IOException {
+    underTest = new PyPiRestoreBlobStrategy(new DryRunPrefix("dryrun"), repositoryManager);
 
     packageProps.setProperty("@BlobStore.created-by", "admin");
     packageProps.setProperty("size", "5674");
@@ -143,98 +116,93 @@ public class OrientPyPiRestoreBlobStrategyTest
 
     when(repositoryManager.get(anyString())).thenReturn(repository);
 
-    when(repository.facet(PyPiFacet.class)).thenReturn(pyPiFacet);
-    when(repository.optionalFacet(StorageFacet.class)).thenReturn(Optional.of(storageFacet));
-    when(repository.optionalFacet(PyPiFacet.class)).thenReturn(Optional.of(pyPiFacet));
-
-    when(storageFacet.txSupplier()).thenReturn(() -> storageTx);
-
-    when(storageTx.findBucket(repository)).thenReturn(bucket);
-
+    when(repository.facet(PypiContentFacet.class)).thenReturn(pypiContentFacet);
+    when(repository.optionalFacet(PypiContentFacet.class)).thenReturn(Optional.of(pypiContentFacet));
+    when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);
+    byte[] blobBytes = Resources.toByteArray(Resources.getResource(getClass(),
+        "pyglet-1.2.1.zip"));
     when(blob.getInputStream()).thenReturn(new ByteArrayInputStream(blobBytes));
 
     when(blobStoreConfiguration.getName()).thenReturn(TEST_BLOB_STORE_NAME);
 
     when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
-
-    when(pyPiRestoreBlobDataFactory.create(any())).thenReturn(pyPiRestoreBlobData);
     when(pyPiRestoreBlobData.getBlobData()).thenReturn(restoreBlobData);
+
+    TempBlob tempBlobMock = mock(TempBlob.class);
+    when(tempBlobMock.get()).thenReturn(new ByteArrayInputStream(blobBytes));
+    when(pypiContentFacet.getTempBlob(any(InputStream.class), anyString())).thenReturn(tempBlobMock);
   }
 
   @Test
   public void testPackageRestore() throws Exception {
+    FluentComponent component = mock(FluentComponent.class);
+    when(component.attributes()).thenReturn(new NestedAttributesMap());
+    FluentAsset asset = mockAsset();
+    when(asset.attributes()).thenReturn(new NestedAttributesMap());
+    when(pypiContentFacet.findOrCreateComponent(anyString(), anyString(), anyString())).thenReturn(component);
+    when(pypiContentFacet.saveAsset(eq(PACKAGE_PATH), eq(component), anyString(), any(TempBlob.class))).thenReturn(asset);
     when(restoreBlobData.getRepository()).thenReturn(repository);
     when(pyPiRestoreBlobData.getBlobData().getBlobName()).thenReturn(PACKAGE_PATH);
-
     underTest.restore(packageProps, blob, blobStore, false);
 
-    verify(pyPiFacet).assetExists(PACKAGE_PATH);
-    verify(pyPiFacet).put(eq(PACKAGE_PATH), any(AssetBlob.class));
+    verify(contentFacet.assets().path(PACKAGE_PATH)).find();
+    verify(pypiContentFacet).findOrCreateComponent(anyString(), anyString(), anyString());
+    verify(pypiContentFacet).saveAsset(eq(PACKAGE_PATH), eq(component), anyString(), any(TempBlob.class));
+    verify(pypiContentFacet).getTempBlob(any(InputStream.class), anyString());
 
-    verifyNoMoreInteractions(pyPiFacet);
+    verifyNoMoreInteractions(pypiContentFacet);
+  }
+
+  private FluentAsset mockAsset() {
+    FluentAsset asset = mock(FluentAsset.class);
+    FluentAssets fluentAssets = mock(FluentAssets.class);
+    FluentAssetBuilder builder = mock(FluentAssetBuilder.class);
+    when(contentFacet.assets()).thenReturn(fluentAssets);
+    when(fluentAssets.path(anyString())).thenReturn(builder);
+    when(builder.find()).thenReturn(Optional.empty());
+    return asset;
   }
 
   @Test
   public void testIndexRestore() throws Exception {
     when(restoreBlobData.getRepository()).thenReturn(repository);
     when(pyPiRestoreBlobData.getBlobData().getBlobName()).thenReturn(INDEX_PATH);
+    mockAsset();
 
     underTest.restore(indexProps, blob, blobStore, false);
 
-    verify(pyPiFacet).assetExists(INDEX_PATH);
-    verify(pyPiFacet).put(eq(INDEX_PATH), any(AssetBlob.class));
+    verify(contentFacet.assets().path(INDEX_PATH)).find();
+    verify(pypiContentFacet).saveAsset(eq(INDEX_PATH), anyString(), any(TempBlob.class));
+    verify(pypiContentFacet).getTempBlob(any(InputStream.class), anyString());
 
-    verifyNoMoreInteractions(pyPiFacet);
+    verifyNoMoreInteractions(pypiContentFacet);
   }
 
   @Test
   public void testRestoreSkipNotFacet() {
-    when(repository.optionalFacet(StorageFacet.class)).thenReturn(Optional.empty());
+    when(repository.optionalFacet(PypiContentFacet.class)).thenReturn(Optional.empty());
 
     underTest.restore(indexProps, blob, blobStore, false);
 
-    verifyNoMoreInteractions(pyPiFacet);
+    verifyNoMoreInteractions(pypiContentFacet);
   }
 
   @Test
   public void testRestoreSkipExistingPackage() {
     when(restoreBlobData.getRepository()).thenReturn(repository);
     when(pyPiRestoreBlobData.getBlobData().getBlobName()).thenReturn(PACKAGE_PATH);
-    when(pyPiFacet.assetExists(PACKAGE_PATH)).thenReturn(true);
+    FluentAssets fluentAssets = mock(FluentAssets.class);
+    FluentAssetBuilder builder = mock(FluentAssetBuilder.class);
+    when(contentFacet.assets()).thenReturn(fluentAssets);
+    when(fluentAssets.path(anyString())).thenReturn(builder);
+    FluentAsset asset = mock(FluentAsset.class);
+    when(asset.component()).thenReturn(Optional.of(mock(FluentComponent.class)));
+    when(builder.find()).thenReturn(Optional.of(asset));
 
     underTest.restore(packageProps, blob, blobStore, false);
 
-    verify(pyPiFacet).assetExists(PACKAGE_PATH);
+    verify(contentFacet.assets().path(PACKAGE_PATH)).find();
 
-    verifyNoMoreInteractions(pyPiFacet);
-  }
-
-  @Test
-  public void testCorrectChecksums() {
-    assertThat(underTest.getHashAlgorithms(), equalTo(ImmutableList.of(SHA1, SHA256, MD5)));
-  }
-
-  @Test
-  public void testRestoreRepairIfAssetsUpdated() {
-    underTest.after(true, repository);
-
-    verify(pyPiRepairIndexComponent).repairRepository(repository);
-    verifyNoMoreInteractions(pyPiRepairIndexComponent);
-  }
-
-  @Test
-  public void testRestoreDoesNotRepairIfAssetsNotUpdated() {
-    underTest.after(false, repository);
-
-    verifyZeroInteractions(pyPiRepairIndexComponent);
-  }
-
-  @Test
-  public void blobDataIsCreated() {
-    when(pyPiRestoreBlobDataFactory.create(restoreBlobData)).thenReturn(pyPiRestoreBlobData);
-
-    assertThat(underTest.createRestoreData(restoreBlobData), is(pyPiRestoreBlobData));
-    verify(pyPiRestoreBlobDataFactory).create(restoreBlobData);
-    verifyNoMoreInteractions(pyPiRestoreBlobDataFactory, restoreBlobData);
+    verifyNoMoreInteractions(pypiContentFacet);
   }
 }

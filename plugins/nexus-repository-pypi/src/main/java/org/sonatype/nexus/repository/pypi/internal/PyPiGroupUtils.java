@@ -23,13 +23,14 @@ import java.util.function.Supplier;
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpStatus;
+import org.sonatype.nexus.repository.pypi.AssetKind;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.Response;
 
 import com.google.common.base.Suppliers;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.pypi.internal.AssetKind.INDEX;
+import static org.sonatype.nexus.repository.pypi.AssetKind.INDEX;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.extractLinksFromIndex;
 
 public class PyPiGroupUtils

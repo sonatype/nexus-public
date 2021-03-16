@@ -50,8 +50,8 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiConstants.ACTION_F
 import static org.sonatype.nexus.repository.pypi.internal.PyPiConstants.FIELD_ACTION;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiConstants.FIELD_CONTENT;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiConstants.GPG_SIGNATURE;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.name;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.path;
+import static org.sonatype.nexus.repository.pypi.PyPiPathUtils.name;
+import static org.sonatype.nexus.repository.pypi.PyPiPathUtils.path;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiSearchUtils.buildSearchResponse;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiSearchUtils.parseSearchRequest;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiStorageUtils.HASH_ALGORITHMS;

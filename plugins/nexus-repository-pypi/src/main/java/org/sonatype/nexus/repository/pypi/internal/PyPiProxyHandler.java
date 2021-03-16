@@ -18,7 +18,7 @@ import org.sonatype.nexus.repository.proxy.ProxyHandler;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Response;
 
-import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.isSearchRequest;
+import static org.sonatype.nexus.repository.pypi.PyPiPathUtils.isSearchRequest;
 
 /**
  * PyPI-specific proxy handler.

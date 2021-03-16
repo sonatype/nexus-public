@@ -17,15 +17,15 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.pypi.internal.PyPiIndexFacet;
-import org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils;
+import org.sonatype.nexus.repository.pypi.PyPiPathUtils;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
-import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.INDEX_PATH_PREFIX;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.normalizeName;
+import static org.sonatype.nexus.repository.pypi.PyPiPathUtils.INDEX_PATH_PREFIX;
+import static org.sonatype.nexus.repository.pypi.PyPiPathUtils.normalizeName;
 import static org.sonatype.nexus.repository.pypi.orient.internal.OrientPyPiDataUtils.findAsset;
 
 /**

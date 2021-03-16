@@ -19,7 +19,7 @@ import java.util.Set;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.repository.pypi.internal.AssetKind;
+import org.sonatype.nexus.repository.pypi.AssetKind;
 import org.sonatype.nexus.repository.pypi.internal.PyPiIndexFacet;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Bucket;
@@ -29,7 +29,7 @@ import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
-import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_NAME;
+import static org.sonatype.nexus.repository.pypi.PyPiAttributes.P_NAME;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 
 /**

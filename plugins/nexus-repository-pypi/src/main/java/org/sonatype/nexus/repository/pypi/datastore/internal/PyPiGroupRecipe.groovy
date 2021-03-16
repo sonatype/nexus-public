@@ -22,8 +22,8 @@ import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.group.GroupHandler
 import org.sonatype.nexus.repository.http.HttpHandlers
-import org.sonatype.nexus.repository.pypi.internal.AssetKind
-import org.sonatype.nexus.repository.pypi.internal.PyPiFormat
+import org.sonatype.nexus.repository.pypi.AssetKind
+import org.sonatype.nexus.repository.pypi.PyPiFormat
 import org.sonatype.nexus.repository.pypi.internal.SearchGroupHandler
 import org.sonatype.nexus.repository.types.GroupType
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet

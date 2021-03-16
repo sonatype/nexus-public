@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.pypi.datastore.internal.store;
 import javax.inject.Named;
 
 import org.sonatype.nexus.repository.content.store.FormatStoreModule;
-import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
+import org.sonatype.nexus.repository.pypi.PyPiFormat;
 
 /**
  * @since 3.29

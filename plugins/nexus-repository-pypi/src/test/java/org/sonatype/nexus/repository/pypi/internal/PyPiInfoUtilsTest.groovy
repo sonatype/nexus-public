@@ -15,6 +15,8 @@ package org.sonatype.nexus.repository.pypi.internal
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
 
+import org.sonatype.nexus.repository.pypi.PyPiInfoUtils
+
 import org.slf4j.Logger
 import spock.lang.Specification
 import spock.lang.Unroll
