@@ -31,6 +31,8 @@ import org.junit.rules.ExternalResource;
 public class CapabilitiesRule
     extends ExternalResource
 {
+  private static final String OUTREACH = "OutreachManagementCapability";
+
   private final Provider<CapabilityRegistry> capabilityRegistryProvider;
 
   private final Collection<String> capabilitiesToDisable = new ArrayList<>();
@@ -43,8 +45,12 @@ public class CapabilitiesRule
     this.capabilityRegistryProvider = capabilityRegistryProvider;
   }
 
+  public void disableOutreach() {
+    disable(OUTREACH);
+  }
+
   @Override
-  protected void after() {
+  public void after() {
     capabilitiesToRemove.stream()
         .map(this::find)
         .filter(Optional::isPresent)
