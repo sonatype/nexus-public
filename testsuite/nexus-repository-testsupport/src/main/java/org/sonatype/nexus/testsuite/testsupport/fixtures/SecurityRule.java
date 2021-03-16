@@ -18,10 +18,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
+import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.security.RepositoryContentSelectorPrivilegeDescriptor;
 import org.sonatype.nexus.security.SecuritySystem;
@@ -47,6 +52,8 @@ import org.slf4j.LoggerFactory;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 
+@Named
+@Singleton
 public class SecurityRule
     extends ExternalResource
 {
@@ -62,11 +69,11 @@ public class SecurityRule
 
   private final Set<String> roles = new HashSet<>();
 
-  private final Set<User> users = new HashSet<>();
+  private final Set<String> users = new HashSet<>();
 
   private AnonymousConfiguration originalAnonymousConfiguration = null;
 
-  final Set<SelectorConfiguration> selectors = new HashSet<>();
+  final Set<String> selectors = new HashSet<>();
 
   public SecurityRule(
       final Provider<SecuritySystem> securitySystemProvider,
@@ -85,14 +92,25 @@ public class SecurityRule
     this.anonymousConfigurationProvider = checkNotNull(anonymousConfigurationProvider);
   }
 
+  @Inject
+  public SecurityRule(
+      final SecuritySystem securitySystem,
+      final SelectorManager selectorManager,
+      final AnonymousManager anonymousConfiguration)
+  {
+    this.securitySystemProvider = () -> securitySystem;
+    this.selectorManagerProvider = () -> selectorManager;
+    this.anonymousConfigurationProvider = () -> anonymousConfiguration;
+  }
+
   @Override
-  protected void after() {
+  public void after() {
     users.forEach(user -> {
       try {
-        securitySystemProvider.get().deleteUser(user.getUserId(), DEFAULT_SOURCE);
+        securitySystemProvider.get().deleteUser(user, DEFAULT_SOURCE);
       }
       catch (Exception e) { //NOSONAR
-        log.debug("Failed to cleanup user: {}", user.getUserId(), e);
+        log.debug("Failed to cleanup user: {}", user, e);
       }
     });
     roles.forEach(roleId -> {
@@ -111,14 +129,11 @@ public class SecurityRule
         log.debug("Failed to cleanup privilege: {}", privilege.getId(), e);
       }
     });
-    selectors.forEach(selector -> {
-      try {
-        selectorManagerProvider.get().delete(selector);
-      }
-      catch (Exception e) { //NOSONAR
-        log.debug("Failed to cleanup content selector: {}", selector.getName(), e);
-      }
-    });
+    selectors.stream()
+        .map(selectorManagerProvider.get()::findByName)
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .forEach(selectorManagerProvider.get()::delete);
 
     if (originalAnonymousConfiguration != null) {
       anonymousConfigurationProvider.get().setConfiguration(originalAnonymousConfiguration);
@@ -260,6 +275,20 @@ public class SecurityRule
     return null;
   }
 
+  /**
+   * Create a user with the specified privileges, the username, the password, and the role will be the same.
+   *
+   * @param prefix a prefix for the generated user & roles.
+   * @param privileges the required privileges
+   *
+   * @return the created user
+   */
+  public User createUserWithPrivileges(final String prefix, final String... privileges) {
+    String roleName = prefix + "-" + UUID.randomUUID().toString();
+    Role role = createRole(roleName, privileges);
+    return createUser(roleName, roleName, role.getRoleId());
+  }
+
   public User createUser(final String name, final String password, final String... roles) {
     User user = new User();
     user.setUserId(name);
@@ -273,7 +302,7 @@ public class SecurityRule
 
     try {
       user = securitySystemProvider.get().addUser(user, password);
-      users.add(user);
+      users.add(user.getUserId());
       return user;
     }
     catch (NoSuchUserManagerException e) {
@@ -296,7 +325,7 @@ public class SecurityRule
         .newSelectorConfiguration(name, type, description, ImmutableMap.of("expression", expression));
 
     selectorManagerProvider.get().create(selectorConfiguration);
-    selectors.add(selectorConfiguration);
+    selectors.add(name);
     return selectorConfiguration;
   }
 
@@ -339,5 +368,17 @@ public class SecurityRule
 
   public void manageRole(final String roleId) {
     roles.add(roleId);
+  }
+
+  public void manageUser(final String userId) {
+    users.add(userId);
+  }
+
+  public void unmanageUser(final String userId) {
+    users.remove(userId);
+  }
+
+  public void unmanageRole(final String roleId) {
+    roles.remove(roleId);
   }
 }
