@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.pypi.rest;
 
-import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
+import org.sonatype.nexus.repository.pypi.PyPiFormat;
 import org.sonatype.nexus.repository.rest.api.model.CleanupPolicyAttributes;
 import org.sonatype.nexus.repository.rest.api.model.ComponentAttributes;
 import org.sonatype.nexus.repository.rest.api.model.HostedRepositoryApiRequest;

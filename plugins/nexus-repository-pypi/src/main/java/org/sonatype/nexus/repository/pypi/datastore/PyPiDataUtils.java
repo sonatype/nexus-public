@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.pypi.datastore.internal;
+package org.sonatype.nexus.repository.pypi.datastore;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,7 +21,7 @@ import javax.annotation.Nullable;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAttributes;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
-import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
+import org.sonatype.nexus.repository.pypi.PyPiFormat;
 import org.sonatype.nexus.repository.view.Content;
 
 import com.google.common.base.Strings;
@@ -29,7 +29,7 @@ import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.SUPPORTED_ATTRIBUTES;
+import static org.sonatype.nexus.repository.pypi.PyPiAttributes.SUPPORTED_ATTRIBUTES;
 import static org.sonatype.nexus.repository.view.Content.CONTENT_LAST_MODIFIED;
 
 /**
@@ -42,7 +42,7 @@ public class PyPiDataUtils
    * the asset, not the component. While most should not differ between uploads for the same name and version, it is
    * possible, so mitigate by associating with assets.
    */
-  static void copyFormatAttributes(final FluentAsset asset, final Map<String, String> attributes) {
+  public static void copyFormatAttributes(final FluentAsset asset, final Map<String, String> attributes) {
     checkNotNull(asset);
     checkNotNull(attributes);
 
@@ -61,7 +61,7 @@ public class PyPiDataUtils
     asset.withAttribute(PyPiFormat.NAME, formatAttributes);
   }
 
-  static void copyFormatAttributes(final FluentComponent component, final Map<String, String> attributes) {
+  public static void copyFormatAttributes(final FluentComponent component, final Map<String, String> attributes) {
     checkNotNull(component);
     checkNotNull(attributes);
 
@@ -74,7 +74,7 @@ public class PyPiDataUtils
     component.withAttribute(PyPiFormat.NAME, formatAttributes);
   }
 
-  static void setFormatAttribute(final FluentAsset asset, final String key, final Object value) {
+  public static void setFormatAttribute(final FluentAsset asset, final String key, final Object value) {
     checkNotNull(asset);
     checkNotNull(key);
     checkNotNull(value);
@@ -82,7 +82,7 @@ public class PyPiDataUtils
     setFormatAttribute(asset, (Map<String, Object>) asset.attributes().get(PyPiFormat.NAME), key, value);
   }
 
-  static void setFormatAttribute(FluentComponent component, String key, Object value) {
+  public static void setFormatAttribute(FluentComponent component, String key, Object value) {
     checkNotNull(component);
     checkNotNull(key);
     checkNotNull(value);
@@ -90,7 +90,7 @@ public class PyPiDataUtils
     setFormatAttribute(component, (Map<String, Object>) component.attributes().get(PyPiFormat.NAME), key, value);
   }
 
-  static void setFormatAttribute(final FluentAttributes fluentAttributes,
+  public static void setFormatAttribute(final FluentAttributes fluentAttributes,
                                  @Nullable Map<String, Object> formatAttributes,
                                  final String key,
                                  final Object value)
@@ -102,7 +102,7 @@ public class PyPiDataUtils
     fluentAttributes.withAttribute(PyPiFormat.NAME, formatAttributes);
   }
 
-  static void setLastModified(final Content content) {
+  public static void setLastModified(final Content content) {
     if (!content.getAttributes().contains(CONTENT_LAST_MODIFIED)) {
       content.getAttributes().set(CONTENT_LAST_MODIFIED, DateTime.now());
     }

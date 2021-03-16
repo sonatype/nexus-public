@@ -63,4 +63,20 @@ public class ContentPypiPathUtils
   private static String buildIndexPath(final String name) {
     return INDEX_PATH_PREFIX + name + (name.endsWith("/") ? "" : "/");
   }
+
+  /**
+   * @param path for an asset
+   * @return {@code true} if the {@code path} represents an index
+   */
+  public static boolean isIndex(final String path) {
+    return path.startsWith(INDEX_PATH_PREFIX);
+  }
+
+  /**
+   * @param path for an asset
+   * @return {@code true} if the {@code path} represents the root index
+   */
+  public static boolean isRootIndexPath(final String path) {
+    return path.equals(INDEX_PATH_PREFIX);
+  }
 }

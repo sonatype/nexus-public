@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.pypi.internal
 
+import org.sonatype.nexus.repository.pypi.PyPiPathUtils
+
 import spock.lang.Specification
 import spock.lang.Unroll
 

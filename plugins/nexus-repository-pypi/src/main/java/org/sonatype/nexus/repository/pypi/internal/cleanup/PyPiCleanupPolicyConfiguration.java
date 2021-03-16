@@ -18,7 +18,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.cleanup.config.CleanupPolicyConfiguration;
-import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
+import org.sonatype.nexus.repository.pypi.PyPiFormat;
 
 import com.google.common.collect.ImmutableMap;
 

@@ -36,8 +36,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_NAME;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.normalizeName;
+import static org.sonatype.nexus.repository.pypi.PyPiAttributes.P_NAME;
+import static org.sonatype.nexus.repository.pypi.PyPiPathUtils.normalizeName;
 import static org.sonatype.nexus.repository.view.Content.CONTENT_ETAG;
 
 /**

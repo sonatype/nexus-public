@@ -24,9 +24,9 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.pypi.internal.PyPiAttributes;
+import org.sonatype.nexus.repository.pypi.PyPiAttributes;
 import org.sonatype.nexus.repository.pypi.internal.PyPiFileUtils;
-import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
+import org.sonatype.nexus.repository.pypi.PyPiFormat;
 import org.sonatype.nexus.repository.pypi.orient.internal.OrientPyPiHostedFacet;
 import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
@@ -49,7 +49,7 @@ import com.google.common.collect.ImmutableMap;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.sonatype.nexus.common.text.Strings2.isBlank;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_ARCHIVE_TYPE;
+import static org.sonatype.nexus.repository.pypi.PyPiAttributes.P_ARCHIVE_TYPE;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiStorageUtils.HASH_ALGORITHMS;
 import static org.sonatype.nexus.repository.view.ContentTypes.TEXT_PLAIN;
 

@@ -20,11 +20,11 @@ import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.maintenance.ContentMaintenanceFacet;
 import org.sonatype.nexus.repository.content.maintenance.LastAssetMaintenanceFacet;
-import org.sonatype.nexus.repository.pypi.internal.AssetKind;
-import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
+import org.sonatype.nexus.repository.pypi.AssetKind;
+import org.sonatype.nexus.repository.pypi.PyPiFormat;
 import org.sonatype.nexus.repository.pypi.internal.PyPiIndexFacet;
 
-import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_NAME;
+import static org.sonatype.nexus.repository.pypi.PyPiAttributes.P_NAME;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 
 /**

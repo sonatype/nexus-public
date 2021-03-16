@@ -10,26 +10,27 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.pypi.internal;
+package org.sonatype.nexus.blobstore.restore.pypi.internal.orient;
 
-import javax.inject.Named;
+import javax.annotation.Nonnull;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.repository.Format;
+import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
+import org.sonatype.nexus.repository.pypi.PyPiRestoreUtil;
+
+import static com.google.common.base.Preconditions.checkState;
+import static org.eclipse.aether.util.StringUtils.isEmpty;
 
 /**
- * PyPI repository format.
- *
- * @since 3.1
+ * @since 3.16
  */
-@Named(PyPiFormat.NAME)
 @Singleton
-public class PyPiFormat
-    extends Format
+public class PyPiRestoreBlobDataFactory
 {
-  public static final String NAME = "pypi";
+  public PyPiRestoreBlobData create(@Nonnull final RestoreBlobData data) {
+    checkState(!isEmpty(data.getBlobName()), "Blob name cannot be empty");
 
-  public PyPiFormat() {
-    super(NAME);
+    String version = PyPiRestoreUtil.extractVersionFromPath(data.getBlobName());
+    return new PyPiRestoreBlobData(data, version);
   }
 }

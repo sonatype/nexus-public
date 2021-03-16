@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.browse.node.BrowsePathBuilder;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.browse.DefaultBrowseNodeGenerator;
-import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
+import org.sonatype.nexus.repository.pypi.PyPiFormat;
 
 import com.google.common.base.Splitter;
 

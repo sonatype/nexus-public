@@ -34,6 +34,8 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import org.sonatype.nexus.common.io.SafeXml;
+import org.sonatype.nexus.repository.pypi.PyPiAttributes;
+import org.sonatype.nexus.repository.pypi.PyPiFormat;
 import org.sonatype.nexus.repository.search.query.SearchQueryService;
 import org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter;
 
@@ -51,8 +53,8 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_NAME;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_SUMMARY;
+import static org.sonatype.nexus.repository.pypi.PyPiAttributes.P_NAME;
+import static org.sonatype.nexus.repository.pypi.PyPiAttributes.P_SUMMARY;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REPOSITORY_NAME;
 import static org.sonatype.nexus.repository.search.query.RepositoryQueryBuilder.unrestricted;
 

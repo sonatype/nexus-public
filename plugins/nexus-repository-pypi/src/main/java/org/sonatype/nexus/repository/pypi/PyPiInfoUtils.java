@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.pypi.internal;
+package org.sonatype.nexus.repository.pypi;
 
 import java.io.BufferedInputStream;
 import java.io.InputStream;
@@ -40,8 +40,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_ARCHIVE_TYPE;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_CLASSIFIERS;
+import static org.sonatype.nexus.repository.pypi.PyPiAttributes.P_ARCHIVE_TYPE;
+import static org.sonatype.nexus.repository.pypi.PyPiAttributes.P_CLASSIFIERS;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiConstants.DIST_INFO_SUFFIX;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiConstants.EGG_INFO_FILENAME;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiConstants.EGG_INFO_SUFFIX;

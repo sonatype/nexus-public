@@ -22,9 +22,9 @@ import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.http.HttpHandlers
-import org.sonatype.nexus.repository.pypi.internal.AssetKind
+import org.sonatype.nexus.repository.pypi.AssetKind
 
-import org.sonatype.nexus.repository.pypi.internal.PyPiFormat
+import org.sonatype.nexus.repository.pypi.PyPiFormat
 import org.sonatype.nexus.repository.pypi.internal.PyPiIndexFacet
 import org.sonatype.nexus.repository.types.HostedType
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet

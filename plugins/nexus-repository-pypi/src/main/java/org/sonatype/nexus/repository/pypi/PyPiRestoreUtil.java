@@ -12,8 +12,8 @@
  */
 package org.sonatype.nexus.repository.pypi;
 
+import org.sonatype.nexus.repository.pypi.datastore.internal.ContentPypiPathUtils;
 import org.sonatype.nexus.repository.pypi.internal.PyPiFileUtils;
-import org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -36,7 +36,12 @@ public class PyPiRestoreUtil
 
   public static boolean isIndex(final String path) {
     checkNotNull(path);
-    return PyPiPathUtils.isIndexPath(path) || PyPiPathUtils.isRootIndexPath(path);
+    return PyPiPathUtils.isIndexPath(path) || PyPiPathUtils.isRootIndexPath(path) || ContentPypiPathUtils.isIndex(path);
+  }
+
+  public static boolean isRootIndex(final String path) {
+    checkNotNull(path);
+    return PyPiPathUtils.isRootIndexPath(path) || ContentPypiPathUtils.isRootIndexPath(path);
   }
 
   private PyPiRestoreUtil() {

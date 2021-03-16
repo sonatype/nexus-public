@@ -20,16 +20,16 @@ import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.pypi.internal.AssetKind;
-import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
+import org.sonatype.nexus.repository.pypi.AssetKind;
+import org.sonatype.nexus.repository.pypi.PyPiFormat;
 import org.sonatype.nexus.repository.repair.RepairMetadataComponent;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.types.HostedType;
 
-import static org.sonatype.nexus.repository.pypi.internal.AssetKind.INDEX;
-import static org.sonatype.nexus.repository.pypi.internal.AssetKind.ROOT_INDEX;
+import static org.sonatype.nexus.repository.pypi.AssetKind.INDEX;
+import static org.sonatype.nexus.repository.pypi.AssetKind.ROOT_INDEX;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 
 /**

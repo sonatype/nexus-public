@@ -18,11 +18,12 @@ import java.util.stream.Stream;
 
 import javax.inject.Named;
 
+import org.sonatype.nexus.repository.pypi.PyPiFormat;
 import org.sonatype.nexus.repository.rest.api.AssetXODescriptor;
 
-import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_NAME;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_VERSION;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_PLATFORM;
+import static org.sonatype.nexus.repository.pypi.PyPiAttributes.P_NAME;
+import static org.sonatype.nexus.repository.pypi.PyPiAttributes.P_PLATFORM;
+import static org.sonatype.nexus.repository.pypi.PyPiAttributes.P_VERSION;
 
 /**
  * @since 3.29

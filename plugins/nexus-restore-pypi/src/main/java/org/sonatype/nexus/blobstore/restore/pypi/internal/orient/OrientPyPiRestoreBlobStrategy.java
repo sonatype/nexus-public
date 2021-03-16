@@ -23,8 +23,6 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.restore.orient.OrientBaseRestoreBlobStrategy;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
-import org.sonatype.nexus.blobstore.restore.pypi.internal.PyPiRestoreBlobData;
-import org.sonatype.nexus.blobstore.restore.pypi.internal.PyPiRestoreBlobDataFactory;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;

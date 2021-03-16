@@ -21,7 +21,7 @@ import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.attributes.AttributesFacet
 import org.sonatype.nexus.repository.http.PartialFetchHandler
 import org.sonatype.nexus.repository.pypi.orient.PyPiFacet
-import org.sonatype.nexus.repository.pypi.internal.AssetKind
+import org.sonatype.nexus.repository.pypi.AssetKind
 import org.sonatype.nexus.repository.pypi.internal.PyPiSecurityFacet
 import org.sonatype.nexus.repository.routing.RoutingRuleHandler
 import org.sonatype.nexus.repository.search.SearchFacet

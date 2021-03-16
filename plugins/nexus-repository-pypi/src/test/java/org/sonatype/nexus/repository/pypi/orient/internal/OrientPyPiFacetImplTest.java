@@ -18,7 +18,7 @@ import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.pypi.internal.AssetKind;
+import org.sonatype.nexus.repository.pypi.AssetKind;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
@@ -42,8 +42,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_SUMMARY;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.INDEX_PATH_PREFIX;
+import static org.sonatype.nexus.repository.pypi.PyPiAttributes.P_SUMMARY;
+import static org.sonatype.nexus.repository.pypi.PyPiPathUtils.INDEX_PATH_PREFIX;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 
 public class OrientPyPiFacetImplTest

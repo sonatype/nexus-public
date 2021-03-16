@@ -18,7 +18,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.export.ExportAssetFilter;
 import org.sonatype.nexus.repository.pypi.internal.PyPiExportAssetFilterSupport;
-import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
+import org.sonatype.nexus.repository.pypi.PyPiFormat;
 
 /**
  * Filter to exclude indexes from export, as they need to be regenerated on import

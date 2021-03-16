@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.pypi.internal.PyPiIndexFacet;
 
 import static org.sonatype.nexus.repository.pypi.datastore.internal.ContentPypiPathUtils.indexPath;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.normalizeName;
+import static org.sonatype.nexus.repository.pypi.PyPiPathUtils.normalizeName;
 
 /**
  * {@link PyPiIndexFacet} implementation.

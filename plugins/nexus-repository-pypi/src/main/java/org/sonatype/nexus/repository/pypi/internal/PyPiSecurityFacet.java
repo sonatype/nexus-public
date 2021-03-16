@@ -21,7 +21,7 @@ import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.security.BreadActions;
 
-import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.isSearchRequest;
+import static org.sonatype.nexus.repository.pypi.PyPiPathUtils.isSearchRequest;
 
 /**
  * PyPI format security facet.

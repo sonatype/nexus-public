@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.pypi.internal;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.repository.pypi.AssetKind;
 
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
 

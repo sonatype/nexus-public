@@ -16,6 +16,7 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.browse.node.BrowseNodeIdentity;
+import org.sonatype.nexus.repository.pypi.PyPiFormat;
 
 /**
  * PyPi custom {@link BrowseNodeIdentity}

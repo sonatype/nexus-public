@@ -26,9 +26,9 @@ import org.sonatype.nexus.repository.cache.NegativeCacheHandler
 import org.sonatype.nexus.repository.http.HttpHandlers
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet
 import org.sonatype.nexus.repository.purge.PurgeUnusedFacet
-import org.sonatype.nexus.repository.pypi.internal.AssetKind
+import org.sonatype.nexus.repository.pypi.AssetKind
 
-import org.sonatype.nexus.repository.pypi.internal.PyPiFormat
+import org.sonatype.nexus.repository.pypi.PyPiFormat
 import org.sonatype.nexus.repository.pypi.internal.PyPiIndexFacet
 import org.sonatype.nexus.repository.pypi.internal.PyPiProxyHandler
 import org.sonatype.nexus.repository.types.ProxyType
