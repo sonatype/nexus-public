@@ -236,7 +236,7 @@ class BlobStoreComponentTest
       0 * blobStore.getMetrics()
   }
 
-  def 'updating a blobstore with the password placeholder does not alter the secret access key'() {
+  def 'updating an s3 blobstore with the password placeholder does not alter the secret access key'() {
     given: 'A blobstore update request'
       def originalSecret = 'hello'
       BlobStoreXO blobStoreXO = new BlobStoreXO(name: 'myblobs', type: 'S3',
@@ -258,6 +258,30 @@ class BlobStoreComponentTest
         blobStore
       }
       updatedXO.attributes.s3.secretAccessKey == PasswordPlaceholder.get()
+  }
+
+  def 'updating an azure blobstore with the password placeholder does not alter the account key'() {
+    given: 'A blobstore update request'
+      def originalSecret = 'hello'
+      BlobStoreXO blobStoreXO = new BlobStoreXO(name: 'myblobs', type: 'Azure Cloud Storage',
+          attributes: ['azure cloud storage': [accountKey: 'test', accountKey: PasswordPlaceholder.get()]])
+      BlobStoreConfiguration existingConfig = new MockBlobStoreConfiguration(name: 'myblobs', type: 'Azure Cloud Storage',
+          attributes: ['azure cloud storage': [accountKey: 'test', accountKey: originalSecret]])
+      BlobStore blobStore = Mock()
+      1 * blobStoreManager.get('myblobs') >> blobStore
+      1 * blobStoreManager.newConfiguration() >> new MockBlobStoreConfiguration();
+
+    when: 'The blobstore is updated'
+      def updatedXO = blobStoreComponent.update(blobStoreXO)
+
+    then: 'The blobstore is updated with the original secret access key'
+      _ * blobStore.getBlobStoreConfiguration() >> existingConfig
+      _ * blobStore.getMetrics() >> Mock(BlobStoreMetrics)
+      1 * blobStoreManager.update(_) >> { args ->
+        assert args[0].attributes.'azure cloud storage'.accountKey == originalSecret
+        blobStore
+      }
+      updatedXO.attributes.'azure cloud storage'.accountKey == PasswordPlaceholder.get()
   }
 
   def 'Remove blobstore does not remove blobstores part of a move repository task'() {

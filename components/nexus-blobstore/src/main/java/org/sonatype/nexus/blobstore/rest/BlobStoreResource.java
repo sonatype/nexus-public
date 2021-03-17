@@ -118,7 +118,7 @@ public class BlobStoreResource
   public void verifyConnection(final @NotNull @Valid BlobStoreConnectionXO blobStoreConnectionXO) {
     try {
       ConnectionChecker conChecker = checkNotNull(connectionCheckers.get(blobStoreConnectionXO.getType()));
-      conChecker.verifyConnection(blobStoreConnectionXO.getAttributes());
+      conChecker.verifyConnection(blobStoreConnectionXO.getName(), blobStoreConnectionXO.getAttributes());
     }
     catch (Exception e) {
       log.warn("Can't connect to {} blob store", blobStoreConnectionXO.getType(), e);
