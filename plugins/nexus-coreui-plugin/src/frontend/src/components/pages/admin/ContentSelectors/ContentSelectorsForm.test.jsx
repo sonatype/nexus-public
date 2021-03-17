@@ -12,6 +12,7 @@
  */
 import React from 'react';
 import {fireEvent, wait, waitForElement, waitForElementToBeRemoved} from '@testing-library/react';
+import {when} from 'jest-when';
 import '@testing-library/jest-dom/extend-expect';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import axios from 'axios';
@@ -48,6 +49,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     },
     isInvalid: jest.requireActual('@sonatype/nexus-ui-plugin').Utils.isInvalid,
     isBlank: jest.requireActual('@sonatype/nexus-ui-plugin').Utils.isBlank,
+    isName: jest.requireActual('@sonatype/nexus-ui-plugin').Utils.isName,
     notBlank: jest.requireActual('@sonatype/nexus-ui-plugin').Utils.notBlank,
     fieldProps: jest.requireActual('@sonatype/nexus-ui-plugin').Utils.fieldProps,
     saveTooltip: jest.requireActual('@sonatype/nexus-ui-plugin').Utils.saveTooltip
@@ -63,7 +65,7 @@ describe('ContentSelectorsForm', function() {
   }
 
   function renderCreateView() {
-    return renderView(<ContentSelectorsForm onDone={onDone} />);
+    return renderView(<ContentSelectorsForm onDone={onDone}/>);
   }
 
   function renderView(view) {
@@ -157,6 +159,37 @@ describe('ContentSelectorsForm', function() {
     fireEvent.click(cancelButton());
 
     await wait(() => expect(onDone).toBeCalled());
+  });
+
+  it('shows errors from the backend on the correct field', async function() {
+    when(axios.post).calledWith('/service/rest/v1/security/content-selectors', expect.anything()).mockRejectedValue({
+      response: {
+        data: [
+          {
+            "id": "PARAMETER name",
+            "message": "An error occurred with the name field"
+          },
+          {
+            "id": "HelperBean.expression",
+            "message": "Invalid CSEL: tokenization error in '\"maven2' at line 1 column 18"
+          }
+        ]
+      }
+    });
+
+    const {expression, getByText, getByRole, loadingMask, name, saveButton, savingMask} = renderCreateView();
+
+    await waitForElementToBeRemoved(loadingMask);
+
+    await TestUtils.changeField(name, 'test');
+    await TestUtils.changeField(expression, 'format == "maven2');
+
+    fireEvent.click(saveButton());
+
+    await waitForElementToBeRemoved(savingMask);
+
+    expect(getByText('An error occurred with the name field')).toBeInTheDocument();
+    expect(getByText('Invalid CSEL: tokenization error in \'"maven2\' at line 1 column 18')).toBeInTheDocument();
   });
 
   it('requests confirmation when delete is requested', async function() {
