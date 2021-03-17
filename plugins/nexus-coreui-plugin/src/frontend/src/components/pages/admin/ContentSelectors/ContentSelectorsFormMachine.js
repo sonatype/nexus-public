@@ -28,6 +28,15 @@ function isEdit({name}) {
   return Utils.notBlank(name);
 }
 
+function validateName(name) {
+  if (Utils.isBlank(name)) {
+    return UIStrings.ERROR.FIELD_REQUIRED;
+  }
+  else if (!Utils.isName(name)) {
+    return UIStrings.ERROR.INVALID_NAME_CHARS;
+  }
+}
+
 export default Utils.buildFormMachine({
   id: 'ContentSelectorsFormMachine',
   config: (config) => ({
@@ -69,7 +78,7 @@ export default Utils.buildFormMachine({
   actions: {
     validate: assign({
       validationErrors: ({data}) => ({
-        name: Utils.isBlank(data.name) ? UIStrings.ERROR.FIELD_REQUIRED : null,
+        name: validateName(data.name),
         expression: Utils.isBlank(data.expression) ? UIStrings.ERROR.FIELD_REQUIRED : null
       })
     }),
@@ -81,16 +90,33 @@ export default Utils.buildFormMachine({
       saveErrors: ({data}, event) => {
         const error = event.data?.response?.data;
 
-        if (typeof error === 'string' && error.indexOf('ORecordDuplicatedException')) {
-          return {
-            name: UIStrings.CONTENT_SELECTORS.MESSAGES.DUPLICATE_ERROR(data.name)
-          };
+        if (typeof error === 'string') {
+          if (error.includes('ORecordDuplicatedException')) {
+            return {
+              name: UIStrings.CONTENT_SELECTORS.MESSAGES.DUPLICATE_ERROR(data.name)
+            };
+          }
+          else if (error.includes('OTooBigIndexKeyException')) {
+            return {
+              name: UIStrings.CONTENT_SELECTORS.MESSAGES.NAME_TOO_LONG
+            }
+          }
         }
 
         if (error instanceof Array) {
-          return {
-            expression: error[0].message
-          };
+          let errors = {};
+          error.forEach(e => {
+            if (e.id.includes('PARAMETER ')) {
+              errors[e.id.replace(/PARAMETER /, '')] = e.message;
+            }
+            else if (e.id === 'HelperBean.expression') {
+              errors.expression = e.message;
+            }
+            else {
+              console.error('Unhandled backend error', e);
+            }
+          });
+          return errors;
         }
 
         return {};
