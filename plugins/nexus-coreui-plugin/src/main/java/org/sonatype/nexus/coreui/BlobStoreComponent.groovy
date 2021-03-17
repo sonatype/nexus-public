@@ -209,6 +209,12 @@ class BlobStoreComponent
       blobStoreXO.attributes.s3.secretAccessKey =
           blobStore.blobStoreConfiguration.attributes?.s3?.secretAccessKey
     }
+    if (blobStoreXO != null && blobStoreXO.attributes != null && blobStoreXO.attributes["azure cloud storage"] != null &&
+        PasswordPlaceholder.is(blobStoreXO.attributes["azure cloud storage"].accountKey)) {
+      //Did not update the password, just use the password we already have
+      blobStoreXO.attributes["azure cloud storage"].accountKey =
+          blobStore.blobStoreConfiguration.attributes["azure cloud storage"].accountKey
+    }
     return asBlobStoreXO(blobStoreManager.update(asConfiguration(blobStoreXO)))
   }
 
@@ -328,6 +334,9 @@ class BlobStoreComponent
   Map<String, Map<String, Object>> filterAttributes(Map<String, Map<String, Object>> attributes) {
     if (attributes?.s3?.secretAccessKey != null) {
       return [*:attributes, s3: [*:attributes.s3, secretAccessKey: PasswordPlaceholder.get()]]
+    }
+    else if (attributes != null && attributes.get("azure cloud storage") != null) {
+      return [*:attributes, 'azure cloud storage': [*:attributes.'azure cloud storage', accountKey: PasswordPlaceholder.get()]]
     }
     else {
       return attributes

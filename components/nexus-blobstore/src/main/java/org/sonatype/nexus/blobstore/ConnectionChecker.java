@@ -19,5 +19,5 @@ import java.util.Map;
  */
 public interface ConnectionChecker
 {
-  boolean verifyConnection(Map<String, Map<String, Object>> blobStoreAttributes);
+  boolean verifyConnection(final String blobStoreName, final Map<String, Map<String, Object>> blobStoreAttributes);
 }

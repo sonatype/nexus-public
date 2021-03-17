@@ -14,6 +14,8 @@ package org.sonatype.nexus.blobstore.rest
 
 class BlobStoreConnectionXO
 {
+  String name
+
   String type
 
   Map<String, Map<String, Object>> attributes

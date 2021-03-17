@@ -98,14 +98,15 @@ public class BlobStoreResourceTest
 
   @Test
   public void verifyConnectionTest() {
-    when(connectionChecker.verifyConnection(any(Map.class))).thenReturn(true);
+    when(connectionChecker.verifyConnection(any(String.class), any(Map.class))).thenReturn(true);
     resource.verifyConnection(getBlobStoreConnectionXO());
   }
 
   @Test(expected = WebApplicationException.class)
   public void verifyConnectionTestFail() {
-    when(connectionChecker.verifyConnection(any(Map.class))).thenThrow(new RuntimeException("Fake unsuccessful connection Exception"));
-      resource.verifyConnection(getBlobStoreConnectionXO());
+    when(connectionChecker.verifyConnection(any(String.class), any(Map.class)))
+        .thenThrow(new RuntimeException("Fake unsuccessful connection Exception"));
+    resource.verifyConnection(getBlobStoreConnectionXO());
   }
 
   private BlobStoreConnectionXO getBlobStoreConnectionXO() {
@@ -116,6 +117,7 @@ public class BlobStoreResourceTest
     Map<String, Map<String, Object>> attributes = new HashMap<>();
     attributes.put("azure cloud storage", connectionDetails);
     BlobStoreConnectionXO blobStoreConnectionXO = new BlobStoreConnectionXO();
+    blobStoreConnectionXO.setName("blobstoreName");
     blobStoreConnectionXO.setType("azure cloud storage");
     blobStoreConnectionXO.setAttributes(attributes);
     return blobStoreConnectionXO;
