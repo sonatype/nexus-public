@@ -12,14 +12,39 @@
  */
 import React from "react";
 import Textfield from "../Textfield/Textfield";
+import MultiSelect from '../MultiSelect/MultiSelect';
+import Select from '../Select/Select';
+import Utils from "../../../interface/Utils";
 
-export default function DynamicFormField({dynamicProps, ...fieldProps}) {
-  if (dynamicProps.type == 'string') {
+export default function DynamicFormField({current, dynamicProps, id, initialValue, onChange}) {
+  if (dynamicProps.type === 'string') {
+    const fieldProps = Utils.fieldProps(id, current, initialValue || '');
     const className = dynamicProps.attributes.long ? 'nx-text-input--long' : '';
+
     return <Textfield {...fieldProps}
                       className={className}
                       disabled={dynamicProps.disabled}
-                      readOnly={dynamicProps.readOnly}/>
+                      readOnly={dynamicProps.readOnly}
+                      onChange={(event) => onChange(fieldProps.name, event.currentTarget.value)}
+    />
+  }
+  else if (dynamicProps.type === 'itemselect') {
+    const fieldProps = Utils.fieldProps(id, current, initialValue || [], (value) => value)
+    return <MultiSelect
+        {...fieldProps}
+        filterValue={dynamicProps.filterValue}
+        toLabel={dynamicProps.attributes.toTitle}
+        fromLabel={dynamicProps.attributes.fromTitle}
+        fromOptions={dynamicProps.attributes.options}
+        onChange={(value) => onChange(fieldProps.name, value)}
+    />;
+  }
+  else if (dynamicProps.type === 'combobox') {
+    const fieldProps = Utils.fieldProps(id, current, initialValue || '');
+    return <Select {...fieldProps} onChange={(event) => onChange(fieldProps.name, event.currentTarget.value)}>
+      <option />
+      {dynamicProps.attributes.options?.map(value => <option key={value} value={value}>{value}</option>)}
+    </Select>;
   }
   else {
     console.warn(`form field type=${dynamicProps.type} is unknown`);

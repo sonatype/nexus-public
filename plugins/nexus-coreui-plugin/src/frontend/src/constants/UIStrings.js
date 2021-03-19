@@ -155,6 +155,7 @@ For more information, <a href="http://links.sonatype.com/products/nxrm3/docs/con
 
     MESSAGES: {
       DUPLICATE_ERROR: (name) => `Another content selector named ${name} already exists`,
+      NAME_TOO_LONG: 'The name of this content selector is too long, please use a shorter name',
       SAVE_ERROR: 'An error occurred while saving the content selector',
       DELETE_ERROR: (name) => `Content selector ${name} is in use and cannot be deleted`,
 

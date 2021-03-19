@@ -43,7 +43,7 @@ class BlobStoreGroupDescriptorTest
   BlobStoreQuotaService quotaService = Mock()
 
   BlobStoreGroupDescriptor blobStoreGroupDescriptor =
-      new BlobStoreGroupDescriptor(blobStoreManager, blobStoreUtil, { blobStoreGroupService }, quotaService)
+      new BlobStoreGroupDescriptor(blobStoreManager, blobStoreUtil, { blobStoreGroupService }, quotaService, [])
 
   def blobStores = [:]
 

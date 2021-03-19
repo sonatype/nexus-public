@@ -13,7 +13,8 @@
 import React from 'react';
 import axios from 'axios';
 import {when} from 'jest-when';
-import {fireEvent, wait, waitForElementToBeRemoved} from '@testing-library/react'
+import {fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react'
+import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/extend-expect';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
@@ -47,6 +48,34 @@ const blobstoreTypes = {
         "allowAutocomplete": false
       }
     ]
+  }, {
+    "id": "Group",
+    "name": "Group",
+    "fields": [
+      {
+        "id": "members",
+        "required": true,
+        "label": "Members",
+        "initialValue": null,
+        "attributes": {
+          "toTitle": "Selected",
+          "fromTitle": "Available",
+          "buttons": ["up", "add", "remove", "down"],
+          "options": ["default", "test", "test-promoted"]
+        },
+        "type": "itemselect",
+        "allowAutocomplete": false
+      }, {
+        "id": "fillPolicy",
+        "required": true,
+        "label": "Fill Policy",
+        "initialValue": null,
+        "attributes": {
+          "options": ["Round Robin", "Write to First"]
+        },
+        "type": "combobox"
+      }
+    ]
   }]
 };
 
@@ -67,16 +96,19 @@ describe('BlobStoresForm', function() {
 
   function render(itemId) {
     return TestUtils.render(<BlobStoresForm itemId={itemId || ''} onDone={onDone}/>,
-        ({getByRole, getByLabelText, queryByLabelText, getByText}) => ({
+        ({getByRole, getByLabelText, queryByLabelText, getByText, queryByText}) => ({
           title: () => getByRole('heading', {level: 1}),
           typeSelect: () => queryByLabelText('Type'),
           name: () => queryByLabelText('Name'),
           path: () => getByLabelText('Path'),
+          availableMembers: () => queryByLabelText('Available'),
+          selectedMembers: () => queryByLabelText('Selected'),
           softQuota: () => getByLabelText('Soft Quota'),
           softQuotaType: () => queryByLabelText('Constraint Type'),
           softQuotaLimit: () => queryByLabelText('Constraint Limit (in MB)'),
           saveButton: () => getByText('Save'),
-          cancelButton: () => getByText('Cancel')
+          cancelButton: () => getByText('Cancel'),
+          promoteToGroup: () => queryByText('Promote to Group')
         }));
   }
 
@@ -96,10 +128,11 @@ describe('BlobStoresForm', function() {
 
     await waitForElementToBeRemoved(loadingMask);
 
-    expect(typeSelect().options.length).toBe(2);
+    expect(typeSelect().options.length).toBe(3);
     expect(Array.from(typeSelect().options).map(option => option.textContent)).toEqual(expect.arrayContaining([
         '',
-        'File'
+        'File',
+        'Group'
     ]));
     expect(typeSelect()).toHaveValue('');
   });
@@ -112,7 +145,8 @@ describe('BlobStoresForm', function() {
 
     await waitForElementToBeRemoved(loadingMask);
 
-    await TestUtils.changeField(typeSelect, 'File');
+    userEvent.selectOptions(typeSelect(), 'File');
+    expect(typeSelect()).toHaveValue('File');
 
     expect(container).toMatchSnapshot();
   });
@@ -125,7 +159,8 @@ describe('BlobStoresForm', function() {
 
     await waitForElementToBeRemoved(loadingMask);
 
-    await TestUtils.changeField(typeSelect, 'File');
+    userEvent.selectOptions(typeSelect(), 'File');
+    expect(typeSelect()).toHaveValue('File');
 
     expect(name()).toBeInTheDocument();
 
@@ -141,7 +176,8 @@ describe('BlobStoresForm', function() {
 
     await waitForElementToBeRemoved(loadingMask);
 
-    await TestUtils.changeField(typeSelect, 'File');
+    userEvent.selectOptions(typeSelect(), 'File');
+    expect(typeSelect()).toHaveValue('File');
 
     expect(softQuota()).toBeInTheDocument();
     expect(softQuotaType()).not.toBeInTheDocument();
@@ -157,15 +193,17 @@ describe('BlobStoresForm', function() {
     when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
     when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
 
-    const {container, loadingMask, typeSelect, name, softQuota, softQuotaType, softQuotaLimit, saveButton} = render();
+    const {loadingMask, typeSelect, name, softQuota, softQuotaType, softQuotaLimit, saveButton} = render();
 
     await waitForElementToBeRemoved(loadingMask);
 
-    await TestUtils.changeField(typeSelect, 'File');
+    userEvent.selectOptions(typeSelect(), 'File');
+    expect(typeSelect()).toHaveValue('File');
 
     expect(saveButton()).toHaveClass('disabled');
 
-    await TestUtils.changeField(name, 'test');
+    userEvent.type(name(), 'test');
+    expect(name()).toHaveValue('test');
 
     expect(saveButton()).not.toHaveClass('disabled');
 
@@ -173,12 +211,15 @@ describe('BlobStoresForm', function() {
 
     expect(saveButton()).toHaveClass('disabled');
 
-    await TestUtils.changeField(softQuotaType, 'spaceRemainingQuota');
-    await TestUtils.changeField(softQuotaLimit, '100');
+    userEvent.selectOptions(softQuotaType(), 'spaceRemainingQuota');
+    expect(softQuotaType()).toHaveValue('spaceRemainingQuota');
+    userEvent.type(softQuotaLimit(), '100');
+    expect(softQuotaLimit()).toHaveValue('100');
 
     expect(saveButton()).not.toHaveClass('disabled');
 
-    await TestUtils.changeField(softQuotaLimit, '');
+    userEvent.clear(softQuotaLimit());
+    expect(softQuotaLimit()).toHaveValue('');
 
     expect(saveButton()).toHaveClass('disabled');
 
@@ -195,14 +236,20 @@ describe('BlobStoresForm', function() {
 
     await waitForElementToBeRemoved(loadingMask);
 
-    await TestUtils.changeField(typeSelect, 'File');
-    await TestUtils.changeField(name, 'test');
-    await TestUtils.changeField(path, 'testPath');
-    fireEvent.click(softQuota());
-    await TestUtils.changeField(softQuotaType, 'spaceRemainingQuota');
-    await TestUtils.changeField(softQuotaLimit, '100');
-
-    fireEvent.click(saveButton());
+    userEvent.selectOptions(typeSelect(), 'File');
+    expect(typeSelect()).toHaveValue('File');
+    userEvent.type(name(), 'test');
+    expect(name()).toHaveValue('test');
+    expect(path()).toHaveValue('/<data-directory>/blobs/test');
+    userEvent.clear(path());
+    userEvent.type(path(), 'testPath');
+    expect(path()).toHaveValue('testPath');
+    userEvent.click(softQuota());
+    userEvent.selectOptions(softQuotaType(), 'spaceRemainingQuota');
+    expect(softQuotaType()).toHaveValue('spaceRemainingQuota');
+    userEvent.type(softQuotaLimit(), '100');
+    expect(softQuotaLimit()).toHaveValue('100');
+    userEvent.click(saveButton());
 
     expect(axios.post).toHaveBeenCalledWith(
         '/service/rest/v1/blobstores/file',
@@ -223,7 +270,6 @@ describe('BlobStoresForm', function() {
     when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
     when(axios.get).calledWith('/service/rest/v1/blobstores/file/test').mockResolvedValue({
       data: {
-        name: 'test',
         path: 'testPath',
         softQuota: {
           type: 'spaceRemainingQuota',
@@ -232,7 +278,40 @@ describe('BlobStoresForm', function() {
       }
     });
 
-    const {loadingMask, title, getByText, typeSelect, name, path, softQuota, softQuotaType, softQuotaLimit} = render('file/test');
+    const {
+      loadingMask,
+      promoteToGroup
+    } = render('file/test');
+
+    await waitForElementToBeRemoved(loadingMask);
+
+    expect(promoteToGroup()).toBeInTheDocument();
+  });
+
+  it('edits a file blob store', async function() {
+    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+    when(axios.get).calledWith('/service/rest/v1/blobstores/file/test').mockResolvedValue({
+      data: {
+        path: 'testPath',
+        softQuota: {
+          type: 'spaceRemainingQuota',
+          limit: '100'
+        }
+      }
+    });
+
+    const {
+      getByText,
+      loadingMask,
+      name,
+      path,
+      title,
+      softQuota,
+      softQuotaType,
+      softQuotaLimit,
+      typeSelect
+    } = render('file/test');
 
     await waitForElementToBeRemoved(loadingMask);
 
@@ -247,5 +326,59 @@ describe('BlobStoresForm', function() {
     expect(softQuota()).toBeChecked();
     expect(softQuotaType()).toHaveValue('spaceRemainingQuota');
     expect(softQuotaLimit()).toHaveValue('100');
+  });
+
+  it('edits a group blob store', async function() {
+    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+    when(axios.get).calledWith('/service/rest/v1/blobstores/group/test').mockResolvedValue({
+      data: {
+        "softQuota" : null,
+        "members" : [ "test-promoted" ],
+        "fillPolicy" : "writeToFirst"
+      }
+    });
+
+    const {
+      availableMembers,
+      getByText,
+      loadingMask,
+      name,
+      selectedMembers,
+      title,
+      typeSelect
+    } = render('group/test');
+
+    await waitForElementToBeRemoved(loadingMask);
+
+    expect(title()).toHaveTextContent('Edit test');
+    expect(getByText('Group Blob Store')).toBeInTheDocument();
+
+    expect(typeSelect()).not.toBeInTheDocument();
+    expect(name()).not.toBeInTheDocument();
+
+    expect(availableMembers()).toContainElement(getByText('default'));
+    expect(selectedMembers()).toContainElement(getByText('test-promoted'));
+  });
+
+  it('promote to group is not shown when editing a group', async function() {
+    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+    when(axios.get).calledWith('/service/rest/v1/blobstores/group/test').mockResolvedValue({
+      data: {
+        "softQuota" : null,
+        "members" : [ "test-promoted" ],
+        "fillPolicy" : "writeToFirst"
+      }
+    });
+
+    const {
+      loadingMask,
+      promoteToGroup
+    } = render('group/test');
+
+    await waitForElementToBeRemoved(loadingMask);
+
+    expect(promoteToGroup()).not.toBeInTheDocument();
   });
 });

@@ -1,4 +1,10 @@
 {
   "private": true,
-  "workspaces": ["components/nexus-ui-plugin", "components/nexus-rapture", "plugins/nexus-coreui-plugin", "private/plugins/nexus-proui-plugin"]
+  "workspaces": [
+    "components/nexus-ui-plugin",
+    "components/nexus-rapture",
+    "plugins/nexus-coreui-plugin",
+    "private/plugins/nexus-proui-plugin"
+  ],
+  "dependencies": {}
 }

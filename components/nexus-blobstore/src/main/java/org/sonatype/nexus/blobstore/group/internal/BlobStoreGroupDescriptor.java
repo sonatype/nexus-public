@@ -13,8 +13,10 @@
 package org.sonatype.nexus.blobstore.group.internal;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -30,6 +32,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 import org.sonatype.nexus.blobstore.group.BlobStoreGroupService;
+import org.sonatype.nexus.blobstore.group.FillPolicy;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.formfields.ComboboxFormField;
 import org.sonatype.nexus.formfields.FormField;
@@ -39,8 +42,10 @@ import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.apache.commons.lang.StringUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Streams.stream;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.blobstore.group.BlobStoreGroup.CONFIG_KEY;
 import static org.sonatype.nexus.blobstore.group.BlobStoreGroup.FILL_POLICY_KEY;
 import static org.sonatype.nexus.blobstore.group.BlobStoreGroup.MEMBERS_KEY;
@@ -85,7 +90,8 @@ public class BlobStoreGroupDescriptor
   public BlobStoreGroupDescriptor(final BlobStoreManager blobStoreManager,
                                   final BlobStoreUtil blobStoreUtil,
                                   final Provider<BlobStoreGroupService> blobStoreGroupService,
-                                  final BlobStoreQuotaService quotaService)
+                                  final BlobStoreQuotaService quotaService,
+                                  final List<FillPolicy> fillPolicies)
   {
     super(quotaService);
     this.blobStoreManager = checkNotNull(blobStoreManager);
@@ -108,6 +114,7 @@ public class BlobStoreGroupDescriptor
         null,
         FormField.MANDATORY
     ).withStoreApi("coreui_Blobstore.fillPolicies");
+    this.fillPolicy.getAttributes().put("options", fillPolicies.stream().map(FillPolicy::getName).collect(toList()));
   }
 
   @Override
@@ -117,6 +124,12 @@ public class BlobStoreGroupDescriptor
 
   @Override
   public List<FormField> getFormFields() {
+    List<String> blobStores = stream(blobStoreManager.browse())
+        .map(BlobStore::getBlobStoreConfiguration)
+        .map(BlobStoreConfiguration::getName)
+        .collect(toList());
+    this.members.getAttributes().put("options", blobStores);
+
     return asList(members, fillPolicy);
   }
 
@@ -196,7 +209,7 @@ public class BlobStoreGroupDescriptor
             if (existingMember.isWritable() || !existingMember.isEmpty()) {
               throw new ValidationErrorsException(
                   format("Blob Store '%s' cannot be removed from Blob Store Group '%s', " +
-                      "use 'Admin - Remove a member from a blob store group' task instead",
+                          "use 'Admin - Remove a member from a blob store group' task instead",
                       existingMemberName, name));
             }
           }

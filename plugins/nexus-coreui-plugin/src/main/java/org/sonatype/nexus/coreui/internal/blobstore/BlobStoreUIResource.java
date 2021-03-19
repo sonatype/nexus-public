@@ -51,7 +51,7 @@ public class BlobStoreUIResource
 
   private final BlobStoreManager blobStoreManager;
 
-  private final List<BlobStoreTypesUIResponse> blobStoreTypes;
+  private final Map<String, BlobStoreDescriptor> blobStoreDescriptors;
 
   private final List<BlobStoreQuotaTypesUIResponse> blobStoreQuotaTypes;
 
@@ -64,8 +64,7 @@ public class BlobStoreUIResource
                              final RepositoryManager repositoryManager)
   {
     this.blobStoreManager = checkNotNull(blobStoreManager);
-    this.blobStoreTypes = blobStoreDescriptors.entrySet().stream()
-        .map(BlobStoreTypesUIResponse::new).collect(toList());
+    this.blobStoreDescriptors = checkNotNull(blobStoreDescriptors);
     this.blobStoreQuotaTypes = quotaFactories.entrySet().stream()
         .map(BlobStoreQuotaTypesUIResponse::new).collect(toList());
     this.repositoryManager = checkNotNull(repositoryManager);
@@ -83,7 +82,7 @@ public class BlobStoreUIResource
   @GET
   @Path("/types")
   public List<BlobStoreTypesUIResponse> listBlobStoreTypes() {
-    return blobStoreTypes;
+    return blobStoreDescriptors.entrySet().stream().map(BlobStoreTypesUIResponse::new).collect(toList());
   }
 
   @RequiresAuthentication

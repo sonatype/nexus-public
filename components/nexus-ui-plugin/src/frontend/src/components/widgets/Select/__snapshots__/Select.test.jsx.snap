@@ -5,7 +5,9 @@ exports[`Select renders correctly 1`] = `
   <div
     class="nxrm-select"
   >
-    <select>
+    <select
+      class="nx-form-select"
+    >
       <option
         value="1"
       >

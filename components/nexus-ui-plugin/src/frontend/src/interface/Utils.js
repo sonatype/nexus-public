@@ -14,10 +14,11 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+import {useRef} from 'react';
 import {assign, Machine} from "xstate";
 import ExtJS from "./ExtJS";
 import UIStrings from "../constants/UIStrings";
-import {hasPath, join, path, pathOr, whereEq} from 'ramda';
+import {hasPath, join, map, path, pathOr, whereEq} from 'ramda';
 import fileSize from 'file-size';
 
 const FIELD_ID = 'FIELD ';
@@ -63,18 +64,22 @@ export default class Utils {
     return !Utils.isUri(str);
   }
 
-  static isInRange({value, min = -Infinity, max = Infinity}) {
+  static isInRange({value, min = -Infinity, max = Infinity, allowDecimals = true}) {
     if (value === null || value === undefined) {
       return null;
     }
 
-    if (typeof (value) === 'string' && this.isBlank(value)) {
+    if (typeof value === 'string' && this.isBlank(value)) {
         return null;
     }
 
     const number = Number(value);
     if (isNaN(number)) {
       return UIStrings.ERROR.NAN
+    }
+
+    if (!allowDecimals && typeof value === 'string' && !/^-?[0-9]*$/.test(value)) {
+      return UIStrings.ERROR.DECIMAL;
     }
 
     if (min > number) {
@@ -86,6 +91,13 @@ export default class Utils {
     else {
       return null;
     }
+  }
+
+  /**
+   * Match the regex from components/nexus-validation/src/main/java/org/sonatype/nexus/validation/constraint/NamePatternConstants.java
+   */
+  static isName(name) {
+    return name.match(/^[a-zA-Z0-9\-]{1}[a-zA-Z0-9_\-\.]*$/);
   }
 
   /**
@@ -239,7 +251,13 @@ export default class Utils {
           saveErrorData: ({data}) => data,
           saveError: (_, event) => {
             const data = event.data?.response?.data;
-            return data instanceof String ? data : null;
+            if (data instanceof String) {
+              return data;
+            }
+            else if (data instanceof Array) {
+              return data.find(({id}) => id === '*')?.message;
+            }
+            return null;
           },
           saveErrors: (_, event) => {
             const data = event.data?.response?.data;
@@ -495,7 +513,7 @@ export default class Utils {
    * @param defaultValue if the machine did not provide any data
    * @return {{name: *, validationErrors: (*|[]), isPristine: boolean, value: (*|string)}}
    */
-  static fieldProps(name, current, defaultValue = '') {
+  static fieldProps(name, current, defaultValue = '', typeConversion = String) {
     const {data = {}, isTouched = {}, validationErrors = {}, saveErrors = {}, saveErrorData = {}} = current.context;
 
     if (!Array.isArray(name)) {
@@ -512,7 +530,7 @@ export default class Utils {
 
     return {
       name: join('.', name),
-      value: String(pathOr(defaultValue, name, data)),
+      value: typeConversion(pathOr(defaultValue, name, data)),
       isPristine: hasPath(name, isTouched) ? !path(name, isTouched) : true,
       validatable: true,
       validationErrors: errors || null
@@ -619,5 +637,38 @@ export default class Utils {
       return UIStrings.UNAVAILABLE;
     }
     return fileSize(bytes).human('jedec');
+  }
+
+  /**
+   * Provide a random id to be used to tie a label to a field.
+   * This function should be avoided when possible and should be replaced with one from the RSC when available.
+   */
+  static getRandomId(prefix) {
+    const typedArray = new Uint8Array(new ArrayBuffer(8));
+
+    crypto.getRandomValues(typedArray);
+
+    const randomHexString = join('', map(x => x.toString(16), Array.from(typedArray)));
+
+    return `${prefix}-${randomHexString}`;
+  }
+
+  /**
+   * Get a random id to use to tie a label to a field. This hook will be stable across re-renders.
+   * This function should be avoided when possible and should be replaced with one from the RSC when available.
+   */
+  static useRandomId(prefix, explicitId) {
+    const idBox = useRef();
+
+    if (explicitId != null) {
+      return explicitId;
+    }
+    else {
+      if (idBox.current == null) {
+        idBox.current = Utils.getRandomId(prefix);
+      }
+
+      return idBox.current;
+    }
   }
 }

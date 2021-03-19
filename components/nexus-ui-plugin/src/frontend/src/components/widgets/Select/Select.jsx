@@ -27,7 +27,7 @@ export default function Select({value, children, className, name, id, isPristine
   });
 
   return <div className={classes}>
-    <select id={id || name} name={name} value={value} {...rest}>
+    <select className="nx-form-select" id={id || name} name={name} value={value} {...rest}>
       {children}
     </select>
     {!isPristine && validatable && isInvalid ?

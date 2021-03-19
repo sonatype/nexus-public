@@ -181,6 +181,7 @@ exports[`CleanupPoliciesForm renders the resolved data 1`] = `
               class="nxrm-select"
             >
               <select
+                class="nx-form-select"
                 id="format"
                 name="format"
               >
@@ -563,6 +564,7 @@ exports[`CleanupPoliciesForm renders the resolved data 1`] = `
                     class="nxrm-select"
                   >
                     <select
+                      class="nx-form-select"
                       id="criteriaReleaseType"
                       name="criteriaReleaseType"
                     >
@@ -769,6 +771,7 @@ exports[`CleanupPoliciesForm renders the resolved data 1`] = `
               class="nxrm-select"
             >
               <select
+                class="nx-form-select"
                 id="repository"
                 name="repository"
               >

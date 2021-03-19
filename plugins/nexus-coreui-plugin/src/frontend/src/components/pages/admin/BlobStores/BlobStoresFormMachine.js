@@ -83,6 +83,10 @@ export default Utils.buildFormMachine({
               target: 'saving',
               cond: 'canSave'
           }],
+
+          PROMOTE_TO_GROUP: {
+            target: 'promoteToGroup'
+          }
         }
       },
       confirmSave: {
@@ -90,6 +94,19 @@ export default Utils.buildFormMachine({
           src: 'confirmSave',
           onDone: 'saving',
           onError: 'loaded'
+        }
+      },
+      promoteToGroup: {
+        invoke: {
+          src: 'promoteToGroup',
+          onDone: {
+            target: 'loaded',
+            actions: ['onSaveSuccess']
+          },
+          onError: {
+            target: 'loaded',
+            actions: ['onPromoteError']
+          }
         }
       }
     }
@@ -109,11 +126,18 @@ export default Utils.buildFormMachine({
           limit: propOr('', 'limit', softQuota)
         }
       };
+      const type = types?.find(type => pristineData.type === type.id.toLowerCase());
+      type?.fields?.forEach(field => {
+        if (field.type === 'itemselect') {
+          field.attributes.options = field.attributes.options.filter(name => name !== pristineData.name);
+        }
+      });
+
       return {
         data: backendData,
         pristineData: backendData,
         types,
-        type: types?.find(type => pristineData.type === type.id.toLowerCase()),
+        type: type,
         quotaTypes,
         repositoryUsage: event.data[3]?.data?.repositoryUsage || 0,
         blobStoreUsage: event.data[3]?.data?.blobStoreUsage || 0
@@ -209,7 +233,7 @@ export default Utils.buildFormMachine({
             validationErrors.softQuota.limit = UIStrings.ERROR.FIELD_REQUIRED;
           }
           else {
-            validationErrors.softQuota.limit = Utils.isInRange({value: data.softQuota.limit, min: 1});
+            validationErrors.softQuota.limit = Utils.isInRange({value: data.softQuota.limit, min: 1, allowDecimals: false});
           }
         }
 
@@ -232,7 +256,13 @@ export default Utils.buildFormMachine({
       }
     }),
 
-    onDeleteError: (_, event) => ExtJS.showErrorMessage(event.data?.message)
+    onDeleteError: (_, event) => ExtJS.showErrorMessage(event.data?.message),
+
+    onPromoteError: (_, event) => ExtJS.showErrorMessage(event.data?.response?.data),
+
+    logSaveError: (_, event) => {
+      console.log(`Load Error: ${event.data?.message}`);
+    }
   },
   guards: {
     isEdit: ({pristineData, isPristine, validationErrors}) => {
@@ -288,6 +318,8 @@ export default Utils.buildFormMachine({
       message: data.name
     }),
 
-    delete: ({data}) => Axios.delete(`/service/rest/v1/blobstores/${data.name}`)
+    delete: ({data}) => Axios.delete(`/service/rest/v1/blobstores/${data.name}`),
+
+    promoteToGroup: ({data}) => Axios.post(`/service/rest/v1/blobstores/group/promote/${data.name}`)
   }
 });

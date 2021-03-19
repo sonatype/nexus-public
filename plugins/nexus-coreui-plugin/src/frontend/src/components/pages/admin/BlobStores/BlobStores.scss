@@ -21,4 +21,12 @@
   .unavailable {
     color: $nx-invalid-color;
   }
+
+  .information {
+    display: flex;
+
+    .nx-icon {
+      color: $nx-blue-600;
+    }
+  }
 }

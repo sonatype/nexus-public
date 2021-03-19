@@ -20,13 +20,15 @@ import {NxTextInput} from '@sonatype/react-shared-components';
 export default function Textfield({id, name, type = "text", onChange, isPristine = false, validatable = true, ...attrs}) {
   function handleChange(value) {
     if (onChange) {
+      const target = {
+        id: id || name,
+        name,
+        type,
+        value
+      };
       onChange({
-        target: {
-          id: id || name,
-          name,
-          type,
-          value
-        }
+        currentTarget: target,
+        target: target
       });
     }
   }

@@ -98,6 +98,7 @@ export default function ContentSelectorsForm({itemId, onDone}) {
 
             <FieldWrapper labelText={UIStrings.CONTENT_SELECTORS.NAME_LABEL}>
               <Textfield
+                  className="nx-text-input--long"
                   {...Utils.fieldProps('name', current)}
                   disabled={pristineData.name}
                   onChange={update}/>
