@@ -46,6 +46,7 @@ exports[`BlobStoresForm renders the form and buttons when the File type is selec
               class="nxrm-select"
             >
               <select
+                class="nx-form-select"
                 id="type"
                 name="type"
               >
@@ -56,6 +57,11 @@ exports[`BlobStoresForm renders the form and buttons when the File type is selec
                   value="File"
                 >
                   File
+                </option>
+                <option
+                  value="Group"
+                >
+                  Group
                 </option>
               </select>
             </div>

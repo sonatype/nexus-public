@@ -154,6 +154,7 @@ exports[`LogViewer renders the log into the text area 1`] = `
                 class="nxrm-select"
               >
                 <select
+                  class="nx-form-select"
                   id="period"
                   name="period"
                 >
@@ -192,6 +193,7 @@ exports[`LogViewer renders the log into the text area 1`] = `
                 class="nxrm-select"
               >
                 <select
+                  class="nx-form-select"
                   id="size"
                   name="size"
                 >

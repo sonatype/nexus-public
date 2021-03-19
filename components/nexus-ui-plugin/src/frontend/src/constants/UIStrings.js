@@ -33,6 +33,7 @@ export default {
   INVALID_TOOLTIP: 'Validation errors are present',
 
   ERROR: {
+    DECIMAL: 'This field must not contain decimal values',
     FIELD_REQUIRED: 'This field is required',
     NAN: 'This field must contain a numeric value',
     MIN: (min) => `The minimum value for this field is ${min}`,
@@ -51,5 +52,14 @@ export default {
       RESET_SUCCESS: 'Your user token has been reset',
       RESET_ERROR: 'You must authenticate successfully to reset your token'
     }
+  },
+
+  MULTI_SELECT: {
+    FROM_LABEL: 'Available',
+    TO_LABEL: 'Selected',
+    MOVE_RIGHT: 'Move Selection Right',
+    MOVE_LEFT: 'Move Selection Left',
+    MOVE_UP: 'Move Selection Up',
+    MOVE_DOWN: 'Move Selection Down'
   }
 };

@@ -406,6 +406,7 @@ exports[`RoutingRulesForm renders the resolved data 1`] = `
               class="nxrm-select"
             >
               <select
+                class="nx-form-select"
                 id="mode"
                 name="mode"
               >

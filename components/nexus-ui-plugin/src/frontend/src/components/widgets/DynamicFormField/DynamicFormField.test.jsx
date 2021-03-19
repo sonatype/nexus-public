@@ -19,8 +19,17 @@ import DynamicFormField from "./DynamicFormField";
 describe('DynamicFormField', () => {
   describe('renders the string type', () => {
     const stringFieldProps = {
-      name: 'test',
-      value: ''
+      id: 'test',
+      current: {
+        context: {
+          data: {
+            test: ''
+          },
+          pristineData: {
+            test: ''
+          }
+        }
+      }
     };
 
     it('renders', () => {
@@ -60,5 +69,43 @@ describe('DynamicFormField', () => {
 
       expect(getByRole('textbox')).toHaveAttribute('readonly');
     });
+
+    it('renders a MultiSelect field', () => {
+      const {container} = render(<DynamicFormField {...makeContext('test', ['a'])} dynamicProps={{
+        type: 'itemselect',
+        attributes: {
+          options: ['a', 'b']
+        }
+      }}/>);
+
+      expect(container).toMatchSnapshot();
+    });
+
+    it('renders a Select field', () => {
+      const {container} = render(<DynamicFormField {...makeContext('test', 'a')} dynamicProps={{
+        type: 'combobox',
+        attributes: {
+          options: ['a', 'b']
+        }
+      }}/>);
+
+      expect(container).toMatchSnapshot();
+    });
+
+    function makeContext(id, value) {
+      return {
+        id,
+        current: {
+          context: {
+            data: {
+              [id]: value
+            },
+            pristineData: {
+              [id]: value
+            }
+          }
+        }
+      }
+    }
   });
 });

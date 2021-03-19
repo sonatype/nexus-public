@@ -181,6 +181,7 @@ exports[`AnonymousSettings renders correctly 1`] = `
               class="nxrm-select"
             >
               <select
+                class="nx-form-select"
                 id="realmName"
                 name="realmName"
               >

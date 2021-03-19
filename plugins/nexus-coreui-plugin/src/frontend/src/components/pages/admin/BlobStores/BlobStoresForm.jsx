@@ -21,9 +21,11 @@ import {
   FieldWrapper,
   NxButton,
   NxCheckbox,
+  NxErrorAlert,
   NxFontAwesomeIcon,
   NxLoadWrapper,
   NxTooltip,
+  NxInfoAlert,
   NxWarningAlert,
   Page,
   PageActions,
@@ -67,6 +69,7 @@ export default function BlobStoresForm({itemId, onDone}) {
     blobStoreUsage,
     data,
     isPristine,
+    saveError,
     loadError,
     quotaTypes,
     repositoryUsage,
@@ -88,6 +91,14 @@ export default function BlobStoresForm({itemId, onDone}) {
 
   function updateField(event) {
     send({type: 'UPDATE', data: {[event.target.name]: event.target.value}});
+  }
+
+  function updateDynamicField(name, value) {
+    send({
+      type: 'UPDATE',
+      data: {
+        [name]: value}
+    });
   }
 
   function toggleSoftQuota() {
@@ -122,20 +133,25 @@ export default function BlobStoresForm({itemId, onDone}) {
     send({type: 'CONFIRM_DELETE'});
   }
 
+  function promoteToGroup() {
+    send({type: 'PROMOTE_TO_GROUP'})
+  }
+
   return <Page className="nxrm-blob-stores">
-    {isEdit && <NxWarningAlert>{FORM.EDIT_WARNING}</NxWarningAlert>}
+    {saveError && <NxErrorAlert>{saveError}</NxErrorAlert>}
     <PageHeader>
       <PageTitle text={isEdit ? FORM.EDIT_TILE(data.name) : FORM.CREATE_TITLE}
                  description={isEdit ? FORM.EDIT_DESCRIPTION(type?.id) : null}/>
-      {isEdit &&
+      {isEdit && type?.id !== "Group" &&
       <PageActions>
-        <NxButton variant="primary">{FORM.PROMOTE_BUTTON}</NxButton>
+        <NxButton variant="primary" onClick={promoteToGroup}>{FORM.PROMOTE_BUTTON}</NxButton>
       </PageActions>
       }
     </PageHeader>
     <ContentBody className="nxrm-blob-stores-form">
       <Section onKeyPress={handleEnter}>
         <NxLoadWrapper loading={isLoading} error={loadError ? `${loadError}` : null} retryHandler={retry}>
+          {isEdit && <NxInfoAlert>{FORM.EDIT_WARNING}</NxInfoAlert>}
           {isCreate &&
           <FieldWrapper labelText={FORM.TYPE.label} description={FORM.TYPE.sublabel}>
             <Select name="type" value={type?.id} onChange={setType}>
@@ -157,8 +173,10 @@ export default function BlobStoresForm({itemId, onDone}) {
                               descriptionText={field.helpText}
                               isOptional={!field.required}>
                   <DynamicFormField
-                      {...Utils.fieldProps(field.id, current, field.initialValue || '')}
-                      onChange={updateField}
+                      id={field.id}
+                      current={current}
+                      initialValue={field.initialValue}
+                      onChange={updateDynamicField}
                       dynamicProps={field}/>
                 </FieldWrapper>
             )}

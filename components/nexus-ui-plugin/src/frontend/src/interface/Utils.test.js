@@ -311,7 +311,14 @@ describe('Utils', () => {
     });
     it('rejects non-numeric values', () => {
       expect(Utils.isInRange({value: '1xx', min: 0})).toBe('This field must contain a numeric value');
-    })
+    });
+    it('rejects decimal values when requested', () => {
+      expect(Utils.isInRange({value: '1.0', max:2, allowDecimals: false}))
+          .toBe('This field must not contain decimal values');
+    });
+    it('allows non decimal values', () => {
+      expect(Utils.isInRange({value: '1', max:2, allowDecimals: false})).toBeNull();
+    });
   });
 });
 

@@ -211,6 +211,7 @@ exports[`LoggingConfigurationForm renders the resolved data 1`] = `
               class="nxrm-select"
             >
               <select
+                class="nx-form-select"
                 id="level"
                 name="level"
               >
@@ -409,6 +410,7 @@ exports[`LoggingConfigurationForm requires the name field when creating a new lo
               class="nxrm-select"
             >
               <select
+                class="nx-form-select"
                 id="level"
                 name="level"
               >
