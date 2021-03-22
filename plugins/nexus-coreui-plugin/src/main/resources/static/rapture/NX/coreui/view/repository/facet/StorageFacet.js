@@ -106,12 +106,13 @@ Ext.define('NX.coreui.view.repository.facet.StorageFacet', {
             displayField: 'name',
             valueField: 'name',
             readOnlyOnUpdate: true,
+            hidden: true,
             listeners: {
               afterrender: function (combo) {
                 if (!combo.getValue()) {
                   var store = combo.getStore();
-                  if (store.getTotalCount() === 1) {
-                    var value = store.getAt(0).get('name');
+                  if (store.getTotalCount() > 0) {
+                    var value = store.first().get('name');
                     combo.originalValue = value;
                     combo.setValue(value);
                   }

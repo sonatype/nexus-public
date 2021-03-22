@@ -140,7 +140,8 @@ Ext.define('NX.coreui.migration.RepositoryCustomizeWindow', {
             displayField: 'name',
             valueField: 'name',
             readOnlyOnUpdate: true,
-            value: me.getDataStore()
+            value: me.getDataStore(),
+            hidden: true
           });
     }
 
