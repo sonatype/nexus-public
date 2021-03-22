@@ -84,7 +84,8 @@ Ext.define('NX.coreui.migration.RepositoryDefaultsScreen', {
           displayField: 'name',
           valueField: 'name',
           readOnlyOnUpdate: true,
-          allowBlank: false
+          allowBlank: false,
+          hidden: true
         });
     }
 
