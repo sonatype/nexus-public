@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -30,9 +31,9 @@ import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
-import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
+import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponentBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
@@ -41,6 +42,7 @@ import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.internal.Attributes;
 import org.sonatype.nexus.repository.maven.internal.hosted.metadata.AbstractMetadataRebuilder;
 import org.sonatype.nexus.repository.maven.internal.hosted.metadata.AbstractMetadataUpdater;
+import org.sonatype.nexus.repository.maven.internal.hosted.metadata.Maven2Metadata;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.transaction.Transactional;
@@ -49,9 +51,12 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.hash.HashCode;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.commons.lang3.StringUtils.prependIfMissing;
+import static org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet.METADATA_REBUILD_KEY;
 import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.metadataPath;
 import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 
@@ -97,8 +102,22 @@ public class DatastoreMetadataRebuilder
       @Nullable final String baseVersion)
   {
     checkNotNull(repository);
-    return new Worker(repository, update, rebuildChecksums, groupId, artifactId, baseVersion, bufferSize,
+    return new DatastoreWorker(repository, update, rebuildChecksums, groupId, artifactId, baseVersion, bufferSize,
         timeoutSeconds, new DatastoreMetadataUpdater(update, repository)).rebuildMetadata();
+  }
+
+  @Override
+  public boolean refreshInTransaction(
+      final Repository repository,
+      final boolean update,
+      final boolean rebuildChecksums,
+      @Nullable final String groupId,
+      @Nullable final String artifactId,
+      @Nullable final String baseVersion)
+  {
+    checkNotNull(repository);
+    return new DatastoreWorker(repository, update, rebuildChecksums, groupId, artifactId, baseVersion, bufferSize,
+        timeoutSeconds, new DatastoreMetadataUpdater(update, repository)).refreshMetadata();
   }
 
   @Transactional
@@ -131,10 +150,10 @@ public class DatastoreMetadataRebuilder
     return repository.facet(ContentFacet.class).assets().path(mavenPath.getPath()).find().isPresent();
   }
 
-  protected static class Worker
-      extends AbstractMetadataRebuilder.Worker
+  protected static class DatastoreWorker
+      extends Worker
   {
-    public Worker(
+    public DatastoreWorker(
         final Repository repository,
         final boolean update,
         final boolean rebuildChecksums,
@@ -208,22 +227,7 @@ public class DatastoreMetadataRebuilder
       for (final String baseVersion : baseVersions) {
         checkCancellation();
         metadataBuilder.onEnterBaseVersion(baseVersion);
-
-        List<FluentComponent> filteredComponents = allVersions.stream()
-            .map(version -> componentBuilder.version(version).find())
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .filter(component -> baseVersion.equals(component.attributes("maven2").get("baseVersion", String.class)))
-            .collect(Collectors.toList());
-        List<FluentAsset> assets = filteredComponents.stream()
-            .map(FluentComponent::assets)
-            .flatMap(Collection::stream)
-            .filter(asset -> !mavenPathParser.parsePath(asset.path()).isSubordinate())
-            .collect(Collectors.toList());
-
-        for (FluentAsset asset : assets) {
-          processAsset(asset);
-        }
+        fetchAssets(allVersions, componentBuilder, baseVersion).forEach(this::processAsset);
 
         processMetadata(metadataPath(groupId, artifactId, baseVersion), metadataBuilder.onExitBaseVersion(), failures);
       }
@@ -231,9 +235,102 @@ public class DatastoreMetadataRebuilder
       processMetadata(metadataPath(groupId, artifactId, null), metadataBuilder.onExitArtifactId(), failures);
     }
 
-    private void processAsset(final FluentAsset asset) {
+    private Stream<Pair<FluentComponent, FluentAsset>> fetchAssets(
+        final Collection<String> allVersions,
+        final FluentComponentBuilder componentBuilder,
+        final String v)
+    {
+      return allVersions.stream()
+          .map(version -> componentBuilder.version(version).find())
+          .filter(Optional::isPresent)
+          .map(Optional::get)
+          .filter(component -> v.equals(component.attributes("maven2").get("baseVersion", String.class)))
+          .flatMap(fc -> fc.assets().stream()
+              .filter(asset -> !mavenPathParser.parsePath(asset.path()).isSubordinate())
+              .map(fa -> Pair.of(fc, fa)));
+    }
+
+    @Override
+    protected boolean refreshArtifact(
+        final String groupId,
+        final String artifactId,
+        final Set<String> baseVersions,
+        final MultipleFailures failures)
+    {
+      MavenPath metadataPath = metadataPath(groupId, artifactId, null);
+
+      FluentComponents components = repository.facet(ContentFacet.class).components();
+      final Collection<String> allVersions = components.versions(groupId, artifactId);
+      final FluentComponentBuilder componentBuilder = components.name(artifactId).namespace(groupId);
+
+      metadataBuilder.onEnterArtifactId(artifactId);
+      boolean rebuiltAtLeastOneVersion = baseVersions.stream()
+          .map(v -> {
+            checkCancellation();
+            return refreshVersion(allVersions, componentBuilder, groupId, artifactId, v, failures);
+          })
+          .reduce(Boolean::logicalOr)
+          .orElse(false);
+      Maven2Metadata newMetadata = metadataBuilder.onExitArtifactId();
+
+      boolean isRequestedVersion = StringUtils.equals(this.groupId, groupId) &&
+          StringUtils.equals(this.artifactId, artifactId) &&
+          StringUtils.equals(baseVersion, null);
+
+      if (isRequestedVersion || rebuiltAtLeastOneVersion || requiresRebuild(metadataPath)) {
+        processMetadata(metadataPath, newMetadata, failures);
+        return true;
+      }
+      else {
+        log.debug("Skipping {}:{} for rebuild", groupId, artifactId);
+        return false;
+      }
+    }
+
+    private boolean refreshVersion(
+        final Collection<String> allVersions,
+        final FluentComponentBuilder componentBuilder,
+        final String groupId,
+        final String artifactId,
+        final String version,
+        final MultipleFailures failures)
+    {
+      MavenPath metadataPath = metadataPath(groupId, artifactId, version);
+
+      metadataBuilder.onEnterBaseVersion(baseVersion);
+      fetchAssets(allVersions, componentBuilder, version).forEach(this::processAsset);
+      Maven2Metadata newMetadata = metadataBuilder.onExitBaseVersion();
+
+      /**
+       * The rebuild flag on the requested asset may have been cleared before we were invoked.
+       * So we check a special case to always rebuild the metadata for the g:a:v that we were initialized with
+       */
+      boolean isRequestedVersion = StringUtils.equals(this.groupId, groupId) &&
+          StringUtils.equals(this.artifactId, artifactId) &&
+          StringUtils.equals(baseVersion, version);
+
+      if (isRequestedVersion || requiresRebuild(metadataPath)) {
+        processMetadata(metadataPath, newMetadata, failures);
+        return true;
+      }
+      else {
+        log.debug("Skipping {}:{}:{} for rebuild", groupId, artifactId, version);
+        return false;
+      }
+    }
+
+    private boolean requiresRebuild(final MavenPath metadataPath) {
+      FluentAssets assets = repository.facet(ContentFacet.class).assets();
+      Optional<FluentAsset> existingMetadata = assets.path(metadataPath.getPath()).find();
+
+      return existingMetadata.map(fa -> fa.attributes().get(METADATA_REBUILD_KEY, Boolean.class, false))
+          .orElse(false);
+    }
+
+    private void processAsset(final Pair<FluentComponent, FluentAsset> componentAssetPair) {
       checkCancellation();
-      Component component = asset.component().get();
+      FluentComponent component = componentAssetPair.getLeft();
+      FluentAsset asset = componentAssetPair.getRight();
       MavenPath mavenPath = mavenPathParser.parsePath(asset.path());
       metadataBuilder.addArtifactVersion(mavenPath);
       if (rebuildChecksums) {

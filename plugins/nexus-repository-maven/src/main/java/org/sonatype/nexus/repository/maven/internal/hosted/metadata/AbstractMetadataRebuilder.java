@@ -246,6 +246,59 @@ public abstract class AbstractMetadataRebuilder
     }
 
     /**
+     * Method refreshing metadata that performs the group level processing.  It uses a similar approach to {@code rebuildMetadata},
+     * except that it tries to trust the existing state and refresh things only if we know they need to be refreshed.
+     */
+    public boolean refreshMetadata()
+    {
+      final MultipleFailures failures = new MultipleFailures();
+
+      checkCancellation();
+      String prevGroupId = null;
+
+      boolean rebuilt = false;
+      try {
+        List<Map<String, Object>> gavs = browseGAVs();
+
+        if (!gavs.isEmpty() && nonNull(groupId)) {
+          metadataBuilder.onEnterGroupId(groupId);
+          if (nonNull(artifactId) && nonNull(baseVersion)) {
+            refreshArtifact(groupId, artifactId, emptySet(), failures);
+          }
+          rebuildMetadataExitGroup(groupId, failures);
+        }
+
+        for (Map<String, Object> gav : gavs) {
+          checkCancellation();
+          final String g = (String) gav.get("groupId");
+          final String a = (String) gav.get("artifactId");
+          final Set<String> bv = (Set<String>) gav.get("baseVersions");
+
+          final boolean groupChange = !Objects.equals(prevGroupId, g);
+          if (groupChange) {
+            if (prevGroupId != null) {
+              rebuildMetadataExitGroup(prevGroupId, failures);
+            }
+            prevGroupId = g;
+            metadataBuilder.onEnterGroupId(g);
+          }
+          boolean rebuildGA =  refreshArtifact(g, a, bv, failures);
+          rebuilt = rebuilt || rebuildGA;
+        }
+
+        if (prevGroupId != null) {
+          rebuildMetadataExitGroup(prevGroupId, failures);
+          rebuilt = true;
+        }
+      }
+      finally {
+        maybeLogFailures(failures);
+      }
+
+      return rebuilt;
+    }
+
+    /**
      * Logs any failures recorded during metadata
      */
     protected void maybeLogFailures(final MultipleFailures failures) {
@@ -291,6 +344,17 @@ public abstract class AbstractMetadataRebuilder
         final String artifactId,
         final Set<String> baseVersions,
         final MultipleFailures failures);
+
+    /**
+     * Method refreshing metadata that may perform artifact and baseVersion processing. While it is called from {@link
+     * #rebuildMetadata()} method, it will use a separate TX/DB to perform writes, it does NOT
+     * accept the TX from caller. Executed in isolation.
+     */
+    protected abstract boolean refreshArtifact(
+        String groupId,
+        String artifactId,
+        Set<String> baseVersions,
+        MultipleFailures failures);
 
     /**
      * Verifies and may fix/create the broken/non-existent Maven hashes (.sha1/.md5 files).

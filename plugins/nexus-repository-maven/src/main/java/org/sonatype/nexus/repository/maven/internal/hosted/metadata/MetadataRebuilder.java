@@ -61,6 +61,14 @@ public interface MetadataRebuilder
       @Nullable String artifactId,
       @Nullable String baseVersion);
 
+  boolean refreshInTransaction(
+      Repository repository,
+      boolean update,
+      boolean rebuildChecksums,
+      @Nullable String groupId,
+      @Nullable String artifactId,
+      @Nullable String baseVersion);
+
   /**
    * Delete the metadata for the input list of GAbVs.
    *
