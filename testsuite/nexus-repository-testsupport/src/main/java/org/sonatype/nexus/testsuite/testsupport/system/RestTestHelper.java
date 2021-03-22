@@ -90,6 +90,8 @@ import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.jboss.resteasy.client.jaxrs.internal.LocalResteasyProviderFactory;
 import org.jboss.resteasy.plugins.providers.RegisterBuiltin;
 import org.jboss.resteasy.spi.ResteasyProviderFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItemInArray;
@@ -99,6 +101,8 @@ import static org.hamcrest.Matchers.is;
 @Singleton
 public class RestTestHelper
 {
+  private static final Logger log = LoggerFactory.getLogger(RestTestHelper.class);
+
   private static final String REST_SERVICE_PATH = "service/rest";
 
   protected static final String SLASH_REPO_SLASH = "/repository/";
@@ -248,6 +252,11 @@ public class RestTestHelper
       @Nullable final String password) throws IOException
   {
     return execute(new HttpPost(), path, Collections.emptyMap(), username, password);
+  }
+
+  public Response put(final String path, final Object entity) throws IOException
+  {
+    return execute(new HttpPut(), path, entity, Collections.emptyMap(), null, null);
   }
 
   public Response put(
@@ -538,7 +547,15 @@ public class RestTestHelper
       protected boolean matchesSafely(final Response response, final Description mismatchDescription) {
         int actualStatus = response.getStatus();
         if (actualStatus != statusCode) {
-          mismatchDescription.appendText("Status code: " + actualStatus + " " + Status.fromStatusCode(actualStatus).getReasonPhrase());
+          String message = "";
+          try {
+            message = IOUtils.toString((InputStream) response.getEntity(), Charset.defaultCharset());
+          }
+          catch (Exception e) {
+            log.info("Failed to extract message body from response {}", response, e);
+          }
+          mismatchDescription.appendText("Status code: " + actualStatus + " "
+              + Status.fromStatusCode(actualStatus).getReasonPhrase() + " Message: " + message);
           return false;
         }
         return true;
@@ -558,8 +575,7 @@ public class RestTestHelper
   {
     assertThat(response.getStatus(), is(HttpStatus.SC_BAD_REQUEST));
 
-
-    ValidationErrorXO[] errors = readResponseBody(ValidationErrorXO[].class, response);
+    ValidationErrorXO[] errors = response.readEntity(ValidationErrorXO[].class);
 
     for (ValidationErrorXO expectedError : expectedErrors) {
       assertThat(errors, hasItemInArray(BeanMatchers.similarTo(expectedError)));
