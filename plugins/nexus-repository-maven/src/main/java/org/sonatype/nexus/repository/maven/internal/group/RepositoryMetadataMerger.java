@@ -224,8 +224,8 @@ public class RepositoryMetadataMerger
       Iterator<T> aIter = a.iterator();
       Iterator<T> bIter = b.iterator();
       boolean allEqual = true;
-      while (aIter.hasNext()) {
-        allEqual = allEqual && equality.test(aIter.next(), bIter.next());
+      while (aIter.hasNext() && allEqual) {
+        allEqual = equality.test(aIter.next(), bIter.next());
       }
       return allEqual;
     }
