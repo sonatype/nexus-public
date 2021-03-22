@@ -55,14 +55,6 @@
         <version>${bouncycastle.version}</version>
       </dependency>
 
-      <!-- geronimo -->
-
-      <dependency>
-        <groupId>org.apache.geronimo.framework</groupId>
-        <artifactId>geronimo-crypto</artifactId>
-        <version>2.2.1</version>
-      </dependency>
-
       <!-- shiro -->
 
       <dependency>
