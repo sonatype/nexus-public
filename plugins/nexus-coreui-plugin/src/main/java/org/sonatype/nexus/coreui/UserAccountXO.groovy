@@ -12,8 +12,10 @@
  */
 package org.sonatype.nexus.coreui
 
+import javax.validation.constraints.Email
+import javax.validation.constraints.NotEmpty
+
 import groovy.transform.ToString
-import org.hibernate.validator.constraints.NotEmpty
 
 /**
  * User account exchange object.
@@ -32,6 +34,7 @@ class UserAccountXO
   @NotEmpty
   String lastName
 
+  @Email
   @NotEmpty
   String email
 
