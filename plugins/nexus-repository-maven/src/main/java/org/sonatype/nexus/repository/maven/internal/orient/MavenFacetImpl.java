@@ -257,7 +257,7 @@ public class MavenFacetImpl
     // avoid triggering nested rebuilds as the rebuilder will already do that if necessary
     rebuilding.set(TRUE);
     try {
-      metadataRebuilder.rebuildInTransaction(
+      metadataRebuilder.refreshInTransaction(
           getRepository(),
           false,
           false,
