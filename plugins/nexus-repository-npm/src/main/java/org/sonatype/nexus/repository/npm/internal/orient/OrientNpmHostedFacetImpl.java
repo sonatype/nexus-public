@@ -57,6 +57,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Arrays.asList;
+import static org.sonatype.nexus.repository.npm.internal.NpmPackageRootMetadataUtils.createFullPackageMetadata;
 import static org.sonatype.nexus.repository.npm.internal.NpmFieldFactory.missingRevFieldMatcher;
 import static org.sonatype.nexus.repository.npm.internal.NpmFieldFactory.rewriteTarballUrlMatcher;
 import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.DIST_TAGS;
@@ -68,7 +69,6 @@ import static org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils.fi
 import static org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils.findPackageTarballComponent;
 import static org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils.savePackageRoot;
 import static org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils.toContent;
-import static org.sonatype.nexus.repository.npm.internal.orient.NpmPackageRootMetadataUtils.createFullPackageMetadata;
 
 /**
  * {@link OrientNpmHostedFacet} implementation.
@@ -186,7 +186,7 @@ public class OrientNpmHostedFacetImpl
         new NestedAttributesMap("metadata", packageJson),
         getRepository().getName(),
         tempBlob.getHashes().get(HashAlgorithm.SHA1).toString(),
-        null,
+        "",
         extractAlwaysPackageVersion);
 
     NpmPackageId packageId = NpmPackageId.parse((String) metadata.get(NpmAttributes.P_NAME));

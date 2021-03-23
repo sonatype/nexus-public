@@ -111,7 +111,8 @@ public class NpmPackageRootMetadataUtilsTest
   @Test
   @SuppressWarnings("unchecked")
   public void bugsFieldAsStringIsSupported() throws Exception {
-    createFullPackageMetadataImpl(extractAlwaysPackageVersion, "../package-string-bugs.json");
+    createFullPackageMetadataRepair(extractAlwaysPackageVersion, "../package-string-bugs.json");
+    createFullPackageMetadataUpload(extractAlwaysPackageVersion, "../package-string-bugs.json");
   }
 
   @Test
@@ -133,11 +134,16 @@ public class NpmPackageRootMetadataUtilsTest
     createFullPackageMetadata(extractPackageRootVersionUnlessEmpty);
   }
 
-  private void createFullPackageMetadata(final BiFunction<String, String, String> function) throws URISyntaxException, IOException {
-    createFullPackageMetadataImpl(function, "../package.json");
+  private void createFullPackageMetadata(final BiFunction<String, String, String> function)
+      throws URISyntaxException, IOException
+  {
+    createFullPackageMetadataRepair(function, "../package.json");
+    createFullPackageMetadataUpload(function, "../package.json");
   }
 
-  private void createFullPackageMetadataImpl(final BiFunction<String, String, String> function, String packageJsonFilename) throws URISyntaxException, IOException {
+  private void createFullPackageMetadataRepair(final BiFunction<String, String, String> function,
+                                               String packageJsonFilename) throws URISyntaxException, IOException
+  {
     try {
       assertThat(BaseUrlHolder.isSet(), is(false));
       BaseUrlHolder.set("http://localhost:8080/");
@@ -152,6 +158,32 @@ public class NpmPackageRootMetadataUtilsTest
               "npm-hosted",
               "abcd",
               repository,
+              function);
+
+      assertPackageMetadata(packageMetadata);
+    }
+    finally {
+      BaseUrlHolder.unset();
+    }
+  }
+
+  private void createFullPackageMetadataUpload(final BiFunction<String, String, String> function,
+                                               String packageJsonFilename) throws URISyntaxException, IOException
+  {
+    try {
+      assertThat(BaseUrlHolder.isSet(), is(false));
+      BaseUrlHolder.set("http://localhost:8080/");
+
+      File packageJsonFile = new File(NpmPackageRootMetadataUtilsTest.class.getResource(packageJsonFilename).toURI());
+      File archive = tempFolderRule.newFile();
+      Map<String, Object> packageJson = new NpmPackageParser()
+          .parsePackageJson(() -> ArchiveUtils.pack(archive, packageJsonFile, "package/package.json"));
+
+      NestedAttributesMap packageMetadata = org.sonatype.nexus.repository.npm.internal.NpmPackageRootMetadataUtils
+          .createFullPackageMetadata(new NestedAttributesMap("metadata", packageJson),
+              "npm-hosted",
+              "abcd",
+              "",
               function);
 
       assertPackageMetadata(packageMetadata);

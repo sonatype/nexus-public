@@ -12,9 +12,45 @@
  */
 package org.sonatype.nexus.repository.npm;
 
+import java.util.Map;
+
+import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.npm.internal.NpmAttributes;
+import org.sonatype.nexus.repository.npm.internal.NpmFormat;
+import org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils;
+import org.sonatype.nexus.repository.npm.internal.NpmPackageId;
 import org.sonatype.nexus.repository.upload.UploadHandler;
+
+import com.google.common.collect.ImmutableMap;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public interface NpmUploadHandler
     extends UploadHandler
 {
+  default Map<String, Object> ensureNpmPermitted(
+      final Repository repository,
+      final Map<String, Object> packageJson)
+  {
+    final String name = (String) packageJson.get(NpmAttributes.P_NAME);
+    final String version = (String) packageJson.get(NpmAttributes.P_VERSION);
+    final String repositoryPath = NpmMetadataUtils.createRepositoryPath(name, version);
+    final Map<String, String> coordinates = toCoordinates(packageJson);
+
+    ensurePermitted(repository.getName(), NpmFormat.NAME, repositoryPath, coordinates);
+    return packageJson;
+  }
+
+  default Map<String, String> toCoordinates(final Map<String, Object> packageJson) {
+    NpmPackageId packageId = NpmPackageId.parse((String) checkNotNull(packageJson.get(NpmAttributes.P_NAME)));
+    String version = (String) checkNotNull(packageJson.get(NpmAttributes.P_VERSION));
+
+    if (packageId.scope() != null) {
+      return ImmutableMap.of("packageScope", packageId.scope(), "packageName", packageId.name(),
+          NpmAttributes.P_VERSION, version);
+    }
+    else {
+      return ImmutableMap.of("packageName", packageId.name(), NpmAttributes.P_VERSION, version);
+    }
+  }
 }

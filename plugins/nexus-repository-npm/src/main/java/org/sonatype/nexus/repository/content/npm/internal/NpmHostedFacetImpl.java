@@ -26,12 +26,13 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.npm.INpmHostedFacet;
 import org.sonatype.nexus.repository.content.npm.NpmContentFacet;
 import org.sonatype.nexus.repository.npm.internal.NpmAttributes;
-import org.sonatype.nexus.repository.npm.internal.NpmHostedFacet;
 import org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageId;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageParser;
@@ -53,6 +54,9 @@ import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.DIST_T
 import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.META_ID;
 import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.META_REV;
 import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.selectVersionByTarballName;
+import static org.sonatype.nexus.repository.npm.internal.NpmPackageRootMetadataUtils.createFullPackageMetadata;
+import static org.sonatype.nexus.repository.npm.internal.NpmVersionComparator.extractAlwaysPackageVersion;
+
 
 /**
  * @since 3.28
@@ -60,7 +64,7 @@ import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.select
 @Named
 public class NpmHostedFacetImpl
     extends NpmFacetSupport
-    implements NpmHostedFacet
+    implements INpmHostedFacet
 {
   private final NpmRequestParser npmRequestParser;
 
@@ -243,6 +247,38 @@ public class NpmHostedFacetImpl
     try (NpmPublishRequest request = npmRequestParser.parsePublish(getRepository(), payload)) {
       putPublishRequest(packageId, revision, request);
     }
+  }
+
+  @Override
+  public Content putPackage(
+      final Map<String, Object> packageJson,
+      final TempBlob tempBlob
+  ) throws IOException
+  {
+    checkNotNull(packageJson);
+    checkNotNull(tempBlob);
+
+    log.debug("Storing package: {}", packageJson);
+    checkNotNull(packageJson.get(NpmAttributes.P_NAME), "Uploaded package is invalid, or is missing package.json");
+
+    String version = (String) packageJson.get(NpmAttributes.P_VERSION);
+
+    NpmPackageId packageId = NpmPackageId.parse((String) checkNotNull(packageJson.get(NpmAttributes.P_NAME)));
+    Map<String, Object> npmAttributes = maybeExtractFormatAttributes(packageId.id(), version, tempBlob);
+
+    Content tarball = content().put(packageId, version, npmAttributes, tempBlob);
+
+    NestedAttributesMap metadata = createFullPackageMetadata(
+        new NestedAttributesMap("metadata", packageJson),
+        getRepository().getName(),
+        tempBlob.getHashes().get(HashAlgorithm.SHA1).toString(),
+        "",
+        extractAlwaysPackageVersion);
+
+    putPackageRoot(packageId, null, metadata);
+
+    return tarball;
+
   }
 
   @Override
