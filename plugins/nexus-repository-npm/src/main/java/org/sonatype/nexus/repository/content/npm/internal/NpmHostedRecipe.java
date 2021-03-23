@@ -27,12 +27,12 @@ import org.sonatype.nexus.repository.content.npm.internal.search.legacy.NpmSearc
 import org.sonatype.nexus.repository.content.search.SearchFacet;
 import org.sonatype.nexus.repository.http.HttpHandlers;
 import org.sonatype.nexus.repository.http.PartialFetchHandler;
+import org.sonatype.nexus.repository.content.npm.INpmHostedFacet;
 import org.sonatype.nexus.repository.npm.internal.NpmAuditErrorHandler;
 import org.sonatype.nexus.repository.npm.internal.NpmAuditFacet;
 import org.sonatype.nexus.repository.npm.internal.NpmAuditTarballFacet;
 import org.sonatype.nexus.repository.npm.internal.NpmFormat;
 import org.sonatype.nexus.repository.npm.internal.NpmHandlers;
-import org.sonatype.nexus.repository.npm.internal.NpmHostedFacet;
 import org.sonatype.nexus.repository.npm.internal.NpmPingHandler;
 import org.sonatype.nexus.repository.npm.internal.NpmSecurityFacet;
 import org.sonatype.nexus.repository.npm.internal.NpmTokenFacet;
@@ -71,7 +71,7 @@ public class NpmHostedRecipe
 {
   public static final String NAME = "npm-hosted";
 
-  private final Provider<NpmHostedFacet> npmHostedFacetProvider;
+  private final Provider<INpmHostedFacet> npmHostedFacetProvider;
 
   private final Provider<NpmSearchIndexFacetHosted> npmSearchIndexFacetProvider;
 
@@ -89,7 +89,7 @@ public class NpmHostedRecipe
       final Provider<NpmAuditFacet> npmAuditFacetProvider,
       final Provider<NpmAuditTarballFacet> npmAuditTarballFacetProvider,
       final Provider<NpmContentFacet> contentFacet,
-      final Provider<NpmHostedFacet> npmHostedFacet,
+      final Provider<INpmHostedFacet> npmHostedFacet,
       final Provider<NpmSearchIndexFacetHosted> npmSearchIndexFacet,
       final Provider<NpmSearchFacetHosted> npmSearchFacet,
       final Provider<NpmHostedMaintenanceFacet> maintenanceFacetProvider,
