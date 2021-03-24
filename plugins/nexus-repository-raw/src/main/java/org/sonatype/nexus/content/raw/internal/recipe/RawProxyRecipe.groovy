@@ -113,10 +113,8 @@ class RawProxyRecipe
   private ViewFacet configure(final ConfigurableViewFacet facet) {
     Router.Builder builder = new Router.Builder()
 
-    addBrowseUnsupportedRoute(builder)
-
     builder.route(new Route.Builder()
-        .matcher(new TokenMatcher('{' + PATH_NAME + ':/.+}'))
+        .matcher(new TokenMatcher('{' + PATH_NAME + ':/.*}'))
         .handler(timingHandler)
         .handler(contentDispositionHandler)
         .handler(securityHandler)
@@ -128,6 +126,7 @@ class RawProxyRecipe
         .handler(partialFetchHandler)
         .handler(contentHeadersHandler)
         .handler(lastDownloadedHandler)
+        .handler(indexHtmlForwardHandler)
         .handler(proxyHandler)
         .create())
 

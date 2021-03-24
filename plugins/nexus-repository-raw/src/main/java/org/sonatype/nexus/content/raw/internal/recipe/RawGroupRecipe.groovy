@@ -72,10 +72,8 @@ class RawGroupRecipe
   private ViewFacet configure(final ConfigurableViewFacet viewFacet) {
     Router.Builder builder = new Router.Builder()
 
-    addBrowseUnsupportedRoute(builder)
-
     builder.route(new Route.Builder()
-        .matcher(new TokenMatcher('{path:/.+}'))
+        .matcher(new TokenMatcher('{path:/.*}'))
         .handler(timingHandler)
         .handler(contentDispositionHandler)
         .handler(securityHandler)
