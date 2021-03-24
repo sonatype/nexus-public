@@ -48,6 +48,8 @@ import static org.sonatype.nexus.testsuite.testsupport.FormatClientSupport.statu
 public class RawProxyOfHostedIT
     extends RawITSupport
 {
+  public static final String INDEX_HTML = "index.html";
+
   public static final String TEST_PATH = "alphabet.txt";
 
   public static final String TEST_CONTENT = "alphabet.txt";
@@ -150,6 +152,43 @@ public class RawProxyOfHostedIT
   @Test
   public void status503ViaProxyProduces503() throws Exception {
     responseViaProxyProduces(HttpStatus.SERVICE_UNAVAILABLE, HttpStatus.SERVICE_UNAVAILABLE);
+  }
+
+  @Test
+  public void remoteHasNoContent() throws Exception {
+    Server server = Server.withPort(0)
+        .serve("/*").withBehaviours(Behaviours.error(HttpStatus.NOT_FOUND))
+        .start();
+    try {
+      proxyClient = rawClient(repos.createRawProxy(testName.getMethodName(), server.getUrl().toExternalForm()));
+      assertThat(status(proxyClient.get(TEST_PATH)), is(HttpStatus.NOT_FOUND));
+      assertThat(status(proxyClient.get("")), is(HttpStatus.NOT_FOUND));
+    }
+    finally {
+      server.stop();
+    }
+  }
+
+  @Test
+  public void rootShouldServeRemoteIndexHtmlContentIfPresent() throws Exception {
+    final File testFile = resolveTestFile(INDEX_HTML);
+    hostedClient.put(INDEX_HTML, ContentType.TEXT_PLAIN, testFile);
+
+    HttpResponse response = proxyClient.get("");
+    assertThat(status(response), is(HttpStatus.OK));
+    assertThat(bytes(response), is(readFileToByteArray(testFile)));
+    assertThat(getLastDownloadedTime(proxyRepo, "").isBeforeNow(), is(equalTo(true)));
+  }
+
+  @Test
+  public void rootShouldServeRemoteIndexHtmContentIfPresent() throws Exception {
+    final File testFile = resolveTestFile(INDEX_HTML);
+    hostedClient.put("index.htm", ContentType.TEXT_PLAIN, testFile);
+
+    HttpResponse response = proxyClient.get("");
+    assertThat(status(response), is(HttpStatus.OK));
+    assertThat(bytes(response), is(readFileToByteArray(testFile)));
+    assertThat(getLastDownloadedTime(proxyRepo, "").isBeforeNow(), is(equalTo(true)));
   }
 
   private void responseViaProxyProduces(final int upstreamStatus, final int downstreamStatus) throws Exception {

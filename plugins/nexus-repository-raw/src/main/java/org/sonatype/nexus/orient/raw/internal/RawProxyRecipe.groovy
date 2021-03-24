@@ -19,7 +19,6 @@ import javax.inject.Named
 import javax.inject.Provider
 import javax.inject.Singleton
 
-import org.sonatype.nexus.repository.raw.ContentDispositionHandler
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.RecipeSupport
 import org.sonatype.nexus.repository.Repository
@@ -31,7 +30,9 @@ import org.sonatype.nexus.repository.http.PartialFetchHandler
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet
 import org.sonatype.nexus.repository.proxy.ProxyHandler
 import org.sonatype.nexus.repository.purge.PurgeUnusedFacet
+import org.sonatype.nexus.repository.raw.ContentDispositionHandler
 import org.sonatype.nexus.repository.raw.internal.RawFormat
+import org.sonatype.nexus.repository.raw.internal.RawIndexHtmlForwardHandler
 import org.sonatype.nexus.repository.raw.internal.RawSecurityFacet
 import org.sonatype.nexus.repository.routing.RoutingRuleHandler
 import org.sonatype.nexus.repository.search.SearchFacet
@@ -140,6 +141,9 @@ class RawProxyRecipe
   ContentDispositionHandler contentDispositionHandler
 
   @Inject
+  RawIndexHtmlForwardHandler indexHtmlForwardHandler
+
+  @Inject
   public RawProxyRecipe(final @Named(ProxyType.NAME) Type type,
                         final @Named(RawFormat.NAME) Format format)
   {
@@ -167,10 +171,8 @@ class RawProxyRecipe
   private ViewFacet configure(final ConfigurableViewFacet facet) {
     Router.Builder builder = new Router.Builder()
 
-    addBrowseUnsupportedRoute(builder)
-
     builder.route(new Route.Builder()
-        .matcher(new TokenMatcher('/{name:.+}'))
+        .matcher(new TokenMatcher('/{name:.*}'))
         .handler(timingHandler)
         .handler(contentDispositionHandler)
         .handler(securityHandler)
@@ -183,6 +185,7 @@ class RawProxyRecipe
         .handler(contentHeadersHandler)
         .handler(unitOfWorkHandler)
         .handler(lastDownloadedHandler)
+        .handler(indexHtmlForwardHandler)
         .handler(proxyHandler)
         .create())
 
