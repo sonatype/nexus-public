@@ -84,6 +84,7 @@ public class MavenContentGroupFacetImpl
     extends GroupFacetImpl
     implements MavenGroupFacet, EventAware.Asynchronous
 {
+  private static final String PATH_PREFIX = "/";
   private final RepositoryMetadataMerger repositoryMetadataMerger;
 
   private final ArchetypeCatalogMerger archetypeCatalogMerger;
@@ -341,7 +342,9 @@ public class MavenContentGroupFacetImpl
                 getRepository().getName(), mavenPath.getPath(), e);
           }
         }
-        getRepository().facet(ContentFacet.class).assets().path(mavenPath.main().getPath()).find()
+        getRepository().facet(ContentFacet.class).assets()
+            .path(prependIfMissing(mavenPath.main().getPath(), PATH_PREFIX))
+            .find()
             .ifPresent(FluentAsset::markAsStale);
       }
     }
