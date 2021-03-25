@@ -18,6 +18,7 @@ import javax.inject.Named
 import javax.inject.Provider
 import javax.inject.Singleton
 
+import org.sonatype.nexus.content.maven.internal.index.MavenContentHostedIndexFacet
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
@@ -25,7 +26,6 @@ import org.sonatype.nexus.repository.http.HttpMethods
 import org.sonatype.nexus.repository.maven.PurgeUnusedSnapshotsFacet
 import org.sonatype.nexus.repository.maven.RemoveSnapshotsFacet
 import org.sonatype.nexus.repository.maven.internal.Maven2Format
-import org.sonatype.nexus.repository.maven.internal.hosted.MavenHostedIndexFacet
 import org.sonatype.nexus.repository.maven.internal.matcher.MavenArchetypeCatalogMatcher
 import org.sonatype.nexus.repository.maven.internal.matcher.MavenIndexMatcher
 import org.sonatype.nexus.repository.maven.internal.matcher.MavenPathMatcher
@@ -51,7 +51,7 @@ class MavenHostedRecipe
     implements Maven2HostedRecipe
 {
   @Inject
-  Provider<MavenHostedIndexFacet> mavenIndexFacet
+  Provider<MavenContentHostedIndexFacet> mavenIndexFacet
 
   @Inject
   Provider<RemoveSnapshotsFacet> removeSnapshotsFacet
