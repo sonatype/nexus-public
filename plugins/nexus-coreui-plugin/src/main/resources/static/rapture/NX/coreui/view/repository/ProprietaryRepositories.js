@@ -21,9 +21,9 @@
  *
  * @since 3.next
  */
-Ext.define('NX.coreui.view.system.ProprietaryRepositories', {
+Ext.define('NX.coreui.view.repository.ProprietaryRepositories', {
   extend: 'NX.view.SettingsPanel',
-  alias: 'widget.nx-coreui-system-proprietary-repositories',
+  alias: 'widget.nx-coreui-repository-proprietary-repositories',
   requires: [
     'NX.Conditions',
     'NX.ext.form.field.ItemSelector',

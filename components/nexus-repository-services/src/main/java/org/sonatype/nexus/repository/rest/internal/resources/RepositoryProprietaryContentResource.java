@@ -50,7 +50,7 @@ import static org.sonatype.nexus.rest.APIConstants.INTERNAL_API_PREFIX;
 
 /**
  * Internal API for UI that allows bulk (un)marking repositories as source of proprietary content to, in conjunction
- * with IQ Server, protect against dependency confusion attacks.
+ * with IQ Server, protect against namespace conflict attacks.
  *
  * @since 3.next
  */
