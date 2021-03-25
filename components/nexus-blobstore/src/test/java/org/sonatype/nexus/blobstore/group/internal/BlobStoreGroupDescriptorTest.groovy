@@ -20,6 +20,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreManager
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup
 import org.sonatype.nexus.blobstore.group.BlobStoreGroupService
+import org.sonatype.nexus.blobstore.group.FillPolicy
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService
 import org.sonatype.nexus.rest.ValidationErrorsException
 
@@ -42,8 +43,18 @@ class BlobStoreGroupDescriptorTest
 
   BlobStoreQuotaService quotaService = Mock()
 
-  BlobStoreGroupDescriptor blobStoreGroupDescriptor =
-      new BlobStoreGroupDescriptor(blobStoreManager, blobStoreUtil, { blobStoreGroupService }, quotaService, [])
+  Map<String, FillPolicy> fillPolicies = [
+      (RoundRobinFillPolicy.TYPE)        : new RoundRobinFillPolicy(),
+      (WriteToFirstMemberFillPolicy.TYPE): new WriteToFirstMemberFillPolicy()
+  ]
+
+  BlobStoreGroupDescriptor blobStoreGroupDescriptor = new BlobStoreGroupDescriptor(
+      blobStoreManager,
+      blobStoreUtil,
+      { blobStoreGroupService },
+      quotaService,
+      fillPolicies
+  )
 
   def blobStores = [:]
 

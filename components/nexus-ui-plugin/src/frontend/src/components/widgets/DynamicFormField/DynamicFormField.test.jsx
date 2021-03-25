@@ -85,7 +85,7 @@ describe('DynamicFormField', () => {
       const {container} = render(<DynamicFormField {...makeContext('test', 'a')} dynamicProps={{
         type: 'combobox',
         attributes: {
-          options: ['a', 'b']
+          options: {'a': 'a', 'b':'b'}
         }
       }}/>);
 

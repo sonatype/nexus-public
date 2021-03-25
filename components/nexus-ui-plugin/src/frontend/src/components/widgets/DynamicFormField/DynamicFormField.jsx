@@ -10,11 +10,12 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from "react";
+import React from 'react';
+import {mapObjIndexed, values} from 'ramda';
 import Textfield from "../Textfield/Textfield";
 import MultiSelect from '../MultiSelect/MultiSelect';
 import Select from '../Select/Select';
-import Utils from "../../../interface/Utils";
+import Utils from '../../../interface/Utils';
 
 export default function DynamicFormField({current, dynamicProps, id, initialValue, onChange}) {
   if (dynamicProps.type === 'string') {
@@ -42,8 +43,8 @@ export default function DynamicFormField({current, dynamicProps, id, initialValu
   else if (dynamicProps.type === 'combobox') {
     const fieldProps = Utils.fieldProps(id, current, initialValue || '');
     return <Select {...fieldProps} onChange={(event) => onChange(fieldProps.name, event.currentTarget.value)}>
-      <option />
-      {dynamicProps.attributes.options?.map(value => <option key={value} value={value}>{value}</option>)}
+      <option/>
+      {values(mapObjIndexed((v, k) => <option key={k} value={k}>{v}</option>, dynamicProps.attributes.options))}
     </Select>;
   }
   else {
