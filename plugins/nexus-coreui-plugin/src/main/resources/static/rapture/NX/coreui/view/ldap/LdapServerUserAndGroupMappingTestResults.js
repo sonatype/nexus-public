@@ -55,10 +55,10 @@ Ext.define('NX.coreui.view.ldap.LdapServerUserAndGroupMappingTestResults', {
     me.items = {
       xtype: 'grid',
       columns: [
-        { header: NX.I18n.get('Ldap_LdapServerUserAndGroupMappingTestResults_ID_Header'), dataIndex: 'username', flex: 1 },
-        { header: NX.I18n.get('Ldap_LdapServerUserAndGroupMappingTestResults_Name_Header'), dataIndex: 'realName', flex: 1 },
-        { header: NX.I18n.get('Ldap_LdapServerUserAndGroupMappingTestResults_Email_Header'), dataIndex: 'email', width: 250 },
-        { header: NX.I18n.get('Ldap_LdapServerUserAndGroupMappingTestResults_Roles_Header'), dataIndex: 'membership', flex: 3 }
+        { header: NX.I18n.get('Ldap_LdapServerUserAndGroupMappingTestResults_ID_Header'), dataIndex: 'username', flex: 1, renderer: Ext.htmlEncode },
+        { header: NX.I18n.get('Ldap_LdapServerUserAndGroupMappingTestResults_Name_Header'), dataIndex: 'realName', flex: 1, renderer: Ext.htmlEncode },
+        { header: NX.I18n.get('Ldap_LdapServerUserAndGroupMappingTestResults_Email_Header'), dataIndex: 'email', width: 250, renderer: Ext.htmlEncode },
+        { header: NX.I18n.get('Ldap_LdapServerUserAndGroupMappingTestResults_Roles_Header'), dataIndex: 'membership', flex: 3, renderer: Ext.htmlEncode }
       ],
       store: Ext.create('Ext.data.JsonStore', {
         fields: ['username', 'realName', 'email', 'membership'],
