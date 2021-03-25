@@ -128,35 +128,6 @@
       </plugin>
 
       <plugin>
-        <groupId>com.github.searls</groupId>
-        <artifactId>jasmine-maven-plugin</artifactId>
-        <configuration>
-          <preloadSources>
-            <source>baseapp-debug.js</source>
-            <source>NX-test.js</source>
-          </preloadSources>
-          <sourceIncludes>
-            <includ>NX.js</includ>
-            <include>Ext/**/*.js</include>
-            <include>NX/**/*.js</include>
-          </sourceIncludes>
-          <specIncludes>
-            <include>**/*-spec.js</include>
-          </specIncludes>
-          <jsSrcDir>${project.basedir}/src/main/resources/static/rapture</jsSrcDir>
-          <jsTestSrcDir>${project.basedir}/src/test/resources/jasmine</jsTestSrcDir>
-          <keepServerAlive>true</keepServerAlive>
-          <webDriverClassName>org.openqa.selenium.phantomjs.PhantomJSDriver</webDriverClassName>
-          <webDriverCapabilities>
-            <capability>
-              <name>phantomjs.binary.path</name>
-              <value>${phantomjs.binary}</value>
-            </capability>
-          </webDriverCapabilities>
-        </configuration>
-      </plugin>
-
-      <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>buildnumber-maven-plugin</artifactId>
         <executions>
@@ -251,23 +222,6 @@
                 </configuration>
               </execution>
             </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-
-    <profile>
-      <id>phantomjs</id>
-      <activation>
-        <property>
-          <name>!skipTests</name>
-        </property>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>com.github.klieber</groupId>
-            <artifactId>phantomjs-maven-plugin</artifactId>
           </plugin>
         </plugins>
       </build>
