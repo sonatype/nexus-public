@@ -79,6 +79,7 @@ public class StreamPayload
   /**
    * Supplies an {@link InputStream}.
    */
+  @FunctionalInterface
   public interface InputStreamSupplier
   {
     @Nonnull
