@@ -235,7 +235,12 @@
               </bootFeatures>
               <installedFeatures>
                 <feature>management</feature>
-                <feature>ssh</feature>
+                <!-- 
+                To enable remote access to the karaf console, uncomment the ssh feature and add ssh to featuresBoot in 
+                org.apache.karaf.features.cfg e.g. featuresBoot = nexus-boot-feature,ssh
+                Note: Enabling remote access is not recommended or supported.
+                -->
+                <!-- <feature>ssh</feature> -->
                 <feature>nexus-orient</feature>
                 <feature>nexus-datastore-mybatis</feature>
                 <feature>nexus-core-feature</feature>
