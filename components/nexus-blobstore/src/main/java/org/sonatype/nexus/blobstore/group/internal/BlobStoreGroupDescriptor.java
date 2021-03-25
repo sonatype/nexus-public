@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -46,6 +45,7 @@ import static com.google.common.collect.Streams.stream;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 import static org.sonatype.nexus.blobstore.group.BlobStoreGroup.CONFIG_KEY;
 import static org.sonatype.nexus.blobstore.group.BlobStoreGroup.FILL_POLICY_KEY;
 import static org.sonatype.nexus.blobstore.group.BlobStoreGroup.MEMBERS_KEY;
@@ -86,17 +86,20 @@ public class BlobStoreGroupDescriptor
 
   private final FormField fillPolicy;
 
+  private final Map<String, FillPolicy> fillPolicies;
+
   @Inject
   public BlobStoreGroupDescriptor(final BlobStoreManager blobStoreManager,
                                   final BlobStoreUtil blobStoreUtil,
                                   final Provider<BlobStoreGroupService> blobStoreGroupService,
                                   final BlobStoreQuotaService quotaService,
-                                  final List<FillPolicy> fillPolicies)
+                                  final Map<String, FillPolicy> fillPolicies)
   {
     super(quotaService);
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.blobStoreUtil = checkNotNull(blobStoreUtil);
     this.blobStoreGroupService = checkNotNull(blobStoreGroupService);
+    this.fillPolicies = checkNotNull(fillPolicies);
     this.members = new ItemselectFormField(
         MEMBERS_KEY,
         messages.membersLabel(),
@@ -114,7 +117,9 @@ public class BlobStoreGroupDescriptor
         null,
         FormField.MANDATORY
     ).withStoreApi("coreui_Blobstore.fillPolicies");
-    this.fillPolicy.getAttributes().put("options", fillPolicies.stream().map(FillPolicy::getName).collect(toList()));
+    this.fillPolicy.getAttributes().put("options", fillPolicies.entrySet().stream().collect(
+        toMap(Map.Entry::getKey, e -> e.getValue().getName())
+    ));
   }
 
   @Override
@@ -147,6 +152,11 @@ public class BlobStoreGroupDescriptor
     String fillPolicy = config.attributes(CONFIG_KEY).get(FILL_POLICY_KEY, String.class);
     if (StringUtils.isBlank(fillPolicy)) {
       throw new ValidationErrorsException("Blob store group requires a fill policy configuration");
+    }
+    if (!fillPolicies.containsKey(fillPolicy)) {
+      throw new ValidationErrorsException("Blob store group requires a valid fill policy name, options include [{}]",
+          String.join(", ", fillPolicies.keySet())
+      );
     }
 
     List<String> memberNames = config.attributes(CONFIG_KEY).get(MEMBERS_KEY, List.class);
