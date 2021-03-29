@@ -51,6 +51,7 @@ import static org.junit.Assert.assertFalse;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.repository.content.store.ComponentDAOTest.browseComponents;
 import static org.sonatype.nexus.repository.content.store.ComponentDAOTest.countComponents;
 
@@ -79,7 +80,7 @@ public class AssetDAOTest
   }
 
   private void createContentRepository(final ContentRepositoryData contentRepository) {
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ContentRepositoryDAO dao = session.access(TestContentRepositoryDAO.class);
       dao.createContentRepository(contentRepository);
       session.getTransaction().commit();
@@ -110,7 +111,7 @@ public class AssetDAOTest
 
     // CREATE
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
       assertThat(browseAssets(dao, repositoryId, null, 10, null), emptyIterable());
@@ -147,7 +148,7 @@ public class AssetDAOTest
 
     // TRY CREATE AGAIN
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
       AssetData duplicate = new AssetData();
@@ -167,7 +168,7 @@ public class AssetDAOTest
 
     // READ
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
       assertFalse(dao.readPath(repositoryId, "test-path").isPresent());
@@ -189,7 +190,7 @@ public class AssetDAOTest
 
     // must use a new session as CURRENT_TIMESTAMP (used for last_updated) is fixed once used inside a session
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
       tempResult = dao.readPath(repositoryId, path1).get();
@@ -236,7 +237,7 @@ public class AssetDAOTest
 
     // must use a new session as CURRENT_TIMESTAMP (used for last_updated) is fixed once used inside a session
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
       tempResult = dao.readPath(repositoryId, path1).get();
@@ -273,7 +274,7 @@ public class AssetDAOTest
 
     // DELETE
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
       assertTrue(dao.deleteAsset(asset1));
@@ -302,7 +303,7 @@ public class AssetDAOTest
     String path = asset.path();
     Asset tempResult;
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
       dao.createAsset(asset);
       session.getTransaction().commit();
@@ -312,7 +313,7 @@ public class AssetDAOTest
 
     Thread.sleep(2); // NOSONAR
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
       tempResult = dao.readPath(repositoryId, path).get();
@@ -336,7 +337,7 @@ public class AssetDAOTest
 
     Thread.sleep(2); // NOSONAR
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
       tempResult = dao.readPath(repositoryId, path).get();
@@ -366,7 +367,7 @@ public class AssetDAOTest
     String path = asset.path();
     Asset tempResult;
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
       dao.createAssetBlob(assetBlob1);
       dao.createAssetBlob(assetBlob2);
@@ -381,7 +382,7 @@ public class AssetDAOTest
 
     Thread.sleep(2); // NOSONAR
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
       tempResult = dao.readPath(repositoryId, path).get();
@@ -410,7 +411,7 @@ public class AssetDAOTest
 
     Thread.sleep(2); // NOSONAR
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
       tempResult = dao.readPath(repositoryId, path).get();
@@ -439,7 +440,7 @@ public class AssetDAOTest
 
     Thread.sleep(2); // NOSONAR
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
       tempResult = dao.readPath(repositoryId, path).get();
@@ -468,7 +469,7 @@ public class AssetDAOTest
 
     Thread.sleep(2); // NOSONAR
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
       tempResult = dao.readPath(repositoryId, path).get();
@@ -495,7 +496,7 @@ public class AssetDAOTest
 
     Thread.sleep(2); // NOSONAR
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
       tempResult = dao.readPath(repositoryId, path).get();
@@ -528,7 +529,7 @@ public class AssetDAOTest
 
     List<Asset> browsedAssets = new ArrayList<>();
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO assetDao = session.access(TestAssetDAO.class);
       ComponentDAO componentDAO = session.access(TestComponentDAO.class);
 
@@ -560,7 +561,7 @@ public class AssetDAOTest
     // check assets under a 'detached' entity with no internal id can still be browsed
     ComponentData component = (ComponentData) generatedComponents().get(0);
     component.componentId = null;
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       assertTrue(session.access(TestAssetDAO.class).browseComponentAssets(component).stream()
           .map(Asset::component)
           .map(Optional::get)
@@ -580,7 +581,7 @@ public class AssetDAOTest
 
     repositoryId = generatedRepositories().get(0).repositoryId;
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
       assertThat(countAssets(dao, repositoryId), is(1000));
@@ -614,7 +615,7 @@ public class AssetDAOTest
     TestAssetData asset2 = randomAsset(repositoryId);
     asset2.setPath(asset1.path() + "/2"); // make sure paths are different
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       TestAssetDAO dao = session.access(TestAssetDAO.class);
 
       // our bespoke schema will be applied automatically via 'extendSchema'...
@@ -647,7 +648,7 @@ public class AssetDAOTest
     TestAssetData asset2 = randomAsset(repositoryId);
     asset2.setPath(asset1.path() + "/2"); // make sure paths are different
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       TestAssetDAO dao = session.access(TestAssetDAO.class);
 
       // our bespoke schema will be applied automatically via 'extendSchema'...
@@ -685,7 +686,7 @@ public class AssetDAOTest
 
     repositoryId = generatedRepositories().get(0).contentRepositoryId();
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
       assertThat(countAssets(dao, repositoryId), is(100));
@@ -725,7 +726,7 @@ public class AssetDAOTest
     asset4.setPath(asset1.path() + "/4");
     asset5.setPath(asset1.path() + "/5");
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
       dao.createAsset(asset1);
@@ -756,14 +757,14 @@ public class AssetDAOTest
     asset1.setLastDownloaded(UTC.now().minusDays(2));
     asset2.setLastDownloaded(UTC.now().minusDays(4));
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
       dao.createAsset(asset1);
       dao.createAsset(asset2);
       session.getTransaction().commit();
     }
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
       assertTrue(dao.readPath(repositoryId, asset1.path()).isPresent());
@@ -790,7 +791,7 @@ public class AssetDAOTest
     AssetData asset2 = randomAsset(repositoryId);
     asset2.setPath(asset1.path() + "/2"); // make sure paths are different
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
       dao.createAsset(asset1);
       dao.createAsset(asset2);
@@ -799,7 +800,7 @@ public class AssetDAOTest
 
     Asset tempResult;
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
       tempResult = dao.readAsset(asset1.assetId).get();
@@ -831,7 +832,7 @@ public class AssetDAOTest
 
     // CREATE
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
       assertThat(
@@ -865,7 +866,7 @@ public class AssetDAOTest
   public void testSetLastDownloaded() {
     AssetData asset1 = randomAsset(repositoryId);
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
       dao.createAsset(asset1);
 
@@ -880,7 +881,7 @@ public class AssetDAOTest
   public void testLastUpdated() {
     AssetData asset1 = randomAsset(repositoryId);
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
       dao.createAsset(asset1);
 

@@ -31,7 +31,6 @@ import org.sonatype.nexus.datastore.DataStoreConfigurationManager;
 import org.sonatype.nexus.datastore.DataStoreDescriptor;
 import org.sonatype.nexus.datastore.DataStoreRestorer;
 import org.sonatype.nexus.datastore.DataStoreUsageChecker;
-import org.sonatype.nexus.datastore.api.ContentDataAccess;
 import org.sonatype.nexus.datastore.api.DataAccess;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
@@ -70,9 +69,7 @@ public class DataStoreManagerImpl
 {
   private static final Key<Class<DataAccess>> DATA_ACCESS_KEY = new Key<Class<DataAccess>>(){/**/};
 
-  private static final DataAccessMediator CONFIG_DATA_ACCESS_MEDIATOR = new DataAccessMediator(false);
-
-  private static final DataAccessMediator CONTENT_DATA_ACCESS_MEDIATOR = new DataAccessMediator(true);
+  private static final DataAccessMediator DATA_ACCESS_MEDIATOR = new DataAccessMediator();
 
   private final boolean enabled;
 
@@ -181,8 +178,7 @@ public class DataStoreManagerImpl
     store.start();
 
     // register the appropriate access types with the store
-    beanLocator.watch(DATA_ACCESS_KEY,
-        isContentStore(storeName) ? CONTENT_DATA_ACCESS_MEDIATOR : CONFIG_DATA_ACCESS_MEDIATOR, store);
+    beanLocator.watch(DATA_ACCESS_KEY, DATA_ACCESS_MEDIATOR, store);
 
     synchronized (dataStores) {
       if (frozen) {
@@ -268,7 +264,6 @@ public class DataStoreManagerImpl
   public boolean delete(final String storeName) throws Exception {
     checkNotNull(storeName);
 
-    checkState(isContentStore(storeName), "%s data store cannot be removed", storeName);
     checkState(!usageChecker.get().isDataStoreUsed(storeName),
         "%s data store is in use by at least one repository", storeName);
 
@@ -347,24 +342,14 @@ public class DataStoreManagerImpl
   private static class DataAccessMediator
       implements Mediator<Named, Class<DataAccess>, DataStore<?>>
   {
-    private final boolean isContentStore;
-
-    DataAccessMediator(final boolean isContentStore) {
-      this.isContentStore = isContentStore;
-    }
-
     @Override
     public void add(final BeanEntry<Named, Class<DataAccess>> entry, final DataStore<?> store) {
-      if (isContentStore == ContentDataAccess.class.isAssignableFrom(entry.getValue())) {
         store.register(entry.getValue());
-      }
     }
 
     @Override
     public void remove(final BeanEntry<Named, Class<DataAccess>> entry, final DataStore<?> store) {
-      if (isContentStore == ContentDataAccess.class.isAssignableFrom(entry.getValue())) {
         store.unregister(entry.getValue());
-      }
     }
   }
 }

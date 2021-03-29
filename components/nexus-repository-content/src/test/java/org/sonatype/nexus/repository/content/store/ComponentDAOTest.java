@@ -42,6 +42,7 @@ import static org.junit.Assert.assertFalse;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 /**
  * Test {@link ComponentDAO}.
@@ -68,7 +69,7 @@ public class ComponentDAOTest
   }
 
   private void createContentRepository(final ContentRepositoryData contentRepository) {
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ContentRepositoryDAO dao = session.access(TestContentRepositoryDAO.class);
       dao.createContentRepository(contentRepository);
       session.getTransaction().commit();
@@ -107,7 +108,7 @@ public class ComponentDAOTest
 
     // CREATE
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ComponentDAO dao = session.access(TestComponentDAO.class);
 
       assertThat(browseComponents(dao, repositoryId, null, 10, null), emptyIterable());
@@ -136,7 +137,7 @@ public class ComponentDAOTest
 
     // TRY CREATE AGAIN
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ComponentDAO dao = session.access(TestComponentDAO.class);
 
       ComponentData duplicate = new ComponentData();
@@ -157,7 +158,7 @@ public class ComponentDAOTest
 
     // READ
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ComponentDAO dao = session.access(TestComponentDAO.class);
 
       assertFalse(dao.readCoordinate(repositoryId, "test-namespace", "test-name", "test-version").isPresent());
@@ -179,7 +180,7 @@ public class ComponentDAOTest
 
     // must use a new session as CURRENT_TIMESTAMP (used for last_updated) is fixed once used inside a session
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ComponentDAO dao = session.access(TestComponentDAO.class);
 
       tempResult = dao.readCoordinate(repositoryId, namespace1, name1, version1).get();
@@ -226,7 +227,7 @@ public class ComponentDAOTest
 
     // must use a new session as CURRENT_TIMESTAMP (used for last_updated) is fixed once used inside a session
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ComponentDAO dao = session.access(TestComponentDAO.class);
 
       tempResult = dao.readCoordinate(repositoryId, namespace1, name1, version1).get();
@@ -263,7 +264,7 @@ public class ComponentDAOTest
 
     // DELETE
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ComponentDAO dao = session.access(TestComponentDAO.class);
 
       assertTrue(dao.deleteComponent(component1));
@@ -294,7 +295,7 @@ public class ComponentDAOTest
 
     List<Component> browsedComponents = new ArrayList<>();
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ComponentDAO dao = session.access(TestComponentDAO.class);
 
       assertThat(generatedRepositories().stream()
@@ -331,7 +332,7 @@ public class ComponentDAOTest
 
     repositoryId = generatedRepositories().get(0).repositoryId;
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ComponentDAO dao = session.access(TestComponentDAO.class);
 
       assertThat(countComponents(dao, repositoryId), is(1000));
@@ -366,7 +367,7 @@ public class ComponentDAOTest
 
     repositoryId = generatedRepositories().get(0).contentRepositoryId();
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ComponentDAO dao = session.access(TestComponentDAO.class);
 
       assertThat(countComponents(dao, repositoryId), is(100));
@@ -400,7 +401,7 @@ public class ComponentDAOTest
     ComponentData component2 = randomComponent(repositoryId);
     component2.setVersion(component1.version() + ".2"); // make sure versions are different
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ComponentDAO dao = session.access(TestComponentDAO.class);
       dao.createComponent(component1);
       dao.createComponent(component2);
@@ -416,14 +417,14 @@ public class ComponentDAOTest
     asset2.setComponent(component2);
     asset2.setLastDownloaded(UTC.now().minusDays(4));
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
       dao.createAsset(asset1);
       dao.createAsset(asset2);
       session.getTransaction().commit();
     }
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ComponentDAO componentDao = session.access(TestComponentDAO.class);
       AssetDAO assetDao = session.access(TestAssetDAO.class);
 
@@ -461,7 +462,7 @@ public class ComponentDAOTest
     ComponentData component2 = randomComponent(repositoryId);
     component2.setVersion(component1.version() + ".2"); // make sure versions are different
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ComponentDAO dao = session.access(TestComponentDAO.class);
       dao.createComponent(component1);
       dao.createComponent(component2);
@@ -470,7 +471,7 @@ public class ComponentDAOTest
 
     Component tempResult;
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ComponentDAO dao = session.access(TestComponentDAO.class);
 
       tempResult = dao.readComponent(component1.componentId).get();
@@ -506,7 +507,7 @@ public class ComponentDAOTest
 
     // CREATE
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ComponentDAO dao = session.access(TestComponentDAO.class);
 
       assertThat(

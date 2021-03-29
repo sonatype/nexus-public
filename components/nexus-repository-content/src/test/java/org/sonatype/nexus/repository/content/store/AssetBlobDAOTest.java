@@ -30,6 +30,7 @@ import static org.junit.Assert.assertFalse;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.testcommon.matchers.NexusMatchers.time;
 
 /**
@@ -51,7 +52,7 @@ public class AssetBlobDAOTest
 
     // CREATE
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
 
       assertThat(dao.browseUnusedAssetBlobs(1, null), emptyIterable());
@@ -71,7 +72,7 @@ public class AssetBlobDAOTest
 
     // TRY CREATE AGAIN
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
 
       AssetBlobData duplicate = new AssetBlobData();
@@ -91,7 +92,7 @@ public class AssetBlobDAOTest
 
     // READ
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
 
       assertFalse(dao.readAssetBlob(new BlobRef("test-node", "test-store", "test-blob")).isPresent());
@@ -107,7 +108,7 @@ public class AssetBlobDAOTest
 
     // DELETE
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
 
       assertTrue(dao.deleteAssetBlob(blobRef1));
@@ -129,7 +130,7 @@ public class AssetBlobDAOTest
 
     BlobRef blobRef1 = assetBlob1.blobRef();
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
 
       dao.createAssetBlob(assetBlob1);
@@ -151,7 +152,7 @@ public class AssetBlobDAOTest
     AssetBlobData assetBlob1 = randomAssetBlob();
     BlobRef blobRef1 = assetBlob1.blobRef();
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
       dao.createAssetBlob(assetBlob1);
 

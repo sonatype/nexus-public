@@ -75,18 +75,19 @@ import org.junit.experimental.categories.Category;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isA;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.datastore.mybatis.CombUUID.combUUID;
 import static org.sonatype.nexus.repository.content.AttributeOperation.SET;
 
@@ -98,7 +99,7 @@ public class FormatStoreManagerTest
     extends TestSupport
 {
   @Rule
-  public DataSessionRule sessionRule = new DataSessionRule("content")
+  public DataSessionRule sessionRule = new DataSessionRule(DEFAULT_DATASTORE_NAME)
       .handle(new BlobRefTypeHandler())
       .access(TestContentRepositoryDAO.class)
       .access(TestComponentDAO.class)
@@ -137,10 +138,10 @@ public class FormatStoreManagerTest
 
     FormatStoreManager underTest = injector.getInstance(Key.get(FormatStoreManager.class, Names.named("test")));
 
-    ContentRepositoryStore<?> contentRepositoryStore = underTest.contentRepositoryStore("content");
-    ComponentStore<?> componentStore = underTest.componentStore("content");
-    AssetStore<?> assetStore = underTest.assetStore("content");
-    AssetBlobStore<?> assetBlobStore = underTest.assetBlobStore("content");
+    ContentRepositoryStore<?> contentRepositoryStore = underTest.contentRepositoryStore(DEFAULT_DATASTORE_NAME);
+    ComponentStore<?> componentStore = underTest.componentStore(DEFAULT_DATASTORE_NAME);
+    AssetStore<?> assetStore = underTest.assetStore(DEFAULT_DATASTORE_NAME);
+    AssetBlobStore<?> assetBlobStore = underTest.assetBlobStore(DEFAULT_DATASTORE_NAME);
 
     // check the appropriate DAOs have been bound
     assertDaoBinding(contentRepositoryStore, TestContentRepositoryDAO.class);
@@ -149,10 +150,10 @@ public class FormatStoreManagerTest
     assertDaoBinding(assetBlobStore, TestAssetBlobDAO.class);
 
     // check that previously requested stores are cached to keep creation costs down
-    assertThat(underTest.contentRepositoryStore("content"), sameInstance(contentRepositoryStore));
-    assertThat(underTest.componentStore("content"), sameInstance(componentStore));
-    assertThat(underTest.assetStore("content"), sameInstance(assetStore));
-    assertThat(underTest.assetBlobStore("content"), sameInstance(assetBlobStore));
+    assertThat(underTest.contentRepositoryStore(DEFAULT_DATASTORE_NAME), sameInstance(contentRepositoryStore));
+    assertThat(underTest.componentStore(DEFAULT_DATASTORE_NAME), sameInstance(componentStore));
+    assertThat(underTest.assetStore(DEFAULT_DATASTORE_NAME), sameInstance(assetStore));
+    assertThat(underTest.assetBlobStore(DEFAULT_DATASTORE_NAME), sameInstance(assetBlobStore));
   }
 
   @Test
@@ -162,10 +163,10 @@ public class FormatStoreManagerTest
 
     FormatStoreManager underTest = injector.getInstance(Key.get(FormatStoreManager.class, Names.named("test")));
 
-    ContentRepositoryStore<?> contentRepositoryStore = underTest.contentRepositoryStore("content");
-    ComponentStore<?> componentStore = underTest.componentStore("content");
-    AssetStore<?> assetStore = underTest.assetStore("content");
-    AssetBlobStore<?> assetBlobStore = underTest.assetBlobStore("content");
+    ContentRepositoryStore<?> contentRepositoryStore = underTest.contentRepositoryStore(DEFAULT_DATASTORE_NAME);
+    ComponentStore<?> componentStore = underTest.componentStore(DEFAULT_DATASTORE_NAME);
+    AssetStore<?> assetStore = underTest.assetStore(DEFAULT_DATASTORE_NAME);
+    AssetBlobStore<?> assetBlobStore = underTest.assetBlobStore(DEFAULT_DATASTORE_NAME);
 
     ContentRepositoryData repository = new ContentRepositoryData();
     repository.setAttributes(new NestedAttributesMap("attributes", new HashMap<>()));
@@ -214,10 +215,10 @@ public class FormatStoreManagerTest
 
     FormatStoreManager underTest = injector.getInstance(Key.get(FormatStoreManager.class, Names.named("test")));
 
-    ContentRepositoryStore<?> contentRepositoryStore = underTest.contentRepositoryStore("content");
-    ComponentStore<?> componentStore = underTest.componentStore("content");
-    AssetStore<?> assetStore = underTest.assetStore("content");
-    AssetBlobStore<?> assetBlobStore = underTest.assetBlobStore("content");
+    ContentRepositoryStore<?> contentRepositoryStore = underTest.contentRepositoryStore(DEFAULT_DATASTORE_NAME);
+    ComponentStore<?> componentStore = underTest.componentStore(DEFAULT_DATASTORE_NAME);
+    AssetStore<?> assetStore = underTest.assetStore(DEFAULT_DATASTORE_NAME);
+    AssetBlobStore<?> assetBlobStore = underTest.assetBlobStore(DEFAULT_DATASTORE_NAME);
 
     // check the appropriate DAOs have been bound
     assertDaoBinding(contentRepositoryStore, TestContentRepositoryDAO.class);
@@ -241,8 +242,8 @@ public class FormatStoreManagerTest
 
     // our bespoke schema will be applied automatically via 'extendSchema'...
 
-    ContentRepositoryStore<?> contentRepositoryStore = underTest.contentRepositoryStore("content");
-    TestAssetStore assetStore = underTest.assetStore("content");
+    ContentRepositoryStore<?> contentRepositoryStore = underTest.contentRepositoryStore(DEFAULT_DATASTORE_NAME);
+    TestAssetStore assetStore = underTest.assetStore(DEFAULT_DATASTORE_NAME);
 
     ContentRepositoryData repository = new ContentRepositoryData();
     repository.setAttributes(new NestedAttributesMap("attributes", new HashMap<>()));
@@ -273,10 +274,10 @@ public class FormatStoreManagerTest
 
     FormatStoreManager underTest = injector.getInstance(Key.get(FormatStoreManager.class, Names.named("test")));
 
-    ContentRepositoryStore<?> contentRepositoryStore = underTest.contentRepositoryStore("content");
-    ComponentStore<?> componentStore = underTest.componentStore("content");
-    AssetStore<?> assetStore = underTest.assetStore("content");
-    AssetBlobStore<?> assetBlobStore = underTest.assetBlobStore("content");
+    ContentRepositoryStore<?> contentRepositoryStore = underTest.contentRepositoryStore(DEFAULT_DATASTORE_NAME);
+    ComponentStore<?> componentStore = underTest.componentStore(DEFAULT_DATASTORE_NAME);
+    AssetStore<?> assetStore = underTest.assetStore(DEFAULT_DATASTORE_NAME);
+    AssetBlobStore<?> assetBlobStore = underTest.assetBlobStore(DEFAULT_DATASTORE_NAME);
 
     ContentRepositoryData repository = new ContentRepositoryData();
     repository.setAttributes(new NestedAttributesMap("attributes", new HashMap<>()));
@@ -358,10 +359,10 @@ public class FormatStoreManagerTest
 
     FormatStoreManager underTest = injector.getInstance(Key.get(FormatStoreManager.class, Names.named("test")));
 
-    ContentRepositoryStore<?> contentRepositoryStore = underTest.contentRepositoryStore("content");
-    ComponentStore<?> componentStore = underTest.componentStore("content");
-    AssetStore<?> assetStore = underTest.assetStore("content");
-    AssetBlobStore<?> assetBlobStore = underTest.assetBlobStore("content");
+    ContentRepositoryStore<?> contentRepositoryStore = underTest.contentRepositoryStore(DEFAULT_DATASTORE_NAME);
+    ComponentStore<?> componentStore = underTest.componentStore(DEFAULT_DATASTORE_NAME);
+    AssetStore<?> assetStore = underTest.assetStore(DEFAULT_DATASTORE_NAME);
+    AssetBlobStore<?> assetBlobStore = underTest.assetBlobStore(DEFAULT_DATASTORE_NAME);
 
     ContentRepositoryData repository = new ContentRepositoryData();
     repository.setAttributes(new NestedAttributesMap("attributes", new HashMap<>()));

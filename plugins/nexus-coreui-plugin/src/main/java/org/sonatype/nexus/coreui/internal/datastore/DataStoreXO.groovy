@@ -18,6 +18,4 @@ package org.sonatype.nexus.coreui.internal.datastore
 class DataStoreXO
 {
   String name
-
-  boolean isContentStore
 }

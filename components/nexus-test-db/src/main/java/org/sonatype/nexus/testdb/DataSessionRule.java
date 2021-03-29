@@ -45,7 +45,7 @@ import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.of;
 import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getBoolean;
 import static org.sonatype.nexus.common.text.Strings2.isBlank;
-import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE_NAME;
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.JDBC_URL;
 
 /**
@@ -81,7 +81,7 @@ public class DataSessionRule
    * Supplies in-memory config sessions.
    */
   public DataSessionRule() {
-    this(CONFIG_DATASTORE_NAME);
+    this(DEFAULT_DATASTORE_NAME);
   }
 
   /**
@@ -154,10 +154,8 @@ public class DataSessionRule
         typeHandlers.forEach(store::register);
         interceptors.forEach(store::register);
 
-        if (CONFIG_DATASTORE_NAME.equals(storeName)) {
+        if (DEFAULT_DATASTORE_NAME.equals(storeName)) {
           configAccessTypes.forEach(store::register);
-        }
-        else {
           contentAccessTypes.forEach(store::register);
         }
       }

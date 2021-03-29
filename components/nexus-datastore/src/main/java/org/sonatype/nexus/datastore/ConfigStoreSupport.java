@@ -23,7 +23,7 @@ import com.google.inject.TypeLiteral;
 import org.eclipse.sisu.inject.TypeArguments;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE_NAME;
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 /**
  * Support class for transactional domain stores backed by the config data store.
@@ -63,6 +63,6 @@ public abstract class ConfigStoreSupport<T extends DataAccess>
 
   @Override
   public DataSession<?> openSession() {
-    return sessionSupplier.openSession(CONFIG_DATASTORE_NAME);
+    return sessionSupplier.openSession(DEFAULT_DATASTORE_NAME);
   }
 }

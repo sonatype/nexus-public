@@ -23,7 +23,7 @@ import org.junit.Rule
 import org.junit.experimental.categories.Category
 import spock.lang.Specification
 
-import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE_NAME
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME
 import static org.sonatype.nexus.repository.routing.RoutingMode.ALLOW
 
 @Category(SQLTestGroup.class)
@@ -44,7 +44,7 @@ class ConfigurationDAOTest
   EntityId id1, id2
 
   void setup() {
-    session = sessionRule.openSession(CONFIG_DATASTORE_NAME)
+    session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)
     dao = session.access(ConfigurationDAO)
     routingRuleDAO = session.access(RoutingRuleDAO)
 

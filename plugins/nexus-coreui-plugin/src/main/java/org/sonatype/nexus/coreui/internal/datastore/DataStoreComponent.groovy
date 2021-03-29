@@ -104,10 +104,8 @@ class DataStoreComponent
 
   DataStoreXO asDataStoreXO(final DataStore dataStore) {
     String storeName = dataStore.configuration.name
-    boolean isContentStore = dataStoreManager.isContentStore(storeName)
     def dataStoreXO = new DataStoreXO(
-        name: storeName,
-        isContentStore: isContentStore
+        name: storeName
     )
     return dataStoreXO
   }

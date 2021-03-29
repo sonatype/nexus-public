@@ -49,7 +49,7 @@ import static org.hamcrest.collection.IsEmptyCollection.empty
 import static org.hamcrest.MatcherAssert.assertThat
 import static org.quartz.JobBuilder.newJob
 import static org.quartz.TriggerBuilder.newTrigger
-import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE_NAME
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME
 
 @Category(SQLTestGroup.class)
 class QuartzDAOTest
@@ -62,7 +62,7 @@ class QuartzDAOTest
 
   @Test
   void 'Schema creation functions and is re-runnable'() {
-    sessionRule.openSession(CONFIG_DATASTORE_NAME).with { session ->
+    sessionRule.openSession(DEFAULT_DATASTORE_NAME).with { session ->
       QuartzDAO underTest = session.access(QuartzDAO)
       underTest.createSchema()
 
@@ -108,7 +108,7 @@ class QuartzDAOTest
   }
 
   private String getDatabaseId() {
-    sessionRule.openConnection(CONFIG_DATASTORE_NAME).with { con ->
+    sessionRule.openConnection(DEFAULT_DATASTORE_NAME).with { con ->
       return con.getMetaData().getDatabaseProductName()
     }
   }

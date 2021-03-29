@@ -48,7 +48,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsIterableWithSize.iterableWithSize;
 import static org.sonatype.nexus.content.matcher.AssetMatcher.path;
 import static org.sonatype.nexus.content.matcher.ComponentMatcher.name;
-import static org.sonatype.nexus.datastore.api.DataStoreManager.CONTENT_DATASTORE_NAME;
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.DATA_STORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 
@@ -85,7 +85,7 @@ public class PurgeUnusedIT
     repository = repos.createRawProxy(PROXY_REPOSITORY_NAME, "http://example.net");
     contentFacet = repository.facet(ContentFacet.class);
     NestedAttributesMap storageAttributes = repository.getConfiguration().attributes(STORAGE);
-    String contentStoreName = storageAttributes.get(DATA_STORE_NAME, String.class, CONTENT_DATASTORE_NAME);
+    String contentStoreName = storageAttributes.get(DATA_STORE_NAME, String.class, DEFAULT_DATASTORE_NAME);
     assetStore = formatStoreManager.assetStore(contentStoreName);
     componentStore = formatStoreManager.componentStore(contentStoreName);
   }

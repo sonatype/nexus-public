@@ -56,7 +56,7 @@ trait ConfigurationRecipes
                 writePolicy  : writePolicy,
                 latestPolicy  : latestPolicy,
                 strictContentTypeValidation: strictContentTypeValidation,
-                dataStoreName: 'content'
+                dataStoreName: 'nexus'
             ] as Map
         ] as Map
     )
@@ -95,7 +95,7 @@ trait ConfigurationRecipes
         storage      : [
             blobStoreName              : blobStoreName,
             strictContentTypeValidation: strictContentTypeValidation,
-            dataStoreName: 'content'
+            dataStoreName: 'nexus'
         ] as Map<String, Object>
     ]
     if (!authentication.isEmpty()) {
@@ -145,7 +145,7 @@ trait ConfigurationRecipes
             storage: [
                 blobStoreName: BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
                 strictContentTypeValidation: true,
-                dataStoreName: 'content'
+                dataStoreName: 'nexus'
             ] as Map<String, Object>
         ]
     )

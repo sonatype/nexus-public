@@ -34,7 +34,7 @@ class CRoleDAOTest
   CRoleDAO dao
 
   void setup() {
-    session = sessionRule.openSession(DataStoreManager.CONFIG_DATASTORE_NAME)
+    session = sessionRule.openSession(DataStoreManager.DEFAULT_DATASTORE_NAME)
     dao = session.access(CRoleDAO)
   }
 

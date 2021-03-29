@@ -45,8 +45,7 @@ import static org.sonatype.nexus.datastore.DataStoreConfigurationLocalSource.LOC
 import static org.sonatype.nexus.datastore.DataStoreConfigurationSourceSupport.VALID_NAME_PATTERN;
 import static org.sonatype.nexus.datastore.DataStoreConfigurationSourceSupport.checkName;
 import static org.sonatype.nexus.datastore.api.DataStoreConfiguration.isSensitiveKey;
-import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE_NAME;
-import static org.sonatype.nexus.datastore.api.DataStoreManager.CONTENT_DATASTORE_NAME;
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 /**
  * Source of {@link DataStoreConfiguration}s from property files in the fabric working directory.
@@ -97,8 +96,7 @@ public class DataStoreConfigurationLocalSource
   public Iterable<String> browseStoreNames() {
     ImmutableSet.Builder<String> storeNames = ImmutableSet.builder();
 
-    storeNames.add(CONFIG_DATASTORE_NAME);
-    storeNames.add(CONTENT_DATASTORE_NAME);
+    storeNames.add(DEFAULT_DATASTORE_NAME);
 
     File[] files = fabricWorkDirectory.listFiles();
     if (files != null) {

@@ -46,7 +46,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertTrue;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
-import static org.sonatype.nexus.datastore.api.DataStoreManager.CONTENT_DATASTORE_NAME;
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.DATA_STORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 import static org.sonatype.nexus.scheduling.TaskState.OK;
@@ -74,7 +74,7 @@ public class DatastoreBlobstoreRestoreTestHelper
 
   private String getContentStore(final Repository repository) {
     NestedAttributesMap storageAttributes = repository.getConfiguration().attributes(STORAGE);
-    return storageAttributes.get(DATA_STORE_NAME, String.class, CONTENT_DATASTORE_NAME);
+    return storageAttributes.get(DATA_STORE_NAME, String.class, DEFAULT_DATASTORE_NAME);
   }
 
   private AssetStore<?> getAssetStore(final Repository repo) {

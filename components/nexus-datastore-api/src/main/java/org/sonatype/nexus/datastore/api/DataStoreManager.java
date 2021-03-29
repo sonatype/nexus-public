@@ -25,9 +25,7 @@ import org.sonatype.nexus.common.app.Freezable;
 public interface DataStoreManager
     extends Lifecycle, Freezable
 {
-  String CONFIG_DATASTORE_NAME = "config";
-
-  String CONTENT_DATASTORE_NAME = "content";
+  String DEFAULT_DATASTORE_NAME = "nexus";
 
   /**
    * Browse existing data stores.
@@ -58,11 +56,4 @@ public interface DataStoreManager
    * @return {@code true} if the named data store already exists. Check is case-insensitive.
    */
   boolean exists(String storeName);
-
-  /**
-   * @return {@code true} if the named data store holds content metadata.
-   */
-  default boolean isContentStore(String storeName) {
-    return !CONFIG_DATASTORE_NAME.equalsIgnoreCase(storeName);
-  }
 }

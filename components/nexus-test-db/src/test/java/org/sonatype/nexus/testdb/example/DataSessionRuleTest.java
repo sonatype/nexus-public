@@ -44,6 +44,7 @@ import static org.junit.Assert.assertFalse;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 /**
  * Test the {@link DataSessionRule}.
@@ -78,7 +79,7 @@ public class DataSessionRuleTest
 
   @Test
   public void testCrudOperations() {
-    try (DataSession<?> session = sessionRule.openSession("config")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       TestItemDAO dao = session.access(TestItemDAO.class);
 
       assertThat(dao.browse(), emptyIterable());
@@ -130,7 +131,7 @@ public class DataSessionRuleTest
     itemB.setNotes("test-entity-2");
     itemB.setProperties(ImmutableMap.of());
 
-    try (DataSession<?> session = sessionRule.openSession("config")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       TestItemDAO dao = session.access(TestItemDAO.class);
 
       dao.create(itemA);
@@ -142,7 +143,7 @@ public class DataSessionRuleTest
     assertThat(itemA.getId(), nullValue()); // cleared on implicit rollback
     assertThat(itemB.getId(), nullValue());
 
-    try (DataSession<?> session = sessionRule.openSession("config")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       TestItemDAO dao = session.access(TestItemDAO.class);
 
       dao.create(itemA);
@@ -162,7 +163,7 @@ public class DataSessionRuleTest
     assertThat(itemA.getId(), nullValue());
     assertThat(itemB.getId(), nullValue());
 
-    try (DataSession<?> session = sessionRule.openSession("config")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       TestItemDAO dao = session.access(TestItemDAO.class);
 
       dao.create(itemA);
@@ -177,7 +178,7 @@ public class DataSessionRuleTest
     assertThat(itemA.getId(), nullValue()); // cleared on explicit rollback
     assertThat(itemB.getId(), notNullValue());
 
-    try (DataSession<?> session = sessionRule.openSession("config")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       TestItemDAO dao = session.access(TestItemDAO.class);
 
       dao.delete(itemB.getId());
@@ -191,7 +192,7 @@ public class DataSessionRuleTest
 
   @Test
   public void testSensitiveAttributesEncryptedAtRest() throws SQLException {
-    try (DataSession<?> session = sessionRule.openSession("config")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       TestItemDAO dao = session.access(TestItemDAO.class);
 
       assertThat(dao.browse(), emptyIterable());
@@ -208,7 +209,7 @@ public class DataSessionRuleTest
 
       assertThat(dao.read(itemA.getId()).get(), is(itemA));
 
-      try (Connection connection = sessionRule.openConnection("config");
+      try (Connection connection = sessionRule.openConnection(DEFAULT_DATASTORE_NAME);
           PreparedStatement statement = connection.prepareStatement("SELECT * FROM test_item;");
           ResultSet resultSet = statement.executeQuery()) {
         assertTrue("Expected at least one test_item", resultSet.next());

@@ -58,6 +58,7 @@ import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.datastore.mybatis.CombUUID.combUUID;
 
 /**
@@ -67,7 +68,7 @@ public class ExampleContentTestSupport
     extends TestSupport
 {
   @Rule
-  public DataSessionRule sessionRule = new DataSessionRule("content")
+  public DataSessionRule sessionRule = new DataSessionRule(DEFAULT_DATASTORE_NAME)
       .handle(new BlobRefTypeHandler())
       .access(TestContentRepositoryDAO.class)
       .access(TestComponentDAO.class)
@@ -263,7 +264,7 @@ public class ExampleContentTestSupport
   }
 
   private boolean doCommit(final Consumer<DataSession<?>> consumer) {
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       consumer.accept(session);
       session.getTransaction().commit();
       return true;

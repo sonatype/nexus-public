@@ -36,6 +36,6 @@ public class ConfigUpgradeManager
       final DataStoreManager dataStoreManager,
       final List<ConfigDatabaseMigrationStep> migrations)
   {
-    super(dataStoreManager, DataStoreManager.CONFIG_DATASTORE_NAME, migrations);
+    super(dataStoreManager, DataStoreManager.DEFAULT_DATASTORE_NAME, migrations);
   }
 }

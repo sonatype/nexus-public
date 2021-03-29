@@ -15,7 +15,6 @@ package org.sonatype.nexus.internal.security.model
 import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup
 import org.sonatype.nexus.datastore.api.DataSession
 import org.sonatype.nexus.datastore.api.DataStoreManager
-import org.sonatype.nexus.security.config.CPrivilege
 import org.sonatype.nexus.security.config.CUserRoleMapping
 import org.sonatype.nexus.testdb.DataSessionRule
 
@@ -35,7 +34,7 @@ class CuserRoleMappingDAOTest
   CUserRoleMappingDAO dao
 
   void setup() {
-    session = sessionRule.openSession(DataStoreManager.CONFIG_DATASTORE_NAME)
+    session = sessionRule.openSession(DataStoreManager.DEFAULT_DATASTORE_NAME)
     dao = session.access(CUserRoleMappingDAO)
   }
 

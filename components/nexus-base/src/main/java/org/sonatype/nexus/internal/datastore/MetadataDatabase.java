@@ -71,7 +71,7 @@ public class MetadataDatabase
     {
       @Override
       protected void generate(final File file) throws Exception {
-        Optional<DataStore<?>> dataStore = dataStoreManager.get(DataStoreManager.CONFIG_DATASTORE_NAME);
+        Optional<DataStore<?>> dataStore = dataStoreManager.get(DataStoreManager.DEFAULT_DATASTORE_NAME);
         if (dataStore.isPresent()) {
           try (OutputStream output = new FileOutputStream(file)) {
             Properties dsProperties = getDbInfo(dataStore.get());

@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.repository.rest.api.model.AbstractRepositoryApiRequest;
 
-import static org.sonatype.nexus.datastore.api.DataStoreManager.CONTENT_DATASTORE_NAME;
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.DATA_STORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 
@@ -37,7 +37,7 @@ public abstract class AbstractRepositoryApiRequestToConfigurationConverter<T ext
 
   protected void maybeAddDataStoreName(final Configuration configuration) {
     if (!orientEnabled) {
-      configuration.attributes(STORAGE).set(DATA_STORE_NAME, CONTENT_DATASTORE_NAME);
+      configuration.attributes(STORAGE).set(DATA_STORE_NAME, DEFAULT_DATASTORE_NAME);
     }
   }
 

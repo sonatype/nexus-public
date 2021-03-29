@@ -41,6 +41,7 @@ import org.junit.Test;
 import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.datastore.mybatis.CombUUID.combUUID;
 
 public class Maven2ComponentDAOTest
@@ -51,7 +52,7 @@ public class Maven2ComponentDAOTest
   private int repositoryId;
 
   @Rule
-  public DataSessionRule sessionRule = new DataSessionRule("content")
+  public DataSessionRule sessionRule = new DataSessionRule(DEFAULT_DATASTORE_NAME)
       .handle(new BlobRefTypeHandler())
       .access(Maven2ContentRepositoryDAO.class)
       .access(Maven2ComponentDAO.class);
@@ -66,7 +67,7 @@ public class Maven2ComponentDAOTest
 
     repositoryId = contentRepository.contentRepositoryId();
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       Maven2ComponentDAO dao = session.access(Maven2ComponentDAO.class);
       generateComponent(1, "1.0.0", "1.0.0", dao);
       generateComponent(2, "1.0.0-20200914.113032-16", "1.0.0-SNAPSHOT", dao);
@@ -78,7 +79,7 @@ public class Maven2ComponentDAOTest
 
   @Test
   public void findComponent() {
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       Maven2ComponentDAO dao = session.access(Maven2ComponentDAO.class);
       Optional<Component> component = dao.readComponent(1);
       assertTrue(component.isPresent());
@@ -87,7 +88,7 @@ public class Maven2ComponentDAOTest
 
   @Test
   public void findGavsWithSnaphots() {
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       Maven2ComponentDAO dao = session.access(Maven2ComponentDAO.class);
       Set<GAV> gavsWithSnaphots = dao.findGavsWithSnaphots(repositoryId, 2);
       assertThat(gavsWithSnaphots.size(), is(1));
@@ -100,7 +101,7 @@ public class Maven2ComponentDAOTest
 
   @Test
   public void findGavsWithSnaphotsLessMinimum() {
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       Maven2ComponentDAO dao = session.access(Maven2ComponentDAO.class);
 
       Set<GAV> gavsWithSnaphots = dao.findGavsWithSnaphots(repositoryId, 3);
@@ -110,7 +111,7 @@ public class Maven2ComponentDAOTest
 
   @Test
   public void findComponentsForGav() {
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       Maven2ComponentDAO dao = session.access(Maven2ComponentDAO.class);
       List<Maven2ComponentData> componentsForGav =
           dao.findComponentsForGav(repositoryId, "artifact", "group", "1.0.0-SNAPSHOT", "1.0.0");
@@ -125,7 +126,7 @@ public class Maven2ComponentDAOTest
 
   @Test
   public void selectSnapshotsAfterRelease() {
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       Maven2ComponentDAO dao = session.access(Maven2ComponentDAO.class);
       int[] componentIds = dao.selectSnapshotsAfterRelease(repositoryId, 0);
       assertThat(componentIds.length, is(3));
@@ -139,7 +140,7 @@ public class Maven2ComponentDAOTest
 
   @Test
   public void selectSnapshotsAfterReleaseInGracePeriod() {
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       Maven2ComponentDAO dao = session.access(Maven2ComponentDAO.class);
       int[] componentIds = dao.selectSnapshotsAfterRelease(repositoryId, 1);
       assertThat(componentIds.length, is(0));
@@ -147,7 +148,7 @@ public class Maven2ComponentDAOTest
   }
 
   private void createContentRepository(final ContentRepositoryData contentRepository) {
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ContentRepositoryDAO dao = session.access(Maven2ContentRepositoryDAO.class);
       dao.createContentRepository(contentRepository);
       session.getTransaction().commit();

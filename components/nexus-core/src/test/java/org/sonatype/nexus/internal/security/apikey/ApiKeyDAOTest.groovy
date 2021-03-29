@@ -21,7 +21,7 @@ import org.junit.Rule
 import org.junit.experimental.categories.Category
 import spock.lang.Specification
 
-import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE_NAME
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME
 
 @Category(SQLTestGroup.class)
 class ApiKeyDAOTest
@@ -58,7 +58,7 @@ class ApiKeyDAOTest
   DataSessionRule sessionRule = new DataSessionRule().access(ApiKeyDAO).handle(new ApiKeyTokenTypeHandler())
 
   void setup() {
-    session = sessionRule.openSession(CONFIG_DATASTORE_NAME)
+    session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)
     apiKeyDAO = session.access(ApiKeyDAO)
   }
 

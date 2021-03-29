@@ -31,9 +31,10 @@ import org.hamcrest.Matcher;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.sonatype.nexus.common.text.Strings2.lower;
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 /**
  * Test the {@link SchemaTemplate} annotation.
@@ -50,7 +51,7 @@ public class SchemaTemplateTest
 
   @Test
   public void testExpectedAccessTypesRegisteredFirst() throws SQLException {
-    try (DataSession<?> session = sessionRule.openSession("config")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       // will fail if @Expects and @SchemaTemplate are not respected
       session.access(MetalSprocketDAO.class);
     }
@@ -62,7 +63,7 @@ public class SchemaTemplateTest
 
   private void assertColumns(final String tableName, final Matcher<Iterable<?>> matcher) throws SQLException {
     List<String> columnNames = new ArrayList<>();
-    try (Connection connection = sessionRule.openConnection("config");
+    try (Connection connection = sessionRule.openConnection(DEFAULT_DATASTORE_NAME);
         ResultSet rs = connection.getMetaData().getColumns(null, null, "%", null)) {
 
       while (rs.next()) {

@@ -60,7 +60,7 @@ public class ConfigStoreConnectionProviderTest
         assertThat(connection.getMetaData().getURL(), startsWith("jdbc:postgresql:"));
       }
       else {
-        assertThat(connection.getMetaData().getURL(), is("jdbc:h2:mem:config"));
+        assertThat(connection.getMetaData().getURL(), is("jdbc:h2:mem:nexus"));
       }
     }
   }
