@@ -25,10 +25,14 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.goodies.i18n.I18N;
+import org.sonatype.goodies.i18n.MessageBundle;
 import org.sonatype.nexus.blobstore.ConnectionChecker;
 import org.sonatype.nexus.blobstore.api.BlobStore;
+import org.sonatype.nexus.blobstore.api.BlobStoreConnectionException;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaResult;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
@@ -60,6 +64,15 @@ public class BlobStoreResource
   private final BlobStoreQuotaService quotaService;
 
   private final Map<String, ConnectionChecker> connectionCheckers;
+
+  private interface Messages
+      extends MessageBundle
+  {
+    @DefaultMessage("Connection failed, check the logs for more information.")
+    String connectionError();
+  }
+
+  private static final Messages messages = I18N.create(Messages.class);
 
   public BlobStoreResource(
       final BlobStoreManager blobStoreManager,
@@ -120,9 +133,13 @@ public class BlobStoreResource
       ConnectionChecker conChecker = checkNotNull(connectionCheckers.get(blobStoreConnectionXO.getType()));
       conChecker.verifyConnection(blobStoreConnectionXO.getName(), blobStoreConnectionXO.getAttributes());
     }
+    catch (BlobStoreConnectionException ce) { // NOSONAR
+      log.error("Can't connect to {} blob store", blobStoreConnectionXO.getType(), ce);
+      throw new WebApplicationException(Response.status(BAD_REQUEST).entity(ce.getMessage()).build());
+    }
     catch (Exception e) {
       log.warn("Can't connect to {} blob store", blobStoreConnectionXO.getType(), e);
-      throw new WebApplicationException("Can't connect to blob store", BAD_REQUEST);
+      throw new WebApplicationException(Response.status(BAD_REQUEST).entity(messages.connectionError()).build());
     }
   }
 }
