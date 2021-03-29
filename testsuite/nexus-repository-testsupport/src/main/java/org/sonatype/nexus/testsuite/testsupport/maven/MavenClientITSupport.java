@@ -70,6 +70,9 @@ public abstract class MavenClientITSupport
     mvn = new MavenCommandLineITSupport(createTestConfig());
 
     mvn.exec("rm -rf ~/.m2");
+
+    //copy the project to a local directory as we are using a read only bind path
+    mvn.exec("cp -R " + PROJECT_PATH + "-external " + PROJECT_PATH);
   }
 
   @After
