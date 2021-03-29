@@ -14,11 +14,12 @@ package org.sonatype.nexus.testsuite.testsupport.http;
 
 import javax.inject.Provider;
 
+import com.sonatype.insight.test.networking.PortAllocator;
+
 import org.sonatype.goodies.httpfixture.server.fluent.Server;
 import org.sonatype.goodies.httpfixture.validation.HttpValidator;
 import org.sonatype.goodies.httpfixture.validation.ValidatingBehaviour;
 import org.sonatype.goodies.httpfixture.validation.ValidatingProxyServer;
-import org.sonatype.goodies.testsupport.port.PortRegistry;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.httpclient.HttpClientManager;
 
@@ -59,18 +60,14 @@ public class HttpValidationITRule
 
   private ValidatingBehaviour upstreamValidatingBehaviour;
 
-  private final PortRegistry portRegistry;
-
-  public HttpValidationITRule(PortRegistry portRegistry,
-                              ValidatingBehaviour upstreamValidatingBehavior,
+  public HttpValidationITRule(ValidatingBehaviour upstreamValidatingBehavior,
                               Provider<HttpClientManager> httpClientManagerProvider)
   {
-    this.portRegistry = checkNotNull(portRegistry);
     this.upstreamValidatingBehaviour = checkNotNull(upstreamValidatingBehavior);
     this.configTestHelper = new HttpConfigurationTestHelper(checkNotNull(httpClientManagerProvider));
 
     // Initialize the upstream server with basic validation behavior
-    this.upstreamServer = Server.server().port(portRegistry.reservePort()).serve("")
+    this.upstreamServer = Server.server().port(PortAllocator.nextFreePort()).serve("")
         .withBehaviours(upstreamValidatingBehavior);
   }
 
@@ -105,7 +102,7 @@ public class HttpValidationITRule
    */
   public HttpValidationITRule withValidatingProxy(HttpValidator... validators) {
     checkArgument(validators != null && validators.length > 0, "Must have at least one validator.");
-    this.proxy = new ValidatingProxyServer(validators).withPort(portRegistry.reservePort());
+    this.proxy = new ValidatingProxyServer(validators).withPort(PortAllocator.nextFreePort());
 
     return this;
   }

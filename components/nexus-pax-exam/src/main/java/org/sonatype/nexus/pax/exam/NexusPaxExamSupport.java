@@ -25,11 +25,12 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.net.ssl.HttpsURLConnection;
 
+import com.sonatype.insight.test.networking.PortAllocator;
+
 import org.sonatype.goodies.common.Loggers;
 import org.sonatype.goodies.testsupport.TestIndex;
 import org.sonatype.goodies.testsupport.junit.TestDataRule;
 import org.sonatype.goodies.testsupport.junit.TestIndexRule;
-import org.sonatype.goodies.testsupport.port.PortRegistry;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.text.Strings2;
@@ -37,7 +38,6 @@ import org.sonatype.nexus.scheduling.TaskScheduler;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Range;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -125,20 +125,6 @@ public abstract class NexusPaxExamSupport
 
   public static String TEST_JDBC_URL_PROPERTY = "nexus.test.jdbcUrl";
 
-  private static final String PORT_REGISTRY_MIN_KEY = "it.portRegistry.min";
-
-  private static final String PORT_REGISTRY_MAX_KEY = "it.portRegistry.max";
-
-  // port range 10000-30000 chosen to not overlap with typical range for ephemeral ports
-
-  private static final int PORT_REGISTRY_MIN_MAIN = 10000;
-
-  private static final int PORT_REGISTRY_MAX_MAIN = 24999;
-
-  private static final int PORT_REGISTRY_MIN_FORK = PORT_REGISTRY_MAX_MAIN + 1;
-
-  private static final int PORT_REGISTRY_MAX_FORK = 30000;
-
   private static final String DATABASE_KEY = "it.database";
 
   // -------------------------------------------------------------------------
@@ -155,8 +141,6 @@ public abstract class NexusPaxExamSupport
 
   @Rule
   public final ExpectedException thrown = ExpectedException.none();
-
-  public static final PortRegistry portRegistry = createPortRegistry();
 
   @Inject
   @Named("http://localhost:${application-port}${nexus-context-path}")
@@ -193,12 +177,6 @@ public abstract class NexusPaxExamSupport
 
   protected Logger createLogger() {
     return Loggers.getLogger(this);
-  }
-
-  private static PortRegistry createPortRegistry() {
-    int portMin = Integer.getInteger(PORT_REGISTRY_MIN_KEY, PORT_REGISTRY_MIN_MAIN);
-    int portMax = Integer.getInteger(PORT_REGISTRY_MAX_KEY, PORT_REGISTRY_MAX_MAIN);
-    return new PortRegistry(portMin, portMax, 60 * 1000);
   }
 
   // -------------------------------------------------------------------------
@@ -413,9 +391,6 @@ public abstract class NexusPaxExamSupport
     File logbackXml = resolveBaseFile("target/test-classes/logback-test.xml");
     String logLevel = System.getProperty("it.test.log.level", "INFO");
 
-    // block ports which might be taken by Pax-Exam RMI
-    portRegistry.blockPorts(Range.closed(21000, 21099));
-
     return composite(
 
         // mimic nexus script
@@ -484,10 +459,6 @@ public abstract class NexusPaxExamSupport
         editConfigurationFilePut(KARAF_CONFIG_PROPERTIES_FILE, //
             "karaf.shutdown.port", "-1"),
 
-        // configure port registry of forked JVM to use a different port range than main JVM driving the test
-        systemProperty(PORT_REGISTRY_MIN_KEY).value(Integer.toString(PORT_REGISTRY_MIN_FORK)),
-        systemProperty(PORT_REGISTRY_MAX_KEY).value(Integer.toString(PORT_REGISTRY_MAX_FORK)),
-
         //configure db, including starting external resources
         when(getValidTestDatabase().isUseContentStore()).useOptions(
             configureDatabase()
@@ -495,13 +466,13 @@ public abstract class NexusPaxExamSupport
 
         // randomize ports...
         editConfigurationFilePut(NEXUS_PROPERTIES_FILE, //
-            "application-port", Integer.toString(portRegistry.reservePort())),
+            "application-port", Integer.toString(PortAllocator.nextFreePort())),
         editConfigurationFilePut(NEXUS_PROPERTIES_FILE, //
-            "application-port-ssl", Integer.toString(portRegistry.reservePort())),
+            "application-port-ssl", Integer.toString(PortAllocator.nextFreePort())),
         editConfigurationFilePut(KARAF_MANAGEMENT_FILE, //
-            "rmiRegistryPort", Integer.toString(portRegistry.reservePort())),
+            "rmiRegistryPort", Integer.toString(PortAllocator.nextFreePort())),
         editConfigurationFilePut(KARAF_MANAGEMENT_FILE, //
-            "rmiServerPort", Integer.toString(portRegistry.reservePort()))
+            "rmiServerPort", Integer.toString(PortAllocator.nextFreePort()))
     );
   }
 
