@@ -56,7 +56,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
-import static org.sonatype.nexus.datastore.api.DataStoreManager.CONTENT_DATASTORE_NAME;
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW;
 import static org.sonatype.nexus.validation.ConstraintViolations.maybeAdd;
@@ -80,7 +80,7 @@ public abstract class ContentFacetSupport
     public String blobStoreName = DEFAULT_BLOBSTORE_NAME;
 
     @NotEmpty
-    public String dataStoreName = CONTENT_DATASTORE_NAME;
+    public String dataStoreName = DEFAULT_DATASTORE_NAME;
 
     @NotNull(groups = HostedType.ValidationGroup.class)
     public WritePolicy writePolicy;

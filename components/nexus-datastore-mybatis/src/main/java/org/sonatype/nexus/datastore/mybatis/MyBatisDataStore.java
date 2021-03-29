@@ -55,7 +55,6 @@ import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.datastore.api.Expects;
 import org.sonatype.nexus.datastore.api.SchemaTemplate;
 import org.sonatype.nexus.datastore.mybatis.handlers.AttributesTypeHandler;
-import org.sonatype.nexus.datastore.mybatis.handlers.ContentTypeHandler;
 import org.sonatype.nexus.datastore.mybatis.handlers.DateTimeTypeHandler;
 import org.sonatype.nexus.datastore.mybatis.handlers.EncryptedStringTypeHandler;
 import org.sonatype.nexus.datastore.mybatis.handlers.EntityUUIDTypeHandler;
@@ -111,7 +110,6 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 import static org.sonatype.nexus.common.text.Strings2.isBlank;
 import static org.sonatype.nexus.common.text.Strings2.lower;
 import static org.sonatype.nexus.common.thread.TcclBlock.begin;
-import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE_NAME;
 import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.ADVANCED;
 import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.JDBC_URL;
 import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.SCHEMA;
@@ -133,9 +131,7 @@ public class MyBatisDataStore
 
   private static final Key<TypeHandler> TYPE_HANDLER_KEY = Key.get(TypeHandler.class);
 
-  private static final TypeHandlerMediator CONFIG_TYPE_HANDLER_MEDIATOR = new TypeHandlerMediator(false);
-
-  private static final TypeHandlerMediator CONTENT_TYPE_HANDLER_MEDIATOR = new TypeHandlerMediator(true);
+  private static final TypeHandlerMediator TYPE_HANDLER_MEDIATOR = new TypeHandlerMediator();
 
   private static final Splitter BY_LINE = onPattern("\\r?\\n").trimResults().omitEmptyStrings();
 
@@ -210,12 +206,11 @@ public class MyBatisDataStore
     Environment environment = new Environment(storeName, new JdbcTransactionFactory(), dataSource);
     mybatisConfig = configureMyBatis(environment);
 
-    registerCommonTypeHandlers(isContentStore(storeName));
+    registerCommonTypeHandlers();
 
     if (beanLocator != null) {
       // register the appropriate type handlers with the store
-      beanLocator.watch(TYPE_HANDLER_KEY,
-          isContentStore(storeName) ? CONTENT_TYPE_HANDLER_MEDIATOR : CONFIG_TYPE_HANDLER_MEDIATOR, this);
+      beanLocator.watch(TYPE_HANDLER_KEY, TYPE_HANDLER_MEDIATOR, this);
     }
   }
 
@@ -317,9 +312,7 @@ public class MyBatisDataStore
       // workaround https://github.com/pgjdbc/pgjdbc/issues/265
       properties.put("dataSource.stringtype", "unspecified");
 
-      if(isContentStore(storeName)) {
-        properties.put("maximumPoolSize", DEFAULT_CONTENT_STORE_MAX_POOL_SIZE);
-      }
+      properties.put("maximumPoolSize", DEFAULT_CONTENT_STORE_MAX_POOL_SIZE);
     }
 
     // Parse and unflatten advanced attributes
@@ -334,10 +327,6 @@ public class MyBatisDataStore
     }
 
     return new HikariConfig(properties);
-  }
-
-  private boolean isContentStore(final String storeName) {
-    return !CONFIG_DATASTORE_NAME.equalsIgnoreCase(storeName);
   }
 
   /**
@@ -379,7 +368,7 @@ public class MyBatisDataStore
    * Register common {@link TypeHandler}s.
    */
   @SuppressWarnings("unchecked")
-  private void registerCommonTypeHandlers(boolean isContentStore) {
+  private void registerCommonTypeHandlers() {
     boolean lenient = configurePlaceholderTypes(mybatisConfig);
 
     // register raw/simple mappers first
@@ -401,16 +390,13 @@ public class MyBatisDataStore
     // generate new entity ids on-demand
     register(new EntityInterceptor(frozenMarker));
 
-    if (!isContentStore) {
+    // security handlers that used to only exist in the config store
+    register(new PasswordCharacterArrayTypeHandler(passwordHelper));
+    register(new PrincipalCollectionTypeHandler());
+    registerDetached(new EncryptedStringTypeHandler()); // detached so it doesn't apply to all Strings
 
-      // security handlers that only exist in the config store
-      register(new PasswordCharacterArrayTypeHandler(passwordHelper));
-      register(new PrincipalCollectionTypeHandler());
-      registerDetached(new EncryptedStringTypeHandler()); // detached so it doesn't apply to all Strings
-
-      // enable automatic encryption of sensitive JSON fields in the config store
-      sensitiveAttributeFilter = buildSensitiveAttributeFilter(mybatisConfig);
-    }
+    // enable automatic encryption of sensitive JSON fields in the config store
+    sensitiveAttributeFilter = buildSensitiveAttributeFilter(mybatisConfig);
 
     // finally register more complex mappers on top of the raw/simple mappers - this way we can have
     // automatic encryption on by default while individual DAOs can choose to use the raw mapper(s)
@@ -719,17 +705,10 @@ public class MyBatisDataStore
   static class TypeHandlerMediator
       implements Mediator<Named, TypeHandler, MyBatisDataStore>
   {
-    private final boolean isContentStore;
-
-    TypeHandlerMediator(final boolean isContentStore) {
-      this.isContentStore = isContentStore;
-    }
 
     @Override
     public void add(final BeanEntry<Named, TypeHandler> entry, final MyBatisDataStore store) {
-      if (isContentStore == entry.getValue() instanceof ContentTypeHandler<?>) {
         store.register(entry.getValue());
-      }
     }
 
     @Override

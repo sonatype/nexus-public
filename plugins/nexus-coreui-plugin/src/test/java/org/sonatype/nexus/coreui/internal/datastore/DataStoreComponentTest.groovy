@@ -28,9 +28,7 @@ class DataStoreComponentTest
     extends Specification
 {
 
-  DataStoreManager dataStoreManager = Mock() {
-    isContentStore(_) >> { callRealMethod() } // default method
-  }
+  DataStoreManager dataStoreManager = Mock()
 
   RepositoryManager repositoryManager = Mock()
 
@@ -57,14 +55,10 @@ class DataStoreComponentTest
       then: 'The known datastores are returned'
         _ * contentDataStore.configuration >> contentConfig
         _ * configDataStore.configuration >> configConfig
-        1 * dataStoreManager.isContentStore('content') >> true
-        1 * dataStoreManager.isContentStore('config') >> false
         1 * dataStoreManager.browse() >> [contentDataStore, configDataStore]
         results.size() == 2
         results[0].name == 'content'
-        results[0].isContentStore
         results[1].name == 'config'
-        !results[1].isContentStore
     }
 
   def 'Reading H2 databases'() {

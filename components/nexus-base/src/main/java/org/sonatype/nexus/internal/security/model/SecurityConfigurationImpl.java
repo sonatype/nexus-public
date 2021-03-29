@@ -44,7 +44,7 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 import com.google.common.collect.ImmutableList;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE_NAME;
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 
 /**
@@ -69,7 +69,7 @@ public class SecurityConfigurationImpl
 
   @Override
   public DataSession<?> openSession() {
-    return sessionSupplier.openSession(CONFIG_DATASTORE_NAME);
+    return sessionSupplier.openSession(DEFAULT_DATASTORE_NAME);
   }
 
   private DataSession<?> thisSession() {

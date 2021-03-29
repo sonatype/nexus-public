@@ -44,6 +44,7 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toExternalId;
@@ -88,7 +89,7 @@ public class BrowseNodeDAOTest
   public void setupContent() {
     contentRepository = randomContentRepository();
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ContentRepositoryDAO dao = session.access(TestContentRepositoryDAO.class);
       dao.createContentRepository(contentRepository);
       session.getTransaction().commit();
@@ -107,7 +108,7 @@ public class BrowseNodeDAOTest
     asset2 = randomAsset(1);
     asset2.setPath(asset1.path() + "/2");
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ComponentDAO componentDao = session.access(TestComponentDAO.class);
       AssetDAO assetDao = session.access(TestAssetDAO.class);
 
@@ -120,7 +121,7 @@ public class BrowseNodeDAOTest
       session.getTransaction().commit();
     }
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
 
       alpha = createNode(null, "alpha", "/a");
@@ -154,7 +155,7 @@ public class BrowseNodeDAOTest
 
   @Test
   public void testPlainBrowsing() {
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
 
       List<BrowseNode> listing;
@@ -201,7 +202,7 @@ public class BrowseNodeDAOTest
 
   @Test
   public void testFilteredBrowsing() {
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
 
       List<BrowseNode> listing;
@@ -240,7 +241,7 @@ public class BrowseNodeDAOTest
 
   @Test
   public void testComponentAssetDeletesNullify() {
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
 
       List<BrowseNode> listing;
@@ -256,12 +257,12 @@ public class BrowseNodeDAOTest
       assertThat(listing.get(0).getAssetId(), is(toExternalId(internalAssetId(asset1))));
     }
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       session.access(TestAssetDAO.class).deleteAsset(asset2);
       session.getTransaction().commit();
     }
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
 
       List<BrowseNode> listing;
@@ -277,12 +278,12 @@ public class BrowseNodeDAOTest
       assertThat(listing.get(0).getAssetId(), is(toExternalId(internalAssetId(asset1))));
     }
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       session.access(TestComponentDAO.class).deleteComponent(component2);
       session.getTransaction().commit();
     }
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
 
       List<BrowseNode> listing;
@@ -301,7 +302,7 @@ public class BrowseNodeDAOTest
 
   @Test
   public void testRepositoryDeleteCascades() {
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
 
       List<BrowseNode> listing;
@@ -317,7 +318,7 @@ public class BrowseNodeDAOTest
       assertThat(listing.get(0).getAssetId(), is(toExternalId(internalAssetId(asset1))));
     }
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       session.access(TestAssetDAO.class).deleteAsset(asset1);
       session.access(TestAssetDAO.class).deleteAsset(asset2);
       session.access(TestComponentDAO.class).deleteComponent(component1);
@@ -326,7 +327,7 @@ public class BrowseNodeDAOTest
       session.getTransaction().commit();
     }
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
 
       assertThat(getListing(dao), is(empty()));

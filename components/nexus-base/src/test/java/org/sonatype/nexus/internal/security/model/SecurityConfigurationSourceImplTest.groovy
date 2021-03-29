@@ -106,7 +106,7 @@ class SecurityConfigurationSourceImplTest
       }
     }).getInstance(SecurityConfigurationSourceImpl)
 
-    UnitOfWork.beginBatch({ sessionRule.openSession(DataStoreManager.CONFIG_DATASTORE_NAME) })
+    UnitOfWork.beginBatch({ sessionRule.openSession(DataStoreManager.DEFAULT_DATASTORE_NAME) })
     System.setProperty('nexus.orient.store.config', 'false')
     underTest.start()
     underTest.loadConfiguration()

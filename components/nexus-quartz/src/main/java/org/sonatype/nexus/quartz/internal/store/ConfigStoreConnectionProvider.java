@@ -26,7 +26,7 @@ import org.sonatype.nexus.datastore.api.DataStore;
 import org.quartz.utils.ConnectionProvider;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE_NAME;
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 /**
  * Supplies JDBC connections to Quartz from the shared config {@link DataStore}.
@@ -53,7 +53,7 @@ public class ConfigStoreConnectionProvider
 
   @Override
   public Connection getConnection() throws SQLException {
-    return sessionSupplier.openConnection(CONFIG_DATASTORE_NAME);
+    return sessionSupplier.openConnection(DEFAULT_DATASTORE_NAME);
   }
 
   @Override

@@ -36,6 +36,6 @@ public class ContentUpgradeManager
       final DataStoreManager dataStoreManager,
       final List<ContentDatabaseMigrationStep> migrations)
   {
-    super(dataStoreManager, DataStoreManager.CONTENT_DATASTORE_NAME, migrations);
+    super(dataStoreManager, DataStoreManager.DEFAULT_DATASTORE_NAME, migrations);
   }
 }

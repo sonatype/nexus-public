@@ -23,7 +23,7 @@ import spock.lang.Specification
 
 import static com.google.common.collect.Streams.stream
 import static java.util.stream.Collectors.toList
-import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE_NAME
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME
 
 @Category(SQLTestGroup.class)
 class SelectorConfigurationDAOTest
@@ -37,7 +37,7 @@ class SelectorConfigurationDAOTest
   SelectorConfigurationDAO dao
 
   void setup() {
-    session = sessionRule.openSession(CONFIG_DATASTORE_NAME)
+    session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)
     dao = session.access(SelectorConfigurationDAO)
   }
 

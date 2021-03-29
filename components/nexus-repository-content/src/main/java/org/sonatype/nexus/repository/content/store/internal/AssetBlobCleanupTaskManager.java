@@ -41,7 +41,7 @@ import com.google.common.eventbus.Subscribe;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Multimaps.synchronizedSetMultimap;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
-import static org.sonatype.nexus.datastore.api.DataStoreManager.CONTENT_DATASTORE_NAME;
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.DATA_STORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 import static org.sonatype.nexus.repository.content.store.internal.AssetBlobCleanupTask.CRON_SCHEDULE;
@@ -76,7 +76,7 @@ public class AssetBlobCleanupTaskManager
 
     Configuration repositoryConfiguration = event.getRepository().getConfiguration();
     NestedAttributesMap storageAttributes = repositoryConfiguration.attributes(STORAGE);
-    String contentStore = (String) storageAttributes.get(DATA_STORE_NAME, CONTENT_DATASTORE_NAME);
+    String contentStore = (String) storageAttributes.get(DATA_STORE_NAME, DEFAULT_DATASTORE_NAME);
 
     if (activeFormatStores.put(format, contentStore) && isStarted()) {
       scheduleAssetBlobCleanupTask(format, contentStore);

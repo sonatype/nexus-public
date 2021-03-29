@@ -25,7 +25,6 @@ Ext.define('NX.coreui.model.Datastore', {
   extend: 'Ext.data.Model',
   idProperty: 'name',
   fields: [
-    {name: 'name', type: 'string', sortType: 'asUCText'},
-    {name: 'isContentStore', type: 'boolean'}
+    {name: 'name', type: 'string', sortType: 'asUCText'}
   ]
 });

@@ -142,7 +142,7 @@ class MavenDefaultRepositoriesContributor
     Map attributes = map.attributes as Map
     if (isDataStoreEnabled()) {
       Map storage = attributes.get('storage') as Map
-      storage.put(DATA_STORE_NAME, 'content')
+      storage.put(DATA_STORE_NAME, 'nexus')
     }
     attributes
   }

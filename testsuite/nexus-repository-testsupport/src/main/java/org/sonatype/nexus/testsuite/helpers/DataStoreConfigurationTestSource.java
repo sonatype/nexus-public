@@ -23,8 +23,6 @@ import javax.annotation.Priority;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.datastore.DataStoreConfigurationSource;
 import org.sonatype.nexus.datastore.DataStoreConfigurationSourceSupport;
 import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
 
@@ -33,8 +31,7 @@ import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.TEST_JDBC_URL_PROPERTY;
 import static org.sonatype.nexus.testsuite.helpers.DataStoreConfigurationTestSource.TEST;
-import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE_NAME;
-import static org.sonatype.nexus.datastore.api.DataStoreManager.CONTENT_DATASTORE_NAME;
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 /**
  * Programmatic source of {@link DataStoreConfiguration}s
@@ -67,8 +64,7 @@ public class DataStoreConfigurationTestSource
         .orElse(name -> { throw new IllegalStateException(format("Tried to add a store %s without a jdbcUrl present", name));});
 
     jdbcUrl.ifPresent(url -> {
-      load(CONFIG_DATASTORE_NAME);
-      load(CONTENT_DATASTORE_NAME);
+      load(DEFAULT_DATASTORE_NAME);
     });
   }
 

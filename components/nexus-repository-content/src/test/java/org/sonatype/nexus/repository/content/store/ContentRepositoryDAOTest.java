@@ -32,6 +32,7 @@ import static org.junit.Assert.assertFalse;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 /**
  * Test {@link ContentRepositoryDAO}.
@@ -52,7 +53,7 @@ public class ContentRepositoryDAOTest
 
     // CREATE
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ContentRepositoryDAO dao = session.access(TestContentRepositoryDAO.class);
 
       assertThat(dao.browseContentRepositories(), emptyIterable());
@@ -73,7 +74,7 @@ public class ContentRepositoryDAOTest
 
     // TRY CREATE AGAIN
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ContentRepositoryDAO dao = session.access(TestContentRepositoryDAO.class);
 
       ContentRepositoryData duplicate = new ContentRepositoryData();
@@ -91,7 +92,7 @@ public class ContentRepositoryDAOTest
 
     // READ
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ContentRepositoryDAO dao = session.access(TestContentRepositoryDAO.class);
 
       assertFalse(dao.readContentRepository(new EntityUUID(new UUID(0, 0))).isPresent());
@@ -111,7 +112,7 @@ public class ContentRepositoryDAOTest
 
     // must use a new session as CURRENT_TIMESTAMP (used for last_updated) is fixed once used inside a session
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ContentRepositoryDAO dao = session.access(TestContentRepositoryDAO.class);
 
       tempResult = dao.readContentRepository(configRepositoryId1).get();
@@ -152,7 +153,7 @@ public class ContentRepositoryDAOTest
 
     // must use a new session as CURRENT_TIMESTAMP (used for last_updated) is fixed once used inside a session
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ContentRepositoryDAO dao = session.access(TestContentRepositoryDAO.class);
 
       tempResult = dao.readContentRepository(configRepositoryId1).get();
@@ -187,7 +188,7 @@ public class ContentRepositoryDAOTest
 
     // DELETE
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ContentRepositoryDAO dao = session.access(TestContentRepositoryDAO.class);
       ContentRepositoryData candidate = new ContentRepositoryData();
 

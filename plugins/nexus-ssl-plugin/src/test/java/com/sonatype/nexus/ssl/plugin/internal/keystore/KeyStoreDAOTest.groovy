@@ -18,7 +18,7 @@ import org.sonatype.nexus.testdb.DataSessionRule
 import org.junit.Rule
 import spock.lang.Specification
 
-import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE_NAME
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME
 
 class KeyStoreDAOTest
     extends Specification
@@ -31,7 +31,7 @@ class KeyStoreDAOTest
   KeyStoreDAO dao
 
   void setup() {
-    session = sessionRule.openSession(CONFIG_DATASTORE_NAME)
+    session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)
     dao = session.access(KeyStoreDAO)
   }
 

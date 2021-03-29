@@ -30,6 +30,7 @@ import org.mockito.Mock;
 
 import static java.nio.file.Files.readAllLines;
 import static java.nio.file.Files.write;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -38,7 +39,6 @@ import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.datastore.DataStoreConfigurationLocalSource.LOCAL;
@@ -77,7 +77,7 @@ public class DataStoreConfigurationLocalSourceTest
 
   @Test
   public void includesDefaultStores() {
-    assertThat(underTest.browseStoreNames(), contains("config", "content"));
+    assertThat(underTest.browseStoreNames(), contains("nexus"));
   }
 
   @Test
@@ -88,7 +88,7 @@ public class DataStoreConfigurationLocalSourceTest
     temporaryFolder.newFile("_badname-store.properties");
     temporaryFolder.newFile("!badname-store.properties");
 
-    assertThat(underTest.browseStoreNames(), containsInAnyOrder("config", "content", "-test", "test"));
+    assertThat(underTest.browseStoreNames(), containsInAnyOrder("nexus", "-test", "test"));
   }
 
   @Test

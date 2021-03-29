@@ -113,9 +113,7 @@ public abstract class NexusPaxExamSupport
 
   public static final String NEXUS_PROPERTIES_FILE = "etc/nexus-default.properties";
 
-  public static final String CONFIG_STORE_PROPERTIES_FILE = "etc/fabric/config-store.properties";
-
-  public static final String CONTENT_STORE_PROPERTIES_FILE = "etc/fabric/content-store.properties";
+  public static final String DATA_STORE_PROPERTIES_FILE = "etc/fabric/nexus-store.properties";
 
   public static final String KARAF_CONFIG_PROPERTIES_FILE = "etc/karaf/config.properties";
 
@@ -521,12 +519,9 @@ public abstract class NexusPaxExamSupport
         return combine(null,
             editConfigurationFilePut(NEXUS_PROPERTIES_FILE, EARLY_ACCESS_DATASTORE, "true"),
             editConfigurationFilePut(NEXUS_PROPERTIES_FILE, EARLY_ACCESS_DATASTORE_DEVELOPER, "true"),
-            editConfigurationFilePut(CONFIG_STORE_PROPERTIES_FILE, "name", "config"),
-            editConfigurationFilePut(CONFIG_STORE_PROPERTIES_FILE, "type", "jdbc"),
-            editConfigurationFilePut(CONFIG_STORE_PROPERTIES_FILE, "jdbcUrl", configurePostgres()),
-            editConfigurationFilePut(CONTENT_STORE_PROPERTIES_FILE, "name", "config"),
-            editConfigurationFilePut(CONTENT_STORE_PROPERTIES_FILE, "type", "jdbc"),
-            editConfigurationFilePut(CONTENT_STORE_PROPERTIES_FILE, "jdbcUrl", configurePostgres()),
+            editConfigurationFilePut(DATA_STORE_PROPERTIES_FILE, "name", "nexus"),
+            editConfigurationFilePut(DATA_STORE_PROPERTIES_FILE, "type", "jdbc"),
+            editConfigurationFilePut(DATA_STORE_PROPERTIES_FILE, "jdbcUrl", configurePostgres()),
             systemProperty(TEST_JDBC_URL_PROPERTY).value(configurePostgres())
         );
       case H2:

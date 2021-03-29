@@ -38,7 +38,7 @@ class CUserDAOTest
   final String PASSWORD2 = '$shiro1$SHA-512$1024$IDetfwWXaulpIe+XL7nOyQ==$ad70UxpgqaXRzaJ41mLnKMy1hzyu3+v7dQ44VHrrNVRpA11S17ZnQX22MZZhjih9DLDEWTe3hJmCfZ8s7/mRHQ=='
 
   void setup() {
-    session = sessionRule.openSession(DataStoreManager.CONFIG_DATASTORE_NAME)
+    session = sessionRule.openSession(DataStoreManager.DEFAULT_DATASTORE_NAME)
     dao = session.access(CUserDAO)
   }
 

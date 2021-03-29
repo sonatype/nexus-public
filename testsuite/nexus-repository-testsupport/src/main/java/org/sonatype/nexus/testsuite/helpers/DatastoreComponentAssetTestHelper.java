@@ -59,7 +59,6 @@ import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
-import org.sonatype.nexus.repository.content.fluent.FluentComponentBuilder;
 import org.sonatype.nexus.repository.content.maintenance.ContentMaintenanceFacet;
 import org.sonatype.nexus.repository.content.store.ContentStoreEvent;
 import org.sonatype.nexus.repository.content.store.InternalIds;
@@ -77,7 +76,7 @@ import static org.apache.commons.lang3.StringUtils.indexOf;
 import static org.apache.commons.lang3.StringUtils.startsWith;
 import static org.apache.commons.lang3.StringUtils.substring;
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
-import static org.sonatype.nexus.datastore.api.DataStoreManager.CONTENT_DATASTORE_NAME;
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.repository.content.AttributeOperation.OVERLAY;
 
 @Named
@@ -374,8 +373,8 @@ public class DatastoreComponentAssetTestHelper
 
     Timestamp time = Timestamp.from(LocalDateTime.now().minusSeconds(minusSeconds).toInstant(ZoneOffset.UTC));
 
-    try (Connection connection = sessionSupplier.openConnection(CONTENT_DATASTORE_NAME);
-        PreparedStatement stmt = connection.prepareStatement("UPDATE " + repository.getFormat().getValue() + "_asset "
+    try (Connection connection = sessionSupplier.openConnection(DEFAULT_DATASTORE_NAME);
+         PreparedStatement stmt = connection.prepareStatement("UPDATE " + repository.getFormat().getValue() + "_asset "
             + "SET last_downloaded = ? WHERE repository_id = ?")) {
       stmt.setTimestamp(1, time);
       stmt.setInt(2, repositoryId);
@@ -396,7 +395,7 @@ public class DatastoreComponentAssetTestHelper
   public void setComponentLastUpdatedTime(Repository repository, final Date date) {
     int repositoryId = ((ContentFacetSupport) repository.facet(ContentFacet.class)).contentRepositoryId();
 
-    try (Connection connection = sessionSupplier.openConnection(CONTENT_DATASTORE_NAME);
+    try (Connection connection = sessionSupplier.openConnection(DEFAULT_DATASTORE_NAME);
          PreparedStatement stmt = connection.prepareStatement("UPDATE " + repository.getFormat().getValue() + "_component "
                  + "SET last_updated = ? WHERE repository_id = ?")) {
       stmt.setTimestamp(1, Timestamp.from(date.toInstant()));
@@ -415,7 +414,7 @@ public class DatastoreComponentAssetTestHelper
   public void setLastDownloadedTimeNull(final Repository repository) {
     int repositoryId = ((ContentFacetSupport) repository.facet(ContentFacet.class)).contentRepositoryId();
 
-    try (Connection connection = sessionSupplier.openConnection(CONTENT_DATASTORE_NAME);
+    try (Connection connection = sessionSupplier.openConnection(DEFAULT_DATASTORE_NAME);
          PreparedStatement stmt = connection.prepareStatement("UPDATE " + repository.getFormat().getValue() + "_asset "
              + "SET last_downloaded = ? WHERE repository_id = ?")) {
       stmt.setNull(1, Types.TIMESTAMP);
@@ -447,8 +446,8 @@ public class DatastoreComponentAssetTestHelper
 
     Timestamp time = Timestamp.from(LocalDateTime.now().minusSeconds(minusSeconds).toInstant(ZoneOffset.UTC));
 
-    try (Connection connection = sessionSupplier.openConnection(CONTENT_DATASTORE_NAME);
-        PreparedStatement stmt = connection.prepareStatement("UPDATE " + repository.getFormat().getValue() + "_asset "
+    try (Connection connection = sessionSupplier.openConnection(DEFAULT_DATASTORE_NAME);
+         PreparedStatement stmt = connection.prepareStatement("UPDATE " + repository.getFormat().getValue() + "_asset "
             + "SET last_downloaded = ? "
             + "WHERE repository_id = ? AND path = ?")) {
 
