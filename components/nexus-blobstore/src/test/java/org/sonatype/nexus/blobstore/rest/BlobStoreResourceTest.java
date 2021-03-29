@@ -20,6 +20,7 @@ import javax.ws.rs.WebApplicationException;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.ConnectionChecker;
 import org.sonatype.nexus.blobstore.api.BlobStore;
+import org.sonatype.nexus.blobstore.api.BlobStoreConnectionException;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaResult;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
@@ -32,6 +33,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
@@ -107,6 +109,16 @@ public class BlobStoreResourceTest
     when(connectionChecker.verifyConnection(any(String.class), any(Map.class)))
         .thenThrow(new RuntimeException("Fake unsuccessful connection Exception"));
     resource.verifyConnection(getBlobStoreConnectionXO());
+  }
+
+  @Test
+  public void verifyConnectionTestFailWithBlobStoreConnectionException() {
+    when(connectionChecker.verifyConnection(any(String.class), any(Map.class)))
+        .thenThrow(new BlobStoreConnectionException("Fake BlobStoreConnectionException"));
+    WebApplicationException e =
+        assertThrows(WebApplicationException.class, () -> resource.verifyConnection(getBlobStoreConnectionXO()));
+    assertEquals(400, e.getResponse().getStatus());
+    assertEquals("Fake BlobStoreConnectionException", e.getResponse().getEntity());
   }
 
   private BlobStoreConnectionXO getBlobStoreConnectionXO() {

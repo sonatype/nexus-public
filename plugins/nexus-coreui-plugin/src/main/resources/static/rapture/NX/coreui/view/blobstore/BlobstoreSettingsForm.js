@@ -279,7 +279,7 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
         NX.Messages.success(NX.I18n.get('Blobstore_BlobstoreSettingsForm_Test_Success_Message'));
       },
       failure: function (response) {
-        NX.Messages.error(NX.I18n.get('Blobstore_BlobstoreSettingsForm_Test_Error_Message'));
+        NX.Messages.error(response.responseText);
       }
     });
   }
