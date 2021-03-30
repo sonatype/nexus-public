@@ -163,7 +163,8 @@ public abstract class NexusPaxExamSupport
   @Named("nexus.orient.enabled")
   private Boolean orientEnabled;
 
-  private static final String POSTGRES_IMAGE = "docker-all.repo.sonatype.com/postgres:12.3";
+  //11.9 is the minimum support version
+  private static final String POSTGRES_IMAGE = "docker-all.repo.sonatype.com/postgres:11.9";
 
   private static final int POSTGRES_PORT = 5432;
 
