@@ -104,17 +104,14 @@ public abstract class BlobStoreMetricsStoreSupport<T extends ImplicitSourcePrope
     }
     else {
       log.info("Blob store metrics file {} not found - initializing at zero.", properties);
-      updateProperties();
-      properties.store();
+      flushProperties();
     }
 
     jobService.startUsing();
     metricsWritingJob = jobService.schedule(() -> {
       try {
         if (dirty.compareAndSet(true, false)) {
-          updateProperties();
-          log.trace("Writing blob store metrics to {}", properties);
-          properties.store();
+          flushProperties();
         }
       }
       catch (Exception e) {
@@ -147,6 +144,13 @@ public abstract class BlobStoreMetricsStoreSupport<T extends ImplicitSourcePrope
   protected abstract AccumulatingBlobStoreMetrics getAccumulatingBlobStoreMetrics() throws BlobStoreMetricsNotAvailableException;
 
   protected abstract Stream<T> backingFiles() throws BlobStoreMetricsNotAvailableException;
+
+  @VisibleForTesting
+  public synchronized void flushProperties() throws IOException {
+    updateProperties();
+    log.trace("Writing blob store metrics to {}", properties);
+    properties.store();
+  }
 
   protected BlobStoreMetrics getCombinedMetrics(final Stream<T> blobStoreMetricsFiles) throws BlobStoreMetricsNotAvailableException {
     AccumulatingBlobStoreMetrics blobStoreMetrics = getAccumulatingBlobStoreMetrics();

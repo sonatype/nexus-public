@@ -1053,4 +1053,10 @@ public class FileBlobStore
           blobId, e.getMessage(), log.isDebugEnabled() ? e : null);
     }
   }
+
+  @Override
+  @VisibleForTesting
+  public void flushMetrics() throws IOException {
+    metricsStore.flushProperties();
+  }
 }

@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.fixtures;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -85,6 +86,12 @@ public class BlobStoreRule
     blobStore.getBlobIdStream().forEach(blobId -> {
       blobStore.deleteHard(blobId);
     });
+    try {
+      blobStore.flushMetrics();
+    }
+    catch (IOException e) {
+      log.error("Failed to flush blobstore metrics.", e);
+    }
   }
 
   @Override

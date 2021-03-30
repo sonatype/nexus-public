@@ -57,8 +57,6 @@ public class DataSessionRule
     extends ExternalResource
     implements DataSessionSupplier
 {
-  private static final String POSTGRES_NO_CLEANUP_KEY = "ot.epg.no-cleanup";
-
   private static final Logger log = LoggerFactory.getLogger(DataSessionRule.class);
 
   private final Map<String, String> attributes = new HashMap<>();
@@ -173,7 +171,6 @@ public class DataSessionRule
     {
       @Override
       public void evaluate() throws Throwable {
-        System.clearProperty(POSTGRES_NO_CLEANUP_KEY);
         try {
           attribute(JDBC_URL, jdbcUrl);
           before();
@@ -183,11 +180,6 @@ public class DataSessionRule
           finally {
             after();
           }
-        }
-        catch (RuntimeException|Error e) {
-          // keep persisted data around if the test fails
-          System.setProperty(POSTGRES_NO_CLEANUP_KEY, "true");
-          throw e;
         }
         finally {
           if (postgres != null) {
@@ -233,7 +225,8 @@ public class DataSessionRule
   }
 
   protected String startPostgres() {
-    postgres = new PostgreSQLContainer<>("docker-all.repo.sonatype.com/postgres:12.3");
+    //11.9 is the minimum support version
+    postgres = new PostgreSQLContainer<>("docker-all.repo.sonatype.com/postgres:11.9");
     postgres.start();
 
     // use the same underlying PostgreSQL database as backing for each store
