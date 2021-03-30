@@ -93,6 +93,10 @@
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-scheduling</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.sonatype.insight.scan</groupId>
+      <artifactId>insight-test-networking</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
@@ -114,12 +118,14 @@
             <Embed-Directory>testlib</Embed-Directory>
             <_nodefaultversion>true</_nodefaultversion>
             <Embed-Dependency>
+              insight-test-networking,
               goodies-testsupport,
               testcontainers,
               duct-tape
             </Embed-Dependency>
             <_exportcontents>
               !*.internal,
+              com.sonatype.insight.test.networking,
               org.sonatype.*,
               org.testcontainers.*,
               org.rnorth.ducttape.*
