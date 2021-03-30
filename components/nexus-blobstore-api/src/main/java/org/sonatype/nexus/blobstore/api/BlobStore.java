@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.api;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Map;
@@ -24,6 +25,7 @@ import javax.annotation.Nullable;
 import org.sonatype.goodies.lifecycle.Lifecycle;
 import org.sonatype.nexus.transaction.TransactionalStore;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.hash.HashCode;
 import org.slf4j.Logger;
 
@@ -300,5 +302,14 @@ public interface BlobStore
   }
 
   default void validateCanCreateAndUpdate() throws Exception {
+  }
+
+  /**
+   * Flush blobstore metrics to disk, forgoing the typical wait period
+   * @throws IOException
+   */
+  @VisibleForTesting
+  default void flushMetrics() throws IOException {
+    //default impl does nothing
   }
 }
