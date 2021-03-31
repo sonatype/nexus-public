@@ -14,13 +14,12 @@ package org.sonatype.nexus.testsuite.testsupport.http;
 
 import javax.inject.Provider;
 
-import com.sonatype.insight.test.networking.PortAllocator;
-
 import org.sonatype.goodies.httpfixture.server.fluent.Server;
 import org.sonatype.goodies.httpfixture.validation.HttpValidator;
 import org.sonatype.goodies.httpfixture.validation.ValidatingBehaviour;
 import org.sonatype.goodies.httpfixture.validation.ValidatingProxyServer;
 import org.sonatype.nexus.common.text.Strings2;
+import org.sonatype.nexus.common.net.PortAllocator;
 import org.sonatype.nexus.httpclient.HttpClientManager;
 
 import org.junit.rules.ExternalResource;

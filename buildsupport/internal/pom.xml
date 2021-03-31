@@ -194,12 +194,6 @@
         </exclusions>
       </dependency>
 
-      <dependency>
-        <groupId>com.sonatype.insight.scan</groupId>
-        <artifactId>insight-test-networking</artifactId>
-        <version>${insight-scanner.version}</version>
-      </dependency>
-
     </dependencies>
   </dependencyManagement>
 

@@ -25,14 +25,13 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.net.ssl.HttpsURLConnection;
 
-import com.sonatype.insight.test.networking.PortAllocator;
-
 import org.sonatype.goodies.common.Loggers;
 import org.sonatype.goodies.testsupport.TestIndex;
 import org.sonatype.goodies.testsupport.junit.TestDataRule;
 import org.sonatype.goodies.testsupport.junit.TestIndexRule;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.common.net.PortAllocator;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 
