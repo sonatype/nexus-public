@@ -248,9 +248,7 @@ public class BootstrapListener
                 "nexus-repository-npm," +
                 "nexus-repository-pypi," +
                 "nexus-repository-docker," +
-                "nexus-repository-nuget," +
                 "nexus-repository-yum," +
-                "nexus-restore-nuget," +
                 "nexus-restore-docker," +
                 "nexus-restore-pypi," +
                 properties.getProperty("nexus-exclude-features", ""));
