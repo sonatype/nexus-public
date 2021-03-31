@@ -203,11 +203,6 @@
       <artifactId>quartz</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>com.sonatype.insight.scan</groupId>
-      <artifactId>insight-test-networking</artifactId>
-    </dependency>
-
   </dependencies>
 
   <build>
