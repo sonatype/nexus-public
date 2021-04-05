@@ -32,10 +32,15 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.junit.Assert;
 import org.junit.experimental.categories.Category;
+import org.ops4j.pax.exam.Configuration;
+import org.ops4j.pax.exam.Option;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
+import static org.ops4j.pax.exam.CoreOptions.when;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
+import static org.sonatype.nexus.common.app.FeatureFlags.EARLY_ACCESS_DATASTORE_DEVELOPER;
 
 /**
  * Support class for Helm ITs.
@@ -95,6 +100,14 @@ public abstract class HelmITSupport
 
   protected HelmITSupport() {
     testData.addDirectory(resolveBaseFile("target/it-resources/helm"));
+  }
+
+  @Configuration
+  public static Option[] configureNexus() {
+    return options(
+        configureNexusBase(),
+        when(getValidTestDatabase().isUseContentStore()).useOptions(editConfigurationFilePut(NEXUS_PROPERTIES_FILE, EARLY_ACCESS_DATASTORE_DEVELOPER, "true"))
+    );
   }
 
   protected Repository createHelmProxyRepository(final String name, final String remoteUrl) {

@@ -74,7 +74,6 @@ import static org.ops4j.pax.exam.CoreOptions.wrappedBundle;
 import static org.ops4j.pax.exam.OptionUtils.combine;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.*;
 import static org.sonatype.nexus.common.app.FeatureFlags.EARLY_ACCESS_DATASTORE;
-import static org.sonatype.nexus.common.app.FeatureFlags.EARLY_ACCESS_DATASTORE_DEVELOPER;
 import static org.testcontainers.containers.BindMode.READ_ONLY;
 
 /**
@@ -489,7 +488,6 @@ public abstract class NexusPaxExamSupport
 
         return combine(null,
             editConfigurationFilePut(NEXUS_PROPERTIES_FILE, EARLY_ACCESS_DATASTORE, "true"),
-            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, EARLY_ACCESS_DATASTORE_DEVELOPER, "true"),
             editConfigurationFilePut(DATA_STORE_PROPERTIES_FILE, "name", "nexus"),
             editConfigurationFilePut(DATA_STORE_PROPERTIES_FILE, "type", "jdbc"),
             editConfigurationFilePut(DATA_STORE_PROPERTIES_FILE, "jdbcUrl", configurePostgres()),
@@ -497,8 +495,7 @@ public abstract class NexusPaxExamSupport
         );
       case H2:
         return combine(null,
-            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, EARLY_ACCESS_DATASTORE, "true"),
-            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, EARLY_ACCESS_DATASTORE_DEVELOPER, "true")
+            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, EARLY_ACCESS_DATASTORE, "true")
         );
       case ORIENT:
         return new Option[0];
