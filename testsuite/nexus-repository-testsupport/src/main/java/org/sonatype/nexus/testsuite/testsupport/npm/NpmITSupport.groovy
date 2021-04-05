@@ -25,9 +25,14 @@ import groovy.json.JsonSlurper
 import org.apache.http.HttpResponse
 import org.apache.http.util.EntityUtils
 import org.junit.experimental.categories.Category
+import org.ops4j.pax.exam.Configuration
+import org.ops4j.pax.exam.Option
 
 import static org.hamcrest.MatcherAssert.assertThat
 import static org.hamcrest.Matchers.equalTo
+import static org.ops4j.pax.exam.CoreOptions.when
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut
+import static org.sonatype.nexus.common.app.FeatureFlags.EARLY_ACCESS_DATASTORE_DEVELOPER
 import static org.sonatype.nexus.repository.http.HttpStatus.CREATED
 import static org.sonatype.nexus.repository.http.HttpStatus.NOT_FOUND
 
@@ -43,6 +48,17 @@ class NpmITSupport
 
   NpmITSupport() {
     testData.addDirectory(resolveBaseFile("target/it-resources/npm"))
+  }
+
+  /**
+   * Configure Nexus.
+   */
+  @Configuration
+  static Option[] configureNexus() {
+    return options(
+            configureNexusBase(),
+            when(getValidTestDatabase().isUseContentStore()).useOptions(editConfigurationFilePut(NEXUS_PROPERTIES_FILE, EARLY_ACCESS_DATASTORE_DEVELOPER, "true"))
+    );
   }
 
   void enableNpmRealm() {

@@ -16,6 +16,7 @@ import {NxTextInput} from '@sonatype/react-shared-components';
 
 /**
  * @since 3.21
+ * @deprecated prefer NxTextInput instead
  */
 export default function Textfield({id, name, type = "text", onChange, isPristine = false, validatable = true, ...attrs}) {
   function handleChange(value) {

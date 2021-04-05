@@ -24,8 +24,13 @@ import org.apache.http.auth.Credentials
 import org.apache.http.client.CredentialsProvider
 import org.apache.http.impl.client.BasicCredentialsProvider
 import org.junit.experimental.categories.Category
+import org.ops4j.pax.exam.Configuration
+import org.ops4j.pax.exam.Option
 
 import static java.lang.Thread.sleep
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFileExtend
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut
+import static org.sonatype.nexus.common.app.FeatureFlags.EARLY_ACCESS_DATASTORE_DEVELOPER
 import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW
 
 /**
@@ -83,6 +88,18 @@ class PyPiITSupport
 
   public PyPiITSupport() {
     testData.addDirectory(resolveBaseFile("target/it-resources/pypi"))
+  }
+
+  @Configuration
+  static Option[] configureNexus() {
+    def nexusBase = configureNexusBase()
+    if (getValidTestDatabase().isUseContentStore()) {
+      return options(
+              nexusBase,
+              editConfigurationFilePut(NEXUS_PROPERTIES_FILE, EARLY_ACCESS_DATASTORE_DEVELOPER, "true")
+      )
+    }
+    return nexusBase
   }
 
   Repository createPyPiProxyRepository(final String name, final String remoteUrl) {

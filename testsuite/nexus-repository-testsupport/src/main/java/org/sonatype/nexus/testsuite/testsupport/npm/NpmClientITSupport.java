@@ -37,6 +37,8 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import org.junit.After;
 import org.junit.Before;
+import org.ops4j.pax.exam.Configuration;
+import org.ops4j.pax.exam.Option;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -44,6 +46,9 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
+import static org.ops4j.pax.exam.CoreOptions.when;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
+import static org.sonatype.nexus.common.app.FeatureFlags.EARLY_ACCESS_DATASTORE_DEVELOPER;
 
 /**
  * Support class for npm Format Client ITs.
@@ -84,6 +89,14 @@ public abstract class NpmClientITSupport
   AnonymousManager anonymousManager;
 
   protected abstract DockerContainerConfig createTestConfig() throws Exception;
+
+  @Configuration
+  public static Option[] configureNexus() {
+    return options(
+        FormatClientITSupport.configureNexus(),
+        when(getValidTestDatabase().isUseContentStore()).useOptions(editConfigurationFilePut(NEXUS_PROPERTIES_FILE, EARLY_ACCESS_DATASTORE_DEVELOPER, "true"))
+    );
+  }
 
   @Before
   public void onInitializeClientIT() throws Exception {
