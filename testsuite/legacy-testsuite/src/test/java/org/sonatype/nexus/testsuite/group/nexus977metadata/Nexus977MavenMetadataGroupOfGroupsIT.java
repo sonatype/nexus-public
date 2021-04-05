@@ -14,7 +14,12 @@ package org.sonatype.nexus.testsuite.group.nexus977metadata;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.List;
 
 import org.sonatype.nexus.integrationtests.AbstractNexusProxyIntegrationTest;
@@ -22,11 +27,14 @@ import org.sonatype.nexus.maven.tasks.descriptors.RebuildMavenMetadataTaskDescri
 import org.sonatype.nexus.proxy.maven.metadata.operations.MetadataBuilder;
 import org.sonatype.nexus.rest.model.ScheduledServicePropertyResource;
 import org.sonatype.nexus.test.utils.TaskScheduleUtil;
+import org.sonatype.nexus.util.DigesterUtils;
 
 import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.hamcrest.MatcherAssert;
+import org.junit.Assert;
 import org.junit.Test;
 
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
 
 public class Nexus977MavenMetadataGroupOfGroupsIT
@@ -68,6 +76,39 @@ public class Nexus977MavenMetadataGroupOfGroupsIT
       Metadata metadata = MetadataBuilder.read(in);
       List<String> versions = metadata.getVersioning().getVersions();
       MatcherAssert.assertThat(versions, hasItems("1.5", "1.0.1", "1.0-SNAPSHOT", "0.8", "2.1"));
+    }
+  }
+
+  @Test
+  public void checkProperMetadataHashesCreated() throws Exception {
+    //note that 'g4' is a group repository
+    String basePath = nexusBaseUrl + "content/repositories/g4/nexus977metadata/project/maven-metadata.xml";
+
+    File testFile = downloadFile(new URL(basePath), "target/downloads/nexus977.xml");
+    MatcherAssert.assertThat("Metadata file not found!", testFile.exists());
+
+    downloadAndAssertHash(basePath + ".sha1", DigesterUtils.getSha1Digest(testFile));
+    downloadAndAssertHash(basePath + ".sha256", DigesterUtils.getSha256Digest(new FileInputStream(testFile)));
+    downloadAndAssertHash(basePath + ".sha512", DigesterUtils.getSha512Digest(new FileInputStream(testFile)));
+    downloadAndAssertHash(basePath + ".md5", DigesterUtils.getMd5Digest(new FileInputStream(testFile)));
+    assertMissing(basePath + ".sha-256");
+    assertMissing(basePath + ".sha-512");
+  }
+
+  private void downloadAndAssertHash(final String filePath, final String expectedHash) throws IOException {
+    File file = downloadFile(new URL(filePath), "target/downloads/nexus977.hash");
+    MatcherAssert.assertThat("Metadata hash file not found", file.exists());
+    MatcherAssert.assertThat("Metadata hash not valid", expectedHash,
+        equalTo(new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8).trim()));
+  }
+
+  private void assertMissing(final String filePath) throws IOException {
+    try {
+      downloadFile(new URL(filePath), "target/downloads/nexus977.hash");
+      Assert.fail("Hashfile should not have been created: " + filePath);
+    }
+    catch (FileNotFoundException e) {
+      //good
     }
   }
 }
