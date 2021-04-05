@@ -17,13 +17,13 @@
 import {assign} from 'xstate';
 import Axios from 'axios';
 
-import {ExtJS, Utils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 
 const loggerUrl = (name) => `/service/rest/internal/ui/loggingConfiguration/${name}`;
 
-export default Utils.buildFormMachine({
+export default FormUtils.buildFormMachine({
   id: 'LoggingConfigurationFormMachine',
   config: (config) => ({
     ...config,
@@ -73,8 +73,16 @@ export default Utils.buildFormMachine({
             actions: ['onReset', 'clearDirtyFlag']
           },
           onError: {
-            target: 'loaded',
-            actions: ['setSaveError']
+            target: 'resetError',
+            actions: ['setResetError']
+          }
+        }
+      },
+      resetError: {
+        on: {
+          SAVE: {
+            target: 'confirmReset',
+            actions: ['clearResetError']
           }
         }
       }
@@ -82,18 +90,21 @@ export default Utils.buildFormMachine({
   })
 }).withConfig({
   actions: {
+    clearResetError: assign({resetError: null}),
+    setResetError: assign({resetError: (_, event) => event?.data?.message}),
+
     validate: assign({
       validationErrors: ({data}) => ({
-        name: Utils.isBlank(data.name) ? UIStrings.ERROR.FIELD_REQUIRED : null
+        name: ValidationUtils.isBlank(data.name) ? UIStrings.ERROR.FIELD_REQUIRED : null
       })
     })
   },
   guards: {
-    isEdit: ({pristineData}) => Utils.notBlank(pristineData.name)
+    isEdit: ({pristineData}) => ValidationUtils.notBlank(pristineData.name)
   },
   services: {
     fetchData: ({pristineData}) => {
-      if (Utils.notBlank(pristineData.name)) { // Edit logging configuration
+      if (ValidationUtils.notBlank(pristineData.name)) { // Edit logging configuration
         return Axios.get(loggerUrl(pristineData.name));
       }
       else { // New Logging Configuration

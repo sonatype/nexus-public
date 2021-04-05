@@ -14,102 +14,27 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {useRef} from 'react';
 import {assign, Machine} from "xstate";
 import ExtJS from "./ExtJS";
 import UIStrings from "../constants/UIStrings";
-import {hasPath, join, map, path, pathOr, whereEq} from 'ramda';
-import fileSize from 'file-size';
+import {hasPath, join, path, pathOr, whereEq} from 'ramda';
 
 const FIELD_ID = 'FIELD ';
 const PARAMETER_ID = 'PARAMETER ';
 
 /**
- * @since 3.22
- * @deprecated - prefer to use other Util classes such as FormUtils and ValidationUtils
+ * @since 3.next
  */
-export default class Utils {
-  /**
-   * Constant for ascending sorts
-   * @since 3.29
-   */
-  static get ASC() {
-    return 'asc';
-  }
-
-  /**
-   * Constant for descending sorts
-   * @since 3.29
-   */
-  static get DESC() {
-    return 'desc';
-  }
-
-  static urlFromPath(path) {
-    return NX.app.baseUrl + path;
-  }
-
-  static isBlank(str) {
-    return (!str || /^\s*$/.test(str));
-  }
-
-  static notBlank(str) {
-    return !Utils.isBlank(str);
-  }
-
-  static isUri(str) {
-    return str && /^[a-z]*:.+$/i.test(str);
-  }
-
-  static notUri(str) {
-    return !Utils.isUri(str);
-  }
-
-  static isInRange({value, min = -Infinity, max = Infinity, allowDecimals = true}) {
-    if (value === null || value === undefined) {
-      return null;
-    }
-
-    if (typeof value === 'string' && this.isBlank(value)) {
-        return null;
-    }
-
-    const number = Number(value);
-    if (isNaN(number)) {
-      return UIStrings.ERROR.NAN
-    }
-
-    if (!allowDecimals && typeof value === 'string' && !/^-?[0-9]*$/.test(value)) {
-      return UIStrings.ERROR.DECIMAL;
-    }
-
-    if (min > number) {
-      return UIStrings.ERROR.MIN(min);
-    }
-    else if (max < number) {
-      return UIStrings.ERROR.MAX(max);
-    }
-    else {
-      return null;
-    }
-  }
-
-  /**
-   * Match the regex from components/nexus-validation/src/main/java/org/sonatype/nexus/validation/constraint/NamePatternConstants.java
-   */
-  static isName(name) {
-    return name.match(/^[a-zA-Z0-9\-]{1}[a-zA-Z0-9_\-\.]*$/);
-  }
-
+export default class FormUtils {
   /**
    * Builds a new xstate machine used to handle forms.
    * Typically the validation action, fetchData service, and saveData service should be implemented in withConfig.
    *
-   * Utils.buildFormMachine({id: 'MyMachine'}).withConfig({
+   * FormUtils.buildFormMachine({id: 'MyMachine'}).withConfig({
    *   actions: {
    *     validate: assign({
    *       validationErrors: ({data}) => ({
-   *         field: Utils.isBlank(data.field) ? UIStrings.ERROR.FIELD_REQUIRED : null
+   *         field: FormUtils.isBlank(data.field) ? UIStrings.ERROR.FIELD_REQUIRED : null
    *       })
    *     })
    *   },
@@ -256,13 +181,7 @@ export default class Utils {
           saveErrorData: ({data}) => data,
           saveError: (_, event) => {
             const data = event.data?.response?.data;
-            if (data instanceof String) {
-              return data;
-            }
-            else if (data instanceof Array) {
-              return data.find(({id}) => id === '*')?.message;
-            }
-            return null;
+            return data instanceof String ? data : null;
           },
           saveErrors: (_, event) => {
             const data = event.data?.response?.data;
@@ -352,143 +271,6 @@ export default class Utils {
   }
 
   /**
-   * Builds a new xstate machine used to handle item lists.
-   *
-   * Utils.buildListMachine({
-   *   id: 'MyMachine',
-   *   config: (config) => ({
-   *     ...config,
-   *     states: {
-   *       ...config.states,
-   *       loaded: {
-   *         ...config.states.loaded,
-   *         on: {
-   *           ...config.states.loaded.on,
-   *           SORT_BY_NAME: {
-   *             target: 'loaded',
-   *             actions: ['setSortByName']
-   *           }
-   *         }
-   *       }
-   *     }
-   *   }),
-   *   config: (config) => ({
-   *     actions: {
-   *       setSortByName: assign({
-   *         sortField: 'name',
-   *         sortDirection: Utils.nextSortDirection('name')
-   *       }),
-   *       filterData: assign({
-   *         data: ({filter, data, pristineData}, _) =>
-   *         pristineData.filter(({name}) => name.toLowerCase().indexOf(filter.toLowerCase()) !== -1)
-   *       })
-   *     },
-   *     services: {
-   *       fetchData: () => axios.get(url)
-   *     }
-   *   })
-   * });
-   *
-   * @param id [required] a unique identifier for this machine
-   * @param sortField [optional] field to sort on, defaults to 'name'
-   * @param initial [optional] the initial state to start in, defaults to 'loading'
-   * @param config [optional] a function used to change the config of the machine
-   * @param options [optional] a function used to change the options of the machine
-   * @return {StateMachine<any, any, AnyEventObject>}
-   */
-  static buildListMachine({
-                            id,
-                            initial = 'loading',
-                            sortField = 'name',
-                            config = (config) => config,
-                            options = (options) => options
-                          })
-  {
-    const DEFAULT_CONFIG = {
-      id,
-      initial: initial,
-
-      context: {
-        data: [],
-        pristineData: [],
-        sortField: sortField,
-        sortDirection: Utils.ASC,
-        filter: '',
-        error: ''
-      },
-
-      states: {
-        loading: {
-          id: 'loading',
-          initial: 'fetch',
-          states: {
-            'fetch': {
-              invoke: {
-                src: 'fetchData',
-                onDone: {
-                  target: '#loaded',
-                  actions: ['setData']
-                },
-                onError: {
-                  target: '#error',
-                  actions: ['setError']
-                }
-              }
-            }
-          }
-        },
-        loaded: {
-          id: 'loaded',
-          entry: ['filterData', 'sortData'],
-          on: {
-            FILTER: {
-              target: 'loaded',
-              actions: ['setFilter']
-            }
-          }
-        },
-        error: {
-          id: 'error'
-        }
-      }
-    };
-
-    const DEFAULT_OPTIONS = {
-      actions: {
-        setData: assign({
-          data: (_, {data}) => data.data,
-          pristineData: (_, {data}) => data.data
-        }),
-
-        setError: assign({
-          error: (_, event) => event.data.message
-        }),
-
-        setFilter: assign({
-          filter: (_, {filter}) => filter
-        }),
-
-        clearFilter: assign({
-          filter: () => ''
-        }),
-
-        filterData: () => {
-        },
-
-        sortData: assign({
-          data: Utils.sortDataByFieldAndDirection
-        })
-      },
-
-      services: {
-        fetchData: () => Promise.resolve({data: []})
-      }
-    };
-
-    return Machine(config(DEFAULT_CONFIG), options(DEFAULT_OPTIONS));
-  }
-
-  /**
    * Check if the errors object returned contains any error messages
    * @param errors {Object | null | undefined}
    * @return {boolean} true if there are any error messages
@@ -518,7 +300,7 @@ export default class Utils {
    * @param defaultValue if the machine did not provide any data
    * @return {{name: *, validationErrors: (*|[]), isPristine: boolean, value: (*|string)}}
    */
-  static fieldProps(name, current, defaultValue = '', typeConversion = String) {
+  static fieldProps(name, current, defaultValue = '') {
     const {data = {}, isTouched = {}, validationErrors = {}, saveErrors = {}, saveErrorData = {}} = current.context;
 
     if (!Array.isArray(name)) {
@@ -535,7 +317,7 @@ export default class Utils {
 
     return {
       name: join('.', name),
-      value: typeConversion(pathOr(defaultValue, name, data)),
+      value: String(pathOr(defaultValue, name, data)),
       isPristine: hasPath(name, isTouched) ? !path(name, isTouched) : true,
       validatable: true,
       validationErrors: errors || null
@@ -567,6 +349,7 @@ export default class Utils {
   /**
    * @param isPristine
    * @param isInvalid
+   * @return {string|null} the tooltip explaining why the save button is disabled
    */
   static saveTooltip({isPristine, isInvalid}) {
     if (isPristine) {
@@ -575,105 +358,12 @@ export default class Utils {
     else if (isInvalid) {
       return UIStrings.INVALID_TOOLTIP;
     }
+    return null;
   }
 
   static discardTooltip({isPristine}) {
     if (isPristine) {
       return UIStrings.PRISTINE_TOOLTIP;
-    }
-  }
-
-  /**
-   * @since 3.29
-   * @param fieldName
-   * @return a function that can be used with assign to set the next sort direction based on the current context
-   */
-  static nextSortDirection(fieldName) {
-    return ({sortField, sortDirection}) => {
-      if (sortField !== fieldName) {
-        return this.ASC;
-      }
-      else if (sortDirection === this.ASC) {
-        return this.DESC
-      }
-      else {
-        return this.ASC;
-      }
-    }
-  }
-
-  /**
-   * @since 3.29
-   * @return the data sorted by the field and direction
-   */
-  static sortDataByFieldAndDirection({sortField, sortDirection, data}) {
-    return (data.slice().sort((a, b) => {
-      const dir = sortDirection === Utils.ASC ? 1 : -1;
-      if (a[sortField] === b[sortField]) {
-        return 0;
-      }
-
-      return (a[sortField] || '') > (b[sortField] || '') ? dir : -dir;
-    }));
-  }
-
-  /**
-   * Determine the sort direction for use with the NxTable columns
-   * @param fieldName
-   * @param context {sortField, sortDirection}
-   * @return {null | 'asc' | 'desc'}
-   */
-  static getSortDirection(fieldName, {sortField, sortDirection}) {
-    if (sortField === fieldName) {
-      return sortDirection;
-    }
-    else {
-      return null;
-    }
-  }
-
-  /**
-   * Convert a size in bytes to a human readable string
-   * @param bytes
-   * @return {*}
-   */
-  static bytesToString(bytes) {
-    if (bytes < 0) {
-      return UIStrings.UNAVAILABLE;
-    }
-    return fileSize(bytes).human('jedec');
-  }
-
-  /**
-   * Provide a random id to be used to tie a label to a field.
-   * This function should be avoided when possible and should be replaced with one from the RSC when available.
-   */
-  static getRandomId(prefix) {
-    const typedArray = new Uint8Array(new ArrayBuffer(8));
-
-    crypto.getRandomValues(typedArray);
-
-    const randomHexString = join('', map(x => x.toString(16), Array.from(typedArray)));
-
-    return `${prefix}-${randomHexString}`;
-  }
-
-  /**
-   * Get a random id to use to tie a label to a field. This hook will be stable across re-renders.
-   * This function should be avoided when possible and should be replaced with one from the RSC when available.
-   */
-  static useRandomId(prefix, explicitId) {
-    const idBox = useRef();
-
-    if (explicitId != null) {
-      return explicitId;
-    }
-    else {
-      if (idBox.current == null) {
-        idBox.current = Utils.getRandomId(prefix);
-      }
-
-      return idBox.current;
     }
   }
 }

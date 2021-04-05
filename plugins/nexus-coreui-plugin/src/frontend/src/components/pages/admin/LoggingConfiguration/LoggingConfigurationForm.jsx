@@ -15,20 +15,17 @@ import {useMachine} from '@xstate/react';
 
 import {
   ContentBody,
-  FieldWrapper,
-  NxErrorAlert,
+  FormUtils,
   NxButton,
-  NxLoadWrapper,
-  NxSubmitMask,
-  NxTooltip,
+  NxForm,
+  NxFormGroup,
+  NxTextInput,
   Page,
   PageHeader,
   PageTitle,
   Section,
-  SectionFooter,
   Select,
-  Textfield,
-  Utils
+  ValidationUtils
 } from '@sonatype/nexus-ui-plugin';
 
 import LoggingConfigurationFormMachine from './LoggingConfigurationFormMachine';
@@ -53,19 +50,30 @@ export default function LoggingConfigurationForm({itemId, onDone}) {
     devTools: true
   });
 
-  const {isPristine, pristineData, data, loadError, saveError, validationErrors} = current.context;
+  const {isPristine, pristineData, data, loadError, saveError, resetError, validationErrors} = current.context;
   const isLoading = current.matches('loading');
   const isSaving = current.matches('saving');
   const isResetting = current.matches('resetting');
-  const isInvalid = Utils.isInvalid(validationErrors);
-  const hasData = data && data !== {};
+  const isInvalid = ValidationUtils.isInvalid(validationErrors);
 
-  function update(event) {
-    send('UPDATE', {data: {[event.target.name]: event.target.value}});
+  function update(field, value) {
+    send({
+      type: 'UPDATE',
+      data: {
+        [field]: value
+      }
+    });
   }
 
-  function save(event) {
-    event.preventDefault();
+  function updateName(value) {
+    update('name', value);
+  }
+
+  function updateLevel(event) {
+    update('level', event.currentTarget.value);
+  }
+
+  function save() {
     send('SAVE');
   }
 
@@ -91,38 +99,38 @@ export default function LoggingConfigurationForm({itemId, onDone}) {
     <PageHeader><PageTitle icon={faScroll} {...UIStrings.LOGGING.MENU}/></PageHeader>
     <ContentBody>
       <Section className="nxrm-logging-configuration-form" onKeyPress={handleEnter}>
-        <NxLoadWrapper loading={isLoading} error={loadError ? `${loadError}` : null} retryHandler={retry}>
-      {hasData && <>
-        {saveError && <NxErrorAlert>{UIStrings.LOGGING.MESSAGES.SAVE_ERROR} {saveError}</NxErrorAlert>}
-        {isSaving && <NxSubmitMask message={UIStrings.SAVING}/>}
-        {isResetting && <NxSubmitMask message={UIStrings.LOGGING.MESSAGES.RESETTING}/>}
-
-        <FieldWrapper labelText={UIStrings.LOGGING.NAME_LABEL}>
-          <Textfield
-              className="nx-text-input--long"
-              {...Utils.fieldProps('name', current)}
-              disabled={pristineData.name}
-              onChange={update}/>
-        </FieldWrapper>
-        <FieldWrapper labelText={UIStrings.LOGGING.LEVEL_LABEL}>
-          <Select name="level" value={data.level} onChange={update}>
-            {['OFF', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'].map(logLevel =>
-                <option key={logLevel} value={logLevel}>{logLevel}</option>
-            )}
-          </Select>
-        </FieldWrapper>
-
-        <SectionFooter>
-          <NxTooltip title={Utils.saveTooltip({isPristine, isInvalid})}>
-            <NxButton variant="primary" className={(isPristine || isInvalid) && 'disabled'} onClick={save} type="submit">
-              {UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
-            </NxButton>
-          </NxTooltip>
-          <NxButton onClick={cancel}>{UIStrings.SETTINGS.CANCEL_BUTTON_LABEL}</NxButton>
-          {itemId && <NxButton variant="error" onClick={reset}>{UIStrings.LOGGING.RESET_BUTTON}</NxButton>}
-        </SectionFooter>
-      </>}
-        </NxLoadWrapper>
+        <NxForm
+            loading={isLoading}
+            loadError={loadError || resetError}
+            doLoad={retry}
+            onCancel={cancel}
+            onSubmit={save}
+            submitError={saveError}
+            submitMaskState={(isSaving || isResetting) ? false : null}
+            submitMaskMessage={isSaving ? UIStrings.SAVING : UIStrings.LOGGING.MESSAGES.RESETTING}
+            submitBtnText={UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
+            validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
+            additionalFooterBtns={
+              itemId && <NxButton variant="error" onClick={reset}>{UIStrings.LOGGING.RESET_BUTTON}</NxButton>
+            }
+        >
+          {() => <>
+            <NxFormGroup label={UIStrings.LOGGING.NAME_LABEL} isRequired>
+              <NxTextInput
+                  className="nx-text-input--long"
+                  {...FormUtils.fieldProps('name', current)}
+                  disabled={pristineData.name}
+                  onChange={updateName}/>
+            </NxFormGroup>
+            <NxFormGroup label={UIStrings.LOGGING.LEVEL_LABEL} isRequired>
+              <Select name="level" value={data.level} onChange={updateLevel}>
+                {['OFF', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'].map(logLevel =>
+                    <option key={logLevel} value={logLevel}>{logLevel}</option>
+                )}
+              </Select>
+            </NxFormGroup>
+          </>}
+        </NxForm>
       </Section>
     </ContentBody>
   </Page>;

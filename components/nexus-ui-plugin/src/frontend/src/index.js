@@ -22,6 +22,8 @@ export { default as UIStrings } from './constants/UIStrings';
 export { default as ExtJS } from './interface/ExtJS';
 
 export { default as Utils } from './interface/Utils';
+export { default as FormUtils } from './interface/FormUtils';
+export { default as ValidationUtils } from './interface/ValidationUtils';
 
 export { default as BreadcrumbActions } from './components/layout/common/BreadcrumbActions/BreadcrumbActions';
 export { default as ContentBody } from './components/layout/common/ContentBody/ContentBody';
@@ -55,8 +57,11 @@ export {
   NxButton,
   NxCheckbox,
   NxErrorAlert,
+  NxFieldset,
   NxFilterInput,
   NxFontAwesomeIcon,
+  NxForm,
+  NxFormGroup,
   NxInfoAlert,
   NxLoadingSpinner,
   NxLoadWrapper,
@@ -73,6 +78,7 @@ export {
   NxTableCell,
   NxTableHead,
   NxTableRow,
+  NxTextInput,
   NxTooltip,
   NxWarningAlert,
 } from '@sonatype/react-shared-components';

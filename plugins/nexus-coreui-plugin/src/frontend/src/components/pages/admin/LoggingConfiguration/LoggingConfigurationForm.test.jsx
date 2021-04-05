@@ -33,9 +33,9 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   ExtJS: {
     requestConfirmation: jest.fn()
   },
-  Utils: {
+  FormUtils: {
     buildFormMachine: function(args) {
-      const machine = jest.requireActual('@sonatype/nexus-ui-plugin').Utils.buildFormMachine(args);
+      const machine = jest.requireActual('@sonatype/nexus-ui-plugin').FormUtils.buildFormMachine(args);
       return machine.withConfig({
         actions: {
           logSaveSuccess: jest.fn(),
@@ -43,12 +43,9 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
         }
       })
     },
-    isInvalid: jest.requireActual('@sonatype/nexus-ui-plugin').Utils.isInvalid,
-    isBlank: jest.requireActual('@sonatype/nexus-ui-plugin').Utils.isBlank,
-    notBlank: jest.requireActual('@sonatype/nexus-ui-plugin').Utils.notBlank,
-    fieldProps: jest.requireActual('@sonatype/nexus-ui-plugin').Utils.fieldProps,
-    saveTooltip: jest.requireActual('@sonatype/nexus-ui-plugin').Utils.saveTooltip,
-    discardTooltip: jest.requireActual('@sonatype/nexus-ui-plugin').Utils.discardTooltip
+    fieldProps: jest.requireActual('@sonatype/nexus-ui-plugin').FormUtils.fieldProps,
+    saveTooltip: jest.requireActual('@sonatype/nexus-ui-plugin').FormUtils.saveTooltip,
+    discardTooltip: jest.requireActual('@sonatype/nexus-ui-plugin').FormUtils.discardTooltip
   }
 }));
 

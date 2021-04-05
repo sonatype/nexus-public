@@ -16,6 +16,7 @@ import {NxTextInput} from "@sonatype/react-shared-components";
 
 /**
  * @since 3.22
+ * @deprecated prefer NxTextInput instead
  */
 const Textarea = forwardRef(({name, id, onChange, ...attrs}, ref) => {
   const handleChange = (value) => {

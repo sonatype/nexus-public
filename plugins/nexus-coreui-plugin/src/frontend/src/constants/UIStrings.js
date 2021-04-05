@@ -462,6 +462,9 @@ This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 
     },
     DESCRIPTION: '<p>No information will be sent to Sonatype when creating the support ZIP file.</p>' +
         '<p>Support ZIP creation may take a few minutes to complete.</p>',
+    CONTENTS: 'Contents',
+    OPTIONS: 'Options',
+
     REPORT_LABEL: 'System information report',
     DUMP_LABEL: 'JVM thread-dump',
     CONFIGURATION_LABEL: 'Configuration files',

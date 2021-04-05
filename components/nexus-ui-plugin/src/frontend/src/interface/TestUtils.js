@@ -20,7 +20,7 @@ import UIStrings from '../constants/UIStrings';
 /**
  * @since 3.24
  */
-export default class Utils {
+export default class TestUtils {
   static render(view, extraSelectors) {
     const selectors = render(view);
     const {queryByText} = selectors;
