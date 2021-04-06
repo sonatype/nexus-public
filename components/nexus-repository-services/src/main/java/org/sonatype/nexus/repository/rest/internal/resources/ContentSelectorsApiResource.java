@@ -75,8 +75,8 @@ public class ContentSelectorsApiResource
   }
 
   @POST
-  @Validate
   @RequiresAuthentication
+  @Validate
   @RequiresPermissions("nexus:selectors:create")
   public void createContentSelector(@Valid final ContentSelectorApiCreateRequest request) {
     selectorFactory.validateSelector(CselSelector.TYPE, request.getExpression());
@@ -96,8 +96,8 @@ public class ContentSelectorsApiResource
 
   @PUT
   @Path("{name}")
-  @Validate
   @RequiresAuthentication
+  @Validate
   @RequiresPermissions("nexus:selectors:update")
   public void updateContentSelector(@PathParam("name") final String name,
                                     @Valid final ContentSelectorApiUpdateRequest request)

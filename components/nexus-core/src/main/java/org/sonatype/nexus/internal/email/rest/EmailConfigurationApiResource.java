@@ -59,8 +59,8 @@ public class EmailConfigurationApiResource
   }
 
   @PUT
-  @Validate
   @RequiresAuthentication
+  @Validate
   @RequiresPermissions("nexus:settings:update")
   public void setEmailConfiguration(@NotNull @Valid final ApiEmailConfiguration apiEmailConfiguration) {
     EmailConfiguration emailConfiguration = emailManager.getConfiguration();
