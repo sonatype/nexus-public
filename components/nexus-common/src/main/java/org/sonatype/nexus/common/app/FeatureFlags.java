@@ -30,4 +30,8 @@ public interface FeatureFlags
   /* Early access developers only. Available values: true, false. Default value: false */
   String EARLY_ACCESS_DATASTORE_DEVELOPER = "nexus.earlyAccess.datastore.developer";
   String EARLY_ACCESS_DATASTORE_DEVELOPER_NAMED = "${nexus.earlyAccess.datastore.developer:-false}";
+
+  /* Orient based flags for marking content that is orient only, and should be disabled when datastore is enabled */
+  String ORIENT_CONFIG_DB = "nexus.orient.store.config";
+  String ORIENT_CONTENT_DB = "nexus.orient.store.content";
 }
