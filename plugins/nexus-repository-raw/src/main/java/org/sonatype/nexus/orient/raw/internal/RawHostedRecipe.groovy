@@ -151,8 +151,19 @@ class RawHostedRecipe
   private ViewFacet configure(final ConfigurableViewFacet facet) {
     Router.Builder builder = new Router.Builder()
 
+    // Additional handlers, such as the lastDownloadHandler, are intentionally
+    // not included on this route because this route forwards to the route below.
+    // This route specifically handles GET / and forwards to /index.html.
     builder.route(new Route.Builder()
-        .matcher(new TokenMatcher('/{name:.*}'))
+        .matcher(and(new ActionMatcher(HttpMethods.GET), new SuffixMatcher('/')))
+        .handler(timingHandler)
+        .handler(indexHtmlForwardHandler)
+        .handler(browseUnsupportedHandler)
+        .create()
+    )
+
+    builder.route(new Route.Builder()
+        .matcher(new TokenMatcher('/{name:.+}'))
         .handler(timingHandler)
         .handler(contentDispositionHandler)
         .handler(securityHandler)
@@ -163,7 +174,6 @@ class RawHostedRecipe
         .handler(contentHeadersHandler)
         .handler(unitOfWorkHandler)
         .handler(lastDownloadedHandler)
-        .handler(indexHtmlForwardHandler)
         .handler(rawContentHandler)
         .create())
 

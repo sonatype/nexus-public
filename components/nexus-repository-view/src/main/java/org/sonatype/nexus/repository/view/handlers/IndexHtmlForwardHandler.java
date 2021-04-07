@@ -64,7 +64,7 @@ public class IndexHtmlForwardHandler
     return HttpResponses.notFound(context.getRequest().getPath());
   }
 
-  private Response forward(final Context context, final String path) throws Exception {
+  protected Response forward(final Context context, final String path) throws Exception {
     log.trace("Forwarding request to path: {}", path);
 
     Request request = new Request.Builder()
