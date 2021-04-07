@@ -35,11 +35,14 @@ public class RawIndexHtmlForwardHandler
   @Nonnull
   @Override
   public Response handle(@Nonnull final Context context) throws Exception {
-    Response response = context.proceed();
-    String path = context.getRequest().getPath();
-    if (path.endsWith("/") && HttpStatus.NOT_FOUND == response.getStatus().getCode()) {
+    Response response = forward(context, context.getRequest().getPath() + ".");
+    if (HttpStatus.NOT_FOUND == response.getStatus().getCode()) {
       response = super.handle(context);
+      if (HttpStatus.NOT_FOUND == response.getStatus().getCode()) {
+        return context.proceed();
+      }
     }
+
     return response;
   }
 }
