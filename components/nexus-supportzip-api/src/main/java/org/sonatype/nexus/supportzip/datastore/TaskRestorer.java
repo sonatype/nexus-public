@@ -74,7 +74,7 @@ public class TaskRestorer
         FileUtils.deleteQuietly(file);
       }
       else {
-        log.warn("Can't find {} file to restore data", file);
+        log.debug("Can't find {} file to restore data", file);
       }
     }
   }
