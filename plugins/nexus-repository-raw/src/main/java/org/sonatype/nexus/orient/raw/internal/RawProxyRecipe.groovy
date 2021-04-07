@@ -26,6 +26,7 @@ import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.attributes.AttributesFacet
 import org.sonatype.nexus.repository.cache.NegativeCacheFacet
 import org.sonatype.nexus.repository.cache.NegativeCacheHandler
+import org.sonatype.nexus.repository.http.HttpMethods
 import org.sonatype.nexus.repository.http.PartialFetchHandler
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet
 import org.sonatype.nexus.repository.proxy.ProxyHandler
@@ -45,15 +46,19 @@ import org.sonatype.nexus.repository.view.ConfigurableViewFacet
 import org.sonatype.nexus.repository.view.Route
 import org.sonatype.nexus.repository.view.Router
 import org.sonatype.nexus.repository.view.ViewFacet
+import org.sonatype.nexus.repository.view.handlers.BrowseUnsupportedHandler
 import org.sonatype.nexus.repository.view.handlers.ConditionalRequestHandler
 import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler
 import org.sonatype.nexus.repository.view.handlers.ExceptionHandler
 import org.sonatype.nexus.repository.view.handlers.HandlerContributor
 import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler
 import org.sonatype.nexus.repository.view.handlers.TimingHandler
+import org.sonatype.nexus.repository.view.matchers.ActionMatcher
+import org.sonatype.nexus.repository.view.matchers.SuffixMatcher
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher
 
 import static org.sonatype.nexus.repository.http.HttpHandlers.notFound
+import static org.sonatype.nexus.repository.view.matchers.logic.LogicMatchers.and
 
 /**
  * Raw proxy repository recipe.
@@ -144,6 +149,9 @@ class RawProxyRecipe
   RawIndexHtmlForwardHandler indexHtmlForwardHandler
 
   @Inject
+  BrowseUnsupportedHandler browseUnsupportedHandler
+
+  @Inject
   public RawProxyRecipe(final @Named(ProxyType.NAME) Type type,
                         final @Named(RawFormat.NAME) Format format)
   {
@@ -171,8 +179,19 @@ class RawProxyRecipe
   private ViewFacet configure(final ConfigurableViewFacet facet) {
     Router.Builder builder = new Router.Builder()
 
+    // Additional handlers, such as the lastDownloadHandler, are intentionally
+    // not included on this route because this route forwards to the route below.
+    // This route specifically handles GET / and forwards to /index.html.
     builder.route(new Route.Builder()
-        .matcher(new TokenMatcher('/{name:.*}'))
+        .matcher(and(new ActionMatcher(HttpMethods.GET), new SuffixMatcher('/')))
+        .handler(timingHandler)
+        .handler(indexHtmlForwardHandler)
+        .handler(browseUnsupportedHandler)
+        .create()
+    )
+
+    builder.route(new Route.Builder()
+        .matcher(new TokenMatcher('/{name:.+}'))
         .handler(timingHandler)
         .handler(contentDispositionHandler)
         .handler(securityHandler)
@@ -185,7 +204,6 @@ class RawProxyRecipe
         .handler(contentHeadersHandler)
         .handler(unitOfWorkHandler)
         .handler(lastDownloadedHandler)
-        .handler(indexHtmlForwardHandler)
         .handler(proxyHandler)
         .create())
 
