@@ -104,6 +104,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.Files.exists;
 import static java.nio.file.Files.newInputStream;
 import static java.util.Arrays.asList;
+import static java.util.Optional.empty;
+import static java.util.Optional.ofNullable;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
@@ -161,6 +163,8 @@ public class MyBatisDataStore
 
   private Configuration mybatisConfig;
 
+  private Optional<Configuration> previousConfig = empty();
+
   @Nullable
   private Predicate<String> sensitiveAttributeFilter;
 
@@ -204,18 +208,25 @@ public class MyBatisDataStore
   protected void doStart(final String storeName, final Map<String, String> attributes) throws Exception {
     dataSource = new HikariDataSource(configureHikari(storeName, attributes));
     Environment environment = new Environment(storeName, new JdbcTransactionFactory(), dataSource);
-    mybatisConfig = configureMyBatis(environment);
 
-    registerCommonTypeHandlers();
+    if (previousConfig.isPresent()) {
+      mybatisConfig = previousConfig.get();
+      mybatisConfig.setEnvironment(environment);
+    } else {
+      mybatisConfig = configureMyBatis(environment);
 
-    if (beanLocator != null) {
-      // register the appropriate type handlers with the store
-      beanLocator.watch(TYPE_HANDLER_KEY, TYPE_HANDLER_MEDIATOR, this);
+      registerCommonTypeHandlers();
+
+      if (beanLocator != null) {
+        // register the appropriate type handlers with the store
+        beanLocator.watch(TYPE_HANDLER_KEY, TYPE_HANDLER_MEDIATOR, this);
+      }
     }
   }
 
   @Override
   protected void doStop() throws Exception {
+    previousConfig = ofNullable(mybatisConfig);
     mybatisConfig = null;
     registeredAccessTypes.clear();
     try {

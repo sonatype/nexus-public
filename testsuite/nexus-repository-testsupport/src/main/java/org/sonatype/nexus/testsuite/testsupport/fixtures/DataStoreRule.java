@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 public class DataStoreRule
     extends ExternalResource
 {
-  private static final Logger log = LoggerFactory.getLogger(TrustStoreRule.class);
+  private static final Logger log = LoggerFactory.getLogger(DataStoreRule.class);
 
   private final Provider<DataStoreManager> dataStoreManagerProvider;
 
