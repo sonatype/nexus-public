@@ -125,7 +125,7 @@ public class WebResourceServiceImpl
       URL url;
       try {
         url = servletContext.getResource(path);
-        if (url != null) {
+        if (url != null && !isDirectory(url)) {
           resource = new UrlWebResource(url, path, mimeSupport.guessMimeTypeFromPath(path));
           log.trace("Found servlet-context resource: {}", resource);
         }
@@ -171,5 +171,13 @@ public class WebResourceServiceImpl
     public void remove(BeanEntry<Named, WebResource> entry, WebResourceServiceImpl watcher) throws Exception {
       // no-op
     }
+  }
+
+  private boolean isDirectory(final URL url) {
+    if ("file".equals(url.getProtocol())) {
+      File file = new File(url.getFile());
+      return file.isDirectory();
+    }
+    return false;
   }
 }
