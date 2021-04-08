@@ -12,8 +12,14 @@
  */
 package org.sonatype.nexus.datastore.api;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
+
+import com.google.common.annotations.VisibleForTesting;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Maps.transformEntries;
@@ -26,6 +32,9 @@ import static java.util.regex.Pattern.compile;
  */
 public class DataStoreConfiguration
 {
+  @VisibleForTesting
+  public static final String REDACTED = "**REDACTED**";
+
   private static final Predicate<String> SENSITIVE_KEYS =
       compile("(?i)(auth|cred|key|pass|secret|sign|token)").asPredicate();
 
@@ -86,10 +95,45 @@ public class DataStoreConfiguration
         '}';
   }
 
+  public static Map<String, Map<String, String>> diff(final DataStoreConfiguration left, final DataStoreConfiguration right) {
+    Map<String, Map<String, String>> results = new HashMap<>();
+    diff("name", left, right, DataStoreConfiguration::getName, results);
+    diff("source", left, right, DataStoreConfiguration::getSource, results);
+    diff("type", left, right, DataStoreConfiguration::getType, results);
+
+    Stream.concat(left.getAttributes().keySet().stream(), right.getAttributes().keySet().stream())
+        .distinct()
+        .forEach(attributeKey -> {
+          Function<DataStoreConfiguration, String> getAttribute = (config -> config.getAttributes().getOrDefault(attributeKey, null));
+          diff("attributes->" + attributeKey, left, right, getAttribute, results);
+        });
+    return results;
+  }
+
+  private static void diff(final String fieldName,
+                           final DataStoreConfiguration a,
+                           final DataStoreConfiguration b,
+                           final Function<DataStoreConfiguration, String> fieldFunction,
+                           Map<String, Map<String, String>> results) {
+    String aField = fieldFunction.apply(a);
+    String bField = fieldFunction.apply(b);
+
+    if (!Objects.equals(aField, bField)) {
+      Map<String, String> result = new HashMap<>();
+      result.put(a.getName(), isSensitiveKey(fieldName) ? REDACTED : aField);
+      result.put(b.getName(), isSensitiveKey(fieldName) ? REDACTED : bField);
+      results.put(fieldName, result);
+    }
+  }
+
   /**
    * Redact output using a blacklist of potentially sensitive key patterns.
    */
   protected Map<String, String> redact(final Map<String, String> attributes) {
-    return transformEntries(attributes, (k, v) -> isSensitiveKey(k) ? "**REDACTED**" : v);
+    if (attributes == null || attributes.isEmpty()) {
+      return attributes;
+    } else {
+      return transformEntries(attributes, (k, v) -> isSensitiveKey(k) ? REDACTED : v);
+    }
   }
 }
