@@ -26,6 +26,11 @@
     <welcome-file>index.html</welcome-file>
   </welcome-file-list>
 
+  <context-param>
+    <param-name>org.eclipse.jetty.servlet.Default.dirAllowed</param-name>
+    <param-value>false</param-value>
+  </context-param>
+
   <error-page>
     <location>/error.html</location>
   </error-page>
