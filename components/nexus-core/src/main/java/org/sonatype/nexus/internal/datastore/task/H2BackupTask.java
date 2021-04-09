@@ -28,6 +28,7 @@ import org.sonatype.nexus.scheduling.Task;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 /**
  * A {@link Task} for backing up an embedded H2 datastore.
@@ -55,8 +56,7 @@ public class H2BackupTask
 
   @Override
   protected Object execute() throws Exception {
-    String dataStoreName =
-        checkNotNull(getConfiguration().getString(H2BackupTaskDescriptor.DATASTORE), "DataStore name not configured");
+    String dataStoreName = DEFAULT_DATASTORE_NAME;
     String location =
         checkNotNull(getConfiguration().getString(H2BackupTaskDescriptor.LOCATION), "Backup location not configured");
 
