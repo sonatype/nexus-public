@@ -25,7 +25,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import static org.fest.assertions.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.verify;
@@ -67,7 +68,7 @@ public class DeleteCleanupMethodTest
 
     DeletionProgress response = underTest.run(repository, ImmutableList.of(component1, component2), cancelledCheck);
 
-    assertThat(response.getCount()).isEqualTo(2L);
+    assertThat(response.getCount(), equalTo(2L));
 
     verify(componentMaintenance).deleteComponents(ImmutableList.of(component1, component2), cancelledCheck, BATCH_SIZE);
   }

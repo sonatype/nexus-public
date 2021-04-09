@@ -33,10 +33,10 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Spy;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.io.Resources.getResource;
 import static com.google.gson.FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES;
 import static org.apache.commons.io.Charsets.UTF_8;
-import static org.fest.util.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
