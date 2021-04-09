@@ -34,11 +34,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 @RunWith(MockitoJUnitRunner.class)
 public class H2BackupTaskTest
@@ -61,18 +62,16 @@ public class H2BackupTaskTest
   @Mock
   private ApplicationDirectories applicationDirectories;
 
-  private String testName = "config";
-
   @Before
   public void setup() {
-    when(dataStoreManager.get(testName)).thenReturn(Optional.of(dataStore));
+    when(dataStoreManager.get(DEFAULT_DATASTORE_NAME)).thenReturn(Optional.of(dataStore));
   }
 
   @Test
   public void testExecute_dateTime() throws Exception {
     String folder = "/foo/bar/{datetime}.zip";
     Date before = date();
-    H2BackupTask task = createTask(testName, folder);
+    H2BackupTask task = createTask(folder);
 
     task.execute();
     Date after = date();
@@ -91,7 +90,7 @@ public class H2BackupTaskTest
   @Test
   public void testExecute_relativePath() throws Exception {
     String folder = "foo/bar/backup.zip";
-    H2BackupTask task = createTask(testName, folder);
+    H2BackupTask task = createTask(folder);
 
     when(applicationDirectories.getWorkDirectory()).thenReturn(temporaryFolder.getRoot());
 
@@ -107,7 +106,7 @@ public class H2BackupTaskTest
 
   @Test
   public void testExecute_missingLocation() throws Exception {
-    H2BackupTask task = createTask(testName, null);
+    H2BackupTask task = createTask(null);
 
     thrown.expect(NullPointerException.class);
     thrown.expectMessage("Backup location not configured");
@@ -115,31 +114,20 @@ public class H2BackupTaskTest
   }
 
   @Test
-  public void testExecute_missingDataStoreName() throws Exception {
-    H2BackupTask task = createTask(null, "/foo/bar.zip");
-
-    thrown.expect(NullPointerException.class);
-    thrown.expectMessage("DataStore name not configured");
-
-    task.execute();
-  }
-
-  @Test
   public void testExecute_missingDataStore() throws Exception {
-    when(dataStoreManager.get("config2")).thenReturn(Optional.empty());
-    H2BackupTask task = createTask("config2", "/foo/bar.zip");
+    when(dataStoreManager.get(DEFAULT_DATASTORE_NAME)).thenReturn(Optional.empty());
+    H2BackupTask task = createTask("/foo/bar.zip");
 
     thrown.expect(RuntimeException.class);
-    thrown.expectMessage("Unable to locate datastore with name config2");
+    thrown.expectMessage("Unable to locate datastore with name nexus");
 
     task.execute();
   }
 
-  private H2BackupTask createTask(final String dataStoreName, final String location) {
+  private H2BackupTask createTask(final String location) {
     H2BackupTask task = new H2BackupTask(dataStoreManager, applicationDirectories);
     TaskConfiguration configuration = new TaskConfiguration();
     configuration.setString(H2BackupTaskDescriptor.LOCATION, location);
-    configuration.setString(H2BackupTaskDescriptor.DATASTORE, dataStoreName);
     configuration.setTypeId(H2BackupTaskDescriptor.TYPE_ID);
     configuration.setId("my.id");
     task.configure(configuration);
