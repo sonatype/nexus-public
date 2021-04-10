@@ -36,6 +36,7 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 
+import static com.google.common.collect.Iterables.size
 import static com.google.common.collect.Lists.asList
 import static com.google.common.collect.Maps.newHashMap
 import static com.google.common.collect.Sets.newHashSet
@@ -43,8 +44,10 @@ import static java.util.Collections.emptyList
 import static java.util.Collections.singletonList
 import static java.util.UUID.randomUUID
 import static java.util.stream.Collectors.toList
-import static org.fest.assertions.api.Assertions.assertThat
-import static org.hamcrest.Matchers.equalTo
+import static org.hamcrest.CoreMatchers.equalTo
+import static org.hamcrest.CoreMatchers.hasItems
+import static org.hamcrest.CoreMatchers.is
+import static org.hamcrest.MatcherAssert.assertThat
 import static org.junit.Assert.assertFalse
 import static org.mockito.Matchers.any
 import static org.mockito.Mockito.mock
@@ -289,7 +292,7 @@ class RepositoryManagerImplTest
     when(configurationStore.list()).
         thenReturn(asList(mavenCentralConfiguration, apacheSnapshotsConfiguration, thirdPartyConfiguration))
 
-    assertThat(repositoryManager.browse()).hasSize(8)
+    assertThat(size(repositoryManager.browse()), equalTo(8))
 
     verify(mavenCentralRepository).init(mavenCentralConfiguration)
     verify(mavenCentralRepository).start()
@@ -349,16 +352,16 @@ class RepositoryManagerImplTest
   @Test
   void 'exists checks name, is not case sensitive'() {
     repositoryManager = buildRepositoryManagerImpl(true)
-    assertThat(repositoryManager.exists(MAVEN_CENTRAL_NAME)).isTrue()
-    assertThat(repositoryManager.exists(MAVEN_CENTRAL_NAME.toUpperCase())).isTrue()
-    assertThat(repositoryManager.exists('missing-repository')).isFalse()
+    assertThat(repositoryManager.exists(MAVEN_CENTRAL_NAME), is(true))
+    assertThat(repositoryManager.exists(MAVEN_CENTRAL_NAME.toUpperCase()), is(true))
+    assertThat(repositoryManager.exists('missing-repository'), is(false))
   }
 
   @Test
   void 'blobstoreUsageCount returns number of repositories using a blob store'() {
     repositoryManager = buildRepositoryManagerImpl(true)
-    assertThat(repositoryManager.blobstoreUsageCount("default")).isEqualTo(3)
-    assertThat(repositoryManager.blobstoreUsageCount("third-party")).isEqualTo(1)
+    assertThat(repositoryManager.blobstoreUsageCount("default"), equalTo(3L))
+    assertThat(repositoryManager.blobstoreUsageCount("third-party"), equalTo(1L))
   }
 
   @Test
@@ -453,7 +456,7 @@ class RepositoryManagerImplTest
 
     def stream = repositoryManager.browseForCleanupPolicy(randomUUID().toString())
 
-    assertThat(stream.count()).isEqualTo(0)
+    assertThat(stream.count(), equalTo(0L))
   }
 
   @Test
@@ -470,8 +473,8 @@ class RepositoryManagerImplTest
     assertThat(repositories
         .get(0).configuration.attributes
         .get(CLEANUP_ATTRIBUTES_KEY)
-        .get(CLEANUP_NAME_KEY).toString(),
-        equalTo(cleanupPolicy))
+        .get(CLEANUP_NAME_KEY),
+        hasItems(cleanupPolicy))
   }
 
 }

@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.view.handlers;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.node.NodeAccess;
 
-import org.fest.util.Strings;
+import com.google.common.base.Strings;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;

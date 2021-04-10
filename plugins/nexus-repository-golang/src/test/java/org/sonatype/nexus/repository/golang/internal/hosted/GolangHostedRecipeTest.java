@@ -23,7 +23,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import static org.fest.util.Strings.isNullOrEmpty;
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
