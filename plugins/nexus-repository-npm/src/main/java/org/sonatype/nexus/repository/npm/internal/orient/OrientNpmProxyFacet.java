@@ -22,7 +22,6 @@ import java.util.function.BiFunction;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.Priority;
-import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.blobstore.api.BlobRef;
@@ -31,7 +30,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
-import org.sonatype.nexus.repository.npm.internal.NonCatalogedVersionHelper;
+import org.sonatype.nexus.repository.npm.internal.NonCatalogedVersionHelperFacet;
 import org.sonatype.nexus.repository.npm.internal.NonResolvableTarballNameException;
 import org.sonatype.nexus.repository.npm.internal.NpmAuditFacet;
 import org.sonatype.nexus.repository.npm.internal.NpmFieldMatcher;
@@ -92,13 +91,6 @@ public class OrientNpmProxyFacet
     extends ProxyFacetSupport
     implements NpmProxyFacet
 {
-  private final NonCatalogedVersionHelper nonCatalogedVersionHelper;
-
-  @Inject
-  public OrientNpmProxyFacet(final NonCatalogedVersionHelper nonCatalogedVersionHelper) {
-    this.nonCatalogedVersionHelper = nonCatalogedVersionHelper;
-  }
-
   @Override
   @Nullable
   protected Content fetch(final Context context, final Content stale) throws IOException {
@@ -208,7 +200,8 @@ public class OrientNpmProxyFacet
     if (ProxyTarget.TARBALL == proxyTarget) {
       TokenMatcher.State state = matcherState(context);
       try {
-        NestedAttributesMap packageVersion = retrievePackageVersion(NpmPaths.packageId(state), NpmPaths.tarballName(state), context);
+        NestedAttributesMap packageVersion =
+            retrievePackageVersion(NpmPaths.packageId(state), NpmPaths.tarballName(state), context);
         url = packageVersion.child(NpmMetadataUtils.DIST).get(NpmMetadataUtils.TARBALL, String.class);
       }
       catch (IOException e) {
@@ -280,7 +273,8 @@ public class OrientNpmProxyFacet
                                                  final Repository repository)
   {
     List<NpmFieldMatcher> fieldMatchers = new ArrayList<>();
-    nonCatalogedVersionHelper.maybeAddExcludedVersionsFieldMatchers(fieldMatchers, packageRootAsset, repository);
+    facet(NonCatalogedVersionHelperFacet.class)
+        .maybeAddExcludedVersionsFieldMatchers(fieldMatchers, packageRootAsset, repository);
     fieldMatchers.add(rewriteTarballUrlMatcher(getRepository(), packageId.id()));
     return fieldMatchers;
   }
@@ -465,7 +459,8 @@ public class OrientNpmProxyFacet
     NestedAttributesMap packageRoot = NpmFacetUtils.loadPackageRoot(tx, asset);
     NestedAttributesMap packageVersion = NpmMetadataUtils.selectVersionByTarballName(packageRoot, tarballName);
     if (packageVersion == null) {
-      throw new NonResolvableTarballNameException("Could not find package " + packageId + " version for " + tarballName);
+      throw new NonResolvableTarballNameException(
+          "Could not find package " + packageId + " version for " + tarballName);
     }
     return packageVersion;
   }
@@ -527,6 +522,6 @@ public class OrientNpmProxyFacet
     super.invalidateProxyCaches();
     final NpmAuditFacet npmAuditFacet = getRepository().facet(NpmAuditFacet.class);
     npmAuditFacet.clearCache();
-    nonCatalogedVersionHelper.clearCache();
+    facet(NonCatalogedVersionHelperFacet.class).clearCache();
   }
 }
