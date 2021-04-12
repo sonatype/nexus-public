@@ -39,8 +39,8 @@ import static java.lang.Boolean.FALSE
 import static java.lang.Boolean.TRUE
 import static org.hamcrest.Matchers.equalTo
 import static org.hamcrest.MatcherAssert.assertThat
-import static org.sonatype.nexus.repository.npm.internal.NonCatalogedVersionHelper.CACHE_NAME
-import static org.sonatype.nexus.repository.npm.internal.NonCatalogedVersionHelper.REMOVE_NON_CATALOGED_KEY
+import static org.sonatype.nexus.repository.npm.internal.NonCatalogedVersionHelperFacet.CACHE_NAME
+import static org.sonatype.nexus.repository.npm.internal.NonCatalogedVersionHelperFacet.REMOVE_NON_CATALOGED_KEY
 import static org.sonatype.nexus.repository.npm.internal.NpmFormat.NAME
 
 class NonCatalogedVersionHelperTest
@@ -63,11 +63,10 @@ class NonCatalogedVersionHelperTest
       def previousVersionLimit = 5
       def componentDetailsTimeout = 10
       CacheHelper cacheHelper = Mock() {
-        maybeCreateCache(CACHE_NAME, _ as MutableConfiguration) >> Mock(Cache)
+        maybeCreateCache('myrepo' + CACHE_NAME, _ as MutableConfiguration) >> Mock(Cache)
       }
-      def nonCatalogedVersionHelper = new NonCatalogedVersionHelper(eventManager, capabilityRegistry,
+      def nonCatalogedVersionHelper = new NonCatalogedVersionHelperFacet(eventManager, capabilityRegistry,
           cacheHelper, previousVersionLimit, componentDetailsTimeout, CACHE_DURATION)
-      nonCatalogedVersionHelper.doStart()
       Repository repo = Mock(Repository) {
         getName() >> 'myrepo'
         getConfiguration() >> Mock(Configuration) {
@@ -81,6 +80,7 @@ class NonCatalogedVersionHelperTest
           }
         }
       }
+      nonCatalogedVersionHelper.attach(repo)
       Asset packageRoot = Mock() {
         blobRef() >> Mock(BlobRef) {
           getBlobId() >> Mock(BlobId)
@@ -121,11 +121,10 @@ class NonCatalogedVersionHelperTest
         get('pkg:npm/%40sonatype/my_package') >> versions
       }
       CacheHelper cacheHelper = Mock() {
-        maybeCreateCache(CACHE_NAME, _ as MutableConfiguration) >> cache
+        maybeCreateCache('myrepo' + CACHE_NAME, _ as MutableConfiguration) >> cache
       }
-      def nonCatalogedVersionHelper = new NonCatalogedVersionHelper(eventManager, capabilityRegistry,
+      def nonCatalogedVersionHelper = new NonCatalogedVersionHelperFacet(eventManager, capabilityRegistry,
           cacheHelper, previousVersionLimit, componentDetailsTimeout, CACHE_DURATION)
-      nonCatalogedVersionHelper.doStart()
       Repository repo = Mock(Repository) {
         getName() >> 'myrepo'
         getConfiguration() >> Mock(Configuration) {
@@ -139,6 +138,7 @@ class NonCatalogedVersionHelperTest
           }
         }
       }
+      nonCatalogedVersionHelper.attach(repo)
       Asset packageRoot = Mock() {
         blobRef() >> Mock(BlobRef) {
           getBlobId() >> Mock(BlobId)
@@ -169,15 +169,15 @@ class NonCatalogedVersionHelperTest
       CacheHelper cacheHelper = Mock() {
         maybeCreateCache(CACHE_NAME, _ as MutableConfiguration) >> Mock(Cache)
       }
-      def nonCatalogedVersionHelper = new NonCatalogedVersionHelper(eventManager, capabilityRegistry,
+      def nonCatalogedVersionHelper = new NonCatalogedVersionHelperFacet(eventManager, capabilityRegistry,
           cacheHelper, previousVersionLimit, componentDetailsTimeout, CACHE_DURATION)
-      nonCatalogedVersionHelper.doStart()
       Repository repo = Mock(Repository) {
         getName() >> 'myrepo'
         getConfiguration() >> Mock(Configuration) {
           attributes(NAME) >> new NestedAttributesMap('npm', [(REMOVE_NON_CATALOGED_KEY): nonCatalogedConfig])
         }
       }
+      nonCatalogedVersionHelper.attach(repo)
       List<NpmFieldMatcher> matchers = []
       Asset packageRoot = Mock()
     when:
@@ -197,7 +197,7 @@ class NonCatalogedVersionHelperTest
   @Test
   void 'It will return last 5 or all versions'() {
     expect:
-      assertThat(NonCatalogedVersionHelper.last(n, versions), equalTo(expected))
+      assertThat(NonCatalogedVersionHelperFacet.last(n, versions), equalTo(expected))
     where:
       n | versions                            | expected
       5 | []                                  | []

@@ -24,6 +24,7 @@ import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.cache.NegativeCacheFacet
 import org.sonatype.nexus.repository.http.HttpHandlers
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet
+import org.sonatype.nexus.repository.npm.internal.NonCatalogedVersionHelperFacet
 import org.sonatype.nexus.repository.npm.internal.NpmAuditErrorHandler
 import org.sonatype.nexus.repository.npm.internal.NpmAuditHandler
 import org.sonatype.nexus.repository.npm.internal.NpmAuditQuickHandler
@@ -93,6 +94,9 @@ class OrientNpmProxyRecipe
   Provider<NpmProxyCacheInvalidatorFacetImpl> npmProxyCacheInvalidatorFacet
 
   @Inject
+  Provider<NonCatalogedVersionHelperFacet> nonCatalogedVersionHelperFacetProvider
+
+  @Inject
   Provider<SingleAssetComponentMaintenance> singleAssetComponentMaintenanceProvider
 
   @Inject
@@ -145,6 +149,7 @@ class OrientNpmProxyRecipe
     repository.attach(npmAuditFacetProvider.get())
     repository.attach(npmAuditTarballFacetProvider.get())
     repository.attach(npmProxyCacheInvalidatorFacet.get())
+    repository.attach(nonCatalogedVersionHelperFacetProvider.get())
   }
 
   /**

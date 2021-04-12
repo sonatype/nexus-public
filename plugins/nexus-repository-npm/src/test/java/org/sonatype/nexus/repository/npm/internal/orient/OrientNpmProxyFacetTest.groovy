@@ -16,7 +16,7 @@ import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.common.collect.AttributesMap
 import org.sonatype.nexus.common.collect.NestedAttributesMap
 import org.sonatype.nexus.repository.Repository
-import org.sonatype.nexus.repository.npm.internal.NonCatalogedVersionHelper
+import org.sonatype.nexus.repository.npm.internal.NonCatalogedVersionHelperFacet
 import org.sonatype.nexus.repository.npm.internal.NpmPackageId
 import org.sonatype.nexus.repository.npm.internal.NpmProxyFacet.ProxyTarget
 import org.sonatype.nexus.repository.npm.orient.NpmFacet
@@ -102,13 +102,14 @@ class OrientNpmProxyFacetTest
   Content content
 
   @Mock
-  NonCatalogedVersionHelper nonCatalogedVersionHelper
+  NonCatalogedVersionHelperFacet nonCatalogedVersionHelperFacet
 
   OrientNpmProxyFacet underTest
 
   @Before
   void setUp() {
-    underTest = spy(new OrientNpmProxyFacet(nonCatalogedVersionHelper))
+    underTest = spy(new OrientNpmProxyFacet())
+    doReturn(nonCatalogedVersionHelperFacet).when(repository).facet(NonCatalogedVersionHelperFacet)
   }
 
   @Test

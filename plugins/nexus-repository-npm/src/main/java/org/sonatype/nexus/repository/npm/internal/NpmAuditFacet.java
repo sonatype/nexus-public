@@ -107,8 +107,6 @@ public class NpmAuditFacet
 
   private final CacheHelper cacheHelper;
 
-  private Cache<AuditComponent, VulnerabilityList> cache;
-
   private final Gson gson =
       new GsonBuilder()
           .serializeNulls()
@@ -191,6 +189,7 @@ public class NpmAuditFacet
       final Set<AuditComponent> componentsToAnalyze,
       final String applicationId) throws ExecutionException, TarballLoadingException
   {
+    Cache<AuditComponent, VulnerabilityList> cache = maybeCreateCache();
     ComponentsVulnerability componentsVulnerability = new ComponentsVulnerability();
     if (!componentsToAnalyze.isEmpty()) {
       if (log.isTraceEnabled()) {
@@ -341,22 +340,23 @@ public class NpmAuditFacet
     return new StringPayload(responseReportString, APPLICATION_JSON);
   }
 
-  private void maybeCreateCache() {
-    if (cache == null && cacheDuration > 0) {
-      log.debug("Creating {} for: {}", CACHE_NAME, getRepository());
+  private Cache<AuditComponent, VulnerabilityList> maybeCreateCache() {
+    if (cacheDuration > 0) {
+      log.debug("Creating {} for: {}", getCacheName(), getRepository());
       Duration duration = new Duration(TimeUnit.HOURS, cacheDuration);
-      cache = cacheHelper.maybeCreateCache(CACHE_NAME, AuditComponent.class, VulnerabilityList.class,
+      return cacheHelper.maybeCreateCache(getCacheName(), AuditComponent.class, VulnerabilityList.class,
           CreatedExpiryPolicy.factoryOf(duration));
-      log.debug("Created {}: {}", CACHE_NAME, cache);
     }
+    return null;
   }
 
   private void maybeDestroyCache() {
-    if (cache != null) {
-      log.debug("Destroying {} for: {}", CACHE_NAME, getRepository());
-      cacheHelper.maybeDestroyCache(CACHE_NAME);
-      cache = null;
-    }
+    log.debug("Destroying {} for: {}", getCacheName(), getRepository());
+    cacheHelper.maybeDestroyCache(getCacheName());
+  }
+
+  private String getCacheName() {
+    return getRepository().getName() + CACHE_NAME;
   }
 
   @Nullable
