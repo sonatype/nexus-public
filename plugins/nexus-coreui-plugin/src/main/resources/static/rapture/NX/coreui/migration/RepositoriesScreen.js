@@ -87,10 +87,6 @@ Ext.define('NX.coreui.migration.RepositoriesScreen', {
             }
           },
           {
-            header: NX.I18n.render(me, 'Datastore_Column'),
-            dataIndex: 'dataStore'
-          },
-          {
             header: NX.I18n.render(me, 'Blobstore_Column'),
             dataIndex: 'blobStore'
           },
