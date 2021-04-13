@@ -81,9 +81,6 @@ Ext.define('NX.coreui.migration.RepositoriesStep', {
 
     me.mask(NX.I18n.render(me, 'Loading_Mask'));
 
-    // ensure datastore is loaded, for customize window
-    me.getStore('Datastore').load();
-
     // ensure blobstore is loaded, for customize window
     me.getStore('Blobstore').load();
 

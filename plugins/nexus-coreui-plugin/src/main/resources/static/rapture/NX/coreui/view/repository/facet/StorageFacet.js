@@ -94,31 +94,13 @@ Ext.define('NX.coreui.view.repository.facet.StorageFacet', {
     if (NX.State.getValue('datastores')) {
       me.items[0].items.unshift(
           {
-            xtype: 'combo',
+            xtype: 'hiddenfield',
             name: 'attributes.storage.dataStoreName',
             itemId: 'dataStoreName',
-            fieldLabel: NX.I18n.get('Repository_Facet_StorageFacet_DataStore_FieldLabel'),
-            helpText: NX.I18n.get('Repository_Facet_StorageFacet_DataStore_HelpText'),
-            emptyText: NX.I18n.get('Repository_Facet_StorageFacet_DataStore_EmptyText'),
             editable: false,
-            store: 'ContentDatastore',
-            queryMode: 'local',
-            displayField: 'name',
-            valueField: 'name',
             readOnlyOnUpdate: true,
             hidden: true,
-            listeners: {
-              afterrender: function (combo) {
-                if (!combo.getValue()) {
-                  var store = combo.getStore();
-                  if (store.getTotalCount() > 0) {
-                    var value = store.first().get('name');
-                    combo.originalValue = value;
-                    combo.setValue(value);
-                  }
-                }
-              }
-            }
+            value: 'nexus'
           });
     }
 

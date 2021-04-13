@@ -46,7 +46,7 @@ Ext.define('NX.coreui.migration.RepositoryCustomizeWindow', {
      *
      * @cfg {String}
      */
-    dataStore: undefined,
+    dataStore: 'nexus',
 
     /**
      * The default blob store to display.
@@ -129,18 +129,11 @@ Ext.define('NX.coreui.migration.RepositoryCustomizeWindow', {
     if (NX.State.getValue('datastores')) {
       me.items.items.splice(1, 0,
           {
-            xtype: 'combo',
+            xtype: 'hiddenfield',
             name: 'dataStore',
-            fieldLabel: NX.I18n.render(me, 'DataStore_FieldLabel'),
-            helpText: NX.I18n.render(me, 'DataStore_HelpText'),
-            emptyText: NX.I18n.render(me, 'DataStore_EmptyText'),
             editable: false,
-            store: 'ContentDatastore',
-            queryMode: 'local',
-            displayField: 'name',
-            valueField: 'name',
             readOnlyOnUpdate: true,
-            value: me.getDataStore(),
+            value: 'nexus',
             hidden: true
           });
     }

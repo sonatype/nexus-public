@@ -26,7 +26,6 @@ import org.sonatype.nexus.repository.maven.MavenHostedFacet;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentMaintenance;
-import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
 import org.sonatype.nexus.transaction.Transactional;
@@ -47,17 +46,21 @@ public class MavenHostedComponentMaintenanceFacet
     extends MavenComponentMaintenanceFacet
 {
   @Override
-  public Set<String> deleteComponent(final EntityId componentId, final boolean deleteBlobs) {
-    String[] coordinates = Transactional.operation
-        .withDb(getRepository().facet(StorageFacet.class).txSupplier())
-        .call(() -> this.findComponent(componentId));
-    Set<String> deletedAssets = super.deleteComponent(componentId, deleteBlobs);
-    if (coordinates != null) {
-      MavenHostedFacet facet = getRepository().facet(MavenHostedFacet.class);
-      Set<String> deletedMetadataPaths = facet.deleteMetadata(coordinates[0], coordinates[1], coordinates[2]);
-      deletedAssets.addAll(deletedMetadataPaths);
+  @TransactionalDeleteBlob
+  protected DeletionResult deleteComponentTx(final EntityId componentId, final boolean deleteBlobs) {
+    DeletionResult result = super.deleteComponentTx(componentId, deleteBlobs);
+
+    Component component = result.getComponent();
+    if (component != null) {
+      String groupId = component.formatAttributes().get(P_GROUP_ID, String.class);
+      String artifactId = component.formatAttributes().get(P_ARTIFACT_ID, String.class);
+      String baseVersion = component.formatAttributes().get(P_BASE_VERSION, String.class);
+      Set<String> deletedMetadataPaths =
+          getRepository().facet(MavenHostedFacet.class).deleteMetadata(groupId, artifactId, baseVersion);
+      result.getAssets().addAll(deletedMetadataPaths);
     }
-    return deletedAssets;
+
+    return result;
   }
 
   @Override

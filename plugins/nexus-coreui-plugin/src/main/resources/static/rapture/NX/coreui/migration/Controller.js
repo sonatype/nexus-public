@@ -27,7 +27,6 @@ Ext.define('NX.coreui.migration.Controller', {
     'NX.I18n',
     'NX.Permissions',
     'NX.State',
-    'NX.coreui.store.Datastore',
     'NX.coreui.store.Blobstore',
     'NX.coreui.migration.PlanStepDetailWindow',
     'NX.coreui.migration.RepositoryStore',
@@ -47,7 +46,6 @@ Ext.define('NX.coreui.migration.Controller', {
   ],
 
   stores: [
-    'Datastore',
     'Blobstore',
     'NX.coreui.migration.RepositoryStore',
     'NX.coreui.migration.PreviewStore',

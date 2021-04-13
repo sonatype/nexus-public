@@ -1505,10 +1505,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     'NX.coreui.migration.RepositoryCustomizeWindow': {
       Title: 'Customize {0}',
 
-      DataStore_FieldLabel: 'Data store',
-      DataStore_HelpText: 'Choose where the content metadata should be stored',
-      DataStore_EmptyText: 'Choose a data store',
-
       BlobStore_FieldLabel: 'Blob store',
       BlobStore_HelpText: 'Choose where the repository content should be stored',
       BlobStore_EmptyText: 'Choose a blob store',

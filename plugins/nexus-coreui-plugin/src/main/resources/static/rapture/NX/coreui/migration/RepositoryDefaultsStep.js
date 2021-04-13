@@ -69,7 +69,6 @@ Ext.define('NX.coreui.migration.RepositoryDefaultsStep', {
 
     me.mask(NX.I18n.render(me, 'Loading_Mask'));
 
-    me.getStore('Datastore').load();
     me.getStore('Blobstore').load();
 
     // load defaults from server
