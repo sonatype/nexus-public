@@ -23,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 
 import javax.mail.Header;
 import javax.mail.internet.InternetHeaders;
@@ -36,6 +37,7 @@ import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.commons.compress.compressors.CompressorInputStream;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -137,6 +139,61 @@ public final class PyPiInfoUtils
       entry = ais.getNextEntry();
     }
     return new LinkedHashMap<>();
+  }
+
+  /**
+   * Extracts file extension from provided filename.
+   * To get filename from path you can use {@link #parseFileName(String)} method.
+   *
+   * @param fileName - Pypi package file name.
+   * @return extension parsed for the given fileName.
+   *         Example: sample.project-1.5.15-py3-none-any.whl ->  <i>whl</i>
+   *         Example: sample.project-1.2.0.tar.gz -> <i>tar.gz</i>
+   */
+  public static String parseExtension(final String fileName) {
+    int extensionStart = getExtensionStart(fileName);
+    return fileName.substring(extensionStart + 1);
+  }
+
+  private static int getExtensionStart(final String fileName) {
+    int extensionStart = fileName.lastIndexOf('.');
+    // Current peace of code tries to find tar.* extension kind. e.g. tar.gz, tar.bz2 ... .
+    if (extensionStart >= 4 && ".tar".equals(fileName.substring(extensionStart - 4, extensionStart))) {
+      extensionStart -= 4;
+    }
+    return extensionStart;
+  }
+
+  /**
+   * Extracts <i>classifier</i> from provided <i>filename</i>.
+   *
+   * @param fileName - Pypi package file name.
+   * @param version - Pypi package version.
+   * @return classifier extracted for the given fileName.
+   *         Example: sample.project-1.5.15-py3-none-any.whl -> py3-none-any
+   */
+  public static Optional<String> parseQualifier(final String fileName, final String version) {
+    int extensionStart = getExtensionStart(fileName);
+    int versionStart = fileName.indexOf(version);
+    if (versionStart >= 0) {
+      int versionEnd = versionStart + version.length();
+      String qualifier =
+          versionEnd >= extensionStart ? StringUtils.EMPTY : fileName.substring(versionEnd + 1, extensionStart);
+      return Optional.of(qualifier);
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * Extracts <i>filename</i> from provided <i>path</i>.
+   *
+   * @param path - Pypi package path.
+   * @return Filename extracted from the given path.
+   *         Example: /packages/sample.project/1.2.0/sample.project-1.2.0.tar.gz -> sample.project-1.2.0.tar.gz
+   */
+  public static String parseFileName(final String path) {
+    checkNotNull(path);
+    return path.substring(path.lastIndexOf('/') + 1);
   }
 
   /**
