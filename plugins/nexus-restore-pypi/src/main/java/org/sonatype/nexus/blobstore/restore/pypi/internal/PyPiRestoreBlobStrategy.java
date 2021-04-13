@@ -40,7 +40,7 @@ import org.sonatype.nexus.repository.pypi.datastore.PypiContentFacet;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.common.app.FeatureFlags.EARLY_ACCESS_DATASTORE_DEVELOPER;
+import static org.sonatype.nexus.common.app.FeatureFlags.EARLY_ACCESS_DATASTORE;
 import static org.sonatype.nexus.repository.pypi.PyPiAttributes.P_NAME;
 import static org.sonatype.nexus.repository.pypi.PyPiAttributes.P_SUMMARY;
 import static org.sonatype.nexus.repository.pypi.PyPiAttributes.P_VERSION;
@@ -54,7 +54,7 @@ import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_K
 /**
  * @since 3.next
  */
-@FeatureFlag(name = EARLY_ACCESS_DATASTORE_DEVELOPER)
+@FeatureFlag(name = EARLY_ACCESS_DATASTORE)
 @Named(PyPiFormat.NAME)
 @Singleton
 public class PyPiRestoreBlobStrategy
