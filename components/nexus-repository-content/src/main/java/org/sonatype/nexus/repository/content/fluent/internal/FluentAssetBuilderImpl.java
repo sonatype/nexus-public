@@ -205,15 +205,21 @@ public class FluentAssetBuilderImpl
   @Override
   public FluentAsset attach(final TempBlob tempBlob) {
     facet.checkAttachAllowed(assetData);
-    blob = makePermanent(tempBlob.getBlob());
-    checksums = tempBlob.getHashes();
-    updateAssetBlob(assetData);
-    return new FluentAssetImpl(facet, assetData);
+    return attachBlob(makePermanent(tempBlob.getBlob()), tempBlob.getHashes());
   }
 
   @Override
   public FluentAsset attach(final Blob blob, final Map<HashAlgorithm, HashCode> checksums) {
     facet.checkAttachAllowed(assetData);
+    return attachBlob(blob, checksums);
+  }
+
+  @Override
+  public FluentAsset attachIgnoringWritePolicy(final Blob blob, final Map<HashAlgorithm, HashCode> checksums) {
+    return attachBlob(blob, checksums);
+  }
+
+  private FluentAsset attachBlob(final Blob blob, final Map<HashAlgorithm, HashCode> checksums) {
     this.blob = blob;
     this.checksums = checksums;
     updateAssetBlob(assetData);

@@ -146,7 +146,14 @@ public class FluentAssetImpl
 
   @Override
   public FluentAsset attach(final Blob blob, final Map<HashAlgorithm, HashCode> checksums) {
-    return new FluentAssetBuilderImpl(facet, facet.stores().assetStore, asset).attach(blob, checksums);
+    return new FluentAssetBuilderImpl(facet, facet.stores().assetStore, asset)
+        .attach(blob, checksums);
+  }
+
+  @Override
+  public FluentAsset attachIgnoringWritePolicy(final Blob blob, final Map<HashAlgorithm, HashCode> checksums) {
+    return new FluentAssetBuilderImpl(facet, facet.stores().assetStore, asset)
+        .attachIgnoringWritePolicy(blob, checksums);
   }
 
   @Override

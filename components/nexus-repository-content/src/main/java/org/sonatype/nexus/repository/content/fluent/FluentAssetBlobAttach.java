@@ -36,4 +36,11 @@ public interface FluentAssetBlobAttach
    * Attaches an existing blob to this asset.
    */
   FluentAsset attach(Blob blob, Map<HashAlgorithm, HashCode> checksums);
+
+  /**
+   * Attaches an existing blob to this asset ignoring the repository's write policy.
+   *
+   * @since 3.next
+   */
+  FluentAsset attachIgnoringWritePolicy(Blob blob, Map<HashAlgorithm, HashCode> checksums);
 }
