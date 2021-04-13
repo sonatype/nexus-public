@@ -16,8 +16,8 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.director.ContentDirector;
+import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.pypi.PyPiFormat;
 
 /**
@@ -34,7 +34,7 @@ public class PyPiContentDirector
   }
 
   @Override
-  public boolean allowMoveTo(final Component component, final Repository destination) {
+  public boolean allowMoveTo(final FluentComponent component, final Repository destination) {
     return true;
   }
 

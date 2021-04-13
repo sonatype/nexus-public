@@ -18,6 +18,7 @@ import java.util.Map;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 
 /**
  * @since 3.24
@@ -66,7 +67,7 @@ public interface ContentDirector
    * This is a hook that allows format implementors to decide if a given {@code component} is allowed to be moved to
    * the {@code destination} repository.
    */
-  default boolean allowMoveTo(final Component component, final Repository destination) {
+  default boolean allowMoveTo(final FluentComponent component, final Repository destination) {
     return false;
   }
 

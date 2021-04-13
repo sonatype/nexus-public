@@ -19,8 +19,8 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.director.ContentDirector;
+import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet;
 import org.sonatype.nexus.repository.maven.VersionPolicy;
@@ -47,7 +47,7 @@ public class MavenContentDirector
   }
 
   @Override
-  public boolean allowMoveTo(final Component component, final Repository destination)
+  public boolean allowMoveTo(final FluentComponent component, final Repository destination)
   {
     VersionPolicy versionPolicy = destination.facet(MavenFacet.class).getVersionPolicy();
     if (MIXED.equals(versionPolicy)) {
