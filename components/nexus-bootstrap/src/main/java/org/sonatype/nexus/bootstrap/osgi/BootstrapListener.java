@@ -246,11 +246,9 @@ public class BootstrapListener
         properties.setProperty("nexus-exclude-features",
             "nexus-repository-helm," +
                 "nexus-repository-npm," +
-                "nexus-repository-pypi," +
                 "nexus-repository-docker," +
                 "nexus-repository-yum," +
                 "nexus-restore-docker," +
-                "nexus-restore-pypi," +
                 properties.getProperty("nexus-exclude-features", ""));
       }
     }
