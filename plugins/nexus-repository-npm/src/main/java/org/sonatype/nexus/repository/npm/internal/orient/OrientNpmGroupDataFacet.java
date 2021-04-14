@@ -209,6 +209,7 @@ public class OrientNpmGroupDataFacet
     List<NpmFieldMatcher> fieldMatchers = getMemberFieldMatchers(responses);
     fieldMatchers.add(rewriteTarballUrlMatcher(getRepository(), packageRootAsset.name()));
     npmContent.fieldMatchers(fieldMatchers);
+    npmContent.packageId(packageRootAsset.name());
     npmContent.missingBlobInputStreamSupplier(
         (missingBlobException) -> buildMergedPackageRootOnMissingBlob(responses, context, missingBlobException));
 
@@ -284,7 +285,9 @@ public class OrientNpmGroupDataFacet
     List<NpmFieldMatcher> fieldMatchers = new ArrayList<>();
     fieldMatchers.addAll(REMOVE_DEFAULT_FIELDS_MATCHERS);
     fieldMatchers.addAll(proxyFieldMatchers);
-    return toContent(getRepository(), packageRootAsset).fieldMatchers(fieldMatchers);
+    return toContent(getRepository(), packageRootAsset)
+        .fieldMatchers(fieldMatchers)
+        .packageId(packageRootAsset.name());
   }
 
   @TransactionalStoreBlob

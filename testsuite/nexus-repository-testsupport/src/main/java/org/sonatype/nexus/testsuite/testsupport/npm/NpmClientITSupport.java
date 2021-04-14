@@ -313,6 +313,15 @@ public abstract class NpmClientITSupport
     assertThat(versionsMap.backing().keySet(), equalTo(ImmutableSet.copyOf(versions)));
   }
 
+  protected void verifyIdAttached(final String repository,
+                                  final String name)
+  {
+    NpmClient npmClient = getNpmClient(repository);
+    NestedAttributesMap fetchedPackageRoot = npmClient.fetch(name);
+    assertThat(fetchedPackageRoot.contains("_id"), is(true));
+    assertThat(fetchedPackageRoot.get("_id", String.class), equalTo(name));
+  }
+
   @SuppressWarnings("unchecked")
   private List<Map<String, Object>> searchForComponent(final String repository,
                                                        final String name,
