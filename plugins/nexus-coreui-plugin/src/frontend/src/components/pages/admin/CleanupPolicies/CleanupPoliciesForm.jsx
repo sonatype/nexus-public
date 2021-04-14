@@ -153,14 +153,16 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
             {isSaving && <NxSubmitMask message={UIStrings.SAVING}/>}
 
             <FieldWrapper labelText={UIStrings.CLEANUP_POLICIES.NAME_LABEL}
-                          descriptionText={UIStrings.CLEANUP_POLICIES.NAME_DESCRIPTION}>
+                          descriptionText={UIStrings.CLEANUP_POLICIES.NAME_DESCRIPTION}
+                          id="cleanup-name-group">
               <Textfield
                   {...Utils.fieldProps('name', current)}
                   disabled={pristineData.name}
                   onChange={update}/>
             </FieldWrapper>
             <FieldWrapper labelText={UIStrings.CLEANUP_POLICIES.FORMAT_LABEL}
-                          descriptionText={UIStrings.CLEANUP_POLICIES.FORMAT_DESCRIPTION}>
+                          descriptionText={UIStrings.CLEANUP_POLICIES.FORMAT_DESCRIPTION}
+                          id="cleanup-format-group">
               <Select
                   {...Utils.fieldProps('format', current)}
                   name="format"
@@ -172,7 +174,8 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
                 )}
               </Select>
             </FieldWrapper>
-            <FieldWrapper labelText={UIStrings.CLEANUP_POLICIES.NOTES_LABEL}>
+            <FieldWrapper labelText={UIStrings.CLEANUP_POLICIES.NOTES_LABEL}
+                          id="cleanup-notes-group">
               <Textfield
                   {...Utils.fieldProps('notes', current)}
                   onChange={update}/>
@@ -184,7 +187,8 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
               </legend>
               {isFieldApplicable('lastBlobUpdated') &&
               <CheckboxControlledWrapper isChecked={Boolean(data.criteriaLastBlobUpdated)}
-                                         onChange={setCriteriaLastBlobUpdatedEnabled}>
+                                         onChange={setCriteriaLastBlobUpdatedEnabled}
+                                         id="criteria-last-blob-updated-group">
                 <FieldWrapper labelText={UIStrings.CLEANUP_POLICIES.LAST_UPDATED_LABEL}
                               descriptionText={UIStrings.CLEANUP_POLICIES.LAST_UPDATED_DESCRIPTION}>
                   <Textfield
@@ -199,7 +203,8 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
               }
               {isFieldApplicable('lastDownloaded') &&
               <CheckboxControlledWrapper isChecked={Boolean(data.criteriaLastDownloaded)}
-                                         onChange={setCriteriaLastDownloadedEnabled}>
+                                         onChange={setCriteriaLastDownloadedEnabled}
+                                         id="criteria-last-downloaded-group">
                 <FieldWrapper labelText={UIStrings.CLEANUP_POLICIES.LAST_DOWNLOADED_LABEL}
                               descriptionText={UIStrings.CLEANUP_POLICIES.LAST_DOWNLOADED_DESCRIPTION}>
                   <Textfield
@@ -214,7 +219,8 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
               }
               {isFieldApplicable('isPrerelease') &&
               <CheckboxControlledWrapper isChecked={Boolean(data.criteriaReleaseType)}
-                                         onChange={setCriteriaReleaseTypeEnabled}>
+                                         onChange={setCriteriaReleaseTypeEnabled}
+                                         id="criteria-release-type-group">
                 <FieldWrapper labelText={UIStrings.CLEANUP_POLICIES.RELEASE_TYPE_LABEL}
                               descriptionText={UIStrings.CLEANUP_POLICIES.RELEASE_TYPE_DESCRIPTION}>
                   <Select
@@ -231,7 +237,8 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
               }
               {isFieldApplicable('regex') &&
               <CheckboxControlledWrapper isChecked={Boolean(data.criteriaAssetRegex)}
-                                         onChange={setCriteriaAssetRegexEnabled}>
+                                         onChange={setCriteriaAssetRegexEnabled}
+                                         id="criteria-asset-name-group">
                 <FieldWrapper labelText={UIStrings.CLEANUP_POLICIES.ASSET_NAME_LABEL}
                               descriptionText={UIStrings.CLEANUP_POLICIES.ASSET_NAME_DESCRIPTION}>
                   <Textfield

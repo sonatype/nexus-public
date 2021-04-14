@@ -22,16 +22,23 @@ import org.sonatype.nexus.testsuite.testsupport.fixtures.RepositoryRule;
 import org.sonatype.nexus.testsuite.testsupport.fixtures.SecurityRule;
 
 import org.junit.rules.ExternalResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class NexusTestSystemSupport<R extends RepositoryRule, C extends CapabilitiesRule>
     extends ExternalResource
 {
+  private final Logger log = LoggerFactory.getLogger(getClass());
+
   private final R repositories;
 
   private final C capabilities;
 
   @Inject
   private BlobStoreRule blobstores;
+
+  @Inject
+  private CleanupTestSystem cleanup;
 
   @Inject
   private ComponentAssetTestHelper components;
@@ -67,6 +74,10 @@ public abstract class NexusTestSystemSupport<R extends RepositoryRule, C extends
     return capabilities;
   }
 
+  public CleanupTestSystem cleanup() {
+    return cleanup;
+  }
+
   public ComponentAssetTestHelper components() {
     return components;
   }
@@ -97,6 +108,8 @@ public abstract class NexusTestSystemSupport<R extends RepositoryRule, C extends
 
   @Override
   protected void after() {
+    log.info("Cleaning up test entities");
+    cleanup.after();
     capabilities.after();
     tasks.after();
     repositories.after();

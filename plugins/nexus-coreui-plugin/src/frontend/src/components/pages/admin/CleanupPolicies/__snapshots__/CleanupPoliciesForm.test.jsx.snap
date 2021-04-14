@@ -89,6 +89,7 @@ exports[`CleanupPoliciesForm renders the resolved data 1`] = `
         >
           <div
             class="nx-form-group"
+            id="cleanup-name-group"
           >
             <label
               class="nx-label"
@@ -161,6 +162,7 @@ exports[`CleanupPoliciesForm renders the resolved data 1`] = `
           </div>
           <div
             class="nx-form-group"
+            id="cleanup-format-group"
           >
             <label
               class="nx-label"
@@ -200,6 +202,7 @@ exports[`CleanupPoliciesForm renders the resolved data 1`] = `
           </div>
           <div
             class="nx-form-group"
+            id="cleanup-notes-group"
           >
             <label
               class="nx-label"
@@ -274,6 +277,7 @@ exports[`CleanupPoliciesForm renders the resolved data 1`] = `
             </legend>
             <div
               class="checkbox-controlled-wrapper"
+              id="criteria-last-blob-updated-group"
             >
               <div
                 class="checkbox-control"
@@ -390,6 +394,7 @@ exports[`CleanupPoliciesForm renders the resolved data 1`] = `
             </div>
             <div
               class="checkbox-controlled-wrapper"
+              id="criteria-last-downloaded-group"
             >
               <div
                 class="checkbox-control"
@@ -506,6 +511,7 @@ exports[`CleanupPoliciesForm renders the resolved data 1`] = `
             </div>
             <div
               class="checkbox-controlled-wrapper"
+              id="criteria-release-type-group"
             >
               <div
                 class="checkbox-control"
@@ -590,6 +596,7 @@ exports[`CleanupPoliciesForm renders the resolved data 1`] = `
             </div>
             <div
               class="checkbox-controlled-wrapper"
+              id="criteria-asset-name-group"
             >
               <div
                 class="checkbox-control"

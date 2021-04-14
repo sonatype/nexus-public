@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.cleanup.storage.event;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -107,7 +108,7 @@ public class CleanupPolicyEventHandler
                                                                         final Map<String, Object> cleanup,
                                                                         final CleanupPolicy cleanupPolicy)
   {
-    Set<String> policyNames = new HashSet<>((Set<String>) cleanup.get(CLEANUP_NAME_KEY));
+    Set<String> policyNames = new HashSet<>((Collection<String>) cleanup.get(CLEANUP_NAME_KEY));
     if (policyNames.removeIf(policyName -> policyName.equals(cleanupPolicy.getName()))) {
       // if we removed the last one, remove the cleanup attribute completely
       if (policyNames.isEmpty()) {
