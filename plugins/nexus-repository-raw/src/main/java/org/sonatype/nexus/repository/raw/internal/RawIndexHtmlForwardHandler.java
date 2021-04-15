@@ -16,6 +16,7 @@ import javax.annotation.Nonnull;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Response;
@@ -39,7 +40,7 @@ public class RawIndexHtmlForwardHandler
     if (HttpStatus.NOT_FOUND == response.getStatus().getCode()) {
       response = super.handle(context);
       if (HttpStatus.NOT_FOUND == response.getStatus().getCode()) {
-        return context.proceed();
+        return HttpResponses.notFound("You can’t browse this way");
       }
     }
 

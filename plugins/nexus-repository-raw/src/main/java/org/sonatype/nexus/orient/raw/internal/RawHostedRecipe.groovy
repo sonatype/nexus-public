@@ -41,7 +41,6 @@ import org.sonatype.nexus.repository.view.ConfigurableViewFacet
 import org.sonatype.nexus.repository.view.Route
 import org.sonatype.nexus.repository.view.Router
 import org.sonatype.nexus.repository.view.ViewFacet
-import org.sonatype.nexus.repository.view.handlers.BrowseUnsupportedHandler
 import org.sonatype.nexus.repository.view.handlers.ConditionalRequestHandler
 import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler
 import org.sonatype.nexus.repository.view.handlers.ExceptionHandler
@@ -125,9 +124,6 @@ class RawHostedRecipe
   ContentDispositionHandler contentDispositionHandler
 
   @Inject
-  BrowseUnsupportedHandler browseUnsupportedHandler
-
-  @Inject
   RawHostedRecipe(@Named(HostedType.NAME) final Type type,
                   @Named(RawFormat.NAME) final Format format)
   {
@@ -158,7 +154,6 @@ class RawHostedRecipe
         .matcher(and(new ActionMatcher(HttpMethods.GET), new SuffixMatcher('/')))
         .handler(timingHandler)
         .handler(indexHtmlForwardHandler)
-        .handler(browseUnsupportedHandler)
         .create()
     )
 
