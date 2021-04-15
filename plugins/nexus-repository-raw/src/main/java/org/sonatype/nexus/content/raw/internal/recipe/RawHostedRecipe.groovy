@@ -76,7 +76,6 @@ class RawHostedRecipe
         .matcher(and(new ActionMatcher(HttpMethods.GET), new SuffixMatcher('/')))
         .handler(timingHandler)
         .handler(indexHtmlForwardHandler)
-        .handler(browseUnsupportedHandler)
         .create()
     )
 

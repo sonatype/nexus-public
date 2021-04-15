@@ -37,7 +37,6 @@ import static org.apache.commons.io.FileUtils.readFileToByteArray;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.containsString;
 import static org.sonatype.goodies.httpfixture.server.fluent.Behaviours.content;
 import static org.sonatype.nexus.testsuite.testsupport.FormatClientSupport.bytes;
 import static org.sonatype.nexus.testsuite.testsupport.FormatClientSupport.status;
@@ -54,8 +53,6 @@ public class RawProxyOfHostedIT
   private static final String TEST_PATH = "alphabet.txt";
 
   private static final String TEST_CONTENT = "alphabet.txt";
-
-  private static final String REPO_BROWSE_ERROR = "repository is not directly browseable at this URL.";
 
   private RawClient hostedClient;
 
@@ -164,8 +161,8 @@ public class RawProxyOfHostedIT
         .start();
     try {
       proxyClient = rawClient(repos.createRawProxy(testName.getMethodName(), server.getUrl().toExternalForm()));
-      assertThat(status(proxyClient.get(TEST_PATH)), is(HttpStatus.NOT_FOUND));
-      assertThat(new String(bytes(proxyClient.get(""))), containsString(REPO_BROWSE_ERROR));
+      assertThat(status(hostedClient.get(TEST_PATH + "/")), is(HttpStatus.NOT_FOUND));
+      assertThat(status(hostedClient.get("")), is(HttpStatus.NOT_FOUND));
     }
     finally {
       server.stop();
@@ -174,9 +171,8 @@ public class RawProxyOfHostedIT
 
   @Test
   public void hostedHasNoContent() throws Exception {
-    assertThat(status(hostedClient.get(TEST_PATH)), is(HttpStatus.NOT_FOUND));
-    assertThat(new String(bytes(hostedClient.get(TEST_PATH + "/"))), containsString(REPO_BROWSE_ERROR));
-    assertThat(new String(bytes(hostedClient.get(""))), containsString(REPO_BROWSE_ERROR));
+    assertThat(status(hostedClient.get(TEST_PATH + "/")), is(HttpStatus.NOT_FOUND));
+    assertThat(status(hostedClient.get("")), is(HttpStatus.NOT_FOUND));
   }
 
   @Test
