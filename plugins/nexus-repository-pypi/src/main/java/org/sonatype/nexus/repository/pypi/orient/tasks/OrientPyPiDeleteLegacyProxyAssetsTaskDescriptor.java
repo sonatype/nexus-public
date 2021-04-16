@@ -27,7 +27,7 @@ import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 public class OrientPyPiDeleteLegacyProxyAssetsTaskDescriptor
     extends TaskDescriptorSupport
 {
-  public static final String TASK_NAME = "PyPi - Delete legacy proxy assets";
+  public static final String TASK_NAME = "PyPI - Delete legacy proxy assets";
 
   public static final String TYPE_ID = "repository.pypi.delete-legacy-proxy-assets";
 

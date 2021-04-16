@@ -38,7 +38,7 @@ import static com.google.common.collect.Streams.stream;
 import static org.sonatype.nexus.repository.pypi.upgrade.PyPiUpgrade_1_2.MARKER_FILE;
 
 /**
- * NEXUS-22770: Delete PyPi proxy assets which don't match the standardized path
+ * NEXUS-22770: Delete PyPI proxy assets which don't match the standardized path
  * (<code>/packages/{name}/{version}/{name}-{version}.{ext}</code>) as well as package metadata which has been
  * re-written.
  *
@@ -70,9 +70,9 @@ public class OrientPyPiDeleteLegacyProxyAssetsTask
     stream(repositoryManager.browse())
         .peek(r -> log.debug("Looking at repository: {}", r))
         .filter(r -> r.getFormat() instanceof PyPiFormat)
-        .peek(r -> log.debug("Looking at PyPi repository: {}", r))
+        .peek(r -> log.debug("Looking at PyPI repository: {}", r))
         .filter(r -> r.getType() instanceof ProxyType)
-        .peek(r -> log.debug("Found PyPi proxy repository: {}", r))
+        .peek(r -> log.debug("Found PyPI proxy repository: {}", r))
         .forEach(this::deleteLegacyAssets);
     if (Files.exists(markerFile)) {
       Files.delete(markerFile);
@@ -81,7 +81,7 @@ public class OrientPyPiDeleteLegacyProxyAssetsTask
   }
 
   private void deleteLegacyAssets(final Repository repository) {
-    log.info("Deleting legacy assets in PyPi proxy repository: {}", repository);
+    log.info("Deleting legacy assets in PyPI proxy repository: {}", repository);
     StorageFacet storageFacet = repository.facet(StorageFacet.class);
 
     try (StorageTx tx = storageFacet.txSupplier().get()) {
@@ -101,7 +101,7 @@ public class OrientPyPiDeleteLegacyProxyAssetsTask
 
   @Override
   public String getMessage() {
-    return "Delete legacy PyPi proxy package assets whose names start with 'packages/'";
+    return "Delete legacy PyPI proxy package assets whose names start with 'packages/'";
   }
 
   private boolean isInvalidPath(final Asset asset) {
