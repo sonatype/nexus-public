@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.apt;
+package org.sonatype.nexus.repository.apt.orient;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -23,9 +23,9 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.apt.internal.AptFormat;
 import org.sonatype.nexus.repository.apt.internal.AptPackageParser;
-import org.sonatype.nexus.repository.apt.internal.FacetHelper;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
-import org.sonatype.nexus.repository.apt.internal.hosted.AptHostedFacet;
+import org.sonatype.nexus.repository.apt.orient.internal.OrientFacetHelper;
+import org.sonatype.nexus.repository.apt.orient.internal.hosted.OrientAptHostedFacet;
 import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
@@ -43,7 +43,7 @@ import org.sonatype.nexus.transaction.UnitOfWork;
  */
 @Singleton
 @Named(AptFormat.NAME)
-public class AptUploadHandler
+public class OrientAptUploadHandler
     extends UploadHandlerSupport
 {
   private final VariableResolverAdapter variableResolverAdapter;
@@ -53,9 +53,9 @@ public class AptUploadHandler
   private UploadDefinition definition;
 
   @Inject
-  public AptUploadHandler(@Named("simple") final VariableResolverAdapter variableResolverAdapter,
-                          final ContentPermissionChecker contentPermissionChecker,
-                          final Set<UploadDefinitionExtension> uploadDefinitionExtensions)
+  public OrientAptUploadHandler(@Named("simple") final VariableResolverAdapter variableResolverAdapter,
+                                final ContentPermissionChecker contentPermissionChecker,
+                                final Set<UploadDefinitionExtension> uploadDefinitionExtensions)
   {
     super(uploadDefinitionExtensions);
     this.variableResolverAdapter = variableResolverAdapter;
@@ -64,11 +64,11 @@ public class AptUploadHandler
 
   @Override
   public UploadResponse handle(final Repository repository, final ComponentUpload upload) throws IOException {
-    AptHostedFacet hostedFacet = repository.facet(AptHostedFacet.class);
+    OrientAptHostedFacet hostedFacet = repository.facet(OrientAptHostedFacet.class);
     StorageFacet storageFacet = repository.facet(StorageFacet.class);
 
     try (TempBlob tempBlob = storageFacet
-        .createTempBlob(upload.getAssetUploads().get(0).getPayload(), FacetHelper.hashAlgorithms)) {
+        .createTempBlob(upload.getAssetUploads().get(0).getPayload(), OrientFacetHelper.hashAlgorithms)) {
       ControlFile controlFile = AptPackageParser.parsePackage(tempBlob);
       if (controlFile == null) {
         throw new IOException("Invalid debian package:  no control file");
@@ -76,7 +76,7 @@ public class AptUploadHandler
       String name = controlFile.getField("Package").map(f -> f.value).get();
       String version = controlFile.getField("Version").map(f -> f.value).get();
       String architecture = controlFile.getField("Architecture").map(f -> f.value).get();
-      String assetPath = FacetHelper.buildAssetPath(name, version, architecture);
+      String assetPath = OrientFacetHelper.buildAssetPath(name, version, architecture);
 
       doValidation(repository, assetPath);
 

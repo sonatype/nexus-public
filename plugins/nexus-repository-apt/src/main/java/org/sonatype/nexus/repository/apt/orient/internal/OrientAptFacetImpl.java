@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.apt.internal;
+package org.sonatype.nexus.repository.apt.orient.internal;
 
 import java.io.IOException;
 
@@ -22,6 +22,8 @@ import javax.validation.groups.Default;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.apt.AptFacet;
+import org.sonatype.nexus.repository.apt.internal.AptPackageParser;
+import org.sonatype.nexus.repository.apt.internal.AptWritePolicySelector;
 import org.sonatype.nexus.repository.apt.internal.debian.PackageInfo;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
@@ -55,7 +57,7 @@ import static org.sonatype.nexus.repository.storage.Query.builder;
  * @since 3.17
  */
 @Named
-public class AptFacetImpl
+public class OrientAptFacetImpl
     extends FacetSupport
     implements AptFacet
 {
@@ -120,7 +122,7 @@ public class AptFacetImpl
       return null;
     }
 
-    return FacetHelper.toContent(asset, tx.requireBlob(asset.requireBlobRef()));
+    return OrientFacetHelper.toContent(asset, tx.requireBlob(asset.requireBlobRef()));
   }
 
   @Override
@@ -133,7 +135,7 @@ public class AptFacetImpl
   @TransactionalStoreBlob
   public Content put(final String path, final Payload content, final PackageInfo info) throws IOException {
     StorageFacet storageFacet = facet(StorageFacet.class);
-    try (final TempBlob tempBlob = storageFacet.createTempBlob(content, FacetHelper.hashAlgorithms)) {
+    try (final TempBlob tempBlob = storageFacet.createTempBlob(content, OrientFacetHelper.hashAlgorithms)) {
       StorageTx tx = UnitOfWork.currentTx();
       Asset asset = isDebPackageContentType(path)
           ? findOrCreateDebAsset(tx, path,
@@ -149,12 +151,12 @@ public class AptFacetImpl
           asset,
           path,
           tempBlob,
-          FacetHelper.hashAlgorithms,
+          OrientFacetHelper.hashAlgorithms,
           null,
           content.getContentType(),
           false);
       tx.saveAsset(asset);
-      return FacetHelper.toContent(asset, blob.getBlob());
+      return OrientFacetHelper.toContent(asset, blob.getBlob());
     }
   }
 

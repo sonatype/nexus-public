@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.apt.internal.hosted;
+package org.sonatype.nexus.repository.apt.orient.internal.hosted;
 
 import java.io.IOException;
 
@@ -35,7 +35,7 @@ import static org.sonatype.nexus.repository.http.HttpMethods.POST;
  */
 @Named
 @Singleton
-public class AptHostedHandler
+public class OrientAptHostedHandler
     extends ComponentSupport
     implements Handler
 {
@@ -45,7 +45,7 @@ public class AptHostedHandler
     String method = context.getRequest().getAction();
 
     AptFacet aptFacet = context.getRepository().facet(AptFacet.class);
-    AptHostedFacet hostedFacet = context.getRepository().facet(AptHostedFacet.class);
+    OrientAptHostedFacet hostedFacet = context.getRepository().facet(OrientAptHostedFacet.class);
 
     switch (method) {
       case GET:
@@ -61,7 +61,7 @@ public class AptHostedHandler
   private Response doPost(final Context context,
                           final String path,
                           final String method,
-                          final AptHostedFacet hostedFacet) throws IOException
+                          final OrientAptHostedFacet hostedFacet) throws IOException
   {
     if ("rebuild-indexes".equals(path)) {
       hostedFacet.rebuildIndexes();

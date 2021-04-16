@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.apt.internal.hosted;
+package org.sonatype.nexus.repository.apt.orient.internal.hosted;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -35,11 +35,12 @@ import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.apt.AptFacet;
 import org.sonatype.nexus.repository.apt.internal.AptMimeTypes;
 import org.sonatype.nexus.repository.apt.internal.AptPackageParser;
-import org.sonatype.nexus.repository.apt.internal.FacetHelper;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile.Paragraph;
 import org.sonatype.nexus.repository.apt.internal.debian.PackageInfo;
 import org.sonatype.nexus.repository.apt.internal.gpg.AptSigningFacet;
+import org.sonatype.nexus.repository.apt.internal.hosted.CompressingTempFileStore;
+import org.sonatype.nexus.repository.apt.orient.internal.OrientFacetHelper;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.StorageFacet;
@@ -76,7 +77,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
  */
 @Named
 @Facet.Exposed
-public class AptHostedFacet
+public class OrientAptHostedFacet
     extends FacetSupport
 {
   private static final String P_INDEX_SECTION = "index_section";
@@ -95,7 +96,7 @@ public class AptHostedFacet
 
   public Asset ingestAsset(final Payload body) throws IOException {
     StorageFacet storageFacet = facet(StorageFacet.class);
-    try (TempBlob tempBlob = storageFacet.createTempBlob(body, FacetHelper.hashAlgorithms)) {
+    try (TempBlob tempBlob = storageFacet.createTempBlob(body, OrientFacetHelper.hashAlgorithms)) {
       ControlFile control = AptPackageParser.parsePackage(tempBlob);
       if (control == null) {
         throw new IllegalOperationException("Invalid Debian package supplied");
@@ -115,7 +116,7 @@ public class AptHostedFacet
     String version = info.getVersion();
     String architecture = info.getArchitecture();
 
-    String assetPath = FacetHelper.buildAssetPath(name, version, architecture);
+    String assetPath = OrientFacetHelper.buildAssetPath(name, version, architecture);
 
     Content content = aptFacet.put(
         assetPath,
@@ -124,7 +125,7 @@ public class AptHostedFacet
 
     Asset asset = Content.findAsset(tx, bucket, content);
     String indexSection =
-        buildIndexSection(control, asset.size(), asset.getChecksums(FacetHelper.hashAlgorithms), assetPath);
+        buildIndexSection(control, asset.size(), asset.getChecksums(OrientFacetHelper.hashAlgorithms), assetPath);
     asset.formatAttributes().set(P_ARCHITECTURE, architecture);
     asset.formatAttributes().set(P_PACKAGE_NAME, name);
     asset.formatAttributes().set(P_PACKAGE_VERSION, version);

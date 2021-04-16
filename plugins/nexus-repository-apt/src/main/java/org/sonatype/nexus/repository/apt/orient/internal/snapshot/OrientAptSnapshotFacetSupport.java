@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.apt.internal.snapshot;
+package org.sonatype.nexus.repository.apt.orient.internal.snapshot;
 
 import java.io.FilterInputStream;
 import java.io.IOException;
@@ -26,7 +26,10 @@ import javax.annotation.Nullable;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.apt.AptFacet;
-import org.sonatype.nexus.repository.apt.internal.FacetHelper;
+import org.sonatype.nexus.repository.apt.internal.snapshot.AptSnapshotFacet;
+import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotComponentSelector;
+import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotItem;
+import org.sonatype.nexus.repository.apt.orient.internal.OrientFacetHelper;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFileParser;
 import org.sonatype.nexus.repository.apt.internal.debian.Release;
@@ -51,7 +54,7 @@ import static org.sonatype.nexus.repository.storage.Query.builder;
 /**
  * @since 3.17
  */
-public abstract class AptSnapshotFacetSupport
+public abstract class OrientAptSnapshotFacetSupport
     extends FacetSupport
     implements AptSnapshotFacet
 {
@@ -75,8 +78,8 @@ public abstract class AptSnapshotFacetSupport
       String assetName = createAssetPath(id, item.specifier.path);
       Asset asset = tx.createAsset(bucket, getRepository().getFormat()).name(assetName);
       try (final TempBlob streamSupplier = storageFacet
-          .createTempBlob(item.content.openInputStream(), FacetHelper.hashAlgorithms)) {
-        AssetBlob blob = tx.createBlob(item.specifier.path, streamSupplier, FacetHelper.hashAlgorithms, null,
+          .createTempBlob(item.content.openInputStream(), OrientFacetHelper.hashAlgorithms)) {
+        AssetBlob blob = tx.createBlob(item.specifier.path, streamSupplier, OrientFacetHelper.hashAlgorithms, null,
             item.specifier.role.getMimeType(), true);
         tx.attachBlob(asset, blob);
       }
@@ -99,7 +102,7 @@ public abstract class AptSnapshotFacetSupport
     }
 
     final Blob blob = tx.requireBlob(asset.requireBlobRef());
-    return FacetHelper.toContent(asset, blob);
+    return OrientFacetHelper.toContent(asset, blob);
   }
 
   @Transactional(retryOn = {ONeedRetryException.class})
@@ -121,7 +124,7 @@ public abstract class AptSnapshotFacetSupport
     AptFacet aptFacet = getRepository().facet(AptFacet.class);
 
     List<SnapshotItem> result = new ArrayList<>();
-    List<SnapshotItem> releaseIndexItems = fetchSnapshotItems(FacetHelper.getReleaseIndexSpecifiers(aptFacet));
+    List<SnapshotItem> releaseIndexItems = fetchSnapshotItems(OrientFacetHelper.getReleaseIndexSpecifiers(aptFacet));
     Map<SnapshotItem.Role, SnapshotItem> itemsByRole = new HashMap<>(
         releaseIndexItems.stream().collect(Collectors.toMap((SnapshotItem item) -> item.specifier.role, item -> item)));
     InputStream releaseStream = null;
@@ -180,14 +183,14 @@ public abstract class AptSnapshotFacetSupport
     result.addAll(releaseIndexItems);
 
     if (aptFacet.isFlat()) {
-      result.addAll(fetchSnapshotItems(FacetHelper.getReleasePackageIndexes(aptFacet, null, null)));
+      result.addAll(fetchSnapshotItems(OrientFacetHelper.getReleasePackageIndexes(aptFacet, null, null)));
     }
     else {
       List<String> archs = selector.getArchitectures(release);
       List<String> comps = selector.getComponents(release);
       for (String arch : archs) {
         for (String comp : comps) {
-          result.addAll(fetchSnapshotItems(FacetHelper.getReleasePackageIndexes(aptFacet, comp, arch)));
+          result.addAll(fetchSnapshotItems(OrientFacetHelper.getReleasePackageIndexes(aptFacet, comp, arch)));
         }
       }
     }

@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.apt.internal;
+package org.sonatype.nexus.repository.apt.orient.internal;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,6 +22,7 @@ import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.apt.AptFacet;
 import org.sonatype.nexus.repository.apt.AptRestoreFacet;
+import org.sonatype.nexus.repository.apt.internal.AptPackageParser;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
 import org.sonatype.nexus.repository.apt.internal.debian.PackageInfo;
 import org.sonatype.nexus.repository.apt.internal.debian.Utils;
@@ -43,7 +44,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
  * @since 3.17
  */
 @Named
-public class AptRestoreFacetImpl
+public class OrientAptRestoreFacetImpl
     extends FacetSupport
     implements AptRestoreFacet
 {
@@ -64,7 +65,7 @@ public class AptRestoreFacetImpl
     tx.attachBlob(asset, assetBlob);
     Content.applyToAsset(asset, Content.maintainLastModified(asset, new AttributesMap()));
     tx.saveAsset(asset);
-    return FacetHelper.toContent(asset, assetBlob.getBlob());
+    return OrientFacetHelper.toContent(asset, assetBlob.getBlob());
   }
 
   @Override

@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.apt.internal;
+package org.sonatype.nexus.repository.apt.orient.internal;
 
 import java.util.Arrays;
 import java.util.List;
@@ -36,7 +36,7 @@ import static org.sonatype.nexus.repository.apt.internal.ReleaseName.*;
 /**
  * @since 3.17
  */
-public class FacetHelper
+public class OrientFacetHelper
 {
   public static final List<HashAlgorithm> hashAlgorithms = Arrays.asList(MD5, SHA1, SHA256);
 
@@ -101,7 +101,7 @@ public class FacetHelper
         buildAssetName(packageName, version, architecture));
   }
 
-  private FacetHelper() {
+  private OrientFacetHelper() {
     //empty
   }
 }

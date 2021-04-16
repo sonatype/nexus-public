@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.apt.internal.proxy;
+package org.sonatype.nexus.repository.apt.orient.internal.proxy;
 
 import java.io.IOException;
 import java.net.URI;
@@ -57,15 +57,15 @@ import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.repository.apt.internal.ReleaseName.RELEASE;
-import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 import static org.sonatype.nexus.repository.apt.internal.debian.Utils.isDebPackageContentType;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
 /**
  * @since 3.17
  */
 @Named
 @Facet.Exposed
-public class AptProxyFacet
+public class OrientAptProxyFacet
     extends ProxyFacetSupport
 {
   public List<SnapshotItem> getSnapshotItems(final List<SnapshotItem.ContentSpecifier> specs) throws IOException {

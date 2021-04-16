@@ -38,7 +38,7 @@ import org.bouncycastle.util.io.TeeOutputStream;
  *
  * @since 3.17
  */
-class CompressingTempFileStore
+public class CompressingTempFileStore
     extends ComponentSupport
     implements AutoCloseable
 {

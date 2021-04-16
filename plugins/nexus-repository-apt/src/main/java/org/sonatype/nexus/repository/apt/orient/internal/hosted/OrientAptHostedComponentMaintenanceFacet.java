@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.apt.internal.hosted;
+package org.sonatype.nexus.repository.apt.orient.internal.hosted;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -22,8 +22,8 @@ import java.util.Set;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.repository.apt.internal.hosted.AptHostedFacet.AssetAction;
-import org.sonatype.nexus.repository.apt.internal.hosted.AptHostedFacet.AssetChange;
+import org.sonatype.nexus.repository.apt.orient.internal.hosted.OrientAptHostedFacet.AssetAction;
+import org.sonatype.nexus.repository.apt.orient.internal.hosted.OrientAptHostedFacet.AssetChange;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
@@ -41,7 +41,7 @@ import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_K
  * @since 3.17
  */
 @Named
-public class AptHostedComponentMaintenanceFacet
+public class OrientAptHostedComponentMaintenanceFacet
     extends DefaultComponentMaintenanceImpl
 {
   @Transactional(retryOn = ONeedRetryException.class)
@@ -59,8 +59,8 @@ public class AptHostedComponentMaintenanceFacet
     Set<String> result = super.deleteAssetTx(assetId, deleteBlobs);
     if ("DEB".equals(assetKind)) {
       try {
-        getRepository().facet(AptHostedFacet.class)
-            .rebuildIndexes(Collections.singletonList(new AptHostedFacet.AssetChange(AssetAction.REMOVED, asset)));
+        getRepository().facet(OrientAptHostedFacet.class)
+            .rebuildIndexes(Collections.singletonList(new OrientAptHostedFacet.AssetChange(AssetAction.REMOVED, asset)));
       }
       catch (IOException e) {
         throw new UncheckedIOException(e);
@@ -98,7 +98,7 @@ public class AptHostedComponentMaintenanceFacet
     log.debug("Deleting component: {}", component.toStringExternal());
     DeletionResult result = new DeletionResult(component, tx.deleteComponent(component, deleteBlobs));
     try {
-      getRepository().facet(AptHostedFacet.class).rebuildIndexes(changes);
+      getRepository().facet(OrientAptHostedFacet.class).rebuildIndexes(changes);
     }
     catch (IOException e) {
       throw new UncheckedIOException(e);
