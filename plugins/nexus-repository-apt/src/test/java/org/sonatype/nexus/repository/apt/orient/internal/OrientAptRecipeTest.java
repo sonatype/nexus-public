@@ -10,11 +10,12 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.apt.internal;
+package org.sonatype.nexus.repository.apt.orient.internal;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.repository.apt.internal.hosted.AptHostedRecipe;
-import org.sonatype.nexus.repository.apt.internal.proxy.AptProxyRecipe;
+import org.sonatype.nexus.repository.apt.internal.AptFormat;
+import org.sonatype.nexus.repository.apt.orient.internal.hosted.OrientAptHostedRecipe;
+import org.sonatype.nexus.repository.apt.orient.internal.proxy.OrientAptProxyRecipe;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.view.handlers.HighAvailabilitySupportChecker;
 
@@ -31,7 +32,7 @@ import static org.mockito.Mockito.when;
 /**
  * @since 3.17
  */
-public class AptRecipeTest
+public class OrientAptRecipeTest
     extends TestSupport
 {
   @Mock
@@ -40,16 +41,16 @@ public class AptRecipeTest
   @Mock
   HighAvailabilitySupportChecker highAvailabilitySupportChecker;
 
-  AptHostedRecipe hostedRecipe;
+  OrientAptHostedRecipe hostedRecipe;
 
-  AptProxyRecipe proxyRecipe;
+  OrientAptProxyRecipe proxyRecipe;
 
   final String APT_NAME = "apt";
 
   @Before
   public void setUp() {
-    hostedRecipe = new AptHostedRecipe(highAvailabilitySupportChecker, new ProxyType(), format);
-    proxyRecipe = new AptProxyRecipe(highAvailabilitySupportChecker, new ProxyType(), format);
+    hostedRecipe = new OrientAptHostedRecipe(highAvailabilitySupportChecker, new ProxyType(), format);
+    proxyRecipe = new OrientAptProxyRecipe(highAvailabilitySupportChecker, new ProxyType(), format);
     when(format.getValue()).thenReturn(APT_NAME);
   }
 

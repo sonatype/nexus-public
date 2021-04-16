@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.restore.apt.internal;
+package org.sonatype.nexus.blobstore.restore.apt.orient.internal;
 
 import java.io.ByteArrayInputStream;
 import java.util.Optional;
@@ -22,6 +22,8 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
+import org.sonatype.nexus.blobstore.restore.apt.internal.AptRestoreBlobData;
+import org.sonatype.nexus.blobstore.restore.apt.internal.orient.OrientAptRestoreBlobStrategy;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.Repository;
@@ -48,10 +50,10 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
 
-public class AptRestoreBlobStrategyTest
+public class OrientAptRestoreBlobStrategyTest
     extends TestSupport
 {
-  AptRestoreBlobStrategy underTest;
+  OrientAptRestoreBlobStrategy underTest;
 
   private static final String TEST_BLOB_STORE_NAME = "test";
 
@@ -101,7 +103,7 @@ public class AptRestoreBlobStrategyTest
 
   @Before
   public void setup() {
-    underTest = new AptRestoreBlobStrategy(nodeAccess, repositoryManager, blobStoreManager, new DryRunPrefix("dryrun"));
+    underTest = new OrientAptRestoreBlobStrategy(nodeAccess, repositoryManager, blobStoreManager, new DryRunPrefix("dryrun"));
 
     when(repositoryManager.get(anyString())).thenReturn(repository);
     when(repository.facet(AptRestoreFacet.class)).thenReturn(aptRestoreFacet);

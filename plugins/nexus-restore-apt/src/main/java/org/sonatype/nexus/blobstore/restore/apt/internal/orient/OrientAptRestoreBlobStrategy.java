@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.restore.apt.internal;
+package org.sonatype.nexus.blobstore.restore.apt.internal.orient;
 
 import java.io.IOException;
 import java.util.List;
@@ -22,6 +22,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+import org.sonatype.nexus.blobstore.restore.apt.internal.AptRestoreBlobData;
 import org.sonatype.nexus.blobstore.restore.orient.OrientBaseRestoreBlobStrategy;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
@@ -45,20 +46,20 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
  */
 @Named("apt")
 @Singleton
-public class AptRestoreBlobStrategy
+public class OrientAptRestoreBlobStrategy
     extends OrientBaseRestoreBlobStrategy<AptRestoreBlobData>
 {
   @Inject
-  public AptRestoreBlobStrategy(final NodeAccess nodeAccess,
-                                final RepositoryManager repositoryManager,
-                                final BlobStoreManager blobStoreManager,
-                                final DryRunPrefix dryRunPrefix)
+  public OrientAptRestoreBlobStrategy(final NodeAccess nodeAccess,
+                                      final RepositoryManager repositoryManager,
+                                      final BlobStoreManager blobStoreManager,
+                                      final DryRunPrefix dryRunPrefix)
   {
     super(nodeAccess, repositoryManager, blobStoreManager, dryRunPrefix);
   }
 
   @Override
-  protected AptRestoreBlobData createRestoreData(final RestoreBlobData blobData) {
+  public AptRestoreBlobData createRestoreData(final RestoreBlobData blobData) {
     checkState(!isEmpty(blobData.getBlobName()), "Blob name cannot be empty");
     return new AptRestoreBlobData(blobData);
   }
@@ -76,7 +77,7 @@ public class AptRestoreBlobStrategy
   }
 
   @Override
-  protected String getAssetPath(@Nonnull final AptRestoreBlobData data) {
+  public String getAssetPath(@Nonnull final AptRestoreBlobData data) {
     return data.getBlobData().getBlobName();
   }
 
@@ -98,7 +99,7 @@ public class AptRestoreBlobStrategy
   }
 
   @Override
-  protected boolean componentRequired(final AptRestoreBlobData data) {
+  public boolean componentRequired(final AptRestoreBlobData data) {
     final Repository repository = data.getBlobData().getRepository();
     final AptRestoreFacet facet = repository.facet(AptRestoreFacet.class);
     return facet.componentRequired(data.getBlobData().getBlobName());
@@ -118,7 +119,7 @@ public class AptRestoreBlobStrategy
 
   @Nonnull
   @Override
-  protected List<HashAlgorithm> getHashAlgorithms() {
+  public List<HashAlgorithm> getHashAlgorithms() {
     return newArrayList(MD5, SHA1, SHA256);
   }
 }

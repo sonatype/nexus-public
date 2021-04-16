@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.apt.internal;
 
 import java.util.List;
 
+import org.sonatype.nexus.repository.apt.orient.internal.OrientAptBrowseNodeGenerator;
 import org.sonatype.nexus.repository.browse.BrowsePaths;
 import org.sonatype.nexus.repository.browse.BrowseTestSupport;
 import org.sonatype.nexus.repository.storage.Asset;
@@ -29,7 +30,7 @@ import static java.util.Arrays.asList;
 public class AptBrowseNodeGeneratorTest
     extends BrowseTestSupport
 {
-  private AptBrowseNodeGenerator generator = new AptBrowseNodeGenerator();
+  private OrientAptBrowseNodeGenerator generator = new OrientAptBrowseNodeGenerator();
 
   @Test
   public void computeComponentPath() {

@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.apt.internal;
+package org.sonatype.nexus.repository.apt.orient.internal;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -19,7 +19,7 @@ import java.util.Collections;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.apt.internal.hosted.AptHostedFacet;
+import org.sonatype.nexus.repository.apt.orient.internal.hosted.OrientAptHostedFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.BucketStore;
@@ -39,7 +39,7 @@ import static org.mockito.Mockito.when;
 /**
  * @since 3.17
  */
-public class AptComponentDirectorTest
+public class OrientAptComponentDirectorTest
     extends TestSupport
 {
   @Mock
@@ -55,7 +55,7 @@ public class AptComponentDirectorTest
   private Repository source;
 
   @Mock
-  private AptHostedFacet sourceFacet;
+  private OrientAptHostedFacet sourceFacet;
 
   @Mock
   private Repository destination;
@@ -68,7 +68,7 @@ public class AptComponentDirectorTest
 
   @Test
   public void allowMoveTest() {
-    AptComponentDirector director = new AptComponentDirector(bucketStore, repositoryManager);
+    OrientAptComponentDirector director = new OrientAptComponentDirector(bucketStore, repositoryManager);
     assertTrue(director.allowMoveTo(destination));
     assertTrue(director.allowMoveFrom(source));
 
@@ -87,9 +87,9 @@ public class AptComponentDirectorTest
   {
     when(destination.facet(StorageFacet.class)).thenReturn(storageFacet);
     when(storageFacet.txSupplier()).thenReturn(() -> tx);
-    when(destination.facet(AptHostedFacet.class)).thenReturn(sourceFacet);
+    when(destination.facet(OrientAptHostedFacet.class)).thenReturn(sourceFacet);
 
-    AptComponentDirector director = new AptComponentDirector(bucketStore, repositoryManager);
+    OrientAptComponentDirector director = new OrientAptComponentDirector(bucketStore, repositoryManager);
     director.afterMove(Collections.emptyList(), destination);
     verify(sourceFacet).rebuildIndexes();
   }
@@ -99,9 +99,9 @@ public class AptComponentDirectorTest
   {
     when(destination.facet(StorageFacet.class)).thenReturn(storageFacet);
     when(storageFacet.txSupplier()).thenReturn(() -> tx);
-    when(destination.facet(AptHostedFacet.class)).thenReturn(sourceFacet);
+    when(destination.facet(OrientAptHostedFacet.class)).thenReturn(sourceFacet);
 
-    AptComponentDirector director = new AptComponentDirector(bucketStore, repositoryManager);
+    OrientAptComponentDirector director = new OrientAptComponentDirector(bucketStore, repositoryManager);
     doThrow(new IOException()).when(sourceFacet).rebuildIndexes();
     director.afterMove(Collections.emptyList(), destination);
   }

@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.apt.internal;
+package org.sonatype.nexus.repository.apt.orient.internal;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +19,7 @@ import javax.annotation.Nullable;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.repository.apt.internal.AptFormat;
 import org.sonatype.nexus.repository.browse.BrowseNodeGenerator;
 import org.sonatype.nexus.repository.browse.BrowsePaths;
 import org.sonatype.nexus.repository.storage.Asset;
@@ -31,7 +32,7 @@ import com.google.common.base.Splitter;
  */
 @Singleton
 @Named(AptFormat.NAME)
-public class AptBrowseNodeGenerator
+public class OrientAptBrowseNodeGenerator
     implements
     BrowseNodeGenerator
 {

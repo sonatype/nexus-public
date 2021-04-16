@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.apt.internal.proxy;
+package org.sonatype.nexus.repository.apt.orient.internal.proxy;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -20,12 +20,13 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
+import org.sonatype.nexus.repository.apt.AptFacet;
 import org.sonatype.nexus.repository.apt.AptRestoreFacet;
-import org.sonatype.nexus.repository.apt.internal.AptFacetImpl;
 import org.sonatype.nexus.repository.apt.internal.AptFormat;
 import org.sonatype.nexus.repository.apt.internal.AptRecipeSupport;
 import org.sonatype.nexus.repository.apt.internal.AptSecurityFacet;
 import org.sonatype.nexus.repository.apt.internal.snapshot.AptSnapshotHandler;
+import org.sonatype.nexus.repository.apt.orient.internal.OrientAptFacetImpl;
 import org.sonatype.nexus.repository.attributes.AttributesFacet;
 import org.sonatype.nexus.repository.cache.NegativeCacheFacet;
 import org.sonatype.nexus.repository.cache.NegativeCacheHandler;
@@ -59,9 +60,9 @@ import static org.sonatype.nexus.repository.http.HttpHandlers.notFound;
 /**
  * @since 3.17
  */
-@Named(AptProxyRecipe.NAME)
+@Named(OrientAptProxyRecipe.NAME)
 @Singleton
-public class AptProxyRecipe
+public class OrientAptProxyRecipe
     extends AptRecipeSupport
 {
 
@@ -83,13 +84,13 @@ public class AptProxyRecipe
   Provider<NegativeCacheFacet> negativeCacheFacet;
 
   @Inject
-  Provider<AptProxyFacet> proxyFacet;
+  Provider<OrientAptProxyFacet> proxyFacet;
 
   @Inject
-  Provider<AptProxySnapshotFacet> proxySnapshotFacet;
+  Provider<OrientAptProxySnapshotFacet> proxySnapshotFacet;
 
   @Inject
-  Provider<AptFacetImpl> aptFacet;
+  Provider<OrientAptFacetImpl> aptFacet;
 
   @Inject
   Provider<AptRestoreFacet> aptRestoreFacet;
@@ -149,8 +150,8 @@ public class AptProxyRecipe
   HandlerContributor handlerContributor;
 
   @Inject
-  public AptProxyRecipe(final HighAvailabilitySupportChecker highAvailabilitySupportChecker,
-                        @Named(ProxyType.NAME) final Type type, @Named(AptFormat.NAME) final Format format)
+  public OrientAptProxyRecipe(final HighAvailabilitySupportChecker highAvailabilitySupportChecker,
+                              @Named(ProxyType.NAME) final Type type, @Named(AptFormat.NAME) final Format format)
   {
     super(highAvailabilitySupportChecker, type, format);
   }
