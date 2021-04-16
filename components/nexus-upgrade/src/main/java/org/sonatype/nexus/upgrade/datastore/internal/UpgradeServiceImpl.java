@@ -34,19 +34,15 @@ public class UpgradeServiceImpl
     extends StateGuardLifecycleSupport
     implements UpgradeService
 {
-  private final ConfigUpgradeManager configUpgradeManager;
-
-  private final ContentUpgradeManager contentUpgradeManager;
+  private final UpgradeManager upgradeManager;
 
   @Inject
-  public UpgradeServiceImpl(final ConfigUpgradeManager configUpgradeManager, final ContentUpgradeManager contentUpgradeManager) {
-    this.configUpgradeManager = configUpgradeManager;
-    this.contentUpgradeManager = contentUpgradeManager;
+  public UpgradeServiceImpl(final UpgradeManager upgradeManager) {
+    this.upgradeManager = upgradeManager;
   }
 
   @Override
   protected void doStart() throws Exception {
-    configUpgradeManager.migrate();
-    contentUpgradeManager.migrate();
+    upgradeManager.migrate();
   }
 }
