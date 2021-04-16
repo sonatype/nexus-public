@@ -18,11 +18,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.sonatype.nexus.datastore.api.ContentDataAccess;
 import org.sonatype.nexus.datastore.api.DataAccess;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
+import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
 import org.sonatype.nexus.datastore.api.DataStoreNotFoundException;
 import org.sonatype.nexus.datastore.mybatis.MyBatisDataStore;
@@ -210,6 +212,10 @@ public class DataSessionRule
   @Override
   public Connection openConnection(final String storeName) throws SQLException {
     return ofNullable(stores.get(storeName)).orElseThrow(() -> new DataStoreNotFoundException(storeName)).openConnection();
+  }
+
+  public Optional<DataStore<?>> getDataStore(final String storeName) {
+    return Optional.ofNullable(stores.get(storeName));
   }
 
   @Override

@@ -19,7 +19,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.datastore.api.DataStoreManager;
-import org.sonatype.nexus.upgrade.datastore.ContentDatabaseMigrationStep;
+import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 /**
  * Upgrade manager for the Content database
@@ -28,13 +28,13 @@ import org.sonatype.nexus.upgrade.datastore.ContentDatabaseMigrationStep;
  */
 @Named
 @Singleton
-public class ContentUpgradeManager
-    extends UpgradeManagerSupport<ContentDatabaseMigrationStep>
+public class UpgradeManager
+    extends UpgradeManagerSupport<DatabaseMigrationStep>
 {
   @Inject
-  public ContentUpgradeManager(
+  public UpgradeManager(
       final DataStoreManager dataStoreManager,
-      final List<ContentDatabaseMigrationStep> migrations)
+      final List<DatabaseMigrationStep> migrations)
   {
     super(dataStoreManager, DataStoreManager.DEFAULT_DATASTORE_NAME, migrations);
   }

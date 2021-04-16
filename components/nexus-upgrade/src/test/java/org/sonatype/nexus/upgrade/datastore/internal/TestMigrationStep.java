@@ -12,30 +12,28 @@
  */
 package org.sonatype.nexus.upgrade.datastore.internal;
 
-import java.util.List;
+import java.sql.Connection;
+import java.sql.Statement;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
-import org.sonatype.nexus.datastore.api.DataStoreManager;
-import org.sonatype.nexus.upgrade.datastore.ConfigDatabaseMigrationStep;
-
-/**
- * Upgrade manager for the Content database
- *
- * @since 3.29
- */
-@Named
-@Singleton
-public class ConfigUpgradeManager
-    extends UpgradeManagerSupport<ConfigDatabaseMigrationStep>
+public class TestMigrationStep
+    extends ComponentSupport
+    implements DatabaseMigrationStep
 {
-  @Inject
-  public ConfigUpgradeManager(
-      final DataStoreManager dataStoreManager,
-      final List<ConfigDatabaseMigrationStep> migrations)
-  {
-    super(dataStoreManager, DataStoreManager.DEFAULT_DATASTORE_NAME, migrations);
+  @Override
+  public String version() {
+    return "1.0";
+  }
+
+  @Override
+  public void migrate(final Connection connection) throws Exception {
+    try (Statement stmt = connection.createStatement()) {
+      stmt.execute("CREATE TABLE IF NOT EXISTS example ( name VARCHAR(50) )");
+      log.info("Created example table.");
+      stmt.execute("INSERT INTO example (name) values('fawkes')");
+      log.info("Inserted name = 'fawkes' into example table.");
+    }
   }
 }
