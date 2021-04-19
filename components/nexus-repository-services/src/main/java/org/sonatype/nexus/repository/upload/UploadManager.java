@@ -15,12 +15,15 @@ package org.sonatype.nexus.repository.upload;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.view.Content;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * @since 3.7
@@ -62,4 +65,21 @@ public interface UploadManager
    * @throws IOException
    */
   Content handle(Repository repository, File content, String path) throws IOException;
+
+  class UIUploadEvent {
+    private final Repository repository;
+    private final List<String> assetPaths;
+    public UIUploadEvent(final Repository repository, final List<String> assetPaths) {
+      this.repository = checkNotNull(repository);
+      this.assetPaths = checkNotNull(assetPaths);
+    }
+
+    public Repository getRepository() {
+      return this.repository;
+    }
+
+    public List<String> getAssetPaths() {
+      return this.assetPaths;
+    }
+  }
 }

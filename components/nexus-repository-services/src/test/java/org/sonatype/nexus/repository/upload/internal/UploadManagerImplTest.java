@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.upload.internal;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
@@ -30,6 +32,8 @@ import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.types.VirtualType;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
+import org.sonatype.nexus.repository.upload.UploadManager;
+import org.sonatype.nexus.repository.upload.UploadManager.UIUploadEvent;
 import org.sonatype.nexus.repository.upload.UploadProcessor;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadHandler;
@@ -46,11 +50,14 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.testcontainers.shaded.com.google.common.collect.Lists;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -94,6 +101,9 @@ public class UploadManagerImplTest
   @Mock
   UploadProcessor uploadComponentProcessor;
 
+  @Mock
+  EventManager eventManager;
+
   @Captor
   ArgumentCaptor<ComponentUpload> componentUploadCaptor;
 
@@ -116,7 +126,7 @@ public class UploadManagerImplTest
     handlers.put("a", handlerA);
     handlers.put("b", handlerB);
 
-    underTest = new UploadManagerImpl(handlers, blobStoreAwareMultipartHelper, uploadComponentProcessor,
+    underTest = new UploadManagerImpl(handlers, blobStoreAwareMultipartHelper, uploadComponentProcessor, eventManager,
         Collections.emptySet());
   }
 
@@ -137,18 +147,26 @@ public class UploadManagerImplTest
     TempBlobFormField field = new TempBlobFormField("asset1", "foo.jar", mock(TempBlob.class));
     uploadedForm.putFile("asset1", field);
     when(blobStoreAwareMultipartHelper.parse(anyObject(), anyObject())).thenReturn(uploadedForm);
-    when(handlerA.handle(anyObject(), anyObject())).thenReturn(mock(UploadResponse.class));
+
+    List<String> assetPaths = Lists.newArrayList("/asset/path/1", "/asset/path/2");
+    UploadResponse uploadResponse = mock(UploadResponse.class);
+    when(uploadResponse.getAssetPaths()).thenReturn(assetPaths);
+    when(handlerA.handle(anyObject(), anyObject())).thenReturn(uploadResponse);
 
     underTest.handle(repository, request);
 
     verify(handlerA, times(1)).handle(repository, componentUploadCaptor.getValue());
     verify(handlerB, never()).handle(anyObject(), anyObject());
+    ArgumentCaptor<UIUploadEvent> eventCaptor = ArgumentCaptor.forClass(UIUploadEvent.class);
+    verify(eventManager, times(1)).post(eventCaptor.capture());
+    assertThat(eventCaptor.getValue().getRepository(), equalTo(repository));
+    assertThat(eventCaptor.getValue().getAssetPaths(), equalTo(assetPaths));
 
     // Try the other, to be sure!
-    reset(handlerA, handlerB);
+    reset(handlerA, handlerB, eventManager);
     when(handlerB.getDefinition()).thenReturn(uploadB);
     when(handlerB.getValidatingComponentUpload(anyObject())).thenReturn(validatingComponentUpload);
-    when(handlerB.handle(anyObject(), anyObject())).thenReturn(mock(UploadResponse.class));
+    when(handlerB.handle(anyObject(), anyObject())).thenReturn(uploadResponse);
 
     when(repository.getFormat()).thenReturn(new Format("b")
     {
@@ -158,6 +176,10 @@ public class UploadManagerImplTest
 
     verify(handlerB, times(1)).handle(repository, componentUploadCaptor.getValue());
     verify(handlerA, never()).handle(anyObject(), anyObject());
+    eventCaptor = ArgumentCaptor.forClass(UIUploadEvent.class);
+    verify(eventManager, times(1)).post(eventCaptor.capture());
+    assertThat(eventCaptor.getValue().getRepository(), equalTo(repository));
+    assertThat(eventCaptor.getValue().getAssetPaths(), equalTo(assetPaths));
   }
 
   @Test

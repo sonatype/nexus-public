@@ -59,9 +59,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class UploadManagerImplTest extends TestSupport
+public class OrientUploadManagerImplTest
+    extends TestSupport
 {
-  private UploadManagerImpl underTest;
+  private OrientUploadManagerImpl underTest;
 
   @Mock
   UploadHandler handlerA;
@@ -115,7 +116,7 @@ public class UploadManagerImplTest extends TestSupport
     handlers.put("a", handlerA);
     handlers.put("b", handlerB);
 
-    underTest = new UploadManagerImpl(handlers, blobStoreAwareMultipartHelper,
+    underTest = new OrientUploadManagerImpl(handlers, blobStoreAwareMultipartHelper,
         Collections.singleton(componentUploadExtension));
   }
 

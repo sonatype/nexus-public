@@ -28,17 +28,19 @@ import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.rest.ComponentUploadExtension;
 import org.sonatype.nexus.repository.rest.internal.resources.ComponentUploadUtils;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.upload.AssetUpload;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
-import org.sonatype.nexus.repository.upload.UploadProcessor;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadHandler;
 import org.sonatype.nexus.repository.upload.UploadManager;
+import org.sonatype.nexus.repository.upload.UploadProcessor;
 import org.sonatype.nexus.repository.upload.UploadResponse;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.rest.ValidationErrorsException;
@@ -48,12 +50,15 @@ import org.apache.commons.fileupload.FileUploadException;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
+import static org.apache.commons.lang3.StringUtils.prependIfMissing;
+import static org.sonatype.nexus.common.app.FeatureFlags.EARLY_ACCESS_DATASTORE;
 
 /**
  * {@link UploadManager} implementation.
  *
  * @since 3.24
  */
+@FeatureFlag(name = EARLY_ACCESS_DATASTORE)
 @Named
 @Singleton
 public class UploadManagerImpl
@@ -70,11 +75,14 @@ public class UploadManagerImpl
 
   private final Set<ComponentUploadExtension> componentUploadExtensions;
 
+  private final EventManager eventManager;
+
   @Inject
   public UploadManagerImpl(
       final Map<String, UploadHandler> uploadHandlers,
       final UploadComponentMultipartHelper multipartHelper,
       final UploadProcessor uploadComponentProcessor,
+      final EventManager eventManager,
       final Set<ComponentUploadExtension> componentsUploadExtensions)
   {
     this.uploadHandlers = checkNotNull(uploadHandlers);
@@ -82,6 +90,7 @@ public class UploadManagerImpl
         .unmodifiableList(uploadHandlers.values().stream().map(UploadHandler::getDefinition).collect(toList()));
     this.multipartHelper = checkNotNull(multipartHelper);
     this.uploadComponentProcessor = checkNotNull(uploadComponentProcessor);
+    this.eventManager = checkNotNull(eventManager);
     this.componentUploadExtensions = checkNotNull(componentsUploadExtensions);
   }
 
@@ -117,6 +126,8 @@ public class UploadManagerImpl
             .collect(toList());
         componentUploadExtension.apply(repository, upload, componentIds);
       }
+
+      eventManager.post(new UIUploadEvent(repository, uploadResponse.getAssetPaths().stream().map(assetPath -> prependIfMissing(assetPath, "/")).collect(toList())));
 
       return uploadResponse;
 
