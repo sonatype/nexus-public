@@ -75,10 +75,16 @@ public class NexusTargetMappingAuthorizationFilter
       if (m.matches()) {
         path = getPathReplacement();
         // TODO: hardcoded currently
-        if (path.contains("@1")) {
+        if (path.contains("@1") && m.groupCount() >= 1) {
           path = path.replaceAll("@1", Matcher.quoteReplacement(m.group(1)));
         }
-        if (path.contains("@2")) {
+        /* NEXUS-27192 This code was blocking namespaced npm packages like @2gis/mapgl.
+         * The matcher m can be configured for various different regular expressions.
+         * The one used when doing an `npm install @2gis/mapgl` is /content(.*).
+         * However, there are other matchers for other requests.
+         * Checking that the matcher contains at least the number of groups ensures we don't hit an NPE.
+         */
+        if (path.contains("@2") && m.groupCount() >= 2) {
           path = path.replaceAll("@2", Matcher.quoteReplacement(m.group(2)));
         }
         // and so on... this will be reworked to be dynamic
