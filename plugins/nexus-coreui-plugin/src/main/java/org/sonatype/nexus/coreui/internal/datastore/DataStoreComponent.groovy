@@ -17,8 +17,6 @@ import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
 
-import org.sonatype.nexus.datastore.DataStoreConfigurationSource
-import org.sonatype.nexus.datastore.DataStoreDescriptor
 import org.sonatype.nexus.datastore.api.DataStore
 import org.sonatype.nexus.datastore.api.DataStoreManager
 import org.sonatype.nexus.extdirect.DirectComponentSupport
@@ -49,12 +47,6 @@ class DataStoreComponent
 {
   @Inject
   DataStoreManager dataStoreManager
-
-  @Inject
-  Map<String, DataStoreDescriptor> dataStoreDescriptors
-
-  @Inject
-  Map<String, DataStoreConfigurationSource> dataStoreConfigurationSources
 
   @Inject
   RepositoryManager repositoryManager
