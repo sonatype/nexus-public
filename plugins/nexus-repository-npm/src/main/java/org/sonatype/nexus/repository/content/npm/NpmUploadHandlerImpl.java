@@ -17,7 +17,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,6 +48,7 @@ import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import com.google.common.collect.Lists;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.singletonList;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 
 /**
@@ -96,11 +96,12 @@ public class NpmUploadHandlerImpl
 
     try (TempBlob tempBlob = contentFacet.blobs().ingest(payload, HASH_ALGORITHMS)) {
       final Map<String, Object> packageJson = npmPackageParser.parsePackageJson(tempBlob);
-      NpmPackageId packageId = NpmPackageId.parse((String) checkNotNull(packageJson.get(NpmAttributes.P_NAME)));
-
+      ensureNpmPermitted(repository, packageJson);
       Content content = hostedFacet.putPackage(packageJson, tempBlob);
 
-      return new UploadResponse(content, Collections.singletonList(NpmContentFacet.metadataPath(packageId)));
+      NpmPackageId packageId = NpmPackageId.parse((String) checkNotNull(packageJson.get(NpmAttributes.P_NAME)));
+      String version = (String) packageJson.get(NpmAttributes.P_VERSION);
+      return new UploadResponse(content, singletonList(NpmContentFacet.tarballPath(packageId, version)));
     }
   }
 

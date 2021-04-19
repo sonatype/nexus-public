@@ -13,9 +13,11 @@
 package org.sonatype.nexus.repository.content.search;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -40,10 +42,14 @@ import org.sonatype.nexus.repository.content.event.component.ComponentDeletedEve
 import org.sonatype.nexus.repository.content.event.component.ComponentEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentPurgedEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentUpdatedEvent;
+import org.sonatype.nexus.repository.content.facet.ContentFacet;
+import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.upload.UploadManager.UIUploadEvent;
 import org.sonatype.nexus.scheduling.PeriodicJobService;
 import org.sonatype.nexus.scheduling.PeriodicJobService.PeriodicJob;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.eventbus.AllowConcurrentEvents;
@@ -53,6 +59,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Integer.parseInt;
 import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toList;
+import static org.apache.commons.lang3.StringUtils.prependIfMissing;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.repository.content.search.SearchEventHandler.RequestType.INDEX;
 import static org.sonatype.nexus.repository.content.search.SearchEventHandler.RequestType.PURGE;
@@ -222,6 +230,46 @@ public class SearchEventHandler
   @Subscribe
   public void on(final AssetDeletedEvent event) {
     requestIndex(event); // update the component search document on asset delete
+  }
+
+  @AllowConcurrentEvents
+  @Subscribe
+  public void on(final UIUploadEvent event) {
+    indexUIUpload(event.getRepository(), event.getAssetPaths());
+  }
+
+  /**
+   * Updates the asset(s) created/updated via a UI upload
+   * It doesn't touch the queue of batch operations to avoid any concurrency issues.
+   * And since this is only for UI, the superfluous work should be minimal
+   */
+  @VisibleForTesting
+  static void indexUIUpload(final Repository repository, final List<String> assetPaths) {
+    repository.optionalFacet(SearchFacet.class).ifPresent(searchFacet ->
+        repository.optionalFacet(ContentFacet.class).ifPresent(contentFacet ->
+            processUIUpload(assetPaths, contentFacet, searchFacet)
+        )
+    );
+  }
+
+  private static void processUIUpload(final List<String> assetPaths, final ContentFacet contentFacet, final SearchFacet searchFacet) {
+    List<EntityId> componentIds = assetPaths.stream()
+        .map(assetPath -> getComponentEntityId(assetPath, contentFacet))
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .collect(toList());
+
+    if (!componentIds.isEmpty()) {
+      searchFacet.index(componentIds);
+    }
+  }
+
+  private static Optional<EntityId> getComponentEntityId(final String assetPath, final ContentFacet contentFacet) {
+    return contentFacet.assets().path(assetPath).find()
+        .map(InternalIds::internalComponentId)
+        .filter(OptionalInt::isPresent)
+        .map(OptionalInt::getAsInt)
+        .map(InternalIds::toExternalId);
   }
 
   @AllowConcurrentEvents

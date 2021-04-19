@@ -38,6 +38,7 @@ import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
+import org.sonatype.nexus.repository.upload.UploadResponse;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.Payload;
@@ -71,9 +72,9 @@ public class MavenUploadHandler
   }
 
   @Override
-  protected ContentAndAssetPathResponseData getResponseContents(final Repository repository,
-                                                                final ComponentUpload componentUpload,
-                                                                final String basePath)
+  protected UploadResponse getUploadResponse(final Repository repository,
+                                             final ComponentUpload componentUpload,
+                                             final String basePath)
       throws IOException
   {
     ContentAndAssetPathResponseData responseData;
@@ -90,7 +91,7 @@ public class MavenUploadHandler
     finally {
       UnitOfWork.end();
     }
-    return responseData;
+    return responseData.uploadResponse();
   }
 
   private void updateMetadata(final Repository repository, final Coordinates coordinates) {

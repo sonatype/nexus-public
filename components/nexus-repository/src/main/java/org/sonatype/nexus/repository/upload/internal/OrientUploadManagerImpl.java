@@ -27,6 +27,7 @@ import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.rest.ComponentUploadExtension;
 import org.sonatype.nexus.repository.rest.internal.resources.ComponentUploadUtils;
@@ -45,15 +46,17 @@ import org.apache.commons.fileupload.FileUploadException;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 
 /**
  * CMA-backed {@link UploadManager}.
  *
  * @since 3.7
  */
+@FeatureFlag(name = ORIENT_ENABLED)
 @Named("default")
 @Singleton
-public class UploadManagerImpl
+public class OrientUploadManagerImpl
     extends ComponentSupport
     implements UploadManager
 {
@@ -66,9 +69,9 @@ public class UploadManagerImpl
   private Set<ComponentUploadExtension> componentUploadExtensions;
 
   @Inject
-  public UploadManagerImpl(final Map<String, UploadHandler> uploadHandlers,
-                           final UploadComponentMultipartHelper multipartHelper,
-                           final Set<ComponentUploadExtension> componentsUploadExtensions)
+  public OrientUploadManagerImpl(final Map<String, UploadHandler> uploadHandlers,
+                                 final UploadComponentMultipartHelper multipartHelper,
+                                 final Set<ComponentUploadExtension> componentsUploadExtensions)
   {
     this.uploadHandlers = checkNotNull(uploadHandlers);
     this.uploadDefinitions = Collections

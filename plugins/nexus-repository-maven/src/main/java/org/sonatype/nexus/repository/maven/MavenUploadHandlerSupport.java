@@ -155,9 +155,7 @@ public abstract class MavenUploadHandlerSupport
 
       doValidation(repository, basePath, upload.getAssetUploads());
 
-      ContentAndAssetPathResponseData responseData = getResponseContents(repository, upload, basePath);
-
-      return responseData.uploadResponse();
+      return getUploadResponse(repository, upload, basePath);
     }
     finally {
       if (pom != null) {
@@ -261,9 +259,9 @@ public abstract class MavenUploadHandlerSupport
     }
   }
 
-  protected abstract ContentAndAssetPathResponseData getResponseContents(Repository repository,
-                                                                         ComponentUpload componentUpload,
-                                                                         String basePath)
+  protected abstract UploadResponse getUploadResponse(Repository repository,
+                                                                       ComponentUpload componentUpload,
+                                                                       String basePath)
       throws IOException;
 
   protected abstract Content doPut(Repository repository, MavenPath mavenPath, Payload payload) throws IOException;

@@ -41,6 +41,7 @@ import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
+import org.sonatype.nexus.repository.upload.UploadResponse;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.Payload;
@@ -49,6 +50,8 @@ import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 import org.joda.time.DateTime;
 
+import static java.util.stream.Collectors.toList;
+import static org.apache.commons.lang3.StringUtils.prependIfMissing;
 import static org.sonatype.nexus.repository.maven.internal.Constants.CHECKSUM_CONTENT_TYPE;
 import static org.sonatype.nexus.repository.view.Content.CONTENT_LAST_MODIFIED;
 
@@ -76,15 +79,17 @@ public class MavenUploadHandler
   }
 
   @Override
-  protected ContentAndAssetPathResponseData getResponseContents(final Repository repository,
-                                                                final ComponentUpload componentUpload,
-                                                                final String basePath) throws IOException
+  protected UploadResponse getUploadResponse(final Repository repository,
+                                             final ComponentUpload componentUpload,
+                                             final String basePath) throws IOException
   {
     ContentAndAssetPathResponseData responseData =
         createAssets(repository, basePath, componentUpload.getAssetUploads());
     maybeGeneratePom(repository, componentUpload, basePath, responseData);
     updateMetadata(repository, responseData.getCoordinates());
-    return responseData;
+    return new UploadResponse(responseData.getContent(), responseData.getAssetPaths().stream()
+        .map(assetPath -> prependIfMissing(assetPath, "/"))
+        .collect(toList()));
   }
 
   private void updateMetadata(final Repository repository, final Coordinates coordinates) {

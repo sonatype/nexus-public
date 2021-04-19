@@ -32,6 +32,7 @@ public interface FeatureFlags
   String EARLY_ACCESS_DATASTORE_DEVELOPER_NAMED = "${nexus.earlyAccess.datastore.developer:-false}";
 
   /* Orient based flags for marking content that is orient only, and should be disabled when datastore is enabled */
+  String ORIENT_ENABLED = "nexus.orient.enabled";
   String ORIENT_CONFIG_DB = "nexus.orient.store.config";
   String ORIENT_CONTENT_DB = "nexus.orient.store.content";
 }

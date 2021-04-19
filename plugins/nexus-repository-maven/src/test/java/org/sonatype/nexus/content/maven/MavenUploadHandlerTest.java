@@ -233,8 +233,8 @@ public class MavenUploadHandlerTest
     componentUpload.getAssetUploads().add(assetUpload);
 
     UploadResponse uploadResponse = underTest.handle(repository, componentUpload);
-    assertThat(uploadResponse.getAssetPaths(), contains("org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.jar",
-        "org/apache/maven/tomcat/5.0.28/tomcat-5.0.28-sources.jar"));
+    assertThat(uploadResponse.getAssetPaths(), contains("/org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.jar",
+        "/org/apache/maven/tomcat/5.0.28/tomcat-5.0.28-sources.jar"));
 
     ArgumentCaptor<MavenPath> pathCapture = ArgumentCaptor.forClass(MavenPath.class);
     verify(mavenFacet, times(4)).put(pathCapture.capture(), any(Payload.class));
@@ -291,8 +291,8 @@ public class MavenUploadHandlerTest
     componentUpload.getAssetUploads().add(assetUpload);
 
     UploadResponse uploadResponse = underTest.handle(repository, componentUpload);
-    assertThat(uploadResponse.getAssetPaths(), contains("org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.jar",
-        "org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.pom"));
+    assertThat(uploadResponse.getAssetPaths(), contains("/org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.jar",
+        "/org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.pom"));
 
     ArgumentCaptor<MavenPath> paths = ArgumentCaptor.forClass(MavenPath.class);
     verify(mavenFacet, times(4)).put(paths.capture(), any());
