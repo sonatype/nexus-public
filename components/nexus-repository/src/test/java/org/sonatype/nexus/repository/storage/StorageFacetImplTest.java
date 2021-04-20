@@ -141,6 +141,9 @@ public class StorageFacetImplTest
   private ConstraintViolationFactory violationFactory;
 
   @Mock
+  private BlobMetadataStorage blobMetadataStorage;
+
+  @Mock
   private AssetManager assetManager;
 
   @Captor
@@ -177,7 +180,8 @@ public class StorageFacetImplTest
         storageFacetManager,
         componentFactory,
         violationFactory,
-        () -> null
+        () -> null,
+        blobMetadataStorage
     );
     underTest.attach(repository);
   }

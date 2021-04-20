@@ -44,6 +44,7 @@ import org.sonatype.nexus.repository.content.fluent.internal.FluentBlobsImpl;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentComponentsImpl;
 import org.sonatype.nexus.repository.content.store.ContentRepositoryData;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
+import org.sonatype.nexus.repository.storage.BlobMetadataStorage;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.security.ClientInfo;
 import org.sonatype.nexus.transaction.Transactional;
@@ -270,6 +271,10 @@ public abstract class ContentFacetSupport
 
   public final String nodeName() {
     return dependencies.nodeAccess.getId();
+  }
+
+  public final BlobMetadataStorage blobMetadataStorage() {
+    return dependencies.blobMetadataStorage;
   }
 
   public final Repository repository() {

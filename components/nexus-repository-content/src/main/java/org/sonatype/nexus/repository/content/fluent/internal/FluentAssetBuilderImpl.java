@@ -20,6 +20,7 @@ import java.util.function.Supplier;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobRef;
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.repository.content.Asset;
@@ -162,7 +163,10 @@ public class FluentAssetBuilderImpl
     headerBuilder.put(CREATED_BY_IP_HEADER, tempHeaders.get(CREATED_BY_IP_HEADER));
     headerBuilder.put(CONTENT_TYPE_HEADER, facet.checkContentType(assetData, tempBlob));
 
-    return facet.stores().blobStore.copy(tempBlob.getId(), headerBuilder.build());
+    Blob permanentBlob = facet.stores().blobStore.copy(tempBlob.getId(), headerBuilder.build());
+    NestedAttributesMap componentAttributes = assetData.component().map(Component::attributes).orElse(null);
+    facet.blobMetadataStorage().attach(facet.stores().blobStore, permanentBlob.getId(), componentAttributes, assetData.attributes());
+    return permanentBlob;
   }
 
   private AssetBlob getOrCreateAssetBlob(final Blob blob, final Map<HashAlgorithm, HashCode> checksums) {

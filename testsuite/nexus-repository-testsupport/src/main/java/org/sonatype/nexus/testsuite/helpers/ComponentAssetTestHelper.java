@@ -158,6 +158,11 @@ public interface ComponentAssetTestHelper
   NestedAttributesMap componentAttributes(Repository repository, String namespace, String name);
 
   /**
+   * Retrieve the attributes for a snapshot component.
+   */
+  NestedAttributesMap snapshotComponentAttributes(Repository repository, String name, String version);
+
+  /**
    * Set the last downloaded time for all assets in a repository.
    */
   void setLastDownloadedTime(Repository repository, int minusSeconds);

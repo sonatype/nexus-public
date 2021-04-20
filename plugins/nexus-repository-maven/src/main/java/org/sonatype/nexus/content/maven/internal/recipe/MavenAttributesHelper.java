@@ -70,6 +70,7 @@ final class MavenAttributesHelper
     mavenAttributes.put(P_ARTIFACT_ID, coordinates.getArtifactId());
     mavenAttributes.put(P_VERSION, coordinates.getVersion());
     mavenAttributes.put(P_BASE_VERSION, coordinates.getBaseVersion());
+    mavenAttributes.put(P_EXTENSION, coordinates.getExtension());
 
     optionalModel.ifPresent(model -> {
       mavenAttributes.put(P_PACKAGING, getPackaging(model));

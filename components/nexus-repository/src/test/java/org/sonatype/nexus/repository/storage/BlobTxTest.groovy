@@ -68,7 +68,7 @@ class BlobTxTest
         create                   : { InputStream is, Map<String, String> map -> is.text; blob }
     ] as BlobStore
 
-    final BlobTx testSubject = new BlobTx(nodeAccess, blobStore)
+    final BlobTx testSubject = new BlobTx(nodeAccess, blobStore, new DefaultBlobMetadataStorage())
     final AssetBlob assetBlob = testSubject.create(inputStream, [:], [SHA1], contentType)
 
     assertThat(assetBlob.contentType, is(equalTo(contentType)))
@@ -106,7 +106,7 @@ class BlobTxTest
         create                   : { Path p, Map<String, String> map, long size, HashCode sha1 -> blob }
     ] as BlobStore
 
-    final BlobTx testSubject = new BlobTx(nodeAccess, blobStore)
+    final BlobTx testSubject = new BlobTx(nodeAccess, blobStore, new DefaultBlobMetadataStorage())
     final AssetBlob assetBlob = testSubject.createByHardLinking(path, headers, hashes, contentType, blobSize)
 
     assertThat(assetBlob.contentType, is(equalTo(contentType)))
@@ -145,7 +145,7 @@ class BlobTxTest
         copy                     : { BlobId id, Map<String, String> map -> blob }
     ] as BlobStore
 
-    BlobTx testSubject = new BlobTx(nodeAccess, blobStore)
+    BlobTx testSubject = new BlobTx(nodeAccess, blobStore, new DefaultBlobMetadataStorage())
     AssetBlob assetBlob = testSubject.createByCopying(blobRef, headers, hashes, true)
 
     assertThat(assetBlob.contentType, is(equalTo(contentType)))

@@ -363,6 +363,16 @@ public class DatastoreComponentAssetTestHelper
   }
 
   @Override
+  public NestedAttributesMap snapshotComponentAttributes(
+      final Repository repository,
+      final String name,
+      final String version)
+  {
+    return findSnapshotComponent(repository, name, version).map(Component::attributes)
+        .orElseThrow(() -> new ComponentNotFoundException(repository, "", name, version));
+  }
+
+  @Override
   public String adjustedPath(final String path) {
     return "/" + stripStart(path, "/");
   }
