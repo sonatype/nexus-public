@@ -104,6 +104,8 @@ public class StorageFacetImpl
 
   private final Provider<RepositoryMoveService> repositoryMoveStoreProvider;
 
+  private final BlobMetadataStorage blobMetadataStorage;
+
   @VisibleForTesting
   static class Config
   {
@@ -143,7 +145,8 @@ public class StorageFacetImpl
                           final StorageFacetManager storageFacetManager,
                           final ComponentFactory componentFactory,
                           final ConstraintViolationFactory constraintViolationFactory,
-                          final Provider<RepositoryMoveService> repositoryMoveStoreProvider)
+                          final Provider<RepositoryMoveService> repositoryMoveStoreProvider,
+                          final BlobMetadataStorage blobMetadataStorage)
   {
     this.nodeAccess = checkNotNull(nodeAccess);
     this.blobStoreManager = checkNotNull(blobStoreManager);
@@ -159,6 +162,7 @@ public class StorageFacetImpl
     this.componentFactory = checkNotNull(componentFactory);
     this.constraintViolationFactory = checkNotNull(constraintViolationFactory);
     this.repositoryMoveStoreProvider = checkNotNull(repositoryMoveStoreProvider);
+    this.blobMetadataStorage = checkNotNull(blobMetadataStorage);
 
     this.txSupplier = () -> openStorageTx(databaseInstanceProvider.get().acquire());
   }
@@ -297,7 +301,7 @@ public class StorageFacetImpl
         new StorageTxImpl(
             createdBy(),
             createdByIp(),
-            new BlobTx(nodeAccess, blobStore),
+            new BlobTx(nodeAccess, blobStore, blobMetadataStorage),
             db,
             getRepository().getName(),
             config.writePolicy == null ? WritePolicy.ALLOW : config.writePolicy,

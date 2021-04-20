@@ -19,6 +19,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
+import org.sonatype.nexus.repository.storage.BlobMetadataStorage;
 import org.sonatype.nexus.security.ClientInfoProvider;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
@@ -45,13 +46,16 @@ class ContentFacetDependencies
 
   final AssetBlobValidators assetBlobValidators;
 
+  final BlobMetadataStorage blobMetadataStorage;
+
   @Inject
   public ContentFacetDependencies(final BlobStoreManager blobStoreManager,
                                   final DataSessionSupplier dataSessionSupplier,
                                   final ConstraintViolationFactory constraintViolationFactory,
                                   final ClientInfoProvider clientInfoProvider,
                                   final NodeAccess nodeAccess,
-                                  final AssetBlobValidators assetBlobValidators)
+                                  final AssetBlobValidators assetBlobValidators,
+                                  final BlobMetadataStorage blobMetadataStorage)
   {
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.dataSessionSupplier = checkNotNull(dataSessionSupplier);
@@ -59,5 +63,6 @@ class ContentFacetDependencies
     this.clientInfoProvider = checkNotNull(clientInfoProvider);
     this.nodeAccess = checkNotNull(nodeAccess);
     this.assetBlobValidators = checkNotNull(assetBlobValidators);
+    this.blobMetadataStorage = checkNotNull(blobMetadataStorage);
   }
 }

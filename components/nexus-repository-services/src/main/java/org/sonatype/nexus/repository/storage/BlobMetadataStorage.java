@@ -10,30 +10,21 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.api;
+package org.sonatype.nexus.repository.storage;
+
+import org.sonatype.nexus.blobstore.api.BlobId;
+import org.sonatype.nexus.blobstore.api.BlobStore;
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
 /**
- * @since 3.4
+ * Allows asset metadata to be stored in a blob store.
+ *
+ * @since 3.next
  */
-public final class BlobAttributesConstants
-{
-  public static final String HEADER_PREFIX = "@";
+public interface BlobMetadataStorage {
 
-  public static final String SHA1_HASH_ATTRIBUTE = "sha1";
-
-  public static final String CONTENT_SIZE_ATTRIBUTE = "size";
-
-  public static final String CREATION_TIME_ATTRIBUTE = "creationTime";
-
-  public static final String DELETED_ATTRIBUTE = "deleted";
-
-  public static final String DELETED_REASON_ATTRIBUTE = "deletedReason";
-
-  public static final String DELETED_DATETIME_ATTRIBUTE = "deletedDateTime";
-
-  public static final String ASSET_ATTRIBUTE_HEADER_PREFIX = "attributes.asset.";
-
-  public static final String COMPONENT_ATTRIBUTE_HEADER_PREFIX = "attributes.component.";
-
-  private BlobAttributesConstants() {}
+  void attach(BlobStore blobStore,
+              BlobId blobId,
+              NestedAttributesMap componentAttributes,
+              NestedAttributesMap assetAttributes);
 }

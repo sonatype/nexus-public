@@ -25,6 +25,7 @@ import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.hash.MultiHashingInputStream;
 import org.sonatype.nexus.common.node.NodeAccess;
@@ -55,13 +56,16 @@ public class BlobTx
 
   private final BlobStore blobStore;
 
+  private final BlobMetadataStorage blobMetadataStorage;
+
   private final Set<AssetBlob> newlyCreatedBlobs = Sets.newHashSet();
 
   private final Map<BlobRef, String> deletionRequests = Maps.newHashMap();
 
-  public BlobTx(final NodeAccess nodeAccess, final BlobStore blobStore) {
+  public BlobTx(final NodeAccess nodeAccess, final BlobStore blobStore, final BlobMetadataStorage blobMetadataStorage) {
     this.nodeAccess = checkNotNull(nodeAccess);
     this.blobStore = checkNotNull(blobStore);
+    this.blobMetadataStorage = checkNotNull(blobMetadataStorage);
   }
 
   public AssetBlob create(final InputStream inputStream,
@@ -125,6 +129,12 @@ public class BlobTx
         hashes,
         hashesVerified,
         headers.get(BlobStore.CONTENT_TYPE_HEADER));
+  }
+
+  public void attachAssetMetadata(final BlobId blobId,
+                                  final NestedAttributesMap componentAttributes,
+                                  final NestedAttributesMap assetAttributes) {
+    blobMetadataStorage.attach(blobStore, blobId, componentAttributes, assetAttributes);
   }
 
   private PrefetchedAssetBlob createPrefetchedAssetBlob(final Blob blob,

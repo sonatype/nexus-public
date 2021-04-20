@@ -542,8 +542,8 @@ public class MavenFacetImpl
                                @Nullable final AttributesMap contentAttributes)
       throws IOException
   {
-    tx.attachBlob(asset, assetBlob);
     Content.applyToAsset(asset, Content.maintainLastModified(asset, contentAttributes));
+    tx.attachBlob(asset, assetBlob);
   }
 
   @Override

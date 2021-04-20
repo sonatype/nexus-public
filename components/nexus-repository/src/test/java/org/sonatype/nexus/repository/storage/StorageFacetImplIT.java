@@ -853,6 +853,7 @@ public class StorageFacetImplIT
     MimeRulesSourceSelector mimeRulesSourceSelector = new MimeRulesSourceSelector(Collections.emptyMap());
     StorageFacetManager storageFacetManager = mock(StorageFacetManager.class);
     ComponentFactory componentFactory = new ComponentFactory(emptySet());
+    BlobMetadataStorage blobMetadataStorage = new DefaultBlobMetadataStorage();
     StorageFacetImpl storageFacetImpl = new StorageFacetImpl(
         mockNodeAccess,
         mockBlobStoreManager,
@@ -866,7 +867,8 @@ public class StorageFacetImplIT
         storageFacetManager,
         componentFactory,
         mock(ConstraintViolationFactory.class),
-        () -> null);
+        () -> null,
+        blobMetadataStorage);
     storageFacetImpl.installDependencies(mock(EventManager.class));
 
     storageFacetImpl.attach(repository);

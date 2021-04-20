@@ -812,6 +812,19 @@ public class StorageTxImpl
 
       assetBlob.setAttached(true);
     }
+
+    try {
+      NestedAttributesMap componentAttributes = null;
+      EntityId componentId = asset.componentId();
+      if (componentId != null) {
+        Component component = findComponent(componentId);
+        componentAttributes = component.attributes();
+      }
+      blobTx.attachAssetMetadata(assetBlob.getBlob().getId(), componentAttributes, asset.attributes());
+    }
+    catch (Exception e) {
+      log.error("Failed to attach asset attributes to blob", e);
+    }
   }
 
   /**

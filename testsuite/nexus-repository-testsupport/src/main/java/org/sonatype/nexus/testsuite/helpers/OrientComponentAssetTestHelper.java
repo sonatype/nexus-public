@@ -335,6 +335,16 @@ public class OrientComponentAssetTestHelper
     return componentAttributes(repository, namespace, name, null);
   }
 
+  @Override
+  public NestedAttributesMap snapshotComponentAttributes(
+      final Repository repository,
+      final String name,
+      final String version)
+  {
+    return findSnapshotComponent(repository, name, version).map(Component::attributes)
+        .orElseThrow(() -> new ComponentNotFoundException(repository, "", name, version));
+  }
+
   private Optional<Component> findComponent(
       final Repository repository,
       @Nullable final String namespace,

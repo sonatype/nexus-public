@@ -130,12 +130,16 @@ public class FluentAssetImpl
   @Override
   public FluentAsset attributes(final AttributeOperation change, final String key, final Object value) {
     facet.stores().assetStore.updateAssetAttributes(asset, new AttributeChangeSet(change, key, value));
+    asset.blob().ifPresent(blob ->
+        facet.blobMetadataStorage().attach(facet.stores().blobStore, blob.blobRef().getBlobId(), null, asset.attributes()));
     return this;
   }
 
   @Override
   public FluentAsset attributes(final AttributeChangeSet changes) {
     facet.stores().assetStore.updateAssetAttributes(asset, changes);
+    asset.blob().ifPresent(blob ->
+        facet.blobMetadataStorage().attach(facet.stores().blobStore, blob.blobRef().getBlobId(), null, asset.attributes()));
     return this;
   }
 

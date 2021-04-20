@@ -106,7 +106,7 @@ public class MavenAttributesHelperTest
     assertEquals(coordinates.getVersion(), componentData.version());
     assertEquals(coordinates.getBaseVersion(), componentData.getBaseVersion());
 
-    assertGroupArtifactVersionSet(4, attributesValueCaptor.getValue());
+    assertGroupArtifactVersionSet(5, attributesValueCaptor.getValue());
   }
 
   @Test
@@ -133,7 +133,7 @@ public class MavenAttributesHelperTest
 
     verify(fluentComponent).attributes(eq(OVERLAY), eq(NAME), attributesValueCaptor.capture());
     Map<String, String> map = attributesValueCaptor.getValue();
-    assertThat(map.entrySet(), hasSize(7));
+    assertThat(map.entrySet(), hasSize(8));
     assertThat(map, hasEntry(P_PACKAGING, PACKAGING));
     assertThat(map, hasEntry(P_POM_NAME, POM_NAME));
     assertThat(map, hasEntry(P_POM_DESCRIPTION, POM_DESCRIPTION));
