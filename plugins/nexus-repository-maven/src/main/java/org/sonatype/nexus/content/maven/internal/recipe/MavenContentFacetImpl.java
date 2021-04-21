@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -73,7 +74,8 @@ import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHe
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.setMavenAttributes;
 import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW;
 import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW_ONCE;
-import static org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet.METADATA_REBUILD_KEY;
+import static org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet.METADATA_FORCE_REBUILD;
+import static org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet.METADATA_REBUILD;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_INDEX;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
@@ -468,7 +470,13 @@ public class MavenContentFacetImpl
     assets()
         .path(prependIfMissing(metadataPath(groupId, artifactId, baseVersion).getPath(), "/"))
         .find()
-        .ifPresent(asset -> asset.withAttribute(METADATA_REBUILD_KEY, true));
+        .ifPresent(this::setMetadataRebuildFlag);
+  }
+
+  private void setMetadataRebuildFlag(FluentAsset asset) {
+    Map<String, Object> metadataRebuild = new HashMap<>();
+    metadataRebuild.put(METADATA_FORCE_REBUILD, true);
+    asset.withAttribute(METADATA_REBUILD, metadataRebuild);
   }
 
   public Set<GAV> findGavsWithSnaphots(final int minimumRetained) {

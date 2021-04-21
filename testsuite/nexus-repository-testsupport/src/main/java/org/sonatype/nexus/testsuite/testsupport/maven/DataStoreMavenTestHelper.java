@@ -29,7 +29,6 @@ import javax.annotation.Nonnull;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.time.DateHelper;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
@@ -293,10 +292,6 @@ public class DataStoreMavenTestHelper
   }
 
   private boolean isNotFlaggedForRebuild(final FluentAsset asset) {
-    NestedAttributesMap attributesMap = asset.attributes("maven2");
-    if (attributesMap.contains("forceRebuild")) {
-      return attributesMap.get("forceRebuild", boolean.class) != true;
-    }
-    return true;
+    return asset.attributes("metadataRebuild").isEmpty();
   }
 }

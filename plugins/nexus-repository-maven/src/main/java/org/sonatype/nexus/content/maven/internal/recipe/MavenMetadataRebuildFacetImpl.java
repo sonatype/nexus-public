@@ -73,7 +73,7 @@ public class MavenMetadataRebuildFacetImpl
       FluentAsset asset = maybeAsset.get();
       Payload payload = maybePayload.get();
       if (needsRebuild(mavenContentFacet.getMavenPathParser().parsePath(path), asset)) {
-        asset.withoutAttribute(METADATA_REBUILD_KEY);
+        asset.withoutAttribute(METADATA_REBUILD);
         rebuildMetadata(payload, update, rebuildChecksums);
       }
     }
@@ -83,7 +83,7 @@ public class MavenMetadataRebuildFacetImpl
     return !TRUE.equals(rebuilding.get())
         && path.getFileName().equals(METADATA_FILENAME)
         && !(getRepository().getType() instanceof ProxyType)
-        && TRUE.equals(asset.attributes().get(METADATA_REBUILD_KEY, false));
+        && TRUE.equals(asset.attributes(METADATA_REBUILD).get(METADATA_FORCE_REBUILD, false));
   }
 
   private void rebuildMetadata(final Payload metadataPayload, final boolean update, final boolean rebuildChecksums)
