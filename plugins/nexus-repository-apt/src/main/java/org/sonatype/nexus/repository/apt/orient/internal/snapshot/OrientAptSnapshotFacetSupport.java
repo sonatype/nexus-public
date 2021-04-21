@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.repository.FacetSupport;
-import org.sonatype.nexus.repository.apt.AptFacet;
+import org.sonatype.nexus.repository.apt.orient.AptFacet;
 import org.sonatype.nexus.repository.apt.internal.snapshot.AptSnapshotFacet;
 import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotComponentSelector;
 import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotItem;

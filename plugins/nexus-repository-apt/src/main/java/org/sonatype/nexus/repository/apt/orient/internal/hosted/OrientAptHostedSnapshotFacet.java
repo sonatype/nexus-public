@@ -18,7 +18,7 @@ import java.util.List;
 
 import javax.inject.Named;
 
-import org.sonatype.nexus.repository.apt.AptFacet;
+import org.sonatype.nexus.repository.apt.orient.AptFacet;
 import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotItem;
 import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotItem.ContentSpecifier;
 import org.sonatype.nexus.repository.apt.orient.internal.snapshot.OrientAptSnapshotFacetSupport;

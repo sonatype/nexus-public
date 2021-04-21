@@ -21,9 +21,9 @@ import javax.validation.groups.Default;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.FacetSupport;
-import org.sonatype.nexus.repository.apt.AptFacet;
+import org.sonatype.nexus.repository.apt.orient.AptFacet;
 import org.sonatype.nexus.repository.apt.internal.AptPackageParser;
-import org.sonatype.nexus.repository.apt.internal.AptWritePolicySelector;
+import org.sonatype.nexus.repository.apt.orient.OrientAptWritePolicySelector;
 import org.sonatype.nexus.repository.apt.internal.debian.PackageInfo;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
@@ -89,7 +89,7 @@ public class OrientAptFacetImpl
   @Override
   protected void doInit(final Configuration configuration) throws Exception {
     super.doInit(configuration);
-    getRepository().facet(StorageFacet.class).registerWritePolicySelector(new AptWritePolicySelector());
+    getRepository().facet(StorageFacet.class).registerWritePolicySelector(new OrientAptWritePolicySelector());
   }
 
   @Override
