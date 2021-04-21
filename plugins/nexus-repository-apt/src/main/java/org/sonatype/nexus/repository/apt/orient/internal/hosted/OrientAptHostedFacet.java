@@ -32,7 +32,7 @@ import org.sonatype.nexus.orient.entity.AttachedEntityHelper;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.IllegalOperationException;
-import org.sonatype.nexus.repository.apt.AptFacet;
+import org.sonatype.nexus.repository.apt.orient.AptFacet;
 import org.sonatype.nexus.repository.apt.internal.AptMimeTypes;
 import org.sonatype.nexus.repository.apt.internal.AptPackageParser;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;

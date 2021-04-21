@@ -17,7 +17,7 @@ import java.util.List;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
-import org.sonatype.nexus.repository.apt.AptFacet;
+import org.sonatype.nexus.repository.apt.orient.AptFacet;
 import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotItem;
 import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotItem.ContentSpecifier;
 import org.sonatype.nexus.repository.storage.Asset;

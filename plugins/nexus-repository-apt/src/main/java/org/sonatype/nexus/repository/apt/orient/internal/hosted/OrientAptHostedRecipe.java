@@ -20,7 +20,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
-import org.sonatype.nexus.repository.apt.AptRestoreFacet;
+import org.sonatype.nexus.repository.apt.orient.AptRestoreFacet;
 import org.sonatype.nexus.repository.apt.internal.AptFormat;
 import org.sonatype.nexus.repository.apt.internal.AptRecipeSupport;
 import org.sonatype.nexus.repository.apt.internal.AptSecurityFacet;
