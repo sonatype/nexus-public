@@ -12,39 +12,19 @@
  */
 package org.sonatype.nexus.datastore;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import javax.annotation.Priority;
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
-import org.sonatype.nexus.common.property.PropertiesFile;
 import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
-import org.sonatype.nexus.datastore.api.DataStoreManager;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Predicates.in;
-import static com.google.common.base.Predicates.not;
-import static com.google.common.collect.Maps.filterKeys;
-import static com.google.common.collect.Maps.fromProperties;
 import static java.lang.Integer.MIN_VALUE;
-import static java.util.Arrays.stream;
 import static org.sonatype.nexus.datastore.DataStoreConfigurationLocalSource.LOCAL;
-import static org.sonatype.nexus.datastore.DataStoreConfigurationSourceSupport.VALID_NAME_PATTERN;
-import static org.sonatype.nexus.datastore.DataStoreConfigurationSourceSupport.checkName;
-import static org.sonatype.nexus.datastore.api.DataStoreConfiguration.isSensitiveKey;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 /**
@@ -61,26 +41,11 @@ public class DataStoreConfigurationLocalSource
 {
   static final String LOCAL = "local";
 
-  private static final String JDBC_TEMPLATE_URL = "jdbc:h2:file:${karaf.data}/db/${storeName}";
+  private static final String JDBC_TEMPLATE_URL = "jdbc:h2:file:${karaf.data}/db/" + DEFAULT_DATASTORE_NAME;
 
-  private static final String NAME_KEY = "name";
+  private static final String JDBC = "jdbc";
 
-  private static final String TYPE_KEY = "type";
-
-  private static final Set<String> TOP_LEVEL_KEYS = ImmutableSet.of(NAME_KEY, TYPE_KEY);
-
-  private static final String STORE_PROPERTIES_SUFFIX = "-store.properties";
-
-  private static final String SYSTEM_PROPERTY_PREFIX = "nexus.datastore.";
-
-  private final Map<String, PropertiesFile> propertiesByStoreName = new ConcurrentHashMap<>();
-
-  private final File fabricWorkDirectory;
-
-  @Inject
-  public DataStoreConfigurationLocalSource(final ApplicationDirectories directories) {
-    this.fabricWorkDirectory = checkNotNull(directories).getWorkDirectory("etc/fabric");
-  }
+  private static final String JDBC_URL = "jdbcUrl";
 
   @Override
   public String getName() {
@@ -94,141 +59,18 @@ public class DataStoreConfigurationLocalSource
 
   @Override
   public Iterable<String> browseStoreNames() {
-    ImmutableSet.Builder<String> storeNames = ImmutableSet.builder();
-
-    storeNames.add(DEFAULT_DATASTORE_NAME);
-
-    File[] files = fabricWorkDirectory.listFiles();
-    if (files != null) {
-      stream(files)
-          .filter(File::canRead)
-          .map(File::getName)
-          .filter(name -> name.endsWith(STORE_PROPERTIES_SUFFIX))
-          .map(name -> name.substring(0, name.indexOf(STORE_PROPERTIES_SUFFIX)))
-          .filter(VALID_NAME_PATTERN.asPredicate())
-          .forEach(storeNames::add);
-    }
-
-    return storeNames.build();
+    return ImmutableSet.<String>builder().add(DEFAULT_DATASTORE_NAME).build();
   }
 
   @Override
   public DataStoreConfiguration load(final String storeName) {
-
-    checkName(storeName);
-
-    PropertiesFile storeProperties = findStoreProperties(storeName);
-    synchronized (storeProperties) {
-
-      try {
-        if (storeProperties.exists()) {
-          storeProperties.load();
-          maybeTrimProperties(storeProperties);
-
-          // quick sanity check that the filename matches the content
-          String dsNameProperty = storeProperties.getProperty(NAME_KEY);
-          checkArgument(storeName.equals(dsNameProperty),
-              "Incorrect data store configuration in the %s Should be [%s] but found [%s]",
-              storeProperties.getFile().getAbsolutePath(), storeName, dsNameProperty);
-        }
-      }
-      catch (IOException e) {
-        throw new UncheckedIOException(e);
-      }
-
-      String storeType = storeProperties.getProperty(TYPE_KEY);
-      if (storeType == null) {
-        storeType = "jdbc";
-        storeProperties.setProperty(TYPE_KEY, storeType);
-        storeProperties.setProperty("jdbcUrl", JDBC_TEMPLATE_URL);
-      }
-
-      DataStoreConfiguration configuration = new DataStoreConfiguration();
-
-      configuration.setName(storeName);
-      configuration.setType(storeType);
-      configuration.setAttributes(filterKeys(fromProperties(storeProperties), not(in(TOP_LEVEL_KEYS))));
-      configuration.setSource(LOCAL);
-
-      return configuration;
-    }
-  }
-
-  private static void maybeTrimProperties(final PropertiesFile propertiesFile) {
-    for (Entry<Object, Object> entry : propertiesFile.entrySet()) {
-      if (!isSensitiveKey(entry.getKey().toString())) {
-        String value = entry.getValue().toString();
-        String trimmedValue = value.trim();
-        if (!trimmedValue.equals(value)) {
-          entry.setValue(trimmedValue);
-        }
-      }
-    }
-  }
-
-  @Override
-  public void save(final DataStoreConfiguration configuration) {
-    String storeName = configuration.getName();
-
-    checkName(storeName);
-
-    PropertiesFile storeProperties = findStoreProperties(storeName);
-    synchronized (storeProperties) {
-
-      storeProperties.setProperty(NAME_KEY, storeName);
-      storeProperties.setProperty(TYPE_KEY, configuration.getType());
-      storeProperties.putAll(configuration.getAttributes());
-
-      try {
-        storeProperties.store();
-      }
-      catch (IOException e) {
-        throw new UncheckedIOException(e);
-      }
-    }
-  }
-
-  @Override
-  public void delete(final DataStoreConfiguration configuration) {
-    String storeName = configuration.getName();
-
-    PropertiesFile storeProperties = propertiesByStoreName.get(storeName);
-    if (storeProperties != null) {
-      synchronized (storeProperties) {
-        storeProperties.getFile().delete();
-      }
-    }
-  }
-
-  /**
-   * Get location of the datastore properties file.
-   *
-   * @param storeName the sore name, see {@link DataStoreManager}
-   * @return the datastore properties {@link File}
-   */
-  public File getPropertiesFile(final String storeName) {
-    return new File(fabricWorkDirectory, storeName + STORE_PROPERTIES_SUFFIX);
-  }
-
-  /**
-   * Checks the cache for the named properties file, initializing it from system properties if new.
-   */
-  private PropertiesFile findStoreProperties(final String storeName) {
-    return propertiesByStoreName.computeIfAbsent(storeName, this::initializeStoreProperties);
-  }
-
-  /**
-   * Initialize properties for the named store; note any defaults gleaned
-   * from system properties may be overloaded by the actual properties file.
-   */
-  private PropertiesFile initializeStoreProperties(final String storeName) {
-    PropertiesFile storeProperties = new PropertiesFile(getPropertiesFile(storeName));
-
-    String systemPrefix = SYSTEM_PROPERTY_PREFIX + storeName + '.';
-    System.getProperties().stringPropertyNames().stream()
-        .filter(k -> k.startsWith(systemPrefix))
-        .forEach(k -> storeProperties.setProperty(k.substring(systemPrefix.length()), System.getProperty(k)));
-
-    return storeProperties;
+    checkArgument(DEFAULT_DATASTORE_NAME.equalsIgnoreCase(storeName),
+        "%s is not valid, %s is the only valid data store name", storeName, DEFAULT_DATASTORE_NAME);
+    DataStoreConfiguration configuration = new DataStoreConfiguration();
+    configuration.setName(DEFAULT_DATASTORE_NAME);
+    configuration.setType(JDBC);
+    configuration.setSource(LOCAL);
+    configuration.setAttributes(ImmutableMap.of(JDBC_URL, JDBC_TEMPLATE_URL));
+    return configuration;
   }
 }
