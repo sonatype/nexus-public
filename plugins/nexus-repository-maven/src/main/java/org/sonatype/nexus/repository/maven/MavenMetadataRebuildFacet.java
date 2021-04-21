@@ -25,7 +25,9 @@ import org.sonatype.nexus.repository.Facet;
 public interface MavenMetadataRebuildFacet
     extends Facet
 {
-  String METADATA_REBUILD_KEY = "forceRebuild";
+  String METADATA_FORCE_REBUILD = "forceRebuild";
+
+  String METADATA_REBUILD = "metadataRebuild";
 
   /**
    * Rebuilds/updates Maven metadata. The parameters depend each on previous, and if any of those are set (ie. G, GA or

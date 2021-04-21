@@ -56,7 +56,8 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.commons.lang3.StringUtils.prependIfMissing;
-import static org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet.METADATA_REBUILD_KEY;
+import static org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet.METADATA_FORCE_REBUILD;
+import static org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet.METADATA_REBUILD;
 import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.metadataPath;
 import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 
@@ -323,8 +324,11 @@ public class DatastoreMetadataRebuilder
       FluentAssets assets = repository.facet(ContentFacet.class).assets();
       Optional<FluentAsset> existingMetadata = assets.path(metadataPath.getPath()).find();
 
-      return existingMetadata.map(fa -> fa.attributes().get(METADATA_REBUILD_KEY, Boolean.class, false))
-          .orElse(false);
+      return existingMetadata.map(this::getMetadataRebuildFlag).orElse(false);
+    }
+
+    private Boolean getMetadataRebuildFlag(FluentAsset asset) {
+      return asset.attributes(METADATA_REBUILD).get(METADATA_FORCE_REBUILD, Boolean.class, false);
     }
 
     private void processAsset(final Pair<FluentComponent, FluentAsset> componentAssetPair) {
