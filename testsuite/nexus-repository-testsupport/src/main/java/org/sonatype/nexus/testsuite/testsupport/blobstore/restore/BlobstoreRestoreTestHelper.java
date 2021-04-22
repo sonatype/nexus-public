@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.blobstore.restore;
 
+import javax.annotation.Nullable;
+
 import org.sonatype.nexus.repository.Repository;
 
 /**
@@ -45,4 +47,23 @@ public interface BlobstoreRestoreTestHelper
   void assertAssetMatchesBlob(Repository repository, String name);
 
   void assertAssetMatchesBlob(Repository repository, String... names);
+
+  void assertAssetInRepository(Repository repository, String name);
+
+  void assertAssetNotInRepository(Repository repository, String... names);
+
+  void assertComponentInRepository(Repository repository, String name, String version);
+
+  void assertComponentNotInRepository(Repository repository, String name);
+
+  void assertComponentNotInRepository(Repository repository, String name, String version);
+
+  void assertAssetAssociatedWithComponent(Repository repository, String name, String path);
+
+  void assertAssetAssociatedWithComponent(
+      Repository repository,
+      @Nullable String group,
+      String name,
+      String version,
+      String... paths);
 }

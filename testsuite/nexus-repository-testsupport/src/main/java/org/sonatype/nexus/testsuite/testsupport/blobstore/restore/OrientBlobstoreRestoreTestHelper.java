@@ -111,11 +111,13 @@ public class OrientBlobstoreRestoreTestHelper
     runRestoreMetadataTaskWithTimeout(10, false);
   }
 
+  @Override
   public void assertComponentNotInRepository(final Repository repository, final String name) {
     Component component = findComponent(repository, name);
     assertThat(component, nullValue());
   }
 
+  @Override
   public void assertComponentNotInRepository(final Repository repository, final String name, final String version) {
     Query query = getQuery(name, version);
     Component component = findComponent(repository, query);
@@ -127,12 +129,14 @@ public class OrientBlobstoreRestoreTestHelper
     assertThat(component, notNullValue());
   }
 
+  @Override
   public void assertComponentInRepository(final Repository repository, final String name, final String version) {
     Query query = getQuery(name, version);
     Component component = findComponent(repository, query);
     assertThat(component, notNullValue());
   }
 
+  @Override
   public void assertAssetNotInRepository(final Repository repository, final String... names) {
     for (String name : names) {
       Asset asset = findAsset(repository, name);
@@ -140,6 +144,7 @@ public class OrientBlobstoreRestoreTestHelper
     }
   }
 
+  @Override
   public void assertAssetInRepository(final Repository repository, final String name) {
     Asset asset = findAsset(repository, name);
     assertThat(asset, notNullValue());
@@ -182,6 +187,7 @@ public class OrientBlobstoreRestoreTestHelper
     assertThat(component, nullValue());
   }
 
+  @Override
   public void assertAssetAssociatedWithComponent(final Repository repository,
                                                  @Nullable final String group,
                                                  final String name,
