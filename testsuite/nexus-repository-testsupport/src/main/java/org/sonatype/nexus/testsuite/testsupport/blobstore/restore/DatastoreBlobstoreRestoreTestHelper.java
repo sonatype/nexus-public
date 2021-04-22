@@ -15,6 +15,7 @@ package org.sonatype.nexus.testsuite.testsupport.blobstore.restore;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -29,6 +30,9 @@ import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
+import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.fluent.FluentComponentBuilder;
+import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 import org.sonatype.nexus.repository.content.store.AssetStore;
 import org.sonatype.nexus.repository.content.store.ComponentStore;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
@@ -37,12 +41,15 @@ import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 
+import org.apache.commons.lang3.StringUtils;
+
 import static java.util.Arrays.stream;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.StringUtils.prependIfMissing;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertTrue;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
@@ -119,10 +126,6 @@ public class DatastoreBlobstoreRestoreTestHelper
     runRestoreMetadataTaskWithTimeout(60, false);
   }
 
-  private FluentAssets assets(final Repository repo) {
-    return repo.facet(ContentFacet.class).assets();
-  }
-
   @Override
   public void assertAssetMatchesBlob(final Repository repo, final String... paths) {
     stream(paths)
@@ -131,8 +134,92 @@ public class DatastoreBlobstoreRestoreTestHelper
   }
 
   @Override
+  public void assertAssetInRepository(final Repository repository, final String path) {
+    Optional<FluentAsset> asset = findAsset(repository, path);
+    assertThat(asset.isPresent(), is(true));
+  }
+
+  @Override
+  public void assertAssetNotInRepository(final Repository repository, final String... paths) {
+    for (String path : paths) {
+      Optional<FluentAsset> asset = findAsset(repository, path);
+      assertThat(asset.isPresent(), is(false));
+    }
+  }
+
+  @Override
+  public void assertComponentInRepository(final Repository repository, final String name, final String version) {
+    Optional<FluentComponent> component = findComponent(repository, name, version);
+    assertThat(component.isPresent(), is(true));
+  }
+
+  @Override
+  public void assertComponentNotInRepository(final Repository repository, final String name) {
+    Optional<FluentComponent> component = findComponent(repository, name);
+    assertThat(component.isPresent(), is(false));
+  }
+
+  @Override
+  public void assertComponentNotInRepository(final Repository repository, final String name, final String version) {
+    Optional<FluentComponent> component = findComponent(repository, name, version);
+    assertThat(component.isPresent(), is(false));
+  }
+
+  @Override
+  public void assertAssetAssociatedWithComponent(final Repository repository, final String name, final String path) {
+    Optional<FluentComponent> component = findComponent(repository, name);
+    assertThat(component.isPresent(), is(true));
+    Optional<FluentAsset> asset = component.get().asset(path).find();
+    assertThat(asset.isPresent(), is(true));
+  }
+
+  @Override
+  public void assertAssetAssociatedWithComponent(
+      final Repository repository,
+      @Nullable final String namespace,
+      final String name,
+      final String version,
+      final String... paths)
+  {
+    FluentComponentBuilder componentBuilder = repository.facet(ContentFacet.class)
+        .components()
+        .name(name)
+        .version(version);
+    if (namespace != null) {
+      componentBuilder = componentBuilder.namespace(namespace);
+    }
+    Optional<FluentComponent> component = componentBuilder.find();
+    assertThat(component.isPresent(), is(true));
+
+    for (String path : paths) {
+      Optional<FluentAsset> asset = component.get().asset(path).find();
+      assertThat(asset.isPresent(), is(true));
+    }
+  }
+
+  @Override
   public void assertAssetMatchesBlob(final Repository repo, final String path) {
     assetMatch(assets(repo).path(prependIfMissing(path, "/")).find(), getBlobStore(repo));
+  }
+
+  private FluentAssets assets(final Repository repo) {
+    return repo.facet(ContentFacet.class).assets();
+  }
+
+  private Optional<FluentAsset> findAsset(final Repository repo, final String path) {
+    return assets(repo).path(StringUtils.prependIfMissing(path, "/")).find();
+  }
+
+  private FluentComponents components(final Repository repo) {
+    return repo.facet(ContentFacet.class).components();
+  }
+
+  private Optional<FluentComponent> findComponent(final Repository repo, final String name) {
+    return components(repo).name(name).find();
+  }
+
+  private Optional<FluentComponent> findComponent(final Repository repo, final String name, final String version) {
+    return components(repo).name(name).version(version).find();
   }
 
   private static BlobStore getBlobStore(final Repository repository) {
@@ -147,9 +234,12 @@ public class DatastoreBlobstoreRestoreTestHelper
 
     assertThat(blob, notNullValue());
 
-    assertThat(asset.map(FluentAsset::path).orElse("MISSING_FLUENT_ASSET"), equalTo(blob.getHeaders().get(BlobStore.BLOB_NAME_HEADER)));
-    assertThat(assetBlob.createdBy().orElse("MISSING_ASSET_BLOB"), equalTo(blob.getHeaders().get(BlobStore.CREATED_BY_HEADER)));
-    assertThat(assetBlob.createdByIp().orElse("MISSING_CREATED_BY"), equalTo(blob.getHeaders().get(BlobStore.CREATED_BY_IP_HEADER)));
+    assertThat(asset.map(FluentAsset::path).orElse("MISSING_FLUENT_ASSET"),
+        equalTo(blob.getHeaders().get(BlobStore.BLOB_NAME_HEADER)));
+    assertThat(assetBlob.createdBy().orElse("MISSING_ASSET_BLOB"),
+        equalTo(blob.getHeaders().get(BlobStore.CREATED_BY_HEADER)));
+    assertThat(assetBlob.createdByIp().orElse("MISSING_CREATED_BY"),
+        equalTo(blob.getHeaders().get(BlobStore.CREATED_BY_IP_HEADER)));
     assertThat(assetBlob.contentType(), equalTo(blob.getHeaders().get(BlobStore.CONTENT_TYPE_HEADER)));
     assertThat(assetBlob.checksums().get(SHA1.name()), equalTo(blob.getMetrics().getSha1Hash()));
     assertThat(assetBlob.blobSize(), equalTo(blob.getMetrics().getContentSize()));
