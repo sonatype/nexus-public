@@ -248,6 +248,7 @@ public class BootstrapListener
                 "nexus-repository-npm," +
                 "nexus-repository-docker," +
                 "nexus-repository-yum," +
+                "nexus-restore-yum," +
                 "nexus-restore-docker," +
                 properties.getProperty("nexus-exclude-features", ""));
       }
