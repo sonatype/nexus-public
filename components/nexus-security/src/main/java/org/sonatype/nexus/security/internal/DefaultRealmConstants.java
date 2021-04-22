@@ -15,7 +15,7 @@ package org.sonatype.nexus.security.internal;
 /**
  * Constants for the Default Authenticating Realm
  *
- * @since 3.next
+ * @since 3.30
  */
 public class DefaultRealmConstants
 {
