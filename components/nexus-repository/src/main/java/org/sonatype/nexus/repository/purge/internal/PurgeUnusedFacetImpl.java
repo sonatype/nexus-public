@@ -39,6 +39,7 @@ import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_COMPONENT;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_LAST_DOWNLOADED;
@@ -50,7 +51,7 @@ import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
  *
  * @since 3.0
  */
-@FeatureFlag(name = "nexus.orient.enabled")
+@FeatureFlag(name = ORIENT_ENABLED)
 @Named
 public class PurgeUnusedFacetImpl
     extends FacetSupport

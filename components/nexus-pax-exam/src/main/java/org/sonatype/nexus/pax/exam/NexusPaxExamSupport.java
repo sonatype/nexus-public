@@ -74,6 +74,7 @@ import static org.ops4j.pax.exam.CoreOptions.wrappedBundle;
 import static org.ops4j.pax.exam.OptionUtils.combine;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.*;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 import static org.testcontainers.containers.BindMode.READ_ONLY;
 
 /**
@@ -158,7 +159,7 @@ public abstract class NexusPaxExamSupport
   protected TaskScheduler taskScheduler;
 
   @Inject
-  @Named("nexus.orient.enabled")
+  @Named(ORIENT_ENABLED)
   private Boolean orientEnabled;
 
   //11.9 is the minimum support version

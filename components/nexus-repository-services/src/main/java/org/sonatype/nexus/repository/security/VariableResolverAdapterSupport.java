@@ -27,6 +27,7 @@ import org.sonatype.nexus.selector.VariableSourceBuilder;
 import org.elasticsearch.search.lookup.SourceLookup;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 
 /**
  * Adapts different contexts to variable resolvers
@@ -41,7 +42,7 @@ public abstract class VariableResolverAdapterSupport
   protected static final String FORMAT = "format";
 
   @Inject
-  @Named("nexus.orient.enabled")
+  @Named(ORIENT_ENABLED)
   public Boolean orientEnabled;
 
   @Override

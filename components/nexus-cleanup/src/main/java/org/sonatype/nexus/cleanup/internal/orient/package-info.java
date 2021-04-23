@@ -16,7 +16,9 @@
  *
  * @since 3.14
  */
-@FeatureFlag(name = "nexus.orient.enabled")
+@FeatureFlag(name = ORIENT_ENABLED)
 package org.sonatype.nexus.cleanup.internal.orient;
 
 import org.sonatype.nexus.common.app.FeatureFlag;
+
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;

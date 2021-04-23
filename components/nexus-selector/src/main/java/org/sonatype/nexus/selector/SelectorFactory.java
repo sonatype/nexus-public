@@ -25,6 +25,7 @@ import org.apache.commons.jexl3.JexlException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 import static org.sonatype.nexus.common.text.Strings2.upper;
 import static org.sonatype.nexus.selector.CselValidator.validateCselExpression;
 import static org.sonatype.nexus.selector.JexlEngine.expandExceptionDetail;
@@ -50,7 +51,7 @@ public class SelectorFactory
   @Inject
   public SelectorFactory(final ConstraintViolationFactory constraintViolationFactory,
                          final CselToSql cselToSql,
-                         @Named("nexus.orient.enabled") final boolean orientEnabled) {
+                         @Named(ORIENT_ENABLED) final boolean orientEnabled) {
     this.constraintViolationFactory = checkNotNull(constraintViolationFactory);
     this.cselToSql = checkNotNull(cselToSql);
     this.orientEnabled = orientEnabled;

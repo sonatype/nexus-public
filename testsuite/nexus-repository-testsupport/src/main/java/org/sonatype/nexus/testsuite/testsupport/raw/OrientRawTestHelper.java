@@ -29,8 +29,9 @@ import org.sonatype.nexus.testsuite.helpers.ComponentAssetTestHelper;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import static org.junit.Assert.assertTrue;
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 
-@FeatureFlag(name = "nexus.orient.enabled")
+@FeatureFlag(name = ORIENT_ENABLED)
 @Named
 @Priority(Integer.MAX_VALUE)
 @Singleton

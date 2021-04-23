@@ -19,6 +19,7 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.repository.rest.api.model.AbstractRepositoryApiRequest;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.DATA_STORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
@@ -31,7 +32,7 @@ public abstract class AbstractRepositoryApiRequestToConfigurationConverter<T ext
   @Inject
   protected ConfigurationStore configurationStore;
 
-  @Named("nexus.orient.enabled")
+  @Named(ORIENT_ENABLED)
   @Inject
   protected boolean orientEnabled;
 

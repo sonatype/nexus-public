@@ -24,6 +24,7 @@ import com.google.inject.servlet.GuiceFilter;
 import com.google.inject.servlet.ServletModule;
 import org.eclipse.sisu.inject.Sources;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getBoolean;
 
 /**
@@ -63,7 +64,7 @@ public class WebModule
 
     highPriorityBinder.install(new MetricsModule());
 
-    if (getBoolean("nexus.orient.enabled", true)) {
+    if (getBoolean(ORIENT_ENABLED, true)) {
       install(new OrientModule());
     }
   }
