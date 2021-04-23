@@ -42,6 +42,7 @@ import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshBund
 import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshManagedBundles;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_DEVELOPER;
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 
 /**
  * {@link ServletContextListener} that bootstraps an OSGi-based application.
@@ -238,7 +239,7 @@ public class BootstrapListener
 
     if (parseBoolean(properties.getProperty(DATASTORE_ENABLED, "false"))) {
       // datastore mode disables orient
-      properties.setProperty("nexus.orient.enabled", "false");
+      properties.setProperty(ORIENT_ENABLED, "false");
 
       // datastore mode, but not developer mode
       if (!parseBoolean(properties.getProperty(DATASTORE_DEVELOPER, "false"))) {
@@ -258,9 +259,9 @@ public class BootstrapListener
   }
 
   private static void selectDbFeature(final Properties properties) {
-    if (parseBoolean(properties.getProperty("nexus.orient.enabled", "true"))) {
+    if (parseBoolean(properties.getProperty(ORIENT_ENABLED, "true"))) {
       properties.setProperty(NEXUS_DB_FEATURE, "nexus-orient");
-      properties.setProperty("nexus.orient.enabled", "true");
+      properties.setProperty(ORIENT_ENABLED, "true");
     }
     else {
       properties.setProperty(NEXUS_DB_FEATURE, "nexus-datastore-mybatis");
