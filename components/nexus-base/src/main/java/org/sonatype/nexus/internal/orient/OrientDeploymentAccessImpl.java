@@ -30,6 +30,7 @@ import org.sonatype.nexus.orient.DatabaseInstance;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.orient.DatabaseInstanceNames.CONFIG;
@@ -43,7 +44,7 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
  *
  * @since 3.6.1
  */
-@FeatureFlag(name = "nexus.orient.store.config")
+@FeatureFlag(name = ORIENT_ENABLED)
 @Named("orient")
 @Priority(Integer.MAX_VALUE)
 @ManagedLifecycle(phase = SCHEMAS)

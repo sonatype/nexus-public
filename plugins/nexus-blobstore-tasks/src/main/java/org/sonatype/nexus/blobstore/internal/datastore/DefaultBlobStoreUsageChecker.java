@@ -31,6 +31,7 @@ import com.codahale.metrics.annotation.Timed;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Optional.of;
 import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 
 /**
  * Check if a blob is referenced in the corresponding metadata for NewDB
@@ -39,7 +40,7 @@ import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
  */
 @Named
 @Singleton
-@FeatureFlag(name = "nexus.datastore.enabled")
+@FeatureFlag(name = DATASTORE_ENABLED)
 public class DefaultBlobStoreUsageChecker
     implements BlobStoreUsageChecker
 {

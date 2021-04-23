@@ -22,6 +22,7 @@ import org.sonatype.nexus.rest.APIConstants;
 
 import io.swagger.annotations.Api;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 import static org.sonatype.nexus.repository.cocoapods.rest.CocoapodsProxyRepositoriesApiResourceBeta.RESOURCE_URI;
 
 /**
@@ -29,7 +30,7 @@ import static org.sonatype.nexus.repository.cocoapods.rest.CocoapodsProxyReposit
  * @deprecated the 'beta' prefix is being phased out, prefer starting new APIs with {@link APIConstants#V1_API_PREFIX}
  * instead. Support backward compatibility.
  */
-@FeatureFlag(name = "nexus.orient.store.content")
+@FeatureFlag(name = ORIENT_ENABLED)
 @Api(hidden = true)
 @Named
 @Singleton

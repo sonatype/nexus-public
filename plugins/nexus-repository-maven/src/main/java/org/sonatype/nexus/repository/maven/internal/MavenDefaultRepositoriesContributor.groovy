@@ -28,6 +28,7 @@ import org.sonatype.nexus.repository.maven.internal.recipes.Maven2GroupRecipe
 import org.sonatype.nexus.repository.maven.internal.recipes.Maven2HostedRecipe
 import org.sonatype.nexus.repository.maven.internal.recipes.Maven2ProxyRecipe
 
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED_NAMED
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.DATA_STORE_NAME
 
 /**
@@ -52,7 +53,7 @@ class MavenDefaultRepositoriesContributor
   RepositoryManager repositoryManager
 
   @Inject
-  @Named('${nexus.datastore.enabled:-false}')
+  @Named(DATASTORE_ENABLED_NAMED)
   boolean dataStoreEnabled
 
   @Override

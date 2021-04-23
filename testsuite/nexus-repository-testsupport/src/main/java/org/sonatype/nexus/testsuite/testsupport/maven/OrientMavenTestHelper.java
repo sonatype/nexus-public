@@ -70,11 +70,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.GROUP;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
-@FeatureFlag(name = "nexus.orient.store.content")
+@FeatureFlag(name = ORIENT_ENABLED)
 @Named("orient")
 @Singleton
 @Priority(Integer.MAX_VALUE)

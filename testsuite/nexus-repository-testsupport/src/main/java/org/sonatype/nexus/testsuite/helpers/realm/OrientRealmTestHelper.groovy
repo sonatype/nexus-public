@@ -18,7 +18,9 @@ import javax.inject.Singleton
 
 import org.sonatype.nexus.common.app.FeatureFlag
 
-@FeatureFlag(name = "nexus.orient.store.content")
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED
+
+@FeatureFlag(name = ORIENT_ENABLED)
 @Named("orient")
 @Singleton
 @Priority(Integer.MAX_VALUE)

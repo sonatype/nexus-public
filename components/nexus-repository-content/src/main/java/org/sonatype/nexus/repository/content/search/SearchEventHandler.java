@@ -61,6 +61,7 @@ import static java.lang.Integer.parseInt;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.prependIfMissing;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.repository.content.search.SearchEventHandler.RequestType.INDEX;
 import static org.sonatype.nexus.repository.content.search.SearchEventHandler.RequestType.PURGE;
@@ -79,7 +80,7 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.toExternal
  *
  * @since 3.26
  */
-@FeatureFlag(name = "nexus.datastore.enabled")
+@FeatureFlag(name = DATASTORE_ENABLED)
 @ManagedLifecycle(phase = SERVICES)
 @Named
 @Singleton

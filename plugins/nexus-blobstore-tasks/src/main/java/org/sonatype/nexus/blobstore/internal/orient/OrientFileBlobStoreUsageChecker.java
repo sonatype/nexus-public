@@ -34,6 +34,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
+
 /**
  * Check if a blob is reference in the corresponding metadata.
  *
@@ -42,7 +44,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 @Named
 @Singleton
 @Priority(Integer.MAX_VALUE)
-@FeatureFlag(name = "nexus.orient.store.content")
+@FeatureFlag(name = ORIENT_ENABLED)
 public class OrientFileBlobStoreUsageChecker
     implements BlobStoreUsageChecker
 {

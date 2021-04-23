@@ -16,7 +16,9 @@
  *
  * @since 3.29
  */
-@FeatureFlag(name = "nexus.datastore.enabled")
+@FeatureFlag(name = DATASTORE_ENABLED)
 package org.sonatype.nexus.cleanup.internal.content;
 
 import org.sonatype.nexus.common.app.FeatureFlag;
+
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;

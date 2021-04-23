@@ -49,6 +49,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_VERSION;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
@@ -58,7 +59,7 @@ import static org.sonatype.nexus.scheduling.TaskState.OK;
  * Helper class containing common functionality needed in ITs testing the restoration of component metadata from blobs.
  * Assumes a unit of work has already been started.
  */
-@FeatureFlag(name = "nexus.orient.store.content")
+@FeatureFlag(name = ORIENT_ENABLED)
 @Priority(Integer.MAX_VALUE)
 @Singleton
 @Named

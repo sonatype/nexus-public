@@ -48,7 +48,7 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.ops4j.pax.exam.CoreOptions.when;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
-import static org.sonatype.nexus.common.app.FeatureFlags.EARLY_ACCESS_DATASTORE_DEVELOPER;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_DEVELOPER;
 
 /**
  * Support class for npm Format Client ITs.
@@ -94,7 +94,8 @@ public abstract class NpmClientITSupport
   public static Option[] configureNexus() {
     return options(
         FormatClientITSupport.configureNexus(),
-        when(getValidTestDatabase().isUseContentStore()).useOptions(editConfigurationFilePut(NEXUS_PROPERTIES_FILE, EARLY_ACCESS_DATASTORE_DEVELOPER, "true"))
+        when(getValidTestDatabase().isUseContentStore()).useOptions(editConfigurationFilePut(NEXUS_PROPERTIES_FILE,
+            DATASTORE_DEVELOPER, "true"))
     );
   }
 

@@ -19,12 +19,13 @@ import javax.ws.rs.Path;
 import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.repository.rest.api.RepositoriesApiResourceV1;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 import static org.sonatype.nexus.repository.golang.rest.GolangProxyRepositoriesApiResourceV1.RESOURCE_URI;
 
 /**
  * @since 3.26
  */
-@FeatureFlag(name = "nexus.orient.store.content")
+@FeatureFlag(name = ORIENT_ENABLED)
 @Named
 @Singleton
 @Path(RESOURCE_URI)

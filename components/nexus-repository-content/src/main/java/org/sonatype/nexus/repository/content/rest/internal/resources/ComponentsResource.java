@@ -61,6 +61,7 @@ import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 import static org.sonatype.nexus.repository.content.rest.AssetXOBuilder.fromAsset;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toExternalId;
@@ -72,7 +73,7 @@ import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 /**
  * @since 3.24
  */
-@FeatureFlag(name = "nexus.datastore.enabled")
+@FeatureFlag(name = DATASTORE_ENABLED)
 @Named
 @Singleton
 @Path(ComponentsResource.RESOURCE_URI)

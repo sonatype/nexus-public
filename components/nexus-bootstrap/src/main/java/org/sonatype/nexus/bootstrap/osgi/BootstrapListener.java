@@ -40,8 +40,8 @@ import static java.lang.Boolean.parseBoolean;
 import static java.util.prefs.Preferences.userRoot;
 import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshBundles;
 import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshManagedBundles;
-import static org.sonatype.nexus.common.app.FeatureFlags.EARLY_ACCESS_DATASTORE;
-import static org.sonatype.nexus.common.app.FeatureFlags.EARLY_ACCESS_DATASTORE_DEVELOPER;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_DEVELOPER;
 
 /**
  * {@link ServletContextListener} that bootstraps an OSGi-based application.
@@ -104,7 +104,7 @@ public class BootstrapListener
         }
       }
 
-      selectEarlyAccessFeature(properties);
+      selectDatastoreFeature(properties);
 
       // pass bootstrap properties to embedded servlet listener
       servletContext.setAttribute("nexus.properties", properties);
@@ -230,18 +230,18 @@ public class BootstrapListener
     }
   }
 
-  private static void selectEarlyAccessFeature(final Properties properties) {
-    // early-access datastore developer mode includes early-access datastore user mode
-    if (parseBoolean(properties.getProperty(EARLY_ACCESS_DATASTORE_DEVELOPER, "false"))) {
-      properties.setProperty(EARLY_ACCESS_DATASTORE, "true");
+  private static void selectDatastoreFeature(final Properties properties) {
+    // datastore developer mode includes datastore user mode
+    if (parseBoolean(properties.getProperty(DATASTORE_DEVELOPER, "false"))) {
+      properties.setProperty(DATASTORE_ENABLED, "true");
     }
 
-    if (parseBoolean(properties.getProperty(EARLY_ACCESS_DATASTORE, "false"))) {
-      // early-access datastore mode disables orient
+    if (parseBoolean(properties.getProperty(DATASTORE_ENABLED, "false"))) {
+      // datastore mode disables orient
       properties.setProperty("nexus.orient.enabled", "false");
 
-      // early-access datastore mode, but not developer mode
-      if (!parseBoolean(properties.getProperty(EARLY_ACCESS_DATASTORE_DEVELOPER, "false"))) {
+      // datastore mode, but not developer mode
+      if (!parseBoolean(properties.getProperty(DATASTORE_DEVELOPER, "false"))) {
         // exclude unfinished format features
         properties.setProperty("nexus-exclude-features",
             "nexus-repository-helm," +
@@ -264,23 +264,13 @@ public class BootstrapListener
     }
     else {
       properties.setProperty(NEXUS_DB_FEATURE, "nexus-datastore-mybatis");
-      properties.setProperty("nexus.datastore.enabled", "true");
+      properties.setProperty(DATASTORE_ENABLED, "true");
       properties.setProperty("nexus.quartz.jobstore.jdbc", "true");
       if (NEXUS_OSS_EDITION.equals(properties.getProperty(NEXUS_EDITION))) {
         properties.setProperty("nexus-exclude-features",
             "nexus-cma-feature," + properties.getProperty("nexus-exclude-features", ""));
       }
     }
-  }
-
-  private static boolean detectMixedMode(final Properties properties) {
-    // ie. storing config in JDBC, while storing content metadata in Orient
-    if (!parseBoolean(properties.getProperty("nexus.orient.store.config", "true"))) {
-      properties.setProperty("nexus.datastore.enabled", "true");
-      properties.setProperty("nexus.quartz.jobstore.jdbc", "true");
-      return true;
-    }
-    return false;
   }
 
   private static void installNexusEdition(final BundleContext ctx, final Properties properties)
@@ -305,13 +295,6 @@ public class BootstrapListener
         }
         if (!featuresService.isInstalled(dbFeature)) {
           featureIds.add(dbFeature.getId());
-        }
-
-        if (detectMixedMode(properties)) {
-          Feature mybatisFeature = featuresService.getFeature("nexus-datastore-mybatis");
-          if (!featuresService.isInstalled(mybatisFeature)) {
-            featureIds.add(mybatisFeature.getId());
-          }
         }
 
         // edition might already be installed in the cache; if so then skip installation

@@ -52,13 +52,14 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertTrue;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.DATA_STORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 import static org.sonatype.nexus.scheduling.TaskState.OK;
 
-@FeatureFlag(name = "nexus.datastore.enabled")
+@FeatureFlag(name = DATASTORE_ENABLED)
 @Singleton
 @Named
 public class DatastoreBlobstoreRestoreTestHelper

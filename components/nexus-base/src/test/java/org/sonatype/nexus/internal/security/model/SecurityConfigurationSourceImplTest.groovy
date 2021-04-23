@@ -43,6 +43,7 @@ import spock.lang.Unroll
 
 import static org.mockito.Mockito.mock
 import static org.mockito.Mockito.when
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED
 
 /**
  * Tests for {@link SecurityConfigurationSourceImpl}.
@@ -107,13 +108,13 @@ class SecurityConfigurationSourceImplTest
     }).getInstance(SecurityConfigurationSourceImpl)
 
     UnitOfWork.beginBatch({ sessionRule.openSession(DataStoreManager.DEFAULT_DATASTORE_NAME) })
-    System.setProperty('nexus.orient.store.config', 'false')
+    System.setProperty(ORIENT_ENABLED, 'false')
     underTest.start()
     underTest.loadConfiguration()
   }
 
   def cleanup() {
-    System.clearProperty('nexus.orient.store.config')
+    System.clearProperty(ORIENT_ENABLED)
     UnitOfWork.end()
   }
 

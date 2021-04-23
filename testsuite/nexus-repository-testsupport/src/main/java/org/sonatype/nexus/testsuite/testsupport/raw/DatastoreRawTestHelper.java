@@ -32,8 +32,9 @@ import org.sonatype.nexus.testsuite.helpers.ComponentAssetTestHelper;
 import org.apache.commons.lang.StringUtils;
 
 import static org.junit.Assert.assertTrue;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 
-@FeatureFlag(name = "nexus.datastore.enabled")
+@FeatureFlag(name = DATASTORE_ENABLED)
 @Named
 @Singleton
 public class DatastoreRawTestHelper

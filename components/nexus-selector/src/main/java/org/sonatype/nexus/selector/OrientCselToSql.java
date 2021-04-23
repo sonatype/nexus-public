@@ -34,12 +34,14 @@ import org.apache.commons.jexl3.parser.ASTSWNode;
 import org.apache.commons.jexl3.parser.ASTStringLiteral;
 import org.apache.commons.jexl3.parser.JexlNode;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
+
 /**
  * Walks the script, transforming CSEL expressions into Orient SQL clauses.
  *
  * @since 3.16
  */
-@FeatureFlag(name = "nexus.orient.store.content")
+@FeatureFlag(name = ORIENT_ENABLED)
 @Named("orient")
 @Priority(Integer.MAX_VALUE)
 @Singleton
