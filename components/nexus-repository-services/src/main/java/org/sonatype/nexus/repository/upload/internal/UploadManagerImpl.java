@@ -51,14 +51,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.prependIfMissing;
-import static org.sonatype.nexus.common.app.FeatureFlags.EARLY_ACCESS_DATASTORE;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 
 /**
  * {@link UploadManager} implementation.
  *
  * @since 3.24
  */
-@FeatureFlag(name = EARLY_ACCESS_DATASTORE)
+@FeatureFlag(name = DATASTORE_ENABLED)
 @Named
 @Singleton
 public class UploadManagerImpl

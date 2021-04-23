@@ -73,7 +73,7 @@ import static org.ops4j.pax.exam.CoreOptions.when;
 import static org.ops4j.pax.exam.CoreOptions.wrappedBundle;
 import static org.ops4j.pax.exam.OptionUtils.combine;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.*;
-import static org.sonatype.nexus.common.app.FeatureFlags.EARLY_ACCESS_DATASTORE;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 import static org.testcontainers.containers.BindMode.READ_ONLY;
 
 /**
@@ -487,7 +487,7 @@ public abstract class NexusPaxExamSupport
           .waitingFor(Wait.forLogMessage(".*database system is ready to accept connections.*", 1));
 
         return combine(null,
-            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, EARLY_ACCESS_DATASTORE, "true"),
+            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, DATASTORE_ENABLED, "true"),
             editConfigurationFilePut(DATA_STORE_PROPERTIES_FILE, "name", "nexus"),
             editConfigurationFilePut(DATA_STORE_PROPERTIES_FILE, "type", "jdbc"),
             editConfigurationFilePut(DATA_STORE_PROPERTIES_FILE, "jdbcUrl", configurePostgres()),
@@ -495,7 +495,7 @@ public abstract class NexusPaxExamSupport
         );
       case H2:
         return combine(null,
-            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, EARLY_ACCESS_DATASTORE, "true")
+            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, DATASTORE_ENABLED, "true")
         );
       case ORIENT:
         return new Option[0];

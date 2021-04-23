@@ -10,10 +10,10 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-@FeatureFlag(name = ORIENT_CONTENT_DB)
+@FeatureFlag(name = ORIENT_ENABLED)
 
 package org.sonatype.nexus.repository.apt.orient;
 
 import org.sonatype.nexus.common.app.FeatureFlag;
 
-import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_CONTENT_DB;
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;

@@ -23,16 +23,14 @@ public interface FeatureFlags
   /* Go (hosted) repository is experimental. Available values: true, false. Default value: false */
   String FEATURE_GOLANG_HOSTED = "nexus.golang.hosted";
 
-  /* Experimental early access to database externalization. Available values: true, false. Default value: false */
-  String EARLY_ACCESS_DATASTORE = "nexus.earlyAccess.datastore.enabled";
-  String EARLY_ACCESS_DATASTORE_NAMED = "${nexus.earlyAccess.datastore.enabled:-false}";
+  /* Database externalization. Available values: true, false. Default value: false */
+  String DATASTORE_ENABLED = "nexus.datastore.enabled";
+  String DATASTORE_ENABLED_NAMED = "${nexus.datastore.enabled:-false}";
 
-  /* Early access developers only. Available values: true, false. Default value: false */
-  String EARLY_ACCESS_DATASTORE_DEVELOPER = "nexus.earlyAccess.datastore.developer";
-  String EARLY_ACCESS_DATASTORE_DEVELOPER_NAMED = "${nexus.earlyAccess.datastore.developer:-false}";
+  /* Database externalization developers only. Available values: true, false. Default value: false */
+  String DATASTORE_DEVELOPER = "nexus.datastore.developer";
+  String DATASTORE_DEVELOPER_NAMED = "${nexus.datastore.developer:-false}";
 
-  /* Orient based flags for marking content that is orient only, and should be disabled when datastore is enabled */
+  /* Orient flag for marking content that is orient only, and should be disabled when datastore is enabled */
   String ORIENT_ENABLED = "nexus.orient.enabled";
-  String ORIENT_CONFIG_DB = "nexus.orient.store.config";
-  String ORIENT_CONTENT_DB = "nexus.orient.store.content";
 }

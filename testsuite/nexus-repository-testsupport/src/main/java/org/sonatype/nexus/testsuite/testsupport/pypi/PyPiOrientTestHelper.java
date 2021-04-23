@@ -30,9 +30,10 @@ import org.sonatype.nexus.testsuite.helpers.ComponentAssetTestHelper;
 import org.junit.Assert;
 
 import static java.util.Objects.requireNonNull;
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
-@FeatureFlag(name = "nexus.orient.store.content")
+@FeatureFlag(name = ORIENT_ENABLED)
 @Named("orient")
 @Singleton
 @Priority(Integer.MAX_VALUE)

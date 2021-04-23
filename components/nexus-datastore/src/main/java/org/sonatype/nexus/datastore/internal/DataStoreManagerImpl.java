@@ -49,6 +49,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.lang.Integer.MAX_VALUE;
 import static java.util.Optional.ofNullable;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED_NAMED;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.common.text.Strings2.lower;
@@ -90,7 +91,7 @@ public class DataStoreManagerImpl
   private volatile boolean frozen;
 
   @Inject
-  public DataStoreManagerImpl(@Named("${nexus.datastore.enabled:-false}") final boolean enabled,
+  public DataStoreManagerImpl(@Named(DATASTORE_ENABLED_NAMED) final boolean enabled,
                               final Map<String, DataStoreDescriptor> dataStoreDescriptors,
                               final Map<String, Provider<DataStore<?>>> dataStorePrototypes,
                               final DataStoreConfigurationManager configurationManager,

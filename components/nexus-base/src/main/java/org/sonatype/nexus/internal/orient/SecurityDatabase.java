@@ -27,6 +27,7 @@ import org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type;
 import org.sonatype.nexus.supportzip.SupportBundleCustomizer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 
 /**
  * Shared {@code security} database components.
@@ -45,7 +46,7 @@ public class SecurityDatabase
   /**
    * Shared {@code security} database instance provider.
    */
-  @FeatureFlag(name = "nexus.orient.store.config")
+  @FeatureFlag(name = ORIENT_ENABLED)
   @Named(NAME)
   @Singleton
   public static class ProviderImpl
@@ -67,7 +68,7 @@ public class SecurityDatabase
   /**
    * Includes export of the {@code security} database in support-zip.
    */
-  @FeatureFlag(name = "nexus.orient.store.config")
+  @FeatureFlag(name = ORIENT_ENABLED)
   @Named
   @Singleton
   public static class SupportBundleCustomizerImpl

@@ -23,12 +23,14 @@ import org.sonatype.nexus.common.upgrade.Checkpoints;
 import org.sonatype.nexus.orient.DatabaseCheckpointSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
+
 /**
  * Upgrade checkpoint for the "security" database.
  * 
  * @since 3.1
  */
-@FeatureFlag(name = "nexus.orient.store.config")
+@FeatureFlag(name = ORIENT_ENABLED)
 @Named
 @Singleton
 @Checkpoints(model = SecurityDatabase.NAME)

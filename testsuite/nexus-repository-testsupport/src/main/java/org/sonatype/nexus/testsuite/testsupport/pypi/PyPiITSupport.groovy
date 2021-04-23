@@ -28,9 +28,8 @@ import org.ops4j.pax.exam.Configuration
 import org.ops4j.pax.exam.Option
 
 import static java.lang.Thread.sleep
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFileExtend
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut
-import static org.sonatype.nexus.common.app.FeatureFlags.EARLY_ACCESS_DATASTORE_DEVELOPER
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_DEVELOPER
 import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW
 
 /**
@@ -96,7 +95,7 @@ class PyPiITSupport
     if (getValidTestDatabase().isUseContentStore()) {
       return options(
               nexusBase,
-              editConfigurationFilePut(NEXUS_PROPERTIES_FILE, EARLY_ACCESS_DATASTORE_DEVELOPER, "true")
+              editConfigurationFilePut(NEXUS_PROPERTIES_FILE, DATASTORE_DEVELOPER, "true")
       )
     }
     return nexusBase

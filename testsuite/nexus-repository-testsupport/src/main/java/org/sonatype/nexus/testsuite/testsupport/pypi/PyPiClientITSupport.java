@@ -42,6 +42,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFileExtend;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 import static org.sonatype.nexus.common.io.NetworkHelper.findLocalHostAddress;
 import static org.sonatype.nexus.repository.http.HttpStatus.OK;
 import static org.sonatype.nexus.repository.search.query.RepositoryQueryBuilder.unrestricted;
@@ -82,7 +83,7 @@ public abstract class PyPiClientITSupport
         withHttps(resolveBaseFile(format("target/it-resources/ssl/%s.jks", DOCKER_HOST_NAME))));
 
     if (getValidTestDatabase().isUseContentStore()) {
-      return options(nexusBase, editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.datastore.enabled", "true"));
+      return options(nexusBase, editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, DATASTORE_ENABLED, "true"));
     }
     return nexusBase;
   }

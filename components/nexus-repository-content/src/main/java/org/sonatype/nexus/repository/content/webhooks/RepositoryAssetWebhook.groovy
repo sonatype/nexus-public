@@ -37,12 +37,14 @@ import org.sonatype.nexus.webhooks.WebhookPayload
 import com.google.common.eventbus.AllowConcurrentEvents
 import com.google.common.eventbus.Subscribe
 
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED
+
 /**
  * Repository {@link Asset} {@link Webhook}.
  *
  * @since 3.27
  */
-@FeatureFlag(name = "nexus.datastore.enabled")
+@FeatureFlag(name = DATASTORE_ENABLED)
 @Named
 @Singleton
 class RepositoryAssetWebhook

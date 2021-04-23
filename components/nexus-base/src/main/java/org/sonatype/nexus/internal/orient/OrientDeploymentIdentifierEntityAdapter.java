@@ -23,12 +23,14 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
+
 /**
  * {@link SingletonEntityAdapter} to store our single {@link DeploymentIdentifier} record.
  *
  * @since 3.6.1
  */
-@FeatureFlag(name = "nexus.orient.store.config")
+@FeatureFlag(name = ORIENT_ENABLED)
 @Named
 @Singleton
 class OrientDeploymentIdentifierEntityAdapter

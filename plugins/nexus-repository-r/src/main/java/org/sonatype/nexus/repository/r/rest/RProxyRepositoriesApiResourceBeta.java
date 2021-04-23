@@ -21,11 +21,13 @@ import org.sonatype.nexus.repository.rest.api.RepositoriesApiResourceBeta;
 
 import io.swagger.annotations.Api;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
+
 /**
  * @since 3.28
  * @deprecated - prefer to use {@link RProxyRepositoriesApiResourceV1 } instead of Beta.
  */
-@FeatureFlag(name = "nexus.orient.store.content")
+@FeatureFlag(name = ORIENT_ENABLED)
 @Named
 @Singleton
 @Path(RepositoriesApiResourceBeta.RESOURCE_URI + "/r/proxy")

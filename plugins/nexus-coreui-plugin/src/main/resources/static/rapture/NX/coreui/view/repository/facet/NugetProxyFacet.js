@@ -55,7 +55,7 @@ Ext.define('NX.coreui.view.repository.facet.NugetProxyFacet', {
                 boxLabel: NX.I18n.get('Repository_Facet_NugetProxyFacet_V2'),
                 name: 'attributes.nugetProxy.nugetVersion',
                 // disable V2 as deprecated for new DB
-                disabled: NX.State.getValue('nexus.earlyAccess.datastore.enabled'),
+                disabled: NX.State.getValue('nexus.datastore.enabled'),
                 inputValue: 'V2'
               },
               {

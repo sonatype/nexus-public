@@ -24,6 +24,7 @@ import org.osgi.framework.startlevel.FrameworkStartLevel
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED
 import static org.sonatype.nexus.extender.NexusContextListener.NEXUS_EXTENDER_START_LEVEL
 
 /**
@@ -42,74 +43,6 @@ class NexusContextListenerTest
     bundleExtender.getBundleContext() >> bundleContext
 
     underTest = new NexusContextListener(bundleExtender)
-  }
-
-  /**
-   * Test setting the feature flags of orient dependent stores based on the value of {@code nexus.orient.enabled}
-   */
-  @Unroll
-  def 'orientEnabled: #orientEnabled, configEnabled: #configEnabled, contentEnabled: #contentEnabled, expectedConfig: #expectedConfig, expectedContent: #expectedContent'() {
-    given:
-      ServletContextEvent event = Mock(ServletContextEvent)
-      ServletContext context = Mock(ServletContext)
-      Map<String, Object> nexusProperties = [:]
-      ServiceReference featureServiceRef = Mock(ServiceReference)
-      FeaturesService featureService = Mock(FeaturesService)
-      Bundle bundle0 = Mock(Bundle)
-      Feature feature = Mock(Feature)
-      FrameworkStartLevel startLevel = Mock(FrameworkStartLevel)
-
-      event.getServletContext() >> context
-      context.getAttribute("nexus.properties") >> nexusProperties
-      bundleContext.getServiceReference(FeaturesService.class) >> featureServiceRef
-      bundleContext.getService(featureServiceRef) >> featureService
-      bundleContext.getBundle(0) >> bundle0
-      featureService.getFeature("null") >> feature
-      bundle0.adapt(FrameworkStartLevel.class) >> startLevel
-      startLevel.getStartLevel() >> NEXUS_EXTENDER_START_LEVEL
-
-    when:
-      maybePut(nexusProperties, "nexus.orient.enabled", orientEnabled)
-      maybePut(nexusProperties, "nexus.orient.store.config", configEnabled)
-      maybePut(nexusProperties, "nexus.orient.store.content", contentEnabled)
-      underTest.contextInitialized(event)
-
-    then:
-      underTest.nexusProperties["nexus.orient.store.config"] == expectedConfig
-      System.getProperty("nexus.orient.store.config") == expectedConfig as String
-
-      underTest.nexusProperties["nexus.orient.store.content"] == expectedContent
-      System.getProperty("nexus.orient.store.content") == expectedContent as String
-
-    where:
-      orientEnabled | configEnabled | contentEnabled | expectedConfig | expectedContent
-      null          | null          | null           | true           | true
-      null          | null          | true           | true           | true
-      null          | null          | false          | true           | false
-      null          | true          | null           | true           | true
-      null          | true          | true           | true           | true
-      null          | true          | false          | true           | false
-      null          | false         | null           | false          | true
-      null          | false         | true           | false          | true
-      null          | false         | false          | false          | false
-      true          | null          | null           | true           | true
-      true          | null          | true           | true           | true
-      true          | null          | false          | true           | false
-      true          | true          | null           | true           | true
-      true          | true          | true           | true           | true
-      true          | true          | false          | true           | false
-      true          | false         | null           | false          | true
-      true          | false         | true           | false          | true
-      true          | false         | false          | false          | false
-      false         | null          | null           | false          | false
-      false         | null          | true           | false          | false
-      false         | null          | false          | false          | false
-      false         | true          | null           | false          | false
-      false         | true          | true           | false          | false
-      false         | true          | false          | false          | false
-      false         | false         | null           | false          | false
-      false         | false         | true           | false          | false
-      false         | false         | false          | false          | false
   }
 
   /**

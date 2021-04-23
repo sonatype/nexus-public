@@ -35,12 +35,14 @@ import org.sonatype.nexus.webhooks.WebhookRequest
 import com.google.common.eventbus.AllowConcurrentEvents
 import com.google.common.eventbus.Subscribe
 
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED
+
 /**
  * Repository {@link Component} {@link Webhook}.
  *
  * @since 3.1
  */
-@FeatureFlag(name = "nexus.orient.store.content")
+@FeatureFlag(name = ORIENT_ENABLED)
 @Named
 @Singleton
 @Priority(Integer.MAX_VALUE)

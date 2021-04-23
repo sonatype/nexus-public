@@ -38,13 +38,14 @@ import com.google.common.eventbus.AllowConcurrentEvents
 import com.google.common.eventbus.Subscribe
 
 import static com.google.common.base.Preconditions.checkNotNull
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED
 
 /**
  * Repository {@link Component} {@link Webhook}.
  *
  * @since 3.27
  */
-@FeatureFlag(name = "nexus.datastore.enabled")
+@FeatureFlag(name = DATASTORE_ENABLED)
 @Named
 @Singleton
 class RepositoryComponentWebhook

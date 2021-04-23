@@ -31,6 +31,7 @@ import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 
 import static java.util.Collections.singletonList
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED_NAMED
 import static org.sonatype.nexus.security.BreadActions.READ
 
 /**
@@ -55,7 +56,7 @@ class DataStoreComponent
   RepositoryPermissionChecker repositoryPermissionChecker
 
   @Inject
-  @Named('${nexus.datastore.enabled:-false}')
+  @Named(DATASTORE_ENABLED_NAMED)
   boolean enabled
 
   @Override

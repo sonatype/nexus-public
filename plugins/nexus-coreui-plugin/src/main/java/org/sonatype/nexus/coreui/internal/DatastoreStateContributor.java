@@ -18,38 +18,38 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.app.FeatureFlags;
 import org.sonatype.nexus.rapture.StateContributor;
 
 import com.google.common.collect.ImmutableMap;
 
-import static org.sonatype.nexus.common.app.FeatureFlags.EARLY_ACCESS_DATASTORE;
-import static org.sonatype.nexus.common.app.FeatureFlags.EARLY_ACCESS_DATASTORE_DEVELOPER_NAMED;
-import static org.sonatype.nexus.common.app.FeatureFlags.EARLY_ACCESS_DATASTORE_NAMED;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_DEVELOPER;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_DEVELOPER_NAMED;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED_NAMED;
 
 @Singleton
 @Named
-public class EarlyAccessStateContributor
+public class DatastoreStateContributor
     implements StateContributor
 {
-  private boolean earlyAccessDatastoreEnabled;
+  private boolean datastoreEnabled;
 
-  private boolean earlyAccessDatastoreDeveloper;
+  private boolean datastoreDeveloper;
 
   @Inject
-  public EarlyAccessStateContributor(
-      @Named(EARLY_ACCESS_DATASTORE_NAMED) boolean earlyAccessDatastoreEnabled,
-      @Named(EARLY_ACCESS_DATASTORE_DEVELOPER_NAMED) boolean earlyAccessDatastoreDeveloper)
+  public DatastoreStateContributor(
+      @Named(DATASTORE_ENABLED_NAMED) boolean datastoreEnabled,
+      @Named(DATASTORE_DEVELOPER_NAMED) boolean datastoreDeveloper)
   {
-    this.earlyAccessDatastoreEnabled = earlyAccessDatastoreEnabled;
-    this.earlyAccessDatastoreDeveloper = earlyAccessDatastoreDeveloper;
+    this.datastoreEnabled = datastoreEnabled;
+    this.datastoreDeveloper = datastoreDeveloper;
   }
 
   @Override
   public Map<String, Object> getState() {
     return ImmutableMap.of(
-        EARLY_ACCESS_DATASTORE, earlyAccessDatastoreEnabled,
-        FeatureFlags.EARLY_ACCESS_DATASTORE_DEVELOPER, earlyAccessDatastoreDeveloper
+        DATASTORE_ENABLED, datastoreEnabled,
+        DATASTORE_DEVELOPER, datastoreDeveloper
     );
   }
 }

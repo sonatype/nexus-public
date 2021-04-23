@@ -165,8 +165,6 @@ public class NexusContextListener
     }
     nexusProperties.putAll(servletProperties);
 
-    prepareNexusProperties();
-
     featuresService = bundleContext.getService(bundleContext.getServiceReference(FeaturesService.class));
 
     injector = Guice.createInjector(new WireModule( //
@@ -464,31 +462,5 @@ public class NexusContextListener
         }
       }
     }, examProperties);
-  }
-
-  /**
-   * Prepares nxrm specific properties.
-   */
-  private void prepareNexusProperties() {
-    // Disable OrientDB-based stores when OrientDB is disabled.
-    String orientEnabledKey = "nexus.orient.enabled";
-    adjustDependentProperty(orientEnabledKey, "nexus.orient.store.config");
-    adjustDependentProperty(orientEnabledKey, "nexus.orient.store.content");
-  }
-
-  /**
-   * Set the value of the {@code dependentKey} property to {@code true} by default or {@code false} if the value
-   * of the {@code parentKey} property is {@code false}.
-   */
-  private void adjustDependentProperty(final String parentKey, final String dependentKey) {
-    Boolean parentEnabled = getBooleanProperty(parentKey, Boolean.TRUE);
-    Boolean dependentEnabled = parentEnabled && getBooleanProperty(dependentKey, Boolean.TRUE);
-
-    nexusProperties.put(dependentKey, dependentEnabled);
-    System.setProperty(dependentKey, dependentEnabled.toString());
-  }
-
-  private Boolean getBooleanProperty(final String key, final Boolean defaultValue) {
-    return Boolean.valueOf(nexusProperties.getOrDefault(key, defaultValue).toString());
   }
 }

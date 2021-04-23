@@ -42,13 +42,14 @@ import com.google.common.collect.ImmutableList;
 
 import static com.google.common.base.Preconditions.checkState;
 import static org.eclipse.aether.util.StringUtils.isEmpty;
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
 
 /**
  * @since 3.28
  */
-@FeatureFlag(name = "nexus.orient.store.content")
+@FeatureFlag(name = ORIENT_ENABLED)
 @Priority(Integer.MAX_VALUE)
 @Named(HelmFormat.NAME)
 @Singleton

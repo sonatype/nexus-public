@@ -27,6 +27,8 @@ import org.sonatype.nexus.security.config.SecurityConfiguration;
 import org.sonatype.nexus.security.config.SecurityConfigurationSource;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getBoolean;
 
@@ -37,7 +39,7 @@ import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getBoole
  */
 @Named("default")
 @ManagedLifecycle(phase = SCHEMAS)
-@FeatureFlag(name = "nexus.datastore.enabled")
+@FeatureFlag(name = DATASTORE_ENABLED)
 @Singleton
 public class SecurityConfigurationSourceImpl
     extends StateGuardLifecycleSupport
@@ -59,7 +61,7 @@ public class SecurityConfigurationSourceImpl
   @Override
   protected void doStart() throws Exception {
     // only add defaults if we're not using Orient for config
-    if (!getBoolean("nexus.orient.store.config", true)) {
+    if (!getBoolean(ORIENT_ENABLED, true)) {
       addDefaultUsers();
       addDefaultRoles();
       addDefaultPrivileges();
