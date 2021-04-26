@@ -35,8 +35,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.lessThanOrEqualTo;
+import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
@@ -68,31 +67,11 @@ public class H2BackupTaskTest
   }
 
   @Test
-  public void testExecute_dateTime() throws Exception {
-    String folder = "/foo/bar/{datetime}.zip";
-    Date before = date();
-    H2BackupTask task = createTask(folder);
-
-    task.execute();
-    Date after = date();
-
-    ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-    verify(dataStore).backup(captor.capture());
-
-    String backupPath = captor.getValue();
-
-    Date serialized = new SimpleDateFormat("yyyy-MM-dd_HHmmss").parse(backupPath.substring(9, backupPath.length() - 4));
-
-    assertThat(before.compareTo(serialized), lessThanOrEqualTo(0));
-    assertThat(serialized.compareTo(after), lessThanOrEqualTo(0));
-  }
-
-  @Test
   public void testExecute_relativePath() throws Exception {
-    String folder = "foo/bar/backup.zip";
+    String folder = "foo/bar";
     H2BackupTask task = createTask(folder);
 
-    when(applicationDirectories.getWorkDirectory()).thenReturn(temporaryFolder.getRoot());
+    when(applicationDirectories.getWorkDirectory(folder)).thenReturn(new File(temporaryFolder.getRoot(), folder));
 
     task.execute();
 
@@ -101,7 +80,7 @@ public class H2BackupTaskTest
 
     String backupPath = captor.getValue();
 
-    assertThat(backupPath, equalTo(new File(temporaryFolder.getRoot(), "foo/bar/backup.zip").getPath()));
+    assertThat(backupPath, startsWith(new File(temporaryFolder.getRoot(), folder).getPath()));
   }
 
   @Test
@@ -116,7 +95,7 @@ public class H2BackupTaskTest
   @Test
   public void testExecute_missingDataStore() throws Exception {
     when(dataStoreManager.get(DEFAULT_DATASTORE_NAME)).thenReturn(Optional.empty());
-    H2BackupTask task = createTask("/foo/bar.zip");
+    H2BackupTask task = createTask("/foo");
 
     thrown.expect(RuntimeException.class);
     thrown.expectMessage("Unable to locate datastore with name nexus");

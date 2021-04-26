@@ -12,10 +12,9 @@
  */
 package org.sonatype.nexus.internal.datastore.task;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.io.File;
+import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import javax.inject.Inject;
@@ -43,6 +42,8 @@ public class H2BackupTask
 
   private final ApplicationDirectories applicationDirectories;
 
+  private static final String TIMESTAMP_FORMAT = "%1$tY-%1$tm-%1$td-%1$tH-%1$tM-%1$tS";
+
   @Inject
   public H2BackupTask(final DataStoreManager dataStoreManager, final ApplicationDirectories applicationDirectories) {
     this.dataStoreManager = checkNotNull(dataStoreManager);
@@ -56,46 +57,32 @@ public class H2BackupTask
 
   @Override
   protected Object execute() throws Exception {
-    String dataStoreName = DEFAULT_DATASTORE_NAME;
-    String location =
-        checkNotNull(getConfiguration().getString(H2BackupTaskDescriptor.LOCATION), "Backup location not configured");
-
-    Optional<DataStore<?>> dataStore = dataStoreManager.get(dataStoreName);
+    Optional<DataStore<?>> dataStore = dataStoreManager.get(DEFAULT_DATASTORE_NAME);
 
     if (!dataStore.isPresent()) {
-      throw new RuntimeException("Unable to locate datastore with name " + dataStoreName);
+      throw new RuntimeException("Unable to locate datastore with name " + DEFAULT_DATASTORE_NAME);
     }
 
-    location = handleRelative(location);
-    location = interpolate(location);
+    File backupFolder = applicationDirectories.getWorkDirectory(checkNotNull(getConfiguration().getString(H2BackupTaskDescriptor.LOCATION), "Backup location not configured"));
+    File backupFile = new File(backupFolder, getBackupFileName());
 
-    log.info("Starting backup of {} to {}", dataStoreName, location);
+    if(backupFile.isFile()){
+      throw new IOException("File already exists at backup file location: " + backupFile.getAbsolutePath());
+    }
+
+    log.info("Starting backup of {} to {}", DEFAULT_DATASTORE_NAME, backupFile.getAbsolutePath());
 
     long start = System.currentTimeMillis();
 
-    dataStore.get().backup(location);
+    dataStore.get().backup(backupFile.getAbsolutePath());
 
-    log.info("Completed backup of {} in {} ms", dataStoreName, System.currentTimeMillis() - start);
+    log.info("Completed backup of {} in {} ms", DEFAULT_DATASTORE_NAME, System.currentTimeMillis() - start);
 
     return null;
   }
 
-  private String handleRelative(final String location) {
-    Path path = Paths.get(location);
-    if (path.isAbsolute()) {
-      return location;
-    }
-    else {
-      return applicationDirectories.getWorkDirectory().toPath().resolve(path).toString();
-    }
-  }
-
-  private static String interpolate(final String location) {
-    if (location.contains("{datetime}")) {
-      SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd_HHmmss");
-
-      return location.replaceAll("\\{datetime\\}", formatter.format(new Date()));
-    }
-    return location;
+  private String getBackupFileName() {
+    return DEFAULT_DATASTORE_NAME + "-" +
+        String.format(TIMESTAMP_FORMAT, LocalDateTime.now()) + ".zip";
   }
 }
