@@ -39,7 +39,7 @@ public class H2BackupTaskDescriptor
   {
     super(TYPE_ID, H2BackupTask.class, "Admin - Backup H2 Database", VISIBLE, EXPOSED, false,
         new StringTextFormField(LOCATION, "Location",
-            "The full path including filename for the database backup zip. May use {datetime} to have the present time included.",
+            "Specify a directory for the database backup",
             MANDATORY));
   }
 }
