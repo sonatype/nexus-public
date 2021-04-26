@@ -38,6 +38,14 @@
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-repository</artifactId>
       <scope>provided</scope>
+      <optional>true</optional>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-repository-content</artifactId>
+      <scope>provided</scope>
+      <optional>true</optional>
     </dependency>
 
     <dependency>
@@ -77,6 +85,7 @@
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-repository</artifactId>
       <classifier>tests</classifier>
+      <optional>true</optional>
       <scope>test</scope>
     </dependency>
   </dependencies>
