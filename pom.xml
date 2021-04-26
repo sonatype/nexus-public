@@ -128,6 +128,9 @@
 
     <!-- Increase staging timeout to help prevent transient staging failures -->
     <staging.progressTimeout>60</staging.progressTimeout>
+
+    <!-- Default Failsafe inclusion  -->
+    <it.includes>%regex[.*/.*IT.class]</it.includes>
   </properties>
 
   <modules>
@@ -431,6 +434,9 @@
               <exclude>**/Abstract*</exclude>
               <exclude>**/*$*</exclude>
             </excludes>
+            <includes>
+              <include>${it.includes}</include>
+            </includes>
           </configuration>
         </plugin>
 
