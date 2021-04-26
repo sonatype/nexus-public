@@ -10,9 +10,10 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.apt.orient;
+package org.sonatype.nexus.repository.apt.datastore;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -21,63 +22,55 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.apt.AptUploadHandlerSupport;
+import org.sonatype.nexus.repository.apt.datastore.internal.AptFacetHelper;
+import org.sonatype.nexus.repository.apt.datastore.internal.hosted.AptHostedFacet;
 import org.sonatype.nexus.repository.apt.internal.AptFormat;
 import org.sonatype.nexus.repository.apt.internal.AptPackageParser;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
-import org.sonatype.nexus.repository.apt.orient.internal.OrientFacetHelper;
-import org.sonatype.nexus.repository.apt.orient.internal.hosted.OrientAptHostedFacet;
 import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
-import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadResponse;
+import org.sonatype.nexus.repository.view.Content;
+import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
-import org.sonatype.nexus.transaction.UnitOfWork;
 
 /**
- * @since 3.17
+ * Support for uploading an Apt components via UI
+ *
+ * @since 3.next
  */
 @Singleton
 @Named(AptFormat.NAME)
-public class OrientAptUploadHandler
+public class AptUploadHandler
     extends AptUploadHandlerSupport
 {
   @Inject
-  public OrientAptUploadHandler(@Named("simple") final VariableResolverAdapter variableResolverAdapter,
-                                final ContentPermissionChecker contentPermissionChecker,
-                                final Set<UploadDefinitionExtension> uploadDefinitionExtensions)
+  public AptUploadHandler(@Named("simple") final VariableResolverAdapter variableResolverAdapter,
+                          final ContentPermissionChecker contentPermissionChecker,
+                          final Set<UploadDefinitionExtension> uploadDefinitionExtensions)
   {
     super(variableResolverAdapter, contentPermissionChecker, uploadDefinitionExtensions);
   }
 
   @Override
   public UploadResponse handle(final Repository repository, final ComponentUpload upload) throws IOException {
-    OrientAptHostedFacet hostedFacet = repository.facet(OrientAptHostedFacet.class);
-    StorageFacet storageFacet = repository.facet(StorageFacet.class);
-
-    try (TempBlob tempBlob = storageFacet
-        .createTempBlob(upload.getAssetUploads().get(0).getPayload(), OrientFacetHelper.hashAlgorithms)) {
+    AptHostedFacet facet = repository.facet(AptHostedFacet.class);
+    AptContentFacet aptContentFacet = repository.facet(AptContentFacet.class);
+    PartPayload payload = upload.getAssetUploads().get(0).getPayload();
+    try (TempBlob tempBlob = aptContentFacet.getTempBlob(payload)) {
       ControlFile controlFile = AptPackageParser.parsePackage(tempBlob);
       if (controlFile == null) {
-        throw new IOException("Invalid debian package:  no control file");
+        throw new IOException("Invalid debian package: no control file");
       }
       String name = controlFile.getField("Package").map(f -> f.value).get();
       String version = controlFile.getField("Version").map(f -> f.value).get();
       String architecture = controlFile.getField("Architecture").map(f -> f.value).get();
-      String assetPath = OrientFacetHelper.buildAssetPath(name, version, architecture);
+      String assetPath = AptFacetHelper.buildAssetPath(name, version, architecture);
 
-      doValidation(repository, assetPath);
-
-      UnitOfWork.begin(storageFacet.txSupplier());
-      try {
-        Asset asset = hostedFacet.ingestAsset(upload.getAssetUploads().get(0).getPayload());
-        return new UploadResponse(asset);
-      }
-      finally {
-        UnitOfWork.end();
-      }
+      final Content content = facet.upload(assetPath, payload);
+      return new UploadResponse(Collections.singletonList(content), Collections.singletonList(assetPath));
     }
   }
 }
