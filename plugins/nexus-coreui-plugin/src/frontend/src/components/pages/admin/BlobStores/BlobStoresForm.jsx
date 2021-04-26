@@ -134,7 +134,7 @@ export default function BlobStoresForm({itemId, onDone}) {
   }
 
   function promoteToGroup() {
-    send({type: 'PROMOTE_TO_GROUP'})
+    send({type: 'PROMOTE_TO_GROUP'});
   }
 
   return <Page className="nxrm-blob-stores">
