@@ -85,7 +85,7 @@ export default Utils.buildFormMachine({
           }],
 
           PROMOTE_TO_GROUP: {
-            target: 'promoteToGroup'
+            target: 'confirmPromote'
           }
         }
       },
@@ -93,6 +93,13 @@ export default Utils.buildFormMachine({
         invoke: {
           src: 'confirmSave',
           onDone: 'saving',
+          onError: 'loaded'
+        }
+      },
+      confirmPromote: {
+        invoke: {
+          src: 'confirmPromote',
+          onDone: 'promoteToGroup',
           onError: 'loaded'
         }
       },
@@ -316,6 +323,13 @@ export default Utils.buildFormMachine({
       yesButtonText: UIStrings.BLOB_STORES.MESSAGES.CONFIRM_DELETE.YES,
       noButtonText: UIStrings.BLOB_STORES.MESSAGES.CONFIRM_DELETE.NO,
       message: data.name
+    }),
+
+    confirmPromote: () => ExtJS.requestConfirmation({
+      title: UIStrings.BLOB_STORES.MESSAGES.CONFIRM_PROMOTE.TITLE,
+      yesButtonText: UIStrings.BLOB_STORES.MESSAGES.CONFIRM_PROMOTE.YES,
+      noButtonText: UIStrings.BLOB_STORES.MESSAGES.CONFIRM_PROMOTE.NO,
+      message: UIStrings.BLOB_STORES.MESSAGES.CONFIRM_PROMOTE.MESSAGE
     }),
 
     delete: ({data}) => Axios.delete(`/service/rest/v1/blobstores/${data.name}`),

@@ -56,7 +56,13 @@ export default {
         NO: 'Cancel'
       },
       CANNOT_DELETE: (repositoryUsage, blobStoreUsage) =>
-          `This blob store is in use by ${repositoryUsage} repositories and ${blobStoreUsage} blob stores`
+        `This blob store is in use by ${repositoryUsage} repositories and ${blobStoreUsage} blob stores`,
+      CONFIRM_PROMOTE: {
+        TITLE: 'Promote Blob Store',
+        MESSAGE: 'Warning: The blob store will be promoted to a new group blob store containing the original blob store as a member. This operation cannot be undone.',
+        YES: 'Promote',
+        NO: 'Cancel'
+      }
     },
 
     LIST: {

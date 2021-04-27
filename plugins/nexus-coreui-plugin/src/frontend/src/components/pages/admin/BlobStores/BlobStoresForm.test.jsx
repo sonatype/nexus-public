@@ -13,10 +13,11 @@
 import React from 'react';
 import axios from 'axios';
 import {when} from 'jest-when';
-import {fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react'
+import {fireEvent, wait, waitFor, waitForElementToBeRemoved} from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/extend-expect';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
+import {ExtJS} from '@sonatype/nexus-ui-plugin';
 
 import BlobStoresForm from './BlobStoresForm';
 
@@ -25,6 +26,14 @@ jest.mock('axios', () => ({
   get: jest.fn(),
   post: jest.fn(),
   put: jest.fn()
+}));
+
+jest.mock('@sonatype/nexus-ui-plugin', () => ({
+  ...jest.requireActual('@sonatype/nexus-ui-plugin'),
+  ExtJS: {
+    requestConfirmation: jest.fn(),
+    showErrorMessage: jest.fn()
+  }
 }));
 
 const blobstoreTypes = {
@@ -93,6 +102,7 @@ const quotaTypes = {
 
 describe('BlobStoresForm', function() {
   const onDone = jest.fn();
+  const confirm = Promise.resolve();
 
   function render(itemId) {
     return TestUtils.render(<BlobStoresForm itemId={itemId || ''} onDone={onDone}/>,
@@ -380,5 +390,38 @@ describe('BlobStoresForm', function() {
     await waitForElementToBeRemoved(loadingMask);
 
     expect(promoteToGroup()).not.toBeInTheDocument();
+  });
+
+  it('requests confirmation when promote is requested', async function() {
+    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+    when(axios.get).calledWith('/service/rest/v1/blobstores/file/test').mockResolvedValue({
+      data: {
+        path: 'testPath',
+        softQuota: {
+          type: 'spaceRemainingQuota',
+          limit: '100'
+        }
+      }
+    });
+
+    const {
+      getByText,
+      loadingMask,
+      title,
+      promoteToGroup
+    } = render('file/test');
+
+    await waitForElementToBeRemoved(loadingMask);
+
+    expect(title()).toHaveTextContent('Edit test');
+    expect(getByText('File Blob Store')).toBeInTheDocument();
+
+    expect(promoteToGroup()).toBeInTheDocument();
+
+    ExtJS.requestConfirmation.mockReturnValue(confirm);
+    fireEvent.click(promoteToGroup());
+
+    await wait(() => expect(axios.post).toBeCalledWith('/service/rest/v1/blobstores/group/promote/test'));
   });
 });
