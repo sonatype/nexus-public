@@ -10,11 +10,12 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.conda.internal;
+package org.sonatype.nexus.repository.conda.internal.orient;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 import javax.inject.Named;
@@ -24,7 +25,7 @@ import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.conda.CondaFacet;
+import org.sonatype.nexus.repository.conda.orient.CondaFacet;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;
@@ -36,7 +37,6 @@ import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.BlobPayload;
 
-import java.util.function.Supplier;
 import com.google.common.collect.ImmutableList;
 
 import static java.util.Collections.singletonList;

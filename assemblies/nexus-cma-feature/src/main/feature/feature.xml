@@ -17,7 +17,6 @@
   <feature name="${project.artifactId}" install="featureFlag:enabledByDefault:nexus.orient.enabled">
     <feature>nexus-repository-cocoapods</feature>
     <feature>nexus-repository-conan</feature>
-    <feature>nexus-repository-conda</feature>
     <feature>nexus-repository-golang</feature>
     <feature>nexus-repository-p2</feature>
     <feature>nexus-repository-r</feature>
