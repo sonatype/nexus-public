@@ -33,6 +33,7 @@
     <feature>nexus-repository-npm</feature>
     <feature>nexus-repository-helm</feature>
     <feature>nexus-repository-pypi</feature>
+    <feature>nexus-repository-conda</feature>
     <feature>nexus-restore-raw</feature>
     <feature>nexus-restore-pypi</feature>
   </feature>

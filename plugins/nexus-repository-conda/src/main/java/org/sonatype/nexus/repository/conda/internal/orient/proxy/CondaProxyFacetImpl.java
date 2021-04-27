@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.conda.internal.proxy;
+package org.sonatype.nexus.repository.conda.internal.orient.proxy;
 
 import java.io.IOException;
 
@@ -20,9 +20,9 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.cache.CacheInfo;
-import org.sonatype.nexus.repository.conda.CondaFacet;
+import org.sonatype.nexus.repository.conda.orient.CondaFacet;
 import org.sonatype.nexus.repository.conda.internal.AssetKind;
-import org.sonatype.nexus.repository.conda.internal.CondaFacetImpl;
+import org.sonatype.nexus.repository.conda.internal.orient.CondaFacetImpl;
 import org.sonatype.nexus.repository.proxy.ProxyFacet;
 import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
 import org.sonatype.nexus.repository.storage.Asset;
