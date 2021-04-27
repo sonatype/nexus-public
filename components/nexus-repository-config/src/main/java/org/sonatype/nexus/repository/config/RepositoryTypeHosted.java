@@ -34,7 +34,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Constraint(validatedBy = RepositoryTypeHostedValidator.class)
 public @interface RepositoryTypeHosted
 {
-  String message() default "must be a valid, hosted type repository name";
+  String message() default "must be a hosted type repository name";
 
   Class<?>[] groups() default {};
 
