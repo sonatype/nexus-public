@@ -10,14 +10,14 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.metrics
+package org.sonatype.nexus.internal.metrics;
 
-import javax.inject.Named
-import javax.inject.Singleton
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-import org.sonatype.nexus.security.config.MemorySecurityConfiguration
-import org.sonatype.nexus.security.config.SecurityContributor
-import org.sonatype.nexus.security.config.memory.MemoryCPrivilege
+import org.sonatype.nexus.security.config.MemorySecurityConfiguration;
+import org.sonatype.nexus.security.config.SecurityContributor;
+import org.sonatype.nexus.security.config.memory.MemoryCPrivilege.MemoryCPrivilegeBuilder;
 
 /**
  * Metrics security configuration.
@@ -26,24 +26,17 @@ import org.sonatype.nexus.security.config.memory.MemoryCPrivilege
  */
 @Named
 @Singleton
-class MetricsSecurityContributor
+public class MetricsSecurityContributor
     implements SecurityContributor
 {
   @Override
-  MemorySecurityConfiguration getContribution() {
-    return new MemorySecurityConfiguration(
-        privileges: [
-            new MemoryCPrivilege(
-                id: 'nx-metrics-all',
-                description: 'All permissions for Metrics',
-                type: 'application',
-                properties: [
-                    domain: 'metrics',
-                    actions: '*'
-                ]
-            )
-        ]
-    )
+  public MemorySecurityConfiguration getContribution() {
+    MemorySecurityConfiguration configuration = new MemorySecurityConfiguration();
+
+    configuration.addPrivilege(
+        new MemoryCPrivilegeBuilder("nx-metrics-all").description("All permissions for Metrics").type("application")
+            .property("domain", "metrics").property("actions", "*").build());
+
+    return configuration;
   }
 }
-

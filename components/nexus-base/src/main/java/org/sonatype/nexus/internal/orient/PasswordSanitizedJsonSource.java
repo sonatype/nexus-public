@@ -46,7 +46,7 @@ class PasswordSanitizedJsonSource
   private static final Set<String> EXCLUDED_CLASSES = Collections.unmodifiableSet(
       new HashSet<>(Arrays.asList("api_key", "usertoken_record")));
 
-  private static final String REPLACEMENT = "**REDACTED**";
+  static final String REPLACEMENT = "**REDACTED**";
 
   private final Provider<DatabaseInstance> databaseInstance;
 

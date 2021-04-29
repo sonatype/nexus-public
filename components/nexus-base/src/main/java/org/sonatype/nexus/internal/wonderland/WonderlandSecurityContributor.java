@@ -10,14 +10,14 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.wonderland
+package org.sonatype.nexus.internal.wonderland;
 
-import javax.inject.Named
-import javax.inject.Singleton
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-import org.sonatype.nexus.security.config.MemorySecurityConfiguration
-import org.sonatype.nexus.security.config.SecurityContributor
-import org.sonatype.nexus.security.config.memory.MemoryCPrivilege
+import org.sonatype.nexus.security.config.MemorySecurityConfiguration;
+import org.sonatype.nexus.security.config.SecurityContributor;
+import org.sonatype.nexus.security.config.memory.MemoryCPrivilege.MemoryCPrivilegeBuilder;
 
 /**
  * Wonderland security configuration.
@@ -26,24 +26,17 @@ import org.sonatype.nexus.security.config.memory.MemoryCPrivilege
  */
 @Named
 @Singleton
-class WonderlandSecurityContributor
+public class WonderlandSecurityContributor
     implements SecurityContributor
 {
   @Override
-  MemorySecurityConfiguration getContribution() {
-    return new MemorySecurityConfiguration(
-        privileges: [
-            new MemoryCPrivilege(
-                id: 'nx-wonderland-all',
-                description: 'All permissions for Wonderland',
-                type: 'application',
-                properties: [
-                    domain: 'wonderland',
-                    actions: '*'
-                ]
-            )
-        ]
-    )
+  public MemorySecurityConfiguration getContribution() {
+    MemorySecurityConfiguration configuration = new MemorySecurityConfiguration();
+
+    configuration.addPrivilege(
+        new MemoryCPrivilegeBuilder("nx-wonderland-all").description("All permissions for Wonderland")
+            .type("application").property("domain", "wonderland").property("actions", "*").build());
+
+    return configuration;
   }
 }
-
