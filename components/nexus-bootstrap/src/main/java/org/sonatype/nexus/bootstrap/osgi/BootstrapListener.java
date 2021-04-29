@@ -245,7 +245,6 @@ public class BootstrapListener
       if (!parseBoolean(properties.getProperty(DATASTORE_DEVELOPER, "false"))) {
         // exclude unfinished format features
         properties.setProperty("nexus-exclude-features",
-            "nexus-repository-helm," +
                 "nexus-repository-npm," +
                 "nexus-repository-docker," +
                 "nexus-repository-yum," +

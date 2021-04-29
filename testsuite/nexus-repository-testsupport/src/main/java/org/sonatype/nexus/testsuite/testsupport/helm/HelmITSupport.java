@@ -40,7 +40,7 @@ import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
 import static org.ops4j.pax.exam.CoreOptions.when;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
-import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_DEVELOPER;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 
 /**
  * Support class for Helm ITs.
@@ -54,8 +54,6 @@ public abstract class HelmITSupport
   public static final String HELM_FORMAT_NAME = "helm";
 
   public static final String MONGO_PKG_NAME = "mongodb";
-  
-  public static final String MONGO_PKG_GROUP = "mongodb";
 
   public static final String YAML_NAME = "index";
 
@@ -107,7 +105,7 @@ public abstract class HelmITSupport
     return options(
         configureNexusBase(),
         when(getValidTestDatabase().isUseContentStore()).useOptions(editConfigurationFilePut(NEXUS_PROPERTIES_FILE,
-            DATASTORE_DEVELOPER, "true"))
+            DATASTORE_ENABLED, "true"))
     );
   }
 
