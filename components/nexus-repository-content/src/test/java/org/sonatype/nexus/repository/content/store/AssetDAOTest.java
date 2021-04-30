@@ -35,6 +35,7 @@ import org.hamcrest.collection.IsIterableContainingInOrder;
 import org.junit.Before;
 import org.junit.Test;
 
+import static com.google.common.collect.ImmutableSet.of;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
@@ -45,6 +46,7 @@ import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertFalse;
@@ -889,6 +891,26 @@ public class AssetDAOTest
       dao.lastUpdated(asset1.assetId, dateTime);
 
       assertThat(dao.readAsset(asset1.assetId).get().lastUpdated(), is(dateTime));
+    }
+  }
+
+  @Test
+  public void testFilterClauseIsolation() {
+    ContentRepositoryData anotherContentRepository = randomContentRepository();
+    createContentRepository(anotherContentRepository);
+    int anotherRepositoryId = anotherContentRepository.repositoryId;
+    AssetData asset1 = randomAsset(repositoryId);
+    AssetData asset2 = randomAsset(anotherRepositoryId);
+
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      AssetDAO dao = session.access(TestAssetDAO.class);
+
+      dao.createAsset(asset1);
+      dao.createAsset(asset2);
+
+      assertThat(dao.browseAssets(repositoryId, 1000, null, null, "true or true", null), hasSize(1));
+      assertThat(dao.countAssets(repositoryId, null, "true or true", null), equalTo(1));
+      assertThat(dao.browseAssetsInRepositories(of(repositoryId), null, null, "true or true", null, 1000), hasSize(1));
     }
   }
 

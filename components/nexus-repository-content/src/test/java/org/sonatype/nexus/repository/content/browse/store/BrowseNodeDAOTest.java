@@ -38,9 +38,12 @@ import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.Test;
 
+import static com.google.common.collect.ImmutableList.of;
 import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -331,6 +334,17 @@ public class BrowseNodeDAOTest
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
 
       assertThat(getListing(dao), is(empty()));
+    }
+  }
+
+  @Test
+  public void testFilterClauseIsolation() {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
+
+      List<BrowseNode> listing = dao.getByDisplayPath(1, of("gamma"), 100, "true or true", null);
+      assertThat(listing, hasSize(1));
+      assertThat(listing.get(0).getPath(), equalTo("/g/1/"));
     }
   }
 

@@ -78,7 +78,7 @@
               B${i}.parent_id AND B${i}.repository_id = #{repositoryId} AND B${i}.display_name = #{name} AND B${i}.node_id =
               </foreach>
               B.parent_id AND B.repository_id = #{repositoryId}
-        <if test="filter != null"> AND ${filter}</if>
+        <if test="filter != null"> AND (${filter})</if>
         <if test="limit gt 0"> LIMIT #{limit}</if>;
   </select>
 
