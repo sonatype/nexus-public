@@ -318,18 +318,18 @@ public class MyBatisDataStore
     properties.put("poolName", storeName);
     properties.putAll(attributes);
 
+    // Parse and unflatten advanced attributes
+    Object advanced = properties.remove(ADVANCED);
+    if (advanced instanceof String) {
+      TO_MAP.split((String) advanced).forEach(properties::putIfAbsent);
+    }
+
     if (attributes.get(JDBC_URL).startsWith("jdbc:postgresql")) {
       properties.put("driverClassName", "org.postgresql.Driver");
       // workaround https://github.com/pgjdbc/pgjdbc/issues/265
       properties.put("dataSource.stringtype", "unspecified");
 
-      properties.put("maximumPoolSize", DEFAULT_CONTENT_STORE_MAX_POOL_SIZE);
-    }
-
-    // Parse and unflatten advanced attributes
-    Object advanced = properties.remove(ADVANCED);
-    if (advanced instanceof String) {
-      TO_MAP.split((String) advanced).forEach(properties::putIfAbsent);
+      properties.putIfAbsent("maximumPoolSize", DEFAULT_CONTENT_STORE_MAX_POOL_SIZE);
     }
 
     // Hikari doesn't like blank schemas in its config
