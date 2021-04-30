@@ -36,5 +36,6 @@
     <feature>nexus-repository-conda</feature>
     <feature>nexus-restore-raw</feature>
     <feature>nexus-restore-pypi</feature>
+    <feature>nexus-restore-helm</feature>
   </feature>
 </features>

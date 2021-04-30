@@ -10,26 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.restore.helm.internal;
+package org.sonatype.nexus.testsuite.testsupport.helm;
 
 import java.util.Properties;
 
 import org.sonatype.nexus.blobstore.api.Blob;
-import org.sonatype.nexus.blobstore.api.BlobStore;
-import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
-import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.blobstore.api.BlobRef;
+import org.sonatype.nexus.repository.Repository;
 
-/**
- * @since 3.next
- */
-public class HelmRestoreBlobData
-    extends RestoreBlobData
+public abstract class HelmTestHelper
 {
-  public HelmRestoreBlobData(final Blob blob,
-                             final Properties blobProperties,
-                             final BlobStore blobStore,
-                             final RepositoryManager repositoryManager)
-  {
-    super(blob, blobProperties, blobStore, repositoryManager);
-  }
+  public abstract Blob getBlob(final Repository repository, final BlobRef blobRef);
+
+  public abstract Properties getRestoreAssetProperties(final Repository repository, final String path);
 }
