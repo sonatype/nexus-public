@@ -23,7 +23,6 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
-import org.sonatype.nexus.blobstore.restore.helm.internal.HelmRestoreBlobData;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.Repository;
@@ -32,7 +31,7 @@ import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.repository.helm.HelmAttributes;
-import org.sonatype.repository.helm.HelmRestoreFacet;
+import org.sonatype.repository.helm.orient.HelmRestoreFacet;
 
 import org.junit.Before;
 import org.junit.Test;

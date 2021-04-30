@@ -16,8 +16,8 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.view.handlers.HighAvailabilitySupportChecker;
-import org.sonatype.repository.helm.internal.orient.hosted.HelmHostedRecipe;
-import org.sonatype.repository.helm.internal.orient.proxy.HelmProxyRecipe;
+import org.sonatype.repository.helm.orient.internal.hosted.HelmHostedRecipe;
+import org.sonatype.repository.helm.orient.internal.proxy.HelmProxyRecipe;
 
 import org.junit.Before;
 import org.junit.Test;

@@ -10,26 +10,30 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.restore.helm.internal;
+package org.sonatype.repository.helm.orient;
 
-import java.util.Properties;
+import java.io.IOException;
+import java.io.InputStream;
 
-import org.sonatype.nexus.blobstore.api.Blob;
-import org.sonatype.nexus.blobstore.api.BlobStore;
-import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
-import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.Facet;
+import org.sonatype.nexus.repository.Facet.Exposed;
+import org.sonatype.nexus.repository.storage.AssetBlob;
+import org.sonatype.nexus.repository.storage.Query;
+import org.sonatype.repository.helm.HelmAttributes;
 
 /**
- * @since 3.next
+ * @since 3.28
  */
-public class HelmRestoreBlobData
-    extends RestoreBlobData
+@Exposed
+public interface HelmRestoreFacet extends Facet
 {
-  public HelmRestoreBlobData(final Blob blob,
-                             final Properties blobProperties,
-                             final BlobStore blobStore,
-                             final RepositoryManager repositoryManager)
-  {
-    super(blob, blobProperties, blobStore, repositoryManager);
-  }
+  void restore(final AssetBlob assetBlob, final String path) throws IOException;
+
+  boolean assetExists(final String path);
+
+  boolean componentRequired(final String name);
+
+  Query getComponentQuery(final HelmAttributes attributes);
+
+  HelmAttributes extractComponentAttributesFromArchive(final String blobName, final InputStream is) throws IOException;
 }

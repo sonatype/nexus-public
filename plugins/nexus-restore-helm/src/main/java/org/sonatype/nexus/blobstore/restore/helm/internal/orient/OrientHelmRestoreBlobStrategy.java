@@ -24,7 +24,6 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
-import org.sonatype.nexus.blobstore.restore.helm.internal.HelmRestoreBlobData;
 import org.sonatype.nexus.blobstore.restore.orient.OrientBaseRestoreBlobStrategy;
 import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
@@ -35,7 +34,7 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Query;
 import org.sonatype.repository.helm.HelmAttributes;
-import org.sonatype.repository.helm.HelmRestoreFacet;
+import org.sonatype.repository.helm.orient.HelmRestoreFacet;
 import org.sonatype.repository.helm.internal.HelmFormat;
 
 import com.google.common.collect.ImmutableList;
