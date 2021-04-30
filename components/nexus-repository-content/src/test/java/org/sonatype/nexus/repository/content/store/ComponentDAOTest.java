@@ -37,6 +37,8 @@ import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyIterable;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -529,6 +531,25 @@ public class ComponentDAOTest
               allOf(sameCoordinates(component2), sameKind(component2), sameAttributes(component2))));
 
       session.getTransaction().commit();
+    }
+  }
+
+  @Test
+  public void testFilterClauseIsolation() {
+    ContentRepositoryData anotherContentRepository = randomContentRepository();
+    createContentRepository(anotherContentRepository);
+    int anotherRepositoryId = anotherContentRepository.repositoryId;
+    ComponentData component1 = randomComponent(repositoryId);
+    ComponentData component2 = randomComponent(anotherRepositoryId);
+
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      ComponentDAO dao = session.access(TestComponentDAO.class);
+
+      dao.createComponent(component1);
+      dao.createComponent(component2);
+
+      assertThat(dao.browseComponents(repositoryId, 1000, null, null, "true or true", null), hasSize(1));
+      assertThat(dao.countComponents(repositoryId, null, "true or true", null), equalTo(1));
     }
   }
 
