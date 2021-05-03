@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.storage
 
+import java.util.function.Supplier
+
 import javax.inject.Provider
 
 import org.sonatype.goodies.testsupport.TestSupport
@@ -20,10 +22,11 @@ import org.sonatype.nexus.blobstore.api.BlobMetrics
 import org.sonatype.nexus.blobstore.api.BlobRef
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.common.collect.NestedAttributesMap
-import org.sonatype.nexus.common.node.NodeAccess
 import org.sonatype.nexus.common.entity.EntityId
 import org.sonatype.nexus.common.entity.EntityMetadata
 import org.sonatype.nexus.common.hash.HashAlgorithm
+import org.sonatype.nexus.common.io.InputStreamSupplier
+import org.sonatype.nexus.common.node.NodeAccess
 import org.sonatype.nexus.mime.MimeRulesSource
 import org.sonatype.nexus.repository.IllegalOperationException
 import org.sonatype.nexus.repository.Repository
@@ -33,7 +36,6 @@ import org.sonatype.nexus.repository.move.RepositoryMoveService
 import org.sonatype.nexus.repository.view.ContentTypes
 import org.sonatype.nexus.repository.view.payloads.TempBlob
 
-import java.util.function.Supplier
 import com.google.common.hash.HashCode
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx
 import com.orientechnologies.orient.core.tx.OTransaction
@@ -94,12 +96,8 @@ extends TestSupport
   @Mock
   private NodeAccess nodeAccess
 
-  private Supplier<InputStream> supplier = new Supplier<InputStream>(){
-    @Override
-    InputStream get() {
-      return new ByteArrayInputStream('testContent'.bytes)
-    }
-  }
+  private InputStreamSupplier supplier = { new ByteArrayInputStream('testContent'.bytes) }
+
   private DefaultContentValidator defaultContentValidator = mock(DefaultContentValidator)
   private Map<String, String> headers = [:]
   private Map<String, String> expectedHeaders = [(BlobStore.REPO_NAME_HEADER) : 'testRepo', (BlobStore.BLOB_NAME_HEADER) : 'testBlob.txt', (BlobStore.CREATED_BY_HEADER) : 'test',  (BlobStore.CREATED_BY_IP_HEADER) : '127.0.0.1', (BlobStore.CONTENT_TYPE_HEADER) : 'text/plain']

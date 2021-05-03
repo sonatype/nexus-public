@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -25,6 +24,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.mime.MimeRulesSource;
 import org.sonatype.nexus.mime.MimeSupport;
 import org.sonatype.nexus.repository.InvalidContentException;
@@ -58,11 +58,11 @@ public class DefaultContentValidator
 
   @Nonnull
   @Override
-  public String determineContentType(boolean strictContentTypeValidation,
-                                     Supplier<InputStream> contentSupplier,
-                                     @Nullable MimeRulesSource mimeRulesSource,
-                                     @Nullable String contentName,
-                                     @Nullable String declaredContentType) throws IOException
+  public String determineContentType(final boolean strictContentTypeValidation,
+                                     final InputStreamSupplier contentSupplier,
+                                     @Nullable final MimeRulesSource mimeRulesSource,
+                                     @Nullable final String contentName,
+                                     @Nullable final String declaredContentType) throws IOException
   {
     checkNotNull(contentSupplier);
     final String declaredBaseContentType = mediaTypeWithoutParameters(declaredContentType);

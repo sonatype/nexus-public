@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.maven.internal.utils;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,13 +23,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.annotation.Nonnull;
-
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.StreamPayload;
-import org.sonatype.nexus.repository.view.payloads.StreamPayload.InputStreamSupplier;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
 
 import com.google.common.hash.HashCode;
@@ -100,15 +96,7 @@ public final class MavenIOUtils
   }
 
   private static StreamPayload aStreamPayload(final Path path, final String contentType) throws IOException {
-    return new StreamPayload(
-        new InputStreamSupplier()
-        {
-          @Nonnull
-          @Override
-          public InputStream get() throws IOException {
-            return new BufferedInputStream(Files.newInputStream(path));
-          }
-        },
+    return new StreamPayload(() -> new BufferedInputStream(Files.newInputStream(path)),
         Files.size(path),
         contentType
     );

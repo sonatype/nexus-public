@@ -13,8 +13,6 @@
 package org.sonatype.repository.conan.internal.orient.proxy.v1;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -24,6 +22,7 @@ import javax.inject.Named;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.entity.EntityHelper;
+import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.config.Configuration;
@@ -252,7 +251,7 @@ public class ConanProxyFacet
    */
   private Content saveAsset(final StorageTx tx,
                             final Asset asset,
-                            final Supplier<InputStream> contentSupplier,
+                            final InputStreamSupplier contentSupplier,
                             final Payload payload,
                             final HashCode hash) throws IOException
   {
@@ -272,7 +271,7 @@ public class ConanProxyFacet
    */
   private Content saveAsset(final StorageTx tx,
                             final Asset asset,
-                            final Supplier<InputStream> contentSupplier,
+                            final InputStreamSupplier contentSupplier,
                             final String contentType,
                             final AttributesMap contentAttributes,
                             final HashCode hash) throws IOException

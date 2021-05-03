@@ -13,6 +13,7 @@
 package org.sonatype.repository.helm.orient.internal.proxy;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.Collections;
 import java.util.Optional;
@@ -45,9 +46,9 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 import org.sonatype.repository.helm.HelmAttributes;
 import org.sonatype.repository.helm.internal.AssetKind;
 import org.sonatype.repository.helm.internal.metadata.IndexYamlAbsoluteUrlRewriter;
-import org.sonatype.repository.helm.orient.internal.HelmFacet;
 import org.sonatype.repository.helm.internal.util.HelmAttributeParser;
 import org.sonatype.repository.helm.internal.util.HelmPathUtils;
+import org.sonatype.repository.helm.orient.internal.HelmFacet;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.commons.lang3.StringUtils.removeStart;
@@ -148,8 +149,9 @@ public class HelmProxyFacetImpl
                                final String fileName,
                                final AssetKind assetKind) throws IOException {
     StorageFacet storageFacet = facet(StorageFacet.class);
-    try (TempBlob tempBlob = storageFacet.createTempBlob(content.openInputStream(), HASH_ALGORITHMS)) {
-      HelmAttributes helmAttributes = helmAttributeParser.getAttributes(assetKind, tempBlob.get());
+    try (TempBlob tempBlob = storageFacet.createTempBlob(content.openInputStream(), HASH_ALGORITHMS);
+         InputStream in = tempBlob.get()) {
+      HelmAttributes helmAttributes = helmAttributeParser.getAttributes(assetKind, in);
       return doCreateOrSaveComponent(helmAttributes, fileName, assetKind, tempBlob, content.getContentType(), content.getAttributes());
     }
   }

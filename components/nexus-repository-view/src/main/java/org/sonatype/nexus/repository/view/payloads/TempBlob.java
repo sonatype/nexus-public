@@ -21,8 +21,8 @@ import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
+import org.sonatype.nexus.common.io.InputStreamSupplier;
 
-import java.util.function.Supplier;
 import com.google.common.hash.HashCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +36,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.1
  */
 public class TempBlob
-    implements Closeable, Supplier<InputStream>
+    implements Closeable, InputStreamSupplier
 {
   private static final Logger log = LoggerFactory.getLogger(TempBlob.class);
 

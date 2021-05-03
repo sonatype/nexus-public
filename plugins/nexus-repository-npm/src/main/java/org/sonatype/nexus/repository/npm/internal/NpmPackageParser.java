@@ -16,12 +16,12 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
-import java.util.function.Supplier;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.io.InputStreamSupplier;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.compress.archivers.ArchiveEntry;
@@ -52,7 +52,7 @@ public class NpmPackageParser
    * Parses the package.json in the supplied tar.gz if present and extractable. In all other situations, an empty map
    * will be returned indicating the absence of (or inability to extract) a valid package.json file and its contents.
    */
-  public Map<String, Object> parsePackageJson(final Supplier<InputStream> supplier) {
+  public Map<String, Object> parsePackageJson(final InputStreamSupplier supplier) {
     try (InputStream is = new BufferedInputStream(supplier.get())) {
       final CompressorStreamFactory compressorStreamFactory = new CompressorStreamFactory();
       try (InputStream cis = compressorStreamFactory.createCompressorInputStream(GZIP, is)) {

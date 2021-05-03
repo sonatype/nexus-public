@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.npm.internal.tasks;
 
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -97,12 +96,11 @@ public class DatastoreReindexNpmRepositoryTask
    * can be extracted from the asset's package.json.
    */
   private void maybeUpdateAsset(final Repository repository, final FluentAsset asset) {
-    Content content = asset.download();
-    if (content == null) {
-      return;
-    }
-    try (InputStream in = content.openInputStream()) {
-      Map<String, Object> formatAttributes = npmPackageParser.parsePackageJson(() -> in);
+    try (Content content = asset.download()) {
+      if (content == null) {
+        return;
+      }
+      Map<String, Object> formatAttributes = npmPackageParser.parsePackageJson(content::openInputStream);
       if (formatAttributes.isEmpty()) {
         log.warn(
             "No format attributes found in package.json for npm asset {} in repository {}, will not be searchable",

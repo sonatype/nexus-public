@@ -66,6 +66,7 @@ public abstract class NpmSearchIndexFacetCaching
   /**
    * Fetches the cached index document, or, if not present, builds index document, caches it and sends it as response.
    */
+  @Override
   @Nonnull
   public Content searchIndex(@Nullable final DateTime since) throws IOException {
     // NOTE: This has been split up into separate calls to realize different transactional behavior:
@@ -102,19 +103,11 @@ public abstract class NpmSearchIndexFacetCaching
       asset = tx.createAsset(bucket, getRepository().getFormat())
           .name(NpmFacetUtils.REPOSITORY_ROOT_ASSET);
       final Path path = Files.createTempFile("npm-searchIndex", "json");
-      try {
-        Content content = buildIndex(tx, path);
+      try (Content content = buildIndex(tx, path)) {
         return saveRepositoryRoot(
             tx,
             asset,
-            () -> {
-              try {
-                return content.openInputStream();
-              }
-              catch (IOException e) {
-                throw new RuntimeException(e);
-              }
-            },
+            content::openInputStream,
             content
         );
       }

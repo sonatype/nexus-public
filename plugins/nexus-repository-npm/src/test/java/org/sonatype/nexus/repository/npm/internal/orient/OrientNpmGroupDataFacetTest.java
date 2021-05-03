@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 import org.sonatype.goodies.common.Time;
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -31,6 +30,7 @@ import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.io.CooperationFactory;
+import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.common.io.LocalCooperationFactory;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
@@ -152,7 +152,7 @@ public class OrientNpmGroupDataFacetTest
   private ConfigurationFacet configurationFacet;
 
   @Captor
-  private ArgumentCaptor<Supplier<InputStream>> inputStreamCaptor;
+  private ArgumentCaptor<InputStreamSupplier> inputStreamCaptor;
 
   private CooperationFactory cooperationFactory = new LocalCooperationFactory();
 
@@ -396,7 +396,7 @@ public class OrientNpmGroupDataFacetTest
     return packageRoot;
   }
 
-  private void assertMergedSimplePackageRoot(final Supplier<InputStream> supplier, final String... versions)
+  private void assertMergedSimplePackageRoot(final InputStreamSupplier supplier, final String... versions)
       throws IOException
   {
     NestedAttributesMap result = NpmJsonUtils.parse(supplier);
@@ -419,7 +419,7 @@ public class OrientNpmGroupDataFacetTest
     return list;
   }
 
-  private Supplier<InputStream> captureGroupStoredBlobInputStream() throws IOException {
+  private InputStreamSupplier captureGroupStoredBlobInputStream() throws IOException {
     verify(storageTx).createBlob(any(),
         inputStreamCaptor.capture()
         , any(), any(), any(), anyBoolean());

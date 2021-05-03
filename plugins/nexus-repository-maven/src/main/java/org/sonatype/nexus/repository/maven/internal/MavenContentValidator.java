@@ -22,13 +22,12 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.mime.MimeRulesSource;
 import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.mime.ContentValidator;
 import org.sonatype.nexus.repository.mime.DefaultContentValidator;
-
-import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -53,11 +52,11 @@ public class MavenContentValidator
 
   @Nonnull
   @Override
-  public String determineContentType(boolean strictContentTypeValidation,
-                                     Supplier<InputStream> contentSupplier,
-                                     @Nullable MimeRulesSource mimeRulesSource,
-                                     @Nullable String contentName,
-                                     @Nullable String declaredContentType) throws IOException
+  public String determineContentType(final boolean strictContentTypeValidation,
+                                     final InputStreamSupplier contentSupplier,
+                                     @Nullable final MimeRulesSource mimeRulesSource,
+                                     @Nullable final String contentName,
+                                     @Nullable final String declaredContentType) throws IOException
   {
     if (contentName != null) {
       if (contentName.endsWith(".pom")) {

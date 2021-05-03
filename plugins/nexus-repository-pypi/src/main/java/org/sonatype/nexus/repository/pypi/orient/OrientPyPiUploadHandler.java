@@ -25,8 +25,8 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.pypi.PyPiAttributes;
-import org.sonatype.nexus.repository.pypi.internal.PyPiFileUtils;
 import org.sonatype.nexus.repository.pypi.PyPiFormat;
+import org.sonatype.nexus.repository.pypi.internal.PyPiFileUtils;
 import org.sonatype.nexus.repository.pypi.orient.internal.OrientPyPiHostedFacet;
 import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
@@ -95,24 +95,24 @@ public class OrientPyPiUploadHandler
     StorageFacet storageFacet = repository.facet(StorageFacet.class);
 
     String contentType = Files.probeContentType(packageFile.toPath());
-    Payload payload = new StreamPayload(() -> new FileInputStream(packageFile), packageFile.length(), contentType);
+    try (Payload payload = new StreamPayload(() -> new FileInputStream(packageFile), packageFile.length(), contentType)) {
+      try (TempBlob tempBlob = storageFacet.createTempBlob(payload, HASH_ALGORITHMS)) {
+        final Map<String, String> metadata = getAndValidateMetadata(repository, tempBlob);
 
-    try (TempBlob tempBlob = storageFacet.createTempBlob(payload, HASH_ALGORITHMS)) {
-      final Map<String, String> metadata = getAndValidateMetadata(repository, tempBlob);
+        String name = getAndValidateName(metadata);
+        String version = getAndValidateVersion(metadata);
 
-      String name = getAndValidateName(metadata);
-      String version = getAndValidateVersion(metadata);
+        String filename = packageFile.getName();
 
-      String filename = packageFile.getName();
+        String packagePath = facet.createPackagePath(name, version, filename);
 
-      String packagePath = facet.createPackagePath(name, version, filename);
+        ensurePermitted(repository.getName(), PyPiFormat.NAME, packagePath, coordinatesFromMetadata(metadata));
 
-      ensurePermitted(repository.getName(), PyPiFormat.NAME, packagePath, coordinatesFromMetadata(metadata));
+        TransactionalStoreBlob.operation.withDb(storageFacet.txSupplier()).throwing(IOException.class).call(
+            () -> facet.upload(filename, metadata, new TempBlobPartPayload("", false, name, contentType, tempBlob)));
 
-      TransactionalStoreBlob.operation.withDb(storageFacet.txSupplier()).throwing(IOException.class).call(
-          () -> facet.upload(filename, metadata, new TempBlobPartPayload("", false, name, contentType, tempBlob)));
-
-      return facet.getPackage(packagePath);
+        return facet.getPackage(packagePath);
+      }
     }
   }
 
@@ -122,18 +122,20 @@ public class OrientPyPiUploadHandler
     OrientPyPiHostedFacet facet = repository.facet(OrientPyPiHostedFacet.class);
     StorageFacet storageFacet = repository.facet(StorageFacet.class);
 
-    Payload payload = new StreamPayload(() -> new FileInputStream(signatureFile), signatureFile.length(), TEXT_PLAIN);
+    try (Payload payload =
+        new StreamPayload(() -> new FileInputStream(signatureFile), signatureFile.length(), TEXT_PLAIN)) {
+      try (TempBlob tempBlob = storageFacet.createTempBlob(payload, HASH_ALGORITHMS)) {
+        String name = PyPiFileUtils.extractNameFromPath(path);
+        String version = PyPiFileUtils.extractVersionFromPath(path);
 
-    try (TempBlob tempBlob = storageFacet.createTempBlob(payload, HASH_ALGORITHMS)) {
-      String name = PyPiFileUtils.extractNameFromPath(path);
-      String version = PyPiFileUtils.extractVersionFromPath(path);
+        ensurePermitted(repository.getName(), PyPiFormat.NAME, path, ImmutableMap.of("name", name, "version", version));
 
-      ensurePermitted(repository.getName(), PyPiFormat.NAME, path, ImmutableMap.of("name", name, "version", version));
+        TransactionalStoreBlob.operation.withDb(storageFacet.txSupplier()).throwing(IOException.class)
+            .call(() -> facet.uploadSignature(name, version,
+                new TempBlobPartPayload("", false, signatureFile.getName(), TEXT_PLAIN, tempBlob)));
 
-      TransactionalStoreBlob.operation.withDb(storageFacet.txSupplier()).throwing(IOException.class).call(
-          () -> facet.uploadSignature(name, version, new TempBlobPartPayload("", false, signatureFile.getName(), TEXT_PLAIN, tempBlob)));
-
-      return facet.getPackage(path);
+        return facet.getPackage(path);
+      }
     }
   }
 

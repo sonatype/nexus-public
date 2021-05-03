@@ -12,8 +12,8 @@
  */
 package org.sonatype.nexus.repository.content.npm;
 
+import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -116,9 +116,8 @@ public class NpmUploadHandlerImpl
     INpmHostedFacet hostedFacet = repository.facet(INpmHostedFacet.class);
 
     Path contentPath = content.toPath();
-    try (FileInputStream fis = new FileInputStream(content)) {
-      Payload payload =
-          new StreamPayload(() -> fis, content.length(), Files.probeContentType(contentPath));
+    try (Payload payload = new StreamPayload(() -> new BufferedInputStream(Files.newInputStream(content.toPath())),
+        content.length(), Files.probeContentType(contentPath));) {
       try (TempBlob tempBlob = contentFacet.blobs().ingest(payload, HASH_ALGORITHMS)) {
         final Map<String, Object> packageJson = npmPackageParser.parsePackageJson(tempBlob);
         ensureNpmPermitted(repository, packageJson);

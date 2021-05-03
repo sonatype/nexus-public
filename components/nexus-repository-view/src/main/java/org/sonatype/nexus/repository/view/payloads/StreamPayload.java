@@ -18,6 +18,7 @@ import java.io.InputStream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.repository.view.Payload;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -73,18 +74,6 @@ public class StreamPayload
   //
   // Supplier
   //
-
-  // NOTE: Not using Guava Supplier, as we need to express throws IOException
-
-  /**
-   * Supplies an {@link InputStream}.
-   */
-  @FunctionalInterface
-  public interface InputStreamSupplier
-  {
-    @Nonnull
-    InputStream get() throws IOException;
-  }
 
   /**
    * Returns an {@link InputStream} and takes in an argument

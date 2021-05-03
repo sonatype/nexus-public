@@ -21,7 +21,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.MissingAssetBlobException;
 import org.sonatype.nexus.repository.view.payloads.StreamPayload.InputStreamFunction;
-import org.sonatype.nexus.repository.view.payloads.StreamPayload.InputStreamSupplier;
+import org.sonatype.nexus.common.io.InputStreamSupplier;
 
 import org.junit.Before;
 import org.junit.Test;

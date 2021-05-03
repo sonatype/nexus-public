@@ -32,7 +32,6 @@ import org.sonatype.nexus.orient.entity.AttachedEntityHelper;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.IllegalOperationException;
-import org.sonatype.nexus.repository.apt.orient.AptFacet;
 import org.sonatype.nexus.repository.apt.internal.AptMimeTypes;
 import org.sonatype.nexus.repository.apt.internal.AptPackageParser;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
@@ -40,6 +39,7 @@ import org.sonatype.nexus.repository.apt.internal.debian.ControlFile.Paragraph;
 import org.sonatype.nexus.repository.apt.internal.debian.PackageInfo;
 import org.sonatype.nexus.repository.apt.internal.gpg.AptSigningFacet;
 import org.sonatype.nexus.repository.apt.internal.hosted.CompressingTempFileStore;
+import org.sonatype.nexus.repository.apt.orient.AptFacet;
 import org.sonatype.nexus.repository.apt.orient.internal.OrientFacetHelper;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Bucket;
@@ -120,7 +120,7 @@ public class OrientAptHostedFacet
 
     Content content = aptFacet.put(
         assetPath,
-        new StreamPayload(() -> body.get(), size, contentType),
+        new StreamPayload(body, size, contentType),
         info);
 
     Asset asset = Content.findAsset(tx, bucket, content);

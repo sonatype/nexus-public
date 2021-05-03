@@ -12,8 +12,8 @@
  */
 package org.sonatype.nexus.orient.raw;
 
+import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -86,7 +86,7 @@ public class RawUploadHandler
       throws IOException
   {
     RawContentFacet facet = repository.facet(RawContentFacet.class);
-    return facet.put(path, new StreamPayload(() -> new FileInputStream(content), Files.size(contentPath),
-        Files.probeContentType(contentPath)));
+    return facet.put(path, new StreamPayload(() -> new BufferedInputStream(Files.newInputStream(contentPath)),
+        Files.size(contentPath), Files.probeContentType(contentPath)));
   }
 }

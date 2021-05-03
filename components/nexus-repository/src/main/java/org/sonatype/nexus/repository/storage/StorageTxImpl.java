@@ -34,6 +34,7 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
+import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuard;
@@ -51,7 +52,6 @@ import org.sonatype.nexus.repository.move.RepositoryMoveService;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.transaction.RetryController;
 
-import java.util.function.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
@@ -649,7 +649,7 @@ public class StorageTxImpl
   @Override
   @Guarded(by = ACTIVE)
   public AssetBlob createBlob(final String blobName,
-                              final Supplier<InputStream> streamSupplier,
+                              final InputStreamSupplier streamSupplier,
                               final Iterable<HashAlgorithm> hashAlgorithms,
                               @Nullable final Map<String, String> headers,
                               @Nullable final String declaredContentType,
@@ -665,12 +665,15 @@ public class StorageTxImpl
 
     Map<String, String> storageHeadersMap = buildStorageHeaders(blobName, streamSupplier, headers, declaredContentType,
         skipContentVerification);
-    return blobTx.create(
-        streamSupplier.get(),
-        storageHeadersMap,
-        hashAlgorithms,
-        storageHeadersMap.get(BlobStore.CONTENT_TYPE_HEADER)
+
+    try (InputStream in = streamSupplier.get()) {
+      return blobTx.create(
+          in,
+          storageHeadersMap,
+          hashAlgorithms,
+          storageHeadersMap.get(BlobStore.CONTENT_TYPE_HEADER)
     );
+    }
   }
 
   @Override
@@ -706,7 +709,7 @@ public class StorageTxImpl
                               final TempBlob originalBlob,
                               @Nullable final Map<String, String> headers,
                               @Nullable final String declaredContentType,
-                              boolean skipContentVerification)
+                              final boolean skipContentVerification)
       throws IOException
   {
     checkNotNull(blobName);
@@ -740,7 +743,7 @@ public class StorageTxImpl
   }
 
   private Map<String, String> buildStorageHeaders(final String blobName,
-                                                  @Nullable final Supplier<InputStream> streamSupplier,
+                                                  @Nullable final InputStreamSupplier streamSupplier,
                                                   @Nullable final Map<String, String> headers,
                                                   @Nullable final String declaredContentType,
                                                   final boolean skipContentVerification) throws IOException
@@ -884,14 +887,14 @@ public class StorageTxImpl
           }
 
           assetBlob.setDuplicate(oldBlob);
-          
+
           return true;
         }
       }
     }
     return false;
   }
-  
+
   /**
    * Deletes the existing blob for the asset if one exists, updating the blob updated field if necessary. The
    * write policy will be enforced for this operation and will throw an exception if updates are not supported.
@@ -918,7 +921,7 @@ public class StorageTxImpl
   @Guarded(by = ACTIVE)
   public AssetBlob setBlob(final Asset asset,
                            final String blobName,
-                           final Supplier<InputStream> streamSupplier,
+                           final InputStreamSupplier streamSupplier,
                            final Iterable<HashAlgorithm> hashAlgorithms,
                            @Nullable final Map<String, String> headers,
                            @Nullable final String declaredContentType,
@@ -982,8 +985,8 @@ public class StorageTxImpl
                            final String blobName,
                            final TempBlob originalBlob,
                            @Nullable final Map<String, String> headers,
-                           @Nullable String declaredContentType,
-                           boolean skipContentVerification)
+                           @Nullable final String declaredContentType,
+                           final boolean skipContentVerification)
       throws IOException
   {
     checkNotNull(blobName);
@@ -1023,7 +1026,7 @@ public class StorageTxImpl
   }
 
   @Nonnull
-  private String determineContentType(final Supplier<InputStream> inputStreamSupplier,
+  private String determineContentType(final InputStreamSupplier inputStreamSupplier,
                                       final String blobName,
                                       @Nullable final String declaredContentType)
       throws IOException

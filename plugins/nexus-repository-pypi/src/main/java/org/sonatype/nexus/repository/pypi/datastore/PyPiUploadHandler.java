@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.pypi.datastore;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -24,11 +25,11 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.repository.pypi.datastore.internal.PyPiHostedFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.pypi.PyPiAttributes;
-import org.sonatype.nexus.repository.pypi.internal.PyPiFileUtils;
 import org.sonatype.nexus.repository.pypi.PyPiFormat;
+import org.sonatype.nexus.repository.pypi.datastore.internal.PyPiHostedFacet;
+import org.sonatype.nexus.repository.pypi.internal.PyPiFileUtils;
 import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
@@ -94,37 +95,42 @@ public class PyPiUploadHandler
     PypiContentFacet contentFacet = repository.facet(PypiContentFacet.class);
 
     String contentType = Files.probeContentType(packageFile.toPath());
-    Payload payload = new StreamPayload(() -> new FileInputStream(packageFile), packageFile.length(), contentType);
+    try (Payload payload = new StreamPayload(() -> new BufferedInputStream(new FileInputStream(packageFile)),
+        packageFile.length(), contentType)) {
+      try (TempBlob tempBlob = contentFacet.getTempBlob(payload)) {
+        final Map<String, String> metadata = getAndValidateMetadata(repository, tempBlob);
 
-    try (TempBlob tempBlob = contentFacet.getTempBlob(payload)) {
-      final Map<String, String> metadata = getAndValidateMetadata(repository, tempBlob);
+        String name = getAndValidateName(metadata);
+        String version = getAndValidateVersion(metadata);
+        String filename = packageFile.getName();
+        String packagePath = facet.createPackagePath(name, version, filename);
 
-      String name = getAndValidateName(metadata);
-      String version = getAndValidateVersion(metadata);
-      String filename = packageFile.getName();
-      String packagePath = facet.createPackagePath(name, version, filename);
-
-      ensurePermitted(repository.getName(), PyPiFormat.NAME, packagePath, coordinatesFromMetadata(metadata));
-      facet.upload(packagePath, metadata, new TempBlobPartPayload("", false, name, contentType, tempBlob));
-      return facet.getPackage(packagePath);
+        ensurePermitted(repository.getName(), PyPiFormat.NAME, packagePath, coordinatesFromMetadata(metadata));
+        facet.upload(packagePath, metadata, new TempBlobPartPayload("", false, name, contentType, tempBlob));
+        return facet.getPackage(packagePath);
+      }
     }
   }
 
-  private Content importSignatureFile(final File signatureFile, final String path, final Repository repository)
+  private Content importSignatureFile(
+      final File signatureFile,
+      final String path,
+      final Repository repository) throws IOException
   {
     PyPiHostedFacet facet = repository.facet(PyPiHostedFacet.class);
     PypiContentFacet contentFacet = repository.facet(PypiContentFacet.class);
 
-    Payload payload = new StreamPayload(() -> new FileInputStream(signatureFile), signatureFile.length(), TEXT_PLAIN);
+    try (Payload payload = new StreamPayload(() -> new BufferedInputStream(new FileInputStream(signatureFile)),
+        signatureFile.length(), TEXT_PLAIN)) {
+      try (TempBlob tempBlob = contentFacet.getTempBlob(payload)) {
+        String name = PyPiFileUtils.extractNameFromPath(path);
+        String version = PyPiFileUtils.extractVersionFromPath(path);
 
-    try (TempBlob tempBlob = contentFacet.getTempBlob(payload)) {
-      String name = PyPiFileUtils.extractNameFromPath(path);
-      String version = PyPiFileUtils.extractVersionFromPath(path);
+        ensurePermitted(repository.getName(), PyPiFormat.NAME, path, ImmutableMap.of("name", name, "version", version));
 
-      ensurePermitted(repository.getName(), PyPiFormat.NAME, path, ImmutableMap.of("name", name, "version", version));
-
-      return facet.uploadSignature(name, version,
-          new TempBlobPartPayload("", false, signatureFile.getName(), TEXT_PLAIN, tempBlob));
+        return facet.uploadSignature(name, version,
+            new TempBlobPartPayload("", false, signatureFile.getName(), TEXT_PLAIN, tempBlob));
+      }
     }
   }
 

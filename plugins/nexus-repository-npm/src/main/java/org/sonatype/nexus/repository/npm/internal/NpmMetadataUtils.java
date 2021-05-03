@@ -29,6 +29,7 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
+import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.ViewFacet;
@@ -416,8 +417,9 @@ public final class NpmMetadataUtils
       if (response.getPayload() == null) {
         throw new IOException("Could not retrieve package " + packageId);
       }
-      final InputStream packageRootIn = response.getPayload().openInputStream();
-      return NpmJsonUtils.parse(() -> packageRootIn);
+      try (Payload payload = response.getPayload()) {
+        return NpmJsonUtils.parse(payload::openInputStream);
+      }
     }
     catch (IOException e) {
       throw e;

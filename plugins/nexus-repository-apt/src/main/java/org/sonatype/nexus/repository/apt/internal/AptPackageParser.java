@@ -14,20 +14,20 @@ package org.sonatype.nexus.repository.apt.internal;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.function.Supplier;
 
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFileParser;
+// NOTE: replace with commons-compress ArArchiveInputStream once fixes to end of stream detection are
+// available in a public release.
+import org.sonatype.nexus.repository.apt.internal.org.apache.commons.compress.archivers.ar.ArArchiveInputStream;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 import org.apache.commons.io.input.CloseShieldInputStream;
-// NOTE: replace with commons-compress ArArchiveInputStream once fixes to end of stream detection are
-// available in a public release.
-import org.sonatype.nexus.repository.apt.internal.org.apache.commons.compress.archivers.ar.ArArchiveInputStream;
 
 /**
  * @since 3.17
@@ -38,7 +38,7 @@ public class AptPackageParser
     throw new IllegalAccessError("Utility class");
   }
 
-  public static ControlFile parsePackage(final Supplier<InputStream> supplier) throws IOException {
+  public static ControlFile parsePackage(final InputStreamSupplier supplier) throws IOException {
     try (ArArchiveInputStream is = new ArArchiveInputStream(supplier.get())) {
       ControlFile control = null;
       ArchiveEntry debEntry;

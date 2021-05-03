@@ -13,6 +13,8 @@
 package org.sonatype.nexus.content.maven.internal.recipe;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -76,9 +78,9 @@ import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW;
 import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW_ONCE;
 import static org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet.METADATA_FORCE_REBUILD;
 import static org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet.METADATA_REBUILD;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_INDEX;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Constants.METADATA_FILENAME;
 import static org.sonatype.nexus.repository.maven.internal.MavenModels.readModel;
 import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.metadataPath;
@@ -218,7 +220,12 @@ public class MavenContentFacetImpl
 
   private void validate(final MavenPath mavenPath, final TempBlob blob) {
     log.debug("Validating maven-metadata.xml before storing");
-    metadataValidator.validate(mavenPath.getPath(), blob.get());
+    try (InputStream in = blob.get()) {
+      metadataValidator.validate(mavenPath.getPath(), in);
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 
   private Content save(final MavenPath mavenPath, final Payload content, final TempBlob blob) throws IOException {

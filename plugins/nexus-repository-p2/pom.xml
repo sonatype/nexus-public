@@ -29,6 +29,12 @@
   <dependencies>
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-common</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-plugin-api</artifactId>
       <scope>provided</scope>
     </dependency>

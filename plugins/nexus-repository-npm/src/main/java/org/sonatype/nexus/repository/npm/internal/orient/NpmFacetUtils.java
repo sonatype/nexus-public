@@ -36,6 +36,7 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
+import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.orient.entity.AttachedEntityHelper;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.npm.internal.NpmAttributes;
@@ -58,7 +59,6 @@ import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.payloads.BlobPayload;
 import org.sonatype.nexus.repository.view.payloads.BytesPayload;
 import org.sonatype.nexus.repository.view.payloads.StreamPayload;
-import org.sonatype.nexus.repository.view.payloads.StreamPayload.InputStreamSupplier;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.thread.io.StreamCopier;
 
@@ -128,7 +128,7 @@ public final class NpmFacetUtils
    * Parses JSON content into map.
    */
   @Nonnull
-  static NestedAttributesMap parse(final Supplier<InputStream> streamSupplier) throws IOException {
+  static NestedAttributesMap parse(final InputStreamSupplier streamSupplier) throws IOException {
     return NpmJsonUtils.parse(streamSupplier);
   }
 
@@ -138,14 +138,14 @@ public final class NpmFacetUtils
   @Nonnull
   static AssetBlob storeContent(final StorageTx tx,
                                 final Asset asset,
-                                final Supplier<InputStream> content,
+                                final InputStreamSupplier content,
                                 final AssetKind assetKind) throws IOException
   {
     asset.formatAttributes().set(P_ASSET_KIND, assetKind.name());
 
     final AssetBlob result = tx.createBlob(
         asset.name(),
-        content::get,
+        content,
         HASH_ALGORITHMS,
         null,
         assetKind.getContentType(),
@@ -221,7 +221,7 @@ public final class NpmFacetUtils
   @Nonnull
   public static Content saveRepositoryRoot(final StorageTx tx,
                                            final Asset asset,
-                                           final Supplier<InputStream> contentSupplier,
+                                           final InputStreamSupplier contentSupplier,
                                            final Content content) throws IOException
   {
     Content.applyToAsset(asset, Content.maintainLastModified(asset, content.getAttributes()));
@@ -356,7 +356,7 @@ public final class NpmFacetUtils
                                                     final Asset packageRootAsset) throws IOException
   {
     final Blob blob = tx.requireBlob(packageRootAsset.requireBlobRef());
-    NestedAttributesMap metadata = NpmJsonUtils.parse(() -> blob.getInputStream());
+    NestedAttributesMap metadata = NpmJsonUtils.parse(blob::getInputStream);
     // add _id
     metadata.set(NpmMetadataUtils.META_ID, packageRootAsset.name());
     return metadata;
@@ -404,7 +404,7 @@ public final class NpmFacetUtils
     storeContent(
         tx,
         packageRootAsset,
-        new StreamCopier<Supplier<InputStream>>(
+        new StreamCopier<InputStreamSupplier>(
             outputStream -> serialize(new OutputStreamWriter(outputStream, UTF_8), packageRoot),
             inputStream -> () -> inputStream).read(),
         AssetKind.PACKAGE_ROOT
@@ -601,8 +601,8 @@ public final class NpmFacetUtils
   }
 
   private static NestedAttributesMap readDistTagResponse(final Payload payload) {
-    try (InputStream is = payload.openInputStream()) {
-      return NpmJsonUtils.parse(() -> is);
+    try (Payload p = payload) {
+      return NpmJsonUtils.parse(p::openInputStream);
     }
     catch (IOException ignore) { //NOSONAR
     }

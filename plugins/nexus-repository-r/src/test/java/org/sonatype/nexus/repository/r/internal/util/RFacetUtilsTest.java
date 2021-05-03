@@ -12,15 +12,14 @@
  */
 package org.sonatype.nexus.repository.r.internal.util;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.function.Supplier;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
@@ -79,7 +78,7 @@ public class RFacetUtilsTest
   Bucket bucket;
 
   @Mock
-  Supplier<InputStream> supplier;
+  InputStreamSupplier supplier;
 
   @Mock
   Payload payload;

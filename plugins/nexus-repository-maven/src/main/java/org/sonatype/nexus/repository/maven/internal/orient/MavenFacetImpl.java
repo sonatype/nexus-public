@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.maven.internal.orient;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
@@ -40,6 +41,7 @@ import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.sonatype.nexus.repository.maven.VersionPolicy;
+import org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.maven.internal.MavenModels;
 import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataRebuilder;
@@ -76,7 +78,15 @@ import static java.lang.Boolean.TRUE;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.*;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.P_ARTIFACT_ID;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.P_CLASSIFIER;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.P_EXTENSION;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.P_GROUP_ID;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.P_PACKAGING;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.P_POM_DESCRIPTION;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.P_POM_NAME;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.P_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
 import static org.sonatype.nexus.repository.maven.internal.Constants.METADATA_FILENAME;
 import static org.sonatype.nexus.repository.maven.internal.orient.MavenFacetUtils.deleteWithHashes;
@@ -252,7 +262,11 @@ public class MavenFacetImpl
   }
 
   private void rebuildMetadata(final Blob metadataBlob) throws IOException {
-    Metadata metadata = MavenModels.readMetadata(metadataBlob.getInputStream());
+    Metadata metadata;
+
+    try (InputStream in  = metadataBlob.getInputStream()) {
+      metadata = MavenModels.readMetadata(in);
+    }
 
     // avoid triggering nested rebuilds as the rebuilder will already do that if necessary
     rebuilding.set(TRUE);
@@ -295,8 +309,8 @@ public class MavenFacetImpl
     try (TempBlob tempBlob = storageFacet.createTempBlob(payload, HashType.ALGORITHMS)) {
       if (path.getFileName().equals(METADATA_FILENAME) && mavenMetadataValidationEnabled) {
         log.debug("Validating maven-metadata.xml before storing");
-        try {
-          metadataValidator.validate(path.getPath(), tempBlob.get());
+        try (InputStream in = tempBlob.get()) {
+          metadataValidator.validate(path.getPath(), in);
         }
         catch (InvalidContentException e) {
           log.warn(e.toString());

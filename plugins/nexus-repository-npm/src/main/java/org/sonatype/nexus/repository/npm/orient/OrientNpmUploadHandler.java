@@ -12,8 +12,8 @@
  */
 package org.sonatype.nexus.repository.npm.orient;
 
+import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -118,15 +118,15 @@ public class OrientNpmUploadHandler
     StorageFacet storageFacet = repository.facet(StorageFacet.class);
 
     Path contentPath = content.toPath();
-    try (FileInputStream fis = new FileInputStream(content)) {
-      Payload payload =
-          new StreamPayload(() -> fis, content.length(), Files.probeContentType(contentPath));
-      TempBlob tempBlob = storageFacet.createTempBlob(payload, NpmFacetUtils.HASH_ALGORITHMS);
-      final Map<String, Object> packageJson = npmPackageParser.parsePackageJson(tempBlob);
-      ensureNpmPermitted(repository, packageJson);
-      StorageTx tx = UnitOfWork.currentTx();
-      Asset asset = npmFacet.putPackage(packageJson, tempBlob);
-      return toContent(asset, tx.requireBlob(asset.requireBlobRef()));
+    try (Payload payload = new StreamPayload(() -> new BufferedInputStream(Files.newInputStream(contentPath)),
+        content.length(), Files.probeContentType(contentPath))) {
+      try (TempBlob tempBlob = storageFacet.createTempBlob(payload, NpmFacetUtils.HASH_ALGORITHMS)) {
+        final Map<String, Object> packageJson = npmPackageParser.parsePackageJson(tempBlob);
+        ensureNpmPermitted(repository, packageJson);
+        StorageTx tx = UnitOfWork.currentTx();
+        Asset asset = npmFacet.putPackage(packageJson, tempBlob);
+        return toContent(asset, tx.requireBlob(asset.requireBlobRef()));
+      }
     }
   }
 

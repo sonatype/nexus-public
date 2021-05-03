@@ -13,14 +13,13 @@
 package org.sonatype.nexus.repository.maven.internal;
 
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.mime.MimeRulesSource;
 import org.sonatype.nexus.repository.mime.DefaultContentValidator;
 
@@ -51,18 +50,18 @@ import static org.mockito.Mockito.when;
 public class MavenContentValidatorTest
     extends TestSupport
 {
-  private static final Supplier<InputStream> DEFAULT_SUPPLIER = () -> new ByteArrayInputStream("0xDEADBEEF".getBytes());
+  private static final InputStreamSupplier DEFAULT_SUPPLIER = () -> new ByteArrayInputStream("0xDEADBEEF".getBytes());
 
   // "caff" as a header would normally be detected as 'audio/x-caf'
-  private static final Supplier<InputStream> AUDIO_CAF_SUPPLIER = () -> new ByteArrayInputStream("caff123456789".getBytes());
+  private static final InputStreamSupplier AUDIO_CAF_SUPPLIER = () -> new ByteArrayInputStream("caff123456789".getBytes());
 
-  private static final Supplier<InputStream> MD5_SUPPLIER = () -> new ByteArrayInputStream("0161dba22520b2c13b50493fd98ed4ce".getBytes());
+  private static final InputStreamSupplier MD5_SUPPLIER = () -> new ByteArrayInputStream("0161dba22520b2c13b50493fd98ed4ce".getBytes());
 
-  private static final Supplier<InputStream> SHA1_SUPPLIER = () -> new ByteArrayInputStream("2abe58492ad5e25e18cfca3fad4f0322d47cb893".getBytes());
+  private static final InputStreamSupplier SHA1_SUPPLIER = () -> new ByteArrayInputStream("2abe58492ad5e25e18cfca3fad4f0322d47cb893".getBytes());
 
-  private static final Supplier<InputStream> SHA256_SUPPLIER = () -> new ByteArrayInputStream("34cbb64305cb610b642162b052e66b4683ae68fd20d34591c21ab68bec106ccb".getBytes());
+  private static final InputStreamSupplier SHA256_SUPPLIER = () -> new ByteArrayInputStream("34cbb64305cb610b642162b052e66b4683ae68fd20d34591c21ab68bec106ccb".getBytes());
 
-  private static final Supplier<InputStream> SHA512_SUPPLIER = () -> new ByteArrayInputStream("bfe3bcd9fc7180c2439d7c0b3b3036f71a6da1fed2983e3ab23185bf3a6877f6a32dbd6b949d7ef3ab1935699a113f47987082fbaffb2ce9f65f5ad058475c0e".getBytes());
+  private static final InputStreamSupplier SHA512_SUPPLIER = () -> new ByteArrayInputStream("bfe3bcd9fc7180c2439d7c0b3b3036f71a6da1fed2983e3ab23185bf3a6877f6a32dbd6b949d7ef3ab1935699a113f47987082fbaffb2ce9f65f5ad058475c0e".getBytes());
 
   @Parameters(name = "{index}: contentName:{0} strictContentValidation:{1}, declaredContentType:{2}, contentSupplier:{3}")
   public static Collection<Object[]> data() {
@@ -118,7 +117,7 @@ public class MavenContentValidatorTest
   public ContentType declaredContentType;
 
   @Parameter(3)
-  public Supplier<InputStream> contentSupplier;
+  public InputStreamSupplier contentSupplier;
 
   @Parameter(4)
   public VerificationMode defaultContentValidatorInvocation;
