@@ -16,17 +16,14 @@ import {path} from 'ramda';
 import {faTrash} from "@fortawesome/free-solid-svg-icons";
 
 import {
-  ContentBody,
   DynamicFormField,
   FieldWrapper,
   NxButton,
   NxCheckbox,
   NxErrorAlert,
   NxFontAwesomeIcon,
-  NxLoadWrapper,
   NxTooltip,
   NxInfoAlert,
-  NxWarningAlert,
   Page,
   PageActions,
   PageHeader,
@@ -35,10 +32,14 @@ import {
   SectionFooter,
   Select,
   Textfield,
-  Utils
+  Utils,
+  NxForm,
+  FormUtils
 } from '@sonatype/nexus-ui-plugin';
 import BlobStoresFormMachine from './BlobStoresFormMachine';
 import UIStrings from '../../../../constants/UIStrings';
+import CustomBlobStoreSettings from './CustomBlobStoreSettings';
+import BlobStoreWarning from './BlobStoreWarning';
 
 const FORM = UIStrings.BLOB_STORES.FORM;
 
@@ -63,6 +64,7 @@ export default function BlobStoresForm({itemId, onDone}) {
   });
 
   const isLoading = current.matches('loading');
+  const isSaving = current.matches('saving');
   const isCreate = itemId === '';
   const isEdit = !isCreate;
   const {
@@ -105,10 +107,20 @@ export default function BlobStoresForm({itemId, onDone}) {
     send({type: 'UPDATE_SOFT_QUOTA', name: 'enabled', value: !path(['softQuota', 'enabled'], data)});
   }
 
+  function toggleCustomSetting(event) {
+    send({type: 'UPDATE_CUSTOM_SETTINGS', name: event.target.id, value: null});
+  }
+
+  function updateCustomSettings(event) {
+    const name = event.target.name;
+    const value = event.target.value;
+    send({type: 'UPDATE_CUSTOM_SETTINGS', name, value});
+  }
+
   function updateQuotaField(event) {
     const name = event.target.name.replace('softQuota.', '');
     const value = event.target.value;
-    send({type: 'UPDATE_SOFT_QUOTA', name, value})
+    send({type: 'UPDATE_SOFT_QUOTA', name, value});
   }
 
   function retry() {
@@ -148,76 +160,80 @@ export default function BlobStoresForm({itemId, onDone}) {
       </PageActions>
       }
     </PageHeader>
-    <ContentBody className="nxrm-blob-stores-form">
+    <NxForm className="nxrm-blob-stores-form"
+            loading={isLoading}
+            loadError={loadError ? `${loadError}` : null}
+            doLoad={retry}
+            onCancel={cancel}
+            onSubmit={save}
+            submitError={saveError}
+            submitMaskState={isSaving ? false : null}
+            submitMaskMessage={UIStrings.SAVING}
+            submitBtnText={UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
+            validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}>
       <Section onKeyPress={handleEnter}>
-        <NxLoadWrapper loading={isLoading} error={loadError ? `${loadError}` : null} retryHandler={retry}>
-          {isEdit && <NxInfoAlert>{FORM.EDIT_WARNING}</NxInfoAlert>}
+        {isEdit && <NxInfoAlert>{FORM.EDIT_WARNING}</NxInfoAlert>}
+        {isCreate &&
+        <FieldWrapper labelText={FORM.TYPE.label} description={FORM.TYPE.sublabel}>
+          <Select name="type" value={type?.id} onChange={setType}>
+            <option value=""></option>
+            {types.map(({id, name}) => <option key={id} value={id}>{name}</option>)}
+          </Select>
+        </FieldWrapper>
+        }
+        {type &&
+        <>
+          <BlobStoreWarning type={type}/>
           {isCreate &&
-          <FieldWrapper labelText={FORM.TYPE.label} description={FORM.TYPE.sublabel}>
-            <Select name="type" value={type?.id} onChange={setType}>
-              <option value=""></option>
-              {types.map(({id, name}) => <option key={id} value={id}>{name}</option>)}
-            </Select>
+          <FieldWrapper labelText={FORM.NAME.label}>
+            <Textfield {...Utils.fieldProps('name', current)} onChange={updateField}/>
           </FieldWrapper>
           }
-          {type &&
+          <CustomBlobStoreSettings type={type} current={current} updateCustomSettings={updateCustomSettings} toggleCustomSetting={toggleCustomSetting}/>
+          {type?.fields?.map(field =>
+              <FieldWrapper key={field.id}
+                            labelText={field.label}
+                            descriptionText={field.helpText}
+                            isOptional={!field.required}>
+                <DynamicFormField
+                    id={field.id}
+                    current={current}
+                    initialValue={field.initialValue}
+                    onChange={updateDynamicField}
+                    dynamicProps={field}/>
+              </FieldWrapper>
+          )}
+          <FieldWrapper labelText={FORM.SOFT_QUOTA.ENABLED.label} descriptionText={FORM.SOFT_QUOTA.ENABLED.sublabel}>
+            <NxCheckbox {...Utils.checkboxProps(['softQuota', 'enabled'], current)} onChange={toggleSoftQuota}>
+              {FORM.SOFT_QUOTA.ENABLED.text}
+            </NxCheckbox>
+          </FieldWrapper>
+          {hasSoftQuota &&
           <>
-            {isCreate &&
-            <FieldWrapper labelText={FORM.NAME.label}>
-              <Textfield {...Utils.fieldProps('name', current)} onChange={updateField}/>
+            <FieldWrapper labelText={FORM.SOFT_QUOTA.TYPE.label} descriptionText={FORM.SOFT_QUOTA.TYPE.sublabel}>
+              <Select {...Utils.fieldProps(['softQuota', 'type'], current)} onChange={updateQuotaField}>
+                <option value="" disabled></option>
+                {quotaTypes.map(({id, name}) => <option key={id} value={id}>{name}</option>)}
+              </Select>
             </FieldWrapper>
-            }
-            {type?.fields?.map(field =>
-                <FieldWrapper key={field.id}
-                              labelText={field.label}
-                              descriptionText={field.helpText}
-                              isOptional={!field.required}>
-                  <DynamicFormField
-                      id={field.id}
-                      current={current}
-                      initialValue={field.initialValue}
-                      onChange={updateDynamicField}
-                      dynamicProps={field}/>
-                </FieldWrapper>
-            )}
-            <FieldWrapper labelText={FORM.SOFT_QUOTA.ENABLED.label} descriptionText={FORM.SOFT_QUOTA.ENABLED.sublabel}>
-              <NxCheckbox {...Utils.checkboxProps(['softQuota', 'enabled'], current)} onChange={toggleSoftQuota}>
-                {FORM.SOFT_QUOTA.ENABLED.text}
-              </NxCheckbox>
+            <FieldWrapper labelText={FORM.SOFT_QUOTA.LIMIT.label}>
+              <Textfield {...Utils.fieldProps(['softQuota', 'limit'], current)} onChange={updateQuotaField}/>
             </FieldWrapper>
-            {hasSoftQuota &&
-            <>
-              <FieldWrapper labelText={FORM.SOFT_QUOTA.TYPE.label} descriptionText={FORM.SOFT_QUOTA.TYPE.sublabel}>
-                <Select {...Utils.fieldProps(['softQuota', 'type'], current)} onChange={updateQuotaField}>
-                  <option value="" disabled></option>
-                  {quotaTypes.map(({id, name}) => <option key={id} value={id}>{name}</option>)}
-                </Select>
-              </FieldWrapper>
-              <FieldWrapper labelText={FORM.SOFT_QUOTA.LIMIT.label}>
-                <Textfield {...Utils.fieldProps(['softQuota', 'limit'], current)} onChange={updateQuotaField}/>
-              </FieldWrapper>
-            </>
-            }
-            <SectionFooter>
-              <NxTooltip title={Utils.saveTooltip({isPristine, isInvalid})}>
-                <NxButton variant="primary" className={cannotSave && 'disabled'} onClick={save} type="submit">
-                  {UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
-                </NxButton>
-              </NxTooltip>
-              <NxButton onClick={cancel}>{UIStrings.SETTINGS.CANCEL_BUTTON_LABEL}</NxButton>
-              {itemId &&
-              <NxTooltip title={deleteTooltip}>
-                <NxButton variant="tertiary" className={cannotDelete && 'disabled'} onClick={confirmDelete}>
-                  <NxFontAwesomeIcon icon={faTrash}/>
-                  <span>{UIStrings.SETTINGS.DELETE_BUTTON_LABEL}</span>
-                </NxButton>
-              </NxTooltip>
-              }
-            </SectionFooter>
           </>
           }
-        </NxLoadWrapper>
+          <SectionFooter>
+            {itemId &&
+            <NxTooltip title={deleteTooltip}>
+              <NxButton variant="tertiary" className={cannotDelete && 'disabled'} onClick={confirmDelete}>
+                <NxFontAwesomeIcon icon={faTrash}/>
+                <span>{UIStrings.SETTINGS.DELETE_BUTTON_LABEL}</span>
+              </NxButton>
+            </NxTooltip>
+            }
+          </SectionFooter>
+        </>
+        }
       </Section>
-    </ContentBody>
+    </NxForm>
   </Page>;
 }

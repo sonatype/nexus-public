@@ -13,6 +13,7 @@
 package org.sonatype.nexus.blobstore;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Nullable;
 
@@ -101,4 +102,6 @@ public interface BlobStoreDescriptor
   default boolean isConnectionTestable() {
     return false;
   }
+
+  default Map<String, List<SelectOption>> getDropDownValues() {return null;}
 }

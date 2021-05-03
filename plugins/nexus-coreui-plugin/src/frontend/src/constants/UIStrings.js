@@ -126,6 +126,38 @@ the documentation</a>.`
     }
   },
 
+  S3_BLOBSTORE_CONFIGURATION: {
+    S3BlobStore_Help: '<em>S3 blob stores require specific permissions to support full provisioning and functionality through Nexus Repository Manager. ' +
+        'Consult our <a href="https://links.sonatype.com/products/nexus/blobstores/s3/docs" target="_blank">documentation</a>' +
+        ' for the specific set of permissions required.</em>',
+    S3BlobStore_Region_FieldLabel: 'Region',
+    S3BlobStore_Region_HelpText: 'Select an AWS Region',
+    S3BlobStore_Bucket_FieldLabel: 'Bucket',
+    S3BlobStore_Bucket_HelpText: 'S3 Bucket Name (must be between 3 and 63 characters long containing only lower-case characters, numbers, periods, and dashes)',
+    S3BlobStore_Prefix_FieldLabel: 'Prefix',
+    S3BlobStore_Prefix_HelpText: 'S3 Path prefix',
+    S3BlobStore_Expiration_FieldLabel: 'Expiration Days',
+    S3BlobStore_Expiration_HelpText: 'How many days until deleted blobs are finally removed from the S3 bucket (-1 to disable)',
+    S3BlobStore_Expiration_DaysText: 'days',
+    S3BlobStore_Authentication_Title: 'Authentication (Optional)',
+    S3BlobStore_Authentication_AccessKeyId: 'Access Key ID',
+    S3BlobStore_Authentication_SecretAccessKey: 'Secret Access Key',
+    S3BlobStore_Authentication_AssumeRoleArn: 'Assume Role ARN (Optional)',
+    S3BlobStore_Authentication_SessionToken: 'Session Token ARN (Optional)',
+    S3BlobStore_EncryptionSettings_Title: 'Encryption (Optional)',
+    S3BlobStore_EncryptionSettings_Type_FieldLabel: 'Encryption Type',
+    S3BlobStore_EncryptionSettings_Type_HelpText: 'The type of encryption for objects in the S3 Blob Store',
+    S3BlobStore_EncryptionSettings_KeyID_FieldLabel: 'KMS Key ID (Optional)',
+    S3BlobStore_EncryptionSettings_KeyID_HelpText: 'If using KMS encryption, you can supply a Key ID. If left blank, then the default will be used',
+    S3BlobStore_AdvancedConnectionSettings_Title: 'Advanced Connection Settings (Optional)',
+    S3BlobStore_AdvancedConnectionSettings_EndPointUrl_FieldLabel: 'Endpoint URL',
+    S3BlobStore_AdvancedConnectionSettings_EndPointUrl_HelpText: 'A custom endpoint URL for third party object stores using the S3 API',
+    S3BlobStore_AdvancedConnectionSettings_SignatureVersion_FieldLabel: 'Signature Version',
+    S3BlobStore_AdvancedConnectionSettings_SignatureVersion_HelpText: 'An API signature version which may be required for third party object stores using the S3 API',
+    S3BlobStore_AdvancedConnectionSettings_PathStyleAccess_FieldLabel: 'Use path-style access',
+    S3BlobStore_AdvancedConnectionSettings_PathStyleAccess_HelpText: 'Setting this flag will result in path-style access being used for all requests'
+  },
+
   CONTENT_SELECTORS: {
     MENU: {
       text: 'Content Selectors'

@@ -1,4 +1,4 @@
-/**
+/*
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
  * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
@@ -10,36 +10,18 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+import React from 'react';
+import {
+  NxWarningAlert,
+} from '@sonatype/nexus-ui-plugin';
 
-/*
-  Style overrides for the react-shared-components. Once we've fully converted to React we should remove these overrides.
-*/
+import UIStrings from '../../../../constants/UIStrings'
 
-@import "~@sonatype/react-shared-components/scss-shared/nx-variables";
+import './S3BlobStoreWarning.scss';
 
-.x-body {
-  line-height: $nx-line-height;
+const FIELDS = UIStrings.S3_BLOBSTORE_CONFIGURATION;
 
-  .nx-tile-footer {
-    text-align: left !important;
-  }
+export default function S3BlobStoreWarning() {
 
-  .nx-footer .nx-btn-bar {
-    flex-direction: row-reverse;
-    > :last-child {
-      margin-right: $nx-spacing-l;
-    }
-  }
-}
-
-.nx-accordion__header {
-  list-style-type: none;
-
-  &::-webkit-details-marker {
-    display: none;
-  }
-
-  > .nx-accordion__summary-wrapper {
-    padding-left: 0px;
-  }
+  return <NxWarningAlert><span dangerouslySetInnerHTML={{__html:FIELDS.S3BlobStore_Help}}/></NxWarningAlert>;
 }

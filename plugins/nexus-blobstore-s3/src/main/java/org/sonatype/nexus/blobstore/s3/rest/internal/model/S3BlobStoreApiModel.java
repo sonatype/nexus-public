@@ -16,10 +16,12 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 import org.sonatype.nexus.blobstore.rest.BlobStoreApiSoftQuota;
+import org.sonatype.nexus.blobstore.s3.internal.S3BlobStore;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.TYPE;
 
 /**
  * Encapsulates the API payload for creating, reading and updating an S3 blob store.
@@ -63,4 +65,6 @@ public class S3BlobStoreApiModel
   public S3BlobStoreApiBucketConfiguration getBucketConfiguration() {
     return bucketConfiguration;
   }
+
+  public String getType() {return TYPE;}
 }
