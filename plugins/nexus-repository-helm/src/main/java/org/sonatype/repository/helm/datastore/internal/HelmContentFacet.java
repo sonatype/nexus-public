@@ -33,6 +33,11 @@ public interface HelmContentFacet
 {
   Iterable<FluentAsset> browseAssets();
 
+  /**
+   * @since 3.next
+   */
+  Iterable<FluentAsset> browseAssetsByKind(AssetKind assetKind);
+
   Optional<Content> getAsset(String path);
 
   Content putIndex(String path, Content content, AssetKind assetKind);

@@ -39,6 +39,7 @@ import org.sonatype.repository.helm.internal.util.HelmAttributeParser;
 import com.google.common.collect.ImmutableList;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.entity.Continuations.iterableOf;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW_ONCE;
@@ -80,7 +81,12 @@ public class HelmContentFacetImpl
 
   @Override
   public Iterable<FluentAsset> browseAssets() {
-    return assets().browse(Integer.MAX_VALUE, null);
+    return iterableOf(assets()::browse);
+  }
+
+  @Override
+  public Iterable<FluentAsset> browseAssetsByKind(final AssetKind assetKind) {
+    return iterableOf(assets().byKind(assetKind.name())::browse);
   }
 
   @Override

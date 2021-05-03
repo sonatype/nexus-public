@@ -26,6 +26,7 @@ import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.view.Content;
+import org.sonatype.repository.helm.internal.AssetKind;
 import org.sonatype.repository.helm.datastore.internal.HelmContentFacet;
 import org.sonatype.repository.helm.internal.util.YamlParser;
 
@@ -84,7 +85,7 @@ public class CreateIndexServiceImplTest
     shaMap.put("sha256", "12345");
 
     when(assetBlob.checksums()).thenReturn(shaMap);
-    when(helmFacet.browseAssets()).thenReturn(list);
+    when(helmFacet.browseAssetsByKind(AssetKind.HELM_PACKAGE)).thenReturn(list);
     when(yamlParser.getYamlContent(anyObject())).thenReturn("index.yaml");
 
     Content result = underTest.buildIndexYaml(repository);
@@ -96,7 +97,7 @@ public class CreateIndexServiceImplTest
   public void testIndexYamlBuiltEvenWhenNoAssets() {
     when(assets.iterator()).thenReturn(assetIterator);
     when(assetIterator.next()).thenReturn(asset);
-    when(helmFacet.browseAssets()).thenReturn(Collections.emptyList());
+    when(helmFacet.browseAssetsByKind(AssetKind.HELM_PACKAGE)).thenReturn(Collections.emptyList());
     when(yamlParser.getYamlContent(anyObject())).thenReturn("index.yaml");
 
     Content result = underTest.buildIndexYaml(repository);

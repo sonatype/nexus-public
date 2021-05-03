@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.tools.datastore;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -27,7 +28,6 @@ import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
-import org.sonatype.nexus.datastore.mybatis.ContinuationArrayList;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
@@ -36,8 +36,8 @@ import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.tools.DeadBlobResult;
-import org.sonatype.nexus.repository.tools.datastore.DatastoreDeadBlobFinder;
 
+import com.google.common.collect.ForwardingCollection;
 import org.apache.commons.io.IOUtils;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -48,11 +48,15 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import static java.util.Collections.emptyList;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNull;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.isNotNull;
+import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -278,9 +282,32 @@ public class DatastoreDeadBlobFinderTest
    */
   @SuppressWarnings({"rawtypes", "unchecked"})
   private void mockAssetBrowse(final List<FluentAsset> assets) {
-    Continuation ret = new ContinuationArrayList();
-    ret.addAll(assets);
-    when(fluentAssets.browse(Integer.MAX_VALUE, null)).thenReturn(ret);
+    when(fluentAssets.browse(anyInt(), isNull(String.class))).thenReturn(new TestContinuation<>(assets, "token"));
+    when(fluentAssets.browse(anyInt(), isNotNull(String.class))).thenReturn(new TestContinuation<>(emptyList(), null));
+  }
+
+  private static class TestContinuation<E>
+      extends ForwardingCollection<E>
+      implements Continuation<E>
+  {
+    private final Collection<E> collection;
+
+    private final String continuationToken;
+
+    public TestContinuation(final Collection<E> collection, final String continuationToken) {
+      this.collection = collection;
+      this.continuationToken = continuationToken;
+    }
+
+    @Override
+    protected Collection<E> delegate() {
+      return collection;
+    }
+
+    @Override
+    public String nextContinuationToken() {
+      return continuationToken;
+    }
   }
 
   private void mockAssetBrowse() {

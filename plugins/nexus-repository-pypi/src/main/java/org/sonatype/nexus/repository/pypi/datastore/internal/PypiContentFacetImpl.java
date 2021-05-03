@@ -28,8 +28,8 @@ import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentQuery;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
-import org.sonatype.nexus.repository.pypi.datastore.PypiContentFacet;
 import org.sonatype.nexus.repository.pypi.PyPiFormat;
+import org.sonatype.nexus.repository.pypi.datastore.PypiContentFacet;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
@@ -37,6 +37,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.entity.Continuations.iterableOf;
+import static org.sonatype.nexus.common.entity.Continuations.streamOf;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.repository.pypi.datastore.PyPiDataUtils.copyFormatAttributes;
@@ -61,7 +63,7 @@ public class PypiContentFacetImpl
 
   @Override
   public Iterable<FluentAsset> browseAssets() {
-    return assets().browse(Integer.MAX_VALUE, null);
+    return iterableOf(assets()::browse);
   }
 
   @Override
@@ -116,9 +118,7 @@ public class PypiContentFacetImpl
 
   @Override
   public List<FluentAsset> assetsByComponentName(String name) {
-    return componentsByName(name)
-        .browse(Integer.MAX_VALUE, null)
-        .stream()
+    return streamOf(componentsByName(name)::browse)
         .flatMap(component -> component.assets().stream())
         .collect(Collectors.toList());
   }
