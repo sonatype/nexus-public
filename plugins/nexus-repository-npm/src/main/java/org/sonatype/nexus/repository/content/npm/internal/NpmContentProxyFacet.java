@@ -192,7 +192,7 @@ public class NpmContentProxyFacet
   }
 
   private NpmContent createNpmContent(final TempBlob tempBlob, final Content content) {
-    return new NpmContent(new NpmStreamPayload(tempBlob::get, content.getContentType()), content);
+    return new NpmContent(new NpmStreamPayload(tempBlob, content.getContentType()), content);
   }
 
   private Content putTarball(
@@ -433,8 +433,8 @@ public class NpmContentProxyFacet
   }
 
   private NestedAttributesMap loadPackageRoot(final FluentAsset asset) throws IOException {
-    try (InputStream inputStream = asset.download().openInputStream()) {
-      NestedAttributesMap metadata = parse(() -> inputStream);
+    try (Content content = asset.download()) {
+      NestedAttributesMap metadata = parse(content::openInputStream);
       metadata.set(META_ID, asset.path());
       return metadata;
     }

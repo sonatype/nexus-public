@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.content.npm.internal;
 
 import java.io.IOException;
-import java.io.InputStream;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -54,12 +53,12 @@ public class NpmTokenFacetImpl
 
   @Override
   public Response login(final Context context) {
-    final Payload payload = context.getRequest().getPayload();
-    if (payload == null) {
-      return NpmResponses.badRequest("Missing body");
-    }
-    try (InputStream in = payload.openInputStream()) {
-      NestedAttributesMap request = NpmJsonUtils.parse(() -> in);
+    try (Payload payload = context.getRequest().getPayload()) {
+      if (payload == null) {
+        return NpmResponses.badRequest("Missing body");
+      }
+
+      NestedAttributesMap request = NpmJsonUtils.parse(payload::openInputStream);
       String token = npmTokenManager.login(request.get("name", String.class), request.get("password", String.class));
       if (null != token) {
         NestedAttributesMap response = new NestedAttributesMap("response", Maps.newHashMap());

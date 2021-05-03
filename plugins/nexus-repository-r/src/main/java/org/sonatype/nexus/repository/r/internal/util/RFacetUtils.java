@@ -13,15 +13,14 @@
 package org.sonatype.nexus.repository.r.internal.util;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
-import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
+import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.r.internal.AssetKind;
 import org.sonatype.nexus.repository.r.internal.RFormat;
@@ -130,7 +129,7 @@ public final class RFacetUtils
    */
   public static Content saveAsset(final StorageTx tx,
                                   final Asset asset,
-                                  final Supplier<InputStream> contentSupplier,
+                                  final InputStreamSupplier contentSupplier,
                                   final Payload payload) throws IOException
   {
     AttributesMap contentAttributes = null;
@@ -149,7 +148,7 @@ public final class RFacetUtils
    */
   public static Content saveAsset(final StorageTx tx,
                                   final Asset asset,
-                                  final Supplier<InputStream> contentSupplier,
+                                  final InputStreamSupplier contentSupplier,
                                   final String contentType,
                                   @Nullable final AttributesMap contentAttributes) throws IOException
   {

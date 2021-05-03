@@ -13,17 +13,15 @@
 package org.sonatype.repository.conan.internal.orient.hosted.v1;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.function.Supplier;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
+import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.repository.Facet.Exposed;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.storage.Asset;
@@ -40,7 +38,6 @@ import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
 import org.sonatype.nexus.repository.view.payloads.StreamPayload;
-import org.sonatype.nexus.repository.view.payloads.StreamPayload.InputStreamSupplier;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.transaction.UnitOfWork;
 import org.sonatype.repository.conan.internal.AssetKind;
@@ -170,14 +167,14 @@ public class ConanHostedFacet
 
   private Content saveAsset(final StorageTx tx,
                             final Asset asset,
-                            final Supplier<InputStream> contentSupplier) throws IOException
+                            final InputStreamSupplier contentSupplier) throws IOException
   {
     return saveAsset(tx, asset, contentSupplier, null, null);
   }
 
   private Content saveAsset(final StorageTx tx,
                             final Asset asset,
-                            final Supplier<InputStream> contentSupplier,
+                            final InputStreamSupplier contentSupplier,
                             final String contentType,
                             final AttributesMap contentAttributes) throws IOException
   {
@@ -206,15 +203,7 @@ public class ConanHostedFacet
 
     return new Response.Builder()
         .status(success(OK))
-        .payload(new StreamPayload(
-            new InputStreamSupplier()
-            {
-              @Nonnull
-              @Override
-              public InputStream get() throws IOException {
-                return content.openInputStream();
-              }
-            },
+        .payload(new StreamPayload(content::openInputStream,
             content.getSize(),
             content.getContentType()))
         .build();

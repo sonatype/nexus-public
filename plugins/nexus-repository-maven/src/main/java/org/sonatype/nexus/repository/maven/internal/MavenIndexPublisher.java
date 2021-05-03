@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.maven.internal;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -23,8 +22,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.TreeSet;
-
-import javax.annotation.Nonnull;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
@@ -38,7 +35,6 @@ import org.sonatype.nexus.repository.view.ContentTypes;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.payloads.StreamPayload;
-import org.sonatype.nexus.repository.view.payloads.StreamPayload.InputStreamSupplier;
 
 import com.google.common.base.Predicate;
 import com.google.common.io.Closer;
@@ -333,15 +329,7 @@ public abstract class MavenIndexPublisher extends ComponentSupport
   }
 
   protected static StreamPayload createStreamPayload(final Path path, final String contentType) throws IOException {
-    return new StreamPayload(
-        new InputStreamSupplier()
-        {
-          @Nonnull
-          @Override
-          public InputStream get() throws IOException {
-            return new BufferedInputStream(Files.newInputStream(path));
-          }
-        },
+    return new StreamPayload(() -> new BufferedInputStream(Files.newInputStream(path)),
         Files.size(path),
         contentType
     );

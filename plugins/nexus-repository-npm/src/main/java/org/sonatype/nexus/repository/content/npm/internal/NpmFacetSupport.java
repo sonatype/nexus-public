@@ -24,7 +24,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 import javax.ws.rs.core.MediaType;
@@ -33,7 +32,6 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponentBuilder;
@@ -50,7 +48,6 @@ import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.payloads.BytesPayload;
 import org.sonatype.nexus.repository.view.payloads.StreamPayload;
-import org.sonatype.nexus.repository.view.payloads.StreamPayload.InputStreamSupplier;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 import org.slf4j.Logger;
@@ -79,14 +76,6 @@ public abstract class NpmFacetSupport
 
   protected NpmFacetSupport(final NpmPackageParser npmPackageParser) {
     this.npmPackageParser = npmPackageParser;
-  }
-
-  /**
-   * Parses JSON content into map.
-   */
-  @Nonnull
-  protected NestedAttributesMap parse(final Supplier<InputStream> streamSupplier) throws IOException {
-    return NpmJsonUtils.parse(streamSupplier);
   }
 
   /**
@@ -145,21 +134,11 @@ public abstract class NpmFacetSupport
       return Optional.empty();
     }
 
-    try (InputStream in = content.get().openInputStream()) {
-      NestedAttributesMap metadata = NpmJsonUtils.parse(() -> in);
+    try (Content c = content.get()) {
+      NestedAttributesMap metadata = NpmJsonUtils.parse(c::openInputStream);
       metadata.set(NpmMetadataUtils.META_ID, NpmContentFacet.metadataPath(packageId));
       return Optional.of(metadata);
     }
-  }
-
-  /**
-   * Returns a {@link Supplier} that will get the {@link InputStream} for the package root associated with the given
-   * {@link Asset}.
-   *
-   * return {@link InputStreamSupplier}
-   */
-  protected InputStreamSupplier openPackageRoot(final FluentAsset packageRootAsset) {
-    return () -> packageRootAssetToInputStream(packageRootAsset);
   }
 
   /**
@@ -194,10 +173,6 @@ public abstract class NpmFacetSupport
 
   protected Iterable<String> findPackageTarballComponents(final NpmPackageId packageId) {
     return content().components().versions(packageId.scope(), packageId.name());
-  }
-
-  private static InputStream packageRootAssetToInputStream(final FluentAsset packageRootAsset) throws IOException {
-    return packageRootAsset.download().openInputStream();
   }
 
   /**
@@ -295,8 +270,8 @@ public abstract class NpmFacetSupport
   }
 
   private static NestedAttributesMap readDistTagResponse(final Payload payload) {
-    try (InputStream is = payload.openInputStream()) {
-      return NpmJsonUtils.parse(() -> is);
+    try (Payload p = payload) {
+      return NpmJsonUtils.parse(p::openInputStream);
     }
     catch (IOException ignore) { // NOSONAR
     }
@@ -321,7 +296,7 @@ public abstract class NpmFacetSupport
       final TempBlob blob)
   {
     return (npmPackageParser, log) -> {
-      Map<String, Object> formatAttributes = npmPackageParser.parsePackageJson(blob::get);
+      Map<String, Object> formatAttributes = npmPackageParser.parsePackageJson(blob);
       if (formatAttributes.isEmpty()) {
         log.warn("No format attributes found in package.json for npm package ID {} version {}, will not be searchable",
             packageId, version);

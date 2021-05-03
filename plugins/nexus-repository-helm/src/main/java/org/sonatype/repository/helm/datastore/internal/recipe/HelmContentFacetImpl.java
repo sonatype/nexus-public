@@ -13,6 +13,7 @@
 package org.sonatype.repository.helm.datastore.internal.recipe;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -29,9 +30,9 @@ import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.repository.helm.HelmAttributes;
+import org.sonatype.repository.helm.datastore.internal.HelmContentFacet;
 import org.sonatype.repository.helm.internal.AssetKind;
 import org.sonatype.repository.helm.internal.HelmFormat;
-import org.sonatype.repository.helm.datastore.internal.HelmContentFacet;
 import org.sonatype.repository.helm.internal.metadata.IndexYamlAbsoluteUrlRewriter;
 import org.sonatype.repository.helm.internal.util.HelmAttributeParser;
 
@@ -110,8 +111,9 @@ public class HelmContentFacetImpl
   @Override
   public Content putComponent(final String path, final Content content, final AssetKind assetKind) throws IOException
   {
-    try (TempBlob blob = blobs().ingest(content, HASHING)) {
-      HelmAttributes helmAttributes = helmAttributeParser.getAttributes(assetKind, blob.get());
+    try (TempBlob blob = blobs().ingest(content, HASHING);
+         InputStream in = blob.get()) {
+      HelmAttributes helmAttributes = helmAttributeParser.getAttributes(assetKind, in);
 
       return assets()
           .path(path)

@@ -13,12 +13,11 @@
 package org.sonatype.nexus.repository.mime;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.mime.MimeRulesSource;
 import org.sonatype.nexus.repository.InvalidContentException;
 
@@ -48,7 +47,7 @@ public interface ContentValidator
    */
   @Nonnull
   String determineContentType(boolean strictContentTypeValidation,
-                              Supplier<InputStream> contentSupplier,
+                              InputStreamSupplier contentSupplier,
                               @Nullable MimeRulesSource mimeRulesSource,
                               @Nullable String contentName,
                               @Nullable String declaredContentType) throws IOException;

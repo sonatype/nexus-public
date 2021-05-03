@@ -13,13 +13,12 @@
 package org.sonatype.nexus.repository.conda.orient;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.common.collect.AttributesMap;
+import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.Asset;
@@ -63,7 +62,7 @@ public interface CondaFacet
    */
   Content saveAsset(final StorageTx tx,
                     final Asset asset,
-                    final Supplier<InputStream> contentSupplier,
+                    final InputStreamSupplier contentSupplier,
                     final Payload payload) throws IOException;
 
   /**
@@ -73,7 +72,7 @@ public interface CondaFacet
    */
   Content saveAsset(final StorageTx tx,
                     final Asset asset,
-                    final Supplier<InputStream> contentSupplier,
+                    final InputStreamSupplier contentSupplier,
                     final String contentType,
                     @Nullable final AttributesMap contentAttributes) throws IOException;
 

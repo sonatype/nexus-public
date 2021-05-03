@@ -15,13 +15,13 @@ package org.sonatype.nexus.repository.npm.internal.orient;
 import java.io.InputStream;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.function.Supplier;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.npm.internal.NpmFormat;
@@ -141,7 +141,7 @@ public class NpmFacetImplTest
     when(asset.name(any())).thenReturn(asset);
     when(assetBlob.getBlobRef()).thenReturn(blobRef);
     when(blob.getInputStream()).thenReturn(inputStream);
-    when(npmPackageParser.parsePackageJson(any(Supplier.class))).thenReturn(FORMAT_ATTRIBUTES);
+    when(npmPackageParser.parsePackageJson(any(InputStreamSupplier.class))).thenReturn(FORMAT_ATTRIBUTES);
   }
 
   @After

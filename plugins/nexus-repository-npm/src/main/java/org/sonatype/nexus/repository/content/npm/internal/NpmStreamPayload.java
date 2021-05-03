@@ -19,6 +19,7 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Objects;
 
+import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.repository.npm.internal.NpmFieldMatcher;
 import org.sonatype.nexus.repository.npm.internal.NpmStreamingObjectMapper;
 import org.sonatype.nexus.repository.view.payloads.StreamPayload;

@@ -13,12 +13,12 @@
 package org.sonatype.nexus.repository.mime
 
 import org.sonatype.goodies.testsupport.TestSupport
+import org.sonatype.nexus.common.io.InputStreamSupplier
 import org.sonatype.nexus.mime.MimeRulesSource
 import org.sonatype.nexus.mime.internal.DefaultMimeSupport
 import org.sonatype.nexus.repository.InvalidContentException
 import org.sonatype.nexus.repository.view.ContentTypes
 
-import java.util.function.Supplier
 import org.junit.Test
 
 import static org.hamcrest.CoreMatchers.equalTo
@@ -34,9 +34,9 @@ class DefaultContentValidatorTest
 
   private byte[] emptyZip = [80, 75, 05, 06, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00]
 
-  Supplier<InputStream> supplier(byte[] bytes) {
+  InputStreamSupplier supplier(byte[] bytes) {
     ByteArrayInputStream bis = new ByteArrayInputStream(bytes)
-    return new Supplier<InputStream>() {
+    return new InputStreamSupplier() {
       @Override
       InputStream get() {
         return bis
@@ -258,8 +258,8 @@ class DefaultContentValidatorTest
   @Test
   void 'strict maven pom having content body with no xml declaration and containing the text "html"'() {
     def content = '''
-    <project xmlns="http://maven.apache.org/POM/4.0.0" 
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    <project xmlns="http://maven.apache.org/POM/4.0.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
       <properties>
         <htmlunit.version>2.4</htmlunit.version>

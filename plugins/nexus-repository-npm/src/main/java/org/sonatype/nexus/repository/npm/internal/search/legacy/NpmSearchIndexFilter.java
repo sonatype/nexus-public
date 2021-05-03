@@ -15,20 +15,16 @@ package org.sonatype.nexus.repository.npm.internal.search.legacy;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils;
-
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.ContentTypes;
 import org.sonatype.nexus.repository.view.payloads.StreamPayload;
-import org.sonatype.nexus.repository.view.payloads.StreamPayload.InputStreamSupplier;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -127,14 +123,7 @@ public class NpmSearchIndexFilter
     }
 
     return new Content(new StreamPayload(
-        new InputStreamSupplier()
-        {
-          @Nonnull
-          @Override
-          public InputStream get() throws IOException {
-            return new BufferedInputStream(Files.newInputStream(path));
-          }
-        },
+        () -> new BufferedInputStream(Files.newInputStream(path)),
         Files.size(path),
         ContentTypes.APPLICATION_JSON)
     );

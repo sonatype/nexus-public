@@ -23,11 +23,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.repository.InvalidContentException;
 
 import com.fasterxml.jackson.core.JsonGenerator.Feature;
@@ -68,10 +68,10 @@ public final class NpmJsonUtils
    * Parses JSON content into map.
    */
   @Nonnull
-  public static NestedAttributesMap parse(final Supplier<InputStream> streamSupplier) throws IOException {
-    try {
+  public static NestedAttributesMap parse(final InputStreamSupplier streamSupplier) throws IOException {
+    try (InputStream in = streamSupplier.get()){
       final Map<String, Object> backing =
-          mapper.<HashMap<String, Object>>readValue(streamSupplier.get(), rawMapJsonTypeRef);
+          mapper.<HashMap<String, Object>>readValue(in, rawMapJsonTypeRef);
       return new NestedAttributesMap(String.valueOf(backing.get(NpmMetadataUtils.NAME)), backing);
     }
     catch (JsonParseException e) {
@@ -117,7 +117,7 @@ public final class NpmJsonUtils
    * Creates input stream supplier out of passed in byte array content.
    */
   @Nonnull
-  static Supplier<InputStream> supplier(final byte[] content) throws IOException {
+  static InputStreamSupplier supplier(final byte[] content) throws IOException {
     return () -> new ByteArrayInputStream(content);
   }
 }

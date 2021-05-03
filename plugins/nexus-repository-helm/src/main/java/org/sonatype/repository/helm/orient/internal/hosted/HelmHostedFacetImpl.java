@@ -34,8 +34,8 @@ import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.transaction.UnitOfWork;
 import org.sonatype.repository.helm.HelmAttributes;
 import org.sonatype.repository.helm.internal.AssetKind;
-import org.sonatype.repository.helm.orient.internal.HelmFacet;
 import org.sonatype.repository.helm.internal.util.HelmAttributeParser;
+import org.sonatype.repository.helm.orient.internal.HelmFacet;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.repository.helm.internal.AssetKind.HELM_PACKAGE;
@@ -129,10 +129,11 @@ public class HelmHostedFacetImpl
     }
 
     StorageTx tx = UnitOfWork.currentTx();
-    InputStream inputStream = tempBlob.get();
-    HelmAttributes attributes = helmAttributeParser.getAttributes(assetKind, inputStream);
-    final Asset asset =
-        helmFacet.findOrCreateAsset(tx, path, assetKind, attributes);
+    HelmAttributes attributes;
+    try (InputStream inputStream = tempBlob.get()) {
+      attributes = helmAttributeParser.getAttributes(assetKind, inputStream);
+    }
+    final Asset asset = helmFacet.findOrCreateAsset(tx, path, assetKind, attributes);
     helmFacet.saveAsset(tx, asset, tempBlob, payload);
     return asset;
   }

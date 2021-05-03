@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.repository.view.payloads.StreamPayload.InputStreamSupplier;
+import org.sonatype.nexus.common.io.InputStreamSupplier;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;

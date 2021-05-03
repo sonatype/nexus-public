@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.content.npm.internal.search.legacy;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
@@ -38,7 +37,6 @@ import org.sonatype.nexus.repository.npm.internal.NpmPackageParser;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.ContentTypes;
 import org.sonatype.nexus.repository.view.payloads.StreamPayload;
-import org.sonatype.nexus.repository.view.payloads.StreamPayload.InputStreamSupplier;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.google.common.base.Strings;
@@ -104,14 +102,7 @@ public class NpmSearchIndexFacetHosted
     }
 
     return new Content(new StreamPayload(
-        new InputStreamSupplier()
-        {
-          @Nonnull
-          @Override
-          public InputStream get() throws IOException {
-            return new BufferedInputStream(Files.newInputStream(path));
-          }
-        },
+        () -> new BufferedInputStream(Files.newInputStream(path)),
         Files.size(path),
         ContentTypes.APPLICATION_JSON)
     );

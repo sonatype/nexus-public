@@ -12,8 +12,8 @@
  */
 package org.sonatype.nexus.repository.maven;
 
+import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -183,8 +183,8 @@ public abstract class MavenUploadHandlerSupport
     }
 
     Path contentPath = content.toPath();
-    try (FileInputStream fis = new FileInputStream(content)) {
-      Payload payload = new StreamPayload(() -> fis, content.length(), Files.probeContentType(contentPath));
+    try (Payload payload = new StreamPayload(() -> new BufferedInputStream(Files.newInputStream(content.toPath())),
+        content.length(), Files.probeContentType(contentPath))) {
       return doPut(repository, mavenPath, payload);
     }
   }

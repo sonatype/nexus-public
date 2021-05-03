@@ -21,7 +21,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
@@ -31,6 +30,7 @@ import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.entity.DetachedEntityMetadata;
 import org.sonatype.nexus.common.entity.DetachedEntityVersion;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
+import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.npm.internal.ArchiveUtils;
@@ -113,7 +113,7 @@ public class OrientNpmHostedFacetTest
   private AssetBlob assetBlob;
 
   @Captor
-  private ArgumentCaptor<Supplier<InputStream>> captor;
+  private ArgumentCaptor<InputStreamSupplier> captor;
 
   @Before
   public void setup() throws Exception {
@@ -137,7 +137,7 @@ public class OrientNpmHostedFacetTest
 
     when(tempBlob.getHashes())
         .thenReturn(Collections.singletonMap(HashAlgorithm.SHA1, HashCode.fromBytes("abcd".getBytes())));
-    when(storageTx.createBlob(anyString(), Matchers.<Supplier<InputStream>> any(), anyCollection(), anyMap(),
+    when(storageTx.createBlob(anyString(), Matchers.<InputStreamSupplier> any(), anyCollection(), anyMap(),
         anyString(), anyBoolean()))
         .thenReturn(assetBlob);
 

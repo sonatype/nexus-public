@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.npm.orient.internal.search.legacy;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -27,10 +26,10 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmJsonUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageId;
+import org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetManager;
 import org.sonatype.nexus.repository.storage.Bucket;
@@ -38,7 +37,6 @@ import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.ContentTypes;
 import org.sonatype.nexus.repository.view.payloads.StreamPayload;
-import org.sonatype.nexus.repository.view.payloads.StreamPayload.InputStreamSupplier;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.google.common.collect.Sets;
@@ -88,15 +86,7 @@ public class NpmSearchIndexFacetHosted
       generator.flush();
     }
 
-    return new Content(new StreamPayload(
-        new InputStreamSupplier()
-        {
-          @Nonnull
-          @Override
-          public InputStream get() throws IOException {
-            return new BufferedInputStream(Files.newInputStream(path));
-          }
-        },
+    return new Content(new StreamPayload(() -> new BufferedInputStream(Files.newInputStream(path)),
         Files.size(path),
         ContentTypes.APPLICATION_JSON)
     );
