@@ -18,6 +18,8 @@ import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/extend-expect';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import S3BlobStoreSettings from './S3BlobStoreSettings';
+import S3BlobStoreWarning from './S3BlobStoreWarning';
 
 import BlobStoresForm from './BlobStoresForm';
 
@@ -85,7 +87,12 @@ const blobstoreTypes = {
         "type": "combobox"
       }
     ]
-  }]
+  },
+    {
+      "id": "S3",
+      "name": "S3"
+    }
+  ]
 };
 
 const quotaTypes = {
@@ -104,6 +111,8 @@ describe('BlobStoresForm', function() {
   const onDone = jest.fn();
   const confirm = Promise.resolve();
 
+  window.ReactComponents = {S3BlobStoreSettings, S3BlobStoreWarning};
+
   function render(itemId) {
     return TestUtils.render(<BlobStoresForm itemId={itemId || ''} onDone={onDone}/>,
         ({getByRole, getByLabelText, queryByLabelText, getByText, queryByText}) => ({
@@ -111,6 +120,19 @@ describe('BlobStoresForm', function() {
           typeSelect: () => queryByLabelText('Type'),
           name: () => queryByLabelText('Name'),
           path: () => getByLabelText('Path'),
+          region: () => getByLabelText('Region'),
+          bucket: () => getByLabelText('Bucket'),
+          prefix: () => getByLabelText('Prefix'),
+          expiration: () => getByLabelText('Expiration Days'),
+          accessKeyId: () => getByLabelText('Access Key ID'),
+          secretAccessKey: () => getByLabelText('Secret Access Key'),
+          assumeRole: () => getByLabelText('Assume Role ARN (Optional)'),
+          sessionToken: () => getByLabelText('Session Token ARN (Optional)'),
+          encryptionType: () => getByLabelText('Encryption Type'),
+          kmsKeyId: () => getByLabelText('KMS Key ID (Optional)'),
+          endpointURL: () => getByLabelText('Endpoint URL'),
+          signatureVersion: () => getByLabelText('Signature Version'),
+          usePathStyle: () => getByLabelText('Use path-style access'),
           availableMembers: () => queryByLabelText('Available'),
           selectedMembers: () => queryByLabelText('Selected'),
           softQuota: () => getByLabelText('Soft Quota'),
@@ -138,7 +160,7 @@ describe('BlobStoresForm', function() {
 
     await waitForElementToBeRemoved(loadingMask);
 
-    expect(typeSelect().options.length).toBe(3);
+    expect(typeSelect().options.length).toBe(4);
     expect(Array.from(typeSelect().options).map(option => option.textContent)).toEqual(expect.arrayContaining([
         '',
         'File',
@@ -160,6 +182,113 @@ describe('BlobStoresForm', function() {
 
     expect(container).toMatchSnapshot();
   });
+
+  it ('renders the form and buttons when the S3 type is selected', async function() {
+    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+
+    const {container, loadingMask, typeSelect} = render();
+
+    await waitForElementToBeRemoved(loadingMask);
+
+    userEvent.selectOptions(typeSelect(), 'S3');
+    expect(typeSelect()).toHaveValue('S3');
+
+    expect(container).toMatchSnapshot();
+  });
+
+  it ('renders S3 specific form fields', async function() {
+    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+
+    const {
+      loadingMask,
+      typeSelect,
+      region,
+      bucket,
+      prefix,
+      expiration,
+      accessKeyId,
+      secretAccessKey,
+      assumeRole,
+      sessionToken,
+      encryptionType,
+      kmsKeyId,
+      endpointURL,
+      signatureVersion,
+      usePathStyle
+    } = render();
+
+    await waitForElementToBeRemoved(loadingMask);
+
+    userEvent.selectOptions(typeSelect(), 'S3');
+    expect(typeSelect()).toHaveValue('S3');
+
+    expect(region()).toBeInTheDocument();
+    expect(bucket()).toBeInTheDocument();
+    expect(prefix()).toBeInTheDocument();
+    expect(expiration()).toBeInTheDocument();
+    expect(accessKeyId()).toBeInTheDocument();
+    expect(secretAccessKey()).toBeInTheDocument();
+    expect(assumeRole()).toBeInTheDocument();
+    expect(sessionToken()).toBeInTheDocument();
+    expect(endpointURL()).toBeInTheDocument();
+    expect(encryptionType()).toBeInTheDocument();
+    expect(kmsKeyId()).toBeInTheDocument();
+    expect(signatureVersion()).toBeInTheDocument();
+    expect(usePathStyle()).toBeInTheDocument();
+  });
+
+  it('enables the save button when the minimum fields are filled in S3 blobstore', async function() {
+    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+
+    const {
+      name,
+      loadingMask,
+      typeSelect,
+      saveButton,
+      expiration,
+      bucket,
+      accessKeyId,
+      secretAccessKey,
+      endpointURL
+    } = render();
+
+    await waitForElementToBeRemoved(loadingMask);
+
+    userEvent.selectOptions(typeSelect(), 'S3');
+    expect(typeSelect()).toHaveValue('S3');
+    expect(expiration()).toHaveValue('3');
+
+    expect(saveButton()).toHaveClass('disabled');
+
+    userEvent.type(name(), 'test');
+    expect(name()).toHaveValue('test');
+
+    userEvent.type(bucket(), 'bucket');
+    expect(bucket()).toHaveValue('bucket');
+    expect(saveButton()).not.toHaveClass('disabled');
+
+    userEvent.type(accessKeyId(), 'someAccessKey');
+    expect(accessKeyId()).toHaveValue('someAccessKey');
+    expect(saveButton()).toHaveClass('disabled');
+
+    userEvent.type(secretAccessKey(), 'SomeSecretAccessKey');
+    expect(secretAccessKey()).toHaveValue('SomeSecretAccessKey');
+    expect(saveButton()).not.toHaveClass('disabled');
+
+    userEvent.type(endpointURL(), 'invalidURL');
+    expect(endpointURL()).toHaveValue('invalidURL');
+    expect(saveButton()).toHaveClass('disabled');
+
+    userEvent.clear(endpointURL());
+    expect(endpointURL()).toHaveValue('');
+    userEvent.type(endpointURL(), 'http://www.fakeurl.com');
+    expect(endpointURL()).toHaveValue('http://www.fakeurl.com');
+    expect(saveButton()).not.toHaveClass('disabled');
+  });
+
 
   it ('renders the name field and dynamic path field when the File type is selected', async function() {
     when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
@@ -275,6 +404,95 @@ describe('BlobStoresForm', function() {
     );
   });
 
+  it('creates a new S3 blob store', async function() {
+    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+
+    const {
+      name,
+      loadingMask,
+      typeSelect,
+      saveButton,
+      expiration,
+      bucket,
+      accessKeyId,
+      secretAccessKey,
+      endpointURL
+    } = render();
+
+    await waitForElementToBeRemoved(loadingMask);
+
+    userEvent.selectOptions(typeSelect(), 'S3');
+    expect(typeSelect()).toHaveValue('S3');
+    expect(expiration()).toHaveValue('3');
+
+    expect(saveButton()).toHaveClass('disabled');
+
+    userEvent.type(name(), 'test');
+    expect(name()).toHaveValue('test');
+
+    userEvent.type(bucket(), 'bucket');
+    expect(bucket()).toHaveValue('bucket');
+    expect(saveButton()).not.toHaveClass('disabled');
+
+    userEvent.type(accessKeyId(), 'someAccessKey');
+    expect(accessKeyId()).toHaveValue('someAccessKey');
+    expect(saveButton()).toHaveClass('disabled');
+
+    userEvent.type(secretAccessKey(), 'SomeSecretAccessKey');
+    expect(secretAccessKey()).toHaveValue('SomeSecretAccessKey');
+    expect(saveButton()).not.toHaveClass('disabled');
+
+    userEvent.type(endpointURL(), 'invalidURL');
+    expect(endpointURL()).toHaveValue('invalidURL');
+    expect(saveButton()).toHaveClass('disabled');
+
+    userEvent.clear(endpointURL());
+    expect(endpointURL()).toHaveValue('');
+    userEvent.type(endpointURL(), 'http://www.fakeurl.com');
+    expect(endpointURL()).toHaveValue('http://www.fakeurl.com');
+    expect(saveButton()).not.toHaveClass('disabled');
+
+    userEvent.click(saveButton());
+
+    expect(axios.post).toHaveBeenCalledWith(
+        '/service/rest/v1/blobstores/s3',
+        {
+          name: 'test',
+          s3Settings: {
+            bucket: 'bucket',
+            prefix: '',
+            region: '',
+            expiration: '3',
+            accessKeyId: 'someAccessKey',
+            secretAccessKey: 'SomeSecretAccessKey',
+            role: '',
+            sessionToken: '',
+            encryptionType: '',
+            encryptionKey: '',
+            endpoint: 'http://www.fakeurl.com',
+            signerType: '',
+            forcePathStyle: ''
+          },
+          bucketConfiguration: {
+            bucket: { region: 'DEFAULT', name: 'bucket', prefix: '', expiration: '3' },
+            security: {
+              accessKeyId: 'someAccessKey',
+              secretAccessKey: 'SomeSecretAccessKey',
+              role: '',
+              sessionToken: ''
+            },
+            encryption: { encryptionType: 'none', encryptionKey: '' },
+            advancedConnection: {
+              endpoint: 'http://www.fakeurl.com',
+              signerType: 'DEFAULT',
+              forcePathStyle: ''
+            }
+          }
+        }
+    );
+  });
+
   it('edits a file blob store', async function() {
     when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
     when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
@@ -294,6 +512,60 @@ describe('BlobStoresForm', function() {
     } = render('file/test');
 
     await waitForElementToBeRemoved(loadingMask);
+
+    expect(promoteToGroup()).toBeInTheDocument();
+  });
+
+  it('edits an s3 blob store', async function() {
+    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+    when(axios.get).calledWith('/service/rest/v1/blobstores/s3/test').mockResolvedValue({
+      data: {
+        name: 'test',
+        bucketConfiguration: {
+          bucket: { region: 'DEFAULT', name: 'bucket', prefix: '', expiration: '3' },
+          bucketSecurity: {
+            accessKeyId: 'someAccessKey',
+            secretAccessKey: 'SomeSecretAccessKey',
+            role: '',
+            sessionToken: ''
+          },
+          encryption: { encryptionType: 'none', encryptionKey: '' },
+          advancedBucketConnection: {
+            endpoint: 'http://www.fakeurl.com',
+            signerType: 'DEFAULT',
+            forcePathStyle: ''
+          }
+        }
+      }
+    });
+
+    const {
+      loadingMask,
+      promoteToGroup,
+      typeSelect,
+      expiration,
+      bucket,
+      accessKeyId,
+      secretAccessKey,
+      endpointURL,
+      name,
+      title
+    } = render('s3/test');
+
+    await waitForElementToBeRemoved(loadingMask);
+
+    expect(title()).toHaveTextContent('Edit test');
+
+    // The type and name fields cannot be changed during edit
+    expect(typeSelect()).not.toBeInTheDocument();
+    expect(name()).not.toBeInTheDocument();
+
+    expect(expiration()).toHaveValue('3');
+    expect(bucket()).toHaveValue('bucket');
+    expect(accessKeyId()).toHaveValue('someAccessKey');
+    expect(secretAccessKey()).toHaveValue('SomeSecretAccessKey');
+    expect(endpointURL()).toHaveValue('http://www.fakeurl.com');
 
     expect(promoteToGroup()).toBeInTheDocument();
   });

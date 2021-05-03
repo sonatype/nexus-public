@@ -289,7 +289,7 @@ export default class Utils {
           saveErrors: () => ({})
         }),
         logSaveError: (_, event) => {
-          console.log(`Load Error: ${event.data?.message}`);
+          console.log(`Save Error: ${event.data?.message}`);
           ExtJS.showErrorMessage(UIStrings.ERROR.SAVE_ERROR)
         },
         logSaveSuccess: () => ExtJS.showSuccessMessage(UIStrings.SAVE_SUCCESS),

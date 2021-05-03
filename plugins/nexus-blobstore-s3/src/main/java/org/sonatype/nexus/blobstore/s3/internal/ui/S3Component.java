@@ -82,6 +82,18 @@ public class S3Component
     );
   }
 
+  public List<S3RegionXO> getRegions() {
+    return regions;
+  }
+
+  public List<S3SignerTypeXO> getSignerTypes() {
+    return signerTypes;
+  }
+
+  public List<S3EncryptionTypeXO> getEncryptionTypes() {
+    return encryptionTypes;
+  }
+
   /**
    * S3 regions
    */

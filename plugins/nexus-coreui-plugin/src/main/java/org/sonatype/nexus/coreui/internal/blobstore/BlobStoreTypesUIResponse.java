@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
+import org.sonatype.nexus.blobstore.SelectOption;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
@@ -31,12 +32,15 @@ public class BlobStoreTypesUIResponse
 
   private final List<FormField> fields;
 
+  private final Map<String, List<SelectOption>> dropDownValues;
+
   public BlobStoreTypesUIResponse(final Map.Entry<String, BlobStoreDescriptor> entry) {
     BlobStoreDescriptor descriptor = entry.getValue();
 
     this.id = entry.getKey();
     this.name = descriptor.getName();
     this.fields = descriptor.getFormFields();
+    this.dropDownValues = descriptor.getDropDownValues();
   }
 
   public String getId() {
@@ -49,5 +53,9 @@ public class BlobStoreTypesUIResponse
 
   public List<FormField> getFields() {
     return fields;
+  }
+
+  public Map<String, List<SelectOption>> getDropDownValues() {
+    return dropDownValues;
   }
 }

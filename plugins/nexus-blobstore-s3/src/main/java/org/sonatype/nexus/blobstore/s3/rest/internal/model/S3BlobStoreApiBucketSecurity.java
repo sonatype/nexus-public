@@ -31,7 +31,7 @@ public class S3BlobStoreApiBucketSecurity
   private final String accessKeyId;
 
   @ApiModelProperty("The secret access key associated with the specified IAM access key ID")
-  private final String secretAccessKey;
+  private String secretAccessKey;
 
   @ApiModelProperty("An IAM role to assume in order to access the S3 bucket")
   private final String role;
@@ -67,5 +67,9 @@ public class S3BlobStoreApiBucketSecurity
 
   public String getSessionToken() {
     return sessionToken;
+  }
+
+  public void setSecretAccessKey(final String secretAccessKey) {
+    this.secretAccessKey = secretAccessKey;
   }
 }

@@ -31,10 +31,14 @@ import UIStrings from './constants/UIStrings';
 import UserAccount from "./components/pages/admin/UserAccount/UserAccount";
 import NuGetApiToken from "./components/pages/user/NuGetApiToken/NuGetApiToken";
 import AnalyzeApplication from "./components/pages/user/AnalyzeApplication/AnalyzeApplication";
+import S3BlobStoreSettings from "./components/pages/admin/BlobStores/S3BlobStoreSettings";
+import S3BlobStoreWarning from "./components/pages/admin/BlobStores/S3BlobStoreWarning";
 
 window.ReactComponents = {
   ...window.ReactComponents,
-  AnalyzeApplication
+  AnalyzeApplication,
+  S3BlobStoreSettings,
+  S3BlobStoreWarning
 };
 
 window.plugins.push({

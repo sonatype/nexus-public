@@ -11,35 +11,12 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-/*
-  Style overrides for the react-shared-components. Once we've fully converted to React we should remove these overrides.
-*/
-
-@import "~@sonatype/react-shared-components/scss-shared/nx-variables";
-
-.x-body {
-  line-height: $nx-line-height;
-
-  .nx-tile-footer {
-    text-align: left !important;
-  }
-
-  .nx-footer .nx-btn-bar {
-    flex-direction: row-reverse;
-    > :last-child {
-      margin-right: $nx-spacing-l;
-    }
+.nxrm-s3-blobstore {
+  .nx-tile-content {
+    padding-left: 0px;
   }
 }
 
-.nx-accordion__header {
-  list-style-type: none;
-
-  &::-webkit-details-marker {
-    display: none;
-  }
-
-  > .nx-accordion__summary-wrapper {
-    padding-left: 0px;
-  }
+.nxrm-s3-blobstore-prefix-text {
+  margin-left: 5px;
 }

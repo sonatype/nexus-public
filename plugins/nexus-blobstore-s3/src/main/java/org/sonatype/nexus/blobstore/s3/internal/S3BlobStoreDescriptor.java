@@ -12,9 +12,15 @@
  */
 package org.sonatype.nexus.blobstore.s3.internal;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -23,12 +29,22 @@ import javax.validation.ValidationException;
 import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptorSupport;
+import org.sonatype.nexus.blobstore.SelectOption;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
+import org.sonatype.nexus.blobstore.s3.internal.encryption.KMSEncrypter;
+import org.sonatype.nexus.blobstore.s3.internal.encryption.NoEncrypter;
+import org.sonatype.nexus.blobstore.s3.internal.encryption.S3ManagedEncrypter;
+import org.sonatype.nexus.blobstore.s3.internal.ui.S3Component;
+import org.sonatype.nexus.blobstore.s3.internal.ui.S3RegionXO;
 import org.sonatype.nexus.formfields.FormField;
 
+import com.amazonaws.services.s3.model.Region;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.lang.StringUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -48,7 +64,17 @@ import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ENDPOINT_KEY;
 public class S3BlobStoreDescriptor
     extends BlobStoreDescriptorSupport
 {
+  private static final String DEFAULT_LABEL = "Default";
+
+  private static final String S3_SIGNER = "S3SignerType";
+
+  private static final String S3_V4_SIGNER = "AWSS3V4SignerType";
+
   public static final String TYPE = "S3";
+
+  private static final String S3_BLOBSTORE_SETTINGS = "S3BlobStoreSettings";
+
+  private final Map<String, List<SelectOption>> s3SelectOptions;
 
   private interface Messages
       extends MessageBundle
@@ -66,6 +92,7 @@ public class S3BlobStoreDescriptor
                                final BlobStoreManager blobStoreManager) {
     super(quotaService);
     this.blobStoreManager = checkNotNull(blobStoreManager);
+    s3SelectOptions = intializeSelectOptions();
   }
 
   @Override
@@ -95,6 +122,34 @@ public class S3BlobStoreDescriptor
   public void sanitizeConfig(final BlobStoreConfiguration config) {
     String bucketPrefix = config.attributes(CONFIG_KEY).get(BUCKET_PREFIX_KEY, String.class, "");
     config.attributes(CONFIG_KEY).set(BUCKET_PREFIX_KEY, trimAndCollapseSlashes(bucketPrefix));
+  }
+
+  @Override
+  public Map<String, List<SelectOption>> getDropDownValues() {
+    return s3SelectOptions;
+  }
+
+  private Map<String, List<SelectOption>> intializeSelectOptions() {
+    return ImmutableMap
+        .of("regions", getRegionOptions(), "encryptionTypes", getEncryptionTypes(), "signerTypes", getSignerTypes());
+  }
+
+  private List<SelectOption> getRegionOptions() {
+    return Stream
+        .concat(Stream.of(new SelectOption(AmazonS3Factory.DEFAULT, DEFAULT_LABEL)), Arrays.stream(Region.values())
+            .map(region -> new SelectOption(region.toAWSRegion().getName(), region.toAWSRegion().getName())))
+        .collect(ImmutableList.toImmutableList());
+  }
+
+  private List<SelectOption> getSignerTypes() {
+    return new ImmutableList.Builder<SelectOption>().add(new SelectOption(AmazonS3Factory.DEFAULT, DEFAULT_LABEL))
+        .add(new SelectOption(S3_SIGNER, S3_SIGNER)).add(new SelectOption(S3_V4_SIGNER, S3_V4_SIGNER)).build();
+  }
+
+  private List<SelectOption> getEncryptionTypes() {
+    return new ImmutableList.Builder<SelectOption>().add(new SelectOption(NoEncrypter.ID, NoEncrypter.NAME))
+        .add(new SelectOption(S3ManagedEncrypter.ID, S3ManagedEncrypter.NAME))
+        .add(new SelectOption(KMSEncrypter.ID, KMSEncrypter.NAME)).build();
   }
 
   private String trimAndCollapseSlashes(final String prefix) {

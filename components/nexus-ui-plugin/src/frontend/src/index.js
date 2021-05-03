@@ -81,4 +81,6 @@ export {
   NxTextInput,
   NxTooltip,
   NxWarningAlert,
+  NxAccordion,
+  NxStatefulAccordion
 } from '@sonatype/react-shared-components';

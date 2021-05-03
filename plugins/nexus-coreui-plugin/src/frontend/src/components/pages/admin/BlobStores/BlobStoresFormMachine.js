@@ -18,7 +18,7 @@
 import axios from 'axios';
 import {assign} from 'xstate';
 import {ExtJS, Utils} from '@sonatype/nexus-ui-plugin';
-import {map, omit, propOr, replace} from 'ramda';
+import {map, omit, propOr, replace, lensPath, set} from 'ramda';
 
 import UIStrings from '../../../../constants/UIStrings';
 import Axios from "axios";
@@ -76,6 +76,12 @@ export default Utils.buildFormMachine({
             internal: false
           },
 
+          UPDATE_CUSTOM_SETTINGS: {
+            target: 'loaded',
+            actions: ['updateCustomData'],
+            internal: false
+          },
+
           SAVE: [{
             target: 'confirmSave',
             cond: 'isEdit'
@@ -124,6 +130,33 @@ export default Utils.buildFormMachine({
       const types = event.data[0]?.data;
       const quotaTypes = event.data[1]?.data;
       const {softQuota, ...otherData} = event.data[2]?.data;
+
+      if (otherData.bucketConfiguration) {
+        let s3Settings = {
+          bucket: otherData.bucketConfiguration.bucket.name,
+          region: otherData.bucketConfiguration.bucket.region,
+          prefix: otherData.bucketConfiguration.bucket.prefix,
+          expiration: otherData.bucketConfiguration.bucket.expiration,
+          encryptionType: otherData.bucketConfiguration.encryption.encryptionType,
+          encryptionKey: otherData.bucketConfiguration.encryption.encryptionKey
+        }
+
+        if (otherData.bucketConfiguration.bucketSecurity) {
+          s3Settings.accessKeyId = otherData.bucketConfiguration.bucketSecurity.accessKeyId ? otherData.bucketConfiguration.bucketSecurity.accessKeyId : '';
+          s3Settings.secretAccessKey = otherData.bucketConfiguration.bucketSecurity.secretAccessKey ? otherData.bucketConfiguration.bucketSecurity.secretAccessKey : '';
+          s3Settings.role = otherData.bucketConfiguration.bucketSecurity.role ? otherData.bucketConfiguration.bucketSecurity.role : ''
+          s3Settings.sessionToken = otherData.bucketConfiguration.bucketSecurity.sessionToken ? otherData.bucketConfiguration.bucketSecurity.sessionToken : '';
+        }
+
+        if (otherData.bucketConfiguration.advancedBucketConnection) {
+          s3Settings.endpoint = otherData.bucketConfiguration.advancedBucketConnection.endpoint ? otherData.bucketConfiguration.advancedBucketConnection.endpoint : '';
+          s3Settings.signerType = otherData.bucketConfiguration.advancedBucketConnection.signerType ? otherData.bucketConfiguration.advancedBucketConnection.signerType : '';
+          s3Settings.forcePathStyle = otherData.bucketConfiguration.advancedBucketConnection.forcePathStyle;
+        }
+
+        otherData.s3Settings = s3Settings;
+      }
+
       const backendData = {
         ...otherData,
         name: pristineData?.name,
@@ -133,6 +166,7 @@ export default Utils.buildFormMachine({
           limit: propOr('', 'limit', softQuota)
         }
       };
+
       const type = types?.find(type => pristineData.type === type.id.toLowerCase());
       type?.fields?.forEach(field => {
         if (field.type === 'itemselect') {
@@ -155,7 +189,8 @@ export default Utils.buildFormMachine({
       type: ({types}, {value}) => types.find(type => type.id.toLowerCase() === value.toLowerCase()),
       data: ({data, types}, {value}) => {
         const type = types.find(type => type.id === value);
-        return {
+
+        let assignedData = {
           name: '',
           ...deriveDynamicFieldData(type),
           softQuota: {
@@ -164,11 +199,31 @@ export default Utils.buildFormMachine({
             limit: ''
           }
         };
+
+        if (type?.id == 'S3') {
+          let s3Settings = {
+            bucket: '',
+            prefix: '',
+            region: '',
+            expiration: '3',
+            accessKeyId: '',
+            secretAccessKey: '',
+            role: '',
+            sessionToken: '',
+            encryptionType: '',
+            encryptionKey: '',
+            endpoint: '',
+            signerType: '',
+            forcePathStyle: ''
+          }
+          assignedData.s3Settings = s3Settings;
+        }
+        return assignedData;
       },
 
       pristineData: ({data, types}, {value}) => {
         const type = types.find(type => type.id === value);
-        return {
+        let pristData =  {
           name: '',
           ...deriveDynamicFieldData(type),
           softQuota: {
@@ -177,6 +232,25 @@ export default Utils.buildFormMachine({
             limit: ''
           }
         };
+
+        if (type?.id == 'S3') {
+          let s3Settings = {
+            bucket: '',
+            prefix: '',
+            region: '',
+            expiration: null,
+            accessKeyId: '',
+            secretAccessKey: '',
+            role: '',
+            sessionToken: '',
+            encryptionType: '',
+            encryptionKey: '',
+            signerType: '',
+          }
+          pristData.s3Settings = s3Settings;
+        }
+        return pristData;
+
       }
     }),
 
@@ -212,10 +286,34 @@ export default Utils.buildFormMachine({
       }
     }),
 
+    updateCustomData: assign({
+      data: ({data}, {name, value}) => {
+        if ((data.type == 'S3') || type?.value == 'S3') {
+          const settingLens = lensPath(name.split('.'));
+
+          if (name == 's3Settings.forcePathStyle') {
+            value = !(data.s3Settings.forcePathStyle ? data.s3Settings.forcePathStyle : false);
+          }
+          return set(settingLens, value, data);
+        }
+      },
+      isTouched: ({isTouched}, {name, value}) => {
+
+        return {
+          ...isTouched,
+          s3Settings: {
+            ...(isTouched.s3Settings || {}),
+            [name]: true
+          }
+        };
+      }
+    }),
+
     validate: assign({
       validationErrors: ({data, type}) => {
         const validationErrors = {
-          softQuota: {}
+          softQuota: {},
+          s3Settings: {}
         };
 
         if (Utils.isBlank(type)) {
@@ -244,6 +342,40 @@ export default Utils.buildFormMachine({
           }
         }
 
+        if (type?.id == 'S3') {
+          if (Utils.isBlank(data.s3Settings.bucket)) {
+            validationErrors.s3Settings.bucket = UIStrings.ERROR.FIELD_REQUIRED;
+          }
+
+          if (Utils.isBlank(data.s3Settings.expiration)) {
+            validationErrors.s3Settings.expiration = UIStrings.ERROR.FIELD_REQUIRED;
+          }
+
+          if (Utils.isBlank(data.s3Settings.accessKeyId) &&
+              (!Utils.isBlank(data.s3Settings.secretAccessKey) || !Utils.isBlank(data.s3Settings.role) ||
+                  !Utils.isBlank(data.s3Settings.sessionToken))) {
+            validationErrors.s3Settings.accessKeyId = UIStrings.ERROR.FIELD_REQUIRED;
+          }
+
+          if (Utils.isBlank(data.s3Settings.secretAccessKey) &&
+              (!Utils.isBlank(data.s3Settings.accessKeyId) || !Utils.isBlank(data.s3Settings.role) ||
+                  !Utils.isBlank(data.s3Settings.sessionToken))) {
+            validationErrors.s3Settings.secretAccessKey = UIStrings.ERROR.FIELD_REQUIRED;
+          }
+
+          if (!Utils.isBlank(data.s3Settings.expiration)) {
+            validationErrors.s3Settings.expiration = Utils.isInRange(
+                {
+                  value: data.s3Settings.expiration,
+                  min: -1,
+                  allowDecimals: false
+                });
+          }
+
+          if (!Utils.isBlank(data.s3Settings.endpoint) && Utils.notUri(data.s3Settings.endpoint)) {
+            validationErrors.s3Settings.endpoint = UIStrings.ERROR.INVALID_URL;
+          }
+        }
         return validationErrors;
       }
     }),
@@ -268,7 +400,9 @@ export default Utils.buildFormMachine({
     onPromoteError: (_, event) => ExtJS.showErrorMessage(event.data?.response?.data),
 
     logSaveError: (_, event) => {
-      console.log(`Load Error: ${event.data?.message}`);
+      let saveError = event.data?.response?.data ? event.data.response.data : UIStrings.ERROR.SAVE_ERROR;
+      ExtJS.showErrorMessage(saveError);
+      console.log(`Save Error: ${saveError}`);
     }
   },
   guards: {
@@ -301,8 +435,35 @@ export default Utils.buildFormMachine({
 
     saveData: ({data, pristineData, type}) => {
       let saveData = data.softQuota.enabled ? data : omit(['softQuota'], data);
+      let bucketConfiguration;
       saveData = map((value) => typeof value === 'string' ? value.trim() : value, saveData);
       const typeId = type.id.toLowerCase();
+      if (type.id == 'S3') {
+        bucketConfiguration = {
+          bucket: {
+            region: (saveData.s3Settings.region != "") ? saveData.s3Settings.region : "DEFAULT",
+            name: saveData.s3Settings.bucket,
+            prefix: saveData.s3Settings.prefix,
+            expiration: saveData.s3Settings.expiration
+          },
+          security: {
+            accessKeyId: saveData.s3Settings.accessKeyId,
+            secretAccessKey: saveData.s3Settings.secretAccessKey,
+            role: saveData.s3Settings.role,
+            sessionToken: saveData.s3Settings.sessionToken
+          },
+          encryption: {
+            encryptionType: (saveData.s3Settings.encryptionType != "") ? saveData.s3Settings.encryptionType : "none",
+            encryptionKey: saveData.s3Settings.encryptionKey
+          },
+          advancedConnection: {
+            endpoint: saveData.s3Settings.endpoint,
+            signerType: (saveData.s3Settings.signerType != "") ? saveData.s3Settings.signerType : "DEFAULT",
+            forcePathStyle: saveData.s3Settings.forcePathStyle
+          }
+        };
+        saveData.bucketConfiguration = bucketConfiguration;
+      }
       if (Utils.notBlank(pristineData.name)) {
         return axios.put(`/service/rest/v1/blobstores/${typeId}/${data.name}`, saveData);
       }
