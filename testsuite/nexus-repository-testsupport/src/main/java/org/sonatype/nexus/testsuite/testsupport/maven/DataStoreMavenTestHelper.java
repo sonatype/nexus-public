@@ -29,7 +29,6 @@ import javax.annotation.Nonnull;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.time.DateHelper;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
@@ -60,6 +59,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertTrue;
+import static org.sonatype.nexus.common.entity.Continuations.iterableOf;
+import static org.sonatype.nexus.common.entity.Continuations.streamOf;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 
@@ -214,9 +215,7 @@ public class DataStoreMavenTestHelper
 
   @Nonnull
   private Stream<FluentComponent> findComponents(final MavenContentFacet mavenContentFacet, final String version) {
-    return mavenContentFacet.components()
-        .browse(Integer.MAX_VALUE, null)
-        .stream()
+    return streamOf(mavenContentFacet.components()::browse)
         .filter(component -> component.namespace().equals("org.sonatype.nexus.testsuite"))
         .filter(component -> version.equals(component.attributes("maven2").get("baseVersion")));
   }
@@ -243,7 +242,7 @@ public class DataStoreMavenTestHelper
   public List<MavenTestComponent> loadComponents(final Repository repository) {
     List<MavenTestComponent> components = new ArrayList<>();
     MavenContentFacet mavenContentFacet = repository.facet(MavenContentFacet.class);
-    Continuation<FluentComponent> fluentComponents = mavenContentFacet.components().browse(Integer.MAX_VALUE, null);
+    Iterable<FluentComponent> fluentComponents = iterableOf(mavenContentFacet.components()::browse);
     for (FluentComponent fluentComponent : fluentComponents) {
       components.add(new MavenTestComponent(fluentComponent.name(),
           fluentComponent.attributes().child("maven2").get("baseVersion").toString(), fluentComponent.version(),
@@ -255,17 +254,14 @@ public class DataStoreMavenTestHelper
   @Override
   public void updateBlobCreated(final Repository repository, final Date date) {
     MavenContentFacet mavenContentFacet = repository.facet(MavenContentFacet.class);
-    mavenContentFacet.assets()
-        .browse(Integer.MAX_VALUE, null)
+    iterableOf(mavenContentFacet.assets()::browse)
         .forEach(asset -> asset.blobCreated(date.toInstant().atOffset(ZoneOffset.UTC)));
   }
 
   @Override
   public List<String> findComponents(final Repository repository) {
     MavenContentFacet mavenContentFacet = repository.facet(MavenContentFacet.class);
-    return mavenContentFacet.components()
-        .browse(Integer.MAX_VALUE, null)
-        .stream()
+    return streamOf(mavenContentFacet.components()::browse)
         .map(component -> component.name() + ":" + component.attributes("maven2").get("baseVersion"))
         .collect(Collectors.toList());
   }
@@ -273,9 +269,7 @@ public class DataStoreMavenTestHelper
   @Override
   public List<String> findAssets(final Repository repository) {
     MavenContentFacet mavenContentFacet = repository.facet(MavenContentFacet.class);
-    return mavenContentFacet.assets()
-        .browse(Integer.MAX_VALUE, null)
-        .stream()
+    return streamOf(mavenContentFacet.assets()::browse)
         .map(Asset::path)
         .collect(Collectors.toList());
   }
@@ -283,9 +277,7 @@ public class DataStoreMavenTestHelper
   @Override
   public List<String> findAssetsExcludingFlaggedForRebuild(final Repository repository) {
     MavenContentFacet mavenContentFacet = repository.facet(MavenContentFacet.class);
-    return mavenContentFacet.assets()
-        .browse(Integer.MAX_VALUE, null)
-        .stream()
+    return streamOf(mavenContentFacet.assets()::browse)
         .filter(this::isNotFlaggedForRebuild)
         .map(Asset::path)
         .collect(Collectors.toList());

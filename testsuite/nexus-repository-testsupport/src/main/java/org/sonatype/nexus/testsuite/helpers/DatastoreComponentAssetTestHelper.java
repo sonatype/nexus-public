@@ -76,6 +76,7 @@ import static org.apache.commons.lang3.StringUtils.indexOf;
 import static org.apache.commons.lang3.StringUtils.startsWith;
 import static org.apache.commons.lang3.StringUtils.substring;
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
+import static org.sonatype.nexus.common.entity.Continuations.streamOf;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.repository.content.AttributeOperation.OVERLAY;
 
@@ -189,9 +190,7 @@ public class DatastoreComponentAssetTestHelper
 
   @Override
   public List<String> findAssetPaths(final String repositoryName) {
-    return repositoryManager.get(repositoryName).facet(ContentFacet.class).assets()
-        .browse(Integer.MAX_VALUE, null)
-        .stream()
+    return streamOf(repositoryManager.get(repositoryName).facet(ContentFacet.class).assets()::browse)
         .map(Asset::path)
         .collect(Collectors.toList());
   }
@@ -301,8 +300,7 @@ public class DatastoreComponentAssetTestHelper
       final Repository repository,
       final Predicate<String> pathMatcher)
   {
-    return repository.facet(ContentFacet.class).assets().browse(Integer.MAX_VALUE, null)
-        .stream()
+    return streamOf(repository.facet(ContentFacet.class).assets()::browse)
         .filter(asset -> asset.component().isPresent())
         .map(FluentAsset::path)
         .map(this::adjustedPath)
@@ -397,7 +395,7 @@ public class DatastoreComponentAssetTestHelper
       throw new RuntimeException(e);
     }
 
-    repository.facet(ContentFacet.class).assets().browse(Integer.MAX_VALUE, null).stream()
+    streamOf(repository.facet(ContentFacet.class).assets()::browse)
         .forEach(asset -> sendEvent(repository, asset));
   }
 
@@ -437,7 +435,7 @@ public class DatastoreComponentAssetTestHelper
     catch (SQLException e) {
       throw new RuntimeException(e);
     }
-    repository.facet(ContentFacet.class).assets().browse(Integer.MAX_VALUE, null).stream()
+    streamOf(repository.facet(ContentFacet.class).assets()::browse)
         .forEach(asset -> sendEvent(repository, asset));
   }
 
@@ -449,7 +447,7 @@ public class DatastoreComponentAssetTestHelper
   {
     int repositoryId = ((ContentFacetSupport) repository.facet(ContentFacet.class)).contentRepositoryId();
 
-    List<String> pathes = repository.facet(ContentFacet.class).assets().browse(Integer.MAX_VALUE, null).stream()
+    List<String> pathes = streamOf(repository.facet(ContentFacet.class).assets()::browse)
         .map(FluentAsset::path)
         .filter(pathMatcher)
         .collect(Collectors.toList());

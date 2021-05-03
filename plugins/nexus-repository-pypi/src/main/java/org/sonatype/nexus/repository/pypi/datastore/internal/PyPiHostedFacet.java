@@ -28,19 +28,19 @@ import javax.inject.Named;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.template.TemplateHelper;
-import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
-import org.sonatype.nexus.repository.pypi.datastore.PypiContentFacet;
 import org.sonatype.nexus.repository.Facet.Exposed;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
+import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 import org.sonatype.nexus.repository.pypi.AssetKind;
 import org.sonatype.nexus.repository.pypi.PyPiAttributes;
 import org.sonatype.nexus.repository.pypi.PyPiFormat;
-import org.sonatype.nexus.repository.pypi.internal.PyPiIndexFacet;
 import org.sonatype.nexus.repository.pypi.PyPiInfoUtils;
+import org.sonatype.nexus.repository.pypi.datastore.PypiContentFacet;
+import org.sonatype.nexus.repository.pypi.internal.PyPiIndexFacet;
 import org.sonatype.nexus.repository.pypi.internal.PyPiLink;
 import org.sonatype.nexus.repository.pypi.internal.SignablePyPiPackage;
 import org.sonatype.nexus.repository.view.Content;
@@ -54,18 +54,19 @@ import org.apache.commons.lang.StringUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.sonatype.nexus.repository.pypi.datastore.internal.ContentPypiPathUtils.indexPath;
-import static org.sonatype.nexus.repository.pypi.datastore.internal.ContentPypiPathUtils.packagesPath;
-import static org.sonatype.nexus.repository.pypi.datastore.PyPiDataUtils.copyFormatAttributes;
-import static org.sonatype.nexus.repository.pypi.datastore.PyPiDataUtils.getMd5;
-import static org.sonatype.nexus.repository.pypi.datastore.PyPiDataUtils.setFormatAttribute;
+import static org.sonatype.nexus.common.entity.Continuations.iterableOf;
 import static org.sonatype.nexus.repository.pypi.AssetKind.ROOT_INDEX;
 import static org.sonatype.nexus.repository.pypi.PyPiAttributes.P_NAME;
 import static org.sonatype.nexus.repository.pypi.PyPiAttributes.P_SUMMARY;
 import static org.sonatype.nexus.repository.pypi.PyPiAttributes.P_VERSION;
+import static org.sonatype.nexus.repository.pypi.PyPiPathUtils.normalizeName;
+import static org.sonatype.nexus.repository.pypi.datastore.PyPiDataUtils.copyFormatAttributes;
+import static org.sonatype.nexus.repository.pypi.datastore.PyPiDataUtils.getMd5;
+import static org.sonatype.nexus.repository.pypi.datastore.PyPiDataUtils.setFormatAttribute;
+import static org.sonatype.nexus.repository.pypi.datastore.internal.ContentPypiPathUtils.indexPath;
+import static org.sonatype.nexus.repository.pypi.datastore.internal.ContentPypiPathUtils.packagesPath;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.buildIndexPage;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.buildRootIndexPage;
-import static org.sonatype.nexus.repository.pypi.PyPiPathUtils.normalizeName;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiStorageUtils.mayAddEtag;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiStorageUtils.validateMd5Hash;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
@@ -185,7 +186,7 @@ public class PyPiHostedFacet
     Map<String, PyPiLink> links = new TreeMap<>();
     FluentComponents components = facet(PypiContentFacet.class).components();
 
-    components.browse(Integer.MAX_VALUE, null)
+    iterableOf(components::browse)
         .forEach(c -> links.put(c.name(), new PyPiLink(c.name(), c.name() + "/")));
     return links.values();
   }

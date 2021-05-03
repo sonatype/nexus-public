@@ -45,6 +45,7 @@ import org.sonatype.nexus.repository.tools.MismatchedSHA1Exception;
 import com.google.common.base.Stopwatch;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.entity.Continuations.streamOf;
 import static org.sonatype.nexus.repository.tools.ResultState.ASSET_DELETED;
 import static org.sonatype.nexus.repository.tools.ResultState.DELETED;
 import static org.sonatype.nexus.repository.tools.ResultState.MISSING_BLOB_REF;
@@ -99,8 +100,7 @@ public class DatastoreDeadBlobFinder
 
     List<DeadBlobResult<Asset>> deadBlobCandidates = repository.optionalFacet(ContentFacet.class)
         .map(ContentFacet::assets)
-        .map(assets -> assets.browse(Integer.MAX_VALUE, null)
-                            .stream()
+        .map(assets -> streamOf(assets::browse)
                             .peek(a -> blobsExamined.incrementAndGet())
                             .map(asset -> {
                                 if (!asset.blob().isPresent() && ignoreMissingBlobRefs) {
