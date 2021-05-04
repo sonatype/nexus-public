@@ -27,8 +27,10 @@ export default class TestUtils {
     return {
       ...selectors,
       loadingMask: () => queryByText('Loading…'),
-      savingMask: () => queryByText(UIStrings.SAVING),
-      ...extraSelectors(selectors)};
+      savingMask: () => queryByText(/saving/i),
+      submittingMask: () => queryByText(/submitting/i),
+      ...extraSelectors(selectors)
+    };
   }
 
   static async changeField(fieldSelector, value) {

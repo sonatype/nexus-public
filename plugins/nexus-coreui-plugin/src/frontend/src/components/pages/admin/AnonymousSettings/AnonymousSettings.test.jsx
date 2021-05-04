@@ -12,7 +12,7 @@
  */
 import React from 'react';
 import { act } from 'react-dom/test-utils';
-import {fireEvent, render, wait} from '@testing-library/react';
+import {fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
@@ -78,7 +78,7 @@ describe('AnonymousSettings', () => {
   it('renders correctly', async () => {
     let {container, loadingMask} = renderView(<AnonymousSettings/>);
 
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(loadingMask);
 
     expect(container).toMatchSnapshot();
   });
@@ -88,7 +88,7 @@ describe('AnonymousSettings', () => {
       loadingMask, enabledField, userIdField, realmField, saveButton, discardButton
     } = renderView(<AnonymousSettings/>);
 
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(loadingMask);
 
     expect(Axios.get).toHaveBeenCalledTimes(2);
     expect(enabledField()).toBeChecked();
@@ -103,16 +103,16 @@ describe('AnonymousSettings', () => {
       loadingMask, enabledField, userIdField, realmField, saveButton, discardButton
     } = renderView(<AnonymousSettings/>);
 
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(loadingMask)
 
     fireEvent.click(enabledField());
-    await wait(() => expect(enabledField()).not.toBeChecked());
+    await waitFor(() => expect(enabledField()).not.toBeChecked());
 
     fireEvent.change(userIdField(), {target: {value: 'changed-username'}});
-    await wait(() => expect(userIdField()).toHaveValue());
+    await waitFor(() => expect(userIdField()).toHaveValue());
 
     fireEvent.change(realmField(), {target: {value: 'r1'}});
-    await wait(() => expect(realmField()).toHaveValue('r1'));
+    await waitFor(() => expect(realmField()).toHaveValue('r1'));
 
     expect(saveButton()).toBeEnabled();
     expect(discardButton()).toBeEnabled();
@@ -140,10 +140,10 @@ describe('AnonymousSettings', () => {
       loadingMask, userIdField, saveButton, discardButton
     } = renderView(<AnonymousSettings/>);
 
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(loadingMask);
 
     fireEvent.change(userIdField(), {target: {value: ''}})
-    await wait(() => expect(userIdField()).toHaveValue(''));
+    await waitFor(() => expect(userIdField()).toHaveValue(''));
 
     expect(saveButton()).toHaveClass('disabled');
     expect(discardButton()).toBeEnabled();
@@ -160,12 +160,12 @@ describe('AnonymousSettings', () => {
       loadingMask, userIdField, discardButton
     } = renderView(<AnonymousSettings/>);
 
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(loadingMask);
 
     expect(window.dirty).toEqual([]);
 
     fireEvent.change(userIdField(), {target: {value: 'anonymous'}})
-    await wait(() => expect(userIdField()).toHaveValue('anonymous'));
+    await waitFor(() => expect(userIdField()).toHaveValue('anonymous'));
 
     expect(window.dirty).toEqual(['AnonymousSettingsForm']);
 

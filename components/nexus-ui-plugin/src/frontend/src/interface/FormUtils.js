@@ -21,6 +21,7 @@ import {hasPath, join, path, pathOr, whereEq} from 'ramda';
 
 const FIELD_ID = 'FIELD ';
 const PARAMETER_ID = 'PARAMETER ';
+const HELPER_BEAN = 'HelperBean.'
 
 /**
  * @since 3.next
@@ -188,15 +189,10 @@ export default class FormUtils {
             if (data instanceof Array) {
               let saveErrors = {};
               data.forEach(({id, message}) => {
-                if (id.startsWith(FIELD_ID)) {
-                  saveErrors[id.replace(FIELD_ID, '')] = message;
-                }
-                else if (id.startsWith(PARAMETER_ID)) {
-                  saveErrors[id.replace(PARAMETER_ID, '')] = message;
-                }
-                else {
-                  saveErrors[id] = message;
-                }
+                id = id.replace(FIELD_ID, '');
+                id = id.replace(PARAMETER_ID, '');
+                id = id.replace(HELPER_BEAN, '');
+                saveErrors[id] = message;
               });
               return saveErrors;
             }
@@ -254,7 +250,7 @@ export default class FormUtils {
 
       guards: {
         canSave: ({isPristine, validationErrors}) => {
-          const isValid = !Utils.isInvalid(validationErrors);
+          const isValid = !FormUtils.isInvalid(validationErrors);
           return !isPristine && isValid;
         },
         canDelete: () => false
@@ -343,10 +339,36 @@ export default class FormUtils {
       name: String(join('.', name)),
       isChecked: Boolean(pathOr(defaultValue, name, data))
     };
-
   }
 
   /**
+   * Generate a function that will send a standard form UPDATE message to a machine
+   * @param name of the field to update
+   * @param send - a function that sends events to the machine
+   * @returns {(function(*): void)|*}
+   */
+  static handleUpdate(name, send) {
+    return (eventOrValue) => {
+      let value;
+      if (typeof eventOrValue === 'string') {
+        value = eventOrValue;
+      }
+      else if (eventOrValue.currentTarget.type === 'checkbox') {
+        value = eventOrValue.currentTarget.checked
+      }
+      else {
+        value = eventOrValue.currentTarget.value;
+      }
+      send({
+        type: 'UPDATE',
+        data: {
+          [name]: value
+        }
+      });
+    };
+  }
+
+    /**
    * @param isPristine
    * @param isInvalid
    * @return {string|null} the tooltip explaining why the save button is disabled
