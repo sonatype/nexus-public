@@ -26,15 +26,11 @@ class ScriptManagerImplTest extends Specification
   def setup(){
     eventManager = Mock(EventManager)
     scriptStore = Mock(ScriptStore)
-
-    scriptManager = new ScriptManagerImpl()
-    scriptManager.eventManager = eventManager
-    scriptManager.scriptStore = scriptStore
   }
 
   def 'scripts can be created if allowCreation is true'(){
     given: 'allowCreation set to true'
-      scriptManager.allowCreation = true
+      scriptManager = new ScriptManagerImpl(eventManager, scriptStore, true)
       scriptStore.newScript() >> new OrientScript()
 
     when: 'a script is attempted to be created'
@@ -47,7 +43,7 @@ class ScriptManagerImplTest extends Specification
 
   def 'scripts can be updated if allowCreation is true'(){
     given: 'allowCreation set to true'
-      scriptManager.allowCreation = true
+      scriptManager = new ScriptManagerImpl(eventManager, scriptStore, true)
       scriptStore.get(_) >> new OrientScript()
 
     when: 'a script is attempted to be created'
@@ -60,7 +56,7 @@ class ScriptManagerImplTest extends Specification
 
   def 'scripts cannot be created if allowCreation is false'(){
     given:
-      scriptManager.allowCreation = false
+      scriptManager = new ScriptManagerImpl(eventManager, scriptStore, false)
     when:
       scriptManager.create("new script", "some content", "groovy")
 
@@ -70,7 +66,7 @@ class ScriptManagerImplTest extends Specification
 
   def 'scripts cannot be updated if allowCreation is false'() {
     given:
-      scriptManager.allowCreation = false
+      scriptManager = new ScriptManagerImpl(eventManager, scriptStore, false)
 
     when:
       scriptManager.update("existing script", "some content")
