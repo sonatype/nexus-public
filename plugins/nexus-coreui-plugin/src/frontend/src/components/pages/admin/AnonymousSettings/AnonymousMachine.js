@@ -17,14 +17,14 @@
 import React, {useState, useEffect} from 'react';
 import {assign} from 'xstate';
 import Axios from 'axios';
-import {ExtJS, Utils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 
 const {ERROR, ANONYMOUS_SETTINGS} = UIStrings;
 
 
-export default Utils.buildFormMachine({
+export default FormUtils.buildFormMachine({
   id: 'AnonymousSettingsForm'
 }).withConfig({
   actions: {
@@ -36,7 +36,7 @@ export default Utils.buildFormMachine({
 
     validate: assign({
       validationErrors: ({data}) => ({
-        userId: Utils.isBlank(data?.userId) ? ERROR.FIELD_REQUIRED : null
+        userId: ValidationUtils.isBlank(data?.userId) ? ERROR.FIELD_REQUIRED : null
       })
     }),
 

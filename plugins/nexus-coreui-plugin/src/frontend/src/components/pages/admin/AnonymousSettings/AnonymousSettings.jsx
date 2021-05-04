@@ -14,19 +14,18 @@ import React from 'react';
 import {useMachine} from '@xstate/react';
 import {
   ContentBody,
-  FieldWrapper,
+  FormUtils,
   NxButton,
   NxCheckbox,
-  NxLoadWrapper,
+  NxForm,
+  NxFormGroup,
   NxTooltip,
   Page,
   PageHeader,
   PageTitle,
   Section,
-  SectionFooter,
   Select,
-  Textfield,
-  Utils
+  Textfield
 } from '@sonatype/nexus-ui-plugin';
 import {faUser} from '@fortawesome/free-solid-svg-icons';
 
@@ -36,24 +35,16 @@ import AnonymousMachine from './AnonymousMachine';
 
 export default function AnonymousSettings() {
   const [current, send] = useMachine(AnonymousMachine, {devTools: true});
-  const {data, isPristine, realms, validationErrors} = current.context;
+  const {data, isPristine, loadError, realms, saveError, validationErrors} = current.context;
   const isLoading = current.matches('loading');
-  const isInvalid = Utils.isInvalid(validationErrors);
-  const hasData = data && data !== {};
+  const isSaving = current.matches('saving')
+  const isInvalid = FormUtils.isInvalid(validationErrors);
 
-  function handleInputChange({target}) {
-    send('UPDATE', {
-      data: {
-        [target.name || target.id]: target.type === 'checkbox' ? target.checked : target.value
-      }
-    });
-  }
-
-  function handleDiscard() {
+  function discard() {
     send('RESET');
   }
 
-  function handleSave() {
+  function save() {
     send('SAVE');
   }
 
@@ -65,50 +56,42 @@ export default function AnonymousSettings() {
     <PageHeader><PageTitle icon={faUser} {...UIStrings.ANONYMOUS_SETTINGS.MENU}/></PageHeader>
     <ContentBody className='nxrm-anonymous-settings'>
       <Section>
-        <NxLoadWrapper loading={isLoading} retryHandler={retry}>
-          {hasData && <>
-            <FieldWrapper labelText={UIStrings.ANONYMOUS_SETTINGS.ENABLED_CHECKBOX_LABEL}>
-              <NxCheckbox
-                  checkboxId='enabled'
-                  isChecked={data.enabled || false}
-                  onChange={handleInputChange}
-              >
-                {UIStrings.ANONYMOUS_SETTINGS.ENABLED_CHECKBOX_DESCRIPTION}
-              </NxCheckbox>
-            </FieldWrapper>
-            <FieldWrapper labelText={UIStrings.ANONYMOUS_SETTINGS.USERNAME_TEXTFIELD_LABEL}>
-              <Textfield
-                  {...Utils.fieldProps('userId', current)}
-                  onChange={handleInputChange}
-              />
-            </FieldWrapper>
-            <FieldWrapper labelText={UIStrings.ANONYMOUS_SETTINGS.REALM_SELECT_LABEL}>
-              <Select
-                  name='realmName'
-                  value={data.realmName}
-                  onChange={handleInputChange}
-              >
-                {
-                  realms?.map((realm) =>
-                      <option key={realm.id} value={realm.id}>{realm.name}</option>
-                  )
-                }
-              </Select>
-            </FieldWrapper>
-            <SectionFooter>
-              <NxTooltip title={Utils.saveTooltip({isPristine, isInvalid})}>
-                <NxButton variant='primary' className={(isPristine || isInvalid) && 'disabled'} onClick={handleSave}>
-                  {UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
-                </NxButton>
-              </NxTooltip>
-              <NxTooltip title={Utils.discardTooltip({isPristine})}>
-                <NxButton className={isPristine && 'disabled'} onClick={handleDiscard}>
+        <NxForm
+            loading={isLoading}
+            loadError={loadError}
+            doLoad={retry}
+            onSubmit={save}
+            submitError={saveError}
+            submitMaskState={isSaving ? false : null}
+            submitBtnText={UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
+            validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
+            additionalFooterBtns={
+              <NxTooltip title={FormUtils.discardTooltip({isPristine})}>
+                <NxButton type="button" className={isPristine && 'disabled'} onClick={discard}>
                   {UIStrings.SETTINGS.DISCARD_BUTTON_LABEL}
                 </NxButton>
               </NxTooltip>
-            </SectionFooter>
+            }>
+          {() => <>
+            <NxFormGroup label={UIStrings.ANONYMOUS_SETTINGS.ENABLED_CHECKBOX_LABEL} isRequired>
+              <NxCheckbox
+                  {...FormUtils.checkboxProps('enabled', current)}
+                  onChange={FormUtils.handleUpdate('enabled', send)}>
+                {UIStrings.ANONYMOUS_SETTINGS.ENABLED_CHECKBOX_DESCRIPTION}
+              </NxCheckbox>
+            </NxFormGroup>
+            <NxFormGroup label={UIStrings.ANONYMOUS_SETTINGS.USERNAME_TEXTFIELD_LABEL} isRequired>
+              <Textfield{...FormUtils.fieldProps('userId', current)} onChange={FormUtils.handleUpdate('userId', send)}/>
+            </NxFormGroup>
+            <NxFormGroup label={UIStrings.ANONYMOUS_SETTINGS.REALM_SELECT_LABEL} isRequired>
+              <Select name='realmName' value={data.realmName} onChange={FormUtils.handleUpdate('realmName', send)}>
+                {realms?.map((realm) =>
+                    <option key={realm.id} value={realm.id}>{realm.name}</option>
+                )}
+              </Select>
+            </NxFormGroup>
           </>}
-        </NxLoadWrapper>
+        </NxForm>
       </Section>
     </ContentBody>
   </Page>;
