@@ -218,7 +218,7 @@ class OrientApiKeyStoreTest
   }
 
   @Test
-  void 'Purge orphaned API keys pauses/resumes TX'() {
+  void 'Purge orphaned API keys pauses or resumes TX'() {
     PrincipalCollection principalA = makePrincipals(PRINCIPAL_A_NAME)
     PrincipalCollection principalB = makePrincipals(PRINCIPAL_B_NAME)
     char[] apiKeyForPrincipalA = underTest.createApiKey(PRINCIPAL_A_DOMAIN, principalA)
