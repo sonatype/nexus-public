@@ -75,6 +75,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver.TEMPORARY_BLOB_ID_PREFIX;
+import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_FILE_ATTRIBUTES_SUFFIX;
+import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_FILE_CONTENT_SUFFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.DIRECT_PATH_BLOB_HEADER;
@@ -428,9 +430,9 @@ public class FileBlobStoreIT
     final Blob blob = underTest.create(sourceFile, TEST_HEADERS, content.length, sha1);
     assertThat(blob.getId().asUniqueString(), not(startsWith(TEMPORARY_BLOB_ID_PREFIX)));
     assertThat(Files.exists(contentDirectory.resolve(blobIdResolver.getLocation(blob.getId()) +
-        FileBlobStore.BLOB_CONTENT_SUFFIX)), is(true));
+        BLOB_FILE_CONTENT_SUFFIX)), is(true));
     assertThat(Files.exists(contentDirectory.resolve(blobIdResolver.getLocation(blob.getId()) +
-        FileBlobStore.BLOB_ATTRIBUTE_SUFFIX)), is(true));
+        BLOB_FILE_ATTRIBUTES_SUFFIX)), is(true));
 
     // Now append some telltale bytes to the end of the original file
     final byte[] appendMe = new byte[100];
@@ -462,14 +464,14 @@ public class FileBlobStoreIT
     }
 
     assertThat(Files.exists(contentDirectory.resolve(blobIdResolver.getLocation(temp.getId()) +
-        FileBlobStore.BLOB_CONTENT_SUFFIX)), is(true));
+        BLOB_FILE_CONTENT_SUFFIX)), is(true));
     assertThat(Files.exists(contentDirectory.resolve(blobIdResolver.getLocation(temp.getId()) +
-        FileBlobStore.BLOB_ATTRIBUTE_SUFFIX)), is(true));
+        BLOB_FILE_ATTRIBUTES_SUFFIX)), is(true));
 
     assertThat(Files.exists(contentDirectory.resolve(blobIdResolver.getLocation(copy.getId()) +
-        FileBlobStore.BLOB_CONTENT_SUFFIX)), is(true));
+        BLOB_FILE_CONTENT_SUFFIX)), is(true));
     assertThat(Files.exists(contentDirectory.resolve(blobIdResolver.getLocation(copy.getId()) +
-        FileBlobStore.BLOB_ATTRIBUTE_SUFFIX)), is(true));
+        BLOB_FILE_ATTRIBUTES_SUFFIX)), is(true));
 
     assertThat(temp.getId().asUniqueString(), startsWith(TEMPORARY_BLOB_ID_PREFIX));
     assertThat(copy.getId().asUniqueString(), not(startsWith(TEMPORARY_BLOB_ID_PREFIX)));
@@ -500,14 +502,14 @@ public class FileBlobStoreIT
     }
 
     assertThat(Files.exists(contentDirectory.resolve(blobIdResolver.getLocation(temp.getId()) +
-        FileBlobStore.BLOB_CONTENT_SUFFIX)), is(true));
+        BLOB_FILE_CONTENT_SUFFIX)), is(true));
     assertThat(Files.exists(contentDirectory.resolve(blobIdResolver.getLocation(temp.getId()) +
-        FileBlobStore.BLOB_ATTRIBUTE_SUFFIX)), is(true));
+        BLOB_FILE_ATTRIBUTES_SUFFIX)), is(true));
 
     assertThat(Files.exists(contentDirectory.resolve(blobIdResolver.getLocation(copy.getId()) +
-        FileBlobStore.BLOB_CONTENT_SUFFIX)), is(true));
+        BLOB_FILE_CONTENT_SUFFIX)), is(true));
     assertThat(Files.exists(contentDirectory.resolve(blobIdResolver.getLocation(copy.getId()) +
-        FileBlobStore.BLOB_ATTRIBUTE_SUFFIX)), is(true));
+        BLOB_FILE_ATTRIBUTES_SUFFIX)), is(true));
 
     assertThat(temp.getId().asUniqueString(), startsWith(TEMPORARY_BLOB_ID_PREFIX));
     assertThat(copy.getId().asUniqueString(), not(startsWith(TEMPORARY_BLOB_ID_PREFIX)));
@@ -614,9 +616,9 @@ public class FileBlobStoreIT
     byte[] content = new byte[TEST_DATA_LENGTH];
     Blob blob = underTest.create(new ByteArrayInputStream(content), TEST_HEADERS);
     Path bytesPath = contentDirectory.resolve(blobIdResolver.getLocation(blob.getId()) +
-        FileBlobStore.BLOB_CONTENT_SUFFIX);
+        BLOB_FILE_CONTENT_SUFFIX);
     Path propertiesPath = contentDirectory.resolve(blobIdResolver.getLocation(blob.getId()) +
-        FileBlobStore.BLOB_ATTRIBUTE_SUFFIX);
+        BLOB_FILE_ATTRIBUTES_SUFFIX);
 
     // truncate blob properties file to simulate corruption
     Files.write(propertiesPath, new byte[0], StandardOpenOption.TRUNCATE_EXISTING);
@@ -639,13 +641,13 @@ public class FileBlobStoreIT
     final Blob blob4 = underTest.create(new ByteArrayInputStream(content), TEST_HEADERS);
 
     Path bytesPath1 = contentDirectory.resolve(blobIdResolver.getLocation(blob1.getId()) +
-        FileBlobStore.BLOB_CONTENT_SUFFIX);
+        BLOB_FILE_CONTENT_SUFFIX);
     Path bytesPath2 = contentDirectory.resolve(blobIdResolver.getLocation(blob2.getId()) +
-        FileBlobStore.BLOB_CONTENT_SUFFIX);
+        BLOB_FILE_CONTENT_SUFFIX);
     Path bytesPath3 = contentDirectory.resolve(blobIdResolver.getLocation(blob3.getId()) +
-        FileBlobStore.BLOB_CONTENT_SUFFIX);
+        BLOB_FILE_CONTENT_SUFFIX);
     Path bytesPath4 = contentDirectory.resolve(blobIdResolver.getLocation(blob4.getId()) +
-        FileBlobStore.BLOB_CONTENT_SUFFIX);
+        BLOB_FILE_CONTENT_SUFFIX);
 
     assertThat(bytesPath1.toFile().exists(), is(true));
     assertThat(bytesPath2.toFile().exists(), is(true));
@@ -701,9 +703,9 @@ public class FileBlobStoreIT
    */
   Pair<Path, Path> verifyBlobPaths(final Blob blob) {
     final Path contentPath = contentDirectory.resolve(blobIdResolver.getLocation(blob.getId()) +
-        FileBlobStore.BLOB_CONTENT_SUFFIX);
+        BLOB_FILE_CONTENT_SUFFIX);
     final Path attributesPath = contentDirectory.resolve(blobIdResolver.getLocation(blob.getId()) +
-        FileBlobStore.BLOB_ATTRIBUTE_SUFFIX);
+        BLOB_FILE_ATTRIBUTES_SUFFIX);
     assertThat(blob.getId().asUniqueString(), not(startsWith(TEMPORARY_BLOB_ID_PREFIX)));
     assertThat(Files.exists(contentPath), is(true));
     assertThat(Files.exists(attributesPath), is(true));

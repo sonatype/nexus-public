@@ -43,6 +43,7 @@ import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.thread.NexusThreadFactory;
 
+import com.amazonaws.AmazonServiceException;
 import com.amazonaws.SdkBaseException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.iterable.S3Objects;
@@ -92,8 +93,6 @@ public class S3BlobStore
     extends BlobStoreSupport<S3AttributesLocation>
 {
   public static final String TYPE = "S3";
-
-  public static final String BLOB_CONTENT_SUFFIX = ".bytes";
 
   public static final String CONFIG_KEY = "s3";
 
@@ -247,7 +246,7 @@ public class S3BlobStore
    * Returns path for blob-id content file relative to root directory.
    */
   private String contentPath(final BlobId id) {
-    return getLocation(id) + BLOB_CONTENT_SUFFIX;
+    return getLocation(id) + BLOB_FILE_CONTENT_SUFFIX;
   }
 
   private String metadataFilePath() {
@@ -258,7 +257,7 @@ public class S3BlobStore
    * Returns path for blob-id attribute file relative to root directory.
    */
   private String attributePath(final BlobId id) {
-    return getLocation(id) + BLOB_ATTRIBUTE_SUFFIX;
+    return getLocation(id) + BLOB_FILE_ATTRIBUTES_SUFFIX;
   }
 
   protected String attributePathString(final BlobId blobId) {
@@ -669,13 +668,13 @@ public class S3BlobStore
     Iterable<S3ObjectSummary> summaries = S3Objects.withPrefix(s3, getConfiguredBucket(), subpath);
     return stream(summaries.spliterator(), false)
         .map(S3ObjectSummary::getKey)
-        .filter(key -> key.endsWith(BLOB_ATTRIBUTE_SUFFIX))
+        .filter(key -> key.endsWith(BLOB_FILE_ATTRIBUTES_SUFFIX))
         .map(this::attributePathToDirectPathBlobId);
   }
 
   private Stream<BlobId> blobIdStream(Iterable<S3ObjectSummary> summaries) {
     return stream(summaries.spliterator(), false)
-        .filter(o -> o.getKey().endsWith(BLOB_ATTRIBUTE_SUFFIX))
+        .filter(o -> o.getKey().endsWith(BLOB_FILE_ATTRIBUTES_SUFFIX))
         .filter(o -> !o.getKey().contains(CONTENT_TMP_PATH))
         .map(S3AttributesLocation::new)
         .map(this::getBlobIdFromAttributeFilePath)
@@ -767,6 +766,46 @@ public class S3BlobStore
     }
   }
 
+  @Override
+  @Timed
+  public void putRawObject(final Path path, final InputStream input) {
+    uploader.upload(s3, getConfiguredBucket(), path.toString(), input);
+  }
+
+  @Nullable
+  @Override
+  @Timed
+  public InputStream getRawObject(final Path path) {
+    try {
+      S3Object object = s3.getObject(getConfiguredBucket(), path.toString());
+      return performanceLogger.maybeWrapForPerformanceLogging(object.getObjectContent());
+    }
+    catch (AmazonServiceException e) {
+      if (e.getStatusCode() == 404) {
+        return null;
+      }
+      throw e;
+    }
+  }
+
+  @Override
+  public boolean hasRawObject(final Path path) {
+    try {
+      return s3.doesObjectExist(getConfiguredBucket(), path.toString());
+    }
+    catch (AmazonServiceException e) {
+      if (e.getStatusCode() == 404) {
+        return false;
+      }
+      throw e;
+    }
+  }
+
+  @Override
+  public void deleteRawObject(final Path path) {
+    s3.deleteObject(getConfiguredBucket(), path.toString());
+  }
+
   /**
    * Used by {@link #getDirectPathBlobIdStream(String)} to convert an s3 key to a {@link BlobId}.
    *
@@ -775,9 +814,9 @@ public class S3BlobStore
   private BlobId attributePathToDirectPathBlobId(final String s3Key) { // NOSONAR
     checkArgument(s3Key.startsWith(getBucketPrefix() + DIRECT_PATH_PREFIX + "/"), "Not direct path blob path: %s",
         s3Key);
-    checkArgument(s3Key.endsWith(BLOB_ATTRIBUTE_SUFFIX), "Not blob attribute path: %s", s3Key);
+    checkArgument(s3Key.endsWith(BLOB_FILE_ATTRIBUTES_SUFFIX), "Not blob attribute path: %s", s3Key);
     String blobName = s3Key
-        .substring(0, s3Key.length() - BLOB_ATTRIBUTE_SUFFIX.length())
+        .substring(0, s3Key.length() - BLOB_FILE_ATTRIBUTES_SUFFIX.length())
         .substring((getBucketPrefix() + DIRECT_PATH_PREFIX).length() + 1);
     Map<String, String> headers = ImmutableMap.of(
         BLOB_NAME_HEADER, blobName,

@@ -41,6 +41,16 @@ public interface BlobStore
     extends TransactionalStore<BlobSession<?>>, Lifecycle
 {
   /**
+   * Suffix of the file that contains the bytes
+   */
+  String BLOB_FILE_CONTENT_SUFFIX = ".bytes";
+
+  /**
+   * Suffix of the file that contains the attributes
+   */
+  String BLOB_FILE_ATTRIBUTES_SUFFIX = ".properties";
+
+  /**
    * An identifying name for disaster recovery purposes (which isn't required to be strictly unique)
    */
   String BLOB_NAME_HEADER = "BlobStore.blob-name";
@@ -291,6 +301,15 @@ public interface BlobStore
    * @since 3.22
    */
   void shutdown() throws Exception;
+
+  void putRawObject(Path path, InputStream in);
+
+  @Nullable
+  InputStream getRawObject(Path path);
+
+  void deleteRawObject(Path path);
+
+  boolean hasRawObject(Path path);
 
   /**
    * Acts as a {@code BlobStore::hardDelete}, except it may be executed asynchronously.

@@ -14,10 +14,12 @@ package org.sonatype.nexus.blobstore.file;
 
 import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.io.UncheckedIOException;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.FileStore;
 import java.nio.file.FileVisitResult;
@@ -72,6 +74,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.HashCode;
 import com.squareup.tape.QueueFile;
+import org.apache.commons.io.FileUtils;
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -105,8 +108,6 @@ public class FileBlobStore
   public static final String BASEDIR = "blobs";
 
   public static final String TYPE = "File";
-
-  public static final String BLOB_CONTENT_SUFFIX = ".bytes";
 
   @VisibleForTesting
   public static final String CONFIG_KEY = "file";
@@ -253,7 +254,7 @@ public class FileBlobStore
    */
   @VisibleForTesting
   Path contentPath(final BlobId id) {
-    return contentDir.resolve(blobIdLocationResolver.getLocation(id) + BLOB_CONTENT_SUFFIX);
+    return contentDir.resolve(blobIdLocationResolver.getLocation(id) + BLOB_FILE_CONTENT_SUFFIX);
   }
 
   /**
@@ -261,7 +262,7 @@ public class FileBlobStore
    */
   @VisibleForTesting
   Path attributePath(final BlobId id) {
-    return contentDir.resolve(blobIdLocationResolver.getLocation(id) + BLOB_ATTRIBUTE_SUFFIX);
+    return contentDir.resolve(blobIdLocationResolver.getLocation(id) + BLOB_FILE_ATTRIBUTES_SUFFIX);
   }
 
   protected String attributePathString(final BlobId blobId) {
@@ -272,14 +273,15 @@ public class FileBlobStore
    * Returns a path for a temporary blob-id content file relative to root directory.
    */
   private Path temporaryContentPath(final BlobId id, final UUID suffix) {
-    return contentDir.resolve(blobIdLocationResolver.getTemporaryLocation(id) + "." + suffix + BLOB_CONTENT_SUFFIX);
+    return contentDir.resolve(blobIdLocationResolver.getTemporaryLocation(id) + "." + suffix + BLOB_FILE_CONTENT_SUFFIX);
   }
 
   /**
    * Returns path for a temporary blob-id attribute file relative to root directory.
    */
   private Path temporaryAttributePath(final BlobId id, final UUID suffix) {
-    return contentDir.resolve(blobIdLocationResolver.getTemporaryLocation(id) + "." + suffix + BLOB_ATTRIBUTE_SUFFIX);
+    return contentDir.resolve(blobIdLocationResolver.getTemporaryLocation(id) + "." + suffix +
+        BLOB_FILE_ATTRIBUTES_SUFFIX);
   }
 
   @Override
@@ -880,7 +882,7 @@ public class FileBlobStore
   private boolean isNonTemporaryAttributeFile(final Path path) {
     File attributeFile = path.toFile();
     return attributeFile.isFile() &&
-        attributeFile.getName().endsWith(BLOB_ATTRIBUTE_SUFFIX) &&
+        attributeFile.getName().endsWith(BLOB_FILE_ATTRIBUTES_SUFFIX) &&
         !attributeFile.getName().startsWith(TEMPORARY_BLOB_ID_PREFIX) &&
         !attributeFile.getAbsolutePath().contains(CONTENT_TMP_PATH);
   }
@@ -985,7 +987,7 @@ public class FileBlobStore
       String pathStr = contentDir.resolve(DIRECT_PATH_ROOT)
           .relativize(path) // just the relative path part under DIRECT_PATH_ROOT
           .toString().replace(File.separatorChar, '/'); // guarantee we return unix-style paths
-      return removeEnd(pathStr, BLOB_ATTRIBUTE_SUFFIX); // drop the .properties suffix
+      return removeEnd(pathStr, BLOB_FILE_ATTRIBUTES_SUFFIX); // drop the .properties suffix
     }
     catch (Exception ex) {
       // file is no longer available
@@ -1051,6 +1053,64 @@ public class FileBlobStore
     catch (Exception e) {
       log.error("Unable to set BlobAttributes for blob id: {}, exception: {}",
           blobId, e.getMessage(), log.isDebugEnabled() ? e : null);
+    }
+  }
+
+  @Override
+  public void putRawObject(final Path path, final InputStream input) {
+    try {
+      Path storageDir = getAbsoluteBlobDir();
+      File rawObjectFile = storageDir.resolve(path).toFile();
+      FileUtils.copyInputStreamToFile(input, rawObjectFile);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Nullable
+  @Override
+  public InputStream getRawObject(final Path path) {
+    try {
+      Path storageDir = getAbsoluteBlobDir();
+      File rawObjectFile = storageDir.resolve(path).toFile();
+      if (rawObjectFile.exists()) {
+        return new FileInputStream(rawObjectFile);
+      }
+      else {
+        return null;
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public boolean hasRawObject(final Path path) {
+    try {
+      Path storageDir = getAbsoluteBlobDir();
+      File rawObjectFile = storageDir.resolve(path).toFile();
+      return rawObjectFile.exists();
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  @Override
+  public void deleteRawObject(final Path path) {
+    try {
+      Path storageDir = getAbsoluteBlobDir();
+      File rawObjectFile = storageDir.resolve(path).toFile();
+      File parent = rawObjectFile.getParentFile();
+      Files.deleteIfExists(rawObjectFile.toPath());
+      String[] children = parent.list();
+      if (children == null || children.length == 0) {
+        Files.deleteIfExists(parent.toPath());
+      }
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
     }
   }
 
