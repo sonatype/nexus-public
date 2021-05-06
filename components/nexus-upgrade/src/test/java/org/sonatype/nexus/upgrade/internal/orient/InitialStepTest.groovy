@@ -44,7 +44,7 @@ class InitialStepTest
   }
 
   @Test
-  public void ' step does not satisfy the dependency if the provided model does not exist and version is over 1.0'() {
+  public void ' step does not satisfy the dependency if the provided model does not exist and version is over 1_0'() {
     assertThat(underTest.satisfies('foo', '2.0'), is(false))
   }
 

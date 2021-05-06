@@ -68,7 +68,7 @@ class NegativeCacheHandlerTest
    * - no other actions (checked by no interactions with repository)
    */
   @Test
-  void 'directly proceed on non GET/HEAD requests'() {
+  void 'directly proceed on non GET or HEAD requests'() {
     when(request.getAction()).thenReturn(HttpMethods.PUT)
     Response contextResponse = HttpResponses.ok()
     when(context.proceed()).thenReturn(contextResponse)
