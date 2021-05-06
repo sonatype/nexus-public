@@ -154,8 +154,8 @@ public class OrientComponentAssetTestHelper
   }
 
   @Override
-  public String contentTypeFor(final String repositoryName, final String path) {
-    return findAssetByNameNotNull(repositoryManager.get(repositoryName), path).contentType();
+  public String contentTypeFor(final Repository repository, final String path) {
+    return findAssetByNameNotNull(repository, path).contentType();
   }
 
   @Override
