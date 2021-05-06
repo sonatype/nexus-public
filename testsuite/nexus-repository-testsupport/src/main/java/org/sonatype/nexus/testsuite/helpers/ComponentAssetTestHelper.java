@@ -128,7 +128,7 @@ public interface ComponentAssetTestHelper
   /**
    * Retrieve content type for a path within the repository.
    */
-  String contentTypeFor(final String repositoryName, final String path);
+  String contentTypeFor(final Repository repository, final String path);
 
   /**
    * Count the number of assets in the given repository.
@@ -216,6 +216,14 @@ public interface ComponentAssetTestHelper
   {
     AssetNotFoundException(final Repository repository, final String path) {
       super("Missing asset: " + path + " from repository: " + repository.getName());
+    }
+  }
+
+  class BlobNotFoundException
+      extends RuntimeException
+  {
+    BlobNotFoundException(final Repository repository, final String path) {
+      super("Missing blob for the asset: " + path + " from repository: " + repository.getName());
     }
   }
 

@@ -201,8 +201,9 @@ public class DatastoreComponentAssetTestHelper
   }
 
   @Override
-  public String contentTypeFor(final String repositoryName, final String path) {
-    throw new UnsupportedOperationException();
+  public String contentTypeFor(final Repository repository, final String path) {
+    Optional<AssetBlob> blob = findAssetByPathNotNull(repository, path).blob();
+    return blob.map(AssetBlob::contentType).orElseThrow(() -> new BlobNotFoundException(repository, path));
   }
 
   @Override
