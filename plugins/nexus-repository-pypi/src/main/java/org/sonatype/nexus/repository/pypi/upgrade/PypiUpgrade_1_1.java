@@ -106,27 +106,26 @@ public class PypiUpgrade_1_1
         OIndex<?> bucketIdx = db.getMetadata().getIndexManager().getIndex(I_REPOSITORY_NAME);
         pypiRepositoryNames.forEach(repositoryName -> {
           log.info("Scanning pypi repository {} for index file assets", repositoryName);
-          OIdentifiable bucket = (OIdentifiable) bucketIdx.get(repositoryName);
+          OIdentifiable bucket = bucketIdx != null ? (OIdentifiable) bucketIdx.get(repositoryName) : null;
           if (bucket == null) {
             log.warn("Unable to find bucket for {}", repositoryName);
-          }
-          else {
-            // Deleting index files
-            int deletes = db.command(deleteIndexCommand).execute(bucket.getIdentity());
-            if (deletes > 0) {
-              log.info(
-                  "Deleted {} pypi index asset(s) in repository {}: ", deletes, repositoryName);
-            }
-
-            if (db.getMetadata().getSchema().existsClass(BROWSE_NODE_CLASS)) {
-              // Deleting browse nodes
-              deletes = db.command(deleteBrowseNodesCommand).execute(repositoryName);
-              if (deletes > 0) {
+          } else {
+             // Deleting index files
+             int deletes = db.command(deleteIndexCommand).execute(bucket.getIdentity());
+             if (deletes > 0) {
                 log.info(
-                    "Deleted {} browse node(s) in repository {}", deletes, repositoryName);
-              }
-            }
+                    "Deleted {} pypi index asset(s) in repository {}: ", deletes, repositoryName);
+             }
           }
+
+          if (db.getMetadata().getSchema().existsClass(BROWSE_NODE_CLASS)) {
+             // Deleting browse nodes
+             int deletes = db.command(deleteBrowseNodesCommand).execute(repositoryName);
+             if (deletes > 0) {
+                log.info(
+                     "Deleted {} browse node(s) in repository {}", deletes, repositoryName);
+             }
+           }
         });
       }
     }
