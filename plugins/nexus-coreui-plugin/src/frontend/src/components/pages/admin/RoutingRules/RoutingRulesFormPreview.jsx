@@ -26,8 +26,8 @@ export default function RoutingRulesPreview({value, onChange, onTest}) {
 
   return <div className="nx-form-row">
     <div className="nx-form-group">
-      <label htmlFor="path" className="nx-label"><span className="nx-label">{ROUTING_RULES.PATH_LABEL}</span></label>
-      <p className="nx-p">{ROUTING_RULES.PATH_DESCRIPTION}</p>
+      <label htmlFor="path" className="nx-label"><span className="nx-label__text">{ROUTING_RULES.PATH_LABEL}</span></label>
+      <div className="nx-sub-label">{ROUTING_RULES.PATH_DESCRIPTION}</div>
       <div className="nx-form-row">
         <div className="nx-form-group">
           {/* Ensure the button is at the correct height and prepend with a / */}

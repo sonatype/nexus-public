@@ -103,16 +103,16 @@ exports[`RoutingRulesForm renders a loading spinner 1`] = `
                 for="path"
               >
                 <span
-                  class="nx-label"
+                  class="nx-label__text"
                 >
                   Path
                 </span>
               </label>
-              <p
-                class="nx-p"
+              <div
+                class="nx-sub-label"
               >
                 Enter a request path to check if it would be blocked or allowed. Requests always start with a leading slash.
-              </p>
+              </div>
               <div
                 class="nx-form-row"
               >
@@ -391,6 +391,7 @@ exports[`RoutingRulesForm renders the resolved data 1`] = `
           </div>
           <div
             class="nx-form-group"
+            id="nxrm-routing-rules-mode"
           >
             <label
               class="nx-label"
@@ -403,9 +404,16 @@ exports[`RoutingRulesForm renders the resolved data 1`] = `
               </span>
             </label>
             <div
+              class="nx-sub-label"
+              id="nx-sub-label-44444444"
+            >
+              Allow or block requests when their path matches any of the following matchers
+            </div>
+            <div
               class="nxrm-select"
             >
               <select
+                aria-describedby="nx-sub-label-44444444"
                 class="nx-form-select"
                 id="mode"
                 name="mode"
@@ -422,9 +430,6 @@ exports[`RoutingRulesForm renders the resolved data 1`] = `
                 </option>
               </select>
             </div>
-            <span>
-              requests when their path matches any of the following matchers
-            </span>
           </div>
           <div
             class="nx-form-group"
@@ -439,12 +444,11 @@ exports[`RoutingRulesForm renders the resolved data 1`] = `
                 Matchers
               </span>
             </div>
-            <p
-              class="nx-p"
-              id="matchers-description"
+            <div
+              class="nx-sub-label"
             >
               Enter regular expressions that will be used to identify request paths to allow or block (depending on above mode)
-            </p>
+            </div>
             <div
               class="nx-form-row"
             >
@@ -462,7 +466,7 @@ exports[`RoutingRulesForm renders the resolved data 1`] = `
                     >
                       <input
                         aria-describedby="matchers-description"
-                        aria-errormessage="nx-text-input-invalid-message-44444444"
+                        aria-errormessage="nx-text-input-invalid-message-55555555"
                         aria-invalid="false"
                         aria-label="Matcher 0"
                         class="nx-text-input__input"
@@ -504,7 +508,7 @@ exports[`RoutingRulesForm renders the resolved data 1`] = `
                     </div>
                     <div
                       class="nx-text-input__invalid-message"
-                      id="nx-text-input-invalid-message-44444444"
+                      id="nx-text-input-invalid-message-55555555"
                       role="alert"
                     />
                   </div>
@@ -599,16 +603,16 @@ exports[`RoutingRulesForm renders the resolved data 1`] = `
                 for="path"
               >
                 <span
-                  class="nx-label"
+                  class="nx-label__text"
                 >
                   Path
                 </span>
               </label>
-              <p
-                class="nx-p"
+              <div
+                class="nx-sub-label"
               >
                 Enter a request path to check if it would be blocked or allowed. Requests always start with a leading slash.
-              </p>
+              </div>
               <div
                 class="nx-form-row"
               >

@@ -15,10 +15,10 @@ import {useMachine} from '@xstate/react';
 
 import {
   ContentBody,
-  FieldWrapper,
   NxButton,
   NxErrorAlert,
   NxFontAwesomeIcon,
+  NxFormGroup,
   NxInfoAlert,
   NxLoadWrapper,
   NxSubmitMask,
@@ -131,29 +131,31 @@ export default function RoutingRulesForm({itemId, onDone}) {
             {saveError && <NxErrorAlert>{ROUTING_RULES.FORM.SAVE_ERROR} {saveError}</NxErrorAlert>}
             {isSaving && <NxSubmitMask message={UIStrings.SAVING}/>}
 
-            <FieldWrapper labelText={ROUTING_RULES.FORM.NAME_LABEL}>
+            <NxFormGroup label={ROUTING_RULES.FORM.NAME_LABEL} isRequired>
               <Textfield
                   {...Utils.fieldProps('name', current)}
                   onChange={update}/>
-            </FieldWrapper>
-            <FieldWrapper labelText={ROUTING_RULES.FORM.DESCRIPTION_LABEL} isOptional>
+            </NxFormGroup>
+            <NxFormGroup label={ROUTING_RULES.FORM.DESCRIPTION_LABEL}>
               <Textfield
                   className="nx-text-input--long"
                   {...Utils.fieldProps('description', current)}
                   onChange={update}/>
-            </FieldWrapper>
-            <FieldWrapper labelText={ROUTING_RULES.FORM.MODE_LABEL}>
+            </NxFormGroup>
+            <NxFormGroup
+                id="nxrm-routing-rules-mode"
+                label={ROUTING_RULES.FORM.MODE_LABEL}
+                sublabel={ROUTING_RULES.FORM.MODE_DESCRIPTION} isRequired>
               <Select {...Utils.fieldProps('mode', current)} onChange={update}>
                 <option value="ALLOW">{ROUTING_RULES.FORM.MODE.ALLOW}</option>
                 <option value="BLOCK">{ROUTING_RULES.FORM.MODE.BLOCK}</option>
               </Select>
-              <span>{ROUTING_RULES.FORM.MODE_DESCRIPTION}</span>
-            </FieldWrapper>
+            </NxFormGroup>
             <div className="nx-form-group">
               <div id="matchers-label" className="nx-label">
                 <span className="nx-label__text">{ROUTING_RULES.FORM.MATCHERS_LABEL}</span>
               </div>
-              <p id="matchers-description" className="nx-p">{ROUTING_RULES.FORM.MATCHERS_DESCRIPTION}</p>
+              <div className="nx-sub-label">{ROUTING_RULES.FORM.MATCHERS_DESCRIPTION}</div>
 
               {data.matchers?.map((value, index) =>
                   <div className="nx-form-row" key={`matcher-${index}`}>
@@ -171,7 +173,7 @@ export default function RoutingRulesForm({itemId, onDone}) {
                     </div>
                     {data.matchers.length > 1 &&
                     <div className="nx-btn-bar">
-                      <NxButton altText={ROUTING_RULES.FORM.DELETE_MATCHER_BUTTON} onClick={() => removeMatcher(index)}>
+                      <NxButton alttext={ROUTING_RULES.FORM.DELETE_MATCHER_BUTTON} onClick={() => removeMatcher(index)}>
                         <NxFontAwesomeIcon icon={faTrash}/>
                       </NxButton>
                     </div>}

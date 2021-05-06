@@ -376,7 +376,7 @@ rel="noopener noreferrer">check the documentation</a>.
         ALLOWED: 'This request would be allowed',
         BLOCKED: 'This request would be blocked'
       },
-      MODE_DESCRIPTION: 'requests when their path matches any of the following matchers',
+      MODE_DESCRIPTION: 'Allow or block requests when their path matches any of the following matchers',
       MATCHERS_LABEL: 'Matchers',
       MATCHER_LABEL: (index) => `Matcher ${index}`,
       MATCHERS_DESCRIPTION: 'Enter regular expressions that will be used to identify request paths to allow or block (depending on above mode)',

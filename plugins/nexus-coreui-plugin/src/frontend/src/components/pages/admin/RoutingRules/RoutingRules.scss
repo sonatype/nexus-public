@@ -40,6 +40,7 @@
 
       @include semi-bold();
       font-size: $nx-font-size;
+      z-index: 1;
     }
 
     .nx-text-input__input {
@@ -50,10 +51,6 @@
   .nxrm-routing-rules-form {
     .add-matcher {
       @include container-horizontal();
-    }
-
-    select {
-      width: auto;
     }
   }
 }
