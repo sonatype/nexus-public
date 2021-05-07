@@ -20,6 +20,7 @@ import java.util.stream.Stream;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
@@ -28,9 +29,9 @@ import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.orient.raw.RawContentFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.orient.raw.RawContentFacet;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
@@ -43,8 +44,9 @@ import org.mockito.Mock;
 
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -77,6 +79,9 @@ public class OrientRawRestoreBlobStrategyTest
 
   @Mock
   private Blob blob;
+
+  @Mock
+  private BlobAttributes blobAttributes;
 
   @Mock
   private BlobStore blobStore;
@@ -126,10 +131,12 @@ public class OrientRawRestoreBlobStrategyTest
     when(repository.getName()).thenReturn(REPOSITORY_NAME);
 
     when(storageFacet.txSupplier()).thenReturn(() -> storageTx);
+    when(storageFacet.blobStore()).thenReturn(blobStore);
 
     when(rawContentFacet.assetExists(BLOB_NAME)).thenReturn(!EXISTS);
 
     when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
+    when(blobStore.getBlobAttributes(any(BlobId.class))).thenReturn(blobAttributes);
     when(blobStoreConfiguration.getName()).thenReturn(TEST_BLOB_STORE_NAME);
 
     underTest = new OrientRawRestoreBlobStrategy(nodeAccess, repositoryManager, blobStoreManager, DRY_RUN_PREFIX);

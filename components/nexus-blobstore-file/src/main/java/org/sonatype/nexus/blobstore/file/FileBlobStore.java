@@ -42,6 +42,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.blobstore.BlobIdLocationResolver;
+import org.sonatype.nexus.blobstore.BlobStoreReconciliationLogger;
 import org.sonatype.nexus.blobstore.BlobStoreSupport;
 import org.sonatype.nexus.blobstore.BlobSupport;
 import org.sonatype.nexus.blobstore.StreamMetrics;
@@ -155,13 +156,16 @@ public class FileBlobStore
 
   private boolean supportsAtomicMove;
 
+  private final BlobStoreReconciliationLogger reconciliationLogger;
+
   @Inject
   public FileBlobStore(final BlobIdLocationResolver blobIdLocationResolver,
                        final FileOperations fileOperations,
                        final ApplicationDirectories applicationDirectories,
                        final FileBlobStoreMetricsStore metricsStore,
                        final NodeAccess nodeAccess,
-                       final DryRunPrefix dryRunPrefix)
+                       final DryRunPrefix dryRunPrefix,
+                       final BlobStoreReconciliationLogger reconciliationLogger)
   {
     super(blobIdLocationResolver, dryRunPrefix);
     this.fileOperations = checkNotNull(fileOperations);
@@ -170,6 +174,7 @@ public class FileBlobStore
     this.nodeAccess = checkNotNull(nodeAccess);
     this.supportsHardLinkCopy = true;
     this.supportsAtomicMove = true;
+    this.reconciliationLogger = checkNotNull(reconciliationLogger);
   }
 
   @VisibleForTesting
@@ -180,9 +185,11 @@ public class FileBlobStore
                        final BlobStoreConfiguration configuration,
                        final ApplicationDirectories directories,
                        final NodeAccess nodeAccess,
-                       final DryRunPrefix dryRunPrefix)
+                       final DryRunPrefix dryRunPrefix,
+                       final BlobStoreReconciliationLogger reconciliationLogger)
   {
-    this(blobIdLocationResolver, fileOperations, directories, metricsStore, nodeAccess, dryRunPrefix);
+    this(blobIdLocationResolver, fileOperations, directories, metricsStore, nodeAccess, dryRunPrefix,
+        reconciliationLogger);
     this.contentDir = checkNotNull(contentDir);
     this.blobStoreConfiguration = checkNotNull(configuration);
   }
@@ -306,7 +313,9 @@ public class FileBlobStore
   private Blob create(final Map<String, String> headers, final BlobIngester ingester, final BlobId blobId) {
     for (int retries = 0; retries <= MAX_COLLISION_RETRIES; retries++) {
       try {
-        return tryCreate(headers, ingester, blobId);
+        Blob blob = tryCreate(headers, ingester, blobId);
+        reconciliationLogger.logBlobCreated(this, blob.getId());
+        return blob;
       }
       catch (BlobCollisionException e) { // NOSONAR
         log.warn("BlobId collision: {} already exists{}", e.getBlobId(),

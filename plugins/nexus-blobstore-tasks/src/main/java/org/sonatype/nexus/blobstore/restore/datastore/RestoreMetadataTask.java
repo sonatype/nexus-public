@@ -12,16 +12,19 @@
  */
 package org.sonatype.nexus.blobstore.restore.datastore;
 
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.nexus.blobstore.BlobStoreReconciliationLogger;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -40,6 +43,8 @@ import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.time.LocalDate.now;
+import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
@@ -47,6 +52,7 @@ import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescri
 import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor.DRY_RUN;
 import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor.INTEGRITY_CHECK;
 import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor.RESTORE_BLOBS;
+import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor.SINCE_DAYS;
 import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor.UNDELETE_BLOBS;
 import static org.sonatype.nexus.blobstore.restore.datastore.DefaultIntegrityCheckStrategy.DEFAULT_NAME;
 
@@ -74,6 +80,8 @@ public class RestoreMetadataTask
 
   private final MaintenanceService maintenanceService;
 
+  private final BlobStoreReconciliationLogger reconciliationLogger;
+
   @Inject
   public RestoreMetadataTask(
       final BlobStoreManager blobStoreManager,
@@ -82,7 +90,8 @@ public class RestoreMetadataTask
       final BlobStoreUsageChecker blobStoreUsageChecker,
       final DryRunPrefix dryRunPrefix,
       final Map<String, IntegrityCheckStrategy> integrityCheckStrategies,
-      final MaintenanceService maintenanceService)
+      final MaintenanceService maintenanceService,
+      final BlobStoreReconciliationLogger reconciliationLogger)
   {
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.repositoryManager = checkNotNull(repositoryManager);
@@ -92,6 +101,7 @@ public class RestoreMetadataTask
     this.defaultIntegrityCheckStrategy = checkNotNull(integrityCheckStrategies.get(DEFAULT_NAME));
     this.integrityCheckStrategies = checkNotNull(integrityCheckStrategies);
     this.maintenanceService = checkNotNull(maintenanceService);
+    this.reconciliationLogger = checkNotNull(reconciliationLogger);
   }
 
   @Override
@@ -106,10 +116,11 @@ public class RestoreMetadataTask
     boolean restoreBlobs = getConfiguration().getBoolean(RESTORE_BLOBS, false);
     boolean undeleteBlobs = getConfiguration().getBoolean(UNDELETE_BLOBS, false);
     boolean integrityCheck = getConfiguration().getBoolean(INTEGRITY_CHECK, false);
+    Integer sinceDays = getConfiguration().getInteger(SINCE_DAYS, -1);
 
     BlobStore blobStore = blobStoreManager.get(blobStoreId);
 
-    restore(blobStore, restoreBlobs, undeleteBlobs, dryRun);
+    restore(blobStore, restoreBlobs, undeleteBlobs, dryRun, sinceDays);
 
     blobStoreIntegrityCheck(integrityCheck, blobStoreId, dryRun);
 
@@ -120,7 +131,8 @@ public class RestoreMetadataTask
       final BlobStore blobStore,
       final boolean restore,
       final boolean undelete,
-      final boolean dryRun) // NOSONAR
+      final boolean dryRun,
+      final Integer sinceDays) // NOSONAR
   {
     if (!restore && !undelete) {
       log.warn("No repair/restore operations selected");
@@ -138,7 +150,7 @@ public class RestoreMetadataTask
     }
 
     try (ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60)) {
-      for (BlobId blobId : (Iterable<BlobId>) blobStore.getBlobIdStream()::iterator) {
+      for (BlobId blobId : (Iterable<BlobId>) getBlobIdStream(blobStore, sinceDays)::iterator) {
         try {
           if (isCanceled()) {
             log.info("Restore metadata task for {} was canceled", blobStore.getBlobStoreConfiguration().getName());
@@ -173,6 +185,18 @@ public class RestoreMetadataTask
       }
 
       updateAssets(touchedRepositories, updateAssets);
+    }
+  }
+
+  private Stream<BlobId> getBlobIdStream(final BlobStore blobStore, final Integer sinceDays) {
+    if (isNull(sinceDays) || sinceDays < 0) {
+      log.info("Will process all blobs");
+      return blobStore.getBlobIdStream();
+    }
+    else {
+      LocalDate sinceDate = now().minusDays(sinceDays);
+      log.info("Will process blobs created within last {} days, that is since {}", sinceDays, sinceDate);
+      return reconciliationLogger.getBlobsCreatedSince(blobStore, sinceDate);
     }
   }
 
@@ -211,7 +235,7 @@ public class RestoreMetadataTask
   }
 
   protected void integrityCheckFailedHandler(final Repository repository, final Asset asset, final boolean isDryRun) {
-    log.debug("{}Removing asset {} from repository {}, blob integrity check failed", isDryRun ? dryRunPrefix.get() : "",
+    log.info("{}Removing asset {} from repository {}, blob integrity check failed", isDryRun ? dryRunPrefix.get() : "",
         asset.path(), repository.getName());
 
     if (!isDryRun) {

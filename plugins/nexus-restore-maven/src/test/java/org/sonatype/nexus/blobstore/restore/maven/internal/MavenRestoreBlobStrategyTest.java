@@ -13,16 +13,21 @@
 package org.sonatype.nexus.blobstore.restore.maven.internal;
 
 import java.io.ByteArrayInputStream;
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.Properties;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobAttributes;
+import org.sonatype.nexus.blobstore.api.BlobId;
+import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
@@ -34,6 +39,7 @@ import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.sonatype.nexus.repository.view.Payload;
 
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -73,6 +79,18 @@ public class MavenRestoreBlobStrategyTest
 
   @Mock
   private Blob blob;
+
+  @Mock
+  private BlobId blobId;
+
+  @Mock
+  private BlobAttributes blobAttributes;
+
+  @Mock
+  private AssetBlob assetBlob;
+
+  @Mock
+  private BlobMetrics blobMetrics;
 
   @Mock
   private BlobStore blobStore;
@@ -126,12 +144,17 @@ public class MavenRestoreBlobStrategyTest
     when(fluentAssetBuilder.find()).thenReturn(Optional.of(asset));
 
     when(asset.component()).thenReturn(empty());
+    when(asset.blob()).thenReturn(Optional.of(assetBlob));
 
     when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);
     when(repository.optionalFacet(MavenContentFacet.class)).thenReturn(Optional.of(mavenFacet));
     when(repository.facet(MavenContentFacet.class)).thenReturn(mavenFacet);
 
     when(blob.getInputStream()).thenReturn(new ByteArrayInputStream(blobBytes));
+    when(blob.getId()).thenReturn(blobId);
+    when(blob.getMetrics()).thenReturn(blobMetrics);
+
+    when(blobAttributes.isDeleted()).thenReturn(false);
 
     when(mavenPathParser.parsePath(BLOB_NAME)).thenReturn(mavenPath);
     when(mavenPathParser.isRepositoryMetadata(mavenPath)).thenReturn(false);
@@ -141,6 +164,7 @@ public class MavenRestoreBlobStrategyTest
     when(blobStoreConfiguration.getName()).thenReturn(TEST_BLOB_STORE_NAME);
 
     when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
+    when(blobStore.getBlobAttributes(blobId)).thenReturn(blobAttributes);
 
     underTest = new MavenRestoreBlobStrategy(dryRunPrefix, repositoryManager, mavenPathParser);
   }
@@ -200,6 +224,32 @@ public class MavenRestoreBlobStrategyTest
   public void testMissingContentFacet() throws Exception {
     when(repository.optionalFacet(MavenContentFacet.class)).thenReturn(Optional.empty());
     underTest.restore(properties, blob, blobStore, false);
+    verifyNoMoreInteractions(mavenFacet);
+  }
+
+  @Test
+  public void shouldSkipDeletedBlob() throws Exception {
+    when(blobAttributes.isDeleted()).thenReturn(true);
+    underTest.restore(properties, blob, blobStore, false);
+    verifyNoMoreInteractions(mavenFacet);
+  }
+
+  @Test
+  public void shouldSkipOlderBlob() throws Exception {
+    when(asset.component()).thenReturn(Optional.of(component));
+    when(assetBlob.blobCreated()).thenReturn(OffsetDateTime.now());
+    when(blobMetrics.getCreationTime()).thenReturn(DateTime.now().minusDays(1));
+    underTest.restore(properties, blob, blobStore, false);
+    verifyNoMoreInteractions(mavenFacet);
+  }
+
+  @Test
+  public void shouldRestoreMoreRecentBlob() throws Exception {
+    when(asset.component()).thenReturn(Optional.of(component));
+    when(assetBlob.blobCreated()).thenReturn(OffsetDateTime.now().minusDays(1));
+    when(blobMetrics.getCreationTime()).thenReturn(DateTime.now());
+    underTest.restore(properties, blob, blobStore, false);
+    verify(mavenFacet).put(eq(mavenPath), any(Payload.class));
     verifyNoMoreInteractions(mavenFacet);
   }
 }

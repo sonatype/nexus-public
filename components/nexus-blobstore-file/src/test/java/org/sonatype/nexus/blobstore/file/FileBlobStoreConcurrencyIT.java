@@ -26,6 +26,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.goodies.testsupport.concurrent.ConcurrentRunner;
+import org.sonatype.nexus.blobstore.BlobStoreReconciliationLogger;
 import org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver;
 import org.sonatype.nexus.blobstore.MetricsInputStream;
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
@@ -93,6 +94,9 @@ public class FileBlobStoreConcurrencyIT
   @Mock
   FileOperations fileOperations;
 
+  @Mock
+  private BlobStoreReconciliationLogger reconciliationLogger;
+
   @Before
   public void setUp() throws Exception {
     Path root = util.createTempDir().toPath();
@@ -116,7 +120,7 @@ public class FileBlobStoreConcurrencyIT
         new SimpleFileOperations(),
         metricsStore,
         config,
-        applicationDirectories, nodeAccess, dryRunPrefix);
+        applicationDirectories, nodeAccess, dryRunPrefix, reconciliationLogger);
     underTest.start();
   }
 

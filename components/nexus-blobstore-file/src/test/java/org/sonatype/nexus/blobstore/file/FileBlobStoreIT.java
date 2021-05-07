@@ -27,6 +27,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.blobstore.BlobStoreReconciliationLogger;
 import org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver;
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.Blob;
@@ -54,9 +55,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import static org.awaitility.Awaitility.await;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.tuple.Pair.of;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
@@ -126,6 +127,9 @@ public class FileBlobStoreIT
   @Mock
   private BlobStoreQuotaService quotaService;
 
+  @Mock
+  private BlobStoreReconciliationLogger reconciliationLogger;
+
   @Before
   public void setUp() throws Exception {
     when(nodeAccess.getId()).thenReturn(UUID.randomUUID().toString());
@@ -148,7 +152,7 @@ public class FileBlobStoreIT
     underTest = new FileBlobStore(blobIdResolver,
         fileOperations,
         applicationDirectories,
-        metricsStore, nodeAccess, dryRunPrefix);
+        metricsStore, nodeAccess, dryRunPrefix, reconciliationLogger);
     underTest.init(config);
     underTest.start();
   }

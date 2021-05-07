@@ -12,16 +12,19 @@
  */
 package org.sonatype.nexus.blobstore.restore.orient;
 
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.nexus.blobstore.BlobStoreReconciliationLogger;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -42,9 +45,12 @@ import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.time.LocalDate.now;
+import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
+import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor.SINCE_DAYS;
 import static org.sonatype.nexus.blobstore.restore.orient.DefaultOrientIntegrityCheckStrategy.DEFAULT_NAME;
 import static org.sonatype.nexus.blobstore.restore.orient.OrientRestoreMetadataTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
 import static org.sonatype.nexus.blobstore.restore.orient.OrientRestoreMetadataTaskDescriptor.DRY_RUN;
@@ -78,6 +84,8 @@ public class OrientRestoreMetadataTask
 
   private final MaintenanceService maintenanceService;
 
+  private final BlobStoreReconciliationLogger reconciliationLogger;
+
   @Inject
   public OrientRestoreMetadataTask(
       final BlobStoreManager blobStoreManager,
@@ -87,7 +95,8 @@ public class OrientRestoreMetadataTask
       final DryRunPrefix dryRunPrefix,
       final Map<String, OrientIntegrityCheckStrategy> integrityCheckStrategies,
       final BucketStore bucketStore,
-      final MaintenanceService maintenanceService)
+      final MaintenanceService maintenanceService,
+      final BlobStoreReconciliationLogger reconciliationLogger)
   {
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.repositoryManager = checkNotNull(repositoryManager);
@@ -98,6 +107,7 @@ public class OrientRestoreMetadataTask
     this.integrityCheckStrategies = checkNotNull(integrityCheckStrategies);
     this.bucketStore = checkNotNull(bucketStore);
     this.maintenanceService = checkNotNull(maintenanceService);
+    this.reconciliationLogger = checkNotNull(reconciliationLogger);
   }
 
   @Override
@@ -112,8 +122,9 @@ public class OrientRestoreMetadataTask
     boolean restoreBlobs = getConfiguration().getBoolean(RESTORE_BLOBS, false);
     boolean undeleteBlobs = getConfiguration().getBoolean(UNDELETE_BLOBS, false);
     boolean integrityCheck = getConfiguration().getBoolean(INTEGRITY_CHECK, false);
+    Integer sinceDays = getConfiguration().getInteger(SINCE_DAYS, -1);
 
-    restore(blobStoreId, restoreBlobs, undeleteBlobs, dryRun);
+    restore(blobStoreId, restoreBlobs, undeleteBlobs, dryRun, sinceDays);
 
     blobStoreIntegrityCheck(integrityCheck, blobStoreId);
 
@@ -124,7 +135,8 @@ public class OrientRestoreMetadataTask
       final String blobStoreName,
       final boolean restore,
       final boolean undelete,
-      final boolean dryRun) // NOSONAR
+      final boolean dryRun,
+      final Integer sinceDays) // NOSONAR
   {
     if (!restore && !undelete) {
       log.warn("No repair/restore operations selected");
@@ -144,7 +156,7 @@ public class OrientRestoreMetadataTask
     }
 
     try (ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60)) {
-      for (BlobId blobId : (Iterable<BlobId>) store.getBlobIdStream()::iterator) {
+      for (BlobId blobId : (Iterable<BlobId>) getBlobIdStream(store, sinceDays)::iterator) {
         try {
           Optional<Context> context = buildContext(blobStoreName, store, blobId);
           if (context.isPresent()) {
@@ -179,6 +191,18 @@ public class OrientRestoreMetadataTask
     }
 
     updateAssets(touchedRepositories, updateAssets);
+  }
+
+  private Stream<BlobId> getBlobIdStream(final BlobStore blobStore, final Integer sinceDays) {
+    if (isNull(sinceDays) || sinceDays < 0) {
+      log.info("Will process all blobs");
+      return blobStore.getBlobIdStream();
+    }
+    else {
+      LocalDate sinceDate = now().minusDays(sinceDays);
+      log.info("Will process blobs created within last {} days, that is since {}", sinceDays, sinceDate);
+      return reconciliationLogger.getBlobsCreatedSince(blobStore, sinceDate);
+    }
   }
 
   private void updateAssets(final Set<Repository> repositories, final boolean updateAssets) {
@@ -217,7 +241,7 @@ public class OrientRestoreMetadataTask
     Bucket bucket = bucketStore.getById(asset.bucketId());
     Repository repository = repositoryManager.get(bucket.getRepositoryName());
 
-    log.debug("Removing asset {} from repository {}, blob integrity check failed", asset.name(), repository.getName());
+    log.info("Removing asset {} from repository {}, blob integrity check failed", asset.name(), repository.getName());
 
     boolean dryRun = getConfiguration().getBoolean(DRY_RUN, false);
     if (!dryRun) {

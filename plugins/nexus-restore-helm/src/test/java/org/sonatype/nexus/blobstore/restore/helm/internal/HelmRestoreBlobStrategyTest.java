@@ -13,21 +13,29 @@
 package org.sonatype.nexus.blobstore.restore.helm.internal;
 
 import java.io.IOException;
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.Properties;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobAttributes;
+import org.sonatype.nexus.blobstore.api.BlobId;
+import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
+import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
+import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.repository.helm.datastore.HelmRestoreFacet;
 
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -75,6 +83,24 @@ public class HelmRestoreBlobStrategyTest
   Blob blob;
 
   @Mock
+  private BlobId blobId;
+
+  @Mock
+  private BlobAttributes blobAttributes;
+
+  @Mock
+  private AssetBlob assetBlob;
+
+  @Mock
+  private BlobMetrics blobMetrics;
+
+  @Mock
+  private FluentAsset fluentAsset;
+
+  @Mock
+  private FluentComponent fluentComponent;
+
+  @Mock
   BlobStore blobStore;
 
   @Mock
@@ -100,6 +126,17 @@ public class HelmRestoreBlobStrategyTest
 
     when(blobStoreConfiguration.getName()).thenReturn(TEST_BLOB_STORE_NAME);
     when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
+
+    when(fluentAsset.component()).thenReturn(Optional.of(fluentComponent));
+    when(fluentAsset.blob()).thenReturn(Optional.of(assetBlob));
+
+    when(blob.getId()).thenReturn(blobId);
+    when(blob.getMetrics()).thenReturn(blobMetrics);
+
+    when(blobAttributes.isDeleted()).thenReturn(false);
+
+    when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
+    when(blobStore.getBlobAttributes(blobId)).thenReturn(blobAttributes);
 
     properties.setProperty("@BlobStore.created-by", "anonymous");
     properties.setProperty("size", "24900");
@@ -146,6 +183,40 @@ public class HelmRestoreBlobStrategyTest
 
   @Test
   public void testPackageIsRestored() throws Exception {
+    restoreBlobStrategy.restore(properties, blob, blobStore, false);
+    verify(helmRestoreFacet).restore(any(), eq(ARCHIVE_PATH));
+    verify(helmRestoreFacet).isRestorable(eq(ARCHIVE_PATH));
+    verifyNoMoreInteractions(helmRestoreFacet);
+  }
+
+  @Test
+  public void shouldSkipDeletedBlob() throws Exception {
+    when(helmRestoreFacet.isRestorable(eq(ARCHIVE_PATH))).thenReturn(true);
+    when(fluentAssetBuilder.find()).thenReturn(Optional.of(fluentAsset));
+    when(blobAttributes.isDeleted()).thenReturn(true);
+    when(helmRestoreFacet.isRestorable(eq(ARCHIVE_PATH))).thenReturn(true);
+    restoreBlobStrategy.restore(properties, blob, blobStore, false);
+    verify(helmRestoreFacet).isRestorable(eq(ARCHIVE_PATH));
+    verifyNoMoreInteractions(helmRestoreFacet);
+  }
+
+  @Test
+  public void shouldSkipOlderBlob() throws Exception {
+    when(helmRestoreFacet.isRestorable(eq(ARCHIVE_PATH))).thenReturn(true);
+    when(fluentAssetBuilder.find()).thenReturn(Optional.of(fluentAsset));
+    when(assetBlob.blobCreated()).thenReturn(OffsetDateTime.now());
+    when(blobMetrics.getCreationTime()).thenReturn(DateTime.now().minusDays(1));
+    restoreBlobStrategy.restore(properties, blob, blobStore, false);
+    verify(helmRestoreFacet).isRestorable(eq(ARCHIVE_PATH));
+    verifyNoMoreInteractions(helmRestoreFacet);
+  }
+
+  @Test
+  public void shouldRestoreMoreRecentBlob() throws Exception {
+    when(helmRestoreFacet.isRestorable(eq(ARCHIVE_PATH))).thenReturn(true);
+    when(fluentAssetBuilder.find()).thenReturn(Optional.of(fluentAsset));
+    when(assetBlob.blobCreated()).thenReturn(OffsetDateTime.now().minusDays(1));
+    when(blobMetrics.getCreationTime()).thenReturn(DateTime.now());
     restoreBlobStrategy.restore(properties, blob, blobStore, false);
     verify(helmRestoreFacet).restore(any(), eq(ARCHIVE_PATH));
     verify(helmRestoreFacet).isRestorable(eq(ARCHIVE_PATH));

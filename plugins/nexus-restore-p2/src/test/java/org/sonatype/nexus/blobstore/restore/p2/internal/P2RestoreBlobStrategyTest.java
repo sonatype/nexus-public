@@ -17,26 +17,41 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.Properties;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobAttributes;
+import org.sonatype.nexus.blobstore.api.BlobId;
+import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
+import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.p2.P2RestoreFacet;
+import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
+import org.sonatype.nexus.repository.storage.Bucket;
+import org.sonatype.nexus.repository.storage.Component;
+import org.sonatype.nexus.repository.storage.Query;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
+import org.sonatype.nexus.transaction.UnitOfWork;
 
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
+import static java.util.Collections.singletonList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -47,11 +62,15 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
 /**
  * @since 0.next
  */
-public class P2RestoreBlobStrategyTest extends TestSupport
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(UnitOfWork.class)
+public class P2RestoreBlobStrategyTest
 {
   private static final String PACKAGE_PATH = "https/download.eclipse.org/releases/2019-12/201912181000/plugins/org.eclipse.core.resources_3.13.600.v20191122-2104.jar";
 
@@ -85,6 +104,27 @@ public class P2RestoreBlobStrategyTest extends TestSupport
   Blob blob;
 
   @Mock
+  BlobAttributes blobAttributes;
+
+  @Mock
+  BlobMetrics blobMetrics;
+
+  @Mock
+  Asset asset;
+
+  @Mock
+  Component component;
+
+  @Mock
+  EntityMetadata entityMetadata;
+
+  @Mock
+  EntityId entityId;
+
+  @Mock
+  Query query;
+
+  @Mock
   BlobStore blobStore;
 
   @Mock
@@ -100,7 +140,7 @@ public class P2RestoreBlobStrategyTest extends TestSupport
   private P2RestoreBlobStrategy restoreBlobStrategy;
 
   @Before
-  public void setup() {
+  public void setup() throws IOException {
     restoreBlobStrategy = new P2RestoreBlobStrategy(nodeAccess, repositoryManager, blobStoreManager, new DryRunPrefix("dryrun"));
 
     when(repositoryManager.get(anyString())).thenReturn(repository);
@@ -108,6 +148,7 @@ public class P2RestoreBlobStrategyTest extends TestSupport
     when(repository.optionalFacet(P2RestoreFacet.class)).thenReturn(Optional.of(p2RestoreFacet));
     when(repository.optionalFacet(StorageFacet.class)).thenReturn(Optional.of(storageFacet));
     when(blob.getInputStream()).thenReturn(new ByteArrayInputStream(blobBytes));
+    when(blob.getMetrics()).thenReturn(blobMetrics);
     when(p2RestoreBlobData.getBlobData()).thenReturn(restoreBlobData);
     when(restoreBlobData.getBlobName()).thenReturn(PACKAGE_PATH);
     when(restoreBlobData.getRepository()).thenReturn(repository);
@@ -115,11 +156,31 @@ public class P2RestoreBlobStrategyTest extends TestSupport
     when(restoreBlobData.getBlobStore()).thenReturn(blobStore);
     when(restoreBlobData.getRepository()).thenReturn(repository);
 
+    when(p2RestoreFacet.getComponentQuery(eq(blob), anyString(), anyString())).thenReturn(query);
+
+    when(storageTx.findComponents(eq(query), any(Iterable.class))).thenReturn(singletonList(component));
+    when(storageTx.findAssetWithProperty(eq(P_NAME), eq(PACKAGE_PATH), any(Bucket.class))).thenReturn(asset);
+
     when(storageFacet.txSupplier()).thenReturn(() -> storageTx);
+    when(storageFacet.blobStore()).thenReturn(blobStore);
+
+    when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
+    when(blobStore.getBlobAttributes(any(BlobId.class))).thenReturn(blobAttributes);
+
+    when(blobAttributes.isDeleted()).thenReturn(false);
+
+    when(asset.componentId()).thenReturn(entityId);
+
+    when(component.getEntityMetadata()).thenReturn(entityMetadata);
+
+    when(entityMetadata.getId()).thenReturn(entityId);
 
     when(blobStoreManager.get(TEST_BLOB_STORE_NAME)).thenReturn(blobStore);
     when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
     when(blobStoreConfiguration.getName()).thenReturn(TEST_BLOB_STORE_NAME);
+
+    mockStatic(UnitOfWork.class);
+    Mockito.when(UnitOfWork.currentTx()).thenReturn(storageTx);
 
     properties.setProperty("@BlobStore.created-by", "anonymous");
     properties.setProperty("size", "894185");
@@ -189,5 +250,39 @@ public class P2RestoreBlobStrategyTest extends TestSupport
   {
     restoreBlobStrategy.getComponentQuery(p2RestoreBlobData);
     verify(p2RestoreFacet, times(1)).getComponentQuery(any(), any(), any());
+  }
+
+  @Test
+  public void shouldSkipDeletedBlob() throws Exception {
+    when(blobAttributes.isDeleted()).thenReturn(true);
+    restoreBlobStrategy.restore(properties, blob, blobStore, false);
+    verifyNoMoreInteractions(p2RestoreFacet);
+  }
+
+  @Test
+  public void shouldSkipOlderBlob() throws Exception {
+    when(p2RestoreFacet.assetExists(PACKAGE_PATH)).thenReturn(true);
+    when(p2RestoreFacet.componentRequired(PACKAGE_PATH)).thenReturn(true);
+    when(asset.blobCreated()).thenReturn(DateTime.now());
+    when(blobMetrics.getCreationTime()).thenReturn(DateTime.now().minusDays(1));
+    restoreBlobStrategy.restore(properties, blob, blobStore, false);
+    verify(p2RestoreFacet).assetExists(PACKAGE_PATH);
+    verify(p2RestoreFacet).componentRequired(PACKAGE_PATH);
+    verify(p2RestoreFacet).getComponentQuery(eq(blob), anyString(), anyString());
+    verifyNoMoreInteractions(p2RestoreFacet);
+  }
+
+  @Test
+  public void shouldRestoreMoreRecentBlob() throws Exception {
+    when(p2RestoreFacet.assetExists(PACKAGE_PATH)).thenReturn(true);
+    when(p2RestoreFacet.componentRequired(PACKAGE_PATH)).thenReturn(true);
+    when(asset.blobCreated()).thenReturn(DateTime.now().minusDays(1));
+    when(blobMetrics.getCreationTime()).thenReturn(DateTime.now());
+    restoreBlobStrategy.restore(properties, blob, blobStore, false);
+    verify(p2RestoreFacet).assetExists(PACKAGE_PATH);
+    verify(p2RestoreFacet).componentRequired(PACKAGE_PATH);
+    verify(p2RestoreFacet).getComponentQuery(any(Blob.class), anyString(), anyString());
+    verify(p2RestoreFacet).restore(any(AssetBlob.class), eq(PACKAGE_PATH));
+    verifyNoMoreInteractions(p2RestoreFacet);
   }
 }

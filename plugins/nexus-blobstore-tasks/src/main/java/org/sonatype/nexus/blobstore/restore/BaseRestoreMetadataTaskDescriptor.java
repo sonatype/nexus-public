@@ -16,6 +16,7 @@ import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
 import org.sonatype.nexus.formfields.CheckboxFormField;
 import org.sonatype.nexus.formfields.ComboboxFormField;
+import org.sonatype.nexus.formfields.NumberTextFormField;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
@@ -40,6 +41,8 @@ public abstract class BaseRestoreMetadataTaskDescriptor
 
   public static final String DRY_RUN = "dryRun";
 
+  public static final String SINCE_DAYS = "sinceDays";
+
   private static final Messages messages = I18N.create(Messages.class);
 
   public BaseRestoreMetadataTaskDescriptor(final Class<? extends TaskSupport> restoreMetadataTaskClass) {
@@ -57,6 +60,9 @@ public abstract class BaseRestoreMetadataTaskDescriptor
         new CheckboxFormField(DRY_RUN,
             messages.dryRunLabel(),
             messages.dryRunHelpText(), OPTIONAL).withInitialValue(false),
+        new NumberTextFormField(SINCE_DAYS,
+            messages.sinceDaysLabel(),
+            messages.sinceDaysHelpText(), OPTIONAL).withMinimumValue(0),
         new CheckboxFormField(RESTORE_BLOBS,
             messages.restoreBlobsLabel(),
             messages.restoreBlobsHelpText(), OPTIONAL).withInitialValue(true),
@@ -104,5 +110,12 @@ public abstract class BaseRestoreMetadataTaskDescriptor
 
     @DefaultMessage("Verify integrity between asset metadata and blob properties")
     String integrityCheckHelpText();
+
+    @DefaultMessage("Only blobs created since X days ago")
+    String sinceDaysLabel();
+
+    @DefaultMessage("Attempt to reconcile blobs only created within specified last number of days (inclusive). " +
+        "Leave empty to reconcile all blobs (this may take a very long time to finish)")
+    String sinceDaysHelpText();
   }
 }

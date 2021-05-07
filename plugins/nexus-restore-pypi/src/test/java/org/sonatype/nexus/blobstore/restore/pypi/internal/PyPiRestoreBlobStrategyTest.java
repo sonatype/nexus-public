@@ -15,11 +15,15 @@ package org.sonatype.nexus.blobstore.restore.pypi.internal;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.Properties;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobAttributes;
+import org.sonatype.nexus.blobstore.api.BlobId;
+import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
@@ -27,6 +31,7 @@ import org.sonatype.nexus.blobstore.restore.pypi.internal.orient.PyPiRestoreBlob
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
@@ -37,6 +42,7 @@ import org.sonatype.nexus.repository.pypi.datastore.PypiContentFacet;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 import com.google.common.io.Resources;
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -65,6 +71,30 @@ public class PyPiRestoreBlobStrategyTest
 
   @Mock
   Blob blob;
+
+  @Mock
+  private BlobId blobId;
+
+  @Mock
+  private BlobAttributes blobAttributes;
+
+  @Mock
+  private AssetBlob assetBlob;
+
+  @Mock
+  private BlobMetrics blobMetrics;
+
+  @Mock
+  private FluentAsset fluentAsset;
+
+  @Mock
+  private FluentAssets fluentAssets;
+
+  @Mock
+  private FluentAssetBuilder builder;
+
+  @Mock
+  private FluentComponent fluentComponent;
 
   @Mock
   Repository repository;
@@ -122,52 +152,60 @@ public class PyPiRestoreBlobStrategyTest
     byte[] blobBytes = Resources.toByteArray(Resources.getResource(getClass(),
         "pyglet-1.2.1.zip"));
     when(blob.getInputStream()).thenReturn(new ByteArrayInputStream(blobBytes));
+    when(blob.getId()).thenReturn(blobId);
+    when(blob.getMetrics()).thenReturn(blobMetrics);
+
+    when(blobAttributes.isDeleted()).thenReturn(false);
 
     when(blobStoreConfiguration.getName()).thenReturn(TEST_BLOB_STORE_NAME);
 
     when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
+    when(blobStore.getBlobAttributes(blobId)).thenReturn(blobAttributes);
+
+    when(contentFacet.assets()).thenReturn(fluentAssets);
+
+    when(fluentAssets.path(anyString())).thenReturn(builder);
+
+    when(fluentAsset.attributes()).thenReturn(new NestedAttributesMap());
+    when(fluentAsset.component()).thenReturn(Optional.of(fluentComponent));
+    when(fluentAsset.blob()).thenReturn(Optional.of(assetBlob));
+
+    when(builder.find()).thenReturn(Optional.of(fluentAsset));
+
+    when(fluentComponent.attributes()).thenReturn(new NestedAttributesMap());
+
     when(pyPiRestoreBlobData.getBlobData()).thenReturn(restoreBlobData);
+    when(pyPiRestoreBlobData.getBlobData().getBlobName()).thenReturn(PACKAGE_PATH);
+
+    when(restoreBlobData.getRepository()).thenReturn(repository);
 
     TempBlob tempBlobMock = mock(TempBlob.class);
     when(tempBlobMock.get()).thenReturn(new ByteArrayInputStream(blobBytes));
     when(pypiContentFacet.getTempBlob(any(InputStream.class), anyString())).thenReturn(tempBlobMock);
+    when(pypiContentFacet.findOrCreateComponent(anyString(), anyString(), anyString())).thenReturn(fluentComponent);
   }
 
   @Test
   public void testPackageRestore() throws Exception {
-    FluentComponent component = mock(FluentComponent.class);
-    when(component.attributes()).thenReturn(new NestedAttributesMap());
-    FluentAsset asset = mockAsset();
-    when(asset.attributes()).thenReturn(new NestedAttributesMap());
-    when(pypiContentFacet.findOrCreateComponent(anyString(), anyString(), anyString())).thenReturn(component);
-    when(pypiContentFacet.saveAsset(eq(PACKAGE_PATH), eq(component), anyString(), any(TempBlob.class))).thenReturn(asset);
-    when(restoreBlobData.getRepository()).thenReturn(repository);
-    when(pyPiRestoreBlobData.getBlobData().getBlobName()).thenReturn(PACKAGE_PATH);
+    when(pypiContentFacet.findOrCreateComponent(anyString(), anyString(), anyString())).thenReturn(fluentComponent);
+    when(pypiContentFacet.saveAsset(eq(PACKAGE_PATH), eq(fluentComponent), anyString(), any(TempBlob.class))).thenReturn(fluentAsset);
+    when(builder.find()).thenReturn(Optional.empty());
+
     underTest.restore(packageProps, blob, blobStore, false);
 
     verify(contentFacet.assets().path(PACKAGE_PATH)).find();
     verify(pypiContentFacet).findOrCreateComponent(anyString(), anyString(), anyString());
-    verify(pypiContentFacet).saveAsset(eq(PACKAGE_PATH), eq(component), anyString(), any(TempBlob.class));
+    verify(pypiContentFacet).saveAsset(eq(PACKAGE_PATH), eq(fluentComponent), anyString(), any(TempBlob.class));
     verify(pypiContentFacet).getTempBlob(any(InputStream.class), anyString());
 
     verifyNoMoreInteractions(pypiContentFacet);
-  }
-
-  private FluentAsset mockAsset() {
-    FluentAsset asset = mock(FluentAsset.class);
-    FluentAssets fluentAssets = mock(FluentAssets.class);
-    FluentAssetBuilder builder = mock(FluentAssetBuilder.class);
-    when(contentFacet.assets()).thenReturn(fluentAssets);
-    when(fluentAssets.path(anyString())).thenReturn(builder);
-    when(builder.find()).thenReturn(Optional.empty());
-    return asset;
   }
 
   @Test
   public void testIndexRestore() throws Exception {
     when(restoreBlobData.getRepository()).thenReturn(repository);
     when(pyPiRestoreBlobData.getBlobData().getBlobName()).thenReturn(INDEX_PATH);
-    mockAsset();
+    when(builder.find()).thenReturn(Optional.empty());
 
     underTest.restore(indexProps, blob, blobStore, false);
 
@@ -203,6 +241,37 @@ public class PyPiRestoreBlobStrategyTest
 
     verify(contentFacet.assets().path(PACKAGE_PATH)).find();
 
+    verifyNoMoreInteractions(pypiContentFacet);
+  }
+
+  @Test
+  public void shouldSkipDeletedBlob() throws Exception {
+    when(blobAttributes.isDeleted()).thenReturn(true);
+    underTest.restore(packageProps, blob, blobStore, false);
+    verifyNoMoreInteractions(pypiContentFacet);
+  }
+
+  @Test
+  public void shouldSkipOlderBlob() throws Exception {
+    when(pypiContentFacet.findOrCreateComponent(anyString(), anyString(), anyString())).thenReturn(fluentComponent);
+    when(pypiContentFacet.saveAsset(eq(PACKAGE_PATH), eq(fluentComponent), anyString(), any(TempBlob.class))).thenReturn(fluentAsset);
+    when(assetBlob.blobCreated()).thenReturn(OffsetDateTime.now());
+    when(blobMetrics.getCreationTime()).thenReturn(DateTime.now().minusDays(1));
+    underTest.restore(packageProps, blob, blobStore, false);
+    verifyNoMoreInteractions(pypiContentFacet);
+  }
+
+  @Test
+  public void shouldRestoreMoreRecentBlob() throws Exception {
+    when(pypiContentFacet.findOrCreateComponent(anyString(), anyString(), anyString())).thenReturn(fluentComponent);
+    when(pypiContentFacet.saveAsset(eq(PACKAGE_PATH), eq(fluentComponent), anyString(), any(TempBlob.class))).thenReturn(fluentAsset);
+    when(assetBlob.blobCreated()).thenReturn(OffsetDateTime.now().minusDays(1));
+    when(blobMetrics.getCreationTime()).thenReturn(DateTime.now());
+    underTest.restore(packageProps, blob, blobStore, false);
+    verify(contentFacet.assets().path(PACKAGE_PATH)).find();
+    verify(pypiContentFacet).findOrCreateComponent(anyString(), anyString(), anyString());
+    verify(pypiContentFacet).saveAsset(eq(PACKAGE_PATH), eq(fluentComponent), anyString(), any(TempBlob.class));
+    verify(pypiContentFacet).getTempBlob(any(InputStream.class), anyString());
     verifyNoMoreInteractions(pypiContentFacet);
   }
 }
