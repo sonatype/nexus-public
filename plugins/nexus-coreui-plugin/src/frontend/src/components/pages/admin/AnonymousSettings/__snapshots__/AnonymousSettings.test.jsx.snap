@@ -110,7 +110,7 @@ exports[`AnonymousSettings renders correctly 1`] = `
             >
               <label
                 class="nx-label"
-                for="nx-form-group-child-11111111"
+                for="userId"
               >
                 <span
                   class="nx-label__text"
@@ -125,11 +125,10 @@ exports[`AnonymousSettings renders correctly 1`] = `
                   class="nx-text-input__box"
                 >
                   <input
-                    aria-describedby=""
-                    aria-errormessage="nx-text-input-invalid-message-22222222"
+                    aria-errormessage="nx-text-input-invalid-message-11111111"
                     aria-invalid="false"
                     class="nx-text-input__input"
-                    id="nx-form-group-child-11111111"
+                    id="userId"
                     name="userId"
                     type="text"
                     value="testUser"
@@ -167,7 +166,7 @@ exports[`AnonymousSettings renders correctly 1`] = `
                 </div>
                 <div
                   class="nx-text-input__invalid-message"
-                  id="nx-text-input-invalid-message-22222222"
+                  id="nx-text-input-invalid-message-11111111"
                   role="alert"
                 />
               </div>
@@ -177,7 +176,7 @@ exports[`AnonymousSettings renders correctly 1`] = `
             >
               <label
                 class="nx-label"
-                for="nx-form-group-child-33333333"
+                for="nx-form-group-child-22222222"
               >
                 <span
                   class="nx-label__text"
@@ -191,7 +190,7 @@ exports[`AnonymousSettings renders correctly 1`] = `
                 <select
                   aria-describedby=""
                   class="nx-form-select"
-                  id="nx-form-group-child-33333333"
+                  id="nx-form-group-child-22222222"
                   name="realmName"
                 >
                   <option
