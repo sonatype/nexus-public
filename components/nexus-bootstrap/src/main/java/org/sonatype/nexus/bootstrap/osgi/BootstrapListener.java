@@ -246,8 +246,6 @@ public class BootstrapListener
         // exclude unfinished format features
         properties.setProperty("nexus-exclude-features",
                 "nexus-repository-npm," +
-                "nexus-repository-docker," +
-                "nexus-restore-docker," +
                 properties.getProperty("nexus-exclude-features", ""));
       }
     }
