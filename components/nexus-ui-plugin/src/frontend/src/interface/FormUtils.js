@@ -312,6 +312,7 @@ export default class FormUtils {
     }
 
     return {
+      id: join('.', name),
       name: join('.', name),
       value: String(pathOr(defaultValue, name, data)),
       isPristine: hasPath(name, isTouched) ? !path(name, isTouched) : true,

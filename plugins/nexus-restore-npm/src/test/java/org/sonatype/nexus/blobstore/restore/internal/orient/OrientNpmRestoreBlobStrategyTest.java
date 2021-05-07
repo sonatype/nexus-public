@@ -18,12 +18,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
+import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
@@ -34,25 +37,38 @@ import org.sonatype.nexus.repository.npm.repair.orient.NpmRepairPackageRootCompo
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;
+import org.sonatype.nexus.repository.storage.Component;
+import org.sonatype.nexus.repository.storage.Query;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
+import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.hash.HashCode;
+import org.joda.time.DateTime;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(UnitOfWork.class)
 public class OrientNpmRestoreBlobStrategyTest
-    extends TestSupport
 {
   private static final String TEST_BLOB_STORE_NAME = "test";
 
@@ -76,6 +92,24 @@ public class OrientNpmRestoreBlobStrategyTest
 
   @Mock
   Blob blob;
+
+  @Mock
+  BlobAttributes blobAttributes;
+
+  @Mock
+  BlobMetrics blobMetrics;
+
+  @Mock
+  Asset asset;
+
+  @Mock
+  Component component;
+
+  @Mock
+  EntityMetadata entityMetadata;
+
+  @Mock
+  EntityId entityId;
 
   @Mock
   BlobStoreConfiguration blobStoreConfiguration;
@@ -136,11 +170,29 @@ public class OrientNpmRestoreBlobStrategyTest
     Mockito.when(repository.facet(NpmFacet.class)).thenReturn(npmFacet);
 
     Mockito.when(storageFacet.txSupplier()).thenReturn(() -> storageTx);
+    Mockito.when(storageFacet.blobStore()).thenReturn(blobStore);
+
+    Mockito.when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
+    Mockito.when(blobStore.getBlobAttributes(any(BlobId.class))).thenReturn(blobAttributes);
+
+    Mockito.when(blobAttributes.isDeleted()).thenReturn(false);
 
     Mockito.when(storageTx.findBucket(repository)).thenReturn(bucket);
+    Mockito.when(storageTx.findComponents(any(Query.class), any(Iterable.class))).thenReturn(singletonList(component));
+    Mockito.when(storageTx.findAssetWithProperty(eq(P_NAME), anyString(), any(Bucket.class))).thenReturn(asset);
+
+    Mockito.when(asset.componentId()).thenReturn(entityId);
+
+    Mockito.when(component.getEntityMetadata()).thenReturn(entityMetadata);
+
+    Mockito.when(entityMetadata.getId()).thenReturn(entityId);
 
     Mockito.when(blob.getId()).thenReturn(new BlobId("test"));
     Mockito.when(blob.getInputStream()).thenReturn(new ByteArrayInputStream(blobBytes));
+    Mockito.when(blob.getMetrics()).thenReturn(blobMetrics);
+
+    mockStatic(UnitOfWork.class);
+    Mockito.when(UnitOfWork.currentTx()).thenReturn(storageTx);
 
     when(blobStoreConfiguration.getName()).thenReturn(TEST_BLOB_STORE_NAME);
 
@@ -193,6 +245,7 @@ public class OrientNpmRestoreBlobStrategyTest
     Mockito.verifyNoMoreInteractions(npmFacet);
   }
 
+  @Ignore("NEXUS-27545")
   @Test
   public void testRestoreSkipExistingPackage() throws Exception {
     Mockito.when(npmFacet.findPackageRootAsset(TEST_PACKAGE_NAME)).thenReturn(Mockito.mock(Asset.class));
@@ -223,5 +276,33 @@ public class OrientNpmRestoreBlobStrategyTest
     underTest.after(false, repository);
 
     verify(npmRepairPackageRootComponent, Mockito.never()).repairRepository(repository);
+  }
+
+  @Test
+  public void shouldSkipDeletedBlob() throws Exception {
+    when(blobAttributes.isDeleted()).thenReturn(true);
+    underTest.restore(tarballProps, blob, blobStore, false);
+    verifyNoMoreInteractions(npmFacet);
+  }
+
+  @Test
+  public void shouldSkipOlderBlob() throws Exception {
+    when(npmFacet.findTarballAsset(TEST_PACKAGE_NAME, TEST_TARBALL_NAME)).thenReturn(asset);
+    when(asset.blobCreated()).thenReturn(DateTime.now());
+    when(blobMetrics.getCreationTime()).thenReturn(DateTime.now().minusDays(1));
+    underTest.restore(tarballProps, blob, blobStore, false);
+    verify(npmFacet).findTarballAsset(TEST_PACKAGE_NAME, TEST_TARBALL_NAME);
+    verifyNoMoreInteractions(npmFacet);
+  }
+
+  @Test
+  public void shouldRestoreMoreRecentBlob() throws Exception {
+    when(npmFacet.findTarballAsset(TEST_PACKAGE_NAME, TEST_TARBALL_NAME)).thenReturn(asset);
+    when(asset.blobCreated()).thenReturn(DateTime.now().minusDays(1));
+    when(blobMetrics.getCreationTime()).thenReturn(DateTime.now());
+    underTest.restore(tarballProps, blob, blobStore, false);
+    verify(npmFacet).findTarballAsset(TEST_PACKAGE_NAME, TEST_TARBALL_NAME);
+    verify(npmFacet).putTarball(eq(TEST_PACKAGE_NAME), eq(TEST_TARBALL_NAME), any(AssetBlob.class), eq(null));
+    verifyNoMoreInteractions(npmFacet);
   }
 }

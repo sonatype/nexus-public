@@ -54,8 +54,6 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
     extends StateGuardLifecycleSupport
     implements BlobStore
 {
-  public static final String BLOB_ATTRIBUTE_SUFFIX = ".properties";
-
   public static final String CONTENT_TMP_PATH = "/content/tmp/";
 
   private final Map<String, Timer> timers = new ConcurrentHashMap<>();
@@ -257,7 +255,7 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
   protected String getBlobIdFromAttributeFilePath(final T attributeFilePath) {
     if (UUID_PATTERN.matcher(attributeFilePath.getFullPath()).matches()) {
       String filename = attributeFilePath.getFileName();
-      return filename.substring(0, filename.length() - BLOB_ATTRIBUTE_SUFFIX.length());
+      return filename.substring(0, filename.length() - BLOB_FILE_ATTRIBUTES_SUFFIX.length());
     }
     try {
       BlobAttributes fileBlobAttributes = getBlobAttributes(attributeFilePath);

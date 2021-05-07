@@ -15,6 +15,7 @@ package org.sonatype.nexus.testsuite.testsupport.fixtures;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -27,6 +28,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 import org.sonatype.nexus.blobstore.group.internal.WriteToFirstMemberFillPolicy;
+import org.sonatype.nexus.common.io.DirectoryHelper;
 
 import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
@@ -81,19 +83,6 @@ public class BlobStoreRule
     return blobStore;
   }
 
-  public void cleanBlobstore(final String name) {
-    BlobStore blobStore = blobStoreManagerProvider.get().get(name);
-    blobStore.getBlobIdStream().forEach(blobId -> {
-      blobStore.deleteHard(blobId);
-    });
-    try {
-      blobStore.flushMetrics();
-    }
-    catch (IOException e) {
-      log.error("Failed to flush blobstore metrics.", e);
-    }
-  }
-
   @Override
   public void after() {
     blobStoreGroupNames.forEach(blobStoreGroupName -> {
@@ -106,11 +95,56 @@ public class BlobStoreRule
     });
     blobStoreNames.forEach(blobStoreName -> {
       try {
-        blobStoreManagerProvider.get().delete(blobStoreName);
+        BlobStore blobStore = blobStoreManagerProvider.get().get(blobStoreName);
+        if (blobStore == null) {
+          log.warn("Blobstore {} not found, will not delete", blobStoreName);
+        }
+        else {
+          cleanBlobstoreContent(blobStore);
+          blobStoreManagerProvider.get().delete(blobStoreName);
+        }
       }
       catch (Exception e) {
         log.error("Failed to remove blobstore {}", blobStoreName, e);
       }
     });
+    blobStoreGroupNames.clear();
+    blobStoreNames.clear();
+  }
+
+  public void cleanBlobstore(final String name) {
+    BlobStore blobStore = blobStoreManagerProvider.get().get(name);
+
+    if (blobStore == null) {
+      log.error("Unable to remove blobstore {}, not found.", name);
+    }
+    else {
+      try {
+        log.info("Cleaning blobstore {} content", name);
+        cleanBlobstoreContent(blobStore);
+        blobStore.flushMetrics();
+        log.info("Finished cleaning blobstore content");
+      }
+      catch (IOException e) {
+        log.error("Failed to clean blobstore {}.", name, e);
+      }
+    }
+  }
+
+  private void cleanBlobstoreContent(final BlobStore blobstore) {
+    try {
+      log.info("Deleting all Blobids from blobstore {}", blobstore.getBlobStoreConfiguration().getName());
+      blobstore.getBlobIdStream().filter(Objects::nonNull).forEach(blobstore::deleteHard);
+
+      //just in case, dump anything else
+      if (blobstore instanceof FileBlobStore) {
+        FileBlobStore fileBlobStore = (FileBlobStore) blobstore;
+        DirectoryHelper.emptyIfExists(fileBlobStore.getContentDir());
+      }
+      log.info("Completed deleting all Blobids from blobstore {}", blobstore.getBlobStoreConfiguration().getName());
+    }
+    catch (Exception e) {
+      log.error("Failed to removing content from blobstore {}.", blobstore.getBlobStoreConfiguration().getName(), e);
+    }
   }
 }

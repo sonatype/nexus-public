@@ -76,6 +76,8 @@ public class BlobStoreGroup
     extends StateGuardLifecycleSupport
     implements BlobStore
 {
+  private static final String RAW_OBJECTS_NOT_SUPPORTED = "Group BlobStore does not support raw objects";
+
   public static final String TYPE = "Group";
 
   public static final String CONFIG_KEY = "group";
@@ -421,6 +423,27 @@ public class BlobStoreGroup
         "name='" + name + "'," +
         "members='" + members.get() + '\'' +
         '}';
+  }
+
+  @Override
+  public void putRawObject(final Path path, final InputStream in) {
+    throw new UnsupportedOperationException(RAW_OBJECTS_NOT_SUPPORTED);
+  }
+
+  @Nullable
+  @Override
+  public InputStream getRawObject(final Path path) {
+    throw new UnsupportedOperationException(RAW_OBJECTS_NOT_SUPPORTED);
+  }
+
+  @Override
+  public boolean hasRawObject(final Path path) {
+    throw new UnsupportedOperationException(RAW_OBJECTS_NOT_SUPPORTED);
+  }
+
+  @Override
+  public void deleteRawObject(final Path path) {
+    throw new UnsupportedOperationException(RAW_OBJECTS_NOT_SUPPORTED);
   }
 
   /**

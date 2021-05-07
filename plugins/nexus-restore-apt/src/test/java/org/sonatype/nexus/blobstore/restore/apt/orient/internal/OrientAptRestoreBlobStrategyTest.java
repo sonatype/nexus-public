@@ -16,8 +16,10 @@ import java.io.ByteArrayInputStream;
 import java.util.Optional;
 import java.util.Properties;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobAttributes;
+import org.sonatype.nexus.blobstore.api.BlobId;
+import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
@@ -29,13 +31,20 @@ import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.apt.orient.AptRestoreFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
+import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
+import org.sonatype.nexus.transaction.UnitOfWork;
 
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -46,12 +55,15 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(UnitOfWork.class)
 public class OrientAptRestoreBlobStrategyTest
-    extends TestSupport
 {
   OrientAptRestoreBlobStrategy underTest;
 
@@ -92,6 +104,15 @@ public class OrientAptRestoreBlobStrategyTest
   Blob blob;
 
   @Mock
+  BlobAttributes blobAttributes;
+
+  @Mock
+  BlobMetrics blobMetrics;
+
+  @Mock
+  Asset asset;
+
+  @Mock
   BlobStore blobStore;
 
   @Mock
@@ -112,11 +133,20 @@ public class OrientAptRestoreBlobStrategyTest
     when(aptRestoreBlobData.getBlobData()).thenReturn(restoreBlobData);
     when(aptRestoreBlobData.getBlobData().getBlobName()).thenReturn(PACKAGE_PATH);
     when(storageFacet.txSupplier()).thenReturn(() -> storageTx);
+    when(storageFacet.blobStore()).thenReturn(blobStore);
+    when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
+    when(blobStore.getBlobAttributes(any(BlobId.class))).thenReturn(blobAttributes);
+    when(blobAttributes.isDeleted()).thenReturn(false);
     when(blob.getInputStream()).thenReturn(new ByteArrayInputStream(blobBytes));
+    when(blob.getMetrics()).thenReturn(blobMetrics);
     when(blobStoreManager.get(TEST_BLOB_STORE_NAME)).thenReturn(blobStore);
     when(blobStoreConfiguration.getName()).thenReturn(TEST_BLOB_STORE_NAME);
     when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
     when(restoreBlobData.getRepository()).thenReturn(repository);
+    when(restoreBlobData.getBlob()).thenReturn(blob);
+    mockStatic(UnitOfWork.class);
+    when(UnitOfWork.currentTx()).thenReturn(storageTx);
+    when(storageTx.findAssetWithProperty(eq(P_NAME), eq(PACKAGE_PATH), any(Bucket.class))).thenReturn(asset);
 
     properties.setProperty("@BlobStore.created-by", "anonymous");
     properties.setProperty("size", "1330");
@@ -182,6 +212,36 @@ public class OrientAptRestoreBlobStrategyTest
     when(aptRestoreFacet.componentRequired(RELEASE_FILE_PATH)).thenReturn(expected);
     assertThat(underTest.componentRequired(aptRestoreBlobData), is(expected));
     verify(aptRestoreFacet).componentRequired(PACKAGE_PATH);
+    verifyNoMoreInteractions(aptRestoreFacet);
+  }
+
+  @Test
+  public void shouldSkipDeletedBlob() throws Exception {
+    when(blobAttributes.isDeleted()).thenReturn(true);
+    underTest.restore(properties, blob, blobStore, false);
+    verifyNoMoreInteractions(aptRestoreFacet);
+  }
+
+  @Test
+  public void shouldSkipOlderBlob() throws Exception {
+    when(aptRestoreFacet.assetExists(PACKAGE_PATH)).thenReturn(true);
+    when(asset.blobCreated()).thenReturn(DateTime.now());
+    when(blobMetrics.getCreationTime()).thenReturn(DateTime.now().minusDays(1));
+    underTest.restore(properties, blob, blobStore, false);
+    verify(aptRestoreFacet).assetExists(PACKAGE_PATH);
+    verify(aptRestoreFacet).componentRequired(PACKAGE_PATH);
+    verifyNoMoreInteractions(aptRestoreFacet);
+  }
+
+  @Test
+  public void shouldRestoreMoreRecentBlob() throws Exception {
+    when(aptRestoreFacet.assetExists(PACKAGE_PATH)).thenReturn(true);
+    when(asset.blobCreated()).thenReturn(DateTime.now().minusDays(1));
+    when(blobMetrics.getCreationTime()).thenReturn(DateTime.now());
+    underTest.restore(properties, blob, blobStore, false);
+    verify(aptRestoreFacet).assetExists(PACKAGE_PATH);
+    verify(aptRestoreFacet).componentRequired(PACKAGE_PATH);
+    verify(aptRestoreFacet).restore(any(AssetBlob.class), eq(PACKAGE_PATH));
     verifyNoMoreInteractions(aptRestoreFacet);
   }
 }

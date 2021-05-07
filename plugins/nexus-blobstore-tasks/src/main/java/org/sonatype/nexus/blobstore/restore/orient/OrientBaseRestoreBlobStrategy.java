@@ -24,6 +24,7 @@ import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
+import org.sonatype.nexus.blobstore.restore.RestoreBlobDataSupport;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobStrategy;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityMetadata;
@@ -40,10 +41,12 @@ import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreMetadata;
+import org.sonatype.nexus.repository.transaction.TransactionalTouchMetadata;
 import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.collect.Iterables;
+import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Lists.newArrayList;
@@ -59,7 +62,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
  *
  * @since 3.6.1
  */
-public abstract class OrientBaseRestoreBlobStrategy<T>
+public abstract class OrientBaseRestoreBlobStrategy<T extends RestoreBlobDataSupport>
     extends ComponentSupport
     implements RestoreBlobStrategy
 {
@@ -96,7 +99,7 @@ public abstract class OrientBaseRestoreBlobStrategy<T>
       doRestore(storageFacet.get(), blobData, restoreData, isDryRun);
     }
     else {
-      log.debug("Skipping asset, blob store: {}, repository: {}, blob name: {}, blob id: {}",
+      log.info("Skipping asset, blob store: {}, repository: {}, blob name: {}, blob id: {}",
           blobStore.getBlobStoreConfiguration().getName(), blobData.getRepository().getName(), blobData.getBlobName(), blob.getId());
     }
   }
@@ -111,17 +114,31 @@ public abstract class OrientBaseRestoreBlobStrategy<T>
 
     UnitOfWork.begin(storageFacet.txSupplier());
     try {
+      if (isBlobDeleted(blobData)) {
+        log.info("Skipping soft-deleted asset for blob store: {}, repository: {}, blob name: {}, blob id: {}",
+            blobStoreName, repoName, blobName, blob.getId());
+        return;
+      }
+
       if (assetExists(restoreData)) {
         if (shouldDeleteAsset(restoreData, blobData, path)) {
-          log.debug(
+          log.info(
               "Deleting asset as component is required but is not found, blob store: {}, repository: {}, path: {}, "
               + "blob name: {}, blob id: {}", blobStoreName, repoName, path, blobName, blob.getId());
           if (!isDryRun) {
             deleteAsset(blobData.getRepository(), path);
           }
         }
+        else if (isRestoreDataMoreRecent(restoreData, path)) {
+          log.info(
+              "{} Deleting asset as more recent blob will be restored, blob store: {}, repository: {}, path: {}, blob name: {}, blob id: {}",
+              dryRunPrefix.get(), blobStoreName, repoName, path, blobName, blob.getId());
+          if (!isDryRun) {
+            deleteAsset(blobData.getRepository(), path);
+          }
+        }
         else {
-          log.debug(
+          log.info(
               "Skipping as asset already exists, blob store: {}, repository: {}, path: {}, blob name: {}, blob id: {}",
               blobStoreName, repoName, path, blobName, blob.getId());
           return;
@@ -242,6 +259,34 @@ public abstract class OrientBaseRestoreBlobStrategy<T>
    * Determine if the asset already exists
    */
   protected abstract boolean assetExists(@Nonnull final T data) throws IOException;
+
+  /**
+   * Determine if the blob is marked as deleted
+   */
+  @TransactionalTouchMetadata
+  protected boolean isBlobDeleted(@Nonnull final RestoreBlobData data) {
+    return data.getRepository().optionalFacet(StorageFacet.class)
+        .map(StorageFacet::blobStore)
+        .map(blobStore -> blobStore.getBlobAttributes(data.getBlob().getId()).isDeleted())
+        .orElse(true);
+  }
+
+  /**
+   * Whether the restoreData's blob was created more recent than the asset's blob
+   */
+  @TransactionalTouchMetadata
+  protected boolean isRestoreDataMoreRecent(final T restoreData, final String path)
+  {
+    Asset asset = findAsset(restoreData.getBlobData().getRepository(), path);
+    if (asset != null) {
+      DateTime existingBlob = asset.blobCreated();
+      if (existingBlob != null) {
+        DateTime restoredBlob = restoreData.getBlobData().getBlob().getMetrics().getCreationTime();
+        return existingBlob.isBefore(restoredBlob);
+      }
+    }
+    return false;
+  }
 
   // ---- BEGIN ABSTRACT METHODS ---
   // These should probably be made abstract when done. Temporarily provided

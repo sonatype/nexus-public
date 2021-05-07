@@ -13,6 +13,9 @@
 package org.sonatype.nexus.blobstore.restore.datastore;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -20,12 +23,17 @@ import javax.annotation.Nonnull;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobAttributes;
+import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobStrategy;
 import org.sonatype.nexus.common.log.DryRunPrefix;
+import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
+
+import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.commons.lang3.StringUtils.prependIfMissing;
@@ -61,7 +69,13 @@ public abstract class BaseRestoreBlobStrategy<T extends RestoreBlobData>
     String blobStoreName = blobStore.getBlobStoreConfiguration().getName();
 
     if (!canAttemptRestore(restoreData)) {
-      log.debug("Skipping asset for blob store: {}, repository: {}, blob name: {}, blob id: {}", blobStoreName,
+      log.info("Skipping asset for blob store: {}, repository: {}, blob name: {}, blob id: {}", blobStoreName,
+          repoName, blobName, blob.getId());
+      return;
+    }
+
+    if (isDeleted(restoreData, blobStore)) {
+      log.info("Skipping soft-deleted asset for blob store: {}, repository: {}, blob name: {}, blob id: {}", blobStoreName,
           repoName, blobName, blob.getId());
       return;
     }
@@ -75,15 +89,23 @@ public abstract class BaseRestoreBlobStrategy<T extends RestoreBlobData>
       if (asset.isPresent()) {
         FluentAsset fluentAsset = asset.get();
         if (shouldDeleteAsset(restoreData, fluentAsset)) {
-          log.debug(
+          log.info(
               "{} Deleting asset as component is required but is not found, blob store: {}, repository: {}, path: {}, blob name: {}, blob id: {}",
               dryRunPrefix.get(), blobStoreName, repoName, fluentAsset.path(), blobName, blob.getId());
           if (!isDryRun) {
             fluentAsset.delete();
           }
         }
+        else if (isRestoreDataMoreRecent(restoreData, fluentAsset)) {
+          log.info(
+              "{} Deleting asset as more recent blob will be restored, blob store: {}, repository: {}, path: {}, blob name: {}, blob id: {}",
+              dryRunPrefix.get(), blobStoreName, repoName, fluentAsset.path(), blobName, blob.getId());
+          if (!isDryRun) {
+            fluentAsset.delete();
+          }
+        }
         else {
-          log.debug(
+          log.info(
               "Skipping as asset already exists, blob store: {}, repository: {}, path: {}, blob name: {}, blob id: {}",
               blobStoreName, repoName, fluentAsset.path(), blobName, blob.getId());
           return;
@@ -120,6 +142,34 @@ public abstract class BaseRestoreBlobStrategy<T extends RestoreBlobData>
   {
     return isComponentRequired(restoreData)
         && isOrphanedAsset(restoreData, asset);
+  }
+
+  /**
+   * Whether the restoreData's blob was created more recent than the asset's blob
+   */
+  protected boolean isRestoreDataMoreRecent(final T restoreData, final FluentAsset asset)
+  {
+    return asset
+        .blob()
+        .map(AssetBlob::blobCreated)
+        .map(blobCreated -> {
+          DateTime dateTime = restoreData.getBlob().getMetrics().getCreationTime();
+          Instant instant = Instant.ofEpochMilli(dateTime.getMillis());
+          OffsetDateTime restoredBlob = OffsetDateTime.ofInstant(instant, ZoneId.of(dateTime.getZone().getID()));
+          return blobCreated.isBefore(restoredBlob);
+        }).orElse(false);
+  }
+
+  /**
+   * Whether restoreData's blob is marked as deleted (or blob attributes are missing)
+   */
+  protected boolean isDeleted(final T restoreData, final BlobStore blobStore) {
+    BlobId blobId = restoreData.getBlob().getId();
+    BlobAttributes blobAttributes = blobStore.getBlobAttributes(blobId);
+    if (blobAttributes != null) {
+      return blobAttributes.isDeleted();
+    }
+    return true;
   }
 
   /**

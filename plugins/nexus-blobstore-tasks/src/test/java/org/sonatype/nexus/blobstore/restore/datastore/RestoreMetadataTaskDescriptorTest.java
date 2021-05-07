@@ -37,6 +37,6 @@ public class RestoreMetadataTaskDescriptorTest
   @Test
   public void testGetFormFields() {
     List<FormField> formField = underTest.getFormFields();
-    assertThat(formField, hasSize(5));
+    assertThat(formField, hasSize(6));
   }
 }

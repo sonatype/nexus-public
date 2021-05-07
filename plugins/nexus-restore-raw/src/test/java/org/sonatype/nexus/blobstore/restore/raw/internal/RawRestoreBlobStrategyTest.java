@@ -13,16 +13,21 @@
 package org.sonatype.nexus.blobstore.restore.raw.internal;
 
 import java.io.IOException;
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.Properties;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobAttributes;
+import org.sonatype.nexus.blobstore.api.BlobId;
+import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.content.raw.RawContentFacet;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
@@ -30,6 +35,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -72,6 +78,18 @@ public class RawRestoreBlobStrategyTest
   private Blob blob;
 
   @Mock
+  private BlobId blobId;
+
+  @Mock
+  private BlobAttributes blobAttributes;
+
+  @Mock
+  private AssetBlob assetBlob;
+
+  @Mock
+  private BlobMetrics blobMetrics;
+
+  @Mock
   private BlobStore blobStore;
 
   @Mock
@@ -108,8 +126,16 @@ public class RawRestoreBlobStrategyTest
     when(fluentAssetBuilder.find()).thenReturn(Optional.of(asset));
 
     when(asset.component()).thenReturn(empty());
+    when(asset.blob()).thenReturn(Optional.of(assetBlob));
+
+    when(blob.getId()).thenReturn(blobId);
+    when(blob.getMetrics()).thenReturn(blobMetrics);
+
+    when(blobAttributes.isDeleted()).thenReturn(false);
 
     when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
+    when(blobStore.getBlobAttributes(blobId)).thenReturn(blobAttributes);
+
     when(blobStoreConfiguration.getName()).thenReturn(TEST_BLOB_STORE_NAME);
 
     properties = new Properties();
@@ -159,6 +185,35 @@ public class RawRestoreBlobStrategyTest
   public void testRestoreCreatesAsset() throws Exception {
     underTest.restore(properties, blob, blobStore, !DRY_RUN);
 
+    verify(asset, times(1)).delete();
+    verify(rawContentFacet, times(1)).put(eq(BLOB_PATH), any());
+  }
+
+  @Test
+  public void shouldSkipDeletedBlob() throws Exception {
+    when(blobAttributes.isDeleted()).thenReturn(true);
+    underTest.restore(properties, blob, blobStore, false);
+    verifyNoMoreInteractions(rawContentFacet);
+    verify(asset, never()).delete();
+    verify(rawContentFacet, never()).put(eq(BLOB_PATH), any());
+  }
+
+  @Test
+  public void shouldSkipOlderBlob() throws Exception {
+    when(asset.component()).thenReturn(of(component));
+    when(assetBlob.blobCreated()).thenReturn(OffsetDateTime.now());
+    when(blobMetrics.getCreationTime()).thenReturn(DateTime.now().minusDays(1));
+    underTest.restore(properties, blob, blobStore, false);
+    verify(asset, never()).delete();
+    verify(rawContentFacet, never()).put(eq(BLOB_PATH), any());
+  }
+
+  @Test
+  public void shouldRestoreMoreRecentBlob() throws Exception {
+    when(asset.component()).thenReturn(of(component));
+    when(assetBlob.blobCreated()).thenReturn(OffsetDateTime.now().minusDays(1));
+    when(blobMetrics.getCreationTime()).thenReturn(DateTime.now());
+    underTest.restore(properties, blob, blobStore, false);
     verify(asset, times(1)).delete();
     verify(rawContentFacet, times(1)).put(eq(BLOB_PATH), any());
   }

@@ -135,7 +135,7 @@ exports[`LoggingConfigurationForm renders the resolved data 1`] = `
             >
               <label
                 class="nx-label"
-                for="nx-form-group-child-00000000"
+                for="name"
               >
                 <span
                   class="nx-label__text"
@@ -150,12 +150,11 @@ exports[`LoggingConfigurationForm renders the resolved data 1`] = `
                   class="nx-text-input__box"
                 >
                   <input
-                    aria-describedby=""
-                    aria-errormessage="nx-text-input-invalid-message-11111111"
+                    aria-errormessage="nx-text-input-invalid-message-00000000"
                     aria-invalid="false"
                     class="nx-text-input__input"
                     disabled=""
-                    id="nx-form-group-child-00000000"
+                    id="name"
                     name="name"
                     type="text"
                     value="ROOT"
@@ -193,7 +192,7 @@ exports[`LoggingConfigurationForm renders the resolved data 1`] = `
                 </div>
                 <div
                   class="nx-text-input__invalid-message"
-                  id="nx-text-input-invalid-message-11111111"
+                  id="nx-text-input-invalid-message-00000000"
                   role="alert"
                 />
               </div>
@@ -203,7 +202,7 @@ exports[`LoggingConfigurationForm renders the resolved data 1`] = `
             >
               <label
                 class="nx-label"
-                for="nx-form-group-child-22222222"
+                for="nx-form-group-child-11111111"
               >
                 <span
                   class="nx-label__text"
@@ -217,7 +216,7 @@ exports[`LoggingConfigurationForm renders the resolved data 1`] = `
                 <select
                   aria-describedby=""
                   class="nx-form-select"
-                  id="nx-form-group-child-22222222"
+                  id="nx-form-group-child-11111111"
                   name="level"
                 >
                   <option
@@ -345,7 +344,7 @@ exports[`LoggingConfigurationForm requires the name field when creating a new lo
             >
               <label
                 class="nx-label"
-                for="nx-form-group-child-33333333"
+                for="name"
               >
                 <span
                   class="nx-label__text"
@@ -360,11 +359,10 @@ exports[`LoggingConfigurationForm requires the name field when creating a new lo
                   class="nx-text-input__box"
                 >
                   <input
-                    aria-describedby=""
-                    aria-errormessage="nx-text-input-invalid-message-44444444"
+                    aria-errormessage="nx-text-input-invalid-message-22222222"
                     aria-invalid="false"
                     class="nx-text-input__input"
-                    id="nx-form-group-child-33333333"
+                    id="name"
                     name="name"
                     type="text"
                     value=""
@@ -402,7 +400,7 @@ exports[`LoggingConfigurationForm requires the name field when creating a new lo
                 </div>
                 <div
                   class="nx-text-input__invalid-message"
-                  id="nx-text-input-invalid-message-44444444"
+                  id="nx-text-input-invalid-message-22222222"
                   role="alert"
                 />
               </div>
@@ -412,7 +410,7 @@ exports[`LoggingConfigurationForm requires the name field when creating a new lo
             >
               <label
                 class="nx-label"
-                for="nx-form-group-child-55555555"
+                for="nx-form-group-child-33333333"
               >
                 <span
                   class="nx-label__text"
@@ -426,7 +424,7 @@ exports[`LoggingConfigurationForm requires the name field when creating a new lo
                 <select
                   aria-describedby=""
                   class="nx-form-select"
-                  id="nx-form-group-child-55555555"
+                  id="nx-form-group-child-33333333"
                   name="level"
                 >
                   <option

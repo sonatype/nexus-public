@@ -14,12 +14,14 @@ package org.sonatype.nexus.blobstore.restore.orient;
 
 import java.net.URL;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Stream;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.blobstore.BlobStoreReconciliationLogger;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -47,8 +49,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
 import static java.util.Collections.singletonList;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -63,6 +65,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
+import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor.SINCE_DAYS;
 import static org.sonatype.nexus.blobstore.restore.orient.DefaultOrientIntegrityCheckStrategy.DEFAULT_NAME;
 import static org.sonatype.nexus.blobstore.restore.orient.OrientRestoreMetadataTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
 import static org.sonatype.nexus.blobstore.restore.orient.OrientRestoreMetadataTaskDescriptor.DRY_RUN;
@@ -116,6 +119,9 @@ public class OrientRestoreMetadataTaskTest
   @Mock
   MaintenanceService maintenanceService;
 
+  @Mock
+  BlobStoreReconciliationLogger reconciliationLogger;
+
   OrientRestoreMetadataTask underTest;
 
   Map<String, OrientIntegrityCheckStrategy> integrityCheckStrategies;
@@ -134,7 +140,7 @@ public class OrientRestoreMetadataTaskTest
 
     underTest =
         new OrientRestoreMetadataTask(blobStoreManager, repositoryManager, ImmutableMap.of("maven2", restoreBlobStrategy),
-            blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies, bucketStore, maintenanceService);
+            blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies, bucketStore, maintenanceService, reconciliationLogger);
 
     reset(integrityCheckStrategies); // reset this mock so we more easily verify calls
 
@@ -328,7 +334,7 @@ public class OrientRestoreMetadataTaskTest
 
     OrientRestoreMetadataTask underTest =
         new OrientRestoreMetadataTask(blobStoreManager, repositoryManager, ImmutableMap.of("maven2", restoreBlobStrategy),
-            blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies, bucketStore, maintenanceService)
+            blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies, bucketStore, maintenanceService, reconciliationLogger)
         {
       @Override
       public boolean isCanceled() {
@@ -430,5 +436,47 @@ public class OrientRestoreMetadataTaskTest
     verify(restoreBlobStrategy).after(true, repository);
     verify(restoreBlobStrategy, times(0)).after(true, repository2);
     verify(restoreBlobStrategy).after(true, repository3);
+  }
+
+  @Test
+  public void shouldGetAllBlobsToRestoreWhenSinceDaysSetToNegativeNumber() throws Exception {
+    configuration.setBoolean(RESTORE_BLOBS, true);
+    configuration.setBoolean(UNDELETE_BLOBS, true);
+    configuration.setBoolean(INTEGRITY_CHECK, false);
+    configuration.setInteger(SINCE_DAYS, -4);
+    underTest.configure(configuration);
+
+    underTest.execute();
+
+    verify(reconciliationLogger, never()).getBlobsCreatedSince(eq(blobStore), any());
+    verify(blobStore).getBlobIdStream();
+  }
+
+  @Test
+  public void shouldGetAllBlobsToRestoreWhenSinceDaysNotSet() throws Exception {
+    configuration.setBoolean(RESTORE_BLOBS, true);
+    configuration.setBoolean(UNDELETE_BLOBS, true);
+    configuration.setBoolean(INTEGRITY_CHECK, false);
+    underTest.configure(configuration);
+
+    underTest.execute();
+
+    verify(reconciliationLogger, never()).getBlobsCreatedSince(eq(blobStore), any());
+    verify(blobStore).getBlobIdStream();
+  }
+
+  @Test
+  public void shouldGetRecentBlobsWhenSinceDaysConfigured() throws Exception {
+    configuration.setBoolean(RESTORE_BLOBS, true);
+    configuration.setBoolean(UNDELETE_BLOBS, true);
+    configuration.setBoolean(INTEGRITY_CHECK, false);
+    configuration.setInteger(SINCE_DAYS, 2);
+    underTest.configure(configuration);
+    when(reconciliationLogger.getBlobsCreatedSince(eq(blobStore), any())).thenReturn(Stream.empty());
+
+    underTest.execute();
+
+    verify(reconciliationLogger).getBlobsCreatedSince(blobStore, LocalDate.now().minusDays(2));
+    verify(blobStore, never()).getBlobIdStream();
   }
 }

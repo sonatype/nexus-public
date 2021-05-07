@@ -534,6 +534,7 @@ export default class Utils {
     }
 
     return {
+      id: join('.', name),
       name: join('.', name),
       value: typeConversion(pathOr(defaultValue, name, data)),
       isPristine: hasPath(name, isTouched) ? !path(name, isTouched) : true,

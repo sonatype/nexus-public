@@ -36,8 +36,8 @@ import com.amazonaws.services.s3.model.S3ObjectSummary
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.BLOB_ATTRIBUTE_SUFFIX
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.BLOB_CONTENT_SUFFIX
+import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_FILE_ATTRIBUTES_SUFFIX
+import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_FILE_CONTENT_SUFFIX
 
 /**
  * {@link S3BlobStore} tests.
@@ -167,11 +167,11 @@ class S3BlobStoreTest
     then: 'deleted tag is added'
       deleted == true
       1 * s3.setObjectTagging(_) >> { args ->
-        assert args[0].getKey().endsWith(BLOB_CONTENT_SUFFIX) == true
+        assert args[0].getKey().endsWith(BLOB_FILE_CONTENT_SUFFIX) == true
         assert args[0].getTagging().getTagSet() == [S3BlobStore.DELETED_TAG]
       }
       1 * s3.setObjectTagging(_) >> { args ->
-        assert args[0].getKey().endsWith(BLOB_ATTRIBUTE_SUFFIX) == true
+        assert args[0].getKey().endsWith(BLOB_FILE_ATTRIBUTES_SUFFIX) == true
         assert args[0].getTagging().getTagSet() == [S3BlobStore.DELETED_TAG]
       }
 
@@ -255,11 +255,11 @@ class S3BlobStoreTest
       1 * blobAttributes.setDeleted(false)
       1 * blobAttributes.setDeletedReason(null)
       1 * s3.setObjectTagging(_) >> { args ->
-        assert args[0].getKey().endsWith(BLOB_CONTENT_SUFFIX) == true
+        assert args[0].getKey().endsWith(BLOB_FILE_CONTENT_SUFFIX) == true
         assert args[0].getTagging().getTagSet().isEmpty()
       }
       1 * s3.setObjectTagging(_) >> { args ->
-        assert args[0].getKey().endsWith(BLOB_ATTRIBUTE_SUFFIX) == true
+        assert args[0].getKey().endsWith(BLOB_FILE_ATTRIBUTES_SUFFIX) == true
         assert args[0].getTagging().getTagSet().isEmpty()
       }
   }

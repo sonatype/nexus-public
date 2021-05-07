@@ -14,32 +14,48 @@ package org.sonatype.nexus.blobstore.restore.r.internal;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.Properties;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobAttributes;
+import org.sonatype.nexus.blobstore.api.BlobId;
+import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
+import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.r.RRestoreFacet;
+import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
+import org.sonatype.nexus.repository.storage.Bucket;
+import org.sonatype.nexus.repository.storage.Component;
+import org.sonatype.nexus.repository.storage.Query;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
+import org.sonatype.nexus.transaction.UnitOfWork;
 
+import com.google.common.collect.ImmutableList;
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -47,10 +63,13 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(UnitOfWork.class)
 public class RRestoreBlobStrategyTest
-    extends TestSupport
 {
   private static final String TEST_BLOB_STORE_NAME = "test";
 
@@ -84,6 +103,27 @@ public class RRestoreBlobStrategyTest
   Blob blob;
 
   @Mock
+  BlobAttributes blobAttributes;
+
+  @Mock
+  BlobMetrics blobMetrics;
+
+  @Mock
+  Component component;
+
+  @Mock
+  EntityMetadata entityMetadata;
+
+  @Mock
+  EntityId entityId;
+
+  @Mock
+  Asset asset;
+
+  @Mock
+  Query query;
+
+  @Mock
   BlobStore blobStore;
 
   @Mock
@@ -108,15 +148,28 @@ public class RRestoreBlobStrategyTest
     when(repository.optionalFacet(RRestoreFacet.class)).thenReturn(Optional.of(rRestoreFacet));
     when(repository.optionalFacet(StorageFacet.class)).thenReturn(Optional.of(storageFacet));
     when(blob.getInputStream()).thenReturn(new ByteArrayInputStream(blobBytes));
+    when(blob.getMetrics()).thenReturn(blobMetrics);
     when(rRestoreBlobData.getBlobData()).thenReturn(restoreBlobData);
     when(restoreBlobData.getBlobName()).thenReturn(ARCHIVE_PATH);
     when(restoreBlobData.getRepository()).thenReturn(repository);
     when(restoreBlobData.getBlob()).thenReturn(blob);
     when(storageFacet.txSupplier()).thenReturn(() -> storageTx);
+    when(storageFacet.blobStore()).thenReturn(blobStore);
     when(restoreBlobData.getRepository()).thenReturn(repository);
-
+    when(storageTx.findComponents(eq(query), any(Iterable.class))).thenReturn(ImmutableList.of(component));
+    when(storageTx.findAssetWithProperty(eq(P_NAME), eq(ARCHIVE_PATH), any(Bucket.class))).thenReturn(asset);
+    when(component.getEntityMetadata()).thenReturn(entityMetadata);
+    when(entityMetadata.getId()).thenReturn(entityId);
+    when(asset.componentId()).thenReturn(entityId);
     when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
+    when(blobStore.getBlobAttributes(any(BlobId.class))).thenReturn(blobAttributes);
+    when(blobAttributes.isDeleted()).thenReturn(false);
     when(blobStoreConfiguration.getName()).thenReturn(TEST_BLOB_STORE_NAME);
+    when(rRestoreFacet.componentRequired(eq(ARCHIVE_PATH))).thenReturn(true);
+    when(rRestoreFacet.getComponentQuery(anyMap())).thenReturn(query);
+    when(rRestoreFacet.extractComponentAttributesFromArchive(anyString(), any())).thenReturn(Collections.emptyMap());
+    mockStatic(UnitOfWork.class);
+    when(UnitOfWork.currentTx()).thenReturn(storageTx);
 
     properties.setProperty("@BlobStore.created-by", "anonymous");
     properties.setProperty("size", "1330");
@@ -164,6 +217,8 @@ public class RRestoreBlobStrategyTest
 
     verify(rRestoreFacet).assetExists(ARCHIVE_PATH);
     verify(rRestoreFacet).componentRequired(ARCHIVE_PATH);
+    verify(rRestoreFacet).getComponentQuery(anyMap());
+    verify(rRestoreFacet).extractComponentAttributesFromArchive(anyString(), any());
     verifyNoMoreInteractions(rRestoreFacet);
   }
 
@@ -181,5 +236,39 @@ public class RRestoreBlobStrategyTest
   {
     restoreBlobStrategy.getComponentQuery(rRestoreBlobData);
     verify(rRestoreFacet, times(1)).getComponentQuery(anyMapOf(String.class, String.class));
+  }
+
+  @Test
+  public void shouldSkipDeletedBlob() throws Exception {
+    when(rRestoreFacet.assetExists(ARCHIVE_PATH)).thenReturn(true);
+    when(blobAttributes.isDeleted()).thenReturn(true);
+    restoreBlobStrategy.restore(properties, blob, blobStore, false);
+    verifyNoMoreInteractions(rRestoreFacet);
+  }
+
+  @Test
+  public void shouldSkipOlderBlob() throws Exception {
+    when(rRestoreFacet.assetExists(ARCHIVE_PATH)).thenReturn(true);
+    when(asset.blobCreated()).thenReturn(DateTime.now());
+    when(blobMetrics.getCreationTime()).thenReturn(DateTime.now().minusDays(1));
+    restoreBlobStrategy.restore(properties, blob, blobStore, false);
+    verify(rRestoreFacet).assetExists(ARCHIVE_PATH);
+    verify(rRestoreFacet).componentRequired(ARCHIVE_PATH);
+    verify(rRestoreFacet).getComponentQuery(anyMap());
+    verify(rRestoreFacet).extractComponentAttributesFromArchive(anyString(), any());
+    verifyNoMoreInteractions(rRestoreFacet);  }
+
+  @Test
+  public void shouldRestoreMoreRecentBlob() throws Exception {
+    when(rRestoreFacet.assetExists(ARCHIVE_PATH)).thenReturn(true);
+    when(asset.blobCreated()).thenReturn(DateTime.now().minusDays(1));
+    when(blobMetrics.getCreationTime()).thenReturn(DateTime.now());
+    restoreBlobStrategy.restore(properties, blob, blobStore, false);
+    verify(rRestoreFacet).assetExists(ARCHIVE_PATH);
+    verify(rRestoreFacet).componentRequired(ARCHIVE_PATH);
+    verify(rRestoreFacet).getComponentQuery(anyMap());
+    verify(rRestoreFacet).restore(any(AssetBlob.class), eq(ARCHIVE_PATH));
+    verify(rRestoreFacet).extractComponentAttributesFromArchive(anyString(), any());
+    verifyNoMoreInteractions(rRestoreFacet);
   }
 }

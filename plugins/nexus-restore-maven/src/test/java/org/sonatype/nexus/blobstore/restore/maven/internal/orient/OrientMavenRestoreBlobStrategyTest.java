@@ -18,45 +18,60 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
+import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
-import org.sonatype.nexus.blobstore.restore.maven.internal.orient.OrientMavenRestoreBlobStrategy;
+import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.internal.Maven2MavenPathParser;
+import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;
+import org.sonatype.nexus.repository.storage.Component;
+import org.sonatype.nexus.repository.storage.Query;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.view.Content;
+import org.sonatype.nexus.transaction.UnitOfWork;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.hash.HashCode;
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(UnitOfWork.class)
 public class OrientMavenRestoreBlobStrategyTest
-    extends TestSupport
 {
   private static final String TEST_BLOB_STORE_NAME = "test";
 
@@ -82,6 +97,24 @@ public class OrientMavenRestoreBlobStrategyTest
 
   @Mock
   Blob blob;
+
+  @Mock
+  BlobAttributes blobAttributes;
+
+  @Mock
+  BlobMetrics blobMetrics;
+
+  @Mock
+  Component component;
+
+  @Mock
+  EntityMetadata entityMetadata;
+
+  @Mock
+  EntityId entityId;
+
+  @Mock
+  Asset asset;
 
   @Mock
   BlobStore blobStore;
@@ -124,17 +157,31 @@ public class OrientMavenRestoreBlobStrategyTest
     when(repositoryManager.get("test-repo")).thenReturn(repository);
     when(repository.optionalFacet(StorageFacet.class)).thenReturn(Optional.of(storageFacet));
     when(repository.optionalFacet(OrientMavenFacet.class)).thenReturn(Optional.of(mavenFacet));
+
     when(storageFacet.txSupplier()).thenReturn(() -> storageTx);
+    when(storageFacet.blobStore()).thenReturn(blobStore);
 
     when(storageTx.findBucket(repository)).thenReturn(bucket);
+    when(storageTx.findComponents(any(Query.class), any(Iterable.class))).thenReturn(ImmutableList.of(component));
+    when(storageTx.findAssetWithProperty(eq(P_NAME), anyString(), any(Bucket.class))).thenReturn(asset);
+
+    when(component.getEntityMetadata()).thenReturn(entityMetadata);
+
+    when(entityMetadata.getId()).thenReturn(entityId);
+
+    when(asset.componentId()).thenReturn(entityId);
 
     when(blob.getId()).thenReturn(new BlobId("test"));
     when(blob.getInputStream()).thenReturn(new ByteArrayInputStream(blobBytes));
+    when(blob.getMetrics()).thenReturn(blobMetrics);
 
     when(maven2MavenPathParser.parsePath("org/codehaus/plexus/plexus/3.1/plexus-3.1.pom"))
         .thenReturn(mavenPath);
 
     when(mavenPath.getCoordinates()).thenReturn(coordinates);
+    when(coordinates.getGroupId()).thenReturn("org.codehaus.plexus");
+    when(coordinates.getArtifactId()).thenReturn("plexus");
+    when(coordinates.getVersion()).thenReturn("3.1");
 
     when(nodeAccess.getId()).thenReturn("node");
 
@@ -142,8 +189,14 @@ public class OrientMavenRestoreBlobStrategyTest
     when(blobStoreConfiguration.getName()).thenReturn(TEST_BLOB_STORE_NAME);
 
     when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
+    when(blobStore.getBlobAttributes(any(BlobId.class))).thenReturn(blobAttributes);
+
+    when(blobAttributes.isDeleted()).thenReturn(false);
 
     when(repository.facet(OrientMavenFacet.class)).thenReturn(mavenFacet);
+
+    mockStatic(UnitOfWork.class);
+    when(UnitOfWork.currentTx()).thenReturn(storageTx);
   }
 
   @SuppressWarnings("deprecation")
@@ -193,5 +246,33 @@ public class OrientMavenRestoreBlobStrategyTest
     verify(mavenFacet).put(eq(mavenPath), assetBlobCaptor.capture(), eq(null));
 
     assertEquals("asset hashes do not match blob", expectedHashes, assetBlobCaptor.getValue().getHashes());
+  }
+
+  @Test
+  public void shouldSkipDeletedBlob() throws Exception {
+    when(blobAttributes.isDeleted()).thenReturn(true);
+    underTest.restore(properties, blob, blobStore, false);
+    verifyNoMoreInteractions(mavenFacet);
+  }
+
+  @Test
+  public void shouldSkipOlderBlob() throws Exception {
+    when(mavenFacet.get(mavenPath)).thenReturn(mock(Content.class));
+    when(asset.blobCreated()).thenReturn(DateTime.now());
+    when(blobMetrics.getCreationTime()).thenReturn(DateTime.now().minusDays(1));
+    underTest.restore(properties, blob, blobStore, false);
+    verify(mavenFacet).get(mavenPath);
+    verifyNoMoreInteractions(mavenFacet);
+  }
+
+  @Test
+  public void shouldRestoreMoreRecentBlob() throws Exception {
+    when(mavenFacet.get(mavenPath)).thenReturn(mock(Content.class));
+    when(asset.blobCreated()).thenReturn(DateTime.now().minusDays(1));
+    when(blobMetrics.getCreationTime()).thenReturn(DateTime.now());
+    underTest.restore(properties, blob, blobStore, false);
+    verify(mavenFacet).get(mavenPath);
+    verify(mavenFacet).put(eq(mavenPath), any(), eq(null));
+    verifyNoMoreInteractions(mavenFacet);
   }
 }
