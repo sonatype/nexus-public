@@ -154,7 +154,7 @@ public class PyPiUploadHandler
 
       ensurePermitted(repository.getName(), PyPiFormat.NAME, path, coordinatesFromMetadata(metadata));
 
-      Content content = facet.upload(filename, metadata, new TempBlobPartPayload(payload, tempBlob)).download();
+      Content content = facet.upload(filename, metadata, new TempBlobPartPayload(payload, tempBlob));
 
       return new UploadResponse(Collections.singletonList(content), Collections.singletonList(path));
     }
