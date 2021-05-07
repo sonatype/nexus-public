@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.pypi.datastore;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -22,8 +23,10 @@ import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
+import org.sonatype.nexus.repository.view.payloads.TempBlobPartPayload;
 
 /**
  * @since 3.29
@@ -61,4 +64,34 @@ public interface PypiContentFacet
   TempBlob getTempBlob(final Payload payload);
 
   TempBlob getTempBlob(final InputStream content, @Nullable final String contentType);
+
+  /**
+   * @since 3.next
+   */
+  FluentAsset putWheel(String filename, Map<String, String> attributes, TempBlob tempBlob, String name);
+
+  /**
+   * @since 3.next
+   */
+  Content getPackage(String packagePath);
+
+  /**
+   * @since 3.next
+   */
+  Optional<Content> getIndex(String name);
+
+  /**
+   * @since 3.next
+   */
+  Content putIndex(String name, Payload index);
+
+  /**
+   * @since 3.next
+   */
+  Content putRootIndex(Payload rootIndex);
+
+  /**
+   * @since 3.next
+   */
+  Content putWheelSignature(String name, String version, TempBlobPartPayload gpgPayload);
 }
