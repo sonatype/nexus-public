@@ -51,6 +51,7 @@ exports[`UserAccount renders correctly 1`] = `
         >
           <div
             class="nx-form-group"
+            id="id-group"
           >
             <label
               class="nx-label"
@@ -119,6 +120,7 @@ exports[`UserAccount renders correctly 1`] = `
           </div>
           <div
             class="nx-form-group"
+            id="first-name-group"
           >
             <label
               class="nx-label"
@@ -185,6 +187,7 @@ exports[`UserAccount renders correctly 1`] = `
           </div>
           <div
             class="nx-form-group"
+            id="last-name-group"
           >
             <label
               class="nx-label"
@@ -251,6 +254,7 @@ exports[`UserAccount renders correctly 1`] = `
           </div>
           <div
             class="nx-form-group"
+            id="email-group"
           >
             <label
               class="nx-label"
@@ -322,6 +326,7 @@ exports[`UserAccount renders correctly 1`] = `
               aria-disabled="true"
               aria-label="There are no changes"
               class="nx-btn disabled nx-btn--primary"
+              id="useraccount-save-button"
               title="There are no changes"
             >
               Save
@@ -330,6 +335,7 @@ exports[`UserAccount renders correctly 1`] = `
               aria-disabled="true"
               aria-label="There are no changes"
               class="nx-btn disabled"
+              id="useraccount-discard-button"
               title="There are no changes"
             >
               Discard
@@ -621,6 +627,7 @@ exports[`UserAccount renders correctly for an external user: externalUser 1`] = 
         >
           <div
             class="nx-form-group"
+            id="id-group"
           >
             <label
               class="nx-label"
@@ -689,6 +696,7 @@ exports[`UserAccount renders correctly for an external user: externalUser 1`] = 
           </div>
           <div
             class="nx-form-group"
+            id="first-name-group"
           >
             <label
               class="nx-label"
@@ -757,6 +765,7 @@ exports[`UserAccount renders correctly for an external user: externalUser 1`] = 
           </div>
           <div
             class="nx-form-group"
+            id="last-name-group"
           >
             <label
               class="nx-label"
@@ -825,6 +834,7 @@ exports[`UserAccount renders correctly for an external user: externalUser 1`] = 
           </div>
           <div
             class="nx-form-group"
+            id="email-group"
           >
             <label
               class="nx-label"
@@ -899,6 +909,7 @@ exports[`UserAccount renders correctly for an external user: externalUser 1`] = 
               aria-label="There are no changes"
               class="nx-btn disabled nx-btn--primary"
               disabled=""
+              id="useraccount-save-button"
               title="There are no changes"
             >
               Save
@@ -908,6 +919,7 @@ exports[`UserAccount renders correctly for an external user: externalUser 1`] = 
               aria-label="There are no changes"
               class="nx-btn disabled"
               disabled=""
+              id="useraccount-discard-button"
               title="There are no changes"
             >
               Discard

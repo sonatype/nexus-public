@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.ui;
 
-import java.io.File;
 import java.net.URL;
 import java.util.Enumeration;
 
@@ -22,23 +21,23 @@ import org.eclipse.sisu.space.ClassSpace;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import static java.util.Arrays.asList;
 import static java.util.Collections.enumeration;
-import static org.hamcrest.Matchers.is;
+import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
 
 public class UiUtilTest
     extends TestSupport
 {
+  private static final String TEST_URL = "https://someurl/nexus-frontend-bundle.js";
+
   @Mock
   private ClassSpace space;
 
   @Test
   public void getHashedFilename() throws Exception {
-    Enumeration<URL> mockedResponse = enumeration(asList(
-        new File("/nexus-frontend-bundle.js").toURI().toURL()
-    ));
+    Enumeration<URL> mockedResponse = enumeration(singletonList(new URL(TEST_URL)));
     when(space.findEntries("static", "nexus-frontend-bundle.js", true)).thenReturn(mockedResponse);
 
     String hashedFilename = UiUtil.getPathForFile("nexus-frontend-bundle.js", space);

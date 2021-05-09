@@ -16,6 +16,9 @@
  */
 import UIStrings from "../constants/UIStrings";
 
+
+const EMAIL_REGEX = /^(")?(?:[^\."])(?:(?:[\.])?(?:[\w\-!#$%&'*+/=?^_`{|}~]))*\1@(\w[\-\w]*\.?){1,5}([A-Za-z]){1,60}$/;
+
 /**
  * @since 3.next
  */
@@ -95,6 +98,24 @@ export default class ValidationUtils {
    */
   static isName(name) {
     return name.match(/^[a-zA-Z0-9\-]{1}[a-zA-Z0-9_\-\.]*$/);
+  }
+
+  /**
+   * @param {string|null|undefined}
+   * @return {boolean} true if the string appears to be a valid email address
+   */
+  static isEmail(str) {
+    return str && EMAIL_REGEX.test(str);
+  }
+
+  static validateEmail(field) {
+    if (ValidationUtils.isBlank(field)) {
+      return UIStrings.ERROR.FIELD_REQUIRED;
+    }
+    else if (!ValidationUtils.isEmail(field)) {
+      return UIStrings.ERROR.INVALID_EMAIL;
+    }
+    return null;
   }
 
   /**

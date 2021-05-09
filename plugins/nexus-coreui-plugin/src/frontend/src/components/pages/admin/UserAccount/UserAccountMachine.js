@@ -16,11 +16,11 @@
  */
 import {assign, Machine} from 'xstate';
 import Axios from 'axios';
-import {ExtJS, Utils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 
-const userAccountMachine = Utils.buildFormMachine({
+const userAccountMachine = FormUtils.buildFormMachine({
   id: 'UserAccount'
 }).withConfig({
   actions: {
@@ -36,9 +36,9 @@ const userAccountMachine = Utils.buildFormMachine({
 
     validate: assign({
       validationErrors: ({data}) => ({
-        firstName: Utils.isBlank(data.firstName) ? UIStrings.ERROR.FIELD_REQUIRED : null,
-        lastName: Utils.isBlank(data.lastName) ? UIStrings.ERROR.FIELD_REQUIRED : null,
-        email: Utils.isBlank(data.email) ? UIStrings.ERROR.FIELD_REQUIRED : null
+        firstName: ValidationUtils.isBlank(data.firstName) ? UIStrings.ERROR.FIELD_REQUIRED : null,
+        lastName: ValidationUtils.isBlank(data.lastName) ? UIStrings.ERROR.FIELD_REQUIRED : null,
+        email: ValidationUtils.validateEmail(data.email)
       })
     })
   },

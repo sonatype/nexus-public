@@ -53,4 +53,26 @@ describe('ValidationUtils', () => {
       expect(ValidationUtils.isInRange({value: '1', max: 2, allowDecimals: false})).toBeNull();
     });
   });
+  describe('isEmail', () => {
+    it('rejects null', () => {
+      expect(ValidationUtils.isEmail(null)).toBeFalsy();
+    });
+    it('rejects undefined', () => {
+      expect(ValidationUtils.isEmail(undefined)).toBeFalsy();
+    });
+    it('rejects invalid emails', () => {
+      expect(ValidationUtils.isEmail('invalid')).toBeFalsy();
+      expect(ValidationUtils.isEmail('invalid@')).toBeFalsy();
+      expect(ValidationUtils.isEmail('invalid@email.')).toBeFalsy();
+      expect(ValidationUtils.isEmail('invalid@email..com')).toBeFalsy();
+      expect(ValidationUtils.isEmail('@email.com')).toBeFalsy();
+      expect(ValidationUtils.isEmail('@email')).toBeFalsy();
+      expect(ValidationUtils.isEmail('@email.')).toBeFalsy();
+    });
+    it('allows valid email', () => {
+      expect(ValidationUtils.isEmail('valid@email')).toBeTruthy();
+      expect(ValidationUtils.isEmail('valid@email.com')).toBeTruthy();
+      expect(ValidationUtils.isEmail('valid@email.s')).toBeTruthy();
+    });
+  });
 });
