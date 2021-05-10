@@ -91,7 +91,7 @@ public abstract class BaseRestoreBlobStrategy<T extends RestoreBlobData>
         if (shouldDeleteAsset(restoreData, fluentAsset)) {
           log.info(
               "{} Deleting asset as component is required but is not found, blob store: {}, repository: {}, path: {}, blob name: {}, blob id: {}",
-              dryRunPrefix.get(), blobStoreName, repoName, fluentAsset.path(), blobName, blob.getId());
+              logPrefix, blobStoreName, repoName, fluentAsset.path(), blobName, blob.getId());
           if (!isDryRun) {
             fluentAsset.delete();
           }
@@ -99,7 +99,7 @@ public abstract class BaseRestoreBlobStrategy<T extends RestoreBlobData>
         else if (isRestoreDataMoreRecent(restoreData, fluentAsset)) {
           log.info(
               "{} Deleting asset as more recent blob will be restored, blob store: {}, repository: {}, path: {}, blob name: {}, blob id: {}",
-              dryRunPrefix.get(), blobStoreName, repoName, fluentAsset.path(), blobName, blob.getId());
+              logPrefix, blobStoreName, repoName, fluentAsset.path(), blobName, blob.getId());
           if (!isDryRun) {
             fluentAsset.delete();
           }
