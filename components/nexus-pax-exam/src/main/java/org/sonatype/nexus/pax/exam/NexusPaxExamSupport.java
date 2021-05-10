@@ -243,7 +243,10 @@ public abstract class NexusPaxExamSupport
    *
    * @throws InterruptedException if the thread is interrupted
    * @throws TimeoutException if the timeout exceeded
+   *
+   * @deprecated use the Awaitility.await() helper instead of this method
    */
+  @Deprecated
   public static void waitFor(final Callable<Boolean> function) // NOSONAR
       throws InterruptedException, TimeoutException
   {
@@ -255,7 +258,10 @@ public abstract class NexusPaxExamSupport
    *
    * @throws InterruptedException if the thread is interrupted
    * @throws TimeoutException if the timeout exceeded
+   *
+   * @deprecated use the Awaitility.await() helper instead of this method
    */
+  @Deprecated
   public static void waitFor(final Callable<Boolean> function, final long millis) // NOSONAR
       throws InterruptedException, TimeoutException
   {
