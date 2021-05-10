@@ -123,8 +123,8 @@ public abstract class OrientBaseRestoreBlobStrategy<T extends RestoreBlobDataSup
       if (assetExists(restoreData)) {
         if (shouldDeleteAsset(restoreData, blobData, path)) {
           log.info(
-              "Deleting asset as component is required but is not found, blob store: {}, repository: {}, path: {}, "
-              + "blob name: {}, blob id: {}", blobStoreName, repoName, path, blobName, blob.getId());
+              "{} Deleting asset as component is required but is not found, blob store: {}, repository: {}, path: {}, "
+              + "blob name: {}, blob id: {}", logPrefix, blobStoreName, repoName, path, blobName, blob.getId());
           if (!isDryRun) {
             deleteAsset(blobData.getRepository(), path);
           }
@@ -132,7 +132,7 @@ public abstract class OrientBaseRestoreBlobStrategy<T extends RestoreBlobDataSup
         else if (isRestoreDataMoreRecent(restoreData, path)) {
           log.info(
               "{} Deleting asset as more recent blob will be restored, blob store: {}, repository: {}, path: {}, blob name: {}, blob id: {}",
-              dryRunPrefix.get(), blobStoreName, repoName, path, blobName, blob.getId());
+              logPrefix, blobStoreName, repoName, path, blobName, blob.getId());
           if (!isDryRun) {
             deleteAsset(blobData.getRepository(), path);
           }
