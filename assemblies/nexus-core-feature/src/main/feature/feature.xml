@@ -31,11 +31,9 @@
     <feature>nexus-repository-raw</feature>
     <feature>nexus-repository-maven</feature>
     <feature>nexus-repository-npm</feature>
-    <feature>nexus-repository-helm</feature>
     <feature>nexus-repository-pypi</feature>
     <feature>nexus-repository-conda</feature>
     <feature>nexus-restore-raw</feature>
     <feature>nexus-restore-pypi</feature>
-    <feature>nexus-restore-helm</feature>
   </feature>
 </features>
