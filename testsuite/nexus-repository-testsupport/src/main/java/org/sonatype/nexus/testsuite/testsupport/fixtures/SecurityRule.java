@@ -38,6 +38,7 @@ import org.sonatype.nexus.security.role.Role;
 import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.NoSuchUserManagerException;
 import org.sonatype.nexus.security.user.User;
+import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.security.user.UserStatus;
 import org.sonatype.nexus.selector.CselSelector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
@@ -158,6 +159,16 @@ public class SecurityRule
     }
     catch (NoSuchAuthorizationManagerException e) {
       log.debug("Failed to get role {}", roleId, e);
+    }
+    return null;
+  }
+
+  public User getUser(final String userId) {
+    try {
+      return securitySystemProvider.get().getUser(userId, DEFAULT_SOURCE);
+    }
+    catch (UserNotFoundException | NoSuchUserManagerException e) {
+      log.debug("Failed to get user {}", userId, e);
     }
     return null;
   }

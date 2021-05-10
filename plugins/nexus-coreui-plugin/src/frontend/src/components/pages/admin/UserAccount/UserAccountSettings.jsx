@@ -85,26 +85,37 @@ export default function UserAccountSettings({service}) {
         {isSaving && <NxSubmitMask message={UIStrings.SAVING}/>}
         {error}
 
-        <FieldWrapper labelText={UIStrings.USER_ACCOUNT.ID_FIELD_LABEL}>
+        <FieldWrapper labelText={UIStrings.USER_ACCOUNT.ID_FIELD_LABEL}
+                      id="id-group">
           <Textfield name="userId" readOnly disabled value={data.userId}/>
         </FieldWrapper>
-        <FieldWrapper labelText={UIStrings.USER_ACCOUNT.FIRST_FIELD_LABEL}>
+        <FieldWrapper labelText={UIStrings.USER_ACCOUNT.FIRST_FIELD_LABEL}
+                      id="first-name-group">
           <Textfield {...buildFieldProps('firstName', current, handleChange)}/>
         </FieldWrapper>
-        <FieldWrapper labelText={UIStrings.USER_ACCOUNT.LAST_FIELD_LABEL}>
+        <FieldWrapper labelText={UIStrings.USER_ACCOUNT.LAST_FIELD_LABEL}
+                      id='last-name-group'>
           <Textfield {...buildFieldProps('lastName', current, handleChange)}/>
         </FieldWrapper>
-        <FieldWrapper labelText={UIStrings.USER_ACCOUNT.EMAIL_FIELD_LABEL}>
+        <FieldWrapper labelText={UIStrings.USER_ACCOUNT.EMAIL_FIELD_LABEL}
+                      id='email-group'>
           <Textfield {...buildFieldProps('email', current, handleChange)}/>
         </FieldWrapper>
         <SectionFooter>
           <NxTooltip title={Utils.saveTooltip({isPristine, isInvalid})}>
-            <NxButton variant='primary' className={(isPristine || isInvalid) && 'disabled'} disabled={external} onClick={handleSave}>
+            <NxButton variant='primary'
+                      className={(isPristine || isInvalid) && 'disabled'}
+                      disabled={external}
+                      onClick={handleSave}
+                      id='useraccount-save-button'>
               {UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
             </NxButton>
           </NxTooltip>
           <NxTooltip title={Utils.discardTooltip({isPristine})}>
-            <NxButton disabled={external} className={isPristine && 'disabled'} onClick={handleDiscard}>
+            <NxButton disabled={external}
+                      className={isPristine && 'disabled'}
+                      onClick={handleDiscard}
+                      id='useraccount-discard-button'>
               {UIStrings.SETTINGS.DISCARD_BUTTON_LABEL}
             </NxButton>
           </NxTooltip>
