@@ -33,7 +33,6 @@
     <module>nexus-blobstore-s3</module>
     <module>nexus-blobstore-tasks</module>
     <module>nexus-coreui-plugin</module>
-    <module>nexus-repository-helm</module>
     <module>nexus-repository-httpbridge</module>
     <module>nexus-repository-golang</module>
     <module>nexus-repository-maven</module>
@@ -47,7 +46,6 @@
     <module>nexus-repository-r</module>
     <module>nexus-repository-raw</module>
     <module>nexus-restore-apt</module>
-    <module>nexus-restore-helm</module>
     <module>nexus-restore-maven</module>
     <module>nexus-restore-npm</module>
     <module>nexus-restore-pypi</module>
@@ -164,36 +162,6 @@
         <type>xml</type>
       </dependency>
       
-      <!-- repository-helm -->
-
-      <dependency>
-        <groupId>org.sonatype.nexus.plugins</groupId>
-        <artifactId>nexus-repository-helm</artifactId>
-        <version>3.31.0-SNAPSHOT</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.sonatype.nexus.plugins</groupId>
-        <artifactId>nexus-repository-helm</artifactId>
-        <version>3.31.0-SNAPSHOT</version>
-        <classifier>features</classifier>
-        <type>xml</type>
-      </dependency>
-
-      <dependency>
-        <groupId>org.sonatype.nexus.plugins</groupId>
-        <artifactId>nexus-restore-helm</artifactId>
-        <version>3.31.0-SNAPSHOT</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.sonatype.nexus.plugins</groupId>
-        <artifactId>nexus-restore-helm</artifactId>
-        <version>3.31.0-SNAPSHOT</version>
-        <classifier>features</classifier>
-        <type>xml</type>
-      </dependency>
-
       <!-- repository-maven -->
 
       <dependency>
