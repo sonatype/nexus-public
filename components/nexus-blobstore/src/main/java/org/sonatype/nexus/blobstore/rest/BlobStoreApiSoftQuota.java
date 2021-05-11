@@ -12,12 +12,13 @@
  */
 package org.sonatype.nexus.blobstore.rest;
 
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+
 import org.sonatype.nexus.blobstore.quota.internal.SpaceRemainingQuota;
 import org.sonatype.nexus.blobstore.quota.internal.SpaceUsedQuota;
 
 import io.swagger.annotations.ApiModelProperty;
-import org.hibernate.validator.constraints.NotBlank;
-import org.hibernate.validator.constraints.Range;
 
 /**
  * @since 3.19
@@ -28,7 +29,7 @@ public class BlobStoreApiSoftQuota
   @ApiModelProperty("The type to use such as " + SpaceRemainingQuota.ID + ", or " + SpaceUsedQuota.ID)
   private String type;
 
-  @Range
+  @Min(0)
   @ApiModelProperty("The limit in MB.")
   private Long limit;
 

@@ -15,7 +15,7 @@ package org.sonatype.nexus.coreui
 import javax.validation.constraints.NotNull
 
 import groovy.transform.ToString
-import org.hibernate.validator.constraints.NotBlank
+import javax.validation.constraints.NotBlank
 
 /**
  * Task type exchange object.

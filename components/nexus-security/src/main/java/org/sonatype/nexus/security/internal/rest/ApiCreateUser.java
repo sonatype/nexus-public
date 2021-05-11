@@ -23,9 +23,9 @@ import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserManager;
 
 import io.swagger.annotations.ApiModelProperty;
-import org.hibernate.validator.constraints.Email;
-import org.hibernate.validator.constraints.NotBlank;
-import org.hibernate.validator.constraints.NotEmpty;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 
 /**
  * @since 3.17

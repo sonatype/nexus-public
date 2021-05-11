@@ -46,7 +46,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions
 import org.apache.shiro.authz.annotation.RequiresUser
 import org.apache.shiro.subject.Subject
 import org.eclipse.sisu.inject.BeanLocator
-import org.hibernate.validator.constraints.NotEmpty
+import javax.validation.constraints.NotEmpty
 
 import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE
 

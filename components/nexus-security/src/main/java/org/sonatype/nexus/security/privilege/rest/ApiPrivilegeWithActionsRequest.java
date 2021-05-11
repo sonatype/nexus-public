@@ -22,7 +22,7 @@ import org.sonatype.nexus.security.internal.rest.NexusSecurityApiConstants;
 import org.sonatype.nexus.security.privilege.Privilege;
 
 import io.swagger.annotations.ApiModelProperty;
-import org.hibernate.validator.constraints.NotEmpty;
+import javax.validation.constraints.NotEmpty;
 
 /**
  * @since 3.19

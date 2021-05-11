@@ -33,8 +33,8 @@ import com.codahale.metrics.annotation.ExceptionMetered
 import com.codahale.metrics.annotation.Timed
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
-import org.hibernate.validator.constraints.NotBlank
-import org.hibernate.validator.constraints.NotEmpty
+import javax.validation.constraints.NotBlank
+import javax.validation.constraints.NotEmpty
 
 import static com.sonatype.nexus.ssl.plugin.internal.ui.TrustStoreComponent.asCertificateXO
 import static org.sonatype.nexus.ssl.CertificateUtil.calculateFingerprint

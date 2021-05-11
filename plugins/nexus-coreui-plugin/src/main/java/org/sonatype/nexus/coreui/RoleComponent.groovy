@@ -35,7 +35,7 @@ import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import groovy.transform.PackageScope
 import org.apache.shiro.authz.annotation.RequiresAuthentication
 import org.apache.shiro.authz.annotation.RequiresPermissions
-import org.hibernate.validator.constraints.NotEmpty
+import javax.validation.constraints.NotEmpty
 
 import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE
 

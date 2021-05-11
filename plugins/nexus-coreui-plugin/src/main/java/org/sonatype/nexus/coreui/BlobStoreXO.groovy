@@ -12,16 +12,17 @@
  */
 package org.sonatype.nexus.coreui
 
+import javax.validation.constraints.Min
+import javax.validation.constraints.NotEmpty
 import javax.validation.constraints.Size
 
 import org.sonatype.nexus.validation.group.Create
-import static org.sonatype.nexus.blobstore.BlobStoreSupport.MAX_NAME_LENGTH
-import static org.sonatype.nexus.blobstore.BlobStoreSupport.MIN_NAME_LENGTH
 
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
-import org.hibernate.validator.constraints.NotEmpty
-import org.hibernate.validator.constraints.Range
+
+import static org.sonatype.nexus.blobstore.BlobStoreSupport.MAX_NAME_LENGTH
+import static org.sonatype.nexus.blobstore.BlobStoreSupport.MIN_NAME_LENGTH
 
 /**
  * @since 3.0
@@ -42,22 +43,22 @@ class BlobStoreXO
 
   String quotaType
 
-  @Range
+  @Min(0L)
   Long quotaLimit
 
   @NotEmpty
   Map<String, Map<String, Object>> attributes
 
-  @Range
+  @Min(0L)
   long blobCount
 
-  @Range
+  @Min(0L)
   long totalSize
 
-  @Range
+  @Min(0L)
   long availableSpace
 
-  @Range
+  @Min(0L)
   long repositoryUseCount
 
   boolean unlimited
@@ -67,7 +68,7 @@ class BlobStoreXO
    */
   boolean unavailable
 
-  @Range
+  @Min(0L)
   long blobStoreUseCount
 
   boolean inUse

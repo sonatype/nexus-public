@@ -13,7 +13,7 @@
 package org.sonatype.nexus.coreui
 
 import groovy.transform.ToString
-import org.hibernate.validator.constraints.NotEmpty
+import javax.validation.constraints.NotEmpty
 
 /**
  * Routing Repository Settings exchange object.

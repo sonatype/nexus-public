@@ -13,7 +13,7 @@
 package org.sonatype.nexus.coreui
 
 import groovy.transform.ToString
-import org.hibernate.validator.constraints.NotBlank
+import javax.validation.constraints.NotBlank
 
 /**
  * BlobStore Quota Type exchange object.

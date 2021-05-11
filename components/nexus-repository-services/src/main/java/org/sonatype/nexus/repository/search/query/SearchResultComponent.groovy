@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.search.query
 
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
-import org.hibernate.validator.constraints.NotBlank
+import javax.validation.constraints.NotBlank
 
 /**
  * Search Result Component object.

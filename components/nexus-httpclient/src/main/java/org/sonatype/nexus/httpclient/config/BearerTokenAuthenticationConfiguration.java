@@ -14,7 +14,7 @@ package org.sonatype.nexus.httpclient.config;
 
 import org.sonatype.nexus.common.text.Strings2;
 
-import org.hibernate.validator.constraints.NotBlank;
+import javax.validation.constraints.NotBlank;
 
 /**
  * Bearer Token authentication configuration

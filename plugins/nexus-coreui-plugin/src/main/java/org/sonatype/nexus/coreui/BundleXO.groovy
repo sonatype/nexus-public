@@ -12,8 +12,8 @@
  */
 package org.sonatype.nexus.coreui
 
-import org.hibernate.validator.constraints.NotBlank
-import org.hibernate.validator.constraints.Range
+import javax.validation.constraints.Min
+import javax.validation.constraints.NotBlank
 
 /**
  * OSGI bundle.
@@ -22,7 +22,7 @@ import org.hibernate.validator.constraints.Range
  */
 class BundleXO
 {
-  @Range
+  @Min(0L)
   long id
 
   @NotBlank
@@ -40,7 +40,7 @@ class BundleXO
   @NotBlank
   String version
 
-  @Range
+  @Min(0L)
   int startLevel
 
   boolean fragment

@@ -16,7 +16,7 @@ import java.util.Map;
 
 import org.sonatype.nexus.capability.CapabilityConfigurationSupport;
 
-import org.hibernate.validator.constraints.NotBlank;
+import javax.validation.constraints.NotBlank;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

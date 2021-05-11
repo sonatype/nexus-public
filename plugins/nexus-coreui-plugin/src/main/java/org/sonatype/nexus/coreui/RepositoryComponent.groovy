@@ -62,7 +62,7 @@ import com.softwarementors.extjs.djn.config.annotations.DirectPollMethod
 import groovy.transform.PackageScope
 import org.apache.commons.lang3.StringUtils
 import org.apache.shiro.authz.annotation.RequiresAuthentication
-import org.hibernate.validator.constraints.NotEmpty
+import javax.validation.constraints.NotEmpty
 
 import static org.sonatype.nexus.coreui.internal.RepositoryCleanupAttributesUtil.initializeCleanupAttributes
 

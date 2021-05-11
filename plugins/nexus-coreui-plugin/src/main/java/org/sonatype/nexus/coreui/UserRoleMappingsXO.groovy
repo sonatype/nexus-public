@@ -18,7 +18,7 @@ import org.sonatype.nexus.security.user.UserExists
 import org.sonatype.nexus.validation.group.Create
 
 import groovy.transform.ToString
-import org.hibernate.validator.constraints.NotBlank
+import javax.validation.constraints.NotBlank
 
 /**
  * User role mappings exchange object.

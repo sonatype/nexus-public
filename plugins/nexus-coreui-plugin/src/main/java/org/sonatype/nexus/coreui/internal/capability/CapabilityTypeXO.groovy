@@ -15,7 +15,7 @@ package org.sonatype.nexus.coreui.internal.capability
 import org.sonatype.nexus.coreui.FormFieldXO
 
 import groovy.transform.ToString
-import org.hibernate.validator.constraints.NotEmpty
+import javax.validation.constraints.NotEmpty
 
 /**
  * Capability Type exchange object.
