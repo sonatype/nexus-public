@@ -68,10 +68,16 @@ Ext.define('NX.coreui.view.component.AssetAttributes', {
         flex: 2,
         dataIndex: 'value',
         renderer: function (val) {
+          var attributeValue = val;
+          if (attributeValue == 0 || attributeValue == false) {
+            // for correct html rendering '0' and 'false' values must be converted to string
+            attributeValue = String(attributeValue);
+          }
+
           return Ext.DomHelper.markup({
             tag: 'div',
             cls: 'attribute-value',
-            html: Ext.util.Format.htmlEncode(val)
+            html: Ext.String.htmlEncode(attributeValue)
           });
         }
       }
