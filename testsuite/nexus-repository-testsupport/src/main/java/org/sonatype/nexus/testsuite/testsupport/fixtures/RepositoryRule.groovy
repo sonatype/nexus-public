@@ -29,7 +29,7 @@ import static com.google.common.base.Preconditions.checkNotNull
 @CompileStatic
 class RepositoryRule
     extends ExternalResource
-    implements MavenRepoRecipes, RawRepoRecipes, NpmRepoRecipes, PyPiRepoRecipes, AptRepoRecipes, GolangRepoRecipes,
+    implements MavenRepoRecipes, RawRepoRecipes, NpmRepoRecipes, AptRepoRecipes, GolangRepoRecipes,
         CocoapodsRepoRecipes, CondaRepoRecipes, RRepoRecipes
 {
   Provider<RepositoryManager> repositoryManagerProvider
