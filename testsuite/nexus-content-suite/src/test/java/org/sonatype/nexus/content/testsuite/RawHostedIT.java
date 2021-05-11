@@ -80,7 +80,7 @@ public class RawHostedIT
     HttpEntity testEntity = new FileEntity(resolveTestFile(TEST_CONTENT), TEXT_PLAIN);
 
     HttpResponse response = rawClient.put(TEST_CONTENT, testEntity);
-    MatcherAssert.assertThat(response.getStatusLine().getStatusCode(), Matchers.is(HttpStatus.BAD_REQUEST));
+    assertThat(response.getStatusLine().getStatusCode(), Matchers.is(HttpStatus.BAD_REQUEST));
     assertThat(response.getStatusLine().getReasonPhrase(), Matchers.containsString("is read-only"));
   }
 
@@ -91,14 +91,14 @@ public class RawHostedIT
     HttpEntity testEntity = new FileEntity(resolveTestFile(TEST_CONTENT), TEXT_PLAIN);
 
     HttpResponse response = rawClient.put(TEST_CONTENT, testEntity);
-    MatcherAssert.assertThat(response.getStatusLine().getStatusCode(), Matchers.is(HttpStatus.CREATED));
+    assertThat(response.getStatusLine().getStatusCode(), Matchers.is(HttpStatus.CREATED));
 
     Configuration hostedConfig = repositoryManager.get(HOSTED_REPO + "-no-delete").getConfiguration().copy();
     hostedConfig.attributes(STORAGE).set(WRITE_POLICY, DENY);
     repositoryManager.update(hostedConfig);
 
     response = rawClient.delete(TEST_CONTENT);
-    MatcherAssert.assertThat(response.getStatusLine().getStatusCode(), Matchers.is(HttpStatus.BAD_REQUEST));
+    assertThat(response.getStatusLine().getStatusCode(), Matchers.is(HttpStatus.BAD_REQUEST));
     assertThat(response.getStatusLine().getReasonPhrase(), Matchers.containsString("cannot be deleted"));
   }
 
@@ -109,10 +109,10 @@ public class RawHostedIT
     HttpEntity testEntity = new FileEntity(resolveTestFile(TEST_CONTENT), TEXT_PLAIN);
 
     HttpResponse response = rawClient.put(TEST_CONTENT, testEntity);
-    MatcherAssert.assertThat(response.getStatusLine().getStatusCode(), Matchers.is(HttpStatus.CREATED));
+    assertThat(response.getStatusLine().getStatusCode(), Matchers.is(HttpStatus.CREATED));
 
     response = rawClient.put(TEST_CONTENT, testEntity);
-    MatcherAssert.assertThat(response.getStatusLine().getStatusCode(), Matchers.is(HttpStatus.BAD_REQUEST));
+    assertThat(response.getStatusLine().getStatusCode(), Matchers.is(HttpStatus.BAD_REQUEST));
     assertThat(response.getStatusLine().getReasonPhrase(), Matchers.containsString("cannot be updated"));
   }
 
@@ -186,9 +186,9 @@ public class RawHostedIT
           nexusUrl, REST_SERVICE_PATH, ComponentsResource.RESOURCE_URI, HOSTED_REPO));
       post.setEntity(builder.build());
 
-      CloseableHttpResponse response = client.execute(post, clientContext());
-
-      assertThat(response.getStatusLine().getStatusCode(), is(204));
+      try (CloseableHttpResponse response = client.execute(post, clientContext())) {
+        assertThat(response.getStatusLine().getStatusCode(), is(204));
+      }
     }
 
     try (CloseableHttpResponse response = rawClient.get("foo/file1.txt")) {
