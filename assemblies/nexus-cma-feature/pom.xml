@@ -64,13 +64,6 @@
 
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-repository-pypi</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-repository-p2</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
@@ -96,14 +89,6 @@
       <classifier>features</classifier>
       <type>xml</type>
     </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-restore-pypi</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
 
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>

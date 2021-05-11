@@ -1,7 +1,0 @@
-<methodResponse>
-  <fault>
-    <value>
-      <string>Fault message</string>
-    </value>
-  </fault>
-</methodResponse>
