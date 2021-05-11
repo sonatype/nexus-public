@@ -169,13 +169,13 @@
       <dependency>
         <groupId>org.mybatis</groupId>
         <artifactId>mybatis</artifactId>
-        <version>3.5.6</version>
+        <version>3.5.7</version>
       </dependency>
 
       <dependency>
         <groupId>com.zaxxer</groupId>
         <artifactId>HikariCP</artifactId>
-        <version>3.4.5</version>
+        <version>4.0.3</version>
       </dependency>
 
       <dependency>
@@ -187,7 +187,7 @@
       <dependency>
         <groupId>org.postgresql</groupId>
         <artifactId>postgresql</artifactId>
-        <version>42.2.19</version>
+        <version>42.2.20</version>
       </dependency>
 
       <dependency>
