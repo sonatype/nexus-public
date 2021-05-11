@@ -62,37 +62,37 @@ public abstract class AbstractCacheBuilder<K, V>
   }
 
   @Override
-  public CacheBuilder name(final String name) {
+  public CacheBuilder<K, V> name(final String name) {
     this.name = name;
     return this;
   }
 
   @Override
-  public CacheBuilder cacheSize(final int cacheSize) {
+  public CacheBuilder<K, V> cacheSize(final int cacheSize) {
     this.cacheSize = cacheSize;
     return this;
   }
 
   @Override
-  public CacheBuilder expiryFactory(final Factory<? extends ExpiryPolicy> expiryFactory) {
+  public CacheBuilder<K, V> expiryFactory(final Factory<? extends ExpiryPolicy> expiryFactory) {
     this.expiryFactory = expiryFactory;
     return this;
   }
 
   @Override
-  public CacheBuilder storeByValue(final boolean storeByValue) {
+  public CacheBuilder<K, V> storeByValue(final boolean storeByValue) {
     this.storeByValue = storeByValue;
     return this;
   }
 
   @Override
-  public CacheBuilder managementEnabled(final boolean enabled) {
+  public CacheBuilder<K, V> managementEnabled(final boolean enabled) {
     this.managementEnabled = enabled;
     return this;
   }
 
   @Override
-  public CacheBuilder statisticsEnabled(final boolean enabled) {
+  public CacheBuilder<K, V> statisticsEnabled(final boolean enabled) {
     this.statisticsEnabled = enabled;
     return this;
   }

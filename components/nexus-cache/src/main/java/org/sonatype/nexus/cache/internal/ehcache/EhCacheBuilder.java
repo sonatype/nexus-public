@@ -12,26 +12,24 @@
  */
 package org.sonatype.nexus.cache.internal.ehcache;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.function.Supplier;
+
 import javax.cache.Cache;
 import javax.cache.CacheManager;
-import javax.cache.expiry.ExpiryPolicy;
 import javax.inject.Named;
 
 import org.sonatype.nexus.cache.AbstractCacheBuilder;
 
-import org.ehcache.ValueSupplier;
-import org.ehcache.config.CacheConfiguration;
 import org.ehcache.config.CacheRuntimeConfiguration;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
-import org.ehcache.config.builders.CacheEventListenerConfigurationBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
-import org.ehcache.event.CacheEvent;
 import org.ehcache.event.CacheEventListener;
 import org.ehcache.event.EventFiring;
 import org.ehcache.event.EventOrdering;
 import org.ehcache.event.EventType;
-import org.ehcache.expiry.Duration;
-import org.ehcache.expiry.Expiry;
+import org.ehcache.expiry.ExpiryPolicy;
 import org.ehcache.jsr107.Eh107Configuration;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -47,7 +45,7 @@ public class EhCacheBuilder<K, V>
 {
   @Override
   @SuppressWarnings("unchecked")
-  public Cache<K, V> build(CacheManager manager) {
+  public Cache<K, V> build(final CacheManager manager) {
     checkNotNull(manager);
     checkNotNull(keyType);
     checkNotNull(valueType);
@@ -67,8 +65,7 @@ public class EhCacheBuilder<K, V>
     manager.enableManagement(name, managementEnabled);
 
     if (persister != null) {
-      CacheEventListener listener = (final CacheEvent cacheEvent) ->
-          persister.accept((K) cacheEvent.getKey(), (V) cacheEvent.getOldValue());
+      CacheEventListener<K, V> listener = cacheEvent -> persister.accept(cacheEvent.getKey(), cacheEvent.getOldValue());
 
       Eh107Configuration<K, V> configuration = cache.getConfiguration(Eh107Configuration.class);
       configuration.unwrap(CacheRuntimeConfiguration.class)
@@ -79,28 +76,53 @@ public class EhCacheBuilder<K, V>
     return cache;
   }
 
-  private Expiry<K, V> mapToEhCacheExpiry(ExpiryPolicy policy) {
-    return new Expiry<K, V>()
+  private ExpiryPolicy<K, V> mapToEhCacheExpiry(final javax.cache.expiry.ExpiryPolicy policy) {
+    return new ExpiryPolicy<K, V>()
     {
       @Override
-      public Duration getExpiryForCreation(K k, V v) {
-        return toEhCacheDuration(policy.getExpiryForCreation());
+      public Duration getExpiryForCreation(final K key, final V value) {
+        return toJavaDuration(policy.getExpiryForCreation());
       }
 
       @Override
-      public Duration getExpiryForAccess(K k, ValueSupplier<? extends V> valueSupplier) {
-        return toEhCacheDuration(policy.getExpiryForAccess());
+      public Duration getExpiryForAccess(final K key, final Supplier<? extends V> value) {
+        return toJavaDuration(policy.getExpiryForAccess());
       }
 
       @Override
-      public Duration getExpiryForUpdate(K k, ValueSupplier<? extends V> valueSupplier, V v) {
-        return toEhCacheDuration(policy.getExpiryForUpdate());
+      public Duration getExpiryForUpdate(final K key, final Supplier<? extends V> oldValue, final V newValue) {
+        return toJavaDuration(policy.getExpiryForUpdate());
       }
 
-      private Duration toEhCacheDuration(javax.cache.expiry.Duration duration) {
-        return duration.isEternal() ?
-            Duration.INFINITE :
-            new Duration(duration.getDurationAmount(), duration.getTimeUnit());
+      private Duration toJavaDuration(final javax.cache.expiry.Duration duration) {
+        if (duration.isEternal()) {
+          return Duration.of(1, ChronoUnit.FOREVER);
+        }
+        ChronoUnit chronoUnit = null;
+        switch(duration.getTimeUnit()) {
+          case DAYS:
+            chronoUnit = ChronoUnit.DAYS;
+            break;
+          case HOURS:
+            chronoUnit = ChronoUnit.HOURS;
+            break;
+          case MICROSECONDS:
+            chronoUnit = ChronoUnit.MICROS;
+            break;
+          case MILLISECONDS:
+            chronoUnit = ChronoUnit.MILLIS;
+            break;
+          case MINUTES:
+            chronoUnit = ChronoUnit.MINUTES;
+            break;
+          case NANOSECONDS:
+            chronoUnit = ChronoUnit.NANOS;
+            break;
+          case SECONDS:
+            chronoUnit = ChronoUnit.SECONDS;
+            break;
+        }
+        return Duration.of(duration.getDurationAmount(), chronoUnit);
       }
     };
   }

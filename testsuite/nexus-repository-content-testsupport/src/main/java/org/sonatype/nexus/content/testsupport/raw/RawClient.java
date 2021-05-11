@@ -20,8 +20,8 @@ import org.sonatype.nexus.content.testsupport.FormatClientSupport;
 import org.sonatype.nexus.repository.http.HttpMethods;
 
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
 import org.apache.http.client.entity.EntityBuilder;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -55,7 +55,7 @@ public class RawClient
     return status(execute(put));
   }
 
-  public HttpResponse put(String path, HttpEntity entity) throws IOException {
+  public CloseableHttpResponse put(final String path, final HttpEntity entity) throws IOException {
     final URI uri = resolve(path);
     final HttpPut put = new HttpPut(uri);
     put.setEntity(entity);
@@ -66,11 +66,11 @@ public class RawClient
     return bytes(get(path));
   }
 
-  public HttpResponse delete(final String path) throws Exception {
+  public CloseableHttpResponse delete(final String path) throws Exception {
     return execute(new HttpDelete(resolve(path)));
   }
 
-  public HttpResponse mkcol(final String path) throws Exception {
+  public CloseableHttpResponse mkcol(final String path) throws Exception {
     HttpUriRequest mkcolRequest = RequestBuilder.create(HttpMethods.MKCOL)
         .setUri(resolve(path)).build();
     return execute(mkcolRequest);

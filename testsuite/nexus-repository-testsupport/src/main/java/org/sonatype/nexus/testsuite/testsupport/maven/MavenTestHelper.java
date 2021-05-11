@@ -15,7 +15,6 @@ package org.sonatype.nexus.testsuite.testsupport.maven;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.util.Date;
 import java.util.List;
@@ -24,21 +23,15 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.goodies.testsupport.TestData;
-import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.pax.exam.NexusPaxExamSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.view.Payload;
 
 import com.google.common.base.Strings;
-import org.apache.commons.compress.utils.IOUtils;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.apache.maven.artifact.repository.metadata.io.xpp3.MetadataXpp3Reader;
 import org.joda.time.DateTime;
 
-import static java.net.URLEncoder.encode;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 
@@ -49,8 +42,6 @@ public abstract class MavenTestHelper
   @Inject
   @Named("http://localhost:${application-port}${nexus-context-path}")
   private URL nexusUrl;
-
-  private CloseableHttpClient client = HttpClientBuilder.create().build();
 
   public abstract Payload read(Repository repository, String path) throws IOException;
 
@@ -162,32 +153,9 @@ public abstract class MavenTestHelper
   }
 
   public Metadata parseMetadata(final InputStream is) throws Exception {
-    try {
+    try (InputStream in = is) {
       assertThat(is, notNullValue());
       return reader.read(is);
-    }
-    finally {
-      IOUtils.closeQuietly(is);
-    }
-  }
-
-  private String url(final Repository repo, final String path) {
-    boolean reset = false;
-    if (!BaseUrlHolder.isSet()) {
-      reset = true;
-      BaseUrlHolder.set(nexusUrl.toString());
-    }
-    try {
-      String repoPath = encode(path.startsWith("/") ? path : '/' + path, UTF_8.toString());
-      return String.format("%s%s", repo.getUrl(), repoPath);
-    }
-    catch (UnsupportedEncodingException e) {
-      throw new RuntimeException(e);
-    }
-    finally {
-      if (reset) {
-        BaseUrlHolder.unset();
-      }
     }
   }
 
