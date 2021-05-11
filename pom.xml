@@ -110,6 +110,9 @@
       org.sonatype.nexus.content.testsuite.groups.SQLTestGroup
     </it.excludedGroups>
     <clm.skip>true</clm.skip>
+
+    <!-- fabric8 container naming pattern: {imageName}-{buildTimestamp}-{index} -->
+    <docker.containerNamePattern>%n-%t-%i</docker.containerNamePattern>
   </properties>
 
   <modules>
