@@ -30,6 +30,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * @since 3.6
  */
+@SuppressWarnings("rawtypes")
 @Named
 @Singleton
 public class CacheHelper
@@ -50,6 +51,7 @@ public class CacheHelper
     return cacheManagerProvider.get();
   }
 
+  @SuppressWarnings("unchecked")
   public <K,V> CacheBuilder<K,V> builder() {
     return cacheBuilderProvider.get();
   }

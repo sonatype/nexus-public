@@ -36,6 +36,7 @@ import static com.google.common.base.Preconditions.checkState;
  *
  * @since 3.14
  */
+@SuppressWarnings("rawtypes")
 @Named("default")
 @Singleton
 public class DefaultCacheBuilderProvider
