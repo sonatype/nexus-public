@@ -176,6 +176,9 @@ Ext.define('NX.coreui.controller.Repositories', {
           OptionalFieldSet enables all child elements each time it is expanded */
           enable: me.disablePreEmptiveAuthCheckboxIfNotHttps
         },
+        'nx-coreui-repository-nugetproxy-facet radiogroup[name=nugetVersion]': {
+          change: me.onNugetProxyVersionChange
+        },
       }
     });
   },
@@ -343,6 +346,8 @@ Ext.define('NX.coreui.controller.Repositories', {
     var me = this,
         uiSettings = NX.State.getValue('uiSettings'),
         statusInterval = 5;
+
+    me.updateNugetRepoURLs();
 
     if (me.statusProvider) {
       me.statusProvider.disconnect();
@@ -623,6 +628,68 @@ Ext.define('NX.coreui.controller.Repositories', {
           }
         ]
       }
+    });
+  },
+
+  onNugetProxyVersionChange: function(element, newValue) {
+    var me = this,
+      store = me.getStore('Repository');
+
+    var nugetVersion = newValue['attributes.nugetProxy.nugetVersion'];
+
+    var repositoryId = me.getModelIdFromBookmark(),
+              model = repositoryId ? store.findRecord('name', repositoryId, 0, false, true, true) : undefined;
+    if (model) {
+      var repositoryUrl = model.get('url');
+      if (nugetVersion == 'V3') {
+        if (Ext.String.endsWith(repositoryUrl, 'index.json')) {
+          return;
+        }
+        repositoryUrl += 'index.json';
+      } else {
+        repositoryUrl = repositoryUrl.replace('index.json', '');
+      }
+      model.set('url', repositoryUrl);
+      model.commit(true);
+
+      var form = element.up('form'),
+        repositoryUrlField = form.down('textfield[name=url]');
+
+      if (repositoryUrl && repositoryUrlField) {
+        repositoryUrlField.setValue(repositoryUrl);
+      }
+    }
+  },
+
+  /**
+   * @private
+   * Update NuGet proxy repositories URLs with 'index.json' suffix for V3.
+   */
+  updateNugetRepoURLs: function() {
+    var me = this,
+      store = me.getStore('Repository');
+
+    // wait until the repositories list loaded
+    store.on('load', function() {
+      store.each(function(record) {
+        var format = record.get('format');
+        var name = record.get('name');
+        var type = record.get('type');
+
+        if (format == 'nuget' && type == 'proxy') {
+          var model = store.findRecord('name', name);
+          if (model) {
+            var repoUrl = model.get('url');
+            var nugetVersion = model.get('attributes')['nugetProxy']['nugetVersion'];
+
+            if (nugetVersion == 'V3' && !Ext.String.endsWith(repoUrl, 'index.json')) {
+              repoUrl += 'index.json';
+              model.set('url', repoUrl);
+              model.commit(true);
+            }
+          }
+        }
+      });
     });
   }
 
