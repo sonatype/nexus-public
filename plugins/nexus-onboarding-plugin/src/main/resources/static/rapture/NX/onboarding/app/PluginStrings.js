@@ -59,6 +59,14 @@ Ext.define('NX.onboarding.app.PluginStrings', {
       '<a href="https://links.sonatype.com/products/nexus/anonymous-access/docs" target="_blank" rel="noopener">More information <span class="x-fa fa-external-link"></a></p>',
       Enable_Label: 'Enable anonymous access',
       Disable_Label: 'Disable anonymous access'
+    },
+    'NX.onboarding.view.ConfigureAnalyticsCollectionScreen': {
+      Title: 'Help Us Improve Nexus Repository',
+      Description: '<p>Please help us improve the Nexus Repository experience and shape future feature improvements by sharing ' +
+          'anonymous statistical metrics and performance information with Sonatype. The collected information will not contain ' +
+          'identifying or proprietary information (e.g. the names of hosts, servers, repositories, or users).</p>',
+      Enable_Label: 'Yes, I agree to share anonymous data.',
+      Disable_Label: 'No, not interested.'
     }
   }
 }, function(obj) {
