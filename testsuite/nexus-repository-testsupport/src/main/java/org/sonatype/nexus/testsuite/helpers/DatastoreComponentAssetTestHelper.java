@@ -21,6 +21,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -380,15 +381,15 @@ public class DatastoreComponentAssetTestHelper
   public void setLastDownloadedTime(final Repository repository, final int minusSeconds) {
     int repositoryId = ((ContentFacetSupport) repository.facet(ContentFacet.class)).contentRepositoryId();
 
-    Timestamp time = Timestamp.from(LocalDateTime.now().minusSeconds(minusSeconds).toInstant(ZoneOffset.UTC));
+    Timestamp time = Timestamp.from(Instant.now().minusSeconds(minusSeconds));
 
     try (Connection connection = sessionSupplier.openConnection(DEFAULT_DATASTORE_NAME);
          PreparedStatement stmt = connection.prepareStatement("UPDATE " + repository.getFormat().getValue() + "_asset "
-            + "SET last_downloaded = ? WHERE repository_id = ?")) {
+             + "SET last_downloaded = ? WHERE repository_id = ?")) {
       stmt.setTimestamp(1, time);
       stmt.setInt(2, repositoryId);
       stmt.execute();
-      if(stmt.getWarnings() != null) {
+      if (stmt.getWarnings() != null) {
         throw new RuntimeException(UPDATE_TIME_ERROR_MESSAGE + stmt.getWarnings());
       }
     }
