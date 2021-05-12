@@ -47,6 +47,7 @@ Ext.define('NX.coreui.view.repository.facet.NugetProxyFacet', {
         items: [
           {
             xtype: 'radiogroup',
+            name: 'nugetVersion',
             fieldLabel: NX.I18n.get('Repository_Facet_NugetProxyFacet_ProtocolVersion'),
             columns: 1,
             vertical: true,
