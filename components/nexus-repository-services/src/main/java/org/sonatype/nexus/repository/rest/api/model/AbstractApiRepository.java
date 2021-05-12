@@ -18,7 +18,7 @@ import javax.validation.constraints.Pattern;
 import org.sonatype.nexus.validation.constraint.NamePatternConstants;
 
 import io.swagger.annotations.ApiModelProperty;
-import org.hibernate.validator.constraints.NotEmpty;
+import javax.validation.constraints.NotEmpty;
 
 /**
  * REST API model of properties common to all repository types & formats.

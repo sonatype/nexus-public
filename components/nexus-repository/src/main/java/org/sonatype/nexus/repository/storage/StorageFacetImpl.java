@@ -53,7 +53,7 @@ import com.google.common.annotations.VisibleForTesting;
 import java.util.function.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import org.hibernate.validator.constraints.NotEmpty;
+import javax.validation.constraints.NotEmpty;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;

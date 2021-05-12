@@ -21,7 +21,7 @@ import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
-import org.hibernate.validator.constraints.NotBlank
+import javax.validation.constraints.NotBlank
 
 import static org.sonatype.nexus.repository.rest.internal.resources.doc.ContentSelectorsResourceDoc.DESCRIPTION_DESCRIPTION
 import static org.sonatype.nexus.repository.rest.internal.resources.doc.ContentSelectorsResourceDoc.EXPRESSION_DESCRIPTION

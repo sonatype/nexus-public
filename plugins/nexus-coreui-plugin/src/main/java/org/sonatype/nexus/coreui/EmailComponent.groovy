@@ -32,7 +32,7 @@ import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import groovy.transform.PackageScope
 import org.apache.shiro.authz.annotation.RequiresAuthentication
 import org.apache.shiro.authz.annotation.RequiresPermissions
-import org.hibernate.validator.constraints.Email
+import javax.validation.constraints.Email
 
 /**
  * Email {@link DirectComponent}.

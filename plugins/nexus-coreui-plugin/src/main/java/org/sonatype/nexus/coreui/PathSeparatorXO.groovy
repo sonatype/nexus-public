@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.coreui
 
-import org.hibernate.validator.constraints.NotEmpty
+import javax.validation.constraints.NotEmpty
 
 /**
  * @since 3.0

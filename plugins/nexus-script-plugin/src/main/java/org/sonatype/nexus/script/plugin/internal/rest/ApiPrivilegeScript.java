@@ -21,7 +21,7 @@ import org.sonatype.nexus.security.privilege.rest.ApiPrivilegeWithActions;
 import org.sonatype.nexus.security.privilege.rest.PrivilegeAction;
 
 import io.swagger.annotations.ApiModelProperty;
-import org.hibernate.validator.constraints.NotBlank;
+import javax.validation.constraints.NotBlank;
 
 /**
  * @since 3.19

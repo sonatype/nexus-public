@@ -19,7 +19,7 @@ import org.sonatype.nexus.validation.constraint.NamePatternConstants
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
 import groovy.transform.TupleConstructor
-import org.hibernate.validator.constraints.NotEmpty
+import javax.validation.constraints.NotEmpty
 
 /**
  * Script exchange object.

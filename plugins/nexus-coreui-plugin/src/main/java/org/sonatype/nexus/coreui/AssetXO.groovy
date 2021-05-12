@@ -14,7 +14,7 @@ package org.sonatype.nexus.coreui
 
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
-import org.hibernate.validator.constraints.NotEmpty
+import javax.validation.constraints.NotEmpty
 
 /**
  * Asset exchange object.

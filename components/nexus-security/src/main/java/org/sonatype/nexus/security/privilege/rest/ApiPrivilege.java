@@ -19,7 +19,7 @@ import org.sonatype.nexus.security.privilege.Privilege;
 import org.sonatype.nexus.validation.constraint.NamePatternConstants;
 
 import io.swagger.annotations.ApiModelProperty;
-import org.hibernate.validator.constraints.NotBlank;
+import javax.validation.constraints.NotBlank;
 
 /**
  * @since 3.19

@@ -16,7 +16,7 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.text.Strings2;
 
-import org.hibernate.validator.constraints.NotBlank;
+import javax.validation.constraints.NotBlank;
 
 /**
  * NTLM authentication configuration.

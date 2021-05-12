@@ -54,7 +54,7 @@ import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import groovy.transform.PackageScope
 import org.apache.shiro.authz.annotation.RequiresAuthentication
 import org.apache.shiro.authz.annotation.RequiresPermissions
-import org.hibernate.validator.constraints.NotEmpty
+import javax.validation.constraints.NotEmpty
 
 import static com.google.common.base.Preconditions.checkState
 import static org.sonatype.nexus.repository.date.TimeZoneUtils.shiftMonthDay

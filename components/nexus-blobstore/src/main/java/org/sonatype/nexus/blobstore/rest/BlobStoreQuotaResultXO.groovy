@@ -16,7 +16,7 @@ import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaResult
 
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
-import org.hibernate.validator.constraints.NotEmpty
+import javax.validation.constraints.NotEmpty
 
 /**
  * @since 3.14

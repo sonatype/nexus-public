@@ -20,8 +20,8 @@ import org.sonatype.nexus.repository.config.UniqueRepositoryName
 import org.sonatype.nexus.validation.group.Create
 
 import groovy.transform.ToString
-import org.hibernate.validator.constraints.NotBlank
-import org.hibernate.validator.constraints.NotEmpty
+import javax.validation.constraints.NotBlank
+import javax.validation.constraints.NotEmpty
 
 /**
  * Repository exchange object.
