@@ -72,6 +72,16 @@ public class BlobStoreRule
     return blobStore;
   }
 
+  public BlobStore createFile(final String name, String path) throws Exception {
+    BlobStoreConfiguration config = blobStoreManagerProvider.get().newConfiguration();
+    config.setName(name);
+    config.setType(FileBlobStore.TYPE);
+    config.attributes(FileBlobStore.CONFIG_KEY).set(PATH_KEY, path);
+    BlobStore blobStore = blobStoreManagerProvider.get().create(config);
+    blobStoreNames.add(name);
+    return blobStore;
+  }
+
   public BlobStore createGroup(final String name, final String... members) throws Exception {
     BlobStoreConfiguration config = blobStoreManagerProvider.get().newConfiguration();
     config.setName(name);

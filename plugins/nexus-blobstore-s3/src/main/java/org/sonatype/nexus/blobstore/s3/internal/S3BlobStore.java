@@ -39,11 +39,11 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
+import org.sonatype.nexus.blobstore.api.RawObjectAccess;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.thread.NexusThreadFactory;
 
-import com.amazonaws.AmazonServiceException;
 import com.amazonaws.SdkBaseException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.iterable.S3Objects;
@@ -172,6 +172,8 @@ public class S3BlobStore
   private final Timer expireTimer;
 
   private final Timer hardDeleteTimer;
+
+  private RawObjectAccess rawObjectAccess;
 
   @Inject
   public S3BlobStore(
@@ -562,6 +564,7 @@ public class S3BlobStore
       bucketManager.setS3(s3);
       bucketManager.prepareStorageLocation(blobStoreConfiguration);
       S3BlobStoreConfigurationHelper.setConfiguredBucket(blobStoreConfiguration, getConfiguredBucket());
+      rawObjectAccess = new S3RawObjectAccess(getConfiguredBucket(), s3, performanceLogger, uploader);
     }
     catch (AmazonS3Exception e) {
       throw buildException(e);
@@ -766,46 +769,6 @@ public class S3BlobStore
     }
   }
 
-  @Override
-  @Timed
-  public void putRawObject(final Path path, final InputStream input) {
-    uploader.upload(s3, getConfiguredBucket(), path.toString(), input);
-  }
-
-  @Nullable
-  @Override
-  @Timed
-  public InputStream getRawObject(final Path path) {
-    try {
-      S3Object object = s3.getObject(getConfiguredBucket(), path.toString());
-      return performanceLogger.maybeWrapForPerformanceLogging(object.getObjectContent());
-    }
-    catch (AmazonServiceException e) {
-      if (e.getStatusCode() == 404) {
-        return null;
-      }
-      throw e;
-    }
-  }
-
-  @Override
-  public boolean hasRawObject(final Path path) {
-    try {
-      return s3.doesObjectExist(getConfiguredBucket(), path.toString());
-    }
-    catch (AmazonServiceException e) {
-      if (e.getStatusCode() == 404) {
-        return false;
-      }
-      throw e;
-    }
-  }
-
-  @Override
-  public void deleteRawObject(final Path path) {
-    s3.deleteObject(getConfiguredBucket(), path.toString());
-  }
-
   /**
    * Used by {@link #getDirectPathBlobIdStream(String)} to convert an s3 key to a {@link BlobId}.
    *
@@ -823,5 +786,10 @@ public class S3BlobStore
         DIRECT_PATH_BLOB_HEADER, "true"
     );
     return blobIdLocationResolver.fromHeaders(headers);
+  }
+
+  @Override
+  public RawObjectAccess getRawObjectAccess() {
+    return rawObjectAccess;
   }
 }

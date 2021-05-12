@@ -43,6 +43,8 @@ import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
+import org.sonatype.nexus.blobstore.api.RawObjectAccess;
+import org.sonatype.nexus.blobstore.api.UnimplementedRawObjectAccess;
 import org.sonatype.nexus.blobstore.group.internal.BlobStoreGroupMetrics;
 import org.sonatype.nexus.blobstore.group.internal.WriteToFirstMemberFillPolicy;
 import org.sonatype.nexus.cache.CacheHelper;
@@ -372,6 +374,11 @@ public class BlobStoreGroup
     return unmodifiableList(members.get());
   }
 
+  @Override
+  public RawObjectAccess getRawObjectAccess() {
+    return new UnimplementedRawObjectAccess();
+  }
+
   /**
    * Supplier for thread-safe lazy initialization of members.
    */
@@ -423,27 +430,6 @@ public class BlobStoreGroup
         "name='" + name + "'," +
         "members='" + members.get() + '\'' +
         '}';
-  }
-
-  @Override
-  public void putRawObject(final Path path, final InputStream in) {
-    throw new UnsupportedOperationException(RAW_OBJECTS_NOT_SUPPORTED);
-  }
-
-  @Nullable
-  @Override
-  public InputStream getRawObject(final Path path) {
-    throw new UnsupportedOperationException(RAW_OBJECTS_NOT_SUPPORTED);
-  }
-
-  @Override
-  public boolean hasRawObject(final Path path) {
-    throw new UnsupportedOperationException(RAW_OBJECTS_NOT_SUPPORTED);
-  }
-
-  @Override
-  public void deleteRawObject(final Path path) {
-    throw new UnsupportedOperationException(RAW_OBJECTS_NOT_SUPPORTED);
   }
 
   /**
