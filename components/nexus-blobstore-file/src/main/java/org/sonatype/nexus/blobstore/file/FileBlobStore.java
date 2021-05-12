@@ -14,12 +14,10 @@ package org.sonatype.nexus.blobstore.file;
 
 import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
-import java.io.UncheckedIOException;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.FileStore;
 import java.nio.file.FileVisitResult;
@@ -55,6 +53,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
+import org.sonatype.nexus.blobstore.api.RawObjectAccess;
 import org.sonatype.nexus.blobstore.file.internal.BlobCollisionException;
 import org.sonatype.nexus.blobstore.file.internal.FileBlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.file.internal.FileOperations;
@@ -75,7 +74,6 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.HashCode;
 import com.squareup.tape.QueueFile;
-import org.apache.commons.io.FileUtils;
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -155,6 +153,8 @@ public class FileBlobStore
   private boolean supportsHardLinkCopy;
 
   private boolean supportsAtomicMove;
+
+  private RawObjectAccess rawObjectAccess;
 
   private final BlobStoreReconciliationLogger reconciliationLogger;
 
@@ -625,6 +625,7 @@ public class FileBlobStore
       DirectoryHelper.mkdir(content);
       this.contentDir = content;
       setConfiguredBlobStorePath(getRelativeBlobDir());
+      rawObjectAccess = new FileRawObjectAccess(blobDir);
     }
     catch (Exception e) {
       throw new BlobStoreException(
@@ -1066,61 +1067,8 @@ public class FileBlobStore
   }
 
   @Override
-  public void putRawObject(final Path path, final InputStream input) {
-    try {
-      Path storageDir = getAbsoluteBlobDir();
-      File rawObjectFile = storageDir.resolve(path).toFile();
-      FileUtils.copyInputStreamToFile(input, rawObjectFile);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Nullable
-  @Override
-  public InputStream getRawObject(final Path path) {
-    try {
-      Path storageDir = getAbsoluteBlobDir();
-      File rawObjectFile = storageDir.resolve(path).toFile();
-      if (rawObjectFile.exists()) {
-        return new FileInputStream(rawObjectFile);
-      }
-      else {
-        return null;
-      }
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Override
-  public boolean hasRawObject(final Path path) {
-    try {
-      Path storageDir = getAbsoluteBlobDir();
-      File rawObjectFile = storageDir.resolve(path).toFile();
-      return rawObjectFile.exists();
-    }
-    catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
-  @Override
-  public void deleteRawObject(final Path path) {
-    try {
-      Path storageDir = getAbsoluteBlobDir();
-      File rawObjectFile = storageDir.resolve(path).toFile();
-      File parent = rawObjectFile.getParentFile();
-      Files.deleteIfExists(rawObjectFile.toPath());
-      String[] children = parent.list();
-      if (children == null || children.length == 0) {
-        Files.deleteIfExists(parent.toPath());
-      }
-    }
-    catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
+  public RawObjectAccess getRawObjectAccess() {
+    return rawObjectAccess;
   }
 
   @Override

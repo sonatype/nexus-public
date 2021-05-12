@@ -302,15 +302,6 @@ public interface BlobStore
    */
   void shutdown() throws Exception;
 
-  void putRawObject(Path path, InputStream in);
-
-  @Nullable
-  InputStream getRawObject(Path path);
-
-  void deleteRawObject(Path path);
-
-  boolean hasRawObject(Path path);
-
   /**
    * Acts as a {@code BlobStore::hardDelete}, except it may be executed asynchronously.
    *
@@ -331,4 +322,9 @@ public interface BlobStore
   default void flushMetrics() throws IOException {
     //default impl does nothing
   }
+
+  /**
+   * @since 3.next
+   */
+  RawObjectAccess getRawObjectAccess();
 }
