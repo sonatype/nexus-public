@@ -67,10 +67,6 @@
       <groupId>com.ning</groupId>
       <artifactId>compress-lzf</artifactId>
     </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty</artifactId>
-    </dependency>
   </dependencies>
 
   <build>

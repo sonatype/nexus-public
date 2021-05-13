@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.search.query;
 
-import java.util.ArrayList;
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,18 +24,13 @@ import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.hamcrest.Matcher;
 import org.jboss.resteasy.spi.ResteasyUriInfo;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Collections.singletonList;
@@ -45,12 +40,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.powermock.api.mockito.PowerMockito.mock;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(XContentBuilder.class)
 public class SearchUtilsTest
     extends TestSupport
 {
@@ -65,6 +55,10 @@ public class SearchUtilsTest
   private static final String URI = "http://localhost";
 
   private static final String CONTEXT_PATH = "/";
+
+  private static final Field fieldNameField = getField(FieldSortBuilder.class, "fieldName");
+
+  private static final Field orderField = getField(FieldSortBuilder.class, "order");
 
   @Mock
   RepositoryManagerRESTAdapter repositoryManagerRESTAdapter;
@@ -300,14 +294,22 @@ public class SearchUtilsTest
     assertThat(forwardQuery.equals(mixedQuery), is(true));
   }
 
-  private void assertSearchBuilder(SortBuilder sortBuilder, String field, String order) throws Exception {
+  private static void assertSearchBuilder(final SortBuilder sortBuilder, final String field, final String order) throws Exception {
     //see https://github.com/elastic/elasticsearch/issues/20853 as to why i can't do something simple like
-    //assertThat(sortBuilders.get(0).toString(), is("somejson"));
-    XContentBuilder xContentBuilder = mock(XContentBuilder.class);
-    sortBuilder.toXContent(xContentBuilder, ToXContent.EMPTY_PARAMS);
-    verify(xContentBuilder).startObject(field);
-    verify(xContentBuilder).field("order", order);
-    verify(xContentBuilder).endObject();
-    verifyNoMoreInteractions(xContentBuilder);
+//    assertThat(sortBuilder.toString(), is("somejson"));
+
+    assertThat(fieldNameField.get(sortBuilder), is(field));
+    assertThat(orderField.get(sortBuilder).toString(), is(order));
+  }
+
+  private static Field getField(final Class<?> clazz, final String fieldName) {
+    try {
+      Field field = FieldSortBuilder.class.getDeclaredField(fieldName);
+      field.setAccessible(true);
+      return field;
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 }
