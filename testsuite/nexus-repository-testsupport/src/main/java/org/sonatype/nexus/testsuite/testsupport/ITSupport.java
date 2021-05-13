@@ -71,7 +71,9 @@ public abstract class ITSupport
    */
   @Before
   public void waitForNexus() {
-    await().atMost(30, TimeUnit.SECONDS).until(responseFrom(nexusUrl));
+    await().atMost(30, TimeUnit.SECONDS)
+        .ignoreExceptionsMatching(exception -> !(exception instanceof InterruptedException))
+        .until(responseFrom(nexusUrl));
   }
 
   /**
