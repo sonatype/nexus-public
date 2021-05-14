@@ -495,9 +495,11 @@ public abstract class NexusPaxExamSupport
 
         return combine(null,
             editConfigurationFilePut(NEXUS_PROPERTIES_FILE, DATASTORE_ENABLED, "true"),
-            editConfigurationFilePut(DATA_STORE_PROPERTIES_FILE, "name", "nexus"),
-            editConfigurationFilePut(DATA_STORE_PROPERTIES_FILE, "type", "jdbc"),
-            editConfigurationFilePut(DATA_STORE_PROPERTIES_FILE, "jdbcUrl", configurePostgres()),
+            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.datastore.nexus.name", "nexus"),
+            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.datastore.nexus.type", "jdbc"),
+            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.datastore.nexus.jdbcUrl", configurePostgres()),
+            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.datastore.nexus.username", DB_USER),
+            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.datastore.nexus.password", DB_PASSWORD),
             systemProperty(TEST_JDBC_URL_PROPERTY).value(configurePostgres())
         );
       case H2:
