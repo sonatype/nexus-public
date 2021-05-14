@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import javax.annotation.Priority;
 import javax.inject.Named;
@@ -43,15 +45,14 @@ import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.Closer;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.maven.index.reader.IndexWriter;
 import org.apache.maven.index.reader.Record;
-import org.apache.maven.index.reader.Record.*;
 import org.apache.maven.index.reader.WritableResourceHandler;
 import org.apache.maven.index.reader.WritableResourceHandler.WritableResource;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.transform;
@@ -175,10 +176,25 @@ public final class OrientMavenIndexPublisher extends MavenIndexPublisher
     Map<String, Object> sqlParams = new HashMap<>();
     sqlParams.put(P_BUCKET, AttachedEntityHelper.id(tx.findBucket(repository)));
     sqlParams.put(P_ASSET_KIND, AssetKind.ARTIFACT.name());
-    return transform(
-        tx.browse(SELECT_HOSTED_ARTIFACTS, sqlParams),
-        (ODocument document) -> toRecord(repository.facet(OrientMavenFacet.class), document)
-    );
+
+    Iterable<ODocument> documents = tx.browse(SELECT_HOSTED_ARTIFACTS, sqlParams);
+    OrientMavenFacet mavenFacet = repository.facet(OrientMavenFacet.class);
+
+    return filterAndConvertToRecords(documents, mavenFacet);
+  }
+
+  @VisibleForTesting
+  Iterable<Record> filterAndConvertToRecords(final Iterable<ODocument> documents, final OrientMavenFacet mavenFacet) {
+    return StreamSupport.stream(documents.spliterator(), false)
+        .filter((ODocument document) -> isCorrectComponent(mavenFacet, document))
+        .map((ODocument document) -> toRecord(mavenFacet, document)).collect(Collectors.toList());
+  }
+
+  private boolean isCorrectComponent(final OrientMavenFacet mavenFacet, final ODocument document) {
+    checkNotNull(document); // sanity
+    final String path = document.field("path", String.class);
+    MavenPath mavenPath = mavenFacet.getMavenPathParser().parsePath(path);
+    return mavenPath.getCoordinates() != null && !mavenPath.isSubordinate(); // otherwise query is wrong
   }
 
   /**
@@ -186,10 +202,8 @@ public final class OrientMavenIndexPublisher extends MavenIndexPublisher
    * belonging to components, but not checksums or signatures.
    */
   private Record toRecord(final OrientMavenFacet mavenFacet, final ODocument document) {
-    checkNotNull(document); // sanity
     final String path = document.field("path", String.class);
     MavenPath mavenPath = mavenFacet.getMavenPathParser().parsePath(path);
-    checkArgument(mavenPath.getCoordinates() != null && !mavenPath.isSubordinate()); // otherwise query is wrong
 
     Record record = new Record(ARTIFACT_ADD, new HashMap<>());
     record.put(REC_MODIFIED, document.field("lastModified", Long.class));
