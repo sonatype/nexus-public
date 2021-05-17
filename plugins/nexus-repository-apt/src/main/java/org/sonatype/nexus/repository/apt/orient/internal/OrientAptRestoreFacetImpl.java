@@ -20,12 +20,12 @@ import javax.inject.Named;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.FacetSupport;
-import org.sonatype.nexus.repository.apt.orient.AptFacet;
-import org.sonatype.nexus.repository.apt.orient.AptRestoreFacet;
 import org.sonatype.nexus.repository.apt.internal.AptPackageParser;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
 import org.sonatype.nexus.repository.apt.internal.debian.PackageInfo;
 import org.sonatype.nexus.repository.apt.internal.debian.Utils;
+import org.sonatype.nexus.repository.apt.orient.AptRestoreFacet;
+import org.sonatype.nexus.repository.apt.orient.OrientAptFacet;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Query;
@@ -53,9 +53,9 @@ public class OrientAptRestoreFacetImpl
   public Content restore(final AssetBlob assetBlob, final String path) throws IOException {
     StorageTx tx = UnitOfWork.currentTx();
     Asset asset;
-    AptFacet aptFacet = facet(AptFacet.class);
+    OrientAptFacet aptFacet = facet(OrientAptFacet.class);
     if (isDebPackageContentType(path)) {
-      ControlFile controlFile = AptPackageParser.getDebControlFile(assetBlob.getBlob());
+      ControlFile controlFile = AptPackageParser.parsePackage(() -> assetBlob.getBlob().getInputStream());
       asset = aptFacet.findOrCreateDebAsset(tx, path, new PackageInfo(controlFile));
     }
     else {

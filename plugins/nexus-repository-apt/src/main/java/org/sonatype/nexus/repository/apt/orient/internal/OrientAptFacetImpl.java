@@ -13,18 +13,19 @@
 package org.sonatype.nexus.repository.apt.orient.internal;
 
 import java.io.IOException;
+import java.util.Optional;
 
-import javax.annotation.Nullable;
 import javax.inject.Named;
 import javax.validation.constraints.NotNull;
 import javax.validation.groups.Default;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.FacetSupport;
-import org.sonatype.nexus.repository.apt.orient.AptFacet;
+import org.sonatype.nexus.repository.apt.internal.AptFacetHelper;
 import org.sonatype.nexus.repository.apt.internal.AptPackageParser;
-import org.sonatype.nexus.repository.apt.orient.OrientAptWritePolicySelector;
 import org.sonatype.nexus.repository.apt.internal.debian.PackageInfo;
+import org.sonatype.nexus.repository.apt.orient.OrientAptFacet;
+import org.sonatype.nexus.repository.apt.orient.OrientAptWritePolicySelector;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.storage.Asset;
@@ -59,7 +60,7 @@ import static org.sonatype.nexus.repository.storage.Query.builder;
 @Named
 public class OrientAptFacetImpl
     extends FacetSupport
-    implements AptFacet
+    implements OrientAptFacet
 {
   @VisibleForTesting
   static final String CONFIG_KEY = "apt";
@@ -113,16 +114,15 @@ public class OrientAptFacetImpl
   }
 
   @Override
-  @Nullable
   @TransactionalTouchBlob
-  public Content get(final String path) throws IOException {
+  public Optional<Content> get(final String path) throws IOException {
     final StorageTx tx = UnitOfWork.currentTx();
     final Asset asset = tx.findAssetWithProperty(P_NAME, path, tx.findBucket(getRepository()));
     if (asset == null) {
-      return null;
+      return Optional.empty();
     }
 
-    return OrientFacetHelper.toContent(asset, tx.requireBlob(asset.requireBlobRef()));
+    return Optional.of(OrientFacetHelper.toContent(asset, tx.requireBlob(asset.requireBlobRef())));
   }
 
   @Override
@@ -135,11 +135,12 @@ public class OrientAptFacetImpl
   @TransactionalStoreBlob
   public Content put(final String path, final Payload content, final PackageInfo info) throws IOException {
     StorageFacet storageFacet = facet(StorageFacet.class);
-    try (final TempBlob tempBlob = storageFacet.createTempBlob(content, OrientFacetHelper.hashAlgorithms)) {
+    try (final TempBlob tempBlob = storageFacet.createTempBlob(content, AptFacetHelper.hashAlgorithms)) {
       StorageTx tx = UnitOfWork.currentTx();
       Asset asset = isDebPackageContentType(path)
           ? findOrCreateDebAsset(tx, path,
-          info != null ? info : new PackageInfo(AptPackageParser.getDebControlFile(tempBlob.getBlob())))
+          info != null ? info : new PackageInfo(
+              AptPackageParser.parsePackage(() -> tempBlob.getBlob().getInputStream())))
           : findOrCreateMetadataAsset(tx, path);
 
       AttributesMap contentAttributes = null;
@@ -151,7 +152,7 @@ public class OrientAptFacetImpl
           asset,
           path,
           tempBlob,
-          OrientFacetHelper.hashAlgorithms,
+          AptFacetHelper.hashAlgorithms,
           null,
           content.getContentType(),
           false);

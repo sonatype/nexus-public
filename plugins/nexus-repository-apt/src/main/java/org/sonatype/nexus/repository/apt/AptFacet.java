@@ -10,23 +10,34 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.apt.datastore.internal.hosted;
+package org.sonatype.nexus.repository.apt;
 
 import java.io.IOException;
+import java.util.Optional;
+
+import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.Facet;
-import org.sonatype.nexus.repository.Facet.Exposed;
+import org.sonatype.nexus.repository.apt.internal.debian.PackageInfo;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 
 /**
- * Apt hosted Facet
- *
- * @since 3.next
+ * @since 3.17
  */
-@Exposed
-public interface AptHostedFacet
+@Facet.Exposed
+public interface AptFacet
     extends Facet
 {
-  Content upload(final String path, final Payload content) throws IOException;
+  Optional<Content> get(final String path) throws IOException;
+
+  Content put(final String path, final Payload payload) throws IOException;
+
+  Content put(final String path, final Payload payload, @Nullable final PackageInfo packageInfo) throws IOException;
+
+  boolean delete(final String path) throws IOException;
+
+  boolean isFlat();
+
+  String getDistribution();
 }

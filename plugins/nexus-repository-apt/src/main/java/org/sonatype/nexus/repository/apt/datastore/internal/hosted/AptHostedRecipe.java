@@ -23,11 +23,25 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.apt.datastore.AptContentFacet;
 import org.sonatype.nexus.repository.apt.internal.AptFormat;
+import org.sonatype.nexus.repository.apt.internal.AptSecurityFacet;
+import org.sonatype.nexus.repository.apt.internal.gpg.AptSigningFacet;
+import org.sonatype.nexus.repository.apt.internal.snapshot.AptSnapshotHandler;
 import org.sonatype.nexus.repository.content.browse.BrowseFacet;
+import org.sonatype.nexus.repository.content.maintenance.LastAssetMaintenanceFacet;
+import org.sonatype.nexus.repository.http.PartialFetchHandler;
+import org.sonatype.nexus.repository.security.SecurityHandler;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet;
+import org.sonatype.nexus.repository.view.Route;
 import org.sonatype.nexus.repository.view.Router;
 import org.sonatype.nexus.repository.view.ViewFacet;
+import org.sonatype.nexus.repository.view.handlers.ConditionalRequestHandler;
+import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler;
+import org.sonatype.nexus.repository.view.handlers.ExceptionHandler;
+import org.sonatype.nexus.repository.view.handlers.HandlerContributor;
+import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler;
+import org.sonatype.nexus.repository.view.handlers.TimingHandler;
+import org.sonatype.nexus.repository.view.matchers.AlwaysMatcher;
 
 import static org.sonatype.nexus.repository.http.HttpHandlers.notFound;
 
@@ -44,16 +58,53 @@ public class AptHostedRecipe
   public static final String NAME = "apt-hosted";
 
   @Inject
-  Provider<ConfigurableViewFacet> viewFacet;
+  Provider<AptSecurityFacet> securityFacet;
 
   @Inject
-  Provider<AptHostedFacet> aptHostedFacet;
+  Provider<AptSigningFacet> aptSigningFacet;
+
+  @Inject
+  Provider<ConfigurableViewFacet> viewFacet;
 
   @Inject
   Provider<AptContentFacet> aptContentFacet;
 
   @Inject
   Provider<BrowseFacet> browseFacet;
+
+  @Inject
+  Provider<LastAssetMaintenanceFacet> maintenanceFacet;
+
+  @Inject
+  TimingHandler timingHandler;
+
+  @Inject
+  SecurityHandler securityHandler;
+
+  @Inject
+  ExceptionHandler exceptionHandler;
+
+  @Inject
+  HandlerContributor handlerContributor;
+
+  @Inject
+  ConditionalRequestHandler conditionalRequestHandler;
+
+  @Inject
+  PartialFetchHandler partialFetchHandler;
+
+  @Inject
+  ContentHeadersHandler contentHeadersHandler;
+
+  @Inject
+  LastDownloadedHandler lastDownloadedHandler;
+
+  @Inject
+  AptSnapshotHandler snapshotHandler;
+
+  @Inject
+  AptHostedHandler hostedHandler;
+
 
   @Inject
   public AptHostedRecipe(
@@ -65,14 +116,28 @@ public class AptHostedRecipe
 
   @Override
   public void apply(final Repository repository) throws Exception {
+    repository.attach(securityFacet.get());
     repository.attach(configure(viewFacet.get()));
-    repository.attach(aptHostedFacet.get());
+    repository.attach(aptSigningFacet.get());
     repository.attach(aptContentFacet.get());
+    repository.attach(maintenanceFacet.get());
     repository.attach(browseFacet.get());
   }
 
   private ViewFacet configure(final ConfigurableViewFacet facet) {
     Router.Builder builder = new Router.Builder();
+
+    builder.route(new Route.Builder().matcher(new AlwaysMatcher())
+        .handler(timingHandler)
+        .handler(securityHandler)
+        .handler(exceptionHandler)
+        .handler(handlerContributor)
+        .handler(conditionalRequestHandler)
+        .handler(partialFetchHandler)
+        .handler(contentHeadersHandler)
+        .handler(lastDownloadedHandler)
+        .handler(snapshotHandler)
+        .handler(hostedHandler).create());
 
     builder.defaultHandlers(notFound());
     facet.configure(builder.create());

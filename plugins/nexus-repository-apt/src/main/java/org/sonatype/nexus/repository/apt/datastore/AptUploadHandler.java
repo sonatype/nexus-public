@@ -22,11 +22,11 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.apt.AptUploadHandlerSupport;
-import org.sonatype.nexus.repository.apt.datastore.internal.AptFacetHelper;
-import org.sonatype.nexus.repository.apt.datastore.internal.hosted.AptHostedFacet;
+import org.sonatype.nexus.repository.apt.internal.AptFacetHelper;
 import org.sonatype.nexus.repository.apt.internal.AptFormat;
 import org.sonatype.nexus.repository.apt.internal.AptPackageParser;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
+import org.sonatype.nexus.repository.apt.internal.debian.PackageInfo;
 import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
@@ -56,20 +56,13 @@ public class AptUploadHandler
 
   @Override
   public UploadResponse handle(final Repository repository, final ComponentUpload upload) throws IOException {
-    AptHostedFacet facet = repository.facet(AptHostedFacet.class);
     AptContentFacet aptContentFacet = repository.facet(AptContentFacet.class);
     PartPayload payload = upload.getAssetUploads().get(0).getPayload();
     try (TempBlob tempBlob = aptContentFacet.getTempBlob(payload)) {
       ControlFile controlFile = AptPackageParser.parsePackage(tempBlob);
-      if (controlFile == null) {
-        throw new IOException("Invalid debian package: no control file");
-      }
-      String name = controlFile.getField("Package").map(f -> f.value).get();
-      String version = controlFile.getField("Version").map(f -> f.value).get();
-      String architecture = controlFile.getField("Architecture").map(f -> f.value).get();
-      String assetPath = AptFacetHelper.buildAssetPath(name, version, architecture);
+      String assetPath = AptFacetHelper.buildAssetPath(controlFile);
 
-      final Content content = facet.upload(assetPath, payload);
+      final Content content = aptContentFacet.put(assetPath, payload, new PackageInfo(controlFile));
       return new UploadResponse(Collections.singletonList(content), Collections.singletonList(assetPath));
     }
   }
