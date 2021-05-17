@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 
+import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -35,6 +36,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
+import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.sonatype.nexus.repository.maven.internal.Maven2MavenPathParser;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
@@ -44,19 +46,18 @@ import org.sonatype.nexus.repository.storage.Query;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.view.Content;
-import org.sonatype.nexus.transaction.UnitOfWork;
+import org.sonatype.nexus.transaction.TransactionModule;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.hash.HashCode;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
@@ -66,12 +67,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(UnitOfWork.class)
 public class OrientMavenRestoreBlobStrategyTest
+    extends TestSupport
 {
   private static final String TEST_BLOB_STORE_NAME = "test";
 
@@ -146,8 +145,17 @@ public class OrientMavenRestoreBlobStrategyTest
 
   @Before
   public void setup() throws IOException {
-    underTest = new OrientMavenRestoreBlobStrategy(maven2MavenPathParser, nodeAccess, repositoryManager, blobStoreManager,
-        dryRunPrefix);
+    underTest = Guice.createInjector(new TransactionModule(), new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(NodeAccess.class).toInstance(nodeAccess);
+        bind(RepositoryManager.class).toInstance(repositoryManager);
+        bind(BlobStoreManager.class).toInstance(blobStoreManager);
+        bind(DryRunPrefix.class).toInstance(new DryRunPrefix("dryrun"));
+        bind(MavenPathParser.class).toInstance(maven2MavenPathParser);
+      }
+    }).getInstance(OrientMavenRestoreBlobStrategy.class);
+
     properties.setProperty("@BlobStore.blob-name", "org/codehaus/plexus/plexus/3.1/plexus-3.1.pom");
     properties.setProperty("@Bucket.repo-name", "test-repo");
     properties.setProperty("size", "1000");
@@ -194,9 +202,6 @@ public class OrientMavenRestoreBlobStrategyTest
     when(blobAttributes.isDeleted()).thenReturn(false);
 
     when(repository.facet(OrientMavenFacet.class)).thenReturn(mavenFacet);
-
-    mockStatic(UnitOfWork.class);
-    when(UnitOfWork.currentTx()).thenReturn(storageTx);
   }
 
   @SuppressWarnings("deprecation")

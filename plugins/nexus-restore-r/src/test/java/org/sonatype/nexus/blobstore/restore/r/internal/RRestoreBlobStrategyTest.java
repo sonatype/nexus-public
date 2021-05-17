@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.Properties;
 
+import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -40,16 +41,15 @@ import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.Query;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
-import org.sonatype.nexus.transaction.UnitOfWork;
+import org.sonatype.nexus.transaction.TransactionModule;
 
 import com.google.common.collect.ImmutableList;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -63,13 +63,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(UnitOfWork.class)
 public class RRestoreBlobStrategyTest
+    extends TestSupport
 {
   private static final String TEST_BLOB_STORE_NAME = "test";
 
@@ -140,8 +138,15 @@ public class RRestoreBlobStrategyTest
 
   @Before
   public void setup() {
-    restoreBlobStrategy =
-        new RRestoreBlobStrategy(nodeAccess, repositoryManager, blobStoreManager, new DryRunPrefix("dryrun"));
+    restoreBlobStrategy  = Guice.createInjector(new TransactionModule(), new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(NodeAccess.class).toInstance(nodeAccess);
+        bind(RepositoryManager.class).toInstance(repositoryManager);
+        bind(BlobStoreManager.class).toInstance(blobStoreManager);
+        bind(DryRunPrefix.class).toInstance(new DryRunPrefix("dryrun"));
+      }
+    }).getInstance(RRestoreBlobStrategy.class);
 
     when(repositoryManager.get(anyString())).thenReturn(repository);
     when(repository.facet(RRestoreFacet.class)).thenReturn(rRestoreFacet);
@@ -168,8 +173,6 @@ public class RRestoreBlobStrategyTest
     when(rRestoreFacet.componentRequired(eq(ARCHIVE_PATH))).thenReturn(true);
     when(rRestoreFacet.getComponentQuery(anyMap())).thenReturn(query);
     when(rRestoreFacet.extractComponentAttributesFromArchive(anyString(), any())).thenReturn(Collections.emptyMap());
-    mockStatic(UnitOfWork.class);
-    when(UnitOfWork.currentTx()).thenReturn(storageTx);
 
     properties.setProperty("@BlobStore.created-by", "anonymous");
     properties.setProperty("size", "1330");

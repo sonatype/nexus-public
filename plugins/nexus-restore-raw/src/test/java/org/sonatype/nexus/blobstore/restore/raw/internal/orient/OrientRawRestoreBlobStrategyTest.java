@@ -35,8 +35,11 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
+import org.sonatype.nexus.transaction.TransactionModule;
 
 import com.google.common.hash.HashCode;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -138,6 +141,16 @@ public class OrientRawRestoreBlobStrategyTest
     when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
     when(blobStore.getBlobAttributes(any(BlobId.class))).thenReturn(blobAttributes);
     when(blobStoreConfiguration.getName()).thenReturn(TEST_BLOB_STORE_NAME);
+
+    underTest = Guice.createInjector(new TransactionModule(), new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(NodeAccess.class).toInstance(nodeAccess);
+        bind(RepositoryManager.class).toInstance(repositoryManager);
+        bind(BlobStoreManager.class).toInstance(blobStoreManager);
+        bind(DryRunPrefix.class).toInstance(DRY_RUN_PREFIX);
+      }
+    }).getInstance(OrientRawRestoreBlobStrategy.class);
 
     underTest = new OrientRawRestoreBlobStrategy(nodeAccess, repositoryManager, blobStoreManager, DRY_RUN_PREFIX);
   }
