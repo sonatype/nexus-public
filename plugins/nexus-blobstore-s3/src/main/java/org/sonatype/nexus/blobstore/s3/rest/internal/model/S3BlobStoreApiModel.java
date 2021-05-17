@@ -31,7 +31,7 @@ import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.TYPE;
 public class S3BlobStoreApiModel
 {
   @NotNull
-  @ApiModelProperty(value = "The name of the S3 blob store.", required = true)
+  @ApiModelProperty(value = "The name of the S3 blob store.", example = "s3", required = true)
   private String name;
 
   @ApiModelProperty("Settings to control the soft quota.")
@@ -66,5 +66,6 @@ public class S3BlobStoreApiModel
     return bucketConfiguration;
   }
 
+  @ApiModelProperty(value = "The blob store type.", readOnly = true, example = TYPE)
   public String getType() {return TYPE;}
 }

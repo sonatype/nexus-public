@@ -102,7 +102,7 @@ public class S3BlobStoreApiResource
   @RequiresAuthentication
   @Path("/{name}")
   @RequiresPermissions("nexus:blobstores:update")
-  public Response updateBlobStore(
+  public void updateBlobStore(
       @Valid final S3BlobStoreApiModel request,
       @PathParam("name") final String blobStoreName) throws Exception
   {
@@ -119,7 +119,6 @@ public class S3BlobStoreApiResource
       final BlobStoreConfiguration blobStoreConfiguration =
           MODEL_MAPPER.apply(blobStoreManager.newConfiguration(), request);
       blobStoreManager.update(blobStoreConfiguration);
-      return noContent().build();
     }
     catch (Exception e) {
       throw new WebApplicationMessageException(INTERNAL_SERVER_ERROR, e.getMessage());
@@ -136,9 +135,8 @@ public class S3BlobStoreApiResource
   @RequiresAuthentication
   @Path("/{name}")
   @RequiresPermissions("nexus:blobstores:read")
-  public Response getBlobStore(@PathParam("name") final String blobStoreName) {
+  public S3BlobStoreApiModel getBlobStore(@PathParam("name") final String blobStoreName) {
     return fetchBlobStoreConfiguration(blobStoreName)
-        .map(model -> ok().entity(model).build())
         .orElseThrow(() -> new WebApplicationMessageException(BAD_REQUEST,
             String.format(UNKNOWN_BLOB_STORE_MSG_FORMAT, blobStoreName), APPLICATION_JSON));
   }

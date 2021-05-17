@@ -28,6 +28,7 @@ import static org.sonatype.nexus.rest.ApiDocConstants.AUTHENTICATION_REQUIRED;
 import static org.sonatype.nexus.rest.ApiDocConstants.INSUFFICIENT_PERMISSIONS;
 import static org.sonatype.nexus.rest.ApiDocConstants.S3_BLOB_STORE_CREATED;
 import static org.sonatype.nexus.rest.ApiDocConstants.S3_BLOB_STORE_UPDATED;
+import static org.sonatype.nexus.rest.ApiDocConstants.SUCCESS;
 import static org.sonatype.nexus.rest.ApiDocConstants.UNKNOWN_S3_BLOB_STORE;
 
 /**
@@ -46,23 +47,23 @@ public interface S3BlobStoreApiResourceDoc
   })
   Response createBlobStore(@Valid S3BlobStoreApiModel request) throws Exception;
 
-  @ApiOperation("Update an S3 blob store configuration")
+  @ApiOperation("Update an S3 blob store configuration by name")
   @ApiResponses(value = {
       @ApiResponse(code = 204, message = S3_BLOB_STORE_UPDATED),
       @ApiResponse(code = 400, message = UNKNOWN_S3_BLOB_STORE),
       @ApiResponse(code = 401, message = AUTHENTICATION_REQUIRED),
       @ApiResponse(code = 403, message = INSUFFICIENT_PERMISSIONS)
   })
-  Response updateBlobStore(
+  void updateBlobStore(
       @Valid final S3BlobStoreApiModel request,
       @ApiParam(value = "Name of the blob store to update") String blobStoreName) throws Exception;
 
-  @ApiOperation("Fetch a S3 blob store configuration")
+  @ApiOperation("Get a S3 blob store configuration by name")
   @ApiResponses(value = {
-      @ApiResponse(code = 200, message = "OK"),
+      @ApiResponse(code = 200, message = SUCCESS, response = S3BlobStoreApiModel.class),
       @ApiResponse(code = 400, message = UNKNOWN_S3_BLOB_STORE),
       @ApiResponse(code = 401, message = AUTHENTICATION_REQUIRED),
       @ApiResponse(code = 403, message = INSUFFICIENT_PERMISSIONS)
   })
-  public Response getBlobStore(@ApiParam(value = "Name of the blob store configuration to fetch") String blobStoreName);
+  S3BlobStoreApiModel getBlobStore(@ApiParam(value = "Name of the blob store configuration to fetch") String blobStoreName);
 }

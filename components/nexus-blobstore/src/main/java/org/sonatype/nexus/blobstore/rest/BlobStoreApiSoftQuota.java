@@ -26,7 +26,8 @@ import io.swagger.annotations.ApiModelProperty;
 public class BlobStoreApiSoftQuota
 {
   @NotBlank
-  @ApiModelProperty("The type to use such as " + SpaceRemainingQuota.ID + ", or " + SpaceUsedQuota.ID)
+  @ApiModelProperty(value = "The type to use such as " + SpaceRemainingQuota.ID + ", or " + SpaceUsedQuota.ID,
+      allowableValues = SpaceRemainingQuota.ID + "," + SpaceUsedQuota.ID)
   private String type;
 
   @Min(0)
