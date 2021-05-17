@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
 
+import static org.sonatype.nexus.blobstore.s3.internal.AmazonS3Factory.DEFAULT;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 /**
@@ -33,7 +34,7 @@ public class S3BlobStoreApiBucket
   @Valid
   @NotNull
   @ApiModelProperty(value = "The AWS region to create a new S3 bucket in or an existing S3 bucket's region",
-      required = true)
+      example = DEFAULT, required = true)
   private final String region;
 
   @Valid
@@ -46,7 +47,8 @@ public class S3BlobStoreApiBucket
 
   @Valid
   @NotNull
-  @ApiModelProperty("How many days until deleted blobs are finally removed from the S3 bucket (-1 to disable)")
+  @ApiModelProperty(value = "How many days until deleted blobs are finally removed from the S3 bucket (-1 to disable)",
+      example = "3")
   private final Integer expiration;
 
   @JsonCreator

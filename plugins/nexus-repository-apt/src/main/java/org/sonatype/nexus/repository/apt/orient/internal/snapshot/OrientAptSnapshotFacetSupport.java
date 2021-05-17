@@ -25,14 +25,15 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.repository.FacetSupport;
-import org.sonatype.nexus.repository.apt.orient.AptFacet;
+import org.sonatype.nexus.repository.apt.AptFacet;
+import org.sonatype.nexus.repository.apt.internal.AptFacetHelper;
+import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
+import org.sonatype.nexus.repository.apt.internal.debian.ControlFileParser;
+import org.sonatype.nexus.repository.apt.internal.debian.Release;
 import org.sonatype.nexus.repository.apt.internal.snapshot.AptSnapshotFacet;
 import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotComponentSelector;
 import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotItem;
 import org.sonatype.nexus.repository.apt.orient.internal.OrientFacetHelper;
-import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
-import org.sonatype.nexus.repository.apt.internal.debian.ControlFileParser;
-import org.sonatype.nexus.repository.apt.internal.debian.Release;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;
@@ -78,8 +79,8 @@ public abstract class OrientAptSnapshotFacetSupport
       String assetName = createAssetPath(id, item.specifier.path);
       Asset asset = tx.createAsset(bucket, getRepository().getFormat()).name(assetName);
       try (final TempBlob streamSupplier = storageFacet
-          .createTempBlob(item.content.openInputStream(), OrientFacetHelper.hashAlgorithms)) {
-        AssetBlob blob = tx.createBlob(item.specifier.path, streamSupplier, OrientFacetHelper.hashAlgorithms, null,
+          .createTempBlob(item.content.openInputStream(), AptFacetHelper.hashAlgorithms)) {
+        AssetBlob blob = tx.createBlob(item.specifier.path, streamSupplier, AptFacetHelper.hashAlgorithms, null,
             item.specifier.role.getMimeType(), true);
         tx.attachBlob(asset, blob);
       }
@@ -124,7 +125,7 @@ public abstract class OrientAptSnapshotFacetSupport
     AptFacet aptFacet = getRepository().facet(AptFacet.class);
 
     List<SnapshotItem> result = new ArrayList<>();
-    List<SnapshotItem> releaseIndexItems = fetchSnapshotItems(OrientFacetHelper.getReleaseIndexSpecifiers(aptFacet));
+    List<SnapshotItem> releaseIndexItems = fetchSnapshotItems(AptFacetHelper.getReleaseIndexSpecifiers(aptFacet));
     Map<SnapshotItem.Role, SnapshotItem> itemsByRole = new HashMap<>(
         releaseIndexItems.stream().collect(Collectors.toMap((SnapshotItem item) -> item.specifier.role, item -> item)));
     InputStream releaseStream = null;
@@ -183,14 +184,14 @@ public abstract class OrientAptSnapshotFacetSupport
     result.addAll(releaseIndexItems);
 
     if (aptFacet.isFlat()) {
-      result.addAll(fetchSnapshotItems(OrientFacetHelper.getReleasePackageIndexes(aptFacet, null, null)));
+      result.addAll(fetchSnapshotItems(AptFacetHelper.getReleasePackageIndexes(aptFacet, null, null)));
     }
     else {
       List<String> archs = selector.getArchitectures(release);
       List<String> comps = selector.getComponents(release);
       for (String arch : archs) {
         for (String comp : comps) {
-          result.addAll(fetchSnapshotItems(OrientFacetHelper.getReleasePackageIndexes(aptFacet, comp, arch)));
+          result.addAll(fetchSnapshotItems(AptFacetHelper.getReleasePackageIndexes(aptFacet, comp, arch)));
         }
       }
     }

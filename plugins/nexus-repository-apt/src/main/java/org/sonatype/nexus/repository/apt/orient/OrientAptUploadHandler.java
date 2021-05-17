@@ -21,10 +21,10 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.apt.AptUploadHandlerSupport;
+import org.sonatype.nexus.repository.apt.internal.AptFacetHelper;
 import org.sonatype.nexus.repository.apt.internal.AptFormat;
 import org.sonatype.nexus.repository.apt.internal.AptPackageParser;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
-import org.sonatype.nexus.repository.apt.orient.internal.OrientFacetHelper;
 import org.sonatype.nexus.repository.apt.orient.internal.hosted.OrientAptHostedFacet;
 import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
@@ -58,15 +58,9 @@ public class OrientAptUploadHandler
     StorageFacet storageFacet = repository.facet(StorageFacet.class);
 
     try (TempBlob tempBlob = storageFacet
-        .createTempBlob(upload.getAssetUploads().get(0).getPayload(), OrientFacetHelper.hashAlgorithms)) {
+        .createTempBlob(upload.getAssetUploads().get(0).getPayload(), AptFacetHelper.hashAlgorithms)) {
       ControlFile controlFile = AptPackageParser.parsePackage(tempBlob);
-      if (controlFile == null) {
-        throw new IOException("Invalid debian package:  no control file");
-      }
-      String name = controlFile.getField("Package").map(f -> f.value).get();
-      String version = controlFile.getField("Version").map(f -> f.value).get();
-      String architecture = controlFile.getField("Architecture").map(f -> f.value).get();
-      String assetPath = OrientFacetHelper.buildAssetPath(name, version, architecture);
+      String assetPath = AptFacetHelper.buildAssetPath(controlFile);
 
       doValidation(repository, assetPath);
 

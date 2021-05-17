@@ -13,12 +13,13 @@
 package org.sonatype.nexus.repository.apt.orient.internal.hosted;
 
 import java.io.IOException;
+import java.util.Optional;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.repository.apt.orient.AptFacet;
+import org.sonatype.nexus.repository.apt.AptFacet;
 import org.sonatype.nexus.repository.apt.internal.snapshot.AptSnapshotHandler;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.view.Content;
@@ -77,11 +78,8 @@ public class OrientAptHostedHandler
   }
 
   private Response doGet(final String path, final AptFacet aptFacet) throws IOException {
-    Content content = aptFacet.get(path);
-    if (content == null) {
-      return HttpResponses.notFound(path);
-    }
-    return HttpResponses.ok(content);
+    Optional<Content> content = aptFacet.get(path);
+    return content.map(HttpResponses::ok).orElseGet(() -> HttpResponses.notFound(path));
   }
 
   private String assetPath(final Context context) {

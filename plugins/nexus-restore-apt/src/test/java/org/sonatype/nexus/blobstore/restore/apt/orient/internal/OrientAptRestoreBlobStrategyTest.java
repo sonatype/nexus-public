@@ -16,6 +16,7 @@ import java.io.ByteArrayInputStream;
 import java.util.Optional;
 import java.util.Properties;
 
+import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -36,15 +37,14 @@ import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
-import org.sonatype.nexus.transaction.UnitOfWork;
+import org.sonatype.nexus.transaction.TransactionModule;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -55,15 +55,13 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(UnitOfWork.class)
 public class OrientAptRestoreBlobStrategyTest
+    extends TestSupport
 {
   OrientAptRestoreBlobStrategy underTest;
 
@@ -124,7 +122,15 @@ public class OrientAptRestoreBlobStrategyTest
 
   @Before
   public void setup() {
-    underTest = new OrientAptRestoreBlobStrategy(nodeAccess, repositoryManager, blobStoreManager, new DryRunPrefix("dryrun"));
+    underTest = Guice.createInjector(new TransactionModule(), new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(NodeAccess.class).toInstance(nodeAccess);
+        bind(RepositoryManager.class).toInstance(repositoryManager);
+        bind(BlobStoreManager.class).toInstance(blobStoreManager);
+        bind(DryRunPrefix.class).toInstance(new DryRunPrefix("dryrun"));
+      }
+    }).getInstance(OrientAptRestoreBlobStrategy.class);
 
     when(repositoryManager.get(anyString())).thenReturn(repository);
     when(repository.facet(AptRestoreFacet.class)).thenReturn(aptRestoreFacet);
@@ -144,8 +150,6 @@ public class OrientAptRestoreBlobStrategyTest
     when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
     when(restoreBlobData.getRepository()).thenReturn(repository);
     when(restoreBlobData.getBlob()).thenReturn(blob);
-    mockStatic(UnitOfWork.class);
-    when(UnitOfWork.currentTx()).thenReturn(storageTx);
     when(storageTx.findAssetWithProperty(eq(P_NAME), eq(PACKAGE_PATH), any(Bucket.class))).thenReturn(asset);
 
     properties.setProperty("@BlobStore.created-by", "anonymous");

@@ -10,27 +10,34 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.apt.orient.internal;
+package org.sonatype.nexus.repository.apt;
 
-import org.sonatype.nexus.blobstore.api.Blob;
-import org.sonatype.nexus.repository.storage.Asset;
+import java.io.IOException;
+import java.util.Optional;
+
+import javax.annotation.Nullable;
+
+import org.sonatype.nexus.repository.Facet;
+import org.sonatype.nexus.repository.apt.internal.debian.PackageInfo;
 import org.sonatype.nexus.repository.view.Content;
-import org.sonatype.nexus.repository.view.payloads.BlobPayload;
-
-import static org.sonatype.nexus.repository.apt.internal.AptFacetHelper.hashAlgorithms;
+import org.sonatype.nexus.repository.view.Payload;
 
 /**
  * @since 3.17
  */
-public class OrientFacetHelper
+@Facet.Exposed
+public interface AptFacet
+    extends Facet
 {
-  public static Content toContent(final Asset asset, final Blob blob) {
-    final Content content = new Content(new BlobPayload(blob, asset.requireContentType()));
-    Content.extractFromAsset(asset, hashAlgorithms, content.getAttributes());
-    return content;
-  }
+  Optional<Content> get(final String path) throws IOException;
 
-  private OrientFacetHelper() {
-    //empty
-  }
+  Content put(final String path, final Payload payload) throws IOException;
+
+  Content put(final String path, final Payload payload, @Nullable final PackageInfo packageInfo) throws IOException;
+
+  boolean delete(final String path) throws IOException;
+
+  boolean isFlat();
+
+  String getDistribution();
 }

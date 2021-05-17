@@ -22,7 +22,7 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.Facet;
-import org.sonatype.nexus.repository.apt.orient.AptFacet;
+import org.sonatype.nexus.repository.apt.AptFacet;
 import org.sonatype.nexus.repository.apt.internal.snapshot.AptSnapshotHandler;
 import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotItem;
 import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotItem.ContentSpecifier;
@@ -74,7 +74,7 @@ public class OrientAptProxyFacet
 
   @Override
   protected Content getCachedContent(final Context context) throws IOException {
-    return getAptFacet().get(assetPath(context));
+    return getAptFacet().get(assetPath(context)).orElse(null);
   }
 
   @Override
@@ -128,7 +128,7 @@ public class OrientAptProxyFacet
     HttpClient httpClient = httpClientFacet.getHttpClient();
     CacheController cacheController = cacheControllerHolder.getMetadataCacheController();
     CacheInfo cacheInfo = cacheController.current();
-    Content oldVersion = aptFacet.get(spec.path);
+    Content oldVersion = aptFacet.get(spec.path).orElse(null);
 
     URI fetchUri = proxyFacet.getRemoteUrl().resolve(spec.path);
     HttpGet getRequest = buildFetchRequest(oldVersion, fetchUri);

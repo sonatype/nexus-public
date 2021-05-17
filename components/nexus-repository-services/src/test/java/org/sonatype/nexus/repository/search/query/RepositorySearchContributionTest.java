@@ -29,7 +29,7 @@ import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
 
 public class RepositorySearchContributionTest
@@ -85,7 +85,7 @@ public class RepositorySearchContributionTest
     assertThat(query.toString(), Matchers.containsString("\"repository_name\" : [ \"repo\", \"repo2\" ]"));
   }
 
-  private Repository mockRepo(String name, Repository... members) {
+  private Repository mockRepo(final String name, final Repository... members) {
     Repository repository = mock(Repository.class);
     when(repository.getName()).thenReturn(name);
     when(repositoryManager.get(name)).thenReturn(repository);

@@ -57,6 +57,7 @@ import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusTyp
 public class BlockingHttpClientTest
     extends TestSupport
 {
+
   @Mock
   CloseableHttpClient httpClient;
 
@@ -79,6 +80,8 @@ public class BlockingHttpClientTest
 
   BlockingHttpClient underTest;
 
+  public static final int UNRECOGNIZED_ERROR_CODE = 513;
+
   @Before
   public void setup() throws Exception {
     when(filterable.call()).thenReturn(httpResponse);
@@ -88,7 +91,8 @@ public class BlockingHttpClientTest
     when(autoBlockConfiguration.shouldBlock(SC_UNAUTHORIZED)).thenReturn(true);
     when(autoBlockConfiguration.shouldBlock(SC_BAD_GATEWAY)).thenReturn(true);
     when(autoBlockConfiguration.shouldBlock(SC_PROXY_AUTHENTICATION_REQUIRED)).thenReturn(true);
-    
+    when(autoBlockConfiguration.shouldBlock(UNRECOGNIZED_ERROR_CODE)).thenReturn(true);
+
     httpHost = HttpHost.create("localhost");
     underTest = new BlockingHttpClient(httpClient, new Config(), statusObserver, true, autoBlockConfiguration);
   }
@@ -180,6 +184,14 @@ public class BlockingHttpClientTest
     when(filterable.call()).thenThrow(new IOException());
     filterAndHandleException();
     verifyUpdateStatus(UNAVAILABLE);
+  }
+
+  @Test
+  public void updateStatusWhenUnavailableDueToUnrecognizedHTTPErrorResponse() throws Exception {
+    setInternalState(underTest, "autoBlock", true);
+    when(statusLine.getStatusCode()).thenReturn(UNRECOGNIZED_ERROR_CODE);
+    filterAndHandleException();
+    verifyUpdateStatus(AUTO_BLOCKED_UNAVAILABLE, "Unrecognized HTTP error, code " + UNRECOGNIZED_ERROR_CODE);
   }
 
   @Test

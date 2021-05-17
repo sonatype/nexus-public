@@ -36,7 +36,6 @@
     <module>nexus-repository-httpbridge</module>
     <module>nexus-repository-golang</module>
     <module>nexus-repository-maven</module>
-    <module>nexus-repository-npm</module>
     <module>nexus-repository-apt</module>
     <module>nexus-repository-cocoapods</module>
     <module>nexus-repository-conan</module>
@@ -46,7 +45,6 @@
     <module>nexus-repository-raw</module>
     <module>nexus-restore-apt</module>
     <module>nexus-restore-maven</module>
-    <module>nexus-restore-npm</module>
     <module>nexus-restore-p2</module>
     <module>nexus-restore-r</module>
     <module>nexus-restore-raw</module>
@@ -159,7 +157,7 @@
         <classifier>features</classifier>
         <type>xml</type>
       </dependency>
-      
+
       <!-- repository-maven -->
 
       <dependency>
@@ -185,36 +183,6 @@
       <dependency>
         <groupId>org.sonatype.nexus.plugins</groupId>
         <artifactId>nexus-restore-maven</artifactId>
-        <version>3.31.0-SNAPSHOT</version>
-        <classifier>features</classifier>
-        <type>xml</type>
-      </dependency>
-
-      <!-- repository-npm -->
-
-      <dependency>
-        <groupId>org.sonatype.nexus.plugins</groupId>
-        <artifactId>nexus-repository-npm</artifactId>
-        <version>3.31.0-SNAPSHOT</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.sonatype.nexus.plugins</groupId>
-        <artifactId>nexus-repository-npm</artifactId>
-        <version>3.31.0-SNAPSHOT</version>
-        <classifier>features</classifier>
-        <type>xml</type>
-      </dependency>
-
-      <dependency>
-        <groupId>org.sonatype.nexus.plugins</groupId>
-        <artifactId>nexus-restore-npm</artifactId>
-        <version>3.31.0-SNAPSHOT</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.sonatype.nexus.plugins</groupId>
-        <artifactId>nexus-restore-npm</artifactId>
         <version>3.31.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
@@ -468,7 +436,7 @@
         <classifier>features</classifier>
         <type>xml</type>
       </dependency>
-	  
+
 	  <!-- default-role plugin -->
 
       <dependency>

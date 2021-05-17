@@ -33,7 +33,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.Mockito.when;
 
 public class BrowseEntitiesByPropertyInSetActionTest {
   private static final String PROPERTY = "property";
@@ -50,7 +50,7 @@ public class BrowseEntitiesByPropertyInSetActionTest {
   @Mock
   private OCommandRequest command;
 
-  private BrowseEntitiesByPropertyInSetAction browseEntitiesByPropertyInSetAction;
+  private BrowseEntitiesByPropertyInSetAction<Entity> browseEntitiesByPropertyInSetAction;
 
   @Before
   public void setup() {

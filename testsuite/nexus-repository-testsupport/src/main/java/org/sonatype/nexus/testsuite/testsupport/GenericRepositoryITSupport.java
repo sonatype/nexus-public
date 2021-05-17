@@ -52,7 +52,6 @@ import org.sonatype.nexus.testsuite.testsupport.fixtures.BlobStoreRule;
 import org.sonatype.nexus.testsuite.testsupport.fixtures.RepositoryRule;
 import org.sonatype.nexus.testsuite.testsupport.golang.GolangClient;
 import org.sonatype.nexus.testsuite.testsupport.maven.Maven2Client;
-import org.sonatype.nexus.testsuite.testsupport.npm.NpmClient;
 import org.sonatype.nexus.testsuite.testsupport.raw.RawClient;
 
 import com.google.common.collect.ImmutableMap;
@@ -147,23 +146,6 @@ public abstract class GenericRepositoryITSupport<RR extends RepositoryRule>
         clientBuilder(repositoryUrl).build(),
         clientContext(),
         repositoryUrl.toURI()
-    );
-  }
-
-  protected NpmClient createNpmClient(final Repository repository, final URL overrideNexusUrl) throws Exception {
-    return createNpmClient(resolveUrl(overrideNexusUrl, SLASH_REPO_SLASH + repository.getName() + "/"));
-  }
-
-  protected NpmClient createNpmClient(final Repository repository) throws Exception {
-    return createNpmClient(repository, nexusUrl);
-  }
-
-  protected NpmClient createNpmClient(final URL repositoryUrl) throws Exception {
-    return new NpmClient(
-        clientBuilder(repositoryUrl).build(),
-        clientContext(),
-        repositoryUrl.toURI(),
-        testData
     );
   }
 

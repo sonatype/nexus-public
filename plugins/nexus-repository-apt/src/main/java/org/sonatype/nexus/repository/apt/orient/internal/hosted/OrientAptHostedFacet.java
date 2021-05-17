@@ -32,6 +32,8 @@ import org.sonatype.nexus.orient.entity.AttachedEntityHelper;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.IllegalOperationException;
+import org.sonatype.nexus.repository.apt.AptFacet;
+import org.sonatype.nexus.repository.apt.internal.AptFacetHelper;
 import org.sonatype.nexus.repository.apt.internal.AptMimeTypes;
 import org.sonatype.nexus.repository.apt.internal.AptPackageParser;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
@@ -39,8 +41,6 @@ import org.sonatype.nexus.repository.apt.internal.debian.ControlFile.Paragraph;
 import org.sonatype.nexus.repository.apt.internal.debian.PackageInfo;
 import org.sonatype.nexus.repository.apt.internal.gpg.AptSigningFacet;
 import org.sonatype.nexus.repository.apt.internal.hosted.CompressingTempFileStore;
-import org.sonatype.nexus.repository.apt.orient.AptFacet;
-import org.sonatype.nexus.repository.apt.orient.internal.OrientFacetHelper;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.StorageFacet;
@@ -96,7 +96,7 @@ public class OrientAptHostedFacet
 
   public Asset ingestAsset(final Payload body) throws IOException {
     StorageFacet storageFacet = facet(StorageFacet.class);
-    try (TempBlob tempBlob = storageFacet.createTempBlob(body, OrientFacetHelper.hashAlgorithms)) {
+    try (TempBlob tempBlob = storageFacet.createTempBlob(body, AptFacetHelper.hashAlgorithms)) {
       ControlFile control = AptPackageParser.parsePackage(tempBlob);
       if (control == null) {
         throw new IllegalOperationException("Invalid Debian package supplied");
@@ -116,7 +116,7 @@ public class OrientAptHostedFacet
     String version = info.getVersion();
     String architecture = info.getArchitecture();
 
-    String assetPath = OrientFacetHelper.buildAssetPath(name, version, architecture);
+    String assetPath = AptFacetHelper.buildAssetPath(name, version, architecture);
 
     Content content = aptFacet.put(
         assetPath,
@@ -125,7 +125,7 @@ public class OrientAptHostedFacet
 
     Asset asset = Content.findAsset(tx, bucket, content);
     String indexSection =
-        buildIndexSection(control, asset.size(), asset.getChecksums(OrientFacetHelper.hashAlgorithms), assetPath);
+        buildIndexSection(control, asset.size(), asset.getChecksums(AptFacetHelper.hashAlgorithms), assetPath);
     asset.formatAttributes().set(P_ARCHITECTURE, architecture);
     asset.formatAttributes().set(P_PACKAGE_NAME, name);
     asset.formatAttributes().set(P_PACKAGE_VERSION, version);

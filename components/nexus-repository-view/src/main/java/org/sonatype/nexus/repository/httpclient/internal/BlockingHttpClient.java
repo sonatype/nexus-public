@@ -211,7 +211,7 @@ public class BlockingHttpClient
 
   private String getReason(final int statusCode) {
     String reason = EnglishReasonPhraseCatalog.INSTANCE.getReason(statusCode, ENGLISH);
-    return reason == null ? "Unrecognized HTTP error" : reason;
+    return reason == null ? "Unrecognized HTTP error, code " + statusCode : reason;
   }
 
   @Override

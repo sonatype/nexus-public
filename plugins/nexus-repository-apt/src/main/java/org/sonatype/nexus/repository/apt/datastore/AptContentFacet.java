@@ -13,6 +13,9 @@
 package org.sonatype.nexus.repository.apt.datastore;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -20,9 +23,12 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.repository.Facet;
-import org.sonatype.nexus.repository.apt.datastore.internal.AptFacetHelper;
+import org.sonatype.nexus.repository.apt.AptFacet;
+import org.sonatype.nexus.repository.apt.internal.AptFacetHelper;
 import org.sonatype.nexus.repository.apt.internal.AptFormat;
 import org.sonatype.nexus.repository.apt.internal.AptPackageParser;
+import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
+import org.sonatype.nexus.repository.apt.internal.debian.ControlFile.Paragraph;
 import org.sonatype.nexus.repository.apt.internal.debian.PackageInfo;
 import org.sonatype.nexus.repository.config.WritePolicy;
 import org.sonatype.nexus.repository.content.Asset;
@@ -30,13 +36,17 @@ import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
+import org.sonatype.nexus.repository.content.utils.FormatAttributesUtils;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
+import org.apache.commons.lang3.StringUtils;
+
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.apt.datastore.internal.AptFacetHelper.normalizeAssetPath;
+import static org.sonatype.nexus.repository.apt.internal.AptFacetHelper.normalizeAssetPath;
 import static org.sonatype.nexus.repository.apt.internal.debian.Utils.isDebPackageContentType;
+import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 
 /**
  * Apt content facet
@@ -47,7 +57,16 @@ import static org.sonatype.nexus.repository.apt.internal.debian.Utils.isDebPacka
 @Named(AptFormat.NAME)
 public class AptContentFacet
     extends ContentFacetSupport
+    implements AptFacet
 {
+  private static final String P_INDEX_SECTION = "index_section";
+
+  private static final String P_ARCHITECTURE = "architecture";
+
+  private static final String P_PACKAGE_NAME = "package_name";
+
+  private static final String P_PACKAGE_VERSION = "package_version";
+
   @Inject
   public AptContentFacet(
       @Named(AptFormat.NAME) final FormatStoreManager formatStoreManager)
@@ -99,18 +118,56 @@ public class AptContentFacet
     }
   }
 
+  @Override
+  public boolean delete(final String path) throws IOException {
+    checkNotNull(path);
+    return assets().path(path).find().map(FluentAsset::delete).orElse(false);
+  }
+
+  @Override
+  public boolean isFlat() {
+    //TODO NEXUS-26888
+    throw new UnsupportedOperationException("Not implemented yet. Check NEXUS-26888 ");
+  }
+
+  @Override
+  public String getDistribution() {
+    //TODO NEXUS-26888
+    throw new UnsupportedOperationException("Not implemented yet. Check NEXUS-26888 ");
+  }
+
   public FluentAsset findOrCreateDebAsset(final String path, final TempBlob tempBlob, final PackageInfo packageInfo)
       throws IOException
   {
+    final ControlFile controlFile = AptPackageParser.parsePackage(() -> tempBlob.getBlob().getInputStream());
     PackageInfo info = packageInfo != null
         ? packageInfo
-        : new PackageInfo(AptPackageParser.getDebControlFile(tempBlob.getBlob()));
+        : new PackageInfo(controlFile);
 
-    return assets()
+    FluentAsset asset  =  assets()
         .path(normalizeAssetPath(path))
         .component(findOrCreateComponent(info))
-        .blob(tempBlob)
-        .save();
+        .blob(tempBlob).save();
+
+    populateAttributes(info, asset, controlFile);
+
+    return asset;
+  }
+
+  private void populateAttributes(final PackageInfo info, final FluentAsset asset, final ControlFile controlFile) {
+    final Map<String, Object> formatAttributes = new HashMap<>();
+    formatAttributes.put(P_ARCHITECTURE, info.getArchitecture());
+    formatAttributes.put(P_PACKAGE_NAME, info.getPackageName());
+    formatAttributes.put(P_PACKAGE_VERSION, info.getVersion());
+    formatAttributes.put(P_INDEX_SECTION, buildIndexSection(controlFile));
+    formatAttributes.put(P_ASSET_KIND, "DEB");
+
+    FormatAttributesUtils.setFormatAttributes(asset, formatAttributes);
+  }
+
+  private String buildIndexSection(final ControlFile controlFile) {
+    final List<Paragraph> paragraph = controlFile.getParagraphs();
+    return paragraph.size() > 0 ? paragraph.get(0).toString() : StringUtils.EMPTY;
   }
 
   public FluentAsset findOrCreateMetadataAsset(final TempBlob tempBlob, final String path) {

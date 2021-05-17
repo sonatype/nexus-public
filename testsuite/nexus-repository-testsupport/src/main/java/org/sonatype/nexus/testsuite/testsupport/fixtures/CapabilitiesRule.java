@@ -74,6 +74,12 @@ public class CapabilitiesRule
     }
   }
 
+  /**
+   * Creates a capability if not present, otherwise enable existing capability.
+   *
+   * @param capabilityType the capability type
+   * @param properties the properties
+   */
   protected void enableAndSetProperties(final String capabilityType, final Map<String, String> properties) {
     Optional<? extends CapabilityReference>  capabilityReference = find(capabilityType);
     if (capabilityReference.isPresent()) {
@@ -86,9 +92,19 @@ public class CapabilitiesRule
       capabilityRegistryProvider.get().update(context.id(), true, null, properties);
     }
     else {
-      capabilityRegistryProvider.get().add(CapabilityType.capabilityType(capabilityType), true, null, properties);
-      capabilitiesToRemove.add(capabilityType);
+      createCapability(capabilityType, properties);
     }
+  }
+
+  /**
+   * Create a capability.
+   *
+   * @param capabilityType
+   * @param properties
+   */
+  protected void createCapability(final String capabilityType, final Map<String, String> properties) {
+    capabilityRegistryProvider.get().add(CapabilityType.capabilityType(capabilityType), true, null, properties);
+    capabilitiesToRemove.add(capabilityType);
   }
 
   /**
