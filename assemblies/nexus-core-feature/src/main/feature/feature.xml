@@ -30,7 +30,6 @@
     <feature>nexus-repository-apt</feature>
     <feature>nexus-repository-raw</feature>
     <feature>nexus-repository-maven</feature>
-    <feature>nexus-repository-npm</feature>
     <feature>nexus-repository-conda</feature>
     <feature>nexus-restore-raw</feature>
   </feature>
