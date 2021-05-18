@@ -34,7 +34,8 @@ public class DirectPathLocationStrategy
   @Override
   public String location(final BlobId blobId) {
     checkNotNull(blobId);
-    checkArgument(!blobId.asUniqueString().contains(".."), "Traversal not allowed with direct blobs");
-    return format("%s/%s", DIRECT_PATH_ROOT, blobId.asUniqueString().replace(DIRECT_PATH_PREFIX, ""));
+    String realBlobIdPath = blobId.asUniqueString().replace(DIRECT_PATH_PREFIX, "");
+    checkArgument(!realBlobIdPath.contains(".."), "Traversal not allowed with direct blobs");
+    return format("%s/%s", DIRECT_PATH_ROOT, realBlobIdPath);
   }
 }
