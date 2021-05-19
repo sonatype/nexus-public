@@ -13,7 +13,6 @@
 package org.sonatype.nexus.content.raw;
 
 import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,6 +26,9 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.content.fluent.FluentAsset;
+import org.sonatype.nexus.repository.importtask.ImportFileConfiguration;
+import org.sonatype.nexus.repository.raw.RawCoordinatesHelper;
 import org.sonatype.nexus.repository.raw.RawUploadHandlerSupport;
 import org.sonatype.nexus.repository.raw.internal.RawFormat;
 import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
@@ -74,12 +76,22 @@ public class RawUploadHandler
   }
 
   @Override
-  protected Content doPut(final Repository repository, final File content, final String path, final Path contentPath)
-      throws IOException
-  {
+  protected Content doPut(final ImportFileConfiguration configuration) throws IOException {
+    Repository repository = configuration.getRepository();
+    String path = configuration.getAssetName();
+    Path contentPath = configuration.getFile().toPath();
+
     RawContentFacet facet = repository.facet(RawContentFacet.class);
-    return facet.put(path, new StreamPayload(() -> new BufferedInputStream(Files.newInputStream(contentPath)),
-        Files.size(contentPath), Files.probeContentType(contentPath)));
+    if (configuration.isHardLinkingEnabled()) {
+      FluentAsset asset = facet.getOrCreateAsset(repository, path, RawCoordinatesHelper.getGroup(path), path);
+      facet.hardLink(repository, asset, path, contentPath);
+      return facet.get(path)
+          .orElseThrow(() -> new RuntimeException("Content could not be found for " + configuration.getAssetName()));
+    }
+    else {
+      return facet.put(path, new StreamPayload(() -> new BufferedInputStream(Files.newInputStream(contentPath)),
+          Files.size(contentPath), Files.probeContentType(contentPath)));
+    }
   }
 
   @Override

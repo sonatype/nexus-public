@@ -12,12 +12,9 @@
  */
 package org.sonatype.nexus.repository.maven;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -28,6 +25,7 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.importtask.ImportFileConfiguration;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.maven.internal.Maven2MavenPathParser;
@@ -49,7 +47,6 @@ import org.sonatype.nexus.repository.upload.ValidatingComponentUpload;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.Payload;
-import org.sonatype.nexus.repository.view.payloads.StreamPayload;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.repository.view.payloads.TempBlobPartPayload;
@@ -99,7 +96,9 @@ public abstract class MavenUploadHandlerSupport
 
   private static final String GROUP_ID_DISPLAY = "Group ID";
 
-  private static final Set<String> ignoredPaths = Sets.newHashSet(ARCHETYPE_CATALOG_FILENAME);
+  private static final Set<String> ignoredPaths = Sets.newHashSet(
+      "/" + ARCHETYPE_CATALOG_FILENAME,
+      ARCHETYPE_CATALOG_FILENAME);
 
   protected final Maven2MavenPathParser parser;
 
@@ -166,6 +165,15 @@ public abstract class MavenUploadHandlerSupport
 
   @Override
   public Content handle(final Repository repository, final File content, final String path) throws IOException {
+    ImportFileConfiguration configuration = new ImportFileConfiguration(repository, content, path);
+    return handle(configuration);
+  }
+
+  @Override
+  public Content handle(final ImportFileConfiguration configuration) throws IOException {
+    final Repository repository = configuration.getRepository();
+    final String path = configuration.getAssetName();
+
     if (ignoredPaths.contains(path)) {
       log.debug("skipping {} as it is on the ignore list.", path);
       return null;
@@ -177,16 +185,12 @@ public abstract class MavenUploadHandlerSupport
 
     ensurePermitted(repository.getName(), Maven2Format.NAME, mavenPath.getPath(), toMap(mavenPath.getCoordinates()));
 
-    if (mavenPath.getHashType() != null) {
+    if (!configuration.isHardLinkingEnabled() && mavenPath.getHashType() != null) {
       log.debug("skipping hash file {}", mavenPath);
       return null;
     }
 
-    Path contentPath = content.toPath();
-    try (Payload payload = new StreamPayload(() -> new BufferedInputStream(Files.newInputStream(content.toPath())),
-        content.length(), Files.probeContentType(contentPath))) {
-      return doPut(repository, mavenPath, payload);
-    }
+    return doPut(configuration);
   }
 
   @Override
@@ -264,7 +268,10 @@ public abstract class MavenUploadHandlerSupport
                                                                        String basePath)
       throws IOException;
 
-  protected abstract Content doPut(Repository repository, MavenPath mavenPath, Payload payload) throws IOException;
+  protected abstract Content doPut(final Repository repository, final MavenPath mavenPath, final Payload payload)
+      throws IOException;
+
+  protected abstract Content doPut(ImportFileConfiguration configuration) throws IOException;
 
   protected abstract VersionPolicy getVersionPolicy(Repository repository);
 

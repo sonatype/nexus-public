@@ -12,7 +12,11 @@
  */
 package org.sonatype.nexus.content.maven;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -27,6 +31,8 @@ import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
+import org.sonatype.nexus.repository.content.fluent.FluentAsset;
+import org.sonatype.nexus.repository.importtask.ImportFileConfiguration;
 import org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
@@ -45,6 +51,7 @@ import org.sonatype.nexus.repository.upload.UploadResponse;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.Payload;
+import org.sonatype.nexus.repository.view.payloads.StreamPayload;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
@@ -100,6 +107,31 @@ public class MavenUploadHandler
     }
     else {
       log.debug("Not updating metadata.xml files since coordinate could not be retrieved from path");
+    }
+  }
+
+  @Override
+  protected Content doPut(ImportFileConfiguration configuration)
+      throws IOException
+  {
+    Repository repository = configuration.getRepository();
+    MavenPath mavenPath = parser.parsePath(configuration.getAssetName());
+    File content = configuration.getFile();
+    Path contentPath = content.toPath();
+
+    if (configuration.isHardLinkingEnabled()) {
+      MavenContentFacet contentFacet = repository.facet(MavenContentFacet.class);
+      FluentAsset asset = contentFacet.createComponentAndAsset(mavenPath);
+      contentFacet.hardLink(asset, contentPath);
+      contentFacet.maybeUpdateComponentAttributes(mavenPath);
+      return contentFacet.get(mavenPath)
+           .orElseThrow(() -> new RuntimeException("Content could not be found for " + configuration.getAssetName()));
+    }
+    else {
+      try (FileInputStream fis = new FileInputStream(content)) {
+        Payload payload = new StreamPayload(() -> fis, content.length(), Files.probeContentType(contentPath));
+        return doPut(repository, mavenPath, payload);
+      }
     }
   }
 

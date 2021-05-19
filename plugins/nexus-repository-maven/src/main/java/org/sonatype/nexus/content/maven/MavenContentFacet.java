@@ -13,6 +13,7 @@
 package org.sonatype.nexus.content.maven;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -22,6 +23,7 @@ import org.sonatype.nexus.content.maven.store.Maven2ComponentData;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
+import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.view.Content;
@@ -126,4 +128,22 @@ public interface MavenContentFacet
    * @since 3.30
    */
   int[] selectSnapshotsAfterRelease(final int gracePeriod);
+
+  /**
+   * Create a component and asset for a maven path without attaching a blob to the asset. This is primarily used when
+   * the blob will be hard linked to the asset afterwards.
+   *
+   * @param mavenPath
+   * @return the asset
+   */
+  FluentAsset createComponentAndAsset(final MavenPath mavenPath);
+
+  /**
+   * Hard link some content to an asset
+   * @param asset
+   * @param path
+   * @param contentPath
+   * @throws IOException
+   */
+  void hardLink(FluentAsset asset, Path contentPath) throws IOException;
 }

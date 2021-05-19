@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.upload;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -21,6 +20,7 @@ import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.importtask.ImportFileConfiguration;
 import org.sonatype.nexus.repository.view.Content;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -59,12 +59,10 @@ public interface UploadManager
    *
    * @since 3.22
    *
-   * @param repository the {@link Repository} to add the file to
-   * @param content the {@link File} to add to the repository
-   * @param path the path of the content relative to the base import directory
+   * @param configuration
    * @throws IOException
    */
-  Content handle(Repository repository, File content, String path) throws IOException;
+  Content handle(final ImportFileConfiguration configuration) throws IOException;
 
   class UIUploadEvent {
     private final Repository repository;

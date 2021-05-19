@@ -13,10 +13,13 @@
 package org.sonatype.nexus.content.raw;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Optional;
 
 import org.sonatype.nexus.repository.Facet;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
+import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 
@@ -31,7 +34,11 @@ public interface RawContentFacet
 {
   Optional<Content> get(String path) throws IOException;
 
+  FluentAsset getOrCreateAsset(Repository repository, String componentName, String componentGroup, String assetName);
+
   Content put(String path, Payload content) throws IOException;
 
   boolean delete(String path) throws IOException;
+
+  void hardLink(Repository repository, FluentAsset asset, String path, Path contentPath);
 }
