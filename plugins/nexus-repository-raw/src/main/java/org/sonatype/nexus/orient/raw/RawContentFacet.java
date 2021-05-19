@@ -13,6 +13,7 @@
 package org.sonatype.nexus.orient.raw;
 
 import java.io.IOException;
+import java.nio.file.Path;
 
 import javax.annotation.Nullable;
 
@@ -64,4 +65,6 @@ public interface RawContentFacet
    * @since 3.15
    */
   boolean assetExists(String name);
+  
+  void hardLink(Repository repository, Asset asset, String path, Path contentPath);
 }

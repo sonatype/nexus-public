@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.upload.internal;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -29,6 +28,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.importtask.ImportFileConfiguration;
 import org.sonatype.nexus.repository.rest.ComponentUploadExtension;
 import org.sonatype.nexus.repository.rest.internal.resources.ComponentUploadUtils;
 import org.sonatype.nexus.repository.types.HostedType;
@@ -131,12 +131,15 @@ public class OrientUploadManagerImpl
   }
 
   @Override
-  public Content handle(
-      final Repository repository, final File content, final String path) throws IOException
+  public Content handle(final ImportFileConfiguration configuration) throws IOException
   {
-    UploadHandler uploadHandler = getUploadHandler(repository);
+    UploadHandler uploadHandler = getUploadHandler(configuration.getRepository());
 
-    return uploadHandler.handle(repository, content, path);
+    if (configuration.isHardLinkingEnabled()) {
+      return uploadHandler.handle(configuration);
+    }
+
+    return uploadHandler.handle(configuration.getRepository(), configuration.getFile(), configuration.getAssetName());
   }
 
   private ComponentUpload create(final Repository repository, final HttpServletRequest request)

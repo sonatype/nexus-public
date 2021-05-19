@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.raw;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.importtask.ImportFileConfiguration;
 import org.sonatype.nexus.repository.raw.internal.RawFormat;
 import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
@@ -103,17 +103,18 @@ public abstract class RawUploadHandlerSupport
       final String path)
       throws IOException
   {
-    ensurePermitted(repository.getName(), RawFormat.NAME, path, emptyMap());
-
-    Path contentPath = content.toPath();
-    return doPut(repository, content, path, contentPath);
+    // TODO: Remove this handler once all formats have been converted to work with ImportFileConfiguration
+    return handle(new ImportFileConfiguration(repository, content, path));
   }
 
-  protected abstract Content doPut(final Repository repository,
-                                   final File content,
-                                   final String path,
-                                   final Path contentPath)
-      throws IOException;
+  @Override
+  public Content handle(final ImportFileConfiguration configuration) throws IOException {
+    ensurePermitted(configuration.getRepository().getName(), RawFormat.NAME, configuration.getAssetName(), emptyMap());
+
+    return doPut(configuration);
+  }
+
+  protected abstract Content doPut(final ImportFileConfiguration configuration) throws IOException;
 
   protected String normalizePath(final String path) {
     String result = path.replaceAll("/+", "/");

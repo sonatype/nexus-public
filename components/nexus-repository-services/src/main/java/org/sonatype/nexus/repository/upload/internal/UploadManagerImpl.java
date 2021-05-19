@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.upload.internal;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -32,6 +31,7 @@ import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.importtask.ImportFileConfiguration;
 import org.sonatype.nexus.repository.rest.ComponentUploadExtension;
 import org.sonatype.nexus.repository.rest.internal.resources.ComponentUploadUtils;
 import org.sonatype.nexus.repository.types.HostedType;
@@ -127,10 +127,11 @@ public class UploadManagerImpl
         componentUploadExtension.apply(repository, upload, componentIds);
       }
 
-      eventManager.post(new UIUploadEvent(repository, uploadResponse.getAssetPaths().stream().map(assetPath -> prependIfMissing(assetPath, "/")).collect(toList())));
+      eventManager.post(new UIUploadEvent(repository,
+          uploadResponse.getAssetPaths().stream().map(assetPath -> prependIfMissing(assetPath, "/"))
+              .collect(toList())));
 
       return uploadResponse;
-
     }
     finally {
       for (AssetUpload assetUpload : upload.getAssetUploads()) {
@@ -148,12 +149,21 @@ public class UploadManagerImpl
   }
 
   @Override
-  public Content handle(
-      final Repository repository, final File content, final String path) throws IOException
+  public Content handle(final ImportFileConfiguration importFileConfiguration)
+      throws IOException
   {
-    UploadHandler uploadHandler = getUploadHandler(repository);
+    UploadHandler uploadHandler = getUploadHandler(importFileConfiguration.getRepository());
 
-    return uploadHandler.handle(repository, content, path.charAt(0) == '/' ? path : '/' + path);
+    if (importFileConfiguration.isHardLinkingEnabled()) {
+      return uploadHandler.handle(importFileConfiguration);
+    }
+    else {
+      return uploadHandler.handle(
+          importFileConfiguration.getRepository(),
+          importFileConfiguration.getFile(),
+          importFileConfiguration.getAssetName()
+      );
+    }
   }
 
   private ComponentUpload create(final Repository repository, final HttpServletRequest request)

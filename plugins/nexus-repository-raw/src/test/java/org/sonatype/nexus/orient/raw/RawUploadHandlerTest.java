@@ -13,10 +13,16 @@
 package org.sonatype.nexus.orient.raw;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
 import org.sonatype.nexus.common.entity.DetachedEntityId;
+import org.sonatype.nexus.mime.MimeSupport;
+import org.sonatype.nexus.repository.importtask.ImportFileConfiguration;
+import org.sonatype.nexus.repository.raw.RawCoordinatesHelper;
 import org.sonatype.nexus.repository.raw.RawUploadHandlerTestSupport;
 import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
@@ -28,6 +34,7 @@ import org.sonatype.nexus.repository.upload.AssetUpload;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadHandler;
 import org.sonatype.nexus.repository.upload.UploadResponse;
+import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.PartPayload;
 
 import org.junit.Before;
@@ -41,6 +48,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -59,12 +67,15 @@ public class RawUploadHandlerTest
   @Mock
   StorageTx storageTx;
 
+  @Mock
+  private MimeSupport mimeSupport;
+
   @Override
   protected UploadHandler newRawUploadHandler(final ContentPermissionChecker contentPermissionChecker,
                                               final VariableResolverAdapter variableResolverAdapter,
                                               final Set<UploadDefinitionExtension> uploadDefinitionExtensions)
   {
-    return new RawUploadHandler(contentPermissionChecker, variableResolverAdapter, uploadDefinitionExtensions);
+    return new RawUploadHandler(contentPermissionChecker, variableResolverAdapter, uploadDefinitionExtensions, mimeSupport);
   }
 
   @Before
@@ -114,6 +125,22 @@ public class RawUploadHandlerTest
     path = paths.get(1);
     assertNotNull(path);
     assertThat(path, is("org/apache/maven/bar.jar"));
+  }
+
+  @Test
+  public void testHandleHardLink() throws IOException {
+    Path contentPath = Files.createTempDirectory("raw-upload-test").resolve("test.txt");
+    String path = contentPath.toString();
+    Asset asset = mock(Asset.class);
+    Content content = mock(Content.class);
+    when(rawFacet.getOrCreateAsset(repository, path, RawCoordinatesHelper.getGroup(path), path)).thenReturn(asset);
+    when(rawFacet.get(path)).thenReturn(content);
+    when(mimeSupport.detectMimeType(any(InputStream.class), eq(path))).thenReturn("text/plain");
+
+    Content importResponse = underTest.handle(new ImportFileConfiguration(repository, contentPath.toFile(), path, true));
+
+    verify(rawFacet).hardLink(repository, asset, path, contentPath);
+    assertThat(importResponse, is(content));
   }
 
   @Override

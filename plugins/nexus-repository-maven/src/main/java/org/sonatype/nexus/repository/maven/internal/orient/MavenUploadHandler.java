@@ -12,21 +12,29 @@
  */
 package org.sonatype.nexus.repository.maven.internal.orient;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.importtask.ImportFileConfiguration;
 import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenHostedFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
+import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.MavenUploadHandlerSupport;
 import org.sonatype.nexus.repository.maven.VersionPolicy;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
@@ -42,6 +50,7 @@ import org.sonatype.nexus.repository.upload.UploadResponse;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.Payload;
+import org.sonatype.nexus.repository.view.payloads.StreamPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
@@ -105,6 +114,38 @@ public class MavenUploadHandler
   }
 
   @Override
+  protected Content doPut(ImportFileConfiguration configuration)
+      throws IOException
+  {
+    OrientMavenFacet mavenFacet = configuration.getRepository().facet(OrientMavenFacet.class);
+    MavenPath mavenPath = parser.parsePath(configuration.getAssetName());
+    File content = configuration.getFile();
+    Path contentPath = content.toPath();
+
+    if (configuration.isHardLinkingEnabled()) {
+      final AttributesMap contentAttributes = new AttributesMap();
+      contentAttributes.set(Content.CONTENT_LAST_MODIFIED, new DateTime(Files.getLastModifiedTime(contentPath).toMillis()));
+
+      byte[] bytes = Files.readAllBytes(contentPath);
+      Map<HashAlgorithm, HashCode> hashes =
+          HashType.ALGORITHMS.stream().collect(Collectors.toMap(a -> a, a -> a.function().hashBytes(bytes)));
+      return mavenFacet.put(
+          mavenPath,
+          contentPath,
+          configuration.getAssetName(),
+          contentAttributes,
+          hashes,
+          Files.size(contentPath));
+    }
+    else {
+      try (FileInputStream fis = new FileInputStream(content)) {
+        Payload payload = new StreamPayload(() -> fis, content.length(), Files.probeContentType(contentPath));
+        return doPut(configuration.getRepository(), mavenPath, payload);
+      }
+    }
+  }
+
+  @Override
   protected Content doPut(final Repository repository, final MavenPath mavenPath, final Payload payload)
       throws IOException
   {
@@ -113,6 +154,7 @@ public class MavenUploadHandler
     putChecksumFiles(mavenFacet, mavenPath, asset);
     return asset;
   }
+
 
   @Override
   protected VersionPolicy getVersionPolicy(final Repository repository) {
