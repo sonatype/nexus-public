@@ -29,6 +29,7 @@ import org.sonatype.nexus.repository.cache.NegativeCacheFacet;
 import org.sonatype.nexus.repository.cache.NegativeCacheHandler;
 import org.sonatype.nexus.repository.content.browse.BrowseFacet;
 import org.sonatype.nexus.repository.content.maintenance.LastAssetMaintenanceFacet;
+import org.sonatype.nexus.repository.content.search.SearchFacet;
 import org.sonatype.nexus.repository.http.PartialFetchHandler;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.proxy.ProxyHandler;
@@ -90,6 +91,9 @@ public class AptProxyRecipe
   Provider<AptContentFacet> aptContentFacet;
 
   @Inject
+  Provider<SearchFacet> searchFacet;
+
+  @Inject
   Provider<BrowseFacet> browseFacet;
 
   @Inject
@@ -146,6 +150,7 @@ public class AptProxyRecipe
     repository.attach(browseFacet.get());
     repository.attach(lastAssetMaintenanceFacet.get());
     repository.attach(purgeUnusedFacet.get());
+    repository.attach(searchFacet.get());
   }
 
   private ViewFacet configure(final ConfigurableViewFacet facet) {
