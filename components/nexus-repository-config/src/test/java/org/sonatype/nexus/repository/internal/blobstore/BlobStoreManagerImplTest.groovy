@@ -32,7 +32,6 @@ import org.hamcrest.Matchers
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExpectedException
 import org.junit.rules.TemporaryFolder
 import org.mockito.ArgumentCaptor
 import org.mockito.Mock
@@ -84,6 +83,9 @@ class BlobStoreManagerImplTest
   @Mock
   ChangeRepositoryBlobstoreDataService changeRepositoryBlobstoreDataService
 
+  @Mock
+  Provider<BlobStoreOverride> blobStoreOverrideProvider
+
   BlobStoreManagerImpl underTest
 
   @Before
@@ -95,7 +97,7 @@ class BlobStoreManagerImplTest
   private BlobStoreManagerImpl newBlobStoreManager(Boolean provisionDefaults = null) {
     spy(new BlobStoreManagerImpl(eventManager, store, [test: descriptor, File: descriptor],
         [test: provider, File: provider], freezeService, { -> repositoryManager } as Provider,
-         nodeAccess, provisionDefaults, changeRepositoryBlobstoreDataService))
+         nodeAccess, provisionDefaults, changeRepositoryBlobstoreDataService, blobStoreOverrideProvider))
   }
 
   @Test
@@ -277,7 +279,8 @@ class BlobStoreManagerImplTest
   void 'Can successfully create new blob stores concurrently'() {
     // avoid newBlobStoreManager method because it returns a spy that throws NPE accessing the stores field
     underTest = new BlobStoreManagerImpl(eventManager, store, [test: descriptor, File: descriptor],
-        [test: provider, File: provider], freezeService, { -> repositoryManager } as Provider, nodeAccess, true, changeRepositoryBlobstoreDataService)
+        [test: provider, File: provider], freezeService, { -> repositoryManager } as Provider, nodeAccess, true,
+        changeRepositoryBlobstoreDataService, blobStoreOverrideProvider)
 
     BlobStore blobStore = mock(BlobStore)
     when(provider.get()).thenReturn(blobStore)

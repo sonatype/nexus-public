@@ -94,6 +94,8 @@ public class BlobStoreManagerImpl
 
   private final ChangeRepositoryBlobstoreDataService changeRepositoryBlobstoreDataService;
 
+  private final Provider<BlobStoreOverride> blobStoreOverrideProvider;
+
   @Inject
   public BlobStoreManagerImpl(final EventManager eventManager, //NOSONAR
                               final BlobStoreConfigurationStore store,
@@ -103,7 +105,8 @@ public class BlobStoreManagerImpl
                               final Provider<RepositoryManager> repositoryManagerProvider,
                               final NodeAccess nodeAccess,
                               @Nullable @Named("${nexus.blobstore.provisionDefaults}") final Boolean provisionDefaults,
-                              @Nullable final ChangeRepositoryBlobstoreDataService changeRepositoryBlobstoreDataService)
+                              @Nullable final ChangeRepositoryBlobstoreDataService changeRepositoryBlobstoreDataService,
+                              final Provider<BlobStoreOverride> blobStoreOverrideProvider)
   {
     this.eventManager = checkNotNull(eventManager);
     this.store = checkNotNull(store);
@@ -112,6 +115,7 @@ public class BlobStoreManagerImpl
     this.freezeService = checkNotNull(freezeService);
     this.repositoryManagerProvider = checkNotNull(repositoryManagerProvider);
     this.changeRepositoryBlobstoreDataService = changeRepositoryBlobstoreDataService;
+    this.blobStoreOverrideProvider = blobStoreOverrideProvider;
 
     if (provisionDefaults != null) {
       // explicit true/false setting, so honour that
@@ -125,6 +129,7 @@ public class BlobStoreManagerImpl
 
   @Override
   protected void doStart() throws Exception {
+    Optional.ofNullable(blobStoreOverrideProvider.get()).ifPresent(BlobStoreOverride::apply);
     List<BlobStoreConfiguration> configurations = store.list();
     if (configurations.isEmpty() && provisionDefaults.getAsBoolean()) {
       log.debug("No BlobStores configured; provisioning default BlobStore");
