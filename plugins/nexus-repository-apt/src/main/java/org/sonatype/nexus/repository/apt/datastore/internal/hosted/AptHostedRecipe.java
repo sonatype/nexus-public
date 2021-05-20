@@ -28,6 +28,7 @@ import org.sonatype.nexus.repository.apt.internal.gpg.AptSigningFacet;
 import org.sonatype.nexus.repository.apt.internal.snapshot.AptSnapshotHandler;
 import org.sonatype.nexus.repository.content.browse.BrowseFacet;
 import org.sonatype.nexus.repository.content.maintenance.LastAssetMaintenanceFacet;
+import org.sonatype.nexus.repository.content.search.SearchFacet;
 import org.sonatype.nexus.repository.http.PartialFetchHandler;
 import org.sonatype.nexus.repository.security.SecurityHandler;
 import org.sonatype.nexus.repository.types.HostedType;
@@ -105,6 +106,8 @@ public class AptHostedRecipe
   @Inject
   AptHostedHandler hostedHandler;
 
+  @Inject
+  Provider<SearchFacet> searchFacet;
 
   @Inject
   public AptHostedRecipe(
@@ -122,6 +125,7 @@ public class AptHostedRecipe
     repository.attach(aptContentFacet.get());
     repository.attach(maintenanceFacet.get());
     repository.attach(browseFacet.get());
+    repository.attach(searchFacet.get());
   }
 
   private ViewFacet configure(final ConfigurableViewFacet facet) {
