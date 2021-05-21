@@ -71,6 +71,9 @@ public class DataStoreConfigurationLocalSource
     configuration.setType(JDBC);
     configuration.setSource(LOCAL);
     configuration.setAttributes(ImmutableMap.of(JDBC_URL, JDBC_TEMPLATE_URL));
+
+    log.info("Loaded '{}' data store configuration defaults (Embedded H2)", storeName);
+
     return configuration;
   }
 }
