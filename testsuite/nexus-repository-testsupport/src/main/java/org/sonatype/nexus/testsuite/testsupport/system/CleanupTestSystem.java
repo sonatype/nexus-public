@@ -24,21 +24,23 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
+import org.sonatype.nexus.common.event.EventManager;
 
-import org.junit.rules.ExternalResource;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 @Named
 @Singleton
 public class CleanupTestSystem
-    extends ExternalResource
+    extends TestSystemSupport
 {
   private CleanupPolicyStorage cleanupPolicyStorage;
 
   private Set<String> names = new HashSet<>();
 
   @Inject
-  public CleanupTestSystem(final CleanupPolicyStorage cleanupPolicyStorage) {
-    this.cleanupPolicyStorage = cleanupPolicyStorage;
+  public CleanupTestSystem(final CleanupPolicyStorage cleanupPolicyStorage, final EventManager eventManager) {
+    super(eventManager);
+    this.cleanupPolicyStorage = checkNotNull(cleanupPolicyStorage);
   }
 
   public CleanupPolicy createCleanupPolicy(final String name, final String notes) {
@@ -68,7 +70,7 @@ public class CleanupTestSystem
   }
 
   @Override
-  public void after() {
+  protected void doAfter() {
     names.stream()
         .map(cleanupPolicyStorage::get)
         .filter(Objects::nonNull)

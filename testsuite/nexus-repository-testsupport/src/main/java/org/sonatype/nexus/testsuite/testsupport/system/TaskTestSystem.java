@@ -22,6 +22,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.event.EventAware;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.events.TaskEvent;
@@ -30,14 +31,15 @@ import org.sonatype.nexus.scheduling.events.TaskEventStoppedDone;
 import org.sonatype.nexus.scheduling.events.TaskEventStoppedFailed;
 
 import com.google.common.eventbus.Subscribe;
-import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 @Named
 @Singleton
 public class TaskTestSystem
-    extends ExternalResource
+    extends TestSystemSupport
     implements EventAware, EventAware.Asynchronous
 {
   private static final Logger log = LoggerFactory.getLogger(TaskTestSystem.class);
@@ -47,12 +49,13 @@ public class TaskTestSystem
   private final TaskScheduler scheduler;
 
   @Inject
-  public TaskTestSystem(final TaskScheduler scheduler) {
-    this.scheduler = scheduler;
+  public TaskTestSystem(final TaskScheduler scheduler, final EventManager eventManager) {
+    super(eventManager);
+    this.scheduler = checkNotNull(scheduler);
   }
 
   @Override
-  protected void after() {
+  protected void doAfter() {
     clear();
   }
 
