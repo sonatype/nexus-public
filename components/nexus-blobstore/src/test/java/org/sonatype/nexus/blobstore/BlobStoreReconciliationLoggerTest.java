@@ -39,7 +39,6 @@ import org.slf4j.LoggerFactory;
 
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.Mockito.verify;
@@ -119,7 +118,7 @@ public class BlobStoreReconciliationLoggerTest
         "2021-04-14 00:00:00,00000000-0000-0000-0000-000000000006".getBytes(StandardCharsets.UTF_8),
         StandardOpenOption.CREATE);
 
-    List<String> result = underTest.getBlobsCreatedSince(blobStore, LocalDate.parse("2021-04-14"))
+    List<String> result = underTest.getBlobsCreatedSince(blobStore.getBlobStoreConfiguration().getName(), LocalDate.parse("2021-04-14"))
         .map(BlobId::asUniqueString)
         .collect(toList());
 

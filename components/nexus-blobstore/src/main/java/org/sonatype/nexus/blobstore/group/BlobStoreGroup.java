@@ -350,6 +350,14 @@ public class BlobStoreGroup
   }
 
   @Override
+  public Stream<BlobId> getBlobIdUpdatedSinceStream(final int sinceDays) {
+    return members
+        .get()
+        .stream()
+        .flatMap((BlobStore member) -> member.getBlobIdUpdatedSinceStream(sinceDays));
+  }
+
+  @Override
   public Stream<BlobId> getDirectPathBlobIdStream(final String prefix) {
     return members.get().stream()
         .map((BlobStore member) -> member.getDirectPathBlobIdStream(prefix))

@@ -228,6 +228,13 @@ public interface BlobStore
   Stream<BlobId> getBlobIdStream();
 
   /**
+   * Get a {@link Stream} of {@link BlobId} for blobs contained in this blob store that have been updated since the given number of days.
+   *
+   * @since 3.next
+   */
+  Stream<BlobId> getBlobIdUpdatedSinceStream(int sinceDays);
+
+  /**
    * Get a {@link Stream} of direct-path {@link BlobId}s under the specified path prefix.
    */
   Stream<BlobId> getDirectPathBlobIdStream(String prefix);
