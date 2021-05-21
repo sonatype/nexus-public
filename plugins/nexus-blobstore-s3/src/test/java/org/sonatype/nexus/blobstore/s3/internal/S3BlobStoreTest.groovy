@@ -29,6 +29,7 @@ import com.amazonaws.services.s3.model.AmazonS3Exception
 import com.amazonaws.services.s3.model.DeleteObjectsRequest
 import com.amazonaws.services.s3.model.DeleteObjectsResult
 import com.amazonaws.services.s3.model.DeleteObjectsResult.DeletedObject
+import com.amazonaws.services.s3.model.ListObjectsRequest
 import com.amazonaws.services.s3.model.ObjectListing
 import com.amazonaws.services.s3.model.S3Object
 import com.amazonaws.services.s3.model.S3ObjectInputStream
@@ -114,6 +115,45 @@ class S3BlobStoreTest
       ''         | 'content/'
       null       | 'content/'
 
+  }
+
+  def 'getBlobIdUpdatedSinceStream filters out of date content'() {
+    given: 'setup blobstore'
+      blobStore.init(config)
+      blobStore.doStart()
+
+      s3.listObjects(_ as ListObjectsRequest) >> { listObjectsRequest ->
+
+        def listing = new ObjectListing()
+        listing.objectSummaries << new S3ObjectSummary(bucketName: 'mybucket', key: '/content/tmp/vol-01/chap-01/12345678-1234-1234-1234-123456789ghi.properties', lastModified: new Date())
+        listing.objectSummaries << new S3ObjectSummary(bucketName: 'mybucket', key: '/content/tmp/vol-01/chap-01/12345678-1234-1234-1234-123456789ghi.bytes', lastModified: new Date())
+        listing.objectSummaries << new S3ObjectSummary(bucketName: 'mybucket', key: 'vol-01/chap-01/12345678-1234-1234-1234-123456789abc.properties', lastModified: new Date())
+        listing.objectSummaries << new S3ObjectSummary(bucketName: 'mybucket', key: 'vol-01/chap-01/12345678-1234-1234-1234-123456789abc.bytes', lastModified: new Date())
+        listing.objectSummaries << new S3ObjectSummary(bucketName: 'mybucket', key: 'vol-01/chap-01/12345678-1234-1234-1234-123456789def.properties', lastModified: new Date().minus(2))
+        listing.objectSummaries << new S3ObjectSummary(bucketName: 'mybucket', key: 'vol-01/chap-01/12345678-1234-1234-1234-123456789def.bytes', lastModified: new Date().minus(2))
+        listing.truncated = false
+
+        return listing
+      }
+
+    when: 'blob id stream is fetched only wanting blobs updated in the last day'
+      List<BlobId> blobIds = blobStore.getBlobIdUpdatedSinceStream(1).collect(Collectors.toList())
+
+    then: 'only the blob updated in the last day will be returned'
+      blobIds.size() == 1
+      blobIds.get(0).asUniqueString() == "12345678-1234-1234-1234-123456789abc"
+  }
+
+  def 'getBlobIdUpdatedSinceStream throws exception if negative sinceDays is passed in'() {
+    given: 'setup blobstore'
+      blobStore.init(config)
+      blobStore.doStart()
+
+    when: 'blob id stream is fetched'
+      blobStore.getBlobIdUpdatedSinceStream(-1)
+
+    then: 'fails'
+      thrown(IllegalArgumentException.class)
   }
 
   @Unroll

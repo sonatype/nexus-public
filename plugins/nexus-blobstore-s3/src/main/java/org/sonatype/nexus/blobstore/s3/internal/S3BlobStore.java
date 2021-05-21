@@ -15,6 +15,10 @@ package org.sonatype.nexus.blobstore.s3.internal;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -70,8 +74,10 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.common.cache.CacheLoader.from;
 import static java.lang.String.format;
+import static java.time.LocalDate.now;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static java.util.Objects.isNull;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.stream.StreamSupport.stream;
 import static org.sonatype.nexus.blobstore.DirectPathLocationStrategy.DIRECT_PATH_ROOT;
@@ -661,7 +667,21 @@ public class S3BlobStore
   @Timed
   public Stream<BlobId> getBlobIdStream() {
     Iterable<S3ObjectSummary> summaries = S3Objects.withPrefix(s3, getConfiguredBucket(), getContentPrefix());
-    return blobIdStream(summaries);
+    return blobIdStream(stream(summaries.spliterator(), false));
+  }
+
+  @Override
+  public Stream<BlobId> getBlobIdUpdatedSinceStream(final int sinceDays) {
+    if (sinceDays < 0) {
+      throw new IllegalArgumentException("sinceDays must >= 0");
+    }
+    else {
+      Iterable<S3ObjectSummary> summaries = S3Objects.withPrefix(s3, getConfiguredBucket(), getContentPrefix());
+      OffsetDateTime offsetDateTime = Instant.now().minus(sinceDays, ChronoUnit.DAYS).atOffset(ZoneOffset.UTC);
+
+      return blobIdStream(nonTempBlobPropertiesFileStream(stream(summaries.spliterator(), false))
+          .filter(s3objectSummary -> s3objectSummary.getLastModified().toInstant().atOffset(ZoneOffset.UTC).isAfter(offsetDateTime)));
+    }
   }
 
   @Override
@@ -675,10 +695,14 @@ public class S3BlobStore
         .map(this::attributePathToDirectPathBlobId);
   }
 
-  private Stream<BlobId> blobIdStream(Iterable<S3ObjectSummary> summaries) {
-    return stream(summaries.spliterator(), false)
+  private Stream<S3ObjectSummary> nonTempBlobPropertiesFileStream(final Stream<S3ObjectSummary> summaries) {
+    return summaries
         .filter(o -> o.getKey().endsWith(BLOB_FILE_ATTRIBUTES_SUFFIX))
-        .filter(o -> !o.getKey().contains(CONTENT_TMP_PATH))
+        .filter(o -> !o.getKey().contains(CONTENT_TMP_PATH));
+  }
+
+  private Stream<BlobId> blobIdStream(final Stream<S3ObjectSummary> summaries) {
+    return nonTempBlobPropertiesFileStream(summaries)
         .map(S3AttributesLocation::new)
         .map(this::getBlobIdFromAttributeFilePath)
         .map(BlobId::new);

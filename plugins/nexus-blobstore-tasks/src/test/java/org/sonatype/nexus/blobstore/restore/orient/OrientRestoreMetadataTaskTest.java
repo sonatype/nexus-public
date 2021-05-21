@@ -14,14 +14,12 @@ package org.sonatype.nexus.blobstore.restore.orient;
 
 import java.net.URL;
 import java.nio.file.Paths;
-import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Stream;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.blobstore.BlobStoreReconciliationLogger;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -52,6 +50,7 @@ import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -119,9 +118,6 @@ public class OrientRestoreMetadataTaskTest
   @Mock
   MaintenanceService maintenanceService;
 
-  @Mock
-  BlobStoreReconciliationLogger reconciliationLogger;
-
   OrientRestoreMetadataTask underTest;
 
   Map<String, OrientIntegrityCheckStrategy> integrityCheckStrategies;
@@ -140,7 +136,7 @@ public class OrientRestoreMetadataTaskTest
 
     underTest =
         new OrientRestoreMetadataTask(blobStoreManager, repositoryManager, ImmutableMap.of("maven2", restoreBlobStrategy),
-            blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies, bucketStore, maintenanceService, reconciliationLogger);
+            blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies, bucketStore, maintenanceService);
 
     reset(integrityCheckStrategies); // reset this mock so we more easily verify calls
 
@@ -159,6 +155,7 @@ public class OrientRestoreMetadataTaskTest
     blobAttributes.load();
     blobId = new BlobId("86e20baa-0bca-4915-a7dc-9a4f34e72321");
     when(blobStore.getBlobIdStream()).thenReturn(Stream.of(blobId));
+    when(blobStore.getBlobIdUpdatedSinceStream(anyInt())).thenReturn(Stream.of(blobId));
     when(blobStoreManager.get(BLOBSTORE_NAME)).thenReturn(blobStore);
 
     when(blobStore.get(blobId, true)).thenReturn(blob);
@@ -334,7 +331,7 @@ public class OrientRestoreMetadataTaskTest
 
     OrientRestoreMetadataTask underTest =
         new OrientRestoreMetadataTask(blobStoreManager, repositoryManager, ImmutableMap.of("maven2", restoreBlobStrategy),
-            blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies, bucketStore, maintenanceService, reconciliationLogger)
+            blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies, bucketStore, maintenanceService)
         {
       @Override
       public boolean isCanceled() {
@@ -448,7 +445,7 @@ public class OrientRestoreMetadataTaskTest
 
     underTest.execute();
 
-    verify(reconciliationLogger, never()).getBlobsCreatedSince(eq(blobStore), any());
+    verify(blobStore, never()).getBlobIdUpdatedSinceStream(anyInt());
     verify(blobStore).getBlobIdStream();
   }
 
@@ -461,7 +458,7 @@ public class OrientRestoreMetadataTaskTest
 
     underTest.execute();
 
-    verify(reconciliationLogger, never()).getBlobsCreatedSince(eq(blobStore), any());
+    verify(blobStore, never()).getBlobIdUpdatedSinceStream(anyInt());
     verify(blobStore).getBlobIdStream();
   }
 
@@ -472,11 +469,11 @@ public class OrientRestoreMetadataTaskTest
     configuration.setBoolean(INTEGRITY_CHECK, false);
     configuration.setInteger(SINCE_DAYS, 2);
     underTest.configure(configuration);
-    when(reconciliationLogger.getBlobsCreatedSince(eq(blobStore), any())).thenReturn(Stream.empty());
+    when(blobStore.getBlobIdUpdatedSinceStream(2)).thenReturn(Stream.empty());
 
     underTest.execute();
 
-    verify(reconciliationLogger).getBlobsCreatedSince(blobStore, LocalDate.now().minusDays(2));
+    verify(blobStore).getBlobIdUpdatedSinceStream(2);
     verify(blobStore, never()).getBlobIdStream();
   }
 }

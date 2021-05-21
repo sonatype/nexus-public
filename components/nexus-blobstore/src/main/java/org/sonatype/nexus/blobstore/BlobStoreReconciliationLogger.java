@@ -83,12 +83,11 @@ public class BlobStoreReconciliationLogger
   /**
    * Stream blob ids of blobs created in a blob store since specified date (inclusive).
    *
-   * @param blobStore for which log will be retrieved
+   * @param blobStoreName name of the blob store for which log will be retrieved
    * @param sinceDate for which retrieve newly created blob ids
    * @return stream of BlobId
    */
-  public Stream<BlobId> getBlobsCreatedSince(final BlobStore blobStore, final LocalDate sinceDate) {
-    String blobStoreName = blobStore.getBlobStoreConfiguration().getName();
+  public Stream<BlobId> getBlobsCreatedSince(final String blobStoreName, final LocalDate sinceDate) {
     return getLogFilesToProcess(blobStoreName, sinceDate)
         .flatMap(this::readLines)
         .map(line -> {

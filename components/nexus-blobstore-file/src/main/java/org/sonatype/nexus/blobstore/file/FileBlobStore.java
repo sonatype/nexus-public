@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.LocalDate;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Objects;
@@ -82,7 +83,9 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.cache.CacheLoader.from;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
+import static java.time.LocalDate.now;
 import static java.util.Arrays.stream;
+import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.removeEnd;
@@ -227,6 +230,17 @@ public class FileBlobStore
     metricsStore.setStorageDir(storageDir);
     metricsStore.setBlobStore(this);
     metricsStore.start();
+  }
+
+  @Override
+  public Stream<BlobId> getBlobIdUpdatedSinceStream(final int sinceDays) {
+    if (sinceDays < 0) {
+      throw new IllegalArgumentException("sinceDays must >= 0");
+    }
+    else {
+      LocalDate sinceDate = now().minusDays(sinceDays);
+      return reconciliationLogger.getBlobsCreatedSince(getBlobStoreConfiguration().getName(), sinceDate);
+    }
   }
 
   private void maybeUpgradeLegacyIndexFile(final Path deletedIndexPath) throws IOException {

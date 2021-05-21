@@ -12,19 +12,16 @@
  */
 package org.sonatype.nexus.blobstore.restore.datastore;
 
-import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.sonatype.nexus.blobstore.BlobStoreReconciliationLogger;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -43,7 +40,6 @@ import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.time.LocalDate.now;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
@@ -80,8 +76,6 @@ public class RestoreMetadataTask
 
   private final MaintenanceService maintenanceService;
 
-  private final BlobStoreReconciliationLogger reconciliationLogger;
-
   @Inject
   public RestoreMetadataTask(
       final BlobStoreManager blobStoreManager,
@@ -90,8 +84,7 @@ public class RestoreMetadataTask
       final BlobStoreUsageChecker blobStoreUsageChecker,
       final DryRunPrefix dryRunPrefix,
       final Map<String, IntegrityCheckStrategy> integrityCheckStrategies,
-      final MaintenanceService maintenanceService,
-      final BlobStoreReconciliationLogger reconciliationLogger)
+      final MaintenanceService maintenanceService)
   {
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.repositoryManager = checkNotNull(repositoryManager);
@@ -101,7 +94,6 @@ public class RestoreMetadataTask
     this.defaultIntegrityCheckStrategy = checkNotNull(integrityCheckStrategies.get(DEFAULT_NAME));
     this.integrityCheckStrategies = checkNotNull(integrityCheckStrategies);
     this.maintenanceService = checkNotNull(maintenanceService);
-    this.reconciliationLogger = checkNotNull(reconciliationLogger);
   }
 
   @Override
@@ -150,7 +142,7 @@ public class RestoreMetadataTask
     }
 
     try (ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60)) {
-      for (BlobId blobId : (Iterable<BlobId>) getBlobIdStream(blobStore, sinceDays)::iterator) {
+      for (BlobId blobId : getBlobIdStream(blobStore, sinceDays)) {
         try {
           if (isCanceled()) {
             log.info("Restore metadata task for {} was canceled", blobStore.getBlobStoreConfiguration().getName());
@@ -188,16 +180,12 @@ public class RestoreMetadataTask
     }
   }
 
-  private Stream<BlobId> getBlobIdStream(final BlobStore blobStore, final Integer sinceDays) {
+  private Iterable<BlobId> getBlobIdStream(final BlobStore store, final Integer sinceDays){
     if (isNull(sinceDays) || sinceDays < 0) {
       log.info("Will process all blobs");
-      return blobStore.getBlobIdStream();
+      return store.getBlobIdStream()::iterator;
     }
-    else {
-      LocalDate sinceDate = now().minusDays(sinceDays);
-      log.info("Will process blobs created within last {} days, that is since {}", sinceDays, sinceDate);
-      return reconciliationLogger.getBlobsCreatedSince(blobStore, sinceDate);
-    }
+    return store.getBlobIdUpdatedSinceStream(sinceDays)::iterator;
   }
 
   private void updateAssets(final Set<Repository> repositories, final boolean updateAssets) {
