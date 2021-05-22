@@ -16,21 +16,23 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.common.log.LoggerLevel;
 
-import org.junit.rules.ExternalResource;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 @Named
 @Singleton
 public class LogTestSystem
-    extends ExternalResource
+    extends TestSystemSupport
 {
   private LogManager logManager;
 
   @Inject
-  public LogTestSystem(final LogManager logManager) {
-    this.logManager = logManager;
+  public LogTestSystem(final LogManager logManager, final EventManager eventManager) {
+    super(eventManager);
+    this.logManager = checkNotNull(logManager);
   }
 
   public void set(final String name, final LoggerLevel level) {
@@ -38,7 +40,7 @@ public class LogTestSystem
   }
 
   @Override
-  public void after() {
+  protected void doAfter() {
     logManager.resetLoggers();
   }
 }

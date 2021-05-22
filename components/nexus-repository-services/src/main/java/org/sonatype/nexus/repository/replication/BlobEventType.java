@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.replication;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * @since 3.next
  */
@@ -19,5 +21,19 @@ public enum BlobEventType
 {
   ADDED,
   UPDATED,
-  DELETED
+  DELETED;
+
+  public static BlobEventType fromCode(final String code) {
+    requireNonNull(code);
+    switch (code) {
+      case "a":
+        return ADDED;
+      case "u":
+        return UPDATED;
+      case "d":
+        return DELETED;
+    }
+
+    return null;
+  }
 }
