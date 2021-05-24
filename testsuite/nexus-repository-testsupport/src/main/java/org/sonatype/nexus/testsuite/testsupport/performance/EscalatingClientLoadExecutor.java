@@ -24,6 +24,8 @@ import org.sonatype.nexus.common.io.DirectoryHelper;
 import org.sonatype.nexus.testsuite.testsupport.performance.PerformanceData.PerformanceRunResult;
 import org.sonatype.nexus.testsuite.testsupport.performance.PerformanceData.PerformanceTestSeries;
 
+import com.google.common.util.concurrent.Runnables;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -50,16 +52,14 @@ public class EscalatingClientLoadExecutor
 
   private final TestIndex testIndex;
 
-  private final Callable<Void> before;
+  private final Runnable before;
 
   /**
    * Accepts an optional callable to be invoked between loads with different numbers of clients.
    */
-  public EscalatingClientLoadExecutor(final TestIndex testIndex, @Nullable final Callable<Void> before) {
+  public EscalatingClientLoadExecutor(final TestIndex testIndex, @Nullable final Runnable before) {
     this.testIndex = checkNotNull(testIndex);
-    this.before = before != null ? before : () -> {
-      return null;
-    };
+    this.before = before != null ? before : Runnables.doNothing();
   }
 
   public void calculateAndGraphPerformance(final String dataSeriesName,
@@ -82,7 +82,7 @@ public class EscalatingClientLoadExecutor
     for (int clientThreads : THREAD_COUNTS) {
 
       // Do whatever preparatory step the test requires
-      before.call();
+      before.run();
 
       final LoadExecutor loadExec = new LoadExecutor(tasks, clientThreads, DURATION_SECONDS);
 

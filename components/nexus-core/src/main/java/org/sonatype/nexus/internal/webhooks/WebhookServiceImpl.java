@@ -16,6 +16,10 @@ import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ThreadPoolExecutor.AbortPolicy;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
 import javax.crypto.Mac;
@@ -28,12 +32,13 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.InternalAccessible;
 import org.sonatype.nexus.common.event.EventAware;
-import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.thread.NexusThreadFactory;
 import org.sonatype.nexus.webhooks.Webhook;
 import org.sonatype.nexus.webhooks.WebhookRequest;
 import org.sonatype.nexus.webhooks.WebhookRequestSendEvent;
 import org.sonatype.nexus.webhooks.WebhookService;
 
+import com.codahale.metrics.annotation.Gauge;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -53,7 +58,9 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.Thread.MIN_PRIORITY;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 
 /**
@@ -82,21 +89,30 @@ public class WebhookServiceImpl
       .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
       .setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
-  private final EventManager eventManager;
-
   private final Provider<CloseableHttpClient> httpClientProvider;
 
   private final List<Webhook> webhooks;
 
+  private final ThreadPoolExecutor threadPoolExecutor;
+
   @Inject
   public WebhookServiceImpl(
-      final EventManager eventManager,
       final Provider<CloseableHttpClient> httpClientProvider,
-      final List<Webhook> webhooks)
+      final List<Webhook> webhooks,
+      @Named("${nexus.webhook.pool.size:-128}") final int poolSize)
   {
-    this.eventManager = checkNotNull(eventManager);
     this.httpClientProvider = checkNotNull(httpClientProvider);
     this.webhooks = checkNotNull(webhooks);
+
+    checkArgument(poolSize > 0, "Pool size must be greater than zero");
+    this.threadPoolExecutor = new ThreadPoolExecutor(
+        poolSize, // core-size
+        poolSize, // max-size
+        0L, // keep-alive
+        TimeUnit.MILLISECONDS,
+        new LinkedBlockingQueue<>(), // allow queueing up of requests
+        new NexusThreadFactory("webhookService", "requestRool", MIN_PRIORITY),
+        new AbortPolicy());
   }
 
   /**
@@ -140,24 +156,26 @@ public class WebhookServiceImpl
   @Override
   public void queue(final WebhookRequest request) {
     checkNotNull(request);
-    eventManager.post(new WebhookRequestSendEvent(request));
+    threadPoolExecutor.execute(() -> {
+      try {
+        send(request);
+      }
+      catch (Exception e) {
+        log.error("Failed to send webhook request:{}", request, e);
+      }
+    });
   }
 
   /**
    * Asynchronous send handler.
    *
-   * @see #send(WebhookRequest)
+   * @see #queue(WebhookRequest)
    */
   @Subscribe
   @AllowConcurrentEvents
   @InternalAccessible
   void on(final WebhookRequestSendEvent event) {
-    try {
-      send(event.getRequest());
-    }
-    catch (Exception e) {
-      log.error("Failed to send webhook request: {}", event.getRequest(), e);
-    }
+    queue(event.getRequest());
   }
 
   @Override
@@ -179,19 +197,31 @@ public class WebhookServiceImpl
     httpPost.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
 
     log.debug("Sending POST request: {}", httpPost);
-    CloseableHttpResponse putResponse = httpClientProvider.get().execute(httpPost);
+    try (CloseableHttpClient httpClient = httpClientProvider.get()) {
+      CloseableHttpResponse putResponse = httpClient.execute(httpPost);
 
-    StatusLine status = putResponse.getStatusLine();
-    log.debug("Response status: {}", status);
+      StatusLine status = putResponse.getStatusLine();
+      log.debug("Response status: {}", status);
 
-    // on exceptional status throw exception
-    int code = status.getStatusCode();
-    if (code >= 300) {
-      String message = extractResponseBody(putResponse);
-      if (message == null) {
-        message = status.getReasonPhrase();
+      // on exceptional status throw exception
+      int code = status.getStatusCode();
+      if (code >= 300) {
+        String message = extractResponseBody(putResponse);
+        if (message == null) {
+          message = status.getReasonPhrase();
+        }
+        throw new HttpResponseException(code, message);
       }
-      throw new HttpResponseException(code, message);
     }
+  }
+
+  @VisibleForTesting
+  public boolean isCalmPeriod() {
+    return threadPoolExecutor.getQueue().isEmpty() && threadPoolExecutor.getActiveCount() == 0;
+  }
+
+  @Gauge(name = "nexus.webhooks.service.executor.queueSize")
+  public int webhookQueueSize() {
+    return threadPoolExecutor.getQueue().size();
   }
 }

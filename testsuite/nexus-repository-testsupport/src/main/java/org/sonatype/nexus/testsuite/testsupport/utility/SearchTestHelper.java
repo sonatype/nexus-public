@@ -22,16 +22,23 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
 import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.pax.exam.NexusPaxExamSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.search.index.SearchIndexService;
 import org.sonatype.nexus.repository.search.query.SearchQueryService;
 
+import org.awaitility.Awaitility;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
+/**
+ * @deprecated
+ * Please use {@code SearchTestSystem} instead
+ */
 @Named
 @Singleton
+@Deprecated
 public class SearchTestHelper
 {
   @Inject
@@ -48,10 +55,10 @@ public class SearchTestHelper
    *
    * General flow is component/asset events -> bulk index requests -> search indexing.
    */
-  public void waitForSearch() throws Exception {
-    NexusPaxExamSupport.waitFor(eventManager::isCalmPeriod);
+  public void waitForSearch() {
+    Awaitility.await().atMost(30, SECONDS).until(eventManager::isCalmPeriod);
     indexService.flush(false); // no need for full fsync here
-    NexusPaxExamSupport.waitFor(indexService::isCalmPeriod);
+    Awaitility.await().atMost(30, SECONDS).until(indexService::isCalmPeriod);
   }
 
   public void verifyComponentExists(
@@ -75,7 +82,6 @@ public class SearchTestHelper
       final WebTarget nexusSearchUrl, final String repository,
       final String artifactId,
       final String version)
-      throws Exception
   {
     waitForSearch();
 
@@ -96,7 +102,6 @@ public class SearchTestHelper
       final WebTarget nexusSearchUrl,
       final String repository,
       final String tag)
-      throws Exception
   {
     waitForSearch();
 
