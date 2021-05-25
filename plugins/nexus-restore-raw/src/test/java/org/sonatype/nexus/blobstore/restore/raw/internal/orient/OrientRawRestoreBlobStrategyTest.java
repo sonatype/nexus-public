@@ -151,8 +151,6 @@ public class OrientRawRestoreBlobStrategyTest
         bind(DryRunPrefix.class).toInstance(DRY_RUN_PREFIX);
       }
     }).getInstance(OrientRawRestoreBlobStrategy.class);
-
-    underTest = new OrientRawRestoreBlobStrategy(nodeAccess, repositoryManager, blobStoreManager, DRY_RUN_PREFIX);
   }
 
   @Test
