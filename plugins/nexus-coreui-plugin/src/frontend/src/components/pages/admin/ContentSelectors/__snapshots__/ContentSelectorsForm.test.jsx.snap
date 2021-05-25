@@ -103,7 +103,7 @@ exports[`ContentSelectorsForm renders a loading spinner 1`] = `
               />
             </div>
             <button
-              class="nx-btn"
+              class="nx-btn nx-btn--secondary"
               disabled=""
             >
               Preview
@@ -517,14 +517,14 @@ exports[`ContentSelectorsForm renders the resolved data 1`] = `
             <button
               aria-disabled="true"
               aria-label="There are no changes"
-              class="nx-btn disabled nx-btn--primary"
+              class="disabled nx-btn nx-btn--primary"
               title="There are no changes"
               type="submit"
             >
               Save
             </button>
             <button
-              class="nx-btn"
+              class="nx-btn nx-btn--secondary"
             >
               Cancel
             </button>
@@ -588,7 +588,7 @@ exports[`ContentSelectorsForm renders the resolved data 1`] = `
               />
             </div>
             <button
-              class="nx-btn"
+              class="nx-btn nx-btn--secondary"
             >
               Preview
             </button>

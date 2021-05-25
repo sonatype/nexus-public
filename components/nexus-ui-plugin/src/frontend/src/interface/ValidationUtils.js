@@ -56,6 +56,22 @@ export default class ValidationUtils {
   }
 
   /**
+   * @param {str|null|undefined}
+   * @returns {boolean} true if the string appears to be a valid url (http/https)
+   */
+  static isUrl(str) {
+    return str && /^https?:\/\/[^"<>^`{|}]+$/i.test(str);
+  }
+
+  /**
+   * @param {str|null|undefined}
+   * @returns {boolean} true if the string does not appear to be a valid url (http/https)
+   */
+  static notUrl(str) {
+    return !ValidationUtils.isUrl(str);
+  }
+
+  /**
    * @param value {string|number|null|undefined}
    * @param min - defaults to -Infinity
    * @param max - defaults to Infinity
@@ -88,6 +104,18 @@ export default class ValidationUtils {
     }
     else {
       return null;
+    }
+  }
+
+  static validateNotBlank(value) {
+    if (ValidationUtils.isBlank(value)) {
+      return UIStrings.ERROR.FIELD_REQUIRED;
+    }
+  }
+
+  static validateIsUrl(value) {
+    if (ValidationUtils.notUrl(value)) {
+      return UIStrings.ERROR.URL_ERROR;
     }
   }
 

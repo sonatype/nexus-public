@@ -40,6 +40,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Streams.stream;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 /**
  * @since 3.29
@@ -83,11 +84,13 @@ public class RepositoryInternalResource
 
   @GET
   public List<RepositoryXO> getRepositories(
+      @QueryParam("type") final String type,
       @QueryParam("withAll") final boolean withAll,
       @QueryParam("withFormats") final boolean withFormats)
   {
     List<RepositoryXO> repositories = stream(repositoryManager.browse())
         .filter(repositoryPermissionChecker::userCanBrowseRepository)
+        .filter(repository -> isBlank(type) || type.equals(repository.getType().toString()))
         .map(repository -> new RepositoryXO(repository.getName(), repository.getName()))
         .sorted(Comparator.comparing(RepositoryXO::getName))
         .collect(toList());

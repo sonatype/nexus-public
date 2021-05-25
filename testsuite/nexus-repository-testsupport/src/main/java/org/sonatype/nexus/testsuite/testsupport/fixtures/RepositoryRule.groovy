@@ -40,6 +40,10 @@ class RepositoryRule
     this.repositoryManagerProvider = checkNotNull(repositoryManagerProvider)
   }
 
+  Iterable<Repository> browse() {
+    return repositoryManagerProvider.get().browse();
+  }
+
   @Override
   public void after() {
     def repositoryManager = repositoryManagerProvider.get()

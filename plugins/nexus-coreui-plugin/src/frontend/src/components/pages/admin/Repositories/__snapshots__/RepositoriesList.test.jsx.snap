@@ -329,6 +329,7 @@ exports[`RepositoriesList matches a snapshot 1`] = `
                 >
                   <span>
                     <button
+                      aria-label="Copy URL to Clipboard"
                       class="nx-btn nx-btn--icon-only"
                       title="Copy URL to Clipboard"
                     >
@@ -410,6 +411,7 @@ exports[`RepositoriesList matches a snapshot 1`] = `
                 >
                   <span>
                     <button
+                      aria-label="Copy URL to Clipboard"
                       class="nx-btn nx-btn--icon-only"
                       title="Copy URL to Clipboard"
                     >
@@ -491,6 +493,7 @@ exports[`RepositoriesList matches a snapshot 1`] = `
                 >
                   <span>
                     <button
+                      aria-label="Copy URL to Clipboard"
                       class="nx-btn nx-btn--icon-only"
                       title="Copy URL to Clipboard"
                     >
@@ -572,6 +575,7 @@ exports[`RepositoriesList matches a snapshot 1`] = `
                 >
                   <span>
                     <button
+                      aria-label="Copy URL to Clipboard"
                       class="nx-btn nx-btn--icon-only"
                       title="Copy URL to Clipboard"
                     >
@@ -653,6 +657,7 @@ exports[`RepositoriesList matches a snapshot 1`] = `
                 >
                   <span>
                     <button
+                      aria-label="Copy URL to Clipboard"
                       class="nx-btn nx-btn--icon-only"
                       title="Copy URL to Clipboard"
                     >
@@ -734,6 +739,7 @@ exports[`RepositoriesList matches a snapshot 1`] = `
                 >
                   <span>
                     <button
+                      aria-label="Copy URL to Clipboard"
                       class="nx-btn nx-btn--icon-only"
                       title="Copy URL to Clipboard"
                     >
@@ -824,6 +830,7 @@ exports[`RepositoriesList matches a snapshot 1`] = `
                 >
                   <span>
                     <button
+                      aria-label="Copy URL to Clipboard"
                       class="nx-btn nx-btn--icon-only"
                       title="Copy URL to Clipboard"
                     >

@@ -54,6 +54,8 @@ export { default as TokenMachine } from './components/machines/TokenMachine';
 
 // Direct RSC exports
 export {
+  NxAccordion,
+  NxStatefulAccordion,
   NxButton,
   NxCheckbox,
   NxErrorAlert,
@@ -62,10 +64,15 @@ export {
   NxFontAwesomeIcon,
   NxForm,
   NxFormGroup,
+  NxH1,
+  NxH2,
+  NxH3,
+  NxH4,
   NxInfoAlert,
   NxLoadingSpinner,
   NxLoadWrapper,
   NxModal,
+  NxP,
   NxStatefulTabs,
   NxSubmitMask,
   NxSuccessAlert,
@@ -81,6 +88,5 @@ export {
   NxTextInput,
   NxTooltip,
   NxWarningAlert,
-  NxAccordion,
-  NxStatefulAccordion
+  NxTile
 } from '@sonatype/react-shared-components';

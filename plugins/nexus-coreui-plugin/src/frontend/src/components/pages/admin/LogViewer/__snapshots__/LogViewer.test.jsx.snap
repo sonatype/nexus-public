@@ -117,7 +117,7 @@ exports[`LogViewer renders the log into the text area 1`] = `
               />
             </div>
             <button
-              class="nx-btn"
+              class="nx-btn nx-btn--secondary"
               id="insertMark"
             >
               <svg

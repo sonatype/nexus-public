@@ -325,7 +325,7 @@ exports[`UserAccount renders correctly 1`] = `
             <button
               aria-disabled="true"
               aria-label="There are no changes"
-              class="nx-btn disabled nx-btn--primary"
+              class="disabled nx-btn nx-btn--primary"
               id="useraccount-save-button"
               title="There are no changes"
             >
@@ -334,7 +334,7 @@ exports[`UserAccount renders correctly 1`] = `
             <button
               aria-disabled="true"
               aria-label="There are no changes"
-              class="nx-btn disabled"
+              class="disabled nx-btn nx-btn--secondary"
               id="useraccount-discard-button"
               title="There are no changes"
             >
@@ -553,18 +553,16 @@ exports[`UserAccount renders correctly 1`] = `
             <button
               aria-disabled="true"
               aria-label=""
-              class="nx-btn disabled nx-btn--primary"
+              class="disabled nx-btn nx-btn--primary"
               text="Validation errors are present"
-              title=""
             >
               Change password
             </button>
             <button
               aria-disabled="true"
               aria-label=""
-              class="nx-btn disabled"
+              class="disabled nx-btn nx-btn--secondary"
               text="There are no changes"
-              title=""
             >
               Discard password change
             </button>
@@ -907,7 +905,7 @@ exports[`UserAccount renders correctly for an external user: externalUser 1`] = 
             <button
               aria-disabled="true"
               aria-label="There are no changes"
-              class="nx-btn disabled nx-btn--primary"
+              class="disabled nx-btn nx-btn--primary"
               disabled=""
               id="useraccount-save-button"
               title="There are no changes"
@@ -917,7 +915,7 @@ exports[`UserAccount renders correctly for an external user: externalUser 1`] = 
             <button
               aria-disabled="true"
               aria-label="There are no changes"
-              class="nx-btn disabled"
+              class="disabled nx-btn nx-btn--secondary"
               disabled=""
               id="useraccount-discard-button"
               title="There are no changes"
