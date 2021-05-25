@@ -19,16 +19,36 @@ public class BlobEvent
 {
   private String blobId;
 
+  private String repositoryName;
+
   private BlobEventType blobEventType;
 
   private boolean inUse;
+
+  private int retryCount = 0;
+
+  public void retry() {
+    retryCount++;
+  }
+
+  public boolean shouldRetry() {
+    return retryCount > 0;
+  }
 
   public String getBlobId() {
     return blobId;
   }
 
+  public String getRepositoryName() {
+    return repositoryName;
+  }
+
   public BlobEventType getBlobEventType() {
     return blobEventType;
+  }
+
+  public int getRetryCount() {
+    return retryCount;
   }
 
   public boolean isInUse() {
@@ -40,6 +60,11 @@ public class BlobEvent
     return this;
   }
 
+  public BlobEvent withRepositoryName(final String repositoryName) {
+    this.repositoryName = repositoryName;
+    return this;
+  }
+
   public BlobEvent withBlobEventType(final BlobEventType blobEventType) {
     this.blobEventType = blobEventType;
     return this;
@@ -47,6 +72,11 @@ public class BlobEvent
 
   public BlobEvent withInUse(final boolean inUse) {
     this.inUse = inUse;
+    return this;
+  }
+
+  public BlobEvent withRetryCount(final int retryCount) {
+    this.retryCount = retryCount;
     return this;
   }
 }
