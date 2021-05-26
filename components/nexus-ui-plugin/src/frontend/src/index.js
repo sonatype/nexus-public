@@ -74,6 +74,7 @@ export {
   NxModal,
   NxP,
   NxStatefulTabs,
+  NxStatefulSuccessAlert,
   NxSubmitMask,
   NxSuccessAlert,
   NxTabs,
