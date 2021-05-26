@@ -22,7 +22,7 @@ import java.util.Set;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.repository.apt.orient.internal.hosted.OrientAptHostedFacet.AssetAction;
+import org.sonatype.nexus.repository.apt.internal.hosted.AssetAction;
 import org.sonatype.nexus.repository.apt.orient.internal.hosted.OrientAptHostedFacet.AssetChange;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Bucket;

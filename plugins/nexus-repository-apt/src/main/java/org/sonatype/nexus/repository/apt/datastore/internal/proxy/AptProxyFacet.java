@@ -80,7 +80,7 @@ public class AptProxyFacet
       // and package files that go along with it.
       cacheControllerHolder.getMetadataCacheController().invalidateCache();
     }
-    return facet(AptContentFacet.class).put(assetPath(context), content);
+    return facet(AptContentFacet.class).put(assetPath(context), content).markAsCached(content).download();
   }
 
   @Override
@@ -132,7 +132,7 @@ public class AptProxyFacet
       contentAttrs.set(Content.CONTENT_LAST_MODIFIED, getDateHeader(response, HttpHeaders.LAST_MODIFIED));
       contentAttrs.set(Content.CONTENT_ETAG, getQuotedStringHeader(response, HttpHeaders.ETAG));
       contentAttrs.set(CacheInfo.class, cacheInfo);
-      Content storedContent = facet(AptContentFacet.class).put(spec.path, fetchedContent);
+      Content storedContent = facet(AptContentFacet.class).put(spec.path, fetchedContent).download();
       return Optional.of(new SnapshotItem(spec, storedContent));
     }
 

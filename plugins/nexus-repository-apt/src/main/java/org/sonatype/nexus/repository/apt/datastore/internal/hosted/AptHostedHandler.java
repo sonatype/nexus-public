@@ -35,7 +35,6 @@ import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.payloads.StreamPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
-
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
 import static org.sonatype.nexus.repository.http.HttpMethods.POST;
@@ -78,9 +77,10 @@ public class AptHostedHandler
                           final String path,
                           final AptContentFacet contentFacet) throws IOException
   {
+    final AptHostedFacet hostedFacet = context.getRepository().facet(AptHostedFacet.class);
     if ("rebuild-indexes".equals(path)) {
-      //TODO NEXUS-26888
-      throw new UnsupportedOperationException("Not implemented yet. Check NEXUS-26888 ");
+      hostedFacet.rebuildMetadata();
+      return HttpResponses.ok();
     }
     else if (BrowsePath.SLASH.equals(path)) {
       final Payload payload = context.getRequest().getPayload();
@@ -90,8 +90,9 @@ public class AptHostedHandler
         long payloadSize = payload.getSize();
         String contentType = payload.getContentType();
 
-        contentFacet.put(assetPath, new StreamPayload(tempBlob, payloadSize, contentType),
-            new PackageInfo(controlFile));
+        hostedFacet.
+            put(assetPath, new StreamPayload(tempBlob, payloadSize, contentType),
+                new PackageInfo(controlFile));
       }
       return HttpResponses.created();
     }

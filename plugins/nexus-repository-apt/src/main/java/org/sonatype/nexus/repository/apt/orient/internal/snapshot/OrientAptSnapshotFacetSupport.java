@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.repository.FacetSupport;
-import org.sonatype.nexus.repository.apt.AptFacet;
+import org.sonatype.nexus.repository.apt.orient.OrientAptFacet;
 import org.sonatype.nexus.repository.apt.internal.AptFacetHelper;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFileParser;
@@ -122,10 +122,14 @@ public abstract class OrientAptSnapshotFacetSupport
   }
 
   protected Iterable<SnapshotItem> collectSnapshotItems(final SnapshotComponentSelector selector) throws IOException {
-    AptFacet aptFacet = getRepository().facet(AptFacet.class);
+    OrientAptFacet aptFacet = getRepository().facet(OrientAptFacet.class);
 
     List<SnapshotItem> result = new ArrayList<>();
-    List<SnapshotItem> releaseIndexItems = fetchSnapshotItems(AptFacetHelper.getReleaseIndexSpecifiers(aptFacet));
+    final boolean isFlat = aptFacet.isFlat();
+    final String distribution = aptFacet.getDistribution();
+
+    List<SnapshotItem> releaseIndexItems = fetchSnapshotItems(AptFacetHelper.getReleaseIndexSpecifiers(
+        isFlat, distribution));
     Map<SnapshotItem.Role, SnapshotItem> itemsByRole = new HashMap<>(
         releaseIndexItems.stream().collect(Collectors.toMap((SnapshotItem item) -> item.specifier.role, item -> item)));
     InputStream releaseStream = null;
@@ -183,15 +187,15 @@ public abstract class OrientAptSnapshotFacetSupport
 
     result.addAll(releaseIndexItems);
 
-    if (aptFacet.isFlat()) {
-      result.addAll(fetchSnapshotItems(AptFacetHelper.getReleasePackageIndexes(aptFacet, null, null)));
+    if (isFlat) {
+      result.addAll(fetchSnapshotItems(AptFacetHelper.getReleasePackageIndexes(isFlat, distribution, null, null)));
     }
     else {
       List<String> archs = selector.getArchitectures(release);
       List<String> comps = selector.getComponents(release);
       for (String arch : archs) {
         for (String comp : comps) {
-          result.addAll(fetchSnapshotItems(AptFacetHelper.getReleasePackageIndexes(aptFacet, comp, arch)));
+          result.addAll(fetchSnapshotItems(AptFacetHelper.getReleasePackageIndexes(isFlat, distribution, comp, arch)));
         }
       }
     }

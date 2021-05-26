@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.apt.internal;
 import java.util.List;
 
 import org.sonatype.nexus.common.hash.HashAlgorithm;
-import org.sonatype.nexus.repository.apt.AptFacet;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
 import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotItem;
 import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotItem.ContentSpecifier;
@@ -58,23 +57,21 @@ public class AptFacetHelper
 
   private static final String ARCHITECTURE = "Architecture";
 
-
   /**
    * Returns list of the release indexes specifiers
    *
-   * @param facet - Apt content facet
+   * @param isFlat - Type of the repository. Flat repository doesn't have distribution
+   * @param dist   - Apt package distribution
    * @return - list of the release indexes specifiers
    */
-  public static List<ContentSpecifier> getReleaseIndexSpecifiers(final AptFacet facet) {
-    if (facet.isFlat()) {
+  public static List<ContentSpecifier> getReleaseIndexSpecifiers(boolean isFlat, final String dist) {
+    if (isFlat) {
       return ImmutableList.of(
           new ContentSpecifier(RELEASE, SnapshotItem.Role.RELEASE_INDEX),
           new ContentSpecifier(RELEASE_GPG, SnapshotItem.Role.RELEASE_SIG),
           new ContentSpecifier(INRELEASE, SnapshotItem.Role.RELEASE_INLINE_INDEX));
     }
     else {
-      String dist = facet.getDistribution();
-
       return ImmutableList.of(
           new ContentSpecifier(String.format(RELEASE_PATH, dist, RELEASE), SnapshotItem.Role.RELEASE_INDEX),
           new ContentSpecifier(String.format(RELEASE_PATH, dist, RELEASE_GPG), SnapshotItem.Role.RELEASE_SIG),
@@ -85,16 +82,17 @@ public class AptFacetHelper
   /**
    * Returns list of the release package indexes
    *
-   * @param facet     - Apt content facet
+   * @param isFlat    - Type of the repository. Flat repository doesn't have distribution
+   * @param dist      - Apt package distribution
    * @param component - Apt Component
    * @param arch      - Package type of architecture. e.g. amd64
    * @return - list of the release package indexes
    */
-  public static List<ContentSpecifier> getReleasePackageIndexes(final AptFacet facet,
+  public static List<ContentSpecifier> getReleasePackageIndexes(boolean isFlat, final String dist,
                                                                 final String component,
                                                                 final String arch)
   {
-    if (facet.isFlat()) {
+    if (isFlat) {
       return ImmutableList.of(
           new ContentSpecifier(PACKAGES, SnapshotItem.Role.PACKAGE_INDEX_RAW),
           new ContentSpecifier(PACKAGES_GZ, SnapshotItem.Role.PACKAGE_INDEX_GZ),
@@ -102,8 +100,6 @@ public class AptFacetHelper
           new ContentSpecifier(PACKAGES_XZ, SnapshotItem.Role.PACKAGE_INDEX_XZ));
     }
     else {
-      String dist = facet.getDistribution();
-
       return ImmutableList.of(
           new ContentSpecifier(String.format(PACKAGE_PATH, dist, component, arch, PACKAGES),
               SnapshotItem.Role.PACKAGE_INDEX_RAW),

@@ -10,34 +10,33 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.apt;
-
-import java.io.IOException;
-import java.util.Optional;
-
-import javax.annotation.Nullable;
-
-import org.sonatype.nexus.repository.Facet;
-import org.sonatype.nexus.repository.apt.internal.debian.PackageInfo;
-import org.sonatype.nexus.repository.view.Content;
-import org.sonatype.nexus.repository.view.Payload;
+package org.sonatype.nexus.repository.apt.internal;
 
 /**
- * @since 3.17
+ * Apt properties
+ *
+ * @since 3.next
  */
-@Facet.Exposed
-public interface AptFacet
-    extends Facet
+public final class AptProperties
 {
-  Optional<Content> get(final String path) throws IOException;
+  private AptProperties() {
+    //Properties class
+  }
 
-  Content put(final String path, final Payload payload) throws IOException;
+  //Apt general properties
+  public static final String DEB = "DEB";
 
-  Content put(final String path, final Payload payload, @Nullable final PackageInfo packageInfo) throws IOException;
+  // Apt hosted properties for metadata rebuild
+  public static final String P_INDEX_SECTION = "index_section";
 
-  boolean delete(final String path) throws IOException;
+  public static final String P_ARCHITECTURE = "architecture";
 
-  boolean isFlat();
+  public static final String P_PACKAGE_NAME = "package_name";
 
-  String getDistribution();
+  public static final String P_PACKAGE_VERSION = "package_version";
+
+  //Apt supported metadata archive file extensions
+  public static final String GZ = ".gz";
+
+  public static final String BZ2 = ".bz2";
 }
