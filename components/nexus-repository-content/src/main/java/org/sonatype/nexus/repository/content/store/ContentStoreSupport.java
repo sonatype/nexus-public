@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.store;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
@@ -109,13 +110,24 @@ public abstract class ContentStoreSupport<T extends ContentDataAccess>
     return find.get().orElseGet(create);
   }
 
+  public <D> D save(
+      final Supplier<Optional<D>> find,
+      final Supplier<D> create,
+      final UnaryOperator<D> update,
+      final Consumer<D> postTransaction)
+  {
+    D result = transactionalSave(find, create, update);
+    postTransaction.accept(result);
+    return result;
+  }
+
   /**
    * Helper to find content in this store before creating or updating it with the given suppliers.
    *
    * @since 3.30
    */
   @Transactional(retryOn = DuplicateKeyException.class)
-  public <D> D save(final Supplier<Optional<D>> find, final Supplier<D> create, final UnaryOperator<D> update) {
+  protected  <D> D transactionalSave(final Supplier<Optional<D>> find, final Supplier<D> create, final UnaryOperator<D> update) {
     return find.get().map(update).orElseGet(create);
   }
 }

@@ -56,6 +56,13 @@ public interface FluentAssetBuilder
   FluentAssetBuilder blob(Blob blob, Map<HashAlgorithm, HashCode> checksums);
 
   /**
+   * Continue building the asset using the given attributes.
+   *
+   * @since 3.next
+   */
+  FluentAssetBuilder attributes(String key, Object value);
+
+  /**
    * Save the asset using details built so far. If the asset doesn't exist it is created otherwise the blob reference
    * is updated.
    *
@@ -64,7 +71,8 @@ public interface FluentAssetBuilder
   FluentAsset save();
 
   /**
-   * Find if an asset exists using the details built so far.
+   * Find by asset path if an asset exists using the details built so far.
+   * Fields such as attributes, kind will be ignored.
    */
   Optional<FluentAsset> find();
 }

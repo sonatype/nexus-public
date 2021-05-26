@@ -46,6 +46,13 @@ public interface FluentComponentBuilder
   FluentComponentBuilder version(String version);
 
   /**
+   * Continue building the component using the given format attributes.
+   *
+   * @since 3.next
+   */
+  FluentComponentBuilder attributes(String key, Object value);
+
+  /**
    * Gets the full component using the details built so far; if it doesn't exist then it is created.
    */
   FluentComponent getOrCreate();

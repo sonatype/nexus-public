@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.fluent.internal;
 
 import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -25,6 +26,8 @@ import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
+import org.sonatype.nexus.repository.content.AttributeChangeSet;
+import org.sonatype.nexus.repository.content.AttributeOperation;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
@@ -69,6 +72,8 @@ public class FluentAssetBuilderImpl
 
   private Blob blob;
 
+  private Map<String, Object> attributes;
+
   public FluentAssetBuilderImpl(final ContentFacetSupport facet, final AssetStore<?> assetStore, final String path) {
     this.facet = checkNotNull(facet);
     this.assetStore = checkNotNull(assetStore);
@@ -111,12 +116,27 @@ public class FluentAssetBuilderImpl
   }
 
   @Override
+  public FluentAssetBuilder attributes(final String key, final Object value) {
+    checkNotNull(key);
+    checkNotNull(value);
+    if (attributes == null) {
+      attributes = new HashMap<>();
+    }
+    attributes.put(key, value);
+    return this;
+  }
+
+  @Override
   public FluentAsset save() {
+    if (attributes != null) {
+      assetData.attributes().backing().putAll(attributes);
+    }
     if (blobSupplier != null) {
       facet.checkAttachAllowed(findAsset().orElse(assetData));
       blob = blobSupplier.get();
     }
-    return new FluentAssetImpl(facet, assetStore.save(this::findAsset, this::createAsset, this::updateAssetBlob));
+    Asset asset = assetStore.save(this::findAsset, this::createAsset, this::updateAsset, this::postTransaction);
+    return new FluentAssetImpl(facet, asset);
   }
 
   @Override
@@ -145,12 +165,39 @@ public class FluentAssetBuilderImpl
     return assetData;
   }
 
+  private Asset updateAsset(Asset asset) {
+    updateAssetBlob(asset);
+    updateAssetAttributes(asset);
+    return asset;
+  }
+
   private Asset updateAssetBlob(Asset asset) {
     if (blob != null) {
       ((AssetData) asset).setAssetBlob(getOrCreateAssetBlob(blob, checksums));
       facet.stores().assetStore.updateAssetBlobLink(asset);
     }
     return asset;
+  }
+
+  private Asset updateAssetAttributes(Asset asset) {
+    if (attributes != null && !attributes.isEmpty()) {
+      AttributeChangeSet changeSet = new AttributeChangeSet();
+      attributes.forEach((key, value) -> changeSet.attributes(AttributeOperation.OVERLAY, key, value));
+      facet.stores()
+          .assetStore
+          .updateAssetAttributes(asset, changeSet);
+    }
+    return asset;
+  }
+
+  private void postTransaction(Asset asset) {
+    if (attributes != null && !attributes.isEmpty()) {
+      asset.blob()
+          .ifPresent(blob -> facet
+              .blobMetadataStorage()
+              .attach(facet.stores().blobStore, blob.blobRef().getBlobId(), null, asset.attributes())
+          );
+    }
   }
 
   private Blob makePermanent(final Blob tempBlob) {
