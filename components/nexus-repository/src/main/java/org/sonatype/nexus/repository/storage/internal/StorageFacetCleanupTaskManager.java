@@ -21,6 +21,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
+import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.schedule.Schedule;
 
@@ -29,6 +30,8 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 import static org.sonatype.nexus.repository.storage.internal.StorageFacetCleanupTaskDescriptor.TYPE_ID;
 
 /**
+ * Manager which ensures the {@link StorageFacetCleanupTask} is scheduled during the startup of Nexus.
+ *
  * @since 3.6
  */
 @Named
@@ -51,10 +54,14 @@ public class StorageFacetCleanupTaskManager
 
   @Override
   protected void doStart() throws Exception {
-    if (!taskScheduler.listsTasks().stream().anyMatch((info) -> TYPE_ID.equals(info.getConfiguration().getTypeId()))) {
-      TaskConfiguration configuration = taskScheduler.createTaskConfigurationInstance(TYPE_ID);
-      Schedule schedule = taskScheduler.getScheduleFactory().cron(new Date(), storageCleanupCron);
-      taskScheduler.scheduleTask(configuration, schedule);
-    }
+    // Remove any existing tasks
+    taskScheduler.listsTasks().stream()
+        .filter((info) -> TYPE_ID.equals(info.getConfiguration().getTypeId()))
+        .forEach(TaskInfo::remove);
+
+    // Create task
+    TaskConfiguration configuration = taskScheduler.createTaskConfigurationInstance(TYPE_ID);
+    Schedule schedule = taskScheduler.getScheduleFactory().cron(new Date(), storageCleanupCron);
+    taskScheduler.scheduleTask(configuration, schedule);
   }
 }
