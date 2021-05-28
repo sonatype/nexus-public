@@ -1172,6 +1172,11 @@
                     <exclude>org.sonatype.sisu:sisu-velocity</exclude>
 
                     <!--
+                    Merged into guice core
+                    -->
+                    <exclude>com.google.inject.extensions:guice-multibindings:*</exclude>
+
+                    <!--
                     Conflicts with slf4j.
                     -->
                     <exclude>commons-logging:*</exclude>

@@ -85,6 +85,12 @@
         <groupId>org.apache.shiro</groupId>
         <artifactId>shiro-guice</artifactId>
         <version>${apache-shiro.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>com.google.inject.extensions</groupId>
+            <artifactId>guice-multibindings</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>
