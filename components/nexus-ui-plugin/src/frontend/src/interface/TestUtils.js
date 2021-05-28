@@ -14,13 +14,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {fireEvent, render, wait} from '@testing-library/react';
+import {fireEvent, render, waitFor} from '@testing-library/react';
 import UIStrings from '../constants/UIStrings';
 
 /**
  * @since 3.24
  */
 export default class TestUtils {
+  static get UNRESOLVED() {
+    return new Promise(() => {});
+  }
+
   static render(view, extraSelectors) {
     const selectors = render(view);
     const {queryByText} = selectors;
@@ -45,7 +49,7 @@ export default class TestUtils {
       }
     });
     try {
-      await wait(() => expect(fieldSelector()).toHaveValue(value));
+      await waitFor(() => expect(fieldSelector()).toHaveValue(value));
     } catch(error) {
       throw new Error(`${fieldSelector().name} with value ${fieldSelector().value} did not match the expected value \n ${error.message}`);
     }

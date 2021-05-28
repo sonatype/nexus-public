@@ -19,6 +19,10 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ThreadPoolExecutor.AbortPolicy;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Nullable;
@@ -31,7 +35,6 @@ import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.event.EventAware;
-import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent;
@@ -48,7 +51,9 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.upload.UploadManager.UIUploadEvent;
 import org.sonatype.nexus.scheduling.PeriodicJobService;
 import org.sonatype.nexus.scheduling.PeriodicJobService.PeriodicJob;
+import org.sonatype.nexus.thread.NexusThreadFactory;
 
+import com.codahale.metrics.annotation.Gauge;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
@@ -58,9 +63,9 @@ import com.google.common.eventbus.Subscribe;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Integer.parseInt;
+import static java.lang.Thread.MIN_PRIORITY;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
-import static org.apache.commons.lang3.StringUtils.prependIfMissing;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.repository.content.search.SearchEventHandler.RequestType.INDEX;
@@ -96,6 +101,8 @@ public class SearchEventHandler
 
   private static final String NO_PURGE_DELAY_KEY = HANDLER_KEY_PREFIX + "noPurgeDelay";
 
+  private static final String FLUSH_POOL_SIZE = HANDLER_KEY_PREFIX + "flushPoolSize";
+
   enum RequestType
   {
     INDEX, PURGE
@@ -105,19 +112,19 @@ public class SearchEventHandler
 
   private final PeriodicJobService periodicJobService;
 
-  private final EventManager eventManager;
-
   private final int flushOnCount;
 
   private final int flushOnSeconds;
 
   private final boolean noPurgeDelay;
 
-  private final FlushEventReceiver flushEventReceiver = new FlushEventReceiver();
-
   private final Map<String, String> pendingRequests = new ConcurrentHashMap<>();
 
   private final AtomicInteger pendingCount = new AtomicInteger();
+
+  private final int poolSize;
+
+  private ThreadPoolExecutor threadPoolExecutor;
 
   private Object flushMutex = new Object();
 
@@ -129,21 +136,21 @@ public class SearchEventHandler
   public SearchEventHandler(
       final RepositoryManager repositoryManager,
       final PeriodicJobService periodicJobService,
-      final EventManager eventManager,
       @Named("${" + FLUSH_ON_COUNT_KEY + ":-100}") final int flushOnCount,
       @Named("${" + FLUSH_ON_SECONDS_KEY + ":-2}") final int flushOnSeconds,
-      @Named("${" + NO_PURGE_DELAY_KEY + ":-true}") final boolean noPurgeDelay)
+      @Named("${" + NO_PURGE_DELAY_KEY + ":-true}") final boolean noPurgeDelay,
+      @Named("${" + FLUSH_POOL_SIZE + ":-128}") final int poolSize)
   {
     this.repositoryManager = checkNotNull(repositoryManager);
     this.periodicJobService = checkNotNull(periodicJobService);
-    this.eventManager = checkNotNull(eventManager);
     checkArgument(flushOnCount > 0, FLUSH_ON_COUNT_KEY + " must be positive");
     this.flushOnCount = flushOnCount;
     checkArgument(flushOnSeconds > 0, FLUSH_ON_SECONDS_KEY + " must be positive");
     this.flushOnSeconds = flushOnSeconds;
     this.noPurgeDelay = noPurgeDelay;
 
-    eventManager.register(flushEventReceiver);
+    checkArgument(poolSize > 0, "Pool size must be greater than zero");
+    this.poolSize = poolSize;
   }
 
   @Override
@@ -152,6 +159,15 @@ public class SearchEventHandler
       periodicJobService.startUsing();
       flushTask = periodicJobService.schedule(this::pollSearchUpdateRequest, flushOnSeconds);
     }
+
+    this.threadPoolExecutor = new ThreadPoolExecutor(
+        poolSize, // core-size
+        poolSize, // max-size
+        0L, // keep-alive
+        TimeUnit.MILLISECONDS,
+        new LinkedBlockingQueue<>(), // allow queueing up of requests
+        new NexusThreadFactory("searchEventHandler", "flushAndPurge", MIN_PRIORITY),
+        new AbortPolicy());
   }
 
   @Override
@@ -160,6 +176,13 @@ public class SearchEventHandler
       flushTask.cancel();
       periodicJobService.stopUsing();
     }
+
+    this.threadPoolExecutor.shutdownNow();
+  }
+
+  @Gauge(name = "nexus.search.eventHandler.executor.queueSize")
+  public int searchEventQueue() {
+    return threadPoolExecutor.getQueue().size();
   }
 
   /**
@@ -173,9 +196,10 @@ public class SearchEventHandler
 
   /**
    * Request update search indexes based on component id
-   * @param format        The repository format
-   * @param componentId   The component id
-   * @param repository    The repository
+   *
+   * @param format      The repository format
+   * @param componentId The component id
+   * @param repository  The repository
    */
   public void requestIndex(final String format, final int componentId, final Repository repository) {
     if (processEvents && componentId > 0) {
@@ -186,9 +210,10 @@ public class SearchEventHandler
 
   /**
    * Request purge search indexes based on component id
-   * @param format        The repository format
-   * @param componentId   The component id
-   * @param repository    The repository
+   *
+   * @param format      The repository format
+   * @param componentId The component id
+   * @param repository  The repository
    */
   public void requestPurge(final String format, final int componentId, final Repository repository) {
     if (processEvents && componentId > 0) {
@@ -240,9 +265,9 @@ public class SearchEventHandler
   }
 
   /**
-   * Updates the asset(s) created/updated via a UI upload
+   * Updates the asset(s) created/updated via a UI upload.
    * It doesn't touch the queue of batch operations to avoid any concurrency issues.
-   * And since this is only for UI, the superfluous work should be minimal
+   * And since this is only for UI, the superfluous work should be minimal.
    */
   @VisibleForTesting
   static void indexUIUpload(final Repository repository, final List<String> assetPaths) {
@@ -253,7 +278,11 @@ public class SearchEventHandler
     );
   }
 
-  private static void processUIUpload(final List<String> assetPaths, final ContentFacet contentFacet, final SearchFacet searchFacet) {
+  private static void processUIUpload(
+      final List<String> assetPaths,
+      final ContentFacet contentFacet,
+      final SearchFacet searchFacet)
+  {
     List<EntityId> componentIds = assetPaths.stream()
         .map(assetPath -> getComponentEntityId(assetPath, contentFacet))
         .filter(Optional::isPresent)
@@ -294,7 +323,6 @@ public class SearchEventHandler
   }
 
   // no need to watch for AssetPurgeEvent because that's only sent when purging assets without components
-
   private void requestIndex(final ComponentEvent event) {
     Optional<Repository> repository = event.getRepository();
 
@@ -339,7 +367,7 @@ public class SearchEventHandler
     // if there are lots of pending requests then reduce count by a page and
     // trigger an asynchronous flush event (which will actually do the work)
     if (pendingCount.getAndUpdate(c -> c >= flushOnCount ? c - flushOnCount : c) >= flushOnCount) {
-      eventManager.post(new FlushEvent());
+      threadPoolExecutor.execute(() -> flushPageOfComponents(null));
       return true;
     }
     return false;
@@ -349,45 +377,10 @@ public class SearchEventHandler
     // if it's still too early to flush requests, but we don't want to delay
     // outstanding purge requests then trigger an asynchronous purge event
     if (!maybeTriggerAsyncFlush() && noPurgeDelay) {
-      eventManager.post(new PurgeEvent());
+      threadPoolExecutor.execute(() -> flushPageOfComponents(PURGE));
       return true;
     }
     return false;
-  }
-
-  /**
-   * Marker event that indicates another page of components should be flushed.
-   */
-  private static class FlushEvent
-  {
-    // this event is a marker only
-  }
-
-  /**
-   * Marker event that indicates another page of components should be purged.
-   */
-  private static class PurgeEvent
-  {
-    // this event is a marker only
-  }
-
-  /**
-   * Asynchronous receiver of {@link FlushEvent}s and {@link PurgeEvent}s.
-   */
-  private class FlushEventReceiver
-      implements EventAware.Asynchronous
-  {
-    @AllowConcurrentEvents
-    @Subscribe
-    public void on(final FlushEvent event) {
-      flushPageOfComponents(null);
-    }
-
-    @AllowConcurrentEvents
-    @Subscribe
-    public void on(final PurgeEvent event) {
-      flushPageOfComponents(PURGE);
-    }
   }
 
   /**
@@ -435,6 +428,11 @@ public class SearchEventHandler
                     searchFacet.purge(componentIds);
                   }
                 })));
+  }
+
+  @VisibleForTesting
+  public boolean isCalmPeriod() {
+    return threadPoolExecutor.getQueue().isEmpty() && threadPoolExecutor.getActiveCount() == 0;
   }
 
   /**

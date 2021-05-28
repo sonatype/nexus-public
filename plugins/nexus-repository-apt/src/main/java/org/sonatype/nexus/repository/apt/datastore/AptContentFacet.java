@@ -13,38 +13,50 @@
 package org.sonatype.nexus.repository.apt.datastore;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.validation.constraints.NotNull;
 
 import org.sonatype.nexus.repository.Facet;
-import org.sonatype.nexus.repository.apt.AptFacet;
 import org.sonatype.nexus.repository.apt.internal.AptFacetHelper;
 import org.sonatype.nexus.repository.apt.internal.AptFormat;
 import org.sonatype.nexus.repository.apt.internal.AptPackageParser;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
-import org.sonatype.nexus.repository.apt.internal.debian.ControlFile.Paragraph;
 import org.sonatype.nexus.repository.apt.internal.debian.PackageInfo;
+import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.config.WritePolicy;
 import org.sonatype.nexus.repository.content.Asset;
+import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.content.utils.FormatAttributesUtils;
+import org.sonatype.nexus.repository.types.HostedType;
+import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
-import org.apache.commons.lang3.StringUtils;
+import com.google.common.annotations.VisibleForTesting;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
+import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
+import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
 import static org.sonatype.nexus.repository.apt.internal.AptFacetHelper.normalizeAssetPath;
+import static org.sonatype.nexus.repository.apt.internal.AptProperties.DEB;
+import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_ARCHITECTURE;
+import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_INDEX_SECTION;
+import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_PACKAGE_NAME;
+import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_PACKAGE_VERSION;
 import static org.sonatype.nexus.repository.apt.internal.debian.Utils.isDebPackageContentType;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 
@@ -57,15 +69,9 @@ import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_K
 @Named(AptFormat.NAME)
 public class AptContentFacet
     extends ContentFacetSupport
-    implements AptFacet
 {
-  private static final String P_INDEX_SECTION = "index_section";
-
-  private static final String P_ARCHITECTURE = "architecture";
-
-  private static final String P_PACKAGE_NAME = "package_name";
-
-  private static final String P_PACKAGE_VERSION = "package_version";
+  @VisibleForTesting
+  static final String CONFIG_KEY = "apt";
 
   @Inject
   public AptContentFacet(
@@ -73,6 +79,17 @@ public class AptContentFacet
   {
     super(formatStoreManager);
   }
+
+  static class Config
+  {
+    @NotNull(groups = {HostedType.ValidationGroup.class, ProxyType.ValidationGroup.class})
+    public String distribution;
+
+    @NotNull(groups = {ProxyType.ValidationGroup.class})
+    public boolean flat;
+  }
+
+  private Config config;
 
   @Override
   protected WritePolicy writePolicy(final Asset asset) {
@@ -89,6 +106,22 @@ public class AptContentFacet
     return writePolicy;
   }
 
+  @Override
+  protected void doConfigure(final Configuration configuration) throws Exception {
+    super.doConfigure(configuration);
+    config = facet(ConfigurationFacet.class)
+        .readSection(configuration, CONFIG_KEY, Config.class);
+    log.debug("APT config: {}", config);
+  }
+  
+  public String getDistribution() {
+    return config.distribution;
+  }
+
+  public boolean isFlat() {
+    return config.flat;
+  }
+
   public Optional<FluentAsset> getAsset(final String path) {
     return assets().path(normalizeAssetPath(path)).find();
   }
@@ -97,43 +130,21 @@ public class AptContentFacet
     return assets().path(normalizeAssetPath(assetPath)).find().map(FluentAsset::download);
   }
 
-  public Content put(final String path, final Payload content) throws IOException {
+  public FluentAsset put(final String path, final Payload content) throws IOException {
     return put(path, content, null);
   }
 
-  public Content put(final String path,
-                     final Payload content,
-                     @Nullable final PackageInfo packageInfo) throws IOException
+  public FluentAsset put(final String path,
+                         final Payload payload,
+                         @Nullable final PackageInfo packageInfo) throws IOException
   {
     String normalizedPath = normalizeAssetPath(path);
 
-    try (TempBlob tempBlob = blobs().ingest(content, AptFacetHelper.hashAlgorithms)) {
-      FluentAsset asset = isDebPackageContentType(normalizedPath)
+    try (TempBlob tempBlob = blobs().ingest(payload, AptFacetHelper.hashAlgorithms)) {
+      return isDebPackageContentType(normalizedPath)
           ? findOrCreateDebAsset(normalizedPath, tempBlob, packageInfo)
           : findOrCreateMetadataAsset(tempBlob, normalizedPath);
-
-      return asset
-          .markAsCached(content)
-          .download();
     }
-  }
-
-  @Override
-  public boolean delete(final String path) throws IOException {
-    checkNotNull(path);
-    return assets().path(path).find().map(FluentAsset::delete).orElse(false);
-  }
-
-  @Override
-  public boolean isFlat() {
-    //TODO NEXUS-26888
-    throw new UnsupportedOperationException("Not implemented yet. Check NEXUS-26888 ");
-  }
-
-  @Override
-  public String getDistribution() {
-    //TODO NEXUS-26888
-    throw new UnsupportedOperationException("Not implemented yet. Check NEXUS-26888 ");
   }
 
   public FluentAsset findOrCreateDebAsset(final String path, final TempBlob tempBlob, final PackageInfo packageInfo)
@@ -144,8 +155,9 @@ public class AptContentFacet
         ? packageInfo
         : new PackageInfo(controlFile);
 
-    FluentAsset asset  =  assets()
+    FluentAsset asset = assets()
         .path(normalizeAssetPath(path))
+        .kind(DEB)
         .component(findOrCreateComponent(info))
         .blob(tempBlob).save();
 
@@ -159,15 +171,26 @@ public class AptContentFacet
     formatAttributes.put(P_ARCHITECTURE, info.getArchitecture());
     formatAttributes.put(P_PACKAGE_NAME, info.getPackageName());
     formatAttributes.put(P_PACKAGE_VERSION, info.getVersion());
-    formatAttributes.put(P_INDEX_SECTION, buildIndexSection(controlFile));
-    formatAttributes.put(P_ASSET_KIND, "DEB");
+    formatAttributes.put(P_INDEX_SECTION, buildIndexSection(controlFile, asset));
+    formatAttributes.put(P_ASSET_KIND, DEB);
 
     FormatAttributesUtils.setFormatAttributes(asset, formatAttributes);
   }
 
-  private String buildIndexSection(final ControlFile controlFile) {
-    final List<Paragraph> paragraph = controlFile.getParagraphs();
-    return paragraph.size() > 0 ? paragraph.get(0).toString() : StringUtils.EMPTY;
+  private String buildIndexSection(final ControlFile controlFile, final FluentAsset asset) {
+    AssetBlob assetBlob = asset.blob()
+        .orElseThrow(() -> new IllegalStateException(
+            "Impossible build " + P_INDEX_SECTION + ". Asset blob couldn't be found for asset: " + asset.path()));
+    final Map<String, String> checksums = assetBlob.checksums();
+
+    return controlFile.getParagraphs().get(0)
+        .withFields(Arrays.asList(
+            new ControlFile.ControlField("Filename", asset.path()),
+            new ControlFile.ControlField("Size", Long.toString(assetBlob.blobSize())),
+            new ControlFile.ControlField("MD5Sum", checksums.get(MD5.name())),
+            new ControlFile.ControlField("SHA1", checksums.get(SHA1.name())),
+            new ControlFile.ControlField("SHA256", checksums.get(SHA256.name()))))
+        .toString();
   }
 
   public FluentAsset findOrCreateMetadataAsset(final TempBlob tempBlob, final String path) {

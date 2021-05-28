@@ -1,4 +1,4 @@
-/**
+/*
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
  * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
@@ -10,14 +10,14 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+package org.sonatype.nexus.repository.apt.internal.hosted;
 
-@import "~@sonatype/react-shared-components/scss-shared/nx-colors";
-
-.nx-form-select[multiple] {
-  background: none;
-}
-
-// Add error styling to the nx-form-select styles - this can be removed once there is a React select component in the RSC
-.nxrm-select.invalid .nx-form-select {
-  border-color: $nx-red-800;
+/**
+ * Type of the action applied to Apt asset
+ *
+ * @since 3.next
+ */
+public enum AssetAction
+{
+  ADDED, REMOVED
 }

@@ -713,14 +713,14 @@ exports[`CleanupPoliciesForm renders the resolved data 1`] = `
             <button
               aria-disabled="true"
               aria-label="There are no changes"
-              class="nx-btn disabled nx-btn--primary"
+              class="disabled nx-btn nx-btn--primary"
               title="There are no changes"
               type="submit"
             >
               Save
             </button>
             <button
-              class="nx-btn"
+              class="nx-btn nx-btn--secondary"
             >
               Cancel
             </button>
@@ -795,7 +795,7 @@ exports[`CleanupPoliciesForm renders the resolved data 1`] = `
               </select>
             </div>
             <button
-              class="nx-btn"
+              class="nx-btn nx-btn--secondary"
               disabled=""
             >
               Preview

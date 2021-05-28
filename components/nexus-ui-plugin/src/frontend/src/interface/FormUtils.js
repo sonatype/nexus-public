@@ -348,7 +348,7 @@ export default class FormUtils {
    * @param send - a function that sends events to the machine
    * @returns {(function(*): void)|*}
    */
-  static handleUpdate(name, send) {
+  static handleUpdate(name, send, type = 'UPDATE') {
     return (eventOrValue) => {
       let value;
       if (typeof eventOrValue === 'string') {
@@ -361,7 +361,7 @@ export default class FormUtils {
         value = eventOrValue.currentTarget.value;
       }
       send({
-        type: 'UPDATE',
+        type,
         data: {
           [name]: value
         }

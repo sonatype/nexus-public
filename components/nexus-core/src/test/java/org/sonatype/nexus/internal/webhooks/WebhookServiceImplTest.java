@@ -23,11 +23,9 @@ import javax.inject.Provider;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.audit.InitiatorProvider;
-import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Type;
-import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.webhooks.GlobalRepositoryWebhook;
 import org.sonatype.nexus.repository.webhooks.GlobalRepositoryWebhook.RepositoryWebhookPayload;
 import org.sonatype.nexus.webhooks.Webhook;
@@ -58,9 +56,6 @@ public class WebhookServiceImplTest
     extends TestSupport
 {
   private static final String SIGNATURE = "918cb6e16fcf197f2c3df5af2cf41b20974ec8a2";
-
-  @Mock
-  private EventManager eventManager;
 
   @Mock
   private Provider<CloseableHttpClient> httpClientProvider;
@@ -101,7 +96,7 @@ public class WebhookServiceImplTest
   public void setup() throws IOException {
     List<Webhook> webhooks = emptyList();
 
-    underTest = new WebhookServiceImpl(eventManager, httpClientProvider, webhooks);
+    underTest = new WebhookServiceImpl(httpClientProvider, webhooks, 1);
 
     when(httpClientProvider.get()).thenReturn(httpClient);
 

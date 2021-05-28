@@ -19,7 +19,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.repository.apt.AptFacet;
+import org.sonatype.nexus.repository.apt.orient.OrientAptFacet;
 import org.sonatype.nexus.repository.apt.internal.snapshot.AptSnapshotHandler;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.view.Content;
@@ -45,7 +45,7 @@ public class OrientAptHostedHandler
     String path = assetPath(context);
     String method = context.getRequest().getAction();
 
-    AptFacet aptFacet = context.getRepository().facet(AptFacet.class);
+    OrientAptFacet aptFacet = context.getRepository().facet(OrientAptFacet.class);
     OrientAptHostedFacet hostedFacet = context.getRepository().facet(OrientAptHostedFacet.class);
 
     switch (method) {
@@ -77,7 +77,7 @@ public class OrientAptHostedHandler
     }
   }
 
-  private Response doGet(final String path, final AptFacet aptFacet) throws IOException {
+  private Response doGet(final String path, final OrientAptFacet aptFacet) throws IOException {
     Optional<Content> content = aptFacet.get(path);
     return content.map(HttpResponses::ok).orElseGet(() -> HttpResponses.notFound(path));
   }

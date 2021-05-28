@@ -261,7 +261,7 @@ exports[`BlobStoresForm renders the form and buttons when the File type is selec
           class="nx-btn-bar"
         >
           <button
-            class="nx-btn"
+            class="nx-form__cancel-btn nx-btn nx-btn--secondary"
             type="button"
           >
             Cancel
@@ -269,7 +269,7 @@ exports[`BlobStoresForm renders the form and buttons when the File type is selec
           <button
             aria-disabled="true"
             aria-label="There are no changes"
-            class="nx-btn disabled nx-btn--primary"
+            class="nx-form__submit-btn disabled nx-btn nx-btn--primary"
             title="There are no changes"
           >
             Save
@@ -1383,7 +1383,7 @@ exports[`BlobStoresForm renders the form and buttons when the S3 type is selecte
           class="nx-btn-bar"
         >
           <button
-            class="nx-btn"
+            class="nx-form__cancel-btn nx-btn nx-btn--secondary"
             type="button"
           >
             Cancel
@@ -1391,7 +1391,7 @@ exports[`BlobStoresForm renders the form and buttons when the S3 type is selecte
           <button
             aria-disabled="true"
             aria-label="Validation errors are present"
-            class="nx-btn disabled nx-btn--primary"
+            class="nx-form__submit-btn disabled nx-btn nx-btn--primary"
             title="Validation errors are present"
           >
             Save

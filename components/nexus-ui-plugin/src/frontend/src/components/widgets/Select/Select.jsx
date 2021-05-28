@@ -22,12 +22,12 @@ import {getFirstValidationError, hasValidationErrors} from "@sonatype/react-shar
  */
 export default function Select({value, children, className, name, id, isPristine, validatable, validationErrors, ...rest}) {
   const isInvalid = hasValidationErrors(validationErrors);
-  const classes = classNames('nxrm-select', className, {
+  const classes = classNames('nx-form-select', className, {
     'invalid': isInvalid && !isPristine
   });
 
-  return <div className={classes}>
-    <select className="nx-form-select" id={id || name} name={name} value={value} {...rest}>
+  return <div className="nxrm-select">
+    <select className={classes} id={id || name} name={name} value={value} {...rest}>
       {children}
     </select>
     {!isPristine && validatable && isInvalid ?

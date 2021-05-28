@@ -26,6 +26,8 @@ import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.search.SearchService;
+import org.sonatype.nexus.repository.search.index.SearchIndexService;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyStore;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
@@ -107,6 +109,9 @@ public abstract class GenericRepositoryITSupport<RR extends RepositoryRule>
 
   @Inject
   protected BlobStoreManager blobStoreManager;
+
+  @Inject
+  protected SearchIndexService searchIndexService;
 
   protected BlobStoreRule blobstoreRule = new BlobStoreRule(() -> blobStoreManager);
 

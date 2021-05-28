@@ -25,6 +25,8 @@ public interface ReplicationIngester
 
   String VALUE_DATE_TIME_PREFIX = "{datetimeepochmillis}";
 
+  String getFormat();
+
   void ingestBlob(
       final String blobId,
       final String blobStoreId,

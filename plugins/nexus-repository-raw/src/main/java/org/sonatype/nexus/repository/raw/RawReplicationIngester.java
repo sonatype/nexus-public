@@ -57,6 +57,11 @@ public class RawReplicationIngester
   }
 
   @Override
+  public String getFormat() {
+    return RawFormat.NAME;
+  }
+
+  @Override
   public void ingestBlob(
       final String blobIdString, final String blobStoreId, final String repositoryName, final BlobEventType eventType)
       throws

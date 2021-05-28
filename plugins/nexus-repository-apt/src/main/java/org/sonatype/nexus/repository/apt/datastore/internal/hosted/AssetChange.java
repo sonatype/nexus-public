@@ -10,27 +10,32 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.testsuite.testsupport.performance;
+package org.sonatype.nexus.repository.apt.datastore.internal.hosted;
 
-import java.util.concurrent.Callable;
-
-import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.pax.exam.NexusPaxExamSupport;
+import org.sonatype.nexus.repository.apt.internal.hosted.AssetAction;
+import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 
 /**
- * Waits for Nexus to be in a calm state.
+ * Helper class which helps to connect asset and action performed under it
+ *
+ * @since 3.next
  */
-public class WaitForCalmPeriod implements Callable<Void>
+public class AssetChange
 {
-  final EventManager eventManager;
+  private final AssetAction action;
 
-  public WaitForCalmPeriod(final EventManager eventManager) {
-    this.eventManager = eventManager;
+  private final FluentAsset asset;
+
+  public AssetChange(final AssetAction action, final FluentAsset asset) {
+    this.action = action;
+    this.asset = asset;
   }
 
-  @Override
-  public Void call() throws Exception {
-    NexusPaxExamSupport.waitFor(eventManager::isCalmPeriod);
-    return null;
+  public AssetAction getAction() {
+    return action;
+  }
+
+  public FluentAsset getAsset() {
+    return asset;
   }
 }

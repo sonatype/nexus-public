@@ -32,7 +32,8 @@ import org.sonatype.nexus.orient.entity.AttachedEntityHelper;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.IllegalOperationException;
-import org.sonatype.nexus.repository.apt.AptFacet;
+import org.sonatype.nexus.repository.apt.internal.hosted.AssetAction;
+import org.sonatype.nexus.repository.apt.orient.OrientAptFacet;
 import org.sonatype.nexus.repository.apt.internal.AptFacetHelper;
 import org.sonatype.nexus.repository.apt.internal.AptMimeTypes;
 import org.sonatype.nexus.repository.apt.internal.AptPackageParser;
@@ -107,7 +108,7 @@ public class OrientAptHostedFacet
 
   @TransactionalStoreBlob
   protected Asset ingestAsset(final ControlFile control, final TempBlob body, final long size, final String contentType) throws IOException {
-    AptFacet aptFacet = getRepository().facet(AptFacet.class);
+    OrientAptFacet aptFacet = getRepository().facet(OrientAptFacet.class);
     StorageTx tx = UnitOfWork.currentTx();
     Bucket bucket = tx.findBucket(getRepository());
 
@@ -144,7 +145,7 @@ public class OrientAptHostedFacet
   @TransactionalStoreMetadata
   public void rebuildIndexes(final List<AssetChange> changes) throws IOException {
     StorageTx tx = UnitOfWork.currentTx();
-    AptFacet aptFacet = getRepository().facet(AptFacet.class);
+    OrientAptFacet aptFacet = getRepository().facet(OrientAptFacet.class);
     AptSigningFacet signingFacet = getRepository().facet(AptSigningFacet.class);
     Bucket bucket = tx.findBucket(getRepository());
 
@@ -263,13 +264,13 @@ public class OrientAptHostedFacet
   }
 
   private String releaseIndexName(final String name) {
-    AptFacet aptFacet = getRepository().facet(AptFacet.class);
+    OrientAptFacet aptFacet = getRepository().facet(OrientAptFacet.class);
     String dist = aptFacet.getDistribution();
     return "dists/" + dist + "/" + name;
   }
 
   private String packageIndexName(final String arch, final String ext) {
-    AptFacet aptFacet = getRepository().facet(AptFacet.class);
+    OrientAptFacet aptFacet = getRepository().facet(OrientAptFacet.class);
     String dist = aptFacet.getDistribution();
     return "dists/" + dist + "/main/binary-" + arch + "/Packages" + ext;
   }
@@ -287,11 +288,6 @@ public class OrientAptHostedFacet
     builder.append(content.getSize());
     builder.append(" ");
     builder.append(filename);
-  }
-
-  public enum AssetAction
-  {
-    ADDED, REMOVED
   }
 
   public static class AssetChange

@@ -264,7 +264,7 @@ exports[`LoggingConfigurationForm renders the resolved data 1`] = `
                   Reset to Default Level
                 </button>
                 <button
-                  class="nx-btn"
+                  class="nx-form__cancel-btn nx-btn nx-btn--secondary"
                   type="button"
                 >
                   Cancel
@@ -272,7 +272,7 @@ exports[`LoggingConfigurationForm renders the resolved data 1`] = `
                 <button
                   aria-disabled="true"
                   aria-label="There are no changes"
-                  class="nx-btn disabled nx-btn--primary"
+                  class="nx-form__submit-btn disabled nx-btn nx-btn--primary"
                   title="There are no changes"
                 >
                   Save
@@ -467,7 +467,7 @@ exports[`LoggingConfigurationForm requires the name field when creating a new lo
                 class="nx-btn-bar"
               >
                 <button
-                  class="nx-btn"
+                  class="nx-form__cancel-btn nx-btn nx-btn--secondary"
                   type="button"
                 >
                   Cancel
@@ -475,7 +475,7 @@ exports[`LoggingConfigurationForm requires the name field when creating a new lo
                 <button
                   aria-disabled="true"
                   aria-label="There are no changes"
-                  class="nx-btn disabled nx-btn--primary"
+                  class="nx-form__submit-btn disabled nx-btn nx-btn--primary"
                   title="There are no changes"
                 >
                   Save

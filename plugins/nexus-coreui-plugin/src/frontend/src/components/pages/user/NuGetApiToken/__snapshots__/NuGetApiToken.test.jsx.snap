@@ -65,7 +65,7 @@ exports[`NuGetApiToken renders correctly: baseline 1`] = `
               </span>
             </button>
             <button
-              class="nx-btn"
+              class="nx-btn nx-btn--secondary"
             >
               <svg
                 aria-hidden="true"
@@ -159,7 +159,7 @@ exports[`NuGetApiToken renders correctly: nugetKeyPresent 1`] = `
               </span>
             </button>
             <button
-              class="nx-btn"
+              class="nx-btn nx-btn--secondary"
             >
               <svg
                 aria-hidden="true"
@@ -181,10 +181,12 @@ exports[`NuGetApiToken renders correctly: nugetKeyPresent 1`] = `
               </span>
             </button>
           </div>
-          <div
+          <dialog
+            aria-modal="true"
             class="nx-modal-backdrop"
+            role="dialog"
           >
-            <section
+            <div
               class="nx-modal nx-modal--wide"
               id="nuget-api-key-modal"
             >
@@ -289,13 +291,13 @@ exports[`NuGetApiToken renders correctly: nugetKeyPresent 1`] = `
                 class="nx-footer"
               >
                 <button
-                  class="nx-btn"
+                  class="nx-btn nx-btn--secondary"
                 >
                   Close
                 </button>
               </footer>
-            </section>
-          </div>
+            </div>
+          </dialog>
         </div>
       </div>
     </div>

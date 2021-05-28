@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.content.fluent.internal;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import org.sonatype.nexus.repository.content.Component;
@@ -42,6 +44,8 @@ public class FluentComponentBuilderImpl
   private String namespace = "";
 
   private String version = "";
+
+  private Map<String, Object> attributes;
 
   public FluentComponentBuilderImpl(final ContentFacetSupport facet,
                                     final ComponentStore<?> componentStore,
@@ -77,6 +81,17 @@ public class FluentComponentBuilderImpl
   }
 
   @Override
+  public FluentComponentBuilder attributes(final String key, final Object value) {
+    checkNotNull(key);
+    checkNotNull(value);
+    if (attributes == null) {
+      attributes = new HashMap<>();
+    }
+    attributes.put(key, value);
+    return this;
+  }
+
+  @Override
   public FluentComponent getOrCreate() {
     return new FluentComponentImpl(facet, componentStore.getOrCreate(this::findComponent, this::createComponent));
   }
@@ -97,6 +112,10 @@ public class FluentComponentBuilderImpl
     component.setName(name);
     component.setKind(kind);
     component.setVersion(version);
+
+    if (attributes != null && !attributes.isEmpty()) {
+      component.attributes().backing().putAll(attributes);
+    }
 
     componentStore.createComponent(component);
 

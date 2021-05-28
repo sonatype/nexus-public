@@ -136,4 +136,12 @@ export default class {
   static state() {
     return NX.State;
   }
+
+  /**
+   * @param permission {string}
+   * @returns {boolean} true if the user has the requested permission
+   */
+  static checkPermission(permission) {
+    return NX.Permissions.check(permission)
+  }
 }

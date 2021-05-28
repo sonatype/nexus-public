@@ -27,7 +27,6 @@ import org.sonatype.nexus.repository.apt.internal.AptSecurityFacet;
 import org.sonatype.nexus.repository.apt.internal.gpg.AptSigningFacet;
 import org.sonatype.nexus.repository.apt.internal.snapshot.AptSnapshotHandler;
 import org.sonatype.nexus.repository.content.browse.BrowseFacet;
-import org.sonatype.nexus.repository.content.maintenance.LastAssetMaintenanceFacet;
 import org.sonatype.nexus.repository.content.search.SearchFacet;
 import org.sonatype.nexus.repository.http.PartialFetchHandler;
 import org.sonatype.nexus.repository.security.SecurityHandler;
@@ -71,10 +70,13 @@ public class AptHostedRecipe
   Provider<AptContentFacet> aptContentFacet;
 
   @Inject
+  Provider<AptHostedFacet> aptHostedFacet;
+
+  @Inject
   Provider<BrowseFacet> browseFacet;
 
   @Inject
-  Provider<LastAssetMaintenanceFacet> maintenanceFacet;
+  Provider<AptLastAssetMaintenanceFacet> maintenanceFacet;
 
   @Inject
   TimingHandler timingHandler;
@@ -123,6 +125,7 @@ public class AptHostedRecipe
     repository.attach(configure(viewFacet.get()));
     repository.attach(aptSigningFacet.get());
     repository.attach(aptContentFacet.get());
+    repository.attach(aptHostedFacet.get());
     repository.attach(maintenanceFacet.get());
     repository.attach(browseFacet.get());
     repository.attach(searchFacet.get());

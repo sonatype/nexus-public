@@ -22,11 +22,13 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.apt.AptUploadHandlerSupport;
+import org.sonatype.nexus.repository.apt.datastore.internal.hosted.AptHostedFacet;
 import org.sonatype.nexus.repository.apt.internal.AptFacetHelper;
 import org.sonatype.nexus.repository.apt.internal.AptFormat;
 import org.sonatype.nexus.repository.apt.internal.AptPackageParser;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
 import org.sonatype.nexus.repository.apt.internal.debian.PackageInfo;
+import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
@@ -57,12 +59,15 @@ public class AptUploadHandler
   @Override
   public UploadResponse handle(final Repository repository, final ComponentUpload upload) throws IOException {
     AptContentFacet aptContentFacet = repository.facet(AptContentFacet.class);
+    AptHostedFacet hostedFacet = repository.facet(AptHostedFacet.class);
     PartPayload payload = upload.getAssetUploads().get(0).getPayload();
     try (TempBlob tempBlob = aptContentFacet.getTempBlob(payload)) {
       ControlFile controlFile = AptPackageParser.parsePackage(tempBlob);
       String assetPath = AptFacetHelper.buildAssetPath(controlFile);
-
-      final Content content = aptContentFacet.put(assetPath, payload, new PackageInfo(controlFile));
+      Content content = hostedFacet
+          .put(assetPath, payload, new PackageInfo(controlFile))
+          .markAsCached(payload)
+          .download();
       return new UploadResponse(Collections.singletonList(content), Collections.singletonList(assetPath));
     }
   }

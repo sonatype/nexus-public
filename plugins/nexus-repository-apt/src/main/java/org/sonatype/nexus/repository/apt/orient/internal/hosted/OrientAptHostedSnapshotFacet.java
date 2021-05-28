@@ -19,7 +19,7 @@ import java.util.Optional;
 
 import javax.inject.Named;
 
-import org.sonatype.nexus.repository.apt.AptFacet;
+import org.sonatype.nexus.repository.apt.orient.OrientAptFacet;
 import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotItem;
 import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotItem.ContentSpecifier;
 import org.sonatype.nexus.repository.apt.orient.internal.snapshot.OrientAptSnapshotFacetSupport;
@@ -45,7 +45,7 @@ public class OrientAptHostedSnapshotFacet
   }
 
   private SnapshotItem getItem(final ContentSpecifier spec) throws IOException {
-    AptFacet apt = getRepository().facet(AptFacet.class);
+    OrientAptFacet apt = getRepository().facet(OrientAptFacet.class);
     Optional<Content> content = apt.get(spec.path);
     return content.map(value -> new SnapshotItem(spec, value)).orElse(null);
   }

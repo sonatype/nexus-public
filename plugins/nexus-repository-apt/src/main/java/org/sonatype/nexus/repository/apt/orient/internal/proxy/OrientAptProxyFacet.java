@@ -22,7 +22,7 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.Facet;
-import org.sonatype.nexus.repository.apt.AptFacet;
+import org.sonatype.nexus.repository.apt.orient.OrientAptFacet;
 import org.sonatype.nexus.repository.apt.internal.snapshot.AptSnapshotHandler;
 import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotItem;
 import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotItem.ContentSpecifier;
@@ -122,7 +122,7 @@ public class OrientAptProxyFacet
   }
 
   private Optional<SnapshotItem> fetchLatest(final ContentSpecifier spec) throws IOException {
-    AptFacet aptFacet = getRepository().facet(AptFacet.class);
+    OrientAptFacet aptFacet = getRepository().facet(OrientAptFacet.class);
     ProxyFacet proxyFacet = facet(ProxyFacet.class);
     HttpClientFacet httpClientFacet = facet(HttpClientFacet.class);
     HttpClient httpClient = httpClientFacet.getHttpClient();
@@ -232,7 +232,7 @@ public class OrientAptProxyFacet
     }
   }
 
-  private AptFacet getAptFacet() {
-    return getRepository().facet(AptFacet.class);
+  private OrientAptFacet getAptFacet() {
+    return getRepository().facet(OrientAptFacet.class);
   }
 }
