@@ -335,7 +335,7 @@ public class RestTestHelper
     else if (body instanceof File) {
       request.setEntity(new FileEntity((File) body, ContentType.APPLICATION_OCTET_STREAM));
     }
-    else {
+    else if (body != null){
       request.setEntity(
           new StringEntity(mapper.writerFor(body.getClass()).writeValueAsString(body), ContentType.APPLICATION_JSON));
     }
