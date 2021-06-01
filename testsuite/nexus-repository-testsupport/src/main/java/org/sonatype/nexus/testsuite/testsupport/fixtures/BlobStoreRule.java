@@ -154,7 +154,7 @@ public class BlobStoreRule
       log.info("Completed deleting all Blobids from blobstore {}", blobstore.getBlobStoreConfiguration().getName());
     }
     catch (Exception e) {
-      log.error("Failed to removing content from blobstore {}.", blobstore.getBlobStoreConfiguration().getName(), e);
+      log.error("Failed to remove content from blobstore {}.", blobstore.getBlobStoreConfiguration().getName(), e);
     }
   }
 }

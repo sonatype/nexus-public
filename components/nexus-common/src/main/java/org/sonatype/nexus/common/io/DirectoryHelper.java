@@ -219,7 +219,7 @@ public final class DirectoryHelper
         {
           @Override
           public FileVisitResult visitFile(final Path f, final BasicFileAttributes attrs) throws IOException {
-            Files.delete(f);
+            Files.deleteIfExists(f);
             return FileVisitResult.CONTINUE;
           }
 
@@ -229,7 +229,7 @@ public final class DirectoryHelper
               throw exc;
             }
             else if (dir != d) {
-              Files.delete(d);
+              Files.deleteIfExists(d);
             }
             return FileVisitResult.CONTINUE;
           }
