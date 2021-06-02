@@ -38,4 +38,10 @@ public interface SelectorConfiguration
   Map<String,String> getAttributes();
 
   void setAttributes(Map<String, ?> attributes);
+
+  default boolean hasCoordinates() {
+    String expression = getAttributes().get(SelectorConfiguration.EXPRESSION);
+
+    return expression != null &&  expression.contains("coordinate.");
+  }
 }
