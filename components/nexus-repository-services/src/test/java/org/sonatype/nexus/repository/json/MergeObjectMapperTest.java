@@ -22,6 +22,7 @@ import java.util.function.Function;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.common.io.InputStreamSupplier;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -67,12 +68,12 @@ public class MergeObjectMapperTest
     verifyMergingMultipleContentsWithMultiDepthJson(this::mergeInputStreamsWhileStreaming);
   }
 
-  private void verifyMergeMultipleContents(Function<List<InputStream>, NestedAttributesMap> function)
+  private void verifyMergeMultipleContents(Function<List<InputStreamSupplier>, NestedAttributesMap> function)
       throws IOException
   {
     try (InputStream recessive = getClass().getResourceAsStream("merge-streaming-payload-recessive.json");
          InputStream dominant = getClass().getResourceAsStream("merge-streaming-payload-dominant.json")) {
-      verifyMergeMultipleContentsResult(function.apply(asList(recessive, dominant)));
+      verifyMergeMultipleContentsResult(function.apply(asList(() -> recessive, () -> dominant)));
     }
   }
 
@@ -185,14 +186,14 @@ public class MergeObjectMapperTest
     assertThat(((Map<String, String>) objects.get(2)), hasEntry("color", "blue"));
   }
 
-  private void verifyMergingMultipleContentsWithMultiDepthJson(Function<List<InputStream>, NestedAttributesMap> function)
+  private void verifyMergingMultipleContentsWithMultiDepthJson(Function<List<InputStreamSupplier>, NestedAttributesMap> function)
       throws IOException
   {
     try (InputStream inputStream1 = getClass().getResourceAsStream("merge-multi-depth-first.json");
          InputStream inputStream2 = getClass().getResourceAsStream("merge-multi-depth-second.json");
          InputStream inputStream3 = getClass().getResourceAsStream("merge-multi-depth-third.json")) {
       verifyMergingMultipleContentsWithMultiDepthJsonResult(
-          function.apply(asList(inputStream1, inputStream2, inputStream3)));
+          function.apply(asList(() -> inputStream1, () -> inputStream2, () -> inputStream3)));
     }
   }
 
@@ -238,7 +239,7 @@ public class MergeObjectMapperTest
     assertThat(funckyFieldName.get("test"), equalTo("value"));
   }
 
-  private NestedAttributesMap mergeInputStreamsWhileStreaming(final List<InputStream> inputStreams) {
+  private NestedAttributesMap mergeInputStreamsWhileStreaming(final List<InputStreamSupplier> inputStreams) {
     try {
       return underTest.merge(inputStreams);
     }
