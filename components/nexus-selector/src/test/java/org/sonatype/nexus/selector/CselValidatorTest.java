@@ -49,6 +49,11 @@ public class CselValidatorTest
   }
 
   @Test(expected = JexlException.class)
+  public void failsToParseCoordinateContentSelectors() throws Exception {
+    validateExpression("coordinate.groupId == \"com.sonatype\"");
+  }
+
+  @Test(expected = JexlException.class)
   public void failsToValidateInvalidContentSelectors() throws Exception {
     validateExpression("a.b.c = false");
   }

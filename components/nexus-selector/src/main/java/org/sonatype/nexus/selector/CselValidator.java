@@ -12,23 +12,19 @@
  */
 package org.sonatype.nexus.selector;
 
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.jexl3.JexlException;
 import org.apache.commons.jexl3.parser.ASTAndNode;
 import org.apache.commons.jexl3.parser.ASTEQNode;
 import org.apache.commons.jexl3.parser.ASTERNode;
 import org.apache.commons.jexl3.parser.ASTIdentifier;
-import org.apache.commons.jexl3.parser.ASTIdentifierAccess;
 import org.apache.commons.jexl3.parser.ASTJexlScript;
 import org.apache.commons.jexl3.parser.ASTNENode;
 import org.apache.commons.jexl3.parser.ASTOrNode;
-import org.apache.commons.jexl3.parser.ASTReference;
 import org.apache.commons.jexl3.parser.ASTReferenceExpression;
 import org.apache.commons.jexl3.parser.ASTSWNode;
 import org.apache.commons.jexl3.parser.ASTStringLiteral;
@@ -48,16 +44,9 @@ class CselValidator
 
   private static final Set<String> VALID_IDENTIFIERS = ImmutableSet.of("format", "path");
 
-  private static final Map<String, Set<String>> VALID_REFERENCES = ImmutableMap.of(
-      "coordinate", ImmutableSet.of("groupId", "artifactId", "version", "extension", "classifier", "id"));
-
   private static final String EMBEDDED_STRING_MESSAGE = "String literal '%s' should not contain embedded string (\" or \')";
 
   private static final String BAD_IDENTIFIER_MESSAGE = "Invalid identifier %s, expected one of " + VALID_IDENTIFIERS;
-
-  private static final String BAD_REFERENCE_MESSAGE = "Invalid reference %s, expected one of %s";
-
-  private static final String TOO_MANY_PARTS_MESSAGE = "Invalid reference, too many parts";
 
   /**
    * Validates the given CSEL expression (in script form).
@@ -164,32 +153,6 @@ class CselValidator
     }
     else {
       throw new JexlException(node, format(BAD_IDENTIFIER_MESSAGE, id));
-    }
-  }
-
-  /**
-   * Accept white-listed dotted references.
-   */
-  @Override
-  protected Object visit(final ASTReference node, final Object data) {
-    if (node.jjtGetNumChildren() == 2) {
-      String ref = ((ASTIdentifier) node.jjtGetChild(LEFT)).getName();
-      Set<String> validSubRefs = VALID_REFERENCES.get(ref);
-      if (validSubRefs != null) {
-        String subRef = ((ASTIdentifierAccess) node.jjtGetChild(RIGHT)).getName();
-        if (validSubRefs.contains(subRef)) {
-          return data;
-        }
-        else {
-          throw new JexlException(node, format(BAD_REFERENCE_MESSAGE, ref + '.' + subRef, ref + '.' + validSubRefs));
-        }
-      }
-      else {
-        throw new JexlException(node, format(BAD_REFERENCE_MESSAGE, ref, VALID_REFERENCES.keySet()));
-      }
-    }
-    else {
-      throw new JexlException(node, TOO_MANY_PARTS_MESSAGE);
     }
   }
 }
