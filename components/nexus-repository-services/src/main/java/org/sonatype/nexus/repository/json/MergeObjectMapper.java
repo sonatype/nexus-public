@@ -22,6 +22,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.common.io.InputStreamSupplier;
 
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -61,7 +62,7 @@ public class MergeObjectMapper
    * @param inputStream {@link InputStream} to parse
    */
   public NestedAttributesMap read(final InputStream inputStream) throws IOException {
-    return merge(singletonList(inputStream), null);
+    return merge(singletonList(() -> inputStream), null);
   }
 
   /**
@@ -69,20 +70,20 @@ public class MergeObjectMapper
    *
    * @see #merge(List, Charset)
    */
-  public NestedAttributesMap merge(final List<InputStream> inputStreams) throws IOException {
+  public NestedAttributesMap merge(final List<InputStreamSupplier> inputStreams) throws IOException {
     return objectMapper.merge(inputStreams);
   }
 
   /**
-   * Merge the given {@link InputStream}s into a {@link NestedAttributesMap}. The merging is done
-   * according the order of the {@link InputStream}s which dictate which values will be considered
+   * Merge the given {@link InputStreamSupplier}s into a {@link NestedAttributesMap}. The merging is done
+   * according the order of the {@link InputStreamSupplier}s which dictate which values will be considered
    * the dominant and preserved (the last is the most dominant) value.
    *
-   * @param inputStreams {@link List} of {@link InputStream}s
+   * @param inputStreams {@link List} of {@link InputStreamSupplier}s
    * @param charset      {@link Charset} used for changing from default UTF-8
    * @return NestedAttributesMap
    */
-  public NestedAttributesMap merge(final List<InputStream> inputStreams, @Nullable final Charset charset)
+  public NestedAttributesMap merge(final List<InputStreamSupplier> inputStreams, @Nullable final Charset charset)
       throws IOException
   {
     return objectMapper.merge(inputStreams, charset);
@@ -119,17 +120,19 @@ public class MergeObjectMapper
   {
     private final JavaType valueType = _typeFactory.constructType(VALUE_TYPE_REF);
 
-    private NestedAttributesMap merge(final List<InputStream> inputStreams) throws IOException {
+    private NestedAttributesMap merge(final List<InputStreamSupplier> inputStreams) throws IOException {
       return merge(inputStreams, null);
     }
 
-    private NestedAttributesMap merge(final List<InputStream> inputStreams, @Nullable final Charset charset)
+    private NestedAttributesMap merge(final List<InputStreamSupplier> inputStreams, @Nullable final Charset charset)
         throws IOException
     {
       NestedAttributesMap result = new NestedAttributesMap("mergeMap", newHashMap());
 
-      for (InputStream inputStream : inputStreams) {
-        merge(result, inputStream, charset);
+      for (InputStreamSupplier inputStreamSupplier : inputStreams) {
+        try (InputStream inputStream = inputStreamSupplier.get()) {
+          merge(result, inputStream, charset);
+        }
       }
 
       return result;
