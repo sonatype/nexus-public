@@ -80,6 +80,9 @@ class OrientMaven2HostedRecipe
   Provider<RemoveSnapshotsFacet> removeSnapshotsFacet
 
   @Inject
+  Provider<OrientMavenReplicationFacet> mavenReplicationFacet
+
+  @Inject
   OrientMaven2HostedRecipe(
       @Named(HostedType.NAME) final Type type,
       @Named(Maven2Format.NAME) final Format format,
@@ -102,6 +105,7 @@ class OrientMaven2HostedRecipe
     repository.attach(mavenPurgeSnapshotsFacet.get())
     repository.attach(removeSnapshotsFacet.get())
     repository.attach(configure(viewFacet.get()))
+    repository.attach(mavenReplicationFacet.get())
   }
 
   private ViewFacet configure(final ConfigurableViewFacet facet) {

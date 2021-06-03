@@ -24,7 +24,6 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.common.collect.AttributesMap;
-import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.mime.MimeSupport;
 import org.sonatype.nexus.orient.raw.RawContentFacet;
@@ -38,8 +37,6 @@ import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
-import org.sonatype.nexus.repository.storage.ComponentMaintenance;
-import org.sonatype.nexus.repository.storage.ReplicationFacet;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
@@ -74,7 +71,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 @Named
 public class RawContentFacetImpl
     extends FacetSupport
-    implements RawContentFacet, ReplicationFacet
+    implements RawContentFacet
 {
   public static final List<HashAlgorithm> HASH_ALGORITHMS = ImmutableList.of(MD5, SHA1);
 
@@ -267,52 +264,4 @@ public class RawContentFacetImpl
     return content;
   }
 
-  @Override
-  public void replicate(final String path, final AssetBlob assetBlob, @Nullable final NestedAttributesMap assetAttributes) {
-    StorageFacet storageFacet = facet(StorageFacet.class);
-    UnitOfWork.begin(storageFacet.txSupplier());
-    try {
-      putPreservingAllAttributes(path, assetBlob, assetAttributes);
-    }
-    finally {
-      UnitOfWork.end();
-    }
-  }
-
-  @TransactionalStoreBlob
-  protected void putPreservingAllAttributes(final String path, final AssetBlob assetBlob, @Nullable final AttributesMap contentAttributes) {
-    StorageTx tx = UnitOfWork.currentTx();
-    Asset asset = getOrCreateAsset(getRepository(), path, RawCoordinatesHelper.getGroup(path), path);
-    tx.attachBlob(asset, assetBlob);
-    asset.attributes((NestedAttributesMap) contentAttributes);
-    tx.saveAsset(asset);
-  }
-
-  @Override
-  public boolean replicateDelete(final String path) {
-    Asset asset;
-
-    StorageFacet storageFacet = facet(StorageFacet.class);
-    UnitOfWork.begin(storageFacet.txSupplier());
-    try {
-      asset = findAssetTransactional(path);
-      if (asset == null) {
-        log.debug("Skipping replication delete with asset {} as it doesn't exist.", path);
-        return false;
-      }
-    }
-    finally {
-      UnitOfWork.end();
-    }
-
-    log.debug("Replicating delete to asset {}", path);
-    return !getRepository().facet(ComponentMaintenance.class).deleteAsset(asset.getEntityMetadata().getId())
-        .isEmpty();
-  }
-
-  @Transactional
-  protected Asset findAssetTransactional(final String path) {
-    StorageTx tx = UnitOfWork.currentTx();
-    return findAsset(tx, path);
-  }
 }

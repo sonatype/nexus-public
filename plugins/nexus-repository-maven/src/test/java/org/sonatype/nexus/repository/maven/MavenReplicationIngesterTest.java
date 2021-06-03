@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.raw;
+package org.sonatype.nexus.repository.maven;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -40,10 +40,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 
-public class RawReplicationIngesterTest
+public class MavenReplicationIngesterTest
     extends TestSupport
 {
-  private RawReplicationIngester underTest;
+  private MavenReplicationIngester underTest;
 
   @Mock
   private BlobStoreManager blobStoreManager;
@@ -71,48 +71,48 @@ public class RawReplicationIngesterTest
     when(blobStore.get(any(BlobId.class))).thenReturn(blob);
     when(blobStore.getBlobAttributes(any(BlobId.class))).thenReturn(blobAttributes);
     when(blobAttributes.getHeaders()).thenReturn(getHeaders());
-    underTest = new RawReplicationIngester(blobStoreManager, replicationIngesterHelper);
+    underTest = new MavenReplicationIngester(blobStoreManager, replicationIngesterHelper);
   }
 
   @Test
-  public void extractAttributesFromProperties() {
+  public void testExtractAttributeFromProperties_extractsExpectedPropertiesextractAttributesFromProperties() {
     Map<String, Object> extractedProperties = underTest.extractAssetAttributesFromProperties(getProperties());
     verifyExtractedProperties(extractedProperties);
   }
 
   @Test(expected = ReplicationIngestionException.class)
-  public void ingestFailsIfBlobstoreNotPresent() {
+  public void testIngestBlob_failsIfBlobstoreNotPresent() {
     when(blobStoreManager.get(anyString())).thenReturn(null);
     underTest.ingestBlob("blobId", "blobStoreId", "repositoryName", BlobEventType.ADDED);
   }
 
   @Test(expected = ReplicationIngestionException.class)
-  public void ingestFailsIfBlobAttributesNotFound() {
+  public void testIngestBlob_failsIfBlobAttributesNotFound() {
     when(blobStore.getBlobAttributes(any(BlobId.class))).thenReturn(null);
     underTest.ingestBlob("blobId", "blobStoreId", "repositoryName", BlobEventType.ADDED);
   }
 
   @Test(expected = ReplicationIngestionException.class)
-  public void ingestFailsIfBlobNotFound() {
+  public void testIngestBlob_failsIfBlobNotFound() {
     when(blobStore.get(any(BlobId.class))).thenReturn(null);
     underTest.ingestBlob("blobId", "blobStoreId", "repositoryName", BlobEventType.ADDED);
   }
 
   @Test
-  public void ingestCallsDeleteIfDeleteEvent() {
+  public void testIngestBlob_callsDeleteIfDeleteEvent() {
     underTest.ingestBlob("blobId", "blobStoreId", "repositoryName", BlobEventType.DELETED);
     verify(replicationIngesterHelper, times(1)).deleteReplication("blobName", "repositoryName");
   }
 
   @Test
-  public void ingestCallsReplicateIfAddEvent() throws IOException {
+  public void testIngestBlob_callsReplicateIfAddEvent() throws IOException {
     underTest.ingestBlob("blobId", "blobStoreId", "repositoryName", BlobEventType.ADDED);
     verify(replicationIngesterHelper, times(1))
         .replicate(any(String.class), any(Blob.class), any(Map.class), any(Map.class), any(String.class), any(String.class));
   }
 
   @Test
-  public void ingestCallsReplicateIfUpdateEvent() throws IOException {
+  public void testIngestBlob_callsReplicateIfUpdateEvent() throws IOException {
     underTest.ingestBlob("blobId", "blobStoreId", "repositoryName", BlobEventType.UPDATED);
     verify(replicationIngesterHelper, times(1))
         .replicate(any(String.class), any(Blob.class), any(Map.class), any(Map.class), any(String.class), any(String.class));

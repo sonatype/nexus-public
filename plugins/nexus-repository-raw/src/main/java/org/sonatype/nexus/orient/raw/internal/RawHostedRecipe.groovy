@@ -88,6 +88,9 @@ class RawHostedRecipe
   Provider<SearchFacet> searchFacet
 
   @Inject
+  Provider<OrientRawReplicationFacet> replicationFacet
+
+  @Inject
   ExceptionHandler exceptionHandler
 
   @Inject
@@ -139,6 +142,7 @@ class RawHostedRecipe
     repository.attach(attributesFacet.get())
     repository.attach(componentMaintenance.get())
     repository.attach(searchFacet.get())
+    repository.attach(replicationFacet.get())
   }
 
   /**

@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.raw;
+package org.sonatype.nexus.repository.maven;
 
 import java.io.IOException;
 import java.util.Map;
@@ -24,10 +24,10 @@ import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
-import org.sonatype.nexus.repository.raw.internal.RawFormat;
+import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.replication.BlobEventType;
-import org.sonatype.nexus.repository.replication.ReplicationIngester;
 import org.sonatype.nexus.repository.replication.ReplicationIngesterHelper;
+import org.sonatype.nexus.repository.replication.ReplicationIngester;
 import org.sonatype.nexus.repository.replication.ReplicationIngesterSupport;
 import org.sonatype.nexus.repository.replication.ReplicationIngestionException;
 
@@ -37,19 +37,22 @@ import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 /**
  * @since 3.next
  */
-@Named(RawFormat.NAME)
+@Named(Maven2Format.NAME)
 @Singleton
-public class RawReplicationIngester
+public class MavenReplicationIngester
     extends ReplicationIngesterSupport
     implements ReplicationIngester
 {
+
   private final BlobStoreManager blobStoreManager;
 
   private final ReplicationIngesterHelper replicationIngesterHelper;
 
   @Inject
-  public RawReplicationIngester(final BlobStoreManager blobstoreManager,
-                                final ReplicationIngesterHelper replicationIngesterHelper)
+  public MavenReplicationIngester(
+      final BlobStoreManager blobstoreManager,
+      final ReplicationIngesterHelper replicationIngesterHelper
+  )
   {
     this.blobStoreManager = checkNotNull(blobstoreManager);
     this.replicationIngesterHelper = checkNotNull(replicationIngesterHelper);
@@ -57,7 +60,7 @@ public class RawReplicationIngester
 
   @Override
   public String getFormat() {
-    return RawFormat.NAME;
+    return Maven2Format.NAME;
   }
 
   @Override
@@ -86,19 +89,20 @@ public class RawReplicationIngester
 
     if (eventType.equals(BlobEventType.DELETED)) {
       log.info("Ingesting a delete for blob {} in repository {} and blob store {}.", blobIdString, repositoryName,
-          blobStoreId);
+               blobStoreId);
       String path = blobAttributes.getHeaders().get(BLOB_NAME_HEADER);
       replicationIngesterHelper.deleteReplication(path, repositoryName);
       return;
     }
 
-    Map<String, Object> assetAttributes = extractAssetAttributesFromProperties(blobAttributes.getProperties());
-    Map<String, Object> componentAttributes = extractComponentAttributesFromProperties(blobAttributes.getProperties());
+    Map<String, Object> backingAssetAttributes = extractAssetAttributesFromProperties(blobAttributes.getProperties());
+    Map<String, Object> backingComponentAttributes = extractComponentAttributesFromProperties(blobAttributes.getProperties());
 
     try {
       log.info("Ingesting blob {} in repository {} and blob store {}.", blobIdString, repositoryName,
-          blobStoreId);
-      replicationIngesterHelper.replicate(blobStoreId, blob, assetAttributes, componentAttributes, repositoryName, blobStoreId);
+               blobStoreId);
+      replicationIngesterHelper.replicate(blobStoreId, blob, backingAssetAttributes, backingComponentAttributes,
+          repositoryName, blobStoreId);
     }
     catch (IOException e) {
       throw new ReplicationIngestionException(String
