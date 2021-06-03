@@ -113,6 +113,9 @@ abstract class MavenRecipeSupport
   @Inject
   Provider<MavenMaintenanceFacet> mavenMaintenanceFacet
 
+  @Inject
+  Provider<MavenReplicationFacet> mavenReplicationFacet
+
   protected MavenRecipeSupport(final Type type, final Format format) {
     super(type, format)
   }

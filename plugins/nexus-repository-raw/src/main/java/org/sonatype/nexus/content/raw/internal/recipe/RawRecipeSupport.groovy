@@ -60,6 +60,9 @@ abstract class RawRecipeSupport
   Provider<BrowseFacet> browseFacet
 
   @Inject
+  Provider<RawReplicationFacet> replicationFacet
+
+  @Inject
   ExceptionHandler exceptionHandler
 
   @Inject

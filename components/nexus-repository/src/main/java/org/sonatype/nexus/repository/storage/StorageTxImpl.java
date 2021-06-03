@@ -868,6 +868,10 @@ public class StorageTxImpl
   {
     if (asset.blobRef() != null) {
       Blob oldBlob = blobTx.get(asset.blobRef());
+      if (asset.blobRef().equals(assetBlob.getBlobRef())) {
+        assetBlob.setDuplicate(oldBlob);
+        return true;
+      }
       if (oldBlob != null) {
         boolean checksumsMatch;
         if (assetBlob.getHashesVerified() && checksumExists(checksums, assetBlob)) {

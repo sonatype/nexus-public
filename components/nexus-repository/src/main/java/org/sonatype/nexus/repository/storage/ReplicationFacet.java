@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import javax.annotation.Nullable;
+
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Facet;
 
@@ -24,7 +26,10 @@ import org.sonatype.nexus.repository.Facet;
 public interface ReplicationFacet
     extends Facet
 {
-  void replicate(String path, AssetBlob assetBlob, NestedAttributesMap contentAttributes);
+  void replicate(String path,
+                 AssetBlob assetBlob,
+                 NestedAttributesMap assetAttributes,
+                 @Nullable NestedAttributesMap componentAttributes);
 
   boolean replicateDelete(String path);
 }

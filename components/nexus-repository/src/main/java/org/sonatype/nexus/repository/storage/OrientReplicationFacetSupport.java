@@ -10,28 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.replication;
+package org.sonatype.nexus.repository.storage;
+
+import org.sonatype.nexus.repository.FacetSupport;
 
 /**
+ * Support for orient {@link ReplicationFacet} implementations.
+ *
  * @since 3.next
  */
-public interface ReplicationIngester
-{
-  String ASSET_ATTRIBUTES_PREFIX = "@attributes.asset.";
+public abstract class OrientReplicationFacetSupport
+    extends FacetSupport
+    implements ReplicationFacet {
 
-  String COMPONENT_ATTRIBUTES_PREFIX = "@attributes.component.";
-
-  String VALUE_DATE_PREFIX = "{dateepochmillis}";
-
-  String VALUE_JODA_DATE_TIME_PREFIX = "{jodadatetimeepochmillis}";
-
-  String VALUE_DATE_TIME_PREFIX = "{datetimeepochmillis}";
-
-  String getFormat();
-
-  void ingestBlob(
-      final String blobId,
-      final String blobStoreId,
-      final String repositoryName,
-      final BlobEventType eventType) throws ReplicationIngestionException;
 }

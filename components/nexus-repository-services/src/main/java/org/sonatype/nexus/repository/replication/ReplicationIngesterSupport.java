@@ -22,7 +22,6 @@ import java.util.Set;
 
 import org.sonatype.goodies.common.ComponentSupport;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.joda.time.DateTime;
 
 /**
@@ -32,14 +31,21 @@ public abstract class ReplicationIngesterSupport
     extends ComponentSupport
     implements ReplicationIngester
 {
-  @VisibleForTesting
-  public Map<String, Object> extractAttributesFromProperties(Properties props) {
+  public Map<String, Object> extractAssetAttributesFromProperties(final Properties props) {
+    return extractAttributesFromProperties(props, ASSET_ATTRIBUTES_PREFIX);
+  }
+
+  public Map<String, Object> extractComponentAttributesFromProperties(final Properties props) {
+    return extractAttributesFromProperties(props, COMPONENT_ATTRIBUTES_PREFIX);
+  }
+
+  private Map<String, Object> extractAttributesFromProperties(Properties props, final String prefix) {
     Map<String, Object> backingAssetAttributes = new HashMap<>();
     Set<String> keys = props.stringPropertyNames();
     for (String key : keys) {
-      if (key.startsWith(ASSET_ATTRIBUTES_PREFIX)) {
+      if (key.startsWith(prefix)) {
         String value = props.getProperty(key);
-        key = key.substring(ASSET_ATTRIBUTES_PREFIX.length());
+        key = key.substring(prefix.length());
         String[] flattenedAttributesParts = key.split("\\.");
         key = flattenedAttributesParts[0];
 

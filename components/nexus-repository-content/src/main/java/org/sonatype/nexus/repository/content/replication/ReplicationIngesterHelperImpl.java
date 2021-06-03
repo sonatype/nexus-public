@@ -10,9 +10,8 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.raw.internal.orient;
+package org.sonatype.nexus.repository.content.replication;
 
-import java.io.IOException;
 import java.util.Map;
 
 import javax.inject.Inject;
@@ -25,73 +24,58 @@ import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.app.FeatureFlag;
-import org.sonatype.nexus.common.collect.NestedAttributesMap;
-import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.raw.RawReplicationIngesterHelper;
+import org.sonatype.nexus.repository.replication.ReplicationIngesterHelper;
 import org.sonatype.nexus.repository.replication.ReplicationIngestionException;
-import org.sonatype.nexus.repository.storage.AssetBlob;
-import org.sonatype.nexus.repository.storage.ReplicationFacet;
 
-import com.google.common.collect.ImmutableList;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
-import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
-import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
-import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
-import static org.sonatype.nexus.common.hash.Hashes.hash;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-@FeatureFlag(name = ORIENT_ENABLED)
-@Named("orient")
+/**
+ * @since 3.next
+ */
+@FeatureFlag(name = DATASTORE_ENABLED)
+@Named
 @Singleton
-public class RawReplicationIngesterHelperOrientImpl
+public class ReplicationIngesterHelperImpl
     extends ComponentSupport
-    implements RawReplicationIngesterHelper
+    implements ReplicationIngesterHelper
 {
-  private final BlobStoreManager blobStoreManager;
+  protected final RepositoryManager repositoryManager;
 
-  private final NodeAccess nodeAccess;
-
-  private final RepositoryManager repositoryManager;
+  protected final BlobStoreManager blobStoreManager;
 
   @Inject
-  public RawReplicationIngesterHelperOrientImpl(
-      final BlobStoreManager blobStoreManager,
-      final NodeAccess nodeAccess,
-      final RepositoryManager repositoryManager)
+  public ReplicationIngesterHelperImpl(final RepositoryManager repositoryManager,
+                                       final BlobStoreManager blobStoreManager)
   {
-    this.blobStoreManager = checkNotNull(blobStoreManager);
-    this.nodeAccess = checkNotNull(nodeAccess);
     this.repositoryManager = checkNotNull(repositoryManager);
+    this.blobStoreManager = checkNotNull(blobStoreManager);
   }
 
   @Override
-  public void replicate(
-      final String blobStoreId, final Blob blob,
-      final Map<String, Object> assetAttributesMap,
-      final String repositoryName,
-      final String blobStoreName) throws IOException
+  public void replicate(final String blobStoreId,
+                        final Blob blob,
+                        final Map<String, Object> assetAttributes,
+                        final Map<String, Object> componentAttributes,
+                        final String repositoryName,
+                        final String blobStoreName)
   {
     Repository repository = repositoryManager.get(repositoryName);
     if (repository == null) {
       throw new ReplicationIngestionException(
-          String.format("Can't replicate blob %s, the repository %s doesn't exist", blob.getId().toString(),
+          String.format("Can't replicate blob %s as the repository %s doesn't exist", blob.getId().toString(),
               repositoryName));
     }
 
-    BlobStore blobStore = blobStoreManager.get(blobStoreId);
+    BlobStore blobStore = blobStoreManager.get(blobStoreName);
     BlobAttributes blobAttributes = blobStore.getBlobAttributes(blob.getId());
-    NestedAttributesMap nestedAttributesMap = new NestedAttributesMap("attributes", assetAttributesMap);
+    String path = normalizePath(blobAttributes.getHeaders().get(BLOB_NAME_HEADER));
 
-    AssetBlob assetBlob = new AssetBlob(nodeAccess,
-        blobStore,
-        store -> blob,
-        blobAttributes.getHeaders().get(CONTENT_TYPE_HEADER),
-        hash(ImmutableList.of(SHA1), blob.getInputStream()), true);
     ReplicationFacet replicationFacet = repository.facet(ReplicationFacet.class);
-    replicationFacet.replicate(blobAttributes.getHeaders().get(BLOB_NAME_HEADER), assetBlob, nestedAttributesMap);
+    replicationFacet.replicate(path, blob, assetAttributes, componentAttributes);
   }
 
   @Override
@@ -102,6 +86,13 @@ public class RawReplicationIngesterHelperOrientImpl
           String.format("Can't delete blob in path %s, the repository %s doesn't exist", path, repositoryName));
     }
     ReplicationFacet replicationFacet = repository.facet(ReplicationFacet.class);
-    replicationFacet.replicateDelete(path);
+    replicationFacet.replicateDelete(normalizePath(path));
+  }
+
+  private String normalizePath(final String path) {
+    if (path.startsWith("/")) {
+      return path;
+    }
+    return "/" + path;
   }
 }
