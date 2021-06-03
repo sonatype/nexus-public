@@ -41,7 +41,7 @@ import static org.sonatype.nexus.common.text.Strings2.isBlank;
  *
  * @since 3.next
  */
-@FeatureFlag(name = "nexus.blobstore.override.enabled")
+@FeatureFlag(name = "nexus.blobstore.override.enabled", enabledByDefault = true)
 @Named
 @Singleton
 public class BlobStoreOverrideImpl
