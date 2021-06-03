@@ -40,6 +40,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriBuilderException;
 
 import org.sonatype.goodies.testsupport.hamcrest.BeanMatchers;
+import org.sonatype.nexus.httpclient.PreemptiveAuthHttpRequestInterceptor;
 import org.sonatype.nexus.rest.ValidationErrorXO;
 import org.sonatype.nexus.rest.client.RestClientConfiguration;
 import org.sonatype.nexus.rest.client.RestClientConfiguration.Customizer;
@@ -193,6 +194,15 @@ public class RestTestHelper
   public CloseableHttpClient client(final String username, final String password)
   {
     return clientBuilder(nexusUrl(), username, password).build();
+  }
+
+  /**
+   * @return a CloseableHttpClient configured for Nexus with the provided authentication and preemptive auth
+   */
+  public CloseableHttpClient clientWithPreemptiveAuth(final String username, final String password)
+  {
+    return clientBuilder(nexusUrl(), username, password).useSystemProperties()
+        .addInterceptorFirst(new PreemptiveAuthHttpRequestInterceptor()).build();
   }
 
   /**
