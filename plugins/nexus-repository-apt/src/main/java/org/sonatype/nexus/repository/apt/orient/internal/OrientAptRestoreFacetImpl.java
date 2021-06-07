@@ -23,7 +23,7 @@ import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.apt.internal.AptPackageParser;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
 import org.sonatype.nexus.repository.apt.internal.debian.PackageInfo;
-import org.sonatype.nexus.repository.apt.internal.debian.Utils;
+import org.sonatype.nexus.repository.apt.debian.Utils;
 import org.sonatype.nexus.repository.apt.orient.OrientAptFacet;
 import org.sonatype.nexus.repository.apt.orient.AptRestoreFacet;
 import org.sonatype.nexus.repository.storage.Asset;
@@ -35,7 +35,7 @@ import org.sonatype.nexus.repository.transaction.TransactionalTouchBlob;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
-import static org.sonatype.nexus.repository.apt.internal.debian.Utils.isDebPackageContentType;
+import static org.sonatype.nexus.repository.apt.debian.Utils.isDebPackageContentType;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_VERSION;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
@@ -55,7 +55,9 @@ public class OrientAptRestoreFacetImpl
     Asset asset;
     OrientAptFacet aptFacet = facet(OrientAptFacet.class);
     if (isDebPackageContentType(path)) {
-      ControlFile controlFile = AptPackageParser.parsePackage(() -> assetBlob.getBlob().getInputStream());
+      ControlFile controlFile = AptPackageParser
+          .parsePackageInfo(() -> assetBlob.getBlob().getInputStream())
+          .getControlFile();
       asset = aptFacet.findOrCreateDebAsset(tx, path, new PackageInfo(controlFile));
     }
     else {
@@ -78,7 +80,7 @@ public class OrientAptRestoreFacetImpl
   @Override
   public Query getComponentQuery(final Blob blob) throws IOException {
     final InputStream inputStream = blob.getInputStream();
-    final PackageInfo packageInfo = new PackageInfo(AptPackageParser.parsePackage(() -> inputStream));
+    final PackageInfo packageInfo = AptPackageParser.parsePackageInfo(() -> inputStream);
     return Query.builder()
         .where(P_NAME).eq(packageInfo.getPackageName())
         .and(P_VERSION).eq(packageInfo.getVersion())

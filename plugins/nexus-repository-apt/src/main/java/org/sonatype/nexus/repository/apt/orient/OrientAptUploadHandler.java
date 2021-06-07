@@ -22,7 +22,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.apt.AptUploadHandlerSupport;
 import org.sonatype.nexus.repository.apt.internal.AptFacetHelper;
-import org.sonatype.nexus.repository.apt.internal.AptFormat;
+import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.apt.internal.AptPackageParser;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
 import org.sonatype.nexus.repository.apt.orient.internal.hosted.OrientAptHostedFacet;
@@ -59,7 +59,7 @@ public class OrientAptUploadHandler
 
     try (TempBlob tempBlob = storageFacet
         .createTempBlob(upload.getAssetUploads().get(0).getPayload(), AptFacetHelper.hashAlgorithms)) {
-      ControlFile controlFile = AptPackageParser.parsePackage(tempBlob);
+      ControlFile controlFile = AptPackageParser.parsePackageInfo(tempBlob).getControlFile();
       String assetPath = AptFacetHelper.buildAssetPath(controlFile);
 
       doValidation(repository, assetPath);

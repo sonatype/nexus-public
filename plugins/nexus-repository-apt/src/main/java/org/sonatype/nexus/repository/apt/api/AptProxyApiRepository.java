@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.apt.api;
 
 import javax.validation.constraints.NotNull;
 
-import org.sonatype.nexus.repository.apt.internal.AptFormat;
+import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.rest.api.model.CleanupPolicyAttributes;
 import org.sonatype.nexus.repository.rest.api.model.HttpClientAttributes;
 import org.sonatype.nexus.repository.rest.api.model.NegativeCacheAttributes;

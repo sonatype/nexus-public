@@ -98,7 +98,9 @@ public class OrientAptHostedFacet
   public Asset ingestAsset(final Payload body) throws IOException {
     StorageFacet storageFacet = facet(StorageFacet.class);
     try (TempBlob tempBlob = storageFacet.createTempBlob(body, AptFacetHelper.hashAlgorithms)) {
-      ControlFile control = AptPackageParser.parsePackage(tempBlob);
+      ControlFile control = AptPackageParser
+          .parsePackageInfo(tempBlob)
+          .getControlFile();
       if (control == null) {
         throw new IllegalOperationException("Invalid Debian package supplied");
       }

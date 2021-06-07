@@ -20,7 +20,6 @@
     <feature>nexus-repository-golang</feature>
     <feature>nexus-repository-p2</feature>
     <feature>nexus-repository-r</feature>
-    <feature>nexus-restore-apt</feature>
     <feature>nexus-restore-maven</feature>
     <feature>nexus-restore-p2</feature>
     <feature>nexus-restore-r</feature>

@@ -138,6 +138,18 @@ public class OrientBlobstoreRestoreTestHelper
   }
 
   @Override
+  public void assertComponentInRepository(
+      final Repository repository,
+      final String group,
+      final String name,
+      final String version)
+  {
+    Query query = getQuery(group, name, version);
+    Component component = findComponent(repository, query);
+    assertThat(component, notNullValue());
+  }
+
+  @Override
   public void assertAssetNotInRepository(final Repository repository, final String... names) {
     for (String name : names) {
       Asset asset = findAsset(repository, name);

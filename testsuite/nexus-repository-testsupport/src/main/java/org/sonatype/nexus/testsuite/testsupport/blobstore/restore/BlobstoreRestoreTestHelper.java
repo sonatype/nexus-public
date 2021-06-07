@@ -54,6 +54,8 @@ public interface BlobstoreRestoreTestHelper
 
   void assertComponentInRepository(Repository repository, String name, String version);
 
+  void assertComponentInRepository(Repository repository, String group, String name, String version);
+
   void assertComponentNotInRepository(Repository repository, String name);
 
   void assertComponentNotInRepository(Repository repository, String name, String version);

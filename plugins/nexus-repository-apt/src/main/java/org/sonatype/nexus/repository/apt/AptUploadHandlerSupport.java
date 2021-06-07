@@ -16,7 +16,6 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.apt.internal.AptFormat;
 import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;

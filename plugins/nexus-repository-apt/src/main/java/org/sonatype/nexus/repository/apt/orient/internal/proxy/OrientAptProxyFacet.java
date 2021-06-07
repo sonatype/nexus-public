@@ -57,7 +57,7 @@ import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.repository.apt.internal.ReleaseName.RELEASE;
-import static org.sonatype.nexus.repository.apt.internal.debian.Utils.isDebPackageContentType;
+import static org.sonatype.nexus.repository.apt.debian.Utils.isDebPackageContentType;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
 /**

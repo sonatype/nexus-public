@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository.apt.orient.internal;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.repository.apt.internal.AptFormat;
+import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.apt.orient.internal.hosted.OrientAptHostedRecipe;
 import org.sonatype.nexus.repository.apt.orient.internal.proxy.OrientAptProxyRecipe;
 import org.sonatype.nexus.repository.types.ProxyType;

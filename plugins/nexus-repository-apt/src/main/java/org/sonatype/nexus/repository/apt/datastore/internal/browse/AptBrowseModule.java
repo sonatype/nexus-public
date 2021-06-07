@@ -15,8 +15,7 @@ package org.sonatype.nexus.repository.apt.datastore.internal.browse;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.repository.apt.datastore.internal.browse.AptBrowseNodeDAO;
-import org.sonatype.nexus.repository.apt.internal.AptFormat;
+import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.content.browse.store.FormatBrowseModule;
 
 /**

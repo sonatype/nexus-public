@@ -21,7 +21,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
 import org.sonatype.nexus.repository.apt.api.AptProxyApiRepository;
-import org.sonatype.nexus.repository.apt.internal.AptFormat;
+import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.rest.api.AbstractProxyRepositoriesApiResource;
 import org.sonatype.nexus.repository.rest.api.FormatAndType;
 import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;

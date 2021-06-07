@@ -155,6 +155,21 @@ public class DatastoreBlobstoreRestoreTestHelper
   }
 
   @Override
+  public void assertComponentInRepository(
+      final Repository repository,
+      final String namespace,
+      final String name,
+      final String version)
+  {
+    Optional<FluentComponent> component = components(repository)
+        .name(name)
+        .version(version)
+        .namespace(namespace)
+        .find();
+    assertThat(component.isPresent(), is(true));
+  }
+
+  @Override
   public void assertComponentNotInRepository(final Repository repository, final String name) {
     Optional<FluentComponent> component = findComponent(repository, name);
     assertThat(component.isPresent(), is(false));

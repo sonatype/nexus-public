@@ -29,6 +29,10 @@ public class PackageInfo
     this.controlFile = controlFile;
   }
 
+  public ControlFile getControlFile() {
+    return controlFile;
+  }
+
   public String getPackageName() {
     return getField(PACKAGE_FIELD);
   }

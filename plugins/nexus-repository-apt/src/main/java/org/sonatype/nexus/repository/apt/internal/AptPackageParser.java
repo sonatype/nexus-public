@@ -18,6 +18,7 @@ import java.io.InputStream;
 import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFileParser;
+import org.sonatype.nexus.repository.apt.internal.debian.PackageInfo;
 import org.sonatype.nexus.repository.apt.internal.org.apache.commons.compress.archivers.ar.ArArchiveInputStream;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
@@ -35,12 +36,12 @@ public class AptPackageParser
     throw new IllegalAccessError("Utility class");
   }
 
-  public static ControlFile parsePackage(final InputStreamSupplier supplier) throws IOException {
+  public static PackageInfo parsePackageInfo(final InputStreamSupplier supplier) throws IOException {
     ControlFile controlFile = parsePackageInternal(supplier);
     if (controlFile == null) {
       throw new IOException("Invalid debian package: no control file");
     }
-    return controlFile;
+    return new PackageInfo(controlFile);
   }
 
   private static ControlFile parsePackageInternal(final InputStreamSupplier supplier) throws IOException {

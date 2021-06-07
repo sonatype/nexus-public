@@ -25,7 +25,7 @@ import javax.validation.constraints.NotNull;
 
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.apt.internal.AptFacetHelper;
-import org.sonatype.nexus.repository.apt.internal.AptFormat;
+import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.apt.internal.AptPackageParser;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
 import org.sonatype.nexus.repository.apt.internal.debian.PackageInfo;
@@ -57,7 +57,7 @@ import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_ARCHITE
 import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_INDEX_SECTION;
 import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_PACKAGE_NAME;
 import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_PACKAGE_VERSION;
-import static org.sonatype.nexus.repository.apt.internal.debian.Utils.isDebPackageContentType;
+import static org.sonatype.nexus.repository.apt.debian.Utils.isDebPackageContentType;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 
 /**
@@ -147,21 +147,22 @@ public class AptContentFacet
     }
   }
 
-  public FluentAsset findOrCreateDebAsset(final String path, final TempBlob tempBlob, final PackageInfo packageInfo)
+  private FluentAsset findOrCreateDebAsset(final String path, final TempBlob tempBlob, @Nullable PackageInfo packageInfo)
       throws IOException
   {
-    final ControlFile controlFile = AptPackageParser.parsePackage(() -> tempBlob.getBlob().getInputStream());
-    PackageInfo info = packageInfo != null
-        ? packageInfo
-        : new PackageInfo(controlFile);
+    if (packageInfo == null) {
+      packageInfo = AptPackageParser.parsePackageInfo(tempBlob);
+    }
 
     FluentAsset asset = assets()
         .path(normalizeAssetPath(path))
         .kind(DEB)
-        .component(findOrCreateComponent(info))
-        .blob(tempBlob).save();
+        .component(findOrCreateComponent(packageInfo))
+        .blob(tempBlob)
+        .save();
 
-    populateAttributes(info, asset, controlFile);
+    ControlFile controlFile = packageInfo.getControlFile();
+    populateAttributes(packageInfo, asset, controlFile);
 
     return asset;
   }
