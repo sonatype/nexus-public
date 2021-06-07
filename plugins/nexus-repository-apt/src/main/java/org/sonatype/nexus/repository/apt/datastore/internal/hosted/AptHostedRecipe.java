@@ -79,6 +79,9 @@ public class AptHostedRecipe
   Provider<AptLastAssetMaintenanceFacet> maintenanceFacet;
 
   @Inject
+  Provider<AptHostedSnapshotFacet> hostedSnapshotFacet;
+
+  @Inject
   TimingHandler timingHandler;
 
   @Inject
@@ -129,6 +132,7 @@ public class AptHostedRecipe
     repository.attach(maintenanceFacet.get());
     repository.attach(browseFacet.get());
     repository.attach(searchFacet.get());
+    repository.attach(hostedSnapshotFacet.get());
   }
 
   private ViewFacet configure(final ConfigurableViewFacet facet) {
