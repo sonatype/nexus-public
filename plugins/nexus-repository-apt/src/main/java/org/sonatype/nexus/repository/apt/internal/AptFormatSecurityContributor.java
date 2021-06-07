@@ -17,6 +17,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.Format;
+import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.security.RepositoryFormatSecurityContributor;
 
 /**

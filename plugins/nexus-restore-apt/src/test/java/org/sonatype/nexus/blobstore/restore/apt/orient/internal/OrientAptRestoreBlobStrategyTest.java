@@ -25,7 +25,7 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
-import org.sonatype.nexus.blobstore.restore.apt.internal.AptRestoreBlobData;
+import org.sonatype.nexus.blobstore.restore.apt.internal.orient.AptRestoreBlobData;
 import org.sonatype.nexus.blobstore.restore.apt.internal.orient.OrientAptRestoreBlobStrategy;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;

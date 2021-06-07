@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.apt.datastore.internal.store;
 
 import javax.inject.Named;
 
-import org.sonatype.nexus.repository.apt.internal.AptFormat;
+import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.content.store.FormatStoreModule;
 
 /**

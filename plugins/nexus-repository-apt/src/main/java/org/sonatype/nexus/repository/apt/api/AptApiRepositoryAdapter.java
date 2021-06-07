@@ -18,7 +18,7 @@ import javax.inject.Named;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.apt.internal.AptFormat;
+import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.rest.api.SimpleApiRepositoryAdapter;
 import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;

@@ -85,7 +85,9 @@ public class AptHostedHandler
     else if (BrowsePath.SLASH.equals(path)) {
       final Payload payload = context.getRequest().getPayload();
       try (TempBlob tempBlob = contentFacet.getTempBlob(payload)) {
-        ControlFile controlFile = AptPackageParser.parsePackage(tempBlob);
+        ControlFile controlFile = AptPackageParser
+            .parsePackageInfo(tempBlob)
+            .getControlFile();
         String assetPath = AptFacetHelper.buildAssetPath(controlFile);
         long payloadSize = payload.getSize();
         String contentType = payload.getContentType();

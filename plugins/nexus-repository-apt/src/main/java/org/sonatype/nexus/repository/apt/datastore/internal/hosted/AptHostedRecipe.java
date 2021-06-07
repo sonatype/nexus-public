@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.RecipeSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.apt.datastore.AptContentFacet;
-import org.sonatype.nexus.repository.apt.internal.AptFormat;
+import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.apt.internal.AptSecurityFacet;
 import org.sonatype.nexus.repository.apt.internal.gpg.AptSigningFacet;
 import org.sonatype.nexus.repository.apt.internal.snapshot.AptSnapshotHandler;

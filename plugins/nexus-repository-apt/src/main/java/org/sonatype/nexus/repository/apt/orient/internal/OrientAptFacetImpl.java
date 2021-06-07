@@ -48,7 +48,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterables;
 
 import static java.util.Collections.singletonList;
-import static org.sonatype.nexus.repository.apt.internal.debian.Utils.isDebPackageContentType;
+import static org.sonatype.nexus.repository.apt.debian.Utils.isDebPackageContentType;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_VERSION;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
@@ -139,8 +139,8 @@ public class OrientAptFacetImpl
       StorageTx tx = UnitOfWork.currentTx();
       Asset asset = isDebPackageContentType(path)
           ? findOrCreateDebAsset(tx, path,
-          info != null ? info : new PackageInfo(
-              AptPackageParser.parsePackage(() -> tempBlob.getBlob().getInputStream())))
+          info != null ? info :
+              AptPackageParser.parsePackageInfo(() -> tempBlob.getBlob().getInputStream()))
           : findOrCreateMetadataAsset(tx, path);
 
       AttributesMap contentAttributes = null;

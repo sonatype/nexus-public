@@ -32,5 +32,6 @@
     <feature>nexus-repository-maven</feature>
     <feature>nexus-repository-conda</feature>
     <feature>nexus-restore-raw</feature>
+    <feature>nexus-restore-apt</feature>
   </feature>
 </features>

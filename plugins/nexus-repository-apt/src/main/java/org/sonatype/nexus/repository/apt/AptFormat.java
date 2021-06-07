@@ -10,18 +10,24 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.restore.apt.internal;
+package org.sonatype.nexus.repository.apt;
 
-import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
-import org.sonatype.nexus.blobstore.restore.RestoreBlobDataSupport;
+import javax.inject.Named;
+import javax.inject.Singleton;
+
+import org.sonatype.nexus.repository.Format;
 
 /**
  * @since 3.17
  */
-public class AptRestoreBlobData
-    extends RestoreBlobDataSupport
+@Named(AptFormat.NAME)
+@Singleton
+public class AptFormat
+    extends Format
 {
-  public AptRestoreBlobData(final RestoreBlobData blobData) {
-    super(blobData);
+  public static final String NAME = "apt";
+
+  public AptFormat() {
+    super(NAME);
   }
 }

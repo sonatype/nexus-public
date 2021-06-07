@@ -22,7 +22,6 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
-import org.sonatype.nexus.blobstore.restore.apt.internal.AptRestoreBlobData;
 import org.sonatype.nexus.blobstore.restore.orient.OrientBaseRestoreBlobStrategy;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
