@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.apt.datastore;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,6 +38,7 @@ import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.store.AssetDAO;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.content.utils.FormatAttributesUtils;
 import org.sonatype.nexus.repository.types.HostedType;
@@ -46,8 +48,10 @@ import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.entity.Continuations.iterableOf;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
@@ -113,7 +117,7 @@ public class AptContentFacet
         .readSection(configuration, CONFIG_KEY, Config.class);
     log.debug("APT config: {}", config);
   }
-  
+
   public String getDistribution() {
     return config.distribution;
   }
@@ -216,5 +220,21 @@ public class AptContentFacet
   public TempBlob getTempBlob(final Payload payload) {
     checkNotNull(payload);
     return blobs().ingest(payload, AptFacetHelper.hashAlgorithms);
+  }
+
+  public TempBlob getTempBlob(final InputStream in, @Nullable final String contentType) {
+    checkNotNull(in);
+    return blobs().ingest(in, contentType, AptFacetHelper.hashAlgorithms);
+  }
+
+  public void deleteAssetsByPrefix(final String pathPrefix) {
+    String filter = "repository_id = #{" + AssetDAO.FILTER_PARAMS + ".repositoryParam}" +
+        " AND path LIKE #{" + AssetDAO.FILTER_PARAMS + ".pathParam}" +
+        " AND component_id IS NULL";
+
+    Map<String, Object> params = ImmutableMap.of("repositoryParam", contentRepositoryId(),
+        "pathParam", pathPrefix + "%");
+
+    iterableOf(assets().byFilter(filter, params)::browse).forEach(FluentAsset::delete);
   }
 }

@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.apt.orient.internal.snapshot;
 
-import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -30,6 +29,7 @@ import org.sonatype.nexus.repository.apt.internal.AptFacetHelper;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFileParser;
 import org.sonatype.nexus.repository.apt.internal.debian.Release;
+import org.sonatype.nexus.repository.apt.internal.snapshot.AptFilterInputStream;
 import org.sonatype.nexus.repository.apt.internal.snapshot.AptSnapshotFacet;
 import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotComponentSelector;
 import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotItem;
@@ -140,40 +140,12 @@ public abstract class OrientAptSnapshotFacetSupport
       InputStream is = itemsByRole.get(SnapshotItem.Role.RELEASE_INLINE_INDEX).content.openInputStream();
       if (is != null) {
         ArmoredInputStream aIs = new ArmoredInputStream(is);
-        releaseStream = new FilterInputStream(aIs)
-        {
-          boolean done = false;
-
-          @Override
-          public int read() throws IOException {
-            if (done) {
-              return -1;
-            }
-            int c = aIs.read();
-            if (c < 0 || !aIs.isClearText()) {
-              done = true;
-              return -1;
-            }
-            return c;
-          }
-
-          @Override
-          public int read(byte[] b, int off, int len) throws IOException {
-            for (int i = 0; i < len; i++) {
-              int c = read();
-              if (c == -1) {
-                return i == 0 ? -1 : i;
-              }
-              b[off + i] = (byte) c;
-            }
-            return len;
-          }
-        };
+        releaseStream = new AptFilterInputStream(aIs);
       }
     }
 
     if (releaseStream == null) {
-      throw new IOException("Invalid upstream repository:  no release index present");
+      throw new IOException("Invalid upstream repository: no release index present");
     }
 
     Release release;

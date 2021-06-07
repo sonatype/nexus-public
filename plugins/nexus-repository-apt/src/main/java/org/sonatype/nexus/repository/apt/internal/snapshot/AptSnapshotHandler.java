@@ -112,7 +112,9 @@ public class AptSnapshotHandler
     return HttpResponses.noContent();
   }
 
-  private Response handleSnapshotFetchRequest(final Context context, final String id, final String path) throws Exception {
+  private Response handleSnapshotFetchRequest(final Context context, final String id, final String path)
+      throws Exception
+  {
     Repository repository = context.getRepository();
     AptSnapshotFacet snapshotFacet = repository.facet(AptSnapshotFacet.class);
     if (snapshotFacet.isSnapshotableFile(path)) {

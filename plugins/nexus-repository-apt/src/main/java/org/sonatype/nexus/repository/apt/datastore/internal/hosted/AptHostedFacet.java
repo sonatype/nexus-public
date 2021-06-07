@@ -155,16 +155,17 @@ public class AptHostedFacet
     Map<String, Writer> streams = new HashMap<>();
     boolean ok = false;
     try {
-      List<String> architectures =
+      Set<String> architectures =
           changes.stream()
               .map(change -> getArchitecture(change.getAsset()))
-              .distinct()
-              .collect(Collectors.toList());
+              .collect(Collectors.toSet());
 
       final Continuation<FluentAsset> allAssets = getRepository().facet(ContentFacet.class)
           .assets()
           .byKind(DEB)
           .browse(Integer.MAX_VALUE, null);
+
+      allAssets.stream().map(this::getArchitecture).collect(Collectors.toCollection(() -> architectures));
 
       Map<String, List<FluentAsset>> assetsPerArch = new HashMap<>();
       for (String architecture : architectures) {
