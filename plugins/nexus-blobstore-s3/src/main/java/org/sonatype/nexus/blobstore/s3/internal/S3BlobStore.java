@@ -570,7 +570,7 @@ public class S3BlobStore
       bucketManager.setS3(s3);
       bucketManager.prepareStorageLocation(blobStoreConfiguration);
       S3BlobStoreConfigurationHelper.setConfiguredBucket(blobStoreConfiguration, getConfiguredBucket());
-      rawObjectAccess = new S3RawObjectAccess(getConfiguredBucket(), s3, performanceLogger, uploader);
+      rawObjectAccess = new S3RawObjectAccess(getConfiguredBucket(), getBucketPrefix(), s3, performanceLogger, uploader);
     }
     catch (AmazonS3Exception e) {
       throw buildException(e);
