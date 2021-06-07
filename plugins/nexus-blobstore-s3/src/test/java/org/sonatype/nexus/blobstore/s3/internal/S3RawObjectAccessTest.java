@@ -65,7 +65,7 @@ public class S3RawObjectAccessTest
 
   @Before
   public void setup() {
-    underTest = new S3RawObjectAccess("mybucket", s3, performanceLogger, uploader);
+    underTest = new S3RawObjectAccess("mybucket", "prefix/", s3, performanceLogger, uploader);
     when(amazonS3Factory.create(any())).thenReturn(s3);
     when(performanceLogger.maybeWrapForPerformanceLogging(any())).then(returnsFirstArg());
   }
@@ -154,6 +154,6 @@ public class S3RawObjectAccessTest
   public void putRawObject() {
     InputStream in = new ByteArrayInputStream("hello!".getBytes());
     underTest.putRawObject(Paths.get("path", "to", "object1"), in);
-    verify(uploader).upload(s3, "mybucket", "path/to/object1", in);
+    verify(uploader).upload(s3, "mybucket", "prefix/path/to/object1", in);
   }
 }

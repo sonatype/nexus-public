@@ -47,6 +47,8 @@ public class S3RawObjectAccess
 
   private final String bucket;
 
+  private final String bucketPrefix;
+
   private final AmazonS3 s3;
 
   private final PerformanceLogger performanceLogger;
@@ -55,11 +57,13 @@ public class S3RawObjectAccess
 
   public S3RawObjectAccess(
       final String bucket,
+      final String bucketPrefix,
       final AmazonS3 s3,
       final PerformanceLogger performanceLogger,
       final S3Uploader uploader)
   {
     this.bucket = requireNonNull(bucket);
+    this.bucketPrefix = requireNonNull(bucketPrefix);
     this.s3 = requireNonNull(s3);
     this.performanceLogger = requireNonNull(performanceLogger);
     this.uploader = requireNonNull(uploader);
@@ -70,7 +74,7 @@ public class S3RawObjectAccess
    */
   @Override
   public Stream<String> listRawObjects(@Nullable final Path path) {
-    final String prefix = path != null ? path + "/" : null;
+    final String prefix = bucketPrefix + (path != null ? path + "/" : "");
 
     ObjectListing listing = s3.listObjects(
         new ListObjectsRequest().withBucketName(bucket)
@@ -99,7 +103,7 @@ public class S3RawObjectAccess
   @Nullable
   public InputStream getRawObject(final Path path) {
     try {
-      S3Object object = s3.getObject(bucket, path.toString());
+      S3Object object = s3.getObject(bucket, bucketPrefix + path.toString());
       return performanceLogger.maybeWrapForPerformanceLogging(object.getObjectContent());
     }
     catch (AmazonServiceException e) {
@@ -113,7 +117,7 @@ public class S3RawObjectAccess
   @Override
   public void putRawObject(final Path path, final InputStream input) {
     try (InputStream in = input) {
-      uploader.upload(s3, bucket, path.toString(), in);
+      uploader.upload(s3, bucket, bucketPrefix + path.toString(), in);
     }
     catch (IOException e) {
       throw new UncheckedIOException(e);
@@ -123,7 +127,7 @@ public class S3RawObjectAccess
   @Override
   public boolean hasRawObject(final Path path) {
     try {
-      return s3.doesObjectExist(bucket, path.toString());
+      return s3.doesObjectExist(bucket, bucketPrefix + path.toString());
     }
     catch (AmazonServiceException e) {
       if (e.getStatusCode() == 404) {
@@ -135,6 +139,6 @@ public class S3RawObjectAccess
 
   @Override
   public void deleteRawObject(final Path path) {
-    s3.deleteObject(bucket, path.toString());
+    s3.deleteObject(bucket, bucketPrefix + path.toString());
   }
 }
