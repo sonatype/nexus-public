@@ -37,15 +37,20 @@ public class S3BlobStoreApiAdvancedBucketConnection
   @ApiModelProperty("Setting this flag will result in path-style access being used for all requests.")
   private final Boolean forcePathStyle;
 
+  @ApiModelProperty("Setting this value will override the default connection pool size of Nexus of the s3 client for this blobstore.")
+  private final Integer maxConnectionPoolSize;
+
   @JsonCreator
   public S3BlobStoreApiAdvancedBucketConnection(
       @JsonProperty("endpoint") final String endpoint,
       @JsonProperty("signerType") final String signerType,
-      @JsonProperty("forcePathStyle") final Boolean forcePathStyle)
+      @JsonProperty("forcePathStyle") final Boolean forcePathStyle,
+      @JsonProperty("maxConnectionPoolSize") final Integer maxConnectionPoolSize)
   {
     this.endpoint = endpoint;
     this.signerType = signerType;
     this.forcePathStyle = forcePathStyle;
+    this.maxConnectionPoolSize = maxConnectionPoolSize;
   }
 
   public String getEndpoint() {
@@ -58,5 +63,9 @@ public class S3BlobStoreApiAdvancedBucketConnection
 
   public Boolean getForcePathStyle() {
     return forcePathStyle;
+  }
+
+  public Integer getMaxConnectionPoolSize() {
+    return maxConnectionPoolSize;
   }
 }

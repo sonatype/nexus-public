@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.s3.rest.internal;
 
-import java.util.function.BiFunction;
+import java.util.Optional;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.rest.BlobStoreApiSoftQuota;
@@ -40,18 +40,21 @@ public final class S3BlobStoreApiModelMapper
 {
   public static final int ONE_MILLION = 1_000_000;
 
-  public static final BiFunction<BlobStoreConfiguration, S3BlobStoreApiModel, BlobStoreConfiguration> MODEL_MAPPER =
-      (initialConfig, model) -> {
-        final BlobStoreConfiguration blobStoreConfiguration = checkNotNull(initialConfig);
-        final S3BlobStoreApiModel request = checkNotNull(model);
-        final S3BlobStoreApiBucketConfiguration
-            bucketConfiguration = checkNotNull(request.getBucketConfiguration());
-        blobStoreConfiguration.setName(request.getName());
-        blobStoreConfiguration.setType(TYPE);
-        copyBucketConfiguration(bucketConfiguration, blobStoreConfiguration.attributes(CONFIG_KEY));
-        copySoftQuota(request.getSoftQuota(), blobStoreConfiguration.attributes(ROOT_KEY));
-        return blobStoreConfiguration;
-      };
+  public static BlobStoreConfiguration map(
+      final BlobStoreConfiguration blobStoreConfiguration,
+      final S3BlobStoreApiModel request)
+  {
+    checkNotNull(blobStoreConfiguration);
+    checkNotNull(request);
+    final S3BlobStoreApiBucketConfiguration bucketConfiguration = checkNotNull(request.getBucketConfiguration());
+
+    blobStoreConfiguration.setName(request.getName());
+    blobStoreConfiguration.setType(TYPE);
+    copyBucketConfiguration(bucketConfiguration, blobStoreConfiguration.attributes(CONFIG_KEY));
+    copySoftQuota(request.getSoftQuota(), blobStoreConfiguration.attributes(ROOT_KEY));
+
+    return blobStoreConfiguration;
+  }
 
   private static void copyBucketConfiguration(final S3BlobStoreApiBucketConfiguration bucketConfiguration, final NestedAttributesMap s3BucketAttributes) {
     copyGeneralS3BucketSettings(checkNotNull(bucketConfiguration.getBucket()), s3BucketAttributes);
@@ -108,6 +111,12 @@ public final class S3BlobStoreApiModelMapper
     if (nonNull(advancedBucketConnection)) {
       setAttribute(s3BucketAttributes, ENDPOINT_KEY, advancedBucketConnection.getEndpoint());
       setAttribute(s3BucketAttributes, SIGNERTYPE_KEY, advancedBucketConnection.getSignerType());
+
+      String maxConnectionPoolSize = Optional.ofNullable(advancedBucketConnection.getMaxConnectionPoolSize())
+          .map(String::valueOf)
+          .orElse(null);
+      setAttribute(s3BucketAttributes, MAX_CONNECTION_POOL_KEY, maxConnectionPoolSize);
+
       setForcePathStyleIfTrue(advancedBucketConnection.getForcePathStyle(), s3BucketAttributes);
     }
   }

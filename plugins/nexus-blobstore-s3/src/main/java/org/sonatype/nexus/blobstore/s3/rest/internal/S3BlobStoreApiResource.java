@@ -28,29 +28,24 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
-import org.sonatype.nexus.blobstore.s3.internal.ui.S3Component;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiModel;
 import org.sonatype.nexus.rapture.PasswordPlaceholder;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import static java.util.Optional.ofNullable;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
-import static javax.ws.rs.core.Response.noContent;
-import static javax.ws.rs.core.Response.ok;
-import static javax.ws.rs.core.Response.status;
 import static org.apache.commons.lang.StringUtils.equalsIgnoreCase;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.TYPE;
-import static org.sonatype.nexus.blobstore.s3.rest.internal.S3BlobStoreApiConfigurationMapper.CONFIGURATION_MAPPER;
-import static org.sonatype.nexus.blobstore.s3.rest.internal.S3BlobStoreApiModelMapper.MODEL_MAPPER;
+import static org.sonatype.nexus.blobstore.s3.rest.internal.S3BlobStoreApiModelMapper.map;
 
 /**
  * REST API endpoints for creating, reading, updating and deleting an S3 blob store.
@@ -71,8 +66,6 @@ public class S3BlobStoreApiResource
 
   private final BlobStoreManager blobStoreManager;
 
-  private final S3Component s3Component = new S3Component();
-
   public S3BlobStoreApiResource(
       final BlobStoreManager blobStoreManager,
       final S3BlobStoreApiUpdateValidation validation)
@@ -87,8 +80,7 @@ public class S3BlobStoreApiResource
   @RequiresPermissions("nexus:blobstores:create")
   public Response createBlobStore(@Valid final S3BlobStoreApiModel request) throws Exception {
     try {
-      final BlobStoreConfiguration blobStoreConfiguration =
-          MODEL_MAPPER.apply(blobStoreManager.newConfiguration(), request);
+      final BlobStoreConfiguration blobStoreConfiguration = map(blobStoreManager.newConfiguration(), request);
       blobStoreManager.create(blobStoreConfiguration);
       return status(CREATED).build();
     }
@@ -116,8 +108,7 @@ public class S3BlobStoreApiResource
     }
 
     try {
-      final BlobStoreConfiguration blobStoreConfiguration =
-          MODEL_MAPPER.apply(blobStoreManager.newConfiguration(), request);
+      final BlobStoreConfiguration blobStoreConfiguration = map(blobStoreManager.newConfiguration(), request);
       blobStoreManager.update(blobStoreConfiguration);
     }
     catch (Exception e) {
@@ -145,7 +136,7 @@ public class S3BlobStoreApiResource
     Optional<S3BlobStoreApiModel> result = ofNullable(blobStoreManager.get(blobStoreName))
         .map(BlobStore::getBlobStoreConfiguration)
         .map(this::ensureBlobStoreTypeIsS3)
-        .map(CONFIGURATION_MAPPER);
+        .map(S3BlobStoreApiConfigurationMapper::map);
     if (result.isPresent() && isAuthenticationDataPresent(result.get())) {
       result.get().getBucketConfiguration().getBucketSecurity().setSecretAccessKey(PasswordPlaceholder.get());
     }
@@ -158,7 +149,7 @@ public class S3BlobStoreApiResource
         isNotEmpty(s3BlobStoreApiModel.getBucketConfiguration().getBucketSecurity().getAccessKeyId());
   }
 
-  private BlobStoreConfiguration ensureBlobStoreTypeIsS3(BlobStoreConfiguration configuration) {
+  private BlobStoreConfiguration ensureBlobStoreTypeIsS3(final BlobStoreConfiguration configuration) {
     final String type = configuration.getType();
     if (!equalsIgnoreCase(TYPE, type)) {
       throw new WebApplicationMessageException(BAD_REQUEST,

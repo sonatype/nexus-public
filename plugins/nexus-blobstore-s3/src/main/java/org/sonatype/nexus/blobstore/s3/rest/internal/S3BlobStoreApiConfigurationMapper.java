@@ -13,16 +13,16 @@
 package org.sonatype.nexus.blobstore.s3.rest.internal;
 
 import java.util.Objects;
-import java.util.function.Function;
+import java.util.Optional;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.rest.BlobStoreApiSoftQuota;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiAdvancedBucketConnection;
-import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiBucketConfiguration;
-import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiModel;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiBucket;
+import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiBucketConfiguration;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiBucketSecurity;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiEncryption;
+import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiModel;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
 import static java.lang.Long.parseLong;
@@ -40,20 +40,21 @@ import static org.sonatype.nexus.blobstore.s3.rest.internal.S3BlobStoreApiModelM
  */
 public final class S3BlobStoreApiConfigurationMapper
 {
-  static final Function<BlobStoreConfiguration, S3BlobStoreApiModel> CONFIGURATION_MAPPER =
-      configuration -> new S3BlobStoreApiModel(
-          configuration.getName(),
-          createSoftQuota(configuration),
-          createS3BlobStoreBucketConfiguration(configuration)
-      );
+  public static S3BlobStoreApiModel map(final BlobStoreConfiguration configuration) {
+    return new S3BlobStoreApiModel(
+        configuration.getName(),
+        createSoftQuota(configuration),
+        createS3BlobStoreBucketConfiguration(configuration)
+    );
+  }
 
   private static BlobStoreApiSoftQuota createSoftQuota(final BlobStoreConfiguration configuration) {
     final NestedAttributesMap softQuotaAttributes = configuration.attributes(ROOT_KEY);
     if (!softQuotaAttributes.isEmpty()) {
-      final BlobStoreApiSoftQuota blobStoreApiSoftQuota = new BlobStoreApiSoftQuota();
       final String quotaType = getValue(softQuotaAttributes, TYPE_KEY);
       final String quotaLimit = getValue(softQuotaAttributes, LIMIT_KEY);
       if (nonNull(quotaType) && nonNull(quotaLimit)) {
+        final BlobStoreApiSoftQuota blobStoreApiSoftQuota = new BlobStoreApiSoftQuota();
         blobStoreApiSoftQuota.setType(quotaType);
         blobStoreApiSoftQuota.setLimit(parseLong(quotaLimit) / ONE_MILLION);
         return blobStoreApiSoftQuota;
@@ -97,15 +98,17 @@ public final class S3BlobStoreApiConfigurationMapper
 
   private static boolean iamCredentialsProvided(
       final String accessKeyId,
-      final String roleToAssume, final String sessionToken)
+      final String roleToAssume,
+      final String sessionToken)
   {
-    return nonNull(accessKeyId) || nonNull(roleToAssume) || nonNull(sessionToken);
+    return anyNonNull(accessKeyId, roleToAssume, sessionToken);
   }
 
   private static S3BlobStoreApiEncryption buildS3BlobStoreEncryption(final NestedAttributesMap s3BucketAttributes) {
     final String encryptionType = getValue(s3BucketAttributes, ENCRYPTION_TYPE);
     final String encryptionKey = getValue(s3BucketAttributes, ENCRYPTION_KEY);
-    if (nonNull(encryptionType) || nonNull(encryptionKey)) {
+
+    if (anyNonNull(encryptionKey, encryptionType)) {
       return new S3BlobStoreApiEncryption(encryptionType, encryptionKey);
     }
     return null;
@@ -115,9 +118,23 @@ public final class S3BlobStoreApiConfigurationMapper
     final String endpoint = getValue(attributes, ENDPOINT_KEY);
     final String signerType = getValue(attributes, SIGNERTYPE_KEY);
     final String forcePathStyle = getValue(attributes, FORCE_PATH_STYLE_KEY);
-    if (nonNull(endpoint) || nonNull(signerType) || nonNull(forcePathStyle)) {
-      return new S3BlobStoreApiAdvancedBucketConnection(endpoint, signerType, Boolean.valueOf(forcePathStyle));
+    Integer maxConnectionPoolSize = Optional.ofNullable(getValue(attributes, MAX_CONNECTION_POOL_KEY))
+        .map(Integer::valueOf)
+        .orElse(null);
+
+    if (anyNonNull(endpoint, signerType, forcePathStyle, maxConnectionPoolSize)) {
+      return new S3BlobStoreApiAdvancedBucketConnection(endpoint, signerType, Boolean.valueOf(forcePathStyle),
+          maxConnectionPoolSize);
     }
     return null;
+  }
+
+  private static boolean anyNonNull(final Object... objects) {
+    for (Object o : objects) {
+      if (o != null) {
+        return true;
+      }
+    }
+    return false;
   }
 }

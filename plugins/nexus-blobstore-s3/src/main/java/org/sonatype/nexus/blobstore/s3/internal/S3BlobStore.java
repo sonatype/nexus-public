@@ -74,10 +74,8 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.common.cache.CacheLoader.from;
 import static java.lang.String.format;
-import static java.time.LocalDate.now;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static java.util.Objects.isNull;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.stream.StreamSupport.stream;
 import static org.sonatype.nexus.blobstore.DirectPathLocationStrategy.DIRECT_PATH_ROOT;
@@ -123,6 +121,8 @@ public class S3BlobStore
   public static final String SIGNERTYPE_KEY = "signertype";
 
   public static final String FORCE_PATH_STYLE_KEY = "forcepathstyle";
+
+  public static final String MAX_CONNECTION_POOL_KEY = "max_connection_pool_size";
 
   public static final String ENCRYPTION_TYPE = "encryption_type";
 
