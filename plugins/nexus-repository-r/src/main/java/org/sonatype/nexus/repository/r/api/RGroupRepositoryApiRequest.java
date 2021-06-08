@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.r.api;
 
-import org.sonatype.nexus.repository.r.internal.RFormat;
+import org.sonatype.nexus.repository.r.RFormat;
 import org.sonatype.nexus.repository.rest.api.model.GroupAttributes;
 import org.sonatype.nexus.repository.rest.api.model.GroupRepositoryApiRequest;
 import org.sonatype.nexus.repository.rest.api.model.StorageAttributes;

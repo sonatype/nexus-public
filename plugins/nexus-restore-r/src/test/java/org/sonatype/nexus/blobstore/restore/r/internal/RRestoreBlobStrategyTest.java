@@ -33,7 +33,7 @@ import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.r.RRestoreFacet;
+import org.sonatype.nexus.repository.r.orient.OrientRRestoreFacet;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;
@@ -89,7 +89,7 @@ public class RRestoreBlobStrategyTest
   StorageFacet storageFacet;
 
   @Mock
-  RRestoreFacet rRestoreFacet;
+  OrientRRestoreFacet rRestoreFacet;
 
   @Mock
   RRestoreBlobData rRestoreBlobData;
@@ -149,8 +149,8 @@ public class RRestoreBlobStrategyTest
     }).getInstance(RRestoreBlobStrategy.class);
 
     when(repositoryManager.get(anyString())).thenReturn(repository);
-    when(repository.facet(RRestoreFacet.class)).thenReturn(rRestoreFacet);
-    when(repository.optionalFacet(RRestoreFacet.class)).thenReturn(Optional.of(rRestoreFacet));
+    when(repository.facet(OrientRRestoreFacet.class)).thenReturn(rRestoreFacet);
+    when(repository.optionalFacet(OrientRRestoreFacet.class)).thenReturn(Optional.of(rRestoreFacet));
     when(repository.optionalFacet(StorageFacet.class)).thenReturn(Optional.of(storageFacet));
     when(blob.getInputStream()).thenReturn(new ByteArrayInputStream(blobBytes));
     when(blob.getMetrics()).thenReturn(blobMetrics);

@@ -19,7 +19,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
 import org.sonatype.nexus.repository.r.api.RHostedRepositoryApiRequest;
-import org.sonatype.nexus.repository.r.internal.RFormat;
+import org.sonatype.nexus.repository.r.RFormat;
 import org.sonatype.nexus.repository.rest.api.AbstractHostedRepositoriesApiResource;
 import org.sonatype.nexus.validation.Validate;
 

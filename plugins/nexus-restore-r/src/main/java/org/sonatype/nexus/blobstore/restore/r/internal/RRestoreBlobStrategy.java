@@ -31,8 +31,8 @@ import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.r.RRestoreFacet;
-import org.sonatype.nexus.repository.r.internal.RFormat;
+import org.sonatype.nexus.repository.r.orient.OrientRRestoreFacet;
+import org.sonatype.nexus.repository.r.RFormat;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Query;
 
@@ -70,7 +70,7 @@ public class RRestoreBlobStrategy
   @Override
   protected boolean canAttemptRestore(@Nonnull final RRestoreBlobData rRestoreBlobData) {
     Repository repository = getRepository(rRestoreBlobData);
-    Optional<RRestoreFacet> rRestoreFacetFacet = repository.optionalFacet(RRestoreFacet.class);
+    Optional<OrientRRestoreFacet> rRestoreFacetFacet = repository.optionalFacet(OrientRRestoreFacet.class);
 
     if (!rRestoreFacetFacet.isPresent()) {
       log.warn("Skipping as R Restore Facet not found on repository: {}", repository.getName());
@@ -86,7 +86,7 @@ public class RRestoreBlobStrategy
 
   @Override
   protected boolean assetExists(@Nonnull final RRestoreBlobData rRestoreBlobData) {
-    RRestoreFacet facet = getRestoreFacet(rRestoreBlobData);
+    OrientRRestoreFacet facet = getRestoreFacet(rRestoreBlobData);
 
     return facet.assetExists(getAssetPath(rRestoreBlobData));
   }
@@ -97,7 +97,7 @@ public class RRestoreBlobStrategy
       @Nonnull final RRestoreBlobData rRestoreBlobData)
       throws IOException
   {
-    RRestoreFacet facet = getRestoreFacet(rRestoreBlobData);
+    OrientRRestoreFacet facet = getRestoreFacet(rRestoreBlobData);
     final String path = getAssetPath(rRestoreBlobData);
 
     facet.restore(assetBlob, path);
@@ -111,7 +111,7 @@ public class RRestoreBlobStrategy
 
   @Override
   protected boolean componentRequired(final RRestoreBlobData data) {
-    RRestoreFacet facet = getRestoreFacet(data);
+    OrientRRestoreFacet facet = getRestoreFacet(data);
     final String path = data.getBlobData().getBlobName();
 
     return facet.componentRequired(path);
@@ -119,7 +119,7 @@ public class RRestoreBlobStrategy
 
   @Override
   protected Query getComponentQuery(final RRestoreBlobData data) throws IOException {
-    RRestoreFacet facet = getRestoreFacet(data);
+    OrientRRestoreFacet facet = getRestoreFacet(data);
     RestoreBlobData blobData = data.getBlobData();
     Map<String, String> attributes;
     try (InputStream inputStream = blobData.getBlob().getInputStream()) {
@@ -134,9 +134,9 @@ public class RRestoreBlobStrategy
     return data.getBlobData().getRepository();
   }
 
-  private RRestoreFacet getRestoreFacet(@Nonnull final RRestoreBlobData rRestoreBlobData) {
+  private OrientRRestoreFacet getRestoreFacet(@Nonnull final RRestoreBlobData rRestoreBlobData) {
     final Repository repository = getRepository(rRestoreBlobData);
 
-    return repository.facet(RRestoreFacet.class);
+    return repository.facet(OrientRRestoreFacet.class);
   }
 }

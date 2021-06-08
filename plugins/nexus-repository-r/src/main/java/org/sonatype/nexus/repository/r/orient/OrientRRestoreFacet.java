@@ -10,28 +10,30 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.r.internal.security;
+package org.sonatype.nexus.repository.r.orient;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
 
-import org.sonatype.nexus.repository.Format;
-import org.sonatype.nexus.repository.r.RFormat;
-import org.sonatype.nexus.repository.security.RepositoryFormatSecurityContributor;
+import org.sonatype.nexus.repository.Facet;
+import org.sonatype.nexus.repository.storage.AssetBlob;
+import org.sonatype.nexus.repository.storage.Query;
 
 /**
- * R format security resource.
- *
  * @since 3.28
  */
-@Named
-@Singleton
-public class RFormatSecurityContributor
-    extends RepositoryFormatSecurityContributor
+@Facet.Exposed
+public interface OrientRRestoreFacet
+    extends Facet
 {
-  @Inject
-  public RFormatSecurityContributor(@Named(RFormat.NAME) final Format format) {
-    super(format);
-  }
+  void restore(final AssetBlob assetBlob, final String path) throws IOException;
+
+  boolean assetExists(final String path);
+
+  boolean componentRequired(final String name);
+
+  Query getComponentQuery(final Map<String, String> attributes);
+
+  Map<String, String> extractComponentAttributesFromArchive(final String filename, final InputStream is);
 }
