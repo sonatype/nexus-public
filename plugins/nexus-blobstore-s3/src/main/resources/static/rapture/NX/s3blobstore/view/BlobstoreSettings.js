@@ -206,6 +206,14 @@ Ext.define('NX.s3blobstore.view.BlobstoreSettings', {
           allowBlank: true
         },
         {
+          xtype:'textfield',
+          name: 'property_max_connection_pool_size',
+          fieldLabel: NX.I18n.get('S3Blobstore_AdvancedConnectionSettings_MaxConnectionPoolSize_FieldLabel'),
+          helpText: NX.I18n.get('S3Blobstore_AdvancedConnectionSettings_MaxConnectionPoolSize_HelpText'),
+          minValue: Number('-1'),
+          allowBlank: true
+        },
+        {
           xtype: 'combo',
           name: 'property_signertype',
           fieldLabel: NX.I18n.get('S3Blobstore_AdvancedConnectionSettings_SignatureVersion_FieldLabel'),
