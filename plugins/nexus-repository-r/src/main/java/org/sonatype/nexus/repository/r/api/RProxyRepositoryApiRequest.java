@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.r.api;
 
-import org.sonatype.nexus.repository.r.internal.RFormat;
+import org.sonatype.nexus.repository.r.RFormat;
 import org.sonatype.nexus.repository.rest.api.model.CleanupPolicyAttributes;
 import org.sonatype.nexus.repository.rest.api.model.HttpClientAttributes;
 import org.sonatype.nexus.repository.rest.api.model.NegativeCacheAttributes;

@@ -10,28 +10,10 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.r.internal.security;
+@FeatureFlag(name = DATASTORE_DEVELOPER)
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+package org.sonatype.nexus.repository.r.datastore;
 
-import org.sonatype.nexus.repository.Format;
-import org.sonatype.nexus.repository.r.RFormat;
-import org.sonatype.nexus.repository.security.RepositoryFormatSecurityContributor;
+import org.sonatype.nexus.common.app.FeatureFlag;
 
-/**
- * R format security resource.
- *
- * @since 3.28
- */
-@Named
-@Singleton
-public class RFormatSecurityContributor
-    extends RepositoryFormatSecurityContributor
-{
-  @Inject
-  public RFormatSecurityContributor(@Named(RFormat.NAME) final Format format) {
-    super(format);
-  }
-}
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_DEVELOPER;

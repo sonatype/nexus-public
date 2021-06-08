@@ -10,30 +10,33 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.storage;
+package org.sonatype.nexus.repository.r.orient.internal;
 
 import java.util.Collections;
 import java.util.Set;
 
-import javax.inject.Named;
-
 import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.Component;
+import org.sonatype.nexus.repository.storage.DefaultComponentMaintenanceImpl;
+import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
+import com.google.common.collect.Iterables;
+
 /**
- * A component maintenance facet that assumes that Components have the same lifecycle as their
- * single Assets.
+ * R Component and asset removing implementation
  *
- * @since 3.0
+ * @since 3.28
  */
-@Named
-public class SingleAssetComponentMaintenance
+public class OrientRComponentMaintenance
     extends DefaultComponentMaintenanceImpl
 {
-  /*
-   * Deletes both the asset and its component.
+  /**
+   * Deletes the asset and its component if it's the only asset in it.
    */
+  @Override
   @TransactionalDeleteBlob
   protected Set<String> deleteAssetTx(final EntityId assetId, final boolean deleteBlob) {
     StorageTx tx = UnitOfWork.currentTx();
@@ -41,14 +44,20 @@ public class SingleAssetComponentMaintenance
     if (asset == null) {
       return Collections.emptySet();
     }
+
     final EntityId componentId = asset.componentId();
     if (componentId == null) {
       // Assets without components should be deleted on their own
       return super.deleteAssetTx(assetId, deleteBlob);
     }
-    else {
-      // Otherwise, delete the component, which in turn cascades down to the asset
+
+    final Component component = tx.findComponent(componentId);
+    if (Iterables.size(tx.browseAssets(component)) == 1) {
+      // Component with only one asset should be deleted as well with its asset
       return deleteComponentTx(componentId, deleteBlob).getAssets();
+    }
+    else {
+      return super.deleteAssetTx(assetId, deleteBlob);
     }
   }
 }
