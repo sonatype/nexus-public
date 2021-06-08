@@ -114,19 +114,23 @@ public class QuartzTaskInfo
           // we ended running and have lastRunState available, enhance log with it
           newStateName = newStateName + " (" + taskState.getLastRunState().getEndState().name() + ")";
         }
-        if (log.isDebugEnabled()) {
-          log.info("Task {} : {} state change {} -> {}",
-              jobKey,
-              config.getTaskLogName(),
-              this.state, newStateName);
-        }
-        else {
-          log.info("Task {} state change {} -> {}",
-              config.getTaskLogName(),
-              this.state, newStateName);
+        //some tasks don't care to add noise to the logs for start/stop states, and manage logging themselves
+        if (config.isLogTaskState()) {
+          if (log.isDebugEnabled()) {
+            log.info("Task {} : {} state change {} -> {}",
+                jobKey,
+                config.getTaskLogName(),
+                this.state, newStateName);
+          }
+          else {
+            log.info("Task {} state change {} -> {}",
+                config.getTaskLogName(),
+                this.state, newStateName);
+          }
         }
       }
-      else {
+      //more info we only want to print if the task needs it
+      else if (config.isLogTaskState()) {
         // this is usually config change of waiting task
         log.debug("Task {} : {} : state={} nextRun={}",
             jobKey.getName(),
