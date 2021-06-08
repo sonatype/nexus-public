@@ -92,6 +92,8 @@ public class TaskConfiguration
 
   static final String EXPOSED_KEY = ".exposed";
 
+  static final String LOG_STATE_KEY = ".logState";
+
   @JsonProperty("configuration")
   private final Map<String, String> configuration;
 
@@ -274,6 +276,14 @@ public class TaskConfiguration
     setString(LAST_RUN_STATE_END_STATE, endState.name());
     setLong(LAST_RUN_STATE_RUN_STARTED, runStarted.getTime());
     setLong(LAST_RUN_STATE_RUN_DURATION, runDuration);
+  }
+
+  public boolean isLogTaskState() {
+    return getBoolean(LOG_STATE_KEY, true);
+  }
+
+  public void setLogTaskState(final boolean logTaskState) {
+    setBoolean(LOG_STATE_KEY, logTaskState);
   }
 
   //
