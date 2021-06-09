@@ -10,23 +10,23 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.conda.internal;
+package org.sonatype.nexus.repository.conda.datastore.internal.browse;
 
-import org.junit.Test;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import org.sonatype.nexus.repository.conda.CondaFormat;
+import org.sonatype.nexus.repository.content.browse.DefaultBrowseNodeGenerator;
 
 /**
- * @since 3.19
+ * Conda places components at the same level as their assets.
+ *
+ * @since 3.next
  */
-public class CondaFormatTest
+@Singleton
+@Named(CondaFormat.NAME)
+public class CondaBrowseNodeGenerator
+    extends DefaultBrowseNodeGenerator
 {
-  @Test
-  public void formatNameIsCorrectTest() {
-    CondaFormat underTest = new CondaFormat();
-
-    assertThat(underTest.getValue(), is(equalTo(CondaFormat.NAME)));
-  }
+  // the default behaviour
 }

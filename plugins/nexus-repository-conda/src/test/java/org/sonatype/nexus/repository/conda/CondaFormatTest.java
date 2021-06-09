@@ -10,28 +10,23 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.conda.internal.security;
+package org.sonatype.nexus.repository.conda;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import org.junit.Test;
 
-import org.sonatype.nexus.repository.conda.CondaFormat;
-import org.sonatype.nexus.repository.Format;
-import org.sonatype.nexus.repository.security.RepositoryFormatSecurityContributor;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
- * Conda format security resource.
- *
  * @since 3.19
  */
-@Named
-@Singleton
-public class CondaFormatSecurityContributor
-    extends RepositoryFormatSecurityContributor
+public class CondaFormatTest
 {
-  @Inject
-  public CondaFormatSecurityContributor(@Named(CondaFormat.NAME) final Format format) {
-    super(format);
+  @Test
+  public void formatNameIsCorrectTest() {
+    CondaFormat underTest = new CondaFormat();
+
+    assertThat(underTest.getValue(), is(equalTo(CondaFormat.NAME)));
   }
 }

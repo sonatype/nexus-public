@@ -10,12 +10,14 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.conda.internal.security;
+package org.sonatype.nexus.repository.conda.security;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.conda.internal.CondaFormat;
+import org.sonatype.nexus.repository.conda.CondaFormat;
+import org.sonatype.nexus.repository.conda.internal.security.CondaFormatSecurityContributor;
+import org.sonatype.nexus.repository.conda.internal.security.CondaSecurityFacet;
 import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;

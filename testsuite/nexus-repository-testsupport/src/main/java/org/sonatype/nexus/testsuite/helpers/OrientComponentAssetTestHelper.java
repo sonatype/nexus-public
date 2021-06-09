@@ -56,13 +56,17 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.joda.time.DateTime;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static java.lang.Boolean.FALSE;
 import static java.time.LocalDate.now;
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang.StringUtils.stripStart;
 import static org.apache.commons.lang3.StringUtils.endsWith;
 import static org.apache.commons.lang3.StringUtils.indexOf;
 import static org.apache.commons.lang3.StringUtils.startsWith;
 import static org.apache.commons.lang3.StringUtils.substring;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
@@ -188,6 +192,18 @@ public class OrientComponentAssetTestHelper
     }
   }
 
+  private static List<Asset> findAssetByComponentName(final Repository repository, final String componentName) {
+    try (StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get()) {
+      tx.begin();
+      return newArrayList(tx.findAssets(
+          Query.builder()
+              .where("component.name").eq(componentName)
+              .build(),
+          singletonList(repository)
+      ));
+    }
+  }
+
   private static Optional<Asset> findAssetByNameNoBucketFind(final Repository repository, final String name) {
     try (StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get()) {
       tx.begin();
@@ -218,9 +234,21 @@ public class OrientComponentAssetTestHelper
   }
 
   @Override
+  public boolean assetExists(final Repository repository, final String componentName, final String formatExtension) {
+    List<Asset> assets = findAssetByComponentName(repository, componentName);
+    assertThat(assets.isEmpty(), is(FALSE));
+    return assets.stream().anyMatch(asset -> asset.name().endsWith(formatExtension));
+  }
+
+  @Override
   public boolean componentExists(final Repository repository, final String name) {
     return findComponents(repository).stream()
         .anyMatch(c -> name.equals(c.name()));
+  }
+
+  @Override
+  public boolean checkComponentExist(final Repository repository, final Predicate<String> nameMatcher) {
+    return findComponents(repository).stream().anyMatch(component -> nameMatcher.test(component.name()));
   }
 
   @Override

@@ -15,25 +15,21 @@ package org.sonatype.nexus.testsuite.testsupport.conda;
 import java.util.List;
 import java.util.Optional;
 
+import javax.inject.Inject;
+
 import com.sonatype.nexus.docker.testsupport.conda.CondaCommandLineITSupport;
 import com.sonatype.nexus.docker.testsupport.framework.DockerContainerConfig;
 
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.Component;
-import org.sonatype.nexus.repository.storage.Query;
-import org.sonatype.nexus.repository.storage.StorageFacet;
-import org.sonatype.nexus.repository.storage.StorageTx;
+import org.sonatype.nexus.testsuite.helpers.ComponentAssetTestHelper;
 import org.sonatype.nexus.testsuite.testsupport.FormatClientITSupport;
 
 import org.joda.time.DateTime;
 import org.junit.Before;
 
-import static com.google.common.collect.Lists.newArrayList;
 import static com.sonatype.nexus.docker.testsupport.conda.CondaClientITConfigFactory.createCondaConfig;
 import static java.lang.Boolean.TRUE;
-import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -53,6 +49,9 @@ public abstract class CondaClientITSupport
   protected CondaCommandLineITSupport condaCli;
 
   private String environmentName;
+
+  @Inject
+  protected ComponentAssetTestHelper testHelper;
 
   /**
    * This initialize method will add the conda resources test data directory and create the {@link #condaCli}.
@@ -75,25 +74,6 @@ public abstract class CondaClientITSupport
 
   protected Repository createCondaProxyRepository(final String repoName, final String repoProxyUrl) {
     return repos.createCondaProxy(repoName, repoProxyUrl);
-  }
-
-  protected static List<Component> findComponents(final Repository repo) {
-    try (StorageTx tx = getStorageTx(repo)) {
-      tx.begin();
-      return newArrayList(tx.browseComponents(tx.findBucket(repo)));
-    }
-  }
-
-  protected static Iterable<Asset> findAssets(final Repository repo, final String componentName) {
-    try (StorageTx tx = getStorageTx(repo)) {
-      tx.begin();
-      return tx.findAssets(
-          Query.builder()
-              .where("component.name").eq(componentName)
-              .build(),
-          singletonList(repo)
-      );
-    }
   }
 
   public Optional<String> getInstalledPackage(final String packageName)
@@ -127,34 +107,20 @@ public abstract class CondaClientITSupport
                                                  final String formatExtension,
                                                  final String packageName)
   {
-    condaCli.condaUpdate(); //Update client to use latest version
-    condaCli.condaExec(
-        "config --set use_only_tar_bz2 " + isEnableTar.toString()); //Set configuration to use or not legacy code
+    //Update client to use latest version
+    condaCli.condaUpdate();
+    //Set configuration to use or not legacy code
+    condaCli.condaExec("config --set use_only_tar_bz2 " + isEnableTar.toString());
 
     installPackage(packageName);
-    List<Component> components = findComponents(condaRepository);
-    Optional<Component> component = components.stream()
-        .filter(comp -> packageName.equals(comp.name() + CONDA_DELIMITER + comp.version()))
-        .findFirst();
-    assertThat(component.isPresent(), is(TRUE));
 
-    Iterable<Asset> assets = findAssets(condaRepository, component.get().name());
-    assertThat(assets.iterator().hasNext(), is(TRUE));
+    String[] packageNameAndVersion = packageName.split(CONDA_DELIMITER);
+    assertThat(packageNameAndVersion.length, is(2));
+    String name = packageNameAndVersion[0];
+    String version = packageNameAndVersion[1];
 
-    boolean isExistExtension = false;
-
-    while (assets.iterator().hasNext()) {
-      Asset asset = assets.iterator().next();
-      if (asset.name().endsWith(formatExtension)) {
-        isExistExtension = true;
-        break;
-      }
-    }
-    assertThat(isExistExtension, is(TRUE));
-  }
-
-  private static StorageTx getStorageTx(final Repository repository) {
-    return repository.facet(StorageFacet.class).txSupplier().get();
+    assertThat(testHelper.componentExists(condaRepository, name, version), is(TRUE));
+    assertThat(testHelper.assetExists(condaRepository, name, formatExtension), is(TRUE));
   }
 
   public void activateNewEnvironment()

@@ -10,28 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.conda.internal.security;
+package org.sonatype.nexus.repository.conda.datastore.internal.store;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-
-import org.sonatype.nexus.repository.conda.CondaFormat;
-import org.sonatype.nexus.repository.Format;
-import org.sonatype.nexus.repository.security.RepositoryFormatSecurityContributor;
+import org.sonatype.nexus.repository.content.store.ComponentDAO;
 
 /**
- * Conda format security resource.
+ * Conda {@link ComponentDAO}.
  *
- * @since 3.19
+ * @since 3.next
  */
-@Named
-@Singleton
-public class CondaFormatSecurityContributor
-    extends RepositoryFormatSecurityContributor
+public interface CondaComponentDAO
+    extends ComponentDAO
 {
-  @Inject
-  public CondaFormatSecurityContributor(@Named(CondaFormat.NAME) final Format format) {
-    super(format);
-  }
+  // nothing to add...
 }

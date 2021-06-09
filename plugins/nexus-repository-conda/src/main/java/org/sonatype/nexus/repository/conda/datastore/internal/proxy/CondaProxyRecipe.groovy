@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.conda.internal.orient.proxy
+package org.sonatype.nexus.repository.conda.datastore.internal.proxy
 
 import javax.annotation.Nonnull
 import javax.inject.Inject
@@ -21,10 +21,9 @@ import javax.inject.Singleton
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
-import org.sonatype.nexus.repository.cache.NegativeCacheFacet
-import org.sonatype.nexus.repository.cache.NegativeCacheHandler
-import org.sonatype.nexus.repository.conda.internal.CondaFormat
-import org.sonatype.nexus.repository.conda.internal.orient.CondaRecipeSupport
+import org.sonatype.nexus.repository.conda.CondaFormat
+import org.sonatype.nexus.repository.conda.datastore.internal.CondaContentFacet
+import org.sonatype.nexus.repository.conda.datastore.internal.CondaRecipeSupport
 import org.sonatype.nexus.repository.http.HttpHandlers
 import org.sonatype.nexus.repository.proxy.ProxyHandler
 import org.sonatype.nexus.repository.types.ProxyType
@@ -32,10 +31,11 @@ import org.sonatype.nexus.repository.view.ConfigurableViewFacet
 import org.sonatype.nexus.repository.view.Route
 import org.sonatype.nexus.repository.view.Router.Builder
 import org.sonatype.nexus.repository.view.ViewFacet
-import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler
 
 /**
- * @since 3.19
+ * Conda proxy recipe.
+ *
+ * @since 3.next
  */
 @Named(CondaProxyRecipe.NAME)
 @Singleton
@@ -45,19 +45,13 @@ class CondaProxyRecipe
   public static final String NAME = 'conda-proxy'
 
   @Inject
-  Provider<CondaProxyFacetImpl> proxyFacet
+  Provider<CondaContentFacet> contentFacet
+
+  @Inject
+  Provider<CondaProxyFacet> proxyFacet;
 
   @Inject
   ProxyHandler proxyHandler
-
-  @Inject
-  Provider<NegativeCacheFacet> negativeCacheFacet
-
-  @Inject
-  NegativeCacheHandler negativeCacheHandler
-
-  @Inject
-  LastDownloadedHandler lastDownloadedHandler
 
   @Inject
   CondaProxyRecipe(@Named(ProxyType.NAME) final Type type, @Named(CondaFormat.NAME) final Format format) {
@@ -66,17 +60,16 @@ class CondaProxyRecipe
 
   @Override
   void apply(@Nonnull final Repository repository) throws Exception {
+    repository.attach(contentFacet.get())
+    repository.attach(browseFacet.get())
+    repository.attach(proxyFacet.get())
     repository.attach(securityFacet.get())
     repository.attach(configure(viewFacet.get()))
     repository.attach(httpClientFacet.get())
     repository.attach(negativeCacheFacet.get())
-    repository.attach(componentMaintenanceFacet.get())
-    repository.attach(condaFacet.get())
-    repository.attach(proxyFacet.get())
-    repository.attach(storageFacet.get())
+    repository.attach(maintenanceFacet.get())
     repository.attach(searchFacet.get())
     repository.attach(purgeUnusedFacet.get())
-    repository.attach(attributesFacet.get())
   }
 
   /**
@@ -87,13 +80,19 @@ class CondaProxyRecipe
 
     addBrowseUnsupportedRoute(builder)
 
-    [rootChannelIndexHtmlMatcher(), rootChannelDataJsonMatcher(), rootChannelRssXmlMatcher(), archIndexHtmlMatcher(),
-     archRepodataJsonMatcher(), archRepodataJsonBz2Matcher(), archRepodata2JsonMatcher(), archTarPackageMatcher(), archCondaPackageMatcher()].
+    [rootChannelIndexHtmlMatcher(),
+     rootChannelDataJsonMatcher(),
+     rootChannelRssXmlMatcher(),
+     archIndexHtmlMatcher(),
+     archRepodataJsonMatcher(),
+     archRepodataJsonBz2Matcher(),
+     archRepodata2JsonMatcher(),
+     archTarPackageMatcher(),
+     archCondaPackageMatcher()].
         each { matcher ->
           builder.route(new Route.Builder().matcher(matcher)
               .handler(timingHandler)
               .handler(securityHandler)
-              .handler(highAvailabilitySupportHandler)
               .handler(routingHandler)
               .handler(exceptionHandler)
               .handler(handlerContributor)
@@ -101,7 +100,6 @@ class CondaProxyRecipe
               .handler(conditionalRequestHandler)
               .handler(partialFetchHandler)
               .handler(contentHeadersHandler)
-              .handler(unitOfWorkHandler)
               .handler(lastDownloadedHandler)
               .handler(proxyHandler)
               .create())

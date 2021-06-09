@@ -69,6 +69,7 @@ import com.google.common.collect.ImmutableMap;
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Strings.nullToEmpty;
+import static java.lang.Boolean.TRUE;
 import static java.time.LocalDate.now;
 import static org.apache.commons.lang.StringUtils.stripStart;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
@@ -76,6 +77,8 @@ import static org.apache.commons.lang3.StringUtils.endsWith;
 import static org.apache.commons.lang3.StringUtils.indexOf;
 import static org.apache.commons.lang3.StringUtils.startsWith;
 import static org.apache.commons.lang3.StringUtils.substring;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
 import static org.sonatype.nexus.common.entity.Continuations.streamOf;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
@@ -240,9 +243,25 @@ public class DatastoreComponentAssetTestHelper
   }
 
   @Override
+  public boolean assetExists(final Repository repository, final String componentName, final String formatExtension) {
+    Optional<FluentComponent> component = browseComponents(repository).stream()
+        .filter(c -> componentName.equals(c.name()))
+        .findFirst();
+
+    assertThat(component.isPresent(), is(TRUE));
+    return component.get().assets().stream().anyMatch(asset -> asset.path().endsWith(formatExtension));
+  }
+
+  @Override
   public boolean componentExists(final Repository repository, final String name) {
     List<FluentComponent> components = browseComponents(repository);
     return components.stream().anyMatch(comp -> comp.name().equals(name));
+  }
+
+  @Override
+  public boolean checkComponentExist(final Repository repository, final Predicate<String> nameMatcher)
+  {
+    return browseComponents(repository).stream().anyMatch(c -> nameMatcher.test(c.name()));
   }
 
   @Override

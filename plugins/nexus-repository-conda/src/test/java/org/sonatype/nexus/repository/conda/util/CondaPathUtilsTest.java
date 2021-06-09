@@ -10,13 +10,13 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.conda.internal.util;
+package org.sonatype.nexus.repository.conda.util;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.repository.conda.internal.AssetKind;
+import org.sonatype.nexus.repository.conda.AssetKind;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
 
 import org.junit.Before;
@@ -27,18 +27,18 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.repository.conda.internal.AssetKind.*;
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.CONDA_EXT;
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.INDEX_HTML;
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.TAR_BZ2_EXT;
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.arch;
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.build;
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.buildArchAssetPath;
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.buildAssetPath;
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.buildCondaPackagePath;
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.name;
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.path;
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.version;
+import static org.sonatype.nexus.repository.conda.AssetKind.*;
+import static org.sonatype.nexus.repository.conda.util.CondaPathUtils.CONDA_EXT;
+import static org.sonatype.nexus.repository.conda.util.CondaPathUtils.INDEX_HTML;
+import static org.sonatype.nexus.repository.conda.util.CondaPathUtils.TAR_BZ2_EXT;
+import static org.sonatype.nexus.repository.conda.util.CondaPathUtils.arch;
+import static org.sonatype.nexus.repository.conda.util.CondaPathUtils.build;
+import static org.sonatype.nexus.repository.conda.util.CondaPathUtils.buildArchAssetPath;
+import static org.sonatype.nexus.repository.conda.util.CondaPathUtils.buildAssetPath;
+import static org.sonatype.nexus.repository.conda.util.CondaPathUtils.buildCondaPackagePath;
+import static org.sonatype.nexus.repository.conda.util.CondaPathUtils.name;
+import static org.sonatype.nexus.repository.conda.util.CondaPathUtils.path;
+import static org.sonatype.nexus.repository.conda.util.CondaPathUtils.version;
 
 /**
  * @since 3.19

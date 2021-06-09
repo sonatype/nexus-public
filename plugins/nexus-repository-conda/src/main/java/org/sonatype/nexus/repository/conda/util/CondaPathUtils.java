@@ -10,10 +10,13 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.conda.internal.util;
+package org.sonatype.nexus.repository.conda.util;
 
+import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher.State;
+
+import org.apache.commons.lang3.StringUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -94,5 +97,15 @@ public class CondaPathUtils
         version(matcherState),
         build(matcherState),
         format(matcherState));
+  }
+
+  /**
+   * Returns path with appended string on the beginning.
+   *
+   * @param path - Any path e.g. 'some/path/example'
+   * @return - the path, e.g. '/some/path/example'
+   */
+  public static String normalizeAssetPath(final String path) {
+    return StringUtils.prependIfMissing(path, BrowsePath.SLASH);
   }
 }
