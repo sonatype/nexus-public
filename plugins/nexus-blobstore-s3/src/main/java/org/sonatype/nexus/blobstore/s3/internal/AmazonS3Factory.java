@@ -12,12 +12,15 @@
  */
 package org.sonatype.nexus.blobstore.s3.internal;
 
+import java.util.Optional;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.common.text.Strings2;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.PredefinedClientConfigurations;
@@ -36,6 +39,7 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.NexusS3ClientBuilder;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
+import com.google.common.base.Predicates;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.*;
@@ -75,7 +79,11 @@ public class AmazonS3Factory
     String region = s3Configuration.get(REGION_KEY, String.class);
     String signerType = s3Configuration.get(SIGNERTYPE_KEY, String.class);
     String forcePathStyle = s3Configuration.get(FORCE_PATH_STYLE_KEY, String.class);
-    Integer maximumConnectionPoolSize = Integer.valueOf(s3Configuration.get(MAX_CONNECTION_POOL_KEY, String.class, "-1"));
+
+    int maximumConnectionPoolSize = Optional.ofNullable(s3Configuration.get(MAX_CONNECTION_POOL_KEY, String.class))
+        .filter(Predicates.not(Strings2::isBlank))
+        .map(Integer::valueOf)
+        .orElse(-1);
 
     AWSCredentialsProvider credentialsProvider = null;
     if (!isNullOrEmpty(accessKeyId) && !isNullOrEmpty(secretAccessKey)) {
