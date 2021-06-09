@@ -65,6 +65,11 @@
     </dependency>
 
     <dependency>
+      <groupId>com.sonatype.insight.brain</groupId>
+      <artifactId>insight-rm-common</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>commons-fileupload</groupId>
       <artifactId>commons-fileupload</artifactId>
     </dependency>

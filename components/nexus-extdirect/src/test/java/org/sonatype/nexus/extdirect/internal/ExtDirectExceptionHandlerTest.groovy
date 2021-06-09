@@ -16,13 +16,13 @@ import javax.validation.ConstraintViolation
 import javax.validation.ConstraintViolationException
 import javax.validation.Path
 
+import com.sonatype.insight.rm.rest.HttpException
+
 import org.sonatype.nexus.extdirect.model.ErrorResponse
 import org.sonatype.nexus.extdirect.model.ValidationResponse
 
-import com.orientechnologies.common.exception.OException
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException
 import com.softwarementors.extjs.djn.api.RegisteredMethod
-import org.apache.shiro.authz.UnauthenticatedException
 import org.junit.Test
 
 import static org.mockito.Mockito.mock
@@ -41,6 +41,17 @@ class ExtDirectExceptionHandlerTest
     ErrorResponse response = (ErrorResponse) exceptionHandler.handleException(registeredMethod, exception)
 
     assert response.message == 'A database error occurred'
+  }
+
+  @Test
+  void handleIQConnectionException() {
+    RegisteredMethod registeredMethod = mock(RegisteredMethod)
+
+    def exception = new HttpException(404, 'Not Found', new IllegalAccessException())
+
+    ErrorResponse response = (ErrorResponse) exceptionHandler.handleException(registeredMethod, exception)
+
+    assert response.message == 'Connection unsuccessful.'
   }
 
   @Test

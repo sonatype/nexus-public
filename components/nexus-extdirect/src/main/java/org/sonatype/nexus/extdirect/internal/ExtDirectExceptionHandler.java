@@ -29,6 +29,7 @@ import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import com.softwarementors.extjs.djn.api.RegisteredMethod;
 import org.apache.commons.collections.ListUtils;
+import org.apache.http.conn.HttpHostConnectException;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authz.UnauthenticatedException;
 import org.slf4j.Logger;
@@ -82,6 +83,10 @@ public class ExtDirectExceptionHandler
         || exceptionName.contains("org.sonatype.nexus.datastore")
         || exceptionName.contains("com.orientechnologies")) {
       return error(new Exception("A database error occurred"));
+    }
+
+    if (e instanceof HttpHostConnectException || exceptionName.contains("com.sonatype.insight.rm.rest.HttpException")) {
+      return error(new Exception("Connection unsuccessful."));
     }
 
     return error(e);
