@@ -25,7 +25,7 @@ import org.sonatype.nexus.repository.apt.internal.AptFacetHelper;
 import org.sonatype.nexus.repository.apt.internal.AptPackageParser;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
 import org.sonatype.nexus.repository.apt.internal.debian.PackageInfo;
-import org.sonatype.nexus.repository.browse.node.BrowsePath;
+import org.sonatype.nexus.repository.apt.internal.snapshot.AptSnapshotHandler;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
@@ -34,6 +34,8 @@ import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.payloads.StreamPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
+
+import org.apache.commons.lang.StringUtils;
 
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
@@ -53,7 +55,7 @@ public class AptHostedHandler
   @Nonnull
   @Override
   public Response handle(@Nonnull final Context context) throws Exception {
-    String path = context.getRequest().getPath();
+    String path = assetPath(context);
     String method = context.getRequest().getAction();
     AptContentFacet contentFacet = context.getRepository().facet(AptContentFacet.class);
 
@@ -82,7 +84,7 @@ public class AptHostedHandler
       hostedFacet.rebuildMetadata();
       return HttpResponses.ok();
     }
-    else if (BrowsePath.SLASH.equals(path)) {
+    else if (StringUtils.isBlank(path)) {
       final Payload payload = context.getRequest().getPayload();
       try (TempBlob tempBlob = contentFacet.getTempBlob(payload)) {
         ControlFile controlFile = AptPackageParser
@@ -101,5 +103,9 @@ public class AptHostedHandler
     else {
       return HttpResponses.methodNotAllowed(POST, GET, HEAD);
     }
+  }
+
+  private String assetPath(final Context context) {
+    return context.getAttributes().require(AptSnapshotHandler.State.class).assetPath;
   }
 }
