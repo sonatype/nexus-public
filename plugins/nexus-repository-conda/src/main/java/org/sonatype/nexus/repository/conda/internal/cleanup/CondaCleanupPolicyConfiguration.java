@@ -18,7 +18,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.cleanup.config.CleanupPolicyConfiguration;
-import org.sonatype.nexus.repository.conda.internal.CondaFormat;
+import org.sonatype.nexus.repository.conda.CondaFormat;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -39,7 +39,8 @@ public class CondaCleanupPolicyConfiguration
 {
   @Override
   public Map<String, Boolean> getConfiguration() {
-    return ImmutableMap.of(LAST_BLOB_UPDATED_KEY, true,
+    return ImmutableMap.of(
+        LAST_BLOB_UPDATED_KEY, true,
         LAST_DOWNLOADED_KEY, true,
         IS_PRERELEASE_KEY, false,
         REGEX_KEY, true);

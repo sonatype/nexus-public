@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.conda.internal.orient
+package org.sonatype.nexus.repository.conda.datastore.internal
 
 import javax.inject.Inject
 import javax.inject.Provider
@@ -18,62 +18,62 @@ import javax.inject.Provider
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.RecipeSupport
 import org.sonatype.nexus.repository.Type
-import org.sonatype.nexus.repository.attributes.AttributesFacet
 import org.sonatype.nexus.repository.cache.NegativeCacheFacet
 import org.sonatype.nexus.repository.cache.NegativeCacheHandler
-import org.sonatype.nexus.repository.conda.internal.AssetKind
-import org.sonatype.nexus.repository.conda.internal.orient.CondaComponentMaintenanceFacet
-import org.sonatype.nexus.repository.conda.internal.orient.CondaFacetImpl
+import org.sonatype.nexus.repository.conda.AssetKind
 import org.sonatype.nexus.repository.conda.internal.security.CondaSecurityFacet
+import org.sonatype.nexus.repository.content.browse.BrowseFacet
+import org.sonatype.nexus.repository.content.maintenance.LastAssetMaintenanceFacet
+import org.sonatype.nexus.repository.content.search.SearchFacet
 import org.sonatype.nexus.repository.http.PartialFetchHandler
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet
 import org.sonatype.nexus.repository.purge.PurgeUnusedFacet
 import org.sonatype.nexus.repository.routing.RoutingRuleHandler
-import org.sonatype.nexus.repository.search.SearchFacet
 import org.sonatype.nexus.repository.security.SecurityHandler
-import org.sonatype.nexus.repository.storage.StorageFacet
-import org.sonatype.nexus.repository.storage.UnitOfWorkHandler
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
 import org.sonatype.nexus.repository.view.Context
 import org.sonatype.nexus.repository.view.Matcher
 import org.sonatype.nexus.repository.view.handlers.ConditionalRequestHandler
 import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler
 import org.sonatype.nexus.repository.view.handlers.ExceptionHandler
-import org.sonatype.nexus.repository.view.handlers.FormatHighAvailabilitySupportHandler
 import org.sonatype.nexus.repository.view.handlers.HandlerContributor
-import org.sonatype.nexus.repository.view.handlers.HighAvailabilitySupportChecker
+import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler
 import org.sonatype.nexus.repository.view.handlers.TimingHandler
 import org.sonatype.nexus.repository.view.matchers.ActionMatcher
 import org.sonatype.nexus.repository.view.matchers.logic.LogicMatchers
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher
 
-import static org.sonatype.nexus.repository.conda.internal.AssetKind.ARCH_CONDA_PACKAGE
-import static org.sonatype.nexus.repository.conda.internal.AssetKind.ARCH_INDEX_HTML
-import static org.sonatype.nexus.repository.conda.internal.AssetKind.ARCH_REPODATA2_JSON
-import static org.sonatype.nexus.repository.conda.internal.AssetKind.ARCH_REPODATA_JSON
-import static org.sonatype.nexus.repository.conda.internal.AssetKind.ARCH_REPODATA_JSON_BZ2
-import static org.sonatype.nexus.repository.conda.internal.AssetKind.ARCH_TAR_PACKAGE
-import static org.sonatype.nexus.repository.conda.internal.AssetKind.CHANNEL_DATA_JSON
-import static org.sonatype.nexus.repository.conda.internal.AssetKind.CHANNEL_INDEX_HTML
-import static org.sonatype.nexus.repository.conda.internal.AssetKind.CHANNEL_RSS_XML
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.CHANNELDATA_JSON
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.CONDA_EXT
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.INDEX_HTML
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.REPODATA2_JSON
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.REPODATA_JSON
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.REPODATA_JSON_BZ2
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.RSS_XML
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.TAR_BZ2_EXT
+import static org.sonatype.nexus.repository.conda.AssetKind.ARCH_CONDA_PACKAGE
+import static org.sonatype.nexus.repository.conda.AssetKind.ARCH_INDEX_HTML
+import static org.sonatype.nexus.repository.conda.AssetKind.ARCH_REPODATA2_JSON
+import static org.sonatype.nexus.repository.conda.AssetKind.ARCH_REPODATA_JSON
+import static org.sonatype.nexus.repository.conda.AssetKind.ARCH_REPODATA_JSON_BZ2
+import static org.sonatype.nexus.repository.conda.AssetKind.ARCH_TAR_PACKAGE
+import static org.sonatype.nexus.repository.conda.AssetKind.CHANNEL_DATA_JSON
+import static org.sonatype.nexus.repository.conda.AssetKind.CHANNEL_INDEX_HTML
+import static org.sonatype.nexus.repository.conda.AssetKind.CHANNEL_RSS_XML
+import static org.sonatype.nexus.repository.conda.util.CondaPathUtils.CHANNELDATA_JSON
+import static org.sonatype.nexus.repository.conda.util.CondaPathUtils.CONDA_EXT
+import static org.sonatype.nexus.repository.conda.util.CondaPathUtils.INDEX_HTML
+import static org.sonatype.nexus.repository.conda.util.CondaPathUtils.REPODATA2_JSON
+import static org.sonatype.nexus.repository.conda.util.CondaPathUtils.REPODATA_JSON
+import static org.sonatype.nexus.repository.conda.util.CondaPathUtils.REPODATA_JSON_BZ2
+import static org.sonatype.nexus.repository.conda.util.CondaPathUtils.RSS_XML
+import static org.sonatype.nexus.repository.conda.util.CondaPathUtils.TAR_BZ2_EXT
 import static org.sonatype.nexus.repository.http.HttpMethods.GET
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD
+
 /**
  * Support for Conda recipes.
  *
- * @since 3.19
+ * @since 3.next
  */
 abstract class CondaRecipeSupport
     extends RecipeSupport
 {
+  @Inject
+  Provider<BrowseFacet> browseFacet
+
   @Inject
   Provider<CondaSecurityFacet> securityFacet
 
@@ -81,16 +81,7 @@ abstract class CondaRecipeSupport
   Provider<ConfigurableViewFacet> viewFacet
 
   @Inject
-  Provider<CondaFacetImpl> condaFacet
-
-  @Inject
-  Provider<StorageFacet> storageFacet
-
-  @Inject
   Provider<SearchFacet> searchFacet
-
-  @Inject
-  Provider<AttributesFacet> attributesFacet
 
   @Inject
   ExceptionHandler exceptionHandler
@@ -111,13 +102,10 @@ abstract class CondaRecipeSupport
   ContentHeadersHandler contentHeadersHandler
 
   @Inject
-  UnitOfWorkHandler unitOfWorkHandler
-
-  @Inject
   HandlerContributor handlerContributor
 
   @Inject
-  Provider<CondaComponentMaintenanceFacet> componentMaintenanceFacet
+  Provider<LastAssetMaintenanceFacet> maintenanceFacet
 
   @Inject
   Provider<HttpClientFacet> httpClientFacet
@@ -132,13 +120,10 @@ abstract class CondaRecipeSupport
   NegativeCacheHandler negativeCacheHandler
 
   @Inject
-  HighAvailabilitySupportChecker highAvailabilitySupportChecker;
-
-  @Inject
-  FormatHighAvailabilitySupportHandler highAvailabilitySupportHandler;
-
-  @Inject
   RoutingRuleHandler routingHandler
+
+  @Inject
+  LastDownloadedHandler lastDownloadedHandler
 
   protected CondaRecipeSupport(final Type type, final Format format) {
     super(type, format)
@@ -201,8 +186,4 @@ abstract class CondaRecipeSupport
     )
   }
 
-  @Override
-  boolean isFeatureEnabled() {
-    return highAvailabilitySupportChecker.isSupported(getFormat().getValue())
-  }
 }

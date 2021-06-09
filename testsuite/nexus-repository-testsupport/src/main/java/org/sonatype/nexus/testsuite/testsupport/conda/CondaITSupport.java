@@ -12,12 +12,6 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.conda;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Provider;
-
-import org.sonatype.nexus.orient.DatabaseInstance;
-import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.testsuite.testsupport.RepositoryITSupport;
 
@@ -57,10 +51,6 @@ public class CondaITSupport
 
   public static final String PATH_TO_THE_PACKAGE =
       ROOT_LINUX + "/" + PACKAGE_NAME + "/";
-
-  @Inject
-  @Named(DatabaseInstanceNames.COMPONENT)
-  Provider<DatabaseInstance> databaseInstanceProvider;
 
   public CondaITSupport() {
     testData.addDirectory(resolveBaseFile("target/it-resources/conda"));

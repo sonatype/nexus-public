@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.conda.internal.rest;
+package org.sonatype.nexus.repository.conda.rest;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -20,7 +20,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
-import org.sonatype.nexus.repository.conda.internal.CondaFormat;
+import org.sonatype.nexus.repository.conda.CondaFormat;
 import org.sonatype.nexus.repository.rest.api.AbstractProxyRepositoriesApiResource;
 import org.sonatype.nexus.repository.rest.api.RepositoriesApiResourceV1;
 import org.sonatype.nexus.validation.Validate;
@@ -32,7 +32,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 
-import static org.sonatype.nexus.repository.conda.internal.rest.CondaProxyRepositoriesApiResource.RESOURCE_URI;
+import static org.sonatype.nexus.repository.conda.rest.CondaProxyRepositoriesApiResource.RESOURCE_URI;
 import static org.sonatype.nexus.rest.ApiDocConstants.API_REPOSITORY_MANAGEMENT;
 import static org.sonatype.nexus.rest.ApiDocConstants.AUTHENTICATION_REQUIRED;
 import static org.sonatype.nexus.rest.ApiDocConstants.DISABLED_IN_HIGH_AVAILABILITY;

@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.conda.internal.orient.proxy;
+package org.sonatype.nexus.repository.conda.orient.internal.proxy;
 
 import java.io.IOException;
 
@@ -21,8 +21,8 @@ import javax.inject.Named;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.conda.orient.CondaFacet;
-import org.sonatype.nexus.repository.conda.internal.AssetKind;
-import org.sonatype.nexus.repository.conda.internal.orient.CondaFacetImpl;
+import org.sonatype.nexus.repository.conda.AssetKind;
+import org.sonatype.nexus.repository.conda.orient.internal.CondaFacetImpl;
 import org.sonatype.nexus.repository.proxy.ProxyFacet;
 import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
 import org.sonatype.nexus.repository.storage.Asset;
@@ -39,9 +39,9 @@ import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
-import static org.sonatype.nexus.repository.conda.internal.AssetKind.ARCH_CONDA_PACKAGE;
-import static org.sonatype.nexus.repository.conda.internal.AssetKind.ARCH_TAR_PACKAGE;
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.*;
+import static org.sonatype.nexus.repository.conda.AssetKind.ARCH_CONDA_PACKAGE;
+import static org.sonatype.nexus.repository.conda.AssetKind.ARCH_TAR_PACKAGE;
+import static org.sonatype.nexus.repository.conda.util.CondaPathUtils.*;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 
 /**

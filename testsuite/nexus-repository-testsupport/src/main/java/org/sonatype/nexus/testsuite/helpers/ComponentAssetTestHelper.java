@@ -91,6 +91,11 @@ public interface ComponentAssetTestHelper
   boolean assetExists(Repository repository, String path);
 
   /**
+   *  Verify that an asset at the given component name and format extension exists for the specified repository.
+   */
+  boolean assetExists(Repository repository, String componentName, String formatExtension);
+
+  /**
    * Verify that an asset at the given path exists for the specified repository, and associated with a component.
    */
   boolean assetWithComponentExists(Repository repository, String path, String group, String name);
@@ -106,9 +111,14 @@ public interface ComponentAssetTestHelper
   boolean assetWithoutComponentExists(Repository repository, String path);
 
   /**
-   * Verify that a component with the given name and version exists for the specified repository.
+   * Verify that a component with the given name exists for the specified repository.
    */
   boolean componentExists(Repository repository, String name);
+
+  /**
+   * Verify that a component with the given name mather exists for the specified repository.
+   */
+  boolean checkComponentExist(Repository repository, Predicate<String> nameMatcher);
 
   /**
    * Verify that a component with the given name and version exists for the specified repository.
