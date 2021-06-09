@@ -512,6 +512,7 @@ This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 
     AUDITLOGFILES_LABEL: 'Audit log files',
     METRICS_LABEL: 'System and component metrics',
     JMX_LABEL: 'JMX information',
+    REPLICATION_LABEL: 'Native replication logs (rsync or awscli)',
     LIMITFILESIZES_LABEL: 'Limit files in the ZIP archive to 30 MB apiece',
     LIMITZIPSIZE_LABEL: 'Limit the ZIP archive to 20 MB',
     CREATED_TITLE: 'Support ZIP Created',

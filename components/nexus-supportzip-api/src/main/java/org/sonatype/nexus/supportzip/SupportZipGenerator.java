@@ -77,6 +77,11 @@ public interface SupportZipGenerator
     private boolean jmx;
 
     /**
+     * Include Replication information.
+     */
+    private boolean replication;
+
+    /**
      * Limit the size of files included in the ZIP.
      */
     private boolean limitFileSizes;
@@ -158,6 +163,14 @@ public interface SupportZipGenerator
       this.jmx = jmx;
     }
 
+    public boolean isReplication() {
+      return replication;
+    }
+
+    public void setReplication(final boolean replication) {
+      this.replication = replication;
+    }
+
     public boolean isLimitFileSizes() {
       return limitFileSizes;
     }
@@ -186,6 +199,7 @@ public interface SupportZipGenerator
           ", tasklog=" + taskLog +
           ", auditlog=" + auditLog +
           ", jmx=" + jmx +
+          ", replication=" + replication +
           ", limitFileSizes=" + limitFileSizes +
           ", limitZipSize=" + limitZipSize +
           '}';

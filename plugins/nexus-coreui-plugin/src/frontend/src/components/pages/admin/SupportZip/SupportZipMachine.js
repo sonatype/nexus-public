@@ -32,6 +32,7 @@ export default Machine(
           auditLog: true,
           metrics: true,
           jmx: true,
+          replication: true,
           limitFileSizes: true,
           limitZipSize: true
         },
