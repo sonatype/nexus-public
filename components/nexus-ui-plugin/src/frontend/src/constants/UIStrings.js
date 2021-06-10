@@ -44,7 +44,8 @@ export default {
     MAX_CHARS: (max) => `This field has a limit of ${max} characters`,
     INVALID_URL: 'URL is not valid',
     INVALID_EMAIL: 'This field should be an e-mail address in the format "user@example.com"',
-    URL_ERROR: 'URL should be in the format \'http://www.example.com\''
+    URL_ERROR: 'URL should be in the format "http://www.example.com"',
+    URL_NEEDS_TRAILING_SLASH: 'URL should be in the format "http://www.example.com/" and must include a trailing slash'
   },
 
   SAVE_SUCCESS: 'The form was saved successfully',

@@ -69,6 +69,7 @@ export {
   NxH3,
   NxH4,
   NxInfoAlert,
+  NxLoadError,
   NxLoadingSpinner,
   NxLoadWrapper,
   NxModal,
