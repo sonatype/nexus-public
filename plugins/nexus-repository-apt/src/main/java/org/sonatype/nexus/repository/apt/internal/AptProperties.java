@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.apt.internal;
 /**
  * Apt properties
  *
- * @since 3.31
+ * @since 3.next
  */
 public final class AptProperties
 {

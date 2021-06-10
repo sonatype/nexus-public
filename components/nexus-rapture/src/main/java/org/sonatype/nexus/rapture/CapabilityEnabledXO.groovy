@@ -16,7 +16,7 @@ import groovy.transform.ToString
 
 /**
  *
- * @since 3.31
+ * @since 3.next
  */
 @ToString(includePackage = false, includeNames = true)
 class CapabilityEnabledXO

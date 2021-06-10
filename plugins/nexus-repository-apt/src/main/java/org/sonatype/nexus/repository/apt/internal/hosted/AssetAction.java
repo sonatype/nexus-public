@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.apt.internal.hosted;
 /**
  * Type of the action applied to Apt asset
  *
- * @since 3.31
+ * @since 3.next
  */
 public enum AssetAction
 {

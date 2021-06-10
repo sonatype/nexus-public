@@ -32,7 +32,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.browse.node.BrowsePath.SLASH;
 
 /**
- * @since 3.31
+ * @since 3.next
  */
 @Named(AptFormat.NAME)
 @Singleton

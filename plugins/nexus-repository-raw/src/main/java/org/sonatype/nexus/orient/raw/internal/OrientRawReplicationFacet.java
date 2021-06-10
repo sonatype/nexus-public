@@ -35,7 +35,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 /**
  * A {@link ReplicationFacet} for raw content running with orient.
  *
- * @since 3.31
+ * @since 3.next
  */
 @Named
 public class OrientRawReplicationFacet

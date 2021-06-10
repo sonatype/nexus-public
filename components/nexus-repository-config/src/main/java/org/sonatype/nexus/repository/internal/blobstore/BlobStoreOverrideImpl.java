@@ -39,7 +39,7 @@ import static org.sonatype.nexus.common.text.Strings2.isBlank;
  *NEXUS_BLOB_STORE_OVERRIDE='{"default":{"file":{"path":"other_path"}}}'
  * </pre>
  *
- * @since 3.31
+ * @since 3.next
  */
 @FeatureFlag(name = "nexus.blobstore.override.enabled", enabledByDefault = true)
 @Named

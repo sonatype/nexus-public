@@ -20,7 +20,7 @@ import javax.annotation.Nonnull;
 /**
  * For use instead of Supplier<InputStream> to reduce errors which leave streams open.
  *
- * @since 3.31
+ * @since 3.next
  */
 @FunctionalInterface
 public interface InputStreamSupplier

@@ -15,7 +15,7 @@ package org.sonatype.nexus.blobstore.api;
 /**
  * Indicates that an error occurred connecting to the source of the blobstore.
  *
- * @since 3.31
+ * @since 3.next
  */
 public class BlobStoreConnectionException
     extends RuntimeException

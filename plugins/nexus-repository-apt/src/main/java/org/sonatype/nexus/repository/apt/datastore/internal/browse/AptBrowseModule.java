@@ -21,7 +21,7 @@ import org.sonatype.nexus.repository.content.browse.store.FormatBrowseModule;
 /**
  * Configures the content store bindings for an Apt format.
  *
- * @since 3.31
+ * @since 3.next
  */
 @Named(AptFormat.NAME)
 @Singleton

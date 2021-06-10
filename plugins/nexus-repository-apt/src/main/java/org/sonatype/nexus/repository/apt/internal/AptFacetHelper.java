@@ -37,7 +37,7 @@ import static org.sonatype.nexus.repository.apt.internal.ReleaseName.RELEASE_GPG
 /**
  * Apt helper class
  *
- * @since 3.31
+ * @since 3.next
  */
 public class AptFacetHelper
 {

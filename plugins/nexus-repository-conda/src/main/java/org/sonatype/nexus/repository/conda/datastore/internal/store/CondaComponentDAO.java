@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.content.store.ComponentDAO;
 /**
  * Conda {@link ComponentDAO}.
  *
- * @since 3.31
+ * @since 3.next
  */
 public interface CondaComponentDAO
     extends ComponentDAO

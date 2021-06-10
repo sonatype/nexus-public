@@ -17,7 +17,7 @@ import javax.annotation.Nullable;
 /**
  * Exception used to indicate when an existing Blob's Input Stream cannot be opened.
  *
- * @since 3.31
+ * @since 3.next
  */
 public class BlobInputStreamException
     extends BlobStoreException

@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.content.store.FormatStoreModule;
 /**
  * Configures the content store bindings for the Conda format.
  *
- * @since 3.31
+ * @since 3.next
  */
 @Named(CondaFormat.NAME)
 public class CondaStoreModule

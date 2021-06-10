@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.content.browse.store.FormatBrowseModule;
 /**
  * Conda {@link FormatBrowseModule}.
  *
- * @since 3.31
+ * @since 3.next
  */
 @Named(CondaFormat.NAME)
 public class CondaBrowseModule

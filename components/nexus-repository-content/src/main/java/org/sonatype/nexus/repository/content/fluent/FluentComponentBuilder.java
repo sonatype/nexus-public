@@ -48,7 +48,7 @@ public interface FluentComponentBuilder
   /**
    * Continue building the component using the given format attributes.
    *
-   * @since 3.31
+   * @since 3.next
    */
   FluentComponentBuilder attributes(String key, Object value);
 

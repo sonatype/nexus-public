@@ -16,12 +16,13 @@ import javax.validation.ConstraintViolation
 import javax.validation.ConstraintViolationException
 import javax.validation.Path
 
+import com.sonatype.insight.rm.rest.HttpException
+
 import org.sonatype.nexus.extdirect.model.ErrorResponse
 import org.sonatype.nexus.extdirect.model.ValidationResponse
 
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException
 import com.softwarementors.extjs.djn.api.RegisteredMethod
-import fake.com.sonatype.insight.rm.rest.HttpException
 import org.junit.Test
 
 import static org.mockito.Mockito.mock

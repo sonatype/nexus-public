@@ -28,7 +28,7 @@ import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotItem.ContentS
 /**
  * Implementation of snapshots for apt hosted repository.
  *
- * @since 3.31
+ * @since 3.next
  */
 @Facet.Exposed
 @Named

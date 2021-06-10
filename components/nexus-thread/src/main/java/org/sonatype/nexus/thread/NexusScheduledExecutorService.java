@@ -29,7 +29,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * A modification of Shiro's {@link SubjectAwareScheduledExecutorService} that in turn returns always the same, supplied {@link
  * Subject} to bind threads with.
  *
- * @since 3.31
+ * @since 3.next
  */
 public class NexusScheduledExecutorService
     extends SubjectAwareScheduledExecutorService

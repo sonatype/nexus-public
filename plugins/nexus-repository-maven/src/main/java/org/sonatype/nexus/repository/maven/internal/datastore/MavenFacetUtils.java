@@ -21,7 +21,7 @@ import static org.sonatype.nexus.repository.maven.internal.Constants.SNAPSHOT_VE
 /**
  * Maven facet utilities for datastore implementation.
  *
- * @since 3.31
+ * @since 3.next
  */
 public final class MavenFacetUtils
 {

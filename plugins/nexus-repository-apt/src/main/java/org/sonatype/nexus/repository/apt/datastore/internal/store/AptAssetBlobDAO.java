@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.apt.datastore.internal.store;
 import org.sonatype.nexus.repository.content.store.AssetBlobDAO;
 
 /**
- * @since 3.31
+ * @since 3.next
  */
 public interface AptAssetBlobDAO
     extends AssetBlobDAO

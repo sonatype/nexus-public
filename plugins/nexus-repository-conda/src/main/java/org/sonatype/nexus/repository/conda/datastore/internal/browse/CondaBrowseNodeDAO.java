@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.content.browse.store.BrowseNodeDAO;
 /**
  * Conda {@link BrowseNodeDAO}.
  *
- * @since 3.31
+ * @since 3.next
  */
 public interface CondaBrowseNodeDAO
     extends BrowseNodeDAO

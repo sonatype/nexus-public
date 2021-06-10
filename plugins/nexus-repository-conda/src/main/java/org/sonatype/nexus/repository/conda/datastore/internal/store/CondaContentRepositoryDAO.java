@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.content.store.ContentRepositoryDAO;
 /**
  * Conda {@link ContentRepositoryDAO}.
  *
- * @since 3.31
+ * @since 3.next
  */
 public interface CondaContentRepositoryDAO
     extends ContentRepositoryDAO

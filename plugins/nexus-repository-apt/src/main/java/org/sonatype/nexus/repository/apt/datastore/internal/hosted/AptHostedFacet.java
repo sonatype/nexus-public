@@ -69,7 +69,7 @@ import static org.sonatype.nexus.repository.apt.internal.ReleaseName.RELEASE_GPG
 /**
  * Apt hosted facet. Holds the logic for recalculation of metadata.
  *
- * @since 3.31
+ * @since 3.next
  */
 @Named
 @Facet.Exposed

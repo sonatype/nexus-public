@@ -33,7 +33,7 @@ import static org.sonatype.nexus.repository.conda.util.CondaPathUtils.*;
 /**
  * The implementation of a logic specific to the proxy repository.
  *
- * @since 3.31
+ * @since 3.next
  */
 @Named
 @Exposed

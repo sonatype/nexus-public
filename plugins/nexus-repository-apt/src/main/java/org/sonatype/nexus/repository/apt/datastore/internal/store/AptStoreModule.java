@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.content.store.FormatStoreModule;
 /**
  * Configures the content store bindings for a Apt format.
  *
- * @since 3.31
+ * @since 3.next
  */
 @Named(AptFormat.NAME)
 public class AptStoreModule

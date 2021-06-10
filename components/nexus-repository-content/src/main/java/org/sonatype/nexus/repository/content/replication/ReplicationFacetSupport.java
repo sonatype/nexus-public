@@ -23,7 +23,7 @@ import org.sonatype.nexus.repository.content.maintenance.ContentMaintenanceFacet
 /**
  * Support for {@link ReplicationFacet} implementations.
  *
- * @since 3.31
+ * @since 3.next
  */
 public abstract class ReplicationFacetSupport
     extends FacetSupport

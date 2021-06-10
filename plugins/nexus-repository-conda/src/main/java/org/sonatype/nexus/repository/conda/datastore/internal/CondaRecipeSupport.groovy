@@ -66,7 +66,7 @@ import static org.sonatype.nexus.repository.http.HttpMethods.HEAD
 /**
  * Support for Conda recipes.
  *
- * @since 3.31
+ * @since 3.next
  */
 abstract class CondaRecipeSupport
     extends RecipeSupport

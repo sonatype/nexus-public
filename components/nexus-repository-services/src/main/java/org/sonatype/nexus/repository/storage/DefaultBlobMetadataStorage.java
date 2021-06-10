@@ -22,7 +22,7 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 /**
  * Default implementation of {@link BlobMetadataStorage} that doesn't store metadata in the blob store.
  *
- * @since 3.31
+ * @since 3.next
  */
 @Named
 @Singleton

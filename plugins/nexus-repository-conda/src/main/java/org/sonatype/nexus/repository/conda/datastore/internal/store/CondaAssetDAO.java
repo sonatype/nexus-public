@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.content.store.AssetDAO;
 /**
  * Conda {@link AssetDAO}.
  *
- * @since 3.31
+ * @since 3.next
  */
 public interface CondaAssetDAO
     extends AssetDAO

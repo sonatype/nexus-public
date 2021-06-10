@@ -24,7 +24,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponent;
  * Allow staging functionality for Apt,
  * @see <a href="https://links.sonatype.com//products/nxrm3/docs/staging">Staging</a> for more details.
  *
- * @since 3.31
+ * @since 3.next
  */
 @Named(AptFormat.NAME)
 @Singleton

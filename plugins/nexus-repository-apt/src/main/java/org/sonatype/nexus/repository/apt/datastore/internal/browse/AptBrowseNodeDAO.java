@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.apt.datastore.internal.browse;
 import org.sonatype.nexus.repository.content.browse.store.BrowseNodeDAO;
 
 /**
- * @since 3.31
+ * @since 3.next
  */
 public interface AptBrowseNodeDAO
     extends BrowseNodeDAO

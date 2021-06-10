@@ -40,7 +40,7 @@ import org.sonatype.nexus.repository.view.payloads.TempBlob;
 /**
  * Support for uploading an Apt components via UI
  *
- * @since 3.31
+ * @since 3.next
  */
 @Singleton
 @Named(AptFormat.NAME)

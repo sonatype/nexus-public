@@ -34,7 +34,7 @@ import static org.sonatype.nexus.repository.maven.internal.datastore.MavenFacetU
 /**
  * Maven content director for datastore implementation.
  *
- * @since 3.31
+ * @since 3.next
  */
 @Named(Maven2Format.NAME)
 @Singleton

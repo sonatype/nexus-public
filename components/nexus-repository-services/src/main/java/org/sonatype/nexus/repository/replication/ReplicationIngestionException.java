@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository.replication;
 
 /**
- * @since 3.31
+ * @since 3.next
  */
 public class ReplicationIngestionException extends RuntimeException
 {
