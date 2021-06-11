@@ -65,6 +65,8 @@
     <nexus.version>3.32.0-SNAPSHOT</nexus.version>
     <nexus2.version>2.14.20-02</nexus2.version>
 
+    <karaf.version>4.3.2</karaf.version>
+
     <!-- Define the node and yarn versions used by the frontend-maven-plugin -->
     <node.version>v12.14.0</node.version>
     <yarn.version>v1.22.0</yarn.version>
@@ -827,7 +829,7 @@
         <plugin>
           <groupId>org.apache.karaf.tooling</groupId>
           <artifactId>karaf-maven-plugin</artifactId>
-          <version>4.2.6</version>
+          <version>${karaf.version}</version>
           <extensions>true</extensions>
           <configuration>
             <excludedArtifactIds>

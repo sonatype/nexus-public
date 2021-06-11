@@ -325,12 +325,14 @@ if "%KARAF_PROFILER%" == "" goto :RUN
 :EXECUTE_DEBUG
     if "%JAVA_DEBUG_OPTS%" == "" set JAVA_DEBUG_OPTS=%DEFAULT_JAVA_DEBUG_OPTS%
     set JAVA_OPTS=%JAVA_DEBUG_OPTS% %JAVA_OPTS%
+    set DEBUG=true
     shift
     goto :RUN_LOOP
 
 :EXECUTE_DEBUGS
     if "%JAVA_DEBUG_OPTS%" == "" set JAVA_DEBUG_OPTS=%DEFAULT_JAVA_DEBUGS_OPTS%
     set JAVA_OPTS=%JAVA_DEBUG_OPTS% %JAVA_OPTS%
+    set DEBUG=true
     shift
     goto :RUN_LOOP
 
@@ -338,6 +340,8 @@ if "%KARAF_PROFILER%" == "" goto :RUN
     SET ARGS=%1 %2 %3 %4 %5 %6 %7 %8
     rem Execute the Java Virtual Machine
     cd "%KARAF_BASE%"
+
+    if not "%DEBUG%" == "true" set JAVA_OPTS=%JAVA_NON_DEBUG_OPTS% %JAVA_OPTS%
 
     rem When users want to update the lib version of, they just need to create
     rem a lib.next directory and on the new restart, it will replace the current lib directory.
@@ -359,19 +363,20 @@ if "%KARAF_PROFILER%" == "" goto :RUN
             "%JAVA%" %JAVA_OPTS% %OPTS% ^
                 --add-reads=java.xml=java.logging ^
                 --add-exports=java.base/org.apache.karaf.specs.locator=java.xml,ALL-UNNAMED ^
-                --patch-module=java.base=lib/endorsed/org.apache.karaf.specs.locator-4.3.0.jar ^
-                --patch-module=java.xml=lib/endorsed/org.apache.karaf.specs.java.xml-4.3.0.jar ^
-                --add-opens=java.base/java.security=ALL-UNNAMED ^
-                --add-opens=java.base/java.net=ALL-UNNAMED ^
-                --add-opens=java.base/java.lang=ALL-UNNAMED ^
-                --add-opens=java.base/java.util=ALL-UNNAMED ^
-                --add-opens=java.naming/javax.naming.spi=ALL-UNNAMED ^
-                --add-opens=java.rmi/sun.rmi.transport.tcp=ALL-UNNAMED ^
+                --patch-module java.base=%KARAF_HOME%\lib\endorsed\org.apache.karaf.specs.locator-4.3.2.jar ^
+                --patch-module java.xml=%KARAF_HOME%\lib\endorsed\org.apache.karaf.specs.java.xml-4.3.2.jar ^
+                --add-opens java.base/java.security=ALL-UNNAMED ^
+                --add-opens java.base/java.net=ALL-UNNAMED ^
+                --add-opens java.base/java.lang=ALL-UNNAMED ^
+                --add-opens java.base/java.util=ALL-UNNAMED ^
+                --add-opens java.naming/javax.naming.spi=ALL-UNNAMED ^
+                --add-opens java.rmi/sun.rmi.transport.tcp=ALL-UNNAMED ^
                 --add-exports=java.base/sun.net.www.protocol.http=ALL-UNNAMED ^
                 --add-exports=java.base/sun.net.www.protocol.https=ALL-UNNAMED ^
                 --add-exports=java.base/sun.net.www.protocol.jar=ALL-UNNAMED ^
                 --add-exports=jdk.xml.dom/org.w3c.dom.html=ALL-UNNAMED ^
                 --add-exports=jdk.naming.rmi/com.sun.jndi.url.rmi=ALL-UNNAMED ^
+                --add-exports java.security.sasl/com.sun.security.sasl=ALL-UNNAMED ^
                 -classpath "%CLASSPATH%" ^
                 -Dkaraf.instances="%KARAF_HOME%\instances" ^
                 -Dkaraf.home="%KARAF_HOME%" ^
