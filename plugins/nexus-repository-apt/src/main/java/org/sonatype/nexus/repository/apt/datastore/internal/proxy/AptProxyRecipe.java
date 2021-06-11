@@ -54,7 +54,7 @@ import static org.sonatype.nexus.repository.http.HttpHandlers.notFound;
 /**
  * Apt proxy repository recipe.
  *
- * @since 3.next
+ * @since 3.31
  */
 @Named(AptProxyRecipe.NAME)
 @Singleton

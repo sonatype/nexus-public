@@ -79,7 +79,7 @@ public class DataStoreConfiguration
   }
 
   /**
-   * @since 3.next
+   * @since 3.31
    */
   public static boolean isSensitiveKey(final String key) {
     return SENSITIVE_KEYS.test(key);

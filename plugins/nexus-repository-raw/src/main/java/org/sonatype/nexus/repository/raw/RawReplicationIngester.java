@@ -35,7 +35,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 
 /**
- * @since 3.next
+ * @since 3.31
  */
 @Named(RawFormat.NAME)
 @Singleton

@@ -37,7 +37,7 @@ import static java.util.stream.Collectors.toList;
 /**
  * Implementation of {@link RawObjectAccess} for the {@link S3BlobStore}.
  *
- * @since 3.next
+ * @since 3.31
  */
 public class S3RawObjectAccess
     implements RawObjectAccess

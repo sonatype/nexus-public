@@ -34,7 +34,7 @@ import static org.sonatype.nexus.testsuite.testsupport.system.RestTestHelper.has
 
 /**
  * Factory for {@link ApiVerifier} which assists with testing REST endpoitns
- * @since 3.next
+ * @since 3.31
  */
 @Named
 @Singleton

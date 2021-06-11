@@ -18,7 +18,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 /**
  * Helper class which helps to connect asset and action performed under it
  *
- * @since 3.next
+ * @since 3.31
  */
 public class AssetChange
 {

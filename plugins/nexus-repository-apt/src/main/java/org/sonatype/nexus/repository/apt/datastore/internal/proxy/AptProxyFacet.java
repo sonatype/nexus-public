@@ -57,7 +57,7 @@ import static org.sonatype.nexus.repository.apt.debian.Utils.isDebPackageContent
 /**
  * The implementation of a logic specific to the proxy repository
  *
- * @since 3.next
+ * @since 3.31
  */
 @Named
 @Facet.Exposed

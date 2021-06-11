@@ -44,7 +44,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Basic implementation of snapshots for apt datastore repositories.
  *
- * @since 3.next
+ * @since 3.31
  */
 public abstract class AptSnapshotFacetSupport
     extends FacetSupport

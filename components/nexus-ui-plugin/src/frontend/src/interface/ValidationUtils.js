@@ -20,7 +20,7 @@ import UIStrings from "../constants/UIStrings";
 const EMAIL_REGEX = /^(")?(?:[^\."])(?:(?:[\.])?(?:[\w\-!#$%&'*+/=?^_`{|}~]))*\1@(\w[\-\w]*\.?){1,5}([A-Za-z]){1,60}$/;
 
 /**
- * @since 3.next
+ * @since 3.31
  */
 export default class ValidationUtils {
   /**

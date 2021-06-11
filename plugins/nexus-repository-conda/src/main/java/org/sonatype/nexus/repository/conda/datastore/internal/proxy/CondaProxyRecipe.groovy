@@ -35,7 +35,7 @@ import org.sonatype.nexus.repository.view.ViewFacet
 /**
  * Conda proxy recipe.
  *
- * @since 3.next
+ * @since 3.31
  */
 @Named(CondaProxyRecipe.NAME)
 @Singleton

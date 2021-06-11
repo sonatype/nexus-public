@@ -40,7 +40,7 @@ import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_DEVELOPER;
 
 /**
- * @since 3.next
+ * @since 3.31
  */
 @FeatureFlag(name = DATASTORE_DEVELOPER)
 @Named(AptFormat.NAME)
