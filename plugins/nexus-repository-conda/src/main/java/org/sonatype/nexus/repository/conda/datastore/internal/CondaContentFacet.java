@@ -38,7 +38,7 @@ import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_K
 /**
  * Conda content facet.
  *
- * @since 3.next
+ * @since 3.31
  */
 @Exposed
 @Named(CondaFormat.NAME)

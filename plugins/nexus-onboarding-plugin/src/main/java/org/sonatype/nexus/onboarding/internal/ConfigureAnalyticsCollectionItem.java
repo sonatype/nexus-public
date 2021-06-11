@@ -30,7 +30,7 @@ import static org.sonatype.nexus.capability.CapabilityType.capabilityType;
 /**
  * Shows analytics opt-in screen for OSS if Analytics Capability is not present.
  *
- * @since 3.next
+ * @since 3.31
  */
 @Named
 @Singleton

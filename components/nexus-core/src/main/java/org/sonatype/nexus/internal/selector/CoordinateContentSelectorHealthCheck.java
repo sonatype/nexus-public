@@ -32,7 +32,7 @@ import static org.apache.commons.lang3.StringUtils.truncate;
  * <p>
  * This warns about them since we will be deprecating them.
  *
- * @since 3.next
+ * @since 3.31
  */
 @Named("Coordinate Content Selectors")
 @Singleton

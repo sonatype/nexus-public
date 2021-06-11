@@ -19,7 +19,7 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 /**
  * Allows asset metadata to be stored in a blob store.
  *
- * @since 3.next
+ * @since 3.31
  */
 public interface BlobMetadataStorage {
 

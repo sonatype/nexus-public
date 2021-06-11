@@ -18,7 +18,7 @@
 
 /**
  *
- * @since 3.next
+ * @since 3.31
  */
 Ext.define('NX.onboarding.step.ConfigureAnalyticsCollectionStep', {
   extend: 'NX.wizard.Step',

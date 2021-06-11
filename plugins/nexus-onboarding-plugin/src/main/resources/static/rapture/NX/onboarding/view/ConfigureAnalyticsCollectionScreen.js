@@ -17,7 +17,7 @@
 /*global Ext, NX*/
 
 /**
- * @since 3.next
+ * @since 3.31
  */
 Ext.define('NX.onboarding.view.ConfigureAnalyticsCollectionScreen', {
   extend: 'NX.onboarding.view.OnboardingScreen',

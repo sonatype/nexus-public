@@ -44,7 +44,7 @@ import static org.sonatype.nexus.repository.http.HttpMethods.POST;
 /**
  * Apt handlers
  *
- * @since 3.next
+ * @since 3.31
  */
 @Named
 @Singleton

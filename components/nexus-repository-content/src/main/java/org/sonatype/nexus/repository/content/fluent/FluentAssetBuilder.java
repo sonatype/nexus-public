@@ -58,7 +58,7 @@ public interface FluentAssetBuilder
   /**
    * Continue building the asset using the given attributes.
    *
-   * @since 3.next
+   * @since 3.31
    */
   FluentAssetBuilder attributes(String key, Object value);
 

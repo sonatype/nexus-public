@@ -32,7 +32,7 @@ import org.sonatype.nexus.repository.content.maintenance.LastAssetMaintenanceFac
 /**
  * Apt maintenance facet
  *
- * @since 3.next
+ * @since 3.31
  */
 @Named
 public class AptLastAssetMaintenanceFacet

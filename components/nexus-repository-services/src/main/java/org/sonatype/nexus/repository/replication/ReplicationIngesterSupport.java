@@ -25,7 +25,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.joda.time.DateTime;
 
 /**
- * @since 3.next
+ * @since 3.31
  */
 public abstract class ReplicationIngesterSupport
     extends ComponentSupport

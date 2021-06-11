@@ -21,7 +21,7 @@ import javax.annotation.Nullable;
 /**
  * Interface for accessing raw objects in a blobstore.
  *
- * @since 3.next
+ * @since 3.31
  */
 public interface RawObjectAccess
 {

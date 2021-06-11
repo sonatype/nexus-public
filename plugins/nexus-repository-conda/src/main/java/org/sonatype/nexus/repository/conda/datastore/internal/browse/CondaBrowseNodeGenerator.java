@@ -21,7 +21,7 @@ import org.sonatype.nexus.repository.content.browse.DefaultBrowseNodeGenerator;
 /**
  * Conda places components at the same level as their assets.
  *
- * @since 3.next
+ * @since 3.31
  */
 @Singleton
 @Named(CondaFormat.NAME)

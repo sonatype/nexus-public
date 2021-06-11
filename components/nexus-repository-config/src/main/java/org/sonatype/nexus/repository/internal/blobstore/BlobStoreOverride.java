@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.internal.blobstore;
 /**
  * Allow the application of "overrides" to blob stores during initialization of {@link BlobStoreManagerImpl}.
  *
- * @since 3.next
+ * @since 3.31
  */
 public interface BlobStoreOverride
 {

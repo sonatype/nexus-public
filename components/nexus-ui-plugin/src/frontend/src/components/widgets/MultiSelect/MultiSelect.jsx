@@ -23,7 +23,7 @@ import './MultiSelect.scss';
 import UIStrings from '../../../constants/UIStrings';
 
 /**
- * @since 3.next
+ * @since 3.31
  */
 export default function MultiSelect({
                                       fromOptions,

@@ -18,7 +18,7 @@ import java.io.IOException;
 import org.bouncycastle.bcpg.ArmoredInputStream;
 
 /**
- * @since 3.next
+ * @since 3.31
  */
 public class AptFilterInputStream
     extends FilterInputStream

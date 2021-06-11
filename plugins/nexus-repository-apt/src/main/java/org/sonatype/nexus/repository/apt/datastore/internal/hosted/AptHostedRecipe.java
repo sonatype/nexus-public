@@ -48,7 +48,7 @@ import static org.sonatype.nexus.repository.http.HttpHandlers.notFound;
 /**
  * Apt hosted repository recipe.
  *
- * @since 3.next
+ * @since 3.31
  */
 @Named(AptHostedRecipe.NAME)
 @Singleton

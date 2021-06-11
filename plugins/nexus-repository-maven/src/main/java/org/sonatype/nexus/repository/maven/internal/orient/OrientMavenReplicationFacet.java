@@ -34,7 +34,7 @@ import static org.sonatype.nexus.repository.maven.internal.orient.MavenFacetUtil
 import static org.sonatype.nexus.repository.maven.internal.orient.MavenFacetUtils.findComponent;
 
 /**
- * @since 3.next
+ * @since 3.31
  */
 @Named
 public class OrientMavenReplicationFacet

@@ -21,7 +21,7 @@ import org.sonatype.nexus.repository.Facet;
 /**
  * Repository {@link Facet} for replication.
  *
- * @since 3.next
+ * @since 3.31
  */
 @Facet.Exposed
 public interface ReplicationFacet

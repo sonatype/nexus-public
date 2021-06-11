@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.FacetSupport;
 /**
  * Support for orient {@link ReplicationFacet} implementations.
  *
- * @since 3.next
+ * @since 3.31
  */
 public abstract class OrientReplicationFacetSupport
     extends FacetSupport

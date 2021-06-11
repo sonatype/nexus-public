@@ -25,7 +25,7 @@ import org.sonatype.nexus.repository.upload.UploadHandlerSupport;
 /**
  * Common base for an Apt upload handlers
  *
- * @since 3.next
+ * @since 3.31
  */
 public abstract class AptUploadHandlerSupport
     extends UploadHandlerSupport

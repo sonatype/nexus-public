@@ -35,7 +35,7 @@ import static java.util.Objects.requireNonNull;
 /**
  * Implementation of {@link RawObjectAccess} for the {@link FileBlobStore}.
  *
- * @since 3.next
+ * @since 3.31
  */
 public class FileRawObjectAccess
     extends ComponentSupport
