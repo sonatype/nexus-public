@@ -88,7 +88,8 @@ class CondaProxyRecipe
     addBrowseUnsupportedRoute(builder)
 
     [rootChannelIndexHtmlMatcher(), rootChannelDataJsonMatcher(), rootChannelRssXmlMatcher(), archIndexHtmlMatcher(),
-     archRepodataJsonMatcher(), archRepodataJsonBz2Matcher(), archRepodata2JsonMatcher(), archTarPackageMatcher(), archCondaPackageMatcher()].
+     archCurrentRepodataJsonMatcher(), archCurrentRepodataJsonBz2Matcher(), archRepodataJsonMatcher(), archRepodataJsonBz2Matcher(), 
+     archRepodata2JsonMatcher(), archTarPackageMatcher(), archCondaPackageMatcher()].
         each { matcher ->
           builder.route(new Route.Builder().matcher(matcher)
               .handler(timingHandler)

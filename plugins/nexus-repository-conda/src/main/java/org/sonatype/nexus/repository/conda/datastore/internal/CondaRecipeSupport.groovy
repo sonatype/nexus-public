@@ -44,6 +44,8 @@ import org.sonatype.nexus.repository.view.matchers.logic.LogicMatchers
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher
 
 import static org.sonatype.nexus.repository.conda.AssetKind.ARCH_CONDA_PACKAGE
+import static org.sonatype.nexus.repository.conda.AssetKind.ARCH_CURRENT_REPODATA_JSON
+import static org.sonatype.nexus.repository.conda.AssetKind.ARCH_CURRENT_REPODATA_JSON_BZ2
 import static org.sonatype.nexus.repository.conda.AssetKind.ARCH_INDEX_HTML
 import static org.sonatype.nexus.repository.conda.AssetKind.ARCH_REPODATA2_JSON
 import static org.sonatype.nexus.repository.conda.AssetKind.ARCH_REPODATA_JSON
@@ -54,6 +56,8 @@ import static org.sonatype.nexus.repository.conda.AssetKind.CHANNEL_INDEX_HTML
 import static org.sonatype.nexus.repository.conda.AssetKind.CHANNEL_RSS_XML
 import static org.sonatype.nexus.repository.conda.util.CondaPathUtils.CHANNELDATA_JSON
 import static org.sonatype.nexus.repository.conda.util.CondaPathUtils.CONDA_EXT
+import static org.sonatype.nexus.repository.conda.util.CondaPathUtils.CURRENT_REPODATA_JSON
+import static org.sonatype.nexus.repository.conda.util.CondaPathUtils.CURRENT_REPODATA_JSON_BZ2
 import static org.sonatype.nexus.repository.conda.util.CondaPathUtils.INDEX_HTML
 import static org.sonatype.nexus.repository.conda.util.CondaPathUtils.REPODATA2_JSON
 import static org.sonatype.nexus.repository.conda.util.CondaPathUtils.REPODATA_JSON
@@ -143,6 +147,14 @@ abstract class CondaRecipeSupport
 
   static Matcher archIndexHtmlMatcher() {
     buildTokenMatcherForPatternAndAssetKind("{path:.*}/{arch:.+}/${INDEX_HTML}", ARCH_INDEX_HTML, GET, HEAD)
+  }
+
+  static Matcher archCurrentRepodataJsonMatcher() {
+    buildTokenMatcherForPatternAndAssetKind("/{path:.+}/{arch:.+}/${CURRENT_REPODATA_JSON}", ARCH_CURRENT_REPODATA_JSON, GET, HEAD)
+  }
+
+  static Matcher archCurrentRepodataJsonBz2Matcher() {
+    buildTokenMatcherForPatternAndAssetKind("/{path:.+}/{arch:.+}/${CURRENT_REPODATA_JSON_BZ2}", ARCH_CURRENT_REPODATA_JSON_BZ2, GET, HEAD)
   }
 
   static Matcher archRepodataJsonMatcher() {

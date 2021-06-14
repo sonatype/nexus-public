@@ -84,6 +84,8 @@ class CondaProxyRecipe
      rootChannelDataJsonMatcher(),
      rootChannelRssXmlMatcher(),
      archIndexHtmlMatcher(),
+     archCurrentRepodataJsonMatcher(),
+     archCurrentRepodataJsonBz2Matcher(),
      archRepodataJsonMatcher(),
      archRepodataJsonBz2Matcher(),
      archRepodata2JsonMatcher(),

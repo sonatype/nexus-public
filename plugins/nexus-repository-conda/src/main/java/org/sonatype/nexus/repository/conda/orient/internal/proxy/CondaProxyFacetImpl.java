@@ -73,6 +73,12 @@ public class CondaProxyFacetImpl
       case ARCH_INDEX_HTML:
         assetPath = buildArchAssetPath(matcherState, INDEX_HTML);
         break;
+      case ARCH_CURRENT_REPODATA_JSON:
+        assetPath = buildArchAssetPath(matcherState, CURRENT_REPODATA_JSON);
+        break;
+      case ARCH_CURRENT_REPODATA_JSON_BZ2:
+        assetPath = buildArchAssetPath(matcherState, CURRENT_REPODATA_JSON_BZ2);
+        break;
       case ARCH_REPODATA_JSON:
         assetPath = buildArchAssetPath(matcherState, REPODATA_JSON);
         break;
@@ -124,6 +130,12 @@ public class CondaProxyFacetImpl
         break;
       case ARCH_INDEX_HTML:
         assetPath = buildArchAssetPath(matcherState, INDEX_HTML);
+        break;
+      case ARCH_CURRENT_REPODATA_JSON:
+        assetPath = buildArchAssetPath(matcherState, CURRENT_REPODATA_JSON);
+        break;
+      case ARCH_CURRENT_REPODATA_JSON_BZ2:
+        assetPath = buildArchAssetPath(matcherState, CURRENT_REPODATA_JSON_BZ2);
         break;
       case ARCH_REPODATA_JSON:
         assetPath = buildArchAssetPath(matcherState, REPODATA_JSON);
