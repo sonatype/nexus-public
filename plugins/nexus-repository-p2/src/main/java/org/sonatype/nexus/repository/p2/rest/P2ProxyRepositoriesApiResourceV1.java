@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.rest.api.RepositoriesApiResourceV1;
 import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 
 /**
- * @since 1.1.7
+ * @since 3.28
  */
 @FeatureFlag(name = ORIENT_ENABLED)
 @Named

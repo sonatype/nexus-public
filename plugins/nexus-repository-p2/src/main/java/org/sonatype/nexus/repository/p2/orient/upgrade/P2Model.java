@@ -10,30 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.p2.rest;
-
-import javax.inject.Named;
-import javax.inject.Singleton;
-import javax.ws.rs.Path;
-
-import org.sonatype.nexus.common.app.FeatureFlag;
-import org.sonatype.nexus.repository.rest.api.RepositoriesApiResourceBeta;
-
-import io.swagger.annotations.Api;
-
-import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
+package org.sonatype.nexus.repository.p2.orient.upgrade;
 
 /**
+ * Holds information about the 'p2' model defined by this plugin.
+ *
+ * This model is stored in the 'component' database as attributes in the generic 'component' model.
+ * Upgrades should depend on the 'component' model and version at the time the upgrade was written.
+ *
  * @since 3.28
- * @deprecated - prefer to use {@link P2ProxyRepositoriesApiResourceV1 } instead of Beta.
  */
-@FeatureFlag(name = ORIENT_ENABLED)
-@Named
-@Singleton
-@Path(RepositoriesApiResourceBeta.RESOURCE_URI + "/p2/proxy")
-@Api(hidden = true)
-@Deprecated
-public class P2ProxyRepositoriesApiResourceBeta
-    extends P2ProxyRepositoriesApiResource
+public interface P2Model
 {
+  String NAME = "p2";
 }

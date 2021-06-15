@@ -23,8 +23,6 @@ import org.sonatype.nexus.repository.p2.internal.exception.AttributeParsingExcep
 import org.sonatype.nexus.repository.p2.internal.metadata.P2Attributes;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
-import com.google.common.annotations.VisibleForTesting;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -48,7 +46,6 @@ public class P2TempBlobUtils
     this.manifestParser = checkNotNull(manifestParser);
   }
 
-  @VisibleForTesting
   public P2Attributes mergeAttributesFromTempBlob(final TempBlob tempBlob, final P2Attributes sourceP2Attributes)
       throws IOException
   {

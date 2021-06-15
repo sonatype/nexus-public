@@ -30,7 +30,7 @@ import javax.xml.stream.events.XMLEvent;
 /**
  * Find and remove the p2.mirrorsUrl property
  *
- * @since 1.1
+ * @since 3.28
  */
 public class RemoveMirrorTransformer
     extends XmlTransformer

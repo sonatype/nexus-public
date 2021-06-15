@@ -10,30 +10,27 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.p2.rest;
+package org.sonatype.nexus.repository.p2.orient;
 
-import javax.inject.Named;
-import javax.inject.Singleton;
-import javax.ws.rs.Path;
+import java.io.IOException;
 
-import org.sonatype.nexus.common.app.FeatureFlag;
-import org.sonatype.nexus.repository.rest.api.RepositoriesApiResourceBeta;
-
-import io.swagger.annotations.Api;
-
-import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
+import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.repository.Facet;
+import org.sonatype.nexus.repository.storage.AssetBlob;
+import org.sonatype.nexus.repository.storage.Query;
 
 /**
  * @since 3.28
- * @deprecated - prefer to use {@link P2ProxyRepositoriesApiResourceV1 } instead of Beta.
  */
-@FeatureFlag(name = ORIENT_ENABLED)
-@Named
-@Singleton
-@Path(RepositoriesApiResourceBeta.RESOURCE_URI + "/p2/proxy")
-@Api(hidden = true)
-@Deprecated
-public class P2ProxyRepositoriesApiResourceBeta
-    extends P2ProxyRepositoriesApiResource
+@Facet.Exposed
+public interface P2RestoreFacet
+    extends Facet
 {
+  void restore(final AssetBlob assetBlob, final String path) throws IOException;
+
+  boolean assetExists(final String path);
+
+  Query getComponentQuery(final Blob blob, final String blobName, final String blobStoreName) throws IOException;
+
+  boolean componentRequired(final String name);
 }

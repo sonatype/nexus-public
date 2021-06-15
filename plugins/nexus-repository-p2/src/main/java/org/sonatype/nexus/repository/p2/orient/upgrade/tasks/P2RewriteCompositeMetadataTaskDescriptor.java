@@ -10,30 +10,28 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.p2.rest;
+package org.sonatype.nexus.repository.p2.orient.upgrade.tasks;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
-import javax.ws.rs.Path;
 
-import org.sonatype.nexus.common.app.FeatureFlag;
-import org.sonatype.nexus.repository.rest.api.RepositoriesApiResourceBeta;
-
-import io.swagger.annotations.Api;
-
-import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
+import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 /**
+ * Task descriptor for {@link P2RewriteCompositeMetadataTask}.
+ *
  * @since 3.28
- * @deprecated - prefer to use {@link P2ProxyRepositoriesApiResourceV1 } instead of Beta.
  */
-@FeatureFlag(name = ORIENT_ENABLED)
 @Named
 @Singleton
-@Path(RepositoriesApiResourceBeta.RESOURCE_URI + "/p2/proxy")
-@Api(hidden = true)
-@Deprecated
-public class P2ProxyRepositoriesApiResourceBeta
-    extends P2ProxyRepositoriesApiResource
+public class P2RewriteCompositeMetadataTaskDescriptor
+    extends TaskDescriptorSupport
 {
+  public static final String TASK_NAME = "p2 - rewrite composite metdata";
+
+  public static final String TYPE_ID = "repository.p2.rewrite-composite-metdata";
+
+  public P2RewriteCompositeMetadataTaskDescriptor() {
+    super(TYPE_ID, P2RewriteCompositeMetadataTask.class, TASK_NAME, VISIBLE, EXPOSED);
+  }
 }
