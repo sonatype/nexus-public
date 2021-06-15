@@ -65,8 +65,8 @@
     </dependency>
 
     <dependency>
-      <groupId>com.sonatype.insight.brain</groupId>
-      <artifactId>insight-rm-common</artifactId>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
     </dependency>
 
     <dependency>
