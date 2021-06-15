@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.replication;
 import static java.util.Objects.requireNonNull;
 
 /**
- * @since 3.next
+ * @since 3.31
  */
 public enum BlobEventType
 {

@@ -298,6 +298,28 @@ exports[`SupportZipForm renders support zip form 1`] = `
           JMX information
         </span>
       </label>
+      <label
+        class="nx-radio-checkbox nx-checkbox tm-unchecked"
+      >
+        <input
+          class="nx-radio-checkbox__input nx-checkbox__input"
+          id="replication"
+          readonly=""
+          type="checkbox"
+        />
+        <span
+          class="nx-radio-checkbox__control nx-checkbox__box"
+        >
+           
+        </span>
+        <span
+          aria-label=""
+          class="nx-radio-checkbox__content nx-checkbox__content"
+          title=""
+        >
+          Native replication logs (rsync or awscli)
+        </span>
+      </label>
     </fieldset>
     <fieldset
       class="nx-fieldset"

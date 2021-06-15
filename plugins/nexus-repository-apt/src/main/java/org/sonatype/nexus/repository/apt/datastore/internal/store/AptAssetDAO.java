@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.apt.datastore.internal.store;
 import org.sonatype.nexus.repository.content.store.AssetDAO;
 
 /**
- * @since 3.next
+ * @since 3.31
  */
 public interface AptAssetDAO
     extends AssetDAO

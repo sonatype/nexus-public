@@ -36,6 +36,8 @@ import org.sonatype.nexus.repository.security.RepositorySelector;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.rest.Resource;
 
+import org.apache.shiro.authz.annotation.RequiresAuthentication;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Streams.stream;
 import static java.util.stream.Collectors.toList;
@@ -83,6 +85,7 @@ public class RepositoryInternalResource
   }
 
   @GET
+  @RequiresAuthentication
   public List<RepositoryXO> getRepositories(
       @QueryParam("type") final String type,
       @QueryParam("withAll") final boolean withAll,

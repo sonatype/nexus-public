@@ -24,7 +24,7 @@ const PARAMETER_ID = 'PARAMETER ';
 const HELPER_BEAN = 'HelperBean.'
 
 /**
- * @since 3.next
+ * @since 3.31
  */
 export default class FormUtils {
   /**

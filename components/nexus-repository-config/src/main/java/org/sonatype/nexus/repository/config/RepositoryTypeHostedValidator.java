@@ -25,7 +25,7 @@ import org.sonatype.nexus.validation.ConstraintValidatorSupport;
 /**
  * Ensure that the value matches a repository name
  *
- * @since 3.next
+ * @since 3.31
  */
 @Named
 public class RepositoryTypeHostedValidator

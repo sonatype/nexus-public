@@ -37,7 +37,7 @@ import static java.util.stream.Collectors.toList;
 /**
  * Implementation of {@link RawObjectAccess} for the {@link S3BlobStore}.
  *
- * @since 3.next
+ * @since 3.31
  */
 public class S3RawObjectAccess
     implements RawObjectAccess
@@ -74,7 +74,7 @@ public class S3RawObjectAccess
    */
   @Override
   public Stream<String> listRawObjects(@Nullable final Path path) {
-    final String prefix = bucketPrefix + (path != null ? path + "/" : "");
+    final String prefix = bucketPrefix + normalizeS3Path(path, true);
 
     ObjectListing listing = s3.listObjects(
         new ListObjectsRequest().withBucketName(bucket)
@@ -103,7 +103,7 @@ public class S3RawObjectAccess
   @Nullable
   public InputStream getRawObject(final Path path) {
     try {
-      S3Object object = s3.getObject(bucket, bucketPrefix + path.toString());
+      S3Object object = s3.getObject(bucket, bucketPrefix + normalizeS3Path(path));
       return performanceLogger.maybeWrapForPerformanceLogging(object.getObjectContent());
     }
     catch (AmazonServiceException e) {
@@ -117,7 +117,7 @@ public class S3RawObjectAccess
   @Override
   public void putRawObject(final Path path, final InputStream input) {
     try (InputStream in = input) {
-      uploader.upload(s3, bucket, bucketPrefix + path.toString(), in);
+      uploader.upload(s3, bucket, bucketPrefix + normalizeS3Path(path), in);
     }
     catch (IOException e) {
       throw new UncheckedIOException(e);
@@ -127,7 +127,7 @@ public class S3RawObjectAccess
   @Override
   public boolean hasRawObject(final Path path) {
     try {
-      return s3.doesObjectExist(bucket, bucketPrefix + path.toString());
+      return s3.doesObjectExist(bucket, bucketPrefix + normalizeS3Path(path));
     }
     catch (AmazonServiceException e) {
       if (e.getStatusCode() == 404) {
@@ -139,6 +139,22 @@ public class S3RawObjectAccess
 
   @Override
   public void deleteRawObject(final Path path) {
-    s3.deleteObject(bucket, bucketPrefix + path.toString());
+    s3.deleteObject(bucket, bucketPrefix + normalizeS3Path(path));
+  }
+
+  private String normalizeS3Path(final Path path) {
+    return normalizeS3Path(path, false);
+  }
+
+  private String normalizeS3Path(final Path path, final boolean requireTrailingSlash) {
+    if (path == null) {
+      return "/";
+    }
+
+    String normalized = path.toString().replace("\\", "/");
+    if (requireTrailingSlash && !normalized.endsWith("/")) {
+      return normalized + "/";
+    }
+    return normalized;
   }
 }

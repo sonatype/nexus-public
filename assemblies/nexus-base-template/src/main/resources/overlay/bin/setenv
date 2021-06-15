@@ -20,6 +20,8 @@
 # karaf scripts
 #
 # export JAVA_HOME # Location of Java installation
+# export JAVA_OPTS # Generic JVM options, for instance, where you can pass the memory configuration
+# export JAVA_NON_DEBUG_OPTS # Additional non-debug JVM options
 # export JAVA_MIN_MEM # Minimum Java heap memory for the JVM
 # export JAVA_MAX_MEM # Maximum Java heap memory for the JVM
 # export DIRECT_MAX_MEM # Maximum direct buffer memory for the JVM

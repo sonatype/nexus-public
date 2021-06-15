@@ -24,7 +24,7 @@ import org.sonatype.nexus.repository.rest.SearchMappings;
 
 import com.google.common.collect.ImmutableList;
 /**
- * @since 1.0.0
+ * @since 3.28
  *
  */
 @Named(P2Format.NAME)

@@ -35,7 +35,7 @@ import static org.sonatype.nexus.repository.replication.ReplicationUtils.getChec
 /**
  * A {@link ReplicationFacet} for maven repositories.
  *
- * @since 3.next
+ * @since 3.31
  */
 @Named(NAME)
 public class MavenReplicationFacet

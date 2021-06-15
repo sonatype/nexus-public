@@ -24,7 +24,7 @@ import io.swagger.annotations.Api;
 import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 
 /**
- * @since 1.1.7
+ * @since 3.28
  * @deprecated - prefer to use {@link P2ProxyRepositoriesApiResourceV1 } instead of Beta.
  */
 @FeatureFlag(name = ORIENT_ENABLED)

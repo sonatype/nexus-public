@@ -16,12 +16,12 @@ import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobDataSupport;
 
 /**
- * @since 0.next
+ * @since 3.28
  */
 public class P2RestoreBlobData
     extends RestoreBlobDataSupport
 {
-  P2RestoreBlobData(final RestoreBlobData blobData) {
+  public P2RestoreBlobData(final RestoreBlobData blobData) {
     super(blobData);
   }
 }

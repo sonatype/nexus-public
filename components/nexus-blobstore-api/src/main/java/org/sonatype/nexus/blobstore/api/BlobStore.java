@@ -230,7 +230,7 @@ public interface BlobStore
   /**
    * Get a {@link Stream} of {@link BlobId} for blobs contained in this blob store that have been updated since the given number of days.
    *
-   * @since 3.next
+   * @since 3.31
    */
   Stream<BlobId> getBlobIdUpdatedSinceStream(int sinceDays);
 
@@ -331,7 +331,7 @@ public interface BlobStore
   }
 
   /**
-   * @since 3.next
+   * @since 3.31
    */
   RawObjectAccess getRawObjectAccess();
 }

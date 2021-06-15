@@ -31,7 +31,7 @@ import javax.xml.stream.events.XMLEvent;
 /**
  * Rewrites a p2 composite site collecting child site references and replacing them with site hashes.
  *
- * @since 1.1
+ * @since 3.28
  */
 public class CompositeRepositoryRewriter
     extends XmlTransformer

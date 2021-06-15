@@ -23,7 +23,7 @@ import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 import org.apache.commons.compress.compressors.xz.XZCompressorOutputStream;
 
 /**
- * @since 1.1
+ * @since 3.28
  */
 @FunctionalInterface
 public interface StreamCopier

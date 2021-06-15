@@ -67,7 +67,7 @@ import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_K
 /**
  * Apt content facet
  *
- * @since 3.next
+ * @since 3.31
  */
 @Facet.Exposed
 @Named(AptFormat.NAME)

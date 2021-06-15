@@ -23,7 +23,7 @@ import com.codahale.metrics.health.HealthCheck;
 /**
  * Gives an unhealthy response if scripting is enabled in the instance.
  * 
- * @since 3.next
+ * @since 3.31
  */
 @Named("Scripting")
 @Singleton

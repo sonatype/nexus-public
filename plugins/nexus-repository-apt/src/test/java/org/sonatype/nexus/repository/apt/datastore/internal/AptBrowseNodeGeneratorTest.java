@@ -27,7 +27,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.core.Is.is;
 
 /**
- * @since 3.next
+ * @since 3.31
  */
 public class AptBrowseNodeGeneratorTest
     extends BrowseTestSupport

@@ -41,6 +41,7 @@ import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.SEC
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.SYSINFO
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.TASKLOG
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.THREAD
+import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.REPLICATIONLOG
 
 /**
  * Default {@link SupportZipGenerator}.
@@ -114,6 +115,9 @@ class SupportZipGeneratorImpl
     }
     if (request.jmx) {
       types << JMX
+    }
+    if (request.replication) {
+      types << REPLICATIONLOG
     }
     return types
   }

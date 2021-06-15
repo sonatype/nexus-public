@@ -18,9 +18,9 @@ import java.nio.charset.StandardCharsets;
 import com.google.common.hash.Hashing;
 
 /**
- * Nomralizes and maps URIs to a hash.
+ * Normalizes and maps URIs to a hash.
  *
- * @since 1.1
+ * @since 3.28
  */
 public class UriToSiteHashUtil
 {

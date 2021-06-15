@@ -36,7 +36,7 @@ import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
 import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
 
 /**
- * @since 1.1
+ * @since 3.28
  */
 public abstract class XmlTransformer
     extends ComponentSupport

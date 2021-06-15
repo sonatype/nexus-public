@@ -20,16 +20,12 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>3.31.0-SNAPSHOT</version>
+    <version>3.32.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-osgi</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>pom</packaging>
-
-  <properties>
-    <karaf.version>4.3.0</karaf.version>
-  </properties>
 
   <dependencyManagement>
     <dependencies>
@@ -48,7 +44,7 @@
       <dependency>
         <groupId>org.apache.felix</groupId>
         <artifactId>org.apache.felix.framework</artifactId>
-        <version>6.0.3</version>
+        <version>6.0.4</version>
       </dependency>
 
       <dependency>

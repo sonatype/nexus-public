@@ -22,7 +22,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Hold the information needed for importing an individual file
  *
- * @since 3.next
+ * @since 3.31
  */
 public class ImportFileConfiguration
 {

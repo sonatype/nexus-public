@@ -24,7 +24,7 @@ import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getInteg
 /**
  * Helper functions for dealing with {@link Continuation}'s.
  *
- * @since 3.next
+ * @since 3.31
  */
 public class Continuations
 {

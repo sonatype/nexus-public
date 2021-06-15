@@ -42,9 +42,10 @@
     <bundle>wrap:${mvn:shiro-guice}$overwrite=merge&amp;Import-Package=*</bundle>
 
     <!--
-    Relax Guice import constraints to workaround a bad import range for javax.annotation
+    Relax Guice import constraints to workaround a bad import range for javax.annotation,
+    also prevent errant imports of com.google.inject.*
     -->
-    <bundle>wrap:${mvn:guice}$overwrite=merge&amp;Import-Package=*</bundle>
+    <bundle>wrap:${mvn:guice}$overwrite=merge&amp;Import-Package=javax.annotation,!com.google.inject.*,*</bundle>
 
     <!--
     Relax Metrics-Guice import constraints so we can use latest release of dropwizard/codahale metrics

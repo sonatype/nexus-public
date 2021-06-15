@@ -34,7 +34,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * @since 3.next
+ * @since 3.31
  */
 @FeatureFlag(name = DATASTORE_ENABLED)
 @Named
