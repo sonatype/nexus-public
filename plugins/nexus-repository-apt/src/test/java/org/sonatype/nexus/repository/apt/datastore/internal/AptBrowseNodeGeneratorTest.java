@@ -49,7 +49,7 @@ public class AptBrowseNodeGeneratorTest
 
     List<BrowsePath> paths = generator.computeComponentPaths(asset);
 
-    assertThat(paths.size(), is(7));
+    assertThat(paths.size(), is(6));
 
     assertThat(paths, containsInAnyOrder(
         new BrowsePath("packages", "/packages/"),
@@ -57,8 +57,7 @@ public class AptBrowseNodeGeneratorTest
         new BrowsePath("nano", "/packages/n/nano/"),
         new BrowsePath("1.0.0", "/packages/n/nano/1.0.0/"),
         new BrowsePath("amd64", "/packages/n/nano/1.0.0/amd64/"),
-        new BrowsePath("nano", "/packages/n/nano/1.0.0/amd64/nano/"),
-        new BrowsePath("path/assetName", "/packages/n/nano/1.0.0/amd64/nano/path/assetName/")));
+        new BrowsePath("nano", "/packages/n/nano/1.0.0/amd64/nano/")));
   }
 
 
