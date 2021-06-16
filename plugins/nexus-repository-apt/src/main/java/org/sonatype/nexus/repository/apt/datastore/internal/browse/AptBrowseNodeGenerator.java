@@ -47,7 +47,9 @@ public class AptBrowseNodeGenerator
   public List<BrowsePath> computeAssetPaths(final Asset asset) {
     Component component = asset.component().orElse(null);
     if (component != null) {
-      return computeComponentPaths(asset);
+      List<BrowsePath> path = computeComponentPaths(asset);
+      BrowsePathBuilder.appendPath(path, asset.path().substring(1));
+      return path;
     }
 
     List<String> pathParts = new ArrayList<>();
@@ -78,7 +80,6 @@ public class AptBrowseNodeGenerator
     pathParts.add(component.version());
     pathParts.add(component.namespace());
     pathParts.add(component.name());
-    pathParts.add(asset.path().substring(1));
     return BrowsePathBuilder.fromPaths(pathParts, true);
   }
 }
