@@ -16,8 +16,8 @@
  */
 import UIStrings from "../constants/UIStrings";
 
-
 const EMAIL_REGEX = /^(")?(?:[^\."])(?:(?:[\.])?(?:[\w\-!#$%&'*+/=?^_`{|}~]))*\1@(\w[\-\w]*\.?){1,5}([A-Za-z]){1,60}$/;
+const NAME_REGEX = /^[a-zA-Z0-9\-]{1}[a-zA-Z0-9_\-\.]*$/;
 
 /**
  * @since 3.31
@@ -107,6 +107,24 @@ export default class ValidationUtils {
     }
   }
 
+  static validateLength(value, length) {
+    if (value.length > length) {
+      return UIStrings.ERROR.MAX_CHARS(255);
+    }
+    return null;
+  }
+
+  /**
+   * @param value
+   * @returns {string|null} an error string if name fails {@link ValidationUtils.isName} or null
+   */
+  static validateName(value) {
+    if (!ValidationUtils.isName(value)) {
+      return UIStrings.ERROR.INVALID_NAME_CHARS;
+    }
+    return null;
+  }
+
   static validateNotBlank(value) {
     if (ValidationUtils.isBlank(value)) {
       return UIStrings.ERROR.FIELD_REQUIRED;
@@ -125,7 +143,7 @@ export default class ValidationUtils {
    * @return {boolean} true if the string is a valid name
    */
   static isName(name) {
-    return name.match(/^[a-zA-Z0-9\-]{1}[a-zA-Z0-9_\-\.]*$/);
+    return name?.match(NAME_REGEX);
   }
 
   /**
