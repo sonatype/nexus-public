@@ -84,4 +84,9 @@ public class ApplicationLicenseImpl
   public void refresh() {
     // no-op
   }
+
+  @Override
+  public boolean isEvaluation() {
+    return false;
+  }
 }
