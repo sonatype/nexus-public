@@ -37,12 +37,12 @@ import org.sonatype.nexus.repository.view.payloads.BlobPayload;
 
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
-import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_DEVELOPER;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 
 /**
  * @since 3.31
  */
-@FeatureFlag(name = DATASTORE_DEVELOPER)
+@FeatureFlag(name = DATASTORE_ENABLED)
 @Named(AptFormat.NAME)
 @Singleton
 public class AptRestoreBlobStrategy
