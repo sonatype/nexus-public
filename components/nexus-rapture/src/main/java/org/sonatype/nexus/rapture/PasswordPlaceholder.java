@@ -13,6 +13,7 @@
 package org.sonatype.nexus.rapture;
 
 import javax.annotation.Nullable;
+import javax.validation.constraints.Null;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -56,5 +57,9 @@ public class PasswordPlaceholder
    */
   public static boolean is(@Nullable final String value) {
     return VALUE.equals(value);
+  }
+
+  public static boolean isNot(@Nullable final String value) {
+    return !PasswordPlaceholder.is(value);
   }
 }
