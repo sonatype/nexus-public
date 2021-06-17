@@ -46,6 +46,11 @@ public interface ApplicationLicense
   boolean isExpired();
 
   /**
+   * Returns {@code true} if license is installed and is an evaluation license.
+   */
+  boolean isEvaluation();
+
+  /**
    * Returns license attributes.
    *
    * This is an immutable view of additional information about the current license.

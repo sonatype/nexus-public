@@ -68,6 +68,7 @@ Ext.define('NX.coreui.controller.Outreach', {
       NX.direct.outreach_Outreach.readStatus(function (response) {
         if (Ext.isObject(response) && response.success && response.data != null && welcomePage.rendered) {
           var user = NX.State.getUser(),
+              daysToExpiry = NX.State.getValue("license").daysToExpiry,
               usertype,
               url;
 
@@ -81,7 +82,8 @@ Ext.define('NX.coreui.controller.Outreach', {
           url = NX.util.Url.urlOf('service/outreach/?version=' + NX.State.getVersion() +
               '&versionMm=' + NX.State.getVersionMajorMinor() +
               '&edition=' + NX.State.getEdition() +
-              '&usertype=' + usertype);
+              '&usertype=' + usertype +
+              '&daysToExpiry=' + daysToExpiry);
 
           // add the outreach iframe to the welcome view
           welcomePage.removeAll();
