@@ -12,7 +12,9 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.fixtures;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -144,7 +146,19 @@ public class BlobStoreRule
   private void cleanBlobstoreContent(final BlobStore blobstore) {
     try {
       log.info("Deleting all Blobids from blobstore {}", blobstore.getBlobStoreConfiguration().getName());
-      blobstore.getBlobIdStream().filter(Objects::nonNull).forEach(blobstore::deleteHard);
+      blobstore.getBlobIdStream().filter(Objects::nonNull).forEach(blobId -> {
+        try {
+          blobstore.deleteHard(blobId);
+        }
+        catch (UncheckedIOException e) {
+          if (e.getCause() instanceof FileNotFoundException) {
+            log.trace("Attempt to delete file that doesn't exist, just ignore and move on.", e);
+          }
+          else {
+            throw e;
+          }
+        }
+      });
 
       //just in case, dump anything else
       if (blobstore instanceof FileBlobStore) {

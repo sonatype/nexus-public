@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.replication;
 
+import java.util.Objects;
+
 /**
  * @since 3.31
  */
@@ -78,5 +80,24 @@ public class BlobEvent
   public BlobEvent withRetryCount(final int retryCount) {
     this.retryCount = retryCount;
     return this;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    BlobEvent blobEvent = (BlobEvent) o;
+    return inUse == blobEvent.inUse && retryCount == blobEvent.retryCount &&
+        Objects.equals(blobId, blobEvent.blobId) &&
+        Objects.equals(repositoryName, blobEvent.repositoryName) && blobEventType == blobEvent.blobEventType;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(blobId, repositoryName, blobEventType, inUse, retryCount);
   }
 }
