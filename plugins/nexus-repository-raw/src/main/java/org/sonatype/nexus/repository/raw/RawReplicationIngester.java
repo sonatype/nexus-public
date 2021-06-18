@@ -96,7 +96,7 @@ public class RawReplicationIngester
     Map<String, Object> componentAttributes = extractComponentAttributesFromProperties(blobAttributes.getProperties());
 
     try {
-      log.info("Ingesting blob {} in repository {} and blob store {}.", blobIdString, repositoryName,
+      log.debug("Ingesting blob {} in repository {} and blob store {}.", blobIdString, repositoryName,
           blobStoreId);
       replicationIngesterHelper.replicate(blobStoreId, blob, assetAttributes, componentAttributes, repositoryName, blobStoreId);
     }

@@ -99,7 +99,7 @@ public class MavenReplicationIngester
     Map<String, Object> backingComponentAttributes = extractComponentAttributesFromProperties(blobAttributes.getProperties());
 
     try {
-      log.info("Ingesting blob {} in repository {} and blob store {}.", blobIdString, repositoryName,
+      log.debug("Ingesting blob {} in repository {} and blob store {}.", blobIdString, repositoryName,
                blobStoreId);
       replicationIngesterHelper.replicate(blobStoreId, blob, backingAssetAttributes, backingComponentAttributes,
           repositoryName, blobStoreId);
