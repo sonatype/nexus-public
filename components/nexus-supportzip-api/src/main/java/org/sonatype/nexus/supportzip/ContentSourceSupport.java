@@ -45,7 +45,7 @@ public abstract class ContentSourceSupport
    */
   public ContentSourceSupport(final Type type, final String path, final Priority priority) {
     this.type = checkNotNull(type);
-    this.path = checkNotNull(path);
+    this.path = normalize(checkNotNull(path));
     setPriority(priority);
   }
 
@@ -86,5 +86,9 @@ public abstract class ContentSourceSupport
         ", path='" + path + '\'' +
         ", priority=" + priority +
         '}';
+  }
+
+  private String normalize(final String path) {
+    return path.replace("\\", "/");
   }
 }
