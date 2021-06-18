@@ -15,15 +15,20 @@ package org.sonatype.nexus.repository.r.internal.util;
 import java.io.InputStream;
 import java.util.Enumeration;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.mail.Header;
 import javax.mail.MessagingException;
 import javax.mail.internet.InternetHeaders;
 
+import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.r.internal.RException;
 
+import com.google.common.collect.ImmutableList;
+
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 
 /**
  * Utility methods for working with R metadata in general.
@@ -32,6 +37,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public final class RMetadataUtils
 {
+  public static final List<HashAlgorithm> HASH_ALGORITHMS = ImmutableList.of(SHA1);
+
   /**
    * Parses metadata stored in a Debian Control File-like format.
    *

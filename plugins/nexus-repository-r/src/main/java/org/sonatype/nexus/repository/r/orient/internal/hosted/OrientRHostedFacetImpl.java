@@ -24,7 +24,6 @@ import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.r.orient.OrientRFacet;
 import org.sonatype.nexus.repository.r.orient.OrientRHostedFacet;
-import org.sonatype.nexus.repository.r.orient.util.OrientRFacetUtils;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.StorageFacet;
@@ -40,13 +39,14 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.r.internal.AssetKind.ARCHIVE;
 import static org.sonatype.nexus.repository.r.internal.util.RDescriptionUtils.extractDescriptionFromArchive;
+import static org.sonatype.nexus.repository.r.internal.util.RMetadataUtils.HASH_ALGORITHMS;
+import static org.sonatype.nexus.repository.r.internal.util.RPathUtils.PACKAGES_GZ_FILENAME;
+import static org.sonatype.nexus.repository.r.internal.util.RPathUtils.buildPath;
+import static org.sonatype.nexus.repository.r.internal.util.RPathUtils.getBasePath;
 import static org.sonatype.nexus.repository.r.orient.util.OrientRFacetUtils.browseAllAssetsByKind;
 import static org.sonatype.nexus.repository.r.orient.util.OrientRFacetUtils.findAsset;
 import static org.sonatype.nexus.repository.r.orient.util.OrientRFacetUtils.saveAsset;
 import static org.sonatype.nexus.repository.r.orient.util.OrientRFacetUtils.toContent;
-import static org.sonatype.nexus.repository.r.internal.util.RPathUtils.PACKAGES_GZ_FILENAME;
-import static org.sonatype.nexus.repository.r.internal.util.RPathUtils.buildPath;
-import static org.sonatype.nexus.repository.r.internal.util.RPathUtils.getBasePath;
 
 /**
  * {@link OrientRHostedFacet} implementation.
@@ -84,7 +84,7 @@ public class OrientRHostedFacetImpl
     checkNotNull(path);
     checkNotNull(payload);
     StorageFacet storageFacet = facet(StorageFacet.class);
-    try (TempBlob tempBlob = storageFacet.createTempBlob(payload, OrientRFacetUtils.HASH_ALGORITHMS)) {
+    try (TempBlob tempBlob = storageFacet.createTempBlob(payload, HASH_ALGORITHMS)) {
       return doPutArchive(path, tempBlob, payload);
     }
   }
@@ -123,7 +123,7 @@ public class OrientRHostedFacetImpl
     byte[] packagesBytes = packagesBuilder.buildPackagesGz();
     StorageFacet storageFacet = getRepository().facet(StorageFacet.class);
     try (InputStream is = new ByteArrayInputStream(packagesBytes)) {
-      TempBlob tempPackagesGz = storageFacet.createTempBlob(is, OrientRFacetUtils.HASH_ALGORITHMS);
+      TempBlob tempPackagesGz = storageFacet.createTempBlob(is, HASH_ALGORITHMS);
       return doPutPackagesGz(tx, basePath, tempPackagesGz);
     }
   }
