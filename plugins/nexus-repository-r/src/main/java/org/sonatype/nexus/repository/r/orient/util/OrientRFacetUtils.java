@@ -13,17 +13,15 @@
 package org.sonatype.nexus.repository.r.orient.util;
 
 import java.io.IOException;
-import java.util.List;
 
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.common.collect.AttributesMap;
-import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.r.internal.AssetKind;
 import org.sonatype.nexus.repository.r.RFormat;
+import org.sonatype.nexus.repository.r.internal.AssetKind;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;
@@ -35,10 +33,8 @@ import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.BlobPayload;
 
-import com.google.common.collect.ImmutableList;
-
 import static java.util.Collections.singletonList;
-import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
+import static org.sonatype.nexus.repository.r.internal.util.RMetadataUtils.HASH_ALGORITHMS;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_VERSION;
@@ -53,8 +49,6 @@ import static org.sonatype.nexus.repository.storage.Query.builder;
  */
 public final class OrientRFacetUtils
 {
-  public static final List<HashAlgorithm> HASH_ALGORITHMS = ImmutableList.of(SHA1);
-
   private OrientRFacetUtils() {
     // empty
   }

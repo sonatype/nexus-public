@@ -378,7 +378,7 @@ public class OrientComponentAssetTestHelper
       final Repository repository,
       @Nullable final String namespace,
       final String name,
-      final String version)
+      @Nullable final String version)
   {
     return findComponents(repository).stream()
         .filter(c -> namespace == null || namespace.equals(c.group()))

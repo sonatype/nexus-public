@@ -29,13 +29,6 @@
   <dependencies>
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-repository-r</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-repository-cocoapods</artifactId>
       <classifier>features</classifier>
       <type>xml</type>

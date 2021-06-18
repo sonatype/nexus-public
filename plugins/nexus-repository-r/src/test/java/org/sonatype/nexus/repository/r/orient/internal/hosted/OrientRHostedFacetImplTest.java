@@ -19,7 +19,6 @@ import java.util.Map;
 
 import org.sonatype.nexus.repository.r.orient.OrientRFacet;
 import org.sonatype.nexus.repository.r.orient.internal.OrientRepositoryFacetTestSupport;
-import org.sonatype.nexus.repository.r.orient.util.OrientRFacetUtils;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
@@ -55,6 +54,7 @@ import static org.sonatype.nexus.repository.r.internal.RAttributes.P_PACKAGE;
 import static org.sonatype.nexus.repository.r.internal.RAttributes.P_SUGGESTS;
 import static org.sonatype.nexus.repository.r.internal.RAttributes.P_VERSION;
 import static org.sonatype.nexus.repository.r.internal.util.RDescriptionUtils.extractDescriptionFromArchive;
+import static org.sonatype.nexus.repository.r.internal.util.RMetadataUtils.HASH_ALGORITHMS;
 
 public class OrientRHostedFacetImplTest
     extends OrientRepositoryFacetTestSupport<OrientRHostedFacetImpl>
@@ -204,7 +204,7 @@ public class OrientRHostedFacetImplTest
         any(),
         any(),
         anyBoolean());
-    when(storageFacet.createTempBlob(any(InputStream.class), eq(OrientRFacetUtils.HASH_ALGORITHMS))).thenAnswer(
+    when(storageFacet.createTempBlob(any(InputStream.class), eq(HASH_ALGORITHMS))).thenAnswer(
         invocation -> {
           InputStream is = (InputStream) invocation.getArguments()[0];
           byte[] content = ByteStreams.toByteArray(is);

@@ -25,9 +25,8 @@ import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.proxy.ProxyFacet;
 import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
-import org.sonatype.nexus.repository.r.orient.OrientRFacet;
 import org.sonatype.nexus.repository.r.internal.AssetKind;
-import org.sonatype.nexus.repository.r.orient.util.OrientRFacetUtils;
+import org.sonatype.nexus.repository.r.orient.OrientRFacet;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.StorageFacet;
@@ -43,10 +42,11 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.r.internal.util.RDescriptionUtils.extractDescriptionFromArchive;
+import static org.sonatype.nexus.repository.r.internal.util.RMetadataUtils.HASH_ALGORITHMS;
+import static org.sonatype.nexus.repository.r.internal.util.RPathUtils.extractRequestPath;
 import static org.sonatype.nexus.repository.r.orient.util.OrientRFacetUtils.findAsset;
 import static org.sonatype.nexus.repository.r.orient.util.OrientRFacetUtils.saveAsset;
 import static org.sonatype.nexus.repository.r.orient.util.OrientRFacetUtils.toContent;
-import static org.sonatype.nexus.repository.r.internal.util.RPathUtils.extractRequestPath;
 
 /**
  * R {@link ProxyFacet} implementation.
@@ -119,7 +119,7 @@ public class OrientRProxyFacetImpl
     checkNotNull(path);
     checkNotNull(content);
     StorageFacet storageFacet = facet(StorageFacet.class);
-    try (TempBlob tempBlob = storageFacet.createTempBlob(content.openInputStream(), OrientRFacetUtils.HASH_ALGORITHMS)) {
+    try (TempBlob tempBlob = storageFacet.createTempBlob(content.openInputStream(), HASH_ALGORITHMS)) {
       return doPutArchive(path, tempBlob, content);
     }
   }
@@ -146,7 +146,7 @@ public class OrientRProxyFacetImpl
       throws IOException
   {
     StorageFacet storageFacet = facet(StorageFacet.class);
-    try (TempBlob tempBlob = storageFacet.createTempBlob(content.openInputStream(), OrientRFacetUtils.HASH_ALGORITHMS)) {
+    try (TempBlob tempBlob = storageFacet.createTempBlob(content.openInputStream(), HASH_ALGORITHMS)) {
       return doPutMetadata(path, tempBlob, content);
     }
   }

@@ -147,12 +147,9 @@ public class DatastoreComponentAssetTestHelper
   }
 
   @Override
-  public void deleteComponent(
-      final Repository repository,
-      final String name,
-      final String version)
+  public void deleteComponent(final Repository repository, final String name, final String version)
   {
-    Component component = findComponent(repository, name, version);
+    Component component = findComponent(repository, null, name, version);
     repository.facet(ContentMaintenanceFacet.class).deleteComponent(component);
   }
 
