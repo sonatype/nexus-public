@@ -15,6 +15,7 @@ package org.sonatype.repository.conan.internal.orient.metadata;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.storage.TempBlob;
+import org.sonatype.repository.conan.internal.metadata.ConanManifest;
 
 import org.junit.Test;
 import org.mockito.Mock;

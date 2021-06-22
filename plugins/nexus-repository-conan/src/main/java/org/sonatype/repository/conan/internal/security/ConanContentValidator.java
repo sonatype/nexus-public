@@ -22,11 +22,11 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.mime.MimeRulesSource;
-import org.sonatype.nexus.repository.storage.ContentValidator;
-import org.sonatype.nexus.repository.storage.DefaultContentValidator;
+import org.sonatype.nexus.repository.mime.ContentValidator;
+import org.sonatype.nexus.repository.mime.DefaultContentValidator;
 import org.sonatype.nexus.repository.view.ContentTypes;
+import org.sonatype.repository.conan.internal.ConanFacetUtils;
 import org.sonatype.repository.conan.internal.ConanFormat;
-import org.sonatype.repository.conan.internal.orient.utils.ConanFacetUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -38,7 +38,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class ConanContentValidator
     implements ContentValidator
 {
-
   private static final String X_PYTHON = "text/x-python";
 
   private final DefaultContentValidator defaultContentValidator;
@@ -50,11 +49,12 @@ public class ConanContentValidator
 
   @Nonnull
   @Override
-  public String determineContentType(final boolean strictContentTypeValidation,
-                                     final InputStreamSupplier contentSupplier,
-                                     @Nullable final MimeRulesSource mimeRulesSource,
-                                     @Nullable final String contentName,
-                                     @Nullable final String declaredContentType) throws IOException
+  public String determineContentType(
+      final boolean strictContentTypeValidation,
+      final InputStreamSupplier contentSupplier,
+      @Nullable final MimeRulesSource mimeRulesSource,
+      @Nullable final String contentName,
+      @Nullable final String declaredContentType) throws IOException
   {
     if (contentName != null) {
       if (contentName.endsWith(".tgz")) {

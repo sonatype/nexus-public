@@ -12,25 +12,17 @@
  */
 package org.sonatype.repository.conan.internal.orient.utils;
 
-import java.util.List;
-
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.Query;
 import org.sonatype.nexus.repository.storage.StorageTx;
-import org.sonatype.repository.conan.internal.AssetKind;
 import org.sonatype.repository.conan.internal.metadata.ConanCoords;
 
-import com.google.common.collect.ImmutableList;
-
 import static java.util.Collections.singletonList;
-import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
-import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_VERSION;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
@@ -41,20 +33,6 @@ import static org.sonatype.repository.conan.internal.orient.proxy.v1.OrientConan
  */
 public class ConanFacetUtils
 {
-  public static final List<HashAlgorithm> HASH_ALGORITHMS = ImmutableList.of(SHA1, SHA256);
-
-  public static final String PACKAGE_SNAPSHOT_IDENTIFIER = "packages";
-
-  public static boolean isPackageSnapshot(String path) {
-    String[] args = path.split("/");
-    String expectPackage = args[args.length - 2];
-    return PACKAGE_SNAPSHOT_IDENTIFIER.equals(expectPackage);
-  }
-
-  public static boolean isDigest(String path) {
-    return path.endsWith(AssetKind.DIGEST.getFilename());
-  }
-
   public static Asset findAsset(final StorageTx tx, final Bucket bucket, final String assetName) {
     return tx.findAssetWithProperty(P_NAME, assetName, bucket);
   }

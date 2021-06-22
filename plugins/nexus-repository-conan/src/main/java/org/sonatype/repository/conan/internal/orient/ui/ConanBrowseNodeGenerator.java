@@ -23,8 +23,8 @@ import org.sonatype.nexus.repository.browse.BrowsePaths;
 import org.sonatype.nexus.repository.browse.ComponentPathBrowseNodeGenerator;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
+import org.sonatype.repository.conan.internal.ConanFacetUtils;
 import org.sonatype.repository.conan.internal.ConanFormat;
-import org.sonatype.repository.conan.internal.orient.utils.ConanFacetUtils;
 
 import com.google.common.collect.ImmutableList;
 
