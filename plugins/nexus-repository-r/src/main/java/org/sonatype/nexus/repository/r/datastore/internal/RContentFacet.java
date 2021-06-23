@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.r.datastore.internal;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Map;
 import java.util.Optional;
 
@@ -50,11 +48,6 @@ import static org.sonatype.nexus.repository.r.internal.util.RPathUtils.getBasePa
 public class RContentFacet
     extends ContentFacetSupport
 {
-  /**
-   * Applied to asset only, holds a value from format describing what current asset is.
-   */
-  private static final String ASSET_KIND = "asset_kind";
-
   @Inject
   public RContentFacet(@Named(RFormat.NAME) final FormatStoreManager formatStoreManager)
   {
@@ -103,15 +96,12 @@ public class RContentFacet
    * @param assetPath the path of an asset.
    * @return the {@link FluentAsset} object.
    */
-  public FluentAsset putPackage(final Payload payload, final String assetPath)
-      throws IOException
-  {
+  public FluentAsset putPackage(final Payload payload, final String assetPath) {
     checkNotNull(payload);
     checkNotNull(assetPath);
 
-    try (TempBlob tempBlob = blobs().ingest(payload, HASH_ALGORITHMS);
-         InputStream is = tempBlob.get()) {
-      Map<String, String> attributes = extractDescriptionFromArchive(assetPath, is);
+    try (TempBlob tempBlob = blobs().ingest(payload, HASH_ALGORITHMS)) {
+      Map<String, String> attributes = extractDescriptionFromArchive(assetPath, tempBlob);
       String name = attributes.get(P_PACKAGE);
       String version = attributes.get(P_VERSION);
       String namespace = getBasePath(assetPath);

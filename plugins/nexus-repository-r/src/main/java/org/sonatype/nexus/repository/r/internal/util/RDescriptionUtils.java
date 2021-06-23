@@ -14,10 +14,12 @@ package org.sonatype.nexus.repository.r.internal.util;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
+import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.repository.r.internal.RException;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
@@ -47,20 +49,38 @@ public final class RDescriptionUtils
   /**
    * Extracts the DESCRIPTION contents from the tgz or zip.
    */
+  public static Map<String, String> extractDescriptionFromArchive(
+      final String filename,
+      final InputStreamSupplier inputStreamSupplier)
+  {
+    try (InputStream is = inputStreamSupplier.get()) {
+      checkNotNull(filename);
+      checkNotNull(is);
+      final String lowerCaseFilename = filename.toLowerCase();
+      if (lowerCaseFilename.endsWith(".tar.gz") || lowerCaseFilename.endsWith(".tgz")) {
+        return extractMetadataFromTgz(is);
+      }
+      else if (lowerCaseFilename.endsWith(".gz")) {
+        return extractMetadataFromGz(is);
+      }
+      else if (lowerCaseFilename.endsWith(".zip")) {
+        return extractMetadataFromZip(is);
+      }
+      throw new IllegalStateException("Unexpected file extension for file: " + filename);
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  /**
+   * Extracts the DESCRIPTION contents from the tgz or zip.
+   *
+   * @deprecated Use {@link #extractDescriptionFromArchive(String, InputStreamSupplier)}
+   */
+  @Deprecated
   public static Map<String, String> extractDescriptionFromArchive(final String filename, InputStream is) {
-    checkNotNull(filename);
-    checkNotNull(is);
-    final String lowerCaseFilename = filename.toLowerCase();
-    if (lowerCaseFilename.endsWith(".tar.gz") || lowerCaseFilename.endsWith(".tgz")) {
-      return extractMetadataFromTgz(is);
-    }
-    else if (lowerCaseFilename.endsWith(".gz")) {
-      return extractMetadataFromGz(is);
-    }
-    else if (lowerCaseFilename.endsWith(".zip")) {
-      return extractMetadataFromZip(is);
-    }
-    throw new IllegalStateException("Unexpected file extension for file: " + filename);
+    return extractDescriptionFromArchive(filename, () -> is);
   }
 
   private static Map<String, String> extractMetadataFromTgz(final InputStream is) {
