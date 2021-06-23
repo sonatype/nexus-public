@@ -149,6 +149,11 @@
     </foreach>;
   </select>
 
+  <select id="findByBlobRef" resultMap="assetResult">
+    SELECT A.* FROM ${format}_asset A INNER JOIN ${format}_asset_blob B USING (asset_blob_id)
+    WHERE repository_id = #{repositoryId} AND blob_ref = #{blobRef};
+  </select>
+
   <update id="updateAssetKind" parameterType="AssetData">
     UPDATE ${format}_asset SET kind = #{kind}, last_updated = CURRENT_TIMESTAMP
         WHERE <include refid="assetMatch"/> AND kind != #{kind};

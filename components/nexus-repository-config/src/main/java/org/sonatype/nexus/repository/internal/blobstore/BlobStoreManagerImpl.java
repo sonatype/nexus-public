@@ -51,6 +51,7 @@ import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.replication.ReplicationBlobStoreStatusManager;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -96,6 +97,8 @@ public class BlobStoreManagerImpl
 
   private final Provider<BlobStoreOverride> blobStoreOverrideProvider;
 
+  private final ReplicationBlobStoreStatusManager replicationBlobStoreStatusManager;
+
   @Inject
   public BlobStoreManagerImpl(final EventManager eventManager, //NOSONAR
                               final BlobStoreConfigurationStore store,
@@ -106,7 +109,8 @@ public class BlobStoreManagerImpl
                               final NodeAccess nodeAccess,
                               @Nullable @Named("${nexus.blobstore.provisionDefaults}") final Boolean provisionDefaults,
                               @Nullable final ChangeRepositoryBlobstoreDataService changeRepositoryBlobstoreDataService,
-                              final Provider<BlobStoreOverride> blobStoreOverrideProvider)
+                              final Provider<BlobStoreOverride> blobStoreOverrideProvider,
+                              final ReplicationBlobStoreStatusManager replicationBlobStoreStatusManager)
   {
     this.eventManager = checkNotNull(eventManager);
     this.store = checkNotNull(store);
@@ -116,6 +120,7 @@ public class BlobStoreManagerImpl
     this.repositoryManagerProvider = checkNotNull(repositoryManagerProvider);
     this.changeRepositoryBlobstoreDataService = changeRepositoryBlobstoreDataService;
     this.blobStoreOverrideProvider = blobStoreOverrideProvider;
+    this.replicationBlobStoreStatusManager = checkNotNull(replicationBlobStoreStatusManager);
 
     if (provisionDefaults != null) {
       // explicit true/false setting, so honour that
@@ -208,7 +213,8 @@ public class BlobStoreManagerImpl
 
     BlobStore blobStore = blobStorePrototypes.get(configuration.getType()).get();
     blobStore.init(configuration);
-    
+    replicationBlobStoreStatusManager.initializeReplicationStatus(configuration);
+
     blobStore.validateCanCreateAndUpdate();
 
     if (!EventHelper.isReplicating()) {
