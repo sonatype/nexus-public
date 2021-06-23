@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.repository.conan.internal.orient.metadata;
+package org.sonatype.repository.conan.internal.metadata;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,7 +19,7 @@ import java.io.InputStreamReader;
 
 import org.sonatype.goodies.common.Loggers;
 import org.sonatype.nexus.common.collect.AttributesMap;
-import org.sonatype.nexus.repository.storage.TempBlob;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 import org.slf4j.Logger;
 
@@ -31,6 +31,10 @@ import org.slf4j.Logger;
 public class ConanManifest
 {
   private static final Logger LOGGER = Loggers.getLogger(ConanManifest.class);
+
+  private ConanManifest() {
+    // nop, utility class
+  }
 
   /**
    * Extract all the md5 for conan files

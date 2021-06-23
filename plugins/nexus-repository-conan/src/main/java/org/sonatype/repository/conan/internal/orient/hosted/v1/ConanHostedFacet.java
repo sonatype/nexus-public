@@ -41,10 +41,10 @@ import org.sonatype.nexus.repository.view.payloads.StreamPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.transaction.UnitOfWork;
 import org.sonatype.repository.conan.internal.AssetKind;
+import org.sonatype.repository.conan.internal.ConanFacetUtils;
 import org.sonatype.repository.conan.internal.hosted.ConanHostedHelper;
 import org.sonatype.repository.conan.internal.metadata.ConanCoords;
 import org.sonatype.repository.conan.internal.orient.hosted.ConanHostedMetadataFacetSupport;
-import org.sonatype.repository.conan.internal.orient.utils.ConanFacetUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.commons.lang3.StringUtils;

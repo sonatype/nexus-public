@@ -10,19 +10,15 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.testsuite.helpers.realm
 
-import javax.inject.Named
-import javax.inject.Singleton
+package org.sonatype.repository.conan.internal.datastore;
 
-@Named
-@Singleton
-class DataStoreRealmTestHelper
-    implements RealmTestHelper
+import org.sonatype.nexus.repository.content.store.AssetDAO;
+
+/**
+ * @since 3.next
+ */
+public interface ConanAssetDAO
+    extends AssetDAO
 {
-  @Override
-  List<String> getAvailableRealms() {
-    ['Conan Bearer Token Realm', 'Crowd Realm', 'Default Role Realm', 'Docker Bearer Token Realm',
-     'LDAP Realm', 'npm Bearer Token Realm', 'NuGet API-Key Realm', 'Rut Auth Realm', 'SAML Realm', 'User Token Realm']
-  }
 }
