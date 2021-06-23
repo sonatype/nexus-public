@@ -87,9 +87,7 @@ public class RProxyFacet
         .download();
   }
 
-  private Content storeArchive(final Content content, final String assetPath)
-      throws IOException
-  {
+  private Content storeArchive(final Content content, final String assetPath) {
     return facet(RContentFacet.class).putPackage(content, assetPath)
         .markAsCached(content)
         .download();

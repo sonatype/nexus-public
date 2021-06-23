@@ -57,7 +57,7 @@ public class RDescriptionUtilsTest
 
   @Test(expected = NullPointerException.class)
   public void nullPointerWhenNullInputStream() throws Exception {
-    extractDescriptionFromArchive("file", null);
+    extractDescriptionFromArchive("file", () -> null);
   }
 
   @Test
