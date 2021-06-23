@@ -201,7 +201,7 @@ Ext.define('NX.coreui.app.PluginConfig', {
     {
       id: 'NX.coreui.controller.SearchConda',
       active: function () {
-        return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-repository-conda');
+        return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-repository-conda');
       }
     },
     {
