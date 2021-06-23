@@ -14,6 +14,7 @@ package org.sonatype.nexus.coreui.internal.content;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -31,6 +32,7 @@ import javax.ws.rs.WebApplicationException;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.coreui.AssetXO;
 import org.sonatype.nexus.coreui.ComponentHelper;
 import org.sonatype.nexus.coreui.ComponentXO;
@@ -315,6 +317,14 @@ public class ContentComponentHelper
     asset.component().ifPresent(component -> assetXO.setComponentId(componentId(component)));
 
     Map<String, Object> attributes = new HashMap<>(asset.attributes().backing());
+    Object formatAttributes = attributes.get(format);
+    if (!Strings2.isEmpty(asset.kind())) {
+      if (formatAttributes instanceof Map) {
+        ((Map<String, Object>) formatAttributes).put("asset_kind", asset.kind());
+      } else {
+        attributes.put(format, Collections.singletonMap("asset_kind", asset.kind()));
+      }
+    }
 
     assetXO.setBlobCreated(Date.from(asset.created().toInstant()));
     asset.blob().ifPresent(blob -> {

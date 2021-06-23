@@ -31,9 +31,7 @@ import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Collections.singletonMap;
 import static org.sonatype.nexus.repository.conda.util.CondaPathUtils.normalizeAssetPath;
-import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 
 /**
  * Conda content facet.
@@ -86,7 +84,6 @@ public class CondaContentFacet
       return assets()
           .path(normalizeAssetPath(assetPath))
           .kind(assetKind.name())
-          .attributes(CondaFormat.NAME, singletonMap(P_ASSET_KIND, assetKind.name()))
           .blob(tempBlob)
           .save();
     }
@@ -119,7 +116,6 @@ public class CondaContentFacet
       return component
           .asset(normalizeAssetPath(assetPath))
           .kind(assetKind.name())
-          .attributes(CondaFormat.NAME, Collections.singletonMap(P_ASSET_KIND, assetKind.name()))
           .blob(tempBlob)
           .save();
     }
