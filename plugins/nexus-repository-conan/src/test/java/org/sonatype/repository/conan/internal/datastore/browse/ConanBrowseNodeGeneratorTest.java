@@ -10,22 +10,20 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.repository.conan.internal.ui;
+package org.sonatype.repository.conan.internal.datastore.browse;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.repository.browse.BrowsePaths;
-import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.Component;
-import org.sonatype.nexus.repository.storage.DefaultComponent;
-import org.sonatype.repository.conan.internal.orient.ui.ConanBrowseNodeGenerator;
+import org.sonatype.nexus.repository.browse.node.BrowsePath;
+import org.sonatype.nexus.repository.content.Asset;
+import org.sonatype.nexus.repository.content.Component;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -33,15 +31,11 @@ import static org.mockito.Mockito.when;
 public class ConanBrowseNodeGeneratorTest
     extends TestSupport
 {
-  Component component;
-
-  ConanBrowseNodeGenerator underTest = new ConanBrowseNodeGenerator();
+  ConanBrowseNodeGenerator underTest;
 
   @Before
-  public void setUp() {
-    component = new DefaultComponent().group("vthiery")
-        .name("jsonformoderncpp")
-        .version("2.1.1");
+  public void setup() {
+    underTest = new ConanBrowseNodeGenerator();
   }
 
   @Test
@@ -49,7 +43,7 @@ public class ConanBrowseNodeGeneratorTest
     Asset asset = createAsset(
         "conans/jsonformoderncpp/2.1.1/vthiery/stable/packages/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/download_urls");
 
-    List<BrowsePaths> assetPath = underTest.computeAssetPaths(asset, component);
+    List<BrowsePath> assetPath = underTest.computeAssetPaths(asset);
 
     assertThat(assetPath.size(), is(6));
     assertThat(assetPath.get(0).getDisplayName(), is("vthiery"));
@@ -65,7 +59,7 @@ public class ConanBrowseNodeGeneratorTest
     Asset asset = createAsset(
         "conans/jsonformoderncpp/2.1.1/vthiery/stable/packages/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9");
 
-    List<BrowsePaths> assetPath = underTest.computeAssetPaths(asset, component);
+    List<BrowsePath> assetPath = underTest.computeAssetPaths(asset);
 
     assertThat(assetPath.size(), is(5));
     assertThat(assetPath.get(0).getDisplayName(), is("vthiery"));
@@ -80,7 +74,7 @@ public class ConanBrowseNodeGeneratorTest
     Asset asset = createAsset(
         "conans/jsonformoderncpp/2.1.1/vthiery/stable/download_urls");
 
-    List<BrowsePaths> assetPath = underTest.computeAssetPaths(asset, component);
+    List<BrowsePath> assetPath = underTest.computeAssetPaths(asset);
 
     assertThat(assetPath.size(), is(4));
     assertThat(assetPath.get(0).getDisplayName(), is("vthiery"));
@@ -90,8 +84,14 @@ public class ConanBrowseNodeGeneratorTest
   }
 
   private Asset createAsset(String assetName) {
+    Component component = mock(Component.class);
+    when(component.namespace()).thenReturn("vthiery");
+    when(component.name()).thenReturn("jsonformoderncpp");
+    when(component.version()).thenReturn("2.1.1");
+
     Asset asset = mock(Asset.class);
-    when(asset.name()).thenReturn(assetName);
+    when(asset.path()).thenReturn(assetName);
+    when(asset.component()).thenReturn(Optional.of(component));
     return asset;
   }
 }
