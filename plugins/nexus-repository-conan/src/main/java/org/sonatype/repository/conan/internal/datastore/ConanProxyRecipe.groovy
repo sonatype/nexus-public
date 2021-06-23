@@ -20,6 +20,7 @@ import javax.inject.Singleton
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
+import org.sonatype.nexus.repository.content.browse.BrowseFacet
 import org.sonatype.nexus.repository.proxy.ProxyHandler
 import org.sonatype.nexus.repository.types.ProxyType
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
@@ -56,6 +57,9 @@ class ConanProxyRecipe
   @Inject
   Provider<ConanTokenFacet> tokenFacet
 
+  @Inject
+  Provider<BrowseFacet> browseFacet
+
   private ConanProxyApiV1 conanApiV1
 
   @Inject
@@ -83,6 +87,7 @@ class ConanProxyRecipe
     repository.attach(componentMaintenanceFacet.get())
     repository.attach(proxyFacet.get())
     repository.attach(contentFacet.get())
+    repository.attach(browseFacet.get())
     repository.attach(searchFacet.get())
     repository.attach(purgeUnusedFacet.get())
   }

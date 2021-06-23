@@ -12,7 +12,6 @@
  */
 package org.sonatype.repository.conan.internal.orient.ui;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,22 +22,20 @@ import org.sonatype.nexus.repository.browse.BrowsePaths;
 import org.sonatype.nexus.repository.browse.ComponentPathBrowseNodeGenerator;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
-import org.sonatype.repository.conan.internal.ConanFacetUtils;
 import org.sonatype.repository.conan.internal.ConanFormat;
 
-import com.google.common.collect.ImmutableList;
-
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.repository.conan.internal.common.ConanBrowseNodeGeneratorHelper.assetSegment;
 
 /**
  * @since 3.28
  */
 @Singleton
 @Named(ConanFormat.NAME)
-public class ConanBrowseNodeGenerator
+public class OrientConanBrowseNodeGenerator
     extends ComponentPathBrowseNodeGenerator
 {
-  public ConanBrowseNodeGenerator() {
+  public OrientConanBrowseNodeGenerator() {
     super();
   }
 
@@ -63,29 +60,4 @@ public class ConanBrowseNodeGenerator
     return super.computeAssetPaths(asset, null);
   }
 
-  private List<BrowsePaths> assetSegment(final String path) {
-    String[] split = path.split(File.separator);
-    int fileNameIndex = split.length - 1;
-    int packageNameIndex;
-    int packagesSegmentIndex;
-
-    if (path.contains(ConanFacetUtils.PACKAGE_SNAPSHOT_IDENTIFIER)) {
-      if (ConanFacetUtils.isPackageSnapshot(path)) {
-        packageNameIndex = split.length - 1;
-        packagesSegmentIndex = split.length - 2;
-        return BrowsePaths
-            .fromPaths(ImmutableList.of(split[packagesSegmentIndex], split[packageNameIndex]),
-                false);
-      }
-      else {
-        packageNameIndex = split.length - 2;
-        packagesSegmentIndex = split.length - 3;
-        return BrowsePaths
-            .fromPaths(ImmutableList
-                    .of(split[packagesSegmentIndex], split[packageNameIndex], split[fileNameIndex]),
-                false);
-      }
-    }
-    return BrowsePaths.fromPaths(ImmutableList.of(split[fileNameIndex]), false);
-  }
 }
