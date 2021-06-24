@@ -20,6 +20,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
@@ -564,6 +565,13 @@ public interface StorageTx
    * type. The asset's old blob, if any, will be deleted.
    */
   void attachBlob(Asset asset, AssetBlob assetBlob);
+
+  /**
+   * Attaches asset metadata to a Blob.
+   *
+   * @since 3.next
+   */
+  void attachAssetMetadata(Asset asset, BlobId blobId);
 
   /**
    * Gets a Blob, or {@code null if not found}.

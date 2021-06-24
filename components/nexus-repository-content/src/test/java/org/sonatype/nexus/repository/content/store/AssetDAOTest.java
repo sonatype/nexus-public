@@ -914,6 +914,39 @@ public class AssetDAOTest
     }
   }
 
+  @Test
+  public void testFindByBlobRef() throws InterruptedException {
+    AssetBlobData assetBlob = randomAssetBlob();
+    AssetData asset1 = randomAsset(repositoryId);
+    AssetData asset2 = randomAsset(repositoryId);
+    String path = asset2.path();
+    Asset tempResult;
+
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
+      dao.createAssetBlob(assetBlob);
+      session.access(TestAssetDAO.class).createAsset(asset2);
+      session.getTransaction().commit();
+    }
+    // ATTACH BLOB
+
+    Thread.sleep(2); // NOSONAR
+
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      AssetDAO dao = session.access(TestAssetDAO.class);
+      tempResult = dao.readPath(repositoryId, path).get();
+      asset2.setAssetBlob(assetBlob);
+      dao.updateAssetBlobLink(asset2);
+      session.getTransaction().commit();
+    }
+
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      AssetDAO dao = session.access(TestAssetDAO.class);
+      tempResult = dao.findByBlobRef(repositoryId, assetBlob.blobRef()).get();
+      assertThat(tempResult.path(), is(path));
+    }
+  }
+
   static int countAssets(final AssetDAO dao, final int repositoryId) {
     return dao.countAssets(repositoryId, null, null, null);
   }

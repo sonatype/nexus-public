@@ -21,6 +21,7 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.ContentDataAccess;
@@ -141,6 +142,15 @@ public interface AssetDAO
    * @since 3.30
    */
   Collection<Asset> readPathsFromRepository(@Param("repositoryId") int repositoryId, @Param("paths") List<String> paths);
+
+  /**
+   * Find an asset based on the blob ref of the associated blob.
+   *
+   * @param repositoryId the repository containing the assets
+   * @param blobRef the blob ref
+   * @return asset if it was found
+   */
+  Optional<Asset> findByBlobRef(@Param("repositoryId") int repositoryId, @Param("blobRef") BlobRef blobRef);
 
   /**
    * Updates the kind of the given asset in the content data store.

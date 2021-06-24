@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.Asset;
@@ -178,6 +179,19 @@ public class AssetStore<T extends AssetDAO>
   @Transactional
   public Optional<Asset> readPath(final int repositoryId, final String path) {
     return dao().readPath(repositoryId, path);
+  }
+
+  /**
+   * Retrieves an asset associated with the given blob ref.
+   *
+   * @param repositoryId the repository containing the asset
+   * @param blobRef the blob ref
+   * @return asset if it was found
+   * @since 3.next
+   */
+  @Transactional
+  public Optional<Asset> findByBlobRef(final int repositoryId, final BlobRef blobRef) {
+    return dao().findByBlobRef(repositoryId, blobRef);
   }
 
   /**

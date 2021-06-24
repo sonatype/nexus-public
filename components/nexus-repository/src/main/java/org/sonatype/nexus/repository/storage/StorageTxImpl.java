@@ -28,6 +28,7 @@ import javax.annotation.Nullable;
 import javax.inject.Provider;
 
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
@@ -824,6 +825,12 @@ public class StorageTxImpl
       assetBlob.setAttached(true);
     }
 
+    attachAssetMetadata(asset, assetBlob.getBlob().getId());
+  }
+
+  @Override
+  @Guarded(by = ACTIVE)
+  public void attachAssetMetadata(final Asset asset, final BlobId blobId) {
     try {
       NestedAttributesMap componentAttributes = null;
       EntityId componentId = asset.componentId();
@@ -831,7 +838,7 @@ public class StorageTxImpl
         Component component = findComponent(componentId);
         componentAttributes = component.attributes();
       }
-      blobTx.attachAssetMetadata(assetBlob.getBlob().getId(), componentAttributes, asset.attributes());
+      blobTx.attachAssetMetadata(blobId, componentAttributes, asset.attributes());
     }
     catch (Exception e) {
       log.error("Failed to attach asset attributes to blob", e);

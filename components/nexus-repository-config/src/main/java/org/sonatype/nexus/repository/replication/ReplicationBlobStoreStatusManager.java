@@ -10,17 +10,21 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.conda.datastore.internal.store;
+package org.sonatype.nexus.repository.replication;
 
-import org.sonatype.nexus.repository.content.store.ContentRepositoryDAO;
+import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 
-/**
- * Conda {@link ContentRepositoryDAO}.
- *
- * @since 3.31
- */
-public interface CondaContentRepositoryDAO
-    extends ContentRepositoryDAO
-{
-  // nothing to add...
+public interface ReplicationBlobStoreStatusManager {
+
+  BlobStoreReplicationStatus getReplicationStatus(BlobStoreConfiguration configuration);
+
+  void initializeReplicationStatus(BlobStoreConfiguration configuration);
+
+  void setReplicationStatus(BlobStoreConfiguration configuration, BlobStoreReplicationStatus status);
+
+  public enum BlobStoreReplicationStatus {
+    ATTRIBUTES_MISSING,
+    ATTRIBUTES_UPGRADING,
+    ATTRIBUTES_PRESENT
+  }
 }

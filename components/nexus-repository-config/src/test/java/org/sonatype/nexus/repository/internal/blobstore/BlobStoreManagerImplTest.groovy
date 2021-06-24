@@ -26,6 +26,7 @@ import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.common.node.NodeAccess
 import org.sonatype.nexus.common.stateguard.InvalidStateException
 import org.sonatype.nexus.repository.manager.RepositoryManager
+import org.sonatype.nexus.repository.replication.ReplicationBlobStoreStatusManager
 
 import com.google.common.collect.Lists
 import org.hamcrest.Matchers
@@ -84,6 +85,9 @@ class BlobStoreManagerImplTest
   ChangeRepositoryBlobstoreDataService changeRepositoryBlobstoreDataService
 
   @Mock
+  ReplicationBlobStoreStatusManager replicationBlobStoreStatusManager
+
+  @Mock
   Provider<BlobStoreOverride> blobStoreOverrideProvider
 
   BlobStoreManagerImpl underTest
@@ -97,7 +101,8 @@ class BlobStoreManagerImplTest
   private BlobStoreManagerImpl newBlobStoreManager(Boolean provisionDefaults = null) {
     spy(new BlobStoreManagerImpl(eventManager, store, [test: descriptor, File: descriptor],
         [test: provider, File: provider], freezeService, { -> repositoryManager } as Provider,
-         nodeAccess, provisionDefaults, changeRepositoryBlobstoreDataService, blobStoreOverrideProvider))
+         nodeAccess, provisionDefaults, changeRepositoryBlobstoreDataService, blobStoreOverrideProvider,
+         replicationBlobStoreStatusManager))
   }
 
   @Test
@@ -280,7 +285,7 @@ class BlobStoreManagerImplTest
     // avoid newBlobStoreManager method because it returns a spy that throws NPE accessing the stores field
     underTest = new BlobStoreManagerImpl(eventManager, store, [test: descriptor, File: descriptor],
         [test: provider, File: provider], freezeService, { -> repositoryManager } as Provider, nodeAccess, true,
-        changeRepositoryBlobstoreDataService, blobStoreOverrideProvider)
+         changeRepositoryBlobstoreDataService, blobStoreOverrideProvider, replicationBlobStoreStatusManager)
 
     BlobStore blobStore = mock(BlobStore)
     when(provider.get()).thenReturn(blobStore)
