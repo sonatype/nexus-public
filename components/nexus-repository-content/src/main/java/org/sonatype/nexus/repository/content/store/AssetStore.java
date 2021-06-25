@@ -187,7 +187,7 @@ public class AssetStore<T extends AssetDAO>
    * @param repositoryId the repository containing the asset
    * @param blobRef the blob ref
    * @return asset if it was found
-   * @since 3.next
+   * @since 3.32
    */
   @Transactional
   public Optional<Asset> findByBlobRef(final int repositoryId, final BlobRef blobRef) {

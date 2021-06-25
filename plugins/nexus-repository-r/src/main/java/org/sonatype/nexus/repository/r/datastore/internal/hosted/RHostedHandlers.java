@@ -30,7 +30,7 @@ import static org.sonatype.nexus.repository.r.internal.util.RPathUtils.extractRe
 /**
  * R hosted handlers.
  *
- * @since 3.next
+ * @since 3.32
  */
 @Named
 @Singleton

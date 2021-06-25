@@ -21,7 +21,7 @@ import org.sonatype.nexus.repository.replication.ReplicationBlobStoreStatusManag
 import static org.sonatype.nexus.repository.replication.ReplicationBlobStoreStatusManager.BlobStoreReplicationStatus.ATTRIBUTES_MISSING;
 
 /**
- * @since 3.next
+ * @since 3.32
  */
 @Named
 @Singleton

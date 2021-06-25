@@ -37,7 +37,7 @@ import static java.util.Collections.emptyMap;
 /**
  * This class removes the absolute paths from download_url files so as to redirect back to this repository
  *
- * @since 3.next
+ * @since 3.32
  */
 @Singleton
 @Named

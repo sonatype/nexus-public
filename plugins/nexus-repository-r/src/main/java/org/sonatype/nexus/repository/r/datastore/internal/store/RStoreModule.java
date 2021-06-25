@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.r.RFormat;
 /**
  * Configures the content store bindings for the R format.
  *
- * @since 3.next
+ * @since 3.32
  */
 @Named(RFormat.NAME)
 public class RStoreModule

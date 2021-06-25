@@ -15,7 +15,7 @@ package org.sonatype.repository.conan.internal.datastore.browse;
 import org.sonatype.nexus.repository.content.browse.store.BrowseNodeDAO;
 
 /**
- * @since 3.next
+ * @since 3.32
  */
 public interface ConanBrowseNodeDAO
     extends BrowseNodeDAO

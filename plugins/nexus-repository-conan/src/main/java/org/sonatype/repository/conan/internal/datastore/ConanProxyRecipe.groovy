@@ -36,7 +36,7 @@ import com.google.inject.Provider
 import static org.sonatype.nexus.repository.http.HttpHandlers.notFound
 
 /**
- * @since 3.next
+ * @since 3.32
  */
 @Named(ConanProxyRecipe.NAME)
 @Singleton

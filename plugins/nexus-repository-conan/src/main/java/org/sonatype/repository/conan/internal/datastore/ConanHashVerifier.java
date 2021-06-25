@@ -26,7 +26,7 @@ import com.google.common.hash.HashCode;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * @since 3.next
+ * @since 3.32
  */
 public class ConanHashVerifier
     extends ComponentSupport

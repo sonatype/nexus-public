@@ -20,7 +20,7 @@ import org.sonatype.repository.conan.internal.ConanFacetUtils;
 import com.google.common.collect.ImmutableList;
 
 /**
- * @since 3.next
+ * @since 3.32
  */
 public class ConanBrowseNodeGeneratorHelper
 {

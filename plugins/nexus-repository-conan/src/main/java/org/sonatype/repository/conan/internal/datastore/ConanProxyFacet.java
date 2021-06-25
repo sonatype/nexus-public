@@ -46,7 +46,7 @@ import static org.sonatype.repository.conan.internal.AssetKind.DIGEST;
 import static org.sonatype.repository.conan.internal.AssetKind.DOWNLOAD_URL;
 
 /**
- * @since 3.next
+ * @since 3.32
  */
 @Named
 public class ConanProxyFacet

@@ -37,7 +37,7 @@ import org.sonatype.nexus.repository.view.ViewFacet
 /**
  * R proxy repository recipe.
  *
- * @since 3.next
+ * @since 3.32
  */
 @Named(RProxyRecipe.NAME)
 @Singleton

@@ -28,7 +28,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.repository.conan.internal.common.ConanBrowseNodeGeneratorHelper.assetSegment;
 
 /**
- * @since 3.next
+ * @since 3.32
  */
 @Singleton
 @Named(ConanFormat.NAME)

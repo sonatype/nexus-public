@@ -33,7 +33,7 @@ import static org.sonatype.nexus.repository.browse.node.BrowsePath.SLASH_CHAR;
 /**
  * R places components at the same level as their assets.
  *
- * @since 3.next
+ * @since 3.32
  */
 @Singleton
 @Named(RFormat.NAME)

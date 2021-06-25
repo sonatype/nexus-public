@@ -46,7 +46,7 @@ import static org.sonatype.nexus.repository.r.internal.util.RPathUtils.removeIni
 /**
  * Upload handler for R format
  *
- * @since 3.next
+ * @since 3.32
  */
 @Singleton
 @Named(RFormat.NAME)

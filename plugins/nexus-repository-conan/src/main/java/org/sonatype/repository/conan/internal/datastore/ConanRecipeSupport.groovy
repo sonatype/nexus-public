@@ -36,7 +36,7 @@ import org.sonatype.repository.conan.ConanContentFacet
 import org.sonatype.repository.conan.internal.security.ConanSecurityFacet
 
 /**
- * @since 3.next
+ * @since 3.32
  */
 abstract class ConanRecipeSupport
     extends RecipeSupport

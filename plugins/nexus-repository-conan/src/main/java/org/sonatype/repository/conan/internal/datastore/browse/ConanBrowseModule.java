@@ -18,7 +18,7 @@ import org.sonatype.nexus.repository.content.browse.store.FormatBrowseModule;
 import org.sonatype.repository.conan.internal.ConanFormat;
 
 /**
- * @since 3.next
+ * @since 3.32
  */
 @Named(ConanFormat.NAME)
 public class ConanBrowseModule

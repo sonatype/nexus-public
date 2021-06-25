@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.content.store.ContentRepositoryDAO;
 /**
  * R {@link ContentRepositoryDAO}.
  *
- * @since 3.next
+ * @since 3.32
  */
 public interface RContentRepositoryDAO
     extends ContentRepositoryDAO
