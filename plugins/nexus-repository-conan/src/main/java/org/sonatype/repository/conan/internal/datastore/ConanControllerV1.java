@@ -45,7 +45,7 @@ import static org.sonatype.repository.conan.internal.AssetKind.CONAN_SOURCES;
 import static org.sonatype.repository.conan.internal.AssetKind.DOWNLOAD_URL;
 
 /**
- * @since 3.next
+ * @since 3.32
  */
 @Named
 @Singleton

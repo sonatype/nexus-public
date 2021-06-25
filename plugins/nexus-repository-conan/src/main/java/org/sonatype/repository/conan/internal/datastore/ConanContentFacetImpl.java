@@ -32,7 +32,7 @@ import org.sonatype.repository.conan.internal.metadata.ConanCoords;
 import static org.sonatype.repository.conan.internal.AssetKind.CONAN_PACKAGE;
 
 /**
- * @since 3.next
+ * @since 3.32
  */
 @Named(ConanFormat.NAME)
 public class ConanContentFacetImpl

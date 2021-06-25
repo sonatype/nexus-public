@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.content.store.AssetBlobDAO;
 /**
  * R {@link AssetBlobDAO}.
  *
- * @since 3.next
+ * @since 3.32
  */
 public interface RAssetBlobDAO
     extends AssetBlobDAO

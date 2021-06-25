@@ -22,7 +22,7 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
 
 /**
- * @since 3.next
+ * @since 3.32
  */
 public class ConanFacetUtils
 {

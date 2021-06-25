@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.content.browse.store.BrowseNodeDAO;
 /**
  * R {@link BrowseNodeDAO}.
  *
- * @since 3.next
+ * @since 3.32
  */
 public interface RBrowseNodeDAO
     extends BrowseNodeDAO

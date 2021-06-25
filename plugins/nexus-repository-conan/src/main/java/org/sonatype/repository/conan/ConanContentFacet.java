@@ -23,7 +23,7 @@ import org.sonatype.repository.conan.internal.AssetKind;
 import org.sonatype.repository.conan.internal.metadata.ConanCoords;
 
 /**
- * @since 3.next
+ * @since 3.32
  */
 @Facet.Exposed
 public interface ConanContentFacet

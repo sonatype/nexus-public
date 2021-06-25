@@ -34,7 +34,7 @@ import org.sonatype.nexus.repository.r.internal.AssetKind
 /**
  * R hosted repository recipe.
  *
- * @since 3.next
+ * @since 3.32
  */
 @Singleton
 @Named(RHostedRecipe.NAME)

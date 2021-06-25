@@ -33,7 +33,7 @@ import static org.sonatype.repository.conan.internal.metadata.ConanMetadata.STAT
 import static org.sonatype.repository.conan.internal.metadata.ConanMetadata.VERSION
 
 /**
- * @since 3.next
+ * @since 3.32
  */
 class ConanProxyHelper
 {

@@ -41,7 +41,7 @@ import static org.sonatype.nexus.repository.r.internal.util.RPathUtils.getBasePa
 /**
  * R content facet.
  *
- * @since 3.next
+ * @since 3.32
  */
 @Exposed
 @Named(RFormat.NAME)

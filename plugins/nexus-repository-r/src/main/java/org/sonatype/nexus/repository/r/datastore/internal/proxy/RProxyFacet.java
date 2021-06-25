@@ -31,7 +31,7 @@ import static org.sonatype.nexus.repository.r.internal.util.RPathUtils.extractRe
 /**
  * The implementation of a logic specific to the proxy repository.
  *
- * @since 3.next
+ * @since 3.32
  */
 @Named
 @Exposed

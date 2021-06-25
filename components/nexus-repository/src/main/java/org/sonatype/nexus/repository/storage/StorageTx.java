@@ -145,7 +145,7 @@ public interface StorageTx
    *
    * For setting the limit @see Continuations.BROWSE_LIMIT
    *
-   * @since 3.next
+   * @since 3.32
    */
   Iterable<Asset> browseAllPartiallyByLimit(Query query, Bucket bucket);
 
@@ -569,7 +569,7 @@ public interface StorageTx
   /**
    * Attaches asset metadata to a Blob.
    *
-   * @since 3.next
+   * @since 3.32
    */
   void attachAssetMetadata(Asset asset, BlobId blobId);
 

@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.content.store.AssetDAO;
 /**
  * R {@link AssetDAO}.
  *
- * @since 3.next
+ * @since 3.32
  */
 public interface RAssetDAO
     extends AssetDAO
