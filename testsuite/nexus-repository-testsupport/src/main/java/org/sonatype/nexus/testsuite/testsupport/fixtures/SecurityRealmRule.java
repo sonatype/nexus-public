@@ -15,18 +15,13 @@ package org.sonatype.nexus.testsuite.testsupport.fixtures;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Provider;
-import javax.inject.Singleton;
 
 import org.sonatype.nexus.security.realm.RealmConfiguration;
 import org.sonatype.nexus.security.realm.RealmManager;
 
 import org.junit.rules.ExternalResource;
 
-@Named
-@Singleton
 public class SecurityRealmRule
     extends ExternalResource
 {
@@ -38,29 +33,22 @@ public class SecurityRealmRule
     this.realmManagerProvider = realmManagerProvider;
   }
 
-  @Inject
-  public SecurityRealmRule(final RealmManager realmManager) {
-    this.realmManagerProvider = () -> realmManager;
-  }
-
   @Override
-  public void before() {
+  protected void before() {
     configuration = realmManagerProvider.get().getConfiguration().copy();
   }
 
   @Override
-  public void after() {
+  protected void after() {
     realmManagerProvider.get().setConfiguration(configuration);
   }
 
   public void addSecurityRealm(final String realm) {
     RealmConfiguration configuration = realmManagerProvider.get().getConfiguration().copy();
     List<String> realms = new ArrayList<>(configuration.getRealmNames());
-    if (!realms.contains(realm)) {
-      realms.add(realm);
-      configuration.setRealmNames(realms);
-      realmManagerProvider.get().setConfiguration(configuration);
-    }
+    realms.add(realm);
+    configuration.setRealmNames(realms);
+    realmManagerProvider.get().setConfiguration(configuration);
   }
 
   public void removeSecurityRealm(final String realm) {

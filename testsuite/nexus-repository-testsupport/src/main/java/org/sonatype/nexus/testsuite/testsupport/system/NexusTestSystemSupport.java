@@ -19,7 +19,6 @@ import org.sonatype.nexus.testsuite.helpers.ComponentAssetTestHelper;
 import org.sonatype.nexus.testsuite.testsupport.fixtures.BlobStoreRule;
 import org.sonatype.nexus.testsuite.testsupport.fixtures.CapabilitiesRule;
 import org.sonatype.nexus.testsuite.testsupport.fixtures.RepositoryRule;
-import org.sonatype.nexus.testsuite.testsupport.fixtures.SecurityRealmRule;
 import org.sonatype.nexus.testsuite.testsupport.fixtures.SecurityRule;
 
 import org.junit.rules.ExternalResource;
@@ -58,9 +57,6 @@ public abstract class NexusTestSystemSupport<R extends RepositoryRule, C extends
 
   @Inject
   private TaskTestSystem tasks;
-
-  @Inject
-  private SecurityRealmRule securityRealms;
 
   protected NexusTestSystemSupport(
       final R repositories,
@@ -106,17 +102,8 @@ public abstract class NexusTestSystemSupport<R extends RepositoryRule, C extends
     return security;
   }
 
-  public SecurityRealmRule securityRealms() {
-    return securityRealms;
-  }
-
   public TaskTestSystem tasks() {
     return tasks;
-  }
-
-  @Override
-  protected void before() throws Throwable {
-    securityRealms.before();
   }
 
   @Override
@@ -128,7 +115,6 @@ public abstract class NexusTestSystemSupport<R extends RepositoryRule, C extends
     repositories.after();
     blobstores.after();
     security.after();
-    securityRealms.after();
   }
 
   public static class NexusTestSystemRule
@@ -138,11 +124,6 @@ public abstract class NexusTestSystemSupport<R extends RepositoryRule, C extends
 
     public NexusTestSystemRule(final Provider<? extends NexusTestSystemSupport<?, ?>> nexus) {
       this.nexus = nexus;
-    }
-
-    @Override
-    protected void before() throws Throwable {
-      nexus.get().before();
     }
 
     @Override

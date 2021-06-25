@@ -178,19 +178,9 @@ public interface ComponentAssetTestHelper
   void setLastDownloadedTime(Repository repository, int minusSeconds);
 
   /**
-   * Set the last updated time for all components in a repository.
+   * Set the last downloaded time for all assets in a repository.
    */
   void setComponentLastUpdatedTime(Repository repository, final Date date);
-
-  /**
-   * Set the last updated time for all assets in a repository.
-   */
-  void setAssetLastUpdatedTime(final Repository repository, final Date date);
-
-  /**
-   * Set the last updated time for a single asset
-   */
-  void setAssetLastUpdatedTime(final Repository repository, final String path, final Date date);
 
   /**
    * Set null to the last downloaded time column for all assets in a repository.

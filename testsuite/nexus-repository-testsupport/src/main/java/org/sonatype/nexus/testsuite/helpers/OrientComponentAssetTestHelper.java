@@ -404,41 +404,13 @@ public class OrientComponentAssetTestHelper
 
   @Override
   public void setComponentLastUpdatedTime(Repository repository, final Date date) {
-    setEntityLastUpdatedTime(repository, date, "component");
-  }
-
-  @Override
-  public void setAssetLastUpdatedTime(final Repository repository, final Date date) {
-    setEntityLastUpdatedTime(repository, date, "asset");
-  }
-
-  private void setEntityLastUpdatedTime(final Repository repository, final Date date, final String table) {
-    String sql = "UPDATE " + table + " SET last_updated = :lastUpdated WHERE bucket.repository_name = :repositoryName";
+    String sql = "UPDATE component SET last_updated = :lastUpdated WHERE bucket.repository_name = :repositoryName";
     HashMap<String, Object> sqlParams = new HashMap<>();
     sqlParams.put("repositoryName", repository.getName());
     sqlParams.put("lastUpdated", date);
-    execute(sql, sqlParams);
-  }
-
-  @Override
-  public void setAssetLastUpdatedTime(final Repository repository, final String path, final Date date) {
-    setEntityLastUpdatedTime(repository, path, date, "asset");
-  }
-
-  private void setEntityLastUpdatedTime(final Repository repository, final String path, final Date date, final String table) {
-    String sql = "UPDATE " + table +
-        " SET last_updated = :lastUpdated WHERE bucket.repository_name = :repositoryName AND name = :assetName";
-    HashMap<String, Object> sqlParams = new HashMap<>();
-    sqlParams.put("repositoryName", repository.getName());
-    sqlParams.put("assetName", path);
-    sqlParams.put("lastUpdated", date);
-    execute(sql, sqlParams);
-  }
-
-  private void execute(final String sql, final HashMap<String, Object> parameters) {
     ODatabaseDocumentTx tx = databaseInstanceProvider.get().acquire();
     tx.begin();
-    tx.command(new OCommandSQL(sql)).execute(parameters);
+    tx.command(new OCommandSQL(sql)).execute(sqlParams);
     tx.commit();
     tx.close();
   }
