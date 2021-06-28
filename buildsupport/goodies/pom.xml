@@ -94,6 +94,12 @@
         <groupId>org.sonatype.sisu.goodies</groupId>
         <artifactId>goodies-ssl</artifactId>
         <version>${goodies.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk15on</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>
