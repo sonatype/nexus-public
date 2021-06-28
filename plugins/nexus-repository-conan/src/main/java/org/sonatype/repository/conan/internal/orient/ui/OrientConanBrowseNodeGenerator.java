@@ -25,6 +25,7 @@ import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.repository.conan.internal.ConanFormat;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.browse.BrowsePaths.fromPaths;
 import static org.sonatype.repository.conan.internal.common.ConanBrowseNodeGeneratorHelper.assetSegment;
 
 /**
@@ -45,7 +46,7 @@ public class OrientConanBrowseNodeGenerator
     componentList.add(component.group());
     componentList.add(component.name());
     componentList.add(component.version());
-    return BrowsePaths.fromPaths(componentList, true);
+    return fromPaths(componentList, true);
   }
 
   @Override
@@ -54,7 +55,7 @@ public class OrientConanBrowseNodeGenerator
 
     if (component != null) {
       List<BrowsePaths> strings = computeComponentPaths(asset, component);
-      strings.addAll(assetSegment(asset.name()));
+      strings.addAll(fromPaths(assetSegment(asset.name()), false));
       return strings;
     }
     return super.computeAssetPaths(asset, null);
