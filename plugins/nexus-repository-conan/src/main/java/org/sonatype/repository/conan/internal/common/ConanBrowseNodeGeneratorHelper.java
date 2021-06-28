@@ -14,7 +14,6 @@ package org.sonatype.repository.conan.internal.common;
 
 import java.util.List;
 
-import org.sonatype.nexus.repository.browse.BrowsePaths;
 import org.sonatype.repository.conan.internal.ConanFacetUtils;
 
 import com.google.common.collect.ImmutableList;
@@ -28,7 +27,7 @@ public class ConanBrowseNodeGeneratorHelper
 
   }
 
-  public static List<BrowsePaths> assetSegment(final String path) {
+  public static List<String> assetSegment(final String path) {
     String[] split = path.split("/");
     int fileNameIndex = split.length - 1;
     int packageNameIndex;
@@ -38,19 +37,14 @@ public class ConanBrowseNodeGeneratorHelper
       if (ConanFacetUtils.isPackageSnapshot(path)) {
         packageNameIndex = split.length - 1;
         packagesSegmentIndex = split.length - 2;
-        return BrowsePaths
-            .fromPaths(ImmutableList.of(split[packagesSegmentIndex], split[packageNameIndex]),
-                false);
+        return ImmutableList.of(split[packagesSegmentIndex], split[packageNameIndex]);
       }
       else {
         packageNameIndex = split.length - 2;
         packagesSegmentIndex = split.length - 3;
-        return BrowsePaths
-            .fromPaths(ImmutableList
-                    .of(split[packagesSegmentIndex], split[packageNameIndex], split[fileNameIndex]),
-                false);
+        return ImmutableList.of(split[packagesSegmentIndex], split[packageNameIndex], split[fileNameIndex]);
       }
     }
-    return BrowsePaths.fromPaths(ImmutableList.of(split[fileNameIndex]), false);
+    return ImmutableList.of(split[fileNameIndex]);
   }
 }

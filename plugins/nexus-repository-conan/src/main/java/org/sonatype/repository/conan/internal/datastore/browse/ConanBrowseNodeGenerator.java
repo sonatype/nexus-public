@@ -19,12 +19,12 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.browse.node.BrowsePath;
-import org.sonatype.nexus.repository.browse.node.BrowsePathBuilder;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.browse.ComponentPathBrowseNodeGenerator;
 import org.sonatype.repository.conan.internal.ConanFormat;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.browse.node.BrowsePathBuilder.fromPaths;
 import static org.sonatype.repository.conan.internal.common.ConanBrowseNodeGeneratorHelper.assetSegment;
 
 /**
@@ -44,7 +44,7 @@ public class ConanBrowseNodeGenerator
       componentList.add(component.version());
     });
 
-    return BrowsePathBuilder.fromPaths(componentList, true);
+    return fromPaths(componentList, true);
   }
 
   @Override
@@ -52,7 +52,7 @@ public class ConanBrowseNodeGenerator
     checkNotNull(asset);
     if (asset.component().isPresent()) {
       List<BrowsePath> browsePaths = computeComponentPaths(asset);
-      browsePaths.addAll(assetSegment(asset.path()));
+      browsePaths.addAll(fromPaths(assetSegment(asset.path()), false));
       return browsePaths;
     }
     else {
