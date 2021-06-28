@@ -16,15 +16,11 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.Path;
 
-import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.repository.rest.api.RepositoriesApiResourceV1;
-
-import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 
 /**
  * @since 3.28
  */
-@FeatureFlag(name = ORIENT_ENABLED)
 @Named
 @Singleton
 @Path(RepositoriesApiResourceV1.RESOURCE_URI + "/conan/proxy")
