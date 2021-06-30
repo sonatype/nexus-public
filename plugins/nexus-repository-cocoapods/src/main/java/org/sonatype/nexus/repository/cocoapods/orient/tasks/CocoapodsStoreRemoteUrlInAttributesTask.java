@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.cocoapods.tasks;
+package org.sonatype.nexus.repository.cocoapods.orient.tasks;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,14 +43,13 @@ import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Streams;
 import org.apache.commons.io.IOUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Streams.stream;
 import static org.sonatype.nexus.repository.cocoapods.internal.CocoapodsFormat.POD_REMOTE_ATTRIBUTE_NAME;
-import static org.sonatype.nexus.repository.cocoapods.upgrade.CocoapodsUpgrade_1_1.MARKER_FILE;
+import static org.sonatype.nexus.repository.cocoapods.orient.upgrade.CocoapodsUpgrade_1_1.MARKER_FILE;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 import static org.sonatype.nexus.repository.storage.Query.builder;
 
@@ -64,9 +63,9 @@ public class CocoapodsStoreRemoteUrlInAttributesTask
     extends TaskSupport
     implements Cancelable
 {
-  private final static int SPEC_ASSET_PATH_NAME_INDEX = 4;
+  private static final int SPEC_ASSET_PATH_NAME_INDEX = 4;
 
-  private final static int SPEC_ASSET_PATH_VERSION_INDEX = 5;
+  private static final int SPEC_ASSET_PATH_VERSION_INDEX = 5;
 
   private final Path markerFile;
 
@@ -110,8 +109,13 @@ public class CocoapodsStoreRemoteUrlInAttributesTask
 
   private List<Repository> getCocoapodsRepositories() {
     return stream(repositoryManager.browse())
-        .filter(r -> r.getFormat() instanceof CocoapodsFormat && r.getType().getValue().equals(ProxyType.NAME))
-        .peek(r -> log.debug("Looking at Cocoapods repository: {}", r))
+        .filter(r -> {
+          if (r.getFormat() instanceof CocoapodsFormat && r.getType().getValue().equals(ProxyType.NAME)) {
+            log.debug("Looking at Cocoapods repository: {}", r);
+            return true;
+          }
+          return false;
+        })
         .collect(Collectors.toList());
   }
 
@@ -154,7 +158,7 @@ public class CocoapodsStoreRemoteUrlInAttributesTask
     Asset podAsset = findPodFile(tx, repository, coords).orElse(null);
     if (podAsset != null) {
       String podPath = PathUtils.buildNxrmPodPath(coords.name, coords.version, URI.create(remoteDownloadURL));
-      log.debug("Update pod: " + podPath);
+      log.debug("Update pod: {}", podPath);
       podAsset.name(podPath);
       tx.saveAsset(podAsset);
     }

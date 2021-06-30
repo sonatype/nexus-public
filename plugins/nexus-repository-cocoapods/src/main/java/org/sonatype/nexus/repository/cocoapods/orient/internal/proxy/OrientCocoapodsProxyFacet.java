@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.cocoapods.internal.proxy;
+package org.sonatype.nexus.repository.cocoapods.orient.internal.proxy;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,6 +28,8 @@ import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.cocoapods.CocoapodsFacet;
 import org.sonatype.nexus.repository.cocoapods.internal.AssetKind;
 import org.sonatype.nexus.repository.cocoapods.internal.PathUtils;
+import org.sonatype.nexus.repository.cocoapods.internal.proxy.InvalidSpecFileException;
+import org.sonatype.nexus.repository.cocoapods.internal.proxy.SpecFileProcessor;
 import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.StorageTx;
@@ -40,7 +42,6 @@ import org.sonatype.nexus.repository.view.payloads.StringPayload;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.collect.ImmutableMap;
-import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -56,21 +57,21 @@ import static org.sonatype.nexus.repository.cocoapods.internal.CocoapodsFormat.r
  */
 @Named
 @Facet.Exposed
-public class CocoapodsProxyFacet
+public class OrientCocoapodsProxyFacet
     extends ProxyFacetSupport
 {
-  private static String ASSET_KIND_ERROR = "Received an invalid AssetKind of type: ";
+  private static final String ASSET_KIND_ERROR = "Received an invalid AssetKind of type: ";
 
   private SpecFileProcessor specFileProcessor;
 
   @Inject
-  public CocoapodsProxyFacet(final SpecFileProcessor specFileProcessor) {
+  public OrientCocoapodsProxyFacet(final SpecFileProcessor specFileProcessor) {
     this.specFileProcessor = specFileProcessor;
   }
 
   private Content transformSpecFile(final Payload payload) throws IOException {
     try (InputStream data = payload.openInputStream()) {
-      String specFile = IOUtils.toString(data, Charsets.UTF_8);
+      String specFile = IOUtils.toString(data, StandardCharsets.UTF_8);
       try {
         return new Content(
             new StringPayload(specFileProcessor.toProxiedSpec(specFile, URI.create(getRepository().getUrl() + "/")),
@@ -168,7 +169,7 @@ public class CocoapodsProxyFacet
   }
 
   @TransactionalTouchMetadata
-  public void setCacheInfo(final Content content, final CacheInfo cacheInfo) throws IOException {
+  public void setCacheInfo(final Content content, final CacheInfo cacheInfo) {
     StorageTx tx = UnitOfWork.currentTx();
 
     Asset asset = Content.findAsset(tx, tx.findBucket(getRepository()), content);

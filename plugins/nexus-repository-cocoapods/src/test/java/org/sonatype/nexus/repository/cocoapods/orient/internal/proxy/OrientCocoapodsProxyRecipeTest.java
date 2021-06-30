@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.cocoapods.internal.proxy;
+package org.sonatype.nexus.repository.cocoapods.orient.internal.proxy;
 
 import javax.inject.Provider;
 
@@ -65,7 +65,7 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.view.Router.LOCAL_ATTRIBUTE_PREFIX;
 
 @RunWith(JUnitParamsRunner.class)
-public class CocoapodsProxyRecipeTest
+public class OrientCocoapodsProxyRecipeTest
     extends TestSupport
 {
   @Mock
@@ -110,7 +110,7 @@ public class CocoapodsProxyRecipeTest
   private PartialFetchHandler partialFetchHandler;
 
   @Mock
-  private Provider<CocoapodsProxyFacet> proxyFacet;
+  private Provider<OrientCocoapodsProxyFacet> proxyFacet;
 
   @Mock
   private ProxyHandler proxyHandler;
@@ -139,7 +139,7 @@ public class CocoapodsProxyRecipeTest
   @Mock
   private Provider<StorageFacet> storageFace;
 
-  private CocoapodsProxyRecipe underTest;
+  private OrientCocoapodsProxyRecipe underTest;
 
   @Mock
   private UnitOfWorkHandler unitOfWorkHandler;
@@ -172,7 +172,7 @@ public class CocoapodsProxyRecipeTest
     when(format.getValue()).thenReturn(COCOAPODS_NAME);
     timingHandler = spy(new TimingHandler(null));
 
-    underTest = new CocoapodsProxyRecipe(new ProxyType(), format);
+    underTest = new OrientCocoapodsProxyRecipe(new ProxyType(), format);
     underTest.timingHandler = timingHandler;
     underTest.securityFacet = securityFacet;
     underTest.viewFacet = viewFacet;

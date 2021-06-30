@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.cocoapods.tasks;
+package org.sonatype.nexus.repository.cocoapods.orient.tasks;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -23,13 +23,13 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
-import org.sonatype.nexus.repository.cocoapods.upgrade.CocoapodsUpgrade_1_1;
+import org.sonatype.nexus.repository.cocoapods.orient.upgrade.CocoapodsUpgrade_1_1;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
-import static org.sonatype.nexus.repository.cocoapods.tasks.CocoapodsStoreRemoteUrlInAttributesTaskDescriptor.TYPE_ID;
-import static org.sonatype.nexus.repository.cocoapods.upgrade.CocoapodsUpgrade_1_1.MARKER_FILE;
+import static org.sonatype.nexus.repository.cocoapods.orient.tasks.CocoapodsStoreRemoteUrlInAttributesTaskDescriptor.TYPE_ID;
+import static org.sonatype.nexus.repository.cocoapods.orient.upgrade.CocoapodsUpgrade_1_1.MARKER_FILE;
 
 /**
  * Instantiates the change download URL storage method task based on the existence of a marker

@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.cocoapods.internal;
+package org.sonatype.nexus.repository.cocoapods.orient.internal;
 
 import java.util.List;
 
@@ -26,10 +26,10 @@ import static java.util.Arrays.asList;
 /**
  * @since 3.19
  */
-public class CocoapodsBrowseNodeGeneratorTest
+public class OrientCocoapodsBrowseNodeGeneratorTest
     extends BrowseTestSupport
 {
-  private CocoapodsBrowseNodeGenerator generator = new CocoapodsBrowseNodeGenerator();
+  private OrientCocoapodsBrowseNodeGenerator generator = new OrientCocoapodsBrowseNodeGenerator();
 
   @Test
   public void shouldComputeAssetAndComponentPath() {

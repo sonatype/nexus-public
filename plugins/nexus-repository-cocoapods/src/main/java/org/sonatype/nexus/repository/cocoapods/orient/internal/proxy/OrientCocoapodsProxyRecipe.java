@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.cocoapods.internal.proxy;
+package org.sonatype.nexus.repository.cocoapods.orient.internal.proxy;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -69,9 +69,9 @@ import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
 /**
  * @since 3.19
  */
-@Named(CocoapodsProxyRecipe.NAME)
+@Named(OrientCocoapodsProxyRecipe.NAME)
 @Singleton
-public class CocoapodsProxyRecipe
+public class OrientCocoapodsProxyRecipe
     extends RecipeSupport
 {
   public static final String NAME = "cocoapods-proxy";
@@ -92,7 +92,7 @@ public class CocoapodsProxyRecipe
   Provider<NegativeCacheFacet> negativeCacheFacet;
 
   @Inject
-  Provider<CocoapodsProxyFacet> proxyFacet;
+  Provider<OrientCocoapodsProxyFacet> proxyFacet;
 
   @Inject
   Provider<CocoapodsFacet> cocoapodsFacet;
@@ -152,7 +152,7 @@ public class CocoapodsProxyRecipe
   HandlerContributor handlerContributor;
 
   @Inject
-  public CocoapodsProxyRecipe(@Named(ProxyType.NAME) Type type, @Named(CocoapodsFormat.NAME) Format format) {
+  public OrientCocoapodsProxyRecipe(@Named(ProxyType.NAME) Type type, @Named(CocoapodsFormat.NAME) Format format) {
     super(type, format);
   }
 
@@ -228,7 +228,7 @@ public class CocoapodsProxyRecipe
   }
 
   private Handler assetKindHandler(final AssetKind assetKind) {
-    return (context) -> {
+    return context -> {
       context.getAttributes().set(AssetKind.class, assetKind);
       return context.proceed();
     };
