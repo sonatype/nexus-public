@@ -10,28 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.cocoapods.tasks;
-
-import javax.inject.Named;
-import javax.inject.Singleton;
-
-import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
+package org.sonatype.nexus.repository.cocoapods.orient.upgrade;
 
 /**
- * Task descriptor for {@link CocoapodsStoreRemoteUrlInAttributesTask}.
+ * Holds information about the 'cocoapods' model defined by this plugin.
+ *
+ * This model is stored in the 'component' database as attributes in the generic 'component' model.
+ * Upgrades should depend on the 'component' model and version at the time the upgrade was written.
  *
  * @since 3.27
  */
-@Named
-@Singleton
-public class CocoapodsStoreRemoteUrlInAttributesTaskDescriptor
-    extends TaskDescriptorSupport
+public interface CocoapodsModel
 {
-  public static final String TASK_NAME = "Cocoapods Proxy - Store remote Url in Attributes";
-
-  public static final String TYPE_ID = "repository.cocoapods.store-remote-url-in-attributes";
-
-  public CocoapodsStoreRemoteUrlInAttributesTaskDescriptor() {
-    super(TYPE_ID, CocoapodsStoreRemoteUrlInAttributesTask.class, TASK_NAME, VISIBLE, EXPOSED);
-  }
+  String NAME = "cocoapods";
 }

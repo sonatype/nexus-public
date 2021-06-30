@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.cocoapods.internal;
+package org.sonatype.nexus.repository.cocoapods.orient.internal;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -57,7 +57,7 @@ import static org.mockito.Mockito.when;
 /**
  * @since 3.19
  */
-public class CocoapodsFacetImplTest
+public class OrientCocoapodsFacetImplTest
     extends TestSupport
 {
   private static final String NAME = "MyCheckWalletUI";
@@ -218,7 +218,7 @@ public class CocoapodsFacetImplTest
         bind(EventManager.class).toInstance(eventManager);
         bind(SpecFileProcessor.class).toInstance(specFileProcessor);
       }
-    }).getInstance(CocoapodsFacetImpl.class);
+    }).getInstance(OrientCocoapodsFacetImpl.class);
     cocoapodsFacet.attach(repository);
     cocoapodsFacet.init();
   }
