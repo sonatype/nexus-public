@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.golang.internal.hosted;
+package org.sonatype.nexus.repository.golang.internal.orient.hosted;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,8 +22,9 @@ import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.golang.internal.metadata.GolangAttributes;
+import org.sonatype.nexus.repository.golang.internal.orient.hosted.GolangHostedFacetImpl;
 import org.sonatype.nexus.repository.golang.internal.util.CompressedContentExtractor;
-import org.sonatype.nexus.repository.golang.internal.util.GolangDataAccess;
+import org.sonatype.nexus.repository.golang.internal.orient.util.GolangDataAccess;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.StorageFacet;

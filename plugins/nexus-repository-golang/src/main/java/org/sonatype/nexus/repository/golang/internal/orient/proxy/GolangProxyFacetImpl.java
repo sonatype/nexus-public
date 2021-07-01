@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.golang.internal.proxy;
+package org.sonatype.nexus.repository.golang.internal.orient.proxy;
 
 import java.io.IOException;
 
@@ -22,7 +22,7 @@ import javax.inject.Named;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.golang.AssetKind;
 import org.sonatype.nexus.repository.golang.internal.metadata.GolangAttributes;
-import org.sonatype.nexus.repository.golang.internal.util.GolangDataAccess;
+import org.sonatype.nexus.repository.golang.internal.orient.util.GolangDataAccess;
 import org.sonatype.nexus.repository.golang.internal.util.GolangPathUtils;
 import org.sonatype.nexus.repository.proxy.ProxyFacet;
 import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
@@ -38,7 +38,7 @@ import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.golang.internal.util.GolangDataAccess.HASH_ALGORITHMS;
+import static org.sonatype.nexus.repository.golang.internal.orient.util.GolangDataAccess.HASH_ALGORITHMS;
 
 /**
  * Go {@link ProxyFacet} implementation.
@@ -151,7 +151,7 @@ public class GolangProxyFacetImpl
   }
 
   @TransactionalTouchMetadata
-  public void setCacheInfo(final Content content, final CacheInfo cacheInfo) throws IOException {
+  public void setCacheInfo(final Content content, final CacheInfo cacheInfo) {
     StorageTx tx = UnitOfWork.currentTx();
     Asset asset = Content.findAsset(tx, tx.findBucket(getRepository()), content);
     if (asset == null) {
