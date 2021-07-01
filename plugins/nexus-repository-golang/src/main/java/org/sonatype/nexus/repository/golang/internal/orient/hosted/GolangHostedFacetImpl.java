@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.golang.internal.hosted;
+package org.sonatype.nexus.repository.golang.internal.orient.hosted;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -27,8 +27,8 @@ import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.golang.AssetKind;
 import org.sonatype.nexus.repository.golang.internal.metadata.GolangAttributes;
 import org.sonatype.nexus.repository.golang.internal.metadata.GolangInfo;
+import org.sonatype.nexus.repository.golang.internal.orient.util.GolangDataAccess;
 import org.sonatype.nexus.repository.golang.internal.util.CompressedContentExtractor;
-import org.sonatype.nexus.repository.golang.internal.util.GolangDataAccess;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
@@ -44,12 +44,12 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static com.google.common.base.Charsets.UTF_8;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.sonatype.nexus.repository.golang.AssetKind.MODULE;
 import static org.sonatype.nexus.repository.golang.AssetKind.PACKAGE;
-import static org.sonatype.nexus.repository.golang.internal.util.GolangDataAccess.HASH_ALGORITHMS;
+import static org.sonatype.nexus.repository.golang.internal.orient.util.GolangDataAccess.HASH_ALGORITHMS;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 import static org.sonatype.nexus.repository.view.ContentTypes.APPLICATION_JSON;
 import static org.sonatype.nexus.repository.view.ContentTypes.TEXT_PLAIN;

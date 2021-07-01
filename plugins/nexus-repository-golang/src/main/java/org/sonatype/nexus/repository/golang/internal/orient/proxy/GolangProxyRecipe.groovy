@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.golang.internal.proxy
+package org.sonatype.nexus.repository.golang.internal.orient.proxy
 
 import javax.annotation.Nonnull
 import javax.inject.Inject
@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.golang.GolangFormat
-import org.sonatype.nexus.repository.golang.internal.GolangRecipeSupport
+import org.sonatype.nexus.repository.golang.internal.orient.GolangRecipeSupport
 import org.sonatype.nexus.repository.http.HttpHandlers
 import org.sonatype.nexus.repository.proxy.ProxyHandler
 import org.sonatype.nexus.repository.routing.RoutingRuleHandler

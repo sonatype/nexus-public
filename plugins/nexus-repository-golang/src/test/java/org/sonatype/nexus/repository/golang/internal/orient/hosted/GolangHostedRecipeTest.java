@@ -10,10 +10,11 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.golang.internal.hosted;
+package org.sonatype.nexus.repository.golang.internal.orient.hosted;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.golang.GolangFormat;
+import org.sonatype.nexus.repository.golang.internal.orient.hosted.GolangHostedRecipe;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.view.handlers.HighAvailabilitySupportChecker;
 
