@@ -12,16 +12,21 @@
  */
 package org.sonatype.nexus.repository.r.datastore.internal;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.nexus.common.entity.Continuations;
 import org.sonatype.nexus.repository.Facet.Exposed;
+import org.sonatype.nexus.repository.config.WritePolicy;
+import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.store.AssetDAO;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.r.RFormat;
 import org.sonatype.nexus.repository.r.internal.AssetKind;
@@ -31,7 +36,11 @@ import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.apache.commons.lang3.StringUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW;
+import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW_ONCE;
 import static org.sonatype.nexus.repository.r.internal.AssetKind.ARCHIVE;
+import static org.sonatype.nexus.repository.r.internal.AssetKind.PACKAGES;
+import static org.sonatype.nexus.repository.r.internal.AssetKind.RDS_METADATA;
 import static org.sonatype.nexus.repository.r.internal.RAttributes.P_PACKAGE;
 import static org.sonatype.nexus.repository.r.internal.RAttributes.P_VERSION;
 import static org.sonatype.nexus.repository.r.internal.util.RDescriptionUtils.extractDescriptionFromArchive;
@@ -52,6 +61,31 @@ public class RContentFacet
   public RContentFacet(@Named(RFormat.NAME) final FormatStoreManager formatStoreManager)
   {
     super(formatStoreManager);
+  }
+
+  @Override
+  protected WritePolicy writePolicy(final Asset asset) {
+    WritePolicy policy = super.writePolicy(asset);
+    if (ALLOW_ONCE == policy) {
+      String assetKind = asset.kind();
+      if (assetKind.equals(PACKAGES.name())
+          || assetKind.equals(RDS_METADATA.name())) {
+        return ALLOW;
+      }
+    }
+    return policy;
+  }
+
+  /**
+   * Returns all assets by kind
+   */
+  public Iterable<FluentAsset> getAssetsByKind(final String kind) {
+    checkNotNull(kind);
+
+    String filterString = " kind = #{" + AssetDAO.FILTER_PARAMS + ".assetKind} ";
+    Map<String, Object> filterParams = Collections.singletonMap("assetKind", kind);
+
+    return Continuations.iterableOf(assets().byFilter(filterString, filterParams)::browse);
   }
 
   /**
@@ -130,7 +164,7 @@ public class RContentFacet
    * @param path - Any path e.g. 'some/path/example'
    * @return - the path, e.g. '/some/path/example'
    */
-  private static String normalizeAssetPath(final String path) {
+  private String normalizeAssetPath(final String path) {
     return StringUtils.prependIfMissing(path, "/");
   }
 }

@@ -22,14 +22,21 @@ import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.http.HttpHandlers
+import org.sonatype.nexus.repository.http.HttpMethods
 import org.sonatype.nexus.repository.r.RFormat
 import org.sonatype.nexus.repository.r.datastore.internal.RContentFacet
 import org.sonatype.nexus.repository.r.datastore.internal.RRecipeSupport
+import org.sonatype.nexus.repository.r.internal.AssetKind
+import org.sonatype.nexus.repository.r.internal.RCommonHandlers
 import org.sonatype.nexus.repository.types.HostedType
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
+import org.sonatype.nexus.repository.view.Route
 import org.sonatype.nexus.repository.view.Router.Builder
 import org.sonatype.nexus.repository.view.ViewFacet
-import org.sonatype.nexus.repository.r.internal.AssetKind
+import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler
+import org.sonatype.nexus.repository.view.matchers.ActionMatcher
+import org.sonatype.nexus.repository.view.matchers.logic.LogicMatchers
+import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher
 
 /**
  * R hosted repository recipe.
@@ -47,7 +54,16 @@ class RHostedRecipe
   Provider<RContentFacet> contentFacet
 
   @Inject
+  Provider<RHostedMetadataFacet> rHostedMetadataFacet
+
+  @Inject
   RHostedHandlers hostedHandlers
+
+  @Inject
+  RCommonHandlers commonHandlers
+
+  @Inject
+  LastDownloadedHandler lastDownloadedHandler
 
   @Inject
   RHostedRecipe(@Named(HostedType.NAME) final Type type,
@@ -63,6 +79,8 @@ class RHostedRecipe
     repository.attach(contentFacet.get())
     repository.attach(browseFacet.get())
     repository.attach(maintenanceFacet.get())
+    repository.attach(rHostedMetadataFacet.get())
+    repository.attach(searchFacet.get())
   }
 
   /**
@@ -70,6 +88,18 @@ class RHostedRecipe
    */
   private ViewFacet configure(final ConfigurableViewFacet facet) {
     Builder builder = new Builder()
+
+    // PACKAGES.gz is the only supported metadata in hosted for now
+    builder.route(packagesGzMatcher()
+        .handler(timingHandler)
+        .handler(assetKindHandler.rcurry(AssetKind.PACKAGES))
+        .handler(securityHandler)
+        .handler(exceptionHandler)
+        .handler(handlerContributor)
+        .handler(partialFetchHandler)
+        .handler(contentHeadersHandler)
+        .handler(hostedHandlers.getPackages)
+        .create())
 
     builder.route(archiveMatcher()
         .handler(timingHandler)
@@ -80,6 +110,7 @@ class RHostedRecipe
         .handler(conditionalRequestHandler)
         .handler(partialFetchHandler)
         .handler(contentHeadersHandler)
+        .handler(lastDownloadedHandler)
         .handler(hostedHandlers.getArchive)
         .create())
 
@@ -95,10 +126,38 @@ class RHostedRecipe
         .handler(hostedHandlers.putArchive)
         .create())
 
+    builder.route(notSupportedMetadataMatcher()
+        .handler(securityHandler)
+        .handler(commonHandlers.notSupportedMetadataRequest)
+        .create())
+
+    addBrowseUnsupportedRoute(builder)
+
     builder.defaultHandlers(HttpHandlers.notFound())
 
     facet.configure(builder.create())
 
     return facet
+  }
+
+  static Route.Builder packagesGzMatcher() {
+    new Route.Builder().matcher(
+        LogicMatchers.and(
+            new ActionMatcher(HttpMethods.GET, HttpMethods.HEAD),
+            packagesGzTokenMatcher()
+        ))
+  }
+
+  static Route.Builder notSupportedMetadataMatcher() {
+    new Route.Builder().matcher(
+        LogicMatchers.and(
+            new ActionMatcher(HttpMethods.GET, HttpMethods.HEAD),
+            LogicMatchers.or(metadataRdsPathMatcher(), packagesTokenMatcher()),
+            LogicMatchers.not(packagesGzTokenMatcher())
+        ))
+  }
+
+  static TokenMatcher packagesGzTokenMatcher() {
+    return new TokenMatcher('/{path:.+}/PACKAGES.gz')
   }
 }

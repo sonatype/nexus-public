@@ -34,6 +34,6 @@ public final class RCommonHandlers
    *
    * Related to:  NEXUS-22119
    */
-  final Handler notSupportedMetadataRequest =
+  public final Handler notSupportedMetadataRequest =
       context -> HttpResponses.notFound("This metadata type is not supported for now.");
 }
