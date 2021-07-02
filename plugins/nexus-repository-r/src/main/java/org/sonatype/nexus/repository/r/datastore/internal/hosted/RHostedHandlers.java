@@ -37,8 +37,12 @@ import static org.sonatype.nexus.repository.r.internal.util.RPathUtils.extractRe
 public class RHostedHandlers
 {
   public Handler getPackages = context -> {
-    // TODO NEXUS-27646
-    throw new UnsupportedOperationException();
+    String assetPath = extractRequestPath(context);
+    FluentAsset fluentAsset = context
+        .getRepository()
+        .facet(RHostedMetadataFacet.class)
+        .getOrCreatePackagesGz(assetPath);
+    return HttpResponses.ok(fluentAsset.download());
   };
 
   public Handler getArchive = context -> {
