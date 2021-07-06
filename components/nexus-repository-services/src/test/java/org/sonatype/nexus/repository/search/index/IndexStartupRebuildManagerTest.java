@@ -10,20 +10,23 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search;
+package org.sonatype.nexus.repository.search.index;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.repository.search.index.RebuildIndexTaskDescriptor;
+
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class IndexStartupRebuildManagerTest
     extends TestSupport
@@ -68,6 +71,6 @@ public class IndexStartupRebuildManagerTest
 
     TaskConfiguration taskConfiguration = taskConfigurationArgumentCaptor.getValue();
 
-    assertThat(taskConfiguration.getString("repositoryName"), is( "*"));
+    MatcherAssert.assertThat(taskConfiguration.getString("repositoryName"), Matchers.is( "*"));
   }
 }
