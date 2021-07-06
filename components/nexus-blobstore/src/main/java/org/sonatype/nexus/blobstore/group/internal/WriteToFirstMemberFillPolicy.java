@@ -41,24 +41,14 @@ public class WriteToFirstMemberFillPolicy
     return NAME;
   }
 
-  @Nullable
   @Override
-  public BlobStore chooseBlobStoreForCreate(
-      final BlobStoreGroup blobStoreGroup, final Map<String, String> headers)
-  {
+  @Nullable
+  public BlobStore chooseBlobStore(final BlobStoreGroup blobStoreGroup, final Map<String, String> headers) {
     return blobStoreGroup
         .getMembers().stream()
         .filter(BlobStore::isWritable)
         .filter(BlobStore::isStorageAvailable)
         .findFirst()
         .orElse(null);
-  }
-
-  @Nullable
-  @Override
-  public BlobStore chooseBlobStoreForCopy(
-      final BlobStoreGroup blobStoreGroup, final BlobStore sourceBlobStore, final Map<String, String> headers)
-  {
-    return sourceBlobStore;
   }
 }

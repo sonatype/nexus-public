@@ -50,20 +50,10 @@ public class RoundRobinFillPolicy
     return NAME;
   }
 
-  @Nullable
   @Override
-  public BlobStore chooseBlobStoreForCreate(
-      final BlobStoreGroup blobStoreGroup, final Map<String, String> headers)
-  {
+  @Nullable
+  public BlobStore chooseBlobStore(final BlobStoreGroup blobStoreGroup, final Map<String, String> headers) {
     return nextMember(blobStoreGroup.getMembers());
-  }
-
-  @Nullable
-  @Override
-  public BlobStore chooseBlobStoreForCopy(
-      final BlobStoreGroup blobStoreGroup, final BlobStore sourceBlobStore, final Map<String, String> headers)
-  {
-    return sourceBlobStore;
   }
 
   /**

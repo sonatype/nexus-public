@@ -24,26 +24,13 @@ import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
  *
  * @since 3.14
  */
-public interface FillPolicy
-{
-  /**
-   * Validate the {@link BlobStoreGroup} is correctly configured for this {@link FillPolicy}.
-   */
-  default void validateBlobStoreGroup(BlobStoreGroup blobStoreGroup) {
-    //default to a valid blob store group
-  }
+public interface FillPolicy {
 
   String getName();
 
   /**
-   * Choose the blob store group member to write a new temp blob to.
+   * Choose the blob store group member to write a new blob to.
    */
   @Nullable
-  BlobStore chooseBlobStoreForCreate(BlobStoreGroup blobStoreGroup, Map<String, String> headers);
-
-  /**
-   * Choose the blob store group member to copy a blob to, when making temp blob a permanent one.
-   */
-  @Nullable
-  BlobStore chooseBlobStoreForCopy(BlobStoreGroup blobStoreGroup, BlobStore sourceBlobStore, Map<String, String> headers);
+  BlobStore chooseBlobStore(BlobStoreGroup blobStoreGroup, Map<String, String> headers);
 }
