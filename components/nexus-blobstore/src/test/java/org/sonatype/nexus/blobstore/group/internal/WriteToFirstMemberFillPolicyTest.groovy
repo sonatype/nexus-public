@@ -38,7 +38,7 @@ class WriteToFirstMemberFillPolicyTest
         ]
       }
     when: 'the policy tries to select the blob store member'
-      def blobStore = underTest.chooseBlobStoreForCreate(blobStoreGroup, [:])
+      def blobStore = underTest.chooseBlobStore(blobStoreGroup, [:])
     then:
       blobStore.blobStoreConfiguration.name == name
 
