@@ -419,13 +419,48 @@ public class DatastoreComponentAssetTestHelper
 
   @Override
   public void setComponentLastUpdatedTime(Repository repository, final Date date) {
+    setLastUpdatedTime(repository, date, "component");
+  }
+
+  @Override
+  public void setAssetLastUpdatedTime(final Repository repository, final Date date) {
+    setLastUpdatedTime(repository, date, "asset");
+  }
+
+  private void setLastUpdatedTime(final Repository repository, final Date date, final String table) {
     int repositoryId = ((ContentFacetSupport) repository.facet(ContentFacet.class)).contentRepositoryId();
 
-    try (Connection connection = sessionSupplier.openConnection(DEFAULT_DATASTORE_NAME);
-         PreparedStatement stmt = connection.prepareStatement("UPDATE " + repository.getFormat().getValue() + "_component "
-                 + "SET last_updated = ? WHERE repository_id = ?")) {
+    try (Connection connection = sessionSupplier
+        .openConnection(DEFAULT_DATASTORE_NAME); PreparedStatement stmt = connection.prepareStatement(
+        "UPDATE " + repository.getFormat().getValue() + "_" + table +
+            " SET last_updated = ? WHERE repository_id = ?")) {
       stmt.setTimestamp(1, Timestamp.from(date.toInstant()));
       stmt.setInt(2, repositoryId);
+      stmt.execute();
+      if (stmt.getWarnings() != null) {
+        throw new RuntimeException("Failed to set updated time: " + stmt.getWarnings());
+      }
+    }
+    catch (SQLException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public void setAssetLastUpdatedTime(final Repository repository, final String path, final Date date) {
+    setLastUpdatedTime(repository, path, date, "asset");
+  }
+
+  private void setLastUpdatedTime(final Repository repository, final String path, final Date date, final String table) {
+    int repositoryId = repository.facet(ContentFacet.class).contentRepositoryId();
+
+    try (Connection connection = sessionSupplier
+        .openConnection(DEFAULT_DATASTORE_NAME); PreparedStatement stmt = connection.prepareStatement(
+        "UPDATE " + repository.getFormat().getValue() + "_" + table +
+            " SET last_updated = ? WHERE repository_id = ? AND path = ?")) {
+      stmt.setTimestamp(1, Timestamp.from(date.toInstant()));
+      stmt.setInt(2, repositoryId);
+      stmt.setString(3, path);
       stmt.execute();
       if (stmt.getWarnings() != null) {
         throw new RuntimeException("Failed to set updated time: " + stmt.getWarnings());
