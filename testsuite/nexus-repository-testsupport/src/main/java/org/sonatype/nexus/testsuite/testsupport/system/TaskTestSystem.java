@@ -23,6 +23,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.events.TaskEvent;
@@ -46,6 +47,8 @@ public class TaskTestSystem
 
   private final List<TaskEvent> events = new ArrayList<>();
 
+  private final List<TaskInfo> tasks = new ArrayList<>();
+
   private final TaskScheduler scheduler;
 
   @Inject
@@ -57,6 +60,8 @@ public class TaskTestSystem
   @Override
   protected void doAfter() {
     clear();
+    tasks.forEach(TaskInfo::remove);
+    tasks.clear();
   }
 
   @Subscribe
@@ -122,6 +127,17 @@ public class TaskTestSystem
     return events(TaskEventStoppedFailed.class, typeId)
         .filter(taskInfo -> taskInfo.getConfiguration().asMap().equals(configuration))
         .count();
+  }
+
+  public TaskInfo create(final String name, final String typeId, final Map<String, String> attributes) {
+    TaskConfiguration taskConfiguration = scheduler.createTaskConfigurationInstance(typeId);
+    attributes.forEach(taskConfiguration::setString);
+    taskConfiguration.setName(name);
+    taskConfiguration.setEnabled(true);
+
+    TaskInfo taskInfo = scheduler.scheduleTask(taskConfiguration, scheduler.getScheduleFactory().manual());
+    tasks.add(taskInfo);
+    return taskInfo;
   }
 
   private Stream<TaskInfo> events(final Class<? extends TaskEvent> clazz, final String typeId) {
