@@ -30,7 +30,6 @@
     <feature>nexus-repository-apt</feature>
     <feature>nexus-repository-raw</feature>
     <feature>nexus-repository-maven</feature>
-    <feature>nexus-repository-conan</feature>
     <feature>nexus-repository-r</feature>
     <feature>nexus-restore-raw</feature>
     <feature>nexus-restore-apt</feature>
