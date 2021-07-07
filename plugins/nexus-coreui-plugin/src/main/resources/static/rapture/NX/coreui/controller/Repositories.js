@@ -347,7 +347,7 @@ Ext.define('NX.coreui.controller.Repositories', {
         uiSettings = NX.State.getValue('uiSettings'),
         statusInterval = 5;
 
-    me.updateNugetRepoURLs();
+    me.updateFormatSpecificProxyRepoURLs();
 
     if (me.statusProvider) {
       me.statusProvider.disconnect();
@@ -665,7 +665,7 @@ Ext.define('NX.coreui.controller.Repositories', {
    * @private
    * Update NuGet proxy repositories URLs with 'index.json' suffix for V3.
    */
-  updateNugetRepoURLs: function() {
+  updateFormatSpecificProxyRepoURLs: function() {
     var me = this,
       store = me.getStore('Repository');
 
@@ -676,16 +676,26 @@ Ext.define('NX.coreui.controller.Repositories', {
         var name = record.get('name');
         var type = record.get('type');
 
-        if (format == 'nuget' && type == 'proxy') {
+        // update nuget-v3-proxy and conda-proxy repo URLs only in the model
+        if (type === 'proxy') {
           var model = store.findRecord('name', name);
           if (model) {
             var repoUrl = model.get('url');
-            var nugetVersion = model.get('attributes')['nugetProxy']['nugetVersion'];
 
-            if (nugetVersion == 'V3' && !Ext.String.endsWith(repoUrl, 'index.json')) {
-              repoUrl += 'index.json';
-              model.set('url', repoUrl);
-              model.commit(true);
+            if (format === 'nuget') {
+              var nugetVersion = model.get('attributes')['nugetProxy']['nugetVersion'];
+              if (nugetVersion === 'V3' && !Ext.String.endsWith(repoUrl, 'index.json')) {
+                repoUrl += 'index.json';
+                model.set('url', repoUrl);
+                model.commit(true);
+              }
+            }
+            if (format === 'conda') {
+              if (!Ext.String.endsWith(repoUrl, 'main')) {
+                repoUrl += 'main';
+                model.set('url', repoUrl);
+                model.commit(true);
+              }
             }
           }
         }
