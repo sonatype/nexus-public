@@ -124,6 +124,14 @@ public class Maven2MavenPathParser
         }
       }
 
+      for (HashType hashType : HashType.values()) {
+        if (str.endsWith("." + hashType.getExt())) {
+          extSuffix.insert(0, "." + hashType.getExt());
+          str = str.substring(0, str.length() - (hashType.getExt().length() + 1));
+          break;
+        }
+      }
+
       if (str.endsWith(Constants.METADATA_FILENAME)) {
         return null;
       }
