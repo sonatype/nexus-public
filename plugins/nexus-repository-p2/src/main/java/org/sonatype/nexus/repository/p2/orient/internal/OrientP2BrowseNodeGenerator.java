@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.annotation.Nullable;
+import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -36,6 +37,7 @@ import com.google.common.base.Splitter;
  */
 @Singleton
 @Named(P2Format.NAME)
+@Priority(Integer.MAX_VALUE)
 public class OrientP2BrowseNodeGenerator
     implements BrowseNodeGenerator
 {

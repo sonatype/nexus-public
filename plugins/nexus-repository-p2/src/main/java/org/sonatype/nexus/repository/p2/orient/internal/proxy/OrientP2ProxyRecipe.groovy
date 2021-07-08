@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.p2.orient.internal.proxy
 
 import javax.annotation.Nonnull
+import javax.annotation.Priority
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Provider
@@ -56,18 +57,17 @@ import org.sonatype.nexus.repository.view.handlers.HandlerContributor
 import org.sonatype.nexus.repository.view.handlers.HighAvailabilitySupportChecker
 import org.sonatype.nexus.repository.view.handlers.TimingHandler
 import org.sonatype.nexus.repository.view.matchers.ActionMatcher
-import org.sonatype.nexus.repository.view.matchers.RegexMatcher
 import org.sonatype.nexus.repository.view.matchers.logic.LogicMatchers
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher
 
 import static org.sonatype.nexus.repository.http.HttpMethods.GET
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD
 import static org.sonatype.nexus.repository.p2.internal.AssetKind.*
-import static org.sonatype.nexus.repository.view.matchers.logic.LogicMatchers.or
 
 /**
  * P2 proxy repository recipe.
  */
+@Priority(Integer.MAX_VALUE)
 @Named(OrientP2ProxyRecipe.NAME)
 @Singleton
 class OrientP2ProxyRecipe

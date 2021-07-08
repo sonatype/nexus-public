@@ -92,6 +92,7 @@
       <artifactId>nexus-repository</artifactId>
       <classifier>tests</classifier>
       <scope>test</scope>
+      <optional>true</optional>
     </dependency>
   </dependencies>
 

@@ -64,9 +64,9 @@ import org.apache.commons.io.IOUtils;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.p2.internal.AssetKind.BINARY_BUNDLE;
 import static org.sonatype.nexus.repository.p2.orient.internal.OrientP2Facet.HASH_ALGORITHMS;
-import static org.sonatype.nexus.repository.p2.orient.internal.util.P2PathUtils.matcherState;
-import static org.sonatype.nexus.repository.p2.orient.internal.util.P2PathUtils.toP2Attributes;
-import static org.sonatype.nexus.repository.p2.orient.internal.util.P2PathUtils.toP2AttributesBinary;
+import static org.sonatype.nexus.repository.p2.orient.internal.util.OrientP2PathUtils.matcherState;
+import static org.sonatype.nexus.repository.p2.orient.internal.util.OrientP2PathUtils.toP2Attributes;
+import static org.sonatype.nexus.repository.p2.orient.internal.util.OrientP2PathUtils.toP2AttributesBinary;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 

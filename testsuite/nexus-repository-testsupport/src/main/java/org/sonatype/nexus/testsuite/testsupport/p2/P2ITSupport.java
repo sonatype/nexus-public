@@ -43,6 +43,9 @@ import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.ops4j.pax.exam.CoreOptions.when;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_DEVELOPER;
 
 public class P2ITSupport
     extends RepositoryITSupport
@@ -116,7 +119,9 @@ public class P2ITSupport
 
   @Configuration
   public static Option[] configureNexus() {
-    return NexusPaxExamSupport.options(NexusITSupport.configureNexusBase());
+    return options(NexusPaxExamSupport.options(NexusITSupport.configureNexusBase()),
+        when(getValidTestDatabase().isUseContentStore())
+            .useOptions(editConfigurationFilePut(NEXUS_PROPERTIES_FILE, DATASTORE_DEVELOPER, "true")));
   }
 
   protected Server server;

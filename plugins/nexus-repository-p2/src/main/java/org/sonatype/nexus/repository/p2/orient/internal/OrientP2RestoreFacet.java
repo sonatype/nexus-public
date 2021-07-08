@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.p2.orient.internal;
 
 import java.io.IOException;
 
+import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -23,10 +24,11 @@ import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.cache.CacheControllerHolder;
 import org.sonatype.nexus.repository.p2.internal.AssetKind;
 import org.sonatype.nexus.repository.p2.internal.metadata.P2Attributes;
+import org.sonatype.nexus.repository.p2.internal.util.P2PathUtils;
 import org.sonatype.nexus.repository.p2.internal.util.P2TempBlobUtils;
 import org.sonatype.nexus.repository.p2.orient.P2Facet;
 import org.sonatype.nexus.repository.p2.orient.P2RestoreFacet;
-import org.sonatype.nexus.repository.p2.orient.internal.util.P2PathUtils;
+import org.sonatype.nexus.repository.p2.orient.internal.util.OrientP2PathUtils;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Component;
@@ -44,6 +46,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
  * @since 3.28
  */
 @Named
+@Priority(Integer.MAX_VALUE)
 public class OrientP2RestoreFacet
     extends FacetSupport
     implements P2RestoreFacet
@@ -117,7 +120,7 @@ public class OrientP2RestoreFacet
     }
     else {
       StorageFacet storageFacet = facet(StorageFacet.class);
-      attributes = P2PathUtils.getPackageAttributesFromBlob(storageFacet, p2TempBlobUtils, blob, blobName);
+      attributes = OrientP2PathUtils.getPackageAttributesFromBlob(storageFacet, p2TempBlobUtils, blob, blobName);
     }
 
     return attributes;

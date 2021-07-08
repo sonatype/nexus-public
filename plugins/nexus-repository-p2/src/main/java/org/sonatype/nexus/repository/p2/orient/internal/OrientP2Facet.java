@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.util.Collection;
 
 import javax.annotation.Nullable;
+import javax.annotation.Priority;
 import javax.inject.Named;
 
 import org.sonatype.nexus.blobstore.api.Blob;
@@ -26,8 +27,8 @@ import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.p2.internal.AssetKind;
 import org.sonatype.nexus.repository.p2.internal.metadata.P2Attributes;
+import org.sonatype.nexus.repository.p2.internal.util.P2PathUtils;
 import org.sonatype.nexus.repository.p2.orient.P2Facet;
-import org.sonatype.nexus.repository.p2.orient.internal.util.P2PathUtils;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;
@@ -46,7 +47,7 @@ import com.google.common.collect.ImmutableList;
 
 import static java.util.Collections.singletonList;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
-import static org.sonatype.nexus.repository.p2.orient.internal.util.P2PathUtils.PLUGIN_NAME;
+import static org.sonatype.nexus.repository.p2.orient.internal.util.OrientP2PathUtils.PLUGIN_NAME;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_VERSION;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
@@ -57,6 +58,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
  * @since 3.28
  */
 @Named
+@Priority(Integer.MAX_VALUE)
 public class OrientP2Facet
     extends FacetSupport
     implements P2Facet
