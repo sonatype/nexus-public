@@ -65,7 +65,7 @@ Ext.define('NX.coreui.view.system.SmtpSettings', {
             itemId: 'port',
             fieldLabel: NX.I18n.get('System_SmtpSettings_Port_FieldLabel'),
             minValue: 1,
-            maxValue: 65536,
+            maxValue: 65535,
             allowDecimals: false,
             allowExponential: false,
             useTrustStore: function (field) {
