@@ -12,8 +12,11 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.system;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
@@ -26,6 +29,8 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.search.index.SearchIndexService;
 import org.sonatype.nexus.repository.search.query.SearchQueryService;
+
+import com.google.common.collect.Lists;
 
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -67,8 +72,91 @@ public class SearchTestSystem
     assertThat(items.size(), is(exists ? 1 : 0));
   }
 
+  public void verifyComponentDoesNotExists(
+      final WebTarget nexusSearchWebTarget,
+      final Repository repository,
+      final Optional<String> group,
+      final Optional<String> name,
+      final Optional<String> version)
+  {
+    assertThat(verifyComponentExistsByGAV(nexusSearchWebTarget, repository, group, name, version), is(0));
+  }
+
+  public void verifyComponentExists(
+      final WebTarget nexusSearchWebTarget,
+      final Repository repository,
+      final Optional<String> group,
+      final Optional<String> name,
+      final Optional<String> version)
+  {
+    assertThat(verifyComponentExistsByGAV(nexusSearchWebTarget, repository, group, name, version), is(1));
+  }
+
+  public void verifyComponentExists(
+      final WebTarget nexusSearchWebTarget,
+      final QueryParam queryParam)
+  {
+    verifyComponentExists(nexusSearchWebTarget, Lists.newArrayList(queryParam));
+  }
+
+  public void verifyComponentExists(
+      final WebTarget nexusSearchWebTarget,
+      final Collection<QueryParam> queryParams)
+  {
+    List<Map<String, Object>> items = searchForComponentByParams(nexusSearchWebTarget, queryParams);
+    assertThat(items.size(), is(1));
+  }
+
+  private int verifyComponentExistsByGAV(
+      final WebTarget nexusSearchWebTarget,
+      final Repository repository,
+      final Optional<String> group,
+      final Optional<String> name,
+      final Optional<String> version)
+  {
+    List<QueryParam> queryParams = new ArrayList<>();
+
+    queryParams.add(new QueryParam("repository", repository.getName()));
+    group.map(g -> new QueryParam("group", g)).ifPresent(queryParams::add);
+    name.map(n -> new QueryParam("name", n)).ifPresent(queryParams::add);
+    version.map(v -> new QueryParam("version", v)).ifPresent(queryParams::add);
+
+    List<Map<String, Object>> items = searchForComponentByParams(nexusSearchWebTarget, queryParams);
+    return items.size();
+  }
+
+  public static class QueryParam {
+    public final String name;
+    public final String value;
+
+    public QueryParam(final String name, final String value) {
+      this.name = name;
+      this.value = value;
+    }
+  }
+
   public SearchQueryService queryService() {
     return searchQueryService;
+  }
+
+  private List<Map<String, Object>> searchForComponentByParams(
+      final WebTarget nexusSearchUrl,
+      final Collection<QueryParam> queryParams)
+  {
+    waitForSearch();
+
+    WebTarget request = nexusSearchUrl;
+    for (QueryParam param : queryParams) {
+      request = request.queryParam(param.name, param.value);
+    }
+
+    Response response = request
+        .request()
+        .buildGet()
+        .invoke();
+
+    Map<String, Object> map = response.readEntity(Map.class);
+    return (List<Map<String, Object>>) map.get("items");
   }
 
   @SuppressWarnings("unchecked")
