@@ -59,10 +59,6 @@ public class PasswordPlaceholder
     return VALUE.equals(value);
   }
 
-  public static boolean isNot(@Nullable final String value) {
-    return !PasswordPlaceholder.is(value);
-  }
-
   /**
    * @param value
    * @return true if the value is not the password placeholder
