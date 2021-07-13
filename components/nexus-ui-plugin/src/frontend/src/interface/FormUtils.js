@@ -151,7 +151,7 @@ export default class FormUtils {
             src: 'delete',
             onDone: {
               target: 'loaded',
-              actions: 'onDeleteSuccess'
+              actions: ['clearDirtyFlag', 'onDeleteSuccess']
             },
             onError: {
               target: 'loaded',
