@@ -97,6 +97,11 @@ public class FileBlobStoreDescriptor
   }
 
   @Override
+  public String getId() {
+    return "file";
+  }
+
+  @Override
   public String getName() {
     return messages.name();
   }

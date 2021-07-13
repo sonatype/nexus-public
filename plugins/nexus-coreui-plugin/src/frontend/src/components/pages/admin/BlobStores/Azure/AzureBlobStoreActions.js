@@ -14,13 +14,31 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-let lastValue = 0;
+import UIStrings, {ValidationUtils} from '@sonatype/nexus-ui-plugin';
 
-window.crypto = {
-  getRandomValues: function(buffer) {
-    buffer.fill(lastValue++);
+export default {
+  init: () => ({
+    bucketConfiguration: {
+      authentication: {
+        authenticationMethod: 'MANAGEDIDENTITY'
+      }
+    }
+  }),
+
+  validation: (data) => {
+    const validationErrors = {
+      bucketConfiguration: {
+        accountName: ValidationUtils.validateNotBlank(data.bucketConfiguration?.accountName),
+        containerName: ValidationUtils.validateNotBlank(data.bucketConfiguration?.containerName)
+      }
+    };
+
+    if (data.bucketConfiguration?.authentication?.authenticationMethod === 'ACCOUNTKEY') {
+      validationErrors.bucketConfiguration.authentication = {
+        accountKey: ValidationUtils.validateNotBlank(data.bucketConfiguration.authentication.accountKey)
+      }
+    }
+
+    return validationErrors;
   }
 };
-
-window.plugins = [];
-window.BlobStoreTypes = {};

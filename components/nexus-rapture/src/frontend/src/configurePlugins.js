@@ -20,6 +20,7 @@ export default function configurePlugins() {
   // Declare an initial (empty) array for plugin configurations
   window.plugins = [];
   window.ReactComponents = {};
+  window.BlobStoreTypes = {};
 
   // A function for the ExtJS codebase to call to register React plugins
   window.onStart = function() {

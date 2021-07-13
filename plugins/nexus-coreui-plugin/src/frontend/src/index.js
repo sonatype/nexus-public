@@ -18,28 +18,41 @@ import ContentSelectors from './components/pages/admin/ContentSelectors/ContentS
 import AnonymousSettings from './components/pages/admin/AnonymousSettings/AnonymousSettings';
 import BlobStores from './components/pages/admin/BlobStores/BlobStores';
 import LoggingConfiguration from './components/pages/admin/LoggingConfiguration/LoggingConfiguration';
-import LogViewer from "./components/pages/admin/LogViewer/LogViewer";
+import LogViewer from './components/pages/admin/LogViewer/LogViewer';
 import Repositories from './components/pages/admin/Repositories/Repositories';
-import RoutingRules from "./components/pages/admin/RoutingRules/RoutingRules";
+import RoutingRules from './components/pages/admin/RoutingRules/RoutingRules';
 import SystemInformation from './components/pages/admin/SystemInformation/SystemInformation';
 import SupportRequest from './components/pages/admin/SupportRequest/SupportRequest';
-import MetricHealth from "./components/pages/admin/MetricHealth/MetricHealth";
-import SupportZip from "./components/pages/admin/SupportZip/SupportZip";
-import CleanupPolicies from "./components/pages/admin/CleanupPolicies/CleanupPolicies";
-
+import MetricHealth from './components/pages/admin/MetricHealth/MetricHealth';
+import SupportZip from './components/pages/admin/SupportZip/SupportZip';
+import CleanupPolicies from './components/pages/admin/CleanupPolicies/CleanupPolicies';
 import UIStrings from './constants/UIStrings';
-import UserAccount from "./components/pages/admin/UserAccount/UserAccount";
-import NuGetApiToken from "./components/pages/user/NuGetApiToken/NuGetApiToken";
-import AnalyzeApplication from "./components/pages/user/AnalyzeApplication/AnalyzeApplication";
-import S3BlobStoreSettings from "./components/pages/admin/BlobStores/S3BlobStoreSettings";
-import S3BlobStoreWarning from "./components/pages/admin/BlobStores/S3BlobStoreWarning";
+import UserAccount from './components/pages/admin/UserAccount/UserAccount';
+import NuGetApiToken from './components/pages/user/NuGetApiToken/NuGetApiToken';
+import AnalyzeApplication from './components/pages/user/AnalyzeApplication/AnalyzeApplication';
+import S3BlobStoreSettings from './components/pages/admin/BlobStores/S3/S3BlobStoreSettings';
+import S3BlobStoreWarning from './components/pages/admin/BlobStores/S3/S3BlobStoreWarning';
+import S3BlobStoreActions from './components/pages/admin/BlobStores/S3/S3BlobStoreActions';
+import AzureBlobStoreSettings from './components/pages/admin/BlobStores/Azure/AzureBlobStoreSettings';
+import AzureBlobStoreActions from './components/pages/admin/BlobStores/Azure/AzureBlobStoreActions';
 
 window.ReactComponents = {
   ...window.ReactComponents,
-  AnalyzeApplication,
-  S3BlobStoreSettings,
-  S3BlobStoreWarning
+  AnalyzeApplication
 };
+
+window.BlobStoreTypes = {
+  ...window.BlobStoreTypes,
+  azure: {
+    Settings: AzureBlobStoreSettings,
+    Actions: AzureBlobStoreActions
+  },
+  s3: {
+    Settings: S3BlobStoreSettings,
+    Warning: S3BlobStoreWarning,
+    Actions: S3BlobStoreActions
+  }
+}
 
 window.plugins.push({
   id: 'nexus-coreui-plugin',

@@ -32,14 +32,17 @@ public class BlobStoreTypesUIResponse
 
   private final List<FormField> fields;
 
+  private final String customSettingsForm;
+
   private final Map<String, List<SelectOption>> dropDownValues;
 
   public BlobStoreTypesUIResponse(final Map.Entry<String, BlobStoreDescriptor> entry) {
     BlobStoreDescriptor descriptor = entry.getValue();
 
-    this.id = entry.getKey();
+    this.id = descriptor.getId();
     this.name = descriptor.getName();
     this.fields = descriptor.getFormFields();
+    this.customSettingsForm = descriptor.customFormName();
     this.dropDownValues = descriptor.getDropDownValues();
   }
 
@@ -53,6 +56,10 @@ public class BlobStoreTypesUIResponse
 
   public List<FormField> getFields() {
     return fields;
+  }
+
+  public String getCustomSettingsForm() {
+    return customSettingsForm;
   }
 
   public Map<String, List<SelectOption>> getDropDownValues() {

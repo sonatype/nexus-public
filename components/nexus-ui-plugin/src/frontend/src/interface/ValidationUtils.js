@@ -18,6 +18,8 @@ import UIStrings from "../constants/UIStrings";
 
 const EMAIL_REGEX = /^(")?(?:[^\."])(?:(?:[\.])?(?:[\w\-!#$%&'*+/=?^_`{|}~]))*\1@(\w[\-\w]*\.?){1,5}([A-Za-z]){1,60}$/;
 const NAME_REGEX = /^[a-zA-Z0-9\-]{1}[a-zA-Z0-9_\-\.]*$/;
+const URI_REGEX = /^[a-z]*:.+$/i;
+const URL_REGEX = /^https?:\/\/[^"<>^`{|}]+$/i;
 
 /**
  * @since 3.31
@@ -44,7 +46,7 @@ export default class ValidationUtils {
    * @return {boolean} true if the string appears to be a valid uri
    */
   static isUri(str) {
-    return str && /^[a-z]*:.+$/i.test(str);
+    return str && URI_REGEX.test(str);
   }
 
   /**
@@ -60,7 +62,7 @@ export default class ValidationUtils {
    * @returns {boolean} true if the string appears to be a valid url (http/https)
    */
   static isUrl(str) {
-    return str && /^https?:\/\/[^"<>^`{|}]+$/i.test(str);
+    return str && URL_REGEX.test(str);
   }
 
   /**
@@ -128,6 +130,12 @@ export default class ValidationUtils {
   static validateNotBlank(value) {
     if (ValidationUtils.isBlank(value)) {
       return UIStrings.ERROR.FIELD_REQUIRED;
+    }
+  }
+
+  static validateIsUri(value) {
+    if (ValidationUtils.notUri(value)) {
+      return UIStrings.ERROR.INVALID_URI;
     }
   }
 

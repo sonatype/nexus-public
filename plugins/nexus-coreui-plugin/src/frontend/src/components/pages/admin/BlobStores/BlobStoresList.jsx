@@ -52,13 +52,13 @@ export default function BlobStoresList({onCreate, onEdit}) {
   const {data, error, filter: filterText} = current.context;
 
   const nameSortDir = Utils.getSortDirection('name', current.context);
-  const typeSortDir = Utils.getSortDirection('type', current.context);
+  const typeSortDir = Utils.getSortDirection('typeName', current.context);
   const stateSortDir = Utils.getSortDirection('available', current.context);
   const countSortDir = Utils.getSortDirection('blobCount', current.context);
   const sizeSortDir = Utils.getSortDirection('totalSizeInBytes', current.context);
   const spaceSortDir = Utils.getSortDirection('availableSpaceInBytes', current.context);
   const sortByName = () => send('SORT_BY_NAME');
-  const sortByType = () => send('SORT_BY_TYPE');
+  const sortByType = () => send('SORT_BY_TYPE_NAME');
   const sortByState = () => send('SORT_BY_STATE');
   const sortByCount = () => send('SORT_BY_COUNT');
   const sortBySize = () => send('SORT_BY_SIZE');
@@ -101,10 +101,10 @@ export default function BlobStoresList({onCreate, onEdit}) {
           </NxTableHead>
           <NxTableBody isLoading={isLoading} error={error} emptyMessage={BLOB_STORES.LIST.EMPTY_LIST}>
             {data.map(
-                ({name, type, available, unavailable, blobCount, totalSizeInBytes, availableSpaceInBytes, unlimited}) => (
-                    <NxTableRow key={name} onClick={() => onEdit(`${type.toLowerCase()}/${name}`)} isClickable>
+                ({name, typeId, typeName, available, unavailable, blobCount, totalSizeInBytes, availableSpaceInBytes, unlimited}) => (
+                    <NxTableRow key={name} onClick={() => onEdit(`${typeId}/${name}`)} isClickable>
                       <NxTableCell>{name}</NxTableCell>
-                      <NxTableCell>{type}</NxTableCell>
+                      <NxTableCell>{typeName}</NxTableCell>
                       <NxTableCell>
                         <NxFontAwesomeIcon className={available ? 'available' : 'unavailable'}
                                            icon={available ? faCheckCircle : faExclamationCircle}/>

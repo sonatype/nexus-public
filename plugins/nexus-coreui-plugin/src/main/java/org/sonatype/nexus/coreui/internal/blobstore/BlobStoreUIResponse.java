@@ -22,7 +22,9 @@ public class BlobStoreUIResponse
 {
   private final String name;
 
-  private final String type;
+  private final String typeId;
+
+  private final String typeName;
 
   private final boolean unavailable;
 
@@ -34,7 +36,7 @@ public class BlobStoreUIResponse
 
   private final boolean unlimited;
 
-  public BlobStoreUIResponse(final BlobStore blobStore) {
+  public BlobStoreUIResponse(final String typeId, final BlobStore blobStore) {
     BlobStoreConfiguration configuration = blobStore.getBlobStoreConfiguration();
 
     if (blobStore.isStarted()) {
@@ -54,15 +56,21 @@ public class BlobStoreUIResponse
     }
 
     name = checkNotNull(configuration.getName());
-    type = checkNotNull(configuration.getType());
+
+    this.typeId = checkNotNull(typeId);
+    typeName = configuration.getType();
   }
 
   public String getName() {
     return name;
   }
 
-  public String getType() {
-    return type;
+  public String getTypeId() {
+    return typeId;
+  }
+
+  public String getTypeName() {
+    return typeName;
   }
 
   public boolean isUnavailable() {

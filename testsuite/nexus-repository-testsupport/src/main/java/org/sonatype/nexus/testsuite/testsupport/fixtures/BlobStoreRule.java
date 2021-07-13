@@ -16,8 +16,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -32,11 +36,14 @@ import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 import org.sonatype.nexus.blobstore.group.internal.WriteToFirstMemberFillPolicy;
 import org.sonatype.nexus.common.io.DirectoryHelper;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Streams;
 import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.codehaus.groovy.runtime.InvokerHelper.asList;
+import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
 import static org.sonatype.nexus.blobstore.file.FileBlobStore.PATH_KEY;
 
 /**
@@ -93,6 +100,28 @@ public class BlobStoreRule
     BlobStore blobStore = blobStoreManagerProvider.get().create(config);
     blobStoreGroupNames.add(name);
     return blobStore;
+  }
+
+  public BlobStore get(final String name) {
+    return blobStoreManagerProvider.get().get(name);
+  }
+
+  /**
+   * Delete all blobstores except the default ones
+   */
+  public void deleteAllBlobstoresExceptDefault() {
+    Streams.stream(blobStoreManagerProvider.get().browse()).forEach(blobStore -> {
+      final String name = blobStore.getBlobStoreConfiguration().getName();
+      if (!name.equals(DEFAULT_BLOBSTORE_NAME)) {
+        try {
+          blobStoreManagerProvider.get().forceDelete(name);
+        }
+        catch (Exception e) {
+          log.error("Failed to remove blobstore {}");
+        }
+      }
+    });
+
   }
 
   @Override

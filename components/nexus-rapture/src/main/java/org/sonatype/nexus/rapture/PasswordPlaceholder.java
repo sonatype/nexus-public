@@ -62,4 +62,12 @@ public class PasswordPlaceholder
   public static boolean isNot(@Nullable final String value) {
     return !PasswordPlaceholder.is(value);
   }
+
+  /**
+   * @param value
+   * @return true if the value is not the password placeholder
+   */
+  public static boolean isNot(@Nullable final String value) {
+    return !PasswordPlaceholder.is(value);
+  }
 }

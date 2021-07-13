@@ -12,7 +12,7 @@
  */
 import React from 'react';
 export default function BlobStoreWarning({type}) {
-  const Warning = window.ReactComponents[type.id + 'BlobStoreWarning'];
+  const Warning = window.BlobStoreTypes[type.id]?.Warning;
 
   if (Warning) {
     return <Warning/>;

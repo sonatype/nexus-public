@@ -72,8 +72,6 @@ public class S3BlobStoreDescriptor
 
   public static final String TYPE = "S3";
 
-  private static final String S3_BLOBSTORE_SETTINGS = "S3BlobStoreSettings";
-
   private final Map<String, List<SelectOption>> s3SelectOptions;
 
   private interface Messages
@@ -93,6 +91,11 @@ public class S3BlobStoreDescriptor
     super(quotaService);
     this.blobStoreManager = checkNotNull(blobStoreManager);
     s3SelectOptions = intializeSelectOptions();
+  }
+
+  @Override
+  public String getId() {
+    return "s3";
   }
 
   @Override

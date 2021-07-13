@@ -74,6 +74,7 @@ export {
   NxLoadWrapper,
   NxModal,
   NxP,
+  NxRadio,
   NxStatefulTabs,
   NxStatefulSuccessAlert,
   NxSubmitMask,

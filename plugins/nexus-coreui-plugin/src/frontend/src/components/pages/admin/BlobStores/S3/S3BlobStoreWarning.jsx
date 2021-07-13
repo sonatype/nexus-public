@@ -15,7 +15,7 @@ import {
   NxWarningAlert,
 } from '@sonatype/nexus-ui-plugin';
 
-import UIStrings from '../../../../constants/UIStrings'
+import UIStrings from '../../../../../constants/UIStrings'
 
 import './S3BlobStoreWarning.scss';
 

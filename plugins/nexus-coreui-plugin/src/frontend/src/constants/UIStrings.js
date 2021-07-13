@@ -123,6 +123,30 @@ the documentation</a>.`
           label: 'Constraint Limit (in MB)'
         }
       }
+    },
+
+    AZURE: {
+      ACCOUNT_NAME: {
+        label: 'Account Name',
+        sublabel: 'The name of the Azure storage account'
+      },
+      CONTAINER_NAME: {
+        label: 'Container Name',
+        sublabel: 'The name of a container to be used for storage; the container will be created if it does not already exist'
+      },
+      AUTHENTICATION: {
+        label: 'Authentication',
+        NO_AUTH: 'Use Environment Variables',
+        MANAGED: 'Managed Identity (System)',
+        ACCOUNT_KEY: {
+          label: 'Account Key',
+          sublabel: 'Account key found under Access keys for the storage account'
+        }
+      },
+      TEST_CONNECTION: 'Test Connection',
+      TEST_CONNECTION_ERROR: 'Connection failed, check the logs for more information',
+      TEST_CONNECTION_SUCCESS: 'Connection succeeded',
+      TESTING: 'Testing connection'
     }
   },
 
