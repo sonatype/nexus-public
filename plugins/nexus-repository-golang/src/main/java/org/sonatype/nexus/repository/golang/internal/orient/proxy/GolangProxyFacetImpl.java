@@ -49,15 +49,11 @@ import static org.sonatype.nexus.repository.golang.internal.orient.util.GolangDa
 public class GolangProxyFacetImpl
     extends ProxyFacetSupport
 {
-  private final GolangPathUtils golangPathUtils;
-
   private final GolangDataAccess golangDataAccess;
 
   @Inject
-  public GolangProxyFacetImpl(final GolangPathUtils golangPathUtils,
-                              final GolangDataAccess golangDataAccess)
+  public GolangProxyFacetImpl(final GolangDataAccess golangDataAccess)
   {
-    this.golangPathUtils = checkNotNull(golangPathUtils);
     this.golangDataAccess = checkNotNull(golangDataAccess);
   }
 
@@ -65,16 +61,16 @@ public class GolangProxyFacetImpl
   @Override
   protected Content getCachedContent(final Context context) throws IOException {
     AssetKind assetKind = context.getAttributes().require(AssetKind.class);
-    TokenMatcher.State matcherState = golangPathUtils.matcherState(context);
+    TokenMatcher.State matcherState = GolangPathUtils.matcherState(context);
     switch (assetKind) {
       case INFO:
       case MODULE:
       case PACKAGE:
-        return getAsset(golangPathUtils.assetPath(matcherState));
+        return getAsset(GolangPathUtils.assetPath(matcherState));
       case LIST:
-        return getAsset(golangPathUtils.listPath(matcherState));
+        return getAsset(GolangPathUtils.listPath(matcherState));
       case LATEST:
-        return getAsset(golangPathUtils.latestPath(matcherState));
+        return getAsset(GolangPathUtils.latestPath(matcherState));
       default:
         throw new IllegalStateException("Received an invalid AssetKind of type: " + assetKind.name());
     }
@@ -83,18 +79,18 @@ public class GolangProxyFacetImpl
   @Override
   protected Content store(final Context context, final Content content) throws IOException {
     AssetKind assetKind = context.getAttributes().require(AssetKind.class);
-    TokenMatcher.State matcherState = golangPathUtils.matcherState(context);
+    TokenMatcher.State matcherState = GolangPathUtils.matcherState(context);
 
     switch (assetKind) {
       case INFO:
       case MODULE:
       case PACKAGE:
-        GolangAttributes golangAttributes = golangPathUtils.getAttributesFromMatcherState(matcherState);
-        return putComponent(golangAttributes, content, golangPathUtils.assetPath(matcherState), assetKind);
+        GolangAttributes golangAttributes = GolangPathUtils.getAttributesFromMatcherState(matcherState);
+        return putComponent(golangAttributes, content, GolangPathUtils.assetPath(matcherState), assetKind);
       case LIST:
-        return putAsset(content, golangPathUtils.listPath(matcherState), assetKind);
+        return putAsset(content, GolangPathUtils.listPath(matcherState), assetKind);
       case LATEST:
-        return putAsset(content, golangPathUtils.latestPath(matcherState), assetKind);
+        return putAsset(content, GolangPathUtils.latestPath(matcherState), assetKind);
       default:
         throw new IllegalStateException("Received an invalid AssetKind of type: " + assetKind.name());
     }

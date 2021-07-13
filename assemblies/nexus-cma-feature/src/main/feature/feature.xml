@@ -16,7 +16,6 @@
 <features xmlns="http://karaf.apache.org/xmlns/features/v1.2.1" name="${project.artifactId}">
   <feature name="${project.artifactId}" install="featureFlag:enabledByDefault:nexus.orient.enabled">
     <feature>nexus-repository-cocoapods</feature>
-    <feature>nexus-repository-golang</feature>
     <feature>nexus-restore-maven</feature>
     <feature>nexus-restore-p2</feature>
     <feature>nexus-restore-raw</feature>

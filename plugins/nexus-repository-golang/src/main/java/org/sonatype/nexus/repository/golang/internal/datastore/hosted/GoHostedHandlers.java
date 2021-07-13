@@ -10,44 +10,47 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.golang.internal.orient.hosted;
+package org.sonatype.nexus.repository.golang.internal.datastore.hosted;
+
+import java.util.Optional;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.golang.AssetKind;
+import org.sonatype.nexus.repository.golang.internal.datastore.GoContentFacet;
 import org.sonatype.nexus.repository.golang.internal.metadata.GolangAttributes;
 import org.sonatype.nexus.repository.golang.internal.util.GolangPathUtils;
+import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
-import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher.State;
 
-import static java.lang.String.format;
+import static com.google.common.base.Preconditions.checkArgument;
+import static org.sonatype.nexus.repository.golang.AssetKind.PACKAGE;
 import static org.sonatype.nexus.repository.http.HttpResponses.created;
 import static org.sonatype.nexus.repository.http.HttpResponses.notFound;
-import static org.sonatype.nexus.repository.http.HttpResponses.ok;
 
 /**
- * @since 3.17
+ * Go's hosted handlers.
+ *
+ * @since 3.next
  */
 @Named
 @Singleton
-public class HostedHandlers
+public class GoHostedHandlers
     extends ComponentSupport
 {
   final Handler get = context -> {
     AssetKind assetKind = context.getAttributes().require(AssetKind.class);
-    Content content;
+    Optional<Content> content;
     switch (assetKind) {
       case INFO:
         content = getInfo(context);
         break;
       case MODULE:
-        content = getModule(context);
-        break;
       case PACKAGE:
         content = getPackage(context);
         break;
@@ -55,45 +58,42 @@ public class HostedHandlers
         content = getList(context);
         break;
       default:
-        throw new RuntimeException(format("Unknown assetKind %s", assetKind.name()));
+        throw new IllegalArgumentException("Unsupported asset kind " + assetKind);
     }
-
-    return (content != null) ? ok(content) : notFound();
+    return content
+        .map(HttpResponses::ok)
+        .orElse(notFound());
   };
 
-  private Content getList(final Context context) {
+  private Optional<Content> getList(final Context context) {
     State state = context.getAttributes().require(State.class);
     String module = GolangPathUtils.module(state);
-    return context.getRepository().facet(GolangHostedFacet.class).getList(module);
+    return context.getRepository().facet(GoContentFacet.class).getVersions(module);
   }
 
-  private Content getPackage(final Context context) {
+  private Optional<Content> getPackage(final Context context) {
     State state = context.getAttributes().require(State.class);
     String path = GolangPathUtils.assetPath(state);
-    return context.getRepository().facet(GolangHostedFacet.class).getPackage(path);
+    return context.getRepository().facet(GoContentFacet.class).getAsset(path);
   }
 
-  private Content getModule(final Context context) {
-    State state = context.getAttributes().require(State.class);
-    String path = GolangPathUtils.assetPath(state);
-    return context.getRepository().facet(GolangHostedFacet.class).getMod(path);
-  }
-
-  private Content getInfo(final Context context) {
+  private Optional<Content> getInfo(final Context context) {
     State state = context.getAttributes().require(State.class);
     String path = GolangPathUtils.assetPath(state);
     GolangAttributes golangAttributes = GolangPathUtils.getAttributesFromMatcherState(state);
-    return context.getRepository().facet(GolangHostedFacet.class).getInfo(path, golangAttributes);
+    return context.getRepository().facet(GoContentFacet.class).getInfo(path, golangAttributes);
   }
 
   final Handler upload = context -> {
-    State state = context.getAttributes().require(TokenMatcher.State.class);
+    State state = context.getAttributes().require(State.class);
     String path = GolangPathUtils.assetPath(state);
     GolangAttributes golangAttributes = GolangPathUtils.getAttributesFromMatcherState(state);
 
     AssetKind assetKind = context.getAttributes().require(AssetKind.class);
-    context.getRepository().facet(GolangHostedFacet.class)
-        .upload(path, golangAttributes, context.getRequest().getPayload(), assetKind);
+    checkArgument(PACKAGE == assetKind, "Unsupported asset kind " + assetKind);
+
+    context.getRepository().facet(GoContentFacet.class)
+        .upload(path, golangAttributes, context.getRequest().getPayload());
 
     return created();
   };
