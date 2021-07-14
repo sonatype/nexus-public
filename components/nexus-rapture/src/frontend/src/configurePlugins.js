@@ -65,7 +65,7 @@ export default function configurePlugins() {
  *   }
  * }
  */
-export function registerFeature(feature) {
+function registerFeature(feature) {
   console.log(`Register feature`, feature);
   const reactViewController = Ext.getApplication().getController('NX.coreui.controller.react.ReactViewController');
   Ext.getApplication().getFeaturesController().registerFeature({
