@@ -17,7 +17,7 @@
 import {assign, Machine} from "xstate";
 import ExtJS from "./ExtJS";
 import UIStrings from "../constants/UIStrings";
-import {hasPath, join, path, pathOr, whereEq} from 'ramda';
+import {hasPath, join, lensPath, path, pathOr, set, whereEq} from 'ramda';
 
 const FIELD_ID = 'FIELD ';
 const PARAMETER_ID = 'PARAMETER ';
@@ -151,7 +151,7 @@ export default class FormUtils {
             src: 'delete',
             onDone: {
               target: 'loaded',
-              actions: 'onDeleteSuccess'
+              actions: ['clearDirtyFlag', 'onDeleteSuccess']
             },
             onError: {
               target: 'loaded',
@@ -226,8 +226,25 @@ export default class FormUtils {
         }),
 
         update: assign({
-          data: ({data}, event) => ({...data, ...event.data}),
+          data: ({data}, event) => {
+            if (event.name) {
+              return set(lensPath(event.name.split('.')), event.value, data);
+            }
+            else if (event.data) {
+              return {
+                ...data,
+                ...event.data
+              };
+            }
+            else {
+              console.error("update event must have a name and value or a data object", event);
+            }
+          },
           isTouched: ({isTouched}, event) => {
+            if (event.name) {
+              return set(lensPath(event.name.split('.')), true, isTouched);
+            }
+
             const result = {...isTouched};
             Object.keys(event.data).forEach(key => result[key] = true);
             return result;
@@ -300,7 +317,7 @@ export default class FormUtils {
     const {data = {}, isTouched = {}, validationErrors = {}, saveErrors = {}, saveErrorData = {}} = current.context;
 
     if (!Array.isArray(name)) {
-      name = [name];
+      name = name.split('.');
     }
 
     let errors = null;
@@ -332,7 +349,7 @@ export default class FormUtils {
     const {data = {}} = current.context;
 
     if (!Array.isArray(name)) {
-      name = [name];
+      name = name.split('.');
     }
 
     return {
@@ -362,9 +379,8 @@ export default class FormUtils {
       }
       send({
         type,
-        data: {
-          [name]: value
-        }
+        name,
+        value
       });
     };
   }

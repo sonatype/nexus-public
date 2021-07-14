@@ -10,18 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
-import {
-  NxWarningAlert,
-} from '@sonatype/nexus-ui-plugin';
+package org.sonatype.nexus.repository.golang.internal.datastore.store;
 
-import UIStrings from '../../../../constants/UIStrings'
+import org.sonatype.nexus.repository.content.store.ComponentDAO;
 
-import './S3BlobStoreWarning.scss';
-
-const FIELDS = UIStrings.S3_BLOBSTORE_CONFIGURATION;
-
-export default function S3BlobStoreWarning() {
-
-  return <NxWarningAlert><span dangerouslySetInnerHTML={{__html:FIELDS.S3BlobStore_Help}}/></NxWarningAlert>;
+/**
+ * Golang's {@link ComponentDAO}.
+ *
+ * @since 3.next
+ */
+public interface GoComponentDAO
+    extends ComponentDAO
+{
+  // nothing to add...
 }

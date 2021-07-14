@@ -17,27 +17,20 @@ import java.io.IOException;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.repository.p2.internal.AssetKind;
 import org.sonatype.nexus.repository.p2.internal.metadata.P2Attributes;
+import org.sonatype.nexus.repository.p2.internal.util.P2PathUtils;
 import org.sonatype.nexus.repository.p2.internal.util.P2TempBlobUtils;
 import org.sonatype.nexus.repository.storage.StorageFacet;
-import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher.State;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Strings.isNullOrEmpty;
-import static java.lang.String.join;
-import static org.sonatype.nexus.repository.p2.internal.AssetKind.ARTIFACTS_METADATA;
-import static org.sonatype.nexus.repository.p2.internal.AssetKind.BUNDLE;
-import static org.sonatype.nexus.repository.p2.internal.AssetKind.COMPOSITE_ARTIFACTS;
-import static org.sonatype.nexus.repository.p2.internal.AssetKind.COMPOSITE_CONTENT;
-import static org.sonatype.nexus.repository.p2.internal.AssetKind.CONTENT_METADATA;
-import static org.sonatype.nexus.repository.p2.internal.AssetKind.P2_INDEX;
 import static org.sonatype.nexus.repository.p2.orient.internal.OrientP2Facet.HASH_ALGORITHMS;
 
 /**
  * Utility methods for working with P2 routes and paths.
  */
-public class P2PathUtils
+public final class OrientP2PathUtils
 {
   public static final String PLUGIN_NAME = "pluginName";
 
@@ -45,24 +38,8 @@ public class P2PathUtils
 
   private static final String EXTENSION = "extension";
 
-  private P2PathUtils() {
+  private OrientP2PathUtils() {
     throw new UnsupportedOperationException();
-  }
-
-  /**
-   * * Returns the path from a {@link State}.
-   */
-  public static String path(final State state) {
-    return match(state, "path");
-  }
-
-  public static String maybePath(final State state) {
-    checkNotNull(state);
-    String path = state.getTokens().get("path");
-    if (isNullOrEmpty(path)) {
-      return String.format("%s.%s", match(state, "name"), match(state, EXTENSION));
-    }
-    return String.format("%s/%s.%s", path, match(state, "name"), match(state, EXTENSION));
   }
 
   /**
@@ -73,34 +50,6 @@ public class P2PathUtils
     String result = state.getTokens().get(name);
     checkNotNull(result);
     return result;
-  }
-
-  /**
-   * Builds a path to an archive for a particular path and name.
-   */
-  public static String path(final String path, final String filename) {
-    if (isNullOrEmpty(path)) {
-      return filename;
-    }
-    else {
-      return path + "/" + filename;
-    }
-  }
-
-  /**
-   * Builds a path to an archive for a particular path, name and extension.
-   */
-  public static String path(final String path, final String filename, final String extension) {
-    String file = join(".", filename, extension);
-    return isNullOrEmpty(path) ? file : join("/", path, file);
-  }
-
-  /**
-   * Builds a path to a binary for a particular path, name and version.
-   */
-  public static String binaryPath(final String path, final String name, final String version) {
-    String file = join("_", name, version);
-    return isNullOrEmpty(path) ? file : join("/", path, file);
   }
 
   /**
@@ -177,7 +126,7 @@ public class P2PathUtils
     //https/download.eclipse.org/technology/epp/packages/2019-12/binary/epp.package.java.executable.cocoa.macosx.x86_64_4.14.0.20191212-1200
     String version = getBinaryVersionFromBlobName(blobName);
     String name = getBinaryNameFromBlobName(blobName, version);
-    AssetKind assetKind = getAssetKind(blobName);
+    AssetKind assetKind = P2PathUtils.getAssetKind(blobName);
 
     attributes.componentName(name);
     attributes.componentVersion(version);
@@ -199,7 +148,7 @@ public class P2PathUtils
       String extension = getPackageExtensionFromBlobName(blobName);
       P2Attributes p2Attributes = P2Attributes.builder().extension(extension).build();
       P2Attributes mergedAttributes = p2TempBlobUtils.mergeAttributesFromTempBlob(tempBlob, p2Attributes);
-      AssetKind assetKind = getAssetKind(blobName);
+      AssetKind assetKind = P2PathUtils.getAssetKind(blobName);
 
       attributes.componentName(mergedAttributes.getComponentName());
       attributes.componentVersion(mergedAttributes.getComponentVersion());
@@ -223,33 +172,5 @@ public class P2PathUtils
   private static String getPackageExtensionFromBlobName(final String blobName) {
     String[] paths = blobName.split("\\.");
     return paths[paths.length - 1];
-  }
-
-  public static AssetKind getAssetKind(final String path) {
-    AssetKind assetKind;
-    if (path.matches("([0-9a-f]{64}\\/)?p2.index$")) {
-      assetKind = P2_INDEX;
-    }
-    else if (path.matches("([0-9a-f]{64}\\/)?(features|plugins)\\/.*_\\d+\\.\\d+\\.\\d+(\\.[A-Za-z0-9_-]+)?.*")
-        || path.matches("([0-9a-f]{64}\\/)?binary\\/.*")) {
-      assetKind = BUNDLE;
-    }
-    else if (path.matches("([0-9a-f]{64}\\/)?compositeContent\\.((jar)|(xml))$")) {
-      assetKind = COMPOSITE_CONTENT;
-    }
-    else if (path.matches("([0-9a-f]{64}\\/)?compositeArtifacts\\.((jar)|(xml))$")) {
-      assetKind = COMPOSITE_ARTIFACTS;
-    }
-    else if (path.matches("([0-9a-f]{64}\\/)?content\\.((jar)|(xml)|(xml\\.xz))$")) {
-      assetKind = CONTENT_METADATA;
-    }
-    else if (path.matches("([0-9a-f]{64}\\/)?artifacts\\.((jar)|(xml)|(xml\\.xz))$")) {
-      assetKind = ARTIFACTS_METADATA;
-    }
-    else {
-      throw new UnsupportedOperationException("Asset path has not supported asset kind with path: " + path);
-    }
-
-    return assetKind;
   }
 }

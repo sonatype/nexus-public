@@ -21,3 +21,6 @@ window.crypto = {
     buffer.fill(lastValue++);
   }
 };
+
+window.plugins = [];
+window.BlobStoreTypes = {};

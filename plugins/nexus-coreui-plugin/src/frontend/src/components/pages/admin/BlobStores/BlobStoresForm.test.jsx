@@ -13,15 +13,18 @@
 import React from 'react';
 import axios from 'axios';
 import {when} from 'jest-when';
-import {fireEvent, wait, waitFor, waitForElementToBeRemoved} from '@testing-library/react'
+import {fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/extend-expect';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
-import S3BlobStoreSettings from './S3BlobStoreSettings';
-import S3BlobStoreWarning from './S3BlobStoreWarning';
+import S3BlobStoreSettings from './S3/S3BlobStoreSettings';
+import S3BlobStoreWarning from './S3/S3BlobStoreWarning';
 
 import BlobStoresForm from './BlobStoresForm';
+
+// Include the blob stores types on the window
+import '../../../../index';
 
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'), // Use most functions from actual axios
@@ -40,7 +43,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
 
 const blobstoreTypes = {
   data: [{
-    "id": "File",
+    "id": "file",
     "name": "File",
     "fields": [
       {
@@ -60,7 +63,7 @@ const blobstoreTypes = {
       }
     ]
   }, {
-    "id": "Group",
+    "id": "group",
     "name": "Group",
     "fields": [
       {
@@ -89,7 +92,7 @@ const blobstoreTypes = {
     ]
   },
     {
-      "id": "S3",
+      "id": "s3",
       "name": "S3"
     }
   ]
@@ -177,8 +180,8 @@ describe('BlobStoresForm', function() {
 
     await waitForElementToBeRemoved(loadingMask);
 
-    userEvent.selectOptions(typeSelect(), 'File');
-    expect(typeSelect()).toHaveValue('File');
+    userEvent.selectOptions(typeSelect(), 'file');
+    expect(typeSelect()).toHaveValue('file');
 
     expect(container).toMatchSnapshot();
   });
@@ -191,8 +194,8 @@ describe('BlobStoresForm', function() {
 
     await waitForElementToBeRemoved(loadingMask);
 
-    userEvent.selectOptions(typeSelect(), 'S3');
-    expect(typeSelect()).toHaveValue('S3');
+    userEvent.selectOptions(typeSelect(), 's3');
+    expect(typeSelect()).toHaveValue('s3');
 
     expect(container).toMatchSnapshot();
   });
@@ -221,8 +224,8 @@ describe('BlobStoresForm', function() {
 
     await waitForElementToBeRemoved(loadingMask);
 
-    userEvent.selectOptions(typeSelect(), 'S3');
-    expect(typeSelect()).toHaveValue('S3');
+    userEvent.selectOptions(typeSelect(), 's3');
+    expect(typeSelect()).toHaveValue('s3');
 
     expect(region()).toBeInTheDocument();
     expect(bucket()).toBeInTheDocument();
@@ -257,8 +260,8 @@ describe('BlobStoresForm', function() {
 
     await waitForElementToBeRemoved(loadingMask);
 
-    userEvent.selectOptions(typeSelect(), 'S3');
-    expect(typeSelect()).toHaveValue('S3');
+    userEvent.selectOptions(typeSelect(), 's3');
+    expect(typeSelect()).toHaveValue('s3');
     expect(expiration()).toHaveValue('3');
 
     expect(saveButton()).toHaveClass('disabled');
@@ -298,8 +301,8 @@ describe('BlobStoresForm', function() {
 
     await waitForElementToBeRemoved(loadingMask);
 
-    userEvent.selectOptions(typeSelect(), 'File');
-    expect(typeSelect()).toHaveValue('File');
+    userEvent.selectOptions(typeSelect(), 'file');
+    expect(typeSelect()).toHaveValue('file');
 
     expect(name()).toBeInTheDocument();
 
@@ -315,8 +318,8 @@ describe('BlobStoresForm', function() {
 
     await waitForElementToBeRemoved(loadingMask);
 
-    userEvent.selectOptions(typeSelect(), 'File');
-    expect(typeSelect()).toHaveValue('File');
+    userEvent.selectOptions(typeSelect(), 'file');
+    expect(typeSelect()).toHaveValue('file');
 
     expect(softQuota()).toBeInTheDocument();
     expect(softQuotaType()).not.toBeInTheDocument();
@@ -336,8 +339,8 @@ describe('BlobStoresForm', function() {
 
     await waitForElementToBeRemoved(loadingMask);
 
-    userEvent.selectOptions(typeSelect(), 'File');
-    expect(typeSelect()).toHaveValue('File');
+    userEvent.selectOptions(typeSelect(), 'file');
+    expect(typeSelect()).toHaveValue('file');
 
     expect(saveButton()).toHaveClass('disabled');
 
@@ -375,8 +378,8 @@ describe('BlobStoresForm', function() {
 
     await waitForElementToBeRemoved(loadingMask);
 
-    userEvent.selectOptions(typeSelect(), 'File');
-    expect(typeSelect()).toHaveValue('File');
+    userEvent.selectOptions(typeSelect(), 'file');
+    expect(typeSelect()).toHaveValue('file');
     userEvent.type(name(), 'test');
     expect(name()).toHaveValue('test');
     expect(path()).toHaveValue('/<data-directory>/blobs/test');
@@ -423,7 +426,7 @@ describe('BlobStoresForm', function() {
     await waitForElementToBeRemoved(loadingMask);
 
     userEvent.selectOptions(typeSelect(), 'S3');
-    expect(typeSelect()).toHaveValue('S3');
+    expect(typeSelect()).toHaveValue('s3');
     expect(expiration()).toHaveValue('3');
 
     expect(saveButton()).toHaveClass('disabled');
@@ -459,34 +462,16 @@ describe('BlobStoresForm', function() {
         '/service/rest/v1/blobstores/s3',
         {
           name: 'test',
-          s3Settings: {
-            bucket: 'bucket',
-            prefix: '',
-            region: '',
-            expiration: '3',
-            accessKeyId: 'someAccessKey',
-            secretAccessKey: 'SomeSecretAccessKey',
-            role: '',
-            sessionToken: '',
-            encryptionType: '',
-            encryptionKey: '',
-            endpoint: 'http://www.fakeurl.com',
-            signerType: '',
-            forcePathStyle: ''
-          },
           bucketConfiguration: {
             bucket: { region: 'DEFAULT', name: 'bucket', prefix: '', expiration: '3' },
-            security: {
+            bucketSecurity: {
               accessKeyId: 'someAccessKey',
-              secretAccessKey: 'SomeSecretAccessKey',
-              role: '',
-              sessionToken: ''
+              secretAccessKey: 'SomeSecretAccessKey'
             },
-            encryption: { encryptionType: 'none', encryptionKey: '' },
-            advancedConnection: {
+            encryption: null,
+            advancedBucketConnection: {
               endpoint: 'http://www.fakeurl.com',
-              signerType: 'DEFAULT',
-              forcePathStyle: ''
+              forcePathStyle: false
             }
           }
         }
@@ -694,6 +679,6 @@ describe('BlobStoresForm', function() {
     ExtJS.requestConfirmation.mockReturnValue(confirm);
     fireEvent.click(promoteToGroup());
 
-    await wait(() => expect(axios.post).toBeCalledWith('/service/rest/v1/blobstores/group/promote/test'));
+    await waitFor(() => expect(axios.post).toBeCalledWith('/service/rest/v1/blobstores/group/promote/test'));
   });
 });

@@ -74,7 +74,10 @@ public class BlobStoreUIResource
   @RequiresPermissions("nexus:blobstores:read")
   @GET
   public List<BlobStoreUIResponse> listBlobStores() {
-    return stream(blobStoreManager.browse()).map(BlobStoreUIResponse::new).collect(toList());
+    return stream(blobStoreManager.browse()).map(blobStore -> {
+      final String typeId = blobStoreDescriptors.get(blobStore.getBlobStoreConfiguration().getType()).getId();
+      return new BlobStoreUIResponse(typeId, blobStore);
+    }).collect(toList());
   }
 
   @RequiresAuthentication

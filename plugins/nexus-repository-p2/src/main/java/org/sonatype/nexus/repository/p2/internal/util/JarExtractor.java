@@ -54,7 +54,7 @@ public abstract class JarExtractor<T>
   protected abstract T createSpecificEntity(final JarInputStream jis, final JarEntry jarEntry) throws IOException, AttributeParsingException;
 
   private JarInputStream getJarStreamFromBlob(final TempBlob tempBlob, final String extension) throws IOException {
-    if (extension.equals("jar")) {
+    if ("jar".equals(extension)) {
       return new JarInputStream(tempBlob.get());
     }
     else {

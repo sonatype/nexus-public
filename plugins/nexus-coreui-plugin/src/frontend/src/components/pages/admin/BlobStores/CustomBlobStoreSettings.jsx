@@ -11,12 +11,12 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-export default function CustomBlobStoreSettings({type, current, updateCustomSettings, toggleCustomSetting}) {
-  const Settings = window.ReactComponents[type.id + 'BlobStoreSettings'];
+
+export default function CustomBlobStoreSettings({type, service}) {
+  const Settings = window.BlobStoreTypes[type.id]?.Settings;
 
   if (Settings) {
-    return <Settings current={current} updateS3Settings={updateCustomSettings} toggleCustomSetting={toggleCustomSetting}
-                     dropDownValues={type.dropDownValues}/>;
+    return <Settings service={service} />;
   }
 
   return null;

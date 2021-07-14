@@ -25,7 +25,7 @@ jest.mock('axios', () => ({
 describe('BlobStoresList', function() {
   const rows = [{
     name: 'test',
-    type: 'File',
+    typeName: 'File',
     unavailable: false,
     unlimited: false,
     blobCount: 66206,
@@ -33,7 +33,7 @@ describe('BlobStoresList', function() {
     availableSpaceInBytes: 42040307712
   }, {
     name: 'test2',
-    type: 'File',
+    typeName: 'File',
     unavailable: true,
     unlimited: false,
     blobCount: 0,
@@ -41,7 +41,7 @@ describe('BlobStoresList', function() {
     availableSpaceInBytes: 0
   }, {
     name: 'test3',
-    type: 'S3',
+    typeName: 'S3',
     unavailable: false,
     unlimited: true,
     blobCount: 0,

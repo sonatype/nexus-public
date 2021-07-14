@@ -123,6 +123,11 @@ public class BlobStoreGroupDescriptor
   }
 
   @Override
+  public String getId() {
+    return "group";
+  }
+
+  @Override
   public String getName() {
     return messages.name();
   }

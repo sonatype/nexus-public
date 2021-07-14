@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.golang.internal.orient.hosted;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -26,7 +25,6 @@ import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher.State;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static org.sonatype.nexus.repository.http.HttpResponses.created;
 import static org.sonatype.nexus.repository.http.HttpResponses.notFound;
@@ -40,13 +38,6 @@ import static org.sonatype.nexus.repository.http.HttpResponses.ok;
 public class HostedHandlers
     extends ComponentSupport
 {
-  private GolangPathUtils pathUtils;
-
-  @Inject
-  public HostedHandlers(final GolangPathUtils pathUtils) {
-    this.pathUtils = checkNotNull(pathUtils);
-  }
-
   final Handler get = context -> {
     AssetKind assetKind = context.getAttributes().require(AssetKind.class);
     Content content;
@@ -72,33 +63,33 @@ public class HostedHandlers
 
   private Content getList(final Context context) {
     State state = context.getAttributes().require(State.class);
-    String module = pathUtils.module(state);
+    String module = GolangPathUtils.module(state);
     return context.getRepository().facet(GolangHostedFacet.class).getList(module);
   }
 
   private Content getPackage(final Context context) {
     State state = context.getAttributes().require(State.class);
-    String path = pathUtils.assetPath(state);
+    String path = GolangPathUtils.assetPath(state);
     return context.getRepository().facet(GolangHostedFacet.class).getPackage(path);
   }
 
   private Content getModule(final Context context) {
     State state = context.getAttributes().require(State.class);
-    String path = pathUtils.assetPath(state);
+    String path = GolangPathUtils.assetPath(state);
     return context.getRepository().facet(GolangHostedFacet.class).getMod(path);
   }
 
   private Content getInfo(final Context context) {
     State state = context.getAttributes().require(State.class);
-    String path = pathUtils.assetPath(state);
-    GolangAttributes golangAttributes = pathUtils.getAttributesFromMatcherState(state);
+    String path = GolangPathUtils.assetPath(state);
+    GolangAttributes golangAttributes = GolangPathUtils.getAttributesFromMatcherState(state);
     return context.getRepository().facet(GolangHostedFacet.class).getInfo(path, golangAttributes);
   }
 
   final Handler upload = context -> {
     State state = context.getAttributes().require(TokenMatcher.State.class);
-    String path = pathUtils.assetPath(state);
-    GolangAttributes golangAttributes = pathUtils.getAttributesFromMatcherState(state);
+    String path = GolangPathUtils.assetPath(state);
+    GolangAttributes golangAttributes = GolangPathUtils.getAttributesFromMatcherState(state);
 
     AssetKind assetKind = context.getAttributes().require(AssetKind.class);
     context.getRepository().facet(GolangHostedFacet.class)

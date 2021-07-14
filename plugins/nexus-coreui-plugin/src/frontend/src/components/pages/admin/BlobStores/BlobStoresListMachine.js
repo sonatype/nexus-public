@@ -18,6 +18,8 @@ import Axios from 'axios';
 import {assign} from 'xstate';
 import {Utils} from '@sonatype/nexus-ui-plugin';
 
+const BLOB_STORES_URL = '/service/rest/internal/ui/blobstores';
+
 export default Utils.buildListMachine({
   id: 'BlobStoresListMachine',
   config: (config) => ({
@@ -32,7 +34,7 @@ export default Utils.buildListMachine({
             target: 'loaded',
             actions: ['setSortByName']
           },
-          SORT_BY_TYPE: {
+          SORT_BY_TYPE_NAME: {
             target: 'loaded',
             actions: ['setSortByType']
           },
@@ -81,8 +83,8 @@ export default Utils.buildListMachine({
         sortDirection: Utils.nextSortDirection('name')
       }),
       setSortByType: assign({
-        sortField: 'type',
-        sortDirection: Utils.nextSortDirection('type')
+        sortField: 'typeName',
+        sortDirection: Utils.nextSortDirection('typeName')
       }),
       setSortByState: assign({
         sortField: 'available',
@@ -108,7 +110,7 @@ export default Utils.buildListMachine({
     },
     services: {
       ...options.services,
-      fetchData: () => Axios.get('/service/rest/internal/ui/blobstores')
+      fetchData: () => Axios.get(BLOB_STORES_URL)
     }
   })
 });

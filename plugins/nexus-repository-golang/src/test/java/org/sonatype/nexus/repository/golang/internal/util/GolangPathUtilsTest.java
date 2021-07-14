@@ -31,12 +31,8 @@ public class GolangPathUtilsTest
   @Mock
   private TokenMatcher.State state;
 
-  private GolangPathUtils underTest;
-
   @Before
   public void setUp() throws Exception {
-    underTest = new GolangPathUtils();
-
     when(state.getTokens()).thenReturn(ImmutableMap.of(
         "module", "github.com/sonatype/example",
         "version", "v1.0.2",
@@ -46,35 +42,35 @@ public class GolangPathUtilsTest
 
   @Test
   public void module() {
-    String module = underTest.module(state);
+    String module = GolangPathUtils.module(state);
 
     assertThat(module, is(equalTo("github.com/sonatype/example")));
   }
 
   @Test
   public void version() {
-    String version = underTest.version(state);
+    String version = GolangPathUtils.version(state);
 
     assertThat(version, is(equalTo("v1.0.2")));
   }
 
   @Test
   public void extension() {
-    String extension = underTest.extension(state);
+    String extension = GolangPathUtils.extension(state);
 
     assertThat(extension, is(equalTo("zip")));
   }
 
   @Test
   public void assetPath() {
-    String assetPath = underTest.assetPath(state);
+    String assetPath = GolangPathUtils.assetPath(state);
 
     assertThat(assetPath, is(equalTo("github.com/sonatype/example/@v/v1.0.2.zip")));
   }
 
   @Test
   public void list() {
-    String listPath = underTest.listPath(state);
+    String listPath = GolangPathUtils.listPath(state);
 
     assertThat(listPath, is(equalTo("github.com/sonatype/example/@v/list")));
   }

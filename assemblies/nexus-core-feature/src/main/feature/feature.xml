@@ -28,9 +28,11 @@
     <feature>nexus-onboarding-plugin</feature>
     <feature>nexus-default-role-plugin</feature>
     <feature>nexus-repository-apt</feature>
-    <feature>nexus-repository-raw</feature>
+    <feature>nexus-repository-golang</feature>
     <feature>nexus-repository-maven</feature>
+    <feature>nexus-repository-p2</feature>
     <feature>nexus-repository-r</feature>
+    <feature>nexus-repository-raw</feature>
     <feature>nexus-restore-raw</feature>
     <feature>nexus-restore-apt</feature>
     <feature>nexus-restore-r</feature>

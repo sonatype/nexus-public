@@ -78,7 +78,7 @@ public class S3BlobStoreApiResource
   @Override
   @RequiresAuthentication
   @RequiresPermissions("nexus:blobstores:create")
-  public Response createBlobStore(@Valid final S3BlobStoreApiModel request) throws Exception {
+  public Response createBlobStore(@Valid final S3BlobStoreApiModel request) {
     try {
       final BlobStoreConfiguration blobStoreConfiguration = map(blobStoreManager.newConfiguration(), request);
       blobStoreManager.create(blobStoreConfiguration);

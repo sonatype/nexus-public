@@ -30,8 +30,6 @@ import org.junit.Rule;
 
 /**
  * Support class for P2 Routing Rule ITs.
- *
- * @since 0.next
  */
 public class P2RoutingRuleITSupport extends P2ITSupport
 {

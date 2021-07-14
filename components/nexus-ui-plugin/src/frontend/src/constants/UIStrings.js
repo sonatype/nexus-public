@@ -42,7 +42,7 @@ export default {
     SAVE_ERROR: 'An error occurred while saving the form',
     INVALID_NAME_CHARS: 'Only letters, digits, underscores(_), hyphens(-), and dots(.) are allowed and may not start with underscore or dot.',
     MAX_CHARS: (max) => `This field has a limit of ${max} characters`,
-    INVALID_URL: 'URL is not valid',
+    INVALID_URI: 'URI should be in the format <protocol>:<path>',
     INVALID_EMAIL: 'This field should be an e-mail address in the format "user@example.com"',
     URL_ERROR: 'URL should be in the format "http://www.example.com"',
     URL_NEEDS_TRAILING_SLASH: 'URL should be in the format "http://www.example.com/" and must include a trailing slash'

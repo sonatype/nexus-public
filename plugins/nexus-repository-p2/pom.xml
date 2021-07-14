@@ -19,7 +19,7 @@
   <parent>
     <groupId>org.sonatype.nexus.plugins</groupId>
     <artifactId>nexus-plugins</artifactId>
-    <version>3.32.0-SNAPSHOT</version>
+    <version>3.33.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-repository-p2</artifactId>
@@ -92,6 +92,7 @@
       <artifactId>nexus-repository</artifactId>
       <classifier>tests</classifier>
       <scope>test</scope>
+      <optional>true</optional>
     </dependency>
   </dependencies>
 

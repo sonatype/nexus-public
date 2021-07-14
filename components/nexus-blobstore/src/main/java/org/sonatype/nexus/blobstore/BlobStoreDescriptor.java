@@ -28,6 +28,11 @@ import org.sonatype.nexus.formfields.FormField;
 public interface BlobStoreDescriptor
 {
   /**
+   * A url-friendly identifier. This must match the identifier used for the blob store REST apis.
+   */
+  String getId();
+
+  /**
    * A user friendly name of the blob store type to be presented in UI.
    *
    * @return blob store name
