@@ -19,8 +19,8 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
 import org.sonatype.nexus.repository.p2.api.P2ProxyRepositoryApiRequest;
-import org.sonatype.nexus.repository.rest.api.AbstractProxyRepositoriesApiResource;
 import org.sonatype.nexus.repository.p2.internal.P2Format;
+import org.sonatype.nexus.repository.rest.api.AbstractProxyRepositoriesApiResource;
 import org.sonatype.nexus.validation.Validate;
 
 import io.swagger.annotations.Api;

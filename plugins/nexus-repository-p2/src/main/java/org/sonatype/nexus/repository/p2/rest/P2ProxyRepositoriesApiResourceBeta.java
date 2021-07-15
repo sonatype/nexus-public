@@ -16,18 +16,14 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.Path;
 
-import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.repository.rest.api.RepositoriesApiResourceBeta;
 
 import io.swagger.annotations.Api;
-
-import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 
 /**
  * @since 3.28
  * @deprecated - prefer to use {@link P2ProxyRepositoriesApiResourceV1 } instead of Beta.
  */
-@FeatureFlag(name = ORIENT_ENABLED)
 @Named
 @Singleton
 @Path(RepositoriesApiResourceBeta.RESOURCE_URI + "/p2/proxy")

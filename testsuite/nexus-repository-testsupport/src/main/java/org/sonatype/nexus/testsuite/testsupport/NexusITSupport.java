@@ -15,6 +15,7 @@ package org.sonatype.nexus.testsuite.testsupport;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.KeyStore;
 import java.util.Arrays;
@@ -46,6 +47,7 @@ import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.testsuite.testsupport.fixtures.SecurityRule;
 import org.sonatype.nexus.testsuite.testsupport.rest.TestSuiteObjectMapperResolver;
 
+import com.google.common.base.Joiner;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -87,6 +89,7 @@ import org.junit.rules.TestName;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 
+import static org.codehaus.groovy.runtime.InvokerHelper.asList;
 import static org.ops4j.pax.exam.CoreOptions.maven;
 import static org.ops4j.pax.exam.CoreOptions.when;
 import static org.ops4j.pax.exam.CoreOptions.wrappedBundle;
@@ -446,6 +449,14 @@ public abstract class NexusITSupport
         }
         return responseBuilder.build();
       }
+    }
+  }
+
+  protected String buildNexusUrl(final String... segments) {
+    try {
+      return nexusUrl.toURI().resolve(Joiner.on('/').join(asList(segments))).toString();
+    } catch (URISyntaxException ex) {
+      throw new RuntimeException(ex);
     }
   }
 }
