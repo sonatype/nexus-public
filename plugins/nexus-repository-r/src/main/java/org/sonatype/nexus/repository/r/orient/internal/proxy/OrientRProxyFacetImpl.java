@@ -25,7 +25,7 @@ import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.proxy.ProxyFacet;
 import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
-import org.sonatype.nexus.repository.r.internal.AssetKind;
+import org.sonatype.nexus.repository.r.AssetKind;
 import org.sonatype.nexus.repository.r.orient.OrientRFacet;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;

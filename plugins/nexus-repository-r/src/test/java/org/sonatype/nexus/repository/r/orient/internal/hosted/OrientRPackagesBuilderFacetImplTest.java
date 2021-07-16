@@ -36,8 +36,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.repository.r.internal.AssetKind.ARCHIVE;
-import static org.sonatype.nexus.repository.r.internal.AssetKind.PACKAGES;
+import static org.sonatype.nexus.repository.r.AssetKind.ARCHIVE;
+import static org.sonatype.nexus.repository.r.AssetKind.PACKAGES;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 
 public class OrientRPackagesBuilderFacetImplTest

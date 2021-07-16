@@ -26,6 +26,7 @@ import org.sonatype.nexus.repository.cache.NegativeCacheHandler
 import org.sonatype.nexus.repository.http.HttpHandlers
 import org.sonatype.nexus.repository.proxy.ProxyHandler
 import org.sonatype.nexus.repository.purge.PurgeUnusedFacet
+import org.sonatype.nexus.repository.r.AssetKind
 import org.sonatype.nexus.repository.r.RFormat
 import org.sonatype.nexus.repository.r.orient.internal.OrientRRecipeSupport
 import org.sonatype.nexus.repository.types.ProxyType
@@ -89,7 +90,7 @@ class OrientRProxyRecipe
 
     builder.route(packagesMatcher()
         .handler(timingHandler)
-        .handler(assetKindHandler.rcurry(org.sonatype.nexus.repository.r.internal.AssetKind.PACKAGES))
+        .handler(assetKindHandler.rcurry(AssetKind.PACKAGES))
         .handler(securityHandler)
         .handler(highAvailabilitySupportHandler)
         .handler(routingRuleHandler)
@@ -104,7 +105,7 @@ class OrientRProxyRecipe
 
     builder.route(metadataRdsMatcher()
         .handler(timingHandler)
-        .handler(assetKindHandler.rcurry(org.sonatype.nexus.repository.r.internal.AssetKind.RDS_METADATA))
+        .handler(assetKindHandler.rcurry(AssetKind.RDS_METADATA))
         .handler(securityHandler)
         .handler(highAvailabilitySupportHandler)
         .handler(routingRuleHandler)
@@ -119,7 +120,7 @@ class OrientRProxyRecipe
 
     builder.route(archiveMatcher()
         .handler(timingHandler)
-        .handler(assetKindHandler.rcurry(org.sonatype.nexus.repository.r.internal.AssetKind.ARCHIVE))
+        .handler(assetKindHandler.rcurry(AssetKind.ARCHIVE))
         .handler(securityHandler)
         .handler(highAvailabilitySupportHandler)
         .handler(routingRuleHandler)

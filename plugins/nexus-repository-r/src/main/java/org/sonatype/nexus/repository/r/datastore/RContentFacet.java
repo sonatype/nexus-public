@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.r.datastore.internal;
+package org.sonatype.nexus.repository.r.datastore;
 
 import java.util.Collections;
 import java.util.Map;
@@ -29,7 +29,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.store.AssetDAO;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.r.RFormat;
-import org.sonatype.nexus.repository.r.internal.AssetKind;
+import org.sonatype.nexus.repository.r.AssetKind;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
@@ -38,22 +38,23 @@ import org.apache.commons.lang3.StringUtils;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW;
 import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW_ONCE;
-import static org.sonatype.nexus.repository.r.internal.AssetKind.ARCHIVE;
-import static org.sonatype.nexus.repository.r.internal.AssetKind.PACKAGES;
-import static org.sonatype.nexus.repository.r.internal.AssetKind.RDS_METADATA;
+import static org.sonatype.nexus.repository.r.AssetKind.ARCHIVE;
+import static org.sonatype.nexus.repository.r.AssetKind.PACKAGES;
+import static org.sonatype.nexus.repository.r.AssetKind.RDS_METADATA;
 import static org.sonatype.nexus.repository.r.internal.RAttributes.P_PACKAGE;
 import static org.sonatype.nexus.repository.r.internal.RAttributes.P_VERSION;
 import static org.sonatype.nexus.repository.r.internal.util.RDescriptionUtils.extractDescriptionFromArchive;
 import static org.sonatype.nexus.repository.r.internal.util.RMetadataUtils.HASH_ALGORITHMS;
 import static org.sonatype.nexus.repository.r.internal.util.RPathUtils.getBasePath;
+import static org.sonatype.nexus.repository.r.internal.util.RPathUtils.removeInitialSlashFromPath;
 
 /**
  * R content facet.
  *
  * @since 3.32
  */
-@Exposed
 @Named(RFormat.NAME)
+@Exposed
 public class RContentFacet
     extends ContentFacetSupport
 {
@@ -138,7 +139,7 @@ public class RContentFacet
       Map<String, String> attributes = extractDescriptionFromArchive(assetPath, tempBlob);
       String name = attributes.get(P_PACKAGE);
       String version = attributes.get(P_VERSION);
-      String namespace = getBasePath(assetPath);
+      String namespace = removeInitialSlashFromPath(getBasePath(assetPath));
       FluentComponent component = findOrCreateComponent(name, namespace, version);
 
       return component

@@ -24,7 +24,7 @@ import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.group.GroupFacetImpl
 import org.sonatype.nexus.repository.group.GroupHandler
 import org.sonatype.nexus.repository.http.HttpHandlers
-import org.sonatype.nexus.repository.r.internal.AssetKind
+import org.sonatype.nexus.repository.r.AssetKind
 import org.sonatype.nexus.repository.r.internal.RCommonHandlers
 import org.sonatype.nexus.repository.r.RFormat
 import org.sonatype.nexus.repository.r.internal.group.PackagesGroupHandler

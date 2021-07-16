@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.restore.r.internal;
+package org.sonatype.nexus.blobstore.restore.r.internal.orient;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,11 +47,11 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
  */
 @Named(RFormat.NAME)
 @Singleton
-public class RRestoreBlobStrategy
-    extends OrientBaseRestoreBlobStrategy<RRestoreBlobData>
+public class OrientRRestoreBlobStrategy
+    extends OrientBaseRestoreBlobStrategy<OrientRRestoreBlobData>
 {
   @Inject
-  public RRestoreBlobStrategy(
+  public OrientRRestoreBlobStrategy(
       final NodeAccess nodeAccess,
       final RepositoryManager repositoryManager,
       final BlobStoreManager blobStoreManager,
@@ -61,14 +61,14 @@ public class RRestoreBlobStrategy
   }
 
   @Override
-  protected RRestoreBlobData createRestoreData(final RestoreBlobData restoreBlobData) {
+  protected OrientRRestoreBlobData createRestoreData(final RestoreBlobData restoreBlobData) {
     checkState(!isEmpty(restoreBlobData.getBlobName()), "Blob name cannot be empty");
 
-    return new RRestoreBlobData(restoreBlobData);
+    return new OrientRRestoreBlobData(restoreBlobData);
   }
 
   @Override
-  protected boolean canAttemptRestore(@Nonnull final RRestoreBlobData rRestoreBlobData) {
+  protected boolean canAttemptRestore(@Nonnull final OrientRRestoreBlobData rRestoreBlobData) {
     Repository repository = getRepository(rRestoreBlobData);
     Optional<OrientRRestoreFacet> rRestoreFacetFacet = repository.optionalFacet(OrientRRestoreFacet.class);
 
@@ -80,12 +80,12 @@ public class RRestoreBlobStrategy
   }
 
   @Override
-  protected String getAssetPath(@Nonnull final RRestoreBlobData rRestoreBlobData) {
+  protected String getAssetPath(@Nonnull final OrientRRestoreBlobData rRestoreBlobData) {
     return rRestoreBlobData.getBlobData().getBlobName();
   }
 
   @Override
-  protected boolean assetExists(@Nonnull final RRestoreBlobData rRestoreBlobData) {
+  protected boolean assetExists(@Nonnull final OrientRRestoreBlobData rRestoreBlobData) {
     OrientRRestoreFacet facet = getRestoreFacet(rRestoreBlobData);
 
     return facet.assetExists(getAssetPath(rRestoreBlobData));
@@ -94,7 +94,7 @@ public class RRestoreBlobStrategy
   @Override
   protected void createAssetFromBlob(
       @Nonnull final AssetBlob assetBlob,
-      @Nonnull final RRestoreBlobData rRestoreBlobData)
+      @Nonnull final OrientRRestoreBlobData rRestoreBlobData)
       throws IOException
   {
     OrientRRestoreFacet facet = getRestoreFacet(rRestoreBlobData);
@@ -110,7 +110,7 @@ public class RRestoreBlobStrategy
   }
 
   @Override
-  protected boolean componentRequired(final RRestoreBlobData data) {
+  protected boolean componentRequired(final OrientRRestoreBlobData data) {
     OrientRRestoreFacet facet = getRestoreFacet(data);
     final String path = data.getBlobData().getBlobName();
 
@@ -118,7 +118,7 @@ public class RRestoreBlobStrategy
   }
 
   @Override
-  protected Query getComponentQuery(final RRestoreBlobData data) throws IOException {
+  protected Query getComponentQuery(final OrientRRestoreBlobData data) throws IOException {
     OrientRRestoreFacet facet = getRestoreFacet(data);
     RestoreBlobData blobData = data.getBlobData();
     Map<String, String> attributes;
@@ -130,11 +130,11 @@ public class RRestoreBlobStrategy
   }
 
   @Override
-  protected Repository getRepository(@Nonnull final RRestoreBlobData data) {
+  protected Repository getRepository(@Nonnull final OrientRRestoreBlobData data) {
     return data.getBlobData().getRepository();
   }
 
-  private OrientRRestoreFacet getRestoreFacet(@Nonnull final RRestoreBlobData rRestoreBlobData) {
+  private OrientRRestoreFacet getRestoreFacet(@Nonnull final OrientRRestoreBlobData rRestoreBlobData) {
     final Repository repository = getRepository(rRestoreBlobData);
 
     return repository.facet(OrientRRestoreFacet.class);

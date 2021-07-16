@@ -23,7 +23,7 @@ import org.sonatype.nexus.repository.http.PartialFetchHandler
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet
 import org.sonatype.nexus.repository.r.orient.OrientRFacet
 import org.sonatype.nexus.repository.r.orient.OrientRRestoreFacet
-import org.sonatype.nexus.repository.r.internal.AssetKind
+import org.sonatype.nexus.repository.r.AssetKind
 import org.sonatype.nexus.repository.r.internal.security.RSecurityFacet
 import org.sonatype.nexus.repository.routing.RoutingRuleHandler
 import org.sonatype.nexus.repository.search.SearchFacet

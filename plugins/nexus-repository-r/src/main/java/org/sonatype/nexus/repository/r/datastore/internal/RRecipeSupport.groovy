@@ -24,7 +24,8 @@ import org.sonatype.nexus.repository.content.search.SearchFacet
 import org.sonatype.nexus.repository.http.HttpMethods
 import org.sonatype.nexus.repository.http.PartialFetchHandler
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet
-import org.sonatype.nexus.repository.r.internal.AssetKind
+import org.sonatype.nexus.repository.r.datastore.RContentFacet
+import org.sonatype.nexus.repository.r.AssetKind
 import org.sonatype.nexus.repository.r.internal.security.RSecurityFacet
 import org.sonatype.nexus.repository.routing.RoutingRuleHandler
 import org.sonatype.nexus.repository.security.SecurityHandler

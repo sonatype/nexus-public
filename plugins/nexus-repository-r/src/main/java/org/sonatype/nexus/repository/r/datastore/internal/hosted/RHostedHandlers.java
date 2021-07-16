@@ -19,7 +19,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.http.HttpResponses;
-import org.sonatype.nexus.repository.r.datastore.internal.RContentFacet;
+import org.sonatype.nexus.repository.r.datastore.RContentFacet;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.rest.ValidationErrorsException;
