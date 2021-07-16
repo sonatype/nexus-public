@@ -176,8 +176,17 @@ public class StorageFacetImpl
     StorageFacetImpl.Config configToValidate = facet(ConfigurationFacet.class)
         .readSection(configuration, STORAGE, StorageFacetImpl.Config.class);
     Set<ConstraintViolation<?>> violations = new HashSet<>();
+    maybeAdd(violations, validateBlobStoreExists(configToValidate.blobStoreName));
     maybeAdd(violations, validateBlobStoreNotInGroup(configToValidate.blobStoreName));
     maybePropagate(violations, log);
+  }
+
+  ConstraintViolation<?> validateBlobStoreExists(final String blobStoreName) {
+    return !blobStoreManager.exists(blobStoreName)
+        ? constraintViolationFactory
+        .createViolation(format("%s.%s.blobStoreName", P_ATTRIBUTES, STORAGE),
+            format("Blob Store '%s' does not exist", blobStoreName))
+        : null;
   }
 
   ConstraintViolation<?> validateBlobStoreNotInGroup(final String blobStoreName) {

@@ -252,6 +252,18 @@ public class StorageFacetImplTest
   }
 
   @Test
+  public void blobStoreNotExistsConstraintViolation() throws Exception {
+    underTest.doConfigure(configuration);
+    when(blobStoreManager.get(BLOB_STORE_NAME)).thenReturn(null);
+    when(blobStoreManager.getParent(BLOB_STORE_NAME)).thenReturn(Optional.empty());
+
+    underTest.validate(configuration);
+    verify(violationFactory, times(1)).createViolation(format("%s.%s.blobStoreName", P_ATTRIBUTES, STORAGE),
+        format("Blob Store '%s' does not exist",
+            BLOB_STORE_NAME));
+  }
+
+  @Test
   public void blobStoreGroupMemberAsStorageCreatesConstraintViolation() throws Exception {
     underTest.doConfigure(configuration);
     when(blobStoreManager.get(BLOB_STORE_NAME)).thenReturn(blobStore);
