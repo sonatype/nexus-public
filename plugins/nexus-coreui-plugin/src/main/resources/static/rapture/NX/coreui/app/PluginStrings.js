@@ -519,6 +519,9 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_CleanupPolicyFacet_Policy_FromTitle: 'Available',
     Repository_Facet_CleanupPolicyFacet_Policy_ToTitle: 'Applied',
     Repository_Facet_CleanupPolicyFacet_Policy_EmptyText: 'None',
+    Repository_Facet_ReplicationFacet_Title: 'Replication',
+    Repository_Facet_ReplicationFacet_Enabled_FieldLabel: 'Enabled',
+    Repository_Facet_ReplicationFacet_Enabled_HelpText: 'If checked, this repository is the target of a replication',
     Repository_Formats_All: '(All Formats)',
     Repository_Facet_GolangFacet_Title: 'Go Settings',
 

@@ -38,10 +38,10 @@ Ext.define('NX.coreui.view.repository.recipe.YumHosted', {
     var me = this;
 
     me.items = [
-      { xtype: 'nx-coreui-repository-yum-hosted-facet'},
-      { xtype: 'nx-coreui-repository-storage-facet'},
-      { xtype: 'nx-coreui-repository-storage-hosted-facet'},
-      { xtype: 'nx-coreui-repository-cleanup-policy-facet'}
+      {xtype: 'nx-coreui-repository-yum-hosted-facet'},
+      {xtype: 'nx-coreui-repository-storage-facet'},
+      {xtype: 'nx-coreui-repository-storage-hosted-facet'},
+      {xtype: 'nx-coreui-repository-cleanup-policy-facet'}
     ];
 
     me.callParent();

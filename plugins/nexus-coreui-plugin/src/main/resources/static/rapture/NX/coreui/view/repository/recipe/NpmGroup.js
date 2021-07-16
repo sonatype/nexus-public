@@ -36,8 +36,8 @@ Ext.define('NX.coreui.view.repository.recipe.NpmGroup', {
     var me = this;
 
     me.items = [
-      { xtype: 'nx-coreui-repository-storage-facet'},
-      { xtype: 'nx-coreui-repository-group-facet', format: 'npm', supportsGroupWrite: true }
+      {xtype: 'nx-coreui-repository-storage-facet'},
+      {xtype: 'nx-coreui-repository-group-facet', format: 'npm', supportsGroupWrite: true }
     ];
 
     me.callParent();
