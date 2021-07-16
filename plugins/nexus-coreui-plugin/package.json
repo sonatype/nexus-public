@@ -32,7 +32,7 @@
     "@babel/preset-env": "=7.4.5",
     "@babel/preset-react": "=7.0.0",
     "@sonatype/nexus-ui-plugin": "0.1.0",
-    "@testing-library/jest-dom": "=5.11.9",
+    "@testing-library/jest-dom": "=5.14.1",
     "@testing-library/react": "=11.2.5",
     "@testing-library/user-event": "=12.8.3",
     "acorn": "=7.0.0",

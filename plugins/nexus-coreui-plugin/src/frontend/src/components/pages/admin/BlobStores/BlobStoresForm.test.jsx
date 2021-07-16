@@ -13,7 +13,7 @@
 import React from 'react';
 import axios from 'axios';
 import {when} from 'jest-when';
-import {fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react'
+import {fireEvent, screen, waitFor, waitForElementToBeRemoved} from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/extend-expect';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
@@ -109,6 +109,11 @@ const quotaTypes = {
     }
   ]
 };
+
+const selectors = {
+  ...TestUtils.selectors,
+  maxConnectionPoolSize: () => screen.queryByLabelText('Max Connection Pool Size')
+}
 
 describe('BlobStoresForm', function() {
   const onDone = jest.fn();
@@ -456,6 +461,15 @@ describe('BlobStoresForm', function() {
     expect(endpointURL()).toHaveValue('http://www.fakeurl.com');
     expect(saveButton()).not.toHaveClass('disabled');
 
+    userEvent.type(selectors.maxConnectionPoolSize(), '0');
+    expect(selectors.maxConnectionPoolSize()).toHaveErrorMessage('The minimum value for this field is 1');
+    userEvent.clear(selectors.maxConnectionPoolSize());
+    userEvent.type(selectors.maxConnectionPoolSize(), '2000000000');
+    expect(selectors.maxConnectionPoolSize()).toHaveErrorMessage('The maximum value for this field is 1000000000');
+    userEvent.clear(selectors.maxConnectionPoolSize());
+    userEvent.type(selectors.maxConnectionPoolSize(), '1');
+    expect(selectors.maxConnectionPoolSize()).not.toHaveErrorMessage(expect.anything());
+
     userEvent.click(saveButton());
 
     expect(axios.post).toHaveBeenCalledWith(
@@ -471,6 +485,7 @@ describe('BlobStoresForm', function() {
             encryption: null,
             advancedBucketConnection: {
               endpoint: 'http://www.fakeurl.com',
+              maxConnectionPoolSize: '1',
               forcePathStyle: false
             }
           }
