@@ -25,9 +25,9 @@ import org.sonatype.nexus.repository.group.GroupFacetImpl
 import org.sonatype.nexus.repository.group.GroupHandler
 import org.sonatype.nexus.repository.http.HttpHandlers
 import org.sonatype.nexus.repository.r.RFormat
-import org.sonatype.nexus.repository.r.datastore.internal.RContentFacet
+import org.sonatype.nexus.repository.r.datastore.RContentFacet
 import org.sonatype.nexus.repository.r.datastore.internal.RRecipeSupport
-import org.sonatype.nexus.repository.r.internal.AssetKind
+import org.sonatype.nexus.repository.r.AssetKind
 import org.sonatype.nexus.repository.r.internal.RCommonHandlers
 import org.sonatype.nexus.repository.r.internal.group.PackagesGroupHandler
 import org.sonatype.nexus.repository.types.GroupType

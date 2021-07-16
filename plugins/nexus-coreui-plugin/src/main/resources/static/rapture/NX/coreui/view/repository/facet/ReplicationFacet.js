@@ -17,17 +17,16 @@
 /*global Ext, NX*/
 
 /**
- * Repository "Settings" form for a Git LFS Hosted repository.
+ * Configuration for replication on a repository
  *
- * @since 3.3
+ * @since 3.next
  */
-Ext.define('NX.coreui.view.repository.recipe.GitLfsHosted', {
-  extend: 'NX.coreui.view.repository.RepositorySettingsForm',
-  alias: 'widget.nx-coreui-repository-gitlfs-hosted',
+Ext.define('NX.coreui.view.repository.facet.ReplicationFacet', {
+  extend: 'Ext.form.FieldContainer',
+  alias: 'widget.nx-coreui-repository-replication-facet',
   requires: [
-    'NX.coreui.view.repository.facet.StorageFacet',
-    'NX.coreui.view.repository.facet.StorageFacetHosted',
-    'NX.coreui.view.repository.facet.CleanupPolicyFacet'
+    'NX.I18n',
+    'NX.State'
   ],
 
   /**
@@ -36,10 +35,25 @@ Ext.define('NX.coreui.view.repository.recipe.GitLfsHosted', {
   initComponent: function() {
     var me = this;
 
+    // Check if the capability is enabled
+    const activeCapabilities = NX.State.getValue('capabilityActiveTypes') || [];
+    this.setVisible(activeCapabilities.includes('replication'));
+
     me.items = [
-      {xtype: 'nx-coreui-repository-storage-facet'},
-      {xtype: 'nx-coreui-repository-storage-hosted-facet'},
-      {xtype: 'nx-coreui-repository-cleanup-policy-facet'}
+      {
+        xtype: 'fieldset',
+        cls: 'nx-form-section',
+        title: NX.I18n.get('Repository_Facet_ReplicationFacet_Title'),
+
+        items: {
+          xtype: 'checkbox',
+          name: 'attributes.replication.enabled',
+          itemId: 'replicationEnabled',
+          fieldLabel: NX.I18n.get('Repository_Facet_ReplicationFacet_Enabled_FieldLabel'),
+          helpText: NX.I18n.get('Repository_Facet_ReplicationFacet_Enabled_HelpText'),
+          value: false
+        }
+      }
     ];
 
     me.callParent();

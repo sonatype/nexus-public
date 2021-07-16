@@ -36,8 +36,8 @@ Ext.define('NX.coreui.view.repository.recipe.NugetGroup', {
     var me = this;
 
     me.items = [
-      { xtype: 'nx-coreui-repository-storage-facet'},
-      { xtype: 'nx-coreui-repository-nuget-group-facet', format: 'nuget'}
+      {xtype: 'nx-coreui-repository-storage-facet'},
+      {xtype: 'nx-coreui-repository-nuget-group-facet', format: 'nuget'}
     ];
 
     me.callParent();

@@ -28,7 +28,7 @@ import org.sonatype.nexus.repository.proxy.ProxyHandler
 import org.sonatype.nexus.repository.purge.PurgeUnusedFacet
 import org.sonatype.nexus.repository.r.RFormat
 import org.sonatype.nexus.repository.r.datastore.internal.RRecipeSupport
-import org.sonatype.nexus.repository.r.internal.AssetKind
+import org.sonatype.nexus.repository.r.AssetKind
 import org.sonatype.nexus.repository.types.ProxyType
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
 import org.sonatype.nexus.repository.view.Router.Builder

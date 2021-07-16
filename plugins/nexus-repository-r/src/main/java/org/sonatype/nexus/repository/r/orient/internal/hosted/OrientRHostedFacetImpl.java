@@ -37,7 +37,7 @@ import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.r.internal.AssetKind.ARCHIVE;
+import static org.sonatype.nexus.repository.r.AssetKind.ARCHIVE;
 import static org.sonatype.nexus.repository.r.internal.util.RDescriptionUtils.extractDescriptionFromArchive;
 import static org.sonatype.nexus.repository.r.internal.util.RMetadataUtils.HASH_ALGORITHMS;
 import static org.sonatype.nexus.repository.r.internal.util.RPathUtils.PACKAGES_GZ_FILENAME;

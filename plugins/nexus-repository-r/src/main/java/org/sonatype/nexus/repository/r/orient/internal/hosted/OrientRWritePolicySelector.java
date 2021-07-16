@@ -20,8 +20,8 @@ import org.sonatype.nexus.repository.storage.WritePolicySelector;
 
 import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW;
 import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW_ONCE;
-import static org.sonatype.nexus.repository.r.internal.AssetKind.PACKAGES;
-import static org.sonatype.nexus.repository.r.internal.AssetKind.RDS_METADATA;
+import static org.sonatype.nexus.repository.r.AssetKind.PACKAGES;
+import static org.sonatype.nexus.repository.r.AssetKind.RDS_METADATA;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 
 public class OrientRWritePolicySelector

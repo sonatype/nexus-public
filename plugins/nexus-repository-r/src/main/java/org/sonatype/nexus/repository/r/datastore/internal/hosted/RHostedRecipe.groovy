@@ -24,9 +24,9 @@ import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.http.HttpHandlers
 import org.sonatype.nexus.repository.http.HttpMethods
 import org.sonatype.nexus.repository.r.RFormat
-import org.sonatype.nexus.repository.r.datastore.internal.RContentFacet
+import org.sonatype.nexus.repository.r.datastore.RContentFacet
 import org.sonatype.nexus.repository.r.datastore.internal.RRecipeSupport
-import org.sonatype.nexus.repository.r.internal.AssetKind
+import org.sonatype.nexus.repository.r.AssetKind
 import org.sonatype.nexus.repository.r.internal.RCommonHandlers
 import org.sonatype.nexus.repository.types.HostedType
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet

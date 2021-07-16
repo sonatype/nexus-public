@@ -10,17 +10,32 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.restore.r.internal;
+package org.sonatype.nexus.repository.r;
 
-import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
-import org.sonatype.nexus.blobstore.restore.RestoreBlobDataSupport;
+import javax.annotation.Nonnull;
+
+import org.sonatype.nexus.repository.cache.CacheControllerHolder;
+import org.sonatype.nexus.repository.cache.CacheControllerHolder.CacheType;
 
 /**
+ * Asset kinds for R.
+ *
  * @since 3.28
  */
-class RRestoreBlobData extends RestoreBlobDataSupport
+public enum AssetKind
 {
-  RRestoreBlobData(final RestoreBlobData blobData) {
-    super(blobData);
+  PACKAGES(CacheControllerHolder.METADATA),
+  RDS_METADATA(CacheControllerHolder.METADATA),
+  ARCHIVE(CacheControllerHolder.CONTENT);
+
+  private final CacheType cacheType;
+
+  AssetKind(final CacheType cacheType) {
+    this.cacheType = cacheType;
+  }
+
+  @Nonnull
+  public CacheType getCacheType() {
+    return cacheType;
   }
 }

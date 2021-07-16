@@ -40,12 +40,12 @@ Ext.define('NX.coreui.view.repository.recipe.HelmProxy', {
         var me = this;
 
         me.items = [
-        {xtype: 'nx-coreui-repository-proxy-facet'},
-        {xtype: 'nx-coreui-repository-storage-facet'},
-        {xtype: 'nx-coreui-repository-routing-rule-facet'},
-        {xtype: 'nx-coreui-repository-negativecache-facet'},
-        {xtype: 'nx-coreui-repository-httpclient-facet'},
-        {xtype: 'nx-coreui-repository-cleanup-policy-facet'}
+            {xtype: 'nx-coreui-repository-proxy-facet'},
+            {xtype: 'nx-coreui-repository-storage-facet'},
+            {xtype: 'nx-coreui-repository-routing-rule-facet'},
+            {xtype: 'nx-coreui-repository-negativecache-facet'},
+            {xtype: 'nx-coreui-repository-httpclient-facet'},
+            {xtype: 'nx-coreui-repository-cleanup-policy-facet'}
         ];
 
         me.callParent();

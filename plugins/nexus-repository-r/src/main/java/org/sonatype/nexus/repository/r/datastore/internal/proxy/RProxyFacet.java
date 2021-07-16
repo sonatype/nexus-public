@@ -21,8 +21,8 @@ import javax.inject.Named;
 import org.sonatype.nexus.repository.Facet.Exposed;
 import org.sonatype.nexus.repository.content.facet.ContentProxyFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
-import org.sonatype.nexus.repository.r.datastore.internal.RContentFacet;
-import org.sonatype.nexus.repository.r.internal.AssetKind;
+import org.sonatype.nexus.repository.r.datastore.RContentFacet;
+import org.sonatype.nexus.repository.r.AssetKind;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 

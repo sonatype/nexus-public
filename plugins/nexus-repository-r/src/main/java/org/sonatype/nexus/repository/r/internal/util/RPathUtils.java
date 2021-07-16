@@ -14,14 +14,14 @@ package org.sonatype.nexus.repository.r.internal.util;
 
 import java.util.regex.Pattern;
 
-import org.sonatype.nexus.repository.r.internal.AssetKind;
+import org.sonatype.nexus.repository.r.AssetKind;
 import org.sonatype.nexus.repository.view.Context;
 
 import org.apache.commons.lang3.StringUtils;
 
-import static org.sonatype.nexus.repository.r.internal.AssetKind.ARCHIVE;
-import static org.sonatype.nexus.repository.r.internal.AssetKind.PACKAGES;
-import static org.sonatype.nexus.repository.r.internal.AssetKind.RDS_METADATA;
+import static org.sonatype.nexus.repository.r.AssetKind.ARCHIVE;
+import static org.sonatype.nexus.repository.r.AssetKind.PACKAGES;
+import static org.sonatype.nexus.repository.r.AssetKind.RDS_METADATA;
 
 /**
  * Utility methods for working with R routes and paths.

@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.r.internal;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.repository.r.AssetKind;
 
 import org.junit.Test;
 

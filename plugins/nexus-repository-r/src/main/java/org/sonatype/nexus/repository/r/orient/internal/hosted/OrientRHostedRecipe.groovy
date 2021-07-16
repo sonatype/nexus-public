@@ -22,6 +22,7 @@ import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.http.HttpHandlers
+import org.sonatype.nexus.repository.r.AssetKind
 import org.sonatype.nexus.repository.r.orient.OrientRHostedFacet
 import org.sonatype.nexus.repository.r.RPackagesBuilderFacet
 import org.sonatype.nexus.repository.r.internal.RCommonHandlers
@@ -88,7 +89,7 @@ class OrientRHostedRecipe
     // PACKAGES.gz is the only supported metadata in hosted for now
     builder.route(packagesGzMatcher()
         .handler(timingHandler)
-        .handler(assetKindHandler.rcurry(org.sonatype.nexus.repository.r.internal.AssetKind.PACKAGES))
+        .handler(assetKindHandler.rcurry(AssetKind.PACKAGES))
         .handler(securityHandler)
         .handler(highAvailabilitySupportHandler)
         .handler(exceptionHandler)
@@ -101,7 +102,7 @@ class OrientRHostedRecipe
 
     builder.route(archiveMatcher()
         .handler(timingHandler)
-        .handler(assetKindHandler.rcurry(org.sonatype.nexus.repository.r.internal.AssetKind.ARCHIVE))
+        .handler(assetKindHandler.rcurry(AssetKind.ARCHIVE))
         .handler(securityHandler)
         .handler(highAvailabilitySupportHandler)
         .handler(exceptionHandler)
@@ -115,7 +116,7 @@ class OrientRHostedRecipe
 
     builder.route(uploadMatcher()
         .handler(timingHandler)
-        .handler(assetKindHandler.rcurry(org.sonatype.nexus.repository.r.internal.AssetKind.ARCHIVE))
+        .handler(assetKindHandler.rcurry(AssetKind.ARCHIVE))
         .handler(securityHandler)
         .handler(highAvailabilitySupportHandler)
         .handler(exceptionHandler)

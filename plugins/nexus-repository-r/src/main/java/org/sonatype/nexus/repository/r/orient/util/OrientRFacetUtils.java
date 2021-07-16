@@ -21,7 +21,7 @@ import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.r.RFormat;
-import org.sonatype.nexus.repository.r.internal.AssetKind;
+import org.sonatype.nexus.repository.r.AssetKind;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;

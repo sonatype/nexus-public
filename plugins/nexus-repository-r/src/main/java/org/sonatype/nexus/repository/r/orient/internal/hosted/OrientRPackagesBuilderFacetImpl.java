@@ -36,7 +36,7 @@ import com.google.common.eventbus.Subscribe;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
-import static org.sonatype.nexus.repository.r.internal.AssetKind.ARCHIVE;
+import static org.sonatype.nexus.repository.r.AssetKind.ARCHIVE;
 import static org.sonatype.nexus.repository.r.internal.util.RPathUtils.getBasePath;
 
 /**

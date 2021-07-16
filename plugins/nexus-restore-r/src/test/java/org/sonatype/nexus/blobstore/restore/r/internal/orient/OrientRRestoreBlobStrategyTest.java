@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.restore.r.internal;
+package org.sonatype.nexus.blobstore.restore.r.internal.orient;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -66,7 +66,7 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
-public class RRestoreBlobStrategyTest
+public class OrientRRestoreBlobStrategyTest
     extends TestSupport
 {
   private static final String TEST_BLOB_STORE_NAME = "test";
@@ -92,7 +92,7 @@ public class RRestoreBlobStrategyTest
   OrientRRestoreFacet rRestoreFacet;
 
   @Mock
-  RRestoreBlobData rRestoreBlobData;
+  OrientRRestoreBlobData rRestoreBlobData;
 
   @Mock
   private RestoreBlobData restoreBlobData;
@@ -134,7 +134,7 @@ public class RRestoreBlobStrategyTest
 
   private Properties properties = new Properties();
 
-  private RRestoreBlobStrategy restoreBlobStrategy;
+  private OrientRRestoreBlobStrategy restoreBlobStrategy;
 
   @Before
   public void setup() {
@@ -146,7 +146,7 @@ public class RRestoreBlobStrategyTest
         bind(BlobStoreManager.class).toInstance(blobStoreManager);
         bind(DryRunPrefix.class).toInstance(new DryRunPrefix("dryrun"));
       }
-    }).getInstance(RRestoreBlobStrategy.class);
+    }).getInstance(OrientRRestoreBlobStrategy.class);
 
     when(repositoryManager.get(anyString())).thenReturn(repository);
     when(repository.facet(OrientRRestoreFacet.class)).thenReturn(rRestoreFacet);
@@ -170,7 +170,7 @@ public class RRestoreBlobStrategyTest
     when(blobStore.getBlobAttributes(any(BlobId.class))).thenReturn(blobAttributes);
     when(blobAttributes.isDeleted()).thenReturn(false);
     when(blobStoreConfiguration.getName()).thenReturn(TEST_BLOB_STORE_NAME);
-    when(rRestoreFacet.componentRequired(eq(ARCHIVE_PATH))).thenReturn(true);
+    when(rRestoreFacet.componentRequired(ARCHIVE_PATH)).thenReturn(true);
     when(rRestoreFacet.getComponentQuery(anyMap())).thenReturn(query);
     when(rRestoreFacet.extractComponentAttributesFromArchive(anyString(), any())).thenReturn(Collections.emptyMap());
 
