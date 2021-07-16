@@ -51,6 +51,13 @@ export default {
         advancedBucketConnection: {
           endpoint: ValidationUtils.notBlank(advancedBucketConnection?.endpoint) ?
               ValidationUtils.validateIsUri(advancedBucketConnection?.endpoint) :
+              null,
+          maxConnectionPoolSize: ValidationUtils.notBlank(advancedBucketConnection?.maxConnectionPoolSize) ?
+              ValidationUtils.isInRange({
+                value: advancedBucketConnection.maxConnectionPoolSize,
+                min: 1,
+                max: 1000000000
+              }) :
               null
         }
       }

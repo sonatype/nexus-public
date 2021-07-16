@@ -17,11 +17,11 @@ import {
   FieldWrapper,
   FormUtils,
   Textfield,
-  Section,
   Select,
   NxAccordion,
   NxStatefulAccordion,
-  NxCheckbox
+  NxCheckbox,
+  NxTextInput
 } from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../../constants/UIStrings'
@@ -162,6 +162,13 @@ export default function S3BlobStoreSettings({service}) {
         <Textfield className="nx-text-input--long"
                    {...FormUtils.fieldProps(advancedField('endpoint'), current)}
                    onChange={FormUtils.handleUpdate(advancedField('endpoint'), send)}/>
+      </FieldWrapper>
+      <FieldWrapper
+        labelText={FIELDS.S3Blobstore_AdvancedConnectionSettings_MaxConnectionPoolSize_FieldLabel}
+        descriptionText={FIELDS.S3Blobstore_AdvancedConnectionSettings_MaxConnectionPoolSize_HelpText}
+      >
+        <NxTextInput {...FormUtils.fieldProps(advancedField('maxConnectionPoolSize'), current)}
+          onChange={FormUtils.handleUpdate(advancedField('maxConnectionPoolSize'), send)} />
       </FieldWrapper>
       <FieldWrapper
           labelText={FIELDS.S3BlobStore_AdvancedConnectionSettings_SignatureVersion_FieldLabel}
