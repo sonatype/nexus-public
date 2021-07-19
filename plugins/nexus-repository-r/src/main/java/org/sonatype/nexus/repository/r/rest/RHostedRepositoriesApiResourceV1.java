@@ -10,26 +10,21 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.r.orient.rest;
+package org.sonatype.nexus.repository.r.rest;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.Path;
 
-import org.sonatype.nexus.common.app.FeatureFlag;
-import org.sonatype.nexus.repository.r.rest.RGroupRepositoriesApiResource;
 import org.sonatype.nexus.repository.rest.api.RepositoriesApiResourceV1;
-
-import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 
 /**
  * @since 3.28
  */
-@FeatureFlag(name = ORIENT_ENABLED)
 @Named
 @Singleton
-@Path(RepositoriesApiResourceV1.RESOURCE_URI + "/r/group")
-public class OrientRGroupRepositoriesApiResourceV1
-    extends RGroupRepositoriesApiResource
+@Path(RepositoriesApiResourceV1.RESOURCE_URI + "/r/hosted")
+public class RHostedRepositoriesApiResourceV1
+    extends RHostedRepositoriesApiResource
 {
 }
