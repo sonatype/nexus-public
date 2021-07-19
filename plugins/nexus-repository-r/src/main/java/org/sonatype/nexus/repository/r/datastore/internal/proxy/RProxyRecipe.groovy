@@ -68,15 +68,15 @@ class RProxyRecipe
 
   @Override
   void apply(@Nonnull final Repository repository) throws Exception {
-    repository.attach(contentFacet.get())
-    repository.attach(browseFacet.get())
-    repository.attach(proxyFacet.get())
     repository.attach(securityFacet.get())
     repository.attach(configure(viewFacet.get()))
     repository.attach(httpClientFacet.get())
     repository.attach(negativeCacheFacet.get())
-    repository.attach(searchFacet.get())
+    repository.attach(proxyFacet.get())
+    repository.attach(contentFacet.get())
+    repository.attach(browseFacet.get())
     repository.attach(purgeUnusedFacet.get())
+    repository.attach(searchFacet.get())
     repository.attach(maintenanceFacet.get())
   }
 

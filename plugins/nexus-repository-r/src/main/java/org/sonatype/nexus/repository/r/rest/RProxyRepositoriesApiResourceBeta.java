@@ -10,31 +10,26 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.r.orient.rest;
+package org.sonatype.nexus.repository.r.rest;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.Path;
 
-import org.sonatype.nexus.common.app.FeatureFlag;
-import org.sonatype.nexus.repository.r.rest.RGroupRepositoriesApiResource;
 import org.sonatype.nexus.repository.rest.api.RepositoriesApiResourceBeta;
 
 import io.swagger.annotations.Api;
 
-import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
-
 /**
  * @since 3.28
- * @deprecated - prefer to use {@link OrientRGroupRepositoriesApiResourceV1 } instead of Beta.
+ * @deprecated - prefer to use {@link RProxyRepositoriesApiResourceV1 } instead of Beta.
  */
-@FeatureFlag(name = ORIENT_ENABLED)
 @Named
 @Singleton
-@Path(RepositoriesApiResourceBeta.RESOURCE_URI + "/r/group")
-@Deprecated
+@Path(RepositoriesApiResourceBeta.RESOURCE_URI + "/r/proxy")
 @Api(hidden = true)
-public class OrientRGroupRepositoriesApiResourceBeta
-    extends RGroupRepositoriesApiResource
+@Deprecated
+public class RProxyRepositoriesApiResourceBeta
+    extends RProxyRepositoriesApiResource
 {
 }
