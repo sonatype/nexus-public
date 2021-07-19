@@ -244,9 +244,6 @@ public class BootstrapListener
       // datastore mode, but not developer mode
       if (!parseBoolean(properties.getProperty(DATASTORE_DEVELOPER, "false"))) {
         // exclude unfinished format features
-        properties.setProperty("nexus-exclude-features",
-                "nexus-repository-npm," +
-                properties.getProperty("nexus-exclude-features", ""));
       }
     }
 
