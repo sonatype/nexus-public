@@ -121,7 +121,7 @@ public class GolangITSupport
                                              final Repository repository,
                                              final String path) throws Exception
   {
-    assertThat(getLastDownloadedTime(repository, path), equalTo(null));
+    assertThat(componentAssetTestHelper.assetExists(repository, path), is(false));
 
     assertThat(status(golangClient.fetchAndClose(path)), is(OK));
 

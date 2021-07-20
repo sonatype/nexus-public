@@ -18,6 +18,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.golang.AssetKind;
 import org.sonatype.nexus.repository.golang.internal.datastore.GoContentFacet;
 import org.sonatype.nexus.repository.golang.internal.metadata.GolangAttributes;
@@ -74,7 +75,10 @@ public class GoHostedHandlers
   private Optional<Content> getPackage(final Context context) {
     State state = context.getAttributes().require(State.class);
     String path = GolangPathUtils.assetPath(state);
-    return context.getRepository().facet(GoContentFacet.class).getAsset(path);
+    return context.getRepository()
+        .facet(GoContentFacet.class)
+        .getAsset(path)
+        .map(FluentAsset::download);
   }
 
   private Optional<Content> getInfo(final Context context) {
