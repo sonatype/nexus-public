@@ -12,12 +12,14 @@
  */
 package org.sonatype.nexus.datastore;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
 
+import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -30,6 +32,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.Streams.stream;
 import static java.lang.String.CASE_INSENSITIVE_ORDER;
+import static java.util.Comparator.comparingInt;
+import static java.util.stream.Collectors.toList;
 
 /**
  * Manages {@link DataStoreConfiguration}s supplied by one or more sources.
@@ -53,16 +57,26 @@ public class DataStoreConfigurationManager
    */
   public Iterable<DataStoreConfiguration> load() {
     Set<String> configuredStores = new TreeSet<>(CASE_INSENSITIVE_ORDER);
-
     // only attempt to load a named store once from the first store that has it
     // (if the first attempt fails then that store is considered not available)
     return configurationSources.values().stream()
         .filter(DataStoreConfigurationSource::isEnabled)
+        .sorted(comparingInt(this::getPriority).reversed())
         .flatMap(source -> stream(source.browseStoreNames())
             .filter(configuredStores::add)
             .map(configLoader(source)))
         .filter(Objects::nonNull)
         .collect(toImmutableList());
+  }
+
+  private int getPriority(DataStoreConfigurationSource configSource){
+    if (configSource.getClass().isAnnotationPresent(Priority.class)) {
+      Priority priority = configSource.getClass().getAnnotation(Priority.class);
+      return priority.value();
+    } else {
+      log.warn("Loaded config source {} without priority, assuming last", configSource.getName());
+      return Integer.MIN_VALUE;
+    }
   }
 
   /**

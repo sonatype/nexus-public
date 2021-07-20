@@ -24,18 +24,18 @@ import com.google.common.collect.ImmutableSet;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.Integer.MIN_VALUE;
-import static org.sonatype.nexus.datastore.DataStoreConfigurationLocalSource.LOCAL;
+import static org.sonatype.nexus.datastore.DataStoreConfigurationDefaultSource.LOCAL;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 /**
- * Source of {@link DataStoreConfiguration}s from property files in the fabric working directory.
+ * Source of {@link DataStoreConfiguration}s for the default datastore only
  *
  * @since 3.19
  */
 @Named(LOCAL)
 @Priority(MIN_VALUE)
 @Singleton
-public class DataStoreConfigurationLocalSource
+public class DataStoreConfigurationDefaultSource
     extends ComponentSupport
     implements DataStoreConfigurationSource
 {
