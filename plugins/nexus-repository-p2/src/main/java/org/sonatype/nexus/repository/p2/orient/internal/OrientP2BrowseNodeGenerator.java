@@ -12,15 +12,10 @@
  */
 package org.sonatype.nexus.repository.p2.orient.internal;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import javax.annotation.Nullable;
 import javax.annotation.Priority;
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -29,8 +24,13 @@ import org.sonatype.nexus.repository.browse.BrowsePaths;
 import org.sonatype.nexus.repository.p2.internal.P2Format;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
+import org.sonatype.nexus.repository.storage.MetadataNode;
 
-import com.google.common.base.Splitter;
+import static java.util.Collections.singletonList;
+import static java.util.Optional.ofNullable;
+import static org.sonatype.nexus.repository.browse.BrowsePaths.fromPaths;
+import static org.sonatype.nexus.repository.p2.internal.browse.P2BrowseNodeGeneratorHelper.computeComponentPath;
+import static org.sonatype.nexus.repository.p2.internal.browse.P2BrowseNodeGeneratorHelper.splitPath;
 
 /**
  * @since 3.28
@@ -41,51 +41,23 @@ import com.google.common.base.Splitter;
 public class OrientP2BrowseNodeGenerator
     implements BrowseNodeGenerator
 {
-  private final Set<String> knownSubDirectories;
-
-  @Inject
-  public OrientP2BrowseNodeGenerator() {
-    Set<String> knownFirstSegments = new HashSet<>();
-    knownFirstSegments.add("binary");
-    knownFirstSegments.add("features");
-    knownFirstSegments.add("plugins");
-
-    knownSubDirectories = Collections.unmodifiableSet(knownFirstSegments);
-  }
-
   @Override
   public List<BrowsePaths> computeAssetPaths(final Asset asset, @Nullable final Component component) {
+    List<BrowsePaths> browsePaths = computeComponentPaths(asset, component);
+
     List<String> assetPaths = splitPath(asset.name());
-
-    List<BrowsePaths> browsePaths = computeComponentPath(assetPaths, component);
-
-    browsePaths.addAll(BrowsePaths.fromPaths(Collections.singletonList(assetPaths.get(assetPaths.size() - 1)), false));
+    browsePaths.addAll(fromPaths(singletonList(assetPaths.get(assetPaths.size() - 1)), false));
     return browsePaths;
   }
 
   @Override
   public List<BrowsePaths> computeComponentPaths(final Asset asset, @Nullable final Component component) {
-    return computeComponentPath(splitPath(asset.name()), component);
+    List<String> componentPaths = computeComponentPath(
+        splitPath(asset.name()),
+        ofNullable(component).map(MetadataNode::name),
+        ofNullable(component).map(Component::version)
+    );
+    return fromPaths(componentPaths,true);
   }
 
-  private List<BrowsePaths> computeComponentPath(final List<String> assetPath, @Nullable final Component component) {
-    List<String> pathParts = new ArrayList<>();
-    if (assetPath.size() > 1) {
-      pathParts.add(assetPath.get(0));
-    }
-
-    if (component != null) {
-      if (!knownSubDirectories.contains(assetPath.get(0))) {
-        pathParts.add(assetPath.get(1));
-      }
-
-      pathParts.addAll(Splitter.on('.').omitEmptyStrings().splitToList(component.name()));
-      pathParts.add(component.version());
-    }
-    return BrowsePaths.fromPaths(pathParts, true);
-  }
-
-  private List<String> splitPath(final String path) {
-    return Splitter.on('/').omitEmptyStrings().splitToList(path);
-  }
 }
