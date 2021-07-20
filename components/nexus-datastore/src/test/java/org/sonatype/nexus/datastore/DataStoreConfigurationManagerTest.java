@@ -13,7 +13,11 @@
 package org.sonatype.nexus.datastore;
 
 import java.io.UncheckedIOException;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.StreamSupport;
+
+import javax.annotation.Priority;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
@@ -25,14 +29,17 @@ import org.junit.Test;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 
+import static java.util.stream.Collectors.toList;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsEqual.equalTo;
 import static org.mockito.Matchers.matches;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-
 /**
  * {@link DataStoreConfigurationManager} tests.
  */
@@ -49,13 +56,82 @@ public class DataStoreConfigurationManagerTest
     underTest = new DataStoreConfigurationManager(configurationSources);
   }
 
-  private DataStoreConfiguration newDataStoreConfiguration(final String name, final String source) {
+  private static DataStoreConfiguration newDataStoreConfiguration(final String name, final String source) {
     DataStoreConfiguration config = new DataStoreConfiguration();
     config.setName(name);
     config.setType("testType");
     config.setSource(source);
     config.setAttributes(ImmutableMap.of());
     return config;
+  }
+
+  @Priority(1)
+  private static class NumberOneConfigSource implements DataStoreConfigurationSource {
+    @Override
+    public String getName() {
+      return "numberOne";
+    }
+
+    @Override
+    public Iterable<String> browseStoreNames() {
+      return ImmutableList.of(getName(), "sharedAll", "shared12", "shared13");
+    }
+
+    @Override
+    public DataStoreConfiguration load(final String storeName) {
+      return newDataStoreConfiguration(storeName, getName());
+    }
+  }
+
+  @Priority(2)
+  private static class NumberTwoConfigSource implements DataStoreConfigurationSource {
+    @Override
+    public String getName() {
+      return "numberTwo";
+    }
+
+    @Override
+    public Iterable<String> browseStoreNames() {
+      return ImmutableList.of(getName(), "sharedAll", "shared12", "shared23");
+    }
+
+    @Override
+    public DataStoreConfiguration load(final String storeName) {
+      return newDataStoreConfiguration(storeName, getName());
+    }
+  }
+
+  @Priority(3)
+  private static class NumberThreeConfigSource implements DataStoreConfigurationSource {
+    @Override
+    public String getName() {
+      return "numberThree";
+    }
+
+    @Override
+    public Iterable<String> browseStoreNames() {
+      return ImmutableList.of(getName(), "sharedAll", "shared13", "shared23");
+    }
+
+    @Override
+    public DataStoreConfiguration load(final String storeName) {
+      return newDataStoreConfiguration(storeName, getName());
+    }
+  }
+
+  @Test
+  public void followsPriorityAnnotationForLoads() {
+    NumberOneConfigSource source1 = new NumberOneConfigSource();
+    NumberTwoConfigSource source2 = new NumberTwoConfigSource();
+    NumberThreeConfigSource source3 = new NumberThreeConfigSource();
+    //Intentionally load them out of order
+    when(configurationSources.values()).thenReturn(ImmutableList.of(source1, source2, source3));
+    List<DataStoreConfiguration> configs = StreamSupport.stream(underTest.load().spliterator(), false).collect(toList());
+
+    assertThat(configs, hasSize(7));
+    assertThat(configs.stream().filter(dataStoreConfiguration -> dataStoreConfiguration.getSource().equals("numberThree")).count(), is(equalTo(4L)));
+    assertThat(configs.stream().filter(dataStoreConfiguration -> dataStoreConfiguration.getSource().equals("numberTwo")).count(), is(equalTo(2L)));
+    assertThat(configs.stream().filter(dataStoreConfiguration -> dataStoreConfiguration.getSource().equals("numberOne")).count(), is(equalTo(1L)));
   }
 
   @Test

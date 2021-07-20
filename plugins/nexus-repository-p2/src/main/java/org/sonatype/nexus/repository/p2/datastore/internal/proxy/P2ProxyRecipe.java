@@ -27,6 +27,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.cache.NegativeCacheFacet;
 import org.sonatype.nexus.repository.cache.NegativeCacheHandler;
+import org.sonatype.nexus.repository.content.browse.BrowseFacet;
 import org.sonatype.nexus.repository.content.maintenance.LastAssetMaintenanceFacet;
 import org.sonatype.nexus.repository.content.search.SearchFacet;
 import org.sonatype.nexus.repository.http.HttpHandlers;
@@ -96,6 +97,8 @@ public class P2ProxyRecipe
 
   private final Provider<LastAssetMaintenanceFacet> maintenanceFacet;
 
+  private final Provider<BrowseFacet> browseFacet;
+
   private final ConditionalRequestHandler conditionalRequestHandler;
 
   private final ContentHeadersHandler contentHeadersHandler;
@@ -130,6 +133,7 @@ public class P2ProxyRecipe
       final Provider<PurgeUnusedFacet> purgeUnusedFacet,
       final Provider<SearchFacet> searchFacet,
       final Provider<LastAssetMaintenanceFacet> maintenanceFacet,
+      final Provider<BrowseFacet> browseFacet,
       final ConditionalRequestHandler conditionalRequestHandler,
       final ContentHeadersHandler contentHeadersHandler,
       final ExceptionHandler exceptionHandler,
@@ -152,6 +156,7 @@ public class P2ProxyRecipe
     this.purgeUnusedFacet = checkNotNull(purgeUnusedFacet);
     this.searchFacet = checkNotNull(searchFacet);
     this.maintenanceFacet = checkNotNull(maintenanceFacet);
+    this.browseFacet = checkNotNull(browseFacet);
 
     this.conditionalRequestHandler = checkNotNull(conditionalRequestHandler);
     this.contentHeadersHandler = checkNotNull(contentHeadersHandler);
@@ -177,6 +182,7 @@ public class P2ProxyRecipe
     repository.attach(searchFacet.get());
     repository.attach(purgeUnusedFacet.get());
     repository.attach(cacheInvalidatorFacet.get());
+    repository.attach(browseFacet.get());
 }
 
   static Matcher buildTokenMatcherForPatternAndAssetKind(
