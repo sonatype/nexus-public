@@ -89,23 +89,6 @@ public class GoContentFacet
   }
 
   /**
-   * Get or create {@link FluentComponent}; if it doesn't exist then it is created.
-   *
-   * @param name    the component name.
-   * @param version the component version.
-   * @return the {@link FluentComponent} object.
-   */
-  public FluentComponent findOrCreateComponent(final String name, final String version) {
-    checkNotNull(name);
-    checkNotNull(version);
-
-    return components()
-        .name(name)
-        .version(version)
-        .getOrCreate();
-  }
-
-  /**
    * Upload Go's ZIP file to the repository.
    *
    * @param path             the path of the package.
@@ -118,7 +101,7 @@ public class GoContentFacet
     checkNotNull(golangAttributes);
     checkNotNull(payload);
 
-    FluentAsset packageAsset = storeContent(path, golangAttributes, payload, PACKAGE);
+    FluentAsset packageAsset = saveComponentAndAsset(path, payload, PACKAGE, golangAttributes);
     extractAndSaveMod(packageAsset, golangAttributes);
   }
 
@@ -148,14 +131,14 @@ public class GoContentFacet
   }
 
   /**
-   * Get content of asset blob.
+   * Get FluentAsset by asset path
    *
-   * @param path the asset path.
-   * @return the {@link Content} of asset blob.
+   * @param assetPath the asset path.
+   * @return the {@link FluentAsset}.
    */
-  public Optional<Content> getAsset(final String path) {
-    checkNotNull(path);
-    return assets().path(normalizeAssetPath(path)).find().map(FluentAsset::download);
+  public Optional<FluentAsset> getAsset(final String assetPath) {
+    checkNotNull(assetPath);
+    return assets().path(normalizeAssetPath(assetPath)).find();
   }
 
   /**
@@ -203,7 +186,7 @@ public class GoContentFacet
     if (goModExistsInZip(content, packageAssetPath)) {
       String moduleAssetPath = packageAssetPath.replace(".zip", ".mod");
       Payload payload = getModAsPayload(content, packageAssetPath);
-      storeContent(moduleAssetPath, golangAttributes, payload, MODULE);
+      saveComponentAndAsset(moduleAssetPath, payload, MODULE, golangAttributes);
     }
   }
 
@@ -230,11 +213,20 @@ public class GoContentFacet
     }
   }
 
-  private FluentAsset storeContent(
+  /**
+   * Saves a new component and asset
+   *
+   * @param path             the asset path of an asset
+   * @param payload          the payload
+   * @param assetKind        the asset kind
+   * @param golangAttributes the specific go attributes of the Go structure.
+   * @return {@link FluentAsset}
+   */
+  public FluentAsset saveComponentAndAsset(
       final String path,
-      final GolangAttributes golangAttributes,
       final Payload payload,
-      final AssetKind assetKind)
+      final AssetKind assetKind,
+      final GolangAttributes golangAttributes)
   {
     FluentComponent component = findOrCreateComponent(golangAttributes.getModule(), golangAttributes.getVersion());
     try (TempBlob tempBlob = blobs().ingest(payload, HASH_ALGORITHMS)) {
@@ -243,6 +235,45 @@ public class GoContentFacet
           .kind(assetKind.name())
           .blob(tempBlob)
           .component(component)
+          .save();
+    }
+  }
+
+  /**
+   * Get or create {@link FluentComponent}; if it doesn't exist then it is created.
+   *
+   * @param name    the component name.
+   * @param version the component version.
+   * @return the {@link FluentComponent} object.
+   */
+  private FluentComponent findOrCreateComponent(final String name, final String version) {
+    checkNotNull(name);
+    checkNotNull(version);
+
+    return components()
+        .name(name)
+        .version(version)
+        .getOrCreate();
+  }
+
+  /**
+   * Saves a new asset
+   *
+   * @param path      the asset path
+   * @param payload   the payload
+   * @param assetKind the asset kind
+   * @return {@link FluentAsset}
+   */
+  public FluentAsset saveAsset(
+      final String path,
+      final Payload payload,
+      final AssetKind assetKind)
+  {
+    try (TempBlob tempBlob = blobs().ingest(payload, HASH_ALGORITHMS)) {
+      return assets()
+          .path(normalizeAssetPath(path))
+          .kind(assetKind.name())
+          .blob(tempBlob)
           .save();
     }
   }
