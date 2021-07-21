@@ -155,4 +155,9 @@ public class MockBlobStoreConfiguration
   public void setWritable(final boolean writable) {
     attributes(STATE).set(WRITABLE, writable);
   }
+
+  public MockBlobStoreConfiguration withName(final String name) {
+    setName(name);
+    return this;
+  }
 }
