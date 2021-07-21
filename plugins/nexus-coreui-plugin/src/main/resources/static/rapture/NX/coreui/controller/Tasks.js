@@ -294,6 +294,9 @@ Ext.define('NX.coreui.controller.Tasks', {
         else if (Ext.isDefined(response.errors)) {
           form.markInvalid(response.errors);
         }
+        else if (Ext.isDefined(response.message)) {
+          NX.Messages.error(response.message);
+        }
       }
     });
   },
@@ -315,6 +318,9 @@ Ext.define('NX.coreui.controller.Tasks', {
         }
         else if (Ext.isDefined(response.errors)) {
           form.markInvalid(response.errors);
+        }
+        else if (Ext.isDefined(response.message)) {
+          NX.Messages.error(response.message);
         }
       }
     });
