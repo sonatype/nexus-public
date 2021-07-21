@@ -197,8 +197,8 @@ public class WebhookServiceImpl
     httpPost.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
 
     log.debug("Sending POST request: {}", httpPost);
-    try (CloseableHttpClient httpClient = httpClientProvider.get()) {
-      CloseableHttpResponse putResponse = httpClient.execute(httpPost);
+    try (CloseableHttpClient httpClient = httpClientProvider.get();
+         CloseableHttpResponse putResponse = httpClient.execute(httpPost)) {
 
       StatusLine status = putResponse.getStatusLine();
       log.debug("Response status: {}", status);
