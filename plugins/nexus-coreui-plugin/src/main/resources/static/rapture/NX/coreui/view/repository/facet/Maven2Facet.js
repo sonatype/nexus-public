@@ -34,6 +34,9 @@ Ext.define('NX.coreui.view.repository.facet.Maven2Facet', {
     itemCls: 'required-field'
   },
 
+  // Default to inline for existing maven repos
+  contentDisposition: 'INLINE',
+
   /**
    * @override
    */
@@ -75,6 +78,21 @@ Ext.define('NX.coreui.view.repository.facet.Maven2Facet', {
               ['PERMISSIVE', NX.I18n.get('Repository_Facet_Maven2Facet_LayoutPolicy_PermissiveItem')]
             ],
             value: 'STRICT'
+          },
+          {
+            xtype: 'combo',
+            name: 'attributes.maven.contentDisposition',
+            itemId: 'contentDisposition',
+            allowBlank: false,
+            fieldLabel: NX.I18n.get('Repository_Facet_Maven2Facet_ContentDisposition_FieldLabel'),
+            helpText: NX.I18n.get('Repository_Facet_Maven2Facet_ContentDisposition_HelpText'),
+            editable: false,
+            store: [
+              ['INLINE', NX.I18n.get('Repository_Facet_Maven2Facet_ContentDisposition_Inline')],
+              ['ATTACHMENT', NX.I18n.get('Repository_Facet_Maven2Facet_ContentDisposition_Attachment')]
+            ],
+            value: me.contentDisposition,
+            queryMode: 'local'
           }
         ]
       }

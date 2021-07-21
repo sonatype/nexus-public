@@ -38,6 +38,8 @@ Ext.define('NX.coreui.view.repository.recipe.Maven2Group', {
     var me = this;
 
     me.items = [
+
+      {xtype: 'nx-coreui-repository-maven2-facet'},
       {xtype: 'nx-coreui-repository-replication-facet'},
       {xtype: 'nx-coreui-repository-storage-facet'},
       {xtype: 'nx-coreui-repository-group-facet', format: 'maven2' }
