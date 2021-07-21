@@ -22,20 +22,29 @@ import org.sonatype.nexus.repository.RecipeSupport
 import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.content.browse.BrowseFacet
 import org.sonatype.nexus.repository.content.search.SearchFacet
+import org.sonatype.nexus.repository.http.HttpMethods
 import org.sonatype.nexus.repository.http.PartialFetchHandler
+import org.sonatype.nexus.repository.maven.ContentDispositionHandler
 import org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet
 import org.sonatype.nexus.repository.maven.MavenPathParser
 import org.sonatype.nexus.repository.maven.internal.MavenSecurityFacet
 import org.sonatype.nexus.repository.maven.internal.VersionPolicyHandler
+import org.sonatype.nexus.repository.maven.internal.matcher.MavenArchetypeCatalogMatcher
+import org.sonatype.nexus.repository.maven.internal.matcher.MavenIndexMatcher
+import org.sonatype.nexus.repository.maven.internal.matcher.MavenPathMatcher
+import org.sonatype.nexus.repository.maven.internal.matcher.MavenRepositoryMetadataMatcher
 import org.sonatype.nexus.repository.routing.RoutingRuleHandler
 import org.sonatype.nexus.repository.security.SecurityHandler
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
+import org.sonatype.nexus.repository.view.Route.Builder
 import org.sonatype.nexus.repository.view.handlers.ConditionalRequestHandler
 import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler
 import org.sonatype.nexus.repository.view.handlers.ExceptionHandler
 import org.sonatype.nexus.repository.view.handlers.HandlerContributor
 import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler
 import org.sonatype.nexus.repository.view.handlers.TimingHandler
+import org.sonatype.nexus.repository.view.matchers.ActionMatcher
+import org.sonatype.nexus.repository.view.matchers.logic.LogicMatchers
 
 import groovy.transform.CompileStatic
 
@@ -116,7 +125,63 @@ abstract class MavenRecipeSupport
   @Inject
   Provider<MavenReplicationFacet> mavenReplicationFacet
 
+  @Inject
+  ContentDispositionHandler contentDispositionHandler
+
   protected MavenRecipeSupport(final Type type, final Format format) {
     super(type, format)
+  }
+
+  Builder newMavenPathRouteBuilder() {
+    return new Builder()
+        .matcher(new MavenPathMatcher(mavenPathParser))
+        .handler(timingHandler)
+        .handler(contentDispositionHandler)
+        .handler(securityHandler)
+        .handler(routingHandler)
+        .handler(exceptionHandler)
+        .handler(handlerContributor)
+        .handler(conditionalRequestHandler)
+  }
+
+  Builder newMetadataRouteBuilder() {
+    return new Builder()
+        .matcher(new MavenRepositoryMetadataMatcher(mavenPathParser))
+        .handler(timingHandler)
+        .handler(securityHandler)
+        .handler(routingHandler)
+        .handler(exceptionHandler)
+        .handler(conditionalRequestHandler)
+  }
+
+  /**
+   * Only GET, HEAD actions allowed, as nothing publishes the binary index, only consumes.
+   */
+  Builder newIndexRouteBuilder() {
+    return new Builder()
+        .matcher(
+            LogicMatchers.and(
+                new MavenIndexMatcher(mavenPathParser),
+                LogicMatchers.or(
+                    new ActionMatcher(HttpMethods.GET),
+                    new ActionMatcher(HttpMethods.HEAD)
+                )
+            )
+        )
+        .handler(timingHandler)
+        .handler(securityHandler)
+        .handler(routingHandler)
+        .handler(exceptionHandler)
+        .handler(conditionalRequestHandler)
+  }
+
+  Builder newArchetypeCatalogRouteBuilder() {
+    return new Builder()
+        .matcher(new MavenArchetypeCatalogMatcher(mavenPathParser))
+        .handler(timingHandler)
+        .handler(securityHandler)
+        .handler(routingHandler)
+        .handler(exceptionHandler)
+        .handler(conditionalRequestHandler)
   }
 }

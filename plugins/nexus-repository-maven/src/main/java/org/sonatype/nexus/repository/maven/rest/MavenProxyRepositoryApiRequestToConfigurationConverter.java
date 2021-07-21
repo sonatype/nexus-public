@@ -29,6 +29,8 @@ import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 public class MavenProxyRepositoryApiRequestToConfigurationConverter
     extends ProxyRepositoryApiRequestToConfigurationConverter<MavenProxyRepositoryApiRequest>
 {
+  private static final String MAVEN = "maven";
+
   @Inject
   public MavenProxyRepositoryApiRequestToConfigurationConverter(final RoutingRuleStore routingRuleStore) {
     super(routingRuleStore);
@@ -37,8 +39,9 @@ public class MavenProxyRepositoryApiRequestToConfigurationConverter
   @Override
   public Configuration convert(final MavenProxyRepositoryApiRequest request) {
     Configuration configuration = super.convert(request);
-    configuration.attributes("maven").set("versionPolicy", request.getMaven().getVersionPolicy());
-    configuration.attributes("maven").set("layoutPolicy", request.getMaven().getLayoutPolicy());
+    configuration.attributes(MAVEN).set("versionPolicy", request.getMaven().getVersionPolicy());
+    configuration.attributes(MAVEN).set("layoutPolicy", request.getMaven().getLayoutPolicy());
+    configuration.attributes(MAVEN).set("contentDisposition", request.getMaven().getContentDisposition());
     NestedAttributesMap httpclient = configuration.attributes("httpclient");
     if (Objects.nonNull(httpclient.get("authentication"))) {
       httpclient.child("authentication").set("preemptive", request.getHttpClient().getAuthentication().isPreemptive());

@@ -24,11 +24,14 @@ import org.sonatype.nexus.repository.rest.api.HostedRepositoryApiRequestToConfig
 public class MavenHostedRepositoryApiRequestToConfigurationConverter
     extends HostedRepositoryApiRequestToConfigurationConverter<MavenHostedRepositoryApiRequest>
 {
+  private static final String MAVEN = "maven";
+
   @Override
   public Configuration convert(final MavenHostedRepositoryApiRequest request) {
     Configuration configuration = super.convert(request);
-    configuration.attributes("maven").set("versionPolicy", request.getMaven().getVersionPolicy());
-    configuration.attributes("maven").set("layoutPolicy", request.getMaven().getLayoutPolicy());
+    configuration.attributes(MAVEN).set("versionPolicy", request.getMaven().getVersionPolicy());
+    configuration.attributes(MAVEN).set("layoutPolicy", request.getMaven().getLayoutPolicy());
+    configuration.attributes(MAVEN).set("contentDisposition", request.getMaven().getContentDisposition());
     return configuration;
   }
 }

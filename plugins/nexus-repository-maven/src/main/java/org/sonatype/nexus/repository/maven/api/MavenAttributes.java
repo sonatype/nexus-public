@@ -36,13 +36,20 @@ public class MavenAttributes
   @NotEmpty
   protected final String layoutPolicy;
 
+  @ApiModelProperty(value = "Content Disposition",
+      allowableValues = "INLINE,ATTACHMENT", example = "ATTACHMENT")
+  @NotEmpty
+  private final String contentDisposition;
+
   @JsonCreator
   public MavenAttributes(
       @JsonProperty("versionPolicy") final String versionPolicy,
-      @JsonProperty("layoutPolicy") final String layoutPolicy)
+      @JsonProperty("layoutPolicy") final String layoutPolicy,
+      @JsonProperty("contentDisposition") final String contentDisposition)
   {
     this.versionPolicy = versionPolicy;
     this.layoutPolicy = layoutPolicy;
+    this.contentDisposition = contentDisposition;
   }
 
   public String getVersionPolicy() {
@@ -51,5 +58,9 @@ public class MavenAttributes
 
   public String getLayoutPolicy() {
     return layoutPolicy;
+  }
+
+  public String getContentDisposition() {
+    return contentDisposition;
   }
 }

@@ -12,17 +12,17 @@
  */
 package org.sonatype.nexus.repository.maven.internal.orient
 
-import org.sonatype.nexus.repository.attributes.AttributesFacet
-
 import javax.inject.Inject
 import javax.inject.Provider
 
+import org.sonatype.nexus.orient.maven.OrientMavenFacet
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.RecipeSupport
 import org.sonatype.nexus.repository.Type
+import org.sonatype.nexus.repository.attributes.AttributesFacet
 import org.sonatype.nexus.repository.http.HttpMethods
 import org.sonatype.nexus.repository.http.PartialFetchHandler
-import org.sonatype.nexus.orient.maven.OrientMavenFacet
+import org.sonatype.nexus.repository.maven.ContentDispositionHandler
 import org.sonatype.nexus.repository.maven.MavenPathParser
 import org.sonatype.nexus.repository.maven.internal.matcher.MavenArchetypeCatalogMatcher
 import org.sonatype.nexus.repository.maven.internal.matcher.MavenIndexMatcher
@@ -90,9 +90,12 @@ abstract class OrientMavenRecipeSupport
 
   @Inject
   HandlerContributor handlerContributor
-  
+
   @Inject
   LastDownloadedHandler lastDownloadedHandler
+
+  @Inject
+  ContentDispositionHandler contentDispositionHandler
 
   final MavenPathParser mavenPathParser
 
@@ -113,6 +116,7 @@ abstract class OrientMavenRecipeSupport
     return new Builder()
         .matcher(new MavenPathMatcher(mavenPathParser))
         .handler(timingHandler)
+        .handler(contentDispositionHandler)
         .handler(securityHandler)
         .handler(routingHandler)
         .handler(exceptionHandler)

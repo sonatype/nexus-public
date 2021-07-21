@@ -22,6 +22,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.internal.RepositoryImpl;
+import org.sonatype.nexus.repository.maven.ContentDisposition;
 import org.sonatype.nexus.repository.maven.LayoutPolicy;
 import org.sonatype.nexus.repository.maven.VersionPolicy;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
@@ -75,12 +76,13 @@ public class MavenApiRepositoryAdapterTest
 
   @Test
   public void testAdapt_hostedRepository() throws Exception {
-    Repository repository = createRepository(new HostedType(), LayoutPolicy.STRICT, VersionPolicy.MIXED);
+    Repository repository = createRepository(new HostedType(), LayoutPolicy.STRICT, VersionPolicy.MIXED, ContentDisposition.INLINE);
 
     MavenHostedApiRepository hostedRepository = (MavenHostedApiRepository) underTest.adapt(repository);
     assertRepository(hostedRepository, "hosted", true);
     assertThat(hostedRepository.getMaven().getLayoutPolicy(), is("STRICT"));
     assertThat(hostedRepository.getMaven().getVersionPolicy(), is("MIXED"));
+    assertThat(hostedRepository.getMaven().getContentDisposition(), is("INLINE"));
     // Check fields are populated, actual values validated with SimpleApiRepositoryAdapterTest
     assertThat(hostedRepository.getCleanup(), nullValue());
     assertThat(hostedRepository.getStorage(), notNullValue());
@@ -88,12 +90,13 @@ public class MavenApiRepositoryAdapterTest
 
   @Test
   public void testAdapt_proxyRepository() throws Exception {
-    Repository repository = createRepository(new ProxyType(), LayoutPolicy.STRICT, VersionPolicy.MIXED);
+    Repository repository = createRepository(new ProxyType(), LayoutPolicy.STRICT, VersionPolicy.MIXED, ContentDisposition.INLINE);
 
     MavenProxyApiRepository proxyRepository = (MavenProxyApiRepository) underTest.adapt(repository);
     assertRepository(proxyRepository, "proxy", true);
     assertThat(proxyRepository.getMaven().getLayoutPolicy(), is("STRICT"));
     assertThat(proxyRepository.getMaven().getVersionPolicy(), is("MIXED"));
+    assertThat(proxyRepository.getMaven().getContentDisposition(), is("INLINE"));
     // Check fields are populated, actual values validated with SimpleApiRepositoryAdapterTest
     assertThat(proxyRepository.getCleanup(), nullValue());
     assertThat(proxyRepository.getHttpClient(), notNullValue());
@@ -131,14 +134,16 @@ public class MavenApiRepositoryAdapterTest
   private static Repository createRepository(
       final Type type,
       final LayoutPolicy layoutPolicy,
-      final VersionPolicy versionPolicy) throws Exception
+      final VersionPolicy versionPolicy,
+      final ContentDisposition contentDisposition) throws Exception
   {
     Repository repository = new RepositoryImpl(Mockito.mock(EventManager.class), type, new Maven2Format());
 
     Configuration configuration = config("my-repo");
     NestedAttributesMap maven = new NestedAttributesMap("maven", newHashMap());
-    maven.set("layoutPolicy", LayoutPolicy.STRICT.toString());
-    maven.set("versionPolicy", VersionPolicy.MIXED.toString());
+    maven.set("layoutPolicy", layoutPolicy.toString());
+    maven.set("versionPolicy", versionPolicy.toString());
+    maven.set("contentDisposition", contentDisposition.toString());
     when(configuration.attributes("maven")).thenReturn(maven);
     repository.init(configuration);
     return repository;

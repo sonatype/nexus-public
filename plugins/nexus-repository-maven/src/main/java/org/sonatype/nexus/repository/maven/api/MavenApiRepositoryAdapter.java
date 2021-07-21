@@ -37,6 +37,8 @@ import org.sonatype.nexus.repository.types.ProxyType;
 public class MavenApiRepositoryAdapter
     extends SimpleApiRepositoryAdapter
 {
+  private static final String MAVEN = "maven";
+
   @Inject
   public MavenApiRepositoryAdapter(final RoutingRuleStore routingRuleStore) {
     super(routingRuleStore);
@@ -69,9 +71,10 @@ public class MavenApiRepositoryAdapter
   }
 
   private MavenAttributes createMavenAttributes(final Repository repository) {
-    String versionPolicy = repository.getConfiguration().attributes("maven").get("versionPolicy", String.class);
-    String layoutPolicy = repository.getConfiguration().attributes("maven").get("layoutPolicy", String.class);
-    return new MavenAttributes(versionPolicy, layoutPolicy);
+    String versionPolicy = repository.getConfiguration().attributes(MAVEN).get("versionPolicy", String.class);
+    String layoutPolicy = repository.getConfiguration().attributes(MAVEN).get("layoutPolicy", String.class);
+    String contentDisposition = repository.getConfiguration().attributes(MAVEN).get("contentDisposition", String.class);
+    return new MavenAttributes(versionPolicy, layoutPolicy, contentDisposition);
   }
 
   @Override
