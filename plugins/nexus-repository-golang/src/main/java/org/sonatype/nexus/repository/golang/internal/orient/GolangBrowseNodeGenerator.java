@@ -10,23 +10,22 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.golang.internal.datastore.browse;
+package org.sonatype.nexus.repository.golang.internal.orient;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.repository.content.browse.AssetPathBrowseNodeGenerator;
+import org.sonatype.nexus.repository.browse.AssetPathBrowseNodeGenerator;
 import org.sonatype.nexus.repository.golang.GolangFormat;
 
 /**
- * Golang places components at the same level as their assets.
+ * Go places components at the same level as their assets.
  *
  * @since 3.next
  */
 @Singleton
 @Named(GolangFormat.NAME)
-public class GoBrowseNodeGenerator
+public class GolangBrowseNodeGenerator
     extends AssetPathBrowseNodeGenerator
 {
-  // the default behaviour
 }
