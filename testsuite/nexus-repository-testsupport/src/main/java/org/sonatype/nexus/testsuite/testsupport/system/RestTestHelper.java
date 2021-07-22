@@ -421,7 +421,9 @@ public class RestTestHelper
   private static HttpClientBuilder clientBuilder(final URI url, final String username, final String password)
   {
     HttpClientBuilder builder = clientBuilder();
-    doUseCredentials(url, builder, username, password);
+    if (username != null) {
+      doUseCredentials(url, builder, username, password);
+    }
     return builder;
   }
 
@@ -522,7 +524,7 @@ public class RestTestHelper
       private T getMessage(final Response response) {
         try (InputStream in = (InputStream) response.getEntity()) {
           in.reset();
-          String actualMessage = IOUtils.toString(in);
+          String actualMessage = IOUtils.toString(in, Charset.defaultCharset());
           if (message instanceof String) {
             return (T) actualMessage;
           }

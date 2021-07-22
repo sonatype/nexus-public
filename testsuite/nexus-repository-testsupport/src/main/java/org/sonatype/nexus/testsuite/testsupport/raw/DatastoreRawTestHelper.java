@@ -38,7 +38,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 @Named
 @Singleton
 public class DatastoreRawTestHelper
-    implements RawTestHelper
+    extends RawTestHelper
 {
   @Inject
   ComponentAssetTestHelper componentAssetTestHelper;
@@ -75,11 +75,11 @@ public class DatastoreRawTestHelper
     }
   }
 
-  private String getGroupAndAsset(String group, String assetName){
+  private String getGroupAndAsset(final String group, final String assetName){
     return getGroup(group) + "/" + assetName;
   }
 
-  private String getGroup(String group) {
+  private String getGroup(final String group) {
     if (StringUtils.isEmpty(group)) {
       return "";
     }

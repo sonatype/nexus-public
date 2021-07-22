@@ -17,10 +17,12 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.capability.CapabilityRegistry;
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.testsuite.testsupport.fixtures.CapabilitiesRule;
 import org.sonatype.nexus.testsuite.testsupport.fixtures.RepositoryRule;
 
+@FeatureFlag(name = "nexus.test.base")
 @Named
 @Singleton
 public class NexusTestSystem

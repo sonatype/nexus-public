@@ -36,7 +36,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 @Priority(Integer.MAX_VALUE)
 @Singleton
 public class OrientRawTestHelper
-    implements RawTestHelper
+    extends RawTestHelper
 {
   @Inject
   ComponentAssetTestHelper componentAssetTestHelper;
