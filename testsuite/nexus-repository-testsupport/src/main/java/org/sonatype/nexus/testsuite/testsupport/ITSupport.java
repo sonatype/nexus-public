@@ -35,11 +35,19 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
+import org.ops4j.pax.exam.Option;
+import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
+import org.ops4j.pax.exam.spi.reactors.PerSuite;
 
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.ops4j.pax.exam.CoreOptions.maven;
+import static org.ops4j.pax.exam.CoreOptions.wrappedBundle;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFileExtend;
+import static org.ops4j.pax.exam.options.WrappedUrlProvisionOption.OverwriteMode.MERGE;
 
+@ExamReactorStrategy(PerSuite.class)
 public abstract class ITSupport
     extends NexusPaxExamSupport
 {
@@ -65,6 +73,20 @@ public abstract class ITSupport
   @Inject
   @Named("https://localhost:${application-port-ssl}${nexus-context-path}")
   private URL nexusSecureUrl;
+
+  protected static Option[] configureNexus(final Option distribution) {
+    return NexusPaxExamSupport.options(
+        distribution,
+
+        editConfigurationFileExtend(SYSTEM_PROPERTIES_FILE, "nexus.security.randompassword", "false"),
+        editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.scripts.allowCreation", "true"),
+        editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.search.event.handler.flushOnCount", "1"),
+
+        // install common test-support features
+        nexusFeature("org.sonatype.nexus.testsuite", "nexus-repository-testsupport"),
+        wrappedBundle(maven("org.awaitility", "awaitility").versionAsInProject()).overwriteManifest(MERGE).imports("*")
+    );
+  }
 
   /**
    * Make sure Nexus is responding on the standard base URL before continuing

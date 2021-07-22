@@ -14,15 +14,39 @@ package org.sonatype.nexus.testsuite.testsupport.raw;
 
 import java.io.IOException;
 
+import javax.inject.Inject;
+
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.view.Content;
+import org.sonatype.nexus.testsuite.testsupport.system.RestTestHelper;
 
-public interface RawTestHelper
+import static com.google.common.base.Preconditions.checkNotNull;
+
+public abstract class RawTestHelper
 {
-  Content read(Repository repository, String path) throws IOException;
+  @Inject
+  private RestTestHelper rest;
 
-  void assertRawComponent(Repository repository, String path, String group);
+  /**
+   * Create a {@link RawClient} for the given repository using the provided authentication.
+   */
+  public RawClient rawClient(final Repository repository, final String username, final String password) throws Exception {
+    checkNotNull(repository);
+    return rawClient("/repository/" + repository + "/", username, password);
+  }
 
-  EntityId createAsset(Repository repository, String componentName, String componentGroup, String assetName);
+  public RawClient rawClient(final String path, final String username, final String password) throws Exception {
+    return new RawClient(
+        rest.client(path, username, password),
+        rest.clientContext(),
+        rest.resolveNexusPath(path)
+    );
+  }
+
+  public abstract Content read(Repository repository, String path) throws IOException;
+
+  public abstract void assertRawComponent(Repository repository, String path, String group);
+
+  public abstract EntityId createAsset(Repository repository, String componentName, String componentGroup, String assetName);
 }
