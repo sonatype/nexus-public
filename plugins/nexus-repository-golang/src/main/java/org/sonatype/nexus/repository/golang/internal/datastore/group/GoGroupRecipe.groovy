@@ -35,7 +35,7 @@ import org.sonatype.nexus.repository.view.ViewFacet
 /**
  * Go group repository recipe.
  *
- * @since 3.33
+ * @since 3.next
  */
 @Singleton
 @Named(GoGroupRecipe.NAME)

@@ -46,7 +46,7 @@ import static org.sonatype.nexus.repository.p2.internal.P2Format.NAME;
 import static org.sonatype.nexus.repository.p2.internal.util.P2PathUtils.PLUGIN_NAME;
 
 /**
- * @since 3.33
+ * @since 3.next
  */
 @Named(NAME)
 public class P2ContentFacetImpl

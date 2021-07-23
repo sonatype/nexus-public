@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-components</artifactId>
-    <version>3.33.1-01</version>
+    <version>3.34.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-repository-content</artifactId>
@@ -67,12 +67,6 @@
     </dependency>
 
     <dependency>
-      <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-upgrade</artifactId>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
       <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-annotation</artifactId>
       <scope>provided</scope>
@@ -93,12 +87,6 @@
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-test-common</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.assertj</groupId>
-      <artifactId>assertj-db</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

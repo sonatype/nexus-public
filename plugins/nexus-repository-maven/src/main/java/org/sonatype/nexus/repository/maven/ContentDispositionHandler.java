@@ -25,7 +25,7 @@ import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 /**
  * Handler to set Content-Disposition HTTP header
  *
- * @since 3.33
+ * @since 3.next
  */
 @Named
 @Singleton

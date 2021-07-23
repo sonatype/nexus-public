@@ -19,7 +19,7 @@
 /**
  * Configuration for replication on a repository
  *
- * @since 3.33
+ * @since 3.next
  */
 Ext.define('NX.coreui.view.repository.facet.ReplicationFacet', {
   extend: 'Ext.form.FieldContainer',

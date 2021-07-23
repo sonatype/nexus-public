@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.p2.datastore.internal.store.P2BrowseNodeDAO
 import org.sonatype.nexus.repository.p2.internal.P2Format;
 
 /**
- * @since 3.33
+ * @since 3.next
  */
 @Named(P2Format.NAME)
 public class P2BrowseModule

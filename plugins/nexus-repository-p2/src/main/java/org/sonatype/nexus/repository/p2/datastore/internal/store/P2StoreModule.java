@@ -24,7 +24,7 @@ import org.sonatype.nexus.repository.p2.internal.P2Format;
 /**
  * Configures the content store bindings for a p2 format.
  *
- * @since 3.33
+ * @since 3.next
  */
 @Named(P2Format.NAME)
 public class P2StoreModule

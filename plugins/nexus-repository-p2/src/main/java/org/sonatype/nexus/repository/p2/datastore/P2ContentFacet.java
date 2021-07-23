@@ -25,7 +25,7 @@ import org.sonatype.nexus.repository.view.Payload;
 /**
  * The p2 format's {@link ContentFacet}
  *
- * @since 3.33
+ * @since 3.next
  */
 @Facet.Exposed
 public interface P2ContentFacet

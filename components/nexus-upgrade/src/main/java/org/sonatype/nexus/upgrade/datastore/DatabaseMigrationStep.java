@@ -14,7 +14,6 @@ package org.sonatype.nexus.upgrade.datastore;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
@@ -61,32 +60,5 @@ public interface DatabaseMigrationStep
 
   default boolean isPostgresql(final Connection conn) throws SQLException {
     return "PostgreSQL".equals(conn.getMetaData().getDatabaseProductName());
-  }
-
-  default boolean tableExists(final Connection conn, final String tableName) throws SQLException {
-    if (isH2(conn)) {
-      try (PreparedStatement statement =
-          conn.prepareStatement("SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?")) {
-        statement.setString(1, tableName.toUpperCase());
-        try (ResultSet results = statement.executeQuery()) {
-          return results.next();
-        }
-      }
-    }
-    else if (isPostgresql(conn)) {
-      try (PreparedStatement statement = conn.prepareStatement("SELECT to_regclass(?);")) {
-        statement.setString(1, tableName);
-        try (ResultSet results = statement.executeQuery()) {
-          if (!results.next()) {
-            return false;
-          }
-          Object oid = results.getObject(1);
-          return oid != null;
-        }
-      }
-    }
-    else {
-      throw new UnsupportedOperationException();
-    }
   }
 }

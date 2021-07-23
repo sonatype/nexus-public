@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.content.store.ContentRepositoryDAO;
 /**
  * Golang's {@link ContentRepositoryDAO}.
  *
- * @since 3.33
+ * @since 3.next
  */
 public interface GoContentRepositoryDAO
     extends ContentRepositoryDAO

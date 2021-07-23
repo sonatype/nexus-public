@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository.maven;
 
 /**
- * @since 3.33
+ * @since 3.next
  */
 public enum ContentDisposition
 {

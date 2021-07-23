@@ -21,7 +21,6 @@ import ch.qos.logback.classic.sift.SiftingAppender;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.FileAppender;
-import ch.qos.logback.core.rolling.RollingFileAppender;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,19 +47,13 @@ public class TaskLogHome
     LoggerContext loggerContext = (LoggerContext) StaticLoggerBinder.getSingleton().getLoggerFactory();
 
     Appender<ILoggingEvent> appender = loggerContext.getLogger(ROOT_LOGGER_NAME).getAppender("tasklogfile");
-    if (!(appender instanceof SiftingAppender) && !(appender instanceof RollingFileAppender)) {
+    if (!(appender instanceof SiftingAppender)) {
       // We are forgiving if the task log appender does not exist. It could be that a user had a customized logback.xml
       // as of 3.4.1 when task logging was introduced. We don't want to block application start in this scenario.
-      log.warn("Could not find a Logback SiftingAppender or RollingFileAppender named 'tasklogfile' in the " +
-          "logback configuration. Please check that the 'tasklogfile' appender exists in logback.xml");
+      log.error("Could not find a Logback SiftingAppender named 'tasklogfile' in the logback configuration. " +
+         "Please check that the 'tasklogfile' appender exists in logback.xml");
       return null;
     }
-
-    if (appender instanceof RollingFileAppender) {
-      RollingFileAppender<ILoggingEvent> rollingFileAppender = (RollingFileAppender<ILoggingEvent>) appender;
-      return new File(rollingFileAppender.getFile()).getParent();
-    }
-
     SiftingAppender siftingAppender = (SiftingAppender) appender;
 
     // this will create a new appender which ultimately creates a temp.log within the tasks log folder

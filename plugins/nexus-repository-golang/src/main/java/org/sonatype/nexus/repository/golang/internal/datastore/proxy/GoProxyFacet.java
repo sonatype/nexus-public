@@ -30,7 +30,7 @@ import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
 
 /**
- * @since 3.33
+ * @since 3.next
  */
 @Named
 public class GoProxyFacet

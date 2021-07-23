@@ -51,7 +51,7 @@ import static org.sonatype.nexus.repository.golang.AssetKind.PACKAGE
 /**
  * Support for Go recipes.
  *
- * @since 3.33
+ * @since 3.next
  */
 abstract class GoRecipeSupport
     extends RecipeSupport

@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.p2.datastore.internal.store;
 import org.sonatype.nexus.repository.content.store.ContentRepositoryDAO;
 
 /**
- * @since 3.33
+ * @since 3.next
  */
 public interface P2ContentRepositoryDAO
     extends ContentRepositoryDAO

@@ -10,23 +10,11 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.golang.internal.datastore.browse;
+package org.sonatype.nexus.blobstore.group;
 
-import javax.inject.Named;
-import javax.inject.Singleton;
-
-import org.sonatype.nexus.repository.content.browse.AssetPathBrowseNodeGenerator;
-import org.sonatype.nexus.repository.golang.GolangFormat;
-
-/**
- * Golang places components at the same level as their assets.
- *
- * @since 3.next
- */
-@Singleton
-@Named(GolangFormat.NAME)
-public class GoBrowseNodeGenerator
-    extends AssetPathBrowseNodeGenerator
+public class InvalidBlobStoreGroupConfiguration extends RuntimeException
 {
-  // the default behaviour
+  public InvalidBlobStoreGroupConfiguration(final String message) {
+    super(message);
+  }
 }

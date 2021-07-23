@@ -35,7 +35,7 @@ import org.sonatype.nexus.repository.view.ViewFacet
 /**
  * Go proxy recipe.
  *
- * @since 3.33
+ * @since 3.next
  */
 @Named(GoProxyRecipe.NAME)
 @Singleton
