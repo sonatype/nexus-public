@@ -261,7 +261,7 @@ Ext.define('NX.coreui.app.PluginConfig', {
     {
       id: 'NX.coreui.controller.SearchR',
       active: function() {
-        return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-repository-r');
+        return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-repository-r');
       }
     },
     {
