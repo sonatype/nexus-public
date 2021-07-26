@@ -14,10 +14,12 @@ package org.sonatype.nexus.blobstore.s3.internal;
 
 import java.util.Optional;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.text.Strings2;
@@ -61,13 +63,17 @@ public class AmazonS3Factory
 
   private final String cloudWatchMetricsNamespace;
 
+  private final Time connectionTtl;
+
   @Inject
   public AmazonS3Factory(@Named("${nexus.s3.connection.pool:--1}") final int connectionPoolSize,
+                         @Nullable @Named("${nexus.s3.connection.ttl:-null}") final Time connectionTtl,
                          @Named("${nexus.s3.cloudwatchmetrics.enabled:-false}") final boolean cloudWatchMetricsEnabled,
                          @Named("${nexus.s3.cloudwatchmetrics.namespace:-nexus-blobstore-s3}") final String cloudWatchMetricsNamespace) {
     this.defaultConnectionPoolSize = connectionPoolSize;
     this.cloudWatchMetricsEnabled = cloudWatchMetricsEnabled;
     this.cloudWatchMetricsNamespace = cloudWatchMetricsNamespace;
+    this.connectionTtl = connectionTtl;
   }
 
   public AmazonS3 create(final BlobStoreConfiguration blobStoreConfiguration) {
@@ -114,6 +120,10 @@ public class AmazonS3Factory
     if (!isNullOrEmptyOrDefault(signerType)) {
       clientConfiguration.setSignerOverride(signerType);
     }
+    if (connectionTtl != null) {
+      clientConfiguration.setConnectionTTL(connectionTtl.toMillis());
+    }
+
     builder = builder.withClientConfiguration(clientConfiguration);
 
     builder = builder.withPathStyleAccessEnabled(Boolean.parseBoolean(forcePathStyle));
