@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.cocoapods.orient.internal.proxy;
+package org.sonatype.nexus.repository.cocoapods.datastore.internal.proxy;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,28 +18,24 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.cache.CacheController;
-import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.cocoapods.CocoapodsFacet;
 import org.sonatype.nexus.repository.cocoapods.internal.AssetKind;
 import org.sonatype.nexus.repository.cocoapods.internal.PathUtils;
 import org.sonatype.nexus.repository.cocoapods.internal.proxy.InvalidSpecFileException;
 import org.sonatype.nexus.repository.cocoapods.internal.proxy.SpecFileProcessor;
-import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
-import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.StorageTx;
-import org.sonatype.nexus.repository.transaction.TransactionalTouchMetadata;
+import org.sonatype.nexus.repository.content.facet.ContentProxyFacetSupport;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
-import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.io.IOUtils;
@@ -53,35 +49,22 @@ import static org.sonatype.nexus.repository.cocoapods.internal.CocoapodsFormat.P
 import static org.sonatype.nexus.repository.cocoapods.internal.CocoapodsFormat.removeInitialSlashFromPath;
 
 /**
- * @since 3.19
+ * @since 3.next
  */
 @Named
 @Facet.Exposed
-public class OrientCocoapodsProxyFacet
-    extends ProxyFacetSupport
+public class CocoapodsProxyFacet
+    extends ContentProxyFacetSupport
 {
   private static final String ASSET_KIND_ERROR = "Received an invalid AssetKind of type: ";
 
-  private SpecFileProcessor specFileProcessor;
+  private final SpecFileProcessor specFileProcessor;
 
   @Inject
-  public OrientCocoapodsProxyFacet(final SpecFileProcessor specFileProcessor) {
-    this.specFileProcessor = specFileProcessor;
-  }
+  public CocoapodsProxyFacet(final SpecFileProcessor specFileProcessor) {
+    checkNotNull(specFileProcessor);
 
-  private Content transformSpecFile(final Payload payload) throws IOException {
-    try (InputStream data = payload.openInputStream()) {
-      String specFile = IOUtils.toString(data, StandardCharsets.UTF_8);
-      try {
-        return new Content(
-            new StringPayload(specFileProcessor.toProxiedSpec(specFile, URI.create(getRepository().getUrl() + "/")),
-                "application/json"));
-      }
-      catch (InvalidSpecFileException e) {
-        log.info("Invalid Spec file", e);
-        return null;
-      }
-    }
+    this.specFileProcessor = specFileProcessor;
   }
 
   @Override
@@ -162,31 +145,6 @@ public class OrientCocoapodsProxyFacet
   }
 
   @Override
-  protected void indicateVerified(final Context context, final Content content, final CacheInfo cacheInfo)
-      throws IOException
-  {
-    setCacheInfo(content, cacheInfo);
-  }
-
-  @TransactionalTouchMetadata
-  public void setCacheInfo(final Content content, final CacheInfo cacheInfo) {
-    StorageTx tx = UnitOfWork.currentTx();
-
-    Asset asset = Content.findAsset(tx, tx.findBucket(getRepository()), content);
-    if (asset == null) {
-      log.debug(
-          "Attempting to set cache info for non-existent Cocoapods asset {}",
-          content.getAttributes().require(Asset.class)
-      );
-      return;
-    }
-
-    log.debug("Updating cacheInfo of {} to {}", asset, cacheInfo);
-    CacheInfo.applyToAsset(asset, cacheInfo);
-    tx.saveAsset(asset);
-  }
-
-  @Override
   @Nonnull
   protected CacheController getCacheController(final Context context) {
     final AssetKind assetKind = context.getAttributes().require(AssetKind.class);
@@ -231,7 +189,25 @@ public class OrientCocoapodsProxyFacet
     return facet(CocoapodsFacet.class).storePodFileContent(path, content, packageName, packageVersion);
   }
 
-  private static class SpecFileContent extends Content {
+  @Nullable
+  private Content transformSpecFile(final Payload payload) throws IOException {
+    try (InputStream data = payload.openInputStream()) {
+      String specFile = IOUtils.toString(data, StandardCharsets.UTF_8);
+      try {
+        return new Content(
+            new StringPayload(specFileProcessor.toProxiedSpec(specFile, URI.create(getRepository().getUrl() + "/")),
+                "application/json"));
+      }
+      catch (InvalidSpecFileException e) {
+        log.info("Invalid Spec file", e);
+        return null;
+      }
+    }
+  }
+
+  private static class SpecFileContent
+      extends Content
+  {
     public SpecFileContent(final String contentType, final AttributesMap attributesMap, final String specFile) {
       super(new StringPayload(specFile, contentType), attributesMap);
     }

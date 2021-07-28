@@ -30,23 +30,33 @@ public interface CocoapodsFacet
   @Nullable
   Content get(final String assetPath);
 
-  boolean delete(final String assetPath) throws IOException;
-
-  Content getOrCreateAsset(final String assetPath,
-                           final Content content,
-                           final String componentName,
-                           final String componentVersion)
+  /**
+   * Store Pod File Content
+   */
+  Content storePodFileContent(final String assetPath,
+                              final Content content,
+                              final String componentName,
+                              final String componentVersion)
       throws IOException;
 
-  Content getOrCreateAsset(final String assetPath,
-                           final Content content,
-                           @Nullable final Map<String, String> formatAttributes)
+  /**
+   * Store Spec File Content
+   */
+  Content storeSpecFileContent(final String assetPath,
+                               final Content content,
+                               @Nullable final Map<String, Object> formatAttributes)
       throws IOException;
 
-  Content getOrCreateAsset(final String assetPath,
-                           final Content content)
+  /**
+   * Store Cdn Metadata Content
+   */
+  Content storeCdnMetadataContent(final String assetPath,
+                                  final Content content)
       throws IOException;
 
+  /**
+   * Get Asset Format Attribute by Key
+   */
   @Nullable
-  <T> T getAssetFormatAttribute(final String assetPath, final String attributeName);
+  String getAssetFormatAttribute(final String assetPath, final String attributeName);
 }

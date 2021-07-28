@@ -57,7 +57,7 @@ import static org.mockito.Mockito.when;
 /**
  * @since 3.19
  */
-public class OrientCocoapodsFacetImplTest
+public class OrientCocoapodsFacetTest
     extends TestSupport
 {
   private static final String NAME = "MyCheckWalletUI";
@@ -127,7 +127,7 @@ public class OrientCocoapodsFacetImplTest
     configAttributeMap();
     when(storageTx.createAsset(any(), eq(component))).thenReturn(asset);
 
-    cocoapodsFacet.getOrCreateAsset(POD_PATH, content, NAME, VERSION);
+    cocoapodsFacet.storePodFileContent(POD_PATH, content, NAME, VERSION);
 
     verify(storageTx, times(1)).createAsset(bucket, component);
     verify(storageTx, times(1)).saveAsset(asset);
@@ -146,7 +146,7 @@ public class OrientCocoapodsFacetImplTest
     configAttributeMap();
     when(storageTx.createAsset(any(), eq(format))).thenReturn(asset);
 
-    cocoapodsFacet.getOrCreateAsset(POD_PATH, content);
+    cocoapodsFacet.storeCdnMetadataContent(POD_PATH, content);
 
     verify(storageTx, times(1)).createAsset(bucket, format);
     verify(storageTx, times(1)).saveAsset(asset);
@@ -165,7 +165,7 @@ public class OrientCocoapodsFacetImplTest
     configAttributeMap();
     when(storageTx.createAsset(any(), eq(component))).thenReturn(asset);
 
-    cocoapodsFacet.getOrCreateAsset(POD_PATH, content, NAME, VERSION);
+    cocoapodsFacet.storePodFileContent(POD_PATH, content, NAME, VERSION);
 
     verify(storageTx, times(1)).createAsset(bucket, component);
     verify(storageTx, times(1)).saveAsset(asset);
@@ -183,7 +183,7 @@ public class OrientCocoapodsFacetImplTest
     configAttributeMap();
     when(storageTx.findAssetWithProperty(any(), any(), eq(bucket))).thenReturn(asset);
 
-    cocoapodsFacet.getOrCreateAsset(POD_PATH, content, NAME, VERSION);
+    cocoapodsFacet.storePodFileContent(POD_PATH, content, NAME, VERSION);
 
     verify(storageTx, times(0)).createAsset(bucket, component);
     verify(storageTx, times(1)).saveAsset(asset);
@@ -199,7 +199,7 @@ public class OrientCocoapodsFacetImplTest
     configAttributeMap();
     when(storageTx.findAssetWithProperty(any(), any(), eq(bucket))).thenReturn(asset);
 
-    cocoapodsFacet.getOrCreateAsset(POD_PATH, content);
+    cocoapodsFacet.storeCdnMetadataContent(POD_PATH, content);
 
     verify(storageTx, times(0)).createAsset(bucket, format);
     verify(storageTx, times(1)).saveAsset(asset);
@@ -218,7 +218,7 @@ public class OrientCocoapodsFacetImplTest
         bind(EventManager.class).toInstance(eventManager);
         bind(SpecFileProcessor.class).toInstance(specFileProcessor);
       }
-    }).getInstance(OrientCocoapodsFacetImpl.class);
+    }).getInstance(OrientCocoapodsFacet.class);
     cocoapodsFacet.attach(repository);
     cocoapodsFacet.init();
   }
