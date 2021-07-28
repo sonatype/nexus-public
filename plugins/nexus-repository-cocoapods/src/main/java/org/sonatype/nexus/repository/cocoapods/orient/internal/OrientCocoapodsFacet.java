@@ -31,7 +31,6 @@ import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
-import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalTouchBlob;
 import org.sonatype.nexus.repository.view.Content;
@@ -55,7 +54,7 @@ import static org.sonatype.nexus.repository.storage.Query.builder;
  * @since 3.19
  */
 @Named
-public class OrientCocoapodsFacetImpl
+public class OrientCocoapodsFacet
     extends FacetSupport
     implements CocoapodsFacet
 {
@@ -82,47 +81,40 @@ public class OrientCocoapodsFacetImpl
   }
 
   @Override
-  @TransactionalDeleteBlob
-  public boolean delete(final String assetPath) throws IOException {
-    //to be implemented
-    return false;
+  @TransactionalStoreBlob
+  public Content storePodFileContent(final String assetPath,
+                                     final Content content,
+                                     final String componentName,
+                                     final String componentVersion)
+      throws IOException
+  {
+    return storePodFile(assetPath, content, componentName, componentVersion, null);
   }
 
   @Override
   @TransactionalStoreBlob
-  public Content getOrCreateAsset(final String assetPath,
-                                  final Content content,
-                                  final String componentName,
-                                  final String componentVersion)
+  public Content storeCdnMetadataContent(final String assetPath,
+                                         final Content content)
       throws IOException
   {
-    return getOrCreateAsset(assetPath, content, componentName, componentVersion, null);
+    return storePodFile(assetPath, content, null, null, null);
   }
 
   @Override
   @TransactionalStoreBlob
-  public Content getOrCreateAsset(final String assetPath,
-                                  final Content content)
+  public Content storeSpecFileContent(final String assetPath,
+                                      final Content content,
+                                      @Nullable final Map<String, Object> formatAttributes)
       throws IOException
   {
-    return getOrCreateAsset(assetPath, content, null, null, null);
+    return storePodFile(assetPath, content, null, null, formatAttributes);
   }
 
-  @Override
-  @TransactionalStoreBlob
-  public Content getOrCreateAsset(final String assetPath,
-                                  final Content content,
-                                  @Nullable final Map<String, String> formatAttributes)
-      throws IOException
-  {
-    return getOrCreateAsset(assetPath, content, null, null, formatAttributes);
-  }
-
-  private Content getOrCreateAsset(final String assetPath,
-                                   final Content content,
-                                   @Nullable final String componentName,
-                                   @Nullable final String componentVersion,
-                                   @Nullable final Map<String, String> formatAttributes)
+  private Content storePodFile(final String assetPath,
+                               final Content content,
+                               @Nullable final String componentName,
+                               @Nullable final String componentVersion,
+                               @Nullable final Map<String, Object> formatAttributes)
       throws IOException
   {
     checkNotNull(assetPath);
@@ -145,7 +137,7 @@ public class OrientCocoapodsFacetImpl
       }
       Content.applyToAsset(asset, content.getAttributes());
       if (formatAttributes != null) {
-        for (Entry<String, String> pair : formatAttributes.entrySet()) {
+        for (Entry<String, Object> pair : formatAttributes.entrySet()) {
           asset.formatAttributes().set(pair.getKey(), pair.getValue());
         }
       }
@@ -161,7 +153,7 @@ public class OrientCocoapodsFacetImpl
   @Override
   @Nullable
   @TransactionalTouchBlob
-  public <T> T getAssetFormatAttribute(final String assetPath, final String attributeName) {
+  public String getAssetFormatAttribute(final String assetPath, final String attributeName) {
     checkNotNull(assetPath);
     checkNotNull(attributeName);
 
@@ -171,7 +163,7 @@ public class OrientCocoapodsFacetImpl
       return null;
     }
 
-    return (T) asset.formatAttributes().get(attributeName);
+    return (String) asset.formatAttributes().get(attributeName);
   }
 
   private Component findOrCreateComponent(final StorageTx tx,
