@@ -262,8 +262,10 @@ export default FormUtils.buildFormMachine({
               !isTouched[field.id] &&
               pristineData[field.id] === '';
         })?.forEach(field => {
-          const tokenReplacement = match => data[stripTokenCharacters(match)];
-          newData[field.id] = replace(tokenMatcher, tokenReplacement, field.attributes.tokenReplacement);
+          if (field.attributes.tokenReplacement) {
+            const tokenReplacement = match => data[stripTokenCharacters(match)];
+            newData[field.id] = replace(tokenMatcher, tokenReplacement, field.attributes.tokenReplacement);
+          }
         });
         return newData;
       }
