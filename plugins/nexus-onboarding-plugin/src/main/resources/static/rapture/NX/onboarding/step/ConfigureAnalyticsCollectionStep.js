@@ -54,9 +54,9 @@ Ext.define('NX.onboarding.step.ConfigureAnalyticsCollectionStep', {
 
     NX.direct.capability_Capability.create({enabled: enabled, typeId: 'analytics-configuration'},
         function(response) {
-          if (response && response.success) {
-            me.moveNext();
-          }
+
+          me.moveNext();
+
         }
     );
   }
