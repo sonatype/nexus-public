@@ -23,7 +23,9 @@ import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.browse.ComponentPathBrowseNodeGenerator;
 import org.sonatype.nexus.repository.p2.internal.P2Format;
 
+import static org.sonatype.nexus.repository.browse.node.BrowsePathBuilder.appendPath;
 import static org.sonatype.nexus.repository.browse.node.BrowsePathBuilder.fromPaths;
+import static org.sonatype.nexus.repository.browse.node.BrowsePathBuilder.last;
 import static org.sonatype.nexus.repository.p2.internal.browse.P2BrowseNodeGeneratorHelper.computeComponentPath;
 import static org.sonatype.nexus.repository.p2.internal.browse.P2BrowseNodeGeneratorHelper.splitPath;
 
@@ -38,9 +40,8 @@ public class P2BrowseNodeGenerator
   @Override
   public List<BrowsePath> computeAssetPaths(final Asset asset) {
     List<BrowsePath> browsePaths = computeComponentPaths(asset);
-
-    List<String> assetPaths = splitPath(asset.path());
-        browsePaths.addAll(fromPaths(assetPaths.subList(assetPaths.size() - 1, assetPaths.size()), true));
+    String assetName = last(splitPath(asset.path()));
+    appendPath(browsePaths, assetName);
     return browsePaths;
   }
 

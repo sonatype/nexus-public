@@ -32,7 +32,6 @@
 
       CONSTRAINT pk_${format}_browse_node_id PRIMARY KEY (node_id),
       CONSTRAINT uk_${format}_browse_node_repository_path UNIQUE (repository_id, request_path),
-      CONSTRAINT uk_${format}_browse_node_component UNIQUE (component_id),
       CONSTRAINT uk_${format}_browse_node_asset UNIQUE (asset_id),
 
       CONSTRAINT fk_${format}_browse_node_repository_id FOREIGN KEY (repository_id)

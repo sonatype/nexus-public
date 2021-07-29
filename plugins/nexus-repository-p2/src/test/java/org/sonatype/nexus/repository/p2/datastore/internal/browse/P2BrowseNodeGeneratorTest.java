@@ -15,20 +15,23 @@ package org.sonatype.nexus.repository.p2.datastore.internal.browse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 
+import com.google.common.collect.ImmutableList;
 import org.junit.Test;
 
 import static java.lang.String.join;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
+import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -45,7 +48,8 @@ public class P2BrowseNodeGeneratorTest
 
   private static final String SUBSITE = "945d37142fbf9b4c2885a99ebcf353ab852479348e7e86446557f7f05fe87e83";
 
-  private static final List<String> COMPONENT_PATH = Arrays.asList("org", "tigris", "subversion", "clientadapter", "svnkit");
+  private static final List<String> COMPONENT_PATH =
+      Arrays.asList("org", "tigris", "subversion", "clientadapter", "svnkit");
 
   private static final String COMPONENT_NAME = join(".", COMPONENT_PATH);
 
@@ -53,26 +57,24 @@ public class P2BrowseNodeGeneratorTest
 
   private static final String ASSET_NAME = join("_", COMPONENT_NAME, COMPONENT_VERSION);
 
-
   private P2BrowseNodeGenerator generator = new P2BrowseNodeGenerator();
 
   @Test
   public void testRepositoryAtRoot() {
     for (String file : COMPONENTLESS_FILES) {
-      Asset asset = createAsset(file, false);
+      Asset asset = createAsset(file);
 
       List<String> paths = generator.computeAssetPaths(asset).stream().map(BrowsePath::getDisplayName)
-          .collect(Collectors.toList());
+          .collect(toList());
       assertThat(paths, contains(file));
     }
 
-
     for (String directory : KNOWN_SUB_DIRECTORIES) {
-      Asset asset = createAsset(join("/", directory, ASSET_NAME), true);
+      Asset asset = createAsset(join("/", directory, ASSET_NAME), COMPONENT_NAME, COMPONENT_VERSION);
 
       List<String> paths = generator.computeAssetPaths(asset).stream()
           .map(BrowsePath::getDisplayName)
-          .collect(Collectors.toList());
+          .collect(toList());
 
       List<String> expectedPaths = new ArrayList<>();
       expectedPaths.add(directory);
@@ -87,18 +89,18 @@ public class P2BrowseNodeGeneratorTest
   public void testNestedRepository() {
     for (String file : COMPONENTLESS_FILES) {
       String path = SUBSITE + "/" + file;
-      Asset asset = createAsset(path, false);
+      Asset asset = createAsset(path);
 
       List<String> paths = generator.computeAssetPaths(asset).stream().map(BrowsePath::getDisplayName)
-          .collect(Collectors.toList());
+          .collect(toList());
       assertThat(paths, contains(SUBSITE, file));
     }
 
     for (String directory : KNOWN_SUB_DIRECTORIES) {
-      Asset asset = createAsset(join("/", SUBSITE, directory, ASSET_NAME), true);
+      Asset asset = createAsset(join("/", SUBSITE, directory, ASSET_NAME), COMPONENT_NAME, COMPONENT_VERSION);
 
       List<String> paths = generator.computeAssetPaths(asset).stream().map(BrowsePath::getDisplayName)
-          .collect(Collectors.toList());
+          .collect(toList());
 
       List<String> expectedPaths = new ArrayList<>();
       expectedPaths.add(SUBSITE);
@@ -110,20 +112,75 @@ public class P2BrowseNodeGeneratorTest
     }
   }
 
-  private Asset createAsset(final String path, final boolean createComponent) {
+  @Test
+  public void testSingularAsset() {
+    String featurePath = "features/edu.umd.cs.findbugs.plugin.eclipse_3.0.1.20150306-5afe4d1.jar";
+    Asset asset = createAsset(featurePath);
+    List<String> assetPaths =
+        generator.computeAssetPaths(asset).stream().map(BrowsePath::getRequestPath).collect(toList());
+
+    List<String> expectedAssetPaths = ImmutableList.of(
+        "/features/",
+        "/features/edu.umd.cs.findbugs.plugin.eclipse_3.0.1.20150306-5afe4d1.jar"
+    );
+
+    assertThat(assetPaths, is(equalTo(expectedAssetPaths)));
+  }
+
+  @Test
+  public void testAssetAndComponent() {
+    String featurePath = "features/edu.umd.cs.findbugs.plugin.eclipse_3.0.1.20150306-5afe4d1.jar";
+    Asset asset = createAsset(featurePath, "edu.umd.cs.findbugs.plugin.eclipse", "3.0.1.20150306-5afe4d1");
+    List<String> assetPaths =
+        generator.computeAssetPaths(asset).stream().map(BrowsePath::getRequestPath).collect(toList());
+    List<String> componentPaths =
+        generator.computeComponentPaths(asset).stream().map(BrowsePath::getRequestPath).collect(toList());
+
+    List<String> expectedAssetPaths = ImmutableList.of(
+        "/features/",
+        "/features/edu/",
+        "/features/edu/umd/",
+        "/features/edu/umd/cs/",
+        "/features/edu/umd/cs/findbugs/",
+        "/features/edu/umd/cs/findbugs/plugin/",
+        "/features/edu/umd/cs/findbugs/plugin/eclipse/",
+        "/features/edu/umd/cs/findbugs/plugin/eclipse/3.0.1.20150306-5afe4d1/",
+        "/features/edu/umd/cs/findbugs/plugin/eclipse/3.0.1.20150306-5afe4d1/edu.umd.cs.findbugs.plugin.eclipse_3.0.1.20150306-5afe4d1.jar"
+    );
+
+    assertThat(assetPaths, is(equalTo(expectedAssetPaths)));
+
+    List<String> expectedComponentPaths = ImmutableList.of(
+        "/features/",
+        "/features/edu/",
+        "/features/edu/umd/",
+        "/features/edu/umd/cs/",
+        "/features/edu/umd/cs/findbugs/",
+        "/features/edu/umd/cs/findbugs/plugin/",
+        "/features/edu/umd/cs/findbugs/plugin/eclipse/",
+        "/features/edu/umd/cs/findbugs/plugin/eclipse/3.0.1.20150306-5afe4d1/"
+    );
+
+    assertThat(componentPaths, is(equalTo(expectedComponentPaths)));
+  }
+
+  private Asset createAsset(final String path) {
     Asset asset = mock(Asset.class);
     when(asset.path()).thenReturn(path);
+    when(asset.component()).thenReturn(empty());
+    return asset;
+  }
 
-    if (createComponent) {
-      Component component = mock(Component.class);
-      when(component.namespace()).thenReturn(null);
-      when(component.name()).thenReturn(COMPONENT_NAME);
-      when(component.version()).thenReturn(COMPONENT_VERSION);
+  private Asset createAsset(final String path, final String componentName, final String componentVersion) {
+    Asset asset = createAsset(path);
+    when(asset.path()).thenReturn(path);
 
-      when(asset.component()).thenReturn(of(component));
-    } else {
-      when(asset.component()).thenReturn(empty());
-    }
+    Component component = mock(Component.class);
+    when(component.namespace()).thenReturn(null);
+    when(component.name()).thenReturn(componentName);
+    when(component.version()).thenReturn(componentVersion);
+
+    when(asset.component()).thenReturn(of(component));
 
     return asset;
   }
