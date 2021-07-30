@@ -21,7 +21,7 @@ import org.sonatype.nexus.repository.golang.GolangFormat;
 /**
  * Golang places components at the same level as their assets.
  *
- * @since 3.next
+ * @since 3.33
  */
 @Singleton
 @Named(GolangFormat.NAME)

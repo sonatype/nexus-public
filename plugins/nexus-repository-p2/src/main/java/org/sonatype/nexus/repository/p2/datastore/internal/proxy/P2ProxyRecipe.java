@@ -68,7 +68,7 @@ import static org.sonatype.nexus.repository.p2.internal.AssetKind.CONTENT_METADA
 import static org.sonatype.nexus.repository.p2.internal.AssetKind.P2_INDEX;
 
 /**
- * @since 3.next
+ * @since 3.33
  */
 @Named(P2ProxyRecipe.NAME)
 @Singleton

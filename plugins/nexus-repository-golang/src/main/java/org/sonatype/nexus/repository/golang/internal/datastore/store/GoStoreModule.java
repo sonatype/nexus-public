@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.golang.GolangFormat;
 /**
  * Configures the content store bindings for the Golang format.
  *
- * @since 3.next
+ * @since 3.33
  */
 @Named(GolangFormat.NAME)
 public class GoStoreModule
