@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.content.store.AssetBlobDAO;
 /**
  * Golang's {@link AssetBlobDAO}.
  *
- * @since 3.next
+ * @since 3.33
  */
 public interface GoAssetBlobDAO
     extends AssetBlobDAO

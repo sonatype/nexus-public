@@ -22,7 +22,7 @@ import com.google.common.base.Splitter;
 import static com.google.common.collect.ImmutableSet.of;
 
 /**
- * @since 3.next
+ * @since 3.33
  */
 public class P2BrowseNodeGeneratorHelper
 {

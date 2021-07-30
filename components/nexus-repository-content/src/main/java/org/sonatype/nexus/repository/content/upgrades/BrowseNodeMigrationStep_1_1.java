@@ -30,7 +30,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Resolves an issue where multiple browse nodes were created with the same parent and the same display name.
  *
- * @since 3.next
+ * @since 3.33
  */
 @Named
 public class BrowseNodeMigrationStep_1_1 implements DatabaseMigrationStep

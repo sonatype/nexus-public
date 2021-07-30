@@ -64,7 +64,7 @@ import static org.sonatype.nexus.repository.view.Payload.UNKNOWN_SIZE;
 /**
  * Golang content facet.
  *
- * @since 3.next
+ * @since 3.33
  */
 @Exposed
 @Named(GolangFormat.NAME)

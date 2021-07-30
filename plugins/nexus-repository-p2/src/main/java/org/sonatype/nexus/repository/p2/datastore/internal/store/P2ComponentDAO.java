@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.p2.datastore.internal.store;
 import org.sonatype.nexus.repository.content.store.ComponentDAO;
 
 /**
- * @since 3.next
+ * @since 3.33
  */
 public interface P2ComponentDAO extends ComponentDAO
 {

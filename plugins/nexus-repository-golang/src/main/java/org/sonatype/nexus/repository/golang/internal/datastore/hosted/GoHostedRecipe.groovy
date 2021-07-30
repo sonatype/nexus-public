@@ -35,7 +35,7 @@ import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getBoole
 /**
  * Go hosted recipe.
  *
- * @since 3.next
+ * @since 3.33
  */
 @Named(GoHostedRecipe.NAME)
 @Singleton

@@ -28,7 +28,7 @@ import static org.sonatype.nexus.repository.p2.internal.browse.P2BrowseNodeGener
 import static org.sonatype.nexus.repository.p2.internal.browse.P2BrowseNodeGeneratorHelper.splitPath;
 
 /**
- * @since 3.next
+ * @since 3.33
  */
 @Singleton
 @Named(P2Format.NAME)

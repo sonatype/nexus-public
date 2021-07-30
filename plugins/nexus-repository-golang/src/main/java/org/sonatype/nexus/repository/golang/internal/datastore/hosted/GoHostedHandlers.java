@@ -37,7 +37,7 @@ import static org.sonatype.nexus.repository.http.HttpResponses.notFound;
 /**
  * Go's hosted handlers.
  *
- * @since 3.next
+ * @since 3.33
  */
 @Named
 @Singleton

@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.content.store.AssetDAO;
 /**
  * Golang's {@link AssetDAO}.
  *
- * @since 3.next
+ * @since 3.33
  */
 public interface GoAssetDAO
     extends AssetDAO

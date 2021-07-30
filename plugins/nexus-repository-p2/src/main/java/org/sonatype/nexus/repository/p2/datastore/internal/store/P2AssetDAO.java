@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.p2.datastore.internal.store;
 import org.sonatype.nexus.repository.content.store.AssetDAO;
 
 /**
- * @since 3.next
+ * @since 3.33
  */
 public interface P2AssetDAO extends AssetDAO
 {

@@ -359,7 +359,7 @@ public class TaskConfiguration
   }
 
   /**
-   * @since 3.next
+   * @since 3.33
    */
   public void addAll(final Map<String, String> attributes) {
     attributes.entrySet().forEach(entry -> configuration.put(entry.getKey(), entry.getValue()));

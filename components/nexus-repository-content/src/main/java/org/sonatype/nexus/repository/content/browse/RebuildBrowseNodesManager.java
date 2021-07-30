@@ -39,7 +39,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
  * Triggers a rebuild task for all repositories when requested. This is largely for upgrades or other early
  * phase code before services have started.
  *
- * @since 3.next
+ * @since 3.33
  */
 @Named
 @ManagedLifecycle(phase = TASKS)
