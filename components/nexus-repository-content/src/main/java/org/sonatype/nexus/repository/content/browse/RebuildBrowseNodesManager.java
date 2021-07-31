@@ -25,6 +25,7 @@ import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.node.RebuildBrowseNodesTaskDescriptor;
+import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskScheduler;
@@ -73,6 +74,7 @@ public class RebuildBrowseNodesManager
     Stopwatch sw = Stopwatch.createStarted();
     try {
       String repositoryNames = StreamSupport.stream(repositoryManager.browse().spliterator(), false)
+          .filter(this::hasAssets)
           .map(Repository::getName)
           .collect(Collectors.joining(","));
 
@@ -88,6 +90,10 @@ public class RebuildBrowseNodesManager
       log.error("Failed to determine if the browse nodes need to be rebuilt for any repositories", e);
     }
     log.debug("scheduling rebuild browse nodes tasks took {} ms", sw.elapsed(TimeUnit.MILLISECONDS));
+  }
+
+  private boolean hasAssets(final Repository repository) {
+    return repository.facet(ContentFacet.class).assets().count() > 0;
   }
 
   private void launchNewTask(final String repositoryNames) {
