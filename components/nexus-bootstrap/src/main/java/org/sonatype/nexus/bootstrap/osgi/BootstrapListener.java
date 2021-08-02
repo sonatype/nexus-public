@@ -72,6 +72,8 @@ public class BootstrapListener
 
   private static final String NEXUS_DB_FEATURE = "nexus-db-feature";
 
+  private static final String NEXUS_EXCLUDE_FEATURES =  "nexus-exclude-features";
+
   private ListenerTracker listenerTracker;
 
   private FilterTracker filterTracker;
@@ -244,6 +246,9 @@ public class BootstrapListener
       // datastore mode, but not developer mode
       if (!parseBoolean(properties.getProperty(DATASTORE_DEVELOPER, "false"))) {
         // exclude unfinished format features
+        properties.setProperty(NEXUS_EXCLUDE_FEATURES,
+                "nexus-repository-rubygems," +
+                properties.getProperty(NEXUS_EXCLUDE_FEATURES, ""));
       }
     }
 
@@ -260,8 +265,8 @@ public class BootstrapListener
       properties.setProperty(DATASTORE_ENABLED, "true");
       properties.setProperty("nexus.quartz.jobstore.jdbc", "true");
       if (NEXUS_OSS_EDITION.equals(properties.getProperty(NEXUS_EDITION))) {
-        properties.setProperty("nexus-exclude-features",
-            "nexus-cma-feature," + properties.getProperty("nexus-exclude-features", ""));
+        properties.setProperty(NEXUS_EXCLUDE_FEATURES,
+            "nexus-cma-feature," + properties.getProperty(NEXUS_EXCLUDE_FEATURES, ""));
       }
     }
   }

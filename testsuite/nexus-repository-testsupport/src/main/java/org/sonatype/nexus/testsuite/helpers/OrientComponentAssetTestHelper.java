@@ -148,6 +148,20 @@ public class OrientComponentAssetTestHelper
   }
 
   @Override
+  public void removeComponent(
+      final Repository repository,
+      final String namespace,
+      final String name,
+      final String version)
+  {
+
+    findComponent(repository, namespace, name, version).ifPresent(component -> {
+      ComponentMaintenance maintenanceFacet = repository.facet(ComponentMaintenance.class);
+      maintenanceFacet.deleteComponent(component.getEntityMetadata().getId());
+    });
+  }
+
+  @Override
   public List<String> findAssetPaths(final String repositoryName) {
     String sql = "SELECT * FROM asset WHERE bucket.repository_name = ?";
     try (ODatabaseDocumentTx tx = databaseInstanceProvider.get().acquire()) {
