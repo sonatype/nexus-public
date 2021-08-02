@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.content.browse.store.BrowseNodeDAO;
 /**
  * Golang {@link BrowseNodeDAO}.
  *
- * @since 3.next
+ * @since 3.33
  */
 public interface GoBrowseNodeDAO
     extends BrowseNodeDAO

@@ -69,6 +69,11 @@ public interface ComponentAssetTestHelper
   void deleteComponent(Repository repository, String name, String version);
 
   /**
+   * Remove an component from a repository using ComponentMaintenance or similar.
+   */
+  void removeComponent(final Repository repository, String namespace, String name, String version);
+
+  /**
    * Remove an asset from a repository using ComponentMaintenance or similar.
    */
   void removeAsset(final Repository repository, final String path);
@@ -78,6 +83,9 @@ public interface ComponentAssetTestHelper
    */
   List<String> findAssetPaths(final String repositoryName);
 
+  /**
+   * Retrieve the AssetKind from asset at the given pat.
+   */
   String assetKind(Repository repository, String path);
 
   /**

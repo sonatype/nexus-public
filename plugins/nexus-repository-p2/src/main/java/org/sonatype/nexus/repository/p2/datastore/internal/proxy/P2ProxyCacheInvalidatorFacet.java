@@ -33,7 +33,7 @@ import com.google.common.eventbus.Subscribe;
 /**
  * Handles invalidating p2 proxy cache when the URL for the repository changes.
  *
- * @since 3.next
+ * @since 3.33
  */
 @Named
 @Facet.Exposed

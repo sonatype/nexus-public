@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.content.store.ComponentDAO;
 /**
  * Golang's {@link ComponentDAO}.
  *
- * @since 3.next
+ * @since 3.33
  */
 public interface GoComponentDAO
     extends ComponentDAO

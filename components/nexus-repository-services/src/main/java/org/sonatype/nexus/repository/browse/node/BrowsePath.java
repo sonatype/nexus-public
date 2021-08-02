@@ -21,10 +21,10 @@ import java.util.Objects;
  * <pre>
  * requestPath         | displayName
  * --------------------+----------------------
- * org/                | org
- * org/foo/            | foo
- * org/foo/-/          | dash
- * org/foo/-/some.file | some.file
+ * /org/                | org
+ * /org/foo/            | foo
+ * /org/foo/-/          | dash
+ * /org/foo/-/some.file | some.file
  * </pre>
  *
  * @since 3.18

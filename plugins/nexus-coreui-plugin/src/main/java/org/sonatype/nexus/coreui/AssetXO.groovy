@@ -12,9 +12,10 @@
  */
 package org.sonatype.nexus.coreui
 
+import javax.validation.constraints.NotEmpty
+
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
-import javax.validation.constraints.NotEmpty
 
 /**
  * Asset exchange object.
@@ -61,5 +62,5 @@ class AssetXO {
   String createdByIp
 
   @NotEmpty
-  Map<String, Map<String, Object>> attributes
+  Map<String, Object> attributes
 }

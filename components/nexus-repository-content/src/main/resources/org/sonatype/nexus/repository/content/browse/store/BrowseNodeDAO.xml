@@ -32,7 +32,6 @@
 
       CONSTRAINT pk_${format}_browse_node_id PRIMARY KEY (node_id),
       CONSTRAINT uk_${format}_browse_node_repository_path UNIQUE (repository_id, request_path),
-      CONSTRAINT uk_${format}_browse_node_component UNIQUE (component_id),
       CONSTRAINT uk_${format}_browse_node_asset UNIQUE (asset_id),
 
       CONSTRAINT fk_${format}_browse_node_repository_id FOREIGN KEY (repository_id)
@@ -44,6 +43,9 @@
 
       -- skip FK for parent_id; doesn't work well when batch deleting from the root
     );
+
+    CREATE UNIQUE INDEX IF NOT EXISTS uk_${format}_browse_node_parent_display
+        ON ${format}_browse_node (repository_id, parent_id, display_name);
 
     CREATE INDEX IF NOT EXISTS idx_${format}_browse_node_tree
         ON ${format}_browse_node (repository_id, parent_id, display_name);
@@ -83,14 +85,24 @@
   </select>
 
   <insert id="mergeBrowseNode" useGeneratedKeys="true" keyProperty="nodeId" parameterType="BrowseNodeData">
-    MERGE INTO ${format}_browse_node (repository_id, request_path, display_name, parent_id, package_url
-        <if test="dbComponentId != null">, component_id</if>
-        <if test="dbAssetId != null">, asset_id</if>
-    )
-    KEY (repository_id, request_path) VALUES (#{repositoryId}, #{requestPath}, #{displayName}, #{parentId}, #{packageUrl}
-        <if test="dbComponentId != null">, #{dbComponentId}</if>
-        <if test="dbAssetId != null">, #{dbAssetId}</if>
-    );
+    MERGE INTO ${format}_browse_node AS B
+         USING (SELECT 1
+                  FROM DUAL)
+            ON (B.repository_id = #{repositoryId} AND
+                B.parent_id = #{parentId} AND
+                B.display_name = #{displayName})
+    WHEN NOT MATCHED THEN
+           INSERT (repository_id, request_path, display_name, parent_id, package_url, component_id, asset_id)
+           VALUES (#{repositoryId}, #{requestPath}, #{displayName}, #{parentId}, #{packageUrl},
+                   #{dbComponentId}, #{dbAssetId})
+    <if test="dbComponentId != null || dbAssetId != null || requestPath.endsWith('/')">
+    WHEN MATCHED THEN UPDATE
+                       <set>
+                         <if test="dbComponentId != null">B.component_id = #{dbComponentId}</if>
+                         <if test="dbAssetId != null">, B.asset_id = #{dbAssetId}</if>
+                         <if test="requestPath.endsWith('/')">, B.request_path = #{requestPath}</if>
+                       </set>
+    </if>;
   </insert>
 
   <insert id="mergeBrowseNode" useGeneratedKeys="true" keyProperty="nodeId" parameterType="BrowseNodeData" databaseId="PostgreSQL">
@@ -102,8 +114,9 @@
         <if test="dbComponentId != null">, #{dbComponentId}</if>
         <if test="dbAssetId != null">, #{dbAssetId}</if>
     )
-    ON CONFLICT (repository_id, request_path) DO UPDATE SET
+    ON CONFLICT (repository_id, parent_id, display_name) DO UPDATE SET
         display_name = #{displayName}, parent_id = #{parentId}, package_url = #{packageUrl}
+        <if test="requestPath.endsWith('/')">, request_path = #{requestPath}</if>
         <if test="dbComponentId != null">, component_id = #{dbComponentId}</if>
         <if test="dbAssetId != null">, asset_id = #{dbAssetId}</if>
     ;

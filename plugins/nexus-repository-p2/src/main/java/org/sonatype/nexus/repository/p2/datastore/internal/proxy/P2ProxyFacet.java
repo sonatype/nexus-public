@@ -61,7 +61,7 @@ import static org.sonatype.nexus.repository.p2.internal.util.P2PathUtils.toP2Att
 /**
  * P2 {@link ProxyFacet} implementation.
  *
- * @since 3.next
+ * @since 3.33
  */
 @Named
 public class P2ProxyFacet

@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.golang.GolangFormat;
 /**
  * Golang {@link FormatBrowseModule}.
  *
- * @since 3.next
+ * @since 3.33
  */
 @Named(GolangFormat.NAME)
 public class GoBrowseModule

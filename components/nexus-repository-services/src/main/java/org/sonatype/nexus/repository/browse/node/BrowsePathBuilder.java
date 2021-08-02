@@ -15,6 +15,9 @@ package org.sonatype.nexus.repository.browse.node;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.apache.commons.lang3.StringUtils.appendIfMissing;
+import static org.apache.commons.lang3.StringUtils.removeStart;
+import static org.sonatype.nexus.repository.browse.node.BrowsePath.SLASH;
 import static org.sonatype.nexus.repository.browse.node.BrowsePath.SLASH_CHAR;
 
 /**
@@ -28,7 +31,7 @@ public class BrowsePathBuilder
     // static utility class
   }
 
-  public static List<BrowsePath> fromPaths(List<String> paths, boolean trailingSlash) {
+  public static List<BrowsePath> fromPaths(final List<String> paths, final boolean trailingSlash) {
     List<BrowsePath> results = new ArrayList<>();
 
     StringBuilder requestPath = new StringBuilder().append(SLASH_CHAR);
@@ -43,11 +46,22 @@ public class BrowsePathBuilder
     return results;
   }
 
-  public static void appendPath(List<BrowsePath> browsePaths, String path) {
-    browsePaths.add(new BrowsePath(path, browsePaths.get(browsePaths.size() - 1).getRequestPath() + path));
+  public static void appendPath(final List<BrowsePath> browsePaths, final String path) {
+    appendPath(browsePaths, path, combine(getLastRequestPath(browsePaths), path));
   }
 
-  public static void appendPath(List<BrowsePath> browsePaths, String path, String requestPath) {
+  private static String combine(final String browsePath, final String path) {
+      return appendIfMissing(browsePath, SLASH) + removeStart(path, SLASH);
+  }
+  private static String getLastRequestPath(final List<BrowsePath> browsePaths) {
+    return browsePaths.isEmpty() ? "" : last(browsePaths).getRequestPath();
+  }
+
+  public static <T> T last(List<T> items) {
+    return items.get(items.size() - 1);
+  }
+
+  public static void appendPath(final List<BrowsePath> browsePaths, final String path, final String requestPath) {
     browsePaths.add(new BrowsePath(path, requestPath));
   }
 }

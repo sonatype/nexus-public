@@ -73,10 +73,11 @@ public class BrowseFacetImpl
   private BrowseNodeManager browseNodeManager;
 
   @Inject
-  public BrowseFacetImpl(final Map<String, FormatStoreManager> formatStoreManagersByFormat,
-                         final Map<String, BrowseNodeGenerator> browseNodeGeneratorsByFormat,
-                         final PackageUrlService packageUrlService,
-                         @Named("${nexus.browse.rebuild.pageSize:-1000}") final int pageSize)
+  public BrowseFacetImpl(
+      final Map<String, FormatStoreManager> formatStoreManagersByFormat,
+      final Map<String, BrowseNodeGenerator> browseNodeGeneratorsByFormat,
+      final PackageUrlService packageUrlService,
+      @Named("${nexus.browse.rebuild.pageSize:-1000}") final int pageSize)
   {
     this.formatStoreManagersByFormat = checkNotNull(formatStoreManagersByFormat);
     this.browseNodeGeneratorsByFormat = checkNotNull(browseNodeGeneratorsByFormat);
@@ -185,16 +186,17 @@ public class BrowseFacetImpl
         browseNodeManager.createBrowseNodes(assetPaths, node -> node.setAsset(asset));
       }
     }
+    else {
+      log.debug("Skipping asset {}", asset.path());
+    }
 
     asset.component().ifPresent(component -> {
-      if (!browseNodeManager.hasComponentNode(component)) {
-        List<BrowsePath> componentPaths = browseNodeGenerator.computeComponentPaths(asset);
-        if (!componentPaths.isEmpty()) {
-          browseNodeManager.createBrowseNodes(componentPaths, node -> {
-            node.setComponent(component);
-            findPackageUrl(component).map(PackageUrl::toString).ifPresent(node::setPackageUrl);
-          });
-        }
+      List<BrowsePath> componentPaths = browseNodeGenerator.computeComponentPaths(asset);
+      if (!componentPaths.isEmpty()) {
+        browseNodeManager.createBrowseNodes(componentPaths, node -> {
+          node.setComponent(component);
+          findPackageUrl(component).map(PackageUrl::toString).ifPresent(node::setPackageUrl);
+        });
       }
     });
   }

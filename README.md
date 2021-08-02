@@ -67,7 +67,7 @@ To run Nexus Repository, after building, unzip the assembly and start the server
     unzip -d target assemblies/nexus-base-template/target/nexus-base-template-*.zip
     ./target/nexus-base-template-*/bin/nexus console
 
-The `nexus-base-template` assembly is used as the basis for the official Sonatype Nexus distributions.
+The `nexus-base-template` assembly is used as the basis for the official Sonatype Nexus Repository distributions.
 
 ## License
 
