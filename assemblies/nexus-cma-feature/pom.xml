@@ -29,21 +29,7 @@
   <dependencies>
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-repository-p2</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-restore-maven</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-restore-p2</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
     </dependency>

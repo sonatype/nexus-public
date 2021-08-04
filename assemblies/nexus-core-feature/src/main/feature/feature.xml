@@ -30,7 +30,6 @@
     <feature>nexus-repository-apt</feature>
     <feature>nexus-repository-cocoapods</feature>
     <feature>nexus-repository-maven</feature>
-    <feature>nexus-repository-p2</feature>
     <feature>nexus-repository-raw</feature>
     <feature>nexus-restore-raw</feature>
     <feature>nexus-restore-apt</feature>
