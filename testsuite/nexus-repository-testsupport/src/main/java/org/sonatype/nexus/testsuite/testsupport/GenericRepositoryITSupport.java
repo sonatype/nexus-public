@@ -49,7 +49,6 @@ import org.sonatype.nexus.testsuite.testsupport.cocoapods.CocoapodsClient;
 import org.sonatype.nexus.testsuite.testsupport.cocoapods.CocoapodsClientFactory;
 import org.sonatype.nexus.testsuite.testsupport.fixtures.BlobStoreRule;
 import org.sonatype.nexus.testsuite.testsupport.fixtures.RepositoryRule;
-import org.sonatype.nexus.testsuite.testsupport.golang.GolangClient;
 import org.sonatype.nexus.testsuite.testsupport.maven.Maven2Client;
 import org.sonatype.nexus.testsuite.testsupport.raw.RawClient;
 
@@ -143,19 +142,6 @@ public abstract class GenericRepositoryITSupport<RR extends RepositoryRule>
 
   protected Maven2Client maven2Client(final URL repositoryUrl) throws Exception {
     return new Maven2Client(
-        clientBuilder(repositoryUrl).build(),
-        clientContext(),
-        repositoryUrl.toURI()
-    );
-  }
-
-  protected GolangClient createGolangClient(final Repository repository) throws Exception {
-    checkNotNull(repository);
-    return createGolangClient(repositoryBaseUrl(repository));
-  }
-
-  protected GolangClient createGolangClient(final URL repositoryUrl) throws Exception {
-    return new GolangClient(
         clientBuilder(repositoryUrl).build(),
         clientContext(),
         repositoryUrl.toURI()

@@ -29,7 +29,6 @@
     <feature>nexus-default-role-plugin</feature>
     <feature>nexus-repository-apt</feature>
     <feature>nexus-repository-cocoapods</feature>
-    <feature>nexus-repository-golang</feature>
     <feature>nexus-repository-maven</feature>
     <feature>nexus-repository-p2</feature>
     <feature>nexus-repository-raw</feature>

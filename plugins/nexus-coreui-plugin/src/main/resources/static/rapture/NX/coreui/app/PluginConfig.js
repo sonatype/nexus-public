@@ -207,7 +207,7 @@ Ext.define('NX.coreui.app.PluginConfig', {
     {
       id: 'NX.coreui.controller.SearchGolang',
       active: function () {
-        return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-repository-golang');
+        return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-repository-golang');
       }
     },
     {
