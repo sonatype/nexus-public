@@ -21,7 +21,11 @@ public class BlobEvent
 {
   private String blobId;
 
+  private String assetPath;
+
   private String repositoryName;
+
+  private String replicationConnectionId;
 
   private BlobEventType blobEventType;
 
@@ -41,8 +45,16 @@ public class BlobEvent
     return blobId;
   }
 
+  public String getAssetPath() {
+    return assetPath;
+  }
+
   public String getRepositoryName() {
     return repositoryName;
+  }
+
+  public String getReplicationConnectionId() {
+    return replicationConnectionId;
   }
 
   public BlobEventType getBlobEventType() {
@@ -62,8 +74,18 @@ public class BlobEvent
     return this;
   }
 
+  public BlobEvent withAssetPath(final String assetPath) {
+    this.assetPath = assetPath;
+    return this;
+  }
+
   public BlobEvent withRepositoryName(final String repositoryName) {
     this.repositoryName = repositoryName;
+    return this;
+  }
+
+  public BlobEvent withReplicationConnectionId(final String replicationConnectionId) {
+    this.replicationConnectionId = replicationConnectionId;
     return this;
   }
 
@@ -93,11 +115,14 @@ public class BlobEvent
     BlobEvent blobEvent = (BlobEvent) o;
     return inUse == blobEvent.inUse && retryCount == blobEvent.retryCount &&
         Objects.equals(blobId, blobEvent.blobId) &&
-        Objects.equals(repositoryName, blobEvent.repositoryName) && blobEventType == blobEvent.blobEventType;
+        Objects.equals(assetPath, blobEvent.assetPath) &&
+        Objects.equals(repositoryName, blobEvent.repositoryName) &&
+        Objects.equals(replicationConnectionId, blobEvent.replicationConnectionId) &&
+        blobEventType == blobEvent.blobEventType;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(blobId, repositoryName, blobEventType, inUse, retryCount);
+    return Objects.hash(blobId, assetPath, repositoryName, replicationConnectionId, blobEventType, inUse, retryCount);
   }
 }
