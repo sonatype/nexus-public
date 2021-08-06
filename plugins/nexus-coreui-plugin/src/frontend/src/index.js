@@ -60,12 +60,11 @@ window.plugins.push({
   features: [
     {
       mode: 'admin',
-      path: '/Repository/Blobstores-new',
+      path: '/Repository/Blobstores',
       ...UIStrings.BLOB_STORES.MENU,
       view: BlobStores,
       iconCls: 'x-fa fa-server',
       visibility: {
-        featureFlags: [{key: 'nexus.react.blobstores', defaultValue: false}],
         permissions: ['nexus:blobstores:read']
       }
     },
