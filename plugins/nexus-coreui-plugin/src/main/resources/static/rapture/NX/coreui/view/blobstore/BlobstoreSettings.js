@@ -6,26 +6,38 @@
  * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
  * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
  *
+ * Sonatype Nexus (TM) Open Source Version is distributed with Sencha Ext JS pursuant to a FLOSS Exception agreed upon
+ * between Sonatype, Inc. and Sencha Inc. Sencha Ext JS is licensed under GPL v3 and cannot be redistributed as part of a
+ * closed source work.
+ *
  * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+/*global Ext, NX*/
 
-import {Detail, Master, MasterDetail} from '@sonatype/nexus-ui-plugin';
+/**
+ * Blobstore "Settings" panel.
+ *
+ * @since 3.0
+ */
+Ext.define('NX.coreui.view.blobstore.BlobstoreSettings', {
+  extend: 'NX.view.SettingsPanel',
+  alias: 'widget.nx-coreui-blobstore-settings',
+  requires: [
+    'NX.I18n'
+  ],
 
-import BlobStoresList from './BlobStoresList';
-import BlobStoresForm from './BlobStoresForm';
+  settingsForm: { xtype: 'nx-coreui-blobstore-settings-form' },
 
-import './BlobStores.scss';
+  /**
+   * @override
+   */
+  initComponent: function() {
+    var me = this;
 
-export default function BlobStores() {
-  return <MasterDetail path="admin/repository/blobstores-new">
-    <Master>
-      <BlobStoresList/>
-    </Master>
-    <Detail>
-      <BlobStoresForm/>
-    </Detail>
-  </MasterDetail>;
-}
+    me.title = NX.I18n.get('Blobstore_BlobstoreSettings_Title');
+
+    me.callParent();
+  }
+});

@@ -10,22 +10,34 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+package org.sonatype.nexus.coreui.internal.blobstore;
 
-import {Detail, Master, MasterDetail} from '@sonatype/nexus-ui-plugin';
+import java.util.Map;
 
-import BlobStoresList from './BlobStoresList';
-import BlobStoresForm from './BlobStoresForm';
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-import './BlobStores.scss';
+import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.rapture.StateContributor;
 
-export default function BlobStores() {
-  return <MasterDetail path="admin/repository/blobstores-new">
-    <Master>
-      <BlobStoresList/>
-    </Master>
-    <Detail>
-      <BlobStoresForm/>
-    </Detail>
-  </MasterDetail>;
+import com.google.common.collect.ImmutableMap;
+
+@Named
+@Singleton
+public class BlobStoreStateContributor
+    extends ComponentSupport
+    implements StateContributor
+{
+  private final Map<String, Object> state;
+
+  @Inject
+  public BlobStoreStateContributor(@Named("${nexus.react.blobstores:-false}") Boolean featureFlag) {
+    state = ImmutableMap.of("nexus.react.blobstores", featureFlag);
+  }
+
+  @Override
+  public Map<String, Object> getState() {
+    return state;
+  }
 }
