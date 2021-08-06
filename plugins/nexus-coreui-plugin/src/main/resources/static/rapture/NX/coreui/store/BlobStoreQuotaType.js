@@ -6,26 +6,40 @@
  * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
  * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
  *
+ * Sonatype Nexus (TM) Open Source Version is distributed with Sencha Ext JS pursuant to a FLOSS Exception agreed upon
+ * between Sonatype, Inc. and Sencha Inc. Sencha Ext JS is licensed under GPL v3 and cannot be redistributed as part of a
+ * closed source work.
+ *
  * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+/*global Ext, NX*/
 
-import {Detail, Master, MasterDetail} from '@sonatype/nexus-ui-plugin';
+/**
+ * Blob store Quota Type store.
+ *
+ * @since 3.14
+ */
+Ext.define('NX.coreui.store.BlobStoreQuotaType', {
+  extend: 'Ext.data.Store',
+  model: 'NX.coreui.model.Reference',
 
-import BlobStoresList from './BlobStoresList';
-import BlobStoresForm from './BlobStoresForm';
+  proxy: {
+    type: 'direct',
+    paramsAsHash: false,
 
-import './BlobStores.scss';
+    api: {
+      read: 'NX.direct.coreui_Blobstore.readQuotaTypes'
+    },
 
-export default function BlobStores() {
-  return <MasterDetail path="admin/repository/blobstores-new">
-    <Master>
-      <BlobStoresList/>
-    </Master>
-    <Detail>
-      <BlobStoresForm/>
-    </Detail>
-  </MasterDetail>;
-}
+    reader: {
+      type: 'json',
+      rootProperty: 'data',
+      idProperty: 'id',
+      successProperty: 'success'
+    }
+  },
+
+  sorters: { property: 'name', direction: 'ASC' }
+});
