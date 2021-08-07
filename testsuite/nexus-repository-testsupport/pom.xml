@@ -222,7 +222,6 @@
               com.sonatype.nexus.repository.nuget.*;resolution:=optional,
               org.sonatype.nexus.repository.apt.*;resolution:=optional,
               org.sonatype.nexus.repository.bower.*;resolution:=optional,
-              org.sonatype.nexus.repository.cocoapods.*;resolution:=optional,
               org.sonatype.nexus.repository.docker.*;resolution:=optional,
               org.sonatype.nexus.repository.gitlfs.*;resolution:=optional,
               org.sonatype.nexus.repository.golang.*;resolution:=optional,
