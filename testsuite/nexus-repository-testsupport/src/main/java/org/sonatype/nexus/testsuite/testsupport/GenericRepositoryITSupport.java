@@ -45,8 +45,6 @@ import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.testsuite.helpers.ComponentAssetTestHelper;
 import org.sonatype.nexus.testsuite.testsupport.apt.AptClient;
 import org.sonatype.nexus.testsuite.testsupport.apt.AptClientFactory;
-import org.sonatype.nexus.testsuite.testsupport.cocoapods.CocoapodsClient;
-import org.sonatype.nexus.testsuite.testsupport.cocoapods.CocoapodsClientFactory;
 import org.sonatype.nexus.testsuite.testsupport.fixtures.BlobStoreRule;
 import org.sonatype.nexus.testsuite.testsupport.fixtures.RepositoryRule;
 import org.sonatype.nexus.testsuite.testsupport.maven.Maven2Client;
@@ -80,8 +78,6 @@ public abstract class GenericRepositoryITSupport<RR extends RepositoryRule>
   protected static final int MAX_NUGET_CLIENT_CONNECTIONS = 100;
 
   protected AptClientFactory aptClientFactory = new AptClientFactory();
-
-  protected CocoapodsClientFactory cocoapodsClientFactory = new CocoapodsClientFactory();
 
   @Inject
   protected ComponentAssetTestHelper componentAssetTestHelper;
@@ -157,18 +153,6 @@ public abstract class GenericRepositoryITSupport<RR extends RepositoryRule>
   {
     checkNotNull(repositoryManager.get(repositoryName));
     return aptClientFactory
-        .createClient(resolveUrl(nexusUrl, SLASH_REPO_SLASH + repositoryName + "/"), username, password);
-  }
-
-  protected CocoapodsClient createCocoapodsClient(final String repositoryName) throws Exception {
-    Credentials creds = credentials();
-    return createCocoapodsClient(repositoryName, creds.getUserPrincipal().getName(), creds.getPassword());
-  }
-
-  protected CocoapodsClient createCocoapodsClient(final String repositoryName, final String username, final String password)
-  {
-    checkNotNull(repositoryManager.get(repositoryName));
-    return cocoapodsClientFactory
         .createClient(resolveUrl(nexusUrl, SLASH_REPO_SLASH + repositoryName + "/"), username, password);
   }
 

@@ -36,7 +36,6 @@
     <module>nexus-repository-httpbridge</module>
     <module>nexus-repository-maven</module>
     <module>nexus-repository-apt</module>
-    <module>nexus-repository-cocoapods</module>
     <module>nexus-repository-raw</module>
     <module>nexus-restore-apt</module>
     <module>nexus-restore-maven</module>
@@ -207,6 +206,36 @@
       <dependency>
         <groupId>org.sonatype.nexus.plugins</groupId>
         <artifactId>nexus-repository-cocoapods</artifactId>
+        <version>3.34.0-SNAPSHOT</version>
+        <classifier>features</classifier>
+        <type>xml</type>
+      </dependency>
+
+      <!-- repository-p2 -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-repository-p2</artifactId>
+        <version>3.34.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-repository-p2</artifactId>
+        <version>3.34.0-SNAPSHOT</version>
+        <classifier>features</classifier>
+        <type>xml</type>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-restore-p2</artifactId>
+        <version>3.34.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-restore-p2</artifactId>
         <version>3.34.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
