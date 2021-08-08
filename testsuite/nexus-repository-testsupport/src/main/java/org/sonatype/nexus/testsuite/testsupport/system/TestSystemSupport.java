@@ -44,7 +44,7 @@ public abstract class TestSystemSupport
   protected abstract void doAfter();
 
   @Override
-  protected void after() {
+  public void after() {
     doAfter();
     waitForCalmPeriod();
   }

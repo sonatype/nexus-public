@@ -10,25 +10,16 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.testsuite.testsupport.system;
+package org.sonatype.nexus.testsuite.testsupport.system.repository.config;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-
-import org.sonatype.nexus.capability.CapabilityRegistry;
-import org.sonatype.nexus.common.app.FeatureFlag;
-import org.sonatype.nexus.testsuite.testsupport.fixtures.CapabilitiesRule;
-
-@FeatureFlag(name = "nexus.test.base")
-@Named
-@Singleton
-public class NexusTestSystem
-    extends NexusTestSystemSupport<RepositoryTestSystem, CapabilitiesRule>
+public interface GroupRepositoryConfig<THIS>
+    extends RepositoryConfig<THIS>
 {
-  @Inject
-  public NexusTestSystem(final RepositoryTestSystem repositoryTestSystem, final CapabilityRegistry capabilityRegistry)
-  {
-    super(repositoryTestSystem, new CapabilitiesRule(() -> capabilityRegistry));
-  }
+  THIS withMembers(final String... members);
+
+  String[] getMembers();
+
+  THIS withGroupWriteMember(final String groupWriteMember);
+
+  String getGroupWriteMember();
 }

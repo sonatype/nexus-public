@@ -18,7 +18,6 @@ import javax.inject.Provider;
 import org.sonatype.nexus.testsuite.helpers.ComponentAssetTestHelper;
 import org.sonatype.nexus.testsuite.testsupport.fixtures.BlobStoreRule;
 import org.sonatype.nexus.testsuite.testsupport.fixtures.CapabilitiesRule;
-import org.sonatype.nexus.testsuite.testsupport.fixtures.RepositoryRule;
 import org.sonatype.nexus.testsuite.testsupport.fixtures.SecurityRealmRule;
 import org.sonatype.nexus.testsuite.testsupport.fixtures.SecurityRule;
 
@@ -26,7 +25,7 @@ import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class NexusTestSystemSupport<R extends RepositoryRule, C extends CapabilitiesRule>
+public abstract class NexusTestSystemSupport<R extends RepositoryTestSystem, C extends CapabilitiesRule>
     extends ExternalResource
 {
   private final Logger log = LoggerFactory.getLogger(getClass());
