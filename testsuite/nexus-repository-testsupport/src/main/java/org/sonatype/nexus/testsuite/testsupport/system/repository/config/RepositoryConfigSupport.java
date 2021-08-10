@@ -13,6 +13,7 @@
 package org.sonatype.nexus.testsuite.testsupport.system.repository.config;
 
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 public abstract class RepositoryConfigSupport<THIS>
     implements RepositoryConfig<THIS>
@@ -20,6 +21,8 @@ public abstract class RepositoryConfigSupport<THIS>
   private String name;
 
   private String blobstore = DEFAULT_BLOBSTORE_NAME;
+
+  private String datastoreName = DEFAULT_DATASTORE_NAME;
 
   private Boolean online = true;
 
@@ -45,6 +48,17 @@ public abstract class RepositoryConfigSupport<THIS>
   @Override
   public String getBlobstore() {
     return blobstore;
+  }
+
+  @Override
+  public THIS withDatastoreName(final String datastoreName) {
+    this.datastoreName = datastoreName;
+    return toTHIS();
+  }
+
+  @Override
+  public String getDatastoreName() {
+    return datastoreName;
   }
 
   @Override

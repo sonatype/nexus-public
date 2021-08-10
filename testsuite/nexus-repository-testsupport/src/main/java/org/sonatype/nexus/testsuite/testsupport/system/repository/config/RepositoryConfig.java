@@ -26,6 +26,10 @@ public interface RepositoryConfig<THIS>
 
   String getBlobstore();
 
+  THIS withDatastoreName(final String datastoreName);
+
+  String getDatastoreName();
+
   THIS withOnline(final Boolean online);
 
   Boolean isOnline();
