@@ -53,6 +53,8 @@ public abstract class FormatRepositoryTestSystemSupport
 
   public static final String ATTRIBUTES_KEY_BLOBSTORE = "blobStoreName";
 
+  public static final String ATTRIBUTES_KEY_DATA_STORE_NAME = "dataStoreName";
+
   public static final String ATTRIBUTES_KEY_STRICT_CONTENT_VALIDATION = "strictContentTypeValidation";
 
   public static final String ATTRIBUTES_KEY_WRITE_POLICY = "writePolicy";
@@ -143,6 +145,7 @@ public abstract class FormatRepositoryTestSystemSupport
     }
 
     NestedAttributesMap storage = configuration.attributes(ATTRIBUTES_MAP_KEY_STORAGE);
+    addConfigIfNotNull(storage, ATTRIBUTES_KEY_DATA_STORE_NAME, config.getDatastoreName());
     addConfigIfNotNull(storage, ATTRIBUTES_KEY_BLOBSTORE, config.getBlobstore());
     addConfigIfNotNull(storage, ATTRIBUTES_KEY_STRICT_CONTENT_VALIDATION, config.isStrictContentTypeValidation());
 
