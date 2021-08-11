@@ -104,25 +104,31 @@ public class LastShutdownTimeServiceImpl
                                        final String groupName,
                                        final DateFormat dateFormat) throws IOException, ParseException {
 
-    int linesRead = advanceReaderToShutdownLine(logReader, startIndicator, lineScanLimit);
-    return findTimeFromPreviousInstance(logReader, timestampPattern, lineScanLimit - linesRead, groupName, dateFormat);
+    Optional<Integer> linesRead = advanceReaderToShutdownLine(logReader, startIndicator, lineScanLimit);
+    if (linesRead.isPresent()) {
+      return findTimeFromPreviousInstance(logReader, timestampPattern, lineScanLimit - linesRead.get(), groupName,
+          dateFormat);
+    }
+    else {
+      return Optional.empty();
+    }
   }
 
   /**
    * The main work of this method is done in moving the logReader to the point just before the last shutdown
    */
-  private int advanceReaderToShutdownLine(final ReversedLinesFileReader logReader,
-                                          final String startIndicator,
-                                          final int lineScanLimit) throws IOException {
+  private Optional<Integer> advanceReaderToShutdownLine(final ReversedLinesFileReader logReader,
+                                                        final String startIndicator,
+                                                        final int lineScanLimit) throws IOException {
     int lineCount = 0;
     String line;
     while(lineCount++ < lineScanLimit && (line = logReader.readLine()) != null) {
       if (line.contains(startIndicator)) {
-        break;
+        return Optional.of(lineCount);
       }
     }
 
-    return lineCount;
+    return Optional.empty();
   }
 
   private Optional<Date> findTimeFromPreviousInstance(final ReversedLinesFileReader logReader,
