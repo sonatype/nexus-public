@@ -14,6 +14,8 @@ package org.sonatype.nexus.internal.log;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -151,5 +153,17 @@ public class LastShutdownTimeServiceImplTest
 
     assertThat(result.isPresent(), equalTo(false));
     verify(reader, never()).readLine();
+  }
+
+  @Test
+  public void handleMissingStartMarker() throws Exception {
+    ReversedLinesFileReader realReader = new ReversedLinesFileReader(
+        Paths.get(getClass().getResource("no-start-marker.log").toURI()), Charset.defaultCharset());
+
+    lastShutdownTimeService = new LastShutdownTimeServiceImpl(logManager, true);
+
+    Optional<Date> result = lastShutdownTimeService.findShutdownTimeInLog(realReader, START_MARKER, pattern, 1000, GROUP_NAME, dateFormat);
+
+    assertThat(result.isPresent(), equalTo(false));
   }
 }
