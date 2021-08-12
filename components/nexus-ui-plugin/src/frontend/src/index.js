@@ -58,6 +58,7 @@ export {
   NxStatefulAccordion,
   NxButton,
   NxCheckbox,
+  NxCode,
   NxErrorAlert,
   NxFieldset,
   NxFilterInput,
