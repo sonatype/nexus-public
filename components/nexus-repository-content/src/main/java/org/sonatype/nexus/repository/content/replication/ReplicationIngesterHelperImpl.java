@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.replication;
 
+import java.io.IOException;
 import java.util.Map;
 
 import javax.inject.Inject;
@@ -30,6 +31,7 @@ import org.sonatype.nexus.repository.replication.ReplicationIngesterHelper;
 import org.sonatype.nexus.repository.replication.ReplicationIngestionException;
 
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
+import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -62,6 +64,7 @@ public class ReplicationIngesterHelperImpl
                         final Map<String, Object> componentAttributes,
                         final String repositoryName,
                         final String blobStoreName)
+      throws IOException
   {
     Repository repository = repositoryManager.get(repositoryName);
     if (repository == null) {
@@ -72,6 +75,8 @@ public class ReplicationIngesterHelperImpl
 
     BlobStore blobStore = blobStoreManager.get(blobStoreName);
     BlobAttributes blobAttributes = blobStore.getBlobAttributes(blob.getId());
+    blobAttributes.getHeaders().put(REPO_NAME_HEADER, repositoryName);
+    blobAttributes.store();
     String path = normalizePath(blobAttributes.getHeaders().get(BLOB_NAME_HEADER));
 
     ReplicationFacet replicationFacet = repository.facet(ReplicationFacet.class);
