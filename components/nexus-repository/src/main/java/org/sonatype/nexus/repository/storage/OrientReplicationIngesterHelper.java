@@ -36,6 +36,7 @@ import com.google.common.collect.ImmutableList;
 
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
+import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.common.hash.Hashes.hash;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -85,6 +86,8 @@ public class OrientReplicationIngesterHelper
     try {
       BlobStore blobStore = blobStoreManager.get(blobStoreId);
       BlobAttributes blobAttributes = blobStore.getBlobAttributes(blob.getId());
+      blobAttributes.getHeaders().put(REPO_NAME_HEADER, repositoryName);
+      blobAttributes.store();
 
       AssetBlob assetBlob = new AssetBlob(nodeAccess,
           blobStore,
