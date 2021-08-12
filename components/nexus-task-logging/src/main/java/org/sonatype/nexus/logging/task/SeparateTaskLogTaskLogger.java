@@ -12,15 +12,22 @@
  */
 package org.sonatype.nexus.logging.task;
 
+import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
+import ch.qos.logback.core.rolling.RollingFileAppender;
 import org.slf4j.Logger;
 import org.slf4j.MDC;
+import org.slf4j.impl.StaticLoggerBinder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
+import static org.slf4j.Logger.ROOT_LOGGER_NAME;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.NEXUS_LOG_ONLY;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.PROGRESS;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
@@ -66,9 +73,19 @@ public class SeparateTaskLogTaskLogger
   protected void writeLogFileNameToNexusLog() {
     String taskLogsHome = TaskLogHome.getTaskLogHome();
     if (taskLogsHome != null) {
-      String filename = format("%s/%s.log", taskLogsHome, taskLogIdentifier);
+      String filename = format("%s/%s", taskLogsHome, getTaskLogIdentifier());
       log.info(NEXUS_LOG_ONLY, TASK_LOG_LOCATION_PREFIX + filename);
     }
+  }
+
+  private String getTaskLogIdentifier() {
+    LoggerContext loggerContext = (LoggerContext) StaticLoggerBinder.getSingleton().getLoggerFactory();
+    Appender<ILoggingEvent> appender = loggerContext.getLogger(ROOT_LOGGER_NAME).getAppender("tasklogfile");
+    if (appender instanceof RollingFileAppender) {
+      File file = new File(((RollingFileAppender<ILoggingEvent>) appender).getFile());
+      return file.getName();
+    }
+    return taskLogIdentifier + ".log";
   }
 
   @Override
