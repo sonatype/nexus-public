@@ -124,7 +124,12 @@ public class DatastoreBlobstoreRestoreTestHelper
 
   @Override
   public void runRestoreMetadataTask() {
-    runRestoreMetadataTaskWithTimeout(60, false);
+    runRestoreMetadataTask(false);
+  }
+
+  @Override
+  public void runRestoreMetadataTask(boolean isDryRun) {
+    runRestoreMetadataTaskWithTimeout(60, isDryRun);
   }
 
   @Override
@@ -146,6 +151,12 @@ public class DatastoreBlobstoreRestoreTestHelper
       Optional<FluentAsset> asset = findAsset(repository, path);
       assertThat(asset.isPresent(), is(false));
     }
+  }
+
+  @Override
+  public void assertComponentInRepository(final Repository repository, final String name) {
+    Optional<FluentComponent> component = findComponent(repository, name, "");
+    assertThat(component.isPresent(), is(true));
   }
 
   @Override
@@ -208,7 +219,7 @@ public class DatastoreBlobstoreRestoreTestHelper
     assertThat(component.isPresent(), is(true));
 
     for (String path : paths) {
-      Optional<FluentAsset> asset = component.get().asset(path).find();
+      Optional<FluentAsset> asset = component.get().asset(prependIfMissing(path, "/")).find();
       assertThat(asset.isPresent(), is(true));
     }
   }

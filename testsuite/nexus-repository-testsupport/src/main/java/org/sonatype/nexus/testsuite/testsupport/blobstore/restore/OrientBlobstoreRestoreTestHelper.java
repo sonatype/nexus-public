@@ -109,7 +109,12 @@ public class OrientBlobstoreRestoreTestHelper
 
   @Override
   public void runRestoreMetadataTask() {
-    runRestoreMetadataTaskWithTimeout(10, false);
+    runRestoreMetadataTask(false);
+  }
+
+  @Override
+  public void runRestoreMetadataTask(boolean isDryRun) {
+    runRestoreMetadataTaskWithTimeout(10, isDryRun);
   }
 
   @Override
@@ -125,6 +130,7 @@ public class OrientBlobstoreRestoreTestHelper
     assertThat(component, nullValue());
   }
 
+  @Override
   public void assertComponentInRepository(final Repository repository, final String name) {
     Component component = findComponent(repository, name);
     assertThat(component, notNullValue());

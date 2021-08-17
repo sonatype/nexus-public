@@ -44,6 +44,8 @@ public interface BlobstoreRestoreTestHelper
 
   void runRestoreMetadataTask();
 
+  void runRestoreMetadataTask(boolean isDryRun);
+
   void assertAssetMatchesBlob(Repository repository, String name);
 
   void assertAssetMatchesBlob(Repository repository, String... names);
@@ -51,6 +53,8 @@ public interface BlobstoreRestoreTestHelper
   void assertAssetInRepository(Repository repository, String name);
 
   void assertAssetNotInRepository(Repository repository, String... names);
+
+  void assertComponentInRepository(Repository repository, String name);
 
   void assertComponentInRepository(Repository repository, String name, String version);
 

@@ -98,7 +98,7 @@ public class RestoreMetadataTask
 
   @Override
   public String getMessage() {
-    return "Uses blobs in a blobstore to restore assest to a repository";
+    return "Uses blobs in a blobstore to restore assets to a repository";
   }
 
   @Override
