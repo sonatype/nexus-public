@@ -80,7 +80,7 @@ public class ErrorPageServletTest
     errorHandler.addErrorPage(GLOBAL_ERROR_PAGE, "/error.html");
     context.setErrorHandler(errorHandler);
 
-    BaseUrlHolder.set("http://127.0.0.1");
+    BaseUrlHolder.set("http://127.0.0.1", "");
 
     server = new Server(0);
     server.setHandler(context);

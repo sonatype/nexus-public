@@ -166,6 +166,7 @@ public class RaptureWebResourceBundle
       protected byte[] generate() throws IOException {
         return render("index.vm", new TemplateParameters()
                 .set("baseUrl", BaseUrlHolder.get())
+                .set("relativePath", BaseUrlHolder.getRelativePath())
                 .set("debug", isDebug())
                 .set("urlSuffix", generateUrlSuffix())
                 .set("styles", getStyles())
@@ -196,6 +197,7 @@ public class RaptureWebResourceBundle
       protected byte[] generate() throws IOException {
         return render("bootstrap.vm", new TemplateParameters()
                 .set("baseUrl", BaseUrlHolder.get())
+                .set("relativePath", BaseUrlHolder.getRelativePath())
                 .set("debug", isDebug())
                 .set("urlSuffix", generateUrlSuffix())
                 .set("namespaces", getExtJsNamespaces())
@@ -223,7 +225,7 @@ public class RaptureWebResourceBundle
       @Override
       protected byte[] generate() throws IOException {
         return render("app.vm", new TemplateParameters()
-                .set("baseUrl", BaseUrlHolder.get())
+                .set("baseUrl", BaseUrlHolder.getRelativePath())
                 .set("debug", isDebug())
                 .set("state", gson.toJson(getState()))
                 .set("pluginConfigs", getExtJsPluginConfigs())
@@ -313,7 +315,7 @@ public class RaptureWebResourceBundle
    */
   private URI uri(final String path) {
     try {
-      return new URI(String.format("%s/static/rapture/%s", BaseUrlHolder.get(), path));
+      return new URI(String.format("%s/static/rapture/%s", BaseUrlHolder.getRelativePath(), path));
     }
     catch (URISyntaxException e) {
       throw new RuntimeException(e);
@@ -326,7 +328,7 @@ public class RaptureWebResourceBundle
    */
   private URI relativeToAbsoluteUri(final String path) {
     try {
-      return new URI(String.format("%s%s", BaseUrlHolder.get(), path));
+      return new URI(String.format("%s%s", BaseUrlHolder.getRelativePath(), path));
     }
     catch (URISyntaxException e) {
       throw new RuntimeException(e);

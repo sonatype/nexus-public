@@ -37,6 +37,15 @@ Ext.define('NX.util.Url', {
   baseUrl: NX.app.baseUrl,
 
   /**
+   * Returns the relative path of the Nexus server.  Path never ends with '/'.
+   *
+   * @public
+   * @property {String}
+   * @readonly
+   */
+  relativePath: NX.app.relativePath,
+
+  /**
    * Returns a cache-busting urlSuffix provided by the Nexus server.
    *
    * @public
@@ -49,7 +58,7 @@ Ext.define('NX.util.Url', {
    * @public
    */
   urlOf: function (path) {
-    var baseUrl = this.baseUrl;
+    var baseUrl = this.relativePath;
 
     if (!Ext.isEmpty(path)) {
       if (Ext.String.endsWith(baseUrl, '/')) {

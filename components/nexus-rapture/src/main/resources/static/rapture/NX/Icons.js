@@ -87,7 +87,7 @@ Ext.define('NX.Icons', {
    * @returns {string}
    */
   url2: function(file, variant) {
-    var url = NX.util.Url.baseUrl + '/static/rapture/resources/icons/';
+    var url = NX.util.Url.relativePath + '/static/rapture/resources/icons/';
     if (variant) {
       url += variant + '/';
     }

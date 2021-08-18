@@ -46,7 +46,7 @@ export default class Utils {
   }
 
   static urlFromPath(path) {
-    return NX.app.baseUrl + path;
+    return NX.app.relativePath + path;
   }
 
   static isBlank(str) {

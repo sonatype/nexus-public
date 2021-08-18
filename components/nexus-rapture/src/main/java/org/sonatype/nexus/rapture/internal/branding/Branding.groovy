@@ -55,7 +55,7 @@ class Branding
   @Nullable
   String interpolate(@Nullable final String html) {
     if (html != null) {
-      return html.replaceAll(Matcher.quoteReplacement('$baseUrl'), BaseUrlHolder.get())
+      return html.replaceAll(Matcher.quoteReplacement('$baseUrl'), BaseUrlHolder.getRelativePath())
     }
     return null
   }

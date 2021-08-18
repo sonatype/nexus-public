@@ -201,7 +201,7 @@ Ext.define('NX.app.Application', {
     //</if>
 
     // Configure blank image URL
-    Ext.BLANK_IMAGE_URL = NX.util.Url.baseUrl + '/static/rapture/resources/images/s.gif';
+    Ext.BLANK_IMAGE_URL = NX.util.Url.relativePath + '/static/rapture/resources/images/s.gif';
 
     if (!csrfToken) {
       basePath = NX.util.Url.baseUrl.substring(window.location.origin.length) || null;

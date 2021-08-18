@@ -59,7 +59,7 @@ public class MavenApiRepositoryAdapterTest
   @Before
   public void setup() {
     underTest = new MavenApiRepositoryAdapter(routingRuleStore);
-    BaseUrlHolder.set("http://nexus-url");
+    BaseUrlHolder.set("http://nexus-url", "");
   }
 
   @Test

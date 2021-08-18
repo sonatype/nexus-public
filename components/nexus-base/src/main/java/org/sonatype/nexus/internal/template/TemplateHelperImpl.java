@@ -64,7 +64,7 @@ public class TemplateHelperImpl
     params.set("nexusVersion", applicationVersion.getVersion());
     params.set("nexusEdition", applicationVersion.getEdition());
     params.set("nexusBrandedEditionAndVersion", applicationVersion.getBrandedEditionAndVersion());
-    params.set("nexusUrl", BaseUrlHolder.get());
+    params.set("relativePath", BaseUrlHolder.getRelativePath());
     params.set("urlSuffix", applicationVersion.getVersion()); // for cache busting
     params.set("esc", new EscapeHelper());
     return params;

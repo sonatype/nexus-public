@@ -47,6 +47,7 @@ public class ExtDirectJsonRequestProcessorThread
     threadState = new SubjectThreadState(subject);
 
     final String baseUrl = BaseUrlHolder.get();
+    final String relativePath = BaseUrlHolder.getRelativePath();
 
     processRequest = ServletScopes.transferRequest(new Callable<String>()
     {
@@ -56,7 +57,7 @@ public class ExtDirectJsonRequestProcessorThread
         UserIdMdcHelper.set();
         try {
           // apply base-url from the original thread
-          BaseUrlHolder.set(baseUrl);
+          BaseUrlHolder.set(baseUrl, relativePath);
 
           return ExtDirectJsonRequestProcessorThread.super.processRequest();
         }

@@ -41,7 +41,7 @@ Ext.define('NX.coreui.view.upload.facet.DefaultUploadFacet', {
       items: [
         {
           xtype: 'nx-settingsform',
-          url: NX.util.Url.baseUrl + '/service/rest/internal/ui/upload/' +
+          url: NX.util.Url.relativePath + '/service/rest/internal/ui/upload/' +
               encodeURIComponent(me.repository.get('name')),
           timeout: 0,
           baseParams: {
