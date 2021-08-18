@@ -79,21 +79,15 @@ public class FileBlobStoreDescriptor
   public FileBlobStoreDescriptor(final BlobStoreQuotaService quotaService,
                                  final ApplicationDirectories applicationDirectories,
                                  final BlobStoreUtil blobStoreUtil,
-                                 final FileBlobStorePathValidator pathValidator,
-                                 @Named("${nexus.react.blobstores:-false}") Boolean featureFlag)
+                                 final FileBlobStorePathValidator pathValidator)
   {
     super(quotaService);
     this.applicationDirectories = applicationDirectories;
     this.blobStoreUtil = blobStoreUtil;
     this.pathValidator = pathValidator;
-    if (featureFlag) {
-      this.path = new StringTextFormField(PATH_KEY, messages.pathLabel(), messages.pathHelpText(), MANDATORY)
-          .withAttribute("tokenReplacement", applicationDirectories.getWorkDirectory("blobs") + "/${name}")
-          .withAttribute("long", Boolean.TRUE);
-    }
-    else {
-      this.path = new StringTextFormField(PATH_KEY, messages.pathLabel(), messages.pathHelpText(), MANDATORY);
-    }
+    this.path = new StringTextFormField(PATH_KEY, messages.pathLabel(), messages.pathHelpText(), MANDATORY)
+        .withAttribute("tokenReplacement", applicationDirectories.getWorkDirectory("blobs") + "/${name}")
+        .withAttribute("long", Boolean.TRUE);
   }
 
   @Override

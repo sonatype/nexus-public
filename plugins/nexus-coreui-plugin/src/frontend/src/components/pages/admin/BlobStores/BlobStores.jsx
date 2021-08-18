@@ -20,7 +20,7 @@ import BlobStoresForm from './BlobStoresForm';
 import './BlobStores.scss';
 
 export default function BlobStores() {
-  return <MasterDetail path="admin/repository/blobstores-new">
+  return <MasterDetail path="admin/repository/blobstores">
     <Master>
       <BlobStoresList/>
     </Master>

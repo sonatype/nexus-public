@@ -37,7 +37,9 @@ Ext.define('NX.coreui.controller.Tasks', {
   ],
   stores: [
     'Task',
-    'TaskType'
+    'TaskType',
+    'Repository',
+    'Blobstore'
   ],
   models: [
     'Task'
@@ -134,6 +136,12 @@ Ext.define('NX.coreui.controller.Tasks', {
         },
         'nx-coreui-task-selecttype': {
           cellclick: me.showAddPanel
+        },
+        'combobox[name=property_fromGroup]': {
+          change: me.removeGroupMemberTaskFromGroupChanged
+        },
+        'combobox[name=property_moveRepositoryName]': {
+          change: me.moveRepositoryTaskRepositoryNameChanged
         }
       }
     });
@@ -513,5 +521,65 @@ Ext.define('NX.coreui.controller.Tasks', {
         });
       }, { scope: me });
     }
+  },
+
+  removeGroupMemberTaskFromGroupChanged: function(groupComboBox, newVal, old) {
+    var members = groupComboBox.up().query('[name=property_memberToRemove]')[0];
+    var selectedGroup = groupComboBox.getStore().getById(newVal);
+    var data = Ext.Array.map(selectedGroup.data.attributes.group.members, function(m) {return {name: m, id: m};});
+    members.setValue(null);
+    members.getStore().setData(data);
+    if(!old) {
+      members.reset();
+    }
+  },
+
+  moveRepositoryTaskRepositoryNameChanged: function(moveRepoComboBox, newVal, old) {
+    this.getStore('Repository').load({
+      scope: this,
+      callback: function() {
+        this.getStore('Blobstore').load({
+          scope: this,
+          callback: function() {
+            var me = this,
+                repoStore = me.getStore('Repository'),
+                selectedRepo = repoStore.findRecord('name', newVal);
+
+            if (selectedRepo) {
+              var blobstoreStore = me.getStore('Blobstore'),
+                  oldSelection,
+                  validSelection = false,
+                  blobstoresCombo = moveRepoComboBox.up().query('[name=property_moveTargetBlobstore]')[0],
+                  currentBlobStore = selectedRepo.data.attributes.storage.blobStoreName,
+                  validBlobstores = blobstoreStore.getRange().filter(function(item) {
+                    return item.data.name !== currentBlobStore;
+                  }).map(function(item) {
+                    return {name: item.data.name, id: item.data.name};
+                  });
+
+              // Check if selected value was valid, if not clean
+              oldSelection = blobstoresCombo.getValue();
+              for (var i = 0; i < validBlobstores.length; i++) {
+                if (validBlobstores[i].id === oldSelection) {
+                  oldSelection = blobstoresCombo.getValue();
+                  validSelection = true;
+                  break;
+                }
+              }
+
+              blobstoresCombo.getStore().setData(validBlobstores);
+              if (!old) {
+                blobstoresCombo.reset();
+              }
+              if (validSelection) {
+                blobstoresCombo.setValue(oldSelection);
+              } else {
+                blobstoresCombo.setValue(null);
+              }
+            }
+          }
+        });
+      }
+    });
   }
 });

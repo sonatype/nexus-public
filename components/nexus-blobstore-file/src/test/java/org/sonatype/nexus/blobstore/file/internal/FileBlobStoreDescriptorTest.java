@@ -56,7 +56,7 @@ public class FileBlobStoreDescriptorTest
   @Before
   public void setup() {
     descriptor =
-        new FileBlobStoreDescriptor(quotaService, applicationDirectories, blobStoreUtil, fileBlobStorePathValidator, false);
+        new FileBlobStoreDescriptor(quotaService, applicationDirectories, blobStoreUtil, fileBlobStorePathValidator);
     when(blobStoreUtil.validateFilePath(anyString(), anyInt())).thenReturn(true);
   }
 
