@@ -91,7 +91,7 @@ public class WebResourceServlet
       path += "index.html";
     }
     else if (INDEX_PATH.equals(path)) {
-      response.sendRedirect(BaseUrlHolder.get()); // prevent browser from sending XHRs to incorrect URL - NEXUS-14593
+      response.sendRedirect(BaseUrlHolder.getRelativePath()); // prevent browser from sending XHRs to incorrect URL - NEXUS-14593
       return;
     }
 
@@ -99,7 +99,7 @@ public class WebResourceServlet
     if (resource == null) {
       // if there is an index.html for the requested path, redirect to it
       if (webResources.getResource(path + INDEX_PATH) != null) {
-        String location = String.format("%s%s/", BaseUrlHolder.get(), path);
+        String location = String.format("%s%s/", BaseUrlHolder.getRelativePath(), path);
         log.debug("Redirecting: {} -> {}", path, location);
         response.sendRedirect(location);
       }

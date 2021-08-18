@@ -67,7 +67,7 @@ class RepositoryRule
 
     try {
       if (!baseUrlSet) {
-        BaseUrlHolder.set('http://localhost:1234')
+        BaseUrlHolder.set('http://localhost:1234', '')
       }
       Repository repository = repositoryManagerProvider.get().create(configuration)
       repositories << repository

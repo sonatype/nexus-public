@@ -53,10 +53,10 @@ Ext.define('NX.controller.Icon', {
     me.installStylesheet();
 
     // HACK: preload some additional image resources
-    me.preloadImage(NX.util.Url.cacheBustingUrl(NX.util.Url.baseUrl + '/static/rapture/resources/images/shared/icon-error.png'));
-    me.preloadImage(NX.util.Url.cacheBustingUrl(NX.util.Url.baseUrl + '/static/rapture/resources/images/shared/icon-info.png'));
-    me.preloadImage(NX.util.Url.cacheBustingUrl(NX.util.Url.baseUrl + '/static/rapture/resources/images/shared/icon-question.png'));
-    me.preloadImage(NX.util.Url.cacheBustingUrl(NX.util.Url.baseUrl + '/static/rapture/resources/images/shared/icon-warning.png'));
+    me.preloadImage(NX.util.Url.cacheBustingUrl(NX.util.Url.relativePath + '/static/rapture/resources/images/shared/icon-error.png'));
+    me.preloadImage(NX.util.Url.cacheBustingUrl(NX.util.Url.relativePath + '/static/rapture/resources/images/shared/icon-info.png'));
+    me.preloadImage(NX.util.Url.cacheBustingUrl(NX.util.Url.relativePath + '/static/rapture/resources/images/shared/icon-question.png'));
+    me.preloadImage(NX.util.Url.cacheBustingUrl(NX.util.Url.relativePath + '/static/rapture/resources/images/shared/icon-warning.png'));
   },
 
   /**

@@ -52,7 +52,7 @@ Ext.define('NX.onboarding.step.ChangeAdminPasswordStep', {
         password = button.up('form').down('#password').getValue();
 
     Ext.Ajax.request({
-      url: NX.util.Url.baseUrl + '/service/rest/internal/ui/onboarding/change-admin-password',
+      url: NX.util.Url.relativePath + '/service/rest/internal/ui/onboarding/change-admin-password',
       method: 'PUT',
       params: password,
       success: function(){

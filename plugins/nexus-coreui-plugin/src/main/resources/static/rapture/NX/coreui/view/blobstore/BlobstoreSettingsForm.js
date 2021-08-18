@@ -271,7 +271,7 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
     var settingsForm = me.up('form');
 
     Ext.Ajax.request({
-      url: NX.util.Url.baseUrl + '/service/rest/v1/blobstores/test-connection',
+      url: NX.util.Url.relativePath + '/service/rest/v1/blobstores/test-connection',
       method: 'POST',
       scope: me,
       jsonData: settingsForm.getForm().getValues(),

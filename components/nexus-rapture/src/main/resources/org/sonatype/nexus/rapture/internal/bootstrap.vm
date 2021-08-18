@@ -42,4 +42,5 @@ NX.global = (function() {
 ## HACK: Needed by NX.util.Url in class-def, should update that to reference dynamically and move this to loader state config
 Ext.ns('NX.app');
 NX.app.baseUrl = '$baseUrl';
+NX.app.relativePath = '.';
 NX.app.urlSuffix = '$urlSuffix';

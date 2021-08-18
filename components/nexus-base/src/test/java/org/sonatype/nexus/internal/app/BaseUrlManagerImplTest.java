@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.internal.app;
 
+import javax.servlet.DispatcherType;
+import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServletRequest;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -97,5 +99,52 @@ public class BaseUrlManagerImplTest
     when(request.getServletPath()).thenReturn(NUGET_QUERY);
 
     assertThat(underTest.detectUrl(), equalTo(expectedBaseUrl));
+  }
+
+  @Test
+  public void testDetectRelativePath() {
+    testRelativePath(".", "", "/");
+    testRelativePath("..", "", "/foo/");
+    testRelativePath("..", "", "/foo/bar");
+    testRelativePath("../..", "", "/foo/bar/");
+    testRelativePath("../..", "", "/foo//bar/");
+  }
+
+  @Test
+  public void testDetectRelativePath_nonRoot() {
+    testRelativePath(".", "/nexus", "/");
+    testRelativePath("..", "/nexus", "/foo/");
+    testRelativePath("..", "/nexus", "/foo/bar");
+    testRelativePath("../..", "/nexus", "/foo/bar/");
+    testRelativePath("../..", "/nexus", "/foo//bar/");
+  }
+
+  @Test
+  public void testDetectRelativePath_errorDispatch() {
+    when(request.getDispatcherType()).thenReturn(DispatcherType.ERROR);
+    when(request.getAttribute(RequestDispatcher.ERROR_REQUEST_URI)).thenReturn("/nexus/foo/bar/");
+    testRelativePath("../..", "/nexus", "/");
+  }
+
+  @Test
+  public void testDetectRelativePath_forwardDispatch() {
+    when(request.getDispatcherType()).thenReturn(DispatcherType.FORWARD);
+    when(request.getAttribute(RequestDispatcher.FORWARD_CONTEXT_PATH)).thenReturn("/nexus2");
+    when(request.getAttribute(RequestDispatcher.FORWARD_REQUEST_URI)).thenReturn("/nexus2/foo/bar/");
+    testRelativePath("../..", "/nexus", "/");
+  }
+
+  @Test
+  public void testDetectRelativePath_fallback() {
+    when(request.getDispatcherType()).thenReturn(DispatcherType.FORWARD);
+    testRelativePath(".", "/nexus", "/");
+  }
+
+  private void testRelativePath(final String expectedPath, final String context, final String requestPath) {
+    when(requestProvider.get()).thenReturn(request);
+    when(request.getContextPath()).thenReturn(context);
+    when(request.getRequestURI()).thenReturn(context + requestPath);
+
+    assertThat(underTest.detectRelativePath(), equalTo(expectedPath));
   }
 }

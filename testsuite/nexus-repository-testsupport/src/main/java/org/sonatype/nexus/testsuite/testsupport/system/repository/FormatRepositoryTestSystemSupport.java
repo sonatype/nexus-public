@@ -106,7 +106,7 @@ public abstract class FormatRepositoryTestSystemSupport
     boolean baseUrlSet = BaseUrlHolder.isSet();
     try {
       if (!baseUrlSet) {
-        BaseUrlHolder.set("http://localhost:1234");
+        BaseUrlHolder.set("http://localhost:1234", "");
       }
       Repository repository = repositoryManager.create(configuration);
       if (tracker != null) {

@@ -73,7 +73,7 @@ public class SimpleApiRepositoryAdapterTest
   @Before
   public void setup() {
     underTest = new SimpleApiRepositoryAdapter(routingRuleStore);
-    BaseUrlHolder.set("http://nexus-url");
+    BaseUrlHolder.set("http://nexus-url", "");
   }
 
   @Test

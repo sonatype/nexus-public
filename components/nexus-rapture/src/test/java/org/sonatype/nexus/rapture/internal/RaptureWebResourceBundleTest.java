@@ -55,7 +55,7 @@ public class RaptureWebResourceBundleTest
 
   @Before
   public void setup() {
-    BaseUrlHolder.set("http://baseurl/");
+    BaseUrlHolder.set("http://baseurl/", ".");
 
     when(httpServletRequest.getParameter("debug")).thenReturn("false");
 
@@ -83,31 +83,31 @@ public class RaptureWebResourceBundleTest
   public void testGetStyles() throws Exception {
     List<URI> uris = underTest.getStyles();
 
-    assertThat(uris, is(asList(new URI("http://baseurl/static/rapture/resources/loading-prod.css"),
-        new URI("http://baseurl/static/rapture/resources/baseapp-prod.css"),
-        new URI("http://baseurl/static/rapture/resources/test-1-prod.css"),
-        new URI("http://baseurl/static/rapture/resources/test-2-prod.css"),
-        new URI("http://baseurl/react-style-1-test.css"),
-        new URI("http://baseurl/react-style-2-test.css"))));
+    assertThat(uris, is(asList(new URI("./static/rapture/resources/loading-prod.css"),
+        new URI("./static/rapture/resources/baseapp-prod.css"),
+        new URI("./static/rapture/resources/test-1-prod.css"),
+        new URI("./static/rapture/resources/test-2-prod.css"),
+        new URI("./react-style-1-test.css"),
+        new URI("./react-style-2-test.css"))));
   }
 
   @Test
   public void testGetScripts_prod() throws Exception {
     List<URI> uris = underTest.getScripts();
 
-    assertThat(uris, is(asList(new URI("http://baseurl/static/rapture/baseapp-prod.js"),
-        new URI("http://baseurl/static/rapture/extdirect-prod.js"),
-        new URI("http://baseurl/static/rapture/bootstrap.js"),
-        new URI("http://baseurl/static/rapture/d3.v4.min.js"),
-        new URI("http://baseurl/extjs-script-1-test-1.js"),
-        new URI("http://baseurl/extjs-script-2-test-1.js"),
-        new URI("http://baseurl/extjs-script-1-test-2.js"),
-        new URI("http://baseurl/extjs-script-2-test-2.js"),
-        new URI("http://baseurl/react-script-1-test-prod.js"),
-        new URI("http://baseurl/react-script-2-test-prod.js"),
-        new URI("http://baseurl/static/rapture/test-1-prod.js"),
-        new URI("http://baseurl/static/rapture/test-2-prod.js"),
-        new URI("http://baseurl/static/rapture/app.js"))));
+    assertThat(uris, is(asList(new URI("./static/rapture/baseapp-prod.js"),
+        new URI("./static/rapture/extdirect-prod.js"),
+        new URI("./static/rapture/bootstrap.js"),
+        new URI("./static/rapture/d3.v4.min.js"),
+        new URI("./extjs-script-1-test-1.js"),
+        new URI("./extjs-script-2-test-1.js"),
+        new URI("./extjs-script-1-test-2.js"),
+        new URI("./extjs-script-2-test-2.js"),
+        new URI("./react-script-1-test-prod.js"),
+        new URI("./react-script-2-test-prod.js"),
+        new URI("./static/rapture/test-1-prod.js"),
+        new URI("./static/rapture/test-2-prod.js"),
+        new URI("./static/rapture/app.js"))));
   }
 
   @Test
@@ -116,17 +116,17 @@ public class RaptureWebResourceBundleTest
 
     List<URI> uris = underTest.getScripts();
 
-    assertThat(uris, is(asList(new URI("http://baseurl/static/rapture/baseapp-debug.js"),
-        new URI("http://baseurl/static/rapture/extdirect-debug.js"),
-        new URI("http://baseurl/static/rapture/bootstrap.js"),
-        new URI("http://baseurl/static/rapture/d3.v4.min.js"),
-        new URI("http://baseurl/extjs-script-1-test-1.js"),
-        new URI("http://baseurl/extjs-script-2-test-1.js"),
-        new URI("http://baseurl/extjs-script-1-test-2.js"),
-        new URI("http://baseurl/extjs-script-2-test-2.js"),
-        new URI("http://baseurl/react-script-1-test-debug.js"),
-        new URI("http://baseurl/react-script-2-test-debug.js"),
-        new URI("http://baseurl/static/rapture/app.js"))));
+    assertThat(uris, is(asList(new URI("./static/rapture/baseapp-debug.js"),
+        new URI("./static/rapture/extdirect-debug.js"),
+        new URI("./static/rapture/bootstrap.js"),
+        new URI("./static/rapture/d3.v4.min.js"),
+        new URI("./extjs-script-1-test-1.js"),
+        new URI("./extjs-script-2-test-1.js"),
+        new URI("./extjs-script-1-test-2.js"),
+        new URI("./extjs-script-2-test-2.js"),
+        new URI("./react-script-1-test-debug.js"),
+        new URI("./react-script-2-test-debug.js"),
+        new URI("./static/rapture/app.js"))));
   }
 
   private final class UiPluginDescriptorImpl

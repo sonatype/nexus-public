@@ -52,7 +52,7 @@ public class AptApiRepositoryAdapterTest
   @Before
   public void setup() {
     underTest = new AptApiRepositoryAdapter(routingRuleStore);
-    BaseUrlHolder.set("http://nexus-url");
+    BaseUrlHolder.set("http://nexus-url", "");
   }
 
   @Test

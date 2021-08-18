@@ -98,7 +98,7 @@ public class ViewServletTest
     parameters = new Parameters();
     when(request.getParameters()).thenReturn(parameters);
 
-    BaseUrlHolder.set("http://placebo");
+    BaseUrlHolder.set("http://placebo", "");
   }
 
   private void descriptionRequested(final String describe) {

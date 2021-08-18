@@ -68,7 +68,7 @@ Ext.define('NX.coreui.view.repository.facet.NugetGroupFacet', {
 
     var nugetRepositories = [];
     Ext.Ajax.request({
-      url: NX.util.Url.baseUrl + '/service/rest/beta/repositories',
+      url: NX.util.Url.relativePath + '/service/rest/beta/repositories',
       method: 'GET',
       headers: {'Content-Type': 'application/json'},
       success: function(response) {

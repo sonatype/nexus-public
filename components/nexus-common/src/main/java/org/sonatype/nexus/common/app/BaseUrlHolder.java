@@ -27,27 +27,39 @@ public final class BaseUrlHolder
 {
   private static final Logger log = LoggerFactory.getLogger(BaseUrlHolder.class);
 
-  private static final InheritableThreadLocal<String> value = new InheritableThreadLocal<>();
+  private static final InheritableThreadLocal<String> baseUrl = new InheritableThreadLocal<>();
+
+  private static final InheritableThreadLocal<String> relativePath = new InheritableThreadLocal<>();
 
   private BaseUrlHolder() {
     // empty
   }
 
   /**
-   * Set the current base URL.
+   * Set the current base URL, and the relative path.
    *
    * The value will be normalized to never end with "/".
    */
-  public static void set(String url) {
+  public static void set(final String url, final String newRelativePath) {
     checkNotNull(url);
+    checkNotNull(newRelativePath);
 
+    String strippedUrl = stripSlash(url);
+    String strippedRelativePath = stripSlash(newRelativePath);
+
+    log.trace("Set: {}", strippedUrl);
+    baseUrl.set(strippedUrl);
+
+    log.trace("Set relativePath: {}", strippedRelativePath);
+    relativePath.set(strippedRelativePath);
+  }
+
+  private static String stripSlash(final String url) {
     // strip off trailing "/", note this is done so that script/template can easily $baseUrl/foo
     if (url.endsWith("/")) {
-      url = url.substring(0, url.length() - 1);
+      return url.substring(0, url.length() - 1);
     }
-
-    log.trace("Set: {}", url);
-    value.set(url);
+    return url;
   }
 
   /**
@@ -56,17 +68,24 @@ public final class BaseUrlHolder
    * @throws IllegalStateException
    */
   public static String get() {
-    String url = value.get();
+    String url = baseUrl.get();
     checkState(url != null, "Base URL not set");
+    return url;
+  }
+
+  public static String getRelativePath() {
+    String url = relativePath.get();
+    checkState(url != null, "Relative path not set");
     return url;
   }
 
   public static void unset() {
     log.trace("Unset");
-    value.remove();
+    baseUrl.remove();
+    relativePath.remove();
   }
 
   public static boolean isSet() {
-    return value.get() != null;
+    return baseUrl.get() != null;
   }
 }

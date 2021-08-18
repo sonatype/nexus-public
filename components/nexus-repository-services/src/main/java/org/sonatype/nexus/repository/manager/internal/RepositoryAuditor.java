@@ -104,7 +104,7 @@ public class RepositoryAuditor
     boolean baseUrlAbsent = !BaseUrlHolder.isSet();
     try {
       if (baseUrlAbsent) {
-        BaseUrlHolder.set(""); // use empty base URL placeholder during conversion to avoid log-spam
+        BaseUrlHolder.set("", ""); // use empty base URL placeholder during conversion to avoid log-spam
       }
 
       AbstractApiRepository apiObject = convert(repository);

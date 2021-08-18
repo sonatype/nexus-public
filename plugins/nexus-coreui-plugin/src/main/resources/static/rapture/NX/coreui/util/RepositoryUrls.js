@@ -41,92 +41,92 @@ Ext.define('NX.coreui.util.RepositoryUrls', {
     maven2: function (me, assetModel) {
       var repositoryName = assetModel.get('repositoryName'),
           assetName = me.getAssetName(assetModel);
-      return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
+      return NX.util.Url.asLink(NX.util.Url.relativePath + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
     },
     apt: function (me, assetModel) {
       var repositoryName = assetModel.get('repositoryName'),
           assetName = me.getAssetName(assetModel);
-      return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
+      return NX.util.Url.asLink(NX.util.Url.relativePath + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
     },
     cocoapods: function (me, assetModel) {
       var repositoryName = assetModel.get('repositoryName'),
           assetName = me.getAssetName(assetModel);
-      return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
+      return NX.util.Url.asLink(NX.util.Url.relativePath + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
     },
     conan: function (me, assetModel) {
       var repositoryName = assetModel.get('repositoryName'),
           assetName = me.getAssetName(assetModel);
-      return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
+      return NX.util.Url.asLink(NX.util.Url.relativePath + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
     },
     conda: function (me, assetModel) {
       var repositoryName = assetModel.get('repositoryName'),
           assetName = me.getAssetName(assetModel);
-      return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
+      return NX.util.Url.asLink(NX.util.Url.relativePath + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
     },
     npm: function (me, assetModel) {
       var repositoryName = assetModel.get('repositoryName'),
           assetName = me.getAssetName(assetModel);
-      return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
+      return NX.util.Url.asLink(NX.util.Url.relativePath + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
     },
     nuget: function (me, assetModel) {
       var repositoryName = assetModel.get('repositoryName'),
           assetName = me.getAssetName(assetModel);
-      return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
+      return NX.util.Url.asLink(NX.util.Url.relativePath + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
     },
     r: function (me, assetModel) {
       var repositoryName = assetModel.get('repositoryName'),
           assetName = me.getAssetName(assetModel);
-      return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
+      return NX.util.Url.asLink(NX.util.Url.relativePath + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
     },
     raw: function (me, assetModel) {
       var repositoryName = assetModel.get('repositoryName'),
           assetName = me.getAssetName(assetModel);
-      return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
+      return NX.util.Url.asLink(NX.util.Url.relativePath + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
     },
     rubygems: function (me, assetModel) {
       var repositoryName = assetModel.get('repositoryName'),
           assetName = me.getAssetName(assetModel);
-      return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
+      return NX.util.Url.asLink(NX.util.Url.relativePath + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
     },
     docker: function (me, assetModel) {
       var repositoryName = assetModel.get('repositoryName'),
           assetName = me.getAssetName(assetModel);
-      return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
+      return NX.util.Url.asLink(NX.util.Url.relativePath + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
     },
     bower: function (me, assetModel) {
       var repositoryName = assetModel.get('repositoryName'),
           assetName = me.getAssetName(assetModel);
-      return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
+      return NX.util.Url.asLink(NX.util.Url.relativePath + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
     },
     pypi: function (me, assetModel) {
       var repositoryName = assetModel.get('repositoryName'),
           assetName = me.getAssetName(assetModel);
-      return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
+      return NX.util.Url.asLink(NX.util.Url.relativePath + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
     },
     yum: function (me, assetModel) {
       var repositoryName = assetModel.get('repositoryName'),
           assetName = me.getAssetName(assetModel);
-      return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
+      return NX.util.Url.asLink(NX.util.Url.relativePath + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
     },
     gitlfs: function (me, assetModel) {
       var repositoryName = assetModel.get('repositoryName'),
           assetName = me.getAssetName(assetModel);
-      return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
+      return NX.util.Url.asLink(NX.util.Url.relativePath + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
     },
     go: function (me, assetModel) {
       var repositoryName = assetModel.get('repositoryName'),
           assetName = me.getAssetName(assetModel);
-      return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
+      return NX.util.Url.asLink(NX.util.Url.relativePath + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
     },
     helm: function (me, assetModel) {
       var repositoryName = assetModel.get('repositoryName'),
           assetName = me.getAssetName(assetModel);
-      return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
+      return NX.util.Url.asLink(NX.util.Url.relativePath + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
     },
     p2: function (me, assetModel) {
       var repositoryName = assetModel.get('repositoryName'),
           assetName = me.getAssetName(assetModel);
-      return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
+      return NX.util.Url.asLink(NX.util.Url.relativePath + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
     }
   },
 
