@@ -51,4 +51,9 @@ public class UnimplementedRawObjectAccess
   public void deleteRawObject(final Path path) {
     throw new UnsupportedOperationException(RAW_OBJECTS_NOT_SUPPORTED);
   }
+
+  @Override
+  public void deleteRawObjectsInPath(final Path path) {
+    throw new UnsupportedOperationException(RAW_OBJECTS_NOT_SUPPORTED);
+  }
 }

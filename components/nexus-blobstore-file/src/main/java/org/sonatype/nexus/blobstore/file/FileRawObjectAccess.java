@@ -18,7 +18,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
@@ -29,6 +28,7 @@ import org.sonatype.nexus.blobstore.api.RawObjectAccess;
 
 import org.apache.commons.io.FileUtils;
 
+import static java.nio.file.Files.delete;
 import static java.util.Arrays.stream;
 import static java.util.Objects.requireNonNull;
 
@@ -105,11 +105,9 @@ public class FileRawObjectAccess
   public void deleteRawObject(final Path path) {
     try {
       File rawObjectFile = storageDir.resolve(path).toFile();
-      File parent = rawObjectFile.getParentFile();
-      Files.deleteIfExists(rawObjectFile.toPath());
-      String[] children = parent.list();
-      if (children == null || children.length == 0) {
-        Files.deleteIfExists(parent.toPath());
+      if (rawObjectFile.exists()) {
+        delete(rawObjectFile.toPath());
+        deleteEmptyParentDirectories(rawObjectFile.getParentFile());
       }
     }
     catch (IOException e) {
@@ -118,8 +116,38 @@ public class FileRawObjectAccess
   }
 
   @Override
+  public void deleteRawObjectsInPath(final Path path) {
+    try {
+      File rawObjectDir = storageDir.resolve(path).toFile();
+      if (rawObjectDir.exists()) {
+        File[] files = rawObjectDir.listFiles();
+        if (files != null) {
+          for (File file : files) {
+            if (file.isFile()) {
+              delete(file.toPath());
+            }
+          }
+        }
+
+        deleteEmptyParentDirectories(rawObjectDir);
+      }
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  @Override
   public boolean hasRawObject(final Path path) {
     File rawObjectFile = storageDir.resolve(path).toFile();
     return rawObjectFile.exists();
+  }
+
+  private void deleteEmptyParentDirectories(final File dir) throws IOException {
+    File parent = dir.getParentFile();
+    String[] children = dir.list();
+    if (children == null || children.length == 0) {
+      delete(dir.toPath());
+      deleteEmptyParentDirectories(parent);
+    }
   }
 }

@@ -201,6 +201,46 @@ Ext.define('NX.coreui.controller.Capabilities', {
   },
 
   /**
+   * @override
+   */
+  onDelete: function () {
+    var me = this,
+        bookmark = NX.Bookmarks.getBookmark(),
+        selection = me.getSelection(),
+        description, model, modelId, deleteWarningMessage;
+
+    if (Ext.isDefined(selection) && selection.length > 0) {
+      modelId = decodeURIComponent(bookmark.getSegment(1));
+      model = me.getList().getStore().getById(modelId);
+      deleteWarningMessage = model.get('deleteWarningMessage');
+
+      if (deleteWarningMessage) {
+        NX.Dialogs.askConfirmation('Confirm deletion?', deleteWarningMessage, function() {
+          me.doDelete(selection);
+        });
+      } else {
+        // standard confirmation
+        description = me.getDescription(selection[0]);
+        NX.Dialogs.askConfirmation('Confirm deletion?', Ext.htmlEncode(description), function () {
+          me.doDelete(selection);
+        });
+      }
+    }
+  },
+
+  /**
+   * @private
+   */
+  doDelete: function(selection) {
+    var me = this;
+
+    me.deleteModel(selection[0]);
+
+    // Reset the bookmark
+    NX.Bookmarks.bookmark(NX.Bookmarks.fromToken(NX.Bookmarks.getBookmark().getSegment(0)));
+  },
+
+  /**
    * @private
    * Displays a warning message if capability is enabled but is not active.
    * @param {NX.coreui.model.Capability} model capability model
@@ -341,7 +381,7 @@ Ext.define('NX.coreui.controller.Capabilities', {
       if (Ext.isObject(response)) {
         if (response.success) {
           NX.Messages.success(NX.I18n.format('Capabilities_Create_Success',
-                me.getDescription(me.getCapabilityModel().create(response.data))));
+              me.getDescription(me.getCapabilityModel().create(response.data))));
           me.getStore('Capability').load();
         }
         else if (Ext.isDefined(response.errors)) {
@@ -366,7 +406,7 @@ Ext.define('NX.coreui.controller.Capabilities', {
       if (Ext.isObject(response)) {
         if (response.success) {
           NX.Messages.success(NX.I18n.format('Capabilities_Update_Success',
-                me.getDescription(me.getCapabilityModel().create(response.data))));
+              me.getDescription(me.getCapabilityModel().create(response.data))));
           form.fireEvent('submitted', form);
           me.getStore('Capability').load();
         }
@@ -431,14 +471,29 @@ Ext.define('NX.coreui.controller.Capabilities', {
   disableCapability: function() {
     var me = this,
         bookmark = NX.Bookmarks.getBookmark(),
-        model, modelId, description;
+        model, modelId, disableWarningMessage;
 
     modelId = decodeURIComponent(bookmark.getSegment(1));
     model = me.getList().getStore().getById(modelId);
-    description = me.getDescription(model);
+    disableWarningMessage = model.get('disableWarningMessage');
 
+    if (disableWarningMessage) {
+      NX.Dialogs.askConfirmation('Confirm disable?', disableWarningMessage, function() {
+        me.doDisable(model);
+      });
+    } else {
+      me.doDisable(model);
+    }
+  },
+
+  /**
+   * @private
+   */
+  doDisable: function(model) {
+    var me = this, description;
+    description = me.getDescription(model);
     me.getContent().getEl().mask(NX.I18n.get('Capabilities_Disable_Mask'));
-    NX.direct.capability_Capability.disable(model.getId(), function(response) {
+    NX.direct.capability_Capability.disable(model.getId(), function (response) {
       me.getContent().getEl().unmask();
       if (Ext.isObject(response) && response.success) {
         me.getStore('Capability').load();

@@ -240,7 +240,9 @@ class CapabilityComponent
         error: reference.context().hasFailure(),
         state: 'disabled',
         stateDescription: reference.context().stateDescription(),
-        properties: filterProperties(reference.context().properties(), capability)
+        properties: filterProperties(reference.context().properties(), capability),
+        disableWarningMessage: descriptor.getDisableWarningMessage(),
+        deleteWarningMessage: descriptor.getDeleteWarningMessage()
     )
 
     if (capabilityXO.enabled && capabilityXO.error) {

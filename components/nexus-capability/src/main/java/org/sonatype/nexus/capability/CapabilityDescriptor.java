@@ -107,4 +107,21 @@ public interface CapabilityDescriptor
    */
   boolean isDuplicated(@Nullable CapabilityIdentity id, Map<String, String> properties);
 
+  /**
+   * Optional warning message to display when disabling the capability.
+   * @since 3.next
+   */
+  @Nullable
+  default String getDisableWarningMessage() {
+    return null;
+  }
+
+  /**
+   * Optional warning message to display when deleting the capability.
+   * @since 3.next
+   */
+  @Nullable
+  default String getDeleteWarningMessage() {
+    return null;
+  }
 }
