@@ -473,7 +473,7 @@ Ext.define('NX.controller.Drilldown', {
   },
 
   /**
-   * @private
+   * @protected
    */
   onDelete: function () {
     var me = this,

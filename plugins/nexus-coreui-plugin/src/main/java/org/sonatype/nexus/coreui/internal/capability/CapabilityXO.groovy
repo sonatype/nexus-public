@@ -59,4 +59,8 @@ class CapabilityXO
   String typeName
 
   Map<String, String> tags
+
+  String disableWarningMessage
+
+  String deleteWarningMessage
 }

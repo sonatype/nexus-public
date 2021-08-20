@@ -27,9 +27,12 @@ import org.sonatype.nexus.blobstore.api.RawObjectAccess;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest.KeyVersion;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
@@ -140,6 +143,27 @@ public class S3RawObjectAccess
   @Override
   public void deleteRawObject(final Path path) {
     s3.deleteObject(bucket, bucketPrefix + normalizeS3Path(path));
+  }
+
+  @Override
+  public void deleteRawObjectsInPath(final Path path) {
+    final String prefix = bucketPrefix + normalizeS3Path(path, true);
+    ObjectListing listing = s3.listObjects(
+        new ListObjectsRequest().withBucketName(bucket)
+            .withPrefix(prefix)
+            .withDelimiter("/")
+            .withMaxKeys(LIST_RAW_OBJECTS_MAX_KEYS));
+    deleteObjectsInListing(listing);
+
+    while (listing.isTruncated()) {
+      listing = s3.listNextBatchOfObjects(listing);
+      deleteObjectsInListing(listing);
+    }
+  }
+
+  private void deleteObjectsInListing(final ObjectListing listing) {
+    List<KeyVersion> keys = listing.getObjectSummaries().stream().map(s -> new KeyVersion(s.getKey())).collect(toList());
+    s3.deleteObjects(new DeleteObjectsRequest(bucket).withKeys(keys));
   }
 
   private String normalizeS3Path(final Path path) {

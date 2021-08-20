@@ -36,6 +36,7 @@ import org.junit.rules.TemporaryFolder;
 
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -122,5 +123,35 @@ public class FileRawObjectAccessTest
 
     byte[] object1 = Files.readAllBytes(dirFile.toPath().resolve("object1.txt"));
     assertEquals("hello!", new String(object1, StandardCharsets.UTF_8));
+  }
+
+  @Test
+  public void deleteRawObjectsInPath() throws Exception {
+    Path path = Paths.get("path", "to");
+
+    File parent = temporaryFolder.newFolder(path.toString());
+    File file1 = temporaryFolder.newFile(path.resolve("object1.txt").toString());
+    File file2 = temporaryFolder.newFile(path.resolve("object2.txt").toString());
+
+    underTest.deleteRawObjectsInPath(path);
+    assertFalse(file1.exists());
+    assertFalse(file2.exists());
+    assertFalse(parent.exists());
+  }
+
+  @Test
+  public void deleteRawObjectsInPathNestedContent() throws Exception {
+    Path path = Paths.get("path", "to");
+
+    File parent = temporaryFolder.newFolder(path.toString());
+    File file1 = temporaryFolder.newFile(path.resolve("object1.txt").toString());
+    File file2 = temporaryFolder.newFile(path.resolve("object2.txt").toString());
+    temporaryFolder.newFolder(path.resolve("nested").toString());
+
+    underTest.deleteRawObjectsInPath(path);
+    assertFalse(file1.exists());
+    assertFalse(file2.exists());
+    // can't delete parent because of nested folder
+    assertTrue(parent.exists());
   }
 }

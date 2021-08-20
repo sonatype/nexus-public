@@ -22,9 +22,12 @@ import java.util.stream.Collectors;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.PerformanceLogger;
+import org.sonatype.nexus.common.template.TemplateParameters;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest.KeyVersion;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.S3Object;
@@ -33,6 +36,7 @@ import com.amazonaws.services.s3.model.S3ObjectSummary;
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
 import static org.junit.Assert.assertEquals;
@@ -155,5 +159,31 @@ public class S3RawObjectAccessTest
     InputStream in = new ByteArrayInputStream("hello!".getBytes());
     underTest.putRawObject(Paths.get("path", "to", "object1"), in);
     verify(uploader).upload(s3, "mybucket", "prefix/path/to/object1", in);
+  }
+
+  @Test
+  public void deleteRawObjectsInPath() {
+    List<S3ObjectSummary> summaries = new ArrayList<>();
+
+    S3ObjectSummary summary1 = new S3ObjectSummary();
+    summary1.setKey("object1");
+    S3ObjectSummary summary2 = new S3ObjectSummary();
+    summary2.setKey("object2");
+
+    summaries.add(summary1);
+    summaries.add(summary2);
+
+    ObjectListing response = mock(ObjectListing.class);
+    when(s3.listObjects(any(ListObjectsRequest.class))).thenReturn(response);
+    when(response.getObjectSummaries()).thenReturn(summaries);
+
+    underTest.deleteRawObjectsInPath(Paths.get("path", "to", "folder"));
+
+    ArgumentCaptor<DeleteObjectsRequest> argument = ArgumentCaptor.forClass(DeleteObjectsRequest.class);
+    verify(s3).deleteObjects(argument.capture());
+    DeleteObjectsRequest deleteObjectsRequest = argument.getValue();
+    List<KeyVersion> keys = deleteObjectsRequest.getKeys();
+    assertEquals("object1", keys.get(0).getKey());
+    assertEquals("object2", keys.get(1).getKey());
   }
 }
