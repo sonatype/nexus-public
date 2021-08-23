@@ -26,7 +26,8 @@ Ext.define('NX.coreui.view.repository.recipe.ConanHosted', {
   alias: 'widget.nx-coreui-repository-conan-hosted',
   requires: [
     'NX.coreui.view.repository.facet.StorageFacet',
-    'NX.coreui.view.repository.facet.StorageFacetHosted'
+    'NX.coreui.view.repository.facet.StorageFacetHosted',
+    'NX.coreui.view.repository.facet.CleanupPolicyFacet'
   ],
 
   /**
@@ -37,7 +38,8 @@ Ext.define('NX.coreui.view.repository.recipe.ConanHosted', {
 
     me.items = [
       {xtype: 'nx-coreui-repository-storage-facet'},
-      {xtype: 'nx-coreui-repository-storage-hosted-facet', writePolicy: 'ALLOW'}
+      {xtype: 'nx-coreui-repository-storage-hosted-facet', writePolicy: 'ALLOW'},
+      {xtype: 'nx-coreui-repository-cleanup-policy-facet'}
     ];
 
     me.callParent();
