@@ -125,4 +125,17 @@ public class BlobEvent
   public int hashCode() {
     return Objects.hash(blobId, assetPath, repositoryName, replicationConnectionId, blobEventType, inUse, retryCount);
   }
+
+  @Override
+  public String toString() {
+    return "BlobEvent{" +
+        "blobId='" + blobId + '\'' +
+        ", assetPath='" + assetPath + '\'' +
+        ", repositoryName='" + repositoryName + '\'' +
+        ", replicationConnectionId='" + replicationConnectionId + '\'' +
+        ", blobEventType=" + blobEventType +
+        ", inUse=" + inUse +
+        ", retryCount=" + retryCount +
+        '}';
+  }
 }
