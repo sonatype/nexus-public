@@ -133,7 +133,7 @@ export default function BlobStoresForm({itemId, onDone}) {
     {saveError && <NxErrorAlert>{saveError}</NxErrorAlert>}
     <PageHeader>
       <PageTitle text={isEdit ? FORM.EDIT_TILE(pristineData.name) : FORM.CREATE_TITLE}
-                 description={isEdit ? FORM.EDIT_DESCRIPTION(pristineData.type) : null}/>
+                 description={isEdit ? FORM.EDIT_DESCRIPTION(type?.name || pristineData.type) : null}/>
       {isEdit && type?.id !== 'group' && types.some(type => type.id === 'group') &&
       <PageActions>
         <NxButton variant="primary" onClick={promoteToGroup}>{FORM.PROMOTE_BUTTON}</NxButton>
