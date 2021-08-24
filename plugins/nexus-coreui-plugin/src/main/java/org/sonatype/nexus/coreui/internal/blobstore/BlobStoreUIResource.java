@@ -85,7 +85,8 @@ public class BlobStoreUIResource
   @GET
   @Path("/types")
   public List<BlobStoreTypesUIResponse> listBlobStoreTypes() {
-    return blobStoreDescriptors.entrySet().stream().map(BlobStoreTypesUIResponse::new).collect(toList());
+    return blobStoreDescriptors.entrySet().stream().filter(entry -> entry.getValue().isEnabled())
+        .map(BlobStoreTypesUIResponse::new).collect(toList());
   }
 
   @RequiresAuthentication

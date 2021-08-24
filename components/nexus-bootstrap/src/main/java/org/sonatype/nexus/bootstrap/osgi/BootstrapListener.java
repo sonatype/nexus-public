@@ -248,6 +248,7 @@ public class BootstrapListener
         // exclude unfinished format features
         properties.setProperty(NEXUS_EXCLUDE_FEATURES,
                 "nexus-repository-rubygems," +
+                "nexus-restore-rubygems," +
                 properties.getProperty(NEXUS_EXCLUDE_FEATURES, ""));
       }
     }
