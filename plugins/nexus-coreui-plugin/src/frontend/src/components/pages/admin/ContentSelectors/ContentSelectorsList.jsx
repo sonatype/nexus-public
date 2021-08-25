@@ -85,7 +85,7 @@ export default function ContentSelectorsList({onCreate, onEdit}) {
               <NxTableCell onClick={() => send('SORT_BY_DESCRIPTION')} isSortable sortDir={descriptionSortDir}>
                 {UIStrings.CONTENT_SELECTORS.DESCRIPTION_LABEL}
               </NxTableCell>
-              <NxTableCell hasIcon/>
+              <NxTableCell chevron/>
             </NxTableRow>
           </NxTableHead>
           <NxTableBody isLoading={isLoading} error={error} emptyMessage={UIStrings.CONTENT_SELECTORS.EMPTY_MESSAGE}>
@@ -94,7 +94,7 @@ export default function ContentSelectorsList({onCreate, onEdit}) {
                   <NxTableCell>{name}</NxTableCell>
                   <NxTableCell>{type?.toUpperCase()}</NxTableCell>
                   <NxTableCell>{description}</NxTableCell>
-                  <NxTableCell hasIcon><NxFontAwesomeIcon icon={faChevronRight}/></NxTableCell>
+                  <NxTableCell chevron/>
                 </NxTableRow>
             ))}
           </NxTableBody>

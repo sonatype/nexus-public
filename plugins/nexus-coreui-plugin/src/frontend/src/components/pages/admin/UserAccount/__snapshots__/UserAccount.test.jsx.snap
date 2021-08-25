@@ -327,7 +327,6 @@ exports[`UserAccount renders correctly 1`] = `
               aria-label="There are no changes"
               class="disabled nx-btn nx-btn--primary"
               id="useraccount-save-button"
-              title="There are no changes"
             >
               Save
             </button>
@@ -336,7 +335,6 @@ exports[`UserAccount renders correctly 1`] = `
               aria-label="There are no changes"
               class="disabled nx-btn nx-btn--secondary"
               id="useraccount-discard-button"
-              title="There are no changes"
             >
               Discard
             </button>
@@ -908,7 +906,6 @@ exports[`UserAccount renders correctly for an external user: externalUser 1`] = 
               class="disabled nx-btn nx-btn--primary"
               disabled=""
               id="useraccount-save-button"
-              title="There are no changes"
             >
               Save
             </button>
@@ -918,7 +915,6 @@ exports[`UserAccount renders correctly for an external user: externalUser 1`] = 
               class="disabled nx-btn nx-btn--secondary"
               disabled=""
               id="useraccount-discard-button"
-              title="There are no changes"
             >
               Discard
             </button>

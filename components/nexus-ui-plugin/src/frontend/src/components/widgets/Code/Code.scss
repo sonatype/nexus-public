@@ -13,15 +13,12 @@
 /**
  * @since 3.27
  */
-@import '~@sonatype/react-shared-components/scss-shared/nx-colors';
-@import '~@sonatype/react-shared-components/scss-shared/nx-variables';
-
 .nxrm-code {
-  border: $nx-border;
-  border-radius: $nx-border-radius;
-  padding: $nx-spacing-md;
+  border: var(--nx-border-default);
+  border-radius: var(--nx-border-radius);
+  padding: var(--nx-spacing-4x);
   flex: 1;
-  color: $nx-text-color;
+  color: var(--nx-color-text);
   font-family: 'Courier New', Courier, monospace;
-  font-size: $nx-font-size-xs;
+  font-size: var(--nx-font-size-xs);
 }

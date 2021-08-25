@@ -11,22 +11,20 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-@import "~@sonatype/react-shared-components/scss-shared/nx-colors";
-
 .nxrm-blob-stores {
   .available {
-    color: $nx-valid-color;
+    color: var(--nx-color-validation-valid);
   }
 
   .unavailable {
-    color: $nx-invalid-color;
+    color: var(--nx-color-validation-invalid);
   }
 
   .information {
     display: flex;
 
     .nx-icon {
-      color: $nx-blue-600;
+      color: var(--nx-swatch-blue-40);
     }
   }
 }

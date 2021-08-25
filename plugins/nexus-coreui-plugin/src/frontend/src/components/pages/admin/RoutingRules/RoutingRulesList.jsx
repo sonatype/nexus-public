@@ -106,7 +106,7 @@ export default function RoutingRulesList({onCreate, onEdit}) {
               <NxTableCell onClick={() => send('SORT_BY_USED_BY')} isSortable sortDir={usedBySortDir}>
                 {ROUTING_RULES.LIST.USED_BY_LABEL}
               </NxTableCell>
-              <NxTableCell hasIcon/>
+              <NxTableCell chevron/>
             </NxTableRow>
           </NxTableHead>
           <NxTableBody isLoading={isLoading} error={error} emptyMessage={ROUTING_RULES.LIST.EMPTY_LIST}>
@@ -120,7 +120,7 @@ export default function RoutingRulesList({onCreate, onEdit}) {
                         <span>{ROUTING_RULES.LIST.USED_BY(assignedRepositoryCount)}</span>
                     }
                   </NxTableCell>
-                  <NxTableCell hasIcon><NxFontAwesomeIcon icon={faChevronRight}/></NxTableCell>
+                  <NxTableCell chevron/>
                 </NxTableRow>
             ))}
           </NxTableBody>

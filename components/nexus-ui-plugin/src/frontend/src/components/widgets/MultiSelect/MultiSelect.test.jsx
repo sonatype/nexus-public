@@ -27,10 +27,10 @@ describe('MultiSelect', () => {
           from: () => queryByLabelText('Available'),
           to: () => queryByLabelText('Selected'),
           option: (text) => queryByText(text, {selector: 'option'}),
-          moveRight: () => queryByTitle(UIStrings.MULTI_SELECT.MOVE_RIGHT),
-          moveLeft: () => queryByTitle(UIStrings.MULTI_SELECT.MOVE_LEFT),
-          moveUp: () => queryByTitle(UIStrings.MULTI_SELECT.MOVE_UP),
-          moveDown: () => queryByTitle(UIStrings.MULTI_SELECT.MOVE_DOWN)
+          moveRight: () => queryByLabelText(UIStrings.MULTI_SELECT.MOVE_RIGHT),
+          moveLeft: () => queryByLabelText(UIStrings.MULTI_SELECT.MOVE_LEFT),
+          moveUp: () => queryByLabelText(UIStrings.MULTI_SELECT.MOVE_UP),
+          moveDown: () => queryByLabelText(UIStrings.MULTI_SELECT.MOVE_DOWN)
         }));
   }
 

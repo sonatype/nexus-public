@@ -133,7 +133,7 @@ export default function RoutingRulesList() {
                     <NxTableCell>
                       {expandable && expanded && <NxFontAwesomeIcon icon={faMinusSquare}/>}
                       {expandable && !expanded && <NxFontAwesomeIcon icon={faPlusSquare}/>}
-                      {repository}
+                      <span>{repository}</span>
                     </NxTableCell>
                     <NxTableCell>{type}</NxTableCell>
                     <NxTableCell>{format}</NxTableCell>

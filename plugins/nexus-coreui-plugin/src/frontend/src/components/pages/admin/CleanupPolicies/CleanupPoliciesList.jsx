@@ -85,7 +85,7 @@ export default function CleanupPoliciesList({onCreate, onEdit}) {
               <NxTableCell onClick={() => send({type: 'SORT_BY_NOTES'})} isSortable sortDir={notesSortDir}>
                 {UIStrings.CLEANUP_POLICIES.NOTES_LABEL}
               </NxTableCell>
-              <NxTableCell hasIcon/>
+              <NxTableCell chevron/>
             </NxTableRow>
           </NxTableHead>
           <NxTableBody isLoading={isLoading} error={error} emptyMessage={UIStrings.CLEANUP_POLICIES.EMPTY_MESSAGE}>
@@ -94,7 +94,7 @@ export default function CleanupPoliciesList({onCreate, onEdit}) {
                   <NxTableCell>{name}</NxTableCell>
                   <NxTableCell>{format}</NxTableCell>
                   <NxTableCell>{notes}</NxTableCell>
-                  <NxTableCell hasIcon><NxFontAwesomeIcon icon={faChevronRight}/></NxTableCell>
+                  <NxTableCell chevron/>
                 </NxTableRow>
             ))}
           </NxTableBody>

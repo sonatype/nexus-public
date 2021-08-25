@@ -43,6 +43,7 @@ exports[`RepositoriesList matches a snapshot 1`] = `
         class="nxrm-page-actions"
       >
         <button
+          aria-disabled="false"
           class="nx-btn nx-btn--primary"
         >
           Create repository
@@ -139,146 +140,156 @@ exports[`RepositoriesList matches a snapshot 1`] = `
                 class="nx-table-row nx-table-row--header"
               >
                 <th
-                  aria-label="Name ascending"
                   aria-sort="ascending"
                   class="nx-cell nx-cell--header nx-cell--sortable"
-                  tabindex="0"
-                  title="Name ascending"
                 >
-                  <span>
-                    Name
-                  </span>
-                  <span
-                    class="nx-cell__sort-icons fa-layers"
+                  <button
+                    aria-label="Name ascending"
+                    class="nx-cell__sort-btn"
+                    type="button"
                   >
-                    <svg
-                      aria-hidden="true"
-                      class="svg-inline--fa fa-sort-down fa-w-10 nx-icon"
-                      data-icon="sort-down"
-                      data-prefix="fas"
-                      focusable="false"
-                      role="img"
-                      viewBox="0 0 320 512"
-                      xmlns="http://www.w3.org/2000/svg"
+                    <span>
+                      Name
+                    </span>
+                    <span
+                      class="nx-cell__sort-icons fa-layers"
                     >
-                      <path
-                        d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                    <svg
-                      aria-hidden="true"
-                      class="svg-inline--fa fa-sort-up fa-w-10 nx-icon"
-                      data-icon="sort-up"
-                      data-prefix="fas"
-                      focusable="false"
-                      role="img"
-                      viewBox="0 0 320 512"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                  </span>
+                      <svg
+                        aria-hidden="true"
+                        class="svg-inline--fa fa-sort-down fa-w-10 nx-icon"
+                        data-icon="sort-down"
+                        data-prefix="fas"
+                        focusable="false"
+                        role="img"
+                        viewBox="0 0 320 512"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                      <svg
+                        aria-hidden="true"
+                        class="svg-inline--fa fa-sort-up fa-w-10 nx-icon"
+                        data-icon="sort-up"
+                        data-prefix="fas"
+                        focusable="false"
+                        role="img"
+                        viewBox="0 0 320 512"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </span>
+                  </button>
                 </th>
                 <th
-                  aria-label="Type unsorted"
                   aria-sort="none"
                   class="nx-cell nx-cell--header nx-cell--sortable"
-                  tabindex="0"
-                  title="Type unsorted"
                 >
-                  <span>
-                    Type
-                  </span>
-                  <span
-                    class="nx-cell__sort-icons fa-layers"
+                  <button
+                    aria-label="Type unsorted"
+                    class="nx-cell__sort-btn"
+                    type="button"
                   >
-                    <svg
-                      aria-hidden="true"
-                      class="svg-inline--fa fa-sort fa-w-10 nx-icon"
-                      data-icon="sort"
-                      data-prefix="fas"
-                      focusable="false"
-                      role="img"
-                      viewBox="0 0 320 512"
-                      xmlns="http://www.w3.org/2000/svg"
+                    <span>
+                      Type
+                    </span>
+                    <span
+                      class="nx-cell__sort-icons fa-layers"
                     >
-                      <path
-                        d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                  </span>
+                      <svg
+                        aria-hidden="true"
+                        class="svg-inline--fa fa-sort fa-w-10 nx-icon"
+                        data-icon="sort"
+                        data-prefix="fas"
+                        focusable="false"
+                        role="img"
+                        viewBox="0 0 320 512"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </span>
+                  </button>
                 </th>
                 <th
-                  aria-label="Format unsorted"
                   aria-sort="none"
                   class="nx-cell nx-cell--header nx-cell--sortable"
-                  tabindex="0"
-                  title="Format unsorted"
                 >
-                  <span>
-                    Format
-                  </span>
-                  <span
-                    class="nx-cell__sort-icons fa-layers"
+                  <button
+                    aria-label="Format unsorted"
+                    class="nx-cell__sort-btn"
+                    type="button"
                   >
-                    <svg
-                      aria-hidden="true"
-                      class="svg-inline--fa fa-sort fa-w-10 nx-icon"
-                      data-icon="sort"
-                      data-prefix="fas"
-                      focusable="false"
-                      role="img"
-                      viewBox="0 0 320 512"
-                      xmlns="http://www.w3.org/2000/svg"
+                    <span>
+                      Format
+                    </span>
+                    <span
+                      class="nx-cell__sort-icons fa-layers"
                     >
-                      <path
-                        d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                  </span>
+                      <svg
+                        aria-hidden="true"
+                        class="svg-inline--fa fa-sort fa-w-10 nx-icon"
+                        data-icon="sort"
+                        data-prefix="fas"
+                        focusable="false"
+                        role="img"
+                        viewBox="0 0 320 512"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </span>
+                  </button>
                 </th>
                 <th
-                  aria-label="Status unsorted"
                   aria-sort="none"
                   class="nx-cell nx-cell--header nx-cell--sortable"
-                  tabindex="0"
-                  title="Status unsorted"
                 >
-                  <span>
-                    Status
-                  </span>
-                  <span
-                    class="nx-cell__sort-icons fa-layers"
+                  <button
+                    aria-label="Status unsorted"
+                    class="nx-cell__sort-btn"
+                    type="button"
                   >
-                    <svg
-                      aria-hidden="true"
-                      class="svg-inline--fa fa-sort fa-w-10 nx-icon"
-                      data-icon="sort"
-                      data-prefix="fas"
-                      focusable="false"
-                      role="img"
-                      viewBox="0 0 320 512"
-                      xmlns="http://www.w3.org/2000/svg"
+                    <span>
+                      Status
+                    </span>
+                    <span
+                      class="nx-cell__sort-icons fa-layers"
                     >
-                      <path
-                        d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                  </span>
+                      <svg
+                        aria-hidden="true"
+                        class="svg-inline--fa fa-sort fa-w-10 nx-icon"
+                        data-icon="sort"
+                        data-prefix="fas"
+                        focusable="false"
+                        role="img"
+                        viewBox="0 0 320 512"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </span>
+                  </button>
                 </th>
                 <th
                   class="nx-cell nx-cell--header"
                 >
-                  <span>
-                    URL
-                  </span>
+                  URL
                 </th>
                 <th
                   class="nx-cell nx-cell--header nx-cell--icon"
@@ -288,28 +299,21 @@ exports[`RepositoriesList matches a snapshot 1`] = `
             <tbody>
               <tr
                 class="nx-table-row nx-clickable"
-                tabindex="0"
               >
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    maven-central
-                  </span>
+                  maven-central
                 </td>
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    proxy
-                  </span>
+                  proxy
                 </td>
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    maven2
-                  </span>
+                  maven2
                 </td>
                 <td
                   class="nx-cell"
@@ -327,30 +331,28 @@ exports[`RepositoriesList matches a snapshot 1`] = `
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    <button
-                      aria-label="Copy URL to Clipboard"
-                      class="nx-btn nx-btn--icon-only"
-                      title="Copy URL to Clipboard"
+                  <button
+                    aria-disabled="false"
+                    aria-label="Copy URL to Clipboard"
+                    class="nx-btn nx-btn--icon-only"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-copy fa-w-14 nx-icon"
+                      data-icon="copy"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 448 512"
+                      xmlns="http://www.w3.org/2000/svg"
                     >
-                      <svg
-                        aria-hidden="true"
-                        class="svg-inline--fa fa-copy fa-w-14 nx-icon"
-                        data-icon="copy"
-                        data-prefix="fas"
-                        focusable="false"
-                        role="img"
-                        viewBox="0 0 448 512"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M320 448v40c0 13.255-10.745 24-24 24H24c-13.255 0-24-10.745-24-24V120c0-13.255 10.745-24 24-24h72v296c0 30.879 25.121 56 56 56h168zm0-344V0H152c-13.255 0-24 10.745-24 24v368c0 13.255 10.745 24 24 24h272c13.255 0 24-10.745 24-24V128H344c-13.2 0-24-10.8-24-24zm120.971-31.029L375.029 7.029A24 24 0 0 0 358.059 0H352v96h96v-6.059a24 24 0 0 0-7.029-16.97z"
-                          fill="currentColor"
-                        />
-                      </svg>
-                    </button>
-                    http://localhost:8081/repository/maven-central/
-                  </span>
+                      <path
+                        d="M320 448v40c0 13.255-10.745 24-24 24H24c-13.255 0-24-10.745-24-24V120c0-13.255 10.745-24 24-24h72v296c0 30.879 25.121 56 56 56h168zm0-344V0H152c-13.255 0-24 10.745-24 24v368c0 13.255 10.745 24 24 24h272c13.255 0 24-10.745 24-24V128H344c-13.2 0-24-10.8-24-24zm120.971-31.029L375.029 7.029A24 24 0 0 0 358.059 0H352v96h96v-6.059a24 24 0 0 0-7.029-16.97z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </button>
+                  http://localhost:8081/repository/maven-central/
                 </td>
                 <td
                   class="nx-cell nx-cell--icon"
@@ -374,28 +376,21 @@ exports[`RepositoriesList matches a snapshot 1`] = `
               </tr>
               <tr
                 class="nx-table-row nx-clickable"
-                tabindex="0"
               >
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    maven-public
-                  </span>
+                  maven-public
                 </td>
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    group
-                  </span>
+                  group
                 </td>
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    maven2
-                  </span>
+                  maven2
                 </td>
                 <td
                   class="nx-cell"
@@ -409,30 +404,28 @@ exports[`RepositoriesList matches a snapshot 1`] = `
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    <button
-                      aria-label="Copy URL to Clipboard"
-                      class="nx-btn nx-btn--icon-only"
-                      title="Copy URL to Clipboard"
+                  <button
+                    aria-disabled="false"
+                    aria-label="Copy URL to Clipboard"
+                    class="nx-btn nx-btn--icon-only"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-copy fa-w-14 nx-icon"
+                      data-icon="copy"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 448 512"
+                      xmlns="http://www.w3.org/2000/svg"
                     >
-                      <svg
-                        aria-hidden="true"
-                        class="svg-inline--fa fa-copy fa-w-14 nx-icon"
-                        data-icon="copy"
-                        data-prefix="fas"
-                        focusable="false"
-                        role="img"
-                        viewBox="0 0 448 512"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M320 448v40c0 13.255-10.745 24-24 24H24c-13.255 0-24-10.745-24-24V120c0-13.255 10.745-24 24-24h72v296c0 30.879 25.121 56 56 56h168zm0-344V0H152c-13.255 0-24 10.745-24 24v368c0 13.255 10.745 24 24 24h272c13.255 0 24-10.745 24-24V128H344c-13.2 0-24-10.8-24-24zm120.971-31.029L375.029 7.029A24 24 0 0 0 358.059 0H352v96h96v-6.059a24 24 0 0 0-7.029-16.97z"
-                          fill="currentColor"
-                        />
-                      </svg>
-                    </button>
-                    http://localhost:8081/repository/maven-public/
-                  </span>
+                      <path
+                        d="M320 448v40c0 13.255-10.745 24-24 24H24c-13.255 0-24-10.745-24-24V120c0-13.255 10.745-24 24-24h72v296c0 30.879 25.121 56 56 56h168zm0-344V0H152c-13.255 0-24 10.745-24 24v368c0 13.255 10.745 24 24 24h272c13.255 0 24-10.745 24-24V128H344c-13.2 0-24-10.8-24-24zm120.971-31.029L375.029 7.029A24 24 0 0 0 358.059 0H352v96h96v-6.059a24 24 0 0 0-7.029-16.97z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </button>
+                  http://localhost:8081/repository/maven-public/
                 </td>
                 <td
                   class="nx-cell nx-cell--icon"
@@ -456,28 +449,21 @@ exports[`RepositoriesList matches a snapshot 1`] = `
               </tr>
               <tr
                 class="nx-table-row nx-clickable"
-                tabindex="0"
               >
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    maven-releases
-                  </span>
+                  maven-releases
                 </td>
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    hosted
-                  </span>
+                  hosted
                 </td>
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    maven2
-                  </span>
+                  maven2
                 </td>
                 <td
                   class="nx-cell"
@@ -491,30 +477,28 @@ exports[`RepositoriesList matches a snapshot 1`] = `
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    <button
-                      aria-label="Copy URL to Clipboard"
-                      class="nx-btn nx-btn--icon-only"
-                      title="Copy URL to Clipboard"
+                  <button
+                    aria-disabled="false"
+                    aria-label="Copy URL to Clipboard"
+                    class="nx-btn nx-btn--icon-only"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-copy fa-w-14 nx-icon"
+                      data-icon="copy"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 448 512"
+                      xmlns="http://www.w3.org/2000/svg"
                     >
-                      <svg
-                        aria-hidden="true"
-                        class="svg-inline--fa fa-copy fa-w-14 nx-icon"
-                        data-icon="copy"
-                        data-prefix="fas"
-                        focusable="false"
-                        role="img"
-                        viewBox="0 0 448 512"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M320 448v40c0 13.255-10.745 24-24 24H24c-13.255 0-24-10.745-24-24V120c0-13.255 10.745-24 24-24h72v296c0 30.879 25.121 56 56 56h168zm0-344V0H152c-13.255 0-24 10.745-24 24v368c0 13.255 10.745 24 24 24h272c13.255 0 24-10.745 24-24V128H344c-13.2 0-24-10.8-24-24zm120.971-31.029L375.029 7.029A24 24 0 0 0 358.059 0H352v96h96v-6.059a24 24 0 0 0-7.029-16.97z"
-                          fill="currentColor"
-                        />
-                      </svg>
-                    </button>
-                    http://localhost:8081/repository/maven-releases/
-                  </span>
+                      <path
+                        d="M320 448v40c0 13.255-10.745 24-24 24H24c-13.255 0-24-10.745-24-24V120c0-13.255 10.745-24 24-24h72v296c0 30.879 25.121 56 56 56h168zm0-344V0H152c-13.255 0-24 10.745-24 24v368c0 13.255 10.745 24 24 24h272c13.255 0 24-10.745 24-24V128H344c-13.2 0-24-10.8-24-24zm120.971-31.029L375.029 7.029A24 24 0 0 0 358.059 0H352v96h96v-6.059a24 24 0 0 0-7.029-16.97z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </button>
+                  http://localhost:8081/repository/maven-releases/
                 </td>
                 <td
                   class="nx-cell nx-cell--icon"
@@ -538,28 +522,21 @@ exports[`RepositoriesList matches a snapshot 1`] = `
               </tr>
               <tr
                 class="nx-table-row nx-clickable"
-                tabindex="0"
               >
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    maven-snapshots
-                  </span>
+                  maven-snapshots
                 </td>
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    hosted
-                  </span>
+                  hosted
                 </td>
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    maven2
-                  </span>
+                  maven2
                 </td>
                 <td
                   class="nx-cell"
@@ -573,30 +550,28 @@ exports[`RepositoriesList matches a snapshot 1`] = `
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    <button
-                      aria-label="Copy URL to Clipboard"
-                      class="nx-btn nx-btn--icon-only"
-                      title="Copy URL to Clipboard"
+                  <button
+                    aria-disabled="false"
+                    aria-label="Copy URL to Clipboard"
+                    class="nx-btn nx-btn--icon-only"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-copy fa-w-14 nx-icon"
+                      data-icon="copy"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 448 512"
+                      xmlns="http://www.w3.org/2000/svg"
                     >
-                      <svg
-                        aria-hidden="true"
-                        class="svg-inline--fa fa-copy fa-w-14 nx-icon"
-                        data-icon="copy"
-                        data-prefix="fas"
-                        focusable="false"
-                        role="img"
-                        viewBox="0 0 448 512"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M320 448v40c0 13.255-10.745 24-24 24H24c-13.255 0-24-10.745-24-24V120c0-13.255 10.745-24 24-24h72v296c0 30.879 25.121 56 56 56h168zm0-344V0H152c-13.255 0-24 10.745-24 24v368c0 13.255 10.745 24 24 24h272c13.255 0 24-10.745 24-24V128H344c-13.2 0-24-10.8-24-24zm120.971-31.029L375.029 7.029A24 24 0 0 0 358.059 0H352v96h96v-6.059a24 24 0 0 0-7.029-16.97z"
-                          fill="currentColor"
-                        />
-                      </svg>
-                    </button>
-                    http://localhost:8081/repository/maven-snapshots/
-                  </span>
+                      <path
+                        d="M320 448v40c0 13.255-10.745 24-24 24H24c-13.255 0-24-10.745-24-24V120c0-13.255 10.745-24 24-24h72v296c0 30.879 25.121 56 56 56h168zm0-344V0H152c-13.255 0-24 10.745-24 24v368c0 13.255 10.745 24 24 24h272c13.255 0 24-10.745 24-24V128H344c-13.2 0-24-10.8-24-24zm120.971-31.029L375.029 7.029A24 24 0 0 0 358.059 0H352v96h96v-6.059a24 24 0 0 0-7.029-16.97z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </button>
+                  http://localhost:8081/repository/maven-snapshots/
                 </td>
                 <td
                   class="nx-cell nx-cell--icon"
@@ -620,28 +595,21 @@ exports[`RepositoriesList matches a snapshot 1`] = `
               </tr>
               <tr
                 class="nx-table-row nx-clickable"
-                tabindex="0"
               >
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    nuget-group
-                  </span>
+                  nuget-group
                 </td>
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    group
-                  </span>
+                  group
                 </td>
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    nuget
-                  </span>
+                  nuget
                 </td>
                 <td
                   class="nx-cell"
@@ -655,30 +623,28 @@ exports[`RepositoriesList matches a snapshot 1`] = `
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    <button
-                      aria-label="Copy URL to Clipboard"
-                      class="nx-btn nx-btn--icon-only"
-                      title="Copy URL to Clipboard"
+                  <button
+                    aria-disabled="false"
+                    aria-label="Copy URL to Clipboard"
+                    class="nx-btn nx-btn--icon-only"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-copy fa-w-14 nx-icon"
+                      data-icon="copy"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 448 512"
+                      xmlns="http://www.w3.org/2000/svg"
                     >
-                      <svg
-                        aria-hidden="true"
-                        class="svg-inline--fa fa-copy fa-w-14 nx-icon"
-                        data-icon="copy"
-                        data-prefix="fas"
-                        focusable="false"
-                        role="img"
-                        viewBox="0 0 448 512"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M320 448v40c0 13.255-10.745 24-24 24H24c-13.255 0-24-10.745-24-24V120c0-13.255 10.745-24 24-24h72v296c0 30.879 25.121 56 56 56h168zm0-344V0H152c-13.255 0-24 10.745-24 24v368c0 13.255 10.745 24 24 24h272c13.255 0 24-10.745 24-24V128H344c-13.2 0-24-10.8-24-24zm120.971-31.029L375.029 7.029A24 24 0 0 0 358.059 0H352v96h96v-6.059a24 24 0 0 0-7.029-16.97z"
-                          fill="currentColor"
-                        />
-                      </svg>
-                    </button>
-                    http://localhost:8081/repository/nuget-group/
-                  </span>
+                      <path
+                        d="M320 448v40c0 13.255-10.745 24-24 24H24c-13.255 0-24-10.745-24-24V120c0-13.255 10.745-24 24-24h72v296c0 30.879 25.121 56 56 56h168zm0-344V0H152c-13.255 0-24 10.745-24 24v368c0 13.255 10.745 24 24 24h272c13.255 0 24-10.745 24-24V128H344c-13.2 0-24-10.8-24-24zm120.971-31.029L375.029 7.029A24 24 0 0 0 358.059 0H352v96h96v-6.059a24 24 0 0 0-7.029-16.97z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </button>
+                  http://localhost:8081/repository/nuget-group/
                 </td>
                 <td
                   class="nx-cell nx-cell--icon"
@@ -702,28 +668,21 @@ exports[`RepositoriesList matches a snapshot 1`] = `
               </tr>
               <tr
                 class="nx-table-row nx-clickable"
-                tabindex="0"
               >
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    nuget-hosted
-                  </span>
+                  nuget-hosted
                 </td>
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    hosted
-                  </span>
+                  hosted
                 </td>
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    nuget
-                  </span>
+                  nuget
                 </td>
                 <td
                   class="nx-cell"
@@ -737,30 +696,28 @@ exports[`RepositoriesList matches a snapshot 1`] = `
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    <button
-                      aria-label="Copy URL to Clipboard"
-                      class="nx-btn nx-btn--icon-only"
-                      title="Copy URL to Clipboard"
+                  <button
+                    aria-disabled="false"
+                    aria-label="Copy URL to Clipboard"
+                    class="nx-btn nx-btn--icon-only"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-copy fa-w-14 nx-icon"
+                      data-icon="copy"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 448 512"
+                      xmlns="http://www.w3.org/2000/svg"
                     >
-                      <svg
-                        aria-hidden="true"
-                        class="svg-inline--fa fa-copy fa-w-14 nx-icon"
-                        data-icon="copy"
-                        data-prefix="fas"
-                        focusable="false"
-                        role="img"
-                        viewBox="0 0 448 512"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M320 448v40c0 13.255-10.745 24-24 24H24c-13.255 0-24-10.745-24-24V120c0-13.255 10.745-24 24-24h72v296c0 30.879 25.121 56 56 56h168zm0-344V0H152c-13.255 0-24 10.745-24 24v368c0 13.255 10.745 24 24 24h272c13.255 0 24-10.745 24-24V128H344c-13.2 0-24-10.8-24-24zm120.971-31.029L375.029 7.029A24 24 0 0 0 358.059 0H352v96h96v-6.059a24 24 0 0 0-7.029-16.97z"
-                          fill="currentColor"
-                        />
-                      </svg>
-                    </button>
-                    http://localhost:8081/repository/nuget-hosted/
-                  </span>
+                      <path
+                        d="M320 448v40c0 13.255-10.745 24-24 24H24c-13.255 0-24-10.745-24-24V120c0-13.255 10.745-24 24-24h72v296c0 30.879 25.121 56 56 56h168zm0-344V0H152c-13.255 0-24 10.745-24 24v368c0 13.255 10.745 24 24 24h272c13.255 0 24-10.745 24-24V128H344c-13.2 0-24-10.8-24-24zm120.971-31.029L375.029 7.029A24 24 0 0 0 358.059 0H352v96h96v-6.059a24 24 0 0 0-7.029-16.97z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </button>
+                  http://localhost:8081/repository/nuget-hosted/
                 </td>
                 <td
                   class="nx-cell nx-cell--icon"
@@ -784,28 +741,21 @@ exports[`RepositoriesList matches a snapshot 1`] = `
               </tr>
               <tr
                 class="nx-table-row nx-clickable"
-                tabindex="0"
               >
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    nuget.org-proxy
-                  </span>
+                  nuget.org-proxy
                 </td>
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    proxy
-                  </span>
+                  proxy
                 </td>
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    nuget
-                  </span>
+                  nuget
                 </td>
                 <td
                   class="nx-cell"
@@ -828,30 +778,28 @@ exports[`RepositoriesList matches a snapshot 1`] = `
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    <button
-                      aria-label="Copy URL to Clipboard"
-                      class="nx-btn nx-btn--icon-only"
-                      title="Copy URL to Clipboard"
+                  <button
+                    aria-disabled="false"
+                    aria-label="Copy URL to Clipboard"
+                    class="nx-btn nx-btn--icon-only"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-copy fa-w-14 nx-icon"
+                      data-icon="copy"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 448 512"
+                      xmlns="http://www.w3.org/2000/svg"
                     >
-                      <svg
-                        aria-hidden="true"
-                        class="svg-inline--fa fa-copy fa-w-14 nx-icon"
-                        data-icon="copy"
-                        data-prefix="fas"
-                        focusable="false"
-                        role="img"
-                        viewBox="0 0 448 512"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M320 448v40c0 13.255-10.745 24-24 24H24c-13.255 0-24-10.745-24-24V120c0-13.255 10.745-24 24-24h72v296c0 30.879 25.121 56 56 56h168zm0-344V0H152c-13.255 0-24 10.745-24 24v368c0 13.255 10.745 24 24 24h272c13.255 0 24-10.745 24-24V128H344c-13.2 0-24-10.8-24-24zm120.971-31.029L375.029 7.029A24 24 0 0 0 358.059 0H352v96h96v-6.059a24 24 0 0 0-7.029-16.97z"
-                          fill="currentColor"
-                        />
-                      </svg>
-                    </button>
-                    http://localhost:8081/repository/nuget.org-proxy/
-                  </span>
+                      <path
+                        d="M320 448v40c0 13.255-10.745 24-24 24H24c-13.255 0-24-10.745-24-24V120c0-13.255 10.745-24 24-24h72v296c0 30.879 25.121 56 56 56h168zm0-344V0H152c-13.255 0-24 10.745-24 24v368c0 13.255 10.745 24 24 24h272c13.255 0 24-10.745 24-24V128H344c-13.2 0-24-10.8-24-24zm120.971-31.029L375.029 7.029A24 24 0 0 0 358.059 0H352v96h96v-6.059a24 24 0 0 0-7.029-16.97z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </button>
+                  http://localhost:8081/repository/nuget.org-proxy/
                 </td>
                 <td
                   class="nx-cell nx-cell--icon"

@@ -155,9 +155,9 @@ exports[`DynamicFormField renders the string type renders a MultiSelect field 1`
       class="nxrm-multiselect__controls"
     >
       <button
+        aria-disabled="false"
         aria-label="Move Selection Right"
         class="nx-btn nx-btn--icon-only"
-        title="Move Selection Right"
       >
         <svg
           aria-hidden="true"
@@ -176,9 +176,9 @@ exports[`DynamicFormField renders the string type renders a MultiSelect field 1`
         </svg>
       </button>
       <button
+        aria-disabled="false"
         aria-label="Move Selection Left"
         class="nx-btn nx-btn--icon-only"
-        title="Move Selection Left"
       >
         <svg
           aria-hidden="true"
@@ -226,9 +226,9 @@ exports[`DynamicFormField renders the string type renders a MultiSelect field 1`
       class="nxrm-multiselect__controls"
     >
       <button
+        aria-disabled="false"
         aria-label="Move Selection Up"
         class="nx-btn nx-btn--icon-only"
-        title="Move Selection Up"
       >
         <svg
           aria-hidden="true"
@@ -247,9 +247,9 @@ exports[`DynamicFormField renders the string type renders a MultiSelect field 1`
         </svg>
       </button>
       <button
+        aria-disabled="false"
         aria-label="Move Selection Down"
         class="nx-btn nx-btn--icon-only"
-        title="Move Selection Down"
       >
         <svg
           aria-hidden="true"

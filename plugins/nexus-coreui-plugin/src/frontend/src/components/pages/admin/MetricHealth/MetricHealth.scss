@@ -22,10 +22,10 @@
   }
 
   .healthy {
-    color: $nx-valid-color;
+    color: var(--nx-color-validation-valid);
   }
 
   .unhealthy {
-    color: $nx-invalid-color;
+    color: var(--nx-color-validation-invalid);
   }
 }

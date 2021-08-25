@@ -15,10 +15,8 @@
   Style overrides for the react-shared-components. Once we've fully converted to React we should remove these overrides.
 */
 
-@import "~@sonatype/react-shared-components/scss-shared/nx-variables";
-
 .x-body {
-  line-height: $nx-line-height;
+  line-height: var(--nx-line-height);
 
   .nx-tile-footer {
     text-align: left !important;
@@ -27,7 +25,7 @@
   .nx-footer .nx-btn-bar {
     flex-direction: row-reverse;
     > :last-child {
-      margin-right: $nx-spacing-l;
+      margin-right: var(--nx-spacing-6x);
     }
   }
 }

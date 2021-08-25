@@ -78,7 +78,7 @@ describe('RepositoriesList', function() {
       filter: () => getByPlaceholderText('Filter by name'),
       tableRow: (index) => container.querySelectorAll('tbody tr')[index],
       tableRows: () => container.querySelectorAll('tbody tr'),
-      urlButton: (index) => container.querySelectorAll('button[title="Copy URL to Clipboard"]')[index]
+      urlButton: (index) => container.querySelectorAll('button[aria-label="Copy URL to Clipboard"]')[index]
     }));
   }
 

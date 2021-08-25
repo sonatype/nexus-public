@@ -10,9 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-@import "~@sonatype/react-shared-components/scss-shared/nx-colors";
 @import "~@sonatype/react-shared-components/scss-shared/nx-container-helpers";
-@import "~@sonatype/react-shared-components/scss-shared/nx-variables";
 @import "~@sonatype/react-shared-components/scss-shared/nx-text-helpers";
 
 /**
@@ -20,26 +18,26 @@
  */
 .nxrm-routing-rules {
   .nx-table > tbody > .nx-table-row > .nx-cell.repository-child {
-    padding-left: $nx-spacing-xxl;
+    padding-left: var(--nx-spacing-12x);
   }
 
   .allowed {
-    color: $nx-valid-color;
+    color: var(--nx-color-validation-valid);
   }
 
   .blocked {
-    color: $nx-invalid-color;
+    color: var(--nx-color-validation-invalid);
   }
 
   .nxrm-path {
     &::before {
       content: "/";
       position: absolute;
-      padding-left: $nx-spacing-md;
+      padding-left: var(--nx-spacing-4x);
       padding-top: 10px;
 
       @include semi-bold();
-      font-size: $nx-font-size;
+      font-size: var(--nx-font-size);
       z-index: 1;
     }
 

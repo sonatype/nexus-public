@@ -96,16 +96,12 @@ export default function MultiSelect({
       </Select>
     </div>
     <div className="nxrm-multiselect__controls">
-      <NxTooltip title={UIStrings.MULTI_SELECT.MOVE_RIGHT}>
-        <NxButton variant="icon-only" onClick={moveRight}>
-          <NxFontAwesomeIcon icon={faCaretRight}/>
-        </NxButton>
-      </NxTooltip>
-      <NxTooltip title={UIStrings.MULTI_SELECT.MOVE_LEFT}>
-        <NxButton variant="icon-only" onClick={moveLeft}>
-          <NxFontAwesomeIcon icon={faCaretLeft}/>
-        </NxButton>
-      </NxTooltip>
+      <NxButton title={UIStrings.MULTI_SELECT.MOVE_RIGHT} variant="icon-only" onClick={moveRight}>
+        <NxFontAwesomeIcon icon={faCaretRight}/>
+      </NxButton>
+      <NxButton title={UIStrings.MULTI_SELECT.MOVE_LEFT} variant="icon-only" onClick={moveLeft}>
+        <NxFontAwesomeIcon icon={faCaretLeft}/>
+      </NxButton>
     </div>
     <div className="nxrm-multiselect__to">
       <label className="nx-sub-label" htmlFor={toId}>{toLabel}</label>
@@ -114,16 +110,12 @@ export default function MultiSelect({
       </Select>
     </div>
     <div className="nxrm-multiselect__controls">
-      <NxTooltip title={UIStrings.MULTI_SELECT.MOVE_UP}>
-        <NxButton variant="icon-only" onClick={moveUp}>
-          <NxFontAwesomeIcon icon={faCaretUp}/>
-        </NxButton>
-      </NxTooltip>
-      <NxTooltip title={UIStrings.MULTI_SELECT.MOVE_DOWN}>
-        <NxButton variant="icon-only" onClick={moveDown}>
-          <NxFontAwesomeIcon icon={faCaretDown}/>
-        </NxButton>
-      </NxTooltip>
+      <NxButton title={UIStrings.MULTI_SELECT.MOVE_UP} variant="icon-only" onClick={moveUp}>
+        <NxFontAwesomeIcon icon={faCaretUp}/>
+      </NxButton>
+      <NxButton title={UIStrings.MULTI_SELECT.MOVE_DOWN} variant="icon-only" onClick={moveDown}>
+        <NxFontAwesomeIcon icon={faCaretDown}/>
+      </NxButton>
     </div>
   </div>;
 }

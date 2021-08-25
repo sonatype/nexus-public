@@ -43,6 +43,7 @@ exports[`LogViewer renders the log into the text area 1`] = `
         class="nxrm-page-actions"
       >
         <button
+          aria-disabled="false"
           class="nx-btn nx-btn--primary"
         >
           <span>
@@ -117,6 +118,7 @@ exports[`LogViewer renders the log into the text area 1`] = `
               />
             </div>
             <button
+              aria-disabled="false"
               class="nx-btn nx-btn--secondary"
               id="insertMark"
             >

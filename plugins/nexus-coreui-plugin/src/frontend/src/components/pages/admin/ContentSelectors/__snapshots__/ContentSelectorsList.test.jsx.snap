@@ -38,6 +38,7 @@ exports[`ContentSelectorsList renders a loading spinner 1`] = `
         class="nxrm-page-actions"
       >
         <button
+          aria-disabled="false"
           class="nx-btn nx-btn--primary"
         >
           <span>
@@ -136,112 +137,121 @@ exports[`ContentSelectorsList renders a loading spinner 1`] = `
                 class="nx-table-row nx-table-row--header"
               >
                 <th
-                  aria-label="Name ascending"
                   aria-sort="ascending"
                   class="nx-cell nx-cell--header nx-cell--sortable"
-                  tabindex="0"
-                  title="Name ascending"
                 >
-                  <span>
-                    Name
-                  </span>
-                  <span
-                    class="nx-cell__sort-icons fa-layers"
+                  <button
+                    aria-label="Name ascending"
+                    class="nx-cell__sort-btn"
+                    type="button"
                   >
-                    <svg
-                      aria-hidden="true"
-                      class="svg-inline--fa fa-sort-down fa-w-10 nx-icon"
-                      data-icon="sort-down"
-                      data-prefix="fas"
-                      focusable="false"
-                      role="img"
-                      viewBox="0 0 320 512"
-                      xmlns="http://www.w3.org/2000/svg"
+                    <span>
+                      Name
+                    </span>
+                    <span
+                      class="nx-cell__sort-icons fa-layers"
                     >
-                      <path
-                        d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                    <svg
-                      aria-hidden="true"
-                      class="svg-inline--fa fa-sort-up fa-w-10 nx-icon"
-                      data-icon="sort-up"
-                      data-prefix="fas"
-                      focusable="false"
-                      role="img"
-                      viewBox="0 0 320 512"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                  </span>
+                      <svg
+                        aria-hidden="true"
+                        class="svg-inline--fa fa-sort-down fa-w-10 nx-icon"
+                        data-icon="sort-down"
+                        data-prefix="fas"
+                        focusable="false"
+                        role="img"
+                        viewBox="0 0 320 512"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                      <svg
+                        aria-hidden="true"
+                        class="svg-inline--fa fa-sort-up fa-w-10 nx-icon"
+                        data-icon="sort-up"
+                        data-prefix="fas"
+                        focusable="false"
+                        role="img"
+                        viewBox="0 0 320 512"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </span>
+                  </button>
                 </th>
                 <th
-                  aria-label="Type unsorted"
                   aria-sort="none"
                   class="nx-cell nx-cell--header nx-cell--sortable"
-                  tabindex="0"
-                  title="Type unsorted"
                 >
-                  <span>
-                    Type
-                  </span>
-                  <span
-                    class="nx-cell__sort-icons fa-layers"
+                  <button
+                    aria-label="Type unsorted"
+                    class="nx-cell__sort-btn"
+                    type="button"
                   >
-                    <svg
-                      aria-hidden="true"
-                      class="svg-inline--fa fa-sort fa-w-10 nx-icon"
-                      data-icon="sort"
-                      data-prefix="fas"
-                      focusable="false"
-                      role="img"
-                      viewBox="0 0 320 512"
-                      xmlns="http://www.w3.org/2000/svg"
+                    <span>
+                      Type
+                    </span>
+                    <span
+                      class="nx-cell__sort-icons fa-layers"
                     >
-                      <path
-                        d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                  </span>
+                      <svg
+                        aria-hidden="true"
+                        class="svg-inline--fa fa-sort fa-w-10 nx-icon"
+                        data-icon="sort"
+                        data-prefix="fas"
+                        focusable="false"
+                        role="img"
+                        viewBox="0 0 320 512"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </span>
+                  </button>
                 </th>
                 <th
-                  aria-label="Description unsorted"
                   aria-sort="none"
                   class="nx-cell nx-cell--header nx-cell--sortable"
-                  tabindex="0"
-                  title="Description unsorted"
                 >
-                  <span>
-                    Description
-                  </span>
-                  <span
-                    class="nx-cell__sort-icons fa-layers"
+                  <button
+                    aria-label="Description unsorted"
+                    class="nx-cell__sort-btn"
+                    type="button"
                   >
-                    <svg
-                      aria-hidden="true"
-                      class="svg-inline--fa fa-sort fa-w-10 nx-icon"
-                      data-icon="sort"
-                      data-prefix="fas"
-                      focusable="false"
-                      role="img"
-                      viewBox="0 0 320 512"
-                      xmlns="http://www.w3.org/2000/svg"
+                    <span>
+                      Description
+                    </span>
+                    <span
+                      class="nx-cell__sort-icons fa-layers"
                     >
-                      <path
-                        d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                  </span>
+                      <svg
+                        aria-hidden="true"
+                        class="svg-inline--fa fa-sort fa-w-10 nx-icon"
+                        data-icon="sort"
+                        data-prefix="fas"
+                        focusable="false"
+                        role="img"
+                        viewBox="0 0 320 512"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </span>
+                  </button>
                 </th>
                 <th
-                  class="nx-cell nx-cell--header nx-cell--icon"
+                  class="nx-cell nx-cell--header nx-cell--chevron"
                 />
               </tr>
             </thead>
@@ -361,6 +371,7 @@ exports[`ContentSelectorsList renders an error message 1`] = `
         class="nxrm-page-actions"
       >
         <button
+          aria-disabled="false"
           class="nx-btn nx-btn--primary"
         >
           <span>
@@ -459,112 +470,121 @@ exports[`ContentSelectorsList renders an error message 1`] = `
                 class="nx-table-row nx-table-row--header"
               >
                 <th
-                  aria-label="Name ascending"
                   aria-sort="ascending"
                   class="nx-cell nx-cell--header nx-cell--sortable"
-                  tabindex="0"
-                  title="Name ascending"
                 >
-                  <span>
-                    Name
-                  </span>
-                  <span
-                    class="nx-cell__sort-icons fa-layers"
+                  <button
+                    aria-label="Name ascending"
+                    class="nx-cell__sort-btn"
+                    type="button"
                   >
-                    <svg
-                      aria-hidden="true"
-                      class="svg-inline--fa fa-sort-down fa-w-10 nx-icon"
-                      data-icon="sort-down"
-                      data-prefix="fas"
-                      focusable="false"
-                      role="img"
-                      viewBox="0 0 320 512"
-                      xmlns="http://www.w3.org/2000/svg"
+                    <span>
+                      Name
+                    </span>
+                    <span
+                      class="nx-cell__sort-icons fa-layers"
                     >
-                      <path
-                        d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                    <svg
-                      aria-hidden="true"
-                      class="svg-inline--fa fa-sort-up fa-w-10 nx-icon"
-                      data-icon="sort-up"
-                      data-prefix="fas"
-                      focusable="false"
-                      role="img"
-                      viewBox="0 0 320 512"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                  </span>
+                      <svg
+                        aria-hidden="true"
+                        class="svg-inline--fa fa-sort-down fa-w-10 nx-icon"
+                        data-icon="sort-down"
+                        data-prefix="fas"
+                        focusable="false"
+                        role="img"
+                        viewBox="0 0 320 512"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                      <svg
+                        aria-hidden="true"
+                        class="svg-inline--fa fa-sort-up fa-w-10 nx-icon"
+                        data-icon="sort-up"
+                        data-prefix="fas"
+                        focusable="false"
+                        role="img"
+                        viewBox="0 0 320 512"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </span>
+                  </button>
                 </th>
                 <th
-                  aria-label="Type unsorted"
                   aria-sort="none"
                   class="nx-cell nx-cell--header nx-cell--sortable"
-                  tabindex="0"
-                  title="Type unsorted"
                 >
-                  <span>
-                    Type
-                  </span>
-                  <span
-                    class="nx-cell__sort-icons fa-layers"
+                  <button
+                    aria-label="Type unsorted"
+                    class="nx-cell__sort-btn"
+                    type="button"
                   >
-                    <svg
-                      aria-hidden="true"
-                      class="svg-inline--fa fa-sort fa-w-10 nx-icon"
-                      data-icon="sort"
-                      data-prefix="fas"
-                      focusable="false"
-                      role="img"
-                      viewBox="0 0 320 512"
-                      xmlns="http://www.w3.org/2000/svg"
+                    <span>
+                      Type
+                    </span>
+                    <span
+                      class="nx-cell__sort-icons fa-layers"
                     >
-                      <path
-                        d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                  </span>
+                      <svg
+                        aria-hidden="true"
+                        class="svg-inline--fa fa-sort fa-w-10 nx-icon"
+                        data-icon="sort"
+                        data-prefix="fas"
+                        focusable="false"
+                        role="img"
+                        viewBox="0 0 320 512"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </span>
+                  </button>
                 </th>
                 <th
-                  aria-label="Description unsorted"
                   aria-sort="none"
                   class="nx-cell nx-cell--header nx-cell--sortable"
-                  tabindex="0"
-                  title="Description unsorted"
                 >
-                  <span>
-                    Description
-                  </span>
-                  <span
-                    class="nx-cell__sort-icons fa-layers"
+                  <button
+                    aria-label="Description unsorted"
+                    class="nx-cell__sort-btn"
+                    type="button"
                   >
-                    <svg
-                      aria-hidden="true"
-                      class="svg-inline--fa fa-sort fa-w-10 nx-icon"
-                      data-icon="sort"
-                      data-prefix="fas"
-                      focusable="false"
-                      role="img"
-                      viewBox="0 0 320 512"
-                      xmlns="http://www.w3.org/2000/svg"
+                    <span>
+                      Description
+                    </span>
+                    <span
+                      class="nx-cell__sort-icons fa-layers"
                     >
-                      <path
-                        d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                  </span>
+                      <svg
+                        aria-hidden="true"
+                        class="svg-inline--fa fa-sort fa-w-10 nx-icon"
+                        data-icon="sort"
+                        data-prefix="fas"
+                        focusable="false"
+                        role="img"
+                        viewBox="0 0 320 512"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </span>
+                  </button>
                 </th>
                 <th
-                  class="nx-cell nx-cell--header nx-cell--icon"
+                  class="nx-cell nx-cell--header nx-cell--chevron"
                 />
               </tr>
             </thead>
@@ -695,6 +715,7 @@ exports[`ContentSelectorsList renders the resolved data 1`] = `
         class="nxrm-page-actions"
       >
         <button
+          aria-disabled="false"
           class="nx-btn nx-btn--primary"
         >
           <span>
@@ -793,204 +814,211 @@ exports[`ContentSelectorsList renders the resolved data 1`] = `
                 class="nx-table-row nx-table-row--header"
               >
                 <th
-                  aria-label="Name ascending"
                   aria-sort="ascending"
                   class="nx-cell nx-cell--header nx-cell--sortable"
-                  tabindex="0"
-                  title="Name ascending"
                 >
-                  <span>
-                    Name
-                  </span>
-                  <span
-                    class="nx-cell__sort-icons fa-layers"
+                  <button
+                    aria-label="Name ascending"
+                    class="nx-cell__sort-btn"
+                    type="button"
                   >
-                    <svg
-                      aria-hidden="true"
-                      class="svg-inline--fa fa-sort-down fa-w-10 nx-icon"
-                      data-icon="sort-down"
-                      data-prefix="fas"
-                      focusable="false"
-                      role="img"
-                      viewBox="0 0 320 512"
-                      xmlns="http://www.w3.org/2000/svg"
+                    <span>
+                      Name
+                    </span>
+                    <span
+                      class="nx-cell__sort-icons fa-layers"
                     >
-                      <path
-                        d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                    <svg
-                      aria-hidden="true"
-                      class="svg-inline--fa fa-sort-up fa-w-10 nx-icon"
-                      data-icon="sort-up"
-                      data-prefix="fas"
-                      focusable="false"
-                      role="img"
-                      viewBox="0 0 320 512"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                  </span>
+                      <svg
+                        aria-hidden="true"
+                        class="svg-inline--fa fa-sort-down fa-w-10 nx-icon"
+                        data-icon="sort-down"
+                        data-prefix="fas"
+                        focusable="false"
+                        role="img"
+                        viewBox="0 0 320 512"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                      <svg
+                        aria-hidden="true"
+                        class="svg-inline--fa fa-sort-up fa-w-10 nx-icon"
+                        data-icon="sort-up"
+                        data-prefix="fas"
+                        focusable="false"
+                        role="img"
+                        viewBox="0 0 320 512"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </span>
+                  </button>
                 </th>
                 <th
-                  aria-label="Type unsorted"
                   aria-sort="none"
                   class="nx-cell nx-cell--header nx-cell--sortable"
-                  tabindex="0"
-                  title="Type unsorted"
                 >
-                  <span>
-                    Type
-                  </span>
-                  <span
-                    class="nx-cell__sort-icons fa-layers"
+                  <button
+                    aria-label="Type unsorted"
+                    class="nx-cell__sort-btn"
+                    type="button"
                   >
-                    <svg
-                      aria-hidden="true"
-                      class="svg-inline--fa fa-sort fa-w-10 nx-icon"
-                      data-icon="sort"
-                      data-prefix="fas"
-                      focusable="false"
-                      role="img"
-                      viewBox="0 0 320 512"
-                      xmlns="http://www.w3.org/2000/svg"
+                    <span>
+                      Type
+                    </span>
+                    <span
+                      class="nx-cell__sort-icons fa-layers"
                     >
-                      <path
-                        d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                  </span>
+                      <svg
+                        aria-hidden="true"
+                        class="svg-inline--fa fa-sort fa-w-10 nx-icon"
+                        data-icon="sort"
+                        data-prefix="fas"
+                        focusable="false"
+                        role="img"
+                        viewBox="0 0 320 512"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </span>
+                  </button>
                 </th>
                 <th
-                  aria-label="Description unsorted"
                   aria-sort="none"
                   class="nx-cell nx-cell--header nx-cell--sortable"
-                  tabindex="0"
-                  title="Description unsorted"
                 >
-                  <span>
-                    Description
-                  </span>
-                  <span
-                    class="nx-cell__sort-icons fa-layers"
+                  <button
+                    aria-label="Description unsorted"
+                    class="nx-cell__sort-btn"
+                    type="button"
                   >
-                    <svg
-                      aria-hidden="true"
-                      class="svg-inline--fa fa-sort fa-w-10 nx-icon"
-                      data-icon="sort"
-                      data-prefix="fas"
-                      focusable="false"
-                      role="img"
-                      viewBox="0 0 320 512"
-                      xmlns="http://www.w3.org/2000/svg"
+                    <span>
+                      Description
+                    </span>
+                    <span
+                      class="nx-cell__sort-icons fa-layers"
                     >
-                      <path
-                        d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                  </span>
+                      <svg
+                        aria-hidden="true"
+                        class="svg-inline--fa fa-sort fa-w-10 nx-icon"
+                        data-icon="sort"
+                        data-prefix="fas"
+                        focusable="false"
+                        role="img"
+                        viewBox="0 0 320 512"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </span>
+                  </button>
                 </th>
                 <th
-                  class="nx-cell nx-cell--header nx-cell--icon"
+                  class="nx-cell nx-cell--header nx-cell--chevron"
                 />
               </tr>
             </thead>
             <tbody>
               <tr
                 class="nx-table-row nx-clickable"
-                tabindex="0"
               >
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    an xss&lt;img src="/static/rapture/resources/icons/x16/user.png" onload="alert(0)"&gt;
-                  </span>
+                  an xss&lt;img src="/static/rapture/resources/icons/x16/user.png" onload="alert(0)"&gt;
                 </td>
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    CSEL
-                  </span>
+                  CSEL
                 </td>
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    description
-                  </span>
+                  description
                 </td>
                 <td
-                  class="nx-cell nx-cell--icon"
+                  class="nx-cell nx-cell--chevron"
                 >
-                  <svg
-                    aria-hidden="true"
-                    class="svg-inline--fa fa-chevron-right fa-w-10 nx-icon"
-                    data-icon="chevron-right"
-                    data-prefix="fas"
-                    focusable="false"
-                    role="img"
-                    viewBox="0 0 320 512"
-                    xmlns="http://www.w3.org/2000/svg"
+                  <button
+                    aria-label="an xss<img src=\\"/static/rapture/resources/icons/x16/user.png\\" onload=\\"alert(0)\\">; CSEL; description"
+                    class="nx-cell__chevron-btn"
+                    type="button"
                   >
-                    <path
-                      d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z"
-                      fill="currentColor"
-                    />
-                  </svg>
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-chevron-right fa-w-10 nx-icon"
+                      data-icon="chevron-right"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 320 512"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </button>
                 </td>
               </tr>
               <tr
                 class="nx-table-row nx-clickable"
-                tabindex="0"
               >
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    jexl-selector
-                  </span>
+                  jexl-selector
                 </td>
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    JEXL
-                  </span>
+                  JEXL
                 </td>
                 <td
                   class="nx-cell"
                 >
-                  <span>
-                    jexl-description
-                  </span>
+                  jexl-description
                 </td>
                 <td
-                  class="nx-cell nx-cell--icon"
+                  class="nx-cell nx-cell--chevron"
                 >
-                  <svg
-                    aria-hidden="true"
-                    class="svg-inline--fa fa-chevron-right fa-w-10 nx-icon"
-                    data-icon="chevron-right"
-                    data-prefix="fas"
-                    focusable="false"
-                    role="img"
-                    viewBox="0 0 320 512"
-                    xmlns="http://www.w3.org/2000/svg"
+                  <button
+                    aria-label="jexl-selector; JEXL; jexl-description"
+                    class="nx-cell__chevron-btn"
+                    type="button"
                   >
-                    <path
-                      d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z"
-                      fill="currentColor"
-                    />
-                  </svg>
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-chevron-right fa-w-10 nx-icon"
+                      data-icon="chevron-right"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 320 512"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </button>
                 </td>
               </tr>
             </tbody>
