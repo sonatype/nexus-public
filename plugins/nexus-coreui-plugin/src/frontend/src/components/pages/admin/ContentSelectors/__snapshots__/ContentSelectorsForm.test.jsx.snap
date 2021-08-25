@@ -103,6 +103,7 @@ exports[`ContentSelectorsForm renders a loading spinner 1`] = `
               />
             </div>
             <button
+              aria-disabled="false"
               class="nx-btn nx-btn--secondary"
               disabled=""
             >
@@ -192,9 +193,7 @@ exports[`ContentSelectorsForm renders a loading spinner 1`] = `
                 <th
                   class="nx-cell nx-cell--header"
                 >
-                  <span>
-                    Name
-                  </span>
+                  Name
                 </th>
               </tr>
             </thead>
@@ -206,9 +205,7 @@ exports[`ContentSelectorsForm renders a loading spinner 1`] = `
                   class="nx-cell nx-cell--meta-info"
                   colspan="1"
                 >
-                  <span>
-                    No content in repositories matched the expression
-                  </span>
+                  No content in repositories matched the expression
                 </td>
               </tr>
             </tbody>
@@ -518,17 +515,18 @@ exports[`ContentSelectorsForm renders the resolved data 1`] = `
               aria-disabled="true"
               aria-label="There are no changes"
               class="disabled nx-btn nx-btn--primary"
-              title="There are no changes"
               type="submit"
             >
               Save
             </button>
             <button
+              aria-disabled="false"
               class="nx-btn nx-btn--secondary"
             >
               Cancel
             </button>
             <button
+              aria-disabled="false"
               class="nx-btn nx-btn--tertiary"
             >
               <svg
@@ -588,6 +586,7 @@ exports[`ContentSelectorsForm renders the resolved data 1`] = `
               />
             </div>
             <button
+              aria-disabled="false"
               class="nx-btn nx-btn--secondary"
             >
               Preview
@@ -676,9 +675,7 @@ exports[`ContentSelectorsForm renders the resolved data 1`] = `
                 <th
                   class="nx-cell nx-cell--header"
                 >
-                  <span>
-                    Name
-                  </span>
+                  Name
                 </th>
               </tr>
             </thead>
@@ -690,9 +687,7 @@ exports[`ContentSelectorsForm renders the resolved data 1`] = `
                   class="nx-cell nx-cell--meta-info"
                   colspan="1"
                 >
-                  <span>
-                    No content in repositories matched the expression
-                  </span>
+                  No content in repositories matched the expression
                 </td>
               </tr>
             </tbody>

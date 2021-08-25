@@ -24,20 +24,18 @@ export default function RoutingRulesPreview({value, onChange, onTest}) {
     }
   }
 
-  return <div className="nx-form-row">
-    <div className="nx-form-group">
-      <label htmlFor="path" className="nx-label"><span className="nx-label__text">{ROUTING_RULES.PATH_LABEL}</span></label>
-      <div className="nx-sub-label">{ROUTING_RULES.PATH_DESCRIPTION}</div>
-      <div className="nx-form-row">
-        <div className="nx-form-group">
-          {/* Ensure the button is at the correct height and prepend with a / */}
-          <label className="nx-label nxrm-path">
-            <Textfield name="path" value={value} onChange={onChange} onKeyPress={handleEnter} validatable={false}/>
-          </label>
-        </div>
-        <div className="nx-btn-bar">
-          <NxButton variant="primary" onClick={onTest}>{ROUTING_RULES.TEST_BUTTON}</NxButton>
-        </div>
+  return <div className="nx-form-group">
+    <label htmlFor="path" className="nx-label"><span className="nx-label__text">{ROUTING_RULES.PATH_LABEL}</span></label>
+    <div className="nx-sub-label">{ROUTING_RULES.PATH_DESCRIPTION}</div>
+    <div className="nx-form-row">
+      <div className="nx-form-group">
+        {/* Ensure the button is at the correct height and prepend with a / */}
+        <label className="nx-label nxrm-path">
+          <Textfield name="path" value={value} onChange={onChange} onKeyPress={handleEnter} validatable={false}/>
+        </label>
+      </div>
+      <div className="nx-btn-bar">
+        <NxButton variant="primary" onClick={onTest}>{ROUTING_RULES.TEST_BUTTON}</NxButton>
       </div>
     </div>
   </div>;

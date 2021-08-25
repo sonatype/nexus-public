@@ -1501,6 +1501,11 @@
   resolved "https://registry.yarnpkg.com/@react-hook/latest/-/latest-1.0.3.tgz#c2d1d0b0af8b69ec6e2b3a2412ba0768ac82db80"
   integrity sha512-dy6duzl+JnAZcDbNTfmaP3xHiKtbXYOaz3G51MGVljh548Y8MWzTr+PHLOfvpypEVW9zwvl+VyKjbWKEVbV1Rg==
 
+"@react-hook/merged-ref@^1.3.0":
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/@react-hook/merged-ref/-/merged-ref-1.3.0.tgz#0f482780e1eefc1abdc964dd3d04680186b07c8a"
+  integrity sha512-9p7fbPZ37n1Cbw37f3EtrcR9TwVjMkoTKwYbG7URO2HDlnOzuNTjsd/VK0/4i52SwKmOa6lBwz6Pr9g0pIyaCg==
+
 "@react-hook/passive-layout-effect@^1.2.0":
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/@react-hook/passive-layout-effect/-/passive-layout-effect-1.2.1.tgz#c06dac2d011f36d61259aa1c6df4f0d5e28bc55e"
@@ -1514,6 +1519,11 @@
     "@react-hook/latest" "^1.0.2"
     "@react-hook/passive-layout-effect" "^1.2.0"
     resize-observer-polyfill "^1.5.1"
+
+"@rooks/use-mutation-observer@^4.11.0":
+  version "4.11.2"
+  resolved "https://registry.yarnpkg.com/@rooks/use-mutation-observer/-/use-mutation-observer-4.11.2.tgz#a0466c4338e0a4487ea19253c86bcd427c29f4af"
+  integrity sha512-vpsdrZdr6TkB1zZJcHx+fR1YC/pHs2BaqcuYiEGjBVbwY5xcC49+h0hAUtQKHth3oJqXfIX/Ng8S7s5HFHdM/A==
 
 "@sinonjs/commons@^1.7.0":
   version "1.8.2"
@@ -1549,16 +1559,18 @@
     in-publish "^2.0.0"
     prop-types "^15.5.10"
 
-"@sonatype/react-shared-components@=5.5.0":
-  version "5.5.0"
-  resolved "https://registry.yarnpkg.com/@sonatype/react-shared-components/-/react-shared-components-5.5.0.tgz#c44ce45a12a680d7f4efb0f555a0d7b4cc9a0aeb"
-  integrity sha512-r26kHGYuC5S6IiHG6eTn8JJw6ZO05PVBCVKzepGRZ01DWz4R/UnH19cMB0EXjYiXQKFb0MxsXDEOek/XHttV8A==
+"@sonatype/react-shared-components@=7.8.1":
+  version "7.8.1"
+  resolved "https://registry.yarnpkg.com/@sonatype/react-shared-components/-/react-shared-components-7.8.1.tgz#9b29601fbe6c1248ca006f595a9c4bb4e6225462"
+  integrity sha512-6phZNeB5M3/xVbR3PqNY5WgfJlzS/KVHyqRkbEMRk/S609dN4WGRFpErEatBJ7AiYCw5ncKQFGEt3CEFcTkXXw==
   dependencies:
     "@fortawesome/fontawesome-svg-core" "^1.2.32"
     "@fortawesome/free-solid-svg-icons" "^5.15.1"
     "@fortawesome/react-fontawesome" "^0.1.14"
     "@material-ui/core" "^4.11.2"
+    "@react-hook/merged-ref" "^1.3.0"
     "@react-hook/resize-observer" "^1.1.0"
+    "@rooks/use-mutation-observer" "^4.11.0"
     "@sonatype/react-commonmark" "^3.0.1"
     "@types/classnames" "^2.2.11"
     "@types/prop-types" "^15.7.3"

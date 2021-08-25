@@ -96,7 +96,7 @@ export default function BlobStoresList({onCreate, onEdit}) {
               <NxTableCell onClick={sortBySpace} isSortable sortDir={spaceSortDir} isNumeric>
                 {COLUMNS.SPACE}
               </NxTableCell>
-              <NxTableCell hasIcon/>
+              <NxTableCell chevron/>
             </NxTableRow>
           </NxTableHead>
           <NxTableBody isLoading={isLoading} error={error} emptyMessage={BLOB_STORES.LIST.EMPTY_LIST}>
@@ -120,7 +120,7 @@ export default function BlobStoresList({onCreate, onEdit}) {
                           Utils.bytesToString(availableSpaceInBytes)
                         }
                       </NxTableCell>
-                      <NxTableCell hasIcon><NxFontAwesomeIcon icon={faChevronRight}/></NxTableCell>
+                      <NxTableCell chevron/>
                     </NxTableRow>
                 ))}
           </NxTableBody>

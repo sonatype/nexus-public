@@ -88,7 +88,7 @@ export default function LoggingConfigurationList({onCreate, onEdit}) {
               <NxTableCell onClick={() => send('SORT_BY_LEVEL')} isSortable sortDir={levelSortDir}>
                 {UIStrings.LOGGING.LEVEL_LABEL}
               </NxTableCell>
-              <NxTableCell hasIcon/>
+              <NxTableCell chevron/>
             </NxTableRow>
           </NxTableHead>
           <NxTableBody isLoading={isLoading} error={error}>
@@ -96,7 +96,7 @@ export default function LoggingConfigurationList({onCreate, onEdit}) {
                 <NxTableRow key={name} onClick={() => onEdit(name)} isClickable>
                   <NxTableCell>{name}</NxTableCell>
                   <NxTableCell>{level}</NxTableCell>
-                  <NxTableCell hasIcon><NxFontAwesomeIcon icon={faChevronRight}/></NxTableCell>
+                  <NxTableCell chevron/>
                 </NxTableRow>
             ))}
           </NxTableBody>

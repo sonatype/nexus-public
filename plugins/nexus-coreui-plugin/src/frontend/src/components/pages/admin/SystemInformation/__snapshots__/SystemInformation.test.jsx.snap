@@ -38,6 +38,7 @@ exports[`SystemInformation renders correctly 1`] = `
         class="nxrm-page-actions"
       >
         <button
+          aria-disabled="false"
           class="nx-btn nx-btn--primary"
           disabled=""
         >
@@ -115,6 +116,7 @@ exports[`SystemInformation renders correctly 2`] = `
         class="nxrm-page-actions"
       >
         <button
+          aria-disabled="false"
           class="nx-btn nx-btn--primary"
         >
           <span>

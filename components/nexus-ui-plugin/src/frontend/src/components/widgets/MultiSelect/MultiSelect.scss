@@ -14,7 +14,6 @@
  * @since 3.31
  */
 @import '../../../styles/colors';
-@import '~@sonatype/react-shared-components/scss-shared/nx-variables';
 
 @mixin vertical-align {
   display: flex;
@@ -35,7 +34,7 @@
 
     select.nx-form-select {
       flex: 1;
-      width: $nx-form-element-width-normal;
+      width: var(--nx-width-form-element-normal);
       border-top-left-radius: 0;
       border-top-right-radius: 0;
       border-top: 0px;
@@ -52,7 +51,7 @@
 
       select {
         flex: 1;
-        width: $nx-form-element-width-normal;
+        width: var(--nx-width-form-element-normal);
         height: 100%;
       }
     }
@@ -61,8 +60,8 @@
   .nxrm-multiselect__controls {
     @include vertical-align;
 
-    padding-top: $nx-font-size-s * $nx-line-height;
-    margin: $nx-spacing-md;
+    padding-top: calc(var(--nx-font-size-s) * var(--nx-line-height));
+    margin: var(--nx-spacing-4x);
 
     button {
       margin: 0;

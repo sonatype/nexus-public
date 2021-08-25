@@ -400,6 +400,7 @@ exports[`SupportZipForm renders support zip form 1`] = `
         class="nx-btn-bar"
       >
         <button
+          aria-disabled="false"
           class="nx-btn nx-btn--primary"
           type="submit"
         >

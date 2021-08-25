@@ -216,7 +216,6 @@ exports[`AnonymousSettings renders correctly 1`] = `
                   aria-disabled="true"
                   aria-label="There are no changes"
                   class="disabled nx-btn nx-btn--secondary"
-                  title="There are no changes"
                   type="button"
                 >
                   Discard
@@ -225,7 +224,6 @@ exports[`AnonymousSettings renders correctly 1`] = `
                   aria-disabled="true"
                   aria-label="There are no changes"
                   class="nx-form__submit-btn disabled nx-btn nx-btn--primary"
-                  title="There are no changes"
                 >
                   Save
                 </button>

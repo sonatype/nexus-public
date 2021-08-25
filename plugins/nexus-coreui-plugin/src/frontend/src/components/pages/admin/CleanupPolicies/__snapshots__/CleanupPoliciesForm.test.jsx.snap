@@ -714,17 +714,18 @@ exports[`CleanupPoliciesForm renders the resolved data 1`] = `
               aria-disabled="true"
               aria-label="There are no changes"
               class="disabled nx-btn nx-btn--primary"
-              title="There are no changes"
               type="submit"
             >
               Save
             </button>
             <button
+              aria-disabled="false"
               class="nx-btn nx-btn--secondary"
             >
               Cancel
             </button>
             <button
+              aria-disabled="false"
               class="nx-btn nx-btn--tertiary"
             >
               <svg
@@ -795,6 +796,7 @@ exports[`CleanupPoliciesForm renders the resolved data 1`] = `
               </select>
             </div>
             <button
+              aria-disabled="false"
               class="nx-btn nx-btn--secondary"
               disabled=""
             >
@@ -882,109 +884,118 @@ exports[`CleanupPoliciesForm renders the resolved data 1`] = `
                 class="nx-table-row nx-table-row--header"
               >
                 <th
-                  aria-label="Name ascending"
                   aria-sort="ascending"
                   class="nx-cell nx-cell--header nx-cell--sortable"
-                  tabindex="0"
-                  title="Name ascending"
                 >
-                  <span>
-                    Name
-                  </span>
-                  <span
-                    class="nx-cell__sort-icons fa-layers"
+                  <button
+                    aria-label="Name ascending"
+                    class="nx-cell__sort-btn"
+                    type="button"
                   >
-                    <svg
-                      aria-hidden="true"
-                      class="svg-inline--fa fa-sort-down fa-w-10 nx-icon"
-                      data-icon="sort-down"
-                      data-prefix="fas"
-                      focusable="false"
-                      role="img"
-                      viewBox="0 0 320 512"
-                      xmlns="http://www.w3.org/2000/svg"
+                    <span>
+                      Name
+                    </span>
+                    <span
+                      class="nx-cell__sort-icons fa-layers"
                     >
-                      <path
-                        d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                    <svg
-                      aria-hidden="true"
-                      class="svg-inline--fa fa-sort-up fa-w-10 nx-icon"
-                      data-icon="sort-up"
-                      data-prefix="fas"
-                      focusable="false"
-                      role="img"
-                      viewBox="0 0 320 512"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                  </span>
+                      <svg
+                        aria-hidden="true"
+                        class="svg-inline--fa fa-sort-down fa-w-10 nx-icon"
+                        data-icon="sort-down"
+                        data-prefix="fas"
+                        focusable="false"
+                        role="img"
+                        viewBox="0 0 320 512"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                      <svg
+                        aria-hidden="true"
+                        class="svg-inline--fa fa-sort-up fa-w-10 nx-icon"
+                        data-icon="sort-up"
+                        data-prefix="fas"
+                        focusable="false"
+                        role="img"
+                        viewBox="0 0 320 512"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </span>
+                  </button>
                 </th>
                 <th
-                  aria-label="Group unsorted"
                   aria-sort="none"
                   class="nx-cell nx-cell--header nx-cell--sortable"
-                  tabindex="0"
-                  title="Group unsorted"
                 >
-                  <span>
-                    Group
-                  </span>
-                  <span
-                    class="nx-cell__sort-icons fa-layers"
+                  <button
+                    aria-label="Group unsorted"
+                    class="nx-cell__sort-btn"
+                    type="button"
                   >
-                    <svg
-                      aria-hidden="true"
-                      class="svg-inline--fa fa-sort fa-w-10 nx-icon"
-                      data-icon="sort"
-                      data-prefix="fas"
-                      focusable="false"
-                      role="img"
-                      viewBox="0 0 320 512"
-                      xmlns="http://www.w3.org/2000/svg"
+                    <span>
+                      Group
+                    </span>
+                    <span
+                      class="nx-cell__sort-icons fa-layers"
                     >
-                      <path
-                        d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                  </span>
+                      <svg
+                        aria-hidden="true"
+                        class="svg-inline--fa fa-sort fa-w-10 nx-icon"
+                        data-icon="sort"
+                        data-prefix="fas"
+                        focusable="false"
+                        role="img"
+                        viewBox="0 0 320 512"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </span>
+                  </button>
                 </th>
                 <th
-                  aria-label="Version unsorted"
                   aria-sort="none"
                   class="nx-cell nx-cell--header nx-cell--sortable"
-                  tabindex="0"
-                  title="Version unsorted"
                 >
-                  <span>
-                    Version
-                  </span>
-                  <span
-                    class="nx-cell__sort-icons fa-layers"
+                  <button
+                    aria-label="Version unsorted"
+                    class="nx-cell__sort-btn"
+                    type="button"
                   >
-                    <svg
-                      aria-hidden="true"
-                      class="svg-inline--fa fa-sort fa-w-10 nx-icon"
-                      data-icon="sort"
-                      data-prefix="fas"
-                      focusable="false"
-                      role="img"
-                      viewBox="0 0 320 512"
-                      xmlns="http://www.w3.org/2000/svg"
+                    <span>
+                      Version
+                    </span>
+                    <span
+                      class="nx-cell__sort-icons fa-layers"
                     >
-                      <path
-                        d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                  </span>
+                      <svg
+                        aria-hidden="true"
+                        class="svg-inline--fa fa-sort fa-w-10 nx-icon"
+                        data-icon="sort"
+                        data-prefix="fas"
+                        focusable="false"
+                        role="img"
+                        viewBox="0 0 320 512"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </span>
+                  </button>
                 </th>
               </tr>
             </thead>
@@ -993,11 +1004,10 @@ exports[`CleanupPoliciesForm renders the resolved data 1`] = `
                 class="nx-table-row"
               >
                 <td
-                  class="nx-cell"
+                  class="nx-cell nx-cell--meta-info"
+                  colspan="3"
                 >
-                  <span>
-                    No assets in repository matched the criteria
-                  </span>
+                  No assets in repository matched the criteria
                 </td>
               </tr>
             </tbody>

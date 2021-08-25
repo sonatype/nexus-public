@@ -218,6 +218,7 @@ exports[`SupportZipResponse renders support zip response 1`] = `
       class="nx-footer"
     >
       <button
+        aria-disabled="false"
         class="nx-btn nx-btn--primary"
         type="submit"
       >

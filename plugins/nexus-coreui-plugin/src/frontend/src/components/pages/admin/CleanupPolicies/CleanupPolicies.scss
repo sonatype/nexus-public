@@ -14,14 +14,12 @@
  * @since 3.29
  */
 
-@import "~@sonatype/react-shared-components/scss-shared/nx-variables";
-
 .nxrm-cleanup-policies {
   .suffix {
     display: inline-block;
     vertical-align: top;
     margin-top: 18px;
-    margin-left: $nx-spacing-xxs;
+    margin-left: var(--nx-spacing-base);
   }
 }
 .nxrm-cleanup-policies {

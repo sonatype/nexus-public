@@ -13,10 +13,8 @@
 /**
  * @since 3.27
  */
-@import '~@sonatype/react-shared-components/scss-shared/nx-variables';
-
 .nxrm-section-toolbar {
   display: flex;
-  margin-bottom: $nx-spacing-xs;
+  margin-bottom: var(--nx-spacing-2x);
   align-items: center;
 }
