@@ -25,6 +25,7 @@ import ExtJS from '../../../../interface/ExtJS';
 export default function MasterDetail({className, children, path, ...attrs}) {
   const {location: {pathname}} = ExtJS.useHistory({basePath: path});
   const [isCreate, setCreate] = useState(false);
+  const [response, setResponse] = useState(null);
 
   const classes = classNames('nxrm-master-detail', className);
   const isMasterRoute = pathname === '';
@@ -38,14 +39,28 @@ export default function MasterDetail({className, children, path, ...attrs}) {
     window.location.hash = `${path}:${itemId}`;
   }
 
-  function onDone() {
+  function onDone(doneResponse) {
     setCreate(false);
+    const warning = doneResponse?.evt?.data?.data;
+    if (warning && typeof warning == 'string') {
+      setResponse(warning);
+    } else {
+      setResponse(null);
+    }
     window.location.hash = path;
   }
 
   const childrenArray = Children.toArray(children);
-  const master = cloneElement(childrenArray.filter(child => child.type === Master)[0], {onCreate, onEdit});
-  const detail = cloneElement(childrenArray.filter(child => child.type === Detail)[0], {itemId, onDone});
+  const master = cloneElement(childrenArray.filter(child => child.type === Master)[0], {
+    onCreate,
+    onEdit,
+    response,
+    setResponse
+  });
+  const detail = cloneElement(childrenArray.filter(child => child.type === Detail)[0], {
+    itemId,
+    onDone
+  });
 
   return (
       <div className={classes} {...attrs}>
