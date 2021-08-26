@@ -261,35 +261,38 @@ public class MetadataBuilder
 
   public void addArtifactVersion(final MavenPath mavenPath) {
     checkNotNull(mavenPath);
-    if (mavenPath.isSubordinate() || mavenPath.getCoordinates() == null) {
+    Coordinates coordinates = mavenPath.getCoordinates();
+    if (mavenPath.isSubordinate() || coordinates == null) {
       return;
     }
-    checkState(Objects.equals(groupId, mavenPath.getCoordinates().getGroupId()));
-    checkState(Objects.equals(artifactId, mavenPath.getCoordinates().getArtifactId()));
-    checkState(Objects.equals(baseVersion, mavenPath.getCoordinates().getBaseVersion()));
+
+    String path = mavenPath.getPath();
+    checkState(Objects.equals(groupId, coordinates.getGroupId()), "GroupId:%s Path:%s", groupId, path);
+    checkState(Objects.equals(artifactId, coordinates.getArtifactId()), "ArtifactId:%s Path:%s", artifactId, path);
+    checkState(Objects.equals(baseVersion, coordinates.getBaseVersion()), "Version:%s Path:%s", baseVersion, path);
 
     log.debug("Discovered {}:{}:{}:{}:{}",
-        mavenPath.getCoordinates().getGroupId(),
-        mavenPath.getCoordinates().getArtifactId(),
-        mavenPath.getCoordinates().getVersion(),
-        mavenPath.getCoordinates().getClassifier(),
-        mavenPath.getCoordinates().getExtension());
+        coordinates.getGroupId(),
+        coordinates.getArtifactId(),
+        coordinates.getVersion(),
+        coordinates.getClassifier(),
+        coordinates.getExtension());
 
-    addBaseVersion(mavenPath.getCoordinates().getBaseVersion());
+    addBaseVersion(coordinates.getBaseVersion());
 
-    if (!mavenPath.getCoordinates().isSnapshot()) {
+    if (!coordinates.isSnapshot()) {
       return;
     }
-    if (Objects.equals(mavenPath.getCoordinates().getBaseVersion(), mavenPath.getCoordinates().getVersion())) {
+    if (Objects.equals(coordinates.getBaseVersion(), coordinates.getVersion())) {
       log.warn("Non-timestamped snapshot, ignoring it: {}", mavenPath);
       return;
     }
 
-    final Version version = parseVersion(mavenPath.getCoordinates().getVersion());
+    final Version version = parseVersion(coordinates.getVersion());
     if (version == null) {
       return; // could not parse, omit it from "latest" maintenance
     }
-    final VersionCoordinates versionCoordinates = new VersionCoordinates(version, mavenPath.getCoordinates());
+    final VersionCoordinates versionCoordinates = new VersionCoordinates(version, coordinates);
 
     // maintain latestVersionCoordinates
     if (latestVersionCoordinates == null || latestVersionCoordinates.version.compareTo(version) < 0) {
@@ -297,7 +300,7 @@ public class MetadataBuilder
     }
 
     // maintain latestVersionCoordinatesMap
-    final String key = key(mavenPath.getCoordinates());
+    final String key = key(coordinates);
     final VersionCoordinates other = latestVersionCoordinatesMap.get(key);
     // add if contained version is less than version
     if (other == null || other.version.compareTo(versionCoordinates.version) < 0) {
