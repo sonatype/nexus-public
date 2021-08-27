@@ -14,61 +14,50 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext*/
+/*global Ext, NX*/
 
 /**
- * Footer branding panel.
  *
- * @since 3.next
+ * @since 3.31
  */
-Ext.define('NX.view.footer.AnalyticsOptOut', {
-  extend: 'Ext.container.Container',
-  alias: 'widget.nx-footer-analytics-opt-out',
-
+Ext.define('NX.onboarding.step.ConfigureAnalyticsCollectionStep', {
+  extend: 'NX.wizard.Step',
   requires: [
-    'NX.I18n',
+    'NX.onboarding.view.ConfigureAnalyticsCollectionScreen',
     'NX.State'
   ],
 
-  hidden: true,
-
-  height: 92,
-
-  layout: {
-    type: 'hbox',
-    align: 'center',
-    pack: 'center'
+  config: {
+    screen: 'NX.onboarding.view.ConfigureAnalyticsCollectionScreen',
+    enabled: true
   },
-
-  baseCls: 'nx-coreui-component-analyticsoptout-banner-outline',
 
   /**
    * @override
    */
-  initComponent: function() {
+  init: function() {
     var me = this;
 
-    me.items = [
-      {
-        html: '<img alt="lock" class="nx-coreui-component-analyticsoptout-banner-icon" src="/static/rapture/resources/images/lock-graphic-01.svg" />'
+    me.control({
+      'button[action=next]': {
+        click: me.configureAnalytics
+      },
+      'button[action=back]': {
+        click: me.moveBack
       }
-    ];
-
-    Ext.History.on('change', me.maybeSetVisible, me);
-    me.maybeSetVisible();
-    me.callParent();
+    });
   },
 
-  maybeSetVisible: function() {
+  configureAnalytics: function(button) {
     var me = this;
-    var user = NX.State.getUser();
+    var enabled = button.up('form').down('#analyticsEnabled').getValue();
 
-    if (window.location.hash.startsWith('#admin/')) {
-      var acknowledgementRequired = NX.State.getValue('acknowledgeAnalytics.required');
-      me.setVisible(acknowledgementRequired);
-    }
-    else {
-      me.setVisible(false);
-    }
-  },
+    NX.direct.capability_Capability.create({enabled: enabled, typeId: 'analytics-configuration'},
+        function(response) {
+
+          me.moveNext();
+
+        }
+    );
+  }
 });

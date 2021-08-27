@@ -31,7 +31,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Default {@link BlobStoreLocator} implementation.
  *
- * @since 3.34
+ * @since 3.next
  */
 @Named
 @Singleton

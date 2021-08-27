@@ -55,7 +55,7 @@ class RoundRobinFillPolicyTest
         ]
       }
     when: 'the policy selects the next writable blob store'
-      def blobStore = roundRobinFillPolicy.chooseBlobStore(blobStoreGroup, [:])
+      def blobStore = roundRobinFillPolicy.chooseBlobStoreForCreate(blobStoreGroup, [:])
     then: 'it selects the correct member and the next index is correct'
       blobStore.getBlobStoreConfiguration().getName() == 'three'
       roundRobinFillPolicy.nextIndex() == 1
@@ -72,7 +72,7 @@ class RoundRobinFillPolicyTest
     and: 'the following initial sequence'
       roundRobinFillPolicy.sequence.set(initialSequence)
     when: 'the policy tries to select the blob store member'
-      def blobStore = roundRobinFillPolicy.chooseBlobStore(blobStoreGroup, [:])
+      def blobStore = roundRobinFillPolicy.chooseBlobStoreForCreate(blobStoreGroup, [:])
     then: 'the selected blobstore is null and the next index is correct'
       blobStore == null
       roundRobinFillPolicy.nextIndex() == expectedNextIndex
@@ -93,7 +93,7 @@ class RoundRobinFillPolicyTest
         getMembers() >> []
       }
     when: 'the policy tries to select the blob store member'
-      def blobStore = roundRobinFillPolicy.chooseBlobStore(blobStoreGroup, [:])
+      def blobStore = roundRobinFillPolicy.chooseBlobStoreForCreate(blobStoreGroup, [:])
     then: 'the result is null'
       blobStore == null
   }
@@ -120,7 +120,7 @@ class RoundRobinFillPolicyTest
     and: 'the following initial sequence'
       roundRobinFillPolicy.sequence.set(initialSequence)
     when: 'the policy tries to select the blob store member'
-      def blobStore = roundRobinFillPolicy.chooseBlobStore(blobStoreGroup, [:])
+      def blobStore = roundRobinFillPolicy.chooseBlobStoreForCreate(blobStoreGroup, [:])
     then: 'the result is as expected'
       blobStore.blobStoreConfiguration.name == expectedName
     where:

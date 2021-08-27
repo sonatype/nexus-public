@@ -12,31 +12,32 @@
  */
 package org.sonatype.nexus.onboarding.internal;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.capability.CapabilityReferenceFilterBuilder.CapabilityReferenceFilter;
 import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.common.app.ApplicationVersion;
-import org.sonatype.nexus.rapture.StateContributor;
+import org.sonatype.nexus.common.app.FeatureFlag;
+import org.sonatype.nexus.onboarding.OnboardingItem;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.capability.CapabilityType.capabilityType;
 
 /**
- * State contributor defining whether acknowledgement of the analytics submission state is required.
+ * Shows analytics opt-in screen for OSS if Analytics Capability is not present.
  *
- * @since 3.next
+ * @since 3.31
  */
 @Named
 @Singleton
-public class AcknowledgeAnalyticsStateContributor
-    implements StateContributor
+@FeatureFlag(name = "nexus.analytics.enabled", enabledByDefault = true)
+public class ConfigureAnalyticsCollectionItem
+    extends ComponentSupport
+    implements OnboardingItem
 {
   protected static final String OSS = "OSS";
 
@@ -47,32 +48,31 @@ public class AcknowledgeAnalyticsStateContributor
   private final CapabilityRegistry capabilityRegistry;
 
   @Inject
-  public AcknowledgeAnalyticsStateContributor(
+  public ConfigureAnalyticsCollectionItem(
       final ApplicationVersion applicationVersion,
       final CapabilityRegistry capabilityRegistry)
   {
-
-    this.applicationVersion = applicationVersion;
-    this.capabilityRegistry = capabilityRegistry;
+    this.applicationVersion = checkNotNull(applicationVersion);
+    this.capabilityRegistry = checkNotNull(capabilityRegistry);
   }
 
-  @Nullable
   @Override
-  public Map<String, Object> getState() {
-    Map<String, Object> properties = new HashMap<>();
-
-    properties.put("acknowledgeAnalytics.required", applies());
-
-    return properties;
+  public String getType() {
+    return "ConfigureAnalyticsCollection";
   }
 
-  private boolean applies() {
+  @Override
+  public int getPriority() {
+    return 64;
+  }
+
+  @Override
+  public boolean applies() {
     return OSS.equals(applicationVersion.getEdition()) && analyticsCapabilityAbsent();
   }
 
   private boolean analyticsCapabilityAbsent() {
     CapabilityType capabilityType = capabilityType(ANALYTICS_CONFIGURATION);
-    return capabilityRegistry.get(new CapabilityReferenceFilter().withType(capabilityType).includeNotExposed())
-        .isEmpty();
+    return capabilityRegistry.get(new CapabilityReferenceFilter().withType(capabilityType)).isEmpty();
   }
 }

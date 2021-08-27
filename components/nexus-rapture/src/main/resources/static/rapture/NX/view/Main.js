@@ -28,8 +28,7 @@ Ext.define('NX.view.Main', {
     'NX.I18n',
     'NX.Icons',
     'NX.view.header.QuickSearch',
-    'Ext.button.Button',
-    'NX.view.footer.AnalyticsOptOut'
+    'Ext.button.Button'
   ],
 
   layout: 'border',
@@ -70,10 +69,6 @@ Ext.define('NX.view.Main', {
         border: true
       },
 
-      {
-        xtype: 'nx-footer-analytics-opt-out',
-        region: 'south'
-      },
       {
         xtype: 'nx-footer',
         region: 'south',

@@ -13,7 +13,7 @@
 package org.sonatype.nexus.blobstore.api;
 
 /**
- * @since 3.34
+ * @since 3.next
  */
 public class RepositoryDoesNotExistException extends Exception
 {

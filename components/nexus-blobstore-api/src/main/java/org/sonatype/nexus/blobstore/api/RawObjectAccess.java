@@ -48,7 +48,7 @@ public interface RawObjectAccess
   /**
    * Deletes all raw objects directly under this path. Does not recursively delete.
    *
-   * @since 3.34
+   * @since 3.next
    */
   void deleteRawObjectsInPath(Path path);
 }
