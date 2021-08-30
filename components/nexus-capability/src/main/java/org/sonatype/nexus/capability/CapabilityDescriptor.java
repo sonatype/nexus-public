@@ -109,7 +109,7 @@ public interface CapabilityDescriptor
 
   /**
    * Optional warning message to display when disabling the capability.
-   * @since 3.next
+   * @since 3.34
    */
   @Nullable
   default String getDisableWarningMessage() {
@@ -118,7 +118,7 @@ public interface CapabilityDescriptor
 
   /**
    * Optional warning message to display when deleting the capability.
-   * @since 3.next
+   * @since 3.34
    */
   @Nullable
   default String getDeleteWarningMessage() {
