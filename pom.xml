@@ -890,6 +890,7 @@
               <id>resteasy-client</id>
               <id>jackson-coreutils</id>
               <id>json-patch</id>
+              <id>jsoup</id>
               <id>swagger-core</id>
               <id>swagger-jaxrs</id>
             </excludedArtifactIds>
