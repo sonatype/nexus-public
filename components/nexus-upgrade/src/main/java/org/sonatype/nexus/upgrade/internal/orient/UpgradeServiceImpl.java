@@ -27,6 +27,7 @@ import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.common.upgrade.Checkpoint;
 import org.sonatype.nexus.common.upgrade.Upgrade;
 import org.sonatype.nexus.common.upgrade.Upgrades;
+import org.sonatype.nexus.upgrade.AnalyticsPermissionReset;
 import org.sonatype.nexus.upgrade.UpgradeService;
 
 import com.google.common.base.Throwables;
@@ -59,14 +60,19 @@ public class UpgradeServiceImpl
 
   private Map<String, String> modelVersions;
 
+  private final AnalyticsPermissionReset analyticsPermissionReset;
+
   @Inject
-  public UpgradeServiceImpl(final UpgradeManager upgradeManager,
-                            final ModelVersionStore modelVersionStore,
-                            final NodeAccess nodeAccess)
+  public UpgradeServiceImpl(
+      final UpgradeManager upgradeManager,
+      final ModelVersionStore modelVersionStore,
+      final NodeAccess nodeAccess,
+      final AnalyticsPermissionReset analyticsPermissionReset)
   {
     this.upgradeManager = checkNotNull(upgradeManager);
     this.modelVersionStore = checkNotNull(modelVersionStore);
     this.nodeAccess = checkNotNull(nodeAccess);
+    this.analyticsPermissionReset = checkNotNull(analyticsPermissionReset);
   }
 
   @Override
@@ -125,6 +131,7 @@ public class UpgradeServiceImpl
       upgrades.forEach(apply());
       log.info(BANNER, "Commit upgrade");
       checkpoints.forEach(commit());
+      analyticsPermissionReset.resetAnalyticsPermissionIfDisabled();
     }
     catch (Throwable e) {
       log.warn(BANNER, "Rollback upgrade");

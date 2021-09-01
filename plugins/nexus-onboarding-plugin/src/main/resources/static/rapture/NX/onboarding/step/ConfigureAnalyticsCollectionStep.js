@@ -52,7 +52,9 @@ Ext.define('NX.onboarding.step.ConfigureAnalyticsCollectionStep', {
     var me = this;
     var enabled = button.up('form').down('#analyticsEnabled').getValue();
 
-    NX.direct.capability_Capability.create({enabled: enabled, typeId: 'analytics-configuration'},
+    NX.direct.capability_Capability.create({enabled: enabled,
+          typeId: 'analytics-configuration',
+          properties: {'submitAnalytics': enabled.toString()}},
         function(response) {
 
           me.moveNext();
