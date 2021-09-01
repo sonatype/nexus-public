@@ -20,6 +20,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.upgrade.Checkpoint;
 import org.sonatype.nexus.common.upgrade.Upgrade;
+import org.sonatype.nexus.upgrade.AnalyticsPermissionReset;
 import org.sonatype.nexus.upgrade.UpgradeService;
 import org.sonatype.nexus.upgrade.example.CheckpointBar;
 import org.sonatype.nexus.upgrade.example.CheckpointFoo;
@@ -61,6 +62,9 @@ public class UpgradeServiceTest
 
   @Mock
   private NodeAccess nodeAccess;
+
+  @Mock
+  private AnalyticsPermissionReset analyticsPermissionReset;
 
   private Checkpoint checkpointFoo;
 
@@ -104,7 +108,7 @@ public class UpgradeServiceTest
     upgradeWibble_2_0 = upgrades[3].mock;
 
     UpgradeManager upgradeManager = new UpgradeManager(asList(checkpoints), asList(upgrades), false);
-    upgradeService = new UpgradeServiceImpl(upgradeManager, modelVersionStore, nodeAccess);
+    upgradeService = new UpgradeServiceImpl(upgradeManager, modelVersionStore, nodeAccess, analyticsPermissionReset);
 
     // defaults to testing non-clustered existing instance
     when(modelVersionStore.isNewInstance()).thenReturn(false);
@@ -122,7 +126,7 @@ public class UpgradeServiceTest
   @Test
   public void testManagesLifecycleOfVersionStore() throws Exception {
     UpgradeManager upgradeManager = new UpgradeManager(asList(), asList(), false);
-    upgradeService = new UpgradeServiceImpl(upgradeManager, modelVersionStore, nodeAccess);
+    upgradeService = new UpgradeServiceImpl(upgradeManager, modelVersionStore, nodeAccess, analyticsPermissionReset);
 
     upgradeService.start();
     verify(modelVersionStore).start();
@@ -134,7 +138,7 @@ public class UpgradeServiceTest
   @Test
   public void testNoUpgradesDoesNothing() throws Exception {
     UpgradeManager upgradeManager = new UpgradeManager(asList(), asList(), false);
-    upgradeService = new UpgradeServiceImpl(upgradeManager, modelVersionStore, nodeAccess);
+    upgradeService = new UpgradeServiceImpl(upgradeManager, modelVersionStore, nodeAccess, analyticsPermissionReset);
 
     upgradeService.start();
 
@@ -145,7 +149,8 @@ public class UpgradeServiceTest
         upgradeFoo_1_1,
         upgradeFoo_1_2,
         upgradeBar_1_1,
-        upgradeWibble_2_0);
+        upgradeWibble_2_0,
+        analyticsPermissionReset);
   }
 
   @Test
@@ -164,7 +169,8 @@ public class UpgradeServiceTest
         upgradeFoo_1_1,
         upgradeFoo_1_2,
         upgradeBar_1_1,
-        upgradeWibble_2_0);
+        upgradeWibble_2_0,
+        analyticsPermissionReset);
   }
 
   @Test
@@ -184,7 +190,8 @@ public class UpgradeServiceTest
         upgradeFoo_1_1,
         upgradeFoo_1_2,
         upgradeBar_1_1,
-        upgradeWibble_2_0);
+        upgradeWibble_2_0,
+        analyticsPermissionReset);
   }
 
   @Test
@@ -205,7 +212,8 @@ public class UpgradeServiceTest
         upgradeFoo_1_1,
         upgradeFoo_1_2,
         upgradeBar_1_1,
-        upgradeWibble_2_0);
+        upgradeWibble_2_0,
+        analyticsPermissionReset);
   }
 
   @Test
@@ -225,7 +233,8 @@ public class UpgradeServiceTest
         upgradeFoo_1_1,
         upgradeFoo_1_2,
         upgradeBar_1_1,
-        upgradeWibble_2_0);
+        upgradeWibble_2_0,
+        analyticsPermissionReset);
 
     order.verify(checkpointFoo).begin("1.1");
     order.verify(checkpointWibble).begin("1.0");
@@ -236,8 +245,11 @@ public class UpgradeServiceTest
     order.verify(checkpointFoo).commit();
     order.verify(checkpointWibble).commit();
 
+    order.verify(analyticsPermissionReset).resetAnalyticsPermissionIfDisabled();
+
     order.verify(checkpointFoo).end();
     order.verify(checkpointWibble).end();
+
 
     verifyNoMoreInteractions(
         checkpointFoo,
@@ -246,7 +258,8 @@ public class UpgradeServiceTest
         upgradeFoo_1_1,
         upgradeFoo_1_2,
         upgradeBar_1_1,
-        upgradeWibble_2_0);
+        upgradeWibble_2_0,
+        analyticsPermissionReset);
   }
 
   @Test
@@ -267,13 +280,16 @@ public class UpgradeServiceTest
         upgradeFoo_1_1,
         upgradeFoo_1_2,
         upgradeBar_1_1,
-        upgradeWibble_2_0);
+        upgradeWibble_2_0,
+        analyticsPermissionReset);
 
     order.verify(checkpointFoo).begin("1.1");
 
     order.verify(upgradeFoo_1_2).apply();
 
     order.verify(checkpointFoo).commit();
+
+    order.verify(analyticsPermissionReset).resetAnalyticsPermissionIfDisabled();
 
     order.verify(checkpointFoo).end();
 
@@ -284,7 +300,8 @@ public class UpgradeServiceTest
         upgradeFoo_1_1,
         upgradeFoo_1_2,
         upgradeBar_1_1,
-        upgradeWibble_2_0);
+        upgradeWibble_2_0,
+        analyticsPermissionReset);
   }
 
   @Test
@@ -309,7 +326,8 @@ public class UpgradeServiceTest
         upgradeFoo_1_1,
         upgradeFoo_1_2,
         upgradeBar_1_1,
-        upgradeWibble_2_0);
+        upgradeWibble_2_0,
+        analyticsPermissionReset);
 
     order.verify(checkpointFoo).begin("1.0");
     order.verify(checkpointBar).begin("1.0");
@@ -324,6 +342,8 @@ public class UpgradeServiceTest
     order.verify(checkpointBar).commit();
     order.verify(checkpointWibble).commit();
 
+    order.verify(analyticsPermissionReset).resetAnalyticsPermissionIfDisabled();
+
     order.verify(checkpointFoo).end();
     order.verify(checkpointBar).end();
     order.verify(checkpointWibble).end();
@@ -335,7 +355,8 @@ public class UpgradeServiceTest
         upgradeFoo_1_1,
         upgradeFoo_1_2,
         upgradeBar_1_1,
-        upgradeWibble_2_0);
+        upgradeWibble_2_0,
+        analyticsPermissionReset);
   }
 
   @Test
@@ -360,7 +381,8 @@ public class UpgradeServiceTest
         upgradeFoo_1_1,
         upgradeFoo_1_2,
         upgradeBar_1_1,
-        upgradeWibble_2_0);
+        upgradeWibble_2_0,
+        analyticsPermissionReset);
 
     order.verify(checkpointFoo).begin("1.0");
     order.verify(checkpointBar).begin("1.0");
@@ -380,7 +402,8 @@ public class UpgradeServiceTest
         upgradeFoo_1_1,
         upgradeFoo_1_2,
         upgradeBar_1_1,
-        upgradeWibble_2_0);
+        upgradeWibble_2_0,
+        analyticsPermissionReset);
   }
 
   @Test
@@ -405,7 +428,8 @@ public class UpgradeServiceTest
         upgradeFoo_1_1,
         upgradeFoo_1_2,
         upgradeBar_1_1,
-        upgradeWibble_2_0);
+        upgradeWibble_2_0,
+        analyticsPermissionReset);
 
     order.verify(checkpointFoo).begin("1.0");
     order.verify(checkpointBar).begin("1.0");
@@ -417,7 +441,8 @@ public class UpgradeServiceTest
         upgradeFoo_1_1,
         upgradeFoo_1_2,
         upgradeBar_1_1,
-        upgradeWibble_2_0);
+        upgradeWibble_2_0,
+        analyticsPermissionReset);
   }
 
   @Test
@@ -442,7 +467,8 @@ public class UpgradeServiceTest
         upgradeFoo_1_1,
         upgradeFoo_1_2,
         upgradeBar_1_1,
-        upgradeWibble_2_0);
+        upgradeWibble_2_0,
+        analyticsPermissionReset);
 
     order.verify(checkpointFoo).begin("1.0");
     order.verify(checkpointBar).begin("1.0");
@@ -467,7 +493,8 @@ public class UpgradeServiceTest
         upgradeFoo_1_1,
         upgradeFoo_1_2,
         upgradeBar_1_1,
-        upgradeWibble_2_0);
+        upgradeWibble_2_0,
+        analyticsPermissionReset);
   }
 
   @Test
@@ -493,7 +520,8 @@ public class UpgradeServiceTest
         upgradeFoo_1_1,
         upgradeFoo_1_2,
         upgradeBar_1_1,
-        upgradeWibble_2_0);
+        upgradeWibble_2_0,
+        analyticsPermissionReset);
 
     order.verify(checkpointFoo).begin("1.0");
     order.verify(checkpointBar).begin("1.0");
@@ -518,7 +546,8 @@ public class UpgradeServiceTest
         upgradeFoo_1_1,
         upgradeFoo_1_2,
         upgradeBar_1_1,
-        upgradeWibble_2_0);
+        upgradeWibble_2_0,
+        analyticsPermissionReset);
   }
 
 }
