@@ -20,6 +20,7 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
@@ -67,6 +68,8 @@ public class OrientAnalyticsPermissionReset
 
   private final Provider<DatabaseInstance> config;
 
+  private final ApplicationVersion applicationVersion;
+
   private static final Logger LOG = LoggerFactory.getLogger(OrientAnalyticsPermissionReset.class);
 
   private static final String DB_CLASS = new OClassNameBuilder()
@@ -74,12 +77,19 @@ public class OrientAnalyticsPermissionReset
       .build();
 
   @Inject
-  public OrientAnalyticsPermissionReset(@Named(DatabaseInstanceNames.CONFIG) final Provider<DatabaseInstance> config) {
+  public OrientAnalyticsPermissionReset(
+      @Named(DatabaseInstanceNames.CONFIG) final Provider<DatabaseInstance> config,
+      final ApplicationVersion applicationVersion) {
     this.config = config;
+    this.applicationVersion = applicationVersion;
   }
 
   @Override
   public void resetAnalyticsPermissionIfDisabled() {
+    if (!OSS.equals(applicationVersion.getEdition())) {
+      return;
+    }
+
     LOG.debug("Checking analytics permission ...");
     try (ODatabaseDocumentTx db = config.get().connect()) {
       if (db.getMetadata().getSchema().existsClass(DB_CLASS)) {
