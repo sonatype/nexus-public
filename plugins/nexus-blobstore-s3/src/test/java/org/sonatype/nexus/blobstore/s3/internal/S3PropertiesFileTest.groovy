@@ -12,11 +12,15 @@
  */
 package org.sonatype.nexus.blobstore.s3.internal
 
+
 import com.amazonaws.services.s3.AmazonS3
+import com.amazonaws.services.s3.model.ObjectMetadata
 import com.amazonaws.services.s3.model.S3Object
 import com.amazonaws.services.s3.model.S3ObjectInputStream
 import spock.lang.Specification
 
+import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX
+import static org.sonatype.nexus.blobstore.api.BlobStore.TEMPORARY_BLOB_HEADER
 
 /**
  * {@link S3PropertiesFile} tests.
@@ -55,8 +59,10 @@ public class S3PropertiesFileTest
     then:
       1 * s3.putObject('mybucket', 'mykey', _, _) >> { bucket, key, bytes, metadata ->
         def text = bytes.text
+        ObjectMetadata objectMetadata = metadata
         assert text.contains('testProperty=newValue' + System.lineSeparator())
         assert metadata.contentLength == text.length()
+        assert objectMetadata.userMetadata.get(TEMPORARY_BLOB_HEADER) == null
       }
   }
 
@@ -70,6 +76,31 @@ public class S3PropertiesFileTest
 
     then:
       assert propertiesFile.toString() == "s3://mybucket/mykey/with/nesting/ {testProperty=newValue, otherKey=otherValue}"
+  }
+
+  def 'Adds BlobStore.temporary-blob UserMetadata to ObjectMetadata when BlobStore.temporary-blob is in headers'() {
+    given:
+      S3PropertiesFile propertiesFile = new S3PropertiesFile(s3, 'mybucket', 'mykey')
+      S3Object s3Object = Mock()
+
+    when:
+      propertiesFile.setProperty(HEADER_PREFIX + TEMPORARY_BLOB_HEADER, 'true')
+      propertiesFile.store()
+
+    then:
+      1 * s3.putObject('mybucket', 'mykey', _, _) >> { bucket, key, bytes, metadata ->
+        def text = bytes.text
+        ObjectMetadata objectMetadata = metadata
+        assert text.contains("BlobStore.temporary-blob=true" + System.lineSeparator())
+        assert metadata.contentLength == text.length()
+        assert objectMetadata.userMetadata.get(TEMPORARY_BLOB_HEADER) == 'true'
+      }
+  }
+
+  private static ObjectMetadata getTempBlobUserMetadata() {
+    ObjectMetadata metadata = new ObjectMetadata();
+    metadata.addUserMetadata(TEMPORARY_BLOB_HEADER, 'true')
+    metadata
   }
 }
 
