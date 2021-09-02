@@ -13,6 +13,7 @@
 package org.sonatype.nexus.upgrade.internal.orient;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 
@@ -24,11 +25,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.testcontainers.shaded.com.google.common.collect.ImmutableMap;
 
 import static java.util.stream.StreamSupport.stream;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.upgrade.internal.orient.OrientAnalyticsPermissionReset.ANALYTICS_CAPABILITY;
 import static org.sonatype.nexus.upgrade.internal.orient.OrientAnalyticsPermissionReset.P_ENABLED;
 import static org.sonatype.nexus.upgrade.internal.orient.OrientAnalyticsPermissionReset.P_PROPERTIES;
@@ -45,10 +48,14 @@ public class OrientAnalyticsPermissionResetTest
   @Rule
   public DatabaseInstanceRule config = DatabaseInstanceRule.inMemory("test_config");
 
+  @Mock
+  private ApplicationVersion applicationVersion;
+
   private OrientAnalyticsPermissionReset underTest;
 
   @Before
   public void setUp() {
+    when(applicationVersion.getEdition()).thenReturn("OSS");
     try (ODatabaseDocumentTx db = config.getInstance().connect()) {
       OSchema schema = db.getMetadata().getSchema();
 
@@ -58,12 +65,12 @@ public class OrientAnalyticsPermissionResetTest
       capability.createProperty(P_TYPE, OType.STRING);
     }
 
-    underTest = new OrientAnalyticsPermissionReset(config.getInstanceProvider());
+    underTest = new OrientAnalyticsPermissionReset(config.getInstanceProvider(), applicationVersion);
   }
 
   @Test
   public void shouldDeleteCapabilityWhenDisabled() {
-    putAnalyticsCapability(false);
+    putAnalyticsCapability();
     assertThat(analyticsCapabilityPresent(), is(true));
 
     underTest.resetAnalyticsPermissionIfDisabled();
@@ -88,8 +95,19 @@ public class OrientAnalyticsPermissionResetTest
     assertThat(analyticsCapabilityPresent(), is(true));
   }
 
-  private void putAnalyticsCapability(final boolean enabled) {
-    putAnalyticsCapability(enabled, false);
+  @Test
+  public void shouldDoNothingIfEditionIsNotOSS() {
+    putAnalyticsCapability();
+    assertThat(analyticsCapabilityPresent(), is(true));
+    when(applicationVersion.getEdition()).thenReturn("PRO");
+
+    underTest.resetAnalyticsPermissionIfDisabled();
+
+    assertThat(analyticsCapabilityPresent(), is(true));
+  }
+
+  private void putAnalyticsCapability() {
+    putAnalyticsCapability(false, false);
   }
 
   private void putAnalyticsCapability(final boolean enabled, final boolean submitAnalytics) {
