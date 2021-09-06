@@ -29,6 +29,21 @@ public interface NpmRepository
   String JSON_MIME_TYPE = "application/json";
 
   /**
+   * Mime type used for npm metadata downstream.
+   * Prefer to use {@link NpmRepository#JSON_MIME_TYPE_WITH_ABBREVIATED_METADATA} instead.
+   */
+  String JSON_MIME_TYPE_WITH_ABBREVIATED_METADATA_SHORT = "application/vnd.npm.install-v1+json";
+
+  /**
+   * Mime type used for npm metadata downstream.
+   * To request an abbreviated document with only the fields required to support installation.
+   * @see <a href="https://github.com/npm/registry/blob/master/docs/responses/package-metadata.md">Package Metadata</a>
+   * for more details.
+   */
+  String JSON_MIME_TYPE_WITH_ABBREVIATED_METADATA =
+      "application/vnd.npm.install-v1+json; q=1.0, application/json; q=0.8, */*";
+
+  /**
    * Mime type used for npm tarballs downstream. See {@link NpmMimeRulesSource}.
    */
   String TARBALL_MIME_TYPE = "application/x-gzip";

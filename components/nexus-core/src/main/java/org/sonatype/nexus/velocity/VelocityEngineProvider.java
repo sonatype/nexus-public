@@ -49,8 +49,6 @@ public class VelocityEngineProvider
     log.info("Creating Nexus VelocityEngine");
 
     VelocityEngine velocityEngine = new VelocityEngine();
-    // log using our chute (slf4j with level fix)
-    velocityEngine.setProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM, new Slf4jLogChute());
 
     // setting various defaults
     // ========================

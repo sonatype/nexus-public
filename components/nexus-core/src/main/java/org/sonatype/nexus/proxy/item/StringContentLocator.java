@@ -26,12 +26,24 @@ public class StringContentLocator
 {
   private static final String ENCODING = "UTF-8";
 
+  private final long modified;
+
   public StringContentLocator(String content) {
-    this(content, null);
+    this(content, null, 0L);
   }
 
   public StringContentLocator(String content, String mimeType) {
+    this(content, mimeType, 0L);
+  }
+
+  public StringContentLocator(String content, String mimeType, long modified) {
     super(toByteArray(content), StringUtils.isBlank(mimeType) ? "text/plain" : mimeType);
+    this.modified = modified;
+  }
+
+  @Override
+  public long getModified() {
+    return modified;
   }
 
   public static byte[] toByteArray(String string) {

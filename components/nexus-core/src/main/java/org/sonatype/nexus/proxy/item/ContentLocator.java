@@ -58,4 +58,11 @@ public interface ContentLocator
    * multiple times against it, {@code false} otherwise.
    */
   boolean isReusable();
+
+  /**
+   * Returns the modified time in millis.
+   */
+  default long getModified() {
+    return 0L;
+  }
 }

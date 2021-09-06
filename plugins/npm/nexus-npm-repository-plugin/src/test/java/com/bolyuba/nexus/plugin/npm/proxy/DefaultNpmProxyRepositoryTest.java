@@ -48,7 +48,7 @@ public class DefaultNpmProxyRepositoryTest
     when(metadataServiceFactory.createProxyMetadataService(any(NpmProxyRepository.class)))
         .thenReturn(mock(ProxyMetadataService.class));
     proxy = new DefaultNpmProxyRepository(mock(ContentClass.class), mock(
-        NpmProxyRepositoryConfigurator.class), metadataServiceFactory, mock(TarballSource.class))
+        NpmProxyRepositoryConfigurator.class), metadataServiceFactory, mock(TarballSource.class), false)
     {
       @Override
       public String getId() {

@@ -96,6 +96,7 @@ public class GroupMetadataServiceImpl
         if (memberRoot != null) {
           if (root == null) {
             root = new PackageRoot(npmGroupRepository.getId(), memberRoot.getRaw());
+            root.setModified(memberRoot.getModified());
             latestVersion = getDistTagsLatest(root);
           }
           else {

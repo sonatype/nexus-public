@@ -37,6 +37,8 @@ public interface ProxyMetadataTransport
    * is returned. If package not found or cannot be fetched for any reason, {@code null} is returned.
    */
   @Nullable
-  PackageRoot fetchPackageRoot(final NpmProxyRepository npmProxyRepository, final String packageName,
-                               final @Nullable PackageRoot expired) throws IOException;
+  PackageRoot fetchPackageRoot(final NpmProxyRepository npmProxyRepository,
+                               final String packageName,
+                               final @Nullable PackageRoot expired,
+                               final boolean abbreviateMetadata) throws IOException;
 }

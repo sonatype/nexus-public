@@ -62,6 +62,10 @@
             <groupId>javax.activation</groupId>
             <artifactId>activation</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>org.apache.velocity</groupId>
+            <artifactId>velocity</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
 
@@ -79,8 +83,8 @@
 
       <dependency>
         <groupId>org.apache.velocity</groupId>
-        <artifactId>velocity</artifactId>
-        <version>1.7</version>
+        <artifactId>velocity-engine-core</artifactId>
+        <version>2.3</version>
       </dependency>
 
       <dependency>

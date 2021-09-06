@@ -41,6 +41,11 @@ public interface MetadataStore
   PackageRoot getPackageByName(NpmRepository repository, String packageName);
 
   /**
+   * Retrieves an abbreviated or full package from store by name.
+   */
+  PackageRoot getPackageByName(NpmRepository repository, String packageName, boolean isAbbreviated);
+
+  /**
    * Deletes all packages from store, returns {@code true} if packages existed.
    *
    * @since 2.11.3

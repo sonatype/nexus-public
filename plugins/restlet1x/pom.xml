@@ -73,6 +73,12 @@
         <groupId>org.restlet</groupId>
         <artifactId>org.restlet.ext.velocity</artifactId>
         <version>${restlet.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.velocity</groupId>
+            <artifactId>velocity</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>

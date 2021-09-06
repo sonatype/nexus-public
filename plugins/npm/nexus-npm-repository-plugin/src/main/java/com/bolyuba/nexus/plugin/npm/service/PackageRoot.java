@@ -31,6 +31,12 @@ public class PackageRoot
 
   public static final String PROP_ETAG = "remote.etag";
 
+  public static final String PROP_MODIFIED = "remote.modified";
+
+  public static final String PROP_ABBREVIATED = "remote.abbreviated";
+
+  public static final String ABBREVIATED_PREFIX = "abbreviated";
+
   private final Map<String, String> properties;
 
   private final Map<String, PackageVersion> wrappedVersions;
@@ -47,7 +53,10 @@ public class PackageRoot
 
   public Map<String, String> getProperties() { return properties; }
 
-  public String getComponentId() {return getRepositoryId() + ":" + getName(); }
+  public String getComponentId() {
+    final String nameSuffix = isAbbreviated() ? ABBREVIATED_PREFIX + ":" + getName() : getName();
+    return getRepositoryId() + ":" + nameSuffix;
+  }
 
   public String getName() {
     return (String) getRaw().get("name");
@@ -62,6 +71,24 @@ public class PackageRoot
   }
 
   public Map<String, NpmBlob> getAttachments() { return attachments; }
+
+  public void setAbbreviated(final boolean isAbbreviated) {
+    properties.put(PROP_ABBREVIATED, Boolean.toString(isAbbreviated));
+  }
+
+  public boolean isAbbreviated() {
+    String abbreviated = properties.get(PROP_ABBREVIATED);
+    return Boolean.parseBoolean(abbreviated);
+  }
+
+  public void setModified(final long modifiedMillis) {
+    properties.put(PROP_MODIFIED, String.valueOf(modifiedMillis));
+  }
+
+  public long getModified() {
+    String time = properties.get(PROP_MODIFIED);
+    return time != null ? Long.parseLong(time) : 0L;
+  }
 
   /**
    * Maintains the "time" object of this document. This method depends on {@link #wrappedVersions} variable and

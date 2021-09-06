@@ -53,6 +53,7 @@ import org.slf4j.LoggerFactory;
 
 import static com.bolyuba.nexus.plugin.npm.service.PackageRoot.PROP_ETAG;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.http.HttpHeaders.ACCEPT;
 
 /**
  * {@link ProxyMetadataTransport} for HTTP.
@@ -168,14 +169,21 @@ public class HttpProxyMetadataTransport
    * package root from this method is guaranteed to be present in the store too.
    */
   @Override
-  public PackageRoot fetchPackageRoot(final NpmProxyRepository npmProxyRepository, final String packageName,
-                                      final PackageRoot expired) throws IOException
+  public PackageRoot fetchPackageRoot(final NpmProxyRepository npmProxyRepository,
+                                      final String packageName,
+                                      final PackageRoot expired,
+                                      final boolean abbreviateMetadata) throws IOException
   {
     final HttpClient httpClient = httpClientManager.create(npmProxyRepository,
         npmProxyRepository.getRemoteStorageContext());
     try {
       final HttpGet get = new HttpGet(buildUri(npmProxyRepository, encodePackageName(packageName)));
-      get.addHeader("accept", NpmRepository.JSON_MIME_TYPE);
+      if (abbreviateMetadata) {
+        get.addHeader(ACCEPT, NpmRepository.JSON_MIME_TYPE_WITH_ABBREVIATED_METADATA);
+      }
+      else {
+        get.addHeader(ACCEPT, NpmRepository.JSON_MIME_TYPE);
+      }
       if (expired != null && expired.getProperties().containsKey(PROP_ETAG)) {
         get.addHeader("if-none-match", expired.getProperties().get(PROP_ETAG));
       }
@@ -215,7 +223,8 @@ public class HttpProxyMetadataTransport
         if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
           final PreparedContentLocator pcl = new PreparedContentLocator(httpResponse.getEntity().getContent(),
               NpmRepository.JSON_MIME_TYPE, ContentLocator.UNKNOWN_LENGTH);
-          final PackageRoot fresh = metadataParser.parsePackageRoot(npmProxyRepository.getId(), pcl);
+          final PackageRoot fresh =
+              metadataParser.parsePackageRoot(npmProxyRepository.getId(), pcl, abbreviateMetadata);
           if (httpResponse.containsHeader("etag")) {
             fresh.getProperties().put(PROP_ETAG, httpResponse.getFirstHeader("etag").getValue());
           }

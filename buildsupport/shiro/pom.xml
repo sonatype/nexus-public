@@ -28,7 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <apache-shiro.version>1.6.0</apache-shiro.version>
+    <apache-shiro.version>1.7.1</apache-shiro.version>
   </properties>
 
   <dependencyManagement>

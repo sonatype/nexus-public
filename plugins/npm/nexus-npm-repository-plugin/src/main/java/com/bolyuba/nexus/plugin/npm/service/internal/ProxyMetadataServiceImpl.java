@@ -33,6 +33,8 @@ import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 
+import static com.bolyuba.nexus.plugin.npm.NpmRepository.JSON_MIME_TYPE_WITH_ABBREVIATED_METADATA;
+import static com.bolyuba.nexus.plugin.npm.NpmRepository.JSON_MIME_TYPE_WITH_ABBREVIATED_METADATA_SHORT;
 import static com.bolyuba.nexus.plugin.npm.service.PackageRoot.PROP_CACHED;
 import static com.bolyuba.nexus.plugin.npm.service.PackageRoot.PROP_ETAG;
 import static com.bolyuba.nexus.plugin.npm.service.PackageRoot.PROP_EXPIRED;
@@ -51,14 +53,18 @@ public class ProxyMetadataServiceImpl
 
   private final ProxyMetadataTransport proxyMetadataTransport;
 
+  private final boolean abbreviateMetadata;
+
   public ProxyMetadataServiceImpl(final NpmProxyRepository npmProxyRepository,
                                   final MetadataStore metadataStore,
                                   final ProxyMetadataTransport proxyMetadataTransport,
-                                  final MetadataParser metadataParser)
+                                  final MetadataParser metadataParser,
+                                  final boolean abbreviateMetadata)
   {
     super(npmProxyRepository, metadataParser, metadataStore);
     this.registryRootUpdateLock = new Object();
     this.proxyMetadataTransport = checkNotNull(proxyMetadataTransport);
+    this.abbreviateMetadata = abbreviateMetadata;
   }
 
   @Override
@@ -78,13 +84,26 @@ public class ProxyMetadataServiceImpl
   public boolean expireMetadataCaches(final PackageRequest request) {
     checkNotNull(request);
     if (request.isPackage()) {
-      final PackageRoot packageRoot = metadataStore.getPackageByName(getNpmRepository(), request.getName());
-      if (packageRoot == null) {
+      final PackageRoot fullPackageRoot = metadataStore.getPackageByName(
+          getNpmRepository(), request.getName(), false);
+      final PackageRoot abbreviatedPackageRoot = metadataStore.getPackageByName(
+          getNpmRepository(), request.getName(), true);
+      if (fullPackageRoot == null && abbreviatedPackageRoot == null) {
+        log.debug("Missing both full and abbreviated package root {} in repository {}",
+            request.getName(), getNpmRepository().getId());
         return false;
       }
-      log.info("Expiring package root {} in repository {}", request.getName(), getNpmRepository().getId());
-      packageRoot.getProperties().put(PROP_EXPIRED, Boolean.TRUE.toString());
-      metadataStore.updatePackage(getNpmRepository(), packageRoot);
+      if (fullPackageRoot != null) {
+        log.info("Expiring full package root {} in repository {}", request.getName(), getNpmRepository().getId());
+        fullPackageRoot.getProperties().put(PROP_EXPIRED, Boolean.TRUE.toString());
+        metadataStore.updatePackage(getNpmRepository(), fullPackageRoot);
+      }
+      if (abbreviatedPackageRoot != null) {
+        log.info("Expiring abbreviated package root {} in repository {}",
+            request.getName(), getNpmRepository().getId());
+        abbreviatedPackageRoot.getProperties().put(PROP_EXPIRED, Boolean.TRUE.toString());
+        metadataStore.updatePackage(getNpmRepository(), abbreviatedPackageRoot);
+      }
       return true;
     }
     else {
@@ -133,10 +152,13 @@ public class ProxyMetadataServiceImpl
       final String packageName = matcher.group(1);
       final String tarballFilename = matcher.group(2);
 
-      tarballRequest = requestTarball(request, mayUpdatePackageRoot(packageName, true), tarballFilename);
+      final String acceptHeader = request.getAcceptHeader();
+      PackageRoot packageRoot = mayUpdatePackageRoot(packageName, true, acceptHeader);
+      tarballRequest = requestTarball(request, packageRoot, tarballFilename);
       if (tarballRequest == null && !request.isRequestLocalOnly()) {
         // might be new package so check the upstream metadata
-        tarballRequest = requestTarball(request, mayUpdatePackageRoot(packageName, false), tarballFilename);
+        packageRoot = mayUpdatePackageRoot(packageName, false, acceptHeader);
+        tarballRequest = requestTarball(request, packageRoot, tarballFilename);
       }
     }
     else {
@@ -204,8 +226,10 @@ public class ProxyMetadataServiceImpl
   @Nullable
   @Override
   protected PackageRoot doGeneratePackageRoot(final PackageRequest request) throws IOException {
-    return mayUpdatePackageRoot(request.getName(),
-        request.getStoreRequest().isRequestLocalOnly());
+    ResourceStoreRequest storeRequest = request.getStoreRequest();
+    final String acceptHeader = storeRequest.getAcceptHeader();
+    final boolean requestLocalOnly = storeRequest.isRequestLocalOnly();
+    return mayUpdatePackageRoot(request.getName(), requestLocalOnly, acceptHeader);
   }
 
   // ==
@@ -240,11 +264,15 @@ public class ProxyMetadataServiceImpl
    * May fetch package root from remote if not found locally, or is found but is expired. The package root returned
    * document is NOT filtered, so this method should not be used to source documents sent downstream.
    */
-  private PackageRoot mayUpdatePackageRoot(final String packageName, final boolean localOnly) throws IOException {
+  private PackageRoot mayUpdatePackageRoot(final String packageName, final boolean localOnly, final String acceptHeader)
+      throws IOException
+  {
     final long now = System.currentTimeMillis();
-    PackageRoot packageRoot = metadataStore.getPackageByName(getNpmRepository(), packageName);
+    boolean shouldAbbreviate = shouldAbbreviateMetadata(acceptHeader);
+    PackageRoot packageRoot = metadataStore.getPackageByName(getNpmRepository(), packageName, shouldAbbreviate);
     if (isRemoteAccessAllowed() && !localOnly && (packageRoot == null || isExpired(packageRoot, now))) {
-      packageRoot = proxyMetadataTransport.fetchPackageRoot(getNpmRepository(), packageName, packageRoot);
+      packageRoot = proxyMetadataTransport
+          .fetchPackageRoot(getNpmRepository(), packageName, packageRoot, shouldAbbreviate);
       if (packageRoot == null) {
         return null;
       }
@@ -284,9 +312,9 @@ public class ProxyMetadataServiceImpl
           getNpmRepository().getId());
       return false;
     }
-    final long remoteCached = packageRoot.getProperties().containsKey(PROP_CACHED) ? Long
-        .valueOf(packageRoot.getProperties().get(PROP_CACHED)) : now;
-    final boolean result = ((now - remoteCached) > (getNpmRepository().getItemMaxAge() * 60L * 1000L));
+    final long remoteCached = packageRoot.getProperties().containsKey(PROP_CACHED) ?
+        Long.parseLong(packageRoot.getProperties().get(PROP_CACHED)) : now;
+    final boolean result = now - remoteCached > getNpmRepository().getItemMaxAgeMillis();
     if (result) {
       log.trace("EXPIRED: package {} is too old", packageRoot.getName());
     }
@@ -305,5 +333,11 @@ public class ProxyMetadataServiceImpl
       return proxyMode.shouldProxy();
     }
     return false;
+  }
+
+  private boolean shouldAbbreviateMetadata(final String acceptHeader) {
+      return abbreviateMetadata &&
+          (JSON_MIME_TYPE_WITH_ABBREVIATED_METADATA.equals(acceptHeader)
+          || JSON_MIME_TYPE_WITH_ABBREVIATED_METADATA_SHORT.equals(acceptHeader));
   }
 }

@@ -17,6 +17,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Stack;
 
+import javax.annotation.Nullable;
+
 import org.sonatype.nexus.proxy.item.StorageItem;
 import org.sonatype.nexus.proxy.repository.GroupRepository;
 import org.sonatype.nexus.proxy.repository.ProxyRepository;
@@ -94,6 +96,8 @@ public class RequestContext
    * interpolation, etc.)
    */
   public static final String CTX_AUTH_CHECK_ONLY = "request.auth.check.only";
+
+  public static final String CTX_ACCEPT_HEADER = "request.accept.header";
 
   private RequestContext parent;
 
@@ -429,6 +433,23 @@ public class RequestContext
    */
   public void setRequestIsDescribe(boolean describe) {
     put(CTX_REQUEST_IS_DESCRIBE, describe);
+  }
+
+  /**
+   * Set the request's accept header.
+   *
+   * @param acceptHeader the accept header of a request.
+   */
+  public void setRequestAcceptHeader(@Nullable final String acceptHeader) {
+    put(CTX_ACCEPT_HEADER, acceptHeader);
+  }
+
+  /**
+   * Get the request's accept header.
+   */
+  @Nullable
+  public String getRequestAcceptHeader() {
+    return containsKey(CTX_ACCEPT_HEADER) ? (String) get(CTX_ACCEPT_HEADER) : null;
   }
 
   // ==
