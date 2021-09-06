@@ -204,7 +204,9 @@ export default class FormUtils {
           saveErrors: () => ({})
         }),
         logSaveError: (_, event) => {
-          console.log(`Load Error: ${event.data?.message}`);
+          if (event.data?.message) {
+            console.log(`Load Error: ${event.data?.message}`);
+          }
           ExtJS.showErrorMessage(UIStrings.ERROR.SAVE_ERROR)
         },
         logSaveSuccess: () => ExtJS.showSuccessMessage(UIStrings.SAVE_SUCCESS),
@@ -213,7 +215,9 @@ export default class FormUtils {
           loadError: (_, event) => event.data?.message
         }),
         logLoadError: (_, event) => {
-          console.log(`Load Error: ${event.data?.message}`);
+          if (event.data?.message) {
+            console.log(`Load Error: ${event.data?.message}`);
+          }
           ExtJS.showErrorMessage(UIStrings.ERROR.LOAD_ERROR)
         },
 
