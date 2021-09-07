@@ -88,6 +88,7 @@ public class MavenReplicationFacet
     FluentAsset fluentAsset = contentFacet.assets().path(path)
       .component(fluentComponent)
       .blob(blob, getChecksumsFromProperties(assetAttributes))
+      .replicated()
       .save();
 
     AttributeChangeSet changeSet = new AttributeChangeSet();

@@ -285,13 +285,13 @@ public abstract class ContentFacetSupport
     return stores;
   }
 
-  public final void checkAttachAllowed(final Asset asset) {
+  public final void checkAttachAllowed(final Asset asset, boolean isReplicated) {
     if (!asset.hasBlob()) {
-      if (!writePolicy(asset).checkCreateAllowed()) {
+      if (!writePolicy(asset).checkCreateAllowed(isReplicated)) {
         throwNotAllowed(asset, " is read-only");
       }
     }
-    else if (!writePolicy(asset).checkUpdateAllowed()) {
+    else if (!writePolicy(asset).checkUpdateAllowed(isReplicated)) {
       throwNotAllowed(asset, " cannot be updated");
     }
   }

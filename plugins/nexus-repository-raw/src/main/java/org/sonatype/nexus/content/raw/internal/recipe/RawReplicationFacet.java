@@ -55,6 +55,7 @@ public class RawReplicationFacet
             .namespace(RawCoordinatesHelper.getGroup(path))
             .getOrCreate())
         .blob(blob, getChecksumsFromProperties(assetAttributes))
+        .replicated()
         .save();
 
     AttributeChangeSet changeSet = new AttributeChangeSet();

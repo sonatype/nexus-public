@@ -60,6 +60,7 @@ public class OrientRawReplicationFacet
   protected void putPreservingAllAttributes(final String path, final AssetBlob assetBlob, @Nullable final AttributesMap contentAttributes) {
     RawContentFacet rawContentFacet = facet(RawContentFacet.class);
     StorageTx tx = UnitOfWork.currentTx();
+    assetBlob.setReplicated(true);
     Asset asset = rawContentFacet.getOrCreateAsset(getRepository(), path, RawCoordinatesHelper.getGroup(path), path);
     tx.attachBlob(asset, assetBlob);
     asset.attributes((NestedAttributesMap) contentAttributes);

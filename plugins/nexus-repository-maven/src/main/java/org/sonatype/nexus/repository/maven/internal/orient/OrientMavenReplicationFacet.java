@@ -51,6 +51,7 @@ public class OrientMavenReplicationFacet
       MavenPath mavenPath = mavenFacet.getMavenPathParser().parsePath(path);
       StorageTx tx = UnitOfWork.currentTx();
 
+      assetBlob.setReplicated(true);
       mavenFacet.put(mavenPath, assetBlob, assetAttributes);
 
       if (mavenPath.getCoordinates() != null) {

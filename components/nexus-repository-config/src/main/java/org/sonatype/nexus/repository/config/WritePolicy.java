@@ -36,26 +36,46 @@ public enum WritePolicy
    * Asset cannot be re-linked with another blob.
    * Asset cannot be unlinked from a blob.
    */
-  DENY;
+  DENY,
+  /**
+   * Asset can be linked with a blob only by replication.
+   * Asset can be re-linked with another blob only by replication.
+   * Asset can be unlinked from a blob only by replication.
+   */
+  REPLICATION_ONLY;
 
   /**
    * Returns {@code true} if Create allowed with this policy.
    */
   public boolean checkCreateAllowed() {
-    return this != DENY;
+    return checkCreateAllowed(false);
+  }
+
+  /**
+   * Returns {@code true} if Create allowed with this policy.
+   */
+  public boolean checkCreateAllowed(final boolean replicated) {
+    return this == ALLOW || this == ALLOW_ONCE || (replicated && this == REPLICATION_ONLY);
   }
 
   /**
    * Returns {@code true} if Update allowed with this policy.
    */
   public boolean checkUpdateAllowed() {
-    return this == ALLOW;
+    return checkUpdateAllowed(false);
+  }
+
+  /**
+   * Returns {@code true} if Create allowed with this policy.
+   */
+  public boolean checkUpdateAllowed(final boolean replicated) {
+    return this == ALLOW || (replicated && this == REPLICATION_ONLY);
   }
 
   /**
    * Returns {@code true} if Delete allowed with this policy.
    */
   public boolean checkDeleteAllowed() {
-    return this != DENY;
+    return this == ALLOW || this == ALLOW_ONCE;
   }
 }
