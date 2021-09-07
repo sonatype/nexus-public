@@ -15,15 +15,19 @@ package org.sonatype.nexus.repository.content.browse.store;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.datastore.api.DuplicateKeyException;
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.transaction.Transactional;
+
+import org.apache.commons.lang3.StringUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetId;
@@ -101,7 +105,23 @@ public class BrowseNodeManager
       if (i == paths.size() - 1) {
         finalStep.accept(node);
       }
-      browseNodeStore.mergeBrowseNode(node);
+      try {
+        browseNodeStore.mergeBrowseNode(node);
+      }
+      catch (DuplicateKeyException e) {
+        log.warn(
+            "Duplicate key for browse node found (repositoryId = {}, name = {}, path = {}), all paths = [{}]; " +
+                "a rebuild will likely be necessary after migration is complete",
+            repositoryId,
+            node.getName(),
+            node.getPath(),
+            paths.stream().map(path -> "(" + path.getDisplayName() + ", " + path.getRequestPath() + ")")
+                .collect(Collectors.joining(", ")),
+            e
+        );
+
+        return;
+      }
       parentId = node.nodeId;
     }
   }
