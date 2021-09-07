@@ -14,52 +14,61 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext, NX*/
+/*global Ext*/
 
 /**
+ * Footer branding panel.
  *
- * @since 3.31
+ * @since 3.next
  */
-Ext.define('NX.onboarding.step.ConfigureAnalyticsCollectionStep', {
-  extend: 'NX.wizard.Step',
+Ext.define('NX.view.footer.AnalyticsOptOut', {
+  extend: 'Ext.container.Container',
+  alias: 'widget.nx-footer-analytics-opt-out',
+
   requires: [
-    'NX.onboarding.view.ConfigureAnalyticsCollectionScreen',
+    'NX.I18n',
     'NX.State'
   ],
 
-  config: {
-    screen: 'NX.onboarding.view.ConfigureAnalyticsCollectionScreen',
-    enabled: true
+  hidden: true,
+
+  height: 92,
+
+  layout: {
+    type: 'hbox',
+    align: 'center',
+    pack: 'center'
   },
+
+  baseCls: 'nx-coreui-component-analyticsoptout-banner-outline',
 
   /**
    * @override
    */
-  init: function() {
+  initComponent: function() {
     var me = this;
 
-    me.control({
-      'button[action=next]': {
-        click: me.configureAnalytics
-      },
-      'button[action=back]': {
-        click: me.moveBack
+    me.items = [
+      {
+        html: '<img alt="lock" class="nx-coreui-component-analyticsoptout-banner-icon" src="/static/rapture/resources/images/lock-graphic-01.svg" />'
       }
-    });
+    ];
+
+    Ext.History.on('change', me.maybeSetVisible, me);
+    me.maybeSetVisible();
+    me.callParent();
   },
 
-  configureAnalytics: function(button) {
+  maybeSetVisible: function() {
     var me = this;
-    var enabled = button.up('form').down('#analyticsEnabled').getValue();
+    var user = NX.State.getUser();
 
-    NX.direct.capability_Capability.create({enabled: enabled,
-          typeId: 'analytics-configuration',
-          properties: {'submitAnalytics': enabled.toString()}},
-        function(response) {
-
-          me.moveNext();
-
-        }
-    );
-  }
+    if (window.location.hash.startsWith('#admin/')) {
+      var acknowledgementRequired = NX.State.getValue('acknowledgeAnalytics.required');
+      me.setVisible(acknowledgementRequired);
+    }
+    else {
+      me.setVisible(false);
+    }
+  },
 });

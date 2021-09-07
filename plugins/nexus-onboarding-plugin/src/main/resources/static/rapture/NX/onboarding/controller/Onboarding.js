@@ -27,7 +27,6 @@ Ext.define('NX.onboarding.controller.Onboarding', {
     'NX.onboarding.step.OnboardingStartStep',
     'NX.onboarding.step.ChangeAdminPasswordStep',
     'NX.onboarding.step.ConfigureAnonymousAccessStep',
-    'NX.onboarding.step.ConfigureAnalyticsCollectionStep',
     'NX.onboarding.step.OnboardingCompleteStep',
     'NX.State'
   ],
@@ -36,7 +35,6 @@ Ext.define('NX.onboarding.controller.Onboarding', {
     'OnboardingStartScreen',
     'ChangeAdminPasswordScreen',
     'ConfigureAnonymousAccessScreen',
-    'ConfigureAnalyticsCollectionScreen',
     'OnboardingCompleteScreen',
     'OnboardingModal'
   ],
