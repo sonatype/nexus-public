@@ -60,6 +60,8 @@ public class AssetBlob
 
   private Blob ingestedBlob;
 
+  private boolean replicated = false;
+
   public AssetBlob(final NodeAccess nodeAccess,
                    final BlobStore blobStore,
                    final Function<BlobStore, Blob> blobFunction,
@@ -200,6 +202,24 @@ public class AssetBlob
    */
   public boolean getHashesVerified() {
     return hashesVerified;
+  }
+
+  /**
+   * Returns {@code true} if this {@link AssetBlob} is being created or updated from replication.
+   *
+   * @since 3.next
+   */
+  public boolean isReplicated() {
+    return replicated;
+  }
+
+  /**
+   * Marks this {@link AssetBlob} as being created or updated by replication.
+   *
+   * @since 3.next
+   */
+  public void setReplicated(final boolean replicated) {
+    this.replicated = replicated;
   }
 
   @VisibleForTesting

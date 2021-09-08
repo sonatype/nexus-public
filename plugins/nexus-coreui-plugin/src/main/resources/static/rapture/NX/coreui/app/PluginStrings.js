@@ -442,6 +442,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_StorageFacetHosted_Deployment_DisableLatestItem: 'Allow redeploy only on \'latest\' tag',
     Repository_Facet_StorageFacetHosted_Deployment_DisableLatestItemHelpText: 'Allow redeploying the \'latest\' tag but defer to the Deployment Policy for all other tags',
     Repository_Facet_StorageFacetHosted_Deployment_ReadOnlyItem: 'Read-only',
+    Repository_Facet_StorageFacetHosted_Deployment_ReplicationOnlyItem: 'Deploy by Replication Only',
     Repository_Facet_StorageFacetHosted_Proprietary_Components_HelpText: 'Components in this repository count as proprietary for namespace conflict attacks (requires Sonatype Nexus Firewall)',
     Repository_Facet_StorageFacetHosted_Proprietary_Components_FieldLabel: 'Proprietary Components',
     Repository_Facet_ProxyFacet_Remote_FieldLabel: 'Remote storage',
