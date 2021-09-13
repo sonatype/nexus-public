@@ -12,27 +12,15 @@
  */
 package org.sonatype.nexus.repository.maven;
 
-import java.io.IOException;
-import java.util.Map;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.blobstore.api.Blob;
-import org.sonatype.nexus.blobstore.api.BlobAttributes;
-import org.sonatype.nexus.blobstore.api.BlobId;
-import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
-import org.sonatype.nexus.repository.replication.BlobEventType;
 import org.sonatype.nexus.repository.replication.ReplicationIngesterHelper;
 import org.sonatype.nexus.repository.replication.ReplicationIngester;
 import org.sonatype.nexus.repository.replication.ReplicationIngesterSupport;
-import org.sonatype.nexus.repository.replication.ReplicationIngestionException;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 
 /**
  * @since 3.31
@@ -43,71 +31,17 @@ public class MavenReplicationIngester
     extends ReplicationIngesterSupport
     implements ReplicationIngester
 {
-
-  private final BlobStoreManager blobStoreManager;
-
-  private final ReplicationIngesterHelper replicationIngesterHelper;
-
   @Inject
   public MavenReplicationIngester(
       final BlobStoreManager blobstoreManager,
       final ReplicationIngesterHelper replicationIngesterHelper
   )
   {
-    this.blobStoreManager = checkNotNull(blobstoreManager);
-    this.replicationIngesterHelper = checkNotNull(replicationIngesterHelper);
+    super(blobstoreManager, replicationIngesterHelper);
   }
 
   @Override
   public String getFormat() {
     return Maven2Format.NAME;
-  }
-
-  @Override
-  public void ingestBlob(final String blobIdString,
-                         final String blobStoreId,
-                         final String repositoryName,
-                         final BlobEventType eventType)
-      throws ReplicationIngestionException
-  {
-    BlobId blobId = new BlobId(blobIdString);
-    BlobStore blobStore = blobStoreManager.get(blobStoreId);
-    if (blobStore == null) {
-      throw new ReplicationIngestionException(
-          String.format("Can't ingest blob %s, the blob store %s doesn't exist", blobIdString, blobStoreId));
-    }
-    Blob blob = blobStore.get(blobId);
-    if (blob == null) {
-      throw new ReplicationIngestionException(
-          String.format("Can't ingest blob %s, the blob doesn't exist", blobIdString));
-    }
-    BlobAttributes blobAttributes = blobStore.getBlobAttributes(blobId);
-    if (blobAttributes == null) {
-      throw new ReplicationIngestionException(
-          String.format("Can't ingest blob %s, the blob doesn't have related attributes", blobIdString));
-    }
-
-    if (eventType.equals(BlobEventType.DELETED)) {
-      log.info("Ingesting a delete for blob {} in repository {} and blob store {}.", blobIdString, repositoryName,
-               blobStoreId);
-      String path = blobAttributes.getHeaders().get(BLOB_NAME_HEADER);
-      replicationIngesterHelper.deleteReplication(path, repositoryName);
-      return;
-    }
-
-    Map<String, Object> backingAssetAttributes = extractAssetAttributesFromProperties(blobAttributes.getProperties());
-    Map<String, Object> backingComponentAttributes = extractComponentAttributesFromProperties(blobAttributes.getProperties());
-
-    try {
-      log.debug("Ingesting blob {} in repository {} and blob store {}.", blobIdString, repositoryName,
-               blobStoreId);
-      replicationIngesterHelper.replicate(blobStoreId, blob, backingAssetAttributes, backingComponentAttributes,
-          repositoryName, blobStoreId);
-    }
-    catch (IOException e) {
-      throw new ReplicationIngestionException(String
-          .format("Could not ingest blob %s for repository %s in blobstore %s.", blobIdString, repositoryName,
-              blobStoreId), e);
-    }
   }
 }

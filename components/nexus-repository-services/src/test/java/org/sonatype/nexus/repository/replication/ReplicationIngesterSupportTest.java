@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.maven;
+package org.sonatype.nexus.repository.replication;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -23,9 +23,6 @@ import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
-import org.sonatype.nexus.repository.replication.BlobEventType;
-import org.sonatype.nexus.repository.replication.ReplicationIngesterHelper;
-import org.sonatype.nexus.repository.replication.ReplicationIngestionException;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -40,10 +37,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 
-public class MavenReplicationIngesterTest
+public class ReplicationIngesterSupportTest
     extends TestSupport
 {
-  private MavenReplicationIngester underTest;
+  private TestReplicationIngester underTest;
 
   @Mock
   private BlobStoreManager blobStoreManager;
@@ -71,11 +68,11 @@ public class MavenReplicationIngesterTest
     when(blobStore.get(any(BlobId.class))).thenReturn(blob);
     when(blobStore.getBlobAttributes(any(BlobId.class))).thenReturn(blobAttributes);
     when(blobAttributes.getHeaders()).thenReturn(getHeaders());
-    underTest = new MavenReplicationIngester(blobStoreManager, replicationIngesterHelper);
+    underTest = new TestReplicationIngester(blobStoreManager, replicationIngesterHelper);
   }
 
   @Test
-  public void testExtractAttributeFromProperties_extractsExpectedPropertiesextractAttributesFromProperties() {
+  public void testExtractAttributeFromProperties_extractsExpectedProperties() {
     Map<String, Object> extractedProperties = underTest.extractAssetAttributesFromProperties(getProperties());
     verifyExtractedProperties(extractedProperties);
   }
@@ -152,5 +149,18 @@ public class MavenReplicationIngesterTest
       properties.put("@attributes.asset.provenance.hashes_not_verified", "false");
     }
     return properties;
+  }
+
+  private static class TestReplicationIngester extends ReplicationIngesterSupport {
+    @Override
+    public String getFormat() {
+      return "TEST";
+    }
+
+    public TestReplicationIngester(final BlobStoreManager blobstoreManager,
+                                   final ReplicationIngesterHelper replicationIngesterHelper)
+    {
+      super(blobstoreManager, replicationIngesterHelper);
+    }
   }
 }

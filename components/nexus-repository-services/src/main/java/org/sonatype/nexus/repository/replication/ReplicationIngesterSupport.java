@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.replication;
 
+import java.io.IOException;
 import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Date;
@@ -21,8 +22,16 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobAttributes;
+import org.sonatype.nexus.blobstore.api.BlobId;
+import org.sonatype.nexus.blobstore.api.BlobStore;
+import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 
 import org.joda.time.DateTime;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 
 /**
  * @since 3.31
@@ -31,6 +40,16 @@ public abstract class ReplicationIngesterSupport
     extends ComponentSupport
     implements ReplicationIngester
 {
+  private final BlobStoreManager blobStoreManager;
+
+  private final ReplicationIngesterHelper replicationIngesterHelper;
+
+  public ReplicationIngesterSupport(final BlobStoreManager blobstoreManager,
+                                    final ReplicationIngesterHelper replicationIngesterHelper) {
+    this.blobStoreManager = checkNotNull(blobstoreManager);
+    this.replicationIngesterHelper = checkNotNull(replicationIngesterHelper);
+  }
+
   public Map<String, Object> extractAssetAttributesFromProperties(final Properties props) {
     return extractAttributesFromProperties(props, ASSET_ATTRIBUTES_PREFIX);
   }
@@ -55,6 +74,63 @@ public abstract class ReplicationIngesterSupport
       }
     }
     return backingAssetAttributes;
+  }
+
+  @Override
+  public void ingestBlob(final String blobIdString,
+                         final String blobStoreId,
+                         final String repositoryName,
+                         final BlobEventType eventType)
+      throws ReplicationIngestionException
+  {
+    BlobId blobId = new BlobId(blobIdString);
+    BlobStore blobStore = blobStoreManager.get(blobStoreId);
+    validateBlobStore(blobStore, blobId, blobStoreId);
+
+    Blob blob = blobStore.get(blobId);
+    BlobAttributes blobAttributes = blobStore.getBlobAttributes(blobId);
+    validateBlob(blob, blobAttributes, blobId);
+
+    if (eventType.equals(BlobEventType.DELETED)) {
+      log.info("Ingesting a delete for blob {} in repository {} and blob store {}.", blobIdString, repositoryName,
+          blobStoreId);
+      String path = blobAttributes.getHeaders().get(BLOB_NAME_HEADER);
+      replicationIngesterHelper.deleteReplication(path, repositoryName);
+      return;
+    }
+
+    Map<String, Object> assetAttributes = extractAssetAttributesFromProperties(blobAttributes.getProperties());
+    Map<String, Object> componentAttributes = extractComponentAttributesFromProperties(blobAttributes.getProperties());
+
+    try {
+      log.debug("Ingesting blob {} in repository {} and blob store {}.", blobIdString, repositoryName,
+          blobStoreId);
+      replicationIngesterHelper.replicate(blobStoreId, blob, assetAttributes, componentAttributes, repositoryName, blobStoreId);
+    }
+    catch (IOException e) {
+      throw new ReplicationIngestionException(String
+          .format("Could not ingest blob %s for repository %s in blobstore %s.", blobIdString, repositoryName,
+              blobStoreId), e);
+    }
+  }
+
+  private void validateBlobStore(final BlobStore blobStore, final BlobId blobId, final String blobStoreId) {
+    if (blobStore == null) {
+      throw new ReplicationIngestionException(
+          String.format("Can't ingest blob %s, the blob store %s doesn't exist", blobId.asUniqueString(), blobStoreId));
+    }
+  }
+
+  private void validateBlob(final Blob blob, final BlobAttributes blobAttributes, final BlobId blobId) {
+    if (blob == null) {
+      throw new ReplicationIngestionException(
+          String.format("Can't ingest blob %s, the blob doesn't exist",  blobId.asUniqueString()));
+    }
+
+    if (blobAttributes == null) {
+      throw new ReplicationIngestionException(
+          String.format("Can't ingest blob %s, the blob doesn't have related attributes",  blobId.asUniqueString()));
+    }
   }
 
   /**
