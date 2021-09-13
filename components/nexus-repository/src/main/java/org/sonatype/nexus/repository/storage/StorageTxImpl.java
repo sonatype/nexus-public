@@ -601,6 +601,9 @@ public class StorageTxImpl
     else {
       assetEntityAdapter.addEntity(db, asset);
     }
+    if (asset.blobRef() != null && asset.blobRef().getBlobId() != null) {
+      attachAssetMetadata(asset, asset.blobRef().getBlobId());
+    }
   }
 
   @Override
@@ -824,8 +827,6 @@ public class StorageTxImpl
 
       assetBlob.setAttached(true);
     }
-
-    attachAssetMetadata(asset, assetBlob.getBlob().getId());
   }
 
   @Override
