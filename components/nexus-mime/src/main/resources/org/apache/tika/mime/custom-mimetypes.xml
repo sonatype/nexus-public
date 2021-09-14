@@ -69,7 +69,7 @@
          This should be rare so we assign lower priority here. Priority is also lower than text/html magics
          for them to be preferred for HTML starting with comment.-->
     <magic priority="30">
-      <match value="" type="string" offset="0"/>
+      <match value="&lt;!--" type="string" offset="0"/>
       <!-- **CUSTOMIZATION** match maven pom files starting with "<project xmlns=" instead of "<?xml" -->
       <match value="&lt;project xmlns=" type="string" offset="0"/>
     </magic>

@@ -257,8 +257,7 @@ class DefaultContentValidatorTest
 
   @Test
   void 'strict maven pom having content body with no xml declaration and containing the text "html"'() {
-    def content = '''
-    <project xmlns="http://maven.apache.org/POM/4.0.0"
+    def content = '''<project xmlns="http://maven.apache.org/POM/4.0.0"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
       <properties>
@@ -275,5 +274,19 @@ class DefaultContentValidatorTest
         'text/xml'
     )
     assertThat(type, equalTo(ContentTypes.APPLICATION_XML))
+  }
+
+  @Test
+  void 'binary content'() {
+    byte[] binary_file = [01, 02, 03, 04, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00]
+
+    def type = testSubject.determineContentType(
+        false,
+        supplier(binary_file),
+        MimeRulesSource.NOOP,
+        'vim',
+        null
+    )
+    assertThat(type, equalTo(ContentTypes.APPLICATION_OCTET_STREAM))
   }
 }
