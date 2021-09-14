@@ -41,6 +41,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
@@ -575,6 +576,16 @@ public class DatastoreComponentAssetTestHelper
         .map(AssetBlob::blobRef)
         .map(BlobRef::getBlobId)
         .ifPresent(blobId -> blobStore.delete(blobId, "test merge recovery"));
+  }
+
+  @Override
+  public Optional<Blob> getBlob(final Repository repository, final String assetPath) {
+    BlobStore blobStore = blobStoreManager.get(DEFAULT_BLOBSTORE_NAME);
+    return findAssetByPath(repository, assetPath)
+        .flatMap(Asset::blob)
+        .map(AssetBlob::blobRef)
+        .map(BlobRef::getBlobId)
+        .map(blobStore::get);
   }
 
   @Override

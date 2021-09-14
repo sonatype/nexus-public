@@ -32,6 +32,7 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
@@ -518,6 +519,24 @@ public class OrientComponentAssetTestHelper
 
       Asset packageRootAsset = tx.findAssetWithProperty("name", assetPath, tx.findBucket(repository));
       storage.blobStore().delete(packageRootAsset.blobRef().getBlobId(), "test merge recovery");
+    }
+    finally {
+      tx.close();
+    }
+  }
+
+  @Override
+  public Optional<Blob> getBlob(final Repository repository, final String assetPath) {
+    StorageFacet storage = repository.facet(StorageFacet.class);
+    StorageTx tx = storage.txSupplier().get();
+    try {
+      tx.begin();
+
+      Asset packageRootAsset = tx.findAssetWithProperty("name", assetPath, tx.findBucket(repository));
+      if (packageRootAsset == null) {
+        return Optional.empty();
+      }
+      return Optional.ofNullable(storage.blobStore().get(packageRootAsset.blobRef().getBlobId()));
     }
     finally {
       tx.close();

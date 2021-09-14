@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 
+import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityId;
@@ -224,6 +225,11 @@ public interface ComponentAssetTestHelper
    * Delete the blob associated with the asset with the specified path.
    */
   void deleteAssetBlob(Repository repository, String assetPath);
+
+  /**
+   * Get the blob associated with the asset with the specified path.
+   */
+  Optional<Blob> getBlob(Repository repository, String assetPath);
 
   /**
    * Obtains a blob ref of an asset in the given repo with the specified path.
