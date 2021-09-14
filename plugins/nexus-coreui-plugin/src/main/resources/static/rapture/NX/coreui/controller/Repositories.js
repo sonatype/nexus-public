@@ -613,6 +613,9 @@ Ext.define('NX.coreui.controller.Repositories', {
           model = repositoryId ? store.findRecord('name', repositoryId, 0, false, true, true) : undefined;
 
       if (model) {
+        if (model.data.attributes && model.data.attributes.replication && model.data.attributes.replication.enabled) {
+          me.showInfo(NX.I18n.format('Repository_Replication_InformationMessage', model.data.attributes.replication.connectionName, model.data.attributes.replication.sourceRepoName));
+        }
         if (options.deleteRecord) {
           return NX.Permissions.check('nexus:repository-admin:' + model.get('format') + ':' + model.get('name') + ':delete');
         }

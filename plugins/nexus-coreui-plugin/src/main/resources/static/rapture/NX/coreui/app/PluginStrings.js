@@ -529,6 +529,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_ReplicationFacet_Enabled_HelpText: 'If checked, this repository is the target of a replication',
     Repository_Formats_All: '(All Formats)',
     Repository_Facet_GolangFacet_Title: 'Go Settings',
+    Repository_Replication_InformationMessage: 'This repository is using the replication {0} to connect to source repository {1}.',
 
     HealthCheckRepositoryColumn_Header: 'Health check',
     HealthCheckRepositoryColumn_Analyzing: 'Analyzing&hellip;',
