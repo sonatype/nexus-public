@@ -308,7 +308,7 @@ public class BlobStoreManagerImpl
       forceDelete(name);
     }
     else {
-      throw new IllegalStateException("BlobStore " + name + " is in use and cannot be deleted");
+      throw new BlobStoreException("BlobStore " + name + " is in use and cannot be deleted", null);
     }
   }
 

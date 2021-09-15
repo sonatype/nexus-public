@@ -302,7 +302,7 @@ class BlobStoreManagerImplTest
     storesIterator.next()
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test(expected = BlobStoreException.class)
   void 'In use blobstore cannot be deleted'() {
     BlobStore used = mock(BlobStore)
     BlobStore unused = mock(BlobStore)
