@@ -15,6 +15,7 @@ package org.sonatype.nexus.blobstore.rest;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 /**
@@ -26,6 +27,20 @@ public class BlobStoreResourceUtil
     throw new WebApplicationMessageException(
         NOT_FOUND,
         "\"Unable to find blobstore\"",
+        APPLICATION_JSON
+    );
+  }
+
+  /**
+   * Throws {@link BAD_REQUEST} exception in case when BlobStore manager could not perform operation
+   * (for example, blobstore is in use)
+   * @param message error message
+   * @throws WebApplicationMessageException
+   */
+  public static void throwBlobStoreBadRequestException(final String message) throws WebApplicationMessageException {
+    throw new WebApplicationMessageException(
+        BAD_REQUEST,
+        "\"" + message + "\"",
         APPLICATION_JSON
     );
   }

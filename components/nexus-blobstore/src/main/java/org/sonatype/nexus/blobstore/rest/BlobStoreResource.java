@@ -33,6 +33,7 @@ import org.sonatype.goodies.i18n.MessageBundle;
 import org.sonatype.nexus.blobstore.ConnectionChecker;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConnectionException;
+import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaResult;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
@@ -103,7 +104,12 @@ public class BlobStoreResource
     if (!blobStoreManager.exists(name)) {
       BlobStoreResourceUtil.throwBlobStoreNotFoundException();
     }
-    blobStoreManager.delete(name);
+    try {
+      blobStoreManager.delete(name);
+    }
+    catch (BlobStoreException e) {
+      BlobStoreResourceUtil.throwBlobStoreBadRequestException(e.getMessage());
+    }
   }
 
   @RequiresAuthentication
