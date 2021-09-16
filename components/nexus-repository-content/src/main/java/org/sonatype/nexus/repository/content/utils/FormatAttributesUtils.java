@@ -94,8 +94,15 @@ public class FormatAttributesUtils
     @SuppressWarnings("unchecked")
     Map<String, Object> attributes = (Map<String, Object>) repositoryContent
         .attributes()
-        .get(formatName, new HashMap<>());
-    return attributes;
+        .get(formatName);
+    if (attributes == null) {
+      return new HashMap<>();
+    }
+    //  "Attributes" can be CollectionSingletonMap or ImmutableMap for example,
+    //    that does not support methods such as put, putAll and so on.
+    //  To support setFormatAttributes, removeFormatAttributes, here is necessary to repack it into "Map",
+    //    that supports put, remove. HashMap - good candidate.
+    return new HashMap<>(attributes);
   }
 
   private static void setFormatAttributes(
