@@ -71,7 +71,13 @@ Ext.define('NX.controller.AnalyticsOptOut', {
 
     analyticsView.add({
       width: 800,
-      html: '<div class="nx-coreui-component-analyticsoptout-banner-text">Sonatype will start to collect anonymous, non-sensitive usage metrics and performance information to shape the future of Nexus Repository.  <a class="nx-coreui-component-analyticsoptout-banner-text-link" href="https://help.sonatype.com/repomanager3/system-configuration/capabilities/in-product-analytics-capability">Learn more</a> about the information we collect or <span><a id="nx-analytics-opt-out-button" class="nx-coreui-component-analyticsoptout-banner-text-link">Opt Out</a></span>.</div>',
+      html: '<div class="nx-coreui-component-analyticsoptout-banner-text">' +
+            'Sonatype will start to collect anonymous, non-sensitive usage metrics ' +
+            'and performance information to shape the future of Nexus Repository.  ' +
+            '<a class="nx-coreui-component-analyticsoptout-banner-text-link" ' +
+            'href="https://help.sonatype.com/repomanager3/system-configuration/capabilities/in-product-analytics-capability">Learn more</a> ' +
+            'about the information we collect or '+
+            '<span><a id="nx-analytics-opt-out-button" class="nx-coreui-component-analyticsoptout-banner-text-link">decline</a></span>.</div>',
       listeners: {
         click: {
           element: 'el',
