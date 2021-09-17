@@ -316,8 +316,7 @@ public class MavenContentFacetImpl
       if (optAsset.isPresent()) {
         FluentAsset asset = optAsset.get();
         Model model = readModel(asset.download().openInputStream());
-        FluentComponent component = createOrGetComponent(mavenPath, Optional.ofNullable(model));
-        publishEvents(component);
+        createOrGetComponent(mavenPath, Optional.ofNullable(model));
       }
     }
   }

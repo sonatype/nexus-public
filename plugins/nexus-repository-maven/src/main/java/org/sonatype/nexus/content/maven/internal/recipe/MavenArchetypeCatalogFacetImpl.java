@@ -94,7 +94,7 @@ public class MavenArchetypeCatalogFacetImpl
   @AllowConcurrentEvents
   public void on(final RebuildMavenArchetypeCatalogEvent event) throws IOException {
     if (StringUtils.equals(getRepository().getName(), event.getRepositoryName())) {
-      rebuildArchetypeCatalog();
+      deleteExistingCatalog();
     }
   }
 
