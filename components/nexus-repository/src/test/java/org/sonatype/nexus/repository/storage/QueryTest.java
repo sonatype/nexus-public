@@ -17,11 +17,13 @@ import java.util.Map;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.storage.Query.Builder;
 
+import com.google.common.collect.ImmutableList;
 import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 
 public class QueryTest
@@ -81,6 +83,17 @@ public class QueryTest
   @Test
   public void testAnd() {
     assertThat(builder.where("x").and("y").build().getWhere(), is("x AND y"));
+  }
+
+  @Test
+  public void testIn() {
+    Query query = builder.where("x").in("p", ImmutableList.of("0", "1", "2")).build();
+    assertThat(query.getWhere(), is("x in (:p0, :p1, :p2)"));
+    final Map<String, Object> parameters = query.getParameters();
+    assertThat(parameters.size(), is(equalTo(3)));
+    assertThat(parameters, hasEntry("p0", "0"));
+    assertThat(parameters, hasEntry("p1", "1"));
+    assertThat(parameters, hasEntry("p2", "2"));
   }
 }
 
