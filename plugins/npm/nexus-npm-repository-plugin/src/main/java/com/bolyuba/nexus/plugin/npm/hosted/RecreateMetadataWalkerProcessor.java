@@ -116,11 +116,7 @@ public class RecreateMetadataWalkerProcessor
           log.info("Malformed package.json in {}", file.getRepositoryItemUid());
           continue;
         }
-        final String version = String.valueOf(versionJson.get("version"));
-        final Map<String, Object> dist = Maps.newHashMap();
-        dist.put("tarball", "generated-on-request"); // We lost original value, but does not matter as is NX hosted
-        dist.put("shasum", file.getRepositoryItemAttributes().get(StorageFileItem.DIGEST_SHA1_KEY));
-        versionJson.put("dist", dist);
+        String version = repairVersionJson(versionJson, file);
         versions.put(version, versionJson);
       }
       catch (Exception e) {
@@ -163,6 +159,16 @@ public class RecreateMetadataWalkerProcessor
     hostedMetadataService.consumePackageRoot(packageRoot);
     packageRoots = packageRoots + 1;
     packageVersions = packageVersions + versions.size();
+  }
+
+  public String repairVersionJson(final Map<String, Object> versionJson, final StorageFileItem file) {
+    final String version = removeBuildMetadata(String.valueOf(versionJson.get("version")));
+    versionJson.put("version", version);
+    final Map<String, Object> dist = Maps.newHashMap();
+    dist.put("tarball", "generated-on-request"); // We lost original value, but does not matter as is NX hosted
+    dist.put("shasum", file.getRepositoryItemAttributes().get(StorageFileItem.DIGEST_SHA1_KEY));
+    versionJson.put("dist", dist);
+    return version;
   }
 
   private Map<String, Object> extractPackageJson(final StorageFileItem file) throws IOException {
@@ -253,6 +259,16 @@ public class RecreateMetadataWalkerProcessor
   {
     if (lower.containsKey(attributeKey)) {
       higher.put(attributeKey, lower.get(attributeKey));
+    }
+  }
+
+  private String removeBuildMetadata(final String version) {
+    int metadataBegin = version.indexOf('+');
+    if (metadataBegin == -1) {
+      return version;
+    }
+    else {
+      return version.substring(0, metadataBegin);
     }
   }
 }
