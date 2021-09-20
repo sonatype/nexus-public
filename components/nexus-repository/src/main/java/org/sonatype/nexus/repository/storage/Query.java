@@ -12,8 +12,10 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
@@ -66,6 +68,16 @@ public class Query
       return this.where(" = ").param(value);
     }
 
+    /**
+     * Appends an equals expression for a parameterized value.
+     */
+    public Builder in(final String name, final Collection<? extends Object> values) {
+      checkNotNull(values);
+      checkState(hasWhere(), "Missing where statement");
+      return this.where(" in ").params(name, values);
+    }
+
+
     public Builder and(String value) {
       checkNotNull(value);
       checkState(hasWhere(), "Missing where statement");
@@ -109,6 +121,20 @@ public class Query
       final String mangledName = checkNotNull(parameterName) + parameterNumber++;
       parameters.put(mangledName, value);
       where(":" + mangledName);
+      return this;
+    }
+
+    private Builder params(final String parameterName, final Collection<? extends Object> values) {
+      String tuple = values.stream()
+          .map(value -> {
+            final String mangledName = checkNotNull(parameterName) + parameterNumber++;
+            parameters.put(mangledName, value);
+            return ":" + mangledName;
+          })
+          .collect(Collectors.joining(", ", "(", ")"));
+
+      where(tuple);
+
       return this;
     }
 
