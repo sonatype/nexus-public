@@ -42,7 +42,7 @@ public class OrientRawReplicationFacet
     extends OrientReplicationFacetSupport
 {
   @Override
-  public void replicate(final String path,
+  public void doReplicate(final String path,
                         final AssetBlob assetBlob,
                         final NestedAttributesMap assetAttributes,
                         @Nullable final NestedAttributesMap componentAttributes) {
@@ -60,7 +60,6 @@ public class OrientRawReplicationFacet
   protected void putPreservingAllAttributes(final String path, final AssetBlob assetBlob, @Nullable final AttributesMap contentAttributes) {
     RawContentFacet rawContentFacet = facet(RawContentFacet.class);
     StorageTx tx = UnitOfWork.currentTx();
-    assetBlob.setReplicated(true);
     Asset asset = rawContentFacet.getOrCreateAsset(getRepository(), path, RawCoordinatesHelper.getGroup(path), path);
     tx.attachBlob(asset, assetBlob);
     asset.attributes((NestedAttributesMap) contentAttributes);
@@ -68,9 +67,8 @@ public class OrientRawReplicationFacet
   }
 
   @Override
-  public boolean replicateDelete(final String path) {
+  public boolean doReplicateDelete(final String path) {
     Asset asset;
-
     StorageFacet storageFacet = facet(StorageFacet.class);
     UnitOfWork.begin(storageFacet.txSupplier());
     try {

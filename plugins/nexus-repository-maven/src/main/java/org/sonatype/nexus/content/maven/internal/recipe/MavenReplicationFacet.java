@@ -58,7 +58,7 @@ public class MavenReplicationFacet
   }
 
   @Override
-  public void replicate(final String path,
+  public void doReplicate(final String path,
                         final Blob blob,
                         final Map<String, Object> assetAttributes,
                         final Map<String, Object> componentAttributes)
@@ -88,7 +88,6 @@ public class MavenReplicationFacet
     FluentAsset fluentAsset = contentFacet.assets().path(path)
       .component(fluentComponent)
       .blob(blob, getChecksumsFromProperties(assetAttributes))
-      .replicated()
       .save();
 
     AttributeChangeSet changeSet = new AttributeChangeSet();

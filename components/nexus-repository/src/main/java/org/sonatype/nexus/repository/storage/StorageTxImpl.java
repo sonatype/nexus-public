@@ -793,7 +793,7 @@ public class StorageTxImpl
     checkArgument(!assetBlob.isAttached(), "Blob is already attached to an asset");
 
     final WritePolicy effectiveWritePolicy = writePolicySelector.select(asset, writePolicy);
-    if (!effectiveWritePolicy.checkCreateAllowed(assetBlob.isReplicated())) {
+    if (!effectiveWritePolicy.checkCreateAllowed()) {
       throw new IllegalOperationException("Repository is read only: " + repositoryName);
     }
 

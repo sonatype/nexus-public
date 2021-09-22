@@ -75,11 +75,4 @@ public interface FluentAssetBuilder
    * Fields such as attributes, kind will be ignored.
    */
   Optional<FluentAsset> find();
-
-  /**
-   * Continue building this asset marking it created or updated by replication.
-   *
-   * @since 3.next
-   */
-  FluentAssetBuilder replicated();
 }

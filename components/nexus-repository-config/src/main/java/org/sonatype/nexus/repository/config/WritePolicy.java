@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.config;
 
+import org.sonatype.nexus.repository.ReplicationMarker;
+
 /**
  * Write policy.
  *
@@ -48,34 +50,20 @@ public enum WritePolicy
    * Returns {@code true} if Create allowed with this policy.
    */
   public boolean checkCreateAllowed() {
-    return checkCreateAllowed(false);
-  }
-
-  /**
-   * Returns {@code true} if Create allowed with this policy.
-   */
-  public boolean checkCreateAllowed(final boolean replicated) {
-    return this == ALLOW || this == ALLOW_ONCE || (replicated && this == REPLICATION_ONLY);
+    return this == ALLOW || this == ALLOW_ONCE || (this == REPLICATION_ONLY && ReplicationMarker.get());
   }
 
   /**
    * Returns {@code true} if Update allowed with this policy.
    */
   public boolean checkUpdateAllowed() {
-    return checkUpdateAllowed(false);
-  }
-
-  /**
-   * Returns {@code true} if Create allowed with this policy.
-   */
-  public boolean checkUpdateAllowed(final boolean replicated) {
-    return this == ALLOW || (replicated && this == REPLICATION_ONLY);
+    return this == ALLOW || (this == REPLICATION_ONLY && ReplicationMarker.get());
   }
 
   /**
    * Returns {@code true} if Delete allowed with this policy.
    */
   public boolean checkDeleteAllowed() {
-    return this == ALLOW || this == ALLOW_ONCE;
+    return this == ALLOW || this == ALLOW_ONCE || (this == REPLICATION_ONLY && ReplicationMarker.get());
   }
 }

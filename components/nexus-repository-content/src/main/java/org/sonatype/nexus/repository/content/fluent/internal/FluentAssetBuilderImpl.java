@@ -74,8 +74,6 @@ public class FluentAssetBuilderImpl
 
   private Map<String, Object> attributes;
 
-  private boolean isReplicated = false;
-
   public FluentAssetBuilderImpl(final ContentFacetSupport facet, final AssetStore<?> assetStore, final String path) {
     this.facet = checkNotNull(facet);
     this.assetStore = checkNotNull(assetStore);
@@ -129,18 +127,12 @@ public class FluentAssetBuilderImpl
   }
 
   @Override
-  public FluentAssetBuilder replicated() {
-    this.isReplicated = true;
-    return this;
-  }
-
-  @Override
   public FluentAsset save() {
     if (attributes != null) {
       assetData.attributes().backing().putAll(attributes);
     }
     if (blobSupplier != null) {
-      facet.checkAttachAllowed(findAsset().orElse(assetData), isReplicated);
+      facet.checkAttachAllowed(findAsset().orElse(assetData));
       blob = blobSupplier.get();
     }
     Asset asset = assetStore.save(this::findAsset, this::createAsset, this::updateAsset, this::postTransaction);
@@ -263,13 +255,13 @@ public class FluentAssetBuilderImpl
 
   @Override
   public FluentAsset attach(final TempBlob tempBlob) {
-    facet.checkAttachAllowed(assetData, isReplicated);
+    facet.checkAttachAllowed(assetData);
     return attachBlob(makePermanent(tempBlob.getBlob()), tempBlob.getHashes());
   }
 
   @Override
   public FluentAsset attach(final Blob blob, final Map<HashAlgorithm, HashCode> checksums) {
-    facet.checkAttachAllowed(assetData, isReplicated);
+    facet.checkAttachAllowed(assetData);
     return attachBlob(blob, checksums);
   }
 

@@ -12,7 +12,11 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import javax.annotation.Nullable;
+
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.FacetSupport;
+import org.sonatype.nexus.repository.ReplicationMarker;
 
 /**
  * Support for orient {@link ReplicationFacet} implementations.
@@ -23,4 +27,38 @@ public abstract class OrientReplicationFacetSupport
     extends FacetSupport
     implements ReplicationFacet {
 
+  @Override
+  public void replicate(
+      final String path,
+      final AssetBlob assetBlob,
+      final NestedAttributesMap assetAttributes,
+      @Nullable final NestedAttributesMap componentAttributes)
+  {
+    try {
+      ReplicationMarker.set(true);
+      doReplicate(path, assetBlob, assetAttributes, componentAttributes);
+    }
+    finally {
+      ReplicationMarker.unset();
+    }
+  }
+
+  @Override
+  public boolean replicateDelete(final String path) {
+    try {
+      ReplicationMarker.set(true);
+      return doReplicateDelete(path);
+    }
+    finally {
+      ReplicationMarker.unset();
+    }
+  }
+
+  public abstract void doReplicate(
+      String path,
+      AssetBlob assetBlob,
+      NestedAttributesMap assetAttributes,
+      @Nullable NestedAttributesMap componentAttributes);
+
+  public abstract boolean doReplicateDelete(String path);
 }
