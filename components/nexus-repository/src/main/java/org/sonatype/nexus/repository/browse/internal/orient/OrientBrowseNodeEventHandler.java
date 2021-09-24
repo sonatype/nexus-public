@@ -20,6 +20,8 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.HasLocality;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeEventHandler;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeEventHandlerSupport;
 import org.sonatype.nexus.repository.config.ConfigurationDeletedEvent;
 import org.sonatype.nexus.repository.storage.AssetCreatedEvent;
 import org.sonatype.nexus.repository.storage.AssetDeletedEvent;
@@ -41,12 +43,16 @@ import static org.sonatype.nexus.orient.ReplicationModeOverrides.dontWaitForRepl
 @Singleton
 @Named
 public class OrientBrowseNodeEventHandler
-    implements EventAware, EventAware.Asynchronous
+    extends BrowseNodeEventHandlerSupport
+    implements EventAware, EventAware.Asynchronous, BrowseNodeEventHandler
 {
   private final OrientBrowseNodeManager browseNodeManager;
 
   @Inject
-  public OrientBrowseNodeEventHandler(final OrientBrowseNodeManager browseNodeManager) {
+  public OrientBrowseNodeEventHandler(final OrientBrowseNodeManager browseNodeManager,
+                                      @Named("${nexus.browse.event.handler.pauseAvailable:-false}")
+                                      final boolean pauseAvailable) {
+    super(pauseAvailable);
     this.browseNodeManager = checkNotNull(browseNodeManager);
   }
 
@@ -79,14 +85,16 @@ public class OrientBrowseNodeEventHandler
   }
 
   private <E extends HasLocality> void handle(final E event, final Consumer<E> consumer) {
-    checkNotNull(event);
-    if (event.isLocal()) {
-      dontWaitForReplicationResults();
-      try {
-        consumer.accept(event);
-      }
-      finally {
-        clearReplicationModeOverrides();
+    if (shouldHandle()) {
+      checkNotNull(event);
+      if (event.isLocal()) {
+        dontWaitForReplicationResults();
+        try {
+          consumer.accept(event);
+        }
+        finally {
+          clearReplicationModeOverrides();
+        }
       }
     }
   }

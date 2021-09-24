@@ -12,9 +12,14 @@
  */
 package org.sonatype.nexus.repository.content.replication;
 
+import java.util.Map;
 import java.util.Optional;
 
+import javax.annotation.Nullable;
+
+import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.repository.FacetSupport;
+import org.sonatype.nexus.repository.ReplicationMarker;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
@@ -30,14 +35,40 @@ public abstract class ReplicationFacetSupport
     implements ReplicationFacet
 {
   @Override
+  public void replicate(final String path,
+                 final Blob blob,
+                 final Map<String, Object> assetAttributes,
+                 final @Nullable Map<String, Object> componentAttributes) {
+    try {
+      ReplicationMarker.set(true);
+      doReplicate(path, blob, assetAttributes, componentAttributes);
+    } finally {
+      ReplicationMarker.unset();
+    }
+  }
+
+  @Override
   public boolean replicateDelete(final String path) {
+    try {
+      ReplicationMarker.set(true);
+      return doReplicateDelete(path);
+    } finally {
+      ReplicationMarker.unset();
+    }
+  }
+
+  public abstract void doReplicate(
+      String path,
+      Blob blob,
+      Map<String, Object> assetAttributes,
+      @Nullable Map<String, Object> componentAttributes);
+
+  public boolean doReplicateDelete(final String path) {
     ContentFacet contentFacet = facet(ContentFacet.class);
     ContentMaintenanceFacet componentMaintenance = facet(ContentMaintenanceFacet.class);
     FluentAssets fluentAssets = contentFacet.assets();
     Optional<FluentAsset> result = fluentAssets.path(path).find();
-    if (result.isPresent()) {
-      componentMaintenance.deleteAsset(result.get());
-    }
+    result.ifPresent(componentMaintenance::deleteAsset);
     return result.isPresent();
   }
 }

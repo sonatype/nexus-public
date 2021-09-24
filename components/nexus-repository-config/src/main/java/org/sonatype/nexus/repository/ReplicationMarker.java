@@ -10,28 +10,34 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.replication;
-
-import java.util.Map;
-import javax.annotation.Nullable;
-
-import org.sonatype.nexus.blobstore.api.Blob;
-import org.sonatype.nexus.repository.Facet;
+package org.sonatype.nexus.repository;
 
 /**
- * Repository {@link Facet} for replication.
+ * Marks a thread as being part of a replication process.
  *
- * @since 3.31
+ * @since 3.next
  */
-@Facet.Exposed
-public interface ReplicationFacet
-    extends Facet
+public class ReplicationMarker
 {
+  private ReplicationMarker() { }
 
-  void replicate(String path,
-                 Blob blob,
-                 Map<String, Object> assetAttributes,
-                 Map<String, Object> componentAttributes);
+  private static final InheritableThreadLocal<Boolean> replicating = new InheritableThreadLocal<Boolean>()
+  {
+    @Override
+    protected Boolean initialValue() {
+      return false;
+    }
+  };
 
-  boolean replicateDelete(String path);
+  public static void set(final boolean value) {
+    replicating.set(value);
+  }
+
+  public static boolean get() {
+    return replicating.get();
+  }
+
+  public static void unset() {
+    replicating.remove();
+  }
 }

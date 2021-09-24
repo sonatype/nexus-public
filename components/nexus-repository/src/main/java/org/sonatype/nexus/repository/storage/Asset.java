@@ -29,7 +29,6 @@ import org.joda.time.Duration;
 
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_BLOB_REF;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_CONTENT_TYPE;
-import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_SIZE;
 import static org.sonatype.nexus.repository.storage.AssetManager.DEFAULT_LAST_DOWNLOADED_INTERVAL;
 
 /**
@@ -102,13 +101,6 @@ public class Asset
   @Nullable
   public Long size() {
     return size;
-  }
-
-  /**
-   * Gets the size of the file in bytes or throws a runtime exception if undefined.
-   */
-  public Long requireSize() {
-    return require(size, P_SIZE);
   }
 
   /**

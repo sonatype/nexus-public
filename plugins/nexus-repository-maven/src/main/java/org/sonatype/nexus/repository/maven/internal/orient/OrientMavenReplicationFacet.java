@@ -42,16 +42,15 @@ public class OrientMavenReplicationFacet
 {
   @Override
   @Transactional
-  public void replicate(final String path,
+  public void doReplicate(final String path,
                         final AssetBlob assetBlob,
                         final NestedAttributesMap assetAttributes,
-                        @Nullable final NestedAttributesMap componentAttributes) {
+                        final NestedAttributesMap componentAttributes) {
     try {
       OrientMavenFacet mavenFacet = facet(OrientMavenFacet.class);
       MavenPath mavenPath = mavenFacet.getMavenPathParser().parsePath(path);
       StorageTx tx = UnitOfWork.currentTx();
 
-      assetBlob.setReplicated(true);
       mavenFacet.put(mavenPath, assetBlob, assetAttributes);
 
       if (mavenPath.getCoordinates() != null) {
@@ -86,7 +85,7 @@ public class OrientMavenReplicationFacet
 
   @Override
   @Transactional
-  public boolean replicateDelete(final String path) {
+  public boolean doReplicateDelete(final String path) {
     try {
       OrientMavenFacet mavenFacet = facet(OrientMavenFacet.class);
       MavenPath mavenPath = mavenFacet.getMavenPathParser().parsePath(path);

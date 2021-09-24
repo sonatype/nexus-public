@@ -25,13 +25,14 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeEventHandler;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeEventHandlerSupport;
 import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetEvent;
@@ -73,8 +74,8 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.toExternal
 @Named
 @Singleton
 public class BrowseEventHandler
-    extends LifecycleSupport
-    implements EventAware // warning: don't make this EventAware.Asynchronous
+    extends BrowseNodeEventHandlerSupport
+    implements BrowseNodeEventHandler, EventAware // warning: don't make this EventAware.Asynchronous
 {
   private static final String HANDLER_KEY_PREFIX = "nexus.browse.event.handler.";
 
@@ -83,6 +84,8 @@ public class BrowseEventHandler
   private static final String FLUSH_ON_SECONDS_KEY = HANDLER_KEY_PREFIX + "flushOnSeconds";
 
   private static final String NO_PURGE_DELAY_KEY = HANDLER_KEY_PREFIX + "noPurgeDelay";
+
+  private static final String PAUSE_AVAILABLE_KEY = HANDLER_KEY_PREFIX + "pauseAvailable";
 
   private final PeriodicJobService periodicJobService;
 
@@ -114,8 +117,10 @@ public class BrowseEventHandler
       final EventManager eventManager,
       @Named("${" + FLUSH_ON_COUNT_KEY + ":-100}") final int flushOnCount,
       @Named("${" + FLUSH_ON_SECONDS_KEY + ":-2}") final int flushOnSeconds,
-      @Named("${" + NO_PURGE_DELAY_KEY + ":-true}") final boolean noPurgeDelay)
+      @Named("${" + NO_PURGE_DELAY_KEY + ":-true}") final boolean noPurgeDelay,
+      @Named("${" + PAUSE_AVAILABLE_KEY + ":-false}") final boolean pauseAvailable)
   {
+    super(pauseAvailable);
     this.periodicJobService = checkNotNull(periodicJobService);
     this.eventManager = checkNotNull(eventManager);
     checkArgument(flushOnCount > 0, FLUSH_ON_COUNT_KEY + " must be positive");
@@ -146,37 +151,49 @@ public class BrowseEventHandler
   @AllowConcurrentEvents
   @Subscribe
   public void on(final AssetCreatedEvent event) {
-    markAssetAsPending(event);
+    if (shouldHandle()) {
+      markAssetAsPending(event);
+    }
   }
 
   @AllowConcurrentEvents
   @Subscribe
   public void on(final AssetUploadedEvent event) {
-    markAssetAsPending(event);
+    if (shouldHandle()) {
+      markAssetAsPending(event);
+    }
   }
 
   @AllowConcurrentEvents
   @Subscribe
   public void on(final AssetDeletedEvent event) {
-    markRepositoryForTrimming(event);
+    if (shouldHandle()) {
+      markRepositoryForTrimming(event);
+    }
   }
 
   @AllowConcurrentEvents
   @Subscribe
   public void on(final AssetPurgedEvent event) {
-    markRepositoryForTrimming(event);
+    if (shouldHandle()) {
+      markRepositoryForTrimming(event);
+    }
   }
 
   @AllowConcurrentEvents
   @Subscribe
   public void on(final ComponentDeletedEvent event) {
-    markRepositoryForTrimming(event);
+    if (shouldHandle()) {
+      markRepositoryForTrimming(event);
+    }
   }
 
   @AllowConcurrentEvents
   @Subscribe
   public void on(final ComponentPurgedEvent event) {
-    markRepositoryForTrimming(event);
+    if (shouldHandle()) {
+      markRepositoryForTrimming(event);
+    }
   }
 
   /**
