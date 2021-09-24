@@ -40,7 +40,7 @@ public class OrientBrowseNodeEventHandlerTest
 
   @Before
   public void setup() {
-    handler = new OrientBrowseNodeEventHandler(browseNodeManager);
+    handler = new OrientBrowseNodeEventHandler(browseNodeManager, false);
   }
 
   @Test
@@ -55,6 +55,22 @@ public class OrientBrowseNodeEventHandlerTest
     handler.on(event);
 
     verify(browseNodeManager).createFromAsset(REPOSITORY_NAME, asset);
+  }
+
+  @Test
+  public void onAssetCreated_browsePaused() {
+    Asset asset = new Asset();
+
+    AssetCreatedEvent event = mock(AssetCreatedEvent.class);
+    when(event.getAsset()).thenReturn(asset);
+    when(event.getRepositoryName()).thenReturn(REPOSITORY_NAME);
+    when(event.isLocal()).thenReturn(true);
+
+    handler = new OrientBrowseNodeEventHandler(browseNodeManager, true);
+    handler.maybePauseEventProcessing();
+    handler.on(event);
+
+    verify(browseNodeManager, never()).createFromAsset(any(), any());
   }
 
   @Test
@@ -81,6 +97,21 @@ public class OrientBrowseNodeEventHandlerTest
   }
 
   @Test
+  public void onAssetDeleted_browsePaused() {
+    Asset asset = new Asset();
+
+    AssetDeletedEvent event = mock(AssetDeletedEvent.class);
+    when(event.getAsset()).thenReturn(asset);
+    when(event.isLocal()).thenReturn(true);
+
+    handler = new OrientBrowseNodeEventHandler(browseNodeManager, true);
+    handler.maybePauseEventProcessing();
+    handler.on(event);
+
+    verify(browseNodeManager, never()).createFromAsset(any(), any());
+  }
+
+  @Test
   public void onAssetDeleted_remote() {
     AssetDeletedEvent event = mock(AssetDeletedEvent.class);
     when(event.isLocal()).thenReturn(false);
@@ -99,6 +130,19 @@ public class OrientBrowseNodeEventHandlerTest
     handler.on(event);
 
     verify(browseNodeManager).deleteByRepository(REPOSITORY_NAME);
+  }
+
+  @Test
+  public void onConfigurationDeleted_browsePaused() {
+    ConfigurationDeletedEvent event = mock(ConfigurationDeletedEvent.class);
+    when(event.isLocal()).thenReturn(true);
+    when(event.getRepositoryName()).thenReturn(REPOSITORY_NAME);
+
+    handler = new OrientBrowseNodeEventHandler(browseNodeManager, true);
+    handler.maybePauseEventProcessing();
+    handler.on(event);
+
+    verify(browseNodeManager, never()).createFromAsset(any(), any());
   }
 
   @Test
