@@ -45,7 +45,7 @@ public class OrientMavenReplicationFacet
   public void doReplicate(final String path,
                         final AssetBlob assetBlob,
                         final NestedAttributesMap assetAttributes,
-                        @Nullable final NestedAttributesMap componentAttributes) {
+                        final NestedAttributesMap componentAttributes) {
     try {
       OrientMavenFacet mavenFacet = facet(OrientMavenFacet.class);
       MavenPath mavenPath = mavenFacet.getMavenPathParser().parsePath(path);

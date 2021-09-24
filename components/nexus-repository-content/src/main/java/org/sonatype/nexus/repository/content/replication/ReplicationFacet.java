@@ -31,7 +31,7 @@ public interface ReplicationFacet
   void replicate(String path,
                  Blob blob,
                  Map<String, Object> assetAttributes,
-                 @Nullable Map<String, Object> componentAttributes);
+                 Map<String, Object> componentAttributes);
 
   boolean replicateDelete(String path);
 }

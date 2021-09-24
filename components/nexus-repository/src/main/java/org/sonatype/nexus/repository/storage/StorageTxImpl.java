@@ -800,7 +800,7 @@ public class StorageTxImpl
     NestedAttributesMap checksums = asset.attributes().child(CHECKSUM);
 
     if (!isDuplicateBlob(asset, assetBlob, effectiveWritePolicy, checksums)) {
-      maybeDeleteBlob(asset, effectiveWritePolicy);
+      maybeDeleteBlob(asset, assetBlob, effectiveWritePolicy);
 
       asset.blobRef(assetBlob.getBlobRef());
       asset.size(assetBlob.getSize());
@@ -919,7 +919,7 @@ public class StorageTxImpl
    * Deletes the existing blob for the asset if one exists, updating the blob updated field if necessary. The
    * write policy will be enforced for this operation and will throw an exception if updates are not supported.
    */
-  private void maybeDeleteBlob(final Asset asset, final WritePolicy effectiveWritePolicy)
+  private void maybeDeleteBlob(final Asset asset, final AssetBlob assetBlob, final WritePolicy effectiveWritePolicy)
   {
     DateTime now = DateTime.now();
     if (asset.blobRef() != null) {

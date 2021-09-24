@@ -45,7 +45,7 @@ public class OrientRawReplicationFacet
   public void doReplicate(final String path,
                         final AssetBlob assetBlob,
                         final NestedAttributesMap assetAttributes,
-                        @Nullable final NestedAttributesMap componentAttributes) {
+                        final NestedAttributesMap componentAttributes) {
     StorageFacet storageFacet = facet(StorageFacet.class);
     UnitOfWork.begin(storageFacet.txSupplier());
     try {
