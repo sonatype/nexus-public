@@ -512,6 +512,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_Npm_Title: 'npm',
     Repository_Facet_Npm_RemoveNonCataloged_Label: 'Remove Non-cataloged Versions',
     Repository_Facet_Npm_RemoveNonCataloged_HelpText: 'Remove non-cataloged versions from the npm package metadata. <span style="font-weight: bold">IQ: Audit and Quarantine</span> capability must be enabled for this feature to take effect. <a target="_blank" href="http://links.sonatype.com/products/nxrm3/docs/npm-with-firewall">Learn more.</a>',
+    Repository_Facet_Npm_RemoveQuarantined_Label: 'Remove Quarantined Versions',
+    Repository_Facet_Npm_RemoveQuarantined_HelpText: 'Remove quarantined versions from the npm package metadata. <span style="font-weight: bold">IQ: Audit and Quarantine</span> capability must be enabled for this feature to take effect. <a target="_blank" href="http://links.sonatype.com/products/nxrm3/docs/npm-with-firewall">Learn more.</a>',
     Repository_Facet_HttpClientFacet_AuthenticationType_FieldLabel: 'Authentication type',
     Repository_Facet_HttpClientFacet_AuthenticationType_Username: 'Username',
     Repository_Facet_HttpClientFacet_AuthenticationType_NTLM: 'Windows NTLM',

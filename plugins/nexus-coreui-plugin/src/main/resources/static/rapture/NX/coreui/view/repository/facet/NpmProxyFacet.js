@@ -50,6 +50,13 @@ Ext.define('NX.coreui.view.repository.facet.NpmProxyFacet', {
             value: false,
             fieldLabel: NX.I18n.get('Repository_Facet_Npm_RemoveNonCataloged_Label'),
             helpText: NX.I18n.get('Repository_Facet_Npm_RemoveNonCataloged_HelpText')
+          },
+          {
+            xtype: 'checkbox',
+            name: 'attributes.npm.removeQuarantinedVersions',
+            value: false,
+            fieldLabel: NX.I18n.get('Repository_Facet_Npm_RemoveQuarantined_Label'),
+            helpText: NX.I18n.get('Repository_Facet_Npm_RemoveQuarantined_HelpText')
           }
         ]
       }
