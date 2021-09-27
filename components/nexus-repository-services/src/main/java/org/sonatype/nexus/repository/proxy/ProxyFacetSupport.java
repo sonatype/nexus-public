@@ -224,6 +224,7 @@ public abstract class ProxyFacetSupport
     httpClient = null;
   }
 
+  @Override
   public URI getRemoteUrl() {
     return config.remoteUrl;
   }
@@ -322,10 +323,10 @@ public abstract class ProxyFacetSupport
     return context.getRequest().getPath() + '?' + context.getRequest().getParameters();
   }
 
-  private <X extends Throwable> void logContentOrThrow(@Nullable final Content content,
-                                                       final Context context,
-                                                       @Nullable final StatusLine statusLine,
-                                                       final X exception) throws X
+  protected <X extends Throwable> void logContentOrThrow(@Nullable final Content content,
+                                                         final Context context,
+                                                         @Nullable final StatusLine statusLine,
+                                                         final X exception) throws X
   {
     String logMessage = buildLogContentMessage(content, statusLine);
     String repositoryName = context.getRepository().getName();
