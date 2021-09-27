@@ -142,7 +142,7 @@ public class UploadComponentMultipartHelper
       try (InputStream in = item.openStream()) {
         // isFormField() is derived from whether the filename in the form was non-null, at least for some of our tests
         // this is not sufficient.
-        if (!item.isFormField() || assetPattern.test(item.getFieldName())) {
+        if (!item.isFormField() || (assetPattern.test(item.getFieldName()) && item.getContentType() != null)) {
           // Don't use getName() here to prevent an InvalidFileNameException.
           String fileName = (String) field.get(item);
           multipartForm.putFile(item.getFieldName(), new TempBlobFormField(item.getFieldName(), fileName,
