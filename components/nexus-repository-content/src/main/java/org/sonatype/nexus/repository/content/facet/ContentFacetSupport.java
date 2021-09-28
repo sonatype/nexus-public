@@ -56,6 +56,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
+import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
@@ -321,7 +322,8 @@ public abstract class ContentFacetSupport
    * Override this method to customize Content-Type validation of asset blobs.
    */
   protected String determineContentType(final Asset asset, final Blob blob, final boolean strictValidation) {
-    return assetBlobValidator.determineContentType(asset, blob, strictValidation);
+    String contentType = blob.getHeaders().get(CONTENT_TYPE_HEADER);
+    return assetBlobValidator.determineContentType(strictValidation, blob::getInputStream, asset.path(), contentType);
   }
 
   /**

@@ -74,6 +74,33 @@ public class HardLinkHelper
     return fluentBlobs.ingest(contentPath, headers, hashCodeSha1, Files.size(contentPath));
   }
 
+  /**
+   * Ingests a blob from a {@code content} via hard-linking.
+   */
+  public Blob ingestHardLink(
+      final Repository repository,
+      final File content,
+      final HashCode hashCodeSha1,
+      final String contentType)
+      throws IOException
+  {
+    checkNotNull(repository);
+    checkNotNull(content);
+    checkNotNull(hashCodeSha1);
+    checkNotNull(contentType);
+
+    Map<String, String> headers = new HashMap<>();
+    String path = content.getPath();
+    headers.put(BLOB_NAME_HEADER, path);
+    headers.put(CONTENT_TYPE_HEADER, contentType);
+
+    Path contentPath = content.toPath();
+
+    FluentBlobs fluentBlobs = repository.facet(ContentFacet.class).blobs();
+
+    return fluentBlobs.ingest(contentPath, headers, hashCodeSha1, Files.size(contentPath));
+  }
+
   private String detectMimeType(final File content) throws IOException {
     String path = content.getPath();
     Path contentPath = content.toPath();

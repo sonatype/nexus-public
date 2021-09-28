@@ -26,7 +26,6 @@ import org.sonatype.nexus.repository.mime.ContentValidator;
 import org.sonatype.nexus.repository.mime.DefaultContentValidator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 
 /**
  * Supplies {@link AssetBlobValidator}s to {@link ContentFacet}s.
@@ -57,14 +56,14 @@ public class AssetBlobValidators
     String format = repository.getFormat().getValue();
     MimeRulesSource mimeRulesSource = mimeRulesSources.getOrDefault(format, MimeRulesSource.NOOP);
     ContentValidator contentValidator = contentValidators.getOrDefault(format, defaultContentValidator);
-    return (asset, blob, strict) -> {
+    return (strict, contentSupplier, assetPath, declaredContentType) -> {
       try {
         return contentValidator.determineContentType(
             strict,
-            blob::getInputStream,
+            contentSupplier,
             mimeRulesSource,
-            asset.path(),
-            blob.getHeaders().get(CONTENT_TYPE_HEADER));
+            assetPath,
+            declaredContentType);
       }
       catch (IOException e) {
         throw new InvalidContentException(e);
