@@ -19,10 +19,16 @@ import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.common.collect.AttributesMap;
+import org.sonatype.nexus.common.io.Cooperation;
+import org.sonatype.nexus.common.io.Cooperation.IOCall;
+import org.sonatype.nexus.common.io.CooperationFactory;
 import org.sonatype.nexus.repository.HasFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.group.GroupFacet;
@@ -55,6 +61,26 @@ public class MergingGroupHandler
 {
   private static final Predicate<Repository> PROXY_OR_GROUP =
       or(new HasFacet(ProxyFacet.class), new HasFacet(GroupFacet.class));
+
+  @Nullable
+  private Cooperation metadataCooperation;
+
+  @Inject
+  public MergingGroupHandler(
+      final CooperationFactory cooperationFactory,
+      @Named("${nexus.maven.group.cooperation.enabled:-true}") final boolean cooperationEnabled,
+      @Named("${nexus.maven.group.cooperation.majorTimeout:-0s}") final Time majorTimeout,
+      @Named("${nexus.maven.group.cooperation.minorTimeout:-30s}") final Time minorTimeout,
+      @Named("${nexus.maven.group.cooperation.threadsPerKey:-100}") final int threadsPerKey)
+  {
+    if (cooperationEnabled) {
+      this.metadataCooperation = cooperationFactory.configure()
+          .majorTimeout(majorTimeout)
+          .minorTimeout(minorTimeout)
+          .threadsPerKey(threadsPerKey)
+          .build(getClass().getName());
+    }
+  }
 
   protected Response doGetHash(@Nonnull final Context context) throws Exception
   {
@@ -114,36 +140,48 @@ public class MergingGroupHandler
     List<Repository> proxiesOrGroups =
         members.stream().filter(PROXY_OR_GROUP::apply).collect(toList());
 
-    Map<Repository, Response> passThroughResponses = getAll(context, proxiesOrGroups, dispatched);
+    Content content = maybeCooperate(key(repository, mavenPath), __ -> {
+      try {
+        // Check members to prime
+        Map<Repository, Response> passThroughResponses = getAll(context, proxiesOrGroups, dispatched);
 
-    Optional<Content> cached = checkCache(groupFacet, mavenPath, repository);
+        Optional<Content> cached = checkCache(groupFacet, mavenPath, repository);
 
-    if (cached.isPresent()) {
-      log.trace("Serving cached content {} : {}", repository.getName(), mavenPath.getPath());
-      return HttpResponses.ok(cached.get());
-    }
+        if (cached.isPresent()) {
+          log.trace("Serving cached content {} : {}", repository.getName(), mavenPath.getPath());
+          return cached.get();
+        }
 
-    // this will fetch the remaining responses, thanks to the 'dispatched' tracking
-    Map<Repository, Response> remainingResponses = getAll(context, members, dispatched);
+        // this will fetch the remaining responses, thanks to the 'dispatched' tracking
+        Map<Repository, Response> remainingResponses = getAll(context, members, dispatched);
 
-    // merge the two sets of responses according to member order
-    LinkedHashMap<Repository, Response> responses = new LinkedHashMap<>();
-    for (Repository member : members) {
-      Response response = passThroughResponses.get(member);
-      if (response == null) {
-        response = remainingResponses.get(member);
+        // merge the two sets of responses according to member order
+        LinkedHashMap<Repository, Response> responses = new LinkedHashMap<>();
+        for (Repository member : members) {
+          Response response = passThroughResponses.get(member);
+          if (response == null) {
+            response = remainingResponses.get(member);
+          }
+          if (response != null) {
+            responses.put(member, response);
+          }
+        }
+
+        // merge the individual responses and cache the result
+        Content mergedContent = groupFacet.mergeAndCache(mavenPath, responses);
+        if (mergedContent != null) {
+          log.trace("Responses merged {} : {}", context.getRepository().getName(), mavenPath.getPath());
+        }
+        return mergedContent;
       }
-      if (response != null) {
-        responses.put(member, response);
+      catch (Exception e) {
+        throw new IOException(e);
       }
-    }
+    });
 
-    // merge the individual responses and cache the result
-    Content mergedContent = groupFacet.mergeAndCache(mavenPath, responses);
 
-    if (mergedContent != null) {
-      log.trace("Responses merged {} : {}", context.getRepository().getName(), mavenPath.getPath());
-      return HttpResponses.ok(mergedContent);
+    if (content != null) {
+      return HttpResponses.ok(content);
     }
     else {
       log.trace("Not found response to merge {} : {}", repository.getName(), mavenPath.getPath());
@@ -180,5 +218,22 @@ public class MergingGroupHandler
     else {
       return doGetContent(context, dispatched);
     }
+  }
+
+  /*
+   * Invoke the call with co-operation if available, if not invoke the call directly.
+   */
+  private <T> T maybeCooperate(final String key, final IOCall<T> call) throws IOException {
+    if (metadataCooperation == null) {
+      return call.call(false);
+    }
+    return metadataCooperation.cooperate(key, call);
+  }
+
+  /*
+   * Create a key for use by co-operation
+   */
+  private static String key(final Repository repository, final MavenPath path) {
+    return repository.getName() + ":" + path.toString();
   }
 }
