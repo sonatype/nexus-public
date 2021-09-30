@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.maven.internal.orient;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -27,6 +28,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.groups.Default;
 
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
@@ -49,6 +51,7 @@ import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtil
 import org.sonatype.nexus.repository.maven.internal.validation.MavenMetadataContentValidator;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
+import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.Query.Builder;
@@ -72,12 +75,14 @@ import com.google.common.hash.HashCode;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.apache.maven.model.Model;
+import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Boolean.TRUE;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_ARTIFACT_ID;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_CLASSIFIER;
@@ -87,7 +92,6 @@ import static org.sonatype.nexus.repository.maven.internal.Attributes.P_PACKAGIN
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_POM_DESCRIPTION;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_POM_NAME;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_VERSION;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
 import static org.sonatype.nexus.repository.maven.internal.Constants.METADATA_FILENAME;
 import static org.sonatype.nexus.repository.maven.internal.orient.MavenFacetUtils.deleteWithHashes;
 import static org.sonatype.nexus.repository.maven.internal.orient.MavenFacetUtils.findAsset;
@@ -383,7 +387,7 @@ public class MavenFacetImpl
         path.getPath(),
         sourceFile,
         hashes,
-        null,
+        extractBlobHeaders(contentAttributes),
         contentType,
         size
     );
@@ -400,7 +404,7 @@ public class MavenFacetImpl
   {
     StorageTx tx = UnitOfWork.currentTx();
 
-    AssetBlob assetBlob = tx.createBlob(path.getPath(), blob, null, contentType, true);
+    AssetBlob assetBlob = tx.createBlob(path.getPath(), blob, extractBlobHeaders(contentAttributes), contentType, true);
 
     return doPutAssetBlob(path, contentAttributes, tx, assetBlob);
   }
@@ -554,10 +558,16 @@ public class MavenFacetImpl
                                final Asset asset,
                                final AssetBlob assetBlob,
                                @Nullable final AttributesMap contentAttributes)
-      throws IOException
   {
-    Content.applyToAsset(asset, Content.maintainLastModified(asset, contentAttributes));
+    AttributesMap contentAttributesWithLastModified = Content.maintainLastModified(asset, contentAttributes);
+    Content.applyToAsset(asset, contentAttributesWithLastModified);
+
     tx.attachBlob(asset, assetBlob);
+
+    // Used in nx2->nx3 migration
+    if (contentAttributesWithLastModified.contains(AssetEntityAdapter.P_BLOB_CREATED)) {
+      asset.blobCreated(contentAttributesWithLastModified.get(AssetEntityAdapter.P_BLOB_CREATED, DateTime.class));
+    }
   }
 
   @Override
@@ -652,5 +662,18 @@ public class MavenFacetImpl
     else {
       return AssetKind.OTHER.name();
     }
+  }
+
+  private Map<String, String> extractBlobHeaders(final AttributesMap contentAttributes) {
+    checkNotNull(contentAttributes);
+    Map<String, String> headers = new HashMap<>();
+    if (contentAttributes.contains(AssetEntityAdapter.P_CREATED_BY)) {
+      headers.put(BlobStore.CREATED_BY_HEADER, contentAttributes.get(AssetEntityAdapter.P_CREATED_BY, String.class));
+    }
+    if (contentAttributes.contains(AssetEntityAdapter.P_CREATED_BY_IP)) {
+      headers.put(BlobStore.CREATED_BY_IP_HEADER,
+          contentAttributes.get(AssetEntityAdapter.P_CREATED_BY_IP, String.class));
+    }
+    return headers.isEmpty() ? null : headers;
   }
 }
