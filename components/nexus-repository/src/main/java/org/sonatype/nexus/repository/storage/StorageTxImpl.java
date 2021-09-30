@@ -767,8 +767,7 @@ public class StorageTxImpl
     Builder<String, String> storageHeaders = ImmutableMap.builder();
     storageHeaders.put(BlobStore.REPO_NAME_HEADER, repositoryName);
     storageHeaders.put(BlobStore.BLOB_NAME_HEADER, blobName);
-    storageHeaders.put(BlobStore.CREATED_BY_HEADER, createdBy);
-    storageHeaders.put(BlobStore.CREATED_BY_IP_HEADER, createdByIp);
+
     if (!skipContentVerification) {
       storageHeaders.put(
           BlobStore.CONTENT_TYPE_HEADER,
@@ -778,8 +777,20 @@ public class StorageTxImpl
     else {
       storageHeaders.put(BlobStore.CONTENT_TYPE_HEADER, declaredContentType);
     }
-    if (headers != null) {
+
+    if (headers == null) {
+      storageHeaders.put(BlobStore.CREATED_BY_HEADER, createdBy);
+      storageHeaders.put(BlobStore.CREATED_BY_IP_HEADER, createdByIp);
+    }
+    else {
       storageHeaders.putAll(headers);
+
+      if (!headers.containsKey(BlobStore.CREATED_BY_HEADER)) {
+        storageHeaders.put(BlobStore.CREATED_BY_HEADER, createdBy);
+      }
+      if (!headers.containsKey(BlobStore.CREATED_BY_IP_HEADER)) {
+        storageHeaders.put(BlobStore.CREATED_BY_IP_HEADER, createdByIp);
+      }
     }
     return storageHeaders.build();
   }
