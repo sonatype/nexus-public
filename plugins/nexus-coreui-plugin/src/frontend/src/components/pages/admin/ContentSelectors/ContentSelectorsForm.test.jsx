@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {fireEvent, wait, waitForElement, waitForElementToBeRemoved} from '@testing-library/react';
+import {fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import {when} from 'jest-when';
 import '@testing-library/jest-dom/extend-expect';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
@@ -80,16 +80,6 @@ describe('ContentSelectorsForm', function() {
     }));
   }
 
-  it('renders a loading spinner', async function() {
-    axios.get.mockImplementation(() => new Promise(() => {}));
-
-    const {container, loadingMask} = renderEditView('test');
-
-    await waitForElement(loadingMask);
-
-    expect(container).toMatchSnapshot();
-  });
-
   it('renders the resolved data', async function() {
     const itemId = 'test';
 
@@ -118,7 +108,6 @@ describe('ContentSelectorsForm', function() {
     expect(description()).toHaveValue('description');
     expect(expression()).toHaveValue('format == "raw"');
     expect(saveButton()).toHaveClass('disabled');
-    expect(container).toMatchSnapshot();
   });
 
   it('renders an error message', async function() {
@@ -158,7 +147,7 @@ describe('ContentSelectorsForm', function() {
 
     fireEvent.click(cancelButton());
 
-    await wait(() => expect(onDone).toBeCalled());
+    await waitFor(() => expect(onDone).toBeCalled());
   });
 
   it('shows errors from the backend on the correct field', async function() {
@@ -221,7 +210,7 @@ describe('ContentSelectorsForm', function() {
     ExtJS.requestConfirmation.mockReturnValue(CONFIRM);
     fireEvent.click(deleteButton());
 
-    await wait(() => expect(axios.delete).toBeCalledWith(`/service/rest/v1/security/content-selectors/${itemId}`));
+    await waitFor(() => expect(axios.delete).toBeCalledWith(`/service/rest/v1/security/content-selectors/${itemId}`));
     expect(onDone).toBeCalled();
   });
 
@@ -251,18 +240,18 @@ describe('ContentSelectorsForm', function() {
 
     await waitForElementToBeRemoved(loadingMask);
 
-    await wait(() => expect(window.dirty).toEqual([]));
+    await waitFor(() => expect(window.dirty).toEqual([]));
 
     await TestUtils.changeField(name, 'test');
     await TestUtils.changeField(description, 'description');
     await TestUtils.changeField(expression, 'format == "raw"');
 
-    await wait(() => expect(window.dirty).toEqual(['ContentSelectorsFormMachine']));
+    await waitFor(() => expect(window.dirty).toEqual(['ContentSelectorsFormMachine']));
 
     expect(saveButton()).not.toBeDisabled();
     fireEvent.click(saveButton());
 
-    await wait(() => expect(axios.post).toHaveBeenCalledWith(
+    await waitFor(() => expect(axios.post).toHaveBeenCalledWith(
         '/service/rest/v1/security/content-selectors',
         {name: 'test', description: 'description', expression: 'format == "raw"'}
     ));

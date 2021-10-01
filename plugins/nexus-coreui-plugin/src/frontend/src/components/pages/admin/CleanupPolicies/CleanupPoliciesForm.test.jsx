@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {fireEvent, wait, waitForElement, waitForElementToBeRemoved} from '@testing-library/react';
+import {fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import {when} from 'jest-when';
 
@@ -113,16 +113,6 @@ describe('CleanupPoliciesForm', function() {
     });
   });
 
-  it('renders a loading spinner', async function() {
-    axios.get.mockImplementation(() => new Promise(() => {}));
-
-    const {container, loadingMask} = renderEditView('test');
-
-    await waitForElement(loadingMask);
-
-    expect(container).toMatchSnapshot();
-  });
-
   it('renders the resolved data', async function() {
     const {container,
       loadingMask,
@@ -145,7 +135,6 @@ describe('CleanupPoliciesForm', function() {
     expect(criteriaReleaseType()).toHaveValue('RELEASES')
     expect(criteriaAssetRegex()).toHaveValue('.*')
     expect(saveButton()).toHaveClass('disabled');
-    expect(container).toMatchSnapshot();
   });
 
   it('renders an error message', async function() {
@@ -178,7 +167,7 @@ describe('CleanupPoliciesForm', function() {
 
     fireEvent.click(cancelButton());
 
-    await wait(() => expect(onDone).toBeCalled());
+    await waitFor(() => expect(onDone).toBeCalled());
   });
 
   it('requests confirmation when delete is requested', async function() {
@@ -206,7 +195,7 @@ describe('CleanupPoliciesForm', function() {
     ExtJS.requestConfirmation.mockReturnValue(CONFIRM);
     fireEvent.click(deleteButton());
 
-    await wait(() => expect(axios.delete).toBeCalledWith(EDIT_URL(itemId)));
+    await waitFor(() => expect(axios.delete).toBeCalledWith(EDIT_URL(itemId)));
     expect(onDone).toBeCalled();
   });
 
@@ -217,18 +206,18 @@ describe('CleanupPoliciesForm', function() {
 
     await waitForElementToBeRemoved(loadingMask);
 
-    await wait(() => expect(window.dirty).toEqual([]));
+    await waitFor(() => expect(window.dirty).toEqual([]));
 
     await TestUtils.changeField(name, 'test');
     await TestUtils.changeField(format, 'testformat');
     await TestUtils.changeField(notes, 'notes');
 
-    await wait(() => expect(window.dirty).toEqual(['CleanupPoliciesFormMachine']));
+    await waitFor(() => expect(window.dirty).toEqual(['CleanupPoliciesFormMachine']));
 
     expect(saveButton()).not.toBeDisabled();
     fireEvent.click(saveButton());
 
-    await wait(() => expect(axios.post).toHaveBeenCalledWith(
+    await waitFor(() => expect(axios.post).toHaveBeenCalledWith(
         '/service/rest/internal/cleanup-policies',
         {name: 'test', format: 'testformat', notes: 'notes'}
     ));

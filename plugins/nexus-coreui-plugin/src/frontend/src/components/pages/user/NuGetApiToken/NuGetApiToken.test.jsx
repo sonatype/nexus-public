@@ -13,7 +13,7 @@
 import React from 'react';
 import Axios from 'axios';
 import {act} from 'react-dom/test-utils';
-import {fireEvent, wait} from '@testing-library/react';
+import {fireEvent, waitFor} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
@@ -65,14 +65,11 @@ describe('NuGetApiToken', () => {
   it('renders correctly', async () => {
     let { container, accessButton, nugetKey } = renderView(<NuGetApiToken/>);
 
-    expect(container).toMatchSnapshot('baseline');
-    await wait(() =>  expect(nugetKey()).not.toBeInTheDocument());
+    await waitFor(() =>  expect(nugetKey()).not.toBeInTheDocument());
 
     await act(async () => fireEvent.click(accessButton()));
 
-    await wait(() =>  expect(nugetKey()).toBeInTheDocument());
-
-    expect(container).toMatchSnapshot('nugetKeyPresent');
+    await waitFor(() =>  expect(nugetKey()).toBeInTheDocument());
   });
 
   it('uses the get call when the access button is pressed',  async () => {
@@ -80,7 +77,7 @@ describe('NuGetApiToken', () => {
 
     await act(async () => fireEvent.click(accessButton()));
 
-    await wait(() =>  expect(nugetKey()).toBeInTheDocument());
+    await waitFor(() =>  expect(nugetKey()).toBeInTheDocument());
 
     expect(Axios.get).toHaveBeenCalledTimes(1);
     expect(Axios.get).toHaveBeenCalledWith(

@@ -12,7 +12,7 @@
  */
 import React from 'react';
 import { act } from 'react-dom/test-utils';
-import {fireEvent, render, wait} from '@testing-library/react';
+import {fireEvent, render} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 
 import SupportZipForm from './SupportZipForm';
@@ -55,9 +55,7 @@ describe('SupportZipForm', function() {
     expect(container.querySelector('input#metrics')).not.toBeChecked();
     expect(container.querySelector('input#jmx')).toBeChecked();
     expect(container.querySelector('input#limitFileSizes')).not.toBeChecked();
-    expect(container.querySelector('input#limitZipSize')).toBeChecked();  
-
-    expect(container).toMatchSnapshot();
+    expect(container.querySelector('input#limitZipSize')).toBeChecked();
   });
 
   it('updates the parameters when clicked', async function() {

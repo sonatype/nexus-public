@@ -12,7 +12,7 @@
  */
 import React from 'react';
 import { act } from 'react-dom/test-utils';
-import {fireEvent, render, wait} from '@testing-library/react';
+import {fireEvent, waitFor} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import axios from 'axios';
@@ -39,7 +39,7 @@ describe('LogViewer', function() {
 
   const changeFieldAndAssertValue = async (fieldSelector, value) => {
     fireEvent.change(fieldSelector(), {target: {value: value}});
-    await wait(() => expect(fieldSelector()).toHaveValue(value));
+    await waitFor(() => expect(fieldSelector()).toHaveValue(value));
   };
 
   it('renders the log into the text area', async function() {
@@ -52,8 +52,6 @@ describe('LogViewer', function() {
     act(() => {
       expect(container.querySelector('textarea')).toHaveValue("log data");
     });
-
-    expect(container).toMatchSnapshot();
   });
 
   it('creates a mark when insert mark clicked', async function() {
@@ -61,7 +59,7 @@ describe('LogViewer', function() {
       data: 'log data'
     }));
 
-    const {container, markInput, insertMarkButton} = await renderView();
+    const {container, markInput} = await renderView();
 
     await changeFieldAndAssertValue(markInput, 'mymark');
 

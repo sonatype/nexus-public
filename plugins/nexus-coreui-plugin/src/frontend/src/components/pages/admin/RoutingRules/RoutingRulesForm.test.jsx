@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {fireEvent, wait, waitForElement, waitForElementToBeRemoved} from '@testing-library/react';
+import {fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import axios from 'axios';
@@ -79,16 +79,6 @@ describe('RoutingRulesForm', function() {
     }));
   }
 
-  it('renders a loading spinner', async function() {
-    axios.get.mockImplementation(() => new Promise(() => {}));
-
-    const {container, loadingMask} = renderEditView('test');
-
-    await waitForElement(loadingMask);
-
-    expect(container).toMatchSnapshot();
-  });
-
   it('renders the resolved data', async function() {
     const itemId = 'allow-all';
 
@@ -101,7 +91,7 @@ describe('RoutingRulesForm', function() {
       }
     });
 
-    const {container, loadingMask, name, description, mode, matcher, saveButton} = renderEditView(itemId);
+    const {loadingMask, name, description, mode, matcher, saveButton} = renderEditView(itemId);
 
     await waitForElementToBeRemoved(loadingMask);
 
@@ -110,7 +100,6 @@ describe('RoutingRulesForm', function() {
     expect(mode()).toHaveValue('ALLOW');
     expect(matcher(0)).toHaveValue('.*');
     expect(saveButton()).toHaveClass('disabled');
-    expect(container).toMatchSnapshot();
   });
 
   it('renders an error message', async function() {
@@ -183,7 +172,7 @@ describe('RoutingRulesForm', function() {
 
     fireEvent.click(cancelButton());
 
-    await wait(() => expect(onDone).toBeCalled());
+    await waitFor(() => expect(onDone).toBeCalled());
   });
 
   it('requests confirmation when delete is requested', async function() {
@@ -208,7 +197,7 @@ describe('RoutingRulesForm', function() {
     ExtJS.requestConfirmation.mockReturnValue(CONFIRM);
     fireEvent.click(deleteButton());
 
-    await wait(() => expect(axios.delete).toBeCalledWith(`/service/rest/internal/ui/routing-rules/${itemId}`));
+    await waitFor(() => expect(axios.delete).toBeCalledWith(`/service/rest/internal/ui/routing-rules/${itemId}`));
     expect(onDone).toBeCalled();
   });
 
@@ -220,19 +209,19 @@ describe('RoutingRulesForm', function() {
 
     await waitForElementToBeRemoved(loadingMask);
 
-    await wait(() => expect(window.dirty).toEqual([]));
+    await waitFor(() => expect(window.dirty).toEqual([]));
 
     await TestUtils.changeField(name, 'block-all');
     await TestUtils.changeField(description, 'Block all requests');
     await TestUtils.changeField(mode, 'BLOCK');
     await TestUtils.changeField(() => matcher(0), '.*');
 
-    await wait(() => expect(window.dirty).toEqual(['RoutingRulesFormMachine']));
+    await waitFor(() => expect(window.dirty).toEqual(['RoutingRulesFormMachine']));
 
     expect(createButton()).not.toBeDisabled();
     fireEvent.click(createButton());
 
-    await wait(() => expect(axios.post).toHaveBeenCalledWith(
+    await waitFor(() => expect(axios.post).toHaveBeenCalledWith(
         '/service/rest/internal/ui/routing-rules/',
         {name: 'block-all', description: 'Block all requests', mode: 'BLOCK', matchers: ['.*']}
     ));
