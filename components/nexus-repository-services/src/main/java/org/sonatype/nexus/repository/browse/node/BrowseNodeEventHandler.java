@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.browse.node;
 
 /**
  * EventHandler that manages browse nodes realtime
- * @since 3.next
+ * @since 3.35
  */
 public interface BrowseNodeEventHandler
 {

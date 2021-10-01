@@ -44,7 +44,7 @@ import static java.util.stream.StreamSupport.stream;
  * Note: this class is disabled by default as we don't want it to run on every OSS upgrade. To enable it, we must set
  * the 'enabledByDefault' property of the FeatureFlag annotation to true.
  *
- * @since 3.next
+ * @since 3.35
  */
 @Named
 @Singleton

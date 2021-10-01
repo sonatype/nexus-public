@@ -19,7 +19,7 @@
 /**
  * Footer branding panel.
  *
- * @since 3.next
+ * @since 3.35
  */
 Ext.define('NX.view.footer.AnalyticsOptOut', {
   extend: 'Ext.container.Container',

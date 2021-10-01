@@ -36,7 +36,7 @@ import static org.sonatype.nexus.repository.replication.ReplicationUtils.getChec
 /**
  * Standard methods for replicating components/assets.
  *
- * @since 3.next
+ * @since 3.35
  */
 @FeatureFlag(name = DATASTORE_ENABLED)
 @Named
