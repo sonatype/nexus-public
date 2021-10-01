@@ -31,7 +31,7 @@ import static org.sonatype.nexus.capability.CapabilityType.capabilityType;
 /**
  * State contributor defining whether acknowledgement of the analytics submission state is required.
  *
- * @since 3.next
+ * @since 3.35
  */
 @Named
 @Singleton

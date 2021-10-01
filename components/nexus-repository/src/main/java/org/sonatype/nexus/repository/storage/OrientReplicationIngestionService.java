@@ -33,7 +33,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 /**
  * Standard methods for replicating components/assets in Orientdb.
  *
- * @since 3.next
+ * @since 3.35
  */
 @Named
 @Singleton

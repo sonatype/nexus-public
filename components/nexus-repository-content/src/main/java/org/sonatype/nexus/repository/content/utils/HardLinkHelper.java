@@ -38,7 +38,7 @@ import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 
 /**
- * @since 3.next
+ * @since 3.35
  */
 @Named
 @Singleton
