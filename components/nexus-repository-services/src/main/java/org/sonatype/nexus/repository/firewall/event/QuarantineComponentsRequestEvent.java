@@ -18,7 +18,7 @@ import java.util.concurrent.CompletableFuture;
 import org.sonatype.nexus.repository.Repository;
 
 /**
- * @since 3.next
+ * @since 3.35
  */
 public class QuarantineComponentsRequestEvent
 {

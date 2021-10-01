@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository;
 /**
  * Marks a thread as being part of a replication process.
  *
- * @since 3.next
+ * @since 3.35
  */
 public class ReplicationMarker
 {

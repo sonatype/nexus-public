@@ -18,7 +18,7 @@ import org.sonatype.goodies.lifecycle.LifecycleSupport;
 
 /**
  * Manages common tasks for the BrowseNodeEventHandler
- * @since 3.next
+ * @since 3.35
  */
 public abstract class BrowseNodeEventHandlerSupport
     extends LifecycleSupport

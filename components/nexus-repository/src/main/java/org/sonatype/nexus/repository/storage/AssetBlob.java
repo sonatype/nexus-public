@@ -207,7 +207,7 @@ public class AssetBlob
   /**
    * Returns {@code true} if this {@link AssetBlob} is being created or updated from replication.
    *
-   * @since 3.next
+   * @since 3.35
    */
   public boolean isReplicated() {
     return replicated;
@@ -216,7 +216,7 @@ public class AssetBlob
   /**
    * Marks this {@link AssetBlob} as being created or updated by replication.
    *
-   * @since 3.next
+   * @since 3.35
    */
   public void setReplicated(final boolean replicated) {
     this.replicated = replicated;
