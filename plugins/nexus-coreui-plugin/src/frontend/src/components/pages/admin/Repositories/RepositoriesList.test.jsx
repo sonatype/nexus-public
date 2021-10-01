@@ -100,17 +100,6 @@ describe('RepositoriesList', function() {
     expect(getByText('There are no repositories available')).toBeInTheDocument();
   });
 
-
-  it('matches a snapshot', async function() {
-    axios.get.mockResolvedValue({data: rows});
-
-    const {loadingMask, container} = render();
-
-    await waitForElementToBeRemoved(loadingMask);
-
-    expect(container).toMatchSnapshot();
-  });
-
   it('renders the rows', async function() {
     axios.get.mockResolvedValue({data: rows});
 

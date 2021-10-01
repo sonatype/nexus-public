@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {fireEvent, wait} from '@testing-library/react';
+import {fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
@@ -79,23 +79,20 @@ describe('UserAccount', () => {
     }));
   }
 
-  it('renders correctly', async () => {
-    let {container, loadingMask} = renderView(<UserAccount/>);
-
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
-
-    expect(container).toMatchSnapshot();
-  });
-
   it('renders correctly for an external user', async () => {
     Axios.get.mockImplementationOnce(() => Promise.resolve({data: mockExternalUserAccount}));
 
     let {
-      container, loadingMask, userIdField, firstNameField, lastNameField, emailField,
-      saveButton, discardButton
+      loadingMask,
+      userIdField,
+      firstNameField,
+      lastNameField,
+      emailField,
+      saveButton,
+      discardButton
     } = renderView(<UserAccount/>);
 
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(loadingMask);
 
     expect(userIdField().hasAttribute('readonly','true')).toBe(true);
     expect(firstNameField().hasAttribute('readonly','true')).toBe(true);
@@ -104,8 +101,6 @@ describe('UserAccount', () => {
 
     expect(saveButton()).toHaveClass('disabled');
     expect(discardButton()).toHaveClass('disabled');
-
-    expect(container).toMatchSnapshot('externalUser');
   });
 
   it('fetches the values of fields from the API and updates them as expected', async () => {
@@ -114,7 +109,7 @@ describe('UserAccount', () => {
         saveButton, discardButton
     } = renderView(<UserAccount/>);
 
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(loadingMask);
 
     expect(Axios.get).toHaveBeenCalledTimes(1);
     expect(userIdField()).toHaveValue('admin');
@@ -130,10 +125,10 @@ describe('UserAccount', () => {
       loadingMask, lastNameField, saveButton, discardButton
     } = renderView(<UserAccount/>);
 
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(loadingMask);
 
     fireEvent.change(lastNameField(), {target: {value: 'FooBar'}});
-    await wait(() => expect(lastNameField()).toHaveValue('FooBar'));
+    await waitFor(() => expect(lastNameField()).toHaveValue('FooBar'));
 
     expect(saveButton()).not.toHaveClass('disabled');
     expect(discardButton()).not.toHaveClass('disabled');
@@ -142,7 +137,7 @@ describe('UserAccount', () => {
 
     fireEvent.click(saveButton());
 
-    await wait(() => expect(saveButton()).toHaveClass('disabled'));
+    await waitFor(() => expect(saveButton()).toHaveClass('disabled'));
     expect(discardButton()).toHaveClass('disabled');
 
     expect(Axios.put).toHaveBeenCalledTimes(1);
@@ -163,16 +158,16 @@ describe('UserAccount', () => {
       loadingMask, lastNameField, saveButton, discardButton
     } = renderView(<UserAccount/>);
 
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(loadingMask);
 
     fireEvent.change(lastNameField(), {target: {value: 'FooBar'}});
-    await wait(() => expect(lastNameField()).toHaveValue('FooBar'));
+    await waitFor(() => expect(lastNameField()).toHaveValue('FooBar'));
 
     expect(saveButton()).not.toHaveClass('disabled');
     expect(discardButton()).not.toHaveClass('disabled');
 
     fireEvent.click(discardButton());
-    await wait(() => expect(discardButton()).toHaveClass('disabled'));
+    await waitFor(() => expect(discardButton()).toHaveClass('disabled'));
 
     expect(lastNameField()).toHaveValue('Admin');
     expect(saveButton()).toHaveClass('disabled');
@@ -184,17 +179,17 @@ describe('UserAccount', () => {
       loadingMask, lastNameField, discardButton
     } = renderView(<UserAccount/>);
 
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(loadingMask);
 
     expect(window.dirty).toEqual([]);
 
     fireEvent.change(lastNameField(), {target: {value: 'FooBar'}});
-    await wait(() => expect(lastNameField()).toHaveValue('FooBar'));
+    await waitFor(() => expect(lastNameField()).toHaveValue('FooBar'));
 
     expect(window.dirty).toEqual(['UserAccount']);
 
     fireEvent.click(discardButton());
 
-    await wait(() => expect(window.dirty).toEqual([]));
+    await waitFor(() => expect(window.dirty).toEqual([]));
   });
 });

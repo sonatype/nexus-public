@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {fireEvent, wait, waitForElement, waitForElementToBeRemoved} from '@testing-library/react';
+import {fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import axios from 'axios';
@@ -75,32 +75,21 @@ describe('LoggingConfigurationForm', function() {
 
   const changeFieldAndAssertValue = async (fieldSelector, value) => {
     fireEvent.change(fieldSelector(), {target: {value: value}});
-    await wait(() => expect(fieldSelector()).toHaveValue(value));
+    await waitFor(() => expect(fieldSelector()).toHaveValue(value));
   };
-
-  it('renders a loading spinner', async function() {
-    axios.get.mockReturnValue(new Promise(() => {}));
-
-    const {container, loadingMask} = renderEditView();
-
-    await waitForElement(loadingMask);
-
-    expect(container).toMatchSnapshot();
-  });
 
   it('renders the resolved data', async function() {
     axios.get.mockResolvedValue({
       data: {name: 'ROOT', level: 'INFO'}
     });
 
-    const {container, loadingMask, name, level, saveButton} = renderEditView();
+    const {loadingMask, name, level, saveButton} = renderEditView();
 
     await waitForElementToBeRemoved(loadingMask);
 
     expect(name()).toHaveValue('ROOT');
     expect(level()).toHaveValue('INFO');
     expect(saveButton()).toHaveClass('disabled');
-    expect(container).toMatchSnapshot();
   });
 
   it('renders an error message', async function() {
@@ -116,11 +105,9 @@ describe('LoggingConfigurationForm', function() {
   });
 
   it('requires the name field when creating a new logging configuration', async function() {
-    const {container, loadingMask, name, level, saveButton} = renderCreateView();
+    const {loadingMask, name, level, saveButton} = renderCreateView();
 
     await waitForElementToBeRemoved(loadingMask);
-
-    expect(container).toMatchSnapshot();
 
     expect(saveButton()).toHaveClass('disabled');
     expect(level()).toHaveValue('INFO');
@@ -137,7 +124,7 @@ describe('LoggingConfigurationForm', function() {
 
     fireEvent.click(cancelButton());
 
-    await wait(() => expect(onDone).toBeCalled());
+    await waitFor(() => expect(onDone).toBeCalled());
   });
 
   it('requests confirmation when the logger is overridden and saves when requested', async function() {
@@ -155,7 +142,7 @@ describe('LoggingConfigurationForm', function() {
     ExtJS.requestConfirmation.mockReturnValue(CONFIRM);
     fireEvent.click(saveButton());
 
-    await wait(() => expect(axios.put).toBeCalledWith(
+    await waitFor(() => expect(axios.put).toBeCalledWith(
         '/service/rest/internal/ui/loggingConfiguration/name',
         {name: 'name', level: 'DEBUG'}
     ));
@@ -171,15 +158,15 @@ describe('LoggingConfigurationForm', function() {
 
     await waitForElementToBeRemoved(loadingMask);
 
-    await wait(() => expect(window.dirty).toEqual([]));
+    await waitFor(() => expect(window.dirty).toEqual([]));
 
     await changeFieldAndAssertValue(level, 'DEBUG');
 
-    await wait(() => expect(window.dirty).toEqual(['LoggingConfigurationFormMachine']));
+    await waitFor(() => expect(window.dirty).toEqual(['LoggingConfigurationFormMachine']));
 
     fireEvent.click(saveButton());
 
-    await wait(() => expect(axios.put).toHaveBeenLastCalledWith(
+    await waitFor(() => expect(axios.put).toHaveBeenLastCalledWith(
         '/service/rest/internal/ui/loggingConfiguration/ROOT',
         {name: 'ROOT', level: 'DEBUG'}
     ));
@@ -199,7 +186,7 @@ describe('LoggingConfigurationForm', function() {
     axios.post.mockReturnValue(CONFIRM);
     fireEvent.click(resetButton());
 
-    await wait(() => expect(resetMask()).toBeInTheDocument());
+    await waitFor(() => expect(resetMask()).toBeInTheDocument());
 
     expect(axios.post).toBeCalledWith('/service/rest/internal/ui/loggingConfiguration/test/reset');
     expect(onDone).toBeCalled();

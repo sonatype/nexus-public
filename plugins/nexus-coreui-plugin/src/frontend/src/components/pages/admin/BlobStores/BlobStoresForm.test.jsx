@@ -187,8 +187,6 @@ describe('BlobStoresForm', function() {
 
     userEvent.selectOptions(typeSelect(), 'file');
     expect(typeSelect()).toHaveValue('file');
-
-    expect(container).toMatchSnapshot();
   });
 
   it ('renders the form and buttons when the S3 type is selected', async function() {
@@ -201,8 +199,6 @@ describe('BlobStoresForm', function() {
 
     userEvent.selectOptions(typeSelect(), 's3');
     expect(typeSelect()).toHaveValue('s3');
-
-    expect(container).toMatchSnapshot();
   });
 
   it ('renders S3 specific form fields', async function() {

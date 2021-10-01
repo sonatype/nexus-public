@@ -44,9 +44,8 @@ describe('PasswordChangeForm', () => {
   }));
 
   it('renders correctly', async () => {
-    let {container, passwordCurrent, passwordNew, passwordNewConfirm, changePasswordButton, discardButton} = render();
+    let {passwordCurrent, passwordNew, passwordNewConfirm, changePasswordButton, discardButton} = render();
 
-    expect(container).toMatchSnapshot();
     expect(passwordCurrent()).toHaveValue('');
     expect(passwordNew()).toHaveValue('');
     expect(passwordNewConfirm()).toHaveValue('');

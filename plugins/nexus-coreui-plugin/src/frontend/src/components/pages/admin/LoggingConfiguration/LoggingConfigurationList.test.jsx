@@ -12,7 +12,7 @@
  */
 import React from 'react';
 import {act} from 'react-dom/test-utils';
-import {fireEvent, render, wait} from '@testing-library/react';
+import {fireEvent, render, wait, waitForElementToBeRemoved} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import axios from 'axios';
@@ -45,22 +45,12 @@ describe('LoggingConfigurationList', function() {
 
     const {container, loadingMask} = renderView();
 
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(loadingMask);
 
     rows.forEach((row, i) => {
       expect(container.querySelector(`tbody tr:nth-child(${i+1}) td:nth-child(1)`)).toHaveTextContent(row.name);
       expect(container.querySelector(`tbody tr:nth-child(${i+1}) td:nth-child(2)`)).toHaveTextContent(row.level);
     });
-    expect(container).toMatchSnapshot();
-  });
-
-  it('renders a loading spinner', async function() {
-    axios.get.mockReturnValue(new Promise(() => {}));
-
-    const {container, loadingMask} = renderView();
-
-    expect(loadingMask()).toBeInTheDocument();
-    expect(container).toMatchSnapshot();
   });
 
   it('renders an error message', async function() {
@@ -68,10 +58,9 @@ describe('LoggingConfigurationList', function() {
 
     const {container, loadingMask} = renderView();
 
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(loadingMask);
 
     expect(container.querySelector('.nx-cell--meta-info')).toHaveTextContent('Error');
-    expect(container).toMatchSnapshot();
   });
 
   it('searches for lower-cased strings in the logger names', async function() {
@@ -84,7 +73,7 @@ describe('LoggingConfigurationList', function() {
 
     const {container, loadingMask, filter} = renderView();
 
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(loadingMask);
 
     fireEvent.change(filter(), {target: {value: 'sonatype'}});
 

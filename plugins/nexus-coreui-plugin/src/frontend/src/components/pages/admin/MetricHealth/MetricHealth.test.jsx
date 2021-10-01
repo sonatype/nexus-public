@@ -11,10 +11,10 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import { act } from 'react-dom/test-utils';
-import {render, wait} from '@testing-library/react';
+import {render, screen, waitForElementToBeRemoved} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import axios from 'axios';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import MetricHealth from './MetricHealth';
 
@@ -24,21 +24,6 @@ jest.mock('axios', () => ({
 }));
 
 describe('MetricHealth', function() {
-  const renderView = async () => {
-    var selectors;
-
-    await act(async () => {
-      const {container, queryByText} = render(<MetricHealth/>);
-
-      selectors = {
-        container,
-        loadingMask: () => queryByText("Loading…"),
-      }
-    });
-
-    return selectors;
-  };
-
   it('renders the resolved data', async function() {
     const metrics = {
       "Available CPUs" : {
@@ -79,33 +64,21 @@ describe('MetricHealth', function() {
       data: metrics
     }));
 
-    const {container, loadingMask} = await renderView();
+    const {container} = render(<MetricHealth/>);
 
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(TestUtils.selectors.queryLoadingMask());
 
     expect(container.querySelector(`tbody tr:nth-child(1) td:nth-child(2)`)).toHaveTextContent("Available CPUs");
     expect(container.querySelector(`tbody tr:nth-child(1) td:nth-child(3)`)).toHaveTextContent("The host system is allocating a maximum of 6 cores to the application.");
-
-    expect(container).toMatchSnapshot();
-  });
-
-  it('renders a loading spinner', async function() {
-    axios.get.mockReturnValue(new Promise(() => {}));
-
-    const {container, loadingMask} = await renderView();
-
-    expect(loadingMask()).toBeInTheDocument();
-    expect(container).toMatchSnapshot();
   });
 
   it('renders an error message', async function() {
     axios.get.mockReturnValue(Promise.reject({message: 'Error'}));
 
-    const {container, loadingMask} = await renderView();
+    const {container} = render(<MetricHealth/>);
 
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(TestUtils.selectors.queryLoadingMask());
 
     expect(container.querySelector('.nx-cell--meta-info')).toHaveTextContent('Error');
-    expect(container).toMatchSnapshot();
   });
 });

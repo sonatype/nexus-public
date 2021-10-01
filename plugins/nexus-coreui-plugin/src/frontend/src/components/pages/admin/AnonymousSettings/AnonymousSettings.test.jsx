@@ -75,14 +75,6 @@ describe('AnonymousSettings', () => {
     }));
   }
 
-  it('renders correctly', async () => {
-    let {container, loadingMask} = renderView(<AnonymousSettings/>);
-
-    await waitForElementToBeRemoved(loadingMask);
-
-    expect(container).toMatchSnapshot();
-  });
-
   it('fetches the values of fields from the API and updates them as expected', async () => {
     let {
       loadingMask, enabledField, userIdField, realmField, saveButton, discardButton
