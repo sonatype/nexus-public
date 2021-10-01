@@ -15,7 +15,7 @@ package org.sonatype.nexus.upgrade;
 /**
  * Used during the upgrade process to allow OSS analytics permission to be re-requested.
  *
- * @since 3.35
+ * @since 3.next
  */
 public interface AnalyticsPermissionReset
 {

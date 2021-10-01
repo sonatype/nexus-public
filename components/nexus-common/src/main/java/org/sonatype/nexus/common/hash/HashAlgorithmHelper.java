@@ -34,7 +34,7 @@ import com.google.common.hash.HashCode;
 import static com.google.common.base.Preconditions.*;
 
 /**
- * @since 3.35
+ * @since 3.next
  */
 @Named
 @Singleton

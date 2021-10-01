@@ -23,7 +23,7 @@ import org.sonatype.nexus.common.log.DryRunPrefix;
  * Support class for Cloud blob stores.
  *
  * @see CloudBlobPropertiesSupport
- * @since 3.35
+ * @since 3.next
  */
 public abstract class CloudBlobStoreSupport<T extends AttributesLocation>
     extends BlobStoreSupport<T>

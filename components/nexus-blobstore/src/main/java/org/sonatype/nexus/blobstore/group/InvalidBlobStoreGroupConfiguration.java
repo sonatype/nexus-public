@@ -10,34 +10,11 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository;
+package org.sonatype.nexus.blobstore.group;
 
-/**
- * Marks a thread as being part of a replication process.
- *
- * @since 3.next
- */
-public class ReplicationMarker
+public class InvalidBlobStoreGroupConfiguration extends RuntimeException
 {
-  private ReplicationMarker() { }
-
-  private static final InheritableThreadLocal<Boolean> replicating = new InheritableThreadLocal<Boolean>()
-  {
-    @Override
-    protected Boolean initialValue() {
-      return false;
-    }
-  };
-
-  public static void set(final boolean value) {
-    replicating.set(value);
-  }
-
-  public static boolean get() {
-    return replicating.get();
-  }
-
-  public static void unset() {
-    replicating.remove();
+  public InvalidBlobStoreGroupConfiguration(final String message) {
+    super(message);
   }
 }

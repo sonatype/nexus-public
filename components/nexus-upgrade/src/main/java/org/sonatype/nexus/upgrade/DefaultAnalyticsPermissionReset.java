@@ -20,7 +20,7 @@ import javax.inject.Singleton;
  * because {@link org.sonatype.nexus.upgrade.internal.orient.OrientAnalyticsPermissionReset} will not always be
  * available.
  *
- * @since 3.35
+ * @since 3.next
  */
 @Named
 @Singleton

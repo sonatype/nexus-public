@@ -25,6 +25,7 @@ import org.sonatype.nexus.blobstore.api.BlobId
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
+import org.sonatype.nexus.blobstore.group.internal.FirstBlobStoreCacheFillPolicy
 import org.sonatype.nexus.blobstore.group.internal.WriteToFirstMemberFillPolicy
 import org.sonatype.nexus.cache.CacheHelper
 
@@ -45,6 +46,8 @@ class BlobStoreGroupTest
 
   FillPolicy writeToFirstPolicy = new WriteToFirstMemberFillPolicy()
 
+  FillPolicy firstBlobStoreCacheFillPolicy = new FirstBlobStoreCacheFillPolicy()
+
   FillPolicy testFillPolicy = Mock()
 
   Cache cache = Mock(Cache)
@@ -59,6 +62,7 @@ class BlobStoreGroupTest
 
   Map<String, Provider<FillPolicy>> fillPolicyFactories = [
       writeToFirst: { -> writeToFirstPolicy} as Provider,
+      firstBlobStoreCacheFillPolicy: { -> firstBlobStoreCacheFillPolicy} as Provider,
       test: { -> testFillPolicy } as Provider
   ]
 
@@ -190,7 +194,7 @@ class BlobStoreGroupTest
       blobStore.create(byteStream, [:])
 
     then:
-      1 * testFillPolicy.chooseBlobStore(blobStore, [:]) >> two
+      1 * testFillPolicy.chooseBlobStoreForCreate(blobStore, [:]) >> two
       0 * one.create(_, _, null)
       1 * two.create(byteStream, [:], null) >> blob
       blob.getId() >> new BlobId('created')
@@ -212,7 +216,7 @@ class BlobStoreGroupTest
       blobStore.create(path, [:], size, hashCode)
 
     then:
-      1 * testFillPolicy.chooseBlobStore(blobStore, [:]) >> two
+      1 * testFillPolicy.chooseBlobStoreForCreate(blobStore, [:]) >> two
       0 * one.create(_, _)
       1 * two.create(path, [:], size, hashCode) >> blob
       blob.getId() >> new BlobId('created')
@@ -309,35 +313,6 @@ class BlobStoreGroupTest
       blobStore.fillPolicy instanceof WriteToFirstMemberFillPolicy
   }
 
-  def 'It will search writable blob stores first'() {
-    given: 'A blob store with two members'
-      config.attributes = [group: [members: ['writableMember', 'nonWritableMember'], fillPolicy: 'test']]
-      blobStore.init(config)
-      blobStore.doStart()
-      blobStoreManager.get('writableMember') >> one
-      blobStoreManager.get('nonWritableMember') >> two
-
-    and: 'One member is read only'
-      one.isWritable() >> true
-      two.isWritable() >> false
-
-    and: 'The members currently contain the same blobId'
-      def blobId = new BlobId('BLOB_ID_VALUE')
-
-    when: 'The member is located'
-      def locatedMember = blobStore.locate(blobId)
-
-    then: 'Only the non read only members value is used'
-      1 * one.exists(blobId) >> true
-      0 * two.exists(blobId) >> true
-
-    and: 'The non read only member was found'
-      one == locatedMember.get()
-
-    and: 'The cache was updated'
-      1 * cache.put(blobId, 'one')
-  }
-
   def "It will only cache blob ids of writable blob stores"() {
     given: 'A blob store with two members'
       config.attributes = [group: [members: ['writableMember', 'nonWritableMember'], fillPolicy: 'test']]
@@ -365,5 +340,136 @@ class BlobStoreGroupTest
 
     and: 'the cache was not updated'
       0 * cache.put(_, _)
+  }
+
+  def 'FirstBlobStoreCache fill policy creates temp blobs in first blob store'() {
+    given: 'A group with two members'
+      config.attributes = [group: [members: ['cache', 'permanent'], fillPolicy: 'firstBlobStoreCacheFillPolicy']]
+      blobStoreManager.get('cache') >> one
+      blobStoreManager.get('permanent') >> two
+      blobStore.init(config)
+      blobStore.doStart()
+      blobStore.getMembers().size() >> 2
+
+      def byteStream = new ByteArrayInputStream("".bytes)
+      def blob = Mock(Blob)
+      def blobHeaders = [(BlobStore.TEMPORARY_BLOB_HEADER):'']
+
+    and: 'One member is not writable'
+      one.isWritable() >> true
+      one.isStorageAvailable() >> true
+      two.isWritable() >> true
+      two.isStorageAvailable() >> true
+
+    when: 'create called for a temp blob'
+      blobStore.create(byteStream, blobHeaders)
+
+    then:
+      1 * one.create(byteStream, blobHeaders, null) >> blob
+      0 * two.create(_,_)
+      blob.getId() >> new BlobId('created')
+  }
+
+  def 'FirstBlobStoreCache fill policy creates permanent blobs in second blob store'() {
+    given: 'A group with two members'
+      config.attributes = [group: [members: ['cache', 'permanent'], fillPolicy: 'firstBlobStoreCacheFillPolicy']]
+      blobStoreManager.get('cache') >> one
+      blobStoreManager.get('permanent') >> two
+      blobStore.init(config)
+      blobStore.doStart()
+
+      def byteStream = new ByteArrayInputStream("".bytes)
+      def blob = Mock(Blob)
+      def blobHeaders = [:] as Map
+
+    and: 'One member is not writable'
+      one.isWritable() >> true
+      one.isStorageAvailable() >> true
+      two.isWritable() >> true
+      two.isStorageAvailable() >> true
+
+    when: 'create called for a temp blob'
+      blobStore.create(byteStream, blobHeaders)
+
+    then:
+      1 * two.create(byteStream, blobHeaders, null) >> blob
+      0 * one.create(_,_)
+      blob.getId() >> new BlobId('created')
+  }
+
+  def 'FirstBlobStoreCache fill policy copies blobs to the second store'() {
+    given: 'A group with two members'
+      config.attributes = [group: [members: ['cache', 'permanent'], fillPolicy: 'firstBlobStoreCacheFillPolicy']]
+      blobStoreManager.get('cache') >> one
+      blobStoreManager.get('permanent') >> two
+      blobStore.init(config)
+      blobStore.doStart()
+
+      def byteStream = new ByteArrayInputStream("".bytes)
+      def blob = Mock(Blob)
+      def blobId = new BlobId('created')
+      blob.getId() >> blobId
+      blob.getInputStream() >> byteStream
+      def blobHeaders = [:] as Map
+
+    and: 'all members are writable'
+      one.isWritable() >> true
+      one.isStorageAvailable() >> true
+      two.isWritable() >> true
+      two.isStorageAvailable() >> true
+
+    and: 'the first member contains the blob to copy'
+      one.exists(blobId) >> true
+      one.get(blobId) >> blob
+
+    when: 'copy called for a blob'
+      blobStore.copy(blobId, blobHeaders)
+
+    then: 'the blob is written to the second blob store'
+      1 * two.create(byteStream, blobHeaders, null) >> blob
+  }
+
+  def 'WriteToFirstMember fill policy copies blobs to the existing store'() {
+    given: 'A group with two members'
+      config.attributes = [group: [members: ['one', 'two'], fillPolicy: 'writeToFirst']]
+      blobStore.init(config)
+      blobStore.doStart()
+      blobStoreManager.get('one') >> one
+      blobStoreManager.get('two') >> two
+
+      def byteStream = new ByteArrayInputStream("".bytes)
+      def blob = Mock(Blob)
+      def blobId = new BlobId('created')
+      blob.getId() >> blobId
+      blob.getInputStream() >> byteStream
+      def blobHeaders = [:] as Map
+
+    and: 'all members are writable'
+      one.isWritable() >> true
+      one.isStorageAvailable() >> true
+      two.isWritable() >> true
+      two.isStorageAvailable() >> true
+
+    and: 'the first member contains the blob to copy'
+      one.exists(blobId) >> true
+      one.get(blobId) >> blob
+
+    when: 'copy called for a blob'
+      blobStore.copy(blobId, blobHeaders)
+
+    then: 'the blob is written to the first blob store'
+      1 * one.copy(blobId, blobHeaders) >> blob
+  }
+
+  def 'blob store group with invalid config throws and exception'() {
+    given: 'A group with two members'
+      config.attributes = [group: [members: ['one'], fillPolicy: 'firstBlobStoreCacheFillPolicy']]
+      blobStoreManager.get('one') >> one
+
+    when:
+      blobStore.init(config)
+
+    then:
+      thrown(InvalidBlobStoreGroupConfiguration)
   }
 }

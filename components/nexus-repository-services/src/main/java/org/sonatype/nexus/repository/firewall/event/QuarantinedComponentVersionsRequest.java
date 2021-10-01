@@ -18,7 +18,7 @@ import java.util.concurrent.CompletableFuture;
 import org.sonatype.nexus.repository.vulnerability.AuditRepositoryComponent;
 
 /**
- * @since 3.35
+ * @since 3.next
  */
 public class QuarantinedComponentVersionsRequest
 {

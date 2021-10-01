@@ -33,7 +33,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
- * @since 3.35
+ * @since 3.next
  */
 @Named
 @Singleton
