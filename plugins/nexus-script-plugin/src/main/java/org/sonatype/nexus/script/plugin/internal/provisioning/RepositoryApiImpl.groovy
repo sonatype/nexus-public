@@ -22,10 +22,10 @@ import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.config.Configuration
+import org.sonatype.nexus.repository.config.WritePolicy
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.maven.LayoutPolicy
 import org.sonatype.nexus.repository.maven.VersionPolicy
-import org.sonatype.nexus.repository.config.WritePolicy
 import org.sonatype.nexus.script.plugin.RepositoryApi
 
 import groovy.transform.CompileDynamic
@@ -48,6 +48,10 @@ class RepositoryApiImpl
   
   @Inject 
   BlobStoreManager blobStoreManager
+
+  @Inject
+  @Named('${nexus.datastore.enabled:-false}')
+  boolean datastoreEnabled
 
   /**
    * Create a hosted configuration for the given recipeName.
@@ -152,6 +156,11 @@ class RepositoryApiImpl
       online = map.online
       attributes = map.attributes as Map
     }
+
+    if (datastoreEnabled) {
+      config.attributes['storage']['dataStoreName'] = 'nexus'
+    }
+
     return config
   }
 
