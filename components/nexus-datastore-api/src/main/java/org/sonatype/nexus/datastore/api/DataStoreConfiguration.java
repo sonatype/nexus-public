@@ -24,6 +24,8 @@ import com.google.common.annotations.VisibleForTesting;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Maps.transformEntries;
 import static java.util.regex.Pattern.compile;
+import static org.apache.commons.lang.StringUtils.containsIgnoreCase;
+import static org.sonatype.nexus.common.jdbc.JdbcUrlRedactor.redactPassword;
 
 /**
  * {@link DataStore} configuration.
@@ -34,6 +36,8 @@ public class DataStoreConfiguration
 {
   @VisibleForTesting
   public static final String REDACTED = "**REDACTED**";
+
+  private static final String JDBC_URL = "jdbcUrl";
 
   private static final Predicate<String> SENSITIVE_KEYS =
       compile("(?i)(auth|cred|key|pass|secret|sign|token)").asPredicate();
@@ -91,7 +95,7 @@ public class DataStoreConfiguration
         "name='" + name + '\'' +
         ", type='" + type + '\'' +
         ", source='" + source + '\'' +
-        ", attributes=" + redact(attributes) +
+        ", attributes=" + maybeRedact(attributes) +
         '}';
   }
 
@@ -120,8 +124,8 @@ public class DataStoreConfiguration
 
     if (!Objects.equals(aField, bField)) {
       Map<String, String> result = new HashMap<>();
-      result.put(a.getName(), isSensitiveKey(fieldName) ? REDACTED : aField);
-      result.put(b.getName(), isSensitiveKey(fieldName) ? REDACTED : bField);
+      result.put(a.getName(), maybeRedact(fieldName, aField));
+      result.put(b.getName(), maybeRedact(fieldName, bField));
       results.put(fieldName, result);
     }
   }
@@ -129,11 +133,19 @@ public class DataStoreConfiguration
   /**
    * Redact output using a blacklist of potentially sensitive key patterns.
    */
-  protected Map<String, String> redact(final Map<String, String> attributes) {
+  protected Map<String, String> maybeRedact(final Map<String, String> attributes) {
     if (attributes == null || attributes.isEmpty()) {
       return attributes;
     } else {
-      return transformEntries(attributes, (k, v) -> isSensitiveKey(k) ? REDACTED : v);
+      return transformEntries(attributes, DataStoreConfiguration::maybeRedact);
     }
+  }
+
+  private static String maybeRedact(final String key, final String value) {
+    String result = value;
+    if (containsIgnoreCase(key, JDBC_URL)) {
+      result = redactPassword(value);
+    }
+    return isSensitiveKey(key) ? REDACTED : result;
   }
 }

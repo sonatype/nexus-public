@@ -226,7 +226,7 @@ class InstallConfigurationCustomizerTest
     temp << '''name=config
 password=secret
 type=jdbc
-jdbcUrl=jdbc\\:postgresql\\://localhost\\:5432/postgres?password=secret&password=secret
+jdbcUrl=jdbc\\:postgresql\\://localhost\\:5432/postgres?password=secret&password=secret&pass
 username=postgres'''
 
     SanitizedDataStoreFileSource source = new SanitizedDataStoreFileSource(CONFIG, 'test/file', temp, DEFAULT)
