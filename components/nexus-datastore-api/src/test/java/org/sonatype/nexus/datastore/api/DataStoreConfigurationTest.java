@@ -20,6 +20,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.junit.Before;
 import org.junit.Test;
 
+import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
@@ -104,11 +105,18 @@ public class DataStoreConfigurationTest
 
     configurationA.getAttributes().put("key-2", "differentValue-2-A");
     configurationB.getAttributes().put("key-2", "differentValue-2-B");
+
+    configurationA.getAttributes().put("jdbcUrl", "localhost:5432/nexus?username=user&password=pass&word");
+    configurationB.getAttributes().put("jdbcUrl", "localhost:5432/nexus?password=pass&word&username=user");
     Map<String, Map<String, String>> diffMap = DataStoreConfiguration.diff(configurationA, configurationB);
-    assertThat(diffMap.keySet(), hasSize(3));
-    assertThat(diffMap.keySet(), containsInAnyOrder("name", "source", "attributes->key-2"));
+    assertThat(diffMap.keySet(), hasSize(4));
+    assertThat(diffMap.keySet(), containsInAnyOrder("name", "source", "attributes->key-2", "attributes->jdbcUrl"));
     assertThat(diffMap.get("name").values(), containsInAnyOrder("configA", "configB"));
     assertThat(diffMap.get("source").values(), containsInAnyOrder("sourceA", "sourceB"));
     assertThat(diffMap.get("attributes->key-2").values(), containsInAnyOrder(REDACTED, REDACTED));
+    assertThat(diffMap.get("attributes->jdbcUrl").values(), containsInAnyOrder(
+        format("localhost:5432/nexus?username=user&password=%s", REDACTED),
+        format("localhost:5432/nexus?password=%s&username=user", REDACTED))
+    );
   }
 }

@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.internal.atlas.customizers
 
+
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
@@ -25,6 +26,7 @@ import org.sonatype.nexus.supportzip.SupportBundle
 import org.sonatype.nexus.supportzip.SupportBundleCustomizer
 
 import static com.google.common.base.Preconditions.checkNotNull
+import static org.sonatype.nexus.common.jdbc.JdbcUrlRedactor.redactPassword
 import static org.sonatype.nexus.supportzip.PasswordSanitizing.REPLACEMENT
 import static org.sonatype.nexus.supportzip.PasswordSanitizing.SENSITIVE_FIELD_NAMES
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority
@@ -208,7 +210,7 @@ class InstallConfigurationCustomizer
           dataStoreConfiguration.replace(key, REPLACEMENT)
         }
       }
-      dataStoreConfiguration.computeIfPresent('jdbcUrl', { k, v -> redactPasswordWithinJdbcUrl(v as String) })
+      dataStoreConfiguration.computeIfPresent('jdbcUrl', { k, v -> redactPassword(v as String) })
       def outputStream = new ByteArrayOutputStream()
       dataStoreConfiguration.store(outputStream, null)
       return new ByteArrayInputStream(outputStream.toByteArray())
@@ -217,38 +219,6 @@ class InstallConfigurationCustomizer
     @Override
     void cleanup() throws Exception {
       super.cleanup()
-    }
-
-    private String redactPasswordWithinJdbcUrl(final String jdbcUrl) {
-      String[] urlParts = jdbcUrl.split("\\?");
-      StringBuilder result = new StringBuilder(urlParts[0]);
-      try {
-        if (urlParts.length == 2) {
-          result.append("?");
-          String[] paramsParts = urlParts[1].split("&");
-          for (String param : paramsParts) {
-            String[] values = param.split("=");
-            String name = values[0];
-            result.append(name);
-            result.append("=");
-            if (SENSITIVE_FIELD_NAMES.contains(name)) {
-              result.append(REPLACEMENT);
-            }
-            else {
-              String value = values.length == 2 ? values[1] : "";
-              result.append(value);
-            }
-            result.append("&");
-          }
-          result.delete(result.length() - 1, result.length());
-        }
-      }
-      catch (Exception e) {
-        log.error("Can't parse jdbcUrl: {}", jdbcUrl, e);
-        return urlParts[0] + "?cant_parse_parameters";
-      }
-
-      return result.toString();
     }
   }
 }
