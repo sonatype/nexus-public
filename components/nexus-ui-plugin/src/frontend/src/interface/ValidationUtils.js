@@ -20,6 +20,7 @@ const EMAIL_REGEX = /^(")?(?:[^\."])(?:(?:[\.])?(?:[\w\-!#$%&'*+/=?^_`{|}~]))*\1
 const NAME_REGEX = /^[a-zA-Z0-9\-]{1}[a-zA-Z0-9_\-\.]*$/;
 const URI_REGEX = /^[a-z]*:.+$/i;
 const URL_REGEX = /^https?:\/\/[^"<>^`{|}]+$/i;
+const SECURE_URL_REGEX = /^https:\/\/[^"<>^`{|}]+$/i;
 
 /**
  * @since 3.31
@@ -71,6 +72,22 @@ export default class ValidationUtils {
    */
   static notUrl(str) {
     return !ValidationUtils.isUrl(str);
+  }
+
+  /**
+   * @param {str|null|undefined}
+   * @returns {boolean} true if the str is an https url
+   */
+  static isSecureUrl(str) {
+    return str && SECURE_URL_REGEX.test(str);
+  }
+
+  /**
+   * @param {str|null|undefined}
+   * @returns {boolean} true if the string does not appear to be a valid secure url (https)
+   */
+  static notSecureUrl(str) {
+    return !ValidationUtils.isSecureUrl(str);
   }
 
   /**

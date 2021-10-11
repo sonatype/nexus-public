@@ -65,5 +65,19 @@ export default {
     MOVE_LEFT: 'Move Selection Left',
     MOVE_UP: 'Move Selection Up',
     MOVE_DOWN: 'Move Selection Down'
+  },
+
+  SSL_CERTIFICATE_DETAILS: {
+    TITLE: 'Certificate Details',
+    NAME: 'Common Name',
+    ORG: 'Organization',
+    UNIT: 'Unit',
+    ISSUER_NAME: 'Issuer Common Name',
+    ISSUER_ORG: 'Issuer Organization',
+    ISSUER_UNIT: 'Issuer Unit',
+    ISSUE_DATE: 'Certificate Issued On',
+    EXPIRE_DATE: 'Valid Until',
+    FINGERPRINT: 'Fingerprint',
+    WARNING: 'This certificate was retrieved over an untrusted connection. Always verify the details before adding it to the Nexus Truststore.'
   }
 };
