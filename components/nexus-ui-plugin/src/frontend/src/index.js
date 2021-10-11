@@ -47,6 +47,7 @@ export { default as HelpTile } from './components/widgets/HelpTile/HelpTile';
 export { default as Information } from './components/widgets/Information/Information';
 export { default as MultiSelect } from './components/widgets/MultiSelect/MultiSelect';
 export { default as Select } from './components/widgets/Select/Select';
+export { default as SslCertificateDetailsModal } from './components/widgets/SslCertificateDetailsModal/SslCertificateDetailsModal';
 export { default as Textarea } from './components/widgets/Textarea/Textarea';
 export { default as Textfield } from './components/widgets/Textfield/Textfield';
 
@@ -90,6 +91,7 @@ export {
   NxTableHead,
   NxTableRow,
   NxTextInput,
+  NxTextLink,
   NxTooltip,
   NxWarningAlert,
   NxTile
