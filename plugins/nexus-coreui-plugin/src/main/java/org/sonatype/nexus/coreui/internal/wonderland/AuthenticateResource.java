@@ -26,6 +26,7 @@ import javax.ws.rs.core.Response.Status;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.common.wonderland.AuthTicketService;
+import org.sonatype.nexus.rest.NotCacheable;
 import org.sonatype.nexus.rest.Resource;
 
 import org.apache.shiro.SecurityUtils;
@@ -67,6 +68,7 @@ public class AuthenticateResource
   @POST
   @Consumes({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
   @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+  @NotCacheable
   public AuthTicketXO post(final AuthTokenXO token) {
     checkNotNull(token);
 

@@ -28,6 +28,7 @@ import javax.ws.rs.core.Response
 import org.sonatype.goodies.common.ComponentSupport
 import org.sonatype.nexus.common.text.Strings2
 import org.sonatype.nexus.common.wonderland.DownloadService
+import org.sonatype.nexus.rest.NotCacheable
 import org.sonatype.nexus.rest.Resource
 
 import org.apache.shiro.authz.annotation.RequiresPermissions
@@ -68,6 +69,7 @@ class DownloadResource
   @Path('{fileName}')
   @Produces('application/zip')
   @RequiresPermissions('nexus:wonderland:download')
+  @NotCacheable
   Response downloadZip(final @PathParam('fileName') String fileName,
                        final @Nullable @QueryParam('t') String authTicketParam, // Base64
                        final @Nullable @HeaderParam(AUTH_TICKET_HEADER) String authTicketHeader)

@@ -76,6 +76,7 @@ public class ComponentContainerImpl
 
     ResteasyProviderFactory providerFactory = getDispatcher().getProviderFactory();
     providerFactory.getContainerRequestFilterRegistry().registerClass(FeatureFlaggedMethodRequestFilter.class);
+    providerFactory.getContainerResponseFilterRegistry().registerClass(NotCacheableResponseFilter.class);
 
     if (log.isDebugEnabled()) {
       log.debug("Provider factory: {}", providerFactory);
