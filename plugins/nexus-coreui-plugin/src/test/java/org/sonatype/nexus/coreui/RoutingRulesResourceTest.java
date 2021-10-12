@@ -91,7 +91,7 @@ public class RoutingRulesResourceTest
     when(repositoryPermissionChecker.userHasRepositoryAdminPermission(Arrays.asList(repository3), "read"))
         .thenReturn(Arrays.asList(repository3));
 
-    when(repositoryPermissionChecker.userCanBrowseRepository(any())).thenReturn(true);
+    when(repositoryPermissionChecker.userCanReadOrBrowse(any())).thenReturn(true);
 
     List<RoutingRuleXO> xos = underTest.getRoutingRules(true);
 
@@ -163,9 +163,9 @@ public class RoutingRulesResourceTest
         .userHasRepositoryAdminPermission(Arrays.asList(repository1, repository2, repository3), "read"))
         .thenReturn(Arrays.asList(repository1, repository3));
 
-    when(repositoryPermissionChecker.userCanBrowseRepository(repository1)).thenReturn(true);
-    when(repositoryPermissionChecker.userCanBrowseRepository(repository2)).thenReturn(false);
-    when(repositoryPermissionChecker.userCanBrowseRepository(repository3)).thenReturn(true);
+    when(repositoryPermissionChecker.userCanReadOrBrowse(repository1)).thenReturn(true);
+    when(repositoryPermissionChecker.userCanReadOrBrowse(repository2)).thenReturn(false);
+    when(repositoryPermissionChecker.userCanReadOrBrowse(repository3)).thenReturn(true);
 
     List<RoutingRuleXO> xos = underTest.getRoutingRules(true);
 

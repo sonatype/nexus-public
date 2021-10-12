@@ -134,7 +134,7 @@ public class RepositoryManagerRESTAdapterImplTest
   }
 
   private void configurePermissions(final Repository repository, final boolean permitBrowse) {
-    when(repositoryPermissionChecker.userCanBrowseRepository(repository)).thenReturn(permitBrowse);
+    when(repositoryPermissionChecker.userCanReadOrBrowse(repository)).thenReturn(permitBrowse);
   }
 
   @Test(expected = NotFoundException.class)

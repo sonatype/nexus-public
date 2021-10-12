@@ -43,8 +43,9 @@ public class RepositoryManagerRESTAdapterImpl
   private final RepositoryPermissionChecker repositoryPermissionChecker;
 
   @Inject
-  public RepositoryManagerRESTAdapterImpl(final RepositoryManager repositoryManager,
-                                          final RepositoryPermissionChecker repositoryPermissionChecker)
+  public RepositoryManagerRESTAdapterImpl(
+      final RepositoryManager repositoryManager,
+      final RepositoryPermissionChecker repositoryPermissionChecker)
   {
     this.repositoryManager = checkNotNull(repositoryManager);
     this.repositoryPermissionChecker = checkNotNull(repositoryPermissionChecker);
@@ -58,8 +59,8 @@ public class RepositoryManagerRESTAdapterImpl
     Repository repository = ofNullable(repositoryManager.get(repositoryId))
         .orElseThrow(() -> new NotFoundException("Unable to locate repository with id " + repositoryId));
 
-    if (repositoryPermissionChecker.userCanBrowseRepository(repository)) {
-      //browse implies complete access to the repository.
+    if (repositoryPermissionChecker.userCanReadOrBrowse(repository)) {
+      //browse or read implies complete access to the repository.
       return repository;
     }
     else {

@@ -34,6 +34,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
+import org.testcontainers.shaded.com.google.common.collect.ImmutableList;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -121,7 +122,7 @@ public class RepositoryPermissionCheckerTest
 
   @Test
   public void testUserCanBrowseRepository() {
-    verifyUserAccessOf(underTest::userCanBrowseRepository, BROWSE);
+    verifyUserAccessOf(underTest::userCanReadOrBrowse);
   }
 
   @Test
@@ -186,12 +187,11 @@ public class RepositoryPermissionCheckerTest
     return permissions.toArray(new Permission[permissions.size()]);
   }
 
-  private void verifyUserAccessOf(final Function<Repository, Boolean> accessCheck,
-                                  final String repositoryPermissionAction)
+  private void verifyUserAccessOf(final Function<Repository, Boolean> accessCheck)
   {
     BiFunction<Boolean, Boolean, Boolean> userCanAccessRepositoryWhen =
         (hasRepositoryPermission, hasSelectorPermission) -> {
-          setUpRepositoryPermission(hasRepositoryPermission, repositoryPermissionAction);
+          setUpRepositoryPermission(hasRepositoryPermission);
           setUpSelectorPermission(hasSelectorPermission);
           return accessCheck.apply(repository);
         };
@@ -202,16 +202,18 @@ public class RepositoryPermissionCheckerTest
     assertFalse(userCanAccessRepositoryWhen.apply(!HAS_REPOSITORY_PERMISSION, !HAS_SELECTOR_PERMISSION));
   }
 
-  private void setUpRepositoryPermission(final boolean hasPermission, final String action) {
-    when(securityHelper.anyPermitted(new RepositoryViewPermission(REPOSITORY_FORMAT, REPOSITORY_NAME, action)))
+  private void setUpRepositoryPermission(final boolean hasPermission) {
+    Permission[] permissions = new Permission[] {new RepositoryViewPermission(REPOSITORY_FORMAT, REPOSITORY_NAME, BROWSE), new RepositoryViewPermission(REPOSITORY_FORMAT, REPOSITORY_NAME, READ)};
+    when(securityHelper.anyPermitted(permissions))
         .thenReturn(hasPermission);
   }
 
   private void setUpSelectorPermission(final boolean hasPermission) {
+    Permission[] permissions = new Permission[] { new RepositoryContentSelectorPermission(SELECTOR_NAME, REPOSITORY_FORMAT, REPOSITORY_NAME,
+        ImmutableList.of(BROWSE)), new RepositoryContentSelectorPermission(SELECTOR_NAME, REPOSITORY_FORMAT, REPOSITORY_NAME,
+        ImmutableList.of(READ))};
     when(securityHelper
-        .anyPermitted(subject,
-            new RepositoryContentSelectorPermission(SELECTOR_NAME, REPOSITORY_FORMAT, REPOSITORY_NAME,
-                singletonList(BROWSE))))
+        .anyPermitted(subject, permissions))
         .thenReturn(hasPermission);
   }
 }

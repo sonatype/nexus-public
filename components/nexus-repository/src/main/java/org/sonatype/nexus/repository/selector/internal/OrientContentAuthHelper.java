@@ -26,6 +26,7 @@ import org.sonatype.nexus.selector.VariableSource;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.storage.DatabaseThreadUtils.withOtherDatabase;
 import static org.sonatype.nexus.security.BreadActions.BROWSE;
+import static org.sonatype.nexus.security.BreadActions.READ;
 
 /**
  * Simple helper class that encapsulates the auth checks for reuse by the orientdb user defined functions
@@ -50,14 +51,14 @@ public class OrientContentAuthHelper
   public boolean checkPathPermissions(final String path, final String format, final String... repositoryNames) {
     VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(format);
     VariableSource variableSource = variableResolverAdapter.fromPath(path, format);
-    return withOtherDatabase(() -> Arrays.stream(repositoryNames).anyMatch(repositoryName -> contentPermissionChecker
-        .isPermitted(repositoryName, format, BROWSE, variableSource)));
+    return withOtherDatabase(() -> Arrays.stream(repositoryNames).anyMatch(repositoryName ->
+        contentPermissionChecker.isPermittedAnyOf(repositoryName, format, variableSource, BROWSE, READ)));
   }
 
   public boolean checkPathPermissionsJexlOnly(final String path, final String format, final String... repositoryNames) {
     VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(format);
     VariableSource variableSource = variableResolverAdapter.fromPath(path, format);
-    return withOtherDatabase(() -> Arrays.stream(repositoryNames).anyMatch(repositoryName -> contentPermissionChecker
-        .isPermittedJexlOnly(repositoryName, format, BROWSE, variableSource)));
+    return withOtherDatabase(() -> Arrays.stream(repositoryNames).anyMatch(repositoryName ->
+        contentPermissionChecker.isPermittedJexlOnlyAnyOf(repositoryName, format, variableSource, BROWSE, READ)));
   }
 }
