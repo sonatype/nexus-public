@@ -24,6 +24,7 @@ import org.sonatype.nexus.selector.VariableSource;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.stream;
 import static org.sonatype.nexus.security.BreadActions.BROWSE;
+import static org.sonatype.nexus.security.BreadActions.READ;
 
 /**
  * Provides various content related auth checks.
@@ -51,14 +52,14 @@ public class ContentAuthHelper
     VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(format);
     VariableSource variableSource = variableResolverAdapter.fromPath(path, format);
     return stream(repositoryNames).anyMatch(
-        repositoryName -> contentPermissionChecker.isPermitted(repositoryName, format, BROWSE, variableSource));
+        repositoryName -> contentPermissionChecker.isPermittedAnyOf(repositoryName, format, variableSource, BROWSE, READ));
   }
 
   public boolean checkPathPermissionsJexlOnly(final String path, final String format, final String... repositoryNames) {
     VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(format);
     VariableSource variableSource = variableResolverAdapter.fromPath(path, format);
     return stream(repositoryNames).anyMatch(
-        repositoryName -> contentPermissionChecker.isPermittedJexlOnly(repositoryName, format, BROWSE, variableSource));
+        repositoryName -> contentPermissionChecker.isPermittedJexlOnlyAnyOf(repositoryName, format, variableSource, BROWSE, READ));
   }
 
 }

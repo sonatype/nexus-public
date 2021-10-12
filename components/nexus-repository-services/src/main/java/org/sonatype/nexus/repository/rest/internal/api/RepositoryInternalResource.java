@@ -92,7 +92,7 @@ public class RepositoryInternalResource
       @QueryParam("withFormats") final boolean withFormats)
   {
     List<RepositoryXO> repositories = stream(repositoryManager.browse())
-        .filter(repositoryPermissionChecker::userCanBrowseRepository)
+        .filter(repositoryPermissionChecker::userCanReadOrBrowse)
         .filter(repository -> isBlank(type) || type.equals(repository.getType().toString()))
         .map(repository -> new RepositoryXO(repository.getName(), repository.getName()))
         .sorted(Comparator.comparing(RepositoryXO::getName))
@@ -121,7 +121,7 @@ public class RepositoryInternalResource
   public List<RepositoryDetailXO> getRepositoryDetails()
   {
     return stream(repositoryManager.browse())
-        .filter(repositoryPermissionChecker::userCanBrowseRepository)
+        .filter(repositoryPermissionChecker::userCanReadOrBrowse)
         .map(this::asRepositoryDetail)
         .collect(toList());
   }

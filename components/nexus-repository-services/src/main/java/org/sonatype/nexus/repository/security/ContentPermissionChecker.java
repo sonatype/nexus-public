@@ -32,6 +32,17 @@ public interface ContentPermissionChecker
                       VariableSource variableSource);
 
   /**
+   * Ensure that either the view permission or the content selector permission is permitted
+   * If any of the actions are permitted, return true
+   *
+   * @since 3.next
+   */
+  boolean isPermittedAnyOf(String repositoryName,
+    String repositoryFormat,
+    VariableSource variableSource,
+    String... actions);
+
+  /**
    * Ensure that either the view permission or that a JEXL content selector permission is permitted
    *
    * @since 3.6
@@ -40,6 +51,17 @@ public interface ContentPermissionChecker
                               String repositoryFormat,
                               String action,
                               VariableSource variableSource);
+
+  /**
+   * Ensure that either the view permission or that a JEXL content selector permission is permitted
+   * If any of the actions are permitted, return true
+   *
+   * @since 3.next
+   */
+  boolean isPermittedJexlOnlyAnyOf(String repositoryName,
+                                   String repositoryFormat,
+                                   VariableSource variableSource,
+                                   String... actions);
 
   /**
    * Ensure that either the view permission or the content selector permission is permitted for the desired
@@ -51,4 +73,16 @@ public interface ContentPermissionChecker
                       String repositoryFormat,
                       String action,
                       VariableSource variableSource);
+
+  /**
+   * Ensure that either the view permission or the content selector permission is permitted for the desired
+   * repositories.
+   * If any of the actions are permitted, return true
+   *
+   * @since 3.next
+   */
+  boolean isPermittedAnyOf(Set<String> repositoryNames,
+                           String repositoryFormat,
+                           VariableSource variableSource,
+                           String... actions);
 }

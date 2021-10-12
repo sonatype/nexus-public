@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.security.internal;
 
 import java.util.Arrays;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -31,6 +32,7 @@ import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.selector.VariableSource;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.shiro.authz.Permission;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -60,10 +62,47 @@ public class ContentPermissionCheckerImpl
   }
 
   @VisibleForTesting
-  public boolean isViewPermitted(final Set<String> repositoryNames, final String repositoryFormat, final String action) {
-    RepositoryViewPermission[] perms = repositoryNames.stream()
-        .map(repositoryName -> new RepositoryViewPermission(repositoryFormat, repositoryName, action))
+  public boolean isViewPermitted(final String repositoryName, final String repositoryFormat, final String... actions) {
+    return securityHelper.anyPermitted(permissionsFor(repositoryName, repositoryFormat, actions));
+  }
+
+  @VisibleForTesting
+  public boolean isViewPermitted(final Set<String> repoNames, final String repositoryFormat, final String... actions) {
+    return securityHelper.anyPermitted(permissionsFor(repoNames, repositoryFormat, actions));
+  }
+
+  private static RepositoryViewPermission[] permissionsFor(final String repositoryName, final String repositoryFormat, final String... actions) {
+    return permissionsStreamFor(repositoryName, repositoryFormat, actions)
         .toArray(RepositoryViewPermission[]::new);
+  }
+
+  private static RepositoryContentSelectorPermission[] contentPermissionsFor(
+      final String repositoryName,
+      final String repositoryFormat,
+      final SelectorConfiguration selectorConfiguration,
+      final String... actions)
+  {
+    return contentPermissionsStreamFor(selectorConfiguration.getName(), repositoryFormat, repositoryName, actions)
+        .toArray(RepositoryContentSelectorPermission[]::new);
+  }
+
+  private static RepositoryViewPermission[] permissionsFor(final Set<String> repoNames, final String repoFormat, final String... actions) {
+    return repoNames.stream()
+        .flatMap(repoName -> permissionsStreamFor(repoName, repoFormat, actions))
+        .toArray(RepositoryViewPermission[]::new);
+  }
+
+  private static Stream<RepositoryViewPermission> permissionsStreamFor(final String repositoryName, final String repositoryFormat, final String... actions) {
+    return Arrays.stream(actions).map(action -> new RepositoryViewPermission(repositoryFormat, repositoryName, action));
+  }
+
+  private static Stream<RepositoryContentSelectorPermission> contentPermissionsStreamFor(final String selectorConfigurationName, final String repositoryFormat, final String repositoryName, final String... actions) {
+    return Arrays.stream(actions).map(action -> new RepositoryContentSelectorPermission(selectorConfigurationName, repositoryFormat, repositoryName, Arrays.asList(action)));
+  }
+
+  @VisibleForTesting
+  public boolean isViewPermitted(final Set<String> repositoryNames, final String repositoryFormat, final String action) {
+    RepositoryViewPermission[] perms = permissionsFor(repositoryNames, repositoryFormat, action);
     if (perms.length > 0) {
       return securityHelper.anyPermitted(perms);
     }
@@ -94,6 +133,56 @@ public class ContentPermissionCheckerImpl
     }
 
     return false;
+  }
+
+  @VisibleForTesting
+  public boolean isContentPermittedAnyOf(final String repositoryName,
+                                         final String repositoryFormat,
+                                         final SelectorConfiguration selectorConfiguration,
+                                         final VariableSource variableSource,
+                                         final String... actions)
+  {
+    try {
+      Permission[] permissions = contentPermissionsFor(repositoryName, repositoryFormat, selectorConfiguration, actions);
+      // make sure subject has the selector permission before evaluating it, because that's a cheaper/faster check
+      return securityHelper.anyPermitted(permissions) && selectorManager.evaluate(selectorConfiguration, variableSource);
+    }
+    catch (SelectorEvaluationException e) {
+      logMsgAndMaybeException(e);
+    }
+
+    return false;
+  }
+
+
+  @VisibleForTesting
+  public boolean isContentPermittedAnyOf(final Set<String> repositoryNames,
+                                         final String repositoryFormat,
+                                         final SelectorConfiguration selectorConfiguration,
+                                         final VariableSource variableSource,
+                                         final String... actions)
+  {
+    try {
+      Permission[] permissions = repositoryNames.stream()
+          .flatMap(repoName -> contentPermissionsStreamFor(selectorConfiguration.getName(), repositoryFormat, repoName, actions))
+          .toArray(Permission[]::new);
+      // make sure subject has the selector permission before evaluating it, because that's a cheaper/faster check
+      return securityHelper.anyPermitted(permissions) && selectorManager.evaluate(selectorConfiguration, variableSource);
+    }
+    catch (SelectorEvaluationException e) {
+      logMsgAndMaybeException(e);
+    }
+
+    return false;
+  }
+
+  private void logMsgAndMaybeException(final SelectorEvaluationException ex) {
+    if (log.isTraceEnabled()) {
+      log.debug(ex.getMessage(), ex);
+    }
+    else {
+      log.debug(ex.getMessage());
+    }
   }
 
   @VisibleForTesting
@@ -169,5 +258,55 @@ public class ContentPermissionCheckerImpl
     }
     return selectorManager.browse().stream()
         .anyMatch(config -> isContentPermitted(repositoryNames, repositoryFormat, action, config, variableSource));
+  }
+
+  @Override
+  public boolean isPermittedJexlOnlyAnyOf(
+      final String repositoryName,
+      final String repositoryFormat,
+      final VariableSource variableSource,
+      final String... actions)
+  {
+    // check view perm first, if applicable, grant access
+    if (isViewPermitted(repositoryName, repositoryFormat, actions)) {
+      return true;
+    }
+    // otherwise check the content selector perms
+    return selectorManager.browseJexl().stream()
+        .anyMatch(config -> isContentPermittedAnyOf(repositoryName, repositoryFormat, config, variableSource, actions));
+  }
+
+  @Override
+  public boolean isPermittedAnyOf(
+      final String repositoryName,
+      final String repositoryFormat,
+      final VariableSource variableSource,
+      final String... actions)
+  {
+    //check view perm first, if applicable, grant access
+    if (isViewPermitted(repositoryName, repositoryFormat, actions)) {
+      return true;
+    }
+    //otherwise check the content selector perms
+    return selectorManager.browse().stream()
+        .anyMatch(config -> isContentPermittedAnyOf(repositoryName, repositoryFormat, config, variableSource, actions));
+  }
+
+  @Override
+  public boolean isPermittedAnyOf(
+      final Set<String> repositoryNames,
+      final String repositoryFormat,
+      final VariableSource variableSource,
+      final String... actions)
+  {
+    if (repositoryNames.isEmpty()) {
+      return false;
+    }
+
+    if (isViewPermitted(repositoryNames, repositoryFormat, actions)) {
+      return true;
+    }
+    return selectorManager.browse().stream()
+        .anyMatch(config -> isContentPermittedAnyOf(repositoryNames, repositoryFormat, config, variableSource, actions));
   }
 }

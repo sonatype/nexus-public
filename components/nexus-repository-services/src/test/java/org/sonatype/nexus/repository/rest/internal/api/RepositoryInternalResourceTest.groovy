@@ -74,7 +74,7 @@ class RepositoryInternalResourceTest
           [(HttpClientFacet): mockHttpFacet('Remote Auto Blocked and Unavailable',
               'java.net.UnknownHostException: api.example.org: nodename nor servname provided, or not known')])
     ]
-    repositories.each { when(repositoryPermissionChecker.userCanBrowseRepository(it)).thenReturn(true) }
+    repositories.each { when(repositoryPermissionChecker.userCanReadOrBrowse(it)).thenReturn(true) }
 
     when(repositoryManager.browse()).thenReturn(repositories)
 
