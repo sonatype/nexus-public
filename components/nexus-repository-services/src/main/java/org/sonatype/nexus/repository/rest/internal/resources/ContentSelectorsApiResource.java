@@ -29,6 +29,7 @@ import org.sonatype.nexus.repository.rest.api.ContentSelectorApiCreateRequest;
 import org.sonatype.nexus.repository.rest.api.ContentSelectorApiResponse;
 import org.sonatype.nexus.repository.rest.api.ContentSelectorApiUpdateRequest;
 import org.sonatype.nexus.repository.rest.internal.resources.doc.ContentSelectorsResourceDoc;
+import org.sonatype.nexus.rest.NotCacheable;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.selector.CselSelector;
@@ -68,6 +69,7 @@ public class ContentSelectorsApiResource
   @GET
   @RequiresAuthentication
   @RequiresPermissions("nexus:selectors:read")
+  @NotCacheable
   public List<ContentSelectorApiResponse> getContentSelectors() {
     // The selector manager has a built-in cache of all content selectors which should bound the performance
     return selectorManager.browse().stream().map(ContentSelectorsApiResource::fromSelectorConfiguration)
