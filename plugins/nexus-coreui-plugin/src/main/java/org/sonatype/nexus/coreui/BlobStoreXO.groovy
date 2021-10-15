@@ -73,7 +73,7 @@ class BlobStoreXO
 
   boolean inUse
 
-  boolean promotable
+  boolean convertable
 
   /**
    * @since 3.29

@@ -75,7 +75,7 @@ const blobstoreTypes = {
           "toTitle": "Selected",
           "fromTitle": "Available",
           "buttons": ["up", "add", "remove", "down"],
-          "options": ["default", "test", "test-promoted"]
+          "options": ["default", "test", "test-converted"]
         },
         "type": "itemselect",
         "allowAutocomplete": false
@@ -148,7 +148,7 @@ describe('BlobStoresForm', function() {
           softQuotaLimit: () => queryByLabelText('Constraint Limit (in MB)'),
           saveButton: () => getByText('Save'),
           cancelButton: () => getByText('Cancel'),
-          promoteToGroup: () => queryByText('Promote to Group')
+          convertToGroup: () => queryByText('Convert to Group')
         }));
   }
 
@@ -504,12 +504,12 @@ describe('BlobStoresForm', function() {
 
     const {
       loadingMask,
-      promoteToGroup
+      convertToGroup
     } = render('file/test');
 
     await waitForElementToBeRemoved(loadingMask);
 
-    expect(promoteToGroup()).toBeInTheDocument();
+    expect(convertToGroup()).toBeInTheDocument();
   });
 
   it('edits an s3 blob store', async function() {
@@ -538,7 +538,7 @@ describe('BlobStoresForm', function() {
 
     const {
       loadingMask,
-      promoteToGroup,
+      convertToGroup,
       typeSelect,
       expiration,
       bucket,
@@ -563,7 +563,7 @@ describe('BlobStoresForm', function() {
     expect(secretAccessKey()).toHaveValue('SomeSecretAccessKey');
     expect(endpointURL()).toHaveValue('http://www.fakeurl.com');
 
-    expect(promoteToGroup()).toBeInTheDocument();
+    expect(convertToGroup()).toBeInTheDocument();
   });
 
   it('edits a file blob store', async function() {
@@ -612,7 +612,7 @@ describe('BlobStoresForm', function() {
     when(axios.get).calledWith('/service/rest/v1/blobstores/group/test').mockResolvedValue({
       data: {
         "softQuota" : null,
-        "members" : [ "test-promoted" ],
+        "members" : [ "test-converted" ],
         "fillPolicy" : "writeToFirst"
       }
     });
@@ -636,60 +636,27 @@ describe('BlobStoresForm', function() {
     expect(name()).not.toBeInTheDocument();
 
     expect(availableMembers()).toContainElement(getByText('default'));
-    expect(selectedMembers()).toContainElement(getByText('test-promoted'));
+    expect(selectedMembers()).toContainElement(getByText('test-converted'));
   });
 
-  it('promote to group is not shown when editing a group', async function() {
+  it('convert to group is not shown when editing a group', async function() {
     when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
     when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
     when(axios.get).calledWith('/service/rest/v1/blobstores/group/test').mockResolvedValue({
       data: {
         "softQuota" : null,
-        "members" : [ "test-promoted" ],
+        "members" : [ "test-converted" ],
         "fillPolicy" : "writeToFirst"
       }
     });
 
     const {
       loadingMask,
-      promoteToGroup
+      convertToGroup
     } = render('group/test');
 
     await waitForElementToBeRemoved(loadingMask);
 
-    expect(promoteToGroup()).not.toBeInTheDocument();
-  });
-
-  it('requests confirmation when promote is requested', async function() {
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
-    when(axios.get).calledWith('/service/rest/v1/blobstores/file/test').mockResolvedValue({
-      data: {
-        path: 'testPath',
-        softQuota: {
-          type: 'spaceRemainingQuota',
-          limit: '100'
-        }
-      }
-    });
-
-    const {
-      getByText,
-      loadingMask,
-      title,
-      promoteToGroup
-    } = render('file/test');
-
-    await waitForElementToBeRemoved(loadingMask);
-
-    expect(title()).toHaveTextContent('Edit test');
-    expect(getByText('File Blob Store')).toBeInTheDocument();
-
-    expect(promoteToGroup()).toBeInTheDocument();
-
-    ExtJS.requestConfirmation.mockReturnValue(confirm);
-    fireEvent.click(promoteToGroup());
-
-    await waitFor(() => expect(axios.post).toBeCalledWith('/service/rest/v1/blobstores/group/promote/test'));
+    expect(convertToGroup()).not.toBeInTheDocument();
   });
 });

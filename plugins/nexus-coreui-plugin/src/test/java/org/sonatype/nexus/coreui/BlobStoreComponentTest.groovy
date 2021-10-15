@@ -117,59 +117,6 @@ class BlobStoreComponentTest
       defaultWorkDirectory.fileSeparator == File.separator
   }
 
-  def 'it will promote a blob that is promotable'() {
-    setup:
-      def groupBlobName = 'myGroup'
-      def from = Mock(BlobStore)
-
-    when: 'trying to promote'
-      def blobStoreXO = blobStoreComponent.promoteToGroup(groupBlobName)
-
-    then: 'blobStoreManager is called correctly'
-      1 * blobStoreManager.get(groupBlobName) >> from
-      1 * blobStoreManager.isPromotable(groupBlobName) >> true
-      1 * repositoryManager.blobstoreUsageCount(_ as String) >> 2L
-      1 * blobStoreGroupService.isEnabled() >> true
-      1 * blobStoreGroupService.promote(from) >> Mock(BlobStoreGroup) {
-          isStarted() >> true
-          getBlobStoreConfiguration() >> new MockBlobStoreConfiguration(name: 'name', type: 'type',
-            attributes: ['group': ['members': 'name-promoted'], blobStoreQuotaConfig: [:]])
-        getMetrics() >> Mock(BlobStoreMetrics) {
-          getBlobCount() >> 1L
-          getTotalSize() >> 500L
-          getAvailableSpace() >> 450L
-          isUnlimited() >> false
-        }
-      }
-
-      blobStoreXO.name == 'name'
-      blobStoreXO.type == 'type'
-      blobStoreXO.attributes == ['group': ['members': 'name-promoted'], blobStoreQuotaConfig: [:]]
-      blobStoreXO.blobCount == 1L
-      blobStoreXO.totalSize == 500L
-      blobStoreXO.availableSpace == 450L
-      !blobStoreXO.unlimited
-      blobStoreXO.repositoryUseCount == 2L
-  }
-
-  def 'it will not promote a blob store type that is not promotable'() {
-    setup:
-      def groupBlobName = 'myGroup'
-      def blobStore = Mock(BlobStore) {
-        getBlobStoreConfiguration() >> new MockBlobStoreConfiguration(name: groupBlobName, attributes: [:])
-      }
-
-    when: 'trying to promote'
-      blobStoreComponent.promoteToGroup(groupBlobName)
-
-    then: 'blobStoreManager is called correctly'
-      1 * blobStoreGroupService.isEnabled() >> true
-      1 * blobStoreManager.get(groupBlobName) >> blobStore
-      1 * blobStoreManager.isPromotable(groupBlobName) >> false
-      BlobStoreException exception = thrown()
-      exception.message == 'Blob store (myGroup) could not be promoted to a blob store group'
-  }
-
   def 'given a blob store with a quota, create a proper blobStoreXO'() {
     setup:
       def blobStore = Mock(BlobStore) {

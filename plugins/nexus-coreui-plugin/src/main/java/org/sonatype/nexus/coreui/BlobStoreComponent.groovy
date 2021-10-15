@@ -279,7 +279,7 @@ class BlobStoreComponent
         taskUseCount: blobstoreInChangeRepoTaskCount(blobStore.blobStoreConfiguration.name),
         blobStoreUseCount: blobStoreManager.blobStoreUsageCount(blobStore.blobStoreConfiguration.name),
         inUse: repositoryManager.isBlobstoreUsed(blobStore.blobStoreConfiguration.name),
-        promotable: blobStoreManager.isPromotable(blobStore.blobStoreConfiguration.name),
+        convertable: blobStoreManager.isConvertable(blobStore.blobStoreConfiguration.name),
         isQuotaEnabled: !quotaAttributes.isEmpty(),
         quotaType: quotaAttributes.get(BlobStoreQuotaSupport.TYPE_KEY),
         quotaLimit: quotaAttributes.get(BlobStoreQuotaSupport.LIMIT_KEY, Number.class)?.div(MILLION)?.toLong(),
@@ -306,19 +306,6 @@ class BlobStoreComponent
       return changeRepositoryBlobstoreDataService.changeRepoTaskUsingBlobstoreCount(blobStoreName);
     }
     return 0;
-  }
-
-  @DirectMethod
-  @Timed
-  @ExceptionMetered
-  @RequiresPermissions('nexus:blobstores:update')
-  @Validate(groups = [Update.class, Default.class])
-  BlobStoreXO promoteToGroup(final @NotNull @Valid String fromName) {
-    BlobStore from = blobStoreManager.get(fromName)
-    if (blobStoreGroupService.get()?.isEnabled() && blobStoreManager.isPromotable(fromName)) {
-      return asBlobStoreXO(blobStoreGroupService.get().promote(from))
-    }
-    throw new BlobStoreException("Blob store (${fromName}) could not be promoted to a blob store group", null)
   }
 
   @DirectMethod

@@ -81,13 +81,13 @@ public interface BlobStoreManager
   long blobStoreUsageCount(String blobStoreName);
 
   /**
-   * Returns true if the blob store is promotable
+   * Returns true if the blob store is convertable
    * @param blobStoreName
-   * @return true if member is promotable
+   * @return true if the blob store can be converted to a group
    *
    * @since 3.15
    */
-  boolean isPromotable(String blobStoreName);
+  boolean isConvertable(String blobStoreName);
 
   /**
    * Returns the parent group of the blob store if it exists
