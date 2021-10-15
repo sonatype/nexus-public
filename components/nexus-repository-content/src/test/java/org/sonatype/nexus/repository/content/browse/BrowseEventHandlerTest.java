@@ -42,12 +42,12 @@ public class BrowseEventHandlerTest
 
   @Before
   public void setup() {
-    underTest = new BrowseEventHandler(periodicJobService, eventManager, 100, 2, true, true);
+    underTest = new BrowseEventHandler(periodicJobService, eventManager, 100, 2, true);
   }
 
   @Test
   public void testAssetPurgedEvent_notProcessedWhenPaused() {
-    underTest.maybePauseEventProcessing();
+    underTest.pauseEventProcessing();
     AssetPurgedEvent event = mock(AssetPurgedEvent.class);
     underTest.on(event);
     verifyZeroInteractions(event);
@@ -55,7 +55,7 @@ public class BrowseEventHandlerTest
 
   @Test
   public void testAssetCreatedEvent_notProcessedWhenPaused() {
-    underTest.maybePauseEventProcessing();
+    underTest.pauseEventProcessing();
     AssetCreatedEvent event = mock(AssetCreatedEvent.class);
     underTest.on(event);
     verifyZeroInteractions(event);
@@ -63,7 +63,7 @@ public class BrowseEventHandlerTest
 
   @Test
   public void testAssetUploadedEvent_notProcessedWhenPaused() {
-    underTest.maybePauseEventProcessing();
+    underTest.pauseEventProcessing();
     AssetUploadedEvent event = mock(AssetUploadedEvent.class);
     underTest.on(event);
     verifyZeroInteractions(event);
@@ -71,7 +71,7 @@ public class BrowseEventHandlerTest
 
   @Test
   public void testAssetDeletedEvent_notProcessedWhenPaused() {
-    underTest.maybePauseEventProcessing();
+    underTest.pauseEventProcessing();
     AssetDeletedEvent event = mock(AssetDeletedEvent.class);
     underTest.on(event);
     verifyZeroInteractions(event);
@@ -79,7 +79,7 @@ public class BrowseEventHandlerTest
 
   @Test
   public void testComponentPurgedEvent_notProcessedWhenPaused() {
-    underTest.maybePauseEventProcessing();
+    underTest.pauseEventProcessing();
     ComponentPurgedEvent event = mock(ComponentPurgedEvent.class);
     underTest.on(event);
     verifyZeroInteractions(event);
@@ -87,7 +87,7 @@ public class BrowseEventHandlerTest
 
   @Test
   public void testComponentDeletedEvent_notProcessedWhenPaused() {
-    underTest.maybePauseEventProcessing();
+    underTest.pauseEventProcessing();
     ComponentDeletedEvent event = mock(ComponentDeletedEvent.class);
     underTest.on(event);
     verifyZeroInteractions(event);

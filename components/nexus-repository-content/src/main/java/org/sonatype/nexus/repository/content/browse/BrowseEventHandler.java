@@ -85,8 +85,6 @@ public class BrowseEventHandler
 
   private static final String NO_PURGE_DELAY_KEY = HANDLER_KEY_PREFIX + "noPurgeDelay";
 
-  private static final String PAUSE_AVAILABLE_KEY = HANDLER_KEY_PREFIX + "pauseAvailable";
-
   private final PeriodicJobService periodicJobService;
 
   private final EventManager eventManager;
@@ -117,10 +115,8 @@ public class BrowseEventHandler
       final EventManager eventManager,
       @Named("${" + FLUSH_ON_COUNT_KEY + ":-100}") final int flushOnCount,
       @Named("${" + FLUSH_ON_SECONDS_KEY + ":-2}") final int flushOnSeconds,
-      @Named("${" + NO_PURGE_DELAY_KEY + ":-true}") final boolean noPurgeDelay,
-      @Named("${" + PAUSE_AVAILABLE_KEY + ":-false}") final boolean pauseAvailable)
+      @Named("${" + NO_PURGE_DELAY_KEY + ":-true}") final boolean noPurgeDelay)
   {
-    super(pauseAvailable);
     this.periodicJobService = checkNotNull(periodicJobService);
     this.eventManager = checkNotNull(eventManager);
     checkArgument(flushOnCount > 0, FLUSH_ON_COUNT_KEY + " must be positive");

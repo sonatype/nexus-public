@@ -24,7 +24,10 @@
 Ext.define('NX.coreui.migration.PhaseFinishStep', {
   extend: 'NX.coreui.migration.ProgressStepSupport',
   requires: [
-    'NX.coreui.migration.PhaseFinishScreen'
+    'NX.coreui.migration.PhaseFinishScreen',
+    'NX.Messages',
+    'NX.Dialogs',
+    'NX.I18n'
   ],
 
   config: {
@@ -101,6 +104,41 @@ Ext.define('NX.coreui.migration.PhaseFinishStep', {
     );
   },
 
+  successfulFinish: function() {
+    var me = this;
+    me.finish();
+    NX.Messages.success(NX.I18n.render(me, 'Done_Message'));
+  },
+
+  maybeOpenDoneModal: function() {
+    var me = this,
+        buildBrowse = NX.State.getValue('migration', {})['buildBrowse'],
+        buildSearch = NX.State.getValue('migration', {})['buildSearch'];
+
+    if (buildBrowse && buildSearch) {
+      me.successfulFinish();
+    }
+    else {
+      var dialogMsg = NX.I18n.render(me, 'Done_Dialog_prefix');
+      if (!buildSearch) {
+        dialogMsg += NX.I18n.render(me, 'Done_Dialog_with_search');
+      }
+      if (!buildBrowse) {
+        dialogMsg += NX.I18n.render(me, 'Done_Dialog_with_browse');
+      }
+      dialogMsg += NX.I18n.render(me, 'Done_Dialog_suffix');
+      NX.Dialogs.showInfo(
+          NX.I18n.render(me, 'Done_Dialog_title'),
+          dialogMsg,
+          {
+            fn: me.successfulFinish,
+            scope: me
+          },
+          true
+      );
+    }
+  },
+
   /**
    * @private
    */
@@ -113,9 +151,7 @@ Ext.define('NX.coreui.migration.PhaseFinishStep', {
       me.unmask();
 
       if (event.status && response.success) {
-        me.finish();
-
-        NX.Messages.success(NX.I18n.render(me, 'Done_Message'));
+        me.maybeOpenDoneModal();
       }
     });
   }

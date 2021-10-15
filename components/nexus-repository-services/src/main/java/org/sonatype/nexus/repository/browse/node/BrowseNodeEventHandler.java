@@ -26,18 +26,11 @@ public interface BrowseNodeEventHandler
   /**
    * pause processing of events, once this happens, rebuilding browse nodes manually (via the task) will be required
    * after resuming processing
-   * requires nexus.browse.event.handler.pauseAvailable=true in nexus.properties
    */
-  void maybePauseEventProcessing();
+  void pauseEventProcessing();
 
   /**
    * resume processing, with the knowledge that anything added while in the paused state did not get added to browse
    */
   void resumeEventProcessing();
-
-  /**
-   * Simple check if pause is available for use
-   * requires nexus.browse.event.handler.pauseAvailable=true in nexus.properties
-   */
-  boolean isPauseAvailable();
 }
