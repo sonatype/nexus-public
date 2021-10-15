@@ -406,7 +406,7 @@ public class BlobStoreManagerImpl
   }
 
   @Override
-  public boolean isPromotable(final String blobStoreName) {
+  public boolean isConvertable(final String blobStoreName) {
     BlobStore blobStore = get(blobStoreName);
     return blobStore != null && blobStore.isGroupable() && blobStore.isWritable() &&
         !store.findParent(blobStore.getBlobStoreConfiguration().getName()).isPresent() &&

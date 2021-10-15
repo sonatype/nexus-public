@@ -94,8 +94,8 @@ export default FormUtils.buildFormMachine({
               cond: 'canSave'
           }],
 
-          PROMOTE_TO_GROUP: {
-            target: 'confirmPromote'
+          MODAL_CONVERT_TO_GROUP_OPEN: {
+            target: 'modalConvertToGroup'
           }
         }
       },
@@ -106,23 +106,30 @@ export default FormUtils.buildFormMachine({
           onError: 'loaded'
         }
       },
-      confirmPromote: {
-        invoke: {
-          src: 'confirmPromote',
-          onDone: 'promoteToGroup',
-          onError: 'loaded'
-        }
+      modalConvertToGroup: {
+        entry: 'modalConvertToGroupSetInitValueToNewBlobName',
+        on: {
+          MODAL_CONVERT_TO_GROUP_CLOSE: {
+            target: 'loaded'
+          },
+          MODAL_CONVERT_TO_GROUP_SAVE: {
+            target: 'convertToGroup',
+          },
+          MODAL_CONVERT_TO_GROUP_SET_NEW_BLOB_NAME: {
+            actions: ['modalConvertToGroupSetNewBlobName'],
+          },
+        },
       },
-      promoteToGroup: {
+      convertToGroup: {
         invoke: {
-          src: 'promoteToGroup',
+          src: 'convertToGroupService',
           onDone: {
             target: 'loaded',
             actions: ['onSaveSuccess']
           },
           onError: {
             target: 'loaded',
-            actions: ['onPromoteError']
+            actions: ['onConvertError']
           }
         }
       }
@@ -161,6 +168,20 @@ export default FormUtils.buildFormMachine({
         repositoryUsage: event.data[3]?.data?.repositoryUsage || 0,
         blobStoreUsage: event.data[3]?.data?.blobStoreUsage || 0
       };
+    }),
+
+    modalConvertToGroupSetNewBlobName: assign({
+      data: ({data}, {value}) => ({
+        ...data,
+        modalConvertToGroupNewBlobName: value
+      })
+    }),
+
+    modalConvertToGroupSetInitValueToNewBlobName: assign({
+      data: ({data}) => ({
+        ...data,
+        modalConvertToGroupNewBlobName: `${data.name}-original`
+      })
     }),
 
     setType: assign({
@@ -273,7 +294,7 @@ export default FormUtils.buildFormMachine({
 
     onDeleteError: (_, event) => ExtJS.showErrorMessage(event.data?.message),
 
-    onPromoteError: (_, event) => ExtJS.showErrorMessage(event.data?.response?.data),
+    onConvertError: (_, event) => ExtJS.showErrorMessage(event.data?.response?.data),
 
     logSaveError: (_, event) => {
       let saveError = event.data?.response?.data ? event.data.response.data : UIStrings.ERROR.SAVE_ERROR;
@@ -334,15 +355,8 @@ export default FormUtils.buildFormMachine({
       message: data.name
     }),
 
-    confirmPromote: () => ExtJS.requestConfirmation({
-      title: UIStrings.BLOB_STORES.MESSAGES.CONFIRM_PROMOTE.TITLE,
-      yesButtonText: UIStrings.BLOB_STORES.MESSAGES.CONFIRM_PROMOTE.YES,
-      noButtonText: UIStrings.BLOB_STORES.MESSAGES.CONFIRM_PROMOTE.NO,
-      message: UIStrings.BLOB_STORES.MESSAGES.CONFIRM_PROMOTE.MESSAGE
-    }),
-
     delete: ({data}) => Axios.delete(`/service/rest/v1/blobstores/${data.name}`),
 
-    promoteToGroup: ({data}) => Axios.post(`/service/rest/v1/blobstores/group/promote/${data.name}`)
+    convertToGroupService: ({data}) => Axios.post(`/service/rest/v1/blobstores/group/convert/${data.name}/${data.modalConvertToGroupNewBlobName}`)
   }
 });

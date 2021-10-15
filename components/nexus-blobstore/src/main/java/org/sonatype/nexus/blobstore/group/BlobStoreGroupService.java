@@ -28,8 +28,9 @@ public interface BlobStoreGroupService {
   /**
    * Takes a {@link BlobStore} and creates a {@link BlobStoreGroup} that contains the original blob store
    *
-   * @param from a {@link BlobStore} to be "promoted"
+   * @param from a {@link BlobStore} to be converted into a group blob store
+   * @param newNameForOriginal a new name for the original blob store
    * @return {@link BlobStoreGroup} that contains the original blob store
    */
-  BlobStoreGroup promote(final BlobStore from);
+  BlobStoreGroup convert(final BlobStore from, final String newNameForOriginal);
 }

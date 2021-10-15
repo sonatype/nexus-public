@@ -322,7 +322,7 @@ class BlobStoreManagerImplTest
   }
 
   @Test
-  void 'It is promotable when the store finds no parents and the blob store is groupable'() {
+  void 'It is convertable when the store finds no parents and the blob store is groupable'() {
     def blobStoreName = 'child'
     def blobStore = mock(BlobStore)
     underTest.track(blobStoreName, blobStore)
@@ -330,31 +330,31 @@ class BlobStoreManagerImplTest
     when(blobStore.isWritable()).thenReturn(true)
     when(blobStore.getBlobStoreConfiguration()).thenReturn(new MockBlobStoreConfiguration(name: blobStoreName))
     when(store.findParent(blobStoreName)).thenReturn(Optional.empty())
-    assert underTest.isPromotable(blobStoreName)
+    assert underTest.isConvertable(blobStoreName)
   }
 
   @Test
-  void 'It is not promotable when the store finds parents'() {
+  void 'It is not convertable when the store finds parents'() {
     def blobStoreName = 'child'
     def blobStore = mock(BlobStore)
     when(blobStore.isGroupable()).thenReturn(true)
     when(blobStore.getBlobStoreConfiguration()).thenReturn(new MockBlobStoreConfiguration(name: blobStoreName))
     when(store.findParent(blobStoreName)).thenReturn(Optional.of(new MockBlobStoreConfiguration()))
-    assert !underTest.isPromotable(blobStoreName)
+    assert !underTest.isConvertable(blobStoreName)
   }
 
   @Test
-  void 'It is not promotable when the store is not groupable'() {
+  void 'It is not convertable when the store is not groupable'() {
     def blobStoreName = 'child'
     def blobStore = mock(BlobStore)
     when(blobStore.isGroupable()).thenReturn(false)
     when(blobStore.getBlobStoreConfiguration()).thenReturn(new MockBlobStoreConfiguration(name: blobStoreName))
     when(store.findParent(blobStoreName)).thenReturn(Optional.empty())
-    assert !underTest.isPromotable(blobStoreName)
+    assert !underTest.isConvertable(blobStoreName)
   }
 
   @Test
-  void 'It is not promotable when the store is in use by a task'() {
+  void 'It is not convertable when the store is in use by a task'() {
     def blobStoreName = 'child'
     def blobStore = mock(BlobStore)
     underTest.track(blobStoreName, blobStore)
@@ -363,7 +363,7 @@ class BlobStoreManagerImplTest
     when(blobStore.isWritable()).thenReturn(true)
     when(blobStore.getBlobStoreConfiguration()).thenReturn(new MockBlobStoreConfiguration(name: blobStoreName))
     when(store.findParent(blobStoreName)).thenReturn(Optional.empty())
-    assert !underTest.isPromotable(blobStoreName)
+    assert !underTest.isConvertable(blobStoreName)
 
   }
 

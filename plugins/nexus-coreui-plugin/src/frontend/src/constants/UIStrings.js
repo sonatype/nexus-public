@@ -102,7 +102,7 @@ the documentation</a>.`
       ',
       EDIT_TILE: (name) => `Edit ${name}`,
       EDIT_DESCRIPTION: (type) => `${type} Blob Store`,
-      PROMOTE_BUTTON: 'Promote to Group',
+      CONVERT_TO_GROUP_BUTTON: 'Convert to Group',
       TYPE: {
         label: 'Type',
         sublabel: 'Select the type of the blob store'
