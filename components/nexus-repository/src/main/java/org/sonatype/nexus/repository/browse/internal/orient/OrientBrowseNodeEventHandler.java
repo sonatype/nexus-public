@@ -49,10 +49,7 @@ public class OrientBrowseNodeEventHandler
   private final OrientBrowseNodeManager browseNodeManager;
 
   @Inject
-  public OrientBrowseNodeEventHandler(final OrientBrowseNodeManager browseNodeManager,
-                                      @Named("${nexus.browse.event.handler.pauseAvailable:-false}")
-                                      final boolean pauseAvailable) {
-    super(pauseAvailable);
+  public OrientBrowseNodeEventHandler(final OrientBrowseNodeManager browseNodeManager) {
     this.browseNodeManager = checkNotNull(browseNodeManager);
   }
 

@@ -1615,7 +1615,17 @@ Ext.define('NX.coreui.app.PluginStrings', {
       Abort_Message: 'Upgrade aborted',
 
       Done_Mask: 'Confirming',
-      Done_Message: 'Upgrade done'
+      Done_Message: 'Upgrade done',
+
+      Done_Dialog_title: 'Upgrade Complete',
+      Done_Dialog_prefix: '<p>Repository content is available immediately for direct download.</p>' +
+          '<p>Tasks have been automatically scheduled to build:</p>' +
+          '<ul>',
+      Done_Dialog_with_browse: '<li>component Browse UI and HTML views</li>',
+      Done_Dialog_with_search: '<li>component Search UI and Search REST APIs</li>',
+      Done_Dialog_suffix: '</ul>' +
+          '<p>All components will not be visible until tasks named "Repo 2 Migration" finish. ' +
+          'Monitor status in the Tasks user interface or by examining the associated task log.</p>'
     },
 
     'NX.coreui.view.ldap.LdapSystemPasswordModal': {

@@ -26,22 +26,13 @@ public abstract class BrowseNodeEventHandlerSupport
 {
   private final AtomicBoolean pauseHandling = new AtomicBoolean(false);
 
-  private final boolean pauseAvailable;
-
-  public BrowseNodeEventHandlerSupport(final boolean pauseAvailable) {
-    this.pauseAvailable = pauseAvailable;
-  }
-
   @Override
   public boolean shouldHandle() {
-    if (!pauseAvailable) {
-      return true;
-    }
     return !pauseHandling.get();
   }
 
   @Override
-  public void maybePauseEventProcessing() {
+  public void pauseEventProcessing() {
     log.info("BrowseNode event processing has been paused");
     pauseHandling.set(true);
   }
@@ -50,10 +41,5 @@ public abstract class BrowseNodeEventHandlerSupport
   public void resumeEventProcessing() {
     log.info("BrowseNode event processing has been resumed");
     pauseHandling.set(false);
-  }
-
-  @Override
-  public boolean isPauseAvailable() {
-    return pauseAvailable;
   }
 }
