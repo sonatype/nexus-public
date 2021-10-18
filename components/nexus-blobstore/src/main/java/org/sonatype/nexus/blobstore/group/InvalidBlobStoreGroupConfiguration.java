@@ -10,28 +10,11 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.upgrade.datastore.internal;
+package org.sonatype.nexus.blobstore.group;
 
-import java.sql.Connection;
-
-import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
-
-/**
- * Test migration step from future
- * @since 3.36
- */
-public class FutureMigrationStep
-    extends ComponentSupport
-    implements DatabaseMigrationStep
+public class InvalidBlobStoreGroupConfiguration extends RuntimeException
 {
-  @Override
-  public String version() {
-    return "4.5.6";
-  }
-
-  @Override
-  public void migrate(final Connection connection) {
-    // . . .
+  public InvalidBlobStoreGroupConfiguration(final String message) {
+    super(message);
   }
 }

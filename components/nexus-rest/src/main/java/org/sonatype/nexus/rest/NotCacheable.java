@@ -23,7 +23,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 /**
  * Flags REST methods that should not be cached and adds the appropriate HTTP headers.
  *
- * @since 3.36
+ * @since 3.next
  */
 @NameBinding
 @Retention(RUNTIME)

@@ -133,6 +133,7 @@ public class BlobStoreGroup
           fillPolicyName, configuration.getName(), FALLBACK_FILL_POLICY_TYPE);
       this.fillPolicy = fillPolicyProviders.get(FALLBACK_FILL_POLICY_TYPE).get();
     }
+    fillPolicy.validateBlobStoreGroup(this);
   }
 
   @Override
@@ -185,7 +186,7 @@ public class BlobStoreGroup
   }
 
   private Blob create(final Map<String, String> headers, final CreateBlobFunction createBlobFunction) {
-    BlobStore result = fillPolicy.chooseBlobStore(this, headers);
+    BlobStore result = fillPolicy.chooseBlobStoreForCreate(this, headers);
     if (result == null) {
       throw new BlobStoreException("Unable to find a member Blob Store of '" + this + "' for create", null);
     }
@@ -197,10 +198,32 @@ public class BlobStoreGroup
   @Override
   @Guarded(by = STARTED)
   public Blob copy(final BlobId blobId, final Map<String, String> headers) {
-    BlobStore target = locate(blobId)
+    BlobStore sourceBlobStore = locate(blobId)
         .orElseThrow(() -> new BlobStoreException("Unable to find blob", blobId));
-    Blob blob = target.copy(blobId, headers);
-    locatedBlobs.put(blob.getId(), target.getBlobStoreConfiguration().getName());
+
+    BlobStore destinationBlobStore = fillPolicy.chooseBlobStoreForCopy(this, sourceBlobStore, headers);
+
+    if (destinationBlobStore == null) {
+      throw new BlobStoreException("Unable to find a member Blob Store of '" + this + "' for copy", blobId);
+    }
+
+    Blob blob;
+    //if the source and destination blob stores are the same, perform the copy
+    if (sourceBlobStore.getBlobStoreConfiguration().getName()
+        .equals(destinationBlobStore.getBlobStoreConfiguration().getName())) {
+      blob = sourceBlobStore.copy(blobId, headers);
+    }
+    //if the source and destination blob stores are different, create it the blob in the destination store
+    else {
+      Blob blobToCopy = sourceBlobStore.get(blobId);
+      if (blobToCopy == null) {
+        log.error("Unable to copy blob because it doesn't exist in blob store: {}, blobId: {}", sourceBlobStore.getBlobStoreConfiguration().getName(), blobId);
+        throw new BlobStoreException("Unable to blob to copy", blobId);
+      }
+      blob = destinationBlobStore.create(blobToCopy.getInputStream(), headers, null);
+    }
+
+    locatedBlobs.put(blob.getId(), destinationBlobStore.getBlobStoreConfiguration().getName());
     return blob;
   }
 

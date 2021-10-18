@@ -26,7 +26,7 @@ import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
 import static javax.ws.rs.core.HttpHeaders.EXPIRES;
 
 /**
- * @since 3.36
+ * @since 3.next
  */
 @NotCacheable
 public class NotCacheableResponseFilter

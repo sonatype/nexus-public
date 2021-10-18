@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.upgrade.datastore.internal;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.sql.DataSource;
 
@@ -23,13 +21,9 @@ import org.sonatype.nexus.datastore.api.DataStoreManager;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 import org.flywaydb.core.Flyway;
-import org.flywaydb.core.api.MigrationInfo;
-import org.flywaydb.core.api.MigrationState;
 import org.flywaydb.core.api.callback.Callback;
 import org.flywaydb.core.api.migration.JavaMigration;
 import org.flywaydb.core.api.output.MigrateResult;
-
-import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Support class for upgrade managers.
@@ -73,9 +67,6 @@ abstract class UpgradeManagerSupport<E extends DatabaseMigrationStep>
 
     MigrateResult result = flyway.migrate();
 
-    checkState(datastoreVersionIsAcceptable(flyway),
-        "The database appears to be from a later version of Nexus Repository");
-
     if (result.migrationsExecuted > 0) {
       result.migrations.forEach(m -> log.info("{} migrated to v{} in {}s", m.description, m.version, m.executionTime));
       result.warnings.forEach(log::warn);
@@ -85,22 +76,5 @@ abstract class UpgradeManagerSupport<E extends DatabaseMigrationStep>
       log.debug("No migrations occurred migration of {} from {} to {}", result.schemaName, result.initialSchemaVersion,
           result.targetSchemaVersion);
     }
-  }
-
-  /**
-   * If migrations with 'future' state exist in db -- newer db schema detected
-   * @param flyway migration engine
-   * @return <b>true</b> if datastore can be used with current nxrm distribution, <b>false</b> otherwise
-   */
-  boolean datastoreVersionIsAcceptable(final Flyway flyway) {
-    List<String> missingMigrations = Arrays.stream(flyway.info().applied())
-        .filter(migrationInfo -> migrationInfo.getState() == MigrationState.FUTURE_SUCCESS)
-        .map(MigrationInfo::getDescription)
-        .collect(Collectors.toList());
-
-    if (!missingMigrations.isEmpty()) {
-      log.error("Missing migrations: {}", missingMigrations);
-    }
-    return missingMigrations.isEmpty();
   }
 }

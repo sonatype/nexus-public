@@ -35,7 +35,7 @@ public interface ContentPermissionChecker
    * Ensure that either the view permission or the content selector permission is permitted
    * If any of the actions are permitted, return true
    *
-   * @since 3.36
+   * @since 3.next
    */
   boolean isPermittedAnyOf(String repositoryName,
     String repositoryFormat,
@@ -56,7 +56,7 @@ public interface ContentPermissionChecker
    * Ensure that either the view permission or that a JEXL content selector permission is permitted
    * If any of the actions are permitted, return true
    *
-   * @since 3.36
+   * @since 3.next
    */
   boolean isPermittedJexlOnlyAnyOf(String repositoryName,
                                    String repositoryFormat,
@@ -79,7 +79,7 @@ public interface ContentPermissionChecker
    * repositories.
    * If any of the actions are permitted, return true
    *
-   * @since 3.36
+   * @since 3.next
    */
   boolean isPermittedAnyOf(Set<String> repositoryNames,
                            String repositoryFormat,

@@ -22,7 +22,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * A builder for blob store configurations.
  *
- * @since 3.36
+ * @since 3.next
  */
 public class BlobStoreConfigurationBuilder
 {

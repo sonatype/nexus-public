@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-components</artifactId>
-    <version>3.36.0-01</version>
+    <version>3.36.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-rapture</artifactId>
@@ -31,7 +31,8 @@
     <resource.url.suffix>?_v=${project.version}&amp;_dc=${resource.url.suffix.timestamp}</resource.url.suffix>
     <sonar.sources>src/main/java,src/main/resources/static/rapture</sonar.sources>
     <sonar.exclusions>
-      src/main/resources/static/rapture/baseapp-*.js
+      src/main/resources/static/rapture/baseapp-*.js,
+      src/main/resources/static/rapture/d3.v4.min.js
     </sonar.exclusions>
   </properties>
 
@@ -101,6 +102,7 @@
           <namespace>NX</namespace>
           <excludes>
             <exclude>baseapp-*.js</exclude>
+            <exclude>d3.v4.min.js</exclude>
           </excludes>
         </configuration>
       </plugin>

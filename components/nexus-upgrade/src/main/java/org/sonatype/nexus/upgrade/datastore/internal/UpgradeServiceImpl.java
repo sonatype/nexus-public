@@ -20,7 +20,6 @@ import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.upgrade.UpgradeService;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.UPGRADE;
 
 /**
@@ -39,7 +38,7 @@ public class UpgradeServiceImpl
 
   @Inject
   public UpgradeServiceImpl(final UpgradeManager upgradeManager) {
-    this.upgradeManager = checkNotNull(upgradeManager);
+    this.upgradeManager = upgradeManager;
   }
 
   @Override

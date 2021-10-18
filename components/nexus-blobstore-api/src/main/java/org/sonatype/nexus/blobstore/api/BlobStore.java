@@ -151,6 +151,15 @@ public interface BlobStore
   Blob copy(BlobId blobId, Map<String, String> headers);
 
   /**
+   * Makes a blob permanent by writing the specified permanent blob headers into the blob's properties file.
+   *
+   * @since 3.35
+   */
+  default Blob makeBlobPermanent(final BlobId blobId, final Map<String, String> headers) {
+    return copy(blobId, headers); // default to copy for non-cloud blob stores
+  }
+
+  /**
    * Returns the corresponding {@link Blob}, or {@code null} if the  blob does not exist or has been {@link #delete
    * deleted}.
    */
@@ -314,8 +323,19 @@ public interface BlobStore
    *
    * @since 3.29
    */
-  default Future<Boolean> asyncDelete(final BlobId blobId) {
+  default Future<Boolean> asyncDelete(BlobId blobId) {
     return CompletableFuture.completedFuture(deleteHard(blobId));
+  }
+
+  /**
+   * Deletes the blob if it is indeed a Temporary blob
+   * Note: This method should only called with a BlobId known to have been created as a TempBlob, implementations may
+   * perform no checks if they provide no special handling.
+   *
+   * @since 3.35
+   */
+  default boolean deleteIfTemp(BlobId blobId) {
+    return deleteHard(blobId);
   }
 
   default void validateCanCreateAndUpdate() throws Exception {
