@@ -243,8 +243,13 @@ Ext.define('NX.coreui.controller.SslCertificates', {
     me.getContent().getEl().mask(NX.I18n.get('SslTrustStore_Load_Mask'));
     NX.direct.ssl_Certificate.retrieveFromHost(parsed[0], parsed[1], protocolHint, function (response) {
       me.getContent().getEl().unmask();
-      if (Ext.isObject(response) && response.success) {
-        me.showCertificateDetailsPanel(response.data);
+      if (Ext.isObject(response)) {
+        if (response.success) {
+          me.showCertificateDetailsPanel(response.data);
+        }
+        else if (response.errors) {
+          NX.Messages.error(Object.values(response.errors));
+        }
       }
     });
   },

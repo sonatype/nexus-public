@@ -10,31 +10,25 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package com.sonatype.nexus.ssl.plugin;
-
-import java.security.cert.CertificateException;
+package com.sonatype.nexus.ssl.plugin.validator;
 
 import javax.validation.ConstraintValidatorContext;
 
-import org.sonatype.nexus.ssl.CertificateUtil;
 import org.sonatype.nexus.validation.ConstraintValidatorSupport;
 
+import com.google.common.net.InetAddresses;
+import com.google.common.net.InternetDomainName;
+
 /**
- * {@link PemCertificate} validator.
+ * Hostname or IP address validator.
  *
- * @since 3.0
+ * @since 3.next
  */
-public class PemCertificateValidator
-    extends ConstraintValidatorSupport<PemCertificate, String>
+public class HostnameOrIpAddressValidator
+    extends ConstraintValidatorSupport<HostnameOrIpAddress, String>
 {
   @Override
   public boolean isValid(final String value, final ConstraintValidatorContext context) {
-    try {
-      CertificateUtil.decodePEMFormattedCertificate(value);
-      return true;
-    }
-    catch (CertificateException e) {
-      return false;
-    }
+    return InternetDomainName.isValid(value) || InetAddresses.isInetAddress(value);
   }
 }

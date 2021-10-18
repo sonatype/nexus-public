@@ -18,15 +18,15 @@ import java.security.cert.X509Certificate
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
-import javax.naming.ldap.LdapName
-import javax.naming.ldap.Rdn
+import javax.validation.constraints.NotBlank
+import javax.validation.constraints.NotEmpty
 
-import com.sonatype.nexus.ssl.plugin.PemCertificate
-import org.sonatype.nexus.ssl.TrustStore
+import com.sonatype.nexus.ssl.plugin.validator.PemCertificate
 
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.ssl.CertificateUtil
+import org.sonatype.nexus.ssl.TrustStore
 import org.sonatype.nexus.validation.Validate
 
 import com.codahale.metrics.annotation.ExceptionMetered
@@ -36,8 +36,6 @@ import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import groovy.transform.PackageScope
 import org.apache.shiro.authz.annotation.RequiresAuthentication
 import org.apache.shiro.authz.annotation.RequiresPermissions
-import javax.validation.constraints.NotBlank
-import javax.validation.constraints.NotEmpty
 
 import static org.sonatype.nexus.ssl.CertificateUtil.calculateFingerprint
 
