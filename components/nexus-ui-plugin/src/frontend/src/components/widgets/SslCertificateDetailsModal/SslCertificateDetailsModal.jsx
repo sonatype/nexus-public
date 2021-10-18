@@ -17,7 +17,7 @@ import DateUtils from "../../../interface/DateUtils";
 import UIStrings from "../../../constants/UIStrings";
 
 /**
- * @since 3.next
+ * @since 3.36
  * @param {function} retryHandler - a function to reload the certificate details if a failure occurs
  * @param {object} certificateDetails - an object containing the certificate details
  * @param {?number} certificateDetails.issuedOn - a timestamp for when the certificate was issued
