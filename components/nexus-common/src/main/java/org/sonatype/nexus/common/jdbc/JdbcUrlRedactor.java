@@ -20,7 +20,7 @@ import static java.util.regex.Pattern.compile;
 /**
  * Offers static helper methods for common operations to hide sensitive data in the jdbcUrl.
  *
- * @since 3.next
+ * @since 3.36
  */
 public final class JdbcUrlRedactor
 {
