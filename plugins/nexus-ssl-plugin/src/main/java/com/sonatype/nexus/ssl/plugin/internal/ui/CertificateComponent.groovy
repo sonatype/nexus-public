@@ -36,6 +36,8 @@ import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import org.apache.shiro.authz.annotation.RequiresAuthentication
 
+import org.apache.shiro.authz.annotation.RequiresPermissions
+
 import static com.sonatype.nexus.ssl.plugin.internal.ui.TrustStoreComponent.asCertificateXO
 import static org.sonatype.nexus.ssl.CertificateUtil.calculateFingerprint
 import static org.sonatype.nexus.ssl.CertificateUtil.decodePEMFormattedCertificate
@@ -69,6 +71,7 @@ extends DirectComponentSupport
   @ExceptionMetered
   @Validate
   @RequiresAuthentication
+  @RequiresPermissions('nexus:ssl-truststore:read')
   CertificateXO retrieveFromHost(final @HostnameOrIpAddress @NotEmpty String host,
                                  final @Nullable Integer port,
                                  final @Nullable String protocolHint)
@@ -101,6 +104,7 @@ extends DirectComponentSupport
   @ExceptionMetered
   @Validate
   @RequiresAuthentication
+  @RequiresPermissions('nexus:ssl-truststore:read')
   CertificateXO details(final @NotBlank @PemCertificate String pem) {
     Certificate certificate = decodePEMFormattedCertificate(pem)
     return asCertificateXO(certificate, isInTrustStore(certificate))

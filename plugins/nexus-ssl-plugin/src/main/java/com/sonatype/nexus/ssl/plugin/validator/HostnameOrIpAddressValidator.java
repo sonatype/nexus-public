@@ -22,7 +22,7 @@ import com.google.common.net.InternetDomainName;
 /**
  * Hostname or IP address validator.
  *
- * @since 3.next
+ * @since 3.36
  */
 public class HostnameOrIpAddressValidator
     extends ConstraintValidatorSupport<HostnameOrIpAddress, String>

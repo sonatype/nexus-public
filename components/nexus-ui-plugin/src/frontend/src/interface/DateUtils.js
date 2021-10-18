@@ -16,7 +16,7 @@
  */
 
 /**
- * @since 3.next
+ * @since 3.36
  *
  * Utilities for working with dates
  */
