@@ -148,6 +148,10 @@ public class CertificateRetriever
 
       return certificates.get();
     }
+    catch (IOException e) {
+      log.warn(e.getMessage());
+      throw new IOException("Could not retrieve an SSL certificate from '" + host + ":" + port + "'");
+    }
     finally {
       // shutdown single-use connection manager
       connectionManager.shutdown();

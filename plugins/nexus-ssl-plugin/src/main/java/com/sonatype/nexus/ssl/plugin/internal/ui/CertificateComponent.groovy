@@ -12,29 +12,29 @@
  */
 package com.sonatype.nexus.ssl.plugin.internal.ui
 
-import org.apache.shiro.authz.annotation.RequiresAuthentication
-
 import java.security.cert.Certificate
 
 import javax.annotation.Nullable
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
+import javax.validation.constraints.NotBlank
+import javax.validation.constraints.NotEmpty
 
-import com.sonatype.nexus.ssl.plugin.PemCertificate
-import org.sonatype.nexus.ssl.TrustStore
 import com.sonatype.nexus.ssl.plugin.internal.CertificateRetriever
+import com.sonatype.nexus.ssl.plugin.validator.HostnameOrIpAddress
+import com.sonatype.nexus.ssl.plugin.validator.PemCertificate
 
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
+import org.sonatype.nexus.ssl.TrustStore
 import org.sonatype.nexus.validation.Validate
 
 import com.codahale.metrics.annotation.ExceptionMetered
 import com.codahale.metrics.annotation.Timed
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
-import javax.validation.constraints.NotBlank
-import javax.validation.constraints.NotEmpty
+import org.apache.shiro.authz.annotation.RequiresAuthentication
 
 import static com.sonatype.nexus.ssl.plugin.internal.ui.TrustStoreComponent.asCertificateXO
 import static org.sonatype.nexus.ssl.CertificateUtil.calculateFingerprint
@@ -69,7 +69,7 @@ extends DirectComponentSupport
   @ExceptionMetered
   @Validate
   @RequiresAuthentication
-  CertificateXO retrieveFromHost(final @NotEmpty String host,
+  CertificateXO retrieveFromHost(final @HostnameOrIpAddress @NotEmpty String host,
                                  final @Nullable Integer port,
                                  final @Nullable String protocolHint)
   {

@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package com.sonatype.nexus.ssl.plugin;
+package com.sonatype.nexus.ssl.plugin.validator;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
@@ -27,17 +27,17 @@ import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Validate PEM formatted certificate.
+ * Validate hostname or IP address.
  *
- * @since 3.0
+ * @since 3.next
  */
 @Target({METHOD, FIELD, ANNOTATION_TYPE, CONSTRUCTOR, PARAMETER})
 @Retention(RUNTIME)
-@Constraint(validatedBy = PemCertificateValidator.class)
+@Constraint(validatedBy = HostnameOrIpAddressValidator.class)
 @Documented
-public @interface PemCertificate
+public @interface HostnameOrIpAddress
 {
-  String message() default "Invalid PEM formatted certificate";
+  String message() default "Invalid host";
 
   Class<?>[] groups() default {};
 

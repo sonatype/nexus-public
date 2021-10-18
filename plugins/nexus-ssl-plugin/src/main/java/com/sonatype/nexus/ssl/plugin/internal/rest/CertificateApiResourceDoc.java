@@ -14,18 +14,19 @@ package com.sonatype.nexus.ssl.plugin.internal.rest;
 
 import java.util.List;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.core.Response;
 
-import com.sonatype.nexus.ssl.plugin.PemCertificate;
+import com.sonatype.nexus.ssl.plugin.validator.HostnameOrIpAddress;
+import com.sonatype.nexus.ssl.plugin.validator.PemCertificate;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CONFLICT;
@@ -44,7 +45,7 @@ public interface CertificateApiResourceDoc
       @ApiResponse(code = SC_BAD_REQUEST,
           message = "A certificate could not be retrieved, see the message for details.")})
   ApiCertificate retrieveCertificate(
-      @ApiParam(value = "The remote system's host name") @NotNull @NotEmpty String host,
+      @ApiParam(value = "The remote system's host name") @NotNull @NotEmpty @HostnameOrIpAddress String host,
       @ApiParam(value = "The port on the remote system to connect to") Integer port,
       @ApiParam(value = "An optional hint of the protocol to try for the connection") String protocolHint);
 
