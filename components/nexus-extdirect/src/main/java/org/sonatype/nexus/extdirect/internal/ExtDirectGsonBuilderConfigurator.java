@@ -34,5 +34,6 @@ public class ExtDirectGsonBuilderConfigurator
     builder.disableHtmlEscaping();
 
     builder.setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+    super.registerEncodingTypeAdapters(builder, configuration);
   }
 }
