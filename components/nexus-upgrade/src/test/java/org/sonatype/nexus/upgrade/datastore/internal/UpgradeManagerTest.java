@@ -16,6 +16,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -103,6 +104,18 @@ public class UpgradeManagerTest
         }
       }
     }
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testWithDatastoreFromFuture() {
+    FutureMigrationStep futureMigrationStep = new FutureMigrationStep();
+
+    UpgradeManager upgradeManagerWithFutureMigration = new UpgradeManager(dataStoreManager,
+        Arrays.asList(migrationStep, futureMigrationStep));
+    upgradeManagerWithFutureMigration.migrate();
+
+    UpgradeManager upgradeManagerWithoutFuture = new UpgradeManager(dataStoreManager, singletonList(migrationStep));
+    upgradeManagerWithoutFuture.migrate();
   }
 
   private Optional<DataStore<?>> getDataStore() {
