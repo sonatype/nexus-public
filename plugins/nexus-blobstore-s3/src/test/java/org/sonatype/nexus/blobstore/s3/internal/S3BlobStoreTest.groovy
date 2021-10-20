@@ -31,7 +31,6 @@ import com.amazonaws.services.s3.model.DeleteObjectsResult
 import com.amazonaws.services.s3.model.DeleteObjectsResult.DeletedObject
 import com.amazonaws.services.s3.model.ListObjectsRequest
 import com.amazonaws.services.s3.model.ObjectListing
-import com.amazonaws.services.s3.model.ObjectMetadata
 import com.amazonaws.services.s3.model.S3Object
 import com.amazonaws.services.s3.model.S3ObjectInputStream
 import com.amazonaws.services.s3.model.S3ObjectSummary
@@ -40,12 +39,6 @@ import spock.lang.Unroll
 
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_FILE_ATTRIBUTES_SUFFIX
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_FILE_CONTENT_SUFFIX
-import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER
-import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER
-import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER
-import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_IP_HEADER
-import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER
-import static org.sonatype.nexus.blobstore.api.BlobStore.TEMPORARY_BLOB_HEADER
 
 /**
  * {@link S3BlobStore} tests.
@@ -115,7 +108,6 @@ class S3BlobStoreTest
 
         return listing
       }
-      1 * s3.getObjectMetadata('mybucket', _) >> new ObjectMetadata()
 
     where:
       prefix     | expected
@@ -133,8 +125,8 @@ class S3BlobStoreTest
       s3.listObjects(_ as ListObjectsRequest) >> { listObjectsRequest ->
 
         def listing = new ObjectListing()
-        listing.objectSummaries << new S3ObjectSummary(bucketName: 'mybucket', key: '/content/vol-01/chap-01/12345678-1234-1234-1234-123456789ghi.properties', lastModified: new Date())
-        listing.objectSummaries << new S3ObjectSummary(bucketName: 'mybucket', key: '/content/vol-01/chap-01/12345678-1234-1234-1234-123456789ghi.bytes', lastModified: new Date())
+        listing.objectSummaries << new S3ObjectSummary(bucketName: 'mybucket', key: '/content/tmp/vol-01/chap-01/12345678-1234-1234-1234-123456789ghi.properties', lastModified: new Date())
+        listing.objectSummaries << new S3ObjectSummary(bucketName: 'mybucket', key: '/content/tmp/vol-01/chap-01/12345678-1234-1234-1234-123456789ghi.bytes', lastModified: new Date())
         listing.objectSummaries << new S3ObjectSummary(bucketName: 'mybucket', key: 'vol-01/chap-01/12345678-1234-1234-1234-123456789abc.properties', lastModified: new Date())
         listing.objectSummaries << new S3ObjectSummary(bucketName: 'mybucket', key: 'vol-01/chap-01/12345678-1234-1234-1234-123456789abc.bytes', lastModified: new Date())
         listing.objectSummaries << new S3ObjectSummary(bucketName: 'mybucket', key: 'vol-01/chap-01/12345678-1234-1234-1234-123456789def.properties', lastModified: new Date().minus(2))
@@ -150,8 +142,6 @@ class S3BlobStoreTest
     then: 'only the blob updated in the last day will be returned'
       blobIds.size() == 1
       blobIds.get(0).asUniqueString() == "12345678-1234-1234-1234-123456789abc"
-      1 * s3.getObjectMetadata('mybucket', '/content/vol-01/chap-01/12345678-1234-1234-1234-123456789ghi.properties') >> getTempBlobMetadata()
-      1 * s3.getObjectMetadata('mybucket', 'vol-01/chap-01/12345678-1234-1234-1234-123456789abc.properties') >> new ObjectMetadata()
   }
 
   def 'getBlobIdUpdatedSinceStream throws exception if negative sinceDays is passed in'() {
@@ -561,112 +551,6 @@ class S3BlobStoreTest
       ""       | _
       "prefix" | _
   }
-
-  def 'create does not create temp blobs with tmp$ blob id'() {
-    given: 'blob store setup'
-      blobStore.init(config)
-      blobStore.doStart()
-
-    when: 'a tempblob is created'
-      def headers = [(CREATED_BY_HEADER): 'test', (CREATED_BY_IP_HEADER): '127.0.0.1',
-                     (BLOB_NAME_HEADER) : 'temp', (TEMPORARY_BLOB_HEADER): '']
-      def blob = blobStore.create(new ByteArrayInputStream('hello world'.bytes),
-          headers)
-
-    then: 'the blob id is not a tmp id'
-      !blob.id.asUniqueString().startsWith('tmp$')
-
-    and: 'correct headers are present'
-      blob.headers == headers
-
-    and: 'temp blob UserMetaData is present'
-      1 * s3.putObject('mybucket', _, _, _) >> { bucket, key, bytes, metadata ->
-        ObjectMetadata objectMetadata = metadata
-        assert objectMetadata.userMetadata.get(TEMPORARY_BLOB_HEADER) == 'true'
-      }
-    when: 'the blob is made permanent'
-      headers.remove(TEMPORARY_BLOB_HEADER)
-      headers.putAll(
-          [(BLOB_NAME_HEADER): 'file.txt', (CONTENT_TYPE_HEADER): 'text/plain', (REPO_NAME_HEADER): 'a repository'])
-      blob = blobStore.makeBlobPermanent(blob.id, headers)
-
-    then: 'correct headers are present'
-      blob.headers == headers
-
-    and: 'temp blob UserMetaData is not present'
-      1 * s3.putObject('mybucket', _, _, _) >> { bucket, key, bytes, metadata ->
-        ObjectMetadata objectMetadata = metadata
-        assert objectMetadata.userMetadata.get(TEMPORARY_BLOB_HEADER) == null
-      }
-  }
-
-  def 'makeBlobPermanent throws exception if temp blob header is passed in'() {
-    given: 'blob store setup'
-      blobStore.init(config)
-      blobStore.doStart()
-
-    when: 'a tempblob is created'
-      def headers = [(CREATED_BY_HEADER): 'test', (CREATED_BY_IP_HEADER): '127.0.0.1',
-                     (BLOB_NAME_HEADER) : 'temp', (TEMPORARY_BLOB_HEADER): '']
-      def blob = blobStore.create(new ByteArrayInputStream('hello world'.bytes),
-          headers)
-
-    and: 'makePermanent is called with temp blob header present'
-      blobStore.makeBlobPermanent(blob.id, headers)
-
-    then: 'An IllegalArgumentException is thrown'
-      thrown(IllegalArgumentException.class)
-  }
-
-  def 'deleteIfTemp deletes blob when temp blob header is present'() {
-    given: 'blob store setup'
-      blobStore.init(config)
-      blobStore.doStart()
-
-      def deleteObjectsResult = Mock(DeleteObjectsResult.class)
-      _ * deleteObjectsResult.getDeletedObjects() >> [Mock(DeletedObject.class), Mock(DeletedObject.class)]
-
-    when: 'a tempblob is created'
-      def headers = [(CREATED_BY_HEADER): 'test', (CREATED_BY_IP_HEADER): '127.0.0.1',
-                     (BLOB_NAME_HEADER) : 'temp', (TEMPORARY_BLOB_HEADER): '']
-      def blob = blobStore.create(new ByteArrayInputStream('hello world'.bytes),
-          headers)
-    then:
-      blob != null
-
-    when: 'deleteIfTemp is called'
-      def deleted = blobStore.deleteIfTemp(blob.id)
-
-    then: 'the blob is deleted'
-      deleted
-      blobStore.get(blob.id) == null
-      1 * s3.deleteObjects(_ as DeleteObjectsRequest) >> deleteObjectsResult
-  }
-
-  def 'deleteIfTemp does not delete blob when temp blob header is absent'() {
-    given: 'blob store setup'
-      blobStore.init(config)
-      blobStore.doStart()
-
-    when: 'a tempblob is created'
-      def headers = [(CREATED_BY_HEADER)  : 'test', (CREATED_BY_IP_HEADER): '127.0.0.1',
-                     (BLOB_NAME_HEADER)   : 'file.txt', (CONTENT_TYPE_HEADER): 'text/plain', (
-                         REPO_NAME_HEADER): 'a repository']
-      def blob = blobStore.create(new ByteArrayInputStream('hello world'.bytes),
-          headers)
-
-    then:
-      blob != null
-
-    and: 'deleteIfTemp is called'
-      def deleted = blobStore.deleteIfTemp(blob.id)
-
-    then: 'the blob is not deleted'
-      !deleted
-      blobStore.get(blob.id) != null
-      0 * s3.deleteObjects(_)
-  }
-
   private mockS3Object(String contents) {
     S3Object s3Object = Mock()
     s3Object.getObjectContent() >> new S3ObjectInputStream(new ByteArrayInputStream(contents.bytes), null)
@@ -679,11 +563,5 @@ class S3BlobStoreTest
 
   private String bytesLocation(BlobId blobId) {
     "content/${locationResolver.permanentLocationStrategy.location(blobId)}.bytes"
-  }
-
-  private static ObjectMetadata getTempBlobMetadata() {
-    ObjectMetadata tempBlobMetaData = new ObjectMetadata()
-    tempBlobMetaData.addUserMetadata(TEMPORARY_BLOB_HEADER, 'true')
-    tempBlobMetaData
   }
 }

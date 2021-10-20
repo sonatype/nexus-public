@@ -203,7 +203,7 @@ public class StorageFacetImplTest
         assertThat(tempBlob.getHashesVerified(), is(true));
         assertThat(tempBlob.getBlob(), is(blob));
       }
-      verify(blobStore).deleteIfTemp(blobId);
+      verify(blobStore).asyncDelete(blobId);
     }
   }
 
@@ -224,7 +224,7 @@ public class StorageFacetImplTest
       assertThat(tempBlob.getHashesVerified(), is(true));
       assertThat(tempBlob.getBlob(), is(blob));
     }
-    verify(blobStore).deleteIfTemp(blobId);
+    verify(blobStore).asyncDelete(blobId);
   }
 
   @Test
@@ -248,7 +248,7 @@ public class StorageFacetImplTest
       assertThat(mapArgumentCaptor.getValue(), hasEntry(BlobStore.CREATED_BY_IP_HEADER, "10.1.1.1"));
       assertThat(mapArgumentCaptor.getValue(), hasEntry(BlobStore.CREATED_BY_HEADER, "jpicard"));
     }
-    verify(blobStore).deleteIfTemp(blobId);
+    verify(blobStore).asyncDelete(blobId);
   }
 
   @Test
