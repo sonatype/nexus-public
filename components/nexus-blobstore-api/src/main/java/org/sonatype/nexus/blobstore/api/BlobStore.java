@@ -151,18 +151,6 @@ public interface BlobStore
   Blob copy(BlobId blobId, Map<String, String> headers);
 
   /**
-<<<<<<< HEAD
-   * Makes a blob permanent by writing the specified permanent blob headers into the blob's properties file.
-   *
-   * @since 3.35
-   */
-  default Blob makeBlobPermanent(final BlobId blobId, final Map<String, String> headers) {
-    return copy(blobId, headers); // default to copy for non-cloud blob stores
-  }
-
-  /**
-=======
->>>>>>> parent of 2dc44c8c89 (NEXUS-28427 - Avoid copy for temp blobs when uploading to S3 (#7097))
    * Returns the corresponding {@link Blob}, or {@code null} if the  blob does not exist or has been {@link #delete
    * deleted}.
    */
