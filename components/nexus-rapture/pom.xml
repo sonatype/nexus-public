@@ -31,8 +31,7 @@
     <resource.url.suffix>?_v=${project.version}&amp;_dc=${resource.url.suffix.timestamp}</resource.url.suffix>
     <sonar.sources>src/main/java,src/main/resources/static/rapture</sonar.sources>
     <sonar.exclusions>
-      src/main/resources/static/rapture/baseapp-*.js,
-      src/main/resources/static/rapture/d3.v4.min.js
+      src/main/resources/static/rapture/baseapp-*.js
     </sonar.exclusions>
   </properties>
 
@@ -102,7 +101,6 @@
           <namespace>NX</namespace>
           <excludes>
             <exclude>baseapp-*.js</exclude>
-            <exclude>d3.v4.min.js</exclude>
           </excludes>
         </configuration>
       </plugin>
