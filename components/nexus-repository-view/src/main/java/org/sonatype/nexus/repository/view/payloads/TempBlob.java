@@ -96,7 +96,7 @@ public class TempBlob
       return;
     }
     try {
-      blobStore.deleteIfTemp(blob.getId());
+      blobStore.asyncDelete(blob.getId());
       deleted = true;
     }
     catch (BlobStoreException e) {

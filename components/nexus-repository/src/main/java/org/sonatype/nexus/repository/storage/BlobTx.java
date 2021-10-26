@@ -125,7 +125,7 @@ public class BlobTx
       throw new MissingBlobException(blobRef);
     }
     return createAssetBlob(
-        store -> store.makeBlobPermanent(blobRef.getBlobId(), headers),
+        store -> store.copy(blobRef.getBlobId(), headers),
         hashes,
         hashesVerified,
         headers.get(BlobStore.CONTENT_TYPE_HEADER));
