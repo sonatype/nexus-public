@@ -83,6 +83,11 @@ public class SearchServiceImpl
   }
 
   @Override
+  public boolean indexExist(final Repository repository) {
+    return searchIndexService.indexExist(repository);
+  }
+
+  @Override
   public void put(final Repository repository, final String identifier, final String json) {
     searchIndexService.put(repository, identifier, json);
   }

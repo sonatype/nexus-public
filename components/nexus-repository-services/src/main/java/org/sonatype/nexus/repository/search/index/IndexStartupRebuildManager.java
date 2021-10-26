@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.search.index;
 
+import java.util.stream.StreamSupport;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -19,9 +21,12 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 import static org.sonatype.nexus.repository.RepositoryTaskSupport.ALL_REPOSITORIES;
 import static org.sonatype.nexus.repository.RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID;
@@ -40,21 +45,38 @@ public class IndexStartupRebuildManager
 
   private final TaskScheduler taskScheduler;
 
+  private final RepositoryManager repositoryManager;
+
+  private final SearchIndexService searchIndexService;
+
   private final boolean rebuildOnStart;
 
   @Inject
-  public IndexStartupRebuildManager(final TaskScheduler taskScheduler) {
-    this(taskScheduler, System.getenv(REBUILD_ON_STARTUP_VARIABLE_NAME));
+  public IndexStartupRebuildManager(
+      final TaskScheduler taskScheduler,
+      final RepositoryManager repositoryManager,
+      final SearchIndexService searchIndexService)
+  {
+    this(taskScheduler, repositoryManager, searchIndexService,
+        System.getenv(REBUILD_ON_STARTUP_VARIABLE_NAME));
   }
 
-  public IndexStartupRebuildManager(final TaskScheduler taskScheduler, @Nullable final String rebuildOnStartEnvVar) {
+  public IndexStartupRebuildManager(
+      final TaskScheduler taskScheduler,
+      final RepositoryManager repositoryManager,
+      final SearchIndexService searchIndexService,
+      @Nullable final String rebuildOnStartEnvVar)
+  {
+
     this.taskScheduler = taskScheduler;
     this.rebuildOnStart = Boolean.parseBoolean(rebuildOnStartEnvVar);
+    this.repositoryManager = checkNotNull(repositoryManager);
+    this.searchIndexService = checkNotNull(searchIndexService);
   }
 
   @Override
   protected void doStart() throws Exception {
-    if (rebuildOnStart) {
+    if (rebuildOnStart && searchIndexNotExists()) {
       log.info("Scheduling rebuild of repository indexes");
       doRebuildAllIndexes();
     }
@@ -72,5 +94,21 @@ public class IndexStartupRebuildManager
     catch (RuntimeException e) {
       log.warn("Problem scheduling rebuild of repository indexes", e);
     }
+  }
+
+  /**
+   * Check search index doesn't exist at least for one repository
+   */
+  private boolean searchIndexNotExists() {
+    return StreamSupport.stream(repositoryManager.browse().spliterator(), false)
+        .filter(this::supportsSearch)
+        .noneMatch(searchIndexService::indexExist);
+  }
+
+  /**
+   * Decide if given repository supports search operations
+   */
+  private boolean supportsSearch(final Repository repository) {
+    return repository.optionalFacet(SearchIndexFacet.class).isPresent();
   }
 }

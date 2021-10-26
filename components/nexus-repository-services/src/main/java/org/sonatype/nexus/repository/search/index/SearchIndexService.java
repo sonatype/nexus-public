@@ -40,9 +40,14 @@ public interface SearchIndexService
   void deleteIndex(Repository repository);
 
   /**
-   * Rebuilds index for specific reppsitory.
+   * Rebuilds index for specific repository.
    */
   void rebuildIndex(Repository repository);
+
+  /**
+   * Check search index exists for specific repository
+   */
+  boolean indexExist(Repository repository);
 
   /**
    * Puts data with given identifier into index of given repository.
