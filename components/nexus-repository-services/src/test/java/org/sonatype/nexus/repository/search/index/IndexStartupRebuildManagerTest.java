@@ -12,18 +12,24 @@
  */
 package org.sonatype.nexus.repository.search.index;
 
-import org.sonatype.goodies.testsupport.TestSupport;
+import java.util.Arrays;
+import java.util.Optional;
 
+import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -36,34 +42,89 @@ public class IndexStartupRebuildManagerTest
   @Mock
   TaskScheduler taskScheduler;
 
+  @Mock
+  RepositoryManager repositoryManager;
+
+  @Mock
+  private Repository repository;
+
+  @Mock
+  private Repository repository2;
+
+  @Mock
+  SearchIndexService searchIndexService;
+
+  @Before
+  public void start() {
+    SearchIndexFacet mockFacet = mock(SearchIndexFacet.class);
+    when(repository.optionalFacet(SearchIndexFacet.class)).thenReturn(Optional.of(mockFacet));
+    when(repository2.optionalFacet(SearchIndexFacet.class)).thenReturn(Optional.of(mockFacet));
+    when(repositoryManager.browse()).thenReturn(Arrays.asList(repository, repository2));
+    when(searchIndexService.indexExist(any())).thenReturn(false);
+  }
+
   @Test
   public void rebuildDoesntRunIfNoVariableIsSet() throws Exception {
-    underTest = new IndexStartupRebuildManager(taskScheduler, null);
+    underTest = new IndexStartupRebuildManager(taskScheduler, repositoryManager,
+        searchIndexService, null);
     underTest.doStart();
     verify(taskScheduler, never()).submit(any());
   }
 
   @Test
   public void rebuildDoesntRunIfVariableIsFalse() throws Exception {
-    underTest = new IndexStartupRebuildManager(taskScheduler, "false");
+    underTest = new IndexStartupRebuildManager(taskScheduler, repositoryManager,
+        searchIndexService, "false");
     underTest.doStart();
     verify(taskScheduler, never()).submit(any());
   }
 
   @Test
   public void rebuildDoesntRunIfVariableIsInvalid() throws Exception {
-    underTest = new IndexStartupRebuildManager(taskScheduler, "this is invalid");
+    underTest = new IndexStartupRebuildManager(taskScheduler, repositoryManager,
+        searchIndexService, "this is invalid");
     underTest.doStart();
     verify(taskScheduler, never()).submit(any());
   }
 
   @Test
   public void rebuildDoesRunIfVariableIsTrue() throws Exception {
-    underTest = new IndexStartupRebuildManager(taskScheduler, "true");
+    underTest = new IndexStartupRebuildManager(taskScheduler, repositoryManager,
+        searchIndexService, "true");
+
     when(taskScheduler.createTaskConfigurationInstance(RebuildIndexTaskDescriptor.TYPE_ID))
         .thenReturn(new TaskConfiguration());
     underTest.doStart();
 
+    assertRebuildScheduled();
+  }
+
+  @Test
+  public void rebuildDoesNotRunIfSearchIndexExists() throws Exception {
+    underTest = new IndexStartupRebuildManager(taskScheduler, repositoryManager,
+        searchIndexService, "true");
+
+    when(searchIndexService.indexExist(any())).thenReturn(true);
+
+    underTest.doStart();
+    verify(taskScheduler, never()).submit(any());
+  }
+
+  @Test
+  public void rebuildDoesRunIfSearchIndexNotExist() throws Exception {
+    underTest = new IndexStartupRebuildManager(taskScheduler, repositoryManager,
+        searchIndexService, "true");
+
+    when(taskScheduler.createTaskConfigurationInstance(RebuildIndexTaskDescriptor.TYPE_ID))
+        .thenReturn(new TaskConfiguration());
+
+    when(searchIndexService.indexExist(any())).thenReturn(false);
+
+    underTest.doStart();
+    assertRebuildScheduled();
+  }
+
+  private void assertRebuildScheduled() {
     ArgumentCaptor<TaskConfiguration> taskConfigurationArgumentCaptor =
         ArgumentCaptor.forClass(TaskConfiguration.class);
 

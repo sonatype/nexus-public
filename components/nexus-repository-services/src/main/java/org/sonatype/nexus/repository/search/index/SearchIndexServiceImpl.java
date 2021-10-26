@@ -241,6 +241,16 @@ public class SearchIndexServiceImpl
   }
 
   @Override
+  public boolean indexExist(final Repository repository) {
+    checkNotNull(repository);
+    final String indexName = indexNamingPolicy.indexName(repository);
+    IndicesAdminClient indices = indicesAdminClient();
+    boolean indexExists = indices.prepareExists(indexName).execute().actionGet().isExists();
+    log.info("Repository {} has search index: {}", repository, indexExists);
+    return indexExists;
+  }
+
+  @Override
   public void put(final Repository repository, final String identifier, final String json) {
     checkNotNull(repository);
     checkNotNull(identifier);
