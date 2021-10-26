@@ -78,6 +78,10 @@ export default {
     ISSUE_DATE: 'Certificate Issued On',
     EXPIRE_DATE: 'Valid Until',
     FINGERPRINT: 'Fingerprint',
-    WARNING: 'This certificate was retrieved over an untrusted connection. Always verify the details before adding it to the Nexus Truststore.'
+    WARNING: 'This certificate was retrieved over an untrusted connection. Always verify the details before adding it to the Nexus Truststore.',
+    ADD_CERTIFICATE: 'Add certificate to truststore',
+    REMOVE_CERTIFICATE: 'Remove certificate from truststore',
+    ADD_ERROR: 'An error occurred while attempting to add the certificate to the truststore.',
+    REMOVE_ERROR: 'An error occurred while attempting to remove the certificate from the truststore.'
   }
 };
