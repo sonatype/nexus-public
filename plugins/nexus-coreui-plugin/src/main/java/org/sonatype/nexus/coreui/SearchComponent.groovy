@@ -12,17 +12,19 @@
  */
 package org.sonatype.nexus.coreui
 
+
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
 import javax.validation.ValidationException
 
 import org.sonatype.nexus.common.event.EventManager
-import org.sonatype.nexus.coreui.events.UiSearchEvent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.extdirect.model.LimitedPagedResponse
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters
 import org.sonatype.nexus.rapture.UiSettingsManager
+import org.sonatype.nexus.repository.search.event.SearchEvent
+import org.sonatype.nexus.repository.search.event.SearchEventSource
 import org.sonatype.nexus.repository.search.query.SearchFilter
 import org.sonatype.nexus.repository.search.query.SearchQueryService
 import org.sonatype.nexus.repository.search.query.SearchResultComponent
@@ -81,7 +83,7 @@ class SearchComponent
   @ExceptionMetered
   @RequiresPermissions('nexus:search:read')
   LimitedPagedResponse<ComponentXO> read(StoreLoadParameters parameters) {
-    eventManager.post(new UiSearchEvent())
+
     if (parameters.limit > searchResultsLimit) {
       parameters.limit = searchResultsLimit
     }
@@ -89,6 +91,9 @@ class SearchComponent
     Collection<SearchFilter> searchFilters = parameters.filters.collect {
       new SearchFilter(it.property, it.value)
     }
+
+    fireSearchEvent(searchFilters)
+
     QueryBuilder query = searchUtils.buildQuery(searchFilters)
 
     if (!query) {
@@ -127,5 +132,9 @@ class SearchComponent
     catch (IllegalArgumentException e) {
       throw new ValidationException(e.getMessage())
     }
+  }
+
+  private void fireSearchEvent(Collection<SearchFilter> searchFilters) {
+    eventManager.post(new SearchEvent(searchFilters, SearchEventSource.UI))
   }
 }
