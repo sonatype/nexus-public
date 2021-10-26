@@ -10,24 +10,34 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.capability.node;
+package org.sonatype.nexus.common.node.orient;
 
-import java.util.Map;
+import java.security.cert.Certificate;
+import java.util.Set;
 
-import org.sonatype.nexus.capability.CapabilityConfigurationSupport;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import org.sonatype.nexus.common.node.NodeAccess;
 
 /**
- * Configuration adapter for {@code [Orient]IdentityCapability}.
+ * Provides access to node details specific to the Orient implementation.
  *
- * @since 3.0
+ * @since 3.1
  */
-public class IdentityCapabilityConfiguration
-    extends CapabilityConfigurationSupport
+public interface OrientNodeAccess
+  extends NodeAccess
 {
-  public IdentityCapabilityConfiguration(final Map<String, String> properties) {
-    checkNotNull(properties);
-    // No specific configuration
-  }
+  /**
+   * Returns the local-node fingerprint.
+   */
+  String getFingerprint();
+
+  /**
+   * Returns the local-node certificate.
+   */
+  Certificate getCertificate();
+
+  /**
+   * Returns identifiers of clustered nodes.
+   */
+  @Override
+  Set<String> getMemberIds();
 }

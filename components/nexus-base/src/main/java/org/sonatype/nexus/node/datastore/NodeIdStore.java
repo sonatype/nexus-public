@@ -10,24 +10,34 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.capability.node;
+package org.sonatype.nexus.node.datastore;
 
-import java.util.Map;
+import java.util.Optional;
 
-import org.sonatype.nexus.capability.CapabilityConfigurationSupport;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import org.sonatype.nexus.common.node.NodeAccess;
 
 /**
- * Configuration adapter for {@code [Orient]IdentityCapability}.
+ * Store for accessing the node id in single node environments.
  *
- * @since 3.0
+ * @since 3.next
  */
-public class IdentityCapabilityConfiguration
-    extends CapabilityConfigurationSupport
+public interface NodeIdStore
 {
-  public IdentityCapabilityConfiguration(final Map<String, String> properties) {
-    checkNotNull(properties);
-    // No specific configuration
-  }
+  /**
+   * Remove the currently persisted node id, this will not change the  {@link NodeAccess}.
+   */
+  void clear();
+
+  /**
+   * Retrieve the current node id if it exists.
+   *
+   * @return the node id
+   */
+  Optional<String> get();
+
+  /**
+   * Set the current node id, this will not update the {@link NodeAccess}
+   * @param nodeId
+   */
+  void set(final String nodeId);
 }

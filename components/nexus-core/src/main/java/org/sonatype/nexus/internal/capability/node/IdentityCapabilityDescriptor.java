@@ -32,14 +32,14 @@ import static org.sonatype.nexus.capability.Tag.categoryTag;
 import static org.sonatype.nexus.capability.Tag.tags;
 
 /**
- * {@link IdentityCapability} descriptor.
+ * {@code [Orient]IdentityCapability} descriptor.
  *
  * @since 3.0
  */
 @Named(IdentityCapabilityDescriptor.TYPE_ID)
 @Singleton
 public class IdentityCapabilityDescriptor
-    extends CapabilityDescriptorSupport
+    extends CapabilityDescriptorSupport<IdentityCapabilityConfiguration>
     implements Taggable
 {
   public static final String TYPE_ID = "node.identity";

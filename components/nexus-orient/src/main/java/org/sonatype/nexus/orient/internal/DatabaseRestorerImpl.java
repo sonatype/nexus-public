@@ -26,14 +26,14 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
-import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.common.node.orient.OrientNodeAccess;
 import org.sonatype.nexus.orient.DatabaseRestorer;
 import org.sonatype.nexus.orient.restore.RestoreFile;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
-import static java.util.stream.Collectors.toList;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.stream.Collectors.toList;
 
 /**
  * Restores orient databases from standard location "sonatype-work/nexus3/restore-from-backup".
@@ -51,10 +51,10 @@ public class DatabaseRestorerImpl
 
   private final File restoreFromLocation;
 
-  private final NodeAccess nodeAccess;
+  private final OrientNodeAccess nodeAccess;
 
   @Inject
-  public DatabaseRestorerImpl(final ApplicationDirectories applicationDirectories, final NodeAccess nodeAccess) {
+  public DatabaseRestorerImpl(final ApplicationDirectories applicationDirectories, final OrientNodeAccess nodeAccess) {
     this.restoreFromLocation = applicationDirectories.getWorkDirectory(RESTORE_FROM_LOCATION);
     this.nodeAccess = checkNotNull(nodeAccess);
   }
