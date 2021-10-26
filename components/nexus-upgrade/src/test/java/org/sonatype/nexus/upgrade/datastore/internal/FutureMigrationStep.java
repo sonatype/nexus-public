@@ -19,7 +19,7 @@ import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 /**
  * Test migration step from future
- * @since 3.next
+ * @since 3.36
  */
 public class FutureMigrationStep
     extends ComponentSupport
