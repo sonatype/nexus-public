@@ -114,11 +114,21 @@
         <if test="dbComponentId != null">, #{dbComponentId}</if>
         <if test="dbAssetId != null">, #{dbAssetId}</if>
     )
-    ON CONFLICT (repository_id, parent_id, display_name) DO UPDATE SET
-        display_name = #{displayName}, parent_id = #{parentId}, package_url = #{packageUrl}
-        <if test="requestPath.endsWith('/')">, request_path = #{requestPath}</if>
-        <if test="dbComponentId != null">, component_id = #{dbComponentId}</if>
-        <if test="dbAssetId != null">, asset_id = #{dbAssetId}</if>
+    ON CONFLICT (repository_id, parent_id, display_name)
+        DO UPDATE
+    <choose>
+      <when test="!requestPath.endsWith('/') &amp;&amp; dbComponentId == null &amp;&amp; dbAssetId == null">
+        SET display_name = ${format}_browse_node.display_name
+      </when>
+      <otherwise>
+          <set>
+            <if test="requestPath.endsWith('/')">request_path = #{requestPath}</if>
+            <if test="dbComponentId != null">, component_id = #{dbComponentId}, package_url = #{packageUrl}</if>
+            <if test="dbAssetId != null">, asset_id = #{dbAssetId}</if>
+          </set>
+      </otherwise>
+    </choose>
+    RETURNING node_id
     ;
   </insert>
 
