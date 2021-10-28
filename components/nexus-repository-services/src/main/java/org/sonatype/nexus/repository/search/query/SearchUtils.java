@@ -129,6 +129,17 @@ public class SearchUtils
   }
 
   /**
+   * Builds a collection of {@link SearchFilter} based on configured search parameters.
+   *
+   * @param uriInfo {@link UriInfo} to extract query parameters from
+   * @return
+   */
+  public Collection<SearchFilter> getSearchFilters(final UriInfo uriInfo) {
+    return convertParameters(uriInfo,
+        Arrays.asList(CONTINUATION_TOKEN, SORT_FIELD, SORT_DIRECTION));
+  }
+
+  /**
    * Builds a {@link QueryBuilder} based on configured search parameters.
    *
    * @param uriInfo {@link UriInfo} to extract query parameters from

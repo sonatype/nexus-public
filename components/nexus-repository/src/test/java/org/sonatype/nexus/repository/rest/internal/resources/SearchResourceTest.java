@@ -24,6 +24,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.rest.SearchResourceExtension;
 import org.sonatype.nexus.repository.rest.api.AssetXO;
@@ -106,6 +107,9 @@ public class SearchResourceTest
   @Spy
   SearchResourceExtension searchResourceExtension = new TestSearchResourceExtension();
 
+  @Mock
+  EventManager eventManager;
+
   SearchResource underTest;
 
   @Before
@@ -114,7 +118,7 @@ public class SearchResourceTest
     setupResponse();
 
     underTest = new SearchResource(searchUtils, assetMapUtils, searchQueryService, new TokenEncoder(),
-        new ComponentXOFactory(emptySet()), ImmutableSet.of(searchResourceExtension), null);
+        new ComponentXOFactory(emptySet()), ImmutableSet.of(searchResourceExtension), eventManager, null);
   }
 
   private void setupResponse() {

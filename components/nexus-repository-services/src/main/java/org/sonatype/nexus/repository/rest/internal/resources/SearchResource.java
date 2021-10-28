@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.rest.internal.resources;
 
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -36,6 +37,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.rest.SearchResourceExtension;
@@ -45,7 +47,10 @@ import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
 import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.rest.internal.resources.doc.SearchResourceDoc;
+import org.sonatype.nexus.repository.search.event.SearchEvent;
+import org.sonatype.nexus.repository.search.event.SearchEventSource;
 import org.sonatype.nexus.repository.search.query.RepositoryQueryBuilder;
+import org.sonatype.nexus.repository.search.query.SearchFilter;
 import org.sonatype.nexus.repository.search.query.SearchQueryService;
 import org.sonatype.nexus.repository.search.query.SearchUtils;
 import org.sonatype.nexus.rest.Page;
@@ -62,6 +67,7 @@ import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.codehaus.groovy.runtime.DefaultGroovyMethods.collect;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.ASSETS;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.GROUP;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.NAME;
@@ -105,6 +111,8 @@ public class SearchResource
 
   private final Map<String, AssetXODescriptor> assetDescriptors;
 
+  private final EventManager eventManager;
+
   private int pageSize = 50;
 
   @Inject
@@ -114,6 +122,7 @@ public class SearchResource
                         final TokenEncoder tokenEncoder,
                         final ComponentXOFactory componentXOFactory,
                         final Set<SearchResourceExtension> searchResourceExtensions,
+                        final EventManager eventManager,
                         @Nullable final Map<String, AssetXODescriptor> assetDescriptors)
   {
     this.searchUtils = checkNotNull(searchUtils);
@@ -123,6 +132,7 @@ public class SearchResource
     this.componentXOFactory = checkNotNull(componentXOFactory);
     this.searchResourceExtensions = checkNotNull(searchResourceExtensions);
     this.assetDescriptors = assetDescriptors;
+    this.eventManager = checkNotNull(eventManager);
   }
 
   @GET
@@ -134,7 +144,11 @@ public class SearchResource
       @Nullable @QueryParam("timeout") final Integer seconds,
       @Context final UriInfo uriInfo)
   {
-    QueryBuilder query = searchUtils.buildQuery(uriInfo);
+    Collection<SearchFilter> searchFilters = searchUtils.getSearchFilters(uriInfo);
+
+    fireSearchEvent(searchFilters);
+
+    QueryBuilder query = searchUtils.buildQuery(searchFilters);
 
     int from = tokenEncoder.decode(continuationToken, query);
 
@@ -198,7 +212,11 @@ public class SearchResource
       @Nullable @QueryParam("timeout") final Integer seconds,
       @Context final UriInfo uriInfo)
   {
-    QueryBuilder query = searchUtils.buildQuery(uriInfo);
+    Collection<SearchFilter> searchFilters = searchUtils.getSearchFilters(uriInfo);
+
+    fireSearchEvent(searchFilters);
+
+    QueryBuilder query = searchUtils.buildQuery(searchFilters);
 
     int from = tokenEncoder.decode(continuationToken, query);
 
@@ -226,7 +244,11 @@ public class SearchResource
                                           @QueryParam("timeout") Integer seconds,
                                           @Context final UriInfo uriInfo)
   {
-    QueryBuilder query = searchUtils.buildQuery(uriInfo);
+    Collection<SearchFilter> searchFilters = searchUtils.getSearchFilters(uriInfo);
+
+    fireSearchEvent(searchFilters);
+
+    QueryBuilder query = searchUtils.buildQuery(searchFilters);
 
     List<AssetXO> assetXOs = retrieveAssets(query, sort, direction, seconds, uriInfo);
 
@@ -301,5 +323,9 @@ public class SearchResource
   @VisibleForTesting
   void setPageSize(final int pageSize) {
     this.pageSize = pageSize;
+  }
+
+  private void fireSearchEvent(Collection<SearchFilter> searchFilters) {
+    eventManager.post(new SearchEvent(searchFilters, SearchEventSource.REST));
   }
 }

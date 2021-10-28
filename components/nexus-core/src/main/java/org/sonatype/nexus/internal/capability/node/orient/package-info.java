@@ -10,17 +10,9 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.coreui.events;
+@FeatureFlag(name = ORIENT_ENABLED)
+package org.sonatype.nexus.internal.capability.node.orient;
 
-/**
- * Emitted when an Ui search has been performed on {@link org.sonatype.nexus.coreui.SearchComponent} (read method)
- *
- * @since 3.20
- */
-public class UiSearchEvent
-{
-  @Override
-  public String toString() {
-    return getClass().getSimpleName();
-  }
-}
+import org.sonatype.nexus.common.app.FeatureFlag;
+
+import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;

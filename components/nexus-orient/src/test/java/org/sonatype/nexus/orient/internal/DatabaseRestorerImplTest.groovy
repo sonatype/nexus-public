@@ -13,7 +13,7 @@
 package org.sonatype.nexus.orient.internal
 
 import org.sonatype.nexus.common.app.ApplicationDirectories
-import org.sonatype.nexus.common.node.NodeAccess
+import org.sonatype.nexus.common.node.orient.OrientNodeAccess
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx
 import org.junit.Rule
@@ -35,7 +35,7 @@ class DatabaseRestorerImplTest
 
   ApplicationDirectories applicationDirectories = Mock()
 
-  NodeAccess nodeAccess = Mock()
+  OrientNodeAccess nodeAccess = Mock()
 
   ODatabaseDocumentTx db = Mock()
 

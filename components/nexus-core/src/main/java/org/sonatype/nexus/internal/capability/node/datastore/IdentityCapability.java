@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.capability.node;
+package org.sonatype.nexus.internal.capability.node.datastore;
 
 import java.util.Map;
 
@@ -22,7 +22,8 @@ import org.sonatype.goodies.i18n.MessageBundle;
 import org.sonatype.nexus.capability.CapabilitySupport;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.template.TemplateParameters;
-import org.sonatype.nexus.ssl.CertificateUtil;
+import org.sonatype.nexus.internal.capability.node.IdentityCapabilityConfiguration;
+import org.sonatype.nexus.internal.capability.node.IdentityCapabilityDescriptor;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -72,9 +73,6 @@ public class IdentityCapability
   protected String renderStatus() throws Exception {
     return render(IdentityCapabilityDescriptor.TYPE_ID + "-status.vm", new TemplateParameters()
         .set("nodeId", nodeAccess.getId())
-        .set("fingerprint", nodeAccess.getFingerprint())
-        .set("pem", CertificateUtil.serializeCertificateInPEM(nodeAccess.getCertificate()))
-        .set("detail", nodeAccess.getCertificate().toString())
     );
   }
 }

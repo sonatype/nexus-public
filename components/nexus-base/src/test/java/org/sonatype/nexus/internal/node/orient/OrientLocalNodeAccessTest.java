@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.node;
+package org.sonatype.nexus.internal.node.orient;
 
 import java.io.File;
 import java.security.cert.Certificate;
@@ -19,6 +19,10 @@ import java.util.Collections;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
+import org.sonatype.nexus.internal.node.KeyStoreManagerConfigurationImpl;
+import org.sonatype.nexus.internal.node.KeyStoreManagerImpl;
+import org.sonatype.nexus.internal.node.KeyStoreStorageManagerImpl;
+import org.sonatype.nexus.internal.node.NodeIdEncoding;
 import org.sonatype.nexus.ssl.KeyStoreManager;
 
 import org.junit.After;
@@ -33,7 +37,7 @@ import static org.hamcrest.Matchers.is;
  * Tests for local {@link NodeAccess}.
  */
 @SuppressWarnings("HardCodedStringLiteral")
-public class LocalNodeAccessTest
+public class OrientLocalNodeAccessTest
     extends TestSupport
 {
   private KeyStoreManager keyStoreManager;
@@ -49,7 +53,7 @@ public class LocalNodeAccessTest
     keyStoreManager = new KeyStoreManagerImpl(new CryptoHelperImpl(), new KeyStoreStorageManagerImpl(dir), config);
     keyStoreManager.generateAndStoreKeyPair("a", "b", "c", "d", "e", "f");
 
-    nodeAccess = new LocalNodeAccess(() -> keyStoreManager);
+    nodeAccess = new OrientLocalNodeAccess(() -> keyStoreManager);
     nodeAccess.start();
   }
 

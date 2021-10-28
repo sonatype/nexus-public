@@ -10,39 +10,61 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from "react";
+import React from 'react';
+import {useMachine} from '@xstate/react';
 
-import {NxButton, NxInfoAlert, NxLoadWrapper, NxModal, NxWarningAlert} from '@sonatype/react-shared-components';
-import DateUtils from "../../../interface/DateUtils";
-import UIStrings from "../../../constants/UIStrings";
+import {
+  NxButton,
+  NxLoadWrapper,
+  NxModal,
+  NxWarningAlert,
+  NxLoadError
+} from '@sonatype/react-shared-components';
+
+import SslCertificateDetail from './SslCertificateDetail';
+import SslCertificateDetailsModalMachine from './SslCertificateDetailsModalMachine';
+import DateUtils from '../../../interface/DateUtils';
+import UIStrings from '../../../constants/UIStrings';
 
 /**
  * @since 3.36
- * @param {function} retryHandler - a function to reload the certificate details if a failure occurs
- * @param {object} certificateDetails - an object containing the certificate details
- * @param {?number} certificateDetails.issuedOn - a timestamp for when the certificate was issued
- * @param {?number} certificateDetails.expiresOn - a timestamp for when the certificate was expired
- * @param {?string} certificateDetails.subjectCommonName
- * @param {?string} certificateDetails.subjectOrganization
- * @param {?string} certificateDetails.subjectOrganizationalUnit
- * @param {?string} certificateDetails.issuerCommonName
- * @param {?string} certificateDetails.issuerOrganization
- * @param {?string} certificateDetails.issuerOrganizationalUnit
- * @param {?string} certificateDetails.fingerprint
- * @param {?string} error - an error message indicating why the certificate could not be loaded
- * @param {function} isLoading - a boolean indicating whether the certificate details are loading
+ * @param {string} hostUrl the host to retrieve the certificate from
+ * @param {function} onCancel a function to fire when the window is closed
  * @returns {JSX.Element}
  */
-export default function SslCertificateDetailsModal({
-                                                     retryHandler,
-                                                     onCancel,
-                                                     certificateDetails,
-                                                     error,
-                                                     isLoading
-                                                   }) {
+export default function SslCertificateDetailsModal({hostUrl, onCancel}) {
+  const url = new URL(hostUrl);
+  const [current, send] = useMachine(SslCertificateDetailsModalMachine, {
+    context: {
+      host: url.hostname,
+      port: url.port ? url.port : '443',
+      onCancel
+    },
+    devTools: true
+  });
+  const {certificateDetails = {}, error = null, isInTruststore = null} = current.context;
+  const isLoading = current.matches('loading') || current.matches('adding') || current.matches('removing');
+  const isViewing = current.matches('viewing');
+  const hasLoadError = current.matches('loadError');
+  const hasAddCertificateError = current.matches('addCertificateError');
+  const hasRemoveCertificateError = current.matches('removeCertificateError');
+
   const SSL_CERTIFICATE_DETAILS = UIStrings.SSL_CERTIFICATE_DETAILS;
   const issuedDate = DateUtils.timestampToString(certificateDetails?.issuedOn);
   const expiredDate = DateUtils.timestampToString(certificateDetails?.expiresOn);
+
+  function retryHandler() {
+    send({type: 'RETRY'});
+  }
+
+  function addToTruststore() {
+    send({type: 'ADD_CERTIFICATE'});
+  }
+
+  function removeFromTruststore() {
+    send({type: 'REMOVE_CERTIFICATE'});
+  }
+
   return (
       <NxModal onCancel={onCancel}>
         <header className="nx-modal-header">
@@ -51,47 +73,65 @@ export default function SslCertificateDetailsModal({
           </h2>
         </header>
         <div className="nx-modal-content">
-          <NxLoadWrapper retryHandler={retryHandler} loading={isLoading} error={error}>
+          <NxLoadWrapper retryHandler={retryHandler} loading={isLoading} error={hasLoadError && error}>
             {() => <>
-              <NxWarningAlert>{SSL_CERTIFICATE_DETAILS.WARNING}</NxWarningAlert>
-              <dl className="nx-read-only">
-                <SslCertificateDetail label={SSL_CERTIFICATE_DETAILS.NAME}
-                                      value={certificateDetails.subjectCommonName}/>
-                <SslCertificateDetail label={SSL_CERTIFICATE_DETAILS.ORG}
-                                      value={certificateDetails.subjectOrganization}/>
-                <SslCertificateDetail label={SSL_CERTIFICATE_DETAILS.UNIT}
-                                      value={certificateDetails.subjectOrganizationalUnit}/>
-                <SslCertificateDetail label={SSL_CERTIFICATE_DETAILS.ISSUER_NAME}
-                                      value={certificateDetails.issuerCommonName}/>
-                <SslCertificateDetail label={SSL_CERTIFICATE_DETAILS.ISSUER_ORG}
-                                      value={certificateDetails.issuerOrganization}/>
-                <SslCertificateDetail label={SSL_CERTIFICATE_DETAILS.ISSUER_UNIT}
-                                      value={certificateDetails.issuerOrganizationalUnit}/>
-                <SslCertificateDetail label={SSL_CERTIFICATE_DETAILS.ISSUE_DATE}
-                                      value={issuedDate}/>
-                <SslCertificateDetail label={SSL_CERTIFICATE_DETAILS.EXPIRE_DATE}
-                                      value={expiredDate}/>
-                <SslCertificateDetail label={SSL_CERTIFICATE_DETAILS.FINGERPRINT}
-                                      value={certificateDetails.fingerprint}/>
-              </dl>
+              {hasAddCertificateError &&
+              <NxLoadError titleMessage={SSL_CERTIFICATE_DETAILS.ADD_ERROR}
+                           error={error}
+                           retryHandler={retryHandler}/>}
+
+              {hasRemoveCertificateError &&
+              <NxLoadError titleMessage={SSL_CERTIFICATE_DETAILS.REMOVE_ERROR}
+                           error={error}
+                           retryHandler={retryHandler}/>}
+
+              {isViewing && <>
+                <NxWarningAlert>{SSL_CERTIFICATE_DETAILS.WARNING}</NxWarningAlert>
+                <dl className="nx-read-only">
+                  <SslCertificateDetail label={SSL_CERTIFICATE_DETAILS.NAME}
+                                        value={certificateDetails.subjectCommonName}/>
+                  <SslCertificateDetail label={SSL_CERTIFICATE_DETAILS.ORG}
+                                        value={certificateDetails.subjectOrganization}/>
+                  <SslCertificateDetail label={SSL_CERTIFICATE_DETAILS.UNIT}
+                                        value={certificateDetails.subjectOrganizationalUnit}/>
+                  <SslCertificateDetail label={SSL_CERTIFICATE_DETAILS.ISSUER_NAME}
+                                        value={certificateDetails.issuerCommonName}/>
+                  <SslCertificateDetail label={SSL_CERTIFICATE_DETAILS.ISSUER_ORG}
+                                        value={certificateDetails.issuerOrganization}/>
+                  <SslCertificateDetail label={SSL_CERTIFICATE_DETAILS.ISSUER_UNIT}
+                                        value={certificateDetails.issuerOrganizationalUnit}/>
+                  <SslCertificateDetail label={SSL_CERTIFICATE_DETAILS.ISSUE_DATE}
+                                        value={issuedDate}/>
+                  <SslCertificateDetail label={SSL_CERTIFICATE_DETAILS.EXPIRE_DATE}
+                                        value={expiredDate}/>
+                  <SslCertificateDetail label={SSL_CERTIFICATE_DETAILS.FINGERPRINT}
+                                        value={certificateDetails.fingerprint}/>
+                </dl>
+              </>}
             </>}
           </NxLoadWrapper>
         </div>
         <footer className="nx-footer">
           <div className="nx-btn-bar">
-            <NxButton onClick={onCancel}>Close</NxButton>
+            {isInTruststore &&
+            <NxButton variant="primary"
+                      type="button"
+                      disabled={isLoading}
+                      onClick={removeFromTruststore}>
+              {SSL_CERTIFICATE_DETAILS.REMOVE_CERTIFICATE}
+            </NxButton>}
+
+            {isInTruststore === false && // isInTruststore will be null during loading, don't show this button then
+            <NxButton variant="primary"
+                      type="button"
+                      disabled={isLoading}
+                      onClick={addToTruststore}>
+              {SSL_CERTIFICATE_DETAILS.ADD_CERTIFICATE}
+            </NxButton>}
+
+            <NxButton type="button" onClick={onCancel}>Close</NxButton>
           </div>
         </footer>
       </NxModal>
   );
-}
-
-function SslCertificateDetail({label, value}) {
-  if (!value) {
-    return null;
-  }
-  return <>
-    <dt className="nx-read-only__label">{label}</dt>
-    <dd className="nx-read-only__data">{value}</dd>
-  </>
 }

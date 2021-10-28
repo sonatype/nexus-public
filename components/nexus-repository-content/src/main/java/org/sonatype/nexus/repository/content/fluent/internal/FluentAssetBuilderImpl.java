@@ -210,7 +210,7 @@ public class FluentAssetBuilderImpl
     headerBuilder.put(CREATED_BY_IP_HEADER, tempHeaders.get(CREATED_BY_IP_HEADER));
     headerBuilder.put(CONTENT_TYPE_HEADER, facet.checkContentType(assetData, tempBlob));
 
-    Blob permanentBlob = facet.stores().blobStore.makeBlobPermanent(tempBlob.getId(), headerBuilder.build());
+    Blob permanentBlob = facet.stores().blobStore.copy(tempBlob.getId(), headerBuilder.build());
     NestedAttributesMap componentAttributes = assetData.component().map(Component::attributes).orElse(null);
     facet.blobMetadataStorage().attach(facet.stores().blobStore, permanentBlob.getId(), componentAttributes, assetData.attributes());
     return permanentBlob;

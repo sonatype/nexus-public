@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.node;
+package org.sonatype.nexus.internal.node.orient;
 
 import java.security.cert.Certificate;
 import java.util.Collections;
@@ -24,8 +24,11 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.common.node.orient.OrientNodeAccess;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.internal.node.KeyStoreManagerImpl;
+import org.sonatype.nexus.internal.node.NodeIdEncoding;
 import org.sonatype.nexus.ssl.CertificateUtil;
 import org.sonatype.nexus.ssl.KeyStoreManager;
 
@@ -41,9 +44,9 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
  */
 @Named("local")
 @Singleton
-public class LocalNodeAccess
+public class OrientLocalNodeAccess
     extends StateGuardLifecycleSupport
-    implements NodeAccess
+    implements OrientNodeAccess
 {
   private final Provider<KeyStoreManager> keyStoreProvider;
 
@@ -56,7 +59,7 @@ public class LocalNodeAccess
   private Map<String, String> memberAliases = Collections.emptyMap();
 
   @Inject
-  public LocalNodeAccess(@Named(KeyStoreManagerImpl.NAME) final Provider<KeyStoreManager> keyStoreProvider) {
+  public OrientLocalNodeAccess(@Named(KeyStoreManagerImpl.NAME) final Provider<KeyStoreManager> keyStoreProvider) {
     this.keyStoreProvider = checkNotNull(keyStoreProvider);
   }
 
