@@ -10,40 +10,37 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.wonderland;
+package org.sonatype.nexus.datastore.internal;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration;
+import org.sonatype.nexus.security.config.SecurityConfiguration;
 import org.sonatype.nexus.security.config.SecurityContributor;
 import org.sonatype.nexus.security.config.SecurityContributorSupport;
 
-import static org.apache.commons.lang.StringUtils.capitalize;
-
 /**
- * Wonderland security configuration.
+ * DataStore security configuration.
  *
- * @since 3.0
+ * @since 3.19
  */
 @Named
 @Singleton
-public class WonderlandSecurityContributor
+public class DataStoreSecurityContributor
     extends SecurityContributorSupport
     implements SecurityContributor
 {
-  private static final String DOMAIN_VALUE = "wonderland";
+  public static final String DATASTORE_DOMAIN = "datastores";
 
-  private static final String NX_WONDERLAND_ALL_PRIV_ID = "nx-wonderland-all";
+  public static final String DATASTORE_PRIV_ID_PREFIX = "nx-datastores";
 
   @Override
-  public MemorySecurityConfiguration getContribution() {
-    MemorySecurityConfiguration configuration = new MemorySecurityConfiguration();
+  public SecurityConfiguration getContribution() {
+    MemorySecurityConfiguration config = new MemorySecurityConfiguration();
 
-    configuration.addPrivilege(
-        createApplicationPrivilege(NX_WONDERLAND_ALL_PRIV_ID, ALL_DESCRIPTION_BASE + capitalize(DOMAIN_VALUE),
-            DOMAIN_VALUE, ACTION_ALL));
+    createCrudAndAllApplicationPrivileges(DATASTORE_PRIV_ID_PREFIX, DATASTORE_DOMAIN).forEach(config::addPrivilege);
 
-    return configuration;
+    return config;
   }
 }

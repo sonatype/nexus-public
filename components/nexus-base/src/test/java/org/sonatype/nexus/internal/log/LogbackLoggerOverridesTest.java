@@ -21,9 +21,10 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.log.LoggerLevel;
 
 import ch.qos.logback.classic.Logger;
-import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -34,23 +35,17 @@ import static org.hamcrest.core.Is.is;
 public class LogbackLoggerOverridesTest
     extends TestSupport
 {
+  @Rule
+  public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
   private File file;
 
   private LogbackLoggerOverrides underTest;
 
   @Before
-  public void setUp() {
-    file = util.createTempFile("logback-overrides");
+  public void setUp() throws Exception {
+    file = temporaryFolder.newFile("logback-overrides.tmp");
     underTest = new LogbackLoggerOverrides(file);
-  }
-
-  @After
-  public void cleanup() {
-    if (file.exists()) {
-      if (!file.delete()) {
-        log("Unable to delete tmp file {}", file.getAbsolutePath());
-      }
-    }
   }
 
   @Test

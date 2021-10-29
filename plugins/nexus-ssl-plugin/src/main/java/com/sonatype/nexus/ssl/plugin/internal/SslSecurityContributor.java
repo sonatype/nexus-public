@@ -10,40 +10,37 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.analytics
+package com.sonatype.nexus.ssl.plugin.internal;
 
-import javax.inject.Named
-import javax.inject.Singleton
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-import org.sonatype.nexus.security.config.MemorySecurityConfiguration
-import org.sonatype.nexus.security.config.SecurityContributor
-import org.sonatype.nexus.security.config.memory.MemoryCPrivilege
+import org.sonatype.nexus.security.config.MemorySecurityConfiguration;
+import org.sonatype.nexus.security.config.SecurityConfiguration;
+import org.sonatype.nexus.security.config.SecurityContributor;
+import org.sonatype.nexus.security.config.SecurityContributorSupport;
 
 /**
- * Analytics security configuration.
+ * SSL security configuration.
  *
  * @since 3.0
  */
 @Named
 @Singleton
-class AnalyticsSecurityContributor
+public class SslSecurityContributor
+    extends SecurityContributorSupport
     implements SecurityContributor
 {
+  public static final String SSL_DOMAIN = "ssl-truststore";
+
+  public static final String SSL_PRIV_ID_PREFIX = "nx-ssl-truststore";
+
   @Override
-  MemorySecurityConfiguration getContribution() {
-    return new MemorySecurityConfiguration(
-        privileges: [
-            new MemoryCPrivilege(
-                id: 'nx-analytics-all',
-                description: 'All permissions for Analytics',
-                type: 'application',
-                properties: [
-                    domain: 'analytics',
-                    actions: '*'
-                ]
-            )
-        ]
-    )
+  public SecurityConfiguration getContribution() {
+    MemorySecurityConfiguration config = new MemorySecurityConfiguration();
+
+    createCrudAndAllApplicationPrivileges(SSL_PRIV_ID_PREFIX, SSL_DOMAIN).forEach(config::addPrivilege);
+
+    return config;
   }
 }
-

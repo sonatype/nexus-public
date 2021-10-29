@@ -10,40 +10,41 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.wonderland;
+package org.sonatype.nexus.internal.analytics;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration;
+import org.sonatype.nexus.security.config.SecurityConfiguration;
 import org.sonatype.nexus.security.config.SecurityContributor;
 import org.sonatype.nexus.security.config.SecurityContributorSupport;
 
-import static org.apache.commons.lang.StringUtils.capitalize;
-
 /**
- * Wonderland security configuration.
+ * Analytics security configuration.
  *
  * @since 3.0
  */
 @Named
 @Singleton
-public class WonderlandSecurityContributor
+public class AnalyticsSecurityContributor
     extends SecurityContributorSupport
     implements SecurityContributor
 {
-  private static final String DOMAIN_VALUE = "wonderland";
+  public static final String ANALYTICS_DOMAIN = "analytics";
 
-  private static final String NX_WONDERLAND_ALL_PRIV_ID = "nx-wonderland-all";
+  public static final String ANALYTICS_ALL_PRIV_ID = "nx-analytics-all";
+
+  public static final String ANALYTICS_ALL_PRIV_DESCRIPTION = "All permissions for Analytics";
 
   @Override
-  public MemorySecurityConfiguration getContribution() {
-    MemorySecurityConfiguration configuration = new MemorySecurityConfiguration();
+  public SecurityConfiguration getContribution() {
+    MemorySecurityConfiguration config = new MemorySecurityConfiguration();
 
-    configuration.addPrivilege(
-        createApplicationPrivilege(NX_WONDERLAND_ALL_PRIV_ID, ALL_DESCRIPTION_BASE + capitalize(DOMAIN_VALUE),
-            DOMAIN_VALUE, ACTION_ALL));
+    config.addPrivilege(
+        createApplicationPrivilege(ANALYTICS_ALL_PRIV_ID, ANALYTICS_ALL_PRIV_DESCRIPTION, ANALYTICS_DOMAIN,
+            ACTION_ALL));
 
-    return configuration;
+    return config;
   }
 }
