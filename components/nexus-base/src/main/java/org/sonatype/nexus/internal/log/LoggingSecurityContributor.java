@@ -17,7 +17,9 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration;
 import org.sonatype.nexus.security.config.SecurityContributor;
-import org.sonatype.nexus.security.config.memory.MemoryCPrivilege.MemoryCPrivilegeBuilder;
+import org.sonatype.nexus.security.config.SecurityContributorSupport;
+
+import static org.apache.commons.lang.StringUtils.capitalize;
 
 /**
  * Logging security configuration.
@@ -27,41 +29,37 @@ import org.sonatype.nexus.security.config.memory.MemoryCPrivilege.MemoryCPrivile
 @Named
 @Singleton
 public class LoggingSecurityContributor
+    extends SecurityContributorSupport
     implements SecurityContributor
 {
-  private static final String TYPE_APPLICATION = "application";
-
-  private static final String DOMAIN_KEY = "domain";
-
   private static final String DOMAIN_VALUE = "logging";
 
-  private static final String PRIV_ID_PREFIX = "nx-logging-";
+  private static final String MARK_DESCRIPTION_BASE = "Mark permission for ";
 
-  private static final String ACTIONS_KEY = "actions";
+  public static final String LOGGING_ALL_PRIV_ID = "nx-logging-all";
 
-  private static final String READ = "read";
+  public static final String LOGGING_READ_PRIV_ID = "nx-logging-read";
 
-  private static final String UPDATE = "update";
+  public static final String LOGGING_UPDATE_PRIV_ID = "nx-logging-update";
+
+  public static final String LOGGING_MARK_PRIV_ID = "nx-logging-mark";
 
   @Override
   public MemorySecurityConfiguration getContribution() {
     MemorySecurityConfiguration configuration = new MemorySecurityConfiguration();
 
     configuration.addPrivilege(
-        new MemoryCPrivilegeBuilder(PRIV_ID_PREFIX + "all").description("All permissions for Logging")
-            .type(TYPE_APPLICATION).property(DOMAIN_KEY, DOMAIN_VALUE).property(ACTIONS_KEY, "*").build());
-
+        createApplicationPrivilege(LOGGING_ALL_PRIV_ID, ALL_DESCRIPTION_BASE + capitalize(DOMAIN_VALUE), DOMAIN_VALUE,
+            ACTION_ALL));
     configuration.addPrivilege(
-        new MemoryCPrivilegeBuilder(PRIV_ID_PREFIX + READ).description("Read permission for Logging")
-            .type(TYPE_APPLICATION).property(DOMAIN_KEY, DOMAIN_VALUE).property(ACTIONS_KEY, READ).build());
-
+        createApplicationPrivilege(LOGGING_READ_PRIV_ID, READ_DESCRIPTION_BASE + capitalize(DOMAIN_VALUE), DOMAIN_VALUE,
+            ACTION_READ));
     configuration.addPrivilege(
-        new MemoryCPrivilegeBuilder(PRIV_ID_PREFIX + UPDATE).description("Update permission for Logging")
-            .type(TYPE_APPLICATION).property(DOMAIN_KEY, DOMAIN_VALUE).property(ACTIONS_KEY, UPDATE).build());
-
+        createApplicationPrivilege(LOGGING_UPDATE_PRIV_ID, UPDATE_DESCRIPTION_BASE + capitalize(DOMAIN_VALUE),
+            DOMAIN_VALUE, ACTION_UPDATE));
     configuration.addPrivilege(
-        new MemoryCPrivilegeBuilder(PRIV_ID_PREFIX + "mark").description("Mark permission for Logging")
-            .type(TYPE_APPLICATION).property(DOMAIN_KEY, DOMAIN_VALUE).property(ACTIONS_KEY, "create").build());
+        createApplicationPrivilege(LOGGING_MARK_PRIV_ID, MARK_DESCRIPTION_BASE + capitalize(DOMAIN_VALUE), DOMAIN_VALUE,
+            ACTION_CREATE_ONLY));
 
     return configuration;
   }

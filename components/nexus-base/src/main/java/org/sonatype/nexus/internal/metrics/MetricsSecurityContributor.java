@@ -17,7 +17,9 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration;
 import org.sonatype.nexus.security.config.SecurityContributor;
-import org.sonatype.nexus.security.config.memory.MemoryCPrivilege.MemoryCPrivilegeBuilder;
+import org.sonatype.nexus.security.config.SecurityContributorSupport;
+
+import static org.apache.commons.lang.StringUtils.capitalize;
 
 /**
  * Metrics security configuration.
@@ -27,15 +29,20 @@ import org.sonatype.nexus.security.config.memory.MemoryCPrivilege.MemoryCPrivile
 @Named
 @Singleton
 public class MetricsSecurityContributor
+    extends SecurityContributorSupport
     implements SecurityContributor
 {
+  private static final String DOMAIN_VALUE = "metrics";
+
+  public static final String METRICS_ALL_PRIV_ID = "nx-metrics-all";
+
   @Override
   public MemorySecurityConfiguration getContribution() {
     MemorySecurityConfiguration configuration = new MemorySecurityConfiguration();
 
     configuration.addPrivilege(
-        new MemoryCPrivilegeBuilder("nx-metrics-all").description("All permissions for Metrics").type("application")
-            .property("domain", "metrics").property("actions", "*").build());
+        createApplicationPrivilege(METRICS_ALL_PRIV_ID, ALL_DESCRIPTION_BASE + capitalize(DOMAIN_VALUE), DOMAIN_VALUE,
+            ACTION_ALL));
 
     return configuration;
   }
