@@ -18,6 +18,7 @@ import java.nio.file.Files;
 
 import org.sonatype.goodies.httpfixture.server.fluent.Behaviours;
 import org.sonatype.goodies.httpfixture.server.fluent.Server;
+import org.sonatype.nexus.common.net.PortAllocator;
 import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.content.testsupport.raw.RawClient;
 import org.sonatype.nexus.content.testsupport.raw.RawITSupport;
@@ -152,7 +153,7 @@ public class RawProxyIT
 
   @Test
   public void retrieveRawWhenRemoteOffline() throws Exception {
-    Server server = Server.withPort(0).serve("/*")
+    Server server = Server.withPort(PortAllocator.nextFreePort()).serve("/*")
         .withBehaviours(content("Response"))
         .start();
     try {
@@ -166,7 +167,9 @@ public class RawProxyIT
   }
 
   private void responseViaGroupProduces(final int upstreamStatus, final int downstreamStatus) throws Exception {
-    Server server = Server.withPort(0).serve("/*").withBehaviours(Behaviours.error(upstreamStatus)).start();
+    Server server =
+        Server.withPort(PortAllocator.nextFreePort()).serve("/*").withBehaviours(Behaviours.error(upstreamStatus))
+            .start();
     try {
       Repository proxy = repos.createRawProxy("raw-test-proxy-" + upstreamStatus + "-" + downstreamStatus,
           server.getUrl().toExternalForm());
@@ -181,7 +184,9 @@ public class RawProxyIT
   }
 
   private void responseViaProxyProduces(final int upstreamStatus, final int downstreamStatus) throws Exception {
-    Server server = Server.withPort(0).serve("/*").withBehaviours(Behaviours.error(upstreamStatus)).start();
+    Server server =
+        Server.withPort(PortAllocator.nextFreePort()).serve("/*").withBehaviours(Behaviours.error(upstreamStatus))
+            .start();
     try {
       proxyClient = rawClient(repos.createRawProxy("raw-test-proxy-" + upstreamStatus + "-" + downstreamStatus,
           server.getUrl().toExternalForm()));

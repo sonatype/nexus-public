@@ -585,6 +585,19 @@ public class MavenFacetImpl
     return deletedPaths;
   }
 
+  public Set<String> deleteAssetOnly(final MavenPath... paths) throws IOException {
+    final StorageTx tx = UnitOfWork.currentTx();
+
+    Set<String> deletedPaths = Sets.newHashSet();
+    for (MavenPath path : paths) {
+      log.trace("DELETE ASSET ONLY {} : {}", getRepository().getName(), path.getPath());
+      if (deleteFile(path, tx, false)) {
+        deletedPaths.add(path.getPath());
+      }
+    }
+    return deletedPaths;
+  }
+
   private boolean deleteFileOrArtifact(final StorageTx tx, final MavenPath mavenPath) {
     if (mavenPath.getCoordinates() != null) {
       return deleteArtifact(mavenPath, tx);
@@ -644,11 +657,15 @@ public class MavenFacetImpl
   }
 
   private boolean deleteFile(final MavenPath path, final StorageTx tx) {
+    return deleteFile(path, tx, true);
+  }
+
+  private boolean deleteFile(final MavenPath path, final StorageTx tx, boolean deleteBlob) {
     final Asset asset = findAsset(tx, tx.findBucket(getRepository()), path);
     if (asset == null) {
       return false;
     }
-    tx.deleteAsset(asset);
+    tx.deleteAsset(asset, deleteBlob);
     return true;
   }
 

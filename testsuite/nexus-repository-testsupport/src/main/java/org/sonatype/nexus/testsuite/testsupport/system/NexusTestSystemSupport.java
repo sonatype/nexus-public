@@ -61,6 +61,9 @@ public abstract class NexusTestSystemSupport<R extends RepositoryTestSystem, C e
   @Inject
   private SecurityRealmRule securityRealms;
 
+  @Inject
+  private ServerTestSystem servers;
+
   protected NexusTestSystemSupport(
       final R repositories,
       final C capabilities)
@@ -113,6 +116,10 @@ public abstract class NexusTestSystemSupport<R extends RepositoryTestSystem, C e
     return tasks;
   }
 
+  public ServerTestSystem servers() {
+    return servers;
+  }
+
   @Override
   protected void before() throws Throwable {
     securityRealms.before();
@@ -121,6 +128,7 @@ public abstract class NexusTestSystemSupport<R extends RepositoryTestSystem, C e
   @Override
   protected void after() {
     log.info("Cleaning up test entities");
+    servers.after();
     cleanup.after();
     capabilities.after();
     tasks.after();

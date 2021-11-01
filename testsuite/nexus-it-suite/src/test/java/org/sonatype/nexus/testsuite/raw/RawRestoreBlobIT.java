@@ -19,6 +19,7 @@ import javax.inject.Inject;
 import org.sonatype.goodies.httpfixture.server.fluent.Behaviours;
 import org.sonatype.goodies.httpfixture.server.fluent.Server;
 import org.sonatype.goodies.httpfixture.server.jetty.behaviour.Content;
+import org.sonatype.nexus.common.net.PortAllocator;
 import org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup;
 import org.sonatype.nexus.content.testsuite.groups.OrientTestGroup;
 import org.sonatype.nexus.repository.Repository;
@@ -71,7 +72,7 @@ public class RawRestoreBlobIT
     hostedRepository = repos.createRawHosted(HOSTED_REPO_NAME);
     hostedClient = rawClient(hostedRepository);
 
-    proxyServer = Server.withPort(0).start();
+    proxyServer = Server.withPort(PortAllocator.nextFreePort()).start();
     proxyServer.serve("/" + TEST_CONTENT).withBehaviours(resolveFile(TEST_CONTENT));
 
     proxyRepository = repos.createRawProxy(PROXY_REPO_NAME, "http://localhost:" + proxyServer.getPort() + "/");

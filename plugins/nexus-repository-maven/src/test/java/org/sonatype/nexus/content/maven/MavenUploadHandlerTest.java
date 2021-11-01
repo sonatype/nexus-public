@@ -28,6 +28,8 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.fluent.FluentBlobs;
+import org.sonatype.nexus.repository.maven.LayoutPolicy;
+import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
@@ -142,6 +144,7 @@ public class MavenUploadHandlerTest
     when(repository.getName()).thenReturn(REPO_NAME);
     when(repository.getFormat()).thenReturn(new Maven2Format());
     when(repository.facet(MavenContentFacet.class)).thenReturn(mavenFacet);
+    when(repository.facet(MavenFacet.class)).thenReturn(mavenFacet);
     when(repository.facet(MavenMetadataRebuildFacet.class)).thenReturn(mavenMetadataRebuildFacet);
 
     FluentBlobs blobs = mock(FluentBlobs.class);
@@ -149,6 +152,7 @@ public class MavenUploadHandlerTest
     when(blobs.ingest(any(Payload.class), any())).thenReturn(tempBlob);
 
     when(mavenFacet.getVersionPolicy()).thenReturn(VersionPolicy.RELEASE);
+    when(mavenFacet.layoutPolicy()).thenReturn(LayoutPolicy.STRICT);
 
     Content content = mock(Content.class);
     AttributesMap attributesMap = mock(AttributesMap.class);
@@ -658,18 +662,22 @@ public class MavenUploadHandlerTest
     }
   }
 
-  @Test(expected = ValidationErrorsException.class)
+  @Test
   public void testHandle_snapshot_asset() throws IOException {
     when(versionPolicyValidator.validArtifactPath(any(), any())).thenReturn(false);
     File file = temporaryFolder.newFile("artifact-1.0-20201124.222716-1.jar");
     Content result = underTest.handle(repository, file, "group/artifact/1.0-SNAPSHOT/artifact-1.0-20201124.222716-1.jar");
+
+    assertNull(result);
   }
 
-  @Test(expected = ValidationErrorsException.class)
+  @Test
   public void testHandle_snapshot_metadata() throws IOException {
     when(versionPolicyValidator.validMetadataPath(any(), any())).thenReturn(false);
     File file = temporaryFolder.newFile("maven-metadata.xml");
     Content result = underTest.handle(repository, file, "group/artifact/1.0-SNAPSHOT/maven-metadata.xml");
+
+    assertNull(result);
   }
 
   private static void assertVariableSource(final VariableSource source,

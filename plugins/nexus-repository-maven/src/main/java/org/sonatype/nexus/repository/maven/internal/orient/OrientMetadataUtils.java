@@ -19,8 +19,10 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.orient.maven.OrientMavenFacet;
+import org.sonatype.nexus.repository.MissingBlobException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.maven.MavenPath;
@@ -76,16 +78,29 @@ public final class OrientMetadataUtils
    */
   @Nullable
   public static Metadata read(final Repository repository, final MavenPath mavenPath) throws IOException {
-    final Content content = repository.facet(OrientMavenFacet.class).get(mavenPath);
-    if (content == null) {
-      return null;
-    }
-    else {
-      Metadata metadata = MavenModels.readMetadata(content.openInputStream());
-      if (metadata == null) {
-        log.warn("Corrupted metadata {} @ {}", repository.getName(), mavenPath.getPath());
+    try {
+      final Content content = repository.facet(OrientMavenFacet.class).get(mavenPath);
+      if (content == null) {
+        return null;
       }
-      return metadata;
+      else {
+        Metadata metadata = MavenModels.readMetadata(content.openInputStream());
+        if (metadata == null) {
+          log.warn("Corrupted metadata {} @ {}", repository.getName(), mavenPath.getPath());
+        }
+        return metadata;
+      }
+    }
+    catch (BlobStoreException | MissingBlobException e) {
+      if (log.isDebugEnabled()) {
+        log.warn(String.format("Found missing blob for metadata path %s, will return null (not found) caused by:",
+            mavenPath.getPath()), e);
+      }
+      else {
+        log.warn("Found missing blob for metadata path {}, will return null (not found) caused by {}",
+            mavenPath.getPath(), e.getMessage());
+      }
+      return null;
     }
   }
 
