@@ -64,6 +64,8 @@ public interface OrientMavenFacet
 
   Set<String> delete(MavenPath... paths) throws IOException;
 
+  Set<String> deleteAssetOnly(MavenPath... paths) throws IOException;
+
   /**
    * @since 3.4
    */

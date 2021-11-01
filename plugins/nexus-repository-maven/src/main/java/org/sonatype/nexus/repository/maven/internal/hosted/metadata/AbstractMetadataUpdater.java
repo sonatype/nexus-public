@@ -87,7 +87,7 @@ abstract public class AbstractMetadataUpdater
       checkNotNull(mavenPath);
       checkNotNull(metadata);
 
-      final Optional<Metadata> oldMetadata = read(mavenPath);
+      final Optional<Metadata> oldMetadata = safeRead(mavenPath);
       if (oldMetadata.isPresent()) {
         final Metadata updated = repositoryMetadataMerger.merge(
             ImmutableList.of(
@@ -115,7 +115,7 @@ abstract public class AbstractMetadataUpdater
       checkNotNull(mavenPath);
       checkNotNull(metadata);
 
-      final Optional<Metadata> oldMetadata = read(mavenPath);
+      final Optional<Metadata> oldMetadata = safeRead(mavenPath);
       if (oldMetadata.isPresent()) {
         final Metadata updated = toMetadata(metadata);
         writeIfChanged(mavenPath, oldMetadata.get(), updated);
@@ -127,6 +127,20 @@ abstract public class AbstractMetadataUpdater
     }
     catch (IOException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  /*
+   * Attempts to read the metadata, if an error occurs an empty optional is returned. This should be used when
+   * operations can safely proceed if the metadata can be overwritten.
+   */
+  private Optional<Metadata> safeRead(final MavenPath mavenPath) {
+    try {
+      return read(mavenPath);
+    }
+    catch (Exception e) {
+      log.warn("Encountered error reading {}", mavenPath, e);
+      return Optional.empty();
     }
   }
 
