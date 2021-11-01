@@ -181,9 +181,12 @@ public abstract class MavenUploadHandlerSupport
 
     MavenPath mavenPath = parser.parsePath(path);
 
-    validateVersionPolicy(repository, mavenPath);
-
-    ensurePermitted(repository.getName(), Maven2Format.NAME, mavenPath.getPath(), toMap(mavenPath.getCoordinates()));
+    try {
+      doImportValidation(repository, mavenPath);
+    } catch (ValidationErrorsException e) {
+      log.warn(e.getMessage(), log.isDebugEnabled() ? e : null);
+      return null;
+    }
 
     if (!configuration.isHardLinkingEnabled() && mavenPath.getHashType() != null) {
       log.debug("skipping hash file {}", mavenPath);
@@ -283,15 +286,28 @@ public abstract class MavenUploadHandlerSupport
   {
     for (AssetUpload asset : assetUploads) {
       MavenPath mavenPath = getMavenPath(basePath, asset);
-
-      if (mavenPath.getCoordinates() == null) {
-        throw new ValidationErrorsException(
-            format("Cannot generate maven coordinate from assembled path '%s'", mavenPath.getPath()));
-      }
-
+      doCoordinatesValidation(mavenPath);
       validateVersionPolicy(repository, mavenPath);
-
       ensurePermitted(repository.getName(), Maven2Format.NAME, mavenPath.getPath(), toMap(mavenPath.getCoordinates()));
+    }
+  }
+
+  private void doImportValidation(final Repository repository, final MavenPath mavenPath) {
+    LayoutPolicy layoutPolicy = repository.facet(MavenFacet.class).layoutPolicy();
+    if (layoutPolicy == LayoutPolicy.STRICT) {
+      if (!parser.isRepositoryMetadata(mavenPath)) {
+        doCoordinatesValidation(mavenPath);
+      }
+      validateVersionPolicy(repository, mavenPath);
+    }
+
+    ensurePermitted(repository.getName(), Maven2Format.NAME, mavenPath.getPath(), toMap(mavenPath.getCoordinates()));
+  }
+
+  private void doCoordinatesValidation(final MavenPath mavenPath) {
+    if (mavenPath.getCoordinates() == null) {
+      throw new ValidationErrorsException(
+          format("Cannot generate maven coordinate from assembled path '%s'", mavenPath.getPath()));
     }
   }
 

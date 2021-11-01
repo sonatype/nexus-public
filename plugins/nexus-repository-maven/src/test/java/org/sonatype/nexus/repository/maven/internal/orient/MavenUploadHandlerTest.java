@@ -26,6 +26,7 @@ import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.maven.LayoutPolicy;
 import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenHostedFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
@@ -158,6 +159,7 @@ public class MavenUploadHandlerTest
     when(storageFacet.createTempBlob(any(Payload.class), any())).thenReturn(tempBlob);
 
     when(mavenFacet.getVersionPolicy()).thenReturn(VersionPolicy.RELEASE);
+    when(mavenFacet.layoutPolicy()).thenReturn(LayoutPolicy.STRICT);
 
     Content content = mock(Content.class);
     AttributesMap attributesMap = mock(AttributesMap.class);
@@ -689,18 +691,21 @@ public class MavenUploadHandlerTest
     assertThat(result, nullValue());
   }
 
-  @Test(expected = ValidationErrorsException.class)
+  @Test
   public void testHandle_snapshot_asset() throws IOException {
     when(versionPolicyValidator.validArtifactPath(any(), any())).thenReturn(false);
+
     File file = temporaryFolder.newFile("artifact-1.0-20201124.222716-1.jar");
     Content result = underTest.handle(repository, file, "group/artifact/1.0-SNAPSHOT/artifact-1.0-20201124.222716-1.jar");
+    assertNull(result);
   }
 
-  @Test(expected = ValidationErrorsException.class)
+  @Test
   public void testHandle_snapshot_metadata() throws IOException {
     when(versionPolicyValidator.validMetadataPath(any(), any())).thenReturn(false);
     File file = temporaryFolder.newFile("maven-metadata.xml");
     Content result = underTest.handle(repository, file, "group/artifact/1.0-SNAPSHOT/maven-metadata.xml");
+    assertNull(result);
   }
 
   private static void assertVariableSource(final VariableSource source,
