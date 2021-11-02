@@ -411,6 +411,9 @@ public class S3BlobStore
         blob.refresh(blobAttributes.getHeaders(), blobAttributes.getMetrics());
         return blob;
       }
+      else {
+        return blob;
+      }
     }
     catch (IOException e) {
       throw new BlobStoreException(e, blobId);
@@ -418,7 +421,6 @@ public class S3BlobStore
     finally {
       lock.unlock();
     }
-    return null;
   }
 
   @Override
