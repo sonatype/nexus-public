@@ -642,7 +642,7 @@ export default class Utils {
     if (bytes < 0) {
       return UIStrings.UNAVAILABLE;
     }
-    return fileSize(bytes).human('jedec');
+    return fileSize(bytes).human('si');
   }
 
   /**

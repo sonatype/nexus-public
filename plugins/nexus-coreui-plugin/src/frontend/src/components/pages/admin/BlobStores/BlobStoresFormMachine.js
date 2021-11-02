@@ -17,7 +17,7 @@
 
 import axios from 'axios';
 import {assign} from 'xstate';
-import {ExtJS, FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, FormUtils, ValidationUtils, UnitUtil} from '@sonatype/nexus-ui-plugin';
 import {map, omit, propOr, replace, lensPath, set} from 'ramda';
 
 import UIStrings from '../../../../constants/UIStrings';
@@ -148,7 +148,7 @@ export default FormUtils.buildFormMachine({
         softQuota: {
           enabled: softQuota?.type || softQuota?.limit,
           type: propOr('', 'type', softQuota),
-          limit: propOr('', 'limit', softQuota)
+          limit: UnitUtil.bytesToMegaBytes(propOr('', 'limit', softQuota))
         }
       };
 
@@ -333,6 +333,9 @@ export default FormUtils.buildFormMachine({
     saveData: ({data, pristineData, type}) => {
       let saveData = data.softQuota.enabled ? data : omit(['softQuota'], data);
       saveData = map((value) => typeof value === 'string' ? value.trim() : value, saveData);
+      if (saveData.softQuota?.limit) {
+        saveData.softQuota.limit = UnitUtil.megaBytesToBytes(saveData.softQuota.limit);
+      }
       if (ValidationUtils.notBlank(pristineData.name)) {
         return axios.put(`/service/rest/v1/blobstores/${type.id}/${data.name}`, saveData);
       }

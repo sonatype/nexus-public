@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.bootstrap.jetty;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -118,6 +119,11 @@ public class ConnectorManager
     server.addConnector(serverConnector);
     try {
       serverConnector.start();
+    }
+    catch (IOException e) {
+      log.error("Could not start connector: {}", connectorConfiguration, e);
+      managedConnectors.remove(connectorConfiguration);
+      server.removeConnector(serverConnector);
     }
     catch (Exception e) {
       log.warn("Could not start connector: {}", connectorConfiguration, e);

@@ -87,8 +87,8 @@ describe('BlobStoresList', function() {
     expect(tableRow(0).cells[1]).toHaveTextContent('File');
     expect(tableRow(0).cells[2]).toHaveTextContent('Started');
     expect(tableRow(0).cells[3]).toHaveTextContent('66206');
-    expect(tableRow(0).cells[4]).toHaveTextContent('16.18 GB');
-    expect(tableRow(0).cells[5]).toHaveTextContent('39.15 GB');
+    expect(tableRow(0).cells[4]).toHaveTextContent('17.38 GB');
+    expect(tableRow(0).cells[5]).toHaveTextContent('42.04 GB');
 
     expect(tableRow(1).cells[0]).toHaveTextContent('test2');
     expect(tableRow(1).cells[1]).toHaveTextContent('File');
@@ -194,11 +194,11 @@ describe('BlobStoresList', function() {
 
     expect(container.querySelector('tbody tr:nth-child(1) td:nth-child(5)')).toHaveTextContent('Unavailable');
     expect(container.querySelector('tbody tr:nth-child(2) td:nth-child(5)')).toHaveTextContent('0.00 Bytes');
-    expect(container.querySelector('tbody tr:nth-child(3) td:nth-child(5)')).toHaveTextContent('16.18 GB');
+    expect(container.querySelector('tbody tr:nth-child(3) td:nth-child(5)')).toHaveTextContent('17.38 GB');
 
     fireEvent.click(tableHeader('Total Size'));
 
-    expect(container.querySelector('tbody tr:nth-child(1) td:nth-child(5)')).toHaveTextContent('16.18 GB');
+    expect(container.querySelector('tbody tr:nth-child(1) td:nth-child(5)')).toHaveTextContent('17.38 GB');
     expect(container.querySelector('tbody tr:nth-child(2) td:nth-child(5)')).toHaveTextContent('0.00 Bytes');
     expect(container.querySelector('tbody tr:nth-child(3) td:nth-child(5)')).toHaveTextContent('Unavailable');
   });
@@ -213,13 +213,13 @@ describe('BlobStoresList', function() {
     fireEvent.click(tableHeader('Available Space'));
 
     expect(container.querySelector('tbody tr:nth-child(1) td:nth-child(6)')).toHaveTextContent('Unavailable');
-    expect(container.querySelector('tbody tr:nth-child(2) td:nth-child(6)')).toHaveTextContent('39.15 GB');
+    expect(container.querySelector('tbody tr:nth-child(2) td:nth-child(6)')).toHaveTextContent('42.04 GB');
     expect(container.querySelector('tbody tr:nth-child(3) td:nth-child(6)')).toHaveTextContent('Unlimited');
 
     fireEvent.click(tableHeader('Available Space'));
 
     expect(container.querySelector('tbody tr:nth-child(1) td:nth-child(6)')).toHaveTextContent('Unlimited');
-    expect(container.querySelector('tbody tr:nth-child(2) td:nth-child(6)')).toHaveTextContent('39.15 GB');
+    expect(container.querySelector('tbody tr:nth-child(2) td:nth-child(6)')).toHaveTextContent('42.04 GB');
     expect(container.querySelector('tbody tr:nth-child(3) td:nth-child(6)')).toHaveTextContent('Unavailable');
   });
 
