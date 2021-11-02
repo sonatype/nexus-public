@@ -12,11 +12,14 @@
  */
 package org.sonatype.nexus.blobstore.s3.internal
 
+import java.util.concurrent.Callable
+import java.util.concurrent.Future
 import java.util.stream.Collectors
 
 import org.sonatype.nexus.blobstore.BlobIdLocationResolver
 import org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration
+import org.sonatype.nexus.blobstore.api.Blob
 import org.sonatype.nexus.blobstore.api.BlobId
 import org.sonatype.nexus.blobstore.api.BlobMetrics
 import org.sonatype.nexus.blobstore.api.BlobStoreException
@@ -37,6 +40,7 @@ import com.amazonaws.services.s3.model.S3ObjectSummary
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import static java.util.concurrent.Executors.newFixedThreadPool
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_FILE_ATTRIBUTES_SUFFIX
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_FILE_CONTENT_SUFFIX
 
@@ -551,6 +555,34 @@ class S3BlobStoreTest
       ""       | _
       "prefix" | _
   }
+
+  def "Concurrent attempts to refresh blob should never return null"() {
+    given: 'A mocked S3 setup'
+      def cfg = new MockBlobStoreConfiguration()
+      cfg.attributes = [s3: [bucket: 'mybucket']]
+
+      def blobId = new BlobId('test')
+      def attributesS3Object = mockS3Object(attributesContents)
+      def contentS3Object = mockS3Object('hello world')
+      _ * bucketManager.prepareStorageLocation(cfg)
+      _ * s3.doesObjectExist('mybucket', propertiesLocation(blobId)) >> true
+      _ * s3.getObject('mybucket', propertiesLocation(blobId)) >> attributesS3Object
+      _ * s3.getObject('mybucket', bytesLocation(blobId)) >> contentS3Object
+
+    when: 'Existing stale blobs are read concurrently'
+      blobStore.init(cfg)
+      blobStore.doStart()
+      def executorService = newFixedThreadPool(2)
+      def callable = { blobStore.get(blobId) }
+      def results = ([executorService.submit(callable as Callable<Blob>),
+                      executorService.submit(callable as Callable<Blob>)] as List<Future<Blob>>)
+
+      executorService.shutdown()
+    then: 'The blobs are not null'
+      results.get(0).get() != null
+      results.get(1).get() != null
+  }
+
   private mockS3Object(String contents) {
     S3Object s3Object = Mock()
     s3Object.getObjectContent() >> new S3ObjectInputStream(new ByteArrayInputStream(contents.bytes), null)
