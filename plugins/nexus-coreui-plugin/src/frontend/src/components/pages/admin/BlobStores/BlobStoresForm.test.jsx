@@ -118,6 +118,8 @@ const selectors = {
 describe('BlobStoresForm', function() {
   const onDone = jest.fn();
   const confirm = Promise.resolve();
+  const SOFT_QUOTA_1_TERABYTE_IN_MEGABYTES = '1048576'; // 1 Terabyte = 1048576 Megabytes
+  const SOFT_QUOTA_1_TERABYTE_IN_BYTES = 1099511627776; // 1 Terabyte = 1048576 Megabytes = 1099511627776 bytes
 
   window.ReactComponents = {S3BlobStoreSettings, S3BlobStoreWarning};
 
@@ -390,8 +392,8 @@ describe('BlobStoresForm', function() {
     userEvent.click(softQuota());
     userEvent.selectOptions(softQuotaType(), 'spaceRemainingQuota');
     expect(softQuotaType()).toHaveValue('spaceRemainingQuota');
-    userEvent.type(softQuotaLimit(), '100');
-    expect(softQuotaLimit()).toHaveValue('100');
+    userEvent.type(softQuotaLimit(), SOFT_QUOTA_1_TERABYTE_IN_MEGABYTES);
+    expect(softQuotaLimit()).toHaveValue(SOFT_QUOTA_1_TERABYTE_IN_MEGABYTES);
     userEvent.click(saveButton());
 
     expect(axios.post).toHaveBeenCalledWith(
@@ -402,7 +404,7 @@ describe('BlobStoresForm', function() {
           softQuota: {
             enabled: true,
             type: 'spaceRemainingQuota',
-            limit: '100'
+            limit: SOFT_QUOTA_1_TERABYTE_IN_BYTES
           }
         }
     );
@@ -497,7 +499,7 @@ describe('BlobStoresForm', function() {
         path: 'testPath',
         softQuota: {
           type: 'spaceRemainingQuota',
-          limit: '100'
+          limit: SOFT_QUOTA_1_TERABYTE_IN_MEGABYTES
         }
       }
     });
@@ -574,7 +576,7 @@ describe('BlobStoresForm', function() {
         path: 'testPath',
         softQuota: {
           type: 'spaceRemainingQuota',
-          limit: '100'
+          limit: '104857600' // Bytes in 100 Megabytes
         }
       }
     });

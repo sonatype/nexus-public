@@ -22,6 +22,7 @@ export {default as UIStrings} from './constants/UIStrings';
 export {default as ExtJS} from './interface/ExtJS';
 
 export {default as Utils} from './interface/Utils';
+export {default as UnitUtil} from './interface/UnitUtil';
 export {default as FormUtils} from './interface/FormUtils';
 export {default as ValidationUtils} from './interface/ValidationUtils';
 
