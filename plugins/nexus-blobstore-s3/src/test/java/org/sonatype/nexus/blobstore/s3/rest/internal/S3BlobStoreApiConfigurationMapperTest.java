@@ -26,6 +26,7 @@ import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiEncrypt
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiModel;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
+import org.hamcrest.core.IsNull;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -68,6 +69,8 @@ public class S3BlobStoreApiConfigurationMapperTest
 
   private static final boolean FORCE_PATH_STYLE = true;
 
+  private static int MAX_CONNECTION_POOL = 5;
+
   private static final int BUCKET_EXPIRATION = 5;
 
   private static final int QUOTA_LIMIT = 2;
@@ -105,6 +108,14 @@ public class S3BlobStoreApiConfigurationMapperTest
     assertBucketAdvancedConnectionDetails(bucketConfiguration.getAdvancedBucketConnection());
   }
 
+  @Test
+  public void testConvertConfigurationToModelEmptyStringMaxConnection() {
+    BlobStoreConfiguration configuration = aFullySetBlobStoreConfigurationWithEmptyStringMaxConnection();
+    S3BlobStoreApiModel model = underTest.apply(configuration);
+    S3BlobStoreApiBucketConfiguration bucketConfiguration = model.getBucketConfiguration();
+    assertThat(bucketConfiguration.getAdvancedBucketConnection().getMaxConnectionPoolSize(), nullValue());
+  }
+
   private static BlobStoreConfiguration aMinimalBlobStoreConfiguration() {
     BlobStoreConfiguration configuration = new MockBlobStoreConfiguration();
     configuration.setType(TYPE);
@@ -121,6 +132,17 @@ public class S3BlobStoreApiConfigurationMapperTest
     NestedAttributesMap bucketAttributes = configuration.attributes(CONFIG_KEY);
     fillRequiredBucketAttributes(bucketAttributes);
     fillOptionalBucketDetails(bucketAttributes);
+    return configuration;
+  }
+
+  private static BlobStoreConfiguration aFullySetBlobStoreConfigurationWithEmptyStringMaxConnection() {
+    BlobStoreConfiguration configuration = new MockBlobStoreConfiguration();
+    configuration.setType(TYPE);
+    configuration.setName(BLOB_STORE_NAME);
+    createSoftQuota(configuration);
+    NestedAttributesMap bucketAttributes = configuration.attributes(CONFIG_KEY);
+    fillRequiredBucketAttributes(bucketAttributes);
+    fillOptionalBucketDetailsEmptyStringMaxConnection(bucketAttributes);
     return configuration;
   }
 
@@ -143,6 +165,12 @@ public class S3BlobStoreApiConfigurationMapperTest
     fillBucketAdvancedConnectionDetails(bucketAttributes);
   }
 
+  private static void fillOptionalBucketDetailsEmptyStringMaxConnection(final NestedAttributesMap bucketAttributes) {
+    fillBucketSecurityDetails(bucketAttributes);
+    fillBucketEncryptionDetails(bucketAttributes);
+    fillBucketAdvancedConnectionDetailsEmptyStringMaxConnection(bucketAttributes);
+  }
+
   private static void fillBucketSecurityDetails(final NestedAttributesMap bucketAttributes) {
     bucketAttributes.set(ACCESS_KEY_ID_KEY, AN_IAM_ACCESS_KEY);
     bucketAttributes.set(SECRET_ACCESS_KEY_KEY, AN_IAM_SECRET_ACCESS_KEY);
@@ -156,9 +184,17 @@ public class S3BlobStoreApiConfigurationMapperTest
   }
 
   private static void fillBucketAdvancedConnectionDetails(final NestedAttributesMap bucketAttributes) {
+  bucketAttributes.set(ENDPOINT_KEY, S3_ENDPOINT_URL);
+  bucketAttributes.set(SIGNERTYPE_KEY, S3_SIGNER_TYPE);
+  bucketAttributes.set(FORCE_PATH_STYLE_KEY, FORCE_PATH_STYLE);
+  bucketAttributes.set(MAX_CONNECTION_POOL_KEY, MAX_CONNECTION_POOL);
+}
+
+  private static void fillBucketAdvancedConnectionDetailsEmptyStringMaxConnection(final NestedAttributesMap bucketAttributes) {
     bucketAttributes.set(ENDPOINT_KEY, S3_ENDPOINT_URL);
     bucketAttributes.set(SIGNERTYPE_KEY, S3_SIGNER_TYPE);
     bucketAttributes.set(FORCE_PATH_STYLE_KEY, FORCE_PATH_STYLE);
+    bucketAttributes.set(MAX_CONNECTION_POOL_KEY, "");
   }
 
   private static void assertSoftQuota(final BlobStoreApiSoftQuota softQuota) {
@@ -195,5 +231,6 @@ public class S3BlobStoreApiConfigurationMapperTest
     assertThat(advancedBucketConnection.getEndpoint(), is(S3_ENDPOINT_URL));
     assertThat(advancedBucketConnection.getSignerType(), is(S3_SIGNER_TYPE));
     assertThat(advancedBucketConnection.getForcePathStyle(), is(FORCE_PATH_STYLE));
+    assertThat(advancedBucketConnection.getMaxConnectionPoolSize(), is(MAX_CONNECTION_POOL));
   }
 }
