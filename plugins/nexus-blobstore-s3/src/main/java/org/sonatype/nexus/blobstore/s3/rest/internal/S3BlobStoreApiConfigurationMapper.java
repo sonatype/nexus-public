@@ -118,9 +118,9 @@ public final class S3BlobStoreApiConfigurationMapper
     final String endpoint = getValue(attributes, ENDPOINT_KEY);
     final String signerType = getValue(attributes, SIGNERTYPE_KEY);
     final String forcePathStyle = getValue(attributes, FORCE_PATH_STYLE_KEY);
-    Integer maxConnectionPoolSize = Optional.ofNullable(getValue(attributes, MAX_CONNECTION_POOL_KEY))
-        .map(Integer::valueOf)
-        .orElse(null);
+    Integer maxConnectionPoolSize =
+        Optional.ofNullable(getValue(attributes, MAX_CONNECTION_POOL_KEY)).filter(val -> !"".equals(val))
+            .map(Integer::valueOf).orElse(null);
 
     if (anyNonNull(endpoint, signerType, forcePathStyle, maxConnectionPoolSize)) {
       return new S3BlobStoreApiAdvancedBucketConnection(endpoint, signerType, Boolean.valueOf(forcePathStyle),
