@@ -12,24 +12,17 @@
  */
 package org.sonatype.nexus.blobstore.s3.rest.internal;
 
-import java.util.Optional;
-
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.rest.BlobStoreApiSoftQuota;
+import org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationBuilder;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiAdvancedBucketConnection;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiBucket;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiBucketConfiguration;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiBucketSecurity;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiEncryption;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiModel;
-import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Objects.nonNull;
-import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.LIMIT_KEY;
-import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.ROOT_KEY;
-import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.TYPE_KEY;
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.*;
 
 /**
  * Transforms a {@link S3BlobStoreApiModel} to an {@link BlobStoreConfiguration}.
@@ -47,97 +40,42 @@ public final class S3BlobStoreApiModelMapper
     checkNotNull(blobStoreConfiguration);
     checkNotNull(request);
     final S3BlobStoreApiBucketConfiguration bucketConfiguration = checkNotNull(request.getBucketConfiguration());
+    S3BlobStoreApiBucket bucket = checkNotNull(bucketConfiguration.getBucket(), "Missing bucket configuration");
 
-    blobStoreConfiguration.setName(request.getName());
-    blobStoreConfiguration.setType(TYPE);
-    copyBucketConfiguration(bucketConfiguration, blobStoreConfiguration.attributes(CONFIG_KEY));
-    copySoftQuota(request.getSoftQuota(), blobStoreConfiguration.attributes(ROOT_KEY));
+    S3BlobStoreConfigurationBuilder builder =
+        S3BlobStoreConfigurationBuilder.builder(blobStoreConfiguration, request.getName())
+        .bucket(bucket.getName())
+        .region(bucket.getRegion())
+        .expiration(bucket.getExpiration())
+        .prefix(bucket.getPrefix());
 
-    return blobStoreConfiguration;
-  }
-
-  private static void copyBucketConfiguration(final S3BlobStoreApiBucketConfiguration bucketConfiguration, final NestedAttributesMap s3BucketAttributes) {
-    copyGeneralS3BucketSettings(checkNotNull(bucketConfiguration.getBucket()), s3BucketAttributes);
-    copyBucketSecuritySettings(bucketConfiguration.getBucketSecurity(), s3BucketAttributes);
-    copyBucketEncryptionSettings(bucketConfiguration.getEncryption(), s3BucketAttributes);
-    copyAdvancedBucketConnectionSettings(bucketConfiguration.getAdvancedBucketConnection(), s3BucketAttributes);
-  }
-
-  private static void copyGeneralS3BucketSettings(
-      final S3BlobStoreApiBucket bucket,
-      final NestedAttributesMap s3BucketAttributes)
-  {
-    s3BucketAttributes.set(REGION_KEY, checkNotNull(bucket.getRegion()));
-    s3BucketAttributes.set(BUCKET_KEY, checkNotNull(bucket.getName()));
-    setAttribute(s3BucketAttributes, BUCKET_PREFIX_KEY, bucket.getPrefix());
-    setAttribute(s3BucketAttributes, EXPIRATION_KEY, String.valueOf(bucket.getExpiration()));
-  }
-
-  private static void setAttribute(
-      final NestedAttributesMap s3BucketAttributes,
-      final String key, final String value)
-  {
-    if (nonNull(value)) {
-      s3BucketAttributes.set(key, value);
+    S3BlobStoreApiBucketSecurity bucketSecurity = bucketConfiguration.getBucketSecurity();
+    if (bucketSecurity != null) {
+      builder.accessKey(bucketSecurity.getAccessKeyId());
+      builder.accessSecret(bucketSecurity.getSecretAccessKey());
+      builder.assumeRole(bucketSecurity.getRole());
+      builder.sessionTokenKey(bucketSecurity.getSessionToken());
     }
-  }
 
-  private static void copyBucketSecuritySettings(
-      final S3BlobStoreApiBucketSecurity bucketSecurity,
-      final NestedAttributesMap s3BucketAttributes)
-  {
-    if (nonNull(bucketSecurity)) {
-      setAttribute(s3BucketAttributes, ACCESS_KEY_ID_KEY, bucketSecurity.getAccessKeyId());
-      setAttribute(s3BucketAttributes, SECRET_ACCESS_KEY_KEY, bucketSecurity.getSecretAccessKey());
-      setAttribute(s3BucketAttributes, ASSUME_ROLE_KEY, bucketSecurity.getRole());
-      setAttribute(s3BucketAttributes, SESSION_TOKEN_KEY, bucketSecurity.getSessionToken());
+    S3BlobStoreApiEncryption encryption = bucketConfiguration.getEncryption();
+    if (encryption != null) {
+      builder.encryptionKey(encryption.getEncryptionKey());
+      builder.encryptionType(encryption.getEncryptionType());
     }
-  }
 
-  private static void copyBucketEncryptionSettings(
-      final S3BlobStoreApiEncryption encryption,
-      final NestedAttributesMap s3BucketAttributes)
-  {
-    if (nonNull(encryption)) {
-      setAttribute(s3BucketAttributes, ENCRYPTION_KEY, encryption.getEncryptionKey());
-      setAttribute(s3BucketAttributes, ENCRYPTION_TYPE, encryption.getEncryptionType());
+    S3BlobStoreApiAdvancedBucketConnection advanced = bucketConfiguration.getAdvancedBucketConnection();
+    if (advanced != null) {
+      builder.endpoint(advanced.getEndpoint());
+      builder.signerType(advanced.getSignerType());
+      builder.maxConnectionPool(advanced.getMaxConnectionPoolSize());
+      builder.forcePathStyle(advanced.getForcePathStyle());
     }
-  }
 
-  private static void copyAdvancedBucketConnectionSettings(
-      final S3BlobStoreApiAdvancedBucketConnection advancedBucketConnection,
-      final NestedAttributesMap s3BucketAttributes)
-  {
-    if (nonNull(advancedBucketConnection)) {
-      setAttribute(s3BucketAttributes, ENDPOINT_KEY, advancedBucketConnection.getEndpoint());
-      setAttribute(s3BucketAttributes, SIGNERTYPE_KEY, advancedBucketConnection.getSignerType());
-
-      String maxConnectionPoolSize = Optional.ofNullable(advancedBucketConnection.getMaxConnectionPoolSize())
-          .map(String::valueOf)
-          .orElse(null);
-      setAttribute(s3BucketAttributes, MAX_CONNECTION_POOL_KEY, maxConnectionPoolSize);
-
-      setForcePathStyleIfTrue(advancedBucketConnection.getForcePathStyle(), s3BucketAttributes);
+    BlobStoreApiSoftQuota softQuota = request.getSoftQuota();
+    if (softQuota != null) {
+      builder.quotaConfig(softQuota.getType(), checkNotNull(softQuota.getLimit(), "Missing quota limit") * ONE_MILLION);
     }
-  }
 
-  private static void setForcePathStyleIfTrue(
-      final Boolean forcePathStyle,
-      final NestedAttributesMap s3BucketAttributes)
-  {
-    if (nonNull(forcePathStyle) && forcePathStyle) {
-      setAttribute(s3BucketAttributes, FORCE_PATH_STYLE_KEY, Boolean.TRUE.toString());
-    }
-  }
-
-  private static void copySoftQuota(
-      final BlobStoreApiSoftQuota softQuota,
-      final NestedAttributesMap softQuotaAttributes)
-  {
-    if (nonNull(softQuota)) {
-      softQuotaAttributes.set(TYPE_KEY, checkNotNull(softQuota.getType()));
-      final Long softQuotaLimit = checkNotNull(softQuota.getLimit());
-      softQuotaAttributes.set(LIMIT_KEY, softQuotaLimit * ONE_MILLION);
-    }
+    return builder.build();
   }
 }
