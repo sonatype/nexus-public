@@ -55,7 +55,7 @@ public class VersionNumberExpander
       }
       catch (NumberFormatException e) {
         log.debug("Unable to parse number as long '{}'", matcher.group());
-        result.append(matcher.group());
+        matcher.appendReplacement(result, matcher.group());
       }
     }
 
