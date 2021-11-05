@@ -126,6 +126,8 @@ public abstract class NexusPaxExamSupport
 
   private static final String DATABASE_KEY = "it.database";
 
+  private static final String BLOB_STORE_KEY = "it.blobstore";
+
   // -------------------------------------------------------------------------
 
   @Rule
@@ -470,6 +472,9 @@ public abstract class NexusPaxExamSupport
             configureDatabase()
         ),
 
+        // configure default blobstore
+        configureBlobstore(),
+
         // randomize ports...
         editConfigurationFilePut(NEXUS_PROPERTIES_FILE, //
             "application-port", Integer.toString(PortAllocator.nextFreePort())),
@@ -510,6 +515,22 @@ public abstract class NexusPaxExamSupport
         return new Option[0];
       default:
         throw new IllegalStateException("No case defined for " + getValidTestDatabase());
+    }
+  }
+
+  protected static Option configureBlobstore() {
+    switch (System.getProperty(BLOB_STORE_KEY, "")) {
+      case "s3":
+        String mockS3endpoint = System.getProperty("mock.s3.service.endpoint");
+        return composite(
+            // enable s3 default
+            editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.test.default.s3", Boolean.TRUE.toString()),
+            // copy the maven property if it exists
+            when(mockS3endpoint != null).useOptions(
+                editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "mock.s3.service.endpoint",
+                    mockS3endpoint)));
+      default:
+        return composite();
     }
   }
 
