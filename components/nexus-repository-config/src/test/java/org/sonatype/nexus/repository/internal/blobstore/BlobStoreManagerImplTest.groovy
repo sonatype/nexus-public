@@ -101,8 +101,8 @@ class BlobStoreManagerImplTest
   private BlobStoreManagerImpl newBlobStoreManager(Boolean provisionDefaults = null) {
     spy(new BlobStoreManagerImpl(eventManager, store, [test: descriptor, File: descriptor],
         [test: provider, File: provider], freezeService, { -> repositoryManager } as Provider,
-         nodeAccess, provisionDefaults, changeRepositoryBlobstoreDataService, blobStoreOverrideProvider,
-         replicationBlobStoreStatusManager))
+         nodeAccess, provisionDefaults, new DefaultFileBlobStoreProvider(), changeRepositoryBlobstoreDataService,
+         blobStoreOverrideProvider, replicationBlobStoreStatusManager))
   }
 
   @Test
@@ -285,6 +285,7 @@ class BlobStoreManagerImplTest
     // avoid newBlobStoreManager method because it returns a spy that throws NPE accessing the stores field
     underTest = new BlobStoreManagerImpl(eventManager, store, [test: descriptor, File: descriptor],
         [test: provider, File: provider], freezeService, { -> repositoryManager } as Provider, nodeAccess, true,
+         new DefaultFileBlobStoreProvider(),
          changeRepositoryBlobstoreDataService, blobStoreOverrideProvider, replicationBlobStoreStatusManager)
 
     BlobStore blobStore = mock(BlobStore)

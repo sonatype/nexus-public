@@ -40,7 +40,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreNotFoundException;
 import org.sonatype.nexus.blobstore.api.BlobStoreUpdatedEvent;
 import org.sonatype.nexus.blobstore.api.ChangeRepositoryBlobstoreDataService;
-import org.sonatype.nexus.blobstore.file.FileBlobStoreConfigurationBuilder;
+import org.sonatype.nexus.blobstore.api.DefaultBlobStoreProvider;
 import org.sonatype.nexus.common.app.FreezeService;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventConsumer;
@@ -99,6 +99,8 @@ public class BlobStoreManagerImpl
 
   private final ReplicationBlobStoreStatusManager replicationBlobStoreStatusManager;
 
+  private final DefaultBlobStoreProvider defaultBlobstoreProvider;
+
   @Inject
   public BlobStoreManagerImpl(final EventManager eventManager, //NOSONAR
                               final BlobStoreConfigurationStore store,
@@ -108,6 +110,7 @@ public class BlobStoreManagerImpl
                               final Provider<RepositoryManager> repositoryManagerProvider,
                               final NodeAccess nodeAccess,
                               @Nullable @Named("${nexus.blobstore.provisionDefaults}") final Boolean provisionDefaults,
+                              final DefaultBlobStoreProvider defaultBlobstoreProvider,
                               @Nullable final ChangeRepositoryBlobstoreDataService changeRepositoryBlobstoreDataService,
                               final Provider<BlobStoreOverride> blobStoreOverrideProvider,
                               final ReplicationBlobStoreStatusManager replicationBlobStoreStatusManager)
@@ -121,6 +124,7 @@ public class BlobStoreManagerImpl
     this.changeRepositoryBlobstoreDataService = changeRepositoryBlobstoreDataService;
     this.blobStoreOverrideProvider = blobStoreOverrideProvider;
     this.replicationBlobStoreStatusManager = checkNotNull(replicationBlobStoreStatusManager);
+    this.defaultBlobstoreProvider = checkNotNull(defaultBlobstoreProvider);
 
     if (provisionDefaults != null) {
       // explicit true/false setting, so honour that
@@ -136,9 +140,10 @@ public class BlobStoreManagerImpl
   protected void doStart() throws Exception {
     Optional.ofNullable(blobStoreOverrideProvider.get()).ifPresent(BlobStoreOverride::apply);
     List<BlobStoreConfiguration> configurations = store.list();
+
     if (configurations.isEmpty() && provisionDefaults.getAsBoolean()) {
       log.debug("No BlobStores configured; provisioning default BlobStore");
-      store.create(new FileBlobStoreConfigurationBuilder(DEFAULT_BLOBSTORE_NAME, this::newConfiguration).build());
+      store.create(defaultBlobstoreProvider.get(this::newConfiguration));
       configurations = store.list();
     }
 

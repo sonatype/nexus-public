@@ -21,20 +21,18 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.entity.EntityHelper;
+import org.sonatype.nexus.repository.search.normalize.VersionNumberExpander;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Streams;
-import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -186,26 +184,7 @@ public class DefaultComponentMetadataProducer
   }
 
   public String getNormalizedVersion(Component component) {
-    String version = component.version();
-    if (StringUtils.isBlank(version)) {
-      return "";
-    }
-
-    Matcher matcher = Pattern.compile("\\d+").matcher(version);
-    StringBuilder replacementBuilder = new StringBuilder();
-    int position = 0;
-    while (matcher.find()) {
-      replacementBuilder.append(version, position, matcher.start());
-      position = matcher.end();
-      try {
-        replacementBuilder.append(String.format("%09d", Long.parseLong(matcher.group())));
-      }
-      catch (NumberFormatException e) {
-        log.debug("Unable to parse number as long '{}'", matcher.group());
-        replacementBuilder.append(matcher.group());
-      }
-    }
-    return replacementBuilder.toString();
+    return VersionNumberExpander.expand(component.version());
   }
 
 }

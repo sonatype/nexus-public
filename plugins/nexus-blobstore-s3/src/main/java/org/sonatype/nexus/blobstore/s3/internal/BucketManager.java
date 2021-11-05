@@ -146,7 +146,7 @@ public class BucketManager
         .withStatus(BucketLifecycleConfiguration.ENABLED);
 
     BucketLifecycleConfiguration newConfiguration = null;
-    if (existing != null) {
+    if (existing != null && !existing.getRules().isEmpty()) {
       List<Rule> rules = nonBlobstoreRules(existing, blobStoreName);
       if (expirationInDays > 0) {
         rules.add(rule);
@@ -184,7 +184,7 @@ public class BucketManager
     if (newLifecycleConfiguration != null) {
       s3.setBucketLifecycleConfiguration(bucket, newLifecycleConfiguration);
     }
-    else {
+    else if (lifecycleConfiguration != null && !lifecycleConfiguration.getRules().isEmpty()) {
       s3.deleteBucketLifecycleConfiguration(bucket);
     }
   }
