@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.capability.node.datastore;
+package org.sonatype.nexus.internal.capability.node;
 
 import java.util.Map;
 
@@ -20,18 +20,19 @@ import javax.inject.Named;
 import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
 import org.sonatype.nexus.capability.CapabilitySupport;
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.template.TemplateParameters;
-import org.sonatype.nexus.internal.capability.node.IdentityCapabilityConfiguration;
-import org.sonatype.nexus.internal.capability.node.IdentityCapabilityDescriptor;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 
 /**
  * Capability for exposing identity details.
  *
  * @since 3.0
  */
+@FeatureFlag(name = DATASTORE_ENABLED)
 @Named(IdentityCapabilityDescriptor.TYPE_ID)
 public class IdentityCapability
     extends CapabilitySupport<IdentityCapabilityConfiguration>
