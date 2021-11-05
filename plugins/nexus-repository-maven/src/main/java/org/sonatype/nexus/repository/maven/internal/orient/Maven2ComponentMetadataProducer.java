@@ -19,11 +19,14 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
+import org.sonatype.nexus.repository.maven.internal.search.MavenVersionNormalizer;
 import org.sonatype.nexus.repository.search.ComponentMetadataProducerExtension;
 import org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer;
+import org.sonatype.nexus.repository.search.normalize.VersionNumberExpander;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
 
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Constants.SNAPSHOT_VERSION_SUFFIX;
 
@@ -37,9 +40,13 @@ import static org.sonatype.nexus.repository.maven.internal.Constants.SNAPSHOT_VE
 public class Maven2ComponentMetadataProducer
     extends DefaultComponentMetadataProducer
 {
+  private final MavenVersionNormalizer versionNormalizer;
+
   @Inject
-  public Maven2ComponentMetadataProducer(final Set<ComponentMetadataProducerExtension> extensions) {
+  public Maven2ComponentMetadataProducer(final Set<ComponentMetadataProducerExtension> extensions,
+                                         final MavenVersionNormalizer versionNormalizer) {
     super(extensions);
+    this.versionNormalizer = requireNonNull(versionNormalizer);
   }
 
   @Override
@@ -49,6 +56,11 @@ public class Maven2ComponentMetadataProducer
       return false;
     }
     return baseVersion.endsWith(SNAPSHOT_VERSION_SUFFIX);
+  }
+
+  @Override
+  public String getNormalizedVersion(final Component component) {
+      return versionNormalizer.getNormalizedValue(component.version());
   }
 }
 

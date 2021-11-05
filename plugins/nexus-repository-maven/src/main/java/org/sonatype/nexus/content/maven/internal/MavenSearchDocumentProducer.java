@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.content.maven.internal;
 
+import java.util.Objects;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -22,7 +23,10 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.search.DefaultSearchDocumentProducer;
 import org.sonatype.nexus.repository.content.search.SearchDocumentExtension;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
+import org.sonatype.nexus.repository.maven.internal.search.MavenVersionNormalizer;
+import org.sonatype.nexus.repository.search.normalize.VersionNumberExpander;
 
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Constants.SNAPSHOT_VERSION_SUFFIX;
 
@@ -36,9 +40,13 @@ import static org.sonatype.nexus.repository.maven.internal.Constants.SNAPSHOT_VE
 public class MavenSearchDocumentProducer
     extends DefaultSearchDocumentProducer
 {
+  private final MavenVersionNormalizer versionNormalizer;
+
   @Inject
-  public MavenSearchDocumentProducer(final Set<SearchDocumentExtension> documentExtensions) {
+  public MavenSearchDocumentProducer(final Set<SearchDocumentExtension> documentExtensions,
+                                     final MavenVersionNormalizer versionNormalizer) {
     super(documentExtensions);
+    this.versionNormalizer = requireNonNull(versionNormalizer);
   }
 
   @Override
@@ -48,5 +56,10 @@ public class MavenSearchDocumentProducer
       return false;
     }
     return baseVersion.endsWith(SNAPSHOT_VERSION_SUFFIX);
+  }
+
+  @Override
+  protected String getNormalizedVersion(final FluentComponent component) {
+    return versionNormalizer.getNormalizedValue(component.version());
   }
 }

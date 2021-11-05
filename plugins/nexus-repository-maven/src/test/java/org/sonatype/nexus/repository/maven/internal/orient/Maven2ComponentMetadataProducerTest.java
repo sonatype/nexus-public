@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.maven.internal.orient;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
+import org.sonatype.nexus.repository.maven.internal.search.MavenVersionNormalizer;
 import org.sonatype.nexus.repository.storage.Component;
 
 import org.junit.Before;
@@ -42,7 +43,7 @@ public class Maven2ComponentMetadataProducerTest
 
   @Before
   public void setUp() throws Exception {
-    underTest = new Maven2ComponentMetadataProducer(emptySet());
+    underTest = new Maven2ComponentMetadataProducer(emptySet(), new MavenVersionNormalizer());
   }
 
   @Test

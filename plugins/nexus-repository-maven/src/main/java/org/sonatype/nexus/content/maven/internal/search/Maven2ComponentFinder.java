@@ -40,7 +40,7 @@ import static java.util.Comparator.reverseOrder;
 public class Maven2ComponentFinder
     extends DefaultComponentFinder
 {
-  private static final Pattern SNAPSHOT_TIMESTAMP = Pattern.compile( "^(.*-)?([0-9]{8}\\.[0-9]{6}-[0-9]+)$" );
+  public static final Pattern SNAPSHOT_TIMESTAMP = Pattern.compile( "^(.*-)?([0-9]{8}\\.[0-9]{6}-[0-9]+)$" );
 
   @Override
   public Stream<FluentComponent> findComponentsByModel(

@@ -35,6 +35,7 @@ import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.search.normalize.VersionNumberExpander;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -143,29 +144,7 @@ public class DefaultSearchDocumentProducer
    * Override this method to customize how versions are normalized in search.
    */
   protected String getNormalizedVersion(final FluentComponent component) {
-    String version = component.version();
-    if (isBlank(version)) {
-      return "";
-    }
-
-    // Prepend any numbers in the version with 0s to make each number 9 digits
-
-    Matcher digitsMatcher = DIGITS_PATTERN.matcher(version);
-    StringBuilder paddedVersion = new StringBuilder();
-
-    int position = 0;
-    while (digitsMatcher.find()) {
-      paddedVersion.append(version, position, digitsMatcher.start());
-      position = digitsMatcher.end();
-      try {
-        paddedVersion.append(String.format("%09d", parseLong(digitsMatcher.group())));
-      }
-      catch (NumberFormatException e) {
-        log.debug("Unable to parse number as long '{}'", digitsMatcher.group());
-        paddedVersion.append(digitsMatcher.group());
-      }
-    }
-    return paddedVersion.toString();
+    return VersionNumberExpander.expand(component.version());
   }
 
   /**

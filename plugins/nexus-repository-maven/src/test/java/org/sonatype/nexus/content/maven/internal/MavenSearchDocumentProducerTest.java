@@ -16,6 +16,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
+import org.sonatype.nexus.repository.maven.internal.search.MavenVersionNormalizer;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -46,7 +47,7 @@ public class MavenSearchDocumentProducerTest
 
   @Before
   public void setup() {
-    underTest = new MavenSearchDocumentProducer(emptySet());
+    underTest = new MavenSearchDocumentProducer(emptySet(), new MavenVersionNormalizer());
     when(component.attributes()).thenReturn(attributes);
     when(attributes.child(Maven2Format.NAME)).thenReturn(childAttributes);
   }
