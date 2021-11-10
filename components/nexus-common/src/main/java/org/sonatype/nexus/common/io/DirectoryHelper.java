@@ -28,6 +28,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.util.EnumSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Nullable;
 
@@ -235,6 +236,52 @@ public final class DirectoryHelper
           }
         }
     );
+  }
+
+  /**
+   * Will walk a directory structure and prune any empty directories found that have modified timestamps that fall
+   * before the provided timestamp value.  If null, all empty directories will be pruned
+   */
+  public static int deleteIfEmptyRecursively(final Path dir, final Long timestamp) throws IOException {
+    final AtomicInteger deleteCount = new AtomicInteger(0);
+
+    File rootDir = dir.toFile();
+
+    if (!rootDir.exists()) {
+      log.debug("Requested path {} doesn't exist, will not process for empty directories to remove.",
+          rootDir.getAbsolutePath());
+      return 0;
+    }
+
+    Files.walkFileTree(dir, new SimpleFileVisitor<Path>(){
+      @Override
+      public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) throws IOException {
+        File dirFile = dir.toFile();
+        if (!dirFile.exists()) {
+          log.debug("Processing directory {} that no longer exists, will ignore and move on", dir.toAbsolutePath());
+          return FileVisitResult.CONTINUE;
+        }
+        if (timestamp != null && dirFile.lastModified() > timestamp) {
+          log.debug("Processing directory {} has been modified recently and will not be removed.", dir.toAbsolutePath());
+          return FileVisitResult.CONTINUE;
+        }
+
+        String[] items = dir.toFile().list();
+        if (items != null && items.length == 0) {
+          try {
+            Files.delete(dir);
+            deleteCount.incrementAndGet();
+          }
+          catch (IOException e) {
+            log.error("Failed to delete empty directory {} will stop processing.", dir.toAbsolutePath(), e);
+            return FileVisitResult.TERMINATE;
+          }
+        }
+        return FileVisitResult.CONTINUE;
+      }
+    });
+
+    return deleteCount.intValue();
   }
 
   /**

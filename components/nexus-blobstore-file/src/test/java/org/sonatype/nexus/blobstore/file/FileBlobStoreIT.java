@@ -152,7 +152,7 @@ public class FileBlobStoreIT
     underTest = new FileBlobStore(blobIdResolver,
         fileOperations,
         applicationDirectories,
-        metricsStore, nodeAccess, dryRunPrefix, reconciliationLogger);
+        metricsStore, nodeAccess, dryRunPrefix, reconciliationLogger, 0L);
     underTest.init(config);
     underTest.start();
   }
