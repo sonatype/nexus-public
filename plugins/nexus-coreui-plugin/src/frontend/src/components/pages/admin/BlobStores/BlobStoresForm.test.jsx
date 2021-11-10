@@ -661,4 +661,56 @@ describe('BlobStoresForm', function() {
 
     expect(convertToGroup()).not.toBeInTheDocument();
   });
+
+  it('log save error message when blobstore can not be added to group', async function() {
+    let updateUrl = "/service/rest/v1/blobstores/group/test";
+    let updateData = {
+      name: "test",
+      members: [
+        "test-blobstore",
+        "default"
+      ],
+      fillPolicy: "writeToFirst"
+    };
+
+    let errorMessage = "Blob Store is not eligible to be a group member";
+
+    when(axios.get).calledWith('/service/rest/v1/blobstores/group/test').mockResolvedValue({
+      data: {
+        "softQuota" : null,
+        "members" : [ "test-blobstore", "default" ],
+        "fillPolicy" : "writeToFirst"
+      }
+    });
+
+    when(axios.put).calledWith(updateUrl, updateData).mockRejectedValue({
+        response: {
+          data: [
+            {
+              "id": "*",
+              "message": errorMessage
+            }
+          ]
+        }
+    });
+
+    const {
+      getByText,
+      loadingMask,
+      selectedMembers
+    } = render('group/test');
+
+    await waitForElementToBeRemoved(loadingMask);
+
+    expect(selectedMembers()).toContainElement(getByText('test-blobstore'));
+    expect(selectedMembers()).toContainElement(getByText('default'));
+
+    const consoleSpy = jest.spyOn(console, 'log');
+
+    await axios.put(updateUrl, updateData).catch(function(reason) {
+      console.log(reason.response.data[0].message);
+    });
+
+    expect(consoleSpy).toHaveBeenCalledWith(errorMessage);
+  });
 });
