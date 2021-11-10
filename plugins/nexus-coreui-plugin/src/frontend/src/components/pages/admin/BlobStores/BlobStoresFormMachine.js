@@ -297,9 +297,22 @@ export default FormUtils.buildFormMachine({
     onConvertError: (_, event) => ExtJS.showErrorMessage(event.data?.response?.data),
 
     logSaveError: (_, event) => {
-      let saveError = event.data?.response?.data ? event.data.response.data : UIStrings.ERROR.SAVE_ERROR;
-      ExtJS.showErrorMessage(saveError);
-      console.log(`Save Error: ${saveError}`);
+      let saveErrors = event.data?.response?.data ? event.data.response.data : UIStrings.ERROR.SAVE_ERROR;
+      var errorMessage = '';
+
+      // try to extract error message from errors from response
+      if (Array.isArray(saveErrors)) {
+        let error = saveErrors[0];
+        if (error) {
+          errorMessage = error.message;
+        }
+      } else {
+        errorMessage = saveErrors;
+      }
+
+      errorMessage = errorMessage ? errorMessage : UIStrings.ERROR.SAVE_ERROR;
+      ExtJS.showErrorMessage(errorMessage);
+      console.log(`Save Error: ${errorMessage}`);
     }
   },
   guards: {
