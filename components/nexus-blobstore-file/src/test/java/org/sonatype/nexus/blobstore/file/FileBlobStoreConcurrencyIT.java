@@ -120,7 +120,7 @@ public class FileBlobStoreConcurrencyIT
         new SimpleFileOperations(),
         metricsStore,
         config,
-        applicationDirectories, nodeAccess, dryRunPrefix, reconciliationLogger);
+        applicationDirectories, nodeAccess, dryRunPrefix, reconciliationLogger, 0L);
     underTest.start();
   }
 

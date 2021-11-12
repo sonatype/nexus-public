@@ -52,6 +52,8 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mock;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.file.Files.delete;
 import static java.nio.file.Files.write;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNotNull;
@@ -134,6 +136,7 @@ public class FileBlobStoreTest
 
   private Path fullPath;
 
+  private Path directFullPath;
 
   @Before
   public void initBlobStore() throws IOException {
@@ -158,7 +161,7 @@ public class FileBlobStoreTest
 
     underTest = new FileBlobStore(util.createTempDir().toPath(),
         blobIdLocationResolver, fileOperations, metrics, configuration,
-        appDirs, nodeAccess, dryRunPrefix, reconciliationLogger);
+        appDirs, nodeAccess, dryRunPrefix, reconciliationLogger, 0L);
 
     when(loadingCache.getUnchecked(any())).thenReturn(underTest.new FileBlob(new BlobId("fakeid")));
 
@@ -168,6 +171,9 @@ public class FileBlobStoreTest
     fullPath = underTest.getAbsoluteBlobDir()
         .resolve("content").resolve("vol-03").resolve("chap-44");
     Files.createDirectories(fullPath);
+
+    directFullPath = underTest.getAbsoluteBlobDir().resolve("content").resolve("directpath");
+    Files.createDirectories(directFullPath);
 
     when(blobIdLocationResolver.getLocation(any(BlobId.class))).thenAnswer(invocation -> {
       BlobId blobId = (BlobId) invocation.getArguments()[0];
@@ -289,6 +295,28 @@ public class FileBlobStoreTest
     checkDeletionsIndex(true);
 
     verify(blobStoreUsageChecker, never()).test(any(), any(), any());
+  }
+
+  @Test
+  public void testDoCompact_clearsDirectPathEmptyDirectories() throws Exception {
+    when(fileOperations.delete(any())).thenReturn(true);
+    when(nodeAccess.isOldestNode()).thenReturn(true);
+    underTest.doStart();
+
+    Path fileInSubdir1 = directFullPath.resolve("subdir").resolve("somefile.txt");
+    fileInSubdir1.toFile().getParentFile().mkdirs();
+    write(fileInSubdir1, "somefile".getBytes(UTF_8));
+
+    Path subdir2 = directFullPath.resolve("subdir2");
+    subdir2.toFile().mkdirs();
+
+    assertThat(fileInSubdir1.toFile().exists(), is(true));
+    assertThat(subdir2.toFile().exists(), is(true));
+
+    underTest.doCompact(blobStoreUsageChecker);
+
+    assertThat(fileInSubdir1.toFile().exists(), is(true));
+    assertThat(subdir2.toFile().exists(), is(false));
   }
 
   @Test

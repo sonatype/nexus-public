@@ -27,11 +27,13 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDate;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Stream;
@@ -76,6 +78,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.HashCode;
 import com.squareup.tape.QueueFile;
 import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -85,7 +88,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
 import static java.time.LocalDate.now;
 import static java.util.Arrays.stream;
-import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.removeEnd;
@@ -161,6 +163,8 @@ public class FileBlobStore
 
   private final BlobStoreReconciliationLogger reconciliationLogger;
 
+  private final long pruneEmptyDirectoryAge;
+
   @Inject
   public FileBlobStore(final BlobIdLocationResolver blobIdLocationResolver,
                        final FileOperations fileOperations,
@@ -168,7 +172,9 @@ public class FileBlobStore
                        final FileBlobStoreMetricsStore metricsStore,
                        final NodeAccess nodeAccess,
                        final DryRunPrefix dryRunPrefix,
-                       final BlobStoreReconciliationLogger reconciliationLogger)
+                       final BlobStoreReconciliationLogger reconciliationLogger,
+                       @Named("${nexus.blobstore.prune.empty.directory.age.ms:-86400000}")
+                       final long pruneEmptyDirectoryAge)
   {
     super(blobIdLocationResolver, dryRunPrefix);
     this.fileOperations = checkNotNull(fileOperations);
@@ -178,6 +184,7 @@ public class FileBlobStore
     this.supportsHardLinkCopy = true;
     this.supportsAtomicMove = true;
     this.reconciliationLogger = checkNotNull(reconciliationLogger);
+    this.pruneEmptyDirectoryAge = pruneEmptyDirectoryAge;
   }
 
   @VisibleForTesting
@@ -189,10 +196,11 @@ public class FileBlobStore
                        final ApplicationDirectories directories,
                        final NodeAccess nodeAccess,
                        final DryRunPrefix dryRunPrefix,
-                       final BlobStoreReconciliationLogger reconciliationLogger)
+                       final BlobStoreReconciliationLogger reconciliationLogger,
+                       final long pruneEmptyDirectoryAge)
   {
     this(blobIdLocationResolver, fileOperations, directories, metricsStore, nodeAccess, dryRunPrefix,
-        reconciliationLogger);
+        reconciliationLogger, pruneEmptyDirectoryAge);
     this.contentDir = checkNotNull(contentDir);
     this.blobStoreConfiguration = checkNotNull(configuration);
   }
@@ -806,10 +814,31 @@ public class FileBlobStore
         deletedBlobIndex.remove();
         deletedBlobIndex.add(bytes);
       }
+
       progressLogger.info("Elapsed time: {}, processed: {}/{}", progressLogger.getElapsed(),
           counter + 1, numBlobs);
     }
+    //once done removing stuff, clean any empty directories left around in the directpath area
+    pruneEmptyDirectories(progressLogger, contentDir.resolve(DIRECT_PATH_ROOT));
     progressLogger.flush();
+  }
+
+  private void pruneEmptyDirectories(final ProgressLogIntervalHelper progressLogger, final Path directPathDir) {
+    long timestamp = new Date().getTime() - pruneEmptyDirectoryAge;
+
+    final String absolutePath = directPathDir.toAbsolutePath().toString();
+
+    progressLogger.info("Removing empty directories from {} that haven't been modified in last {}",
+        absolutePath,
+        DateTimeFormat.forPattern("kk' hours 'mm' minutes 'ss.SSS' seconds'").print(timestamp));
+    try {
+      int count = DirectoryHelper.deleteIfEmptyRecursively(directPathDir, timestamp);
+      progressLogger.info("Removed {} empty directories from {}", count, absolutePath);
+    }
+    catch (IOException e) {
+      log.error("Failed to remove at least one empty directory from {}", absolutePath, e);
+      progressLogger.info("Failed to remove at least one empty directory from {}: {}", absolutePath, e.getMessage());
+    }
   }
 
   @VisibleForTesting

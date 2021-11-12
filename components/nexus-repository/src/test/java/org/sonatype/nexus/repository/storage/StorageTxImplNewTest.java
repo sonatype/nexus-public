@@ -46,7 +46,8 @@ import static org.mockito.Mockito.when;
 /**
  * Tests for {@link StorageTxImpl}.
  */
-public class StorageTxImplTestNew extends TestSupport
+public class StorageTxImplNewTest
+    extends TestSupport
 {
   @Mock
   private BlobTx blobTx;

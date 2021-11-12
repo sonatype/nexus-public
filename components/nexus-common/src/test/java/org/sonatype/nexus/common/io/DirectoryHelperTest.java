@@ -15,11 +15,14 @@ package org.sonatype.nexus.common.io;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystemException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Date;
 
 import javax.annotation.Nullable;
 
@@ -29,8 +32,11 @@ import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -47,7 +53,10 @@ import static org.sonatype.goodies.testsupport.hamcrest.FileMatchers.isFile;
 public class DirectoryHelperTest
     extends TestSupport
 {
-  private static final byte[] PAYLOAD = "payload".getBytes(Charset.forName("UTF-8"));
+  @Rule
+  public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  private static final byte[] PAYLOAD = "payload".getBytes(UTF_8);
 
   private File root;
 
@@ -308,4 +317,77 @@ public class DirectoryHelperTest
     assertThat(dirNames, hasSize(0));
   }
 
+  @Test
+  public void testDeleteIfEmptyRecursively() throws Exception {
+    File dir = temporaryFolder.newFolder("basedir");
+
+    //now lets start adding some directories
+    //first off a simple empty directory
+    File subdir = new File(dir, "sub");
+    Files.createDirectory(subdir.toPath());
+
+    //now some nested empty directories
+    subdir = new File(dir, "subnested");
+    Files.createDirectory(subdir.toPath());
+    for (int i = 0 ; i < 10 ; i++) {
+      subdir = new File(subdir, "subnested" + i);
+      Files.createDirectory(subdir.toPath());
+    }
+
+    //now a directory with a file in it
+    subdir = new File(dir, "subwithcontent");
+    Files.createDirectory(subdir.toPath());
+    new File(subdir, "afile.txt").createNewFile();
+
+    //now a nested directory with a file in it
+    subdir = new File(dir, "subnestedwithcontent");
+    Files.createDirectory(subdir.toPath());
+    for (int i = 0 ; i < 10 ; i++) {
+      subdir = new File(subdir, "subnestedwithcontent" + i);
+      Path newdir = Files.createDirectory(subdir.toPath());
+      if (i == 9) {
+        new File(newdir.toFile(), "afile.txt").createNewFile();
+      }
+    }
+
+    int count = DirectoryHelper.deleteIfEmptyRecursively(dir.toPath(), null);
+
+    assertThat(dir, exists());
+    assertThat(new File(dir, "sub"), not(exists()));
+    assertThat(new File(dir, "subnested"), not(exists()));
+    assertThat(new File(dir, "subwithcontent"), exists());
+    assertThat(new File(dir, "subnestedwithcontent"), exists());
+    assertThat(count, is(12));
+  }
+
+  @Test
+  public void testDeleteIfEmptyRecursively_missingDirectory() throws Exception {
+    int count = DirectoryHelper.deleteIfEmptyRecursively(Paths.get("fake", "dir"), null);
+    assertThat(count, is(0));
+  }
+
+  @Test
+  public void testDeleteIfEmptyRecursively_skipNewerDirs() throws Exception {
+    File dir = temporaryFolder.newFolder("basedir");
+
+    //This directory will be the one that is slightly older than the timestamp so _should_ get deleted
+    File subdir = new File(dir, "sub");
+    Files.createDirectory(subdir.toPath());
+
+    //put some sleeps around the timestamp, to guaranty state, and that the timestamp wont errantly associate with the
+    //test created directories
+    Thread.sleep(100);
+    Date okTimestamp = new Date();
+    Thread.sleep(100);
+
+    //This directory should come after the timestamp, so should not get deleted
+    subdir = new File(dir, "sub2");
+    Files.createDirectory(subdir.toPath());
+
+    int count = DirectoryHelper.deleteIfEmptyRecursively(dir.toPath(), okTimestamp.getTime());
+
+    assertThat(count, is(1));
+    assertThat(new File(dir, "sub"), not(exists()));
+    assertThat(new File(dir, "sub2"), exists());
+  }
 }
