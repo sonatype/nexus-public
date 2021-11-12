@@ -14,6 +14,7 @@ package org.sonatype.nexus.internal.log;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.FileWriter;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
 import java.text.DateFormat;
@@ -155,11 +156,23 @@ public class LastShutdownTimeServiceImplTest
     verify(reader, never()).readLine();
   }
 
+  // Create file if no exists, throws IOException
+  public void fillFile(String fileName) throws IOException {
+        File realFile = new File(fileName);
+        com.google.common.io.Files.touch(realFile);
+        FileWriter myWriter = new FileWriter(fileName);
+        myWriter.write("Files in Java might be tricky...");
+        myWriter.write("but it is fun enough!");
+        myWriter.close();
+  }
+
   @Test
   public void handleMissingStartMarker() throws Exception {
-    ReversedLinesFileReader realReader = new ReversedLinesFileReader(
-        Paths.get(getClass().getResource("no-start-marker.log").toURI()), Charset.defaultCharset());
+    final String TMP_FILE_NAME = "no-start-marker.log";
+    fillFile(TMP_FILE_NAME);
 
+    ReversedLinesFileReader realReader = new ReversedLinesFileReader(
+        Paths.get(TMP_FILE_NAME), Charset.defaultCharset());
     lastShutdownTimeService = new LastShutdownTimeServiceImpl(logManager, true);
 
     Optional<Date> result = lastShutdownTimeService.findShutdownTimeInLog(realReader, START_MARKER, pattern, 1000, GROUP_NAME, dateFormat);
