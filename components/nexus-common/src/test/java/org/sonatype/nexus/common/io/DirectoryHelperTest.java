@@ -376,9 +376,9 @@ public class DirectoryHelperTest
 
     //put some sleeps around the timestamp, to guaranty state, and that the timestamp wont errantly associate with the
     //test created directories
-    Thread.sleep(100);
+    Thread.sleep(1000);
     Date okTimestamp = new Date();
-    Thread.sleep(100);
+    Thread.sleep(1000);
 
     //This directory should come after the timestamp, so should not get deleted
     subdir = new File(dir, "sub2");
