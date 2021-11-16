@@ -25,6 +25,13 @@ public interface Transaction
 
   void rollback();
 
+  /**
+   * Invoked at the end of the transaction
+   */
+  default void end() {
+
+  };
+
   boolean isActive();
 
   /**

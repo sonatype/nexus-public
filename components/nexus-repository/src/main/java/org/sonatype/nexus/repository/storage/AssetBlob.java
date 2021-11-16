@@ -145,7 +145,9 @@ public class AssetBlob
    * Sets the attached state or this instance. Only can be invoked once, while this instance is not attached.
    */
   void setAttached(final boolean attached) {
-    checkArgument(!this.attached, "Already attached");
+    if (attached) {
+      checkArgument(!this.attached, "Already attached");
+    }
     this.attached = attached;
   }
 

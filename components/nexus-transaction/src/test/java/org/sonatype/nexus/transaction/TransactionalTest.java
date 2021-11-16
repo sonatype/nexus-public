@@ -61,14 +61,16 @@ public class TransactionalTest
 
     when(tx.isActive()).thenAnswer(new Answer<Boolean>()
     {
-      public Boolean answer(InvocationOnMock invocation) throws Throwable {
+      @Override
+      public Boolean answer(final InvocationOnMock invocation) throws Throwable {
         return isActive;
       }
     });
 
     doAnswer(new Answer<Void>()
     {
-      public Void answer(InvocationOnMock invocation) throws Throwable {
+      @Override
+      public Void answer(final InvocationOnMock invocation) throws Throwable {
         isActive = true;
         return null;
       }
@@ -76,7 +78,8 @@ public class TransactionalTest
 
     doAnswer(new Answer<Void>()
     {
-      public Void answer(InvocationOnMock invocation) throws Throwable {
+      @Override
+      public Void answer(final InvocationOnMock invocation) throws Throwable {
         isActive = false;
         if (throwExceptionOnCommit) {
           throw new ConcurrentModificationException();
@@ -87,7 +90,8 @@ public class TransactionalTest
 
     doAnswer(new Answer<Void>()
     {
-      public Void answer(InvocationOnMock invocation) throws Throwable {
+      @Override
+      public Void answer(final InvocationOnMock invocation) throws Throwable {
         isActive = false;
         return null;
       }
@@ -121,16 +125,19 @@ public class TransactionalTest
     order.verify(tx).reason(DEFAULT_REASON);
     order.verify(tx).begin();
     order.verify(tx).commit();
+    order.verify(tx).end();
     order.verify(session).close();
     order.verify(session).getTransaction();
     order.verify(tx).reason(DEFAULT_REASON);
     order.verify(tx).begin();
     order.verify(tx).commit();
+    order.verify(tx).end();
     order.verify(session).close();
     order.verify(session).getTransaction();
     order.verify(tx).reason(DEFAULT_REASON);
     order.verify(tx).begin();
     order.verify(tx).commit();
+    order.verify(tx).end();
     order.verify(session).close();
     verifyNoMoreInteractions(session, tx);
   }
@@ -145,6 +152,7 @@ public class TransactionalTest
     order.verify(tx).reason("Testing!");
     order.verify(tx).begin();
     order.verify(tx).commit();
+    order.verify(tx).end();
     order.verify(session).close();
     verifyNoMoreInteractions(session, tx);
   }
@@ -177,16 +185,19 @@ public class TransactionalTest
     order.verify(tx).reason(DEFAULT_REASON);
     order.verify(tx).begin();
     order.verify(tx).commit();
+    order.verify(tx).end();
     order.verify(session).close();
     order.verify(session2).getTransaction();
     order.verify(tx2).reason(DEFAULT_REASON);
     order.verify(tx2).begin();
     order.verify(tx2).commit();
+    order.verify(tx2).end();
     order.verify(session2).close();
     order.verify(session).getTransaction();
     order.verify(tx).reason(DEFAULT_REASON);
     order.verify(tx).begin();
     order.verify(tx).commit();
+    order.verify(tx).end();
     order.verify(session).close();
     verifyNoMoreInteractions(session, tx, session2, tx2);
   }
@@ -208,16 +219,19 @@ public class TransactionalTest
     order.verify(tx).reason(DEFAULT_REASON);
     order.verify(tx).begin();
     order.verify(tx).commit();
+    order.verify(tx).end();
     order.verify(session).getTransaction();
     order.verify(tx).isActive();
     order.verify(tx).reason(DEFAULT_REASON);
     order.verify(tx).begin();
     order.verify(tx).commit();
+    order.verify(tx).end();
     order.verify(session).getTransaction();
     order.verify(tx).isActive();
     order.verify(tx).reason(DEFAULT_REASON);
     order.verify(tx).begin();
     order.verify(tx).commit();
+    order.verify(tx).end();
     order.verify(session).close();
     verifyNoMoreInteractions(session, tx);
   }
@@ -238,6 +252,7 @@ public class TransactionalTest
     order.verify(session).getTransaction();
     order.verify(tx).isActive();
     order.verify(tx).commit();
+    order.verify(tx).end();
     order.verify(session).close();
     order.verify(session).getTransaction();
     order.verify(tx).reason(DEFAULT_REASON);
@@ -247,6 +262,7 @@ public class TransactionalTest
     order.verify(session).getTransaction();
     order.verify(tx).isActive();
     order.verify(tx).commit();
+    order.verify(tx).end();
     order.verify(session).close();
     order.verify(session).getTransaction();
     order.verify(tx).reason(DEFAULT_REASON);
@@ -256,6 +272,7 @@ public class TransactionalTest
     order.verify(session).getTransaction();
     order.verify(tx).isActive();
     order.verify(tx).commit();
+    order.verify(tx).end();
     order.verify(session).close();
     verifyNoMoreInteractions(session, tx);
   }
@@ -282,6 +299,7 @@ public class TransactionalTest
     order.verify(session).getTransaction();
     order.verify(tx).isActive();
     order.verify(tx).commit();
+    order.verify(tx).end();
     order.verify(session).getTransaction();
     order.verify(tx).isActive();
     order.verify(tx).reason(DEFAULT_REASON);
@@ -291,6 +309,7 @@ public class TransactionalTest
     order.verify(session).getTransaction();
     order.verify(tx).isActive();
     order.verify(tx).commit();
+    order.verify(tx).end();
     order.verify(session).getTransaction();
     order.verify(tx).isActive();
     order.verify(tx).reason(DEFAULT_REASON);
@@ -300,6 +319,7 @@ public class TransactionalTest
     order.verify(session).getTransaction();
     order.verify(tx).isActive();
     order.verify(tx).commit();
+    order.verify(tx).end();
     order.verify(session).close();
     verifyNoMoreInteractions(session, tx);
   }
@@ -317,6 +337,7 @@ public class TransactionalTest
     order.verify(tx).capture(methods.nestedStore);
     order.verify(tx).isActive();
     order.verify(tx).commit();
+    order.verify(tx).end();
     order.verify(session).close();
     verifyNoMoreInteractions(session, tx);
   }
@@ -343,6 +364,7 @@ public class TransactionalTest
       order.verify(tx).reason(DEFAULT_REASON);
       order.verify(tx).begin();
       order.verify(tx).rollback();
+      order.verify(tx).end();
       order.verify(session).close();
       verifyNoMoreInteractions(session, tx);
     }
@@ -359,6 +381,7 @@ public class TransactionalTest
       order.verify(tx).reason(DEFAULT_REASON);
       order.verify(tx).begin();
       order.verify(tx).rollback();
+      order.verify(tx).end();
       order.verify(session).close();
       verifyNoMoreInteractions(session, tx);
     }
@@ -375,6 +398,7 @@ public class TransactionalTest
       order.verify(tx).reason(DEFAULT_REASON);
       order.verify(tx).begin();
       order.verify(tx).commit();
+      order.verify(tx).end();
       order.verify(session).close();
       verifyNoMoreInteractions(session, tx);
     }
@@ -391,6 +415,7 @@ public class TransactionalTest
       order.verify(tx).reason(DEFAULT_REASON);
       order.verify(tx).begin();
       order.verify(tx).commit();
+      order.verify(tx).end();
       order.verify(session).close();
       verifyNoMoreInteractions(session, tx);
     }
@@ -417,6 +442,7 @@ public class TransactionalTest
     order.verify(tx).allowRetry(any(IOException.class));
     order.verify(tx).begin();
     order.verify(tx).commit();
+    order.verify(tx).end();
     order.verify(session).close();
     verifyNoMoreInteractions(session, tx);
   }
@@ -439,6 +465,7 @@ public class TransactionalTest
       order.verify(tx).begin();
       order.verify(tx).rollback();
       order.verify(tx).allowRetry(any(IOException.class));
+      order.verify(tx).end();
       order.verify(session).close();
       verifyNoMoreInteractions(session, tx);
     }
@@ -465,6 +492,7 @@ public class TransactionalTest
     order.verify(tx).allowRetry(any(IllegalStateException.class));
     order.verify(tx).begin();
     order.verify(tx).commit();
+    order.verify(tx).end();
     order.verify(session).close();
     verifyNoMoreInteractions(session, tx);
   }
@@ -487,6 +515,7 @@ public class TransactionalTest
       order.verify(tx).begin();
       order.verify(tx).rollback();
       order.verify(tx).allowRetry(any(IllegalStateException.class));
+      order.verify(tx).end();
       order.verify(session).close();
       verifyNoMoreInteractions(session, tx);
     }
@@ -513,6 +542,7 @@ public class TransactionalTest
     order.verify(tx).allowRetry(any(IllegalStateException.class));
     order.verify(tx).begin();
     order.verify(tx).commit();
+    order.verify(tx).end();
     order.verify(session).close();
     verifyNoMoreInteractions(session, tx);
   }
@@ -535,6 +565,7 @@ public class TransactionalTest
       order.verify(tx).begin();
       order.verify(tx).rollback();
       order.verify(tx).allowRetry(any(IllegalStateException.class));
+      order.verify(tx).end();
       order.verify(session).close();
       verifyNoMoreInteractions(session, tx);
     }
@@ -571,6 +602,7 @@ public class TransactionalTest
       order.verify(tx).commit();
       order.verify(tx).rollback();
       order.verify(tx).allowRetry(any(ConcurrentModificationException.class));
+      order.verify(tx).end();
       order.verify(session).close();
       verifyNoMoreInteractions(session, tx);
     }
@@ -592,6 +624,7 @@ public class TransactionalTest
       order.verify(tx).begin();
       order.verify(tx).commit();
       order.verify(tx).rollback();
+      order.verify(tx).end();
       order.verify(session).close();
       verifyNoMoreInteractions(session, tx);
     }
@@ -613,6 +646,7 @@ public class TransactionalTest
       order.verify(tx).begin();
       order.verify(tx).commit();
       order.verify(tx).rollback();
+      order.verify(tx).end();
       order.verify(session).close();
       verifyNoMoreInteractions(session, tx);
     }
@@ -639,6 +673,7 @@ public class TransactionalTest
     order.verify(tx).allowRetry(any(IOException.class));
     order.verify(tx).begin();
     order.verify(tx).commit();
+    order.verify(tx).end();
     order.verify(session).close();
     verifyNoMoreInteractions(session, tx);
   }
