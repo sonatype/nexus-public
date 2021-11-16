@@ -44,62 +44,72 @@ final class TransactionalWrapper
    */
   public Object proceedWithTransaction(final Transaction tx) throws Throwable {
     tx.reason(spec.reason());
-    while (true) {
-      boolean committed = false;
-      Throwable throwing = null;
-      Object result = null;
-      try {
-        if (tracing) {
-          log.trace("BEGIN {} : {}", tx, aspect.getStaticPart());
-        }
-        tx.begin();
+    try {
+      while (true) {
+        boolean committed = false;
+        Throwable throwing = null;
+        Object result = null;
         try {
-          result = aspect.proceed();
-          return result;
-        }
-        catch (final Throwable e) { // make sure we capture VM errors here (will be rethrown later)
-          throwing = e;
-        }
-        finally {
-          if (throwing == null || instanceOf(throwing, spec.commitOn())) {
-            if (tracing) {
-              log.trace("COMMIT {} : {}", tx, aspect.getStaticPart(), throwing);
-            }
-            tx.commit();
-            committed = true;
-          }
-          if (throwing != null) {
-            throw throwing;
-          }
-        }
-      }
-      catch (final Exception e) { // ignore VM errors as here as we don't rollback/retry on them
-        if (!committed) {
           if (tracing) {
-            log.trace("ROLLBACK {} : {}", tx, aspect.getStaticPart(), e);
+            log.trace("BEGIN {} : {}", tx, aspect.getStaticPart());
           }
-          tx.rollback();
-          if (instanceOf(e, spec.retryOn()) && tx.allowRetry(e)) {
-            if (tracing) {
-              log.trace("RETRY {} : {}", tx, aspect.getStaticPart(), e);
-            }
-            continue;
+          tx.begin();
+          try {
+            result = aspect.proceed();
+            return result;
           }
-          // only want to swallow commit exceptions distinct from 'throwing'
-          if (throwing != e && instanceOf(e, spec.swallow())) {
-            if (tracing) {
-              log.trace("SWALLOW {} : {}", tx, aspect.getStaticPart(), e);
+          catch (final Throwable e) { // make sure we capture VM errors here (will be rethrown later)
+            throwing = e;
+          }
+          finally {
+            if (throwing == null || instanceOf(throwing, spec.commitOn())) {
+              if (tracing) {
+                log.trace("COMMIT {} : {}", tx, aspect.getStaticPart(), throwing);
+              }
+              tx.commit();
+              committed = true;
             }
             if (throwing != null) {
               throw throwing;
             }
-            return result;
           }
         }
-        if (throwing != null && throwing != e) {
-          e.addSuppressed(throwing);
+        catch (final Exception e) { // ignore VM errors as here as we don't rollback/retry on them
+          if (!committed) {
+            if (tracing) {
+              log.trace("ROLLBACK {} : {}", tx, aspect.getStaticPart(), e);
+            }
+            tx.rollback();
+            if (instanceOf(e, spec.retryOn()) && tx.allowRetry(e)) {
+              if (tracing) {
+                log.trace("RETRY {} : {}", tx, aspect.getStaticPart(), e);
+              }
+              continue;
+            }
+            // only want to swallow commit exceptions distinct from 'throwing'
+            if (throwing != e && instanceOf(e, spec.swallow())) {
+              if (tracing) {
+                log.trace("SWALLOW {} : {}", tx, aspect.getStaticPart(), e);
+              }
+              if (throwing != null) {
+                throw throwing;
+              }
+              return result;
+            }
+          }
+          if (throwing != null && throwing != e) {
+            e.addSuppressed(throwing);
+          }
+          throw e;
         }
-        throw e;
+      }
+    }
+    finally {
+      try {
+        tx.end();
+      }
+      catch (Exception e) {
+        log.trace("END {}", tx, e);
       }
     }
   }

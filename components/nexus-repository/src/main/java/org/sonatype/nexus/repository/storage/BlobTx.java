@@ -125,7 +125,7 @@ public class BlobTx
       throw new MissingBlobException(blobRef);
     }
     return createAssetBlob(
-        store -> store.copy(blobRef.getBlobId(), headers),
+        store -> store.makeBlobPermanent(blobRef.getBlobId(), headers),
         hashes,
         hashesVerified,
         headers.get(BlobStore.CONTENT_TYPE_HEADER));
@@ -202,7 +202,7 @@ public class BlobTx
     clearState();
   }
 
-  public void rollback() {
+  public void end() {
     //
     // No need to undelete deletionRequests here, because rollback is only triggered if the DB commit fails.
     // At that point we haven't done any deletions (just queued up requests) so there's nothing to undelete.
@@ -217,13 +217,29 @@ public class BlobTx
     //
     for (AssetBlob assetBlob : newlyCreatedBlobs) {
       try {
-        assetBlob.delete("Rolling back new asset", USE_HARD_DELETE);
+        if (!assetBlob.isAttached()) {
+          assetBlob.delete("Rolling back new asset", USE_HARD_DELETE);
+        }
       }
       catch (Throwable t) {
         log.warn("Unable to delete new blob {} while rolling back transaction", assetBlob.getBlobRef(), t);
       }
     }
     clearState();
+  }
+
+  public void rollback() {
+    //
+    // No need to undelete deletionRequests here, because rollback is only triggered if the DB commit fails.
+    // At that point we haven't done any deletions (just queued up requests) so there's nothing to undelete.
+    //
+    // With the behaviour of makePermanent in some BlobStores (e.g. S3) which re-use the existing Blob, in the event
+    // of a rollback we only want to mark created blobs as unattached so they aren't permanently deleted before
+    // retries occur.
+    //
+    for (AssetBlob assetBlob : newlyCreatedBlobs) {
+      assetBlob.setAttached(false);
+    }
   }
 
   private void clearState() {

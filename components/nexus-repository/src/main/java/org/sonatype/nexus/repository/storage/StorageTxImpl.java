@@ -206,6 +206,11 @@ public class StorageTxImpl
   }
 
   @Override
+  public void end() {
+    blobTx.end();
+  }
+
+  @Override
   public boolean isActive() {
     return ACTIVE.equals(stateGuard.getCurrent());
   }
