@@ -18,7 +18,7 @@ import java.util.function.Supplier;
  * Implementations of {@link BlobStoreManager} may choose to use one or more implementations of this interface
  * to create the initial blob stores.
  *
- * @since 3.37
+ * @since 3.next
  */
 public interface DefaultBlobStoreProvider
 {

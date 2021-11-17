@@ -23,7 +23,7 @@ import org.sonatype.nexus.security.config.memory.MemoryCRole;
 import static org.apache.commons.lang.StringUtils.capitalize;
 
 /**
- * @since 3.37
+ * @since 3.next
  */
 public abstract class SecurityContributorSupport
     implements SecurityContributor

@@ -35,7 +35,7 @@ import static org.sonatype.nexus.repository.internal.search.index.task.SearchUpd
  * Ad-hoc "manager" class that checks to see if any repository indexes are out of date and need to be updated and
  * schedules a task to do so.
  *
- * @since 3.37
+ * @since 3.next
  */
 @Named
 @ManagedLifecycle(phase = TASKS)

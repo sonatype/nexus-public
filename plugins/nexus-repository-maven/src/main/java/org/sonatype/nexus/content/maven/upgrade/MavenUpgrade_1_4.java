@@ -38,7 +38,7 @@ import static org.sonatype.nexus.repository.maven.internal.tasks.MavenSearchInde
  * Upgrade step that marks existing maven repositories (at the time of the upgrade) as needing to be re-indexed to
  * support a new search normalization format.
  *
- * @since 3.37
+ * @since 3.next
  */
 @Named
 @Singleton

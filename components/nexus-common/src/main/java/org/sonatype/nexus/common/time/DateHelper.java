@@ -14,7 +14,6 @@ package org.sonatype.nexus.common.time;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
@@ -94,31 +93,5 @@ public class DateHelper
    */
   public static org.joda.time.Duration toJodaDuration(final Duration javaDuration) {
     return org.joda.time.Duration.millis(javaDuration.toMillis());
-  }
-
-  /**
-   * Converts the Date to a LocalDate (a date, without time). The returned LocalDate will represent the Date of the
-   * provided value in UTC.
-   *
-   * @since 3.next
-   */
-  public static LocalDate toLocalDate(@Nullable final Date date) {
-    if (date == null) {
-      return null;
-    }
-    return date.toInstant().atOffset(ZoneOffset.UTC).toLocalDate();
-  }
-
-  /**
-   * Converts the Date to a LocalDate (a date, without time). The returned LocalDate will represent the Date of the
-   * provided value in UTC.
-   *
-   * @since 3.next
-   */
-  public static Date atStartOfDay(@Nullable final LocalDate date) {
-    if (date == null) {
-      return null;
-    }
-    return Date.from(date.atStartOfDay(ZoneOffset.UTC).toInstant());
   }
 }

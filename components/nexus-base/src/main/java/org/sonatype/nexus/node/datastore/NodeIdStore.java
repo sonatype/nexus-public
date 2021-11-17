@@ -19,7 +19,7 @@ import org.sonatype.nexus.common.node.NodeAccess;
 /**
  * Store for accessing the node id in single node environments.
  *
- * @since 3.37
+ * @since 3.next
  */
 public interface NodeIdStore
 {

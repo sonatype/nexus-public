@@ -23,7 +23,7 @@ import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 /**
  * Task descriptor for {@link SearchUpdateTask}.
  *
- * @since 3.37
+ * @since 3.next
  */
 @Named
 @Singleton

@@ -24,7 +24,7 @@ import org.sonatype.nexus.repository.maven.internal.tasks.MavenSearchIndexVersio
 import org.sonatype.nexus.repository.types.GroupType;
 
 /**
- * @since 3.37
+ * @since 3.next
  */
 @Named(Maven2Format.NAME)
 @Singleton

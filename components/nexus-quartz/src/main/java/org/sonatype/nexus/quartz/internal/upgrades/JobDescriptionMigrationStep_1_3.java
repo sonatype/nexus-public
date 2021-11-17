@@ -22,7 +22,7 @@ import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 /**
  * Resolve issue when job can't be scheduled due to limited size of 'description' column
  *
- * @since 3.37
+ * @since 3.next
  */
 @Named
 public class JobDescriptionMigrationStep_1_3

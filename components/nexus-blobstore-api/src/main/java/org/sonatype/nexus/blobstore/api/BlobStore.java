@@ -153,7 +153,7 @@ public interface BlobStore
   /**
    * Makes a blob permanent by writing the specified permanent blob headers into the blob's properties file.
    *
-   * @since 3.37
+   * @since 3.next
    */
   default Blob makeBlobPermanent(final BlobId blobId, final Map<String, String> headers) {
     return copy(blobId, headers); // default to copy for non-cloud blob stores
@@ -332,7 +332,7 @@ public interface BlobStore
    * Note: This method should only called with a BlobId known to have been created as a TempBlob, implementations may
    * perform no checks if they provide no special handling.
    *
-   * @since 3.37
+   * @since 3.next
    */
   default boolean deleteIfTemp(BlobId blobId) {
     return deleteHard(blobId);

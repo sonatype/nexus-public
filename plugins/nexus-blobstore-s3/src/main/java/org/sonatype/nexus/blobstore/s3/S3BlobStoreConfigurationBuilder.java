@@ -29,7 +29,7 @@ import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.*;
 /**
  * Builder for S3 BlobStoreConfiguration objects.
  *
- * @since 3.37
+ * @since 3.next
  */
 public class S3BlobStoreConfigurationBuilder
     extends BlobStoreConfigurationBuilder

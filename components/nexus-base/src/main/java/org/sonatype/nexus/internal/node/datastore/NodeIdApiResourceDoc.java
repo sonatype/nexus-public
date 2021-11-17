@@ -22,7 +22,7 @@ import io.swagger.annotations.ApiResponses;
 /**
  * REST API to reset the stored Node ID. This is intended for use when cloning a system.
  *
- * @since 3.37
+ * @since 3.next
  */
 @Api(value = "System: Nodes")
 public interface NodeIdApiResourceDoc

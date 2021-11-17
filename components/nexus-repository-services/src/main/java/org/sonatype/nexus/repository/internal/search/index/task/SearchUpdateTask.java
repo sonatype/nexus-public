@@ -28,7 +28,7 @@ import static org.sonatype.nexus.repository.internal.search.index.task.SearchUpd
 /**
  * Task that updates repository search indexes that are out of date.
  *
- * @since 3.37
+ * @since 3.next
  */
 @Named
 public class SearchUpdateTask

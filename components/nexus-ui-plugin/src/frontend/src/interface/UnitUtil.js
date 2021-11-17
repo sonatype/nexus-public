@@ -16,7 +16,7 @@
  */
 
 /**
- * @since 3.37
+ * @since 3.next
  */
 export default class UnitUtil {
   static bytesToMegaBytes(value) {

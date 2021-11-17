@@ -75,27 +75,17 @@ public class FluentBlobsImpl
   @Override
   public TempBlob ingest(final InputStream in,
                          @Nullable final String contentType,
-                         final Iterable<HashAlgorithm> hashing) {
-    return ingest(in, contentType, ImmutableMap.of(), hashing);
-  }
-
-  @Override
-  public TempBlob ingest(final InputStream in,
-                         @Nullable final String contentType,
-                         final Map<String, String> headers,
                          final Iterable<HashAlgorithm> hashing)
   {
     Optional<ClientInfo> clientInfo = facet.clientInfo();
 
     Builder<String, String> tempHeaders = ImmutableMap.builder();
-    tempHeaders.putAll(headers);
-
-    maybePut(tempHeaders, headers, TEMPORARY_BLOB_HEADER, "");
-    maybePut(tempHeaders, headers, REPO_NAME_HEADER, facet.repository().getName());
-    maybePut(tempHeaders, headers, BLOB_NAME_HEADER, "temp");
-    maybePut(tempHeaders, headers, CREATED_BY_HEADER, clientInfo.map(ClientInfo::getUserid).orElse(SYSTEM));
-    maybePut(tempHeaders, headers, CREATED_BY_IP_HEADER, clientInfo.map(ClientInfo::getRemoteIP).orElse(SYSTEM));
-    maybePut(tempHeaders, headers, CONTENT_TYPE_HEADER, ofNullable(contentType).orElse(APPLICATION_OCTET_STREAM));
+    tempHeaders.put(TEMPORARY_BLOB_HEADER, "");
+    tempHeaders.put(REPO_NAME_HEADER, facet.repository().getName());
+    tempHeaders.put(BLOB_NAME_HEADER, "temp");
+    tempHeaders.put(CREATED_BY_HEADER, clientInfo.map(ClientInfo::getUserid).orElse(SYSTEM));
+    tempHeaders.put(CREATED_BY_IP_HEADER, clientInfo.map(ClientInfo::getRemoteIP).orElse(SYSTEM));
+    tempHeaders.put(CONTENT_TYPE_HEADER, ofNullable(contentType).orElse(APPLICATION_OCTET_STREAM));
 
     MultiHashingInputStream hashingStream = new MultiHashingInputStream(hashing, in);
     Blob blob = blobStore.create(hashingStream, tempHeaders.build());

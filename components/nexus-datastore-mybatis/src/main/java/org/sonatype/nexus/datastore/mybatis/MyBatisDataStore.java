@@ -159,8 +159,6 @@ public class MyBatisDataStore
 
   private final BeanLocator beanLocator;
 
-  private final ClassLoader uberClassLoader;
-
   private HikariDataSource dataSource;
 
   private Configuration mybatisConfig;
@@ -172,13 +170,11 @@ public class MyBatisDataStore
 
   @Inject
   public MyBatisDataStore(@Named("mybatis") final PbeCipher databaseCipher,
-                          @Named("nexus-uber") final ClassLoader classLoader,
                           final PasswordHelper passwordHelper,
                           final ApplicationDirectories directories,
                           final BeanLocator beanLocator)
   {
     checkState(databaseCipher instanceof MyBatisCipher);
-    this.uberClassLoader = checkNotNull(classLoader);
     this.databaseCipher = checkNotNull(databaseCipher);
     this.passwordHelper = checkNotNull(passwordHelper);
     this.directories = checkNotNull(directories);
@@ -198,7 +194,6 @@ public class MyBatisDataStore
       this.databaseCipher = new MyBatisCipher();
       MavenCipherImpl passwordCipher = new MavenCipherImpl(new CryptoHelperImpl());
       this.passwordHelper = new PasswordHelper(passwordCipher, LEGACY_PHRASE_SERVICE);
-      this.uberClassLoader = Thread.currentThread().getContextClassLoader();
     }
     catch (Exception e) {
       throw new IllegalStateException("Unexpected error during setup", e);
@@ -512,16 +507,15 @@ public class MyBatisDataStore
    * Registers a simple {@link DataAccess} type with MyBatis.
    */
   private void registerSimpleMapper(final Class<? extends DataAccess> accessType) {
+
     // make sure any types expected by the access type are registered first
     Expects expects = accessType.getAnnotation(Expects.class);
     if (expects != null) {
       asList(expects.value()).forEach(this::register);
     }
 
-    try (TcclBlock tccl = TcclBlock.begin(uberClassLoader)) {
-      // MyBatis will load the corresponding XML schema
-      mybatisConfig.addMapper(accessType);
-    }
+    // MyBatis will load the corresponding XML schema
+    mybatisConfig.addMapper(accessType);
   }
 
   /**

@@ -29,7 +29,7 @@ import static java.util.Objects.requireNonNull;
  * Formats need to implement {@link SearchIndexUpdateManager} to define the logic for the format, otherwise the default
  * implementation is to never re-index.
  *
- * @since 3.37
+ * @since 3.next
  */
 @Named
 public class SearchUpdateService

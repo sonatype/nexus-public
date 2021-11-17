@@ -102,6 +102,5 @@ export {
   NxTextLink,
   NxTooltip,
   NxWarningAlert,
-  NxTile,
-  NxStatefulInfoAlert
+  NxTile
 } from '@sonatype/react-shared-components';
