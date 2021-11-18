@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import java.util.Map;
+
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
@@ -23,8 +25,9 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
  */
 public interface BlobMetadataStorage {
 
-  void attach(BlobStore blobStore,
-              BlobId blobId,
-              NestedAttributesMap componentAttributes,
-              NestedAttributesMap assetAttributes);
+  void attach(
+      BlobStore blobStore,
+      BlobId blobId,
+      NestedAttributesMap componentAttributes,
+      NestedAttributesMap assetAttributes, Map<String, String> checksums);
 }
