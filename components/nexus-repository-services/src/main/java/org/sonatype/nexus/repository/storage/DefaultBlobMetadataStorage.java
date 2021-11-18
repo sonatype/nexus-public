@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import java.util.Map;
+
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -30,10 +32,11 @@ public class DefaultBlobMetadataStorage
     implements BlobMetadataStorage
 {
   @Override
-  public void attach(final BlobStore blobStore,
-                     final BlobId blobId,
-                     final NestedAttributesMap componentAttributes,
-                     final NestedAttributesMap assetAttributes) {
+  public void attach(
+      final BlobStore blobStore,
+      final BlobId blobId,
+      final NestedAttributesMap componentAttributes,
+      final NestedAttributesMap assetAttributes, final Map<String, String> checksums) {
     // no-op
   }
 }

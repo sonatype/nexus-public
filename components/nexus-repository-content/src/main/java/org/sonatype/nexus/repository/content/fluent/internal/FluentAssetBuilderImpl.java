@@ -195,7 +195,7 @@ public class FluentAssetBuilderImpl
       asset.blob()
           .ifPresent(blob -> facet
               .blobMetadataStorage()
-              .attach(facet.stores().blobStore, blob.blobRef().getBlobId(), null, asset.attributes())
+              .attach(facet.stores().blobStore, blob.blobRef().getBlobId(), null, asset.attributes(), blob.checksums())
           );
     }
   }
@@ -212,7 +212,9 @@ public class FluentAssetBuilderImpl
 
     Blob permanentBlob = facet.stores().blobStore.makeBlobPermanent(tempBlob.getId(), headerBuilder.build());
     NestedAttributesMap componentAttributes = assetData.component().map(Component::attributes).orElse(null);
-    facet.blobMetadataStorage().attach(facet.stores().blobStore, permanentBlob.getId(), componentAttributes, assetData.attributes());
+    Map<String, String> checksums = assetData.blob().map(AssetBlob::checksums).orElse(null);
+    facet.blobMetadataStorage().attach(facet.stores().blobStore, permanentBlob.getId(), componentAttributes, assetData.attributes(),
+        checksums);
     return permanentBlob;
   }
 

@@ -134,7 +134,7 @@ public class BlobTx
   public void attachAssetMetadata(final BlobId blobId,
                                   final NestedAttributesMap componentAttributes,
                                   final NestedAttributesMap assetAttributes) {
-    blobMetadataStorage.attach(blobStore, blobId, componentAttributes, assetAttributes);
+    blobMetadataStorage.attach(blobStore, blobId, componentAttributes, assetAttributes, null);
   }
 
   private PrefetchedAssetBlob createPrefetchedAssetBlob(final Blob blob,
