@@ -51,7 +51,7 @@ import static org.sonatype.nexus.content.maven.internal.search.Maven2ComponentFi
  * </ol>
  * </p>
  *
- * @since 3.next
+ * @since 3.37
  */
 @Named(Maven2Format.NAME)
 public class MavenVersionNormalizer

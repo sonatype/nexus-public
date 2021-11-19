@@ -36,7 +36,7 @@ import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 /**
  * REST API to reset the stored Node ID. This is intended for use when cloning a system.
  *
- * @since 3.next
+ * @since 3.37
  */
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
