@@ -32,7 +32,7 @@ import org.slf4j.Logger;
  * <li>000000113</li>
  * </ul>
  *
- * @since 3.next
+ * @since 3.37
  */
 public class VersionNumberExpander
 {

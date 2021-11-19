@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.maven.internal.tasks;
 import org.sonatype.nexus.repository.search.index.SearchIndexUpdateManager;
 
 /**
- * @since 3.next
+ * @since 3.37
  */
 public interface MavenSearchIndexVersionManager
     extends SearchIndexUpdateManager

@@ -37,7 +37,7 @@ import static java.util.stream.Collectors.toList;
  * Upgrade step that marks existing maven repositories (at the time of the upgrade) as needing to be re-indexed to
  * support a new search normalization format.
  *
- * @since 3.next
+ * @since 3.37
  */
 @Named
 @Singleton

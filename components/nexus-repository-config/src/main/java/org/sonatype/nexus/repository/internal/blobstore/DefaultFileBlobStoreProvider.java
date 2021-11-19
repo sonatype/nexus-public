@@ -25,7 +25,7 @@ import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTOR
 /**
  * Provider for creating the default browse node configuration
  *
- * @since 3.next
+ * @since 3.37
  */
 @Named
 public class DefaultFileBlobStoreProvider
