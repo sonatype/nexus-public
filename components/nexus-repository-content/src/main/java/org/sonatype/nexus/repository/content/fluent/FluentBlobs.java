@@ -41,6 +41,11 @@ public interface FluentBlobs
   TempBlob ingest(InputStream in, @Nullable String contentType, Iterable<HashAlgorithm> hashing);
 
   /**
+   * Ingests the given stream as a temporary blob with custom headers and the requested hashing.
+   */
+  TempBlob ingest(InputStream in, @Nullable String contentType, Map<String, String> headers, Iterable<HashAlgorithm> hashing);
+
+  /**
    * Ingests the given payload as a temporary blob with the requested hashing.
    */
   TempBlob ingest(Payload payload, Iterable<HashAlgorithm> hashing);
