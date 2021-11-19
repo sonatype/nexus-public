@@ -21,7 +21,7 @@ import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.types.GroupType;
 
 /**
- * @since 3.next
+ * @since 3.37
  */
 @Named(Maven2Format.NAME)
 @Singleton

@@ -14,7 +14,7 @@ import React from 'react';
 import {useUniqueId} from '@sonatype/react-shared-components';
 
 /**
- * @since 3.next
+ * @since 3.37
  * @param {string} label
  * @param {string} value
  * @returns {JSX.Element|null}

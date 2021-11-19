@@ -25,7 +25,7 @@ import org.sonatype.nexus.node.datastore.NodeIdStore;
 import org.sonatype.nexus.transaction.Transactional;
 
 /**
- * @since 3.next
+ * @since 3.37
  */
 @Named("mybatis")
 @Singleton

@@ -17,7 +17,7 @@ import org.sonatype.nexus.datastore.api.SingletonDataAccess;
 /**
  * DAO for accessing the single stored node id. Not appropriate for clustered environments.
  *
- * @since 3.next
+ * @since 3.37
  */
 public interface NodeIdDAO
     extends SingletonDataAccess<String>

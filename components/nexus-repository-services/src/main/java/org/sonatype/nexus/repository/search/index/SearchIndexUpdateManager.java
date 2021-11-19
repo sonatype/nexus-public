@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.Repository;
 /**
  * Defines logic for determining if a repository search index is out of date and needs to be re-indexed.
  *
- * @since 3.next
+ * @since 3.37
  */
 public interface SearchIndexUpdateManager
 {
