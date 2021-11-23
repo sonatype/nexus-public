@@ -34,7 +34,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
-import org.testcontainers.shaded.com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
