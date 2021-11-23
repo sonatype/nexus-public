@@ -18,6 +18,7 @@ import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.config.WritePolicy;
 import org.sonatype.nexus.repository.storage.WritePolicySelector;
 
+import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.ARTIFACT_SUBORDINATE;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_INDEX;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
@@ -39,7 +40,8 @@ public class MavenWritePolicySelector
   public WritePolicy select(final Asset asset, final WritePolicy configured) {
     if (ALLOW_ONCE == configured) {
       final String assetKind = asset.formatAttributes().get(P_ASSET_KIND, String.class);
-      if (Objects.equals(REPOSITORY_METADATA.name(), assetKind) || Objects.equals(REPOSITORY_INDEX.name(), assetKind)) {
+      if (Objects.equals(REPOSITORY_METADATA.name(), assetKind) || Objects.equals(REPOSITORY_INDEX.name(), assetKind) ||
+          Objects.equals(ARTIFACT_SUBORDINATE.name(), assetKind)) {
         return ALLOW;
       }
     }

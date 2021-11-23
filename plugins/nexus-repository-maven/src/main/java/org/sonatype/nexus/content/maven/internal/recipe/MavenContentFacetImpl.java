@@ -90,6 +90,7 @@ import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW_ONCE;
 import static org.sonatype.nexus.repository.content.AttributeOperation.OVERLAY;
 import static org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet.METADATA_FORCE_REBUILD;
 import static org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet.METADATA_REBUILD;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.ARTIFACT_SUBORDINATE;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_INDEX;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_ARTIFACT_ID;
@@ -203,7 +204,8 @@ public class MavenContentFacetImpl
     if (ALLOW_ONCE == configuredWritePolicy) {
       String assetKind = asset.kind();
       if (StringUtils.equals(REPOSITORY_METADATA.name(), assetKind)
-          || StringUtils.equals(REPOSITORY_INDEX.name(), assetKind)) {
+          || StringUtils.equals(REPOSITORY_INDEX.name(), assetKind)
+          || StringUtils.equals(ARTIFACT_SUBORDINATE.name(), assetKind)) {
         return ALLOW;
       }
     }
