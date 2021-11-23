@@ -26,6 +26,7 @@ import org.mockito.Mock;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.ARTIFACT_SUBORDINATE;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.OTHER;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
@@ -75,6 +76,14 @@ public class MavenWritePolicySelectorTest
 
     WritePolicy writePolicy = underTest.select(asset, ALLOW_ONCE);
     assertEquals(writePolicy, ALLOW_ONCE);
+  }
+
+  @Test
+  public void select_withWritePolicyAllowOnceAndSubordinateFile() {
+    whenAssetFormatAttributes(ARTIFACT_SUBORDINATE.name());
+
+    WritePolicy writePolicy = underTest.select(asset, ALLOW_ONCE);
+    assertEquals(writePolicy, ALLOW);
   }
 
   private void whenAssetFormatAttributes(String assetKindName) {
