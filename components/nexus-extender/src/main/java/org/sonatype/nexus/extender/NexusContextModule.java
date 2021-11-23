@@ -13,9 +13,9 @@
 package org.sonatype.nexus.extender;
 
 import java.util.Map;
-
 import javax.servlet.ServletContext;
 
+import org.sonatype.nexus.blobstore.metrics.BlobStoreModule;
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.app.ManagedLifecycleManager;
 import org.sonatype.nexus.common.guice.TimeTypeConverter;
@@ -76,6 +76,7 @@ public class NexusContextModule
 
     install(new StateGuardModule());
     install(new TransactionModule());
+    install(new BlobStoreModule());
     install(new TimeTypeConverter());
     install(new WebSecurityModule(servletContext));
 

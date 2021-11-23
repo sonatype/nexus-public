@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
-
 import javax.annotation.Nullable;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
@@ -201,6 +200,11 @@ public interface BlobStore
    * Provides an immutable snapshot of metrics about the BlobStore's usage.
    */
   BlobStoreMetrics getMetrics();
+
+  /**
+   * A map of blob storage metrics by operation type which are filled by (@code BlobStoreAnalyticsInterceptor)
+   */
+  Map<OperationType, OperationMetrics> getOperationMetricsByType();
 
   /**
    * Perform garbage collection, purging blobs marked for deletion or whatever other periodic, implementation-specific

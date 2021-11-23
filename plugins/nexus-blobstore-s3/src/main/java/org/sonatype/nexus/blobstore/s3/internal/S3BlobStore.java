@@ -25,7 +25,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Stream;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -43,7 +42,10 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
+import org.sonatype.nexus.blobstore.api.OperationMetrics;
+import org.sonatype.nexus.blobstore.api.OperationType;
 import org.sonatype.nexus.blobstore.api.RawObjectAccess;
+import org.sonatype.nexus.blobstore.metrics.MonitoringBlobStoreMetrics;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.thread.NexusThreadFactory;
@@ -80,6 +82,8 @@ import static java.util.Collections.singletonList;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.stream.StreamSupport.stream;
 import static org.sonatype.nexus.blobstore.DirectPathLocationStrategy.DIRECT_PATH_ROOT;
+import static org.sonatype.nexus.blobstore.api.OperationType.DOWNLOAD;
+import static org.sonatype.nexus.blobstore.api.OperationType.UPLOAD;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreConfigurationHelper.getConfiguredExpirationInDays;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.buildException;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.FAILED;
@@ -282,6 +286,7 @@ public class S3BlobStore
 
   @Override
   @Timed
+  @MonitoringBlobStoreMetrics(operationType = UPLOAD)
   protected Blob doCreate(
       final InputStream blobData,
       final Map<String, String> headers,
@@ -399,6 +404,7 @@ public class S3BlobStore
   @Nullable
   @Override
   @Timed
+  @MonitoringBlobStoreMetrics(operationType = DOWNLOAD)
   public Blob get(final BlobId blobId, final boolean includeDeleted) {
     checkNotNull(blobId);
 
@@ -586,6 +592,11 @@ public class S3BlobStore
   @Timed
   public BlobStoreMetrics getMetrics() {
     return storeMetrics.getMetrics();
+  }
+
+  @Override
+  public Map<OperationType, OperationMetrics> getOperationMetricsByType() {
+    return storeMetrics.getOperationMetrics();
   }
 
   @Override

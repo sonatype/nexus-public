@@ -16,12 +16,13 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
-
 import javax.annotation.Nullable;
 import javax.cache.Cache;
 import javax.cache.configuration.MutableConfiguration;
@@ -43,10 +44,13 @@ import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
+import org.sonatype.nexus.blobstore.api.OperationMetrics;
+import org.sonatype.nexus.blobstore.api.OperationType;
 import org.sonatype.nexus.blobstore.api.RawObjectAccess;
 import org.sonatype.nexus.blobstore.api.UnimplementedRawObjectAccess;
 import org.sonatype.nexus.blobstore.group.internal.BlobStoreGroupMetrics;
 import org.sonatype.nexus.blobstore.group.internal.WriteToFirstMemberFillPolicy;
+import org.sonatype.nexus.blobstore.metrics.MonitoringBlobStoreMetrics;
 import org.sonatype.nexus.cache.CacheHelper;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
@@ -62,6 +66,8 @@ import static java.util.Collections.synchronizedList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
+import static org.sonatype.nexus.blobstore.api.OperationType.DOWNLOAD;
+import static org.sonatype.nexus.blobstore.api.OperationType.UPLOAD;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.FAILED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.NEW;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.SHUTDOWN;
@@ -174,12 +180,14 @@ public class BlobStoreGroup
 
   @Override
   @Guarded(by = STARTED)
+  @MonitoringBlobStoreMetrics(operationType = UPLOAD)
   public Blob create(final InputStream blobData, final Map<String, String> headers, @Nullable final BlobId blobId) {
     return create(headers, target -> target.create(blobData, headers, blobId));
   }
 
   @Override
   @Guarded(by = STARTED)
+  @MonitoringBlobStoreMetrics(operationType = UPLOAD)
   public Blob create(final Path sourceFile, final Map<String, String> headers, final long size, final HashCode sha1) {
     return create(headers, target -> target.create(sourceFile, headers, size, sha1));
   }
@@ -207,6 +215,7 @@ public class BlobStoreGroup
   @Nullable
   @Override
   @Guarded(by = STARTED)
+  @MonitoringBlobStoreMetrics(operationType = DOWNLOAD)
   public Blob get(final BlobId blobId) {
     return locate(blobId)
         .map((BlobStore target) -> target.get(blobId))
@@ -216,6 +225,7 @@ public class BlobStoreGroup
   @Nullable
   @Override
   @Guarded(by = STARTED)
+  @MonitoringBlobStoreMetrics(operationType = DOWNLOAD)
   public Blob get(final BlobId blobId, final boolean includeDeleted) {
     if (includeDeleted) {
       // check directly without using cache
@@ -274,6 +284,29 @@ public class BlobStoreGroup
       .map((BlobStore member) -> member.getMetrics())
       ::iterator;
     return new BlobStoreGroupMetrics(membersMetrics);
+  }
+
+  @Override
+  public Map<OperationType, OperationMetrics> getOperationMetricsByType() {
+    Map<OperationType, OperationMetrics> result = new EnumMap<>(OperationType.class);
+    Iterable<Map<OperationType, OperationMetrics>> metrics = members.get().stream()
+        .map(BlobStore::getOperationMetricsByType)
+        ::iterator;
+    for (Map<OperationType, OperationMetrics> metric : metrics) {
+      for (Entry<OperationType, OperationMetrics> metricsEntry : metric.entrySet()) {
+        OperationType type = metricsEntry.getKey();
+        OperationMetrics operationMetrics = metricsEntry.getValue();
+        OperationMetrics existingMetrics = result.get(type);
+        if (existingMetrics != null) {
+          OperationMetrics aggregatedMetrics = existingMetrics.add(operationMetrics);
+          result.put(type, aggregatedMetrics);
+        }
+        else {
+          result.put(type, operationMetrics);
+        }
+      }
+    }
+    return result;
   }
 
   @Override
