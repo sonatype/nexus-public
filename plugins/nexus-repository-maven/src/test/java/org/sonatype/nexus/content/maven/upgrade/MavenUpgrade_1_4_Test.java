@@ -31,7 +31,7 @@ import org.sonatype.nexus.testdb.DataSessionRule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.testcontainers.shaded.com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap;
 
 import static java.lang.Boolean.TRUE;
 import static org.junit.Assert.assertEquals;
