@@ -36,7 +36,8 @@ trait DockerRepoRecipes
                                 @Nullable int httpsPort,
                                 final boolean v1Enabled = true,
                                 final WritePolicy writePolicy = WritePolicy.ALLOW,
-                                final boolean latestPolicy = false
+                                final boolean latestPolicy = false,
+                                final boolean strictContentTypeValidation = true
   )
   {
     Configuration configuration =
