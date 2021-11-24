@@ -92,6 +92,7 @@ Ext.define('NX.coreui.controller.Api', {
       apiPage.add({
         xtype: 'uxiframe',
         itemId: 'api',
+        id: 'api',
         anchor: '100%',
         width: '100%',
         flex: 1,
