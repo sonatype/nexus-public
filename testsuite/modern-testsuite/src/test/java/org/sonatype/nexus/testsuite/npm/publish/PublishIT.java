@@ -27,6 +27,7 @@ import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.either;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 
@@ -115,7 +116,8 @@ public class PublishIT
       log(stdOut);
 
       assertThat(exitCode, not(equalTo(0))); // exited with error
-      assertThat(stdErr, containsString("does not allow updating artifacts")); // error msg
+      assertThat(stdErr, either(containsString("does not allow updating artifacts")) // error msg
+          .or(containsString("400 Bad Request - PUT"))); // newer NPMs don't show the message
     }
 
     // repo config change, allow redeploy

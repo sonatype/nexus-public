@@ -23,7 +23,9 @@ import com.google.common.io.CharStreams;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.either;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.stringContainsInOrder;
 
@@ -71,8 +73,8 @@ public class NpmInstallIT
     log(stdOut);
 
     assertThat(stdOut, containsString("commonjs@0.0.1"));
-    assertThat(stdOut, containsString("system@0.1.0"));
-    assertThat(stdOut, stringContainsInOrder(Arrays.asList("test@0.6.0", "ansi-font@0.0.2")));
+    assertThat(stdOut, either(containsString("added 4 packages")) // newer npm
+        .or(allOf(containsString("system@0.1.0"), stringContainsInOrder(Arrays.asList("test@0.6.0", "ansi-font@0.0.2"))))); // older
 
     assertThat(exitCode, equalTo(0));
   }

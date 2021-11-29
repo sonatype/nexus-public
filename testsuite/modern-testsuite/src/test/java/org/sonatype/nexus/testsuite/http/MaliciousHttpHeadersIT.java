@@ -30,7 +30,7 @@ import org.junit.Test;
 
 import static org.apache.http.HttpHeaders.HOST;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 @NexusStartAndStopStrategy(NexusStartAndStopStrategy.Strategy.EACH_TEST)
 public class MaliciousHttpHeadersIT
