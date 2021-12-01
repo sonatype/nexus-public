@@ -29,7 +29,6 @@
 
   <properties>
     <pax-exam.version>4.13.3</pax-exam.version>
-    <testcontainers.version>1.14.3</testcontainers.version>
   </properties>
 
   <dependencyManagement>
@@ -282,4 +281,30 @@
     </dependencies>
   </dependencyManagement>
 
+  <profiles>
+    <profile>
+      <id>ci</id>
+      <activation>
+        <property>
+          <name>ci</name>
+        </property>
+      </activation>
+      <properties>
+        <!-- Bamboo uses an older version of docker -->
+        <testcontainers.version>1.14.3</testcontainers.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>local</id>
+      <activation>
+        <property>
+          <name>!ci</name>
+        </property>
+      </activation>
+      <properties>
+        <!-- Test containers has a bug around mounting file systems on Windows -->
+        <testcontainers.version>1.16.2</testcontainers.version>
+      </properties>
+    </profile>
+  </profiles>
 </project>
