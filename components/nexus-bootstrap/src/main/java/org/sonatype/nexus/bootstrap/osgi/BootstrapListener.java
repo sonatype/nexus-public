@@ -40,6 +40,7 @@ import static java.lang.Boolean.parseBoolean;
 import static java.util.prefs.Preferences.userRoot;
 import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshBundles;
 import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshManagedBundles;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_DEVELOPER;
 import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
@@ -236,6 +237,11 @@ public class BootstrapListener
   private static void selectDatastoreFeature(final Properties properties) {
     // datastore developer mode includes datastore user mode
     if (parseBoolean(properties.getProperty(DATASTORE_DEVELOPER, "false"))) {
+      properties.setProperty(DATASTORE_ENABLED, "true");
+    }
+
+    // datastore clustered mode includes datastore user mode
+    if (parseBoolean(properties.getProperty(DATASTORE_CLUSTERED_ENABLED, "false"))) {
       properties.setProperty(DATASTORE_ENABLED, "true");
     }
 

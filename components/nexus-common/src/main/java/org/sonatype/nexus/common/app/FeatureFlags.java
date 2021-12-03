@@ -31,6 +31,10 @@ public interface FeatureFlags
   String DATASTORE_DEVELOPER = "nexus.datastore.developer";
   String DATASTORE_DEVELOPER_NAMED = "${nexus.datastore.developer:-false}";
 
+  /* Distributed event service. Available values: true, false. Default value: false */
+  String DATASTORE_CLUSTERED_ENABLED = "nexus.datastore.clustered.enabled";
+  String DATASTORE_CLUSTERED_ENABLED_NAMED = "${nexus.datastore.clustered.enabled:-false}";
+
   /* Orient flag for marking content that is orient only, and should be disabled when datastore is enabled */
   String ORIENT_ENABLED = "nexus.orient.enabled";
 }

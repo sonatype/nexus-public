@@ -44,6 +44,7 @@
     <module>nexus-cache</module>
     <module>nexus-datastore</module>
     <module>nexus-datastore-api</module>
+    <module>nexus-distributed-event-service-api</module>
     <module>nexus-datastore-mybatis</module>
     <module>nexus-elasticsearch</module>
     <module>nexus-email</module>
