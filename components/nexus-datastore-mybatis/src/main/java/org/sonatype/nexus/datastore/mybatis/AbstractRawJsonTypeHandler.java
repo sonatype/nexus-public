@@ -31,7 +31,7 @@ public abstract class AbstractRawJsonTypeHandler<T>
   private static final ObjectMapper RAW_OBJECT_MAPPER = new ObjectMapper();
 
   @Override
-  protected final ObjectMapper buildObjectMapper(final Supplier<ObjectMapper> unused) {
+  protected ObjectMapper buildObjectMapper(final Supplier<ObjectMapper> unused) {
     return RAW_OBJECT_MAPPER;
   }
 
