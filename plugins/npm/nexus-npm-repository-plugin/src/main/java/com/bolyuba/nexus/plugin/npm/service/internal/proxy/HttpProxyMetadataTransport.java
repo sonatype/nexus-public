@@ -184,9 +184,7 @@ public class HttpProxyMetadataTransport
       else {
         get.addHeader(ACCEPT, NpmRepository.JSON_MIME_TYPE);
       }
-      if (expired != null && expired.getProperties().containsKey(PROP_ETAG)) {
-        get.addHeader("if-none-match", expired.getProperties().get(PROP_ETAG));
-      }
+      addIfNoneMatchHeaderIfExpired(expired, get);
       final HttpClientContext context = new HttpClientContext();
       context.setAttribute(Hc4Provider.HTTP_CTX_KEY_REPOSITORY, npmProxyRepository);
 
@@ -199,9 +197,20 @@ public class HttpProxyMetadataTransport
         stopwatch = Stopwatch.createStarted();
       }
 
-      final HttpResponse httpResponse;
+      HttpResponse httpResponse;
       try {
         httpResponse = httpClient.execute(get, context);
+        if (abbreviateMetadata && (HttpStatus.SC_NOT_FOUND == httpResponse.getStatusLine().getStatusCode())) {
+          final HttpGet newGet = new HttpGet(buildUri(npmProxyRepository, encodePackageName(packageName)));
+          newGet.addHeader(ACCEPT, NpmRepository.JSON_MIME_TYPE);
+          addIfNoneMatchHeaderIfExpired(expired, newGet);
+          final HttpClientContext newContext = new HttpClientContext();
+          newContext.setAttribute(Hc4Provider.HTTP_CTX_KEY_REPOSITORY, npmProxyRepository);
+          final HttpClient newHttpClient = httpClientManager.create(npmProxyRepository,
+              npmProxyRepository.getRemoteStorageContext());
+
+          httpResponse = newHttpClient.execute(newGet, newContext);
+        }
       }
       finally {
         timerContext.stop();
@@ -238,6 +247,12 @@ public class HttpProxyMetadataTransport
     }
     finally {
       httpClientManager.release(npmProxyRepository, npmProxyRepository.getRemoteStorageContext());
+    }
+  }
+
+  private void addIfNoneMatchHeaderIfExpired(final PackageRoot expired, final HttpGet get) {
+    if (expired != null && expired.getProperties().containsKey(PROP_ETAG)) {
+      get.addHeader("if-none-match", expired.getProperties().get(PROP_ETAG));
     }
   }
 

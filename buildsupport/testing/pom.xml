@@ -155,6 +155,18 @@
         <version>1.2.3</version>
       </dependency>
 
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers</artifactId>
+        <version>1.16.2</version>
+      </dependency>
+
+      <!-- Managed JNA due to conflict between Selenium & testcontainers -->
+      <dependency>
+        <groupId>net.java.dev.jna</groupId>
+        <artifactId>jna</artifactId>
+        <version>5.10.0</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
