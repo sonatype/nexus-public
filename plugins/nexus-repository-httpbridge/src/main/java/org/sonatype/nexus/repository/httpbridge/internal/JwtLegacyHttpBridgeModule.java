@@ -12,47 +12,60 @@
  */
 package org.sonatype.nexus.repository.httpbridge.internal;
 
-import javax.inject.Named;
-
-import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.security.FilterChainModule;
-import org.sonatype.nexus.security.SecurityFilter;
+import org.sonatype.nexus.security.JwtHelper;
+import org.sonatype.nexus.security.JwtSecurityFilter;
 import org.sonatype.nexus.security.anonymous.AnonymousFilter;
 import org.sonatype.nexus.security.authc.AntiCsrfFilter;
 import org.sonatype.nexus.security.authc.NexusAuthenticationFilter;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyAuthenticationFilter;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Binder;
+import org.apache.shiro.web.filter.mgt.FilterChainResolver;
+import org.apache.shiro.web.mgt.WebSecurityManager;
 
-import static org.sonatype.nexus.common.app.FeatureFlags.SESSION_ENABLED;
+import static org.eclipse.sisu.inject.Sources.prioritize;
 
 /**
- * Repository HTTP bridge module.
+ * Repository HTTP bridge module for legacy URLs using {@link JwtSecurityFilter}.
  *
- * @since 3.0
+ * @since 3.next
  */
-@Named
-@FeatureFlag(name = SESSION_ENABLED)
-public class HttpBridgeModule
+public class JwtLegacyHttpBridgeModule
     extends AbstractModule
 {
-  public static final String MOUNT_POINT = "/repository";
-
   @Override
   protected void configure() {
-    install(new HttpBridgeServletModule()
+    bind(LegacyViewServlet.class);
+
+    bind(ExhaustRequestFilter.class);
+
+    requireBinding(WebSecurityManager.class);
+    requireBinding(FilterChainResolver.class);
+    requireBinding(JwtHelper.class);
+
+    // Bind after core-servlets but before error servlet
+    Binder highPriorityBinder = binder().withSource(prioritize(0x50000000));
+    highPriorityBinder.install(new LegacyHttpBridgeServletModule()
     {
       @Override
       protected void bindSecurityFilter(final FilterKeyBindingBuilder filter) {
-        filter.through(SecurityFilter.class);
+        filter.through(JwtSecurityFilter.class);
       }
     });
 
-    install(new FilterChainModule()
+    highPriorityBinder.install(new FilterChainModule()
     {
       @Override
       protected void configure() {
-        addFilterChain(MOUNT_POINT + "/**",
+        addFilterChain("/content/**",
+            NexusAuthenticationFilter.NAME,
+            ApiKeyAuthenticationFilter.NAME,
+            AnonymousFilter.NAME,
+            AntiCsrfFilter.NAME);
+
+        addFilterChain("/service/local/**",
             NexusAuthenticationFilter.NAME,
             ApiKeyAuthenticationFilter.NAME,
             AnonymousFilter.NAME,
@@ -60,4 +73,5 @@ public class HttpBridgeModule
       }
     });
   }
+
 }

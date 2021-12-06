@@ -31,6 +31,7 @@ import org.osgi.framework.Constants;
 
 import static java.lang.Boolean.parseBoolean;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
+import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 import static org.sonatype.nexus.extender.modules.FeatureFlaggedIndex.filterByFeatureFlag;
 
 /**
@@ -44,6 +45,8 @@ public class NexusBundleModule
   private static final ShiroAopModule shiroAopModule = new ShiroAopModule();
 
   private static final SecurityFilterModule securityFilterModule = new SecurityFilterModule();
+
+  private static final JwtSecurityFilterModule jwtSecurityFilterModule = new JwtSecurityFilterModule();
 
   private static final MetricsRegistryModule metricsRegistryModule = new MetricsRegistryModule();
 
@@ -121,7 +124,13 @@ public class NexusBundleModule
 
   private void maybeAddSecurityFilter(final List<Module> modules) {
     if (imports.contains("org.sonatype.nexus.security")) {
-      modules.add(securityFilterModule);
+      if (parseBoolean((String) nexusProperties.get(JWT_ENABLED))) {
+        modules.add(jwtSecurityFilterModule);
+      }
+      else
+      {
+        modules.add(securityFilterModule);
+      }
     }
   }
 

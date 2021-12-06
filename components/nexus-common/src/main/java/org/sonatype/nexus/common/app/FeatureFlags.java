@@ -37,4 +37,10 @@ public interface FeatureFlags
 
   /* Orient flag for marking content that is orient only, and should be disabled when datastore is enabled */
   String ORIENT_ENABLED = "nexus.orient.enabled";
+
+  /* JWT externalization. Available values: true, false. Default value: false */
+  String JWT_ENABLED = "nexus.jwt.enabled";
+
+  /* Session flag for marking content that is only for session, and should be disabled when jwt is enabled */
+  String SESSION_ENABLED = "nexus.session.enabled";
 }

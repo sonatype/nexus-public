@@ -30,10 +30,19 @@
   <properties>
     <bouncycastle.version>1.67</bouncycastle.version>
     <apache-shiro.version>1.8.0</apache-shiro.version>
+    <java-jwt.version>3.16.0</java-jwt.version>
   </properties>
 
   <dependencyManagement>
     <dependencies>
+
+      <!-- jwt -->
+
+      <dependency>
+        <groupId>com.auth0</groupId>
+        <artifactId>java-jwt</artifactId>
+        <version>${java-jwt.version}</version>
+      </dependency>
 
       <!-- bouncycastle -->
 

@@ -43,7 +43,9 @@ import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshMana
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_DEVELOPER;
+import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
+import static org.sonatype.nexus.common.app.FeatureFlags.SESSION_ENABLED;
 
 /**
  * {@link ServletContextListener} that bootstraps an OSGi-based application.
@@ -109,6 +111,7 @@ public class BootstrapListener
       }
 
       selectDatastoreFeature(properties);
+      selectAuthenticationFeature(properties);
 
       // pass bootstrap properties to embedded servlet listener
       servletContext.setAttribute("nexus.properties", properties);
@@ -273,6 +276,15 @@ public class BootstrapListener
         properties.setProperty(NEXUS_EXCLUDE_FEATURES,
             "nexus-cma-feature," + properties.getProperty(NEXUS_EXCLUDE_FEATURES, ""));
       }
+    }
+  }
+
+  private static void selectAuthenticationFeature(final Properties properties) {
+    if (parseBoolean(properties.getProperty(SESSION_ENABLED, "true"))) {
+      properties.setProperty(SESSION_ENABLED, "true");
+    }
+    if (parseBoolean(properties.getProperty(JWT_ENABLED, "false"))) {
+      properties.setProperty(SESSION_ENABLED, "false");
     }
   }
 

@@ -14,6 +14,7 @@ package org.sonatype.nexus.internal.web;
 
 import javax.inject.Named;
 
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.internal.metrics.MetricsModule;
 import org.sonatype.nexus.internal.orient.OrientModule;
 
@@ -25,6 +26,7 @@ import com.google.inject.servlet.ServletModule;
 import org.eclipse.sisu.inject.Sources;
 
 import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
+import static org.sonatype.nexus.common.app.FeatureFlags.SESSION_ENABLED;
 import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getBoolean;
 
 /**
@@ -33,6 +35,7 @@ import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getBoole
  * @since 3.0
  */
 @Named
+@FeatureFlag(name = SESSION_ENABLED)
 public class WebModule
     extends AbstractModule
 {
@@ -62,10 +65,14 @@ public class WebModule
       }
     });
 
-    highPriorityBinder.install(new MetricsModule());
+    installMetricsModule(highPriorityBinder);
 
     if (getBoolean(ORIENT_ENABLED, true)) {
       install(new OrientModule());
     }
+  }
+
+  protected void installMetricsModule(final Binder highPriorityBinder) {
+    highPriorityBinder.install(new MetricsModule());
   }
 }

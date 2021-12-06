@@ -16,7 +16,7 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.security.FilterChainModule;
-import org.sonatype.nexus.security.SecurityFilter;
+import org.sonatype.nexus.security.JwtSecurityFilter;
 import org.sonatype.nexus.security.anonymous.AnonymousFilter;
 import org.sonatype.nexus.security.authc.AntiCsrfFilter;
 import org.sonatype.nexus.security.authc.NexusAuthenticationFilter;
@@ -25,37 +25,22 @@ import org.sonatype.nexus.security.authz.PermissionsFilter;
 import com.codahale.metrics.Clock;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.inject.AbstractModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.sonatype.nexus.common.app.FeatureFlags.SESSION_ENABLED;
+import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 
 /**
- * <a href="http://metrics.dropwizard.io">Dropwizard Metrics</a> guice configuration.
- * 
- * Installs servlet endpoints:
- * 
- * <ul>
- * <li>/service/metrics/ping</li>
- * <li>/service/metrics/threads</li>
- * <li>/service/metrics/data</li>
- * <li>/service/metrics/healthcheck</li>
- * <li>/service/metrics/prometheus</li>
- * </ul>
- * 
- * Protected by {@code nexus:metrics:read} permission.
- * 
- * @since 2.5
+ * Dropwizard Metrics</a> guice configuration using {@link JwtSecurityFilter}
+ *
+ * @since 3.next
  */
 @Named
-@FeatureFlag(name = SESSION_ENABLED)
-public class MetricsModule
-    extends AbstractModule
+@FeatureFlag(name = JWT_ENABLED)
+public class JwtMetricsModule
+  extends MetricsModule
 {
-  private static final Logger log = LoggerFactory.getLogger(MetricsModule.class);
-
-  protected static final String MOUNT_POINT = "/service/metrics";
+  private static final Logger log = LoggerFactory.getLogger(JwtMetricsModule.class);
 
   @Override
   protected void configure() {
@@ -71,7 +56,7 @@ public class MetricsModule
     {
       @Override
       protected void bindSecurityFilter() {
-        filter(MOUNT_POINT + "/*").through(SecurityFilter.class);
+        filter(MOUNT_POINT + "/*").through(JwtSecurityFilter.class);
       }
     });
 

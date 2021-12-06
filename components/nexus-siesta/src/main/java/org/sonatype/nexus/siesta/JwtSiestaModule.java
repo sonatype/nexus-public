@@ -15,44 +15,28 @@ package org.sonatype.nexus.siesta;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.app.FeatureFlag;
-import org.sonatype.nexus.security.FilterChainModule;
-import org.sonatype.nexus.security.SecurityFilter;
-import org.sonatype.nexus.security.anonymous.AnonymousFilter;
-import org.sonatype.nexus.security.authc.AntiCsrfFilter;
-import org.sonatype.nexus.security.authc.NexusAuthenticationFilter;
+import org.sonatype.nexus.security.JwtSecurityFilter;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.inject.AbstractModule;
 import com.google.inject.servlet.ServletModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.sonatype.nexus.common.app.FeatureFlags.SESSION_ENABLED;
+import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 
 /**
- * Siesta plugin module.
+ * Siesta plugin module using {@link JwtSecurityFilter}.
  *
- * @since 2.4
+ * @since 3.next
  */
 @Named
-@FeatureFlag(name = SESSION_ENABLED)
-public class SiestaModule
-    extends AbstractModule
+@FeatureFlag(name = JWT_ENABLED)
+public class JwtSiestaModule
+  extends SiestaModule
 {
-  public static final String MOUNT_POINT = "/service/rest";
-
-  private static final Logger log = LoggerFactory.getLogger(SiestaModule.class);
-
-  public static final String SKIP_MODULE_CONFIGURATION = SiestaModule.class.getName() + ".skip";
+  private static final Logger log = LoggerFactory.getLogger(JwtSiestaModule.class);
 
   @Override
-  protected void configure() {
-    // HACK: avoid configuration of this module in cases as it is not wanted. e.g. automatically discovered by Sisu
-    if (!Boolean.getBoolean(SKIP_MODULE_CONFIGURATION)) {
-      doConfigure();
-    }
-  }
-
   protected ServletModule configureServletModule() {
     return new ServletModule()
     {
@@ -64,25 +48,8 @@ public class SiestaModule
         serve(MOUNT_POINT + "/*").with(SiestaServlet.class, ImmutableMap.of(
             "resteasy.servlet.mapping.prefix", MOUNT_POINT
         ));
-        filter(MOUNT_POINT + "/*").through(SecurityFilter.class);
+        filter(MOUNT_POINT + "/*").through(JwtSecurityFilter.class);
       }
     };
-  }
-
-  private void doConfigure() {
-    install(new ResteasyModule());
-
-    install(configureServletModule());
-
-    install(new FilterChainModule()
-    {
-      @Override
-      protected void configure() {
-        addFilterChain(MOUNT_POINT + "/**",
-            NexusAuthenticationFilter.NAME,
-            AnonymousFilter.NAME,
-            AntiCsrfFilter.NAME);
-      }
-    });
   }
 }

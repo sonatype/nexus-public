@@ -16,35 +16,31 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.security.FilterChainModule;
-import org.sonatype.nexus.security.SecurityFilter;
+import org.sonatype.nexus.security.JwtSecurityFilter;
 import org.sonatype.nexus.security.anonymous.AnonymousFilter;
 import org.sonatype.nexus.security.authc.AntiCsrfFilter;
 import org.sonatype.nexus.security.authc.NexusAuthenticationFilter;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyAuthenticationFilter;
 
-import com.google.inject.AbstractModule;
-
-import static org.sonatype.nexus.common.app.FeatureFlags.SESSION_ENABLED;
+import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 
 /**
- * Repository HTTP bridge module.
+ * Repository HTTP bridge module using {@link JwtSecurityFilter}.
  *
- * @since 3.0
+ * @since 3.next
  */
 @Named
-@FeatureFlag(name = SESSION_ENABLED)
-public class HttpBridgeModule
-    extends AbstractModule
+@FeatureFlag(name = JWT_ENABLED)
+public class JwtHttpBridgeModule
+  extends HttpBridgeModule
 {
-  public static final String MOUNT_POINT = "/repository";
-
   @Override
   protected void configure() {
     install(new HttpBridgeServletModule()
     {
       @Override
       protected void bindSecurityFilter(final FilterKeyBindingBuilder filter) {
-        filter.through(SecurityFilter.class);
+        filter.through(JwtSecurityFilter.class);
       }
     });
 
