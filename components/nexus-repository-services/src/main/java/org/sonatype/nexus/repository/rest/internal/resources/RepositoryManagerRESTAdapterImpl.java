@@ -12,8 +12,10 @@
  */
 package org.sonatype.nexus.repository.rest.internal.resources;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.ws.rs.NotFoundException;
@@ -67,6 +69,38 @@ public class RepositoryManagerRESTAdapterImpl
       //repository exists but user does not have the appropriate permission to browse, return a 403
       throw new WebApplicationException(FORBIDDEN);
     }
+  }
+
+  @Override
+  public Repository getReadableRepository(String repositoryId) {
+    if (repositoryId == null) {
+      throw new WebApplicationException("repositoryId is required.", UNPROCESSABLE_ENTITY);
+    }
+    Repository repository = ofNullable(repositoryManager.get(repositoryId))
+        .orElseThrow(() -> new NotFoundException("Unable to locate repository with id " + repositoryId));
+
+    if (!userCanReadOrBrowseOrGroupPermissions(repository)) {
+      // user does not have the appropriate permission to browse, return a 403
+      throw new WebApplicationException(FORBIDDEN);
+    }
+
+    //browse or read implies complete access to the repository.
+    return repository;
+  }
+
+  private boolean userCanReadOrBrowseOrGroupPermissions(final Repository repository) {
+    //  Given - repository = raw-hosted
+    //  nx-repository-view-raw-raw-hosted-read - allowed
+    //  nx-repository-view-raw-raw-group-read(raw-group contains raw-hosted as a member) - allowed
+    List<String> repositories = new ArrayList<>(repositoryManager
+        .findContainingGroups(repository.getName()));
+    repositories.add(repository.getName());
+
+    return repositories
+        .stream()
+        .map(repositoryManager::get)
+        .filter(Objects::nonNull)
+        .anyMatch(repositoryPermissionChecker::userCanReadOrBrowse);
   }
 
   @Override

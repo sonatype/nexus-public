@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.rest.internal.resources;
 
+import java.util.Collections;
 import java.util.List;
 
 import javax.ws.rs.NotFoundException;
@@ -42,6 +43,8 @@ public class RepositoryManagerRESTAdapterImplTest
 
   private static final String REPOSITORY_NAME_3 = "repoNameThree";
 
+  private static final String REPOSITORY_GROUP_NAME = "repoGroupName";
+
   private static final String REPOSITORY_FORMAT = "repoFormat";
 
   private static final String REPOSITORY_FORMAT_2 = "repoFormatTwo";
@@ -63,6 +66,9 @@ public class RepositoryManagerRESTAdapterImplTest
   Repository repository3;
 
   @Mock
+  Repository groupRepository;
+
+  @Mock
   Format repositoryFormat;
 
   @Mock
@@ -79,6 +85,7 @@ public class RepositoryManagerRESTAdapterImplTest
   @Before
   public void setUp() throws Exception {
     when(repositoryManager.get(REPOSITORY_NAME)).thenReturn(repository);
+    when(repositoryManager.get(REPOSITORY_GROUP_NAME)).thenReturn(groupRepository);
     when(repositoryManager.browse()).thenReturn(asList(repository, repository2, repository3));
 
     when(repository.getFormat()).thenReturn(repositoryFormat);
@@ -88,10 +95,14 @@ public class RepositoryManagerRESTAdapterImplTest
     when(repository.getName()).thenReturn(REPOSITORY_NAME);
     when(repository2.getName()).thenReturn(REPOSITORY_NAME_2);
     when(repository3.getName()).thenReturn(REPOSITORY_NAME_3);
+    when(groupRepository.getName()).thenReturn(REPOSITORY_GROUP_NAME);
 
     when(repositoryFormat.getValue()).thenReturn(REPOSITORY_FORMAT);
     when(repositoryFormat2.getValue()).thenReturn(REPOSITORY_FORMAT_2);
     when(repositoryFormat3.getValue()).thenReturn(REPOSITORY_FORMAT_3);
+
+    when(repositoryManager.findContainingGroups(REPOSITORY_NAME))
+        .thenReturn(Collections.singletonList(REPOSITORY_GROUP_NAME));
 
     underTest = new RepositoryManagerRESTAdapterImpl(repositoryManager, repositoryPermissionChecker);
   }
@@ -151,6 +162,54 @@ public class RepositoryManagerRESTAdapterImplTest
     catch (WebApplicationException e) {
       assertThat(e.getResponse().getStatus(), is(422));
     }
+  }
+
+  @Test(expected = NotFoundException.class)
+  public void getReadableRepository_notFound() {
+    underTest.getReadableRepository("notFound");
+  }
+
+  @Test
+  public void getReadableRepository_null() {
+    try {
+      underTest.getReadableRepository(null);
+      fail(); //should have thrown exception
+    }
+    catch (WebApplicationException e) {
+      assertThat(e.getResponse().getStatus(), is(422));
+    }
+  }
+
+  @Test
+  public void getReadableRepository_cannotReadOrBrowse() {
+    configurePermissions(repository, false);
+    configurePermissions(groupRepository, false);
+
+    try {
+      underTest.getReadableRepository(repository.getName());
+      fail(); //should have thrown exception
+    }
+    catch (WebApplicationException e) {
+      assertThat(e.getResponse().getStatus(), is(403));
+    }
+  }
+
+  @Test
+  public void getReadableRepository_canReadOrBrowse() {
+    configurePermissions(repository, true);
+    configurePermissions(groupRepository, false);
+
+    Repository actual = underTest.getReadableRepository(repository.getName());
+    assertThat(actual, is(repository));
+  }
+
+  @Test
+  public void getReadableRepository_canReadOrBrowse_asGroupMember() {
+    configurePermissions(repository, false);
+    configurePermissions(groupRepository, true);
+
+    Repository actual = underTest.getReadableRepository(repository.getName());
+    assertThat(actual, is(repository));
   }
 
   @Test

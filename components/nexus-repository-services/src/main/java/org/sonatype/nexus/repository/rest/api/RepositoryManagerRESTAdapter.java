@@ -33,6 +33,24 @@ public interface RepositoryManagerRESTAdapter
   Repository getRepository(String repositoryId);
 
   /**
+   * Retrieve a repository. Will throw a {@link javax.ws.rs.WebApplicationException} with status code 422 if the
+   * supplied  repository id is null, and throws a {@link javax.ws.rs.NotFoundException} if no repository with the
+   * supplied id exists.
+   *
+   * Be careful ! Throws 403 if a user have not permissions(READ or BROWSE) to the supplied repository or a group repository as a member of supplied repository.
+   *
+   * Examples:
+   * Given - repositoryId = raw-hosted
+   * Scenario 1. nx-repository-view-raw-raw-hosted-read - allowed
+   *
+   * Scenario 2. nx-repository-view-raw-raw-group-read(raw-group contains raw-hosted as a member) - allowed.
+   *            In this case a user has not got raw-hosted permissions but the user has raw-group permissions.
+   *            So the user has access to all members of the raw-group.
+   *
+   */
+  Repository getReadableRepository(String repositoryId);
+
+  /**
    * Retrieve all repositories that the user access to.
    */
   List<Repository> getRepositories();

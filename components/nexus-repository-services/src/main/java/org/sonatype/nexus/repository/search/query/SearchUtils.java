@@ -107,6 +107,10 @@ public class SearchUtils
     return repoAdapter.getRepository(repository);
   }
 
+  public Repository getReadableRepository(final String repository) {
+    return repoAdapter.getReadableRepository(repository);
+  }
+
   /**
    * @since 3.15
    * @param searchFilters
