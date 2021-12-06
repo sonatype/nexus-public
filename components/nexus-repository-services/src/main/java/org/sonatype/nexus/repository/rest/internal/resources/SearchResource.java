@@ -171,7 +171,7 @@ public class SearchResource
   @SuppressWarnings("unchecked")
   private ComponentXO toComponent(final SearchHit componentHit) {
     Map<String, Object> componentMap = checkNotNull(componentHit.getSource());
-    Repository repository = searchUtils.getRepository((String) componentMap.get(REPOSITORY_NAME));
+    Repository repository = searchUtils.getReadableRepository((String) componentMap.get(REPOSITORY_NAME));
 
     ComponentXO componentXO = componentXOFactory.createComponentXO();
 

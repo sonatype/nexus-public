@@ -109,6 +109,7 @@ public abstract class RepositoryResourceTestSupport
                                            String url)
   {
     when(repositoryManagerRESTAdapter.getRepository(name)).thenReturn(repository);
+    when(repositoryManagerRESTAdapter.getReadableRepository(name)).thenReturn(repository);
     when(repository.getUrl()).thenReturn(url);
     when(repository.getName()).thenReturn(name);
     when(repository.getFormat()).thenReturn(format);
