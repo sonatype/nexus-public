@@ -10,41 +10,35 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.httpbridge.internal;
+package org.sonatype.nexus.extdirect.internal;
 
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.security.FilterChainModule;
-import org.sonatype.nexus.security.SecurityFilter;
+import org.sonatype.nexus.security.JwtSecurityFilter;
 import org.sonatype.nexus.security.anonymous.AnonymousFilter;
 import org.sonatype.nexus.security.authc.AntiCsrfFilter;
 import org.sonatype.nexus.security.authc.NexusAuthenticationFilter;
-import org.sonatype.nexus.security.authc.apikey.ApiKeyAuthenticationFilter;
 
-import com.google.inject.AbstractModule;
-
-import static org.sonatype.nexus.common.app.FeatureFlags.SESSION_ENABLED;
+import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 
 /**
- * Repository HTTP bridge module.
+ * Ext.Direct Guice module using {@link JwtSecurityFilter}.
  *
- * @since 3.0
+ * @since 3.next
  */
 @Named
-@FeatureFlag(name = SESSION_ENABLED)
-public class HttpBridgeModule
-    extends AbstractModule
+@FeatureFlag(name = JWT_ENABLED)
+public class JwtExtDirectModule
+  extends ExtDirectModule
 {
-  public static final String MOUNT_POINT = "/repository";
-
   @Override
   protected void configure() {
-    install(new HttpBridgeServletModule()
-    {
+    install(new ExtDirectServletModule(MOUNT_POINT) {
       @Override
-      protected void bindSecurityFilter(final FilterKeyBindingBuilder filter) {
-        filter.through(SecurityFilter.class);
+      protected void bindSecurityFilter() {
+        filter(MOUNT_POINT + "*").through(JwtSecurityFilter.class);
       }
     });
 
@@ -54,7 +48,6 @@ public class HttpBridgeModule
       protected void configure() {
         addFilterChain(MOUNT_POINT + "/**",
             NexusAuthenticationFilter.NAME,
-            ApiKeyAuthenticationFilter.NAME,
             AnonymousFilter.NAME,
             AntiCsrfFilter.NAME);
       }

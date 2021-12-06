@@ -10,37 +10,28 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.apache.shiro.nexus;
+package org.sonatype.nexus.internal.web;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.sonatype.nexus.security.anonymous.AnonymousHelper;
+import org.sonatype.nexus.common.app.FeatureFlag;
+import org.sonatype.nexus.internal.metrics.JwtMetricsModule;
+import com.google.inject.Binder;
 
-import org.apache.shiro.mgt.SessionStorageEvaluator;
-import org.apache.shiro.subject.Subject;
-import org.apache.shiro.web.mgt.DefaultWebSessionStorageEvaluator;
+import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 
 /**
- * Custom {@link SessionStorageEvaluator}.
+ * Web module to use JWT.
  *
- * @since 3.0
+ * @since 3.next
  */
-public class NexusSessionStorageEvaluator
-  extends DefaultWebSessionStorageEvaluator
+@Named
+@FeatureFlag(name = JWT_ENABLED)
+public class JwtWebModule
+    extends WebModule
 {
-  @Inject
-  @Named("${nexus.session.enabled:-true}")
-  private boolean sessionsEnabled;
-
-  /**
-   * Disable storage for anonymous subject.
-   */
   @Override
-  public boolean isSessionStorageEnabled(final Subject subject) {
-    if (sessionsEnabled) {
-       return !AnonymousHelper.isAnonymous(subject) && super.isSessionStorageEnabled(subject);
-    }
-    return false;
+  protected void installMetricsModule(final Binder highPriorityBinder) {
+    highPriorityBinder.install(new JwtMetricsModule());
   }
 }

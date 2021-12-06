@@ -14,9 +14,11 @@ package org.sonatype.nexus.rapture.internal.security;
 
 import java.io.IOException;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -31,38 +33,45 @@ import org.slf4j.LoggerFactory;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.net.HttpHeaders.X_FRAME_OPTIONS;
 import static javax.servlet.http.HttpServletResponse.SC_NO_CONTENT;
-import static org.sonatype.nexus.common.app.FeatureFlags.SESSION_ENABLED;
+import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
+import static org.sonatype.nexus.security.JwtHelper.JWT_COOKIE_NAME;
 import static org.sonatype.nexus.servlet.XFrameOptions.DENY;
 
 /**
- * Session servlet, to expose end-point for configuration of Shiro authentication filter to
- * establish a user session.
+ * JWT servlet, to expose end-point for configuration of Shiro authentication filter to
+ * establish a JWT.
  *
- * @since 3.0
+ * @since 3.next
  *
- * @see SessionAuthenticationFilter
+ * @see JwtAuthenticationFilter
  */
 @Named
 @Singleton
-@FeatureFlag(name = SESSION_ENABLED)
-public class SessionServlet
-  extends HttpServlet
+@FeatureFlag(name = JWT_ENABLED)
+public class JwtServlet
+    extends HttpServlet
 {
-  private static final Logger log = LoggerFactory.getLogger(SessionServlet.class);
+  private static final Logger log = LoggerFactory.getLogger(JwtServlet.class);
+
+  private final String contextPath;
+
+  @Inject
+  public JwtServlet(@Named("${nexus-context-path}") final String contextPath) {
+    this.contextPath = contextPath;
+  }
 
   /**
-   * Create session.
+   * Create token.
    */
   @Override
   protected void doPost(final HttpServletRequest request, final HttpServletResponse response)
       throws ServletException, IOException
   {
     Subject subject = SecurityUtils.getSubject();
-    log.info("Created session for user: {}", subject.getPrincipal());
+    log.debug("Created token for user: {}", subject.getPrincipal());
 
     // sanity check
     checkState(subject.isAuthenticated());
-    checkState(subject.getSession(false) != null);
 
     response.setStatus(SC_NO_CONTENT);
 
@@ -71,20 +80,24 @@ public class SessionServlet
   }
 
   /**
-   * Delete session.
+   * Delete token.
    */
   @Override
   protected void doDelete(final HttpServletRequest request, final HttpServletResponse response)
       throws ServletException, IOException
   {
     Subject subject = SecurityUtils.getSubject();
-    log.info("Deleting session for user: {}", subject.getPrincipal());
+    log.debug("Deleting token for user: {}", subject.getPrincipal());
     subject.logout();
 
     // sanity check
     checkState(!subject.isAuthenticated());
     checkState(!subject.isRemembered());
-    checkState(subject.getSession(false) == null);
+
+    Cookie cookie = new Cookie(JWT_COOKIE_NAME, "null");
+    cookie.setPath(contextPath);
+    cookie.setMaxAge(0);
+    response.addCookie(cookie);
 
     response.setStatus(SC_NO_CONTENT);
 

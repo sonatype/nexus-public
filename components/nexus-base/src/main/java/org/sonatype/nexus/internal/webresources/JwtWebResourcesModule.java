@@ -10,53 +10,50 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.httpbridge.internal;
+package org.sonatype.nexus.internal.webresources;
 
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.security.FilterChainModule;
-import org.sonatype.nexus.security.SecurityFilter;
+import org.sonatype.nexus.security.JwtSecurityFilter;
 import org.sonatype.nexus.security.anonymous.AnonymousFilter;
 import org.sonatype.nexus.security.authc.AntiCsrfFilter;
-import org.sonatype.nexus.security.authc.NexusAuthenticationFilter;
-import org.sonatype.nexus.security.authc.apikey.ApiKeyAuthenticationFilter;
 
-import com.google.inject.AbstractModule;
+import com.google.inject.Binder;
+import com.google.inject.servlet.ServletModule;
+import org.eclipse.sisu.inject.Sources;
 
-import static org.sonatype.nexus.common.app.FeatureFlags.SESSION_ENABLED;
+import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 
 /**
- * Repository HTTP bridge module.
+ * Web resources module using {@link JwtSecurityFilter}. Both servlet and filter-chain are installed with the lowest priority.
  *
- * @since 3.0
+ * @since 3.next
  */
 @Named
-@FeatureFlag(name = SESSION_ENABLED)
-public class HttpBridgeModule
-    extends AbstractModule
+@FeatureFlag(name = JWT_ENABLED)
+public class JwtWebResourcesModule
+  extends WebResourcesModule
 {
-  public static final String MOUNT_POINT = "/repository";
-
   @Override
   protected void configure() {
-    install(new HttpBridgeServletModule()
+    final Binder lowPriorityBinder = binder().withSource(Sources.prioritize(Integer.MIN_VALUE));
+
+    lowPriorityBinder.install(new ServletModule()
     {
       @Override
-      protected void bindSecurityFilter(final FilterKeyBindingBuilder filter) {
-        filter.through(SecurityFilter.class);
+      protected void configureServlets() {
+        serve("/*").with(WebResourceServlet.class);
+        filter("/*").through(JwtSecurityFilter.class);
       }
     });
 
-    install(new FilterChainModule()
+    lowPriorityBinder.install(new FilterChainModule()
     {
       @Override
       protected void configure() {
-        addFilterChain(MOUNT_POINT + "/**",
-            NexusAuthenticationFilter.NAME,
-            ApiKeyAuthenticationFilter.NAME,
-            AnonymousFilter.NAME,
-            AntiCsrfFilter.NAME);
+        addFilterChain("/**", AnonymousFilter.NAME, AntiCsrfFilter.NAME);
       }
     });
   }

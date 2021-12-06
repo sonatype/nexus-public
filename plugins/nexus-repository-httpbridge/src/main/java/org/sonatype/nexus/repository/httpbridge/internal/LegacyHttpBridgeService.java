@@ -22,6 +22,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.capability.CapabilityEvent;
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.repository.httpbridge.legacy.LegacyUrlCapabilityDescriptor;
 import org.sonatype.nexus.repository.httpbridge.legacy.LegacyUrlEnabledHelper;
@@ -38,6 +39,7 @@ import org.eclipse.sisu.wire.ParameterKeys;
 import org.eclipse.sisu.wire.WireModule;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.FeatureFlags.SESSION_ENABLED;
 
 /**
  * Manages the injection of {@link LegacyHttpBridgeModule} based on the capability being enabled or the system property
@@ -46,6 +48,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Named
 @Singleton
+@FeatureFlag(name = SESSION_ENABLED)
 public class LegacyHttpBridgeService
     implements EventAware
 {
@@ -81,10 +84,14 @@ public class LegacyHttpBridgeService
     }
   }
 
+  protected AbstractModule getLegacyHttpBridgeModule() {
+    return new LegacyHttpBridgeModule();
+  }
+
   private void addLegacyHttpBridgeModule() {
     if (legacyBridgeInjector == null) {
       this.legacyBridgeInjector = new InjectorBindings(
-          Guice.createInjector(new WireModule(new LegacyHttpBridgeModule(), new AbstractModule()
+          Guice.createInjector(new WireModule(getLegacyHttpBridgeModule(), new AbstractModule()
           {
             @Override
             protected void configure() {
