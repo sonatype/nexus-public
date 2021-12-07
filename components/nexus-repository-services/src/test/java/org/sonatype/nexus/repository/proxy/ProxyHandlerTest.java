@@ -20,6 +20,7 @@ import org.sonatype.nexus.common.io.CooperationException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.http.HttpStatus;
+import org.sonatype.nexus.repository.httpclient.RemoteBlockedIOException;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Request;
@@ -33,8 +34,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
@@ -106,6 +107,13 @@ public class ProxyHandlerTest
     Response response = underTest.handle(context);
     assertStatusCode(response, HttpStatus.SERVICE_UNAVAILABLE);
     assertStatusMessage(response, "Cooperation failed");
+  }
+
+  @Test
+  public void testIOExceptionReturns404Response() throws Exception {
+    when(request.getAction()).thenReturn(HttpMethods.GET);
+    doThrow(new RemoteBlockedIOException("message")).when(proxyFacet).get(context);
+    assertStatusCode(underTest.handle(context), HttpStatus.NOT_FOUND);
   }
 
   @Test
