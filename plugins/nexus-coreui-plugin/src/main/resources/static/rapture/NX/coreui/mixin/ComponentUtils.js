@@ -238,10 +238,13 @@ Ext.define('NX.coreui.mixin.ComponentUtils', {
    * @returns {NX.model.Icon} an icon for a given asset name
    */
   getIconForAssetName: function (assetName) {
-    var extension = assetName.substr(assetName.lastIndexOf('.') + 1);
-    extension = this.getExtensionOverrideMaybe(extension);
-
-    return NX.getApplication().getIconController().findIcon('asset-type-' + extension, 'x16');
+    var index = assetName.lastIndexOf('.');
+    if (index != -1) {
+      var extension = assetName.substr(index + 1);
+      extension = this.getExtensionOverrideMaybe(extension);
+      return NX.getApplication().getIconController().findIcon('asset-type-' + extension, 'x16');
+    }
+    return null;
   },
 
   /**

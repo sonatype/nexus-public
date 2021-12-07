@@ -28,6 +28,10 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>pom</packaging>
 
+  <properties>
+    <clm.skip>true</clm.skip>
+  </properties>
+
   <modules>
     <module>commons</module>
     <module>db</module>
