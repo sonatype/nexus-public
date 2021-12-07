@@ -27,6 +27,11 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>bundle</packaging>
 
+  <properties>
+    <!-- this is a bundle used only by tests -->
+    <clm.skip>true</clm.skip>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.osgi</groupId>

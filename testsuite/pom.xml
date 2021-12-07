@@ -30,6 +30,8 @@
 
   <properties>
     <failsafe.timeout>900</failsafe.timeout>
+
+    <clm.skip>true</clm.skip>
   </properties>
 
   <modules>
