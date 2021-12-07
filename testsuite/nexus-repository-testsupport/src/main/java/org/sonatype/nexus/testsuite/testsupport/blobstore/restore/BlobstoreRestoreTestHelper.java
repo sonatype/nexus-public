@@ -46,8 +46,6 @@ public interface BlobstoreRestoreTestHelper
 
   void runRestoreMetadataTask(boolean isDryRun);
 
-  void assertAssetMatchesBlob(Repository repository, String name);
-
   void assertAssetMatchesBlob(Repository repository, String... names);
 
   void assertAssetInRepository(Repository repository, String name);
@@ -72,4 +70,10 @@ public interface BlobstoreRestoreTestHelper
       String name,
       String version,
       String... paths);
+
+  /**
+   * Rewrites all the blob names either adding a leading slash, or removing a leading slash to simulate blobs
+   * which were written by the other database.
+   */
+  void rewriteBlobNames();
 }

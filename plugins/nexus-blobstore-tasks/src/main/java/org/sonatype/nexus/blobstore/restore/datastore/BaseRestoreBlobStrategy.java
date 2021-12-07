@@ -26,7 +26,6 @@ import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStore;
-import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobStrategy;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.repository.content.AssetBlob;
@@ -44,7 +43,7 @@ import static org.apache.commons.lang3.StringUtils.prependIfMissing;
  *
  * @since 3.29
  */
-public abstract class BaseRestoreBlobStrategy<T extends RestoreBlobData>
+public abstract class BaseRestoreBlobStrategy<T extends DataStoreRestoreBlobData>
     extends ComponentSupport
     implements RestoreBlobStrategy
 {

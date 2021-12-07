@@ -207,6 +207,10 @@ public class DefaultOrientIntegrityCheckStrategy
     checkArgument(blobName != null, BLOB_NAME_MISSING);
     checkArgument(assetName != null, ASSET_NAME_MISSING);
 
+    if (blobName.startsWith("/") && !assetName.startsWith("/")) {
+      blobName = blobName.substring(1);
+    }
+
     if (!Objects.equals(assetName, blobName)) {
       log.error(NAME_MISMATCH, blobName, assetName);
       return false;

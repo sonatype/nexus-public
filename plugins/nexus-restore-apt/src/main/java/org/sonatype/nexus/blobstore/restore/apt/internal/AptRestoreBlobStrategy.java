@@ -23,8 +23,8 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobStore;
-import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
 import org.sonatype.nexus.blobstore.restore.datastore.BaseRestoreBlobStrategy;
+import org.sonatype.nexus.blobstore.restore.datastore.DataStoreRestoreBlobData;
 import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.repository.Repository;
@@ -46,7 +46,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 @Named(AptFormat.NAME)
 @Singleton
 public class AptRestoreBlobStrategy
-    extends BaseRestoreBlobStrategy<RestoreBlobData>
+    extends BaseRestoreBlobStrategy<DataStoreRestoreBlobData>
 {
   private final RepositoryManager repositoryManager;
 
@@ -61,7 +61,7 @@ public class AptRestoreBlobStrategy
 
   @Override
   protected boolean canAttemptRestore(
-      @Nonnull final RestoreBlobData data)
+      @Nonnull final DataStoreRestoreBlobData data)
   {
     Repository repository = data.getRepository();
 
@@ -75,7 +75,7 @@ public class AptRestoreBlobStrategy
 
   @Override
   protected void createAssetFromBlob(
-      final Blob assetBlob, final RestoreBlobData data) throws IOException
+      final Blob assetBlob, final DataStoreRestoreBlobData data) throws IOException
   {
     String assetPath = getAssetPath(data);
     String contentType = data.getProperty(HEADER_PREFIX + CONTENT_TYPE_HEADER);
@@ -86,19 +86,19 @@ public class AptRestoreBlobStrategy
   }
 
   @Override
-  protected String getAssetPath(@Nonnull final RestoreBlobData data) {
+  protected String getAssetPath(@Nonnull final DataStoreRestoreBlobData data) {
     return data.getBlobName();
   }
 
   @Override
-  protected RestoreBlobData createRestoreData(
+  protected DataStoreRestoreBlobData createRestoreData(
       final Properties properties, final Blob blob, final BlobStore blobStore)
   {
-    return new RestoreBlobData(blob, properties, blobStore, repositoryManager);
+    return new DataStoreRestoreBlobData(blob, properties, blobStore, repositoryManager);
   }
 
   @Override
-  protected boolean isComponentRequired(final RestoreBlobData data) {
+  protected boolean isComponentRequired(final DataStoreRestoreBlobData data) {
     String blobName = data.getBlobName();
     return Utils.isDebPackageContentType(blobName);
   }

@@ -30,7 +30,7 @@ import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
  *
  * @since 3.6.1
  */
-public class RestoreBlobData
+public abstract class RestoreBlobData
 {
   private final Blob blob;
 
@@ -40,10 +40,11 @@ public class RestoreBlobData
 
   private final Repository repository;
 
-  public RestoreBlobData(final Blob blob,
-                         final Properties blobProperties,
-                         final BlobStore blobStore,
-                         final RepositoryManager repositoryManager)
+  protected RestoreBlobData(
+      final Blob blob,
+      final Properties blobProperties,
+      final BlobStore blobStore,
+      final RepositoryManager repositoryManager)
   {
     checkNotNull(repositoryManager);
     checkNotNull(blobProperties);
@@ -75,7 +76,7 @@ public class RestoreBlobData
     return repository;
   }
 
-  public final String getProperty(String propertyName) {
+  public final String getProperty(final String propertyName) {
     return blobProperties.getProperty(propertyName);
   }
 }

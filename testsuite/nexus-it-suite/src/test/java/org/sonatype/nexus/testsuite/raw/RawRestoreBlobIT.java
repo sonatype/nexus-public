@@ -35,9 +35,9 @@ import org.junit.experimental.categories.Category;
 
 import static org.apache.commons.lang3.StringUtils.prependIfMissing;
 import static org.apache.http.entity.ContentType.TEXT_PLAIN;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.sonatype.nexus.repository.http.HttpStatus.OK;
 
@@ -93,6 +93,18 @@ public class RawRestoreBlobIT
   @Test
   public void testMetadataRestoreWhenOnlyAssetsAreMissing() throws Exception {
     verifyMetadataRestored(restoreTestHelper::simulateAssetMetadataLoss);
+  }
+
+  /**
+   * For Orient this tests restoring newdb assets, for newdb this tests restoring Orient assets
+   */
+  @Category(OrientAndSQLTestGroup.class)
+  @Test
+  public void testRestoreFromOtherDatabase() throws Exception {
+    verifyMetadataRestored(() -> {
+      restoreTestHelper.rewriteBlobNames();
+      restoreTestHelper.simulateAssetMetadataLoss();
+    });
   }
 
   @Category(OrientTestGroup.class)

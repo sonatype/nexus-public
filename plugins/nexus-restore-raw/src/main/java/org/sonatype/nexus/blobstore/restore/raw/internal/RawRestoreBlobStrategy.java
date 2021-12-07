@@ -22,8 +22,8 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobStore;
-import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
 import org.sonatype.nexus.blobstore.restore.datastore.BaseRestoreBlobStrategy;
+import org.sonatype.nexus.blobstore.restore.datastore.DataStoreRestoreBlobData;
 import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.content.raw.RawContentFacet;
@@ -43,7 +43,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 @FeatureFlag(name = DATASTORE_ENABLED)
 @Singleton
 public class RawRestoreBlobStrategy
-    extends BaseRestoreBlobStrategy<RestoreBlobData>
+    extends BaseRestoreBlobStrategy<DataStoreRestoreBlobData>
 {
   private final RepositoryManager repositoryManager;
 
@@ -57,7 +57,7 @@ public class RawRestoreBlobStrategy
   }
 
   @Override
-  protected boolean canAttemptRestore(@Nonnull final RestoreBlobData data)
+  protected boolean canAttemptRestore(@Nonnull final DataStoreRestoreBlobData data)
   {
     Repository repository = data.getRepository();
 
@@ -71,7 +71,7 @@ public class RawRestoreBlobStrategy
   }
 
   @Override
-  protected void createAssetFromBlob(final Blob assetBlob, final RestoreBlobData data) throws IOException
+  protected void createAssetFromBlob(final Blob assetBlob, final DataStoreRestoreBlobData data) throws IOException
   {
     String contentType = data.getProperty(HEADER_PREFIX + CONTENT_TYPE_HEADER);
     RawContentFacet rawContentFacet = data.getRepository().facet(RawContentFacet.class);
@@ -79,21 +79,21 @@ public class RawRestoreBlobStrategy
   }
 
   @Override
-  protected String getAssetPath(@Nonnull final RestoreBlobData data) {
+  protected String getAssetPath(@Nonnull final DataStoreRestoreBlobData data) {
     return data.getBlobName();
   }
 
   @Override
-  protected RestoreBlobData createRestoreData(
+  protected DataStoreRestoreBlobData createRestoreData(
       final Properties properties,
       final Blob blob,
       final BlobStore blobStore)
   {
-    return new RestoreBlobData(blob, properties, blobStore, repositoryManager);
+    return new DataStoreRestoreBlobData(blob, properties, blobStore, repositoryManager);
   }
 
   @Override
-  protected boolean isComponentRequired(final RestoreBlobData data) {
+  protected boolean isComponentRequired(final DataStoreRestoreBlobData data) {
     return true;
   }
 

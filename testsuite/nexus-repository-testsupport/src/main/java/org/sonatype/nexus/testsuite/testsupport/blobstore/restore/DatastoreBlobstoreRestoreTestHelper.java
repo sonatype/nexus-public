@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.blobstore.restore;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Map;
 import java.util.Optional;
 
@@ -22,9 +24,11 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobStore;
+import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
@@ -52,6 +56,8 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
@@ -73,6 +79,9 @@ public class DatastoreBlobstoreRestoreTestHelper
 
   @Inject
   private RepositoryManager manager;
+
+  @Inject
+  private BlobStoreManager blobstoreManager;
 
   @Override
   public void simulateComponentAndAssetMetadataLoss() {
@@ -128,7 +137,7 @@ public class DatastoreBlobstoreRestoreTestHelper
   }
 
   @Override
-  public void runRestoreMetadataTask(boolean isDryRun) {
+  public void runRestoreMetadataTask(final boolean isDryRun) {
     runRestoreMetadataTaskWithTimeout(60, isDryRun);
   }
 
@@ -225,8 +234,32 @@ public class DatastoreBlobstoreRestoreTestHelper
   }
 
   @Override
-  public void assertAssetMatchesBlob(final Repository repo, final String path) {
-    assetMatch(assets(repo).path(prependIfMissing(path, "/")).find(), getBlobStore(repo));
+  public void rewriteBlobNames() {
+    manager.browse().forEach(repo -> {
+      ContentFacet content = repo.facet(ContentFacet.class);
+      content.assets().browse(Integer.MAX_VALUE, null).stream()
+          .map(Asset::blob)
+          .filter(Optional::isPresent)
+          .map(Optional::get)
+          .map(AssetBlob::blobRef)
+          .map(blobRef -> blobstoreManager.get(blobRef.getStore()).getBlobAttributes(blobRef.getBlobId()))
+          .forEach(blobAttr -> {
+            Map<String, String> headers = blobAttr.getHeaders();
+            String name = headers.get(BLOB_NAME_HEADER);
+            if (name != null && name.startsWith("/")) {
+              headers.put(BLOB_NAME_HEADER, name.substring(1));
+              try {
+                blobAttr.store();
+              }
+              catch (IOException e) {
+                throw new UncheckedIOException("Failed to rewrite blob: " + name, e);
+              }
+            }
+            else {
+              fail("Found missing name or unexpected name: " + name);
+            }
+          });
+    });
   }
 
   private FluentAssets assets(final Repository repo) {
@@ -254,7 +287,8 @@ public class DatastoreBlobstoreRestoreTestHelper
   }
 
   private static void assetMatch(final Optional<FluentAsset> asset, final BlobStore blobStore) {
-    assertTrue(asset.isPresent() && asset.get().blob().isPresent());
+    assertTrue(asset.isPresent());
+    assertTrue(asset.get().blob().isPresent());
     AssetBlob assetBlob = asset.orElseThrow(AssertionError::new).blob().orElseThrow(AssertionError::new);
 
     Blob blob = blobStore.get(assetBlob.blobRef().getBlobId());
