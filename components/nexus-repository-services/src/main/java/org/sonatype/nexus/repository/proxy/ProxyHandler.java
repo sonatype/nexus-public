@@ -21,6 +21,7 @@ import javax.annotation.Nullable;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.io.CooperationException;
 import org.sonatype.nexus.repository.http.HttpResponses;
+import org.sonatype.nexus.repository.httpclient.RemoteBlockedIOException;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Headers;
@@ -63,6 +64,9 @@ public class ProxyHandler
     }
     catch (CooperationException e) { // NOSONAR
       return HttpResponses.serviceUnavailable(e.getMessage());
+    }
+    catch (RemoteBlockedIOException e) {
+      return HttpResponses.notFound(e.getMessage());
     }
     catch (IOException | UncheckedIOException e) {
       return HttpResponses.badGateway();
