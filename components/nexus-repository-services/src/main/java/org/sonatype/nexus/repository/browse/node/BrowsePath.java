@@ -14,6 +14,8 @@ package org.sonatype.nexus.repository.browse.node;
 
 import java.util.Objects;
 
+import static java.lang.String.format;
+
 /**
  * Used to denote a node's request path (used for security checks) and a potentially different display name.
  * Suppose when browsing format 'dash' we change all folders named 'dash' to '-' for display purposes, i.e.
@@ -73,5 +75,10 @@ public class BrowsePath
   @Override
   public int hashCode() {
     return Objects.hash(displayName, requestPath);
+  }
+
+  @Override
+  public String toString() {
+    return format("Display Name:%s, Request Path:%s", displayName, requestPath);
   }
 }
