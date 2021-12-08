@@ -63,7 +63,7 @@ public class MavenRestoreBlobStrategyTest
 
   private static final String TEST_BLOB_STORE_NAME = "test";
 
-  private static final String BLOB_NAME = "org/codehaus/plexus/plexus/3.1/plexus-3.1.pom";
+  private static final String BLOB_NAME = "/org/codehaus/plexus/plexus/3.1/plexus-3.1.pom";
 
   @Mock
   private MavenPathParser mavenPathParser;

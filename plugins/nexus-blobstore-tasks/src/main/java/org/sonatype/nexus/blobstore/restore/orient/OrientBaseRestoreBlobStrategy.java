@@ -91,7 +91,7 @@ public abstract class OrientBaseRestoreBlobStrategy<T extends RestoreBlobDataSup
                       final BlobStore blobStore,
                       final boolean isDryRun)
   {
-    RestoreBlobData blobData = new RestoreBlobData(blob, properties, blobStore, repositoryManager);
+    RestoreBlobData blobData = new OrientRestoreBlobData(blob, properties, blobStore, repositoryManager);
     Optional<StorageFacet> storageFacet = blobData.getRepository().optionalFacet(StorageFacet.class);
     T restoreData = createRestoreData(blobData);
 
