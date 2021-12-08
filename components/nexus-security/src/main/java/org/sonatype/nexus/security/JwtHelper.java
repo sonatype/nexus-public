@@ -20,6 +20,7 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import javax.servlet.http.Cookie;
 
 import org.sonatype.nexus.common.text.Strings2;
 
@@ -34,7 +35,7 @@ import org.slf4j.LoggerFactory;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * JWT helper to create, decode and verify token
+ * Helper to create, decode, verify and refresh JWT cookie
  *
  * @since 3.next
  */
@@ -42,7 +43,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Singleton
 public class JwtHelper
 {
-  public static final String JWT_COOKIE_NAME = "nx-jwt";
+  public static final String JWT_COOKIE_NAME = "NXJWT";
 
   public static final String ISSUER = "sonatype";
 
@@ -60,12 +61,16 @@ public class JwtHelper
 
   private final int expiry;
 
+  private final String contextPath;
+
   private final JWTVerifier verifier;
 
   @Inject
   public JwtHelper(@Named("${nexus.jwt.expiry:-1800}") final int expiry,
+                   @Named("${nexus-context-path}") final String contextPath,
                    @Nullable @Named("${nexus.jwt.secret}") final String secret) {
     this.expiry = expiry;
+    this.contextPath = contextPath;
     String secretValue = secret;
     if (Strings2.isBlank(secretValue)) {
       secretValue = UUID.randomUUID().toString();
@@ -77,26 +82,27 @@ public class JwtHelper
   }
 
   /**
-   * Generates a new JWT
+   * Generates a new JWT and makes cookie to store it
    */
-  public String createJwt(final Subject subject) {
+  public Cookie createJwtCookie(final Subject subject) {
     checkNotNull(subject);
 
     String username = subject.getPrincipal().toString();
     Optional<String> realm = subject.getPrincipals().getRealmNames().stream().findFirst();
 
-    Date issuedAt = new Date();
-    Date expiresAt = new Date(issuedAt.getTime() + getExpiryInMillis());
-    String userSessionId = UUID.randomUUID().toString();
+    return createJwtCookie(username, realm.orElse(null));
+  }
 
-    return JWT.create()
-        .withIssuer(ISSUER)
-        .withClaim(USER, username)
-        .withClaim(REALM, realm.orElse(null))
-        .withClaim(USER_SESSION_ID, userSessionId)
-        .withIssuedAt(issuedAt)
-        .withExpiresAt(expiresAt)
-        .sign(algorithm);
+  /**
+   * Verify jwt, refresh if it's valid and make new cookie
+   */
+  public Optional<Cookie> verifyAndRefreshJwtCookie(final String jwt) {
+    checkNotNull(jwt);
+
+    Optional<DecodedJWT> decodedJWT = verifyJwt(jwt);
+    return decodedJWT.map(decoded -> createJwtCookie(decoded.getClaim(USER).asString(),
+        decoded.getClaim(REALM).asString(),
+        decoded.getClaim(USER_SESSION_ID).asString()));
   }
 
   /**
@@ -126,5 +132,40 @@ public class JwtHelper
    */
   public long getExpiryInMillis() {
     return expiry * MILLIS_PER_SECOND;
+  }
+
+  private Cookie createJwtCookie(final String user, final String realm) {
+    String userSessionId = UUID.randomUUID().toString();
+    return createJwtCookie(user, realm, userSessionId);
+  }
+
+  private Cookie createJwtCookie(final String user, final String realm, final String userSessionId) {
+    String jwt = createToken(user, realm, userSessionId);
+    return createCookie(jwt);
+  }
+
+  private String createToken(final String user, final String realm, final String userSessionId) {
+    Date issuedAt = new Date();
+    Date expiresAt = getExpiresAt(issuedAt);
+    return JWT.create()
+        .withIssuer(ISSUER)
+        .withClaim(USER, user)
+        .withClaim(REALM, realm)
+        .withClaim(USER_SESSION_ID, userSessionId)
+        .withIssuedAt(issuedAt)
+        .withExpiresAt(expiresAt)
+        .sign(algorithm);
+  }
+
+  private Cookie createCookie(final String jwt) {
+    Cookie cookie = new Cookie(JWT_COOKIE_NAME, jwt);
+    cookie.setMaxAge(getExpiryInSec());
+    cookie.setPath(contextPath);
+    cookie.setHttpOnly(true);
+    return cookie;
+  }
+
+  private Date getExpiresAt(final Date issuedAt) {
+    return new Date(issuedAt.getTime() + getExpiryInMillis());
   }
 }
