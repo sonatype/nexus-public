@@ -23,6 +23,7 @@ import org.sonatype.nexus.security.authc.NexusAuthenticationFilter;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
+import com.google.inject.Module;
 import com.google.inject.servlet.ServletModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +54,14 @@ public class SiestaModule
     }
   }
 
+  private void doConfigure() {
+    install(new ResteasyModule());
+
+    install(configureServletModule());
+
+    install(configureFilterChainModule());
+  }
+
   protected ServletModule configureServletModule() {
     return new ServletModule()
     {
@@ -69,12 +78,8 @@ public class SiestaModule
     };
   }
 
-  private void doConfigure() {
-    install(new ResteasyModule());
-
-    install(configureServletModule());
-
-    install(new FilterChainModule()
+  protected Module configureFilterChainModule() {
+    return new FilterChainModule()
     {
       @Override
       protected void configure() {
@@ -83,6 +88,6 @@ public class SiestaModule
             AnonymousFilter.NAME,
             AntiCsrfFilter.NAME);
       }
-    });
+    };
   }
 }

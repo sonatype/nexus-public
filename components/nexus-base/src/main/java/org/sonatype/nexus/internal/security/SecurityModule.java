@@ -17,6 +17,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.security.FilterProviderSupport;
+import org.sonatype.nexus.security.JwtFilter;
 import org.sonatype.nexus.security.anonymous.AnonymousFilter;
 import org.sonatype.nexus.security.authc.AntiCsrfFilter;
 import org.sonatype.nexus.security.authc.NexusAuthenticationFilter;
@@ -36,6 +37,7 @@ public class SecurityModule
 {
   @Override
   protected void configure() {
+    bind(filterKey(JwtFilter.NAME)).to(JwtFilter.class);
     bind(filterKey(AnonymousFilter.NAME)).to(AnonymousFilter.class);
     bind(filterKey(NexusAuthenticationFilter.NAME)).to(NexusAuthenticationFilter.class);
     bind(filterKey(ApiKeyAuthenticationFilter.NAME)).to(ApiKeyAuthenticationFilter.class);

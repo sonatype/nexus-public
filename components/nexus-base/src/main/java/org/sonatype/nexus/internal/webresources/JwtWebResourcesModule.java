@@ -16,6 +16,7 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.security.FilterChainModule;
+import org.sonatype.nexus.security.JwtFilter;
 import org.sonatype.nexus.security.JwtSecurityFilter;
 import org.sonatype.nexus.security.anonymous.AnonymousFilter;
 import org.sonatype.nexus.security.authc.AntiCsrfFilter;
@@ -53,7 +54,7 @@ public class JwtWebResourcesModule
     {
       @Override
       protected void configure() {
-        addFilterChain("/**", AnonymousFilter.NAME, AntiCsrfFilter.NAME);
+        addFilterChain("/**", JwtFilter.NAME, AnonymousFilter.NAME, AntiCsrfFilter.NAME);
       }
     });
   }

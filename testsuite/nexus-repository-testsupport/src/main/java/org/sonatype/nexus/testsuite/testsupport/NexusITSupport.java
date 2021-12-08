@@ -106,7 +106,7 @@ public abstract class NexusITSupport
 {
   protected static final String DEFAULT_SESSION_COOKIE_NAME = "NXSESSIONID";
 
-  protected static final String DEFAULT_JWT_COOKIE_NAME = "nx-jwt";
+  protected static final String DEFAULT_JWT_COOKIE_NAME = "NXJWT";
 
   protected static final String REST_SERVICE_PATH = "service/rest";
 

@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.httpbridge.internal;
 
 import org.sonatype.nexus.security.FilterChainModule;
+import org.sonatype.nexus.security.JwtFilter;
 import org.sonatype.nexus.security.JwtHelper;
 import org.sonatype.nexus.security.JwtSecurityFilter;
 import org.sonatype.nexus.security.anonymous.AnonymousFilter;
@@ -61,12 +62,14 @@ public class JwtLegacyHttpBridgeModule
       protected void configure() {
         addFilterChain("/content/**",
             NexusAuthenticationFilter.NAME,
+            JwtFilter.NAME,
             ApiKeyAuthenticationFilter.NAME,
             AnonymousFilter.NAME,
             AntiCsrfFilter.NAME);
 
         addFilterChain("/service/local/**",
             NexusAuthenticationFilter.NAME,
+            JwtFilter.NAME,
             ApiKeyAuthenticationFilter.NAME,
             AnonymousFilter.NAME,
             AntiCsrfFilter.NAME);

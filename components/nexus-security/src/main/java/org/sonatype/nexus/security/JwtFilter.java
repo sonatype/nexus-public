@@ -10,7 +10,9 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.rapture.internal.security;
+package org.sonatype.nexus.security;
+
+import java.util.Optional;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -18,51 +20,48 @@ import javax.inject.Singleton;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.sonatype.nexus.common.app.FeatureFlag;
-import org.sonatype.nexus.security.JwtHelper;
-
-import org.apache.shiro.authc.AuthenticationToken;
-import org.apache.shiro.subject.Subject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.shiro.web.servlet.AdviceFilter;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
+import static java.util.Arrays.stream;
+import static org.sonatype.nexus.security.JwtHelper.JWT_COOKIE_NAME;
 
 /**
- * JWT authentication filter for {@link JwtServlet}.
+ * Filter to verify and refresh JWT cookie
  *
  * @since 3.next
  */
 @Named
 @Singleton
-@FeatureFlag(name = JWT_ENABLED)
-public class JwtAuthenticationFilter
-    extends SessionAuthenticationFilter
+public class JwtFilter extends AdviceFilter
 {
-  private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
-
-  public static final String NAME = "nx-jwt-authc";
+  public static final String NAME = "nx-jwt";
 
   private final JwtHelper jwtHelper;
 
   @Inject
-  public JwtAuthenticationFilter(final JwtHelper jwtHelper) {
+  public JwtFilter(final JwtHelper jwtHelper) {
     this.jwtHelper = checkNotNull(jwtHelper);
   }
 
   @Override
-  protected boolean onLoginSuccess(final AuthenticationToken token,
-                                   final Subject subject,
-                                   final ServletRequest request,
-                                   final ServletResponse response)
-      throws Exception
-  {
-    log.debug("Success: token={}, subject={}", token, subject);
-    Cookie cookie = jwtHelper.createJwtCookie(subject);
-    ((HttpServletResponse)response).addCookie(cookie);
+  protected boolean preHandle(final ServletRequest request, final ServletResponse response) throws Exception {
+    Cookie[] cookies = ((HttpServletRequest) request).getCookies();
+
+    if (cookies != null) {
+      Optional<Cookie> jwtCookie = stream(cookies)
+          .filter(cookie -> cookie.getName().equals(JWT_COOKIE_NAME))
+          .findFirst();
+
+      if (jwtCookie.isPresent()) {
+        Cookie cookie = jwtCookie.get();
+        Optional<Cookie> refreshedToken = jwtHelper.verifyAndRefreshJwtCookie(cookie.getValue());
+        refreshedToken.ifPresent(((HttpServletResponse) response)::addCookie);
+      }
+    }
     return true;
   }
 }
