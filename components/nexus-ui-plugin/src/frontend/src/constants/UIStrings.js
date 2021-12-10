@@ -43,7 +43,7 @@ export default {
     INVALID_NAME_CHARS: 'Only letters, digits, underscores(_), hyphens(-), and dots(.) are allowed and may not start with underscore or dot.',
     MAX_CHARS: (max) => `This field has a limit of ${max} characters`,
     INVALID_URI: 'URI should be in the format <protocol>:<path>',
-    INVALID_EMAIL: 'This field should be an e-mail address in the format "user@example.com"',
+    INVALID_EMAIL: 'This field should be an e-mail address in the format "user@example.com" or "user@example"',
     URL_ERROR: 'URL should be in the format "http://www.example.com"',
     URL_NEEDS_TRAILING_SLASH: 'URL should be in the format "http://www.example.com/" and must include a trailing slash'
   },
