@@ -40,7 +40,7 @@ Ext.define('NX.util.Validator', {
    * is the same as default ExtJS email vtype.
    * @private
    */
-  nxEmailRegex : /^(")?(?:[^\."])(?:(?:[\.])?(?:[\w\-!#$%&'*+/=?^_`{|}~]))*\1@(\w[\-\w]*\.){1,5}([A-Za-z]){2,60}$/,
+  nxEmailRegex : /^(")?(?:[^\."])(?:(?:[\.])?(?:[\w\-!#$%&'*+/=?^_`{|}~]))*\1@(\w[\-\w]*\.?){1,5}([A-Za-z]){2,60}$/,
 
   /**
    * A regular expression to detect a valid hostname according to RFC 1123.
