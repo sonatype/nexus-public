@@ -52,7 +52,7 @@ public class IndexStartupRebuildManagerTest
   private Repository repository2;
 
   @Mock
-  SearchIndexService searchIndexService;
+  ElasticSearchIndexService elasticSearchIndexService;
 
   @Before
   public void start() {
@@ -60,13 +60,13 @@ public class IndexStartupRebuildManagerTest
     when(repository.optionalFacet(SearchIndexFacet.class)).thenReturn(Optional.of(mockFacet));
     when(repository2.optionalFacet(SearchIndexFacet.class)).thenReturn(Optional.of(mockFacet));
     when(repositoryManager.browse()).thenReturn(Arrays.asList(repository, repository2));
-    when(searchIndexService.indexExist(any())).thenReturn(false);
+    when(elasticSearchIndexService.indexExist(any())).thenReturn(false);
   }
 
   @Test
   public void rebuildDoesntRunIfNoVariableIsSet() throws Exception {
     underTest = new IndexStartupRebuildManager(taskScheduler, repositoryManager,
-        searchIndexService, null);
+        elasticSearchIndexService, null);
     underTest.doStart();
     verify(taskScheduler, never()).submit(any());
   }
@@ -74,7 +74,7 @@ public class IndexStartupRebuildManagerTest
   @Test
   public void rebuildDoesntRunIfVariableIsFalse() throws Exception {
     underTest = new IndexStartupRebuildManager(taskScheduler, repositoryManager,
-        searchIndexService, "false");
+        elasticSearchIndexService, "false");
     underTest.doStart();
     verify(taskScheduler, never()).submit(any());
   }
@@ -82,7 +82,7 @@ public class IndexStartupRebuildManagerTest
   @Test
   public void rebuildDoesntRunIfVariableIsInvalid() throws Exception {
     underTest = new IndexStartupRebuildManager(taskScheduler, repositoryManager,
-        searchIndexService, "this is invalid");
+        elasticSearchIndexService, "this is invalid");
     underTest.doStart();
     verify(taskScheduler, never()).submit(any());
   }
@@ -90,7 +90,7 @@ public class IndexStartupRebuildManagerTest
   @Test
   public void rebuildDoesRunIfVariableIsTrue() throws Exception {
     underTest = new IndexStartupRebuildManager(taskScheduler, repositoryManager,
-        searchIndexService, "true");
+        elasticSearchIndexService, "true");
 
     when(taskScheduler.createTaskConfigurationInstance(RebuildIndexTaskDescriptor.TYPE_ID))
         .thenReturn(new TaskConfiguration());
@@ -102,9 +102,9 @@ public class IndexStartupRebuildManagerTest
   @Test
   public void rebuildDoesNotRunIfSearchIndexExists() throws Exception {
     underTest = new IndexStartupRebuildManager(taskScheduler, repositoryManager,
-        searchIndexService, "true");
+        elasticSearchIndexService, "true");
 
-    when(searchIndexService.indexExist(any())).thenReturn(true);
+    when(elasticSearchIndexService.indexExist(any())).thenReturn(true);
 
     underTest.doStart();
     verify(taskScheduler, never()).submit(any());
@@ -113,12 +113,12 @@ public class IndexStartupRebuildManagerTest
   @Test
   public void rebuildDoesRunIfSearchIndexNotExist() throws Exception {
     underTest = new IndexStartupRebuildManager(taskScheduler, repositoryManager,
-        searchIndexService, "true");
+        elasticSearchIndexService, "true");
 
     when(taskScheduler.createTaskConfigurationInstance(RebuildIndexTaskDescriptor.TYPE_ID))
         .thenReturn(new TaskConfiguration());
 
-    when(searchIndexService.indexExist(any())).thenReturn(false);
+    when(elasticSearchIndexService.indexExist(any())).thenReturn(false);
 
     underTest.doStart();
     assertRebuildScheduled();

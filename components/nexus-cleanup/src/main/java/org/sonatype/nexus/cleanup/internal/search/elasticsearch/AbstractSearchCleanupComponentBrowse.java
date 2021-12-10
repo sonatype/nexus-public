@@ -22,7 +22,7 @@ import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.query.QueryOptions;
-import org.sonatype.nexus.repository.search.query.SearchQueryService;
+import org.sonatype.nexus.repository.search.query.ElasticSearchQueryService;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
@@ -57,7 +57,7 @@ public abstract class AbstractSearchCleanupComponentBrowse
 
   private static final String GROUP = "group";
 
-  private final SearchQueryService searchQueryService;
+  private final ElasticSearchQueryService elasticSearchQueryService;
 
   private final MetricRegistry metricRegistry;
 
@@ -67,11 +67,11 @@ public abstract class AbstractSearchCleanupComponentBrowse
 
   protected AbstractSearchCleanupComponentBrowse(
       final Map<String, CriteriaAppender> criteriaAppenders,
-      final SearchQueryService searchQueryService,
+      final ElasticSearchQueryService elasticSearchQueryService,
       final MetricRegistry metricRegistry)
   {
     this.criteriaAppenders = checkNotNull(criteriaAppenders);
-    this.searchQueryService = checkNotNull(searchQueryService);
+    this.elasticSearchQueryService = checkNotNull(elasticSearchQueryService);
     this.metricRegistry = checkNotNull(metricRegistry);
   }
 
@@ -95,7 +95,7 @@ public abstract class AbstractSearchCleanupComponentBrowse
     long start = System.nanoTime();
 
     try {
-      return searchQueryService.browse(unrestricted(query).inRepositories(repository));
+      return elasticSearchQueryService.browse(unrestricted(query).inRepositories(repository));
     }
     finally {
       updateTimer(policy, repository, System.nanoTime() - start);
@@ -110,7 +110,7 @@ public abstract class AbstractSearchCleanupComponentBrowse
     long start = System.nanoTime();
 
     try {
-      return searchQueryService.search(
+      return elasticSearchQueryService.search(
           unrestricted(query)
               .sortBy(getSort(options.getSortProperty(), options.getSortDirection()))
               .inRepositories(repository),

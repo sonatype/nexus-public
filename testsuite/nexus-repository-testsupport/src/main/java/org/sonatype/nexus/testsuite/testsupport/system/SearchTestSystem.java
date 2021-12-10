@@ -27,8 +27,8 @@ import javax.ws.rs.core.Response;
 
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.search.index.SearchIndexService;
-import org.sonatype.nexus.repository.search.query.SearchQueryService;
+import org.sonatype.nexus.repository.search.index.ElasticSearchIndexService;
+import org.sonatype.nexus.repository.search.query.ElasticSearchQueryService;
 
 import com.google.common.collect.Lists;
 
@@ -41,10 +41,10 @@ import static org.hamcrest.core.Is.is;
 public class SearchTestSystem
 {
   @Inject
-  public SearchIndexService indexService;
+  public ElasticSearchIndexService indexService;
 
   @Inject
-  public SearchQueryService searchQueryService;
+  public ElasticSearchQueryService elasticSearchQueryService;
 
   @Inject
   public EventManager eventManager;
@@ -135,8 +135,8 @@ public class SearchTestSystem
     }
   }
 
-  public SearchQueryService queryService() {
-    return searchQueryService;
+  public ElasticSearchQueryService queryService() {
+    return elasticSearchQueryService;
   }
 
   private List<Map<String, Object>> searchForComponentByParams(

@@ -23,7 +23,7 @@ import org.sonatype.nexus.transaction.UnitOfWork;
  * @since 3.0
  */
 @Facet.Exposed
-public interface SearchFacet
+public interface ElasticSearchFacet
     extends SearchIndexFacet
 {
   /**

@@ -10,30 +10,33 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search.query;
-
-import javax.inject.Named;
-import javax.inject.Singleton;
-
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
+package org.sonatype.nexus.repository.search;
 
 /**
- * "attributes.docker.layerAncestry" {@link SearchContribution} (adds a prefix query for ancestry).
+ * This defines the db-agnostic interface for searching. All search requests should go through this.
  *
- * @since 3.15
+ * @since 3.next
  */
-@Named("attributes.docker.layerAncestry")
-@Singleton
-public class DockerLayerIdSearchContribution
-    extends SearchContributionSupport
+public interface SearchService
 {
+  /**
+   * Search for components with the passed in {@link SearchRequest}
+   *
+   * @since 3.next
+   */
+  SearchResponse search(SearchRequest searchRequest);
 
-  @Override
-  public void contribute(final BoolQueryBuilder query, final String type, final String value) {
-    if (value != null) {
-      query.must(QueryBuilders.prefixQuery(type, value));
-    }
-  }
+  /**
+   * Browse through all of the components returned
+   *
+   * @since 3.next
+   */
+  Iterable<ComponentSearchResult> browse(SearchRequest searchRequest);
 
+  /**
+   * Return the count of components matching the {@link SearchRequest}
+   *
+   * @since 3.next
+   */
+  long count(SearchRequest searchRequest);
 }

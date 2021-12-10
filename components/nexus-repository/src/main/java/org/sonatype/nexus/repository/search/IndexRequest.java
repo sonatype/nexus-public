@@ -49,27 +49,27 @@ final class IndexRequest
   }
 
   /**
-   * Applies the index request to the repository's {@link SearchFacet} one-by-one.
+   * Applies the index request to the repository's {@link ElasticSearchFacet} one-by-one.
    *
    * Has side-effect of removing local deletions from {@link #pendingDeletes}.
    */
-  void apply(final SearchFacet searchFacet) {
+  void apply(final ElasticSearchFacet elasticSearchFacet) {
     updatedIds.forEach(id -> {
       if (pendingDeletes.remove(id)) {
-        searchFacet.delete(id);
+        elasticSearchFacet.delete(id);
       }
       else {
-        searchFacet.put(id);
+        elasticSearchFacet.put(id);
       }
     });
   }
 
   /**
-   * Applies the index request to the repository's {@link SearchFacet} in bulk.
+   * Applies the index request to the repository's {@link ElasticSearchFacet} in bulk.
    *
    * Has side-effect of removing local deletions from {@link #pendingDeletes}.
    */
-  void bulkApply(final SearchFacet searchFacet) {
+  void bulkApply(final ElasticSearchFacet elasticSearchFacet) {
 
     if (!pendingDeletes.isEmpty()) {
       Set<EntityId> deletedIds = new HashSet<>();
@@ -84,12 +84,12 @@ final class IndexRequest
       }
 
       if (!deletedIds.isEmpty()) {
-        searchFacet.bulkDelete(deletedIds);
+        elasticSearchFacet.bulkDelete(deletedIds);
       }
     }
 
     if (!updatedIds.isEmpty()) {
-      searchFacet.bulkPut(updatedIds);
+      elasticSearchFacet.bulkPut(updatedIds);
     }
   }
 }

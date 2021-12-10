@@ -49,10 +49,10 @@ import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.rest.internal.resources.doc.SearchResourceDoc;
 import org.sonatype.nexus.repository.search.event.SearchEvent;
 import org.sonatype.nexus.repository.search.event.SearchEventSource;
+import org.sonatype.nexus.repository.search.query.ElasticSearchQueryService;
+import org.sonatype.nexus.repository.search.query.ElasticSearchUtils;
 import org.sonatype.nexus.repository.search.query.RepositoryQueryBuilder;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
-import org.sonatype.nexus.repository.search.query.SearchQueryService;
-import org.sonatype.nexus.repository.search.query.SearchUtils;
 import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.Resource;
 
@@ -67,16 +67,15 @@ import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static org.codehaus.groovy.runtime.DefaultGroovyMethods.collect;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.ASSETS;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.GROUP;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.NAME;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.VERSION;
 import static org.sonatype.nexus.repository.search.query.RepositoryQueryBuilder.repositoryQuery;
-import static org.sonatype.nexus.repository.search.query.SearchUtils.CONTINUATION_TOKEN;
-import static org.sonatype.nexus.repository.search.query.SearchUtils.SORT_DIRECTION;
-import static org.sonatype.nexus.repository.search.query.SearchUtils.SORT_FIELD;
+import static org.sonatype.nexus.repository.search.query.ElasticSearchUtils.CONTINUATION_TOKEN;
+import static org.sonatype.nexus.repository.search.query.ElasticSearchUtils.SORT_DIRECTION;
+import static org.sonatype.nexus.repository.search.query.ElasticSearchUtils.SORT_FIELD;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 
 /**
@@ -97,11 +96,11 @@ public class SearchResource
 
   public static final String SEARCH_AND_DOWNLOAD_URI = "/assets/download";
 
-  private final SearchUtils searchUtils;
+  private final ElasticSearchUtils elasticSearchUtils;
 
   private final AssetMapUtils assetMapUtils;
 
-  private final SearchQueryService searchQueryService;
+  private final ElasticSearchQueryService elasticSearchQueryService;
 
   private final TokenEncoder tokenEncoder;
 
@@ -116,18 +115,19 @@ public class SearchResource
   private int pageSize = 50;
 
   @Inject
-  public SearchResource(final SearchUtils searchUtils,
-                        final AssetMapUtils assetMapUtils,
-                        final SearchQueryService searchQueryService,
-                        final TokenEncoder tokenEncoder,
-                        final ComponentXOFactory componentXOFactory,
-                        final Set<SearchResourceExtension> searchResourceExtensions,
-                        final EventManager eventManager,
-                        @Nullable final Map<String, AssetXODescriptor> assetDescriptors)
+  public SearchResource(
+      final ElasticSearchUtils elasticSearchUtils,
+      final AssetMapUtils assetMapUtils,
+      final ElasticSearchQueryService elasticSearchQueryService,
+      final TokenEncoder tokenEncoder,
+      final ComponentXOFactory componentXOFactory,
+      final Set<SearchResourceExtension> searchResourceExtensions,
+      final EventManager eventManager,
+      @Nullable final Map<String, AssetXODescriptor> assetDescriptors)
   {
-    this.searchUtils = checkNotNull(searchUtils);
+    this.elasticSearchUtils = checkNotNull(elasticSearchUtils);
     this.assetMapUtils = checkNotNull(assetMapUtils);
-    this.searchQueryService = checkNotNull(searchQueryService);
+    this.elasticSearchQueryService = checkNotNull(elasticSearchQueryService);
     this.tokenEncoder = checkNotNull(tokenEncoder);
     this.componentXOFactory = checkNotNull(componentXOFactory);
     this.searchResourceExtensions = checkNotNull(searchResourceExtensions);
@@ -144,21 +144,21 @@ public class SearchResource
       @Nullable @QueryParam("timeout") final Integer seconds,
       @Context final UriInfo uriInfo)
   {
-    Collection<SearchFilter> searchFilters = searchUtils.getSearchFilters(uriInfo);
+    Collection<SearchFilter> searchFilters = elasticSearchUtils.getSearchFilters(uriInfo);
 
     fireSearchEvent(searchFilters);
 
-    QueryBuilder query = searchUtils.buildQuery(searchFilters);
+    QueryBuilder query = elasticSearchUtils.buildQuery(searchFilters);
 
     int from = tokenEncoder.decode(continuationToken, query);
 
     RepositoryQueryBuilder repoQuery = repositoryQuery(query);
-    repoQuery.sortBy(searchUtils.getSortBuilders(sort, direction, false));
+    repoQuery.sortBy(elasticSearchUtils.getSortBuilders(sort, direction, false));
     if (seconds != null) {
       repoQuery.timeout(Duration.ofSeconds(seconds));
     }
 
-    SearchResponse response = searchQueryService.search(repoQuery, from, getPageSize());
+    SearchResponse response = elasticSearchQueryService.search(repoQuery, from, getPageSize());
 
     List<ComponentXO> componentXOs = Arrays.stream(response.getHits().hits())
         .map(this::toComponent)
@@ -171,7 +171,7 @@ public class SearchResource
   @SuppressWarnings("unchecked")
   private ComponentXO toComponent(final SearchHit componentHit) {
     Map<String, Object> componentMap = checkNotNull(componentHit.getSource());
-    Repository repository = searchUtils.getReadableRepository((String) componentMap.get(REPOSITORY_NAME));
+    Repository repository = elasticSearchUtils.getReadableRepository((String) componentMap.get(REPOSITORY_NAME));
 
     ComponentXO componentXO = componentXOFactory.createComponentXO();
 
@@ -212,21 +212,21 @@ public class SearchResource
       @Nullable @QueryParam("timeout") final Integer seconds,
       @Context final UriInfo uriInfo)
   {
-    Collection<SearchFilter> searchFilters = searchUtils.getSearchFilters(uriInfo);
+    Collection<SearchFilter> searchFilters = elasticSearchUtils.getSearchFilters(uriInfo);
 
     fireSearchEvent(searchFilters);
 
-    QueryBuilder query = searchUtils.buildQuery(searchFilters);
+    QueryBuilder query = elasticSearchUtils.buildQuery(searchFilters);
 
     int from = tokenEncoder.decode(continuationToken, query);
 
     RepositoryQueryBuilder repoQuery = repositoryQuery(query);
-    repoQuery.sortBy(searchUtils.getSortBuilders(sort, direction, false));
+    repoQuery.sortBy(elasticSearchUtils.getSortBuilders(sort, direction, false));
     if (seconds != null) {
       repoQuery.timeout(Duration.ofSeconds(seconds));
     }
 
-    SearchResponse componentResponse = searchQueryService.search(repoQuery, from, getPageSize());
+    SearchResponse componentResponse = elasticSearchQueryService.search(repoQuery, from, getPageSize());
 
     List<AssetXO> assetXOs = retrieveAssets(componentResponse, uriInfo);
     return new Page<>(assetXOs, componentResponse.getHits().hits().length == getPageSize() ?
@@ -244,11 +244,11 @@ public class SearchResource
                                           @QueryParam("timeout") Integer seconds,
                                           @Context final UriInfo uriInfo)
   {
-    Collection<SearchFilter> searchFilters = searchUtils.getSearchFilters(uriInfo);
+    Collection<SearchFilter> searchFilters = elasticSearchUtils.getSearchFilters(uriInfo);
 
     fireSearchEvent(searchFilters);
 
-    QueryBuilder query = searchUtils.buildQuery(searchFilters);
+    QueryBuilder query = elasticSearchUtils.buildQuery(searchFilters);
 
     List<AssetXO> assetXOs = retrieveAssets(query, sort, direction, seconds, uriInfo);
 
@@ -272,12 +272,12 @@ public class SearchResource
                                        @Nullable final Integer seconds)
   {
     RepositoryQueryBuilder repoQuery = repositoryQuery(query);
-    repoQuery.sortBy(searchUtils.getSortBuilders(sort, direction, false));
+    repoQuery.sortBy(elasticSearchUtils.getSortBuilders(sort, direction, false));
     if (seconds != null) {
       repoQuery.timeout(Duration.ofSeconds(seconds));
     }
 
-    return this.retrieveAssets(searchQueryService.search(repoQuery, from, getPageSize()), uriInfo);
+    return this.retrieveAssets(elasticSearchQueryService.search(repoQuery, from, getPageSize()), uriInfo);
   }
 
   private List<AssetXO> retrieveAssets(final QueryBuilder query,
@@ -294,7 +294,7 @@ public class SearchResource
                                         final MultivaluedMap<String, String> assetParams)
   {
     Map<String, Object> componentMap = checkNotNull(componentHit.getSource());
-    Repository repository = searchUtils.getRepository((String) componentMap.get(REPOSITORY_NAME));
+    Repository repository = elasticSearchUtils.getRepository((String) componentMap.get(REPOSITORY_NAME));
 
     List<Map<String, Object>> assets = (List<Map<String, Object>>) componentMap.get(ASSETS);
     if (assets == null) {
@@ -310,7 +310,7 @@ public class SearchResource
   MultivaluedMap<String, String> getAssetParams(final UriInfo uriInfo) {
     return uriInfo.getQueryParameters()
         .entrySet().stream()
-        .filter(t -> searchUtils.isAssetSearchParam(t.getKey()))
+        .filter(t -> elasticSearchUtils.isAssetSearchParam(t.getKey()))
         .collect(toMap(Entry::getKey, Entry::getValue, (u, v) -> {
           throw new IllegalStateException(format("Duplicate key %s", u));
         }, MultivaluedHashMap::new));

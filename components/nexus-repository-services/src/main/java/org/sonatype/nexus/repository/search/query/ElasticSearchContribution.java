@@ -12,28 +12,23 @@
  */
 package org.sonatype.nexus.repository.search.query;
 
-import javax.inject.Named;
-import javax.inject.Singleton;
-
 import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
 
 /**
- * "attributes.docker.content_digest" {@link SearchContribution} (adds a prefix query for content_digest).
+ * Contributor to search query/filter.
  *
  * @since 3.15
  */
-@Named("assets.attributes.docker.content_digest")
-@Singleton
-public class DockerContentDigestSearchContribution
-    extends SearchContributionSupport
+public interface ElasticSearchContribution
 {
 
-  @Override
-  public void contribute(final BoolQueryBuilder query, final String type, final String value) {
-    if (value != null) {
-      query.filter(QueryBuilders.termQuery(type, value));
-    }
-  }
+  /**
+   * Contribute to search query/filter.
+   *
+   * @param query to contribute to
+   * @param type   type of filter
+   * @param value  value of filter
+   */
+  void contribute(BoolQueryBuilder query, String type, String value);
 
 }

@@ -20,7 +20,7 @@ import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.repository.search.query.SearchUtils;
+import org.sonatype.nexus.repository.search.query.ElasticSearchUtils;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -54,13 +54,13 @@ public class AssetMapUtilsTest
   private AssetMapUtils underTest;
 
   @Mock
-  private SearchUtils searchUtils;
+  private ElasticSearchUtils elasticSearchUtils;
 
   @Before
   public void setup() {
     assetMap = createAsset("antlr.jar", "maven2", "first-sha1", of("extension", "jar"));
     assetMapWithClassifier = createAsset("antlr.jar", "maven2", "first-sha1", of("extension", "jar", "classifier", "sources"));
-    underTest = new AssetMapUtils(searchUtils);
+    underTest = new AssetMapUtils(elasticSearchUtils);
   }
 
   @Test
@@ -109,7 +109,7 @@ public class AssetMapUtilsTest
 
   @Test
   public void testFilterAsset_AssetMapClassifier_AssetParamClassifier() {
-    when(searchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(CLASSIFIER_ATTRIBUTE_NAME);
+    when(elasticSearchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(CLASSIFIER_ATTRIBUTE_NAME);
     MultivaluedMap<String, String>  assetParams = new MultivaluedHashMap<>();
     assetParams.add(CLASSIFIER_ATTRIBUTE_NAME, "sources");
 
@@ -118,7 +118,7 @@ public class AssetMapUtilsTest
 
   @Test
   public void testFilterAsset_AssetMapNoClassifier_AssetParamNoClassifier() {
-    when(searchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(EXTENSION_ATTRIBUTE_NAME);
+    when(elasticSearchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(EXTENSION_ATTRIBUTE_NAME);
     MultivaluedMap<String, String>  assetParams = new MultivaluedHashMap<>();
     assetParams.add(EXTENSION_ATTRIBUTE_NAME, "jar");
 
@@ -127,7 +127,7 @@ public class AssetMapUtilsTest
 
   @Test
   public void testFilterAsset_AssetMapNoClassifier_AssetParamClassifier() {
-    when(searchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(CLASSIFIER_ATTRIBUTE_NAME);
+    when(elasticSearchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(CLASSIFIER_ATTRIBUTE_NAME);
     MultivaluedMap<String, String>  assetParams = new MultivaluedHashMap<>();
     assetParams.add(CLASSIFIER_ATTRIBUTE_NAME, "sources");
 
@@ -136,7 +136,7 @@ public class AssetMapUtilsTest
 
   @Test
   public void testFilterAsset_AssetMapClassifier_AssetParamNoClassifier() {
-    when(searchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(EXTENSION_ATTRIBUTE_NAME);
+    when(elasticSearchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(EXTENSION_ATTRIBUTE_NAME);
     MultivaluedMap<String, String>  assetParams = new MultivaluedHashMap<>();
     assetParams.add(EXTENSION_ATTRIBUTE_NAME, "sources");
 
@@ -145,7 +145,7 @@ public class AssetMapUtilsTest
 
   @Test
   public void testFilterAsset_AssetMapNoClassifier_AssetParamEmptyClassifier() {
-    when(searchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(CLASSIFIER_ATTRIBUTE_NAME);
+    when(elasticSearchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(CLASSIFIER_ATTRIBUTE_NAME);
     MultivaluedMap<String, String>  assetParams = new MultivaluedHashMap<>();
     assetParams.add(CLASSIFIER_ATTRIBUTE_NAME, "");
 
@@ -154,7 +154,7 @@ public class AssetMapUtilsTest
 
   @Test
   public void testFilterAsset_AssetMapClassifier_AssetParamEmptyClassifier() {
-    when(searchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(CLASSIFIER_ATTRIBUTE_NAME);
+    when(elasticSearchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(CLASSIFIER_ATTRIBUTE_NAME);
     MultivaluedMap<String, String>  assetParams = new MultivaluedHashMap<>();
     assetParams.add(CLASSIFIER_ATTRIBUTE_NAME, "");
 
@@ -163,7 +163,7 @@ public class AssetMapUtilsTest
 
   @Test
   public void testFilterAsset_AssetMapClassifier_EmptyAssetParam() {
-    when(searchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(CLASSIFIER_ATTRIBUTE_NAME);
+    when(elasticSearchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(CLASSIFIER_ATTRIBUTE_NAME);
     MultivaluedMap<String, String>  assetParams = new MultivaluedHashMap<>();
 
     assertTrue(underTest.filterAsset(assetMapWithClassifier, assetParams));
@@ -171,8 +171,8 @@ public class AssetMapUtilsTest
 
   @Test
   public void testFilterAsset_MultipleAssetParams() {
-    when(searchUtils.getFullAssetAttributeName(CLASSIFIER_ATTRIBUTE_NAME)).thenReturn(CLASSIFIER_ATTRIBUTE_NAME);
-    when(searchUtils.getFullAssetAttributeName(EXTENSION_ATTRIBUTE_NAME)).thenReturn(EXTENSION_ATTRIBUTE_NAME);
+    when(elasticSearchUtils.getFullAssetAttributeName(CLASSIFIER_ATTRIBUTE_NAME)).thenReturn(CLASSIFIER_ATTRIBUTE_NAME);
+    when(elasticSearchUtils.getFullAssetAttributeName(EXTENSION_ATTRIBUTE_NAME)).thenReturn(EXTENSION_ATTRIBUTE_NAME);
     MultivaluedMap<String, String>  assetParams = new MultivaluedHashMap<>();
     assetParams.add(CLASSIFIER_ATTRIBUTE_NAME, "sources");
     assetParams.add(EXTENSION_ATTRIBUTE_NAME, "jar");
@@ -183,7 +183,7 @@ public class AssetMapUtilsTest
 
   @Test
   public void testFilterAsset_GetEmptyAssetParams() {
-    when(searchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(any(String.class));
+    when(elasticSearchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(any(String.class));
     List<String> emptyAssetParamsList = underTest.getEmptyAssetParams(getPopulatedMultiValueMap());
 
     assertThat(emptyAssetParamsList.size(), equalTo(1));
@@ -191,9 +191,9 @@ public class AssetMapUtilsTest
 
   @Test
   public void testFilterAsset_GetNonEmptyAssetParams() {
-    when(searchUtils.getFullAssetAttributeName(CLASSIFIER_ATTRIBUTE_NAME)).thenReturn(CLASSIFIER_ATTRIBUTE_NAME);
-    when(searchUtils.getFullAssetAttributeName(EXTENSION_ATTRIBUTE_NAME)).thenReturn(EXTENSION_ATTRIBUTE_NAME);
-    when(searchUtils.getFullAssetAttributeName(ARTIFACT_ID_ATTRIBUTE_NAME)).thenReturn(ARTIFACT_ID_ATTRIBUTE_NAME);
+    when(elasticSearchUtils.getFullAssetAttributeName(CLASSIFIER_ATTRIBUTE_NAME)).thenReturn(CLASSIFIER_ATTRIBUTE_NAME);
+    when(elasticSearchUtils.getFullAssetAttributeName(EXTENSION_ATTRIBUTE_NAME)).thenReturn(EXTENSION_ATTRIBUTE_NAME);
+    when(elasticSearchUtils.getFullAssetAttributeName(ARTIFACT_ID_ATTRIBUTE_NAME)).thenReturn(ARTIFACT_ID_ATTRIBUTE_NAME);
     Map<String, String> nonEmptyAssetParamsList = underTest.getNonEmptyAssetParams(getPopulatedMultiValueMap());
 
     assertThat(nonEmptyAssetParamsList.size(), equalTo(2));

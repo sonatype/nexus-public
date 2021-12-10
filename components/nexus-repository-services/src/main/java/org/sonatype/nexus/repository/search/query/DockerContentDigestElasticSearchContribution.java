@@ -12,36 +12,28 @@
  */
 package org.sonatype.nexus.repository.search.query;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.lucene.queryparser.classic.QueryParserBase;
+import javax.inject.Named;
+import javax.inject.Singleton;
+
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 
 /**
- * Support for {@link SearchContribution} implementations.
+ * "attributes.docker.content_digest" {@link ElasticSearchContribution} (adds a prefix query for content_digest).
  *
  * @since 3.15
  */
-public class SearchContributionSupport
-    implements SearchContribution
+@Named("assets.attributes.docker.content_digest")
+@Singleton
+public class DockerContentDigestElasticSearchContribution
+    extends ElasticSearchContributionSupport
 {
 
   @Override
   public void contribute(final BoolQueryBuilder query, final String type, final String value) {
-    // do nothing
-  }
-
-  public String escape(String value) {
-    if (null == value) {
-      return null;
+    if (value != null) {
+      query.filter(QueryBuilders.termQuery(type, value));
     }
-
-    String escaped = QueryParserBase.escape(value);
-
-    boolean shouldLeaveDoubleQuotesEscaped = StringUtils.countMatches(value, "\"") % 2 != 0;
-    String escapedCharactersRegex = shouldLeaveDoubleQuotesEscaped ? "\\\\([?*])" : "\\\\([?*\"])";
-
-    // unescape supported special characters
-    return escaped.replaceAll(escapedCharactersRegex, "$1");
   }
 
 }

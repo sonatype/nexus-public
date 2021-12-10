@@ -26,7 +26,7 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.InvalidStateException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.search.index.SearchIndexService;
+import org.sonatype.nexus.repository.search.index.ElasticSearchIndexService;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
@@ -54,7 +54,7 @@ public class IndexRequestProcessor
 
   private final EventManager eventManager;
 
-  private final SearchIndexService searchIndexService;
+  private final ElasticSearchIndexService elasticSearchIndexService;
 
   private final boolean bulkProcessing;
 
@@ -63,12 +63,12 @@ public class IndexRequestProcessor
   @Inject
   public IndexRequestProcessor(final RepositoryManager repositoryManager,
                                final EventManager eventManager,
-                               final SearchIndexService searchIndexService,
+                               final ElasticSearchIndexService elasticSearchIndexService,
                                @Named("${nexus.elasticsearch.bulkProcessing:-true}") final boolean bulkProcessing)
   {
     this.repositoryManager = checkNotNull(repositoryManager);
     this.eventManager = checkNotNull(eventManager);
-    this.searchIndexService = checkNotNull(searchIndexService);
+    this.elasticSearchIndexService = checkNotNull(elasticSearchIndexService);
     this.bulkProcessing = bulkProcessing;
   }
 
@@ -80,7 +80,7 @@ public class IndexRequestProcessor
   @Override
   protected void doStop() {
     eventManager.unregister(this);
-    searchIndexService.flush(true);
+    elasticSearchIndexService.flush(true);
   }
 
   @Subscribe
@@ -101,7 +101,7 @@ public class IndexRequestProcessor
     if (!pendingDeletes.isEmpty()) {
       // IndexSyncService can request deletes that have no associated repository,
       // in which case we need to attempt a special bulk delete as the last step
-      searchIndexService.bulkDelete(null, transform(pendingDeletes, EntityId::getValue));
+      elasticSearchIndexService.bulkDelete(null, transform(pendingDeletes, EntityId::getValue));
     }
   }
 
@@ -133,7 +133,7 @@ public class IndexRequestProcessor
   }
 
   private void doUpdateSearchIndex(final Repository repository, final IndexRequest indexRequest) {
-    repository.optionalFacet(SearchFacet.class).ifPresent(searchFacet -> {
+    repository.optionalFacet(ElasticSearchFacet.class).ifPresent(searchFacet -> {
       UnitOfWork.begin(repository.facet(StorageFacet.class).txSupplier());
       try {
         if (bulkProcessing) {

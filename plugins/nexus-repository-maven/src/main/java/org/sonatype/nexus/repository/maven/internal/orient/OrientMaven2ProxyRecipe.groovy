@@ -34,7 +34,7 @@ import org.sonatype.nexus.repository.maven.internal.matcher.MavenNx2MetaFilesMat
 import org.sonatype.nexus.repository.maven.internal.recipes.Maven2ProxyRecipe
 import org.sonatype.nexus.repository.proxy.ProxyHandler
 import org.sonatype.nexus.repository.purge.PurgeUnusedFacet
-import org.sonatype.nexus.repository.search.SearchFacet
+import org.sonatype.nexus.repository.search.ElasticSearchFacet
 import org.sonatype.nexus.repository.types.ProxyType
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
 import org.sonatype.nexus.repository.view.Router
@@ -56,7 +56,7 @@ class OrientMaven2ProxyRecipe
     implements Maven2ProxyRecipe
 {
   @Inject
-  Provider<SearchFacet> searchFacet
+  Provider<ElasticSearchFacet> searchFacet
 
   @Inject
   Provider<HttpClientFacet> httpClientFacet

@@ -47,7 +47,7 @@ public class IndexStartupRebuildManager
 
   private final RepositoryManager repositoryManager;
 
-  private final SearchIndexService searchIndexService;
+  private final ElasticSearchIndexService elasticSearchIndexService;
 
   private final boolean rebuildOnStart;
 
@@ -55,23 +55,23 @@ public class IndexStartupRebuildManager
   public IndexStartupRebuildManager(
       final TaskScheduler taskScheduler,
       final RepositoryManager repositoryManager,
-      final SearchIndexService searchIndexService)
+      final ElasticSearchIndexService elasticSearchIndexService)
   {
-    this(taskScheduler, repositoryManager, searchIndexService,
+    this(taskScheduler, repositoryManager, elasticSearchIndexService,
         System.getenv(REBUILD_ON_STARTUP_VARIABLE_NAME));
   }
 
   public IndexStartupRebuildManager(
       final TaskScheduler taskScheduler,
       final RepositoryManager repositoryManager,
-      final SearchIndexService searchIndexService,
+      final ElasticSearchIndexService elasticSearchIndexService,
       @Nullable final String rebuildOnStartEnvVar)
   {
 
     this.taskScheduler = taskScheduler;
     this.rebuildOnStart = Boolean.parseBoolean(rebuildOnStartEnvVar);
     this.repositoryManager = checkNotNull(repositoryManager);
-    this.searchIndexService = checkNotNull(searchIndexService);
+    this.elasticSearchIndexService = checkNotNull(elasticSearchIndexService);
   }
 
   @Override
@@ -102,7 +102,7 @@ public class IndexStartupRebuildManager
   private boolean searchIndexNotExists() {
     return StreamSupport.stream(repositoryManager.browse().spliterator(), false)
         .filter(this::supportsSearch)
-        .noneMatch(searchIndexService::indexExist);
+        .noneMatch(elasticSearchIndexService::indexExist);
   }
 
   /**

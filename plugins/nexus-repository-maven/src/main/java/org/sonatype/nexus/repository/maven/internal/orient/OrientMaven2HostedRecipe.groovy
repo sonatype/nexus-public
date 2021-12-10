@@ -32,7 +32,7 @@ import org.sonatype.nexus.repository.maven.internal.VersionPolicyHandler
 import org.sonatype.nexus.repository.maven.internal.hosted.HostedHandler
 import org.sonatype.nexus.repository.maven.internal.hosted.MavenHostedIndexFacet
 import org.sonatype.nexus.repository.maven.internal.recipes.Maven2HostedRecipe
-import org.sonatype.nexus.repository.search.SearchFacet
+import org.sonatype.nexus.repository.search.ElasticSearchFacet
 import org.sonatype.nexus.repository.types.HostedType
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
 import org.sonatype.nexus.repository.view.Router
@@ -53,7 +53,7 @@ class OrientMaven2HostedRecipe
     implements Maven2HostedRecipe
 {
   @Inject
-  Provider<SearchFacet> searchFacet
+  Provider<ElasticSearchFacet> searchFacet
 
   @Inject
   Provider<MavenHostedFacet> mavenHostedFacet

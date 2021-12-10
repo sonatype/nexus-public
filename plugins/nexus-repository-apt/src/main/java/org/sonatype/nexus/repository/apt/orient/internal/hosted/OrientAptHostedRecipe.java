@@ -30,7 +30,7 @@ import org.sonatype.nexus.repository.apt.internal.snapshot.AptSnapshotHandler;
 import org.sonatype.nexus.repository.apt.orient.internal.OrientAptFacetImpl;
 import org.sonatype.nexus.repository.attributes.AttributesFacet;
 import org.sonatype.nexus.repository.http.PartialFetchHandler;
-import org.sonatype.nexus.repository.search.SearchFacet;
+import org.sonatype.nexus.repository.search.ElasticSearchFacet;
 import org.sonatype.nexus.repository.security.SecurityHandler;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.UnitOfWorkHandler;
@@ -96,7 +96,7 @@ public class OrientAptHostedRecipe
   Provider<OrientAptHostedComponentMaintenanceFacet> componentMaintenance;
 
   @Inject
-  Provider<SearchFacet> searchFacet;
+  Provider<ElasticSearchFacet> searchFacet;
 
   @Inject
   ExceptionHandler exceptionHandler;

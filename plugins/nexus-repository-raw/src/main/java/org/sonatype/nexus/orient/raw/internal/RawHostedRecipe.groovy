@@ -31,7 +31,7 @@ import org.sonatype.nexus.repository.raw.ContentDispositionHandler
 import org.sonatype.nexus.repository.raw.internal.RawFormat
 import org.sonatype.nexus.repository.raw.internal.RawIndexHtmlForwardHandler
 import org.sonatype.nexus.repository.raw.internal.RawSecurityFacet
-import org.sonatype.nexus.repository.search.SearchFacet
+import org.sonatype.nexus.repository.search.ElasticSearchFacet
 import org.sonatype.nexus.repository.security.SecurityHandler
 import org.sonatype.nexus.repository.storage.SingleAssetComponentMaintenance
 import org.sonatype.nexus.repository.storage.StorageFacet
@@ -85,7 +85,7 @@ class RawHostedRecipe
   Provider<SingleAssetComponentMaintenance> componentMaintenance
 
   @Inject
-  Provider<SearchFacet> searchFacet
+  Provider<ElasticSearchFacet> searchFacet
 
   @Inject
   Provider<OrientRawReplicationFacet> replicationFacet

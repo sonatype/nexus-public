@@ -24,9 +24,9 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.search.index.SearchIndexService;
+import org.sonatype.nexus.repository.search.index.ElasticSearchIndexService;
 import org.sonatype.nexus.repository.search.query.RepositoryQueryBuilder;
-import org.sonatype.nexus.repository.search.query.SearchQueryService;
+import org.sonatype.nexus.repository.search.query.ElasticSearchQueryService;
 
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -39,57 +39,57 @@ import static java.time.Duration.ofSeconds;
 import static org.sonatype.nexus.repository.search.query.RepositoryQueryBuilder.repositoryQuery;
 
 /**
- * Default {@link SearchService} implementation. It does not expects that {@link Repository} have storage facet
+ * Default {@link ElasticSearchService} implementation. It does not expects that {@link Repository} have storage facet
  * attached.
  *
  * @since 3.0
  */
 @Named("legacy")
 @Singleton
-public class SearchServiceImpl
+public class ElasticSearchServiceImpl
     extends ComponentSupport
-    implements SearchService
+    implements ElasticSearchService
 {
-  private final SearchIndexService searchIndexService;
+  private final ElasticSearchIndexService elasticSearchIndexService;
 
-  private final SearchQueryService searchQueryService;
+  private final ElasticSearchQueryService elasticSearchQueryService;
 
   /**
-   * @param searchIndexService the search index service
-   * @param searchQueryService the search query service
+   * @param elasticSearchIndexService the search index service
+   * @param elasticSearchQueryService the search query service
    */
   @Inject
-  public SearchServiceImpl(
-      final SearchIndexService searchIndexService,
-      final SearchQueryService searchQueryService)
+  public ElasticSearchServiceImpl(
+      final ElasticSearchIndexService elasticSearchIndexService,
+      final ElasticSearchQueryService elasticSearchQueryService)
   {
-    this.searchIndexService = checkNotNull(searchIndexService);
-    this.searchQueryService = checkNotNull(searchQueryService);
+    this.elasticSearchIndexService = checkNotNull(elasticSearchIndexService);
+    this.elasticSearchQueryService = checkNotNull(elasticSearchQueryService);
   }
 
   @Override
   public void createIndex(final Repository repository) {
-    searchIndexService.createIndex(repository);
+    elasticSearchIndexService.createIndex(repository);
   }
 
   @Override
   public void deleteIndex(final Repository repository) {
-    searchIndexService.deleteIndex(repository);
+    elasticSearchIndexService.deleteIndex(repository);
   }
 
   @Override
   public void rebuildIndex(final Repository repository) {
-    searchIndexService.rebuildIndex(repository);
+    elasticSearchIndexService.rebuildIndex(repository);
   }
 
   @Override
   public boolean indexExist(final Repository repository) {
-    return searchIndexService.indexExist(repository);
+    return elasticSearchIndexService.indexExist(repository);
   }
 
   @Override
   public void put(final Repository repository, final String identifier, final String json) {
-    searchIndexService.put(repository, identifier, json);
+    elasticSearchIndexService.put(repository, identifier, json);
   }
 
   @Override
@@ -98,37 +98,37 @@ public class SearchServiceImpl
                                         final Function<T, String> identifierProducer,
                                         final Function<T, String> jsonDocumentProducer)
   {
-    return searchIndexService.bulkPut(repository, components, identifierProducer, jsonDocumentProducer);
+    return elasticSearchIndexService.bulkPut(repository, components, identifierProducer, jsonDocumentProducer);
   }
 
   @Override
   public void delete(final Repository repository, final String identifier) {
-    searchIndexService.delete(repository, identifier);
+    elasticSearchIndexService.delete(repository, identifier);
   }
 
   @Override
   public void bulkDelete(@Nullable final Repository repository, final Iterable<String> identifiers) {
-    searchIndexService.bulkDelete(repository, identifiers);
+    elasticSearchIndexService.bulkDelete(repository, identifiers);
   }
 
   @Override
   public void flush(final boolean fsync) {
-    searchIndexService.flush(fsync);
+    elasticSearchIndexService.flush(fsync);
   }
 
   @Override
   public long getUpdateCount() {
-    return searchIndexService.getUpdateCount();
+    return elasticSearchIndexService.getUpdateCount();
   }
 
   @Override
   public boolean isCalmPeriod() {
-    return searchIndexService.isCalmPeriod();
+    return elasticSearchIndexService.isCalmPeriod();
   }
 
   @Override
   public void waitForCalm() {
-    searchIndexService.waitForCalm();
+    elasticSearchIndexService.waitForCalm();
   }
 
   /**
@@ -167,7 +167,7 @@ public class SearchServiceImpl
       repoQuery = repoQuery.inRepositories(repoNames);
     }
 
-    return searchQueryService.browse(repoQuery.unrestricted());
+    return elasticSearchQueryService.browse(repoQuery.unrestricted());
   }
 
   /**
@@ -182,7 +182,7 @@ public class SearchServiceImpl
    */
   @Override
   public Iterable<SearchHit> browse(final QueryBuilder query) {
-    return searchQueryService.browse(query);
+    return elasticSearchQueryService.browse(query);
   }
 
   @Override
@@ -198,7 +198,7 @@ public class SearchServiceImpl
       repoQuery = repoQuery.sortBy(sort);
     }
 
-    return searchQueryService.search(repoQuery.unrestricted(), from, size);
+    return elasticSearchQueryService.search(repoQuery.unrestricted(), from, size);
   }
 
   @Override
@@ -213,7 +213,7 @@ public class SearchServiceImpl
       repoQuery = repoQuery.sortBy(sort);
     }
 
-    return searchQueryService.search(repoQuery.unrestricted(), from, size);
+    return elasticSearchQueryService.search(repoQuery.unrestricted(), from, size);
   }
 
   @Override
@@ -233,7 +233,7 @@ public class SearchServiceImpl
       repoQuery = repoQuery.timeout(ofSeconds(seconds));
     }
 
-    return searchQueryService.search(repoQuery, from, size);
+    return elasticSearchQueryService.search(repoQuery, from, size);
   }
 
   @Override
@@ -243,7 +243,7 @@ public class SearchServiceImpl
   {
     RepositoryQueryBuilder repoQuery = repositoryQuery(query).inRepositories(repoNames);
 
-    return searchQueryService.search(repoQuery, aggregations);
+    return elasticSearchQueryService.search(repoQuery, aggregations);
   }
 
   @Override
@@ -258,13 +258,13 @@ public class SearchServiceImpl
       repoQuery = repoQuery.sortBy(sort);
     }
 
-    return searchQueryService.search(repoQuery.unrestricted(), aggregations);
+    return elasticSearchQueryService.search(repoQuery.unrestricted(), aggregations);
   }
 
   @Override
   public long countUnrestricted(final QueryBuilder query) {
     RepositoryQueryBuilder repoQuery = repositoryQuery(query);
 
-    return searchQueryService.count(repoQuery.unrestricted());
+    return elasticSearchQueryService.count(repoQuery.unrestricted());
   }
 }

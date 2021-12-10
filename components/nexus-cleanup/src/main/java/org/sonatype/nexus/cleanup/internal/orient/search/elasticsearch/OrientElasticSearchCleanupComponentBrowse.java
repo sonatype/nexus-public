@@ -28,7 +28,7 @@ import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.extdirect.model.PagedResponse;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.query.QueryOptions;
-import org.sonatype.nexus.repository.search.query.SearchQueryService;
+import org.sonatype.nexus.repository.search.query.ElasticSearchQueryService;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.transaction.UnitOfWork;
@@ -56,10 +56,10 @@ public class OrientElasticSearchCleanupComponentBrowse
   @Inject
   public OrientElasticSearchCleanupComponentBrowse(
       final Map<String, CriteriaAppender> criteriaAppenders,
-      final SearchQueryService searchQueryService,
+      final ElasticSearchQueryService elasticSearchQueryService,
       final MetricRegistry metricRegistry)
   {
-    super(criteriaAppenders, searchQueryService, metricRegistry);
+    super(criteriaAppenders, elasticSearchQueryService, metricRegistry);
   }
 
   @Override

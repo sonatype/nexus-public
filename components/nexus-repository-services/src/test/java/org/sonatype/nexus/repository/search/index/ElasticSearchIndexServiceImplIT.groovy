@@ -26,7 +26,7 @@ import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.config.Configuration
 import org.sonatype.nexus.repository.manager.RepositoryManager
-import org.sonatype.nexus.repository.search.query.SearchQueryServiceImpl
+import org.sonatype.nexus.repository.search.query.ElasticSearchQueryServiceImpl
 import org.sonatype.nexus.repository.search.query.SearchSubjectHelper
 import org.sonatype.nexus.security.SecurityHelper
 
@@ -56,7 +56,7 @@ import static org.mockito.Mockito.mock
 import static org.mockito.Mockito.when
 import static org.sonatype.nexus.repository.search.query.RepositoryQueryBuilder.unrestricted
 
-class SearchIndexServiceImplIT
+class ElasticSearchIndexServiceImplIT
     extends TestSupport
 {
   static final String BASEDIR = new File(System.getProperty('basedir', '')).absolutePath
@@ -97,9 +97,9 @@ class SearchIndexServiceImplIT
   @Mock
   EventManager eventManager
 
-  SearchIndexServiceImpl searchIndexService
+  ElasticSearchIndexServiceImpl searchIndexService
 
-  SearchQueryServiceImpl searchQueryService
+  ElasticSearchQueryServiceImpl searchQueryService
 
   def repositories = []
 
@@ -121,10 +121,10 @@ class SearchIndexServiceImplIT
 
     IndexNamingPolicy indexNamingPolicy = new HashedNamingPolicy()
 
-    searchIndexService = new SearchIndexServiceImpl(clientProvider,
+    searchIndexService = new ElasticSearchIndexServiceImpl(clientProvider,
         indexNamingPolicy, ImmutableList.of(), eventManager, 1000, 1, 0, CALM_TIMEOUT, 1)
 
-    searchQueryService = new SearchQueryServiceImpl(clientProvider,
+    searchQueryService = new ElasticSearchQueryServiceImpl(clientProvider,
         repositoryManager, securityHelper, searchSubjectHelper, indexNamingPolicy, false)
 
     when(repositoryConfig.isOnline()).thenReturn(true)
