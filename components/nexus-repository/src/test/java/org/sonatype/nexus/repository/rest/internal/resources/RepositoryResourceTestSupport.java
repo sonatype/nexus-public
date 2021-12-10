@@ -26,10 +26,10 @@ import org.sonatype.nexus.repository.browse.BrowseService;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
-import org.sonatype.nexus.repository.search.query.DefaultSearchContribution;
-import org.sonatype.nexus.repository.search.query.KeywordSearchContribution;
-import org.sonatype.nexus.repository.search.query.SearchContribution;
-import org.sonatype.nexus.repository.search.query.SearchUtils;
+import org.sonatype.nexus.repository.search.query.DefaultElasticSearchContribution;
+import org.sonatype.nexus.repository.search.query.KeywordElasticSearchContribution;
+import org.sonatype.nexus.repository.search.query.ElasticSearchContribution;
+import org.sonatype.nexus.repository.search.query.ElasticSearchUtils;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
@@ -82,7 +82,7 @@ public abstract class RepositoryResourceTestSupport
   Map<String, String> testChecksum =
       ImmutableMap.of(HashAlgorithm.SHA1.name(), "87acec17cd9dcd20a716cc2cf67417b71c8a7016");
 
-  SearchUtils searchUtils;
+  ElasticSearchUtils elasticSearchUtils;
 
   AssetMapUtils assetMapUtils;
 
@@ -96,12 +96,12 @@ public abstract class RepositoryResourceTestSupport
     storageTxSupplier = () -> storageTx;
     when(storageFacet.txSupplier()).thenReturn(storageTxSupplier);
 
-    Map<String, SearchContribution> searchContributions = new HashMap<>();
-    searchContributions.put(DefaultSearchContribution.NAME, new DefaultSearchContribution());
-    searchContributions.put(KeywordSearchContribution.NAME, new KeywordSearchContribution());
-    searchUtils = new SearchUtils(repositoryManagerRESTAdapter, searchMappings, searchContributions);
+    Map<String, ElasticSearchContribution> searchContributions = new HashMap<>();
+    searchContributions.put(DefaultElasticSearchContribution.NAME, new DefaultElasticSearchContribution());
+    searchContributions.put(KeywordElasticSearchContribution.NAME, new KeywordElasticSearchContribution());
+    elasticSearchUtils = new ElasticSearchUtils(repositoryManagerRESTAdapter, searchMappings, searchContributions);
 
-    assetMapUtils = new AssetMapUtils(searchUtils);
+    assetMapUtils = new AssetMapUtils(elasticSearchUtils);
   }
 
   protected void configureMockedRepository(Repository repository,

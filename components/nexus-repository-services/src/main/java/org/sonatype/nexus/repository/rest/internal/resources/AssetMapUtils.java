@@ -22,7 +22,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.core.MultivaluedMap;
 
-import org.sonatype.nexus.repository.search.query.SearchUtils;
+import org.sonatype.nexus.repository.search.query.ElasticSearchUtils;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -42,11 +42,11 @@ class AssetMapUtils
 {
   private static final String EMPTY_PARAM = "";
 
-  private final SearchUtils searchUtils;
+  private final ElasticSearchUtils elasticSearchUtils;
 
   @Inject
-  public AssetMapUtils(final SearchUtils searchUtils) {
-    this.searchUtils = checkNotNull(searchUtils);
+  public AssetMapUtils(final ElasticSearchUtils elasticSearchUtils) {
+    this.elasticSearchUtils = checkNotNull(elasticSearchUtils);
   }
 
   /**
@@ -158,7 +158,7 @@ class AssetMapUtils
     return assetParams.entrySet()
         .stream()
         .filter(entry -> EMPTY_PARAM.equals(entry.getValue().get(0)))
-        .map(e -> searchUtils.getFullAssetAttributeName(e.getKey()))
+        .map(e -> elasticSearchUtils.getFullAssetAttributeName(e.getKey()))
         .collect(toList());
   }
 
@@ -173,6 +173,6 @@ class AssetMapUtils
         .stream()
         .filter(entry -> !EMPTY_PARAM.equals(entry.getValue().get(0)))
         .collect(Collectors
-            .toMap(entry -> searchUtils.getFullAssetAttributeName(entry.getKey()), entry -> entry.getValue().get(0)));
+            .toMap(entry -> elasticSearchUtils.getFullAssetAttributeName(entry.getKey()), entry -> entry.getValue().get(0)));
   }
 }

@@ -26,10 +26,10 @@ import org.sonatype.nexus.rapture.UiSettingsManager
 import org.sonatype.nexus.repository.search.event.SearchEvent
 import org.sonatype.nexus.repository.search.event.SearchEventSource
 import org.sonatype.nexus.repository.search.query.SearchFilter
-import org.sonatype.nexus.repository.search.query.SearchQueryService
+import org.sonatype.nexus.repository.search.query.ElasticSearchQueryService
 import org.sonatype.nexus.repository.search.query.SearchResultComponent
 import org.sonatype.nexus.repository.search.query.SearchResultsGenerator
-import org.sonatype.nexus.repository.search.query.SearchUtils
+import org.sonatype.nexus.repository.search.query.ElasticSearchUtils
 
 import com.codahale.metrics.annotation.ExceptionMetered
 import com.codahale.metrics.annotation.Timed
@@ -54,10 +54,10 @@ class SearchComponent
     extends DirectComponentSupport
 {
   @Inject
-  SearchQueryService searchQueryService
+  ElasticSearchQueryService searchQueryService
 
   @Inject
-  SearchUtils searchUtils
+  ElasticSearchUtils searchUtils
 
   @Inject
   @Named('${nexus.searchResultsLimit:-1000}')

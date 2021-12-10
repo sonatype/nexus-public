@@ -12,37 +12,30 @@
  */
 package org.sonatype.nexus.repository.search.query;
 
-import java.util.List;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.aggregations.AggregationBuilder;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 
 /**
- * Search query service.
+ * "default" {@link ElasticSearchContribution} (adds filter as an ES term filter).
  *
- * @since 3.25
+ * @since 3.15
  */
-public interface SearchQueryService
+@Named(DefaultElasticSearchContribution.NAME)
+@Singleton
+public class DefaultElasticSearchContribution
+    extends ElasticSearchContributionSupport
 {
-  /**
-   * Browse component metadata matches.
-   */
-  Iterable<SearchHit> browse(QueryBuilder query);
+  public static final String NAME = "default";
 
-  /**
-   * Search component metadata (paged).
-   */
-  SearchResponse search(QueryBuilder query, int from, int size);
+  @Override
+  public void contribute(final BoolQueryBuilder query, final String type, final String value) {
+    if (value != null) {
+      String escaped = escape(value);
+      query.must(QueryBuilders.queryStringQuery(escaped).field(type).lowercaseExpandedTerms(false));
+    }
+  }
 
-  /**
-   * Search component metadata (aggregated).
-   */
-  SearchResponse search(QueryBuilder query, List<AggregationBuilder> aggregations);
-
-  /**
-   * Count component metadata.
-   */
-  long count(QueryBuilder query);
 }

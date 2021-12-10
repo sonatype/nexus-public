@@ -26,7 +26,7 @@ import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.config.Configuration
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.manager.internal.RepositoryImpl
-import org.sonatype.nexus.repository.search.query.SearchQueryServiceImpl
+import org.sonatype.nexus.repository.search.query.ElasticSearchQueryServiceImpl
 import org.sonatype.nexus.repository.search.query.SearchSubjectHelper
 import org.sonatype.nexus.repository.types.HostedType
 import org.sonatype.nexus.scheduling.CancelableHelper
@@ -62,7 +62,7 @@ import static org.mockito.Mockito.when
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1
 import static org.sonatype.nexus.repository.search.index.SearchConstants.TYPE
 
-class SearchIndexServiceImplTest
+class ElasticSearchIndexServiceImplTest
     extends TestSupport
 {
   private static final Function<Map, String> NEVER_CALLED_ID_PRODUCER = null
@@ -114,9 +114,9 @@ class SearchIndexServiceImplTest
 
   Settings settings = Settings.EMPTY
 
-  SearchIndexServiceImpl searchIndexService
+  ElasticSearchIndexServiceImpl searchIndexService
 
-  SearchQueryServiceImpl searchQueryService
+  ElasticSearchQueryServiceImpl searchQueryService
 
   @Before
   public void setup() {
@@ -128,10 +128,10 @@ class SearchIndexServiceImplTest
 
     IndexNamingPolicy indexNamingPolicy = new HashedNamingPolicy()
 
-    searchIndexService = new SearchIndexServiceImpl(clientProvider,
+    searchIndexService = new ElasticSearchIndexServiceImpl(clientProvider,
         indexNamingPolicy, indexSettingsContributors, eventManager, 1000, 0, 0, 3000, 1)
 
-    searchQueryService = new SearchQueryServiceImpl(clientProvider,
+    searchQueryService = new ElasticSearchQueryServiceImpl(clientProvider,
       repositoryManager, securityHelper, searchSubjectHelper, indexNamingPolicy, false)
 
     searchIndexService.bulkProcessorToExecutors = new HashMap<>()
@@ -167,7 +167,7 @@ class SearchIndexServiceImplTest
   }
 
   /**
-   * Verify successful execution path for {@link SearchIndexServiceImpl#bulkPut(Repository, Iterable, Function, Function)}.
+   * Verify successful execution path for {@link ElasticSearchIndexServiceImpl#bulkPut(Repository, Iterable, Function, Function)}.
    */
   @Test
   void testBulkPut() {

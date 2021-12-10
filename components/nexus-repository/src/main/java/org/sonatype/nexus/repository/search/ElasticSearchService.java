@@ -17,7 +17,7 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.repository.search.index.SearchIndexService;
+import org.sonatype.nexus.repository.search.index.ElasticSearchIndexService;
 
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -30,8 +30,8 @@ import org.elasticsearch.search.sort.SortBuilder;
  *
  * @since 3.0
  */
-public interface SearchService
-    extends SearchIndexService
+public interface ElasticSearchService
+    extends ElasticSearchIndexService
 {
   /**
    * Search component metadata and browse results, without the effect of content selectors.

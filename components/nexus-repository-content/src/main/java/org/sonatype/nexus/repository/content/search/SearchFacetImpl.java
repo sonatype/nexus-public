@@ -31,7 +31,7 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
-import org.sonatype.nexus.repository.search.index.SearchIndexService;
+import org.sonatype.nexus.repository.search.index.ElasticSearchIndexService;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
@@ -56,7 +56,7 @@ public class SearchFacetImpl
     extends FacetSupport
     implements SearchFacet
 {
-  private final SearchIndexService searchIndexService;
+  private final ElasticSearchIndexService elasticSearchIndexService;
 
   private final Map<String, SearchDocumentProducer> searchDocumentProducersByFormat;
 
@@ -69,12 +69,12 @@ public class SearchFacetImpl
   private Map<String, Object> repositoryFields;
 
   @Inject
-  public SearchFacetImpl(final SearchIndexService searchIndexService,
+  public SearchFacetImpl(final ElasticSearchIndexService elasticSearchIndexService,
                          final Map<String, SearchDocumentProducer> searchDocumentProducersByFormat,
                          @Named("${nexus.elasticsearch.reindex.pageSize:-1000}") final int pageSize,
                          @Named("${nexus.elasticsearch.bulkProcessing:-true}") final boolean bulkProcessing)
   {
-    this.searchIndexService = checkNotNull(searchIndexService);
+    this.elasticSearchIndexService = checkNotNull(elasticSearchIndexService);
     this.searchDocumentProducersByFormat = checkNotNull(searchDocumentProducersByFormat);
     this.pageSize = max(pageSize, 1);
     this.bulkProcessing = bulkProcessing;
@@ -92,12 +92,12 @@ public class SearchFacetImpl
 
   @Override
   protected void doStart() throws Exception {
-    searchIndexService.createIndex(getRepository());
+    elasticSearchIndexService.createIndex(getRepository());
   }
 
   @Override
   protected void doDelete() {
-    searchIndexService.deleteIndex(getRepository());
+    elasticSearchIndexService.deleteIndex(getRepository());
   }
 
   @Guarded(by = STARTED)
@@ -112,10 +112,10 @@ public class SearchFacetImpl
 
     Repository repository = getRepository();
     if (bulkProcessing) {
-      searchIndexService.bulkPut(repository, components::iterator, this::identifier, this::document);
+      elasticSearchIndexService.bulkPut(repository, components::iterator, this::identifier, this::document);
     }
     else {
-      components.forEach(c -> searchIndexService.put(repository, identifier(c), document(c)));
+      components.forEach(c -> elasticSearchIndexService.put(repository, identifier(c), document(c)));
     }
   }
 
@@ -128,10 +128,10 @@ public class SearchFacetImpl
 
     Repository repository = getRepository();
     if (bulkProcessing) {
-      searchIndexService.bulkDelete(repository, identifiers::iterator);
+      elasticSearchIndexService.bulkDelete(repository, identifiers::iterator);
     }
     else {
-      identifiers.forEach(id -> searchIndexService.delete(repository, id));
+      identifiers.forEach(id -> elasticSearchIndexService.delete(repository, id));
     }
   }
 
@@ -140,7 +140,7 @@ public class SearchFacetImpl
   public void rebuildIndex() {
     log.info("Rebuilding index of repository {}", getRepository().getName());
 
-    searchIndexService.rebuildIndex(getRepository()); // clears out old documents
+    elasticSearchIndexService.rebuildIndex(getRepository()); // clears out old documents
 
     rebuildComponentIndex();
   }
@@ -163,7 +163,7 @@ public class SearchFacetImpl
         Continuation<FluentComponent> page = components.browse(pageSize, null);
         while (!page.isEmpty()) {
 
-          searchIndexService.bulkPut(getRepository(), page, this::identifier, this::document);
+          elasticSearchIndexService.bulkPut(getRepository(), page, this::identifier, this::document);
           processed += page.size();
 
           long elapsed = sw.elapsed(TimeUnit.MILLISECONDS);

@@ -31,17 +31,17 @@ import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSIT
 /**
  * @since 3.15.2
  */
-@Named(RepositorySearchContribution.NAME)
+@Named(RepositoryElasticSearchContribution.NAME)
 @Singleton
-public class RepositorySearchContribution
-    extends DefaultSearchContribution
+public class RepositoryElasticSearchContribution
+    extends DefaultElasticSearchContribution
 {
   public static final String NAME = REPOSITORY_NAME;
 
   private final RepositoryManager repositoryManager;
 
   @Inject
-  public RepositorySearchContribution(final RepositoryManager repositoryManager) {
+  public RepositoryElasticSearchContribution(final RepositoryManager repositoryManager) {
     this.repositoryManager = repositoryManager;
   }
 

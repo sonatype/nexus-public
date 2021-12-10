@@ -26,8 +26,8 @@ import org.elasticsearch.action.bulk.BulkProcessor;
  * The intention is for this Runnable to be run on a single dedicated worker thread so that only that thread
  * is contesting for the BulkProcessor's MutEx when {@link BulkProcessor#add(ActionRequest)} is invoked.
  * That worker thread should be the same worker thread running instances of {@link BulkProcessorFlusher}.
- * This is achieved by using a single thread pool in {@link SearchIndexServiceImpl} to run instances of
- * this Runnable which are created in {@link SearchIndexServiceImpl}.
+ * This is achieved by using a single thread pool in {@link ElasticSearchIndexServiceImpl} to run instances of
+ * this Runnable which are created in {@link ElasticSearchIndexServiceImpl}.
  *
  * @since 3.22
  */

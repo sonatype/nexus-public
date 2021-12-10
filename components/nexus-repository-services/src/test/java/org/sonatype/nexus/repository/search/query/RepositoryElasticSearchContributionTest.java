@@ -32,17 +32,17 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
 
-public class RepositorySearchContributionTest
+public class RepositoryElasticSearchContributionTest
   extends TestSupport
 {
   @Mock
   private RepositoryManager repositoryManager;
 
-  private RepositorySearchContribution underTest;
+  private RepositoryElasticSearchContribution underTest;
 
   @Before
   public void setup() {
-    underTest = new RepositorySearchContribution(repositoryManager);
+    underTest = new RepositoryElasticSearchContribution(repositoryManager);
   }
 
   @Test

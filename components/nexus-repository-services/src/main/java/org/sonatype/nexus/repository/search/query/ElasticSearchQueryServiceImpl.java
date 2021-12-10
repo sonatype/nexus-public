@@ -72,15 +72,15 @@ import static org.sonatype.nexus.repository.search.query.RepositoryQueryBuilder.
 import static org.sonatype.nexus.security.BreadActions.BROWSE;
 
 /**
- * Default {@link SearchQueryService} implementation.
+ * Default {@link ElasticSearchQueryService} implementation.
  *
  * @since 3.25
  */
 @Named("default")
 @Singleton
-public class SearchQueryServiceImpl
+public class ElasticSearchQueryServiceImpl
     extends ComponentSupport
-    implements SearchQueryService
+    implements ElasticSearchQueryService
 {
   private static final SearchResponse EMPTY_SEARCH_RESPONSE =
       new SearchResponse(InternalSearchResponse.empty(), null, 0, 0, 0, new ShardSearchFailure[]{});
@@ -106,12 +106,12 @@ public class SearchQueryServiceImpl
    * @param profile whether or not to profile elasticsearch queries (default: false)
    */
   @Inject
-  public SearchQueryServiceImpl(final Provider<Client> client,
-                                final RepositoryManager repositoryManager,
-                                final SecurityHelper securityHelper,
-                                final SearchSubjectHelper searchSubjectHelper,
-                                final IndexNamingPolicy indexNamingPolicy,
-                                @Named("${nexus.elasticsearch.profile:-false}") final boolean profile)
+  public ElasticSearchQueryServiceImpl(final Provider<Client> client,
+                                       final RepositoryManager repositoryManager,
+                                       final SecurityHelper securityHelper,
+                                       final SearchSubjectHelper searchSubjectHelper,
+                                       final IndexNamingPolicy indexNamingPolicy,
+                                       @Named("${nexus.elasticsearch.profile:-false}") final boolean profile)
   {
     this.client = checkNotNull(client);
     this.repositoryManager = checkNotNull(repositoryManager);
@@ -315,7 +315,7 @@ public class SearchQueryServiceImpl
   String[] getSearchableIndexes(final RepositoryQueryBuilder repoQuery) {
     Stream<Repository> repositories = StreamSupport
         .stream(repositoryManager.browse().spliterator(), false)
-        .filter(SearchQueryServiceImpl::repoOnlineAndHasSearchIndexFacet);
+        .filter(ElasticSearchQueryServiceImpl::repoOnlineAndHasSearchIndexFacet);
 
     if (repoQuery.repositoryNames != null) {
       repositories = repositories
@@ -349,7 +349,9 @@ public class SearchQueryServiceImpl
           builder.startObject();
           profileShardResult.toXContent(builder, ToXContent.EMPTY_PARAMS);
           builder.endObject();
-          log.info("Elasticsearch profile for {} is: {}", entry.getKey(), builder.string());
+          if (log.isInfoEnabled()) {
+            log.info("Elasticsearch profile for {} is: {}", entry.getKey(), builder.string());
+          }
         }
         catch (IOException e) {
           log.error("Error writing elasticsearch profile result", e);

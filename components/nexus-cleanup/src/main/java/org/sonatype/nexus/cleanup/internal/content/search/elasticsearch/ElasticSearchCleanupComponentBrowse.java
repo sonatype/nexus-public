@@ -29,7 +29,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.query.QueryOptions;
-import org.sonatype.nexus.repository.search.query.SearchQueryService;
+import org.sonatype.nexus.repository.search.query.ElasticSearchQueryService;
 
 import com.codahale.metrics.MetricRegistry;
 import org.elasticsearch.action.search.SearchResponse;
@@ -53,10 +53,10 @@ public class ElasticSearchCleanupComponentBrowse
 
   @Inject
   public ElasticSearchCleanupComponentBrowse(final Map<String, CriteriaAppender> criteriaAppenders,
-                                             final SearchQueryService searchQueryService,
+                                             final ElasticSearchQueryService elasticSearchQueryService,
                                              final MetricRegistry metricRegistry)
   {
-    super(criteriaAppenders, searchQueryService, metricRegistry);
+    super(criteriaAppenders, elasticSearchQueryService, metricRegistry);
   }
 
   @Override

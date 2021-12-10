@@ -12,23 +12,36 @@
  */
 package org.sonatype.nexus.repository.search.query;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.lucene.queryparser.classic.QueryParserBase;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 
 /**
- * Contributor to search query/filter.
+ * Support for {@link ElasticSearchContribution} implementations.
  *
  * @since 3.15
  */
-public interface SearchContribution
+public class ElasticSearchContributionSupport
+    implements ElasticSearchContribution
 {
 
-  /**
-   * Contribute to search query/filter.
-   *
-   * @param query to contribute to
-   * @param type   type of filter
-   * @param value  value of filter
-   */
-  void contribute(BoolQueryBuilder query, String type, String value);
+  @Override
+  public void contribute(final BoolQueryBuilder query, final String type, final String value) {
+    // do nothing
+  }
+
+  public String escape(String value) {
+    if (null == value) {
+      return null;
+    }
+
+    String escaped = QueryParserBase.escape(value);
+
+    boolean shouldLeaveDoubleQuotesEscaped = StringUtils.countMatches(value, "\"") % 2 != 0;
+    String escapedCharactersRegex = shouldLeaveDoubleQuotesEscaped ? "\\\\([?*])" : "\\\\([?*\"])";
+
+    // unescape supported special characters
+    return escaped.replaceAll(escapedCharactersRegex, "$1");
+  }
 
 }

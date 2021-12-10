@@ -13,6 +13,8 @@
 package org.sonatype.nexus.repository.search.query;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +26,7 @@ import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.hamcrest.Matcher;
@@ -41,7 +44,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class SearchUtilsTest
+public class ElasticSearchUtilsTest
     extends TestSupport
 {
   static final String VALID_SHA1_ATTRIBUTE_NAME = "assets.attributes.checksum.sha1";
@@ -63,7 +66,7 @@ public class SearchUtilsTest
   @Mock
   RepositoryManagerRESTAdapter repositoryManagerRESTAdapter;
 
-  SearchUtils underTest;
+  ElasticSearchUtils underTest;
 
   @Before
   public void setup() {
@@ -74,10 +77,10 @@ public class SearchUtilsTest
         )
     );
 
-    Map<String, SearchContribution> searchContributions = new HashMap<>();
-    searchContributions.put(DefaultSearchContribution.NAME, new DefaultSearchContribution());
-    searchContributions.put(KeywordSearchContribution.NAME, new KeywordSearchContribution());
-    underTest = new SearchUtils(repositoryManagerRESTAdapter, searchMappings, searchContributions);
+    Map<String, ElasticSearchContribution> searchContributions = new HashMap<>();
+    searchContributions.put(DefaultElasticSearchContribution.NAME, new DefaultElasticSearchContribution());
+    searchContributions.put(KeywordElasticSearchContribution.NAME, new KeywordElasticSearchContribution());
+    underTest = new ElasticSearchUtils(repositoryManagerRESTAdapter, searchMappings, searchContributions);
   }
 
   @Test
@@ -292,6 +295,39 @@ public class SearchUtilsTest
 
     assertThat(forwardQuery.equals(backwardQuery), is(true));
     assertThat(forwardQuery.equals(mixedQuery), is(true));
+  }
+
+  @Test
+  public void buildSearchRequestFromSearchFilters(){
+    Collection<SearchFilter> searchFilters = new ArrayList<>();
+    searchFilters.add(new SearchFilter("keyword", "org.junit"));
+    searchFilters.add(new SearchFilter("repository", "maven_central"));
+    searchFilters.add(new SearchFilter("format", "maven"));
+
+    QueryBuilder queryBuilder = underTest.buildQuery(searchFilters);
+
+    assertThat(queryBuilder.toString(), is("{\n" +
+        "  \"bool\" : {\n" +
+        "    \"must\" : [ {\n" +
+        "      \"query_string\" : {\n" +
+        "        \"query\" : \"maven\",\n" +
+        "        \"fields\" : [ \"format\" ],\n" +
+        "        \"lowercase_expanded_terms\" : false\n" +
+        "      }\n" +
+        "    }, {\n" +
+        "      \"query_string\" : {\n" +
+        "        \"query\" : \"org.junit\",\n" +
+        "        \"fields\" : [ \"name.case_insensitive\", \"group.case_insensitive\", \"_all\" ]\n" +
+        "      }\n" +
+        "    }, {\n" +
+        "      \"query_string\" : {\n" +
+        "        \"query\" : \"maven_central\",\n" +
+        "        \"fields\" : [ \"repository\" ],\n" +
+        "        \"lowercase_expanded_terms\" : false\n" +
+        "      }\n" +
+        "    } ]\n" +
+        "  }\n" +
+        "}"));
   }
 
   private static void assertSearchBuilder(final SortBuilder sortBuilder, final String field, final String order) throws Exception {

@@ -27,7 +27,7 @@ import com.google.common.annotations.VisibleForTesting;
  *
  * @since 3.25
  */
-public interface SearchIndexService
+public interface ElasticSearchIndexService
 {
   /**
    * Create index for specified repository, if does not already exits.

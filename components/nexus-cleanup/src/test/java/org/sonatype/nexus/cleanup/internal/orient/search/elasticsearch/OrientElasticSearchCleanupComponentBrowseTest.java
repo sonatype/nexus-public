@@ -26,7 +26,7 @@ import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.search.query.RepositoryQueryBuilder;
-import org.sonatype.nexus.repository.search.query.SearchQueryService;
+import org.sonatype.nexus.repository.search.query.ElasticSearchQueryService;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.transaction.UnitOfWork;
@@ -92,7 +92,7 @@ public class OrientElasticSearchCleanupComponentBrowseTest
   private SearchHit searchHit1, searchHit2;
 
   @Mock
-  private SearchQueryService searchQueryService;
+  private ElasticSearchQueryService elasticSearchQueryService;
 
   @Mock
   private StorageTx tx;
@@ -112,7 +112,7 @@ public class OrientElasticSearchCleanupComponentBrowseTest
         LAST_BLOB_UPDATED_KEY, new LastBlobUpdatedCriteriaAppender(),
         IS_PRERELEASE_KEY, new PrereleaseCriteriaAppender(),
         REGEX_KEY, new RegexCriteriaAppender()
-    ), searchQueryService, metricRegistry);
+    ), elasticSearchQueryService, metricRegistry);
 
     when(repository.getName()).thenReturn(REPO_NAME);
 
@@ -190,20 +190,20 @@ public class OrientElasticSearchCleanupComponentBrowseTest
     CleanupPolicy lastBlobUpdatedPolicy = new OrientCleanupPolicy();
     lastBlobUpdatedPolicy.setCriteria(criteria);
 
-    when(searchQueryService.browse(any())).thenReturn(ImmutableList.of(searchHit1, searchHit2));
+    when(elasticSearchQueryService.browse(any())).thenReturn(ImmutableList.of(searchHit1, searchHit2));
 
     Iterable<EntityId> componentsIterable = underTest.browse(lastBlobUpdatedPolicy, repository);
 
     assertThat(componentsIterable.iterator().hasNext(), is(false));
 
-    verify(searchQueryService, never()).browse(any());
+    verify(elasticSearchQueryService, never()).browse(any());
   }
 
   private void assertComponentsReturned(final Map<String, String> criteria) {
     CleanupPolicy lastBlobUpdatedPolicy = new OrientCleanupPolicy();
     lastBlobUpdatedPolicy.setCriteria(criteria);
 
-    when(searchQueryService.browse(any())).thenReturn(ImmutableList.of(searchHit1, searchHit2));
+    when(elasticSearchQueryService.browse(any())).thenReturn(ImmutableList.of(searchHit1, searchHit2));
 
     Iterable<EntityId> componentsIterable = underTest.browse(lastBlobUpdatedPolicy, repository);
 
@@ -215,7 +215,7 @@ public class OrientElasticSearchCleanupComponentBrowseTest
 
   private void assertQuery(final String key, final String expectedQuery) {
     ArgumentCaptor<QueryBuilder> queryBuilderCaptor = ArgumentCaptor.forClass(QueryBuilder.class);
-    verify(searchQueryService).browse(queryBuilderCaptor.capture());
+    verify(elasticSearchQueryService).browse(queryBuilderCaptor.capture());
 
     RepositoryQueryBuilder actualQuery = repositoryQuery(queryBuilderCaptor.getValue());
 

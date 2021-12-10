@@ -23,14 +23,14 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
 
 /**
- * "Keyword" {@link SearchContribution} (adds filter as an ES query string).
+ * "Keyword" {@link ElasticSearchContribution} (adds filter as an ES query string).
  *
  * @since 3.15
  */
-@Named(KeywordSearchContribution.NAME)
+@Named(KeywordElasticSearchContribution.NAME)
 @Singleton
-public class KeywordSearchContribution
-    extends SearchContributionSupport
+public class KeywordElasticSearchContribution
+    extends ElasticSearchContributionSupport
 {
   public static final String NAME = "keyword";
 

@@ -70,15 +70,15 @@ import static org.sonatype.nexus.repository.search.index.SearchConstants.TYPE;
 import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 
 /**
- * Default {@link SearchIndexService} implementation.
+ * Default {@link ElasticSearchIndexService} implementation.
  *
  * @since 3.25
  */
 @Named("default")
 @Singleton
-public class SearchIndexServiceImpl
+public class ElasticSearchIndexServiceImpl
     extends ComponentSupport
-    implements SearchIndexService
+    implements ElasticSearchIndexService
 {
   private final Provider<Client> client;
 
@@ -113,15 +113,15 @@ public class SearchIndexServiceImpl
    *                        That is, the number of independent batches to accumulate index updates in.
    */
   @Inject
-  public SearchIndexServiceImpl(final Provider<Client> client, // NOSONAR
-                                final IndexNamingPolicy indexNamingPolicy,
-                                final List<IndexSettingsContributor> indexSettingsContributors,
-                                final EventManager eventManager,
-                                @Named("${nexus.elasticsearch.bulkCapacity:-1000}") final int bulkCapacity,
-                                @Named("${nexus.elasticsearch.concurrentRequests:-1}") final int concurrentRequests,
-                                @Named("${nexus.elasticsearch.flushInterval:-0}") final int flushInterval,
-                                @Named("${nexus.elasticsearch.calmTimeout:-3000}") final int calmTimeout,
-                                @Named("${nexus.elasticsearch.batching.threads.count:-1}") final int batchingThreads)
+  public ElasticSearchIndexServiceImpl(final Provider<Client> client, // NOSONAR
+                                       final IndexNamingPolicy indexNamingPolicy,
+                                       final List<IndexSettingsContributor> indexSettingsContributors,
+                                       final EventManager eventManager,
+                                       @Named("${nexus.elasticsearch.bulkCapacity:-1000}") final int bulkCapacity,
+                                       @Named("${nexus.elasticsearch.concurrentRequests:-1}") final int concurrentRequests,
+                                       @Named("${nexus.elasticsearch.flushInterval:-0}") final int flushInterval,
+                                       @Named("${nexus.elasticsearch.calmTimeout:-3000}") final int calmTimeout,
+                                       @Named("${nexus.elasticsearch.batching.threads.count:-1}") final int batchingThreads)
   {
     checkState(batchingThreads > 0,
         "'nexus.elasticsearch.batching.threads.count' must be positive.");
@@ -475,7 +475,7 @@ public class SearchIndexServiceImpl
     long end = System.currentTimeMillis() + calmTimeout;
     do {
       try {
-        if (function.call()) {
+        if (Boolean.TRUE.equals(function.call())) {
           return; // success
         }
       }

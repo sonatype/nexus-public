@@ -19,9 +19,10 @@ import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class DefaultSearchContributionTest
+public class DefaultElasticSearchContributionTest
 {
-  private DefaultSearchContribution defaultSearchContribution = new DefaultSearchContribution();
+  private DefaultElasticSearchContribution
+      defaultSearchContribution = new DefaultElasticSearchContribution();
 
   @Test
   public void defaultSearchContributionEscapesStartingSlash() {

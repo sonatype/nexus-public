@@ -23,8 +23,8 @@ import javax.ws.rs.core.Response;
 
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.search.index.SearchIndexService;
-import org.sonatype.nexus.repository.search.query.SearchQueryService;
+import org.sonatype.nexus.repository.search.index.ElasticSearchIndexService;
+import org.sonatype.nexus.repository.search.query.ElasticSearchQueryService;
 
 import org.awaitility.Awaitility;
 
@@ -42,10 +42,10 @@ import static org.hamcrest.core.Is.is;
 public class SearchTestHelper
 {
   @Inject
-  public SearchIndexService indexService;
+  public ElasticSearchIndexService indexService;
 
   @Inject
-  public SearchQueryService searchQueryService;
+  public ElasticSearchQueryService elasticSearchQueryService;
 
   @Inject
   public EventManager eventManager;
@@ -73,8 +73,8 @@ public class SearchTestHelper
     assertThat(items.size(), is(exists ? 1 : 0));
   }
 
-  public SearchQueryService queryService() {
-    return searchQueryService;
+  public ElasticSearchQueryService queryService() {
+    return elasticSearchQueryService;
   }
 
   @SuppressWarnings("unchecked")

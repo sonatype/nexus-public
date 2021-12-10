@@ -36,7 +36,7 @@ import org.sonatype.nexus.repository.browse.internal.orient.BrowseNodeEntityAdap
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.mime.DefaultContentValidator;
-import org.sonatype.nexus.repository.search.SearchFacet;
+import org.sonatype.nexus.repository.search.ElasticSearchFacet;
 import org.sonatype.nexus.repository.storage.internal.ComponentSchemaRegistration;
 import org.sonatype.nexus.security.ClientInfoProvider;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
@@ -135,12 +135,12 @@ public class StorageFacetImplIT
     when(testRepository1.getName()).thenReturn("test-repository-1");
     when(testRepository1.getFormat()).thenReturn(testFormat);
     when(testRepository1.facet(ConfigurationFacet.class)).thenReturn(configurationFacet);
-    when(testRepository1.facet(SearchFacet.class)).thenReturn(mock(SearchFacet.class));
+    when(testRepository1.facet(ElasticSearchFacet.class)).thenReturn(mock(ElasticSearchFacet.class));
 
     when(testRepository2.getName()).thenReturn("test-repository-2");
     when(testRepository2.getFormat()).thenReturn(testFormat);
     when(testRepository2.facet(ConfigurationFacet.class)).thenReturn(configurationFacet);
-    when(testRepository2.facet(SearchFacet.class)).thenReturn(mock(SearchFacet.class));
+    when(testRepository2.facet(ElasticSearchFacet.class)).thenReturn(mock(ElasticSearchFacet.class));
 
     underTest = storageFacetImpl("testNodeId", bucketEntityAdapter, componentEntityAdapter, assetEntityAdapter, testRepository1);
   }

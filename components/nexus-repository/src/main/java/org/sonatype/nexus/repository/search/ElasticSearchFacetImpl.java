@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -29,7 +28,7 @@ import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
-import org.sonatype.nexus.repository.search.index.SearchIndexService;
+import org.sonatype.nexus.repository.search.index.ElasticSearchIndexService;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.BucketEntityAdapter;
@@ -58,22 +57,22 @@ import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REPOSITORY_NAME;
 
 /**
- * Default {@link SearchFacet} implementation.
+ * Default {@link ElasticSearchFacet} implementation.
  *
  * Depends on presence of a {@link StorageFacet} attached to {@link Repository}.
  *
  * @since 3.0
  */
 @Named
-public class SearchFacetImpl
+public class ElasticSearchFacetImpl
     extends FacetSupport
-    implements SearchFacet
+    implements ElasticSearchFacet
 {
   private static final int PAGE_SIZE = 1_000;
 
   private static final int BUCKET = 0;
 
-  private final SearchIndexService searchIndexService;
+  private final ElasticSearchIndexService elasticSearchIndexService;
 
   private final Map<String, ComponentMetadataProducer> componentMetadataProducers;
 
@@ -86,13 +85,13 @@ public class SearchFacetImpl
   private Map<String, Object> repositoryMetadata;
 
   @Inject
-  public SearchFacetImpl(final SearchIndexService searchIndexService,
-                         final Map<String, ComponentMetadataProducer> componentMetadataProducers,
-                         final ComponentEntityAdapter componentEntityAdapter,
-                         final ComponentStore componentStore,
-                         final BucketEntityAdapter bucketEntityAdapter)
+  public ElasticSearchFacetImpl(final ElasticSearchIndexService elasticSearchIndexService,
+                                final Map<String, ComponentMetadataProducer> componentMetadataProducers,
+                                final ComponentEntityAdapter componentEntityAdapter,
+                                final ComponentStore componentStore,
+                                final BucketEntityAdapter bucketEntityAdapter)
   {
-    this.searchIndexService = checkNotNull(searchIndexService);
+    this.elasticSearchIndexService = checkNotNull(elasticSearchIndexService);
     this.componentMetadataProducers = checkNotNull(componentMetadataProducers);
     this.componentEntityAdapter = checkNotNull(componentEntityAdapter);
     this.componentStore = checkNotNull(componentStore);
@@ -109,7 +108,7 @@ public class SearchFacetImpl
   @Guarded(by = STARTED)
   public void rebuildIndex() {
     log.info("Rebuilding index of repository {}", getRepository().getName());
-    searchIndexService.rebuildIndex(getRepository());
+    elasticSearchIndexService.rebuildIndex(getRepository());
     UnitOfWork.begin(facet(StorageFacet.class).txSupplier());
     try {
       rebuildComponentIndex();
@@ -136,28 +135,29 @@ public class SearchFacetImpl
       long total = componentStore.countComponents(ImmutableList.of(bucket));
 
       if (total > 0) {
-        ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60);
-        Stopwatch sw = Stopwatch.createStarted();
+        try (ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60)) {
+          Stopwatch sw = Stopwatch.createStarted();
 
-        OIndexCursor cursor = componentStore.getIndex(ComponentEntityAdapter.I_BUCKET_GROUP_NAME_VERSION).cursor();
-        List<Entry<OCompositeKey, EntityId>> nextPage = componentStore.getNextPage(cursor, PAGE_SIZE);
-        while (!Iterables.isEmpty(nextPage)) {
-          List<EntityId> componentIds = nextPage.stream()
-              .filter(entry -> bucketId.equals(entry.getKey().getKeys().get(BUCKET)))
-              .map(Entry::getValue)
-              .collect(toList());
+          OIndexCursor cursor = componentStore.getIndex(ComponentEntityAdapter.I_BUCKET_GROUP_NAME_VERSION).cursor();
+          List<Entry<OCompositeKey, EntityId>> nextPage = componentStore.getNextPage(cursor, PAGE_SIZE);
+          while (!Iterables.isEmpty(nextPage)) {
+            List<EntityId> componentIds = nextPage.stream()
+                .filter(entry -> bucketId.equals(entry.getKey().getKeys().get(BUCKET)))
+                .map(Entry::getValue)
+                .collect(toList());
 
-          processed += componentIds.size();
+            processed += componentIds.size();
 
-          bulkPut(componentIds);
+            bulkPut(componentIds);
 
-          long elapsed = sw.elapsed(TimeUnit.MILLISECONDS);
-          progressLogger
-              .info("Indexed {} / {} {} components in {} ms", processed, total, repository.getName(), elapsed);
+            long elapsed = sw.elapsed(TimeUnit.MILLISECONDS);
+            progressLogger
+                .info("Indexed {} / {} {} components in {} ms", processed, total, repository.getName(), elapsed);
 
-          nextPage = componentStore.getNextPage(cursor, PAGE_SIZE);
+            nextPage = componentStore.getNextPage(cursor, PAGE_SIZE);
+          }
+          progressLogger.flush(); // ensure the final progress message is flushed
         }
-        progressLogger.flush(); // ensure the final progress message is flushed
       }
     }
     catch (Exception e) {
@@ -171,7 +171,7 @@ public class SearchFacetImpl
     checkNotNull(componentId);
     String json = json(componentId);
     if (json != null) {
-      searchIndexService.put(getRepository(), identifier(componentId), json);
+      elasticSearchIndexService.put(getRepository(), identifier(componentId), json);
     }
   }
 
@@ -179,31 +179,31 @@ public class SearchFacetImpl
   @Guarded(by = STARTED)
   public void bulkPut(final Iterable<EntityId> componentIds) {
     checkNotNull(componentIds);
-    searchIndexService.bulkPut(getRepository(), componentIds, this::identifier, this::json);
+    elasticSearchIndexService.bulkPut(getRepository(), componentIds, this::identifier, this::json);
   }
 
   @Override
   @Guarded(by = STARTED)
   public void delete(final EntityId componentId) {
     checkNotNull(componentId);
-    searchIndexService.delete(getRepository(), identifier(componentId));
+    elasticSearchIndexService.delete(getRepository(), identifier(componentId));
   }
 
   @Override
   @Guarded(by = STARTED)
   public void bulkDelete(final Iterable<EntityId> componentIds) {
     checkNotNull(componentIds);
-    searchIndexService.bulkDelete(getRepository(), transform(componentIds, this::identifier));
+    elasticSearchIndexService.bulkDelete(getRepository(), transform(componentIds, this::identifier));
   }
 
   @Override
   protected void doStart() throws Exception {
-    searchIndexService.createIndex(getRepository());
+    elasticSearchIndexService.createIndex(getRepository());
   }
 
   @Override
   protected void doDelete() {
-    searchIndexService.deleteIndex(getRepository());
+    elasticSearchIndexService.deleteIndex(getRepository());
   }
 
   /**
