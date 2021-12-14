@@ -70,7 +70,7 @@ export default function ContentSelectorsForm({itemId, onDone}) {
   }
 
   function handleEnter(event) {
-    if (event.key === 'Enter') {
+    if (event.key === 'Enter' && event.target.id !== 'expression') {
       save(event);
     }
   }

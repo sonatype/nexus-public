@@ -12,6 +12,7 @@
  */
 import React from 'react';
 import {fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
 import '@testing-library/jest-dom/extend-expect';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
@@ -179,6 +180,16 @@ describe('ContentSelectorsForm', function() {
 
     expect(getByText('An error occurred with the name field')).toBeInTheDocument();
     expect(getByText('Invalid CSEL: tokenization error in \'"maven2\' at line 1 column 18')).toBeInTheDocument();
+  });
+
+  it('allows new line for expression textarea', async function() {
+    const {expression, loadingMask} = renderCreateView();
+
+    await waitForElementToBeRemoved(loadingMask);
+
+    userEvent.type(expression(), 'format == "raw"{enter}and format == "maven2"')
+
+    expect(expression()).toHaveValue('format == "raw"\nand format == "maven2"');
   });
 
   it('requests confirmation when delete is requested', async function() {
