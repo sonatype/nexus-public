@@ -61,8 +61,9 @@ ant = new AntBuilder()
 ant.project.buildListeners[0].messageOutputLevel = 0
 
 HR = "".padRight(jline.TerminalFactory.get().getWidth() - 7, '-') // terminal line width
-LOCK_FILE = "target/sonatype-work/nexus3/lock"
-SONATYPE_WORK = "target/sonatype-work"
+TARGET_DIR = "target"
+LOCK_FILE = "$TARGET_DIR/sonatype-work/nexus3/lock"
+SONATYPE_WORK = "$TARGET_DIR/sonatype-work"
 SONATYPE_WORK_BACKUP = System.getProperty("java.io.tmpdir") + "/nxrm-sonatype-work"
 TAKARI_SMART_BUILD_VERSION = "0.5.0"
 TAKARI_LOCAL_REPO_VERSION = "0.11.2"
@@ -279,7 +280,7 @@ def processBuildMode() {
     return
   }
 
-  if (!new File("target").exists()) {
+  if (!new File("$TARGET_DIR").exists()) {
     warn("No root target folder present. Full build required.")
     buildOptions.buildMode = "full"
     return
@@ -378,6 +379,7 @@ def processCliOptions(args) {
     _ longOpt: 'no-random-password', "Disable generation of random password (default)"
     _ longOpt: 'npm-install', "use `npm install` for npm dependencies (this results in a faster, but less stable build)"
     _ longOpt: 'npm-ci', "use `npm ci` for npm dependencies (this results in a slower, but more stable build and is the default)"
+    o longOpt: 'overwrite-target', args: 1, "Overwrite target dir"
 
     // general options
     d longOpt: 'dry-run', 'Dry run, don\'t actually execute anything'
@@ -409,6 +411,8 @@ Examples:
   ./nxrm.groovy -x -rf :nexus-main  Due to a limitation in the Groovy CliBuilder, any positional parameters you wish to pass into the maven build or run commands need to be after the '-x' parameter, and be last.
   ./nxrm.groovy -x -U               Example usage to force Maven snapshot updates.
   ./nxrm.groovy --geb               Enables Geb in your IDE. See https://docs.sonatype.com/display/Nexus/Nexus+Repository+Manager+Developer+Onboarding#NexusRepositoryManagerDeveloperOnboarding-TestingWithGeb
+  ./nxrm.groovy target-overwrite 
+                new-target-dir      Run script using artifacts from provided directory
 '''
     return false
   }
@@ -862,7 +866,7 @@ def deploy() {
   extract("./private/assemblies/nexus-pro/target/", "nexus-professional-*-bundle.zip")
 
   // Tell Karaf to load bundles from local .m2 folder
-  def files = new FileNameFinder().getFileNames("target", "nexus*/**/org.ops4j.pax.url.mvn.cfg")
+  def files = new FileNameFinder().getFileNames("$TARGET_DIR", "nexus*/**/org.ops4j.pax.url.mvn.cfg")
   files.each {
     // comment out localRepository
     ant.replace(file: it, token: "org.ops4j.pax.url.mvn.localRepository",
@@ -882,7 +886,7 @@ def extract(path, zipRegex) {
   else {
     File file = new File(files.get(0))
     info("Extracting: ${file.toString()}")
-    ArchiverFactory.createArchiver(ArchiveFormat.ZIP).extract(file, new File("target"))
+    ArchiverFactory.createArchiver(ArchiveFormat.ZIP).extract(file, new File("$TARGET_DIR"))
   }
 }
 
@@ -921,7 +925,7 @@ def checkSSL() {
     }
 
     // Copy to etc/ssl folder
-    List<String> files = new FileNameFinder().getFileNames("target", "nexus*/NOTICE.txt")
+    List<String> files = new FileNameFinder().getFileNames("$TARGET_DIR", "nexus*/NOTICE.txt")
     files.each {
       File dest = new File(new File(it).getParent(), "etc/ssl/")
       debug("SSL: Copying keystore.jks to $dest")
@@ -929,7 +933,7 @@ def checkSSL() {
     }
 
     // Update nexus.properties (and default files)
-    files = new FileNameFinder().getFileNames("target", "nexus*/**/nexus*.properties")
+    files = new FileNameFinder().getFileNames("$TARGET_DIR", "nexus*/**/nexus*.properties")
     files.each {
       ant.replace(file: it, token: '${jetty.etc}/jetty-http.xml,${jetty.etc}/jetty-requestlog.xml',
           value: '${jetty.etc}/jetty-http.xml,${jetty.etc}/jetty-https.xml,${jetty.etc}/jetty-requestlog.xml')
@@ -957,14 +961,14 @@ def checkSSH() {
   debug("Enabling SSH")
 
   // Add ssh option to all cfg files in target
-  List<String> files = new FileNameFinder().getFileNames("target", "nexus*/**/org.apache.karaf.features.cfg")
+  List<String> files = new FileNameFinder().getFileNames("$TARGET_DIR", "nexus*/**/org.apache.karaf.features.cfg")
   files.each {
     debug("Updating $it to enable SSH")
     ant.replaceregexp(file: it, match: "\\(wrap\\), ", replace: "\\(wrap\\),ssh,")
   }
 
   // Karaf ssh port
-  files = new FileNameFinder().getFileNames("target", "nexus*/**/org.apache.karaf.shell.cfg")
+  files = new FileNameFinder().getFileNames("$TARGET_DIR", "nexus*/**/org.apache.karaf.shell.cfg")
   files.each {
     debug("Updating $it to set Karaf SSH port")
     ant.replaceregexp(file: it, match: "sshPort = 8022", replace: "sshPort = ${rcConfig.karafSshPort}")
@@ -977,7 +981,7 @@ def checkOrient() {
     debug("Enabling Orient")
 
     // Update nexus.properties (and default files)
-    List<String> files = new FileNameFinder().getFileNames("target", "nexus*/**/nexus*.properties")
+    List<String> files = new FileNameFinder().getFileNames("$TARGET_DIR", "nexus*/**/nexus*.properties")
     files.each {
       ensurePresentInFile(new File(it), "nexus.orient.binaryListenerEnabled=true")
       ensurePresentInFile(new File(it), "nexus.orient.httpListenerEnabled=true")
@@ -994,14 +998,14 @@ def checkElastic() {
     debug("Enabling Elastic")
 
     // Update elasticsearch.yml (and default files)
-    List<String> files = new FileNameFinder().getFileNames("target", "nexus*/**/elasticsearch.yml")
+    List<String> files = new FileNameFinder().getFileNames("$TARGET_DIR", "nexus*/**/elasticsearch.yml")
     files.each {
       debug("Updating $it to set enable Elastic HTTP")
       ant.replace(file: it, token: "http.enabled: false", value: "http.enabled: true")
     }
 
     // Update nexus.properties (and default files)
-    files = new FileNameFinder().getFileNames("target", "nexus*/**/nexus*.properties")
+    files = new FileNameFinder().getFileNames("$TARGET_DIR", "nexus*/**/nexus*.properties")
     files.each {
       ensurePresentInFile(new File(it), 'nexus.elasticsearch.plugins=license,marvel-agent,mobz/elasticsearch-head,lmenezes/elasticsearch-kopf,xyu/elasticsearch-whatson')
     }
@@ -1015,7 +1019,7 @@ def checkPorts() {
   debug("Checking application ports")
 
   // Update nexus.properties (and default files)
-  List<String> files = new FileNameFinder().getFileNames("target", "nexus*/etc/nexus*.properties sonatype-work/nexus3/etc/nexus*properties")
+  List<String> files = new FileNameFinder().getFileNames("$TARGET_DIR", "nexus*/etc/nexus*.properties sonatype-work/nexus3/etc/nexus*properties")
   files.each {
     ensurePresentInFile(new File(it), "application-port=${rcConfig.port}")
     ensurePresentInFile(new File(it), "application-port-ssl=${rcConfig.sslPort}")
@@ -1063,7 +1067,7 @@ def runNxrm() {
     Model model = reader.read(new FileReader(new File('pom.xml')))
     def version = model.getVersion()
 
-    def nxrmCommand = ["target/${dir}${version}/bin/nexus".toString()]
+    def nxrmCommand = ["$TARGET_DIR/${dir}${version}/bin/nexus".toString()]
     nxrmCommand = nxrmCommand.plus(positionalOptions.join(' ')) // add remaining arguments (e.g. -rf :project)
     info("Executing NXRM command: ${nxrmCommand.join(' ')}")
 
@@ -1078,7 +1082,8 @@ def runNxrm() {
     processBuilder.environment().put('NEXUS_SECURITY_RANDOMPASSWORD', Boolean.toString(rcConfig.randomPassword))
     processBuilder.environment().put('JAVA_MAX_MEM', rcConfig.javaMaxMem)
     processBuilder.environment().put('DIRECT_MAX_MEM', rcConfig.directMaxMem)
-    processBuilder.environment().put('JAVA_DEBUG_PORT', Integer.toString(rcConfig.javaDebugPort))
+    processBuilder.environment().put('JAVA_DEBUG_PORT',
+        rcConfig.javaDebugPort instanceof String ? rcConfig.javaDebugPort : Integer.toString(rcConfig.javaDebugPort))
     processBuilder.environment().put('EXTRA_JAVA_OPTS', rcConfig.vmOptions)
     processBuilder.environment().put('NEXUS_RESOURCE_DIRS', evaluate(new File('buildsupport/scripts/nexusresourcedirs.groovy')))
 
@@ -1167,6 +1172,9 @@ if (!processCliOptions(args)) {
 rcConfig = processRcConfigFile()
 
 lastBuild = processLastBuild()
+
+if (cliOptions.'overwrite-target')
+  TARGET_DIR = cliOptions.'overwrite-target'
 
 // stand-alone options
 if (cliOptions.run) {
