@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.extender.modules;
 
+import java.util.Map;
+
 import org.sonatype.nexus.extender.modules.internal.CachedGaugeTypeListener;
 
 import com.codahale.metrics.SharedMetricRegistries;
@@ -23,18 +25,26 @@ import com.palominolabs.metrics.guice.annotation.MethodAnnotationResolver;
 
 /**
  * Provides instrumentation of methods annotated with metrics annotations.
- * 
+ *
  * @since 3.0
  */
 public class InstrumentationModule
     extends AbstractModule
 {
+  private final Map<?, ?> nexusProperties;
+
+  InstrumentationModule(Map<?, ?> nexusProperties) {
+    this.nexusProperties = nexusProperties;
+  }
+
   @Override
   protected void configure() {
     install(MetricsInstrumentationModule.builder()
         .withMetricRegistry(SharedMetricRegistries.getOrCreate("nexus"))
         .build());
 
-    bindListener(Matchers.any(), new CachedGaugeTypeListener(SharedMetricRegistries.getOrCreate("nexus"), new DefaultMetricNamer(), new MethodAnnotationResolver()));
+    bindListener(Matchers.any(),
+        new CachedGaugeTypeListener(SharedMetricRegistries.getOrCreate("nexus"), new DefaultMetricNamer(),
+            new MethodAnnotationResolver(), nexusProperties));
   }
 }
