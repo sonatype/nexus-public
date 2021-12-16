@@ -51,12 +51,14 @@ export default function ContentSelectorsPreview({type, expression}) {
     <NxLoadWrapper isLoading={isLoading} retryHandler={retry}>
       <FieldWrapper labelText={UIStrings.CONTENT_SELECTORS.PREVIEW.REPOSITORY_LABEL}
                     descriptionText={UIStrings.CONTENT_SELECTORS.PREVIEW.REPOSITORY_DESCRIPTION}>
-        <Select name="repository" onChange={repositoryChangeHandler} value={repositories}>
-          {allRepositories.map(({id, name}) =>
-              <option key={id} value={id}>{name}</option>
-          )}
-        </Select>
-        <NxButton disabled={previewUnavailable} onClick={previewHandler}>{UIStrings.CONTENT_SELECTORS.PREVIEW.BUTTON}</NxButton>
+        <div className="nx-form-row">
+          <Select name="repository" onChange={repositoryChangeHandler} value={repositories}>
+            {allRepositories.map(({id, name}) =>
+                <option key={id} value={id}>{name}</option>
+            )}
+          </Select>
+          <NxButton disabled={previewUnavailable} onClick={previewHandler}>{UIStrings.CONTENT_SELECTORS.PREVIEW.BUTTON}</NxButton>
+        </div>
       </FieldWrapper>
       <SectionToolbar>
         <div className="nxrm-spacer" />

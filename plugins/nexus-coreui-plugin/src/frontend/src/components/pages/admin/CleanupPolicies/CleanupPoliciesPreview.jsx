@@ -69,13 +69,15 @@ export default function CleanupPoliciesPreview({policyData}) {
       {() => <>
         <FieldWrapper labelText={UIStrings.CLEANUP_POLICIES.PREVIEW.REPOSITORY_LABEL}
                       descriptionText={UIStrings.CLEANUP_POLICIES.PREVIEW.REPOSITORY_DESCRIPTION}>
-          <Select name="repository" onChange={repositoryChangeHandler}>
-            <option value="">{UIStrings.CLEANUP_POLICIES.REPOSITORY_SELECT}</option>
-            {repositories.map(({id, name}) =>
-                <option key={id} value={id}>{name}</option>
-            )}
-          </Select>
-          <NxButton disabled={previewUnavailable} onClick={previewHandler}>{UIStrings.CLEANUP_POLICIES.PREVIEW.BUTTON}</NxButton>
+          <div className="nx-form-row">
+            <Select name="repository" onChange={repositoryChangeHandler}>
+              <option value="">{UIStrings.CLEANUP_POLICIES.REPOSITORY_SELECT}</option>
+              {repositories.map(({id, name}) =>
+                  <option key={id} value={id}>{name}</option>
+              )}
+            </Select>
+            <NxButton disabled={previewUnavailable} onClick={previewHandler}>{UIStrings.CLEANUP_POLICIES.PREVIEW.BUTTON}</NxButton>
+          </div>
         </FieldWrapper>
         <SectionToolbar>
           <div className="nxrm-spacer" />
