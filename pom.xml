@@ -1273,7 +1273,7 @@
                     CVE-2021-44228
                     -->
                     <exclude>org.apache.logging.log4j:log4j-core:(,2.15.0)</exclude>
-                    <exclude>ch.qos.logback:logback-classic:(,1.2.8)</exclude>
+                    <exclude>ch.qos.logback:logback-classic:(,1.2.9)</exclude>
 
                     <!--
                     Ban old bouncycastle.
