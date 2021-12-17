@@ -14,9 +14,9 @@ import React from 'react';
 import {useMachine} from '@xstate/react';
 
 import {
-  FieldWrapper,
   NxButton,
   NxFilterInput,
+  NxFormGroup,
   NxLoadWrapper,
   NxTable,
   NxTableBody,
@@ -67,10 +67,15 @@ export default function CleanupPoliciesPreview({policyData}) {
     <h2>{UIStrings.CLEANUP_POLICIES.TITLE}</h2>
     <NxLoadWrapper loading={isLoadingForm} error={formError} retryHandler={retryForm}>
       {() => <>
-        <FieldWrapper labelText={UIStrings.CLEANUP_POLICIES.PREVIEW.REPOSITORY_LABEL}
-                      descriptionText={UIStrings.CLEANUP_POLICIES.PREVIEW.REPOSITORY_DESCRIPTION}>
+        <div className="nx-form-group">
+          <label id="preview-repository-label" className="nx-label" htmlFor="repository">
+            <span class="nx-label__text">{UIStrings.CLEANUP_POLICIES.PREVIEW.REPOSITORY_LABEL}</span>
+          </label>
+          <div id="preview-repository-sub-label" className="nx-sub-label">
+            {UIStrings.CLEANUP_POLICIES.PREVIEW.REPOSITORY_DESCRIPTION}
+          </div>
           <div className="nx-form-row">
-            <Select name="repository" onChange={repositoryChangeHandler}>
+            <Select name="repository" onChange={repositoryChangeHandler} aria-describedby="preview-repository-sub-label">
               <option value="">{UIStrings.CLEANUP_POLICIES.REPOSITORY_SELECT}</option>
               {repositories.map(({id, name}) =>
                   <option key={id} value={id}>{name}</option>
@@ -78,7 +83,7 @@ export default function CleanupPoliciesPreview({policyData}) {
             </Select>
             <NxButton disabled={previewUnavailable} onClick={previewHandler}>{UIStrings.CLEANUP_POLICIES.PREVIEW.BUTTON}</NxButton>
           </div>
-        </FieldWrapper>
+        </div>
         <SectionToolbar>
           <div className="nxrm-spacer" />
           <NxFilterInput
