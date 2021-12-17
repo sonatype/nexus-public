@@ -1118,6 +1118,11 @@
           <artifactId>docker-maven-plugin</artifactId>
           <version>0.33.0</version>
         </plugin>
+          
+        <plugin>
+          <artifactId>maven-gpg-plugin</artifactId>
+          <version>3.0.1</version>
+        </plugin>
       </plugins>
     </pluginManagement>
 
