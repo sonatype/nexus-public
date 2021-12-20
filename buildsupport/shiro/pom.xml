@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>2.14.20-02</version>
+    <version>2.14.21-02</version>
   </parent>
 
   <artifactId>nexus-buildsupport-shiro</artifactId>
