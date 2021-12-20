@@ -28,7 +28,7 @@ import org.sonatype.nexus.yum.YumRegistry;
 import org.sonatype.nexus.yum.internal.capabilities.GenerateMetadataCapability;
 import org.sonatype.nexus.yum.internal.capabilities.GenerateMetadataCapabilityConfiguration;
 import org.sonatype.plexus.rest.resource.PlexusResource;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;

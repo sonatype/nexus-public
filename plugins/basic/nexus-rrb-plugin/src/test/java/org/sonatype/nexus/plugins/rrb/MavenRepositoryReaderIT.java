@@ -28,7 +28,7 @@ import org.sonatype.nexus.proxy.repository.ProxyRepository;
 import org.sonatype.nexus.proxy.repository.RemoteProxySettings;
 import org.sonatype.nexus.proxy.storage.remote.DefaultRemoteStorageContext;
 import org.sonatype.nexus.proxy.storage.remote.http.QueryStringBuilder;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import junit.framework.Assert;
 import org.apache.http.client.HttpClient;
@@ -64,7 +64,7 @@ public class MavenRepositoryReaderIT
 
   String localUrl = "http://local"; // This URL doesn't matter for the tests
 
-  String nameOfConnector; // This is the host:portnumber of the Jetty connector
+  String remoteUrl; // This is the url of the Jetty connector
 
   @Mock
   private QueryStringBuilder queryStringBuilder;
@@ -128,13 +128,7 @@ public class MavenRepositoryReaderIT
     server.setHandler(handler); // Assign the handler of incoming requests
     server.start();
 
-    // After starting we must find out the host:port, so we know how to
-    // connect to the server in the tests
-    for (Connector connector : server.getConnectors()) {
-      nameOfConnector = connector.getName();
-      break; // We only need one connector name (and there should only be
-      // one...)
-    }
+    remoteUrl = server.getURI().toString();
   }
 
   @After
@@ -148,7 +142,7 @@ public class MavenRepositoryReaderIT
    * Auxiliary methods
    */
   private String getRemoteUrl() {
-    return "http://" + nameOfConnector + "/";
+    return remoteUrl;
   }
 
   private ProxyRepository getFakeProxyRepository(final String remoteUrl) {

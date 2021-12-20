@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>2.14.21-SNAPSHOT</version>
+    <version>2.14.22-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-insight</artifactId>
@@ -29,8 +29,8 @@
 
   <properties>
     <sonatype-licensing.version>1.5.0</sonatype-licensing.version>
-    <insight-brain.version>1.33.0-04</insight-brain.version>
-    <insight-scanner.version>2.4.5-01</insight-scanner.version>
+    <insight-brain.version>1.68.0-01</insight-brain.version>
+    <insight-scanner.version>2.18.1-01</insight-scanner.version>
   </properties>
 
   <dependencyManagement>

@@ -20,7 +20,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 
 import org.sonatype.sisu.goodies.common.io.PrintBuffer;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import com.google.common.base.Throwables;
 import com.sun.net.httpserver.HttpServer;

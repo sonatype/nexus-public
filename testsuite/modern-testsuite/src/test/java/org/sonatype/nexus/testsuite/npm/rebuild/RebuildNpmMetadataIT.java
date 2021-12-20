@@ -17,7 +17,7 @@ import java.io.File;
 import org.sonatype.nexus.client.core.subsystem.content.Location;
 import org.sonatype.nexus.testsuite.client.Scheduler;
 import org.sonatype.nexus.testsuite.npm.NpmITSupport;
-import org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers;
+import org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers;
 
 import com.bolyuba.nexus.plugin.npm.client.NpmHostedRepository;
 import com.google.common.base.Charsets;
@@ -27,7 +27,7 @@ import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
-import static org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers.exists;
+import static org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers.exists;
 
 /**
  * Rebuild NPM metadata.

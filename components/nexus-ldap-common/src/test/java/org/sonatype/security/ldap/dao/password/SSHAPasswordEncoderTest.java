@@ -12,7 +12,7 @@
  */
 package org.sonatype.security.ldap.dao.password;
 
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.junit.Assert;
 import org.junit.Test;

@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.testsuite</groupId>
     <artifactId>nexus-testsuite</artifactId>
-    <version>2.14.21-SNAPSHOT</version>
+    <version>2.14.22-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-legacy-testsuite</artifactId>
@@ -339,6 +339,14 @@
                       <type>zip</type>
                       <outputDirectory>${project.build.directory}/containers</outputDirectory>
                       <includes>*/bin/**,*/conf/**,*/lib/**,*/webapps/*manager/**</includes>
+                    </artifactItem>
+                    <artifactItem>
+                      <groupId>org.eclipse.jetty</groupId>
+                      <artifactId>jetty-distribution</artifactId>
+                      <version>9.4.40.v20210413</version>
+                      <type>zip</type>
+                      <outputDirectory>${project.build.directory}/containers</outputDirectory>
+                      <includes>*/start*,*/bin/**,*/etc/**,*/lib/**</includes>
                     </artifactItem>
                     <artifactItem>
                       <groupId>org.eclipse.jetty</groupId>

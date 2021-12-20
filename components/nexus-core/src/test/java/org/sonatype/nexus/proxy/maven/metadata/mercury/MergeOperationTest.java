@@ -16,7 +16,7 @@ import java.util.Arrays;
 
 import org.sonatype.nexus.proxy.maven.metadata.operations.MetadataOperand;
 import org.sonatype.nexus.proxy.maven.metadata.operations.NexusMergeOperation;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.apache.maven.artifact.repository.metadata.Versioning;

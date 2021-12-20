@@ -17,7 +17,7 @@ import java.net.URL;
 
 import org.sonatype.nexus.groovyremote.client.GroovyRemoteClient;
 import org.sonatype.nexus.groovyremote.client.GroovyRemoteClient.Builder;
-import org.sonatype.sisu.litmus.testsupport.TestUtil;
+import org.sonatype.sisu.goodies.testsupport.TestUtil;
 
 import com.google.common.base.Throwables;
 

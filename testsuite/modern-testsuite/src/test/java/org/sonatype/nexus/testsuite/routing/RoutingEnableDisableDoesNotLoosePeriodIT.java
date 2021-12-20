@@ -13,7 +13,7 @@
 package org.sonatype.nexus.testsuite.routing;
 
 import org.sonatype.nexus.client.core.subsystem.routing.DiscoveryConfiguration;
-import org.sonatype.sisu.litmus.testsupport.group.Smoke;
+import org.sonatype.sisu.goodies.testsupport.group.Smoke;
 
 import org.junit.Before;
 import org.junit.Test;

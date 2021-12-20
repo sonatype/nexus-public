@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.client.rest.jersey;
 
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 public class JerseyNexusClientTestSupport
     extends TestSupport

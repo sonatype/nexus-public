@@ -35,7 +35,7 @@ import org.sonatype.nexus.templates.repository.maven.Maven2HostedRepositoryTempl
 import org.sonatype.nexus.templates.repository.maven.Maven2Maven1ShadowRepositoryTemplate;
 import org.sonatype.security.SecuritySystem;
 import org.sonatype.security.authentication.AuthenticationException;
-import org.sonatype.sisu.litmus.testsupport.group.Slow;
+import org.sonatype.sisu.goodies.testsupport.group.Slow;
 
 import junit.framework.Assert;
 import org.apache.commons.io.FileUtils;

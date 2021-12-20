@@ -17,7 +17,7 @@ import java.nio.charset.StandardCharsets;
 
 import org.sonatype.nexus.bundle.launcher.NexusBundleConfiguration;
 import org.sonatype.nexus.testsuite.npm.NpmMockRegistryITSupport;
-import org.sonatype.sisu.litmus.testsupport.group.External;
+import org.sonatype.sisu.goodies.testsupport.group.External;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;

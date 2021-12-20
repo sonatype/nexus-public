@@ -15,7 +15,7 @@ package com.bolyuba.nexus.plugin.npm.hosted;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import com.bolyuba.nexus.plugin.npm.service.HostedMetadataService;
 import org.sonatype.nexus.proxy.attributes.Attributes;

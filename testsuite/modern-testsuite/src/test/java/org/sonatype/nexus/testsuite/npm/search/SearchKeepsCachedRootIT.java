@@ -23,7 +23,7 @@ import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
-import static org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers.isFile;
+import static org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers.isFile;
 
 /**
  * IT for NPM search, ensuring that first pull of registry root populates the cache and second search request will

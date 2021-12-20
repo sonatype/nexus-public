@@ -16,8 +16,8 @@ import javax.inject.Named;
 
 import org.sonatype.sisu.goodies.common.ComponentSupport;
 
-import com.yammer.metrics.core.HealthCheck;
-import com.yammer.metrics.core.HealthCheckRegistry;
+import com.codahale.metrics.health.HealthCheck;
+import com.codahale.metrics.health.HealthCheckRegistry;
 import org.eclipse.sisu.BeanEntry;
 import org.eclipse.sisu.Mediator;
 
@@ -33,12 +33,12 @@ public class HealthCheckMediator
 {
   public void add(final BeanEntry<Named, HealthCheck> entry, final HealthCheckRegistry registry) throws Exception {
     log.debug("Registering: {}", entry);
-    registry.register(entry.getValue());
+    registry.register(entry.getKey().value(), entry.getValue());
   }
 
   public void remove(final BeanEntry<Named, HealthCheck> entry, final HealthCheckRegistry registry) throws Exception {
     log.debug("Un-registering: {}", entry);
-    registry.unregister(entry.getValue());
+    registry.unregister(entry.getKey().value());
   }
 }
 

@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>2.14.21-SNAPSHOT</version>
+    <version>2.14.22-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-testing</artifactId>
@@ -29,6 +29,7 @@
 
   <properties>
     <selenium.version>2.26.0</selenium.version>
+    <http-testing-harness.version>1.0-SNAPSHOT</http-testing-harness.version>
   </properties>
 
   <dependencyManagement>
@@ -43,7 +44,7 @@
       <dependency>
         <groupId>org.sonatype.plexus</groupId>
         <artifactId>plexus-jetty-testsuite</artifactId>
-        <version>2.1</version>
+        <version>2.2-SNAPSHOT</version>
         <exclusions>
           <exclusion>
             <groupId>org.codehaus.plexus</groupId>
@@ -55,13 +56,13 @@
       <dependency>
         <groupId>org.sonatype.http-testing-harness</groupId>
         <artifactId>server-provider</artifactId>
-        <version>0.8</version>
+        <version>${http-testing-harness.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.http-testing-harness</groupId>
         <artifactId>junit-runner</artifactId>
-        <version>0.8</version>
+        <version>${http-testing-harness.version}</version>
       </dependency>
 
       <dependency>
@@ -83,9 +84,9 @@
       </dependency>
 
       <dependency>
-        <groupId>org.sonatype.sisu.litmus</groupId>
-        <artifactId>litmus-testsupport</artifactId>
-        <version>1.9</version>
+        <groupId>org.sonatype.sisu.goodies</groupId>
+        <artifactId>goodies-testsupport</artifactId>
+        <version>1.15.0-SNAPSHOT</version>
         <exclusions>
           <exclusion>
             <groupId>com.thoughtworks.xstream</groupId>

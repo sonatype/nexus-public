@@ -16,7 +16,7 @@ import java.io.File;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.sisu.litmus.testsupport.TestData;
+import org.sonatype.sisu.goodies.testsupport.TestData;
 import org.sonatype.tests.http.server.jetty.behaviour.PathRecorderBehaviour;
 
 import com.bolyuba.nexus.plugin.npm.client.NpmProxyRepository;

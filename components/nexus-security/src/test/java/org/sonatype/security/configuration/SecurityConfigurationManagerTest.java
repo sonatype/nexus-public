@@ -17,7 +17,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
-import org.sonatype.sisu.litmus.testsupport.TestUtil;
+import org.sonatype.sisu.goodies.testsupport.TestUtil;
 
 import junit.framework.Assert;
 import org.apache.commons.io.FileUtils;

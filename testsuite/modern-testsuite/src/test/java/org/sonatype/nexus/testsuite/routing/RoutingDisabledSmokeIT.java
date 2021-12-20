@@ -17,7 +17,7 @@ import org.sonatype.nexus.client.core.exception.NexusClientBadRequestException;
 import org.sonatype.nexus.client.core.subsystem.routing.DiscoveryConfiguration;
 import org.sonatype.nexus.client.core.subsystem.routing.Status;
 import org.sonatype.nexus.client.core.subsystem.routing.Status.Outcome;
-import org.sonatype.sisu.litmus.testsupport.group.Smoke;
+import org.sonatype.sisu.goodies.testsupport.group.Smoke;
 
 import org.junit.Before;
 import org.junit.Test;

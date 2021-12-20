@@ -13,7 +13,7 @@
 package org.sonatype.nexus.rest;
 
 import org.sonatype.plexus.rest.resource.PathProtectionDescriptor;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.junit.Test;
 

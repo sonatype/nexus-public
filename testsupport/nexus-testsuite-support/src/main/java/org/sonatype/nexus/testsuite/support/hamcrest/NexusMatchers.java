@@ -16,9 +16,9 @@ import java.io.File;
 import java.util.regex.Pattern;
 
 import org.sonatype.nexus.bundle.launcher.NexusBundle;
-import org.sonatype.sisu.litmus.testsupport.hamcrest.ConjunctionMatcher;
-import org.sonatype.sisu.litmus.testsupport.hamcrest.InversionMatcher;
-import org.sonatype.sisu.litmus.testsupport.hamcrest.LogFileMatcher;
+import org.sonatype.sisu.goodies.testsupport.hamcrest.ConjunctionMatcher;
+import org.sonatype.sisu.goodies.testsupport.hamcrest.InversionMatcher;
+import org.sonatype.sisu.goodies.testsupport.hamcrest.LogFileMatcher;
 
 import com.google.common.base.Preconditions;
 import org.hamcrest.Description;

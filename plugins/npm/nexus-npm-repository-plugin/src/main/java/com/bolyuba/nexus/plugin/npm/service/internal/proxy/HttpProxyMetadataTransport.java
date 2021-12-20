@@ -34,12 +34,11 @@ import com.bolyuba.nexus.plugin.npm.service.PackageRoot;
 import com.bolyuba.nexus.plugin.npm.service.internal.MetadataParser;
 import com.bolyuba.nexus.plugin.npm.service.internal.PackageRootIterator;
 import com.bolyuba.nexus.plugin.npm.service.internal.ProxyMetadataTransport;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
+import com.codahale.metrics.Timer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
-import com.yammer.metrics.Metrics;
-import com.yammer.metrics.core.MetricsRegistry;
-import com.yammer.metrics.core.Timer;
-import com.yammer.metrics.core.TimerContext;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
@@ -70,7 +69,7 @@ public class HttpProxyMetadataTransport
 
   private final HttpClientManager httpClientManager;
 
-  private final MetricsRegistry metricsRegistry;
+  private final MetricRegistry metricsRegistry;
 
   @Inject
   public HttpProxyMetadataTransport(final MetadataParser metadataParser,
@@ -78,7 +77,7 @@ public class HttpProxyMetadataTransport
   {
     this.metadataParser = checkNotNull(metadataParser);
     this.httpClientManager = checkNotNull(httpClientManager);
-    this.metricsRegistry = Metrics.defaultRegistry();
+    this.metricsRegistry = SharedMetricRegistries.getOrCreate("nexus");
   }
 
   /**
@@ -99,7 +98,7 @@ public class HttpProxyMetadataTransport
       context.setAttribute(Hc4Provider.HTTP_CTX_KEY_REPOSITORY, npmProxyRepository);
 
       final Timer timer = timer(get, npmProxyRepository.getRemoteUrl());
-      final TimerContext timerContext = timer.time();
+      final Timer.Context timerContext = timer.time();
       Stopwatch stopwatch = null;
 
       if (outboundRequestLog.isDebugEnabled()) {
@@ -189,7 +188,7 @@ public class HttpProxyMetadataTransport
       context.setAttribute(Hc4Provider.HTTP_CTX_KEY_REPOSITORY, npmProxyRepository);
 
       final Timer timer = timer(get, npmProxyRepository.getRemoteUrl());
-      final TimerContext timerContext = timer.time();
+      final Timer.Context timerContext = timer.time();
       Stopwatch stopwatch = null;
 
       if (outboundRequestLog.isDebugEnabled()) {
@@ -270,6 +269,6 @@ public class HttpProxyMetadataTransport
   }
 
   private Timer timer(final HttpUriRequest httpRequest, final String baseUrl) {
-    return metricsRegistry.newTimer(HttpProxyMetadataTransport.class, baseUrl, httpRequest.getMethod());
+    return metricsRegistry.timer(MetricRegistry.name(HttpProxyMetadataTransport.class, baseUrl, httpRequest.getMethod()));
   }
 }

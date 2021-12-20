@@ -14,7 +14,7 @@ package org.sonatype.sisu.ehcache;
 
 import java.io.File;
 
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.junit.After;
 import org.junit.Before;

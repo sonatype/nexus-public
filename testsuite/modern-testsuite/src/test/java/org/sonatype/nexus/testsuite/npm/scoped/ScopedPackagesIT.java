@@ -18,7 +18,7 @@ import java.util.List;
 import org.sonatype.nexus.client.core.subsystem.content.Location;
 import org.sonatype.nexus.testsuite.npm.MockNpmRegistry;
 import org.sonatype.nexus.testsuite.npm.NpmITSupport;
-import org.sonatype.sisu.litmus.testsupport.TestData;
+import org.sonatype.sisu.goodies.testsupport.TestData;
 
 import com.bolyuba.nexus.plugin.npm.client.NpmGroupRepository;
 import com.bolyuba.nexus.plugin.npm.client.NpmHostedRepository;

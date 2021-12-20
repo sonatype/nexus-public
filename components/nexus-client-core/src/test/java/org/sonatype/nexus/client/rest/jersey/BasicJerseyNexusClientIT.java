@@ -22,7 +22,7 @@ import org.sonatype.nexus.client.core.condition.VersionConditions;
 import org.sonatype.nexus.client.core.exception.NexusClientNotFoundException;
 import org.sonatype.nexus.client.rest.BaseUrl;
 import org.sonatype.nexus.client.rest.NexusClientFactory;
-import org.sonatype.sisu.litmus.testsupport.group.External;
+import org.sonatype.sisu.goodies.testsupport.group.External;
 
 import junit.framework.Assert;
 import org.junit.Test;

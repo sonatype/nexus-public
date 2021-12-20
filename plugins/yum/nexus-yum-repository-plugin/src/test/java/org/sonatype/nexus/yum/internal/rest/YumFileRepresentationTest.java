@@ -13,7 +13,7 @@
 package org.sonatype.nexus.yum.internal.rest;
 
 import org.sonatype.nexus.yum.internal.YumRepositoryImpl;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.junit.Test;
 import org.restlet.data.MediaType;

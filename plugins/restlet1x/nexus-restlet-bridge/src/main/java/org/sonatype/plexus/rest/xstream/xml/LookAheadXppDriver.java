@@ -22,7 +22,7 @@ import java.io.Writer;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 import com.thoughtworks.xstream.io.xml.PrettyPrintWriter;
-import com.thoughtworks.xstream.io.xml.XmlFriendlyReplacer;
+import com.thoughtworks.xstream.io.xml.XmlFriendlyNameCoder;
 import com.thoughtworks.xstream.io.xml.XppDriver;
 
 /**
@@ -35,19 +35,19 @@ public class LookAheadXppDriver
   private static boolean xppLibraryPresent;
 
   public LookAheadXppDriver() {
-    super(new XmlFriendlyReplacer());
+    super(new XmlFriendlyNameCoder());
   }
 
   /**
    * @since restlet-bridge 1.2
    */
-  public LookAheadXppDriver(XmlFriendlyReplacer replacer) {
+  public LookAheadXppDriver(XmlFriendlyNameCoder replacer) {
     super(replacer);
   }
 
   public HierarchicalStreamReader createReader(Reader xml) {
     loadLibrary();
-    return new LookAheadXppReader(xml, xmlFriendlyReplacer());
+    return new LookAheadXppReader(xml, getNameCoder());
   }
 
   public HierarchicalStreamReader createReader(InputStream in) {
@@ -57,7 +57,7 @@ public class LookAheadXppDriver
   private void loadLibrary() {
     if (!xppLibraryPresent) {
       try {
-        getClass().getClassLoader().loadClass("org.xmlpull.mxp1.MXParser");
+        getClass().getClassLoader().loadClass("io.github.xstream.mxparser.MXParser");
       }
       catch (ClassNotFoundException e) {
         throw new IllegalArgumentException("XPP3 pull parser library not present. Specify another driver." +
@@ -68,7 +68,7 @@ public class LookAheadXppDriver
   }
 
   public HierarchicalStreamWriter createWriter(Writer out) {
-    return new PrettyPrintWriter(out, xmlFriendlyReplacer());
+    return new PrettyPrintWriter(out, getNameCoder());
   }
 
   public HierarchicalStreamWriter createWriter(OutputStream out) {

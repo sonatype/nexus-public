@@ -22,7 +22,7 @@ import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers.readable;
+import static org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers.readable;
 
 public class P2R0304P2RepositoryRecreateIT
     extends AbstractNexusP2GeneratorIT

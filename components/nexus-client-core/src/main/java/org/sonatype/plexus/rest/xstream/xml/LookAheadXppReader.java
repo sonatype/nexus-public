@@ -28,9 +28,11 @@ import org.sonatype.plexus.rest.xstream.LookAheadStreamReader;
 import com.thoughtworks.xstream.converters.ConversionException;
 import com.thoughtworks.xstream.converters.ErrorWriter;
 import com.thoughtworks.xstream.io.StreamException;
+import com.thoughtworks.xstream.io.naming.NameCoder;
 import com.thoughtworks.xstream.io.xml.AbstractPullReader;
+import com.thoughtworks.xstream.io.xml.XmlFriendlyNameCoder;
 import com.thoughtworks.xstream.io.xml.XmlFriendlyReplacer;
-import org.xmlpull.mxp1.MXParser;
+import io.github.xstream.mxparser.MXParser;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -61,7 +63,7 @@ public class LookAheadXppReader
   /**
    * @since 1.2
    */
-  public LookAheadXppReader(Reader reader, XmlFriendlyReplacer replacer) {
+  public LookAheadXppReader(Reader reader, NameCoder replacer) {
     super(replacer);
     try {
       parser = createParser();

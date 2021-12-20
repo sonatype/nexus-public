@@ -271,19 +271,6 @@ public class DefaultNexusBundleConfiguration
       }
     }
 
-    // see https://bugs.eclipse.org/bugs/show_bug.cgi?id=357318#c62
-    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-      overlays.add(
-          fileTaskBuilder.replace()
-              .inFile(path("nexus/conf/jetty.xml"))
-              .replace(
-                  "org.sonatype.nexus.bootstrap.jetty.InstrumentedSelectChannelConnector",
-                  "org.eclipse.jetty.server.nio.BlockingChannelConnector"
-              )
-              .failIfFileDoesNotExist()
-      );
-    }
-
     if (getLogLevel() != null || getLogPattern() != null) {
       overlays.add(
           fileTaskBuilder.properties(path("sonatype-work/nexus/conf/logback.properties"))

@@ -27,7 +27,7 @@ import org.restlet.data.MediaType;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.not;
-import static org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers.contains;
+import static org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers.contains;
 
 public class NXCM4481P2ProxyChangeRemoteUrlIT
     extends AbstractNexusProxyP2IT

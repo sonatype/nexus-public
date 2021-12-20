@@ -45,8 +45,8 @@ import org.sonatype.nexus.test.utils.XStreamFactory;
 import org.sonatype.security.guice.SecurityModule;
 import org.sonatype.security.rest.model.UserResource;
 import org.sonatype.sisu.goodies.prefs.memory.MemoryPreferencesFactory;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
-import org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers;
 
 import com.google.common.base.Throwables;
 import com.thoughtworks.xstream.XStream;

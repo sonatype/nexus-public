@@ -14,7 +14,7 @@ package com.bolyuba.nexus.plugin.npm.service;
 
 import java.util.Map;
 
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import com.google.common.collect.ImmutableMap;
 import org.hamcrest.MatcherAssert;

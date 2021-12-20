@@ -18,7 +18,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.sisu.litmus.testsupport.group.Slow;
+import org.sonatype.sisu.goodies.testsupport.group.Slow;
 
 import com.google.inject.Provides;
 import org.eclipse.sisu.Parameters;

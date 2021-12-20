@@ -53,25 +53,25 @@ public class VelocityEngineProvider
     // setting various defaults
     // ========================
     // to avoid "unable to find resource 'VM_global_library.vm' in any resource loader."
-    velocityEngine.setProperty("velocimacro.library", "");
+    velocityEngine.setProperty("velocimacro.library.path", "");
     // to use classpath loader
-    velocityEngine.setProperty(RuntimeConstants.RESOURCE_LOADER, "class");
-    velocityEngine.setProperty("class.resource.loader.class",
+    velocityEngine.setProperty(RuntimeConstants.RESOURCE_LOADERS, "class");
+    velocityEngine.setProperty("resource.loader.class.class",
         "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
     // to make us strict with template references (early problem detection)
-    velocityEngine.setProperty("runtime.references.strict", "true");
+    velocityEngine.setProperty(RuntimeConstants.RUNTIME_REFERENCES_STRICT, "true");
 
-    velocityEngine.setProperty(RuntimeConstants.RESOURCE_LOADER, "class");
-    velocityEngine.setProperty("class.resource.loader.class",
+    velocityEngine.setProperty(RuntimeConstants.RESOURCE_LOADERS, "class");
+    velocityEngine.setProperty("resource.loader.class.class",
         "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
     // to set caching ON
-    velocityEngine.setProperty("class.resource.loader.cache", "true");
+    velocityEngine.setProperty("resource.loader.class.cache", "true");
     // to never check for template modification (they are JARred)
-    velocityEngine.setProperty("class.resource.loader.modificationCheckInterval", "0");
+    velocityEngine.setProperty(RuntimeConstants.RESOURCE_LOADER_CHECK_INTERVAL, "0");
     // to set strict mode OFF
-    velocityEngine.setProperty("runtime.references.strict", "false");
+    velocityEngine.setProperty(RuntimeConstants.RUNTIME_REFERENCES_STRICT, "false");
     // to force templates having inline local scope for VM definitions
-    velocityEngine.setProperty("velocimacro.permissions.allow.inline.local.scope", "true");
+    velocityEngine.setProperty("velocimacro.inline.local_scope", "true");
 
     // fire up the engine
     // ==================

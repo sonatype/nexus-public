@@ -20,7 +20,7 @@ import org.sonatype.nexus.testsuite.p2.AbstractNexusProxyP2IT;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers.exists;
+import static org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers.exists;
 
 public class NXCM1678UpdateSiteAbsoluteUrlsIT
     extends AbstractNexusProxyP2IT

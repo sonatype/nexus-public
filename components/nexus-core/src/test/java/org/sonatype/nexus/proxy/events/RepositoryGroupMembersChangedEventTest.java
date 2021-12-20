@@ -17,7 +17,7 @@ import java.util.List;
 
 import org.sonatype.nexus.proxy.events.RepositoryGroupMembersChangedEvent.MemberChange;
 import org.sonatype.nexus.proxy.repository.GroupRepository;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.junit.Test;
 import org.mockito.Mockito;

@@ -21,7 +21,7 @@ import java.util.concurrent.Callable;
 import org.sonatype.nexus.testsuite.npm.MockNpmRegistry;
 import org.sonatype.nexus.testsuite.npm.NpmITSupport;
 import org.sonatype.nexus.testsuite.npm.smoke.NpmInstallIT;
-import org.sonatype.sisu.litmus.testsupport.TestData;
+import org.sonatype.sisu.goodies.testsupport.TestData;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;

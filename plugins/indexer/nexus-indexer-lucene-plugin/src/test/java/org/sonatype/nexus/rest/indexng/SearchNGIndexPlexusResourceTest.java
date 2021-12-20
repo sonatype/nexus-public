@@ -32,7 +32,7 @@ import org.sonatype.plexus.rest.resource.PlexusResource;
 import org.sonatype.plexus.rest.resource.PlexusResourceException;
 import org.sonatype.plexus.rest.resource.error.ErrorMessage;
 import org.sonatype.plexus.rest.resource.error.ErrorResponse;
-import org.sonatype.sisu.litmus.testsupport.group.Slow;
+import org.sonatype.sisu.goodies.testsupport.group.Slow;
 
 import com.google.common.collect.Lists;
 import org.apache.lucene.queryParser.ParseException;

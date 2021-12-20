@@ -12,7 +12,7 @@
  */
 package com.bolyuba.nexus.plugin.npm.service;
 
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import com.bolyuba.nexus.plugin.npm.service.PackageRequest.PackageCoordinates;
 import org.junit.Test;

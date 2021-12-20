@@ -14,7 +14,7 @@ package org.sonatype.nexus.wonderland.internal;
 
 import org.sonatype.sisu.goodies.crypto.internal.CryptoHelperImpl;
 import org.sonatype.sisu.goodies.crypto.internal.RandomBytesGeneratorImpl;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.junit.Test;
 

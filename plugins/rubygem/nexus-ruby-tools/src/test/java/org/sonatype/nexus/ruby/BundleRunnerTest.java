@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.ruby;
 
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.junit.Rule;
 import org.junit.Test;

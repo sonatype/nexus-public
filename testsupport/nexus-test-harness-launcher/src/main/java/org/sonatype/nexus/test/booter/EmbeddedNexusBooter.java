@@ -126,14 +126,6 @@ public class EmbeddedNexusBooter
         "<!-- Set name=\"stopAtShutdown\">true</Set -->"
     );
 
-    // see https://bugs.eclipse.org/bugs/show_bug.cgi?id=357318#c62
-    if (System.getProperty("os.name").toLowerCase().contains("windows")) {
-      xml = xml.replace(
-          "org.sonatype.nexus.bootstrap.jetty.InstrumentedSelectChannelConnector",
-          "org.eclipse.jetty.server.nio.BlockingChannelConnector"
-      );
-    }
-
     FileUtils.writeStringToFile(file, xml, "UTF-8");
   }
 

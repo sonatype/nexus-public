@@ -117,6 +117,9 @@ public class NexusRestClient
       throws IOException
   {
     final Representation entity = response.getEntity();
+    if (Status.SUCCESS_NO_CONTENT.equals(response.getStatus())) {
+      return "";
+    }
     assertThat(entity, notNullValue());
     final String responseText = entity.getText();
     return responseText;

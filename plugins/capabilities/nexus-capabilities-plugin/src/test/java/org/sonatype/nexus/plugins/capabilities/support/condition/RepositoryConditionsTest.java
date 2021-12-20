@@ -18,7 +18,7 @@ import org.sonatype.nexus.plugins.capabilities.internal.condition.RepositoryLoca
 import org.sonatype.nexus.plugins.capabilities.internal.condition.RepositoryProxyModeCondition;
 import org.sonatype.nexus.proxy.registry.RepositoryRegistry;
 import org.sonatype.sisu.goodies.eventbus.EventBus;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.hamcrest.Matchers;
 import org.junit.Before;

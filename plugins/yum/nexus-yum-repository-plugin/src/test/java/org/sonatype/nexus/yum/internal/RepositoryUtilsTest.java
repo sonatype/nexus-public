@@ -15,7 +15,7 @@ package org.sonatype.nexus.yum.internal;
 import java.io.File;
 
 import org.sonatype.nexus.proxy.repository.Repository;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.junit.Test;
 

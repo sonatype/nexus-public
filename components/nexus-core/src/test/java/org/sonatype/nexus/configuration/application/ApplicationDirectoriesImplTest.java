@@ -14,8 +14,8 @@ package org.sonatype.nexus.configuration.application;
 
 import java.io.File;
 
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
-import org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers;
 
 import org.junit.Before;
 import org.junit.Test;

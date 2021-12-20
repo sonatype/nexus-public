@@ -25,8 +25,8 @@ import org.sonatype.nexus.proxy.item.StorageFileItem;
 import org.sonatype.nexus.proxy.item.StorageItem;
 import org.sonatype.nexus.proxy.repository.ProxyRepository;
 import org.sonatype.nexus.proxy.repository.Repository;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
-import org.sonatype.sisu.litmus.testsupport.junit.TestDataRule;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.junit.TestDataRule;
 
 import com.google.common.collect.Maps;
 import org.apache.commons.io.IOUtils;
@@ -47,7 +47,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.sonatype.sisu.litmus.testsupport.hamcrest.DiffMatchers.equalTo;
+import static org.sonatype.sisu.goodies.testsupport.hamcrest.DiffMatchers.equalTo;
 
 /**
  * {@link MetadataProcessor} UTs.

@@ -15,7 +15,7 @@ package org.sonatype.nexus.proxy.repository;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.junit.Test;
 

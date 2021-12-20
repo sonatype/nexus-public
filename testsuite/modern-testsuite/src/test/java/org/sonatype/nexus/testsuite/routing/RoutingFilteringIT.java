@@ -27,7 +27,7 @@ import org.sonatype.nexus.client.core.subsystem.routing.Status;
 import org.sonatype.nexus.client.core.subsystem.routing.Status.Outcome;
 import org.sonatype.nexus.testsuite.client.Caches;
 import org.sonatype.nexus.testsuite.client.Scheduler;
-import org.sonatype.sisu.litmus.testsupport.group.Smoke;
+import org.sonatype.sisu.goodies.testsupport.group.Smoke;
 import org.sonatype.tests.http.server.api.Behaviour;
 import org.sonatype.tests.http.server.fluent.Behaviours;
 import org.sonatype.tests.http.server.fluent.Server;

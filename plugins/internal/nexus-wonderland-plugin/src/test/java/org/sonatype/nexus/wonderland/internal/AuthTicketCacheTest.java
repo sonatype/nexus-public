@@ -14,7 +14,7 @@ package org.sonatype.nexus.wonderland.internal;
 
 import java.util.Map.Entry;
 
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.apache.commons.lang.mutable.MutableBoolean;
 import org.junit.Test;

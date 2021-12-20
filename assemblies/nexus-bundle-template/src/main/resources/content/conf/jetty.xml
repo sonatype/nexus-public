@@ -13,32 +13,18 @@
     Eclipse Foundation. All other trademarks are the property of their respective owners.
 
 -->
-<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure.dtd">
-
-<!-- ============================================================ -->
-<!--                                                              -->
-<!-- For help using this configuration, see:                      -->
-<!--                                                              -->
-<!--   http://links.sonatype.com/products/nexus/oss/docs-jetty    -->
-<!--                                                              -->
-<!-- ============================================================ -->
+<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure_9_0.dtd">
 <Configure id="Server" class="org.eclipse.jetty.server.Server">
 
-  <Set name="threadPool">
-    <New class="com.yammer.metrics.jetty.InstrumentedQueuedThreadPool"/>
-  </Set>
+  <Arg name="threadpool">
+    <New id="threadpool" class="org.sonatype.nexus.bootstrap.jetty.NexusInstrumentedQueuedThreadPool">
+      <Set name="minThreads">100</Set>
+      <Set name="maxThreads">400</Set>
+      <Set name="detailedDump">false</Set>
+    </New>
+  </Arg>
 
-  <Call name="addConnector">
-    <Arg>
-      <New id="HTTPConnector" class="org.sonatype.nexus.bootstrap.jetty.InstrumentedSelectChannelConnector">
-        <Set name="host"><Property name="application-host"/></Set>
-        <Set name="port"><Property name="application-port"/></Set>
-        <Set name="forwarded">true</Set>
-      </New>
-    </Arg>
-  </Call>
-
-  <New id="NexusHandler" class="com.yammer.metrics.jetty.InstrumentedHandler">
+  <New id="NexusHandler" class="org.sonatype.nexus.bootstrap.jetty.NexusInstrumentedHandler">
     <Arg>
       <New id="NexusWebAppContext" class="org.eclipse.jetty.webapp.WebAppContext">
         <Arg><Property name="nexus-webapp"/></Arg>
@@ -51,17 +37,71 @@
 
   <Set name="handler">
     <New id="Handlers" class="org.eclipse.jetty.server.handler.HandlerCollection">
-      <Call name="addHandler">
-        <Arg>
-          <Ref id="NexusHandler"/>
-        </Arg>
-      </Call>
+      <Set name="handlers">
+        <Array type="org.eclipse.jetty.server.Handler">
+          <Item>
+            <Ref refid="NexusHandler"/>
+          </Item>
+          <Item>
+            <New id="DefaultHandler" class="org.eclipse.jetty.server.handler.DefaultHandler"/>
+          </Item>
+        </Array>
+      </Set>
     </New>
   </Set>
 
   <Set name="stopAtShutdown">true</Set>
-  <Set name="sendServerVersion">true</Set>
-  <Set name="sendDateHeader">true</Set>
-  <Set name="gracefulShutdown">1000</Set>
+  <Set name="stopTimeout"><Property name="jetty.stop.timeout" default="5000"/></Set>
+  <Set name="dumpAfterStart"><Property name="jetty.dump.start" default="false"/></Set>
+  <Set name="dumpBeforeStop"><Property name="jetty.dump.stop" default="false"/></Set>
+
+  <New id="httpConfig" class="org.eclipse.jetty.server.HttpConfiguration">
+    <Set name="outputBufferSize"><Property name="jetty.output.buffer.size" default="32768"/></Set>
+    <Set name="outputAggregationSize"><Property name="jetty.output.aggregation.size" default="8192"/></Set>
+    <Set name="requestHeaderSize"><Property name="jetty.request.header.size" default="8192"/></Set>
+    <Set name="responseHeaderSize"><Property name="jetty.response.header.size" default="8192"/></Set>
+    <Set name="sendServerVersion"><Property name="jetty.send.server.version" default="true"/></Set>
+    <Set name="sendDateHeader"><Property name="jetty.send.date.header" default="true"/></Set>
+    <Set name="headerCacheSize">512</Set>
+    <Set name="delayDispatchUntilContent"><Property name="jetty.delayDispatchUntilContent" default="false"/></Set>
+    <Call name="addCustomizer">
+      <Arg><New class="org.eclipse.jetty.server.ForwardedRequestCustomizer"/></Arg>
+    </Call>
+  </New>
+
+  <Call name="addConnector">
+    <Arg>
+      <New id="httpConnector" class="org.eclipse.jetty.server.ServerConnector">
+        <Arg name="server"><Ref refid="Server"/></Arg>
+        <Arg name="acceptors" type="int"><Property name="jetty.http.acceptors" default="-1"/></Arg>
+        <Arg name="selectors" type="int"><Property name="jetty.http.selectors" default="-1"/></Arg>
+        <Arg name="factories">
+          <Array type="org.eclipse.jetty.server.ConnectionFactory">
+            <!-- uncomment to support proxy protocol
+            <Item>
+              <New class="org.eclipse.jetty.server.ProxyConnectionFactory"/>
+            </Item>-->
+            <Item>
+              <New class="org.sonatype.nexus.bootstrap.jetty.NexusInstrumentedConnectionFactory">
+                <Arg>
+                  <New class="org.eclipse.jetty.server.HttpConnectionFactory">
+                    <Arg name="config">
+                      <Ref refid="httpConfig"/>
+                    </Arg>
+                  </New>
+                </Arg>
+              </New>
+            </Item>
+          </Array>
+        </Arg>
+        <Set name="host"><Property name="application-host" /></Set>
+        <Set name="port"><Property name="application-port"/></Set>
+        <Set name="idleTimeout"><Property name="jetty.http.timeout" default="30000"/></Set>
+        <Set name="soLingerTime"><Property name="jetty.http.soLingerTime" default="-1"/></Set>
+        <Set name="acceptorPriorityDelta"><Property name="jetty.http.acceptorPriorityDelta" default="0"/></Set>
+        <Set name="acceptQueueSize"><Property name="jetty.http.acceptQueueSize" default="0"/></Set>
+      </New>
+    </Arg>
+  </Call>
 
 </Configure>

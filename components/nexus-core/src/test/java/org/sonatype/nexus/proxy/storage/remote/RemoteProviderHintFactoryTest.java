@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.proxy.storage.remote;
 
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.junit.After;
 import org.junit.Before;

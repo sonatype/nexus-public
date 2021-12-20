@@ -14,7 +14,7 @@ package org.sonatype.nexus.mime;
 
 import java.util.Properties;
 
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import com.google.common.base.Joiner;
 import org.junit.Test;

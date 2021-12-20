@@ -44,7 +44,7 @@ import org.sonatype.nexus.proxy.repository.ProxyRepository;
 import org.sonatype.nexus.proxy.repository.Repository;
 import org.sonatype.nexus.proxy.repository.RepositoryWritePolicy;
 import org.sonatype.nexus.proxy.storage.UnsupportedStorageOperationException;
-import org.sonatype.sisu.litmus.testsupport.group.Slow;
+import org.sonatype.sisu.goodies.testsupport.group.Slow;
 
 import com.google.common.eventbus.Subscribe;
 import org.apache.commons.io.FileUtils;
@@ -57,7 +57,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers.exists;
+import static org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers.exists;
 
 @Category(Slow.class) // ~25s
 public class M2RepositoryTest

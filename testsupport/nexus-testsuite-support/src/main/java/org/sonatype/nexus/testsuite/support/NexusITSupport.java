@@ -32,11 +32,11 @@ import org.sonatype.sisu.bl.support.resolver.MavenBridgedBundleResolver;
 import org.sonatype.sisu.bl.support.resolver.TargetDirectoryResolver;
 import org.sonatype.sisu.filetasks.FileTaskBuilder;
 import org.sonatype.sisu.goodies.common.Properties2;
-import org.sonatype.sisu.litmus.testsupport.TestData;
-import org.sonatype.sisu.litmus.testsupport.TestIndex;
-import org.sonatype.sisu.litmus.testsupport.inject.InjectedTestSupport;
-import org.sonatype.sisu.litmus.testsupport.junit.TestDataRule;
-import org.sonatype.sisu.litmus.testsupport.junit.TestIndexRule;
+import org.sonatype.sisu.goodies.testsupport.TestData;
+import org.sonatype.sisu.goodies.testsupport.TestIndex;
+import org.sonatype.sisu.goodies.testsupport.inject.InjectedTestSupport;
+import org.sonatype.sisu.goodies.testsupport.junit.TestDataRule;
+import org.sonatype.sisu.goodies.testsupport.junit.TestIndexRule;
 import org.sonatype.sisu.maven.bridge.MavenArtifactResolver;
 import org.sonatype.sisu.maven.bridge.MavenModelResolver;
 

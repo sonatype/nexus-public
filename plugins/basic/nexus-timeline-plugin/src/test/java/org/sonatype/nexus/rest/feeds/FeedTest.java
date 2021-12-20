@@ -20,7 +20,7 @@ import org.sonatype.nexus.NexusAppTestSupport;
 import org.sonatype.nexus.rest.feeds.sources.FeedSource;
 import org.sonatype.plexus.rest.resource.PlexusResource;
 
-import com.sun.syndication.feed.synd.SyndFeed;
+import com.rometools.rome.feed.synd.SyndFeed;
 import junit.framework.Assert;
 import org.junit.Test;
 import org.restlet.Context;

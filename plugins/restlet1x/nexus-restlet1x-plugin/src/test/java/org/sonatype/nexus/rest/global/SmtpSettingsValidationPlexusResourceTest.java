@@ -14,7 +14,7 @@ package org.sonatype.nexus.rest.global;
 
 import org.sonatype.nexus.email.SmtpSettingsValidator;
 import org.sonatype.nexus.rest.model.SmtpSettingsResource;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import com.thoughtworks.xstream.XStream;
 import org.junit.Test;

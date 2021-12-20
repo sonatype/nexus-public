@@ -12,12 +12,11 @@
  */
 package org.sonatype.nexus.atlas.internal.customizers
 
-import com.yammer.metrics.core.Clock
-import com.yammer.metrics.core.HealthCheckRegistry
-import com.yammer.metrics.core.MetricPredicate
-import com.yammer.metrics.core.MetricsRegistry
-import com.yammer.metrics.core.VirtualMachineMetrics
-import com.yammer.metrics.reporting.ConsoleReporter
+import com.codahale.metrics.Clock
+import com.codahale.metrics.health.HealthCheckRegistry
+import com.codahale.metrics.MetricFilter
+import com.codahale.metrics.MetricRegistry
+import com.codahale.metrics.jvm.ThreadDump
 import org.sonatype.nexus.atlas.GeneratedContentSourceSupport
 import org.sonatype.nexus.atlas.SupportBundle
 import org.sonatype.nexus.atlas.SupportBundleCustomizer
@@ -47,22 +46,21 @@ class MetricsCustomizer
 {
   private final Clock clock
 
-  private final VirtualMachineMetrics virtualMachineMetrics
-
-  private final MetricsRegistry metricsRegistry
+  private final MetricRegistry metricsRegistry
 
   private final HealthCheckRegistry healthCheckRegistry
 
+  private final ThreadDump threadDump
+
   @Inject
   MetricsCustomizer(final Clock clock,
-                    final VirtualMachineMetrics virtualMachineMetrics,
-                    final MetricsRegistry metricsRegistry,
+                    final MetricRegistry metricsRegistry,
                     final HealthCheckRegistry healthCheckRegistry)
   {
     this.clock = checkNotNull(clock)
-    this.virtualMachineMetrics = checkNotNull(virtualMachineMetrics)
     this.metricsRegistry = checkNotNull(metricsRegistry)
     this.healthCheckRegistry = checkNotNull(healthCheckRegistry)
+    this.virtualMachineMetrics = checkNotNull(virtualMachineMetrics)
   }
 
   @Override
@@ -76,7 +74,7 @@ class MetricsCustomizer
       @Override
       protected void generate(final File file) {
         file.withOutputStream {
-          virtualMachineMetrics.threadDump(it)
+          threadDump.dump(it)
         }
       }
     }
@@ -117,14 +115,12 @@ class MetricsCustomizer
       protected void generate(final File file) {
         file.withOutputStream {
           // NOTE: there is no easy way to get out json report, so using the console reporter for now
-          def reporter = new ConsoleReporter(
-              metricsRegistry,
-              new PrintStream(it),
-              MetricPredicate.ALL,
-              clock,
-              TimeZone.getDefault()
-          )
-          reporter.run()
+          def reporter = ConsoleReporter.forRegistry(metricsRegistry)
+                           .outputTo(new PrintStream(it))
+                           .filter(MetricFilter.ALL)
+                           .withClock(clock)
+                           .build()
+          reporter.report()
         }
       }
     }

@@ -12,19 +12,15 @@
  */
 package org.sonatype.nexus.webapp.metrics;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import com.yammer.metrics.core.HealthCheck;
-import com.yammer.metrics.core.VirtualMachineMetrics;
-import com.yammer.metrics.util.DeadlockHealthCheck;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.codahale.metrics.health.HealthCheck;
+import com.codahale.metrics.health.jvm.ThreadDeadlockHealthCheck;
 
 /**
- * {@link DeadlockHealthCheck} provider.
+ * {@link ThreadDeadlockHealthCheck} provider.
  *
  * @since 2.8
  */
@@ -33,15 +29,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class DeadlockHealthCheckProvider
   implements Provider<HealthCheck>
 {
-  private final VirtualMachineMetrics metrics;
-
-  @Inject
-  public DeadlockHealthCheckProvider(final VirtualMachineMetrics metrics) {
-    this.metrics = checkNotNull(metrics);
-  }
-
   @Override
   public HealthCheck get() {
-    return new DeadlockHealthCheck(metrics);
+    return new ThreadDeadlockHealthCheck();
   }
 }

@@ -20,7 +20,7 @@ import java.util.Map;
 import org.sonatype.nexus.configuration.application.ApplicationDirectories;
 import org.sonatype.nexus.proxy.item.ContentLocator;
 import org.sonatype.security.SecuritySystem;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import com.bolyuba.nexus.plugin.npm.service.NpmBlob;
 import com.fasterxml.jackson.core.JsonParser;

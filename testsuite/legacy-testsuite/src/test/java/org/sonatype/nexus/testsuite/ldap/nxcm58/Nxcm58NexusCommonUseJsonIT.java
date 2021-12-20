@@ -163,7 +163,7 @@ public class Nxcm58NexusCommonUseJsonIT
     ldapUser.addRole("nx-admin");
     Response response = userUtil.sendMessage(Method.PUT, ldapUser, "LDAP");
     Assert.assertTrue("Status: " + response.getStatus() + "\nresponse: "
-        + response.getEntity().getText(), response.getStatus().isSuccess());
+        + response.getEntity(), response.getStatus().isSuccess());
 
     // login/do something with an ldap user
     TestContainer.getInstance().getTestContext().setUsername("cstamas");

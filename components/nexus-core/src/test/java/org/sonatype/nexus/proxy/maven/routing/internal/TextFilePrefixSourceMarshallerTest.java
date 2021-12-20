@@ -21,7 +21,7 @@ import java.nio.charset.Charset;
 import java.util.List;
 
 import org.sonatype.nexus.proxy.item.StorageFileItem;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.junit.Test;
 import org.mockito.Mock;

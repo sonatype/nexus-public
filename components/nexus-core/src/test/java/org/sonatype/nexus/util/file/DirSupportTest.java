@@ -23,7 +23,7 @@ import java.util.ArrayList;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
@@ -33,10 +33,10 @@ import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.*;
 import static org.hamcrest.Matchers.*;
-import static org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers.exists;
-import static org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers.isDirectory;
-import static org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers.isEmptyDirectory;
-import static org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers.isFile;
+import static org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers.exists;
+import static org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers.isDirectory;
+import static org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers.isEmptyDirectory;
+import static org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers.isFile;
 
 public class DirSupportTest
     extends TestSupport

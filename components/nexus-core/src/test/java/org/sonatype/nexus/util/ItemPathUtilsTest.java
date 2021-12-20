@@ -15,7 +15,7 @@ package org.sonatype.nexus.util;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.junit.Assert;
 import org.junit.Test;

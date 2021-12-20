@@ -17,7 +17,7 @@ import java.util.Map;
 
 import org.sonatype.security.SecuritySystem;
 import org.sonatype.sisu.ehcache.CacheManagerComponent;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;

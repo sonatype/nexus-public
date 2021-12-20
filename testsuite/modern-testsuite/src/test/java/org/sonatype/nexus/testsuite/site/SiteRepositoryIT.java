@@ -38,7 +38,7 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.startsWith;
-import static org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers.matchSha1;
+import static org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers.matchSha1;
 
 @NexusStartAndStopStrategy(NexusStartAndStopStrategy.Strategy.EACH_TEST)
 public class SiteRepositoryIT

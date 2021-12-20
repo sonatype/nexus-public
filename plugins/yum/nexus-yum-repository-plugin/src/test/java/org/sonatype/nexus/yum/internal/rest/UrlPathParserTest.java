@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.yum.internal.rest;
 
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.junit.Test;
 import org.restlet.data.Method;

@@ -14,7 +14,7 @@ package org.sonatype.nexus.testsuite;
 
 import org.sonatype.nexus.client.core.NexusClient;
 import org.sonatype.nexus.client.core.NexusStatus;
-import org.sonatype.sisu.litmus.testsupport.group.Smoke;
+import org.sonatype.sisu.goodies.testsupport.group.Smoke;
 
 import org.junit.Test;
 import org.junit.experimental.categories.Category;

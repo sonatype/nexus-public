@@ -15,7 +15,7 @@ package org.sonatype.nexus.rest.feeds.sources;
 import java.io.IOException;
 import java.util.Map;
 
-import com.sun.syndication.feed.synd.SyndFeed;
+import com.rometools.rome.feed.synd.SyndFeed;
 
 /**
  * A Feed source. Impementors of this interface produces feeds.

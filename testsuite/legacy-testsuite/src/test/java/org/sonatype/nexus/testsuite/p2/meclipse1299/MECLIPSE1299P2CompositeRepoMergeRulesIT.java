@@ -26,7 +26,7 @@ import org.w3c.dom.Document;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasXPath;
 import static org.hamcrest.Matchers.is;
-import static org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers.exists;
+import static org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers.exists;
 
 public class MECLIPSE1299P2CompositeRepoMergeRulesIT
     extends AbstractNexusProxyP2IT

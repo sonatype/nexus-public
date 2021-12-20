@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-testsupport</artifactId>
-    <version>2.14.21-SNAPSHOT</version>
+    <version>2.14.22-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-test-common</artifactId>
@@ -43,8 +43,8 @@
     </dependency>
 
     <dependency>
-      <groupId>org.sonatype.sisu.litmus</groupId>
-      <artifactId>litmus-testsupport</artifactId>
+      <groupId>org.sonatype.sisu.goodies</groupId>
+      <artifactId>goodies-testsupport</artifactId>
     </dependency>
 
     <dependency>
@@ -66,11 +66,6 @@
     <dependency>
       <groupId>org.databene</groupId>
       <artifactId>contiperf</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.eclipse.jetty.orbit</groupId>
-      <artifactId>javax.servlet</artifactId>
     </dependency>
 
     <dependency>

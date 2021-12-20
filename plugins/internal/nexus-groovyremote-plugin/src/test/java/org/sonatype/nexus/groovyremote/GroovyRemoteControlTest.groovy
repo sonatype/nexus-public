@@ -20,7 +20,7 @@ import groovyx.remote.transport.http.RemoteControlHttpHandler
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import org.sonatype.sisu.litmus.testsupport.TestSupport
+import org.sonatype.sisu.goodies.testsupport.TestSupport
 
 /**
  * Trials of <a href="http://groovy.codehaus.org/modules/remote/">Groovy Remote Control</a>.

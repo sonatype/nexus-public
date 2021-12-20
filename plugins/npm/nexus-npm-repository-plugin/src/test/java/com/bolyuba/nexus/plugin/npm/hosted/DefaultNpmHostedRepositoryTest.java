@@ -13,7 +13,7 @@
 package com.bolyuba.nexus.plugin.npm.hosted;
 
 import org.sonatype.nexus.proxy.registry.ContentClass;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import com.bolyuba.nexus.plugin.npm.service.MetadataServiceFactory;
 import com.bolyuba.nexus.plugin.npm.service.NpmBlob;

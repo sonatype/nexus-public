@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.plugins</groupId>
     <artifactId>nexus-plugins-basic</artifactId>
-    <version>2.14.21-SNAPSHOT</version>
+    <version>2.14.22-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-timeline-plugin</artifactId>
@@ -62,9 +62,8 @@
     </dependency>
 
     <dependency>
-      <groupId>rome</groupId>
+      <groupId>com.rometools</groupId>
       <artifactId>rome</artifactId>
-      <version>0.9</version>
     </dependency>
 
     <dependency>
@@ -88,7 +87,7 @@
         <artifactId>nexus-plugin-bundle-maven-plugin</artifactId>
         <configuration>
           <sharedDependencies>
-            <sharedDependencies>rome:rome</sharedDependencies>
+            <sharedDependencies>com.rometools:rome</sharedDependencies>
           </sharedDependencies>
         </configuration>
       </plugin>

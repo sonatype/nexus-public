@@ -23,8 +23,8 @@ import org.restlet.data.MediaType;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.sonatype.nexus.test.utils.TaskScheduleUtil.waitForAllTasksToStop;
-import static org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers.exists;
-import static org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers.isDirectory;
+import static org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers.exists;
+import static org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers.isDirectory;
 
 public class NXCM3339P2GroupMemberRetrieveErrorIT
     extends AbstractNexusProxyP2IT

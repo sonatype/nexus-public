@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-testsupport</artifactId>
-    <version>2.14.21-SNAPSHOT</version>
+    <version>2.14.22-SNAPSHOT</version>
   </parent>
 
   <!--
@@ -93,9 +93,8 @@
     </dependency>
 
     <dependency>
-      <groupId>rome</groupId>
+      <groupId>com.rometools</groupId>
       <artifactId>rome</artifactId>
-      <version>0.9</version>
     </dependency>
 
     <!-- XPP, is left out since we _import_ (yuck) deeps and loose transitive deeps! -->
