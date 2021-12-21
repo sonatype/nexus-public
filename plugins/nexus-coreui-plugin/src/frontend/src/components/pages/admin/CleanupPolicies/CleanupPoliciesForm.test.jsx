@@ -88,7 +88,9 @@ describe('CleanupPoliciesForm', function() {
       deleteButton: () => queryByText(UIStrings.SETTINGS.DELETE_BUTTON_LABEL),
       previewButton: () => queryByText(UIStrings.CLEANUP_POLICIES.PREVIEW.BUTTON),
       previewRepositories: () => queryByLabelText(UIStrings.CLEANUP_POLICIES.PREVIEW.REPOSITORY_LABEL),
-      previewFilterText: () => queryByPlaceholderText(UIStrings.CLEANUP_POLICIES.FILTER_PLACEHOLDER)
+      previewFilterText: () => queryByPlaceholderText(UIStrings.CLEANUP_POLICIES.FILTER_PLACEHOLDER),
+      previewSampleWarning: () => queryByText(UIStrings.CLEANUP_POLICIES.PREVIEW.SAMPLE_WARNING, {exact: false}),
+      previewCmpCount: (a, t) => queryByText(UIStrings.CLEANUP_POLICIES.PREVIEW.COMPONENT_COUNT(a, t), {exact: false})
     }));
   }
 
@@ -226,7 +228,15 @@ describe('CleanupPoliciesForm', function() {
 
   describe('preview', function() {
     it('submits the filter text to the backend', async function() {
-      const {loadingMask, previewButton, previewFilterText, previewRepositories, queryByText} = renderEditView(EDITABLE_ITEM.name);
+      const {
+        loadingMask, 
+        previewButton, 
+        previewFilterText, 
+        previewRepositories, 
+        previewSampleWarning,
+        previewCmpCount,
+        queryByText
+      } = renderEditView(EDITABLE_ITEM.name);
 
       await waitForElementToBeRemoved(loadingMask);
 
@@ -260,6 +270,9 @@ describe('CleanupPoliciesForm', function() {
 
       expect(queryByText('maven-aether-provider')).toBeInTheDocument();
 
+      expect(previewSampleWarning()).toBeInTheDocument();
+      expect(previewCmpCount(1, 1)).toBeInTheDocument();
+
       when(axios.post).calledWith(PREVIEW_URL, {
         criteriaLastBlobUpdated: EDITABLE_ITEM.criteriaLastBlobUpdated,
         criteriaLastDownloaded: EDITABLE_ITEM.criteriaLastDownloaded,
@@ -279,6 +292,8 @@ describe('CleanupPoliciesForm', function() {
       await waitForElementToBeRemoved(() => queryByText('maven-aether-provider'));
 
       expect(queryByText('No assets in repository matched the criteria')).toBeInTheDocument();
+
+      expect(previewSampleWarning()).not.toBeInTheDocument();
     });
   });
 });

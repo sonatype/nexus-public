@@ -28,12 +28,14 @@ export default Machine({
   type: 'parallel',
   context: {
     data: [],
+    total: 0,
     filter: '',
     formError: null,
     previewError: null,
     repositories: [],
     sortField: 'name',
-    sortDirection: Utils.ASC
+    sortDirection: Utils.ASC,
+    isAlertShown: false
   },
   states: {
     form: {
@@ -93,7 +95,9 @@ export default Machine({
     preview: {
       initial: 'loaded',
       states: {
-        loaded: {},
+        loaded: {
+          entry: ['showAlert']
+        },
         loading: {
           invoke: {
             id: 'fetchData',
@@ -122,6 +126,9 @@ export default Machine({
           target: '.loading',
           cond: 'hasRepository',
           actions: ['setPolicyData']
+        },
+        HIDE_ALERT: {
+          actions: ['hideAlert']
         }
       }
     }
@@ -141,7 +148,8 @@ export default Machine({
     }),
     setData: assign({
       data: (_, event) => event.data.data.results,
-      pristineData: (_, event) => event.data.data.results
+      pristineData: (_, event) => event.data.data.results,
+      total: (_, event) => event.data.data.total,
     }),
     setFilter: assign({
       filter: (_, {filter}) => filter,
@@ -181,6 +189,12 @@ export default Machine({
     }),
     sortData: assign({
       data: Utils.sortDataByFieldAndDirection
+    }),
+    showAlert: assign({
+      isAlertShown: ({data}) => !!data.length
+    }),
+    hideAlert: assign({
+      isAlertShown: false
     })
   },
   guards: {
