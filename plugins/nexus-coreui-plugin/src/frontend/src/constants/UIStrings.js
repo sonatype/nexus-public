@@ -643,7 +643,9 @@ Once created, a cleanup policy must be assigned to a repository from \
       NAME_COLUMN: 'Name',
       GROUP_COLUMN: 'Group',
       VERSION_COLUMN: 'Version',
-      EMPTY: 'No assets in repository matched the criteria'
+      EMPTY: 'No assets in repository matched the criteria',
+      COMPONENT_COUNT: (actual, total) => `Component count (matching criteria) viewing ${actual} out of ${total}.`,
+      SAMPLE_WARNING: 'Results may only be a sample of what will be deleted using the current criteria.',
     },
 
     MESSAGES: {

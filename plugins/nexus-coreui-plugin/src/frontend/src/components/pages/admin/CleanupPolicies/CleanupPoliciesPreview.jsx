@@ -23,6 +23,7 @@ import {
   NxTableCell,
   NxTableHead,
   NxTableRow,
+  NxWarningAlert,
   Section, SectionToolbar,
   Select,
   Utils
@@ -36,7 +37,16 @@ export default function CleanupPoliciesPreview({policyData}) {
     devTools: true
   });
 
-  const {repositories, data, filter : filterText, formError, previewError, repository} = current.context;
+  const {
+    repositories, 
+    data, 
+    filter : filterText, 
+    formError, 
+    previewError, 
+    repository, 
+    total,
+    isAlertShown
+  } = current.context;
   const previewUnavailable = Utils.isBlank(repository) || (Utils.isBlank(policyData.criteriaLastBlobUpdated) &&
       Utils.isBlank(policyData.criteriaLastDownloaded) && Utils.isBlank(policyData.criteriaReleaseType) &&
       Utils.isBlank(policyData.criteriaAssetRegex));
@@ -84,6 +94,10 @@ export default function CleanupPoliciesPreview({policyData}) {
             <NxButton disabled={previewUnavailable} onClick={previewHandler}>{UIStrings.CLEANUP_POLICIES.PREVIEW.BUTTON}</NxButton>
           </div>
         </div>
+        {isAlertShown && <NxWarningAlert onClose={() => send({type: 'HIDE_ALERT'})}>
+              <p className="nx-p">{UIStrings.CLEANUP_POLICIES.PREVIEW.SAMPLE_WARNING}</p>
+              <p className="nx-p">{UIStrings.CLEANUP_POLICIES.PREVIEW.COMPONENT_COUNT(data.length, total)}</p>  
+        </NxWarningAlert>}
         <SectionToolbar>
           <div className="nxrm-spacer" />
           <NxFilterInput
