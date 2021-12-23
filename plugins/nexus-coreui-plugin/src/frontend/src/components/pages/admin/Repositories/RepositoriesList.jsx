@@ -17,6 +17,7 @@ import {
   ContentBody,
   ExtJS,
   HelpTile,
+  ListMachineUtils,
   NxButton,
   NxFilterInput,
   NxFontAwesomeIcon,
@@ -30,8 +31,7 @@ import {
   PageTitle,
   PageActions,
   Section,
-  SectionToolbar,
-  Utils
+  SectionToolbar
 } from '@sonatype/nexus-ui-plugin';
 import {
   faChevronRight,
@@ -52,10 +52,10 @@ export default function RepositoriesList({onCreate, onEdit, copyUrl = doCopyUrl}
   const isLoading = current.matches('loading');
   const {data, error, filter: filterText} = current.context;
 
-  const nameSortDir = Utils.getSortDirection('name', current.context);
-  const typeSortDir = Utils.getSortDirection('type', current.context);
-  const formatSortDir = Utils.getSortDirection('format', current.context);
-  const statusSortDir = Utils.getSortDirection('status', current.context);
+  const nameSortDir = ListMachineUtils.getSortDirection('name', current.context);
+  const typeSortDir = ListMachineUtils.getSortDirection('type', current.context);
+  const formatSortDir = ListMachineUtils.getSortDirection('format', current.context);
+  const statusSortDir = ListMachineUtils.getSortDirection('status', current.context);
   const sortByName = () => send('SORT_BY_NAME');
   const sortByType = () => send('SORT_BY_TYPE');
   const sortByFormat = () => send('SORT_BY_FORMAT');

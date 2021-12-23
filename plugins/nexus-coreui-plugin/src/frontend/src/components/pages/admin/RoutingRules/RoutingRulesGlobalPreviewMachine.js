@@ -16,7 +16,6 @@
  */
 import {assign, Machine} from 'xstate';
 import Axios from 'axios';
-import {Utils} from '@sonatype/nexus-ui-plugin';
 
 export default Machine(
     {

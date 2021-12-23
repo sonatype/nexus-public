@@ -17,6 +17,7 @@ import {faChevronRight, faRedo, faScroll} from '@fortawesome/free-solid-svg-icon
 
 import {
   ContentBody,
+  ListMachineUtils,
   NxButton,
   NxFilterInput,
   NxFontAwesomeIcon,
@@ -30,8 +31,7 @@ import {
   PageHeader,
   PageTitle,
   Section,
-  SectionToolbar,
-  Utils
+  SectionToolbar
 } from '@sonatype/nexus-ui-plugin';
 
 import LoggingConfigurationListMachine from './LoggingConfigurationListMachine';
@@ -45,8 +45,8 @@ export default function LoggingConfigurationList({onCreate, onEdit}) {
   const filterText = current.context.filter;
   const error = current.context.error;
 
-  const nameSortDir = Utils.getSortDirection('name', current.context);
-  const levelSortDir = Utils.getSortDirection('level', current.context);
+  const nameSortDir = ListMachineUtils.getSortDirection('name', current.context);
+  const levelSortDir = ListMachineUtils.getSortDirection('level', current.context);
 
   function filter(value) {
     send('FILTER', {filter: value});

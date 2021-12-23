@@ -18,6 +18,7 @@ import {faChevronRight, faInfoCircle, faBroom} from '@fortawesome/free-solid-svg
 import {
   ContentBody,
   HelpTile,
+  ListMachineUtils,
   NxButton,
   NxFilterInput,
   NxFontAwesomeIcon,
@@ -31,8 +32,7 @@ import {
   PageHeader,
   PageTitle,
   Section,
-  SectionToolbar,
-  Utils
+  SectionToolbar
 } from '@sonatype/nexus-ui-plugin';
 
 import CleanupPoliciesListMachine from './CleanupPoliciesListMachine';
@@ -46,9 +46,9 @@ export default function CleanupPoliciesList({onCreate, onEdit}) {
   const filterText = current.context.filter;
   const error = current.context.error;
 
-  const nameSortDir = Utils.getSortDirection('name', current.context);
-  const formatSortDir = Utils.getSortDirection('format', current.context);
-  const notesSortDir = Utils.getSortDirection('notes', current.context);
+  const nameSortDir = ListMachineUtils.getSortDirection('name', current.context);
+  const formatSortDir = ListMachineUtils.getSortDirection('format', current.context);
+  const notesSortDir = ListMachineUtils.getSortDirection('notes', current.context);
 
   function filter(value) {
     send({type: 'FILTER', filter: value});

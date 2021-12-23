@@ -16,7 +16,7 @@
  */
 import {assign, actions, Machine, send} from 'xstate';
 import Axios from 'axios';
-import {Utils} from '@sonatype/nexus-ui-plugin';
+import {ListMachineUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 
@@ -34,7 +34,7 @@ export default Machine({
     previewError: null,
     repositories: [],
     sortField: 'name',
-    sortDirection: Utils.ASC,
+    sortDirection: ListMachineUtils.ASC,
     isAlertShown: false
   },
   states: {
@@ -177,18 +177,18 @@ export default Machine({
     }),
     setSortByName: assign({
       sortField: 'name',
-      sortDirection: Utils.nextSortDirection('name')
+      sortDirection: ListMachineUtils.nextSortDirection('name')
     }),
     setSortByGroup: assign({
       sortField: 'group',
-      sortDirection: Utils.nextSortDirection('group')
+      sortDirection: ListMachineUtils.nextSortDirection('group')
     }),
     setSortByVersion: assign({
       sortField: 'version',
-      sortDirection: Utils.nextSortDirection('version')
+      sortDirection: ListMachineUtils.nextSortDirection('version')
     }),
     sortData: assign({
-      data: Utils.sortDataByFieldAndDirection
+      data: ListMachineUtils.sortDataByFieldAndDirection({useLowerCaseSorting: true})
     }),
     showAlert: assign({
       isAlertShown: ({data}) => !!data.length
@@ -198,7 +198,7 @@ export default Machine({
     })
   },
   guards: {
-    hasRepository: ({repository}) => Utils.notBlank(repository)
+    hasRepository: ({repository}) => ValidationUtils.notBlank(repository)
   },
   services: {
     fetchRepositories: () => Axios.get('/service/rest/internal/ui/repositories'),
