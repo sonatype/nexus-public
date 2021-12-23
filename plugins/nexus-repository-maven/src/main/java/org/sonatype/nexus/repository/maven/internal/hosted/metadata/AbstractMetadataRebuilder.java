@@ -358,13 +358,14 @@ public abstract class AbstractMetadataRebuilder
 
     /**
      * Verifies and may fix/create the broken/non-existent Maven hashes (.sha1/.md5 files).
+     * @return true if the checksum was rebuilt
      */
-    protected void mayUpdateChecksum(final MavenPath mavenPath, final HashType hashType) {
+    protected boolean mayUpdateChecksum(final MavenPath mavenPath, final HashType hashType) {
       Optional<HashCode> checksum = getChecksum(mavenPath, hashType);
       if (!checksum.isPresent()) {
         // this means that an asset stored in maven repository lacks checksum required by maven repository (see maven facet)
         log.warn("Asset with path {} lacks checksum {}", mavenPath, hashType);
-        return;
+        return false;
       }
 
       String assetChecksum = checksum.get().toString();
@@ -375,7 +376,7 @@ public abstract class AbstractMetadataRebuilder
           try (InputStream is = content.openInputStream()) {
             final String mavenChecksum = DigestExtractor.extract(is);
             if (Objects.equals(assetChecksum, mavenChecksum)) {
-              return; // all is OK: exists and matches
+              return false; // all is OK: exists and matches
             }
           }
         }
@@ -394,6 +395,7 @@ public abstract class AbstractMetadataRebuilder
         log.warn("Error writing {}", checksumPath, e);
         throw new RuntimeException(e);
       }
+      return true;
     }
 
     protected abstract Optional<HashCode> getChecksum(final MavenPath mavenPath, final HashType hashType);

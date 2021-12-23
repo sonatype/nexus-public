@@ -18,8 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -27,6 +27,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.MultipleFailures;
+import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
@@ -37,6 +38,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponentBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
+import org.sonatype.nexus.repository.content.fluent.FluentQuery;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.internal.Attributes;
@@ -222,13 +224,12 @@ public class DatastoreMetadataRebuilder
       metadataBuilder.onEnterArtifactId(artifactId);
 
       FluentComponents components = repository.facet(ContentFacet.class).components();
-      Collection<String> allVersions = components.versions(groupId, artifactId);
-      FluentComponentBuilder componentBuilder = components.name(artifactId).namespace(groupId);
 
       for (final String baseVersion : baseVersions) {
         checkCancellation();
         metadataBuilder.onEnterBaseVersion(baseVersion);
-        fetchAssets(allVersions, componentBuilder, baseVersion).forEach(this::processAsset);
+
+        processAssets(components, groupId, artifactId, baseVersion, this::processAsset);
 
         processMetadata(metadataPath(groupId, artifactId, baseVersion), metadataBuilder.onExitBaseVersion(), failures);
       }
@@ -236,19 +237,37 @@ public class DatastoreMetadataRebuilder
       processMetadata(metadataPath(groupId, artifactId, null), metadataBuilder.onExitArtifactId(), failures);
     }
 
-    private Stream<Pair<FluentComponent, FluentAsset>> fetchAssets(
-        final Collection<String> allVersions,
-        final FluentComponentBuilder componentBuilder,
-        final String v)
+    private void processAssets(
+        final FluentComponents components,
+        final String groupId,
+        final String artifactId,
+        final String baseVersion,
+        final Consumer<Pair<FluentComponent, FluentAsset>> processor)
     {
-      return allVersions.stream()
-          .map(version -> componentBuilder.version(version).find())
-          .filter(Optional::isPresent)
-          .map(Optional::get)
-          .filter(component -> v.equals(component.attributes("maven2").get("baseVersion", String.class)))
-          .flatMap(fc -> fc.assets().stream()
+      if (StringUtils.isBlank(groupId) || StringUtils.isBlank(artifactId) || StringUtils.isBlank(baseVersion)) {
+        log.debug("Skipping assets for component with groupId={}, artifactId={}, and baseVersion={}",
+            groupId, artifactId, baseVersion);
+        return;
+      }
+
+      FluentQuery<FluentComponent> componentsByBaseVersion = components.byFilter(
+          "namespace = #{filterParams.groupId} AND " +
+              "name = #{filterParams.artifactId} AND " +
+              "(base_version = #{filterParams.baseVersion} OR version = #{filterParams.baseVersion})",
+          ImmutableMap.of(
+              "groupId", groupId,
+              "artifactId", artifactId,
+              "baseVersion", baseVersion));
+      Continuation<FluentComponent> matchingComponents = componentsByBaseVersion.browse(bufferSize, null);
+      while (!matchingComponents.isEmpty()) {
+        matchingComponents.forEach(component -> {
+          component.assets().stream()
               .filter(asset -> !mavenPathParser.parsePath(asset.path()).isSubordinate())
-              .map(fa -> Pair.of(fc, fa)));
+              .forEach(asset -> processor.accept(Pair.of(component, asset)));
+        });
+
+        matchingComponents = componentsByBaseVersion.browse(bufferSize, matchingComponents.nextContinuationToken());
+      }
     }
 
     @Override
@@ -268,7 +287,7 @@ public class DatastoreMetadataRebuilder
       boolean rebuiltAtLeastOneVersion = baseVersions.stream()
           .map(v -> {
             checkCancellation();
-            return refreshVersion(allVersions, componentBuilder, groupId, artifactId, v, failures);
+            return refreshVersion(components, groupId, artifactId, v, failures);
           })
           .reduce(Boolean::logicalOr)
           .orElse(false);
@@ -289,8 +308,7 @@ public class DatastoreMetadataRebuilder
     }
 
     private boolean refreshVersion(
-        final Collection<String> allVersions,
-        final FluentComponentBuilder componentBuilder,
+        final FluentComponents components,
         final String groupId,
         final String artifactId,
         final String version,
@@ -299,7 +317,7 @@ public class DatastoreMetadataRebuilder
       MavenPath metadataPath = metadataPath(groupId, artifactId, version);
 
       metadataBuilder.onEnterBaseVersion(baseVersion);
-      fetchAssets(allVersions, componentBuilder, version).forEach(this::processAsset);
+      processAssets(components, groupId, artifactId, version, this::processAsset);
       Maven2Metadata newMetadata = metadataBuilder.onExitBaseVersion();
 
       /**
@@ -338,10 +356,13 @@ public class DatastoreMetadataRebuilder
       MavenPath mavenPath = mavenPathParser.parsePath(asset.path());
       metadataBuilder.addArtifactVersion(mavenPath);
       if (rebuildChecksums) {
-        mayUpdateChecksum(mavenPath, HashType.SHA1);
-        mayUpdateChecksum(mavenPath, HashType.SHA256);
-        mayUpdateChecksum(mavenPath, HashType.SHA512);
-        mayUpdateChecksum(mavenPath, HashType.MD5);
+        boolean sha1ChecksumWasRebuilt = mayUpdateChecksum(mavenPath, HashType.SHA1);
+        if (sha1ChecksumWasRebuilt) {
+          // Rebuilding checksums is expensive so only rebuild the others if the first one was rebuilt
+          mayUpdateChecksum(mavenPath, HashType.SHA256);
+          mayUpdateChecksum(mavenPath, HashType.SHA512);
+          mayUpdateChecksum(mavenPath, HashType.MD5);
+        }
       }
       final String packaging =
           component.attributes(repository.getFormat().getValue()).get(Attributes.P_PACKAGING, String.class);

@@ -20,7 +20,7 @@
  * - Takari (optional but recommended. Much quicker builds.) - see http://takari.io/book/30-team-maven.html#takari-smart-builder
  *      To enable: Add 'takari=true' to .nxrm/nxrmrc.groovy
  */
-@Grab(group = 'ch.qos.logback', module = 'logback-classic', version = '1.2.3')
+@Grab(group = 'ch.qos.logback', module = 'logback-classic', version = '1.2.9')
 @Grab(group = 'com.aestasit.infrastructure.sshoogr', module = 'sshoogr', version = '0.9.26')
 @Grab(group = 'com.caseyscarborough.colorizer', module = 'groovy-colorizer', version = '1.0.0')
 @Grab(group = 'jline', module = 'jline', version = '2.14.2')
