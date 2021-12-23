@@ -18,6 +18,7 @@ import {faChevronRight, faInfoCircle, faScroll} from '@fortawesome/free-solid-sv
 import {
   ContentBody,
   HelpTile,
+  ListMachineUtils,
   NxButton,
   NxFilterInput,
   NxFontAwesomeIcon,
@@ -31,8 +32,7 @@ import {
   PageHeader,
   PageTitle,
   Section,
-  SectionToolbar,
-  Utils
+  SectionToolbar
 } from '@sonatype/nexus-ui-plugin';
 
 import ContentSelectorsListMachine from './ContentSelectorsListMachine';
@@ -46,9 +46,9 @@ export default function ContentSelectorsList({onCreate, onEdit}) {
   const filterText = current.context.filter;
   const error = current.context.error;
 
-  const nameSortDir = Utils.getSortDirection('name', current.context);
-  const typeSortDir = Utils.getSortDirection('type', current.context);
-  const descriptionSortDir = Utils.getSortDirection('description', current.context);
+  const nameSortDir = ListMachineUtils.getSortDirection('name', current.context);
+  const typeSortDir = ListMachineUtils.getSortDirection('type', current.context);
+  const descriptionSortDir = ListMachineUtils.getSortDirection('description', current.context);
 
   function filter(value) {
     send('FILTER', {filter: value});

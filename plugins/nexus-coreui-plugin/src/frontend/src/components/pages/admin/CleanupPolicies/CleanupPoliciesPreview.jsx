@@ -14,6 +14,7 @@ import React from 'react';
 import {useMachine} from '@xstate/react';
 
 import {
+  ListMachineUtils,
   NxButton,
   NxFilterInput,
   NxFormGroup,
@@ -26,7 +27,7 @@ import {
   NxWarningAlert,
   Section, SectionToolbar,
   Select,
-  Utils
+  ValidationUtils
 } from '@sonatype/nexus-ui-plugin';
 import UIStrings from "../../../../constants/UIStrings";
 
@@ -47,16 +48,19 @@ export default function CleanupPoliciesPreview({policyData}) {
     total,
     isAlertShown
   } = current.context;
-  const previewUnavailable = Utils.isBlank(repository) || (Utils.isBlank(policyData.criteriaLastBlobUpdated) &&
-      Utils.isBlank(policyData.criteriaLastDownloaded) && Utils.isBlank(policyData.criteriaReleaseType) &&
-      Utils.isBlank(policyData.criteriaAssetRegex));
+  const previewUnavailable = ValidationUtils.isBlank(repository) || (
+      ValidationUtils.isBlank(policyData.criteriaLastBlobUpdated) &&
+      ValidationUtils.isBlank(policyData.criteriaLastDownloaded) &&
+      ValidationUtils.isBlank(policyData.criteriaReleaseType) &&
+      ValidationUtils.isBlank(policyData.criteriaAssetRegex)
+  );
   const isLoadingForm = current.matches('form.loading');
   const isLoadingPreview = current.matches('preview.loading');
   const hasData = data?.length > 0;
 
-  const nameSortDir = Utils.getSortDirection('name', current.context);
-  const groupSortDir = Utils.getSortDirection('group', current.context);
-  const versionSortDir = Utils.getSortDirection('version', current.context);
+  const nameSortDir = ListMachineUtils.getSortDirection('name', current.context);
+  const groupSortDir = ListMachineUtils.getSortDirection('group', current.context);
+  const versionSortDir = ListMachineUtils.getSortDirection('version', current.context);
 
   const repositoryChangeHandler = (event) => send({type: 'SET_REPOSITORY', repository: event.target.value});
   const previewHandler = () => send({type: 'PREVIEW', policyData});
@@ -99,9 +103,9 @@ export default function CleanupPoliciesPreview({policyData}) {
               <p className="nx-p">{UIStrings.CLEANUP_POLICIES.PREVIEW.COMPONENT_COUNT(data.length, total)}</p>  
         </NxWarningAlert>}
         <SectionToolbar>
-          <div className="nxrm-spacer" />
+          <div className="nxrm-spacer"/>
           <NxFilterInput
-            id="filter"
+              id="filter"
               onChange={filter}
               value={filterText}
               placeholder={UIStrings.CLEANUP_POLICIES.FILTER_PLACEHOLDER}/>

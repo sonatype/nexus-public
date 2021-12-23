@@ -16,101 +16,39 @@
  */
 import Axios from 'axios';
 import {assign} from 'xstate';
-import {Utils} from '@sonatype/nexus-ui-plugin';
+import {ListMachineUtils} from '@sonatype/nexus-ui-plugin';
 
 const BLOB_STORES_URL = '/service/rest/internal/ui/blobstores';
 
-export default Utils.buildListMachine({
+export default ListMachineUtils.buildListMachine({
   id: 'BlobStoresListMachine',
-  config: (config) => ({
-    ...config,
-    states: {
-      ...config.states,
-      loaded: {
-        ...config.states.loaded,
-        on: {
-          ...config.states.loaded.on,
-          SORT_BY_NAME: {
-            target: 'loaded',
-            actions: ['setSortByName']
-          },
-          SORT_BY_TYPE_NAME: {
-            target: 'loaded',
-            actions: ['setSortByType']
-          },
-          SORT_BY_STATE: {
-            target: 'loaded',
-            actions: ['setSortByState']
-          },
-          SORT_BY_COUNT: {
-            target: 'loaded',
-            actions: ['setSortByCount']
-          },
-          SORT_BY_SIZE: {
-            target: 'loaded',
-            actions: ['setSortBySize']
-          },
-          SORT_BY_SPACE: {
-            target: 'loaded',
-            actions: ['setSortBySpace']
-          }
-        }
-      }
-    }
-  }),
-  options: (options) => ({
-    ...options,
-    actions: {
-      ...options.actions,
-      setData: assign({
-        data: (_, {data}) => data.data.map(blobStore => ({
-          ...blobStore,
-          available: !blobStore.unavailable,
-          blobCount: blobStore.unavailable ? -1 : blobStore.blobCount,
-          totalSizeInBytes: blobStore.unavailable ? -1 : blobStore.totalSizeInBytes,
-          availableSpaceInBytes: blobStore.unlimited ? Infinity : blobStore.availableSpaceInBytes
-        })),
-        pristineData: (_, {data}) => data.data.map(blobStore => ({
-          ...blobStore,
-          available: !blobStore.unavailable,
-          blobCount: blobStore.unavailable ? -1 : blobStore.blobCount,
-          totalSizeInBytes: blobStore.unavailable ? -1 : blobStore.totalSizeInBytes,
-          availableSpaceInBytes: blobStore.unlimited ? Infinity : blobStore.availableSpaceInBytes
-        })),
-      }),
-      setSortByName: assign({
-        sortField: 'name',
-        sortDirection: Utils.nextSortDirection('name')
-      }),
-      setSortByType: assign({
-        sortField: 'typeName',
-        sortDirection: Utils.nextSortDirection('typeName')
-      }),
-      setSortByState: assign({
-        sortField: 'available',
-        sortDirection: Utils.nextSortDirection('available')
-      }),
-      setSortByCount: assign({
-        sortField: 'blobCount',
-        sortDirection: Utils.nextSortDirection('blobCount')
-      }),
-      setSortBySize: assign({
-        sortField: 'totalSizeInBytes',
-        sortDirection: Utils.nextSortDirection('totalSizeInBytes')
-      }),
-      setSortBySpace: assign({
-        sortField: 'availableSpaceInBytes',
-        sortDirection: Utils.nextSortDirection('availableSpaceInBytes')
-      }),
-      filterData: assign({
-        data: ({filter, data, pristineData}, _) => pristineData.filter(({name}) =>
-            name.toLowerCase().indexOf(filter.toLowerCase()) !== -1
-        )
-      })
-    },
-    services: {
-      ...options.services,
-      fetchData: () => Axios.get(BLOB_STORES_URL)
-    }
-  })
+  sortableFields: ['name', 'typeName', 'available', 'blobCount', 'totalSizeInBytes', 'availableSpaceInBytes'],
+}).withConfig({
+  actions: {
+    setData: assign({
+      data: (_, {data}) => data.data.map(blobStore => ({
+        ...blobStore,
+        available: !blobStore.unavailable,
+        blobCount: blobStore.unavailable ? -1 : blobStore.blobCount,
+        totalSizeInBytes: blobStore.unavailable ? -1 : blobStore.totalSizeInBytes,
+        availableSpaceInBytes: blobStore.unlimited ? Infinity : blobStore.availableSpaceInBytes
+      })),
+      pristineData: (_, {data}) => data.data.map(blobStore => ({
+        ...blobStore,
+        available: !blobStore.unavailable,
+        blobCount: blobStore.unavailable ? -1 : blobStore.blobCount,
+        totalSizeInBytes: blobStore.unavailable ? -1 : blobStore.totalSizeInBytes,
+        availableSpaceInBytes: blobStore.unlimited ? Infinity : blobStore.availableSpaceInBytes
+      })),
+    }),
+
+    filterData: assign({
+      data: ({filter, data, pristineData}, _) => pristineData.filter(({name}) =>
+          name.toLowerCase().indexOf(filter.toLowerCase()) !== -1
+      )
+    })
+  },
+  services: {
+    fetchData: () => Axios.get(BLOB_STORES_URL)
+  }
 });
