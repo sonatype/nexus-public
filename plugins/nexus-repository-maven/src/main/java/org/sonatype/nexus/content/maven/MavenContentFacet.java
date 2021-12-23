@@ -24,6 +24,7 @@ import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
+import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.view.Content;
@@ -146,4 +147,12 @@ public interface MavenContentFacet
    * @throws IOException
    */
   void hardLink(FluentAsset asset, Path contentPath) throws IOException;
+
+  /**
+   * @param source component to copy
+   * @return a new component copied from the source to the current repository
+   *
+   * @since 3.next
+   */
+  FluentComponent copy(final Component source);
 }

@@ -18,7 +18,9 @@ import java.util.Map;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.director.ContentDirector;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.maven.MavenFacet;
@@ -76,5 +78,12 @@ public class MavenContentDirector
         .distinct()
         .forEach(group -> facet.rebuildMetadata(
             group, null, null, false));
+  }
+
+  @Override
+  public FluentComponent copyComponent(
+      final Component source, final Repository destination)
+  {
+    return destination.facet(MavenContentFacet.class).copy(source);
   }
 }

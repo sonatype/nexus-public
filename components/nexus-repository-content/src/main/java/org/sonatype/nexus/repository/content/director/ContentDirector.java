@@ -18,7 +18,9 @@ import java.util.Map;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.fluent.FluentComponentBuilder;
 
 /**
  * @since 3.24
@@ -42,6 +44,27 @@ public interface ContentDirector
       final Repository destination)
   {
     return component;
+  }
+
+  /**
+   * This is a hook that allows format implementations to customize how a component is copied.
+   *
+   * @param source the component to copy
+   * @param destination the repository to copy the component to
+   * @return a reference to the component
+   *
+   * @since 3.next
+   */
+  default FluentComponent copyComponent(final Component source, final Repository destination) {
+    ContentFacet content = destination.facet(ContentFacet.class);
+
+    FluentComponentBuilder destComponentBuilder = content.components().name(source.name()).namespace(source.namespace())
+        .version(source.version());
+
+    source.attributes().forEach(attribute ->
+        destComponentBuilder.attributes(attribute.getKey(), attribute.getValue()));
+
+    return destComponentBuilder.getOrCreate();
   }
 
   /**

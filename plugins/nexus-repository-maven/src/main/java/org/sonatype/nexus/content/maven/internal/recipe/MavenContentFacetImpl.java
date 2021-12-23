@@ -54,6 +54,7 @@ import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.fluent.FluentComponentBuilder;
 import org.sonatype.nexus.repository.content.store.ComponentStore;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.maven.LayoutPolicy;
@@ -563,6 +564,31 @@ public class MavenContentFacetImpl
 
       return asset;
     }
+  }
+
+  public FluentComponent copy(final Component source) {
+    FluentComponentBuilder componentBuilder = components()
+        .name(source.name())
+        .namespace(source.namespace())
+        .version(source.version());
+
+    source.attributes().forEach(attribute -> {
+      componentBuilder.attributes(attribute.getKey(), attribute.getValue());
+    });
+
+    FluentComponent component = componentBuilder.getOrCreate();
+
+    Maven2ComponentData componentData = new Maven2ComponentData();
+    componentData.setNamespace(source.namespace());
+    componentData.setName(source.name());
+    componentData.setVersion(source.version());
+    componentData.setRepositoryId(contentRepositoryId());
+    componentData.setBaseVersion(component.attributes().child("maven2").get("baseVersion").toString());
+
+    Maven2ComponentStore componentStore = (Maven2ComponentStore) stores().componentStore;
+    componentStore.updateBaseVersion(componentData);
+
+    return component;
   }
 
   private FluentComponent createOrGetComponent(Coordinates coordinates) {
