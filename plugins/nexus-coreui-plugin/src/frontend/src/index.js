@@ -17,6 +17,7 @@
 import ContentSelectors from './components/pages/admin/ContentSelectors/ContentSelectors';
 import AnonymousSettings from './components/pages/admin/AnonymousSettings/AnonymousSettings';
 import BlobStores from './components/pages/admin/BlobStores/BlobStores';
+import InsightFrontend from './components/pages/admin/InsightFrontend/InsightFrontend';
 import LoggingConfiguration from './components/pages/admin/LoggingConfiguration/LoggingConfiguration';
 import LogViewer from './components/pages/admin/LogViewer/LogViewer';
 import Repositories from './components/pages/admin/Repositories/Repositories';
@@ -211,6 +212,23 @@ window.plugins.push({
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         permissions: ['nexus:*']
       }
-    }
+    },
+    {
+      mode: 'admin',
+      path: '/Repository/InsightFrontend',
+      text: 'Log4j Visualizer',
+      description: 'Log4j Visualizer',
+      view: InsightFrontend,
+      iconCls: 'x-fa fa-binoculars',
+      visibility: {
+        requiresUser: true,
+        statesEnabled: [
+          {
+            key: 'vulnerabilityCapabilityState',
+            defaultValue: {enabled: false}
+          }
+        ]
+      }
+    },
   ]
 });
