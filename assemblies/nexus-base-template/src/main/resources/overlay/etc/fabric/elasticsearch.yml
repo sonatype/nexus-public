@@ -20,6 +20,8 @@ discovery.zen.ping.multicast.enabled: false
 
 search.default_search_timeout: 5m
 
+cluster.routing.allocation.disk.threshold_enabled: false
+
 # ======================== Elasticsearch Configuration =========================
 #
 # NOTE: Elasticsearch comes with reasonable defaults for most settings.
