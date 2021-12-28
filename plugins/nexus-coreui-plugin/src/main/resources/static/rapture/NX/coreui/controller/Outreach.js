@@ -60,7 +60,6 @@ Ext.define('NX.coreui.controller.Outreach', {
     var me = this,
         welcomePage = me.getWelcomePage();
 
-    console.log("ForTest showOutreach");
     NX.direct.outreach_Outreach.readStatus(function (response) {
       if (Ext.isObject(response) && response.success && response.data != null && welcomePage.rendered) {
         var user = NX.State.getUser(),
@@ -75,7 +74,7 @@ Ext.define('NX.coreui.controller.Outreach', {
         }
         else {
           usertype = 'anonymous';
-          height = '0%';
+          height = '100%';
         }
 
         url = NX.util.Url.urlOf('service/outreach/?version=' + NX.State.getVersion() +
