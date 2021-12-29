@@ -114,7 +114,8 @@ export default function InsightFrontend() {
               "log4shell"). The data below provides insight into log4j consumption through this Nexus Repository instance and specifically shows downloads impacted by
               CVE-2021-44228. This data is not live and is refreshed whenever the Statistics - Recalculate vulnerabilities statistics task runs. Note that the Log4j Visualizer only
               captures information about the log4j component in Maven and only identifies those impacted by CVE-2021-44228. It does not currently identify or track other log4j
-              vulnerabilities.
+              vulnerabilities. You must run the <em>Statistics - Recalculate vulnerabilities statistics</em> task to refresh the data
+              below. <a href="https://help.sonatype.com/repomanager3/nexus-repository-administration/capabilities/log4j-visualizer" target="_blank" rel="noopener noreferrer">Learn more</a>.
             </p>
           </div>
         </div>
@@ -128,21 +129,20 @@ export default function InsightFrontend() {
             <h4>
               Short term
             </h4>
-            <div className="recommendations-container">
-              <span>1. Encourage development teams to <strong>upgrade their log4j dependencies</strong> to a non-vulnerable version.</span>
-              <span>2. Refer to the guidance in Sonatype’s Find and <a href={findAndFixLog4jUrl} target="_blank" rel="noopener noreferrer">Fix Log4j announcement</a>.</span>
-              <span>3. <strong>Don’t delete vulnerable log4j versions</strong> from your repositories except as a last resort. Fixing critical problems can be harder when missing dependencies cause builds to break.</span>
-              <span>2. Refer to the guidance in Sonatype’s <a href={findAndFixLog4jUrl} target="_blank" rel="noopener noreferrer">Find and Fix Log4j announcement</a>.</span>
-              <span>Stay up to date to the <a href={resourceCentreUrl} target="_blank" rel="noopener noreferrer">latest Log4j development</a></span>
-            </div>
+            <ol className="recommendations-container">
+              <li>Encourage development teams to <strong>upgrade their log4j dependencies</strong> to a non-vulnerable version.</li>
+              <li>Refer to the guidance in Sonatype’s Find and <a href={findAndFixLog4jUrl} target="_blank" rel="noopener noreferrer">Fix Log4j announcement</a>.</li>
+              <li><strong>Don’t delete vulnerable log4j versions</strong> from your repositories except as a last resort. Fixing critical problems can be harder when missing dependencies as that can cause builds to break.</li>
+              <li>Stay up to date with the <a href={resourceCentreUrl} target="_blank" rel="noopener noreferrer">latest Log4j development</a>.</li>
+            </ol>
             <h4>
               Long term
             </h4>
-            <div className="recommendations-container">
-              <span>1. Consider <strong>reducing anonymous access to your repositories</strong> so that you can more easily understand who is consuming vulnerable dependencies.</span>
-              <span>2. <strong>Block vulnerable open source components and malicious attacks</strong> from being downloaded into your repositories using <a href={firewallUrl} target="_blank" rel="noopener noreferrer">Nexus Firewall</a>.</span>
-              <span>3. <strong>Reduce remediation time</strong> by using <a href={lifecycleUrl} target="_blank" rel="noopener noreferrer">Nexus Lifecycle</a> for continuous application monitoring.</span>
-            </div>
+            <ol className="recommendations-container">
+              <li>Consider <strong>reducing anonymous access to your repositories</strong> so that you can more easily understand who is consuming vulnerable dependencies.</li>
+              <li><strong>Block vulnerable open source components and malicious attacks</strong> from being downloaded into your repositories using <a href={firewallUrl} target="_blank" rel="noopener noreferrer">Nexus Firewall</a>.</li>
+              <li><strong>Reduce remediation time</strong> by using <a href={lifecycleUrl} target="_blank" rel="noopener noreferrer">Nexus Lifecycle</a> for continuous application monitoring.</li>
+            </ol>
           </div>
         </div>
         <div className="nx-scrollable nx-table-container">
