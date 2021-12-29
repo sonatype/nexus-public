@@ -19,7 +19,7 @@
   <parent>
     <artifactId>nexus-components</artifactId>
     <groupId>org.sonatype.nexus</groupId>
-    <version>3.37.3-01</version>
+    <version>3.37.3-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
