@@ -131,7 +131,7 @@ export default function InsightFrontend() {
             </h4>
             <ol className="recommendations-container">
               <li>Encourage development teams to <strong>upgrade their log4j dependencies</strong> to a non-vulnerable version.</li>
-              <li>Refer to the guidance in Sonatype’s Find and <a href={findAndFixLog4jUrl} target="_blank" rel="noopener noreferrer">Fix Log4j announcement</a>.</li>
+              <li>Refer to the guidance in Sonatype’s <a href={findAndFixLog4jUrl} target="_blank" rel="noopener noreferrer">Find and Fix Log4j announcement</a>.</li>
               <li><strong>Don’t delete vulnerable log4j versions</strong> from your repositories except as a last resort. Fixing critical problems can be harder when missing dependencies as that can cause builds to break.</li>
               <li>Stay up to date with the <a href={resourceCentreUrl} target="_blank" rel="noopener noreferrer">latest Log4j development</a>.</li>
             </ol>
