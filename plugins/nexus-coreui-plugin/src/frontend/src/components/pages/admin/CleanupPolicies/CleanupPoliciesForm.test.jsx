@@ -12,6 +12,7 @@
  */
 import React from 'react';
 import {fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/extend-expect';
 import {when} from 'jest-when';
 
@@ -224,6 +225,58 @@ describe('CleanupPoliciesForm', function() {
         {name: 'test', format: 'testformat', notes: 'notes'}
     ));
     expect(window.dirty).toEqual([]);
+  });
+
+  it('resets data fields when disable checkboxes', async function() {
+    const {container,
+      loadingMask,
+      criteriaLastBlobUpdated,
+      criteriaLastDownloaded,
+      criteriaReleaseType,
+      criteriaAssetRegex,
+      saveButton} = renderEditView(EDITABLE_ITEM.name);
+
+    await waitForElementToBeRemoved(loadingMask);
+
+    expect(criteriaLastBlobUpdated()).not.toBeDisabled();
+    expect(criteriaLastDownloaded()).not.toBeDisabled();
+    expect(criteriaReleaseType()).not.toBeDisabled();
+    expect(criteriaAssetRegex()).not.toBeDisabled();
+
+    userEvent.selectOptions(criteriaReleaseType(), '');
+    expect(criteriaReleaseType()).toHaveValue('');
+
+    const lastBlobCheckbox = container.querySelector('#criteria-last-blob-updated-group .nx-radio-checkbox');
+    const lastDownloadedCheckbox = container.querySelector('#criteria-last-downloaded-group .nx-radio-checkbox');
+    const releaseTypeCheckbox = container.querySelector('#criteria-release-type-group .nx-radio-checkbox');
+    const assetNameCheckbox = container.querySelector('#criteria-asset-name-group .nx-radio-checkbox');
+
+    fireEvent.click(lastBlobCheckbox);
+    fireEvent.click(lastDownloadedCheckbox);
+    fireEvent.click(releaseTypeCheckbox);
+    fireEvent.click(assetNameCheckbox);
+
+    expect(criteriaLastBlobUpdated()).toBeDisabled();
+    expect(criteriaLastDownloaded()).toBeDisabled();
+    expect(criteriaReleaseType()).toBeDisabled();
+    expect(criteriaAssetRegex()).toBeDisabled();
+
+    expect(saveButton()).not.toHaveClass('disabled');
+
+    fireEvent.click(saveButton());
+
+    await waitFor(() => expect(axios.put).toHaveBeenCalledWith(
+      '/service/rest/internal/cleanup-policies/' + EDITABLE_ITEM.name,
+      {
+        criteriaAssetRegex: null,
+        criteriaLastBlobUpdated: null,
+        criteriaLastDownloaded: null,
+        criteriaReleaseType: null,
+        format: EDITABLE_ITEM.format,
+        name: EDITABLE_ITEM.name,
+        notes: EDITABLE_ITEM.notes
+      }
+    ));
   });
 
   describe('preview', function() {
