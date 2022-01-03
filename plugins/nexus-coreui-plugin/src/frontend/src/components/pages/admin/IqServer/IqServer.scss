@@ -11,30 +11,20 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-/*
-  Style overrides for the react-shared-components. Once we've fully converted to React we should remove these overrides.
-*/
-
-.x-body {
-  line-height: var(--nx-line-height);
-
-  .nx-tile-footer {
-    text-align: left !important;
+.nxrm-iq-server {
+  .open-dashboard-link {
+    float: right;
   }
-
-  .nx-btn {
-    white-space: nowrap;
+  .help-text {
+    margin-bottom: 26px;
   }
-}
-
-.nx-accordion__header {
-  list-style-type: none;
-
-  &::-webkit-details-marker {
-    display: none;
-  }
-
-  > .nx-accordion__summary-wrapper {
-    padding-left: 0px;
+  .verify-connection-status {
+    .nx-alert {
+      margin: auto;
+    }
+    .nx-loading-spinner {
+      text-align: center;
+      height: 76px;
+    }
   }
 }

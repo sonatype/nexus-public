@@ -36,6 +36,7 @@ import S3BlobStoreWarning from './components/pages/admin/BlobStores/S3/S3BlobSto
 import S3BlobStoreActions from './components/pages/admin/BlobStores/S3/S3BlobStoreActions';
 import AzureBlobStoreSettings from './components/pages/admin/BlobStores/Azure/AzureBlobStoreSettings';
 import AzureBlobStoreActions from './components/pages/admin/BlobStores/Azure/AzureBlobStoreActions';
+import IqServer from './components/pages/admin/IqServer/IqServer';
 
 window.ReactComponents = {
   ...window.ReactComponents,
@@ -215,6 +216,16 @@ window.plugins.push({
     },
     {
       mode: 'admin',
+      path: '/IQ',
+      ...UIStrings.IQ_SERVER.MENU,
+      view: IqServer,
+      iconCls: 'x-fa fa-shield-alt',
+      visibility: {
+        permissions: ['nexus:settings:read']
+      }
+    },
+    {
+      mode: 'admin',
       path: '/Repository/InsightFrontend',
       text: 'Log4j Visualizer',
       description: 'Log4j Visualizer',
@@ -229,6 +240,6 @@ window.plugins.push({
           }
         ]
       }
-    },
+    }
   ]
 });

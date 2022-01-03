@@ -59,21 +59,6 @@ Ext.define('NX.coreui.controller.Clm', {
   init: function () {
     var me = this;
 
-    me.getApplication().getFeaturesController().registerFeature({
-      mode: 'admin',
-      path: '/IQ',
-      text: NX.I18n.get('Clm_Text'),
-      description: NX.I18n.get('Clm_Description'),
-      view: { xtype: 'nx-coreui-clm-settings' },
-      iconConfig: {
-        file: 'three_tags.png',
-        variants: ['x16', 'x32']
-      },
-      visible: function () {
-        return NX.Permissions.check('nexus:settings:read');
-      }
-    }, me);
-
     me.listen({
       controller: {
         '#State': {
