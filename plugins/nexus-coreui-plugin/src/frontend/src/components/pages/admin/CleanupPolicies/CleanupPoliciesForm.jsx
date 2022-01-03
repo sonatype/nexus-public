@@ -82,28 +82,28 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
 
   function setCriteriaLastBlobUpdatedEnabled(checked) {
     send({type: 'SET_CRITERIA_LAST_BLOB_UPDATED_ENABLED', checked: checked})
-    if (!checked && data.criteriaLastBlobUpdated) {
+    if (!checked && data.criteriaLastBlobUpdated != null) {
       send({type: 'UPDATE', data: {criteriaLastBlobUpdated: null}});
     }
   }
 
   function setCriteriaLastDownloadedEnabled(checked) {
     send({type: 'SET_CRITERIA_LAST_DOWNLOADED_ENABLED', checked: checked})
-    if (!checked && data.criteriaLastDownloaded) {
+    if (!checked && data.criteriaLastDownloaded != null) {
       send({type: 'UPDATE', data: {criteriaLastDownloaded: null}});
     }
   }
 
   function setCriteriaReleaseTypeEnabled(checked) {
     send({type: 'SET_CRITERIA_RELEASE_TYPE_ENABLED', checked: checked})
-    if (!checked && data.criteriaReleaseType) {
+    if (!checked && data.criteriaReleaseType != null) {
       send({type: 'UPDATE', data: {criteriaReleaseType: null}});
     }
   }
 
   function setCriteriaAssetRegexEnabled(checked) {
     send({type: 'SET_CRITERIA_ASSET_REGEX_ENABLED', checked: checked})
-    if (!checked && data.criteriaAssetRegex) {
+    if (!checked && data.criteriaAssetRegex != null) {
       send({type: 'UPDATE', data: {criteriaAssetRegex: null}});
     }
   }
