@@ -85,6 +85,7 @@ import static org.sonatype.nexus.blobstore.DirectPathLocationStrategy.DIRECT_PAT
 import static org.sonatype.nexus.blobstore.api.OperationType.DOWNLOAD;
 import static org.sonatype.nexus.blobstore.api.OperationType.UPLOAD;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreConfigurationHelper.getConfiguredExpirationInDays;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.NOT_IMPLEMENTED_CODE;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.buildException;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.FAILED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.NEW;
@@ -497,11 +498,19 @@ public class S3BlobStore
       blobAttributes.setDeletedDateTime(new DateTime());
       blobAttributes.store();
 
-      // soft delete is implemented using an S3 lifecycle that sets expiration on objects with DELETED_TAG
-      // tag the bytes
-      s3.setObjectTagging(tagAsDeleted(contentPath(blobId)));
-      // tag the attributes
-      s3.setObjectTagging(tagAsDeleted(attributePath(blobId)));
+      try {
+        // soft delete is implemented using an S3 lifecycle that sets expiration on objects with DELETED_TAG
+        // tag the bytes
+        s3.setObjectTagging(tagAsDeleted(contentPath(blobId)));
+        // tag the attributes
+        s3.setObjectTagging(tagAsDeleted(attributePath(blobId)));
+      } catch (AmazonS3Exception e) {
+        if (NOT_IMPLEMENTED_CODE.equals(e.getErrorCode())) {
+          log.warn("Bucket does not support object tagging.", e);
+        } else {
+          throw e;
+        }
+      }
       blob.markStale();
 
       Long contentSize = getContentSizeForDeletion(blobAttributes);
@@ -797,8 +806,16 @@ public class S3BlobStore
   @Override
   @Timed
   protected void doUndelete(final BlobId blobId, final BlobAttributes attributes) {
-    s3.setObjectTagging(untagAsDeleted(contentPath(blobId)));
-    s3.setObjectTagging(untagAsDeleted(attributePath(blobId)));
+    try {
+      s3.setObjectTagging(untagAsDeleted(contentPath(blobId)));
+      s3.setObjectTagging(untagAsDeleted(attributePath(blobId)));
+    } catch (AmazonS3Exception e) {
+      if (NOT_IMPLEMENTED_CODE.equals(e.getErrorCode())) {
+        log.warn("Bucket does not support object tagging.", e);
+      } else {
+        throw e;
+      }
+    }
     storeMetrics.recordAddition(attributes.getMetrics().getContentSize());
   }
 
