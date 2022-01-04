@@ -83,7 +83,7 @@ export default function CleanupPoliciesPreview({policyData}) {
       {() => <>
         <div className="nx-form-group">
           <label id="preview-repository-label" className="nx-label" htmlFor="repository">
-            <span class="nx-label__text">{UIStrings.CLEANUP_POLICIES.PREVIEW.REPOSITORY_LABEL}</span>
+            <span className="nx-label__text">{UIStrings.CLEANUP_POLICIES.PREVIEW.REPOSITORY_LABEL}</span>
           </label>
           <div id="preview-repository-sub-label" className="nx-sub-label">
             {UIStrings.CLEANUP_POLICIES.PREVIEW.REPOSITORY_DESCRIPTION}

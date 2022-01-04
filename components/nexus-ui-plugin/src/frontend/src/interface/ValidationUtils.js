@@ -92,10 +92,9 @@ export default class ValidationUtils {
 
   /**
    * @param value {string|number|null|undefined}
-   * @param min - defaults to -Infinity
-   * @param max - defaults to Infinity
-   * @return null if the string is null, undefined, or blank
-   * @return {string|null} a string error message if the number falls outside of the provided boundaries, null otherwise
+   * @param min - minimum allowed value, defaults to -Infinity
+   * @param max - maximum allowed value, defaults to Infinity
+   * @return {string|null} a string error message if the number falls outside of the range; null if the string is blank or within the boundaries
    */
   static isInRange({value, min = -Infinity, max = Infinity, allowDecimals = true}) {
     if (value === null || value === undefined) {
