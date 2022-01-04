@@ -45,6 +45,8 @@ public class S3BlobStoreException
 
   public static final String SIGNATURE_DOES_NOT_MATCH_CODE = "SignatureDoesNotMatch";
 
+  public static final String NOT_IMPLEMENTED_CODE = "NotImplemented";
+
   public static Map<String, String> ERROR_CODE_MESSAGES = ImmutableMap.of(
     INVALID_ACCESS_KEY_ID_CODE, "The Access Key ID provided was invalid.",
     ACCESS_DENIED_CODE, "Access denied. Please check the credentials provided have proper permissions.",
