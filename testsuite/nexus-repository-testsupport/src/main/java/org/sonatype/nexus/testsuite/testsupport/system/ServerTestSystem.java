@@ -15,7 +15,7 @@ package org.sonatype.nexus.testsuite.testsupport.system;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
+import java.util.Map.Entry;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -59,7 +59,9 @@ public class ServerTestSystem
 
   public Server createServer(final Map<String, Behaviour> behaviors) throws Exception {
     Server server = Server.withPort(PortAllocator.nextFreePort());
-    behaviors.forEach((key, value) -> server.serve(prependIfMissing(key, "/")).withBehaviours(value));
+    for (Entry<String, Behaviour> entry : behaviors.entrySet()) {
+      server = server.serve(prependIfMissing(entry.getKey(), "/")).withBehaviours(entry.getValue());
+    }
     servers.add(server);
     server.start();
     return server;
