@@ -41,7 +41,7 @@ Ext.define('NX.coreui.controller.FirewallRepositoryColumn', {
     'FirewallRepositoryStatus'
   ],
   refs: [
-    { ref: 'list', selector: 'nx-coreui-repository-list' }
+    { ref: 'list', selector: 'nx-coreui-repository-list-template' }
   ],
 
   /**
@@ -68,7 +68,7 @@ Ext.define('NX.coreui.controller.FirewallRepositoryColumn', {
         }
       },
       store: {
-        '#Repository': {
+        '#RepositoryReference': {
           load: me.loadFirewallStatus
         },
         '#FirewallRepositoryStatus': {
