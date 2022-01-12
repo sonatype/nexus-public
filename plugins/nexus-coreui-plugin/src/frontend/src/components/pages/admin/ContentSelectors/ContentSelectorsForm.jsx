@@ -16,20 +16,18 @@ import {useMachine} from '@xstate/react';
 import {
   ContentBody,
   FieldWrapper,
-  NxErrorAlert,
   NxButton,
+  NxForm,
+  NxP,
   NxFontAwesomeIcon,
-  NxLoadWrapper,
-  NxSubmitMask,
-  NxTooltip,
   Page,
   PageHeader,
   PageTitle,
   Section,
-  SectionFooter,
   Textarea,
   Textfield,
-  Utils
+  Utils,
+  FormUtils,
 } from '@sonatype/nexus-ui-plugin';
 
 import ContentSelectorsFormMachine from './ContentSelectorsFormMachine';
@@ -64,15 +62,8 @@ export default function ContentSelectorsForm({itemId, onDone}) {
     send('UPDATE', {data: {[event.target.name]: event.target.value}});
   }
 
-  function save(event) {
-    event.preventDefault();
+  function save() {
     send('SAVE');
-  }
-
-  function handleEnter(event) {
-    if (event.key === 'Enter' && event.target.id !== 'expression') {
-      save(event);
-    }
   }
 
   function cancel() {
@@ -90,12 +81,26 @@ export default function ContentSelectorsForm({itemId, onDone}) {
   return <Page className="nxrm-content-selectors">
     <PageHeader><PageTitle icon={faScroll} {...UIStrings.CONTENT_SELECTORS.MENU}/></PageHeader>
     <ContentBody>
-      <Section className="nxrm-content-selectors-form" onKeyPress={handleEnter}>
-        <NxLoadWrapper loading={isLoading} error={loadError ? `${loadError}` : null} retryHandler={retry}>
+      <Section className="nxrm-content-selectors-form">
+        <NxForm
+          loading={isLoading}
+          loadError={loadError}
+          onCancel={cancel}
+          doLoad={retry}
+          onSubmit={save}
+          submitError={saveError}
+          submitMaskState={isSaving ? false : null}
+          submitBtnText={UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
+          submitMaskMessage={UIStrings.SAVING}
+          validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
+          additionalFooterBtns={itemId &&
+            <NxButton variant="tertiary" onClick={confirmDelete}>
+              <NxFontAwesomeIcon icon={faTrash}/>
+              <span>{UIStrings.SETTINGS.DELETE_BUTTON_LABEL}</span>
+            </NxButton>
+          }
+        >
           {hasData && <>
-            {saveError && <NxErrorAlert>{UIStrings.CONTENT_SELECTORS.MESSAGES.SAVE_ERROR}</NxErrorAlert>}
-            {isSaving && <NxSubmitMask message={UIStrings.SAVING}/>}
-
             <FieldWrapper labelText={UIStrings.CONTENT_SELECTORS.NAME_LABEL}>
               <Textfield
                   className="nx-text-input--long"
@@ -123,32 +128,17 @@ export default function ContentSelectorsForm({itemId, onDone}) {
               />
             </FieldWrapper>
 
-            <h4>Example Content Selector Expressions</h4>
-            <p>
-              Select "raw" format content:
+            <h4>{UIStrings.CONTENT_SELECTORS.EXPRESSION_EXAMPLES}</h4>
+            <NxP>
+              {UIStrings.CONTENT_SELECTORS.RAW_EXPRESSION_EXAMPLE_LABEL}:
               {' '}<code className="nx-code">format == "raw"</code>
-            </p>
-            <p>
-              Select "maven2" content along a path that starts with "/org":
+            </NxP>
+            <NxP>
+              {UIStrings.CONTENT_SELECTORS.MULTI_EXPRESSIONS_EXAMPLE_LABEL}:
               {' '}<code className="nx-code">format == "maven2" and path =^ "/org"</code>
-            </p>
-
-            <SectionFooter>
-              <NxTooltip title={Utils.saveTooltip({isPristine, isInvalid})}>
-                <NxButton variant="primary" className={(isPristine || isInvalid) && 'disabled'} onClick={save}
-                          type="submit">
-                  {UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
-                </NxButton>
-              </NxTooltip>
-              <NxButton onClick={cancel}>{UIStrings.SETTINGS.CANCEL_BUTTON_LABEL}</NxButton>
-              {itemId &&
-              <NxButton variant="tertiary" onClick={confirmDelete}>
-                <NxFontAwesomeIcon icon={faTrash}/>
-                <span>{UIStrings.SETTINGS.DELETE_BUTTON_LABEL}</span>
-              </NxButton>}
-            </SectionFooter>
+            </NxP>
           </>}
-        </NxLoadWrapper>
+        </NxForm>
       </Section>
       {!loadError && <ContentSelectorsPreview type={data?.type} expression={data?.expression}/>}
     </ContentBody>

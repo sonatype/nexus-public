@@ -204,6 +204,9 @@ For more information, <a href="http://links.sonatype.com/products/nxrm3/docs/con
     DESCRIPTION_LABEL: 'Description',
     EXPRESSION_LABEL: 'Search Expression',
     EXPRESSION_DESCRIPTION: 'Use the following query to identify repository content',
+    EXPRESSION_EXAMPLES: 'Example Content Selector Expressions',
+    RAW_EXPRESSION_EXAMPLE_LABEL: 'Select "raw" format content',
+    MULTI_EXPRESSIONS_EXAMPLE_LABEL: 'Select "maven2" content along a path that starts with "/org"',
 
     PREVIEW: {
       TITLE: 'Preview Content Selector Results',
