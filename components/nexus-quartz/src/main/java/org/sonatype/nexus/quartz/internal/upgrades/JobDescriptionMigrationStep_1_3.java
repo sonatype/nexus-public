@@ -33,7 +33,7 @@ public class JobDescriptionMigrationStep_1_3
 
   private static final String QUARTZ_TRIGGERS = "qrtz_triggers";
 
-  private static final String STATEMENT = "ALTER TABLE public.%s ALTER COLUMN description TYPE text";
+  private static final String STATEMENT = "ALTER TABLE %s ALTER COLUMN description TYPE text";
 
   @Override
   public String version() {
