@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.common.entity.EntityUUID;
+import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
 import org.sonatype.nexus.supportzip.datastore.JsonExporter;
 
 import org.junit.After;

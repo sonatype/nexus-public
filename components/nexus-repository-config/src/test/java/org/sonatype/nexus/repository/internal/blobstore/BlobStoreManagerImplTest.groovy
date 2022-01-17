@@ -25,6 +25,7 @@ import org.sonatype.nexus.common.app.FreezeService
 import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.common.node.NodeAccess
 import org.sonatype.nexus.common.stateguard.InvalidStateException
+import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.replication.ReplicationBlobStoreStatusManager
 
@@ -257,9 +258,9 @@ class BlobStoreManagerImplTest
     when(provider.get()).thenReturn(blobStore)
     BlobStoreConfiguration configuration = createConfig('test')
     underTest.create(configuration)
-    
+
     underTest.stop()
-    
+
     verify(blobStore).stop()
   }
 
@@ -390,7 +391,7 @@ class BlobStoreManagerImplTest
     assert underTest.browse().toList() == [blobStore]
   }
 
-  private BlobStoreConfiguration createConfig(name = 'foo', type = 'test', attributes = [file:[path:'baz']]) {
+  private BlobStoreConfiguration createConfig(name = 'foo', type = 'test', attributes = [file: [path: 'baz']]) {
     def entity = new MockBlobStoreConfiguration(
         name: name,
         type: type,
