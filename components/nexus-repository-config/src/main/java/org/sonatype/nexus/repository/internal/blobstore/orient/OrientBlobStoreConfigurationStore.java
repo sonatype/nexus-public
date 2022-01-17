@@ -27,7 +27,7 @@ import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
-import org.sonatype.nexus.repository.internal.blobstore.BlobStoreConfigurationStore;
+import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
 
 import com.google.common.collect.ImmutableList;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;

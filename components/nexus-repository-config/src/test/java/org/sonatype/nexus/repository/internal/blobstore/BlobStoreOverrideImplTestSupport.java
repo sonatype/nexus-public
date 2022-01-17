@@ -16,6 +16,7 @@ import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
+import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
 
 import com.google.common.collect.Maps;
 import org.junit.Before;

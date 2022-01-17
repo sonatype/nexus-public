@@ -23,6 +23,7 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.common.app.FeatureFlag;
+import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
