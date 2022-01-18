@@ -14,6 +14,7 @@ import React from 'react';
 import {fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
+import {act} from "react-dom/test-utils";
 import '@testing-library/jest-dom/extend-expect';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import axios from 'axios';
@@ -77,7 +78,8 @@ describe('ContentSelectorsForm', function() {
       expression: () => queryByLabelText(UIStrings.CONTENT_SELECTORS.EXPRESSION_LABEL),
       saveButton: () => queryByText(UIStrings.SETTINGS.SAVE_BUTTON_LABEL),
       cancelButton: () => queryByText(UIStrings.SETTINGS.CANCEL_BUTTON_LABEL),
-      deleteButton: () => queryByText(UIStrings.SETTINGS.DELETE_BUTTON_LABEL)
+      deleteButton: () => queryByText(UIStrings.SETTINGS.DELETE_BUTTON_LABEL),
+      previewButton: () => queryByText(UIStrings.CONTENT_SELECTORS.PREVIEW.BUTTON)
     }));
   }
 
@@ -267,5 +269,91 @@ describe('ContentSelectorsForm', function() {
         {name: 'test', description: 'description', expression: 'format == "raw"'}
     ));
     expect(window.dirty).toEqual([]);
+  });
+
+  describe('ContentSelectorsPreview', function() {
+    it('shows previews', async function () {
+      const emptyPreviewMessage = UIStrings.CONTENT_SELECTORS.PREVIEW.EMPTY;
+
+      const itemId = 'test';
+      axios.get.mockImplementation((url) => {
+        if (url === `/service/rest/v1/security/content-selectors/${itemId}`) {
+          return Promise.resolve({
+            data: {
+              'name' : itemId,
+              'type' : 'csel',
+              'description' : 'description',
+              'expression' : 'format == "raw"'
+            }
+          });
+        }
+        else if (url === '/service/rest/internal/ui/repositories?withAll=true&withFormats=true') {
+          return Promise.resolve({data: [
+            {id: "*", name: "(All Repositories)"}
+          ]});
+        }
+      });
+
+      axios.post.mockResolvedValue({data: {
+        total: 1,
+        results: [{
+          id: null,
+          repository: 'maven-central',
+          format: 'maven2',
+          group: 'org.apache.maven',
+          name: 'maven-aether-provider',
+          version: '3.0',
+          assets: null
+        }]
+      }});
+
+      const {loadingMask, previewButton, getByText} = renderEditView(itemId);
+      await waitForElementToBeRemoved(loadingMask);
+
+      expect(getByText(emptyPreviewMessage)).toBeInTheDocument();
+
+      await act(async () => fireEvent.click(previewButton()));
+
+      expect(getByText('maven-aether-provider')).toBeInTheDocument();
+    });
+
+    it('shows preview error API message', async function () {
+      const itemId = 'test';
+      axios.get.mockImplementation((url) => {
+        if (url === `/service/rest/v1/security/content-selectors/${itemId}`) {
+          return Promise.resolve({
+            data: {
+              'name' : itemId,
+              'type' : 'csel',
+              'description' : 'description',
+              'expression' : 'format == "raw"'
+            }
+          });
+        }
+        else if (url === '/service/rest/internal/ui/repositories?withAll=true&withFormats=true') {
+          return Promise.resolve({data: [
+            {id: "*", name: "(All Repositories)"}
+          ]});
+        }
+      });
+
+      axios.post.mockRejectedValue({
+        response: {
+          data: [
+            {
+              id: 'HelperBean.expression',
+              message: 'Invalid CSEL'
+            }
+          ]
+        }
+      });
+
+      const {loadingMask, previewButton, getByText} = renderEditView(itemId);
+      await waitForElementToBeRemoved(loadingMask);
+
+      await act(async () => fireEvent.click(previewButton()));
+
+      expect(getByText('An error occurred loading data. Invalid CSEL')).toBeInTheDocument();
+    });
   });
 });
