@@ -127,7 +127,7 @@ export default Utils.buildFormMachine({
       data: ({data}, {index}) => ({...data, matchers: data.matchers.filter((_, i) => i !== index)}),
       isTouched: ({isTouched}, {index}) => ({
         ...isTouched,
-        matchers: isTouched.matchers.filter((_, touchedIndex) => touchedIndex !== index )
+        matchers: (isTouched.matchers || []).filter((_, touchedIndex) => touchedIndex !== index )
       })
     }),
     updateMatcher: assign({
