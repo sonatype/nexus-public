@@ -173,7 +173,10 @@ export default function RoutingRulesForm({itemId, onDone}) {
                     </div>
                     {data.matchers.length > 1 &&
                     <div className="nx-btn-bar">
-                      <NxButton alttext={ROUTING_RULES.FORM.DELETE_MATCHER_BUTTON} onClick={() => removeMatcher(index)}>
+                      <NxButton
+                          title={ROUTING_RULES.FORM.DELETE_MATCHER_BUTTON}
+                          onClick={() => removeMatcher(index)}
+                      >
                         <NxFontAwesomeIcon icon={faTrash}/>
                       </NxButton>
                     </div>}

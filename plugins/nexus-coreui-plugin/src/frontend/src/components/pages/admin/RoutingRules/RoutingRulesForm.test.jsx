@@ -12,6 +12,7 @@
  */
 import React from 'react';
 import {fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
+import {act} from 'react-dom/test-utils';
 import '@testing-library/jest-dom/extend-expect';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import axios from 'axios';
@@ -57,6 +58,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
 describe('RoutingRulesForm', function() {
   const CONFIRM = Promise.resolve();
   const onDone = jest.fn();
+  const ROUTING_RULES_URL = (name) => `/service/rest/internal/ui/routing-rules/${name}`;
 
   function renderEditView(itemId) {
     return renderView(<RoutingRulesForm itemId={itemId} onDone={onDone}/>);
@@ -67,11 +69,12 @@ describe('RoutingRulesForm', function() {
   }
 
   function renderView(view) {
-    return TestUtils.render(view, ({queryByLabelText, queryByText}) => ({
+    return TestUtils.render(view, ({queryByLabelText, queryByText, queryAllByLabelText}) => ({
       name: () => queryByLabelText(UIStrings.ROUTING_RULES.FORM.NAME_LABEL),
       description: () => queryByLabelText(UIStrings.ROUTING_RULES.FORM.DESCRIPTION_LABEL),
       mode: () => queryByLabelText(UIStrings.ROUTING_RULES.FORM.MODE_LABEL),
       matcher: (index) => queryByLabelText(UIStrings.ROUTING_RULES.FORM.MATCHER_LABEL(index)),
+      deleteMatcherButton: (index) => queryAllByLabelText(UIStrings.ROUTING_RULES.FORM.DELETE_MATCHER_BUTTON)[index],
       createButton: () => queryByText(UIStrings.ROUTING_RULES.FORM.CREATE_BUTTON, {selector: '[type="submit"]'}),
       saveButton: () => queryByText(UIStrings.SETTINGS.SAVE_BUTTON_LABEL),
       cancelButton: () => queryByText(UIStrings.SETTINGS.CANCEL_BUTTON_LABEL),
@@ -197,7 +200,7 @@ describe('RoutingRulesForm', function() {
     ExtJS.requestConfirmation.mockReturnValue(CONFIRM);
     fireEvent.click(deleteButton());
 
-    await waitFor(() => expect(axios.delete).toBeCalledWith(`/service/rest/internal/ui/routing-rules/${itemId}`));
+    await waitFor(() => expect(axios.delete).toBeCalledWith(ROUTING_RULES_URL(itemId)));
     expect(onDone).toBeCalled();
   });
 
@@ -222,9 +225,53 @@ describe('RoutingRulesForm', function() {
     fireEvent.click(createButton());
 
     await waitFor(() => expect(axios.post).toHaveBeenCalledWith(
-        '/service/rest/internal/ui/routing-rules/',
+        ROUTING_RULES_URL(''),
         {name: 'block-all', description: 'Block all requests', mode: 'BLOCK', matchers: ['.*']}
     ));
     expect(window.dirty).toEqual([]);
+  });
+
+  it('removes existing matchers', async function() {
+    const itemId = 'allow-all';
+
+    axios.get.mockResolvedValue({
+      data: {
+        name: itemId,
+        description: 'Allow all requests',
+        mode: 'ALLOW',
+        matchers: ['a', 'b', 'c']
+      }
+    });
+
+    const {loadingMask, matcher, saveButton, deleteMatcherButton} = renderEditView(itemId);
+
+    await waitForElementToBeRemoved(loadingMask);
+
+    expect(matcher(0)).toHaveValue('a');
+    expect(matcher(1)).toHaveValue('b');
+    expect(matcher(2)).toHaveValue('c');
+
+    expect(deleteMatcherButton(0)).toBeInTheDocument();
+    expect(deleteMatcherButton(1)).toBeInTheDocument();
+    expect(deleteMatcherButton(2)).toBeInTheDocument();
+
+    fireEvent.click(deleteMatcherButton(2));
+    expect(matcher(2)).not.toBeInTheDocument();
+
+    fireEvent.click(deleteMatcherButton(1));
+    expect(matcher(1)).not.toBeInTheDocument();
+
+    expect(deleteMatcherButton(0)).toBe(undefined);
+
+    expect(saveButton()).not.toHaveClass('disabled');
+
+    await act(async () => fireEvent.click(saveButton()));
+
+    expect(axios.put).toHaveBeenLastCalledWith(ROUTING_RULES_URL(itemId), {
+      description: 'Allow all requests',
+      matchers: ['a'],
+      mode: 'ALLOW',
+      name: 'allow-all',
+    });
   });
 });
