@@ -62,7 +62,7 @@ export default Machine(
             },
             PREVIEW: {
               target: 'preview',
-              actions: ['clearFilter']
+              actions: ['clearPreviewError', 'clearFilter']
             },
             FILTER: {
               target: 'loaded',
@@ -126,6 +126,10 @@ export default Machine(
 
         setPreviewError: assign({
           previewError: (_, event) => event.data.response.data[0].message
+        }),
+
+        clearPreviewError: assign({
+          previewError: () => ''
         }),
 
         logLoadError: (_, event) => console.error(event.data.message)
