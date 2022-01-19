@@ -12,6 +12,10 @@
  */
 package org.sonatype.nexus.repository.rest;
 
+import java.util.Objects;
+
+import org.sonatype.nexus.repository.rest.sql.UnsupportedSearchField;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -28,10 +32,22 @@ public class SearchMapping
 
   private final String description;
 
-  public SearchMapping(final String alias, final String attribute, final String description) {
+  private final SearchFieldSupport field;
+
+  public SearchMapping(
+      final String alias,
+      final String attribute,
+      final String description,
+      final SearchFieldSupport field)
+  {
     this.alias = checkNotNull(alias);
     this.attribute = checkNotNull(attribute);
     this.description = checkNotNull(description);
+    this.field = checkNotNull(field);
+  }
+
+  public SearchMapping(final String alias, final String attribute, final String description) {
+    this(alias, attribute, description, UnsupportedSearchField.INSTANCE);
   }
 
   public String getAttribute() {
@@ -46,6 +62,10 @@ public class SearchMapping
     return description;
   }
 
+  public SearchFieldSupport getField() {
+    return field;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) {
@@ -57,21 +77,15 @@ public class SearchMapping
 
     SearchMapping that = (SearchMapping) o;
 
-    if (!attribute.equals(that.attribute)) {
-      return false;
-    }
-    if (!alias.equals(that.alias)) {
-      return false;
-    }
-    return description.equals(that.description);
+    return Objects.equals(attribute, that.attribute) &&
+        Objects.equals(alias, that.alias) &&
+        Objects.equals(description, that.description) &&
+        Objects.equals(field, that.field);
   }
 
   @Override
   public int hashCode() {
-    int result = attribute.hashCode();
-    result = 31 * result + alias.hashCode();
-    result = 31 * result + description.hashCode();
-    return result;
+    return Objects.hash(attribute, alias, description, field);
   }
 
   @Override
@@ -80,6 +94,7 @@ public class SearchMapping
         "attribute='" + attribute + '\'' +
         ", alias='" + alias + '\'' +
         ", description='" + description + '\'' +
+        ", field='" + field + '\'' +
         '}';
   }
 }

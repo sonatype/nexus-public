@@ -20,6 +20,7 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
+import org.sonatype.nexus.repository.rest.sql.ComponentSearchField;
 
 import com.google.common.collect.ImmutableList;
 
@@ -39,9 +40,9 @@ public class DefaultSearchMappings
       new SearchMapping("q", "keyword", "Query by keyword"),
       new SearchMapping("repository", REPOSITORY_NAME, "Repository name"),
       new SearchMapping("format", "format", "Query by format"),
-      new SearchMapping("group", "group.raw", "Component group"),
-      new SearchMapping("name", "name.raw", "Component name"),
-      new SearchMapping("version", "version", "Component version"),
+      new SearchMapping("group", "group.raw", "Component group", ComponentSearchField.NAMESPACE),
+      new SearchMapping("name", "name.raw", "Component name", ComponentSearchField.NAME),
+      new SearchMapping("version", "version", "Component version", ComponentSearchField.VERSION),
       new SearchMapping("md5", "assets.attributes.checksum.md5", "Specific MD5 hash of component's asset"),
       new SearchMapping("sha1", "assets.attributes.checksum.sha1", "Specific SHA-1 hash of component's asset"),
       new SearchMapping("sha256", "assets.attributes.checksum.sha256", "Specific SHA-256 hash of component's asset"),
