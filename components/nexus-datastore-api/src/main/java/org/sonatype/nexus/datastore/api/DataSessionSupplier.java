@@ -30,6 +30,14 @@ public interface DataSessionSupplier
   DataSession<?> openSession(String storeName);
 
   /**
+   * Opens a new {@link DataSession} against the named data store and sets the transaction isolation to Serializable.
+   *
+   * @throws DataStoreNotFoundException if the store does not exist
+   * @since 3.next
+   */
+  DataSession<?> openSerializableTransactionSession(String storeName);
+
+  /**
    * Opens a new JDBC {@link Connection} to the named data store.
    *
    * @throws DataStoreNotFoundException if the store does not exist

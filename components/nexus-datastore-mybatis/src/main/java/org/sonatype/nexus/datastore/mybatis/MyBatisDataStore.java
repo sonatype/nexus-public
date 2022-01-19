@@ -108,6 +108,7 @@ import static java.util.Optional.empty;
 import static java.util.Optional.ofNullable;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
+import static org.apache.ibatis.session.TransactionIsolationLevel.SERIALIZABLE;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.common.text.Strings2.isBlank;
 import static org.sonatype.nexus.common.text.Strings2.lower;
@@ -270,6 +271,12 @@ public class MyBatisDataStore
   @Override
   public MyBatisDataSession openSession() {
     return new MyBatisDataSession(new DataAccessSqlSession(mybatisConfig));
+  }
+
+  @Guarded(by = STARTED)
+  @Override
+  public MyBatisDataSession openSerializableTransactionSession() {
+    return new MyBatisDataSession(new DataAccessSqlSession(mybatisConfig, SERIALIZABLE));
   }
 
   @Guarded(by = STARTED)

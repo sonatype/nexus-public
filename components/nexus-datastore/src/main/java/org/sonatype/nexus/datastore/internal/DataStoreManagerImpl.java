@@ -137,6 +137,12 @@ public class DataStoreManagerImpl
   }
 
   @Override
+  public DataSession<?> openSerializableTransactionSession(final String storeName) {
+    return get(storeName).orElseThrow(() -> new DataStoreNotFoundException(storeName))
+        .openSerializableTransactionSession();
+  }
+
+  @Override
   public Connection openConnection(final String storeName) throws SQLException {
     return get(storeName).orElseThrow(() -> new DataStoreNotFoundException(storeName)).openConnection();
   }

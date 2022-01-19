@@ -211,6 +211,12 @@ public class DataSessionRule
   }
 
   @Override
+  public DataSession<?> openSerializableTransactionSession(final String storeName) {
+    return ofNullable(stores.get(storeName)).orElseThrow(() -> new DataStoreNotFoundException(storeName))
+        .openSerializableTransactionSession();
+  }
+
+  @Override
   public Connection openConnection(final String storeName) throws SQLException {
     return ofNullable(stores.get(storeName)).orElseThrow(() -> new DataStoreNotFoundException(storeName)).openConnection();
   }
