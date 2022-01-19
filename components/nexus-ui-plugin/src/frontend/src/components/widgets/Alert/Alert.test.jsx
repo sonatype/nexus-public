@@ -17,13 +17,11 @@ import '@testing-library/jest-dom/extend-expect';
 import Alert from "./Alert";
 
 describe('Alert', () => {
-  it('renders correctly', () => {
-    const {container} = render(<Alert type="error"/>);
-    expect(container).toMatchSnapshot();
-  });
-
   it('renders correctly with an error message', () => {
-    const {container} = render(<Alert type="error">A custom error message</Alert>);
-    expect(container).toMatchSnapshot();
+    const message = 'A custom error message';
+
+    const {container} = render(<Alert type="error">{message}</Alert>);
+
+    expect(container).toHaveTextContent(message);
   });
 });

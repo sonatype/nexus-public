@@ -18,9 +18,10 @@ import ContentBody from './ContentBody';
 
 describe('ContentBody', () => {
   it('renders correctly', () => {
+    const body = 'Content Body'
     const {container} = render(
-        <ContentBody className="test">body</ContentBody>
+        <ContentBody className="test">{body}</ContentBody>
     );
-    expect(container).toMatchSnapshot();
+    expect(container).toHaveTextContent(body);
   });
 });

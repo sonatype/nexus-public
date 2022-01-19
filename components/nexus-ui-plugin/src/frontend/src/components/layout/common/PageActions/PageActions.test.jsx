@@ -18,9 +18,10 @@ import PageActions from './PageActions';
 
 describe('PageActions', () => {
   it('renders correctly', () => {
+    const action = 'Page action';
     const {container} = render(
-        <PageActions><span>action</span></PageActions>
+        <PageActions><span>{action}</span></PageActions>
     );
-    expect(container).toMatchSnapshot();
+    expect(container).toHaveTextContent(action);
   });
 });

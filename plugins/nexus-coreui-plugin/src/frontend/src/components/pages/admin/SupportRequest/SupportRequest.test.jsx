@@ -13,13 +13,15 @@
 import React from 'react';
 import {render} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
+import UIStrings from "../../../../constants/UIStrings";
 
 import SupportRequest from './SupportRequest';
 
-describe('SystemInformation', () => {
+describe('SupportRequest', () => {
   it('renders correctly', async () => {
     const {container} = render(<SupportRequest/>);
 
-    expect(container).toMatchSnapshot();
+    expect(container).toHaveTextContent(UIStrings.SUPPORT_REQUEST.ACTIONS.submitRequest);
+    expect(container).toHaveTextContent(UIStrings.SUPPORT_REQUEST.DESCRIPTION);
   });
 });

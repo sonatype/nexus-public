@@ -19,9 +19,10 @@ import PageHeader from './PageHeader';
 
 describe('PageHeader', () => {
   it('renders with children', () => {
+    const content = 'test';
     const {container} = render(
-        <PageHeader>test</PageHeader>
+        <PageHeader>{content}</PageHeader>
     );
-    expect(container).toMatchSnapshot();
+    expect(container).toHaveTextContent(content);
   });
 });

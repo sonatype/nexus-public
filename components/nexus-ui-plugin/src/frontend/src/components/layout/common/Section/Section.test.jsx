@@ -18,9 +18,10 @@ import Section from './Section';
 
 describe('Section', () => {
   it('renders correctly', () => {
+    const name = 'Section Name';
     const {container} = render(
-        <Section>section</Section>
+        <Section>{name}</Section>
     );
-    expect(container).toMatchSnapshot();
+    expect(container).toHaveTextContent(name);
   });
 });
