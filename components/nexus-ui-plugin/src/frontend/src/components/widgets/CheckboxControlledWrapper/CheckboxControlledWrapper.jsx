@@ -20,12 +20,8 @@ import PropTypes from "prop-types";
 /**
  * @since 3.29
  */
-export default function CheckboxControlledWrapper({id, isChecked, children, onChange}) {
-  const [checked, setChecked] = useState(!!isChecked),
-      toggle = () => setChecked(!checked);
-
+export default function CheckboxControlledWrapper({id, children, onChange, ...attrs}) {
   function handleChange(event) {
-    toggle();
     if (onChange) {
       onChange(event.target.checked);
     }
@@ -33,7 +29,7 @@ export default function CheckboxControlledWrapper({id, isChecked, children, onCh
 
   return <div className='checkbox-controlled-wrapper' id={id}>
     <div className='checkbox-control'>
-      <NxCheckbox isChecked={checked} onChange={handleChange}/>
+      <NxCheckbox {...attrs} onChange={handleChange}/>
     </div>
     <div className='checkbox-children'>
       {children}

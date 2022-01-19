@@ -615,9 +615,13 @@ Once created, a cleanup policy must be assigned to a repository from \
     FORMAT_LABEL: 'Format',
     NOTES_LABEL: 'Notes',
     CRITERIA_LABEL: 'Cleanup Criteria',
+    LAST_UPDATED_CHECKBOX_TITLE: (enabled) => `${enabled ? 'Disable' : 'Enable'} Component Age Criteria`,
     LAST_UPDATED_LABEL: 'Component Age',
+    LAST_DOWNLOADED_CHECKBOX_TITLE: (enabled) => `${enabled ? 'Disable' : 'Enable'} Component Usage Criteria`,
     LAST_DOWNLOADED_LABEL: 'Component Usage',
+    RELEASE_TYPE_CHECKBOX_TITLE: (enabled) => `${enabled ? 'Disable' : 'Enable'} Release Type Criteria`,
     RELEASE_TYPE_LABEL: 'Release Type',
+    ASSET_NAME_CHECKBOX_TITLE: (enabled) => `${enabled ? 'Disable' : 'Enable'} Asset Name Matcher Criteria`,
     ASSET_NAME_LABEL: 'Asset Name Matcher',
     FORMAT_SELECT: 'Select a format...',
     RELEASE_TYPE_SELECT: 'Select a release type...',
@@ -649,6 +653,7 @@ Once created, a cleanup policy must be assigned to a repository from \
       EMPTY: 'No assets in repository matched the criteria',
       COMPONENT_COUNT: (actual, total) => `Component count (matching criteria) viewing ${actual} out of ${total}.`,
       SAMPLE_WARNING: 'Results may only be a sample of what will be deleted using the current criteria.',
+      BUTTON_TOOLTIP: 'Please select a repository and at least one cleanup criteria',
     },
 
     MESSAGES: {
