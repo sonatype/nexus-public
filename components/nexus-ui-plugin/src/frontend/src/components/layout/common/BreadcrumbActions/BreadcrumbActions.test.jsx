@@ -18,9 +18,10 @@ import BreadcrumbActions from './BreadcrumbActions';
 
 describe('BreadcrumbActions', () => {
   it('renders correctly', () => {
+    const action = 'Action Name';
     const {container} = render(
-        <BreadcrumbActions><span>action</span></BreadcrumbActions>
+        <BreadcrumbActions><span>{action}</span></BreadcrumbActions>
     );
-    expect(container).toMatchSnapshot();
+    expect(container).toHaveTextContent(action);
   });
 });

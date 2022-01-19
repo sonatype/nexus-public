@@ -18,14 +18,14 @@ import Select from "./Select";
 import UIStrings from "../../../constants/UIStrings";
 
 describe('Select', () => {
-  it('renders correctly', () => {
+  it('renders select tag', () => {
     const {container} = render(
         <Select>
           <option value="1">1</option>
           <option value="2">2</option>
         </Select>
     );
-    expect(container).toMatchSnapshot();
+    expect(container.querySelector('.nxrm-select')).toBeInTheDocument();
   });
 
   it('renders the first error message', () => {

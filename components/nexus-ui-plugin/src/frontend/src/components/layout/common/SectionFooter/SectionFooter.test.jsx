@@ -18,9 +18,10 @@ import SectionFooter from './SectionFooter';
 
 describe('SectionFooter', () => {
   it('renders correctly', () => {
+    const footer = 'Footer Content';
     const {container} = render(
-        <SectionFooter>footer</SectionFooter>
+        <SectionFooter>{footer}</SectionFooter>
     );
-    expect(container).toMatchSnapshot();
+    expect(container).toHaveTextContent(footer);
   });
 });

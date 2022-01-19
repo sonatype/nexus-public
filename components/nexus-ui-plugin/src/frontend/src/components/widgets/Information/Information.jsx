@@ -38,12 +38,12 @@ Information.propTypes = {
 
 function InformationRow({children}) {
   return <tr className="nxrm-information--row">{children}</tr>;
-};
+}
 
 function InformationName({children}) {
   return <td className="nxrm-information--name">{children}</td>;
-};
+}
 
 function InformationValue({children}) {
   return <td className="nxrm-information--value">{children}</td>;
-};
+}

@@ -19,9 +19,11 @@ import Page from './Page';
 
 describe('Page', () => {
   it('renders with custom class', () => {
+    const content = 'Page content';
     const {container} = render(
-        <Page className="test">test</Page>
+        <Page className="test">{content}</Page>
     );
-    expect(container).toMatchSnapshot();
+    expect(container).toHaveTextContent(content);
+    expect(container.querySelector('.test')).toBeInTheDocument();
   });
 });

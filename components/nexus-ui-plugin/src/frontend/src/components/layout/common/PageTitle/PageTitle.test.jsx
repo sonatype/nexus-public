@@ -24,20 +24,21 @@ describe('PageTitle', () => {
     const {container} = render(
         <PageTitle icon={faInfo} text="text"/>
     );
-    expect(container).toMatchSnapshot();
+    expect(container.querySelector('.nx-icon')).toBeInTheDocument();
   });
 
   it('renders the text without an icon', () => {
     const {container} = render(
         <PageTitle text="text"/>
     );
-    expect(container).toMatchSnapshot();
+    expect(container).toHaveTextContent('text');
   });
 
   it('renders the text with a description', () => {
     const {container} = render(
         <PageTitle text="text" description="description"/>
     );
-    expect(container).toMatchSnapshot();
+    expect(container).toHaveTextContent('text');
+    expect(container).toHaveTextContent('description');
   });
 });

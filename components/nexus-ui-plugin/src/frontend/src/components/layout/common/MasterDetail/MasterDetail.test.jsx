@@ -27,7 +27,7 @@ jest.mock('../../../../interface/ExtJS', () => class {
 describe('MasterDetail', () => {
   it('renders the master view when at the root', () => {
     ExtJS.useHistory.mockReturnValue({location: {pathname: ''}});
-    const {container, queryByTestId} = render(
+    const {queryByTestId} = render(
         <MasterDetail path="admin">
           <Master><TestMaster /></Master>
           <Detail><TestDetail /></Detail>
@@ -36,12 +36,11 @@ describe('MasterDetail', () => {
 
     expect(queryByTestId('master')).toBeInTheDocument();
     expect(queryByTestId('detail')).not.toBeInTheDocument();
-    expect(container).toMatchSnapshot();
   });
 
   it('renders the detail view when on a child path', () => {
     ExtJS.useHistory.mockReturnValue({location: {pathname: ':itemId'}});
-    const {container, queryByTestId} = render(
+    const {queryByTestId} = render(
         <MasterDetail path="admin">
           <Master><TestMaster /></Master>
           <Detail><TestDetail /></Detail>
@@ -50,12 +49,11 @@ describe('MasterDetail', () => {
 
     expect(queryByTestId('master')).not.toBeInTheDocument();
     expect(queryByTestId('detail')).toBeInTheDocument();
-    expect(container).toMatchSnapshot();
   });
 
   it('renders the detail view when onCreate is called', () => {
     ExtJS.useHistory.mockReturnValue({location: {pathname: ''}});
-    const {container, getByTestId, queryByTestId} = render(
+    const {getByTestId, queryByTestId} = render(
         <MasterDetail path="admin">
           <Master><TestMaster /></Master>
           <Detail><TestDetail /></Detail>
@@ -67,7 +65,6 @@ describe('MasterDetail', () => {
 
     expect(queryByTestId('master')).not.toBeInTheDocument();
     expect(queryByTestId('detail')).toBeInTheDocument();
-    expect(container).toMatchSnapshot();
   });
 });
 
