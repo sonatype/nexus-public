@@ -10,26 +10,33 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.transaction;
+package org.sonatype.nexus.repository.content.search;
+
+import org.sonatype.nexus.datastore.api.DataSession;
+import org.sonatype.nexus.repository.content.browse.store.example.TestSearchDAO;
+import org.sonatype.nexus.repository.content.store.ExampleContentTestSupport;
+
+import org.junit.Test;
+
+import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 /**
- * Represents some kind of storage with transactional behaviour.
- *
- * @since 3.19
+ * Test {@link SearchDAO}.
  */
-public interface TransactionalStore<S extends TransactionalSession<?>>
+public class SearchDAOTest
+    extends ExampleContentTestSupport
 {
-  /**
-   * Opens a new {@link TransactionalSession}.
-   */
-  S openSession();
+  public SearchDAOTest() {
+    super(TestSearchDAO.class);
+  }
 
   /**
-   * Opens a new {@link TransactionalSession} with the Serializable isolation level.
-   *
-   * @since 3.next
+   * This test exists to ensure the stubbed DAO doesn't break or cause exceptions
    */
-  default S openSerializableTransactionSession() {
-    throw new UnsupportedOperationException();
+  @Test
+  public void testEmptyCreateSchema() {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      session.access(TestSearchDAO.class);
+    }
   }
 }

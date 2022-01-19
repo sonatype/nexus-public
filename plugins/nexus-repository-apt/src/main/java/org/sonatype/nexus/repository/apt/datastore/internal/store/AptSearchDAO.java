@@ -12,22 +12,12 @@
  */
 package org.sonatype.nexus.repository.apt.datastore.internal.store;
 
-import javax.inject.Named;
-
-import org.sonatype.nexus.repository.apt.AptFormat;
-import org.sonatype.nexus.repository.content.store.FormatStoreModule;
+import org.sonatype.nexus.repository.content.search.SearchDAO;
 
 /**
- * Configures the content store bindings for a Apt format.
- *
- * @since 3.31
+ * @since 3.next
  */
-@Named(AptFormat.NAME)
-public class AptStoreModule
-    extends FormatStoreModule<AptContentRepositoryDAO,
-    AptComponentDAO,
-    AptAssetDAO,
-    AptAssetBlobDAO,
-    AptSearchDAO>
+public interface AptSearchDAO
+    extends SearchDAO
 {
 }

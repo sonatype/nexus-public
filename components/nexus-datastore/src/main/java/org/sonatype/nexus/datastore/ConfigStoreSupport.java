@@ -34,7 +34,7 @@ public abstract class ConfigStoreSupport<T extends DataAccess>
     extends StateGuardLifecycleSupport
     implements TransactionalStore<DataSession<?>>
 {
-  private final DataSessionSupplier sessionSupplier;
+  protected final DataSessionSupplier sessionSupplier;
 
   private final Class<T> daoClass;
 

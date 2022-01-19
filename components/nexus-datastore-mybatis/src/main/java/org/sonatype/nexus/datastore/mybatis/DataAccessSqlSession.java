@@ -14,6 +14,8 @@ package org.sonatype.nexus.datastore.mybatis;
 
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 import org.sonatype.nexus.common.app.FrozenException;
 import org.sonatype.nexus.datastore.api.DataAccessException;
 
@@ -25,6 +27,7 @@ import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.TransactionIsolationLevel;
 import org.apache.ibatis.session.defaults.DefaultSqlSession;
 import org.apache.ibatis.transaction.Transaction;
 import org.apache.ibatis.transaction.TransactionFactory;
@@ -42,7 +45,11 @@ final class DataAccessSqlSession
     extends DefaultSqlSession
 {
   public DataAccessSqlSession(final Configuration configuration) {
-    super(configuration, newExecutor(configuration));
+    this(configuration, null);
+  }
+
+  public DataAccessSqlSession(final Configuration configuration, final TransactionIsolationLevel isolationLevel) {
+    super(configuration, newExecutor(configuration, isolationLevel));
   }
 
   @Override
@@ -119,14 +126,17 @@ final class DataAccessSqlSession
   }
 
   /**
-   * Creates a new session {@link Executor} without auto-commit, using the default isolation level.
+   * Creates a new session {@link Executor} without auto-commit, using the specified isolation level.
    */
-  private static Executor newExecutor(final Configuration configuration) {
+  private static Executor newExecutor(
+      final Configuration configuration,
+      @Nullable TransactionIsolationLevel isolationLevel)
+  {
     Transaction tx = null;
     try {
       Environment environment = configuration.getEnvironment();
       TransactionFactory txFactory = environment.getTransactionFactory();
-      tx = txFactory.newTransaction(environment.getDataSource(), null, false);
+      tx = txFactory.newTransaction(environment.getDataSource(), isolationLevel, false);
       return configuration.newExecutor(tx);
     }
     catch (Exception e) {

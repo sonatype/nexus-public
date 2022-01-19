@@ -10,24 +10,26 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.apt.datastore.internal.store;
+package org.sonatype.nexus.repository.rest.sql;
 
-import javax.inject.Named;
-
-import org.sonatype.nexus.repository.apt.AptFormat;
-import org.sonatype.nexus.repository.content.store.FormatStoreModule;
+import org.sonatype.nexus.repository.rest.SearchFieldSupport;
 
 /**
- * Configures the content store bindings for a Apt format.
+ * A field on the component table.
  *
- * @since 3.31
+ * @since 3.next
  */
-@Named(AptFormat.NAME)
-public class AptStoreModule
-    extends FormatStoreModule<AptContentRepositoryDAO,
-    AptComponentDAO,
-    AptAssetDAO,
-    AptAssetBlobDAO,
-    AptSearchDAO>
+public class ComponentSearchField extends SearchFieldSupport
 {
+  private static final String TABLE = "${format}_component";
+
+  public static final ComponentSearchField NAMESPACE = new ComponentSearchField("namespace");
+
+  public static final SearchFieldSupport NAME = new ComponentSearchField("name");
+
+  public static final SearchFieldSupport VERSION = new ComponentSearchField("version");
+
+  public ComponentSearchField(final String columnName) {
+    super(TABLE, columnName);
+  }
 }
