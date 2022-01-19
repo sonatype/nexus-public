@@ -63,6 +63,8 @@ public class RepositoryInternalResource
       "(All Repositories)"
   );
 
+  static final String ALL_FORMATS = "*";
+
   private final List<Format> formats;
 
   private final RepositoryManager repositoryManager;
@@ -89,11 +91,15 @@ public class RepositoryInternalResource
   public List<RepositoryXO> getRepositories(
       @QueryParam("type") final String type,
       @QueryParam("withAll") final boolean withAll,
-      @QueryParam("withFormats") final boolean withFormats)
+      @QueryParam("withFormats") final boolean withFormats,
+      @QueryParam("format") final String formatParam)
   {
     List<RepositoryXO> repositories = stream(repositoryManager.browse())
         .filter(repositoryPermissionChecker::userCanReadOrBrowse)
         .filter(repository -> isBlank(type) || type.equals(repository.getType().toString()))
+        .filter(repository -> isBlank(formatParam)
+                || formatParam.equals(ALL_FORMATS)
+                || formatParam.equals(repository.getFormat().getValue()))
         .map(repository -> new RepositoryXO(repository.getName(), repository.getName()))
         .sorted(Comparator.comparing(RepositoryXO::getName))
         .collect(toList());

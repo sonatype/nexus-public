@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
+import {fireEvent, screen, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/extend-expect';
 import {when} from 'jest-when';
@@ -52,6 +52,14 @@ const EDIT_URL = (itemId) => `/service/rest/internal/cleanup-policies/${itemId}`
 const FORMATS_URL = '/service/rest/internal/cleanup-policies/criteria/formats';
 const REPOSITORIES_URL = '/service/rest/internal/ui/repositories';
 const PREVIEW_URL = '/service/rest/internal/cleanup-policies/preview/components';
+
+const selectors = {
+  ...TestUtils.selectors,
+  getCriteriaLastBlobUpdatedCheckbox: () => screen.getByTitle(/(Enable|Disable) Component Age Criteria/),
+  getCriteriaLastDownloadedCheckbox: () => screen.getByTitle(/(Enable|Disable) Component Usage Criteria/),
+  getCriteriaReleaseTypeCheckbox: () => screen.getByTitle(/(Enable|Disable) Release Type Criteria/),
+  getCriteriaAssetRegexCheckbox: () => screen.getByTitle(/(Enable|Disable) Asset Name Matcher Criteria/)
+}
 
 describe('CleanupPoliciesForm', function() {
   const CONFIRM = Promise.resolve();
@@ -96,11 +104,13 @@ describe('CleanupPoliciesForm', function() {
   }
 
   beforeEach(() => {
-    when(axios.get).calledWith(REPOSITORIES_URL).mockResolvedValue({
-      data:  [{
-        'id': 'maven-central',
-        'name': 'maven-central'
-      }]
+    when(axios.get)
+      .calledWith(REPOSITORIES_URL, {params: {format: EDITABLE_ITEM.format}})
+      .mockResolvedValue({
+        data:  [{
+          'id': 'maven-central',
+          'name': 'maven-central'
+        }]
     });
 
     when(axios.get).calledWith(EDIT_URL(EDITABLE_ITEM.name)).mockResolvedValue({
@@ -133,10 +143,14 @@ describe('CleanupPoliciesForm', function() {
     expect(name()).toHaveValue('test');
     expect(format()).toHaveValue('testformat');
     expect(notes()).toHaveValue('test notes');
+    expect(selectors.getCriteriaLastBlobUpdatedCheckbox()).toHaveClass('tm-checked');
     expect(criteriaLastBlobUpdated()).toHaveValue('7');
+    expect(selectors.getCriteriaLastDownloadedCheckbox()).toHaveClass('tm-checked');
     expect(criteriaLastDownloaded()).toHaveValue('8');
-    expect(criteriaReleaseType()).toHaveValue('RELEASES')
-    expect(criteriaAssetRegex()).toHaveValue('.*')
+    expect(selectors.getCriteriaReleaseTypeCheckbox()).toHaveClass('tm-checked');
+    expect(criteriaReleaseType()).toHaveValue('RELEASES');
+    expect(selectors.getCriteriaAssetRegexCheckbox()).toHaveClass('tm-checked');
+    expect(criteriaAssetRegex()).toHaveValue('.*');
     expect(saveButton()).toHaveClass('disabled');
   });
 
@@ -222,7 +236,15 @@ describe('CleanupPoliciesForm', function() {
 
     await waitFor(() => expect(axios.post).toHaveBeenCalledWith(
         '/service/rest/internal/cleanup-policies',
-        {name: 'test', format: 'testformat', notes: 'notes'}
+        {
+          name: 'test',
+          format: 'testformat',
+          notes: 'notes',
+          criteriaAssetRegex: null,
+          criteriaLastBlobUpdated: null,
+          criteriaLastDownloaded: null,
+          criteriaReleaseType: null
+        }
     ));
     expect(window.dirty).toEqual([]);
   });
@@ -346,6 +368,80 @@ describe('CleanupPoliciesForm', function() {
 
       expect(queryByText('No assets in repository matched the criteria')).toBeInTheDocument();
 
+      expect(previewSampleWarning()).not.toBeInTheDocument();
+    });
+
+    it('clears preview results when the cleanup policies form is changed', async function() {
+      const {
+        loadingMask,
+        format,
+        previewButton,
+        previewRepositories,
+        previewSampleWarning,
+        previewCmpCount,
+        queryByText
+      } = renderEditView(EDITABLE_ITEM.name);
+
+      await waitForElementToBeRemoved(loadingMask);
+
+      await TestUtils.changeField(previewRepositories, 'maven-central');
+
+      when(axios.post).calledWith(PREVIEW_URL, {
+        criteriaLastBlobUpdated: EDITABLE_ITEM.criteriaLastBlobUpdated,
+        criteriaLastDownloaded: EDITABLE_ITEM.criteriaLastDownloaded,
+        criteriaReleaseType: EDITABLE_ITEM.criteriaReleaseType,
+        criteriaAssetRegex: EDITABLE_ITEM.criteriaAssetRegex,
+        filter: '',
+        repository: 'maven-central'
+      }).mockResolvedValueOnce({
+        data: {
+          total: 1,
+          results: [{
+            id: null,
+            repository: 'maven-central',
+            format: 'maven2',
+            group: 'org.apache.maven',
+            name: 'maven-aether-provider',
+            version: '3.0',
+            assets: null
+          }]
+        }
+      });
+
+      fireEvent.click(previewButton());
+
+      await waitForElementToBeRemoved(loadingMask);
+
+      expect(queryByText('maven-aether-provider')).toBeInTheDocument();
+      expect(selectors.getCriteriaLastBlobUpdatedCheckbox()).toHaveClass('tm-checked');
+      expect(selectors.getCriteriaLastDownloadedCheckbox()).toHaveClass('tm-checked');
+      expect(selectors.getCriteriaReleaseTypeCheckbox()).toHaveClass('tm-checked');
+      expect(selectors.getCriteriaAssetRegexCheckbox()).toHaveClass('tm-checked');
+
+      expect(previewSampleWarning()).toBeInTheDocument();
+      expect(previewCmpCount(1, 1)).toBeInTheDocument();
+
+      when(axios.post).calledWith(PREVIEW_URL, {
+        criteriaLastBlobUpdated: EDITABLE_ITEM.criteriaLastBlobUpdated,
+        criteriaLastDownloaded: EDITABLE_ITEM.criteriaLastDownloaded,
+        criteriaReleaseType: EDITABLE_ITEM.criteriaReleaseType,
+        criteriaAssetRegex: EDITABLE_ITEM.criteriaAssetRegex,
+        filter: 'test',
+        repository: 'maven-central'
+      }).mockResolvedValueOnce({
+        data: {
+          total: 0,
+          results: []
+        }
+      });
+
+      await TestUtils.changeField(format, 'testformat');
+
+      expect(selectors.getCriteriaLastBlobUpdatedCheckbox()).toHaveClass('tm-unchecked');
+      expect(selectors.getCriteriaLastDownloadedCheckbox()).toHaveClass('tm-unchecked');
+      expect(selectors.getCriteriaReleaseTypeCheckbox()).toHaveClass('tm-unchecked');
+      expect(selectors.getCriteriaAssetRegexCheckbox()).toHaveClass('tm-unchecked');
+      expect(queryByText('No assets in repository matched the criteria')).toBeInTheDocument();
       expect(previewSampleWarning()).not.toBeInTheDocument();
     });
   });

@@ -101,6 +101,10 @@ export default Utils.buildFormMachine({
           SET_CRITERIA_ASSET_REGEX_ENABLED: {
             target: 'loaded',
             actions: ['setCriteriaAssetRegexEnabled']
+          },
+          UPDATE: {
+            ...config.states.loaded.on.UPDATE,
+            actions: [...config.states.loaded.on.UPDATE.actions, 'clearCriteria']
           }
         }
       }
@@ -145,7 +149,27 @@ export default Utils.buildFormMachine({
       criteriaAssetRegexEnabled: (_, event) => event.data?.data.criteriaAssetRegex
     }),
 
-    onDeleteError: ({data}) => ExtJS.showErrorMessage(UIStrings.CLEANUP_POLICIES.MESSAGES.DELETE_ERROR(data.name))
+    clearCriteria: assign((ctx, event) => {
+      if (event.data.format !== ctx.format) {
+        return {
+          ...ctx,
+          data: {
+            ...ctx.data,
+            criteriaLastBlobUpdated: null,
+            criteriaLastDownloaded: null,
+            criteriaReleaseType: null,
+            criteriaAssetRegex: null
+          },
+          criteriaLastDownloadedEnabled: false,
+          criteriaLastBlobUpdatedEnabled: false,
+          criteriaReleaseTypeEnabled: false,
+          criteriaAssetRegexEnabled: false
+        };
+      }
+      return ctx;
+    }),
+
+    onDeleteError: ({data}) => ExtJS.showErrorMessage(UIStrings.CLEANUP_POLICIES.MESSAGES.DELETE_ERROR(data.name)),
   },
   guards: {
     isEdit: ({pristineData}) => isEdit(pristineData),

@@ -34,10 +34,10 @@ import {
 } from '@sonatype/nexus-ui-plugin';
 
 import CleanupPoliciesFormMachine from './CleanupPoliciesFormMachine';
+import CleanupPoliciesPreview from './CleanupPoliciesPreview';
 
 import UIStrings from '../../../../constants/UIStrings';
-import {faBroom, faTrash} from '@fortawesome/free-solid-svg-icons';
-import CleanupPoliciesPreview from './CleanupPoliciesPreview';
+import {faTrash} from '@fortawesome/free-solid-svg-icons';
 
 import './CleanupPolicies.scss';
 
@@ -186,9 +186,12 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
                 {UIStrings.CLEANUP_POLICIES.CRITERIA_LABEL}
               </legend>
               {isFieldApplicable('lastBlobUpdated') &&
-              <CheckboxControlledWrapper isChecked={Boolean(data.criteriaLastBlobUpdated)}
+              <CheckboxControlledWrapper isChecked={criteriaLastBlobUpdatedEnabled}
                                          onChange={setCriteriaLastBlobUpdatedEnabled}
-                                         id="criteria-last-blob-updated-group">
+                                         id="criteria-last-blob-updated-group"
+                                         title={UIStrings.CLEANUP_POLICIES.LAST_UPDATED_CHECKBOX_TITLE(
+                                             criteriaLastBlobUpdatedEnabled
+                                         )}>
                 <FieldWrapper labelText={UIStrings.CLEANUP_POLICIES.LAST_UPDATED_LABEL}
                               descriptionText={UIStrings.CLEANUP_POLICIES.LAST_UPDATED_DESCRIPTION}>
                   <Textfield
@@ -202,9 +205,12 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
               </CheckboxControlledWrapper>
               }
               {isFieldApplicable('lastDownloaded') &&
-              <CheckboxControlledWrapper isChecked={Boolean(data.criteriaLastDownloaded)}
+              <CheckboxControlledWrapper isChecked={criteriaLastDownloadedEnabled}
                                          onChange={setCriteriaLastDownloadedEnabled}
-                                         id="criteria-last-downloaded-group">
+                                         id="criteria-last-downloaded-group"
+                                         title={UIStrings.CLEANUP_POLICIES.LAST_DOWNLOADED_CHECKBOX_TITLE(
+                                             criteriaLastDownloadedEnabled
+                                         )}>
                 <FieldWrapper labelText={UIStrings.CLEANUP_POLICIES.LAST_DOWNLOADED_LABEL}
                               descriptionText={UIStrings.CLEANUP_POLICIES.LAST_DOWNLOADED_DESCRIPTION}>
                   <Textfield
@@ -218,9 +224,12 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
               </CheckboxControlledWrapper>
               }
               {isFieldApplicable('isPrerelease') &&
-              <CheckboxControlledWrapper isChecked={Boolean(data.criteriaReleaseType)}
+              <CheckboxControlledWrapper isChecked={criteriaReleaseTypeEnabled}
                                          onChange={setCriteriaReleaseTypeEnabled}
-                                         id="criteria-release-type-group">
+                                         id="criteria-release-type-group"
+                                         title={UIStrings.CLEANUP_POLICIES.RELEASE_TYPE_CHECKBOX_TITLE(
+                                             criteriaReleaseTypeEnabled
+                                         )}>
                 <FieldWrapper labelText={UIStrings.CLEANUP_POLICIES.RELEASE_TYPE_LABEL}
                               descriptionText={UIStrings.CLEANUP_POLICIES.RELEASE_TYPE_DESCRIPTION}>
                   <Select
@@ -236,9 +245,12 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
               </CheckboxControlledWrapper>
               }
               {isFieldApplicable('regex') &&
-              <CheckboxControlledWrapper isChecked={Boolean(data.criteriaAssetRegex)}
+              <CheckboxControlledWrapper isChecked={criteriaAssetRegexEnabled}
                                          onChange={setCriteriaAssetRegexEnabled}
-                                         id="criteria-asset-name-group">
+                                         id="criteria-asset-name-group"
+                                         title={UIStrings.CLEANUP_POLICIES.ASSET_NAME_CHECKBOX_TITLE(
+                                             criteriaAssetRegexEnabled
+                                         )}>
                 <FieldWrapper labelText={UIStrings.CLEANUP_POLICIES.ASSET_NAME_LABEL}
                               descriptionText={UIStrings.CLEANUP_POLICIES.ASSET_NAME_DESCRIPTION}>
                   <Textfield
@@ -267,6 +279,7 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
           </>}
         </NxLoadWrapper>
       </Section>
+
       {!isLoading && !loadError && hasData && <CleanupPoliciesPreview policyData={data}/>}
     </ContentBody>
   </Page>;
