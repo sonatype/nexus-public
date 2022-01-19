@@ -471,6 +471,8 @@ This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 
       UPDATE_ERROR: 'An error occurred while updating user account settings',
       PASSWORD_NO_MATCH_ERROR: 'Passwords do not match',
       PASSWORD_MUST_DIFFER_ERROR: 'New password must be different',
+      PASSWORD_CHANGE_SUCCESS: 'Password changed',
+      PASSWORD_CHANGE_ERROR: 'Change password failed',
     },
     ID_FIELD_LABEL: 'Username',
     FIRST_FIELD_LABEL: 'First Name',

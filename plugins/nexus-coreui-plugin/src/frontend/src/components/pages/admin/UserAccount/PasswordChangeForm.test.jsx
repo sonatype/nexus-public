@@ -11,18 +11,21 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {fireEvent, wait} from '@testing-library/react';
+import {fireEvent, waitFor} from '@testing-library/react';
+import {act} from "react-dom/test-utils";
 import '@testing-library/jest-dom/extend-expect';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import PasswordChangeForm from './PasswordChangeForm';
 import UIStrings from '../../../../constants/UIStrings';
 import Axios from 'axios';
+import {ExtJS} from '@sonatype/nexus-ui-plugin';
 
 jest.mock('@sonatype/nexus-ui-plugin', () => {
   return {
     ...jest.requireActual('@sonatype/nexus-ui-plugin'),
     ExtJS: {
       showSuccessMessage: jest.fn(),
+      showErrorMessage: jest.fn(),
       fetchAuthenticationToken: jest.fn(() => Promise.resolve({data: 'fakeToken'})),
     }
   };
@@ -35,6 +38,8 @@ jest.mock('axios', () => {
 });
 
 describe('PasswordChangeForm', () => {
+  const CHANGE_PASSWORD_URL = '/service/rest/internal/ui/user/admin/password';
+
   const render = () => TestUtils.render(<PasswordChangeForm userId="admin"/>, ({getByLabelText, getByText}) => ({
     passwordCurrent: () => getByLabelText(UIStrings.USER_ACCOUNT.PASSWORD_CURRENT_FIELD_LABEL),
     passwordNew: () => getByLabelText(UIStrings.USER_ACCOUNT.PASSWORD_NEW_FIELD_LABEL),
@@ -93,9 +98,9 @@ describe('PasswordChangeForm', () => {
 
     fireEvent.click(changePasswordButton());
 
-    await wait(() => expect(Axios.put).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(Axios.put).toHaveBeenCalledTimes(1));
     expect(Axios.put).toHaveBeenCalledWith(
-        `/service/rest/internal/ui/user/admin/password`,
+        CHANGE_PASSWORD_URL,
         {
           authToken: 'fakeToken',
           password: 'bazzle',
@@ -106,6 +111,30 @@ describe('PasswordChangeForm', () => {
     expect(passwordNewConfirm()).toHaveValue('');
     expect(changePasswordButton()).toHaveClass('disabled');
     expect(discardButton()).toHaveClass('disabled');
+  });
+
+  it('shows password API validation error', async () => {
+    const {passwordCurrent, passwordNew, passwordNewConfirm, changePasswordButton} = render();
+    const apiValidationError = 'Passwords must contain an uppercase letter'
+
+    await TestUtils.changeField(passwordCurrent, 'foobar');
+    await TestUtils.changeField(passwordNew, 'bazzle');
+    await TestUtils.changeField(passwordNewConfirm, 'bazzle');
+
+    Axios.put.mockRejectedValue({
+      response: {
+        data: [
+          {
+            id: '*',
+            message: apiValidationError
+          }
+        ]
+      }
+    });
+
+    await act(async () => fireEvent.click(changePasswordButton()));
+
+    expect(ExtJS.showErrorMessage).toHaveBeenCalledWith(apiValidationError);
   });
 
   it('resets the form on discard', async () => {
@@ -122,7 +151,7 @@ describe('PasswordChangeForm', () => {
 
     fireEvent.click(discardButton());
 
-    await wait(() => expect(passwordCurrent()).toHaveValue(''));
+    await waitFor(() => expect(passwordCurrent()).toHaveValue(''));
     expect(passwordNew()).toHaveValue('');
     expect(passwordNewConfirm()).toHaveValue('');
     expect(changePasswordButton()).toHaveClass('disabled');

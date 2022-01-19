@@ -64,18 +64,10 @@ export default Utils.buildFormMachine({
         };
       }
     }),
-    logSaveSuccess: () => ExtJS.showSuccessMessage('Password changed'),
-    logSaveError: (error) => {
-      if (Array.isArray(error.saveError)) {
-        const message = error.saveError.filter(e => e.id !== "authToken").map(e => e.message).join('\\n');
-        if (message) {
-          ExtJS.showErrorMessage(message);
-        }
-      }
-      else {
-        ExtJS.showErrorMessage('Change password failed');
-        console.error(error);
-      }
+    logSaveSuccess: () => ExtJS.showSuccessMessage(UIStrings.USER_ACCOUNT.MESSAGES.PASSWORD_CHANGE_SUCCESS),
+    logSaveError: (context) => {
+      const error = context.saveError || UIStrings.USER_ACCOUNT.MESSAGES.PASSWORD_CHANGE_ERROR;
+      ExtJS.showErrorMessage(error);
     },
     onSaveSuccess: assign({
       data: () => EMPTY_DATA,
