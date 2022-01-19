@@ -10,24 +10,22 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.apt.datastore.internal.store;
+package org.sonatype.nexus.repository.content.search;
 
-import javax.inject.Named;
-
-import org.sonatype.nexus.repository.apt.AptFormat;
-import org.sonatype.nexus.repository.content.store.FormatStoreModule;
+import org.sonatype.nexus.datastore.api.ContentDataAccess;
+import org.sonatype.nexus.datastore.api.Expects;
+import org.sonatype.nexus.datastore.api.SchemaTemplate;
+import org.sonatype.nexus.repository.content.store.AssetBlobDAO;
+import org.sonatype.nexus.repository.content.store.AssetDAO;
+import org.sonatype.nexus.repository.content.store.ComponentDAO;
 
 /**
- * Configures the content store bindings for a Apt format.
- *
- * @since 3.31
+ * @since 3.next
  */
-@Named(AptFormat.NAME)
-public class AptStoreModule
-    extends FormatStoreModule<AptContentRepositoryDAO,
-    AptComponentDAO,
-    AptAssetDAO,
-    AptAssetBlobDAO,
-    AptSearchDAO>
+@Expects({AssetDAO.class, ComponentDAO.class, AssetBlobDAO.class})
+@SchemaTemplate("format")
+public interface SearchDAO
+    extends ContentDataAccess
 {
+
 }

@@ -10,24 +10,29 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.apt.datastore.internal.store;
+package org.sonatype.nexus.repository.content.search;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.sonatype.nexus.repository.apt.AptFormat;
-import org.sonatype.nexus.repository.content.store.FormatStoreModule;
+import org.sonatype.nexus.datastore.api.DataSessionSupplier;
+import org.sonatype.nexus.repository.content.store.ContentStoreSupport;
+
+import com.google.inject.assistedinject.Assisted;
 
 /**
- * Configures the content store bindings for a Apt format.
- *
- * @since 3.31
+ * @since 3.next
  */
-@Named(AptFormat.NAME)
-public class AptStoreModule
-    extends FormatStoreModule<AptContentRepositoryDAO,
-    AptComponentDAO,
-    AptAssetDAO,
-    AptAssetBlobDAO,
-    AptSearchDAO>
+@Named
+public class SearchStore<T extends SearchDAO>
+  extends ContentStoreSupport<T>
 {
+  @Inject
+  public SearchStore(final DataSessionSupplier sessionSupplier,
+                                @Assisted final String contentStoreName,
+                                @Assisted final Class<T> daoClass)
+  {
+    super(sessionSupplier, contentStoreName, daoClass);
+  }
+
 }

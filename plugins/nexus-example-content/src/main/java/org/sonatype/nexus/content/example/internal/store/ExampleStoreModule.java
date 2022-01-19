@@ -27,7 +27,8 @@ public class ExampleStoreModule
     extends FormatStoreModule<ExampleContentRepositoryDAO,
                               ExampleComponentDAO,
                               ExampleAssetDAO,
-                              ExampleAssetBlobDAO>
+                              ExampleAssetBlobDAO,
+                              ExampleSearchDAO>
 {
   // nothing to add...
 }
