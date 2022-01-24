@@ -16,10 +16,6 @@ import {useMachine} from '@xstate/react';
 import {
   ContentBody,
   FieldWrapper,
-  NxButton,
-  NxForm,
-  NxP,
-  NxFontAwesomeIcon,
   Page,
   PageHeader,
   PageTitle,
@@ -29,6 +25,17 @@ import {
   Utils,
   FormUtils,
 } from '@sonatype/nexus-ui-plugin';
+
+import {
+  NxForm,
+  NxErrorAlert,
+  NxButton,
+  NxFontAwesomeIcon,
+  NxLoadWrapper,
+  NxSubmitMask,
+  NxTooltip,
+  NxP
+} from '@sonatype/react-shared-components';
 
 import ContentSelectorsFormMachine from './ContentSelectorsFormMachine';
 

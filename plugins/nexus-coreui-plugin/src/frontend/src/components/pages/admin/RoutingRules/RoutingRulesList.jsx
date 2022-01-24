@@ -18,14 +18,6 @@ import {faChevronRight, faInfoCircle, faMapSigns} from '@fortawesome/free-solid-
 import {
   ContentBody,
   HelpTile,
-  NxButton,
-  NxFilterInput,
-  NxFontAwesomeIcon,
-  NxTable,
-  NxTableBody,
-  NxTableCell,
-  NxTableHead,
-  NxTableRow,
   Page,
   PageActions,
   PageHeader,
@@ -34,6 +26,17 @@ import {
   SectionToolbar,
   Utils
 } from '@sonatype/nexus-ui-plugin';
+
+import {
+  NxButton,
+  NxFilterInput,
+  NxFontAwesomeIcon,
+  NxTable,
+  NxTableBody,
+  NxTableCell,
+  NxTableHead,
+  NxTableRow,
+} from '@sonatype/react-shared-components';
 
 import RoutingRulesGlobalPreview from './RoutingRulesGlobalPreview';
 import RoutingRulesListMachine from './RoutingRulesListMachine';

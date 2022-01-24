@@ -16,10 +16,6 @@ import {useMachine} from '@xstate/react';
 import {
   ContentBody,
   FormUtils,
-  NxButton,
-  NxForm,
-  NxFormGroup,
-  NxTextInput,
   Page,
   PageHeader,
   PageTitle,
@@ -27,6 +23,13 @@ import {
   Select,
   ValidationUtils
 } from '@sonatype/nexus-ui-plugin';
+
+import {
+  NxButton,
+  NxForm,
+  NxFormGroup,
+  NxTextInput,
+} from '@sonatype/react-shared-components';
 
 import LoggingConfigurationFormMachine from './LoggingConfigurationFormMachine';
 

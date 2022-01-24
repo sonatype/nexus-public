@@ -16,6 +16,8 @@ import '@testing-library/jest-dom/extend-expect';
 
 import DynamicFormField from "./DynamicFormField";
 
+import UIStrings from '../../../constants/UIStrings';
+
 describe('DynamicFormField', () => {
   describe('renders the string type', () => {
     const stringFieldProps = {
@@ -71,7 +73,7 @@ describe('DynamicFormField', () => {
     });
 
     it('renders a MultiSelect field', () => {
-      const {container, queryByLabelText} = render(<DynamicFormField {...makeContext('test', ['a'])} dynamicProps={{
+      const {container, queryByTitle} = render(<DynamicFormField {...makeContext('test', ['a'])} dynamicProps={{
         type: 'itemselect',
         attributes: {
           options: ['a', 'b']
@@ -79,10 +81,11 @@ describe('DynamicFormField', () => {
       }}/>);
 
       expect(container.querySelector('.nxrm-select')).toBeInTheDocument();
-      expect(queryByLabelText('Move Selection Right')).toBeInTheDocument();
-      expect(queryByLabelText('Move Selection Left')).toBeInTheDocument();
-      expect(queryByLabelText('Move Selection Up')).toBeInTheDocument();
-      expect(queryByLabelText('Move Selection Down')).toBeInTheDocument();
+      expect(queryByTitle(UIStrings.MULTI_SELECT.MOVE_RIGHT)).toBeInTheDocument();
+      expect(queryByTitle(UIStrings.MULTI_SELECT.MOVE_LEFT)).toBeInTheDocument();
+      expect(queryByTitle(UIStrings.MULTI_SELECT.MOVE_UP)).toBeInTheDocument();
+      expect(queryByTitle(UIStrings.MULTI_SELECT.MOVE_DOWN)).toBeInTheDocument();
+
     });
 
     it('renders a Select field', () => {

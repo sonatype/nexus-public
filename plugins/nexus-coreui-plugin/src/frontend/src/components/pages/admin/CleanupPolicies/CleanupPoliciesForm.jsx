@@ -17,12 +17,6 @@ import {
   CheckboxControlledWrapper,
   ContentBody,
   FieldWrapper,
-  NxErrorAlert,
-  NxButton,
-  NxFontAwesomeIcon,
-  NxLoadWrapper,
-  NxSubmitMask,
-  NxTooltip,
   Page,
   PageHeader,
   PageTitle,
@@ -32,6 +26,15 @@ import {
   Textfield,
   Utils
 } from '@sonatype/nexus-ui-plugin';
+
+import {
+  NxErrorAlert,
+  NxButton,
+  NxFontAwesomeIcon,
+  NxLoadWrapper,
+  NxSubmitMask,
+  NxTooltip,
+} from '@sonatype/react-shared-components';
 
 import CleanupPoliciesFormMachine from './CleanupPoliciesFormMachine';
 import CleanupPoliciesPreview from './CleanupPoliciesPreview';

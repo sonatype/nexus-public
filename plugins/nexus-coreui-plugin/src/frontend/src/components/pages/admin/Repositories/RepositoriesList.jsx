@@ -18,6 +18,15 @@ import {
   ExtJS,
   HelpTile,
   ListMachineUtils,
+  Page,
+  PageHeader,
+  PageTitle,
+  PageActions,
+  Section,
+  SectionToolbar
+} from '@sonatype/nexus-ui-plugin';
+
+import {
   NxButton,
   NxFilterInput,
   NxFontAwesomeIcon,
@@ -26,13 +35,8 @@ import {
   NxTableCell,
   NxTableHead,
   NxTableRow,
-  Page,
-  PageHeader,
-  PageTitle,
-  PageActions,
-  Section,
-  SectionToolbar
-} from '@sonatype/nexus-ui-plugin';
+} from '@sonatype/react-shared-components';
+
 import {
   faChevronRight,
   faCopy,

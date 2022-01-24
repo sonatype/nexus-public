@@ -15,11 +15,6 @@ import {useMachine} from '@xstate/react';
 import {
   ContentBody,
   FormUtils,
-  NxButton,
-  NxCheckbox,
-  NxForm,
-  NxFormGroup,
-  NxTooltip,
   Page,
   PageHeader,
   PageTitle,
@@ -27,6 +22,13 @@ import {
   Select,
   Textfield
 } from '@sonatype/nexus-ui-plugin';
+import {
+  NxButton,
+  NxCheckbox,
+  NxForm,
+  NxFormGroup,
+  NxTooltip,
+} from '@sonatype/react-shared-components';
 import {faUser} from '@fortawesome/free-solid-svg-icons';
 
 import UIStrings from '../../../../constants/UIStrings';

@@ -18,12 +18,6 @@ import {faTrash} from "@fortawesome/free-solid-svg-icons";
 import {
   DynamicFormField,
   FieldWrapper,
-  NxButton,
-  NxCheckbox,
-  NxErrorAlert,
-  NxFontAwesomeIcon,
-  NxTooltip,
-  NxInfoAlert,
   Page,
   PageActions,
   PageHeader,
@@ -32,13 +26,21 @@ import {
   SectionFooter,
   Select,
   Textfield,
-  NxForm,
   FormUtils,
+} from '@sonatype/nexus-ui-plugin';
+import {
+  NxButton,
+  NxCheckbox,
+  NxErrorAlert,
+  NxFontAwesomeIcon,
+  NxTooltip,
+  NxInfoAlert,
+  NxForm,
   NxModal,
   NxTextInput,
   NxFormGroup,
   NxLoadWrapper
-} from '@sonatype/nexus-ui-plugin';
+} from '@sonatype/react-shared-components';
 import BlobStoresFormMachine from './BlobStoresFormMachine';
 import UIStrings from '../../../../constants/UIStrings';
 import CustomBlobStoreSettings from './CustomBlobStoreSettings';

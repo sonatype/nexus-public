@@ -15,15 +15,17 @@ import {useService} from '@xstate/react';
 import {
   Alert,
   FieldWrapper,
-  NxButton,
-  NxLoadWrapper,
-  NxSubmitMask,
-  NxTooltip,
   Section,
   SectionFooter,
   Textfield,
   Utils
 } from '@sonatype/nexus-ui-plugin';
+import {
+  NxButton,
+  NxLoadWrapper,
+  NxSubmitMask,
+  NxTooltip,
+} from '@sonatype/react-shared-components';
 import UIStrings from '../../../../constants/UIStrings';
 
 export default function UserAccountSettings({service}) {

@@ -17,14 +17,6 @@ import {
   ContentBody,
   HelpTile,
   ListMachineUtils,
-  NxButton,
-  NxFilterInput,
-  NxFontAwesomeIcon,
-  NxTable,
-  NxTableBody,
-  NxTableCell,
-  NxTableHead,
-  NxTableRow,
   Page,
   PageHeader,
   PageTitle,
@@ -33,6 +25,16 @@ import {
   SectionToolbar,
   Utils
 } from '@sonatype/nexus-ui-plugin';
+import {
+  NxButton,
+  NxFilterInput,
+  NxFontAwesomeIcon,
+  NxTable,
+  NxTableBody,
+  NxTableCell,
+  NxTableHead,
+  NxTableRow,
+} from '@sonatype/react-shared-components';
 import {
   faCheckCircle,
   faChevronRight,

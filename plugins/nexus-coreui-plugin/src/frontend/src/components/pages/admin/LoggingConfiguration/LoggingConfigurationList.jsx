@@ -18,6 +18,15 @@ import {faChevronRight, faRedo, faScroll} from '@fortawesome/free-solid-svg-icon
 import {
   ContentBody,
   ListMachineUtils,
+  Page,
+  PageActions,
+  PageHeader,
+  PageTitle,
+  Section,
+  SectionToolbar
+} from '@sonatype/nexus-ui-plugin';
+
+import {
   NxButton,
   NxFilterInput,
   NxFontAwesomeIcon,
@@ -26,13 +35,7 @@ import {
   NxTableCell,
   NxTableHead,
   NxTableRow,
-  Page,
-  PageActions,
-  PageHeader,
-  PageTitle,
-  Section,
-  SectionToolbar
-} from '@sonatype/nexus-ui-plugin';
+} from '@sonatype/react-shared-components';
 
 import LoggingConfigurationListMachine from './LoggingConfigurationListMachine';
 

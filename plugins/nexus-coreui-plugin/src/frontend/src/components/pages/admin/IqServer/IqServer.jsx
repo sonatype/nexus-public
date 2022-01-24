@@ -15,6 +15,14 @@ import {useMachine} from '@xstate/react';
 import {
   ContentBody,
   FormUtils,
+  Page,
+  PageHeader,
+  PageTitle,
+  Section,
+  Select,
+  ValidationUtils
+} from '@sonatype/nexus-ui-plugin';
+import {
   NxButton,
   NxCheckbox,
   NxErrorAlert,
@@ -25,13 +33,7 @@ import {
   NxTextInput,
   NxTextLink,
   NxSuccessAlert,
-  Page,
-  PageHeader,
-  PageTitle,
-  Section,
-  Select,
-  ValidationUtils
-} from '@sonatype/nexus-ui-plugin';
+} from '@sonatype/react-shared-components';
 import {faShieldAlt} from '@fortawesome/free-solid-svg-icons';
 
 import UIStrings from '../../../../constants/UIStrings';

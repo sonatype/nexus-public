@@ -12,7 +12,7 @@
  */
 import React from 'react';
 import UIStrings from '../../../../constants/UIStrings';
-import {NxButton, NxCheckbox, NxFieldset, NxFontAwesomeIcon} from '@sonatype/nexus-ui-plugin';
+import {NxButton, NxCheckbox, NxFieldset, NxFontAwesomeIcon} from '@sonatype/react-shared-components';
 import {faFileArchive} from '@fortawesome/free-solid-svg-icons';
 
 export default function SupportZipForm({params, setParams, submit, clustered, hazips}) {

@@ -155,13 +155,13 @@ describe('IqServer', () => {
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     expect(selectors.getSaveButton()).toHaveAttribute('aria-disabled', 'true');
-    expect(selectors.getSaveButton()).toHaveAttribute('aria-label', 'There are no changes');
+    expect(selectors.getSaveButton()).toHaveAttribute('aria-label', 'Submit disabled: There are no changes');
 
     userEvent.click(selectors.getEnabledCheckbox());
 
     expect(selectors.getEnabledCheckbox()).toBeChecked();
     expect(selectors.getSaveButton()).toHaveAttribute('aria-disabled', 'true');
-    expect(selectors.getSaveButton()).toHaveAttribute('aria-label', 'Validation errors are present');
+    expect(selectors.getSaveButton()).toHaveAttribute('aria-label', 'Submit disabled: Validation errors are present');
   });
 
   it('enables the save button when the form is valid', async () => {
@@ -192,7 +192,7 @@ describe('IqServer', () => {
     userEvent.selectOptions(selectors.getAuthenticationMethodSelect(), 'USER');
 
     expect(selectors.getSaveButton()).toHaveAttribute('aria-disabled', 'true');
-    expect(selectors.getSaveButton()).toHaveAttribute('aria-label', 'Validation errors are present');
+    expect(selectors.getSaveButton()).toHaveAttribute('aria-label', 'Submit disabled: Validation errors are present');
 
     await TestUtils.changeField(selectors.getUsernameInput, 'user');
     await TestUtils.changeField(selectors.getPasswordInput, 'pass');
@@ -218,22 +218,22 @@ describe('IqServer', () => {
 
     await TestUtils.changeField(selectors.getConnectionTimeoutInput, '0');
     expect(selectors.getSaveButton()).toHaveAttribute('aria-disabled', 'true');
-    expect(selectors.getSaveButton()).toHaveAttribute('aria-label', 'Validation errors are present');
+    expect(selectors.getSaveButton()).toHaveAttribute('aria-label', 'Submit disabled: Validation errors are present');
 
     userEvent.clear(selectors.getConnectionTimeoutInput());
     await TestUtils.changeField(selectors.getConnectionTimeoutInput, '3601');
     expect(selectors.getSaveButton()).toHaveAttribute('aria-disabled', 'true');
-    expect(selectors.getSaveButton()).toHaveAttribute('aria-label', 'Validation errors are present');
+    expect(selectors.getSaveButton()).toHaveAttribute('aria-label', 'Submit disabled: Validation errors are present');
 
     userEvent.clear(selectors.getConnectionTimeoutInput());
     await TestUtils.changeField(selectors.getConnectionTimeoutInput, '1');
     expect(selectors.getSaveButton()).not.toHaveAttribute('aria-disabled', 'true');
-    expect(selectors.getSaveButton()).not.toHaveAttribute('aria-label', 'Validation errors are present');
+    expect(selectors.getSaveButton()).not.toHaveAttribute('aria-label', 'Submit disabled: Validation errors are present');
 
     userEvent.clear(selectors.getConnectionTimeoutInput());
     await TestUtils.changeField(selectors.getConnectionTimeoutInput, '3600');
     expect(selectors.getSaveButton()).not.toHaveAttribute('aria-disabled', 'true');
-    expect(selectors.getSaveButton()).not.toHaveAttribute('aria-label', 'Validation errors are present');
+    expect(selectors.getSaveButton()).not.toHaveAttribute('aria-label', 'Submit disabled: Validation errors are present');
   });
 
   it('discards changes', async () => {

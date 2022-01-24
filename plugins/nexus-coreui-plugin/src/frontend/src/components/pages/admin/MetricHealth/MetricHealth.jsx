@@ -20,17 +20,20 @@ import {faCheckCircle, faExclamationCircle, faMedkit} from '@fortawesome/free-so
 import {
   ContentBody,
   ListMachineUtils,
+  Page,
+  PageHeader,
+  PageTitle,
+  Section
+} from '@sonatype/nexus-ui-plugin';
+
+import {
   NxFontAwesomeIcon,
   NxTable,
   NxTableBody,
   NxTableCell,
   NxTableHead,
   NxTableRow,
-  Page,
-  PageHeader,
-  PageTitle,
-  Section
-} from '@sonatype/nexus-ui-plugin';
+} from '@sonatype/react-shared-components';
 
 import MetricHealthMachine from './MetricHealthMachine';
 

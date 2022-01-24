@@ -13,7 +13,8 @@
 import React from 'react';
 import {useMachine} from '@xstate/react';
 import PasswordChangeMachine from './PasswordChangeMachine';
-import {FieldWrapper, NxButton, NxTooltip, SectionFooter, Section, Textfield, Utils} from '@sonatype/nexus-ui-plugin';
+import {FieldWrapper, SectionFooter, Section, Textfield, Utils} from '@sonatype/nexus-ui-plugin';
+import {NxButton, NxTooltip} from '@sonatype/react-shared-components';
 import UIStrings from '../../../../constants/UIStrings';
 
 export default function PasswordChangeForm({userId}) {

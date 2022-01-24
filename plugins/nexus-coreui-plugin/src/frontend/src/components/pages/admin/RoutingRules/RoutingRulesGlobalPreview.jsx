@@ -17,6 +17,14 @@ import {faMinusSquare, faPlusSquare} from '@fortawesome/free-solid-svg-icons';
 import {
   ContentBody,
   FieldWrapper,
+  Page,
+  PageTitle,
+  Section,
+  SectionToolbar,
+  Select
+} from '@sonatype/nexus-ui-plugin';
+
+import {
   NxButton,
   NxFilterInput,
   NxFontAwesomeIcon,
@@ -27,12 +35,7 @@ import {
   NxTableCell,
   NxTableHead,
   NxTableRow,
-  Page,
-  PageTitle,
-  Section,
-  SectionToolbar,
-  Select
-} from '@sonatype/nexus-ui-plugin';
+} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
 import RoutingRulesPreview from './RoutingRulesFormPreview';

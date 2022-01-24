@@ -15,15 +15,6 @@ import {useMachine} from '@xstate/react';
 
 import {
   ContentBody,
-  NxButton,
-  NxErrorAlert,
-  NxFontAwesomeIcon,
-  NxFormGroup,
-  NxInfoAlert,
-  NxLoadWrapper,
-  NxSubmitMask,
-  NxSuccessAlert,
-  NxTooltip,
   Page,
   PageHeader,
   PageTitle,
@@ -33,6 +24,18 @@ import {
   Textfield,
   Utils
 } from '@sonatype/nexus-ui-plugin';
+
+import {
+  NxButton,
+  NxErrorAlert,
+  NxFontAwesomeIcon,
+  NxFormGroup,
+  NxInfoAlert,
+  NxLoadWrapper,
+  NxSubmitMask,
+  NxSuccessAlert,
+  NxTooltip,
+} from '@sonatype/react-shared-components';
 
 import RoutingRuleFormMachine from './RoutingRulesFormMachine';
 

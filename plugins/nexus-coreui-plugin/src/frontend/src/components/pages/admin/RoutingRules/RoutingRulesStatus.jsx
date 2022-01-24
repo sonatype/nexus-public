@@ -13,9 +13,7 @@
 import React from 'react';
 import {faCheckCircle, faTimesCircle} from '@fortawesome/free-solid-svg-icons';
 
-import {
-  NxFontAwesomeIcon
-} from '@sonatype/nexus-ui-plugin';
+import {NxFontAwesomeIcon} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
 

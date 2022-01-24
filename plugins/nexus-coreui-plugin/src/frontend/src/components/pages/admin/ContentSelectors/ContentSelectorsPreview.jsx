@@ -15,6 +15,12 @@ import {useMachine} from '@xstate/react';
 
 import {
   FieldWrapper,
+  Section, SectionToolbar,
+  Select,
+  Utils
+} from '@sonatype/nexus-ui-plugin';
+
+import {
   NxButton,
   NxFilterInput,
   NxLoadWrapper,
@@ -23,10 +29,7 @@ import {
   NxTableCell,
   NxTableHead,
   NxTableRow,
-  Section, SectionToolbar,
-  Select,
-  Utils
-} from '@sonatype/nexus-ui-plugin';
+} from '@sonatype/react-shared-components';
 import UIStrings from "../../../../constants/UIStrings";
 
 import ContentSelectorsPreviewMachine from './ContentSelectorsPreviewMachine';
