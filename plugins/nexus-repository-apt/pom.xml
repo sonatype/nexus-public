@@ -71,6 +71,13 @@
       <artifactId>xz</artifactId>
     </dependency>
 
+    <!-- commons-compress dependency for zstd support -->
+    <dependency>
+      <groupId>com.github.luben</groupId>
+      <artifactId>zstd-jni</artifactId>
+      <version>1.4.8-7</version>
+    </dependency>
+
     <dependency>
       <groupId>org.bouncycastle</groupId>
       <artifactId>bcprov-jdk15to18</artifactId>

@@ -25,6 +25,7 @@ import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
+import org.apache.commons.compress.compressors.zstandard.ZstdCompressorInputStream;
 import org.apache.commons.io.input.CloseShieldInputStream;
 
 /**
@@ -59,6 +60,9 @@ public class AptPackageParser
             break;
           case "control.tar.xz":
             controlStream = new XZCompressorInputStream(new CloseShieldInputStream(is));
+            break;
+          case "control.tar.zst":
+            controlStream = new ZstdCompressorInputStream(new CloseShieldInputStream(is));
             break;
           default:
             continue;
