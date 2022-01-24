@@ -14,7 +14,7 @@
 import React, {useState} from 'react';
 import {move} from 'ramda';
 
-import {NxButton, NxFilterInput, NxFontAwesomeIcon, NxTooltip} from '@sonatype/react-shared-components';
+import {NxButton, NxFilterInput, NxFontAwesomeIcon, getUniqueId} from '@sonatype/react-shared-components';
 import {faCaretDown, faCaretLeft, faCaretRight, faCaretUp} from '@fortawesome/free-solid-svg-icons';
 import Select from '../Select/Select';
 import Utils from '../../../interface/Utils';
@@ -38,8 +38,8 @@ export default function MultiSelect({
   const [toSelected, setToSelected] = useState([]);
   const fromValues = fromOptions.filter(from => !value.includes(from)).filter(from => from.includes(filter));
 
-  const fromId = Utils.useRandomId('nxrm-multiselect-from');
-  const toId = Utils.useRandomId('nxrm-multiselect-to');
+  const fromId = getUniqueId('nxrm-multiselect-from');
+  const toId = getUniqueId('nxrm-multiselect-to');
 
   const onFilterChange = (value) => {
     setFilter(value);
