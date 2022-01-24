@@ -46,6 +46,9 @@ public class AptITSupport
 
   public static final String DEB = "nano_2.2.6-1_amd64.deb";
 
+  public static final String DEB_SZT =
+      "linux-image-unsigned-5.14.1-051401-generic_5.14.1-051401.202109030936_amd64.deb";
+
   public static final String DEB_ARCH = "amd64";
 
   public static final String DEB_NAME = "nano";
