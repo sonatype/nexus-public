@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.distributed.event.service.api.common;
 
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -28,33 +30,51 @@ public class DataStoreConfigurationEvent
 {
   public static final String NAME = "DataStoreConfigurationEvent";
 
-  private final Integer maximumConnectionPool;
+  private final String configurationName;
 
-  private final String advanced;
+  private final String type;
+
+  private final String source;
+
+  private final Map<String, String> attributes;
 
   @JsonCreator
   public DataStoreConfigurationEvent(
-      @JsonProperty("maximumConnectionPool") final Integer maximumConnectionPool,
-      @JsonProperty("advanced") final String advanced)
+      @JsonProperty("configurationName") final String configurationName,
+      @JsonProperty("type") final String type,
+      @JsonProperty("source") final String source,
+      @JsonProperty("attributes") final Map<String, String> attributes)
   {
     super(UPDATED);
-    this.maximumConnectionPool = checkNotNull(maximumConnectionPool);
-    this.advanced = checkNotNull(advanced);
+    this.configurationName = checkNotNull(configurationName);
+    this.type = checkNotNull(type);
+    this.source = checkNotNull(source);
+    this.attributes = checkNotNull(attributes);
   }
 
-  public Integer getMaximumConnectionPool() {
-    return maximumConnectionPool;
+  public String getConfigurationName() {
+    return configurationName;
   }
 
-  public String getAdvanced() {
-    return advanced;
+  public String getType() {
+    return type;
+  }
+
+  public String getSource() {
+    return source;
+  }
+
+  public Map<String, String> getAttributes() {
+    return attributes;
   }
 
   @Override
   public String toString() {
     return "DataStoreConfigurationEvent{" +
-        "maximumConnectionPool=" + maximumConnectionPool +
-        ", advanced='" + advanced + '\'' +
+        "name='" + configurationName + '\'' +
+        ", type='" + type + '\'' +
+        ", source='" + source + '\'' +
+        ", attributes=" + attributes +
         '}';
   }
 }
