@@ -19,20 +19,20 @@ import {
   PageHeader,
   PageTitle,
   Section,
-  SectionFooter,
   Select,
   Textfield,
-  Utils
+  Utils,
+  FormUtils,
 } from '@sonatype/nexus-ui-plugin';
 
 import {
+  NxForm,
   NxButton,
   NxErrorAlert,
   NxFontAwesomeIcon,
   NxFormGroup,
   NxInfoAlert,
   NxLoadWrapper,
-  NxSubmitMask,
   NxSuccessAlert,
   NxTooltip,
 } from '@sonatype/react-shared-components';
@@ -87,23 +87,18 @@ export default function RoutingRulesForm({itemId, onDone}) {
     send({type: 'UPDATE', data: {[event.target.name]: event.target.value}});
   }
 
-  function save(event) {
-    event.preventDefault();
+  function save() {
     send({type: 'SAVE'});
-  }
-
-  function handleEnter(event) {
-    if (event.key === 'Enter') {
-      save(event);
-    }
   }
 
   function cancel() {
     send({type: 'CANCEL'});
   }
 
-  function remove() {
-    send({type: 'DELETE'});
+  function remove(e) {
+    if (!e.currentTarget.classList.contains('disabled')) {
+      send({type: 'DELETE'});
+    }
   }
 
   function retry() {
@@ -128,12 +123,29 @@ export default function RoutingRulesForm({itemId, onDone}) {
       <PageTitle text={itemId ? ROUTING_RULES.FORM.EDIT_TITLE : ROUTING_RULES.FORM.CREATE_TITLE}/>
     </PageHeader>
     <ContentBody>
-      <Section className="nxrm-routing-rules-form" onKeyPress={handleEnter}>
-        <NxLoadWrapper loading={isLoading} error={loadError ? `${loadError}` : null} retryHandler={retry}>
+      <Section className="nxrm-routing-rules-form">
+        <NxForm
+            loading={isLoading}
+            loadError={loadError}
+            onCancel={cancel}
+            doLoad={retry}
+            onSubmit={save}
+            submitError={saveError}
+            submitMaskState={isSaving ? false : null}
+            submitBtnText={itemId ? SETTINGS.SAVE_BUTTON_LABEL : ROUTING_RULES.FORM.CREATE_BUTTON}
+            submitMaskMessage={UIStrings.SAVING}
+            validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
+            additionalFooterBtns={itemId &&
+              <NxTooltip title={data.assignedRepositoryCount > 0 ? ROUTING_RULES.FORM.CANNOT_DELETE(
+                  data.assignedRepositoryNames) : undefined}>
+                <NxButton type="button" variant="tertiary" onClick={remove} className={hasAssignedRepositories && 'disabled'}>
+                  <NxFontAwesomeIcon icon={faTrash}/>
+                  <span>{SETTINGS.DELETE_BUTTON_LABEL}</span>
+                </NxButton>
+              </NxTooltip>
+            }
+        >
           {hasData && <>
-            {saveError && <NxErrorAlert>{ROUTING_RULES.FORM.SAVE_ERROR} {saveError}</NxErrorAlert>}
-            {isSaving && <NxSubmitMask message={UIStrings.SAVING}/>}
-
             <NxFormGroup label={ROUTING_RULES.FORM.NAME_LABEL} isRequired>
               <Textfield
                   {...Utils.fieldProps('name', current)}
@@ -177,6 +189,7 @@ export default function RoutingRulesForm({itemId, onDone}) {
                     {data.matchers.length > 1 &&
                     <div className="nx-btn-bar">
                       <NxButton
+                          type="button"
                           title={ROUTING_RULES.FORM.DELETE_MATCHER_BUTTON}
                           onClick={() => removeMatcher(index)}
                       >
@@ -192,26 +205,8 @@ export default function RoutingRulesForm({itemId, onDone}) {
                 </NxButton>
               </div>
             </div>
-
-            <SectionFooter>
-              <NxTooltip title={Utils.saveTooltip({isPristine, isInvalid})}>
-                <NxButton type="submit" variant="primary" className={(isPristine || isInvalid) && 'disabled'}
-                          onClick={save}>
-                  {itemId ? SETTINGS.SAVE_BUTTON_LABEL : ROUTING_RULES.FORM.CREATE_BUTTON}
-                </NxButton>
-              </NxTooltip>
-              <NxButton onClick={cancel}>{SETTINGS.CANCEL_BUTTON_LABEL}</NxButton>
-              {itemId &&
-              <NxTooltip title={data.assignedRepositoryCount > 0 ? ROUTING_RULES.FORM.CANNOT_DELETE(
-                  data.assignedRepositoryNames) : undefined}>
-                <NxButton variant="tertiary" onClick={remove} disabled={data.assignedRepositoryCount > 0}>
-                  <NxFontAwesomeIcon icon={faTrash}/>
-                  <span>{SETTINGS.DELETE_BUTTON_LABEL}</span>
-                </NxButton>
-              </NxTooltip>}
-            </SectionFooter>
           </>}
-        </NxLoadWrapper>
+        </NxForm>
       </Section>
 
       <Section className="nxrm-routing-rules-preview">
