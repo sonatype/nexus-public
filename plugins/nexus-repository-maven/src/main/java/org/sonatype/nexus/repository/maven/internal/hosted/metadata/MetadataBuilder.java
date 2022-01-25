@@ -284,7 +284,7 @@ public class MetadataBuilder
       return;
     }
     if (Objects.equals(coordinates.getBaseVersion(), coordinates.getVersion())) {
-      log.warn("Non-timestamped snapshot, ignoring it: {}", mavenPath);
+      log.debug("Non-timestamped snapshot, ignoring it: {}", mavenPath);
       return;
     }
 
