@@ -57,9 +57,20 @@ class ResourcesTestUtils
     return component;
   }
 
+
   static AssetSearchResult createAsset(
       final String name,
       final String format,
+      final String sha1,
+      final Map<String, Object> formatAttributes)
+  {
+    return createAsset(name, format, "maven-central", sha1, formatAttributes);
+  }
+
+  static AssetSearchResult createAsset(
+      final String name,
+      final String format,
+      final String repositoryName,
       final String sha1,
       final Map<String, Object> formatAttributes)
   {
@@ -68,7 +79,7 @@ class ResourcesTestUtils
     asset.setFormat(format);
     asset.setChecksum(of("sha1", sha1));
     asset.setId(UUID.randomUUID().toString());
-    asset.setRepository("maven-central");
+    asset.setRepository(repositoryName);
     Map<String, Object> attributes = of("cache", of("last_verified", 1234), "checksum", of("sha1", sha1), format,
         formatAttributes);
     asset.setAttributes(attributes);
