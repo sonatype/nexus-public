@@ -29,6 +29,7 @@ import org.sonatype.nexus.formfields.CheckboxFormField;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.NumberTextFormField;
 import org.sonatype.nexus.formfields.StringTextFormField;
+import org.sonatype.nexus.rapture.settings.RaptureSettings;
 
 import com.google.common.collect.Lists;
 

@@ -16,7 +16,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.rapture.internal.settings.RaptureSettings;
+import org.sonatype.nexus.rapture.settings.RaptureSettings;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

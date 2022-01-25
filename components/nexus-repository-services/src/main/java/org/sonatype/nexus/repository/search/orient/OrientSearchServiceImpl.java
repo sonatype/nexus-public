@@ -95,6 +95,9 @@ public class OrientSearchServiceImpl
     if (StringUtils.isNotEmpty(searchRequest.getContinuationToken())) {
       from = decodeFrom(searchRequest, queryBuilder);
     }
+    else {
+      from = searchRequest.getOffset();
+    }
 
     org.elasticsearch.action.search.SearchResponse searchResponse =
         elasticSearchQueryService.search(queryBuilder, from, searchRequest.getLimit());

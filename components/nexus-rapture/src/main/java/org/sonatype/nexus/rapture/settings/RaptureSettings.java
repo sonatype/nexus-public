@@ -10,11 +10,9 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.rapture.internal.settings;
+package org.sonatype.nexus.rapture.settings;
 
 import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
-
 import javax.validation.constraints.NotBlank;
 
 /**
@@ -27,8 +25,6 @@ public class RaptureSettings
   public static final String DEFAULT_TITLE = "Nexus Repository Manager";
 
   public static final boolean DEFAULT_DEBUG_ALLOWED = true;
-
-  // FIXME: Use Goodies Time
 
   public static final int DEFAULT_STATUS_INTERVAL_AUTHENTICATED = 5; // seconds
 
@@ -62,7 +58,7 @@ public class RaptureSettings
 
   @Min(DEFAULT_LONG_REQUEST_TIMEOUT)
   private int longRequestTimeout = DEFAULT_LONG_REQUEST_TIMEOUT;
-  
+
   @Min(MIN_SEARCH_REQUEST_TIMEOUT)
   private int searchRequestTimeout = DEFAULT_SEARCH_REQUEST_TIMEOUT;
 

@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import org.sonatype.nexus.repository.search.query.SearchFilter;
 
@@ -42,6 +43,8 @@ public class SearchRequest
 
   private final int limit;
 
+  private final int offset;
+
   private SearchRequest(final Builder builder) {
     this.checkAuthorization = builder.checkAuthorization;
     this.searchFilters = builder.searchFilters;
@@ -50,6 +53,7 @@ public class SearchRequest
     this.continuationToken = builder.continuationToken;
     this.sortDirection = builder.sortDirection;
     this.limit = builder.limit;
+    this.offset = builder.offset;
   }
 
   public boolean isCheckAuthorization() {
@@ -80,6 +84,10 @@ public class SearchRequest
     return limit;
   }
 
+  public int getOffset() {
+    return offset;
+  }
+
   public static Builder builder() {
     return new Builder();
   }
@@ -99,6 +107,8 @@ public class SearchRequest
     private String continuationToken;
 
     private Integer limit;
+
+    private Integer offset;
 
     public Builder disableAuthorization() {
       this.checkAuthorization = false;
@@ -145,10 +155,17 @@ public class SearchRequest
       return this;
     }
 
+    public Builder offset(final Integer offset) {
+      this.offset = offset;
+      return this;
+    }
+
     public SearchRequest build() {
       if (this.limit == null) {
         this.limit = DEFAULT_LIMIT;
       }
+
+      this.offset = Optional.ofNullable(offset).orElse(0);
 
       return new SearchRequest(this);
     }
