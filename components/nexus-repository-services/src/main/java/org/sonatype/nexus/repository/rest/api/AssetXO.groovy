@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.rest.api
 import javax.annotation.Nullable
 
 import org.sonatype.nexus.repository.Repository
+import org.sonatype.nexus.repository.search.AssetSearchResult
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -25,9 +26,9 @@ import groovy.transform.builder.Builder
 
 import static org.sonatype.nexus.repository.search.index.SearchConstants.ATTRIBUTES
 import static org.sonatype.nexus.repository.search.index.SearchConstants.CHECKSUM
+import static org.sonatype.nexus.repository.search.index.SearchConstants.CONTENT_TYPE
 import static org.sonatype.nexus.repository.search.index.SearchConstants.ID
 import static org.sonatype.nexus.repository.search.index.SearchConstants.NAME
-import static org.sonatype.nexus.repository.search.index.SearchConstants.CONTENT_TYPE
 
 /**
  * Asset transfer object for REST APIs.
@@ -58,6 +59,24 @@ class AssetXO
 
   @JsonIgnore
   Map attributes
+
+  static AssetXO from(
+      AssetSearchResult asset,
+      Repository repository,
+      @Nullable final Map<String, AssetXODescriptor> assetDescriptors)
+  {
+    return builder()
+        .path(asset.getPath())
+        .downloadUrl(repository.url + '/' + asset.getPath())
+        .id(asset.getId())
+        .repository(repository.getName())
+        .checksum(asset.getChecksum())
+        .format(asset.getFormat())
+        .contentType(asset.getContentType())
+        .attributes(getExpandedAttributes(asset.getAttributes(), asset.getFormat(), assetDescriptors))
+        .lastModified(asset.getLastModified())
+        .build()
+  }
 
   static AssetXO fromElasticSearchMap(final Map map, final Repository repository,
                                       @Nullable final Map<String, AssetXODescriptor> assetDescriptors)

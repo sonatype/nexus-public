@@ -16,6 +16,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.sonatype.nexus.repository.search.AssetSearchResult;
+import org.sonatype.nexus.repository.search.ComponentSearchResult;
+
 import com.google.common.collect.ImmutableMap;
 
 import static com.google.common.collect.ImmutableMap.of;
@@ -35,30 +38,67 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
  */
 class ResourcesTestUtils
 {
-  static Map<String, Object> createComponent(final String name,
-                                             final String repository,
-                                             final String format,
-                                             final String group,
-                                             final String version,
-                                             final List<?> assets)
+  static ComponentSearchResult createComponent(
+      final String name,
+      final String repository,
+      final String format,
+      final String group,
+      final String version,
+      final List<AssetSearchResult> assets)
   {
-    return ImmutableMap.<String, Object>builder()
-        .put(NAME, name)
-        .put(FORMAT, format)
-        .put(REPOSITORY_NAME, repository)
-        .put(GROUP, group)
-        .put(VERSION, version)
-        .put(ASSETS, assets)
-        .build();
+    ComponentSearchResult component = new ComponentSearchResult();
+    component.setFormat(format);
+    component.setAssets(assets);
+    component.setGroup(group);
+    component.setName(name);
+    component.setRepositoryName(repository);
+    component.setVersion(version);
+
+    return component;
   }
 
-  static Map<String, Object> createAsset(final String name,
-                                         final String format,
-                                         final String sha1,
-                                         final Map<String, Object> formatAttributes)
+  static AssetSearchResult createAsset(
+      final String name,
+      final String format,
+      final String sha1,
+      final Map<String, Object> formatAttributes)
   {
+    AssetSearchResult asset = new AssetSearchResult();
+    asset.setPath(name);
+    asset.setFormat(format);
+    asset.setChecksum(of("sha1", sha1));
+    asset.setId(UUID.randomUUID().toString());
+    asset.setRepository("maven-central");
     Map<String, Object> attributes = of("cache", of("last_verified", 1234), "checksum", of("sha1", sha1), format,
         formatAttributes);
+    asset.setAttributes(attributes);
+    return asset;
+  }
+
+  static Map<String, Object> createComponentMap(final String name,
+      final String repository,
+      final String format,
+      final String group,
+      final String version,
+      final List<?> assets)
+  {
+  return ImmutableMap.<String, Object>builder()
+      .put(NAME, name)
+      .put(FORMAT, format)
+      .put(REPOSITORY_NAME, repository)
+      .put(GROUP, group)
+      .put(VERSION, version)
+      .put(ASSETS, assets)
+      .build();
+  }
+
+  static Map<String, Object> createAssetMap(final String name,
+    final String format,
+    final String sha1,
+    final Map<String, Object> formatAttributes)
+  {
+    Map<String, Object> attributes = of("cache", of("last_verified", 1234), "checksum", of("sha1", sha1), format,
+    formatAttributes);
     return of(NAME, name, ID, UUID.randomUUID().toString(), ATTRIBUTES, attributes);
   }
 }

@@ -31,6 +31,7 @@ import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
 import org.sonatype.nexus.repository.search.SearchRequest;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -97,20 +98,12 @@ public class ElasticSearchUtils
         DefaultElasticSearchContribution.NAME));
   }
 
-  public Map<String, String> getSearchParameters() {
-    return searchParams;
-  }
-
-  public Map<String, String> getAssetSearchParameters() {
+  private Map<String, String> getAssetSearchParameters() {
     return assetSearchParams;
   }
 
   public Repository getRepository(final String repository) {
     return repoAdapter.getRepository(repository);
-  }
-
-  public Repository getReadableRepository(final String repository) {
-    return repoAdapter.getReadableRepository(repository);
   }
 
   /**
@@ -132,17 +125,6 @@ public class ElasticSearchUtils
     log.debug("Query: {}", query);
 
     return query;
-  }
-
-  /**
-   * Builds a collection of {@link SearchFilter} based on configured search parameters.
-   *
-   * @param uriInfo {@link UriInfo} to extract query parameters from
-   * @return
-   */
-  public Collection<SearchFilter> getSearchFilters(final UriInfo uriInfo) {
-    return convertParameters(uriInfo,
-        Arrays.asList(CONTINUATION_TOKEN, SORT_FIELD, SORT_DIRECTION));
   }
 
   /**
@@ -174,11 +156,8 @@ public class ElasticSearchUtils
         }).collect(toSet())).flatMap(Collection::stream).collect(toSet());
   }
 
-  public boolean isAssetSearchParam(final String assetSearchParam) {
-    return assetSearchParams.containsKey(assetSearchParam) || isFullAssetAttributeName(assetSearchParam);
-  }
-
-  public boolean isFullAssetAttributeName(final String assetSearchParam) {
+  @VisibleForTesting
+  boolean isFullAssetAttributeName(final String assetSearchParam) {
     return assetSearchParam.startsWith(ASSET_PREFIX);
   }
 
@@ -190,7 +169,7 @@ public class ElasticSearchUtils
     return getSortBuilders(sort, direction, true);
   }
 
-  public List<SortBuilder> getSortBuilders(final String sort, final String direction, boolean allowAnySort) {
+  private List<SortBuilder> getSortBuilders(final String sort, final String direction, final boolean allowAnySort) {
     if (sort == null) {
       return emptyList();
     }
@@ -210,32 +189,32 @@ public class ElasticSearchUtils
     }
   }
 
-  private List<SortBuilder> handleGroupSort(String direction) {
+  private List<SortBuilder> handleGroupSort(final String direction) {
     return Arrays.asList(fieldSort(GROUP + CI_SUFFIX).order(getValidSortOrder(direction, SortOrder.ASC)),
         fieldSort(NAME + CI_SUFFIX).order(SortOrder.ASC), fieldSort(VERSION).order(SortOrder.ASC));
   }
 
-  private List<SortBuilder> handleNameSort(String direction) {
+  private List<SortBuilder> handleNameSort(final String direction) {
     return Arrays.asList(fieldSort(NAME + CI_SUFFIX).order(getValidSortOrder(direction, SortOrder.ASC)),
         fieldSort(VERSION).order(SortOrder.ASC), fieldSort(GROUP + CI_SUFFIX).order(SortOrder.ASC));
   }
 
-  private List<SortBuilder> handleRepositoryNameSort(String direction) {
+  private List<SortBuilder> handleRepositoryNameSort(final String direction) {
     return singletonList(fieldSort(REPOSITORY_NAME).order(getValidSortOrder(direction, SortOrder.ASC)));
   }
 
-  private List<SortBuilder> handleVersionSort(String direction) {
+  private List<SortBuilder> handleVersionSort(final String direction) {
     return singletonList(fieldSort(NORMALIZED_VERSION).order(getValidSortOrder(direction, SortOrder.DESC)));
   }
 
-  private List<SortBuilder> handleOtherSort(String sort, String direction, boolean allowed) {
+  private List<SortBuilder> handleOtherSort(final String sort, final String direction, final boolean allowed) {
     if (!allowed) {
       return emptyList();
     }
     return singletonList(fieldSort(sort).order(getValidSortOrder(direction, SortOrder.ASC)));
   }
 
-  private SortOrder getValidSortOrder(String direction, SortOrder defaultValue) {
+  private SortOrder getValidSortOrder(final String direction, final SortOrder defaultValue) {
     if (direction != null) {
       switch (direction.toLowerCase()) {
         case "asc":

@@ -12,8 +12,8 @@
  */
 package org.sonatype.nexus.repository.rest.internal.resources;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
@@ -26,15 +26,11 @@ import org.sonatype.nexus.repository.browse.BrowseService;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
-import org.sonatype.nexus.repository.search.query.DefaultElasticSearchContribution;
-import org.sonatype.nexus.repository.search.query.KeywordElasticSearchContribution;
-import org.sonatype.nexus.repository.search.query.ElasticSearchContribution;
-import org.sonatype.nexus.repository.search.query.ElasticSearchUtils;
+import org.sonatype.nexus.repository.search.SearchUtils;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 
-import java.util.function.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
@@ -82,7 +78,7 @@ public abstract class RepositoryResourceTestSupport
   Map<String, String> testChecksum =
       ImmutableMap.of(HashAlgorithm.SHA1.name(), "87acec17cd9dcd20a716cc2cf67417b71c8a7016");
 
-  ElasticSearchUtils elasticSearchUtils;
+  SearchUtils searchUtils;
 
   AssetMapUtils assetMapUtils;
 
@@ -96,17 +92,14 @@ public abstract class RepositoryResourceTestSupport
     storageTxSupplier = () -> storageTx;
     when(storageFacet.txSupplier()).thenReturn(storageTxSupplier);
 
-    Map<String, ElasticSearchContribution> searchContributions = new HashMap<>();
-    searchContributions.put(DefaultElasticSearchContribution.NAME, new DefaultElasticSearchContribution());
-    searchContributions.put(KeywordElasticSearchContribution.NAME, new KeywordElasticSearchContribution());
-    elasticSearchUtils = new ElasticSearchUtils(repositoryManagerRESTAdapter, searchMappings, searchContributions);
+    searchUtils = new SearchUtils(repositoryManagerRESTAdapter, searchMappings);
 
-    assetMapUtils = new AssetMapUtils(elasticSearchUtils);
+    assetMapUtils = new AssetMapUtils(searchUtils);
   }
 
-  protected void configureMockedRepository(Repository repository,
-                                           String name,
-                                           String url)
+  protected void configureMockedRepository(final Repository repository,
+                                           final String name,
+                                           final String url)
   {
     when(repositoryManagerRESTAdapter.getRepository(name)).thenReturn(repository);
     when(repositoryManagerRESTAdapter.getReadableRepository(name)).thenReturn(repository);
@@ -116,7 +109,7 @@ public abstract class RepositoryResourceTestSupport
     when(repository.facet(StorageFacet.class)).thenReturn(storageFacet);
   }
 
-  Asset getMockedAsset(String name, String idValue) {
+  Asset getMockedAsset(final String name, final String idValue) {
     AssetMocks assetMocks = new AssetMocks();
     MockitoAnnotations.initMocks(assetMocks);
 
@@ -135,7 +128,7 @@ public abstract class RepositoryResourceTestSupport
   {
     @Mock
     Asset asset;
-    
+
     @Mock
     EntityMetadata assetEntityMetadata;
 

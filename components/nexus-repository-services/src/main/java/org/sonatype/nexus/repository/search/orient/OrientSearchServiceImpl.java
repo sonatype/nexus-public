@@ -14,30 +14,34 @@ package org.sonatype.nexus.repository.search.orient;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import com.google.common.collect.ImmutableList;
-import org.apache.commons.lang.StringUtils;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.index.query.QueryBuilder;
-
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO;
+import org.sonatype.nexus.repository.rest.internal.resources.TokenEncoder;
 import org.sonatype.nexus.repository.search.AssetSearchResult;
+import org.sonatype.nexus.repository.search.ComponentSearchResult;
 import org.sonatype.nexus.repository.search.SearchRequest;
 import org.sonatype.nexus.repository.search.SearchResponse;
-import org.sonatype.nexus.repository.search.ComponentSearchResult;
 import org.sonatype.nexus.repository.search.SearchService;
 import org.sonatype.nexus.repository.search.query.ElasticSearchQueryService;
 import org.sonatype.nexus.repository.search.query.ElasticSearchUtils;
+
+import com.google.common.collect.ImmutableList;
+import org.apache.commons.lang.StringUtils;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.search.SearchHit;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.ASSETS;
@@ -65,13 +69,21 @@ public class OrientSearchServiceImpl
 
   private final ElasticSearchUtils elasticSearchUtils;
 
+  private final TokenEncoder tokenEncoder;
+
+  private final Set<OrientSearchExtension> decorators;
+
   @Inject
   public OrientSearchServiceImpl(
       final ElasticSearchQueryService elasticSearchQueryService,
-      final ElasticSearchUtils elasticSearchUtils)
+      final ElasticSearchUtils elasticSearchUtils,
+      final TokenEncoder tokenEncoder,
+      final Set<OrientSearchExtension> decorators)
   {
-    this.elasticSearchQueryService = elasticSearchQueryService;
-    this.elasticSearchUtils = elasticSearchUtils;
+    this.elasticSearchQueryService = checkNotNull(elasticSearchQueryService);
+    this.elasticSearchUtils = checkNotNull(elasticSearchUtils);
+    this.tokenEncoder = checkNotNull(tokenEncoder);
+    this.decorators = checkNotNull(decorators);
   }
 
   @Override
@@ -81,17 +93,12 @@ public class OrientSearchServiceImpl
     int from = 0;
 
     if (StringUtils.isNotEmpty(searchRequest.getContinuationToken())) {
-      try {
-        from = Integer.parseInt(searchRequest.getContinuationToken());
-      }
-      catch (NumberFormatException e) {
-        log.error("Failed to parse continuation token: {}", searchRequest.getContinuationToken(), e);
-      }
+      from = decodeFrom(searchRequest, queryBuilder);
     }
 
     org.elasticsearch.action.search.SearchResponse searchResponse =
         elasticSearchQueryService.search(queryBuilder, from, searchRequest.getLimit());
-    return convertSearchResponse(searchResponse);
+    return convertSearchResponse(searchResponse, continuationToken(searchRequest, queryBuilder, searchResponse));
   }
 
   @Override
@@ -125,7 +132,27 @@ public class OrientSearchServiceImpl
     }
   }
 
-  private SearchResponse convertSearchResponse(final org.elasticsearch.action.search.SearchResponse esResponse) {
+  private String continuationToken(
+      final SearchRequest request,
+      final QueryBuilder query,
+      final org.elasticsearch.action.search.SearchResponse searchResponse)
+  {
+    if (request.getLimit() != searchResponse.getHits().hits().length) {
+      return null;
+    }
+
+    int from = decodeFrom(request, query);
+    return tokenEncoder.encode(from, request.getLimit(), query);
+  }
+
+  private int decodeFrom(final SearchRequest request, final QueryBuilder query) {
+    return tokenEncoder.decode(request.getContinuationToken(), query);
+  }
+
+  private SearchResponse convertSearchResponse(
+      final org.elasticsearch.action.search.SearchResponse esResponse,
+      final String continuationToken)
+  {
     SearchResponse searchResponse = new SearchResponse();
     List<ComponentSearchResult> componentSearchResults = new ArrayList<>();
 
@@ -134,9 +161,12 @@ public class OrientSearchServiceImpl
     }
 
     searchResponse.setSearchResults(componentSearchResults);
+
+    searchResponse.setContinuationToken(continuationToken);
     return searchResponse;
   }
 
+  @SuppressWarnings("unchecked")
   private ComponentSearchResult toComponentSearchResult(final SearchHit componentHit) {
     Map<String, Object> componentMap = checkNotNull(componentHit.getSource());
     Repository repository = elasticSearchUtils.getRepository((String) componentMap.get(REPOSITORY_NAME));
@@ -160,20 +190,42 @@ public class OrientSearchServiceImpl
     componentSearchResult.setRepositoryName(repository.getName());
     componentSearchResult.setFormat(repository.getFormat().getValue());
 
+    decorators.forEach(extension -> extension.updateComponent(componentSearchResult, componentHit));
+
     return componentSearchResult;
   }
 
+  @SuppressWarnings("unchecked")
   private AssetSearchResult toAssetSearchResult(final Map<String, Object> assetMap, final Repository repository) {
 
     AssetSearchResult assetSearchResult = new AssetSearchResult();
 
     assetSearchResult.setAttributes((Map<String, Object>) assetMap.getOrDefault(ATTRIBUTES, Collections.emptyMap()));
     assetSearchResult.setPath((String) assetMap.get(NAME));
-    assetSearchResult.setId((String) assetMap.get(ID));
+    assetSearchResult.setRepository(repository.getName());
+    assetSearchResult.setId(new RepositoryItemIDXO(repository.getName(), String.valueOf(assetMap.get(ID))).getValue());
     assetSearchResult.setChecksum((Map<String, String>) assetSearchResult.getAttributes().get(CHECKSUM));
     assetSearchResult.setFormat(repository.getFormat().getValue());
     assetSearchResult.setContentType((String) assetMap.get(CONTENT_TYPE));
+    assetSearchResult.setLastModified(calculateLastModified(assetMap));
 
     return assetSearchResult;
+  }
+
+  private Date calculateLastModified(final Map<String, Object> attributes) {
+    try {
+      return Optional.ofNullable(attributes.get("content"))
+          .map(Map.class::cast)
+          .map(content -> content.get("last_modified"))
+          .map(String.class::cast)
+          .map(Long::parseLong)
+          .map(Date::new)
+          .orElse(null);
+    }
+    catch (Exception ignored) {
+      log.debug("Unable to retrieve last_modified", ignored);
+      // Nothing we can do here for invalid data. It shouldn't happen but date parsing will blow out the results.
+      return null;
+    }
   }
 }

@@ -12,7 +12,11 @@
  */
 package org.sonatype.nexus.repository.search;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Result of a component search
@@ -34,6 +38,24 @@ public class ComponentSearchResult
   private String format;
 
   private List<AssetSearchResult> assets;
+
+  private Map<String, Object> annotations = new HashMap<>();
+
+  /**
+   * Adds an annotation to the search result, this is an extension point for plugins. The ID must be unique.
+   */
+  public void addAnnotation(final String id, final Object annotation) {
+    checkArgument(!annotations.containsKey(id), "Annotation " + id + " already exists on the component.");
+    annotations.put(id, annotation);
+  }
+
+  /**
+   * Returns the requested annotation if it has been set.
+   */
+  @SuppressWarnings("unchecked")
+  public Object getAnnotation(final String id) {
+    return annotations.get(id);
+  }
 
   public String getId() {
     return id;

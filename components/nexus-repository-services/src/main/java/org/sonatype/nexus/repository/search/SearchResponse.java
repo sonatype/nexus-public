@@ -21,8 +21,18 @@ public class SearchResponse
 {
   private List<ComponentSearchResult> searchResults;
 
+  private String continuationToken;
+
+  public String getContinuationToken() {
+    return continuationToken;
+  }
+
   public List<ComponentSearchResult> getSearchResults() {
     return searchResults;
+  }
+
+  public void setContinuationToken(final String continuationToken) {
+    this.continuationToken = continuationToken;
   }
 
   public void setSearchResults(final List<ComponentSearchResult> searchResults) {
