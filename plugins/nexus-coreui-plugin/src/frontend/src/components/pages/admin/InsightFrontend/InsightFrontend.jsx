@@ -17,7 +17,10 @@ import {
   NxFilterInput,
   NxLoadWrapper,
   NxStatefulInfoAlert,
-  NxTable,
+  NxTable
+} from '@sonatype/react-shared-components';
+
+import {
   Page
 } from '@sonatype/nexus-ui-plugin';
 import './InsightFrontend.scss';
@@ -159,6 +162,7 @@ export default function InsightFrontend() {
                   <NxTable.Row isFilterHeader>
                     <NxTable.Cell>
                       <NxFilterInput placeholder="Type a name"
+                                     id="repositoryFilter"
                                      onChange={onFilterByRepositoryName}
                                      value={filterByRepositoryNameValue}
                       />
@@ -186,6 +190,7 @@ export default function InsightFrontend() {
                   <NxTable.Row isFilterHeader>
                     <NxTable.Cell>
                       <NxFilterInput placeholder="Type a name"
+                                     id="usernameFilter"
                                      onChange={onFilterByUsername}
                                      value={filterByUsernameValue}
                       />
@@ -213,6 +218,7 @@ export default function InsightFrontend() {
                   <NxTable.Row isFilterHeader>
                     <NxTable.Cell>
                       <NxFilterInput placeholder="Type a name"
+                                     id="ipAddressFilter"
                                      onChange={onFilterByIpAddress}
                                      value={filterByIpAddressValue}
                       />

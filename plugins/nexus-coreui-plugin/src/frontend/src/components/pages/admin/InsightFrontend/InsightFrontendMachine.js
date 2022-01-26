@@ -39,9 +39,9 @@ export default createMachine(
           totalDownloads: 0
         },
         filters: {
-          filterByRepositoryNameValue: undefined,
-          filterByIpAddressValue: undefined,
-          filterByUsernameValue: undefined,
+          filterByRepositoryNameValue: '',
+          filterByIpAddressValue: '',
+          filterByUsernameValue: '',
         }
       },
       states: {
