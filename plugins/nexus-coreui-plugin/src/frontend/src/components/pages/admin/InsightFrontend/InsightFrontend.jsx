@@ -14,13 +14,11 @@ import React from 'react';
 import {useMachine} from '@xstate/react';
 
 import {
-  Detail,
-  Master,
-  MasterDetail,
-  NxTable,
   NxFilterInput,
-  Page,
-  NxStatefulInfoAlert
+  NxLoadWrapper,
+  NxStatefulInfoAlert,
+  NxTable,
+  Page
 } from '@sonatype/nexus-ui-plugin';
 import './InsightFrontend.scss';
 import InsightFrontendMachine, {
@@ -89,156 +87,155 @@ export default function InsightFrontend() {
     });
   }
 
-  return <MasterDetail path="admin/repository/insightfrontend">
-    <Master>
+  function retry() {
+    // Do nothing for now
+  }
+
+  return (
       <Page>
-        <NxStatefulInfoAlert>
-          Sonatype is providing this Log4j Visualizer for a limited time to all Nexus Repository OSS and
-          PRO users due to the urgent threat that the log4j vulnerability poses to the global software community.
-          All access and use of the Log4j Visualizer is governed by the terms of your agreement with Sonatype or,
-          in the absence of such, <a href="https://www.sonatype.com/campaign/software-evaluation-agreement" target="_blank" rel="noopener noreferrer">these terms</a>.
-          We may update or remove this feature completely in future versions.
-        </NxStatefulInfoAlert>
-        <div className="nx-page-title">
-          <hgroup className="nx-page-title__headings">
-            <h1 className="nx-h1">
-              Organization Insights
-            </h1>
-            <p className="nx-page-title__sub-title">
-              Total Downloads Affected by Log4shell : <strong>{totalDownloads}</strong>
-            </p>
-          </hgroup>
-          <div className="nx-page-title__description">
-            <p className="nx-p">
-              Log4j is the most popular logging framework used by Java software. It has been reported to contain serious vulnerabilities, including <a href="https://nvd.nist.gov/vuln/detail/CVE-2021-44228" target="_blank" rel="noopener noreferrer">CVE-2021-44228</a> (also known as
-              "log4shell"). The data below provides insight into log4j consumption through this Nexus Repository instance and specifically shows downloads impacted by
-              CVE-2021-44228. This data is not live and is refreshed whenever the Statistics - Recalculate vulnerabilities statistics task runs. Note that the Log4j Visualizer only
-              captures information about the log4j component in Maven and only identifies those impacted by CVE-2021-44228. It does not currently identify or track other log4j
-              vulnerabilities. You must run the <em>Statistics - Recalculate vulnerabilities statistics</em> task to refresh the data
-              below. <a href="https://help.sonatype.com/repomanager3/nexus-repository-administration/capabilities/log4j-visualizer" target="_blank" rel="noopener noreferrer">Learn more</a>.
-            </p>
-          </div>
-        </div>
-        <div className="nx-page-title">
-          <hgroup className="nx-page-title__headings">
-            <h1 className="nx-h1">
-              Recommendations
-            </h1>
-          </hgroup>
-          <div className="nx-page-title__description">
-            <h4>
-              Short term
-            </h4>
-            <ol className="recommendations-container">
-              <li>Encourage development teams to <strong>upgrade their log4j dependencies</strong> to a non-vulnerable version.</li>
-              <li>Refer to the guidance in Sonatype’s <a href={findAndFixLog4jUrl} target="_blank" rel="noopener noreferrer">Find and Fix Log4j announcement</a>.</li>
-              <li><strong>Don’t delete vulnerable log4j versions</strong> from your repositories except as a last resort. Fixing critical problems can be harder when missing dependencies as that can cause builds to break.</li>
-              <li>Stay up to date with the <a href={resourceCentreUrl} target="_blank" rel="noopener noreferrer">latest Log4j development</a>.</li>
-            </ol>
-            <h4>
-              Long term
-            </h4>
-            <ol className="recommendations-container">
-              <li>Consider <strong>reducing anonymous access to your repositories</strong> so that you can more easily understand who is consuming vulnerable dependencies.</li>
-              <li><strong>Block vulnerable open source components and malicious attacks</strong> from being downloaded into your repositories using <a href={firewallUrl} target="_blank" rel="noopener noreferrer">Nexus Firewall</a>.</li>
-              <li><strong>Reduce remediation time</strong> by using <a href={lifecycleUrl} target="_blank" rel="noopener noreferrer">Nexus Lifecycle</a> for continuous application monitoring.</li>
-            </ol>
-          </div>
-        </div>
-        <div className="nx-scrollable nx-table-container">
-          <NxTable className="nx-table">
-            <NxTable.Head>
-              <NxTable.Row>
-                <NxTable.Cell>Repository</NxTable.Cell>
-                <NxTable.Cell>Downloads</NxTable.Cell>
-              </NxTable.Row>
-              <NxTable.Row isFilterHeader>
-                <NxTable.Cell>
-                  <NxFilterInput placeholder="Type a name"
-                      onChange={onFilterByRepositoryName}
-                      value={filterByRepositoryNameValue}
-                  />
-                </NxTable.Cell>
-              </NxTable.Row>
-            </NxTable.Head>
-            <NxTable.Body emptyMessage="No data">
-              {
-                downloadsByRepositoryName.map((row, index) => (
-                    <NxTable.Row key={index}>
-                      <NxTable.Cell>{row.identifier}</NxTable.Cell>
-                      <NxTable.Cell>{row.downloadCount}</NxTable.Cell>
-                    </NxTable.Row>
-                ))
-              }
-            </NxTable.Body>
-          </NxTable>
-        </div>
-        <div className="nx-scrollable nx-table-container">
-          <NxTable className="nx-table">
-            <NxTable.Head>
-              <NxTable.Row>
-                <NxTable.Cell>Username</NxTable.Cell>
-                <NxTable.Cell>Downloads</NxTable.Cell>
-              </NxTable.Row>
-              <NxTable.Row isFilterHeader>
-                <NxTable.Cell>
-                  <NxFilterInput placeholder="Type a name"
-                      onChange={onFilterByUsername}
-                      value={filterByUsernameValue}
-                  />
-                </NxTable.Cell>
-              </NxTable.Row>
-            </NxTable.Head>
-            <NxTable.Body emptyMessage="No data">
-              {
-                downloadsByUsername.map((row, index) => (
-                    <NxTable.Row
-                        key={index}
-                    >
-                      <NxTable.Cell>{row.identifier}</NxTable.Cell>
-                      <NxTable.Cell>{row.downloadCount}</NxTable.Cell>
-                    </NxTable.Row>
-                ))
-              }
-            </NxTable.Body>
-          </NxTable>
-        </div>
-        <div className="nx-scrollable nx-table-container">
-          <NxTable className="nx-table">
-            <NxTable.Head>
-              <NxTable.Row>
-                <NxTable.Cell>IP address</NxTable.Cell>
-                <NxTable.Cell>Downloads</NxTable.Cell>
-              </NxTable.Row>
-              <NxTable.Row isFilterHeader>
-                <NxTable.Cell>
-                  <NxFilterInput placeholder="Type a name"
-                      onChange={onFilterByIpAddress}
-                      value={filterByIpAddressValue}
-                  />
-                </NxTable.Cell>
-              </NxTable.Row>
-            </NxTable.Head>
-            <NxTable.Body emptyMessage="No data">
-              {
-                downloadsByIpAddress.map((row, index) => (
-                    <NxTable.Row
-                        key={index}
-                    >
-                      <NxTable.Cell>{row.identifier}</NxTable.Cell>
-                      <NxTable.Cell>{row.downloadCount}</NxTable.Cell>
-                    </NxTable.Row>
-                ))
-              }
-            </NxTable.Body>
-          </NxTable>
-        </div>
-        <div>
-          <h1>Feedback</h1>
-          <p>Interested in knowing other vulnerabilities in your repositories? Let us know what would you like to see. <a href={mailAddress}>Contact us</a></p>
-        </div>
+        <NxLoadWrapper loading={current.matches('loading')} retryHandler={retry}>
+          {() => <>
+            <NxStatefulInfoAlert>
+              Sonatype is providing this Log4j Visualizer for a limited time to all Nexus Repository OSS and
+              PRO users due to the urgent threat that the log4j vulnerability poses to the global software community.
+              All access and use of the Log4j Visualizer is governed by the terms of your agreement with Sonatype or,
+              in the absence of such, <a href="https://www.sonatype.com/campaign/software-evaluation-agreement" target="_blank" rel="noopener noreferrer">these terms</a>.
+              We may update or remove this feature completely in future versions.
+            </NxStatefulInfoAlert>
+            <div className="nx-page-title">
+              <hgroup className="nx-page-title__headings">
+                <h1 className="nx-h1">
+                  Organization Insights
+                </h1>
+                <p className="nx-page-title__sub-title">
+                  Total Downloads Affected by Log4shell : <strong>{totalDownloads}</strong>
+                </p>
+              </hgroup>
+              <div className="nx-page-title__description">
+                <p className="nx-p">
+                  Log4j is the most popular logging framework used by Java software. It has been reported to contain serious vulnerabilities, including <a href="https://nvd.nist.gov/vuln/detail/CVE-2021-44228" target="_blank" rel="noopener noreferrer">CVE-2021-44228</a> (also known as
+                  "log4shell"). The data below provides insight into log4j consumption through this Nexus Repository instance and specifically shows downloads impacted by
+                  CVE-2021-44228. This data is not live and is refreshed whenever the Statistics - Recalculate vulnerabilities statistics task runs. Note that the Log4j Visualizer only
+                  captures information about the log4j component in Maven and only identifies those impacted by CVE-2021-44228. It does not currently identify or track other log4j
+                  vulnerabilities. You must run the <em>Statistics - Recalculate vulnerabilities statistics</em> task to refresh the data
+                  below. <a href="https://help.sonatype.com/repomanager3/nexus-repository-administration/capabilities/log4j-visualizer" target="_blank" rel="noopener noreferrer">Learn more</a>.
+                </p>
+              </div>
+            </div>
+            <div className="nx-page-title">
+              <hgroup className="nx-page-title__headings">
+                <h1 className="nx-h1">
+                  Recommendations
+                </h1>
+              </hgroup>
+              <div className="nx-page-title__description">
+                <h4>
+                  Short term
+                </h4>
+                <ol className="recommendations-container">
+                  <li>Encourage development teams to <strong>upgrade their log4j dependencies</strong> to a non-vulnerable version.</li>
+                  <li>Refer to the guidance in Sonatype’s <a href={findAndFixLog4jUrl} target="_blank" rel="noopener noreferrer">Find and Fix Log4j announcement</a>.</li>
+                  <li><strong>Don’t delete vulnerable log4j versions</strong> from your repositories except as a last resort. Fixing critical problems can be harder when missing dependencies as that can cause builds to break.</li>
+                  <li>Stay up to date with the <a href={resourceCentreUrl} target="_blank" rel="noopener noreferrer">latest Log4j development</a>.</li>
+                </ol>
+                <h4>
+                  Long term
+                </h4>
+                <ol className="recommendations-container">
+                  <li>Consider <strong>reducing anonymous access to your repositories</strong> so that you can more easily understand who is consuming vulnerable dependencies.</li>
+                  <li><strong>Block vulnerable open source components and malicious attacks</strong> from being downloaded into your repositories using <a href={firewallUrl} target="_blank" rel="noopener noreferrer">Nexus Firewall</a>.</li>
+                  <li><strong>Reduce remediation time</strong> by using <a href={lifecycleUrl} target="_blank" rel="noopener noreferrer">Nexus Lifecycle</a> for continuous application monitoring.</li>
+                </ol>
+              </div>
+            </div>
+
+            <div className="nx-scrollable nx-table-container">
+              <NxTable className="nx-table">
+                <NxTable.Head>
+                  <NxTable.Row>
+                    <NxTable.Cell>Repository</NxTable.Cell>
+                    <NxTable.Cell>Downloads</NxTable.Cell>
+                  </NxTable.Row>
+                  <NxTable.Row isFilterHeader>
+                    <NxTable.Cell>
+                      <NxFilterInput placeholder="Type a name"
+                                     onChange={onFilterByRepositoryName}
+                                     value={filterByRepositoryNameValue}
+                      />
+                    </NxTable.Cell>
+                  </NxTable.Row>
+                </NxTable.Head>
+                <NxTable.Body emptyMessage="No data">
+                  {downloadsByRepositoryName.map((row, index) =>
+                      <NxTable.Row key={index}>
+                        <NxTable.Cell>{row.identifier}</NxTable.Cell>
+                        <NxTable.Cell>{row.downloadCount}</NxTable.Cell>
+                      </NxTable.Row>
+                  )}
+                </NxTable.Body>
+              </NxTable>
+            </div>
+
+            <div className="nx-scrollable nx-table-container">
+              <NxTable className="nx-table">
+                <NxTable.Head>
+                  <NxTable.Row>
+                    <NxTable.Cell>Username</NxTable.Cell>
+                    <NxTable.Cell>Downloads</NxTable.Cell>
+                  </NxTable.Row>
+                  <NxTable.Row isFilterHeader>
+                    <NxTable.Cell>
+                      <NxFilterInput placeholder="Type a name"
+                                     onChange={onFilterByUsername}
+                                     value={filterByUsernameValue}
+                      />
+                    </NxTable.Cell>
+                  </NxTable.Row>
+                </NxTable.Head>
+                <NxTable.Body emptyMessage="No data">
+                  {downloadsByUsername.map((row, index) =>
+                      <NxTable.Row key={index}>
+                        <NxTable.Cell>{row.identifier}</NxTable.Cell>
+                        <NxTable.Cell>{row.downloadCount}</NxTable.Cell>
+                      </NxTable.Row>
+                  )}
+                </NxTable.Body>
+              </NxTable>
+            </div>
+
+            <div className="nx-scrollable nx-table-container">
+              <NxTable className="nx-table">
+                <NxTable.Head>
+                  <NxTable.Row>
+                    <NxTable.Cell>IP address</NxTable.Cell>
+                    <NxTable.Cell>Downloads</NxTable.Cell>
+                  </NxTable.Row>
+                  <NxTable.Row isFilterHeader>
+                    <NxTable.Cell>
+                      <NxFilterInput placeholder="Type a name"
+                                     onChange={onFilterByIpAddress}
+                                     value={filterByIpAddressValue}
+                      />
+                    </NxTable.Cell>
+                  </NxTable.Row>
+                </NxTable.Head>
+                <NxTable.Body emptyMessage="No data">
+                  {downloadsByIpAddress.map((row, index) =>
+                      <NxTable.Row key={index}>
+                        <NxTable.Cell>{row.identifier}</NxTable.Cell>
+                        <NxTable.Cell>{row.downloadCount}</NxTable.Cell>
+                      </NxTable.Row>
+                  )}
+                </NxTable.Body>
+              </NxTable>
+            </div>
+
+            <div>
+              <h1>Feedback</h1>
+              <p>Interested in knowing other vulnerabilities in your repositories? Let us know what would you like to see. <a href={mailAddress}>Contact us</a></p>
+            </div>
+          </>}
+        </NxLoadWrapper>
       </Page>
-    </Master>
-    <Detail/>
-  </MasterDetail>;
+  );
 }
