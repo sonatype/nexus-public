@@ -136,7 +136,7 @@ public class SearchComponent
     int offset = Optional.ofNullable(page)
                     .map(p -> p - 1) // the UI is 1 indexed, not 0 indexed
                     .map(p -> p * queryLimit)
-                    .orElse(null);
+                    .orElse(0);
 
     SearchRequest request = SearchRequest.builder()
         .searchFilters(filters)
