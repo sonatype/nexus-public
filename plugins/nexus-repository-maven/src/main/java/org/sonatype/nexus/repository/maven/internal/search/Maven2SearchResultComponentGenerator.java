@@ -12,9 +12,10 @@
  */
 package org.sonatype.nexus.repository.maven.internal.search;
 
-import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -22,19 +23,12 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
-import org.sonatype.nexus.repository.search.query.SearchResultComponent;
+import org.sonatype.nexus.repository.search.ComponentSearchResult;
 import org.sonatype.nexus.repository.search.query.SearchResultComponentGeneratorSupport;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 
-import org.elasticsearch.search.SearchHit;
-
 import static java.util.Objects.nonNull;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.ATTRIBUTES;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.FORMAT;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.GROUP;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.NAME;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.VERSION;
 
 /**
  * @since 3.14
@@ -42,7 +36,7 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
 @Singleton
 @Named(Maven2Format.NAME)
 public class Maven2SearchResultComponentGenerator
-  extends SearchResultComponentGeneratorSupport
+    extends SearchResultComponentGeneratorSupport
 {
   @Inject
   public Maven2SearchResultComponentGenerator(final VariableResolverAdapterManager variableResolverAdapterManager,
@@ -52,43 +46,43 @@ public class Maven2SearchResultComponentGenerator
   }
 
   @Override
-  public SearchResultComponent from(final SearchHit hit, final Set<String> componentIdSet) {
-    SearchResultComponent component = null;
-    final Map<String, Object> source = hit.getSource();
-    String repositoryName = getPrivilegedRepositoryName(source);
-    String group = (String) source.get(GROUP);
-    String name = (String) source.get(NAME);
-    String format = (String) source.get(FORMAT);
-    Optional<String> baseVersion = Optional.ofNullable(source.get(ATTRIBUTES))
-        .map(attributes -> ((Map) attributes).get("maven2"))
-        .map(maven2 -> ((Map) maven2).get("baseVersion"))
-        .map(Object::toString);
-    String baseVersionString = baseVersion.orElse("");
-    String baseVersionId = baseVersionString.isEmpty() ? "" :
-        repositoryName + ":" + group + ":" + name + ":" + baseVersionString;
+  public ComponentSearchResult from(final ComponentSearchResult hit, final Set<String> componentIdSet) {
+    hit.setRepositoryName(getPrivilegedRepositoryName(hit));
 
-    if (baseVersionId.isEmpty() || (!componentIdSet.contains(baseVersionId))) {
+    return Optional.ofNullable(hit.getAnnotation("baseVersion"))
+        .map(Object::toString)
+        .filter(Objects::nonNull)
+        .filter(((Predicate<String>) String::isEmpty).negate())
+        .map(baseVersion -> createComponentForBaseVersion(hit, componentIdSet, baseVersion))
+        .orElse(null);
+  }
+
+  private ComponentSearchResult createComponentForBaseVersion(
+      final ComponentSearchResult hit,
+      final Set<String> componentIdSet,
+      final String baseVersion)
+  {
+    ComponentSearchResult component = null;
+    String baseVersionId = hit.getRepositoryName() + ":" + hit.getGroup() + ":" + hit.getName() + ":" + baseVersion;
+
+    if (!componentIdSet.contains(baseVersionId)) {
       boolean isSnapshot = isSnapshotId(baseVersionId);
-      component = new SearchResultComponent();
+      component = new ComponentSearchResult();
 
       component.setId(isSnapshot ? baseVersionId : hit.getId());
-      component.setRepositoryName(repositoryName);
-      component.setGroup(group);
-      component.setName(name);
-      component.setFormat(format);
+      component.setRepositoryName(hit.getRepositoryName());
+      component.setGroup(hit.getGroup());
+      component.setName(hit.getName());
+      component.setFormat(hit.getFormat());
+      component.setAssets(hit.getAssets());
 
-      if (baseVersionString.isEmpty()) {
-        component.setVersion((String) source.get(VERSION));
-      }
-      else {
-        component.setVersion(baseVersionString);
-      }
+      component.setVersion(baseVersion);
     }
 
     return component;
   }
 
-  public static boolean isSnapshotId(String id) {
+  public static boolean isSnapshotId(final String id) {
     return nonNull(id) && id.endsWith("-SNAPSHOT");
   }
 }

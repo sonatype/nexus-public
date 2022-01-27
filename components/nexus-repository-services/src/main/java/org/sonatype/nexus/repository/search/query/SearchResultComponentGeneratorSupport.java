@@ -12,23 +12,19 @@
  */
 package org.sonatype.nexus.repository.search.query;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.search.AssetSearchResult;
+import org.sonatype.nexus.repository.search.ComponentSearchResult;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.selector.VariableSource;
 
-import org.elasticsearch.search.lookup.SourceLookup;
-
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.search.index.SearchConstants.FORMAT;
-import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
 
 /**
  * @since 3.15
@@ -52,18 +48,16 @@ public abstract class SearchResultComponentGeneratorSupport
     this.contentPermissionChecker = checkNotNull(contentPermissionChecker);
   }
 
-  protected String getPrivilegedRepositoryName(Map<String,Object> source) {
-    String repositoryName = (String) source.get(REPOSITORY_NAME);
-    String repositoryFormat = (String) source.get(FORMAT);
+  protected String getPrivilegedRepositoryName(final ComponentSearchResult source) {
+    String repositoryName = source.getRepositoryName();
+    String repositoryFormat = source.getFormat();
 
-    List<Map<String, Object>> assets = (List<Map<String, Object>>) source.getOrDefault("assets", Collections.emptyList());
-
-    SourceLookup lookup = new SourceLookup();
-    lookup.setSource(source);
+    List<AssetSearchResult> assets = source.getAssets();
 
     if (assets != null && !assets.isEmpty()) {
       VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(repositoryFormat);
-      VariableSource variableSource = variableResolverAdapter.fromSourceLookup(lookup, assets.get(0));
+
+      VariableSource variableSource = variableResolverAdapter.fromSearchResult(source, assets.get(0));
       List<String> repositoryNames = repositoryManager.findContainingGroups(repositoryName);
       repositoryNames.add(0, repositoryName);
       for (String name : repositoryNames) {

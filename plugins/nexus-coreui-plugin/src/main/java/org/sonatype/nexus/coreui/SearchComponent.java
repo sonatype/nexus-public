@@ -40,9 +40,11 @@ import org.sonatype.nexus.repository.search.SortDirection;
 import org.sonatype.nexus.repository.search.event.SearchEvent;
 import org.sonatype.nexus.repository.search.event.SearchEventSource;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
+import org.sonatype.nexus.repository.search.query.SearchResultsGenerator;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
+import com.google.common.annotations.VisibleForTesting;
 import com.softwarementors.extjs.djn.config.annotations.DirectAction;
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -63,22 +65,26 @@ public class SearchComponent
 {
   private final SearchService searchService;
 
-  private final int searchResultsLimit;
-
   private final UiSettingsManager uiSettingsManager;
 
   private final EventManager eventManager;
+
+  private final SearchResultsGenerator searchResultsGenerator;
+
+  private int searchResultsLimit;
 
   @Inject
   public SearchComponent(
       final SearchService searchService,
       @Named("${nexus.searchResultsLimit:-1000}") final int searchResultsLimit,
       final UiSettingsManager uiSettingsManager,
+      final SearchResultsGenerator searchResultsGenerator,
       final EventManager eventManager)
   {
     this.searchService = checkNotNull(searchService);
     this.searchResultsLimit = searchResultsLimit;
     this.uiSettingsManager = checkNotNull(uiSettingsManager);
+    this.searchResultsGenerator = checkNotNull(searchResultsGenerator);
     this.eventManager = checkNotNull(eventManager);
   }
 
@@ -147,11 +153,21 @@ public class SearchComponent
 
     SearchResponse response = searchService.search(request);
 
-    List<ComponentXO> componentXOs = response.getSearchResults().stream()
+    List<ComponentXO> componentXOs = searchResultsGenerator.getSearchResultList(response).stream()
         .map(SearchComponent::toComponent)
         .collect(toList());
 
-    return new LimitedPagedResponse<>(limit, -1, componentXOs, false);
+    return new LimitedPagedResponse<>(limit, response.getTotalHits(), componentXOs, false);
+  }
+
+  @VisibleForTesting
+  public int getSearchResultsLimit() {
+    return searchResultsLimit;
+  }
+
+  @VisibleForTesting
+  public void setSearchResultsLimit(final int searchResultsLimit) {
+    this.searchResultsLimit = searchResultsLimit;
   }
 
   private static ComponentXO toComponent(final ComponentSearchResult componentHit) {

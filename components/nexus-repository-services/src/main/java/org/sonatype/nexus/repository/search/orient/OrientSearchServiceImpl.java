@@ -28,7 +28,6 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.rest.internal.resources.TokenEncoder;
 import org.sonatype.nexus.repository.search.AssetSearchResult;
 import org.sonatype.nexus.repository.search.ComponentSearchResult;
@@ -166,6 +165,8 @@ public class OrientSearchServiceImpl
     searchResponse.setSearchResults(componentSearchResults);
 
     searchResponse.setContinuationToken(continuationToken);
+    searchResponse.setTotalHits(esResponse.getHits().getTotalHits());
+
     return searchResponse;
   }
 
@@ -189,7 +190,7 @@ public class OrientSearchServiceImpl
     componentSearchResult.setGroup((String) componentMap.get(GROUP));
     componentSearchResult.setName((String) componentMap.get(NAME));
     componentSearchResult.setVersion((String) componentMap.get(VERSION));
-    componentSearchResult.setId(new RepositoryItemIDXO(repository.getName(), componentHit.getId()).getValue());
+    componentSearchResult.setId(componentHit.getId());
     componentSearchResult.setRepositoryName(repository.getName());
     componentSearchResult.setFormat(repository.getFormat().getValue());
 
@@ -206,7 +207,7 @@ public class OrientSearchServiceImpl
     assetSearchResult.setAttributes((Map<String, Object>) assetMap.getOrDefault(ATTRIBUTES, Collections.emptyMap()));
     assetSearchResult.setPath((String) assetMap.get(NAME));
     assetSearchResult.setRepository(repository.getName());
-    assetSearchResult.setId(new RepositoryItemIDXO(repository.getName(), String.valueOf(assetMap.get(ID))).getValue());
+    assetSearchResult.setId(String.valueOf(assetMap.get(ID)));
     assetSearchResult.setChecksum((Map<String, String>) assetSearchResult.getAttributes().get(CHECKSUM));
     assetSearchResult.setFormat(repository.getFormat().getValue());
     assetSearchResult.setContentType((String) assetMap.get(CONTENT_TYPE));

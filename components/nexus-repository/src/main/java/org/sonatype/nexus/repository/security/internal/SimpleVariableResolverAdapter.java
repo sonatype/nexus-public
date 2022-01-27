@@ -18,6 +18,8 @@ import javax.annotation.Priority;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.repository.search.AssetSearchResult;
+import org.sonatype.nexus.repository.search.ComponentSearchResult;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetVariableResolver;
 import org.sonatype.nexus.repository.storage.AssetVariableResolverSupport;
@@ -62,5 +64,14 @@ public class SimpleVariableResolverAdapter
                                      final Map<String, Object> asset)
   {
     //no-op the simple impl just allows for the path/format variable resolvers in the support class
+  }
+
+  @Override
+  protected void addFromSearchResults(
+      final VariableSourceBuilder builder,
+      final ComponentSearchResult component,
+      final AssetSearchResult asset)
+  {
+    // no-op the simple impl just allows for the path/format variable resolvers in the support class
   }
 }

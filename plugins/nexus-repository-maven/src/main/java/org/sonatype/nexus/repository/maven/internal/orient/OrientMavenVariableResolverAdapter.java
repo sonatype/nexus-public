@@ -22,6 +22,8 @@ import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.maven.internal.utils.MavenVariableResolverAdapterUtil;
+import org.sonatype.nexus.repository.search.AssetSearchResult;
+import org.sonatype.nexus.repository.search.ComponentSearchResult;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetVariableResolverSupport;
 import org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter;
@@ -70,6 +72,15 @@ public class OrientMavenVariableResolverAdapter
                                      final Map<String, Object> asset)
   {
     addMavenCoordinates(builder, (String) asset.get(MetadataNodeEntityAdapter.P_NAME));
+  }
+
+  @Override
+  protected void addFromSearchResults(
+      final VariableSourceBuilder builder,
+      final ComponentSearchResult component,
+      final AssetSearchResult asset)
+  {
+    addMavenCoordinates(builder, asset.getPath());
   }
 
   /**

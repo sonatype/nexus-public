@@ -44,6 +44,7 @@ import org.sonatype.nexus.repository.rest.api.AssetXO;
 import org.sonatype.nexus.repository.rest.api.AssetXODescriptor;
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
+import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.rest.internal.resources.doc.SearchResourceDoc;
 import org.sonatype.nexus.repository.search.ComponentSearchResult;
 import org.sonatype.nexus.repository.search.SearchRequest;
@@ -228,7 +229,7 @@ public class SearchResource
     componentXO.setGroup(componentHit.getGroup());
     componentXO.setName(componentHit.getName());
     componentXO.setVersion(componentHit.getVersion());
-    componentXO.setId(componentHit.getId());
+    componentXO.setId(new RepositoryItemIDXO(repository.getName(), componentHit.getId()).getValue());
     componentXO.setRepository(componentHit.getRepositoryName());
     componentXO.setFormat(componentHit.getFormat());
 

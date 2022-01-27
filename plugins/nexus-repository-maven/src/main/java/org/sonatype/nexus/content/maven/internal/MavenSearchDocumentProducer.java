@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.content.maven.internal;
 
-import java.util.Objects;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -24,7 +23,6 @@ import org.sonatype.nexus.repository.content.search.DefaultSearchDocumentProduce
 import org.sonatype.nexus.repository.content.search.SearchDocumentExtension;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.maven.internal.search.MavenVersionNormalizer;
-import org.sonatype.nexus.repository.search.normalize.VersionNumberExpander;
 
 import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;

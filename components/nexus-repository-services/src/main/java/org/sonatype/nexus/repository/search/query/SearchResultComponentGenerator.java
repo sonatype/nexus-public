@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.search.query;
 
 import java.util.Set;
 
-import org.elasticsearch.search.SearchHit;
+import org.sonatype.nexus.repository.search.ComponentSearchResult;
 
 /**
  *
@@ -23,5 +23,5 @@ import org.elasticsearch.search.SearchHit;
  */
 public interface SearchResultComponentGenerator
 {
-  SearchResultComponent from(final SearchHit hit, final Set<String> componentIdSet);
+  ComponentSearchResult from(ComponentSearchResult hit, Set<String> componentIdSet);
 }

@@ -68,7 +68,7 @@ class AssetXO
     return builder()
         .path(asset.getPath())
         .downloadUrl(repository.url + '/' + asset.getPath())
-        .id(asset.getId())
+        .id(new RepositoryItemIDXO(repository.getName(), asset.getId()).getValue())
         .repository(repository.getName())
         .checksum(asset.getChecksum())
         .format(asset.getFormat())
