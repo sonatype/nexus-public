@@ -49,12 +49,15 @@ public class Maven2SearchResultComponentGenerator
   public ComponentSearchResult from(final ComponentSearchResult hit, final Set<String> componentIdSet) {
     hit.setRepositoryName(getPrivilegedRepositoryName(hit));
 
-    return Optional.ofNullable(hit.getAnnotation("baseVersion"))
+    Optional<String> baseVersion = Optional.ofNullable(hit.getAnnotation("baseVersion"))
         .map(Object::toString)
         .filter(Objects::nonNull)
-        .filter(((Predicate<String>) String::isEmpty).negate())
-        .map(baseVersion -> createComponentForBaseVersion(hit, componentIdSet, baseVersion))
-        .orElse(null);
+        .filter(((Predicate<String>) String::isEmpty).negate());
+
+    if (baseVersion.isPresent()) {
+      return createComponentForBaseVersion(hit, componentIdSet, baseVersion.get());
+    }
+    return hit;
   }
 
   private ComponentSearchResult createComponentForBaseVersion(

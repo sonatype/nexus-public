@@ -131,7 +131,6 @@ public class SearchComponent
     String sortField = sort.stream().findFirst().map(Sort::getProperty).orElse(null);
     String sortDirection = sort.stream().findFirst().map(Sort::getDirection).orElse(null);
 
-    fireSearchEvent(filters);
     int queryLimit =  Math.min(limit, searchResultsLimit);
     int offset = Optional.ofNullable(page)
                     .map(p -> p - 1) // the UI is 1 indexed, not 0 indexed
