@@ -342,11 +342,12 @@ public class RepositoryManagerImpl
     checkNotNull(configuration);
     validateConfiguration(configuration);
 
+    Repository repository = loadRepositoryIntoMemory(configuration);
     if (!EventHelper.isReplicating()) {
       store.create(configuration);
     }
+    repository.start();
 
-    Repository repository = loadRepositoryIntoMemory(configuration);
     eventManager.post(new RepositoryCreatedEvent(repository));
 
     distributeRepositoryConfigurationEvent(repository.getName(), CREATED);
@@ -419,7 +420,6 @@ public class RepositoryManagerImpl
 
     Repository repository = newRepository(configuration);
     track(repository);
-    repository.start();
 
     return repository;
   }
@@ -611,6 +611,7 @@ public class RepositoryManagerImpl
     configuration.ifPresent(config -> {
       try {
         Repository repository = loadRepositoryIntoMemory(config);
+        repository.start();
         eventManager.post(new RepositoryCreatedEvent(repository));
       }
       catch (Exception e) {
