@@ -15,24 +15,30 @@ package org.sonatype.nexus.security;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
-
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.servlet.http.Cookie;
 
-import org.sonatype.nexus.common.text.Strings2;
+import org.sonatype.nexus.common.app.FeatureFlag;
+import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.event.EventAware;
+import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.security.jwt.JwtSecretChanged;
+import org.sonatype.nexus.security.jwt.JwtVerificationException;
+import org.sonatype.nexus.security.jwt.JwtVerifier;
+import org.sonatype.nexus.security.jwt.SecretStore;
 
 import com.auth0.jwt.JWT;
-import com.auth0.jwt.JWTVerifier;
-import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.google.common.eventbus.Subscribe;
+import com.google.inject.Provider;
 import org.apache.shiro.subject.Subject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SECURITY;
 
 /**
  * Helper to create, decode, verify and refresh JWT cookie
@@ -40,8 +46,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.next
  */
 @Named
+@ManagedLifecycle(phase = SECURITY)
 @Singleton
+@FeatureFlag(name = JWT_ENABLED)
 public class JwtHelper
+    extends StateGuardLifecycleSupport
+    implements EventAware
 {
   public static final String JWT_COOKIE_NAME = "NXJWT";
 
@@ -53,32 +63,34 @@ public class JwtHelper
 
   public static final String USER_SESSION_ID = "userSessionId";
 
-  private static final Logger log = LoggerFactory.getLogger(JwtHelper.class);
-
-  private static final long MILLIS_PER_SECOND = 1000;
-
-  private final Algorithm algorithm;
+  private static final long MILLIS_PER_SECOND = 1_000;
 
   private final int expiry;
 
   private final String contextPath;
 
-  private final JWTVerifier verifier;
+  private final Provider<SecretStore> secretStoreProvider;
+
+  private JwtVerifier verifier;
 
   @Inject
   public JwtHelper(@Named("${nexus.jwt.expiry:-1800}") final int expiry,
                    @Named("${nexus-context-path}") final String contextPath,
-                   @Nullable @Named("${nexus.jwt.secret}") final String secret) {
+                   final Provider<SecretStore> secretStoreProvider) {
+    checkState(expiry >= 0, "JWT expiry should be positive");
     this.expiry = expiry;
-    this.contextPath = contextPath;
-    String secretValue = secret;
-    if (Strings2.isBlank(secretValue)) {
-      secretValue = UUID.randomUUID().toString();
-    }
-    this.algorithm = Algorithm.HMAC256(secretValue);
-    this.verifier = JWT.require(algorithm)
-        .withIssuer(JwtHelper.ISSUER)
-        .build();
+    this.contextPath = checkNotNull(contextPath);
+    this.secretStoreProvider = checkNotNull(secretStoreProvider);
+  }
+
+  @Override
+  protected void doStart() throws Exception {
+    super.doStart();
+    // the new secret will be generated as UUID only if it is not presented yet.
+    secretStoreProvider.get().generateNewSecret();
+    // we have to read the generated secret from the DB since another node may write it
+    verifier = new JwtVerifier(secretStoreProvider.get().getSecret()
+        .orElseThrow(() -> new IllegalStateException("JWT secret not found")));
   }
 
   /**
@@ -96,28 +108,21 @@ public class JwtHelper
   /**
    * Verify jwt, refresh if it's valid and make new cookie
    */
-  public Optional<Cookie> verifyAndRefreshJwtCookie(final String jwt) {
+  public Cookie verifyAndRefreshJwtCookie(final String jwt) throws JwtVerificationException {
     checkNotNull(jwt);
 
-    Optional<DecodedJWT> decodedJWT = verifyJwt(jwt);
-    return decodedJWT.map(decoded -> createJwtCookie(decoded.getClaim(USER).asString(),
+    DecodedJWT decoded = verifyJwt(jwt);
+
+    return createJwtCookie(decoded.getClaim(USER).asString(),
         decoded.getClaim(REALM).asString(),
-        decoded.getClaim(USER_SESSION_ID).asString()));
+        decoded.getClaim(USER_SESSION_ID).asString());
   }
 
   /**
    * Verifies and decode token
    */
-  public Optional<DecodedJWT> verifyJwt(final String jwt) {
-    DecodedJWT decodedJWT;
-    try {
-      decodedJWT = verifier.verify(jwt);
-    }
-    catch (Exception e) {
-      log.error("Invalid token", e);
-      return Optional.empty();
-    }
-    return Optional.of(decodedJWT);
+  public DecodedJWT verifyJwt(final String jwt) throws JwtVerificationException {
+    return verifier.verify(jwt);
   }
 
   /**
@@ -132,6 +137,17 @@ public class JwtHelper
    */
   public long getExpiryInMillis() {
     return expiry * MILLIS_PER_SECOND;
+  }
+
+  /**
+   * Handles a JWT secret change event.
+   *
+   * @param event the {@link JwtSecretChanged} with the new secret.
+   */
+  @Subscribe
+  public void on(final JwtSecretChanged event) {
+    log.debug("JWT secret has changed. Reset the cookies");
+    verifier = new JwtVerifier(event.getSecret());
   }
 
   private Cookie createJwtCookie(final String user, final String realm) {
@@ -154,7 +170,7 @@ public class JwtHelper
         .withClaim(USER_SESSION_ID, userSessionId)
         .withIssuedAt(issuedAt)
         .withExpiresAt(expiresAt)
-        .sign(algorithm);
+        .sign(verifier.getAlgorithm());
   }
 
   private Cookie createCookie(final String jwt) {
@@ -162,6 +178,7 @@ public class JwtHelper
     cookie.setMaxAge(getExpiryInSec());
     cookie.setPath(contextPath);
     cookie.setHttpOnly(true);
+
     return cookie;
   }
 

@@ -16,15 +16,17 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
-
 import javax.servlet.http.Cookie;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.security.jwt.JwtVerificationException;
+import org.sonatype.nexus.security.jwt.SecretStore;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.google.inject.Provider;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.Subject;
 import org.junit.Before;
@@ -32,7 +34,6 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
@@ -50,11 +51,20 @@ public class JwtHelperTest
   @Mock
   private PrincipalCollection principals;
 
+  @Mock
+  private SecretStore secretStore;
+
+  @Mock
+  private Provider<SecretStore> storeProvider;
+
   private JwtHelper underTest;
 
   @Before
-  public void setup() {
-    underTest = new JwtHelper(300,"/","secret");
+  public void setup() throws Exception {
+    when(secretStore.getSecret()).thenReturn(Optional.of("secret"));
+    when(storeProvider.get()).thenReturn(secretStore);
+    underTest = new JwtHelper(300, "/", storeProvider);
+    underTest.doStart();
     when(subject.getPrincipal()).thenReturn("admin");
     when(subject.getPrincipals()).thenReturn(principals);
     when(principals.getRealmNames()).thenReturn(Collections.singleton("NexusAuthorizingRealm"));
@@ -71,45 +81,38 @@ public class JwtHelperTest
   }
 
   @Test
-  public void testVerifyJwt_success() {
+  public void testVerifyJwt_success() throws Exception {
     String jwt = makeValidJwt();
-    Optional<DecodedJWT> decodedJWT = underTest.verifyJwt(jwt);
-    assertTrue(decodedJWT.isPresent());
+    DecodedJWT decodedJWT = underTest.verifyJwt(jwt);
 
-    DecodedJWT decoded = decodedJWT.get();
-    assertEquals(ISSUER, decoded.getClaim("iss").asString());
+    assertEquals(ISSUER, decodedJWT.getClaim("iss").asString());
   }
 
-  @Test
-  public void testVerifyJwt_tokenExpired() {
+  @Test(expected = JwtVerificationException.class)
+  public void testVerifyJwt_tokenExpired() throws Exception {
     String jwt = makeInvalidJwt();
-    Optional<DecodedJWT> decodedJWT = underTest.verifyJwt(jwt);
-    assertFalse(decodedJWT.isPresent());
+    underTest.verifyJwt(jwt);
   }
 
   @Test
-  public void testVerifyAndRefresh_success() {
+  public void testVerifyAndRefresh_success() throws Exception {
     String jwt = makeValidJwt();
     DecodedJWT decodedJWT = decodeJwt(jwt);
 
-    Optional<Cookie> refreshed = underTest.verifyAndRefreshJwtCookie(jwt);
-    assertTrue(refreshed.isPresent());
+    Cookie refreshed = underTest.verifyAndRefreshJwtCookie(jwt);
+    assertCookie(refreshed);
 
-    Cookie refreshedCookie = refreshed.get();
-    assertCookie(refreshedCookie);
-
-    DecodedJWT refreshedJwt = decodeJwt(refreshedCookie.getValue());
+    DecodedJWT refreshedJwt = decodeJwt(refreshed.getValue());
 
     Claim userSessionId = decodedJWT.getClaim(USER_SESSION_ID);
     assertEquals(userSessionId.asString(), refreshedJwt.getClaim(USER_SESSION_ID).asString());
-    assertJwt(refreshedCookie.getValue());
+    assertJwt(refreshed.getValue());
   }
 
-  @Test
-  public void testVerifyAndRefresh_invalidJwt() {
+  @Test(expected = JwtVerificationException.class)
+  public void testVerifyAndRefresh_invalidJwt() throws Exception {
     String jwt = makeInvalidJwt();
-    Optional<Cookie> refreshed = underTest.verifyAndRefreshJwtCookie(jwt);
-    assertFalse(refreshed.isPresent());
+    underTest.verifyAndRefreshJwtCookie(jwt);
   }
 
   private String makeValidJwt() {
