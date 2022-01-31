@@ -22,9 +22,11 @@
     "@xstate/react": "=1.2.2",
     "axios": "=0.21.4",
     "classnames": "=2.2.6",
-    "react": "=16.11.0",
-    "react-dom": "=16.11.0",
-    "xstate": "=4.16.0"
+    "react": "=16.14.0",
+    "react-dom": "=16.14.0",
+    "xstate": "=4.16.0",
+    "@nivo/core": "^0.79.0",
+    "@nivo/line": "^0.79.0"
   },
   "devDependencies": {
     "@babel/core": "=7.4.5",

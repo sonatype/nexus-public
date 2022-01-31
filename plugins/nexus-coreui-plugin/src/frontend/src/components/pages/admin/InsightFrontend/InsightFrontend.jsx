@@ -12,6 +12,7 @@
  */
 import React from 'react';
 import {useMachine} from '@xstate/react';
+import {ResponsiveLine} from '@nivo/line';
 
 import {
   NxFilterInput,
@@ -37,6 +38,8 @@ export default function InsightFrontend() {
     downloadsByRepositoryName,
     downloadsByIpAddress,
     downloadsByUsername,
+    downloadsByDay,
+    unaffectedDownloadsByDay,
     totalDownloads,
   } = current.context.data;
   const {
@@ -88,6 +91,82 @@ export default function InsightFrontend() {
         filterValue: value
       }
     });
+  }
+
+  function createChartView() {
+    return downloadsByDay.length > 0 || unaffectedDownloadsByDay.length > 0 ?
+        <div className="chart-container">
+          <ResponsiveLine data={
+            [
+              {
+                id: 'log4shell',
+                data: downloadsByDay.map((download) => {
+                  return {
+                    x: new Date(download.day.year, download.day.monthValue - 1, download.day.dayOfMonth),
+                    y: download.downloadCount
+                  }
+                })
+              }
+              ,
+              {
+                id: 'non-log4shell',
+                data: unaffectedDownloadsByDay.map((download) => {
+                  return {
+                    x: new Date(download.day.year, download.day.monthValue - 1, download.day.dayOfMonth),
+                    y: download.downloadCount
+                  }
+                })
+              }
+            ]
+          }
+                          margin={{top: 50, right: 110, bottom: 50, left: 60}}
+                          yScale={{
+                            type: 'linear',
+                            stacked: true
+                          }}
+                          xScale={{
+                            type: 'time',
+                            format: '%Y-%m-%d',
+                            precision: 'day',
+                            useUTC: false
+                          }}
+                          axisLeft={{
+                            legend: 'Number of Downloads',
+                            legendPosition: 'middle',
+                            legendOffset: -40
+                          }}
+                          axisBottom={{
+                            legend: 'Dates',
+                            format: '%b-%d',
+                            legendOffset: 40,
+                            legendPosition: 'middle'
+                          }}
+                          colors={[
+                            '#EF889A',
+                            '#46A2E1'
+                          ]}
+                          xFormat="time:%Y-%m-%d"
+                          enablePoints={false}
+                          useMesh={true}
+                          lineWidth={3}
+                          crosshairType={'cross'}
+                          legends={[
+                            {
+                              anchor: 'top-right',
+                              direction: 'column',
+                              justify: false,
+                              translateX: 100,
+                              translateY: 0,
+                              itemsSpacing: 0,
+                              itemDirection: 'left-to-right',
+                              itemWidth: 80,
+                              itemHeight: 20,
+                              symbolSize: 14,
+                              symbolShape: 'circle'
+                            }
+                          ]}
+          />
+        </div> : <div className="chart-container empty-chart">No Data Available</div>
   }
 
   function retry() {
@@ -151,96 +230,108 @@ export default function InsightFrontend() {
                 </ol>
               </div>
             </div>
+            <div className="insight-frontend-content">
+              <div className="insight-frontend-content-item">
 
-            <div className="nx-scrollable nx-table-container">
-              <NxTable className="nx-table">
-                <NxTable.Head>
-                  <NxTable.Row>
-                    <NxTable.Cell>Repository</NxTable.Cell>
-                    <NxTable.Cell>Downloads</NxTable.Cell>
-                  </NxTable.Row>
-                  <NxTable.Row isFilterHeader>
-                    <NxTable.Cell>
-                      <NxFilterInput placeholder="Type a name"
-                                     id="repositoryFilter"
-                                     onChange={onFilterByRepositoryName}
-                                     value={filterByRepositoryNameValue}
-                      />
-                    </NxTable.Cell>
-                  </NxTable.Row>
-                </NxTable.Head>
-                <NxTable.Body emptyMessage="No data">
-                  {downloadsByRepositoryName.map((row, index) =>
-                      <NxTable.Row key={index}>
-                        <NxTable.Cell>{row.identifier}</NxTable.Cell>
-                        <NxTable.Cell>{row.downloadCount}</NxTable.Cell>
+
+                <div className="nx-scrollable nx-table-container">
+                  <NxTable className="nx-table">
+                    <NxTable.Head>
+                      <NxTable.Row>
+                        <NxTable.Cell>Repository</NxTable.Cell>
+                        <NxTable.Cell>Downloads</NxTable.Cell>
                       </NxTable.Row>
-                  )}
-                </NxTable.Body>
-              </NxTable>
-            </div>
-
-            <div className="nx-scrollable nx-table-container">
-              <NxTable className="nx-table">
-                <NxTable.Head>
-                  <NxTable.Row>
-                    <NxTable.Cell>Username</NxTable.Cell>
-                    <NxTable.Cell>Downloads</NxTable.Cell>
-                  </NxTable.Row>
-                  <NxTable.Row isFilterHeader>
-                    <NxTable.Cell>
-                      <NxFilterInput placeholder="Type a name"
-                                     id="usernameFilter"
-                                     onChange={onFilterByUsername}
-                                     value={filterByUsernameValue}
-                      />
-                    </NxTable.Cell>
-                  </NxTable.Row>
-                </NxTable.Head>
-                <NxTable.Body emptyMessage="No data">
-                  {downloadsByUsername.map((row, index) =>
-                      <NxTable.Row key={index}>
-                        <NxTable.Cell>{row.identifier}</NxTable.Cell>
-                        <NxTable.Cell>{row.downloadCount}</NxTable.Cell>
+                      <NxTable.Row isFilterHeader>
+                        <NxTable.Cell>
+                          <NxFilterInput placeholder="Type a name"
+                                         id="repositoryFilter"
+                                         onChange={onFilterByRepositoryName}
+                                         value={filterByRepositoryNameValue}
+                          />
+                        </NxTable.Cell>
                       </NxTable.Row>
-                  )}
-                </NxTable.Body>
-              </NxTable>
-            </div>
+                    </NxTable.Head>
+                    <NxTable.Body emptyMessage="No data">
+                      {
+                        downloadsByRepositoryName.map((row, index) => (
+                            <NxTable.Row key={index}>
+                              <NxTable.Cell>{row.identifier}</NxTable.Cell>
+                              <NxTable.Cell>{row.downloadCount}</NxTable.Cell>
+                            </NxTable.Row>
+                        ))
+                      }
+                    </NxTable.Body>
+                  </NxTable>
+                </div>
+                {createChartView()}
+              </div>
+              <div className="insight-frontend-content-item">
 
-            <div className="nx-scrollable nx-table-container">
-              <NxTable className="nx-table">
-                <NxTable.Head>
-                  <NxTable.Row>
-                    <NxTable.Cell>IP address</NxTable.Cell>
-                    <NxTable.Cell>Downloads</NxTable.Cell>
-                  </NxTable.Row>
-                  <NxTable.Row isFilterHeader>
-                    <NxTable.Cell>
-                      <NxFilterInput placeholder="Type a name"
-                                     id="ipAddressFilter"
-                                     onChange={onFilterByIpAddress}
-                                     value={filterByIpAddressValue}
-                      />
-                    </NxTable.Cell>
-                  </NxTable.Row>
-                </NxTable.Head>
-                <NxTable.Body emptyMessage="No data">
-                  {downloadsByIpAddress.map((row, index) =>
-                      <NxTable.Row key={index}>
-                        <NxTable.Cell>{row.identifier}</NxTable.Cell>
-                        <NxTable.Cell>{row.downloadCount}</NxTable.Cell>
+                <div className="nx-scrollable nx-table-container">
+                  <NxTable className="nx-table">
+                    <NxTable.Head>
+                      <NxTable.Row>
+                        <NxTable.Cell>Username</NxTable.Cell>
+                        <NxTable.Cell>Downloads</NxTable.Cell>
                       </NxTable.Row>
-                  )}
-                </NxTable.Body>
-              </NxTable>
-            </div>
+                      <NxTable.Row isFilterHeader>
+                        <NxTable.Cell>
+                          <NxFilterInput placeholder="Type a name"
+                                         id="usernameFilter"
+                                         onChange={onFilterByUsername}
+                                         value={filterByUsernameValue}
+                          />
+                        </NxTable.Cell>
+                      </NxTable.Row>
+                    </NxTable.Head>
+                    <NxTable.Body emptyMessage="No data">
+                      {downloadsByUsername.map((row, index) =>
+                          <NxTable.Row key={index}>
+                            <NxTable.Cell>{row.identifier}</NxTable.Cell>
+                            <NxTable.Cell>{row.downloadCount}</NxTable.Cell>
+                          </NxTable.Row>
+                      )}
+                    </NxTable.Body>
+                  </NxTable>
+                </div>
 
-            <div>
-              <h1>Feedback</h1>
-              <p>Interested in knowing other vulnerabilities in your repositories? Let us know what would you like to see. <a href={mailAddress}>Contact us</a></p>
+                <div className="nx-scrollable nx-table-container">
+                  <NxTable className="nx-table">
+                    <NxTable.Head>
+                      <NxTable.Row>
+                        <NxTable.Cell>IP address</NxTable.Cell>
+                        <NxTable.Cell>Downloads</NxTable.Cell>
+                      </NxTable.Row>
+                      <NxTable.Row isFilterHeader>
+                        <NxTable.Cell>
+                          <NxFilterInput placeholder="Type a name"
+                                         id="ipAddressFilter"
+                                         onChange={onFilterByIpAddress}
+                                         value={filterByIpAddressValue}
+                          />
+                        </NxTable.Cell>
+                      </NxTable.Row>
+                    </NxTable.Head>
+                    <NxTable.Body emptyMessage="No data">
+
+                      {downloadsByIpAddress.map((row, index) =>
+                          <NxTable.Row key={index}>
+                            <NxTable.Cell>{row.identifier}</NxTable.Cell>
+                            <NxTable.Cell>{row.downloadCount}</NxTable.Cell>
+                          </NxTable.Row>
+                      )}
+                    </NxTable.Body>
+                  </NxTable>
+                </div>
+
+              </div>
+              <div>
+                <h1>Feedback</h1>
+                <p>Interested in knowing other vulnerabilities in your repositories? Let us know what would you like to see. <a href={mailAddress}>Contact us</a></p>
+              </div>
             </div>
-          </>}
+          </>
+          }
         </NxLoadWrapper>
       </Page>
   );

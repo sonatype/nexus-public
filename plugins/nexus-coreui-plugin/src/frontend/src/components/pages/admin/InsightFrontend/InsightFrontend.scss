@@ -17,4 +17,28 @@
 
 .nx-table-container {
   margin-bottom: 10px;
+  width: calc(50% - 10px);
+  height: 400px;
+}
+
+.chart-container {
+  margin-bottom: 10px;
+  width: calc(50% - 10px);
+  height: 400px;
+}
+
+.empty-chart {
+  justify-content: center;
+  display: flex;
+  align-items: center;
+}
+
+.insight-frontend-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.insight-frontend-content-item {
+  display: flex;
+  justify-content: space-between;
 }
