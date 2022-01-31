@@ -61,6 +61,11 @@
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-distributed-event-service-api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-testsupport</artifactId>
       <scope>test</scope>
     </dependency>
@@ -100,10 +105,7 @@
       <artifactId>system-rules</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-distributed-event-service-api</artifactId>
-    </dependency>
+
   </dependencies>
 
 </project>
