@@ -14,15 +14,9 @@ package org.sonatype.nexus.repository.maven.upgrade;
 
 import java.util.List;
 
-import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Provider;
-import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.upgrade.DependsOn;
-import org.sonatype.nexus.common.upgrade.Upgrades;
 import org.sonatype.nexus.orient.DatabaseInstance;
-import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.orient.DatabaseUpgradeSupport;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -34,17 +28,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
 
 /**
- * Upgrade step that marks existing maven repositories (at the time of the upgrade) as needing to be re-indexed to
- * support a new search normalization format.
+ * Upgrade step that marks existing maven repositories (at the time of the upgrade) as needing to be re-indexed.
  *
- * @since 3.37
+ * @since 3.next
  */
-@Named
-@Singleton
-@Upgrades(model = MavenModel.NAME, from = "1.1", to = "1.2")
-@DependsOn(model = DatabaseInstanceNames.COMPONENT, version = "1.15", checkpoint = true)
-@DependsOn(model = DatabaseInstanceNames.CONFIG, version = "1.9")
-public class MavenUpgrade_1_2 // NOSONAR
+public class OrientMavenIndexUpgrade
     extends DatabaseUpgradeSupport
 {
   private static final String SELECT_MAVEN_REPOSITORIES =
@@ -59,10 +47,9 @@ public class MavenUpgrade_1_2 // NOSONAR
 
   private final Provider<DatabaseInstance> componentDatabaseInstance;
 
-  @Inject
-  public MavenUpgrade_1_2(
-      @Named(DatabaseInstanceNames.CONFIG) final Provider<DatabaseInstance> configDatabaseInstance,
-      @Named(DatabaseInstanceNames.COMPONENT) final Provider<DatabaseInstance> componentDatabaseInstance)
+  public OrientMavenIndexUpgrade(
+      final Provider<DatabaseInstance> configDatabaseInstance,
+      final Provider<DatabaseInstance> componentDatabaseInstance)
   {
     this.configDatabaseInstance = checkNotNull(configDatabaseInstance);
     this.componentDatabaseInstance = checkNotNull(componentDatabaseInstance);

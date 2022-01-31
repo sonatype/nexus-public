@@ -16,17 +16,17 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 /**
- * Re-index for new search normalization format.
+ * Re-index for update to search normalization format.
  *
  * @since 3.37
  */
 @Named
 @Singleton
-public class MavenUpgrade_1_4 // NOSONAR
+public class MavenUpgrade_1_5 // NOSONAR
     extends MavenIndexUpgrade
 {
   @Override
   public String version() {
-    return "1.4";
+    return "1.5";
   }
 }

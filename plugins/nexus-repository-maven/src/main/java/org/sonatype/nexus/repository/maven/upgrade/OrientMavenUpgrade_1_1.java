@@ -46,7 +46,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Upgrades(model = MavenModel.NAME, from = "1.0", to = "1.1")
 @DependsOn(model = DatabaseInstanceNames.COMPONENT, version = "1.12", checkpoint = true)
 @DependsOn(model = DatabaseInstanceNames.CONFIG, version = "1.5")
-public class MavenUpgrade_1_1 // NOSONAR
+public class OrientMavenUpgrade_1_1 // NOSONAR
     extends DatabaseUpgradeSupport
 {
   private static final String SELECT_MAVEN_REPOSITORIES =
@@ -69,7 +69,7 @@ public class MavenUpgrade_1_1 // NOSONAR
   private final Provider<DatabaseInstance> componentDatabaseInstance;
 
   @Inject
-  public MavenUpgrade_1_1(
+  public OrientMavenUpgrade_1_1(
       @Named(DatabaseInstanceNames.CONFIG) final Provider<DatabaseInstance> configDatabaseInstance,
       @Named(DatabaseInstanceNames.COMPONENT) final Provider<DatabaseInstance> componentDatabaseInstance)
   {

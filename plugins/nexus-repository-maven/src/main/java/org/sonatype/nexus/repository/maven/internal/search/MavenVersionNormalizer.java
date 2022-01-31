@@ -111,7 +111,7 @@ public class MavenVersionNormalizer
     String qualifier = result[1];
 
     String[] versionList = version.split("\\.");
-    if (versionList.length > VERSION_LENGTH) {
+    if (!isRecognizedFormat(versionList)) {
       // just expand versions with no other processing
       return VersionNumberExpander.expand(originalVersion);
     }
@@ -236,5 +236,9 @@ public class MavenVersionNormalizer
     }
 
     return VersionNumberExpander.expand(v);
+  }
+
+  private boolean isRecognizedFormat(final String[] versionList) {
+    return versionList.length > 0 && versionList.length <= VERSION_LENGTH && !isBlank(versionList[0]);
   }
 }

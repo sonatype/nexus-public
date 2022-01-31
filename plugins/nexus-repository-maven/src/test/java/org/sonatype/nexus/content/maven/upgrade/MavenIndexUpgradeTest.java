@@ -39,7 +39,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
-public class MavenUpgrade_1_4_Test
+public class MavenIndexUpgradeTest
     extends TestSupport
 {
   @Rule
@@ -53,7 +53,12 @@ public class MavenUpgrade_1_4_Test
 
   private Maven2ContentRepositoryDAO contentRepositoryDAO;
 
-  private MavenUpgrade_1_4 underTest = new MavenUpgrade_1_4();
+  private final MavenIndexUpgrade underTest = new MavenIndexUpgrade() {
+    @Override
+    public String version() {
+      return "1.0";
+    }
+  };
 
   private ConfigurationData hosted1Config;
 

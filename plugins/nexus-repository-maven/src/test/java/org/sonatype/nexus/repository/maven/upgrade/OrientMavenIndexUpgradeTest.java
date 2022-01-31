@@ -25,10 +25,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 
-public class MavenUpgrade_1_2_Test
+public class OrientMavenIndexUpgradeTest
     extends MavenUpgradeTestSupport
 {
-  private MavenUpgrade_1_2 underTest;
+  private OrientMavenIndexUpgrade underTest;
 
   @Before
   public void setUp() {
@@ -44,7 +44,7 @@ public class MavenUpgrade_1_2_Test
       bucket("group");
     }
 
-    underTest = new MavenUpgrade_1_2(configDatabase.getInstanceProvider(),
+    underTest = new OrientMavenIndexUpgrade(configDatabase.getInstanceProvider(),
         componentDatabase.getInstanceProvider());
   }
 

@@ -25,10 +25,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 
-public class MavenUpgrade_1_1_Test
+public class OrientMavenUpgrade_1_1_Test
     extends MavenUpgradeTestSupport
 {
-  private MavenUpgrade_1_1 underTest;
+  private OrientMavenUpgrade_1_1 underTest;
 
   @Before
   public void setUp() {
@@ -47,7 +47,7 @@ public class MavenUpgrade_1_1_Test
       asset(bucketIdx, "maven2Hosted", ".index/nexus-maven-repository-index.properties", "OTHER");
     }
 
-    underTest = new MavenUpgrade_1_1(configDatabase.getInstanceProvider(),
+    underTest = new OrientMavenUpgrade_1_1(configDatabase.getInstanceProvider(),
         componentDatabase.getInstanceProvider());
   }
 
