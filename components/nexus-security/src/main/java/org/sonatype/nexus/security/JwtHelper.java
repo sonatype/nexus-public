@@ -15,6 +15,7 @@ package org.sonatype.nexus.security;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -24,6 +25,7 @@ import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.distributed.event.service.api.common.JWTSecretChangedEvent;
 import org.sonatype.nexus.security.jwt.JwtSecretChanged;
 import org.sonatype.nexus.security.jwt.JwtVerificationException;
 import org.sonatype.nexus.security.jwt.JwtVerifier;
@@ -63,9 +65,7 @@ public class JwtHelper
 
   public static final String USER_SESSION_ID = "userSessionId";
 
-  private static final long MILLIS_PER_SECOND = 1_000;
-
-  private final int expiry;
+  private final int expirySeconds;
 
   private final String contextPath;
 
@@ -74,11 +74,13 @@ public class JwtHelper
   private JwtVerifier verifier;
 
   @Inject
-  public JwtHelper(@Named("${nexus.jwt.expiry:-1800}") final int expiry,
-                   @Named("${nexus-context-path}") final String contextPath,
-                   final Provider<SecretStore> secretStoreProvider) {
-    checkState(expiry >= 0, "JWT expiry should be positive");
-    this.expiry = expiry;
+  public JwtHelper(
+      @Named("${nexus.jwt.expiry:-1800}") final int expirySeconds,
+      @Named("${nexus-context-path}") final String contextPath,
+      final Provider<SecretStore> secretStoreProvider)
+  {
+    checkState(expirySeconds >= 0, "JWT expiration period should be positive");
+    this.expirySeconds = expirySeconds;
     this.contextPath = checkNotNull(contextPath);
     this.secretStoreProvider = checkNotNull(secretStoreProvider);
   }
@@ -90,7 +92,7 @@ public class JwtHelper
     secretStoreProvider.get().generateNewSecret();
     // we have to read the generated secret from the DB since another node may write it
     verifier = new JwtVerifier(secretStoreProvider.get().getSecret()
-        .orElseThrow(() -> new IllegalStateException("JWT secret not found")));
+        .orElseThrow(() -> new IllegalStateException("JWT secret not found  in datastore")));
   }
 
   /**
@@ -128,15 +130,8 @@ public class JwtHelper
   /**
    * Gets expiry in seconds
    */
-  public int getExpiryInSec() {
-    return expiry;
-  }
-
-  /**
-   * Gets expiry in milliseconds
-   */
-  public long getExpiryInMillis() {
-    return expiry * MILLIS_PER_SECOND;
+  public int getExpirySeconds() {
+    return expirySeconds;
   }
 
   /**
@@ -148,6 +143,18 @@ public class JwtHelper
   public void on(final JwtSecretChanged event) {
     log.debug("JWT secret has changed. Reset the cookies");
     verifier = new JwtVerifier(event.getSecret());
+  }
+
+  /**
+   * Handles a JWT secret change event from another node .
+   *
+   * @param event the {@link JWTSecretChangedEvent} with the new secret.
+   */
+  @Subscribe
+  public void on(final JWTSecretChangedEvent event) {
+    log.debug("JWT secret has changed on {} node. Reset the cookies", event.getNodeId());
+    verifier = new JwtVerifier(secretStoreProvider.get().getSecret()
+        .orElseThrow(() -> new IllegalStateException("JWT secret not found in datastore")));
   }
 
   private Cookie createJwtCookie(final String user, final String realm) {
@@ -175,7 +182,7 @@ public class JwtHelper
 
   private Cookie createCookie(final String jwt) {
     Cookie cookie = new Cookie(JWT_COOKIE_NAME, jwt);
-    cookie.setMaxAge(getExpiryInSec());
+    cookie.setMaxAge(this.expirySeconds);
     cookie.setPath(contextPath);
     cookie.setHttpOnly(true);
 
@@ -183,6 +190,6 @@ public class JwtHelper
   }
 
   private Date getExpiresAt(final Date issuedAt) {
-    return new Date(issuedAt.getTime() + getExpiryInMillis());
+    return new Date(issuedAt.getTime() + TimeUnit.SECONDS.toMillis(this.expirySeconds));
   }
 }

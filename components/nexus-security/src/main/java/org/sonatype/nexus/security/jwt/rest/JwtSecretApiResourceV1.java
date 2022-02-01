@@ -27,6 +27,8 @@ import javax.ws.rs.core.Response;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.distributed.event.service.api.common.JWTSecretChangedEvent;
+import org.sonatype.nexus.distributed.event.service.api.common.PublisherEvent;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.security.jwt.JwtSecretChanged;
 import org.sonatype.nexus.security.jwt.SecretStore;
@@ -39,6 +41,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.status;
+import static org.sonatype.nexus.distributed.event.service.api.EphemeralNodeId.NODE_ID;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 import static org.sonatype.nexus.security.jwt.rest.JwtSecretApiResourceV1.PATH;
 
@@ -76,6 +79,7 @@ public class JwtSecretApiResourceV1
   public void updateSecret(@NotNull final String secret) {
     secretStore.setSecret(secret);
     eventManager.post(new JwtSecretChanged(secret));
+    eventManager.post(new PublisherEvent(NODE_ID, new JWTSecretChangedEvent(NODE_ID)));
   }
 
   @GET

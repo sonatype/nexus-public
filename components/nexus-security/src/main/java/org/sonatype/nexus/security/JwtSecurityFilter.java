@@ -13,6 +13,7 @@
 package org.sonatype.nexus.security;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.ServletRequest;
@@ -49,16 +50,17 @@ import static org.sonatype.nexus.security.JwtHelper.USER;
  */
 @Singleton
 public class JwtSecurityFilter
-  extends SecurityFilter
+    extends SecurityFilter
 {
   private final JwtHelper jwtHelper;
 
   private static final Logger log = LoggerFactory.getLogger(JwtSecurityFilter.class);
 
   @Inject
-  public JwtSecurityFilter(final WebSecurityManager webSecurityManager,
-                           final FilterChainResolver filterChainResolver,
-                           final JwtHelper jwtHelper)
+  public JwtSecurityFilter(
+      final WebSecurityManager webSecurityManager,
+      final FilterChainResolver filterChainResolver,
+      final JwtHelper jwtHelper)
   {
     super(webSecurityManager, filterChainResolver);
     this.jwtHelper = checkNotNull(jwtHelper);
@@ -100,7 +102,7 @@ public class JwtSecurityFilter
               realm.asString()
           );
 
-          session.setTimeout(jwtHelper.getExpiryInMillis());
+          session.setTimeout(TimeUnit.SECONDS.toMillis(jwtHelper.getExpirySeconds()));
           session.setAttribute(JWT_COOKIE_NAME, jwt);
 
           return new WebDelegatingSubject(
