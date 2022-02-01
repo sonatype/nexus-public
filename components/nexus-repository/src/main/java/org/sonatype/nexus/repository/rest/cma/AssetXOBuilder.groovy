@@ -50,6 +50,9 @@ class AssetXOBuilder
         .contentType(asset.contentType())
         .attributes(getExpandedAttributes(asset, format, assetDescriptors))
         .lastModified(calculateLastModified(asset))
+        .uploader(asset.createdBy())
+        .uploaderIp(asset.createdByIp())
+        .fileSize(asset.size())
         .build()
   }
 

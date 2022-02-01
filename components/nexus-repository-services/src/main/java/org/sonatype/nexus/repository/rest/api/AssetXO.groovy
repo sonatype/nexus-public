@@ -57,6 +57,12 @@ class AssetXO
 
   Date lastModified
 
+  String uploader
+
+  String uploaderIp
+
+  long fileSize
+
   @JsonIgnore
   Map attributes
 
