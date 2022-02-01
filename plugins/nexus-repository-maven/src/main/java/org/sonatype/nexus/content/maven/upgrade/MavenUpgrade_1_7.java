@@ -22,11 +22,11 @@ import javax.inject.Singleton;
  */
 @Named
 @Singleton
-public class MavenUpgrade_1_5 // NOSONAR
+public class MavenUpgrade_1_7 // NOSONAR
     extends MavenIndexUpgrade
 {
   @Override
   public String version() {
-    return "1.5";
+    return "1.7";
   }
 }
