@@ -361,12 +361,15 @@ public class RepositoryManagerImpl
     checkNotNull(configuration);
     validateConfiguration(configuration);
 
+    // load old configuration before update
+    Configuration oldConfiguration = repository(configuration.getRepositoryName()).getConfiguration().copy();
+
     // the configuration must be updated before repository restart
     if (!EventHelper.isReplicating()) {
       store.update(configuration);
     }
     Repository repository = updateRepositoryInMemory(configuration);
-    eventManager.post(new RepositoryUpdatedEvent(repository, configuration));
+    eventManager.post(new RepositoryUpdatedEvent(repository, oldConfiguration));
 
     distributeRepositoryConfigurationEvent(repository.getName(), UPDATED);
 
@@ -629,8 +632,9 @@ public class RepositoryManagerImpl
     Optional<Configuration> configuration = repositoryConfiguration(repositoryName);
     configuration.ifPresent(config -> {
       try {
+        Configuration oldConfiguration = repository(repositoryName).getConfiguration().copy();
         Repository repository = updateRepositoryInMemory(config);
-        eventManager.post(new RepositoryUpdatedEvent(repository, config));
+        eventManager.post(new RepositoryUpdatedEvent(repository, oldConfiguration));
       }
       catch (Exception e) {
         log.error("Error updating repository configuration on UI", e);
