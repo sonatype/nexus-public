@@ -88,7 +88,7 @@ public class QueryTest
   @Test
   public void testIn() {
     Query query = builder.where("x").in("p", ImmutableList.of("0", "1", "2")).build();
-    assertThat(query.getWhere(), is("x in (:p0, :p1, :p2)"));
+    assertThat(query.getWhere(), is("x in [:p0, :p1, :p2]"));
     final Map<String, Object> parameters = query.getParameters();
     assertThat(parameters.size(), is(equalTo(3)));
     assertThat(parameters, hasEntry("p0", "0"));
