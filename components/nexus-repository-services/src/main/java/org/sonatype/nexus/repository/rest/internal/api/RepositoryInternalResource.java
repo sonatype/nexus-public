@@ -28,6 +28,7 @@ import javax.ws.rs.QueryParam;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -73,17 +74,21 @@ public class RepositoryInternalResource
 
   private final ProxyType proxyType;
 
+  private final List<Recipe> recipes;
+
   @Inject
   public RepositoryInternalResource(
       final List<Format> formats,
       final RepositoryManager repositoryManager,
       final RepositoryPermissionChecker repositoryPermissionChecker,
-      final ProxyType proxyType)
+      final ProxyType proxyType,
+      final List<Recipe> recipes)
   {
     this.formats = checkNotNull(formats);
     this.repositoryManager = checkNotNull(repositoryManager);
     this.repositoryPermissionChecker = checkNotNull(repositoryPermissionChecker);
     this.proxyType = checkNotNull(proxyType);
+    this.recipes = checkNotNull(recipes);
   }
 
   @GET
@@ -129,6 +134,16 @@ public class RepositoryInternalResource
     return stream(repositoryManager.browse())
         .filter(repositoryPermissionChecker::userCanReadOrBrowse)
         .map(this::asRepositoryDetail)
+        .collect(toList());
+  }
+
+  @GET
+  @Path("/recipes")
+  public List<RecipeXO> getRecipes()
+  {
+    return recipes.stream()
+        .filter(Recipe::isFeatureEnabled)
+        .map(RecipeXO::new)
         .collect(toList());
   }
 

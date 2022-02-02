@@ -325,6 +325,37 @@ as provide a location for them to store more content. For more information, chec
 <a href="http://links.sonatype.com/products/nxrm3/docs/repository" target="_blank" rel="noopener noreferrer">\
 the documentation</a>.`
       },
+    },
+
+    EDITOR: {
+      CREATE_TITLE: {
+        text: 'Create Repository',
+        description: 'Select a repository format, then choose a type (group, hosted, or proxy)'
+      },
+      EDIT_TITLE: {
+        text: 'Edit Repository',
+        description: 'Select a repository format, then choose a type (group, hosted, or proxy)'
+      },
+      FORMAT_AND_TYPE_CAPTION: 'Repository Format & Type',
+      FORMAT_LABEL: 'Format',
+      TYPE_LABEL: 'Type',
+      CONFIGURATION_CAPTION: 'Configuration',
+      NAME_LABEL: 'Name',
+      STATUS_LABEL: 'Status',
+      STATUS_DESCR: 'Online - Ready to connect',
+      STORAGE_CAPTION: 'Storage',
+      BLOB_STORE_LABEL: 'Blob Store',
+      CONTENT_VALIDATION_LABEL: 'Strict Content Type Validation', 
+      CONTENT_VALIDATION_DESCR: 'Enabled',
+      GROUP_CAPTION: 'Group',
+      MEMBERS_LABEL: 'Member Repositories',
+      SELECT_FORMAT_OPTION: 'Select a format...',
+      SELECT_TYPE_OPTION: 'Select a type...',
+      SELECT_STORE_OPTION: 'Select a blob store...',
+      SAVE_BUTTON_LABEL: 'Create Repository',
+      MESSAGES: {
+        SAVE_ERROR: 'An error occurred while saving the repository',
+      }
     }
   },
 

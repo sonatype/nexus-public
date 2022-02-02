@@ -17,6 +17,7 @@ import org.sonatype.nexus.repository.Facet
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
+import org.sonatype.nexus.repository.Recipe
 import org.sonatype.nexus.repository.config.Configuration
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus
@@ -45,6 +46,9 @@ class RepositoryInternalResourceTest
   @Mock
   RepositoryPermissionChecker repositoryPermissionChecker
 
+  @Mock
+  List<Recipe> recipes
+
   ProxyType proxyType = new ProxyType()
 
   GroupType groupType = new GroupType()
@@ -55,7 +59,7 @@ class RepositoryInternalResourceTest
 
   @Before
   void setup() {
-    underTest = new RepositoryInternalResource(formats, repositoryManager, repositoryPermissionChecker, proxyType);
+    underTest = new RepositoryInternalResource(formats, repositoryManager, repositoryPermissionChecker, proxyType, recipes);
   }
 
   @Test
