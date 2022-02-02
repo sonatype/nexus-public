@@ -26,6 +26,7 @@ import org.sonatype.nexus.orient.DatabaseExternalizer;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
@@ -102,8 +103,8 @@ public class PasswordSanitizedJsonSourceTest
       OutputStream os = (OutputStream) invocation.getArguments()[0];
       os.write(
           ("{\"secret\": \"secret-key\", \"applicationPassword\": \"password\", \"systemPassword\": \"password\", " +
-              "\"password\": \"password\", \"secretAccessKey\": \"password\", \"sessionToken\": \"sToken\"}")
-              .getBytes(StandardCharsets.UTF_8));
+              "\"password\": \"password\", \"secretAccessKey\": \"password\", \"sessionToken\": \"sToken\", " +
+              "\"destination_instance_password\": \"password\"}").getBytes(StandardCharsets.UTF_8));
       return null;
     }).when(databaseExternalizer).export(any(), any());
 
@@ -117,6 +118,7 @@ public class PasswordSanitizedJsonSourceTest
     assertThat(model.password, is(PasswordSanitizedJsonSource.REPLACEMENT));
     assertThat(model.secretAccessKey, is(PasswordSanitizedJsonSource.REPLACEMENT));
     assertThat(model.sessionToken, is(PasswordSanitizedJsonSource.REPLACEMENT));
+    assertThat(model.destinationInstancePassword, is(PasswordSanitizedJsonSource.REPLACEMENT));
   }
 
   @Test
@@ -151,5 +153,8 @@ public class PasswordSanitizedJsonSourceTest
     public String secretAccessKey;
 
     public String sessionToken;
+
+    @JsonProperty("destination_instance_password")
+    public String destinationInstancePassword;
   }
 }

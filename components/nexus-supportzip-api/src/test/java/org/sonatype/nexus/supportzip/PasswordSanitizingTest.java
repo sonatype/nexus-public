@@ -35,7 +35,8 @@ public class PasswordSanitizingTest
     Map<String, String> sensitiveData = ImmutableMap.of(
         "password", "admin123",
         "secret", "admin123",
-        "bearerToken", "admin123");
+        "bearerToken", "admin123",
+        "destinationInstancePassword", "admin123");
     Map<String, String> sanitized = passwordSanitizing.transform(sensitiveData);
     assertNotNull(sanitized);
     assertThat(sanitized.toString(), not(containsString("admin123")));
