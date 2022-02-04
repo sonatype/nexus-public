@@ -31,7 +31,7 @@ export default createMachine(
           downloadsByIpAddress: [],
           downloadsByUsername: [],
           downloadsByDay: [],
-          unaffectedDownloadsByDay: [],
+          downloadsByDayNonVulnerable: [],
           totalDownloads: 0
         },
         data: {
@@ -39,7 +39,7 @@ export default createMachine(
           downloadsByIpAddress: [],
           downloadsByUsername: [],
           downloadsByDay: [],
-          unaffectedDownloadsByDay: [],
+          downloadsByDayNonVulnerable: [],
           totalDownloads: 0
         },
         filters: {
@@ -145,7 +145,7 @@ export default createMachine(
           const downloadsByUsername = await axios.get('/service/rest/v1/vulnerability/count-by-username');
           const downloadsByIp = await axios.get('/service/rest/v1/vulnerability/count-by-ip');
           const downloadsByDay = await axios.get('/service/rest/v1/vulnerability/count-by-day');
-          const unaffectedDownloadsByDay = await axios.get('/service/rest/v1/vulnerability/count-unaffected-by-day');
+          const downloadsByDayNonVulnerable = await axios.get('/service/rest/v1/vulnerability/count-by-day-non-vulnerable');
           const totalDownloads = await axios.get('/service/rest/v1/vulnerability/count-total');
 
           return {
@@ -153,7 +153,7 @@ export default createMachine(
             downloadsByIpAddress: downloadsByIp?.data || [],
             downloadsByUsername: downloadsByUsername?.data || [],
             downloadsByDay: downloadsByDay?.data || [],
-            unaffectedDownloadsByDay: unaffectedDownloadsByDay?.data || [],
+            downloadsByDayNonVulnerable: downloadsByDayNonVulnerable?.data || [],
             totalDownloads: totalDownloads?.data || 0
           };
         }

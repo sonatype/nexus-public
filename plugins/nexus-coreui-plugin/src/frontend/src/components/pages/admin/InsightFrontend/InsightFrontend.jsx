@@ -39,7 +39,7 @@ export default function InsightFrontend() {
     downloadsByIpAddress,
     downloadsByUsername,
     downloadsByDay,
-    unaffectedDownloadsByDay,
+    downloadsByDayNonVulnerable,
     totalDownloads,
   } = current.context.data;
   const {
@@ -94,7 +94,7 @@ export default function InsightFrontend() {
   }
 
   function createChartView() {
-    return downloadsByDay.length > 0 || unaffectedDownloadsByDay.length > 0 ?
+    return downloadsByDay.length > 0 || downloadsByDayNonVulnerable.length > 0 ?
         <div className="chart-container">
           <ResponsiveLine data={
             [
@@ -110,7 +110,7 @@ export default function InsightFrontend() {
               ,
               {
                 id: 'non-log4shell',
-                data: unaffectedDownloadsByDay.map((download) => {
+                data: downloadsByDayNonVulnerable.map((download) => {
                   return {
                     x: new Date(download.day.year, download.day.monthValue - 1, download.day.dayOfMonth),
                     y: download.downloadCount
