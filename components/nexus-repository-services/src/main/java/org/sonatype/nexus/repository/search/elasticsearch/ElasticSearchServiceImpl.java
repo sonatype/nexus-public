@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search.orient;
+package org.sonatype.nexus.repository.search.elasticsearch;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -60,7 +60,7 @@ import static org.sonatype.nexus.repository.search.index.SearchConstants.VERSION
  */
 @Named
 @Singleton
-public class OrientSearchServiceImpl
+public class ElasticSearchServiceImpl
     extends ComponentSupport
     implements SearchService
 {
@@ -73,7 +73,7 @@ public class OrientSearchServiceImpl
   private final Set<OrientSearchExtension> decorators;
 
   @Inject
-  public OrientSearchServiceImpl(
+  public ElasticSearchServiceImpl(
       final ElasticSearchQueryService elasticSearchQueryService,
       final ElasticSearchUtils elasticSearchUtils,
       final TokenEncoder tokenEncoder,

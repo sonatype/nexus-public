@@ -20,7 +20,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.search.ComponentSearchResult;
-import org.sonatype.nexus.repository.search.orient.OrientSearchExtension;
+import org.sonatype.nexus.repository.search.elasticsearch.OrientSearchExtension;
 
 import org.elasticsearch.search.SearchHit;
 
