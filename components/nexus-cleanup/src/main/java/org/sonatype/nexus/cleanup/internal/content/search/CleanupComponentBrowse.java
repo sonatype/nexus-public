@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.cleanup.internal.orient.search.elasticsearch;
+package org.sonatype.nexus.cleanup.internal.content.search;
 
 import java.util.stream.Stream;
 
@@ -18,15 +18,15 @@ import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.extdirect.model.PagedResponse;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.query.QueryOptions;
-import org.sonatype.nexus.repository.storage.Component;
 
 /**
  * Finds components to be cleaned up.
  *
  * @since 3.14
  */
-public interface OrientCleanupComponentBrowse
+public interface CleanupComponentBrowse
 {
   Stream<EntityId> browse(CleanupPolicy policy, Repository repository);
 

@@ -61,6 +61,16 @@ public class Continuations
     return streamOf(iterableOf(browseFunction, limit));
   }
 
+  public static <T> Stream<T> streamOf(
+      final BiFunction<Integer, String, Continuation<T>> browseFunction,
+      final int limit,
+      final String startToken)
+  {
+    checkArgument(browseFunction != null, FUNCTION_NON_NULL);
+    checkArgument(limit >= 0, LIMIT_NON_NEGATIVE);
+    return streamOf(iterableOf(browseFunction, limit, startToken));
+  }
+
   public static <T> Iterable<T> iterableOf(final BiFunction<Integer, String, Continuation<T>> browseFunction) {
     checkArgument(browseFunction != null, FUNCTION_NON_NULL);
     return () -> iteratorOf(browseFunction);
@@ -75,6 +85,16 @@ public class Continuations
     return () -> iteratorOf(browseFunction, limit);
   }
 
+  public static <T> Iterable<T> iterableOf(
+      final BiFunction<Integer, String, Continuation<T>> browseFunction,
+      final int limit,
+      final String startToken)
+  {
+    checkArgument(browseFunction != null, FUNCTION_NON_NULL);
+    checkArgument(limit >= 0, LIMIT_NON_NEGATIVE);
+    return () -> iteratorOf(browseFunction, limit, startToken);
+  }
+
   public static <T> Iterator<T> iteratorOf(final BiFunction<Integer, String, Continuation<T>> browseFunction) {
     checkArgument(browseFunction != null, FUNCTION_NON_NULL);
     return iteratorOf(browseFunction, BROWSE_LIMIT);
@@ -84,10 +104,18 @@ public class Continuations
       final BiFunction<Integer, String, Continuation<T>> browseFunction,
       final int limit)
   {
+    return iteratorOf(browseFunction, limit, null);
+  }
+
+  public static <T> Iterator<T> iteratorOf(
+      final BiFunction<Integer, String, Continuation<T>> browseFunction,
+      final int limit,
+      final String startToken)
+  {
     checkArgument(browseFunction != null, FUNCTION_NON_NULL);
     checkArgument(limit >= 0, LIMIT_NON_NEGATIVE);
     return new Iterator<T>() {
-      private Continuation<T> continuation = browseFunction.apply(limit, null);
+      private Continuation<T> continuation = browseFunction.apply(limit, startToken);
 
       private Iterator<T> iterator = continuation.iterator();
 

@@ -682,7 +682,15 @@ Once created, a cleanup policy must be assigned to a repository from \
       GROUP_COLUMN: 'Group',
       VERSION_COLUMN: 'Version',
       EMPTY: 'No assets in repository matched the criteria',
-      COMPONENT_COUNT: (actual, total) => `Component count (matching criteria) viewing ${actual} out of ${total}.`,
+      COMPONENT_COUNT: (actual, total) => {
+        if (total === 0) {
+          return 'Criteria matched no components.';
+        }
+        else if (total > 0) {
+          return `Component count (matching criteria) viewing ${actual} out of ${total}.`;
+        }
+        return `Component count (matching criteria) viewing first ${actual}`;
+      },
       SAMPLE_WARNING: 'Results may only be a sample of what will be deleted using the current criteria.',
       BUTTON_TOOLTIP: 'Please select a repository and at least one cleanup criteria',
     },

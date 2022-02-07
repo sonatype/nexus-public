@@ -35,11 +35,7 @@ public final class MyBatisDataSession
 {
   private final SqlSession session;
 
-  private Object preCommit;
-
-  private Object postCommit;
-
-  private Object onRollback;
+  private Actions actions = new Actions();
 
   public MyBatisDataSession(final SqlSession session) {
     this.session = checkNotNull(session);
@@ -57,17 +53,17 @@ public final class MyBatisDataSession
 
   @Override
   public void preCommit(final Runnable hook) {
-    preCommit = addHook(preCommit, hook);
+    actions.preCommit = addHook(actions.preCommit, hook);
   }
 
   @Override
   public void postCommit(final Runnable hook) {
-    postCommit = addHook(postCommit, hook);
+    actions.postCommit = addHook(actions.postCommit, hook);
   }
 
   @Override
   public void onRollback(final Runnable hook) {
-    onRollback = addHook(onRollback, hook);
+    actions.onRollback = addHook(actions.onRollback, hook);
   }
 
   @Override
@@ -77,15 +73,15 @@ public final class MyBatisDataSession
 
   @Override
   protected void doCommit() {
-    callHooks(preCommit);
+    callHooks(actions.preCommit);
     session.commit();
-    callHooks(postCommit);
+    callHooks(actions.postCommit);
   }
 
   @Override
   protected void doRollback() {
     session.rollback();
-    callHooks(onRollback);
+    callHooks(actions.onRollback);
   }
 
   @Override
@@ -121,18 +117,37 @@ public final class MyBatisDataSession
   private void callHooks(final Object hooks) {
     if (hooks == null) {
       // nothing to call
+      return;
     }
-    else if (hooks instanceof Runnable) {
-      ((Runnable) hooks).run();
+
+    Actions existing = actions;
+    try {
+      // We unset the actions here in case the hook makes a nested DB call.
+      actions = new Actions();
+
+      if (hooks instanceof Runnable) {
+        ((Runnable) hooks).run();
+      }
+      else {
+        ((List<Runnable>) hooks).forEach(Runnable::run);
+      }
     }
-    else {
-      ((List<Runnable>) hooks).forEach(Runnable::run);
+    finally {
+      actions = existing;
     }
   }
 
   private void clearHooks() {
-    preCommit = null;
-    postCommit = null;
-    onRollback = null;
+    actions.preCommit = null;
+    actions.postCommit = null;
+    actions.onRollback = null;
+  }
+
+  private static class Actions {
+    Object preCommit;
+
+    Object postCommit;
+
+    Object onRollback;
   }
 }

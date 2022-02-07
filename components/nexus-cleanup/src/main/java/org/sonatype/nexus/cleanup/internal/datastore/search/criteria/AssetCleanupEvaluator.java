@@ -10,31 +10,26 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.cleanup.internal.content.search.elasticsearch;
+package org.sonatype.nexus.cleanup.internal.datastore.search.criteria;
 
-import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
-import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.extdirect.model.PagedResponse;
+import java.util.function.Predicate;
+
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.content.Component;
-import org.sonatype.nexus.repository.query.QueryOptions;
+import org.sonatype.nexus.repository.content.Asset;
 
 /**
- * Finds components to be cleaned up.
+ * An evaluator of a cleanup policy criteria which is only concerned with an Asset
  *
- * @since 3.14
+ * @since 3.next
  */
-public interface CleanupComponentBrowse
+public interface AssetCleanupEvaluator
 {
-  Iterable<EntityId> browse(CleanupPolicy policy, Repository repository);
-
   /**
-   * Returns a paged response of components
+   * Creates a predicate which indicates whether the asset is eligible for cleanup.
    *
-   * @param policy cleanup policy criteria
-   * @param repository repository to browse
-   * @param options specifies paging and sorting criteria
-   * @return a page of {@link Component}
+   * @param repository  the source repository for the assets which will be fed into the predicate
+   * @param value       the value associated with the CleanupPolicy for use with this criteria
+   * @return            the predicate
    */
-  PagedResponse<Component> browseByPage(CleanupPolicy policy, Repository repository, QueryOptions options);
+  Predicate<Asset> getPredicate(Repository repository, String value);
 }

@@ -34,11 +34,9 @@ public class MavenSearchDocumentProducerTest
 {
   private static final String VERSION_NUMBER = "1.0.0";
 
-  @Mock
-  private NestedAttributesMap attributes;
+  private NestedAttributesMap attributes = new NestedAttributesMap();
 
-  @Mock
-  private NestedAttributesMap childAttributes;
+  private NestedAttributesMap childAttributes = attributes.child(Maven2Format.NAME);
 
   @Mock
   private FluentComponent component;
@@ -47,9 +45,9 @@ public class MavenSearchDocumentProducerTest
 
   @Before
   public void setup() {
-    underTest = new MavenSearchDocumentProducer(emptySet(), new MavenVersionNormalizer());
+    underTest =
+        new MavenSearchDocumentProducer(emptySet(), new MavenVersionNormalizer(), new MavenPreReleaseEvaluator());
     when(component.attributes()).thenReturn(attributes);
-    when(attributes.child(Maven2Format.NAME)).thenReturn(childAttributes);
   }
 
   @Test
@@ -59,14 +57,14 @@ public class MavenSearchDocumentProducerTest
 
   @Test
   public void isPrerelease_shouldBeFalse_when_baseVersion_IsNotSnapshot() {
-    when(childAttributes.get(P_BASE_VERSION)).thenReturn(VERSION_NUMBER);
+    childAttributes.set(P_BASE_VERSION, VERSION_NUMBER);
 
     assertFalse(underTest.isPrerelease(component));
   }
 
   @Test
   public void isPrerelease_shouldBeTrue_when_baseVersion_IsNotSnapshot() {
-    when(childAttributes.get(P_BASE_VERSION)).thenReturn(VERSION_NUMBER + SNAPSHOT_VERSION_SUFFIX);
+    childAttributes.set(P_BASE_VERSION, VERSION_NUMBER + SNAPSHOT_VERSION_SUFFIX);
 
     assertTrue(underTest.isPrerelease(component));
   }

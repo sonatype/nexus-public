@@ -12,9 +12,9 @@
  */
 package org.sonatype.nexus.cleanup.internal.orient.service;
 
-import java.util.List;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
+import java.util.stream.Stream;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.cleanup.internal.method.CleanupMethod;
@@ -40,10 +40,12 @@ import org.mockito.Mock;
 
 import static com.google.common.collect.Sets.newLinkedHashSet;
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
+import static java.util.stream.Stream.empty;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.argThat;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -52,6 +54,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_BLOB_UPDATED_KEY;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_DOWNLOADED_KEY;
+import static org.sonatype.nexus.testcommon.matchers.NexusMatchers.streamContains;
 
 public class OrientCleanupServiceImplTest
     extends TestSupport
@@ -119,8 +122,8 @@ public class OrientCleanupServiceImplTest
     when(cleanupPolicy1.getCriteria()).thenReturn(ImmutableMap.of(LAST_BLOB_UPDATED_KEY, "1"));
     when(cleanupPolicy2.getCriteria()).thenReturn(ImmutableMap.of(LAST_DOWNLOADED_KEY, "2"));
 
-    when(browseService.browse(cleanupPolicy1, repository1)).thenReturn(ImmutableList.of(component1, component2));
-    when(browseService.browse(cleanupPolicy2, repository2)).thenReturn(ImmutableList.of(component3));
+    when(browseService.browse(cleanupPolicy1, repository1)).thenReturn(ImmutableList.of(component1, component2).stream());
+    when(browseService.browse(cleanupPolicy2, repository2)).thenReturn(ImmutableList.of(component3).stream());
 
     when(cancelledCheck.getAsBoolean()).thenReturn(false);
 
@@ -132,17 +135,17 @@ public class OrientCleanupServiceImplTest
   public void fetchPolicyForEachRepositoryAndRunCleanup() throws Exception {
     underTest.cleanup(cancelledCheck);
 
-    verify(cleanupMethod).run(repository1, ImmutableList.of(component1, component2), cancelledCheck);
-    verify(cleanupMethod).run(repository2, ImmutableList.of(component3), cancelledCheck);
+    verify(cleanupMethod).run(eq(repository1), argThat(streamContains(component1,  component2)), eq(cancelledCheck));
+    verify(cleanupMethod).run(eq(repository2), argThat(streamContains(component3)), eq(cancelledCheck));
   }
 
   @Test
   public void fetchMultiplePoliciesForEachRepositoryAndRunCleanup() {
     String[] policyNamesForRepo1 = {"abc", "def", "ghi"};
-    List<EntityId> componentsForRepo1 = setupForMultiplePolicies(repository1, policyNamesForRepo1);
+    Stream<EntityId> componentsForRepo1 = setupForMultiplePolicies(repository1, policyNamesForRepo1);
 
     String[] policyNamesForRepo2 = {"qwe", "rty", "uio"};
-    List<EntityId> componentsForRepo2 = setupForMultiplePolicies(repository2, policyNamesForRepo2);
+    Stream<EntityId> componentsForRepo2 = setupForMultiplePolicies(repository2, policyNamesForRepo2);
 
     underTest.cleanup(cancelledCheck);
 
@@ -156,7 +159,7 @@ public class OrientCleanupServiceImplTest
 
     underTest.cleanup(cancelledCheck);
 
-    verify(cleanupMethod).run(repository1, ImmutableList.of(component1, component2), cancelledCheck);
+    verify(cleanupMethod).run(eq(repository1), argThat(streamContains(component1,  component2)), eq(cancelledCheck));
   }
 
   @Test
@@ -166,7 +169,7 @@ public class OrientCleanupServiceImplTest
 
     underTest.cleanup(cancelledCheck);
 
-    verify(cleanupMethod).run(repository1, ImmutableList.of(component1, component2), cancelledCheck);
+    verify(cleanupMethod).run(eq(repository1), argThat(streamContains(component1,  component2)), eq(cancelledCheck));
   }
 
   @Test
@@ -175,7 +178,7 @@ public class OrientCleanupServiceImplTest
 
     underTest.cleanup(cancelledCheck);
 
-    verify(cleanupMethod, never()).run(repository3, ImmutableList.of(component2), cancelledCheck);
+    verify(cleanupMethod, never()).run(eq(repository3), argThat(streamContains(component2)), eq(cancelledCheck));
   }
 
   @Test
@@ -184,7 +187,7 @@ public class OrientCleanupServiceImplTest
 
     underTest.cleanup(cancelledCheck);
 
-    verify(cleanupMethod).run(repository2, ImmutableList.of(component3), cancelledCheck);
+    verify(cleanupMethod).run(eq(repository2), argThat(streamContains(component3)), eq(cancelledCheck));
   }
 
   @Test
@@ -193,7 +196,7 @@ public class OrientCleanupServiceImplTest
 
     underTest.cleanup(cancelledCheck);
 
-    verify(cleanupMethod).run(repository2, ImmutableList.of(component3), cancelledCheck);
+    verify(cleanupMethod).run(eq(repository2), argThat(streamContains(component3)), eq(cancelledCheck));
   }
 
   @Test
@@ -201,23 +204,23 @@ public class OrientCleanupServiceImplTest
     doAnswer(i -> {
       when(cancelledCheck.getAsBoolean()).thenReturn(true);
       return deletionProgress;
-    }).when(cleanupMethod).run(repository1, ImmutableList.of(component1, component2), cancelledCheck);
+    }).when(cleanupMethod).run(eq(repository1), any(), eq(cancelledCheck));
 
     underTest.cleanup(cancelledCheck);
 
-    verify(cleanupMethod).run(repository1, ImmutableList.of(component1, component2), cancelledCheck);
-    verify(cleanupMethod, never()).run(repository2, ImmutableList.of(component3), cancelledCheck);
+    verify(cleanupMethod).run(eq(repository1), argThat(streamContains(component1,  component2)), eq(cancelledCheck));
+    verify(cleanupMethod, never()).run(eq(repository2), argThat(streamContains(component3)), eq(cancelledCheck));
   }
 
   @Test
   public void doNothingWhenNoComponentsFound() throws Exception {
-    when(browseService.browse(cleanupPolicy1, repository1)).thenReturn(emptyList());
-    when(browseService.browse(cleanupPolicy2, repository2)).thenReturn(emptyList());
+    when(browseService.browse(cleanupPolicy1, repository1)).thenReturn(empty());
+    when(browseService.browse(cleanupPolicy2, repository2)).thenReturn(empty());
 
     underTest.cleanup(cancelledCheck);
 
-    verify(cleanupMethod, never()).run(repository1, ImmutableList.of(component1, component2), cancelledCheck);
-    verify(cleanupMethod, never()).run(repository2, ImmutableList.of(component3), cancelledCheck);
+    verify(cleanupMethod, never()).run(eq(repository1), argThat(streamContains(component1,  component2)), eq(cancelledCheck));
+    verify(cleanupMethod, never()).run(eq(repository2), argThat(streamContains(component3)), eq(cancelledCheck));
   }
 
   @Test
@@ -227,8 +230,8 @@ public class OrientCleanupServiceImplTest
 
     underTest.cleanup(cancelledCheck);
 
-    verify(cleanupMethod, never()).run(repository1, ImmutableList.of(component1, component2), cancelledCheck);
-    verify(cleanupMethod, never()).run(repository2, ImmutableList.of(component3), cancelledCheck);
+    verify(cleanupMethod, never()).run(eq(repository1), argThat(streamContains(component1,  component2)), eq(cancelledCheck));
+    verify(cleanupMethod, never()).run(eq(repository2), argThat(streamContains(component3)), eq(cancelledCheck));
   }
 
   @Test
@@ -260,8 +263,8 @@ public class OrientCleanupServiceImplTest
 
     underTest.cleanup(cancelledCheck);
 
-    verify(cleanupMethod, times(2)).run(repository1, ImmutableList.of(component1, component2), cancelledCheck);
-    verify(cleanupMethod).run(repository2, ImmutableList.of(component3), cancelledCheck);
+    verify(cleanupMethod, times(2)).run(eq(repository1), argThat(streamContains(component1,  component2)), eq(cancelledCheck));
+    verify(cleanupMethod).run(eq(repository2), argThat(streamContains(component3)), eq(cancelledCheck));
   }
 
   private void setupRepository(final Repository repository, final String... policyName) {
@@ -277,15 +280,15 @@ public class OrientCleanupServiceImplTest
     when(repository.facet(StorageFacet.class)).thenReturn(storageFacet);
   }
 
-  private List<EntityId> setupForMultiplePolicies(final Repository repository, final String... policyNames) {
+  private Stream<EntityId> setupForMultiplePolicies(final Repository repository, final String... policyNames) {
     setupRepository(repository, policyNames);
     return setupComponents(repository, policyNames);
   }
 
-  private List<EntityId> setupComponents(final Repository repository,
-                                         final String... policyNames)
+  private Stream<EntityId> setupComponents(final Repository repository,
+                                           final String... policyNames)
   {
-    ImmutableList<EntityId> components = ImmutableList.of(mock(EntityId.class), mock(EntityId.class));
+    Stream<EntityId> components = ImmutableList.of(mock(EntityId.class), mock(EntityId.class)).stream();
 
     asList(policyNames).forEach(policyName -> {
       CleanupPolicy cleanupPolicy = mock(CleanupPolicy.class);

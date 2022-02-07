@@ -14,6 +14,8 @@ package org.sonatype.nexus.cleanup.internal.orient.search.elasticsearch;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.cleanup.internal.search.elasticsearch.LastBlobUpdatedCriteriaAppender;
@@ -49,7 +51,6 @@ import org.mockito.Mock;
 import static java.lang.Boolean.parseBoolean;
 import static java.lang.String.format;
 import static java.util.Collections.emptyMap;
-import static org.apache.commons.collections.IteratorUtils.toList;
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 import static org.elasticsearch.index.query.QueryBuilders.existsQuery;
 import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
@@ -192,7 +193,7 @@ public class OrientElasticSearchCleanupComponentBrowseTest
 
     when(elasticSearchQueryService.browse(any())).thenReturn(ImmutableList.of(searchHit1, searchHit2));
 
-    Iterable<EntityId> componentsIterable = underTest.browse(lastBlobUpdatedPolicy, repository);
+    Stream<EntityId> componentsIterable = underTest.browse(lastBlobUpdatedPolicy, repository);
 
     assertThat(componentsIterable.iterator().hasNext(), is(false));
 
@@ -205,9 +206,9 @@ public class OrientElasticSearchCleanupComponentBrowseTest
 
     when(elasticSearchQueryService.browse(any())).thenReturn(ImmutableList.of(searchHit1, searchHit2));
 
-    Iterable<EntityId> componentsIterable = underTest.browse(lastBlobUpdatedPolicy, repository);
+    Stream<EntityId> componentsIterable = underTest.browse(lastBlobUpdatedPolicy, repository);
 
-    List<EntityId> components = toList(componentsIterable.iterator());
+    List<EntityId> components = componentsIterable.collect(Collectors.toList());
 
     assertThat(components.get(0), is(equalTo(new DetachedEntityId(COMPONENT_ID_1))));
     assertThat(components.get(1), is(equalTo(new DetachedEntityId(COMPONENT_ID_2))));

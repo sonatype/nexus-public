@@ -13,6 +13,8 @@
 package org.sonatype.nexus.cleanup.internal.orient.method;
 
 import java.util.function.BooleanSupplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.Priority;
 import javax.inject.Inject;
@@ -45,9 +47,10 @@ public class OrientDeleteCleanupMethod
 
   @Override
   public DeletionProgress run(final Repository repository,
-                              final Iterable<EntityId> components,
+                              final Stream<EntityId> components,
                               final BooleanSupplier cancelledCheck)
   {
-    return repository.facet(ComponentMaintenance.class).deleteComponents(components, cancelledCheck, batchSize);
+    return repository.facet(ComponentMaintenance.class).deleteComponents(components.collect(Collectors.toList()),
+        cancelledCheck, batchSize);
   }
 }

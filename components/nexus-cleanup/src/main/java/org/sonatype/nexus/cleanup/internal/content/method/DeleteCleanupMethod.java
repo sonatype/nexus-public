@@ -13,7 +13,7 @@
 package org.sonatype.nexus.cleanup.internal.content.method;
 
 import java.util.function.BooleanSupplier;
-import java.util.stream.StreamSupport;
+import java.util.stream.Stream;
 
 import javax.inject.Named;
 
@@ -38,13 +38,13 @@ public class DeleteCleanupMethod
   @Override
   public DeletionProgress run(
       final Repository repository,
-      final Iterable<EntityId> components,
+      final Stream<EntityId> components,
       final BooleanSupplier cancelledCheck)
   {
     ContentMaintenanceFacet maintenance = repository.facet(ContentMaintenanceFacet.class);
     DeletionProgress progress = new DeletionProgress();
 
-    int[] componentIds = StreamSupport.stream(components.spliterator(), true)
+    int[] componentIds = components
         .mapToInt(InternalIds::toInternalId)
         .toArray();
 

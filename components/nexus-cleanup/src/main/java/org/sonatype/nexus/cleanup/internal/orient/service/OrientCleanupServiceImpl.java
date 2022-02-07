@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
+import java.util.stream.Stream;
 
 import javax.annotation.Priority;
 import javax.inject.Inject;
@@ -125,7 +126,7 @@ public class OrientCleanupServiceImpl
     if (!policy.getCriteria().isEmpty()) {
       do {
         try {
-          Iterable<EntityId> componentsToDelete = browseService.browse(policy, repository);
+          Stream<EntityId> componentsToDelete = browseService.browse(policy, repository);
           DeletionProgress currentProgress = cleanupMethod.run(repository, componentsToDelete, cancelledCheck);
           deletionProgress.update(currentProgress);
         }

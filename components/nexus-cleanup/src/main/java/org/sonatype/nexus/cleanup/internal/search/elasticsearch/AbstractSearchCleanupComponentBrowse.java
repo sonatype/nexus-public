@@ -15,6 +15,8 @@ package org.sonatype.nexus.cleanup.internal.search.elasticsearch;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
@@ -38,8 +40,6 @@ import org.elasticsearch.search.sort.SortOrder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static com.google.common.collect.Iterables.transform;
-import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
@@ -75,17 +75,17 @@ public abstract class AbstractSearchCleanupComponentBrowse
     this.metricRegistry = checkNotNull(metricRegistry);
   }
 
-  public Iterable<EntityId> browse(final CleanupPolicy policy, final Repository repository) {
+  public Stream<EntityId> browse(final CleanupPolicy policy, final Repository repository) {
     if (policy.getCriteria().isEmpty()) {
-      return emptyList();
+      return Stream.empty();
     }
 
     QueryBuilder query = convertPolicyToQuery(policy);
 
     log.debug("Searching for components to cleanup using policy {}", policy);
 
-    return transform(invokeSearch(policy, repository, query),
-        searchHit -> new DetachedEntityId(searchHit.getId()));
+    return StreamSupport.stream(invokeSearch(policy, repository, query).spliterator(), false)
+        .map(searchHit -> new DetachedEntityId(searchHit.getId()));
   }
 
   private Iterable<SearchHit> invokeSearch(final CleanupPolicy policy,

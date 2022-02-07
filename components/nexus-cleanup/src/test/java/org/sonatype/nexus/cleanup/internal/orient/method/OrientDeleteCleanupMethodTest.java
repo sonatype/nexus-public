@@ -29,10 +29,11 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class DeleteCleanupMethodTest
+public class OrientDeleteCleanupMethodTest
     extends TestSupport
 {
   private static final int BATCH_SIZE = 500;
@@ -42,10 +43,10 @@ public class DeleteCleanupMethodTest
 
   @Mock
   private EntityId component1, component2;
-  
+
   @Mock
   private BooleanSupplier cancelledCheck;
-  
+
   @Mock
   private ComponentMaintenance componentMaintenance;
 
@@ -58,7 +59,7 @@ public class DeleteCleanupMethodTest
     when(cancelledCheck.getAsBoolean()).thenReturn(false);
     when(repository.facet(ComponentMaintenance.class)).thenReturn(componentMaintenance);
   }
-  
+
   @Test
   public void deleteComponent() throws Exception {
     DeletionProgress deletionProgress = new DeletionProgress();
@@ -66,10 +67,12 @@ public class DeleteCleanupMethodTest
 
     when(componentMaintenance.deleteComponents(any(), any(), anyInt())).thenReturn(deletionProgress);
 
-    DeletionProgress response = underTest.run(repository, ImmutableList.of(component1, component2), cancelledCheck);
+    DeletionProgress response =
+        underTest.run(repository, ImmutableList.of(component1, component2).stream(), cancelledCheck);
 
     assertThat(response.getCount(), equalTo(2L));
 
-    verify(componentMaintenance).deleteComponents(ImmutableList.of(component1, component2), cancelledCheck, BATCH_SIZE);
+    verify(componentMaintenance).deleteComponents(eq(ImmutableList.of(component1, component2)), eq(cancelledCheck),
+        eq(BATCH_SIZE));
   }
 }

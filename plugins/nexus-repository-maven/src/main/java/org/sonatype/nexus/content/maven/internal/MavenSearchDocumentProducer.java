@@ -24,9 +24,7 @@ import org.sonatype.nexus.repository.content.search.SearchDocumentExtension;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.maven.internal.search.MavenVersionNormalizer;
 
-import static java.util.Objects.requireNonNull;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
-import static org.sonatype.nexus.repository.maven.internal.Constants.SNAPSHOT_VERSION_SUFFIX;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Maven implementation of {@link DefaultSearchDocumentProducer}
@@ -40,20 +38,22 @@ public class MavenSearchDocumentProducer
 {
   private final MavenVersionNormalizer versionNormalizer;
 
+  private final MavenPreReleaseEvaluator preReleaseEvaluator;
+
   @Inject
-  public MavenSearchDocumentProducer(final Set<SearchDocumentExtension> documentExtensions,
-                                     final MavenVersionNormalizer versionNormalizer) {
+  public MavenSearchDocumentProducer(
+      final Set<SearchDocumentExtension> documentExtensions,
+      final MavenVersionNormalizer versionNormalizer,
+      final MavenPreReleaseEvaluator preReleaseEvaluator)
+  {
     super(documentExtensions);
-    this.versionNormalizer = requireNonNull(versionNormalizer);
+    this.versionNormalizer = checkNotNull(versionNormalizer);
+    this.preReleaseEvaluator = checkNotNull(preReleaseEvaluator);
   }
 
   @Override
   protected boolean isPrerelease(final FluentComponent component) {
-    String baseVersion = (String) component.attributes().child(Maven2Format.NAME).get(P_BASE_VERSION);
-    if (baseVersion == null) {
-      return false;
-    }
-    return baseVersion.endsWith(SNAPSHOT_VERSION_SUFFIX);
+    return preReleaseEvaluator.isPreRelease(component);
   }
 
   @Override
