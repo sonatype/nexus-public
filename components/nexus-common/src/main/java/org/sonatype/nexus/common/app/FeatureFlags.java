@@ -49,4 +49,7 @@ public interface FeatureFlags
 
   /* Session flag for marking content that is only for session, and should be disabled when jwt is enabled */
   String SESSION_ENABLED = "nexus.session.enabled";
+
+  /* HTTP Replication. Available values: true, false. Default value: false */
+  String REPLICATION_HTTP_ENABLED = "nexus.replication.http.enabled";
 }

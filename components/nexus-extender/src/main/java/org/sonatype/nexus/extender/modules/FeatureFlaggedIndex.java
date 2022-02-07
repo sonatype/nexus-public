@@ -14,17 +14,18 @@ package org.sonatype.nexus.extender.modules;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
-
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.app.FeatureFlag;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.eclipse.sisu.space.ClassFinder;
 import org.eclipse.sisu.space.ClassSpace;
 import org.eclipse.sisu.space.IndexedClassFinder;
@@ -46,8 +47,8 @@ import static org.osgi.framework.wiring.BundleRevision.HOST_NAMESPACE;
 import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getBoolean;
 
 /**
- * Filters out components whose type or package is annotated with {@link FeatureFlag}
- * when the associated system property indicates that feature is currently disabled.
+ * Filters out components whose type or package is annotated with {@link FeatureFlag} when the associated system
+ * property indicates that feature is currently disabled.
  *
  * @since 3.19
  */
@@ -109,11 +110,14 @@ public class FeatureFlaggedIndex
     return GLOBAL_INDEX;
   }
 
-  private static boolean isFeatureFlagDisabled(final Bundle bundle, final String clazzName) {
+  @VisibleForTesting
+  public static boolean isFeatureFlagDisabled(final Bundle bundle, final String clazzName) {
     try {
       Class<?> clazz = bundle.loadClass(clazzName);
-      FeatureFlag flag = clazz.getAnnotation(FeatureFlag.class);
-      return !getBoolean(flag.name(), flag.enabledByDefault());
+      boolean flagResult = Arrays.stream(clazz.getAnnotationsByType(FeatureFlag.class))
+          .map(flag -> getBoolean(flag.name(), flag.enabledByDefault()))
+          .reduce(true, (result, flag) -> flag && result);
+      return !flagResult;
     }
     catch (Exception | LinkageError e) {
       log.debug("Cannot determine feature-flag for {}; assuming false", clazzName, e);
