@@ -22,6 +22,7 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.config.ConfigurationDAO;
 import org.sonatype.nexus.repository.config.ConfigurationDeletedEvent;
 import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.transaction.Transactional;

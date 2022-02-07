@@ -22,7 +22,7 @@ import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.content.maven.store.Maven2ContentRepositoryDAO;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DataStore;
-import org.sonatype.nexus.repository.config.internal.ConfigurationDAO;
+import org.sonatype.nexus.repository.config.ConfigurationDAO;
 import org.sonatype.nexus.repository.config.internal.ConfigurationData;
 import org.sonatype.nexus.repository.content.ContentRepository;
 import org.sonatype.nexus.repository.content.store.ContentRepositoryData;

@@ -14,7 +14,7 @@
 
 -->
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="org.sonatype.nexus.repository.config.internal.ConfigurationDAO">
+<mapper namespace="org.sonatype.nexus.repository.config.ConfigurationDAO">
 
   <insert id="createSchema">
     CREATE TABLE IF NOT EXISTS repository (

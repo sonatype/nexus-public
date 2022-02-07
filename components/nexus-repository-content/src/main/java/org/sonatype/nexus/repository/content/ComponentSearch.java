@@ -10,24 +10,21 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.search;
-
-import org.sonatype.nexus.datastore.api.ContentDataAccess;
-import org.sonatype.nexus.datastore.api.Expects;
-import org.sonatype.nexus.datastore.api.SchemaTemplate;
-import org.sonatype.nexus.repository.config.ConfigurationDAO;
-import org.sonatype.nexus.repository.content.store.AssetBlobDAO;
-import org.sonatype.nexus.repository.content.store.AssetDAO;
-import org.sonatype.nexus.repository.content.store.ComponentDAO;
-import org.sonatype.nexus.repository.content.store.ContentRepositoryDAO;
+package org.sonatype.nexus.repository.content;
 
 /**
  * @since 3.next
  */
-@Expects({ContentRepositoryDAO.class, ComponentDAO.class, AssetDAO.class, AssetBlobDAO.class, ConfigurationDAO.class})
-@SchemaTemplate("format")
-public interface SearchDAO
-    extends ContentDataAccess
+public interface ComponentSearch
+    extends RepositoryContent
 {
+  Integer componentId();
 
+  String namespace();
+
+  String componentName();
+
+  String repositoryName();
+
+  String version();
 }

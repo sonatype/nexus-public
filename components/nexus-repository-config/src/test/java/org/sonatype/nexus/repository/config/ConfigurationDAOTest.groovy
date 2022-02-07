@@ -10,11 +10,13 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.config.internal
+package org.sonatype.nexus.repository.config
 
 import org.sonatype.nexus.common.entity.EntityId
 import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup
 import org.sonatype.nexus.datastore.api.DataSession
+import org.sonatype.nexus.repository.config.ConfigurationDAO
+import org.sonatype.nexus.repository.config.internal.ConfigurationData
 import org.sonatype.nexus.repository.routing.internal.RoutingRuleDAO
 import org.sonatype.nexus.repository.routing.internal.RoutingRuleData
 import org.sonatype.nexus.testdb.DataSessionRule
