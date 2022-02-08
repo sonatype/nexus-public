@@ -46,6 +46,9 @@ Ext.define('NX.coreui.controller.Outreach', {
         },
         '#State': {
           userchanged: me.refreshOutreachContent
+        },
+        '#Permissions': {
+          changed: me.refreshOutreachContent
         }
       },
       component: {
