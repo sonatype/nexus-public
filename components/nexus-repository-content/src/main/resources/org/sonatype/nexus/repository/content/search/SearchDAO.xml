@@ -47,8 +47,13 @@
     FROM ${format}_component_search
     <where>
       <if test="filter != null"> (${filter})</if>
-      <if test="continuationToken != null"> AND componentId > #{continuationToken}</if>
+      <if test="continuationToken != null"> AND search_component_id > #{continuationToken}</if>
     </where>
-    ORDER BY componentId LIMIT #{limit};
+    <if test="sortColumnName != null">ORDER BY #{sortColumnName} <if test="isReverseOrder">DESC </if></if>
+    LIMIT #{limit};
+  </select>
+
+  <select id="count" resultType="int">
+    SELECT COUNT(*) FROM ${format}_component_search;
   </select>
 </mapper>

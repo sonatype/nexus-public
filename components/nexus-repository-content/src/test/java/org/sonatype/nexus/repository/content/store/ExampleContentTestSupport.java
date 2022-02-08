@@ -14,11 +14,15 @@ package org.sonatype.nexus.repository.content.store;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -30,11 +34,14 @@ import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.datastore.api.DataAccess;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DuplicateKeyException;
+import org.sonatype.nexus.repository.config.ConfigurationDAO;
+import org.sonatype.nexus.repository.config.internal.ConfigurationData;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.ContentRepository;
 import org.sonatype.nexus.repository.content.RepositoryContent;
+import org.sonatype.nexus.repository.content.search.SearchData;
 import org.sonatype.nexus.repository.content.store.example.TestAssetBlobDAO;
 import org.sonatype.nexus.repository.content.store.example.TestAssetDAO;
 import org.sonatype.nexus.repository.content.store.example.TestAssetData;
@@ -48,11 +55,13 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
 import org.hamcrest.collection.IsIterableContainingInOrder;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Integer.toHexString;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
@@ -93,6 +102,8 @@ public class ExampleContentTestSupport
 
   private List<AssetData> assets;
 
+  private List<ConfigurationData> configurations;
+
   public ExampleContentTestSupport() {
     // do nothing
   }
@@ -115,6 +126,21 @@ public class ExampleContentTestSupport
 
   protected List<Asset> generatedAssets() {
     return unmodifiableList(assets);
+  }
+
+  protected List<ConfigurationData> generatedConfigurations() {
+    return unmodifiableList(configurations);
+  }
+
+  protected SearchData getSearchDataFromComponent(final ComponentData componentData) {
+    SearchData searchData = new SearchData();
+    searchData.setComponentId(componentData.componentId);
+    searchData.setNamespace(componentData.namespace());
+    searchData.setComponentName(componentData.name());
+    searchData.setVersion(componentData.version());
+    searchData.setRepositoryId(componentData.repositoryId);
+
+    return searchData;
   }
 
   protected void generateRandomNamespaces(final int maxNamespaces) {
@@ -161,6 +187,25 @@ public class ExampleContentTestSupport
     paths = ImmutableList.copyOf(uniquePaths);
   }
 
+  protected void generateConfiguration() {
+    final ConfigurationData configurationData = getConfigurationData();
+    if (doCommit(session -> session.access(ConfigurationDAO.class).create(configurationData))) {
+      configurations = Collections.singletonList(configurationData);
+    }
+  }
+
+  @NotNull
+  private ConfigurationData getConfigurationData() {
+    ConfigurationData configurationData = new ConfigurationData();
+    Map<String, Object> key = Collections.singletonMap("key", "value");
+    Map<String, Map<String, Object>> attributes = Collections.singletonMap("key", key);
+    configurationData.setAttributes(attributes);
+    configurationData.setName("repo-name");
+    configurationData.setOnline(true);
+    configurationData.setRecipeName("recipe");
+    return configurationData;
+  }
+
   protected void generateRandomRepositories(final int maxRepositories) {
     repositories = new ArrayList<>();
     while (repositories.size() < maxRepositories) {
@@ -168,6 +213,14 @@ public class ExampleContentTestSupport
       if (doCommit(session -> session.access(TestContentRepositoryDAO.class).createContentRepository(repository))) {
         repositories.add(repository);
       }
+    }
+  }
+
+  protected void generateSingleRepository(final UUID configRepositoryUUID) {
+    ContentRepositoryData repository = randomContentRepository();
+    repository.setConfigRepositoryId(new EntityUUID(configRepositoryUUID));
+    if (doCommit(session -> session.access(TestContentRepositoryDAO.class).createContentRepository(repository))) {
+      repositories = Collections.singletonList(repository);
     }
   }
 

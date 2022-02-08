@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.search;
 
+import org.sonatype.nexus.common.entity.ContinuationAware;
 import org.sonatype.nexus.repository.content.ComponentSearch;
 import org.sonatype.nexus.repository.content.store.AbstractRepositoryContent;
 
@@ -22,7 +23,7 @@ import org.sonatype.nexus.repository.content.store.AbstractRepositoryContent;
  */
 public class SearchData
     extends AbstractRepositoryContent
-    implements ComponentSearch
+    implements ComponentSearch, ContinuationAware
 {
   Integer componentId; // NOSONAR: internal id
 
@@ -33,6 +34,11 @@ public class SearchData
   private String version;
 
   private String repositoryName;
+
+  @Override
+  public String nextContinuationToken() {
+    return Integer.toString(componentId);
+  }
 
   @Override
   public String toString() {
