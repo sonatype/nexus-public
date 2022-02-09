@@ -14,7 +14,7 @@
     "classnames": "=2.2.6",
     "file-size": "=1.0.0",
     "node-gyp": "=8.1.0",
-    "ramda": "=0.27.1"
+    "ramda": "=0.28.0"
   },
   "peerDependencies": {
     "react": "=16.14.0",
