@@ -17,7 +17,7 @@
 import {assign} from 'xstate';
 import Axios from 'axios';
 
-import {ExtJS, Utils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, Utils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 
@@ -47,14 +47,8 @@ function validateCriteriaNumberField(enabled, field) {
     if (Utils.isBlank(field)) {
       return UIStrings.ERROR.FIELD_REQUIRED;
     }
-    else if (isNaN(field)) {
-      return UIStrings.ERROR.NAN;
-    }
-    else if (parseInt(field) < 1) {
-      return UIStrings.ERROR.MIN(1);
-    }
-    else if (parseInt(field) > 24855) {
-      return UIStrings.ERROR.MAX(24855);
+    else {
+      return ValidationUtils.isInRange({value: field, min:1, max:24855, allowDecimals:false});
     }
   }
 
