@@ -71,13 +71,12 @@ Ext.define('NX.coreui.controller.Outreach', {
             url,
             height;
 
+        usertype = 'anonymous';
+        height = '100%';
+
         if (user) {
           usertype = user.administrator ? 'admin' : 'normal';
-          height = log4jDisclaimerAvailable ? 'calc(100% - 250px)' : '100%';
-        }
-        else {
-          usertype = 'anonymous';
-          height = '100%';
+          height = log4jDisclaimerAvailable && user.administrator ? 'calc(100% - 250px)' : '100%';
         }
 
         url = NX.util.Url.urlOf('service/outreach/?version=' + NX.State.getVersion() +
