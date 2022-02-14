@@ -20,6 +20,7 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
+import org.sonatype.nexus.xstream.XStreamUtil;
 import org.sonatype.plexus.rest.resource.PlexusResource;
 import org.sonatype.plexus.rest.xstream.json.JsonOrgHierarchicalStreamDriver;
 import org.sonatype.plexus.rest.xstream.json.PrimitiveKeyedMapConverter;
@@ -271,8 +272,20 @@ public abstract class PlexusRestletApplicationBridge
 
   protected final XStream createAndConfigureXstream(HierarchicalStreamDriver driver) {
     XStream xstream = new XStream(driver);
+    XStreamUtil.configure(xstream);
 
     xstream.setClassLoader(uberClassLoader);
+
+    xstream.allowTypesByWildcard(new String[]{
+        "org.sonatype.nexus.rest.model.*",
+        "org.sonatype.security.rest.model.*",
+        "org.sonatype.nexus.plugins.lvo.api.dto.*",
+        "com.sonatype.nexus.plugins.smartproxy.internal.rest.dto.*",
+        "com.sonatype.nexus.staging.api.dto.*DTO",
+        "com.sonatype.nexus.index.rest.model.*",
+        "com.sonatype.security.ldap.api.dto.*",
+        "com.sonatype.nexus.rest.templates.settings.api.dto.*",
+        "com.sonatype.nexus.procurement.api.dto.*"});
 
     // let the application configure the XStream
     xstream = doConfigureXstream(xstream);

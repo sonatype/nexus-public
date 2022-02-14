@@ -182,6 +182,10 @@ public class TestMarshalUnmarchal
     xstreamXML = napp.doConfigureXstream(new XStream(new LookAheadXppDriver()));
 
     xstreamJSON = napp.doConfigureXstream(new XStream(new JsonOrgHierarchicalStreamDriver()));
+
+    // We only do this because it is test code
+    xstreamXML.allowTypesByWildcard(new String[] {"**"});
+    xstreamJSON.allowTypesByWildcard(new String[] {"**"});
   }
 
   protected XStream getXmlXStream() {

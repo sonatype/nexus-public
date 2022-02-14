@@ -53,6 +53,9 @@ public class XStreamXmlProvider
 
   public XStreamXmlProvider(final XStream xstream, final MediaType xstreamMediaType) {
     this.xstream = Check.notNull(xstream, XStream.class);
+    this.xstream.allowTypesByWildcard(new String[]{
+        "com.sonatype.nexus.rest.templates.settings.api.dto.*",
+        "com.sonatype.nexus.procurement.api.dto.*DTO"});
     this.xstreamMediaType = Check.notNull(xstreamMediaType, MediaType.class);
   }
 

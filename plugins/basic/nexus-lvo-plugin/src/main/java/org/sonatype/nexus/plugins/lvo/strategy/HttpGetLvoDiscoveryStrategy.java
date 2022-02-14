@@ -24,6 +24,7 @@ import org.sonatype.nexus.plugins.lvo.DiscoveryRequest;
 import org.sonatype.nexus.plugins.lvo.DiscoveryResponse;
 import org.sonatype.nexus.plugins.lvo.DiscoveryStrategy;
 import org.sonatype.nexus.proxy.NoSuchRepositoryException;
+import org.sonatype.nexus.xstream.XStreamUtil;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.XStreamException;
@@ -51,6 +52,7 @@ public class HttpGetLvoDiscoveryStrategy
   protected synchronized XStream getXStream() {
     if (xstream == null) {
       xstream = new XStream(new XppDomDriver());
+      XStreamUtil.configure(xstream);
       DiscoveryResponse.configureXStream(xstream);
     }
 

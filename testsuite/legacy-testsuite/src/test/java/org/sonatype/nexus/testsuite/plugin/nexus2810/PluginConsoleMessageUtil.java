@@ -42,8 +42,12 @@ public class PluginConsoleMessageUtil
     xmlXstream = XStreamFactory.getXmlXStream(new XStreamConfigurator()
     {
       public void configure(XStream xstream) {
-        xstream.processAnnotations(PluginInfoDTO.class);
-        xstream.processAnnotations(PluginInfoListResponseDTO.class);
+        Class[] pluginTypes = new Class[]{
+            PluginInfoDTO.class,
+            PluginInfoListResponseDTO.class
+        };
+        xstream.allowTypes(pluginTypes);
+        xstream.processAnnotations(pluginTypes);
 
         xstream.registerLocalConverter(PluginInfoListResponseDTO.class, "data", new AliasingListConverter(
             PluginInfoDTO.class, "pluginInfo"));

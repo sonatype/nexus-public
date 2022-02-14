@@ -35,5 +35,8 @@ public abstract class AbstractRestTestCase
     NexusApplication napp = new NexusApplication();
 
     napp.doConfigureXstream(xstream);
+
+    // We only do this because it is test code
+    xstream.allowTypesByWildcard(new String[] {"**"});
   }
 }

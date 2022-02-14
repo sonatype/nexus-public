@@ -34,11 +34,15 @@ import com.thoughtworks.xstream.XStream;
 public class LdapXStreamConfigurator
 {
   public static XStream configureXStream(XStream xstream) {
-    xstream.processAnnotations(LdapConnectionInfoResponse.class);
-    xstream.processAnnotations(LdapUserAndGroupConfigurationResponse.class);
-    xstream.processAnnotations(LdapUserListResponse.class);
-    xstream.processAnnotations(LdapAuthenticationTestRequest.class);
-    xstream.processAnnotations(LdapUserAndGroupConfigTestRequest.class);
+    Class[] ldapTypes = new Class[]{
+        LdapConnectionInfoResponse.class,
+        LdapUserAndGroupConfigurationResponse.class,
+        LdapUserListResponse.class,
+        LdapAuthenticationTestRequest.class,
+        LdapUserAndGroupConfigTestRequest.class
+    };
+    xstream.allowTypes(ldapTypes);
+    xstream.processAnnotations(ldapTypes);
 
     // NXCM-2974 unescape html entities like "o=org&amp;org", they get escaped by nexus-rest-api json->DTO
     // conversion

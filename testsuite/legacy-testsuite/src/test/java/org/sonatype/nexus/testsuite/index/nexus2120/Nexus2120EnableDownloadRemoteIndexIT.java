@@ -101,8 +101,12 @@ public class Nexus2120EnableDownloadRemoteIndexIT
 
     XStream xstream = XStreamFactory.getXmlXStream();
 
-    xstream.processAnnotations(IndexBrowserTreeNodeDTO.class);
-    xstream.processAnnotations(IndexBrowserTreeViewResponseDTO.class);
+    Class[] indexBrowserTypes = new Class[]{
+        IndexBrowserTreeNodeDTO.class,
+        IndexBrowserTreeViewResponseDTO.class
+    };
+    xstream.allowTypes(indexBrowserTypes);
+    xstream.processAnnotations(indexBrowserTypes);
 
     XStreamRepresentation re = new XStreamRepresentation(xstream, content, MediaType.APPLICATION_XML);
     IndexBrowserTreeViewResponseDTO resourceResponse =

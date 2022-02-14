@@ -812,6 +812,11 @@
                     <exclude>org.sonatype.spice:plexus-ehcache</exclude>
 
                     <!--
+                    Ban old xstream.
+                    -->
+                    <exclude>com.thoughtworks.xstream:xstream:(,1.4.17]</exclude>
+
+                    <!--
                     Ban log4j.
                     -->
                     <exclude>log4j:*</exclude>

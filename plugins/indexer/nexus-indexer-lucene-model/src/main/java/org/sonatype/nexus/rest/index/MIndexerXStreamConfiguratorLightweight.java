@@ -34,15 +34,22 @@ import com.thoughtworks.xstream.XStream;
 public class MIndexerXStreamConfiguratorLightweight
 {
   public static XStream configureXStream(final XStream xstream) {
-    xstream.processAnnotations(SearchResponse.class);
+    Class[] searchTypes = new Class[] {
+        SearchResponse.class,
+        SearchNGResponse.class,
+        NexusNGArtifact.class,
+        NexusNGArtifactHit.class,
+        NexusNGArtifactLink.class,
+        IndexBrowserTreeViewResponseDTO.class,
+        IndexBrowserTreeNodeDTO.class
+    };
+    xstream.allowTypes(searchTypes);
+    xstream.processAnnotations(searchTypes);
+
     xstream.registerLocalConverter(SearchResponse.class, "data", new AliasingListConverter(NexusArtifact.class,
         "artifact"));
 
     // NG
-    xstream.processAnnotations(SearchNGResponse.class);
-    xstream.processAnnotations(NexusNGArtifact.class);
-    xstream.processAnnotations(NexusNGArtifactHit.class);
-    xstream.processAnnotations(NexusNGArtifactLink.class);
     xstream.registerLocalConverter(SearchNGResponse.class, "data", new AliasingListConverter(
         NexusNGArtifact.class, "artifact"));
     xstream.registerLocalConverter(NexusNGArtifact.class, "artifactHits", new AliasingListConverter(
@@ -51,8 +58,6 @@ public class MIndexerXStreamConfiguratorLightweight
         NexusNGArtifactLink.class, "artifactLink"));
 
     // Tree (DTO classes extends classes from Maven Indexer, it is hence needed on classpath)
-    xstream.processAnnotations(IndexBrowserTreeViewResponseDTO.class);
-    xstream.processAnnotations(IndexBrowserTreeNodeDTO.class);
     xstream.registerLocalConverter(IndexBrowserTreeNodeDTO.class, "children", new AliasingListConverter(
         IndexBrowserTreeNodeDTO.class, "child"));
 

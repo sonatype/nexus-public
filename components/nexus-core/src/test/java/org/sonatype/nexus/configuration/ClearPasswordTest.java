@@ -100,7 +100,9 @@ public class ClearPasswordTest
     source.storeConfiguration();
 
     XStream xs = new XStream();
-    xs.processAnnotations(new Class[] { Xpp3Dom.class });
+    Class[] xppTypes = new Class[]{Xpp3Dom.class};
+    xs.allowTypes(xppTypes);
+    xs.processAnnotations(xppTypes);
     Assert.assertTrue("Configuration is corroupt, passwords are encrypted (in memory). ",
         xs.toXML(config).contains(password));
 

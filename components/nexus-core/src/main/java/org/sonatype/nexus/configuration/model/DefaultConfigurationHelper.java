@@ -19,6 +19,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.configuration.PasswordHelper;
+import org.sonatype.nexus.xstream.XStreamUtil;
 import org.sonatype.plexus.components.cipher.PlexusCipherException;
 import org.sonatype.sisu.goodies.common.ComponentSupport;
 
@@ -41,6 +42,17 @@ public class DefaultConfigurationHelper
    * XStream is used for a deep clone (TODO: not sure if this is a great idea)
    */
   private static XStream xstream = new XStream();
+
+  static {
+    XStreamUtil.configure(xstream);
+    xstream.allowTypes(new String[] {"org.codehaus.plexus.util.xml.Xpp3Dom"});
+    xstream.allowTypesByWildcard(
+        new String[]{"org.sonatype.nexus.configuration.model.*",
+            "org.sonatype.nexus.configuration.model.v2_0_0.*",
+            "org.sonatype.nexus.configuration.model.v2_2_0.*",
+            "org.sonatype.nexus.configuration.model.v2_5_0.*",
+            "org.sonatype.nexus.configuration.model.v2_7_0.*"});
+  }
 
   @Inject
   public DefaultConfigurationHelper(PasswordHelper passwordHelper) {

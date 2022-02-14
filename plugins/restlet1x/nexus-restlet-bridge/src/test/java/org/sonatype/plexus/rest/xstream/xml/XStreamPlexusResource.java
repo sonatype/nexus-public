@@ -52,7 +52,11 @@ public class XStreamPlexusResource
   public void configureXStream(XStream xstream) {
     super.configureXStream(xstream);
 
-    xstream.processAnnotations(SimpleTestObject.class);
+    Class[] types = new Class[]{
+        SimpleTestObject.class
+    };
+    xstream.allowTypes(types);
+    xstream.processAnnotations(types);
   }
 
   @Override

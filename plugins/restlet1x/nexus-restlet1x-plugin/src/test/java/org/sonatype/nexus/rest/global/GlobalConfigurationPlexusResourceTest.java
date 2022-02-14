@@ -48,6 +48,7 @@ public class GlobalConfigurationPlexusResourceTest
 
     // make sure the configuration resource configures xstream to unescape
     final XStream xStream = new XStream();
+    xStream.allowTypes(new Class[]{SmtpSettings.class});
     testSubject.configureXStream(xStream);
 
     final String xml = xStream.toXML(settings);

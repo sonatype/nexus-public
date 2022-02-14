@@ -179,8 +179,12 @@ public class Nexus3567GroupMemberChangesIndexIT
 
     XStream xstream = XStreamFactory.getXmlXStream();
 
-    xstream.processAnnotations(IndexBrowserTreeNode.class);
-    xstream.processAnnotations(IndexBrowserTreeViewResponseDTO.class);
+    Class[] indexBrowserTypes = new Class[]{
+        IndexBrowserTreeNode.class,
+        IndexBrowserTreeViewResponseDTO.class
+    };
+    xstream.allowTypes(indexBrowserTypes);
+    xstream.processAnnotations(indexBrowserTypes);
 
     XStreamRepresentation re = new XStreamRepresentation(xstream, responseText, MediaType.APPLICATION_XML);
     IndexBrowserTreeViewResponseDTO resourceResponse =
