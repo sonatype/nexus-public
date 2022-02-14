@@ -16,8 +16,6 @@ import '@testing-library/jest-dom/extend-expect';
 
 import DynamicFormField from "./DynamicFormField";
 
-import UIStrings from '../../../constants/UIStrings';
-
 describe('DynamicFormField', () => {
   describe('renders the string type', () => {
     const stringFieldProps = {
@@ -73,19 +71,21 @@ describe('DynamicFormField', () => {
     });
 
     it('renders a MultiSelect field', () => {
-      const {container, queryByTitle} = render(<DynamicFormField {...makeContext('test', ['a'])} dynamicProps={{
+      const options = ['transfer-list-option-1', 'transfer-list-option-2'];
+      const dynamicProps = {
         type: 'itemselect',
         attributes: {
-          options: ['a', 'b']
+          options
         }
-      }}/>);
+      }
+      const {container} = render(<DynamicFormField
+         {...makeContext('test', [])} dynamicProps={dynamicProps}
+        />);
 
-      expect(container.querySelector('.nxrm-select')).toBeInTheDocument();
-      expect(queryByTitle(UIStrings.MULTI_SELECT.MOVE_RIGHT)).toBeInTheDocument();
-      expect(queryByTitle(UIStrings.MULTI_SELECT.MOVE_LEFT)).toBeInTheDocument();
-      expect(queryByTitle(UIStrings.MULTI_SELECT.MOVE_UP)).toBeInTheDocument();
-      expect(queryByTitle(UIStrings.MULTI_SELECT.MOVE_DOWN)).toBeInTheDocument();
-
+      expect(screen.getByText('Available Items')).toBeInTheDocument();  
+      expect(screen.getByText('Transferred Items')).toBeInTheDocument(); 
+      expect(screen.getByLabelText(options[0])).toBeInTheDocument();
+      expect(screen.getByLabelText(options[1])).toBeInTheDocument();
     });
 
     it('renders a Select field', () => {

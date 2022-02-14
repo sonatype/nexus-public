@@ -49,7 +49,6 @@ export {default as DynamicFormField} from './components/widgets/DynamicFormField
 export {default as FieldWrapper} from './components/widgets/FieldWrapper/FieldWrapper';
 export {default as HelpTile} from './components/widgets/HelpTile/HelpTile';
 export {default as Information} from './components/widgets/Information/Information';
-export {default as MultiSelect} from './components/widgets/MultiSelect/MultiSelect';
 export {default as Select} from './components/widgets/Select/Select';
 export {
   default as SslCertificateDetailsModal
