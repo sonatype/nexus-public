@@ -15,11 +15,12 @@ import {render, screen, waitForElementToBeRemoved, waitFor} from '@testing-libra
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/extend-expect';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
+import {ExtJS} from '@sonatype/nexus-ui-plugin';
 import {when} from 'jest-when';
 
 import Axios from 'axios';
 import IqServer from './IqServer';
-
+import UIStrings from "../../../../constants/UIStrings";
 
 jest.mock('@sonatype/nexus-ui-plugin', () => {
   return {
@@ -27,7 +28,8 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
     ExtJS: {
       showSuccessMessage: jest.fn(),
       showErrorMessage: jest.fn(),
-      setDirtyStatus: jest.requireActual('@sonatype/nexus-ui-plugin').ExtJS.setDirtyStatus
+      setDirtyStatus: jest.requireActual('@sonatype/nexus-ui-plugin').ExtJS.setDirtyStatus,
+      checkPermission: jest.fn().mockReturnValue(true),
     }
   }
 });
@@ -40,6 +42,12 @@ jest.mock('axios', () => {  // Mock out parts of axios, has to be done in same s
     post: jest.fn()
   };
 });
+
+global.NX = {
+  Permissions: {
+    check: jest.fn(() => true)
+  }
+}
 
 const selectors = {
   ...TestUtils.selectors,
@@ -328,4 +336,65 @@ describe('IqServer', () => {
       '/service/rest/v1/iq', simpleData
     ));
   });
+
+  describe('Read Only Mode', () => {
+    const dataClass = 'nx-read-only__data';
+    const labelClass = 'nx-read-only__label';
+
+    it('Shows Iq Server configuration in Read Only mode', async () => {
+      ExtJS.checkPermission.mockReturnValueOnce(false);
+
+      when(Axios.get).calledWith('/service/rest/v1/iq').mockResolvedValue({
+        data: DEFAULT_RESPONSE
+      });
+
+      render(<IqServer/>);
+
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+      expect(screen.getByText(UIStrings.SETTINGS.READ_ONLY.WARNING)).toBeInTheDocument();
+
+      expect(screen.getByText(UIStrings.IQ_SERVER.ENABLED.label)).toHaveClass(labelClass);
+      expect(screen.getByText('Disabled')).toHaveClass(dataClass);
+      expect(screen.queryByText(UIStrings.IQ_SERVER.IQ_SERVER_URL.label)).not.toBeInTheDocument();
+    });
+
+    it('Shows empty Iq Server page in Read Only mode', async () => {
+      ExtJS.checkPermission.mockReturnValueOnce(false);
+
+      when(Axios.get).calledWith('/service/rest/v1/iq').mockResolvedValue({
+        data: {
+          "enabled": true,
+          "showLink": true,
+          "url": "http://example.com",
+          "authenticationType": "USER",
+          "username": "user",
+          "password": "pass",
+          "useTrustStoreForUrl": true,
+          "timeoutSeconds": null,
+          "properties": "some=text"
+        }
+      });
+
+      render(<IqServer/>);
+
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+      expect(screen.getByText(UIStrings.SETTINGS.READ_ONLY.WARNING)).toBeInTheDocument();
+
+      expect(screen.getByText(UIStrings.IQ_SERVER.ENABLED.label)).toHaveClass(labelClass);
+      expect(screen.getByText(UIStrings.IQ_SERVER.SHOW_LINK.label)).toHaveClass(labelClass);
+      expect(screen.getAllByText('Enabled').length).toBe(2);
+      expect(screen.getByText(UIStrings.IQ_SERVER.IQ_SERVER_URL.label)).toHaveClass(labelClass);
+      expect(screen.getByText('http://example.com')).toHaveClass(dataClass);
+      expect(screen.getByText(UIStrings.IQ_SERVER.AUTHENTICATION_TYPE.label)).toHaveClass(labelClass);
+      expect(screen.getByText('User Authentication')).toHaveClass(dataClass);
+      expect(screen.getByText(UIStrings.IQ_SERVER.USERNAME.label)).toHaveClass(labelClass);
+      expect(screen.getByText('user')).toHaveClass(dataClass);
+      expect(screen.getByText(UIStrings.IQ_SERVER.CONNECTION_TIMEOUT.label)).toHaveClass(labelClass);
+      expect(screen.getByText(UIStrings.IQ_SERVER.CONNECTION_TIMEOUT_DEFAULT_VALUE_LABEL)).toHaveClass(dataClass);
+      expect(screen.getByText(UIStrings.IQ_SERVER.PROPERTIES.label)).toHaveClass(labelClass);
+      expect(screen.getByText('some=text')).toHaveClass(dataClass);
+    });
+  })
 });

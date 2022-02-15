@@ -22,7 +22,15 @@ export default {
     CANCEL_BUTTON_LABEL: 'Cancel',
     DISCARD_BUTTON_LABEL: 'Discard',
     SAVE_BUTTON_LABEL: 'Save',
-    DELETE_BUTTON_LABEL: 'Delete'
+    DELETE_BUTTON_LABEL: 'Delete',
+
+    READ_ONLY: {
+      WARNING: 'You are currently viewing a Read-only version of this page. You may not have the correct permissions to edit. Contact your Administrator to check permissions.',
+      CHECKBOX: {
+        ENABLED: 'Enabled',
+        DISABLED: 'Disabled',
+      }
+    },
   },
 
   SAVING: 'Saving...',

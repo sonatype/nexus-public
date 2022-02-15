@@ -11,76 +11,24 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {useMachine} from '@xstate/react';
 import {
   ContentBody,
-  FormUtils,
   Page,
   PageHeader,
   PageTitle,
   Section,
-  Select,
-  ValidationUtils
+  ExtJS,
 } from '@sonatype/nexus-ui-plugin';
-import {
-  NxButton,
-  NxCheckbox,
-  NxErrorAlert,
-  NxForm,
-  NxFormGroup,
-  NxLoadWrapper,
-  NxTooltip,
-  NxTextInput,
-  NxTextLink,
-  NxSuccessAlert,
-} from '@sonatype/react-shared-components';
+
 import {faShieldAlt} from '@fortawesome/free-solid-svg-icons';
+
+import IqServerForm from './IqServerForm';
+import IqServerReadOnly from './IqServerReadOnly';
 
 import UIStrings from '../../../../constants/UIStrings';
 
-import Machine from './IqServerMachine';
-
-import './IqServer.scss';
-
 export default function IqServer() {
-  const [current, send] = useMachine(Machine, {devTools: true});
-  const {data, pristineData, isPristine, loadError, saveError, validationErrors, verifyConnectionError, verifyConnectionSuccessMessage} = current.context;
-  const isLoading = current.matches('loading');
-  const isSaving = current.matches('saving')
-  const isInvalid = FormUtils.isInvalid(validationErrors);
-
-  const canOpenIqServerDashboard = pristineData.enabled && ValidationUtils.isUrl(pristineData.url);
-
-  function verifyConnection() {
-    send('VERIFY_CONNECTION');
-  }
-
-  function discard() {
-    send('RESET');
-  }
-
-  function save() {
-    send('SAVE');
-  }
-
-  function retry() {
-    send('RETRY');
-  }
-
-  function dismissValidationMessage() {
-    send('DISMISS');
-  }
-
-  function handleAuthTypeChange(event) {
-    send({
-      type: 'UPDATE',
-      data: {
-        authenticationType: event.currentTarget.value,
-        username: '',
-        password: ''
-      }
-    });
-  }
+  const canEdit = ExtJS.checkPermission('nexus:settings:update');
 
   return <Page>
     <PageHeader>
@@ -88,104 +36,7 @@ export default function IqServer() {
     </PageHeader>
     <ContentBody className="nxrm-iq-server">
       <Section>
-        <NxForm
-          loading={isLoading}
-          loadError={loadError}
-          doLoad={retry}
-          onSubmit={save}
-          submitError={saveError}
-          submitMaskState={isSaving ? false : null}
-          submitBtnText={UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
-          validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
-          additionalFooterBtns={<>
-            <NxButton type="button" variant="tertiary" disabled={isInvalid} onClick={verifyConnection}>
-              {UIStrings.IQ_SERVER.VERIFY_CONNECTION_BUTTON_LABEL}
-            </NxButton>
-            <NxTooltip title={FormUtils.discardTooltip({isPristine})}>
-              <NxButton type="button" className={isPristine && 'disabled'} onClick={discard}>
-                {UIStrings.SETTINGS.DISCARD_BUTTON_LABEL}
-              </NxButton>
-            </NxTooltip>
-          </>}>
-          {() => <>
-            {canOpenIqServerDashboard &&
-            <NxTextLink className="open-dashboard-link" external href={pristineData.url}>
-              {UIStrings.IQ_SERVER.OPEN_DASHBOARD}
-            </NxTextLink>}
-            <p>
-              <NxTextLink external href="http://www.sonatype.com/nexus/product-overview/nexus-lifecycle">
-                {UIStrings.IQ_SERVER.MENU.text}
-              </NxTextLink>
-              {' '}{UIStrings.IQ_SERVER.FORM_NOTES}
-            </p>
-            <div className="nx-sub-label help-text">{UIStrings.IQ_SERVER.HELP_TEXT}</div>
-            <NxFormGroup label={UIStrings.IQ_SERVER.ENABLED.label} isRequired>
-              <NxCheckbox
-                  {...FormUtils.checkboxProps('enabled', current)}
-                  onChange={FormUtils.handleUpdate('enabled', send)}>
-                {UIStrings.IQ_SERVER.ENABLED.sublabel}
-              </NxCheckbox>
-            </NxFormGroup>
-            <NxFormGroup {...UIStrings.IQ_SERVER.IQ_SERVER_URL} isRequired>
-              <NxTextInput className="nx-text-input--long"
-                           {...FormUtils.fieldProps('url', current)}
-                           onChange={FormUtils.handleUpdate('url', send)}/>
-            </NxFormGroup>
-            <NxFormGroup label={UIStrings.IQ_SERVER.AUTHENTICATION_TYPE.label} isRequired>
-              <Select className="nx-form-select--long"
-                      {...FormUtils.fieldProps('authenticationType', current)}
-                      onChange={handleAuthTypeChange}>
-                <option value=""/>
-                <option value="USER">{UIStrings.IQ_SERVER.AUTHENTICATION_TYPE.USER}</option>
-                <option value="PKI">{UIStrings.IQ_SERVER.AUTHENTICATION_TYPE.PKI}</option>
-              </Select>
-            </NxFormGroup>
-            {data.authenticationType === 'USER' && <>
-              <NxFormGroup {...UIStrings.IQ_SERVER.USERNAME} isRequired>
-                <NxTextInput className="nx-text-input--long"
-                             {...FormUtils.fieldProps('username', current)}
-                             onChange={FormUtils.handleUpdate('username', send)}/>
-              </NxFormGroup>
-              <NxFormGroup {...UIStrings.IQ_SERVER.PASSWORD} isRequired>
-                <NxTextInput className="nx-text-input--long"
-                             type="password"
-                             autoComplete="new-password"
-                             {...FormUtils.fieldProps('password', current)}
-                             onChange={FormUtils.handleUpdate('password', send)}/>
-              </NxFormGroup>
-            </>}
-            <NxFormGroup {...UIStrings.IQ_SERVER.CONNECTION_TIMEOUT}>
-              <NxTextInput className="nx-text-input--long"
-                           {...FormUtils.fieldProps('timeoutSeconds', current)}
-                           onChange={FormUtils.handleUpdate('timeoutSeconds', send)}/>
-            </NxFormGroup>
-            <NxFormGroup {...UIStrings.IQ_SERVER.PROPERTIES}>
-              <NxTextInput className="nx-text-input--long"
-                           type="textarea"
-                           {...FormUtils.fieldProps('properties', current)}
-                           onChange={FormUtils.handleUpdate('properties', send)}/>
-            </NxFormGroup>
-            <NxFormGroup label={UIStrings.IQ_SERVER.SHOW_LINK.label} isRequired>
-              <NxCheckbox{...FormUtils.checkboxProps('showLink', current)}
-                         onChange={FormUtils.handleUpdate('showLink', send)}>
-                {UIStrings.IQ_SERVER.SHOW_LINK.sublabel}
-              </NxCheckbox>
-            </NxFormGroup>
-            <div className="verify-connection-status">
-              {!current.matches('loaded.idle') &&
-              <NxLoadWrapper loading={current.matches('loaded.verifyingConnection')} retryHandler={()=>{}}>
-                {current.matches('loaded.success') &&
-                <NxSuccessAlert onClose={dismissValidationMessage}>
-                  {UIStrings.IQ_SERVER.VERIFY_CONNECTION_SUCCESSFUL(verifyConnectionSuccessMessage)}
-                </NxSuccessAlert>}
-                {current.matches('loaded.error') &&
-                <NxErrorAlert onClose={dismissValidationMessage}>
-                  {UIStrings.IQ_SERVER.VERIFY_CONNECTION_ERROR(verifyConnectionError)}
-                </NxErrorAlert>}
-              </NxLoadWrapper>}
-            </div>
-          </>}
-        </NxForm>
+        {canEdit ? <IqServerForm/> : <IqServerReadOnly/>}
       </Section>
     </ContentBody>
   </Page>;

@@ -413,4 +413,14 @@ export default class FormUtils {
       return UIStrings.PRISTINE_TOOLTIP;
     }
   }
+
+    /**
+   * @param enabled [required]
+   * @return {string} read only checkbox status label
+   */
+  static readOnlyCheckboxValueLabel(enabled) {
+    return enabled
+        ? UIStrings.SETTINGS.READ_ONLY.CHECKBOX.ENABLED
+        : UIStrings.SETTINGS.READ_ONLY.CHECKBOX.DISABLED;
+  }
 }

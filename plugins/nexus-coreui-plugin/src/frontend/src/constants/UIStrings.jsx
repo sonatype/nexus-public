@@ -750,6 +750,7 @@ Once created, a cleanup policy must be assigned to a repository from \
         Leave blank to use the globally defined HTTP timeout.
       </>,
     },
+    CONNECTION_TIMEOUT_DEFAULT_VALUE_LABEL: 'Globally Defined',
     PROPERTIES: {
       label: 'Properties',
       sublabel: 'Additional properties to configure for IQ Server'
