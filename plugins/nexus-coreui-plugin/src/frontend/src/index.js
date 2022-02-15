@@ -238,7 +238,8 @@ window.plugins.push({
             key: 'vulnerabilityCapabilityState',
             defaultValue: {enabled: false}
           }
-        ]
+        ],
+        permissions: ['nexus:*']
       }
     }
   ]
