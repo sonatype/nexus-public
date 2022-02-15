@@ -465,6 +465,12 @@ This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 
     TEST_BUTTON: 'Test'
   },
 
+  LOG4J_VISUALIZER: {
+    MENU: {
+      text: 'Log4j Visualizer'
+    }
+  },
+
   SYSTEM_INFORMATION: {
     MENU: {
       text: 'System Information'
