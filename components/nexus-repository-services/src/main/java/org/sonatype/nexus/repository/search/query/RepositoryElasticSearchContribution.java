@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.search.query;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -23,7 +24,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 
-import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 
 import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
@@ -46,7 +47,7 @@ public class RepositoryElasticSearchContribution
   }
 
   @Override
-  public void contribute(final BoolQueryBuilder query, final String type, final String value) {
+  public void contribute(final Consumer<QueryBuilder> query, final String type, final String value) {
     if (value == null) {
       return;
     }
@@ -58,7 +59,7 @@ public class RepositoryElasticSearchContribution
       if (groupFacet.isPresent()) {
         List<Repository> members = groupFacet.get().leafMembers();
 
-        query.must(QueryBuilders.termsQuery(type, members.stream().map(Repository::getName).toArray(String[]::new)));
+        query.accept(QueryBuilders.termsQuery(type, members.stream().map(Repository::getName).toArray(String[]::new)));
         return;
       }
     }

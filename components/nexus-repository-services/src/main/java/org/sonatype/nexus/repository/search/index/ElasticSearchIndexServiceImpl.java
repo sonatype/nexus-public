@@ -46,7 +46,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Resources;
 import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.action.admin.indices.stats.IndexStats;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
@@ -249,22 +248,6 @@ public class ElasticSearchIndexServiceImpl
     boolean indexExists = indices.prepareExists(indexName).execute().actionGet().isExists();
     log.info("Repository {} has search index: {}", repository, indexExists);
     return indexExists;
-  }
-
-  @Override
-  public boolean indexEmpty(final Repository repository) {
-    checkNotNull(repository);
-    String indexName = indexNamingPolicy.indexName(repository);
-
-    IndexStats indexStats = indicesAdminClient().prepareStats(indexName).get().getIndex(indexName);
-    long count = 0;
-    if (indexStats != null) {
-      count = indexStats.getTotal().getDocs().getCount();
-    }
-
-    boolean isEmpty = count == 0;
-    log.debug("Repository index: {} is {}.", indexName, isEmpty ? "empty" : "not empty");
-    return isEmpty;
   }
 
   @Override

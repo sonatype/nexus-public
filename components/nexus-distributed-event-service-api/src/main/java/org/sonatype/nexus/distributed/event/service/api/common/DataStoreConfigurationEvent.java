@@ -23,7 +23,7 @@ import static org.sonatype.nexus.distributed.event.service.api.EventType.UPDATED
 /**
  * Indicates that a Data store configuration has been updated.
  *
- * @since 3.38
+ * @since 3.next
  */
 public class DataStoreConfigurationEvent
     extends DistributedEventSupport

@@ -12,7 +12,9 @@
  */
 package org.sonatype.nexus.repository.search.query;
 
-import org.elasticsearch.index.query.BoolQueryBuilder;
+import java.util.function.Consumer;
+
+import org.elasticsearch.index.query.QueryBuilder;
 
 /**
  * Contributor to search query/filter.
@@ -29,6 +31,6 @@ public interface ElasticSearchContribution
    * @param type   type of filter
    * @param value  value of filter
    */
-  void contribute(BoolQueryBuilder query, String type, String value);
+  void contribute(Consumer<QueryBuilder> query, String type, String value);
 
 }

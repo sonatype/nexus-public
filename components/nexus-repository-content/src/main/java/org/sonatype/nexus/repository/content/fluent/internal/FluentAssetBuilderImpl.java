@@ -37,7 +37,6 @@ import org.sonatype.nexus.repository.content.store.AssetBlobData;
 import org.sonatype.nexus.repository.content.store.AssetData;
 import org.sonatype.nexus.repository.content.store.AssetStore;
 import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
-import org.sonatype.nexus.repository.view.payloads.AttachableBlob;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 import com.google.common.collect.ImmutableMap;
@@ -104,7 +103,7 @@ public class FluentAssetBuilderImpl
 
   @Override
   public FluentAssetBuilder blob(final TempBlob tempBlob) {
-    blobSupplier = () -> makePermanent(tempBlob);
+    blobSupplier = () -> makePermanent(tempBlob.getBlob());
     checksums = tempBlob.getHashes();
     return this;
   }
@@ -201,23 +200,17 @@ public class FluentAssetBuilderImpl
     }
   }
 
-  private Blob makePermanent(final TempBlob tempBlob) {
-    if (tempBlob instanceof AttachableBlob && !((AttachableBlob) tempBlob).isAttached()) {
-      ((AttachableBlob) tempBlob).markAttached();
-      return tempBlob.getBlob();
-    }
-
-    Blob blob = tempBlob.getBlob();
+  private Blob makePermanent(final Blob tempBlob) {
     ImmutableMap.Builder<String, String> headerBuilder = ImmutableMap.builder();
 
-    Map<String, String> tempHeaders = blob.getHeaders();
+    Map<String, String> tempHeaders = tempBlob.getHeaders();
     headerBuilder.put(REPO_NAME_HEADER, tempHeaders.get(REPO_NAME_HEADER));
     headerBuilder.put(BLOB_NAME_HEADER, assetData.path());
     headerBuilder.put(CREATED_BY_HEADER, tempHeaders.get(CREATED_BY_HEADER));
     headerBuilder.put(CREATED_BY_IP_HEADER, tempHeaders.get(CREATED_BY_IP_HEADER));
-    headerBuilder.put(CONTENT_TYPE_HEADER, facet.checkContentType(assetData, blob));
+    headerBuilder.put(CONTENT_TYPE_HEADER, facet.checkContentType(assetData, tempBlob));
 
-    Blob permanentBlob = facet.stores().blobStore.makeBlobPermanent(blob.getId(), headerBuilder.build());
+    Blob permanentBlob = facet.stores().blobStore.makeBlobPermanent(tempBlob.getId(), headerBuilder.build());
     NestedAttributesMap componentAttributes = assetData.component().map(Component::attributes).orElse(null);
     Map<String, String> checksums = assetData.blob().map(AssetBlob::checksums).orElse(null);
     facet.blobMetadataStorage().attach(facet.stores().blobStore, permanentBlob.getId(), componentAttributes, assetData.attributes(),
@@ -265,7 +258,7 @@ public class FluentAssetBuilderImpl
   @Override
   public FluentAsset attach(final TempBlob tempBlob) {
     facet.checkAttachAllowed(assetData);
-    return attachBlob(makePermanent(tempBlob), tempBlob.getHashes());
+    return attachBlob(makePermanent(tempBlob.getBlob()), tempBlob.getHashes());
   }
 
   @Override

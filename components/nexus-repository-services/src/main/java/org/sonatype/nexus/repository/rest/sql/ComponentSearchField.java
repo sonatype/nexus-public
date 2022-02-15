@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.rest.SearchFieldSupport;
 /**
  * A field on the component table.
  *
- * @since 3.38
+ * @since 3.next
  */
 public class ComponentSearchField extends SearchFieldSupport
 {

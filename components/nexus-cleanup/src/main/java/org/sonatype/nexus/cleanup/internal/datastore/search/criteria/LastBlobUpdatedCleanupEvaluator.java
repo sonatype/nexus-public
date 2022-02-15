@@ -27,7 +27,7 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
  * Creates a test which evaluates whether an asset's blob was created (i.e. attached) to the asset on or before
  * the time determined by the offset.
  *
- * @since 3.38
+ * @since 3.next
  */
 @Named(LAST_BLOB_UPDATED_KEY)
 public class LastBlobUpdatedCleanupEvaluator

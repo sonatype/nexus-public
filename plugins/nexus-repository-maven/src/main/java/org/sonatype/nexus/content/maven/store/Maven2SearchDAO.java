@@ -15,7 +15,7 @@ package org.sonatype.nexus.content.maven.store;
 import org.sonatype.nexus.repository.content.search.SearchDAO;
 
 /**
- * @since 3.38
+ * @since 3.next
  */
 public interface Maven2SearchDAO
     extends SearchDAO

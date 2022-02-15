@@ -19,7 +19,7 @@ import org.elasticsearch.search.SearchHit;
 /**
  * Extension point for search based on ElasticSearchs
  *
- * @since 3.38
+ * @since 3.next
  */
 public interface OrientSearchExtension
 {

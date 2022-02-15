@@ -15,7 +15,7 @@ package org.sonatype.nexus.blobstore.api;
 /**
  * The blob store operation type is used for monitor metrics.
  *
- * @since 3.38
+ * @since 3.next
  */
 public enum OperationType
 {

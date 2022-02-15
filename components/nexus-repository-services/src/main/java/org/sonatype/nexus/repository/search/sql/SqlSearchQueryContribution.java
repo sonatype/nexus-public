@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.search.query.SearchFilter;
  *
  * @see SearchFilter
  * @see SqlSearchQueryCondition
- * @since 3.38
+ * @since 3.next
  */
 public interface SqlSearchQueryContribution
 {

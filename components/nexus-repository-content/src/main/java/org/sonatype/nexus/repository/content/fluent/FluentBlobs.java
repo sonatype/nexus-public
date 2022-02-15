@@ -51,19 +51,6 @@ public interface FluentBlobs
   TempBlob ingest(Payload payload, Iterable<HashAlgorithm> hashing);
 
   /**
-   * Ingests the given payload as a temporary blob with the requested hashing.
-   *
-   * @param path        the path to the file on the local file system
-   * @param contentType the content type of the provided file if known
-   * @param hashing     the hashing algorithms to use for the blob
-   * @param requireHardLink  when true ingest will fail if the attempt to hard link fails, otherwise an attempt will be
-   *                         made to copy the file content.
-   *
-   * @since 3.next
-   */
-  TempBlob ingest(Path path, @Nullable String contentType, Iterable<HashAlgorithm> hashing, boolean requireHardLink);
-
-  /**
    * Ingests a blob from a {@code sourceFile} via hard-linking.
    *
    * @since 3.29

@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.rest.SearchFieldSupport;
 /**
  * Represents a field that is unsupported.
  *
- * @since 3.38
+ * @since 3.next
  */
 public final class UnsupportedSearchField
     extends SearchFieldSupport

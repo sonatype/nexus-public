@@ -109,7 +109,7 @@ export default function InsightFrontend() {
                 id: 'log4shell',
                 data: downloadsByDay.map((download) => {
                   return {
-                    x: new Date(download.day),
+                    x: new Date(download.day.year, download.day.monthValue - 1, download.day.dayOfMonth),
                     y: download.downloadCount
                   }
                 })
@@ -119,7 +119,7 @@ export default function InsightFrontend() {
                 id: 'non-log4shell',
                 data: downloadsByDayNonVulnerable.map((download) => {
                   return {
-                    x: new Date(download.day),
+                    x: new Date(download.day.year, download.day.monthValue - 1, download.day.dayOfMonth),
                     y: download.downloadCount
                   }
                 })

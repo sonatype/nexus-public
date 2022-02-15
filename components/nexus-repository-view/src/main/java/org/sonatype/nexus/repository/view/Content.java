@@ -60,14 +60,6 @@ public class Content
   }
 
   /**
-   * Creates an instance based on the original replacing the payload. Note that attributes are referenced, not copied.
-   */
-  public Content(final Content originalContent, final Payload payload) {
-    this.payload = checkNotNull(payload);
-    this.attributes = originalContent.getAttributes();
-  }
-
-  /**
    * @since 3.4
    */
   protected Content(final Payload payload, final AttributesMap attributes) {
@@ -99,10 +91,6 @@ public class Content
   @Override
   public void copy(final InputStream inputStream, final OutputStream outputStream) throws IOException {
     payload.copy(inputStream, outputStream);
-  }
-
-  public Payload getPayload() {
-    return payload;
   }
 
   @Nonnull

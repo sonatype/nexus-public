@@ -24,7 +24,7 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 /**
  * Perform the verification against the given JWT,
  *
- * @since 3.38
+ * @since 3.next
  */
 public class JwtVerifier
     extends ComponentSupport

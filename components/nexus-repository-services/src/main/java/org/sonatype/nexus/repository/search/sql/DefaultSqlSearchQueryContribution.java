@@ -25,7 +25,7 @@ import org.sonatype.nexus.repository.rest.SearchMappings;
  * wildcard sql query conditions and stores them in the supplied {@link SqlSearchQueryBuilder}.
  *
  * @see SqlSearchQueryBuilder
- * @since 3.38
+ * @since 3.next
  */
 @Named(DefaultSqlSearchQueryContribution.NAME)
 @Singleton

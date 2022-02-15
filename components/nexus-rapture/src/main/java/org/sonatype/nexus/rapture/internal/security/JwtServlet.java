@@ -41,7 +41,7 @@ import static org.sonatype.nexus.servlet.XFrameOptions.DENY;
  * JWT servlet, to expose end-point for configuration of Shiro authentication filter to
  * establish a JWT.
  *
- * @since 3.38
+ * @since 3.next
  *
  * @see JwtAuthenticationFilter
  */

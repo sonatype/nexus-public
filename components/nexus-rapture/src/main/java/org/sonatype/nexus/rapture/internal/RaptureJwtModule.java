@@ -30,7 +30,7 @@ import static org.sonatype.nexus.security.FilterProviderSupport.filterKey;
 /**
  * Rapture Guice module for JWT.
  *
- * @since 3.38
+ * @since 3.next
  */
 @Named
 @FeatureFlag(name = JWT_ENABLED)

@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * DistributedEvent support class
  *
- * @since 3.38
+ * @since 3.next
  */
 public abstract class DistributedEventSupport
     implements DistributedEvent

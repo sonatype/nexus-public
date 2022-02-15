@@ -31,7 +31,7 @@ import static org.eclipse.sisu.inject.Sources.prioritize;
 /**
  * Repository HTTP bridge module for legacy URLs using {@link JwtSecurityFilter}.
  *
- * @since 3.38
+ * @since 3.next
  */
 public class JwtLegacyHttpBridgeModule
     extends AbstractModule

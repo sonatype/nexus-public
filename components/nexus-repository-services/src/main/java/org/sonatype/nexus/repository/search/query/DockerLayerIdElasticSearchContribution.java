@@ -12,10 +12,12 @@
  */
 package org.sonatype.nexus.repository.search.query;
 
+import java.util.function.Consumer;
+
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 
 /**
@@ -30,9 +32,9 @@ public class DockerLayerIdElasticSearchContribution
 {
 
   @Override
-  public void contribute(final BoolQueryBuilder query, final String type, final String value) {
+  public void contribute(final Consumer<QueryBuilder> query, final String type, final String value) {
     if (value != null) {
-      query.must(QueryBuilders.prefixQuery(type, value));
+      query.accept(QueryBuilders.prefixQuery(type, value));
     }
   }
 

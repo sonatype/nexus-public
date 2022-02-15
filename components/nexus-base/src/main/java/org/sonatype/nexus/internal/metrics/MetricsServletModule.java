@@ -21,7 +21,7 @@ import com.google.inject.servlet.ServletModule;
 /**
  * Servlet module for Metrics module.
  *
- * @since 3.38
+ * @since 3.next
  */
 public abstract class MetricsServletModule
     extends ServletModule

@@ -119,7 +119,7 @@ public class FileBlobStore
 
   @VisibleForTesting
   public static final String CONFIG_KEY = "file";
-
+  
   public static final String PATH_KEY = "path";
 
   @VisibleForTesting
@@ -298,7 +298,6 @@ public class FileBlobStore
     return contentDir.resolve(blobIdLocationResolver.getLocation(id) + BLOB_FILE_ATTRIBUTES_SUFFIX);
   }
 
-  @Override
   protected String attributePathString(final BlobId blobId) {
     return attributePath(blobId).toString();
   }
@@ -1101,7 +1100,7 @@ public class FileBlobStore
    *
    * @see BlobIdLocationResolver
    */
-  private BlobId toBlobId(final String blobName) {
+  private BlobId toBlobId(String blobName) {
     Map<String, String> headers = ImmutableMap.of(
         BLOB_NAME_HEADER, blobName,
         DIRECT_PATH_BLOB_HEADER, "true"
@@ -1110,7 +1109,7 @@ public class FileBlobStore
   }
 
   @Override
-  public void setBlobAttributes(final BlobId blobId, final BlobAttributes blobAttributes) {
+  public void setBlobAttributes(BlobId blobId, BlobAttributes blobAttributes) {
     try {
       FileBlobAttributes fileBlobAttributes = getFileBlobAttributes(blobId);
       fileBlobAttributes.updateFrom(blobAttributes);

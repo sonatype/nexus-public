@@ -12,9 +12,11 @@
  */
 package org.sonatype.nexus.repository.search.query;
 
+import java.util.function.Consumer;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.queryparser.classic.QueryParserBase;
-import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 
 /**
  * Support for {@link ElasticSearchContribution} implementations.
@@ -26,11 +28,11 @@ public class ElasticSearchContributionSupport
 {
 
   @Override
-  public void contribute(final BoolQueryBuilder query, final String type, final String value) {
+  public void contribute(final Consumer<QueryBuilder> query, final String type, final String value) {
     // do nothing
   }
 
-  public String escape(String value) {
+  public String escape(final String value) {
     if (null == value) {
       return null;
     }

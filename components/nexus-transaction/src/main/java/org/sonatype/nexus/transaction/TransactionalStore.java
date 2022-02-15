@@ -27,7 +27,7 @@ public interface TransactionalStore<S extends TransactionalSession<?>>
   /**
    * Opens a new {@link TransactionalSession} with the Serializable isolation level.
    *
-   * @since 3.38
+   * @since 3.next
    */
   default S openSerializableTransactionSession() {
     throw new UnsupportedOperationException();

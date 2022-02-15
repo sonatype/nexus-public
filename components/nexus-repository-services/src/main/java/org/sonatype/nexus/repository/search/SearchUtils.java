@@ -36,7 +36,7 @@ import static java.util.stream.Collectors.toMap;
 import static java.util.stream.StreamSupport.stream;
 
 /**
- * @since 3.38
+ * @since 3.next
  */
 @Named
 @Singleton

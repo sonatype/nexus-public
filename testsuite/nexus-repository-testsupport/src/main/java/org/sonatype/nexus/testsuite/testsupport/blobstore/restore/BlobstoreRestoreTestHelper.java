@@ -12,12 +12,8 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.blobstore.restore;
 
-import java.util.Map;
-import java.util.function.Predicate;
-
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.repository.Repository;
 
 /**
@@ -80,16 +76,4 @@ public interface BlobstoreRestoreTestHelper
    * which were written by the other database.
    */
   void rewriteBlobNames();
-
-  /**
-   * Retrieve the map of path->blobId for all assets in the provided repository.
-   *
-   * @param pathFilter a predicate which returns true if the asset path should be included in the result.
-   *
-   */
-  Map<String, BlobId> getAssetToBlobIds(Repository repo, Predicate<String> pathFilter);
-
-  default Map<String, BlobId> getAssetToBlobIds(final Repository repo) {
-    return getAssetToBlobIds(repo, path -> true);
-  }
 }

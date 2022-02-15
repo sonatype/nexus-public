@@ -83,14 +83,6 @@ public class Content
   }
 
   /**
-   * Creates an instance based on the original replacing the payload. Note that attributes are referenced, not copied.
-   */
-  public Content(final Content originalContent, final Payload payload) {
-    this.payload = checkNotNull(payload);
-    this.attributes = originalContent.getAttributes();
-  }
-
-  /**
    * @since 3.4
    */
   protected Content(final Payload payload, final AttributesMap attributes) {
@@ -127,10 +119,6 @@ public class Content
   @Nonnull
   public AttributesMap getAttributes() {
     return attributes;
-  }
-
-  public Payload getPayload() {
-    return payload;
   }
 
   @Override
@@ -203,7 +191,7 @@ public class Content
    * @see #extractFromAsset(Asset, Iterable, AttributesMap)
    */
   @Nullable
-  public static Asset findAsset(final StorageTx tx, final Bucket bucket, final Content content) {
+  public static Asset findAsset(final StorageTx tx, final Bucket bucket, Content content) {
     final Asset contentAsset = content.getAttributes().require(Asset.class);
     if (EntityHelper.hasMetadata(contentAsset)) {
       return tx.findAsset(EntityHelper.id(contentAsset), bucket);

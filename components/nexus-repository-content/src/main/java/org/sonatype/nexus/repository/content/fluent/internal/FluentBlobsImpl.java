@@ -12,19 +12,15 @@
  */
 package org.sonatype.nexus.repository.content.fluent.internal;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
@@ -33,18 +29,14 @@ import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.hash.MultiHashingInputStream;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentBlobs;
-import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
-import org.sonatype.nexus.repository.view.payloads.AttachableBlob;
-import org.sonatype.nexus.repository.view.payloads.DetachedBlobPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
-import org.sonatype.nexus.repository.view.payloads.TempBlobPayload;
+import org.sonatype.nexus.repository.view.payloads.TempBlobPartPayload;
 import org.sonatype.nexus.security.ClientInfo;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.hash.HashCode;
-import org.apache.commons.io.IOUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Optional.ofNullable;
@@ -54,7 +46,6 @@ import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_IP_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.TEMPORARY_BLOB_HEADER;
-import static org.sonatype.nexus.common.hash.Hashes.hash;
 import static org.sonatype.nexus.repository.view.ContentTypes.APPLICATION_OCTET_STREAM;
 
 /**
@@ -63,7 +54,6 @@ import static org.sonatype.nexus.repository.view.ContentTypes.APPLICATION_OCTET_
  * @since 3.24
  */
 public class FluentBlobsImpl
-    extends ComponentSupport
     implements FluentBlobs
 {
   private static final String SYSTEM = "system";
@@ -95,54 +85,6 @@ public class FluentBlobsImpl
                          final Map<String, String> headers,
                          final Iterable<HashAlgorithm> hashing)
   {
-    MultiHashingInputStream hashingStream = new MultiHashingInputStream(hashing, in);
-    Blob blob = blobStore.create(hashingStream, tempHeaders(headers, contentType));
-
-    return new TempBlob(blob, hashingStream.hashes(), true, blobStore);
-  }
-
-  @Override
-  public TempBlob ingest(
-      final Path path,
-      @Nullable final String contentType,
-      final Iterable<HashAlgorithm> algorithms,
-      final boolean requireHardLink)
-  {
-    try {
-      Map<HashAlgorithm, HashCode> hashes = computeHashes(path, algorithms);
-      Map<String, String> tempHeaders = tempHeaders(Collections.emptyMap(), contentType);
-      Blob blob;
-      try {
-        blob = blobStore.create(path, tempHeaders, Files.size(path), hashes.get(HashAlgorithm.SHA1));
-      }
-      catch (Exception e) {
-        if (requireHardLink) {
-          throw e;
-        }
-        log.debug("Failed to hard-link {}", path);
-        try (InputStream in = new BufferedInputStream(Files.newInputStream(path))) {
-          blob = blobStore.create(in, tempHeaders);
-        }
-      }
-      return new TempBlob(blob, hashes, true, blobStore);
-    }
-    catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
-  private Map<HashAlgorithm, HashCode> computeHashes(final Path path, final Iterable<HashAlgorithm> hashing) {
-    try (InputStream in = new BufferedInputStream(Files.newInputStream(path));
-        MultiHashingInputStream hashingStream = new MultiHashingInputStream(hashing, in)) {
-      IOUtils.consume(hashingStream);
-      return hashingStream.hashes();
-    }
-    catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
-  private Map<String, String> tempHeaders(final Map<String, String> headers, final String contentType) {
     Optional<ClientInfo> clientInfo = facet.clientInfo();
 
     Builder<String, String> tempHeaders = ImmutableMap.builder();
@@ -155,21 +97,16 @@ public class FluentBlobsImpl
     maybePut(tempHeaders, headers, CREATED_BY_IP_HEADER, clientInfo.map(ClientInfo::getRemoteIP).orElse(SYSTEM));
     maybePut(tempHeaders, headers, CONTENT_TYPE_HEADER, ofNullable(contentType).orElse(APPLICATION_OCTET_STREAM));
 
-    return tempHeaders.build();
+    MultiHashingInputStream hashingStream = new MultiHashingInputStream(hashing, in);
+    Blob blob = blobStore.create(hashingStream, tempHeaders.build());
+
+    return new TempBlob(blob, hashingStream.hashes(), true, blobStore);
   }
 
   @Override
   public TempBlob ingest(final Payload payload, final Iterable<HashAlgorithm> hashing) {
-    if (payload instanceof Content) {
-      return ingest(((Content) payload).getPayload(), hashing);
-    }
-    else if (payload instanceof TempBlobPayload) {
-      return ((TempBlobPayload) payload).getTempBlob();
-    }
-    else if (payload instanceof DetachedBlobPayload) {
-      DetachedBlobPayload detachedBlobPayload = (DetachedBlobPayload) payload;
-      Map<HashAlgorithm, HashCode> hashes = hashes(payload, hashing);
-      return new AttachableBlob(detachedBlobPayload.getBlob(), hashes, true, blobStore);
+    if (payload instanceof TempBlobPartPayload) {
+      return ((TempBlobPartPayload) payload).getTempBlob();
     }
     try (InputStream in = payload.openInputStream()) {
       return ingest(in, cleanupContentType(payload.getContentType()), hashing);
@@ -231,15 +168,6 @@ public class FluentBlobsImpl
   {
     if (!existing.containsKey(key)) {
       builder.put(key, value);
-    }
-  }
-
-  private static Map<HashAlgorithm, HashCode> hashes(final Payload payload, final Iterable<HashAlgorithm> hashing) {
-    try (InputStream in = payload.openInputStream()) {
-      return hash(hashing, in);
-    }
-    catch (IOException e) {
-      throw new UncheckedIOException(e);
     }
   }
 }

@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Servlet module for Ext.Direct Guice module.
  *
- * @since 3.38
+ * @since 3.next
  */
 public abstract class ExtDirectServletModule
     extends ServletModule

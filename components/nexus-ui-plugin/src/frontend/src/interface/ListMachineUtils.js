@@ -17,7 +17,7 @@
 import {assign, Machine} from 'xstate';
 
 /**
- * @since 3.38
+ * @since 3.next
  */
 export default class ListMachineUtils {
   /**

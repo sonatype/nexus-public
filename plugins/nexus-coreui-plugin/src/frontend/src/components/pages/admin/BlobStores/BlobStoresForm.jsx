@@ -51,8 +51,8 @@ const FORM = UIStrings.BLOB_STORES.FORM;
 export default function BlobStoresForm({itemId, onDone}) {
   const idParts = itemId.split('/');
   const pristineData = idParts?.length ? {
-    type: idParts[0] && decodeURIComponent(idParts[0]),
-    name: idParts[1] && decodeURIComponent(idParts[1])
+    type: idParts[0],
+    name: idParts[1]
   } : {};
 
   const [current, send, service] = useMachine(BlobStoresFormMachine, {

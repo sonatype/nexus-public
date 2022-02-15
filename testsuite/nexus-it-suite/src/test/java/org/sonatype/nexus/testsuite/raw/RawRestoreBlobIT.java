@@ -13,14 +13,12 @@
 package org.sonatype.nexus.testsuite.raw;
 
 import java.io.File;
-import java.util.Map;
 
 import javax.inject.Inject;
 
 import org.sonatype.goodies.httpfixture.server.fluent.Behaviours;
 import org.sonatype.goodies.httpfixture.server.fluent.Server;
 import org.sonatype.goodies.httpfixture.server.jetty.behaviour.Content;
-import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.common.net.PortAllocator;
 import org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup;
 import org.sonatype.nexus.content.testsuite.groups.OrientTestGroup;
@@ -38,7 +36,6 @@ import org.junit.experimental.categories.Category;
 import static org.apache.commons.lang3.StringUtils.prependIfMissing;
 import static org.apache.http.entity.ContentType.TEXT_PLAIN;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -48,6 +45,10 @@ import static org.sonatype.nexus.repository.http.HttpStatus.OK;
 public class RawRestoreBlobIT
     extends RawITSupport
 {
+  private static final String HOSTED_REPO_NAME = "raw-hosted";
+
+  private static final String PROXY_REPO_NAME = "raw-proxy";
+
   private static final String TEST_CONTENT = "alphabet.txt";
 
   private Server proxyServer;
@@ -60,10 +61,6 @@ public class RawRestoreBlobIT
 
   private RawClient proxyClient;
 
-  private Map<String, BlobId> hostedPathsToBlobs;
-
-  private Map<String, BlobId> proxyPathsToBlobs;
-
   @Inject
   private BlobstoreRestoreTestHelper restoreTestHelper;
 
@@ -72,21 +69,18 @@ public class RawRestoreBlobIT
 
   @Before
   public void setup() throws Exception {
-    hostedRepository = repos.createRawHosted(repoName("hosted"));
+    hostedRepository = repos.createRawHosted(HOSTED_REPO_NAME);
     hostedClient = rawClient(hostedRepository);
 
     proxyServer = Server.withPort(PortAllocator.nextFreePort()).start();
     proxyServer.serve("/" + TEST_CONTENT).withBehaviours(resolveFile(TEST_CONTENT));
 
-    proxyRepository = repos.createRawProxy(repoName("proxy"), "http://localhost:" + proxyServer.getPort() + "/");
+    proxyRepository = repos.createRawProxy(PROXY_REPO_NAME, "http://localhost:" + proxyServer.getPort() + "/");
     proxyClient = rawClient(proxyRepository);
 
     File testFile = resolveTestFile(TEST_CONTENT);
     assertThat(hostedClient.put(TEST_CONTENT, TEXT_PLAIN, testFile), is(HttpStatus.CREATED));
     assertThat(proxyClient.get(TEST_CONTENT).getStatusLine().getStatusCode(), is(OK));
-
-    hostedPathsToBlobs = restoreTestHelper.getAssetToBlobIds(hostedRepository);
-    proxyPathsToBlobs = restoreTestHelper.getAssetToBlobIds(proxyRepository);
   }
 
   @Category(OrientAndSQLTestGroup.class)
@@ -139,7 +133,6 @@ public class RawRestoreBlobIT
     assertFalse(componentAssetTestHelper.assetExists(proxyRepository, TEST_CONTENT));
     restoreTestHelper.runRestoreMetadataTaskWithTimeout(10, false);
     assertTrue(componentAssetTestHelper.assetExists(proxyRepository, TEST_CONTENT));
-    verityBlobsUnchanged();
   }
 
   private void verifyMetadataRestored(final Runnable metadataLossSimulation) throws Exception {
@@ -159,17 +152,8 @@ public class RawRestoreBlobIT
     assertTrue(assetWithComponentExists(hostedRepository, TEST_CONTENT, "/", TEST_CONTENT));
     assertTrue(assetWithComponentExists(proxyRepository, TEST_CONTENT, "/", TEST_CONTENT));
 
-    verityBlobsUnchanged();
     assertThat(hostedClient.get(TEST_CONTENT).getStatusLine().getStatusCode(), is(OK));
     assertThat(proxyClient.get(TEST_CONTENT).getStatusLine().getStatusCode(), is(OK));
-  }
-
-  /*
-   * Verifies that the original blobs are attached to the assets, not copied.
-   */
-  private void verityBlobsUnchanged() {
-    assertThat(restoreTestHelper.getAssetToBlobIds(hostedRepository), equalTo(hostedPathsToBlobs));
-    assertThat(restoreTestHelper.getAssetToBlobIds(proxyRepository), equalTo(proxyPathsToBlobs));
   }
 
   private boolean componentExists(final Repository repository, final String name) {
@@ -184,9 +168,5 @@ public class RawRestoreBlobIT
 
   private Content resolveFile(final String filename) {
     return Behaviours.file(testData.resolveFile(filename));
-  }
-
-  private String repoName(final String prefix) {
-    return String.format("%s-%s", prefix, testName.getMethodName());
   }
 }

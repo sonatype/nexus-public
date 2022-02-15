@@ -34,7 +34,7 @@ import static org.sonatype.nexus.security.JwtHelper.JWT_COOKIE_NAME;
 /**
  * Filter to verify and refresh JWT cookie
  *
- * @since 3.38
+ * @since 3.next
  */
 @Named
 @Singleton

@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.content.Asset;
 /**
  * An evaluator of a cleanup policy criteria which is only concerned with an Asset
  *
- * @since 3.38
+ * @since 3.next
  */
 public interface AssetCleanupEvaluator
 {

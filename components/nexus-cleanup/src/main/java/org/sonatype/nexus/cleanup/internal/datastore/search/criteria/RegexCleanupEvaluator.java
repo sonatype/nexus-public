@@ -27,7 +27,7 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
 /**
  * Creates an predicate which determines whether an asset's path matches the specified regular expression
  *
- * @since 3.38
+ * @since 3.next
  */
 @Named(REGEX_KEY)
 public class RegexCleanupEvaluator

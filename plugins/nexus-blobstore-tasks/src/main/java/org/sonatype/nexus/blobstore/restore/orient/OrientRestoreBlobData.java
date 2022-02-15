@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 /**
  * Simple structure for relevant data for a blob during metadata restoration
  *
- * @since 3.38
+ * @since 3.next
  */
 public class OrientRestoreBlobData extends RestoreBlobData
 {

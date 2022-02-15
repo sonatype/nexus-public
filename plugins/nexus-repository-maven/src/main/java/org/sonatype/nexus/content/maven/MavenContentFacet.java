@@ -152,7 +152,7 @@ public interface MavenContentFacet
    * @param source component to copy
    * @return a new component copied from the source to the current repository
    *
-   * @since 3.38
+   * @since 3.next
    */
   FluentComponent copy(final Component source);
 }

@@ -17,7 +17,7 @@ import com.google.inject.servlet.ServletModule;
 /**
  * Servlet module for legacy HTTP bridge module.
  *
- * @since 3.38
+ * @since 3.next
  */
 public abstract class LegacyHttpBridgeServletModule
     extends ServletModule

@@ -56,7 +56,7 @@ import static org.sonatype.nexus.repository.search.index.SearchConstants.VERSION
 /**
  * Implementation of {@link SearchService} to be used with orient/elasticsearch
  *
- * @since 3.38
+ * @since 3.next
  */
 @Named
 @Singleton

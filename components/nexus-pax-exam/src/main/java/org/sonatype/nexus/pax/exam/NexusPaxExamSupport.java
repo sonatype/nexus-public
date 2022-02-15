@@ -128,13 +128,6 @@ public abstract class NexusPaxExamSupport
 
   private static final String BLOB_STORE_KEY = "it.blobstore";
 
-  /*
-   * Key identifying a system property which if set, should be used as a prefix for {@code it-data} subdirectory
-   * names to prevent a collision when Jenkins aggregates across parallel stages. (Jenkins isn't smart enough to
-   * avoid overwriting files)
-   */
-  private static final String PROP_TEST_PREFIX = "it.data.prefix";
-
   // -------------------------------------------------------------------------
 
   @Rule
@@ -477,13 +470,6 @@ public abstract class NexusPaxExamSupport
         //configure db, including starting external resources
         when(getValidTestDatabase().isUseContentStore()).useOptions(
             configureDatabase()
-        ),
-
-        when(System.getProperty(PROP_TEST_PREFIX) != null).useOptions(
-            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, //
-                PROP_TEST_PREFIX, System.getProperty(PROP_TEST_PREFIX)),
-            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, //
-                "goodies.build.name", System.getProperty(PROP_TEST_PREFIX))
         ),
 
         // configure default blobstore

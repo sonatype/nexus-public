@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>3.38.1-01</version>
+    <version>3.38.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-testing</artifactId>
@@ -159,13 +159,7 @@
       <dependency>
         <groupId>org.littleshoot</groupId>
         <artifactId>littleproxy</artifactId>
-        <version>1.1.2</version>
-        <exclusions>
-          <exclusion>
-            <groupId>com.barchart.udt</groupId>
-            <artifactId>barchart-udt-bundle</artifactId>
-          </exclusion>
-        </exclusions>
+        <version>1.1.0</version>
       </dependency>
 
       <!--

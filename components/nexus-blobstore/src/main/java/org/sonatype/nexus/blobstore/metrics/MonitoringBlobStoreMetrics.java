@@ -22,7 +22,7 @@ import org.sonatype.nexus.blobstore.api.OperationType;
 /**
  * Marks a blob store method with {@link OperationType} type to collect metrics.
  *
- * @since 3.38
+ * @since 3.next
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})

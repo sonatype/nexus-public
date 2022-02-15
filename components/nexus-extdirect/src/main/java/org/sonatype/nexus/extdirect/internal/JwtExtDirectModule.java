@@ -27,7 +27,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 /**
  * Ext.Direct Guice module using {@link JwtSecurityFilter}.
  *
- * @since 3.38
+ * @since 3.next
  */
 @Named
 @FeatureFlag(name = JWT_ENABLED)

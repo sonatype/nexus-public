@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.search.query;
 
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,6 +20,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
 
@@ -39,7 +41,7 @@ public class KeywordElasticSearchContribution
       "^(?<group>[^\\s:]+):(?<name>[^\\s:]+)(:(?<version>[^\\s:]+))?(:(?<extension>[^\\s:]+))?(:(?<classifier>[^\\s:]+))?$");
 
   @Override
-  public void contribute(final BoolQueryBuilder query, final String type, final String value) {
+  public void contribute(final Consumer<QueryBuilder> query, final String type, final String value) {
     if (value == null) {
       return;
     }
@@ -56,7 +58,7 @@ public class KeywordElasticSearchContribution
 
       buildGavQuery(gavQuery, group, name, version, extension, classifier);
 
-      query.must(gavQuery);
+      query.accept(gavQuery);
     }
     else {
       String escaped = escape(value);
@@ -64,16 +66,16 @@ public class KeywordElasticSearchContribution
           .field("name.case_insensitive")
           .field("group.case_insensitive")
           .field("_all");
-      query.must(keywordQuery);
+      query.accept(keywordQuery);
     }
   }
 
-  private void buildGavQuery(BoolQueryBuilder gavQuery,
-                             String group,
-                             String name,
-                             String version,
-                             String extension,
-                             String classifier)
+  private void buildGavQuery(final BoolQueryBuilder gavQuery,
+                             final String group,
+                             final String name,
+                             final String version,
+                             final String extension,
+                             final String classifier)
   {
     if (group != null) {
       gavQuery.must(QueryBuilders.termQuery("group.raw", group));

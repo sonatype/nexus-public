@@ -15,28 +15,28 @@ package org.sonatype.nexus.repository.search;
 /**
  * This defines the db-agnostic interface for searching. All search requests should go through this.
  *
- * @since 3.38
+ * @since 3.next
  */
 public interface SearchService
 {
   /**
    * Search for components with the passed in {@link SearchRequest}
    *
-   * @since 3.38
+   * @since 3.next
    */
   SearchResponse search(SearchRequest searchRequest);
 
   /**
    * Browse through all of the components returned
    *
-   * @since 3.38
+   * @since 3.next
    */
   Iterable<ComponentSearchResult> browse(SearchRequest searchRequest);
 
   /**
    * Return the count of components matching the {@link SearchRequest}
    *
-   * @since 3.38
+   * @since 3.next
    */
   long count(SearchRequest searchRequest);
 }

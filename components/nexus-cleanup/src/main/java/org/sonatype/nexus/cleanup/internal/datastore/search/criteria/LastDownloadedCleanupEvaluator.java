@@ -28,7 +28,7 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
  * Tests whether the asset was last downloaded before the specified offset, or if the asset has never been downloaded
  * whether its asset was created before the offset.
  *
- * @since 3.38
+ * @since 3.next
  */
 @Named(LAST_DOWNLOADED_KEY)
 public class LastDownloadedCleanupEvaluator

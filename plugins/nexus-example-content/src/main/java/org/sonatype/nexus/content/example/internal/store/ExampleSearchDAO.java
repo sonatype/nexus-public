@@ -15,7 +15,7 @@ package org.sonatype.nexus.content.example.internal.store;
 import org.sonatype.nexus.repository.content.search.SearchDAO;
 
 /**
- * @since 3.38
+ * @since 3.next
  */
 public interface ExampleSearchDAO
     extends SearchDAO

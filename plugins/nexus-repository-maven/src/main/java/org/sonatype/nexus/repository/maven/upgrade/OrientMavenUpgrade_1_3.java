@@ -25,7 +25,7 @@ import org.sonatype.nexus.orient.DatabaseInstanceNames;
 /**
  * Re-index for update to search normalization format.
  *
- * @since 3.38
+ * @since 3.next
  */
 @Named
 @Singleton

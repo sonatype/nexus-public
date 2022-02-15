@@ -39,9 +39,7 @@ import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 
 /**
  * @since 3.35
- * @deprecated please use the appropriate ingest methods on {@code StorageFacet} and {@code FluentBlobs}
  */
-@Deprecated
 @Named
 @Singleton
 public class HardLinkHelper

@@ -28,8 +28,9 @@ import org.sonatype.nexus.repository.content.store.ExampleContentTestSupport;
 import org.junit.Before;
 import org.junit.Test;
 
-import static java.util.Objects.isNull;
+import static java.util.Objects.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 /**

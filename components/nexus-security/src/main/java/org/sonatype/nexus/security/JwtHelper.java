@@ -45,7 +45,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SECURITY;
 /**
  * Helper to create, decode, verify and refresh JWT cookie
  *
- * @since 3.38
+ * @since 3.next
  */
 @Named
 @ManagedLifecycle(phase = SECURITY)

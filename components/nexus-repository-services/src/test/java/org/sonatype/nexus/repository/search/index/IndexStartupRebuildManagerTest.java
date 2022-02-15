@@ -60,6 +60,7 @@ public class IndexStartupRebuildManagerTest
     when(repository.optionalFacet(SearchIndexFacet.class)).thenReturn(Optional.of(mockFacet));
     when(repository2.optionalFacet(SearchIndexFacet.class)).thenReturn(Optional.of(mockFacet));
     when(repositoryManager.browse()).thenReturn(Arrays.asList(repository, repository2));
+    when(elasticSearchIndexService.indexExist(any())).thenReturn(false);
   }
 
   @Test
@@ -87,32 +88,40 @@ public class IndexStartupRebuildManagerTest
   }
 
   @Test
-  public void rebuildIndexesIfVariableIsTrueAndAllIndexesAreEmpty() throws Exception {
+  public void rebuildDoesRunIfVariableIsTrue() throws Exception {
     underTest = new IndexStartupRebuildManager(taskScheduler, repositoryManager,
         elasticSearchIndexService, "true");
 
     when(taskScheduler.createTaskConfigurationInstance(RebuildIndexTaskDescriptor.TYPE_ID))
         .thenReturn(new TaskConfiguration());
-    when(elasticSearchIndexService.indexEmpty(any(Repository.class))).thenReturn(true);
-
     underTest.doStart();
 
     assertRebuildScheduled();
   }
 
   @Test
-  public void shouldNotRebuildIndexesWhenOneIndexIsNotEmpty() throws Exception {
+  public void rebuildDoesNotRunIfSearchIndexExists() throws Exception {
     underTest = new IndexStartupRebuildManager(taskScheduler, repositoryManager,
         elasticSearchIndexService, "true");
 
-    when(elasticSearchIndexService.indexEmpty(repository)).thenReturn(true);
-    when(elasticSearchIndexService.indexEmpty(repository2)).thenReturn(false);
+    when(elasticSearchIndexService.indexExist(any())).thenReturn(true);
+
+    underTest.doStart();
+    verify(taskScheduler, never()).submit(any());
+  }
+
+  @Test
+  public void rebuildDoesRunIfSearchIndexNotExist() throws Exception {
+    underTest = new IndexStartupRebuildManager(taskScheduler, repositoryManager,
+        elasticSearchIndexService, "true");
+
     when(taskScheduler.createTaskConfigurationInstance(RebuildIndexTaskDescriptor.TYPE_ID))
         .thenReturn(new TaskConfiguration());
 
-    underTest.doStart();
+    when(elasticSearchIndexService.indexExist(any())).thenReturn(false);
 
-    verify(taskScheduler, never()).submit(any());
+    underTest.doStart();
+    assertRebuildScheduled();
   }
 
   private void assertRebuildScheduled() {

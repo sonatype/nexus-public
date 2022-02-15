@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 /**
  * Result of a component search
  *
- * @since 3.38
+ * @since 3.next
  */
 public class ComponentSearchResult
 {

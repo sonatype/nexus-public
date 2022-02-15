@@ -30,7 +30,7 @@ import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryBuilder.que
  * Translates SearchFilters to a {@link SqlSearchQueryBuilder} containing a condition format string and the search
  * values.
  *
- * @since 3.38
+ * @since 3.next
  */
 @Named
 @Singleton

@@ -23,7 +23,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 /**
  * Web module to use JWT.
  *
- * @since 3.38
+ * @since 3.next
  */
 @Named
 @FeatureFlag(name = JWT_ENABLED)

@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository.content;
 
 /**
- * @since 3.38
+ * @since 3.next
  */
 public interface ComponentSearch
     extends RepositoryContent

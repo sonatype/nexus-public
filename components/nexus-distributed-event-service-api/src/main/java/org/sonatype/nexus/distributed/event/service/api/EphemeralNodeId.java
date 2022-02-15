@@ -26,7 +26,7 @@ import org.sonatype.nexus.distributed.event.service.api.common.PublisherEvent;
  *
  * See {@code DistributedEventPublisher}
  * @see PublisherEvent
- * @since 3.38
+ * @since 3.next
  */
 public final class EphemeralNodeId
 {

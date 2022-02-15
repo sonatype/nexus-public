@@ -25,28 +25,12 @@ import static java.util.Optional.ofNullable;
  */
 public class TestCounters
 {
-  private static final File DATA_DIR;
+  private static final File DATA_DIR = TestBaseDir.resolve("target/it-data");
 
-  private static final File REPORTS_DIR;
-
-  private static final String PREFIX = System.getProperty("it.data.prefix", "");
+  private static final File REPORTS_DIR = TestBaseDir.resolve("target/it-reports");
 
   private TestCounters() {
     // static helper class
-  }
-
-  static {
-    File baseDataDir = TestBaseDir.resolve("target/it-data");
-    File baseReportsDir = TestBaseDir.resolve("target/it-reports");
-
-    if (PREFIX.length() > 0) {
-      DATA_DIR = new File(baseDataDir, PREFIX);
-      REPORTS_DIR  = new File(baseReportsDir, PREFIX);
-    }
-    else {
-      DATA_DIR = baseDataDir;
-      REPORTS_DIR = baseReportsDir;
-    }
   }
 
   /**
@@ -82,10 +66,7 @@ public class TestCounters
    * Returns the largest number that exactly matches one of the listed filenames.
    */
   private static int lastNumberedFile(final String[] list) {
-    return stream(list)
-        .mapToInt(TestCounters::tryParseInt)
-        .max()
-        .orElse(0);
+    return stream(list).mapToInt(TestCounters::tryParseInt).max().orElse(0);
   }
 
   /**

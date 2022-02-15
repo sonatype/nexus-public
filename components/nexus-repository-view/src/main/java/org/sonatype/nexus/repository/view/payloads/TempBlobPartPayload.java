@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.view.payloads;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import javax.annotation.Nullable;
 
@@ -26,7 +27,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.1
  */
 public class TempBlobPartPayload
-    extends TempBlobPayload
     implements PartPayload
 {
   private final String name;
@@ -35,11 +35,17 @@ public class TempBlobPartPayload
 
   private final boolean isFormField;
 
+  private final String contentType;
+
+  private final TempBlob tempBlob;
+
   public TempBlobPartPayload(final PartPayload payload, final TempBlob tempBlob) throws IOException {
-    super(tempBlob, checkNotNull(payload).getContentType());
+    this.tempBlob = checkNotNull(tempBlob);
+    checkNotNull(payload);
     this.name = payload.getName();
     this.fieldName = payload.getFieldName();
     this.isFormField = payload.isFormField();
+    this.contentType = payload.getContentType();
   }
 
   /**
@@ -51,10 +57,11 @@ public class TempBlobPartPayload
                              @Nullable final String contentType,
                              final TempBlob tempBlob)
   {
-    super(tempBlob, contentType);
+    this.tempBlob = checkNotNull(tempBlob);
     this.fieldName = checkNotNull(fieldName);
     this.name = name;
     this.isFormField = isFormField;
+    this.contentType = contentType;
   }
 
   @Nullable
@@ -71,5 +78,31 @@ public class TempBlobPartPayload
   @Override
   public boolean isFormField() {
     return isFormField;
+  }
+
+  @Override
+  public InputStream openInputStream() throws IOException {
+    return tempBlob.get();
+  }
+
+  @Override
+  public long getSize() {
+    return UNKNOWN_SIZE;
+  }
+
+  @Nullable
+  @Override
+  public String getContentType() {
+    return contentType;
+  }
+
+  @SuppressWarnings("unchecked")
+  public <T extends TempBlob> T getTempBlob() {
+    return (T) tempBlob;
+  }
+
+  @Override
+  public void close() throws IOException {
+    tempBlob.close();
   }
 }

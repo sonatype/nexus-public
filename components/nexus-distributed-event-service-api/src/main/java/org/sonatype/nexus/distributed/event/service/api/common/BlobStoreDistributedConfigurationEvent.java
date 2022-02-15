@@ -22,7 +22,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Indicates that a Blob store configuration has been created, updated or deleted.
  *
- * @since 3.38
+ * @since 3.next
  */
 public class BlobStoreDistributedConfigurationEvent
     extends DistributedEventSupport

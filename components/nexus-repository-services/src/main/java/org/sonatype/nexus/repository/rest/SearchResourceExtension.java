@@ -26,7 +26,7 @@ public interface SearchResourceExtension
   /**
    * Update the {@link ComponentXO} with data from the {@link ComponentSearchResult}
    *
-   * @since 3.38
+   * @since 3.next
    */
   ComponentXO updateComponentXO(ComponentXO componentXO, ComponentSearchResult hit);
 }

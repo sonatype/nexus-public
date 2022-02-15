@@ -23,7 +23,7 @@ import org.sonatype.nexus.repository.search.query.SearchFilter;
 /**
  * This class encompasses all the options for a search request.
  *
- * @since 3.38
+ * @since 3.next
  */
 public class SearchRequest
 {
@@ -45,6 +45,8 @@ public class SearchRequest
 
   private final int offset;
 
+  private final boolean conjunction;
+
   private SearchRequest(final Builder builder) {
     this.checkAuthorization = builder.checkAuthorization;
     this.searchFilters = builder.searchFilters;
@@ -54,6 +56,7 @@ public class SearchRequest
     this.sortDirection = builder.sortDirection;
     this.limit = builder.limit;
     this.offset = builder.offset;
+    this.conjunction = builder.conjunction;
   }
 
   public boolean isCheckAuthorization() {
@@ -88,6 +91,10 @@ public class SearchRequest
     return offset;
   }
 
+  public boolean isConjunction() {
+    return conjunction;
+  }
+
   public static Builder builder() {
     return new Builder();
   }
@@ -109,6 +116,8 @@ public class SearchRequest
     private Integer limit;
 
     private Integer offset;
+
+    private boolean conjunction = true;
 
     public Builder disableAuthorization() {
       this.checkAuthorization = false;
@@ -137,6 +146,14 @@ public class SearchRequest
 
     public Builder continuationToken(final String continuationToken) {
       this.continuationToken = continuationToken;
+      return this;
+    }
+
+    /**
+     * Sets the request to use a disjunction (OR) rather than default of conjunction (AND).
+     */
+    public Builder disjunction() {
+      this.conjunction = false;
       return this;
     }
 

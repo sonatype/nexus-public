@@ -23,7 +23,7 @@ import com.google.inject.matcher.Matchers;
 /**
  * Registers the {@link MonitoringBlobStoreMetrics} behaviour.
  *
- * @since 3.38
+ * @since 3.next
  */
 public class BlobStoreModule
     extends AbstractInterceptorModule
