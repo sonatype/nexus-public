@@ -76,9 +76,12 @@ public class IndexStartupRebuildManager
 
   @Override
   protected void doStart() throws Exception {
-    if (rebuildOnStart && searchIndexNotExists()) {
+    if (rebuildOnStart && allIndicesEmpty()) {
       log.info("Scheduling rebuild of repository indexes");
       doRebuildAllIndexes();
+    }
+    else {
+      log.info("Skipping rebuild of repository indexes");
     }
   }
 
@@ -97,12 +100,12 @@ public class IndexStartupRebuildManager
   }
 
   /**
-   * Check search index doesn't exist at least for one repository
+   * Checks whether all repository search indices are empty.
    */
-  private boolean searchIndexNotExists() {
+  private boolean allIndicesEmpty() {
     return StreamSupport.stream(repositoryManager.browse().spliterator(), false)
         .filter(this::supportsSearch)
-        .noneMatch(elasticSearchIndexService::indexExist);
+        .allMatch(elasticSearchIndexService::indexEmpty);
   }
 
   /**
