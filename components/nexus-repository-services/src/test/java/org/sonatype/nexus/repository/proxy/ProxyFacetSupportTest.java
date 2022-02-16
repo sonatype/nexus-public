@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.proxy;
 
 import java.io.IOException;
 import java.net.URI;
+import java.time.Duration;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -21,6 +22,7 @@ import javax.annotation.Nullable;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.common.cooperation2.internal.datastore.DefaultCooperation2Factory;
 import org.sonatype.nexus.repository.MissingBlobException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.CacheController;
@@ -32,6 +34,7 @@ import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.httpclient.RemoteBlockedIOException;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
+import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.transaction.RetryDeniedException;
 
 import org.apache.http.HttpResponse;
@@ -45,7 +48,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -114,6 +116,9 @@ public class ProxyFacetSupportTest
   Content reFetchedContent;
 
   @Mock
+  Content storedContent;
+
+  @Mock
   AttributesMap attributesMap;
 
   @Mock
@@ -144,10 +149,17 @@ public class ProxyFacetSupportTest
 
     when(cachedContext.getRepository()).thenReturn(repository);
 
+    Request request = mock(Request.class);
+    when(cachedContext.getRequest()).thenReturn(request);
+
     when(missingContext.getRepository()).thenReturn(repository);
+    when(missingContext.getRequest()).thenReturn(request);
 
     underTest.cacheControllerHolder = cacheControllerHolder;
     underTest.attach(repository);
+    underTest.configureCooperation(new DefaultCooperation2Factory(), false, Duration.ofSeconds(0),
+        Duration.ofSeconds(60), 10);
+    underTest.buildCooperation();
   }
 
   @Test
@@ -166,11 +178,11 @@ public class ProxyFacetSupportTest
     doReturn(content).when(underTest).getCachedContent(cachedContext);
 
     doReturn(reFetchedContent).when(underTest).fetch(cachedContext, content);
-    doReturn(reFetchedContent).when(underTest).store(cachedContext, reFetchedContent);
+    doReturn(storedContent).when(underTest).store(cachedContext, reFetchedContent);
 
     Content foundContent = underTest.get(cachedContext);
 
-    assertThat(foundContent, is(reFetchedContent));
+    assertThat(foundContent, is(storedContent));
   }
 
   @Test
@@ -247,11 +259,11 @@ public class ProxyFacetSupportTest
     doThrow(e).when(underTest).getCachedContent(cachedContext);
 
     doReturn(reFetchedContent).when(underTest).fetch(cachedContext, null);
-    doReturn(reFetchedContent).when(underTest).store(cachedContext, reFetchedContent);
+    doReturn(storedContent).when(underTest).store(cachedContext, reFetchedContent);
 
     Content foundContent = underTest.get(cachedContext);
 
-    assertThat(foundContent, is(reFetchedContent));
+    assertThat(foundContent, is(storedContent));
   }
 
   @Test(expected = RetryDeniedException.class)
@@ -305,11 +317,11 @@ public class ProxyFacetSupportTest
     doReturn(content).when(underTest).getCachedContent(cachedContext);
 
     doReturn(reFetchedContent).when(underTest).fetch(cachedContext, content);
-    doReturn(reFetchedContent).when(underTest).store(cachedContext, reFetchedContent);
+    doReturn(storedContent).when(underTest).store(cachedContext, reFetchedContent);
 
     Content foundContent = underTest.get(cachedContext);
 
-    assertThat(foundContent, is(reFetchedContent));
+    assertThat(foundContent, is(storedContent));
   }
 
   @PrepareForTest(HttpClientUtils.class)

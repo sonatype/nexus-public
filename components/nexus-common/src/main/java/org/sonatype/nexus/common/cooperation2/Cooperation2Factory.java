@@ -10,26 +10,24 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.io;
+package org.sonatype.nexus.common.cooperation2;
 
 import java.time.Duration;
 
-import org.sonatype.goodies.common.Time;
-
 /**
- * Supplies {@link Cooperation} points. Not intended for use with SQL/Datastore.
+ * Supplies {@link Cooperation2} points allowing different threads to cooperate on computationally intensive tasks.
  *
- * @since 3.14
+ * @since 3.next
  */
-public interface CooperationFactory
+public interface Cooperation2Factory
 {
   /**
-   * Start configuring a new {@link Cooperation} point.
+   * Start configuring a new {@link Cooperation2} point.
    */
   Builder configure();
 
   /**
-   * Fluent builder for configuring {@link Cooperation} points.
+   * Fluent builder for configuring {@link Cooperation2} points.
    */
   interface Builder
   {
@@ -39,27 +37,9 @@ public interface CooperationFactory
     Builder majorTimeout(Duration majorTimeout);
 
     /**
-     * @param majorTimeout when waiting for the main I/O request
-     * @deprecated use the API utilizing java.time.Duration
-     */
-    @Deprecated
-    default Builder majorTimeout(final Time majorTimeout) {
-      return majorTimeout(Duration.ofSeconds(majorTimeout.toSeconds()));
-    }
-
-    /**
      * @param minorTimeout when waiting for any I/O dependencies
      */
     Builder minorTimeout(Duration minorTimeout);
-
-    /**
-     * @param minorTimeout when waiting for any I/O dependencies
-     * @deprecated use the API utilizing java.time.Duration
-     */
-    @Deprecated
-    default Builder minorTimeout(final Time minorTimeout) {
-      return majorTimeout(Duration.ofSeconds(minorTimeout.toSeconds()));
-    }
 
     /**
      * @param threadsPerKey limits the threads waiting under each key
@@ -67,10 +47,15 @@ public interface CooperationFactory
     Builder threadsPerKey(int threadsPerKey);
 
     /**
-     * Builds a new {@link Cooperation} point with this configuration.
+     * @params disabled indicates whether the resulting co-operation should disable concurrency controls.
+     */
+    Builder enabled(boolean disabled);
+
+    /**
+     * Builds a new {@link Cooperation2} point with this configuration.
      *
      * @param id unique identifier for this cooperation point
      */
-    Cooperation build(String id);
+    Cooperation2 build(String id);
   }
 }

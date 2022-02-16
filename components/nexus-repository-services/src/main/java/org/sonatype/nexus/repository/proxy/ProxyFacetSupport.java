@@ -15,7 +15,9 @@ package org.sonatype.nexus.repository.proxy;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
+import java.time.Duration;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -24,13 +26,15 @@ import javax.inject.Named;
 import javax.validation.constraints.NotNull;
 
 import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.cooperation2.Cooperation2;
+import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
 import org.sonatype.nexus.common.io.Cooperation;
-import org.sonatype.nexus.common.io.CooperationFactory;
 import org.sonatype.nexus.repository.BadRequestException;
 import org.sonatype.nexus.repository.ETagHeaderUtils;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.MissingBlobException;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheControllerHolder;
 import org.sonatype.nexus.repository.cache.CacheInfo;
@@ -122,11 +126,9 @@ public abstract class ProxyFacetSupport
 
   protected CacheControllerHolder cacheControllerHolder;
 
-  @Nullable
-  private CooperationFactory.Builder cooperationBuilder;
+  private Cooperation2Factory.Builder cooperationBuilder;
 
-  @Nullable
-  private Cooperation proxyCooperation;
+  private Cooperation2 proxyCooperation;
 
   /**
    * Configures content {@link Cooperation} for this proxy; a timeout of 0 means wait indefinitely.
@@ -140,31 +142,35 @@ public abstract class ProxyFacetSupport
    */
   @Inject
   protected void configureCooperation(
-      final CooperationFactory cooperationFactory,
+      final Cooperation2Factory cooperationFactory,
       @Named("${nexus.proxy.cooperation.enabled:-true}") final boolean cooperationEnabled,
-      @Named("${nexus.proxy.cooperation.majorTimeout:-0s}") final Time majorTimeout,
-      @Named("${nexus.proxy.cooperation.minorTimeout:-30s}") final Time minorTimeout,
+      @Named("${nexus.proxy.cooperation.majorTimeout:-0s}") final Duration majorTimeout,
+      @Named("${nexus.proxy.cooperation.minorTimeout:-30s}") final Duration minorTimeout,
       @Named("${nexus.proxy.cooperation.threadsPerKey:-100}") final int threadsPerKey)
   {
-    if (cooperationEnabled) {
       this.cooperationBuilder = cooperationFactory.configure()
+          .enabled(cooperationEnabled)
           .majorTimeout(majorTimeout)
           .minorTimeout(minorTimeout)
           .threadsPerKey(threadsPerKey);
-    }
   }
 
   @VisibleForTesting
   void buildCooperation() {
+    buildCooperation(getRepository());
+  }
+
+  @VisibleForTesting
+  public void buildCooperation(final Repository repository) {
     if (cooperationBuilder != null) {
-      this.proxyCooperation = cooperationBuilder.build(getRepository().getName() + ":proxy");
+      this.proxyCooperation = cooperationBuilder.build(repository.getName() + ":proxy");
     }
   }
 
   @Override
   protected void doInit(final Configuration configuration) throws Exception {
     super.doInit(configuration);
-    buildCooperation();
+    buildCooperation(getRepository());
   }
 
   @Override
@@ -244,21 +250,15 @@ public abstract class ProxyFacetSupport
    * Attempt to retrieve from the remote using proxy co-operation
    */
   protected Content get(final Context context, @Nullable final Content staleContent) throws IOException {
-    if (proxyCooperation == null) {
-      return doGet(context, staleContent);
-    }
-
-    return proxyCooperation.cooperate(getRequestKey(context), failover -> {
-      Content latestContent = staleContent;
-      if (failover) {
-        // re-check cache when failing over to new thread
-        latestContent = proxyCooperation.join(() -> maybeGetCachedContent(context));
-        if (!isStale(context, latestContent)) {
-          return latestContent;
-        }
-      }
-      return doGet(context, latestContent);
-    });
+    return proxyCooperation.on(() -> doGet(context, staleContent))
+        .checkFunction(() -> {
+          Content latestContent = maybeGetCachedContent(context);
+          if (!isStale(context, latestContent)) {
+            return Optional.of(latestContent);
+          }
+          return Optional.empty();
+        })
+        .cooperate(getRequestKey(context));
   }
 
   /**
@@ -284,7 +284,7 @@ public abstract class ProxyFacetSupport
       remote = fetch(context, content);
       if (remote != null) {
         content = store(context, remote);
-        if (proxyCooperation != null && remote.equals(content)) {
+        if (remote.equals(content)) {
           // remote wasn't stored; make reusable copy for cooperation
           content = new TempContent(remote);
         }

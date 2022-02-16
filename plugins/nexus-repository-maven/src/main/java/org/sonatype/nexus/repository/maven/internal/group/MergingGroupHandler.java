@@ -13,22 +13,21 @@
 package org.sonatype.nexus.repository.maven.internal.group;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.common.collect.AttributesMap;
-import org.sonatype.nexus.common.io.Cooperation;
-import org.sonatype.nexus.common.io.Cooperation.IOCall;
-import org.sonatype.nexus.common.io.CooperationFactory;
+import org.sonatype.nexus.common.cooperation2.Cooperation2;
+import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
+import org.sonatype.nexus.common.cooperation2.IOCall;
 import org.sonatype.nexus.repository.HasFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.group.GroupFacet;
@@ -62,24 +61,22 @@ public class MergingGroupHandler
   private static final Predicate<Repository> PROXY_OR_GROUP =
       or(new HasFacet(ProxyFacet.class), new HasFacet(GroupFacet.class));
 
-  @Nullable
-  private Cooperation metadataCooperation;
+  private Cooperation2 metadataCooperation;
 
   @Inject
   public MergingGroupHandler(
-      final CooperationFactory cooperationFactory,
+      final Cooperation2Factory cooperationFactory,
       @Named("${nexus.maven.group.cooperation.enabled:-true}") final boolean cooperationEnabled,
-      @Named("${nexus.maven.group.cooperation.majorTimeout:-0s}") final Time majorTimeout,
-      @Named("${nexus.maven.group.cooperation.minorTimeout:-30s}") final Time minorTimeout,
+      @Named("${nexus.maven.group.cooperation.majorTimeout:-0s}") final Duration majorTimeout,
+      @Named("${nexus.maven.group.cooperation.minorTimeout:-30s}") final Duration minorTimeout,
       @Named("${nexus.maven.group.cooperation.threadsPerKey:-100}") final int threadsPerKey)
   {
-    if (cooperationEnabled) {
-      this.metadataCooperation = cooperationFactory.configure()
-          .majorTimeout(majorTimeout)
-          .minorTimeout(minorTimeout)
-          .threadsPerKey(threadsPerKey)
-          .build(getClass().getName());
-    }
+    this.metadataCooperation = cooperationFactory.configure()
+        .majorTimeout(majorTimeout)
+        .minorTimeout(minorTimeout)
+        .threadsPerKey(threadsPerKey)
+        .enabled(cooperationEnabled)
+        .build(getClass().getName());
   }
 
   protected Response doGetHash(@Nonnull final Context context) throws Exception
@@ -140,7 +137,7 @@ public class MergingGroupHandler
     List<Repository> proxiesOrGroups =
         members.stream().filter(PROXY_OR_GROUP::apply).collect(toList());
 
-    Content content = maybeCooperate(key(repository, mavenPath), __ -> {
+    Content content = maybeCooperate(repository, mavenPath, () -> {
       try {
         // Check members to prime
         Map<Repository, Response> passThroughResponses = getAll(context, proxiesOrGroups, dispatched);
@@ -223,17 +220,12 @@ public class MergingGroupHandler
   /*
    * Invoke the call with co-operation if available, if not invoke the call directly.
    */
-  private <T> T maybeCooperate(final String key, final IOCall<T> call) throws IOException {
-    if (metadataCooperation == null) {
-      return call.call(false);
-    }
-    return metadataCooperation.cooperate(key, call);
-  }
-
-  /*
-   * Create a key for use by co-operation
-   */
-  private static String key(final Repository repository, final MavenPath path) {
-    return repository.getName() + ":" + path.toString();
+  private <T> T maybeCooperate(
+      final Repository repository,
+      final MavenPath path,
+      final IOCall<T> call) throws IOException
+  {
+    return metadataCooperation.on(call)
+        .cooperate(repository.getName(), path.toString());
   }
 }
