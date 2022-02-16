@@ -12,10 +12,9 @@
  */
 package org.sonatype.nexus.common.io;
 
-import org.sonatype.goodies.common.Time;
-import org.sonatype.goodies.lifecycle.LifecycleSupport;
+import java.time.Duration;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
+import org.sonatype.goodies.lifecycle.LifecycleSupport;
 
 /**
  * Common scaffolding for {@link CooperationFactory} implementations.
@@ -49,12 +48,12 @@ public abstract class CooperationFactorySupport
 
     protected int threadsPerKey = 0;
 
-    public Time majorTimeout() {
-      return new Time(majorTimeoutSeconds, SECONDS);
+    public Duration majorTimeout() {
+      return Duration.ofSeconds(majorTimeoutSeconds);
     }
 
-    public Time minorTimeout() {
-      return new Time(minorTimeoutSeconds, SECONDS);
+    public Duration minorTimeout() {
+      return Duration.ofSeconds(minorTimeoutSeconds);
     }
 
     public int threadsPerKey() {
@@ -78,14 +77,14 @@ public abstract class CooperationFactorySupport
       implements Builder
   {
     @Override
-    public Builder majorTimeout(final Time majorTimeout) {
-      this.majorTimeoutSeconds = majorTimeout.toSecondsI();
+    public Builder majorTimeout(final Duration majorTimeout) {
+      this.majorTimeoutSeconds = (int) majorTimeout.getSeconds();
       return this;
     }
 
     @Override
-    public Builder minorTimeout(final Time minorTimeout) {
-      this.minorTimeoutSeconds = minorTimeout.toSecondsI();
+    public Builder minorTimeout(final Duration minorTimeout) {
+      this.minorTimeoutSeconds = (int) minorTimeout.getSeconds();
       return this;
     }
 

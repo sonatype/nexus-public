@@ -13,14 +13,15 @@
 package org.sonatype.nexus.common.io;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.common.io.Cooperation.IOCall;
 import org.sonatype.nexus.common.io.CooperationFactorySupport.Config;
 
@@ -139,22 +140,22 @@ public class CooperatingFuture<T>
   /**
    * Cooperatively waits for the lead thread; may failover and repeat the request if allowed.
    */
-  protected T waitForCall(final IOCall<T> request, final Time initialTimeout, final boolean failover)
+  protected T waitForCall(final IOCall<T> request, final Duration initialTimeout, final boolean failover)
       throws InterruptedException, ExecutionException, IOException
   {
-    if (initialTimeout.value() <= 0) {
+    if (initialTimeout.isZero() || initialTimeout.isNegative()) {
       log.debug("Attempt cooperative wait on {}", this);
       return get(); // wait indefinitely
     }
 
-    Time timeout = initialTimeout;
+    Duration timeout = initialTimeout;
     if (failover) {
       timeout = staggerTimeout(timeout); // preserve minimum gap between failover attempts
     }
 
     try {
       log.debug("Attempt cooperative wait on {} for {}", this, timeout);
-      return get(timeout.value(), timeout.unit());
+      return get(timeout.toMillis(), TimeUnit.MILLISECONDS);
     }
     catch (TimeoutException e) {
       log.debug("Cooperative wait timed out on {}", this, e);
@@ -202,7 +203,7 @@ public class CooperatingFuture<T>
    * @return staggered timeout that makes sure waiting threads don't all wake-up at the same time
    */
   @VisibleForTesting
-  Time staggerTimeout(final Time gap) {
+  Duration staggerTimeout(final Duration gap) {
     long currentTimeMillis = System.currentTimeMillis();
 
     // atomically progress the staggered time
@@ -213,6 +214,6 @@ public class CooperatingFuture<T>
     }
     while (!staggerTimeMillis.compareAndSet(prevTimeMillis, nextTimeMillis));
 
-    return Time.millis(nextTimeMillis - currentTimeMillis);
+    return Duration.ofMillis(nextTimeMillis - currentTimeMillis);
   }
 }
