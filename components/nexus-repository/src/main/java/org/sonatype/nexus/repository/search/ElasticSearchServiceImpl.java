@@ -88,6 +88,11 @@ public class ElasticSearchServiceImpl
   }
 
   @Override
+  public boolean indexEmpty(final Repository repository) {
+    return elasticSearchIndexService.indexEmpty(repository);
+  }
+
+  @Override
   public void put(final Repository repository, final String identifier, final String json) {
     elasticSearchIndexService.put(repository, identifier, json);
   }
