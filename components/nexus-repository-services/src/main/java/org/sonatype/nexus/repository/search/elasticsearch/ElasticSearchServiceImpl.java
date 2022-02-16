@@ -12,6 +12,10 @@
  */
 package org.sonatype.nexus.repository.search.elasticsearch;
 
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -43,15 +47,8 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.search.index.SearchConstants.ASSETS;
-import static org.sonatype.nexus.repository.search.index.SearchConstants.ATTRIBUTES;
-import static org.sonatype.nexus.repository.search.index.SearchConstants.CHECKSUM;
-import static org.sonatype.nexus.repository.search.index.SearchConstants.CONTENT_TYPE;
-import static org.sonatype.nexus.repository.search.index.SearchConstants.GROUP;
-import static org.sonatype.nexus.repository.search.index.SearchConstants.ID;
-import static org.sonatype.nexus.repository.search.index.SearchConstants.NAME;
-import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
-import static org.sonatype.nexus.repository.search.index.SearchConstants.VERSION;
+import static java.time.format.DateTimeFormatter.ofPattern;
+import static org.sonatype.nexus.repository.search.index.SearchConstants.*;
 
 /**
  * Implementation of {@link SearchService} to be used with orient/elasticsearch
@@ -64,6 +61,8 @@ public class ElasticSearchServiceImpl
     extends ComponentSupport
     implements SearchService
 {
+  private static final DateTimeFormatter DATE_TIME_FORMATTER = ofPattern("uuuu-MM-dd'T'HH:mm:ss.SSSZ");
+
   private final ElasticSearchQueryService elasticSearchQueryService;
 
   private final ElasticSearchUtils elasticSearchUtils;
@@ -193,6 +192,8 @@ public class ElasticSearchServiceImpl
     componentSearchResult.setId(componentHit.getId());
     componentSearchResult.setRepositoryName(repository.getName());
     componentSearchResult.setFormat(repository.getFormat().getValue());
+    componentSearchResult.setLastDownloaded(calculateOffsetDateTime(componentMap, LAST_DOWNLOADED_KEY));
+    componentSearchResult.setLastModified(calculateOffsetDateTime(componentMap, LAST_BLOB_UPDATED_KEY));
 
     decorators.forEach(extension -> extension.updateComponent(componentSearchResult, componentHit));
 
@@ -214,6 +215,22 @@ public class ElasticSearchServiceImpl
     assetSearchResult.setLastModified(calculateLastModified(assetMap));
 
     return assetSearchResult;
+  }
+
+  private OffsetDateTime calculateOffsetDateTime(final Map<String, Object> attributes, final String field) {
+    try {
+      return Optional.ofNullable(attributes.get(field))
+          .map(String.class::cast)
+          .map(DATE_TIME_FORMATTER::parse)
+          .map(Instant::from)
+          .map(instant -> OffsetDateTime.ofInstant(instant, ZoneOffset.UTC))
+          .orElse(null);
+    }
+    catch (Exception ignored) {
+      log.debug("Unable to retrieve {}", field, ignored);
+      // Nothing we can do here for invalid data. It shouldn't happen but date parsing will blow out the results.
+      return null;
+    }
   }
 
   private Date calculateLastModified(final Map<String, Object> attributes) {

@@ -144,6 +144,11 @@ public class SearchRequest
       return this;
     }
 
+    public Builder repositories(final List<String> repositoryNames) {
+      this.repositories.addAll(repositoryNames);
+      return this;
+    }
+
     public Builder continuationToken(final String continuationToken) {
       this.continuationToken = continuationToken;
       return this;

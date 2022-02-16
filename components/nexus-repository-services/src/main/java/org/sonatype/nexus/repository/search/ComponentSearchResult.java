@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.search;
 
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +37,10 @@ public class ComponentSearchResult
   private String version;
 
   private String format;
+
+  private OffsetDateTime lastDownloaded;
+
+  private OffsetDateTime lastModified;
 
   private List<AssetSearchResult> assets;
 
@@ -111,5 +116,27 @@ public class ComponentSearchResult
 
   public void setAssets(final List<AssetSearchResult> assets) {
     this.assets = assets;
+  }
+
+  /**
+   * Represents the latest date a blob from any asset associated with the component was changed.
+   */
+  public OffsetDateTime getLastModified() {
+    return lastModified;
+  }
+
+  public void setLastModified(final OffsetDateTime lastModified) {
+    this.lastModified = lastModified;
+  }
+
+  /**
+   * Represents the most recent time any asset associated with this component was downloaded.
+   */
+  public OffsetDateTime getLastDownloaded() {
+    return lastDownloaded;
+  }
+
+  public void setLastDownloaded(final OffsetDateTime lastDownloaded) {
+    this.lastDownloaded = lastDownloaded;
   }
 }

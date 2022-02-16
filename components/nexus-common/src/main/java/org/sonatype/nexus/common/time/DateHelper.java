@@ -82,6 +82,10 @@ public class DateHelper
     return Instant.ofEpochMilli(dateTime.getMillis()).atOffset(ZoneOffset.UTC);
   }
 
+  public static OffsetDateTime toOffsetDateTime(final Date date) {
+    return Instant.ofEpochMilli(date.getTime()).atOffset(ZoneOffset.UTC);
+  }
+
   /**
    * @since 3.24
    */
