@@ -17,6 +17,8 @@ import java.util.Map;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.common.entity.AbstractEntity;
 
+import org.apache.commons.lang.StringUtils;
+
 /**
  * Represents a configured cleanup policy
  *
@@ -87,7 +89,7 @@ public class OrientCleanupPolicy
 
   @Override
   public void setFormat(final String format) {
-    this.format = format;
+    this.format = StringUtils.equals(format, ALL_FORMATS) ? ALL_CLEANUP_POLICY_FORMAT : format;
   }
 
   @Override

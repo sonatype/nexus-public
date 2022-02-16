@@ -64,7 +64,7 @@ import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.LAST_BLOB
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.LAST_DOWNLOADED_KEY;
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.REGEX_KEY;
 import static org.sonatype.nexus.cleanup.internal.rest.CleanupPolicyResource.RESOURCE_URI;
-import static org.sonatype.nexus.cleanup.storage.CleanupPolicy.ALL_CLEANUP_POLICY_FORMAT;
+import static org.sonatype.nexus.cleanup.storage.CleanupPolicy.ALL_FORMATS;
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicyReleaseType.PRERELEASES;
 import static org.sonatype.nexus.rest.APIConstants.INTERNAL_API_PREFIX;
 
@@ -83,8 +83,6 @@ public class CleanupPolicyResource
   private static final int PREVIEW_ITEM_COUNT = 50;
 
   protected static final String RESOURCE_URI = INTERNAL_API_PREFIX + "/cleanup-policies";
-
-  protected static final String ALL_FORMATS = "*";
 
   protected static final String MODE_DELETE = "delete";
 
@@ -257,8 +255,7 @@ public class CleanupPolicyResource
     policy.setName(cleanupPolicyXO.getName());
     policy.setNotes(cleanupPolicyXO.getNotes());
     policy.setMode(MODE_DELETE);
-    policy.setFormat(
-        cleanupPolicyXO.getFormat().equals(ALL_FORMATS) ? ALL_CLEANUP_POLICY_FORMAT : cleanupPolicyXO.getFormat());
+    policy.setFormat(cleanupPolicyXO.getFormat());
     policy.setCriteria(toCriteriaMap(cleanupPolicyXO));
 
     return policy;

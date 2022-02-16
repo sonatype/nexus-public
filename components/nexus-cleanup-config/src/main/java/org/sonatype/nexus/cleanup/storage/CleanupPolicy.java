@@ -22,6 +22,7 @@ import java.util.Map;
 public interface CleanupPolicy //NOSONAR
 {
   String ALL_CLEANUP_POLICY_FORMAT = "ALL_FORMATS";
+  String ALL_FORMATS = "*";
 
   String getName();
 
