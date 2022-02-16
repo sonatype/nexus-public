@@ -14,6 +14,7 @@ package org.sonatype.nexus.common.cooperation2.internal;
 
 import java.time.Duration;
 
+import org.sonatype.nexus.common.cooperation2.Config;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory.Builder;
 
 import static com.google.common.base.Preconditions.checkNotNull;

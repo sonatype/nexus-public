@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.cooperation2.internal.datastore;
+package org.sonatype.nexus.common.cooperation2;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -20,22 +20,18 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.cooperation2.Cooperation2;
-import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
-import org.sonatype.nexus.common.cooperation2.CooperationKey;
-import org.sonatype.nexus.common.cooperation2.IOCall;
-import org.sonatype.nexus.common.cooperation2.internal.Config;
+import org.sonatype.nexus.common.cooperation2.datastore.internal.CooperatingFuture;
 import org.sonatype.nexus.common.cooperation2.internal.Cooperation2Builder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toMap;
 
 /**
- * An implementation of {@link Cooperation2Factory} which uses local concurrency controls.
+ * Support for class using basic local concurrency controls for {@link Cooperation2Factory}
  *
  * @since 3.next
  */
-public class LocalCooperation2
+public abstract class ScopedCooperation2Support
     extends ComponentSupport
     implements Cooperation2
 {
@@ -45,7 +41,7 @@ public class LocalCooperation2
 
   protected final String scope;
 
-  public LocalCooperation2(final String scope, final Config config) {
+  protected ScopedCooperation2Support(final String scope, final Config config) {
     this.config = checkNotNull(config);
     this.scope = checkNotNull(scope);
   }
@@ -61,7 +57,7 @@ public class LocalCooperation2
 
   @Override
   public <RET> Builder<RET> on(final IOCall<RET> workFunction) {
-    return new LocalCooperation2Builder<>(workFunction);
+    return new ScopedCooperation2Builder<>(workFunction);
   }
 
   @Override
@@ -70,10 +66,12 @@ public class LocalCooperation2
         .collect(toMap(CooperatingFuture::getRequestKey, CooperatingFuture::getThreadCount));
   }
 
-  public class LocalCooperation2Builder<R>
+  public class ScopedCooperation2Builder<R>
       extends Cooperation2Builder<R>
   {
-    public LocalCooperation2Builder(final IOCall<R> workFunction) {
+    protected CooperationKey cooperationKey;
+
+    public ScopedCooperation2Builder(final IOCall<R> workFunction) {
       super(workFunction);
     }
 
@@ -93,7 +91,7 @@ public class LocalCooperation2
 
     @Override
     public R cooperate(final String action, final String... nestedScope) throws IOException {
-      CooperationKey cooperationKey = CooperationKey.create(scope, action, nestedScope);
+      cooperationKey = CooperationKey.create(scope, action, nestedScope);
       CooperatingFuture<R> myFuture = new CooperatingFuture<>(cooperationKey, config);
       String scopedKey = cooperationKey.getHashedKey();
 

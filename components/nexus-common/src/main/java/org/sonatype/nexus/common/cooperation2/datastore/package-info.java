@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 @FeatureFlag(name = DATASTORE_ENABLED)
-package org.sonatype.nexus.common.cooperation2.internal.datastore;
+package org.sonatype.nexus.common.cooperation2.datastore;
 
 import org.sonatype.nexus.common.app.FeatureFlag;
 

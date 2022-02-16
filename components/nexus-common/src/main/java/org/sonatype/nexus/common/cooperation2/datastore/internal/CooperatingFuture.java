@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.cooperation2.internal.datastore;
+package org.sonatype.nexus.common.cooperation2.datastore.internal;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -23,10 +23,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
+import org.sonatype.nexus.common.cooperation2.Config;
 import org.sonatype.nexus.common.cooperation2.CooperationException;
 import org.sonatype.nexus.common.cooperation2.CooperationKey;
 import org.sonatype.nexus.common.cooperation2.IOCall;
-import org.sonatype.nexus.common.cooperation2.internal.Config;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
