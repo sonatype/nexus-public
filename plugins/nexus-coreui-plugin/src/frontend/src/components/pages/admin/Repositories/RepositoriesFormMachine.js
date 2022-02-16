@@ -21,122 +21,97 @@ import {Utils, FormUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 
-export const baseIntUrl = '/service/rest/internal/ui/repositories';
-export const basePubUrl = '/service/rest/v1/repositories';
-export const recipesUrl = baseIntUrl + '/recipes';
-export const blobStoresUrl = '/service/rest/v1/blobstores';
-export const repositoryUrl = (format, type) => `${basePubUrl}/${formatFormat(format)}/${type}`;
+export const repositoryUrl = (format, type) =>
+  `/service/rest/v1/repositories/${formatFormat(format)}/${type}`;
 
 export default FormUtils.buildFormMachine({
-  id: 'RepositoriesFormMachine',
-  initial: 'loadingOptions',
-  config: (config) => ({
-    ...config,
-    states: {
-      ...config.states,
-      loadingOptions: {
-        invoke: {
-          id: 'fetchOptions',
-          src: 'fetchOptions',
-          onDone: {
-            target: 'loading',
-            actions: ['setOptions']
-          },
-          onError: {
-            target: 'loadError',
-            actions: ['setLoadError', 'logLoadError']
-          }
-        }
-      }
-    },
-    on: {
-      'RETRY': {
-        target: 'loading'
-      }
-    }
-  })
+  id: 'RepositoriesFormMachine'
 }).withConfig({
   actions: {
     validate: assign({
       validationErrors: ({data}) => ({
         name: validateNameField(data.name),
-        format: Utils.isBlank(data.format) ? UIStrings.ERROR.FIELD_REQUIRED : null,
+        format: Utils.isBlank(data.format)
+          ? UIStrings.ERROR.FIELD_REQUIRED
+          : null,
         type: Utils.isBlank(data.type) ? UIStrings.ERROR.FIELD_REQUIRED : null,
-        blobStoreName: Utils.isBlank(data.blobStoreName) ? UIStrings.ERROR.FIELD_REQUIRED : null,
-        memberNames: isGroupType(data.type) && !data.memberNames.length ? UIStrings.ERROR.FIELD_REQUIRED : null
+        blobStoreName: Utils.isBlank(data.blobStoreName)
+          ? UIStrings.ERROR.FIELD_REQUIRED
+          : null,
+        memberNames:
+          isGroupType(data.type) && !data.memberNames.length
+            ? UIStrings.ERROR.FIELD_REQUIRED
+            : null
       })
-    }),
-    setRepositories: assign({
-      repositories: (_, event) => event.data?.data
-    }),
-    setOptions: assign({
-      blobStores: (_, event) => event.data[1]?.data,
-      formats: (_, event) => {
-        const recipes = event.data[0]?.data;
-        return getFormats(recipes);
-      },
-      types: (_, event) => {
-        const recipes = event.data[0]?.data;
-        return getTypes(recipes);
-      }
     })
   },
   services: {
-    fetchData: async ({pristineData, blobStores}) => {
-      if (isEdit(pristineData)) { 
-        const response = await Axios.get(repositoriesUrl(pristineData.name));
+    fetchData: async ({pristineData}) => {
+      if (isEdit(pristineData)) {
+        const response = await Axios.get(repositoryUrl(pristineData.name));
         const {
-          group: {memberNames}, 
-          storage: {blobStoreName, strictContentTypeValidation}, 
+          group: {memberNames},
+          storage: {blobStoreName, strictContentTypeValidation, writePolicy},
+          component: {proprietaryComponents},
+          cleanup: {policyNames},
           ...rest
         } = response;
-        return {data: {
-          ...rest,
-          memberNames,
-          blobStoreName,
-          strictContentTypeValidation
-        }};
+        return {
+          data: {
+            ...rest,
+            memberNames,
+            blobStoreName,
+            strictContentTypeValidation,
+            writePolicy,
+            proprietaryComponents,
+            policyNames
+          }
+        };
       } else {
-        return {data: {
-          format: '',
-          type: '',
-          name: '',
-          online: true,
-          memberNames: [],
-          blobStoreName: getDefaultBlobStore(blobStores),
-          strictContentTypeValidation: true
-        }};
+        return {
+          data: {
+            format: '',
+            type: '',
+            name: '',
+            online: true,
+            memberNames: [],
+            strictContentTypeValidation: true,
+            writePolicy: 'ALLOW_ONCE',
+            proprietaryComponents: false,
+            policyNames: []
+          }
+        };
       }
-    },
-    fetchOptions: () => {
-      return Promise.all([
-        Axios.get(recipesUrl),
-        Axios.get(blobStoresUrl)
-      ]);
     },
     saveData: ({data, pristineData}) => {
       const {
-        format, 
-        type, 
-        name, 
-        online, 
-        blobStoreName, 
+        format,
+        type,
+        name,
+        online,
+        blobStoreName,
         strictContentTypeValidation,
-        memberNames
+        memberNames,
+        writePolicy,
+        proprietaryComponents,
+        policyNames
       } = data;
       const payload = {
         name,
         online,
         storage: {
           blobStoreName,
-          strictContentTypeValidation
+          strictContentTypeValidation,
+          writePolicy
         },
-        group: {memberNames}
+        group: {memberNames},
+        component: {proprietaryComponents},
+        cleanup: {policyNames}
       };
       return isEdit(pristineData)
         ? Axios.put(repositoryUrl(format, type), payload)
         : Axios.post(repositoryUrl(format, type), payload);
-    },
+    }
   }
 });
 
@@ -145,30 +120,15 @@ const isEdit = ({name}) => Utils.notBlank(name);
 const validateNameField = (field) => {
   if (Utils.isBlank(field)) {
     return UIStrings.ERROR.FIELD_REQUIRED;
-  }
-  else if (field.length > 255) {
+  } else if (field.length > 255) {
     return UIStrings.ERROR.MAX_CHARS(255);
-  }
-  else if (!Utils.isName(field)) {
+  } else if (!Utils.isName(field)) {
     return UIStrings.ERROR.INVALID_NAME_CHARS;
   }
 
   return null;
-}
+};
 
-const formatFormat = (format) => format === 'maven2' ? 'maven' : format
-
-const getFormats = (recipes) => [...new Set(recipes?.map(r => r.format))].sort();
-
-const getTypes = (recipes) => recipes?.reduce((acc, curr) => {
-  const {format, type} = curr;
-  acc.has(format)
-    ? acc.get(format).push(type)
-    : acc.set(format, [type]);
-  return acc;
-}, new Map());
-
-const getDefaultBlobStore = (blobStores) => 
-  blobStores?.length && blobStores.length === 1 ? blobStores[0].name : '';
+const formatFormat = (format) => (format === 'maven2' ? 'maven' : format);
 
 const isGroupType = (type) => type === 'group';

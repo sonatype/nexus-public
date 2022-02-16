@@ -28,14 +28,12 @@ import axios from 'axios';
 import UIStrings from '../../../../constants/UIStrings';
 
 import RepositoriesForm from './RepositoriesForm';
-import {
-  basePubUrl,
-  recipesUrl,
-  blobStoresUrl,
-  repositoryUrl
-} from './RepositoriesFormMachine';
 
-import {repositoriesUrl} from './GroupMembersSelectorMachine';
+import {repositoryUrl} from './RepositoriesFormMachine';
+import {repositoriesUrl} from './facets/GenericGroupConfiguration';
+import {cleanupPoliciesUrl} from './facets/GenericCleanupConfiguration';
+import {RECIPES_URL} from './facets/GenericFormatConfiguration';
+import {BLOB_STORES_URL} from './facets/GenericStorageConfiguration';
 
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'),
@@ -53,16 +51,24 @@ describe('RepositoriesForm', () => {
     getCreateButton: () =>
       screen.getByText(EDITOR.SAVE_BUTTON_LABEL, {selector: 'button'}),
     getCancelButton: () => screen.queryByText('Cancel'),
-    getFormatSelect: () => screen.getByLabelText('Format'),
-    getTypeSelect: () => screen.getByLabelText('Type'),
-    getBlobStoreSelect: () => screen.getByLabelText('Blob Store'),
-    getNameInput: () => screen.getByLabelText('Name'),
+    getFormatSelect: () => screen.getByLabelText(EDITOR.FORMAT_LABEL),
+    getTypeSelect: () => screen.getByLabelText(EDITOR.TYPE_LABEL),
+    getBlobStoreSelect: () => screen.getByLabelText(EDITOR.BLOB_STORE_LABEL),
+    getDeploymentPolicySelect: () =>
+      screen.getByLabelText(EDITOR.DEPLOYMENT_POLICY_LABEL),
+    getNameInput: () => screen.getByLabelText(EDITOR.NAME_LABEL),
     getStatusCheckbox: () =>
-      screen.getByRole('checkbox', {name: 'Online - Ready to connect'}),
+      screen.getByRole('checkbox', {name: EDITOR.STATUS_DESCR}),
     getContentValidationCheckbox: () =>
-      screen.queryByRole('checkbox', {name: 'Enabled'}),
-    getGroupSectionTitle: () => screen.queryByText('Group'),
-    getMemberOption: (memberName) => screen.getByLabelText(memberName)
+      screen.queryByRole('checkbox', {name: EDITOR.CONTENT_VALIDATION_DESCR}),
+    getProprietaryComponentsCheckbox: () =>
+      screen.queryByRole('checkbox', {
+        name: EDITOR.PROPRIETARY_COMPONENTS_DESCR
+      }),
+    getHostedSectionTitle: () => screen.queryByText(EDITOR.HOSTED_CAPTION),
+    getCleanupSectionTitle: () => screen.queryByText(EDITOR.CLEANUP_CAPTION),
+    getGroupSectionTitle: () => screen.queryByText(EDITOR.GROUP_CAPTION),
+    getTransferListOption: (optionLabel) => screen.getByLabelText(optionLabel)
   };
 
   const renderView = (itemId = '') => {
@@ -112,23 +118,32 @@ describe('RepositoriesForm', () => {
     {id: 'maven-snapshots', name: 'maven-snapshots'}
   ];
 
-  when(axios.get)
-    .calledWith(expect.stringContaining(repositoriesUrl('maven2')))
-    .mockResolvedValue({data: MAVEN_REPOS_RESPONSE});
+  const MAVEN_CLEANUP_RESPONSE = [
+    {id: 'policy-all-fomats', name: 'policy-all-fomats'},
+    {id: 'policy-maven-1', name: 'policy-maven-1'},
+    {id: 'policy-maven-2', name: 'policy-maven-2'}
+  ];
 
-  when(axios.get)
-    .calledWith(expect.stringContaining(recipesUrl))
-    .mockResolvedValue({data: RECIPES_RESPONSE});
+  beforeEach(() => {
+    when(axios.get)
+      .calledWith(expect.stringContaining(repositoriesUrl({format: 'maven2'})))
+      .mockResolvedValue({data: MAVEN_REPOS_RESPONSE});
+    when(axios.get)
+      .calledWith(expect.stringContaining(RECIPES_URL))
+      .mockResolvedValue({data: RECIPES_RESPONSE});
+    when(axios.get)
+      .calledWith(expect.stringContaining(BLOB_STORES_URL))
+      .mockResolvedValue({data: BLOB_STORES_RESPONSE});
+    when(axios.get)
+      .calledWith(
+        expect.stringContaining(cleanupPoliciesUrl({format: 'maven2'}))
+      )
+      .mockResolvedValue({data: MAVEN_CLEANUP_RESPONSE});
+  });
 
-  when(axios.get)
-    .calledWith(expect.stringContaining(blobStoresUrl))
-    .mockResolvedValue({data: BLOB_STORES_RESPONSE});
+  it('renders the form and populates dropdowns when type is GROUP', async () => {
+    const format = 'maven2';
 
-  when(axios.post)
-    .calledWith(expect.stringContaining(basePubUrl))
-    .mockResolvedValue({data: {}});
-
-  it('renders the form and populates dropdowns', async () => {
     renderView();
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
@@ -137,7 +152,7 @@ describe('RepositoriesForm', () => {
 
     expect(selectors.getTypeSelect()).toBeDisabled();
 
-    await TestUtils.changeField(selectors.getFormatSelect, 'maven2');
+    await TestUtils.changeField(selectors.getFormatSelect, format);
 
     expect(selectors.getTypeSelect()).toBeEnabled();
 
@@ -145,31 +160,75 @@ describe('RepositoriesForm', () => {
 
     await TestUtils.changeField(selectors.getTypeSelect, 'group');
 
-    validateSelectOptions(selectors.getBlobStoreSelect(), BLOB_STORES_OPTIONS);
+    validateSelectOptions(
+      selectors.getBlobStoreSelect(),
+      BLOB_STORES_OPTIONS,
+      ''
+    );
 
     await waitFor(() =>
       expect(axios.get).toHaveBeenCalledWith(
-        expect.stringContaining(repositoriesUrl('maven2'))
+        expect.stringContaining(repositoriesUrl({format}))
       )
     );
 
     MAVEN_REPOS_RESPONSE.forEach((repo) => {
-      expect(selectors.getMemberOption(repo.name)).toBeInTheDocument();
+      expect(selectors.getTransferListOption(repo.name)).toBeInTheDocument();
     });
+
+    expect(selectors.getContentValidationCheckbox()).not.toBeInTheDocument();
+    expect(selectors.getHostedSectionTitle()).not.toBeInTheDocument();
+    expect(selectors.getCleanupSectionTitle()).not.toBeInTheDocument();
   });
 
-  it('calls onDone when cancelled', async () => {
+  it('renders the form and populates dropdowns when type is HOSTED', async () => {
+    const format = 'maven2';
+    const blobStoreResponse = [{name: 'default'}];
+    const blobStoreOptions = [
+      {name: EDITOR.SELECT_STORE_OPTION},
+      ...blobStoreResponse
+    ];
+    when(axios.get)
+      .calledWith(expect.stringContaining(BLOB_STORES_URL))
+      .mockResolvedValue({data: blobStoreResponse});
+
     renderView();
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
-    await TestUtils.changeField(selectors.getFormatSelect, 'maven2');
-    await TestUtils.changeField(selectors.getTypeSelect, 'group');
 
-    fireEvent.click(selectors.getCancelButton());
-    await waitFor(() => expect(onDone).toHaveBeenCalled());
+    await TestUtils.changeField(selectors.getFormatSelect, format);
+    await TestUtils.changeField(selectors.getTypeSelect, 'hosted');
+
+    validateSelectOptions(
+      selectors.getBlobStoreSelect(),
+      blobStoreOptions,
+      'default'
+    );
+
+    const deploymentPolicyOptions = Object.values(
+      EDITOR.DEPLOYMENT_POLICY_OPTIONS
+    ).map((name) => ({name}));
+    validateSelectOptions(
+      selectors.getDeploymentPolicySelect(),
+      deploymentPolicyOptions,
+      'ALLOW_ONCE'
+    );
+
+    await waitFor(() =>
+      expect(axios.get).toHaveBeenCalledWith(
+        expect.stringContaining(cleanupPoliciesUrl({format}))
+      )
+    );
+
+    MAVEN_CLEANUP_RESPONSE.forEach((policy) => {
+      expect(selectors.getTransferListOption(policy.name)).toBeInTheDocument();
+    });
+
+    expect(selectors.getContentValidationCheckbox()).toBeInTheDocument();
+    expect(selectors.getGroupSectionTitle()).not.toBeInTheDocument();
   });
 
-  it('creates group repository', async () => {
+  it('creates GROUP repository', async () => {
     const format = 'maven2';
     const type = 'group';
     const url = repositoryUrl(format, type);
@@ -178,10 +237,17 @@ describe('RepositoriesForm', () => {
       online: false,
       storage: {
         blobStoreName: 'blob-store-1',
-        strictContentTypeValidation: true
+        strictContentTypeValidation: true,
+        writePolicy: 'ALLOW_ONCE'
       },
       group: {
         memberNames: ['maven-releases', 'maven-snapshots']
+      },
+      cleanup: {
+        policyNames: []
+      },
+      component: {
+        proprietaryComponents: false
       }
     };
 
@@ -195,13 +261,20 @@ describe('RepositoriesForm', () => {
     expect(selectors.getCreateButton()).toHaveClass('disabled');
 
     await TestUtils.changeField(selectors.getNameInput, payload.name);
+
     fireEvent.click(selectors.getStatusCheckbox());
+
     await TestUtils.changeField(
       selectors.getBlobStoreSelect,
       payload.storage.blobStoreName
     );
-    fireEvent.click(selectors.getMemberOption(payload.group.memberNames[0]));
-    fireEvent.click(selectors.getMemberOption(payload.group.memberNames[1]));
+
+    fireEvent.click(
+      selectors.getTransferListOption(payload.group.memberNames[0])
+    );
+    fireEvent.click(
+      selectors.getTransferListOption(payload.group.memberNames[1])
+    );
 
     expect(selectors.getCreateButton()).not.toHaveClass('disabled');
 
@@ -209,7 +282,55 @@ describe('RepositoriesForm', () => {
     await waitFor(() => expect(axios.post).toHaveBeenCalledWith(url, payload));
   });
 
-  it('filters types by format and correct fields for group', async () => {
+  it('creates HOSTED repository', async () => {
+    const format = 'maven2';
+    const type = 'hosted';
+    const url = repositoryUrl(format, type);
+    const payload = {
+      name: 'maven-hosted-1',
+      online: true,
+      storage: {
+        blobStoreName: 'blob-store-1',
+        strictContentTypeValidation: false,
+        writePolicy: 'ALLOW'
+      },
+      group: {
+        memberNames: []
+      },
+      component: {proprietaryComponents: true},
+      cleanup: {policyNames: ['policy-all-fomats', 'policy-maven-1']}
+    };
+
+    renderView();
+
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+    await TestUtils.changeField(selectors.getFormatSelect, format);
+    await TestUtils.changeField(selectors.getTypeSelect, type);
+    await TestUtils.changeField(selectors.getNameInput, payload.name);
+    await TestUtils.changeField(
+      selectors.getDeploymentPolicySelect,
+      payload.storage.writePolicy
+    );
+    await TestUtils.changeField(
+      selectors.getBlobStoreSelect,
+      payload.storage.blobStoreName
+    );
+
+    fireEvent.click(selectors.getContentValidationCheckbox());
+    fireEvent.click(selectors.getProprietaryComponentsCheckbox());
+    fireEvent.click(
+      selectors.getTransferListOption(payload.cleanup.policyNames[0])
+    );
+    fireEvent.click(
+      selectors.getTransferListOption(payload.cleanup.policyNames[1])
+    );
+    fireEvent.click(selectors.getCreateButton());
+
+    await waitFor(() => expect(axios.post).toHaveBeenCalledWith(url, payload));
+  });
+
+  it('filters types by format', async () => {
     when(axios.get)
       .calledWith(expect.stringContaining(repositoriesUrl('p2')))
       .mockResolvedValue({data: []});
@@ -238,16 +359,24 @@ describe('RepositoriesForm', () => {
     expect(selectors.getTypeSelect()).not.toContainElement(
       screen.queryByText('group')
     );
+  });
 
-    await TestUtils.changeField(selectors.getTypeSelect, 'proxy');
-    expect(selectors.getContentValidationCheckbox()).toBeInTheDocument();
-    expect(selectors.getGroupSectionTitle()).not.toBeInTheDocument();
+  it('calls onDone when cancelled', async () => {
+    renderView();
+
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+    await TestUtils.changeField(selectors.getFormatSelect, 'maven2');
+    await TestUtils.changeField(selectors.getTypeSelect, 'group');
+
+    fireEvent.click(selectors.getCancelButton());
+    await waitFor(() => expect(onDone).toHaveBeenCalled());
   });
 });
 
-const validateSelectOptions = (selectElement, options) => {
+const validateSelectOptions = (selectElement, options, value) => {
   options.forEach((option) => {
     expect(getByRole(selectElement, 'option', option)).toBeInTheDocument();
   });
   expect(getAllByRole(selectElement, 'option')).toHaveLength(options.length);
+  value && expect(selectElement).toHaveValue(value);
 };

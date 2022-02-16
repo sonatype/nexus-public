@@ -26,6 +26,7 @@ export {default as UnitUtil} from './interface/UnitUtil';
 export { default as FormUtils } from './interface/FormUtils';
 export { default as ListMachineUtils } from './interface/ListMachineUtils';
 export { default as ValidationUtils } from './interface/ValidationUtils';
+export {default as useSimpleMachine} from './interface/SimpleMachineUtils';
 
 export {default as BreadcrumbActions} from './components/layout/common/BreadcrumbActions/BreadcrumbActions';
 export {default as ContentBody} from './components/layout/common/ContentBody/ContentBody';

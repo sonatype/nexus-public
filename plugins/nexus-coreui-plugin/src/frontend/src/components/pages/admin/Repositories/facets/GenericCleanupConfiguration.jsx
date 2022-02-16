@@ -11,48 +11,54 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React, {useEffect} from 'react';
-import {useMachine} from '@xstate/react';
+
+import {FormUtils, useSimpleMachine} from '@sonatype/nexus-ui-plugin';
 
 import {
   NxFormGroup,
   NxStatefulTransferList,
-  NxLoadWrapper,
+  NxLoadWrapper
 } from '@sonatype/react-shared-components';
 
-import UIStrings from '../../../../constants/UIStrings';
-import GroupMembersSelectorMachine from './GroupMembersSelectorMachine';
+import UIStrings from '../../../../../constants/UIStrings';
 
 const {EDITOR} = UIStrings.REPOSITORIES;
 
-export default function GroupMembersSelector({
-  format,
-  selectedMembers,
-  onChange,
-}) {
-  const [current, send] = useMachine(GroupMembersSelectorMachine, {
-    devTools: true,
-  });
+export const cleanupPoliciesUrl = (event) =>
+  '/service/rest/internal/cleanup-policies?format=' +
+  encodeURIComponent(event.format);
+
+export default function GenericCleanupConfiguration({parentMachine}) {
+  const {current, load, retry, isLoading} = useSimpleMachine(
+    'GenericCleanupConfigurationMachine',
+    cleanupPoliciesUrl
+  );
+
+  const [currentParent, sendParent] = parentMachine;
+
+  const {format, policyNames} = currentParent.context.data;
 
   useEffect(() => {
-    send({type: 'LOAD_REPOSITORIES', format});
+    load({format});
   }, [format]);
 
-  const {repositories, error} = current.context;
+  const {data: policies, error} = current.context;
 
-  const isLoading = current.matches('loading');
-
-  const retry = () => send('RETRY');
+  const availablePolicies =
+    policies?.map((it) => ({id: it.name, displayName: it.name})) || [];
 
   return (
     <>
-      <h2 className="nx-h2">{EDITOR.GROUP_CAPTION}</h2>
+      <h2 className="nx-h2">{EDITOR.CLEANUP_CAPTION}</h2>
       <NxLoadWrapper loading={isLoading} error={error} retryHandler={retry}>
-        <NxFormGroup label={EDITOR.MEMBERS_LABEL}>
+        <NxFormGroup
+          label={EDITOR.CLEANUP_POLICIES_LABEL}
+          sublabel={EDITOR.CLEANUP_POLICIES_SUBLABEL}
+        >
           <NxStatefulTransferList
-            allItems={repositories}
-            selectedItems={selectedMembers}
-            onChange={onChange}
-            allowReordering
+            allItems={availablePolicies}
+            selectedItems={new Set(policyNames)}
+            onChange={FormUtils.handleUpdate('policyNames', sendParent)}
           />
         </NxFormGroup>
       </NxLoadWrapper>

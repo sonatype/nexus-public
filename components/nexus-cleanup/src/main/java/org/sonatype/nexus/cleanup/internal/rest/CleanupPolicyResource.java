@@ -28,16 +28,7 @@ import javax.inject.Singleton;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.groups.Default;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.cleanup.config.CleanupPolicyConfiguration;
@@ -67,6 +58,7 @@ import static java.lang.Boolean.TRUE;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.IS_PRERELEASE_KEY;
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.LAST_BLOB_UPDATED_KEY;
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.LAST_DOWNLOADED_KEY;
@@ -131,8 +123,11 @@ public class CleanupPolicyResource
   @GET
   @RequiresAuthentication
   @RequiresPermissions("nexus:*")
-  public List<CleanupPolicyXO> get() {
-    return cleanupPolicyStorage.getAll().stream().map(cleanupPolicy -> CleanupPolicyXO.fromCleanupPolicy(cleanupPolicy,
+  public List<CleanupPolicyXO> get(@QueryParam("format") final String format) {
+    List<CleanupPolicy> policies = isBlank(format) || format.equals(ALL_FORMATS)
+        ? cleanupPolicyStorage.getAll()
+        : cleanupPolicyStorage.getAllByFormat(format);
+    return policies.stream().map(cleanupPolicy -> CleanupPolicyXO.fromCleanupPolicy(cleanupPolicy,
         (int) repositoryManager.browseForCleanupPolicy(cleanupPolicy.getName()).count()))
         .sorted(Comparator.comparing(CleanupPolicyXO::getName)).collect(toList());
   }
@@ -152,7 +147,7 @@ public class CleanupPolicyResource
   @Path("{name}")
   @RequiresAuthentication
   @RequiresPermissions("nexus:*")
-  public CleanupPolicyXO get(@PathParam("name") final String name) {
+  public CleanupPolicyXO getByName(@PathParam("name") final String name) {
     CleanupPolicy cleanupPolicy = cleanupPolicyStorage.get(name);
 
     if (cleanupPolicy == null) {

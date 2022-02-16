@@ -353,8 +353,22 @@ the documentation</a>.`
       SELECT_TYPE_OPTION: 'Select a type...',
       SELECT_STORE_OPTION: 'Select a blob store...',
       SAVE_BUTTON_LABEL: 'Create Repository',
+      CLEANUP_CAPTION: 'Cleanup',
+      CLEANUP_POLICIES_LABEL: 'Cleanup Policies',
+      CLEANUP_POLICIES_SUBLABEL: 'Nexus Repository will delete components that match any of the applied policies',
+      HOSTED_CAPTION: 'Hosted',
+      DEPLOYMENT_POLICY_LABEL: 'Deployment Policy',
+      DEPLOYMENT_POLICY_SUBLABEL: 'Controls whether or not to allow updates and deployments to artifacts',
+      PROPRIETARY_COMPONENTS_LABEL: 'Proprietary Components',
+      PROPRIETARY_COMPONENTS_DESCR: 'Components in this repository count as proprietary for namespace conflict attacks (requires Sonatype Nexus Firewall)',
       MESSAGES: {
         SAVE_ERROR: 'An error occurred while saving the repository',
+      },
+      DEPLOYMENT_POLICY_OPTIONS: {
+        ALLOW: 'Allow redeploy',
+        ALLOW_ONCE: 'Disable redeploy',
+        DENY: 'Read-only',
+        REPLICATION_ONLY: 'Deploy by Replication Only'
       }
     }
   },
