@@ -15,12 +15,24 @@ import axios from 'axios';
 import {fireEvent, waitForElementToBeRemoved} from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
+import {ExtJS} from '@sonatype/nexus-ui-plugin';
 
 import RepositoriesList from './RepositoriesList';
+import UIStrings from "../../../../constants/UIStrings";
 
 jest.mock('axios', () => ({
   get: jest.fn()
 }));
+
+jest.mock('@sonatype/nexus-ui-plugin', () => {
+  return {
+    ...jest.requireActual('@sonatype/nexus-ui-plugin'),
+    ExtJS: {
+      checkPermission: jest.fn().mockReturnValue(true),
+    }
+  }
+});
+
 const mockCopyUrl = jest.fn((event) => event.stopPropagation());
 
 describe('RepositoriesList', function() {
@@ -78,7 +90,8 @@ describe('RepositoriesList', function() {
       filter: () => getByPlaceholderText('Filter by name'),
       tableRow: (index) => container.querySelectorAll('tbody tr')[index],
       tableRows: () => container.querySelectorAll('tbody tr'),
-      urlButton: (index) => container.querySelectorAll('button[title="Copy URL to Clipboard"]')[index]
+      urlButton: (index) => container.querySelectorAll('button[title="Copy URL to Clipboard"]')[index],
+      createButton: () => getByText(UIStrings.REPOSITORIES.LIST.CREATE_BUTTON),
     }));
   }
 
@@ -257,5 +270,14 @@ describe('RepositoriesList', function() {
     fireEvent.click(urlButton(0));
 
     expect(mockCopyUrl).toBeCalled();
+  });
+
+  it('disables the create button when not enough permissions', async function() {
+    axios.get.mockResolvedValue({data: []});
+    ExtJS.checkPermission.mockReturnValue(false);
+    const {createButton, loadingMask} = render();
+    await waitForElementToBeRemoved(loadingMask);
+
+    expect(createButton()).toHaveClass('disabled');
   });
 });

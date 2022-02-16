@@ -40,6 +40,8 @@ export default {
   PRISTINE_TOOLTIP: 'There are no changes',
   INVALID_TOOLTIP: 'Validation errors are present',
 
+  PERMISSION_ERROR: 'You do not have permission to perform this action.',
+
   ERROR: {
     DECIMAL: 'This field must not contain decimal values',
     FIELD_REQUIRED: 'This field is required',

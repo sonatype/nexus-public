@@ -27,8 +27,8 @@ import javax.ws.rs.QueryParam;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Format;
-import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Recipe;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -44,6 +44,7 @@ import static com.google.common.collect.Streams.stream;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.sonatype.nexus.security.BreadActions.READ;
 
 /**
  * @since 3.29
@@ -100,7 +101,7 @@ public class RepositoryInternalResource
       @QueryParam("format") final String formatParam)
   {
     List<RepositoryXO> repositories = stream(repositoryManager.browse())
-        .filter(repositoryPermissionChecker::userCanReadOrBrowse)
+        .filter(repository -> repositoryPermissionChecker.userHasRepositoryAdminPermission(repository, READ))
         .filter(repository -> isBlank(type) || type.equals(repository.getType().toString()))
         .filter(repository -> isBlank(formatParam)
                 || formatParam.equals(ALL_FORMATS)
@@ -132,7 +133,7 @@ public class RepositoryInternalResource
   public List<RepositoryDetailXO> getRepositoryDetails()
   {
     return stream(repositoryManager.browse())
-        .filter(repositoryPermissionChecker::userCanReadOrBrowse)
+        .filter(repository -> repositoryPermissionChecker.userHasRepositoryAdminPermission(repository, READ))
         .map(this::asRepositoryDetail)
         .collect(toList());
   }
