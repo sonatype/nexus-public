@@ -88,19 +88,7 @@ module.exports = {
     }),
     new MiniCssExtractPlugin({
       filename: '[name].css'
-    }),
-    new NormalModuleReplacementPlugin(
-        // Replace scss from the RSC library with empty css since it's already included in nexus-rapture
-        // make sure to use path.sep to cover varying OS's
-        /.*@sonatype.*\.s?css/,
-        function(resource) {
-          const RSC_INDEX = resource.request.indexOf(
-              'node_modules' + path.sep + '@sonatype' + path.sep + 'react-shared-components');
-
-          resource.request = resource.request.substring(0, RSC_INDEX) + 'buildsupport' + path.sep + 'ui' +
-              path.sep + 'empty.scss';
-        }
-    )
+    })
   ],
   resolve: {
     extensions: ['.js', '.jsx']
