@@ -13,7 +13,7 @@
     Eclipse Foundation. All other trademarks are the property of their respective owners.
 
 -->
-<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure_9_0.dtd">
+<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure_9_3.dtd">
 <Configure id="Server" class="org.eclipse.jetty.server.Server">
 
   <!-- =============================================================== -->
@@ -46,10 +46,10 @@
 
   <New id="sslContextFactory" class="org.eclipse.jetty.util.ssl.SslContextFactory$Server">
     <Set name="KeyStorePath">./conf/ssl/keystore.jks</Set>
-    <Set name="KeyStorePassword">OBF:1v2j1uum1xtv1zej1zer1xtn1uvk1v1v</Set>
-    <Set name="KeyManagerPassword">OBF:1v2j1uum1xtv1zej1zer1xtn1uvk1v1v</Set>
+    <Set name="KeyStorePassword">password</Set>
+    <Set name="KeyManagerPassword">password</Set>
     <Set name="TrustStorePath">./conf/ssl/keystore.jks</Set>
-    <Set name="TrustStorePassword">OBF:1v2j1uum1xtv1zej1zer1xtn1uvk1v1v</Set>
+    <Set name="TrustStorePassword">password</Set>
     <Set name="EndpointIdentificationAlgorithm"></Set>
     <Set name="NeedClientAuth"><Property name="jetty.ssl.needClientAuth" default="false"/></Set>
     <Set name="WantClientAuth"><Property name="jetty.ssl.wantClientAuth" default="false"/></Set>
@@ -88,9 +88,14 @@
 
         <Set name="host"><Property name="application-host" /></Set>
         <Set name="port"><Property name="application-port-ssl" /></Set>
-        <Set name="idleTimeout"><Property name="jetty.https.timeout" default="30000"/></Set>
+        <Set name="idleTimeout"><Property name="jetty.https.idleTimeout" default="30000"/></Set>
         <Set name="acceptorPriorityDelta"><Property name="jetty.https.acceptorPriorityDelta" default="0"/></Set>
         <Set name="acceptQueueSize"><Property name="jetty.https.acceptQueueSize" default="0"/></Set>
+        <Call name="addBean">
+          <Arg>
+            <New class="org.eclipse.jetty.io.ConnectionStatistics"/>
+          </Arg>
+        </Call>
       </New>
     </Arg>
   </Call>

@@ -168,7 +168,8 @@ public class EmbeddedNexusBooter
       launcher = launcherFactory.newInstance(
           testRealm,
           overrides,
-          new String[] { new File(installDir, "conf/jetty.xml").getAbsolutePath() }
+          new String[] { new File(installDir, "conf/jetty.xml").getAbsolutePath(),
+                         new File(installDir, "conf/jetty-http.xml").getAbsolutePath() }
       );
     }
     finally {

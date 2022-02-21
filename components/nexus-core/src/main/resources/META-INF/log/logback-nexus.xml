@@ -33,13 +33,12 @@
       <maxHistory>90</maxHistory>
     </rollingPolicy>
   </appender>
-
-  <appender name="metrics" class="org.sonatype.nexus.bootstrap.log.NexusInstrumentedAppender"/>
+  <appender name="logback.logger" class="org.sonatype.nexus.bootstrap.log.NexusInstrumentedAppender"/>
 
   <root level="${root.level}">
     <appender-ref ref="console"/>
     <appender-ref ref="logfile"/>
-    <appender-ref ref="metrics"/>
+    <appender-ref ref="logback.logger"/>
   </root>
 
 </included>

@@ -45,14 +45,6 @@ public class NexusMetricsServlet
   @Inject
   public NexusMetricsServlet(final MetricRegistry registry) {
     super(registry);
-
-    // JVM metrics are no longer automatically added in codahale-metrics
-    registry.register(name("jvm", "vm"), new JvmAttributeGaugeSet());
-    registry.register(name("jvm", "memory"), new MemoryUsageGaugeSet());
-    registry.register(name("jvm", "buffers"), new BufferPoolMetricSet(ManagementFactory.getPlatformMBeanServer()));
-    registry.register(name("jvm", "fd_usage"), new FileDescriptorRatioGauge());
-    registry.register(name("jvm", "thread-states"), new ThreadStatesGaugeSet());
-    registry.register(name("jvm", "garbage-collectors"), new GarbageCollectorMetricSet());
   }
 
   @Override

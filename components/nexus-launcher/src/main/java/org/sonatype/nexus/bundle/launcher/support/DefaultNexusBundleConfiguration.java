@@ -313,8 +313,8 @@ public class DefaultNexusBundleConfiguration
                   keystoreLocation.getAbsolutePath()
               )
               .replace(
-                  "OBF:1v2j1uum1xtv1zej1zer1xtn1uvk1v1v",
-                  keystorePassword
+                  ">password<",
+                  ">" + keystorePassword + "<"
               )
               .failIfFileDoesNotExist()
       );
