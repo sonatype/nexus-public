@@ -65,7 +65,7 @@
     <nexus.version>3.38.0-SNAPSHOT</nexus.version>
     <nexus2.version>2.14.20-02</nexus2.version>
 
-    <karaf.version>4.3.2</karaf.version>
+    <karaf.version>4.3.6</karaf.version>
 
     <!-- Define the node and yarn versions used by the frontend-maven-plugin -->
     <node.version>v12.14.0</node.version>
