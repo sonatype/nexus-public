@@ -28,9 +28,8 @@ import org.sonatype.nexus.repository.content.store.ExampleContentTestSupport;
 import org.junit.Before;
 import org.junit.Test;
 
-import static java.util.Objects.*;
+import static java.util.Objects.isNull;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 /**
@@ -62,7 +61,7 @@ public class SearchDAOTest
   }
 
   @Test
-  public void testSearchComponents() {
+  public void testSearchComponents() throws InterruptedException {
     generateConfiguration();
     final EntityId repositoryId = generatedConfigurations().get(0).getRepositoryId();
     generateSingleRepository(UUID.fromString(repositoryId.getValue()));
@@ -76,7 +75,8 @@ public class SearchDAOTest
       final Continuation<ComponentSearch> actual =
           searchDAO.searchComponents(1000, null, null, null, false, null);
 
-      actualData = (SearchData) actual.stream().findFirst().get();
+      actualData = actual.stream().findFirst()
+          .map(actualSearch -> (SearchData) actualSearch).orElseGet(SearchData::new);
     }
 
     assertThat("Data fetched from DB is same as generated",

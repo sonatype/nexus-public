@@ -28,7 +28,8 @@
   <packaging>pom</packaging>
 
   <properties>
-    <jackson2.version>2.11.4</jackson2.version>
+    <jackson2.version>2.13.1</jackson2.version>
+    <jackson2.yaml.version>2.12.2</jackson2.yaml.version>
     <jaxb.version>2.3.3</jaxb.version>
     <resteasy.version>3.15.3.Final</resteasy.version>
     <swagger.version>1.6.2</swagger.version>
@@ -297,7 +298,7 @@
       <dependency>
         <groupId>com.fasterxml.jackson.dataformat</groupId>
         <artifactId>jackson-dataformat-yaml</artifactId>
-        <version>${jackson2.version}</version>
+        <version>${jackson2.yaml.version}</version>
       </dependency>
 
       <dependency>
