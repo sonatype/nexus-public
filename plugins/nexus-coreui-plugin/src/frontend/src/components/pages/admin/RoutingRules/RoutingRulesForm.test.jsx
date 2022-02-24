@@ -69,13 +69,13 @@ describe('RoutingRulesForm', function() {
   }
 
   function renderView(view) {
-    return TestUtils.render(view, ({queryByLabelText, queryByText, queryAllByLabelText}) => ({
+    return TestUtils.render(view, ({queryByLabelText, queryByText, queryAllByTitle}) => ({
       name: () => queryByLabelText(UIStrings.ROUTING_RULES.FORM.NAME_LABEL),
       description: () => queryByLabelText(UIStrings.ROUTING_RULES.FORM.DESCRIPTION_LABEL),
       mode: () => queryByLabelText(UIStrings.ROUTING_RULES.FORM.MODE_LABEL),
       matcher: (index) => queryByLabelText(UIStrings.ROUTING_RULES.FORM.MATCHER_LABEL(index)),
-      deleteMatcherButton: (index) => queryAllByLabelText(UIStrings.ROUTING_RULES.FORM.DELETE_MATCHER_BUTTON)[index],
-      createButton: () => queryByText(UIStrings.ROUTING_RULES.FORM.CREATE_BUTTON, {selector: '[type="submit"]'}),
+      deleteMatcherButton: (index) => queryAllByTitle(UIStrings.ROUTING_RULES.FORM.DELETE_MATCHER_BUTTON)[index],
+      createButton: () => queryByText(UIStrings.ROUTING_RULES.FORM.CREATE_BUTTON, {selector: '.nx-btn'}),
       saveButton: () => queryByText(UIStrings.SETTINGS.SAVE_BUTTON_LABEL),
       cancelButton: () => queryByText(UIStrings.SETTINGS.CANCEL_BUTTON_LABEL),
       deleteButton: () => queryByText(UIStrings.SETTINGS.DELETE_BUTTON_LABEL)

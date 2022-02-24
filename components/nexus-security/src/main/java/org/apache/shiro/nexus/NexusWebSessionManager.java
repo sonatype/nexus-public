@@ -35,11 +35,13 @@ public class NexusWebSessionManager
   @Inject
   public void configureProperties(
       @Named("${shiro.globalSessionTimeout:-" + DEFAULT_GLOBAL_SESSION_TIMEOUT + "}") final long globalSessionTimeout,
-      @Named("${nexus.sessionCookieName:-" + DEFAULT_NEXUS_SESSION_COOKIE_NAME + "}") final String sessionCookieName)
+      @Named("${nexus.sessionCookieName:-" + DEFAULT_NEXUS_SESSION_COOKIE_NAME + "}") final String sessionCookieName,
+      @Named("${nexus.session.enabled:-true}") final boolean sessionEnabled)
   {
     setGlobalSessionTimeout(globalSessionTimeout);
     log.info("Global session timeout: {} ms", getGlobalSessionTimeout());
 
+    setSessionIdCookieEnabled(sessionEnabled);
     Cookie cookie = getSessionIdCookie();
     cookie.setName(sessionCookieName);
     log.info("Session-cookie prototype: name={}", cookie.getName());

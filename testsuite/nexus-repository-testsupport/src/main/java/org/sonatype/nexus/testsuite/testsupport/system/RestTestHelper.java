@@ -76,6 +76,7 @@ import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
@@ -344,6 +345,9 @@ public class RestTestHelper
     }
     else if (body instanceof File) {
       request.setEntity(new FileEntity((File) body, ContentType.APPLICATION_OCTET_STREAM));
+    }
+    else if (body instanceof MultipartEntityBuilder) {
+      request.setEntity(((MultipartEntityBuilder)body).build());
     }
     else if (body != null){
       request.setEntity(

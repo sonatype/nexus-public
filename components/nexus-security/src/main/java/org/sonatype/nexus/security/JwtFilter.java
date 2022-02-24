@@ -13,7 +13,6 @@
 package org.sonatype.nexus.security;
 
 import java.util.Optional;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -21,9 +20,12 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+
+import org.sonatype.nexus.common.text.Strings2;
+import org.sonatype.nexus.security.jwt.JwtVerificationException;
 
 import org.apache.shiro.web.servlet.AdviceFilter;
+import org.apache.shiro.web.util.WebUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.stream;
@@ -36,7 +38,8 @@ import static org.sonatype.nexus.security.JwtHelper.JWT_COOKIE_NAME;
  */
 @Named
 @Singleton
-public class JwtFilter extends AdviceFilter
+public class JwtFilter
+    extends AdviceFilter
 {
   public static final String NAME = "nx-jwt";
 
@@ -58,8 +61,21 @@ public class JwtFilter extends AdviceFilter
 
       if (jwtCookie.isPresent()) {
         Cookie cookie = jwtCookie.get();
-        Optional<Cookie> refreshedToken = jwtHelper.verifyAndRefreshJwtCookie(cookie.getValue());
-        refreshedToken.ifPresent(((HttpServletResponse) response)::addCookie);
+        String jwt = cookie.getValue();
+        if (!Strings2.isEmpty(jwt)) {
+          Cookie refreshedToken;
+          try {
+            refreshedToken = jwtHelper.verifyAndRefreshJwtCookie(jwt);
+          }
+          catch (JwtVerificationException e) {
+            // expire the cookie in case of any issues while JWT verification
+            cookie.setValue("");
+            cookie.setMaxAge(0);
+            WebUtils.toHttp(response).addCookie(cookie);
+            return false;
+          }
+          WebUtils.toHttp(response).addCookie(refreshedToken);
+        }
       }
     }
     return true;

@@ -11,7 +11,111 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
+import {useMachine} from '@xstate/react';
 
-export default function RepositoriesForm({itemId, onDone}) {
-  return <div/>;
+import {
+  ContentBody,
+  Page,
+  PageHeader,
+  PageTitle,
+  Section,
+  Utils,
+  FormUtils
+} from '@sonatype/nexus-ui-plugin';
+
+import {NxForm} from '@sonatype/react-shared-components';
+
+import {faDatabase} from '@fortawesome/free-solid-svg-icons';
+
+import UIStrings from '../../../../constants/UIStrings';
+import './Repositories.scss';
+
+import RepositoriesFormMachine from './RepositoriesFormMachine';
+
+import GenericGroupConfiguration from './facets/GenericGroupConfiguration';
+import GenericCleanupConfiguration from './facets/GenericCleanupConfiguration';
+import GenericHostedConfiguration from './facets/GenericHostedConfiguration';
+import GenericStorageConfiguration from './facets/GenericStorageConfiguration';
+import GenericFormatConfiguration from './facets/GenericFormatConfiguration';
+import GenericNameConfiguration from './facets/GenericNameConfiguration';
+
+export default function RepositoriesForm({itemId, onDone = () => {}}) {
+  const stateMachine = useMachine(RepositoriesFormMachine, {
+    context: {
+      pristineData: {
+        name: itemId
+      }
+    },
+    actions: {
+      onSaveSuccess: onDone,
+      onDeleteSuccess: onDone
+    },
+    devTools: true
+  });
+
+  const [current, send] = stateMachine;
+
+  const {
+    isPristine,
+    isEdit,
+    loadError,
+    saveError,
+    validationErrors,
+    data: {format, type}
+  } = current.context;
+
+  const {EDITOR} = UIStrings.REPOSITORIES;
+  const {SAVING} = UIStrings;
+
+  const isLoading = current.matches('loading');
+  const isSaving = current.matches('saving');
+  const isInvalid = Utils.isInvalid(validationErrors);
+
+  const retry = () => send({type: 'RETRY'});
+
+  const save = () => send({type: 'SAVE'});
+
+  return (
+    <Page className="nxrm-repository-editor">
+      <PageHeader>
+        <PageTitle
+          icon={faDatabase}
+          {...(isEdit ? EDITOR.EDIT_TITLE : EDITOR.CREATE_TITLE)}
+        />
+      </PageHeader>
+      <ContentBody>
+        <Section className="nxrm-repository-editor-form">
+          <NxForm
+            loading={isLoading}
+            loadError={loadError}
+            onCancel={onDone}
+            doLoad={retry}
+            onSubmit={save}
+            submitError={saveError}
+            submitMaskState={isSaving ? false : null}
+            submitBtnText={EDITOR.SAVE_BUTTON_LABEL}
+            submitMaskMessage={SAVING}
+            validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
+          >
+            <GenericFormatConfiguration parentMachine={stateMachine} />
+            {format && type && (
+              <>
+                <GenericNameConfiguration parentMachine={stateMachine} />
+                <GenericStorageConfiguration parentMachine={stateMachine} />
+                {type === 'group' && (
+                  <GenericGroupConfiguration parentMachine={stateMachine} />
+                )}
+                {type === 'hosted' && (
+                  <GenericHostedConfiguration parentMachine={stateMachine} />
+                )}
+                {type !== 'group' && (
+                  <GenericCleanupConfiguration parentMachine={stateMachine} />
+                )}
+              </>
+            )}
+          </NxForm>
+        </Section>
+      </ContentBody>
+    </Page>
+  );
 }

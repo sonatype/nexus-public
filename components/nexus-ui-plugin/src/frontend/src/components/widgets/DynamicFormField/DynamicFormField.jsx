@@ -13,9 +13,9 @@
 import React from 'react';
 import {mapObjIndexed, values} from 'ramda';
 import Textfield from "../Textfield/Textfield";
-import MultiSelect from '../MultiSelect/MultiSelect';
 import Select from '../Select/Select';
 import Utils from '../../../interface/Utils';
+import {NxStatefulTransferList} from '@sonatype/react-shared-components';
 
 export default function DynamicFormField({current, dynamicProps, id, initialValue, onChange}) {
   if (dynamicProps.type === 'string') {
@@ -30,15 +30,15 @@ export default function DynamicFormField({current, dynamicProps, id, initialValu
     />
   }
   else if (dynamicProps.type === 'itemselect') {
-    const fieldProps = Utils.fieldProps(id, current, initialValue || [], (value) => value)
-    return <MultiSelect
-        {...fieldProps}
-        filterValue={dynamicProps.filterValue}
-        toLabel={dynamicProps.attributes.toTitle}
-        fromLabel={dynamicProps.attributes.fromTitle}
-        fromOptions={dynamicProps.attributes.options}
-        onChange={(value) => onChange(fieldProps.name, value)}
-    />;
+    const allItems = dynamicProps.attributes.options.map((it) => ({id: it, displayName: it}));
+    const selectedItems = current.context.data[id] || [];
+
+    return <NxStatefulTransferList
+      allItems={allItems}
+      selectedItems={selectedItems}
+      onChange={(value) => onChange(id, value)}
+      allowReordering
+    />
   }
   else if (dynamicProps.type === 'combobox') {
     const fieldProps = Utils.fieldProps(id, current, initialValue || '');

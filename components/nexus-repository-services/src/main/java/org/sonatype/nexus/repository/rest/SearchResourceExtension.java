@@ -14,8 +14,7 @@ package org.sonatype.nexus.repository.rest;
 
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.repository.rest.internal.resources.SearchResource;
-
-import org.elasticsearch.search.SearchHit;
+import org.sonatype.nexus.repository.search.ComponentSearchResult;
 
 /**
  * Extension point for the {@link SearchResource} class
@@ -25,7 +24,9 @@ import org.elasticsearch.search.SearchHit;
 public interface SearchResourceExtension
 {
   /**
-   * Update the {@link ComponentXO} with data from the {@link SearchHit}
+   * Update the {@link ComponentXO} with data from the {@link ComponentSearchResult}
+   *
+   * @since 3.next
    */
-  ComponentXO updateComponentXO(ComponentXO componentXO, SearchHit hit);
+  ComponentXO updateComponentXO(ComponentXO componentXO, ComponentSearchResult hit);
 }

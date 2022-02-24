@@ -13,11 +13,18 @@
 package org.sonatype.nexus.testcommon.matchers;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeDiagnosingMatcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.joda.time.DateTime;
+
+import static org.hamcrest.Matchers.contains;
 
 public class NexusMatchers
 {
@@ -55,5 +62,31 @@ public class NexusMatchers
         return dateTime.isEqual(item);
       }
     };
+  }
+
+  /*
+   * Creates a {@link Matcher} for {@link Stream}. Note that the stream cannot have been consumed,
+   * and that the matcher is a termainl operation for the Stream.
+   */
+  @SafeVarargs
+  public static <E> Matcher<Stream<E>> streamContains(final E... items) {
+    List<E> actual = new ArrayList<>();
+    Matcher<Iterable<? extends E>> iterableMatcher = contains(items);
+
+    return new TypeSafeDiagnosingMatcher<Stream<E>>(Stream.class) {
+
+      @Override
+      public void describeTo(final Description description) {
+        iterableMatcher.describeTo(description);
+      }
+
+      @Override
+      protected boolean matchesSafely(final Stream<E> item, final Description mismatchDescription) {
+        if (actual.isEmpty()) {
+          item.collect(Collectors.toCollection(() -> actual));
+        }
+
+        return iterableMatcher.matches(actual);
+      }};
   }
 }

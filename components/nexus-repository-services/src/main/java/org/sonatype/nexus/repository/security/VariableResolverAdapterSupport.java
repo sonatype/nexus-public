@@ -18,6 +18,8 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.search.AssetSearchResult;
+import org.sonatype.nexus.repository.search.ComponentSearchResult;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.selector.ConstantVariableResolver;
 import org.sonatype.nexus.selector.PropertiesResolver;
@@ -80,9 +82,25 @@ public abstract class VariableResolverAdapterSupport
     return builder.build();
   }
 
+  @Override
+  public VariableSource fromSearchResult(final ComponentSearchResult component, final AssetSearchResult asset) {
+    VariableSourceBuilder builder = new VariableSourceBuilder();
+    builder.addResolver(new ConstantVariableResolver(asset.getPath(), PATH));
+    builder.addResolver(new ConstantVariableResolver(component.getFormat(), FORMAT));
+
+    addFromSearchResults(builder, component, asset);
+
+    return builder.build();
+  }
+
   protected abstract void addFromSourceLookup(VariableSourceBuilder builder,
                                               SourceLookup sourceLookup,
                                               Map<String, Object> asset);
+
+  protected abstract void addFromSearchResults(
+      VariableSourceBuilder builder,
+      ComponentSearchResult component,
+      AssetSearchResult asset);
 
   protected void addCoordinates(final VariableSourceBuilder builder, final Map<String, String> coordinates) {
     builder.addResolver(new PropertiesResolver<>("coordinate", coordinates));

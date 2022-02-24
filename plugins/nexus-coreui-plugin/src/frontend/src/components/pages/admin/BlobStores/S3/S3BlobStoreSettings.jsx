@@ -13,16 +13,9 @@
 import React from 'react';
 import {useService} from '@xstate/react';
 
-import {
-  FieldWrapper,
-  FormUtils,
-  Textfield,
-  Select,
-  NxAccordion,
-  NxStatefulAccordion,
-  NxCheckbox,
-  NxTextInput
-} from '@sonatype/nexus-ui-plugin';
+import { FieldWrapper, FormUtils, Textfield, Select } from '@sonatype/nexus-ui-plugin';
+
+import { NxAccordion, NxStatefulAccordion, NxCheckbox, NxTextInput } from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings'
 

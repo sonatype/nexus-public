@@ -15,14 +15,14 @@ import {useMachine} from '@xstate/react';
 import {faGlobe} from '@fortawesome/free-solid-svg-icons';
 import {
   ContentBody,
-  NxButton,
-  NxLoadWrapper,
   Page,
   PageActions,
   PageHeader,
   PageTitle,
   Utils
 } from '@sonatype/nexus-ui-plugin';
+
+import {NxButton, NxLoadWrapper} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
 import SystemInformationBody from './SystemInformationBody';

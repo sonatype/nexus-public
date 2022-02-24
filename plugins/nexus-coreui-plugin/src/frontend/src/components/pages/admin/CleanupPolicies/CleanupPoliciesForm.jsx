@@ -17,21 +17,21 @@ import {
   CheckboxControlledWrapper,
   ContentBody,
   FieldWrapper,
-  NxErrorAlert,
-  NxButton,
-  NxFontAwesomeIcon,
-  NxLoadWrapper,
-  NxSubmitMask,
-  NxTooltip,
   Page,
   PageHeader,
   PageTitle,
   Section,
-  SectionFooter,
   Select,
   Textfield,
-  Utils
+  Utils,
+  FormUtils,
 } from '@sonatype/nexus-ui-plugin';
+
+import {
+  NxForm,
+  NxButton,
+  NxFontAwesomeIcon,
+} from '@sonatype/react-shared-components';
 
 import CleanupPoliciesFormMachine from './CleanupPoliciesFormMachine';
 import CleanupPoliciesPreview from './CleanupPoliciesPreview';
@@ -108,15 +108,8 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
     }
   }
 
-  function save(event) {
-    event.preventDefault();
+  function save() {
     send({type: 'SAVE'});
-  }
-
-  function handleEnter(event) {
-    if (event.key === 'Enter') {
-      save(event);
-    }
   }
 
   function retry() {
@@ -146,12 +139,26 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
       <PageTitle text={isEdit ? UIStrings.CLEANUP_POLICIES.EDIT_TITLE : UIStrings.CLEANUP_POLICIES.CREATE_TITLE}/>
     </PageHeader>
     <ContentBody>
-      <Section className="nxrm-cleanup-policies-form" onKeyPress={handleEnter}>
-        <NxLoadWrapper loading={isLoading} error={loadError ? `${loadError}` : null} retryHandler={retry}>
+      <Section className="nxrm-cleanup-policies-form">
+        <NxForm
+            loading={isLoading}
+            loadError={loadError}
+            onCancel={cancel}
+            doLoad={retry}
+            onSubmit={save}
+            submitError={saveError}
+            submitMaskState={isSaving ? false : null}
+            submitBtnText={UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
+            submitMaskMessage={UIStrings.SAVING}
+            validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
+            additionalFooterBtns={itemId &&
+              <NxButton type="button" variant="tertiary" onClick={confirmDelete}>
+                <NxFontAwesomeIcon icon={faTrash}/>
+                <span>{UIStrings.SETTINGS.DELETE_BUTTON_LABEL}</span>
+              </NxButton>
+            }
+        >
           {hasData && <>
-            {saveError && <NxErrorAlert>{UIStrings.CLEANUP_POLICIES.MESSAGES.SAVE_ERROR}</NxErrorAlert>}
-            {isSaving && <NxSubmitMask message={UIStrings.SAVING}/>}
-
             <FieldWrapper labelText={UIStrings.CLEANUP_POLICIES.NAME_LABEL}
                           descriptionText={UIStrings.CLEANUP_POLICIES.NAME_DESCRIPTION}
                           id="cleanup-name-group">
@@ -186,7 +193,7 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
                 {UIStrings.CLEANUP_POLICIES.CRITERIA_LABEL}
               </legend>
               {isFieldApplicable('lastBlobUpdated') &&
-              <CheckboxControlledWrapper isChecked={criteriaLastBlobUpdatedEnabled}
+              <CheckboxControlledWrapper isChecked={Boolean(criteriaLastBlobUpdatedEnabled)}
                                          onChange={setCriteriaLastBlobUpdatedEnabled}
                                          id="criteria-last-blob-updated-group"
                                          title={UIStrings.CLEANUP_POLICIES.LAST_UPDATED_CHECKBOX_TITLE(
@@ -205,7 +212,7 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
               </CheckboxControlledWrapper>
               }
               {isFieldApplicable('lastDownloaded') &&
-              <CheckboxControlledWrapper isChecked={criteriaLastDownloadedEnabled}
+              <CheckboxControlledWrapper isChecked={Boolean(criteriaLastDownloadedEnabled)}
                                          onChange={setCriteriaLastDownloadedEnabled}
                                          id="criteria-last-downloaded-group"
                                          title={UIStrings.CLEANUP_POLICIES.LAST_DOWNLOADED_CHECKBOX_TITLE(
@@ -224,7 +231,7 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
               </CheckboxControlledWrapper>
               }
               {isFieldApplicable('isPrerelease') &&
-              <CheckboxControlledWrapper isChecked={criteriaReleaseTypeEnabled}
+              <CheckboxControlledWrapper isChecked={Boolean(criteriaReleaseTypeEnabled)}
                                          onChange={setCriteriaReleaseTypeEnabled}
                                          id="criteria-release-type-group"
                                          title={UIStrings.CLEANUP_POLICIES.RELEASE_TYPE_CHECKBOX_TITLE(
@@ -245,7 +252,7 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
               </CheckboxControlledWrapper>
               }
               {isFieldApplicable('regex') &&
-              <CheckboxControlledWrapper isChecked={criteriaAssetRegexEnabled}
+              <CheckboxControlledWrapper isChecked={Boolean(criteriaAssetRegexEnabled)}
                                          onChange={setCriteriaAssetRegexEnabled}
                                          id="criteria-asset-name-group"
                                          title={UIStrings.CLEANUP_POLICIES.ASSET_NAME_CHECKBOX_TITLE(
@@ -262,22 +269,8 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
               }
             </fieldset>
             }
-            <SectionFooter>
-              <NxTooltip title={Utils.saveTooltip({isPristine, isInvalid})}>
-                <NxButton variant="primary" className={(isPristine || isInvalid) && 'disabled'} onClick={save}
-                          type="submit">
-                  {UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
-                </NxButton>
-              </NxTooltip>
-              <NxButton onClick={cancel}>{UIStrings.SETTINGS.CANCEL_BUTTON_LABEL}</NxButton>
-              {itemId &&
-              <NxButton variant="tertiary" onClick={confirmDelete}>
-                <NxFontAwesomeIcon icon={faTrash}/>
-                <span>{UIStrings.SETTINGS.DELETE_BUTTON_LABEL}</span>
-              </NxButton>}
-            </SectionFooter>
           </>}
-        </NxLoadWrapper>
+        </NxForm>
       </Section>
 
       {!isLoading && !loadError && hasData && <CleanupPoliciesPreview policyData={data}/>}

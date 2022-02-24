@@ -16,6 +16,7 @@ import javax.annotation.Nullable
 
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.content.Asset
+import org.sonatype.nexus.repository.content.AssetBlob
 import org.sonatype.nexus.repository.rest.api.AssetXO
 import org.sonatype.nexus.repository.rest.api.AssetXODescriptor
 import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO
@@ -35,10 +36,16 @@ class AssetXOBuilder
   {
     String externalId = toExternalId(internalAssetId(asset)).value
 
-    Map checksum = asset.blob().map({ blob -> blob.checksums() }).orElse([:])
+    Optional<AssetBlob> assetBlob = asset.blob()
 
-    String contentType = asset.blob().map({ blob -> blob.contentType() }).orElse(null)
+    Map checksum = assetBlob.map({ blob -> blob.checksums() }).orElse([:])
+
+    String contentType = assetBlob.map({ blob -> blob.contentType() }).orElse(null)
     String format = repository.format.value
+
+    String uploader = assetBlob.flatMap( {blob -> blob.createdBy()}).orElse(null)
+    String uploaderIp = assetBlob.flatMap( {blob -> blob.createdByIp()}).orElse(null)
+    long fileSize = assetBlob.map({ blob -> blob.blobSize()}).orElse(0)
 
     return AssetXO.builder()
         .path(asset.path())
@@ -50,6 +57,9 @@ class AssetXOBuilder
         .contentType(contentType)
         .lastModified(calculateLastModified(asset))
         .attributes(getExpandedAttributes(asset, format, assetDescriptors))
+        .uploader(uploader)
+        .uploaderIp(uploaderIp)
+        .fileSize(fileSize)
         .build()
   }
 

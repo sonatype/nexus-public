@@ -15,14 +15,20 @@ package org.sonatype.nexus.security.internal;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.distributed.event.service.api.DistributedEvent;
+import org.sonatype.nexus.distributed.event.service.api.EventType;
+import org.sonatype.nexus.distributed.event.service.api.common.AuthorizationChangedDistributedEvent;
+import org.sonatype.nexus.distributed.event.service.api.common.PrivilegeConfigurationEvent;
+import org.sonatype.nexus.distributed.event.service.api.common.PublisherEvent;
+import org.sonatype.nexus.distributed.event.service.api.common.RoleConfigurationEvent;
 import org.sonatype.nexus.security.authz.AuthorizationConfigurationChanged;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.config.CPrivilege;
@@ -42,10 +48,15 @@ import org.sonatype.nexus.security.role.RoleUpdatedEvent;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.eventbus.Subscribe;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static  org.sonatype.nexus.security.internal.DefaultRealmConstants.DEFAULT_USER_SOURCE;
-import static  org.sonatype.nexus.security.internal.DefaultRealmConstants.DEFAULT_REALM_NAME;
+import static org.sonatype.nexus.distributed.event.service.api.EphemeralNodeId.NODE_ID;
+import static org.sonatype.nexus.distributed.event.service.api.EventType.CREATED;
+import static org.sonatype.nexus.distributed.event.service.api.EventType.DELETED;
+import static org.sonatype.nexus.distributed.event.service.api.EventType.UPDATED;
+import static org.sonatype.nexus.security.internal.DefaultRealmConstants.DEFAULT_USER_SOURCE;
+import static org.sonatype.nexus.security.internal.DefaultRealmConstants.DEFAULT_REALM_NAME;
 
 /**
  * Default {@link AuthorizationManager}.
@@ -54,7 +65,7 @@ import static  org.sonatype.nexus.security.internal.DefaultRealmConstants.DEFAUL
 @Singleton
 public class AuthorizationManagerImpl
     extends ComponentSupport
-    implements AuthorizationManager
+    implements AuthorizationManager, EventAware
 {
   public static final String SOURCE = DEFAULT_USER_SOURCE;
 
@@ -65,9 +76,10 @@ public class AuthorizationManagerImpl
   private final List<PrivilegeDescriptor> privilegeDescriptors;
 
   @Inject
-  public AuthorizationManagerImpl(final SecurityConfigurationManager configuration,
-                                  final EventManager eventManager,
-                                  final List<PrivilegeDescriptor> privilegeDescriptors)
+  public AuthorizationManagerImpl(
+      final SecurityConfigurationManager configuration,
+      final EventManager eventManager,
+      final List<PrivilegeDescriptor> privilegeDescriptors)
   {
     this.configuration = configuration;
     this.eventManager = eventManager;
@@ -156,7 +168,6 @@ public class AuthorizationManagerImpl
     return target;
   }
 
-
   @Nullable
   private PrivilegeDescriptor descriptor(final String type) {
     for (PrivilegeDescriptor descriptor : privilegeDescriptors) {
@@ -191,29 +202,32 @@ public class AuthorizationManagerImpl
   @Override
   public Role addRole(final Role role) {
     // the roleId of the secRole might change, so we need to keep the reference
-    final CRole secRole = this.convert(role);
+    CRole secRole = this.convert(role);
 
     configuration.createRole(secRole);
 
     log.info("Added role {}", role.getName());
-    eventManager.post(new RoleCreatedEvent(role));
+
+    fireRoleCreatedEvent(role);
+    fireRoleConfigurationDistributedEvent(role.getRoleId(), CREATED);
 
     // notify any listeners that the config changed
-    this.fireAuthorizationChangedEvent();
+    fireAuthorizationChangedEvent();
 
     return this.convert(secRole);
   }
 
   @Override
   public Role updateRole(final Role role) throws NoSuchRoleException {
-    final CRole secRole = this.convert(role);
+    CRole secRole = this.convert(role);
 
     configuration.updateRole(secRole);
 
-    eventManager.post(new RoleUpdatedEvent(role));
+    fireRoleUpdatedEvent(role);
+    fireRoleConfigurationDistributedEvent(role.getRoleId(), UPDATED);
 
     // notify any listeners that the config changed
-    this.fireAuthorizationChangedEvent();
+    fireAuthorizationChangedEvent();
 
     return this.convert(secRole);
   }
@@ -224,10 +238,11 @@ public class AuthorizationManagerImpl
     configuration.deleteRole(roleId);
 
     log.info("Removed role {}", role.getName());
-    eventManager.post(new RoleDeletedEvent(role));
+    fireRoleDeletedEvent(role);
+    fireRoleConfigurationDistributedEvent(roleId, DELETED);
 
     // notify any listeners that the config changed
-    this.fireAuthorizationChangedEvent();
+    fireAuthorizationChangedEvent();
   }
 
   // //
@@ -257,10 +272,12 @@ public class AuthorizationManagerImpl
     configuration.createPrivilege(secPriv);
 
     log.info("Added privilege {}", privilege.getName());
-    eventManager.post(new PrivilegeCreatedEvent(privilege));
+
+    firePrivilegeCreatedEvent(privilege);
+    firePrivilegeConfigurationDistributedEvent(privilege.getId(), CREATED);
 
     // notify any listeners that the config changed
-    this.fireAuthorizationChangedEvent();
+    fireAuthorizationChangedEvent();
 
     return this.convert(secPriv);
   }
@@ -271,10 +288,11 @@ public class AuthorizationManagerImpl
 
     configuration.updatePrivilege(secPriv);
 
-    eventManager.post(new PrivilegeUpdatedEvent(privilege));
+    firePrivilegeUpdatedEvent(privilege);
+    firePrivilegeConfigurationDistributedEvent(privilege.getId(), UPDATED);
 
     // notify any listeners that the config changed
-    this.fireAuthorizationChangedEvent();
+    fireAuthorizationChangedEvent();
 
     return this.convert(secPriv);
   }
@@ -285,10 +303,11 @@ public class AuthorizationManagerImpl
     configuration.deletePrivilege(privilegeId);
 
     log.info("Removed privilege {}", privilege.getName());
-    eventManager.post(new PrivilegeDeletedEvent(privilege));
+    firePrivilegeDeletedEvent(privilege);
+    firePrivilegeConfigurationDistributedEvent(privilegeId, DELETED);
 
     // notify any listeners that the config changed
-    this.fireAuthorizationChangedEvent();
+    fireAuthorizationChangedEvent();
   }
 
   @Override
@@ -296,7 +315,154 @@ public class AuthorizationManagerImpl
     return true;
   }
 
+  @Subscribe
+  public void onRoleConfigurationEvent(final RoleConfigurationEvent event) {
+    checkNotNull(event);
+
+    String roleId = event.getRoleId();
+    EventType eventType = event.getEventType();
+
+    log.debug("Consume distributed RoleConfigurationEvent: roleId={}, type={}", roleId, eventType);
+
+    switch (eventType) {
+      case CREATED:
+        handleRoleCreatedDistributedEvent(roleId);
+        break;
+      case UPDATED:
+        handleRoleUpdatedDistributedEvent(roleId);
+        break;
+      case DELETED:
+        handleRoleDeletedDistributedEvent(roleId);
+        break;
+    }
+  }
+
+  @Subscribe
+  public void onPrivilegeConfigurationEvent(final PrivilegeConfigurationEvent event) {
+    checkNotNull(event);
+
+    String privilegeId = event.getPrivilegeId();
+    EventType eventType = event.getEventType();
+
+    log.debug("Consume distributed PrivilegeConfigurationEvent: privilegeId={}, type={}", privilegeId, eventType);
+
+    switch (eventType) {
+      case CREATED:
+        handlePrivilegeCreatedDistributedEvent(privilegeId);
+        break;
+      case UPDATED:
+        handlePrivilegeUpdatedDistributedEvent(privilegeId);
+        break;
+      case DELETED:
+        handlePrivilegeDeletedDistributedEvent(privilegeId);
+        break;
+    }
+  }
+
+  // role DES events handlers
+  private void handleRoleCreatedDistributedEvent(final String roleId) {
+    try {
+      Role role = getRole(roleId);
+      fireRoleCreatedEvent(role);
+    }
+    catch (NoSuchRoleException e) {
+      log.error("Could not load role={} while handling distributed event", roleId, e);
+    }
+  }
+
+  private void handleRoleUpdatedDistributedEvent(final String roleId) {
+    try {
+      Role role = getRole(roleId);
+      fireRoleUpdatedEvent(role);
+    }
+    catch (NoSuchRoleException e) {
+      log.error("Could not load role={} while handling distributed event", roleId, e);
+    }
+  }
+
+  private void handleRoleDeletedDistributedEvent(final String roleId) {
+    try {
+      Role role = getRole(roleId);
+      fireRoleDeletedEvent(role);
+    }
+    catch (NoSuchRoleException e) {
+      log.error("Could not load role={} while handling distributed event", roleId);
+    }
+  }
+
+  // privilege DES event handlers
+  private void handlePrivilegeCreatedDistributedEvent(final String privilegeId) {
+    try {
+      Privilege privilege = getPrivilege(privilegeId);
+      firePrivilegeCreatedEvent(privilege);
+    }
+    catch (NoSuchPrivilegeException e) {
+      log.error("Could not load privilege={} while handling distributed event", privilegeId);
+    }
+  }
+
+  private void handlePrivilegeUpdatedDistributedEvent(final String privilegeId) {
+    try {
+      Privilege privilege = getPrivilege(privilegeId);
+      firePrivilegeUpdatedEvent(privilege);
+    }
+    catch (NoSuchPrivilegeException e) {
+      log.error("Could not load privilege={} while handling distributed event", privilegeId);
+    }
+  }
+
+  private void handlePrivilegeDeletedDistributedEvent(final String privilegeId) {
+    try {
+      Privilege privilege = getPrivilege(privilegeId);
+      firePrivilegeDeletedEvent(privilege);
+    }
+    catch (NoSuchPrivilegeException e) {
+      log.error("Could not load privilege={} while handling distributed event", privilegeId);
+    }
+  }
+
   private void fireAuthorizationChangedEvent() {
-    this.eventManager.post(new AuthorizationConfigurationChanged());
+    eventManager.post(new AuthorizationConfigurationChanged());
+    eventManager.post(new PublisherEvent(NODE_ID, new AuthorizationChangedDistributedEvent()));
+  }
+
+  private void fireRoleCreatedEvent(final Role role) {
+    eventManager.post(new RoleCreatedEvent(role));
+  }
+
+  private void fireRoleUpdatedEvent(final Role role) {
+    eventManager.post(new RoleUpdatedEvent(role));
+  }
+
+  private void fireRoleDeletedEvent(final Role role) {
+    eventManager.post(new RoleDeletedEvent(role));
+  }
+
+  private void firePrivilegeCreatedEvent(final Privilege privilege) {
+    eventManager.post(new PrivilegeCreatedEvent(privilege));
+  }
+
+  private void firePrivilegeUpdatedEvent(final Privilege privilege) {
+    eventManager.post(new PrivilegeUpdatedEvent(privilege));
+  }
+
+  private void firePrivilegeDeletedEvent(final Privilege privilege) {
+    eventManager.post(new PrivilegeDeletedEvent(privilege));
+  }
+
+  private void fireRoleConfigurationDistributedEvent(final String roleId, final EventType eventType) {
+    log.debug("Distribute event: roleId={}, type={}", roleId, eventType);
+
+    DistributedEvent event = new RoleConfigurationEvent(roleId, eventType);
+    PublisherEvent publisherEvent = new PublisherEvent(NODE_ID, event);
+    eventManager.post(publisherEvent);
+  }
+
+  private void firePrivilegeConfigurationDistributedEvent(final String privilegeId, final EventType eventType) {
+    log.debug("Distribute event: privilegeId={}, type={}", privilegeId, eventType);
+
+    DistributedEvent event = new PrivilegeConfigurationEvent(privilegeId, eventType);
+    PublisherEvent publisherEvent = new PublisherEvent(NODE_ID, event);
+    eventManager.post(publisherEvent);
   }
 }

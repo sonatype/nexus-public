@@ -15,6 +15,8 @@ package org.sonatype.nexus.repository.security;
 import java.util.Map;
 
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.search.AssetSearchResult;
+import org.sonatype.nexus.repository.search.ComponentSearchResult;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.selector.VariableSource;
 
@@ -42,4 +44,6 @@ public interface VariableResolverAdapter
    * @since 3.18
    */
   VariableSource fromPath(String path, String format);
+
+  VariableSource fromSearchResult(ComponentSearchResult component, AssetSearchResult asset);
 }

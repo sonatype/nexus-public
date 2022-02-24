@@ -71,18 +71,21 @@ describe('DynamicFormField', () => {
     });
 
     it('renders a MultiSelect field', () => {
-      const {container, queryByLabelText} = render(<DynamicFormField {...makeContext('test', ['a'])} dynamicProps={{
+      const options = ['transfer-list-option-1', 'transfer-list-option-2'];
+      const dynamicProps = {
         type: 'itemselect',
         attributes: {
-          options: ['a', 'b']
+          options
         }
-      }}/>);
+      }
+      const {container} = render(<DynamicFormField
+         {...makeContext('test', [])} dynamicProps={dynamicProps}
+        />);
 
-      expect(container.querySelector('.nxrm-select')).toBeInTheDocument();
-      expect(queryByLabelText('Move Selection Right')).toBeInTheDocument();
-      expect(queryByLabelText('Move Selection Left')).toBeInTheDocument();
-      expect(queryByLabelText('Move Selection Up')).toBeInTheDocument();
-      expect(queryByLabelText('Move Selection Down')).toBeInTheDocument();
+      expect(screen.getByText('Available Items')).toBeInTheDocument();  
+      expect(screen.getByText('Transferred Items')).toBeInTheDocument(); 
+      expect(screen.getByLabelText(options[0])).toBeInTheDocument();
+      expect(screen.getByLabelText(options[1])).toBeInTheDocument();
     });
 
     it('renders a Select field', () => {

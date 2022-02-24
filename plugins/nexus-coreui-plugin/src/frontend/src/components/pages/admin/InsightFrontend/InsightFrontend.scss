@@ -17,4 +17,46 @@
 
 .nx-table-container {
   margin-bottom: 10px;
+  width: calc(50% - 10px);
+  height: 400px;
+}
+
+.chart-container {
+  margin-bottom: 10px;
+  width: 100%;
+  height: 400px;
+  padding-right: 10px;
+}
+
+.chart-header {
+  margin-top: -20px;
+  padding-right: 10px;
+}
+
+.empty-chart {
+  justify-content: center;
+  display: flex;
+  align-items: center;
+  width: calc(50% - 10px);
+}
+
+.insight-frontend-title {
+  max-width: 100%;
+}
+
+.insight-frontend-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.insight-frontend-frame {
+  background-color: #FFFFFF;
+}
+
+.insight-frontend-container {
+  margin: 20px;
+}
+.insight-frontend-content-item {
+  display: flex;
+  justify-content: space-between;
 }

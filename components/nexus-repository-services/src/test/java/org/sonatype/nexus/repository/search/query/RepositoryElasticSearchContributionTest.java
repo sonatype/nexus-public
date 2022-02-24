@@ -51,7 +51,7 @@ public class RepositoryElasticSearchContributionTest
 
     BoolQueryBuilder query = QueryBuilders.boolQuery();
 
-    underTest.contribute(query, REPOSITORY_NAME, "repo");
+    underTest.contribute(query::must, REPOSITORY_NAME, "repo");
 
     //validate we revert to default query when a reponame isn't a group, which is just to match the string as entered
     assertThat(query.toString(), Matchers.containsString("\"query\" : \"repo\""));
@@ -65,7 +65,7 @@ public class RepositoryElasticSearchContributionTest
 
     BoolQueryBuilder query = QueryBuilders.boolQuery();
 
-    underTest.contribute(query, REPOSITORY_NAME, "repo");
+    underTest.contribute(query::must, REPOSITORY_NAME, "repo");
 
     //validate we revert to default query when a reponame doesn't match, which is just to match the string as entered
     assertThat(query.toString(), Matchers.containsString("\"query\" : \"repo\""));
@@ -80,7 +80,7 @@ public class RepositoryElasticSearchContributionTest
 
     BoolQueryBuilder query = QueryBuilders.boolQuery();
 
-    underTest.contribute(query, REPOSITORY_NAME, "group");
+    underTest.contribute(query::must, REPOSITORY_NAME, "group");
 
     assertThat(query.toString(), Matchers.containsString("\"repository_name\" : [ \"repo\", \"repo2\" ]"));
   }

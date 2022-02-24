@@ -36,7 +36,7 @@ public class NexusPaxExamTestIndexRule
     extends TestIndexRule
 {
   public NexusPaxExamTestIndexRule() {
-    super(TestBaseDir.resolve("target/it-reports"), TestBaseDir.resolve("target/it-data"));
+    super(getCiPath("target/it-reports"), getCiPath("target/it-data"));
   }
 
   /**
@@ -66,5 +66,17 @@ public class NexusPaxExamTestIndexRule
     File logDir = new File(lastInstallDir, "nexus3/log");
     captureLogs(this, logDir, description.getClassName());
     finished(description);
+  }
+
+  /*
+   * Jenkins will overwrite archived files from parallel stages. This attempts to name the path after the job stage.
+   */
+  private static File getCiPath(final String path) {
+    File file = TestBaseDir.resolve(path);
+    String jobName = System.getProperty("it.data.prefix");
+    if (jobName != null) {
+      return new File(file, jobName);
+    }
+    return file;
   }
 }

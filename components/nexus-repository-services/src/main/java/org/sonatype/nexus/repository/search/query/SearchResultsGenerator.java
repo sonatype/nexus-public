@@ -14,7 +14,9 @@ package org.sonatype.nexus.repository.search.query;
 
 import java.util.List;
 
-import org.elasticsearch.action.search.SearchResponse;
+import org.sonatype.nexus.repository.search.ComponentSearchResult;
+import org.sonatype.nexus.repository.search.SearchResponse;
+
 /**
  * Generates search results consumable by the UI
  *
@@ -22,5 +24,5 @@ import org.elasticsearch.action.search.SearchResponse;
  */
 public interface SearchResultsGenerator
 {
-  List<SearchResultComponent> getSearchResultList(SearchResponse response);
+  List<ComponentSearchResult> getSearchResultList(SearchResponse response);
 }

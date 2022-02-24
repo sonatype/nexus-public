@@ -11,7 +11,8 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {NxButton, Textfield} from '@sonatype/nexus-ui-plugin';
+import {Textfield} from '@sonatype/nexus-ui-plugin';
+import {NxButton} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
 

@@ -12,10 +12,12 @@
  */
 package org.sonatype.nexus.common.io;
 
+import java.time.Duration;
+
 import org.sonatype.goodies.common.Time;
 
 /**
- * Supplies {@link Cooperation} points.
+ * Supplies {@link Cooperation} points. Not intended for use with SQL/Datastore.
  *
  * @since 3.14
  */
@@ -34,12 +36,30 @@ public interface CooperationFactory
     /**
      * @param majorTimeout when waiting for the main I/O request
      */
-    Builder majorTimeout(Time majorTimeout);
+    Builder majorTimeout(Duration majorTimeout);
+
+    /**
+     * @param majorTimeout when waiting for the main I/O request
+     * @deprecated use the API utilizing java.time.Duration
+     */
+    @Deprecated
+    default Builder majorTimeout(final Time majorTimeout) {
+      return majorTimeout(Duration.ofSeconds(majorTimeout.toSeconds()));
+    }
 
     /**
      * @param minorTimeout when waiting for any I/O dependencies
      */
-    Builder minorTimeout(Time minorTimeout);
+    Builder minorTimeout(Duration minorTimeout);
+
+    /**
+     * @param minorTimeout when waiting for any I/O dependencies
+     * @deprecated use the API utilizing java.time.Duration
+     */
+    @Deprecated
+    default Builder minorTimeout(final Time minorTimeout) {
+      return majorTimeout(Duration.ofSeconds(minorTimeout.toSeconds()));
+    }
 
     /**
      * @param threadsPerKey limits the threads waiting under each key

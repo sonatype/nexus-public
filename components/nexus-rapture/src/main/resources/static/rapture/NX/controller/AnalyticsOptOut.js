@@ -37,10 +37,19 @@ Ext.define('NX.controller.AnalyticsOptOut', {
         'nx-footer-analytics-opt-out': {
           beforerender: me.renderTextAndButton
         }
+      },
+      controller: {
+        '#Permissions': {
+          changed: me.maybeSetVisible
+        }
       }
     });
 
     me.callParent();
+  },
+
+  maybeSetVisible: function() {
+    this.getAnalytics().maybeSetVisible()
   },
 
   dismiss: function() {

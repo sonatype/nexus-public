@@ -14,7 +14,14 @@ import React, {useEffect} from 'react';
 import {useMachine} from '@xstate/react';
 
 import {
+  FieldWrapper,
   ListMachineUtils,
+  Section, SectionToolbar,
+  Select,
+  ValidationUtils
+} from '@sonatype/nexus-ui-plugin';
+
+import {
   NxButton,
   NxFilterInput,
   NxLoadWrapper,
@@ -24,12 +31,8 @@ import {
   NxTableHead,
   NxTableRow,
   NxTooltip,
-  NxWarningAlert,
-  Section,
-  SectionToolbar,
-  Select,
-  ValidationUtils
-} from '@sonatype/nexus-ui-plugin';
+  NxWarningAlert
+} from '@sonatype/react-shared-components';
 import UIStrings from '../../../../constants/UIStrings';
 
 import CleanupPoliciesPreviewFormMachine from './CleanupPoliciesPreviewFormMachine';

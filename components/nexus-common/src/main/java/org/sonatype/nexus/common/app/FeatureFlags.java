@@ -35,6 +35,12 @@ public interface FeatureFlags
   String DATASTORE_CLUSTERED_ENABLED = "nexus.datastore.clustered.enabled";
   String DATASTORE_CLUSTERED_ENABLED_NAMED = "${nexus.datastore.clustered.enabled:-false}";
 
+  //Enable Datastore search
+  String DATASTORE_SEARCH_ENABLED = "nexus.datastore.search.enabled";
+
+  //Enable elastic search
+  String ELASTIC_SEARCH_ENABLED = "nexus.elasticsearch.enabled";
+
   /* Orient flag for marking content that is orient only, and should be disabled when datastore is enabled */
   String ORIENT_ENABLED = "nexus.orient.enabled";
 
@@ -43,4 +49,7 @@ public interface FeatureFlags
 
   /* Session flag for marking content that is only for session, and should be disabled when jwt is enabled */
   String SESSION_ENABLED = "nexus.session.enabled";
+
+  /* HTTP Replication. Available values: true, false. Default value: false */
+  String REPLICATION_HTTP_ENABLED = "nexus.replication.http.enabled";
 }

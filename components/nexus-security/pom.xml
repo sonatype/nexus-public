@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-components</artifactId>
-    <version>3.38.0-SNAPSHOT</version>
+    <version>3.39.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-security</artifactId>
@@ -32,6 +32,11 @@
     <dependency>
       <groupId>com.auth0</groupId>
       <artifactId>java-jwt</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-distributed-event-service-api</artifactId>
     </dependency>
 
     <dependency>
@@ -72,6 +77,11 @@
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-rest</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-distributed-event-service-api</artifactId>
     </dependency>
 
     <dependency>

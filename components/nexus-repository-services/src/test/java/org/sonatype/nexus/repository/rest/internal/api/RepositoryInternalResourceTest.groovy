@@ -17,6 +17,7 @@ import org.sonatype.nexus.repository.Facet
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
+import org.sonatype.nexus.repository.Recipe
 import org.sonatype.nexus.repository.config.Configuration
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus
@@ -32,6 +33,7 @@ import org.mockito.Mock
 
 import static org.mockito.Mockito.mock
 import static org.mockito.Mockito.when
+import static org.sonatype.nexus.security.BreadActions.READ
 
 class RepositoryInternalResourceTest
     extends TestSupport
@@ -45,6 +47,9 @@ class RepositoryInternalResourceTest
   @Mock
   RepositoryPermissionChecker repositoryPermissionChecker
 
+  @Mock
+  List<Recipe> recipes
+
   ProxyType proxyType = new ProxyType()
 
   GroupType groupType = new GroupType()
@@ -55,7 +60,7 @@ class RepositoryInternalResourceTest
 
   @Before
   void setup() {
-    underTest = new RepositoryInternalResource(formats, repositoryManager, repositoryPermissionChecker, proxyType);
+    underTest = new RepositoryInternalResource(formats, repositoryManager, repositoryPermissionChecker, proxyType, recipes)
   }
 
   @Test
@@ -74,7 +79,7 @@ class RepositoryInternalResourceTest
           [(HttpClientFacet): mockHttpFacet('Remote Auto Blocked and Unavailable',
               'java.net.UnknownHostException: api.example.org: nodename nor servname provided, or not known')])
     ]
-    repositories.each { when(repositoryPermissionChecker.userCanReadOrBrowse(it)).thenReturn(true) }
+    repositories.each { when(repositoryPermissionChecker.userHasRepositoryAdminPermission(it, READ)).thenReturn(true) }
 
     when(repositoryManager.browse()).thenReturn(repositories)
 
@@ -84,7 +89,7 @@ class RepositoryInternalResourceTest
     assert details[0].type == 'proxy'
     assert details[0].format == 'maven2'
     assert details[0].url == 'http://localhost:8081/repository/maven-central/'
-    assert details[0].status.online == true
+    assert details[0].status.online
     assert details[0].status.description == 'Ready to Connect'
     assert details[0].status.reason == null
 
@@ -92,7 +97,7 @@ class RepositoryInternalResourceTest
     assert details[1].type == 'group'
     assert details[1].format == 'maven2'
     assert details[1].url == 'http://localhost:8081/repository/maven-public/'
-    assert details[1].status.online == true
+    assert details[1].status.online
     assert details[1].status.description == null
     assert details[1].status.reason == null
 
@@ -100,7 +105,7 @@ class RepositoryInternalResourceTest
     assert details[2].type == 'hosted'
     assert details[2].format == 'maven2'
     assert details[2].url == 'http://localhost:8081/repository/maven-releases/'
-    assert details[2].status.online == true
+    assert details[2].status.online
     assert details[2].status.description == null
     assert details[2].status.reason == null
 
@@ -108,7 +113,7 @@ class RepositoryInternalResourceTest
     assert details[3].type == 'hosted'
     assert details[3].format == 'maven2'
     assert details[3].url == 'http://localhost:8081/repository/maven-snapshots/'
-    assert details[3].status.online == false
+    assert !details[3].status.online
     assert details[3].status.description == null
     assert details[3].status.reason == null
 
@@ -116,7 +121,7 @@ class RepositoryInternalResourceTest
     assert details[4].type == 'group'
     assert details[4].format == 'nuget'
     assert details[4].url == 'http://localhost:8081/repository/nuget-group/'
-    assert details[4].status.online == true
+    assert details[4].status.online
     assert details[4].status.description == null
     assert details[4].status.reason == null
 
@@ -124,7 +129,7 @@ class RepositoryInternalResourceTest
     assert details[5].type == 'hosted'
     assert details[5].format == 'nuget'
     assert details[5].url == 'http://localhost:8081/repository/nuget-hosted/'
-    assert details[5].status.online == true
+    assert details[5].status.online
     assert details[5].status.description == null
     assert details[5].status.reason == null
 
@@ -132,7 +137,7 @@ class RepositoryInternalResourceTest
     assert details[6].type == 'proxy'
     assert details[6].format == 'nuget'
     assert details[6].url == 'http://localhost:8081/repository/nuget.org-proxy/'
-    assert details[6].status.online == true
+    assert details[6].status.online
     assert details[6].status.description == 'Remote Auto Blocked and Unavailable'
     assert details[6].status.reason ==
         'java.net.UnknownHostException: api.example.org: nodename nor servname provided, or not known'

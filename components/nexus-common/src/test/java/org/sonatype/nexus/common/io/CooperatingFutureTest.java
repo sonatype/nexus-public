@@ -12,20 +12,20 @@
  */
 package org.sonatype.nexus.common.io;
 
+import java.time.Duration;
 import java.util.Random;
 import java.util.concurrent.locks.LockSupport;
 
-import org.sonatype.goodies.common.Time;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.io.CooperationFactorySupport.Config;
 
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 public class CooperatingFutureTest
     extends TestSupport
@@ -45,10 +45,10 @@ public class CooperatingFutureTest
     for (int i = 1; i < downloadTimeMillis.length; i++) {
 
       // random sleep representing some client-side work
-      LockSupport.parkNanos(Time.millis(random.nextInt((int) expectedGap)).toNanos());
+      LockSupport.parkNanos(Duration.ofMillis(random.nextInt((int) expectedGap)).toNanos());
 
       // staggered sleep should bring us close to the expected gap
-      LockSupport.parkNanos(cooperatingFuture.staggerTimeout(Time.millis(expectedGap)).toNanos());
+      LockSupport.parkNanos(cooperatingFuture.staggerTimeout(Duration.ofMillis(expectedGap)).toNanos());
 
       downloadTimeMillis[i] = System.currentTimeMillis(); // next download
     }

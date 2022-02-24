@@ -13,7 +13,8 @@
 import React from 'react';
 import PropTypes from "prop-types";
 import {faHandsHelping} from "@fortawesome/free-solid-svg-icons";
-import {ExtJS, NxButton, NxFontAwesomeIcon} from '@sonatype/nexus-ui-plugin';
+import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import {NxButton, NxFontAwesomeIcon} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
 import './HealthCheckEula.scss';

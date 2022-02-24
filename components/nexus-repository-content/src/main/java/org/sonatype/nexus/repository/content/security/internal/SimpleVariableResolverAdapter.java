@@ -19,6 +19,8 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.security.AssetVariableResolverSupport;
+import org.sonatype.nexus.repository.search.AssetSearchResult;
+import org.sonatype.nexus.repository.search.ComponentSearchResult;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.selector.VariableSourceBuilder;
 
@@ -43,6 +45,15 @@ public class SimpleVariableResolverAdapter
   protected void addFromSourceLookup(final VariableSourceBuilder builder,
                                      final SourceLookup sourceLookup,
                                      final Map<String, Object> asset)
+  {
+    // no-op the simple impl just allows for the path/format variable resolvers in the support class
+  }
+
+  @Override
+  protected void addFromSearchResults(
+      final VariableSourceBuilder builder,
+      final ComponentSearchResult component,
+      final AssetSearchResult asset)
   {
     // no-op the simple impl just allows for the path/format variable resolvers in the support class
   }

@@ -122,6 +122,16 @@ public class MavenVersionNormalizerTest
     assertInOrder("3-beta-1", "3.0.0-20100505.190345-1");
   }
 
+  @Test
+  public void testUnrecognizedVersionDefaultsToOriginalLogic() {
+    assertEquals("asparagus.schoolbus", underTest.getNormalizedValue("asparagus.schoolbus"));
+    assertEquals("000000001.000000002.000000003.000000004.000000005", underTest.getNormalizedValue("1.2.3.4.5"));
+    assertEquals("develop-020211201.000171404-000000903", underTest.getNormalizedValue("develop-20211201.171404-903"));
+
+    assertInOrder("develop-20211130.182421-895", "develop-20211130.203249-896", "develop-20211201.111154-898",
+        "develop-20211202.180605-904");
+  }
+
   private void assertInOrder(String... versions) {
     for (int i = 1; i < versions.length; i++) {
       String v1 = versions[i - 1];

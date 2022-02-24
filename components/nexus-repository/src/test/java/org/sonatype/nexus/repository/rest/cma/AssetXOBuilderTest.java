@@ -107,6 +107,9 @@ public class AssetXOBuilderTest
     when(assetOne.blobCreated()).thenReturn(new DateTime(blobCreatedTimestamp));
     when(assetOne.blobUpdated()).thenReturn(new DateTime(blobUpdatedTimestamp));
     when(assetOne.lastDownloaded()).thenReturn(new DateTime(lastDownloadedTimestamp));
+    when(assetOne.createdBy()).thenReturn("admin");
+    when(assetOne.createdByIp()).thenReturn("10.0.0.1");
+    when(assetOne.size()).thenReturn(2345L);
 
     AssetXO assetXO = AssetXOBuilder.fromAsset(assetOne, repository, null);
 
@@ -118,6 +121,9 @@ public class AssetXOBuilderTest
     assertThat(assetXO.getLastModified(), is(new Date(blobUpdatedTimestamp)));
     assertThat(assetXO.getAttributes().get("blobCreated"), is(new Date(blobCreatedTimestamp)));
     assertThat(assetXO.getAttributes().get("lastDownloaded"), is(new Date(lastDownloadedTimestamp)));
+    assertThat(assetXO.getUploader(), is("admin"));
+    assertThat(assetXO.getUploaderIp(), is("10.0.0.1"));
+    assertThat(assetXO.getFileSize(), is(2345L));
   }
 
   @Test

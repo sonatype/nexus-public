@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.cleanup.internal.orient.search.elasticsearch;
 
+import java.util.stream.Stream;
+
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.extdirect.model.PagedResponse;
@@ -26,7 +28,7 @@ import org.sonatype.nexus.repository.storage.Component;
  */
 public interface OrientCleanupComponentBrowse
 {
-  Iterable<EntityId> browse(CleanupPolicy policy, Repository repository);
+  Stream<EntityId> browse(CleanupPolicy policy, Repository repository);
 
   /**
    * Returns a paged response of components

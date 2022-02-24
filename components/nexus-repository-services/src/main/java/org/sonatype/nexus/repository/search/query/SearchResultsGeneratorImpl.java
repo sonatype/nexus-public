@@ -12,20 +12,19 @@
  */
 package org.sonatype.nexus.repository.search.query;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.search.SearchHit;
-
-import static org.sonatype.nexus.repository.search.index.SearchConstants.FORMAT;
+import org.sonatype.nexus.repository.search.ComponentSearchResult;
+import org.sonatype.nexus.repository.search.SearchResponse;
 
 /**
  * Generates search results consumable by the UI
@@ -52,22 +51,23 @@ public class SearchResultsGeneratorImpl
   }
 
   @Override
-  public List<SearchResultComponent> getSearchResultList(final SearchResponse response) {
-    List<SearchResultComponent> searchResultComponents = new ArrayList<>((int) response.getHits().getTotalHits());
+  public List<ComponentSearchResult> getSearchResultList(final SearchResponse response) {
     Set<String> componentIdSet = new HashSet<>();
 
-    for (SearchHit hit : response.getHits().getHits()) {
-      Map<String, Object> source = hit.getSource();
-      String format = source.get(FORMAT).toString();
-      SearchResultComponentGenerator generator = searchResultComponentGeneratorMap
-          .getOrDefault(format, defaultSearchResultComponentGenerator);
-      SearchResultComponent component = generator.from(hit, componentIdSet);
-      if (null != component) {
-        componentIdSet.add(component.getId());
-        searchResultComponents.add(component);
-      }
-    }
+    return response.getSearchResults().stream()
+        .map(component -> {
+          String format = component.getFormat();
 
-    return searchResultComponents;
+          SearchResultComponentGenerator generator = searchResultComponentGeneratorMap
+              .getOrDefault(format, defaultSearchResultComponentGenerator);
+
+          ComponentSearchResult hit = generator.from(component, componentIdSet);
+          if (null != hit) {
+            componentIdSet.add(hit.getId());
+          }
+          return hit;
+        })
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
   }
 }

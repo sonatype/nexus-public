@@ -18,8 +18,6 @@ import {
   ContentBody,
   Code,
   ExtJS,
-  NxButton,
-  NxFontAwesomeIcon,
   Page,
   PageActions,
   PageHeader,
@@ -29,6 +27,11 @@ import {
   SectionToolbar,
   Textfield
 } from '@sonatype/nexus-ui-plugin';
+
+import {
+  NxButton,
+  NxFontAwesomeIcon,
+} from '@sonatype/react-shared-components';
 
 import {faScroll, faStamp} from '@fortawesome/free-solid-svg-icons';
 
@@ -92,7 +95,7 @@ export default function LogViewer() {
       event.preventDefault();
       send('INSERT_MARK');
     }
-  }  
+  }
 
   function insertMark() {
     send('INSERT_MARK');

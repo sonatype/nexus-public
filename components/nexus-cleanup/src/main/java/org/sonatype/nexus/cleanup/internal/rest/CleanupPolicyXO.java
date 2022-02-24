@@ -29,7 +29,7 @@ import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.IS_PREREL
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.LAST_BLOB_UPDATED_KEY;
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.LAST_DOWNLOADED_KEY;
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.REGEX_KEY;
-import static org.sonatype.nexus.cleanup.internal.rest.CleanupPolicyResource.ALL_FORMATS;
+import static org.sonatype.nexus.cleanup.storage.CleanupPolicy.ALL_FORMATS;
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicy.ALL_CLEANUP_POLICY_FORMAT;
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicyReleaseType.PRERELEASES;
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicyReleaseType.RELEASES;

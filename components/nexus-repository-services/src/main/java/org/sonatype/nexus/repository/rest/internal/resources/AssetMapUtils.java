@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.rest.internal.resources;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -22,7 +23,8 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.core.MultivaluedMap;
 
-import org.sonatype.nexus.repository.search.query.ElasticSearchUtils;
+import org.sonatype.nexus.repository.search.AssetSearchResult;
+import org.sonatype.nexus.repository.search.SearchUtils;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -42,11 +44,11 @@ class AssetMapUtils
 {
   private static final String EMPTY_PARAM = "";
 
-  private final ElasticSearchUtils elasticSearchUtils;
+  private final SearchUtils searchUtils;
 
   @Inject
-  public AssetMapUtils(final ElasticSearchUtils elasticSearchUtils) {
-    this.elasticSearchUtils = checkNotNull(elasticSearchUtils);
+  public AssetMapUtils(final SearchUtils searchUtils) {
+    this.searchUtils = checkNotNull(searchUtils);
   }
 
   /**
@@ -56,13 +58,13 @@ class AssetMapUtils
    * maps. In the REST API we have query parameters like 'assets.attributes.checksum.sha1'. Given the 'assets' map and
    * an identifier such as this, this method will attempt to pull the nested value out.
    *
-   * @param assetMap the Map containing all the asset attributes
+   * @param asset the asset search result containing all the attributes
    * @param identifier an attribute identifier
    * @return Value, if found
    */
   @SuppressWarnings("unchecked")
-  static Optional<Object> getValueFromAssetMap(final Map<String, Object> assetMap, final String identifier) {
-    if (isNullOrEmpty(identifier) || assetMap.isEmpty()) {
+  static Optional<Object> getValueFromAssetMap(final AssetSearchResult asset, final String identifier) {
+    if (isNullOrEmpty(identifier)) {
       return Optional.empty();
     }
 
@@ -72,13 +74,35 @@ class AssetMapUtils
       keys.remove(0);
     }
 
-    Object value = assetMap;
+    switch (keys.get(0)) {
+      case "contentType":
+        return Optional.of(asset.getContentType());
+      case "format":
+        return Optional.of(asset.getFormat());
+      case "id":
+        return Optional.of(asset.getId());
+      case "path":
+        return Optional.of(asset.getPath());
+    }
+
+    Object value = Collections.emptyMap();
+    if (!keys.isEmpty() && "attributes".equals(keys.get(0))) {
+      keys.remove(0);
+      value = asset.getAttributes();
+
+      if (!keys.isEmpty() && "checksum".equals(keys.get(0))) {
+        keys.remove(0);
+        value = asset.getChecksum();
+      }
+    }
+
     for (String key : keys) {
       if (value == null) {
         return Optional.empty();
       }
       value = ((Map<String, Object>) value).get(key);
     }
+
     return Optional.ofNullable(value);
   }
 
@@ -105,9 +129,9 @@ class AssetMapUtils
    * @return boolean to indicate if the response should include (true) or exclude (false) this asset
    */
   @VisibleForTesting
-  boolean filterAsset(final Map<String, Object> assetMap, final MultivaluedMap<String, String> assetParams) {
+  boolean filterAsset(final AssetSearchResult asset, final MultivaluedMap<String, String> assetParams) {
     // short circuit if the assetMap contains an assetAttribute found in the list of empty asset params
-    if (excludeAsset(assetMap, getEmptyAssetParams(assetParams))) {
+    if (excludeAsset(asset, getEmptyAssetParams(assetParams))) {
       return false;
     }
 
@@ -121,7 +145,7 @@ class AssetMapUtils
 
     // loop each asset specific http query parameter to filter out assets that do not apply
     return assetParamsWithValues.entrySet().stream()
-        .allMatch(entry -> keepAsset(assetMap, entry.getKey(), entry.getValue()));
+        .allMatch(entry -> keepAsset(asset, entry.getKey(), entry.getValue()));
   }
 
   /**
@@ -130,9 +154,9 @@ class AssetMapUtils
    *
    * @return boolean indicating if the asset for which this method was called should be excluded from the response
    */
-   static boolean excludeAsset(final Map<String, Object> assetMap, final List<String> paramFilters) {
+   static boolean excludeAsset(final AssetSearchResult asset, final List<String> paramFilters) {
     return paramFilters.stream()
-        .anyMatch(filter -> getValueFromAssetMap(assetMap, filter).isPresent());
+        .anyMatch(filter -> getValueFromAssetMap(asset, filter).isPresent());
   }
 
   /**
@@ -141,8 +165,8 @@ class AssetMapUtils
    *
    * @return boolean indicating if the asset contains the param key and matches the provided param value
    */
-   static boolean keepAsset(final Map<String, Object> assetMap, final String paramKey, final String paramValue) {
-    return getValueFromAssetMap(assetMap, paramKey)
+   static boolean keepAsset(final AssetSearchResult asset, final String paramKey, final String paramValue) {
+    return getValueFromAssetMap(asset, paramKey)
         .map(result -> result.equals(paramValue))
         .orElse(false);
   }
@@ -158,7 +182,7 @@ class AssetMapUtils
     return assetParams.entrySet()
         .stream()
         .filter(entry -> EMPTY_PARAM.equals(entry.getValue().get(0)))
-        .map(e -> elasticSearchUtils.getFullAssetAttributeName(e.getKey()))
+        .map(e -> searchUtils.getFullAssetAttributeName(e.getKey()))
         .collect(toList());
   }
 
@@ -173,6 +197,6 @@ class AssetMapUtils
         .stream()
         .filter(entry -> !EMPTY_PARAM.equals(entry.getValue().get(0)))
         .collect(Collectors
-            .toMap(entry -> elasticSearchUtils.getFullAssetAttributeName(entry.getKey()), entry -> entry.getValue().get(0)));
+            .toMap(entry -> searchUtils.getFullAssetAttributeName(entry.getKey()), entry -> entry.getValue().get(0)));
   }
 }

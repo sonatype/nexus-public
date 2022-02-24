@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {NxStatefulTabs, NxTabList, NxTab, NxTabPanel} from '@sonatype/nexus-ui-plugin';
+import {NxStatefulTabs, NxTabList, NxTab, NxTabPanel} from '@sonatype/react-shared-components';
 
 import NodeSupportZipResponse from "./NodeSupportZipResponse";
 

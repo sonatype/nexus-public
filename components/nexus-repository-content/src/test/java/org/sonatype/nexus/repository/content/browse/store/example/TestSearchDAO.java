@@ -12,8 +12,11 @@
  */
 package org.sonatype.nexus.repository.content.browse.store.example;
 
+import org.sonatype.nexus.datastore.api.Expects;
+import org.sonatype.nexus.repository.config.ConfigurationDAO;
 import org.sonatype.nexus.repository.content.search.SearchDAO;
 
+@Expects({ConfigurationDAO.class})
 public interface TestSearchDAO
   extends SearchDAO
 {

@@ -15,6 +15,7 @@ import { act } from 'react-dom/test-utils';
 import {fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
+import {ExtJS} from '@sonatype/nexus-ui-plugin';
 
 import Axios from 'axios';
 import AnonymousSettings from './AnonymousSettings';
@@ -36,7 +37,8 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
     ExtJS: {
       showSuccessMessage: jest.fn(),
       showErrorMessage: jest.fn(),
-      setDirtyStatus: jest.requireActual('@sonatype/nexus-ui-plugin').ExtJS.setDirtyStatus
+      setDirtyStatus: jest.requireActual('@sonatype/nexus-ui-plugin').ExtJS.setDirtyStatus,
+      checkPermission: jest.fn().mockReturnValue(true),
     }
   }
 });
@@ -164,5 +166,24 @@ describe('AnonymousSettings', () => {
     fireEvent.click(discardButton());
 
     expect(window.dirty).toEqual([]);
+  });
+
+  it('Shows page in Read Only mode', async () => {
+    ExtJS.checkPermission.mockReturnValueOnce(false);
+    const dataClass = 'nx-read-only__data';
+    const labelClass = 'nx-read-only__label';
+
+    let {loadingMask, getByText} = renderView(<AnonymousSettings/>);
+
+    await waitForElementToBeRemoved(loadingMask);
+
+    expect(getByText(UIStrings.SETTINGS.READ_ONLY.WARNING)).toBeInTheDocument();
+
+    expect(getByText(UIStrings.ANONYMOUS_SETTINGS.ENABLED_CHECKBOX_LABEL)).toHaveClass(labelClass);
+    expect(getByText('Enabled')).toHaveClass(dataClass);
+    expect(getByText(UIStrings.ANONYMOUS_SETTINGS.USERNAME_TEXTFIELD_LABEL)).toHaveClass(labelClass);
+    expect(getByText('testUser')).toHaveClass(dataClass);
+    expect(getByText(UIStrings.ANONYMOUS_SETTINGS.REALM_SELECT_LABEL)).toHaveClass(labelClass);
+    expect(getByText('Realm Two')).toHaveClass(dataClass);
   });
 });

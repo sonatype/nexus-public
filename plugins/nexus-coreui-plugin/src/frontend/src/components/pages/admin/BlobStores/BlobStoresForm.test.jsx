@@ -13,11 +13,10 @@
 import React from 'react';
 import axios from 'axios';
 import {when} from 'jest-when';
-import {fireEvent, screen, waitFor, waitForElementToBeRemoved} from '@testing-library/react'
+import {fireEvent, screen, waitForElementToBeRemoved} from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/extend-expect';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
 import S3BlobStoreSettings from './S3/S3BlobStoreSettings';
 import S3BlobStoreWarning from './S3/S3BlobStoreWarning';
 
@@ -143,8 +142,8 @@ describe('BlobStoresForm', function() {
           endpointURL: () => getByLabelText('Endpoint URL'),
           signatureVersion: () => getByLabelText('Signature Version'),
           usePathStyle: () => getByLabelText('Use path-style access'),
-          availableMembers: () => queryByLabelText('Available'),
-          selectedMembers: () => queryByLabelText('Selected'),
+          availableMembers: () => getByRole('group', {name: 'Available Items'}),
+          selectedMembers: () => getByRole('group', {name: 'Transferred Items'}),
           softQuota: () => getByLabelText('Soft Quota'),
           softQuotaType: () => queryByLabelText('Constraint Type'),
           softQuotaLimit: () => queryByLabelText('Constraint Limit (in MB)'),
@@ -622,6 +621,7 @@ describe('BlobStoresForm', function() {
     const {
       availableMembers,
       getByText,
+      getByLabelText,
       loadingMask,
       name,
       selectedMembers,
@@ -637,8 +637,8 @@ describe('BlobStoresForm', function() {
     expect(typeSelect()).not.toBeInTheDocument();
     expect(name()).not.toBeInTheDocument();
 
-    expect(availableMembers()).toContainElement(getByText('default'));
-    expect(selectedMembers()).toContainElement(getByText('test-converted'));
+    expect(availableMembers()).toContainElement(getByLabelText('default'));
+    expect(selectedMembers()).toContainElement(getByLabelText('test-converted'));
   });
 
   it('convert to group is not shown when editing a group', async function() {
@@ -663,51 +663,32 @@ describe('BlobStoresForm', function() {
   });
 
   it('log save error message when blobstore can not be added to group', async function() {
-    let updateUrl = "/service/rest/v1/blobstores/group/test";
-    let updateData = {
-      name: "test",
-      members: [
-        "test-blobstore",
-        "default"
-      ],
-      fillPolicy: "writeToFirst"
-    };
+    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
 
-    let errorMessage = "Blob Store is not eligible to be a group member";
+    let updateUrl = '/service/rest/v1/blobstores/group/test';
 
-    when(axios.get).calledWith('/service/rest/v1/blobstores/group/test').mockResolvedValue({
+    when(axios.get).calledWith(updateUrl).mockResolvedValue({
       data: {
         "softQuota" : null,
-        "members" : [ "test-blobstore", "default" ],
+        "members" : [ "test-converted", "default" ],
         "fillPolicy" : "writeToFirst"
       }
     });
 
-    when(axios.put).calledWith(updateUrl, updateData).mockRejectedValue({
-        response: {
-          data: [
-            {
-              "id": "*",
-              "message": errorMessage
-            }
-          ]
-        }
+    let errorMessage = 'Blob Store is not eligible to be a group member';
+
+    when(axios.put).calledWith(updateUrl, {}).mockRejectedValue({
+        response: {data: [{ "id": "*", "message": errorMessage}]}
     });
 
-    const {
-      getByText,
-      loadingMask,
-      selectedMembers
-    } = render('group/test');
+    const {loadingMask} = render('group/test');
 
     await waitForElementToBeRemoved(loadingMask);
 
-    expect(selectedMembers()).toContainElement(getByText('test-blobstore'));
-    expect(selectedMembers()).toContainElement(getByText('default'));
-
     const consoleSpy = jest.spyOn(console, 'log');
 
-    await axios.put(updateUrl, updateData).catch(function(reason) {
+    await axios.put(updateUrl, {}).catch(function(reason) {
       console.log(reason.response.data[0].message);
     });
 

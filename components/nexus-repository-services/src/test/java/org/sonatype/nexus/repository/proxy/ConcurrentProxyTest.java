@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.proxy;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -27,14 +28,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.common.Time;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.goodies.testsupport.concurrent.ConcurrentRunner;
 import org.sonatype.goodies.testsupport.concurrent.ConcurrentTask;
 import org.sonatype.nexus.common.collect.AttributesMap;
-import org.sonatype.nexus.common.io.CooperationException;
-import org.sonatype.nexus.common.io.CooperationFactory;
-import org.sonatype.nexus.common.io.LocalCooperationFactory;
+import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
+import org.sonatype.nexus.common.cooperation2.CooperationException;
+import org.sonatype.nexus.common.cooperation2.datastore.DefaultCooperation2Factory;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheControllerHolder;
@@ -52,12 +52,12 @@ import org.mockito.Spy;
 
 import static com.google.common.base.Charsets.UTF_8;
 import static com.google.common.io.ByteStreams.toByteArray;
-import static org.awaitility.Awaitility.await;
 import static java.util.stream.Collectors.summingInt;
 import static java.util.stream.Collectors.toList;
+import static org.awaitility.Awaitility.await;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
@@ -107,7 +107,7 @@ public class ConcurrentProxyTest
   @Mock
   Content assetContent;
 
-  CooperationFactory cooperationFactory = new LocalCooperationFactory();
+  Cooperation2Factory cooperationFactory = new DefaultCooperation2Factory();
 
   Random random = new Random();
 
@@ -298,7 +298,7 @@ public class ConcurrentProxyTest
   public void noDownloadCooperation() throws Exception {
     int iterations = 3;
 
-    underTest.configureCooperation(cooperationFactory, false, Time.seconds(0), Time.seconds(0), 0);
+    underTest.configureCooperation(cooperationFactory, false, Duration.ofSeconds(0), Duration.ofSeconds(0), 0);
     underTest.buildCooperation();
 
     // indirect paths will trigger a request for the index to resolve the final URL
@@ -358,7 +358,8 @@ public class ConcurrentProxyTest
   public void downloadCooperation() throws Exception {
     int iterations = 3;
 
-    underTest.configureCooperation(cooperationFactory, true, Time.seconds(60), Time.seconds(10), NUM_CLIENTS);
+    underTest.configureCooperation(cooperationFactory, true, Duration.ofSeconds(60), Duration.ofSeconds(10),
+        NUM_CLIENTS);
     underTest.buildCooperation();
 
     List<Request> validRequests = generateRandomRequests("some/valid/indirect/path-");
@@ -446,7 +447,8 @@ public class ConcurrentProxyTest
   public void limitCooperatingThreads() throws Exception {
     int threadLimit = 10;
 
-    underTest.configureCooperation(cooperationFactory, true, Time.seconds(60), Time.seconds(10), threadLimit);
+    underTest.configureCooperation(cooperationFactory, true, Duration.ofSeconds(60), Duration.ofSeconds(10),
+        threadLimit);
     underTest.buildCooperation();
 
     Request request = new Request.Builder().action(GET).path("some/fixed/path").build();

@@ -372,8 +372,12 @@ export default class FormUtils {
   static handleUpdate(name, send, type = 'UPDATE') {
     return (eventOrValue) => {
       let value;
-      if (typeof eventOrValue === 'string') {
+      if (typeof eventOrValue === 'string' ||
+          eventOrValue instanceof Array) {
         value = eventOrValue;
+      }
+      else if (eventOrValue instanceof Set) {
+        value = Array.from(eventOrValue);
       }
       else if (eventOrValue.currentTarget.type === 'checkbox') {
         value = eventOrValue.currentTarget.checked
@@ -408,5 +412,15 @@ export default class FormUtils {
     if (isPristine) {
       return UIStrings.PRISTINE_TOOLTIP;
     }
+  }
+
+    /**
+   * @param enabled [required]
+   * @return {string} read only checkbox status label
+   */
+  static readOnlyCheckboxValueLabel(enabled) {
+    return enabled
+        ? UIStrings.SETTINGS.READ_ONLY.CHECKBOX.ENABLED
+        : UIStrings.SETTINGS.READ_ONLY.CHECKBOX.DISABLED;
   }
 }

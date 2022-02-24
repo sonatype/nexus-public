@@ -63,7 +63,7 @@ Ext.define('NX.view.footer.AnalyticsOptOut', {
     var me = this;
     var user = NX.State.getUser();
 
-    if (window.location.hash.startsWith('#admin/')) {
+    if (user !== null && user !== undefined && NX.Permissions.check('nexus:capabilities:create')) {
       var acknowledgementRequired = NX.State.getValue('acknowledgeAnalytics.required');
       me.setVisible(acknowledgementRequired);
     }

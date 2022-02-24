@@ -22,6 +22,7 @@ import javax.inject.Named;
  * @since 3.29
  */
 @Named
+@FunctionalInterface
 public interface AssetXODescriptor
 {
   Set<String> listExposedAttributeKeys();

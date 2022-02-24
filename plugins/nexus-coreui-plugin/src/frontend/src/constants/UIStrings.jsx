@@ -325,6 +325,51 @@ as provide a location for them to store more content. For more information, chec
 <a href="http://links.sonatype.com/products/nxrm3/docs/repository" target="_blank" rel="noopener noreferrer">\
 the documentation</a>.`
       },
+    },
+
+    EDITOR: {
+      CREATE_TITLE: {
+        text: 'Create Repository',
+        description: 'Select a repository format, then choose a type (group, hosted, or proxy)'
+      },
+      EDIT_TITLE: {
+        text: 'Edit Repository',
+        description: 'Select a repository format, then choose a type (group, hosted, or proxy)'
+      },
+      FORMAT_AND_TYPE_CAPTION: 'Repository Format & Type',
+      FORMAT_LABEL: 'Format',
+      TYPE_LABEL: 'Type',
+      CONFIGURATION_CAPTION: 'Configuration',
+      NAME_LABEL: 'Name',
+      STATUS_LABEL: 'Status',
+      STATUS_DESCR: 'Online - Ready to connect',
+      STORAGE_CAPTION: 'Storage',
+      BLOB_STORE_LABEL: 'Blob Store',
+      CONTENT_VALIDATION_LABEL: 'Strict Content Type Validation', 
+      CONTENT_VALIDATION_DESCR: 'Enabled',
+      GROUP_CAPTION: 'Group',
+      MEMBERS_LABEL: 'Member Repositories',
+      SELECT_FORMAT_OPTION: 'Select a format...',
+      SELECT_TYPE_OPTION: 'Select a type...',
+      SELECT_STORE_OPTION: 'Select a blob store...',
+      SAVE_BUTTON_LABEL: 'Create Repository',
+      CLEANUP_CAPTION: 'Cleanup',
+      CLEANUP_POLICIES_LABEL: 'Cleanup Policies',
+      CLEANUP_POLICIES_SUBLABEL: 'Nexus Repository will delete components that match any of the applied policies',
+      HOSTED_CAPTION: 'Hosted',
+      DEPLOYMENT_POLICY_LABEL: 'Deployment Policy',
+      DEPLOYMENT_POLICY_SUBLABEL: 'Controls whether or not to allow updates and deployments to artifacts',
+      PROPRIETARY_COMPONENTS_LABEL: 'Proprietary Components',
+      PROPRIETARY_COMPONENTS_DESCR: 'Components in this repository count as proprietary for namespace conflict attacks (requires Sonatype Nexus Firewall)',
+      MESSAGES: {
+        SAVE_ERROR: 'An error occurred while saving the repository',
+      },
+      DEPLOYMENT_POLICY_OPTIONS: {
+        ALLOW: 'Allow redeploy',
+        ALLOW_ONCE: 'Disable redeploy',
+        DENY: 'Read-only',
+        REPLICATION_ONLY: 'Deploy by Replication Only'
+      }
     }
   },
 
@@ -432,6 +477,12 @@ This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 
     PATH_LABEL: 'Path',
     PATH_DESCRIPTION: 'Enter a request path to check if it would be blocked or allowed. Requests always start with a leading slash.',
     TEST_BUTTON: 'Test'
+  },
+
+  LOG4J_VISUALIZER: {
+    MENU: {
+      text: 'Log4j Visualizer'
+    }
   },
 
   SYSTEM_INFORMATION: {
@@ -651,7 +702,15 @@ Once created, a cleanup policy must be assigned to a repository from \
       GROUP_COLUMN: 'Group',
       VERSION_COLUMN: 'Version',
       EMPTY: 'No assets in repository matched the criteria',
-      COMPONENT_COUNT: (actual, total) => `Component count (matching criteria) viewing ${actual} out of ${total}.`,
+      COMPONENT_COUNT: (actual, total) => {
+        if (total === 0) {
+          return 'Criteria matched no components.';
+        }
+        else if (total > 0) {
+          return `Component count (matching criteria) viewing ${actual} out of ${total}.`;
+        }
+        return `Component count (matching criteria) viewing first ${actual}`;
+      },
       SAMPLE_WARNING: 'Results may only be a sample of what will be deleted using the current criteria.',
       BUTTON_TOOLTIP: 'Please select a repository and at least one cleanup criteria',
     },
@@ -711,6 +770,7 @@ Once created, a cleanup policy must be assigned to a repository from \
         Leave blank to use the globally defined HTTP timeout.
       </>,
     },
+    CONNECTION_TIMEOUT_DEFAULT_VALUE_LABEL: 'Globally Defined',
     PROPERTIES: {
       label: 'Properties',
       sublabel: 'Additional properties to configure for IQ Server'

@@ -19,6 +19,15 @@ import {
   ContentBody,
   HelpTile,
   ListMachineUtils,
+  Page,
+  PageActions,
+  PageHeader,
+  PageTitle,
+  Section,
+  SectionToolbar
+} from '@sonatype/nexus-ui-plugin';
+
+import {
   NxButton,
   NxFilterInput,
   NxFontAwesomeIcon,
@@ -27,13 +36,7 @@ import {
   NxTableCell,
   NxTableHead,
   NxTableRow,
-  Page,
-  PageActions,
-  PageHeader,
-  PageTitle,
-  Section,
-  SectionToolbar
-} from '@sonatype/nexus-ui-plugin';
+} from '@sonatype/react-shared-components';
 
 import ContentSelectorsListMachine from './ContentSelectorsListMachine';
 

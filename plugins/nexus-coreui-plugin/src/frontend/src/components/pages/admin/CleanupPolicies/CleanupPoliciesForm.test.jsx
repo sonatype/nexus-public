@@ -177,6 +177,43 @@ describe('CleanupPoliciesForm', function() {
     expect(saveButton()).not.toHaveClass('disabled');
   });
 
+  it('does not allow decimal values in lastBlobUpdated fields' , async function() {
+    const {loadingMask, name, format, saveButton, criteriaLastBlobUpdated, container} = renderCreateView();
+
+    await waitForElementToBeRemoved(loadingMask);
+    expect(saveButton()).toHaveClass('disabled');
+
+    await TestUtils.changeField(name, 'name');
+    await TestUtils.changeField(format, 'testformat')
+    const lastBlobCheckbox = container.querySelector('#criteria-last-blob-updated-group .nx-radio-checkbox');
+
+    fireEvent.click(lastBlobCheckbox);
+    await TestUtils.changeField(criteriaLastBlobUpdated, '4');
+    expect(saveButton()).not.toHaveClass('disabled');
+
+    await TestUtils.changeField(criteriaLastBlobUpdated, '4.7');
+    expect(saveButton()).toHaveClass('disabled');
+
+  });
+
+  it('does not allow decimal values in lastDownloaded fields' , async function() {
+    const {loadingMask, name, format, saveButton, criteriaLastDownloaded, container} = renderCreateView();
+
+    await waitForElementToBeRemoved(loadingMask);
+    expect(saveButton()).toHaveClass('disabled');
+
+    await TestUtils.changeField(name, 'name');
+    await TestUtils.changeField(format, 'testformat')
+    const lastDownloadedCheckbox = container.querySelector('#criteria-last-downloaded-group .nx-radio-checkbox');
+
+    fireEvent.click(lastDownloadedCheckbox);
+    await TestUtils.changeField(criteriaLastDownloaded, '5');
+    expect(saveButton()).not.toHaveClass('disabled');
+
+    await TestUtils.changeField(criteriaLastDownloaded, '5.3');
+    expect(saveButton()).toHaveClass('disabled');
+  });
+
   it('fires onDone when cancelled', async function() {
     const {loadingMask, cancelButton} = renderCreateView();
 
@@ -190,15 +227,7 @@ describe('CleanupPoliciesForm', function() {
   it('requests confirmation when delete is requested', async function() {
     const itemId = 'test';
     when(axios.get).calledWith(EDIT_URL(itemId)).mockResolvedValue({
-      data: {
-        'name' : 'test',
-        'format' : 'testformat',
-        'notes' : 'test notes',
-        'criteriaLastBlobUpdated' : '7',
-        'criteriaLastDownloaded' : '8',
-        'criteriaReleaseType' : 'RELEASES',
-        'criteriaAssetRegex' : '.*'
-      }
+      data: {...EDITABLE_ITEM}
     });
 
     axios.delete.mockReturnValue(Promise.resolve());

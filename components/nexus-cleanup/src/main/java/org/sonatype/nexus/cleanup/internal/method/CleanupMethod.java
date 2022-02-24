@@ -13,6 +13,7 @@
 package org.sonatype.nexus.cleanup.internal.method;
 
 import java.util.function.BooleanSupplier;
+import java.util.stream.Stream;
 
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
@@ -34,6 +35,6 @@ public interface CleanupMethod
    * @return the number of components cleaned up
    */
   DeletionProgress run(Repository repository,
-                       Iterable<EntityId> components,
+                       Stream<EntityId> components,
                        BooleanSupplier cancelledCheck);
 }

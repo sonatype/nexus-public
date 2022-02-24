@@ -19,13 +19,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.cleanup.internal.content.search.elasticsearch.CleanupComponentBrowse;
+import org.sonatype.nexus.cleanup.internal.content.search.CleanupComponentBrowse;
 import org.sonatype.nexus.cleanup.internal.method.CleanupMethod;
 import org.sonatype.nexus.cleanup.service.CleanupService;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
@@ -115,7 +116,7 @@ public class CleanupServiceImpl
     if (!policy.getCriteria().isEmpty()) {
       do {
         try {
-          Iterable<EntityId> componentsToDelete = browseService.browse(policy, repository);
+          Stream<EntityId> componentsToDelete = browseService.browse(policy, repository);
           DeletionProgress currentProgress = cleanupMethod.run(repository, componentsToDelete, cancelledCheck);
           deletionProgress.update(currentProgress);
         }

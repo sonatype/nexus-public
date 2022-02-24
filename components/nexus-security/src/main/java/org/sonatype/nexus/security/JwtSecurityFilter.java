@@ -13,13 +13,16 @@
 package org.sonatype.nexus.security;
 
 import java.util.Optional;
-
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+
+import org.sonatype.nexus.common.text.Strings2;
+import org.sonatype.nexus.security.jwt.JwtVerificationException;
 
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
@@ -30,6 +33,9 @@ import org.apache.shiro.web.filter.mgt.FilterChainResolver;
 import org.apache.shiro.web.mgt.WebSecurityManager;
 import org.apache.shiro.web.subject.WebSubject;
 import org.apache.shiro.web.subject.support.WebDelegatingSubject;
+import org.apache.shiro.web.util.WebUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.stream;
@@ -44,14 +50,17 @@ import static org.sonatype.nexus.security.JwtHelper.USER;
  */
 @Singleton
 public class JwtSecurityFilter
-  extends SecurityFilter
+    extends SecurityFilter
 {
   private final JwtHelper jwtHelper;
 
+  private static final Logger log = LoggerFactory.getLogger(JwtSecurityFilter.class);
+
   @Inject
-  public JwtSecurityFilter(final WebSecurityManager webSecurityManager,
-                           final FilterChainResolver filterChainResolver,
-                           final JwtHelper jwtHelper)
+  public JwtSecurityFilter(
+      final WebSecurityManager webSecurityManager,
+      final FilterChainResolver filterChainResolver,
+      final JwtHelper jwtHelper)
   {
     super(webSecurityManager, filterChainResolver);
     this.jwtHelper = checkNotNull(jwtHelper);
@@ -69,31 +78,42 @@ public class JwtSecurityFilter
       if (jwtCookie.isPresent()) {
         Cookie cookie = jwtCookie.get();
 
-        Optional<DecodedJWT> verified = jwtHelper.verifyJwt(cookie.getValue());
+        SimpleSession session = new SimpleSession(request.getRemoteHost());
+        DecodedJWT decodedJwt;
+        String jwt = cookie.getValue();
+        if (!Strings2.isEmpty(jwt)) {
+          try {
+            decodedJwt = jwtHelper.verifyJwt(jwt);
+          }
+          catch (JwtVerificationException e) {
+            log.debug("Expire and reset the JWT cookie due to the error: {}", e.getMessage());
+            cookie.setValue("");
+            cookie.setMaxAge(0);
+            WebUtils.toHttp(response).addCookie(cookie);
 
-         if (verified.isPresent()) {
-           DecodedJWT decoded = verified.get();
-           Claim user = decoded.getClaim(USER);
-           Claim realm = decoded.getClaim(REALM);
+            return super.createSubject(request, response);
+          }
 
-           PrincipalCollection principals = new SimplePrincipalCollection(
-               user.asString(),
-               realm.asString()
-           );
+          Claim user = decodedJwt.getClaim(USER);
+          Claim realm = decodedJwt.getClaim(REALM);
 
-           SimpleSession session = new SimpleSession(request.getRemoteHost());
-           session.setTimeout(jwtHelper.getExpiryInMillis());
-           session.setAttribute(JWT_COOKIE_NAME, cookie.getValue());
+          PrincipalCollection principals = new SimplePrincipalCollection(
+              user.asString(),
+              realm.asString()
+          );
 
-           return new WebDelegatingSubject(
-               principals,
-               true,
-               request.getRemoteHost(),
-               session,
-               true,
-               request,
-               response,
-               getSecurityManager());
+          session.setTimeout(TimeUnit.SECONDS.toMillis(jwtHelper.getExpirySeconds()));
+          session.setAttribute(JWT_COOKIE_NAME, jwt);
+
+          return new WebDelegatingSubject(
+              principals,
+              true,
+              request.getRemoteHost(),
+              session,
+              true,
+              request,
+              response,
+              getSecurityManager());
         }
       }
     }

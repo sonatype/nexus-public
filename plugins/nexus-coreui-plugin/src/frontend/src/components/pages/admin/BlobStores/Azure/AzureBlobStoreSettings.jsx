@@ -13,8 +13,8 @@
 import React from 'react';
 import {useMachine, useService} from '@xstate/react';
 
+import {FormUtils} from '@sonatype/nexus-ui-plugin';
 import {
-  FormUtils,
   NxButton,
   NxErrorAlert,
   NxFieldset,
@@ -23,7 +23,7 @@ import {
   NxSuccessAlert,
   NxTextInput,
   NxRadio
-} from '@sonatype/nexus-ui-plugin';
+} from '@sonatype/react-shared-components';
 
 import AzureBlobStoreSettingsMachine from './AzureBlobStoreSettingsMachine';
 import UIStrings from '../../../../../constants/UIStrings';

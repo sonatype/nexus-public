@@ -50,6 +50,14 @@ public interface ElasticSearchIndexService
   boolean indexExist(Repository repository);
 
   /**
+   * Checks whether search index for the specified repository is empty.
+   *
+   * @param repository The repository to check.
+   * @return True if the index is empty, false otherwise.
+   */
+  boolean indexEmpty(Repository repository);
+
+  /**
    * Puts data with given identifier into index of given repository.
    */
   void put(Repository repository, String identifier, String json);

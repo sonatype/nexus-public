@@ -84,26 +84,6 @@ public class ElasticSearchUtilsTest
   }
 
   @Test
-  public void testIsAssetSearchParam_MappedAlias_Sha1() {
-    assertTrue(underTest.isAssetSearchParam(SHA1_ALIAS));
-  }
-
-  @Test
-  public void testIsAssetSearchParam_UnMapped_FullAssetAttributeName() {
-    assertTrue(underTest.isAssetSearchParam(VALID_SHA1_ATTRIBUTE_NAME));
-  }
-
-  @Test
-  public void testIsAssetSearchParam_UnMappedAlias_Returns_False() {
-    assertFalse(underTest.isAssetSearchParam("new.asset"));
-  }
-
-  @Test
-  public void testIsAssetSearchParam_Invalid_Full_AssetAttribute() {
-    assertFalse(underTest.isAssetSearchParam(INVALID_SHA1_ATTRIBUTE_NAME));
-  }
-
-  @Test
   public void testIsFullAssetAttributeName() {
     assertTrue(underTest.isFullAssetAttributeName(VALID_SHA1_ATTRIBUTE_NAME));
   }
@@ -269,12 +249,6 @@ public class ElasticSearchUtilsTest
     List<SortBuilder> sortBuilders = underTest.getSortBuilders("otherfield", "desc");
     assertThat(sortBuilders.size(), is(1));
     assertSearchBuilder(sortBuilders.get(0), "otherfield", "desc");
-  }
-
-  @Test
-  public void testGetSortBuilders_byOtherField_whenNotSupported() throws Exception {
-    List<SortBuilder> sortBuilders = underTest.getSortBuilders("otherfield", "asc", false);
-    assertThat(sortBuilders.isEmpty(), is(true));
   }
 
   @Test

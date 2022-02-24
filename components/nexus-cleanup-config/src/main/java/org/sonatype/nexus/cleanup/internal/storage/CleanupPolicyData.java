@@ -17,6 +17,8 @@ import java.util.Map;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.common.entity.HasName;
 
+import org.apache.commons.lang.StringUtils;
+
 /**
  * {@link CleanupPolicy} data.
  *
@@ -68,7 +70,7 @@ public class CleanupPolicyData
 
   @Override
   public void setFormat(final String format) {
-    this.format = format;
+    this.format = StringUtils.equals(format, ALL_FORMATS) ? ALL_CLEANUP_POLICY_FORMAT : format;
   }
 
   @Override

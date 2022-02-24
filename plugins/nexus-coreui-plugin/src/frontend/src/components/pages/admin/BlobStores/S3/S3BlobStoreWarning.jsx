@@ -11,9 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {
-  NxWarningAlert,
-} from '@sonatype/nexus-ui-plugin';
+import { NxWarningAlert } from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings'
 

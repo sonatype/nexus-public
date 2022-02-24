@@ -30,7 +30,7 @@ public class DefaultElasticSearchContributionTest
     String field = "name";
     String value = "/foo";
 
-    defaultSearchContribution.contribute(query, field, value);
+    defaultSearchContribution.contribute(query::must, field, value);
 
     assertThat(query.toString(), Matchers.containsString("\"query\" : \"\\\\/foo\""));
   }
@@ -41,7 +41,7 @@ public class DefaultElasticSearchContributionTest
     String field = "name";
     String value = "a/b/";
 
-    defaultSearchContribution.contribute(query, field, value);
+    defaultSearchContribution.contribute(query::must, field, value);
 
     assertThat(query.toString(), Matchers.containsString("\"query\" : \"a\\\\/b\\\\/\""));
   }

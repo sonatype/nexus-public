@@ -18,6 +18,15 @@ import {
   ExtJS,
   HelpTile,
   ListMachineUtils,
+  Page,
+  PageHeader,
+  PageTitle,
+  PageActions,
+  Section,
+  SectionToolbar
+} from '@sonatype/nexus-ui-plugin';
+
+import {
   NxButton,
   NxFilterInput,
   NxFontAwesomeIcon,
@@ -26,13 +35,9 @@ import {
   NxTableCell,
   NxTableHead,
   NxTableRow,
-  Page,
-  PageHeader,
-  PageTitle,
-  PageActions,
-  Section,
-  SectionToolbar
-} from '@sonatype/nexus-ui-plugin';
+  NxTooltip,
+} from '@sonatype/react-shared-components';
+
 import {
   faChevronRight,
   faCopy,
@@ -62,12 +67,31 @@ export default function RepositoriesList({onCreate, onEdit, copyUrl = doCopyUrl}
   const sortByStatus = () => send('SORT_BY_STATUS');
 
   const filter = (value) => send({type: 'FILTER', filter: value});
+  const canCreate = ExtJS.checkPermission('nexus:repository-admin:*:*:add');
+
+  function create() {
+    if (canCreate) {
+      onCreate();
+    }
+  }
 
   return <Page className="nxrm-repositories">
     <PageHeader>
       <PageTitle icon={faDatabase} {...REPOSITORIES.MENU} />
       <PageActions>
-        <NxButton variant="primary" onClick={onCreate}>{REPOSITORIES.LIST.CREATE_BUTTON}</NxButton>
+        <NxTooltip
+            title={!canCreate && UIStrings.PERMISSION_ERROR}
+            placement="bottom"
+        >
+          <NxButton
+              type="button"
+              variant="primary"
+              className={!canCreate && 'disabled'}
+              onClick={create}
+          >
+            {REPOSITORIES.LIST.CREATE_BUTTON}
+          </NxButton>
+        </NxTooltip>
       </PageActions>
     </PageHeader>
     <ContentBody className="nxrm-repositories-list">

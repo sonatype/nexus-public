@@ -36,7 +36,7 @@ import static org.sonatype.nexus.repository.http.HttpStatus.NOT_ACCEPTABLE;
 public class TokenEncoder
     extends ComponentSupport
 {
-  int decode(@Nullable final String continuationToken, final QueryBuilder query) {
+  public int decode(@Nullable final String continuationToken, final QueryBuilder query) {
     if (continuationToken == null) {
       return 0;
     }
@@ -54,7 +54,7 @@ public class TokenEncoder
     }
   }
 
-  String encode(final int lastFrom, final int pageSize, final QueryBuilder query) {
+  public String encode(final int lastFrom, final int pageSize, final QueryBuilder query) {
     int index = lastFrom + pageSize;
     return Hex.encode(format("%s:%s", Integer.toString(index), getHashCode(query)).getBytes(UTF_8));
   }

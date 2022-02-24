@@ -131,7 +131,7 @@ public class Query
             parameters.put(mangledName, value);
             return ":" + mangledName;
           })
-          .collect(Collectors.joining(", ", "(", ")"));
+          .collect(Collectors.joining(", ", "[", "]"));
 
       where(tuple);
 

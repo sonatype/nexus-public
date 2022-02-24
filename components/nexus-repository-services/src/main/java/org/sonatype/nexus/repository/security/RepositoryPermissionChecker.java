@@ -147,6 +147,15 @@ public class RepositoryPermissionChecker
   }
 
   /**
+   * @param repository to test against admin permissions
+   * @param actions the admin actions to test the user for
+   * @return true if the user has permission to perform the admin actions on the repository
+   */
+  public boolean userHasRepositoryAdminPermission(Repository repository, final String... actions) {
+    return !userHasPermission(r -> new RepositoryAdminPermission(r, actions), repository).isEmpty();
+  }
+
+  /**
    * @since 3.17
    * @param repositories to test the actions permission against
    * @param actions the repository-admin actions

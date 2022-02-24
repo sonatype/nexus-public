@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.common.app;
 
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
@@ -26,6 +27,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  */
 @Retention(RUNTIME)
 @Target({ PACKAGE, TYPE })
+@Repeatable(FeatureFlagGroup.class)
 public @interface FeatureFlag
 {
   String name();

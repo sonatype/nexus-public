@@ -15,6 +15,7 @@ package org.sonatype.nexus.rapture.internal.settings;
 import java.util.Map;
 
 import org.sonatype.nexus.common.text.Strings2;
+import org.sonatype.nexus.rapture.settings.RaptureSettings;
 
 import com.google.common.collect.Maps;
 

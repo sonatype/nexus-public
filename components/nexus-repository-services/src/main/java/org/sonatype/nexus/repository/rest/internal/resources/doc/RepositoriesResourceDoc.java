@@ -19,8 +19,14 @@ import org.sonatype.nexus.repository.rest.internal.resources.RepositoriesResourc
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 
 import static org.sonatype.nexus.rest.ApiDocConstants.API_REPOSITORY_MANAGEMENT;
+import static org.sonatype.nexus.rest.ApiDocConstants.AUTHENTICATION_REQUIRED;
+import static org.sonatype.nexus.rest.ApiDocConstants.INSUFFICIENT_PERMISSIONS;
+import static org.sonatype.nexus.rest.ApiDocConstants.REPOSITORY_NOT_FOUND;
 
 /**
  * Swagger documentation for {@link RepositoriesResource}
@@ -32,4 +38,12 @@ public interface RepositoriesResourceDoc
 {
   @ApiOperation("List repositories")
   List<RepositoryXO> getRepositories();
+
+  @ApiOperation("Get repository details")
+  @ApiResponses(value = {
+      @ApiResponse(code = 401, message = AUTHENTICATION_REQUIRED),
+      @ApiResponse(code = 403, message = INSUFFICIENT_PERMISSIONS),
+      @ApiResponse(code = 404, message = REPOSITORY_NOT_FOUND)
+  })
+  RepositoryXO getRepository(@ApiParam(value = "Name of the repository to get") final String repositoryName);
 }

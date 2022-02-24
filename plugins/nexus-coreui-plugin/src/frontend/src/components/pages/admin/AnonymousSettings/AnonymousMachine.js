@@ -23,7 +23,6 @@ import UIStrings from '../../../../constants/UIStrings';
 
 const {ERROR, ANONYMOUS_SETTINGS} = UIStrings;
 
-
 export default FormUtils.buildFormMachine({
   id: 'AnonymousSettingsForm'
 }).withConfig({

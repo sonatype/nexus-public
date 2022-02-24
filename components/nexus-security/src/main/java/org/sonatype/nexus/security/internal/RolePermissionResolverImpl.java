@@ -27,6 +27,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.distributed.event.service.api.common.AuthorizationChangedDistributedEvent;
 import org.sonatype.nexus.security.authz.AuthorizationConfigurationChanged;
 import org.sonatype.nexus.security.config.CPrivilege;
 import org.sonatype.nexus.security.config.CRole;
@@ -103,6 +104,12 @@ public class RolePermissionResolverImpl
   @AllowConcurrentEvents
   @Subscribe
   public void on(final SecurityContributionChangedEvent event) {
+    invalidate();
+  }
+
+  @AllowConcurrentEvents
+  @Subscribe
+  public void on(final AuthorizationChangedDistributedEvent event) {
     invalidate();
   }
 

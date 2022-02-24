@@ -12,7 +12,8 @@
  */
 import React from 'react';
 import {faKey} from "@fortawesome/free-solid-svg-icons";
-import {Code, ExtJS, FieldWrapper, NxButton, NxFontAwesomeIcon, NxModal} from '@sonatype/nexus-ui-plugin';
+import {Code, ExtJS, FieldWrapper} from '@sonatype/nexus-ui-plugin';
+import {NxButton, NxFontAwesomeIcon, NxModal} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
 import './NugetApiToken.scss';

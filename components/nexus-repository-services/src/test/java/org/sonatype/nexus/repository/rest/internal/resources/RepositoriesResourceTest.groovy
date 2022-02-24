@@ -27,8 +27,8 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 
-import static org.hamcrest.Matchers.is
 import static org.hamcrest.MatcherAssert.assertThat
+import static org.hamcrest.Matchers.is
 import static org.mockito.Mockito.mock
 import static org.mockito.Mockito.when
 
@@ -76,6 +76,8 @@ class RepositoriesResourceTest
         createMockRepository(REPOSITORY_2_NAME, REPOSITORY_2_FORMAT, REPOSITORY_2_TYPE, REPOSITORY_2_URL, null)
 
     when(repositoryManagerRESTAdapter.getRepositories()).thenReturn([repository1, repository2])
+    when(repositoryManagerRESTAdapter.getReadableRepository(REPOSITORY_1_NAME)).thenReturn(repository1)
+    when(repositoryManagerRESTAdapter.getReadableRepository(REPOSITORY_2_NAME)).thenReturn(repository2)
 
     underTest = new RepositoriesResource(repositoryManagerRESTAdapter)
   }
@@ -83,6 +85,12 @@ class RepositoriesResourceTest
   @Test
   void testGetRepositories() {
     assertThat(underTest.getRepositories(), is([REPOSITORY_XO_1, REPOSITORY_XO_2]))
+  }
+
+  @Test
+  void testGetRepository() {
+    assertThat(underTest.getRepository(REPOSITORY_1_NAME), is(REPOSITORY_XO_1))
+    assertThat(underTest.getRepository(REPOSITORY_1_NAME), is(REPOSITORY_XO_1))
   }
 
   private static Repository createMockRepository(final String name, final Format format, final Type type,
@@ -94,7 +102,7 @@ class RepositoriesResourceTest
     when(repository.getType()).thenReturn(type)
     when(repository.getUrl()).thenReturn(url)
     def configuration = mock(Configuration)
-    if(type instanceof ProxyType) {
+    if (type instanceof ProxyType) {
       when(configuration.attributes('proxy')).thenReturn(new NestedAttributesMap(
           'proxy',
           [remoteUrl: remoteUrl]

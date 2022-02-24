@@ -19,7 +19,7 @@
   <parent>
     <artifactId>nexus-components</artifactId>
     <groupId>org.sonatype.nexus</groupId>
-    <version>3.38.0-SNAPSHOT</version>
+    <version>3.39.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -38,6 +38,12 @@
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-orient</artifactId>
       <optional>true</optional>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-upgrade</artifactId>
       <scope>provided</scope>
     </dependency>
 
