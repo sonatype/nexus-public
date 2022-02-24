@@ -61,7 +61,7 @@ public class SearchDAOTest
   }
 
   @Test
-  public void testSearchComponents() throws InterruptedException {
+  public void testSearchComponents() {
     generateConfiguration();
     final EntityId repositoryId = generatedConfigurations().get(0).getRepositoryId();
     generateSingleRepository(UUID.fromString(repositoryId.getValue()));
@@ -75,8 +75,7 @@ public class SearchDAOTest
       final Continuation<ComponentSearch> actual =
           searchDAO.searchComponents(1000, null, null, null, false, null);
 
-      actualData = actual.stream().findFirst()
-          .map(actualSearch -> (SearchData) actualSearch).orElseGet(SearchData::new);
+      actualData = (SearchData) actual.stream().findFirst().get();
     }
 
     assertThat("Data fetched from DB is same as generated",
