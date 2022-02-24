@@ -24,7 +24,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import static com.fasterxml.jackson.core.JsonToken.START_OBJECT;
+import static com.fasterxml.jackson.core.JsonToken.FIELD_NAME;
+import static com.fasterxml.jackson.core.JsonTokenId.ID_START_OBJECT;
 import static com.google.common.collect.Maps.newHashMap;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -69,8 +70,9 @@ public class MapDeserializerSerializerTest
 
   @Test
   public void should_Use_UntypedObjectDeserializerSerializer() throws IOException {
-    when(parser.getCurrentToken()).thenReturn(START_OBJECT);
-    when(parser.getCurrentName()).thenReturn("currentFieldName");
+    when(parser.currentTokenId()).thenReturn(ID_START_OBJECT);
+    when(parser.currentToken()).thenReturn(FIELD_NAME);
+    when(parser.currentName()).thenReturn("currentFieldName");
     when(parser.nextFieldName()).thenReturn(null);
     when(valueInstantiator.createUsingDefault(context)).thenReturn(newHashMap());
 
