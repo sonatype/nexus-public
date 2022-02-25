@@ -17,7 +17,7 @@ import org.sonatype.nexus.datastore.api.SingletonDataAccess;
 /**
  * DAO for accessing the JWT secret
  *
- * @since 3.next
+ * @since 3.38
  */
 public interface JwtSecretDAO
     extends SingletonDataAccess<String>

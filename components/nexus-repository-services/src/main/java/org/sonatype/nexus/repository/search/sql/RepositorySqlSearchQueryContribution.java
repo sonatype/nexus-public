@@ -39,7 +39,7 @@ import static java.util.stream.Collectors.toSet;
  *
  * Search terms are split by whitespace.
  *
- * @since 3.next
+ * @since 3.38
  */
 @Named(RepositorySqlSearchQueryContribution.NAME)
 @Singleton

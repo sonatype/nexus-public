@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.search;
 import java.util.List;
 
 /**
- * @since 3.next
+ * @since 3.38
  */
 public class SearchResponse
 {

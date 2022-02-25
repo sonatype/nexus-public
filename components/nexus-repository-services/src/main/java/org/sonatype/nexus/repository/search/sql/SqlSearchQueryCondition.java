@@ -23,7 +23,7 @@ import static java.util.Collections.unmodifiableMap;
  * its associated values (which in the example given will be a <code>Map&lt;String, String&gt;</code> of named
  * parameters and their associated values).
  *
- * @since 3.next
+ * @since 3.38
  */
 public class SqlSearchQueryCondition
 {

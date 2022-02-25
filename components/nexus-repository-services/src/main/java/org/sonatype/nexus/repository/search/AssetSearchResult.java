@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  * Result of an Asset search
  *
- * @since 3.next
+ * @since 3.38
  */
 public class AssetSearchResult
 {

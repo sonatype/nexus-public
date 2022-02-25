@@ -34,7 +34,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 /**
  * JWT authentication filter for {@link JwtServlet}.
  *
- * @since 3.next
+ * @since 3.38
  */
 @Named
 @Singleton

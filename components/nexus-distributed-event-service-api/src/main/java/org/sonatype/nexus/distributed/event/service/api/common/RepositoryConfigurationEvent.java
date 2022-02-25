@@ -22,7 +22,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Indicates that a repository configuration has been created, updated or deleted.
  *
- * @since 3.next
+ * @since 3.38
  */
 public class RepositoryConfigurationEvent
     extends DistributedEventSupport

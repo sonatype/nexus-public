@@ -25,7 +25,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponent;
  * Note: an implementor which is not concerned with a component's assets should override both methods which may avoid a
  * database query.
  *
- * @since 3.next
+ * @since 3.38
  */
 public interface PreReleaseEvaluator
 {

@@ -32,7 +32,7 @@ import static java.util.stream.Collectors.toMap;
  * Accumulates conditions created by the {@link SqlSearchQueryContribution} implementations for each {@link
  * SearchFilter} passed into them. It holds the conditions built so far.
  *
- * @since 3.next
+ * @since 3.38
  */
 public class SqlSearchQueryBuilder
 {

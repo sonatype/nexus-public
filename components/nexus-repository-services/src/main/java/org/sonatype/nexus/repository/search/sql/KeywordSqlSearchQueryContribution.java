@@ -52,7 +52,7 @@ import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBu
  * Otherwise wildcard conditions are created for checking each search term in the component's namespace, name and
  * version.
  *
- * @since 3.next
+ * @since 3.38
  */
 @Named(KeywordSqlSearchQueryContribution.NAME)
 @Singleton

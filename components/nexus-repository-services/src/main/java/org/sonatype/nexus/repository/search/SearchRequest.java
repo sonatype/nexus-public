@@ -23,7 +23,7 @@ import org.sonatype.nexus.repository.search.query.SearchFilter;
 /**
  * This class encompasses all the options for a search request.
  *
- * @since 3.next
+ * @since 3.38
  */
 public class SearchRequest
 {

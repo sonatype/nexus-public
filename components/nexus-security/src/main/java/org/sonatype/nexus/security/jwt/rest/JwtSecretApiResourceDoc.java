@@ -27,7 +27,7 @@ import static org.sonatype.nexus.rest.ApiDocConstants.INSUFFICIENT_PERMISSIONS;
 /**
  * REST API to reset the stored JWT secret.
  *
- * @since 3.next
+ * @since 3.38
  */
 @Api(value = "Security management: JWT")
 public interface JwtSecretApiResourceDoc

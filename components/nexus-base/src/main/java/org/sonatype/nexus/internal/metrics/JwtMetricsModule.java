@@ -34,7 +34,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 /**
  * Dropwizard Metrics</a> guice configuration using {@link JwtSecurityFilter}
  *
- * @since 3.next
+ * @since 3.38
  */
 @Named
 @FeatureFlag(name = JWT_ENABLED)

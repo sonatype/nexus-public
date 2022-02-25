@@ -28,7 +28,7 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * A method interceptor which monitor blob store operations (see {@link OperationType}) of the annotated method.
  *
- * @since 3.next
+ * @since 3.38
  */
 public class BlobStoreAnalyticsInterceptor
     extends ComponentSupport
