@@ -44,7 +44,7 @@ class MemorySecurityConfigurationTest
 
     where:
       src << ['default', 'ldap', 'crowd', 'other']
-      ignoreCase << ['true', 'true', 'true', 'false']
-      isFound << [true, true, true, false]
+      ignoreCase << ['false', 'true', 'true', 'false']
+      isFound << [false, true, true, false]
   }
 }

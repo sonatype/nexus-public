@@ -58,35 +58,6 @@ public class CUserRoleMappingDAOTest
   }
 
   @Test
-  public void testCreateReadUpdateDelete_caseInsensitive() {
-    CUserRoleMappingData roleMapping = new CUserRoleMappingData();
-    roleMapping.setUserId("admin");
-    roleMapping.setSource("default");
-    roleMapping.setRoles(Stream.of("role1", "role2").collect(toSet()));
-    dao.create(roleMapping);
-
-    CUserRoleMappingData read = dao.read("ADMIN", "default").get();
-
-    assertThat(read, not(nullValue()));
-    assertThat(read.getUserId(), is("admin"));
-    assertThat(read.getSource(), is("default"));
-    assertThat(read.getRoles(), is(Stream.of("role1", "role2").collect(toSet())));
-
-    roleMapping.setUserId("Admin");
-    roleMapping.setRoles(singleton("role3"));
-    dao.update(roleMapping);
-
-    read = dao.read("admin", "default").get();
-
-    assertThat(read, not(nullValue()));
-    assertThat(read.getRoles(), is(singleton("role3")));
-
-    assertThat(dao.delete("ADMIN", "default"), is(true));
-
-    assertThat(dao.read("admin", "default").isPresent(), is(false));
-  }
-
-  @Test
   public void testCreateReadUpdateDelete_caseSensitive() {
     CUserRoleMappingData roleMapping = new CUserRoleMappingData();
     roleMapping.setUserId("admin");

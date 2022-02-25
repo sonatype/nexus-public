@@ -230,7 +230,6 @@ public class OrientSecurityConfigurationSourceTest
 
   @Test
   public void testUserRoleMappings_notCaseSensitive_bySource() throws Exception {
-    testUserRoleMappings_notCaseSensitive("default");
     testUserRoleMappings_notCaseSensitive("ldap");
     testUserRoleMappings_notCaseSensitive("crowd");
   }
