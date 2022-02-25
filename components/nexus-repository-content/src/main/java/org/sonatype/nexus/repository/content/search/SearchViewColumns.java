@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.content.search;
 /**
  * Enum representing column names for {@link SearchDAO}
  *
- * @since 3.next
+ * @since 3.38
  */
 public enum SearchViewColumns
 {

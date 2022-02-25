@@ -104,7 +104,7 @@ public class DateHelper
    * Converts the Date to a LocalDate (a date, without time). The returned LocalDate will represent the Date of the
    * provided value in UTC.
    *
-   * @since 3.next
+   * @since 3.38
    */
   public static LocalDate toLocalDate(@Nullable final Date date) {
     if (date == null) {
@@ -117,7 +117,7 @@ public class DateHelper
    * Converts the Date to a LocalDate (a date, without time). The returned LocalDate will represent the Date of the
    * provided value in UTC.
    *
-   * @since 3.next
+   * @since 3.38
    */
   public static Date atStartOfDay(@Nullable final LocalDate date) {
     if (date == null) {

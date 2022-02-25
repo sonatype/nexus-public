@@ -19,7 +19,7 @@ import static org.sonatype.nexus.repository.httpbridge.internal.HttpBridgeModule
 /**
  * Servlet module for Repository HTTP bridge.
  *
- * @since 3.next
+ * @since 3.38
  */
 public abstract class HttpBridgeServletModule
     extends ServletModule

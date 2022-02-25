@@ -23,7 +23,7 @@ import org.sonatype.nexus.repository.content.Component;
  *
  * Note: If the criteria is interested in only a single Asset see AssetCleanupEvaluator.
  *
- * @since 3.next
+ * @since 3.38
  */
 public interface ComponentCleanupEvaluator
 {

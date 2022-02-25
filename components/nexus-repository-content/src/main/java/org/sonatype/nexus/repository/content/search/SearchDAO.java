@@ -30,7 +30,7 @@ import org.sonatype.nexus.repository.content.store.ContentRepositoryDAO;
 import org.apache.ibatis.annotations.Param;
 
 /**
- * @since 3.next
+ * @since 3.38
  */
 @Expects({ContentRepositoryDAO.class, ComponentDAO.class, AssetDAO.class, AssetBlobDAO.class, ConfigurationDAO.class})
 @SchemaTemplate("format")

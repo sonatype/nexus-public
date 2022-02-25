@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.content.store.AbstractRepositoryContent;
 /**
  * {@link ComponentSearch} data backed by the content data store.
  *
- * @since 3.next
+ * @since 3.38
  */
 public class SearchData
     extends AbstractRepositoryContent

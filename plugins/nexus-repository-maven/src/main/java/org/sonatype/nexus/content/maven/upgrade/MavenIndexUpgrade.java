@@ -36,7 +36,7 @@ import static org.sonatype.nexus.repository.maven.internal.tasks.MavenSearchInde
 /**
  * Upgrade step that marks existing maven repositories (at the time of the upgrade) as needing to be re-indexed.
  *
- * @since 3.next
+ * @since 3.38
  */
 public abstract class MavenIndexUpgrade
     extends ComponentSupport

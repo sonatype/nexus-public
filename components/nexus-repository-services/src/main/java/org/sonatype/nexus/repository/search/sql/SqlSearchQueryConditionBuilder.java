@@ -46,7 +46,7 @@ import static org.sonatype.nexus.repository.search.sql.SqlSearchConditionType.WI
  * Utility class for building exact and wildcard sql search query conditions.
  *
  * @see SqlSearchQueryCondition
- * @since 3.next
+ * @since 3.38
  */
 @Named
 @Singleton

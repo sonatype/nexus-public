@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.rest.SearchFieldSupport;
 /**
  * A field on the asset table.
  *
- * @since 3.next
+ * @since 3.38
  */
 public class AssetSearchField extends SearchFieldSupport
 {

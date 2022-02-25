@@ -30,7 +30,7 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
  * An evaluator which creates a test which determines whether a component and its assets pre-release state matches the
  * specified value.
  *
- * @since 3.next
+ * @since 3.38
  */
 @Named(IS_PRERELEASE_KEY)
 public class PrereleaseCleanupEvaluator

@@ -29,7 +29,7 @@ import org.sonatype.nexus.transaction.Transactional;
 import com.google.inject.assistedinject.Assisted;
 
 /**
- * @since 3.next
+ * @since 3.38
  */
 @Named
 public class SearchStore<T extends SearchDAO>
@@ -52,7 +52,7 @@ public class SearchStore<T extends SearchDAO>
    * @param filterQuery       optional filter to apply
    * @return collection of components and the next continuation token
    * @see Continuation#nextContinuationToken()
-   * @since 3.next
+   * @since 3.38
    */
   @Transactional
   public Continuation<ComponentSearch> searchComponents(

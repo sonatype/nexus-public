@@ -43,7 +43,7 @@ import static org.apache.commons.lang3.StringUtils.removeStart;
 /**
  * Base implementation for {@link SqlSearchQueryContribution}
  *
- * @since 3.next
+ * @since 3.38
  */
 public abstract class SqlSearchQueryContributionSupport
     extends ComponentSupport

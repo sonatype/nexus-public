@@ -21,7 +21,7 @@ import static org.sonatype.nexus.distributed.event.service.api.EventType.UPDATED
 /**
  * Indicates that a 'JWT secret' has been changed.
  *
- * @since 3.next
+ * @since 3.38
  */
 public class JWTSecretChangedEvent
     extends DistributedEventSupport

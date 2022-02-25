@@ -48,7 +48,7 @@ import static org.sonatype.nexus.security.jwt.rest.JwtSecretApiResourceV1.PATH;
 /**
  * REST API to reset the stored JWT secret.
  *
- * @since 3.next
+ * @since 3.38
  */
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)

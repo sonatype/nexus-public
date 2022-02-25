@@ -29,7 +29,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 /**
  * Implementation of {@link SecretStore} for datastore.
  *
- * @since 3.next
+ * @since 3.38
  */
 @Named("mybatis")
 @Singleton

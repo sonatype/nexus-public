@@ -22,7 +22,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 /**
  * Result of a component search
  *
- * @since 3.next
+ * @since 3.38
  */
 public class ComponentSearchResult
 {

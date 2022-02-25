@@ -21,7 +21,7 @@ import org.apache.shiro.web.mgt.WebSecurityManager;
 /**
  * JwtSecurityFilter support bindings.
  *
- * @since 3.next
+ * @since 3.38
  */
 public class JwtSecurityFilterModule
     extends AbstractModule

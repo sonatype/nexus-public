@@ -15,7 +15,7 @@ package org.sonatype.nexus.security.jwt;
 /**
  * Exception with details about a JWT verification attempt.
  *
- * @since 3.next
+ * @since 3.38
  */
 public class JwtVerificationException
     extends Exception

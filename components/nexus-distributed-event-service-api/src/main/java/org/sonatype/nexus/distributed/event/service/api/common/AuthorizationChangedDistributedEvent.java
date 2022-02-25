@@ -17,7 +17,7 @@ import org.sonatype.nexus.distributed.event.service.api.EventType;
 /**
  * Indicates that authorization changed.
  *
- * @since 3.next
+ * @since 3.38
  */
 public class AuthorizationChangedDistributedEvent
     extends DistributedEventSupport

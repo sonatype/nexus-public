@@ -22,7 +22,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * A PublisherEvent is a notification to the DistributedEventPublisher to publish the enclosed {@link
  * DistributedEvent}.
  *
- * @since 3.next
+ * @since 3.38
  */
 public final class PublisherEvent
 {

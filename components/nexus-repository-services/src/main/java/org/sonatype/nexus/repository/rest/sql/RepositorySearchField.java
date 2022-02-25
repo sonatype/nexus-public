@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.rest.sql;
 import org.sonatype.nexus.repository.rest.SearchFieldSupport;
 
 /**
- * @since 3.next
+ * @since 3.38
  */
 public class RepositorySearchField
     extends SearchFieldSupport

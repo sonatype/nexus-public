@@ -15,7 +15,7 @@ package org.sonatype.nexus.security.jwt;
 /**
  * An event fired when the JWT secret has changed.
  *
- * @since 3.next
+ * @since 3.38
  */
 public class JwtSecretChanged
 {

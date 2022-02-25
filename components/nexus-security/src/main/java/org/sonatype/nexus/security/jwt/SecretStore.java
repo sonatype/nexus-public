@@ -17,7 +17,7 @@ import java.util.Optional;
 /**
  * Store for accessing the JWT secret.
  *
- * @since 3.next
+ * @since 3.38
  */
 public interface SecretStore
 {
