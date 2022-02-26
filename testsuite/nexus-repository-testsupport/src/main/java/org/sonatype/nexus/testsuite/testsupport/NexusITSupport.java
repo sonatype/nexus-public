@@ -100,7 +100,10 @@ import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_DEVELOPER;
 
 /**
  * Support for Nexus integration tests.
+ *
+ * @deprecated Please write new tests using {@link NexusBaseITSupport}
  */
+@Deprecated
 public abstract class NexusITSupport
     extends NexusPaxExamSupport
 {

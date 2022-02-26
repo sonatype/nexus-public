@@ -69,7 +69,10 @@ import static org.sonatype.nexus.testsuite.testsupport.FormatClientSupport.statu
 
 /**
  * Support class for repository format ITs.
+ *
+ * @deprecated Please write new tests as part of the {@link ITSupport} hierarchy
  */
+@Deprecated
 public abstract class GenericRepositoryITSupport<RR extends RepositoryRule>
     extends NexusITSupport
 {
