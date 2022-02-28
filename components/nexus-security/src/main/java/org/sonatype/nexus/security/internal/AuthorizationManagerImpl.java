@@ -51,12 +51,11 @@ import com.google.common.collect.Sets;
 import com.google.common.eventbus.Subscribe;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.distributed.event.service.api.EphemeralNodeId.NODE_ID;
 import static org.sonatype.nexus.distributed.event.service.api.EventType.CREATED;
 import static org.sonatype.nexus.distributed.event.service.api.EventType.DELETED;
 import static org.sonatype.nexus.distributed.event.service.api.EventType.UPDATED;
-import static org.sonatype.nexus.security.internal.DefaultRealmConstants.DEFAULT_USER_SOURCE;
 import static org.sonatype.nexus.security.internal.DefaultRealmConstants.DEFAULT_REALM_NAME;
+import static org.sonatype.nexus.security.internal.DefaultRealmConstants.DEFAULT_USER_SOURCE;
 
 /**
  * Default {@link AuthorizationManager}.
@@ -423,7 +422,7 @@ public class AuthorizationManagerImpl
 
   private void fireAuthorizationChangedEvent() {
     eventManager.post(new AuthorizationConfigurationChanged());
-    eventManager.post(new PublisherEvent(NODE_ID, new AuthorizationChangedDistributedEvent()));
+    eventManager.post(new PublisherEvent(new AuthorizationChangedDistributedEvent()));
   }
 
   private void fireRoleCreatedEvent(final Role role) {
@@ -454,15 +453,13 @@ public class AuthorizationManagerImpl
     log.debug("Distribute event: roleId={}, type={}", roleId, eventType);
 
     DistributedEvent event = new RoleConfigurationEvent(roleId, eventType);
-    PublisherEvent publisherEvent = new PublisherEvent(NODE_ID, event);
-    eventManager.post(publisherEvent);
+    eventManager.post(new PublisherEvent(event));
   }
 
   private void firePrivilegeConfigurationDistributedEvent(final String privilegeId, final EventType eventType) {
     log.debug("Distribute event: privilegeId={}, type={}", privilegeId, eventType);
 
     DistributedEvent event = new PrivilegeConfigurationEvent(privilegeId, eventType);
-    PublisherEvent publisherEvent = new PublisherEvent(NODE_ID, event);
-    eventManager.post(publisherEvent);
+    eventManager.post(new PublisherEvent(event));
   }
 }

@@ -20,6 +20,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -72,7 +73,6 @@ import static java.util.stream.StreamSupport.stream;
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
-import static org.sonatype.nexus.distributed.event.service.api.EphemeralNodeId.NODE_ID;
 import static org.sonatype.nexus.distributed.event.service.api.EventType.CREATED;
 import static org.sonatype.nexus.distributed.event.service.api.EventType.DELETED;
 import static org.sonatype.nexus.distributed.event.service.api.EventType.UPDATED;
@@ -661,6 +661,6 @@ public class RepositoryManagerImpl
     log.debug("Distribute repository configuration event: repository={}:{}", repositoryName, eventType);
 
     RepositoryConfigurationEvent configEvent = new RepositoryConfigurationEvent(repositoryName, eventType);
-    eventManager.post(new PublisherEvent(NODE_ID, configEvent));
+    eventManager.post(new PublisherEvent(configEvent));
   }
 }

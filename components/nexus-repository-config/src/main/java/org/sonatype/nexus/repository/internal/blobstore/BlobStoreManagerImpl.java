@@ -68,7 +68,6 @@ import static java.lang.String.format;
 import static java.util.Optional.empty;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
-import static org.sonatype.nexus.distributed.event.service.api.EphemeralNodeId.NODE_ID;
 import static org.sonatype.nexus.distributed.event.service.api.EventType.DELETED;
 import static org.sonatype.nexus.distributed.event.service.api.EventType.UPDATED;
 
@@ -240,7 +239,7 @@ public class BlobStoreManagerImpl
     }
 
     doCreate(blobStore, configuration);
-    eventManager.post(new PublisherEvent(NODE_ID,
+    eventManager.post(new PublisherEvent(
         new BlobStoreDistributedConfigurationEvent(configuration.getName(), EventType.CREATED)));
 
     return blobStore;
@@ -277,7 +276,7 @@ public class BlobStoreManagerImpl
 
     doUpdate(blobStore, configuration);
 
-    eventManager.post(new PublisherEvent(NODE_ID,
+    eventManager.post(new PublisherEvent(
         new BlobStoreDistributedConfigurationEvent(configuration.getName(), UPDATED)));
 
     return blobStore;
@@ -368,7 +367,7 @@ public class BlobStoreManagerImpl
       store.delete(blobStore.getBlobStoreConfiguration());
     }
     eventManager.post(new BlobStoreDeletedEvent(blobStore));
-    eventManager.post(new PublisherEvent(NODE_ID,
+    eventManager.post(new PublisherEvent(
         new BlobStoreDistributedConfigurationEvent(name, DELETED)));
   }
 

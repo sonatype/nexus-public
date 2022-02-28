@@ -16,6 +16,7 @@ import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -152,7 +153,7 @@ public class JwtHelper
    */
   @Subscribe
   public void on(final JWTSecretChangedEvent event) {
-    log.debug("JWT secret has changed on {} node. Reset the cookies", event.getNodeId());
+    log.debug("JWT secret has changed on a remote node. Reset the cookies");
     verifier = new JwtVerifier(secretStoreProvider.get().getSecret()
         .orElseThrow(() -> new IllegalStateException("JWT secret not found in datastore")));
   }
