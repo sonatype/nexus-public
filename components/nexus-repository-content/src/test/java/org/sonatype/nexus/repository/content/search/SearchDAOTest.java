@@ -13,23 +13,28 @@
 package org.sonatype.nexus.repository.content.search;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.repository.config.internal.ConfigurationData;
+import org.sonatype.nexus.repository.content.Asset;
+import org.sonatype.nexus.repository.content.AssetBlob;
+import org.sonatype.nexus.repository.content.SearchResult;
 import org.sonatype.nexus.repository.content.Component;
-import org.sonatype.nexus.repository.content.ComponentSearch;
-import org.sonatype.nexus.repository.content.browse.store.example.TestSearchDAO;
 import org.sonatype.nexus.repository.content.store.ComponentData;
 import org.sonatype.nexus.repository.content.store.ExampleContentTestSupport;
+import org.sonatype.nexus.repository.content.store.example.TestSearchDAO;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import static java.util.Objects.isNull;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 /**
@@ -63,55 +68,59 @@ public class SearchDAOTest
   @Test
   public void testSearchComponents() {
     generateConfiguration();
-    final EntityId repositoryId = generatedConfigurations().get(0).getRepositoryId();
+    EntityId repositoryId = generatedConfigurations().get(0).getRepositoryId();
     generateSingleRepository(UUID.fromString(repositoryId.getValue()));
-    generateRandomContent(1, 1);
-
-    final SearchData actualData;
+    generateContent(1, 1);
 
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       SearchDAO searchDAO = session.access(TestSearchDAO.class);
 
-      final Continuation<ComponentSearch> actual =
-          searchDAO.searchComponents(1000, null, null, null, false, null);
+      int count = searchDAO.count();
+      assertThat(count, is(1));
 
-      actualData = (SearchData) actual.stream().findFirst().get();
+      Continuation<SearchResult> actual = searchDAO.searchComponents(10, null, null, null, null, false);
+      Optional<SearchResult> componentSearch = actual.stream().findFirst();
+
+      assertThat(componentSearch.isPresent(), is(true));
+      assertThat("Data fetched from DB is NOT the same as generated",
+          isProvidedSearchDataAreEqualAndNotNull(componentSearch.get(), getGeneratedData()));
     }
-
-    assertThat("Data fetched from DB is same as generated",
-        isProvidedSearchDataAreEqualAndNotNull(actualData, getGeneratedData()));
   }
 
-  private boolean isProvidedSearchDataAreEqualAndNotNull(SearchData left, SearchData right) {
-    if (isNull(left)
-        || isNull(right)
-        || isNull(left.componentId)
-        || isNull(left.namespace())
-        || isNull(left.componentName())
-        || isNull(left.version())
-        || isNull(left.repositoryName())
-        || isNull(left.repositoryName())) {
+  private boolean isProvidedSearchDataAreEqualAndNotNull(final SearchResult left, final SearchResultData right) {
+    if (isNull(left) || isNull(right)) {
       return false;
     }
 
-    return left.componentId.equals(right.componentId)
-        && left.namespace().equals(right.namespace())
-        && left.componentName().equals(right.componentName())
-        && left.version().equals(right.version())
-        && left.repositoryName().equals(right.repositoryName());
+    return Objects.equals(left.componentId(), right.componentId()) &&
+        Objects.equals(left.namespace(), right.namespace()) &&
+        Objects.equals(left.componentName(), right.componentName()) &&
+        Objects.equals(left.version(), right.version()) &&
+        Objects.equals(left.repositoryName(), right.repositoryName()) &&
+        Objects.equals(left.path(), right.path()) &&
+        Objects.equals(left.contentType(), right.contentType()) &&
+        Objects.equals(left.checksums(), right.checksums());
   }
 
-  private SearchData getGeneratedData() {
-    final List<Component> components = generatedComponents();
-    final List<ConfigurationData> configurations = generatedConfigurations();
+  private SearchResultData getGeneratedData() {
+    List<Component> components = generatedComponents();
+    List<ConfigurationData> configurations = generatedConfigurations();
     if (components.isEmpty() || configurations.isEmpty()) {
-      return new SearchData();
+      return new SearchResultData();
     }
-    SearchData searchData =
-        getSearchDataFromComponent((ComponentData) components.get(0));
+    SearchResultData searchData = getSearchDataFromComponent((ComponentData) components.get(0));
 
     searchData.setRepositoryName(configurations.get(0).getRepositoryName());
-    searchData.setAttributes(generatedAssets().get(0).attributes());
+    Asset asset = generatedAssets().get(0);
+    searchData.setAttributes(asset.attributes());
+    searchData.setPath(asset.path());
+
+    Optional<AssetBlob> blobOpt = asset.blob();
+    if (blobOpt.isPresent()) {
+      AssetBlob assetBlob = blobOpt.get();
+      searchData.setContentType(assetBlob.contentType());
+      searchData.setChecksums(assetBlob.checksums());
+    }
 
     return searchData;
   }

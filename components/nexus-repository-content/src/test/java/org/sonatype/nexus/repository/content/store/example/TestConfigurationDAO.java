@@ -10,15 +10,15 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.browse.store.example;
+package org.sonatype.nexus.repository.content.store.example;
 
-import org.sonatype.nexus.datastore.api.Expects;
 import org.sonatype.nexus.repository.config.ConfigurationDAO;
-import org.sonatype.nexus.repository.content.search.SearchDAO;
 
-@Expects({ConfigurationDAO.class})
-public interface TestSearchDAO
-  extends SearchDAO
+/**
+ * Test format for configuration DAO.
+ */
+public interface TestConfigurationDAO
+    extends ConfigurationDAO
 {
   // nothing to add
 }

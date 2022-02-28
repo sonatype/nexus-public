@@ -37,6 +37,7 @@ import org.mockito.Mock;
 
 import static java.util.Optional.empty;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -130,8 +131,7 @@ public class RepositorySqlSearchQueryContributionTest
 
   private SqlSearchQueryCondition mockCondition(final Set<String> repositories) {
     final SqlSearchQueryCondition condition = new SqlSearchQueryCondition("condition", new HashMap<>());
-    when(sqlSearchQueryConditionBuilder.condition(RepositorySqlSearchQueryContributionTest.REPOSITORY, repositories))
-        .thenReturn(condition);
+    when(sqlSearchQueryConditionBuilder.condition(any(), eq(repositories))).thenReturn(condition);
     return condition;
   }
 

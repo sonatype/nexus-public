@@ -12,21 +12,24 @@
  */
 package org.sonatype.nexus.repository.content.search;
 
+import java.util.Map;
+
 import org.sonatype.nexus.common.entity.ContinuationAware;
-import org.sonatype.nexus.repository.content.ComponentSearch;
+import org.sonatype.nexus.repository.content.SearchResult;
 import org.sonatype.nexus.repository.content.store.AbstractRepositoryContent;
 
 /**
- * {@link ComponentSearch} data backed by the content data store.
+ * {@link SearchResult} data backed by the content data store.
  *
  * @since 3.38
  */
-public class SearchData
+public class SearchResultData
     extends AbstractRepositoryContent
-    implements ComponentSearch, ContinuationAware
+    implements SearchResult, ContinuationAware
 {
   Integer componentId; // NOSONAR: internal id
 
+  // --- component related data ---
   private String namespace;
 
   private String componentName;
@@ -35,20 +38,38 @@ public class SearchData
 
   private String repositoryName;
 
+  // --- asset related data ---
+  private Integer assetId;
+
+  private String path;
+
+  private String contentType;
+
+  private Map<String, String> checksums;
+
   @Override
   public String nextContinuationToken() {
     return Integer.toString(componentId);
   }
 
   @Override
-  public String toString() {
-    return "ComponentData{" +
-        "componentId=" + componentId +
-        ", namespace='" + namespace + '\'' +
-        ", componentName='" + componentName + '\'' +
-        ", version='" + version + '\'' +
-        ", repositoryName='" + repositoryName + '\'' +
-        "} " + super.toString();
+  public Integer assetId() {
+    return assetId;
+  }
+
+  @Override
+  public String path() {
+    return path;
+  }
+
+  @Override
+  public String contentType() {
+    return contentType;
+  }
+
+  @Override
+  public Map<String, String> checksums() {
+    return checksums;
   }
 
   @Override
@@ -76,6 +97,10 @@ public class SearchData
     return version;
   }
 
+  public void setComponentId(final Integer componentId) {
+    this.componentId = componentId;
+  }
+
   public void setNamespace(final String namespace) {
     this.namespace = namespace;
   }
@@ -92,7 +117,34 @@ public class SearchData
     this.repositoryName = repositoryName;
   }
 
-  public void setComponentId(final Integer componentId) {
-    this.componentId = componentId;
+  public void setAssetId(final Integer assetId) {
+    this.assetId = assetId;
+  }
+
+  public void setPath(final String path) {
+    this.path = path;
+  }
+
+  public void setContentType(final String contentType) {
+    this.contentType = contentType;
+  }
+
+  public void setChecksums(final Map<String, String> checksums) {
+    this.checksums = checksums;
+  }
+
+  @Override
+  public String toString() {
+    return "ComponentSearchData{" +
+        "componentId=" + componentId +
+        ", namespace='" + namespace + '\'' +
+        ", componentName='" + componentName + '\'' +
+        ", version='" + version + '\'' +
+        ", repositoryName='" + repositoryName + '\'' +
+        ", assetId=" + assetId +
+        ", path='" + path + '\'' +
+        ", contentType='" + contentType + '\'' +
+        ", checksums=" + checksums +
+        '}';
   }
 }

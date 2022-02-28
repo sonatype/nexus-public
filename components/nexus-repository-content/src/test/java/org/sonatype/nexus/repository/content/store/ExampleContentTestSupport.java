@@ -19,7 +19,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -41,7 +40,7 @@ import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.ContentRepository;
 import org.sonatype.nexus.repository.content.RepositoryContent;
-import org.sonatype.nexus.repository.content.search.SearchData;
+import org.sonatype.nexus.repository.content.search.SearchResultData;
 import org.sonatype.nexus.repository.content.store.example.TestAssetBlobDAO;
 import org.sonatype.nexus.repository.content.store.example.TestAssetDAO;
 import org.sonatype.nexus.repository.content.store.example.TestAssetData;
@@ -61,7 +60,6 @@ import org.junit.Rule;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Integer.toHexString;
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
@@ -82,7 +80,8 @@ public class ExampleContentTestSupport
       .access(TestContentRepositoryDAO.class)
       .access(TestComponentDAO.class)
       .access(TestAssetBlobDAO.class)
-      .access(TestAssetDAO.class);
+      .access(TestAssetDAO.class)
+      .access(ConfigurationDAO.class);
 
   private Random random = new Random();
 
@@ -132,8 +131,8 @@ public class ExampleContentTestSupport
     return unmodifiableList(configurations);
   }
 
-  protected SearchData getSearchDataFromComponent(final ComponentData componentData) {
-    SearchData searchData = new SearchData();
+  protected SearchResultData getSearchDataFromComponent(final ComponentData componentData) {
+    SearchResultData searchData = new SearchResultData();
     searchData.setComponentId(componentData.componentId);
     searchData.setNamespace(componentData.namespace());
     searchData.setComponentName(componentData.name());
@@ -251,6 +250,37 @@ public class ExampleContentTestSupport
             asset.setAssetBlob(assetBlob);
             session.access(TestAssetDAO.class).updateAssetBlobLink(asset);
           }
+        })) {
+          assetBlobs.add(assetBlob);
+        }
+      }
+    }
+  }
+
+  // Generate the component with asset and blob
+  protected void generateContent(final int maxComponents, final int maxAssets) {
+    components = new ArrayList<>();
+    while (components.size() < maxComponents) {
+      int repositoryId = repositories.get(random.nextInt(repositories.size())).repositoryId;
+      ComponentData component = randomComponent(repositoryId);
+      if (doCommit(session -> session.access(TestComponentDAO.class).createComponent(component))) {
+        components.add(component);
+      }
+    }
+
+    assets = new ArrayList<>();
+    assetBlobs = new ArrayList<>();
+    while (assets.size() < maxAssets) {
+      ComponentData component = components.get(random.nextInt(components.size()));
+      AssetData asset = randomAsset(component.repositoryId);
+      asset.setComponent(component);
+      if (doCommit(session -> session.access(TestAssetDAO.class).createAsset(asset))) {
+        assets.add(asset);
+        AssetBlobData assetBlob = randomAssetBlob();
+        if (doCommit(session -> {
+          session.access(TestAssetBlobDAO.class).createAssetBlob(assetBlob);
+          asset.setAssetBlob(assetBlob);
+          session.access(TestAssetDAO.class).updateAssetBlobLink(asset);
         })) {
           assetBlobs.add(assetBlob);
         }

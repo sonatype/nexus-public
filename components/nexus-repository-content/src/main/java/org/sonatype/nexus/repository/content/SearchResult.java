@@ -12,10 +12,15 @@
  */
 package org.sonatype.nexus.repository.content;
 
+import java.time.OffsetDateTime;
+import java.util.Map;
+
 /**
- * @since 3.38
+ * Provides search results.
+ *
+ * @since 3.next
  */
-public interface ComponentSearch
+public interface SearchResult
     extends RepositoryContent
 {
   Integer componentId();
@@ -27,4 +32,14 @@ public interface ComponentSearch
   String repositoryName();
 
   String version();
+
+  Integer assetId();
+
+  String path();
+
+  String contentType();
+
+  OffsetDateTime lastUpdated();
+
+  Map<String, String> checksums();
 }

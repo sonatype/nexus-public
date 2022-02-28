@@ -10,28 +10,9 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.search;
+@FeatureFlag(name = DATASTORE_SEARCH_ENABLED)
+package org.sonatype.nexus.repository.content.search.sql;
 
-/**
- * Enum representing column names for {@link SearchDAO}
- *
- * @since 3.38
- */
-public enum SearchViewColumns
-{
-  COMPONENT_ID("componentId"),
-  NAMESPACE("namespace"),
-  SEARCH_COMPONENT_NAME("componentName"),
-  VERSION("version"),
-  REPOSITORY_NAME("repositoryName");
+import org.sonatype.nexus.common.app.FeatureFlag;
 
-  private final String name;
-
-  SearchViewColumns(final String name) {
-    this.name = name;
-  }
-
-  public String getName() {
-    return name;
-  }
-}
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_SEARCH_ENABLED;

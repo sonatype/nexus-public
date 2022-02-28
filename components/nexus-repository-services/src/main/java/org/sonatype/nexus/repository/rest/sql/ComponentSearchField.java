@@ -19,13 +19,14 @@ import org.sonatype.nexus.repository.rest.SearchFieldSupport;
  *
  * @since 3.38
  */
-public class ComponentSearchField extends SearchFieldSupport
+public class ComponentSearchField
+    extends SearchFieldSupport
 {
   private static final String TABLE = "${format}_component";
 
   public static final ComponentSearchField NAMESPACE = new ComponentSearchField("namespace");
 
-  public static final SearchFieldSupport NAME = new ComponentSearchField("name");
+  public static final SearchFieldSupport NAME = new ComponentSearchField("search_component_name");
 
   public static final SearchFieldSupport VERSION = new ComponentSearchField("version");
 

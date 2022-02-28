@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.content.search;
 
 import java.util.Map;
-
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.Continuation;
@@ -21,7 +20,7 @@ import org.sonatype.nexus.datastore.api.ContentDataAccess;
 import org.sonatype.nexus.datastore.api.Expects;
 import org.sonatype.nexus.datastore.api.SchemaTemplate;
 import org.sonatype.nexus.repository.config.ConfigurationDAO;
-import org.sonatype.nexus.repository.content.ComponentSearch;
+import org.sonatype.nexus.repository.content.SearchResult;
 import org.sonatype.nexus.repository.content.store.AssetBlobDAO;
 import org.sonatype.nexus.repository.content.store.AssetDAO;
 import org.sonatype.nexus.repository.content.store.ComponentDAO;
@@ -40,27 +39,30 @@ public interface SearchDAO
   String FILTER_PARAMS = "filterParams";
 
   /**
+   * Search components in the scope of one format.
    *
-   * @param limit amount of rows in response
+   * @param limit             the maximum number of rows to return
    * @param continuationToken optional token to continue from a previous request
-   * @param filter optional filter to apply
-   * @param values optional values map for filter (required if filter is not null)
-   * @param isReverseOrder boolean flag to reverse soring order
-   * @param sortColumnName column name to be used for search
-   * @return collection of {@link SearchData} representing search results for given format and the next continuation token
+   * @param filter            optional filter to apply
+   * @param values            optional values map for filter (required if filter is not null)
+   * @param sortColumnName    optional column name to be used for sorting
+   * @param isDescending      boolean flag for descending soring order
+   * @return collection of {@link SearchResultData} representing search results for a given format and the next
+   * continuation token
    */
-  Continuation<ComponentSearch> searchComponents(
+  Continuation<SearchResult> searchComponents(
       @Param("limit") int limit,
       @Nullable @Param("continuationToken") String continuationToken,
       @Nullable @Param("filter") String filter,
       @Nullable @Param(FILTER_PARAMS) final Map<String, String> values,
-      @Param("isReverseOrder") boolean isReverseOrder,
-      @Nullable @Param("sortColumnName") SearchViewColumns sortColumnName); //TODO to be revisited in the scope of NEXUS-29476
+      @Nullable @Param("sortColumnName") SearchViewColumns sortColumnName,
+      //TODO to be revisited in the scope of NEXUS-29476
+      @Param("isDescending") boolean isDescending);
 
   /**
-   * Count all {@link SearchData} in the given format.
+   * Count all {@link SearchResultData} in the given format.
    *
-   * @return count of all {@link SearchData} in the given format
+   * @return count of all {@link SearchResultData} in the given format
    */
   int count();
 }

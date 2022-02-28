@@ -14,8 +14,11 @@ package org.sonatype.nexus.repository.content.store.example;
 
 import org.sonatype.nexus.repository.content.search.SearchDAO;
 
+/**
+ * Test format for search DAO.
+ */
 public interface TestSearchDAO
     extends SearchDAO
 {
-
+  // nothing to add
 }

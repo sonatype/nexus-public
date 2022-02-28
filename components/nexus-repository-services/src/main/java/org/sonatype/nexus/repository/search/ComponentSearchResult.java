@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.search;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -138,5 +139,12 @@ public class ComponentSearchResult
 
   public void setLastDownloaded(final OffsetDateTime lastDownloaded) {
     this.lastDownloaded = lastDownloaded;
+  }
+
+  public void addAsset(final AssetSearchResult asset) {
+    if (assets == null) {
+      assets = new ArrayList<>();
+    }
+    assets.add(asset);
   }
 }

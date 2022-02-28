@@ -21,15 +21,16 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
-import org.sonatype.nexus.repository.content.ComponentSearch;
+import org.sonatype.nexus.repository.content.SearchResult;
 import org.sonatype.nexus.repository.content.store.ContentStoreSupport;
+import org.sonatype.nexus.repository.search.SortDirection;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryCondition;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.inject.assistedinject.Assisted;
 
 /**
- * @since 3.38
+ * @since 3.next
  */
 @Named
 public class SearchStore<T extends SearchDAO>
@@ -50,17 +51,18 @@ public class SearchStore<T extends SearchDAO>
    * @param limit             maximum number of components to return
    * @param continuationToken optional token to continue from a previous request
    * @param filterQuery       optional filter to apply
+   * @param sortColumnName    optional column name to be used for sorting
+   * @param sortDirection     the sort direction: ascending or descending
    * @return collection of components and the next continuation token
    * @see Continuation#nextContinuationToken()
-   * @since 3.38
    */
   @Transactional
-  public Continuation<ComponentSearch> searchComponents(
+  public Continuation<SearchResult> searchComponents(
       final int limit,
       @Nullable final String continuationToken,
       @Nullable final SqlSearchQueryCondition filterQuery,
-      final boolean isReverseOrder,
-      final SearchViewColumns sortColumnName)
+      @Nullable final SearchViewColumns sortColumnName,
+      final SortDirection sortDirection)
   {
     String filterFormat = null;
     Map<String, String> formatValues = null;
@@ -69,9 +71,16 @@ public class SearchStore<T extends SearchDAO>
       formatValues = filterQuery.getValues();
     }
 
-    return dao().searchComponents(limit, continuationToken, filterFormat, formatValues, isReverseOrder, sortColumnName);
+    boolean isDescending = SortDirection.DESC == sortDirection;
+    return dao().searchComponents(limit, continuationToken, filterFormat, formatValues, sortColumnName, isDescending);
   }
 
+  /**
+   * Count all {@link SearchResultData} in the given format.
+   *
+   * @return count of all {@link SearchResultData} in the given format
+   */
+  @Transactional
   public int count()
   {
     return dao().count();
