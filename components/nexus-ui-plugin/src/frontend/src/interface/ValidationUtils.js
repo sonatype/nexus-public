@@ -27,7 +27,7 @@ const SECURE_URL_REGEX = /^https:\/\/[^"<>^`{|}]+$/i;
  */
 export default class ValidationUtils {
   /**
-   * @param {string|null|undefined}
+   * @param str {string|null|undefined}
    * @return {boolean} true if the string is blank, null, or undefined
    */
   static isBlank(str) {
@@ -35,7 +35,7 @@ export default class ValidationUtils {
   }
 
   /**
-   * @param {string|null|undefined}
+   * @param str {string|null|undefined}
    * @return {boolean} true if the string is not blank, null, or undefined
    */
   static notBlank(str) {
@@ -43,7 +43,7 @@ export default class ValidationUtils {
   }
 
   /**
-   * @param {string|null|undefined}
+   * @param str {string|null|undefined}
    * @return {boolean} true if the string appears to be a valid uri
    */
   static isUri(str) {
@@ -51,7 +51,7 @@ export default class ValidationUtils {
   }
 
   /**
-   * @param {string}
+   * @param str {string}
    * @return {boolean} true if the string does not appear to be a valid uri
    */
   static notUri(str) {
@@ -59,7 +59,7 @@ export default class ValidationUtils {
   }
 
   /**
-   * @param {str|null|undefined}
+   * @param str {string|null|undefined}
    * @returns {boolean} true if the string appears to be a valid url (http/https)
    */
   static isUrl(str) {
@@ -67,7 +67,7 @@ export default class ValidationUtils {
   }
 
   /**
-   * @param {str|null|undefined}
+   * @param str {string|null|undefined}
    * @returns {boolean} true if the string does not appear to be a valid url (http/https)
    */
   static notUrl(str) {
@@ -75,7 +75,7 @@ export default class ValidationUtils {
   }
 
   /**
-   * @param {str|null|undefined}
+   * @param str {string|null|undefined}
    * @returns {boolean} true if the str is an https url
    */
   static isSecureUrl(str) {
@@ -83,7 +83,7 @@ export default class ValidationUtils {
   }
 
   /**
-   * @param {str|null|undefined}
+   * @param str {string|null|undefined}
    * @returns {boolean} true if the string does not appear to be a valid secure url (https)
    */
   static notSecureUrl(str) {

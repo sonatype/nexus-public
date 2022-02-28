@@ -28,7 +28,6 @@ export { default as ListMachineUtils } from './interface/ListMachineUtils';
 export { default as ValidationUtils } from './interface/ValidationUtils';
 export {default as useSimpleMachine} from './interface/SimpleMachineUtils';
 
-export {default as BreadcrumbActions} from './components/layout/common/BreadcrumbActions/BreadcrumbActions';
 export {default as ContentBody} from './components/layout/common/ContentBody/ContentBody';
 export {default as Section} from './components/layout/common/Section/Section';
 export {default as SectionFooter} from './components/layout/common/SectionFooter/SectionFooter';
@@ -41,7 +40,6 @@ export {default as PageActions} from './components/layout/common/PageActions/Pag
 export {default as PageHeader} from './components/layout/common/PageHeader/PageHeader';
 export {default as PageTitle} from './components/layout/common/PageTitle/PageTitle';
 
-export {default as Alert} from './components/widgets/Alert/Alert';
 export {
   default as CheckboxControlledWrapper
 } from './components/widgets/CheckboxControlledWrapper/CheckboxControlledWrapper';

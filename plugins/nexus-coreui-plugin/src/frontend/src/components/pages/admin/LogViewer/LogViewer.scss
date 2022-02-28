@@ -14,8 +14,6 @@
  * @since 3.24
  */
 
-@import "~@sonatype/nexus-ui-plugin/dist/styles/colors";
-
 .nxrm-log-viewer {
   height: 100%;
 
@@ -31,7 +29,7 @@
   .nxrm-select-action {
     margin-left: var(--nx-spacing-base);
     select {
-      margin-bottom: 0px;
+      margin-bottom: 0;
     }
   }
 

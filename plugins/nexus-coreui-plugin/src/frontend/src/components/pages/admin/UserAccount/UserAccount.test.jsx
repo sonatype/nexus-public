@@ -94,10 +94,10 @@ describe('UserAccount', () => {
 
     await waitForElementToBeRemoved(loadingMask);
 
-    expect(userIdField().hasAttribute('readonly','true')).toBe(true);
-    expect(firstNameField().hasAttribute('readonly','true')).toBe(true);
-    expect(lastNameField().hasAttribute('readonly','true')).toBe(true);
-    expect(emailField().hasAttribute('readonly','true')).toBe(true);
+    expect(userIdField()).toBeDisabled();
+    expect(firstNameField()).toBeDisabled();
+    expect(lastNameField()).toBeDisabled();
+    expect(emailField()).toBeDisabled();
 
     expect(saveButton()).toHaveClass('disabled');
     expect(discardButton()).toHaveClass('disabled');
