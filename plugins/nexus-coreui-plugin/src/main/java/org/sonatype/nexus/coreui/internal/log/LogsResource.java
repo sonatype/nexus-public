@@ -12,78 +12,93 @@
  */
 package org.sonatype.nexus.coreui.internal.log;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
-import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
-import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.log.LogManager;
-import org.sonatype.nexus.common.log.LogMarker;
+import org.sonatype.nexus.logging.task.TaskLogHome;
 import org.sonatype.nexus.rest.APIConstants;
 import org.sonatype.nexus.rest.Resource;
 
-import com.google.common.base.Strings;
+import com.google.common.collect.Sets;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.net.HttpHeaders.CONTENT_DISPOSITION;
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toSet;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
-import static org.sonatype.nexus.common.log.LogManager.DEFAULT_LOGGER;
 
 /**
- * Log REST resource.
+ * Logs REST resource.
  *
- * @since 2.7
+ * @since 3.3
  */
 @Named
 @Singleton
-@Path(LogResource.RESOURCE_URI)
-public class LogResource
+@Path(LogsResource.RESOURCE_URI)
+public class LogsResource
     extends ComponentSupport
     implements Resource
 {
-  public static final String RESOURCE_URI = APIConstants.INTERNAL_API_PREFIX + "/logging/log";
+  public static final String RESOURCE_URI = APIConstants.INTERNAL_API_PREFIX + "/logging/logs";
 
   public static final String DEFAULT_MARK = "MARK";
 
   private final LogManager logManager;
 
-  private final LogMarker logMarker;
-
   @Inject
-  public LogResource(final LogManager logManager, final LogMarker logMarker) {
+  public LogsResource(final LogManager logManager) {
     this.logManager = checkNotNull(logManager);
-    this.logMarker = checkNotNull(logMarker);
   }
 
   /**
-   * Downloads a part of nexus.log (specified by fromByte/bytesCount) or full nexus.log (if fromByte/bytesCount are
-   * null).
-   *
-   * @param fromByte   starting position
-   * @param bytesCount number of bytes
-   * @return part or full nexus.log
-   * @throws Exception If getting log fails
-   * @deprecated moving to {@link LogsResource}
+   * List the log files known by the system
    */
   @GET
+  @Produces({APPLICATION_JSON})
+  @RequiresPermissions("nexus:logging:read")
+  public Set<LogXO> listLogs() throws IOException {
+    Predicate<java.nio.file.Path> isValidLog = path -> path.getFileName().toString().toLowerCase().endsWith(".log");
+
+    Set<LogXO> logs = logManager.getLogFiles().stream().map(file -> new LogXO(file.toPath())).collect(toSet());
+    try (Stream<java.nio.file.Path> directory = Files.list(Paths.get(TaskLogHome.getTaskLogHome()))) {
+      Set<LogXO> taskLogs = directory
+          .filter(isValidLog)
+          .map(LogXO::new).collect(toSet());
+      return Sets.union(logs, taskLogs);
+    }
+  }
+
+  /**
+   * Downloads a part of a log file or the complete log file if fromByte/bytesCount are null.
+   */
+  @GET
+  @Path("/{filename: .*\\.log}")
   @Produces({TEXT_PLAIN})
   @RequiresPermissions("nexus:logging:read")
-  @Deprecated
-  public Response get(@QueryParam("fromByte") final Long fromByte,
+  public Response get(@PathParam("filename") final String filename,
+                      @QueryParam("fromByte") final Long fromByte,
                       @QueryParam("bytesCount") final Long bytesCount)
-      throws Exception
+      throws NotFoundException, IOException
   {
     Long from = fromByte;
     if (from == null || from < 0) {
@@ -93,29 +108,12 @@ public class LogResource
     if (count == null) {
       count = Long.MAX_VALUE;
     }
-    String logName = logManager.getLogFor(DEFAULT_LOGGER)
-        .orElseThrow(() -> new NotFoundException("Failed to determine log file name for " + DEFAULT_LOGGER));
-    InputStream log = logManager.getLogFileStream(logName, from, count);
+    InputStream log = logManager.getLogFileStream(filename, from, count);
     if (log == null) {
-      throw new NotFoundException("nexus.log not found");
+      throw new NotFoundException(format("%s not found", filename));
     }
     return Response.ok(log)
-        .header(CONTENT_DISPOSITION, format("attachment; filename=\"%s\"", logName))
+        .header(CONTENT_DISPOSITION, format("attachment; filename=\"%s\"", filename))
         .build();
-  }
-
-  /**
-   */
-  @POST
-  @Path("/mark")
-  @Consumes({TEXT_PLAIN})
-  @RequiresPermissions("nexus:logging:create")
-  public void mark(final String message) {
-    if (Strings.isNullOrEmpty(message)) {
-      logMarker.markLog(DEFAULT_MARK);
-    }
-    else {
-      logMarker.markLog(message);
-    }
   }
 }

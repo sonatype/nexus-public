@@ -17,16 +17,20 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -42,6 +46,7 @@ import org.sonatype.nexus.common.log.LoggerLevelChangedEvent;
 import org.sonatype.nexus.common.log.LoggersResetEvent;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.logging.task.TaskLogHome;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
@@ -61,6 +66,8 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.impl.StaticLoggerBinder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toSet;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.KERNEL;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
@@ -74,6 +81,8 @@ public class LogbackLogManager
     extends StateGuardLifecycleSupport
     implements LogManager
 {
+  private static final String TASKS_PREFIX = "tasks/";
+
   private final EventManager eventManager;
 
   private final BeanLocator beanLocator;
@@ -153,55 +162,53 @@ public class LogbackLogManager
   static Optional<String> getLogFor(final String loggerName, final Collection<Appender<ILoggingEvent>> appenders) {
     return appenders.stream()
         .filter(appender -> loggerName.equals(appender.getName()))
-        .filter(named -> named instanceof FileAppender)
+        .filter(FileAppender.class::isInstance)
         .map(fileAppender -> ((FileAppender) fileAppender).getFile())
         .map(FilenameUtils::getName)
-        .findAny();
+        .filter(Objects::nonNull)
+        .findFirst();
   }
 
   @Override
   @Guarded(by = STARTED)
   public Set<File> getLogFiles() {
-    HashSet<File> files = new HashSet<>();
-
-    for (Appender<?> appender : appenders()) {
-      if (appender instanceof FileAppender) {
-        String path = ((FileAppender<?>) appender).getFile();
-        files.add(new File(path));
-      }
-    }
-
-    return files;
+    return appenders().stream()
+        .filter(FileAppender.class::isInstance)
+        .map(fileAppender -> ((FileAppender) fileAppender).getFile())
+        .map(File::new)
+        .collect(toSet());
   }
 
   @Override
   @Nullable
   @Guarded(by = STARTED)
   public File getLogFile(final String fileName) {
-    Set<File> files = getLogFiles();
-    for (File file : files) {
-      if (file.getName().equals(fileName)) {
-        return file;
-      }
-    }
-    return null;
+    final String filePrefix = fileName.startsWith(TASKS_PREFIX) ? TASKS_PREFIX : "";
+
+    return requireNonNull(getAllLogFiles(fileName).orElse(null)).stream()
+        .filter(file -> fileName.equals(filePrefix + file.getName()))
+        .findFirst()
+        .orElseGet(() -> {
+          log.error("Unable to find log file");
+          return null;
+    });
   }
 
   @Override
   @Nullable
   @Guarded(by = STARTED)
   public InputStream getLogFileStream(final String fileName, final long from, final long count) throws IOException {
-    log.debug("Retrieving log file: {}", fileName);
+    log.debug("Retrieving log file");
 
     // checking for platform or normalized path-separator (on unix these are the same)
-    if (fileName.contains(File.pathSeparator) || fileName.contains("/")) {
-      log.warn("Cannot retrieve log files with path separators in their name");
+    if ((fileName.contains(File.pathSeparator) || fileName.contains("/")) && !fileName.startsWith(TASKS_PREFIX)) {
+      log.warn("Cannot retrieve log files with path separators in their name, unless it is a task log");
       return null;
     }
 
     File file = getLogFile(fileName);
     if (file == null || !file.exists()) {
-      log.warn("Log file does not exist: {}", fileName);
+      log.warn("Log file does not exist");
       return null;
     }
 
@@ -454,5 +461,24 @@ public class LogbackLogManager
       }
     }
     return result;
+  }
+
+  /**
+   *
+   * Helper to get log files
+   */
+  private Optional<Set<File>> getAllLogFiles(final String fileName) {
+    if (fileName.startsWith(TASKS_PREFIX) && fileName.endsWith(".log")) {
+      try(Stream<Path> tasks = Files.list(Paths.get(requireNonNull(TaskLogHome.getTaskLogHome())))) {
+        return Optional.of(tasks.map(Path::toFile).collect(toSet()));
+      }
+      catch (IOException e) {
+        log.error("Unable to list files in the tasks directory", e);
+        return Optional.empty();
+      }
+    }
+    else {
+      return Optional.of(getLogFiles());
+    }
   }
 }
