@@ -100,9 +100,9 @@ public class RepositoryInternalResource
       @QueryParam("withFormats") final boolean withFormats,
       @QueryParam("format") final String formatParam)
   {
-    List<RepositoryXO> repositories = stream(repositoryManager.browse())
-        .filter(repository -> repositoryPermissionChecker.userHasRepositoryAdminPermission(repository, READ))
-        .filter(repository -> isBlank(type) || type.equals(repository.getType().toString()))
+    List<RepositoryXO> repositories = repositoryPermissionChecker.userCanBrowseRepositories(repositoryManager.browse())
+        .stream()
+        .filter(repository -> isBlank(type) || type.equals(repository.getType().getValue()))
         .filter(repository -> isBlank(formatParam)
                 || formatParam.equals(ALL_FORMATS)
                 || formatParam.equals(repository.getFormat().getValue()))
