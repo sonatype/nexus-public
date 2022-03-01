@@ -101,4 +101,11 @@ public class AssetSearchResult
   public void setAttributes(final Map<String, Object> attributes) {
     this.attributes = attributes;
   }
+
+  @Override
+  public String toString() {
+    return "AssetSearchResult [path=" + path + ", id=" + id + ", repository=" + repository + ", format=" + format
+        + ", checksum=" + checksum + ", contentType=" + contentType + ", lastModified=" + lastModified + ", attributes="
+        + attributes + "]";
+  }
 }

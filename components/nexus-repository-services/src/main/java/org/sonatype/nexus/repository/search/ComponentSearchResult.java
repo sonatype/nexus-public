@@ -147,4 +147,11 @@ public class ComponentSearchResult
     }
     assets.add(asset);
   }
+
+  @Override
+  public String toString() {
+    return "ComponentSearchResult [id=" + id + ", repositoryName=" + repositoryName + ", group=" + group + ", name="
+        + name + ", version=" + version + ", format=" + format + ", lastDownloaded=" + lastDownloaded
+        + ", lastModified=" + lastModified + ", assets=" + assets + ", annotations=" + annotations + "]";
+  }
 }

@@ -39,4 +39,8 @@ public interface SearchService
    * @since 3.38
    */
   long count(SearchRequest searchRequest);
+
+  default void waitForCalm() {
+    // not required for default
+  }
 }

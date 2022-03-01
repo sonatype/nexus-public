@@ -257,6 +257,10 @@ public class ElasticSearchUtils
       repositoryQueryBuilder.inRepositories(searchRequest.getRepositories());
     }
 
+    if (!searchRequest.isCheckAuthorization()) {
+      repositoryQueryBuilder.unrestricted();
+    }
+
     return repositoryQueryBuilder;
   }
 }

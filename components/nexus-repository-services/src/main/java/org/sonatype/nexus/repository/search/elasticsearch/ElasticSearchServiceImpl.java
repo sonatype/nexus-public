@@ -38,6 +38,7 @@ import org.sonatype.nexus.repository.search.ComponentSearchResult;
 import org.sonatype.nexus.repository.search.SearchRequest;
 import org.sonatype.nexus.repository.search.SearchResponse;
 import org.sonatype.nexus.repository.search.SearchService;
+import org.sonatype.nexus.repository.search.index.ElasticSearchIndexService;
 import org.sonatype.nexus.repository.search.query.ElasticSearchQueryService;
 import org.sonatype.nexus.repository.search.query.ElasticSearchUtils;
 
@@ -65,6 +66,8 @@ public class ElasticSearchServiceImpl
 
   private final ElasticSearchQueryService elasticSearchQueryService;
 
+  private final ElasticSearchIndexService elasticSearchIndexService;
+
   private final ElasticSearchUtils elasticSearchUtils;
 
   private final TokenEncoder tokenEncoder;
@@ -74,11 +77,13 @@ public class ElasticSearchServiceImpl
   @Inject
   public ElasticSearchServiceImpl(
       final ElasticSearchQueryService elasticSearchQueryService,
+      final ElasticSearchIndexService elasticSearchIndexService,
       final ElasticSearchUtils elasticSearchUtils,
       final TokenEncoder tokenEncoder,
       final Set<OrientSearchExtension> decorators)
   {
     this.elasticSearchQueryService = checkNotNull(elasticSearchQueryService);
+    this.elasticSearchIndexService = checkNotNull(elasticSearchIndexService);
     this.elasticSearchUtils = checkNotNull(elasticSearchUtils);
     this.tokenEncoder = checkNotNull(tokenEncoder);
     this.decorators = checkNotNull(decorators);
@@ -131,6 +136,11 @@ public class ElasticSearchServiceImpl
     public ComponentSearchResult next() {
       return toComponentSearchResult(searchHitIterator.next());
     }
+  }
+
+  @Override
+  public void waitForCalm() {
+    elasticSearchIndexService.waitForCalm();
   }
 
   private String continuationToken(

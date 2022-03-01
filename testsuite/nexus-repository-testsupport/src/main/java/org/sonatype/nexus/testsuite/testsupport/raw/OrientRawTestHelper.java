@@ -21,6 +21,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.orient.raw.RawContentFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.StorageFacet;
@@ -66,10 +67,22 @@ public class OrientRawTestHelper
   {
     UnitOfWork.begin(repository.facet(StorageFacet.class).txSupplier());
     try {
-      return repository.facet(RawContentFacet.class).getOrCreateAsset(repository, componentName, componentGroup, assetName).componentId();
+      String path = getGroupAndAsset(componentGroup, assetName);
+
+      return repository.facet(RawContentFacet.class)
+          .getOrCreateAsset(repository, componentName, componentGroup, path)
+          .componentId();
     }
     finally {
       UnitOfWork.end();
     }
+  }
+
+
+  private String getGroupAndAsset(final String group, final String assetName){
+    if (Strings2.isBlank(group)) {
+      return assetName;
+    }
+    return group + "/" + assetName;
   }
 }

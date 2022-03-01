@@ -23,6 +23,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.goodies.testsupport.TestData;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.pax.exam.NexusPaxExamSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.view.Payload;
@@ -192,7 +193,7 @@ public abstract class MavenTestHelper
    *
    * @return componentId
    */
-  public abstract String createComponent(
+  public abstract EntityId createComponent(
       final Repository repository,
       final String groupId,
       final String artifactId,
