@@ -45,9 +45,15 @@
         flex-direction: column;
       }
     }
-  }
 
-  .nxrm-code {
-    flex: 1
+    .log-viewer-textarea {
+      border: var(--nx-border-default);
+      border-radius: var(--nx-border-radius);
+      padding: var(--nx-spacing-4x);
+      flex: 1;
+      color: var(--nx-color-text);
+      font-family: 'Courier New', Courier, monospace;
+      font-size: var(--nx-font-size-xs);
+    }
   }
 }

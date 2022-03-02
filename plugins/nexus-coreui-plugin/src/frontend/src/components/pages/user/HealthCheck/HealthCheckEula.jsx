@@ -17,7 +17,6 @@ import {ExtJS} from '@sonatype/nexus-ui-plugin';
 import {NxButton, NxFontAwesomeIcon} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
-import './HealthCheckEula.scss';
 import {useMachine} from "@xstate/react";
 import HealthCheckEulaMachine from "./HealthCheckEulaMachine";
 

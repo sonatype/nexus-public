@@ -16,7 +16,6 @@ import {useMachine} from '@xstate/react';
 
 import {
   ContentBody,
-  Code,
   ExtJS,
   Page,
   PageActions,
@@ -145,7 +144,13 @@ export default function LogViewer() {
             </Select>
           </SelectAction>
         </SectionToolbar>
-        <Code ref={textarea} readOnly value={logText} />
+        <textarea
+            name="logs"
+            value={logText}
+            className="log-viewer-textarea"
+            ref={textarea}
+            readOnly
+        />
       </Section>
     </ContentBody>
   </Page>;

@@ -17,7 +17,6 @@ import {FieldWrapper, Select, Textfield, Utils} from '@sonatype/nexus-ui-plugin'
 import {NxButton, NxFontAwesomeIcon, NxLoadWrapper} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
-import './AnalyzeApplicationModal.scss';
 import {useMachine} from "@xstate/react";
 import AnalyzeApplicationModalMachine from "./AnalyzeApplicationModalMachine";
 

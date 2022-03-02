@@ -556,8 +556,8 @@ This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 
     DETAILS: {
       MAIN: 'Your NuGet API Key enables pushing packages using nuget.exe.',
       WARNING: 'Keep this key secret!',
-      API_KEY_TEXT: 'Your NuGet API Key is:',
-      REGISTER_TEXT: 'You can register this key for a given repository with the following command:',
+      API_KEY_TEXT: 'Your NuGet API Key is',
+      REGISTER_TEXT: 'You can register this key for a given repository with the following command',
       REGISTER_COMMAND: 'nuget setapikey {0} -source {1}',
       AUTO_CLOSE: 'This window will automatically close after one minute.'
     }

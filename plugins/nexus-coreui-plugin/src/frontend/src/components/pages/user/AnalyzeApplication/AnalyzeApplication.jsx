@@ -13,7 +13,6 @@
 import React from 'react';
 import PropTypes from "prop-types";
 
-import './AnalyzeApplicationModal.scss';
 import {useMachine} from "@xstate/react";
 import AnalyzeApplicationMachine from "./AnalyzeApplicationMachine";
 import HealthCheckEula from "../HealthCheck/HealthCheckEula";
