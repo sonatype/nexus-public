@@ -17,11 +17,10 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.Path;
 
-import com.sonatype.nexus.ssl.plugin.internal.CertificateRetriever;
-
 import org.sonatype.nexus.rest.APIConstants;
 import org.sonatype.nexus.security.internal.rest.SecurityApiResourceBeta;
 import org.sonatype.nexus.ssl.TrustStore;
+import org.sonatype.nexus.ssl.CertificateRetriever;
 
 import io.swagger.annotations.Api;
 

@@ -26,6 +26,8 @@ import javax.net.ssl.SSLContext;
  */
 public interface TrustStore
 {
+  public static final String KEY_STORE_ERROR_MESSAGE = "An error occurred accessing the trust store.";
+
   /**
    * Imports a clients public key that will be allowed to connect.
    *
