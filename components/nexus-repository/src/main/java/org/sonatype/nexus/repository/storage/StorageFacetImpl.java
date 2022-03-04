@@ -12,17 +12,24 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 import javax.validation.ConstraintViolation;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.groups.Default;
 
@@ -40,20 +47,20 @@ import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
-import org.sonatype.nexus.repository.move.RepositoryMoveService;
 import org.sonatype.nexus.repository.config.WritePolicy;
+import org.sonatype.nexus.repository.move.RepositoryMoveService;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.view.Payload;
-import org.sonatype.nexus.repository.view.payloads.TempBlobPartPayload;
+import org.sonatype.nexus.repository.view.payloads.TempBlobPayload;
 import org.sonatype.nexus.security.ClientInfo;
 import org.sonatype.nexus.security.ClientInfoProvider;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.util.function.Supplier;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.hash.HashCode;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import javax.validation.constraints.NotEmpty;
+import org.apache.commons.io.IOUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
@@ -256,20 +263,15 @@ public class StorageFacetImpl
   public TempBlob createTempBlob(final InputStream inputStream, final Iterable<HashAlgorithm> hashAlgorithms) {
     BlobStore blobStore = checkNotNull(blobStoreManager.get(config.blobStoreName));
     MultiHashingInputStream hashingStream = new MultiHashingInputStream(hashAlgorithms, inputStream);
-    Blob blob = blobStore.create(hashingStream,
-        ImmutableMap.of(
-            BlobStore.BLOB_NAME_HEADER, "temp",
-            BlobStore.CREATED_BY_HEADER, createdBy(),
-            BlobStore.CREATED_BY_IP_HEADER, createdByIp(),
-            BlobStore.TEMPORARY_BLOB_HEADER, ""));
+    Blob blob = blobStore.create(hashingStream, tempHeaders());
     return new TempBlob(blob, hashingStream.hashes(), true, blobStore);
   }
 
   @Override
   public TempBlob createTempBlob(final Payload payload, final Iterable<HashAlgorithm> hashAlgorithms)
   {
-    if (payload instanceof TempBlobPartPayload) {
-      return ((TempBlobPartPayload) payload).getTempBlob();
+    if (payload instanceof TempBlobPayload) {
+      return ((TempBlobPayload) payload).getTempBlob();
     }
     try (InputStream inputStream = payload.openInputStream()) {
       return createTempBlob(inputStream, hashAlgorithms);
@@ -277,6 +279,55 @@ public class StorageFacetImpl
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @Override
+  public TempBlob createTempBlob(
+      final Path path,
+      final Iterable<HashAlgorithm> hashAlgorithms,
+      final boolean requireHardLink)
+  {
+    try {
+      BlobStore blobStore = checkNotNull(blobStoreManager.get(config.blobStoreName));
+      Map<HashAlgorithm, HashCode> hashes = computeHashes(path, hashAlgorithms);
+      Map<String, String> headers = tempHeaders();
+      Blob blob;
+      try {
+        blob = blobStore.create(path, headers, Files.size(path), hashes.get(HashAlgorithm.SHA1));
+      }
+      catch (Exception e) {
+        if (requireHardLink) {
+          throw e;
+        }
+        log.debug("Failed to hard-link {}", path);
+        try (InputStream in = new BufferedInputStream(Files.newInputStream(path))) {
+          blob = blobStore.create(in, headers);
+        }
+      }
+      return new TempBlob(blob, hashes, true, blobStore);
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  private Map<HashAlgorithm, HashCode> computeHashes(final Path path, final Iterable<HashAlgorithm> hashing) {
+    try (InputStream in = new BufferedInputStream(Files.newInputStream(path));
+        MultiHashingInputStream hashingStream = new MultiHashingInputStream(hashing, in)) {
+      IOUtils.consume(hashingStream);
+      return hashingStream.hashes();
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  private Map<String, String> tempHeaders() {
+    return ImmutableMap.of(
+        BlobStore.BLOB_NAME_HEADER, "temp",
+        BlobStore.CREATED_BY_HEADER, createdBy(),
+        BlobStore.CREATED_BY_IP_HEADER, createdByIp(),
+        BlobStore.TEMPORARY_BLOB_HEADER, "");
   }
 
   /**
