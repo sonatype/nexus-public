@@ -33,10 +33,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Stream;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -1068,7 +1068,7 @@ public class FileBlobStore
     try {
       FileBlobAttributes blobAttributes = new FileBlobAttributes(blobPath);
       if (!blobAttributes.load()) {
-        log.warn("Attempt to access non-existent blob {} ({})", blobId, attributePath(blobId));
+        log.warn("Attempt to access non-existent blob attributes file {} for blob {}", attributePath(blobId), blobId);
         return null;
       }
       else {
