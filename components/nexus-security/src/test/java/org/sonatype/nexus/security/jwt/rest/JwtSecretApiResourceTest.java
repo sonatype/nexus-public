@@ -12,9 +12,6 @@
  */
 package org.sonatype.nexus.security.jwt.rest;
 
-import java.util.Optional;
-import javax.ws.rs.core.Response;
-
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.jwt.SecretStore;
@@ -23,10 +20,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class JwtSecretApiResourceTest
     extends TestSupport
@@ -45,20 +40,9 @@ public class JwtSecretApiResourceTest
   }
 
   @Test
-  public void getSecretNotNull() {
-    when(secretStore.getSecret()).thenReturn(Optional.of("secret"));
+  public void resetSecret() {
+    underTest.resetSecret();
 
-    Response response = underTest.getSecret();
-
-    assertThat(response.getStatus(), is(200));
-    Object entity = response.getEntity();
-    assertThat(((String) entity), is("secret"));
-  }
-
-  @Test
-  public void updateSecret() {
-    underTest.updateSecret("secret");
-
-    verify(secretStore).setSecret("secret");
+    verify(secretStore).setSecret(any(String.class));
   }
 }

@@ -12,12 +12,10 @@
  */
 package org.sonatype.nexus.security.jwt.rest;
 
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.core.Response;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
@@ -32,18 +30,10 @@ import static org.sonatype.nexus.rest.ApiDocConstants.INSUFFICIENT_PERMISSIONS;
 @Api(value = "Security management: JWT")
 public interface JwtSecretApiResourceDoc
 {
-  @ApiOperation("Set JWT secret (note that session will be expired for the all logged-in users)")
+  @ApiOperation("Reset JWT secret (note that session will be expired for the all logged-in users)")
   @ApiResponses(value = {
       @ApiResponse(code = 401, message = AUTHENTICATION_REQUIRED),
       @ApiResponse(code = 403, message = INSUFFICIENT_PERMISSIONS)
   })
-  void updateSecret(@ApiParam(required = true) @NotNull String secret);
-
-  @ApiOperation("Get JWT secret")
-  @ApiResponses(value = {
-      @ApiResponse(code = 401, message = AUTHENTICATION_REQUIRED),
-      @ApiResponse(code = 403, message = INSUFFICIENT_PERMISSIONS),
-      @ApiResponse(code = 404, message = "Secret is not found")
-  })
-  Response getSecret();
+  Response resetSecret();
 }

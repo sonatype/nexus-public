@@ -12,18 +12,15 @@
  */
 package org.sonatype.nexus.security.jwt.rest;
 
-import java.util.Optional;
+import java.util.UUID;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.sonatype.goodies.common.ComponentSupport;
@@ -39,7 +36,6 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.status;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
@@ -74,23 +70,12 @@ public class JwtSecretApiResourceV1
   @PUT
   @RequiresAuthentication
   @RequiresPermissions("nexus:settings:update")
-  @Consumes(MediaType.TEXT_PLAIN)
   @Override
-  public void updateSecret(@NotNull final String secret) {
+  public Response resetSecret() {
+    String secret = UUID.randomUUID().toString();
     secretStore.setSecret(secret);
     eventManager.post(new JwtSecretChanged(secret));
     eventManager.post(new PublisherEvent(new JWTSecretChangedEvent()));
-  }
-
-  @GET
-  @RequiresAuthentication
-  @RequiresPermissions("nexus:settings:read")
-  @Override
-  public Response getSecret() {
-    Optional<String> secret = secretStore.getSecret();
-    if (secret.isPresent()) {
-      return status(OK).entity(secret.get()).type(MediaType.TEXT_PLAIN).build();
-    }
-    return status(NOT_FOUND).build();
+    return status(OK).build();
   }
 }
