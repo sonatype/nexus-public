@@ -64,7 +64,7 @@ class InstallConfigurationCustomizer
         else if (file.name == 'hazelcast.xml' || file.name == 'hazelcast-network.xml') {
           supportBundle << new SanitizedHazelcastFileSource(CONFIG, "$prefix/${file.name}", file, priority)
         }
-        else if (file.name.endsWith('store.properties')) {
+        else if (file.name.contains('store.properties')) {
           supportBundle << new SanitizedDataStoreFileSource(CONFIG, "$prefix/${file.name}", file, priority)
         }
         else {
