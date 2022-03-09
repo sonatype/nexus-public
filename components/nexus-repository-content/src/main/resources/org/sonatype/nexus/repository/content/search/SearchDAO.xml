@@ -53,10 +53,10 @@
     FROM ${format}_component_search
     <where>
       <if test="filter != null"> (${filter})</if>
-      <if test="continuationToken != null"> AND search_component_id > #{continuationToken}</if>
     </where>
     <if test="sortColumnName != null">ORDER BY (${sortColumnName}) <if test="isDescending">DESC </if></if>
-    LIMIT #{limit};
+    LIMIT #{limit}
+    OFFSET #{offset};
   </select>
 
   <select id="count" resultType="int">

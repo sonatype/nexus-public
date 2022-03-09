@@ -28,7 +28,6 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.SearchResult;
@@ -48,9 +47,10 @@ import org.sonatype.nexus.repository.search.sql.SqlSearchUtils;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.security.SecurityHelper;
 
-import com.google.common.collect.Lists;
-
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Lists.newArrayList;
+import static java.lang.Boolean.FALSE;
+import static java.lang.Boolean.TRUE;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.FORMAT;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
@@ -90,19 +90,18 @@ public class SqlSearchService
 
   @Override
   public SearchResponse search(final SearchRequest searchRequest) {
-    Collection<ComponentSearchResult> searchResults = searchComponents(searchRequest);
-    List<ComponentSearchResult> componentSearchResults = Lists.newArrayList(searchResults);
+    ComponentSearchResultPage searchResultPage = searchComponents(searchRequest);
     SearchResponse response = new SearchResponse();
-    response.setSearchResults(componentSearchResults);
-    response.setTotalHits((long) componentSearchResults.size());
-    response.setContinuationToken(null); // TODO impl it in the scope of NEXUS-29475
+    response.setSearchResults(searchResultPage.componentSearchResults);
+    response.setTotalHits((long) searchResultPage.componentSearchResults.size());
+    response.setContinuationToken(String.valueOf(searchResultPage.offset));
 
     return response;
   }
 
   @Override
   public Iterable<ComponentSearchResult> browse(final SearchRequest searchRequest) {
-    return searchComponents(searchRequest);
+    return searchComponents(searchRequest).componentSearchResults;
   }
 
   @Override
@@ -116,7 +115,7 @@ public class SqlSearchService
     return 0L;
   }
 
-  private Collection<ComponentSearchResult> searchComponents(final SearchRequest searchRequest) {
+  private ComponentSearchResultPage searchComponents(final SearchRequest searchRequest) {
     SqlSearchQueryBuilder queryBuilder = searchUtils.buildQuery(searchRequest.getSearchFilters());
     SqlSearchQueryCondition queryCondition = queryBuilder.buildQuery().orElse(null);
 
@@ -127,7 +126,7 @@ public class SqlSearchService
       return searchByFormat(searchStore, searchRequest, queryCondition, searchFormat);
     }
 
-    return Collections.emptyList();
+    return ComponentSearchResultPage.empty();
   }
 
   private SearchStore<?> getSearchStore(final String format) {
@@ -135,15 +134,31 @@ public class SqlSearchService
     return formatStoreManager.searchStore(DEFAULT_DATASTORE_NAME);
   }
 
-  private Collection<ComponentSearchResult> searchByFormat(
+  private ComponentSearchResultPage searchByFormat(
       final SearchStore<?> searchStore,
       final SearchRequest searchRequest,
       final SqlSearchQueryCondition queryCondition,
       final String format)
   {
-    Continuation<SearchResult> searchResults = searchStore.searchComponents(
+    int offset = 0;
+    String continuationToken = searchRequest.getContinuationToken();
+    try {
+      if (continuationToken != null) {
+        offset = Integer.parseInt(continuationToken);
+        if (offset < 0) {
+          log.error("Continuation token [{}] should be a positive number", continuationToken);
+          return ComponentSearchResultPage.empty();
+        }
+      }
+    }
+    catch (NumberFormatException e) {
+      log.error("Continuation token [{}] should be a number", continuationToken);
+      return ComponentSearchResultPage.empty();
+    }
+
+    Collection<SearchResult> searchResults = searchStore.searchComponents(
         searchRequest.getLimit(),
-        searchRequest.getContinuationToken(),
+        offset,
         queryCondition,
         SearchViewColumns.COMPONENT_ID, //TODO will be changed in the scope of NEXUS-29476
         searchRequest.getSortDirection());
@@ -152,7 +167,7 @@ public class SqlSearchService
     Map<Integer, ComponentSearchResult> componentById = new LinkedHashMap<>();
     Map<String, Boolean> repositoryNameByAccess = getPermittedRepositories(searchResults);
     for (SearchResult component : searchResults) {
-      if (Boolean.TRUE.equals(repositoryNameByAccess.get(component.repositoryName()))) {
+      if (TRUE.equals(repositoryNameByAccess.get(component.repositoryName()))) {
         ComponentSearchResult componentSearchResult = componentById.get(component.componentId());
         if (componentSearchResult == null) {
           componentSearchResult = buildComponentSearchResult(component, format);
@@ -163,10 +178,10 @@ public class SqlSearchService
       }
     }
 
-    return componentById.values();
+    return new ComponentSearchResultPage(searchResults.size(), newArrayList(componentById.values()));
   }
 
-  private Map<String, Boolean> getPermittedRepositories(final Continuation<SearchResult> components) {
+  private Map<String, Boolean> getPermittedRepositories(final Collection<SearchResult> components) {
     Map<String, Boolean> repositoryNameByAccess = new HashMap<>();
     for (SearchResult componentSearch : components) {
       String repositoryName = componentSearch.repositoryName();
@@ -175,10 +190,10 @@ public class SqlSearchService
         Repository repository = repositoryManager.get(repositoryName);
         // we must pre-filter repositories we can access
         if (repository != null && securityHelper.allPermitted(new RepositoryViewPermission(repository, BROWSE))) {
-          repositoryNameByAccess.put(repositoryName, Boolean.TRUE);
+          repositoryNameByAccess.put(repositoryName, TRUE);
         }
         else {
-          repositoryNameByAccess.put(repositoryName, Boolean.FALSE);
+          repositoryNameByAccess.put(repositoryName, FALSE);
         }
       }
     }
@@ -246,11 +261,28 @@ public class SqlSearchService
     Repository repository = repositoryManager.get(repositoryName);
     if (repository == null) {
       // we shouldn't throw any exceptions here
-      log.error("Can't find repository: {}. Search results will not be available for this repository",
-          repositoryName);
+      log.error("Can't find repository: {}. Search results will not be available for this repository", repositoryName);
     }
     else {
       formats.add(repository.getFormat().getValue());
+    }
+  }
+
+  private static class ComponentSearchResultPage {
+    private final int offset;
+
+    private final List<ComponentSearchResult> componentSearchResults;
+
+    public ComponentSearchResultPage(
+        final int offset,
+        final List<ComponentSearchResult> componentSearchResults)
+    {
+      this.offset = offset;
+      this.componentSearchResults = checkNotNull(componentSearchResults);
+    }
+
+    private static ComponentSearchResultPage empty() {
+      return new ComponentSearchResultPage(0, Collections.emptyList());
     }
   }
 }

@@ -12,19 +12,19 @@
  */
 package org.sonatype.nexus.repository.content.search;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.repository.config.internal.ConfigurationData;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
-import org.sonatype.nexus.repository.content.SearchResult;
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.SearchResult;
 import org.sonatype.nexus.repository.content.store.ComponentData;
 import org.sonatype.nexus.repository.content.store.ExampleContentTestSupport;
 import org.sonatype.nexus.repository.content.store.example.TestSearchDAO;
@@ -78,12 +78,30 @@ public class SearchDAOTest
       int count = searchDAO.count();
       assertThat(count, is(1));
 
-      Continuation<SearchResult> actual = searchDAO.searchComponents(10, null, null, null, null, false);
+      Collection<SearchResult> actual = searchDAO.searchComponents(10, 0, null, null, null, false);
       Optional<SearchResult> componentSearch = actual.stream().findFirst();
 
       assertThat(componentSearch.isPresent(), is(true));
       assertThat("Data fetched from DB is NOT the same as generated",
           isProvidedSearchDataAreEqualAndNotNull(componentSearch.get(), getGeneratedData()));
+    }
+  }
+
+  @Test
+  public void testSearchComponentsWithOffset() {
+    generateConfiguration();
+    EntityId repositoryId = generatedConfigurations().get(0).getRepositoryId();
+    generateSingleRepository(UUID.fromString(repositoryId.getValue()));
+    generateContent(10, 10);
+
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      SearchDAO searchDAO = session.access(TestSearchDAO.class);
+
+      int count = searchDAO.count();
+      assertThat(count, is(10));
+
+      Collection<SearchResult> actual = searchDAO.searchComponents(10, 10, null, null, null, false);
+      assertThat(actual.isEmpty(), is(true));
     }
   }
 

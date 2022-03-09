@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.content.search;
 
 import java.util.Map;
 
-import org.sonatype.nexus.common.entity.ContinuationAware;
 import org.sonatype.nexus.repository.content.SearchResult;
 import org.sonatype.nexus.repository.content.store.AbstractRepositoryContent;
 
@@ -25,7 +24,7 @@ import org.sonatype.nexus.repository.content.store.AbstractRepositoryContent;
  */
 public class SearchResultData
     extends AbstractRepositoryContent
-    implements SearchResult, ContinuationAware
+    implements SearchResult
 {
   Integer componentId; // NOSONAR: internal id
 
@@ -46,11 +45,6 @@ public class SearchResultData
   private String contentType;
 
   private Map<String, String> checksums;
-
-  @Override
-  public String nextContinuationToken() {
-    return Integer.toString(componentId);
-  }
 
   @Override
   public Integer assetId() {

@@ -12,10 +12,11 @@
  */
 package org.sonatype.nexus.repository.content.search;
 
+import java.util.Collection;
 import java.util.Map;
+
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.ContentDataAccess;
 import org.sonatype.nexus.datastore.api.Expects;
 import org.sonatype.nexus.datastore.api.SchemaTemplate;
@@ -42,7 +43,7 @@ public interface SearchDAO
    * Search components in the scope of one format.
    *
    * @param limit             the maximum number of rows to return
-   * @param continuationToken optional token to continue from a previous request
+   * @param offset            number of rows to skip in relation to the first row of the first page
    * @param filter            optional filter to apply
    * @param values            optional values map for filter (required if filter is not null)
    * @param sortColumnName    optional column name to be used for sorting
@@ -50,9 +51,9 @@ public interface SearchDAO
    * @return collection of {@link SearchResultData} representing search results for a given format and the next
    * continuation token
    */
-  Continuation<SearchResult> searchComponents(
+  Collection<SearchResult> searchComponents(
       @Param("limit") int limit,
-      @Nullable @Param("continuationToken") String continuationToken,
+      @Param("offset") int offset,
       @Nullable @Param("filter") String filter,
       @Nullable @Param(FILTER_PARAMS) final Map<String, String> values,
       @Nullable @Param("sortColumnName") SearchViewColumns sortColumnName,
