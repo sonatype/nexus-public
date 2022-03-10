@@ -29,6 +29,10 @@
 
   <properties>
     <jackson2.version>2.13.1</jackson2.version>
+    <!-- The behavior of the jackson-dataformat-yaml has changed in 2.12.3
+         and it breaks the com.sonatype.repository.helm.internal.util.YamlParser class
+         (and its tests in com.sonatype.repository.helm.internal.util.YamlParserTest).
+    -->
     <jackson2.yaml.version>2.12.2</jackson2.yaml.version>
     <jaxb.version>2.3.3</jaxb.version>
     <resteasy.version>3.15.3.Final</resteasy.version>
