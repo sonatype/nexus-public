@@ -57,7 +57,16 @@ Ext.define('NX.coreui.view.repository.facet.NpmProxyFacet', {
             value: false,
             fieldLabel: NX.I18n.get('Repository_Facet_Npm_RemoveQuarantined_Label'),
             helpText: NX.I18n.get('Repository_Facet_Npm_RemoveQuarantined_HelpText')
-          }
+          },
+	      {
+	        xtype: 'panel',
+	        itemId: 'warning',
+	        ui: 'nx-drilldown-message',
+	        cls: 'nx-drilldown-warning',
+	        iconCls: NX.Icons.cls('drilldown-warning', 'x16'),
+	        title: NX.I18n.format('Repository_Facet_Npm_RemoveQuarantined_Warning'),
+	        hidden: false
+	      }
         ]
       }
     ];
