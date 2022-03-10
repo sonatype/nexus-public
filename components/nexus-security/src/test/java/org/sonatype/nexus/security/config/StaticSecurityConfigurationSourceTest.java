@@ -45,6 +45,19 @@ public class StaticSecurityConfigurationSourceTest
   }
 
   @Test
+  public void shouldGetPasswordFromEnvironmentVariable() throws IOException {
+    String password = "supersecretpassword";
+
+    underTest = new StaticSecurityConfigurationSource(passwordService, adminPasswordFileManager, false, password);
+
+    SecurityConfiguration configuration = underTest.getConfiguration();
+    CUser user = configuration.getUser("admin");
+    assertThat(user.getPassword(), is("encrypted"));
+    verify(passwordService).encryptPassword(password);
+    verify(adminPasswordFileManager, never()).writeFile(any());
+  }
+
+  @Test
   public void testGetConfiguration_argNonRandom() throws IOException {
     underTest = new StaticSecurityConfigurationSource(passwordService, adminPasswordFileManager, false);
 
