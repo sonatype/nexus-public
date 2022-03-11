@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.search.sql;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -73,17 +74,19 @@ public class RepositorySqlSearchQueryContribution
   private SearchFilter expandRepositories(final SearchFilter searchFilter) {
     Set<String> values = split(searchFilter.getValue());
     Set<String> repositories = getLeafMembers(values);
-    repositories.addAll(excludeGroupMembers(values));
+    repositories.addAll(excludeGroupRepositories(values));
     return new SearchFilter(searchFilter.getProperty(), join(SPACE, repositories));
   }
 
-  private Set<String> excludeGroupMembers(final Set<String> values) {
-    return values.stream()
-        .map(repositoryManager::get)
-        .filter(Objects::nonNull)
-        .filter(this::isNotGroupRepository)
-        .map(Repository::getName)
-        .collect(toSet());
+  private Set<String> excludeGroupRepositories(final Set<String> values) {
+    Set<String> repositoryNames = new HashSet<>();
+    for (String repositoryName : values) {
+      Repository repository = repositoryManager.get(repositoryName);
+      if (repository == null || isNotGroupRepository(repository)) {
+        repositoryNames.add(repositoryName);
+      }
+    }
+    return repositoryNames;
   }
 
   private boolean isNotGroupRepository(final Repository repository) {

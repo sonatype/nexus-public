@@ -129,6 +129,17 @@ public class RepositorySqlSearchQueryContributionTest
     verify(queryBuilder).add(condition);
   }
 
+  @Test
+  public void shouldCreateConditionWhenUnknownRepositoryNameSpecified() {
+    SearchFilter searchFilter = new SearchFilter(REPOSITORY_NAME, HOSTED_REPO_3);
+    mockHostedRepo();
+    SqlSearchQueryCondition condition = mockCondition(ImmutableSet.of(HOSTED_REPO_3));
+
+    underTest.contribute(queryBuilder, searchFilter);
+
+    verify(queryBuilder).add(condition);
+  }
+
   private SqlSearchQueryCondition mockCondition(final Set<String> repositories) {
     final SqlSearchQueryCondition condition = new SqlSearchQueryCondition("condition", new HashMap<>());
     when(sqlSearchQueryConditionBuilder.condition(any(), eq(repositories))).thenReturn(condition);

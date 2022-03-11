@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -67,6 +68,8 @@ public class SqlSearchService
     extends ComponentSupport
     implements SearchService
 {
+  private static final String DELIMITER = "\\s+";
+
   private final SqlSearchUtils searchUtils;
 
   private final RepositoryManager repositoryManager;
@@ -234,9 +237,9 @@ public class SqlSearchService
     // We have to parse the SearchRequest to get a search format.
     for (SearchFilter searchFilter : searchRequest.getSearchFilters()) {
       if (REPOSITORY_NAME.equals(searchFilter.getProperty())) {
-        String repositoryName = searchFilter.getValue();
-        if (!Strings2.isEmpty(repositoryName)) {
-          addRepositoryFormat(repositoryName, formats);
+        String value = searchFilter.getValue();
+        if (!Strings2.isEmpty(value)) {
+          Stream.of(value.split(DELIMITER)).forEach(repositoryName -> addRepositoryFormat(repositoryName, formats));
         }
       }
       else if (FORMAT.equals(searchFilter.getProperty())) {
