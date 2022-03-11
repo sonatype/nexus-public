@@ -48,14 +48,14 @@
     <result property="path" column="path"/>
   </resultMap>
 
-  <select id="searchComponents" resultMap="searchDataMap">
+  <select id="searchComponents" resultMap="searchDataMap" parameterType="SqlSearchRequest">
     SELECT *
     FROM ${format}_component_search
     <where>
       <if test="filter != null"> (${filter})</if>
     </where>
-    <if test="sortColumnName != null">ORDER BY (${sortColumnName}) <if test="isDescending">DESC </if></if>
-    LIMIT #{limit}
+    ORDER BY ${sortColumnName} ${sortDirection}<if test="sortColumnName != defaultSortColumnName">, ${defaultSortColumnName} </if>
+    <if test="limit != null">LIMIT #{limit}</if>
     OFFSET #{offset};
   </select>
 

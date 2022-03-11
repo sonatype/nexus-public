@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.search;
 
 import java.util.Collection;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -28,6 +29,7 @@ import org.sonatype.nexus.repository.content.SearchResult;
 import org.sonatype.nexus.repository.content.store.ComponentData;
 import org.sonatype.nexus.repository.content.store.ExampleContentTestSupport;
 import org.sonatype.nexus.repository.content.store.example.TestSearchDAO;
+import org.sonatype.nexus.repository.search.SortDirection;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -77,8 +79,14 @@ public class SearchDAOTest
 
       int count = searchDAO.count();
       assertThat(count, is(1));
+      SqlSearchRequest request = SqlSearchRequest.builder()
+          .limit(10)
+          .sortColumnName(SearchViewColumns.COMPONENT_ID.name())
+          .sortDirection(SortDirection.ASC.name())
+          .defaultSortColumnName(SearchViewColumns.COMPONENT_ID.name())
+          .build();
 
-      Collection<SearchResult> actual = searchDAO.searchComponents(10, 0, null, null, null, false);
+      Collection<SearchResult> actual = searchDAO.searchComponents(request);
       Optional<SearchResult> componentSearch = actual.stream().findFirst();
 
       assertThat(componentSearch.isPresent(), is(true));
@@ -99,8 +107,15 @@ public class SearchDAOTest
 
       int count = searchDAO.count();
       assertThat(count, is(10));
+      SqlSearchRequest request = SqlSearchRequest.builder()
+          .limit(10)
+          .offset(10)
+          .sortColumnName(SearchViewColumns.COMPONENT_ID.name())
+          .sortDirection(SortDirection.ASC.name())
+          .defaultSortColumnName(SearchViewColumns.COMPONENT_ID.name())
+          .build();
 
-      Collection<SearchResult> actual = searchDAO.searchComponents(10, 10, null, null, null, false);
+      Collection<SearchResult> actual = searchDAO.searchComponents(request);
       assertThat(actual.isEmpty(), is(true));
     }
   }

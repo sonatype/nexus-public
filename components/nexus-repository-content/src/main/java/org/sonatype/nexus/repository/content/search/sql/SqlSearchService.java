@@ -163,7 +163,7 @@ public class SqlSearchService
         searchRequest.getLimit(),
         offset,
         queryCondition,
-        SearchViewColumns.COMPONENT_ID, //TODO will be changed in the scope of NEXUS-29476
+        SearchViewColumns.fromSortFieldName(searchRequest.getSortField()),
         searchRequest.getSortDirection());
 
     // we have to save ordering here

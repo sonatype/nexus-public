@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.content.search;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -48,11 +49,11 @@ public class SearchStore<T extends SearchDAO>
   /**
    * Browse all components that match the given filters
    *
-   * @param limit             maximum number of components to return
-   * @param offset            number of rows to skip in relation to the first row of the first page
-   * @param filterQuery       optional filter to apply
-   * @param sortColumnName    optional column name to be used for sorting
-   * @param sortDirection     the sort direction: ascending or descending
+   * @param limit          maximum number of components to return
+   * @param offset         number of rows to skip in relation to the first row of the first page
+   * @param filterQuery    optional filter to apply
+   * @param sortColumnName optional column name to be used for sorting
+   * @param sortDirection  the sort direction: ascending or descending
    * @return collection of components
    */
   @Transactional
@@ -60,7 +61,7 @@ public class SearchStore<T extends SearchDAO>
       final int limit,
       final int offset,
       @Nullable final SqlSearchQueryCondition filterQuery,
-      @Nullable final SearchViewColumns sortColumnName,
+      final SearchViewColumns sortColumnName,
       final SortDirection sortDirection)
   {
     String filterFormat = null;
@@ -70,8 +71,20 @@ public class SearchStore<T extends SearchDAO>
       formatValues = filterQuery.getValues();
     }
 
-    boolean isDescending = SortDirection.DESC == sortDirection;
-    return dao().searchComponents(limit, offset, filterFormat, formatValues, sortColumnName, isDescending);
+    String direction = Optional.ofNullable(sortDirection).orElse(SortDirection.ASC).name();
+
+    SqlSearchRequest request = SqlSearchRequest
+        .builder()
+        .limit(limit)
+        .offset(offset)
+        .searchFilter(filterFormat)
+        .searchFilterValues(formatValues)
+        .sortColumnName(sortColumnName.name())
+        .sortDirection(direction)
+        .defaultSortColumnName(SearchViewColumns.COMPONENT_ID.name())
+        .build();
+
+    return dao().searchComponents(request);
   }
 
   /**

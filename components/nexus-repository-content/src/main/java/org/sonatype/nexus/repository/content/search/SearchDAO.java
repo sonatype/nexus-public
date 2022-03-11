@@ -42,23 +42,11 @@ public interface SearchDAO
   /**
    * Search components in the scope of one format.
    *
-   * @param limit             the maximum number of rows to return
-   * @param offset            number of rows to skip in relation to the first row of the first page
-   * @param filter            optional filter to apply
-   * @param values            optional values map for filter (required if filter is not null)
-   * @param sortColumnName    optional column name to be used for sorting
-   * @param isDescending      boolean flag for descending soring order
+   * @param request DTO containing all required params for search
    * @return collection of {@link SearchResultData} representing search results for a given format and the next
    * continuation token
    */
-  Collection<SearchResult> searchComponents(
-      @Param("limit") int limit,
-      @Param("offset") int offset,
-      @Nullable @Param("filter") String filter,
-      @Nullable @Param(FILTER_PARAMS) final Map<String, String> values,
-      @Nullable @Param("sortColumnName") SearchViewColumns sortColumnName,
-      //TODO to be revisited in the scope of NEXUS-29476
-      @Param("isDescending") boolean isDescending);
+  Collection<SearchResult> searchComponents(SqlSearchRequest request);
 
   /**
    * Count all {@link SearchResultData} in the given format.
