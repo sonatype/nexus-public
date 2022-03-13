@@ -28,7 +28,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.hamcrest.Matchers.is;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.BLOB_STORE_NAME;

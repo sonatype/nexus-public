@@ -26,16 +26,16 @@ import org.sonatype.nexus.repository.maven.PurgeUnusedSnapshotsFacet;
 import org.sonatype.nexus.repository.maven.internal.group.MavenGroupFacet;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
+import org.sonatype.nexus.test.util.Whitebox;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.internal.util.reflection.Whitebox;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -96,9 +96,9 @@ public class PurgeUnusedSnapshotsFacetImplTest
     Whitebox.setInternalState(contentFacetStores, "assetStore", assetStore);
 
     // Final methods can't be mocked so mocking fields here
-    Whitebox.setInternalState(mavenContentFacet, "stores", contentFacetStores);
-    Whitebox.setInternalState(mavenContentFacet, "fluentComponents", fluentComponents);
-    Whitebox.setInternalState(mavenContentFacet, "contentRepositoryId", CONTENT_REPOSITORY_ID);
+    when(mavenContentFacet.stores()).thenReturn(contentFacetStores);
+    when(mavenContentFacet.components()).thenReturn(fluentComponents);
+    when(mavenContentFacet.contentRepositoryId()).thenReturn(CONTENT_REPOSITORY_ID);
 
     when(fluentComponents.count()).thenReturn(NUMBER_OF_COMPONENTS);
 

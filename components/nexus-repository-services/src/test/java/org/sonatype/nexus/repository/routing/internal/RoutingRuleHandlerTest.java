@@ -26,11 +26,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNotNull;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -66,7 +66,7 @@ public class RoutingRuleHandlerTest
 
   @Test
   public void testHandle_allowed() throws Exception {
-    when(routingRuleHelper.isAllowed(any(Repository.class), eq(SOME_PATH))).thenReturn(true);
+    when(routingRuleHelper.isAllowed(nullable(Repository.class), eq(SOME_PATH))).thenReturn(true);
 
     Response response = underTest.handle(context);
     assertThat(response, is(contextResponse));
@@ -75,7 +75,7 @@ public class RoutingRuleHandlerTest
 
   @Test
   public void testHandle_blocked() throws Exception {
-    when(routingRuleHelper.isAllowed(any(Repository.class), eq(SOME_PATH))).thenReturn(false);
+    when(routingRuleHelper.isAllowed(nullable(Repository.class), eq(SOME_PATH))).thenReturn(false);
 
     Response response = underTest.handle(context);
     assertNotNull(response);
@@ -89,11 +89,11 @@ public class RoutingRuleHandlerTest
     params.put("foo", "bar");
     params.put("bar", "foo");
     when(request.getParameters()).thenReturn(new Parameters(params));
-    when(routingRuleHelper.isAllowed(any(Repository.class), eq("/some/path?foo=bar&bar=foo"))).thenReturn(true);
+    when(routingRuleHelper.isAllowed(nullable(Repository.class), eq("/some/path?foo=bar&bar=foo"))).thenReturn(true);
 
     Response response = underTest.handle(context);
     assertThat(response, is(contextResponse));
     verify(context).proceed();
-    verify(routingRuleHelper).isAllowed(any(Repository.class), eq("/some/path?foo=bar&bar=foo"));
+    verify(routingRuleHelper).isAllowed(nullable(Repository.class), eq("/some/path?foo=bar&bar=foo"));
   }
 }

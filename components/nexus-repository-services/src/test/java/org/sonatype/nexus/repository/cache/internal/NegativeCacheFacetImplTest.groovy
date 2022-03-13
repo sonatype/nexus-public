@@ -20,7 +20,6 @@ import org.sonatype.nexus.cache.CacheHelper
 import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.cache.NegativeCacheKey
-import org.sonatype.nexus.repository.config.Configuration
 import org.sonatype.nexus.repository.config.ConfigurationFacet
 import org.sonatype.nexus.repository.http.HttpStatus
 import org.sonatype.nexus.repository.view.Status
@@ -29,7 +28,7 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentCaptor
 
-import static org.mockito.Matchers.any
+import static org.mockito.ArgumentMatchers.any
 import static org.mockito.Mockito.eq
 import static org.mockito.Mockito.mock
 import static org.mockito.Mockito.never
@@ -60,7 +59,7 @@ class NegativeCacheFacetImplTest
   void setUp() {
     cacheHelper = mock(CacheHelper)
     cache = mock(Cache)
-    when(cacheHelper.maybeCreateCache(any(String), any(Class), any(Class), any(MutableConfiguration))).thenReturn(cache)
+    when(cacheHelper.maybeCreateCache(any(), any(), any(), any())).thenReturn(cache)
     underTest = new NegativeCacheFacetImpl(cacheHelper)
     underTest.installDependencies(mock(EventManager))
     key = mock(NegativeCacheKey)
@@ -72,7 +71,7 @@ class NegativeCacheFacetImplTest
     config.enabled = false
     def configurationFacet = mock(ConfigurationFacet.class)
     when(configurationFacet.readSection(
-        any(Configuration.class),
+        any(),
         eq(NegativeCacheFacetImpl.CONFIG_KEY),
         eq(NegativeCacheFacetImpl.Config.class)))
         .thenReturn(config)

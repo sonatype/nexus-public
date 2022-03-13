@@ -45,9 +45,9 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import static java.util.Optional.empty;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -140,7 +140,7 @@ public class MavenRestoreBlobStrategyTest
     when(repositoryManager.get(REPO_NAME)).thenReturn(repository);
 
     when(contentFacet.assets()).thenReturn(assets);
-    when(assets.path(anyString())).thenReturn(fluentAssetBuilder);
+    when(assets.path(nullable(String.class))).thenReturn(fluentAssetBuilder);
     when(fluentAssetBuilder.find()).thenReturn(Optional.of(asset));
 
     when(asset.component()).thenReturn(empty());

@@ -18,8 +18,6 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.annotation.Nullable;
-
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
@@ -35,12 +33,9 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.MockedStatic;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -48,12 +43,9 @@ import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({UnitOfWork.class})
 public class OrientReplicationIngesterHelperTest
-    //extends TestSupport
+    extends TestSupport
 {
   @Mock
   private RepositoryManager repositoryManager;
@@ -89,6 +81,9 @@ public class OrientReplicationIngesterHelperTest
   @Mock
   Map<String, String> headers;
 
+  @Mock
+  private MockedStatic<UnitOfWork> unitOfWork;
+
   private InputStream contentInputStream;
 
   private OrientReplicationIngesterHelper underTest;
@@ -96,7 +91,6 @@ public class OrientReplicationIngesterHelperTest
   @Before
   public void setup() {
     contentInputStream = new ByteArrayInputStream("someContent".getBytes());
-    mockStatic(UnitOfWork.class);
     when(blob.getInputStream()).thenReturn(contentInputStream);
     when(headers.get("BlobStore.blob-name")).thenReturn("/somePath");
     when(headers.get("BlobStore.content-type")).thenReturn("someContentType");

@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.upgrade
 
+import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.common.app.ApplicationDirectories
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule
 
@@ -22,12 +23,10 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import org.junit.runner.RunWith
 import org.mockito.Mock
-import org.mockito.runners.MockitoJUnitRunner
 
-import static org.hamcrest.Matchers.equalTo
 import static org.hamcrest.MatcherAssert.assertThat
+import static org.hamcrest.Matchers.equalTo
 import static org.mockito.Mockito.when
 import static org.sonatype.nexus.repository.upgrade.ConfigDatabaseUpgrade_1_4.C_HEALTHCHECKCONFIG
 import static org.sonatype.nexus.repository.upgrade.ConfigDatabaseUpgrade_1_4.PROPERTY_QUERY
@@ -36,8 +35,8 @@ import static org.sonatype.nexus.repository.upgrade.ConfigDatabaseUpgrade_1_4.P_
 /**
  * Unit tests for {@link ConfigDatabaseUpgrade_1_4}.
  */
-@RunWith(MockitoJUnitRunner.class)
 class ConfigDatabaseUpgrade_1_4Test
+    extends TestSupport
 {
   @Rule
   public DatabaseInstanceRule database = DatabaseInstanceRule.inMemory('test')

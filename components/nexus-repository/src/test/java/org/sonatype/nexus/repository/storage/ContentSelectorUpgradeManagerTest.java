@@ -21,7 +21,6 @@ import org.sonatype.nexus.selector.CselSelector;
 import org.sonatype.nexus.selector.JexlSelector;
 import org.sonatype.nexus.selector.OrientSelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorConfiguration;
-import org.sonatype.nexus.selector.SelectorEvaluationException;
 import org.sonatype.nexus.selector.SelectorFactory;
 import org.sonatype.nexus.selector.SelectorManager;
 
@@ -70,7 +69,7 @@ public class ContentSelectorUpgradeManagerTest
     when(selectorManager.browseJexl()).thenReturn(asList(jexlSelector));
 
     String expression = jexlSelector.getAttributes().get("expression");
-    doThrow(SelectorEvaluationException.class).when(selectorFactory).validateSelector(CselSelector.TYPE, expression);
+    doThrow(RuntimeException.class).when(selectorFactory).validateSelector(CselSelector.TYPE, expression);
 
     manager.doStart();
 
@@ -89,7 +88,7 @@ public class ContentSelectorUpgradeManagerTest
     verifyNoMoreInteractions(selectorManager);
   }
 
-  private SelectorConfiguration createSelector(String expression, String type) {
+  private SelectorConfiguration createSelector(final String expression, final String type) {
     Map<String, Object> attributes = new HashMap<>();
     attributes.put("expression", expression);
 

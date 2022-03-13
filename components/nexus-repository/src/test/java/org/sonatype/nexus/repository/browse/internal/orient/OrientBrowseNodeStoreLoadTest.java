@@ -51,7 +51,7 @@ import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptySet;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;

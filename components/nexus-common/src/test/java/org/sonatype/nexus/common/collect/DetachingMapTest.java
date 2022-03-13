@@ -28,10 +28,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.AdditionalAnswers.returnsFirstArg;
-import static org.mockito.Matchers.anyObject;
+import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 public class DetachingMapTest
@@ -76,7 +76,7 @@ public class DetachingMapTest
 
     verifyNoMoreInteractions(backing);
 
-    verifyZeroInteractions(allowDetach, detach);
+    verifyNoInteractions(allowDetach, detach);
   }
 
   @Test
@@ -151,7 +151,7 @@ public class DetachingMapTest
     underTest = new DetachingMap<>(original, allowDetach, detach);
 
     when(allowDetach.getAsBoolean()).thenReturn(true);
-    when(detach.apply(anyObject())).thenAnswer(returnsFirstArg());
+    when(detach.apply(isNotNull())).thenAnswer(returnsFirstArg());
 
     assertThat(underTest.put("2", "II"), is("two"));
     assertThat(underTest, hasEntry("2", "II"));

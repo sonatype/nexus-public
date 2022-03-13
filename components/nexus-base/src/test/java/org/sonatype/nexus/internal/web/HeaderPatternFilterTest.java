@@ -24,7 +24,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 

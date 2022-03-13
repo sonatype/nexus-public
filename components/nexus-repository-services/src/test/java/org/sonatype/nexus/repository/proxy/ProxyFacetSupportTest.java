@@ -46,11 +46,9 @@ import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.message.BasicHttpResponse;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.Spy;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import static java.util.Collections.singletonMap;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -58,23 +56,21 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.BYPASS_HTTP_ERRORS_HEADER_NAME;
 import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.BYPASS_HTTP_ERRORS_HEADER_VALUE;
 
 /**
  * Tests for the abstract class {@link ProxyFacetSupport}
  */
-@RunWith(PowerMockRunner.class)
 public class ProxyFacetSupportTest
     extends TestSupport
 {
@@ -324,7 +320,6 @@ public class ProxyFacetSupportTest
     assertThat(foundContent, is(storedContent));
   }
 
-  @PrepareForTest(HttpClientUtils.class)
   @Test
   public void leak() throws Exception {
     HttpClientFacet httpClientFacet = mock(HttpClientFacet.class);
@@ -345,27 +340,26 @@ public class ProxyFacetSupportTest
     doReturn("http://example.com").when(underTest).getUrl(cachedContext);
     doReturn(httpResponse).when(underTest).execute(eq(cachedContext), eq(httpClient), any(HttpRequestBase.class));
 
-    mockStatic(HttpClientUtils.class);
 
-    Configuration configuration = mock(Configuration.class);
-    when(configuration.attributes("proxy")).thenReturn(new NestedAttributesMap(
-        "proxy",
-        singletonMap("remoteUrl", "http://example.com")
-    ));
-    underTest.doConfigure(configuration);
-    underTest.doStart();
+    try (MockedStatic<HttpClientUtils> httpClientUtils = mockStatic(HttpClientUtils.class)) {
+      Configuration configuration = mock(Configuration.class);
+      when(configuration.attributes("proxy")).thenReturn(new NestedAttributesMap(
+          "proxy",
+          singletonMap("remoteUrl", "http://example.com")
+          ));
+      underTest.doConfigure(configuration);
+      underTest.doStart();
 
-    try {
-      underTest.get(cachedContext);
-      fail("Expected BypassHttpErrorException to be thrown");
+      try {
+        underTest.get(cachedContext);
+        fail("Expected BypassHttpErrorException to be thrown");
+      }
+      catch (BypassHttpErrorException expected) {
+        // expected
+      }
+
+      httpClientUtils.verify(() -> HttpClientUtils.closeQuietly(httpResponse), times(1));
     }
-    catch (BypassHttpErrorException expected) {
-      // expected
-    }
-
-    verifyStatic();
-    HttpClientUtils.closeQuietly(httpResponse);
-    verifyNoMoreInteractions(HttpClientUtils.class);
   }
 
   @Test

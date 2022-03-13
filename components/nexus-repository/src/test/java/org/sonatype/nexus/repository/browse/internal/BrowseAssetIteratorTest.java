@@ -33,15 +33,15 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.browse.internal.BrowseAssetIterator.QUERY_TEMPLATE;
@@ -255,7 +255,7 @@ public class BrowseAssetIteratorTest {
     return docs;
   }
 
-  private static <T> List<T> concat(List<T>... lists) {
+  private static <T> List<T> concat(final List<T>... lists) {
     return Stream.of(lists)
         .flatMap(Collection::stream)
         .collect(toList());
@@ -292,7 +292,7 @@ public class BrowseAssetIteratorTest {
   }
 
   private static class QueryMatcher
-      extends ArgumentMatcher<OSQLSynchQuery<ODocument>>
+      implements ArgumentMatcher<OSQLSynchQuery<ODocument>>
   {
     private final OSQLSynchQuery<ODocument> expected;
 
@@ -301,12 +301,12 @@ public class BrowseAssetIteratorTest {
     }
 
     @Override
-    public boolean matches(final Object argument) {
+    public boolean matches(final OSQLSynchQuery<ODocument> argument) {
       if (!(argument instanceof OSQLSynchQuery)) {
         return false;
       }
 
-      OSQLSynchQuery<ODocument> actual = (OSQLSynchQuery<ODocument>) argument;
+      OSQLSynchQuery<ODocument> actual = argument;
 
       return expected.getText().equals(actual.getText()) && expected.getLimit() == actual.getLimit();
     }

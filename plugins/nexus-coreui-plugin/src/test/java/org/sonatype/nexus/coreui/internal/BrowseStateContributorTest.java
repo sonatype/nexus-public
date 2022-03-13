@@ -34,7 +34,7 @@ import org.mockito.Mock;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.RepositoryTaskSupport.ALL_REPOSITORIES;
 
@@ -97,8 +97,8 @@ public class BrowseStateContributorTest
     assertThat(state.get("rebuildingRepositories"), is(Collections.singleton(ALL_REPOSITORIES)));
     assertThat(state.get("browseTreeMaxNodes"), is(10));
 
-    verifyZeroInteractions(tasks.get(1));
-    verifyZeroInteractions(tasks.get(2));
+    verifyNoInteractions(tasks.get(1));
+    verifyNoInteractions(tasks.get(2));
   }
 
   @Test

@@ -26,7 +26,7 @@ import org.mockito.Mock
 
 import static org.mockito.Mockito.verify
 import static org.mockito.Mockito.verifyNoMoreInteractions
-import static org.mockito.Mockito.verifyZeroInteractions
+import static org.mockito.Mockito.verifyNoInteractions
 import static org.mockito.Mockito.when
 
 /**
@@ -73,7 +73,7 @@ class AuditRecorderImplTest
     underTest.enabled = false
     underTest.record(data)
 
-    verifyZeroInteractions(eventManager)
+    verifyNoInteractions(eventManager)
   }
 
   @Test

@@ -24,7 +24,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.security.JwtHelper.JWT_COOKIE_NAME;
 
@@ -91,7 +91,7 @@ public class JwtFilterTest
 
     jwtFilter.preHandle(request, response);
 
-    verifyZeroInteractions(response);
+    verifyNoInteractions(response);
   }
 
   private Cookie makeCookie(final String jwt) {

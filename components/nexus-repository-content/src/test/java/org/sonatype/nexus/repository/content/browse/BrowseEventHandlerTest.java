@@ -27,7 +27,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 public class BrowseEventHandlerTest
     extends TestSupport
@@ -50,7 +50,7 @@ public class BrowseEventHandlerTest
     underTest.pauseEventProcessing();
     AssetPurgedEvent event = mock(AssetPurgedEvent.class);
     underTest.on(event);
-    verifyZeroInteractions(event);
+    verifyNoInteractions(event);
   }
 
   @Test
@@ -58,7 +58,7 @@ public class BrowseEventHandlerTest
     underTest.pauseEventProcessing();
     AssetCreatedEvent event = mock(AssetCreatedEvent.class);
     underTest.on(event);
-    verifyZeroInteractions(event);
+    verifyNoInteractions(event);
   }
 
   @Test
@@ -66,7 +66,7 @@ public class BrowseEventHandlerTest
     underTest.pauseEventProcessing();
     AssetUploadedEvent event = mock(AssetUploadedEvent.class);
     underTest.on(event);
-    verifyZeroInteractions(event);
+    verifyNoInteractions(event);
   }
 
   @Test
@@ -74,7 +74,7 @@ public class BrowseEventHandlerTest
     underTest.pauseEventProcessing();
     AssetDeletedEvent event = mock(AssetDeletedEvent.class);
     underTest.on(event);
-    verifyZeroInteractions(event);
+    verifyNoInteractions(event);
   }
 
   @Test
@@ -82,7 +82,7 @@ public class BrowseEventHandlerTest
     underTest.pauseEventProcessing();
     ComponentPurgedEvent event = mock(ComponentPurgedEvent.class);
     underTest.on(event);
-    verifyZeroInteractions(event);
+    verifyNoInteractions(event);
   }
 
   @Test
@@ -90,6 +90,6 @@ public class BrowseEventHandlerTest
     underTest.pauseEventProcessing();
     ComponentDeletedEvent event = mock(ComponentDeletedEvent.class);
     underTest.on(event);
-    verifyZeroInteractions(event);
+    verifyNoInteractions(event);
   }
 }

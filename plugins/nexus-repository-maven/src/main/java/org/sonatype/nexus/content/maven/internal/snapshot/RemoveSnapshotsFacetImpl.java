@@ -94,7 +94,8 @@ public class RemoveSnapshotsFacetImpl
    * Examine all snapshots in the given repo, delete those that match our configuration criteria and flag which GAVs
    * require a metadata update.
    */
-  protected void processRepository(
+  @VisibleForTesting
+  void processRepository(
       final Repository repository, final RemoveSnapshotsConfig config)
   {
     log.info("Begin processing snapshots in repository '{}'", repository.getName());
@@ -196,7 +197,8 @@ public class RemoveSnapshotsFacetImpl
   /**
    * Delete snapshots for released components after grace period
    */
-  private void deleteSnapshotsForReleasedComponents(final Repository repository, final RemoveSnapshotsConfig config)
+  @VisibleForTesting
+  void deleteSnapshotsForReleasedComponents(final Repository repository, final RemoveSnapshotsConfig config)
   {
     if (config.getRemoveIfReleased()) {
       MavenContentFacet facet = repository.facet(MavenContentFacet.class);

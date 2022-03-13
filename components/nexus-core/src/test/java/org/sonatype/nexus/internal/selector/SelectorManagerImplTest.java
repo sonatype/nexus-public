@@ -50,7 +50,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.security.RepositoryContentSelectorPrivilegeDescriptor.P_REPOSITORY;
 import static org.sonatype.nexus.repository.security.RepositorySelector.ALL;
@@ -204,7 +204,7 @@ public class SelectorManagerImplTest
 
     manager.delete(selector);
 
-    verifyZeroInteractions(store);
+    verifyNoInteractions(store);
   }
 
   @Test

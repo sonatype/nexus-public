@@ -46,8 +46,8 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.upload.UploadFieldDefinition.Type.STRING;
 

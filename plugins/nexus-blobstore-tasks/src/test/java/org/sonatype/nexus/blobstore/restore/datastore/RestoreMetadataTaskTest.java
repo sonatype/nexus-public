@@ -48,10 +48,10 @@ import org.mockito.Mock;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -59,7 +59,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
@@ -215,7 +215,7 @@ public class RestoreMetadataTaskTest
 
     underTest.execute();
 
-    verifyZeroInteractions(blobStore);
+    verifyNoInteractions(blobStore);
   }
 
   @Test
@@ -229,7 +229,7 @@ public class RestoreMetadataTaskTest
 
     underTest.execute();
 
-    verifyZeroInteractions(repositoryManager);
+    verifyNoInteractions(repositoryManager);
   }
 
   @Test
@@ -244,7 +244,7 @@ public class RestoreMetadataTaskTest
 
     underTest.execute();
 
-    verifyZeroInteractions(integrityCheckStrategies);
+    verifyNoInteractions(integrityCheckStrategies);
   }
 
   @Test
@@ -262,7 +262,7 @@ public class RestoreMetadataTaskTest
     underTest.execute();
 
     verify(defaultIntegrityCheckStrategy).check(any(), any(), any(), any());
-    verifyZeroInteractions(testIntegrityCheckStrategy);
+    verifyNoInteractions(testIntegrityCheckStrategy);
   }
 
   @Test
@@ -276,7 +276,7 @@ public class RestoreMetadataTaskTest
 
     underTest.execute();
 
-    verifyZeroInteractions(defaultIntegrityCheckStrategy);
+    verifyNoInteractions(defaultIntegrityCheckStrategy);
     verify(testIntegrityCheckStrategy).check(eq(repository), eq(blobStore), any(), any());
   }
 

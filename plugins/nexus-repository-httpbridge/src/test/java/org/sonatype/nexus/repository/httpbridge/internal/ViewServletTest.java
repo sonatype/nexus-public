@@ -39,8 +39,8 @@ import org.mockito.Mock;
 
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;

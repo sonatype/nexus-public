@@ -34,7 +34,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.rest.internal.resources.AssetMapUtils.getValueFromAssetMap;
 import static org.sonatype.nexus.repository.rest.internal.resources.ResourcesTestUtils.createAsset;

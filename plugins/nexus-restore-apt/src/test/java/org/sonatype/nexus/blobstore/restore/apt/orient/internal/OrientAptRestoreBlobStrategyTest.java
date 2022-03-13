@@ -49,9 +49,8 @@ import org.mockito.Mock;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -132,7 +131,7 @@ public class OrientAptRestoreBlobStrategyTest
       }
     }).getInstance(OrientAptRestoreBlobStrategy.class);
 
-    when(repositoryManager.get(anyString())).thenReturn(repository);
+    when(repositoryManager.get(nullable(String.class))).thenReturn(repository);
     when(repository.facet(AptRestoreFacet.class)).thenReturn(aptRestoreFacet);
     when(repository.optionalFacet(AptRestoreFacet.class)).thenReturn(Optional.of(aptRestoreFacet));
     when(repository.optionalFacet(StorageFacet.class)).thenReturn(Optional.of(storageFacet));
@@ -141,7 +140,7 @@ public class OrientAptRestoreBlobStrategyTest
     when(storageFacet.txSupplier()).thenReturn(() -> storageTx);
     when(storageFacet.blobStore()).thenReturn(blobStore);
     when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
-    when(blobStore.getBlobAttributes(any(BlobId.class))).thenReturn(blobAttributes);
+    when(blobStore.getBlobAttributes(nullable(BlobId.class))).thenReturn(blobAttributes);
     when(blobAttributes.isDeleted()).thenReturn(false);
     when(blob.getInputStream()).thenReturn(new ByteArrayInputStream(blobBytes));
     when(blob.getMetrics()).thenReturn(blobMetrics);
@@ -150,7 +149,7 @@ public class OrientAptRestoreBlobStrategyTest
     when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
     when(restoreBlobData.getRepository()).thenReturn(repository);
     when(restoreBlobData.getBlob()).thenReturn(blob);
-    when(storageTx.findAssetWithProperty(eq(P_NAME), eq(PACKAGE_PATH), any(Bucket.class))).thenReturn(asset);
+    when(storageTx.findAssetWithProperty(eq(P_NAME), eq(PACKAGE_PATH), nullable(Bucket.class))).thenReturn(asset);
 
     properties.setProperty("@BlobStore.created-by", "anonymous");
     properties.setProperty("size", "1330");
@@ -187,7 +186,7 @@ public class OrientAptRestoreBlobStrategyTest
   public void testPackageIsRestored() throws Exception {
     underTest.restore(properties, blob, blobStore, false);
     verify(aptRestoreFacet).assetExists(PACKAGE_PATH);
-    verify(aptRestoreFacet).restore(any(AssetBlob.class), eq(PACKAGE_PATH));
+    verify(aptRestoreFacet).restore(nullable(AssetBlob.class), eq(PACKAGE_PATH));
     verifyNoMoreInteractions(aptRestoreFacet);
   }
 
@@ -245,7 +244,7 @@ public class OrientAptRestoreBlobStrategyTest
     underTest.restore(properties, blob, blobStore, false);
     verify(aptRestoreFacet).assetExists(PACKAGE_PATH);
     verify(aptRestoreFacet).componentRequired(PACKAGE_PATH);
-    verify(aptRestoreFacet).restore(any(AssetBlob.class), eq(PACKAGE_PATH));
+    verify(aptRestoreFacet).restore(nullable(AssetBlob.class), eq(PACKAGE_PATH));
     verifyNoMoreInteractions(aptRestoreFacet);
   }
 }

@@ -22,7 +22,7 @@ import org.mockito.Mock;
 import org.mockito.verification.VerificationMode;
 
 import static org.apache.http.HttpHeaders.USER_AGENT;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;

@@ -35,7 +35,7 @@ import org.mockito.Mock;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 public class RealmManagerImplTest
@@ -77,7 +77,7 @@ public class RealmManagerImplTest
   public void testOnStoreChanged_LocalEvent() {
     when(configEvent.isLocal()).thenReturn(true);
     manager.on(configEvent);
-    verifyZeroInteractions(eventManager, configStore);
+    verifyNoInteractions(eventManager, configStore);
   }
 
   @Test

@@ -28,27 +28,21 @@ import org.sonatype.nexus.repository.content.facet.ContentFacetStores;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.store.AssetBlobStore;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.test.util.Whitebox;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.reflect.Whitebox;
 
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({ContentFacetStores.class, ContentFacetSupport.class})
 public class DefaultBlobStoreUsageCheckerTest
     extends TestSupport
 {
@@ -90,16 +84,15 @@ public class DefaultBlobStoreUsageCheckerTest
   @Mock
   ContentFacetSupport contentFacet;
 
+  @Mock
   ContentFacetStores contentFacetStores;
 
   DefaultBlobStoreUsageChecker underTest;
 
   @Before
   public void setUp() {
-    contentFacetStores = PowerMockito.mock(ContentFacetStores.class);
     Whitebox.setInternalState(contentFacetStores, "assetBlobStore", assetBlobStore);
 
-    contentFacet = PowerMockito.mock(ContentFacetSupport.class);
     when(contentFacet.stores()).thenReturn(contentFacetStores);
     when(contentFacet.nodeName()).thenReturn(NODE_ID);
 

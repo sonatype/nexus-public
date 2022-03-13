@@ -36,11 +36,11 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import static java.util.Optional.empty;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 public class RepositorySqlSearchQueryContributionTest
@@ -102,7 +102,7 @@ public class RepositorySqlSearchQueryContributionTest
   public void shouldIgnoreNull() {
     underTest.contribute(queryBuilder, null);
 
-    verifyZeroInteractions(sqlSearchQueryConditionBuilder);
+    verifyNoMoreInteractions(sqlSearchQueryConditionBuilder);
     verify(queryBuilder, never()).add(any());
   }
 
@@ -167,7 +167,7 @@ public class RepositorySqlSearchQueryContributionTest
     mockHostedRepositoryType(hostedRepo1, hostedRepo2);
   }
 
-  private void mockHostedRepositoryType(Repository... repositories) {
+  private void mockHostedRepositoryType(final Repository... repositories) {
     Stream.of(repositories)
         .forEach(repository -> when(repository.getType()).thenReturn(hostedType));
     when(hostedType.getValue()).thenReturn(HostedType.NAME);

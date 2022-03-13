@@ -21,19 +21,19 @@ import java.nio.file.StandardOpenOption;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.MockedStatic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,16 +41,13 @@ import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(LoggerFactory.class)
 public class BlobStoreReconciliationLoggerTest
+    extends TestSupport
 {
   @Rule
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -64,6 +61,9 @@ public class BlobStoreReconciliationLoggerTest
   @Mock
   private Logger logger;
 
+  @Mock
+  private MockedStatic<LoggerFactory> mockedStatic;
+
   private BlobStoreReconciliationLogger underTest;
 
   @Before
@@ -74,17 +74,23 @@ public class BlobStoreReconciliationLoggerTest
     when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
 
     // mock logger used to actually log blob ids
-    mockStatic(LoggerFactory.class);
-    when(LoggerFactory.getLogger("blobstore-reconciliation-log")).thenReturn(logger);
-    when(LoggerFactory.getLogger(BlobStoreReconciliationLogger.class)).thenReturn(mock(Logger.class));
+    mockedStatic.when(() -> LoggerFactory.getLogger("blobstore-reconciliation-log")).thenReturn(logger);
+    mockedStatic.when(() -> LoggerFactory.getLogger(BlobStoreReconciliationLogger.class)).thenReturn(mock(Logger.class));
 
     underTest = new BlobStoreReconciliationLogger(applicationDirectories);
+  }
+
+  @After
+  public void teardown() {
+    if (mockedStatic != null) {
+      mockedStatic.close();
+    }
   }
 
   @Test
   public void shouldNotLogTemporaryBlobs() {
     underTest.logBlobCreated(blobStore, new BlobId("tmp$00000000-0000-0000-0000-000000000000"));
-    verifyZeroInteractions(logger);
+    verifyNoInteractions(logger);
   }
 
   @Test
@@ -93,8 +99,7 @@ public class BlobStoreReconciliationLoggerTest
 
     verify(logger).info("00000000-0000-0000-0000-000000000000");
 
-    verifyStatic();
-    LoggerFactory.getLogger("blobstore-reconciliation-log");
+    mockedStatic.verify(() -> LoggerFactory.getLogger("blobstore-reconciliation-log"));
   }
 
   @Test

@@ -25,7 +25,7 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 
-import static org.mockito.Matchers.anyObject
+import static org.mockito.ArgumentMatchers.isNotNull
 import static org.mockito.Mockito.mock
 import static org.mockito.Mockito.never
 import static org.mockito.Mockito.when
@@ -51,8 +51,8 @@ class NexusTaskNotificationEmailSenderTest
   @Before
   void setup() {
     def taskNotificationMessageGenerators = [DEFAULT: defaultTaskNotificationMessageGenerator, CUSTOM: customTaskNotificationMessageGenerator]
-    when(defaultTaskNotificationMessageGenerator.completed(anyObject())).thenReturn("completed message");
-    when(defaultTaskNotificationMessageGenerator.failed(anyObject(), anyObject())).thenReturn("failure message");
+    when(defaultTaskNotificationMessageGenerator.completed(isNotNull())).thenReturn("completed message");
+    when(defaultTaskNotificationMessageGenerator.failed(isNotNull(), isNotNull())).thenReturn("failure message");
     underTest = new NexusTaskNotificationEmailSender({ -> emailManager}, taskNotificationMessageGenerators)
   }
 
@@ -68,7 +68,7 @@ class NexusTaskNotificationEmailSenderTest
 
     underTest.on(event)
 
-    verify(emailManager).send(anyObject())
+    verify(emailManager).send(isNotNull())
   }
 
   @Test
@@ -84,7 +84,7 @@ class NexusTaskNotificationEmailSenderTest
 
     underTest.on(event)
 
-    verify(emailManager, never()).send(anyObject())
+    verify(emailManager, never()).send(isNotNull())
   }
 
   @Test
@@ -100,7 +100,7 @@ class NexusTaskNotificationEmailSenderTest
 
     underTest.on(event)
 
-    verify(emailManager).send(anyObject())
+    verify(emailManager).send(isNotNull())
   }
 
   @Test
@@ -113,11 +113,11 @@ class NexusTaskNotificationEmailSenderTest
     when(taskInfo.getConfiguration()).thenReturn(taskConfiguration)
     when(taskConfiguration.getAlertEmail()).thenReturn("foo@example.com")
     when(taskConfiguration.getNotificationCondition()).thenReturn(TaskNotificationCondition.SUCCESS_FAILURE)
-    when(customTaskNotificationMessageGenerator.completed(anyObject())).thenReturn("body")
+    when(customTaskNotificationMessageGenerator.completed(isNotNull())).thenReturn("body")
     TaskEventStoppedDone event = new TaskEventStoppedDone(taskInfo)
 
     underTest.on(event)
 
-    verify(customTaskNotificationMessageGenerator).completed(anyObject())
+    verify(customTaskNotificationMessageGenerator).completed(isNotNull())
   }
 }

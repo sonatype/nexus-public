@@ -28,7 +28,7 @@ import static java.util.Arrays.asList;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -99,14 +99,14 @@ public class CookieFilterTest
 
     cookieFilter.doFilter(request, response, filterChain);
 
-    verifyZeroInteractions(response);
+    verifyNoInteractions(response);
   }
 
   @Test
   public void ifNotInstanceOfHttpServletResponseDoNotProcessResponse() throws Exception {
     cookieFilter.doFilter(request, notInstanceOfHttpServletResponse, filterChain);
 
-    verifyZeroInteractions(response);
+    verifyNoInteractions(response);
   }
 
   @Test

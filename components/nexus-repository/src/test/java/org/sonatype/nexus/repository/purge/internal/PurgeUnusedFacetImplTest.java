@@ -43,7 +43,7 @@ import org.mockito.Mock;
 import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.Thread.sleep;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 

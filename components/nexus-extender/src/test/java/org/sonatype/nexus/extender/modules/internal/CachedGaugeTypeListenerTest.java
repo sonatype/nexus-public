@@ -35,8 +35,8 @@ import org.mockito.Mock;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.isA;
+import static org.mockito.ArgumentMatchers.isNotNull;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -113,7 +113,7 @@ public class CachedGaugeTypeListenerTest
   public void testHearAnalyticDisable() {
     mockProperties.put("test.annotated.disable", "true");
     undertest.hear(testTypeLiteral, mockTypeEncounter);
-    verify(mockTypeEncounter, times(0)).register((InjectionListener<? super TestClass>) anyObject());
+    verify(mockTypeEncounter, times(0)).register((InjectionListener<? super TestClass>) isNotNull());
   }
 
   private long getTimeout(InjectionListener<? super TestClass> listener) throws Exception {

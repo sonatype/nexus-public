@@ -31,8 +31,6 @@ import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
-import org.sonatype.nexus.blobstore.restore.datastore.DefaultIntegrityCheckStrategy;
-import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Repository;
@@ -54,22 +52,20 @@ import static java.util.Collections.addAll;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.startsWith;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.restore.datastore.DefaultIntegrityCheckStrategy.*;
-import static org.sonatype.nexus.repository.storage.Asset.CHECKSUM;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_BLOB_REF;
 
 public class DefaultIntegrityCheckStrategyTest
@@ -113,7 +109,7 @@ public class DefaultIntegrityCheckStrategyTest
 
     when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);
 
-    defaultIntegrityCheckStrategy = spy(new TestDefaultIntegrityCheckStrategy(10));
+    defaultIntegrityCheckStrategy = new TestDefaultIntegrityCheckStrategy(10);
   }
 
   @Test
@@ -123,7 +119,7 @@ public class DefaultIntegrityCheckStrategyTest
     FluentAsset mockAsset = getMockAsset("name", of(assetBlob));
 
     Continuation<FluentAsset> continuation = buildContinuation(mockAsset);
-    when(assets.browse(anyInt(), anyString())).thenReturn(continuation).thenReturn(new ContinuationArrayList<>());
+    when(assets.browse(anyInt(), nullable(String.class))).thenReturn(continuation).thenReturn(new ContinuationArrayList<>());
 
     // stub attribute load to fail
     when(blobStore.getBlobAttributes(blobId)).thenReturn(null);
@@ -141,7 +137,7 @@ public class DefaultIntegrityCheckStrategyTest
     FluentAsset mockAsset = getMockAsset("name", of(assetBlob));
 
     Continuation<FluentAsset> continuation = buildContinuation(mockAsset);
-    when(assets.browse(anyInt(), anyString())).thenReturn(continuation).thenReturn(new ContinuationArrayList<>());
+    when(assets.browse(anyInt(), nullable(String.class))).thenReturn(continuation).thenReturn(new ContinuationArrayList<>());
 
     BlobAttributes blobAttributes = getMockBlobAttributes(of("name"), TEST_HASH1, true);
     when(blobStore.getBlobAttributes(blobId)).thenReturn(blobAttributes);
@@ -159,7 +155,7 @@ public class DefaultIntegrityCheckStrategyTest
     FluentAsset mockAsset = getMockAsset("name", of(assetBlob));
 
     Continuation<FluentAsset> continuation = buildContinuation(mockAsset);
-    when(assets.browse(anyInt(), anyString())).thenReturn(continuation).thenReturn(new ContinuationArrayList<>());
+    when(assets.browse(anyInt(), nullable(String.class))).thenReturn(continuation).thenReturn(new ContinuationArrayList<>());
 
     when(mockAsset.blob()).thenReturn(empty());
 
@@ -176,7 +172,7 @@ public class DefaultIntegrityCheckStrategyTest
     FluentAsset mockAsset = getMockAsset("name", of(assetBlob));
 
     Continuation<FluentAsset> continuation = buildContinuation(mockAsset);
-    when(assets.browse(anyInt(), anyString())).thenReturn(continuation).thenReturn(new ContinuationArrayList<>());
+    when(assets.browse(anyInt(), nullable(String.class))).thenReturn(continuation).thenReturn(new ContinuationArrayList<>());
     // throw an unexpected error
     NullPointerException ex = new NullPointerException(format("Missing property: %s", P_BLOB_REF));
     when(mockAsset.blob()).thenThrow(ex);
@@ -199,7 +195,7 @@ public class DefaultIntegrityCheckStrategyTest
   public void testCheck_MissingAssetSha1() {
     runTest("name", empty(), "name", TEST_HASH1, () -> false);
 
-    verify(logger, never()).error(eq(NAME_MISMATCH), anyString(), anyString());
+    verify(logger, never()).error(eq(NAME_MISMATCH), nullable(String.class), nullable(String.class));
     verify(logger).error(eq(ERROR_PROCESSING_ASSET_WITH_EX), any(), eq(ASSET_SHA1_MISSING), any());
     verify(checkFailedHandler).accept(any());
   }
@@ -208,8 +204,8 @@ public class DefaultIntegrityCheckStrategyTest
   public void testCheck_MismatchAssetSha1() {
     runTest("name", TEST_HASH1, "name", TEST_HASH2, () -> false);
 
-    verify(logger, never()).error(eq(NAME_MISMATCH), anyString(), anyString());
-    verify(logger).error(eq(SHA1_MISMATCH), eq("name"), anyString(), anyString());
+    verify(logger, never()).error(eq(NAME_MISMATCH), nullable(String.class), nullable(String.class));
+    verify(logger).error(eq(SHA1_MISMATCH), eq("name"), nullable(String.class), nullable(String.class));
     verify(checkFailedHandler).accept(any());
   }
 
@@ -217,7 +213,7 @@ public class DefaultIntegrityCheckStrategyTest
   public void testCheck_MissingAssetName() {
     runTest(null, TEST_HASH1, "name", TEST_HASH1, () -> false);
 
-    verify(logger, never()).error(eq(NAME_MISMATCH), anyString(), anyString());
+    verify(logger, never()).error(eq(NAME_MISMATCH), nullable(String.class), nullable(String.class));
     verify(logger).error(eq(ERROR_PROCESSING_ASSET_WITH_EX), any(), eq(ASSET_NAME_MISSING), any());
     verify(checkFailedHandler).accept(any());
   }
@@ -226,7 +222,7 @@ public class DefaultIntegrityCheckStrategyTest
   public void testCheck_MissingBlobName() {
     runTest("name", TEST_HASH1, null, TEST_HASH1, () -> false);
 
-    verify(logger, never()).error(eq(NAME_MISMATCH), anyString(), anyString());
+    verify(logger, never()).error(eq(NAME_MISMATCH), nullable(String.class), nullable(String.class));
     verify(logger).error(eq(ERROR_PROCESSING_ASSET_WITH_EX), any(), eq(BLOB_NAME_MISSING), any());
     verify(checkFailedHandler).accept(any());
   }
@@ -235,7 +231,7 @@ public class DefaultIntegrityCheckStrategyTest
   public void test_missingBlobSha1() {
     runTest("name", TEST_HASH1, "name", empty(), () -> false);
 
-    verify(logger, never()).error(eq(NAME_MISMATCH), anyString(), anyString());
+    verify(logger, never()).error(eq(NAME_MISMATCH), nullable(String.class), nullable(String.class));
     verify(logger).error(eq(ERROR_PROCESSING_ASSET_WITH_EX), any(), eq(BLOB_METRICS_MISSING_SHA1), any());
     verify(checkFailedHandler).accept(any());
   }
@@ -244,8 +240,8 @@ public class DefaultIntegrityCheckStrategyTest
   public void testCheck_MismatchName() {
     runTest("aa", TEST_HASH1, "bb", TEST_HASH1, () -> false);
 
-    verify(logger).error(eq(NAME_MISMATCH), anyString(), anyString());
-    verify(logger, never()).error(eq(SHA1_MISMATCH), anyString(), anyString(), anyString());
+    verify(logger).error(eq(NAME_MISMATCH), nullable(String.class), nullable(String.class));
+    verify(logger, never()).error(eq(SHA1_MISMATCH), nullable(String.class), nullable(String.class), nullable(String.class));
     verify(checkFailedHandler).accept(any());
   }
 
@@ -254,7 +250,7 @@ public class DefaultIntegrityCheckStrategyTest
     doThrow(new BlobStoreException("bse", new BlobId("blob"))).when(blobData).close();
     runTest("name", TEST_HASH1, "name", TEST_HASH1, () -> false);
 
-    verify(logger).error(eq(BLOB_DATA_MISSING_FOR_ASSET), anyString());
+    verify(logger).error(eq(BLOB_DATA_MISSING_FOR_ASSET), nullable(String.class));
     verify(checkFailedHandler).accept(any());
   }
 
@@ -280,16 +276,16 @@ public class DefaultIntegrityCheckStrategyTest
     FluentAsset mockAsset = getMockAsset(assetPath, of(assetBlob));
     Continuation<FluentAsset> assetContinuation = buildContinuation(mockAsset);
 
-    when(assets.browse(anyInt(), anyString())).thenReturn(assetContinuation).thenReturn(new ContinuationArrayList<>());
+    when(assets.browse(anyInt(), nullable(String.class))).thenReturn(assetContinuation).thenReturn(new ContinuationArrayList<>());
     when(blobStore.getBlobAttributes(blobId)).thenReturn(blobAttributes);
 
     defaultIntegrityCheckStrategy.check(repository, blobStore, cancel, checkFailedHandler);
 
-    verify(logger).info(startsWith("Checking integrity of assets"), anyString(), anyString());
+    verify(logger).info(startsWith("Checking integrity of assets"), nullable(String.class), nullable(String.class));
 
     // if cancel is invoked, we'll never see the debug line
     if (!cancel.getAsBoolean()) {
-      verify(logger).debug(startsWith("Checking asset {}"), any(Asset.class));
+      verify(logger).debug(startsWith("Checking asset {}"), nullable(String.class));
     }
   }
 
@@ -345,7 +341,7 @@ public class DefaultIntegrityCheckStrategyTest
     return assetBlob;
   }
 
-  private FluentAsset getMockAsset(final String path, Optional<AssetBlob> assetBlob) {
+  private FluentAsset getMockAsset(final String path, final Optional<AssetBlob> assetBlob) {
     FluentAsset asset = mock(FluentAsset.class);
     when(asset.path()).thenReturn(path);
     when(asset.blob()).thenReturn(assetBlob);

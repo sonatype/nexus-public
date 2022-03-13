@@ -66,13 +66,13 @@ import org.quartz.spi.JobStore
 import org.quartz.spi.OperableTrigger
 
 import static junit.framework.TestCase.assertEquals
+import static org.hamcrest.MatcherAssert.assertThat
 import static org.hamcrest.Matchers.equalTo
 import static org.hamcrest.Matchers.hasSize
-import static org.hamcrest.MatcherAssert.assertThat
-import static org.mockito.Matchers.any
-import static org.mockito.Matchers.anyObject
-import static org.mockito.Matchers.eq
-import static org.mockito.Matchers.notNull
+import static org.mockito.ArgumentMatchers.any
+import static org.mockito.ArgumentMatchers.isNotNull
+import static org.mockito.ArgumentMatchers.eq
+import static org.mockito.ArgumentMatchers.notNull
 import static org.mockito.Mockito.*
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED
 import static org.sonatype.nexus.scheduling.TaskConfiguration.LAST_RUN_STATE_END_STATE
@@ -117,7 +117,7 @@ class QuartzSchedulerSPITest
     when(lastShutdownTimeService.estimateLastShutdownTime()).thenReturn(Optional.empty())
 
     def statusDelayedExecutor = mock(DatabaseStatusDelayedExecutor.class)
-    doAnswer({ it.getArguments()[0].run() }).when(statusDelayedExecutor).execute(notNull(Runnable.class))
+    doAnswer({ it.getArguments()[0].run() }).when(statusDelayedExecutor).execute(any(Runnable.class))
 
     underTest = new QuartzSchedulerSPI(
         eventManager, nodeAccess, provider, scheduler, lastShutdownTimeService, statusDelayedExecutor, true
@@ -317,7 +317,7 @@ class QuartzSchedulerSPITest
     def quartzTaskState = mock(QuartzTaskState)
     underTest.pause()
     underTest.runNow('trigger-source', new JobKey('name', 'group'), quartzTaskInfo, quartzTaskState)
-    verify(quartzTaskInfo, never()).setNexusTaskState(anyObject(), anyObject(), anyObject(), anyObject())
+    verify(quartzTaskInfo, never()).setNexusTaskState(isNotNull(), isNotNull(), isNotNull(), isNotNull())
   }
 
   @Test

@@ -54,7 +54,7 @@ import org.mockito.Mock;
 
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.io.ByteStreams.nullOutputStream;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;

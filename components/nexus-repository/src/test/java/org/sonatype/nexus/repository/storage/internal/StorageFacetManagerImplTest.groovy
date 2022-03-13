@@ -33,7 +33,7 @@ import org.mockito.Mock
 import static org.hamcrest.Matchers.is
 import static org.hamcrest.Matchers.startsWith
 import static org.hamcrest.MatcherAssert.assertThat
-import static org.mockito.Matchers.same
+import static org.mockito.ArgumentMatchers.same
 import static org.mockito.Mockito.doThrow
 import static org.mockito.Mockito.never
 import static org.mockito.Mockito.verify

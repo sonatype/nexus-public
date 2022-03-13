@@ -28,10 +28,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.AdditionalAnswers.returnsFirstArg;
-import static org.mockito.Matchers.anyObject;
+import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 public class DetachingListTest
@@ -80,7 +80,7 @@ public class DetachingListTest
 
     verifyNoMoreInteractions(backing);
 
-    verifyZeroInteractions(allowDetach, detach);
+    verifyNoInteractions(allowDetach, detach);
   }
 
   @Test
@@ -98,7 +98,7 @@ public class DetachingListTest
 
     inOrder.verify(allowDetach).getAsBoolean();
     inOrder.verify(backing).size();
-    inOrder.verify(backing).forEach(anyObject());
+    inOrder.verify(backing).forEach(isNotNull());
     // the rest happens on the detached list
 
     verifyNoMoreInteractions(backing, allowDetach, detach);
@@ -117,7 +117,7 @@ public class DetachingListTest
 
     inOrder.verify(allowDetach).getAsBoolean();
     inOrder.verify(backing).size();
-    inOrder.verify(backing).forEach(anyObject());
+    inOrder.verify(backing).forEach(isNotNull());
     // the rest happens on the detached list
 
     verifyNoMoreInteractions(backing, allowDetach, detach);
@@ -171,7 +171,7 @@ public class DetachingListTest
     underTest = new DetachingList<>(original, allowDetach, detach);
 
     when(allowDetach.getAsBoolean()).thenReturn(true);
-    when(detach.apply(anyObject())).thenAnswer(returnsFirstArg());
+    when(detach.apply(isNotNull())).thenAnswer(returnsFirstArg());
 
     assertThat(underTest.remove("THERE"), is(true));
     assertThat(underTest.add("WORLD"), is(true));

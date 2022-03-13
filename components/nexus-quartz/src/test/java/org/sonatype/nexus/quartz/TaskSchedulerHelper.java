@@ -49,8 +49,8 @@ import org.quartz.spi.JobFactory;
 import org.quartz.spi.JobStore;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.notNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -132,7 +132,7 @@ public class TaskSchedulerHelper
       doAnswer(i  -> {
         ((Runnable) i.getArguments()[0]).run();
         return null;
-      }).when(statusDelayedExecutor).execute(notNull(Runnable.class));
+      }).when(statusDelayedExecutor).execute(any(Runnable.class));
       binder.bind(DatabaseStatusDelayedExecutor.class)
           .toInstance(statusDelayedExecutor);
 
