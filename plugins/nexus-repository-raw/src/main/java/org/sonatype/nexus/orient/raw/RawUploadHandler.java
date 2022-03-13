@@ -14,8 +14,10 @@ package org.sonatype.nexus.orient.raw;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -26,19 +28,19 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.mime.MimeSupport;
+import org.sonatype.nexus.orient.raw.internal.RawContentFacetImpl;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.importtask.ImportFileConfiguration;
-import org.sonatype.nexus.repository.raw.RawCoordinatesHelper;
 import org.sonatype.nexus.repository.raw.RawUploadHandlerSupport;
 import org.sonatype.nexus.repository.raw.internal.RawFormat;
 import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
-import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.PartPayload;
-import org.sonatype.nexus.repository.view.payloads.StreamPayload;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
+import org.sonatype.nexus.repository.view.payloads.TempBlobPayload;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.collect.Lists;
@@ -95,15 +97,13 @@ public class RawUploadHandler
     String path = configuration.getAssetName();
     Path contentPath = configuration.getFile().toPath();
 
-    RawContentFacet facet = repository.facet(RawContentFacet.class);
-    if (configuration.isHardLinkingEnabled()) {
-      Asset asset = facet.getOrCreateAsset(repository, path, RawCoordinatesHelper.getGroup(path), path);
-      facet.hardLink(repository, asset, path, contentPath);
+    try (TempBlob tempBlob = repository.facet(StorageFacet.class).createTempBlob(contentPath,
+        RawContentFacetImpl.HASH_ALGORITHMS, configuration.isHardLinkingEnabled());
+        InputStream in = new BufferedInputStream(Files.newInputStream(contentPath, StandardOpenOption.READ))) {
+      RawContentFacet facet = repository.facet(RawContentFacet.class);
+      facet.put(path,
+          new TempBlobPayload(tempBlob, mimeSupport.detectMimeType(in, contentPath.getFileName().toString())));
       return facet.get(path);
-    }
-    else {
-      return facet.put(path, new StreamPayload(() -> new BufferedInputStream(Files.newInputStream(contentPath)),
-          Files.size(contentPath), mimeSupport.detectMimeType(Files.newInputStream(contentPath), path)));
     }
   }
 }

@@ -16,12 +16,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
-import org.sonatype.nexus.repository.content.fluent.FluentAsset;
+import org.sonatype.nexus.repository.content.fluent.FluentBlobs;
 import org.sonatype.nexus.repository.importtask.ImportFileConfiguration;
-import org.sonatype.nexus.repository.raw.RawCoordinatesHelper;
 import org.sonatype.nexus.repository.raw.RawUploadHandlerTestSupport;
 import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
@@ -32,6 +30,8 @@ import org.sonatype.nexus.repository.upload.UploadHandler;
 import org.sonatype.nexus.repository.upload.UploadResponse;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.PartPayload;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
+import org.sonatype.nexus.repository.view.payloads.TempBlobPayload;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -44,6 +44,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -56,6 +57,12 @@ public class RawUploadHandlerTest
   @Mock
   RawContentFacet rawFacet;
 
+  @Mock
+  FluentBlobs blobs;
+
+  @Mock
+  TempBlob tempBlob;
+
   @Override
   protected UploadHandler newRawUploadHandler(final ContentPermissionChecker contentPermissionChecker,
                                               final VariableResolverAdapter variableResolverAdapter,
@@ -67,6 +74,7 @@ public class RawUploadHandlerTest
   @Before
   public void setup() throws IOException {
     when(repository.facet(RawContentFacet.class)).thenReturn(rawFacet);
+    when(rawFacet.blobs()).thenReturn(blobs);
   }
 
   @Test
@@ -110,14 +118,14 @@ public class RawUploadHandlerTest
   public void testHandleHardLink() throws IOException {
     Path contentPath = Files.createTempDirectory("raw-upload-test").resolve("test.txt");
     String path = contentPath.toString();
-    FluentAsset asset = mock(FluentAsset.class);
     Content content = mock(Content.class);
-    when(rawFacet.getOrCreateAsset(repository, path, RawCoordinatesHelper.getGroup(path), path)).thenReturn(asset);
-    when(rawFacet.get(path)).thenReturn(Optional.of(content));
+    when(rawFacet.put(eq(path), any(TempBlobPayload.class))).thenReturn(content);
+
+    when(blobs.ingest(eq(contentPath), any(), any(), eq(true))).thenReturn(tempBlob);
 
     Content importResponse = underTest.handle(new ImportFileConfiguration(repository, contentPath.toFile(), path, true));
 
-    verify(rawFacet).hardLink(repository, asset, path, contentPath);
+    verify(rawFacet).put(eq(path), any(TempBlobPayload.class));
     assertThat(importResponse, is(content));
   }
 
