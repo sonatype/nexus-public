@@ -83,7 +83,7 @@ public abstract class FormatRepositoryTestSystemSupport
 
   public static final String ATTRIBUTES_KEY_NC_TTL = "timeToLive";
 
-  public static final String ATTRIBUTES_KEY_MEMBERS = "members";
+  public static final String ATTRIBUTES_KEY_MEMBERS = "memberNames";
 
   public static final String ATTRIBUTES_KEY_GROUP_WRITE_MEMBER = "groupWriteMember";
 
