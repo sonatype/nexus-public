@@ -15,8 +15,6 @@ package org.sonatype.nexus.content.maven.internal.recipe;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -26,22 +24,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.validation.constraints.NotNull;
 
-import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.content.maven.internal.event.RebuildMavenArchetypeCatalogEvent;
 import org.sonatype.nexus.content.maven.store.GAV;
 import org.sonatype.nexus.content.maven.store.Maven2ComponentData;
 import org.sonatype.nexus.content.maven.store.Maven2ComponentStore;
-import org.sonatype.nexus.mime.MimeSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
@@ -73,16 +66,12 @@ import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.hash.HashCode;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.Model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.lang3.StringUtils.prependIfMissing;
-import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
-import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
-import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenArchetypeCatalogFacetImpl.MAVEN_ARCHETYPE_KIND;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.assetKind;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.setMavenAttributes;
@@ -91,17 +80,16 @@ import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW_ONCE;
 import static org.sonatype.nexus.repository.content.AttributeOperation.OVERLAY;
 import static org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet.METADATA_FORCE_REBUILD;
 import static org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet.METADATA_REBUILD;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.ARTIFACT_SUBORDINATE;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_INDEX;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_ARTIFACT_ID;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_CLASSIFIER;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_EXTENSION;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_GROUP_ID;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_VERSION;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.ARTIFACT_SUBORDINATE;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_INDEX;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
 import static org.sonatype.nexus.repository.maven.internal.Constants.METADATA_FILENAME;
-import static org.sonatype.nexus.repository.maven.internal.Maven2Format.NAME;
 import static org.sonatype.nexus.repository.maven.internal.MavenModels.readModel;
 import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.metadataPath;
 
@@ -110,7 +98,7 @@ import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.Metad
  *
  * @since 3.25
  */
-@Named(NAME)
+@Named(Maven2Format.NAME)
 public class MavenContentFacetImpl
     extends ContentFacetSupport
     implements MavenContentFacet
@@ -133,8 +121,6 @@ public class MavenContentFacetImpl
 
   private MetadataRebuilder metadataRebuilder;
 
-  private MimeSupport mimeSupport;
-
   static class Config
   {
     @NotNull(groups = {HostedType.ValidationGroup.class, ProxyType.ValidationGroup.class})
@@ -154,12 +140,11 @@ public class MavenContentFacetImpl
 
   @Inject
   public MavenContentFacetImpl(
-      @Named(NAME) final FormatStoreManager formatStoreManager,
+      @Named(Maven2Format.NAME) final FormatStoreManager formatStoreManager,
       final Map<String, MavenPathParser> mavenPathParsers,
       final MetadataRebuilder metadataRebuilder,
       final MavenMetadataContentValidator metadataValidator,
       final EventManager eventManager,
-      final MimeSupport mimeSupport,
       @Named("${nexus.maven.metadata.validation.enabled:-true}") final boolean metadataValidationEnabled)
   {
     super(formatStoreManager);
@@ -167,7 +152,6 @@ public class MavenContentFacetImpl
     this.metadataRebuilder = checkNotNull(metadataRebuilder);
     this.metadataValidator = metadataValidator;
     this.eventManager = eventManager;
-    this.mimeSupport = checkNotNull(mimeSupport);
     this.metadataValidationEnabled = metadataValidationEnabled;
   }
 
@@ -231,25 +215,6 @@ public class MavenContentFacetImpl
       }
       return save(mavenPath, content, blob);
     }
-  }
-
-  @Override
-  public void hardLink(FluentAsset asset, Path contentPath) throws IOException {
-    String mimeType = mimeSupport.detectMimeType(Files.newInputStream(contentPath), contentPath.toString());
-
-    Map<String, String> headers = ImmutableMap.of(
-        BLOB_NAME_HEADER, contentPath.toString(),
-        CONTENT_TYPE_HEADER, mimeType
-    );
-
-    byte[] bytes = Files.readAllBytes(contentPath);
-    Map<HashAlgorithm, HashCode> hashes = HashType.ALGORITHMS.stream().collect(Collectors.toMap(
-        Function.identity(),
-        a -> a.function().hashBytes(bytes)
-    ));
-    Blob blob = blobs().ingest(contentPath, headers, hashes.get(SHA1), Files.size(contentPath));
-
-    asset.attach(blob, hashes);
   }
 
   private Optional<FluentAsset> findAsset(final String path) {
@@ -456,10 +421,10 @@ public class MavenContentFacetImpl
         .collect(toSet());
   }
 
-  private String[] collectGabv(Component component) {
+  private String[] collectGabv(final Component component) {
     return new String[]{
         component.namespace(), component.name(),
-        component.attributes(NAME).get(P_BASE_VERSION, String.class)
+        component.attributes(Maven2Format.NAME).get(P_BASE_VERSION, String.class)
     };
   }
 
@@ -523,17 +488,19 @@ public class MavenContentFacetImpl
         .ifPresent(this::setMetadataRebuildFlag);
   }
 
-  private void setMetadataRebuildFlag(FluentAsset asset) {
+  private void setMetadataRebuildFlag(final FluentAsset asset) {
     Map<String, Object> metadataRebuild = new HashMap<>();
     metadataRebuild.put(METADATA_FORCE_REBUILD, true);
     asset.withAttribute(METADATA_REBUILD, metadataRebuild);
   }
 
+  @Override
   public Set<GAV> findGavsWithSnaphots(final int minimumRetained) {
     Maven2ComponentStore componentStore = (Maven2ComponentStore)stores().componentStore;
     return componentStore.findGavsWithSnaphots(contentRepositoryId(), minimumRetained);
   }
 
+  @Override
   public List<Maven2ComponentData> findComponentsForGav(final String name,
                                                        final String group,
                                                        final String baseVersion,
@@ -542,11 +509,13 @@ public class MavenContentFacetImpl
     return componentStore.findComponentsForGav(contentRepositoryId(), name, group, baseVersion, releaseVersion);
   }
 
+  @Override
   public int[] selectSnapshotsAfterRelease(final int gracePeriod) {
     Maven2ComponentStore componentStore = (Maven2ComponentStore) stores().componentStore;
     return componentStore.selectSnapshotsAfterRelease(gracePeriod, contentRepositoryId());
   }
-  
+
+  @Override
   public FluentAsset createComponentAndAsset(final MavenPath mavenPath) {
     String assetName = "/" + mavenPath.getPath();
     String assetKind = assetKind(mavenPath, mavenPathParser);
@@ -566,6 +535,7 @@ public class MavenContentFacetImpl
     }
   }
 
+  @Override
   public FluentComponent copy(final Component source) {
     FluentComponentBuilder componentBuilder = components()
         .name(source.name())
@@ -591,7 +561,7 @@ public class MavenContentFacetImpl
     return component;
   }
 
-  private FluentComponent createOrGetComponent(Coordinates coordinates) {
+  private FluentComponent createOrGetComponent(final Coordinates coordinates) {
     MavenContentFacet facet = getRepository().facet(MavenContentFacet.class);
     final String artifactId = coordinates.getArtifactId();
     final String groupId = coordinates.getGroupId();
