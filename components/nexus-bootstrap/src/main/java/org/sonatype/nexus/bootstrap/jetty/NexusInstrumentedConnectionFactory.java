@@ -21,7 +21,7 @@ import org.eclipse.jetty.server.ConnectionFactory;
 /**
  * Extension of {@link com.codahale.metrics.jetty9.InstrumentedConnectionFactory}.
  *
- * @since 2.next
+ * @since 2.15
  */
 public final class NexusInstrumentedConnectionFactory
     extends InstrumentedConnectionFactory

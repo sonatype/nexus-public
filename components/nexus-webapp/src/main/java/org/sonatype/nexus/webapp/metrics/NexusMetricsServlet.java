@@ -36,7 +36,7 @@ import static com.google.common.net.HttpHeaders.CONTENT_DISPOSITION;
 /**
  * Customized {@link com.codahale.metrics.servlets.MetricsServlet} to support injection and download.
  *
- * @since 2.next
+ * @since 2.15
  */
 @Singleton
 public class NexusMetricsServlet

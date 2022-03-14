@@ -18,7 +18,7 @@ import com.codahale.metrics.logback.InstrumentedAppender;
 /**
  * Extension of {@link com.codahale.metrics.logback.InstrumentedAppender} that restores the default constructor.
  *
- * @since 2.next
+ * @since 2.15
  */
 public final class NexusInstrumentedAppender
     extends InstrumentedAppender

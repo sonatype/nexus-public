@@ -18,7 +18,7 @@ import com.codahale.metrics.jetty9.InstrumentedQueuedThreadPool;
 /**
  * Extension of {@link com.codahale.metrics.jetty9.InstrumentedQueuedThreadPool} that restores the default constructor.
  *
- * @since 2.next
+ * @since 2.15
  */
 public final class NexusInstrumentedQueuedThreadPool
     extends InstrumentedQueuedThreadPool

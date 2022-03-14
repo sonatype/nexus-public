@@ -25,7 +25,7 @@ import static com.google.common.net.HttpHeaders.CONTENT_DISPOSITION;
 /**
  * Customized {@link com.codahale.metrics.servlets.ThreadDumpServlet} to support download.
  *
- * @since 2.next
+ * @since 2.15
  */
 public class NexusThreadDumpServlet
   extends ThreadDumpServlet

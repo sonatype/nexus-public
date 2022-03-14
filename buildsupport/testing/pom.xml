@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>2.14.22-SNAPSHOT</version>
+    <version>2.15.1-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-testing</artifactId>
@@ -29,7 +29,7 @@
 
   <properties>
     <selenium.version>2.26.0</selenium.version>
-    <http-testing-harness.version>1.0-SNAPSHOT</http-testing-harness.version>
+    <http-testing-harness.version>1.0.0</http-testing-harness.version>
   </properties>
 
   <dependencyManagement>
@@ -44,7 +44,7 @@
       <dependency>
         <groupId>org.sonatype.plexus</groupId>
         <artifactId>plexus-jetty-testsuite</artifactId>
-        <version>2.2-SNAPSHOT</version>
+        <version>2.2</version>
         <exclusions>
           <exclusion>
             <groupId>org.codehaus.plexus</groupId>
@@ -86,7 +86,7 @@
       <dependency>
         <groupId>org.sonatype.sisu.goodies</groupId>
         <artifactId>goodies-testsupport</artifactId>
-        <version>1.15.0-SNAPSHOT</version>
+        <version>1.15</version>
         <exclusions>
           <exclusion>
             <groupId>com.thoughtworks.xstream</groupId>

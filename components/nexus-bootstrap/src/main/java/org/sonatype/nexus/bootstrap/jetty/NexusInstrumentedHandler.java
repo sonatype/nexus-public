@@ -19,7 +19,7 @@ import org.eclipse.jetty.server.Handler;
 /**
  * Extension of {@link com.codahale.metrics.jetty9.InstrumentedHandler} that restores the delegate constructor.
  *
- * @since 2.next
+ * @since 2.15
  */
 public final class NexusInstrumentedHandler
     extends InstrumentedHandler

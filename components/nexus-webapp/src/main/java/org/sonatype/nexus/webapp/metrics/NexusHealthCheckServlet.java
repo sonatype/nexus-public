@@ -22,7 +22,7 @@ import com.codahale.metrics.servlets.HealthCheckServlet;
  * Customized {@link com.codahale.metrics.servlets.HealthCheckServlet} to support injection.
  *
  * @see HealthCheckMediator
- * @since 2.next
+ * @since 2.15
  */
 @Singleton
 public class NexusHealthCheckServlet
