@@ -19,7 +19,7 @@ import AnonymousSettings from './components/pages/admin/AnonymousSettings/Anonym
 import BlobStores from './components/pages/admin/BlobStores/BlobStores';
 import InsightFrontend from './components/pages/admin/InsightFrontend/InsightFrontend';
 import LoggingConfiguration from './components/pages/admin/LoggingConfiguration/LoggingConfiguration';
-import LogViewer from './components/pages/admin/LogViewer/LogViewer';
+import Logs from "./components/pages/admin/Logs/Logs";
 import Repositories from './components/pages/admin/Repositories/Repositories';
 import RoutingRules from './components/pages/admin/RoutingRules/RoutingRules';
 import SystemInformation from './components/pages/admin/SystemInformation/SystemInformation';
@@ -194,9 +194,9 @@ window.plugins.push({
     },
     {
       mode: 'admin',
-      path: '/Support/Logging/LogViewer',
-      ...UIStrings.LOG_VIEWER.MENU,
-      view: LogViewer,
+      path: '/Support/Logs',
+      ...UIStrings.LOGS.MENU,
+      view: Logs,
       iconCls: 'x-fa fa-terminal',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',

@@ -37,6 +37,7 @@
     "@xstate/inspect": "=0.4.1",
     "axios": "=0.21.4",
     "core-js": "=2.6.11",
+    "luxon": "=1.27.0",
     "mini-css-extract-plugin": "=0.9.0",
     "react": "=16.14.0",
     "react-dom": "=16.14.0",

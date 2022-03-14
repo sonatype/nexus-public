@@ -273,13 +273,34 @@ For more information, <a href="http://links.sonatype.com/products/nxrm3/docs/con
     }
   },
 
-  LOG_VIEWER: {
+  LOGS: {
     MENU: {
-      text: 'Log Viewer',
+      text: 'Logs',
       description: 'View the current log contents'
     },
+
+    LIST: {
+      FILTER_PLACEHOLDER: 'Filter by File Name',
+      LOGGER_NAME_LABEL: 'Logger Name',
+      FILE_NAME_LABEL: 'File Name',
+      SIZE_LABEL: 'Size',
+      LAST_MODIFIED_LABEL: 'Last Modified'
+    },
+
+    VIEW: {
+      TITLE: (log) => `Viewing ${log}`,
+      DOWNLOAD: 'Download',
+      MARK: {
+        LABEL: 'Marker to insert into log',
+        INSERT: 'Insert'
+      },
+      REFRESH: {
+        RATE_LABEL: 'Refresh Rate',
+        SIZE_LABEL: 'Size'
+      }
+    },
+
     REFRESH: {
-      TEXT: 'Refresh Interval',
       MANUAL_ITEM: 'Manual',
       TWENTY_SECONDS_ITEM: 'Every 20 seconds',
       MINUTE_ITEM: 'Every minute',
@@ -290,10 +311,7 @@ For more information, <a href="http://links.sonatype.com/products/nxrm3/docs/con
       LAST25KB_ITEM: 'Last 25KB',
       LAST50KB_ITEM: 'Last 50KB',
       LAST100KB_ITEM: 'Last 100KB'
-    },
-    DOWNLOAD: 'Download',
-    INSERT_MARK: 'Insert Mark',
-    MARK_PLACEHOLDER: 'Marker to insert into log'
+    }
   },
 
   REPOSITORIES: {

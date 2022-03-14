@@ -14,20 +14,28 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import axios from 'axios';
-import * as nxrmUiPlugin from '@sonatype/nexus-ui-plugin';
-import * as rsc from '@sonatype/react-shared-components';
-import React from 'react';
-import ReactDOM from 'react-dom';
-import * as xstate from 'xstate';
-import * as luxon from 'luxon';
+import HumanReadableUtils from './HumanReadableUtils';
 
-export default function exposeDependencies() {
-  window.axios = axios;
-  window.react = React;
-  window.ReactDOM = ReactDOM;
-  window.xstate = xstate;
-  window.nxrmUiPlugin = nxrmUiPlugin;
-  window.luxon = luxon;
-  window.rsc = rsc;
-}
+describe('HumanReadableUtils', () => {
+  describe('bytesToString', () => {
+    it('returns unavailable for an invalid number of bytes', () => {
+      expect(HumanReadableUtils.bytesToString(-1)).toBe('Unavailable')
+    });
+
+    it('returns the number of bytes as a human readable string', () => {
+      expect(HumanReadableUtils.bytesToString(2)).toBe('2.00 Bytes');
+    });
+
+    it('returns the number of kilobytes as a human readable string', () => {
+      expect(HumanReadableUtils.bytesToString(2000)).toBe('1.95 KB');
+    });
+
+    it('returns the number of megabytes as a human readable string', () => {
+      expect(HumanReadableUtils.bytesToString(1024 * 1024)).toBe('1.00 MB');
+    });
+
+    it('returns the number of megabytes as a human readable string', () => {
+      expect(HumanReadableUtils.bytesToString(1024 * 1024 * 2048)).toBe('2.00 GB');
+    });
+  });
+});

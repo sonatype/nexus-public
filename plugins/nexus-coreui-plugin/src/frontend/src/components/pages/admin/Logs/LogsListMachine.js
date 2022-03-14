@@ -15,19 +15,26 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import axios from 'axios';
-import * as nxrmUiPlugin from '@sonatype/nexus-ui-plugin';
-import * as rsc from '@sonatype/react-shared-components';
-import React from 'react';
-import ReactDOM from 'react-dom';
-import * as xstate from 'xstate';
-import * as luxon from 'luxon';
+import {assign} from 'xstate';
 
-export default function exposeDependencies() {
-  window.axios = axios;
-  window.react = React;
-  window.ReactDOM = ReactDOM;
-  window.xstate = xstate;
-  window.nxrmUiPlugin = nxrmUiPlugin;
-  window.luxon = luxon;
-  window.rsc = rsc;
-}
+import {ListMachineUtils} from '@sonatype/nexus-ui-plugin';
+
+export default ListMachineUtils.buildListMachine({
+  id: 'LogViewerListMachine',
+  sortField: 'fileName',
+  sortableFields: ['fileName', 'size', 'lastModified']
+}).withConfig({
+  actions: {
+    filterData: assign({
+      data: ({filter, pristineData}) => {
+        return pristineData.filter(({fileName}) => fileName.toLowerCase().includes(filter.toLowerCase()));
+      }
+    })
+  },
+  services: {
+    fetchData: () => axios.get('/service/rest/internal/logging/logs')
+  }
+});
+
+
+

@@ -14,12 +14,8 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {assign, cancel, Machine} from 'xstate';
+import {assign, Machine} from 'xstate';
 import Axios from 'axios';
-
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
-
-import UIStrings from "../../../../constants/UIStrings";
 
 export default Machine(
     {
@@ -142,7 +138,7 @@ export default Machine(
         isManual: ({period}) => period == 0
       },
       services: {
-        retrieve: ({size}) => Axios.get('/service/rest/internal/logging/log', {params: {bytesCount: size * -1024}}),
+        retrieve: ({itemId, size}) => Axios.get(`/service/rest/internal/logging/logs/${itemId}`, {params: {bytesCount: size * -1024}}),
         insertMark: ({mark}) => Axios.post('/service/rest/internal/logging/log/mark', mark, {headers: {'Content-Type': 'text/plain'}})
       }
     }

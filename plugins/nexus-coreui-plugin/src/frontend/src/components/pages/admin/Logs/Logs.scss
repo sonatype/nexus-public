@@ -14,8 +14,28 @@
  * @since 3.24
  */
 
-.nxrm-log-viewer {
-  height: 100%;
+.nxrm-logs, .nxrm-logs > .nx-page-main {
+  height: calc(100% + 36px);
+
+  .nxrm-logs-list {
+    height: auto;
+  }
+
+  .nxrm-logs-filter {
+    margin-left: auto;
+  }
+
+  [download] {
+    text-decoration: none;
+  }
+
+  .nx-form-row, .nx-form-group {
+    margin-bottom: 0;
+  }
+
+  .nx-form-row:last-of-type {
+    margin-left: auto;
+  }
 
   .nxrm-log-viewer-mark-text {
     min-width: 216px;
@@ -26,17 +46,10 @@
     }
   }
 
-  .nxrm-select-action {
-    margin-left: var(--nx-spacing-base);
-    select {
-      margin-bottom: 0;
-    }
-  }
-
   .nxrm-content-body {
     height: calc(100% - 128px);
 
-    .nxrm-section {
+    .nxrm-log-viewer {
       height: 100%;
 
       .nx-tile-content {
@@ -44,6 +57,10 @@
         display: flex;
         flex-direction: column;
       }
+    }
+
+    .log-viewer-size {
+      margin-right: 0;
     }
 
     .log-viewer-textarea {

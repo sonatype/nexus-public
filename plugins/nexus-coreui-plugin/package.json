@@ -22,6 +22,7 @@
     "@xstate/react": "=1.2.2",
     "axios": "=0.21.4",
     "classnames": "=2.2.6",
+    "luxon": "=1.27.0",
     "react": "=16.14.0",
     "react-dom": "=16.14.0",
     "xstate": "=4.16.0",

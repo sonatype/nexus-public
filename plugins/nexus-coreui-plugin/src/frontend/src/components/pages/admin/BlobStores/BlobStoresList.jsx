@@ -16,6 +16,7 @@ import {useMachine} from '@xstate/react';
 import {
   ContentBody,
   HelpTile,
+  HumanReadableUtils,
   ListMachineUtils,
   Page,
   PageHeader,
@@ -114,13 +115,13 @@ export default function BlobStoresList({onCreate, onEdit}) {
                         <span>{available ? BLOB_STORES.LIST.AVAILABLE : BLOB_STORES.LIST.UNAVAILABLE}</span>
                       </NxTableCell>
                       <NxTableCell isNumeric>{unavailable ? BLOB_STORES.LIST.UNKNOWN : blobCount}</NxTableCell>
-                      <NxTableCell isNumeric>{unavailable ? BLOB_STORES.LIST.UNKNOWN : Utils.bytesToString(
+                      <NxTableCell isNumeric>{unavailable ? BLOB_STORES.LIST.UNKNOWN : HumanReadableUtils.bytesToString(
                           totalSizeInBytes)} ({totalSizeInBytes})</NxTableCell>
                       <NxTableCell isNumeric>
                         {
                           (unavailable && BLOB_STORES.LIST.UNKNOWN) ||
                           (unlimited && BLOB_STORES.LIST.UNLIMITED) ||
-                          Utils.bytesToString(availableSpaceInBytes)
+                          HumanReadableUtils.bytesToString(availableSpaceInBytes)
                         }
                       </NxTableCell>
                       <NxTableCell chevron/>

@@ -176,6 +176,7 @@ public class LogbackLogManager
         .filter(FileAppender.class::isInstance)
         .map(fileAppender -> ((FileAppender) fileAppender).getFile())
         .map(File::new)
+        .filter(file -> file.length() > 0)
         .collect(toSet());
   }
 

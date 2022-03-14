@@ -77,6 +77,8 @@ export default {
     MOVE_DOWN: 'Move Selection Down'
   },
 
+  UNAVAILABLE: 'Unavailable',
+
   SSL_CERTIFICATE_DETAILS: {
     TITLE: 'Certificate Details',
     NAME: 'Common Name',

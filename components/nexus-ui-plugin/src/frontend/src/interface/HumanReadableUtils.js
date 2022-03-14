@@ -1,3 +1,4 @@
+
 /*
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
@@ -14,20 +15,25 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import axios from 'axios';
-import * as nxrmUiPlugin from '@sonatype/nexus-ui-plugin';
-import * as rsc from '@sonatype/react-shared-components';
-import React from 'react';
-import ReactDOM from 'react-dom';
-import * as xstate from 'xstate';
-import * as luxon from 'luxon';
+import UIStrings from '../constants/UIStrings';
+import fileSize from 'file-size';
 
-export default function exposeDependencies() {
-  window.axios = axios;
-  window.react = React;
-  window.ReactDOM = ReactDOM;
-  window.xstate = xstate;
-  window.nxrmUiPlugin = nxrmUiPlugin;
-  window.luxon = luxon;
-  window.rsc = rsc;
+/**
+ * @since 3.next
+ *
+ * Utility methods for creating human readable strings from data.
+ */
+export default class HumanReadableUtils {
+  /**
+   * Convert a size in bytes to a human readable string
+   * @param bytes
+   * @param unitOfMeasurement - si, iec, or jedec, more information available at https://www.npmjs.com/package/file-size
+   * @return {*}
+   */
+  static bytesToString(bytes, unitNotation = 'jedec') {
+    if (bytes < 0) {
+      return UIStrings.UNAVAILABLE;
+    }
+    return fileSize(bytes).human(unitNotation);
+  }
 }
