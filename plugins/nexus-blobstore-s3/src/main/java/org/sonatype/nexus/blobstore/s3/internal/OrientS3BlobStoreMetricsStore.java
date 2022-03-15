@@ -13,6 +13,7 @@
 package org.sonatype.nexus.blobstore.s3.internal;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -22,6 +23,8 @@ import javax.inject.Named;
 import org.sonatype.nexus.blobstore.AccumulatingBlobStoreMetrics;
 import org.sonatype.nexus.blobstore.BlobStoreMetricsNotAvailableException;
 import org.sonatype.nexus.blobstore.BlobStoreMetricsStoreSupport;
+import org.sonatype.nexus.blobstore.api.OperationMetrics;
+import org.sonatype.nexus.blobstore.api.OperationType;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.scheduling.PeriodicJobService;
@@ -39,8 +42,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.6.1
  */
 @Named
-public class S3BlobStoreMetricsStore
+public class OrientS3BlobStoreMetricsStore
     extends BlobStoreMetricsStoreSupport<S3PropertiesFile>
+    implements S3BlobStoreMetricsService
 {
 
   static final ImmutableMap<String, Long> AVAILABLE_SPACE_BY_FILE_STORE = ImmutableMap.of("s3", Long.MAX_VALUE);
@@ -52,11 +56,11 @@ public class S3BlobStoreMetricsStore
   private AmazonS3 s3;
 
   @Inject
-  public S3BlobStoreMetricsStore(final PeriodicJobService jobService,
-                                 final NodeAccess nodeAccess,
-                                 final BlobStoreQuotaService quotaService,
-                                 @Named("${nexus.blobstore.quota.warnIntervalSeconds:-60}")
-                                 final int quotaCheckInterval)
+  public OrientS3BlobStoreMetricsStore(
+      final PeriodicJobService jobService,
+      final NodeAccess nodeAccess,
+      final BlobStoreQuotaService quotaService,
+      @Named("${nexus.blobstore.quota.warnIntervalSeconds:-60}") final int quotaCheckInterval)
   {
     super(nodeAccess, jobService, quotaService, quotaCheckInterval);
   }
@@ -90,19 +94,32 @@ public class S3BlobStoreMetricsStore
     }
   }
 
+  @Override
   public void setBucket(final String bucket) {
     checkNotNull(bucket);
     this.bucket = bucket;
   }
 
+  @Override
   public void setS3(final AmazonS3 s3) {
     checkNotNull(s3);
     this.s3 = s3;
   }
 
+  @Override
   public void setBucketPrefix(String bucketPrefix) {
     checkNotNull(bucketPrefix);
     this.bucketPrefix = bucketPrefix;
+  }
+
+  @Override
+  public Map<OperationType, OperationMetrics> getOperationMetricsDelta() {
+    return super.getOperationMetrics();
+  }
+
+  @Override
+  public void flush() throws IOException {
+    super.flushProperties();
   }
 
   @Override

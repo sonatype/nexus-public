@@ -65,6 +65,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.annotation.Timed;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
@@ -168,7 +169,7 @@ public class S3BlobStore
 
   private boolean preferAsyncCleanup;
 
-  private S3BlobStoreMetricsStore storeMetrics;
+  private S3BlobStoreMetricsService storeMetrics;
 
   private LoadingCache<BlobId, S3Blob> liveBlobs;
 
@@ -195,7 +196,7 @@ public class S3BlobStore
       @Named("${nexus.s3.preferExpire:-false}") final boolean preferExpire,
       @Named("${nexus.s3.forceHardDelete:-false}") final boolean forceHardDelete,
       @Named("${nexus.s3.preferAsyncCleanup:-true}") final boolean preferAsyncCleanup,
-      final S3BlobStoreMetricsStore storeMetrics,
+      final S3BlobStoreMetricsService storeMetrics,
       final DryRunPrefix dryRunPrefix,
       final BucketManager bucketManager)
   {
@@ -600,6 +601,11 @@ public class S3BlobStore
   }
 
   @Override
+  public Map<OperationType, OperationMetrics> getOperationMetricsDelta() {
+    return storeMetrics.getOperationMetricsDelta();
+  }
+
+  @Override
   protected void doInit(final BlobStoreConfiguration configuration) {
     try {
       this.s3 = amazonS3Factory.create(configuration);
@@ -655,11 +661,13 @@ public class S3BlobStore
   @Guarded(by = {NEW, STOPPED, FAILED, SHUTDOWN})
   public void remove() {
     try {
+      storeMetrics.remove();
+
       boolean contentEmpty = s3.listObjects(getConfiguredBucket(), getContentPrefix()).getObjectSummaries().isEmpty();
       if (contentEmpty) {
         S3PropertiesFile metadata = new S3PropertiesFile(s3, getConfiguredBucket(), metadataFilePath());
         metadata.remove();
-        storeMetrics.remove();
+
         bucketManager.deleteStorageLocation(getBlobStoreConfiguration());
       }
       else {
@@ -878,6 +886,12 @@ public class S3BlobStore
   @Override
   public RawObjectAccess getRawObjectAccess() {
     return rawObjectAccess;
+  }
+
+  @Override
+  @VisibleForTesting
+  public void flushMetrics() throws IOException {
+    storeMetrics.flush();
   }
 
   private S3BlobAttributes writeBlobAttributes(

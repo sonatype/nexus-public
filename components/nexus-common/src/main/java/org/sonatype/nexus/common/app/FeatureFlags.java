@@ -52,4 +52,7 @@ public interface FeatureFlags
 
   /* HTTP Replication. Available values: true, false. Default value: false */
   String REPLICATION_HTTP_ENABLED = "nexus.replication.http.enabled";
+
+  /*  */
+  String DATASTORE_BLOBSTORE_METRICS = "nexus.datastore.blobstore.metrics.enabled";
 }

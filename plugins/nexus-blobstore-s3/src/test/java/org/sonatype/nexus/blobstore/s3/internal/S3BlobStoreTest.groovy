@@ -66,7 +66,7 @@ class S3BlobStoreTest
 
   S3Copier copier =  Mock()
 
-  S3BlobStoreMetricsStore storeMetrics = Mock()
+  OrientS3BlobStoreMetricsStore storeMetrics = Mock()
 
   DryRunPrefix dryRunPrefix = Mock()
 
@@ -392,7 +392,6 @@ class S3BlobStoreTest
       1 * s3.listObjects('mybucket', 'myPrefix/content/') >> Mock(ObjectListing) {
         getObjectSummaries() >> [Mock(S3ObjectSummary)]
       }
-      0 * storeMetrics.remove()
       0 * s3.deleteObject('mybucket', 'myPrefix/metadata.properties')
       0 * bucketManager.deleteStorageLocation(config)
       1 * s3.deleteBucketLifecycleConfiguration('mybucket')

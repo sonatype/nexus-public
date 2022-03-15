@@ -207,6 +207,11 @@ public interface BlobStore
   Map<OperationType, OperationMetrics> getOperationMetricsByType();
 
   /**
+   * Map of operation metrics that to be updated with changes as they happen.
+   */
+  Map<OperationType, OperationMetrics> getOperationMetricsDelta();
+
+  /**
    * Perform garbage collection, purging blobs marked for deletion or whatever other periodic, implementation-specific
    * tasks need doing.
    */

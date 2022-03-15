@@ -32,7 +32,7 @@ import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
-import org.sonatype.nexus.blobstore.file.internal.FileBlobStoreMetricsStore;
+import org.sonatype.nexus.blobstore.file.internal.OrientFileBlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.file.internal.FileOperations;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.log.DryRunPrefix;
@@ -53,7 +53,6 @@ import org.junit.rules.TemporaryFolder;
 import org.mockito.Mock;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.nio.file.Files.delete;
 import static java.nio.file.Files.write;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNotNull;
@@ -104,7 +103,7 @@ public class FileBlobStoreTest
   private ApplicationDirectories appDirs;
 
   @Mock
-  private FileBlobStoreMetricsStore metrics;
+  private OrientFileBlobStoreMetricsStore metrics;
 
   @Mock
   private LoadingCache loadingCache;

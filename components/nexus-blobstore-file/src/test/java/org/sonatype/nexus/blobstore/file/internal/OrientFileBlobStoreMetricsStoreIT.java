@@ -42,10 +42,10 @@ import static org.mockito.Mockito.when;
 /**
  * {@link FileBlobStore} integration tests.
  */
-public class FileBlobStoreMetricsStoreIT
+public class OrientFileBlobStoreMetricsStoreIT
     extends TestSupport
 {
-  private FileBlobStoreMetricsStore underTest;
+  private OrientFileBlobStoreMetricsStore underTest;
 
   private Path blobStoreDirectory;
 
@@ -69,7 +69,7 @@ public class FileBlobStoreMetricsStoreIT
   public void setUp() throws Exception {
     blobStoreDirectory = util.createTempDir().toPath();
     when(nodeAccess.getId()).thenReturn(UUID.randomUUID().toString());
-    underTest = new FileBlobStoreMetricsStore(new PeriodicJobServiceImpl(), nodeAccess, quotaService,
+    underTest = new OrientFileBlobStoreMetricsStore(new PeriodicJobServiceImpl(), nodeAccess, quotaService,
         QUOTA_CHECK_INTERVAL, fileOperations);
     underTest.setStorageDir(blobStoreDirectory);
     underTest.setBlobStore(blobStore);
@@ -97,10 +97,10 @@ public class FileBlobStoreMetricsStoreIT
   @Test
   public void metricsLoadsExistingPropertyFile() throws Exception {
     PropertiesFile props = new PropertiesFile(
-        blobStoreDirectory.resolve(nodeAccess.getId() + "-" + FileBlobStoreMetricsStore.METRICS_FILENAME).toFile());
+        blobStoreDirectory.resolve(nodeAccess.getId() + "-" + OrientFileBlobStoreMetricsStore.METRICS_FILENAME).toFile());
 
-    props.put(FileBlobStoreMetricsStore.BLOB_COUNT_PROP_NAME, "32");
-    props.put(FileBlobStoreMetricsStore.TOTAL_SIZE_PROP_NAME, "200");
+    props.put(OrientFileBlobStoreMetricsStore.BLOB_COUNT_PROP_NAME, "32");
+    props.put(OrientFileBlobStoreMetricsStore.TOTAL_SIZE_PROP_NAME, "200");
 
     props.store();
 
@@ -112,7 +112,7 @@ public class FileBlobStoreMetricsStoreIT
 
   @Test
   public void listBackingFiles() throws Exception {
-    underTest = new FileBlobStoreMetricsStore(new PeriodicJobServiceImpl(), nodeAccess, quotaService, 5,
+    underTest = new OrientFileBlobStoreMetricsStore(new PeriodicJobServiceImpl(), nodeAccess, quotaService, 5,
         fileOperations);
     Stream backingFiles = underTest.backingFiles();
     assertThat("backing files is empty", backingFiles.count(), is(0L));

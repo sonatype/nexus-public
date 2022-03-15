@@ -48,7 +48,7 @@ public class BlobStoreAnalyticsInterceptor
     OperationMetrics operationMetrics;
     if (invocation.getThis() instanceof BlobStore) {
       blobStore = (BlobStore) invocation.getThis();
-      operationMetrics = blobStore.getOperationMetricsByType().get(operationType);
+      operationMetrics = blobStore.getOperationMetricsDelta().get(operationType);
     }
     else {
       log.info("Can't monitor operation metrics for class={}, methodName={}", clazz, methodName);

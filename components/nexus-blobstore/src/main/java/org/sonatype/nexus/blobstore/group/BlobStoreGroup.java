@@ -310,6 +310,29 @@ public class BlobStoreGroup
   }
 
   @Override
+  public Map<OperationType, OperationMetrics> getOperationMetricsDelta() {
+    Map<OperationType, OperationMetrics> result = new EnumMap<>(OperationType.class);
+    Iterable<Map<OperationType, OperationMetrics>> metrics = members.get().stream()
+        .map(BlobStore::getOperationMetricsDelta)
+        ::iterator;
+    for (Map<OperationType, OperationMetrics> metric : metrics) {
+      for (Entry<OperationType, OperationMetrics> metricsEntry : metric.entrySet()) {
+        OperationType type = metricsEntry.getKey();
+        OperationMetrics operationMetrics = metricsEntry.getValue();
+        OperationMetrics existingMetrics = result.get(type);
+        if (existingMetrics != null) {
+          OperationMetrics aggregatedMetrics = existingMetrics.add(operationMetrics);
+          result.put(type, aggregatedMetrics);
+        }
+        else {
+          result.put(type, operationMetrics);
+        }
+      }
+    }
+    return result;
+  }
+
+  @Override
   @Guarded(by = STARTED)
   public synchronized void compact() {
     members.get().stream().forEach((BlobStore member) -> member.compact());

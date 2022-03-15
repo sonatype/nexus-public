@@ -35,7 +35,7 @@ import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
-import org.sonatype.nexus.blobstore.file.internal.FileBlobStoreMetricsStore;
+import org.sonatype.nexus.blobstore.file.internal.OrientFileBlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.file.internal.SimpleFileOperations;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
@@ -112,7 +112,7 @@ public class FileBlobStoreIT
 
   private Path contentDirectory;
 
-  private FileBlobStoreMetricsStore metricsStore;
+  private OrientFileBlobStoreMetricsStore metricsStore;
 
   private SimpleFileOperations fileOperations;
 
@@ -142,7 +142,7 @@ public class FileBlobStoreIT
 
     fileOperations = spy(new SimpleFileOperations());
 
-    metricsStore = new FileBlobStoreMetricsStore(new PeriodicJobServiceImpl(), nodeAccess, quotaService,
+    metricsStore = new OrientFileBlobStoreMetricsStore(new PeriodicJobServiceImpl(), nodeAccess, quotaService,
         QUOTA_CHECK_INTERVAL, fileOperations);
 
     blobIdResolver = new DefaultBlobIdLocationResolver();

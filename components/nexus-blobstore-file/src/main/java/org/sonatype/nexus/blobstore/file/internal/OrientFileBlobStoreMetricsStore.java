@@ -18,6 +18,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -27,6 +28,9 @@ import javax.inject.Named;
 import org.sonatype.nexus.blobstore.AccumulatingBlobStoreMetrics;
 import org.sonatype.nexus.blobstore.BlobStoreMetricsNotAvailableException;
 import org.sonatype.nexus.blobstore.BlobStoreMetricsStoreSupport;
+import org.sonatype.nexus.blobstore.api.OperationMetrics;
+import org.sonatype.nexus.blobstore.api.OperationType;
+import org.sonatype.nexus.blobstore.file.FileBlobStoreMetricsService;
 import org.sonatype.nexus.scheduling.PeriodicJobService;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.common.node.NodeAccess;
@@ -45,20 +49,21 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 @Named
-public class FileBlobStoreMetricsStore
+public class OrientFileBlobStoreMetricsStore
     extends BlobStoreMetricsStoreSupport<PropertiesFile>
+    implements FileBlobStoreMetricsService
 {
   private Path storageDirectory;
 
   private final FileOperations fileOperations;
 
   @Inject
-  public FileBlobStoreMetricsStore(final PeriodicJobService jobService,
-                                   final NodeAccess nodeAccess,
-                                   final BlobStoreQuotaService quotaService,
-                                   @Named("${nexus.blobstore.quota.warnIntervalSeconds:-60}")
+  public OrientFileBlobStoreMetricsStore(final PeriodicJobService jobService,
+                                         final NodeAccess nodeAccess,
+                                         final BlobStoreQuotaService quotaService,
+                                         @Named("${nexus.blobstore.quota.warnIntervalSeconds:-60}")
                                    final int quotaCheckInterval,
-                                   final FileOperations fileOperations)
+                                         final FileOperations fileOperations)
   {
     super(nodeAccess, jobService, quotaService, quotaCheckInterval);
     this.fileOperations = checkNotNull(fileOperations);
@@ -103,6 +108,16 @@ public class FileBlobStoreMetricsStore
     checkNotNull(storageDirectory);
     checkArgument(storageDirectory.toFile().isDirectory());
     this.storageDirectory = storageDirectory;
+  }
+
+  @Override
+  public Map<OperationType, OperationMetrics> getOperationMetricsDelta() {
+    return getOperationMetrics();
+  }
+
+  @Override
+  public void flush() throws IOException {
+    super.flushProperties();
   }
 
   @Override

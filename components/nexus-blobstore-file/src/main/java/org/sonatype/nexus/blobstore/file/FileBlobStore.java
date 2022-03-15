@@ -59,7 +59,6 @@ import org.sonatype.nexus.blobstore.api.OperationMetrics;
 import org.sonatype.nexus.blobstore.api.OperationType;
 import org.sonatype.nexus.blobstore.api.RawObjectAccess;
 import org.sonatype.nexus.blobstore.file.internal.BlobCollisionException;
-import org.sonatype.nexus.blobstore.file.internal.FileBlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.file.internal.FileOperations;
 import org.sonatype.nexus.blobstore.metrics.MonitoringBlobStoreMetrics;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
@@ -151,7 +150,7 @@ public class FileBlobStore
 
   private Path basedir;
 
-  private FileBlobStoreMetricsStore metricsStore;
+  private FileBlobStoreMetricsService metricsStore;
 
   private LoadingCache<BlobId, FileBlob> liveBlobs;
 
@@ -173,7 +172,7 @@ public class FileBlobStore
   public FileBlobStore(final BlobIdLocationResolver blobIdLocationResolver,
                        final FileOperations fileOperations,
                        final ApplicationDirectories applicationDirectories,
-                       final FileBlobStoreMetricsStore metricsStore,
+                       final FileBlobStoreMetricsService metricsStore,
                        final NodeAccess nodeAccess,
                        final DryRunPrefix dryRunPrefix,
                        final BlobStoreReconciliationLogger reconciliationLogger,
@@ -195,7 +194,7 @@ public class FileBlobStore
   public FileBlobStore(final Path contentDir, //NOSONAR
                        final BlobIdLocationResolver blobIdLocationResolver,
                        final FileOperations fileOperations,
-                       final FileBlobStoreMetricsStore metricsStore,
+                       final FileBlobStoreMetricsService metricsStore,
                        final BlobStoreConfiguration configuration,
                        final ApplicationDirectories directories,
                        final NodeAccess nodeAccess,
@@ -583,6 +582,11 @@ public class FileBlobStore
   }
 
   @Override
+  public Map<OperationType, OperationMetrics> getOperationMetricsDelta() {
+    return metricsStore.getOperationMetricsDelta();
+  }
+
+  @Override
   protected void doCompact(@Nullable final BlobStoreUsageChecker inUseChecker) {
     try {
       PropertiesFile metadata = new PropertiesFile(getAbsoluteBlobDir().resolve(METADATA_FILENAME).toFile());
@@ -749,9 +753,11 @@ public class FileBlobStore
   @Guarded(by = {NEW, STOPPED, FAILED, SHUTDOWN})
   public void remove() {
     try {
+      metricsStore.remove();
+
       Path blobDir = getAbsoluteBlobDir();
+
       if (fileOperations.deleteEmptyDirectory(contentDir)) {
-        metricsStore.remove();
         fileOperations.deleteQuietly(blobDir.resolve("metadata.properties"));
         File[] files = blobDir.toFile().listFiles((dir, name) -> name.endsWith(DELETIONS_FILENAME));
         if (files != null) {
@@ -1130,6 +1136,6 @@ public class FileBlobStore
   @Override
   @VisibleForTesting
   public void flushMetrics() throws IOException {
-    metricsStore.flushProperties();
+    metricsStore.flush();
   }
 }
