@@ -22,6 +22,8 @@ import Axios from 'axios';
 import IqServer from './IqServer';
 import UIStrings from "../../../../constants/UIStrings";
 
+const {IQ_SERVER, SETTINGS} = UIStrings;
+
 jest.mock('@sonatype/nexus-ui-plugin', () => {
   return {
     ...jest.requireActual('@sonatype/nexus-ui-plugin'),
@@ -51,18 +53,17 @@ global.NX = {
 
 const selectors = {
   ...TestUtils.selectors,
-  getEnabledCheckbox: () => screen.getByLabelText("Enable the use of IQ Server"),
-  getUrlInput: () => screen.getByLabelText("IQ Server URL"),
-  getAuthenticationMethodSelect: () => screen.getByLabelText("Authentication Method"),
-  getUsernameInput: () => screen.queryByLabelText('Username'),
-  getPasswordInput: () => screen.queryByLabelText('Password'),
-  getConnectionTimeoutInput: () => screen.getByLabelText("Connection Timeout"),
-  getPropertiesInput: () => screen.getByLabelText("Properties"),
-  getShowIqServerLinkCheckbox: () => screen.getByLabelText(
-      "Show IQ Server link in the Browse menu when the server is enabled"),
-  getVerifyConnectionButton: () => screen.getByText('Verify Connection'),
-  getDiscardButton: () => screen.getByText('Discard'),
-  getSaveButton: () => screen.getByText('Save')
+  getEnabledCheckbox: () => screen.getByLabelText(IQ_SERVER.ENABLED.sublabel),
+  getUrlInput: () => screen.getByLabelText(IQ_SERVER.IQ_SERVER_URL.label),
+  getAuthenticationMethodSelect: () => screen.getByLabelText(IQ_SERVER.AUTHENTICATION_TYPE.label),
+  getUsernameInput: () => screen.queryByLabelText(IQ_SERVER.USERNAME.label),
+  getPasswordInput: () => screen.queryByLabelText(IQ_SERVER.PASSWORD.label),
+  getConnectionTimeoutInput: () => screen.getByLabelText(IQ_SERVER.CONNECTION_TIMEOUT.label),
+  getPropertiesInput: () => screen.getByLabelText(IQ_SERVER.PROPERTIES.label),
+  getShowIqServerLinkCheckbox: () => screen.getByLabelText(IQ_SERVER.SHOW_LINK.sublabel),
+  getVerifyConnectionButton: () => screen.getByText(IQ_SERVER.VERIFY_CONNECTION_BUTTON_LABEL),
+  getDiscardButton: () => screen.getByText(SETTINGS.DISCARD_BUTTON_LABEL),
+  getSaveButton: () => screen.getByText(SETTINGS.SAVE_BUTTON_LABEL),
 };
 
 const DEFAULT_RESPONSE = {
@@ -352,11 +353,11 @@ describe('IqServer', () => {
 
       await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
-      expect(screen.getByText(UIStrings.SETTINGS.READ_ONLY.WARNING)).toBeInTheDocument();
+      expect(screen.getByText(SETTINGS.READ_ONLY.WARNING)).toBeInTheDocument();
 
-      expect(screen.getByText(UIStrings.IQ_SERVER.ENABLED.label)).toHaveClass(labelClass);
+      expect(screen.getByText(IQ_SERVER.ENABLED.label)).toHaveClass(labelClass);
       expect(screen.getByText('Disabled')).toHaveClass(dataClass);
-      expect(screen.queryByText(UIStrings.IQ_SERVER.IQ_SERVER_URL.label)).not.toBeInTheDocument();
+      expect(screen.queryByText(IQ_SERVER.IQ_SERVER_URL.label)).not.toBeInTheDocument();
     });
 
     it('Shows empty Iq Server page in Read Only mode', async () => {
@@ -380,20 +381,20 @@ describe('IqServer', () => {
 
       await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
-      expect(screen.getByText(UIStrings.SETTINGS.READ_ONLY.WARNING)).toBeInTheDocument();
+      expect(screen.getByText(SETTINGS.READ_ONLY.WARNING)).toBeInTheDocument();
 
-      expect(screen.getByText(UIStrings.IQ_SERVER.ENABLED.label)).toHaveClass(labelClass);
-      expect(screen.getByText(UIStrings.IQ_SERVER.SHOW_LINK.label)).toHaveClass(labelClass);
+      expect(screen.getByText(IQ_SERVER.ENABLED.label)).toHaveClass(labelClass);
+      expect(screen.getByText(IQ_SERVER.SHOW_LINK.label)).toHaveClass(labelClass);
       expect(screen.getAllByText('Enabled').length).toBe(2);
-      expect(screen.getByText(UIStrings.IQ_SERVER.IQ_SERVER_URL.label)).toHaveClass(labelClass);
+      expect(screen.getByText(IQ_SERVER.IQ_SERVER_URL.label)).toHaveClass(labelClass);
       expect(screen.getByText('http://example.com')).toHaveClass(dataClass);
-      expect(screen.getByText(UIStrings.IQ_SERVER.AUTHENTICATION_TYPE.label)).toHaveClass(labelClass);
+      expect(screen.getByText(IQ_SERVER.AUTHENTICATION_TYPE.label)).toHaveClass(labelClass);
       expect(screen.getByText('User Authentication')).toHaveClass(dataClass);
-      expect(screen.getByText(UIStrings.IQ_SERVER.USERNAME.label)).toHaveClass(labelClass);
+      expect(screen.getByText(IQ_SERVER.USERNAME.label)).toHaveClass(labelClass);
       expect(screen.getByText('user')).toHaveClass(dataClass);
-      expect(screen.getByText(UIStrings.IQ_SERVER.CONNECTION_TIMEOUT.label)).toHaveClass(labelClass);
-      expect(screen.getByText(UIStrings.IQ_SERVER.CONNECTION_TIMEOUT_DEFAULT_VALUE_LABEL)).toHaveClass(dataClass);
-      expect(screen.getByText(UIStrings.IQ_SERVER.PROPERTIES.label)).toHaveClass(labelClass);
+      expect(screen.getByText(IQ_SERVER.CONNECTION_TIMEOUT.label)).toHaveClass(labelClass);
+      expect(screen.getByText(IQ_SERVER.CONNECTION_TIMEOUT_DEFAULT_VALUE_LABEL)).toHaveClass(dataClass);
+      expect(screen.getByText(IQ_SERVER.PROPERTIES.label)).toHaveClass(labelClass);
       expect(screen.getByText('some=text')).toHaveClass(dataClass);
     });
   })

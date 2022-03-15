@@ -37,6 +37,7 @@ import S3BlobStoreActions from './components/pages/admin/BlobStores/S3/S3BlobSto
 import AzureBlobStoreSettings from './components/pages/admin/BlobStores/Azure/AzureBlobStoreSettings';
 import AzureBlobStoreActions from './components/pages/admin/BlobStores/Azure/AzureBlobStoreActions';
 import IqServer from './components/pages/admin/IqServer/IqServer';
+import ProprietaryRepositories from './components/pages/admin/ProprietaryRepositories/ProprietaryRepositories';
 
 window.ReactComponents = {
   ...window.ReactComponents,
@@ -220,6 +221,16 @@ window.plugins.push({
       ...UIStrings.IQ_SERVER.MENU,
       view: IqServer,
       iconCls: 'x-fa fa-shield-alt',
+      visibility: {
+        permissions: ['nexus:settings:read']
+      }
+    },
+    {
+      mode: 'admin',
+      path: '/Repository/Proprietary',
+      ...UIStrings.PROPRIETARY_REPOSITORIES.MENU,
+      view: ProprietaryRepositories,
+      iconCls: 'x-fa fa-door-closed',
       visibility: {
         permissions: ['nexus:settings:read']
       }

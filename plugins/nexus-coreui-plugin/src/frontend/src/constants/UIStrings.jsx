@@ -803,5 +803,21 @@ Once created, a cleanup policy must be assigned to a repository from \
     VERIFY_CONNECTION_ERROR: (msg) => `Connection Failed: ${msg}`,
     FORM_NOTES: 'can evaluate application and organizing policies',
     HELP_TEXT: 'To enable this feature configure the IQ Server URL, username and password'
+  },
+
+  PROPRIETARY_REPOSITORIES: {
+    MENU: {
+      text: 'Proprietary Repositories',
+      description: 'Manage the set of hosted repositories that contain proprietary components'
+    },
+    CONFIGURATION: {
+      LABEL: 'Proprietary Repositories Configuration',
+      AVAILABLE_TITLE: 'Generic Hosted Repositories',
+      SELECTED_TITLE: 'Proprietary Hosted Repositories',
+      EMPTY_LIST: 'There are no selected proprietary hosted repositories',
+    },
+    HELP_TEXT: `To help prevent dependency confusion attacks, identify your hosted repositories that contain 
+    proprietary components. Refer to the documentation for details on setting up appropriate IQ policies to 
+    quarantine public components with the same names as your proprietary components.`,
   }
 };
