@@ -16,6 +16,10 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import javax.annotation.Nullable;
@@ -26,6 +30,8 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobId;
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.app.FeatureFlag;
@@ -333,5 +339,22 @@ public class OrientBlobstoreRestoreTestHelper
 
   private static Query getQuery(final String group, final String name, final String version) {
     return Query.builder().where(P_GROUP).eq(group).and(P_NAME).eq(name).and(P_VERSION).eq(version).build();
+  }
+
+  @Override
+  public Map<String, BlobId> getAssetToBlobIds(final Repository repo, final Predicate<String> pathFilter) {
+    try (StorageTx tx = repo.facet(StorageFacet.class).txSupplier().get()) {
+      tx.begin();
+      return StreamSupport.stream(tx.browseAssets(tx.findBucket(repo)).spliterator(), false)
+          .filter(asset -> Objects.nonNull(asset.blobRef()))
+          .filter(asset -> pathFilter.test(asset.name()))
+          .collect(Collectors.toMap(Asset::name, OrientBlobstoreRestoreTestHelper::toBlobId));
+    }
+  }
+
+  private static BlobId toBlobId(final Asset asset) {
+    return Optional.ofNullable(asset.blobRef())
+        .map(BlobRef::getBlobId)
+        .orElse(null);
   }
 }

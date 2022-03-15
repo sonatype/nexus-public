@@ -33,7 +33,10 @@ import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.hash.MultiHashingInputStream;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentBlobs;
+import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
+import org.sonatype.nexus.repository.view.payloads.AttachableBlob;
+import org.sonatype.nexus.repository.view.payloads.DetachedBlobPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.repository.view.payloads.TempBlobPayload;
 import org.sonatype.nexus.security.ClientInfo;
@@ -51,6 +54,7 @@ import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_IP_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.TEMPORARY_BLOB_HEADER;
+import static org.sonatype.nexus.common.hash.Hashes.hash;
 import static org.sonatype.nexus.repository.view.ContentTypes.APPLICATION_OCTET_STREAM;
 
 /**
@@ -156,8 +160,16 @@ public class FluentBlobsImpl
 
   @Override
   public TempBlob ingest(final Payload payload, final Iterable<HashAlgorithm> hashing) {
-    if (payload instanceof TempBlobPayload) {
+    if (payload instanceof Content) {
+      return ingest(((Content) payload).getPayload(), hashing);
+    }
+    else if (payload instanceof TempBlobPayload) {
       return ((TempBlobPayload) payload).getTempBlob();
+    }
+    else if (payload instanceof DetachedBlobPayload) {
+      DetachedBlobPayload detachedBlobPayload = (DetachedBlobPayload) payload;
+      Map<HashAlgorithm, HashCode> hashes = hashes(payload, hashing);
+      return new AttachableBlob(detachedBlobPayload.getBlob(), hashes, true, blobStore);
     }
     try (InputStream in = payload.openInputStream()) {
       return ingest(in, cleanupContentType(payload.getContentType()), hashing);
@@ -219,6 +231,15 @@ public class FluentBlobsImpl
   {
     if (!existing.containsKey(key)) {
       builder.put(key, value);
+    }
+  }
+
+  private static Map<HashAlgorithm, HashCode> hashes(final Payload payload, final Iterable<HashAlgorithm> hashing) {
+    try (InputStream in = payload.openInputStream()) {
+      return hash(hashing, in);
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
     }
   }
 }

@@ -40,15 +40,15 @@ public class TempBlob
 {
   private static final Logger log = LoggerFactory.getLogger(TempBlob.class);
 
-  private final Blob blob;
+  protected final Blob blob;
 
-  private final Map<HashAlgorithm, HashCode> hashes;
+  protected final Map<HashAlgorithm, HashCode> hashes;
 
-  private final boolean hashesVerified;
+  protected final boolean hashesVerified;
 
-  private final BlobStore blobStore;
+  protected final BlobStore blobStore;
 
-  private boolean deleted = false;
+  protected boolean deleted = false;
 
   public TempBlob(final Blob blob,
                   final Map<HashAlgorithm, HashCode> hashes,

@@ -37,7 +37,6 @@ public class TempBlobPartPayload
 
   public TempBlobPartPayload(final PartPayload payload, final TempBlob tempBlob) throws IOException {
     super(tempBlob, checkNotNull(payload).getContentType());
-    checkNotNull(payload);
     this.name = payload.getName();
     this.fieldName = payload.getFieldName();
     this.isFormField = payload.isFormField();

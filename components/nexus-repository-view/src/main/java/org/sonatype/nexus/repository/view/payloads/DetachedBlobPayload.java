@@ -17,40 +17,40 @@ import java.io.InputStream;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.repository.view.Payload;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 
 /**
- * PartPayload backed by a TempBlob. The storage layer will recognize this and unwrap it rather than creating another
- * {@link TempBlob}
+ * A {@link Payload} which is backed by a {@link Blob} which is not attached to any assets. Primarily intended for use
+ * in reconcile.
  */
-public class TempBlobPayload
+public class DetachedBlobPayload
     implements Payload
 {
+  private final Blob blob;
+
   private final String contentType;
 
-  private final TempBlob tempBlob;
-
-  public TempBlobPayload(final TempBlob tempBlob, @Nullable final String contentType) {
-    this.tempBlob = checkNotNull(tempBlob);
-    this.contentType = contentType;
+  public DetachedBlobPayload(final Blob blob) {
+    this.blob = checkNotNull(blob);
+    this.contentType = blob.getHeaders().get(CONTENT_TYPE_HEADER);
   }
 
-  public TempBlobPayload(final TempBlob tempBlob) {
-    this.tempBlob = checkNotNull(tempBlob);
-    this.contentType = tempBlob.getBlob().getHeaders().get(CONTENT_TYPE_HEADER);
+  public Blob getBlob() {
+    return blob;
   }
 
   @Override
   public InputStream openInputStream() throws IOException {
-    return tempBlob.get();
+    return blob.getInputStream();
   }
 
   @Override
   public long getSize() {
-    return tempBlob.getBlob().getMetrics().getContentSize();
+    return blob.getMetrics().getContentSize();
   }
 
   @Nullable
@@ -59,13 +59,11 @@ public class TempBlobPayload
     return contentType;
   }
 
-  @SuppressWarnings("unchecked")
-  public <T extends TempBlob> T getTempBlob() {
-    return (T) tempBlob;
-  }
-
   @Override
-  public void close() throws IOException {
-    tempBlob.close();
+  public String toString() {
+    return getClass().getSimpleName() + "{" +
+        "blob=" + blob +
+        ", contentType='" + contentType + '\'' +
+        '}';
   }
 }
