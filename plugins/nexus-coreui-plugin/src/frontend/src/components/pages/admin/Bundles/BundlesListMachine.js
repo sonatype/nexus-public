@@ -14,38 +14,26 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext, NX*/
+import { assign } from 'xstate';
 
-/**
- * Bundles feature panel.
- *
- * @since 3.0
- */
-Ext.define('NX.coreui.view.system.Bundles', {
-  extend: 'NX.view.drilldown.Drilldown',
-  alias: 'widget.nx-coreui-system-bundles',
-  requires: [
-    'NX.I18n'
-  ],
+import { ListMachineUtils } from '@sonatype/nexus-ui-plugin';
+import { extAPIRequest } from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/ExtAPIUtils';
 
-  /**
-   * @override
-   */
-  initComponent: function() {
-    Ext.apply(this, {
-      iconName: 'bundle-default',
-
-      masters: [
-        { xtype: 'nx-coreui-system-bundlelist' }
-      ],
-
-      tabs: {
-        xtype: 'nx-info-panel',
-        title: NX.I18n.get('System_Bundles_Details_Tab'),
-        cls: 'nx-hr'
-      }
-    });
-
-    this.callParent();
+export default ListMachineUtils.buildListMachine({
+  id: 'BundlesListMachine',
+  sortableFields: ['id', 'state', 'startLevel', 'name', 'version'],
+}).withConfig({
+  actions: {
+    filterData: assign({
+      data: ({filter, data, pristineData}, _) => pristineData.filter(
+          ({name}) => name.toLowerCase().indexOf(filter.toLowerCase()) !== -1
+      )
+    }),
+    sortData: assign({
+      data: ListMachineUtils.sortDataByFieldAndDirection({useLowerCaseSorting: true})
+    }),
+  },
+  services: {
+    fetchData: () => extAPIRequest('coreui_Bundle', 'read').then(v => v.data.result),
   }
 });

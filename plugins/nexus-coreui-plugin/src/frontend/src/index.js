@@ -37,6 +37,7 @@ import S3BlobStoreActions from './components/pages/admin/BlobStores/S3/S3BlobSto
 import AzureBlobStoreSettings from './components/pages/admin/BlobStores/Azure/AzureBlobStoreSettings';
 import AzureBlobStoreActions from './components/pages/admin/BlobStores/Azure/AzureBlobStoreActions';
 import IqServer from './components/pages/admin/IqServer/IqServer';
+import Bundles from './components/pages/admin/Bundles/Bundles';
 import ProprietaryRepositories from './components/pages/admin/ProprietaryRepositories/ProprietaryRepositories';
 
 window.ReactComponents = {
@@ -252,6 +253,17 @@ window.plugins.push({
         ],
         permissions: ['nexus:*']
       }
-    }
+    },
+    {
+      mode: 'admin',
+      path: '/System/Bundles',
+      ...UIStrings.BUNDLES.MENU,
+      view: Bundles,
+      iconCls: 'x-fa fa-puzzle-piece',
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        permissions: ['nexus:bundles:read']
+      }
+    },
   ]
 });

@@ -45,13 +45,6 @@ describe('SystemInformation', () => {
     'nexus-license': {
       'fingerprint': 'hash'
     },
-    'nexus-bundles': {
-      '0': {
-        'bundleId': 0,
-        'enabled': true,
-        'config': 'value'
-      }
-    },
     'system-time': {
       'time': 'value'
     },

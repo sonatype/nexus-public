@@ -363,7 +363,7 @@ the documentation</a>.`
       STATUS_DESCR: 'Online - Ready to connect',
       STORAGE_CAPTION: 'Storage',
       BLOB_STORE_LABEL: 'Blob Store',
-      CONTENT_VALIDATION_LABEL: 'Strict Content Type Validation', 
+      CONTENT_VALIDATION_LABEL: 'Strict Content Type Validation',
       CONTENT_VALIDATION_DESCR: 'Enabled',
       GROUP_CAPTION: 'Group',
       MEMBERS_LABEL: 'Member Repositories',
@@ -805,6 +805,36 @@ Once created, a cleanup policy must be assigned to a repository from \
     HELP_TEXT: 'To enable this feature configure the IQ Server URL, username and password'
   },
 
+  BUNDLES: {
+    MENU: {
+      text: 'Bundles',
+      description: 'View OSGI bundles'
+    },
+    LIST: {
+      ID_LABEL: 'ID',
+      STATE_LABEL: 'State',
+      LEVEL_LABEL: 'Level',
+      NAME_LABEL: 'Name',
+      VERSION_LABEL: 'Version'
+    },
+    BUNDLES_DETAIL: {
+      MENU: {
+        text: 'Bundle Summary'
+      },
+      LIST: {
+        ID_LABEL: 'ID',
+        NAME_LABEL: 'Name',
+        SYMBOLIC_NAME_LABEL: 'Symbolic Name',
+        VERSION_LABEL: 'Version',
+        STATE_LABEL: 'State',
+        LOCATION_LABEL: 'Location',
+        START_LEVEL_LABEL: 'Start Level',
+        LAST_MODIFIED_LABEL: 'Last Modified',
+        FRAGMENT_LABEL: 'Fragment'
+      },
+    }
+  },
+
   PROPRIETARY_REPOSITORIES: {
     MENU: {
       text: 'Proprietary Repositories',
@@ -816,8 +846,8 @@ Once created, a cleanup policy must be assigned to a repository from \
       SELECTED_TITLE: 'Proprietary Hosted Repositories',
       EMPTY_LIST: 'There are no selected proprietary hosted repositories',
     },
-    HELP_TEXT: `To help prevent dependency confusion attacks, identify your hosted repositories that contain 
-    proprietary components. Refer to the documentation for details on setting up appropriate IQ policies to 
+    HELP_TEXT: `To help prevent dependency confusion attacks, identify your hosted repositories that contain
+    proprietary components. Refer to the documentation for details on setting up appropriate IQ policies to
     quarantine public components with the same names as your proprietary components.`,
   }
 };

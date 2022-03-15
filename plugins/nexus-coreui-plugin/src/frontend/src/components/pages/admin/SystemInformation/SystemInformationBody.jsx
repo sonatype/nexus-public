@@ -41,10 +41,6 @@ export default function SystemInformationBody({systemInformation}) {
         sectionName="nexus-license"
         information={systemInformation['nexus-license']}
     />
-    <NestedSystemInformationSection
-        sectionName="nexus-bundles"
-        sectionInformation={systemInformation['nexus-bundles']}
-    />
     <SystemInformationSection
         sectionName="system-time"
         information={systemInformation['system-time']}
