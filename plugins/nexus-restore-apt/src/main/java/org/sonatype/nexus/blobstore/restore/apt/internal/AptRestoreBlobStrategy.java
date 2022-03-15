@@ -33,10 +33,8 @@ import org.sonatype.nexus.repository.apt.datastore.AptContentFacet;
 import org.sonatype.nexus.repository.apt.debian.Utils;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.view.Payload;
-import org.sonatype.nexus.repository.view.payloads.BlobPayload;
+import org.sonatype.nexus.repository.view.payloads.DetachedBlobPayload;
 
-import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
-import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 
 /**
@@ -78,8 +76,7 @@ public class AptRestoreBlobStrategy
       final Blob assetBlob, final DataStoreRestoreBlobData data) throws IOException
   {
     String assetPath = getAssetPath(data);
-    String contentType = data.getProperty(HEADER_PREFIX + CONTENT_TYPE_HEADER);
-    Payload payload = new BlobPayload(assetBlob, contentType);
+    Payload payload = new DetachedBlobPayload(assetBlob);
     data.getRepository()
         .facet(AptContentFacet.class)
         .put(assetPath, payload);

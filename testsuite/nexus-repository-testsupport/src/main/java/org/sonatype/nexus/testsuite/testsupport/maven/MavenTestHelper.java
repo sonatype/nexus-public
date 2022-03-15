@@ -15,6 +15,7 @@ package org.sonatype.nexus.testsuite.testsupport.maven;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
 import java.util.Date;
 import java.util.List;
@@ -26,8 +27,12 @@ import org.sonatype.goodies.testsupport.TestData;
 import org.sonatype.nexus.pax.exam.NexusPaxExamSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.view.Payload;
+import org.sonatype.nexus.testsuite.testsupport.system.RestTestHelper;
 
 import com.google.common.base.Strings;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.apache.maven.artifact.repository.metadata.io.xpp3.MetadataXpp3Reader;
 import org.joda.time.DateTime;
@@ -42,6 +47,9 @@ public abstract class MavenTestHelper
   @Inject
   @Named("http://localhost:${application-port}${nexus-context-path}")
   private URL nexusUrl;
+
+  @Inject
+  private RestTestHelper restTestHelper;
 
   public abstract Payload read(Repository repository, String path) throws IOException;
 
@@ -84,6 +92,20 @@ public abstract class MavenTestHelper
     mvnDeploy(testData, project, group, artifactId, version, new URL(nexusUrl,
         "/repository/maven-public"),
         new URL(nexusUrl, "/repository/" + deployRepositoryName));
+  }
+
+  public Maven2Client createMaven2Client(final String repositoryName, final String username, final String password)
+  {
+    String repositoryPath = "repository/" + repositoryName + '/';
+    URI repositoryUri = restTestHelper.resolveNexusPath(repositoryPath);
+    CloseableHttpClient client = restTestHelper.client(repositoryPath, username, password);
+
+    RequestConfig.Builder requestConfigBuilder = RequestConfig.custom();
+    requestConfigBuilder.setExpectContinueEnabled(true);
+    HttpClientContext httpClientContext = HttpClientContext.create();
+    httpClientContext.setRequestConfig(requestConfigBuilder.build());
+
+    return new Maven2Client(client, httpClientContext, repositoryUri);
   }
 
   protected void mvnLegacyDeploy(

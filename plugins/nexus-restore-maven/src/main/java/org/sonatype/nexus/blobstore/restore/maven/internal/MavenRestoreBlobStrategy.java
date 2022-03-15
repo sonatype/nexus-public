@@ -32,11 +32,9 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
-import org.sonatype.nexus.repository.view.payloads.BlobPayload;
+import org.sonatype.nexus.repository.view.payloads.DetachedBlobPayload;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
-import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 
 /**
@@ -91,9 +89,8 @@ public class MavenRestoreBlobStrategy
 
   @Override
   protected void createAssetFromBlob(final Blob assetBlob, final MavenRestoreBlobData data) throws IOException {
-    String contentType = data.getProperty(HEADER_PREFIX + CONTENT_TYPE_HEADER);
     MavenContentFacet mavenFacet = data.getRepository().facet(MavenContentFacet.class);
-    mavenFacet.put(data.getMavenPath(), new BlobPayload(assetBlob, contentType));
+    mavenFacet.put(data.getMavenPath(), new DetachedBlobPayload(assetBlob));
   }
 
   @Override

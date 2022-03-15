@@ -29,11 +29,9 @@ import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.content.raw.RawContentFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.view.payloads.BlobPayload;
+import org.sonatype.nexus.repository.view.payloads.DetachedBlobPayload;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
-import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 
 /**
@@ -73,9 +71,8 @@ public class RawRestoreBlobStrategy
   @Override
   protected void createAssetFromBlob(final Blob assetBlob, final DataStoreRestoreBlobData data) throws IOException
   {
-    String contentType = data.getProperty(HEADER_PREFIX + CONTENT_TYPE_HEADER);
     RawContentFacet rawContentFacet = data.getRepository().facet(RawContentFacet.class);
-    rawContentFacet.put(data.getBlobName(), new BlobPayload(assetBlob, contentType));
+    rawContentFacet.put(data.getBlobName(), new DetachedBlobPayload(assetBlob));
   }
 
   @Override
