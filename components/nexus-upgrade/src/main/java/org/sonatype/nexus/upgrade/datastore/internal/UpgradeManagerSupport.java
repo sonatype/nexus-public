@@ -69,6 +69,7 @@ abstract class UpgradeManagerSupport<E extends DatabaseMigrationStep>
         .ignoreMissingMigrations(true) // Removed plugins (e.g. Pro)
         .baselineOnMigrate(true) // create flyway tables the first time migration is run
         .locations(new String[0]) // disable scanning for scripts
+        .outOfOrder(true)
         .load();
 
     MigrateResult result = flyway.migrate();

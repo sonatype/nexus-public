@@ -118,6 +118,28 @@ public class UpgradeManagerTest
     upgradeManagerWithoutFuture.migrate();
   }
 
+  @Test
+  public void testUpgradeSkippedStep() throws SQLException {
+    FutureMigrationStep futureMigrationStep = new FutureMigrationStep();
+    UpgradeManager upgradeManager = new UpgradeManager(dataStoreManager, Arrays.asList(migrationStep, futureMigrationStep));
+    upgradeManager.migrate();
+
+    SkippedMigrationStep skippedMigrationStep = new SkippedMigrationStep();
+    UpgradeManager upgradeManagerWithSkipped = new UpgradeManager(dataStoreManager, Arrays.asList(migrationStep, futureMigrationStep, skippedMigrationStep));
+    upgradeManagerWithSkipped.migrate();
+
+    try (Connection conn = getConnection()) {
+      try (Statement stmt = conn.createStatement()) {
+        // check for the result of the upgrade step
+        try (ResultSet results = stmt.executeQuery("SELECT * FROM skipped")) {
+          assertThat(results.next(), equalTo(true));
+          assertThat(results.getString("name"), equalTo("fawkes"));
+          assertThat(results.next(), equalTo(false));
+        }
+      }
+    }
+  }
+
   private Optional<DataStore<?>> getDataStore() {
     return dataSessionRule.getDataStore(DEFAULT_DATASTORE_NAME);
   }
