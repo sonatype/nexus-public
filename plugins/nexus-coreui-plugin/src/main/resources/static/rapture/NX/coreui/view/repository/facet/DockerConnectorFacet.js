@@ -60,6 +60,16 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
           },
           {
             xtype: 'fieldcontainer',
+            fieldLabel: NX.I18n.get('Repository_Facet_Docker_SubdomainNamespace_FieldLabel'),
+            helpText: NX.I18n.get('Repository_Facet_Docker_SubdomainNamespace_HelpText'),
+            layout: 'hbox',
+            items: [
+              me.createCheckbox('namespace'),
+              me.createNamespace('namespace')
+            ]
+          },
+          {
+            xtype: 'fieldcontainer',
             fieldLabel: NX.I18n.get('Repository_Facet_DockerConnectorFacet_HttpPort_FieldLabel'),
             helpText: NX.I18n.get('Repository_Facet_DockerConnectorFacet_HttpPort_HelpText'),
             layout: 'hbox',
@@ -174,6 +184,32 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
       maxValue: 65536,
       allowDecimals: false,
       allowExponential: false,
+      allowBlank: false,
+      disabled: true,
+      width: 565,
+      style: {
+        marginLeft: '5px'
+      },
+      listeners: {
+        /**
+         * Check the checkbox if port has value.
+         */
+        change: function() {
+          var checkbox = this.up('form').down('#' + type + 'Enabled');
+          if (this.getValue() && !checkbox.getValue()) {
+            checkbox.setValue(true);
+            checkbox.resetOriginalValue();
+          }
+        }
+      }
+    };
+  },
+
+  createNamespace: function(type) {
+    return {
+      xtype: 'textfield',
+      name: 'attributes.docker.namespace',
+      itemId: type + 'Port',
       allowBlank: false,
       disabled: true,
       width: 565,
