@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.testsuite.testsupport;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -35,6 +36,14 @@ import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.common.thread.TcclBlock;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
 
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import org.testcontainers.containers.FixedHostPortGenericContainer;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -69,6 +78,10 @@ public class TestDefaultS3BlobStoreProvider
 
   private String endpoint;
 
+  private final String prefix;
+
+  private final boolean forcePathStyle;
+
   private final ClassLoader classLoader;
 
   @Inject
@@ -77,14 +90,20 @@ public class TestDefaultS3BlobStoreProvider
       @Nullable @Named("nexus.test.s3.bucket") final String bucket,
       @Nullable @Named("nexus.test.s3.region") final String region,
       @Nullable @Named("nexus.test.s3.accessKey") final String accessKey,
-      @Nullable @Named("nexus.test.s3.accessSecret") final String accessSecret)
+      @Nullable @Named("nexus.test.s3.accessSecret") final String accessSecret,
+      @Nullable @Named("nexus.test.s3.endpoint") final String endpoint,
+      @Nullable @Named("${nexus.test.s3.forcePathStyle:-true}") final Boolean forcePathStyle)
   {
-    this.useReal = false;
+
     this.classLoader = classLoader;
     this.s3Bucket = Optional.ofNullable(bucket).orElse(UUID.randomUUID().toString());
     this.region = Optional.ofNullable(region).orElse("us-east-1");
     this.accessKey = Optional.ofNullable(accessKey).orElse("admin");
     this.accessSecret = Optional.ofNullable(accessSecret).orElse("admin");
+    this.forcePathStyle = Optional.ofNullable(forcePathStyle).orElse(true);
+    this.endpoint = endpoint;
+    this.useReal = Objects.nonNull(endpoint);
+    this.prefix = UUID.randomUUID().toString();
   }
 
   @Override
@@ -94,10 +113,11 @@ public class TestDefaultS3BlobStoreProvider
         .bucket(s3Bucket)
         .region(region)
         .endpoint(endpoint)
+        .prefix(prefix)
         .expiration(0)
         .accessKey(accessKey)
         .accessSecret(accessSecret)
-        .forcePathStyle(true)
+        .forcePathStyle(forcePathStyle)
         .build();
   }
 
@@ -128,8 +148,30 @@ public class TestDefaultS3BlobStoreProvider
 
   @Override
   protected void doStop() throws Exception {
-    if (s3MockContainer != null && s3MockContainer.isRunning()) {
-      s3MockContainer.stop();
+    if (Objects.isNull(endpoint)) {
+      if (s3MockContainer != null && s3MockContainer.isRunning()) {
+        s3MockContainer.stop();
+      }
+    }
+    else {
+      AWSStaticCredentialsProvider credentialsProvider =
+          new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, accessSecret));
+      AmazonS3 s3 = AmazonS3ClientBuilder.standard()
+          .withEndpointConfiguration(new EndpointConfiguration(endpoint, region))
+          .withCredentials(credentialsProvider)
+          .withRegion(Regions.valueOf(region))
+          .withPathStyleAccessEnabled(forcePathStyle)
+          .build();
+      ObjectListing bucketContent = s3.listObjects(s3Bucket, prefix);
+
+      do {
+        bucketContent.getObjectSummaries().forEach(summary -> s3.deleteObject(s3Bucket, summary.getKey()));
+
+        if (bucketContent.isTruncated()) {
+          bucketContent = s3.listNextBatchOfObjects(bucketContent);
+        }
+      }
+      while (!bucketContent.isTruncated());
     }
   }
 }
