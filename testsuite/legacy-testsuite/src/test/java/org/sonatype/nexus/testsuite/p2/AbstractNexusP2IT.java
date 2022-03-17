@@ -26,9 +26,9 @@ import org.apache.maven.it.util.ResourceExtractor;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers.exists;
-import static org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers.isDirectory;
-import static org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers.readable;
+import static org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers.exists;
+import static org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers.isDirectory;
+import static org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers.readable;
 
 public abstract class AbstractNexusP2IT
     extends AbstractNexusIntegrationTest

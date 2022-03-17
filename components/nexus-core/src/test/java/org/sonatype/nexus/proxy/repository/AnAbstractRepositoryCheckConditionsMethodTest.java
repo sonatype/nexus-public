@@ -29,7 +29,7 @@ import org.sonatype.nexus.proxy.item.uid.RepositoryItemUidAttributeSource;
 import org.sonatype.nexus.proxy.maven.uid.MavenRepositoryItemUidAttributeSource;
 import org.sonatype.nexus.proxy.registry.RepositoryRegistry;
 import org.sonatype.sisu.goodies.eventbus.EventBus;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 import org.sonatype.sisu.locks.LocalResourceLockFactory;
 
 import com.google.common.collect.ImmutableMap;

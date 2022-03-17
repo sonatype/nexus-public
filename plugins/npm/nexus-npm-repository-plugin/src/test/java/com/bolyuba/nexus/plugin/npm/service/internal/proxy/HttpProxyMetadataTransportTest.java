@@ -13,7 +13,7 @@
 package com.bolyuba.nexus.plugin.npm.service.internal.proxy;
 
 import org.sonatype.nexus.proxy.storage.remote.httpclient.HttpClientManager;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import com.bolyuba.nexus.plugin.npm.service.internal.MetadataParser;
 import org.junit.Before;

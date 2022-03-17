@@ -35,7 +35,7 @@ import org.sonatype.nexus.proxy.repository.GroupRepository;
 import org.sonatype.nexus.proxy.repository.HostedRepository;
 import org.sonatype.nexus.proxy.repository.ProxyRepository;
 import org.sonatype.nexus.proxy.repository.Repository;
-import org.sonatype.sisu.litmus.testsupport.mock.MockitoRule;
+import org.sonatype.sisu.goodies.testsupport.mock.MockitoRule;
 
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Ignore;

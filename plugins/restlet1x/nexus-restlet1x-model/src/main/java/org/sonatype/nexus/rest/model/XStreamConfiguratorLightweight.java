@@ -41,7 +41,6 @@ import org.sonatype.security.rest.model.RoleResource;
 import org.sonatype.security.rest.model.RoleResourceRequest;
 import org.sonatype.security.rest.model.RoleResourceResponse;
 import org.sonatype.security.rest.model.UserChangePasswordRequest;
-import org.sonatype.security.rest.model.UserForgotPasswordRequest;
 import org.sonatype.security.rest.model.UserListResourceResponse;
 import org.sonatype.security.rest.model.UserResource;
 import org.sonatype.security.rest.model.UserResourceRequest;
@@ -91,40 +90,44 @@ public class XStreamConfiguratorLightweight
     // Maven POM
     xstream.alias("project", Model.class);
 
-    xstream.processAnnotations(ArtifactResolveResourceResponse.class);
-    xstream.processAnnotations(GlobalConfigurationListResourceResponse.class);
-    xstream.processAnnotations(GlobalConfigurationResourceResponse.class);
-    xstream.processAnnotations(RepositoryStatusListResourceResponse.class);
-    xstream.processAnnotations(RepositoryListResourceResponse.class);
-    xstream.processAnnotations(RepositoryResourceResponse.class);
-    xstream.processAnnotations(RepositoryStatusResourceResponse.class);
-    xstream.processAnnotations(RepositoryMetaResourceResponse.class);
-    xstream.processAnnotations(RepositoryGroupListResourceResponse.class);
-    xstream.processAnnotations(RepositoryGroupResourceResponse.class);
-    xstream.processAnnotations(RepositoryRouteListResourceResponse.class);
-    xstream.processAnnotations(RepositoryRouteResourceResponse.class);
-    xstream.processAnnotations(ScheduledServiceListResourceResponse.class);
-    xstream.processAnnotations(ScheduledServiceResourceStatusResponse.class);
-    xstream.processAnnotations(ScheduledServiceResourceResponse.class);
-    xstream.processAnnotations(ScheduledServiceTypeResourceResponse.class);
-    xstream.processAnnotations(ContentListResourceResponse.class);
-    xstream.processAnnotations(ContentListDescribeResourceResponse.class);
-    xstream.processAnnotations(ConfigurationsListResourceResponse.class);
-    xstream.processAnnotations(FeedListResourceResponse.class);
-    xstream.processAnnotations(NFCResourceResponse.class);
-    xstream.processAnnotations(StatusResourceResponse.class);
-    xstream.processAnnotations(WastebasketResourceResponse.class);
-    xstream.processAnnotations(RepositoryTargetListResourceResponse.class);
-    xstream.processAnnotations(RepositoryTargetResourceResponse.class);
-    xstream.processAnnotations(RepositoryContentClassListResourceResponse.class);
-    xstream.processAnnotations(MirrorResourceListResponse.class);
-    xstream.processAnnotations(MirrorResourceListRequest.class);
-    xstream.processAnnotations(MirrorStatusResourceListResponse.class);
-    xstream.processAnnotations(SmtpSettingsResourceRequest.class);
-    xstream.processAnnotations(PlexusComponentListResourceResponse.class);
-    xstream.processAnnotations(NexusRepositoryTypeListResourceResponse.class);
-    xstream.processAnnotations(PrivilegeResourceRequest.class);
-    xstream.processAnnotations(Maven2ArtifactInfoResourceRespose.class);
+    Class[] types = new Class[]{
+        ArtifactResolveResourceResponse.class,
+        GlobalConfigurationListResourceResponse.class,
+        GlobalConfigurationResourceResponse.class,
+        RepositoryStatusListResourceResponse.class,
+        RepositoryListResourceResponse.class,
+        RepositoryResourceResponse.class,
+        RepositoryStatusResourceResponse.class,
+        RepositoryMetaResourceResponse.class,
+        RepositoryGroupListResourceResponse.class,
+        RepositoryGroupResourceResponse.class,
+        RepositoryRouteListResourceResponse.class,
+        RepositoryRouteResourceResponse.class,
+        ScheduledServiceListResourceResponse.class,
+        ScheduledServiceResourceStatusResponse.class,
+        ScheduledServiceResourceResponse.class,
+        ScheduledServiceTypeResourceResponse.class,
+        ContentListResourceResponse.class,
+        ContentListDescribeResourceResponse.class,
+        ConfigurationsListResourceResponse.class,
+        FeedListResourceResponse.class,
+        NFCResourceResponse.class,
+        StatusResourceResponse.class,
+        WastebasketResourceResponse.class,
+        RepositoryTargetListResourceResponse.class,
+        RepositoryTargetResourceResponse.class,
+        RepositoryContentClassListResourceResponse.class,
+        MirrorResourceListResponse.class,
+        MirrorResourceListRequest.class,
+        MirrorStatusResourceListResponse.class,
+        SmtpSettingsResourceRequest.class,
+        PlexusComponentListResourceResponse.class,
+        NexusRepositoryTypeListResourceResponse.class,
+        PrivilegeResourceRequest.class,
+        Maven2ArtifactInfoResourceRespose.class
+    };
+    xstream.allowTypes(types);
+    xstream.processAnnotations(types);
 
     xstream.alias("nexus-error", errorResponseClazz);
     xstream.alias("error", errorMessageClazz);
@@ -243,30 +246,46 @@ public class XStreamConfiguratorLightweight
     xstream.omitField(Scm.class, "modelEncoding");
 
     // SECURITY below
-    xstream.processAnnotations(AuthenticationLoginResourceResponse.class);
-    xstream.processAnnotations(UserResourceResponse.class);
-    xstream.processAnnotations(UserListResourceResponse.class);
-    xstream.processAnnotations(UserResourceRequest.class);
-    xstream.processAnnotations(UserForgotPasswordRequest.class);
-    xstream.processAnnotations(UserChangePasswordRequest.class);
+    Class[] securityTypes = new Class[]{
+        AuthenticationLoginResourceResponse.class,
+        UserResourceResponse.class,
+        UserListResourceResponse.class,
+        UserResourceRequest.class,
+        UserChangePasswordRequest.class,
+        RoleListResourceResponse.class,
+        RoleResource.class,
+        RoleResourceRequest.class,
+        RoleResourceResponse.class,
+        PrivilegeListResourceResponse.class,
+        PrivilegeStatusResourceResponse.class,
+        PrivilegeTypeResourceResponse.class,
+        UserToRoleResourceRequest.class,
+        PlexusUserResourceResponse.class,
+        PlexusRoleResource.class,
+        PlexusUserListResourceResponse.class,
+        ExternalRoleMappingListResourceResponse.class,
+        ExternalRoleMappingResourceResponse.class,
+        ExternalRoleMappingResource.class,
+        PlexusRoleListResourceResponse.class,
+        PlexusUserSearchCriteriaResourceRequest.class,
+        org.sonatype.security.rest.model.PlexusComponentListResourceResponse.class,
+        org.sonatype.security.rest.model.PlexusComponentListResource.class,
+        UserAccount.class,
+        UserAccountRequestResponseWrapper.class
+    };
+    xstream.allowTypes(securityTypes);
+    xstream.processAnnotations(securityTypes);
+
     xstream.registerLocalConverter(UserResource.class, "roles", new AliasingListConverter(String.class, "role"));
     xstream.registerLocalConverter(UserListResourceResponse.class, "data", new AliasingListConverter(
         UserResource.class, "users-list-item"));
 
-    xstream.processAnnotations(RoleListResourceResponse.class);
-    xstream.processAnnotations(RoleResource.class);
-    xstream.processAnnotations(RoleResourceRequest.class);
-
-    xstream.processAnnotations(RoleResourceResponse.class);
     xstream.registerLocalConverter(RoleListResourceResponse.class, "data", new AliasingListConverter(
         RoleResource.class, "roles-list-item"));
     xstream.registerLocalConverter(RoleResource.class, "roles", new AliasingListConverter(String.class, "role"));
     xstream.registerLocalConverter(RoleResource.class, "privileges", new AliasingListConverter(String.class,
         "privilege"));
 
-    xstream.processAnnotations(PrivilegeListResourceResponse.class);
-    xstream.processAnnotations(PrivilegeStatusResourceResponse.class);
-    xstream.processAnnotations(PrivilegeTypeResourceResponse.class);
     xstream.registerLocalConverter(PrivilegeListResourceResponse.class, "data", new AliasingListConverter(
         PrivilegeStatusResource.class, "privilege-item"));
     xstream.registerLocalConverter(PrivilegeResource.class, "method", new AliasingListConverter(String.class,
@@ -278,50 +297,37 @@ public class XStreamConfiguratorLightweight
     xstream.registerLocalConverter(PrivilegeTypeResource.class, "properties", new AliasingListConverter(
         PrivilegeTypePropertyResource.class, "privilege-type-property"));
 
-    xstream.processAnnotations(UserToRoleResourceRequest.class);
     xstream.registerLocalConverter(UserToRoleResource.class, "roles", new AliasingListConverter(String.class,
         "role"));
 
-    xstream.processAnnotations(PlexusUserResourceResponse.class);
     xstream.registerLocalConverter(PlexusUserResource.class, "roles", new AliasingListConverter(
         PlexusRoleResource.class, "plexus-role"));
 
-    xstream.processAnnotations(PlexusRoleResource.class);
-
-    xstream.processAnnotations(PlexusUserListResourceResponse.class);
     xstream.registerLocalConverter(PlexusUserListResourceResponse.class, "data", new AliasingListConverter(
         PlexusUserResource.class, "plexus-user"));
-
-    xstream.processAnnotations(ExternalRoleMappingListResourceResponse.class);
-    xstream.processAnnotations(ExternalRoleMappingResourceResponse.class);
-    xstream.processAnnotations(ExternalRoleMappingResource.class);
 
     xstream.registerLocalConverter(ExternalRoleMappingListResourceResponse.class, "data",
         new AliasingListConverter(ExternalRoleMappingResource.class, "mapping"));
     xstream.registerLocalConverter(ExternalRoleMappingResource.class, "mappedRoles", new AliasingListConverter(
         PlexusRoleResource.class, "plexus-role"));
 
-    xstream.processAnnotations(PlexusRoleListResourceResponse.class);
     xstream.registerLocalConverter(PlexusRoleListResourceResponse.class, "data", new AliasingListConverter(
         PlexusRoleResource.class, "plexus-role"));
 
-    xstream.processAnnotations(PlexusUserSearchCriteriaResourceRequest.class);
-
-    xstream.processAnnotations(org.sonatype.security.rest.model.PlexusComponentListResourceResponse.class);
-    xstream.processAnnotations(org.sonatype.security.rest.model.PlexusComponentListResource.class);
     xstream.registerLocalConverter(org.sonatype.security.rest.model.PlexusComponentListResourceResponse.class,
         "data", new AliasingListConverter(org.sonatype.security.rest.model.PlexusComponentListResource.class,
         "component"));
 
-    xstream.processAnnotations(UserAccount.class);
-    xstream.processAnnotations(UserAccountRequestResponseWrapper.class);
-
     // Automatic routing aka proxy404 (NEXUS-5472)
-    xstream.processAnnotations(RoutingDiscoveryStatusMessage.class);
-    xstream.processAnnotations(RoutingStatusMessage.class);
-    xstream.processAnnotations(RoutingStatusMessageWrapper.class);
-    xstream.processAnnotations(RoutingConfigMessage.class);
-    xstream.processAnnotations(RoutingConfigMessageWrapper.class);
+    Class[] routingTypes = new Class[] {
+        RoutingDiscoveryStatusMessage.class,
+        RoutingStatusMessage.class,
+        RoutingStatusMessageWrapper.class,
+        RoutingConfigMessage.class,
+        RoutingConfigMessageWrapper.class
+    };
+    xstream.allowTypes(routingTypes);
+    xstream.processAnnotations(routingTypes);
 
     return xstream;
   }

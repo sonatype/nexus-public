@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.sonatype.sisu.goodies.eventbus.EventBus;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.hamcrest.Matcher;
 import org.junit.Before;

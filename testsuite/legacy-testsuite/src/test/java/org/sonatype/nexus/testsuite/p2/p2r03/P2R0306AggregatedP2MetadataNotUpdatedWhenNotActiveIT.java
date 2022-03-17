@@ -21,7 +21,7 @@ import org.junit.Test;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers.exists;
+import static org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers.exists;
 
 public class P2R0306AggregatedP2MetadataNotUpdatedWhenNotActiveIT
     extends AbstractNexusP2GeneratorIT

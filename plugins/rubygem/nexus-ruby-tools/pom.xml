@@ -19,7 +19,7 @@
   <parent>
     <groupId>org.sonatype.nexus.plugins</groupId>
     <artifactId>nexus-plugins-rubygem</artifactId>
-    <version>2.14.21-02</version>
+    <version>2.15.0-04</version>
   </parent>
 
   <artifactId>nexus-ruby-tools</artifactId>
@@ -53,8 +53,8 @@
     </dependency>
 
     <dependency>
-      <groupId>org.sonatype.sisu.litmus</groupId>
-      <artifactId>litmus-testsupport</artifactId>
+      <groupId>org.sonatype.sisu.goodies</groupId>
+      <artifactId>goodies-testsupport</artifactId>
       <scope>test</scope>
     </dependency>
 

@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.sonatype.plexus.components.cipher.DefaultPlexusCipher;
 import org.sonatype.plexus.components.cipher.PlexusCipherException;
 import org.sonatype.security.configuration.source.AbstractPhraseService;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import com.google.common.base.Throwables;
 import org.junit.Before;

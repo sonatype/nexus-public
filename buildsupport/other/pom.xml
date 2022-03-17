@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>2.14.21-02</version>
+    <version>2.15.0-04</version>
   </parent>
 
   <artifactId>nexus-buildsupport-other</artifactId>
@@ -62,6 +62,10 @@
             <groupId>javax.activation</groupId>
             <artifactId>activation</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>org.apache.velocity</groupId>
+            <artifactId>velocity</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
 
@@ -79,8 +83,8 @@
 
       <dependency>
         <groupId>org.apache.velocity</groupId>
-        <artifactId>velocity</artifactId>
-        <version>1.7</version>
+        <artifactId>velocity-engine-core</artifactId>
+        <version>2.3</version>
       </dependency>
 
       <dependency>
@@ -134,7 +138,7 @@
       <dependency>
         <groupId>org.freemarker</groupId>
         <artifactId>freemarker</artifactId>
-        <version>2.3.19</version>
+        <version>2.3.31</version>
       </dependency>
 
       <dependency>
@@ -142,6 +146,19 @@
         <artifactId>opencsv</artifactId>
         <version>2.1</version>
       </dependency>
+
+      <dependency>
+        <groupId>com.rometools</groupId>
+        <artifactId>rome</artifactId>
+        <version>1.16.0</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.jdom</groupId>
+        <artifactId>jdom2</artifactId>
+        <version>2.0.6.1</version>
+      </dependency>
+      
 
       <dependency>
         <groupId>org.codehaus.woodstox</groupId>
@@ -153,12 +170,6 @@
             <artifactId>stax-api</artifactId>
           </exclusion>
         </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>org.jdom</groupId>
-        <artifactId>jdom</artifactId>
-        <version>1.1</version>
       </dependency>
 
       <dependency>

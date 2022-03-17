@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.sonatype.nexus.proxy.repository.Repository;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import com.bolyuba.nexus.plugin.npm.NpmRepository;
 import com.bolyuba.nexus.plugin.npm.group.NpmGroupRepository;

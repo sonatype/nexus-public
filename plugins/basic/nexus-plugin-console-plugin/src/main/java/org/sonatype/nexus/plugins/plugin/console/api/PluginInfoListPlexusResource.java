@@ -68,8 +68,12 @@ public class PluginInfoListPlexusResource
   public void configureXStream(XStream xstream) {
     super.configureXStream(xstream);
 
-    xstream.processAnnotations(PluginInfoDTO.class);
-    xstream.processAnnotations(PluginInfoListResponseDTO.class);
+    Class[] pluginInfoTypes = new Class[] {
+        PluginInfoDTO.class,
+        PluginInfoListResponseDTO.class
+    };
+    xstream.allowTypes(pluginInfoTypes);
+    xstream.processAnnotations(pluginInfoTypes);
 
     xstream.registerLocalConverter(PluginInfoListResponseDTO.class, "data", new AliasingListConverter(
         PluginInfoDTO.class, "pluginInfo"));

@@ -80,7 +80,7 @@ public class Nxcm335EffectiveUsersIT
     ldapUser.addRole("nx-admin");
     Response response = userUtil.sendMessage(Method.PUT, ldapUser, "LDAP");
     Assert.assertTrue("Status: " + response.getStatus() + "\nresponse: "
-        + response.getEntity().getText(), response.getStatus().isSuccess());
+        + response.getEntity(), response.getStatus().isSuccess());
 
     // search effective users should find user
     users = this.doSearch("", true, "all");
@@ -95,7 +95,7 @@ public class Nxcm335EffectiveUsersIT
     ldapUser.addRole("nx-admin");
     response = userUtil.sendMessage(Method.PUT, ldapUser, "LDAP");
     Assert.assertTrue("Status: " + response.getStatus() + "\nresponse: "
-        + response.getEntity().getText(), response.getStatus().isSuccess());
+        + response.getEntity(), response.getStatus().isSuccess());
 
     // search effective users should find user
     users = this.doSearch("", true, "LDAP");
@@ -132,7 +132,7 @@ public class Nxcm335EffectiveUsersIT
     ldapUser.addRole("nx-admin");
     Response response = userUtil.sendMessage(Method.PUT, ldapUser, "LDAP");
     Assert.assertTrue("Status: " + response.getStatus() + "\nresponse: "
-        + response.getEntity().getText(), response.getStatus().isSuccess());
+        + response.getEntity(), response.getStatus().isSuccess());
 
     // search effective users should find user
     users = this.doSearch("", false, "LDAP");
@@ -147,7 +147,7 @@ public class Nxcm335EffectiveUsersIT
     ldapUser.addRole("nx-admin");
     response = userUtil.sendMessage(Method.PUT, ldapUser, "LDAP");
     Assert.assertTrue("Status: " + response.getStatus() + "\nresponse: "
-        + response.getEntity().getText(), response.getStatus().isSuccess());
+        + response.getEntity(), response.getStatus().isSuccess());
 
     // search effective users should find user
     users = this.doSearch("", false, "LDAP");

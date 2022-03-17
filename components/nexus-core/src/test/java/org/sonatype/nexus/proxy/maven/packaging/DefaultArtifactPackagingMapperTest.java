@@ -13,7 +13,7 @@
 package org.sonatype.nexus.proxy.maven.packaging;
 
 import org.sonatype.nexus.configuration.application.NexusConfiguration;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.junit.Before;
 import org.junit.Test;

@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
+import javax.annotation.Nullable;
+
 import org.sonatype.nexus.proxy.item.RepositoryItemUid;
 import org.sonatype.nexus.proxy.item.StorageItem;
 import org.sonatype.nexus.proxy.repository.Repository;
@@ -392,6 +394,14 @@ public class ResourceStoreRequest
    */
   public Map<String, List<String>> getAppliedMappings() {
     return appliedMappings;
+  }
+
+  /**
+   * Get the request's accept header.
+   */
+  @Nullable
+  public String getAcceptHeader() {
+    return getRequestContext().getRequestAcceptHeader();
   }
 
   // ==

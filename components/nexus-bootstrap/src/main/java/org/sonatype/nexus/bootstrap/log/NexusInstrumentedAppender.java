@@ -10,28 +10,20 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.testsuite.security.nexus586;
+package org.sonatype.nexus.bootstrap.log;
 
-import org.sonatype.nexus.integrationtests.AbstractNexusIntegrationTest;
-import org.sonatype.nexus.test.utils.ForgotPasswordUtils;
-
-import org.junit.Assert;
-import org.junit.Test;
-import org.restlet.data.Response;
+import com.codahale.metrics.SharedMetricRegistries;
+import com.codahale.metrics.logback.InstrumentedAppender;
 
 /**
- * Saving the Nexus config needs to validate the anonymous user information
+ * Extension of {@link com.codahale.metrics.logback.InstrumentedAppender} that restores the default constructor.
+ *
+ * @since 2.15
  */
-public class Nexus586AnonymousForgotPasswordIT
-    extends AbstractNexusIntegrationTest
+public final class NexusInstrumentedAppender
+    extends InstrumentedAppender
 {
-
-  @Test
-  public void forgotPassword()
-      throws Exception
-  {
-    String username = "anonymous";
-    Response response = ForgotPasswordUtils.get(this).recoverUserPassword(username, "changeme2@yourcompany.com");
-    Assert.assertEquals(400, response.getStatus().getCode());
+  public NexusInstrumentedAppender() {
+    super(SharedMetricRegistries.getOrCreate("nexus"));
   }
 }

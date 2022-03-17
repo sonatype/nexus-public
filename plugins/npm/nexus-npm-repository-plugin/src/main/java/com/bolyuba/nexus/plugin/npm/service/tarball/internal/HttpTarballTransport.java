@@ -33,13 +33,13 @@ import com.bolyuba.nexus.plugin.npm.NpmRepository;
 import com.bolyuba.nexus.plugin.npm.proxy.NpmProxyRepository;
 import com.bolyuba.nexus.plugin.npm.service.NpmBlob;
 import com.bolyuba.nexus.plugin.npm.service.PackageVersion;
+import com.bolyuba.nexus.plugin.npm.service.internal.proxy.HttpProxyMetadataTransport;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
-import com.yammer.metrics.Metrics;
-import com.yammer.metrics.core.MetricsRegistry;
-import com.yammer.metrics.core.Timer;
-import com.yammer.metrics.core.TimerContext;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
+import com.codahale.metrics.Timer;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
@@ -78,12 +78,12 @@ public class HttpTarballTransport
 
   private final Hc4Provider hc4Provider;
 
-  private final MetricsRegistry metricsRegistry;
+  private final MetricRegistry metricsRegistry;
 
   @Inject
   public HttpTarballTransport(final Hc4Provider hc4Provider) {
     this.hc4Provider = checkNotNull(hc4Provider);
-    this.metricsRegistry = Metrics.defaultRegistry();
+    this.metricsRegistry = SharedMetricRegistries.getOrCreate("nexus");
   }
 
   public NpmBlob getTarballForVersion(final NpmProxyRepository npmProxyRepository, final File target,
@@ -97,7 +97,7 @@ public class HttpTarballTransport
     get.addHeader("Accept", NpmRepository.TARBALL_MIME_TYPE);
 
     final Timer timer = timer(get, npmProxyRepository.getRemoteUrl());
-    final TimerContext timerContext = timer.time();
+    final Timer.Context timerContext = timer.time();
     Stopwatch stopwatch = null;
 
     if (outboundRequestLog.isDebugEnabled()) {
@@ -158,6 +158,6 @@ public class HttpTarballTransport
   }
 
   private Timer timer(final HttpUriRequest httpRequest, final String baseUrl) {
-    return metricsRegistry.newTimer(HttpTarballTransport.class, baseUrl, httpRequest.getMethod());
+    return metricsRegistry.timer(MetricRegistry.name(HttpTarballTransport.class, baseUrl, httpRequest.getMethod()));
   }
 }

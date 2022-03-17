@@ -41,8 +41,8 @@ import org.junit.Test;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers.isDirectory;
-import static org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers.isEmptyDirectory;
+import static org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers.isDirectory;
+import static org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers.isEmptyDirectory;
 
 /**
  * Tests the {@link DefaultWastebasket} class.

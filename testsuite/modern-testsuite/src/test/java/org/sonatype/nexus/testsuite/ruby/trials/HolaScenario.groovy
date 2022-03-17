@@ -14,7 +14,7 @@ package org.sonatype.nexus.testsuite.ruby.trials
 
 import org.apache.commons.codec.digest.DigestUtils
 import org.sonatype.nexus.client.core.NexusClient
-import org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers
+import org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers
 
 import static org.hamcrest.MatcherAssert.assertThat
 

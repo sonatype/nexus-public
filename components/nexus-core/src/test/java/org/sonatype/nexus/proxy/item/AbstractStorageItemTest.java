@@ -16,7 +16,7 @@ import org.sonatype.nexus.proxy.AbstractNexusTestEnvironment;
 import org.sonatype.nexus.proxy.ResourceStore;
 import org.sonatype.nexus.proxy.repository.Repository;
 import org.sonatype.nexus.proxy.router.RepositoryRouter;
-import org.sonatype.sisu.litmus.testsupport.mock.MockitoRule;
+import org.sonatype.sisu.goodies.testsupport.mock.MockitoRule;
 
 import org.junit.Rule;
 import org.junit.Test;

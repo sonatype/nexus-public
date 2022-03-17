@@ -10,21 +10,22 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.test.utils;
+package org.sonatype.nexus.bootstrap.jetty;
 
-import org.sonatype.nexus.integrationtests.RequestFacade;
+import com.codahale.metrics.SharedMetricRegistries;
+import com.codahale.metrics.jetty9.InstrumentedHandler;
+import org.eclipse.jetty.server.Handler;
 
-import org.restlet.data.Method;
-import org.restlet.data.Response;
-
-public class ResetPasswordUtils
+/**
+ * Extension of {@link com.codahale.metrics.jetty9.InstrumentedHandler} that restores the delegate constructor.
+ *
+ * @since 2.15
+ */
+public final class NexusInstrumentedHandler
+    extends InstrumentedHandler
 {
-
-  public static Response resetPassword(String username)
-      throws Exception
-  {
-    String serviceURI = "service/local/users_reset/" + username;
-    return RequestFacade.sendMessage(serviceURI, Method.DELETE);
+  public NexusInstrumentedHandler(Handler delegate) {
+    super(SharedMetricRegistries.getOrCreate("nexus"));
+    setHandler(delegate);
   }
-
 }

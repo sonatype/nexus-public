@@ -13,7 +13,7 @@
 package com.bolyuba.nexus.plugin.npm.service;
 
 import org.sonatype.nexus.proxy.ResourceStoreRequest;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.junit.Test;
 import org.mockito.Mock;

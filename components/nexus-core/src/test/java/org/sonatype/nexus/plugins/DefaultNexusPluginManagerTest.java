@@ -25,7 +25,7 @@ import org.sonatype.plugin.metadata.GAVCoordinate;
 import org.sonatype.plugins.model.PluginDependency;
 import org.sonatype.plugins.model.PluginMetadata;
 import org.sonatype.sisu.goodies.eventbus.EventBus;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import com.google.inject.util.Providers;
 import org.eclipse.sisu.bean.BeanManager;

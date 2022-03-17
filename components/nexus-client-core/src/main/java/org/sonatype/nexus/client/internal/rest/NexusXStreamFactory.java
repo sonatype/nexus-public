@@ -35,6 +35,8 @@ public class NexusXStreamFactory
     xstream.setMode(XStream.NO_REFERENCES);
     xstream.autodetectAnnotations(false);
     xstream.ignoreUnknownElements();
+    xstream.allowTypesByWildcard(new String[]{"org.sonatype.nexus.rest.model.*", "org.sonatype.security.rest.model.*",
+        "com.sonatype.nexus.plugins.smartproxy.internal.rest.dto.*"});
     return xstream;
   }
 

@@ -19,7 +19,7 @@ import org.sonatype.nexus.testsuite.p2.AbstractNexusProxyP2SecureIT;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers.exists;
+import static org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers.exists;
 
 public class MECLIPSE0465x01ProxyAuthenticatedP2RepoIT
     extends AbstractNexusProxyP2SecureIT

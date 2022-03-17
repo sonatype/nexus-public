@@ -27,8 +27,11 @@ public class TestLuceneRestMarshalUnmarchal
   {
     super.setUp();
 
-    getJsonXStream().processAnnotations(SearchResponse.class);
-    getXmlXStream().processAnnotations(SearchResponse.class);
+    Class[] searchTypes = new Class[]{SearchResponse.class};
+    getJsonXStream().allowTypes(searchTypes);
+    getJsonXStream().processAnnotations(searchTypes);
+    getXmlXStream().allowTypes(searchTypes);
+    getXmlXStream().processAnnotations(searchTypes);
 
     getJsonXStream().registerLocalConverter(SearchResponse.class, "data", new AliasingListConverter(NexusArtifact.class,
         "artifact"));

@@ -58,7 +58,9 @@ public class RunTest
     xstream.alias("top", TopLevelObject.class);
     xstream.registerConverter(new TopLevelObjectConverter(xstream.getMapper(), xstream.getReflectionProvider()));
     xstream.registerConverter(new BaseDataObjectConverter(xstream.getMapper(), xstream.getReflectionProvider()));
-    xstream.processAnnotations(new Class[] { DataObject1.class, DataObject2.class });
+    Class[] types = new Class[] { DataObject1.class, DataObject2.class, TopLevelObject.class };
+    xstream.allowTypes(types);
+    xstream.processAnnotations(types);
 
     // xstream.aliasAttribute( "type", "class" );
     // xstream.alias( "type-one", DataObject1.class );
@@ -105,7 +107,9 @@ public class RunTest
     xstream.alias("top", TopLevelObject.class);
     xstream.registerConverter(new TopLevelObjectConverter(xstream.getMapper(), xstream.getReflectionProvider()));
     xstream.registerConverter(new BaseDataObjectConverter(xstream.getMapper(), xstream.getReflectionProvider()));
-    xstream.processAnnotations(new Class[] { DataObject1.class });
+    Class[] types = new Class[] { DataObject1.class, TopLevelObject.class };
+    xstream.allowTypes(types);
+    xstream.processAnnotations(types);
 
     // xstream.aliasAttribute( "type", "class" );
     // xstream.alias( "type-one", DataObject1.class );

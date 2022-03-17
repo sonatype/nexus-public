@@ -17,7 +17,7 @@ import java.util.Date;
 import java.util.HashSet;
 
 import org.sonatype.scheduling.iterators.WeeklySchedulerIterator;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.junit.Test;
 

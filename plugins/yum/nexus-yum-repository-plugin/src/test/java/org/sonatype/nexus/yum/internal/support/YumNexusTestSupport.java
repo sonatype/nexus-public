@@ -40,10 +40,10 @@ import org.sonatype.nexus.proxy.repository.HostedRepository;
 import org.sonatype.nexus.proxy.repository.Repository;
 import org.sonatype.nexus.proxy.repository.RepositoryKind;
 import org.sonatype.nexus.yum.internal.task.CommandLineExecutor;
-import org.sonatype.sisu.litmus.testsupport.TestTracer;
-import org.sonatype.sisu.litmus.testsupport.TestUtil;
-import org.sonatype.sisu.litmus.testsupport.junit.TestDataRule;
-import org.sonatype.sisu.litmus.testsupport.junit.TestIndexRule;
+import org.sonatype.sisu.goodies.testsupport.TestTracer;
+import org.sonatype.sisu.goodies.testsupport.TestUtil;
+import org.sonatype.sisu.goodies.testsupport.junit.TestDataRule;
+import org.sonatype.sisu.goodies.testsupport.junit.TestIndexRule;
 
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.ThreadSleep;

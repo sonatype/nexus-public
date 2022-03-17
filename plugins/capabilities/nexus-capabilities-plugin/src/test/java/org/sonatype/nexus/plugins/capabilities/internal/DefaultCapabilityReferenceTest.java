@@ -34,7 +34,7 @@ import org.sonatype.nexus.proxy.events.NexusStoppedEvent;
 import org.sonatype.sisu.goodies.eventbus.EventBus;
 import org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus;
 import org.sonatype.sisu.goodies.eventbus.internal.ReentrantGuavaEventBus;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.junit.Before;
 import org.junit.Test;

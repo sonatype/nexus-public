@@ -34,12 +34,11 @@ import com.bolyuba.nexus.plugin.npm.service.PackageRoot;
 import com.bolyuba.nexus.plugin.npm.service.internal.MetadataParser;
 import com.bolyuba.nexus.plugin.npm.service.internal.PackageRootIterator;
 import com.bolyuba.nexus.plugin.npm.service.internal.ProxyMetadataTransport;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
+import com.codahale.metrics.Timer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
-import com.yammer.metrics.Metrics;
-import com.yammer.metrics.core.MetricsRegistry;
-import com.yammer.metrics.core.Timer;
-import com.yammer.metrics.core.TimerContext;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
@@ -53,6 +52,7 @@ import org.slf4j.LoggerFactory;
 
 import static com.bolyuba.nexus.plugin.npm.service.PackageRoot.PROP_ETAG;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.http.HttpHeaders.ACCEPT;
 
 /**
  * {@link ProxyMetadataTransport} for HTTP.
@@ -69,7 +69,7 @@ public class HttpProxyMetadataTransport
 
   private final HttpClientManager httpClientManager;
 
-  private final MetricsRegistry metricsRegistry;
+  private final MetricRegistry metricsRegistry;
 
   @Inject
   public HttpProxyMetadataTransport(final MetadataParser metadataParser,
@@ -77,7 +77,7 @@ public class HttpProxyMetadataTransport
   {
     this.metadataParser = checkNotNull(metadataParser);
     this.httpClientManager = checkNotNull(httpClientManager);
-    this.metricsRegistry = Metrics.defaultRegistry();
+    this.metricsRegistry = SharedMetricRegistries.getOrCreate("nexus");
   }
 
   /**
@@ -98,7 +98,7 @@ public class HttpProxyMetadataTransport
       context.setAttribute(Hc4Provider.HTTP_CTX_KEY_REPOSITORY, npmProxyRepository);
 
       final Timer timer = timer(get, npmProxyRepository.getRemoteUrl());
-      final TimerContext timerContext = timer.time();
+      final Timer.Context timerContext = timer.time();
       Stopwatch stopwatch = null;
 
       if (outboundRequestLog.isDebugEnabled()) {
@@ -168,22 +168,27 @@ public class HttpProxyMetadataTransport
    * package root from this method is guaranteed to be present in the store too.
    */
   @Override
-  public PackageRoot fetchPackageRoot(final NpmProxyRepository npmProxyRepository, final String packageName,
-                                      final PackageRoot expired) throws IOException
+  public PackageRoot fetchPackageRoot(final NpmProxyRepository npmProxyRepository,
+                                      final String packageName,
+                                      final PackageRoot expired,
+                                      final boolean abbreviateMetadata) throws IOException
   {
     final HttpClient httpClient = httpClientManager.create(npmProxyRepository,
         npmProxyRepository.getRemoteStorageContext());
     try {
       final HttpGet get = new HttpGet(buildUri(npmProxyRepository, encodePackageName(packageName)));
-      get.addHeader("accept", NpmRepository.JSON_MIME_TYPE);
-      if (expired != null && expired.getProperties().containsKey(PROP_ETAG)) {
-        get.addHeader("if-none-match", expired.getProperties().get(PROP_ETAG));
+      if (abbreviateMetadata) {
+        get.addHeader(ACCEPT, NpmRepository.JSON_MIME_TYPE_WITH_ABBREVIATED_METADATA);
       }
+      else {
+        get.addHeader(ACCEPT, NpmRepository.JSON_MIME_TYPE);
+      }
+      addIfNoneMatchHeaderIfExpired(expired, get);
       final HttpClientContext context = new HttpClientContext();
       context.setAttribute(Hc4Provider.HTTP_CTX_KEY_REPOSITORY, npmProxyRepository);
 
       final Timer timer = timer(get, npmProxyRepository.getRemoteUrl());
-      final TimerContext timerContext = timer.time();
+      final Timer.Context timerContext = timer.time();
       Stopwatch stopwatch = null;
 
       if (outboundRequestLog.isDebugEnabled()) {
@@ -191,9 +196,20 @@ public class HttpProxyMetadataTransport
         stopwatch = Stopwatch.createStarted();
       }
 
-      final HttpResponse httpResponse;
+      HttpResponse httpResponse;
       try {
         httpResponse = httpClient.execute(get, context);
+        if (abbreviateMetadata && (HttpStatus.SC_NOT_FOUND == httpResponse.getStatusLine().getStatusCode())) {
+          final HttpGet newGet = new HttpGet(buildUri(npmProxyRepository, encodePackageName(packageName)));
+          newGet.addHeader(ACCEPT, NpmRepository.JSON_MIME_TYPE);
+          addIfNoneMatchHeaderIfExpired(expired, newGet);
+          final HttpClientContext newContext = new HttpClientContext();
+          newContext.setAttribute(Hc4Provider.HTTP_CTX_KEY_REPOSITORY, npmProxyRepository);
+          final HttpClient newHttpClient = httpClientManager.create(npmProxyRepository,
+              npmProxyRepository.getRemoteStorageContext());
+
+          httpResponse = newHttpClient.execute(newGet, newContext);
+        }
       }
       finally {
         timerContext.stop();
@@ -215,7 +231,8 @@ public class HttpProxyMetadataTransport
         if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
           final PreparedContentLocator pcl = new PreparedContentLocator(httpResponse.getEntity().getContent(),
               NpmRepository.JSON_MIME_TYPE, ContentLocator.UNKNOWN_LENGTH);
-          final PackageRoot fresh = metadataParser.parsePackageRoot(npmProxyRepository.getId(), pcl);
+          final PackageRoot fresh =
+              metadataParser.parsePackageRoot(npmProxyRepository.getId(), pcl, abbreviateMetadata);
           if (httpResponse.containsHeader("etag")) {
             fresh.getProperties().put(PROP_ETAG, httpResponse.getFirstHeader("etag").getValue());
           }
@@ -229,6 +246,12 @@ public class HttpProxyMetadataTransport
     }
     finally {
       httpClientManager.release(npmProxyRepository, npmProxyRepository.getRemoteStorageContext());
+    }
+  }
+
+  private void addIfNoneMatchHeaderIfExpired(final PackageRoot expired, final HttpGet get) {
+    if (expired != null && expired.getProperties().containsKey(PROP_ETAG)) {
+      get.addHeader("if-none-match", expired.getProperties().get(PROP_ETAG));
     }
   }
 
@@ -246,6 +269,6 @@ public class HttpProxyMetadataTransport
   }
 
   private Timer timer(final HttpUriRequest httpRequest, final String baseUrl) {
-    return metricsRegistry.newTimer(HttpProxyMetadataTransport.class, baseUrl, httpRequest.getMethod());
+    return metricsRegistry.timer(MetricRegistry.name(HttpProxyMetadataTransport.class, baseUrl, httpRequest.getMethod()));
   }
 }

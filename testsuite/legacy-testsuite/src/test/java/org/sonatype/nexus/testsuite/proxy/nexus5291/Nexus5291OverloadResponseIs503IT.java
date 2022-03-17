@@ -12,9 +12,10 @@
  */
 package org.sonatype.nexus.testsuite.proxy.nexus5291;
 
+import java.time.Duration;
+
 import org.sonatype.nexus.integrationtests.AbstractNexusProxyIntegrationTest;
 import org.sonatype.nexus.test.utils.NexusRequestMatchers;
-import org.sonatype.sisu.goodies.common.Time;
 import org.sonatype.tests.http.server.fluent.Behaviours;
 import org.sonatype.tests.http.server.fluent.Server;
 
@@ -57,7 +58,7 @@ public class Nexus5291OverloadResponseIs503IT
   public void startProxy()
       throws Exception
   {
-    server = Server.withPort(proxyPort).serve("/").withBehaviours(Behaviours.pause(Time.days(1))).start();
+    server = Server.withPort(proxyPort).serve("/").withBehaviours(Behaviours.pause(Duration.ofDays(1))).start();
   }
 
   @After

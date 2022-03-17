@@ -12,14 +12,14 @@
  */
 package com.bolyuba.nexus.plugin.npm.service;
 
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import com.bolyuba.nexus.plugin.npm.service.PackageRequest.PackageCoordinates;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 
 

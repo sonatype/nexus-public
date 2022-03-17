@@ -22,9 +22,9 @@ import java.util.Set;
 
 import org.sonatype.nexus.feeds.NexusArtifactEvent;
 
-import com.sun.syndication.feed.synd.SyndEntry;
-import com.sun.syndication.feed.synd.SyndFeed;
-import com.sun.syndication.feed.synd.SyndFeedImpl;
+import com.rometools.rome.feed.synd.SyndEntry;
+import com.rometools.rome.feed.synd.SyndFeed;
+import com.rometools.rome.feed.synd.SyndFeedImpl;
 import org.codehaus.plexus.util.StringUtils;
 
 /**

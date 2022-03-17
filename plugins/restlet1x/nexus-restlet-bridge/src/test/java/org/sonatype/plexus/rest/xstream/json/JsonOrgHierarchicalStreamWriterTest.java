@@ -31,11 +31,13 @@ public class JsonOrgHierarchicalStreamWriterTest
 
     this.xstream.registerConverter(new PrimitiveKeyedMapConverter(xstream.getMapper()));
 
-    this.xstream.processAnnotations(new Class[] {
+    Class[] types = new Class[] {
         OneValued.class,
         CombinedValued.class,
         ThreeValued.class
-    });
+    };
+    this.xstream.allowTypes(types);
+    this.xstream.processAnnotations(types);
   }
 
   protected void setUp()

@@ -69,8 +69,12 @@ public abstract class AbstractIndexContentPlexusResource
   public void configureXStream(XStream xstream) {
     super.configureXStream(xstream);
 
-    xstream.processAnnotations(IndexBrowserTreeNodeDTO.class);
-    xstream.processAnnotations(IndexBrowserTreeViewResponseDTO.class);
+    Class[] indexBrowserTypes = new Class[] {
+        IndexBrowserTreeNodeDTO.class,
+        IndexBrowserTreeViewResponseDTO.class
+    };
+    xstream.allowTypes(indexBrowserTypes);
+    xstream.processAnnotations(indexBrowserTypes);
   }
 
   @Override

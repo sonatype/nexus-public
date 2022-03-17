@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import org.sonatype.sisu.litmus.testsupport.TestUtil;
+import org.sonatype.sisu.goodies.testsupport.TestUtil;
 
 import com.google.common.collect.Maps;
 import org.apache.commons.io.FileUtils;

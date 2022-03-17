@@ -68,10 +68,13 @@ public class DefaultNpmGroupRepository
 
   private final GroupMetadataService groupMetadataService;
 
+  private final boolean conditionalResponse;
+
   @Inject
   public DefaultNpmGroupRepository(final @Named(NpmContentClass.ID) ContentClass contentClass,
                                    final NpmGroupRepositoryConfigurator configurator,
-                                   final MetadataServiceFactory metadataServiceFactory)
+                                   final MetadataServiceFactory metadataServiceFactory,
+                                   final @Named("${nexus.npm.conditionalResponse:-false}") boolean conditionalResponse)
   {
 
     this.groupMetadataService = metadataServiceFactory.createGroupMetadataService(this);
@@ -79,6 +82,7 @@ public class DefaultNpmGroupRepository
     this.contentClass = checkNotNull(contentClass);
     this.configurator = checkNotNull(configurator);
     this.repositoryKind = new DefaultRepositoryKind(NpmGroupRepository.class, null);
+    this.conditionalResponse = conditionalResponse;
   }
 
   @Override
@@ -147,7 +151,12 @@ public class DefaultNpmGroupRepository
             contentLocator = groupMetadataService.producePackageVersion(packageRequest);
           }
           if (contentLocator != null) {
-            return new DefaultStorageFileItem(this, storeRequest, true, true, contentLocator);
+            DefaultStorageFileItem storageFileItem =
+                new DefaultStorageFileItem(this, storeRequest, true, true, contentLocator);
+            if (conditionalResponse) {
+              storageFileItem.setModified(contentLocator.getModified());
+            }
+            return storageFileItem;
           }
         }
         else {

@@ -13,7 +13,7 @@
     Eclipse Foundation. All other trademarks are the property of their respective owners.
 
 -->
-<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure.dtd">
+<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure_9_3.dtd">
 
 <!-- =============================================================== -->
 <!-- Expose JMX MBeans and access from a remote host                 -->
@@ -29,7 +29,7 @@
   -->
 
   <!-- explicitly setting rmi server hostname as IP address here can help avoid network routing issues -->
-  <!-- http://docs.oracle.com/javase/7/docs/technotes/guides/management/faq.html#linux1 -->
+  <!-- http://docs.oracle.com/javase/8/docs/technotes/guides/management/faq.html#linux1 -->
   <Call name="setProperty" class="java.lang.System">
     <Arg>java.rmi.server.hostname</Arg>
     <Arg>
@@ -39,7 +39,7 @@
 
   <!-- WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING -->
   <!-- defaulting convenience over security; exposing JMX to any remote host without ssl or authentication -->
-  <!-- http://docs.oracle.com/javase/7/docs/technotes/guides/jmx/ -->
+  <!-- http://docs.oracle.com/javase/8/docs/technotes/guides/jmx/ -->
   <Call name="setProperty" class="java.lang.System">
     <Arg>com.sun.management.jmxremote.ssl</Arg>
     <Arg>
@@ -53,47 +53,6 @@
     </Arg>
   </Call>
 
-  <!-- =========================================================== -->
-  <!-- Initialize an mbean server                                  -->
-  <!-- =========================================================== -->
-  <Call id="MBeanServer" class="java.lang.management.ManagementFactory" name="getPlatformMBeanServer" />
-
-  <!-- =========================================================== -->
-  <!-- Initialize the Jetty MBean container                        -->
-  <!-- =========================================================== -->
-  <New id="MBeanContainer" class="org.eclipse.jetty.jmx.MBeanContainer">
-    <Arg>
-      <Ref id="MBeanServer" />
-    </Arg>
-    <Call name="start"/>
-  </New>
-
-  <!-- Add to the Server to listen for object events -->
-  <Get id="Container" name="container">
-    <Call name="addEventListener">
-      <Arg>
-        <Ref id="MBeanContainer" />
-      </Arg>
-    </Call>
-  </Get>
-
-  <!-- Add to the Server as a managed lifecycle -->
-  <Call name="addBean">
-    <Arg>
-      <Ref id="MBeanContainer"/>
-    </Arg>
-    <Arg type="boolean">true</Arg>
-  </Call>
-
-  <!-- Logging is initialized prior to the MBeanContainer, so it is necessary to register the logger manually -->
-  <Ref id="MBeanContainer">
-    <Call name="addBean">
-      <Arg>
-        <New class="org.eclipse.jetty.util.log.Log"/>
-      </Arg>
-    </Call>
-  </Ref>
-
   <!-- create the RMIRegistry -->
   <Call name="createRegistry" class="java.rmi.registry.LocateRegistry">
     <Arg type="java.lang.Integer"><Property name="jmx-port" default="1099" /></Arg>
@@ -102,7 +61,7 @@
     </Call>
   </Call>
 
-  <!-- create the RMI connector -->
+  <!-- create a remote JMXConnectorServer -->
   <New id="ConnectorServer" class="org.eclipse.jetty.jmx.ConnectorServer">
     <Arg>
       <New class="javax.management.remote.JMXServiceURL">

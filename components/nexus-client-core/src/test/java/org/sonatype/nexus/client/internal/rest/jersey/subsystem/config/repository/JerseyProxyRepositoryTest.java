@@ -15,7 +15,7 @@ package org.sonatype.nexus.client.internal.rest.jersey.subsystem.config.reposito
 import org.sonatype.nexus.client.internal.rest.jersey.subsystem.repository.JerseyProxyRepository;
 import org.sonatype.nexus.client.rest.jersey.JerseyNexusClient;
 import org.sonatype.nexus.rest.model.RepositoryProxyResource;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.junit.Test;
 

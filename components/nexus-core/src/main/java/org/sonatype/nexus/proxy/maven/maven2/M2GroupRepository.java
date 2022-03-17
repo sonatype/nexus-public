@@ -296,9 +296,9 @@ public class M2GroupRepository
 
       storeMergedMetadataItemDigest(request, sha1Digest, items, "SHA1");
 
-      storeMergedMetadataItemDigest(request, sha256Digest, items, "SHA-256");
+      storeMergedMetadataItemDigest(request, sha256Digest, items, "SHA256");
 
-      storeMergedMetadataItemDigest(request, sha512Digest, items, "SHA-512");
+      storeMergedMetadataItemDigest(request, sha512Digest, items, "SHA512");
 
       resultOutputStream.close();
 

@@ -14,7 +14,7 @@ package org.sonatype.nexus.plugins.capabilities.support.condition;
 
 import org.sonatype.nexus.plugins.capabilities.Condition;
 import org.sonatype.nexus.plugins.capabilities.internal.condition.NexusIsActiveCondition;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.hamcrest.Matchers;
 import org.junit.Test;

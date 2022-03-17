@@ -44,14 +44,18 @@ public class MetadataServiceFactoryImpl
 
   private final ProxyMetadataTransport proxyMetadataTransport;
 
+  private final boolean abbreviateMetadata;
+
   @Inject
   public MetadataServiceFactoryImpl(final MetadataStore metadataStore,
                                     final MetadataParser metadataParser,
-                                    final ProxyMetadataTransport proxyMetadataTransport)
+                                    final ProxyMetadataTransport proxyMetadataTransport,
+                                    final @Named("${nexus.npm.abbreviateMetadata:-false}") boolean abbreviateMetadata)
   {
     this.metadataStore = checkNotNull(metadataStore);
     this.metadataParser = checkNotNull(metadataParser);
     this.proxyMetadataTransport = checkNotNull(proxyMetadataTransport);
+    this.abbreviateMetadata = abbreviateMetadata;
   }
 
   @VisibleForTesting
@@ -69,7 +73,7 @@ public class MetadataServiceFactoryImpl
   public ProxyMetadataService createProxyMetadataService(final NpmProxyRepository npmProxyRepository) {
     metadataStore.startOnce();
     return new ProxyMetadataServiceImpl(npmProxyRepository, metadataStore,
-        getProxyMetadataTransport(), metadataParser);
+        getProxyMetadataTransport(), metadataParser, abbreviateMetadata);
   }
 
   @Override

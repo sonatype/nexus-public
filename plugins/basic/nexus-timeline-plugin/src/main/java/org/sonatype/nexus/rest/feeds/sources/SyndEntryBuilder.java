@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.rest.feeds.sources;
 
-import com.sun.syndication.feed.synd.SyndEntry;
+import com.rometools.rome.feed.synd.SyndEntry;
 
 /**
  * @author Juven Xu

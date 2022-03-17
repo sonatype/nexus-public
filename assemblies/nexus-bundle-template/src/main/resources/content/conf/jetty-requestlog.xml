@@ -13,15 +13,10 @@
     Eclipse Foundation. All other trademarks are the property of their respective owners.
 
 -->
-<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure.dtd">
-
-<!-- =============================================================== -->
-<!-- Configure the Jetty Request Log                                 -->
-<!-- =============================================================== -->
-
+<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure_9_3.dtd">
 <Configure id="Server" class="org.eclipse.jetty.server.Server">
 
-  <Ref id="Handlers">
+  <Ref refid="Handlers">
     <Call name="addHandler">
       <Arg>
         <New id="RequestLogHandler" class="org.eclipse.jetty.server.handler.RequestLogHandler">

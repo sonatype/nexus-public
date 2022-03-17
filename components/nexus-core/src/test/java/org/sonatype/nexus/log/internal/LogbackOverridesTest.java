@@ -18,8 +18,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.sonatype.nexus.log.LoggerLevel;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
-import org.sonatype.sisu.litmus.testsupport.hamcrest.DiffMatchers;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.hamcrest.DiffMatchers;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;

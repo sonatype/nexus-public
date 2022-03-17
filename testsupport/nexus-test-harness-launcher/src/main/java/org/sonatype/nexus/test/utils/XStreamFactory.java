@@ -52,5 +52,8 @@ public class XStreamFactory
 
     // Nexus replaces the String converter with one that escape HTML, we do NOT want that on the IT client.
     xstream.registerConverter(new StringConverter());
+
+    // We only do this because it is test code
+    xstream.allowTypesByWildcard(new String[] {"**"});
   }
 }

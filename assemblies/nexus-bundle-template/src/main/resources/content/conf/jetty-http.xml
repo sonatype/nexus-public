@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure_9_3.dtd">
+<Configure id="Server" class="org.eclipse.jetty.server.Server">
+  <Call name="addConnector">
+    <Arg>
+      <New id="httpConnector" class="org.eclipse.jetty.server.ServerConnector">
+        <Arg name="server"><Ref refid="Server"/></Arg>
+        <Arg name="acceptors" type="int"><Property name="jetty.http.acceptors" default="-1"/></Arg>
+        <Arg name="selectors" type="int"><Property name="jetty.http.selectors" default="-1"/></Arg>
+        <Arg name="factories">
+          <Array type="org.eclipse.jetty.server.ConnectionFactory">
+            <!-- uncomment to support proxy protocol
+            <Item>
+              <New class="org.eclipse.jetty.server.ProxyConnectionFactory"/>
+            </Item>-->
+            <Item>
+              <New class="org.sonatype.nexus.bootstrap.jetty.NexusInstrumentedConnectionFactory">
+                <Arg>
+                  <New class="org.eclipse.jetty.server.HttpConnectionFactory">
+                    <Arg name="config">
+                      <Ref refid="httpConfig"/>
+                    </Arg>
+                  </New>
+                </Arg>
+              </New>
+            </Item>
+          </Array>
+        </Arg>
+        <Set name="host"><Property name="application-host" /></Set>
+        <Set name="port"><Property name="application-port"/></Set>
+        <Set name="idleTimeout"><Property name="jetty.http.idleTimeout" default="30000"/></Set>
+        <Set name="acceptorPriorityDelta"><Property name="jetty.http.acceptorPriorityDelta" default="0"/></Set>
+        <Set name="acceptQueueSize"><Property name="jetty.http.acceptQueueSize" default="0"/></Set>
+        <Call name="addBean">
+          <Arg>
+            <New class="org.eclipse.jetty.io.ConnectionStatistics"/>
+          </Arg>
+        </Call>
+      </New>
+    </Arg>
+  </Call>
+</Configure>

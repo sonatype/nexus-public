@@ -16,7 +16,7 @@ import java.util.concurrent.Executors;
 
 import org.sonatype.nexus.proxy.maven.routing.internal.task.executor.ConstrainedExecutor;
 import org.sonatype.nexus.proxy.maven.routing.internal.task.executor.ConstrainedExecutorImpl;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.junit.Test;
 

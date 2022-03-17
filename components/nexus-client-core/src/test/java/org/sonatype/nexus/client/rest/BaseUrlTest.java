@@ -14,7 +14,7 @@ package org.sonatype.nexus.client.rest;
 
 import java.net.MalformedURLException;
 
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.junit.Assert;
 import org.junit.Test;

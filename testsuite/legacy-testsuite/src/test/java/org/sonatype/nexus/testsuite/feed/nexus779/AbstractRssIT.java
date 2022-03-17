@@ -17,8 +17,8 @@ import java.util.List;
 import org.sonatype.nexus.integrationtests.AbstractPrivilegeTest;
 import org.sonatype.nexus.test.utils.FeedUtil;
 
-import com.sun.syndication.feed.synd.SyndEntry;
-import com.sun.syndication.feed.synd.SyndFeed;
+import com.rometools.rome.feed.synd.SyndEntry;
+import com.rometools.rome.feed.synd.SyndFeed;
 
 public abstract class AbstractRssIT
     extends AbstractPrivilegeTest

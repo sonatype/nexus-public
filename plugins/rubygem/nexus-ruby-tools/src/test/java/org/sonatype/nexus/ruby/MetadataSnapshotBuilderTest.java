@@ -14,7 +14,7 @@ package org.sonatype.nexus.ruby;
 
 import java.io.InputStream;
 
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;

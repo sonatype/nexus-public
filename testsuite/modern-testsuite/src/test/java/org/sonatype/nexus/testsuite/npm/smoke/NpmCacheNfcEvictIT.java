@@ -18,13 +18,13 @@ import org.sonatype.nexus.bundle.launcher.NexusBundleConfiguration;
 import org.sonatype.nexus.client.core.exception.NexusClientNotFoundException;
 import org.sonatype.nexus.client.core.subsystem.content.Location;
 import org.sonatype.nexus.testsuite.npm.NpmMockRegistryITSupport;
-import org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers;
+import org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers;
 
 import com.bolyuba.nexus.plugin.npm.client.NpmProxyRepository;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.not;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 
 /**

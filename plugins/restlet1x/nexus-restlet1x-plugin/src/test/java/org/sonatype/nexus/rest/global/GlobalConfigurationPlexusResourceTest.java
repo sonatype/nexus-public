@@ -16,7 +16,7 @@ import org.sonatype.nexus.configuration.source.ApplicationConfigurationSource;
 import org.sonatype.nexus.notification.NotificationManager;
 import org.sonatype.nexus.rest.model.SmtpSettings;
 import org.sonatype.security.configuration.source.SecurityConfigurationSource;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import com.thoughtworks.xstream.XStream;
 import org.junit.Test;
@@ -48,6 +48,7 @@ public class GlobalConfigurationPlexusResourceTest
 
     // make sure the configuration resource configures xstream to unescape
     final XStream xStream = new XStream();
+    xStream.allowTypes(new Class[]{SmtpSettings.class});
     testSubject.configureXStream(xStream);
 
     final String xml = xStream.toXML(settings);

@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.plugins</groupId>
     <artifactId>nexus-plugins-restlet1x</artifactId>
-    <version>2.14.21-02</version>
+    <version>2.15.0-04</version>
   </parent>
 
   <artifactId>nexus-restlet-bridge</artifactId>
@@ -74,7 +74,7 @@
 
     <dependency>
       <groupId>org.json</groupId>
-      <artifactId>org.json</artifactId>
+      <artifactId>json</artifactId>
     </dependency>
 
     <dependency>

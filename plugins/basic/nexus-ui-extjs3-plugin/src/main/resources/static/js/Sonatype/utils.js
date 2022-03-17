@@ -6,6 +6,10 @@
  * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
  * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
  *
+ * Sonatype Nexus (TM) Open Source Version is distributed with Sencha Ext JS pursuant to a FLOSS Exception agreed upon
+ * between Sonatype, Inc. and Sencha Inc. Sencha Ext JS is licensed under GPL v3 and cannot be redistributed as part of a
+ * closed source work.
+ *
  * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
@@ -558,42 +562,6 @@ define('Sonatype/utils',['../extjs', 'Nexus/config', 'Nexus/util/Format', 'Sonat
                         allowBlank : false
                       }],
                   buttons : [{
-                        text : 'Reset Password',
-                        formBind : true,
-                        scope : this,
-                        handler : function() {
-                          var username = w.find('name', 'username')[0].getValue();
-                          var email = w.find('name', 'email')[0].getValue();
-
-                          Ext.Ajax.request({
-                                scope : this,
-                                method : 'POST',
-                                jsonData : {
-                                  data : {
-                                    userId : username,
-                                    email : email
-                                  }
-                                },
-                                url : Sonatype.config.repos.urls.usersForgotPassword,
-                                success : function(response, options) {
-                                  w.close();
-                                  Ext.MessageBox.show({
-                                        title : 'Reset Password',
-                                        msg : 'Password request completed successfully.' + '<br /><br />' + 'Check your mailbox, your new password should arrive in a few minutes.',
-                                        buttons : Ext.MessageBox.OK,
-                                        icon : Ext.MessageBox.INFO,
-                                        animEl : 'mb3'
-                                      });
-                                },
-                                failure : function(response, options) {
-                                  var errorOptions = {
-                                    hideErrorStatus : true
-                                  };
-                                  ns.connectionError(response, 'There is a problem resetting your password.', false, errorOptions)
-                                }
-                              });
-                        }
-                      }, {
                         text : 'Cancel',
                         formBind : false,
                         scope : this,

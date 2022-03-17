@@ -120,11 +120,18 @@ public class MetadataParser
   public PackageRoot parsePackageRoot(final String repositoryId, final ContentLocator contentLocator)
       throws IOException
   {
+    return parsePackageRoot(repositoryId, contentLocator, false);
+  }
+
+  public PackageRoot parsePackageRoot(final String repositoryId,
+                                      final ContentLocator contentLocator,
+                                      final boolean abbreviateMetadata) throws IOException
+  {
     checkNotNull(repositoryId);
     checkNotNull(contentLocator);
     checkArgument(NpmRepository.JSON_MIME_TYPE.equals(contentLocator.getMimeType()), "JSON is expected inout!");
     try (final JsonParser parser = objectMapper.getFactory().createParser(contentLocator.getContent())) {
-      final PackageRoot packageRoot = parsePackageRoot(repositoryId, parser);
+      final PackageRoot packageRoot = parsePackageRoot(repositoryId, parser, abbreviateMetadata);
       checkArgument(!packageRoot.isIncomplete(),
           "Wrong API use, incomplete package roots should not be consumed this way!");
       return packageRoot;
@@ -155,7 +162,7 @@ public class MetadataParser
       return null;
     }
     final String jsonString = objectMapper.writeValueAsString(root.getRaw());
-    return new StringContentLocator(jsonString, NpmRepository.JSON_MIME_TYPE);
+    return new StringContentLocator(jsonString, NpmRepository.JSON_MIME_TYPE, root.getModified());
   }
 
   @Nullable
@@ -171,7 +178,10 @@ public class MetadataParser
 
   // ==
 
-  private PackageRoot parsePackageRoot(final String repositoryId, final JsonParser parser) throws IOException {
+  private PackageRoot parsePackageRoot(final String repositoryId,
+                                       final JsonParser parser,
+                                       final boolean abbreviateMetadata) throws IOException
+  {
     final Map<String, Object> raw = Maps.newHashMap();
     final Map<String, NpmBlob> attachments = Maps.newHashMap();
     final String currentUserId = getCurrentUserId();
@@ -193,6 +203,8 @@ public class MetadataParser
       }
     }
     final PackageRoot result = new PackageRoot(repositoryId, raw);
+    result.setAbbreviated(abbreviateMetadata);
+    result.setModified(System.currentTimeMillis());
     if (!attachments.isEmpty()) {
       result.getAttachments().putAll(attachments);
     }
@@ -491,7 +503,7 @@ public class MetadataParser
           if (parser.getCurrentName().startsWith("_")) {
             continue; // skip it
           }
-          return parsePackageRoot(repositoryId, parser);
+          return parsePackageRoot(repositoryId, parser, false);
         }
         return null;
       }

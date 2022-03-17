@@ -40,17 +40,16 @@ public class Nexus1923ProxyIncrementalIndexIT
 
     //First create our hosted repository
     createHostedRepository();
-    //And hosted repository task
-    String hostedReindexId = createHostedReindexTask();
 
     TaskScheduleUtil.waitForAllTasksToStop();
+
+    //And hosted repository task
+    String hostedReindexId = createHostedReindexTask();
 
     FileUtils.copyDirectory(getTestFile(FIRST_ARTIFACT),
         hostedRepoStorageDirectory);
 
     reindexHostedRepository(hostedReindexId);
-
-    TaskScheduleUtil.waitForAllTasksToStop();
 
     //validate that after reindex is done we have an incremental chunk in the hosted repo
     Assert.assertTrue(getHostedRepositoryIndex().exists());

@@ -53,7 +53,7 @@ import org.sonatype.sisu.goodies.eventbus.EventBus;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Module;
-import com.yammer.metrics.annotation.Timed;
+import com.codahale.metrics.annotation.Timed;
 import org.eclipse.sisu.Parameters;
 import org.eclipse.sisu.bean.BeanManager;
 import org.eclipse.sisu.inject.DefaultRankingFunction;

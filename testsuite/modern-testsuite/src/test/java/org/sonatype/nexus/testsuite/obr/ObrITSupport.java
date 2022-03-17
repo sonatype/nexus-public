@@ -43,7 +43,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.sonatype.sisu.filetasks.builder.FileRef.file;
-import static org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers.exists;
+import static org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers.exists;
 
 @NexusStartAndStopStrategy(NexusStartAndStopStrategy.Strategy.EACH_TEST)
 public abstract class ObrITSupport

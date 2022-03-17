@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.testsuite.support;
 
-import org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers;
+import org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers;
 
 import org.junit.Test;
 
@@ -22,7 +22,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.sonatype.nexus.testsuite.support.hamcrest.NexusMatchers.doesNotHaveCommonExceptions;
 import static org.sonatype.nexus.testsuite.support.hamcrest.NexusMatchers.doesNotHaveFailingPlugins;
 import static org.sonatype.nexus.testsuite.support.hamcrest.NexusMatchers.logFile;
-import static org.sonatype.sisu.litmus.testsupport.hamcrest.URLMatchers.respondsWithStatus;
+import static org.sonatype.sisu.goodies.testsupport.hamcrest.URLMatchers.respondsWithStatus;
 
 /**
  * Test starting and stopping of Nexus.

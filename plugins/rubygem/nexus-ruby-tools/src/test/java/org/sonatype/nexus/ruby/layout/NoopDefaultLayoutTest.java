@@ -14,7 +14,7 @@ package org.sonatype.nexus.ruby.layout;
 
 import org.sonatype.nexus.ruby.FileType;
 import org.sonatype.nexus.ruby.cuba.DefaultRubygemsFileSystem;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.junit.Test;
 

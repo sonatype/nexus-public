@@ -80,16 +80,4 @@ public class DefaultSecurityEmailer
 
     nexusEmailer.sendMail(request);
   }
-
-  public void sendResetPassword(String email, String password) {
-    StringBuilder body = new StringBuilder();
-    body.append("Your password has been reset.  Your new password is: ");
-    body.append(password);
-
-    MailRequest request = nexusEmailer.getDefaultMailRequest("Nexus: User account notification.", body.toString());
-
-    request.getToAddresses().add(new Address(email));
-
-    nexusEmailer.sendMail(request);
-  }
 }

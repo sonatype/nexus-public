@@ -29,7 +29,7 @@ import org.sonatype.nexus.proxy.maven.routing.internal.ConfigImpl;
 import org.sonatype.nexus.test.utils.NexusStatusUtil;
 import org.sonatype.nexus.test.utils.TestProperties;
 import org.sonatype.nexus.testsuite.plugin.nexus2810.PluginConsoleMessageUtil;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.apache.commons.io.FileUtils;
 import org.codehaus.cargo.container.ContainerType;

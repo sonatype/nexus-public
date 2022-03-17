@@ -41,6 +41,9 @@ public class XStreamFactory
   }
 
   private static void configureXStream(XStream xstream, XStreamConfigurator configurator) {
+    // We only do this because it is test code
+    xstream.allowTypesByWildcard(new String[] {"**"});
+
     if (configurator != null) {
       configurator.configure(xstream);
     }

@@ -13,32 +13,16 @@
     Eclipse Foundation. All other trademarks are the property of their respective owners.
 
 -->
-<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure.dtd">
-
-<!-- ============================================================ -->
-<!--                                                              -->
-<!-- For help using this configuration, see:                      -->
-<!--                                                              -->
-<!--   http://links.sonatype.com/products/nexus/oss/docs-jetty    -->
-<!--                                                              -->
-<!-- ============================================================ -->
+<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure_9_3.dtd">
 <Configure id="Server" class="org.eclipse.jetty.server.Server">
 
-  <Set name="threadPool">
-    <New class="com.yammer.metrics.jetty.InstrumentedQueuedThreadPool"/>
-  </Set>
+  <Arg name="threadpool">
+    <New id="threadpool" class="org.sonatype.nexus.bootstrap.jetty.NexusInstrumentedQueuedThreadPool">
+      <Set name="maxThreads" type="int"><Property name="jetty.threadpool.maxThreads" default="400"/></Set>
+    </New>
+  </Arg>
 
-  <Call name="addConnector">
-    <Arg>
-      <New id="HTTPConnector" class="org.sonatype.nexus.bootstrap.jetty.InstrumentedSelectChannelConnector">
-        <Set name="host"><Property name="application-host"/></Set>
-        <Set name="port"><Property name="application-port"/></Set>
-        <Set name="forwarded">true</Set>
-      </New>
-    </Arg>
-  </Call>
-
-  <New id="NexusHandler" class="com.yammer.metrics.jetty.InstrumentedHandler">
+  <New id="NexusHandler" class="org.sonatype.nexus.bootstrap.jetty.NexusInstrumentedHandler">
     <Arg>
       <New id="NexusWebAppContext" class="org.eclipse.jetty.webapp.WebAppContext">
         <Arg><Property name="nexus-webapp"/></Arg>
@@ -51,17 +35,58 @@
 
   <Set name="handler">
     <New id="Handlers" class="org.eclipse.jetty.server.handler.HandlerCollection">
-      <Call name="addHandler">
-        <Arg>
-          <Ref id="NexusHandler"/>
-        </Arg>
-      </Call>
+      <Set name="handlers">
+        <Array type="org.eclipse.jetty.server.Handler">
+          <Item>
+            <Ref refid="NexusHandler"/>
+          </Item>
+        </Array>
+      </Set>
     </New>
   </Set>
 
   <Set name="stopAtShutdown">true</Set>
-  <Set name="sendServerVersion">true</Set>
-  <Set name="sendDateHeader">true</Set>
-  <Set name="gracefulShutdown">1000</Set>
+  <Set name="stopTimeout"><Property name="jetty.server.stopTimeout" default="5000"/></Set>
+  <Set name="dumpAfterStart"><Property name="jetty.server.dumpAfterStart" default="false"/></Set>
+  <Set name="dumpBeforeStop"><Property name="jetty.server.dumpBeforeStop" default="false"/></Set>
+
+  <New id="httpConfig" class="org.eclipse.jetty.server.HttpConfiguration">
+    <Set name="outputBufferSize"><Property name="jetty.httpConfig.outputBufferSize" default="32768"/></Set>
+    <Set name="outputAggregationSize"><Property name="jetty.httpConfig.outputAggregationSize" default="8192"/></Set>
+    <Set name="requestHeaderSize"><Property name="jetty.httpConfig.requestHeaderSize" default="8192"/></Set>
+    <Set name="responseHeaderSize"><Property name="jetty.httpConfig.responseHeaderSize" default="8192"/></Set>
+    <Set name="sendServerVersion"><Property name="jetty.httpConfig.sendServerVersion" default="true"/></Set>
+    <Set name="sendDateHeader"><Property name="jetty.httpConfig.sendDateHeader" default="true"/></Set>
+    <Set name="headerCacheSize"><Property name="jetty.httpConfig.headerCacheSize" default="1024" /></Set>
+    <Set name="delayDispatchUntilContent"><Property name="jetty.httpConfig.delayDispatchUntilContent" default="false"/></Set>
+    <Call name="addCustomizer">
+      <Arg><New class="org.eclipse.jetty.server.ForwardedRequestCustomizer"/></Arg>
+    </Call>
+  </New>
+
+  <!-- =========================================================== -->
+  <!-- Get the platform MBeanServer                                -->
+  <!-- =========================================================== -->
+  <Call id="MBeanServer" class="java.lang.management.ManagementFactory" name="getPlatformMBeanServer" />
+
+  <!-- =========================================================== -->
+  <!-- Initialize the Jetty MBeanContainer                         -->
+  <!-- =========================================================== -->
+  <Call name="addBean">
+    <Arg>
+      <New id="MBeanContainer" class="org.eclipse.jetty.jmx.MBeanContainer">
+        <Arg>
+          <Ref refid="MBeanServer" />
+        </Arg>
+      </New>
+    </Arg>
+  </Call>
+
+  <!-- Add the static log -->
+  <Call name="addBean">
+    <Arg>
+      <Get class="org.eclipse.jetty.util.log.Log" name="Log" />
+    </Arg>
+  </Call>
 
 </Configure>

@@ -18,7 +18,7 @@ import java.util.concurrent.Callable;
 
 import org.sonatype.scheduling.schedules.DailySchedule;
 import org.sonatype.scheduling.schedules.Schedule;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import junit.framework.Assert;
 import org.junit.Before;

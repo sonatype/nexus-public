@@ -20,8 +20,8 @@ import java.io.LineNumberReader;
 import org.sonatype.nexus.bundle.launcher.NexusBundleConfiguration;
 import org.sonatype.nexus.client.core.subsystem.routing.Status;
 import org.sonatype.nexus.client.core.subsystem.routing.Status.Outcome;
-import org.sonatype.sisu.litmus.testsupport.group.External;
-import org.sonatype.sisu.litmus.testsupport.group.Slow;
+import org.sonatype.sisu.goodies.testsupport.group.External;
+import org.sonatype.sisu.goodies.testsupport.group.Slow;
 
 import com.google.common.io.ByteStreams;
 import com.google.common.io.InputSupplier;

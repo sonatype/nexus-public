@@ -57,6 +57,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
+import static com.bolyuba.nexus.plugin.npm.service.PackageRoot.ABBREVIATED_PREFIX;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -260,14 +261,25 @@ public class OrientMetadataStore
   }
 
   @Override
-  public PackageRoot getPackageByName(final NpmRepository repository, final String packageName) {
+  public PackageRoot getPackageByName(final NpmRepository repository, final String packageName)
+  {
+    PackageRoot fullPackageRoot = getPackageByName(repository, packageName, false);
+    // in case the full package is missing - try to find the abbreviated version of it.
+    return fullPackageRoot != null ? fullPackageRoot : getPackageByName(repository, packageName, true);
+  }
+
+  @Override
+  public PackageRoot getPackageByName(final NpmRepository repository,
+                                      final String packageName,
+                                      final boolean isAbbreviated)
+  {
     checkNotNull(repository);
     checkNotNull(packageName);
     final EntityHandler<PackageRoot> entityHandler = getHandlerFor(PackageRoot.class);
     try (ODatabaseDocumentTx db = db()) {
       db.begin();
       try {
-        final ODocument doc = doGetPackageByName(db, repository, packageName);
+        final ODocument doc = doGetPackageByName(db, repository, packageName, isAbbreviated);
         if (doc == null) {
           return null;
         }
@@ -310,11 +322,17 @@ public class OrientMetadataStore
     try (ODatabaseDocumentTx db = db()) {
       db.begin();
       try {
-        final ODocument doc = doGetPackageByName(db, repository, packageName);
-        if (doc == null) {
+        final ODocument fullDoc = doGetPackageByName(db, repository, packageName, false);
+        final ODocument abbreviatedDoc = doGetPackageByName(db, repository, packageName, true);
+        if (fullDoc == null && abbreviatedDoc == null) {
           return false;
         }
-        db.delete(doc);
+        if (fullDoc != null) {
+          db.delete(fullDoc);
+        }
+        if (abbreviatedDoc != null) {
+          db.delete(abbreviatedDoc);
+        }
         return true;
       }
       finally {
@@ -439,10 +457,12 @@ public class OrientMetadataStore
 
   private ODocument doGetPackageByName(final ODatabaseDocumentTx db,
                                        final NpmRepository repository,
-                                       final String packageName)
+                                       final String packageName,
+                                       final boolean isAbbreviated)
   {
+    final String nameSuffix = isAbbreviated ? ABBREVIATED_PREFIX + ":" + packageName : packageName;
     final List<ODocument> entries = db
-        .query(new OSQLSynchQuery<>(SQL_GET_PACKAGE_BY_NAME), repository.getId() + ":" + packageName);
+        .query(new OSQLSynchQuery<>(SQL_GET_PACKAGE_BY_NAME), repository.getId() + ":" + nameSuffix);
     for (ODocument entry : entries) {
       return entry; // we expect only one
     }
@@ -455,7 +475,7 @@ public class OrientMetadataStore
                                       final PackageRoot packageRoot,
                                       final boolean overlay)
   {
-    ODocument doc = doGetPackageByName(db, repository, packageRoot.getName());
+    ODocument doc = doGetPackageByName(db, repository, packageRoot.getName(), packageRoot.isAbbreviated());
     if (doc == null) {
       doc = db.newInstance(entityHandler.getSchemaName());
     }

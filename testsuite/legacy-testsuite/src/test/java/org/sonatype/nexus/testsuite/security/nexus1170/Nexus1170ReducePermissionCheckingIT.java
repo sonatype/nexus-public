@@ -98,7 +98,6 @@ public class Nexus1170ReducePermissionCheckingIT
     this.checkPermission(permissions, "nexus:repostatus", 1);
     this.checkPermission(permissions, "security:usersforgotpw", 9);
     this.checkPermission(permissions, "security:usersforgotid", 9);
-    this.checkPermission(permissions, "security:usersreset", 0);
     this.checkPermission(permissions, "security:userschangepw", 9);
 
     this.checkPermission(permissions, "nexus:command", 0);

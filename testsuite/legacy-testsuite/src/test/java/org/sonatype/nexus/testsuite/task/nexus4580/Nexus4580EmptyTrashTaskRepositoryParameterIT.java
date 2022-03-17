@@ -20,7 +20,7 @@ import org.sonatype.nexus.rest.model.ScheduledServicePropertyResource;
 import org.sonatype.nexus.tasks.descriptors.EmptyTrashTaskDescriptor;
 import org.sonatype.nexus.test.utils.NexusRequestMatchers;
 import org.sonatype.nexus.test.utils.TaskScheduleUtil;
-import org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers;
+import org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers;
 
 import org.junit.Test;
 import org.restlet.resource.StringRepresentation;

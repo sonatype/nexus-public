@@ -30,6 +30,8 @@ import org.sonatype.nexus.proxy.RemoteStorageException;
 import org.sonatype.nexus.proxy.ResourceStoreRequest;
 import org.sonatype.nexus.proxy.StorageException;
 import org.sonatype.nexus.proxy.access.Action;
+import org.sonatype.nexus.proxy.events.RepositoryConfigurationUpdatedEvent;
+import org.sonatype.nexus.proxy.events.RepositoryRegistryEventAdd;
 import org.sonatype.nexus.proxy.events.RepositoryRegistryEventRemove;
 import org.sonatype.nexus.proxy.item.AbstractStorageItem;
 import org.sonatype.nexus.proxy.item.ContentLocator;
@@ -38,11 +40,14 @@ import org.sonatype.nexus.proxy.item.RepositoryItemUid;
 import org.sonatype.nexus.proxy.item.RepositoryItemUidLock;
 import org.sonatype.nexus.proxy.item.StorageFileItem;
 import org.sonatype.nexus.proxy.item.StorageItem;
+import org.sonatype.nexus.proxy.maven.MavenRepository;
+import org.sonatype.nexus.proxy.maven.maven2.Maven2ContentClass;
 import org.sonatype.nexus.proxy.registry.ContentClass;
 import org.sonatype.nexus.proxy.repository.AbstractProxyRepository;
 import org.sonatype.nexus.proxy.repository.DefaultRepositoryKind;
 import org.sonatype.nexus.proxy.repository.Repository;
 import org.sonatype.nexus.proxy.repository.RepositoryKind;
+import org.sonatype.nexus.proxy.repository.ShadowRepository;
 import org.sonatype.nexus.proxy.storage.UnsupportedStorageOperationException;
 import org.sonatype.nexus.proxy.walker.WalkerFilter;
 
@@ -96,11 +101,16 @@ public class DefaultNpmProxyRepository
 
   private final TarballSource tarballSource;
 
+  private long itemMaxAgeMillis;
+
+  private final boolean conditionalResponse;
+
   @Inject
   public DefaultNpmProxyRepository(final @Named(NpmContentClass.ID) ContentClass contentClass,
                                    final NpmProxyRepositoryConfigurator configurator,
                                    final MetadataServiceFactory metadataServiceFactory,
-                                   final TarballSource tarballSource)
+                                   final TarballSource tarballSource,
+                                   final @Named("${nexus.npm.conditionalResponse:-false}") boolean conditionalResponse)
   {
     this.proxyMetadataService = metadataServiceFactory.createProxyMetadataService(this);
     this.tarballSource = checkNotNull(tarballSource);
@@ -109,6 +119,8 @@ public class DefaultNpmProxyRepository
 
     this.repositoryKind = new DefaultRepositoryKind(NpmProxyRepository.class, null);
     this.mimeRulesSource = new NpmMimeRulesSource();
+
+    this.conditionalResponse = conditionalResponse;
   }
 
   @AllowConcurrentEvents
@@ -119,8 +131,25 @@ public class DefaultNpmProxyRepository
     }
   }
 
+  @AllowConcurrentEvents
+  @Subscribe
+  public void onEvent(final RepositoryRegistryEventAdd event) {
+    updateItemMaxAge(event.getRepository());
+  }
+
+  @AllowConcurrentEvents
+  @Subscribe
+  public void onEvent(final RepositoryConfigurationUpdatedEvent event) {
+    updateItemMaxAge(event.getRepository());
+  }
+
   @Override
   public ProxyMetadataService getMetadataService() { return proxyMetadataService; }
+
+  @Override
+  public long getItemMaxAgeMillis() {
+    return itemMaxAgeMillis;
+  }
 
   @Override
   protected Configurator getConfigurator() {
@@ -268,6 +297,9 @@ public class DefaultNpmProxyRepository
     result.setRemoteChecked(Long.MAX_VALUE); // do not handle it as expired at any cost
     result.setExpired(false); // do not handle it as expired at any cost
     result.getItemContext().put(NpmRepository.NPM_METADATA_SERVICED, Boolean.TRUE); // mark item as NPM md serviced
+    if (conditionalResponse) {
+      result.setModified(contentLocator.getModified());
+    }
     return result;
   }
 
@@ -431,5 +463,15 @@ public class DefaultNpmProxyRepository
       return false;
     }
     return super.isOld(maxAge, item, shouldCalculate);
+  }
+
+  private void updateItemMaxAge(final Repository repository) {
+    if (repository != null && repository.getRepositoryKind().isFacetAvailable(NpmProxyRepository.class)) {
+      final NpmProxyRepository npmProxyRepository = repository.adaptToFacet(NpmProxyRepository.class);
+      final long currentItemMaxAgeMillis = npmProxyRepository.getItemMaxAge() * 60_000L;
+      if (currentItemMaxAgeMillis != itemMaxAgeMillis) {
+        itemMaxAgeMillis = currentItemMaxAgeMillis;
+      }
+    }
   }
 }

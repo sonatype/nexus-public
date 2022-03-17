@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.sonatype.sisu.litmus.testsupport.TestUtil;
+import org.sonatype.sisu.goodies.testsupport.TestUtil;
 import org.sonatype.timeline.internal.DefaultTimeline;
 
 import org.eclipse.sisu.launch.InjectedTestCase;

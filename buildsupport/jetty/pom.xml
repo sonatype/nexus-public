@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>2.14.21-02</version>
+    <version>2.15.0-04</version>
   </parent>
 
   <artifactId>nexus-buildsupport-jetty</artifactId>
@@ -28,15 +28,15 @@
   <packaging>pom</packaging>
 
   <properties>
-    <eclipse-jetty.version>8.1.16.v20140903</eclipse-jetty.version>
+    <eclipse-jetty.version>9.4.45.v20220203</eclipse-jetty.version>
   </properties>
 
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>org.eclipse.jetty.orbit</groupId>
-        <artifactId>javax.servlet</artifactId>
-        <version>3.0.0.v201112011016</version>
+        <groupId>javax.servlet</groupId>
+        <artifactId>javax.servlet-api</artifactId>
+        <version>3.1.0</version>
       </dependency>
 
       <dependency>
@@ -126,6 +126,12 @@
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-ajp</artifactId>
+        <version>${eclipse-jetty.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-proxy</artifactId>
         <version>${eclipse-jetty.version}</version>
       </dependency>
 

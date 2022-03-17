@@ -23,7 +23,7 @@ import org.sonatype.nexus.integrationtests.TestContainer;
 import org.sonatype.nexus.security.ldap.realms.api.dto.LdapConnectionInfoDTO;
 import org.sonatype.nexus.testsuite.ldap.AbstractLdapIntegrationIT;
 import org.sonatype.nexus.testsuite.ldap.LdapConnMessageUtil;
-import org.sonatype.sisu.litmus.testsupport.net.TrustingX509TrustManager;
+import org.sonatype.sisu.goodies.testsupport.net.TrustingX509TrustManager;
 
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.junit.BeforeClass;

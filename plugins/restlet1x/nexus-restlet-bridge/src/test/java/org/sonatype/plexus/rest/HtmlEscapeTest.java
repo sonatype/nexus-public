@@ -28,6 +28,7 @@ public class HtmlEscapeTest
   public void testEscape() {
     XStream xstream = new XStream();
     xstream.registerConverter(new HtmlEscapeStringConverter());
+    xstream.allowTypes(new Class[]{Two.class});
 
     Bbb bbb = new Bbb();
     bbb.setaValue("aaa-value");
@@ -49,6 +50,7 @@ public class HtmlEscapeTest
     XStream xstream = new XStream();
     xstream.registerConverter(new HtmlEscapeStringConverter());
     xstream.registerLocalConverter(One.class, "oneValue", new StringConverter());
+    xstream.allowTypes(new Class[]{Two.class});
 
     // now make one field allow html characters
     Bbb bbb = new Bbb();

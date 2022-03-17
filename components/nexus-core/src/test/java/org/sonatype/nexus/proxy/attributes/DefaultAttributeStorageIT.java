@@ -29,7 +29,7 @@ import org.sonatype.nexus.proxy.maven.RepositoryPolicy;
 import org.sonatype.nexus.proxy.maven.maven2.M2Repository;
 import org.sonatype.nexus.proxy.maven.maven2.M2RepositoryConfiguration;
 import org.sonatype.nexus.proxy.repository.Repository;
-import org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers;
+import org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers;
 
 import org.apache.commons.io.FileUtils;
 import org.codehaus.plexus.util.xml.Xpp3Dom;

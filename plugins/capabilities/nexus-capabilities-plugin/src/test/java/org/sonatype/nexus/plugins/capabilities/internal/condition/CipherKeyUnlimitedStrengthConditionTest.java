@@ -14,7 +14,7 @@ package org.sonatype.nexus.plugins.capabilities.internal.condition;
 
 import org.sonatype.sisu.goodies.crypto.CryptoHelper;
 import org.sonatype.sisu.goodies.eventbus.EventBus;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.junit.Before;
 import org.junit.Test;

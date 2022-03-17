@@ -16,14 +16,15 @@ import java.io.File;
 import java.io.IOException;
 
 import org.sonatype.nexus.yum.internal.support.YumNexusTestSupport;
-import org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers;
+import org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers;
 import org.sonatype.sisu.resource.scanner.scanners.SerialScanner;
 
+import org.junit.After;
 import org.junit.Test;
 
 import static java.io.File.pathSeparator;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.not;
-import static org.junit.Assert.assertThat;
 
 public class RpmListWriterTest
     extends YumNexusTestSupport
@@ -43,6 +44,15 @@ public class RpmListWriterTest
   public static final String NO_ADDED_FILE = null;
 
   public static final boolean NO_SINGLE_RPM_PER_DIRECTORY = true;
+
+  private File toDelete;
+
+  @After
+  public void teardown() {
+    if (toDelete != null) {
+      toDelete.delete();
+    }
+  }
 
   @Test
   public void shouldListFileInSubDirs()
@@ -155,7 +165,7 @@ public class RpmListWriterTest
         new RpmScanner(new SerialScanner())
     ).writeList();
 
-    return rpmListFile;
+    return toDelete = rpmListFile;
   }
 
   private ListFileFactory listFileFactory(final File file) {

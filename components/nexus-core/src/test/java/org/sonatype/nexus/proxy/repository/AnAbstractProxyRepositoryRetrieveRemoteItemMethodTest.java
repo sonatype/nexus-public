@@ -36,7 +36,7 @@ import org.sonatype.nexus.proxy.storage.remote.RemoteItemNotFoundException;
 import org.sonatype.nexus.proxy.storage.remote.RemoteRepositoryStorage;
 import org.sonatype.nexus.proxy.wastebasket.Wastebasket;
 import org.sonatype.sisu.goodies.eventbus.EventBus;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 import org.sonatype.sisu.locks.LocalResourceLockFactory;
 
 import com.google.common.collect.ImmutableList;

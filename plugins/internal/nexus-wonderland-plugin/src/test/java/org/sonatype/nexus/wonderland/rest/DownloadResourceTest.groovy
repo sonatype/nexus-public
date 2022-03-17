@@ -19,7 +19,7 @@ import javax.ws.rs.WebApplicationException
 import org.sonatype.nexus.util.Tokens
 import org.sonatype.nexus.wonderland.AuthTicketService
 import org.sonatype.nexus.wonderland.DownloadService
-import org.sonatype.sisu.litmus.testsupport.TestSupport
+import org.sonatype.sisu.goodies.testsupport.TestSupport
 
 import org.junit.Before
 import org.junit.Test

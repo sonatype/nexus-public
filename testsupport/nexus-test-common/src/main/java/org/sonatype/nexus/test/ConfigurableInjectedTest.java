@@ -22,7 +22,7 @@ import java.util.Properties;
 import javax.inject.Inject;
 
 import org.sonatype.nexus.test.util.StopWatch;
-import org.sonatype.sisu.litmus.testsupport.TestUtil;
+import org.sonatype.sisu.goodies.testsupport.TestUtil;
 
 import org.eclipse.sisu.launch.InjectedTest;
 import org.junit.After;

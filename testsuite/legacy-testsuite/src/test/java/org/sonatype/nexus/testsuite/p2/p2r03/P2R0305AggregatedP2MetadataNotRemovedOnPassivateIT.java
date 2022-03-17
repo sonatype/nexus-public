@@ -19,7 +19,7 @@ import org.sonatype.nexus.testsuite.p2.AbstractNexusP2GeneratorIT;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers.exists;
+import static org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers.exists;
 
 public class P2R0305AggregatedP2MetadataNotRemovedOnPassivateIT
     extends AbstractNexusP2GeneratorIT

@@ -14,7 +14,7 @@ package org.sonatype.nexus.apachehttpclient;
 
 import java.util.concurrent.TimeUnit;
 
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.apache.http.conn.HttpClientConnectionManager;
 import org.junit.Test;

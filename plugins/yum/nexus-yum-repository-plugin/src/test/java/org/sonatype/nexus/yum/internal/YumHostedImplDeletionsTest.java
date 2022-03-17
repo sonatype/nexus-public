@@ -23,7 +23,7 @@ import org.sonatype.nexus.proxy.repository.HostedRepository;
 import org.sonatype.nexus.scheduling.NexusScheduler;
 import org.sonatype.nexus.yum.YumHosted;
 import org.sonatype.nexus.yum.internal.task.GenerateMetadataTask;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.junit.Before;
 import org.junit.Test;

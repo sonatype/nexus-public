@@ -62,7 +62,7 @@ import org.junit.rules.ExpectedException;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.sonatype.nexus.client.core.subsystem.content.Location.repositoryLocation;
-import static org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers.matchSha1;
+import static org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers.matchSha1;
 
 public class ClientIT
     extends ClientITSupport

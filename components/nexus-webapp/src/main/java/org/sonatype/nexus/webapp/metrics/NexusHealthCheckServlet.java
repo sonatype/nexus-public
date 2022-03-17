@@ -10,30 +10,26 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.testsuite.security.nexus586;
+package org.sonatype.nexus.webapp.metrics;
 
-import org.sonatype.nexus.integrationtests.AbstractNexusIntegrationTest;
-import org.sonatype.nexus.test.utils.ForgotUsernameUtils;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.restlet.data.Status;
+import com.codahale.metrics.health.HealthCheckRegistry;
+import com.codahale.metrics.servlets.HealthCheckServlet;
 
 /**
- * Saving the Nexus config needs to validate the anonymous user information
+ * Customized {@link com.codahale.metrics.servlets.HealthCheckServlet} to support injection.
+ *
+ * @see HealthCheckMediator
+ * @since 2.15
  */
-public class Nexus586AnonymousForgotUserIdIT
-    extends AbstractNexusIntegrationTest
+@Singleton
+public class NexusHealthCheckServlet
+    extends HealthCheckServlet
 {
-
-  @Test
-  public void forgotUsername()
-      throws Exception
-  {
-    if (printKnownErrorButDoNotFail(Nexus586AnonymousResetPasswordIT.class, "forgotUsername")) {
-      return;
-    }
-    Status status = ForgotUsernameUtils.get(this).recoverUsername("changeme2@yourcompany.com");
-    Assert.assertEquals(400, status.getCode());
+  @Inject
+  public NexusHealthCheckServlet(final HealthCheckRegistry registry) {
+    super(registry);
   }
 }

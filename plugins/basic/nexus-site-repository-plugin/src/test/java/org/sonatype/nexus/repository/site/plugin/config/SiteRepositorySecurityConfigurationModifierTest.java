@@ -21,8 +21,8 @@ import javax.inject.Inject;
 import org.sonatype.security.model.Configuration;
 import org.sonatype.security.model.io.xpp3.SecurityConfigurationXpp3Reader;
 import org.sonatype.security.model.io.xpp3.SecurityConfigurationXpp3Writer;
-import org.sonatype.sisu.litmus.testsupport.hamcrest.DiffMatchers;
-import org.sonatype.sisu.litmus.testsupport.inject.InjectedTestSupport;
+import org.sonatype.sisu.goodies.testsupport.hamcrest.DiffMatchers;
+import org.sonatype.sisu.goodies.testsupport.inject.InjectedTestSupport;
 
 import org.junit.Test;
 

@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.proxy.storage.remote.httpclient;
 
+import java.time.Duration;
+
 import org.sonatype.nexus.ApplicationStatusSource;
 import org.sonatype.nexus.apachehttpclient.Hc4ProviderImpl;
 import org.sonatype.nexus.apachehttpclient.PoolingClientConnectionManagerMBeanInstaller;
@@ -30,7 +32,7 @@ import org.sonatype.nexus.proxy.storage.remote.http.QueryStringBuilder;
 import org.sonatype.nexus.proxy.utils.UserAgentBuilder;
 import org.sonatype.sisu.goodies.common.Time;
 import org.sonatype.sisu.goodies.eventbus.EventBus;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 import org.sonatype.tests.http.server.fluent.Behaviours;
 import org.sonatype.tests.http.server.fluent.Server;
 
@@ -207,7 +209,7 @@ public class HttpClientRemoteStorageTest
 
       // a mock remote server that will simply "hang" to occupy the request socket
       final Server server =
-          Server.withPort(0).serve("/").withBehaviours(Behaviours.pause(Time.days(1))).start();
+          Server.withPort(0).serve("/").withBehaviours(Behaviours.pause(Duration.ofDays(1))).start();
       // the URL we will try to connect to
       final String url = "http://foo.com:" + server.getPort() + "/foo/bar.jar";
       // the requesting logic packed as Runnable

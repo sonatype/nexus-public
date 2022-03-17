@@ -15,7 +15,7 @@ package org.sonatype.scheduling;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import com.google.common.collect.Lists;
 import org.junit.Ignore;

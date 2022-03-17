@@ -29,9 +29,6 @@ public class MockEmailer
   public void sendNewUserCreated(String email, String userid, String password) {
   }
 
-  public void sendResetPassword(String email, String password) {
-  }
-
   public List<String> getForgotUserIds() {
     return forgotUserIds;
   }

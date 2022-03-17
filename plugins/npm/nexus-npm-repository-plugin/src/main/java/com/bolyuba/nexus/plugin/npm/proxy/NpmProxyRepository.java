@@ -27,4 +27,6 @@ public interface NpmProxyRepository
 {
   @Override
   ProxyMetadataService getMetadataService();
+
+  long getItemMaxAgeMillis();
 }

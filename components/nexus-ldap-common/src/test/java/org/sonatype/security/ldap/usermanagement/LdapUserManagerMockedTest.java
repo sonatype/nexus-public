@@ -15,7 +15,7 @@ package org.sonatype.security.ldap.usermanagement;
 import org.sonatype.security.ldap.dao.LdapUser;
 import org.sonatype.security.ldap.realms.LdapManager;
 import org.sonatype.security.usermanagement.User;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import org.junit.Before;
 import org.junit.Test;

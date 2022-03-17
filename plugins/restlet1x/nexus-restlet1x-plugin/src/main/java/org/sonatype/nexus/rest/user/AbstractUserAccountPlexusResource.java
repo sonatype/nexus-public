@@ -39,8 +39,12 @@ public abstract class AbstractUserAccountPlexusResource
   public void configureXStream(XStream xstream) {
     super.configureXStream(xstream);
 
-    xstream.processAnnotations(UserAccount.class);
-    xstream.processAnnotations(UserAccountRequestResponseWrapper.class);
+    Class[] userAccountTypes = new Class[] {
+        UserAccount.class,
+        UserAccountRequestResponseWrapper.class
+    };
+    xstream.allowTypes(userAccountTypes);
+    xstream.processAnnotations(userAccountTypes);
   }
 
   protected UserAccount nexusToRestModel(User user, Request request) {

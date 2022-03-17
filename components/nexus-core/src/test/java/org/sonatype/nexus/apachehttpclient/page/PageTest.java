@@ -16,7 +16,7 @@ import java.net.SocketException;
 
 import org.sonatype.nexus.apachehttpclient.page.Page.PageContext;
 import org.sonatype.nexus.apachehttpclient.page.Page.UnexpectedPageResponse;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 import org.sonatype.tests.http.server.fluent.Behaviours;
 import org.sonatype.tests.http.server.fluent.Server;
 

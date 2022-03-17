@@ -12,29 +12,36 @@
  */
 package org.sonatype.nexus.webapp.metrics;
 
+import java.lang.management.ManagementFactory;
+
 import org.sonatype.nexus.guice.FilterChainModule;
+import org.sonatype.nexus.util.SystemPropertiesHelper;
 import org.sonatype.nexus.web.internal.SecurityFilter;
 
+import com.codahale.metrics.Clock;
+import com.codahale.metrics.JmxReporter;
+import com.codahale.metrics.JvmAttributeGaugeSet;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
+import com.codahale.metrics.health.HealthCheckRegistry;
+import com.codahale.metrics.jvm.BufferPoolMetricSet;
+import com.codahale.metrics.jvm.FileDescriptorRatioGauge;
+import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
+import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
+import com.codahale.metrics.jvm.ThreadStatesGaugeSet;
+import com.codahale.metrics.servlet.InstrumentedFilter;
+import com.codahale.metrics.servlets.PingServlet;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
 import com.google.inject.servlet.ServletModule;
-import com.yammer.metrics.HealthChecks;
-import com.yammer.metrics.Metrics;
-import com.yammer.metrics.core.Clock;
-import com.yammer.metrics.core.HealthCheckRegistry;
-import com.yammer.metrics.core.MetricsRegistry;
-import com.yammer.metrics.core.VirtualMachineMetrics;
-import com.yammer.metrics.reporting.HealthCheckServlet;
-import com.yammer.metrics.reporting.MetricsServlet;
-import com.yammer.metrics.reporting.PingServlet;
-import com.yammer.metrics.reporting.ThreadDumpServlet;
-import com.yammer.metrics.web.DefaultWebappMetricsFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.codahale.metrics.MetricRegistry.name;
+
 /**
- * <a href="http://metrics.codahale.com">Yammer Metrics</a> guice configuration.
+ * Metrics guice configuration.
  *
  * Installs servlet endpoints:
  *
@@ -56,6 +63,11 @@ public class MetricsModule
 
   private static final String MOUNT_POINT = "/internal";
 
+  private static final String METRICS_MBEANS_ENABLED_PROP = "nexus.metrics.mbeans.enabled";
+
+  private static final boolean METRICS_MBEANS_ENABLED = SystemPropertiesHelper
+      .getBoolean(METRICS_MBEANS_ENABLED_PROP, true);
+
   @Override
   protected void configure() {
     // NOTE: AdminServletModule (metrics-guice integration) generates invalid links, so wire up servlets ourselves
@@ -63,14 +75,29 @@ public class MetricsModule
     final Clock clock = Clock.defaultClock();
     bind(Clock.class).toInstance(clock);
 
-    final VirtualMachineMetrics virtualMachineMetrics = VirtualMachineMetrics.getInstance();
-    bind(VirtualMachineMetrics.class).toInstance(virtualMachineMetrics);
+    bind(HealthCheckRegistry.class).toInstance(new HealthCheckRegistry());
 
-    final HealthCheckRegistry healthCheckRegistry = HealthChecks.defaultRegistry();
-    bind(HealthCheckRegistry.class).toInstance(healthCheckRegistry);
+    // non-guicey static reference
+    MetricRegistry metricsRegistry = SharedMetricRegistries.getOrCreate("nexus");
+    // In the case of in-memory-reload of NXRM webapp in legacy ITs, we need to protect against adding the same metrics
+    if(!metricsRegistry.getNames().contains("jvm.vm.name")){
+      metricsRegistry.register(name("jvm", "vm"), new JvmAttributeGaugeSet());
+      metricsRegistry.register(name("jvm", "memory"), new MemoryUsageGaugeSet());
+      metricsRegistry.register(name("jvm", "buffers"), new BufferPoolMetricSet(ManagementFactory.getPlatformMBeanServer()));
+      metricsRegistry.register(name("jvm", "fd_usage"), new FileDescriptorRatioGauge());
+      metricsRegistry.register(name("jvm", "thread-states"), new ThreadStatesGaugeSet());
+      metricsRegistry.register(name("jvm", "garbage-collectors"), new GarbageCollectorMetricSet());
+    }
 
-    final MetricsRegistry metricsRegistry = Metrics.defaultRegistry();
-    bind(MetricsRegistry.class).toInstance(metricsRegistry);
+    if (METRICS_MBEANS_ENABLED){
+      log.info("nexus.metrics MBeans available");
+      JmxReporter jmxReporter = JmxReporter.forRegistry(metricsRegistry).inDomain("nexus.metrics").build();
+      jmxReporter.start();
+    } else {
+      log.info("nexus.metrics MBeans disabled");
+    }
+
+    bind(MetricRegistry.class).toInstance(metricsRegistry);
 
     final JsonFactory jsonFactory = new JsonFactory(new ObjectMapper());
     bind(JsonFactory.class).toInstance(jsonFactory);
@@ -79,22 +106,18 @@ public class MetricsModule
     {
       @Override
       protected void configureServlets() {
+        bind(NexusMetricsServlet.class);
+        bind(NexusHealthCheckServlet.class);
+
         serve(MOUNT_POINT + "/ping").with(new PingServlet());
-
-        serve(MOUNT_POINT + "/threads").with(new ThreadDumpServlet(virtualMachineMetrics));
-
-        serve(MOUNT_POINT + "/metrics").with(new MetricsServlet(
-            clock,
-            virtualMachineMetrics,
-            metricsRegistry,
-            jsonFactory,
-            true
-        ));
-
-        serve(MOUNT_POINT + "/healthcheck").with(new HealthCheckServlet(healthCheckRegistry));
+        serve(MOUNT_POINT + "/threads").with(new NexusThreadDumpServlet());
+        serve(MOUNT_POINT + "/metrics").with(NexusMetricsServlet.class);
+        serve(MOUNT_POINT + "/healthcheck").with(NexusHealthCheckServlet.class);
 
         // record metrics for all webapp access
-        filter("/*").through(new DefaultWebappMetricsFilter());
+        filter("/*").through(new InstrumentedFilter());
+
+        bind(SecurityFilter.class);
 
         // configure security
         filter(MOUNT_POINT + "/*").through(SecurityFilter.class);

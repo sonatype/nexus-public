@@ -38,7 +38,7 @@ import org.sonatype.nexus.plugins.capabilities.internal.storage.CapabilityStorag
 import org.sonatype.nexus.plugins.capabilities.internal.storage.CapabilityStorageItem;
 import org.sonatype.plexus.components.cipher.DefaultPlexusCipher;
 import org.sonatype.sisu.goodies.eventbus.EventBus;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;

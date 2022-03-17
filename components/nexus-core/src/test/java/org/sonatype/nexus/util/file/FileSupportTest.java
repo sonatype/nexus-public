@@ -23,8 +23,8 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
-import org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.hamcrest.FileMatchers;
 
 import com.google.common.base.Charsets;
 import org.junit.After;

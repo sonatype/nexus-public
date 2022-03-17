@@ -26,8 +26,8 @@ import javax.ws.rs.QueryParam;
 
 import org.sonatype.plexus.rest.resource.PathProtectionDescriptor;
 
-import com.sun.syndication.feed.synd.SyndEntry;
-import com.sun.syndication.feed.synd.SyndFeed;
+import com.rometools.rome.feed.synd.SyndEntry;
+import com.rometools.rome.feed.synd.SyndFeed;
 import org.codehaus.enunciate.contract.jaxrs.ResourceMethodSignature;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.restlet.Context;

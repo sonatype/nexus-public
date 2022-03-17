@@ -19,7 +19,7 @@ import org.sonatype.nexus.plugins.lvo.DiscoveryRequest;
 import org.sonatype.nexus.plugins.lvo.DiscoveryResponse;
 import org.sonatype.nexus.plugins.lvo.config.model.CLvoKey;
 import org.sonatype.nexus.proxy.NoSuchRepositoryException;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import com.google.common.base.Throwables;
 import org.apache.http.HttpResponse;

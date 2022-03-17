@@ -15,7 +15,7 @@ package org.sonatype.nexus.bootstrap;
 import java.util.Map;
 
 import org.sonatype.nexus.bootstrap.ConfigurationBuilder.Customizer;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;

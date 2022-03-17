@@ -13,8 +13,9 @@
 package org.sonatype.nexus.rest.global;
 
 import org.sonatype.nexus.email.SmtpSettingsValidator;
+import org.sonatype.nexus.rest.model.SmtpSettings;
 import org.sonatype.nexus.rest.model.SmtpSettingsResource;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import com.thoughtworks.xstream.XStream;
 import org.junit.Test;
@@ -76,6 +77,7 @@ public class SmtpSettingsValidationPlexusResourceTest
 
     // make sure the configuration resource configures xstream to unescape
     final XStream xStream = new XStream();
+    xStream.allowTypes(new Class[]{SmtpSettingsResource.class});
     testSubject.configureXStream(xStream);
 
     final String xml = xStream.toXML(settings);

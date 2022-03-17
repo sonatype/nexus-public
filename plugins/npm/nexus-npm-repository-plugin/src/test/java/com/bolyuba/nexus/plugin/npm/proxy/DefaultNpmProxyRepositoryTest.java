@@ -19,7 +19,7 @@ import org.sonatype.nexus.proxy.item.RepositoryItemUidLock;
 import org.sonatype.nexus.proxy.item.StringContentLocator;
 import org.sonatype.nexus.proxy.registry.ContentClass;
 import org.sonatype.sisu.goodies.eventbus.EventBus;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import com.bolyuba.nexus.plugin.npm.service.MetadataServiceFactory;
 import com.bolyuba.nexus.plugin.npm.service.ProxyMetadataService;
@@ -48,7 +48,7 @@ public class DefaultNpmProxyRepositoryTest
     when(metadataServiceFactory.createProxyMetadataService(any(NpmProxyRepository.class)))
         .thenReturn(mock(ProxyMetadataService.class));
     proxy = new DefaultNpmProxyRepository(mock(ContentClass.class), mock(
-        NpmProxyRepositoryConfigurator.class), metadataServiceFactory, mock(TarballSource.class))
+        NpmProxyRepositoryConfigurator.class), metadataServiceFactory, mock(TarballSource.class), false)
     {
       @Override
       public String getId() {

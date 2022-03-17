@@ -14,8 +14,8 @@ package org.sonatype.nexus.testsuite.support.hamcrest;
 
 import java.io.File;
 
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
-import org.sonatype.sisu.litmus.testsupport.junit.TestInfoRule;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.junit.TestInfoRule;
 
 import org.hamcrest.Matchers;
 import org.junit.Rule;

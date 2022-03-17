@@ -64,7 +64,9 @@ public class PlexusPluginPlexusResource
 
   @Override
   public void configureXStream(final XStream xstream) {
-    xstream.processAnnotations(PlexusPluginResponse.class);
+    Class[] pluginTypes = new Class[] {PlexusPluginResponse.class};
+    xstream.allowTypes(pluginTypes);
+    xstream.processAnnotations(pluginTypes);
   }
 
   /**

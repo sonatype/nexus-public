@@ -35,7 +35,7 @@ import org.sonatype.nexus.proxy.storage.remote.RemoteStorageContext;
 import org.sonatype.nexus.proxy.storage.remote.httpclient.HttpClientManager;
 import org.sonatype.nexus.web.BaseUrlHolder;
 import org.sonatype.security.SecuritySystem;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import com.bolyuba.nexus.plugin.npm.NpmRepository;
 import com.bolyuba.nexus.plugin.npm.group.DefaultNpmGroupRepository;
@@ -146,7 +146,7 @@ public class MetadataServiceIT
         return PackageRootIterator.EMPTY;
       }
     };
-    metadataService = new MetadataServiceFactoryImpl(metadataStore, metadataParser, proxyMetadataTransport);
+    metadataService = new MetadataServiceFactoryImpl(metadataStore, metadataParser, proxyMetadataTransport, false);
 
     when(hc4Provider.createHttpClient(Mockito.any(RemoteStorageContext.class))).thenReturn(httpClient);
 
@@ -186,7 +186,7 @@ public class MetadataServiceIT
 
     // not using mock as it would OOM when it tracks invocations, as we work with large files here
     npmProxyRepository = new DefaultNpmProxyRepository(mock(ContentClass.class), mock(
-        NpmProxyRepositoryConfigurator.class), metadataService, tarballSource)
+        NpmProxyRepositoryConfigurator.class), metadataService, tarballSource, false)
     {
       @Override
       public String getId() {
@@ -214,7 +214,7 @@ public class MetadataServiceIT
 
     // not using mock as it would OOM when it tracks invocations, as we work with large files here
     npmGroupRepository = new DefaultNpmGroupRepository(mock(ContentClass.class), mock(
-        NpmGroupRepositoryConfigurator.class), metadataService)
+        NpmGroupRepositoryConfigurator.class), metadataService, false)
     {
       @Override
       public String getId() {

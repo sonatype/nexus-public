@@ -12,7 +12,7 @@
  */
 package com.bolyuba.nexus.plugin.npm.internal;
 
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import com.bolyuba.nexus.plugin.npm.NpmRepository;
 import org.junit.Test;

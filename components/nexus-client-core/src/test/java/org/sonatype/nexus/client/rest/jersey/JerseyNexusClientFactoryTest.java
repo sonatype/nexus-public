@@ -17,7 +17,7 @@ import org.sonatype.nexus.client.rest.BaseUrl;
 import org.sonatype.nexus.client.rest.ConnectionInfo;
 import org.sonatype.nexus.client.rest.ConnectionInfo.ValidationLevel;
 import org.sonatype.nexus.client.rest.ProxyInfo;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 
 import com.google.common.collect.ImmutableMap;
 import com.sun.jersey.client.apache4.ApacheHttpClient4;

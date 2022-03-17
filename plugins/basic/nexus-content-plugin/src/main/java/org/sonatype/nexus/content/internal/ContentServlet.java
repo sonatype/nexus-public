@@ -72,6 +72,7 @@ import org.slf4j.LoggerFactory;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.io.ByteStreams.limit;
 import static javax.servlet.http.HttpServletResponse.*;
+import static org.apache.http.HttpHeaders.ACCEPT;
 
 /**
  * Provides access to repositories contents.
@@ -219,6 +220,9 @@ public class ContentServlet
         }
       }
     }
+
+    // put the accept request-header field
+    result.getRequestContext().setRequestAcceptHeader(request.getHeader(ACCEPT));
 
     // put the incoming URLs
     final StringBuffer sb = request.getRequestURL();

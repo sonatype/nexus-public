@@ -17,7 +17,7 @@ import java.util.List;
 import org.sonatype.nexus.apachehttpclient.page.Page;
 import org.sonatype.nexus.apachehttpclient.page.Page.UnexpectedPageResponse;
 import org.sonatype.nexus.proxy.maven.MavenProxyRepository;
-import org.sonatype.sisu.litmus.testsupport.TestSupport;
+import org.sonatype.sisu.goodies.testsupport.TestSupport;
 import org.sonatype.tests.http.server.fluent.Server;
 
 import org.apache.http.client.HttpClient;

@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.net.URL;
 
 import org.sonatype.nexus.testsuite.p2.AbstractNexusProxyP2IT;
-import org.sonatype.sisu.litmus.testsupport.hamcrest.LogFileMatcher;
+import org.sonatype.sisu.goodies.testsupport.hamcrest.LogFileMatcher;
 
 import org.junit.Rule;
 import org.junit.Test;

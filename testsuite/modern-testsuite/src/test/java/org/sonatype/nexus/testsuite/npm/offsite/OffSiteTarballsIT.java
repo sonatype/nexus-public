@@ -21,7 +21,7 @@ import java.util.concurrent.Callable;
 import org.sonatype.nexus.testsuite.npm.MockNpmRegistry;
 import org.sonatype.nexus.testsuite.npm.NpmITSupport;
 import org.sonatype.nexus.testsuite.npm.smoke.NpmInstallIT;
-import org.sonatype.sisu.litmus.testsupport.TestData;
+import org.sonatype.sisu.goodies.testsupport.TestData;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
@@ -31,7 +31,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.either;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -123,9 +125,9 @@ public class OffSiteTarballsIT
     log(stdOut);
 
     assertThat(stdOut, containsString("commonjs@0.0.1"));
-    assertThat(stdOut, containsString("system@0.1.0"));
-    assertThat(stdOut, stringContainsInOrder(Arrays.asList("test@0.6.0", "ansi-font@0.0.2")));
 
+    assertThat(stdOut, either(containsString("added 4 packages")) // newer npm
+       .or(allOf(containsString("system@0.1.0"), stringContainsInOrder(Arrays.asList("test@0.6.0", "ansi-font@0.0.2"))))); // older
     assertThat(exitCode, equalTo(0));
 
     // registry1 should never been asked for tarball

@@ -28,9 +28,10 @@ import org.sonatype.plexus.rest.xstream.LookAheadStreamReader;
 import com.thoughtworks.xstream.converters.ConversionException;
 import com.thoughtworks.xstream.converters.ErrorWriter;
 import com.thoughtworks.xstream.io.StreamException;
+import com.thoughtworks.xstream.io.naming.NameCoder;
 import com.thoughtworks.xstream.io.xml.AbstractPullReader;
-import com.thoughtworks.xstream.io.xml.XmlFriendlyReplacer;
-import org.xmlpull.mxp1.MXParser;
+import com.thoughtworks.xstream.io.xml.XmlFriendlyNameCoder;
+import io.github.xstream.mxparser.MXParser;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -53,13 +54,13 @@ public class LookAheadXppReader
   HashMap<String, String> lookaheadMap = new HashMap<String, String>();
 
   public LookAheadXppReader(Reader reader) {
-    this(reader, new XmlFriendlyReplacer());
+    this(reader, new XmlFriendlyNameCoder());
   }
 
   /**
    * @since restlet-bridge 1.2
    */
-  public LookAheadXppReader(Reader reader, XmlFriendlyReplacer replacer) {
+  public LookAheadXppReader(Reader reader, NameCoder replacer) {
     super(replacer);
     try {
       parser = createParser();
@@ -163,7 +164,7 @@ public class LookAheadXppReader
     for (int ii = 0; ii < this.parser.getAttributeCount(); ii++) {
       String attributeName = this.parser.getAttributeName(ii);
       String attributeValue = this.parser.getAttributeValue(ii);
-      item.attributes.put(unescapeXmlName(attributeName), attributeValue);
+      item.attributes.put(decodeNode(attributeName), attributeValue);
     }
 
     return item;
