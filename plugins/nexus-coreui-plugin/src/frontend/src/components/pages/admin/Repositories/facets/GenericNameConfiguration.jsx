@@ -14,11 +14,7 @@ import React from 'react';
 
 import {FormUtils} from '@sonatype/nexus-ui-plugin';
 
-import {
-  NxFormGroup,
-  NxCheckbox,
-  NxTextInput
-} from '@sonatype/react-shared-components';
+import {NxFormGroup, NxCheckbox, NxTextInput, NxFieldset} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
 
@@ -30,28 +26,21 @@ export default function GenericNameConfiguration({parentMachine}) {
   return (
     <>
       <h2 className="nx-h2">{EDITOR.CONFIGURATION_CAPTION}</h2>
-      <NxFormGroup
-        label={EDITOR.NAME_LABEL}
-        isRequired
-        className="nxrm-form-group-name"
-      >
+      <NxFormGroup label={EDITOR.NAME_LABEL} isRequired className="nxrm-form-group-name">
         <NxTextInput
           {...FormUtils.fieldProps('name', currentParent)}
           onChange={FormUtils.handleUpdate('name', sendParent)}
         />
       </NxFormGroup>
-      <NxFormGroup
-        label={EDITOR.STATUS_LABEL}
-        isRequired
-        className="nxrm-form-group-status"
-      >
+
+      <NxFieldset label={EDITOR.STATUS_LABEL} className="nxrm-form-group-status">
         <NxCheckbox
           {...FormUtils.checkboxProps('online', currentParent)}
           onChange={FormUtils.handleUpdate('online', sendParent)}
         >
           {EDITOR.STATUS_DESCR}
         </NxCheckbox>
-      </NxFormGroup>
+      </NxFieldset>
     </>
   );
 }

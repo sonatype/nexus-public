@@ -17,97 +17,89 @@
 import {assign} from 'xstate';
 import Axios from 'axios';
 
-import {Utils, FormUtils} from '@sonatype/nexus-ui-plugin';
+import {mergeDeepRight} from 'ramda';
+
+import {Utils, FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
+
+import getTemplate from './RepositoryTemplates';
 
 export const repositoryUrl = (format, type) =>
   `/service/rest/v1/repositories/${formatFormat(format)}/${type}`;
 
 export default FormUtils.buildFormMachine({
-  id: 'RepositoriesFormMachine'
+  id: 'RepositoriesFormMachine',
+  config: (config) =>
+    mergeDeepRight(config, {
+      states: {
+        loaded: {
+          on: {
+            RESET_DATA: {
+              actions: ['resetData'],
+              target: 'loaded'
+            }
+          }
+        }
+      }
+    })
 }).withConfig({
   actions: {
     validate: assign({
       validationErrors: ({data}) => ({
-        name: validateNameField(data.name),
-        format: Utils.isBlank(data.format)
-          ? UIStrings.ERROR.FIELD_REQUIRED
-          : null,
-        type: Utils.isBlank(data.type) ? UIStrings.ERROR.FIELD_REQUIRED : null,
-        blobStoreName: Utils.isBlank(data.blobStoreName)
-          ? UIStrings.ERROR.FIELD_REQUIRED
-          : null,
-        memberNames:
-          isGroupType(data.type) && !data.memberNames.length
-            ? UIStrings.ERROR.FIELD_REQUIRED
-            : null
+        name: validateName(data.name),
+        format: ValidationUtils.validateNotBlank(data.format),
+        type: ValidationUtils.validateNotBlank(data.type),
+        storage: {
+          blobStoreName: validateBlobSoreName(data)
+        },
+        group: {
+          memberNames: validateMemeberNames(data)
+        },
+        proxy: {
+          remoteUrl: validateRemoteUrl(data),
+          contentMaxAge: validateTimeToLive(data.proxy?.contentMaxAge),
+          metadataMaxAge: validateTimeToLive(data.proxy?.metadataMaxAge)
+        },
+        negativeCache: {
+          timeToLive: validateTimeToLive(data.negativeCache?.timeToLive)
+        },
+        httpClient: {
+          authentication: {
+            username: validateHttpAuthCreds(data, 'username'),
+            password: validateHttpAuthCreds(data, 'password'),
+            ntlmHost: validateHttpAuthNtlm(data, 'ntlmHost'),
+            ntlmDomain: validateHttpAuthNtlm(data, 'ntlmDomain')
+          },
+          connection: {
+            retries: validateHttpConnectionRetries(data),
+            timeout: validateHttpConnectionTimeout(data)
+          }
+        }
       })
+    }),
+    resetData: assign({
+      data: (_, event) => {
+        const {format, repoType} = event;
+        return {
+          ...getTemplate(repoType),
+          format
+        };
+      }
     })
   },
   services: {
     fetchData: async ({pristineData}) => {
       if (isEdit(pristineData)) {
         const response = await Axios.get(repositoryUrl(pristineData.name));
-        const {
-          group: {memberNames},
-          storage: {blobStoreName, strictContentTypeValidation, writePolicy},
-          component: {proprietaryComponents},
-          cleanup: {policyNames},
-          ...rest
-        } = response;
-        return {
-          data: {
-            ...rest,
-            memberNames,
-            blobStoreName,
-            strictContentTypeValidation,
-            writePolicy,
-            proprietaryComponents,
-            policyNames
-          }
-        };
+        return {data: response};
       } else {
-        return {
-          data: {
-            format: '',
-            type: '',
-            name: '',
-            online: true,
-            memberNames: [],
-            strictContentTypeValidation: true,
-            writePolicy: 'ALLOW_ONCE',
-            proprietaryComponents: false,
-            policyNames: []
-          }
-        };
+        return {data: {name: ''}};
       }
     },
     saveData: ({data, pristineData}) => {
-      const {
-        format,
-        type,
-        name,
-        online,
-        blobStoreName,
-        strictContentTypeValidation,
-        memberNames,
-        writePolicy,
-        proprietaryComponents,
-        policyNames
-      } = data;
-      const payload = {
-        name,
-        online,
-        storage: {
-          blobStoreName,
-          strictContentTypeValidation,
-          writePolicy
-        },
-        group: {memberNames},
-        component: {proprietaryComponents},
-        cleanup: {policyNames}
-      };
+      const {format, type} = data;
+      const payload = data;
       return isEdit(pristineData)
         ? Axios.put(repositoryUrl(format, type), payload)
         : Axios.post(repositoryUrl(format, type), payload);
@@ -117,18 +109,75 @@ export default FormUtils.buildFormMachine({
 
 const isEdit = ({name}) => Utils.notBlank(name);
 
-const validateNameField = (field) => {
-  if (Utils.isBlank(field)) {
+const formatFormat = (format) => (format === 'maven2' ? 'maven' : format);
+
+const isProxyType = (type) => type === 'proxy';
+const isGroupType = (type) => type === 'group';
+
+const validateName = (value) => {
+  if (ValidationUtils.isBlank(value)) {
     return UIStrings.ERROR.FIELD_REQUIRED;
-  } else if (field.length > 255) {
+  } else if (value.length > 255) {
     return UIStrings.ERROR.MAX_CHARS(255);
-  } else if (!Utils.isName(field)) {
+  } else if (!Utils.isName(value)) {
     return UIStrings.ERROR.INVALID_NAME_CHARS;
   }
-
   return null;
 };
 
-const formatFormat = (format) => (format === 'maven2' ? 'maven' : format);
+const validateTimeToLive = (value) =>
+  ValidationUtils.isInRange({value, min: -1, max: 1440, allowDecimals: false});
 
-const isGroupType = (type) => type === 'group';
+const validateRemoteUrl = (data) =>
+  isProxyType(data.type)
+    ? ValidationUtils.validateNotBlank(data.proxy.remoteUrl) ||
+      ValidationUtils.validateIsUrl(data.proxy.remoteUrl)
+    : null;
+
+const validateMemeberNames = (data) =>
+  isGroupType(data.type) && !data.group.memberNames.length ? UIStrings.ERROR.FIELD_REQUIRED : null;
+
+const validateBlobSoreName = (data) =>
+  ValidationUtils.validateNotBlank(data.storage?.blobStoreName);
+
+const validateHttpAuthCreds = (data, attrName) => {
+  if (!isProxyType(data.type)) {
+    return;
+  }
+  const type = data.httpClient?.authentication?.type;
+  if (type && type !== '') {
+    const attrValue = data.httpClient.authentication[attrName];
+    return ValidationUtils.validateNotBlank(attrValue);
+  }
+};
+
+const validateHttpAuthNtlm = (data, attrName) => {
+  if (!isProxyType(data.type)) {
+    return;
+  }
+  const type = data.httpClient?.authentication?.type;
+  if (type && type !== '' && type === 'ntlm') {
+    const attrValue = data.httpClient.authentication[attrName];
+    return ValidationUtils.validateNotBlank(attrValue);
+  }
+};
+
+const validateHttpConnectionRetries = (data) =>
+  isProxyType(data.type) &&
+  data.httpClient.connection &&
+  ValidationUtils.isInRange({
+    value: data.httpClient.connection.retries,
+    min: 0,
+    max: 10,
+    allowDecimals: false
+  });
+
+const validateHttpConnectionTimeout = (data) =>
+  isProxyType(data.type) &&
+  data.httpClient.connection &&
+  ValidationUtils.isInRange({
+    value: data.httpClient.connection.timeout,
+    min: 0,
+    max: 3600,
+    allowDecimals: false
+  });

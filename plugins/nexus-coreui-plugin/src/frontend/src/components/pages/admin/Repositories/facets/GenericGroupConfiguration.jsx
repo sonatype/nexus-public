@@ -25,8 +25,7 @@ import UIStrings from '../../../../../constants/UIStrings';
 const {EDITOR} = UIStrings.REPOSITORIES;
 
 export const repositoriesUrl = (event) =>
-  '/service/rest/internal/ui/repositories?format=' +
-  encodeURIComponent(event.format);
+  '/service/rest/internal/ui/repositories?format=' + encodeURIComponent(event.format);
 
 export default function GenericGroupConfiguration({parentMachine}) {
   const {current, load, retry, isLoading} = useSimpleMachine(
@@ -38,7 +37,10 @@ export default function GenericGroupConfiguration({parentMachine}) {
 
   const [currentParent, sendParent] = parentMachine;
 
-  const {format, memberNames} = currentParent.context.data;
+  const {
+    format,
+    group: {memberNames}
+  } = currentParent.context.data;
 
   useEffect(() => {
     load({format});
@@ -55,7 +57,7 @@ export default function GenericGroupConfiguration({parentMachine}) {
           <NxStatefulTransferList
             allItems={availableRepositories}
             selectedItems={memberNames}
-            onChange={FormUtils.handleUpdate('memberNames', sendParent)}
+            onChange={FormUtils.handleUpdate('group.memberNames', sendParent)}
             allowReordering
           />
         </NxFormGroup>

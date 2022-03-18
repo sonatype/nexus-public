@@ -36,7 +36,9 @@ export default function GenericCleanupConfiguration({parentMachine}) {
 
   const [currentParent, sendParent] = parentMachine;
 
-  const {format, policyNames} = currentParent.context.data;
+  const {format, cleanup} = currentParent.context.data;
+
+  const policyNames = cleanup?.policyNames;
 
   useEffect(() => {
     load({format});
@@ -58,7 +60,7 @@ export default function GenericCleanupConfiguration({parentMachine}) {
           <NxStatefulTransferList
             allItems={availablePolicies}
             selectedItems={new Set(policyNames)}
-            onChange={FormUtils.handleUpdate('policyNames', sendParent)}
+            onChange={FormUtils.handleUpdate('cleanup.policyNames', sendParent)}
           />
         </NxFormGroup>
       </NxLoadWrapper>

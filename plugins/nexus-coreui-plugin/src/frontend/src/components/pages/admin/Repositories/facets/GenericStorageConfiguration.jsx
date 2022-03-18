@@ -17,7 +17,8 @@ import {Select, FormUtils, useSimpleMachine} from '@sonatype/nexus-ui-plugin';
 import {
   NxFormGroup,
   NxCheckbox,
-  NxLoadWrapper
+  NxLoadWrapper,
+  NxFieldset
 } from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
@@ -27,21 +28,26 @@ const {EDITOR} = UIStrings.REPOSITORIES;
 export const BLOB_STORES_URL = '/service/rest/v1/blobstores';
 
 export default function GenericStorageConfiguration({parentMachine}) {
-  const {current, retry, isLoading} = useSimpleMachine(
+  const {current, load, retry, isLoading} = useSimpleMachine(
     'GenericStorageConfigurationMachine',
-    BLOB_STORES_URL,
-    true
+    BLOB_STORES_URL
   );
 
   const [currentParent, sendParent] = parentMachine;
 
   const {data: blobStores, error} = current.context;
 
-  const {type} = currentParent.context.data;
+  const {format, type} = currentParent.context.data;
 
   useEffect(() => {
-    sendParent('UPDATE', {
-      data: {blobStoreName: getDefaultBlobStore(blobStores)}
+    load();
+  }, [format, type]);
+
+  useEffect(() => {
+    sendParent({
+      type: 'UPDATE',
+      name: 'storage.blobStoreName',
+      value: getDefaultBlobStore(blobStores)
     });
   }, [blobStores]);
 
@@ -49,15 +55,11 @@ export default function GenericStorageConfiguration({parentMachine}) {
     <>
       <h2 className="nx-h2">{EDITOR.STORAGE_CAPTION}</h2>
       <NxLoadWrapper loading={isLoading} error={error} retryHandler={retry}>
-        <NxFormGroup
-          label={EDITOR.BLOB_STORE_LABEL}
-          isRequired
-          className="nxrm-form-group-store"
-        >
+        <NxFormGroup label={EDITOR.BLOB_STORE_LABEL} isRequired className="nxrm-form-group-store">
           <Select
-            {...FormUtils.fieldProps('blobStoreName', currentParent)}
-            name="blobStoreName"
-            onChange={FormUtils.handleUpdate('blobStoreName', sendParent)}
+            {...FormUtils.fieldProps('storage.blobStoreName', currentParent)}
+            name="storage.blobStoreName"
+            onChange={FormUtils.handleUpdate('storage.blobStoreName', sendParent)}
           >
             <option value="">{EDITOR.SELECT_STORE_OPTION}</option>
             {blobStores?.map(({name}) => (
@@ -69,24 +71,17 @@ export default function GenericStorageConfiguration({parentMachine}) {
         </NxFormGroup>
 
         {type !== 'group' && (
-          <NxFormGroup
+          <NxFieldset
             label={EDITOR.CONTENT_VALIDATION_LABEL}
-            isRequired
             className="nxrm-form-group-content-validation"
           >
             <NxCheckbox
-              {...FormUtils.checkboxProps(
-                'strictContentTypeValidation',
-                currentParent
-              )}
-              onChange={FormUtils.handleUpdate(
-                'strictContentTypeValidation',
-                sendParent
-              )}
+              {...FormUtils.checkboxProps('storage.strictContentTypeValidation', currentParent)}
+              onChange={FormUtils.handleUpdate('storage.strictContentTypeValidation', sendParent)}
             >
-              {EDITOR.CONTENT_VALIDATION_DESCR}
+              {EDITOR.ENABLED_CHECKBOX_DESCR}
             </NxCheckbox>
-          </NxFormGroup>
+          </NxFieldset>
         )}
       </NxLoadWrapper>
     </>

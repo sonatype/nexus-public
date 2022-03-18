@@ -18,7 +18,8 @@ import {
   waitFor,
   waitForElementToBeRemoved,
   getAllByRole,
-  getByRole
+  getByRole,
+  queryByRole
 } from '@testing-library/react';
 import {when} from 'jest-when';
 import '@testing-library/jest-dom/extend-expect';
@@ -34,6 +35,7 @@ import {repositoriesUrl} from './facets/GenericGroupConfiguration';
 import {cleanupPoliciesUrl} from './facets/GenericCleanupConfiguration';
 import {RECIPES_URL} from './facets/GenericFormatConfiguration';
 import {BLOB_STORES_URL} from './facets/GenericStorageConfiguration';
+import {ROUTING_RULES_URL} from './facets/GenericOptionsConfiguration';
 
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'),
@@ -46,21 +48,21 @@ jest.mock('axios', () => ({
 const {EDITOR} = UIStrings.REPOSITORIES;
 
 describe('RepositoriesForm', () => {
+  const getCheckbox = (fieldsetLabel) => {
+    const container = screen.queryByRole('group', {name: fieldsetLabel});
+    return container ? queryByRole(container, 'checkbox') : null;
+  };
+
   const selectors = {
     ...TestUtils.selectors,
-    getCreateButton: () =>
-      screen.getByText(EDITOR.SAVE_BUTTON_LABEL, {selector: 'button'}),
+    getCreateButton: () => screen.getByText(EDITOR.SAVE_BUTTON_LABEL, {selector: 'button'}),
     getCancelButton: () => screen.queryByText('Cancel'),
     getFormatSelect: () => screen.getByLabelText(EDITOR.FORMAT_LABEL),
     getTypeSelect: () => screen.getByLabelText(EDITOR.TYPE_LABEL),
     getBlobStoreSelect: () => screen.getByLabelText(EDITOR.BLOB_STORE_LABEL),
-    getDeploymentPolicySelect: () =>
-      screen.getByLabelText(EDITOR.DEPLOYMENT_POLICY_LABEL),
+    getDeploymentPolicySelect: () => screen.queryByLabelText(EDITOR.DEPLOYMENT_POLICY_LABEL),
     getNameInput: () => screen.getByLabelText(EDITOR.NAME_LABEL),
-    getStatusCheckbox: () =>
-      screen.getByRole('checkbox', {name: EDITOR.STATUS_DESCR}),
-    getContentValidationCheckbox: () =>
-      screen.queryByRole('checkbox', {name: EDITOR.CONTENT_VALIDATION_DESCR}),
+    getStatusCheckbox: () => screen.getByRole('checkbox', {name: EDITOR.STATUS_DESCR}),
     getProprietaryComponentsCheckbox: () =>
       screen.queryByRole('checkbox', {
         name: EDITOR.PROPRIETARY_COMPONENTS_DESCR
@@ -68,7 +70,25 @@ describe('RepositoriesForm', () => {
     getHostedSectionTitle: () => screen.queryByText(EDITOR.HOSTED_CAPTION),
     getCleanupSectionTitle: () => screen.queryByText(EDITOR.CLEANUP_CAPTION),
     getGroupSectionTitle: () => screen.queryByText(EDITOR.GROUP_CAPTION),
-    getTransferListOption: (optionLabel) => screen.getByLabelText(optionLabel)
+    getTransferListOption: (optionLabel) => screen.getByLabelText(optionLabel),
+    getRoutingRuleSelect: () => screen.queryByLabelText(EDITOR.ROUTING_RULE_LABEL),
+    getRemoteUrlInput: () => screen.queryByLabelText(EDITOR.REMOTE_STORAGE_LABEL),
+    getContentMaxAgeInput: () => screen.getByLabelText(EDITOR.MAX_COMP_AGE_LABEL),
+    getMetadataMaxAgeInput: () => screen.getByLabelText(EDITOR.MAX_META_AGE_LABEL),
+    getAuthTypeSelect: () => screen.getByLabelText(EDITOR.AUTH_TYPE_LABEL),
+    getUsernameInput: () => screen.queryByLabelText(EDITOR.USERNAME_LABEL),
+    getPasswordInput: () => screen.queryByLabelText(EDITOR.PASSWORD_LABEL),
+    getNtlmHostInput: () => screen.queryByLabelText(EDITOR.NTLM_HOST_LABEL),
+    getNtlmDomainInput: () => screen.queryByLabelText(EDITOR.NTLM_DOMAIN_LABEL),
+    getUserAgentSuffixInput: () => screen.getByLabelText(EDITOR.USER_AGENT_LABEL),
+    getRetriesInput: () => screen.getByLabelText(EDITOR.RETRIES_LABEL),
+    getTimeoutInput: () => screen.getByLabelText(EDITOR.TIMEOUT_LABEL),
+    getTimeToLiveInput: () => screen.getByLabelText(EDITOR.NEGATIVE_CACHE_TTL_LABEL),
+    getBlockedCheckbox: () => screen.getByRole('checkbox', {name: EDITOR.BLOCK_DESCR}),
+    getAutoBlockCheckbox: () => screen.getByRole('checkbox', {name: EDITOR.AUTO_BLOCK_DESCR}),
+    getCookiesCheckbox: () => getCheckbox(EDITOR.COOKIES_LABEL),
+    getRedirectsCheckbox: () => getCheckbox(EDITOR.REDIRECTS_LABEL),
+    getContentValidationCheckbox: () => getCheckbox(EDITOR.CONTENT_VALIDATION_LABEL)
   };
 
   const renderView = (itemId = '') => {
@@ -87,16 +107,9 @@ describe('RepositoriesForm', () => {
     {format: 'p2', type: 'proxy'}
   ];
 
-  const BLOB_STORES_RESPONSE = [
-    {name: 'default'},
-    {name: 'blob-store-1'},
-    {name: 'blob-store-2'}
-  ];
+  const BLOB_STORES_RESPONSE = [{name: 'default'}, {name: 'blob-store-1'}, {name: 'blob-store-2'}];
 
-  const BLOB_STORES_OPTIONS = [
-    {name: EDITOR.SELECT_STORE_OPTION},
-    ...BLOB_STORES_RESPONSE
-  ];
+  const BLOB_STORES_OPTIONS = [{name: EDITOR.SELECT_STORE_OPTION}, ...BLOB_STORES_RESPONSE];
 
   const FORMAT_OPTIONS = [
     {name: EDITOR.SELECT_FORMAT_OPTION},
@@ -124,6 +137,11 @@ describe('RepositoriesForm', () => {
     {id: 'policy-maven-2', name: 'policy-maven-2'}
   ];
 
+  const ROUTING_RULES_RESPONSE = [
+    {id: 'routing-rule-1', name: 'routing-rule-1'},
+    {id: 'routing-rule-2', name: 'routing-rule-2'}
+  ];
+
   beforeEach(() => {
     when(axios.get)
       .calledWith(expect.stringContaining(repositoriesUrl({format: 'maven2'})))
@@ -135,10 +153,11 @@ describe('RepositoriesForm', () => {
       .calledWith(expect.stringContaining(BLOB_STORES_URL))
       .mockResolvedValue({data: BLOB_STORES_RESPONSE});
     when(axios.get)
-      .calledWith(
-        expect.stringContaining(cleanupPoliciesUrl({format: 'maven2'}))
-      )
+      .calledWith(expect.stringContaining(cleanupPoliciesUrl({format: 'maven2'})))
       .mockResolvedValue({data: MAVEN_CLEANUP_RESPONSE});
+    when(axios.get)
+      .calledWith(expect.stringContaining(ROUTING_RULES_URL))
+      .mockResolvedValue({data: ROUTING_RULES_RESPONSE});
   });
 
   it('renders the form and populates dropdowns when type is GROUP', async () => {
@@ -160,16 +179,10 @@ describe('RepositoriesForm', () => {
 
     await TestUtils.changeField(selectors.getTypeSelect, 'group');
 
-    validateSelectOptions(
-      selectors.getBlobStoreSelect(),
-      BLOB_STORES_OPTIONS,
-      ''
-    );
+    validateSelectOptions(selectors.getBlobStoreSelect(), BLOB_STORES_OPTIONS, '');
 
     await waitFor(() =>
-      expect(axios.get).toHaveBeenCalledWith(
-        expect.stringContaining(repositoriesUrl({format}))
-      )
+      expect(axios.get).toHaveBeenCalledWith(expect.stringContaining(repositoriesUrl({format})))
     );
 
     MAVEN_REPOS_RESPONSE.forEach((repo) => {
@@ -184,10 +197,7 @@ describe('RepositoriesForm', () => {
   it('renders the form and populates dropdowns when type is HOSTED', async () => {
     const format = 'maven2';
     const blobStoreResponse = [{name: 'default'}];
-    const blobStoreOptions = [
-      {name: EDITOR.SELECT_STORE_OPTION},
-      ...blobStoreResponse
-    ];
+    const blobStoreOptions = [{name: EDITOR.SELECT_STORE_OPTION}, ...blobStoreResponse];
     when(axios.get)
       .calledWith(expect.stringContaining(BLOB_STORES_URL))
       .mockResolvedValue({data: blobStoreResponse});
@@ -199,15 +209,11 @@ describe('RepositoriesForm', () => {
     await TestUtils.changeField(selectors.getFormatSelect, format);
     await TestUtils.changeField(selectors.getTypeSelect, 'hosted');
 
-    validateSelectOptions(
-      selectors.getBlobStoreSelect(),
-      blobStoreOptions,
-      'default'
-    );
+    validateSelectOptions(selectors.getBlobStoreSelect(), blobStoreOptions, 'default');
 
-    const deploymentPolicyOptions = Object.values(
-      EDITOR.DEPLOYMENT_POLICY_OPTIONS
-    ).map((name) => ({name}));
+    const deploymentPolicyOptions = Object.values(EDITOR.DEPLOYMENT_POLICY_OPTIONS).map((name) => ({
+      name
+    }));
     validateSelectOptions(
       selectors.getDeploymentPolicySelect(),
       deploymentPolicyOptions,
@@ -215,9 +221,7 @@ describe('RepositoriesForm', () => {
     );
 
     await waitFor(() =>
-      expect(axios.get).toHaveBeenCalledWith(
-        expect.stringContaining(cleanupPoliciesUrl({format}))
-      )
+      expect(axios.get).toHaveBeenCalledWith(expect.stringContaining(cleanupPoliciesUrl({format})))
     );
 
     MAVEN_CLEANUP_RESPONSE.forEach((policy) => {
@@ -228,26 +232,56 @@ describe('RepositoriesForm', () => {
     expect(selectors.getGroupSectionTitle()).not.toBeInTheDocument();
   });
 
+  it('renders the form and shows/hides auth fields when type is PROXY', async () => {
+    renderView();
+
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+    await TestUtils.changeField(selectors.getFormatSelect, 'maven2');
+    await TestUtils.changeField(selectors.getTypeSelect, 'proxy');
+
+    expect(selectors.getRemoteUrlInput()).toBeInTheDocument();
+    expect(selectors.getRoutingRuleSelect()).toBeInTheDocument();
+    expect(selectors.getAuthTypeSelect()).toBeInTheDocument();
+
+    expect(selectors.getGroupSectionTitle()).not.toBeInTheDocument();
+    expect(selectors.getDeploymentPolicySelect()).not.toBeInTheDocument();
+
+    expect(selectors.getUsernameInput()).not.toBeInTheDocument();
+    expect(selectors.getPasswordInput()).not.toBeInTheDocument();
+    expect(selectors.getNtlmHostInput()).not.toBeInTheDocument();
+    expect(selectors.getNtlmDomainInput()).not.toBeInTheDocument();
+
+    await TestUtils.changeField(selectors.getAuthTypeSelect, 'username');
+
+    expect(selectors.getUsernameInput()).toBeInTheDocument();
+    expect(selectors.getUsernameInput()).toBeInTheDocument();
+    expect(selectors.getNtlmHostInput()).not.toBeInTheDocument();
+    expect(selectors.getNtlmDomainInput()).not.toBeInTheDocument();
+
+    await TestUtils.changeField(selectors.getAuthTypeSelect, 'ntlm');
+
+    expect(selectors.getUsernameInput()).toBeInTheDocument();
+    expect(selectors.getUsernameInput()).toBeInTheDocument();
+    expect(selectors.getNtlmHostInput()).toBeInTheDocument();
+    expect(selectors.getNtlmDomainInput()).toBeInTheDocument();
+  });
+
   it('creates GROUP repository', async () => {
     const format = 'maven2';
     const type = 'group';
     const url = repositoryUrl(format, type);
     const payload = {
+      format,
+      type,
       name: 'maven-group-1',
       online: false,
       storage: {
         blobStoreName: 'blob-store-1',
-        strictContentTypeValidation: true,
-        writePolicy: 'ALLOW_ONCE'
+        strictContentTypeValidation: true
       },
       group: {
         memberNames: ['maven-releases', 'maven-snapshots']
-      },
-      cleanup: {
-        policyNames: []
-      },
-      component: {
-        proprietaryComponents: false
       }
     };
 
@@ -264,17 +298,10 @@ describe('RepositoriesForm', () => {
 
     fireEvent.click(selectors.getStatusCheckbox());
 
-    await TestUtils.changeField(
-      selectors.getBlobStoreSelect,
-      payload.storage.blobStoreName
-    );
+    await TestUtils.changeField(selectors.getBlobStoreSelect, payload.storage.blobStoreName);
 
-    fireEvent.click(
-      selectors.getTransferListOption(payload.group.memberNames[0])
-    );
-    fireEvent.click(
-      selectors.getTransferListOption(payload.group.memberNames[1])
-    );
+    fireEvent.click(selectors.getTransferListOption(payload.group.memberNames[0]));
+    fireEvent.click(selectors.getTransferListOption(payload.group.memberNames[1]));
 
     expect(selectors.getCreateButton()).not.toHaveClass('disabled');
 
@@ -287,15 +314,14 @@ describe('RepositoriesForm', () => {
     const type = 'hosted';
     const url = repositoryUrl(format, type);
     const payload = {
+      format,
+      type,
       name: 'maven-hosted-1',
       online: true,
       storage: {
         blobStoreName: 'blob-store-1',
         strictContentTypeValidation: false,
         writePolicy: 'ALLOW'
-      },
-      group: {
-        memberNames: []
       },
       component: {proprietaryComponents: true},
       cleanup: {policyNames: ['policy-all-fomats', 'policy-maven-1']}
@@ -308,23 +334,107 @@ describe('RepositoriesForm', () => {
     await TestUtils.changeField(selectors.getFormatSelect, format);
     await TestUtils.changeField(selectors.getTypeSelect, type);
     await TestUtils.changeField(selectors.getNameInput, payload.name);
-    await TestUtils.changeField(
-      selectors.getDeploymentPolicySelect,
-      payload.storage.writePolicy
-    );
-    await TestUtils.changeField(
-      selectors.getBlobStoreSelect,
-      payload.storage.blobStoreName
-    );
+    await TestUtils.changeField(selectors.getDeploymentPolicySelect, payload.storage.writePolicy);
+    await TestUtils.changeField(selectors.getBlobStoreSelect, payload.storage.blobStoreName);
 
     fireEvent.click(selectors.getContentValidationCheckbox());
     fireEvent.click(selectors.getProprietaryComponentsCheckbox());
-    fireEvent.click(
-      selectors.getTransferListOption(payload.cleanup.policyNames[0])
+    fireEvent.click(selectors.getTransferListOption(payload.cleanup.policyNames[0]));
+    fireEvent.click(selectors.getTransferListOption(payload.cleanup.policyNames[1]));
+    fireEvent.click(selectors.getCreateButton());
+
+    await waitFor(() => expect(axios.post).toHaveBeenCalledWith(url, payload));
+  });
+
+  it('creates PROXY repository', async () => {
+    const format = 'maven2';
+    const type = 'proxy';
+    const url = repositoryUrl(format, type);
+    const payload = {
+      format,
+      type,
+      name: 'go-proxy-1',
+      online: true,
+      routingRule: 'routing-rule-1',
+      storage: {
+        blobStoreName: 'blob-store-1',
+        strictContentTypeValidation: true
+      },
+      cleanup: null,
+      proxy: {
+        remoteUrl: 'https://repo123.net',
+        contentMaxAge: '600',
+        metadataMaxAge: '700'
+      },
+      negativeCache: {
+        enabled: true,
+        timeToLive: '800'
+      },
+      httpClient: {
+        blocked: true,
+        autoBlock: false,
+        connection: {
+          retries: '3',
+          userAgentSuffix: 'user-agent-suffix-1',
+          timeout: '100',
+          enableCircularRedirects: true,
+          enableCookies: true
+        },
+        authentication: {
+          type: 'ntlm',
+          username: 'user1',
+          password: 'pass1',
+          ntlmHost: 'ntlmhost1',
+          ntlmDomain: 'ntlm.domain'
+        }
+      }
+    };
+
+    renderView();
+
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+    await TestUtils.changeField(selectors.getFormatSelect, format);
+    await TestUtils.changeField(selectors.getTypeSelect, type);
+    await TestUtils.changeField(selectors.getNameInput, payload.name);
+    await TestUtils.changeField(selectors.getBlobStoreSelect, payload.storage.blobStoreName);
+    await TestUtils.changeField(selectors.getRoutingRuleSelect, payload.routingRule);
+    await TestUtils.changeField(selectors.getRemoteUrlInput, payload.proxy.remoteUrl);
+    await TestUtils.changeField(selectors.getContentMaxAgeInput, payload.proxy.contentMaxAge);
+    await TestUtils.changeField(selectors.getMetadataMaxAgeInput, payload.proxy.metadataMaxAge);
+    await TestUtils.changeField(
+      selectors.getAuthTypeSelect,
+      payload.httpClient.authentication.type
     );
-    fireEvent.click(
-      selectors.getTransferListOption(payload.cleanup.policyNames[1])
+    await TestUtils.changeField(
+      selectors.getUsernameInput,
+      payload.httpClient.authentication.username
     );
+    await TestUtils.changeField(
+      selectors.getPasswordInput,
+      payload.httpClient.authentication.password
+    );
+    await TestUtils.changeField(
+      selectors.getNtlmHostInput,
+      payload.httpClient.authentication.ntlmHost
+    );
+    await TestUtils.changeField(
+      selectors.getNtlmDomainInput,
+      payload.httpClient.authentication.ntlmDomain
+    );
+    await TestUtils.changeField(
+      selectors.getUserAgentSuffixInput,
+      payload.httpClient.connection.userAgentSuffix
+    );
+    await TestUtils.changeField(selectors.getRetriesInput, payload.httpClient.connection.retries);
+    await TestUtils.changeField(selectors.getTimeoutInput, payload.httpClient.connection.timeout);
+    await TestUtils.changeField(selectors.getTimeToLiveInput, payload.negativeCache.timeToLive);
+
+    fireEvent.click(selectors.getBlockedCheckbox());
+    fireEvent.click(selectors.getAutoBlockCheckbox());
+    fireEvent.click(selectors.getRedirectsCheckbox());
+    fireEvent.click(selectors.getCookiesCheckbox());
+
     fireEvent.click(selectors.getCreateButton());
 
     await waitFor(() => expect(axios.post).toHaveBeenCalledWith(url, payload));
@@ -353,12 +463,8 @@ describe('RepositoriesForm', () => {
 
     await TestUtils.changeField(selectors.getFormatSelect, 'p2');
     expect(selectors.getTypeSelect()).toHaveValue('');
-    expect(selectors.getTypeSelect()).not.toContainElement(
-      screen.queryByText('hosted')
-    );
-    expect(selectors.getTypeSelect()).not.toContainElement(
-      screen.queryByText('group')
-    );
+    expect(selectors.getTypeSelect()).not.toContainElement(screen.queryByText('hosted'));
+    expect(selectors.getTypeSelect()).not.toContainElement(screen.queryByText('group'));
   });
 
   it('calls onDone when cancelled', async () => {

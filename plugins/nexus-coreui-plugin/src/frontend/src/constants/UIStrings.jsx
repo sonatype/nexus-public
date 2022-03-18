@@ -346,6 +346,8 @@ the documentation</a>.`
     },
 
     EDITOR: {
+      ENABLED_CHECKBOX_DESCR: 'Enabled',
+      NONE_OPTION: 'None',
       CREATE_TITLE: {
         text: 'Create Repository',
         description: 'Select a repository format, then choose a type (group, hosted, or proxy)'
@@ -387,7 +389,41 @@ the documentation</a>.`
         ALLOW_ONCE: 'Disable redeploy',
         DENY: 'Read-only',
         REPLICATION_ONLY: 'Deploy by Replication Only'
-      }
+      },
+      PROXY_CAPTION: 'Proxy Settings',
+      REMOTE_STORAGE_LABEL: 'Remote Storage',
+      REMOTE_STORAGE_SUBLABEL: 'Location of the remote repository to proxy (e.g., https://repo1.maven.org/maven2/)',
+      URL_PLACEHOLDER: 'Enter a URL',
+      BLOCKING_LABEL: 'Blocking',
+      BLOCK_DESCR: 'Block outbound connections to the repository',
+      AUTO_BLOCK_DESCR: 'Auto-block outbound connections to the repository if remote peer is detected as unreachable/unresponsive',
+      MAX_COMP_AGE_LABEL: 'Maximum Component Age',
+      MAX_COMP_AGE_SUBLABEL: 'How long (in minutes) to cache artifacts before re-checking the remote repository. Release repositories should use -1',
+      MAX_META_AGE_LABEL: 'Maximum Metadata Age',
+      MAX_META_AGE_SUBLABEL: 'How long (in minutes) to cache that a file was not found in the repository',
+      OPTIONS_CAPTION: 'Options',
+      ROUTING_RULE_LABEL: 'Routing Rule',
+      NEGATIVE_CACHE_LABEL: 'Negative Cache',
+      NEGATIVE_CACHE_DESCR: 'Enabled',
+      NEGATIVE_CACHE_TTL_LABEL: 'Negative Cache TTL (Minutes)',
+      NEGATIVE_CACHE_TTL_SUBLABEL: 'How long to cache that a file was not able to be found in the repository',
+      HTTP_AUTH_CAPTION: 'HTTP Authentication',
+      AUTH_TYPE_LABEL: 'Authentication type',
+      USERNAME_LABEL: 'Username',
+      PASSWORD_LABEL: 'Password',
+      USERNAME_OPTION: 'Username',
+      NTLM_OPTION: 'Windows NTLM',
+      NTLM_HOST_LABEL: 'Windows NTLM hostname',
+      NTLM_DOMAIN_LABEL: 'Windows NTLM domain',
+      REQUEST_SETTINGS_CAPTION: 'HTTP Request Settings',
+      USER_AGENT_LABEL: 'User-Agent Customization',
+      USER_AGEN_SUBLABEL: 'Define a custom fragment to append to "User-Agent" header in HTTP requests',
+      RETRIES_LABEL: 'Connection Retries',
+      RETRIES_SUBLABEL: 'Number of times to retry if the first connection attempt times out',
+      TIMEOUT_LABEL: 'Connection Timeout (Seconds)',
+      TIMEOUT_SUBLABEL: 'Time (in seconds) to wait before stopping and retrying the connection; leave blank to use the global HTTP timeout',
+      REDIRECTS_LABEL: 'Circular Redirects',
+      COOKIES_LABEL: 'Cookies'
     }
   },
 

@@ -38,6 +38,10 @@ import GenericHostedConfiguration from './facets/GenericHostedConfiguration';
 import GenericStorageConfiguration from './facets/GenericStorageConfiguration';
 import GenericFormatConfiguration from './facets/GenericFormatConfiguration';
 import GenericNameConfiguration from './facets/GenericNameConfiguration';
+import GenericProxyConfiguration from './facets/GenericProxyConfiguration';
+import GenericOptionsConfiguration from './facets/GenericOptionsConfiguration';
+import GenericHttpReqConfiguration from './facets/GenericHttpReqConfiguration';
+import GenericHttpAuthConfiguration from './facets/GenericHttpAuthConfiguration';
 
 export default function RepositoriesForm({itemId, onDone = () => {}}) {
   const stateMachine = useMachine(RepositoriesFormMachine, {
@@ -78,10 +82,7 @@ export default function RepositoriesForm({itemId, onDone = () => {}}) {
   return (
     <Page className="nxrm-repository-editor">
       <PageHeader>
-        <PageTitle
-          icon={faDatabase}
-          {...(isEdit ? EDITOR.EDIT_TITLE : EDITOR.CREATE_TITLE)}
-        />
+        <PageTitle icon={faDatabase} {...(isEdit ? EDITOR.EDIT_TITLE : EDITOR.CREATE_TITLE)} />
       </PageHeader>
       <ContentBody>
         <Section className="nxrm-repository-editor-form">
@@ -102,14 +103,20 @@ export default function RepositoriesForm({itemId, onDone = () => {}}) {
               <>
                 <GenericNameConfiguration parentMachine={stateMachine} />
                 <GenericStorageConfiguration parentMachine={stateMachine} />
-                {type === 'group' && (
-                  <GenericGroupConfiguration parentMachine={stateMachine} />
+                {type === 'group' && <GenericGroupConfiguration parentMachine={stateMachine} />}
+                {type === 'hosted' && <GenericHostedConfiguration parentMachine={stateMachine} />}
+                {type === 'proxy' && (
+                  <>
+                    <GenericProxyConfiguration parentMachine={stateMachine} />
+                    <GenericOptionsConfiguration parentMachine={stateMachine} />
+                  </>
                 )}
-                {type === 'hosted' && (
-                  <GenericHostedConfiguration parentMachine={stateMachine} />
-                )}
-                {type !== 'group' && (
-                  <GenericCleanupConfiguration parentMachine={stateMachine} />
+                {type !== 'group' && <GenericCleanupConfiguration parentMachine={stateMachine} />}
+                {type === 'proxy' && (
+                  <>
+                    <GenericHttpAuthConfiguration parentMachine={stateMachine} />
+                    <GenericHttpReqConfiguration parentMachine={stateMachine} />
+                  </>
                 )}
               </>
             )}
