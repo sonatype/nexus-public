@@ -50,6 +50,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getFirst;
 import static com.google.common.collect.Iterables.isEmpty;
 import static com.google.common.collect.Lists.newArrayList;
+import static org.apache.commons.lang3.StringUtils.appendIfMissing;
+import static org.apache.commons.lang3.StringUtils.prependIfMissing;
 
 /**
  * {@link BrowseNode} entity-adapter.
@@ -400,7 +402,7 @@ public class BrowseNodeEntityAdapter
   }
 
   /**
-   * Removes the {@link BrowseNode} associated with the given asset id.
+   * Removes the {@link BrowseNode} associated with the given asset id
    */
   public void deleteAssetNode(final ODatabaseDocumentTx db, final EntityId assetId) {
     // a given asset will only appear once in the tree
@@ -408,14 +410,18 @@ public class BrowseNodeEntityAdapter
         db.command(new OCommandSQL(FIND_BY_ASSET)).execute(
             ImmutableMap.of(P_ASSET_ID, recordIdentity(assetId))), null);
 
+
     if (document != null) {
-      if (document.containsField(P_COMPONENT_ID)) {
+      String repository = document.field(P_REPOSITORY_NAME);
+      String nodePath = appendIfMissing(prependIfMissing(document.field(P_PATH), "/"), "/");
+      if (document.containsField(P_COMPONENT_ID) || !hasNoChildren(db, repository, nodePath)) {
         // component still exists, just remove asset details
+        // OR there are child nodes, need to keep node to allow their access.
         document.removeField(P_ASSET_ID);
         document.save();
       }
       else {
-        maybeDeleteParents(db, document.field(P_REPOSITORY_NAME), document.field(P_PARENT_PATH));
+        maybeDeleteParents(db, repository, document.field(P_PARENT_PATH));
         document.delete();
       }
     }
@@ -534,6 +540,11 @@ public class BrowseNodeEntityAdapter
   @Override
   public boolean resolveConflicts() {
     return true;
+  }
+
+
+  private boolean hasNoChildren(final ODatabaseDocumentTx db, final String repo, final String path){
+    return childCountEqualTo(db, repo, path, 0);
   }
 
   private boolean childCountEqualTo(final ODatabaseDocumentTx db,
