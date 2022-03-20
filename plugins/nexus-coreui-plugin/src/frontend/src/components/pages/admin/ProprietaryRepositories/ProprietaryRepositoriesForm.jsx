@@ -17,7 +17,6 @@ import {FormUtils} from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
   NxForm,
-  NxFormGroup,
   NxTooltip,
   NxStatefulTransferList,
 } from '@sonatype/react-shared-components';
@@ -67,17 +66,15 @@ export default function ProprietaryRepositories() {
       </>}>
     {() => <>
       <p>{HELP_TEXT}</p>
-      <NxFormGroup label={LABELS.LABEL} isRequired>
-        <NxStatefulTransferList
-            id="proprietary_repositories_select"
-            availableItemsLabel={LABELS.AVAILABLE_TITLE}
-            selectedItemsLabel={LABELS.SELECTED_TITLE}
-            allItems={repositories}
-            selectedItems={enabledRepositories}
-            onChange={FormUtils.handleUpdate('enabledRepositories', send)}
-            showMoveAll
-        />
-      </NxFormGroup>
+      <NxStatefulTransferList
+          id="proprietary_repositories_select"
+          availableItemsLabel={LABELS.AVAILABLE_TITLE}
+          selectedItemsLabel={LABELS.SELECTED_TITLE}
+          allItems={repositories}
+          selectedItems={enabledRepositories}
+          onChange={FormUtils.handleUpdate('enabledRepositories', send)}
+          showMoveAll
+      />
     </>}
   </NxForm>;
 }

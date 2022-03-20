@@ -25,7 +25,7 @@ export default {
     DELETE_BUTTON_LABEL: 'Delete',
 
     READ_ONLY: {
-      WARNING: 'You are currently viewing a Read-only version of this page. You may not have the correct permissions to edit. Contact your Administrator to check permissions.',
+      WARNING: 'You are viewing a read-only version of this page. You do not have permission to edit. Contact your Administrator if you need additional permissions.',
       CHECKBOX: {
         ENABLED: 'Enabled',
         DISABLED: 'Disabled',

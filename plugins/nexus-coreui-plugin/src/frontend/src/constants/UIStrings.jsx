@@ -12,6 +12,8 @@
  */
 import React from 'react';
 
+import {NxTextLink} from '@sonatype/react-shared-components';
+
 import {UIStrings} from '@sonatype/nexus-ui-plugin';
 
 export default {
@@ -880,10 +882,14 @@ Once created, a cleanup policy must be assigned to a repository from \
       LABEL: 'Proprietary Repositories Configuration',
       AVAILABLE_TITLE: 'Generic Hosted Repositories',
       SELECTED_TITLE: 'Proprietary Hosted Repositories',
-      EMPTY_LIST: 'There are no selected proprietary hosted repositories',
+      EMPTY_LIST: 'There are no configured proprietary hosted repositories for which you have view permissions.',
     },
-    HELP_TEXT: `To help prevent dependency confusion attacks, identify your hosted repositories that contain
-    proprietary components. Refer to the documentation for details on setting up appropriate IQ policies to
-    quarantine public components with the same names as your proprietary components.`,
+    HELP_TEXT: <>
+      {'To help prevent dependency confusion attacks, identify your hosted repositories that contain proprietary components. Refer to the'}{' '}
+      <NxTextLink external href="http://links.sonatype.com/products/nxrm3/docs/proprietary-repositories">
+        {'documentation'}
+      </NxTextLink>
+      {' '}{'for details on setting up appropriate IQ policies to quarantine public components with the same names as your proprietary components.'}
+    </>,
   }
 };
