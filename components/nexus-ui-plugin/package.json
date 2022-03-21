@@ -1,30 +1,43 @@
 {
   "name": "@sonatype/nexus-ui-plugin",
   "version": "0.1.0",
+  "private": true,
   "main": "dist/index.js",
   "files": [
     "dist"
   ],
-  "private": true,
+  "scripts": {
+    "build": "npm-run-all build-all",
+    "build-all": "npm-run-all compile-js copy-scss copy-package-json",
+    "watch": "npm-run-all copy-scss copy-package-json watch-js",
+    "compile-js": "babel src/frontend/src --source-maps inline --out-dir dist",
+    "watch-js": "babel src/frontend/src --out-dir dist --watch --verbose",
+    "copy-scss": "cpx \"src/frontend/src/**/*.scss\" dist",
+    "copy-package-json": "cpx package.json dist",
+    "test": "jest --config src/frontend/jest.config.js",
+    "test-coverage": "jest --config src/frontend/jest.config.js --coverage",
+    "test-watch": "jest --config src/frontend/jest.config.js --watch",
+    "test-watch-debug": "node --inspect-brk node_modules/.bin/jest --config src/frontend/jest.config.js --runInBand --watchAll"
+  },
   "dependencies": {
+    "@babel/runtime": "=7.17.2",
     "@fortawesome/fontawesome-svg-core": "=1.2.25",
     "@fortawesome/free-solid-svg-icons": "=5.11.2",
     "@fortawesome/react-fontawesome": "=0.1.4",
-    "@sonatype/react-shared-components": "=9.5.15",
-    "classnames": "=2.2.6",
+    "@sonatype/react-shared-components": "=9.13.2",
+    "classnames": "=2.3.1",
     "file-size": "=1.0.0",
     "node-gyp": "=8.1.0",
     "ramda": "=0.28.0"
   },
-  "peerDependencies": {
-    "react": "=16.14.0",
-    "react-dom": "=16.14.0",
-    "xstate": "=4.16.0"
-  },
   "devDependencies": {
-    "@babel/cli": "=7.6.4",
-    "@babel/plugin-proposal-class-properties": "=7.7.0",
-    "@babel/plugin-proposal-optional-chaining": "=7.6.0",
+    "@babel/cli": "=7.17.6",
+    "@babel/core": "=7.17.5",
+    "@babel/plugin-proposal-class-properties": "=7.16.7",
+    "@babel/plugin-proposal-optional-chaining": "=7.16.7",
+    "@babel/plugin-transform-runtime": "=7.17.0",
+    "@babel/preset-env": "=7.16.11",
+    "@babel/preset-react": "=7.16.7",
     "@testing-library/jest-dom": "=5.14.1",
     "@testing-library/react": "=12.1.2",
     "@testing-library/user-event": "=12.8.3",
@@ -38,17 +51,9 @@
     "react-test-renderer": "=16.14.0",
     "xstate": "=4.16.0"
   },
-  "scripts": {
-    "build": "npm-run-all build-all",
-    "build-all": "npm-run-all compile-js copy-scss copy-package-json",
-    "watch": "npm-run-all copy-scss copy-package-json watch-js",
-    "compile-js": "babel src/frontend/src --source-maps inline --out-dir dist",
-    "watch-js": "babel src/frontend/src --out-dir dist --watch --verbose",
-    "copy-scss": "cpx \"src/frontend/src/**/*.scss\" dist",
-    "copy-package-json": "cpx package.json dist",
-    "test": "jest --config src/frontend/jest.config.js",
-    "test-coverage": "jest --config src/frontend/jest.config.js --coverage",
-    "test-watch": "jest --config src/frontend/jest.config.js --watch",
-    "test-watch-debug": "node --inspect-brk node_modules/.bin/jest --config src/frontend/jest.config.js --runInBand --watchAll"
+  "peerDependencies": {
+    "react": "=16.14.0",
+    "react-dom": "=16.14.0",
+    "xstate": "=4.16.0"
   }
 }

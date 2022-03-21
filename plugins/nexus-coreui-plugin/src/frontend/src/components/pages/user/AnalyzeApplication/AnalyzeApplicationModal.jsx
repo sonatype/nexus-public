@@ -20,6 +20,8 @@ import UIStrings from '../../../../constants/UIStrings';
 import {useMachine} from "@xstate/react";
 import AnalyzeApplicationModalMachine from "./AnalyzeApplicationModalMachine";
 
+import './AnalyzeApplication.scss';
+
 export default function AnalyzeApplicationModal(props) {
   const [state, send] = useMachine(AnalyzeApplicationModalMachine, {
     context: {
@@ -88,7 +90,7 @@ export default function AnalyzeApplicationModal(props) {
               descriptionText={UIStrings.ANALYZE_APPLICATION.PACKAGES.DESCRIPTION}
               isOptional>
             <Textfield {...Utils.fieldProps('packages', state)} onChange={handleUpdate}
-                       className='nx-text-input--long'/>
+                       className='nxrm-analyze-app-pkg-input'/>
           </FieldWrapper>
         </div>
 
