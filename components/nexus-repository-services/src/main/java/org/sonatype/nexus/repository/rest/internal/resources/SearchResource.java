@@ -217,6 +217,7 @@ public class SearchResource
             .map(String::toUpperCase)
             .map(SortDirection::valueOf)
             .orElse(null))
+        .includeAssets()
         .build();
 
     return searchService.search(request);

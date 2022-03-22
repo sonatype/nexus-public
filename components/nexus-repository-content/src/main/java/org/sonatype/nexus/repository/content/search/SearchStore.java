@@ -93,8 +93,14 @@ public class SearchStore<T extends SearchDAO>
    * @return count of all {@link SearchResultData} in the given format
    */
   @Transactional
-  public int count()
+  public int count(@Nullable final SqlSearchQueryCondition filterQuery)
   {
-    return dao().count();
+    String filterFormat = null;
+    Map<String, String> formatValues = null;
+    if (Objects.nonNull(filterQuery)) {
+      filterFormat = filterQuery.getSqlConditionFormat();
+      formatValues = filterQuery.getValues();
+    }
+    return dao().count(filterFormat, formatValues);
   }
 }

@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -29,6 +28,7 @@ import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
+import org.sonatype.nexus.repository.content.AssetInfo;
 import org.sonatype.nexus.repository.content.AttributeChangeSet;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.event.asset.AssetAttributesEvent;
@@ -192,6 +192,17 @@ public class AssetStore<T extends AssetDAO>
   @Transactional
   public Optional<Asset> findByBlobRef(final int repositoryId, final BlobRef blobRef) {
     return dao().findByBlobRef(repositoryId, blobRef);
+  }
+
+  /**
+   * Retrieves an assets associated with the given component ids.
+   *
+   * @param componentIds a set of component ids to search
+   * @return collection of {@link AssetInfo}
+   */
+  @Transactional
+  public Collection<AssetInfo> findByComponentIds(final Set<Integer> componentIds) {
+    return dao().findByComponentIds(componentIds);
   }
 
   /**

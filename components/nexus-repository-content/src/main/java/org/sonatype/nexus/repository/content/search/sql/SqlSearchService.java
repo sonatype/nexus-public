@@ -12,16 +12,17 @@
  */
 package org.sonatype.nexus.repository.content.search.sql;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.inject.Inject;
@@ -31,9 +32,11 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.content.AssetInfo;
 import org.sonatype.nexus.repository.content.SearchResult;
 import org.sonatype.nexus.repository.content.search.SearchStore;
 import org.sonatype.nexus.repository.content.search.SearchViewColumns;
+import org.sonatype.nexus.repository.content.store.AssetStore;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.search.AssetSearchResult;
@@ -49,9 +52,9 @@ import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.security.SecurityHelper;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
+import static java.util.stream.Collectors.groupingBy;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.FORMAT;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
@@ -112,24 +115,28 @@ public class SqlSearchService
     Optional<String> searchFormatOpt = getSearchFormat(searchRequest);
     if (searchFormatOpt.isPresent()) {
       SearchStore<?> searchStore = getSearchStore(searchFormatOpt.get());
-      return searchStore.count();
+      SqlSearchQueryCondition queryCondition = getSqlSearchQueryCondition(searchRequest);
+      return searchStore.count(queryCondition);
     }
 
     return 0L;
   }
 
   private ComponentSearchResultPage searchComponents(final SearchRequest searchRequest) {
-    SqlSearchQueryBuilder queryBuilder = searchUtils.buildQuery(searchRequest.getSearchFilters());
-    SqlSearchQueryCondition queryCondition = queryBuilder.buildQuery().orElse(null);
+    SqlSearchQueryCondition queryCondition = getSqlSearchQueryCondition(searchRequest);
 
     Optional<String> searchFormatOpt = getSearchFormat(searchRequest);
     if (searchFormatOpt.isPresent()) {
       String searchFormat = searchFormatOpt.get();
-      SearchStore<?> searchStore = getSearchStore(searchFormat);
-      return searchByFormat(searchStore, searchRequest, queryCondition, searchFormat);
+      return searchByFormat(searchRequest, queryCondition, searchFormat);
     }
 
     return ComponentSearchResultPage.empty();
+  }
+
+  private SqlSearchQueryCondition getSqlSearchQueryCondition(final SearchRequest searchRequest) {
+    SqlSearchQueryBuilder queryBuilder = searchUtils.buildQuery(searchRequest.getSearchFilters());
+    return queryBuilder.buildQuery().orElse(null);
   }
 
   private SearchStore<?> getSearchStore(final String format) {
@@ -137,8 +144,12 @@ public class SqlSearchService
     return formatStoreManager.searchStore(DEFAULT_DATASTORE_NAME);
   }
 
+  private AssetStore<?> getAssetStore(final String format) {
+    FormatStoreManager formatStoreManager = formatStoreManagersByFormat.get(format);
+    return formatStoreManager.assetStore(DEFAULT_DATASTORE_NAME);
+  }
+
   private ComponentSearchResultPage searchByFormat(
-      final SearchStore<?> searchStore,
       final SearchRequest searchRequest,
       final SqlSearchQueryCondition queryCondition,
       final String format)
@@ -159,6 +170,7 @@ public class SqlSearchService
       return ComponentSearchResultPage.empty();
     }
 
+    SearchStore<?> searchStore = getSearchStore(format);
     Collection<SearchResult> searchResults = searchStore.searchComponents(
         searchRequest.getLimit(),
         offset,
@@ -166,22 +178,34 @@ public class SqlSearchService
         SearchViewColumns.fromSortFieldName(searchRequest.getSortField()),
         searchRequest.getSortDirection());
 
-    // we have to save ordering here
-    Map<Integer, ComponentSearchResult> componentById = new LinkedHashMap<>();
+    Map<Integer, List<AssetInfo>> componentIdToAsset = new HashMap<>();
+    if (searchRequest.isIncludeAssets()) {
+      AssetStore<?> assetStore = getAssetStore(format);
+      Set<Integer> componentIds = searchResults.stream()
+          .map(SearchResult::componentId)
+          .collect(Collectors.toSet());
+      componentIdToAsset = assetStore.findByComponentIds(componentIds).stream()
+          .collect(groupingBy(AssetInfo::componentId));
+    }
+
+    List<ComponentSearchResult> componentSearchResults = new ArrayList<>(searchResults.size());
     Map<String, Boolean> repositoryNameByAccess = getPermittedRepositories(searchResults);
     for (SearchResult component : searchResults) {
-      if (TRUE.equals(repositoryNameByAccess.get(component.repositoryName()))) {
-        ComponentSearchResult componentSearchResult = componentById.get(component.componentId());
-        if (componentSearchResult == null) {
-          componentSearchResult = buildComponentSearchResult(component, format);
-          componentById.put(component.componentId(), componentSearchResult);
+      String repositoryName = component.repositoryName();
+      if (TRUE.equals(repositoryNameByAccess.get(repositoryName))) {
+        ComponentSearchResult componentSearchResult = buildComponentSearchResult(component, format);
+        if (searchRequest.isIncludeAssets()) {
+          List<AssetInfo> assets = componentIdToAsset.get(component.componentId());
+          for (AssetInfo asset : assets) {
+            AssetSearchResult assetSearchResult = buildAssetSearch(asset, format, repositoryName);
+            componentSearchResult.addAsset(assetSearchResult);
+          }
         }
-        AssetSearchResult assetSearchResult = buildAssetSearch(component, format);
-        componentSearchResult.addAsset(assetSearchResult);
+        componentSearchResults.add(componentSearchResult);
       }
     }
 
-    return new ComponentSearchResultPage(searchResults.size(), newArrayList(componentById.values()));
+    return new ComponentSearchResultPage(searchResults.size(), componentSearchResults);
   }
 
   private Map<String, Boolean> getPermittedRepositories(final Collection<SearchResult> components) {
@@ -204,28 +228,29 @@ public class SqlSearchService
     return repositoryNameByAccess;
   }
 
-  private ComponentSearchResult buildComponentSearchResult(final SearchResult assetSearch, final String format) {
-    ComponentSearchResult searchResult = new ComponentSearchResult();
-    searchResult.setId(String.valueOf(assetSearch.componentId()));
-    searchResult.setFormat(format);
-    searchResult.setRepositoryName(assetSearch.repositoryName());
-    searchResult.setName(assetSearch.componentName());
-    searchResult.setGroup(assetSearch.namespace());
-    searchResult.setVersion(assetSearch.version());
+  private ComponentSearchResult buildComponentSearchResult(final SearchResult searchResult, final String format) {
+    ComponentSearchResult componentSearchResult = new ComponentSearchResult();
+    componentSearchResult.setId(String.valueOf(searchResult.componentId()));
+    componentSearchResult.setFormat(format);
+    componentSearchResult.setRepositoryName(searchResult.repositoryName());
+    componentSearchResult.setName(searchResult.componentName());
+    componentSearchResult.setGroup(searchResult.namespace());
+    componentSearchResult.setVersion(searchResult.version());
 
-    return searchResult;
+    return componentSearchResult;
   }
 
-  private AssetSearchResult buildAssetSearch(final SearchResult assetSearch, final String format) {
+  private AssetSearchResult buildAssetSearch(final AssetInfo asset, final String format, final String repositoryName) {
     AssetSearchResult searchResult = new AssetSearchResult();
-    searchResult.setId(String.valueOf(assetSearch.assetId()));
-    searchResult.setPath(assetSearch.path());
-    searchResult.setRepository(assetSearch.repositoryName());
+
+    searchResult.setId(String.valueOf(asset.assetId()));
+    searchResult.setPath(asset.path());
+    searchResult.setRepository(repositoryName);
     searchResult.setFormat(format);
-    searchResult.setLastModified(Date.from(assetSearch.lastUpdated().toInstant()));
-    searchResult.setAttributes(assetSearch.attributes().backing());
-    searchResult.setContentType(assetSearch.contentType());
-    searchResult.setChecksum(assetSearch.checksums());
+    searchResult.setLastModified(Date.from(asset.lastUpdated().toInstant()));
+    searchResult.setAttributes(asset.attributes().backing());
+    searchResult.setContentType(asset.contentType());
+    searchResult.setChecksum(asset.checksums());
 
     return searchResult;
   }

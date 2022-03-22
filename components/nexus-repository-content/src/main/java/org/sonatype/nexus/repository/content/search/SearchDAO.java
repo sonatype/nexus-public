@@ -37,21 +37,21 @@ import org.apache.ibatis.annotations.Param;
 public interface SearchDAO
     extends ContentDataAccess
 {
-  String FILTER_PARAMS = "filterParams";
-
   /**
    * Search components in the scope of one format.
    *
    * @param request DTO containing all required params for search
-   * @return collection of {@link SearchResultData} representing search results for a given format and the next
-   * continuation token
+   * @return collection of {@link SearchResultData} representing search results for a given format.
    */
   Collection<SearchResult> searchComponents(SqlSearchRequest request);
 
   /**
-   * Count all {@link SearchResultData} in the given format.
+   * Count components in the given format.
    *
-   * @return count of all {@link SearchResultData} in the given format
+   * @param filter optional filter to apply
+   * @param values optional values map for filter (required if filter is not null)
+   * @return number of found components.
    */
-  int count();
+  int count(@Nullable @Param("filter") String filter,
+            @Nullable @Param("filterParams") final Map<String, String> values);
 }

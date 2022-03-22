@@ -12,21 +12,26 @@
  */
 package org.sonatype.nexus.repository.content;
 
+import java.time.OffsetDateTime;
+import java.util.Map;
+
 /**
- * Provides search results.
+ * Information about asset and it's blob.
  *
  * @since 3.next
  */
-public interface SearchResult
+public interface AssetInfo
     extends RepositoryContent
 {
+  Integer assetId();
+
   Integer componentId();
 
-  String namespace();
+  String path();
 
-  String componentName();
+  String contentType();
 
-  String repositoryName();
+  OffsetDateTime lastUpdated();
 
-  String version();
+  Map<String, String> checksums();
 }

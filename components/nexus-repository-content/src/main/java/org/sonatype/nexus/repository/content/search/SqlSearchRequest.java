@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.content.search;
 
 import java.util.Map;
-import java.util.Optional;
 
 import javax.annotation.Nullable;
 
@@ -113,9 +112,6 @@ public class SqlSearchRequest
     }
 
     public SqlSearchRequest build() {
-
-      this.offset = Optional.ofNullable(offset).orElse(0);
-
       return new SqlSearchRequest(this);
     }
   }

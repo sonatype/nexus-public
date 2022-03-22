@@ -16,14 +16,19 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DuplicateKeyException;
 import org.sonatype.nexus.repository.content.Asset;
+import org.sonatype.nexus.repository.content.AssetBlob;
+import org.sonatype.nexus.repository.content.AssetInfo;
 import org.sonatype.nexus.repository.content.store.example.TestAssetBlobDAO;
 import org.sonatype.nexus.repository.content.store.example.TestAssetDAO;
 import org.sonatype.nexus.repository.content.store.example.TestAssetData;
@@ -944,6 +949,31 @@ public class AssetDAOTest
       AssetDAO dao = session.access(TestAssetDAO.class);
       tempResult = dao.findByBlobRef(repositoryId, assetBlob.blobRef()).get();
       assertThat(tempResult.path(), is(path));
+    }
+  }
+
+  @Test
+  public void testFindByComponentIds() {
+    generateConfiguration();
+    EntityId repositoryId = generatedConfigurations().get(0).getRepositoryId();
+    generateSingleRepository(UUID.fromString(repositoryId.getValue()));
+    generateContent(2);
+
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      TestAssetDAO dao = session.access(TestAssetDAO.class);
+      Collection<AssetInfo> assets = dao.findByComponentIds(Collections.singleton(1));
+
+      Optional<AssetInfo> assetOpt = assets.stream().findFirst();
+      assertThat(assetOpt.isPresent(), is(true));
+      AssetInfo asset = assetOpt.get();
+
+      Asset generatedAsset = generatedAssets().get(0);
+      AssetBlob generatedAssetBlob = generatedAssetBlobs().get(0);
+
+      assertThat(asset.path(), is(generatedAsset.path()));
+      assertThat(asset.contentType(), is(generatedAssetBlob.contentType()));
+      assertThat(asset.lastUpdated(), notNullValue());
+      assertThat(asset.checksums(), notNullValue());
     }
   }
 

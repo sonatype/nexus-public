@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.content.search;
 
-import java.util.Map;
-
 import org.sonatype.nexus.repository.content.SearchResult;
 import org.sonatype.nexus.repository.content.store.AbstractRepositoryContent;
 
@@ -28,7 +26,6 @@ public class SearchResultData
 {
   Integer componentId; // NOSONAR: internal id
 
-  // --- component related data ---
   private String namespace;
 
   private String componentName;
@@ -36,35 +33,6 @@ public class SearchResultData
   private String version;
 
   private String repositoryName;
-
-  // --- asset related data ---
-  private Integer assetId;
-
-  private String path;
-
-  private String contentType;
-
-  private Map<String, String> checksums;
-
-  @Override
-  public Integer assetId() {
-    return assetId;
-  }
-
-  @Override
-  public String path() {
-    return path;
-  }
-
-  @Override
-  public String contentType() {
-    return contentType;
-  }
-
-  @Override
-  public Map<String, String> checksums() {
-    return checksums;
-  }
 
   @Override
   public Integer componentId() {
@@ -111,34 +79,14 @@ public class SearchResultData
     this.repositoryName = repositoryName;
   }
 
-  public void setAssetId(final Integer assetId) {
-    this.assetId = assetId;
-  }
-
-  public void setPath(final String path) {
-    this.path = path;
-  }
-
-  public void setContentType(final String contentType) {
-    this.contentType = contentType;
-  }
-
-  public void setChecksums(final Map<String, String> checksums) {
-    this.checksums = checksums;
-  }
-
   @Override
   public String toString() {
-    return "ComponentSearchData{" +
+    return "SearchResultData{" +
         "componentId=" + componentId +
         ", namespace='" + namespace + '\'' +
         ", componentName='" + componentName + '\'' +
         ", version='" + version + '\'' +
         ", repositoryName='" + repositoryName + '\'' +
-        ", assetId=" + assetId +
-        ", path='" + path + '\'' +
-        ", contentType='" + contentType + '\'' +
-        ", checksums=" + checksums +
         '}';
   }
 }

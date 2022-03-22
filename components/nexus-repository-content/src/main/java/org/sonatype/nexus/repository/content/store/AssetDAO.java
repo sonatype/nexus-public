@@ -29,6 +29,7 @@ import org.sonatype.nexus.datastore.api.Expects;
 import org.sonatype.nexus.datastore.api.SchemaTemplate;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
+import org.sonatype.nexus.repository.content.AssetInfo;
 import org.sonatype.nexus.repository.content.Component;
 
 import org.apache.ibatis.annotations.Param;
@@ -151,6 +152,15 @@ public interface AssetDAO
    * @return asset if it was found
    */
   Optional<Asset> findByBlobRef(@Param("repositoryId") int repositoryId, @Param("blobRef") BlobRef blobRef);
+
+  /**
+   * Find assets by their component ids.
+   *
+   * @param componentIds a set of component ids.
+   *                     In case of {@code null} or empty set will be returned all available assets.
+   * @return collection of {@link AssetInfo}
+   */
+  Collection<AssetInfo> findByComponentIds(@Nullable @Param("componentIds") Set<Integer> componentIds);
 
   /**
    * Updates the kind of the given asset in the content data store.

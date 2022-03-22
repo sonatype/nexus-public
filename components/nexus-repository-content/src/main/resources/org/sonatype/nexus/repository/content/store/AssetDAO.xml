@@ -154,6 +154,20 @@
     WHERE repository_id = #{repositoryId} AND blob_ref = #{blobRef};
   </select>
 
+  <select id="findByComponentIds" resultType="org.sonatype.nexus.repository.content.store.AssetInfoData" parameterType="java.util.Set">
+    SELECT *
+    FROM ${format}_asset A
+    INNER JOIN ${format}_asset_blob USING (asset_blob_id)
+    <where>
+      <if test="componentIds != null">
+        <foreach collection="componentIds" item="componentId" index="index" open="component_id IN (" close=")" separator=",">
+          #{componentId}
+        </foreach>
+      </if>
+    </where>
+    ORDER BY asset_id
+  </select>
+
   <update id="updateAssetKind" parameterType="AssetData">
     UPDATE ${format}_asset SET kind = #{kind}, last_updated = CURRENT_TIMESTAMP
         WHERE <include refid="assetMatch"/> AND kind != #{kind};

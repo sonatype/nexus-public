@@ -47,6 +47,8 @@ public class SearchRequest
 
   private final boolean conjunction;
 
+  private final boolean includeAssets;
+
   private SearchRequest(final Builder builder) {
     this.checkAuthorization = builder.checkAuthorization;
     this.searchFilters = builder.searchFilters;
@@ -57,6 +59,7 @@ public class SearchRequest
     this.limit = builder.limit;
     this.offset = builder.offset;
     this.conjunction = builder.conjunction;
+    this.includeAssets = builder.includeAssets;
   }
 
   public boolean isCheckAuthorization() {
@@ -95,6 +98,10 @@ public class SearchRequest
     return conjunction;
   }
 
+  public boolean isIncludeAssets() {
+    return includeAssets;
+  }
+
   public static Builder builder() {
     return new Builder();
   }
@@ -118,6 +125,8 @@ public class SearchRequest
     private Integer offset;
 
     private boolean conjunction = true;
+
+    private boolean includeAssets = false;
 
     public Builder disableAuthorization() {
       this.checkAuthorization = false;
@@ -159,6 +168,14 @@ public class SearchRequest
      */
     public Builder disjunction() {
       this.conjunction = false;
+      return this;
+    }
+
+    /**
+     * Sets the request to include asset data.
+     */
+    public Builder includeAssets() {
+      this.includeAssets = true;
       return this;
     }
 
