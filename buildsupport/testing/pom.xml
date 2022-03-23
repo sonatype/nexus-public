@@ -161,7 +161,7 @@
         <artifactId>pax-url-aether</artifactId>
         <version>2.6.7</version>
       </dependency>
-      
+
       <dependency>
         <groupId>org.littleshoot</groupId>
         <artifactId>littleproxy</artifactId>
@@ -172,6 +172,12 @@
             <artifactId>barchart-udt-bundle</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-all</artifactId>
+        <version>4.1.75.Final</version>
       </dependency>
 
       <!--
