@@ -10,15 +10,32 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.maven.internal.tasks;
+package org.sonatype.nexus.repository.content.upgrades;
 
-import org.sonatype.nexus.repository.search.index.SearchIndexUpdateManager;
+import java.util.Map;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+
+import org.sonatype.nexus.repository.Recipe;
+import org.sonatype.nexus.repository.content.search.upgrade.SearchIndexUpgrade;
 
 /**
- * @since 3.37
+ * Re-index search for all formats to store external id instead of internal id.
  */
-public interface MavenSearchIndexVersionManager
-    extends SearchIndexUpdateManager
+@Named
+@Singleton
+public class SearchIndexUpgrade_1_10
+    extends SearchIndexUpgrade
 {
-  String MAVEN_SEARCH_INDEX_OUTDATED = "maven_search_index_outdated";
+  @Inject
+  public SearchIndexUpgrade_1_10(final Map<String, Recipe> recipes) {
+    super(recipes);
+  }
+
+  @Override
+  public String version() {
+    return "1.10";
+  }
 }

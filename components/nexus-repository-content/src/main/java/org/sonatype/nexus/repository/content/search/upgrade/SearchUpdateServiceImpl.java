@@ -10,36 +10,28 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.maven.internal.tasks.orient;
+package org.sonatype.nexus.repository.content.search.upgrade;
 
-import javax.annotation.Priority;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.attributes.AttributesFacet;
-import org.sonatype.nexus.repository.maven.internal.Maven2Format;
-import org.sonatype.nexus.repository.maven.internal.tasks.MavenSearchIndexVersionManager;
+import org.sonatype.nexus.repository.content.facet.ContentFacet;
+import org.sonatype.nexus.repository.search.index.SearchUpdateService;
 import org.sonatype.nexus.repository.types.GroupType;
 
-/**
- * @since 3.37
- */
-@Named(Maven2Format.NAME)
+@Named
 @Singleton
-@Priority(Integer.MAX_VALUE)
-public class OrientMavenSearchIndexVersionManager
-    implements MavenSearchIndexVersionManager
+public class SearchUpdateServiceImpl
+    implements SearchUpdateService
 {
   @Override
   public boolean needsReindex(final Repository repository) {
     if (GroupType.NAME.equals(repository.getType().getValue())) {
       return false;
     }
-    AttributesFacet attributesFacet = repository.facet(AttributesFacet.class);
-    Object indexOutdated =
-        attributesFacet.getAttributes().get(MAVEN_SEARCH_INDEX_OUTDATED);
+    ContentFacet contentFacet = repository.facet(ContentFacet.class);
+    Object indexOutdated = contentFacet.attributes().get(SEARCH_INDEX_OUTDATED);
     if (indexOutdated instanceof Boolean) {
       return (Boolean) indexOutdated;
     }
@@ -48,7 +40,7 @@ public class OrientMavenSearchIndexVersionManager
 
   @Override
   public void doneReindexing(final Repository repository) {
-    repository.facet(AttributesFacet.class)
-        .modifyAttributes((final NestedAttributesMap attributes) -> attributes.remove(MAVEN_SEARCH_INDEX_OUTDATED));
+    ContentFacet contentFacet = repository.facet(ContentFacet.class);
+    contentFacet.withoutAttribute(SEARCH_INDEX_OUTDATED);
   }
 }

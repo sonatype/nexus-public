@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 @FeatureFlag(name = ORIENT_ENABLED)
-package org.sonatype.nexus.repository.maven.internal.tasks.orient;
+package org.sonatype.nexus.repository.search.upgrade.orient;
 
 import org.sonatype.nexus.common.app.FeatureFlag;
 

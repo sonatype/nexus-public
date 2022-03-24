@@ -16,9 +16,9 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.internal.search.index.SearchUpdateService;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.search.index.SearchIndexFacet;
+import org.sonatype.nexus.repository.search.index.SearchUpdateService;
 import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.TaskSupport;
 

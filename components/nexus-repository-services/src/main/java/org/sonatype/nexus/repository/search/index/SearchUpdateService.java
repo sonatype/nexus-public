@@ -19,8 +19,10 @@ import org.sonatype.nexus.repository.Repository;
  *
  * @since 3.37
  */
-public interface SearchIndexUpdateManager
+public interface SearchUpdateService
 {
+  String SEARCH_INDEX_OUTDATED = "search_index_outdated";
+
   boolean needsReindex(Repository repository);
 
   void doneReindexing(Repository repository);

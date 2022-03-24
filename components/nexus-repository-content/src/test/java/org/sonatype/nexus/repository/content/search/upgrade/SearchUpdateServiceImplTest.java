@@ -10,16 +10,16 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.maven.internal.tasks;
+package org.sonatype.nexus.repository.content.search.upgrade;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
-import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.content.facet.ContentFacet;
+import org.sonatype.nexus.repository.search.index.SearchUpdateService;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 
-import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -27,23 +27,24 @@ import org.mockito.Mock;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.search.index.SearchUpdateService.SEARCH_INDEX_OUTDATED;
 
-public class MavenSearchIndexVersionManagerImplTest
+public class SearchUpdateServiceImplTest
     extends TestSupport
 {
   @Mock
   private Repository repository;
 
   @Mock
-  private MavenContentFacet contentFacet;
+  private ContentFacet contentFacet;
 
   private final NestedAttributesMap attributes = new NestedAttributesMap();
 
-  private final MavenSearchIndexVersionManagerImpl underTest = new MavenSearchIndexVersionManagerImpl();
+  private final SearchUpdateServiceImpl underTest = new SearchUpdateServiceImpl();
 
   @Before
   public void setup() {
-    when(repository.facet(MavenContentFacet.class)).thenReturn(contentFacet);
+    when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);
     when(repository.getType()).thenReturn(new HostedType());
     when(contentFacet.attributes()).thenReturn(attributes);
   }
@@ -61,19 +62,19 @@ public class MavenSearchIndexVersionManagerImplTest
 
   @Test
   public void needsReindex_invalidFlag() {
-    attributes.set("maven_search_index_outdated", "hello");
+    attributes.set(SEARCH_INDEX_OUTDATED, "hello");
     assertFalse(underTest.needsReindex(repository));
   }
 
   @Test
   public void needsReindex_falseFlag() {
-    attributes.set("maven_search_index_outdated", false);
+    attributes.set(SEARCH_INDEX_OUTDATED, false);
     assertFalse(underTest.needsReindex(repository));
   }
 
   @Test
   public void needsReindex_trueFlag() {
-    attributes.set("maven_search_index_outdated", true);
+    attributes.set(SEARCH_INDEX_OUTDATED, true);
     assertTrue(underTest.needsReindex(repository));
   }
 }

@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.maven.internal.tasks.orient;
+package org.sonatype.nexus.repository.search.upgrade.orient;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.ImmutableNestedAttributesMap;
@@ -27,8 +27,9 @@ import org.mockito.Mock;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.search.index.SearchUpdateService.SEARCH_INDEX_OUTDATED;
 
-public class OrientMavenSearchIndexVersionManagerTest
+public class OrientSearchUpdateServiceTest
     extends TestSupport
 {
   @Mock
@@ -37,7 +38,7 @@ public class OrientMavenSearchIndexVersionManagerTest
   @Mock
   private AttributesFacet attributesFacet;
 
-  private final OrientMavenSearchIndexVersionManager underTest = new OrientMavenSearchIndexVersionManager();
+  private final OrientSearchUpdateService underTest = new OrientSearchUpdateService();
 
   @Before
   public void setup() {
@@ -61,21 +62,21 @@ public class OrientMavenSearchIndexVersionManagerTest
   @Test
   public void needsReindex_invalidFlag() {
     when(attributesFacet.getAttributes()).thenReturn(
-        new ImmutableNestedAttributesMap(null, "", ImmutableMap.of("maven_search_index_outdated", "hello")));
+        new ImmutableNestedAttributesMap(null, "", ImmutableMap.of(SEARCH_INDEX_OUTDATED, "hello")));
     assertFalse(underTest.needsReindex(repository));
   }
 
   @Test
   public void needsReindex_falseFlag() {
     when(attributesFacet.getAttributes()).thenReturn(
-        new ImmutableNestedAttributesMap(null, "", ImmutableMap.of("maven_search_index_outdated", false)));
+        new ImmutableNestedAttributesMap(null, "", ImmutableMap.of(SEARCH_INDEX_OUTDATED, false)));
     assertFalse(underTest.needsReindex(repository));
   }
 
   @Test
   public void needsReindex_trueFlag() {
     when(attributesFacet.getAttributes()).thenReturn(
-        new ImmutableNestedAttributesMap(null, "", ImmutableMap.of("maven_search_index_outdated", true)));
+        new ImmutableNestedAttributesMap(null, "", ImmutableMap.of(SEARCH_INDEX_OUTDATED, true)));
     assertTrue(underTest.needsReindex(repository));
   }
 }
