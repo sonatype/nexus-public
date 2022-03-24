@@ -14,39 +14,20 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {createMachine, assign} from 'xstate';
+import {assign, createMachine} from 'xstate';
 import axios from 'axios';
-
-export const FILTER_BY_REPOSITORY_NAME = 'FILTER_BY_REPOSITORY_NAME';
-export const FILTER_BY_IP_ADDRESS = 'FILTER_BY_IP_ADDRESS';
-export const FILTER_BY_USERNAME = 'FILTER_BY_USERNAME';
 
 export default createMachine(
     {
       id: 'InsightFrontendMachine',
       initial: 'loading',
       context: {
-        pristineData: {
-          downloadsByRepositoryName: [],
-          downloadsByIpAddress: [],
-          downloadsByUsername: [],
-          downloadsByDay: [],
-          downloadsByDayNonVulnerable: [],
-          totalDownloads: 0
-        },
-        data: {
-          downloadsByRepositoryName: [],
-          downloadsByIpAddress: [],
-          downloadsByUsername: [],
-          downloadsByDay: [],
-          downloadsByDayNonVulnerable: [],
-          totalDownloads: 0
-        },
-        filters: {
-          filterByRepositoryNameValue: '',
-          filterByIpAddressValue: '',
-          filterByUsernameValue: '',
-        }
+        downloadsByRepositoryName: [],
+        downloadsByIpAddress: [],
+        downloadsByUsername: [],
+        downloadsByDay: [],
+        downloadsByDayNonVulnerable: [],
+        totalDownloads: 0
       },
       states: {
         loading: {
@@ -58,86 +39,12 @@ export default createMachine(
             },
           }
         },
-        viewing: {
-          on: {
-            FILTER_TABLE_BY: {
-              // target: 'viewing',
-              actions: ['doFilterTable']
-            }
-          }
-        }
+        viewing: {}
       },
     },
     {
       actions: {
-        setData: assign((context, event) => {
-          return {
-            ...context,
-            pristineData: {
-              ...event.data
-            },
-            data: {
-              ...event.data
-            }
-          }
-        }),
-        doFilterTable: assign((context, event) => {
-          const {
-            filterType,
-            filterValue
-          } = event.value;
-
-          if (filterType === FILTER_BY_REPOSITORY_NAME) {
-            const result = context.pristineData.downloadsByRepositoryName
-                .filter(it => it.identifier.includes(filterValue));
-
-            return {
-              ...context,
-              data: {
-                ...context.data,
-                downloadsByRepositoryName: result
-              },
-              filters: {
-                ...context.filters,
-                filterByRepositoryNameValue: filterValue
-              }
-            }
-          }
-          if (filterType === FILTER_BY_IP_ADDRESS) {
-            const result = context.pristineData.downloadsByIpAddress
-                .filter(it => it.identifier.includes(filterValue));
-
-            return {
-              ...context,
-              data: {
-                ...context.data,
-                downloadsByIpAddress: result
-              },
-              filters: {
-                ...context.filters,
-                filterByIpAddressValue: filterValue
-              }
-            }
-          }
-          if (filterType === FILTER_BY_USERNAME) {
-            const result = context.pristineData.downloadsByUsername
-                .filter(it => it.identifier.includes(filterValue));
-
-            return {
-              ...context,
-              data: {
-                ...context.data,
-                downloadsByUsername: result
-              },
-              filters: {
-                ...context.filters,
-                filterByUsernameValue: filterValue
-              }
-            }
-          }
-
-          return context;
-        })
+        setData: assign((_, event) => event.data)
       },
       services: {
         fetchData: async () => {
