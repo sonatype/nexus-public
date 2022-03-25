@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.IntSupplier;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -45,20 +47,17 @@ import org.sonatype.nexus.repository.search.SearchRequest;
 import org.sonatype.nexus.repository.search.SearchResponse;
 import org.sonatype.nexus.repository.search.SearchService;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
+import org.sonatype.nexus.repository.search.sql.SqlSearchPermissionException;
+import org.sonatype.nexus.repository.search.sql.SqlSearchPermissionManager;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryBuilder;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryCondition;
 import org.sonatype.nexus.repository.search.sql.SqlSearchUtils;
-import org.sonatype.nexus.repository.security.RepositoryViewPermission;
-import org.sonatype.nexus.security.SecurityHelper;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.Boolean.FALSE;
-import static java.lang.Boolean.TRUE;
 import static java.util.stream.Collectors.groupingBy;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.FORMAT;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
-import static org.sonatype.nexus.security.BreadActions.BROWSE;
 
 /**
  * Implementation of {@link SearchService} to be used in sql search query.
@@ -79,35 +78,34 @@ public class SqlSearchService
 
   private final Map<String, FormatStoreManager> formatStoreManagersByFormat;
 
-  private final SecurityHelper securityHelper;
+  private final SqlSearchPermissionManager sqlSearchPermissionManager;
 
   @Inject
   public SqlSearchService(
       final SqlSearchUtils searchUtils,
       final RepositoryManager repositoryManager,
       final Map<String, FormatStoreManager> formatStoreManagersByFormat,
-      final SecurityHelper securityHelper)
+      final SqlSearchPermissionManager sqlSearchPermissionManager)
   {
     this.searchUtils = checkNotNull(searchUtils);
     this.repositoryManager = checkNotNull(repositoryManager);
     this.formatStoreManagersByFormat = checkNotNull(formatStoreManagersByFormat);
-    this.securityHelper = checkNotNull(securityHelper);
+    this.sqlSearchPermissionManager = checkNotNull(sqlSearchPermissionManager);
   }
 
   @Override
   public SearchResponse search(final SearchRequest searchRequest) {
-    ComponentSearchResultPage searchResultPage = searchComponents(searchRequest);
+    ComponentSearchResultPage searchResultPage = executeSearch(() -> searchComponents(searchRequest));
     SearchResponse response = new SearchResponse();
     response.setSearchResults(searchResultPage.componentSearchResults);
     response.setTotalHits((long) searchResultPage.componentSearchResults.size());
     response.setContinuationToken(String.valueOf(searchResultPage.offset));
-
     return response;
   }
 
   @Override
   public Iterable<ComponentSearchResult> browse(final SearchRequest searchRequest) {
-    return searchComponents(searchRequest).componentSearchResults;
+    return executeSearch( () -> searchComponents(searchRequest)).componentSearchResults;
   }
 
   @Override
@@ -115,28 +113,61 @@ public class SqlSearchService
     Optional<String> searchFormatOpt = getSearchFormat(searchRequest);
     if (searchFormatOpt.isPresent()) {
       SearchStore<?> searchStore = getSearchStore(searchFormatOpt.get());
-      SqlSearchQueryCondition queryCondition = getSqlSearchQueryCondition(searchRequest);
-      return searchStore.count(queryCondition);
+      return executeCount(() -> {
+        SqlSearchQueryCondition queryCondition = getSqlSearchQueryCondition(searchRequest, searchFormatOpt.get());
+        return searchStore.count(queryCondition);
+      });
     }
-
     return 0L;
   }
 
   private ComponentSearchResultPage searchComponents(final SearchRequest searchRequest) {
-    SqlSearchQueryCondition queryCondition = getSqlSearchQueryCondition(searchRequest);
-
     Optional<String> searchFormatOpt = getSearchFormat(searchRequest);
     if (searchFormatOpt.isPresent()) {
       String searchFormat = searchFormatOpt.get();
+      SqlSearchQueryCondition queryCondition = getSqlSearchQueryCondition(searchRequest, searchFormat);
       return searchByFormat(searchRequest, queryCondition, searchFormat);
     }
 
     return ComponentSearchResultPage.empty();
   }
 
-  private SqlSearchQueryCondition getSqlSearchQueryCondition(final SearchRequest searchRequest) {
+  private SqlSearchQueryCondition getSqlSearchQueryCondition(final SearchRequest searchRequest, final String format) {
     SqlSearchQueryBuilder queryBuilder = searchUtils.buildQuery(searchRequest.getSearchFilters());
+    addPermissionFilters(queryBuilder, searchRequest.getSearchFilters(), format);
     return queryBuilder.buildQuery().orElse(null);
+  }
+
+  private void addPermissionFilters(
+      final SqlSearchQueryBuilder queryBuilder,
+      final List<SearchFilter> searchFilters,
+      final String format)
+  {
+    sqlSearchPermissionManager.addPermissionFilters(
+        queryBuilder,
+        format,
+        searchUtils.getRepositoryFilter(searchFilters).map(SearchFilter::getValue).orElse(null)
+    );
+  }
+
+  private ComponentSearchResultPage executeSearch(final Supplier<ComponentSearchResultPage> searchRequest) {
+    try {
+      return searchRequest.get();
+    }
+    catch (SqlSearchPermissionException ex) {
+      log.debug(ex.getMessage());
+    }
+    return ComponentSearchResultPage.empty();
+  }
+
+  private int executeCount(final IntSupplier searchRequest) {
+    try {
+      return searchRequest.getAsInt();
+    }
+    catch (SqlSearchPermissionException ex) {
+      log.debug(ex.getMessage());
+    }
+    return 0;
   }
 
   private SearchStore<?> getSearchStore(final String format) {
@@ -189,43 +220,20 @@ public class SqlSearchService
     }
 
     List<ComponentSearchResult> componentSearchResults = new ArrayList<>(searchResults.size());
-    Map<String, Boolean> repositoryNameByAccess = getPermittedRepositories(searchResults);
     for (SearchResult component : searchResults) {
       String repositoryName = component.repositoryName();
-      if (TRUE.equals(repositoryNameByAccess.get(repositoryName))) {
-        ComponentSearchResult componentSearchResult = buildComponentSearchResult(component, format);
-        if (searchRequest.isIncludeAssets()) {
-          List<AssetInfo> assets = componentIdToAsset.get(component.componentId());
-          for (AssetInfo asset : assets) {
-            AssetSearchResult assetSearchResult = buildAssetSearch(asset, format, repositoryName);
-            componentSearchResult.addAsset(assetSearchResult);
-          }
+      ComponentSearchResult componentSearchResult = buildComponentSearchResult(component, format);
+      if (searchRequest.isIncludeAssets()) {
+        List<AssetInfo> assets = componentIdToAsset.get(component.componentId());
+        for (AssetInfo asset : assets) {
+          AssetSearchResult assetSearchResult = buildAssetSearch(asset, format, repositoryName);
+          componentSearchResult.addAsset(assetSearchResult);
         }
-        componentSearchResults.add(componentSearchResult);
       }
+      componentSearchResults.add(componentSearchResult);
     }
 
     return new ComponentSearchResultPage(searchResults.size(), componentSearchResults);
-  }
-
-  private Map<String, Boolean> getPermittedRepositories(final Collection<SearchResult> components) {
-    Map<String, Boolean> repositoryNameByAccess = new HashMap<>();
-    for (SearchResult componentSearch : components) {
-      String repositoryName = componentSearch.repositoryName();
-      Boolean permitted = repositoryNameByAccess.get(repositoryName);
-      if (permitted == null) {
-        Repository repository = repositoryManager.get(repositoryName);
-        // we must pre-filter repositories we can access
-        if (repository != null && securityHelper.allPermitted(new RepositoryViewPermission(repository, BROWSE))) {
-          repositoryNameByAccess.put(repositoryName, TRUE);
-        }
-        else {
-          repositoryNameByAccess.put(repositoryName, FALSE);
-        }
-      }
-    }
-
-    return repositoryNameByAccess;
   }
 
   private ComponentSearchResult buildComponentSearchResult(final SearchResult searchResult, final String format) {
@@ -275,7 +283,7 @@ public class SqlSearchService
       }
     }
 
-    // in case of search formats are different - we can't recognize where to search and returns an empty result.
+    // Searching across formats is not supported
     return formats.size() == 1 ? Optional.of(formats.iterator().next()) : Optional.empty();
   }
 
@@ -296,7 +304,8 @@ public class SqlSearchService
     }
   }
 
-  private static class ComponentSearchResultPage {
+  private static class ComponentSearchResultPage
+  {
     private final int offset;
 
     private final List<ComponentSearchResult> componentSearchResults;

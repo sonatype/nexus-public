@@ -18,6 +18,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.search.SearchRequest;
+import org.sonatype.nexus.repository.search.sql.SqlSearchPermissionManager;
 import org.sonatype.nexus.repository.search.sql.SqlSearchUtils;
 import org.sonatype.nexus.security.SecurityHelper;
 
@@ -50,6 +51,9 @@ public class SqlSearchServiceTest
 
   @Mock
   private SqlSearchUtils searchUtils;
+
+  @Mock
+  private SqlSearchPermissionManager sqlSearchPermissionManager;
 
   @InjectMocks
   private SqlSearchService underTest;

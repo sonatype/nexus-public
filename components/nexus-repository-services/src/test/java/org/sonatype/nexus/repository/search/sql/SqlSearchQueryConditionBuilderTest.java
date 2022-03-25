@@ -132,6 +132,20 @@ public class SqlSearchQueryConditionBuilderTest
     assertThat(actual.getValues().values(), containsInAnyOrder("repo1", "repo2", "repo3", "maven%", "raw_"));
   }
 
+  @Test
+  public void shouldPrefixParametersInEqualsCondition() {
+    String value = "repo1";
+    String parameterPrefix = "abc_";
+    String expectedFormat = "repository_name = #{filterParams.abc_repository_name}";
+    Map<String, String> expectedValues = ImmutableMap.of("abc_repository_name", value);
+
+    assertThat(underTest.condition("repository_name", value, parameterPrefix),
+        is(aSqlSearchCondition(expectedFormat, expectedValues)));
+
+    assertThat(underTest.condition("repository_name", singleton(value), parameterPrefix),
+        is(aSqlSearchCondition(expectedFormat, expectedValues)));
+  }
+
   private SqlSearchQueryCondition aSqlSearchCondition(final String conditionFormat, final Map<String, String> values) {
     return new SqlSearchQueryCondition(conditionFormat, values);
   }

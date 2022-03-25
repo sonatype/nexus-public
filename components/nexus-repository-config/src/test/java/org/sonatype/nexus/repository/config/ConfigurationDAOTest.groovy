@@ -12,15 +12,16 @@
  */
 package org.sonatype.nexus.repository.config
 
+
 import org.sonatype.nexus.common.entity.EntityId
 import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup
 import org.sonatype.nexus.datastore.api.DataSession
-import org.sonatype.nexus.repository.config.ConfigurationDAO
 import org.sonatype.nexus.repository.config.internal.ConfigurationData
 import org.sonatype.nexus.repository.routing.internal.RoutingRuleDAO
 import org.sonatype.nexus.repository.routing.internal.RoutingRuleData
 import org.sonatype.nexus.testdb.DataSessionRule
 
+import com.google.common.collect.ImmutableSet
 import org.junit.Rule
 import org.junit.experimental.categories.Category
 import spock.lang.Specification
@@ -43,7 +44,7 @@ class ConfigurationDAOTest
 
   RoutingRuleDAO routingRuleDAO
 
-  EntityId id1, id2
+  EntityId id1, id2, id3
 
   void setup() {
     session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)
@@ -60,8 +61,14 @@ class ConfigurationDAOTest
         matchers: ['d', 'e', 'f'])
     routingRuleDAO.create(routingRule)
 
+    routingRule = new RoutingRuleData(id: null, name: 'baz', mode: ALLOW,
+        description: 'desc1',
+        matchers: ['a', 'b', 'c'])
+    routingRuleDAO.create(routingRule)
+
     id1 = routingRuleDAO.readByName('foo').get().id
     id2 = routingRuleDAO.readByName('bar').get().id
+    id3 = routingRuleDAO.readByName('baz').get().id
   }
 
   void cleanup() {
@@ -125,5 +132,33 @@ class ConfigurationDAOTest
 
     then: 'the read value matches the original'
       read.getAttributes().get('baz').get('userpassword') == 'booz'
+  }
+
+  def 'read by names'() {
+    given: 'a Configuration'
+
+      def configuration1 = new ConfigurationData(name: 'foo', recipeName: 'foo', online: true,
+          attributes: [baz: [buzz: 'booz']], routingRuleId: id1)
+
+      def configuration2 = new ConfigurationData(name: 'barr', recipeName: 'barr', online: true,
+          attributes: [bar: [burr: 'foo']], routingRuleId: id2)
+
+      def configuration3 = new ConfigurationData(name: 'bazz', recipeName: 'bazz', online: true,
+          attributes: [baz: [bazz: 'bar']], routingRuleId: id3)
+
+    when: 'the configurations are stored'
+      dao.create(configuration1)
+      dao.create(configuration2)
+      dao.create(configuration3)
+
+    and: 'it is read back'
+      def results = dao.readByNames(ImmutableSet.of('_oo', 'b%z_'))
+
+    then: 'the result contains two items'
+      results.size() == 2
+    and: 'the items are same as original'
+      def names = results.stream().collect { it.repositoryName }
+      names.contains(configuration1.name)
+      names.contains(configuration3.name)
   }
 }

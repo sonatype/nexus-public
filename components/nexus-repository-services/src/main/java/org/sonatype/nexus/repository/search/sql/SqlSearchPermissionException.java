@@ -10,36 +10,15 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.config;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-
-import org.sonatype.goodies.lifecycle.Lifecycle;
+package org.sonatype.nexus.repository.search.sql;
 
 /**
- * {@link Configuration} store.
- *
- * @since 3.0
+ * Exception throw when a user does not have 'BROWSE' permissions nor content selectors for repositories being searched.
  */
-public interface ConfigurationStore
-  extends Lifecycle
+public class SqlSearchPermissionException
+    extends RuntimeException
 {
-  List<Configuration> list();
-
-  void create(Configuration configuration);
-
-  void update(Configuration configuration);
-
-  void delete(Configuration configuration);
-
-  /**
-   * Create a new {@link Configuration} instance.
-   *
-   * @since 3.21
-   */
-  Configuration newConfiguration();
-
-  Collection<Configuration> readByNames(Set<String> repositoryNames);
+  public SqlSearchPermissionException(final String message) {
+    super(message);
+  }
 }

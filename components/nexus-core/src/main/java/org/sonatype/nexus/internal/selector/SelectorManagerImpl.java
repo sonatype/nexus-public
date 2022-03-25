@@ -223,7 +223,10 @@ public class SelectorManagerImpl
 
   @Override
   @Guarded(by = STARTED)
-  public List<SelectorConfiguration> browseActive(final List<String> repositoryNames, final List<String> formats) {
+  public List<SelectorConfiguration> browseActive(
+      final Collection<String> repositoryNames,
+      final List<String> formats)
+  {
     AuthorizationManager authorizationManager;
     User currentUser;
 
@@ -278,7 +281,7 @@ public class SelectorManagerImpl
     return selectorConfiguration;
   }
 
-  private boolean matchesFormatOrRepository(final List<String> repositoryNames,
+  private boolean matchesFormatOrRepository(final Collection<String> repositoryNames,
                                             final List<String> formats,
                                             final Privilege privilege)
   {
@@ -322,7 +325,7 @@ public class SelectorManagerImpl
     }
   }
 
-  private Predicate<Privilege> repositoryFormatOrNameMatcher(final List<String> repositoryNames,
+  private Predicate<Privilege> repositoryFormatOrNameMatcher(final Collection<String> repositoryNames,
                                                              final List<String> formats)
   {
     return (p) -> matchesFormatOrRepository(repositoryNames, formats, p);

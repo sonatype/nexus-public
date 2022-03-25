@@ -102,17 +102,16 @@ public abstract class SqlSearchQueryContributionSupport
     return PATTERN.matcher(value);
   }
 
-  protected String maybeTrimQuotes(String value) {
+  public static String maybeTrimQuotes(String value) {
     value = removeEnd(value, QUOTE);
     value = removeStart(value, QUOTE);
     return value;
   }
 
-  private Map<String, SearchFieldSupport> fieldMappingsByAttribute(final Map<String, SearchMappings> searchMappings) {
+  public static Map<String, SearchFieldSupport> fieldMappingsByAttribute(final Map<String, SearchMappings> searchMappings) {
     return searchMappings.entrySet().stream()
         .flatMap(e -> stream(e.getValue().get().spliterator(), false))
-        .collect(toMap(SearchMapping::getAttribute,
-            SearchMapping::getField));
+        .collect(toMap(SearchMapping::getAttribute, SearchMapping::getField));
   }
 
   @Nullable

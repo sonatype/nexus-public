@@ -29,7 +29,8 @@
         c.created AS component_created,
         r.name as search_repository_name,
         b.content_type,
-        b.checksums
+        b.checksums,
+        a.path
       FROM ${format}_component c
        INNER JOIN ${format}_content_repository cr ON c.repository_id = cr.repository_id
        INNER JOIN repository r ON cr.config_repository_id = r.id
