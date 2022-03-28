@@ -12,30 +12,26 @@
  */
 package org.sonatype.nexus.repository.view.handlers;
 
+import java.util.Optional;
+
 import javax.annotation.Nonnull;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.repository.http.HttpConditions;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.Response;
-import org.sonatype.nexus.repository.view.Status;
 import org.sonatype.nexus.repository.view.ViewFacet;
-
-import com.google.common.base.Predicate;
-import com.google.common.net.HttpHeaders;
 
 import static org.sonatype.nexus.repository.http.HttpConditions.makeConditional;
 import static org.sonatype.nexus.repository.http.HttpConditions.makeUnconditional;
-import static org.sonatype.nexus.repository.http.HttpConditions.requestPredicate;
 import static org.sonatype.nexus.repository.http.HttpMethods.DELETE;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
 import static org.sonatype.nexus.repository.http.HttpMethods.POST;
 import static org.sonatype.nexus.repository.http.HttpMethods.PUT;
-import static org.sonatype.nexus.repository.http.HttpStatus.NOT_MODIFIED;
-import static org.sonatype.nexus.repository.http.HttpStatus.PRECONDITION_FAILED;
 
 /**
  * A format-neutral handler for conditional requests. It relies on existence of following HTTP entity headers:
@@ -58,11 +54,10 @@ public class ConditionalRequestHandler
   @Nonnull
   @Override
   public Response handle(@Nonnull final Context context) throws Exception {
-    final Predicate<Response> requestPredicate = requestPredicate(context.getRequest());
-    if (requestPredicate != null) {
+    if (HttpConditions.isConditional(context.getRequest())) {
       makeUnconditional(context.getRequest());
       try {
-        return handleConditional(context, requestPredicate);
+        return handleConditional(context);
       }
       finally {
         makeConditional(context.getRequest());
@@ -73,25 +68,20 @@ public class ConditionalRequestHandler
   }
 
   @Nonnull
-  private Response handleConditional(@Nonnull final Context context,
-                                     @Nonnull final Predicate<Response> requestPredicate) throws Exception
+  private Response handleConditional(@Nonnull final Context context) throws Exception
   {
     final String action = context.getRequest().getAction();
-    log.debug("Conditional request: {} {}: {}",
+    log.debug("Conditional request: {} {}",
         action,
-        context.getRequest().getPath(),
-        requestPredicate);
+        context.getRequest().getPath());
     switch (action) {
       case GET:
       case HEAD: {
         final Response response = context.proceed();
-        if (response.getStatus().isSuccessful() && !requestPredicate.apply(response)) {
+        if (response.getStatus().isSuccessful()) {
           // copy only ETag header, leave out all other entity headers
-          final Response.Builder responseBuilder = new Response.Builder().status(Status.success(NOT_MODIFIED));
-          if (response.getHeaders().contains(HttpHeaders.ETAG)) {
-            responseBuilder.header(HttpHeaders.ETAG, response.getHeaders().get(HttpHeaders.ETAG));
-          }
-          return responseBuilder.build();
+          Optional<Response> conditionalResponse = HttpConditions.maybeCreateConditionalResponse(context, response);
+          return conditionalResponse.orElse(response);
         }
         else {
           return response;
@@ -103,19 +93,14 @@ public class ConditionalRequestHandler
       case DELETE: {
         final Request getRequest = new Request.Builder().copy(context.getRequest()).action(GET).build();
         final Response response = context.getRepository().facet(ViewFacet.class).dispatch(getRequest);
-        if (response.getStatus().isSuccessful() && !requestPredicate.apply(response)) {
-          // keep all response headers like Last-Modified and ETag, etc
-          return new Response.Builder()
-              .copy(response)
-              .status(Status.failure(PRECONDITION_FAILED))
-              .payload(null)
-              .build();
+        if (response.getStatus().isSuccessful()) {
+          Optional<Response> conditionalResponse = HttpConditions.maybeCreateConditionalResponse(context, response);
+          if (conditionalResponse.isPresent()) {
+            return conditionalResponse.get();
+          }
         }
-        else {
-          return context.proceed();
-        }
+        return context.proceed();
       }
-
       default:
         return context.proceed();
     }
