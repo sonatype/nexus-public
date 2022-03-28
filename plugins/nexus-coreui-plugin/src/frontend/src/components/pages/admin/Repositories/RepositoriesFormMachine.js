@@ -19,30 +19,36 @@ import Axios from 'axios';
 
 import {mergeDeepRight} from 'ramda';
 
-import {Utils, FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
+import {FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 
 import getTemplate from './RepositoryTemplates';
 
-export const repositoryUrl = (format, type) =>
-  `/service/rest/v1/repositories/${formatFormat(format)}/${type}`;
+export const repositoryUrl = (format, type) => `/service/rest/v1/repositories/${formatFormat(format)}/${type}`;
+export const editRepositoryUrl = (repositoryName) => `/service/rest/internal/ui/repositories/repository/${repositoryName}`;
 
 export default FormUtils.buildFormMachine({
   id: 'RepositoriesFormMachine',
   config: (config) =>
-    mergeDeepRight(config, {
-      states: {
-        loaded: {
-          on: {
-            RESET_DATA: {
-              actions: ['resetData'],
-              target: 'loaded'
+      mergeDeepRight(config, {
+        states: {
+          loaded: {
+            on: {
+              RESET_DATA: {
+                actions: ['resetData'],
+                target: 'loaded'
+              },
+              SET_DEFAULT_BLOB_STORE: {
+                cond: 'hasNoBlobStoreName',
+                target: 'loaded',
+                actions: ['update'],
+                internal: false
+              }
             }
           }
         }
-      }
-    })
+      })
 }).withConfig({
   actions: {
     validate: assign({
@@ -54,7 +60,7 @@ export default FormUtils.buildFormMachine({
           blobStoreName: validateBlobSoreName(data)
         },
         group: {
-          memberNames: validateMemeberNames(data)
+          memberNames: validateMemberNames(data)
         },
         proxy: {
           remoteUrl: validateRemoteUrl(data),
@@ -88,12 +94,21 @@ export default FormUtils.buildFormMachine({
       }
     })
   },
+  guards: {
+    hasNoBlobStoreName: ({data}) => ValidationUtils.isBlank(data.storage?.blobStoreName)
+  },
   services: {
     fetchData: async ({pristineData}) => {
       if (isEdit(pristineData)) {
-        const response = await Axios.get(repositoryUrl(pristineData.name));
-        return {data: response};
-      } else {
+        const response = await Axios.get(editRepositoryUrl(pristineData.name));
+        return mergeDeepRight(response, {
+          data: {
+            routingRule: response.data.routingRuleName
+          }
+        });
+
+      }
+      else {
         return {data: {name: ''}};
       }
     },
@@ -101,51 +116,45 @@ export default FormUtils.buildFormMachine({
       const {format, type} = data;
       const payload = data;
       return isEdit(pristineData)
-        ? Axios.put(repositoryUrl(format, type), payload)
-        : Axios.post(repositoryUrl(format, type), payload);
+          ? Axios.put(repositoryUrl(format, type) + '/' + pristineData.name, payload)
+          : Axios.post(repositoryUrl(format, type), payload);
     }
   }
 });
 
-const isEdit = ({name}) => Utils.notBlank(name);
+const isEdit = ({name}) => ValidationUtils.notBlank(name);
 
 const formatFormat = (format) => (format === 'maven2' ? 'maven' : format);
 
 const isProxyType = (type) => type === 'proxy';
 const isGroupType = (type) => type === 'group';
 
-const validateName = (value) => {
-  if (ValidationUtils.isBlank(value)) {
-    return UIStrings.ERROR.FIELD_REQUIRED;
-  } else if (value.length > 255) {
-    return UIStrings.ERROR.MAX_CHARS(255);
-  } else if (!Utils.isName(value)) {
-    return UIStrings.ERROR.INVALID_NAME_CHARS;
-  }
-  return null;
-};
+const validateName = (value) =>
+    ValidationUtils.validateNotBlank(value) ||
+    ValidationUtils.validateLength(value) ||
+    ValidationUtils.validateName(value);
 
 const validateTimeToLive = (value) =>
-  ValidationUtils.isInRange({value, min: -1, max: 1440, allowDecimals: false});
+    ValidationUtils.isInRange({value, min: -1, max: 1440, allowDecimals: false});
 
 const validateRemoteUrl = (data) =>
-  isProxyType(data.type)
-    ? ValidationUtils.validateNotBlank(data.proxy.remoteUrl) ||
-      ValidationUtils.validateIsUrl(data.proxy.remoteUrl)
-    : null;
+    isProxyType(data.type)
+        ? ValidationUtils.validateNotBlank(data.proxy.remoteUrl) ||
+        ValidationUtils.validateIsUrl(data.proxy.remoteUrl)
+        : null;
 
-const validateMemeberNames = (data) =>
-  isGroupType(data.type) && !data.group.memberNames.length ? UIStrings.ERROR.FIELD_REQUIRED : null;
+const validateMemberNames = (data) =>
+    isGroupType(data.type) && !data.group.memberNames.length ? UIStrings.ERROR.FIELD_REQUIRED : null;
 
 const validateBlobSoreName = (data) =>
-  ValidationUtils.validateNotBlank(data.storage?.blobStoreName);
+    ValidationUtils.validateNotBlank(data.storage?.blobStoreName);
 
 const validateHttpAuthCreds = (data, attrName) => {
   if (!isProxyType(data.type)) {
     return;
   }
   const type = data.httpClient?.authentication?.type;
-  if (type && type !== '') {
+  if (type) {
     const attrValue = data.httpClient.authentication[attrName];
     return ValidationUtils.validateNotBlank(attrValue);
   }
@@ -156,28 +165,28 @@ const validateHttpAuthNtlm = (data, attrName) => {
     return;
   }
   const type = data.httpClient?.authentication?.type;
-  if (type && type !== '' && type === 'ntlm') {
+  if (type && type === 'ntlm') {
     const attrValue = data.httpClient.authentication[attrName];
     return ValidationUtils.validateNotBlank(attrValue);
   }
 };
 
 const validateHttpConnectionRetries = (data) =>
-  isProxyType(data.type) &&
-  data.httpClient.connection &&
-  ValidationUtils.isInRange({
-    value: data.httpClient.connection.retries,
-    min: 0,
-    max: 10,
-    allowDecimals: false
-  });
+    isProxyType(data.type) &&
+    data.httpClient.connection &&
+    ValidationUtils.isInRange({
+      value: data.httpClient.connection.retries,
+      min: 0,
+      max: 10,
+      allowDecimals: false
+    });
 
 const validateHttpConnectionTimeout = (data) =>
-  isProxyType(data.type) &&
-  data.httpClient.connection &&
-  ValidationUtils.isInRange({
-    value: data.httpClient.connection.timeout,
-    min: 0,
-    max: 3600,
-    allowDecimals: false
-  });
+    isProxyType(data.type) &&
+    data.httpClient.connection &&
+    ValidationUtils.isInRange({
+      value: data.httpClient.connection.timeout,
+      min: 0,
+      max: 3600,
+      allowDecimals: false
+    });

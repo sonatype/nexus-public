@@ -156,6 +156,7 @@ public abstract class NexusTestSystemSupport<R extends RepositoryTestSystem, C e
   @Override
   protected void before() throws Throwable {
     securityRealms.before();
+    repositories.before();
   }
 
   @Override

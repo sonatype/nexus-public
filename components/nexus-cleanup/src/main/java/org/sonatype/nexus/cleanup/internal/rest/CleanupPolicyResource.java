@@ -120,7 +120,7 @@ public class CleanupPolicyResource
 
   @GET
   @RequiresAuthentication
-  @RequiresPermissions("nexus:*")
+  @RequiresPermissions("nexus:settings:read")
   public List<CleanupPolicyXO> get(@QueryParam("format") final String format) {
     List<CleanupPolicy> policies = isBlank(format) || format.equals(ALL_FORMATS)
         ? cleanupPolicyStorage.getAll()

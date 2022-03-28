@@ -20,6 +20,7 @@ import './styles/_global.scss';
 export { default as UIStrings } from './constants/UIStrings';
 
 export { default as ExtJS } from './interface/ExtJS';
+export { default as ExtAPIUtils } from './interface/ExtAPIUtils';
 
 export { default as Utils } from './interface/Utils';
 export { default as UnitUtil } from './interface/UnitUtil';

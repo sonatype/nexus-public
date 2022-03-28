@@ -16,19 +16,77 @@
  */
 
 import Axios from 'axios';
+import {assign, createMachine} from 'xstate';
+import {useMachine} from '@xstate/react';
+import {mergeDeepRight} from 'ramda';
+import UIStrings from "../constants/UIStrings";
+
 /**
  * @param url URL string for the request
  * @param action the ExtJS action (example: coreui_Bundle, coreui_AnonymousSettings etc.)
  * @param method the method for the request (example: read, write etc.)
  */
-export const extAPIRequest = (action, method) => {
-  return Axios.post('/service/extdirect',
+export const extAPIRequest = (action, method, data = null) => Axios.post('/service/extdirect',
     {
       "action": action,
       "method": method,
-      "data": null,
+      "data": data,
       "type": "rpc",
       "tid": 8
     }
-  );
+);
+
+export default class ExtAPIUtils {
+  static request = extAPIRequest;
+
+  static useExtMachine(action, method, options = {}) {
+    const machine = createMachine({
+      id: `ExtMachine(${action}, ${method})`,
+
+      initial: options.initial || 'loaded',
+
+      states: {
+        loading: {
+          invoke: {
+            src: 'fetch',
+            onDone: {
+              target: 'loaded',
+              actions: ['setData']
+            },
+            onError: {
+              target: 'error',
+              actions: ['setError']
+            }
+          }
+        },
+        loaded: {},
+        error: {}
+      },
+
+      on: {
+        LOAD: {
+          target: 'loading'
+        }
+      }
+    }, {
+      actions: {
+        setData: assign({
+          data: (_, event) => ExtAPIUtils.extractResult(event)
+        }),
+
+        setError: assign({
+          error: (_, event) => event?.message || UIStrings.ERROR.UNKNOWN
+        })
+      },
+      services: {
+        fetch: async (_, {data = null}) => extAPIRequest(action, method, data)
+      }
+    });
+
+    return useMachine(machine, mergeDeepRight({devTools: true}, options));
+  }
+
+  static extractResult(event, defaultOption = []) {
+    return event?.data?.data?.result?.data || defaultOption;
+  }
 }

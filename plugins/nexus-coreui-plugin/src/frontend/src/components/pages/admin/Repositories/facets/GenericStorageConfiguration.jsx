@@ -12,40 +12,30 @@
  */
 import React, {useEffect} from 'react';
 
-import {Select, FormUtils, useSimpleMachine} from '@sonatype/nexus-ui-plugin';
+import {ExtAPIUtils, FormUtils, Select} from '@sonatype/nexus-ui-plugin';
 
-import {
-  NxFormGroup,
-  NxCheckbox,
-  NxLoadWrapper,
-  NxFieldset
-} from '@sonatype/react-shared-components';
+import {NxCheckbox, NxFieldset, NxFormGroup, NxLoadWrapper} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
 
 const {EDITOR} = UIStrings.REPOSITORIES;
 
-export const BLOB_STORES_URL = '/service/rest/v1/blobstores';
-
 export default function GenericStorageConfiguration({parentMachine}) {
-  const {current, load, retry, isLoading} = useSimpleMachine(
-    'GenericStorageConfigurationMachine',
-    BLOB_STORES_URL
-  );
-
   const [currentParent, sendParent] = parentMachine;
+  const [blobStoresState, blobStoresSend] = ExtAPIUtils.useExtMachine('coreui_Blobstore', 'readNames');
 
-  const {data: blobStores, error} = current.context;
-
+  const {data: blobStores, error} = blobStoresState.context;
   const {format, type} = currentParent.context.data;
+  const loadBlobStores = () => blobStoresSend({type: 'LOAD'});
+  const isLoading = blobStoresState.matches('loading');
 
   useEffect(() => {
-    load();
+    loadBlobStores();
   }, [format, type]);
 
   useEffect(() => {
     sendParent({
-      type: 'UPDATE',
+      type: 'SET_DEFAULT_BLOB_STORE',
       name: 'storage.blobStoreName',
       value: getDefaultBlobStore(blobStores)
     });
@@ -54,7 +44,7 @@ export default function GenericStorageConfiguration({parentMachine}) {
   return (
     <>
       <h2 className="nx-h2">{EDITOR.STORAGE_CAPTION}</h2>
-      <NxLoadWrapper loading={isLoading} error={error} retryHandler={retry}>
+      <NxLoadWrapper loading={isLoading} error={error} retryHandler={loadBlobStores}>
         <NxFormGroup label={EDITOR.BLOB_STORE_LABEL} isRequired className="nxrm-form-group-store">
           <Select
             {...FormUtils.fieldProps('storage.blobStoreName', currentParent)}

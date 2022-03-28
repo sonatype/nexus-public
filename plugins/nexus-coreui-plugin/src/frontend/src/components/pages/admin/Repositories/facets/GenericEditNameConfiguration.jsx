@@ -20,7 +20,7 @@ import UIStrings from '../../../../../constants/UIStrings';
 
 const {EDITOR} = UIStrings.REPOSITORIES;
 
-export default function GenericNameConfiguration({parentMachine}) {
+export default function GenericEditNameConfiguration({parentMachine}) {
   const [currentParent, sendParent] = parentMachine;
 
   return (

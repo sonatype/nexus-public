@@ -36,6 +36,7 @@ import {cleanupPoliciesUrl} from './facets/GenericCleanupConfiguration';
 import {RECIPES_URL} from './facets/GenericFormatConfiguration';
 import {BLOB_STORES_URL} from './facets/GenericStorageConfiguration';
 import {ROUTING_RULES_URL} from './facets/GenericOptionsConfiguration';
+import {mergeDeepRight} from 'ramda';
 
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'),
@@ -55,13 +56,24 @@ describe('RepositoriesForm', () => {
 
   const selectors = {
     ...TestUtils.selectors,
-    getCreateButton: () => screen.getByText(EDITOR.SAVE_BUTTON_LABEL, {selector: 'button'}),
+
+    getCreateButton: () => screen.getByText(EDITOR.CREATE_BUTTON, {selector: 'button'}),
+    getSaveButton: () => screen.getByText(EDITOR.SAVE_BUTTON, {selector: 'button'}),
     getCancelButton: () => screen.queryByText('Cancel'),
+
+    getReadOnlyName: () => screen.getByText(EDITOR.NAME_LABEL, {selector: 'dt'}),
+    getReadOnlyFormat: () => screen.getByText(EDITOR.FORMAT_LABEL, {selector: 'dt'}),
+    getReadOnlyType: () => screen.getByText(EDITOR.TYPE_LABEL, {selector: 'dt'}),
+    getReadOnlyUrl: () => screen.getByText(EDITOR.URL_LABEL, {selector: 'dt'}),
+
+
     getFormatSelect: () => screen.getByLabelText(EDITOR.FORMAT_LABEL),
     getTypeSelect: () => screen.getByLabelText(EDITOR.TYPE_LABEL),
-    getBlobStoreSelect: () => screen.getByLabelText(EDITOR.BLOB_STORE_LABEL),
     getDeploymentPolicySelect: () => screen.queryByLabelText(EDITOR.DEPLOYMENT_POLICY_LABEL),
     getNameInput: () => screen.getByLabelText(EDITOR.NAME_LABEL),
+
+    getBlobStoreSelect: () => screen.getByLabelText(EDITOR.BLOB_STORE_LABEL),
+    getDeploymentPolicySelect: () => screen.queryByLabelText(EDITOR.DEPLOYMENT_POLICY_LABEL),
     getStatusCheckbox: () => screen.getByRole('checkbox', {name: EDITOR.STATUS_DESCR}),
     getProprietaryComponentsCheckbox: () =>
       screen.queryByRole('checkbox', {
@@ -402,6 +414,9 @@ describe('RepositoriesForm', () => {
     await TestUtils.changeField(selectors.getRemoteUrlInput, payload.proxy.remoteUrl);
     await TestUtils.changeField(selectors.getContentMaxAgeInput, payload.proxy.contentMaxAge);
     await TestUtils.changeField(selectors.getMetadataMaxAgeInput, payload.proxy.metadataMaxAge);
+    await TestUtils.changeField(selectors.getRemoteUrlInput, payload.proxy.remoteUrl);
+    await TestUtils.changeField(selectors.getContentMaxAgeInput, payload.proxy.contentMaxAge);
+    await TestUtils.changeField(selectors.getMetadataMaxAgeInput, payload.proxy.metadataMaxAge);
     await TestUtils.changeField(
       selectors.getAuthTypeSelect,
       payload.httpClient.authentication.type
@@ -476,6 +491,162 @@ describe('RepositoriesForm', () => {
 
     fireEvent.click(selectors.getCancelButton());
     await waitFor(() => expect(onDone).toHaveBeenCalled());
+  });
+
+
+
+  it('edits raw hosted repositories', async function() {
+    const repo = {
+      name: "raw-hosted",
+      format: "raw",
+      url: "http://localhost:8081/repository/raw-hosted",
+      online: true,
+      storage: {
+        blobStoreName: "default",
+        strictContentTypeValidation: true,
+        writePolicy: "ALLOW_ONCE"
+      },
+      cleanup: {
+        policyNames: []
+      },
+      component: {
+        proprietaryComponents: false
+      },
+      type: "hosted"
+    };
+    when(axios.get).calledWith('/service/rest/internal/ui/repositories/repository/raw-hosted').mockResolvedValueOnce({
+      data: repo
+    });
+
+    renderView('raw-hosted');
+
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+    expect(selectors.getReadOnlyName().nextSibling).toHaveTextContent(repo.name);
+    expect(selectors.getReadOnlyFormat().nextSibling).toHaveTextContent(repo.format)
+    expect(selectors.getReadOnlyType().nextSibling).toHaveTextContent(repo.type);
+    expect(selectors.getReadOnlyUrl().nextSibling).toHaveTextContent(repo.url);
+    expect(selectors.getContentValidationCheckbox()).toBeChecked();
+
+    fireEvent.click(selectors.getContentValidationCheckbox());
+
+    expect(selectors.getContentValidationCheckbox()).not.toBeChecked();
+
+    fireEvent.click(selectors.getSaveButton());
+
+    expect(axios.put).toBeCalledWith('/service/rest/v1/repositories/raw/hosted/raw-hosted', mergeDeepRight(repo, {
+      storage: {
+        strictContentTypeValidation: false
+      }
+    }));
+  });
+
+  it('edits raw proxy repositories', async function() {
+    const repo = {
+      name: "raw-proxy",
+      format: "raw",
+      url: "http://localhost:8081/repository/raw-proxy",
+      online: true,
+      storage: {
+        blobStoreName: "default",
+        strictContentTypeValidation: true
+      },
+      cleanup: {
+        policyNames: []
+      },
+      proxy: {
+        remoteUrl: "http://example.com",
+        contentMaxAge: 1440,
+        metadataMaxAge: 1440
+      },
+      negativeCache: {
+        enabled: true,
+        timeToLive: 1440
+      },
+      httpClient: {
+        blocked: false,
+        autoBlock: true,
+        connection: {
+          retries: 0,
+          userAgentSuffix: "",
+          timeout: 60,
+          enableCircularRedirects: false,
+          enableCookies: false,
+          useTrustStore: false
+        },
+        authentication: null
+      },
+      routingRuleName: null,
+      type: "proxy"
+    };
+    when(axios.get).calledWith('/service/rest/internal/ui/repositories/repository/raw-proxy').mockResolvedValueOnce({
+      data: repo
+    });
+
+    renderView('raw-proxy');
+
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+    await TestUtils.changeField(selectors.getRemoteUrlInput, 'http://other.com')
+
+    fireEvent.click(selectors.getSaveButton());
+
+    expect(axios.put).toBeCalledWith('/service/rest/v1/repositories/raw/proxy/raw-proxy', mergeDeepRight(repo, {
+      proxy: {
+        remoteUrl: 'http://other.com'
+      },
+      routingRule: null
+    }));
+  });
+
+  it('edits raw group repositories', async function() {
+    const repo = {
+      name: "raw-group",
+      format: "raw",
+      url: "http://localhost:8081/repository/raw-group",
+      online: true,
+      storage: {
+        blobStoreName: "default",
+        strictContentTypeValidation: true
+      },
+      group: {
+        memberNames: ["raw-hosted", "raw-proxy"]
+      },
+
+      type: "group"
+    };
+    when(axios.get).calledWith('/service/rest/internal/ui/repositories/repository/raw-group').mockResolvedValueOnce({
+      data: repo
+    });
+    when(axios.get).calledWith('/service/rest/internal/ui/repositories?format=raw').mockResolvedValueOnce({
+      data: [
+        {
+          id: "raw-group",
+          name: "raw-group"
+        }, {
+          id: "raw-hosted",
+          name: "raw-hosted"
+        }, {
+          id: "raw-proxy",
+          name: "raw-proxy"
+        }
+      ]
+    });
+
+    renderView('raw-group');
+
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+    fireEvent.click(screen.getByLabelText('raw-hosted'));
+
+    fireEvent.click(selectors.getSaveButton());
+
+    expect(axios.put).toBeCalledWith('/service/rest/v1/repositories/raw/group/raw-group', mergeDeepRight(repo, {
+      group: {
+        memberNames: ['raw-proxy']
+      },
+      routingRule: undefined
+    }));
   });
 });
 

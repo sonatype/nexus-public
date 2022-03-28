@@ -37,13 +37,15 @@ import GenericCleanupConfiguration from './facets/GenericCleanupConfiguration';
 import GenericHostedConfiguration from './facets/GenericHostedConfiguration';
 import GenericStorageConfiguration from './facets/GenericStorageConfiguration';
 import GenericFormatConfiguration from './facets/GenericFormatConfiguration';
-import GenericNameConfiguration from './facets/GenericNameConfiguration';
+import GenericReadOnlyNameConfiguration from './facets/GenericReadOnlyNameConfiguration';
+import GenericEditNameConfiguration from './facets/GenericEditNameConfiguration';
 import GenericProxyConfiguration from './facets/GenericProxyConfiguration';
 import GenericOptionsConfiguration from './facets/GenericOptionsConfiguration';
 import GenericHttpReqConfiguration from './facets/GenericHttpReqConfiguration';
 import GenericHttpAuthConfiguration from './facets/GenericHttpAuthConfiguration';
 
 export default function RepositoriesForm({itemId, onDone = () => {}}) {
+  const isEdit = Boolean(itemId);
   const stateMachine = useMachine(RepositoriesFormMachine, {
     context: {
       pristineData: {
@@ -61,7 +63,6 @@ export default function RepositoriesForm({itemId, onDone = () => {}}) {
 
   const {
     isPristine,
-    isEdit,
     loadError,
     saveError,
     validationErrors,
@@ -94,14 +95,15 @@ export default function RepositoriesForm({itemId, onDone = () => {}}) {
             onSubmit={save}
             submitError={saveError}
             submitMaskState={isSaving ? false : null}
-            submitBtnText={EDITOR.SAVE_BUTTON_LABEL}
+            submitBtnText={isEdit ? EDITOR.SAVE_BUTTON : EDITOR.CREATE_BUTTON}
             submitMaskMessage={SAVING}
             validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
           >
-            <GenericFormatConfiguration parentMachine={stateMachine} />
+            {isEdit && <GenericReadOnlyNameConfiguration parentMachine={stateMachine}/>}
+            {!isEdit && <GenericFormatConfiguration parentMachine={stateMachine}/>}
             {format && type && (
               <>
-                <GenericNameConfiguration parentMachine={stateMachine} />
+              {!isEdit && <GenericEditNameConfiguration parentMachine={stateMachine} />}
                 <GenericStorageConfiguration parentMachine={stateMachine} />
                 {type === 'group' && <GenericGroupConfiguration parentMachine={stateMachine} />}
                 {type === 'hosted' && <GenericHostedConfiguration parentMachine={stateMachine} />}
