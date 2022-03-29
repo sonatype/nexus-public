@@ -18,6 +18,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
+import org.sonatype.nexus.repository.cache.RepositoryCacheInvalidationService;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.event.asset.AssetUploadedEvent;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
@@ -52,9 +53,13 @@ public class MavenContentGroupFacetImplTest
   @Mock
   private Type groupType;
 
+  @Mock
+  private RepositoryCacheInvalidationService repositoryCacheInvalidationService;
+
   @Before
   public void setup() {
-    underTest = spy(new MavenContentGroupFacetImpl(repositoryManager, constraintViolationFactory, groupType));
+    underTest = spy(new MavenContentGroupFacetImpl(repositoryManager, constraintViolationFactory, groupType,
+        repositoryCacheInvalidationService));
   }
 
   /**

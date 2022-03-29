@@ -30,6 +30,7 @@ import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.cache.CacheInfo;
+import org.sonatype.nexus.repository.cache.RepositoryCacheInvalidationService;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.group.GroupFacetImpl;
 import org.sonatype.nexus.repository.http.HttpStatus;
@@ -92,9 +93,10 @@ public class OrientMavenGroupFacet
   public OrientMavenGroupFacet(
       final RepositoryManager repositoryManager,
       final ConstraintViolationFactory constraintViolationFactory,
-      @Named(GroupType.NAME) final Type groupType)
+      @Named(GroupType.NAME) final Type groupType,
+      final RepositoryCacheInvalidationService repositoryCacheInvalidationService)
   {
-    super(repositoryManager, constraintViolationFactory, groupType);
+    super(repositoryManager, constraintViolationFactory, groupType, repositoryCacheInvalidationService);
     this.repositoryMetadataMerger = new RepositoryMetadataMerger();
     this.archetypeCatalogMerger = new ArchetypeCatalogMerger();
   }

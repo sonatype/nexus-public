@@ -35,7 +35,7 @@ import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.MissingFacetException
 import org.sonatype.nexus.repository.Recipe
 import org.sonatype.nexus.repository.Repository
-import org.sonatype.nexus.repository.cache.RepositoryCacheUtils
+import org.sonatype.nexus.repository.cache.RepositoryCacheInvalidationService
 import org.sonatype.nexus.repository.config.Configuration
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet
 import org.sonatype.nexus.repository.manager.RepositoryManager
@@ -78,6 +78,9 @@ class RepositoryComponent
     extends DirectComponentSupport
     implements StateContributor
 {
+  @Inject
+  RepositoryCacheInvalidationService repositoryCacheInvalidationService;
+
   @Inject
   RepositoryManager repositoryManager
 
@@ -297,7 +300,7 @@ class RepositoryComponent
   void invalidateCache(final @NotEmpty String name) {
     Repository repository = repositoryManager.get(name)
     securityHelper.ensurePermitted(adminPermission(repository, BreadActions.EDIT))
-    RepositoryCacheUtils.invalidateCaches(repository)
+    repositoryCacheInvalidationService.processCachesInvalidation(repository)
   }
 
   RepositoryXO asRepository(Repository input) {

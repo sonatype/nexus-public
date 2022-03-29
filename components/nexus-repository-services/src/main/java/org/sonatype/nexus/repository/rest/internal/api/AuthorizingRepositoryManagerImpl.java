@@ -21,7 +21,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.cache.RepositoryCacheUtils;
+import org.sonatype.nexus.repository.cache.RepositoryCacheInvalidationService;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.rest.api.AuthorizingRepositoryManager;
@@ -59,15 +59,19 @@ public class AuthorizingRepositoryManagerImpl
 
   private final TaskScheduler taskScheduler;
 
+  private final RepositoryCacheInvalidationService repositoryCacheInvalidationService;
+
   @Inject
   public AuthorizingRepositoryManagerImpl(
       final RepositoryManager repositoryManager,
       final RepositoryPermissionChecker repositoryPermissionChecker,
-      final TaskScheduler taskScheduler)
+      final TaskScheduler taskScheduler,
+      final RepositoryCacheInvalidationService repositoryCacheInvalidationService)
   {
     this.repositoryManager = checkNotNull(repositoryManager);
     this.repositoryPermissionChecker = checkNotNull(repositoryPermissionChecker);
     this.taskScheduler = checkNotNull(taskScheduler);
+    this.repositoryCacheInvalidationService = checkNotNull(repositoryCacheInvalidationService);
   }
 
   public void create(@Nonnull final Configuration configuration) throws Exception {
@@ -154,7 +158,7 @@ public class AuthorizingRepositoryManagerImpl
   {
     Repository repository = getEditableRepositoryOrThrow(name);
     ensureProxyOrGroup(repository);
-    RepositoryCacheUtils.invalidateCaches(repository);
+    repositoryCacheInvalidationService.processCachesInvalidation(repository);
   }
 
   private void ensureProxyOrGroup(final Repository repository) throws IncompatibleRepositoryException {

@@ -14,8 +14,10 @@
 package org.sonatype.nexus.repository.rest.internal.api;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.NegativeCacheFacet;
+import org.sonatype.nexus.repository.cache.RepositoryCacheInvalidationService;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.proxy.ProxyFacet;
@@ -34,7 +36,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -65,7 +66,9 @@ public class AuthorizingRepositoryManagerTest
   @Mock
   private Repository repository;
 
-  @InjectMocks
+  @Mock
+  private EventManager eventManager;
+
   private AuthorizingRepositoryManagerImpl authorizingRepositoryManager;
 
   @Before
@@ -73,6 +76,11 @@ public class AuthorizingRepositoryManagerTest
     when(repository.getName()).thenReturn("repository");
     when(repositoryManager.get(anyString())).thenReturn(repository);
     when(repositoryManager.get(eq("absent"))).thenReturn(null);
+
+    RepositoryCacheInvalidationService repositoryCacheInvalidationService =
+        new RepositoryCacheInvalidationService(repositoryManager, eventManager);
+    authorizingRepositoryManager = new AuthorizingRepositoryManagerImpl(
+        repositoryManager, repositoryPermissionChecker, taskScheduler, repositoryCacheInvalidationService);
   }
 
   @Test

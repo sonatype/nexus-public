@@ -12,44 +12,75 @@
  */
 package org.sonatype.nexus.repository.cache;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+
+import org.sonatype.nexus.common.event.EventAware;
+import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.distributed.event.service.api.common.PublisherEvent;
+import org.sonatype.nexus.distributed.event.service.api.common.RepositoryCacheInvalidationEvent;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.group.GroupFacet;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.proxy.ProxyFacet;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.ProxyType;
+
+import com.google.common.eventbus.Subscribe;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Utility class for consolidating repeated cache-related logic not exclusive to individual facets and components.
+ * Service class for consolidating repeated cache-related logic not exclusive to individual facets and components.
  *
- * @since 3.0
+ * @since 3.next
  */
-public final class RepositoryCacheUtils
+@Named
+@Singleton
+public class RepositoryCacheInvalidationService
+    implements EventAware
 {
-  private RepositoryCacheUtils() {
-    // empty
+  private final RepositoryManager repositoryManager;
+
+  private final EventManager eventManager;
+
+  @Inject
+  public RepositoryCacheInvalidationService(
+      final RepositoryManager repositoryManager,
+      final EventManager eventManager)
+  {
+    this.repositoryManager = checkNotNull(repositoryManager);
+    this.eventManager = checkNotNull(eventManager);
+  }
+
+  public void processCachesInvalidation(final Repository repository) {
+    invalidateCaches(repository, true);
   }
 
   /**
-   * Invalidates the group or proxy caches of the specified repository based on type.
-   *
+   * Invalidates the group or proxy caches of the specified repository based on type and fires an DES event if cache
+   * invalidation was triggered by current node.
    * This is a no-op for hosted repositories.
    */
-  public static void invalidateCaches(final Repository repository) {
+  private void invalidateCaches(final Repository repository, final boolean isTriggeredByCurrentNode) {
     checkNotNull(repository);
     if (GroupType.NAME.equals(repository.getType().getValue())) {
       invalidateGroupCaches(repository);
-    } else if (ProxyType.NAME.equals(repository.getType().getValue())) {
+    }
+    else if (ProxyType.NAME.equals(repository.getType().getValue())) {
       invalidateProxyAndNegativeCaches(repository);
+    }
+    if (isTriggeredByCurrentNode) {
+      postEvent(repository);
     }
   }
 
   /**
    * Invalidates the group caches for given repository.
    */
-  public static void invalidateGroupCaches(final Repository repository) {
+  private static void invalidateGroupCaches(final Repository repository) {
     checkNotNull(repository);
     checkArgument(GroupType.NAME.equals(repository.getType().getValue()));
     GroupFacet groupFacet = repository.facet(GroupFacet.class);
@@ -59,12 +90,22 @@ public final class RepositoryCacheUtils
   /**
    * Invalidates the proxy and negative caches for given repository.
    */
-  public static void invalidateProxyAndNegativeCaches(final Repository repository) {
+  private static void invalidateProxyAndNegativeCaches(final Repository repository) {
     checkNotNull(repository);
     checkArgument(ProxyType.NAME.equals(repository.getType().getValue()));
     ProxyFacet proxyFacet = repository.facet(ProxyFacet.class);
     proxyFacet.invalidateProxyCaches();
     NegativeCacheFacet negativeCacheFacet = repository.facet(NegativeCacheFacet.class);
     negativeCacheFacet.invalidate();
+  }
+
+  private void postEvent(final Repository repository) {
+    RepositoryCacheInvalidationEvent cacheEvent = new RepositoryCacheInvalidationEvent(repository.getName());
+    eventManager.post(new PublisherEvent(cacheEvent));
+  }
+
+  @Subscribe
+  public void on(final RepositoryCacheInvalidationEvent event) {
+    invalidateCaches(repositoryManager.get(event.getRepositoryName()), false);
   }
 }
