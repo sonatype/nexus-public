@@ -14,12 +14,15 @@ package org.sonatype.nexus.repository.maven.internal.content;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -27,7 +30,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.MultipleFailures;
-import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.common.entity.Continuations;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
@@ -36,7 +39,6 @@ import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
-import org.sonatype.nexus.repository.content.fluent.FluentComponentBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 import org.sonatype.nexus.repository.content.fluent.FluentQuery;
 import org.sonatype.nexus.repository.maven.MavenPath;
@@ -173,45 +175,58 @@ public class DatastoreMetadataRebuilder
 
     @Override
     protected List<Map<String, Object>> browseGAVs() {
-      ContentFacet contentFacet = repository.facet(ContentFacet.class);
-      return contentFacet.components()
-          .namespaces()
-          .stream()
-          .map(namespace -> contentFacet.components()
-              .names(namespace)
-              .stream()
-              .map(name -> {
-                    Set<String> baseVersions = contentFacet.components()
-                        .versions(namespace, name)
-                        .stream()
-                        .map(version ->
-                            contentFacet.components()
-                                .name(name)
-                                .namespace(namespace)
-                                .version(version)
-                                .find()
-                                .map(component -> component.attributes("maven2").get("baseVersion", String.class)))
-                        .filter(Optional::isPresent)
-                        .map(Optional::get)
-                        .collect(Collectors.toSet());
-                  return ImmutableMap.<String, Object>of(
-                  "groupId", namespace,
-                  "artifactId", name,
-                  "baseVersions", baseVersions);
-                  }
-              ).collect(Collectors.toList())
+      Stream<String> namespaces = Optional.ofNullable(groupId)
+          .map(Collections::singleton)
+          .map(set -> (Collection<String>) set)
+          .orElseGet(() -> content().components().namespaces())
+          .stream();
+
+      return namespaces.map(namespace -> namesInNamespace(namespace)
+              .map(name -> findBaseVersions(namespace, name))
+              .collect(Collectors.toList())
           ).flatMap(Collection::stream)
           .collect(Collectors.toList());
     }
 
+    private Stream<String> namesInNamespace(final String namespace) {
+      if (groupId != null && artifactId != null) {
+        return Collections.singleton(artifactId).stream();
+      }
+      else {
+        return content().components()
+            .names(namespace)
+            .stream();
+      }
+    }
+
+    private MavenContentFacet content() {
+      return repository.facet(MavenContentFacet.class);
+    }
+
+    private Map<String, Object> findBaseVersions(final String namespace, final String name) {
+      FluentQuery<FluentComponent> query = content().components()
+          .byFilter("namespace = #{filterParams.namespace} AND name = #{filterParams.name}",
+              ImmutableMap.of("namespace", namespace, "name", name));
+
+      Set<String> baseVersions = Continuations.streamOf(query::browse)
+          .map(component -> component.attributes("maven2").get("baseVersion", String.class))
+          .filter(Objects::nonNull)
+          .collect(Collectors.toSet());
+
+      return ImmutableMap.<String, Object>of(
+          "groupId", namespace,
+          "artifactId", name,
+          "baseVersions", baseVersions);
+    }
+
     @Override
     protected Content get(final MavenPath mavenPath) throws IOException {
-      return repository.facet(MavenContentFacet.class).get(mavenPath).orElse(null);
+      return content().get(mavenPath).orElse(null);
     }
 
     @Override
     protected void put(final MavenPath mavenPath, final Payload payload) throws IOException {
-      repository.facet(MavenContentFacet.class).put(mavenPath, payload);
+      content().put(mavenPath, payload);
     }
 
     @Override
@@ -223,7 +238,7 @@ public class DatastoreMetadataRebuilder
     {
       metadataBuilder.onEnterArtifactId(artifactId);
 
-      FluentComponents components = repository.facet(ContentFacet.class).components();
+      FluentComponents components = content().components();
 
       for (final String baseVersion : baseVersions) {
         checkCancellation();
@@ -258,16 +273,12 @@ public class DatastoreMetadataRebuilder
               "groupId", groupId,
               "artifactId", artifactId,
               "baseVersion", baseVersion));
-      Continuation<FluentComponent> matchingComponents = componentsByBaseVersion.browse(bufferSize, null);
-      while (!matchingComponents.isEmpty()) {
-        matchingComponents.forEach(component -> {
-          component.assets().stream()
-              .filter(asset -> !mavenPathParser.parsePath(asset.path()).isSubordinate())
-              .forEach(asset -> processor.accept(Pair.of(component, asset)));
-        });
 
-        matchingComponents = componentsByBaseVersion.browse(bufferSize, matchingComponents.nextContinuationToken());
-      }
+      Continuations.streamOf(componentsByBaseVersion::browse, bufferSize)
+          .forEach(component -> component.assets().stream()
+                .filter(asset -> !mavenPathParser.parsePath(asset.path()).isSubordinate())
+                .forEach(asset -> processor.accept(Pair.of(component, asset)))
+          );
     }
 
     @Override
@@ -279,9 +290,7 @@ public class DatastoreMetadataRebuilder
     {
       MavenPath metadataPath = metadataPath(groupId, artifactId, null);
 
-      FluentComponents components = repository.facet(ContentFacet.class).components();
-      final Collection<String> allVersions = components.versions(groupId, artifactId);
-      final FluentComponentBuilder componentBuilder = components.name(artifactId).namespace(groupId);
+      FluentComponents components = content().components();
 
       metadataBuilder.onEnterArtifactId(artifactId);
       boolean rebuiltAtLeastOneVersion = baseVersions.stream()
@@ -339,13 +348,13 @@ public class DatastoreMetadataRebuilder
     }
 
     private boolean requiresRebuild(final MavenPath metadataPath) {
-      FluentAssets assets = repository.facet(ContentFacet.class).assets();
+      FluentAssets assets = content().assets();
       Optional<FluentAsset> existingMetadata = assets.path(metadataPath.getPath()).find();
 
       return existingMetadata.map(this::getMetadataRebuildFlag).orElse(false);
     }
 
-    private Boolean getMetadataRebuildFlag(FluentAsset asset) {
+    private Boolean getMetadataRebuildFlag(final FluentAsset asset) {
       return asset.attributes(METADATA_REBUILD).get(METADATA_FORCE_REBUILD, Boolean.class, false);
     }
 
@@ -376,7 +385,7 @@ public class DatastoreMetadataRebuilder
     @Override
     protected Optional<HashCode> getChecksum(final MavenPath mavenPath, final HashType hashType)
     {
-      return repository.facet(ContentFacet.class)
+      return content()
           .assets()
           .path(PATH_PREFIX + mavenPath.getPath())
           .find()

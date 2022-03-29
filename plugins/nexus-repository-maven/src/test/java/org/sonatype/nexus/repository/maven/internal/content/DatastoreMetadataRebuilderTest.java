@@ -24,7 +24,6 @@ import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
-import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 import org.sonatype.nexus.repository.maven.MavenPath;
@@ -55,9 +54,6 @@ public class DatastoreMetadataRebuilderTest
     extends TestSupport
 {
   @Mock
-  private ContentFacet contentFacet;
-
-  @Mock
   private MavenContentFacet mavenContentFacet;
 
   @Mock
@@ -77,13 +73,12 @@ public class DatastoreMetadataRebuilderTest
 
   @Before
   public void setup() {
-    when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);
     when(repository.facet(MavenContentFacet.class)).thenReturn(mavenContentFacet);
     when(repository.getFormat()).thenReturn(new Maven2Format());
     when(mavenContentFacet.getMavenPathParser()).thenReturn(mavenPathParser);
     when(mavenPathParser.parsePath(anyString())).thenReturn(mock(MavenPath.class));
-    when(contentFacet.assets()).thenReturn(assets);
-    when(contentFacet.components()).thenReturn(components);
+    when(mavenContentFacet.assets()).thenReturn(assets);
+    when(mavenContentFacet.components()).thenReturn(components);
 
     Logger logger = (Logger) LoggerFactory.getLogger(ROOT_LOGGER_NAME);
     logger.addAppender(mockAppender);
@@ -107,7 +102,7 @@ public class DatastoreMetadataRebuilderTest
     Thread taskThread = new Thread(() -> {
       CancelableHelper.set(canceled);
 
-      new DatastoreMetadataRebuilder(10, 20).rebuild(repository, true, false, "group", "artifact", "version");
+      new DatastoreMetadataRebuilder(10, 20).rebuild(repository, true, false, null, null, null);
     });
     taskThread.setUncaughtExceptionHandler((t, e) -> {
       if (e instanceof TaskInterruptedException) {

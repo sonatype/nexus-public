@@ -127,6 +127,11 @@ public class Continuations
         else if (iterator.hasNext()) {
           return true;
         }
+        else if (continuation.size() != limit) {
+          // Optimization, if the number of returned results is not the same as the limit we provided, this indicates
+          // that there were no more entries at the time of the query.
+          return false;
+        }
         else {
           return Optional.ofNullable(continuation.nextContinuationToken())
               .map(token -> {
