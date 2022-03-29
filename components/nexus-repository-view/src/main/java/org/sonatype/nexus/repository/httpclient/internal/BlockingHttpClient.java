@@ -195,6 +195,10 @@ public class BlockingHttpClient
     return status;
   }
 
+  public void setRemoteConnectionStatus(final RemoteConnectionStatus status) {
+    this.status = status;
+  }
+
   private boolean isRemoteUnavailable(final Exception e) {
     if (e instanceof ConnectionPoolTimeoutException) {
       return false;

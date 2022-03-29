@@ -32,6 +32,8 @@ public interface HttpClientFacet
 
   RemoteConnectionStatus getStatus();
 
+  void setStatus(RemoteConnectionStatus status);
+
   Header createBasicAuthHeader();
 
   /**

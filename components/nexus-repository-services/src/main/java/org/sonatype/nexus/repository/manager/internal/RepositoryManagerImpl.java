@@ -20,7 +20,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -41,6 +40,7 @@ import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.distributed.event.service.api.EventType;
 import org.sonatype.nexus.distributed.event.service.api.common.PublisherEvent;
 import org.sonatype.nexus.distributed.event.service.api.common.RepositoryConfigurationEvent;
+import org.sonatype.nexus.distributed.event.service.api.common.RepositoryRemoteConnectionStatusEvent;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
 import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.Repository;
@@ -52,6 +52,9 @@ import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.repository.config.ConfigurationUpdatedEvent;
 import org.sonatype.nexus.repository.group.GroupFacet;
+import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
+import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
+import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType;
 import org.sonatype.nexus.repository.manager.ConfigurationValidator;
 import org.sonatype.nexus.repository.manager.DefaultRepositoriesContributor;
 import org.sonatype.nexus.repository.manager.RepositoryCreatedEvent;
@@ -65,6 +68,7 @@ import org.sonatype.nexus.repository.view.ViewFacet;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.eventbus.Subscribe;
+import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -440,7 +444,6 @@ public class RepositoryManagerImpl
     // ensure configuration sanity
     repository.validate(configuration);
 
-    Configuration oldConfiguration = repository.getConfiguration().copy();
     repository.stop();
     repository.update(configuration);
     repository.start();
@@ -545,6 +548,21 @@ public class RepositoryManagerImpl
       default:
         log.error("Unknown event type {}", eventType);
     }
+  }
+
+  @Subscribe
+  public void on(final RepositoryRemoteConnectionStatusEvent event) {
+    String repositoryName = event.getRepositoryName();
+    RemoteConnectionStatusType statusType = RemoteConnectionStatusType.values()[event.getRemoteConnectionStatusTypeOrdinal()];
+
+    // restore RemoteConnectionStatus from event
+    log.warn("Consume distributed RepositoryRemoteConnectionStatusEvent: repository={}, type={}", repositoryName, statusType);
+
+    RemoteConnectionStatus status = new RemoteConnectionStatus(statusType, event.getReason())
+        .setBlockedUntil(new DateTime(event.getBlockedUntilMillis()))
+        .setRequestUrl(event.getRequestUrl());
+
+    repository(repositoryName).facet(HttpClientFacet.class).setStatus(status);
   }
 
   @Subscribe
