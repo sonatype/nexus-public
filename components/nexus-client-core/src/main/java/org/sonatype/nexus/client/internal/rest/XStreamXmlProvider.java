@@ -28,10 +28,13 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.Provider;
 
 import org.sonatype.nexus.client.internal.util.Check;
+import org.sonatype.nexus.rest.model.NexusResponse;
 
 import com.sun.jersey.core.provider.AbstractMessageReaderWriterProvider;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.CompactWriter;
+import com.thoughtworks.xstream.security.TypeHierarchyPermission;
+import com.thoughtworks.xstream.security.WildcardTypePermission;
 
 /**
  * Jersey provider that uses XStream, as we want to use the same tech (as we have all the config bits already) on
@@ -52,6 +55,9 @@ public class XStreamXmlProvider
   private final XStream xstream;
 
   public XStreamXmlProvider(final XStream xstream, final MediaType xstreamMediaType) {
+    xstream.addPermission(new TypeHierarchyPermission(NexusResponse.class));
+    xstream.addPermission(new WildcardTypePermission(new String[]{"com.sonatype.nexus.staging.api.dto.*"}));
+
     this.xstream = Check.notNull(xstream, XStream.class);
     this.xstream.allowTypesByWildcard(new String[]{
         "com.sonatype.nexus.rest.templates.settings.api.dto.*",
