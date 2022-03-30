@@ -18,6 +18,7 @@ import java.util.regex.Pattern;
 import javax.inject.Named;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.search.normalize.VersionNumberExpander;
 
@@ -206,7 +207,7 @@ public class MavenVersionNormalizer
   }
 
   private QualifierType getQualifierType(final String qualifier, final String originalVersion) {
-    if (qualifier == null || qualifier.equals(GA) || qualifier.equals(RELEASE) || qualifier.equals(FINAL)) {
+    if (Strings2.isBlank(qualifier) || qualifier.equals(GA) || qualifier.equals(RELEASE) || qualifier.equals(FINAL)) {
       return QualifierType.RELEASE;
     }
     else if (SNAPSHOT_TIMESTAMP.matcher(originalVersion).matches()) {
