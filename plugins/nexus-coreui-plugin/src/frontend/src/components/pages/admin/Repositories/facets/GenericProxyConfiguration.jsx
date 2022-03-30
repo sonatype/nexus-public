@@ -23,13 +23,18 @@ const {EDITOR} = UIStrings.REPOSITORIES;
 export default function GenericProxyConfiguration({parentMachine}) {
   const [currentParent, sendParent] = parentMachine;
 
+  const {format} = currentParent.context.data;
+
   return (
     <>
       <h2 className="nx-h2">{EDITOR.PROXY_CAPTION}</h2>
 
       <NxFormGroup
         label={EDITOR.REMOTE_STORAGE_LABEL}
-        sublabel={EDITOR.REMOTE_STORAGE_SUBLABEL}
+        sublabel={
+          EDITOR.REMOTE_STORAGE_SUBLABEL +
+          (EDITOR.REMOTE_URL_EXAMPLES[format] || EDITOR.REMOTE_URL_EXAMPLES.default)
+        }
         isRequired
         className="nxrm-form-group-remote-storage"
       >

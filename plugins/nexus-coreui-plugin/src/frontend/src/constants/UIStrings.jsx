@@ -395,7 +395,7 @@ the documentation</a>.`
       },
       PROXY_CAPTION: 'Proxy Settings',
       REMOTE_STORAGE_LABEL: 'Remote Storage',
-      REMOTE_STORAGE_SUBLABEL: 'Location of the remote repository to proxy (e.g., https://repo1.maven.org/maven2/)',
+      REMOTE_STORAGE_SUBLABEL: 'Location of the remote repository to proxy',
       URL_PLACEHOLDER: 'Enter a URL',
       BLOCKING_LABEL: 'Blocking',
       BLOCK_DESCR: 'Block outbound connections to the repository',
@@ -426,7 +426,18 @@ the documentation</a>.`
       TIMEOUT_LABEL: 'Connection Timeout (Seconds)',
       TIMEOUT_SUBLABEL: 'Time (in seconds) to wait before stopping and retrying the connection; leave blank to use the global HTTP timeout',
       REDIRECTS_LABEL: 'Circular Redirects',
-      COOKIES_LABEL: 'Cookies'
+      COOKIES_LABEL: 'Cookies',
+      REMOTE_URL_EXAMPLES: {
+        bower: ' (e.g., https://registry.bower.io)',
+        docker: ' (e.g., https://registry-1.docker.io)',
+        maven2: ' (e.g., https://repo1.maven.org/maven2/)',
+        npm: ' (e.g., https://registry.npmjs.org)',
+        nuget: ' (e.g., https://api.nuget.org/v3/index.json)',
+        pypi: ' (e.g., https://pypi.org)',
+        rubygems: ' (e.g., https://rubygems.org)',
+        yum: ' (e.g., http://mirror.centos.org/centos/)',
+        default: ' (e.g., https://example.com)'	
+      }
     }
   },
 
