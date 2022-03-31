@@ -62,6 +62,8 @@ public class HttpClientFacetImplTest
 
   private static final String YUM = "yum";
 
+  private static final String TEST_REPOSITORY_NAME = "test-repository";
+
   private HttpClientFacetImpl underTest;
 
   @Mock
@@ -132,6 +134,8 @@ public class HttpClientFacetImplTest
     underTest.attach(repository);
     underTest.installDependencies(eventManager);
     when(configurationFacet.readSection(configuration, CONFIG_KEY, Config.class)).thenReturn(config);
+
+    when(repository.getName()).thenReturn(TEST_REPOSITORY_NAME);
 
     when(npmFormat.getValue()).thenReturn(NPM);
     when(yumFormat.getValue()).thenReturn(YUM);
