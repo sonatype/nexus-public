@@ -19,7 +19,7 @@ import Axios from 'axios';
 import {assign, createMachine} from 'xstate';
 import {useMachine} from '@xstate/react';
 import {mergeDeepRight} from 'ramda';
-import UIStrings from "../constants/UIStrings";
+import UIStrings from '../constants/UIStrings';
 
 /**
  * @param url URL string for the request
@@ -40,6 +40,8 @@ export default class ExtAPIUtils {
   static request = extAPIRequest;
 
   static useExtMachine(action, method, options = {}) {
+    const defaultResult = options.defaultResult || [];
+
     const machine = createMachine({
       id: `ExtMachine(${action}, ${method})`,
 
@@ -71,7 +73,7 @@ export default class ExtAPIUtils {
     }, {
       actions: {
         setData: assign({
-          data: (_, event) => ExtAPIUtils.extractResult(event)
+          data: (_, {data}) => data
         }),
 
         setError: assign({
@@ -79,14 +81,23 @@ export default class ExtAPIUtils {
         })
       },
       services: {
-        fetch: async (_, {data = null}) => extAPIRequest(action, method, data)
+        fetch: async (_, {data = null}) => {
+          const response = await this.request(action, method, data)
+          return this.extractResult(response, defaultResult);
+        }
       }
     });
 
-    return useMachine(machine, mergeDeepRight({devTools: true}, options));
+    return useMachine(machine, mergeDeepRight({
+      context: {
+        data: defaultResult
+      },
+      devTools: true
+    }, options));
   }
 
-  static extractResult(event, defaultOption = []) {
-    return event?.data?.data?.result?.data || defaultOption;
+  static extractResult(response, defaultResult) {
+    const extDirectResponse = response.data;
+    return extDirectResponse.result.data || defaultResult;
   }
 }

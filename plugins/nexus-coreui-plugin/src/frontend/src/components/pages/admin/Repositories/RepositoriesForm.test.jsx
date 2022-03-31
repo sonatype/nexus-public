@@ -32,21 +32,51 @@ import RepositoriesForm from './RepositoriesForm';
 
 import {repositoryUrl} from './RepositoriesFormMachine';
 import {repositoriesUrl} from './facets/GenericGroupConfiguration';
-import {cleanupPoliciesUrl} from './facets/GenericCleanupConfiguration';
 import {RECIPES_URL} from './facets/GenericFormatConfiguration';
-import {BLOB_STORES_URL} from './facets/GenericStorageConfiguration';
 import {ROUTING_RULES_URL} from './facets/GenericOptionsConfiguration';
 import {mergeDeepRight} from 'ramda';
 
-jest.mock('axios', () => ({
-  ...jest.requireActual('axios'),
-  get: jest.fn(),
-  put: jest.fn(),
-  post: jest.fn(),
-  delete: jest.fn()
+jest.mock('axios');
+
+jest.mock('@sonatype/nexus-ui-plugin', () => ({
+  ...jest.requireActual('@sonatype/nexus-ui-plugin'),
+  ExtAPIUtils: {
+    request: (action, method, data = null) => jest.requireMock('axios').get('/service/extdirect', {
+      action, method, data, type: 'rpc', tid: '8'
+    }),
+    useExtMachine: jest.requireActual('@sonatype/nexus-ui-plugin').ExtAPIUtils.useExtMachine,
+    extractResult: jest.requireActual('@sonatype/nexus-ui-plugin').ExtAPIUtils.extractResult
+  }
 }));
 
 const {EDITOR} = UIStrings.REPOSITORIES;
+
+const BLOB_STORE_EXT_REQUEST = {
+  action: 'coreui_Blobstore',
+  method: 'readNames',
+  data: null,
+  type: 'rpc',
+  tid: '8'
+};
+
+function CLEANUP_EXT_REQUEST(format = 'maven2') {
+  return {
+    action: 'cleanup_CleanupPolicy',
+    method: 'readByFormat',
+    data: [
+      {
+        filter: [
+          {
+            property: 'format',
+            value: format
+          }
+        ]
+      }
+    ],
+    type: 'rpc',
+    tid: '8'
+  };
+}
 
 describe('RepositoriesForm', () => {
   const getCheckbox = (fieldsetLabel) => {
@@ -69,7 +99,6 @@ describe('RepositoriesForm', () => {
 
     getFormatSelect: () => screen.getByLabelText(EDITOR.FORMAT_LABEL),
     getTypeSelect: () => screen.getByLabelText(EDITOR.TYPE_LABEL),
-    getDeploymentPolicySelect: () => screen.queryByLabelText(EDITOR.DEPLOYMENT_POLICY_LABEL),
     getNameInput: () => screen.getByLabelText(EDITOR.NAME_LABEL),
 
     getBlobStoreSelect: () => screen.getByLabelText(EDITOR.BLOB_STORE_LABEL),
@@ -162,11 +191,11 @@ describe('RepositoriesForm', () => {
       .calledWith(expect.stringContaining(RECIPES_URL))
       .mockResolvedValue({data: RECIPES_RESPONSE});
     when(axios.get)
-      .calledWith(expect.stringContaining(BLOB_STORES_URL))
-      .mockResolvedValue({data: BLOB_STORES_RESPONSE});
+      .calledWith('/service/extdirect', BLOB_STORE_EXT_REQUEST)
+      .mockResolvedValue({data: TestUtils.makeExtResult(BLOB_STORES_RESPONSE)});
     when(axios.get)
-      .calledWith(expect.stringContaining(cleanupPoliciesUrl({format: 'maven2'})))
-      .mockResolvedValue({data: MAVEN_CLEANUP_RESPONSE});
+      .calledWith('/service/extdirect', CLEANUP_EXT_REQUEST())
+      .mockResolvedValue({data: TestUtils.makeExtResult(MAVEN_CLEANUP_RESPONSE)});
     when(axios.get)
       .calledWith(expect.stringContaining(ROUTING_RULES_URL))
       .mockResolvedValue({data: ROUTING_RULES_RESPONSE});
@@ -191,7 +220,7 @@ describe('RepositoriesForm', () => {
 
     await TestUtils.changeField(selectors.getTypeSelect, 'group');
 
-    validateSelectOptions(selectors.getBlobStoreSelect(), BLOB_STORES_OPTIONS, '');
+    await waitFor(() => validateSelectOptions(selectors.getBlobStoreSelect(), BLOB_STORES_OPTIONS, ''));
 
     await waitFor(() =>
       expect(axios.get).toHaveBeenCalledWith(expect.stringContaining(repositoriesUrl({format})))
@@ -211,8 +240,8 @@ describe('RepositoriesForm', () => {
     const blobStoreResponse = [{name: 'default'}];
     const blobStoreOptions = [{name: EDITOR.SELECT_STORE_OPTION}, ...blobStoreResponse];
     when(axios.get)
-      .calledWith(expect.stringContaining(BLOB_STORES_URL))
-      .mockResolvedValue({data: blobStoreResponse});
+      .calledWith('/service/extdirect', BLOB_STORE_EXT_REQUEST)
+      .mockResolvedValue({data: TestUtils.makeExtResult(blobStoreResponse)});
 
     renderView();
 
@@ -221,7 +250,7 @@ describe('RepositoriesForm', () => {
     await TestUtils.changeField(selectors.getFormatSelect, format);
     await TestUtils.changeField(selectors.getTypeSelect, 'hosted');
 
-    validateSelectOptions(selectors.getBlobStoreSelect(), blobStoreOptions, 'default');
+    await waitFor(() => validateSelectOptions(selectors.getBlobStoreSelect(), blobStoreOptions, 'default'));
 
     const deploymentPolicyOptions = Object.values(EDITOR.DEPLOYMENT_POLICY_OPTIONS).map((name) => ({
       name
@@ -233,7 +262,7 @@ describe('RepositoriesForm', () => {
     );
 
     await waitFor(() =>
-      expect(axios.get).toHaveBeenCalledWith(expect.stringContaining(cleanupPoliciesUrl({format})))
+      expect(axios.get).toHaveBeenCalledWith('/service/extdirect', CLEANUP_EXT_REQUEST())
     );
 
     MAVEN_CLEANUP_RESPONSE.forEach((policy) => {

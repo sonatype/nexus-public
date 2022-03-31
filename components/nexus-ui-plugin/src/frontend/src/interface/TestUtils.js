@@ -62,4 +62,12 @@ export default class TestUtils {
     querySavingMask: () => screen.queryByText(/saving/i),
     querySubmittingMask: () => screen.queryByText(/submitting/i)
   }
+
+  static makeExtResult(data) {
+    return {
+      result: {
+        data
+      }
+    };
+  }
 }

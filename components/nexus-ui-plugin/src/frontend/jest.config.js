@@ -94,8 +94,7 @@ module.exports = {
   // A map from regular expressions to module names that allow to stub out resources with a single module
   moduleNameMapper: {
     "\\.scss$": "<rootDir>/__jest__/styleMock.js",
-    "\\.png$": "<rootDir>/__jest__/styleMock.js",
-    "\\.svg$": "<rootDir>/__jest__/styleMock.js"
+    "\\.(png|svg)$": "<rootDir>/__jest__/imgMock.js"
   },
 
   // An array of regexp pattern strings, matched against all module paths before considered 'visible' to the module loader

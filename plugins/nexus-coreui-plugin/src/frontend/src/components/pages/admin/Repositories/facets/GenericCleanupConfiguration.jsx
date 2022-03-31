@@ -26,7 +26,7 @@ export default function GenericCleanupConfiguration({parentMachine}) {
   const [cleanupState, cleanupSend] = ExtAPIUtils.useExtMachine('cleanup_CleanupPolicy', 'readByFormat', {
     actions: {
       setData: assign({
-        data: (_, event) => ExtAPIUtils.extractResult(event).map(policy =>
+        data: (_, {data}) => data?.map(policy =>
             ({id: policy.name, displayName: policy.name}))
       })
     }
