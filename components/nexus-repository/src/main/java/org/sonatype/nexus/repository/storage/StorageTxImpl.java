@@ -323,6 +323,14 @@ public class StorageTxImpl
 
   @Override
   @Guarded(by = ACTIVE)
+  public Iterable<Asset> browseAllPartiallyByLimit(final Bucket bucket)
+  {
+    return assetEntityAdapter
+        .browseAllPartiallyByLimit(db, null, null, ImmutableList.of(bucket));
+  }
+
+  @Override
+  @Guarded(by = ACTIVE)
   public Iterable<Asset> browseAllPartiallyByLimit(final Query query, final Bucket bucket)
   {
     return assetEntityAdapter

@@ -67,6 +67,11 @@ public class AssetEntityAdapter
       .build();
 
   /**
+   * Key of {@link Asset} attribute denoting the Orientdb record id.
+   */
+  public static final String P_RID = "@rid";
+
+  /**
    * Applied (optionally) to asset only, holds a value from format describing what current asset is.
    */
   public static final String P_ASSET_KIND = "asset_kind";
@@ -139,6 +144,12 @@ public class AssetEntityAdapter
       .property(P_NAME)
       .build();
 
+  private static final String I_BUCKET_RID = new OIndexNameBuilder()
+      .type(DB_CLASS)
+      .property(P_BUCKET)
+      .property("RID")
+      .build();
+
   public static final String I_COMPONENT = new OIndexNameBuilder()
       .type(DB_CLASS)
       .property(P_COMPONENT)
@@ -185,6 +196,8 @@ public class AssetEntityAdapter
     type.createIndex(I_BUCKET_COMPONENT_NAME, INDEX_TYPE.UNIQUE.name(), null, metadata,
         new String[]{P_BUCKET, P_COMPONENT, P_NAME}
     );
+    type.createIndex(I_BUCKET_RID, INDEX_TYPE.UNIQUE.name(), P_BUCKET, P_RID);
+
     type.createIndex(I_BUCKET_NAME, INDEX_TYPE.NOTUNIQUE, P_BUCKET, P_NAME);
     type.createIndex(I_COMPONENT, INDEX_TYPE.NOTUNIQUE, P_COMPONENT);
 
