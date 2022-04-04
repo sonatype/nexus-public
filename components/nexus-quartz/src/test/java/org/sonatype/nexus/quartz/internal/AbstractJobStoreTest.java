@@ -30,9 +30,11 @@ package org.sonatype.nexus.quartz.internal;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.node.NodeAccess;
 
 import junit.framework.Assert;
 import org.junit.After;
@@ -631,6 +633,44 @@ public abstract class AbstractJobStoreTest
   public static class MyJob implements Job {
     public void execute(JobExecutionContext context) throws JobExecutionException {
       //
+    }
+  }
+
+  public static class SimpleNodeAccess implements NodeAccess
+  {
+    @Override
+    public String getId() {
+      return "test id";
+    }
+
+    @Override
+    public boolean isClustered() {
+      return true;
+    }
+
+    @Override
+    public Set<String> getMemberIds() {
+      return null;
+    }
+
+    @Override
+    public boolean isOldestNode() {
+      return false;
+    }
+
+    @Override
+    public Map<String, String> getMemberAliases() {
+      return null;
+    }
+
+    @Override
+    public void start() throws Exception {
+
+    }
+
+    @Override
+    public void stop() throws Exception {
+
     }
   }
 

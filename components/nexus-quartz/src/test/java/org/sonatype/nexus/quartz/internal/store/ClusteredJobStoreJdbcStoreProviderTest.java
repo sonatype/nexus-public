@@ -10,35 +10,40 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.quartz.internal.orient;
+package org.sonatype.nexus.quartz.internal.store;
 
-import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
+import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.quartz.internal.AbstractJobStoreTest;
 import org.sonatype.nexus.quartz.internal.JobStoreJdbcProvider;
+import org.sonatype.nexus.quartz.internal.QuartzDAO;
+import org.sonatype.nexus.testdb.DataSessionRule;
 
 import org.junit.Rule;
+import org.junit.experimental.categories.Category;
 import org.quartz.spi.JobStore;
 
-public class JobStoreJdbcOrientProviderTest
+@Category(SQLTestGroup.class)
+public class ClusteredJobStoreJdbcStoreProviderTest
     extends AbstractJobStoreTest
 {
   @Rule
-  public DatabaseInstanceRule database = DatabaseInstanceRule.inMemory("config");
+  public DataSessionRule sessionRule = new DataSessionRule().access(QuartzDAO.class);
 
   private JobStore jobStore;
 
   @Override
-  protected JobStore createJobStore(String name) {
-    jobStore = new JobStoreJdbcProvider(new ConfigOrientConnectionProvider(database.getInstanceProvider()),
-        new SimpleNodeAccess(), false).get();
-    jobStore.setInstanceId("SINGLE_NODE_TEST");
+  protected JobStore createJobStore(final String name) {
+
+    jobStore =
+        new JobStoreJdbcProvider(new ConfigStoreConnectionProvider(sessionRule), new SimpleNodeAccess(), true).get();
+    jobStore.setInstanceId("CLUSTERED_TEST");
     jobStore.setInstanceName(name);
 
     return jobStore;
   }
 
   @Override
-  protected void destroyJobStore(String name) {
+  protected void destroyJobStore(final String name) {
     jobStore.shutdown();
     jobStore = null;
   }
