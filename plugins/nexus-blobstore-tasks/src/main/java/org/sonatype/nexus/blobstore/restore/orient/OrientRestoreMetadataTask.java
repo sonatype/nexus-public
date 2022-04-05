@@ -12,11 +12,15 @@
  */
 package org.sonatype.nexus.blobstore.restore.orient;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
@@ -185,7 +189,7 @@ public class OrientRestoreMetadataTask
     updateAssets(touchedRepositories, updateAssets);
   }
 
-  private Iterable<BlobId> getBlobIdStream(final BlobStore store, final Integer sinceDays){
+  private Iterable<BlobId> getBlobIdStream(final BlobStore store, final Integer sinceDays) {
     if (isNull(sinceDays) || sinceDays < 0) {
       log.info("Will process all blobs");
       return store.getBlobIdStream()::iterator;
@@ -217,11 +221,19 @@ public class OrientRestoreMetadataTask
       return;
     }
 
-    StreamSupport.stream(repositoryManager.browseForBlobStore(blobStoreId).spliterator(), false)
+    Iterable<Repository> repositories = repositoryManager.browseForBlobStore(blobStoreId);
+
+    List<Repository> syncList = Collections.synchronizedList(StreamSupport.stream(repositories.spliterator(), false)
+        .collect(Collectors.toList()));
+
+    syncList.stream()
+        .filter(Objects::nonNull)
         .filter(r -> !(r.getType() instanceof GroupType))
-        .forEach(repository -> integrityCheckStrategies
-            .getOrDefault(repository.getFormat().getValue(), defaultOrientIntegrityCheckStrategy)
-            .check(repository, blobStore, this::isCanceled, this::integrityCheckFailedHandler)
+        .filter(Repository::isStarted)
+        .forEach(repository ->
+            integrityCheckStrategies
+                .getOrDefault(repository.getFormat().getValue(), defaultOrientIntegrityCheckStrategy)
+                .check(repository, blobStore, this::isCanceled, this::integrityCheckFailedHandler)
         );
   }
 
@@ -245,7 +257,8 @@ public class OrientRestoreMetadataTask
         .map(context -> context.properties(context.blobAttributes.getProperties()))
         .map(context -> context.repositoryName(context.properties.getProperty(HEADER_PREFIX + REPO_NAME_HEADER)))
         .map(context -> context.repository(repositoryManager.get(context.repositoryName)))
-        .map(context -> context.restoreBlobStrategy(restoreBlobStrategies.get(context.repository.getFormat().getValue())));
+        .map(context -> context.restoreBlobStrategy(
+            restoreBlobStrategies.get(context.repository.getFormat().getValue())));
   }
 
   private static class Context

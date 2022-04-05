@@ -14,7 +14,9 @@ package org.sonatype.nexus.blobstore.restore.datastore;
 
 import java.net.URL;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Stream;
@@ -141,6 +143,7 @@ public class RestoreMetadataTaskTest
     configuration.setTypeId(TYPE_ID);
 
     when(repositoryManager.get("maven-central")).thenReturn(repository);
+    when(repository.isStarted()).thenReturn(true);
     when(repository.getFormat()).thenReturn(mavenFormat);
     when(mavenFormat.getValue()).thenReturn("maven2");
 
@@ -245,6 +248,50 @@ public class RestoreMetadataTaskTest
     underTest.execute();
 
     verifyNoInteractions(integrityCheckStrategies);
+  }
+
+  @Test
+  public void testIntegrityCheckNullRepositories() throws Exception {
+    configuration.setBoolean(RESTORE_BLOBS, false);
+    configuration.setBoolean(UNDELETE_BLOBS, false);
+    configuration.setBoolean(INTEGRITY_CHECK, true);
+    underTest.configure(configuration);
+
+    when(repositoryManager.browseForBlobStore(any())).thenReturn(Collections.emptyList());
+
+    underTest.execute();
+
+    verifyZeroInteractions(integrityCheckStrategies);
+  }
+
+  @Test
+  public void testIntegrityCheckNullRepository() throws Exception {
+    configuration.setBoolean(RESTORE_BLOBS, false);
+    configuration.setBoolean(UNDELETE_BLOBS, false);
+    configuration.setBoolean(INTEGRITY_CHECK, true);
+    underTest.configure(configuration);
+
+    List<Repository> repositories = singletonList(null);
+    when(repositoryManager.browseForBlobStore(any())).thenReturn(repositories);
+
+    underTest.execute();
+
+    verifyZeroInteractions(integrityCheckStrategies);
+  }
+
+  @Test
+  public void testIntegrityCheck_SkipNotStartedRepositories() throws Exception {
+    configuration.setBoolean(RESTORE_BLOBS, false);
+    configuration.setBoolean(UNDELETE_BLOBS, false);
+    configuration.setBoolean(INTEGRITY_CHECK, true);
+    underTest.configure(configuration);
+
+    when(repository.isStarted()).thenReturn(false);
+    when(repositoryManager.browseForBlobStore(any())).thenReturn(singletonList(repository));
+
+    underTest.execute();
+
+    verifyZeroInteractions(integrityCheckStrategies);
   }
 
   @Test

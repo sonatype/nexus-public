@@ -121,4 +121,9 @@ public interface Repository
    * Returns the URL for the root of the repository, without its trailing slash.
    */
   String getUrl();
+
+  /**
+   * Returns true if repository is in the STARTED state.
+   */
+  boolean isStarted();
 }

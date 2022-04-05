@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.manager.internal;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -321,9 +323,18 @@ public class RepositoryManagerImpl
   @Override
   @Guarded(by = STARTED)
   public Iterable<Repository> browseForBlobStore(String blobStoreId) {
-    return stream(browse().spliterator(), true)
-        .filter(r -> blobStoreId.equals(r.getConfiguration().attributes(STORAGE).get(BLOB_STORE_NAME)))
-        ::iterator;
+    Iterable<Repository> browseResult = browse();
+
+    if (browseResult != null && browseResult.iterator().hasNext()){
+      return stream(browseResult.spliterator(), true)
+          .filter(Repository::isStarted)
+          .filter(r -> blobStoreId.equals(r.getConfiguration().attributes(STORAGE).get(BLOB_STORE_NAME)))
+          ::iterator;
+    }
+    else {
+      return Collections.emptyList();
+    }
+
   }
 
   @Override

@@ -12,11 +12,15 @@
  */
 package org.sonatype.nexus.blobstore.restore.datastore;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
@@ -180,7 +184,7 @@ public class RestoreMetadataTask
     }
   }
 
-  private Iterable<BlobId> getBlobIdStream(final BlobStore store, final Integer sinceDays){
+  private Iterable<BlobId> getBlobIdStream(final BlobStore store, final Integer sinceDays) {
     if (isNull(sinceDays) || sinceDays < 0) {
       log.info("Will process all blobs");
       return store.getBlobIdStream()::iterator;
@@ -212,8 +216,15 @@ public class RestoreMetadataTask
       return;
     }
 
-    StreamSupport.stream(repositoryManager.browseForBlobStore(blobStoreId).spliterator(), false)
+    Iterable<Repository> repositories = repositoryManager.browseForBlobStore(blobStoreId);
+
+    List<Repository> syncList = Collections.synchronizedList(StreamSupport.stream(repositories.spliterator(), false)
+        .collect(Collectors.toList()));
+
+    syncList.stream()
+        .filter(Objects::nonNull)
         .filter(repository -> !(repository.getType() instanceof GroupType))
+        .filter(Repository::isStarted)
         .forEach(repository ->
             integrityCheckStrategies
                 .getOrDefault(repository.getFormat().getValue(), defaultIntegrityCheckStrategy)
