@@ -48,8 +48,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
 import static java.util.Collections.singletonList;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -261,7 +261,7 @@ public class RestoreMetadataTaskTest
 
     underTest.execute();
 
-    verifyZeroInteractions(integrityCheckStrategies);
+    verifyNoInteractions(integrityCheckStrategies);
   }
 
   @Test
@@ -276,7 +276,7 @@ public class RestoreMetadataTaskTest
 
     underTest.execute();
 
-    verifyZeroInteractions(integrityCheckStrategies);
+    verifyNoInteractions(integrityCheckStrategies);
   }
 
   @Test
@@ -291,7 +291,7 @@ public class RestoreMetadataTaskTest
 
     underTest.execute();
 
-    verifyZeroInteractions(integrityCheckStrategies);
+    verifyNoInteractions(integrityCheckStrategies);
   }
 
   @Test
