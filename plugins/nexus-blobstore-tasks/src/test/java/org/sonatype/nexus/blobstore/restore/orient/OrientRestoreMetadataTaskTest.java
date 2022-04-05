@@ -66,14 +66,14 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
+import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
+import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor.DRY_RUN;
+import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor.INTEGRITY_CHECK;
+import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor.RESTORE_BLOBS;
 import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor.SINCE_DAYS;
+import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor.TYPE_ID;
+import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor.UNDELETE_BLOBS;
 import static org.sonatype.nexus.blobstore.restore.orient.DefaultOrientIntegrityCheckStrategy.DEFAULT_NAME;
-import static org.sonatype.nexus.blobstore.restore.orient.OrientRestoreMetadataTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
-import static org.sonatype.nexus.blobstore.restore.orient.OrientRestoreMetadataTaskDescriptor.DRY_RUN;
-import static org.sonatype.nexus.blobstore.restore.orient.OrientRestoreMetadataTaskDescriptor.INTEGRITY_CHECK;
-import static org.sonatype.nexus.blobstore.restore.orient.OrientRestoreMetadataTaskDescriptor.RESTORE_BLOBS;
-import static org.sonatype.nexus.blobstore.restore.orient.OrientRestoreMetadataTaskDescriptor.TYPE_ID;
-import static org.sonatype.nexus.blobstore.restore.orient.OrientRestoreMetadataTaskDescriptor.UNDELETE_BLOBS;
 
 public class OrientRestoreMetadataTaskTest
     extends TestSupport
@@ -251,7 +251,7 @@ public class OrientRestoreMetadataTaskTest
 
     underTest.execute();
 
-    verifyZeroInteractions(integrityCheckStrategies);
+    verifyNoInteractions(integrityCheckStrategies);
   }
 
   @Test
@@ -266,7 +266,7 @@ public class OrientRestoreMetadataTaskTest
 
     underTest.execute();
 
-    verifyZeroInteractions(integrityCheckStrategies);
+    verifyNoInteractions(integrityCheckStrategies);
   }
 
   @Test
@@ -296,7 +296,7 @@ public class OrientRestoreMetadataTaskTest
 
     underTest.execute();
 
-    verifyZeroInteractions(integrityCheckStrategies);
+    verifyNoInteractions(integrityCheckStrategies);
   }
 
   @Test
@@ -338,9 +338,9 @@ public class OrientRestoreMetadataTaskTest
     configuration.setBoolean(UNDELETE_BLOBS, true);
     configuration.setBoolean(INTEGRITY_CHECK, false);
     underTest.configure(configuration);
-    
+
     underTest.execute();
-    
+
     verify(restoreBlobStrategy).after(true, repository);
   }
 
