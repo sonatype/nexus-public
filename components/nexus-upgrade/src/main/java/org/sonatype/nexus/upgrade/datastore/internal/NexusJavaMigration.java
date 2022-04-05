@@ -52,6 +52,11 @@ public class NexusJavaMigration implements JavaMigration
   }
 
   @Override
+  public boolean isBaselineMigration() {
+    return false;
+  }
+
+  @Override
   public boolean isUndo() {
     return false;
   }
