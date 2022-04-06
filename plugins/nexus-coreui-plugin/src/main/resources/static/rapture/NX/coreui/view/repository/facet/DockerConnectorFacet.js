@@ -60,12 +60,12 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
           },
           {
             xtype: 'fieldcontainer',
-            fieldLabel: NX.I18n.get('Repository_Facet_Docker_SubdomainNamespace_FieldLabel'),
-            helpText: NX.I18n.get('Repository_Facet_Docker_SubdomainNamespace_HelpText'),
+            fieldLabel: NX.I18n.get('Repository_Facet_Docker_Subdomain_FieldLabel'),
+            helpText: NX.I18n.get('Repository_Facet_Docker_Subdomain_HelpText'),
             layout: 'hbox',
             items: [
-              me.createCheckbox('namespace'),
-              me.createNamespace('namespace')
+              me.createCheckbox('subdomain'),
+              me.createSubdomain('subdomain')
             ]
           },
           {
@@ -186,7 +186,7 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
       allowExponential: false,
       allowBlank: false,
       disabled: true,
-      width: 565,
+      width: 560,
       style: {
         marginLeft: '5px'
       },
@@ -205,20 +205,20 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
     };
   },
 
-  createNamespace: function(type) {
+  createSubdomain: function(type) {
     return {
       xtype: 'textfield',
       name: 'attributes.docker.namespace',
       itemId: type + 'Port',
       allowBlank: false,
       disabled: true,
-      width: 565,
+      width: 560,
       style: {
         marginLeft: '5px'
       },
       listeners: {
         /**
-         * Check the checkbox if port has value.
+         * Check the checkbox if subdomain has value.
          */
         change: function() {
           var checkbox = this.up('form').down('#' + type + 'Enabled');

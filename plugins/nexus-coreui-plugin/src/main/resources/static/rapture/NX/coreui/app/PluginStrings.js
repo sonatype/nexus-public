@@ -364,8 +364,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
         '<a href="https://links.sonatype.com/products/nexus/docker-ssl-connector/docs" target="_blank" rel="noopener">documentation</a>' +
         ' for which connector is appropriate for your use case. For information on scaling the repositories' +
         ' see our <a href="https://links.sonatype.com/products/nexus/docker-scaling-repositories/docs" target="_blank" rel="noopener">scaling documentation</a>.</em>',
-    Repository_Facet_Docker_SubdomainNamespace_FieldLabel: 'Subdomain namespace',
-    Repository_Facet_Docker_SubdomainNamespace_HelpText: 'Allows to use subdomain namespace.',
+    Repository_Facet_Docker_Subdomain_FieldLabel: 'Allow Subdomain Routing',
+    Repository_Facet_Docker_Subdomain_HelpText: 'Use the following subdomain to make push and pull requests for this repository.',
     Repository_Facet_DockerConnectorFacet_HttpPort_FieldLabel: 'HTTP',
     Repository_Facet_DockerConnectorFacet_HttpPort_HelpText: 'Create an HTTP connector at specified port. Normally used if the server is behind a secure proxy.',
     Repository_Facet_DockerConnectorFacet_HttpsPort_FieldLabel: 'HTTPS',
