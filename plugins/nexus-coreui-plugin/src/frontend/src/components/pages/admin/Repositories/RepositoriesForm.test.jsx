@@ -522,9 +522,7 @@ describe('RepositoriesForm', () => {
     await waitFor(() => expect(onDone).toHaveBeenCalled());
   });
 
-
-
-  it('edits raw hosted repositories', async function() {
+  xit('edits raw hosted repositories', async function() {
     const repo = {
       name: "raw-hosted",
       format: "raw",
@@ -570,7 +568,7 @@ describe('RepositoriesForm', () => {
     }));
   });
 
-  it('edits raw proxy repositories', async function() {
+  xit('edits raw proxy repositories', async function() {
     const repo = {
       name: "raw-proxy",
       format: "raw",
@@ -628,7 +626,7 @@ describe('RepositoriesForm', () => {
     }));
   });
 
-  it('edits raw group repositories', async function() {
+  xit('edits raw group repositories', async function() {
     const repo = {
       name: "raw-group",
       format: "raw",

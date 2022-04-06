@@ -12,9 +12,9 @@
  */
 import React from 'react';
 
-import {Select, FormUtils, useSimpleMachine} from '@sonatype/nexus-ui-plugin';
+import {FormUtils, useSimpleMachine} from '@sonatype/nexus-ui-plugin';
 
-import {NxFormGroup, NxLoadWrapper} from '@sonatype/react-shared-components';
+import {NxFormGroup, NxFormSelect, NxLoadWrapper} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
 
@@ -56,9 +56,8 @@ export default function GenericFormatConfiguration({parentMachine}) {
       <NxLoadWrapper loading={isLoading} error={error} retryHandler={retry}>
         <div className="nx-form-row">
           <NxFormGroup label={EDITOR.FORMAT_LABEL} isRequired className="nxrm-form-group-format">
-            <Select
+            <NxFormSelect
               {...FormUtils.fieldProps('format', currentParent)}
-              name="format"
               onChange={handleFormatUpdate}
             >
               <option value="">{EDITOR.SELECT_FORMAT_OPTION}</option>
@@ -67,13 +66,12 @@ export default function GenericFormatConfiguration({parentMachine}) {
                   {format}
                 </option>
               ))}
-            </Select>
+            </NxFormSelect>
           </NxFormGroup>
 
           <NxFormGroup label={EDITOR.TYPE_LABEL} isRequired className="nxrm-form-group-type">
-            <Select
+            <NxFormSelect
               {...FormUtils.fieldProps('type', currentParent)}
-              name="type"
               onChange={handleTypeUpdate}
               disabled={!format}
             >
@@ -83,7 +81,7 @@ export default function GenericFormatConfiguration({parentMachine}) {
                   {type}
                 </option>
               ))}
-            </Select>
+            </NxFormSelect>
           </NxFormGroup>
         </div>
       </NxLoadWrapper>

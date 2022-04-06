@@ -10,33 +10,34 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+import React, {useEffect} from 'react';
 
-import {
-  NxReadOnly
-} from '@sonatype/react-shared-components';
+import {FormUtils} from '@sonatype/nexus-ui-plugin';
+
+import {NxCheckbox, NxFieldset} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
 
 const {EDITOR} = UIStrings.REPOSITORIES;
 
-export default function GenericReadOnlyNameConfiguration({parentMachine}) {
-  const [state] = parentMachine;
-  const {name, format, type, url} = state.context.data;
+export default function BowerProxyConfiguration({parentMachine}) {
+  const [currentParent, sendParent] = parentMachine;
+
+  useEffect(() => {
+    sendParent({type: 'UPDATE', name: 'bower.rewritePackageUrls', value: true});
+  }, []);
 
   return (
-      <NxReadOnly>
-        <NxReadOnly.Label>{EDITOR.NAME_LABEL}</NxReadOnly.Label>
-        <NxReadOnly.Data>{name}</NxReadOnly.Data>
-
-        <NxReadOnly.Label>{EDITOR.FORMAT_LABEL}</NxReadOnly.Label>
-        <NxReadOnly.Data>{format}</NxReadOnly.Data>
-
-        <NxReadOnly.Label>{EDITOR.TYPE_LABEL}</NxReadOnly.Label>
-        <NxReadOnly.Data>{type}</NxReadOnly.Data>
-
-        <NxReadOnly.Label>{EDITOR.URL_LABEL}</NxReadOnly.Label>
-        <NxReadOnly.Data>{url}</NxReadOnly.Data>
-      </NxReadOnly>
+    <NxFieldset
+      label={EDITOR.BOWER.REWRITE_URLS_LABEL}
+      className="nxrm-form-group-bower-rewrite-urls"
+    >
+      <NxCheckbox
+        {...FormUtils.checkboxProps('bower.rewritePackageUrls', currentParent)}
+        onChange={FormUtils.handleUpdate('bower.rewritePackageUrls', sendParent)}
+      >
+        {EDITOR.BOWER.REWRITE_URLS_DESCR}
+      </NxCheckbox>
+    </NxFieldset>
   );
 }

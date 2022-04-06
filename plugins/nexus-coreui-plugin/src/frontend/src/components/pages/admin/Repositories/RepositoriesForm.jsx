@@ -32,17 +32,11 @@ import './Repositories.scss';
 
 import RepositoriesFormMachine from './RepositoriesFormMachine';
 
-import GenericGroupConfiguration from './facets/GenericGroupConfiguration';
-import GenericCleanupConfiguration from './facets/GenericCleanupConfiguration';
-import GenericHostedConfiguration from './facets/GenericHostedConfiguration';
-import GenericStorageConfiguration from './facets/GenericStorageConfiguration';
+import {getRepositoryFacets} from './RepositoryFormConfig';
+
 import GenericFormatConfiguration from './facets/GenericFormatConfiguration';
 import GenericReadOnlyNameConfiguration from './facets/GenericReadOnlyNameConfiguration';
 import GenericEditNameConfiguration from './facets/GenericEditNameConfiguration';
-import GenericProxyConfiguration from './facets/GenericProxyConfiguration';
-import GenericOptionsConfiguration from './facets/GenericOptionsConfiguration';
-import GenericHttpReqConfiguration from './facets/GenericHttpReqConfiguration';
-import GenericHttpAuthConfiguration from './facets/GenericHttpAuthConfiguration';
 
 export default function RepositoriesForm({itemId, onDone = () => {}}) {
   const isEdit = Boolean(itemId);
@@ -80,6 +74,8 @@ export default function RepositoriesForm({itemId, onDone = () => {}}) {
 
   const save = () => send({type: 'SAVE'});
 
+  const repositoryFacets = getRepositoryFacets(format, type);
+
   return (
     <Page className="nxrm-repository-editor">
       <PageHeader>
@@ -99,27 +95,17 @@ export default function RepositoriesForm({itemId, onDone = () => {}}) {
             submitMaskMessage={SAVING}
             validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
           >
-            {isEdit && <GenericReadOnlyNameConfiguration parentMachine={stateMachine}/>}
-            {!isEdit && <GenericFormatConfiguration parentMachine={stateMachine}/>}
+            {!isEdit && <GenericFormatConfiguration parentMachine={stateMachine} />}
             {format && type && (
               <>
-              {!isEdit && <GenericEditNameConfiguration parentMachine={stateMachine} />}
-                <GenericStorageConfiguration parentMachine={stateMachine} />
-                {type === 'group' && <GenericGroupConfiguration parentMachine={stateMachine} />}
-                {type === 'hosted' && <GenericHostedConfiguration parentMachine={stateMachine} />}
-                {type === 'proxy' && (
-                  <>
-                    <GenericProxyConfiguration parentMachine={stateMachine} />
-                    <GenericOptionsConfiguration parentMachine={stateMachine} />
-                  </>
+                {isEdit ? (
+                  <GenericReadOnlyNameConfiguration  parentMachine={stateMachine} />
+                ) : (
+                  <GenericEditNameConfiguration parentMachine={stateMachine} />
                 )}
-                {type !== 'group' && <GenericCleanupConfiguration parentMachine={stateMachine} />}
-                {type === 'proxy' && (
-                  <>
-                    <GenericHttpAuthConfiguration parentMachine={stateMachine} />
-                    <GenericHttpReqConfiguration parentMachine={stateMachine} />
-                  </>
-                )}
+                {repositoryFacets.map((Facet, index) => (
+                  <Facet parentMachine={stateMachine} key={index} />
+                ))}
               </>
             )}
           </NxForm>

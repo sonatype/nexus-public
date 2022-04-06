@@ -10,33 +10,35 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+import React, {useEffect} from 'react';
 
-import {
-  NxReadOnly
-} from '@sonatype/react-shared-components';
+import {FormUtils} from '@sonatype/nexus-ui-plugin';
+
+import {NxCheckbox, NxFieldset} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
 
 const {EDITOR} = UIStrings.REPOSITORIES;
 
-export default function GenericReadOnlyNameConfiguration({parentMachine}) {
-  const [state] = parentMachine;
-  const {name, format, type, url} = state.context.data;
+export default function ReplicationConfiguration({parentMachine}) {
+  const [currentParent, sendParent] = parentMachine;
+
+  useEffect(() => {
+    sendParent({type: 'UPDATE', name: 'replication.enabled', value: false});
+  }, []);
 
   return (
-      <NxReadOnly>
-        <NxReadOnly.Label>{EDITOR.NAME_LABEL}</NxReadOnly.Label>
-        <NxReadOnly.Data>{name}</NxReadOnly.Data>
-
-        <NxReadOnly.Label>{EDITOR.FORMAT_LABEL}</NxReadOnly.Label>
-        <NxReadOnly.Data>{format}</NxReadOnly.Data>
-
-        <NxReadOnly.Label>{EDITOR.TYPE_LABEL}</NxReadOnly.Label>
-        <NxReadOnly.Data>{type}</NxReadOnly.Data>
-
-        <NxReadOnly.Label>{EDITOR.URL_LABEL}</NxReadOnly.Label>
-        <NxReadOnly.Data>{url}</NxReadOnly.Data>
-      </NxReadOnly>
+    <NxFieldset
+      label={EDITOR.REPLICATION_LABEL}
+      sublabel={EDITOR.REPLICATION_SUBLABEL}
+      className="nxrm-form-group-replication"
+    >
+      <NxCheckbox
+        {...FormUtils.checkboxProps('replication.enabled', currentParent)}
+        onChange={FormUtils.handleUpdate('replication.enabled', sendParent)}
+      >
+        {EDITOR.ENABLED_CHECKBOX_DESCR}
+      </NxCheckbox>
+    </NxFieldset>
   );
 }

@@ -12,9 +12,9 @@
  */
 import React from 'react';
 
-import {Select, FormUtils} from '@sonatype/nexus-ui-plugin';
+import {FormUtils} from '@sonatype/nexus-ui-plugin';
 
-import {NxFormGroup, NxTextInput} from '@sonatype/react-shared-components';
+import {NxFormGroup, NxFormSelect, NxTextInput} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
 
@@ -48,15 +48,14 @@ export default function GenericHttpAuthConfiguration({parentMachine}) {
     <>
       <h2 className="nx-h2">{EDITOR.HTTP_AUTH_CAPTION}</h2>
       <NxFormGroup label={EDITOR.AUTH_TYPE_LABEL} className="nxrm-form-group-http-auth-type">
-        <Select
+        <NxFormSelect
           {...FormUtils.fieldProps('httpClient.authentication.type', currentParent)}
-          name="authType"
           onChange={updateType}
         >
           <option value="">{EDITOR.NONE_OPTION}</option>
           <option value="username">{EDITOR.USERNAME_OPTION}</option>
           <option value="ntlm">{EDITOR.NTLM_OPTION}</option>
-        </Select>
+        </NxFormSelect>
       </NxFormGroup>
 
       {type && type !== '' && (

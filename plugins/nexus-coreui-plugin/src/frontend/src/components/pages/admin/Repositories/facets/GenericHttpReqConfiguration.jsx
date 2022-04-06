@@ -60,7 +60,7 @@ export default function GenericHttpReqConfiguration({parentMachine}) {
 
       <NxFormGroup
         label={EDITOR.TIMEOUT_LABEL}
-        sublabel={EDITOR.TIMEOUT_LABEL}
+        sublabel={EDITOR.TIMEOUT_SUBLABEL}
         className="nxrm-form-group-timeout"
       >
         <NxTextInput

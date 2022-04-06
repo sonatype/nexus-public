@@ -424,9 +424,25 @@ the documentation</a>.`
       RETRIES_LABEL: 'Connection Retries',
       RETRIES_SUBLABEL: 'Number of times to retry if the first connection attempt times out',
       TIMEOUT_LABEL: 'Connection Timeout (Seconds)',
-      TIMEOUT_SUBLABEL: 'Time (in seconds) to wait before stopping and retrying the connection; leave blank to use the global HTTP timeout',
+      TIMEOUT_SUBLABEL: 'Time (in seconds) to wait before stopping and retrying the connection. Leave blank to use the globally defined HTTP timeout',
       REDIRECTS_LABEL: 'Circular Redirects',
       COOKIES_LABEL: 'Cookies',
+      REPLICATION_LABEL: 'Replication',
+      REPLICATION_SUBLABEL: 'If checked, this repository is the target of a replication',
+      BOWER: {
+        REWRITE_URLS_LABEL: 'Enable Rewrite of Package URLs',
+        REWRITE_URLS_DESCR: 'Force Bower to retrieve packages through the proxy repository'
+      },
+      YUM: {
+        REPODATA_DEPTH_LABEL: 'Repodata Depth',
+        REPODATA_DEPTH_SUBLABEL: 'Specifies the repository depth where the repodata folder are created',
+        LAYOUT_POLICY_LABEL: 'Layout Policy',
+        LAYOUT_POLICY_SUBLABEL: 'Validate that all paths are RPMs or yum metadata'
+      },
+      RAW: {
+        CONTENT_DISPOSITION_LABEL: 'Content Disposition',
+        CONTENT_DISPOSITION_SUBLABEL: 'Add Content-Disposition header as "Attachment" to disable some content from being inline in a browser'
+      },
       REMOTE_URL_EXAMPLES: {
         bower: ' (e.g., https://registry.bower.io)',
         docker: ' (e.g., https://registry-1.docker.io)',

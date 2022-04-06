@@ -12,9 +12,15 @@
  */
 import React, {useEffect} from 'react';
 
-import {ExtAPIUtils, FormUtils, Select} from '@sonatype/nexus-ui-plugin';
+import {ExtAPIUtils, FormUtils} from '@sonatype/nexus-ui-plugin';
 
-import {NxCheckbox, NxFieldset, NxFormGroup, NxLoadWrapper} from '@sonatype/react-shared-components';
+import {
+  NxFormGroup,
+  NxCheckbox,
+  NxLoadWrapper,
+  NxFieldset,
+  NxFormSelect
+} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
 
@@ -46,9 +52,8 @@ export default function GenericStorageConfiguration({parentMachine}) {
       <h2 className="nx-h2">{EDITOR.STORAGE_CAPTION}</h2>
       <NxLoadWrapper loading={isLoading} error={error} retryHandler={loadBlobStores}>
         <NxFormGroup label={EDITOR.BLOB_STORE_LABEL} isRequired className="nxrm-form-group-store">
-          <Select
+          <NxFormSelect
             {...FormUtils.fieldProps('storage.blobStoreName', currentParent)}
-            name="storage.blobStoreName"
             onChange={FormUtils.handleUpdate('storage.blobStoreName', sendParent)}
           >
             <option value="">{EDITOR.SELECT_STORE_OPTION}</option>
@@ -57,7 +62,7 @@ export default function GenericStorageConfiguration({parentMachine}) {
                 {name}
               </option>
             ))}
-          </Select>
+          </NxFormSelect>
         </NxFormGroup>
 
         {type !== 'group' && (

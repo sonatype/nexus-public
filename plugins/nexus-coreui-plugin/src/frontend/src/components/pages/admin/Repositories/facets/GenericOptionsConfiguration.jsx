@@ -12,14 +12,15 @@
  */
 import React from 'react';
 
-import {Select, FormUtils, useSimpleMachine} from '@sonatype/nexus-ui-plugin';
+import {FormUtils, useSimpleMachine} from '@sonatype/nexus-ui-plugin';
 
 import {
   NxFormGroup,
   NxLoadWrapper,
   NxTextInput,
   NxCheckbox,
-  NxFieldset
+  NxFieldset,
+  NxFormSelect
 } from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
@@ -46,9 +47,8 @@ export default function GenericOptionsConfiguration({parentMachine}) {
       <h2 className="nx-h2">{EDITOR.OPTIONS_CAPTION}</h2>
       <NxLoadWrapper loading={isLoading} error={error} retryHandler={retry}>
         <NxFormGroup label={EDITOR.ROUTING_RULE_LABEL} className="nxrm-form-group-routing-rule">
-          <Select
+          <NxFormSelect
             {...FormUtils.fieldProps('routingRule', currentParent)}
-            name="routingRule"
             onChange={FormUtils.handleUpdate('routingRule', sendParent)}
           >
             <option value="">{EDITOR.NONE_OPTION}</option>
@@ -57,7 +57,7 @@ export default function GenericOptionsConfiguration({parentMachine}) {
                 {name}
               </option>
             ))}
-          </Select>
+          </NxFormSelect>
         </NxFormGroup>
 
         <NxFieldset label={EDITOR.NEGATIVE_CACHE_LABEL} className="nxrm-form-group-proxy-cache">

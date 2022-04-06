@@ -12,9 +12,9 @@
  */
 import React from 'react';
 
-import {Select, FormUtils} from '@sonatype/nexus-ui-plugin';
+import {FormUtils} from '@sonatype/nexus-ui-plugin';
 
-import {NxFormGroup, NxCheckbox, NxFieldset} from '@sonatype/react-shared-components';
+import {NxFormGroup, NxCheckbox, NxFieldset, NxFormSelect} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
 
@@ -34,9 +34,8 @@ export default function GenericHostedConfiguration({parentMachine}) {
         isRequired
         className="nxrm-form-group-hosted"
       >
-        <Select
+        <NxFormSelect
           {...FormUtils.fieldProps('storage.writePolicy', currentParent)}
-          name="storage.writePolicy"
           onChange={FormUtils.handleUpdate('storage.writePolicy', sendParent)}
         >
           {deploymentPolicies?.map(([value, displayName]) => (
@@ -44,7 +43,7 @@ export default function GenericHostedConfiguration({parentMachine}) {
               {displayName}
             </option>
           ))}
-        </Select>
+        </NxFormSelect>
       </NxFormGroup>
 
       <NxFieldset
