@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.content.rest.internal.resources;
 
+import java.time.OffsetDateTime;
+import java.util.Date;
 import java.util.Optional;
 
 import javax.ws.rs.NotFoundException;
@@ -27,6 +29,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentAssetImpl;
 import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
+import org.sonatype.nexus.repository.content.store.AssetBlobData;
 import org.sonatype.nexus.repository.content.store.AssetData;
 import org.sonatype.nexus.repository.rest.api.AssetXO;
 import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO;
@@ -42,9 +45,9 @@ import org.mockito.Mock;
 import static java.util.Base64.getUrlEncoder;
 import static java.util.Collections.emptyMap;
 import static java.util.Optional.empty;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -63,6 +66,8 @@ public class AssetsResourceTest
   private static final int AN_ASSET_ID = 1;
 
   private static final String A_FORMAT = "aFormatValue";
+
+  private static final OffsetDateTime BLOB_CREATED = OffsetDateTime.now().minusDays(1);
 
   @Mock
   private Format aFormat;
@@ -166,6 +171,11 @@ public class AssetsResourceTest
     AssetData asset = new AssetData();
     asset.setAssetId(AN_ASSET_ID);
     asset.setPath(ASSET_PATH);
+    asset.setCreated(OffsetDateTime.now());
+    AssetBlobData assetBlob = new AssetBlobData();
+    assetBlob.setAssetBlobId(1);
+    assetBlob.setBlobCreated(BLOB_CREATED);
+    asset.setAssetBlob(assetBlob);
     return asset;
   }
 
@@ -176,6 +186,7 @@ public class AssetsResourceTest
         .id(new RepositoryItemIDXO(REPOSITORY_NAME, toExternalId(AN_ASSET_ID).getValue()).getValue())
         .repository(REPOSITORY_NAME)
         .checksum(emptyMap())
+        .lastModified(new Date(BLOB_CREATED.toInstant().toEpochMilli()))
         .build();
   }
 
