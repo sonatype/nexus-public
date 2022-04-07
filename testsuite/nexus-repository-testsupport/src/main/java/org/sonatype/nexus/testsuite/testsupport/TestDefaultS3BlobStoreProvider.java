@@ -12,10 +12,12 @@
  */
 package org.sonatype.nexus.testsuite.testsupport;
 
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.annotation.Priority;
@@ -42,13 +44,14 @@ import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest.KeyVersion;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
-import org.testcontainers.containers.FixedHostPortGenericContainer;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.KERNEL;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
 /**
@@ -56,7 +59,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
  */
 @FeatureFlag(name = "nexus.test.default.s3")
 @ManagedObject
-@ManagedLifecycle(phase = KERNEL)
+@ManagedLifecycle(phase = SERVICES)
 @Named
 @Singleton
 @Priority(Integer.MAX_VALUE)
@@ -84,6 +87,8 @@ public class TestDefaultS3BlobStoreProvider
 
   private final ClassLoader classLoader;
 
+  private BlobStoreConfiguration blobStoreConfiguration;
+
   @Inject
   public TestDefaultS3BlobStoreProvider(
       @Named("nexus-uber") final ClassLoader classLoader,
@@ -94,7 +99,6 @@ public class TestDefaultS3BlobStoreProvider
       @Nullable @Named("nexus.test.s3.endpoint") final String endpoint,
       @Nullable @Named("${nexus.test.s3.forcePathStyle:-true}") final Boolean forcePathStyle)
   {
-
     this.classLoader = classLoader;
     this.s3Bucket = Optional.ofNullable(bucket).orElse(UUID.randomUUID().toString());
     this.region = Optional.ofNullable(region).orElse("us-east-1");
@@ -109,16 +113,20 @@ public class TestDefaultS3BlobStoreProvider
   @Override
   @Guarded(by = STARTED)
   public BlobStoreConfiguration get(final Supplier<BlobStoreConfiguration> configurationSupplier) {
-    return S3BlobStoreConfigurationBuilder.builder(configurationSupplier, BlobStoreManager.DEFAULT_BLOBSTORE_NAME)
-        .bucket(s3Bucket)
-        .region(region)
-        .endpoint(endpoint)
-        .prefix(prefix)
-        .expiration(0)
-        .accessKey(accessKey)
-        .accessSecret(accessSecret)
-        .forcePathStyle(forcePathStyle)
-        .build();
+    if (Objects.isNull(blobStoreConfiguration)) {
+      blobStoreConfiguration =
+          S3BlobStoreConfigurationBuilder.builder(configurationSupplier, BlobStoreManager.DEFAULT_BLOBSTORE_NAME)
+              .bucket(s3Bucket)
+              .region(region)
+              .endpoint(endpoint)
+              .prefix(prefix)
+              .expiration(0)
+              .accessKey(accessKey)
+              .accessSecret(accessSecret)
+              .forcePathStyle(forcePathStyle)
+              .build();
+    }
+    return blobStoreConfiguration;
   }
 
   @Override
@@ -131,9 +139,9 @@ public class TestDefaultS3BlobStoreProvider
     String mavenMockEndpoint = System.getProperty("mock.s3.service.endpoint");
     if (mavenMockEndpoint == null) {
       int s3MockPort = PortAllocator.nextFreePort();
-      try (TcclBlock block = TcclBlock.begin(classLoader)) {
-        s3MockContainer = new FixedHostPortGenericContainer("docker-all.repo.sonatype.com/adobe/s3mock")
-            .withFixedExposedPort(s3MockPort, 9090)
+      try (TcclBlock ignored = TcclBlock.begin(classLoader)) {
+        s3MockContainer = new GenericContainer<>("docker-all.repo.sonatype.com/adobe/s3mock")
+            .withExposedPorts(s3MockPort, 9090)
             .withEnv("initialBuckets", s3Bucket)
             .waitingFor(Wait.forListeningPort());
 
@@ -147,7 +155,7 @@ public class TestDefaultS3BlobStoreProvider
   }
 
   @Override
-  protected void doStop() throws Exception {
+  protected void doStop() {
     if (Objects.isNull(endpoint)) {
       if (s3MockContainer != null && s3MockContainer.isRunning()) {
         s3MockContainer.stop();
@@ -164,14 +172,20 @@ public class TestDefaultS3BlobStoreProvider
           .build();
       ObjectListing bucketContent = s3.listObjects(s3Bucket, prefix);
 
+      boolean readIncomplete;
       do {
-        bucketContent.getObjectSummaries().forEach(summary -> s3.deleteObject(s3Bucket, summary.getKey()));
+        readIncomplete = bucketContent.isTruncated();
 
-        if (bucketContent.isTruncated()) {
-          bucketContent = s3.listNextBatchOfObjects(bucketContent);
-        }
+        s3.deleteObjects(new DeleteObjectsRequest(s3Bucket).withKeys(
+            bucketContent.getObjectSummaries().stream()
+                .map(S3ObjectSummary::getKey)
+                .sorted(Comparator.reverseOrder())
+                .map(KeyVersion::new)
+                .collect(Collectors.toList())
+        ));
+        bucketContent = s3.listNextBatchOfObjects(bucketContent);
       }
-      while (!bucketContent.isTruncated());
+      while (readIncomplete);
     }
   }
 }
