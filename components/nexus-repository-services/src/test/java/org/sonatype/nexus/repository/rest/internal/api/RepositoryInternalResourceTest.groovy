@@ -28,6 +28,7 @@ import org.sonatype.nexus.repository.types.HostedType
 import org.sonatype.nexus.repository.types.ProxyType
 
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.mockito.Mock
 
@@ -63,6 +64,7 @@ class RepositoryInternalResourceTest
     underTest = new RepositoryInternalResource(formats, repositoryManager, repositoryPermissionChecker, proxyType, recipes)
   }
 
+  @Ignore
   @Test
   void testGetDetails() {
     def maven2 = new Format('maven2') {}
