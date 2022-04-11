@@ -22,6 +22,8 @@ import org.sonatype.nexus.repository.config.Configuration
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus
 import org.sonatype.nexus.repository.manager.RepositoryManager
+import org.sonatype.nexus.repository.rest.api.ApiRepositoryAdapter
+import org.sonatype.nexus.repository.rest.api.AuthorizingRepositoryManager
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker
 import org.sonatype.nexus.repository.types.GroupType
 import org.sonatype.nexus.repository.types.HostedType
@@ -51,6 +53,15 @@ class RepositoryInternalResourceTest
   @Mock
   List<Recipe> recipes
 
+  @Mock
+  AuthorizingRepositoryManager authorizingRepositoryManager
+
+  @Mock
+  Map<String, ApiRepositoryAdapter> convertersByFormat
+
+  @Mock
+  ApiRepositoryAdapter defaultAdapter
+
   ProxyType proxyType = new ProxyType()
 
   GroupType groupType = new GroupType()
@@ -61,7 +72,16 @@ class RepositoryInternalResourceTest
 
   @Before
   void setup() {
-    underTest = new RepositoryInternalResource(formats, repositoryManager, repositoryPermissionChecker, proxyType, recipes)
+    underTest = new RepositoryInternalResource(
+        formats,
+        repositoryManager,
+        repositoryPermissionChecker,
+        proxyType,
+        recipes,
+        authorizingRepositoryManager,
+        convertersByFormat,
+        defaultAdapter
+    )
   }
 
   @Ignore
