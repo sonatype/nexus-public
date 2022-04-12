@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.upgrades;
 
 import java.util.Map;
+import java.util.Optional;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -35,7 +36,7 @@ public class SearchIndexUpgrade_1_10
   }
 
   @Override
-  public String version() {
-    return "1.10";
+  public Optional<String> version() {
+    return Optional.of("1.10");
   }
 }

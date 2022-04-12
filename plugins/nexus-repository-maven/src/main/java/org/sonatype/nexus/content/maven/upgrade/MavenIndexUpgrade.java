@@ -23,6 +23,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.repository.content.search.upgrade.SearchIndexUpgrade;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,7 +36,7 @@ import static org.sonatype.nexus.repository.search.index.SearchUpdateService.SEA
  * Upgrade step that marks existing maven repositories (at the time of the upgrade) as needing to be re-indexed.
  *
  * @deprecated New database migrations should use {@link SearchIndexUpgrade}
- * 
+ *
  * @since 3.38
  */
 @Deprecated
@@ -53,9 +54,6 @@ public abstract class MavenIndexUpgrade
       "update maven2_content_repository set attributes = ? where config_repository_id = ?";
 
   public static final String ID = "id";
-
-  @Override
-  public abstract String version();
 
   @Override
   public void migrate(final Connection connection) throws Exception {

@@ -13,6 +13,7 @@
 package org.sonatype.nexus.quartz.internal.upgrades;
 
 import java.sql.Connection;
+import java.util.Optional;
 
 import javax.inject.Named;
 
@@ -36,8 +37,8 @@ public class JobDescriptionMigrationStep_1_3
   private static final String STATEMENT = "ALTER TABLE %s ALTER COLUMN description TYPE text";
 
   @Override
-  public String version() {
-    return "1.3";
+  public Optional<String> version() {
+    return Optional.of("1.3");
   }
 
   @Override

@@ -156,7 +156,7 @@ public class SearchIndexUpgradeTest
     contentRepositoryDAO.createContentRepository(repo);
   }
 
-  private boolean isRepositoryMarked(ContentRepository repo) {
+  private boolean isRepositoryMarked(final ContentRepository repo) {
     return TRUE.equals(repo.attributes().get(SEARCH_INDEX_OUTDATED));
   }
 
@@ -168,8 +168,8 @@ public class SearchIndexUpgradeTest
     }
 
     @Override
-    public String version() {
-      return "1.0";
+    public Optional<String> version() {
+      return Optional.of("1.0");
     }
   }
 }

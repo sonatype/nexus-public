@@ -48,7 +48,9 @@ public class NexusJavaMigration implements JavaMigration
 
   @Override
   public MigrationVersion getVersion() {
-    return MigrationVersion.fromVersion(dbMigrationStep.version());
+    return dbMigrationStep.version()
+        .map(MigrationVersion::fromVersion)
+        .orElse(null);
   }
 
   @Override

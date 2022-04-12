@@ -25,9 +25,9 @@ import javax.annotation.Nullable;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Recipe;
+import org.sonatype.nexus.repository.internal.search.index.task.SearchUpdateTask;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
-import org.sonatype.nexus.repository.internal.search.index.task.SearchUpdateTask;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -63,9 +63,6 @@ public abstract class SearchIndexUpgrade
   protected SearchIndexUpgrade(final Map<String, Recipe> recipes) {
     this.recipes = recipes;
   }
-
-  @Override
-  public abstract String version();
 
   public boolean test(final String format) {
     // default implementation is to re-index all formats
