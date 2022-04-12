@@ -24,6 +24,7 @@ import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.datastore.api.DuplicateKeyException;
 import org.sonatype.nexus.internal.selector.SelectorConfigurationStore;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
@@ -32,6 +33,7 @@ import org.sonatype.nexus.selector.SelectorConfiguration;
 
 import com.google.common.collect.ImmutableList;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -101,7 +103,12 @@ public class OrientSelectorConfigurationStore
     checkArgument(configuration instanceof OrientSelectorConfiguration,
         "Configuration is not an OrientSelectorConfiguration");
 
-    inTxRetry(databaseInstance).run(db -> entityAdapter.addEntity(db, (OrientSelectorConfiguration) configuration));
+    try {
+      inTxRetry(databaseInstance).run(db -> entityAdapter.addEntity(db, (OrientSelectorConfiguration) configuration));
+    }
+    catch (ORecordDuplicatedException e) {
+      throw new DuplicateKeyException(e);
+    }
   }
 
   @Override

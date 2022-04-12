@@ -31,8 +31,10 @@ import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.datastore.api.DuplicateKeyException;
 import org.sonatype.nexus.repository.security.RepositoryContentSelectorPrivilegeDescriptor;
 import org.sonatype.nexus.repository.security.RepositorySelector;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
@@ -167,7 +169,12 @@ public class SelectorManagerImpl
     selectorConfiguration.setType(type);
     selectorConfiguration.setDescription(description);
     selectorConfiguration.setAttributes(attributes);
-    store.create(selectorConfiguration);
+    try {
+      store.create(selectorConfiguration);
+    }
+    catch (DuplicateKeyException e) {
+      throw new ValidationErrorsException("name", "A selector with the same name already exists. Name must be unique.");
+    }
   }
 
   @Override
