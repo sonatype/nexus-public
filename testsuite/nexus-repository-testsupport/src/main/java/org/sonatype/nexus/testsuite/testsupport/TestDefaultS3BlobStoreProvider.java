@@ -167,7 +167,6 @@ public class TestDefaultS3BlobStoreProvider
       AmazonS3 s3 = AmazonS3ClientBuilder.standard()
           .withEndpointConfiguration(new EndpointConfiguration(endpoint, region))
           .withCredentials(credentialsProvider)
-          .withRegion(Regions.valueOf(region))
           .withPathStyleAccessEnabled(forcePathStyle)
           .build();
       ObjectListing bucketContent = s3.listObjects(s3Bucket, prefix);
