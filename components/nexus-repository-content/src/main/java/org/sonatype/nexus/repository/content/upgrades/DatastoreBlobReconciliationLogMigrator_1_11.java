@@ -83,8 +83,8 @@ public class DatastoreBlobReconciliationLogMigrator_1_11
   }
 
   @Override
-  public String version() {
-    return "1.11";
+  public Optional<String> version() {
+    return Optional.of("1.11");
   }
 
   @Override
