@@ -59,7 +59,7 @@ public class FileBlobStoreResource
   @RequiresAuthentication
   @RequiresPermissions("nexus:blobstores:create")
   @POST
-  @Path("/")
+  @Path("/file")
   @Validate
   public void createFileBlobStore(@Valid final FileBlobStoreApiCreateRequest request) throws Exception {
     BlobStoreConfiguration configuration = request.toBlobStoreConfiguration(blobStoreManager.newConfiguration());
@@ -75,7 +75,7 @@ public class FileBlobStoreResource
   @RequiresAuthentication
   @RequiresPermissions("nexus:blobstores:update")
   @PUT
-  @Path("/{name}")
+  @Path("/file/{name}")
   @Validate
   public void updateFileBlobStore(@PathParam("name") final String name,
                                   @Valid final FileBlobStoreApiUpdateRequest request)
@@ -94,7 +94,7 @@ public class FileBlobStoreResource
   @RequiresAuthentication
   @RequiresPermissions("nexus:blobstores:read")
   @GET
-  @Path("/{name}")
+  @Path("/file/{name}")
   public FileBlobStoreApiModel getFileBlobStoreConfiguration(@PathParam("name") final String name)
   {
     BlobStoreConfiguration configuration = getBlobStoreConfiguration(name);

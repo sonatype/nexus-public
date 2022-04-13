@@ -77,6 +77,7 @@ public class S3BlobStoreApiResource
   @POST
   @Override
   @RequiresAuthentication
+  @Path("/s3")
   @RequiresPermissions("nexus:blobstores:create")
   public Response createBlobStore(@Valid final S3BlobStoreApiModel request) {
     try {
@@ -92,7 +93,7 @@ public class S3BlobStoreApiResource
   @PUT
   @Override
   @RequiresAuthentication
-  @Path("/{name}")
+  @Path("/s3/{name}")
   @RequiresPermissions("nexus:blobstores:update")
   public void updateBlobStore(
       @Valid final S3BlobStoreApiModel request,
@@ -124,7 +125,7 @@ public class S3BlobStoreApiResource
   @GET
   @Override
   @RequiresAuthentication
-  @Path("/{name}")
+  @Path("/s3/{name}")
   @RequiresPermissions("nexus:blobstores:read")
   public S3BlobStoreApiModel getBlobStore(@PathParam("name") final String blobStoreName) {
     return fetchBlobStoreConfiguration(blobStoreName)
