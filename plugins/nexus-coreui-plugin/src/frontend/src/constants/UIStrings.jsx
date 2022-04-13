@@ -361,7 +361,7 @@ the documentation</a>.`
       FORMAT_AND_TYPE_CAPTION: 'Repository Format & Type',
       FORMAT_LABEL: 'Format',
       TYPE_LABEL: 'Type',
-      URL_LABEL: 'Url',
+      URL_LABEL: 'URL',
       CONFIGURATION_CAPTION: 'Configuration',
       NAME_LABEL: 'Name',
       STATUS_LABEL: 'Status',
@@ -429,20 +429,24 @@ the documentation</a>.`
       COOKIES_LABEL: 'Cookies',
       REPLICATION_LABEL: 'Replication',
       REPLICATION_SUBLABEL: 'If checked, this repository is the target of a replication',
-      BOWER: {
-        REWRITE_URLS_LABEL: 'Enable Rewrite of Package URLs',
-        REWRITE_URLS_DESCR: 'Force Bower to retrieve packages through the proxy repository'
-      },
-      YUM: {
-        REPODATA_DEPTH_LABEL: 'Repodata Depth',
-        REPODATA_DEPTH_SUBLABEL: 'Specifies the repository depth where the repodata folder are created',
-        LAYOUT_POLICY_LABEL: 'Layout Policy',
-        LAYOUT_POLICY_SUBLABEL: 'Validate that all paths are RPMs or yum metadata'
-      },
-      RAW: {
-        CONTENT_DISPOSITION_LABEL: 'Content Disposition',
-        CONTENT_DISPOSITION_SUBLABEL: 'Add Content-Disposition header as "Attachment" to disable some content from being inline in a browser'
-      },
+      REWRITE_URLS_LABEL: 'Enable Rewrite of Package URLs',
+      REWRITE_URLS_DESCR: 'Force Bower to retrieve packages through the proxy repository',
+      REPODATA_DEPTH_LABEL: 'Repodata Depth',
+      REPODATA_DEPTH_SUBLABEL: 'Specifies the repository depth where the repodata folder are created',
+      LAYOUT_POLICY_LABEL: 'Layout Policy',
+      DEPLOY_POLICY_SUBLABEL: 'Validate that all paths are RPMs or yum metadata',
+      LAYOUT_POLICY_SUBLABEL: 'Validate that all paths are maven artifact or metadata paths',
+      CONTENT_DISPOSITION_LABEL: 'Content Disposition',
+      CONTENT_DISPOSITION_SUBLABEL: 'Add Content-Disposition header as "Attachment" to disable some content from being inline in a browser',
+      VERSION_POLICY_LABEL: 'Version Policy',
+      VERSION_POLICY_SUBLABEL: 'What type of artifacts does this repository store?',
+      REMOVE_NON_CATALOGED_LABEL: 'Remove Non-catalogued Versions',
+      REMOVE_NON_CATALOGED_SUBLABEL: 'IQ Audit and Quarantine capability must be enabled for this feature to take effect. ',
+      REMOVE_NON_CATALOGED_DESCR: 'Remove non-catalogued versions from the package metadata',
+      REMOVE_QUARANTINED_LABEL: 'Remove Quarantined Versions',
+      REMOVE_QUARANTINED_SUBLABEL: 'IQ Audit and Quarantine capability must be enabled for this feature to take effect. ',
+      REMOVE_QUARANTINED_DESCR: 'Remove quarantined versions from the package metadata',
+      LEARN_MORE: 'Learn more',
       REMOTE_URL_EXAMPLES: {
         bower: ' (e.g., https://registry.bower.io)',
         docker: ' (e.g., https://registry-1.docker.io)',

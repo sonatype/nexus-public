@@ -20,28 +20,27 @@ import UIStrings from '../../../../../constants/UIStrings';
 
 const {EDITOR} = UIStrings.REPOSITORIES;
 
-export default function RawConfiguration({parentMachine}) {
+export default function RepodataDepthConfiguration({parentMachine}) {
   const [currentParent, sendParent] = parentMachine;
 
-  const contentDispositionOptions = [
-    {key: 'Inline', value: 'INLINE'},
-    {key: 'Attachment', value: 'ATTACHMENT'}
-  ];
+  const {format} = currentParent.context.data;
+
+  const repodataDepthOptions = [0, 1, 2, 3, 4, 5];
 
   return (
     <NxFormGroup
-      label={EDITOR.RAW.CONTENT_DISPOSITION_LABEL}
-      className="nxrm-form-group-content-desposition"
-      sublabel={EDITOR.RAW.CONTENT_DISPOSITION_SUBLABEL}
+      label={EDITOR.REPODATA_DEPTH_LABEL}
+      className="nxrm-form-group-repodata-depth"
+      sublabel={EDITOR.REPODATA_DEPTH_SUBLABEL}
       isRequired
     >
       <NxFormSelect
-        {...FormUtils.fieldProps('raw.contentDisposition', currentParent)}
-        onChange={FormUtils.handleUpdate('raw.contentDisposition', sendParent)}
+        {...FormUtils.selectProps(`${format}.repodataDepth`, currentParent)}
+        onChange={FormUtils.handleUpdate(`${format}.repodataDepth`, sendParent)}
       >
-        {contentDispositionOptions?.map(({key, value}) => (
-          <option key={key} value={value}>
-            {key}
+        {repodataDepthOptions?.map((val) => (
+          <option key={val} value={val}>
+            {val}
           </option>
         ))}
       </NxFormSelect>

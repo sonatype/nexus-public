@@ -35,15 +35,21 @@ import {repositoriesUrl} from './facets/GenericGroupConfiguration';
 import {RECIPES_URL} from './facets/GenericFormatConfiguration';
 import {ROUTING_RULES_URL} from './facets/GenericOptionsConfiguration';
 import {mergeDeepRight} from 'ramda';
+import {genericDefaultValues} from './RepositoryFormDefaultValues';
 
 jest.mock('axios');
 
 jest.mock('@sonatype/nexus-ui-plugin', () => ({
   ...jest.requireActual('@sonatype/nexus-ui-plugin'),
   ExtAPIUtils: {
-    request: (action, method, data = null) => jest.requireMock('axios').get('/service/extdirect', {
-      action, method, data, type: 'rpc', tid: '8'
-    }),
+    request: (action, method, data = null) =>
+      jest.requireMock('axios').get('/service/extdirect', {
+        action,
+        method,
+        data,
+        type: 'rpc',
+        tid: '8'
+      }),
     useExtMachine: jest.requireActual('@sonatype/nexus-ui-plugin').ExtAPIUtils.useExtMachine,
     extractResult: jest.requireActual('@sonatype/nexus-ui-plugin').ExtAPIUtils.extractResult
   }
@@ -86,21 +92,13 @@ describe('RepositoriesForm', () => {
 
   const selectors = {
     ...TestUtils.selectors,
-
     getCreateButton: () => screen.getByText(EDITOR.CREATE_BUTTON, {selector: 'button'}),
     getSaveButton: () => screen.getByText(EDITOR.SAVE_BUTTON, {selector: 'button'}),
     getCancelButton: () => screen.queryByText('Cancel'),
-
-    getReadOnlyName: () => screen.getByText(EDITOR.NAME_LABEL, {selector: 'dt'}),
-    getReadOnlyFormat: () => screen.getByText(EDITOR.FORMAT_LABEL, {selector: 'dt'}),
-    getReadOnlyType: () => screen.getByText(EDITOR.TYPE_LABEL, {selector: 'dt'}),
     getReadOnlyUrl: () => screen.getByText(EDITOR.URL_LABEL, {selector: 'dt'}),
-
-
     getFormatSelect: () => screen.getByLabelText(EDITOR.FORMAT_LABEL),
     getTypeSelect: () => screen.getByLabelText(EDITOR.TYPE_LABEL),
     getNameInput: () => screen.getByLabelText(EDITOR.NAME_LABEL),
-
     getBlobStoreSelect: () => screen.getByLabelText(EDITOR.BLOB_STORE_LABEL),
     getDeploymentPolicySelect: () => screen.queryByLabelText(EDITOR.DEPLOYMENT_POLICY_LABEL),
     getStatusCheckbox: () => screen.getByRole('checkbox', {name: EDITOR.STATUS_DESCR}),
@@ -129,7 +127,14 @@ describe('RepositoriesForm', () => {
     getAutoBlockCheckbox: () => screen.getByRole('checkbox', {name: EDITOR.AUTO_BLOCK_DESCR}),
     getCookiesCheckbox: () => getCheckbox(EDITOR.COOKIES_LABEL),
     getRedirectsCheckbox: () => getCheckbox(EDITOR.REDIRECTS_LABEL),
-    getContentValidationCheckbox: () => getCheckbox(EDITOR.CONTENT_VALIDATION_LABEL)
+    getContentValidationCheckbox: () => getCheckbox(EDITOR.CONTENT_VALIDATION_LABEL),
+    getRewritePackageUrlsCheckbox: () => getCheckbox(EDITOR.REWRITE_URLS_LABEL),
+    getRepodataDepthSelect: () => screen.getByLabelText(EDITOR.REPODATA_DEPTH_LABEL),
+    getLayoutPolicySelect: () => screen.getByLabelText(EDITOR.LAYOUT_POLICY_LABEL),
+    getContentDispositionSelect: () => screen.getByLabelText(EDITOR.CONTENT_DISPOSITION_LABEL),
+    getRemoveNonCataloguedCheckbox: () => getCheckbox(EDITOR.REMOVE_NON_CATALOGED_LABEL),
+    getRemoveQuarantinedCheckbox: () => getCheckbox(EDITOR.REMOVE_QUARANTINED_LABEL),
+    getVersionPolicySelect: () => screen.getByLabelText(EDITOR.VERSION_POLICY_LABEL)
   };
 
   const renderView = (itemId = '') => {
@@ -139,13 +144,19 @@ describe('RepositoriesForm', () => {
   const onDone = jest.fn();
 
   const RECIPES_RESPONSE = [
+    {format: 'bower', type: 'proxy'},
     {format: 'maven2', type: 'group'},
     {format: 'maven2', type: 'hosted'},
     {format: 'maven2', type: 'proxy'},
+    {format: 'npm', type: 'proxy'},
     {format: 'nuget', type: 'hosted'},
     {format: 'nuget', type: 'proxy'},
     {format: 'nuget', type: 'group'},
-    {format: 'p2', type: 'proxy'}
+    {format: 'p2', type: 'proxy'},
+    {format: 'raw', type: 'proxy'},
+    {format: 'raw', type: 'hosted'},
+    {format: 'raw', type: 'group'},
+    {format: 'yum', type: 'hosted'}
   ];
 
   const BLOB_STORES_RESPONSE = [{name: 'default'}, {name: 'blob-store-1'}, {name: 'blob-store-2'}];
@@ -154,9 +165,13 @@ describe('RepositoriesForm', () => {
 
   const FORMAT_OPTIONS = [
     {name: EDITOR.SELECT_FORMAT_OPTION},
+    {name: 'bower'},
     {name: 'maven2'},
+    {name: 'npm'},
     {name: 'nuget'},
-    {name: 'p2'}
+    {name: 'p2'},
+    {name: 'raw'},
+    {name: 'yum'}
   ];
 
   const TYPE_OPTIONS = [
@@ -201,14 +216,14 @@ describe('RepositoriesForm', () => {
       .mockResolvedValue({data: ROUTING_RULES_RESPONSE});
   });
 
-  it('renders the form and populates dropdowns when type is GROUP', async () => {
+  it('renders the form and populates dropdowns when type is group', async () => {
     const format = 'maven2';
 
     renderView();
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
-    validateSelectOptions(selectors.getFormatSelect(), FORMAT_OPTIONS);
+    validateSelect(selectors.getFormatSelect(), FORMAT_OPTIONS);
 
     expect(selectors.getTypeSelect()).toBeDisabled();
 
@@ -216,11 +231,11 @@ describe('RepositoriesForm', () => {
 
     expect(selectors.getTypeSelect()).toBeEnabled();
 
-    validateSelectOptions(selectors.getTypeSelect(), TYPE_OPTIONS);
+    validateSelect(selectors.getTypeSelect(), TYPE_OPTIONS);
 
     await TestUtils.changeField(selectors.getTypeSelect, 'group');
 
-    await waitFor(() => validateSelectOptions(selectors.getBlobStoreSelect(), BLOB_STORES_OPTIONS, ''));
+    await waitFor(() => validateSelect(selectors.getBlobStoreSelect(), BLOB_STORES_OPTIONS, ''));
 
     await waitFor(() =>
       expect(axios.get).toHaveBeenCalledWith(expect.stringContaining(repositoriesUrl({format})))
@@ -235,7 +250,7 @@ describe('RepositoriesForm', () => {
     expect(selectors.getCleanupSectionTitle()).not.toBeInTheDocument();
   });
 
-  it('renders the form and populates dropdowns when type is HOSTED', async () => {
+  it('renders the form and populates dropdowns when type is hosted', async () => {
     const format = 'maven2';
     const blobStoreResponse = [{name: 'default'}];
     const blobStoreOptions = [{name: EDITOR.SELECT_STORE_OPTION}, ...blobStoreResponse];
@@ -250,16 +265,14 @@ describe('RepositoriesForm', () => {
     await TestUtils.changeField(selectors.getFormatSelect, format);
     await TestUtils.changeField(selectors.getTypeSelect, 'hosted');
 
-    await waitFor(() => validateSelectOptions(selectors.getBlobStoreSelect(), blobStoreOptions, 'default'));
+    await waitFor(() =>
+      validateSelect(selectors.getBlobStoreSelect(), blobStoreOptions, 'default')
+    );
 
     const deploymentPolicyOptions = Object.values(EDITOR.DEPLOYMENT_POLICY_OPTIONS).map((name) => ({
       name
     }));
-    validateSelectOptions(
-      selectors.getDeploymentPolicySelect(),
-      deploymentPolicyOptions,
-      'ALLOW_ONCE'
-    );
+    validateSelect(selectors.getDeploymentPolicySelect(), deploymentPolicyOptions, 'ALLOW_ONCE');
 
     await waitFor(() =>
       expect(axios.get).toHaveBeenCalledWith('/service/extdirect', CLEANUP_EXT_REQUEST())
@@ -273,7 +286,7 @@ describe('RepositoriesForm', () => {
     expect(selectors.getGroupSectionTitle()).not.toBeInTheDocument();
   });
 
-  it('renders the form and shows/hides auth fields when type is PROXY', async () => {
+  it('renders the form and shows/hides auth fields when type is proxy', async () => {
     renderView();
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
@@ -308,7 +321,7 @@ describe('RepositoriesForm', () => {
     expect(selectors.getNtlmDomainInput()).toBeInTheDocument();
   });
 
-  it('creates GROUP repository', async () => {
+  it('creates group repository', async () => {
     const format = 'maven2';
     const type = 'group';
     const url = repositoryUrl(format, type);
@@ -323,6 +336,11 @@ describe('RepositoriesForm', () => {
       },
       group: {
         memberNames: ['maven-releases', 'maven-snapshots']
+      },
+      maven: {
+        contentDisposition: 'INLINE',
+        layoutPolicy: 'STRICT',
+        versionPolicy: 'RELEASE'
       }
     };
 
@@ -350,7 +368,7 @@ describe('RepositoriesForm', () => {
     await waitFor(() => expect(axios.post).toHaveBeenCalledWith(url, payload));
   });
 
-  it('creates HOSTED repository', async () => {
+  it('creates hosted repository', async () => {
     const format = 'maven2';
     const type = 'hosted';
     const url = repositoryUrl(format, type);
@@ -365,7 +383,12 @@ describe('RepositoriesForm', () => {
         writePolicy: 'ALLOW'
       },
       component: {proprietaryComponents: true},
-      cleanup: {policyNames: ['policy-all-fomats', 'policy-maven-1']}
+      cleanup: {policyNames: ['policy-all-fomats', 'policy-maven-1']},
+      maven: {
+        contentDisposition: 'INLINE',
+        layoutPolicy: 'STRICT',
+        versionPolicy: 'RELEASE'
+      }
     };
 
     renderView();
@@ -387,14 +410,14 @@ describe('RepositoriesForm', () => {
     await waitFor(() => expect(axios.post).toHaveBeenCalledWith(url, payload));
   });
 
-  it('creates PROXY repository', async () => {
-    const format = 'maven2';
+  it('creates proxy repository', async () => {
+    const format = 'p2';
     const type = 'proxy';
     const url = repositoryUrl(format, type);
     const payload = {
       format,
       type,
-      name: 'go-proxy-1',
+      name: 'p2-proxy-1',
       online: true,
       routingRule: 'routing-rule-1',
       storage: {
@@ -414,20 +437,8 @@ describe('RepositoriesForm', () => {
       httpClient: {
         blocked: true,
         autoBlock: false,
-        connection: {
-          retries: '3',
-          userAgentSuffix: 'user-agent-suffix-1',
-          timeout: '100',
-          enableCircularRedirects: true,
-          enableCookies: true
-        },
-        authentication: {
-          type: 'ntlm',
-          username: 'user1',
-          password: 'pass1',
-          ntlmHost: 'ntlmhost1',
-          ntlmDomain: 'ntlm.domain'
-        }
+        connection: null,
+        authentication: null
       }
     };
 
@@ -443,9 +454,75 @@ describe('RepositoriesForm', () => {
     await TestUtils.changeField(selectors.getRemoteUrlInput, payload.proxy.remoteUrl);
     await TestUtils.changeField(selectors.getContentMaxAgeInput, payload.proxy.contentMaxAge);
     await TestUtils.changeField(selectors.getMetadataMaxAgeInput, payload.proxy.metadataMaxAge);
+    await TestUtils.changeField(selectors.getTimeToLiveInput, payload.negativeCache.timeToLive);
+
+    fireEvent.click(selectors.getBlockedCheckbox());
+    fireEvent.click(selectors.getAutoBlockCheckbox());
+
+    fireEvent.click(selectors.getCreateButton());
+
+    await waitFor(() => expect(axios.post).toHaveBeenCalledWith(url, payload));
+  });
+
+  it('creates proxy repository with http client settings', async () => {
+    const format = 'maven2';
+    const type = 'proxy';
+    const url = repositoryUrl(format, type);
+    const payload = {
+      format,
+      type,
+      name: 'maven-proxy-1',
+      online: true,
+      routingRule: '',
+      storage: {
+        blobStoreName: 'default',
+        strictContentTypeValidation: true
+      },
+      cleanup: null,
+      proxy: {
+        remoteUrl: 'https://repo123.net',
+        contentMaxAge: -1,
+        metadataMaxAge: 1440
+      },
+      negativeCache: {
+        enabled: true,
+        timeToLive: 1440
+      },
+      httpClient: {
+        blocked: false,
+        autoBlock: true,
+        connection: {
+          retries: '3',
+          userAgentSuffix: 'user-agent-suffix-1',
+          timeout: '100',
+          enableCircularRedirects: true,
+          enableCookies: true
+        },
+        authentication: {
+          type: 'ntlm',
+          username: 'user1',
+          password: 'pass1',
+          ntlmHost: 'ntlmhost1',
+          ntlmDomain: 'ntlm.domain'
+        }
+      },
+      maven: {
+        contentDisposition: 'INLINE',
+        layoutPolicy: 'STRICT',
+        versionPolicy: 'RELEASE'
+      }
+    };
+
+    renderView();
+
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+    await TestUtils.changeField(selectors.getFormatSelect, format);
+    await TestUtils.changeField(selectors.getTypeSelect, type);
+    await TestUtils.changeField(selectors.getNameInput, payload.name);
+    await TestUtils.changeField(selectors.getBlobStoreSelect, payload.storage.blobStoreName);
     await TestUtils.changeField(selectors.getRemoteUrlInput, payload.proxy.remoteUrl);
-    await TestUtils.changeField(selectors.getContentMaxAgeInput, payload.proxy.contentMaxAge);
-    await TestUtils.changeField(selectors.getMetadataMaxAgeInput, payload.proxy.metadataMaxAge);
+
     await TestUtils.changeField(
       selectors.getAuthTypeSelect,
       payload.httpClient.authentication.type
@@ -472,12 +549,42 @@ describe('RepositoriesForm', () => {
     );
     await TestUtils.changeField(selectors.getRetriesInput, payload.httpClient.connection.retries);
     await TestUtils.changeField(selectors.getTimeoutInput, payload.httpClient.connection.timeout);
-    await TestUtils.changeField(selectors.getTimeToLiveInput, payload.negativeCache.timeToLive);
 
-    fireEvent.click(selectors.getBlockedCheckbox());
-    fireEvent.click(selectors.getAutoBlockCheckbox());
     fireEvent.click(selectors.getRedirectsCheckbox());
     fireEvent.click(selectors.getCookiesCheckbox());
+
+    fireEvent.click(selectors.getCreateButton());
+
+    await waitFor(() => expect(axios.post).toHaveBeenCalledWith(url, payload));
+  });
+
+  it('creates bower proxy repository', async () => {
+    const format = 'bower';
+    const type = 'proxy';
+    const url = repositoryUrl(format, type);
+    const name = 'bower-proxy-1';
+    const payload = {
+      ...genericDefaultValues.proxy,
+      name,
+      format,
+      bower: {
+        rewritePackageUrls: false
+      }
+    };
+    payload.proxy.remoteUrl = 'https://repo123.net';
+    payload.storage.blobStoreName = 'default';
+
+    renderView();
+
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+    await TestUtils.changeField(selectors.getFormatSelect, format);
+    await TestUtils.changeField(selectors.getTypeSelect, type);
+    await TestUtils.changeField(selectors.getNameInput, payload.name);
+    await TestUtils.changeField(selectors.getBlobStoreSelect, payload.storage.blobStoreName);
+    await TestUtils.changeField(selectors.getRemoteUrlInput, payload.proxy.remoteUrl);
+
+    fireEvent.click(selectors.getRewritePackageUrlsCheckbox());
 
     fireEvent.click(selectors.getCreateButton());
 
@@ -522,16 +629,16 @@ describe('RepositoriesForm', () => {
     await waitFor(() => expect(onDone).toHaveBeenCalled());
   });
 
-  xit('edits raw hosted repositories', async function() {
+  it('edits raw hosted repositories', async function () {
     const repo = {
-      name: "raw-hosted",
-      format: "raw",
-      url: "http://localhost:8081/repository/raw-hosted",
+      name: 'raw-hosted',
+      format: 'raw',
+      url: 'http://localhost:8081/repository/raw-hosted',
       online: true,
       storage: {
-        blobStoreName: "default",
+        blobStoreName: 'default',
         strictContentTypeValidation: true,
-        writePolicy: "ALLOW_ONCE"
+        writePolicy: 'ALLOW_ONCE'
       },
       cleanup: {
         policyNames: []
@@ -539,19 +646,21 @@ describe('RepositoriesForm', () => {
       component: {
         proprietaryComponents: false
       },
-      type: "hosted"
+      type: 'hosted'
     };
-    when(axios.get).calledWith('/service/rest/internal/ui/repositories/repository/raw-hosted').mockResolvedValueOnce({
-      data: repo
-    });
+    when(axios.get)
+      .calledWith('/service/rest/internal/ui/repositories/repository/raw-hosted')
+      .mockResolvedValueOnce({
+        data: repo
+      });
 
     renderView('raw-hosted');
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
-    expect(selectors.getReadOnlyName().nextSibling).toHaveTextContent(repo.name);
-    expect(selectors.getReadOnlyFormat().nextSibling).toHaveTextContent(repo.format)
-    expect(selectors.getReadOnlyType().nextSibling).toHaveTextContent(repo.type);
+    validateSelect(selectors.getNameInput(), null, repo.name);
+    validateSelect(selectors.getFormatSelect(), null, repo.format);
+    validateSelect(selectors.getTypeSelect(), null, repo.type);
     expect(selectors.getReadOnlyUrl().nextSibling).toHaveTextContent(repo.url);
     expect(selectors.getContentValidationCheckbox()).toBeChecked();
 
@@ -561,28 +670,31 @@ describe('RepositoriesForm', () => {
 
     fireEvent.click(selectors.getSaveButton());
 
-    expect(axios.put).toBeCalledWith('/service/rest/v1/repositories/raw/hosted/raw-hosted', mergeDeepRight(repo, {
-      storage: {
-        strictContentTypeValidation: false
-      }
-    }));
+    expect(axios.put).toBeCalledWith(
+      '/service/rest/v1/repositories/raw/hosted/raw-hosted',
+      mergeDeepRight(repo, {
+        storage: {
+          strictContentTypeValidation: false
+        }
+      })
+    );
   });
 
-  xit('edits raw proxy repositories', async function() {
+  it('edits raw proxy repositories', async function () {
     const repo = {
-      name: "raw-proxy",
-      format: "raw",
-      url: "http://localhost:8081/repository/raw-proxy",
+      name: 'raw-proxy',
+      format: 'raw',
+      url: 'http://localhost:8081/repository/raw-proxy',
       online: true,
       storage: {
-        blobStoreName: "default",
+        blobStoreName: 'default',
         strictContentTypeValidation: true
       },
       cleanup: {
         policyNames: []
       },
       proxy: {
-        remoteUrl: "http://example.com",
+        remoteUrl: 'http://example.com',
         contentMaxAge: 1440,
         metadataMaxAge: 1440
       },
@@ -595,7 +707,7 @@ describe('RepositoriesForm', () => {
         autoBlock: true,
         connection: {
           retries: 0,
-          userAgentSuffix: "",
+          userAgentSuffix: '',
           timeout: 60,
           enableCircularRedirects: false,
           enableCookies: false,
@@ -604,61 +716,72 @@ describe('RepositoriesForm', () => {
         authentication: null
       },
       routingRuleName: null,
-      type: "proxy"
+      type: 'proxy'
     };
-    when(axios.get).calledWith('/service/rest/internal/ui/repositories/repository/raw-proxy').mockResolvedValueOnce({
-      data: repo
-    });
+    when(axios.get)
+      .calledWith('/service/rest/internal/ui/repositories/repository/raw-proxy')
+      .mockResolvedValueOnce({
+        data: repo
+      });
 
     renderView('raw-proxy');
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
-    await TestUtils.changeField(selectors.getRemoteUrlInput, 'http://other.com')
+    await TestUtils.changeField(selectors.getRemoteUrlInput, 'http://other.com');
 
     fireEvent.click(selectors.getSaveButton());
 
-    expect(axios.put).toBeCalledWith('/service/rest/v1/repositories/raw/proxy/raw-proxy', mergeDeepRight(repo, {
-      proxy: {
-        remoteUrl: 'http://other.com'
-      },
-      routingRule: null
-    }));
+    expect(axios.put).toBeCalledWith(
+      '/service/rest/v1/repositories/raw/proxy/raw-proxy',
+      mergeDeepRight(repo, {
+        proxy: {
+          remoteUrl: 'http://other.com'
+        },
+        routingRule: null
+      })
+    );
   });
 
-  xit('edits raw group repositories', async function() {
+  it('edits raw group repositories', async function () {
     const repo = {
-      name: "raw-group",
-      format: "raw",
-      url: "http://localhost:8081/repository/raw-group",
+      name: 'raw-group',
+      format: 'raw',
+      url: 'http://localhost:8081/repository/raw-group',
       online: true,
       storage: {
-        blobStoreName: "default",
+        blobStoreName: 'default',
         strictContentTypeValidation: true
       },
       group: {
-        memberNames: ["raw-hosted", "raw-proxy"]
+        memberNames: ['raw-hosted', 'raw-proxy']
       },
 
-      type: "group"
+      type: 'group'
     };
-    when(axios.get).calledWith('/service/rest/internal/ui/repositories/repository/raw-group').mockResolvedValueOnce({
-      data: repo
-    });
-    when(axios.get).calledWith('/service/rest/internal/ui/repositories?format=raw').mockResolvedValueOnce({
-      data: [
-        {
-          id: "raw-group",
-          name: "raw-group"
-        }, {
-          id: "raw-hosted",
-          name: "raw-hosted"
-        }, {
-          id: "raw-proxy",
-          name: "raw-proxy"
-        }
-      ]
-    });
+    when(axios.get)
+      .calledWith('/service/rest/internal/ui/repositories/repository/raw-group')
+      .mockResolvedValueOnce({
+        data: repo
+      });
+    when(axios.get)
+      .calledWith('/service/rest/internal/ui/repositories?format=raw')
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 'raw-group',
+            name: 'raw-group'
+          },
+          {
+            id: 'raw-hosted',
+            name: 'raw-hosted'
+          },
+          {
+            id: 'raw-proxy',
+            name: 'raw-proxy'
+          }
+        ]
+      });
 
     renderView('raw-group');
 
@@ -668,19 +791,71 @@ describe('RepositoriesForm', () => {
 
     fireEvent.click(selectors.getSaveButton());
 
-    expect(axios.put).toBeCalledWith('/service/rest/v1/repositories/raw/group/raw-group', mergeDeepRight(repo, {
-      group: {
-        memberNames: ['raw-proxy']
-      },
-      routingRule: undefined
-    }));
+    expect(axios.put).toBeCalledWith(
+      '/service/rest/v1/repositories/raw/group/raw-group',
+      mergeDeepRight(repo, {
+        group: {
+          memberNames: ['raw-proxy']
+        },
+        routingRule: undefined
+      })
+    );
+  });
+
+  it('renders yum hosted fields with correct default values', async () => {
+    renderView();
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+    await TestUtils.changeField(selectors.getFormatSelect, 'yum');
+    await TestUtils.changeField(selectors.getTypeSelect, 'hosted');
+
+    validateSelect(selectors.getRepodataDepthSelect(), null, 0);
+    validateSelect(selectors.getLayoutPolicySelect(), null, 'STRICT');
+  });
+
+  it('renders raw fields with correct default values', async () => {
+    renderView();
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+    await TestUtils.changeField(selectors.getFormatSelect, 'raw');
+
+    await TestUtils.changeField(selectors.getTypeSelect, 'proxy');
+    validateSelect(selectors.getContentDispositionSelect(), null, 'ATTACHMENT');
+
+    await TestUtils.changeField(selectors.getTypeSelect, 'hosted');
+    validateSelect(selectors.getContentDispositionSelect(), null, 'ATTACHMENT');
+
+    await TestUtils.changeField(selectors.getTypeSelect, 'group');
+    validateSelect(selectors.getContentDispositionSelect(), null, 'ATTACHMENT');
+  });
+
+  it('renders npm proxy fields with correct default values', async () => {
+    renderView();
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+    await TestUtils.changeField(selectors.getFormatSelect, 'npm');
+    await TestUtils.changeField(selectors.getTypeSelect, 'proxy');
+
+    expect(selectors.getRemoveNonCataloguedCheckbox()).not.toBeChecked();
+    expect(selectors.getRemoveQuarantinedCheckbox()).not.toBeChecked();
+  });
+
+  it('renders maven proxy fields with correct default values', async () => {
+    renderView();
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+    await TestUtils.changeField(selectors.getFormatSelect, 'maven2');
+    await TestUtils.changeField(selectors.getTypeSelect, 'proxy');
+
+    validateSelect(selectors.getContentDispositionSelect(), null, 'INLINE');
+    validateSelect(selectors.getLayoutPolicySelect(), null, 'STRICT');
+    validateSelect(selectors.getVersionPolicySelect(), null, 'RELEASE');
   });
 });
 
-const validateSelectOptions = (selectElement, options, value) => {
-  options.forEach((option) => {
-    expect(getByRole(selectElement, 'option', option)).toBeInTheDocument();
-  });
-  expect(getAllByRole(selectElement, 'option')).toHaveLength(options.length);
+const validateSelect = (selectElement, options, value) => {
+  expect(selectElement).toBeInTheDocument();
+  if (options) {
+    options.forEach((option) => {
+      expect(getByRole(selectElement, 'option', option)).toBeInTheDocument();
+    });
+    expect(getAllByRole(selectElement, 'option')).toHaveLength(options.length);
+  }
   value && expect(selectElement).toHaveValue(value);
 };

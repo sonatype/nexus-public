@@ -32,11 +32,10 @@ import './Repositories.scss';
 
 import RepositoriesFormMachine from './RepositoriesFormMachine';
 
-import {getRepositoryFacets} from './RepositoryFormConfig';
+import {getFacets} from './RepositoryFormConfig';
 
 import GenericFormatConfiguration from './facets/GenericFormatConfiguration';
-import GenericReadOnlyNameConfiguration from './facets/GenericReadOnlyNameConfiguration';
-import GenericEditNameConfiguration from './facets/GenericEditNameConfiguration';
+import GenericNameConfiguration from './facets/GenericNameConfiguration';
 
 export default function RepositoriesForm({itemId, onDone = () => {}}) {
   const isEdit = Boolean(itemId);
@@ -74,7 +73,7 @@ export default function RepositoriesForm({itemId, onDone = () => {}}) {
 
   const save = () => send({type: 'SAVE'});
 
-  const repositoryFacets = getRepositoryFacets(format, type);
+  const repositoryFacets = getFacets(format, type);
 
   return (
     <Page className="nxrm-repository-editor">
@@ -95,14 +94,10 @@ export default function RepositoriesForm({itemId, onDone = () => {}}) {
             submitMaskMessage={SAVING}
             validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
           >
-            {!isEdit && <GenericFormatConfiguration parentMachine={stateMachine} />}
+            <GenericFormatConfiguration parentMachine={stateMachine} />
             {format && type && (
               <>
-                {isEdit ? (
-                  <GenericReadOnlyNameConfiguration  parentMachine={stateMachine} />
-                ) : (
-                  <GenericEditNameConfiguration parentMachine={stateMachine} />
-                )}
+                <GenericNameConfiguration parentMachine={stateMachine} />
                 {repositoryFacets.map((Facet, index) => (
                   <Facet parentMachine={stateMachine} key={index} />
                 ))}

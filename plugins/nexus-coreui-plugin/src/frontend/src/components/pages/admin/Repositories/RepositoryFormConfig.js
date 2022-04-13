@@ -15,9 +15,8 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import GenericStorageConfiguration from './facets/GenericStorageConfiguration';
-import YumHostedConfiguration from './facets/YumHostedConfiguration';
-import BowerProxyConfiguration from './facets/BowerProxyConfiguration';
-import RawConfiguration from './facets/RawConfiguration';
+import RewritePackageUrlsConfiguration from './facets/RewritePackageUrlsConfiguration';
+import ContentDespositionConfiguration from './facets/ContentDespositionConfiguration';
 import GenericProxyConfiguration from './facets/GenericProxyConfiguration';
 import GenericGroupConfiguration from './facets/GenericGroupConfiguration';
 import GenericOptionsConfiguration from './facets/GenericOptionsConfiguration';
@@ -26,41 +25,182 @@ import GenericHttpAuthConfiguration from './facets/GenericHttpAuthConfiguration'
 import GenericHttpReqConfiguration from './facets/GenericHttpReqConfiguration';
 import GenericHostedConfiguration from './facets/GenericHostedConfiguration';
 import ReplicationConfiguration from './facets/ReplicationConfiguration';
+import RepodataDepthConfiguration from './facets/RepodataDepthConfiguration';
+import RpmDeployPolicyConfiguration from './facets/RpmDeployPolicyConfiguration';
+import VersionPolicyConfiguration from './facets/VersionPolicyConfiguration';
+import NpmConfiguration from './facets/NpmConfiguration';
+import LayoutPolicyConfiguration from './facets/LayoutPolicyConfiguration';
 
-const genericProxyFacets = [
-  GenericStorageConfiguration,
-  GenericProxyConfiguration,
-  GenericOptionsConfiguration,
-  GenericCleanupConfiguration,
-  GenericHttpAuthConfiguration,
-  GenericHttpReqConfiguration
-];
+import {genericDefaultValues} from './RepositoryFormDefaultValues';
+import {genericValidators} from './RepositoryFormValidators';
 
-const genericHostedFacets = [
-  GenericStorageConfiguration,
-  GenericHostedConfiguration,
-  GenericCleanupConfiguration
-];
+import {mergeDeepRight} from 'ramda';
 
-const genericGroupFacets = [GenericStorageConfiguration, GenericGroupConfiguration];
+// temp
+const isCapabilityEnabled = false;
+const replicationFacet = isCapabilityEnabled ? ReplicationConfiguration : () => null;
+const replicationDefaultValue = isCapabilityEnabled ? {replication: {enabled: false}} : null;
 
-const repositoryFacets = {
-  bower_proxy: [BowerProxyConfiguration, ...genericProxyFacets],
-  yum_hosted: [YumHostedConfiguration, ...genericHostedFacets],
-  raw_proxy: [ReplicationConfiguration, RawConfiguration, , ...genericProxyFacets],
-  raw_hosted: [ReplicationConfiguration, RawConfiguration, ...genericHostedFacets],
-  raw_group: [ReplicationConfiguration, RawConfiguration, ...genericGroupFacets]
+const genericFacets = {
+  proxy: [
+    GenericStorageConfiguration,
+    GenericProxyConfiguration,
+    GenericOptionsConfiguration,
+    GenericCleanupConfiguration,
+    GenericHttpAuthConfiguration,
+    GenericHttpReqConfiguration
+  ],
+  hosted: [GenericStorageConfiguration, GenericHostedConfiguration, GenericCleanupConfiguration],
+  group: [GenericStorageConfiguration, GenericGroupConfiguration]
 };
 
-export const getRepositoryFacets = (format, type) => {
-  const recipe = `${format}_${type}`;
-  if (repositoryFacets.hasOwnProperty(recipe)) {
-    return repositoryFacets[recipe];
-  } else if (type === 'proxy') {
-    return genericProxyFacets;
-  } else if (type === 'hosted') {
-    return genericHostedFacets;
-  } else if (type === 'group') {
-    return genericGroupFacets;
+const repositoryFormats = {
+  bower_proxy: {
+    facets: [RewritePackageUrlsConfiguration, ...genericFacets.proxy],
+    defaultValues: {
+      ...genericDefaultValues.proxy,
+      bower: {rewritePackageUrls: true}
+    },
+    validators: (data) => ({
+      ...genericValidators.proxy(data)
+    })
+  },
+  yum_hosted: {
+    facets: [RepodataDepthConfiguration, RpmDeployPolicyConfiguration, ...genericFacets.hosted],
+    defaultValues: {
+      ...genericDefaultValues.hosted,
+      yum: {
+        repodataDepth: 0,
+        deployPolicy: 'STRICT'
+      }
+    },
+    validators: (data) => ({
+      ...genericValidators.hosted(data)
+    })
+  },
+  raw_proxy: {
+    facets: [replicationFacet, ContentDespositionConfiguration, ...genericFacets.proxy],
+    defaultValues: {
+      ...genericDefaultValues.proxy,
+      ...replicationDefaultValue,
+      raw: {contentDisposition: 'ATTACHMENT'}
+    },
+    validators: (data) => ({
+      ...genericValidators.proxy(data)
+    })
+  },
+  raw_hosted: {
+    facets: [replicationFacet, ContentDespositionConfiguration, ...genericFacets.hosted],
+    defaultValues: {
+      ...mergeDeepRight(genericDefaultValues.hosted, {
+        storage: {strictContentTypeValidation: false,
+        }
+      }),
+      ...replicationDefaultValue,
+      raw: {contentDisposition: 'ATTACHMENT'}
+    },
+    validators: (data) => ({
+      ...genericValidators.hosted(data)
+    })
+  },
+  raw_group: {
+    facets: [replicationFacet, ContentDespositionConfiguration, ...genericFacets.group],
+    defaultValues: {
+      ...genericDefaultValues.group,
+      ...replicationDefaultValue,
+      raw: {contentDisposition: 'ATTACHMENT'}
+    },
+    validators: (data) => ({
+      ...genericValidators.group(data)
+    })
+  },
+  maven2_proxy: {
+    facets: [
+      replicationFacet,
+      VersionPolicyConfiguration,
+      LayoutPolicyConfiguration,
+      ContentDespositionConfiguration,
+      ...genericFacets.proxy
+    ],
+    defaultValues: {
+      ...genericDefaultValues.proxy,
+      ...replicationDefaultValue,
+      proxy: {
+        ...genericDefaultValues.proxy.proxy,
+        contentMaxAge: -1,
+      },
+      maven: {
+        layoutPolicy: 'STRICT',
+        contentDisposition: 'INLINE',
+        versionPolicy: 'RELEASE'
+      }
+    },
+    validators: (data) => ({
+      ...genericValidators.proxy(data)
+    })
+  },
+  maven2_hosted: {
+    facets: [
+      replicationFacet,
+      VersionPolicyConfiguration,
+      LayoutPolicyConfiguration,
+      ContentDespositionConfiguration,
+      ...genericFacets.hosted
+    ],
+    defaultValues: {
+      ...genericDefaultValues.hosted,
+      ...replicationDefaultValue,
+      maven: {
+        layoutPolicy: 'STRICT',
+        contentDisposition: 'INLINE',
+        versionPolicy: 'RELEASE'
+      }
+    },
+    validators: (data) => ({
+      ...genericValidators.hosted(data)
+    })
+  },
+  maven2_group: {
+    facets: [
+      replicationFacet,
+      VersionPolicyConfiguration,
+      LayoutPolicyConfiguration,
+      ContentDespositionConfiguration,
+      ...genericFacets.group
+    ],
+    defaultValues: {
+      ...genericDefaultValues.group,
+      ...replicationDefaultValue,
+      maven: {
+        layoutPolicy: 'STRICT',
+        contentDisposition: 'INLINE',
+        versionPolicy: 'RELEASE'
+      }
+    },
+    validators: (data) => ({
+      ...genericValidators.group(data)
+    })
+  },
+  npm_proxy: {
+    facets: [NpmConfiguration, ...genericFacets.proxy],
+    defaultValues: {
+      ...genericDefaultValues.proxy,
+      npm: {
+        removeNonCataloged: false,
+        removeQuarantined: false
+      }
+    },
+    validators: (data) => ({
+      ...genericValidators.proxy(data)
+    })
   }
 };
+
+export const getFacets = (format, type) =>
+  repositoryFormats[`${format}_${type}`]?.facets || genericFacets[type];
+
+export const getDefaultValues = (format, type) =>
+  repositoryFormats[`${format}_${type}`]?.defaultValues || genericDefaultValues[type];
+
+export const getValidators = (format, type) =>
+  repositoryFormats[`${format}_${type}`]?.validators || genericValidators[type] || (() => ({}));

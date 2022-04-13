@@ -14,27 +14,40 @@ import React from 'react';
 
 import {FormUtils} from '@sonatype/nexus-ui-plugin';
 
-import {NxCheckbox, NxFieldset} from '@sonatype/react-shared-components';
+import {NxFormGroup, NxFormSelect} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
 
 const {EDITOR} = UIStrings.REPOSITORIES;
 
-export default function ReplicationConfiguration({parentMachine}) {
+export default function LayoutPolicyConfiguration({parentMachine}) {
   const [currentParent, sendParent] = parentMachine;
 
+  let {format} = currentParent.context.data;
+  format = format === 'maven2' ? 'maven' : format;
+
+  const layoutPolicyOptions = [
+    {key: 'Strict', value: 'STRICT'},
+    {key: 'Permissive', value: 'PERMISSIVE'}
+  ];
+
   return (
-    <NxFieldset
-      label={EDITOR.REPLICATION_LABEL}
-      sublabel={EDITOR.REPLICATION_SUBLABEL}
-      className="nxrm-form-group-replication"
+    <NxFormGroup
+      label={EDITOR.LAYOUT_POLICY_LABEL}
+      className="nxrm-form-group-layout-policy"
+      sublabel={EDITOR.LAYOUT_POLICY_SUBLABEL}
+      isRequired
     >
-      <NxCheckbox
-        {...FormUtils.checkboxProps('replication.enabled', currentParent)}
-        onChange={FormUtils.handleUpdate('replication.enabled', sendParent)}
+      <NxFormSelect
+        {...FormUtils.selectProps(`${format}.layoutPolicy`, currentParent)}
+        onChange={FormUtils.handleUpdate(`${format}.layoutPolicy`, sendParent)}
       >
-        {EDITOR.ENABLED_CHECKBOX_DESCR}
-      </NxCheckbox>
-    </NxFieldset>
+        {layoutPolicyOptions.map(({key, value}) => (
+          <option key={key} value={value}>
+            {key}
+          </option>
+        ))}
+      </NxFormSelect>
+    </NxFormGroup>
   );
 }

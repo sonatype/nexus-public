@@ -53,7 +53,7 @@ export default function GenericStorageConfiguration({parentMachine}) {
       <NxLoadWrapper loading={isLoading} error={error} retryHandler={loadBlobStores}>
         <NxFormGroup label={EDITOR.BLOB_STORE_LABEL} isRequired className="nxrm-form-group-store">
           <NxFormSelect
-            {...FormUtils.fieldProps('storage.blobStoreName', currentParent)}
+            {...FormUtils.selectProps('storage.blobStoreName', currentParent)}
             onChange={FormUtils.handleUpdate('storage.blobStoreName', sendParent)}
           >
             <option value="">{EDITOR.SELECT_STORE_OPTION}</option>

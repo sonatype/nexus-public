@@ -31,6 +31,9 @@ export default function GenericFormatConfiguration({parentMachine}) {
 
   const [currentParent, sendParent] = parentMachine;
 
+  const {pristineData: {name}} = currentParent.context;
+  const isEdit = !!name;
+
   const {data: recipes, error} = current.context;
 
   const formats = getFormats(recipes);
@@ -57,8 +60,9 @@ export default function GenericFormatConfiguration({parentMachine}) {
         <div className="nx-form-row">
           <NxFormGroup label={EDITOR.FORMAT_LABEL} isRequired className="nxrm-form-group-format">
             <NxFormSelect
-              {...FormUtils.fieldProps('format', currentParent)}
+              {...FormUtils.selectProps('format', currentParent)}
               onChange={handleFormatUpdate}
+              disabled={isEdit}
             >
               <option value="">{EDITOR.SELECT_FORMAT_OPTION}</option>
               {formats?.map((format) => (
@@ -71,9 +75,9 @@ export default function GenericFormatConfiguration({parentMachine}) {
 
           <NxFormGroup label={EDITOR.TYPE_LABEL} isRequired className="nxrm-form-group-type">
             <NxFormSelect
-              {...FormUtils.fieldProps('type', currentParent)}
+              {...FormUtils.selectProps('type', currentParent)}
               onChange={handleTypeUpdate}
-              disabled={!format}
+              disabled={!format || isEdit}
             >
               <option value="">{EDITOR.SELECT_TYPE_OPTION}</option>
               {types?.get(format)?.map((type) => (

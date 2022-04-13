@@ -14,33 +14,25 @@ import React from 'react';
 
 import {FormUtils} from '@sonatype/nexus-ui-plugin';
 
-import {NxFormGroup, NxCheckbox, NxTextInput, NxFieldset} from '@sonatype/react-shared-components';
+import {NxCheckbox, NxFieldset} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
 
 const {EDITOR} = UIStrings.REPOSITORIES;
 
-export default function GenericEditNameConfiguration({parentMachine}) {
+export default function RewritePackageUrlsConfiguration({parentMachine}) {
   const [currentParent, sendParent] = parentMachine;
 
-  return (
-    <>
-      <h2 className="nx-h2">{EDITOR.CONFIGURATION_CAPTION}</h2>
-      <NxFormGroup label={EDITOR.NAME_LABEL} isRequired className="nxrm-form-group-name">
-        <NxTextInput
-          {...FormUtils.fieldProps('name', currentParent)}
-          onChange={FormUtils.handleUpdate('name', sendParent)}
-        />
-      </NxFormGroup>
+  const {format} = currentParent.context.data;
 
-      <NxFieldset label={EDITOR.STATUS_LABEL} className="nxrm-form-group-status">
-        <NxCheckbox
-          {...FormUtils.checkboxProps('online', currentParent)}
-          onChange={FormUtils.handleUpdate('online', sendParent)}
-        >
-          {EDITOR.STATUS_DESCR}
-        </NxCheckbox>
-      </NxFieldset>
-    </>
+  return (
+    <NxFieldset label={EDITOR.REWRITE_URLS_LABEL} className="nxrm-form-group-rewrite-urls">
+      <NxCheckbox
+        {...FormUtils.checkboxProps(`${format}.rewritePackageUrls`, currentParent)}
+        onChange={FormUtils.handleUpdate(`${format}.rewritePackageUrls`, sendParent)}
+      >
+        {EDITOR.REWRITE_URLS_DESCR}
+      </NxCheckbox>
+    </NxFieldset>
   );
 }

@@ -14,27 +14,40 @@ import React from 'react';
 
 import {FormUtils} from '@sonatype/nexus-ui-plugin';
 
-import {NxCheckbox, NxFieldset} from '@sonatype/react-shared-components';
+import {NxFormGroup, NxFormSelect} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
 
 const {EDITOR} = UIStrings.REPOSITORIES;
 
-export default function ReplicationConfiguration({parentMachine}) {
+const contentDispositionOptions = [
+  {key: 'Inline', value: 'INLINE'},
+  {key: 'Attachment', value: 'ATTACHMENT'}
+];
+
+export default function ContentDespositionConfiguration({parentMachine}) {
   const [currentParent, sendParent] = parentMachine;
 
+  let {format} = currentParent.context.data;
+  format = format === 'maven2' ? 'maven' : format;
+
   return (
-    <NxFieldset
-      label={EDITOR.REPLICATION_LABEL}
-      sublabel={EDITOR.REPLICATION_SUBLABEL}
-      className="nxrm-form-group-replication"
+    <NxFormGroup
+      label={EDITOR.CONTENT_DISPOSITION_LABEL}
+      className="nxrm-form-group-content-disposition"
+      sublabel={EDITOR.CONTENT_DISPOSITION_SUBLABEL}
+      isRequired
     >
-      <NxCheckbox
-        {...FormUtils.checkboxProps('replication.enabled', currentParent)}
-        onChange={FormUtils.handleUpdate('replication.enabled', sendParent)}
+      <NxFormSelect
+        {...FormUtils.selectProps(`${format}.contentDisposition`, currentParent)}
+        onChange={FormUtils.handleUpdate(`${format}.contentDisposition`, sendParent)}
       >
-        {EDITOR.ENABLED_CHECKBOX_DESCR}
-      </NxCheckbox>
-    </NxFieldset>
+        {contentDispositionOptions?.map(({key, value}) => (
+          <option key={key} value={value}>
+            {key}
+          </option>
+        ))}
+      </NxFormSelect>
+    </NxFormGroup>
   );
 }

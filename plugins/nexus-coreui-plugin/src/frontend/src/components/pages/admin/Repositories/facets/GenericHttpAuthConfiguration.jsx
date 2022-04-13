@@ -49,7 +49,7 @@ export default function GenericHttpAuthConfiguration({parentMachine}) {
       <h2 className="nx-h2">{EDITOR.HTTP_AUTH_CAPTION}</h2>
       <NxFormGroup label={EDITOR.AUTH_TYPE_LABEL} className="nxrm-form-group-http-auth-type">
         <NxFormSelect
-          {...FormUtils.fieldProps('httpClient.authentication.type', currentParent)}
+          {...FormUtils.selectProps('httpClient.authentication.type', currentParent)}
           onChange={updateType}
         >
           <option value="">{EDITOR.NONE_OPTION}</option>

@@ -48,7 +48,7 @@ export default function GenericOptionsConfiguration({parentMachine}) {
       <NxLoadWrapper loading={isLoading} error={error} retryHandler={retry}>
         <NxFormGroup label={EDITOR.ROUTING_RULE_LABEL} className="nxrm-form-group-routing-rule">
           <NxFormSelect
-            {...FormUtils.fieldProps('routingRule', currentParent)}
+            {...FormUtils.selectProps('routingRule', currentParent)}
             onChange={FormUtils.handleUpdate('routingRule', sendParent)}
           >
             <option value="">{EDITOR.NONE_OPTION}</option>

@@ -14,27 +14,47 @@ import React from 'react';
 
 import {FormUtils} from '@sonatype/nexus-ui-plugin';
 
-import {NxCheckbox, NxFieldset} from '@sonatype/react-shared-components';
+import {NxFormGroup, NxFormSelect} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
 
 const {EDITOR} = UIStrings.REPOSITORIES;
 
-export default function ReplicationConfiguration({parentMachine}) {
+export default function VersionPolicyConfiguration({parentMachine}) {
   const [currentParent, sendParent] = parentMachine;
 
+  let {
+    pristineData: {name},
+    data: {format}
+  } = currentParent.context;
+
+  const isEdit = !!name;
+  format = format === 'maven2' ? 'maven' : format;
+
+  const versionPolicyOptions = [
+    {key: 'Release', value: 'RELEASE'},
+    {key: 'Snapshot', value: 'SNAPSHOT'},
+    {key: 'Mixed', value: 'MIXED'}
+  ];
+
   return (
-    <NxFieldset
-      label={EDITOR.REPLICATION_LABEL}
-      sublabel={EDITOR.REPLICATION_SUBLABEL}
-      className="nxrm-form-group-replication"
+    <NxFormGroup
+      label={EDITOR.VERSION_POLICY_LABEL}
+      className="nxrm-form-group-version-policy"
+      sublabel={EDITOR.VERSION_POLICY_SUBLABEL}
+      isRequired
     >
-      <NxCheckbox
-        {...FormUtils.checkboxProps('replication.enabled', currentParent)}
-        onChange={FormUtils.handleUpdate('replication.enabled', sendParent)}
+      <NxFormSelect
+        {...FormUtils.selectProps(`${format}.versionPolicy`, currentParent)}
+        onChange={FormUtils.handleUpdate(`${format}.versionPolicy`, sendParent)}
+        disabled={isEdit}
       >
-        {EDITOR.ENABLED_CHECKBOX_DESCR}
-      </NxCheckbox>
-    </NxFieldset>
+        {versionPolicyOptions.map(({key, value}) => (
+          <option key={key} value={value}>
+            {key}
+          </option>
+        ))}
+      </NxFormSelect>
+    </NxFormGroup>
   );
 }

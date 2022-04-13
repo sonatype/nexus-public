@@ -35,7 +35,7 @@ export default function GenericHostedConfiguration({parentMachine}) {
         className="nxrm-form-group-hosted"
       >
         <NxFormSelect
-          {...FormUtils.fieldProps('storage.writePolicy', currentParent)}
+          {...FormUtils.selectProps('storage.writePolicy', currentParent)}
           onChange={FormUtils.handleUpdate('storage.writePolicy', sendParent)}
         >
           {deploymentPolicies?.map(([value, displayName]) => (
