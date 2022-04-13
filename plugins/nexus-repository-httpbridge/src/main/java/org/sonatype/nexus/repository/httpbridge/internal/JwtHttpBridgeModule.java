@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.httpbridge.internal;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.app.FeatureFlag;
-import org.sonatype.nexus.security.FilterChainModule;
 import org.sonatype.nexus.security.JwtFilter;
 import org.sonatype.nexus.security.JwtSecurityFilter;
 import org.sonatype.nexus.security.anonymous.AnonymousFilter;
@@ -45,17 +44,14 @@ public class JwtHttpBridgeModule
       }
     });
 
-    install(new FilterChainModule()
-    {
-      @Override
-      protected void configure() {
-        addFilterChain(MOUNT_POINT + "/**",
-            NexusAuthenticationFilter.NAME,
-            JwtFilter.NAME,
-            ApiKeyAuthenticationFilter.NAME,
-            AnonymousFilter.NAME,
-            AntiCsrfFilter.NAME);
-      }
-    });
+    String[] filterChain = {
+        NexusAuthenticationFilter.NAME,
+        JwtFilter.NAME,
+        ApiKeyAuthenticationFilter.NAME,
+        AnonymousFilter.NAME,
+        AntiCsrfFilter.NAME
+    };
+
+    installFilterChain(filterChain);
   }
 }

@@ -208,7 +208,7 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
   createSubdomain: function(type) {
     return {
       xtype: 'textfield',
-      name: 'attributes.docker.namespace',
+      name: 'attributes.docker.subdomain',
       itemId: type + 'Port',
       allowBlank: false,
       disabled: true,
