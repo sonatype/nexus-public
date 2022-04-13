@@ -249,7 +249,9 @@ public class ExampleContentTestSupport
   // Generate the component with asset and blob
   protected void generateContent(final int maxComponents) {
     List<String> componentNames = new ArrayList<>(maxComponents);
-    IntStream.range(0, maxComponents).forEach(__ -> componentNames.add(names.get(random.nextInt(names.size()))));
+    IntStream
+        .range(0, maxComponents)
+        .forEach(i -> componentNames.add("component_name" + i));
     generateContent(componentNames);
   }
 
@@ -434,7 +436,7 @@ public class ExampleContentTestSupport
           .map(v -> v != null ? is(v) : nullValue())
           .collect(toList());
 
-      @SuppressWarnings({ "unchecked", "rawtypes" })
+      @SuppressWarnings({"unchecked", "rawtypes"})
       // (use hamcrest class directly as javac picks the wrong static varargs method)
       boolean matches = new IsIterableContainingInOrder(matchers).matches(actualValues);
       if (!matches) {
