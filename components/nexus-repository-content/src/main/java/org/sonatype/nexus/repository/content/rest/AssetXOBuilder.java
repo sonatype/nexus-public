@@ -20,7 +20,6 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.Repository;
@@ -73,11 +72,17 @@ public class AssetXOBuilder
         .format(format)
         .contentType(contentType)
         .lastModified(lastModified)
+        .lastDownloaded(getLastDownloaded(asset))
         .attributes(getExpandedAttributes(asset, format, assetDescriptors))
         .uploader(uploader)
         .uploaderIp(uploaderIp)
         .fileSize(fileSize)
         .build();
+  }
+
+  @Nullable
+  private static Date getLastDownloaded(final Asset asset) {
+    return asset.lastDownloaded().map(offsetDateTime -> Date.from(offsetDateTime.toInstant())).orElse(null);
   }
 
   private static Map<String, Object> getExpandedAttributes(
