@@ -78,7 +78,7 @@
 
   <appender name="blobstore-reconciliation-log-file" class="ch.qos.logback.classic.sift.SiftingAppender">
     <discriminator>
-      <key>blobstore</key>
+      <key>blobstore-reconciliation-path</key>
       <defaultValue>unknown</defaultValue>
     </discriminator>
     <sift>
@@ -87,7 +87,7 @@
           <Pattern>%d{"yyyy-MM-dd HH:mm:ss"},%msg%n</Pattern>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-          <fileNamePattern>${karaf.data}/log/blobstore/${blobstore}/%d</fileNamePattern>
+          <fileNamePattern>${blobstore-reconciliation-path}/%d</fileNamePattern>
           <maxHistory>90</maxHistory>
         </rollingPolicy>
       </appender>

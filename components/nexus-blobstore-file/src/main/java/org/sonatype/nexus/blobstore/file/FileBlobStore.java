@@ -78,6 +78,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.HashCode;
 import com.squareup.tape.QueueFile;
+import org.apache.commons.io.FileUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 
@@ -143,6 +144,8 @@ public class FileBlobStore
   static final int MAX_COLLISION_RETRIES = 8;
 
   private Path contentDir;
+
+  private Path reconciliationLogDir;
 
   private final FileOperations fileOperations;
 
@@ -250,7 +253,7 @@ public class FileBlobStore
     }
     else {
       LocalDate sinceDate = now().minusDays(sinceDays);
-      return reconciliationLogger.getBlobsCreatedSince(getBlobStoreConfiguration().getName(), sinceDate);
+      return reconciliationLogger.getBlobsCreatedSince(reconciliationLogDir, sinceDate);
     }
   }
 
@@ -342,7 +345,7 @@ public class FileBlobStore
     for (int retries = 0; retries <= MAX_COLLISION_RETRIES; retries++) {
       try {
         Blob blob = tryCreate(headers, ingester, blobId);
-        reconciliationLogger.logBlobCreated(this, blob.getId());
+        reconciliationLogger.logBlobCreated(reconciliationLogDir, blob.getId());
         return blob;
       }
       catch (BlobCollisionException e) { // NOSONAR
@@ -663,6 +666,10 @@ public class FileBlobStore
       Path content = blobDir.resolve("content");
       DirectoryHelper.mkdir(content);
       this.contentDir = content;
+      Path reconciliationLogDir = blobDir.resolve("reconciliation");
+      DirectoryHelper.mkdir(reconciliationLogDir);
+      this.reconciliationLogDir = reconciliationLogDir;
+
       setConfiguredBlobStorePath(getRelativeBlobDir());
       rawObjectAccess = new FileRawObjectAccess(blobDir);
     }
@@ -756,7 +763,7 @@ public class FileBlobStore
       metricsStore.remove();
 
       Path blobDir = getAbsoluteBlobDir();
-
+      FileUtils.deleteDirectory(reconciliationLogDir.toFile());
       if (fileOperations.deleteEmptyDirectory(contentDir)) {
         fileOperations.deleteQuietly(blobDir.resolve("metadata.properties"));
         File[] files = blobDir.toFile().listFiles((dir, name) -> name.endsWith(DELETIONS_FILENAME));

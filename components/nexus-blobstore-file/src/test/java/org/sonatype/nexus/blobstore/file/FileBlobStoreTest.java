@@ -91,6 +91,8 @@ public class FileBlobStoreTest
 
   private static final byte[] EMPTY_BLOB_STORE_PROPERTIES = ("").getBytes(StandardCharsets.ISO_8859_1);
 
+  private static final String RECONCILIATION = "reconciliation";
+
   private AtomicBoolean cancelled = new AtomicBoolean(false);
 
   @Mock
@@ -215,7 +217,7 @@ public class FileBlobStoreTest
 
     assertThat(blob.getMetrics().getContentSize(), is(size));
     assertThat(blob.getMetrics().getSha1Hash(), is("356a192b7913b04c54574d18c28d46e6395428ab"));
-    verify(reconciliationLogger).logBlobCreated(eq(underTest), any());
+    verify(reconciliationLogger).logBlobCreated(eq(underTest.getAbsoluteBlobDir().resolve(RECONCILIATION)), any());
   }
 
   @Test
@@ -231,7 +233,8 @@ public class FileBlobStoreTest
     underTest.create(path, TEST_HEADERS, size, sha1);
 
     verify(fileOperations, times(4)).exists(any());
-    verify(reconciliationLogger, times(1)).logBlobCreated(eq(underTest), any());
+    verify(reconciliationLogger, times(1))
+        .logBlobCreated(eq(underTest.getAbsoluteBlobDir().resolve(RECONCILIATION)), any());
   }
 
   @Test

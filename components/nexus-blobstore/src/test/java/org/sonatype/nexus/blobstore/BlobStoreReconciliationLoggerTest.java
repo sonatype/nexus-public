@@ -13,10 +13,11 @@
 
 package org.sonatype.nexus.blobstore;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDate;
 import java.util.List;
@@ -49,6 +50,8 @@ import static org.mockito.Mockito.when;
 public class BlobStoreReconciliationLoggerTest
     extends TestSupport
 {
+  public static final String RECONCILIATION_LOG_DIRECTORY = "reconciliationLogDirectory";
+
   @Rule
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -63,6 +66,9 @@ public class BlobStoreReconciliationLoggerTest
 
   @Mock
   private MockedStatic<LoggerFactory> mockedStatic;
+
+  @Mock
+  private Path reconciliationLogPath;
 
   private BlobStoreReconciliationLogger underTest;
 
@@ -89,13 +95,13 @@ public class BlobStoreReconciliationLoggerTest
 
   @Test
   public void shouldNotLogTemporaryBlobs() {
-    underTest.logBlobCreated(blobStore, new BlobId("tmp$00000000-0000-0000-0000-000000000000"));
+    underTest.logBlobCreated(reconciliationLogPath, new BlobId("tmp$00000000-0000-0000-0000-000000000000"));
     verifyNoInteractions(logger);
   }
 
   @Test
   public void shouldLogBlobId() {
-    underTest.logBlobCreated(blobStore, new BlobId("00000000-0000-0000-0000-000000000000"));
+    underTest.logBlobCreated(reconciliationLogPath, new BlobId("00000000-0000-0000-0000-000000000000"));
 
     verify(logger).info("00000000-0000-0000-0000-000000000000");
 
@@ -105,7 +111,7 @@ public class BlobStoreReconciliationLoggerTest
   @Test
   public void shouldReadBlobIdsLoggedOnAndAfterRequestedDate() throws IOException {
     when(applicationDirectories
-        .getWorkDirectory("log" + File.separator + "blobstore" + File.separator + "blob-store-name"))
+        .getWorkDirectory(RECONCILIATION_LOG_DIRECTORY))
         .thenReturn(temporaryFolder.getRoot());
     Files.write(temporaryFolder.newFile("2021-04-13").toPath(),
         "2021-04-13 00:00:00,00000000-0000-0000-0000-000000000001".getBytes(StandardCharsets.UTF_8),
@@ -123,7 +129,8 @@ public class BlobStoreReconciliationLoggerTest
         "2021-04-14 00:00:00,00000000-0000-0000-0000-000000000006".getBytes(StandardCharsets.UTF_8),
         StandardOpenOption.CREATE);
 
-    List<String> result = underTest.getBlobsCreatedSince(blobStore.getBlobStoreConfiguration().getName(), LocalDate.parse("2021-04-14"))
+    List<String> result = underTest.getBlobsCreatedSince(Paths.get(RECONCILIATION_LOG_DIRECTORY),
+        LocalDate.parse("2021-04-14"))
         .map(BlobId::asUniqueString)
         .collect(toList());
 

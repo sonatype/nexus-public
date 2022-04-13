@@ -15,6 +15,7 @@ package org.sonatype.nexus.blobstore;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.Objects;
@@ -25,7 +26,6 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.BlobId;
-import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 
 import org.slf4j.Logger;
@@ -39,18 +39,16 @@ import static org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver.TEMPORA
  * Helper class for storing and retrieving reconciliation log for newly created blob store. Configuration is stored in
  * logback.xml. Logback will be responsible for rolling the files, and all we need to do is just call it via this class
  * that sets the context properties, so each blob store has its own reconciliation log file. Reconciliation logs are
- * stored at ${karaf.data}/log/blobstore/${blobstore}/%date.log
+ * stored at &lt;blobstore root&gt;/reconciliation/%date.log
  */
 @Singleton
 public class BlobStoreReconciliationLogger
 {
-  public static final String BLOBSTORE = "blobstore";
+  public static final String BLOBSTORE = "blobstore-reconciliation-path";
 
   private static final String RECONCILIATION_LOGGER_NAME = "blobstore-reconciliation-log";
 
   private static final Logger LOGGER = LoggerFactory.getLogger(BlobStoreReconciliationLogger.class);
-
-  private static final String BLOBSTORE_LOG_PATH = "log" + File.separator + BLOBSTORE + File.separator;
 
   private final Logger reconciliationLogger;
 
@@ -64,13 +62,12 @@ public class BlobStoreReconciliationLogger
 
   /**
    * Add new entry in rolling log later used in reconciliation task.
-   *
-   * @param blobStore in which new blob was created
-   * @param blobId    of blob created
+   * @param reconciliationLogPath The path to the blob store's reconciliation log directory
+   * @param blobId id of blob created
    */
-  public void logBlobCreated(final BlobStore blobStore, final BlobId blobId) {
+  public void logBlobCreated(final Path reconciliationLogPath, final BlobId blobId) {
     if (isNotTemporaryBlob(blobId)) {
-      MDC.put(BLOBSTORE, blobStore.getBlobStoreConfiguration().getName());
+      MDC.put(BLOBSTORE, reconciliationLogPath.toString());
       reconciliationLogger.info(blobId.asUniqueString());
       MDC.remove(BLOBSTORE);
     }
@@ -83,12 +80,12 @@ public class BlobStoreReconciliationLogger
   /**
    * Stream blob ids of blobs created in a blob store since specified date (inclusive).
    *
-   * @param blobStoreName name of the blob store for which log will be retrieved
+   * @param reconciliationLogPath The path to the blob store's reconciliation log directory
    * @param sinceDate for which retrieve newly created blob ids
    * @return stream of BlobId
    */
-  public Stream<BlobId> getBlobsCreatedSince(final String blobStoreName, final LocalDate sinceDate) {
-    return getLogFilesToProcess(blobStoreName, sinceDate)
+  public Stream<BlobId> getBlobsCreatedSince(final Path reconciliationLogPath, final LocalDate sinceDate) {
+    return getLogFilesToProcess(reconciliationLogPath, sinceDate)
         .flatMap(this::readLines)
         .map(line -> {
           String[] split = line.split(",");
@@ -114,9 +111,8 @@ public class BlobStoreReconciliationLogger
     }
   }
 
-  private Stream<File> getLogFilesToProcess(final String blobStoreName, final LocalDate sinceDate) {
-    String reconciliationLogPath = BLOBSTORE_LOG_PATH + blobStoreName;
-    File reconciliationLogDirectory = applicationDirectories.getWorkDirectory(reconciliationLogPath);
+  private Stream<File> getLogFilesToProcess(final Path reconciliationLogPath, final LocalDate sinceDate) {
+    File reconciliationLogDirectory = applicationDirectories.getWorkDirectory(reconciliationLogPath.toString());
     File[] logs = reconciliationLogDirectory.listFiles();
     if (Objects.nonNull(logs)) {
       return Stream.of(logs)
