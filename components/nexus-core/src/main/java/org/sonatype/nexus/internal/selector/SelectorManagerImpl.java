@@ -16,11 +16,15 @@ import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -44,6 +48,7 @@ import org.sonatype.nexus.security.role.NoSuchRoleException;
 import org.sonatype.nexus.security.role.Role;
 import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.User;
+import org.sonatype.nexus.security.user.UserManager;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.selector.Selector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
@@ -232,7 +237,7 @@ public class SelectorManagerImpl
   @Guarded(by = STARTED)
   public List<SelectorConfiguration> browseActive(
       final Collection<String> repositoryNames,
-      final List<String> formats)
+      final Collection<String> formats)
   {
     AuthorizationManager authorizationManager;
     User currentUser;
@@ -253,7 +258,7 @@ public class SelectorManagerImpl
     List<String> roleIds = currentUser.getRoles().stream().map(RoleIdentifier::getRoleId)
         .collect(toList());
 
-    List<Role> roles = getRoles(roleIds, authorizationManager, new ArrayList<>());
+    List<Role> roles = getRoles(roleIds, authorizationManager);
 
     List<String> contentSelectorNames = roles.stream().map(Role::getPrivileges).flatMap(Collection::stream).map(id -> {
       try {
@@ -289,7 +294,7 @@ public class SelectorManagerImpl
   }
 
   private boolean matchesFormatOrRepository(final Collection<String> repositoryNames,
-                                            final List<String> formats,
+                                            final Collection<String> formats,
                                             final Privilege privilege)
   {
     String type = privilege.getType();
@@ -313,27 +318,43 @@ public class SelectorManagerImpl
     return isMatchingFormat || isMatchingRepository;
   }
 
-  private List<Role> getRoles(final List<String> roleIds, final AuthorizationManager authorizationManager, final List<Role> roles)
-  {
-    roleIds.forEach(roleId -> getRoles(roleId, authorizationManager, roles));
-
-    return roles;
-  }
-
-  private void getRoles(final String roleId, final AuthorizationManager authorizationManager, final List<Role> roles)
+  private List<Role> getRoles(
+      final List<String> roleIds,
+      final AuthorizationManager authorizationManager)
   {
     try {
-      Role role = authorizationManager.getRole(roleId);
-      roles.add(role);
-      role.getRoles().forEach(nestedRoleId -> getRoles(nestedRoleId, authorizationManager, roles));
+      // Remote roles can't contribute privileges, or have nested roles.
+      Map<String, Role> roleMap = securitySystem.listRoles(UserManager.DEFAULT_SOURCE).stream()
+          .collect(Collectors.toMap(Role::getRoleId, Function.identity()));
+
+      Set<String> results = new HashSet<>();
+      roleIds.forEach(roleId -> traverseRoleTree(roleId, roleMap, results));
+      return results.stream().map(roleMap::get)
+          .collect(Collectors.toList());
     }
-    catch (NoSuchRoleException e) {
-      log.debug("Unable to find role for roleId={}, continue searching for roles", roleId, e);
+    catch (NoSuchAuthorizationManagerException e) {
+      // This should never happen in practice
+      log.error("Missing default user manager", e);
+      throw new RuntimeException(e);
     }
+  }
+
+  private void traverseRoleTree(final String roleId, final Map<String, Role> roleMap, final Set<String> results) {
+    if (results.contains(roleId)) {
+      // already visited
+      return;
+    }
+    Role role = roleMap.get(roleId);
+    if (role == null) {
+      // missing role
+      return;
+    }
+    results.add(roleId);
+    role.getRoles().forEach(childId -> traverseRoleTree(childId, roleMap, results));
   }
 
   private Predicate<Privilege> repositoryFormatOrNameMatcher(final Collection<String> repositoryNames,
-                                                             final List<String> formats)
+                                                             final Collection<String> formats)
   {
     return (p) -> matchesFormatOrRepository(repositoryNames, formats, p);
   }

@@ -56,7 +56,7 @@ public interface SelectorManager
    *
    * @since 3.6
    */
-  List<SelectorConfiguration> browseActive(Collection<String> repositoryNames, List<String> formats);
+  List<SelectorConfiguration> browseActive(Collection<String> repositoryNames, Collection<String> formats);
 
   /**
    * Read content selector by id.

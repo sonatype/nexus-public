@@ -15,6 +15,7 @@ package org.sonatype.nexus.internal.selector;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -27,6 +28,7 @@ import org.sonatype.nexus.security.privilege.Privilege;
 import org.sonatype.nexus.security.role.Role;
 import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.User;
+import org.sonatype.nexus.security.user.UserManager;
 import org.sonatype.nexus.selector.CselSelector;
 import org.sonatype.nexus.selector.JexlSelector;
 import org.sonatype.nexus.selector.OrientSelectorConfiguration;
@@ -90,6 +92,7 @@ public class SelectorManagerImplTest
 
     when(securitySystem.getAuthorizationManager(DEFAULT_SOURCE)).thenReturn(authorizationManager);
     when(securitySystem.currentUser()).thenReturn(user);
+    when(securitySystem.listRoles(UserManager.DEFAULT_SOURCE)).thenReturn(new HashSet<>());
 
     selectorConfigurations = new ArrayList<>();
 
@@ -133,9 +136,9 @@ public class SelectorManagerImplTest
   @Test
   public void browseActiveReturnsAllContentSelectorsForMatchingNestedRoles() throws Exception {
     createSelectorConfiguration("roleId", "rolePrivilegeId", "roleSelectorName", "repository");
+    securitySystem.listRoles(UserManager.DEFAULT_SOURCE).stream().findFirst().get().getRoles().add("nestedRoleId");
     SelectorConfiguration nestedRoleConfig = createSelectorConfiguration("nestedRoleId", "nestedRolePrivilegeId",
         "nestedRoleSelectorName", ALL);
-    authorizationManager.getRole("roleId").getRoles().add("nestedRoleId");
     when(user.getRoles()).thenReturn(newHashSet(new RoleIdentifier("", "roleId")));
 
     List<SelectorConfiguration> selectors = manager.browseActive(asList("anyRepository"), asList("anyFormat"));
@@ -149,7 +152,6 @@ public class SelectorManagerImplTest
     createSelectorConfiguration("roleId", "rolePrivilegeId", "roleSelectorName", ALL + '-' + repositoryFormat);
     createSelectorConfiguration("nestedRoleId", "nestedRolePrivilegeId", "nestedRoleSelectorName",
         ALL + '-' + repositoryFormat);
-    authorizationManager.getRole("roleId").getRoles().add("nestedRoleId");
     when(user.getRoles()).thenReturn(newHashSet(new RoleIdentifier("", "roleId")));
 
     List<SelectorConfiguration> selectors = manager.browseActive(asList("repository"), asList("unknownFormat"));
@@ -163,9 +165,9 @@ public class SelectorManagerImplTest
     String repositoryFormat = "format";
     SelectorConfiguration roleConfig = createSelectorConfiguration("roleId", "rolePrivilegeId",
         "roleSelectorName", repositoryName);
+    securitySystem.listRoles(UserManager.DEFAULT_SOURCE).stream().findFirst().get().getRoles().add("nestedRoleId");
     SelectorConfiguration nestedRoleConfig = createSelectorConfiguration("nestedRoleId",
         "nestedRolePrivilegeId", "nestedRoleSelectorName", repositoryName);
-    authorizationManager.getRole("roleId").getRoles().add("nestedRoleId");
     when(user.getRoles()).thenReturn(newHashSet(new RoleIdentifier("", "roleId")));
 
     List<SelectorConfiguration> selectors = manager.browseActive(asList(repositoryName), asList(repositoryFormat));
@@ -234,10 +236,10 @@ public class SelectorManagerImplTest
   }
 
   private SelectorConfiguration createSelectorConfiguration(
-      String roleId,
-      String rolePrivilegeId,
-      String roleSelectorName,
-      String repositoryName) throws Exception
+      final String roleId,
+      final String rolePrivilegeId,
+      final String roleSelectorName,
+      final String repositoryName) throws Exception
   {
     createRole(roleId, rolePrivilegeId);
     createRepositoryContentSelectorPrivilege(rolePrivilegeId, roleSelectorName, repositoryName);
@@ -250,9 +252,9 @@ public class SelectorManagerImplTest
     return selectorConfiguration;
   }
 
-  private Privilege createRepositoryContentSelectorPrivilege(String privilegeId,
-                                                             String selectorConfigurationName,
-                                                             String repositoryName)
+  private Privilege createRepositoryContentSelectorPrivilege(final String privilegeId,
+                                                             final String selectorConfigurationName,
+                                                             final String repositoryName)
       throws Exception
   {
     Privilege privilege = new Privilege();
@@ -268,11 +270,12 @@ public class SelectorManagerImplTest
     return privilege;
   }
 
-  private Role createRole(String roleId, String privilegeId) throws Exception {
+  private Role createRole(final String roleId, final String privilegeId) throws Exception {
     Role role = new Role();
     role.setRoleId(roleId);
     role.getPrivileges().add(privilegeId);
 
+    securitySystem.listRoles(UserManager.DEFAULT_SOURCE).add(role);
     when(authorizationManager.getRole(roleId)).thenReturn(role);
 
     return role;

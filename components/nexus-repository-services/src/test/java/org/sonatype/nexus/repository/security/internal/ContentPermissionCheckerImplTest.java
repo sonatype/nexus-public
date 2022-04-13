@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.security.internal;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Set;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.security.RepositoryContentSelectorPermission;
@@ -246,7 +247,9 @@ public class ContentPermissionCheckerImplTest
             eq(new RepositoryContentSelectorPermission("selector", "repoFormat", "repoName2", Arrays.asList(BreadActions.READ)))))
         .thenReturn(true);
 
-    when(selectorManager.browse()).thenReturn(Arrays.asList(config));
+    Set<String> repositoryNames = Sets.newLinkedHashSet(Arrays.asList("repoName", "repoName2"));
+
+    when(selectorManager.browseActive(repositoryNames, Collections.singletonList("repoFormat"))).thenReturn(Arrays.asList(config));
 
     when(selectorManager.evaluate(any(), any())).thenReturn(true);
 
