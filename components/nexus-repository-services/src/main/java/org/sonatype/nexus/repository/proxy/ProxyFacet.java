@@ -47,4 +47,9 @@ public interface ProxyFacet
    * content, if any.
    */
   void invalidateProxyCaches();
+
+  /**
+   * Returns the configuration object used by the proxy facet
+   */
+  ProxyRepositoryConfiguration getConfiguration();
 }

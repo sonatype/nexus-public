@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.scheduling.internal;
 
+import java.time.Duration;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -43,6 +44,7 @@ public class PeriodicJobServiceImpl
 
   private int activeClients;
 
+  @Override
   public synchronized void startUsing() throws Exception {
     if (activeClients == 0) {
       start();
@@ -50,6 +52,7 @@ public class PeriodicJobServiceImpl
     activeClients++;
   }
 
+  @Override
   public synchronized void stopUsing() throws Exception {
     checkState(activeClients > 0, "Not started");
     activeClients--;
@@ -72,6 +75,10 @@ public class PeriodicJobServiceImpl
     executor = null;
   }
 
+  public void runOnce(final Runnable runnable, final int delaySeconds) {
+    executor.schedule(runnable, delaySeconds, TimeUnit.SECONDS);
+  }
+
   @Override
   @Guarded(by = STARTED)
   public PeriodicJob schedule(final Runnable runnable, final int repeatPeriodSeconds) {
@@ -84,7 +91,19 @@ public class PeriodicJobServiceImpl
     return () -> scheduledFuture.cancel(false);
   }
 
-  private Runnable wrap(Runnable inner) {
+  @Override
+  @Guarded(by = STARTED)
+  public PeriodicJob schedule(final Runnable runnable, final Duration delay, final Duration repeatPeriod) {
+    ScheduledFuture<?> scheduledFuture = executor.scheduleAtFixedRate(
+        wrap(runnable),
+        delay.toMillis(),
+        repeatPeriod.toMillis(),
+        TimeUnit.MILLISECONDS);
+
+    return () -> scheduledFuture.cancel(false);
+  }
+
+  private Runnable wrap(final Runnable inner) {
     return () -> {
       try {
         inner.run();

@@ -325,13 +325,13 @@ public class ProxyFacetSupportTest
     HttpClientFacet httpClientFacet = mock(HttpClientFacet.class);
     HttpClient httpClient = mock(HttpClient.class);
     ConfigurationFacet configurationFacet = mock(ConfigurationFacet.class);
-    ProxyFacetSupport.Config config = new ProxyFacetSupport.Config();
+    ProxyFacetSupport.ProxyConfig config = new ProxyFacetSupport.ProxyConfig();
     config.remoteUrl = new URI("http://example.com");
 
     when(repository.facet(HttpClientFacet.class)).thenReturn(httpClientFacet);
     when(httpClientFacet.getHttpClient()).thenReturn(httpClient);
     when(repository.facet(ConfigurationFacet.class)).thenReturn(configurationFacet);
-    when(configurationFacet.readSection(any(Configuration.class), anyString(), eq(ProxyFacetSupport.Config.class)))
+    when(configurationFacet.readSection(any(Configuration.class), anyString(), eq(ProxyFacetSupport.ProxyConfig.class)))
         .thenReturn(config);
 
     HttpResponse httpResponse = new BasicHttpResponse(

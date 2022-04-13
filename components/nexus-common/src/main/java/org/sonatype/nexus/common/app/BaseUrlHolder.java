@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.common.app;
 
+import java.util.concurrent.Callable;
+import java.util.function.Supplier;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,5 +90,25 @@ public final class BaseUrlHolder
 
   public static boolean isSet() {
     return baseUrl.get() != null;
+  }
+
+  public static <R> R  with(final String url, final String relative, final Supplier<R> operation) {
+    set(url, relative);
+    try {
+      return operation.get();
+    }
+    finally {
+      unset();
+    }
+  }
+
+  public static <R> R  call(final String url, final String relative, final Callable<R> operation) throws Exception {
+    set(url, relative);
+    try {
+      return operation.call();
+    }
+    finally {
+      unset();
+    }
   }
 }
