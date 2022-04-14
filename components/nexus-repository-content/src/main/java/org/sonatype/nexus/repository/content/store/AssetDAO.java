@@ -111,6 +111,36 @@ public interface AssetDAO
   Collection<Asset> browseComponentAssets(Component component);
 
   /**
+   * Finds assets where lastUpdated is greater than the given value.
+   *
+   * @param repositoryId the repository to browse
+   * @param lastUpdated date that assets must have been updated after
+   * @param likeExpressions List of SQL like expressions that match on the path column
+   * @param limit maximum number of assets to return
+   * @return collection of assets
+   */
+  List<Asset> findGreaterThanLastUpdated(
+      @Param("repositoryId") int repositoryId,
+      @Nullable @Param("lastUpdated") OffsetDateTime lastUpdated,
+      @Param("likeExpressions") List<String> likeExpressions,
+      @Param("limit") int limit);
+
+  /**
+   * Finds all assets where lastUpdated equals the given value.
+   *
+   * @param repositoryId the repository to browse
+   * @param lastUpdated date to match
+   * @param likeExpressions List of SQL like expressions that match on path column
+   * @param limit maximum number of assets to return
+   * @return collection of assets
+   */
+  List<Asset> findEqualsLastUpdated(
+      @Param("repositoryId") int repositoryId,
+      @Param("lastUpdated") OffsetDateTime lastUpdated,
+      @Param("likeExpressions") List<String> likeExpressions,
+      @Param("limit") int limit);
+
+  /**
    * Creates the given asset in the content data store.
    *
    * @param asset the asset to create

@@ -35,6 +35,7 @@ import org.sonatype.nexus.repository.content.store.example.TestAssetData;
 import org.sonatype.nexus.repository.content.store.example.TestComponentDAO;
 import org.sonatype.nexus.repository.content.store.example.TestContentRepositoryDAO;
 
+import com.google.common.collect.ImmutableList;
 import org.hamcrest.collection.IsIterableContainingInAnyOrder;
 import org.hamcrest.collection.IsIterableContainingInOrder;
 import org.junit.Before;
@@ -974,6 +975,58 @@ public class AssetDAOTest
       assertThat(asset.contentType(), is(generatedAssetBlob.contentType()));
       assertThat(asset.lastUpdated(), notNullValue());
       assertThat(asset.checksums(), notNullValue());
+    }
+  }
+
+  @Test
+  public void testFindLastUpdated() {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      TestAssetDAO dao = session.access(TestAssetDAO.class);
+      OffsetDateTime baseTime = OffsetDateTime.now();
+      Collection<Asset> found = dao.findEqualsLastUpdated(repositoryId, baseTime, ImmutableList.of(),100);
+      assertThat(found, emptyIterable());
+      found = dao.findGreaterThanLastUpdated(repositoryId, baseTime, ImmutableList.of(), 10);
+      assertThat(found, emptyIterable());
+
+      AssetData asset1 = generateAsset(repositoryId, "/asset1/asset1.jar");
+      AssetData asset2 = generateAsset(repositoryId, "/asset2/asset2.jar");
+      AssetData asset3 = generateAsset(repositoryId, "/asset3/asset3.jar");
+      AssetData asset4 = generateAsset(repositoryId, "/asset4/asset4.jar");
+      AssetData asset5 = generateAsset(repositoryId, "/asset5/asset5.jar");
+      AssetData asset6 = generateAsset(repositoryId, "/asset6/asset6.jar");
+
+      asset1.setLastUpdated(baseTime);
+      asset2.setLastUpdated(baseTime);
+      asset3.setLastUpdated(baseTime.plusSeconds(1));
+      asset4.setLastUpdated(baseTime.plusSeconds(2));
+      asset5.setLastUpdated(baseTime.minusSeconds(1));
+      asset6.setLastUpdated(baseTime.minusSeconds(2));
+      asset6.setLastUpdated(baseTime.minusSeconds(3));
+
+      dao.createAsset(asset1);
+      dao.createAsset(asset2);
+      dao.createAsset(asset3);
+      dao.createAsset(asset4);
+      dao.createAsset(asset5);
+      dao.createAsset(asset6);
+
+      found = dao.findEqualsLastUpdated(repositoryId, baseTime, ImmutableList.of(),100);
+      assertThat(found.size(), is(2));
+
+      found = dao.findGreaterThanLastUpdated(repositoryId, baseTime, ImmutableList.of(),100);
+      assertThat(found.size(), is(2));
+
+      found = dao.findGreaterThanLastUpdated(repositoryId, baseTime, ImmutableList.of(),1);
+      assertThat(found.size(), is(1));
+
+      found = dao.findGreaterThanLastUpdated(repositoryId, baseTime.minusDays(1), ImmutableList.of("%/asset1/%"), 100);
+      assertThat(found.size(), is(1));
+
+      found = dao.findGreaterThanLastUpdated(repositoryId, baseTime.minusDays(1), ImmutableList.of("%/asset3/%", "%/asset5/%"), 100);
+      assertThat(found.size(), is(2));
+
+      found = dao.findGreaterThanLastUpdated(repositoryId, baseTime.minusDays(1), ImmutableList.of("%/asset_/a%.jar%"), 100);
+      assertThat(found.size(), is(6));
     }
   }
 

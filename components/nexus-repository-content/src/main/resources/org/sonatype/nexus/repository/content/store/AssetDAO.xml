@@ -46,6 +46,7 @@
     CREATE INDEX IF NOT EXISTS idx_${format}_asset_kind ON ${format}_asset (kind);
     CREATE INDEX IF NOT EXISTS idx_${format}_asset_component ON ${format}_asset (component_id);
     CREATE INDEX IF NOT EXISTS idx_${format}_asset_blob ON ${format}_asset (asset_blob_id);
+    CREATE INDEX IF NOT EXISTS idx_${format}_asset_last_updated ON ${format}_asset (last_updated);
     --
   </insert>
 
@@ -120,6 +121,25 @@
             USING (component_id) WHERE <include refid="componentCoordinateMatch"/>;
       </otherwise>
     </choose>
+  </select>
+
+  <sql id="likeExpressions">
+    <foreach collection="likeExpressions" item="likeExpression" open="AND (" close=")" separator=" OR ">
+      path LIKE #{likeExpression}
+    </foreach>
+  </sql>
+
+  <select id="findGreaterThanLastUpdated" resultMap="assetResult">
+    SELECT * FROM ${format}_asset WHERE repository_id = #{repositoryId}
+    <if test="lastUpdated != null"> AND last_updated > #{lastUpdated}</if>
+    <include refid="likeExpressions"/>
+    ORDER BY last_updated LIMIT #{limit}
+  </select>
+
+  <select id="findEqualsLastUpdated" resultMap="assetResult">
+    SELECT * FROM ${format}_asset WHERE repository_id = #{repositoryId} AND last_updated = #{lastUpdated}
+    <include refid="likeExpressions"/>
+    LIMIT #{limit}
   </select>
 
   <insert id="createAsset" useGeneratedKeys="true" keyProperty="assetId" parameterType="AssetData">
