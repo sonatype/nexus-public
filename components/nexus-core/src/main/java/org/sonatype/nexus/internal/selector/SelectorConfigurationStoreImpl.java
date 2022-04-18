@@ -13,7 +13,6 @@
 package org.sonatype.nexus.internal.selector;
 
 import java.util.List;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -22,6 +21,9 @@ import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
+import org.sonatype.nexus.distributed.event.service.api.EventType;
+import org.sonatype.nexus.distributed.event.service.api.common.PublisherEvent;
+import org.sonatype.nexus.distributed.event.service.api.common.SelectorConfigurationChangedEvent;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.transaction.Transactional;
 
@@ -63,6 +65,7 @@ public class SelectorConfigurationStoreImpl
   public void create(final SelectorConfiguration configuration) {
     doCreate(configuration);
     postEvent(configuration);
+    postDesEvent(EventType.CREATED);
   }
 
   @Transactional
@@ -79,6 +82,7 @@ public class SelectorConfigurationStoreImpl
   public void update(final SelectorConfiguration configuration) {
     if (doUpdate(configuration)) {
       postEvent(configuration);
+      postDesEvent(EventType.UPDATED);
     }
   }
 
@@ -91,6 +95,7 @@ public class SelectorConfigurationStoreImpl
   public void delete(final SelectorConfiguration configuration) {
     if (doDelete(configuration)) {
       postEvent(configuration);
+      postDesEvent(EventType.DELETED);
     }
   }
 
@@ -119,5 +124,9 @@ public class SelectorConfigurationStoreImpl
         return configuration;
       }
     });
+  }
+
+  private void postDesEvent(final EventType eventType) {
+    eventManager.post(new PublisherEvent(new SelectorConfigurationChangedEvent(eventType)));
   }
 }

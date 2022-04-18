@@ -13,7 +13,6 @@
 package org.sonatype.nexus.internal.selector;
 
 import java.lang.ref.SoftReference;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -25,7 +24,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -36,6 +34,7 @@ import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.datastore.api.DuplicateKeyException;
+import org.sonatype.nexus.distributed.event.service.api.common.SelectorConfigurationChangedEvent;
 import org.sonatype.nexus.repository.security.RepositoryContentSelectorPrivilegeDescriptor;
 import org.sonatype.nexus.repository.security.RepositorySelector;
 import org.sonatype.nexus.rest.ValidationErrorsException;
@@ -44,7 +43,6 @@ import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
 import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException;
 import org.sonatype.nexus.security.privilege.Privilege;
-import org.sonatype.nexus.security.role.NoSuchRoleException;
 import org.sonatype.nexus.security.role.Role;
 import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.User;
@@ -203,6 +201,18 @@ public class SelectorManagerImpl
   public void on(final SelectorConfigurationEvent event) {
     cachedBrowseResult = EMPTY_CACHE;
 
+    selectorCache.invalidateAll();
+  }
+
+  /**
+   * Handles a selector configuration change event from another nodes.
+   *
+   * @param event the {@link SelectorConfigurationChangedEvent} with event type.
+   */
+  @Subscribe
+  public void on(final SelectorConfigurationChangedEvent event) {
+    log.debug("Selector configuration has {} on a remote node. Invalidate the cache.", event.getEventType());
+    cachedBrowseResult = EMPTY_CACHE;
     selectorCache.invalidateAll();
   }
 
