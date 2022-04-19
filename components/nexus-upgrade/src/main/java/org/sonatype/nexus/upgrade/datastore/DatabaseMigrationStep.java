@@ -24,7 +24,8 @@ import java.util.Optional;
 public interface DatabaseMigrationStep
 {
   /**
-   * The version this step migrates the database to. Empty values are considered to be repeatable migrations.
+   * The version this step migrates the database to. Migrations returning an empty value will only run when the checksum
+   * changes.
    */
   Optional<String> version();
 
