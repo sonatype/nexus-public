@@ -179,11 +179,9 @@
     FROM ${format}_asset A
     INNER JOIN ${format}_asset_blob USING (asset_blob_id)
     <where>
-      <if test="componentIds != null">
-        <foreach collection="componentIds" item="componentId" index="index" open="component_id IN (" close=")" separator=",">
-          #{componentId}
-        </foreach>
-      </if>
+      <foreach collection="componentIds" item="componentId" index="index" open="component_id IN (" close=")" separator=",">
+        #{componentId}
+      </foreach>
     </where>
     ORDER BY asset_id
   </select>

@@ -187,10 +187,9 @@ public interface AssetDAO
    * Find assets by their component ids.
    *
    * @param componentIds a set of component ids.
-   *                     In case of {@code null} or empty set will be returned all available assets.
    * @return collection of {@link AssetInfo}
    */
-  Collection<AssetInfo> findByComponentIds(@Nullable @Param("componentIds") Set<Integer> componentIds);
+  Collection<AssetInfo> findByComponentIds(@Param("componentIds") Set<Integer> componentIds);
 
   /**
    * Updates the kind of the given asset in the content data store.

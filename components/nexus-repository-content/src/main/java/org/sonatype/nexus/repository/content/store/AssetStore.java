@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.content.store;
 
 import java.time.OffsetDateTime;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -46,6 +47,7 @@ import org.sonatype.nexus.repository.content.fluent.internal.FluentAssetImpl;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.inject.assistedinject.Assisted;
+import org.apache.shiro.util.CollectionUtils;
 
 import static java.util.Arrays.stream;
 import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttributeChange;
@@ -274,6 +276,10 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public Collection<AssetInfo> findByComponentIds(final Set<Integer> componentIds) {
+    if (CollectionUtils.isEmpty(componentIds)) {
+      return Collections.emptyList();
+    }
+
     return dao().findByComponentIds(componentIds);
   }
 

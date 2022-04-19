@@ -13,6 +13,8 @@
 package org.sonatype.nexus.repository.content.store;
 
 import java.time.OffsetDateTime;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +30,7 @@ import org.sonatype.nexus.datastore.api.ContentDataAccess;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
+import org.sonatype.nexus.repository.content.AssetInfo;
 import org.sonatype.nexus.repository.content.AttributeChangeSet;
 import org.sonatype.nexus.repository.content.event.asset.AssetAttributesEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent;
@@ -437,6 +440,59 @@ public class FormatStoreManagerTest
     assertThat(events.get(14), instanceOf(ContentRepositoryDeletedEvent.class));
 
     verifyNoMoreInteractions(eventManager);
+  }
+
+  @Test
+  public void testFindByComponentIds() {
+    Injector injector =
+        Guice.createInjector(new WireModule(new TestPlainStoreModule(), new SessionModule(), new TransactionModule()));
+    FormatStoreManager underTest = injector.getInstance(Key.get(FormatStoreManager.class, Names.named("test")));
+    ContentRepositoryStore<?> contentRepositoryStore = underTest.contentRepositoryStore(DEFAULT_DATASTORE_NAME);
+    AssetBlobStore<?> assetBlobStore = underTest.assetBlobStore(DEFAULT_DATASTORE_NAME);
+    AssetStore<?> assetStore = underTest.assetStore(DEFAULT_DATASTORE_NAME);
+    ComponentStore<?> componentStore = underTest.componentStore(DEFAULT_DATASTORE_NAME);
+
+    ContentRepositoryData repository = new ContentRepositoryData();
+    repository.setAttributes(new NestedAttributesMap("attributes", new HashMap<>()));
+    repository.setConfigRepositoryId(new EntityUUID(combUUID()));
+    contentRepositoryStore.createContentRepository(repository);
+
+    ComponentData component = new ComponentData();
+    component.setAttributes(new NestedAttributesMap("attributes", new HashMap<>()));
+    component.setRepositoryId(repository.repositoryId);
+    component.setNamespace("");
+    component.setName("testComponent");
+    component.setKind("aKind");
+    component.setVersion("1.0");
+    component.setLastUpdated(OffsetDateTime.now());
+    componentStore.createComponent(component);
+
+    AssetBlobData assetBlob = new AssetBlobData();
+    assetBlob.setBlobRef(new BlobRef("local", "default", "testBlob"));
+    assetBlob.setBlobSize(0);
+    assetBlob.setContentType("text/plain");
+    assetBlob.setChecksums(ImmutableMap.of());
+    assetBlob.setBlobCreated(UTC.now());
+    assetBlobStore.createAssetBlob(assetBlob);
+
+    AssetData asset = new AssetData();
+    asset.setAttributes(new NestedAttributesMap("attributes", new HashMap<>()));
+    asset.setRepositoryId(repository.repositoryId);
+    asset.setComponent(component);
+    asset.setPath("/path/to/asset");
+    asset.setKind("test");
+    asset.setAssetBlob(assetBlob);
+    asset.setLastUpdated(OffsetDateTime.now());
+    assetStore.createAsset(asset);
+
+    Collection<AssetInfo> assets = assetStore.findByComponentIds(Collections.singleton(1));
+    assertThat(assets.size(), is(1));
+
+    assets = assetStore.findByComponentIds(Collections.emptySet());
+    assertThat(assets.size(), is(0));
+
+    assets = assetStore.findByComponentIds(null);
+    assertThat(assets.size(), is(0));
   }
 
   // checks the DAO access provided by the store matches our expectations

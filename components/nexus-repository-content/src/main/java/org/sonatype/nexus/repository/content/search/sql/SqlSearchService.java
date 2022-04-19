@@ -208,6 +208,9 @@ public class SqlSearchService
         queryCondition,
         SearchViewColumns.fromSortFieldName(searchRequest.getSortField()),
         searchRequest.getSortDirection());
+    if (searchResults.isEmpty()) {
+      return new ComponentSearchResultPage(0, Collections.emptyList());
+    }
 
     Map<Integer, List<AssetInfo>> componentIdToAsset = new HashMap<>();
     if (searchRequest.isIncludeAssets()) {
