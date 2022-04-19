@@ -47,13 +47,14 @@ public class DistributedEventsUpgradeTest
   @Test
   public void shouldSkipMigrationWhenClusterEnabled() throws Exception {
     DistributedEventsUpgrade underTest = new DistributedEventsUpgrade(true);
-    try (Connection conn = spy(sessionRule.openConnection(DEFAULT_DATASTORE_NAME))) {
+    try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
       assertThat(underTest.tableExists(conn, TABLE_NAME), is(true));
 
-      underTest.migrate(conn);
+      Connection spyConn = spy(conn);
+      underTest.migrate(spyConn);
+      verifyNoInteractions(spyConn);
 
       assertThat(underTest.tableExists(conn, TABLE_NAME), is(true));
-      verifyNoInteractions(conn);
     }
   }
 
