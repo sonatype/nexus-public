@@ -55,4 +55,6 @@ public interface FeatureFlags
 
   /*  */
   String DATASTORE_BLOBSTORE_METRICS = "nexus.datastore.blobstore.metrics.enabled";
+
+  String DATASTORE_TABLE_SEARCH = "nexus.datastore.table.search.enabled";
 }
