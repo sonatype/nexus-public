@@ -24,6 +24,7 @@ import org.sonatype.nexus.blobstore.api.BlobId
 import org.sonatype.nexus.blobstore.api.BlobMetrics
 import org.sonatype.nexus.blobstore.api.BlobStoreException
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker
 import org.sonatype.nexus.common.log.DryRunPrefix
 
 import com.amazonaws.SdkClientException
@@ -68,6 +69,8 @@ class S3BlobStoreTest
 
   OrientS3BlobStoreMetricsStore storeMetrics = Mock()
 
+  BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker = Mock()
+
   DryRunPrefix dryRunPrefix = Mock()
 
   BucketManager bucketManager = Mock()
@@ -75,7 +78,7 @@ class S3BlobStoreTest
   AmazonS3 s3 = Mock()
 
   S3BlobStore blobStore = new S3BlobStore(amazonS3Factory, locationResolver, uploader, copier, false, false, false,
-      storeMetrics, dryRunPrefix, bucketManager)
+      storeMetrics, dryRunPrefix, bucketManager, blobStoreQuotaUsageChecker)
 
   def config = new MockBlobStoreConfiguration()
 
@@ -472,7 +475,7 @@ class S3BlobStoreTest
   def "expiry test"(){
     given: 'blob exists'
       def expiryPreferredBlobStore = new S3BlobStore(amazonS3Factory, locationResolver, uploader, copier, true, false, false,
-          storeMetrics, dryRunPrefix, bucketManager)
+          storeMetrics, dryRunPrefix, bucketManager, blobStoreQuotaUsageChecker)
 
       def blobId = new BlobId('soft-delete-success')
       def cfg = new MockBlobStoreConfiguration()
@@ -502,7 +505,7 @@ class S3BlobStoreTest
   def "hard delete hard deletes when prefered"(){
     given: 'blob exists'
       def hardDeleteStore = new S3BlobStore(amazonS3Factory, locationResolver, uploader, copier, true, true, false,
-          storeMetrics, dryRunPrefix, bucketManager)
+          storeMetrics, dryRunPrefix, bucketManager, blobStoreQuotaUsageChecker)
 
       def blobId = new BlobId('soft-delete-success')
       def cfg = new MockBlobStoreConfiguration()
@@ -535,7 +538,7 @@ class S3BlobStoreTest
   def "regular delete hard deletes when prefered"(){
     given: 'blob exists'
       def hardDeleteStore = new S3BlobStore(amazonS3Factory, locationResolver, uploader, copier, true, true, false,
-          storeMetrics, dryRunPrefix, bucketManager)
+          storeMetrics, dryRunPrefix, bucketManager, blobStoreQuotaUsageChecker)
 
       def blobId = new BlobId('soft-delete-success')
       def cfg = new MockBlobStoreConfiguration()

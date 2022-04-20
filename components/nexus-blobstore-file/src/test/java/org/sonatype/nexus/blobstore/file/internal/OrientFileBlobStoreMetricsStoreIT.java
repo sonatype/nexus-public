@@ -51,13 +51,8 @@ public class OrientFileBlobStoreMetricsStoreIT
 
   private static final int METRICS_FLUSH_TIMEOUT = 5;
 
-  private static final int QUOTA_CHECK_INTERVAL = 5;
-
   @Mock
   NodeAccess nodeAccess;
-
-  @Mock
-  BlobStoreQuotaService quotaService;
 
   @Mock
   BlobStore blobStore;
@@ -69,8 +64,8 @@ public class OrientFileBlobStoreMetricsStoreIT
   public void setUp() throws Exception {
     blobStoreDirectory = util.createTempDir().toPath();
     when(nodeAccess.getId()).thenReturn(UUID.randomUUID().toString());
-    underTest = new OrientFileBlobStoreMetricsStore(new PeriodicJobServiceImpl(), nodeAccess, quotaService,
-        QUOTA_CHECK_INTERVAL, fileOperations);
+    underTest =
+        new OrientFileBlobStoreMetricsStore(new PeriodicJobServiceImpl(), nodeAccess, fileOperations);
     underTest.setStorageDir(blobStoreDirectory);
     underTest.setBlobStore(blobStore);
   }
@@ -112,8 +107,8 @@ public class OrientFileBlobStoreMetricsStoreIT
 
   @Test
   public void listBackingFiles() throws Exception {
-    underTest = new OrientFileBlobStoreMetricsStore(new PeriodicJobServiceImpl(), nodeAccess, quotaService, 5,
-        fileOperations);
+    underTest =
+        new OrientFileBlobStoreMetricsStore(new PeriodicJobServiceImpl(), nodeAccess, fileOperations);
     Stream backingFiles = underTest.backingFiles();
     assertThat("backing files is empty", backingFiles.count(), is(0L));
 
@@ -122,16 +117,6 @@ public class OrientFileBlobStoreMetricsStoreIT
 
     backingFiles = underTest.backingFiles();
     assertThat("backing files contains the data file", backingFiles.count(), is(1L));
-  }
-
-  @Test
-  public void invokeQuotaServiceOnFlush() throws Exception {
-    underTest.start();
-
-    underTest.recordAddition(1000);
-    Thread.sleep(QUOTA_CHECK_INTERVAL * 1000);
-    await().atMost(QUOTA_CHECK_INTERVAL, SECONDS).until(() -> underTest.getMetrics().getBlobCount(), is(1L));
-    verify(quotaService, times(1)).checkQuota(blobStore);
   }
 
   @Test(expected=BlobStoreMetricsNotAvailableException.class)

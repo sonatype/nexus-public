@@ -32,7 +32,6 @@ import org.sonatype.nexus.blobstore.api.OperationMetrics;
 import org.sonatype.nexus.blobstore.api.OperationType;
 import org.sonatype.nexus.blobstore.file.FileBlobStoreMetricsService;
 import org.sonatype.nexus.scheduling.PeriodicJobService;
-import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.property.PropertiesFile;
 
@@ -60,12 +59,9 @@ public class OrientFileBlobStoreMetricsStore
   @Inject
   public OrientFileBlobStoreMetricsStore(final PeriodicJobService jobService,
                                          final NodeAccess nodeAccess,
-                                         final BlobStoreQuotaService quotaService,
-                                         @Named("${nexus.blobstore.quota.warnIntervalSeconds:-60}")
-                                   final int quotaCheckInterval,
                                          final FileOperations fileOperations)
   {
-    super(nodeAccess, jobService, quotaService, quotaCheckInterval);
+    super(nodeAccess, jobService);
     this.fileOperations = checkNotNull(fileOperations);
   }
 

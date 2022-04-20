@@ -77,8 +77,6 @@ public abstract class BlobStoreMetricsStoreSupport<T extends ImplicitSourcePrope
 
   protected BlobStore blobStore;
 
-  protected PeriodicJob quotaCheckingJob;
-
   protected final NodeAccess nodeAccess;
 
   protected T properties;
@@ -87,22 +85,13 @@ public abstract class BlobStoreMetricsStoreSupport<T extends ImplicitSourcePrope
 
   protected PeriodicJob metricsWritingJob;
 
-  protected final BlobStoreQuotaService quotaService;
-
-  protected final int quotaCheckInterval;
-
   private Map<OperationType, OperationMetrics> operationMetrics;
 
   public BlobStoreMetricsStoreSupport(final NodeAccess nodeAccess,
-                                      final PeriodicJobService jobService,
-                                      final BlobStoreQuotaService quotaService,
-                                      final int quotaCheckInterval)
+                                      final PeriodicJobService jobService)
   {
     this.nodeAccess = checkNotNull(nodeAccess);
     this.jobService = checkNotNull(jobService);
-    this.quotaService = checkNotNull(quotaService);
-    checkArgument(quotaCheckInterval > 0);
-    this.quotaCheckInterval = quotaCheckInterval;
   }
 
   @Override
@@ -139,8 +128,6 @@ public abstract class BlobStoreMetricsStoreSupport<T extends ImplicitSourcePrope
         log.error("Cannot write blob store metrics", e);
       }
     }, METRICS_FLUSH_PERIOD_SECONDS);
-
-    quotaCheckingJob = jobService.schedule(createQuotaCheckJob(blobStore, quotaService, log), quotaCheckInterval);
   }
 
   @Override
@@ -148,8 +135,6 @@ public abstract class BlobStoreMetricsStoreSupport<T extends ImplicitSourcePrope
     blobStore = null;
     metricsWritingJob.cancel();
     metricsWritingJob = null;
-    quotaCheckingJob.cancel();
-    quotaCheckingJob = null;
     jobService.stopUsing();
 
     blobCount = null;

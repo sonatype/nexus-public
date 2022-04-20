@@ -25,7 +25,6 @@ import org.sonatype.nexus.blobstore.BlobStoreMetricsNotAvailableException;
 import org.sonatype.nexus.blobstore.BlobStoreMetricsStoreSupport;
 import org.sonatype.nexus.blobstore.api.OperationMetrics;
 import org.sonatype.nexus.blobstore.api.OperationType;
-import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.scheduling.PeriodicJobService;
 
@@ -58,11 +57,9 @@ public class OrientS3BlobStoreMetricsStore
   @Inject
   public OrientS3BlobStoreMetricsStore(
       final PeriodicJobService jobService,
-      final NodeAccess nodeAccess,
-      final BlobStoreQuotaService quotaService,
-      @Named("${nexus.blobstore.quota.warnIntervalSeconds:-60}") final int quotaCheckInterval)
+      final NodeAccess nodeAccess)
   {
-    super(nodeAccess, jobService, quotaService, quotaCheckInterval);
+    super(nodeAccess, jobService);
   }
 
   @Override

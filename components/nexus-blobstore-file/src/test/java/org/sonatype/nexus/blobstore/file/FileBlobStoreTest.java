@@ -34,6 +34,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
 import org.sonatype.nexus.blobstore.file.internal.OrientFileBlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.file.internal.FileOperations;
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
@@ -108,6 +109,9 @@ public class FileBlobStoreTest
   private OrientFileBlobStoreMetricsStore metrics;
 
   @Mock
+  private BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker;
+
+  @Mock
   private LoadingCache loadingCache;
 
   @Mock
@@ -160,9 +164,8 @@ public class FileBlobStoreTest
 
     configuration.setAttributes(attributes);
 
-    underTest = new FileBlobStore(util.createTempDir().toPath(),
-        blobIdLocationResolver, fileOperations, metrics, configuration,
-        appDirs, nodeAccess, dryRunPrefix, reconciliationLogger, 0L);
+    underTest = new FileBlobStore(util.createTempDir().toPath(), blobIdLocationResolver, fileOperations, metrics,
+        configuration, appDirs, nodeAccess, dryRunPrefix, reconciliationLogger, 0L, blobStoreQuotaUsageChecker);
 
     when(loadingCache.getUnchecked(any())).thenReturn(underTest.new FileBlob(new BlobId("fakeid")));
 

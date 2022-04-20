@@ -38,6 +38,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.file.internal.OrientFileBlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.file.internal.SimpleFileOperations;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.io.DirectoryHelper;
 import org.sonatype.nexus.common.log.DryRunPrefix;
@@ -114,6 +115,8 @@ public class FileBlobStoreIT
 
   private OrientFileBlobStoreMetricsStore metricsStore;
 
+  private BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker;
+
   private SimpleFileOperations fileOperations;
 
   private DefaultBlobIdLocationResolver blobIdResolver;
@@ -142,17 +145,18 @@ public class FileBlobStoreIT
 
     fileOperations = spy(new SimpleFileOperations());
 
-    metricsStore = new OrientFileBlobStoreMetricsStore(new PeriodicJobServiceImpl(), nodeAccess, quotaService,
-        QUOTA_CHECK_INTERVAL, fileOperations);
+    metricsStore =
+        new OrientFileBlobStoreMetricsStore(new PeriodicJobServiceImpl(), nodeAccess, fileOperations);
+
+    blobStoreQuotaUsageChecker =
+        new BlobStoreQuotaUsageChecker(new PeriodicJobServiceImpl(), QUOTA_CHECK_INTERVAL, quotaService);
 
     blobIdResolver = new DefaultBlobIdLocationResolver();
 
     final BlobStoreConfiguration config = new MockBlobStoreConfiguration();
     config.attributes(FileBlobStore.CONFIG_KEY).set(FileBlobStore.PATH_KEY, blobStoreDirectory.toString());
-    underTest = new FileBlobStore(blobIdResolver,
-        fileOperations,
-        applicationDirectories,
-        metricsStore, nodeAccess, dryRunPrefix, reconciliationLogger, 0L);
+    underTest = new FileBlobStore(blobIdResolver, fileOperations, applicationDirectories, metricsStore, nodeAccess,
+        dryRunPrefix, reconciliationLogger, 0L, blobStoreQuotaUsageChecker);
     underTest.init(config);
     underTest.start();
   }

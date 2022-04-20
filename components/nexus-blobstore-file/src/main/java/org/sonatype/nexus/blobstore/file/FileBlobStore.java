@@ -61,6 +61,7 @@ import org.sonatype.nexus.blobstore.api.RawObjectAccess;
 import org.sonatype.nexus.blobstore.file.internal.BlobCollisionException;
 import org.sonatype.nexus.blobstore.file.internal.FileOperations;
 import org.sonatype.nexus.blobstore.metrics.MonitoringBlobStoreMetrics;
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.io.DirectoryHelper;
 import org.sonatype.nexus.common.log.DryRunPrefix;
@@ -171,6 +172,8 @@ public class FileBlobStore
 
   private final long pruneEmptyDirectoryAge;
 
+  private final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker;
+
   @Inject
   public FileBlobStore(final BlobIdLocationResolver blobIdLocationResolver,
                        final FileOperations fileOperations,
@@ -180,7 +183,8 @@ public class FileBlobStore
                        final DryRunPrefix dryRunPrefix,
                        final BlobStoreReconciliationLogger reconciliationLogger,
                        @Named("${nexus.blobstore.prune.empty.directory.age.ms:-86400000}")
-                       final long pruneEmptyDirectoryAge)
+                       final long pruneEmptyDirectoryAge,
+                       final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker)
   {
     super(blobIdLocationResolver, dryRunPrefix);
     this.fileOperations = checkNotNull(fileOperations);
@@ -191,6 +195,7 @@ public class FileBlobStore
     this.supportsAtomicMove = true;
     this.reconciliationLogger = checkNotNull(reconciliationLogger);
     this.pruneEmptyDirectoryAge = pruneEmptyDirectoryAge;
+    this.blobStoreQuotaUsageChecker = checkNotNull(blobStoreQuotaUsageChecker);
   }
 
   @VisibleForTesting
@@ -203,10 +208,11 @@ public class FileBlobStore
                        final NodeAccess nodeAccess,
                        final DryRunPrefix dryRunPrefix,
                        final BlobStoreReconciliationLogger reconciliationLogger,
-                       final long pruneEmptyDirectoryAge)
+                       final long pruneEmptyDirectoryAge,
+                       final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker)
   {
     this(blobIdLocationResolver, fileOperations, directories, metricsStore, nodeAccess, dryRunPrefix,
-        reconciliationLogger, pruneEmptyDirectoryAge);
+        reconciliationLogger, pruneEmptyDirectoryAge, blobStoreQuotaUsageChecker);
     this.contentDir = checkNotNull(contentDir);
     this.blobStoreConfiguration = checkNotNull(configuration);
   }
@@ -244,6 +250,9 @@ public class FileBlobStore
     metricsStore.setStorageDir(storageDir);
     metricsStore.setBlobStore(this);
     metricsStore.start();
+
+    blobStoreQuotaUsageChecker.setBlobStore(this);
+    blobStoreQuotaUsageChecker.start();
   }
 
   @Override
@@ -281,6 +290,7 @@ public class FileBlobStore
     finally {
       deletedBlobIndex = null;
       metricsStore.stop();
+      blobStoreQuotaUsageChecker.stop();
     }
   }
 

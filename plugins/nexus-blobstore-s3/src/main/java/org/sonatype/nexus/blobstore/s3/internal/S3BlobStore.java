@@ -46,6 +46,7 @@ import org.sonatype.nexus.blobstore.api.OperationMetrics;
 import org.sonatype.nexus.blobstore.api.OperationType;
 import org.sonatype.nexus.blobstore.api.RawObjectAccess;
 import org.sonatype.nexus.blobstore.metrics.MonitoringBlobStoreMetrics;
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.thread.NexusThreadFactory;
@@ -171,6 +172,8 @@ public class S3BlobStore
 
   private S3BlobStoreMetricsService storeMetrics;
 
+  private BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker;
+
   private LoadingCache<BlobId, S3Blob> liveBlobs;
 
   private AmazonS3 s3;
@@ -198,13 +201,15 @@ public class S3BlobStore
       @Named("${nexus.s3.preferAsyncCleanup:-true}") final boolean preferAsyncCleanup,
       final S3BlobStoreMetricsService storeMetrics,
       final DryRunPrefix dryRunPrefix,
-      final BucketManager bucketManager)
+      final BucketManager bucketManager,
+      final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker)
   {
     super(blobIdLocationResolver, dryRunPrefix);
     this.amazonS3Factory = checkNotNull(amazonS3Factory);
     this.copier = checkNotNull(copier);
     this.uploader = checkNotNull(uploader);
     this.storeMetrics = checkNotNull(storeMetrics);
+    this.blobStoreQuotaUsageChecker = checkNotNull(blobStoreQuotaUsageChecker);
     this.bucketManager = checkNotNull(bucketManager);
     this.preferExpire = preferExpire;
 
@@ -240,6 +245,9 @@ public class S3BlobStore
     storeMetrics.setBlobStore(this);
     storeMetrics.start();
 
+    blobStoreQuotaUsageChecker.setBlobStore(this);
+    blobStoreQuotaUsageChecker.start();
+
     if (this.preferAsyncCleanup && executorService == null) {
       this.executorService = newFixedThreadPool(8,
           new NexusThreadFactory("s3-blobstore", "async-ops"));
@@ -254,6 +262,7 @@ public class S3BlobStore
       executorService = null;
     }
     storeMetrics.stop();
+    blobStoreQuotaUsageChecker.stop();
   }
 
   /**
