@@ -67,6 +67,16 @@ export default ListMachineUtils.buildListMachine({
             }
           }
         }
+      },
+      error: {
+        ...config.states.error,
+        on: {
+          ...config.states.error.on,
+          FILTER: {
+            ...config.states.error.on.FILTER,
+            actions: [...config.states.error.on.FILTER.actions, 'debouncePreview', 'sendPreview']
+          }
+        }
       }
     },
     on: {

@@ -110,7 +110,7 @@ export default class ListMachineUtils {
                 src: 'fetchData',
                 onDone: {
                   target: '#loaded',
-                  actions: ['setData']
+                  actions: ['clearError','setData']
                 },
                 onError: {
                   target: '#error',
@@ -136,7 +136,13 @@ export default class ListMachineUtils {
           }
         },
         error: {
-          id: 'error'
+          id: 'error',
+          on: {
+            FILTER: {
+              target: 'loaded',
+              actions: ['setFilter']
+            }
+          }
         }
       }
     };
@@ -147,11 +153,15 @@ export default class ListMachineUtils {
 
         setData: assign({
           data: (_, {data}) => data.data,
-          pristineData: (_, {data}) => data.data
+          pristineData: (_, {data}) => data.data,
         }),
 
         setError: assign({
           error: (_, event) => event.data.message
+        }),
+
+        clearError: assign({
+          error: ''
         }),
 
         setFilter: assign({
