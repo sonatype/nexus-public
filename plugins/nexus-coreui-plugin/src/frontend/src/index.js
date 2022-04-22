@@ -81,7 +81,8 @@ window.plugins.push({
       visibility: {
         featureFlags: [{key: 'nexus.react.repositories', defaultValue: false}],
         permissions: ['nexus:repository-admin:*:*:read']
-      }
+      },
+      weight: 10,
     },
     {
       mode: 'admin',
@@ -92,7 +93,8 @@ window.plugins.push({
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         permissions: ['nexus:selectors:read']
-      }
+      },
+      weight: 300,
     },
     {
       mode: 'admin',
@@ -103,7 +105,8 @@ window.plugins.push({
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         permissions: ['nexus:*']
-      }
+      },
+      weight: 500,
     },
     {
       mode: 'admin',
@@ -214,7 +217,8 @@ window.plugins.push({
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         permissions: ['nexus:*']
-      }
+      },
+      weight: 400,
     },
     {
       mode: 'admin',
