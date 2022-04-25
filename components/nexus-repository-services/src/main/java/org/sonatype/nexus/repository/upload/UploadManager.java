@@ -20,6 +20,7 @@ import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.importtask.ImportResult;
 import org.sonatype.nexus.repository.importtask.ImportFileConfiguration;
 import org.sonatype.nexus.repository.view.Content;
 
@@ -63,6 +64,15 @@ public interface UploadManager
    * @throws IOException
    */
   Content handle(final ImportFileConfiguration configuration) throws IOException;
+
+  /**
+   * This is a hook that allows to handle situations where additional work is required.
+   *
+   * One example of this is when some repository-spanning metadata can be updated after they are processed.
+   */
+  default void handleAfterImport(final ImportResult importResult) throws IOException {
+    // No implementation
+  }
 
   class UIUploadEvent {
     private final Repository repository;
