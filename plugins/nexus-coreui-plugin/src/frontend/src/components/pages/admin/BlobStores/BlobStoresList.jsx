@@ -24,7 +24,6 @@ import {
   PageActions,
   Section,
   SectionToolbar,
-  Utils
 } from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
@@ -38,10 +37,8 @@ import {
 } from '@sonatype/react-shared-components';
 import {
   faCheckCircle,
-  faChevronRight,
   faExclamationCircle,
-  faInfoCircle,
-  faServer
+  faServer,
 } from '@fortawesome/free-solid-svg-icons';
 
 import BlobStoresListMachine from './BlobStoresListMachine';
@@ -131,10 +128,7 @@ export default function BlobStoresList({onCreate, onEdit}) {
         </NxTable>
       </Section>
 
-      <HelpTile>
-        <h3><NxFontAwesomeIcon icon={faInfoCircle}/><span>{BLOB_STORES.LIST.HELP.TITLE}</span></h3>
-        <p dangerouslySetInnerHTML={{__html: BLOB_STORES.LIST.HELP.TEXT}}/>
-      </HelpTile>
+      <HelpTile header={BLOB_STORES.LIST.HELP.TITLE} body={BLOB_STORES.LIST.HELP.TEXT}/>
     </ContentBody>
   </Page>;
 }

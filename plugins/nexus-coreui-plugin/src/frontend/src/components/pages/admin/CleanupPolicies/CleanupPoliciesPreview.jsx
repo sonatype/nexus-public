@@ -14,7 +14,6 @@ import React, {useEffect} from 'react';
 import {useMachine} from '@xstate/react';
 
 import {
-  FieldWrapper,
   ListMachineUtils,
   Section, SectionToolbar,
   Select,
@@ -74,7 +73,7 @@ export default function CleanupPoliciesPreview({policyData}) {
     sendToForm({type: 'LOAD_REPOSITORIES', format: policyData.format});
   }
 
-  function previewHandler(event) {
+  function previewHandler() {
     sendToList({type: 'PREVIEW', repository, policyData});
   }
 
@@ -83,7 +82,7 @@ export default function CleanupPoliciesPreview({policyData}) {
   }
 
   function filterPreview(filter) {
-    sendToList({type: 'FILTER', filter})
+    sendToList({type: 'FILTER', filter});
   }
 
   return <Section className="nxrm-cleanup-policies-preview">
@@ -115,10 +114,10 @@ export default function CleanupPoliciesPreview({policyData}) {
           </div>
         </div>
         {isAlertShown &&
-        <NxWarningAlert onClose={() => sendToForm({type: 'HIDE_ALERT'})}>
-          <p className="nx-p">{UIStrings.CLEANUP_POLICIES.PREVIEW.SAMPLE_WARNING}</p>
-          <p className="nx-p">{UIStrings.CLEANUP_POLICIES.PREVIEW.COMPONENT_COUNT(data.length, total)}</p>
-        </NxWarningAlert>}
+            <NxWarningAlert onClose={() => sendToForm({type: 'HIDE_ALERT'})}>
+              <p className="nx-p">{UIStrings.CLEANUP_POLICIES.PREVIEW.SAMPLE_WARNING}</p>
+              <p className="nx-p">{UIStrings.CLEANUP_POLICIES.PREVIEW.COMPONENT_COUNT(data.length, total)}</p>
+            </NxWarningAlert>}
         <SectionToolbar>
           <div className="nxrm-spacer"/>
           <NxFilterInput

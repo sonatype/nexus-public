@@ -80,7 +80,7 @@ export default class FormUtils {
             src: 'fetchData',
             onDone: {
               target: 'loaded',
-              actions: ['setData', 'postProcessData', 'validate']
+              actions: ['clearLoadError', 'setData', 'postProcessData', 'validate']
             },
             onError: {
               target: 'loadError',
@@ -224,6 +224,9 @@ export default class FormUtils {
           }
           ExtJS.showErrorMessage(UIStrings.ERROR.LOAD_ERROR);
         },
+        clearLoadError: assign({
+          loadError: null,
+        }),
 
         onSaveSuccess: () => {},
 

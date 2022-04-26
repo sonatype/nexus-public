@@ -20,25 +20,9 @@ import {assign, createMachine} from 'xstate';
 import {useMachine} from '@xstate/react';
 import {mergeDeepRight} from 'ramda';
 import UIStrings from '../constants/UIStrings';
-
-/**
- * @param url URL string for the request
- * @param action the ExtJS action (example: coreui_Bundle, coreui_AnonymousSettings etc.)
- * @param method the method for the request (example: read, write etc.)
- */
-export const extAPIRequest = (action, method, data = null) => Axios.post('/service/extdirect',
-    {
-      "action": action,
-      "method": method,
-      "data": data,
-      "type": "rpc",
-      "tid": 8
-    }
-);
+import APIConstants from '../constants/APIConstants';
 
 export default class ExtAPIUtils {
-  static request = extAPIRequest;
-
   static useExtMachine(action, method, options = {}) {
     const defaultResult = options.defaultResult || [];
 
@@ -82,7 +66,7 @@ export default class ExtAPIUtils {
       },
       services: {
         fetch: async (_, {data = null}) => {
-          const response = await this.request(action, method, data)
+          const response = await this.extAPIRequest(action, method, data);
           return this.extractResult(response, defaultResult);
         }
       }
@@ -99,5 +83,33 @@ export default class ExtAPIUtils {
   static extractResult(response, defaultResult) {
     const extDirectResponse = response.data;
     return extDirectResponse.result.data || defaultResult;
+  }
+
+  static createRequestBody(action, method, data = null, tid = 1) {
+    return {action, method, data, type: 'rpc', tid};
+  };
+
+  /**
+   * @param {string} action [required] the ExtJS action (example: coreui_Bundle, coreui_AnonymousSettings etc.)
+   * @param {string} method [required] the method for the request (example: read, write etc.)
+   * @param {string, Object, Array} data [optional] - The request data
+   * @return {Promise}
+   */
+  static extAPIRequest(action, method, data) {
+    return Axios.post(APIConstants.EXT.URL, this.createRequestBody(action, method, data));
+  }
+
+  /**
+   * @param {Object[]} requests [required] - The list of requests
+   * @param {string} requests[].action [required] - The ExtJS action
+   * @param {string} requests[].method [required] - The method for the request
+   * @param {string, Object, Array} requests[].data [optional] - The request data
+   * @return {Promise}
+   */
+  static extAPIBulkRequest(requests) {
+    const data = requests.map((request, index) => {
+      return this.createRequestBody(request.action, request.method, request.data, index + 1);
+    });
+    return Axios.post(APIConstants.EXT.URL, data);
   }
 }

@@ -25,13 +25,13 @@ import UIStrings from '../../../../constants/UIStrings';
 
 import ProprietaryRepositoriesMachine from './ProprietaryRepositoriesMachine';
 
-const {PROPRIETARY_REPOSITORIES: { CONFIGURATION: LABELS, HELP_TEXT }, SETTINGS} = UIStrings;
+const {PROPRIETARY_REPOSITORIES: {CONFIGURATION: LABELS, HELP_TEXT}, SETTINGS} = UIStrings;
 
 export default function ProprietaryRepositories() {
   const [current, send] = useMachine(ProprietaryRepositoriesMachine, {devTools: true});
   const {data: {enabledRepositories}, possibleRepos, isPristine, loadError, saveError, validationErrors} = current.context;
-  const isLoading = current.matches('loading') || current.matches('loadingPossibleRepos');
-  const isSaving = current.matches('saving')
+  const isLoading = current.matches('loading');
+  const isSaving = current.matches('saving');
   const isInvalid = FormUtils.isInvalid(validationErrors);
 
   function discard() {

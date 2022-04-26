@@ -17,6 +17,7 @@
 
 import {ListMachineUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 import {actions, assign, send} from 'xstate';
+import {mergeDeepRight} from 'ramda';
 import Axios from 'axios';
 
 export default ListMachineUtils.buildListMachine({
@@ -24,22 +25,16 @@ export default ListMachineUtils.buildListMachine({
   initial: 'loaded',
   sortableFields: ['group', 'name', 'version'],
 
-  config: (config) => ({
-    ...config,
+  config: config => mergeDeepRight(config, {
     context: {
-      ...config.context,
       repository: '',
       policyData: {},
       isAlertShown: false
     },
     states: {
-      ...config.states,
       loaded: {
-        ...config.states.loaded,
         on: {
-          ...config.states.loaded.on,
           FILTER: {
-            ...config.states.loaded.on.FILTER,
             actions: [...config.states.loaded.on.FILTER.actions, 'debouncePreview', 'sendPreview']
           },
           RETRY_PREVIEW: {
@@ -53,15 +48,10 @@ export default ListMachineUtils.buildListMachine({
         }
       },
       loading: {
-        ...config.states.loading,
         states: {
-          ...config.states.loading.states,
           fetch: {
-            ...config.states.loading.states.fetch,
             invoke: {
-              ...config.states.loading.states.fetch.invoke,
               onDone: {
-                ...config.states.loading.states.fetch.invoke.onDone,
                 actions: [...config.states.loading.states.fetch.invoke.onDone.actions, 'maybeShowAlert']
               }
             }
@@ -69,13 +59,10 @@ export default ListMachineUtils.buildListMachine({
         }
       },
       error: {
-        ...config.states.error,
         on: {
-          ...config.states.error.on,
           FILTER: {
-            ...config.states.error.on.FILTER,
             actions: [...config.states.error.on.FILTER.actions, 'debouncePreview', 'sendPreview']
-          }
+          },
         }
       }
     },
@@ -83,7 +70,10 @@ export default ListMachineUtils.buildListMachine({
       CLEAR_PREVIEW: {
         target: 'loaded',
         actions: ['clear']
-      }
+      },
+      RETRY_PREVIEW: {
+        target: 'loading'
+      },
     }
   })
 }).withConfig({
@@ -100,7 +90,8 @@ export default ListMachineUtils.buildListMachine({
       data: () => [],
       pristineData: () => [],
       total: () => 0,
-      isAlertShown: () => false
+      isAlertShown: () => false,
+      error: '',
     }),
 
     debouncePreview: actions.cancel('cleanup-preview'),
@@ -131,7 +122,7 @@ export default ListMachineUtils.buildListMachine({
     )
   },
   services: {
-    fetchData: ({filter}, {policyData, repository}) => Axios.post(
+    fetchData: ({filter, policyData, repository}) => Axios.post(
         '/service/rest/internal/cleanup-policies/preview/components', {
           criteriaLastBlobUpdated: policyData.criteriaLastBlobUpdated,
           criteriaLastDownloaded: policyData.criteriaLastDownloaded,

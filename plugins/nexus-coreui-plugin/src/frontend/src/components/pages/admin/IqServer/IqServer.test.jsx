@@ -14,8 +14,7 @@ import React from 'react';
 import {render, screen, waitForElementToBeRemoved, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/extend-expect';
-import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, TestUtils} from '@sonatype/nexus-ui-plugin';
 import {when} from 'jest-when';
 
 import Axios from 'axios';

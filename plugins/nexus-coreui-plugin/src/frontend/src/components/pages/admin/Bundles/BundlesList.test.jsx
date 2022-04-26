@@ -13,7 +13,7 @@
 import React from 'react';
 import { fireEvent, render, screen, waitForElementToBeRemoved } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
-import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
+import {TestUtils} from '@sonatype/nexus-ui-plugin';
 
 import BundlesList from './BundlesList';
 import BundlesListMachine from './BundlesListMachine';

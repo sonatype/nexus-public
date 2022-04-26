@@ -11,18 +11,20 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
+import {mergeDeepRight} from 'ramda';
 import {render, screen, waitForElementToBeRemoved, waitFor, fireEvent} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import {act} from "react-dom/test-utils";
 import {when} from 'jest-when';
-import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, TestUtils, ExtAPIUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
 
 import Axios from 'axios';
 import ProprietaryRepositories from './ProprietaryRepositories';
 import UIStrings from "../../../../constants/UIStrings";
 
 const {PROPRIETARY_REPOSITORIES: LABELS, SETTINGS} = UIStrings;
+const {EXT: {PROPRIETARY_REPOSITORIES: {ACTION, METHODS}, }} = APIConstants;
+const URL = APIConstants.EXT.URL;
 
 jest.mock('@sonatype/nexus-ui-plugin', () => {
   return {
@@ -57,146 +59,103 @@ const selectors = {
   selectedList: () => screen.getByRole('group', {name: LABELS.CONFIGURATION.SELECTED_TITLE}),
 };
 
-const ALL_REPOS_REQUEST = {
-  action: 'coreui_ProprietaryRepositories',
-  data: null,
-  method: 'readPossibleRepos',
-  tid: 1,
-  type: 'rpc',
-};
-
-const ALL_REPOS_RESPONSE = {
-  action: "coreui_ProprietaryRepositories",
-  method: "readPossibleRepos",
-  tid: 1,
-  type: "rpc",
-  result: {
-    data: [
-      {
-        id: "maven-releases",
-        name: "maven-releases",
-      }, {
-        id: "maven-snapshots",
-        name: "maven-snapshots",
-      }, {
-        id: "nuget-hosted",
-        name: "nuget-hosted",
-      },
-    ],
-    success: true,
-  }
-};
-
-const ENABLED_REPOS_REQUEST = {
-  action: 'coreui_ProprietaryRepositories',
-  data: null,
-  method: 'read',
-  tid: 1,
-  type: 'rpc',
-};
+const ENABLED_REPOS_REQUEST = ExtAPIUtils.createRequestBody(ACTION, METHODS.READ, null, 1);
+const ALL_REPOS_REQUEST = ExtAPIUtils.createRequestBody(ACTION, METHODS.POSSIBLE_REPOS, null, 2);
 
 const ENABLED_REPOS_RESPONSE = {
-  action: "coreui_ProprietaryRepositories",
-  method: "read",
+  ...TestUtils.makeExtResult({enabledRepositories: ['nuget-hosted']}),
   tid: 1,
-  type: "rpc",
-  result: {
-    data: {
-      enabledRepositories: ['nuget-hosted'],
-    },
-    success: true,
-  }
+}
+const ALL_REPOS_RESPONSE = {
+  ...TestUtils.makeExtResult([
+    {id: "maven-releases", name: "maven-releases"},
+    {id: "maven-snapshots", name: "maven-snapshots"},
+    {id: "nuget-hosted", name: "nuget-hosted"},
+  ]),
+  tid: 2,
 };
 
+const FETCH_DATA_REQUEST = [ENABLED_REPOS_REQUEST, ALL_REPOS_REQUEST];
+const FETCH_DATA_RESPONSE = [ENABLED_REPOS_RESPONSE, ALL_REPOS_RESPONSE];
+
 describe('ProprietaryRepositories', () => {
+
   beforeEach(() => {
-    when(Axios.post).calledWith('/service/extdirect', ALL_REPOS_REQUEST).mockResolvedValue({
-      data: ALL_REPOS_RESPONSE
-    });
-    when(Axios.post).calledWith('/service/extdirect', ENABLED_REPOS_REQUEST).mockResolvedValue({
-      data: ENABLED_REPOS_RESPONSE
+    when(Axios.post).calledWith(URL, FETCH_DATA_REQUEST).mockResolvedValue({
+      data: FETCH_DATA_RESPONSE
     });
   });
 
   it('renders the resolved data', async () => {
+    const {queryLoadingMask, availableList, selectedList} = selectors;
+
     render(<ProprietaryRepositories/>);
+    await waitForElementToBeRemoved(queryLoadingMask());
 
-    await waitForElementToBeRemoved(selectors.queryLoadingMask());
-
-    expect(selectors.availableList()).toHaveTextContent('maven-releases');
-    expect(selectors.selectedList()).not.toHaveTextContent('maven-releases');
-    expect(selectors.availableList()).toHaveTextContent('maven-snapshots');
-    expect(selectors.selectedList()).toHaveTextContent('nuget-hosted');
+    expect(availableList()).toHaveTextContent('maven-releases');
+    expect(selectedList()).not.toHaveTextContent('maven-releases');
+    expect(availableList()).toHaveTextContent('maven-snapshots');
+    expect(selectedList()).toHaveTextContent('nuget-hosted');
   });
 
   it('discards changes', async () => {
+    const {availableList, selectedList, discardButton} = selectors;
+
     render(<ProprietaryRepositories/>);
-    await waitFor(() => expect(Axios.post).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(Axios.post).toHaveBeenCalledTimes(1));
 
-    expect(selectors.availableList()).toHaveTextContent('maven-snapshots');
-    expect(selectors.availableList()).toHaveTextContent('maven-releases');
-    expect(selectors.selectedList()).toHaveTextContent('nuget-hosted');
+    expect(availableList()).toHaveTextContent('maven-snapshots');
+    expect(availableList()).toHaveTextContent('maven-releases');
+    expect(selectedList()).toHaveTextContent('nuget-hosted');
 
-    expect(selectors.discardButton()).toHaveClass('disabled');
+    expect(discardButton()).toHaveClass('disabled');
 
     fireEvent.click(screen.getByText('maven-snapshots'));
     fireEvent.click(screen.getByText('nuget-hosted'));
 
-    expect(selectors.selectedList()).toHaveTextContent('maven-snapshots');
-    expect(selectors.availableList()).toHaveTextContent('maven-releases');
-    expect(selectors.availableList()).toHaveTextContent('nuget-hosted');
+    expect(selectedList()).toHaveTextContent('maven-snapshots');
+    expect(availableList()).toHaveTextContent('maven-releases');
+    expect(availableList()).toHaveTextContent('nuget-hosted');
 
-    expect(selectors.discardButton()).not.toHaveClass('disabled');
-    fireEvent.click(selectors.discardButton());
+    expect(discardButton()).not.toHaveClass('disabled');
+    fireEvent.click(discardButton());
 
-    expect(selectors.availableList()).toHaveTextContent('maven-snapshots');
-    expect(selectors.availableList()).toHaveTextContent('maven-releases');
-    expect(selectors.selectedList()).toHaveTextContent('nuget-hosted');
+    expect(availableList()).toHaveTextContent('maven-snapshots');
+    expect(availableList()).toHaveTextContent('maven-releases');
+    expect(selectedList()).toHaveTextContent('nuget-hosted');
   });
 
   it('edits the Proprietary Repositories Form', async () => {
-    when(Axios.post).calledWith('/service/extdirect', expect.objectContaining({method: 'update'}))
+    const {availableList, selectedList, saveButton} = selectors;
+
+    when(Axios.post).calledWith(URL, expect.objectContaining({method: 'update'}))
       .mockResolvedValue({
-        data: {
-          action: "coreui_ProprietaryRepositories",
-          method: "update",
-          tid: 1,
-          type: "rpc",
-          result: {
-            data: {
-              enabledRepositories: ['nuget-hosted'],
-            },
-            success: true,
-          }
-        }
+        data: TestUtils.makeExtResult({enabledRepositories: ['nuget-hosted']})
       });
 
     await act(async () => {
       render(<ProprietaryRepositories/>);
     });
 
-    await waitFor(() => expect(Axios.post).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(Axios.post).toHaveBeenCalledTimes(1));
 
-    expect(selectors.saveButton()).toHaveClass('disabled');
+    expect(saveButton()).toHaveClass('disabled');
 
     fireEvent.click(screen.getByText('maven-releases'));
     fireEvent.click(screen.getByText('nuget-hosted'));
 
-    expect(selectors.availableList()).toHaveTextContent('nuget-hosted');
-    expect(selectors.availableList()).toHaveTextContent('maven-snapshots');
-    expect(selectors.selectedList()).toHaveTextContent('maven-releases');
+    expect(availableList()).toHaveTextContent('nuget-hosted');
+    expect(availableList()).toHaveTextContent('maven-snapshots');
+    expect(selectedList()).toHaveTextContent('maven-releases');
 
-    expect(selectors.saveButton()).not.toHaveClass('disabled');
+    expect(saveButton()).not.toHaveClass('disabled');
 
-    await act(async () => {fireEvent.click(selectors.saveButton())});
+    await act(async () => {fireEvent.click(saveButton())});
 
-    expect(Axios.post).toHaveBeenCalledWith('/service/extdirect', {
-      action: 'coreui_ProprietaryRepositories',
-      data: [{enabledRepositories: ['maven-releases']}],
-      method: 'update',
-      tid: 1,
-      type: 'rpc',
-    });
+    expect(Axios.post).toHaveBeenCalledWith(
+        URL,
+        ExtAPIUtils.createRequestBody(ACTION, METHODS.UPDATE, [{enabledRepositories: ['maven-releases']}])
+    );
   });
 
   describe('Read Only Mode', () => {
@@ -209,7 +168,7 @@ describe('ProprietaryRepositories', () => {
         render(<ProprietaryRepositories/>);
       });
 
-      await waitFor(() => expect(Axios.post).toHaveBeenCalledTimes(2));
+      await waitFor(() => expect(Axios.post).toHaveBeenCalledTimes(1));
 
       expect(screen.getByText(LABELS.CONFIGURATION.SELECTED_TITLE)).toBeInTheDocument();
 
@@ -219,20 +178,17 @@ describe('ProprietaryRepositories', () => {
     it('Shows empty Proprietary Repositories page in Read Only mode', async () => {
       ExtJS.checkPermission.mockReturnValueOnce(false);
 
-      when(Axios.post).calledWith('/service/extdirect', ENABLED_REPOS_REQUEST).mockResolvedValue({
-        data: {
-          ...ENABLED_REPOS_RESPONSE,
-          result: {
-            ...ENABLED_REPOS_RESPONSE.result,
-            data: {enabledRepositories: []},
-          }
-        }
+      when(Axios.post).calledWith(URL, FETCH_DATA_REQUEST).mockResolvedValue({
+        data: [
+            mergeDeepRight(ENABLED_REPOS_RESPONSE, {result: {data: {enabledRepositories: []}}}),
+            ALL_REPOS_RESPONSE
+        ],
       });
 
       await act(async () => {
         render(<ProprietaryRepositories/>);
       });
-      await waitFor(() => expect(Axios.post).toHaveBeenCalledTimes(2));
+      await waitFor(() => expect(Axios.post).toHaveBeenCalledTimes(1));
 
       expect(screen.getByText(LABELS.CONFIGURATION.SELECTED_TITLE)).toBeInTheDocument();
       expect(screen.getByText(LABELS.CONFIGURATION.EMPTY_LIST)).toBeInTheDocument();

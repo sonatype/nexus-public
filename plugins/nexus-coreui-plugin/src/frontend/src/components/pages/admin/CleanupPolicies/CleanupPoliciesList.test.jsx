@@ -11,10 +11,10 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
+import axios from 'axios';
 import { waitForElementToBeRemoved } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
-import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
-import axios from 'axios';
+import {TestUtils} from '@sonatype/nexus-ui-plugin';
 
 import CleanupPoliciesList from './CleanupPoliciesList';
 

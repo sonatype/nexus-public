@@ -79,13 +79,15 @@ export default {
       EMPTY_LIST: 'There are no blob stores available',
       HELP: {
         TITLE: 'What is a blob store?',
-        TEXT: `\
-The binary assets you download via proxy repositories, or publish to hosted repositories, are stored in \
-the blob store attached to those repositories. In traditional, single node NXRM deployments, blob stores \
-are typically associated with a local filesystem directory, usually within the sonatype-work directory. \
-For more information, check \
-<a href="http://links.sonatype.com/products/nxrm3/docs/blob-store" target="_blank" rel="noopener noreferrer">\
-the documentation</a>.`
+        TEXT: <>
+          The binary assets you download via proxy repositories, or publish to hosted repositories, are stored in
+          the blob store attached to those repositories. In traditional, single node NXRM deployments, blob stores
+          are typically associated with a local filesystem directory, usually within the sonatype-work directory.
+          For more information, check{' '}
+          <NxTextLink external href="http://links.sonatype.com/products/nxrm3/docs/blob-store">
+            the documentation
+          </NxTextLink>.
+        </>,
       },
       AVAILABLE: 'Started',
       UNAVAILABLE: 'Failed',
@@ -192,12 +194,14 @@ the documentation</a>.`
     EMPTY_MESSAGE: 'No content selectors were found',
 
     HELP_TITLE: 'What is a content selector?',
-    HELP_TEXT: `\
-Content selectors provide a means for you to select specific content from your repositories. \
-Repository content is evaluated against expressions written in CSEL (Content Selector Expression Language). \
-For more information, <a href="http://links.sonatype.com/products/nxrm3/docs/content-selector" target="_blank" rel="noopener noreferrer">check the documentation</a>.\
-`,
-
+    HELP_TEXT: <>
+      Content selectors provide a means for you to select specific content from your repositories.
+      Repository content is evaluated against expressions written in CSEL (Content Selector Expression Language).
+      For more information,{' '}
+      <NxTextLink external href="http://links.sonatype.com/products/nxrm3/docs/content-selector">
+        check the documentation
+      </NxTextLink>.
+    </>,
     CREATE_BUTTON: 'Create Selector',
     FILTER_PLACEHOLDER: 'Filter',
 
@@ -331,19 +335,22 @@ For more information, <a href="http://links.sonatype.com/products/nxrm3/docs/con
         STATUS: 'Status',
         URL: 'URL',
         HEALTH_CHECK: 'Health check',
-        IQ: 'IQ Policy Violations'
+        IQ: 'IQ Policy Violations',
       },
       FILTER_PLACEHOLDER: 'Filter by name',
       EMPTY_LIST: 'There are no repositories available',
+      COPY_URL_TITLE: 'Copy URL to Clipboard',
       HELP: {
         TITLE: 'What is a repository?',
-        TEXT: `\
-A repository is a storage location where components, such as packages, libraries, binaries, and containers, \
-are retrieved so they can be installed or used. Creating and managing repositories is an essential part of \
-your Nexus Repository Manager configuration since it allows you to expose content to your end users as well \
-as provide a location for them to store more content. For more information, check \
-<a href="http://links.sonatype.com/products/nxrm3/docs/repository" target="_blank" rel="noopener noreferrer">\
-the documentation</a>.`
+        TEXT: <>
+          A repository is a storage location where components, such as packages, libraries, binaries, and containers,
+          are retrieved so they can be installed or used. Creating and managing repositories is an essential part of
+          your Nexus Repository Manager configuration since it allows you to expose content to your end users as well
+          as provide a location for them to store more content. For more information, check{' '}
+          <NxTextLink external href="http://links.sonatype.com/products/nxrm3/docs/repository">
+            the documentation
+          </NxTextLink>.
+        </>,
       },
     },
 
@@ -456,7 +463,7 @@ the documentation</a>.`
         pypi: ' (e.g., https://pypi.org)',
         rubygems: ' (e.g., https://rubygems.org)',
         yum: ' (e.g., http://mirror.centos.org/centos/)',
-        default: ' (e.g., https://example.com)'	
+        default: ' (e.g., https://example.com)'
       }
     }
   },
@@ -478,12 +485,14 @@ the documentation</a>.`
       USED_BY: (count) => count === 1 ? '1 repository' : `${count} repositories`,
       EMPTY_LIST: 'There are no routing rules created yet',
       HELP_TITLE: 'What is a routing rule?',
-      HELP_TEXT: `\
-Routes are like filters you can apply to groups in terms of security access and general component retrieval. \
-They can be used to reduce the number of repositories within a group accessed in order to retrieve a component. \
-For more information, <a href="http://links.sonatype.com/products/nxrm3/docs/routing-rule" target="_blank" \
-rel="noopener noreferrer">check the documentation</a>.
-`
+      HELP_TEXT: <>
+        Routes are like filters you can apply to groups in terms of security access and general component retrieval.
+        They can be used to reduce the number of repositories within a group accessed in order to retrieve a component.
+        For more information,{' '}
+        <NxTextLink external href="http://links.sonatype.com/products/nxrm3/docs/routing-rule">
+          check the documentation
+        </NxTextLink>.
+      </>,
     },
 
     PREVIEW: {
@@ -740,12 +749,15 @@ This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 
     EDIT_TITLE: 'Edit Cleanup Policy',
 
     HELP_TITLE: 'What is a cleanup policy?',
-    HELP_TEXT: `\
-Cleanup policies can be used to remove content from your repositories. These policies will execute at the configured frequency. \
-Once created, a cleanup policy must be assigned to a repository from \
-<a href="#admin/repository/repositories">the repository configuration screen</a>. For more information, check \
-<a href="http://links.sonatype.com/products/nxrm3/docs/cleanup-policy" target="_blank" rel="noopener noreferrer">the documentation</a>.\
-`,
+    HELP_TEXT: <>
+      Cleanup policies can be used to remove content from your repositories. These policies will execute
+      at the configured frequency. Once created, a cleanup policy must be assigned to a repository from{' '}
+      <NxTextLink href="#admin/repository/repositories">the repository configuration screen</NxTextLink>.
+      For more information, check{' '}
+      <NxTextLink external href="http://links.sonatype.com/products/nxrm3/docs/cleanup-policy">
+        the documentation
+      </NxTextLink>.
+    </>,
     EMPTY_MESSAGE: 'No cleanup policies were found',
     CREATE_BUTTON: 'Create Cleanup Policy',
     FILTER_PLACEHOLDER: 'Filter',
@@ -917,11 +929,13 @@ Once created, a cleanup policy must be assigned to a repository from \
       EMPTY_LIST: 'There are no configured proprietary hosted repositories for which you have view permissions.',
     },
     HELP_TEXT: <>
-      {'To help prevent dependency confusion attacks, identify your hosted repositories that contain proprietary components. Refer to the'}{' '}
+      To help prevent dependency confusion attacks, identify your hosted repositories that contain
+      proprietary components. Refer to the{' '}
       <NxTextLink external href="http://links.sonatype.com/products/nxrm3/docs/proprietary-repositories">
-        {'documentation'}
+        documentation
       </NxTextLink>
-      {' '}{'for details on setting up appropriate IQ policies to quarantine public components with the same names as your proprietary components.'}
+      {' '}for details on setting up appropriate IQ policies to quarantine public components with the same names
+      as your proprietary components.
     </>,
   }
 };

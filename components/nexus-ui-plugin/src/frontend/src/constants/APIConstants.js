@@ -14,25 +14,23 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import { assign } from 'xstate';
 
-import { ListMachineUtils, ExtAPIUtils } from '@sonatype/nexus-ui-plugin';
-
-export default ListMachineUtils.buildListMachine({
-  id: 'BundlesListMachine',
-  sortableFields: ['id', 'state', 'startLevel', 'name', 'version'],
-}).withConfig({
-  actions: {
-    filterData: assign({
-      data: ({filter, data, pristineData}, _) => pristineData.filter(
-          ({name}) => name.toLowerCase().indexOf(filter.toLowerCase()) !== -1
-      )
-    }),
-    sortData: assign({
-      data: ListMachineUtils.sortDataByFieldAndDirection({useLowerCaseSorting: true})
-    }),
+export default {
+  EXT: {
+    URL: '/service/extdirect',
+    PROPRIETARY_REPOSITORIES: {
+      ACTION: 'coreui_ProprietaryRepositories',
+      METHODS: {
+        READ: 'read',
+        UPDATE: 'update',
+        POSSIBLE_REPOS: 'readPossibleRepos',
+      },
+    },
+    BLOBSTORE: {
+      ACTION: 'coreui_Blobstore',
+      METHODS: {
+        READ_NAMES: 'readNames',
+      },
+    },
   },
-  services: {
-    fetchData: () => ExtAPIUtils.extAPIRequest('coreui_Bundle', 'read').then(v => v.data.result),
-  }
-});
+};

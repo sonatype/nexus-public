@@ -16,70 +16,35 @@
  */
 import React from 'react';
 import {assign} from 'xstate';
-import Axios from 'axios';
-import {FormUtils} from '@sonatype/nexus-ui-plugin';
+import {sortBy, prop} from 'ramda';
+import {FormUtils, ExtAPIUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
+
+const {EXT: {PROPRIETARY_REPOSITORIES: {ACTION, METHODS}, }} = APIConstants;
 
 export default FormUtils.buildFormMachine({
   id: 'ProprietaryRepositoriesMachine',
-  initial: 'loadingPossibleRepos',
-  config: (config) => ({
-    ...config,
-    context: {
-      ...config.context,
-      data: {
-        possibleRepos: [],
-        enabledRepositories: [],
-      },
-      pristineData: {
-        possibleRepos: [],
-        enabledRepositories: [],
-      }
-    },
-    states: {
-      ...config.states,
-      loadingPossibleRepos: {
-        invoke: {
-          id: 'fetchPossibleRepos',
-          src: 'fetchPossibleRepos',
-          onDone: {
-            target: 'loading',
-            actions: ['setPossibleRepos']
-          },
-          onError: {
-            target: 'loadError',
-            actions: ['setLoadError', 'logLoadError']
-          }
-        }
-      },
-    },
-    on: {
-      'RETRY': {
-        target: 'loading'
-      }
-    }
-  }),
 }).withConfig({
   actions: {
-    setPossibleRepos: assign({
-      possibleRepos: (_, event) => {
-        return event.data?.data?.result?.data;
-      }
-    }),
     validate: assign({
       validationErrors: () => {{}}
     }),
+    setData: assign((_, event) => {
+      const [selected, possible] = sortBy(prop('tid'), event.data?.data || []);
+      const data = selected?.result?.data;
+      return {
+        data,
+        pristineData: data,
+        possibleRepos: possible?.result?.data,
+      };
+    }),
   },
   services: {
-    fetchData: () => Axios.post('/service/extdirect', {"action":"coreui_ProprietaryRepositories","method":"read","data":null,"type":"rpc","tid":1}).then(v => v.data.result),
-    fetchPossibleRepos: () => Axios.post('/service/extdirect',{"action":"coreui_ProprietaryRepositories","method":"readPossibleRepos","data":null,"type":"rpc","tid":1}),
-    saveData: ({data}) => {
-      return Axios.post('/service/extdirect', {
-        "action": "coreui_ProprietaryRepositories",
-        "method": "update",
-        "data": [{"enabledRepositories": data.enabledRepositories}],
-        "type": "rpc",
-        "tid": 1
-      }).then(res => res.data.result)
-    },
+    fetchData: () => ExtAPIUtils.extAPIBulkRequest([
+      {action: ACTION, method: METHODS.READ},
+      {action: ACTION, method: METHODS.POSSIBLE_REPOS},
+    ]),
+    saveData: ({data}) => ExtAPIUtils.extAPIRequest(ACTION, METHODS.UPDATE, [
+      {'enabledRepositories': data.enabledRepositories}
+    ]).then(v => v.data.result),
   }
 });

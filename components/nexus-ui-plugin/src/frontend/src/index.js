@@ -18,12 +18,14 @@ import './styles/_nx-overrides.scss';
 import './styles/_global.scss';
 
 export { default as UIStrings } from './constants/UIStrings';
+export { default as APIConstants } from './constants/APIConstants';
 
 export { default as ExtJS } from './interface/ExtJS';
 export { default as ExtAPIUtils } from './interface/ExtAPIUtils';
 
 export { default as Utils } from './interface/Utils';
 export { default as UnitUtil } from './interface/UnitUtil';
+export { default as TestUtils } from './interface/TestUtils';
 export { default as FormUtils } from './interface/FormUtils';
 export { default as HumanReadableUtils } from './interface/HumanReadableUtils';
 export { default as ListMachineUtils } from './interface/ListMachineUtils';

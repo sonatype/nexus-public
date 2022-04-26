@@ -14,11 +14,10 @@ import React from 'react';
 import {fireEvent, waitFor} from '@testing-library/react';
 import {act} from "react-dom/test-utils";
 import '@testing-library/jest-dom/extend-expect';
-import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import PasswordChangeForm from './PasswordChangeForm';
 import UIStrings from '../../../../constants/UIStrings';
 import Axios from 'axios';
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, TestUtils} from '@sonatype/nexus-ui-plugin';
 
 jest.mock('@sonatype/nexus-ui-plugin', () => {
   return {

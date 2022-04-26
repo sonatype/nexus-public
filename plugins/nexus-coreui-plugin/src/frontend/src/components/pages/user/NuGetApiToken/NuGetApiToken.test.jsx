@@ -15,7 +15,7 @@ import Axios from 'axios';
 import {act} from 'react-dom/test-utils';
 import {fireEvent, waitFor} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
-import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
+import {TestUtils} from '@sonatype/nexus-ui-plugin';
 
 import NuGetApiToken from './NuGetApiToken';
 import UIStrings from '../../../../constants/UIStrings';
@@ -63,7 +63,7 @@ describe('NuGetApiToken', () => {
   }
 
   it('renders correctly', async () => {
-    let { container, accessButton, nugetKey } = renderView(<NuGetApiToken/>);
+    let {accessButton, nugetKey} = renderView(<NuGetApiToken/>);
 
     await waitFor(() =>  expect(nugetKey()).not.toBeInTheDocument());
 

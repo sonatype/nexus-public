@@ -16,9 +16,8 @@ import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
 import {act} from "react-dom/test-utils";
 import '@testing-library/jest-dom/extend-expect';
-import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import axios from 'axios';
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, TestUtils} from '@sonatype/nexus-ui-plugin';
 
 import ContentSelectorsForm from './ContentSelectorsForm';
 
@@ -102,7 +101,7 @@ describe('ContentSelectorsForm', function() {
       }
     });
 
-    const {container, loadingMask, name, type, description, expression, saveButton} = renderEditView(itemId);
+    const {loadingMask, name, type, description, expression, saveButton} = renderEditView(itemId);
 
     await waitForElementToBeRemoved(loadingMask);
 
@@ -169,7 +168,7 @@ describe('ContentSelectorsForm', function() {
       }
     });
 
-    const {expression, getByText, getByRole, loadingMask, name, saveButton, savingMask} = renderCreateView();
+    const {expression, getByText, loadingMask, name, saveButton, savingMask} = renderCreateView();
 
     await waitForElementToBeRemoved(loadingMask);
 

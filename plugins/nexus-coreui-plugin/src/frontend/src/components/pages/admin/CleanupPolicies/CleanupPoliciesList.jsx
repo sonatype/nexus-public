@@ -13,7 +13,7 @@
 import React from 'react';
 import {useMachine} from '@xstate/react';
 
-import {faChevronRight, faInfoCircle, faBroom} from '@fortawesome/free-solid-svg-icons';
+import {faBroom} from '@fortawesome/free-solid-svg-icons';
 
 import {
   ContentBody,
@@ -30,7 +30,6 @@ import {
 import {
   NxButton,
   NxFilterInput,
-  NxFontAwesomeIcon,
   NxTable,
   NxTableBody,
   NxTableCell,
@@ -41,6 +40,8 @@ import {
 import CleanupPoliciesListMachine from './CleanupPoliciesListMachine';
 
 import UIStrings from '../../../../constants/UIStrings';
+
+const {CLEANUP_POLICIES: LABELS} = UIStrings;
 
 export default function CleanupPoliciesList({onCreate, onEdit}) {
   const [current, send] = useMachine(CleanupPoliciesListMachine, {devTools: true});
@@ -59,10 +60,10 @@ export default function CleanupPoliciesList({onCreate, onEdit}) {
 
   return <Page className="nxrm-cleanup-policies">
     <PageHeader>
-      <PageTitle icon={faBroom} {...UIStrings.CLEANUP_POLICIES.MENU}/>
+      <PageTitle icon={faBroom} {...LABELS.MENU}/>
       <PageActions>
         <NxButton variant="primary" onClick={onCreate}>
-          <span>{UIStrings.CLEANUP_POLICIES.CREATE_BUTTON}</span>
+          <span>{LABELS.CREATE_BUTTON}</span>
         </NxButton>
       </PageActions>
     </PageHeader>
@@ -74,24 +75,24 @@ export default function CleanupPoliciesList({onCreate, onEdit}) {
               id="filter"
               onChange={filter}
               value={filterText}
-              placeholder={UIStrings.CLEANUP_POLICIES.FILTER_PLACEHOLDER}/>
+              placeholder={LABELS.FILTER_PLACEHOLDER}/>
         </SectionToolbar>
         <NxTable>
           <NxTableHead>
             <NxTableRow>
               <NxTableCell onClick={() => send({type: 'SORT_BY_NAME'})} isSortable sortDir={nameSortDir}>
-                {UIStrings.CLEANUP_POLICIES.NAME_LABEL}
+                {LABELS.NAME_LABEL}
               </NxTableCell>
               <NxTableCell onClick={() => send({type: 'SORT_BY_FORMAT'})} isSortable sortDir={formatSortDir}>
-                {UIStrings.CLEANUP_POLICIES.FORMAT_LABEL}
+                {LABELS.FORMAT_LABEL}
               </NxTableCell>
               <NxTableCell onClick={() => send({type: 'SORT_BY_NOTES'})} isSortable sortDir={notesSortDir}>
-                {UIStrings.CLEANUP_POLICIES.NOTES_LABEL}
+                {LABELS.NOTES_LABEL}
               </NxTableCell>
               <NxTableCell chevron/>
             </NxTableRow>
           </NxTableHead>
-          <NxTableBody isLoading={isLoading} error={error} emptyMessage={UIStrings.CLEANUP_POLICIES.EMPTY_MESSAGE}>
+          <NxTableBody isLoading={isLoading} error={error} emptyMessage={LABELS.EMPTY_MESSAGE}>
             {data.map(({name, format, notes}) => (
                 <NxTableRow key={name} onClick={() => onEdit(name)} isClickable>
                   <NxTableCell>{name}</NxTableCell>
@@ -104,10 +105,7 @@ export default function CleanupPoliciesList({onCreate, onEdit}) {
         </NxTable>
       </Section>
 
-      <HelpTile>
-        <h3><NxFontAwesomeIcon icon={faInfoCircle}/>{UIStrings.CLEANUP_POLICIES.HELP_TITLE}</h3>
-        <p dangerouslySetInnerHTML={{__html: UIStrings.CLEANUP_POLICIES.HELP_TEXT}}/>
-      </HelpTile>
+      <HelpTile header={LABELS.HELP_TITLE} body={LABELS.HELP_TEXT}/>
     </ContentBody>
   </Page>;
 }

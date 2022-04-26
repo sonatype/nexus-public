@@ -16,9 +16,8 @@ import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/extend-expect';
 import {when} from 'jest-when';
 
-import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import axios from 'axios';
-import {ExtJS, Utils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, Utils, TestUtils} from '@sonatype/nexus-ui-plugin';
 
 import CleanupPoliciesForm from './CleanupPoliciesForm';
 
@@ -84,7 +83,7 @@ describe('CleanupPoliciesForm', function() {
   }
 
   function renderView(view) {
-    return TestUtils.render(view, ({queryByLabelText, queryByText, queryByPlaceholderText, loadingMask}) => ({
+    return TestUtils.render(view, ({queryByLabelText, queryByText, queryByPlaceholderText}) => ({
       name: () => queryByLabelText(UIStrings.CLEANUP_POLICIES.NAME_LABEL),
       format: () => queryByLabelText(UIStrings.CLEANUP_POLICIES.FORMAT_LABEL),
       notes: () => queryByLabelText(UIStrings.CLEANUP_POLICIES.NOTES_LABEL),
@@ -127,7 +126,7 @@ describe('CleanupPoliciesForm', function() {
   });
 
   it('renders the resolved data', async function() {
-    const {container,
+    const {
       loadingMask,
       name,
       format,
@@ -136,7 +135,8 @@ describe('CleanupPoliciesForm', function() {
       criteriaLastDownloaded,
       criteriaReleaseType,
       criteriaAssetRegex,
-      saveButton} = renderEditView(EDITABLE_ITEM.name);
+      saveButton
+    } = renderEditView(EDITABLE_ITEM.name);
 
     await waitForElementToBeRemoved(loadingMask);
 

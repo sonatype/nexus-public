@@ -11,6 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
+import Axios from 'axios';
 import {
   fireEvent,
   render,
@@ -23,9 +24,9 @@ import {
 } from '@testing-library/react';
 import {when} from 'jest-when';
 import '@testing-library/jest-dom/extend-expect';
-import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
+import {mergeDeepRight} from 'ramda';
 
-import axios from 'axios';
+import {TestUtils, ExtAPIUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
 import UIStrings from '../../../../constants/UIStrings';
 
 import RepositoriesForm from './RepositoriesForm';
@@ -34,54 +35,31 @@ import {repositoryUrl} from './RepositoriesFormMachine';
 import {repositoriesUrl} from './facets/GenericGroupConfiguration';
 import {RECIPES_URL} from './facets/GenericFormatConfiguration';
 import {ROUTING_RULES_URL} from './facets/GenericOptionsConfiguration';
-import {mergeDeepRight} from 'ramda';
 import {genericDefaultValues} from './RepositoryFormDefaultValues';
 
-jest.mock('axios');
-
-jest.mock('@sonatype/nexus-ui-plugin', () => ({
-  ...jest.requireActual('@sonatype/nexus-ui-plugin'),
-  ExtAPIUtils: {
-    request: (action, method, data = null) =>
-      jest.requireMock('axios').get('/service/extdirect', {
-        action,
-        method,
-        data,
-        type: 'rpc',
-        tid: '8'
-      }),
-    useExtMachine: jest.requireActual('@sonatype/nexus-ui-plugin').ExtAPIUtils.useExtMachine,
-    extractResult: jest.requireActual('@sonatype/nexus-ui-plugin').ExtAPIUtils.extractResult
-  }
+jest.mock('axios', () => ({
+  ...jest.requireActual('axios'),
+  get: jest.fn(),
+  put: jest.fn(),
+  post: jest.fn(),
 }));
 
 const {EDITOR} = UIStrings.REPOSITORIES;
+const EXT_URL = APIConstants.EXT.URL;
 
-const BLOB_STORE_EXT_REQUEST = {
-  action: 'coreui_Blobstore',
-  method: 'readNames',
-  data: null,
-  type: 'rpc',
-  tid: '8'
-};
+const BLOB_STORE_EXT_REQUEST = ExtAPIUtils.createRequestBody('coreui_Blobstore', 'readNames');
 
 function CLEANUP_EXT_REQUEST(format = 'maven2') {
-  return {
-    action: 'cleanup_CleanupPolicy',
-    method: 'readByFormat',
-    data: [
-      {
-        filter: [
-          {
-            property: 'format',
-            value: format
-          }
-        ]
-      }
-    ],
-    type: 'rpc',
-    tid: '8'
-  };
+  return ExtAPIUtils.createRequestBody('cleanup_CleanupPolicy', 'readByFormat', [
+    {
+      filter: [
+        {
+          property: 'format',
+          value: format,
+        }
+      ]
+    }
+  ]);
 }
 
 describe('RepositoriesForm', () => {
@@ -199,19 +177,19 @@ describe('RepositoriesForm', () => {
   ];
 
   beforeEach(() => {
-    when(axios.get)
+    when(Axios.get)
       .calledWith(expect.stringContaining(repositoriesUrl({format: 'maven2'})))
       .mockResolvedValue({data: MAVEN_REPOS_RESPONSE});
-    when(axios.get)
+    when(Axios.get)
       .calledWith(expect.stringContaining(RECIPES_URL))
       .mockResolvedValue({data: RECIPES_RESPONSE});
-    when(axios.get)
-      .calledWith('/service/extdirect', BLOB_STORE_EXT_REQUEST)
+    when(Axios.post)
+      .calledWith(EXT_URL, BLOB_STORE_EXT_REQUEST)
       .mockResolvedValue({data: TestUtils.makeExtResult(BLOB_STORES_RESPONSE)});
-    when(axios.get)
-      .calledWith('/service/extdirect', CLEANUP_EXT_REQUEST())
+    when(Axios.post)
+      .calledWith(EXT_URL, CLEANUP_EXT_REQUEST())
       .mockResolvedValue({data: TestUtils.makeExtResult(MAVEN_CLEANUP_RESPONSE)});
-    when(axios.get)
+    when(Axios.get)
       .calledWith(expect.stringContaining(ROUTING_RULES_URL))
       .mockResolvedValue({data: ROUTING_RULES_RESPONSE});
   });
@@ -238,7 +216,7 @@ describe('RepositoriesForm', () => {
     await waitFor(() => validateSelect(selectors.getBlobStoreSelect(), BLOB_STORES_OPTIONS, ''));
 
     await waitFor(() =>
-      expect(axios.get).toHaveBeenCalledWith(expect.stringContaining(repositoriesUrl({format})))
+      expect(Axios.get).toHaveBeenCalledWith(expect.stringContaining(repositoriesUrl({format})))
     );
 
     MAVEN_REPOS_RESPONSE.forEach((repo) => {
@@ -254,8 +232,8 @@ describe('RepositoriesForm', () => {
     const format = 'maven2';
     const blobStoreResponse = [{name: 'default'}];
     const blobStoreOptions = [{name: EDITOR.SELECT_STORE_OPTION}, ...blobStoreResponse];
-    when(axios.get)
-      .calledWith('/service/extdirect', BLOB_STORE_EXT_REQUEST)
+    when(Axios.post)
+      .calledWith(EXT_URL, BLOB_STORE_EXT_REQUEST)
       .mockResolvedValue({data: TestUtils.makeExtResult(blobStoreResponse)});
 
     renderView();
@@ -275,7 +253,7 @@ describe('RepositoriesForm', () => {
     validateSelect(selectors.getDeploymentPolicySelect(), deploymentPolicyOptions, 'ALLOW_ONCE');
 
     await waitFor(() =>
-      expect(axios.get).toHaveBeenCalledWith('/service/extdirect', CLEANUP_EXT_REQUEST())
+      expect(Axios.post).toHaveBeenCalledWith(EXT_URL, CLEANUP_EXT_REQUEST())
     );
 
     MAVEN_CLEANUP_RESPONSE.forEach((policy) => {
@@ -365,7 +343,7 @@ describe('RepositoriesForm', () => {
     expect(selectors.getCreateButton()).not.toHaveClass('disabled');
 
     fireEvent.click(selectors.getCreateButton());
-    await waitFor(() => expect(axios.post).toHaveBeenCalledWith(url, payload));
+    await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(url, payload));
   });
 
   it('creates hosted repository', async () => {
@@ -407,7 +385,7 @@ describe('RepositoriesForm', () => {
     fireEvent.click(selectors.getTransferListOption(payload.cleanup.policyNames[1]));
     fireEvent.click(selectors.getCreateButton());
 
-    await waitFor(() => expect(axios.post).toHaveBeenCalledWith(url, payload));
+    await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(url, payload));
   });
 
   it('creates proxy repository', async () => {
@@ -461,7 +439,7 @@ describe('RepositoriesForm', () => {
 
     fireEvent.click(selectors.getCreateButton());
 
-    await waitFor(() => expect(axios.post).toHaveBeenCalledWith(url, payload));
+    await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(url, payload));
   });
 
   it('creates proxy repository with http client settings', async () => {
@@ -555,7 +533,7 @@ describe('RepositoriesForm', () => {
 
     fireEvent.click(selectors.getCreateButton());
 
-    await waitFor(() => expect(axios.post).toHaveBeenCalledWith(url, payload));
+    await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(url, payload));
   });
 
   it('creates bower proxy repository', async () => {
@@ -588,15 +566,15 @@ describe('RepositoriesForm', () => {
 
     fireEvent.click(selectors.getCreateButton());
 
-    await waitFor(() => expect(axios.post).toHaveBeenCalledWith(url, payload));
+    await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(url, payload));
   });
 
   it('filters types by format', async () => {
-    when(axios.get)
+    when(Axios.get)
       .calledWith(expect.stringContaining(repositoriesUrl('p2')))
       .mockResolvedValue({data: []});
 
-    when(axios.get)
+    when(Axios.get)
       .calledWith(expect.stringContaining(repositoriesUrl('nuget')))
       .mockResolvedValue({data: []});
 
@@ -648,7 +626,7 @@ describe('RepositoriesForm', () => {
       },
       type: 'hosted'
     };
-    when(axios.get)
+    when(Axios.get)
       .calledWith('/service/rest/internal/ui/repositories/repository/raw-hosted')
       .mockResolvedValueOnce({
         data: repo
@@ -670,7 +648,7 @@ describe('RepositoriesForm', () => {
 
     fireEvent.click(selectors.getSaveButton());
 
-    expect(axios.put).toBeCalledWith(
+    expect(Axios.put).toBeCalledWith(
       '/service/rest/v1/repositories/raw/hosted/raw-hosted',
       mergeDeepRight(repo, {
         storage: {
@@ -718,7 +696,7 @@ describe('RepositoriesForm', () => {
       routingRuleName: null,
       type: 'proxy'
     };
-    when(axios.get)
+    when(Axios.get)
       .calledWith('/service/rest/internal/ui/repositories/repository/raw-proxy')
       .mockResolvedValueOnce({
         data: repo
@@ -732,7 +710,7 @@ describe('RepositoriesForm', () => {
 
     fireEvent.click(selectors.getSaveButton());
 
-    expect(axios.put).toBeCalledWith(
+    expect(Axios.put).toBeCalledWith(
       '/service/rest/v1/repositories/raw/proxy/raw-proxy',
       mergeDeepRight(repo, {
         proxy: {
@@ -759,12 +737,12 @@ describe('RepositoriesForm', () => {
 
       type: 'group'
     };
-    when(axios.get)
+    when(Axios.get)
       .calledWith('/service/rest/internal/ui/repositories/repository/raw-group')
       .mockResolvedValueOnce({
         data: repo
       });
-    when(axios.get)
+    when(Axios.get)
       .calledWith('/service/rest/internal/ui/repositories?format=raw')
       .mockResolvedValueOnce({
         data: [
@@ -791,7 +769,7 @@ describe('RepositoriesForm', () => {
 
     fireEvent.click(selectors.getSaveButton());
 
-    expect(axios.put).toBeCalledWith(
+    expect(Axios.put).toBeCalledWith(
       '/service/rest/v1/repositories/raw/group/raw-group',
       mergeDeepRight(repo, {
         group: {
