@@ -89,13 +89,6 @@ public interface DatabaseMaintenanceService
   Map<String, Object> checkDatabase(String databaseName);
 
   /**
-   * Attempts to repair the named database; returns short summary in map form.
-   *
-   * @since 3.16
-   */
-  Map<String, Object> repairDatabase(String databaseName);
-
-  /**
    * Requests reinstallation of the named database with content from the cluster; returns short summary in map form.
    *
    * @since 3.16
