@@ -378,6 +378,8 @@ public class RepositoryManagerImpl
 
     // load old configuration before update
     Configuration oldConfiguration = repository(configuration.getRepositoryName()).getConfiguration().copy();
+    String repositoryName = checkNotNull(configuration.getRepositoryName());
+    validateRepositoryConfiguration(repositoryName, configuration);
 
     // the configuration must be updated before repository restart
     if (!EventHelper.isReplicating()) {
@@ -400,7 +402,7 @@ public class RepositoryManagerImpl
 
     if (!EventHelper.isReplicating()) {
       Optional<Configuration> configuration = repositoryConfiguration(name);
-      configuration.ifPresent(config -> store.delete(config));
+      configuration.ifPresent(store::delete);
     }
 
     eventManager.post(new RepositoryDeletedEvent(repository));
@@ -448,12 +450,7 @@ public class RepositoryManagerImpl
     String repositoryName = checkNotNull(configuration.getRepositoryName());
     log.info("Updating repository in memory: {} -> {}", repositoryName, configuration);
 
-    validateConfiguration(configuration);
-
     Repository repository = repository(repositoryName);
-
-    // ensure configuration sanity
-    repository.validate(configuration);
 
     repository.stop();
     repository.update(configuration);
@@ -661,8 +658,10 @@ public class RepositoryManagerImpl
     Optional<Configuration> configuration = repositoryConfiguration(repositoryName);
     configuration.ifPresent(config -> {
       try {
+        validateConfiguration(config);
         Configuration oldConfiguration = repository(repositoryName).getConfiguration().copy();
-        Repository repository = updateRepositoryInMemory(config);
+        Repository repository = repository(repositoryName);
+        updateRepositoryInMemory(config);
         eventManager.post(new RepositoryUpdatedEvent(repository, oldConfiguration));
       }
       catch (Exception e) {
@@ -692,4 +691,11 @@ public class RepositoryManagerImpl
     RepositoryConfigurationEvent configEvent = new RepositoryConfigurationEvent(repositoryName, eventType);
     eventManager.post(new PublisherEvent(configEvent));
   }
+
+  private void validateRepositoryConfiguration(String repositoryName, Configuration configuration) throws Exception {
+    Repository repository = repository(repositoryName);
+    // ensure configuration sanity
+    repository.validate(configuration);
+  }
+
 }
