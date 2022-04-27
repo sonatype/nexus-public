@@ -89,11 +89,10 @@ public class DataStoreCleanupComponentBrowse
     checkNotNull(options);
     checkNotNull(options.getStart());
     checkNotNull(options.getLimit());
-    checkNotNull(options.getFilter());
 
     Predicate<FluentComponent> componentFilter = createComponentFilter(repository, policy);
 
-    Optional<Predicate<FluentComponent>> optionsFilter = createOptionsFilter(options.getFilter());
+    Optional<Predicate<FluentComponent>> optionsFilter = createOptionsFilter(options);
     if (optionsFilter.isPresent()) {
       componentFilter = componentFilter.and(optionsFilter.get());
     }
@@ -113,8 +112,9 @@ public class DataStoreCleanupComponentBrowse
    * Creates a Predicate that will return true if any of the Component's name/group/version
    * matches the provided filter.
    */
-  private Optional<Predicate<FluentComponent>> createOptionsFilter(final String filter) {
-    if (filter.trim().length() > 0) {
+  private Optional<Predicate<FluentComponent>> createOptionsFilter(final QueryOptions options) {
+    String filter = options.getFilter();
+    if (filter != null && filter.trim().length() > 0) {
       Predicate<FluentComponent> optionsFilter = (component) ->
           component.name().contains(filter) ||
           component.namespace().contains(filter) ||
