@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.store;
 
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -172,19 +173,29 @@ public class AssetStore<T extends AssetDAO>
   {
     List<String> pathExpressions = wildcardExpressions.stream().map(this::convertWildcardToLike).collect(Collectors.toList());
 
+    // We consider dates the same if they are at the same millisecond. Normalization of the date plus using a >= query has
+    // the effect of doing a > query as if the data in the database was truncated to the millisecond.
+    OffsetDateTime lastUpdatedNormalized = null;
+    if (lastUpdated != null) {
+      lastUpdatedNormalized = lastUpdated.plus(1, ChronoUnit.MILLIS).truncatedTo(ChronoUnit.MILLIS);
+    }
+
     // Fetch one extra record to check if there are more results with the same lastUpdated value. Most of the time
     // this won't be the case, and we will not need a query to find them all.
-    List<Asset> assets = dao().findGreaterThanLastUpdated(repositoryId, lastUpdated, pathExpressions, batchSize + 1);
+    List<Asset> assets = dao().findGreaterThanOrEqualToLastUpdated(repositoryId, lastUpdatedNormalized, pathExpressions, batchSize + 1);
 
     if (assets.size() == batchSize + 1) {
       if (hasMoreResultsWithSameLastUpdated(assets)) {
         Set<String> knownPaths = assets.stream().map(Asset::path).collect(Collectors.toSet());
         Asset lastAsset = assets.get(assets.size() - 1);
 
-        // Add all records that exactly match the timestamp of the last record. Then we can continue paging with a
-        // greater than query.
+        OffsetDateTime startLastUpdated = lastAsset.lastUpdated().truncatedTo(ChronoUnit.MILLIS);
+        OffsetDateTime endLastUpdated = startLastUpdated.plus(1, ChronoUnit.MILLIS);
+
+        // Add all records that match the timestamp (truncating to millisecond) of the last record. Then we can continue
+        // paging with a greater than query.
         List<Asset> matchLastUpdated =
-            dao().findEqualsLastUpdated(repositoryId, lastAsset.lastUpdated(), pathExpressions, LAST_UPDATED_LIMIT);
+            dao().findLastUpdatedWithinRange(repositoryId, startLastUpdated, endLastUpdated, pathExpressions, LAST_UPDATED_LIMIT);
 
         if (matchLastUpdated.size() == LAST_UPDATED_LIMIT) {
           log.error(

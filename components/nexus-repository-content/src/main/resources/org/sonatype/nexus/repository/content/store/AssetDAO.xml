@@ -129,15 +129,15 @@
     </foreach>
   </sql>
 
-  <select id="findGreaterThanLastUpdated" resultMap="assetResult">
+  <select id="findGreaterThanOrEqualToLastUpdated" resultMap="assetResult">
     SELECT * FROM ${format}_asset WHERE repository_id = #{repositoryId}
-    <if test="lastUpdated != null"> AND last_updated > #{lastUpdated}</if>
+    <if test="lastUpdated != null"> AND last_updated >= #{lastUpdated}</if>
     <include refid="likeExpressions"/>
     ORDER BY last_updated LIMIT #{limit}
   </select>
 
-  <select id="findEqualsLastUpdated" resultMap="assetResult">
-    SELECT * FROM ${format}_asset WHERE repository_id = #{repositoryId} AND last_updated = #{lastUpdated}
+  <select id="findLastUpdatedWithinRange" resultMap="assetResult">
+    SELECT * FROM ${format}_asset WHERE repository_id = #{repositoryId} AND last_updated >= #{startLastUpdated} AND last_updated &lt; #{endLastUpdated}
     <include refid="likeExpressions"/>
     LIMIT #{limit}
   </select>

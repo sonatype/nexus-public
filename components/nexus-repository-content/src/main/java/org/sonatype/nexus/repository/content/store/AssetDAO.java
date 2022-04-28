@@ -111,15 +111,15 @@ public interface AssetDAO
   Collection<Asset> browseComponentAssets(Component component);
 
   /**
-   * Finds assets where lastUpdated is greater than the given value.
+   * Finds assets where lastUpdated is greater than or equal to the given value.
    *
    * @param repositoryId the repository to browse
    * @param lastUpdated date that assets must have been updated after
-   * @param likeExpressions List of SQL like expressions that match on the path column
+   * @param likeExpressions list of SQL like expressions that match on the path column
    * @param limit maximum number of assets to return
    * @return collection of assets
    */
-  List<Asset> findGreaterThanLastUpdated(
+  List<Asset> findGreaterThanOrEqualToLastUpdated(
       @Param("repositoryId") int repositoryId,
       @Nullable @Param("lastUpdated") OffsetDateTime lastUpdated,
       @Param("likeExpressions") List<String> likeExpressions,
@@ -129,14 +129,16 @@ public interface AssetDAO
    * Finds all assets where lastUpdated equals the given value.
    *
    * @param repositoryId the repository to browse
-   * @param lastUpdated date to match
-   * @param likeExpressions List of SQL like expressions that match on path column
+   * @param startLastUpdated lastUpdated is greater than or equal to this value
+   * @param endLastUpdated lastUpdated is less than this value
+   * @param likeExpressions list of SQL like expressions that match on path column
    * @param limit maximum number of assets to return
    * @return collection of assets
    */
-  List<Asset> findEqualsLastUpdated(
+  List<Asset> findLastUpdatedWithinRange(
       @Param("repositoryId") int repositoryId,
-      @Param("lastUpdated") OffsetDateTime lastUpdated,
+      @Param("startLastUpdated") OffsetDateTime startLastUpdated,
+      @Param("endLastUpdated") OffsetDateTime endLastUpdated,
       @Param("likeExpressions") List<String> likeExpressions,
       @Param("limit") int limit);
 

@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.content.store;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -982,10 +983,12 @@ public class AssetDAOTest
   public void testFindLastUpdated() {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       TestAssetDAO dao = session.access(TestAssetDAO.class);
-      OffsetDateTime baseTime = OffsetDateTime.now();
-      Collection<Asset> found = dao.findEqualsLastUpdated(repositoryId, baseTime, ImmutableList.of(),100);
+      OffsetDateTime baseTime = OffsetDateTime.of(2022, 4, 24, 15, 18, 22,
+          111111000, ZoneOffset.UTC);
+      Collection<Asset> found = dao.findLastUpdatedWithinRange(repositoryId, baseTime,
+          baseTime.plus(1, ChronoUnit.MILLIS), ImmutableList.of(), 100);
       assertThat(found, emptyIterable());
-      found = dao.findGreaterThanLastUpdated(repositoryId, baseTime, ImmutableList.of(), 10);
+      found = dao.findGreaterThanOrEqualToLastUpdated(repositoryId, baseTime, ImmutableList.of(), 10);
       assertThat(found, emptyIterable());
 
       AssetData asset1 = generateAsset(repositoryId, "/asset1/asset1.jar");
@@ -1010,23 +1013,59 @@ public class AssetDAOTest
       dao.createAsset(asset5);
       dao.createAsset(asset6);
 
-      found = dao.findEqualsLastUpdated(repositoryId, baseTime, ImmutableList.of(),100);
+      found = dao.findLastUpdatedWithinRange(repositoryId, baseTime, baseTime.plus(1, ChronoUnit.MILLIS), ImmutableList.of(),100);
       assertThat(found.size(), is(2));
 
-      found = dao.findGreaterThanLastUpdated(repositoryId, baseTime, ImmutableList.of(),100);
-      assertThat(found.size(), is(2));
+      found = dao.findGreaterThanOrEqualToLastUpdated(repositoryId, baseTime, ImmutableList.of(),100);
+      assertThat(found.size(), is(4));
 
-      found = dao.findGreaterThanLastUpdated(repositoryId, baseTime, ImmutableList.of(),1);
+      found = dao.findGreaterThanOrEqualToLastUpdated(repositoryId, baseTime, ImmutableList.of(),1);
       assertThat(found.size(), is(1));
 
-      found = dao.findGreaterThanLastUpdated(repositoryId, baseTime.minusDays(1), ImmutableList.of("%/asset1/%"), 100);
+      found = dao.findGreaterThanOrEqualToLastUpdated(repositoryId, baseTime.minusDays(1), ImmutableList.of("%/asset1/%"), 100);
       assertThat(found.size(), is(1));
 
-      found = dao.findGreaterThanLastUpdated(repositoryId, baseTime.minusDays(1), ImmutableList.of("%/asset3/%", "%/asset5/%"), 100);
+      found = dao.findGreaterThanOrEqualToLastUpdated(repositoryId, baseTime.minusDays(1), ImmutableList.of("%/asset3/%", "%/asset5/%"), 100);
       assertThat(found.size(), is(2));
 
-      found = dao.findGreaterThanLastUpdated(repositoryId, baseTime.minusDays(1), ImmutableList.of("%/asset_/a%.jar%"), 100);
+      found = dao.findGreaterThanOrEqualToLastUpdated(repositoryId, baseTime.minusDays(1), ImmutableList.of("%/asset_/a%.jar%"), 100);
       assertThat(found.size(), is(6));
+    }
+  }
+
+  @Test
+  public void testFindLastUpdatedTruncatesToMilliseconds() {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      TestAssetDAO dao = session.access(TestAssetDAO.class);
+      OffsetDateTime baseTime = OffsetDateTime.of(2022, 4, 24, 15, 18, 22,
+          111111000, ZoneOffset.UTC);
+      Collection<Asset> found = dao.findLastUpdatedWithinRange(repositoryId, baseTime, baseTime.plus(1, ChronoUnit.MILLIS), ImmutableList.of(),100);
+      assertThat(found, emptyIterable());
+      found = dao.findGreaterThanOrEqualToLastUpdated(repositoryId, baseTime, ImmutableList.of(), 10);
+      assertThat(found, emptyIterable());
+
+      AssetData asset1 = generateAsset(repositoryId, "/asset1/asset1.jar");
+      AssetData asset2 = generateAsset(repositoryId, "/asset2/asset2.jar");
+      AssetData asset3 = generateAsset(repositoryId, "/asset3/asset3.jar");
+      AssetData asset4 = generateAsset(repositoryId, "/asset4/asset4.jar");
+
+      asset1.setLastUpdated(baseTime);
+      asset2.setLastUpdated(baseTime);
+      // Microsecond level time can be stored in both h2 and postgres. However, the last updated queries should truncate
+      // the time and treat these as identical to baseTime
+      asset3.setLastUpdated(baseTime.plusNanos(5000));
+      asset4.setLastUpdated(baseTime.plusNanos(8000));
+
+      dao.createAsset(asset1);
+      dao.createAsset(asset2);
+      dao.createAsset(asset3);
+      dao.createAsset(asset4);
+
+      found = dao.findLastUpdatedWithinRange(repositoryId, baseTime, baseTime.plus(1, ChronoUnit.MILLIS), ImmutableList.of(),100);
+      assertThat(found.size(), is(4));
+
+      found = dao.findGreaterThanOrEqualToLastUpdated(repositoryId, baseTime.plus(1, ChronoUnit.MILLIS).truncatedTo(ChronoUnit.MILLIS), ImmutableList.of(),100);
+      assertThat(found.size(), is(0));
     }
   }
 
