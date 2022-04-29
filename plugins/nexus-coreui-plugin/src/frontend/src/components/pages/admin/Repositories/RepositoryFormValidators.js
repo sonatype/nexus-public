@@ -51,7 +51,7 @@ export const genericValidators = {
 };
 
 const validateTimeToLive = (value) =>
-  ValidationUtils.isInRange({value, min: -1, max: 1440, allowDecimals: false}) ||
+  ValidationUtils.isInRange({value, min: -1, allowDecimals: false}) ||
   ValidationUtils.validateNotBlank(value);
 
 const validateHttpAuthCreds = (data, attrName) => {
@@ -87,3 +87,23 @@ const validateHttpConnectionTimeout = (data) =>
     max: 3600,
     allowDecimals: false
   });
+
+export const validateDockerConnectorPort = (data, attrName) => {
+  const port = data.docker[attrName];
+  return port === null
+    ? null
+    : ValidationUtils.validateNotBlank(port) ||
+        ValidationUtils.isInRange({
+          value: port,
+          min: 1,
+          max: 65536,
+          allowDecimals: false
+        });
+};
+
+export const validateDockerIndexUrl = (data) => {
+  const {indexUrl} = data.dockerProxy;
+  return indexUrl === null
+    ? null
+    : ValidationUtils.validateNotBlank(indexUrl) || ValidationUtils.validateIsUrl(indexUrl);
+};

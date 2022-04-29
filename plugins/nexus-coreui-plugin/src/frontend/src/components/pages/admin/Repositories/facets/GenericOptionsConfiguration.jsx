@@ -79,6 +79,7 @@ export default function GenericOptionsConfiguration({parentMachine}) {
             {...FormUtils.fieldProps('negativeCache.timeToLive', currentParent)}
             onChange={FormUtils.handleUpdate('negativeCache.timeToLive', sendParent)}
             disabled={!isNegativeCacheEnabled}
+            className="nx-text-input--short"
           />
         </NxFormGroup>
       </NxLoadWrapper>

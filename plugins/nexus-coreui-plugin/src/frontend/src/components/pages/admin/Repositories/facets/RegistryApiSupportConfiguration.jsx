@@ -12,31 +12,30 @@
  */
 import React from 'react';
 
-import {
-  NxReadOnly
-} from '@sonatype/react-shared-components';
+import {NxH2, NxCheckbox, NxFieldset} from '@sonatype/react-shared-components';
+import {FormUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../../constants/UIStrings';
 
 const {EDITOR} = UIStrings.REPOSITORIES;
 
-export default function GenericReadOnlyNameConfiguration({parentMachine}) {
-  const [state] = parentMachine;
-  const {name, format, type, url} = state.context.data;
+export default function RegistryApiSupportConfiguration({parentMachine}) {
+  const [currentParent, sendParent] = parentMachine;
 
   return (
-      <NxReadOnly>
-        <NxReadOnly.Label>{EDITOR.NAME_LABEL}</NxReadOnly.Label>
-        <NxReadOnly.Data>{name}</NxReadOnly.Data>
-
-        <NxReadOnly.Label>{EDITOR.FORMAT_LABEL}</NxReadOnly.Label>
-        <NxReadOnly.Data>{format}</NxReadOnly.Data>
-
-        <NxReadOnly.Label>{EDITOR.TYPE_LABEL}</NxReadOnly.Label>
-        <NxReadOnly.Data>{type}</NxReadOnly.Data>
-
-        <NxReadOnly.Label>{EDITOR.URL_LABEL}</NxReadOnly.Label>
-        <NxReadOnly.Data>{url}</NxReadOnly.Data>
-      </NxReadOnly>
+    <>
+      <NxH2>{EDITOR.REGISTRY_API_SUPPORT_CAPTION}</NxH2>
+      <NxFieldset
+        label={EDITOR.REGISTRY_API_SUPPORT_LABEL}
+        className="nxrm-form-group-registry-api-support"
+      >
+        <NxCheckbox
+          {...FormUtils.checkboxProps('docker.v1Enabled', currentParent)}
+          onChange={FormUtils.handleUpdate('docker.v1Enabled', sendParent)}
+        >
+          {EDITOR.REGISTRY_API_SUPPORT_DESCR}
+        </NxCheckbox>
+      </NxFieldset>
+    </>
   );
 }

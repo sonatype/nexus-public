@@ -35,6 +35,9 @@ export default function GenericStorageConfiguration({parentMachine}) {
   const loadBlobStores = () => blobStoresSend({type: 'LOAD'});
   const isLoading = blobStoresState.matches('loading');
 
+  const {name} = currentParent.context.pristineData;
+  const isEdit = !!name;
+
   useEffect(() => {
     loadBlobStores();
   }, [format, type]);
@@ -55,6 +58,7 @@ export default function GenericStorageConfiguration({parentMachine}) {
           <NxFormSelect
             {...FormUtils.selectProps('storage.blobStoreName', currentParent)}
             onChange={FormUtils.handleUpdate('storage.blobStoreName', sendParent)}
+            disabled={isEdit}
           >
             <option value="">{EDITOR.SELECT_STORE_OPTION}</option>
             {blobStores?.map(({name}) => (

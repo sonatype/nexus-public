@@ -359,11 +359,11 @@ export default {
       NONE_OPTION: 'None',
       CREATE_TITLE: {
         text: 'Create Repository',
-        description: 'Select a repository format, then choose a type (group, hosted, or proxy)'
+        description: 'Select a repository format; then, choose a type (group, hosted, or proxy)'
       },
       EDIT_TITLE: {
         text: 'Edit Repository',
-        description: 'Select a repository format, then choose a type (group, hosted, or proxy)'
+        description: 'Edit your existing repository setup'
       },
       FORMAT_AND_TYPE_CAPTION: 'Repository Format & Type',
       FORMAT_LABEL: 'Format',
@@ -410,7 +410,7 @@ export default {
       MAX_COMP_AGE_LABEL: 'Maximum Component Age',
       MAX_COMP_AGE_SUBLABEL: 'How long (in minutes) to cache artifacts before re-checking the remote repository. Release repositories should use -1',
       MAX_META_AGE_LABEL: 'Maximum Metadata Age',
-      MAX_META_AGE_SUBLABEL: 'How long (in minutes) to cache that a file was not found in the repository',
+      MAX_META_AGE_SUBLABEL: 'How long (in minutes) to cache metadata before rechecking the remote repository',
       OPTIONS_CAPTION: 'Options',
       ROUTING_RULE_LABEL: 'Routing Rule',
       NEGATIVE_CACHE_LABEL: 'Negative Cache',
@@ -454,6 +454,23 @@ export default {
       REMOVE_QUARANTINED_SUBLABEL: 'IQ Audit and Quarantine capability must be enabled for this feature to take effect. ',
       REMOVE_QUARANTINED_DESCR: 'Remove quarantined versions from the package metadata',
       LEARN_MORE: 'Learn more',
+      REPOSITORY_CONNECTORS_CAPTION: 'Repository Connectors',
+      HTTP_CONNECTOR_LABEL: 'HTTP',
+      HTTP_CONNECTOR_SUBLABEL: 'Create an HTTP connector at specified port. Normally used if the server is behind a secure proxy',
+      HTTPS_CONNECTOR_LABEL: 'HTTPS',
+      HTTPS_CONNECTOR_SUBLABEL: 'Create an HTTP connector at specified port. Normally used if the server is configured for https',
+      DOCKER_CONNECTOR_PLACEHOLDER: 'Enter a port number',
+      ALLOW_ANON_DOCKER_PULL_LABEL: 'Allow anonymous docker pull',
+      ALLOW_ANON_DOCKER_PULL_DESCR: 'Allow anonymous docker pull (Docker Bearer Token Realm required)',
+      REGISTRY_API_SUPPORT_CAPTION: 'Docker Registry API Support',
+      REGISTRY_API_SUPPORT_LABEL: 'Enable Docker V1 API',
+      REGISTRY_API_SUPPORT_DESCR: 'Allow clients to use the V1 API to interact with this repository ',
+      DOCKER_INDEX_LABEL: 'Docker Index',
+      USE_PROXY_REGISTRY_DESCR: 'Use Proxy registry (specified above)',
+      USE_DOCKER_HUB_DESCR: 'Use Docker Hub',
+      USE_CUSTOM_INDEX_DESCR: 'Custom index',
+      DOCKER_INDEX_URL_LABEL: 'Location of the Docker Index',
+      DOCKER_INDEX_URL_PLACEHOLDER: 'Enter a URL',
       REMOTE_URL_EXAMPLES: {
         bower: ' (e.g., https://registry.bower.io)',
         docker: ' (e.g., https://registry-1.docker.io)',
@@ -463,8 +480,30 @@ export default {
         pypi: ' (e.g., https://pypi.org)',
         rubygems: ' (e.g., https://rubygems.org)',
         yum: ' (e.g., http://mirror.centos.org/centos/)',
-        default: ' (e.g., https://example.com)'
-      }
+        default: ' (e.g., https://example.com)'	
+      },
+      DOCKER_CONNECTORS_HELP: <>
+        Connectors allow Docker clients to connect directly to hosted registries, but are not always
+        required.
+        <br />
+        Consult our{' '}
+        <NxTextLink
+          href="https://links.sonatype.com/products/nexus/docker-ssl-connector/docs"
+          external
+        >
+          documentation
+        </NxTextLink>
+        {' '}for which connector is appropriate for your use case.
+        <br />
+        For information on scaling see our{' '}
+        <NxTextLink
+          href="https://links.sonatype.com/products/nexus/docker-scaling-repositories/docs"
+          external
+        >
+          scaling documentation
+        </NxTextLink>
+        .
+      </>
     }
   },
 

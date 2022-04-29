@@ -18,6 +18,8 @@ import {NxCheckbox, NxFieldset, NxFormGroup, NxTextInput} from '@sonatype/react-
 
 import UIStrings from '../../../../../constants/UIStrings';
 
+import DockerIndexConfiguration from './DockerIndexConfiguration';
+
 const {EDITOR} = UIStrings.REPOSITORIES;
 
 export default function GenericProxyConfiguration({parentMachine}) {
@@ -45,6 +47,8 @@ export default function GenericProxyConfiguration({parentMachine}) {
         />
       </NxFormGroup>
 
+      {format === 'docker' && <DockerIndexConfiguration parentMachine={parentMachine} />}
+
       <NxFieldset label={EDITOR.BLOCKING_LABEL} className="nxrm-form-group-proxy-blocking">
         <NxCheckbox
           {...FormUtils.checkboxProps('httpClient.blocked', currentParent)}
@@ -69,6 +73,7 @@ export default function GenericProxyConfiguration({parentMachine}) {
         <NxTextInput
           {...FormUtils.fieldProps('proxy.contentMaxAge', currentParent)}
           onChange={FormUtils.handleUpdate('proxy.contentMaxAge', sendParent)}
+          className="nx-text-input--short"
         />
       </NxFormGroup>
 
@@ -81,6 +86,7 @@ export default function GenericProxyConfiguration({parentMachine}) {
         <NxTextInput
           {...FormUtils.fieldProps('proxy.metadataMaxAge', currentParent)}
           onChange={FormUtils.handleUpdate('proxy.metadataMaxAge', sendParent)}
+          className="nx-text-input--short"
         />
       </NxFormGroup>
     </>

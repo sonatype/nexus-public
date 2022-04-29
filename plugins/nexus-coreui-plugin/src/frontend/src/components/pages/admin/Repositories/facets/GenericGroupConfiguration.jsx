@@ -25,7 +25,7 @@ import UIStrings from '../../../../../constants/UIStrings';
 const {EDITOR} = UIStrings.REPOSITORIES;
 
 export const repositoriesUrl = (event) =>
-    `/service/rest/internal/ui/repositories?format=${encodeURIComponent(event.format)}`;
+  `/service/rest/internal/ui/repositories?format=${encodeURIComponent(event.format)}`;
 
 export default function GenericGroupConfiguration({parentMachine}) {
   const {current, load, retry, isLoading} = useSimpleMachine(
@@ -47,22 +47,25 @@ export default function GenericGroupConfiguration({parentMachine}) {
     load({format});
   }, [format]);
 
-  const availableRepositories = repositories
-      ?.filter(it => it.name !== name)
-      ?.map(it => ({id: it.id, displayName: it.name})) || [];
+  const availableRepositories =
+    repositories
+      ?.filter((it) => it.name !== name)
+      ?.map((it) => ({id: it.id, displayName: it.name})) || [];
 
   return (
     <>
       <h2 className="nx-h2">{EDITOR.GROUP_CAPTION}</h2>
       <NxLoadWrapper loading={isLoading} error={error} retryHandler={retry}>
-        {availableRepositories.length > 0 && <NxFormGroup label={EDITOR.MEMBERS_LABEL} isRequired>
-          <NxStatefulTransferList
-            allItems={availableRepositories}
-            selectedItems={memberNames}
-            onChange={FormUtils.handleUpdate('group.memberNames', sendParent)}
-            allowReordering
-          />
-        </NxFormGroup>}
+        {availableRepositories.length > 0 && (
+          <NxFormGroup label={EDITOR.MEMBERS_LABEL} isRequired>
+            <NxStatefulTransferList
+              allItems={availableRepositories}
+              selectedItems={memberNames}
+              onChange={FormUtils.handleUpdate('group.memberNames', sendParent)}
+              allowReordering
+            />
+          </NxFormGroup>
+        )}
       </NxLoadWrapper>
     </>
   );

@@ -101,5 +101,5 @@ const formatFormat = (format) => (format === 'maven2' ? 'maven' : format);
 
 const validateName = (value) =>
   ValidationUtils.validateNotBlank(value) ||
-  ValidationUtils.validateLength(value) ||
+  ValidationUtils.validateLength(value, 200) ||
   ValidationUtils.validateName(value);

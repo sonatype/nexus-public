@@ -30,11 +30,23 @@ import RpmDeployPolicyConfiguration from './facets/RpmDeployPolicyConfiguration'
 import VersionPolicyConfiguration from './facets/VersionPolicyConfiguration';
 import NpmConfiguration from './facets/NpmConfiguration';
 import LayoutPolicyConfiguration from './facets/LayoutPolicyConfiguration';
+import RepositoryConnectorsConfiguration from './facets/RepositoryConnectorsConfiguration';
+import RegistryApiSupportConfiguration from './facets/RegistryApiSupportConfiguration';
 
 import {genericDefaultValues} from './RepositoryFormDefaultValues';
-import {genericValidators} from './RepositoryFormValidators';
+import {
+  genericValidators,
+  validateDockerConnectorPort,
+  validateDockerIndexUrl
+} from './RepositoryFormValidators';
 
 import {mergeDeepRight} from 'ramda';
+
+export const DOCKER_INDEX_TYPES = {
+  registry: 'REGISTRY',
+  hub: 'HUB',
+  custom: 'CUSTOM'
+};
 
 // temp
 const isCapabilityEnabled = false;
@@ -93,8 +105,7 @@ const repositoryFormats = {
     facets: [replicationFacet, ContentDespositionConfiguration, ...genericFacets.hosted],
     defaultValues: {
       ...mergeDeepRight(genericDefaultValues.hosted, {
-        storage: {strictContentTypeValidation: false,
-        }
+        storage: {strictContentTypeValidation: false}
       }),
       ...replicationDefaultValue,
       raw: {contentDisposition: 'ATTACHMENT'}
@@ -127,7 +138,7 @@ const repositoryFormats = {
       ...replicationDefaultValue,
       proxy: {
         ...genericDefaultValues.proxy.proxy,
-        contentMaxAge: -1,
+        contentMaxAge: -1
       },
       maven: {
         layoutPolicy: 'STRICT',
@@ -192,6 +203,62 @@ const repositoryFormats = {
     },
     validators: (data) => ({
       ...genericValidators.proxy(data)
+    })
+  },
+  docker_proxy: {
+    facets: [
+      RepositoryConnectorsConfiguration,
+      RegistryApiSupportConfiguration,
+      ...genericFacets.proxy
+    ],
+    defaultValues: {
+      ...genericDefaultValues.proxy,
+      docker: {
+        httpPort: null,
+        httpsPort: null,
+        forceBasicAuth: false,
+        v1Enabled: false,
+        subdomain: null
+      },
+      dockerProxy: {
+        indexType: DOCKER_INDEX_TYPES.registry,
+        indexUrl: null
+      }
+    },
+    validators: (data) => ({
+      ...genericValidators.proxy(data),
+      docker: {
+        httpPort: validateDockerConnectorPort(data, 'httpPort'),
+        httpsPort: validateDockerConnectorPort(data, 'httpsPort')
+      },
+      dockerProxy: {
+        indexUrl: validateDockerIndexUrl(data)
+      }
+    })
+  },
+  docker_hosted: {
+    facets: [
+      RepositoryConnectorsConfiguration,
+      RegistryApiSupportConfiguration,
+      ...genericFacets.hosted
+    ],
+    defaultValues: {
+      ...mergeDeepRight(genericDefaultValues.hosted, {
+        storage: {writePolicy: 'ALLOW'}
+      }),
+      docker: {
+        httpPort: null,
+        httpsPort: null,
+        forceBasicAuth: false,
+        v1Enabled: false,
+        subdomain: null
+      }
+    },
+    validators: (data) => ({
+      docker: {
+        httpPort: validateDockerConnectorPort(data, 'httpPort'),
+        httpsPort: validateDockerConnectorPort(data, 'httpsPort')
+      }
     })
   }
 };
