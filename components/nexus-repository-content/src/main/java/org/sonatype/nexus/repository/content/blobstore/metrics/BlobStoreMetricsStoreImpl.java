@@ -56,8 +56,8 @@ public class BlobStoreMetricsStoreImpl
 
   @Override
   @Transactional
-  public void clearOperationMetrics(String blobStoreName) {
-    //todo https://issues.sonatype.org/browse/NEXUS-31122
+  public void clearOperationMetrics(final String blobStoreName) {
+    dao().clearOperationMetrics(blobStoreName);
   }
 
   @Override

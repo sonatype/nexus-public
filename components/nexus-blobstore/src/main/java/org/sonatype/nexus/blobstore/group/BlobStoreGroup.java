@@ -333,6 +333,11 @@ public class BlobStoreGroup
   }
 
   @Override
+  public void clearOperationMetrics() {
+    // noop invoke the method on the members
+  }
+
+  @Override
   @Guarded(by = STARTED)
   public synchronized void compact() {
     members.get().stream().forEach((BlobStore member) -> member.compact());

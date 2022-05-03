@@ -40,4 +40,9 @@ public interface BlobStoreMetricsDAO
    * Initialize the metrics for the given blobstore.
    */
   void initializeMetrics(String blobStoreName);
+
+  /**
+   * Clears the operational metrics associated with the blob store
+   */
+  void clearOperationMetrics(String blobStoreName);
 }

@@ -167,4 +167,43 @@ public class BlobStoreMetricsDAOTest
     assertThat(updatedBlobStoreMetricsEntity.getBlobCount(), is(1L));
     assertThat(updatedBlobStoreMetricsEntity.getTotalSize(), is(170L));
   }
+
+  @Test
+  public void testClearOperationalMetrics() {
+    dao.initializeMetrics("test");
+
+    BlobStoreMetricsEntity blobStoreMetricsEntity = new BlobStoreMetricsEntity();
+    blobStoreMetricsEntity.setBlobStoreName("test");
+    // we want to ensure non-operational metrics are not cleared, so non-zero values
+    blobStoreMetricsEntity.setBlobCount(2);
+    blobStoreMetricsEntity.setTotalSize(200);
+    blobStoreMetricsEntity.setDownloadBlobSize(1);
+    blobStoreMetricsEntity.setDownloadErrorRequests(1);
+    blobStoreMetricsEntity.setDownloadSuccessfulRequests(1);
+    blobStoreMetricsEntity.setDownloadTimeOnRequests(1);
+    blobStoreMetricsEntity.setUploadBlobSize(1);
+    blobStoreMetricsEntity.setUploadErrorRequests(1);
+    blobStoreMetricsEntity.setUploadSuccessfulRequests(1);
+    blobStoreMetricsEntity.setUploadTimeOnRequests(1);
+
+    dao.updateMetrics(blobStoreMetricsEntity);
+    dao.clearOperationMetrics("test");
+
+    BlobStoreMetricsEntity actual = dao.get("test");
+    // Verify persistent metrics are maintained
+    assertThat(actual.getBlobStoreName(), is("test"));
+    assertThat(actual.getBlobCount(), is(2L));
+    assertThat(actual.getTotalSize(), is(200L));
+
+    // Verify Operational Metrics have been reset
+    assertThat(actual.getDownloadBlobSize(), is(0L));
+    assertThat(actual.getDownloadErrorRequests(), is(0L));
+    assertThat(actual.getDownloadSuccessfulRequests(), is(0L));
+    assertThat(actual.getDownloadTimeOnRequests(), is(0L));
+
+    assertThat(actual.getUploadBlobSize(), is(0L));
+    assertThat(actual.getUploadErrorRequests(), is(0L));
+    assertThat(actual.getUploadSuccessfulRequests(), is(0L));
+    assertThat(actual.getUploadTimeOnRequests(), is(0L));
+  }
 }

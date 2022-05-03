@@ -600,6 +600,11 @@ public class FileBlobStore
   }
 
   @Override
+  public void clearOperationMetrics() {
+    metricsStore.clearOperationMetrics();
+  }
+
+  @Override
   protected void doCompact(@Nullable final BlobStoreUsageChecker inUseChecker) {
     try {
       PropertiesFile metadata = new PropertiesFile(getAbsoluteBlobDir().resolve(METADATA_FILENAME).toFile());

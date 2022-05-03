@@ -212,6 +212,11 @@ public interface BlobStore
   Map<OperationType, OperationMetrics> getOperationMetricsDelta();
 
   /**
+   * Clears the operational metrics of the blobstore.
+   */
+  void clearOperationMetrics();
+
+  /**
    * Perform garbage collection, purging blobs marked for deletion or whatever other periodic, implementation-specific
    * tasks need doing.
    */

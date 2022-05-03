@@ -61,6 +61,19 @@
     WHERE blob_store_name = #{blobStoreName};
   </update>
 
+  <update id="clearOperationMetrics">
+    UPDATE blob_store_metrics
+       SET upload_blob_size             = 0,
+           upload_successful_requests   = 0,
+           upload_time_on_requests      = 0,
+           upload_error_requests        = 0,
+           download_blob_size           = 0,
+           download_successful_requests = 0,
+           download_time_on_requests    = 0,
+           download_error_requests      = 0
+     WHERE blob_store_name = #{blobStoreName};
+  </update>
+
   <select id="get" resultType="org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsEntity">
     SELECT *
     FROM blob_store_metrics

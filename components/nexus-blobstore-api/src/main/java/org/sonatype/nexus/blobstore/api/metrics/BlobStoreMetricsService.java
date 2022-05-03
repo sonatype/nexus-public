@@ -62,6 +62,11 @@ public interface BlobStoreMetricsService
   Map<OperationType, OperationMetrics> getOperationMetricsDelta();
 
   /**
+   * Reset the operational metrics.
+   */
+  void clearOperationMetrics();
+
+  /**
    * Flush the metrics to the metric store.
    */
   void flush() throws IOException;

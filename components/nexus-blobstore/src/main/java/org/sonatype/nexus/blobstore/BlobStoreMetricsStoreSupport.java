@@ -24,6 +24,7 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.api.OperationMetrics;
 import org.sonatype.nexus.blobstore.api.OperationType;
+import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsService;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.property.ImplicitSourcePropertiesFile;
@@ -45,6 +46,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 
 public abstract class BlobStoreMetricsStoreSupport<T extends ImplicitSourcePropertiesFile>
     extends StateGuardLifecycleSupport
+    implements BlobStoreMetricsService
 {
   private static final int METRICS_LOADING_DELAY_MILLIS = 200;
 
@@ -190,12 +192,14 @@ public abstract class BlobStoreMetricsStoreSupport<T extends ImplicitSourcePrope
     return blobStoreMetrics;
   }
 
+  @Override
   public void setBlobStore(final BlobStore blobStore) {
     checkState(this.blobStore == null, "Do not initialize twice");
     checkNotNull(blobStore);
     this.blobStore = blobStore;
   }
 
+  @Override
   @Guarded(by = STARTED)
   public BlobStoreMetrics getMetrics() {
     try {
@@ -207,10 +211,12 @@ public abstract class BlobStoreMetricsStoreSupport<T extends ImplicitSourcePrope
     }
   }
 
+  @Override
   public Map<OperationType, OperationMetrics> getOperationMetrics() {
     return operationMetrics;
   }
 
+  @Override
   @Guarded(by = STARTED)
   public void recordAddition(final long size) {
     blobCount.incrementAndGet();
@@ -218,6 +224,7 @@ public abstract class BlobStoreMetricsStoreSupport<T extends ImplicitSourcePrope
     dirty.set(true);
   }
 
+  @Override
   @Guarded(by = STARTED)
   public void recordDeletion(final long size) {
     blobCount.decrementAndGet();
@@ -280,5 +287,12 @@ public abstract class BlobStoreMetricsStoreSupport<T extends ImplicitSourcePrope
     }
   }
 
+  @Override
+  public void clearOperationMetrics() {
+    getOperationMetricsDelta().values().forEach(OperationMetrics::clear);
+    getOperationMetrics().values().forEach(OperationMetrics::clear);
+  }
+
+  @Override
   public abstract void remove();
 }

@@ -104,17 +104,21 @@ public abstract class DatastoreBlobStoreMetricsServiceSupport
     BlobStoreMetricsEntity metricsEntity =
         blobStoreMetricsStore.get(this.blobStore.getBlobStoreConfiguration().getName());
 
+    Map<OperationType, OperationMetrics> delta = getOperationMetricsDelta();
+
     OperationMetrics uploadMetrics = new OperationMetrics();
     uploadMetrics.setBlobSize(metricsEntity.getUploadBlobSize());
     uploadMetrics.setErrorRequests(metricsEntity.getUploadErrorRequests());
     uploadMetrics.setSuccessfulRequests(metricsEntity.getUploadSuccessfulRequests());
     uploadMetrics.setTimeOnRequests(metricsEntity.getUploadTimeOnRequests());
+    uploadMetrics.add(delta.get(OperationType.UPLOAD));
 
     OperationMetrics downloadMetrics = new OperationMetrics();
     downloadMetrics.setBlobSize(metricsEntity.getDownloadBlobSize());
     downloadMetrics.setErrorRequests(metricsEntity.getDownloadErrorRequests());
     downloadMetrics.setSuccessfulRequests(metricsEntity.getDownloadSuccessfulRequests());
     downloadMetrics.setTimeOnRequests(metricsEntity.getDownloadTimeOnRequests());
+    downloadMetrics.add(delta.get(OperationType.DOWNLOAD));
 
     Map<OperationType, OperationMetrics> operationMetricsMap = new HashMap<>();
     operationMetricsMap.put(OperationType.UPLOAD, uploadMetrics);
@@ -152,6 +156,12 @@ public abstract class DatastoreBlobStoreMetricsServiceSupport
     downloadMetrics.clear();
 
     blobStoreMetricsStore.updateMetrics(blobStoreMetricsEntity);
+  }
+
+  @Override
+  public void clearOperationMetrics() {
+    datastoreBlobStoreMetricsContainer.getOperationMetricsDelta().values().forEach(OperationMetrics::clear);
+    blobStoreMetricsStore.clearOperationMetrics(blobStore.getBlobStoreConfiguration().getName());
   }
 
   @Override

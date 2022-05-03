@@ -615,6 +615,11 @@ public class S3BlobStore
   }
 
   @Override
+  public void clearOperationMetrics() {
+    storeMetrics.clearOperationMetrics();
+  }
+
+  @Override
   protected void doInit(final BlobStoreConfiguration configuration) {
     try {
       this.s3 = amazonS3Factory.create(configuration);
