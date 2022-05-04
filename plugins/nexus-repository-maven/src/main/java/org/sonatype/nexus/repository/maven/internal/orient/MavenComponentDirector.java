@@ -25,6 +25,8 @@ import org.sonatype.nexus.repository.maven.VersionPolicy;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentDirector;
 
+import org.apache.commons.lang3.tuple.Pair;
+
 import static org.sonatype.nexus.repository.maven.VersionPolicy.MIXED;
 import static org.sonatype.nexus.repository.maven.VersionPolicy.RELEASE;
 import static org.sonatype.nexus.repository.maven.VersionPolicy.SNAPSHOT;
@@ -64,11 +66,9 @@ public class MavenComponentDirector
 
   @Override
   public void afterMove(final List<Map<String, String>> components, final Repository destination) {
-    destination.optionalFacet(MavenHostedFacet.class).ifPresent(f ->
-        components.stream()
-            .map(component -> component.get("group"))
-            .distinct()
-            .forEach(group -> f.rebuildMetadata(group, null, null, false))
-    );
+    destination.optionalFacet(MavenHostedFacet.class).ifPresent(facet -> components.stream()
+        .map(component -> Pair.of(component.get("group"), component.get("name")))
+        .distinct()
+        .forEach(pair -> facet.rebuildMetadata(pair.getLeft(), pair.getRight(), null, false)));
   }
 }

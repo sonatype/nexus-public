@@ -28,6 +28,8 @@ import org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet;
 import org.sonatype.nexus.repository.maven.VersionPolicy;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 
+import org.apache.commons.lang3.tuple.Pair;
+
 import static org.sonatype.nexus.repository.maven.VersionPolicy.MIXED;
 import static org.sonatype.nexus.repository.maven.VersionPolicy.RELEASE;
 import static org.sonatype.nexus.repository.maven.VersionPolicy.SNAPSHOT;
@@ -69,15 +71,13 @@ public class MavenContentDirector
   }
 
   @Override
-  public void afterMove(
-      final List<Map<String, String>> components, final Repository destination)
+  public void afterMove(final List<Map<String, String>> components, final Repository destination)
   {
     MavenMetadataRebuildFacet facet = destination.facet(MavenMetadataRebuildFacet.class);
     components.stream()
-        .map(component -> component.get("group"))
+        .map(component -> Pair.of(component.get("group"), component.get("name")))
         .distinct()
-        .forEach(group -> facet.rebuildMetadata(
-            group, null, null, false));
+        .forEach(pair -> facet.rebuildMetadata(pair.getLeft(), pair.getRight(), null, false));
   }
 
   @Override

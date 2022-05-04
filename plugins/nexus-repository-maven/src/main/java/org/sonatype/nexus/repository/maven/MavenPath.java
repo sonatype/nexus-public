@@ -466,7 +466,6 @@ public class MavenPath
   public String toString() {
     return getClass().getSimpleName() + "{" +
         "path='" + path + '\'' +
-        ", fileName='" + fileName + '\'' +
         ", hashType=" + hashType +
         '}';
   }

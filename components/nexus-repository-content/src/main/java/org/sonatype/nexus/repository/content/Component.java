@@ -42,4 +42,11 @@ public interface Component
    * The component version; empty string if the component doesn't have a version.
    */
   String version();
+
+  default String toStringExternal() {
+    return "namespace=" + namespace() +
+        ", name=" + name() +
+        ", kind=" + kind() +
+        ", version=" + version();
+  }
 }

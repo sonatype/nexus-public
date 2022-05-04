@@ -66,6 +66,7 @@ abstract public class AbstractMetadataUpdater
    */
   public void processMetadata(final MavenPath metadataPath, final Maven2Metadata metadata) {
     if (metadata != null) {
+      log.debug("Processing Metadata {} to Path {}", metadata, metadataPath.getPath());
       if (update) {
         update(metadataPath, metadata);
       }
@@ -74,6 +75,7 @@ abstract public class AbstractMetadataUpdater
       }
     }
     else if (!update) {
+      log.debug("Deleting Metadata from {}", metadataPath.getPath());
       delete(metadataPath);
     }
   }
@@ -83,6 +85,7 @@ abstract public class AbstractMetadataUpdater
    */
   @VisibleForTesting
   protected void update(final MavenPath mavenPath, final Maven2Metadata metadata) {
+    log.debug("Updating Metadata in {}", mavenPath.getPath());
     try {
       checkNotNull(mavenPath);
       checkNotNull(metadata);
@@ -98,7 +101,6 @@ abstract public class AbstractMetadataUpdater
         writeIfChanged(mavenPath, oldMetadata.get(), updated);
       }
       else {
-        // old does not exists, just write it
         write(mavenPath, toMetadata(metadata));
       }
     }
@@ -111,6 +113,7 @@ abstract public class AbstractMetadataUpdater
    * Writes/overwrites metadata, replacing existing one, if any.
    */
   protected void replace(final MavenPath mavenPath, final Maven2Metadata metadata) {
+    log.debug("Replacing Metadata in {}", mavenPath.getPath());
     try {
       checkNotNull(mavenPath);
       checkNotNull(metadata);
@@ -121,7 +124,6 @@ abstract public class AbstractMetadataUpdater
         writeIfChanged(mavenPath, oldMetadata.get(), updated);
       }
       else {
-        // old does not exists, just write it
         write(mavenPath, toMetadata(metadata));
       }
     }
@@ -200,7 +202,7 @@ abstract public class AbstractMetadataUpdater
       throws IOException
   {
     if (repositoryMetadataMerger.metadataEquals(oldMetadata, newMetadata)) {
-      log.info("metadata for {} hasn't changed, skipping", mavenPath);
+      log.info("Metadata for {} hasn't changed, skipping", mavenPath.getPath());
     }
     else {
       write(mavenPath, newMetadata);

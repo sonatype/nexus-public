@@ -175,16 +175,17 @@ public class DatastoreMetadataRebuilder
 
     @Override
     protected List<Map<String, Object>> browseGAVs() {
-      Stream<String> namespaces = Optional.ofNullable(groupId)
+      Collection<String> namespaces = Optional.ofNullable(groupId)
           .map(Collections::singleton)
           .map(set -> (Collection<String>) set)
-          .orElseGet(() -> content().components().namespaces())
-          .stream();
+          .orElseGet(() -> content().components().namespaces());
+      log.debug("Searching GAVs on {} namespaces", namespaces.size());
 
-      return namespaces.map(namespace -> namesInNamespace(namespace)
+      return namespaces.stream()
+          .map(namespace -> namesInNamespace(namespace)
               .map(name -> findBaseVersions(namespace, name))
-              .collect(Collectors.toList())
-          ).flatMap(Collection::stream)
+              .collect(Collectors.toList()))
+          .flatMap(Collection::stream)
           .collect(Collectors.toList());
     }
 

@@ -113,7 +113,7 @@ public class MavenHostedFacetImpl
   public void rebuildMetadata(@Nullable final String groupId, @Nullable final String artifactId,
                               @Nullable final String baseVersion, final boolean rebuildChecksums, final boolean update)
   {
-    log.debug("Rebuilding Maven2 hosted repository metadata: repository={}, update={}, g={}, a={}, bV={}",
+    log.debug("Rebuilding Maven2 hosted repository metadata: repository={}, update={}, group={}, artifact={}, baseVersion={}",
         getRepository().getName(), update, groupId, artifactId, baseVersion);
     metadataRebuilder.rebuild(getRepository(), update, rebuildChecksums, groupId, artifactId, baseVersion);
   }
@@ -132,7 +132,7 @@ public class MavenHostedFacetImpl
 
   @Override
   public Set<String> deleteMetadata(final String groupId, final String artifactId, final String baseVersion) {
-    log.debug("Deleting Maven2 hosted repository metadata: repository={}, g={}, a={}, bV={}", getRepository().getName(),
+    log.debug("Deleting Maven2 hosted repository metadata: repository={}, group={}, artifact={}, baseVersion={}", getRepository().getName(),
         groupId, artifactId, baseVersion);
     try {
       return OrientMetadataUtils.deleteAndAddRebuildFlag(getRepository(), groupId, artifactId, baseVersion);
