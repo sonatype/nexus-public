@@ -120,7 +120,7 @@ class QuartzSchedulerSPITest
     doAnswer({ it.getArguments()[0].run() }).when(statusDelayedExecutor).execute(any(Runnable.class))
 
     underTest = new QuartzSchedulerSPI(
-        eventManager, nodeAccess, provider, scheduler, lastShutdownTimeService, statusDelayedExecutor, true
+        eventManager, nodeAccess, provider, scheduler, lastShutdownTimeService, statusDelayedExecutor, true, true
     )
     scheduler.start()
     underTest.start()

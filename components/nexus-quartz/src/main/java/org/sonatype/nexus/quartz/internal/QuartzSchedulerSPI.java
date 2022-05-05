@@ -33,6 +33,7 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.app.FeatureFlags;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
@@ -70,6 +71,7 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.SchedulerMetaData;
 import org.quartz.Trigger;
+import org.quartz.Trigger.TriggerState;
 import org.quartz.TriggerKey;
 import org.quartz.UnableToInterruptJobException;
 import org.quartz.core.QuartzScheduler;
@@ -135,6 +137,8 @@ public class QuartzSchedulerSPI
 
   private boolean active;
 
+  private final boolean datastoreClustered;
+
   @SuppressWarnings("squid:S00107") //suppress constructor parameter count
   @Inject
   public QuartzSchedulerSPI(final EventManager eventManager,
@@ -143,7 +147,8 @@ public class QuartzSchedulerSPI
                             final Provider<Scheduler> schedulerProvider,
                             final LastShutdownTimeService lastShutdownTimeService,
                             final DatabaseStatusDelayedExecutor delayedExecutor,
-                            @Named("${nexus.quartz.recoverInterruptedJobs:-true}") final boolean recoverInterruptedJobs)
+                            @Named("${nexus.quartz.recoverInterruptedJobs:-true}") final boolean recoverInterruptedJobs,
+                            @Named(FeatureFlags.DATASTORE_CLUSTERED_ENABLED_NAMED) final boolean datastoreClustered)
   {
     this.eventManager = checkNotNull(eventManager);
     this.nodeAccess = checkNotNull(nodeAccess);
@@ -158,6 +163,8 @@ public class QuartzSchedulerSPI
 
     // FIXME: sort out with refinement to lifecycle below
     this.active = true;
+
+    this.datastoreClustered = datastoreClustered;
   }
 
   public QuartzTriggerConverter triggerConverter() {
@@ -375,14 +382,23 @@ public class QuartzSchedulerSPI
                                                   final Trigger trigger) throws SchedulerException
   {
     log.debug("Initializing task-state: jobDetail={}, trigger={}", jobDetail, trigger);
-
-    Date now = new Date();
-    TaskConfiguration taskConfiguration = configurationOf(jobDetail);
     Schedule schedule = triggerConverter.convert(trigger);
+    return attachJobListener(jobDetail, trigger, schedule);
+  }
+
+  /**
+   * Attach {@link QuartzTaskJobListener} to job.
+   */
+  private QuartzTaskJobListener attachJobListener(final JobDetail jobDetail,
+                                                  final Trigger trigger,
+                                                  final Schedule schedule) throws SchedulerException
+  {
+    Date taskStart = new Date();
+    TaskConfiguration taskConfiguration = configurationOf(jobDetail);
     QuartzTaskState taskState = new QuartzTaskState(
         taskConfiguration,
         schedule,
-        trigger.getFireTimeAfter(now)
+        trigger.getFireTimeAfter(taskStart)
     );
 
     QuartzTaskFuture future = null;
@@ -391,7 +407,7 @@ public class QuartzSchedulerSPI
           this,
           jobDetail.getKey(),
           taskConfiguration.getTaskLogName(),
-          now,
+          taskStart,
           schedule,
           null
       );
@@ -733,7 +749,13 @@ public class QuartzSchedulerSPI
 
       Set<JobKey> jobKeys = scheduler.getJobKeys(jobGroupEquals(GROUP_NAME));
       for (JobKey jobKey : jobKeys) {
-        QuartzTaskJobListener listener = findJobListener(jobKey);
+        QuartzTaskJobListener listener;
+        if (datastoreClustered) {
+          listener = fetchJobListener(jobKey);
+        }
+        else {
+          listener = findJobListener(jobKey);
+        }
         if (listener != null) {
           result.put(jobKey, listener.getTaskInfo());
         }
@@ -745,6 +767,31 @@ public class QuartzSchedulerSPI
 
       return result;
     }
+  }
+
+  /**
+   * Fetch Quartz Job from a DB.
+   */
+  @Nullable
+  private QuartzTaskJobListener fetchJobListener(final JobKey jobKey) throws SchedulerException {
+    JobDetail jobDetail = scheduler.getJobDetail(jobKey);
+    if (jobDetail == null) {
+      log.error("Missing job detail for key: {}", jobKey);
+      return null;
+    }
+
+    TriggerKey triggerKey = triggerKey(jobKey.getName(), jobKey.getGroup());
+    Trigger trigger = scheduler.getTrigger(triggerKey);
+    TriggerState triggerState = scheduler.getTriggerState(triggerKey);
+
+    if (TriggerState.BLOCKED == triggerState) {
+      /* BLOCKED means that the trigger is prevented from being fired
+         because it relates to a StatefulJob that is already executing. */
+      Schedule schedule = scheduleFactory.now();
+      return attachJobListener(jobDetail, trigger, schedule);
+    }
+
+    return attachJobListener(jobDetail, trigger);
   }
 
   private Map<Trigger, JobDetail> getNexusJobs() throws SchedulerException {
