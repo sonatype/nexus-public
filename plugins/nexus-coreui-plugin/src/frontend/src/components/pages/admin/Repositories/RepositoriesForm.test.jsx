@@ -15,6 +15,7 @@ import Axios from 'axios';
 import {
   fireEvent,
   render,
+  cleanup,
   screen,
   waitFor,
   waitForElementToBeRemoved,
@@ -41,7 +42,7 @@ jest.mock('axios', () => ({
   ...jest.requireActual('axios'),
   get: jest.fn(),
   put: jest.fn(),
-  post: jest.fn(),
+  post: jest.fn()
 }));
 
 const {EDITOR} = UIStrings.REPOSITORIES;
@@ -55,7 +56,7 @@ function CLEANUP_EXT_REQUEST(format = 'maven2') {
       filter: [
         {
           property: 'format',
-          value: format,
+          value: format
         }
       ]
     }
@@ -252,9 +253,7 @@ describe('RepositoriesForm', () => {
     }));
     validateSelect(selectors.getDeploymentPolicySelect(), deploymentPolicyOptions, 'ALLOW_ONCE');
 
-    await waitFor(() =>
-      expect(Axios.post).toHaveBeenCalledWith(EXT_URL, CLEANUP_EXT_REQUEST())
-    );
+    await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(EXT_URL, CLEANUP_EXT_REQUEST()));
 
     MAVEN_CLEANUP_RESPONSE.forEach((policy) => {
       expect(selectors.getTransferListOption(policy.name)).toBeInTheDocument();
@@ -719,6 +718,48 @@ describe('RepositoriesForm', () => {
         routingRule: null
       })
     );
+  });
+
+  it('expands/collapses HTTP Request section properly', async function () {
+    const repo1 = {
+      ...genericDefaultValues.proxy,
+      name: 'raw-proxy',
+      format: 'raw',
+      type: 'proxy',
+      url: 'http://localhost:8081/repository/raw-proxy'
+    };
+
+    const repo2 = mergeDeepRight(repo1, {
+      httpClient: {
+        connection: {
+          retries: 3
+        }
+      }
+    });
+
+    when(Axios.get)
+      .calledWith('/service/rest/internal/ui/repositories/repository/raw-proxy')
+      .mockResolvedValueOnce({
+        data: repo1
+      });
+
+    renderView('raw-proxy');
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+    expect(selectors.getRetriesInput()).not.toBeVisible();
+
+    cleanup();
+
+    when(Axios.get)
+      .calledWith('/service/rest/internal/ui/repositories/repository/raw-proxy')
+      .mockResolvedValueOnce({
+        data: repo2
+      });
+
+    renderView('raw-proxy');
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+    expect(selectors.getRetriesInput()).toBeVisible();
   });
 
   it('edits raw group repositories', async function () {

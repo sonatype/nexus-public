@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+import React, {useState} from 'react';
 
 import {FormUtils} from '@sonatype/nexus-ui-plugin';
 
@@ -18,8 +18,8 @@ import {
   NxFormGroup,
   NxCheckbox,
   NxTextInput,
-  NxStatefulAccordion,
   NxAccordion,
+  NxStatefulAccordion,
   NxFieldset
 } from '@sonatype/react-shared-components';
 
@@ -30,8 +30,16 @@ const {EDITOR} = UIStrings.REPOSITORIES;
 export default function GenericHttpReqConfiguration({parentMachine}) {
   const [currentParent, sendParent] = parentMachine;
 
+  const {userAgentSuffix, retries, timeout, enableCircularRedirects, enableCookies} =
+    currentParent.context.data.httpClient.connection || {};
+
+  const isOpen = Boolean(userAgentSuffix || retries || timeout || enableCircularRedirects || enableCookies);
+  
   return (
-    <NxStatefulAccordion className="nxrm-form-accordion-http-request">
+    <NxStatefulAccordion
+      className="nxrm-form-accordion-http-request"
+      defaultOpen={isOpen}
+    >
       <NxAccordion.Header>
         <NxAccordion.Title>{EDITOR.REQUEST_SETTINGS_CAPTION}</NxAccordion.Title>
       </NxAccordion.Header>
