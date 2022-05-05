@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.storage;
 
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.function.Supplier;
 
 import org.sonatype.nexus.blobstore.api.BlobStore;
@@ -59,6 +60,19 @@ public interface StorageFacet
    * @since 3.1
    */
   TempBlob createTempBlob(Payload payload, Iterable<HashAlgorithm> hashAlgorithms);
+
+  /**
+   * Ingests the given payload as a temporary blob with the requested hashing.
+   *
+   * @param path             the path to the file on the local file system
+   * @param contentType      the content type of the provided file if known
+   * @param hashing          the hashing algorithms to use for the blob
+   * @param requireHardLink  when true ingest will fail if the attempt to hard link fails, otherwise an attempt will be
+   *                         made to copy the file content.
+   *
+   * @since 3.next
+   */
+  TempBlob createTempBlob(Path path, final Iterable<HashAlgorithm> hashAlgorithms, boolean requireHardLink);
 
   /**
    * Returns the {@link BlobStore} associated with the repository.

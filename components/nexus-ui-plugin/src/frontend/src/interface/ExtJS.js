@@ -129,6 +129,9 @@ export default class {
     });
   }
 
+  /**
+   * @deprecated - Use a link with the download attribute instead
+   */
   static downloadUrl(url) {
     NX.util.DownloadHelper.downloadUrl(url);
   }

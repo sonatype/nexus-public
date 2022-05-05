@@ -28,6 +28,7 @@
   <packaging>pom</packaging>
 
   <modules>
+    <module>nexus2-npm-metadata-export</module>
     <module>nexus-audit</module>
     <module>nexus-base</module>
     <module>nexus-blobstore</module>

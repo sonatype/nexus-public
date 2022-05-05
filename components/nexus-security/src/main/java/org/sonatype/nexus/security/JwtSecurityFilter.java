@@ -46,7 +46,7 @@ import static org.sonatype.nexus.security.JwtHelper.USER;
 /**
  * JWT security filter.
  *
- * @since 3.next
+ * @since 3.38
  */
 @Singleton
 public class JwtSecurityFilter

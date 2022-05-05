@@ -24,7 +24,7 @@ import org.osgi.framework.Bundle;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doReturn;
 
 public class FeatureFlaggedIndexTest
@@ -46,7 +46,7 @@ public class FeatureFlaggedIndexTest
 
   @Before
   public void setup() throws ClassNotFoundException {
-    doReturn(TestClass.class).when(mockBundle).loadClass(anyString());
+    doReturn(TestClass.class).when(mockBundle).loadClass(nullable(String.class));
     System.clearProperty(FLAG_1);
     System.clearProperty(FLAG_2);
     assertThat(System.getProperty(FLAG_1), is((String) null));
@@ -61,23 +61,23 @@ public class FeatureFlaggedIndexTest
 
   @Test
   public void testNoFlagsEnabled() {
-    assertThat(FeatureFlaggedIndex.isFeatureFlagDisabled(mockBundle, anyString()), is(true));
+    assertThat(FeatureFlaggedIndex.isFeatureFlagDisabled(mockBundle, ""), is(true));
   }
 
   @Test
   public void testPartialFlagsEnabled() {
     System.setProperty(FLAG_1, Boolean.toString(true));
-    assertThat(FeatureFlaggedIndex.isFeatureFlagDisabled(mockBundle, anyString()), is(true));
+    assertThat(FeatureFlaggedIndex.isFeatureFlagDisabled(mockBundle, ""), is(true));
 
     System.clearProperty(FLAG_1);
     System.setProperty(FLAG_2, Boolean.toString(true));
-    assertThat(FeatureFlaggedIndex.isFeatureFlagDisabled(mockBundle, anyString()), is(true));
+    assertThat(FeatureFlaggedIndex.isFeatureFlagDisabled(mockBundle, ""), is(true));
   }
 
   @Test
   public void testAllFlagsEnabled() {
     System.setProperty(FLAG_1, Boolean.toString(true));
     System.setProperty(FLAG_2, Boolean.toString(true));
-    assertThat(FeatureFlaggedIndex.isFeatureFlagDisabled(mockBundle, anyString()), is(false));
+    assertThat(FeatureFlaggedIndex.isFeatureFlagDisabled(mockBundle, ""), is(false));
   }
 }

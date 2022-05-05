@@ -12,15 +12,11 @@
  */
 
 #nuget-api-key-modal {
-  .nxrm-code {
-    width: 700px;
-  }
+  .nx-code-snippet {
+    width: var(--nx-width-form-element-wide);
 
-  #nuget-api-key {
-    height: 44px;
-  }
-
-  #nuget-example-command {
-    height: 62px;
+    textarea {
+      min-height: unset;
+    }
   }
 }

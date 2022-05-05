@@ -14,14 +14,14 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {assign, Machine} from "xstate";
-import ExtJS from "./ExtJS";
-import UIStrings from "../constants/UIStrings";
+import {assign, Machine} from 'xstate';
+import ExtJS from './ExtJS';
+import UIStrings from '../constants/UIStrings';
 import {hasPath, join, lensPath, path, pathOr, set, whereEq} from 'ramda';
 
 const FIELD_ID = 'FIELD ';
 const PARAMETER_ID = 'PARAMETER ';
-const HELPER_BEAN = 'HelperBean.'
+const HELPER_BEAN = 'HelperBean.';
 
 /**
  * @since 3.31
@@ -52,13 +52,12 @@ export default class FormUtils {
    * @return {StateMachine<any, any, AnyEventObject>}
    */
   static buildFormMachine({
-                            id,
-                            initial = 'loading',
-                            stateAfterSave = 'loaded',
-                            config = (config) => config,
-                            options = (options) => options
-                          })
-  {
+    id,
+    initial = 'loading',
+    stateAfterSave = 'loaded',
+    config = (config) => config,
+    options = (options) => options
+  }) {
     const DEFAULT_CONFIG = {
       id,
       initial,
@@ -81,7 +80,7 @@ export default class FormUtils {
             src: 'fetchData',
             onDone: {
               target: 'loaded',
-              actions: ['setData', 'postProcessData', 'validate']
+              actions: ['clearLoadError', 'setData', 'postProcessData', 'validate']
             },
             onError: {
               target: 'loadError',
@@ -121,7 +120,13 @@ export default class FormUtils {
             src: 'saveData',
             onDone: {
               target: stateAfterSave,
-              actions: ['clearDirtyFlag', 'clearSaveError', 'setSavedData', 'logSaveSuccess', 'onSaveSuccess']
+              actions: [
+                'clearDirtyFlag',
+                'clearSaveError',
+                'setSavedData',
+                'logSaveSuccess',
+                'onSaveSuccess'
+              ]
             },
 
             onError: {
@@ -173,8 +178,7 @@ export default class FormUtils {
           data: (_, event) => event.data?.data,
           pristineData: (_, event) => event.data?.data
         }),
-        postProcessData: () => {
-        },
+        postProcessData: () => {},
         setDirtyFlag: ({isPristine}) => ExtJS.setDirtyStatus(id, !isPristine),
         clearDirtyFlag: () => ExtJS.setDirtyStatus(id, false),
 
@@ -207,7 +211,7 @@ export default class FormUtils {
           if (event.data?.message) {
             console.log(`Load Error: ${event.data?.message}`);
           }
-          ExtJS.showErrorMessage(UIStrings.ERROR.SAVE_ERROR)
+          ExtJS.showErrorMessage(UIStrings.ERROR.SAVE_ERROR);
         },
         logSaveSuccess: () => ExtJS.showSuccessMessage(UIStrings.SAVE_SUCCESS),
 
@@ -218,11 +222,13 @@ export default class FormUtils {
           if (event.data?.message) {
             console.log(`Load Error: ${event.data?.message}`);
           }
-          ExtJS.showErrorMessage(UIStrings.ERROR.LOAD_ERROR)
+          ExtJS.showErrorMessage(UIStrings.ERROR.LOAD_ERROR);
         },
+        clearLoadError: assign({
+          loadError: null,
+        }),
 
-        onSaveSuccess: () => {
-        },
+        onSaveSuccess: () => {},
 
         reset: assign({
           data: ({pristineData}) => pristineData,
@@ -233,15 +239,13 @@ export default class FormUtils {
           data: ({data}, event) => {
             if (event.name) {
               return set(lensPath(event.name.split('.')), event.value, data);
-            }
-            else if (event.data) {
+            } else if (event.data) {
               return {
                 ...data,
                 ...event.data
               };
-            }
-            else {
-              console.error("update event must have a name and value or a data object", event);
+            } else {
+              console.error('update event must have a name and value or a data object', event);
             }
           },
           isTouched: ({isTouched}, event) => {
@@ -250,7 +254,7 @@ export default class FormUtils {
             }
 
             const result = {...isTouched};
-            Object.keys(event.data).forEach(key => result[key] = true);
+            Object.keys(event.data).forEach((key) => (result[key] = true));
             return result;
           }
         }),
@@ -297,17 +301,17 @@ export default class FormUtils {
       return false;
     }
 
-    return Boolean(Object.values(errors).find(error => {
-      if (error === null || error === undefined) {
-        return false;
-      }
-      else if (error.length > 0) {
-        return true;
-      }
-      else {
-        return this.isInvalid(error);
-      }
-    }));
+    return Boolean(
+      Object.values(errors).find((error) => {
+        if (error === null || error === undefined) {
+          return false;
+        } else if (error.length > 0) {
+          return true;
+        } else {
+          return this.isInvalid(error);
+        }
+      })
+    );
   }
 
   /**
@@ -318,7 +322,13 @@ export default class FormUtils {
    * @return {{name: *, validationErrors: (*|[]), isPristine: boolean, value: (*|string)}}
    */
   static fieldProps(name, current, defaultValue = '') {
-    const {data = {}, isTouched = {}, validationErrors = {}, saveErrors = {}, saveErrorData = {}} = current.context;
+    const {
+      data = {},
+      isTouched = {},
+      validationErrors = {},
+      saveErrors = {},
+      saveErrorData = {}
+    } = current.context;
 
     if (!Array.isArray(name)) {
       name = name.split('.');
@@ -327,8 +337,7 @@ export default class FormUtils {
     let errors = null;
     if (path(name, isTouched) && path(name, validationErrors)) {
       errors = path(name, validationErrors);
-    }
-    else if (path(name, saveErrors) && path(name, saveErrorData) === path(name, data)) {
+    } else if (path(name, saveErrors) && path(name, saveErrorData) === path(name, data)) {
       errors = path(name, saveErrors);
     }
 
@@ -339,6 +348,31 @@ export default class FormUtils {
       isPristine: hasPath(name, isTouched) ? !path(name, isTouched) : true,
       validatable: true,
       validationErrors: errors || null
+    };
+  }
+
+  /**
+   * Generate common props for form fields
+   * @param name
+   * @param current a form machine generated by buildFormMachine
+   * @param defaultValue if the machine did not provide any data
+   * @return {{name: *, isPristine: boolean, value: (*|string)}}
+   */
+  static selectProps(name, current, defaultValue = '') {
+    const {
+      data = {},
+      isTouched = {}
+    } = current.context;
+
+    if (!Array.isArray(name)) {
+      name = name.split('.');
+    }
+
+    return {
+      id: join('.', name),
+      name: join('.', name),
+      value: String(pathOr(defaultValue, name, data)),
+      isPristine: hasPath(name, isTouched) ? !path(name, isTouched) : true
     };
   }
 
@@ -372,17 +406,13 @@ export default class FormUtils {
   static handleUpdate(name, send, type = 'UPDATE') {
     return (eventOrValue) => {
       let value;
-      if (typeof eventOrValue === 'string' ||
-          eventOrValue instanceof Array) {
+      if (typeof eventOrValue === 'string' || eventOrValue instanceof Array) {
         value = eventOrValue;
-      }
-      else if (eventOrValue instanceof Set) {
+      } else if (eventOrValue instanceof Set) {
         value = Array.from(eventOrValue);
-      }
-      else if (eventOrValue.currentTarget.type === 'checkbox') {
-        value = eventOrValue.currentTarget.checked
-      }
-      else {
+      } else if (eventOrValue.currentTarget.type === 'checkbox') {
+        value = eventOrValue.currentTarget.checked;
+      } else {
         value = eventOrValue.currentTarget.value;
       }
       send({
@@ -393,7 +423,7 @@ export default class FormUtils {
     };
   }
 
-    /**
+  /**
    * @param isPristine
    * @param isInvalid
    * @return {string|null} the tooltip explaining why the save button is disabled
@@ -401,8 +431,7 @@ export default class FormUtils {
   static saveTooltip({isPristine, isInvalid}) {
     if (isPristine) {
       return UIStrings.PRISTINE_TOOLTIP;
-    }
-    else if (isInvalid) {
+    } else if (isInvalid) {
       return UIStrings.INVALID_TOOLTIP;
     }
     return null;
@@ -414,13 +443,13 @@ export default class FormUtils {
     }
   }
 
-    /**
+  /**
    * @param enabled [required]
    * @return {string} read only checkbox status label
    */
   static readOnlyCheckboxValueLabel(enabled) {
     return enabled
-        ? UIStrings.SETTINGS.READ_ONLY.CHECKBOX.ENABLED
-        : UIStrings.SETTINGS.READ_ONLY.CHECKBOX.DISABLED;
+      ? UIStrings.SETTINGS.READ_ONLY.CHECKBOX.ENABLED
+      : UIStrings.SETTINGS.READ_ONLY.CHECKBOX.DISABLED;
   }
 }

@@ -22,7 +22,7 @@ import org.junit.Test;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -42,6 +42,19 @@ public class StaticSecurityConfigurationSourceTest
     underTest = new StaticSecurityConfigurationSource(passwordService, adminPasswordFileManager, true);
     when(passwordService.encryptPassword(any())).thenReturn("encrypted");
     when(adminPasswordFileManager.readFile()).thenReturn(null);
+  }
+
+  @Test
+  public void shouldGetPasswordFromEnvironmentVariable() throws IOException {
+    String password = "supersecretpassword";
+
+    underTest = new StaticSecurityConfigurationSource(passwordService, adminPasswordFileManager, false, password);
+
+    SecurityConfiguration configuration = underTest.getConfiguration();
+    CUser user = configuration.getUser("admin");
+    assertThat(user.getPassword(), is("encrypted"));
+    verify(passwordService).encryptPassword(password);
+    verify(adminPasswordFileManager, never()).writeFile(any());
   }
 
   @Test

@@ -23,7 +23,7 @@ import org.mockito.Mock;
 
 import static java.util.Collections.emptyList;
 import static org.codehaus.groovy.runtime.InvokerHelper.asList;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;

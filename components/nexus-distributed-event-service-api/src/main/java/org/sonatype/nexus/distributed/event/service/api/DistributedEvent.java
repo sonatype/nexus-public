@@ -15,7 +15,7 @@ package org.sonatype.nexus.distributed.event.service.api;
 /**
  * Interface for distributed events.
  *
- * @since 3.next
+ * @since 3.38
  */
 public interface DistributedEvent
 {

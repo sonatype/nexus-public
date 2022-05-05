@@ -18,6 +18,7 @@ import java.io.InputStreamReader;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +30,7 @@ import javax.annotation.Nonnull;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.time.DateHelper;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
@@ -43,7 +45,6 @@ import org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
-import org.sonatype.nexus.repository.raw.RawCoordinatesHelper;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
@@ -221,7 +222,7 @@ public class DataStoreMavenTestHelper
   }
 
   @Override
-  public String createComponent(
+  public EntityId createComponent(
       final Repository repository,
       final String groupId,
       final String artifactId,
@@ -231,11 +232,13 @@ public class DataStoreMavenTestHelper
     FluentAsset asset = repository.facet(ContentFacet.class).assets()
         .path(path)
         .component(repository.facet(ContentFacet.class).components()
-            .name(path)
-            .namespace(RawCoordinatesHelper.getGroup(path))
-            .getOrCreate())
+            .name(artifactId)
+            .namespace(groupId)
+            .version(version)
+            .getOrCreate()
+            .withAttribute("maven2", Collections.singletonMap("baseVersion", version)))
         .save();
-    return InternalIds.toExternalId(InternalIds.internalComponentId(asset).getAsInt()).getValue();
+    return InternalIds.toExternalId(InternalIds.internalComponentId(asset).getAsInt());
   }
 
   @Override

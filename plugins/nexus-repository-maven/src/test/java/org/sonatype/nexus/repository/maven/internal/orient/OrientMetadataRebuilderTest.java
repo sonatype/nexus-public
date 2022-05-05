@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -59,15 +60,14 @@ import org.slf4j.LoggerFactory;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.Thread.sleep;
 import static java.util.Collections.emptyList;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyMapOf;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -117,7 +117,7 @@ public class OrientMetadataRebuilderTest
     when(repository.facet(OrientMavenFacet.class)).thenReturn(mavenFacet);
     when(storageTx.findBucket(repository)).thenReturn(bucket);
     when(mavenFacet.getMavenPathParser()).thenReturn(mavenPathParser);
-    when(mavenPathParser.parsePath(anyString())).thenReturn(mock(MavenPath.class));
+    when(mavenPathParser.parsePath(nullable(String.class))).thenReturn(mock(MavenPath.class));
 
     Logger logger = (Logger)LoggerFactory.getLogger(ROOT_LOGGER_NAME);
     logger.addAppender(mockAppender);
@@ -135,7 +135,7 @@ public class OrientMetadataRebuilderTest
     ArgumentCaptor<Long> timeoutSecondsCaptor = ArgumentCaptor.forClass(Long.class);
 
     when(storageTx
-        .browse(anyString(), anyMapOf(String.class, Object.class), bufferSizeCaptor.capture(),
+        .browse(nullable(String.class), nullable(Map.class), bufferSizeCaptor.capture(),
             timeoutSecondsCaptor.capture()))
         .thenReturn(emptyList());
 
@@ -158,9 +158,9 @@ public class OrientMetadataRebuilderTest
     when(attributes.get(P_BASE_VERSION)).thenReturn("version");
 
     doReturn(attributes).when(component).formatAttributes();
-    doReturn(infiniteIterator(doc)).when(storageTx).browse(anyString(), anyMapOf(String.class, Object.class), anyInt(), anyLong());
+    doReturn(infiniteIterator(doc)).when(storageTx).browse(nullable(String.class), nullable(Map.class), anyInt(), anyLong());
     doReturn(infiniteIterator(component)).when(storageTx).browseComponents(any(), any());
-    doReturn(infiniteIterator(mock(Asset.class))).when(storageTx).browseAssets(any(Component.class));
+    doReturn(infiniteIterator(mock(Asset.class))).when(storageTx).browseAssets(nullable(Component.class));
 
     final AtomicBoolean canceled = new AtomicBoolean(false);
     final List<Throwable> uncaught = new ArrayList<>();
@@ -200,7 +200,7 @@ public class OrientMetadataRebuilderTest
     final String artifact2 = "artifact2";
     final String version2 = "2.0-SNAPSHOT";
     Content content = mock(Content.class);
-    when(mavenFacet.get(any(MavenPath.class))).thenReturn(content);
+    when(mavenFacet.get(nullable(MavenPath.class))).thenReturn(content);
 
     // setup objects necessary to trigger actual metadata construction in MetadataBuilder
     ODocument doc = mock(ODocument.class);
@@ -227,13 +227,13 @@ public class OrientMetadataRebuilderTest
     when(gav2Coordinates.getArtifactId()).thenReturn(artifact2);
     when(gav2Coordinates.getBaseVersion()).thenReturn(version2);
 
-    when(mavenPathParser.parsePath(anyString())).thenReturn(gav1Path, gav2Path);
+    when(mavenPathParser.parsePath(nullable(String.class))).thenReturn(gav1Path, gav2Path);
 
     // wiring to return the above
     doReturn(iteratorWithItems(doc, doc)).when(storageTx)
-        .browse(anyString(), anyMapOf(String.class, Object.class), anyInt(), anyLong());
+        .browse(nullable(String.class), nullable(Map.class), anyInt(), anyLong());
     when(storageTx.browseComponents(any(), any())).thenAnswer(i -> iteratorWithItems(component));
-    when(storageTx.browseAssets(any(Component.class))).thenAnswer(i -> iteratorWithItems(mock(Asset.class)));
+    when(storageTx.browseAssets(nullable(Component.class))).thenAnswer(i -> iteratorWithItems(mock(Asset.class)));
 
     // stage error on first artifact
     when(content.openInputStream()).thenThrow(new IOException()).thenReturn(mock(InputStream.class));
@@ -253,7 +253,7 @@ public class OrientMetadataRebuilderTest
         .count(), is(1L));
   }
 
-  private Iterable infiniteIterator(Object returnItem) {
+  private Iterable infiniteIterator(final Object returnItem) {
     Iterable iterable = mock(Iterable.class);
     Iterator iterator = mock(Iterator.class);
     Spliterator spliterator = mock(Spliterator.class);
@@ -266,7 +266,7 @@ public class OrientMetadataRebuilderTest
     return iterable;
   }
 
-  private Iterable iteratorWithItems(Object... returnItems) {
+  private Iterable iteratorWithItems(final Object... returnItems) {
     int numItems = returnItems.length;
     Iterable iterable = mock(Iterable.class);
     Iterator iterator = mock(Iterator.class);

@@ -14,8 +14,7 @@ import React from 'react';
 import { act } from 'react-dom/test-utils';
 import {fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
-import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, TestUtils} from '@sonatype/nexus-ui-plugin';
 
 import Axios from 'axios';
 import AnonymousSettings from './AnonymousSettings';

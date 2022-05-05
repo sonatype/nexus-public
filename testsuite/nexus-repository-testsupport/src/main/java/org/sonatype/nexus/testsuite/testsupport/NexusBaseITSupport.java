@@ -25,6 +25,10 @@ import static org.ops4j.pax.exam.CoreOptions.wrappedBundle;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFileExtend;
 import static org.ops4j.pax.exam.options.WrappedUrlProvisionOption.OverwriteMode.MERGE;
 
+/**
+ * Base class for Nexus public distribution tests. Tests should be direct subclasses of this, shared code should be
+ * extracted into shared helper classes.
+ */
 public abstract class NexusBaseITSupport
     extends ITSupport
 {

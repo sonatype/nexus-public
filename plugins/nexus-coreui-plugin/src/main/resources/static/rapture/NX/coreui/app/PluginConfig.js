@@ -127,12 +127,6 @@ Ext.define('NX.coreui.app.PluginConfig', {
       }
     },
     {
-      id: 'NX.coreui.controller.Bundles',
-      active: function () {
-        return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
-      }
-    },
-    {
       id: 'NX.coreui.controller.Repositories',
       active: function () {
         return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
@@ -330,12 +324,6 @@ Ext.define('NX.coreui.app.PluginConfig', {
       active: function() {
         return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
       }
-    },
-    {
-      id: 'NX.coreui.controller.ProprietaryRepositories',
-      active: function () {
-        return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
-      }
-    },
+    }
   ]
 });

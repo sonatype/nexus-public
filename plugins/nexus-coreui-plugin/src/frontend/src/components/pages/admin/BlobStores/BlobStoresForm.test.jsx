@@ -16,7 +16,7 @@ import {when} from 'jest-when';
 import {fireEvent, screen, waitForElementToBeRemoved} from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/extend-expect';
-import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
+import {TestUtils} from '@sonatype/nexus-ui-plugin';
 import S3BlobStoreSettings from './S3/S3BlobStoreSettings';
 import S3BlobStoreWarning from './S3/S3BlobStoreWarning';
 
@@ -182,7 +182,7 @@ describe('BlobStoresForm', function() {
     when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
     when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
 
-    const {container, loadingMask, typeSelect} = render();
+    const {loadingMask, typeSelect} = render();
 
     await waitForElementToBeRemoved(loadingMask);
 
@@ -194,7 +194,7 @@ describe('BlobStoresForm', function() {
     when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
     when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
 
-    const {container, loadingMask, typeSelect} = render();
+    const {loadingMask, typeSelect} = render();
 
     await waitForElementToBeRemoved(loadingMask);
 
@@ -316,7 +316,7 @@ describe('BlobStoresForm', function() {
     when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
     when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
 
-    const {loadingMask, typeSelect, softQuota, softQuotaType, softQuotaLimit, getByText} = render();
+    const {loadingMask, typeSelect, softQuota, softQuotaType, softQuotaLimit} = render();
 
     await waitForElementToBeRemoved(loadingMask);
 

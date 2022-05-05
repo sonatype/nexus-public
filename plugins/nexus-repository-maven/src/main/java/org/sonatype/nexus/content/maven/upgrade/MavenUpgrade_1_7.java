@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.content.maven.upgrade;
 
+import java.util.Optional;
+
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -26,7 +28,7 @@ public class MavenUpgrade_1_7 // NOSONAR
     extends MavenIndexUpgrade
 {
   @Override
-  public String version() {
-    return "1.7";
+  public Optional<String> version() {
+    return Optional.of("1.7");
   }
 }

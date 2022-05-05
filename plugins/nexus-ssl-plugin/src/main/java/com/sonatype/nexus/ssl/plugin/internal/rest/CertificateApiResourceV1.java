@@ -17,10 +17,9 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.Path;
 
-import com.sonatype.nexus.ssl.plugin.internal.CertificateRetriever;
-
 import org.sonatype.nexus.security.internal.rest.SecurityApiResourceV1;
 import org.sonatype.nexus.ssl.TrustStore;
+import org.sonatype.nexus.ssl.CertificateRetriever;
 
 /**
  * @since 3.26

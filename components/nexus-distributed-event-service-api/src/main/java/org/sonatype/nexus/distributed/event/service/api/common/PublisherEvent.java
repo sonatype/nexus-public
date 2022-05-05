@@ -22,21 +22,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * A PublisherEvent is a notification to the DistributedEventPublisher to publish the enclosed {@link
  * DistributedEvent}.
  *
- * @since 3.next
+ * @since 3.38
  */
 public final class PublisherEvent
 {
-  private final String sourceNodeId;
-
   private final DistributedEvent distributedEvent;
 
-  public PublisherEvent(final String sourceNodeId, final DistributedEvent distributedEvent) {
-    this.sourceNodeId = checkNotNull(sourceNodeId);
+  public PublisherEvent(final DistributedEvent distributedEvent) {
     this.distributedEvent = checkNotNull(distributedEvent);
-  }
-
-  public String getSourceNodeId() {
-    return sourceNodeId;
   }
 
   public DistributedEvent getDistributedEvent() {

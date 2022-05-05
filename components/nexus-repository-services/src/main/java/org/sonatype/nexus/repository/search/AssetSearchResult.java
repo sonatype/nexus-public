@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  * Result of an Asset search
  *
- * @since 3.next
+ * @since 3.38
  */
 public class AssetSearchResult
 {
@@ -100,5 +100,12 @@ public class AssetSearchResult
 
   public void setAttributes(final Map<String, Object> attributes) {
     this.attributes = attributes;
+  }
+
+  @Override
+  public String toString() {
+    return "AssetSearchResult [path=" + path + ", id=" + id + ", repository=" + repository + ", format=" + format
+        + ", checksum=" + checksum + ", contentType=" + contentType + ", lastModified=" + lastModified + ", attributes="
+        + attributes + "]";
   }
 }

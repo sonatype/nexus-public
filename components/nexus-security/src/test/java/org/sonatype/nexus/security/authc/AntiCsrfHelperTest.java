@@ -35,7 +35,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 public class AntiCsrfHelperTest
@@ -73,7 +73,7 @@ public class AntiCsrfHelperTest
   public void testRequireValidToken_Disabled() {
     underTest = new AntiCsrfHelper(false);
     underTest.requireValidToken(httpServletRequest, "a-token");
-    verifyZeroInteractions(httpServletRequest);
+    verifyNoInteractions(httpServletRequest);
   }
 
   /*
@@ -135,7 +135,7 @@ public class AntiCsrfHelperTest
   public void testIsAccessAllowed_Disabled() {
     underTest = new AntiCsrfHelper(false);
     assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
-    verifyZeroInteractions(httpServletRequest);
+    verifyNoInteractions(httpServletRequest);
   }
 
   /*

@@ -80,6 +80,8 @@ public class MavenVersionNormalizerTest
     assertVersionsEqual( "1x", "1.0.0-x" );
     assertVersionsEqual( "1.0x", "1-x" );
     assertVersionsEqual( "1.0.0x", "1-x" );
+    // NEXUS-31494
+    assertVersionsEqual( "1.0-", "1" );
   }
 
   @Test

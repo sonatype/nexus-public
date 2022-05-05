@@ -26,7 +26,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 /**
  * Manages the injection of {@link JwtLegacyHttpBridgeModule} based on the capability being enabled or the system property
  *
- * @since 3.next
+ * @since 3.38
  */
 @Named
 @Singleton

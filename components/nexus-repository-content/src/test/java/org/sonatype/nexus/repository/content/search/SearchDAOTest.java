@@ -12,25 +12,30 @@
  */
 package org.sonatype.nexus.repository.content.search;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
-import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.datastore.api.DataSession;
-import org.sonatype.nexus.repository.config.internal.ConfigurationData;
-import org.sonatype.nexus.repository.content.Component;
-import org.sonatype.nexus.repository.content.ComponentSearch;
-import org.sonatype.nexus.repository.content.browse.store.example.TestSearchDAO;
-import org.sonatype.nexus.repository.content.store.ComponentData;
+import org.sonatype.nexus.repository.content.SearchResult;
 import org.sonatype.nexus.repository.content.store.ExampleContentTestSupport;
+import org.sonatype.nexus.repository.content.store.example.TestSearchDAO;
+import org.sonatype.nexus.repository.search.SortDirection;
+import org.sonatype.nexus.repository.search.sql.SqlSearchQueryCondition;
+import org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilder;
 
 import org.junit.Before;
 import org.junit.Test;
 
-import static java.util.Objects.isNull;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
+import static org.sonatype.nexus.repository.rest.sql.ComponentSearchField.NAME;
 
 /**
  * Test {@link SearchDAO}.
@@ -61,59 +66,93 @@ public class SearchDAOTest
   }
 
   @Test
-  public void testSearchComponents() throws InterruptedException {
+  public void testSearchComponents() {
     generateConfiguration();
-    final EntityId repositoryId = generatedConfigurations().get(0).getRepositoryId();
+    EntityId repositoryId = generatedConfigurations().get(0).getRepositoryId();
     generateSingleRepository(UUID.fromString(repositoryId.getValue()));
-    generateRandomContent(1, 1);
-
-    final SearchData actualData;
+    generateContent(1);
 
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       SearchDAO searchDAO = session.access(TestSearchDAO.class);
 
-      final Continuation<ComponentSearch> actual =
-          searchDAO.searchComponents(1000, null, null, null, false, null);
+      int count = searchDAO.count(null, null);
+      assertThat(count, is(1));
 
-      actualData = actual.stream().findFirst()
-          .map(actualSearch -> (SearchData) actualSearch).orElseGet(SearchData::new);
+      SqlSearchRequest request = SqlSearchRequest.builder()
+          .limit(10)
+          .sortColumnName(SearchViewColumns.COMPONENT_ID.name())
+          .sortDirection(SortDirection.ASC.name())
+          .defaultSortColumnName(SearchViewColumns.COMPONENT_ID.name())
+          .build();
+      Collection<SearchResult> actual = searchDAO.searchComponents(request);
+      Optional<SearchResult> componentSearch = actual.stream().findFirst();
+
+      assertThat(componentSearch.isPresent(), is(true));
+      SearchResult searchResult = componentSearch.get();
+      assertThat(searchResult.componentId(), notNullValue());
+      assertThat(searchResult.namespace(), notNullValue());
+      assertThat(searchResult.componentName(), notNullValue());
+      assertThat(searchResult.version(), notNullValue());
+      assertThat(searchResult.repositoryName(), notNullValue());
     }
-
-    assertThat("Data fetched from DB is same as generated",
-        isProvidedSearchDataAreEqualAndNotNull(actualData, getGeneratedData()));
   }
 
-  private boolean isProvidedSearchDataAreEqualAndNotNull(SearchData left, SearchData right) {
-    if (isNull(left)
-        || isNull(right)
-        || isNull(left.componentId)
-        || isNull(left.namespace())
-        || isNull(left.componentName())
-        || isNull(left.version())
-        || isNull(left.repositoryName())
-        || isNull(left.repositoryName())) {
-      return false;
-    }
+  @Test
+  public void testSearchComponentsWithFilter() {
+    generateConfiguration();
+    EntityId repositoryId = generatedConfigurations().get(0).getRepositoryId();
+    generateSingleRepository(UUID.fromString(repositoryId.getValue()));
+    List<String> componentNames = Arrays.asList("component", "foo_component", "test_component_name", "name");
+    generateContent(componentNames);
 
-    return left.componentId.equals(right.componentId)
-        && left.namespace().equals(right.namespace())
-        && left.componentName().equals(right.componentName())
-        && left.version().equals(right.version())
-        && left.repositoryName().equals(right.repositoryName());
+    SqlSearchQueryConditionBuilder queryConditionBuilder = new SqlSearchQueryConditionBuilder();
+    SqlSearchQueryCondition queryCondition = queryConditionBuilder.condition(NAME.getColumnName(), "*component*");
+
+    String conditionFormat = queryCondition.getSqlConditionFormat();
+    Map<String, String> values = queryCondition.getValues();
+
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      SearchDAO searchDAO = session.access(TestSearchDAO.class);
+
+      int count = searchDAO.count(conditionFormat, values);
+      assertThat(count, is(3));
+
+      SqlSearchRequest request = SqlSearchRequest.builder()
+          .searchFilter(conditionFormat)
+          .searchFilterValues(values)
+          .limit(10)
+          .sortColumnName(SearchViewColumns.COMPONENT_ID.name())
+          .defaultSortColumnName(SearchViewColumns.COMPONENT_ID.name())
+          .build();
+      Collection<SearchResult> results = searchDAO.searchComponents(request);
+
+      assertThat(results.size(), is(3));
+      assertThat(results.stream().filter(component -> component.componentName().equals("name")).count(), is(0L));
+    }
   }
 
-  private SearchData getGeneratedData() {
-    final List<Component> components = generatedComponents();
-    final List<ConfigurationData> configurations = generatedConfigurations();
-    if (components.isEmpty() || configurations.isEmpty()) {
-      return new SearchData();
+  @Test
+  public void testSearchComponentsWithOffset() {
+    generateConfiguration();
+    EntityId repositoryId = generatedConfigurations().get(0).getRepositoryId();
+    generateSingleRepository(UUID.fromString(repositoryId.getValue()));
+    generateContent(10);
+
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      SearchDAO searchDAO = session.access(TestSearchDAO.class);
+
+      int count = searchDAO.count(null, null);
+      assertThat(count, is(10));
+      SqlSearchRequest request = SqlSearchRequest.builder()
+          .limit(10)
+          .offset(10)
+          .sortColumnName(SearchViewColumns.COMPONENT_ID.name())
+          .sortDirection(SortDirection.ASC.name())
+          .defaultSortColumnName(SearchViewColumns.COMPONENT_ID.name())
+          .build();
+
+      Collection<SearchResult> actual = searchDAO.searchComponents(request);
+      assertThat(actual.isEmpty(), is(true));
     }
-    SearchData searchData =
-        getSearchDataFromComponent((ComponentData) components.get(0));
-
-    searchData.setRepositoryName(configurations.get(0).getRepositoryName());
-    searchData.setAttributes(generatedAssets().get(0).attributes());
-
-    return searchData;
   }
 }

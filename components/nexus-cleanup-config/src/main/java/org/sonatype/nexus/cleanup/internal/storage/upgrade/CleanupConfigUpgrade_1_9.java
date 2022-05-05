@@ -14,6 +14,7 @@ package org.sonatype.nexus.cleanup.internal.storage.upgrade;
 
 import java.sql.Connection;
 import java.sql.Statement;
+import java.util.Optional;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -28,8 +29,8 @@ public class CleanupConfigUpgrade_1_9
     implements DatabaseMigrationStep
 {
   @Override
-  public String version() {
-    return "1.9";
+  public Optional<String> version() {
+    return Optional.of("1.9");
   }
 
   @Override

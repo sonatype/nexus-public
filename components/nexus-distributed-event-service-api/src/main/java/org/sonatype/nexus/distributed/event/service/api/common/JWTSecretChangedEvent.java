@@ -13,39 +13,22 @@
 package org.sonatype.nexus.distributed.event.service.api.common;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.distributed.event.service.api.EventType.UPDATED;
 
 /**
  * Indicates that a 'JWT secret' has been changed.
  *
- * @since 3.next
+ * @since 3.38
  */
 public class JWTSecretChangedEvent
     extends DistributedEventSupport
 {
   public static final String NAME = "JWTSecretChangedEvent";
 
-  private final String nodeId;
-
   @JsonCreator
-  public JWTSecretChangedEvent(
-      @JsonProperty("nodeId") final String nodeId)
+  public JWTSecretChangedEvent()
   {
     super(UPDATED);
-    this.nodeId = checkNotNull(nodeId);
-  }
-
-  public String getNodeId() {
-    return nodeId;
-  }
-
-  @Override
-  public String toString() {
-    return "JWTSecretChangedEvent{" +
-        "nodeId='" + nodeId + '\'' +
-        '}';
   }
 }

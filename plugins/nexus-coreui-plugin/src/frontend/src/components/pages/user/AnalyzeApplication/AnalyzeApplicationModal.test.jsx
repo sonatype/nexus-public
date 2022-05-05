@@ -14,7 +14,7 @@ import React from 'react';
 import Axios from 'axios';
 import axios from 'axios';
 import TestUtils from "@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils";
-import {fireEvent, wait} from "@testing-library/react";
+import { fireEvent, waitFor, waitForElementToBeRemoved } from "@testing-library/react";
 import '@testing-library/jest-dom/extend-expect';
 import UIStrings from "../../../../constants/UIStrings";
 import AnalyzeApplicationModal from "./AnalyzeApplicationModal";
@@ -73,7 +73,7 @@ describe('AnalyzeApplicationModal', () => {
   it('renders correctly', async() => {
     let {loadingMask, email, password, packages, reportName, cancelButton, analyzeButton, selectedAsset } = render();
 
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(loadingMask());
 
     expect(email()).toHaveValue('test@sonatype.com');
     expect(password()).toHaveValue('');
@@ -87,7 +87,7 @@ describe('AnalyzeApplicationModal', () => {
   it('form values are updated', async() => {
     let {loadingMask, email, password, packages, reportName, selectedAsset, cancelButton, analyzeButton } = render();
 
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(loadingMask());
 
     await TestUtils.changeField(email, 'foo@bar.com');
     await TestUtils.changeField(password, 'foobar');
@@ -107,7 +107,7 @@ describe('AnalyzeApplicationModal', () => {
   it('analyze cancelled', async() => {
     let {loadingMask, email, password, analyzeButton, cancelButton } = render();
 
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(loadingMask());
 
     expect(analyzeButton()).toHaveClass('disabled');
     await TestUtils.changeField(email, 'foo@bar.com');
@@ -118,13 +118,13 @@ describe('AnalyzeApplicationModal', () => {
 
     expect(Axios.post).toHaveBeenCalledTimes(0);
 
-    await wait( () => expect(onCancelMock).toHaveBeenCalled());
+    await waitFor( () => expect(onCancelMock).toHaveBeenCalled());
   });
 
   it('analyze submitted', async() => {
     let {loadingMask, email, password, packages, analyzeButton } = render();
 
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(loadingMask());
 
     await TestUtils.changeField(email, 'foo@bar.com');
     await TestUtils.changeField(password, 'foobar');
@@ -146,6 +146,6 @@ describe('AnalyzeApplicationModal', () => {
         }
     );
 
-    await wait( () => expect(onAnalyzedMock).toHaveBeenCalled());
+    await waitFor( () => expect(onAnalyzedMock).toHaveBeenCalled());
   });
 });

@@ -16,12 +16,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -34,14 +30,15 @@ import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 import org.sonatype.nexus.blobstore.group.internal.WriteToFirstMemberFillPolicy;
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.io.DirectoryHelper;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
 import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.lang.Boolean.TRUE;
 import static org.codehaus.groovy.runtime.InvokerHelper.asList;
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
 import static org.sonatype.nexus.blobstore.file.FileBlobStore.PATH_KEY;
@@ -56,11 +53,15 @@ public class BlobStoreRule
 {
   private static final Logger log = LoggerFactory.getLogger(BlobStoreRule.class);
 
-  private final Provider<BlobStoreManager> blobStoreManagerProvider;
+  protected final Provider<BlobStoreManager> blobStoreManagerProvider;
 
-  private final List<String> blobStoreNames = new ArrayList<>();
+  protected final List<String> blobStoreNames = new ArrayList<>();
 
-  private final List<String> blobStoreGroupNames = new ArrayList<>();
+  protected final List<String> blobStoreGroupNames = new ArrayList<>();
+
+  private static final String S3_TYPE = "S3";
+
+  private static final String S3_SERVICE_ENDPOINT = System.getProperty("mock.s3.service.endpoint");
 
   public BlobStoreRule(final Provider<BlobStoreManager> blobStoreManagerProvider) {
     this.blobStoreManagerProvider = blobStoreManagerProvider;
@@ -100,6 +101,22 @@ public class BlobStoreRule
     BlobStore blobStore = blobStoreManagerProvider.get().create(config);
     blobStoreGroupNames.add(name);
     return blobStore;
+  }
+
+  public BlobStore createS3(final String blobStoreName, final String bucketName, final String prefix)
+      throws Exception
+  {
+    BlobStoreConfiguration configuration = blobStoreManagerProvider.get().newConfiguration();
+    configuration.setType(S3_TYPE);
+    configuration.setName(blobStoreName);
+    final NestedAttributesMap bucketAttributes = configuration.attributes(S3_TYPE.toLowerCase());
+    bucketAttributes.set("region", "us-east-1");
+    bucketAttributes.set("bucket", bucketName);
+    bucketAttributes.set("prefix", prefix);
+    bucketAttributes.set("expiration", 5);
+    bucketAttributes.set("endpoint", S3_SERVICE_ENDPOINT);
+    bucketAttributes.set("forcePathStyle".toLowerCase(), TRUE.toString());
+    return blobStoreManagerProvider.get().create(configuration);
   }
 
   public BlobStore get(final String name) {

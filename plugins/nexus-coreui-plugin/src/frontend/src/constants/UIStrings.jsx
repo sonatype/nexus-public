@@ -12,6 +12,8 @@
  */
 import React from 'react';
 
+import {NxTextLink} from '@sonatype/react-shared-components';
+
 import {UIStrings} from '@sonatype/nexus-ui-plugin';
 
 export default {
@@ -77,13 +79,15 @@ export default {
       EMPTY_LIST: 'There are no blob stores available',
       HELP: {
         TITLE: 'What is a blob store?',
-        TEXT: `\
-The binary assets you download via proxy repositories, or publish to hosted repositories, are stored in \
-the blob store attached to those repositories. In traditional, single node NXRM deployments, blob stores \
-are typically associated with a local filesystem directory, usually within the sonatype-work directory. \
-For more information, check \
-<a href="http://links.sonatype.com/products/nxrm3/docs/blob-store" target="_blank" rel="noopener noreferrer">\
-the documentation</a>.`
+        TEXT: <>
+          The binary assets you download via proxy repositories, or publish to hosted repositories, are stored in
+          the blob store attached to those repositories. In traditional, single node NXRM deployments, blob stores
+          are typically associated with a local filesystem directory, usually within the sonatype-work directory.
+          For more information, check{' '}
+          <NxTextLink external href="http://links.sonatype.com/products/nxrm3/docs/blob-store">
+            the documentation
+          </NxTextLink>.
+        </>,
       },
       AVAILABLE: 'Started',
       UNAVAILABLE: 'Failed',
@@ -190,12 +194,14 @@ the documentation</a>.`
     EMPTY_MESSAGE: 'No content selectors were found',
 
     HELP_TITLE: 'What is a content selector?',
-    HELP_TEXT: `\
-Content selectors provide a means for you to select specific content from your repositories. \
-Repository content is evaluated against expressions written in CSEL (Content Selector Expression Language). \
-For more information, <a href="http://links.sonatype.com/products/nxrm3/docs/content-selector" target="_blank" rel="noopener noreferrer">check the documentation</a>.\
-`,
-
+    HELP_TEXT: <>
+      Content selectors provide a means for you to select specific content from your repositories.
+      Repository content is evaluated against expressions written in CSEL (Content Selector Expression Language).
+      For more information,{' '}
+      <NxTextLink external href="http://links.sonatype.com/products/nxrm3/docs/content-selector">
+        check the documentation
+      </NxTextLink>.
+    </>,
     CREATE_BUTTON: 'Create Selector',
     FILTER_PLACEHOLDER: 'Filter',
 
@@ -273,13 +279,34 @@ For more information, <a href="http://links.sonatype.com/products/nxrm3/docs/con
     }
   },
 
-  LOG_VIEWER: {
+  LOGS: {
     MENU: {
-      text: 'Log Viewer',
+      text: 'Logs',
       description: 'View the current log contents'
     },
+
+    LIST: {
+      FILTER_PLACEHOLDER: 'Filter by File Name',
+      LOGGER_NAME_LABEL: 'Logger Name',
+      FILE_NAME_LABEL: 'File Name',
+      SIZE_LABEL: 'Size',
+      LAST_MODIFIED_LABEL: 'Last Modified'
+    },
+
+    VIEW: {
+      TITLE: (log) => `Viewing ${log}`,
+      DOWNLOAD: 'Download',
+      MARK: {
+        LABEL: 'Marker to insert into log',
+        INSERT: 'Insert'
+      },
+      REFRESH: {
+        RATE_LABEL: 'Refresh Rate',
+        SIZE_LABEL: 'Size'
+      }
+    },
+
     REFRESH: {
-      TEXT: 'Refresh Interval',
       MANUAL_ITEM: 'Manual',
       TWENTY_SECONDS_ITEM: 'Every 20 seconds',
       MINUTE_ITEM: 'Every minute',
@@ -290,10 +317,7 @@ For more information, <a href="http://links.sonatype.com/products/nxrm3/docs/con
       LAST25KB_ITEM: 'Last 25KB',
       LAST50KB_ITEM: 'Last 50KB',
       LAST100KB_ITEM: 'Last 100KB'
-    },
-    DOWNLOAD: 'Download',
-    INSERT_MARK: 'Insert Mark',
-    MARK_PLACEHOLDER: 'Marker to insert into log'
+    }
   },
 
   REPOSITORIES: {
@@ -311,48 +335,54 @@ For more information, <a href="http://links.sonatype.com/products/nxrm3/docs/con
         STATUS: 'Status',
         URL: 'URL',
         HEALTH_CHECK: 'Health check',
-        IQ: 'IQ Policy Violations'
+        IQ: 'IQ Policy Violations',
       },
       FILTER_PLACEHOLDER: 'Filter by name',
       EMPTY_LIST: 'There are no repositories available',
+      COPY_URL_TITLE: 'Copy URL to Clipboard',
       HELP: {
         TITLE: 'What is a repository?',
-        TEXT: `\
-A repository is a storage location where components, such as packages, libraries, binaries, and containers, \
-are retrieved so they can be installed or used. Creating and managing repositories is an essential part of \
-your Nexus Repository Manager configuration since it allows you to expose content to your end users as well \
-as provide a location for them to store more content. For more information, check \
-<a href="http://links.sonatype.com/products/nxrm3/docs/repository" target="_blank" rel="noopener noreferrer">\
-the documentation</a>.`
+        TEXT: <>
+          A repository is a storage location where components, such as packages, libraries, binaries, and containers,
+          are retrieved so they can be installed or used. Creating and managing repositories is an essential part of
+          your Nexus Repository Manager configuration since it allows you to expose content to your end users as well
+          as provide a location for them to store more content. For more information, check{' '}
+          <NxTextLink external href="http://links.sonatype.com/products/nxrm3/docs/repository">
+            the documentation
+          </NxTextLink>.
+        </>,
       },
     },
 
     EDITOR: {
+      ENABLED_CHECKBOX_DESCR: 'Enabled',
+      NONE_OPTION: 'None',
       CREATE_TITLE: {
         text: 'Create Repository',
-        description: 'Select a repository format, then choose a type (group, hosted, or proxy)'
+        description: 'Select a repository format; then, choose a type (group, hosted, or proxy)'
       },
       EDIT_TITLE: {
         text: 'Edit Repository',
-        description: 'Select a repository format, then choose a type (group, hosted, or proxy)'
+        description: 'Edit your existing repository setup'
       },
       FORMAT_AND_TYPE_CAPTION: 'Repository Format & Type',
       FORMAT_LABEL: 'Format',
       TYPE_LABEL: 'Type',
+      URL_LABEL: 'URL',
       CONFIGURATION_CAPTION: 'Configuration',
       NAME_LABEL: 'Name',
       STATUS_LABEL: 'Status',
       STATUS_DESCR: 'Online - Ready to connect',
       STORAGE_CAPTION: 'Storage',
       BLOB_STORE_LABEL: 'Blob Store',
-      CONTENT_VALIDATION_LABEL: 'Strict Content Type Validation', 
-      CONTENT_VALIDATION_DESCR: 'Enabled',
+      CONTENT_VALIDATION_LABEL: 'Strict Content Type Validation',
       GROUP_CAPTION: 'Group',
       MEMBERS_LABEL: 'Member Repositories',
       SELECT_FORMAT_OPTION: 'Select a format...',
       SELECT_TYPE_OPTION: 'Select a type...',
       SELECT_STORE_OPTION: 'Select a blob store...',
-      SAVE_BUTTON_LABEL: 'Create Repository',
+      CREATE_BUTTON: 'Create Repository',
+      SAVE_BUTTON: 'Save',
       CLEANUP_CAPTION: 'Cleanup',
       CLEANUP_POLICIES_LABEL: 'Cleanup Policies',
       CLEANUP_POLICIES_SUBLABEL: 'Nexus Repository will delete components that match any of the applied policies',
@@ -369,7 +399,111 @@ the documentation</a>.`
         ALLOW_ONCE: 'Disable redeploy',
         DENY: 'Read-only',
         REPLICATION_ONLY: 'Deploy by Replication Only'
-      }
+      },
+      PROXY_CAPTION: 'Proxy Settings',
+      REMOTE_STORAGE_LABEL: 'Remote Storage',
+      REMOTE_STORAGE_SUBLABEL: 'Location of the remote repository to proxy',
+      URL_PLACEHOLDER: 'Enter a URL',
+      BLOCKING_LABEL: 'Blocking',
+      BLOCK_DESCR: 'Block outbound connections to the repository',
+      AUTO_BLOCK_DESCR: 'Auto-block outbound connections to the repository if remote peer is detected as unreachable/unresponsive',
+      MAX_COMP_AGE_LABEL: 'Maximum Component Age',
+      MAX_COMP_AGE_SUBLABEL: 'How long (in minutes) to cache artifacts before re-checking the remote repository. Release repositories should use -1',
+      MAX_META_AGE_LABEL: 'Maximum Metadata Age',
+      MAX_META_AGE_SUBLABEL: 'How long (in minutes) to cache metadata before rechecking the remote repository',
+      OPTIONS_CAPTION: 'Options',
+      ROUTING_RULE_LABEL: 'Routing Rule',
+      NEGATIVE_CACHE_LABEL: 'Negative Cache',
+      NEGATIVE_CACHE_DESCR: 'Enabled',
+      NEGATIVE_CACHE_TTL_LABEL: 'Negative Cache TTL (Minutes)',
+      NEGATIVE_CACHE_TTL_SUBLABEL: 'How long to cache that a file was not able to be found in the repository',
+      HTTP_AUTH_CAPTION: 'HTTP Authentication',
+      AUTH_TYPE_LABEL: 'Authentication type',
+      USERNAME_LABEL: 'Username',
+      PASSWORD_LABEL: 'Password',
+      USERNAME_OPTION: 'Username',
+      NTLM_OPTION: 'Windows NTLM',
+      NTLM_HOST_LABEL: 'Windows NTLM hostname',
+      NTLM_DOMAIN_LABEL: 'Windows NTLM domain',
+      REQUEST_SETTINGS_CAPTION: 'HTTP Request Settings',
+      USER_AGENT_LABEL: 'User-Agent Customization',
+      USER_AGEN_SUBLABEL: 'Define a custom fragment to append to "User-Agent" header in HTTP requests',
+      RETRIES_LABEL: 'Connection Retries',
+      RETRIES_SUBLABEL: 'Number of times to retry if the first connection attempt times out',
+      TIMEOUT_LABEL: 'Connection Timeout (Seconds)',
+      TIMEOUT_SUBLABEL: 'Time (in seconds) to wait before stopping and retrying the connection. Leave blank to use the globally defined HTTP timeout',
+      REDIRECTS_LABEL: 'Circular Redirects',
+      COOKIES_LABEL: 'Cookies',
+      REPLICATION_LABEL: 'Replication',
+      REPLICATION_SUBLABEL: 'If checked, this repository is the target of a replication',
+      REWRITE_URLS_LABEL: 'Enable Rewrite of Package URLs',
+      REWRITE_URLS_DESCR: 'Force Bower to retrieve packages through the proxy repository',
+      REPODATA_DEPTH_LABEL: 'Repodata Depth',
+      REPODATA_DEPTH_SUBLABEL: 'Specifies the repository depth where the repodata folder are created',
+      LAYOUT_POLICY_LABEL: 'Layout Policy',
+      DEPLOY_POLICY_SUBLABEL: 'Validate that all paths are RPMs or yum metadata',
+      LAYOUT_POLICY_SUBLABEL: 'Validate that all paths are maven artifact or metadata paths',
+      CONTENT_DISPOSITION_LABEL: 'Content Disposition',
+      CONTENT_DISPOSITION_SUBLABEL: 'Add Content-Disposition header as "Attachment" to disable some content from being inline in a browser',
+      VERSION_POLICY_LABEL: 'Version Policy',
+      VERSION_POLICY_SUBLABEL: 'What type of artifacts does this repository store?',
+      REMOVE_NON_CATALOGED_LABEL: 'Remove Non-catalogued Versions',
+      REMOVE_NON_CATALOGED_SUBLABEL: 'IQ Audit and Quarantine capability must be enabled for this feature to take effect. ',
+      REMOVE_NON_CATALOGED_DESCR: 'Remove non-catalogued versions from the package metadata',
+      REMOVE_QUARANTINED_LABEL: 'Remove Quarantined Versions',
+      REMOVE_QUARANTINED_SUBLABEL: 'IQ Audit and Quarantine capability must be enabled for this feature to take effect. ',
+      REMOVE_QUARANTINED_DESCR: 'Remove quarantined versions from the package metadata',
+      LEARN_MORE: 'Learn more',
+      REPOSITORY_CONNECTORS_CAPTION: 'Repository Connectors',
+      HTTP_CONNECTOR_LABEL: 'HTTP',
+      HTTP_CONNECTOR_SUBLABEL: 'Create an HTTP connector at specified port. Normally used if the server is behind a secure proxy',
+      HTTPS_CONNECTOR_LABEL: 'HTTPS',
+      HTTPS_CONNECTOR_SUBLABEL: 'Create an HTTP connector at specified port. Normally used if the server is configured for https',
+      DOCKER_CONNECTOR_PLACEHOLDER: 'Enter a port number',
+      ALLOW_ANON_DOCKER_PULL_LABEL: 'Allow anonymous docker pull',
+      ALLOW_ANON_DOCKER_PULL_DESCR: 'Allow anonymous docker pull (Docker Bearer Token Realm required)',
+      REGISTRY_API_SUPPORT_CAPTION: 'Docker Registry API Support',
+      REGISTRY_API_SUPPORT_LABEL: 'Enable Docker V1 API',
+      REGISTRY_API_SUPPORT_DESCR: 'Allow clients to use the V1 API to interact with this repository ',
+      DOCKER_INDEX_LABEL: 'Docker Index',
+      USE_PROXY_REGISTRY_DESCR: 'Use Proxy registry (specified above)',
+      USE_DOCKER_HUB_DESCR: 'Use Docker Hub',
+      USE_CUSTOM_INDEX_DESCR: 'Custom index',
+      DOCKER_INDEX_URL_LABEL: 'Location of the Docker Index',
+      DOCKER_INDEX_URL_PLACEHOLDER: 'Enter a URL',
+      REMOTE_URL_EXAMPLES: {
+        bower: ' (e.g., https://registry.bower.io)',
+        docker: ' (e.g., https://registry-1.docker.io)',
+        maven2: ' (e.g., https://repo1.maven.org/maven2/)',
+        npm: ' (e.g., https://registry.npmjs.org)',
+        nuget: ' (e.g., https://api.nuget.org/v3/index.json)',
+        pypi: ' (e.g., https://pypi.org)',
+        rubygems: ' (e.g., https://rubygems.org)',
+        yum: ' (e.g., http://mirror.centos.org/centos/)',
+        default: ' (e.g., https://example.com)'	
+      },
+      DOCKER_CONNECTORS_HELP: <>
+        Connectors allow Docker clients to connect directly to hosted registries, but are not always
+        required.
+        <br />
+        Consult our{' '}
+        <NxTextLink
+          href="https://links.sonatype.com/products/nexus/docker-ssl-connector/docs"
+          external
+        >
+          documentation
+        </NxTextLink>
+        {' '}for which connector is appropriate for your use case.
+        <br />
+        For information on scaling see our{' '}
+        <NxTextLink
+          href="https://links.sonatype.com/products/nexus/docker-scaling-repositories/docs"
+          external
+        >
+          scaling documentation
+        </NxTextLink>
+        .
+      </>
     }
   },
 
@@ -390,12 +524,14 @@ the documentation</a>.`
       USED_BY: (count) => count === 1 ? '1 repository' : `${count} repositories`,
       EMPTY_LIST: 'There are no routing rules created yet',
       HELP_TITLE: 'What is a routing rule?',
-      HELP_TEXT: `\
-Routes are like filters you can apply to groups in terms of security access and general component retrieval. \
-They can be used to reduce the number of repositories within a group accessed in order to retrieve a component. \
-For more information, <a href="http://links.sonatype.com/products/nxrm3/docs/routing-rule" target="_blank" \
-rel="noopener noreferrer">check the documentation</a>.
-`
+      HELP_TEXT: <>
+        Routes are like filters you can apply to groups in terms of security access and general component retrieval.
+        They can be used to reduce the number of repositories within a group accessed in order to retrieve a component.
+        For more information,{' '}
+        <NxTextLink external href="http://links.sonatype.com/products/nxrm3/docs/routing-rule">
+          check the documentation
+        </NxTextLink>.
+      </>,
     },
 
     PREVIEW: {
@@ -556,8 +692,8 @@ This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 
     DETAILS: {
       MAIN: 'Your NuGet API Key enables pushing packages using nuget.exe.',
       WARNING: 'Keep this key secret!',
-      API_KEY_TEXT: 'Your NuGet API Key is:',
-      REGISTER_TEXT: 'You can register this key for a given repository with the following command:',
+      API_KEY_TEXT: 'Your NuGet API Key is',
+      REGISTER_TEXT: 'You can register this key for a given repository with the following command',
       REGISTER_COMMAND: 'nuget setapikey {0} -source {1}',
       AUTO_CLOSE: 'This window will automatically close after one minute.'
     }
@@ -652,12 +788,15 @@ This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 
     EDIT_TITLE: 'Edit Cleanup Policy',
 
     HELP_TITLE: 'What is a cleanup policy?',
-    HELP_TEXT: `\
-Cleanup policies can be used to remove content from your repositories. These policies will execute at the configured frequency. \
-Once created, a cleanup policy must be assigned to a repository from \
-<a href="#admin/repository/repositories">the repository configuration screen</a>. For more information, check \
-<a href="http://links.sonatype.com/products/nxrm3/docs/cleanup-policy" target="_blank" rel="noopener noreferrer">the documentation</a>.\
-`,
+    HELP_TEXT: <>
+      Cleanup policies can be used to remove content from your repositories. These policies will execute
+      at the configured frequency. Once created, a cleanup policy must be assigned to a repository from{' '}
+      <NxTextLink href="#admin/repository/repositories">the repository configuration screen</NxTextLink>.
+      For more information, check{' '}
+      <NxTextLink external href="http://links.sonatype.com/products/nxrm3/docs/cleanup-policy">
+        the documentation
+      </NxTextLink>.
+    </>,
     EMPTY_MESSAGE: 'No cleanup policies were found',
     CREATE_BUTTON: 'Create Cleanup Policy',
     FILTER_PLACEHOLDER: 'Filter',
@@ -785,5 +924,57 @@ Once created, a cleanup policy must be assigned to a repository from \
     VERIFY_CONNECTION_ERROR: (msg) => `Connection Failed: ${msg}`,
     FORM_NOTES: 'can evaluate application and organizing policies',
     HELP_TEXT: 'To enable this feature configure the IQ Server URL, username and password'
+  },
+
+  BUNDLES: {
+    MENU: {
+      text: 'Bundles',
+      description: 'View OSGI bundles'
+    },
+    LIST: {
+      ID_LABEL: 'ID',
+      STATE_LABEL: 'State',
+      LEVEL_LABEL: 'Level',
+      NAME_LABEL: 'Name',
+      VERSION_LABEL: 'Version'
+    },
+    BUNDLES_DETAIL: {
+      MENU: {
+        text: 'Bundle Summary'
+      },
+      LIST: {
+        ID_LABEL: 'ID',
+        NAME_LABEL: 'Name',
+        SYMBOLIC_NAME_LABEL: 'Symbolic Name',
+        VERSION_LABEL: 'Version',
+        STATE_LABEL: 'State',
+        LOCATION_LABEL: 'Location',
+        START_LEVEL_LABEL: 'Start Level',
+        LAST_MODIFIED_LABEL: 'Last Modified',
+        FRAGMENT_LABEL: 'Fragment'
+      },
+    }
+  },
+
+  PROPRIETARY_REPOSITORIES: {
+    MENU: {
+      text: 'Proprietary Repositories',
+      description: 'Manage the set of hosted repositories that contain proprietary components'
+    },
+    CONFIGURATION: {
+      LABEL: 'Proprietary Repositories Configuration',
+      AVAILABLE_TITLE: 'Generic Hosted Repositories',
+      SELECTED_TITLE: 'Proprietary Hosted Repositories',
+      EMPTY_LIST: 'There are no configured proprietary hosted repositories for which you have view permissions.',
+    },
+    HELP_TEXT: <>
+      To help prevent dependency confusion attacks, identify your hosted repositories that contain
+      proprietary components. Refer to the{' '}
+      <NxTextLink external href="http://links.sonatype.com/products/nxrm3/docs/proprietary-repositories">
+        documentation
+      </NxTextLink>
+      {' '}for details on setting up appropriate IQ policies to quarantine public components with the same names
+      as your proprietary components.
+    </>,
   }
 };

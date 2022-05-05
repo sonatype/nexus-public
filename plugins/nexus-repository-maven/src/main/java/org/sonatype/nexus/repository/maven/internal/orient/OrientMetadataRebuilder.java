@@ -276,6 +276,7 @@ public class OrientMetadataRebuilder
     protected List<Map<String, Object>> browseGAVs() {
       Iterable<ODocument> iterableGavs = Transactional.operation.call(() -> {
         final StorageTx tx = UnitOfWork.currentTx();
+        log.debug("Searching GAVs with Query='{}' and Parameters='{}'", sql, sqlParams);
         return tx.browse(sql, sqlParams, bufferSize, timeoutSeconds);
       });
       return StreamSupport.stream(iterableGavs.spliterator(), false).map(odocument -> ImmutableMap.of(

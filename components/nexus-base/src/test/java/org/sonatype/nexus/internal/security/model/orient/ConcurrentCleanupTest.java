@@ -31,13 +31,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 /**
@@ -71,7 +71,7 @@ public class ConcurrentCleanupTest
 
   @Before
   public void prepare() throws Exception {
-    when(passwordService.encryptPassword(Matchers.any())).thenReturn("encrypted");
+    when(passwordService.encryptPassword(any())).thenReturn("encrypted");
     when(adminPasswordFileManager.readFile()).thenReturn("password");
     source = new OrientSecurityConfigurationSource(database.getInstanceProvider(),
         new StaticSecurityConfigurationSource(passwordService, adminPasswordFileManager, true),
@@ -246,7 +246,7 @@ public class ConcurrentCleanupTest
       return startSignal;
     }
 
-    public void setStartSignal(CountDownLatch startSignal) {
+    public void setStartSignal(final CountDownLatch startSignal) {
       this.startSignal = startSignal;
     }
 
@@ -254,7 +254,7 @@ public class ConcurrentCleanupTest
       return doneSignal;
     }
 
-    public void setDoneSignal(CountDownLatch doneSignal) {
+    public void setDoneSignal(final CountDownLatch doneSignal) {
       this.doneSignal = doneSignal;
     }
 
@@ -262,7 +262,7 @@ public class ConcurrentCleanupTest
       return toDo;
     }
 
-    public void setToDo(Runnable toDo) {
+    public void setToDo(final Runnable toDo) {
       this.toDo = toDo;
     }
   }

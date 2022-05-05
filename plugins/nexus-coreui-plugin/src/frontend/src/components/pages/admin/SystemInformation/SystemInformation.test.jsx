@@ -18,7 +18,7 @@ import '@testing-library/jest-dom/extend-expect';
 import {when} from 'jest-when';
 
 import SystemInformation from './SystemInformation';
-import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
+import {TestUtils} from '@sonatype/nexus-ui-plugin';
 
 const NESTED_SECTION = 'h3';
 const NAME = '.nxrm-information--name';
@@ -44,13 +44,6 @@ describe('SystemInformation', () => {
     },
     'nexus-license': {
       'fingerprint': 'hash'
-    },
-    'nexus-bundles': {
-      '0': {
-        'bundleId': 0,
-        'enabled': true,
-        'config': 'value'
-      }
     },
     'system-time': {
       'time': 'value'

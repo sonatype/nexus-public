@@ -32,14 +32,13 @@ import './Repositories.scss';
 
 import RepositoriesFormMachine from './RepositoriesFormMachine';
 
-import GenericGroupConfiguration from './facets/GenericGroupConfiguration';
-import GenericCleanupConfiguration from './facets/GenericCleanupConfiguration';
-import GenericHostedConfiguration from './facets/GenericHostedConfiguration';
-import GenericStorageConfiguration from './facets/GenericStorageConfiguration';
+import {getFacets} from './RepositoryFormConfig';
+
 import GenericFormatConfiguration from './facets/GenericFormatConfiguration';
 import GenericNameConfiguration from './facets/GenericNameConfiguration';
 
 export default function RepositoriesForm({itemId, onDone = () => {}}) {
+  const isEdit = Boolean(itemId);
   const stateMachine = useMachine(RepositoriesFormMachine, {
     context: {
       pristineData: {
@@ -57,7 +56,6 @@ export default function RepositoriesForm({itemId, onDone = () => {}}) {
 
   const {
     isPristine,
-    isEdit,
     loadError,
     saveError,
     validationErrors,
@@ -75,13 +73,12 @@ export default function RepositoriesForm({itemId, onDone = () => {}}) {
 
   const save = () => send({type: 'SAVE'});
 
+  const repositoryFacets = getFacets(format, type);
+
   return (
     <Page className="nxrm-repository-editor">
       <PageHeader>
-        <PageTitle
-          icon={faDatabase}
-          {...(isEdit ? EDITOR.EDIT_TITLE : EDITOR.CREATE_TITLE)}
-        />
+        <PageTitle icon={faDatabase} {...(isEdit ? EDITOR.EDIT_TITLE : EDITOR.CREATE_TITLE)} />
       </PageHeader>
       <ContentBody>
         <Section className="nxrm-repository-editor-form">
@@ -93,7 +90,7 @@ export default function RepositoriesForm({itemId, onDone = () => {}}) {
             onSubmit={save}
             submitError={saveError}
             submitMaskState={isSaving ? false : null}
-            submitBtnText={EDITOR.SAVE_BUTTON_LABEL}
+            submitBtnText={isEdit ? EDITOR.SAVE_BUTTON : EDITOR.CREATE_BUTTON}
             submitMaskMessage={SAVING}
             validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
           >
@@ -101,16 +98,9 @@ export default function RepositoriesForm({itemId, onDone = () => {}}) {
             {format && type && (
               <>
                 <GenericNameConfiguration parentMachine={stateMachine} />
-                <GenericStorageConfiguration parentMachine={stateMachine} />
-                {type === 'group' && (
-                  <GenericGroupConfiguration parentMachine={stateMachine} />
-                )}
-                {type === 'hosted' && (
-                  <GenericHostedConfiguration parentMachine={stateMachine} />
-                )}
-                {type !== 'group' && (
-                  <GenericCleanupConfiguration parentMachine={stateMachine} />
-                )}
+                {repositoryFacets.map((Facet, index) => (
+                  <Facet parentMachine={stateMachine} key={index} />
+                ))}
               </>
             )}
           </NxForm>

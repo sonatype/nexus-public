@@ -16,7 +16,10 @@ import org.sonatype.nexus.testsuite.testsupport.fixtures.RepositoryRule;
 
 /**
  * Support class for repository format ITs.
+ *
+ * @deprecated Please write new tests as part of the {@link ITSupport} hierarchy
  */
+@Deprecated
 public abstract class RepositoryITSupport
     extends GenericRepositoryITSupport<RepositoryRule>
 {

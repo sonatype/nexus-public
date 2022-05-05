@@ -32,7 +32,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheInfo;
-import org.sonatype.nexus.repository.cache.RepositoryCacheUtils;
+import org.sonatype.nexus.repository.cache.RepositoryCacheInvalidationService;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -67,6 +67,8 @@ public class GroupFacetImpl
 
   public static final String CONFIG_KEY = "group";
 
+  private final RepositoryCacheInvalidationService repositoryCacheInvalidationService;
+
   public static class Config
   {
     @NotNull
@@ -88,11 +90,13 @@ public class GroupFacetImpl
   @Inject
   public GroupFacetImpl(final RepositoryManager repositoryManager,
                         final ConstraintViolationFactory constraintViolationFactory,
-                        @Named(GroupType.NAME) final Type groupType)
+                        @Named(GroupType.NAME) final Type groupType,
+                        final RepositoryCacheInvalidationService repositoryCacheInvalidationService)
   {
     this.repositoryManager = checkNotNull(repositoryManager);
     this.groupType = checkNotNull(groupType);
     this.constraintViolationFactory = checkNotNull(constraintViolationFactory);
+    this.repositoryCacheInvalidationService = checkNotNull(repositoryCacheInvalidationService);
   }
 
   @Override
@@ -229,7 +233,7 @@ public class GroupFacetImpl
     log.info("Invalidating group caches of {}", getRepository().getName());
     cacheController.invalidateCache();
     for (Repository repository : members()) {
-      RepositoryCacheUtils.invalidateCaches(repository);
+      repositoryCacheInvalidationService.processCachesInvalidation(repository);
     }
   }
 

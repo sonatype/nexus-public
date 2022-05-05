@@ -33,10 +33,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Stream;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -59,9 +59,9 @@ import org.sonatype.nexus.blobstore.api.OperationMetrics;
 import org.sonatype.nexus.blobstore.api.OperationType;
 import org.sonatype.nexus.blobstore.api.RawObjectAccess;
 import org.sonatype.nexus.blobstore.file.internal.BlobCollisionException;
-import org.sonatype.nexus.blobstore.file.internal.FileBlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.file.internal.FileOperations;
 import org.sonatype.nexus.blobstore.metrics.MonitoringBlobStoreMetrics;
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.io.DirectoryHelper;
 import org.sonatype.nexus.common.log.DryRunPrefix;
@@ -79,6 +79,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.HashCode;
 import com.squareup.tape.QueueFile;
+import org.apache.commons.io.FileUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 
@@ -119,7 +120,7 @@ public class FileBlobStore
 
   @VisibleForTesting
   public static final String CONFIG_KEY = "file";
-  
+
   public static final String PATH_KEY = "path";
 
   @VisibleForTesting
@@ -145,13 +146,15 @@ public class FileBlobStore
 
   private Path contentDir;
 
+  private Path reconciliationLogDir;
+
   private final FileOperations fileOperations;
 
   private final ApplicationDirectories applicationDirectories;
 
   private Path basedir;
 
-  private FileBlobStoreMetricsStore metricsStore;
+  private FileBlobStoreMetricsService metricsStore;
 
   private LoadingCache<BlobId, FileBlob> liveBlobs;
 
@@ -169,16 +172,19 @@ public class FileBlobStore
 
   private final long pruneEmptyDirectoryAge;
 
+  private final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker;
+
   @Inject
   public FileBlobStore(final BlobIdLocationResolver blobIdLocationResolver,
                        final FileOperations fileOperations,
                        final ApplicationDirectories applicationDirectories,
-                       final FileBlobStoreMetricsStore metricsStore,
+                       final FileBlobStoreMetricsService metricsStore,
                        final NodeAccess nodeAccess,
                        final DryRunPrefix dryRunPrefix,
                        final BlobStoreReconciliationLogger reconciliationLogger,
                        @Named("${nexus.blobstore.prune.empty.directory.age.ms:-86400000}")
-                       final long pruneEmptyDirectoryAge)
+                       final long pruneEmptyDirectoryAge,
+                       final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker)
   {
     super(blobIdLocationResolver, dryRunPrefix);
     this.fileOperations = checkNotNull(fileOperations);
@@ -189,22 +195,24 @@ public class FileBlobStore
     this.supportsAtomicMove = true;
     this.reconciliationLogger = checkNotNull(reconciliationLogger);
     this.pruneEmptyDirectoryAge = pruneEmptyDirectoryAge;
+    this.blobStoreQuotaUsageChecker = checkNotNull(blobStoreQuotaUsageChecker);
   }
 
   @VisibleForTesting
   public FileBlobStore(final Path contentDir, //NOSONAR
                        final BlobIdLocationResolver blobIdLocationResolver,
                        final FileOperations fileOperations,
-                       final FileBlobStoreMetricsStore metricsStore,
+                       final FileBlobStoreMetricsService metricsStore,
                        final BlobStoreConfiguration configuration,
                        final ApplicationDirectories directories,
                        final NodeAccess nodeAccess,
                        final DryRunPrefix dryRunPrefix,
                        final BlobStoreReconciliationLogger reconciliationLogger,
-                       final long pruneEmptyDirectoryAge)
+                       final long pruneEmptyDirectoryAge,
+                       final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker)
   {
     this(blobIdLocationResolver, fileOperations, directories, metricsStore, nodeAccess, dryRunPrefix,
-        reconciliationLogger, pruneEmptyDirectoryAge);
+        reconciliationLogger, pruneEmptyDirectoryAge, blobStoreQuotaUsageChecker);
     this.contentDir = checkNotNull(contentDir);
     this.blobStoreConfiguration = checkNotNull(configuration);
   }
@@ -242,6 +250,9 @@ public class FileBlobStore
     metricsStore.setStorageDir(storageDir);
     metricsStore.setBlobStore(this);
     metricsStore.start();
+
+    blobStoreQuotaUsageChecker.setBlobStore(this);
+    blobStoreQuotaUsageChecker.start();
   }
 
   @Override
@@ -251,7 +262,7 @@ public class FileBlobStore
     }
     else {
       LocalDate sinceDate = now().minusDays(sinceDays);
-      return reconciliationLogger.getBlobsCreatedSince(getBlobStoreConfiguration().getName(), sinceDate);
+      return reconciliationLogger.getBlobsCreatedSince(reconciliationLogDir, sinceDate);
     }
   }
 
@@ -279,6 +290,7 @@ public class FileBlobStore
     finally {
       deletedBlobIndex = null;
       metricsStore.stop();
+      blobStoreQuotaUsageChecker.stop();
     }
   }
 
@@ -298,6 +310,7 @@ public class FileBlobStore
     return contentDir.resolve(blobIdLocationResolver.getLocation(id) + BLOB_FILE_ATTRIBUTES_SUFFIX);
   }
 
+  @Override
   protected String attributePathString(final BlobId blobId) {
     return attributePath(blobId).toString();
   }
@@ -342,7 +355,7 @@ public class FileBlobStore
     for (int retries = 0; retries <= MAX_COLLISION_RETRIES; retries++) {
       try {
         Blob blob = tryCreate(headers, ingester, blobId);
-        reconciliationLogger.logBlobCreated(this, blob.getId());
+        reconciliationLogger.logBlobCreated(reconciliationLogDir, blob.getId());
         return blob;
       }
       catch (BlobCollisionException e) { // NOSONAR
@@ -582,6 +595,16 @@ public class FileBlobStore
   }
 
   @Override
+  public Map<OperationType, OperationMetrics> getOperationMetricsDelta() {
+    return metricsStore.getOperationMetricsDelta();
+  }
+
+  @Override
+  public void clearOperationMetrics() {
+    metricsStore.clearOperationMetrics();
+  }
+
+  @Override
   protected void doCompact(@Nullable final BlobStoreUsageChecker inUseChecker) {
     try {
       PropertiesFile metadata = new PropertiesFile(getAbsoluteBlobDir().resolve(METADATA_FILENAME).toFile());
@@ -658,6 +681,10 @@ public class FileBlobStore
       Path content = blobDir.resolve("content");
       DirectoryHelper.mkdir(content);
       this.contentDir = content;
+      Path reconciliationLogDir = blobDir.resolve("reconciliation");
+      DirectoryHelper.mkdir(reconciliationLogDir);
+      this.reconciliationLogDir = reconciliationLogDir;
+
       setConfiguredBlobStorePath(getRelativeBlobDir());
       rawObjectAccess = new FileRawObjectAccess(blobDir);
     }
@@ -748,9 +775,11 @@ public class FileBlobStore
   @Guarded(by = {NEW, STOPPED, FAILED, SHUTDOWN})
   public void remove() {
     try {
+      metricsStore.remove();
+
       Path blobDir = getAbsoluteBlobDir();
+      FileUtils.deleteDirectory(reconciliationLogDir.toFile());
       if (fileOperations.deleteEmptyDirectory(contentDir)) {
-        metricsStore.remove();
         fileOperations.deleteQuietly(blobDir.resolve("metadata.properties"));
         File[] files = blobDir.toFile().listFiles((dir, name) -> name.endsWith(DELETIONS_FILENAME));
         if (files != null) {
@@ -1068,7 +1097,7 @@ public class FileBlobStore
     try {
       FileBlobAttributes blobAttributes = new FileBlobAttributes(blobPath);
       if (!blobAttributes.load()) {
-        log.warn("Attempt to access non-existent blob {} ({})", blobId, attributePath(blobId));
+        log.warn("Attempt to access non-existent blob attributes file {} for blob {}", attributePath(blobId), blobId);
         return null;
       }
       else {
@@ -1100,7 +1129,7 @@ public class FileBlobStore
    *
    * @see BlobIdLocationResolver
    */
-  private BlobId toBlobId(String blobName) {
+  private BlobId toBlobId(final String blobName) {
     Map<String, String> headers = ImmutableMap.of(
         BLOB_NAME_HEADER, blobName,
         DIRECT_PATH_BLOB_HEADER, "true"
@@ -1109,7 +1138,7 @@ public class FileBlobStore
   }
 
   @Override
-  public void setBlobAttributes(BlobId blobId, BlobAttributes blobAttributes) {
+  public void setBlobAttributes(final BlobId blobId, final BlobAttributes blobAttributes) {
     try {
       FileBlobAttributes fileBlobAttributes = getFileBlobAttributes(blobId);
       fileBlobAttributes.updateFrom(blobAttributes);
@@ -1129,6 +1158,6 @@ public class FileBlobStore
   @Override
   @VisibleForTesting
   public void flushMetrics() throws IOException {
-    metricsStore.flushProperties();
+    metricsStore.flush();
   }
 }

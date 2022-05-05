@@ -14,8 +14,7 @@ import React from 'react';
 import axios from 'axios';
 import {fireEvent, waitForElementToBeRemoved} from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect';
-import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, TestUtils} from '@sonatype/nexus-ui-plugin';
 
 import RepositoriesList from './RepositoriesList';
 import UIStrings from "../../../../constants/UIStrings";
@@ -263,7 +262,7 @@ describe('RepositoriesList', function() {
   it('copies url on button press', async function() {
     axios.get.mockResolvedValue({data: rows});
 
-    const {filter, loadingMask, tableRow, tableRows, urlButton} = render();
+    const {loadingMask, urlButton} = render();
 
     await waitForElementToBeRemoved(loadingMask);
 

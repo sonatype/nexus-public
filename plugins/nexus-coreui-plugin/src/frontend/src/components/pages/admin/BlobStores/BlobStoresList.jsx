@@ -16,6 +16,7 @@ import {useMachine} from '@xstate/react';
 import {
   ContentBody,
   HelpTile,
+  HumanReadableUtils,
   ListMachineUtils,
   Page,
   PageHeader,
@@ -23,7 +24,6 @@ import {
   PageActions,
   Section,
   SectionToolbar,
-  Utils
 } from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
@@ -37,10 +37,8 @@ import {
 } from '@sonatype/react-shared-components';
 import {
   faCheckCircle,
-  faChevronRight,
   faExclamationCircle,
-  faInfoCircle,
-  faServer
+  faServer,
 } from '@fortawesome/free-solid-svg-icons';
 
 import BlobStoresListMachine from './BlobStoresListMachine';
@@ -114,13 +112,13 @@ export default function BlobStoresList({onCreate, onEdit}) {
                         <span>{available ? BLOB_STORES.LIST.AVAILABLE : BLOB_STORES.LIST.UNAVAILABLE}</span>
                       </NxTableCell>
                       <NxTableCell isNumeric>{unavailable ? BLOB_STORES.LIST.UNKNOWN : blobCount}</NxTableCell>
-                      <NxTableCell isNumeric>{unavailable ? BLOB_STORES.LIST.UNKNOWN : Utils.bytesToString(
+                      <NxTableCell isNumeric>{unavailable ? BLOB_STORES.LIST.UNKNOWN : HumanReadableUtils.bytesToString(
                           totalSizeInBytes)} ({totalSizeInBytes})</NxTableCell>
                       <NxTableCell isNumeric>
                         {
                           (unavailable && BLOB_STORES.LIST.UNKNOWN) ||
                           (unlimited && BLOB_STORES.LIST.UNLIMITED) ||
-                          Utils.bytesToString(availableSpaceInBytes)
+                          HumanReadableUtils.bytesToString(availableSpaceInBytes)
                         }
                       </NxTableCell>
                       <NxTableCell chevron/>
@@ -130,10 +128,7 @@ export default function BlobStoresList({onCreate, onEdit}) {
         </NxTable>
       </Section>
 
-      <HelpTile>
-        <h3><NxFontAwesomeIcon icon={faInfoCircle}/><span>{BLOB_STORES.LIST.HELP.TITLE}</span></h3>
-        <p dangerouslySetInnerHTML={{__html: BLOB_STORES.LIST.HELP.TEXT}}/>
-      </HelpTile>
+      <HelpTile header={BLOB_STORES.LIST.HELP.TITLE} body={BLOB_STORES.LIST.HELP.TEXT}/>
     </ContentBody>
   </Page>;
 }

@@ -13,15 +13,17 @@
 package org.sonatype.nexus.internal.selector;
 
 import java.lang.ref.SoftReference;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
-
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -31,17 +33,20 @@ import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.datastore.api.DuplicateKeyException;
+import org.sonatype.nexus.distributed.event.service.api.common.SelectorConfigurationChangedEvent;
 import org.sonatype.nexus.repository.security.RepositoryContentSelectorPrivilegeDescriptor;
 import org.sonatype.nexus.repository.security.RepositorySelector;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
 import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException;
 import org.sonatype.nexus.security.privilege.Privilege;
-import org.sonatype.nexus.security.role.NoSuchRoleException;
 import org.sonatype.nexus.security.role.Role;
 import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.User;
+import org.sonatype.nexus.security.user.UserManager;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.selector.Selector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
@@ -167,7 +172,12 @@ public class SelectorManagerImpl
     selectorConfiguration.setType(type);
     selectorConfiguration.setDescription(description);
     selectorConfiguration.setAttributes(attributes);
-    store.create(selectorConfiguration);
+    try {
+      store.create(selectorConfiguration);
+    }
+    catch (DuplicateKeyException e) {
+      throw new ValidationErrorsException("name", "A selector with the same name already exists. Name must be unique.");
+    }
   }
 
   @Override
@@ -191,6 +201,18 @@ public class SelectorManagerImpl
   public void on(final SelectorConfigurationEvent event) {
     cachedBrowseResult = EMPTY_CACHE;
 
+    selectorCache.invalidateAll();
+  }
+
+  /**
+   * Handles a selector configuration change event from another nodes.
+   *
+   * @param event the {@link SelectorConfigurationChangedEvent} with event type.
+   */
+  @Subscribe
+  public void on(final SelectorConfigurationChangedEvent event) {
+    log.debug("Selector configuration has {} on a remote node. Invalidate the cache.", event.getEventType());
+    cachedBrowseResult = EMPTY_CACHE;
     selectorCache.invalidateAll();
   }
 
@@ -223,7 +245,10 @@ public class SelectorManagerImpl
 
   @Override
   @Guarded(by = STARTED)
-  public List<SelectorConfiguration> browseActive(final List<String> repositoryNames, final List<String> formats) {
+  public List<SelectorConfiguration> browseActive(
+      final Collection<String> repositoryNames,
+      final Collection<String> formats)
+  {
     AuthorizationManager authorizationManager;
     User currentUser;
 
@@ -243,7 +268,7 @@ public class SelectorManagerImpl
     List<String> roleIds = currentUser.getRoles().stream().map(RoleIdentifier::getRoleId)
         .collect(toList());
 
-    List<Role> roles = getRoles(roleIds, authorizationManager, new ArrayList<>());
+    List<Role> roles = getRoles(roleIds, authorizationManager);
 
     List<String> contentSelectorNames = roles.stream().map(Role::getPrivileges).flatMap(Collection::stream).map(id -> {
       try {
@@ -278,8 +303,8 @@ public class SelectorManagerImpl
     return selectorConfiguration;
   }
 
-  private boolean matchesFormatOrRepository(final List<String> repositoryNames,
-                                            final List<String> formats,
+  private boolean matchesFormatOrRepository(final Collection<String> repositoryNames,
+                                            final Collection<String> formats,
                                             final Privilege privilege)
   {
     String type = privilege.getType();
@@ -303,27 +328,43 @@ public class SelectorManagerImpl
     return isMatchingFormat || isMatchingRepository;
   }
 
-  private List<Role> getRoles(final List<String> roleIds, final AuthorizationManager authorizationManager, final List<Role> roles)
-  {
-    roleIds.forEach(roleId -> getRoles(roleId, authorizationManager, roles));
-
-    return roles;
-  }
-
-  private void getRoles(final String roleId, final AuthorizationManager authorizationManager, final List<Role> roles)
+  private List<Role> getRoles(
+      final List<String> roleIds,
+      final AuthorizationManager authorizationManager)
   {
     try {
-      Role role = authorizationManager.getRole(roleId);
-      roles.add(role);
-      role.getRoles().forEach(nestedRoleId -> getRoles(nestedRoleId, authorizationManager, roles));
+      // Remote roles can't contribute privileges, or have nested roles.
+      Map<String, Role> roleMap = securitySystem.listRoles(UserManager.DEFAULT_SOURCE).stream()
+          .collect(Collectors.toMap(Role::getRoleId, Function.identity()));
+
+      Set<String> results = new HashSet<>();
+      roleIds.forEach(roleId -> traverseRoleTree(roleId, roleMap, results));
+      return results.stream().map(roleMap::get)
+          .collect(Collectors.toList());
     }
-    catch (NoSuchRoleException e) {
-      log.debug("Unable to find role for roleId={}, continue searching for roles", roleId, e);
+    catch (NoSuchAuthorizationManagerException e) {
+      // This should never happen in practice
+      log.error("Missing default user manager", e);
+      throw new RuntimeException(e);
     }
   }
 
-  private Predicate<Privilege> repositoryFormatOrNameMatcher(final List<String> repositoryNames,
-                                                             final List<String> formats)
+  private void traverseRoleTree(final String roleId, final Map<String, Role> roleMap, final Set<String> results) {
+    if (results.contains(roleId)) {
+      // already visited
+      return;
+    }
+    Role role = roleMap.get(roleId);
+    if (role == null) {
+      // missing role
+      return;
+    }
+    results.add(roleId);
+    role.getRoles().forEach(childId -> traverseRoleTree(childId, roleMap, results));
+  }
+
+  private Predicate<Privilege> repositoryFormatOrNameMatcher(final Collection<String> repositoryNames,
+                                                             final Collection<String> formats)
   {
     return (p) -> matchesFormatOrRepository(repositoryNames, formats, p);
   }

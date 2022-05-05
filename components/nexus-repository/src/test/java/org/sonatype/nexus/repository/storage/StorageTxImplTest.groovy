@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.storage
 
-import java.util.function.Supplier
-
 import javax.inject.Provider
 
 import org.sonatype.goodies.testsupport.TestSupport
@@ -47,10 +45,10 @@ import org.mockito.Mock
 import static java.util.Collections.singletonList
 import static org.hamcrest.MatcherAssert.assertThat
 import static org.hamcrest.Matchers.is
-import static org.mockito.Matchers.any
-import static org.mockito.Matchers.anyBoolean
-import static org.mockito.Matchers.anyString
-import static org.mockito.Matchers.eq
+import static org.mockito.ArgumentMatchers.any
+import static org.mockito.ArgumentMatchers.anyBoolean
+import static org.mockito.ArgumentMatchers.anyString
+import static org.mockito.ArgumentMatchers.eq
 import static org.mockito.Mockito.doReturn
 import static org.mockito.Mockito.doThrow
 import static org.mockito.Mockito.mock
@@ -67,7 +65,7 @@ import static org.sonatype.nexus.repository.storage.Asset.PROVENANCE
  * Tests for {@link StorageTxImpl}.
  */
 class StorageTxImplTest
-extends TestSupport
+    extends TestSupport
 {
   @Mock
   private BlobTx blobTx
@@ -108,7 +106,7 @@ extends TestSupport
     when(asset.getEntityMetadata()).thenReturn(entityMetadata)
     when(entityMetadata.getId()).thenReturn(entityId)
 
-    when(defaultContentValidator.determineContentType(anyBoolean(), any(Supplier), eq(MimeRulesSource.NOOP), anyString(), anyString())).thenReturn("text/plain")
+    when(defaultContentValidator.determineContentType(anyBoolean(), any(InputStreamSupplier), eq(MimeRulesSource.NOOP), anyString(), anyString())).thenReturn("text/plain")
     when(db.getTransaction()).thenReturn(tx)
   }
 
@@ -696,12 +694,12 @@ extends TestSupport
         MimeRulesSource.NOOP, componentFactory, repositoryMoveStoreProvider, nodeAccess)
 
     underTest.assetExists(repositoryName, repository)
-    verify(assetEntityAdapter).exists(eq(db), eq(repositoryName), any(Bucket.class))
+    verify(assetEntityAdapter).exists(eq(db), eq(repositoryName), any())
 
-    doReturn(true).when(assetEntityAdapter).exists(eq(db), eq(repositoryName), any(Bucket.class))
+    doReturn(true).when(assetEntityAdapter).exists(eq(db), eq(repositoryName), any())
     assertThat underTest.assetExists(repositoryName, repository), is(true)
 
-    doReturn(false).when(assetEntityAdapter).exists(eq(db), eq(repositoryName), any(Bucket.class))
+    doReturn(false).when(assetEntityAdapter).exists(eq(db), eq(repositoryName), any())
     assertThat underTest.assetExists(repositoryName, repository), is(false)
   }
 
@@ -773,11 +771,11 @@ extends TestSupport
 
     def blobRef = mock(BlobRef)
     def tempBlob = mock(TempBlob)
-    
-    doThrow(new MissingBlobException(blobRef)).when(blobTx).createByCopying(any(BlobRef), any(Map), any(Map), anyBoolean())
+
+    doThrow(new MissingBlobException(blobRef)).when(blobTx).createByCopying(any(), any(Map), any(Map), anyBoolean())
 
     underTest.createBlob('blob', tempBlob, headers, ContentTypes.TEXT_PLAIN, true)
 
-    verify(blobTx).create(any(InputStream), any(Map), any(Iterable), any(String))
+    verify(blobTx).create(any(), any(Map), any(Iterable), any(String))
   }
 }

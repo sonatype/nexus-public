@@ -14,10 +14,8 @@
  * @since 3.22
  */
 
-@import '../../../styles/colors';
-
 .nxrm-information--row:nth-child(even){
-  background-color: $almost-white;
+  background-color: var(--nx-swatch-grey-95);
 }
 
 .nxrm-information--name {

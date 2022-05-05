@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
+import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.orient.freeze.FreezeRequest;
 import org.sonatype.nexus.orient.freeze.FreezeRequest.InitiatorType;
@@ -31,9 +32,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -44,8 +43,8 @@ import static org.mockito.Mockito.when;
 /**
  * Unit tests for {@link LocalDatabaseFrozenStateManager}.
  */
-@RunWith(MockitoJUnitRunner.class)
 public class LocalDatabaseFrozenStateManagerTest
+    extends TestSupport
 {
   @Rule
   public TemporaryFolder temporaryFolder = new TemporaryFolder();

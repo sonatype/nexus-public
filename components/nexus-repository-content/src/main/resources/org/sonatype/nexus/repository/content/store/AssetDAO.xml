@@ -46,6 +46,7 @@
     CREATE INDEX IF NOT EXISTS idx_${format}_asset_kind ON ${format}_asset (kind);
     CREATE INDEX IF NOT EXISTS idx_${format}_asset_component ON ${format}_asset (component_id);
     CREATE INDEX IF NOT EXISTS idx_${format}_asset_blob ON ${format}_asset (asset_blob_id);
+    CREATE INDEX IF NOT EXISTS idx_${format}_asset_last_updated ON ${format}_asset (last_updated);
     --
   </insert>
 
@@ -122,6 +123,25 @@
     </choose>
   </select>
 
+  <sql id="likeExpressions">
+    <foreach collection="likeExpressions" item="likeExpression" open="AND (" close=")" separator=" OR ">
+      path LIKE #{likeExpression}
+    </foreach>
+  </sql>
+
+  <select id="findGreaterThanOrEqualToLastUpdated" resultMap="assetResult">
+    SELECT * FROM ${format}_asset WHERE repository_id = #{repositoryId}
+    <if test="lastUpdated != null"> AND last_updated >= #{lastUpdated}</if>
+    <include refid="likeExpressions"/>
+    ORDER BY last_updated LIMIT #{limit}
+  </select>
+
+  <select id="findLastUpdatedWithinRange" resultMap="assetResult">
+    SELECT * FROM ${format}_asset WHERE repository_id = #{repositoryId} AND last_updated >= #{startLastUpdated} AND last_updated &lt; #{endLastUpdated}
+    <include refid="likeExpressions"/>
+    LIMIT #{limit}
+  </select>
+
   <insert id="createAsset" useGeneratedKeys="true" keyProperty="assetId" parameterType="AssetData">
     INSERT INTO ${format}_asset (repository_id, path, kind, component_id, asset_blob_id, last_updated, last_downloaded,
                                  attributes)
@@ -152,6 +172,18 @@
   <select id="findByBlobRef" resultMap="assetResult">
     SELECT A.* FROM ${format}_asset A INNER JOIN ${format}_asset_blob B USING (asset_blob_id)
     WHERE repository_id = #{repositoryId} AND blob_ref = #{blobRef};
+  </select>
+
+  <select id="findByComponentIds" resultType="org.sonatype.nexus.repository.content.store.AssetInfoData" parameterType="java.util.Set">
+    SELECT *
+    FROM ${format}_asset A
+    INNER JOIN ${format}_asset_blob USING (asset_blob_id)
+    <where>
+      <foreach collection="componentIds" item="componentId" index="index" open="component_id IN (" close=")" separator=",">
+        #{componentId}
+      </foreach>
+    </where>
+    ORDER BY asset_id
   </select>
 
   <update id="updateAssetKind" parameterType="AssetData">

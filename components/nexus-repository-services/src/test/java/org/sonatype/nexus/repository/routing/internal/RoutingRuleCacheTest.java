@@ -38,7 +38,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 public class RoutingRuleCacheTest
@@ -177,7 +177,7 @@ public class RoutingRuleCacheTest
 
     // verify we get right value back
     assertThat(routingRuleCache.getRoutingRuleId(repository), is(new DetachedEntityId("rule-a")));
-    verifyZeroInteractions(store);
+    verifyNoInteractions(store);
   }
 
   private OrientRoutingRule mockRule(final String ruleId) {

@@ -43,9 +43,12 @@ public class DefaultSearchMappings
 
   public static final String VERSION = "version";
 
+  public static final String SEARCH_REPOSITORY_NAME = "search_repository_name";
+
   private static final List<SearchMapping> MAPPINGS = ImmutableList.of(
       new SearchMapping("q", "keyword", "Query by keyword"),
-      new SearchMapping("repository", REPOSITORY_NAME, "Repository name", new RepositorySearchField("repository")),
+      new SearchMapping("repository", REPOSITORY_NAME, "Repository name",
+          new RepositorySearchField(SEARCH_REPOSITORY_NAME)),
       new SearchMapping("format", "format", "Query by format"),
       new SearchMapping("group", GROUP_RAW, "Component group", ComponentSearchField.NAMESPACE),
       new SearchMapping("name", NAME_RAW, "Component name", ComponentSearchField.NAME),

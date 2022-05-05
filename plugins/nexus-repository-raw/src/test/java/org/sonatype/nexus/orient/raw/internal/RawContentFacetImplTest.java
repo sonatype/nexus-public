@@ -12,17 +12,9 @@
  */
 package org.sonatype.nexus.orient.raw.internal;
 
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Date;
-import java.util.Map;
-
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
-import org.sonatype.nexus.common.hash.HashAlgorithm;
-import org.sonatype.nexus.mime.MimeSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.Asset;
@@ -31,10 +23,8 @@ import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.StorageTx;
-import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
-import com.google.common.hash.HashCode;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.After;
 import org.junit.Before;
@@ -43,23 +33,15 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 
 import static com.google.common.collect.Maps.newHashMap;
-import static com.google.common.hash.Hashing.sha1;
-import static java.util.Collections.emptyMap;
-import static java.util.Collections.singletonMap;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
-import static org.sonatype.nexus.repository.view.Content.CONTENT;
 
 public class RawContentFacetImplTest
     extends TestSupport
@@ -103,9 +85,6 @@ public class RawContentFacetImplTest
   @Mock
   private AssetEntityAdapter assetEntityAdapter;
 
-  @Mock
-  private MimeSupport mimeSupport;
-
   private RawContentFacetImpl underTest;
 
   @Before
@@ -122,7 +101,7 @@ public class RawContentFacetImplTest
     when(tx.getDb()).thenReturn(db);
     when(tx.findBucket(repository)).thenReturn(bucket);
 
-    underTest = new RawContentFacetImpl(assetEntityAdapter, mimeSupport);
+    underTest = new RawContentFacetImpl(assetEntityAdapter);
     underTest.attach(repository);
 
     UnitOfWork.beginBatch(tx);
@@ -192,22 +171,5 @@ public class RawContentFacetImplTest
 
     assertTrue("Asset should exist", underTest.assetExists(EXISTING_ASSET_NAME));
     assertFalse("Asset should not exist", underTest.assetExists(NON_EXISTENT_ASSET_NAME));
-  }
-
-  @Test
-  public void testHardLink() throws Exception {
-    Path contentPath = Files.createTempDirectory("faw-content-facet-test").resolve("test.txt");
-    contentPath.toFile().createNewFile();
-    String path = contentPath.toString();
-    when(mimeSupport.detectMimeType(any(InputStream.class), anyString())).thenReturn("text/plain");
-
-    underTest.hardLink(repository, asset, path, contentPath);
-
-    Map<HashAlgorithm, HashCode> hashes = singletonMap(SHA1, sha1().hashBytes(Files.readAllBytes(contentPath)));
-
-    verify(tx).setBlob(asset, path, contentPath, hashes, emptyMap(), "text/plain", Files.size(contentPath));
-    verify(tx).saveAsset(asset);
-    assertThat(asset.attributes().child(CONTENT).get(Content.CONTENT_LAST_MODIFIED),
-        is(new Date(Files.getLastModifiedTime(contentPath).toMillis())));
   }
 }

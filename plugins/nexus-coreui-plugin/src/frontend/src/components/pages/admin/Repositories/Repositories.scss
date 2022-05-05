@@ -10,14 +10,24 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
- @use '~@sonatype/react-shared-components/scss-shared/nx-container-helpers';
+@use '~@sonatype/react-shared-components/scss-shared/nx-container-helpers';
+@use '~@sonatype/react-shared-components/scss-shared/nx-text-helpers';
 
 .nxrm-repository-editor {
   .nx-form {
     @include nx-container-helpers.container-vertical;
   }
-  
+
   .nxrm-section {
     min-width: min-content;
+  }
+
+  .nxrm-docker-connectors-caption {
+    margin-bottom: var(--nx-spacing-2x);
+  }
+
+  .nxrm-docker-connectors-help {
+    color: #333;
+    margin-bottom: var(--nx-spacing-8x);
   }
 }

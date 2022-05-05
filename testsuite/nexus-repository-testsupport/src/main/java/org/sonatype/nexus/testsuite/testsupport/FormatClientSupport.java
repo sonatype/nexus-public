@@ -13,6 +13,7 @@
 package org.sonatype.nexus.testsuite.testsupport;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.util.Collections;
 import java.util.Map;
@@ -149,9 +150,14 @@ public class FormatClientSupport
     return response.getStatusLine().getStatusCode();
   }
 
-  public static byte[] bytes(HttpResponse response) throws IOException {
-    checkState(response.getEntity() != null);
-    return EntityUtils.toByteArray(response.getEntity());
+  public static byte[] bytes(final HttpResponse response) {
+    try {
+      checkState(response.getEntity() != null);
+      return EntityUtils.toByteArray(response.getEntity());
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 
   public static HttpResponse consume(final CloseableHttpResponse response) throws IOException {

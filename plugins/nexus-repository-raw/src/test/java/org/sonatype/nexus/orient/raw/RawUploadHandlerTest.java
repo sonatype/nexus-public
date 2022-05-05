@@ -14,13 +14,13 @@ package org.sonatype.nexus.orient.raw;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.mime.MimeSupport;
+import org.sonatype.nexus.orient.raw.internal.RawContentFacetImpl;
 import org.sonatype.nexus.repository.importtask.ImportFileConfiguration;
 import org.sonatype.nexus.repository.raw.RawCoordinatesHelper;
 import org.sonatype.nexus.repository.raw.RawUploadHandlerTestSupport;
@@ -36,9 +36,12 @@ import org.sonatype.nexus.repository.upload.UploadHandler;
 import org.sonatype.nexus.repository.upload.UploadResponse;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.PartPayload;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
@@ -47,8 +50,8 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -65,10 +68,16 @@ public class RawUploadHandlerTest
   RawContentFacet rawFacet;
 
   @Mock
+  StorageFacet storageFacet;
+
+  @Mock
   StorageTx storageTx;
 
   @Mock
   private MimeSupport mimeSupport;
+
+  @Rule
+  public TemporaryFolder temp = new TemporaryFolder();
 
   @Override
   protected UploadHandler newRawUploadHandler(final ContentPermissionChecker contentPermissionChecker,
@@ -82,7 +91,7 @@ public class RawUploadHandlerTest
   public void setup() throws IOException {
     when(repository.facet(RawContentFacet.class)).thenReturn(rawFacet);
 
-    StorageFacet storageFacet = mock(StorageFacet.class);
+    storageFacet = mock(StorageFacet.class);
     when(storageFacet.txSupplier()).thenReturn(() -> storageTx);
     when(repository.facet(StorageFacet.class)).thenReturn(storageFacet);
   }
@@ -129,22 +138,31 @@ public class RawUploadHandlerTest
 
   @Test
   public void testHandleHardLink() throws IOException {
-    Path contentPath = Files.createTempDirectory("raw-upload-test").resolve("test.txt");
+    Path contentPath = temp.newFile("test.txt").toPath();
     String path = contentPath.toString();
     Asset asset = mock(Asset.class);
     Content content = mock(Content.class);
+    TempBlob blob = mock(TempBlob.class);
+
     when(rawFacet.getOrCreateAsset(repository, path, RawCoordinatesHelper.getGroup(path), path)).thenReturn(asset);
     when(rawFacet.get(path)).thenReturn(content);
     when(mimeSupport.detectMimeType(any(InputStream.class), eq(path))).thenReturn("text/plain");
+    when(storageFacet.createTempBlob(contentPath, RawContentFacetImpl.HASH_ALGORITHMS, true))
+        .thenReturn(blob);
 
-    Content importResponse = underTest.handle(new ImportFileConfiguration(repository, contentPath.toFile(), path, true));
+    Content importResponse =
+        underTest.handle(new ImportFileConfiguration(repository, contentPath.toFile(), path, true));
 
-    verify(rawFacet).hardLink(repository, asset, path, contentPath);
+    verify(rawFacet).put(eq(path), any());
     assertThat(importResponse, is(content));
   }
 
   @Override
-  protected void testNormalizePath(String directory, String file, String expectedPath) throws IOException {
+  protected void testNormalizePath(
+      final String directory,
+      final String file,
+      final String expectedPath) throws IOException
+  {
     reset(rawFacet);
     ComponentUpload component = new ComponentUpload();
 

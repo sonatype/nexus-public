@@ -27,25 +27,25 @@ import org.sonatype.nexus.security.privilege.ApplicationPermission;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorManager;
 
+import com.google.common.collect.ImmutableList;
 import org.apache.shiro.authz.Permission;
 import org.apache.shiro.subject.Subject;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
-import com.google.common.collect.ImmutableList;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertFalse;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyVararg;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.same;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -114,7 +114,8 @@ public class RepositoryPermissionCheckerTest
     when(selectorManager.browseActive(Arrays.asList(REPOSITORY_NAME_1, REPOSITORY_NAME_2),
         Collections.singletonList(REPOSITORY_FORMAT))).thenReturn(asList(selector));
 
-    when(securityHelper.isPermitted(same(subject), anyVararg())).thenReturn(new boolean[] { true, false, false });
+    when(securityHelper.isPermitted(same(subject), ArgumentMatchers.<Permission>any()))
+        .thenReturn(new boolean[] { true, false, false });
     when(securityHelper.subject()).thenReturn(subject);
 
     underTest = new RepositoryPermissionChecker(securityHelper, selectorManager);

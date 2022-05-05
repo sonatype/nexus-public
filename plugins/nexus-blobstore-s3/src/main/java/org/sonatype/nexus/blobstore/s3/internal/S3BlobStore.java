@@ -46,6 +46,7 @@ import org.sonatype.nexus.blobstore.api.OperationMetrics;
 import org.sonatype.nexus.blobstore.api.OperationType;
 import org.sonatype.nexus.blobstore.api.RawObjectAccess;
 import org.sonatype.nexus.blobstore.metrics.MonitoringBlobStoreMetrics;
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.thread.NexusThreadFactory;
@@ -65,6 +66,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.annotation.Timed;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
@@ -168,7 +170,9 @@ public class S3BlobStore
 
   private boolean preferAsyncCleanup;
 
-  private S3BlobStoreMetricsStore storeMetrics;
+  private S3BlobStoreMetricsService storeMetrics;
+
+  private BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker;
 
   private LoadingCache<BlobId, S3Blob> liveBlobs;
 
@@ -195,15 +199,17 @@ public class S3BlobStore
       @Named("${nexus.s3.preferExpire:-false}") final boolean preferExpire,
       @Named("${nexus.s3.forceHardDelete:-false}") final boolean forceHardDelete,
       @Named("${nexus.s3.preferAsyncCleanup:-true}") final boolean preferAsyncCleanup,
-      final S3BlobStoreMetricsStore storeMetrics,
+      final S3BlobStoreMetricsService storeMetrics,
       final DryRunPrefix dryRunPrefix,
-      final BucketManager bucketManager)
+      final BucketManager bucketManager,
+      final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker)
   {
     super(blobIdLocationResolver, dryRunPrefix);
     this.amazonS3Factory = checkNotNull(amazonS3Factory);
     this.copier = checkNotNull(copier);
     this.uploader = checkNotNull(uploader);
     this.storeMetrics = checkNotNull(storeMetrics);
+    this.blobStoreQuotaUsageChecker = checkNotNull(blobStoreQuotaUsageChecker);
     this.bucketManager = checkNotNull(bucketManager);
     this.preferExpire = preferExpire;
 
@@ -239,6 +245,9 @@ public class S3BlobStore
     storeMetrics.setBlobStore(this);
     storeMetrics.start();
 
+    blobStoreQuotaUsageChecker.setBlobStore(this);
+    blobStoreQuotaUsageChecker.start();
+
     if (this.preferAsyncCleanup && executorService == null) {
       this.executorService = newFixedThreadPool(8,
           new NexusThreadFactory("s3-blobstore", "async-ops"));
@@ -253,6 +262,7 @@ public class S3BlobStore
       executorService = null;
     }
     storeMetrics.stop();
+    blobStoreQuotaUsageChecker.stop();
   }
 
   /**
@@ -600,6 +610,16 @@ public class S3BlobStore
   }
 
   @Override
+  public Map<OperationType, OperationMetrics> getOperationMetricsDelta() {
+    return storeMetrics.getOperationMetricsDelta();
+  }
+
+  @Override
+  public void clearOperationMetrics() {
+    storeMetrics.clearOperationMetrics();
+  }
+
+  @Override
   protected void doInit(final BlobStoreConfiguration configuration) {
     try {
       this.s3 = amazonS3Factory.create(configuration);
@@ -655,11 +675,13 @@ public class S3BlobStore
   @Guarded(by = {NEW, STOPPED, FAILED, SHUTDOWN})
   public void remove() {
     try {
+      storeMetrics.remove();
+
       boolean contentEmpty = s3.listObjects(getConfiguredBucket(), getContentPrefix()).getObjectSummaries().isEmpty();
       if (contentEmpty) {
         S3PropertiesFile metadata = new S3PropertiesFile(s3, getConfiguredBucket(), metadataFilePath());
         metadata.remove();
-        storeMetrics.remove();
+
         bucketManager.deleteStorageLocation(getBlobStoreConfiguration());
       }
       else {
@@ -878,6 +900,12 @@ public class S3BlobStore
   @Override
   public RawObjectAccess getRawObjectAccess() {
     return rawObjectAccess;
+  }
+
+  @Override
+  @VisibleForTesting
+  public void flushMetrics() throws IOException {
+    storeMetrics.flush();
   }
 
   private S3BlobAttributes writeBlobAttributes(

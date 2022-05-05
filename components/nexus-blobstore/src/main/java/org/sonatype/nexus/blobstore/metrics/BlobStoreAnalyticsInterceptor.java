@@ -28,7 +28,7 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * A method interceptor which monitor blob store operations (see {@link OperationType}) of the annotated method.
  *
- * @since 3.next
+ * @since 3.38
  */
 public class BlobStoreAnalyticsInterceptor
     extends ComponentSupport
@@ -48,7 +48,7 @@ public class BlobStoreAnalyticsInterceptor
     OperationMetrics operationMetrics;
     if (invocation.getThis() instanceof BlobStore) {
       blobStore = (BlobStore) invocation.getThis();
-      operationMetrics = blobStore.getOperationMetricsByType().get(operationType);
+      operationMetrics = blobStore.getOperationMetricsDelta().get(operationType);
     }
     else {
       log.info("Can't monitor operation metrics for class={}, methodName={}", clazz, methodName);

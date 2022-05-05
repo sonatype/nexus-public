@@ -21,6 +21,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
@@ -39,9 +40,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Streams.stream;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 
+@FeatureFlag(name = "nexus.test.base")
 @Named
 @Singleton
 public class RepositoryTestSystem
@@ -65,7 +68,7 @@ public class RepositoryTestSystem
 
   final RepositoryManager repositoryManager;
 
-  final Set<String> repositories = new HashSet<>();
+  final Set<String> repositoriesBeforeTest = new HashSet<>();
 
   final Map<String, FormatRepositoryTestSystem> formatRepositoryTestSystemMap;
 
@@ -78,24 +81,25 @@ public class RepositoryTestSystem
     super(eventManager);
     this.repositoryManager = checkNotNull(repositoryManager);
     this.formatRepositoryTestSystemMap = checkNotNull(formatRepositoryTestSystemMap);
+  }
 
-    for (FormatRepositoryTestSystem formatRepositoryTestSystem : formatRepositoryTestSystemMap.values()) {
-      formatRepositoryTestSystem.installTracker(repositories::add);
-    }
+  @Override
+  protected void doBefore() {
+    repositoriesBeforeTest.addAll(stream(repositoryManager.browse()).map(Repository::getName).collect(toList()));
   }
 
   @Override
   protected void doAfter() {
-    for (String repository : repositories) {
-      if (repositoryManager.exists(repository)) {
+    stream(repositoryManager.browse()).forEach(repository -> {
+      if (!repositoriesBeforeTest.contains(repository.getName())) {
         try {
-          repositoryManager.delete(repository);
+          repositoryManager.delete(repository.getName());
         }
         catch (Exception e) {
-          log.error("Unable to delete repository {}", repository, e);
+          log.error("Attempt to auto-delete {} failed", repository.getName());
         }
       }
-    }
+    });
   }
 
   public AptFormatRepositoryTestSystem apt() {
@@ -127,11 +131,11 @@ public class RepositoryTestSystem
   }
 
   public List<Repository> getRepositories() {
-    return Streams.stream(repositoryManager.browse()).collect(toList());
+    return stream(repositoryManager.browse()).collect(toList());
   }
 
   public List<Repository> getRepositories(final Type... types) {
-    return Streams.stream(repositoryManager.browse()).filter(repository -> isType(repository, types)).collect(toList());
+    return stream(repositoryManager.browse()).filter(repository -> isType(repository, types)).collect(toList());
   }
 
   protected Map<String, FormatRepositoryTestSystem> getFormatRepositoryTestSystemMap() {

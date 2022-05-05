@@ -26,9 +26,10 @@ import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusEvent
 import org.junit.Before
 import org.junit.Test
 
-import static org.mockito.Matchers.any
+import static org.mockito.ArgumentMatchers.any
 import static org.mockito.Mockito.mock
 import static org.mockito.Mockito.verify
+import static org.mockito.Mockito.when
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.AVAILABLE
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.BLOCKED
 
@@ -88,7 +89,9 @@ class HttpClientFacetImplConfigTest
   @Test
   void 'fire event on remote connection status changed'() {
     def underTest = new HttpClientFacetImpl(mock(HttpClientManager.class), [:], [:], [:], [:], [:])
-    underTest.attach(mock(Repository.class))
+    def repository = mock(Repository.class)
+    when(repository.name).thenReturn("test-repository")
+    underTest.attach(repository)
     underTest.installDependencies(eventManager)
     underTest.onStatusChanged(new RemoteConnectionStatus(AVAILABLE), new RemoteConnectionStatus(BLOCKED))
     verify(eventManager).post(any(RemoteConnectionStatusEvent.class))

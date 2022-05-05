@@ -15,6 +15,8 @@ package org.sonatype.nexus.repository.rest.internal.api;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -22,6 +24,7 @@ import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 
@@ -32,6 +35,9 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.rest.api.ApiRepositoryAdapter;
+import org.sonatype.nexus.repository.rest.api.AuthorizingRepositoryManager;
+import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositorySelector;
 import org.sonatype.nexus.repository.types.ProxyType;
@@ -77,19 +83,31 @@ public class RepositoryInternalResource
 
   private final List<Recipe> recipes;
 
+  private final AuthorizingRepositoryManager authorizingRepositoryManager;
+
+  private final Map<String, ApiRepositoryAdapter> convertersByFormat;
+
+  private final ApiRepositoryAdapter defaultAdapter;
+
   @Inject
   public RepositoryInternalResource(
       final List<Format> formats,
       final RepositoryManager repositoryManager,
       final RepositoryPermissionChecker repositoryPermissionChecker,
       final ProxyType proxyType,
-      final List<Recipe> recipes)
+      final List<Recipe> recipes,
+      final AuthorizingRepositoryManager authorizingRepositoryManager,
+      final Map<String, ApiRepositoryAdapter> convertersByFormat,
+      @Named("default") final ApiRepositoryAdapter defaultAdapter)
   {
     this.formats = checkNotNull(formats);
     this.repositoryManager = checkNotNull(repositoryManager);
     this.repositoryPermissionChecker = checkNotNull(repositoryPermissionChecker);
     this.proxyType = checkNotNull(proxyType);
     this.recipes = checkNotNull(recipes);
+    this.authorizingRepositoryManager = checkNotNull(authorizingRepositoryManager);
+    this.convertersByFormat = checkNotNull(convertersByFormat);
+    this.defaultAdapter = checkNotNull(defaultAdapter);
   }
 
   @GET
@@ -100,12 +118,12 @@ public class RepositoryInternalResource
       @QueryParam("withFormats") final boolean withFormats,
       @QueryParam("format") final String formatParam)
   {
-    List<RepositoryXO> repositories = stream(repositoryManager.browse())
-        .filter(repository -> repositoryPermissionChecker.userHasRepositoryAdminPermission(repository, READ))
-        .filter(repository -> isBlank(type) || type.equals(repository.getType().toString()))
+    List<RepositoryXO> repositories = repositoryPermissionChecker.userCanBrowseRepositories(repositoryManager.browse())
+        .stream()
+        .filter(repository -> isBlank(type) || type.equals(repository.getType().getValue()))
         .filter(repository -> isBlank(formatParam)
-                || formatParam.equals(ALL_FORMATS)
-                || formatParam.equals(repository.getFormat().getValue()))
+            || formatParam.equals(ALL_FORMATS)
+            || formatParam.equals(repository.getFormat().getValue()))
         .map(repository -> new RepositoryXO(repository.getName(), repository.getName()))
         .sorted(Comparator.comparing(RepositoryXO::getName))
         .collect(toList());
@@ -126,6 +144,14 @@ public class RepositoryInternalResource
     result.addAll(repositories);
 
     return result;
+  }
+
+  @GET
+  @Path("/repository/{repositoryName}")
+  @RequiresAuthentication
+  public AbstractApiRepository getRepository(@PathParam("repositoryName") final String repositoryName) {
+    return authorizingRepositoryManager.getRepositoryWithAdmin(repositoryName).map(repository ->
+        convertersByFormat.getOrDefault(repository.getFormat().getValue(), defaultAdapter).adapt(repository)).get();
   }
 
   @GET
@@ -159,10 +185,10 @@ public class RepositoryInternalResource
       reason = remoteConnectionStatus.getReason();
     }
     return new RepositoryDetailXO(
-      repository.getName(),
-      repository.getType().toString(),
-      repository.getFormat().toString(),
-      repository.getUrl(),
-      new RepositoryStatusXO(online, description, reason));
+        repository.getName(),
+        repository.getType().toString(),
+        repository.getFormat().toString(),
+        repository.getUrl(),
+        new RepositoryStatusXO(online, description, reason));
   }
 }

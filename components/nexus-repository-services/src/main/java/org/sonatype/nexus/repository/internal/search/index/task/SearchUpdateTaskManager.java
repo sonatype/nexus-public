@@ -22,8 +22,8 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.internal.search.index.SearchUpdateService;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.search.index.SearchUpdateService;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 

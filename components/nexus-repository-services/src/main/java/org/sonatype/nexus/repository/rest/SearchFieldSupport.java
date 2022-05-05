@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * A reference to a table and column.
  *
- * @since 3.next
+ * @since 3.38
  */
 public abstract class SearchFieldSupport
 {

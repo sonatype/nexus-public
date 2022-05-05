@@ -33,7 +33,7 @@ import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 public class S3BlobStoreApiResourceV1
   extends S3BlobStoreApiResource
 {
-  static final String RESOURCE_URI = V1_API_PREFIX + "/blobstores/s3";
+  static final String RESOURCE_URI = V1_API_PREFIX + "/blobstores";
 
   @Inject
   public S3BlobStoreApiResourceV1(final BlobStoreManager blobStoreManager,

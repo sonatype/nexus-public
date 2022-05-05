@@ -32,7 +32,7 @@ import org.mockito.Mock;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -68,10 +68,10 @@ public class OrientMavenIndexPublisherTest
   @Test
   public void testFilterAndConvertToRecords() {
     MavenPath mavenPath1 = new MavenPath(PATH1, null);
-    doReturn(mavenPath2).when(mavenPath2).locate(anyString(), anyString());
+    doReturn(mavenPath2).when(mavenPath2).locate(any(), any());
     doReturn(mavenPath2).when(mavenPath2).signature(SignatureType.GPG);
     when(mavenFacet.getMavenPathParser()).thenReturn(mavenPathParser);
-    when(mavenPathParser.parsePath(anyString())).thenReturn(mavenPath1).thenReturn(mavenPath2);
+    when(mavenPathParser.parsePath(any())).thenReturn(mavenPath1).thenReturn(mavenPath2);
 
     Iterable<Record> records = orientMavenIndexPublisher.filterAndConvertToRecords(createAssets(), mavenFacet);
 
@@ -84,7 +84,7 @@ public class OrientMavenIndexPublisherTest
     return Arrays.asList(asset("wrong"), asset(RIGHT_ARTIFACT));
   }
 
-  private ODocument asset(String artifactId) {
+  private ODocument asset(final String artifactId) {
     ODocument asset = new ODocument(new OClassNameBuilder().type("asset").build());
     asset.field("artifactId", artifactId);
     return asset;

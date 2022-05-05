@@ -16,9 +16,11 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="${namespace}">
   <insert id="createSchema">
-    CREATE OR REPLACE VIEW ${format}_component_search AS
+    DROP VIEW IF EXISTS ${format}_component_search CASCADE;
+
+    CREATE VIEW ${format}_component_search AS
       SELECT
-        c.component_id AS search_component_id,
+        c.component_id AS component_id,
         c.repository_id AS component_repository_id,
         c.namespace,
         c.name AS search_component_name,
@@ -26,7 +28,9 @@
         c.version,
         c.created AS component_created,
         r.name as search_repository_name,
-        a.*
+        b.content_type,
+        b.checksums,
+        a.path
       FROM ${format}_component c
        INNER JOIN ${format}_content_repository cr ON c.repository_id = cr.repository_id
        INNER JOIN repository r ON cr.config_repository_id = r.id
@@ -34,26 +38,31 @@
        INNER JOIN ${format}_asset_blob b ON a.asset_blob_id = b.asset_blob_id
   </insert>
 
-  <resultMap id="searchDataMap" type="org.sonatype.nexus.repository.content.search.SearchData">
-    <id property="componentId" column="search_component_id" />
+  <resultMap id="searchDataMap" type="org.sonatype.nexus.repository.content.search.SearchResultData">
+    <id property="componentId" column="component_id" />
     <result property="namespace" column="namespace"/>
     <result property="componentName" column="search_component_name"/>
     <result property="version" column="version"/>
     <result property="repositoryName" column="search_repository_name"/>
   </resultMap>
 
-  <select id="searchComponents" resultMap="searchDataMap">
-    SELECT *
+  <select id="searchComponents" resultMap="searchDataMap" parameterType="SqlSearchRequest">
+    SELECT component_id, namespace, search_component_name, version, search_repository_name
     FROM ${format}_component_search
     <where>
-      <if test="filter != null"> (${filter})</if>
-      <if test="continuationToken != null"> AND search_component_id > #{continuationToken}</if>
+      <if test="filter != null">(${filter})</if>
     </where>
-    <if test="sortColumnName != null">ORDER BY #{sortColumnName} <if test="isReverseOrder">DESC </if></if>
-    LIMIT #{limit};
+    GROUP BY component_id, namespace, search_component_name, version, search_repository_name
+    ORDER BY ${sortColumnName} ${sortDirection}
+    <if test="sortColumnName != defaultSortColumnName">, ${defaultSortColumnName}</if>
+    <if test="limit != null">LIMIT #{limit}</if>
+    OFFSET #{offset};
   </select>
 
   <select id="count" resultType="int">
-    SELECT COUNT(*) FROM ${format}_component_search;
+    SELECT COUNT(DISTINCT component_id) FROM ${format}_component_search
+    <where>
+      <if test="filter != null">(${filter})</if>
+    </where>
   </select>
 </mapper>

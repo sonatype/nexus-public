@@ -30,12 +30,12 @@ import org.mockito.Mock;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyMap;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.security.BreadActions.BROWSE;
 
@@ -119,6 +119,6 @@ public class ContentAuthPluginScriptTest
         .put("repository_name", REPOSITORY_NAME)
         .build());
     assertThat(underTest.run(), is(false));
-    verifyZeroInteractions(contentPermissionChecker);
+    verifyNoInteractions(contentPermissionChecker);
   }
 }

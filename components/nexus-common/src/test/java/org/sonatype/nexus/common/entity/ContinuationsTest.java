@@ -51,7 +51,6 @@ public class ContinuationsTest
     int limit = BROWSE_LIMIT;
     assertThat(streamOf(browseMock::browse).collect(toList()), contains(STRINGS));
     verify(browseMock).browse(limit, null);
-    verify(browseMock).browse(limit, "eight");
     verifyNoMoreInteractions(browseMock);
   }
 
@@ -60,7 +59,6 @@ public class ContinuationsTest
     int limit = 9;
     assertThat(streamOf(browseMock::browse, limit).collect(toList()), contains(STRINGS));
     verify(browseMock).browse(limit, null);
-    verify(browseMock).browse(limit, "eight");
     verifyNoMoreInteractions(browseMock);
   }
 
@@ -79,7 +77,6 @@ public class ContinuationsTest
     assertThat(streamOf(browseMock::browse, limit).collect(toList()), contains(STRINGS));
     verify(browseMock).browse(limit, null);
     verify(browseMock).browse(limit, "seven");
-    verify(browseMock).browse(limit, "eight");
     verifyNoMoreInteractions(browseMock);
   }
 
@@ -89,7 +86,6 @@ public class ContinuationsTest
     assertThat(streamOf(browseMock::browse, limit).collect(toList()), contains(STRINGS));
     verify(browseMock).browse(limit, null);
     verify(browseMock).browse(limit, "six");
-    verify(browseMock).browse(limit, "eight");
     verifyNoMoreInteractions(browseMock);
   }
 
@@ -99,7 +95,6 @@ public class ContinuationsTest
     assertThat(streamOf(browseMock::browse, limit).collect(toList()), contains(STRINGS));
     verify(browseMock).browse(limit, null);
     verify(browseMock).browse(limit, "five");
-    verify(browseMock).browse(limit, "eight");
     verifyNoMoreInteractions(browseMock);
   }
 
@@ -120,7 +115,6 @@ public class ContinuationsTest
     verify(browseMock).browse(limit, null);
     verify(browseMock).browse(limit, "three");
     verify(browseMock).browse(limit, "six");
-    verify(browseMock).browse(limit, "eight");
     verifyNoMoreInteractions(browseMock);
   }
 
@@ -175,7 +169,6 @@ public class ContinuationsTest
     assertThat(result, contains("one"));
     assertThat(result, hasSize(1));
     verify(browseMock).browse(BROWSE_LIMIT, null);
-    verify(browseMock).browse(BROWSE_LIMIT, "one");
     verifyNoMoreInteractions(browseMock);
   }
 

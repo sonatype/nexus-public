@@ -102,6 +102,11 @@ public class RepositoryImpl
   }
 
   @Override
+  public boolean isStarted() {
+    return this.states.is(STARTED);
+  }
+
+  @Override
   public String toString() {
     return getClass().getSimpleName() + "{" +
         "type=" + type +

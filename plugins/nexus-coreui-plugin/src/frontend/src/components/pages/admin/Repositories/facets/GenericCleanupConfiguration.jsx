@@ -11,54 +11,61 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React, {useEffect} from 'react';
+import {assign} from 'xstate';
 
-import {FormUtils, useSimpleMachine} from '@sonatype/nexus-ui-plugin';
+import {ExtAPIUtils, FormUtils} from '@sonatype/nexus-ui-plugin';
 
-import {
-  NxFormGroup,
-  NxStatefulTransferList,
-  NxLoadWrapper
-} from '@sonatype/react-shared-components';
+import {NxFormGroup, NxLoadWrapper, NxStatefulTransferList} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
 
 const {EDITOR} = UIStrings.REPOSITORIES;
 
-export const cleanupPoliciesUrl = (event) =>
-  '/service/rest/internal/cleanup-policies?format=' +
-  encodeURIComponent(event.format);
-
 export default function GenericCleanupConfiguration({parentMachine}) {
-  const {current, load, retry, isLoading} = useSimpleMachine(
-    'GenericCleanupConfigurationMachine',
-    cleanupPoliciesUrl
-  );
-
   const [currentParent, sendParent] = parentMachine;
+  const [cleanupState, cleanupSend] = ExtAPIUtils.useExtMachine('cleanup_CleanupPolicy', 'readByFormat', {
+    actions: {
+      setData: assign({
+        data: (_, {data}) => data?.map(policy =>
+            ({id: policy.name, displayName: policy.name}))
+      })
+    }
+  });
 
-  const {format, policyNames} = currentParent.context.data;
+  const {format, cleanup} = currentParent.context.data;
+  const {data: availablePolicies = [], error} = cleanupState.context;
+  const isLoading = cleanupState.matches('loading');
+
+  const loadCleanupPolicies = () => cleanupSend({
+    type: 'LOAD',
+    data: [
+      {
+        filter: [
+          {
+            property: 'format',
+            value: format
+          }
+        ]
+      }
+    ]
+  });
 
   useEffect(() => {
-    load({format});
+    loadCleanupPolicies();
   }, [format]);
-
-  const {data: policies, error} = current.context;
-
-  const availablePolicies =
-    policies?.map((it) => ({id: it.name, displayName: it.name})) || [];
 
   return (
     <>
       <h2 className="nx-h2">{EDITOR.CLEANUP_CAPTION}</h2>
-      <NxLoadWrapper loading={isLoading} error={error} retryHandler={retry}>
+      <NxLoadWrapper loading={isLoading} error={error} retryHandler={loadCleanupPolicies}>
         <NxFormGroup
           label={EDITOR.CLEANUP_POLICIES_LABEL}
           sublabel={EDITOR.CLEANUP_POLICIES_SUBLABEL}
         >
           <NxStatefulTransferList
             allItems={availablePolicies}
-            selectedItems={new Set(policyNames)}
-            onChange={FormUtils.handleUpdate('policyNames', sendParent)}
+            selectedItems={new Set(cleanup?.policyNames)}
+            onChange={FormUtils.handleUpdate('cleanup.policyNames', sendParent)}
           />
         </NxFormGroup>
       </NxLoadWrapper>

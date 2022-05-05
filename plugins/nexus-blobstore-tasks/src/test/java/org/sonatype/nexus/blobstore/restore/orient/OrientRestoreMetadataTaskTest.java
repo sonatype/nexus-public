@@ -14,7 +14,9 @@ package org.sonatype.nexus.blobstore.restore.orient;
 
 import java.net.URL;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Stream;
@@ -49,10 +51,10 @@ import org.mockito.Mock;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -60,18 +62,18 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
+import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
+import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor.DRY_RUN;
+import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor.INTEGRITY_CHECK;
+import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor.RESTORE_BLOBS;
 import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor.SINCE_DAYS;
+import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor.TYPE_ID;
+import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor.UNDELETE_BLOBS;
 import static org.sonatype.nexus.blobstore.restore.orient.DefaultOrientIntegrityCheckStrategy.DEFAULT_NAME;
-import static org.sonatype.nexus.blobstore.restore.orient.OrientRestoreMetadataTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
-import static org.sonatype.nexus.blobstore.restore.orient.OrientRestoreMetadataTaskDescriptor.DRY_RUN;
-import static org.sonatype.nexus.blobstore.restore.orient.OrientRestoreMetadataTaskDescriptor.INTEGRITY_CHECK;
-import static org.sonatype.nexus.blobstore.restore.orient.OrientRestoreMetadataTaskDescriptor.RESTORE_BLOBS;
-import static org.sonatype.nexus.blobstore.restore.orient.OrientRestoreMetadataTaskDescriptor.TYPE_ID;
-import static org.sonatype.nexus.blobstore.restore.orient.OrientRestoreMetadataTaskDescriptor.UNDELETE_BLOBS;
 
 public class OrientRestoreMetadataTaskTest
     extends TestSupport
@@ -146,6 +148,7 @@ public class OrientRestoreMetadataTaskTest
     configuration.setTypeId(TYPE_ID);
 
     when(repositoryManager.get("maven-central")).thenReturn(repository);
+    when(repository.isStarted()).thenReturn(true);
     when(repository.getFormat()).thenReturn(mavenFormat);
     when(mavenFormat.getValue()).thenReturn("maven2");
 
@@ -220,7 +223,7 @@ public class OrientRestoreMetadataTaskTest
 
     underTest.execute();
 
-    verifyZeroInteractions(blobStoreManager);
+    verifyNoInteractions(blobStoreManager);
   }
 
   @Test
@@ -234,7 +237,36 @@ public class OrientRestoreMetadataTaskTest
 
     underTest.execute();
 
-    verifyZeroInteractions(repositoryManager);
+    verifyNoInteractions(repositoryManager);
+  }
+
+  @Test
+  public void testIntegrityCheckNoRepositories() throws Exception {
+    configuration.setBoolean(RESTORE_BLOBS, false);
+    configuration.setBoolean(UNDELETE_BLOBS, false);
+    configuration.setBoolean(INTEGRITY_CHECK, true);
+    underTest.configure(configuration);
+
+    when(repositoryManager.browseForBlobStore(any())).thenReturn(Collections.emptyList());
+
+    underTest.execute();
+
+    verifyNoInteractions(integrityCheckStrategies);
+  }
+
+  @Test
+  public void testIntegrityCheckNullRepository() throws Exception {
+    configuration.setBoolean(RESTORE_BLOBS, false);
+    configuration.setBoolean(UNDELETE_BLOBS, false);
+    configuration.setBoolean(INTEGRITY_CHECK, true);
+    underTest.configure(configuration);
+
+    List<Repository> repositories = singletonList(null);
+    when(repositoryManager.browseForBlobStore(any())).thenReturn(repositories);
+
+    underTest.execute();
+
+    verifyNoInteractions(integrityCheckStrategies);
   }
 
   @Test
@@ -249,7 +281,22 @@ public class OrientRestoreMetadataTaskTest
 
     underTest.execute();
 
-    verifyZeroInteractions(integrityCheckStrategies);
+    verifyNoInteractions(integrityCheckStrategies);
+  }
+
+  @Test
+  public void testIntegrityCheck_SkipNotStartedRepositories() throws Exception {
+    configuration.setBoolean(RESTORE_BLOBS, false);
+    configuration.setBoolean(UNDELETE_BLOBS, false);
+    configuration.setBoolean(INTEGRITY_CHECK, true);
+    underTest.configure(configuration);
+
+    when(repository.isStarted()).thenReturn(false);
+    when(repositoryManager.browseForBlobStore(any())).thenReturn(singletonList(repository));
+
+    underTest.execute();
+
+    verifyNoInteractions(integrityCheckStrategies);
   }
 
   @Test
@@ -267,7 +314,7 @@ public class OrientRestoreMetadataTaskTest
     underTest.execute();
 
     verify(orientDefaultIntegrityCheckStrategy).check(any(), any(), any(), any());
-    verifyZeroInteractions(testOrientIntegrityCheckStrategy);
+    verifyNoInteractions(testOrientIntegrityCheckStrategy);
   }
 
   @Test
@@ -281,7 +328,7 @@ public class OrientRestoreMetadataTaskTest
 
     underTest.execute();
 
-    verifyZeroInteractions(orientDefaultIntegrityCheckStrategy);
+    verifyNoInteractions(orientDefaultIntegrityCheckStrategy);
     verify(testOrientIntegrityCheckStrategy).check(eq(repository), eq(blobStore), any(), any());
   }
 
@@ -291,9 +338,9 @@ public class OrientRestoreMetadataTaskTest
     configuration.setBoolean(UNDELETE_BLOBS, true);
     configuration.setBoolean(INTEGRITY_CHECK, false);
     underTest.configure(configuration);
-    
+
     underTest.execute();
-    
+
     verify(restoreBlobStrategy).after(true, repository);
   }
 

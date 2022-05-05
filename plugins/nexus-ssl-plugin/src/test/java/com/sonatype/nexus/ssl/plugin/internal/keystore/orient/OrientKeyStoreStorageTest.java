@@ -34,7 +34,7 @@ import org.mockito.Mock;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.mockito.Matchers.anyObject;
+import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -136,7 +136,7 @@ public class OrientKeyStoreStorageTest
       OrientKeyStoreData entity = (OrientKeyStoreData) invoc.getArguments()[0];
       entity.setEntityMetadata(newEntityMetadata("1"));
       return null;
-    }).when(storageManager).save(anyObject());
+    }).when(storageManager).save(isNotNull());
     KeyStore keyStore = newKeyStoreWithData();
     storage.save(keyStore, STORE_PASSWORD);
     assertThat(storage.modified(), is(false));

@@ -48,14 +48,23 @@ public class DefaultCacheBuilderProvider
   private final String name;
 
   @Inject
-  public DefaultCacheBuilderProvider(final Map<String, Provider<CacheBuilder>> providers,
-                                     @Nullable @Named("${nexus.cache.provider}") final String customName,
-                                     final NodeAccess nodeAccess)
+  public DefaultCacheBuilderProvider(
+      final Map<String, Provider<CacheBuilder>> providers,
+      @Nullable @Named("${nexus.cache.provider}") final String customName,
+      @Named("${nexus.orient.enabled:-false}") final boolean orient,
+      final NodeAccess nodeAccess)
   {
     this.providers = checkNotNull(providers);
-    this.name = customName != null ? customName : (nodeAccess.isClustered() ? "hazelcast" : "ehcache");
+    this.name = customName != null ? customName : getCustomName(orient, nodeAccess);
     checkArgument(!"default".equals(name));
     checkState(providers.containsKey(name), "Missing cache-builder: %s", name);
+  }
+
+  private String getCustomName(
+      @Named("nexus.orient.enabled") final boolean orient,
+      final NodeAccess nodeAccess)
+  {
+    return orient && nodeAccess.isClustered() ? "hazelcast" : "ehcache";
   }
 
   @Override

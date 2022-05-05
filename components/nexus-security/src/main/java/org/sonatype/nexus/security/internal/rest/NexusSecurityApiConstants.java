@@ -79,6 +79,8 @@ public final class NexusSecurityApiConstants
 
   public static final String ROLE_DESCRIPTION_DESCRIPTION = "The description of this role.";
 
+  public static final String ROLE_READONLY_DESCRIPTION = "Indicates whether the role can be changed. The system will ignore any supplied external values.";
+
   public static final String ROLE_PRIVILEGES_DESCRIPTION = "The list of privileges assigned to this role.";
 
   public static final String ROLE_ROLES_DESCRIPTION = "The list of roles assigned to this role.";

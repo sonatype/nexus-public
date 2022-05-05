@@ -16,6 +16,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Optional;
 
 /**
  * @since 3.29
@@ -23,9 +24,10 @@ import java.sql.SQLException;
 public interface DatabaseMigrationStep
 {
   /**
-   * The version this step migrates the database to
+   * The version this step migrates the database to. Migrations returning an empty value will only run when the checksum
+   * changes.
    */
-  String version();
+  Optional<String> version();
 
   /**
    * Perform the migration step. The provided connection should not be closed.

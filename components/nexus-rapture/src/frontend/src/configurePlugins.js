@@ -73,6 +73,7 @@ function registerFeature(feature) {
     path: feature.path,
     text: feature.text,
     description: feature.description,
+    weight: feature.weight,
     view: {
       xtype: 'nx-coreui-react-main-container',
       itemId: 'react-view',

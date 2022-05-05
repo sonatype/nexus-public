@@ -13,7 +13,6 @@
 package org.sonatype.nexus.content.maven;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -140,19 +139,10 @@ public interface MavenContentFacet
   FluentAsset createComponentAndAsset(final MavenPath mavenPath);
 
   /**
-   * Hard link some content to an asset
-   * @param asset
-   * @param path
-   * @param contentPath
-   * @throws IOException
-   */
-  void hardLink(FluentAsset asset, Path contentPath) throws IOException;
-
-  /**
    * @param source component to copy
    * @return a new component copied from the source to the current repository
    *
-   * @since 3.next
+   * @since 3.38
    */
   FluentComponent copy(final Component source);
 }

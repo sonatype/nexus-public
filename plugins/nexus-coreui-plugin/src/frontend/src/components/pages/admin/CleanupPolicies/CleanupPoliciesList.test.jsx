@@ -11,10 +11,10 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {waitFor} from '@testing-library/react';
-import '@testing-library/jest-dom/extend-expect';
-import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import axios from 'axios';
+import { waitForElementToBeRemoved } from '@testing-library/react';
+import '@testing-library/jest-dom/extend-expect';
+import {TestUtils} from '@sonatype/nexus-ui-plugin';
 
 import CleanupPoliciesList from './CleanupPoliciesList';
 
@@ -61,7 +61,7 @@ describe('CleanupPoliciesList', function() {
 
     const {container, loadingMask} = renderView();
 
-    await waitFor(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(loadingMask());
 
     rows.forEach((row, i) => {
       expect(container.querySelector(`tbody tr:nth-child(${i+1}) td:nth-child(1)`)).toHaveTextContent(row.name);
@@ -75,7 +75,7 @@ describe('CleanupPoliciesList', function() {
 
     const {container, loadingMask} = renderView();
 
-    await waitFor(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(loadingMask());
 
     expect(container.querySelector('.nx-cell--meta-info')).toHaveTextContent('Error');
   });

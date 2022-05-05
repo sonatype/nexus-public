@@ -12,50 +12,59 @@
  */
 package org.sonatype.nexus.rapture.internal;
 
+import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.rapture.internal.logging.LogEventComponent;
 import org.sonatype.nexus.rapture.internal.logging.LogEventXO;
 
+import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(LoggerFactory.class)
 public class LogEventComponentTest
+    extends TestSupport
 {
+  @Mock
+  private MockedStatic<LoggerFactory> loggerFactory;
+
+  @Mock
+  private Logger log;
+
   private LogEventComponent underTest;
+
+  @Before
+  public void setup() {
+    // Required for class setup
+    loggerFactory.when(() -> LoggerFactory.getLogger(LogEventComponent.class))
+        .thenReturn(mock(Logger.class));
+
+    // The logger we care about
+    loggerFactory.when(() -> LoggerFactory.getLogger("org.something"))
+        .thenReturn(log);
+  }
 
   @Test
   public void testEnabledLogging() {
     underTest = new LogEventComponent(true);
 
-    mockStatic(LoggerFactory.class);
-    when(LoggerFactory.getLogger("org.something")).thenReturn(mock(Logger.class));
-
     underTest.recordEvent(createLogEvent());
 
-    verifyStatic();
-    LoggerFactory.getLogger("org.something");
+    loggerFactory.verify(() -> LoggerFactory.getLogger("org.something"));
   }
 
   @Test
   public void testDisabledLogging() {
     underTest = new LogEventComponent(false);
 
-    mockStatic(LoggerFactory.class);
-
     underTest.recordEvent(createLogEvent());
 
-    PowerMockito.verifyNoMoreInteractions(LoggerFactory.class);
+    loggerFactory.verify(() -> LoggerFactory.getLogger(any(String.class)), times(0));
   }
 
   private LogEventXO createLogEvent() {

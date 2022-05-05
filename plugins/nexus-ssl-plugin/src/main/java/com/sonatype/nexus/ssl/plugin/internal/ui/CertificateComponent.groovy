@@ -21,13 +21,13 @@ import javax.inject.Singleton
 import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotEmpty
 
-import com.sonatype.nexus.ssl.plugin.internal.CertificateRetriever
 import com.sonatype.nexus.ssl.plugin.validator.HostnameOrIpAddress
 import com.sonatype.nexus.ssl.plugin.validator.PemCertificate
 
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.ssl.TrustStore
+import org.sonatype.nexus.ssl.CertificateRetriever
 import org.sonatype.nexus.validation.Validate
 
 import com.codahale.metrics.annotation.ExceptionMetered

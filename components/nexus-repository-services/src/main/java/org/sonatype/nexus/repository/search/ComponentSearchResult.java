@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.search;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +23,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 /**
  * Result of a component search
  *
- * @since 3.next
+ * @since 3.38
  */
 public class ComponentSearchResult
 {
@@ -138,5 +139,19 @@ public class ComponentSearchResult
 
   public void setLastDownloaded(final OffsetDateTime lastDownloaded) {
     this.lastDownloaded = lastDownloaded;
+  }
+
+  public void addAsset(final AssetSearchResult asset) {
+    if (assets == null) {
+      assets = new ArrayList<>();
+    }
+    assets.add(asset);
+  }
+
+  @Override
+  public String toString() {
+    return "ComponentSearchResult [id=" + id + ", repositoryName=" + repositoryName + ", group=" + group + ", name="
+        + name + ", version=" + version + ", format=" + format + ", lastDownloaded=" + lastDownloaded
+        + ", lastModified=" + lastModified + ", assets=" + assets + ", annotations=" + annotations + "]";
   }
 }

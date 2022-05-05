@@ -16,6 +16,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -50,8 +51,8 @@ public class BrowseNodeMigrationStep_1_1 implements DatabaseMigrationStep
   }
 
   @Override
-  public String version() {
-    return "1.1";
+  public Optional<String> version() {
+    return Optional.of("1.1");
   }
 
   @Override

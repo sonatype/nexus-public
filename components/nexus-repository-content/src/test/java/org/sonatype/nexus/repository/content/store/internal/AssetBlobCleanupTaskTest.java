@@ -35,7 +35,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 
 import static org.mockito.ArgumentCaptor.forClass;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.content.store.internal.AssetBlobCleanupTask.BATCH_SIZE;

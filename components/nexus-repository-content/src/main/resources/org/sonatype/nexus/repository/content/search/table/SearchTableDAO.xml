@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.sonatype.nexus.repository.content.search.table.SearchTableDAO">
+
+  <insert id="createSchema">
+    CREATE TABLE IF NOT EXISTS components_search
+    (
+      component_id      INTEGER                  NOT NULL,
+      repository_id     INTEGER                  NOT NULL,
+      asset_id          INTEGER                  NOT NULL,
+      format            VARCHAR                  NOT NULL,
+      namespace         VARCHAR                  NOT NULL,
+      component_name    VARCHAR                  NOT NULL,
+      component_kind    VARCHAR                  NOT NULL,
+      version           VARCHAR                  NOT NULL,
+      component_created TIMESTAMP WITH TIME ZONE NOT NULL,
+      repository_name   VARCHAR(200)             NOT NULL,
+      content_type      VARCHAR                  NOT NULL,
+      md5               VARCHAR,
+      sha1              VARCHAR,
+      sha256            VARCHAR,
+      sha512            VARCHAR,
+
+      CONSTRAINT pk_components_search PRIMARY KEY (component_id, repository_id, asset_id, format)
+      );
+    CREATE INDEX IF NOT EXISTS idx_components_search_version ON components_search (version);
+    CREATE INDEX IF NOT EXISTS idx_components_search_namespace ON components_search (namespace);
+    CREATE INDEX IF NOT EXISTS idx_components_search_component_name ON components_search (component_name);
+    CREATE INDEX IF NOT EXISTS idx_components_search_repository_name ON components_search (repository_name);
+    CREATE INDEX IF NOT EXISTS idx_components_search_md5 ON components_search (md5);
+    CREATE INDEX IF NOT EXISTS idx_components_search_sha1 ON components_search (sha1);
+    CREATE INDEX IF NOT EXISTS idx_components_search_sha256 ON components_search (sha256);
+    CREATE INDEX IF NOT EXISTS idx_components_search_sha512 ON components_search (sha512);
+  </insert>
+</mapper>

@@ -32,11 +32,11 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import static java.util.Arrays.asList;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.rest.sql.ComponentSearchField.NAME;
 import static org.sonatype.nexus.repository.rest.sql.ComponentSearchField.NAMESPACE;
@@ -79,7 +79,7 @@ public class KeywordSqlSearchQueryContributionTest
   public void shouldIgnoreNull() {
     underTest.contribute(queryBuilder, null);
 
-    verifyZeroInteractions(sqlSearchQueryConditionBuilder);
+    verifyNoMoreInteractions(sqlSearchQueryConditionBuilder);
     verify(queryBuilder, never()).add(any());
   }
 

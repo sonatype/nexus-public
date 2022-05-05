@@ -13,7 +13,6 @@
 package org.sonatype.nexus.coreui;
 
 import java.util.List;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -26,11 +25,14 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.security.realm.RealmManager;
 import org.sonatype.nexus.security.realm.SecurityRealm;
+import org.sonatype.nexus.security.user.UserManager;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.sonatype.nexus.security.anonymous.AnonymousHelper.getAuthenticationRealms;
 
 /**
  * @since 3.19
@@ -48,15 +50,23 @@ public class RealmSettingsResource
 
   private final RealmManager realmManager;
 
+  private final List<String> authenticationRealms;
+
   @Inject
-  public RealmSettingsResource(final RealmManager realmManager) {
+  public RealmSettingsResource(
+      final RealmManager realmManager,
+      List<UserManager> userManagers) {
     this.realmManager = checkNotNull(realmManager);
+    checkNotNull(userManagers);
+    authenticationRealms = getAuthenticationRealms(userManagers);
   }
 
   @GET
   @Path("/types")
   @RequiresPermissions("nexus:settings:read")
   public List<SecurityRealm> readRealmTypes() {
-    return realmManager.getAvailableRealms();
+    return realmManager.getAvailableRealms().stream()
+        .filter(securityRealm -> authenticationRealms.contains(securityRealm.getId()))
+        .collect(toList());
   }
 }

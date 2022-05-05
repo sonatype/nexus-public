@@ -57,8 +57,8 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyObject;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -146,17 +146,17 @@ public class UploadManagerImplTest
     BlobStoreMultipartForm uploadedForm = new BlobStoreMultipartForm();
     TempBlobFormField field = new TempBlobFormField("asset1", "foo.jar", mock(TempBlob.class));
     uploadedForm.putFile("asset1", field);
-    when(blobStoreAwareMultipartHelper.parse(anyObject(), anyObject())).thenReturn(uploadedForm);
+    when(blobStoreAwareMultipartHelper.parse(isNotNull(), isNotNull())).thenReturn(uploadedForm);
 
     List<String> assetPaths = Lists.newArrayList("/asset/path/1", "/asset/path/2");
     UploadResponse uploadResponse = mock(UploadResponse.class);
     when(uploadResponse.getAssetPaths()).thenReturn(assetPaths);
-    when(handlerA.handle(anyObject(), anyObject())).thenReturn(uploadResponse);
+    when(handlerA.handle(isNotNull(), isNotNull())).thenReturn(uploadResponse);
 
     underTest.handle(repository, request);
 
     verify(handlerA, times(1)).handle(repository, componentUploadCaptor.getValue());
-    verify(handlerB, never()).handle(anyObject(), anyObject());
+    verify(handlerB, never()).handle(isNotNull(), isNotNull());
     ArgumentCaptor<UIUploadEvent> eventCaptor = ArgumentCaptor.forClass(UIUploadEvent.class);
     verify(eventManager, times(1)).post(eventCaptor.capture());
     assertThat(eventCaptor.getValue().getRepository(), equalTo(repository));
@@ -165,8 +165,8 @@ public class UploadManagerImplTest
     // Try the other, to be sure!
     reset(handlerA, handlerB, eventManager);
     when(handlerB.getDefinition()).thenReturn(uploadB);
-    when(handlerB.getValidatingComponentUpload(anyObject())).thenReturn(validatingComponentUpload);
-    when(handlerB.handle(anyObject(), anyObject())).thenReturn(uploadResponse);
+    when(handlerB.getValidatingComponentUpload(isNotNull())).thenReturn(validatingComponentUpload);
+    when(handlerB.handle(isNotNull(), isNotNull())).thenReturn(uploadResponse);
 
     when(repository.getFormat()).thenReturn(new Format("b")
     {
@@ -175,7 +175,7 @@ public class UploadManagerImplTest
     underTest.handle(repository, request);
 
     verify(handlerB, times(1)).handle(repository, componentUploadCaptor.getValue());
-    verify(handlerA, never()).handle(anyObject(), anyObject());
+    verify(handlerA, never()).handle(isNotNull(), isNotNull());
     eventCaptor = ArgumentCaptor.forClass(UIUploadEvent.class);
     verify(eventManager, times(1)).post(eventCaptor.capture());
     assertThat(eventCaptor.getValue().getRepository(), equalTo(repository));

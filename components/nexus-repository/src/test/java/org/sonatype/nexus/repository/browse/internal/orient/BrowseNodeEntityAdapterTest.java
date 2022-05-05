@@ -47,7 +47,7 @@ import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
@@ -200,6 +200,159 @@ public class BrowseNodeEntityAdapterTest
                   hasProperty("assetId", nullValue()),
                   hasProperty("path", is("org/foo/1.0/")))
           ));
+
+      underTest.deleteComponentNode(db, EntityHelper.id(component));
+
+      assertThat(underTest.browse(db), is(emptyIterable()));
+    }
+  }
+
+  @Test
+  public void deleteAssetDoesNotRemoveNodeWithChildren() throws Exception {
+    List<String> path = Splitter.on('/').omitEmptyStrings().splitToList(asset.name());
+
+    try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
+      underTest.createComponentNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(path.subList(0, 3)), component);
+
+      assertThat(underTest.browse(db),
+          containsInAnyOrder(
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/")),
+                  hasProperty("name", is("org")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/")),
+                  hasProperty("name", is("foo")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/")),
+                  hasProperty("name", is("1.0")),
+                  hasProperty("componentId", is(EntityHelper.id(component))),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/1.0")))
+          ));
+
+      Asset parentAsset = new Asset();
+      parentAsset.bucketId(EntityHelper.id(bucket));
+      parentAsset.componentId(EntityHelper.id(component));
+      parentAsset.attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
+      parentAsset.format(FORMAT_NAME);
+      parentAsset.name("/org/foo");
+      assetEntityAdapter.addEntity(db, parentAsset);
+      underTest.createAssetNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(path.subList(0, 3)), parentAsset);
+
+      underTest.createAssetNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(path), asset);
+
+      assertThat(underTest.browse(db),
+          containsInAnyOrder(
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/")),
+                  hasProperty("name", is("org")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/")),
+                  hasProperty("name", is("foo")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/")),
+                  hasProperty("name", is("1.0")),
+                  hasProperty("componentId", is(EntityHelper.id(component))),
+                  hasProperty("assetId", is(EntityHelper.id(parentAsset))),
+                  hasProperty("path", is("org/foo/1.0/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/1.0/")),
+                  hasProperty("name", is("foo-1.0.jar")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", is(EntityHelper.id(asset))),
+                  hasProperty("path", is("org/foo/1.0/foo-1.0.jar")))
+          ));
+
+      underTest.deleteAssetNode(db, EntityHelper.id(parentAsset));
+
+      assertThat(underTest.browse(db),
+          containsInAnyOrder(
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/")),
+                  hasProperty("name", is("org")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/")),
+                  hasProperty("name", is("foo")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/")),
+                  hasProperty("name", is("1.0")),
+                  hasProperty("componentId", is(EntityHelper.id(component))),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/1.0/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/1.0/")),
+                  hasProperty("name", is("foo-1.0.jar")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", is(EntityHelper.id(asset))),
+                  hasProperty("path", is("org/foo/1.0/foo-1.0.jar")))
+          ));
+
+      underTest.deleteAssetNode(db, EntityHelper.id(asset));
+
+      assertThat(underTest.browse(db),
+          containsInAnyOrder(
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/")),
+                  hasProperty("name", is("org")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/")),
+                  hasProperty("name", is("foo")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/")),
+                  hasProperty("name", is("1.0")),
+                  hasProperty("componentId", is(EntityHelper.id(component))),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/1.0/")))
+          ));
+
 
       underTest.deleteComponentNode(db, EntityHelper.id(component));
 

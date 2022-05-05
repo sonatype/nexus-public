@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.selector;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -55,7 +56,7 @@ public interface SelectorManager
    *
    * @since 3.6
    */
-  List<SelectorConfiguration> browseActive(List<String> repositoryNames, List<String> formats);
+  List<SelectorConfiguration> browseActive(Collection<String> repositoryNames, Collection<String> formats);
 
   /**
    * Read content selector by id.

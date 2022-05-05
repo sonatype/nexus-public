@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository.search.sql;
 
 /**
- * @since 3.next
+ * @since 3.38
  */
 enum SqlSearchConditionType
 {

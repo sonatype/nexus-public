@@ -25,7 +25,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.validation.constraints.NotNull;
 
-import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.common.cooperation2.Cooperation2;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
 import org.sonatype.nexus.common.io.Cooperation;
@@ -89,7 +88,8 @@ public abstract class ProxyFacetSupport
   static final String CONFIG_KEY = "proxy";
 
   @VisibleForTesting
-  public static class Config
+  public static class ProxyConfig
+      implements ProxyRepositoryConfiguration
   {
     @Url
     @NotNull
@@ -99,13 +99,37 @@ public abstract class ProxyFacetSupport
      * Content max-age minutes.
      */
     @NotNull
-    public Integer contentMaxAge = Time.hours(24).toMinutesI();
+    public Integer contentMaxAge = (int) Duration.ofHours(24).toMinutes();
 
     /**
      * Metadata max-age minutes.
      */
     @NotNull
-    public Integer metadataMaxAge = Time.hours(24).toMinutesI();
+    public Integer metadataMaxAge = (int) Duration.ofHours(24).toMinutes();
+
+    /**
+     * Content max-age.
+     */
+    @Override
+    public Duration getContentMaxAge() {
+      return Duration.ofMinutes(contentMaxAge);
+    }
+
+    /**
+     * Metadata max-age.
+     */
+    @Override
+    public Duration getMetadataMaxAge() {
+      return Duration.ofMinutes(metadataMaxAge);
+    }
+
+    /**
+     * The remote URI of the proxy repository.
+     */
+    @Override
+    public URI getRemoteURL() {
+      return remoteUrl;
+    }
 
     @Override
     public String toString() {
@@ -118,7 +142,7 @@ public abstract class ProxyFacetSupport
 
   private static final ThreadLocal<Boolean> downloading = new ThreadLocal<>();
 
-  private Config config;
+  private ProxyConfig config;
 
   private HttpClientFacet httpClient;
 
@@ -129,6 +153,11 @@ public abstract class ProxyFacetSupport
   private Cooperation2Factory.Builder cooperationBuilder;
 
   private Cooperation2 proxyCooperation;
+
+  @Override
+  public ProxyRepositoryConfiguration getConfiguration() {
+    return config;
+  }
 
   /**
    * Configures content {@link Cooperation} for this proxy; a timeout of 0 means wait indefinitely.
@@ -175,16 +204,16 @@ public abstract class ProxyFacetSupport
 
   @Override
   protected void doValidate(final Configuration configuration) throws Exception {
-    facet(ConfigurationFacet.class).validateSection(configuration, CONFIG_KEY, Config.class);
+    facet(ConfigurationFacet.class).validateSection(configuration, CONFIG_KEY, ProxyConfig.class);
   }
 
   @Override
   protected void doConfigure(final Configuration configuration) throws Exception {
-    config = facet(ConfigurationFacet.class).readSection(configuration, CONFIG_KEY, Config.class);
+    config = facet(ConfigurationFacet.class).readSection(configuration, CONFIG_KEY, ProxyConfig.class);
 
     cacheControllerHolder = new CacheControllerHolder(
-        new CacheController(Time.minutes(config.contentMaxAge).toSecondsI(), null),
-        new CacheController(Time.minutes(config.metadataMaxAge).toSecondsI(), null)
+        new CacheController((int) config.getContentMaxAge().getSeconds(), null),
+        new CacheController((int) config.getMetadataMaxAge().getSeconds(), null)
     );
 
     // normalize URL path to contain trailing slash
@@ -379,7 +408,7 @@ public abstract class ProxyFacetSupport
     cacheControllerHolder.invalidateCaches();
   }
 
-  private Content maybeGetCachedContent(Context context) throws IOException {
+  private Content maybeGetCachedContent(final Context context) throws IOException {
     try {
       return getCachedContent(context);
     }
@@ -413,11 +442,11 @@ public abstract class ProxyFacetSupport
   protected abstract Content store(final Context context, final Content content) throws IOException;
 
   @Nullable
-  protected Content fetch(final Context context, Content stale) throws IOException {
+  protected Content fetch(final Context context, final Content stale) throws IOException {
     return fetch(getUrl(context), context, stale);
   }
 
-  protected Content fetch(String url, Context context, @Nullable Content stale) throws IOException {
+  protected Content fetch(final String url, final Context context, @Nullable final Content stale) throws IOException {
     HttpClient client = httpClient.getHttpClient();
 
     checkState(config.remoteUrl.isAbsolute(),
@@ -533,7 +562,7 @@ public abstract class ProxyFacetSupport
   /**
    * Builds the {@link HttpRequestBase} for a particular set of parameters (mapping to GET by default).
    */
-  protected HttpRequestBase buildFetchHttpRequest(URI uri, Context context) {
+  protected HttpRequestBase buildFetchHttpRequest(final URI uri, final Context context) {
     return new HttpGet(uri);
   }
 

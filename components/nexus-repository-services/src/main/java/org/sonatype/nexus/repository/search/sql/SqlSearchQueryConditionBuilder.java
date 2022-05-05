@@ -37,6 +37,7 @@ import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.containsAny;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.sonatype.nexus.repository.search.sql.SqlSearchConditionType.EXACT;
@@ -46,7 +47,7 @@ import static org.sonatype.nexus.repository.search.sql.SqlSearchConditionType.WI
  * Utility class for building exact and wildcard sql search query conditions.
  *
  * @see SqlSearchQueryCondition
- * @since 3.next
+ * @since 3.38
  */
 @Named
 @Singleton
@@ -93,14 +94,19 @@ public class SqlSearchQueryConditionBuilder
    * <code>SqlSearchQueryCondition("field LIKE #{field}", {field=value})</code> if the specified value is a wildcard.
    */
   public SqlSearchQueryCondition condition(final String field, final String value) {
-    checkArgument(isNotBlank(field), FIELD_NAME_MUST_NOT_BE_EMPTY);
-    checkArgument(isNotBlank(value), "Value must not be empty.");
+    return createCondition(field, value, EMPTY);
+  }
 
-    if (exactOrWildcard(value) == EXACT) {
-      return new SqlSearchQueryCondition(equalTo(field), ImmutableMap.of(field, value));
-    }
-    return new SqlSearchQueryCondition(wildcard(field, placeholder(field)),
-        ImmutableMap.of(field, replaceWildcards(value)));
+  /**
+   * Creates a SqlSearchQueryCondition of the form <code>SqlSearchQueryCondition("field = #{field}",
+   * {field=value})</code> if the specified value is an exact value or a SqlSearchQueryCondition of the form
+   * <code>SqlSearchQueryCondition("field LIKE #{field}", {field=value})</code> if the specified value is a wildcard.
+   *
+   * The keys of the parameters Map contained in the created <code>SqlQueryCondition</code> are prefixed with the
+   * specified <code>parameterPrefix</code>.
+   */
+  public SqlSearchQueryCondition condition(final String field, final String value, final String parameterPrefix) {
+    return createCondition(field, value, parameterPrefix);
   }
 
   /**
@@ -113,12 +119,37 @@ public class SqlSearchQueryConditionBuilder
     checkArgument(isNotBlank(fieldName), FIELD_NAME_MUST_NOT_BE_EMPTY);
     checkArgument(!values.isEmpty(), VALUES_MUST_NOT_BE_EMPTY);
 
+    return createCondition(fieldName, values, EMPTY);
+  }
+
+  /**
+   * Builds an exact and/or wildcard conditions depending on the specified values for the specified field.
+   *
+   * If the specified values contains both exact and wildcard values then the conditions are ORed for the specified
+   * field.
+   *
+   * The keys of the parameters Map contained in the returned <code>SqlQueryCondition</code> are prefixed with the
+   * specified <code>parameterPrefix</code>.
+   */
+  public SqlSearchQueryCondition condition(
+      final String fieldName,
+      final Set<String> values,
+      final String parameterPrefix)
+  {
+    return createCondition(fieldName, values, parameterPrefix);
+  }
+
+  private SqlSearchQueryCondition createCondition(
+      final String fieldName,
+      final Set<String> values,
+      final String parameterPrefix)
+  {
     if (values.size() == 1) {
-      return condition(fieldName, getOnlyElement(values));
+      return condition(fieldName, getOnlyElement(values), parameterPrefix);
     }
 
     final Map<SqlSearchConditionType, Set<String>> valueGroups = groupIntoExactOrWildcard(values);
-    final List<String> valueNames = createValueNames(fieldName, values.size());
+    final List<String> valueNames = createValueNames(parameterPrefix + fieldName, values.size());
     final List<String> placeholders = createPlaceholders(valueNames);
     final List<SqlSearchQueryCondition> conditions = new ArrayList<>();
 
@@ -130,6 +161,22 @@ public class SqlSearchQueryConditionBuilder
       conditions.add(createWildcardCondition(fieldName, valueGroups, valueNames, placeholders));
     }
     return combine(conditions);
+  }
+
+  private SqlSearchQueryCondition createCondition(
+      final String field,
+      final String value,
+      final String parameterPrefix)
+  {
+    checkArgument(isNotBlank(field), FIELD_NAME_MUST_NOT_BE_EMPTY);
+    checkArgument(isNotBlank(value), "Value must not be empty.");
+
+    if (exactOrWildcard(value) == EXACT) {
+      return new SqlSearchQueryCondition(equalTo(field, parameterPrefix),
+          ImmutableMap.of(parameterPrefix + field, value));
+    }
+    return new SqlSearchQueryCondition(wildcard(field, placeholder(parameterPrefix + field)),
+        ImmutableMap.of(parameterPrefix + field, replaceWildcards(value)));
   }
 
   /**
@@ -150,14 +197,18 @@ public class SqlSearchQueryConditionBuilder
   }
 
   private static SqlSearchConditionType exactOrWildcard(final String value) {
-    if (containsAny(value, REGEX_IDENTIFIERS)) {
+    if (isWildcard(value)) {
       return SqlSearchConditionType.WILDCARD;
     }
     return EXACT;
   }
 
-  private static String equalTo(final String field) {
-    return String.format("%s = %s", field, placeholder(field));
+  public static boolean isWildcard(final String value) {
+    return containsAny(value, REGEX_IDENTIFIERS);
+  }
+
+  private static String equalTo(final String field, final String parameterPrefix) {
+    return String.format("%s = %s", field, placeholder(parameterPrefix + field));
   }
 
   private static String wildcard(final String fieldName, final String placeholder) {
@@ -244,7 +295,7 @@ public class SqlSearchQueryConditionBuilder
     return join(values.stream(), COMMA);
   }
 
-  private static Set<String> replaceWildcards(final Set<String> values) {
+  public static Set<String> replaceWildcards(final Set<String> values) {
     return values.stream()
         .map(SqlSearchQueryConditionBuilder::replaceWildcards)
         .collect(toSet());

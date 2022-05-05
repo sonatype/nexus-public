@@ -18,6 +18,7 @@ import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeoutException;
 
@@ -52,6 +53,7 @@ import org.ops4j.pax.exam.OptionUtils;
 import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.karaf.options.KarafDistributionConfigurationFileExtendOption;
 import org.ops4j.pax.exam.options.MavenUrlReference;
+import org.ops4j.pax.exam.options.OptionalCompositeOption;
 import org.ops4j.pax.exam.options.ProvisionOption;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
@@ -535,17 +537,38 @@ public abstract class NexusPaxExamSupport
   protected static Option configureBlobstore() {
     switch (System.getProperty(BLOB_STORE_KEY, "")) {
       case "s3":
-        String mockS3endpoint = System.getProperty("mock.s3.service.endpoint");
+        String mockS3endpoint = "mock.s3.service.endpoint";
+        String bucket = "nexus.test.s3.bucket";
+        String region = "nexus.test.s3.region";
+        String accessKey = "nexus.test.s3.accessKey";
+        String accessSecret = "nexus.test.s3.accessSecret";
+        String endpoint = "nexus.test.s3.endpoint";
+        String forcePathStyle = "nexus.test.s3.forcePathStyle";
+
         return composite(
             // enable s3 default
             editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.test.default.s3", Boolean.TRUE.toString()),
             // copy the maven property if it exists
-            when(mockS3endpoint != null).useOptions(
-                editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "mock.s3.service.endpoint",
-                    mockS3endpoint)));
+            getS3OptionalCompositeOption(mockS3endpoint, System.getProperty(mockS3endpoint)),
+            getS3OptionalCompositeOption(bucket, System.getProperty(bucket)),
+            getS3OptionalCompositeOption(region, System.getProperty(region)),
+            getS3OptionalCompositeOption(accessKey, System.getProperty(accessKey)),
+            getS3OptionalCompositeOption(accessSecret, System.getProperty(accessSecret)),
+            getS3OptionalCompositeOption(endpoint, System.getProperty(endpoint)),
+            getS3OptionalCompositeOption(forcePathStyle, System.getProperty(forcePathStyle))
+        );
       default:
         return composite();
     }
+  }
+
+  private static OptionalCompositeOption getS3OptionalCompositeOption(
+      final String propertyKey,
+      final Object propertyValue)
+  {
+    return when(Objects.nonNull(propertyValue)).useOptions(
+        editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, propertyKey, propertyValue)
+    );
   }
 
   private static String configurePostgres() {

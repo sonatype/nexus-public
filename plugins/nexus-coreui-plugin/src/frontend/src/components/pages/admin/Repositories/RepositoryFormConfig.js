@@ -1,0 +1,273 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Open Source Version is distributed with Sencha Ext JS pursuant to a FLOSS Exception agreed upon
+ * between Sonatype, Inc. and Sencha Inc. Sencha Ext JS is licensed under GPL v3 and cannot be redistributed as part of a
+ * closed source work.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+import GenericStorageConfiguration from './facets/GenericStorageConfiguration';
+import RewritePackageUrlsConfiguration from './facets/RewritePackageUrlsConfiguration';
+import ContentDespositionConfiguration from './facets/ContentDespositionConfiguration';
+import GenericProxyConfiguration from './facets/GenericProxyConfiguration';
+import GenericGroupConfiguration from './facets/GenericGroupConfiguration';
+import GenericOptionsConfiguration from './facets/GenericOptionsConfiguration';
+import GenericCleanupConfiguration from './facets/GenericCleanupConfiguration';
+import GenericHttpAuthConfiguration from './facets/GenericHttpAuthConfiguration';
+import GenericHttpReqConfiguration from './facets/GenericHttpReqConfiguration';
+import GenericHostedConfiguration from './facets/GenericHostedConfiguration';
+import ReplicationConfiguration from './facets/ReplicationConfiguration';
+import RepodataDepthConfiguration from './facets/RepodataDepthConfiguration';
+import RpmDeployPolicyConfiguration from './facets/RpmDeployPolicyConfiguration';
+import VersionPolicyConfiguration from './facets/VersionPolicyConfiguration';
+import NpmConfiguration from './facets/NpmConfiguration';
+import LayoutPolicyConfiguration from './facets/LayoutPolicyConfiguration';
+import RepositoryConnectorsConfiguration from './facets/RepositoryConnectorsConfiguration';
+import RegistryApiSupportConfiguration from './facets/RegistryApiSupportConfiguration';
+
+import {genericDefaultValues} from './RepositoryFormDefaultValues';
+import {
+  genericValidators,
+  validateDockerConnectorPort,
+  validateDockerIndexUrl
+} from './RepositoryFormValidators';
+
+import {mergeDeepRight} from 'ramda';
+
+export const DOCKER_INDEX_TYPES = {
+  registry: 'REGISTRY',
+  hub: 'HUB',
+  custom: 'CUSTOM'
+};
+
+// temp
+const isCapabilityEnabled = false;
+const replicationFacet = isCapabilityEnabled ? ReplicationConfiguration : () => null;
+const replicationDefaultValue = isCapabilityEnabled ? {replication: {enabled: false}} : null;
+
+const genericFacets = {
+  proxy: [
+    GenericStorageConfiguration,
+    GenericProxyConfiguration,
+    GenericOptionsConfiguration,
+    GenericCleanupConfiguration,
+    GenericHttpAuthConfiguration,
+    GenericHttpReqConfiguration
+  ],
+  hosted: [GenericStorageConfiguration, GenericHostedConfiguration, GenericCleanupConfiguration],
+  group: [GenericStorageConfiguration, GenericGroupConfiguration]
+};
+
+const repositoryFormats = {
+  bower_proxy: {
+    facets: [RewritePackageUrlsConfiguration, ...genericFacets.proxy],
+    defaultValues: {
+      ...genericDefaultValues.proxy,
+      bower: {rewritePackageUrls: true}
+    },
+    validators: (data) => ({
+      ...genericValidators.proxy(data)
+    })
+  },
+  yum_hosted: {
+    facets: [RepodataDepthConfiguration, RpmDeployPolicyConfiguration, ...genericFacets.hosted],
+    defaultValues: {
+      ...genericDefaultValues.hosted,
+      yum: {
+        repodataDepth: 0,
+        deployPolicy: 'STRICT'
+      }
+    },
+    validators: (data) => ({
+      ...genericValidators.hosted(data)
+    })
+  },
+  raw_proxy: {
+    facets: [replicationFacet, ContentDespositionConfiguration, ...genericFacets.proxy],
+    defaultValues: {
+      ...genericDefaultValues.proxy,
+      ...replicationDefaultValue,
+      raw: {contentDisposition: 'ATTACHMENT'}
+    },
+    validators: (data) => ({
+      ...genericValidators.proxy(data)
+    })
+  },
+  raw_hosted: {
+    facets: [replicationFacet, ContentDespositionConfiguration, ...genericFacets.hosted],
+    defaultValues: {
+      ...mergeDeepRight(genericDefaultValues.hosted, {
+        storage: {strictContentTypeValidation: false}
+      }),
+      ...replicationDefaultValue,
+      raw: {contentDisposition: 'ATTACHMENT'}
+    },
+    validators: (data) => ({
+      ...genericValidators.hosted(data)
+    })
+  },
+  raw_group: {
+    facets: [replicationFacet, ContentDespositionConfiguration, ...genericFacets.group],
+    defaultValues: {
+      ...genericDefaultValues.group,
+      ...replicationDefaultValue,
+      raw: {contentDisposition: 'ATTACHMENT'}
+    },
+    validators: (data) => ({
+      ...genericValidators.group(data)
+    })
+  },
+  maven2_proxy: {
+    facets: [
+      replicationFacet,
+      VersionPolicyConfiguration,
+      LayoutPolicyConfiguration,
+      ContentDespositionConfiguration,
+      ...genericFacets.proxy
+    ],
+    defaultValues: {
+      ...genericDefaultValues.proxy,
+      ...replicationDefaultValue,
+      proxy: {
+        ...genericDefaultValues.proxy.proxy,
+        contentMaxAge: -1
+      },
+      maven: {
+        layoutPolicy: 'STRICT',
+        contentDisposition: 'INLINE',
+        versionPolicy: 'RELEASE'
+      }
+    },
+    validators: (data) => ({
+      ...genericValidators.proxy(data)
+    })
+  },
+  maven2_hosted: {
+    facets: [
+      replicationFacet,
+      VersionPolicyConfiguration,
+      LayoutPolicyConfiguration,
+      ContentDespositionConfiguration,
+      ...genericFacets.hosted
+    ],
+    defaultValues: {
+      ...genericDefaultValues.hosted,
+      ...replicationDefaultValue,
+      maven: {
+        layoutPolicy: 'STRICT',
+        contentDisposition: 'INLINE',
+        versionPolicy: 'RELEASE'
+      }
+    },
+    validators: (data) => ({
+      ...genericValidators.hosted(data)
+    })
+  },
+  maven2_group: {
+    facets: [
+      replicationFacet,
+      VersionPolicyConfiguration,
+      LayoutPolicyConfiguration,
+      ContentDespositionConfiguration,
+      ...genericFacets.group
+    ],
+    defaultValues: {
+      ...genericDefaultValues.group,
+      ...replicationDefaultValue,
+      maven: {
+        layoutPolicy: 'STRICT',
+        contentDisposition: 'INLINE',
+        versionPolicy: 'RELEASE'
+      }
+    },
+    validators: (data) => ({
+      ...genericValidators.group(data)
+    })
+  },
+  npm_proxy: {
+    facets: [NpmConfiguration, ...genericFacets.proxy],
+    defaultValues: {
+      ...genericDefaultValues.proxy,
+      npm: {
+        removeNonCataloged: false,
+        removeQuarantined: false
+      }
+    },
+    validators: (data) => ({
+      ...genericValidators.proxy(data)
+    })
+  },
+  docker_proxy: {
+    facets: [
+      RepositoryConnectorsConfiguration,
+      RegistryApiSupportConfiguration,
+      ...genericFacets.proxy
+    ],
+    defaultValues: {
+      ...genericDefaultValues.proxy,
+      docker: {
+        httpPort: null,
+        httpsPort: null,
+        forceBasicAuth: false,
+        v1Enabled: false,
+        subdomain: null
+      },
+      dockerProxy: {
+        indexType: DOCKER_INDEX_TYPES.registry,
+        indexUrl: null
+      }
+    },
+    validators: (data) => ({
+      ...genericValidators.proxy(data),
+      docker: {
+        httpPort: validateDockerConnectorPort(data, 'httpPort'),
+        httpsPort: validateDockerConnectorPort(data, 'httpsPort')
+      },
+      dockerProxy: {
+        indexUrl: validateDockerIndexUrl(data)
+      }
+    })
+  },
+  docker_hosted: {
+    facets: [
+      RepositoryConnectorsConfiguration,
+      RegistryApiSupportConfiguration,
+      ...genericFacets.hosted
+    ],
+    defaultValues: {
+      ...mergeDeepRight(genericDefaultValues.hosted, {
+        storage: {writePolicy: 'ALLOW'}
+      }),
+      docker: {
+        httpPort: null,
+        httpsPort: null,
+        forceBasicAuth: false,
+        v1Enabled: false,
+        subdomain: null
+      }
+    },
+    validators: (data) => ({
+      docker: {
+        httpPort: validateDockerConnectorPort(data, 'httpPort'),
+        httpsPort: validateDockerConnectorPort(data, 'httpsPort')
+      }
+    })
+  }
+};
+
+export const getFacets = (format, type) =>
+  repositoryFormats[`${format}_${type}`]?.facets || genericFacets[type];
+
+export const getDefaultValues = (format, type) =>
+  repositoryFormats[`${format}_${type}`]?.defaultValues || genericDefaultValues[type];
+
+export const getValidators = (format, type) =>
+  repositoryFormats[`${format}_${type}`]?.validators || genericValidators[type] || (() => ({}));

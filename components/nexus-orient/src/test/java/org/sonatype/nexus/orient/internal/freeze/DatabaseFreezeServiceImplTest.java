@@ -63,10 +63,10 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentCaptor.forClass;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.notNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -136,7 +136,7 @@ public class DatabaseFreezeServiceImplTest
     when(distributedServerManager.getMessageService()).thenReturn(distributedMessageService);
     when(distributedMessageService.getDatabases()).thenReturn(Collections.singleton("test"));
     when(distributedServerManager.executeInDistributedDatabaseLock(eq("test"), anyLong(),
-        any(OModifiableDistributedConfiguration.class),
+        any(),
         (OCallable<Object, OModifiableDistributedConfiguration>) notNull()))
         .then(invoc -> ((OCallable) invoc.getArguments()[3]).call(distributedConfiguration));
     when(distributedServerManager.getDatabaseConfiguration("test"))

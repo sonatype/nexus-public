@@ -13,7 +13,7 @@
 import React from 'react';
 import {useMachine} from '@xstate/react';
 
-import {faChevronRight, faRedo, faScroll} from '@fortawesome/free-solid-svg-icons';
+import {faRedo, faScroll} from '@fortawesome/free-solid-svg-icons';
 
 import {
   ContentBody,

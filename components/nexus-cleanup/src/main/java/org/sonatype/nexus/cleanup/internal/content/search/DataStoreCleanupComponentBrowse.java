@@ -15,6 +15,7 @@ package org.sonatype.nexus.cleanup.internal.content.search;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
@@ -45,7 +46,7 @@ import org.sonatype.nexus.repository.query.QueryOptions;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * @since 3.next
+ * @since 3.38
  */
 @Named
 @Singleton
@@ -91,6 +92,11 @@ public class DataStoreCleanupComponentBrowse
 
     Predicate<FluentComponent> componentFilter = createComponentFilter(repository, policy);
 
+    Optional<Predicate<FluentComponent>> optionsFilter = createOptionsFilter(options);
+    if (optionsFilter.isPresent()) {
+      componentFilter = componentFilter.and(optionsFilter.get());
+    }
+
     List<Component> result =
     Continuations.streamOf(browseComponentsFn(repository), Continuations.BROWSE_LIMIT, options.getLastId())
         .filter(componentFilter)
@@ -102,6 +108,23 @@ public class DataStoreCleanupComponentBrowse
     return new PagedResponse<>(-1, result);
   }
 
+  /**
+   * Creates a Predicate that will return true if any of the Component's name/group/version
+   * matches the provided filter.
+   */
+  private Optional<Predicate<FluentComponent>> createOptionsFilter(final QueryOptions options) {
+    String filter = options.getFilter();
+    if (filter != null && filter.trim().length() > 0) {
+      Predicate<FluentComponent> optionsFilter = (component) ->
+          component.name().contains(filter) ||
+          component.namespace().contains(filter) ||
+          component.version().contains(filter);
+      return Optional.of(optionsFilter);
+    }
+    else {
+      return Optional.empty();
+    }
+  }
 
   /*
    * Creates a Predicate which will return true if the Component and any of its Assets match all of the specified

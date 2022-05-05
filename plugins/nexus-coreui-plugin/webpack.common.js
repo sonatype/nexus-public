@@ -16,8 +16,6 @@
  */
 const CopyModulesPlugin = require('copy-modules-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
-const TerserJSPlugin = require('terser-webpack-plugin');
 const path = require('path');
 const {NormalModuleReplacementPlugin} = require('webpack');
 
@@ -27,6 +25,17 @@ module.exports = {
   },
   module: {
     rules: [
+      {
+        /*
+        Required to fix a problem with the babel dependencies
+          Module not found: Error: Can't resolve './nonIterableRest' in '/Users/mmartz/Code/nexus-internal/node_modules/@babel/runtime/helpers/esm'
+          Did you mean 'nonIterableRest.js'?
+        */
+        test: /\.m?js/,
+        resolve: {
+          fullySpecified: false
+        }
+      },
       {
         test: /\.jsx?$/,
         exclude: /node_modules/,
@@ -72,19 +81,9 @@ module.exports = {
       }
     ]
   },
-  optimization: {
-    minimizer: [
-      new TerserJSPlugin({
-        cache: true,
-        parallel: true,
-        sourceMap: true
-      }),
-      new OptimizeCSSAssetsPlugin({})
-    ]
-  },
   plugins: [
     new CopyModulesPlugin({
-      destination: path.resolve(__dirname, 'target/webpack-modules')
+      destination: path.resolve(__dirname, 'target', 'webpack-modules')
     }),
     new MiniCssExtractPlugin({
       filename: '[name].css'
@@ -107,6 +106,7 @@ module.exports = {
   },
   externals: {
     axios: 'axios',
+    luxon: 'luxon',
     '@sonatype/nexus-ui-plugin': 'nxrmUiPlugin',
     '@sonatype/react-shared-components': 'rsc',
     react: 'react',

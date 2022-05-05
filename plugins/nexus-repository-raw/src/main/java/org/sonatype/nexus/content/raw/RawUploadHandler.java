@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.content.raw;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,9 +25,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.importtask.ImportFileConfiguration;
-import org.sonatype.nexus.repository.raw.RawCoordinatesHelper;
 import org.sonatype.nexus.repository.raw.RawUploadHandlerSupport;
 import org.sonatype.nexus.repository.raw.internal.RawFormat;
 import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
@@ -36,7 +33,8 @@ import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.PartPayload;
-import org.sonatype.nexus.repository.view.payloads.StreamPayload;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
+import org.sonatype.nexus.repository.view.payloads.TempBlobPayload;
 
 import com.google.common.collect.Lists;
 
@@ -81,16 +79,11 @@ public class RawUploadHandler
     String path = configuration.getAssetName();
     Path contentPath = configuration.getFile().toPath();
 
-    RawContentFacet facet = repository.facet(RawContentFacet.class);
-    if (configuration.isHardLinkingEnabled()) {
-      FluentAsset asset = facet.getOrCreateAsset(repository, path, RawCoordinatesHelper.getGroup(path), path);
-      facet.hardLink(repository, asset, path, contentPath);
-      return facet.get(path)
-          .orElseThrow(() -> new RuntimeException("Content could not be found for " + configuration.getAssetName()));
-    }
-    else {
-      return facet.put(path, new StreamPayload(() -> new BufferedInputStream(Files.newInputStream(contentPath)),
-          Files.size(contentPath), Files.probeContentType(contentPath)));
+    RawContentFacet contentFacet = repository.facet(RawContentFacet.class);
+    String contentType = Files.probeContentType(contentPath);
+    try (TempBlob blob = contentFacet.blobs().ingest(contentPath, contentType, RawContentFacet.HASHING,
+        configuration.isHardLinkingEnabled())) {
+      return contentFacet.put(path, new TempBlobPayload(blob, contentType));
     }
   }
 

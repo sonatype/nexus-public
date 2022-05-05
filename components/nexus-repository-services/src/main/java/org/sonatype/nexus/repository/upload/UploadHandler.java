@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.importtask.ImportResult;
 import org.sonatype.nexus.repository.importtask.ImportFileConfiguration;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
@@ -115,6 +116,15 @@ public interface UploadHandler
   default Content handle(final ImportFileConfiguration configuration) throws IOException {
     String format = configuration.getRepository().getFormat().getValue();
     throw new UnsupportedOperationException("Import using hard links not supported for " + format + " format");
+  }
+
+  /**
+   * This is a hook that allows to handle situations where additional work is required.
+   *
+   * One example of this is when some repository-spanning metadata can be updated after they are processed.
+   */
+  default void handleAfterImport(final ImportResult importResult) throws IOException {
+    // No implementation
   }
 
   /**

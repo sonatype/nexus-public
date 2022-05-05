@@ -42,17 +42,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.CAPABILITIES;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.EVENTS;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.KERNEL;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.OFF;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.RESTORE;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SECURITY;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.UPGRADE;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.*;
 
 public class NexusLifecycleManagerTest
     extends TestSupport
@@ -129,7 +119,7 @@ public class NexusLifecycleManagerTest
     Collections.shuffle(randomPhases);
     Iterable<BeanEntry<Named, Lifecycle>> entries = randomPhases.stream().map(phase -> {
       BeanEntry<Named, Lifecycle> entry = mock(BeanEntry.class);
-      doReturn(phase.getClass().getSuperclass()).when(entry).getImplementationClass();
+      doReturn(phase.getClass()).when(entry).getImplementationClass();
       when(entry.getValue()).thenReturn(phase);
       return entry;
     }).collect(toList());

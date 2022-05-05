@@ -28,6 +28,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.importtask.ImportResult;
 import org.sonatype.nexus.repository.importtask.ImportFileConfiguration;
 import org.sonatype.nexus.repository.rest.ComponentUploadExtension;
 import org.sonatype.nexus.repository.rest.internal.resources.ComponentUploadUtils;
@@ -140,6 +141,13 @@ public class OrientUploadManagerImpl
     }
 
     return uploadHandler.handle(configuration.getRepository(), configuration.getFile(), configuration.getAssetName());
+  }
+
+  @Override
+  public void handleAfterImport(final ImportResult importResult) throws IOException {
+    Repository repository = importResult.getRepository();
+    UploadHandler uploadHandler = getUploadHandler(repository);
+    uploadHandler.handleAfterImport(importResult);
   }
 
   private ComponentUpload create(final Repository repository, final HttpServletRequest request)

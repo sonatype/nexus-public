@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.search.sql;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
@@ -27,13 +28,15 @@ import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
 public class SqlSearchUtilsTest
     extends TestSupport
 {
+  private static final String RAW_FORMAT = "raw";
+
   @Mock
   private SqlSearchQueryContribution defaultSearchContribution;
 
@@ -50,12 +53,35 @@ public class SqlSearchUtilsTest
   public void shouldBuildQueryConditionsForSearchFilters() {
 
     List<SearchFilter> searchFilters = asList(new SearchFilter("group.raw", "junit org.mockito"),
-        new SearchFilter("repository_name", "raw-hosted raw-proxy"));
+        new SearchFilter("version", "4.13 3.2.0"));
 
     final SqlSearchQueryBuilder queryBuilder = underTest.buildQuery(searchFilters);
 
     assertThat(queryBuilder, is(notNullValue()));
     verify(defaultSearchContribution).contribute(any(SqlSearchQueryBuilder.class), eq(searchFilters.get(0)));
     verify(defaultSearchContribution).contribute(any(SqlSearchQueryBuilder.class), eq(searchFilters.get(1)));
+  }
+
+  @Test
+  public void shouldFindFormatFilter() {
+    List<SearchFilter> searchFilters = asList(new SearchFilter("group.raw", "junit org.mockito"),
+        new SearchFilter("format", RAW_FORMAT));
+
+    Optional<String> format = underTest.getFormat(searchFilters);
+
+    assertThat(format.isPresent(), is(true));
+    assertThat(format.get(), is(RAW_FORMAT));
+  }
+
+  @Test
+  public void shouldFindRepositoryNameFilter() {
+    SearchFilter repositoryNameFilter = new SearchFilter("repository_name", "raw-hosted raw-proxy");
+    List<SearchFilter> searchFilters = asList(new SearchFilter("group.raw", "junit org.mockito"),
+        repositoryNameFilter);
+
+    Optional<SearchFilter> repositoryFilter = underTest.getRepositoryFilter(searchFilters);
+
+    assertThat(repositoryFilter.isPresent(), is(true));
+    assertThat(repositoryFilter.get(), is(repositoryNameFilter));
   }
 }

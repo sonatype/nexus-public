@@ -34,6 +34,7 @@ import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
 import org.sonatype.nexus.orient.freeze.FreezeRequest;
 import org.sonatype.nexus.orient.freeze.FreezeRequest.InitiatorType;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
+import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.TaskSupport;
 import org.sonatype.nexus.security.subject.FakeAlmightySubject;
 import org.sonatype.nexus.thread.NexusExecutorService;
@@ -63,10 +64,17 @@ public class DatabaseBackupTask
 
   private final DatabaseFreezeService freezeService;
 
+  private final TaskScheduler taskScheduler;
+
   @Inject
-  public DatabaseBackupTask(final DatabaseBackup databaseBackup, final DatabaseFreezeService freezeService) {
+  public DatabaseBackupTask(
+      final DatabaseBackup databaseBackup,
+      final DatabaseFreezeService freezeService,
+      final TaskScheduler taskScheduler)
+  {
     this.databaseBackup = checkNotNull(databaseBackup);
     this.freezeService = checkNotNull(freezeService);
+    this.taskScheduler = checkNotNull(taskScheduler);
   }
 
   private interface Messages
@@ -91,6 +99,11 @@ public class DatabaseBackupTask
 
   @Override
   protected Object execute() throws Exception {
+
+    if (blobstoreReconciliationIsRunning()) {
+      throw new RuntimeException("unable to perform backup task, a blobstore reconciliation task is currently running");
+    }
+
     List<Callable<Void>> jobs = Lists.newArrayList();
     final LocalDateTime timestamp = LocalDateTime.now();
     log.info("task named '{}' database backup to location {}", getName(), location);
@@ -122,6 +135,14 @@ public class DatabaseBackupTask
     failures.maybePropagate();
     return null;
 
+  }
+
+  private boolean blobstoreReconciliationIsRunning() {
+    return taskScheduler
+        .listsTasks()
+        .stream()
+        .filter(taskInfo -> "blobstore.rebuildComponentDB".equals(taskInfo.getTypeId()))
+        .anyMatch(taskInfo -> taskInfo.getCurrentState().getState().isRunning());
   }
 
   private void monitorBackupResults(final List<Callable<Void>> jobs, final MultipleFailures failures)

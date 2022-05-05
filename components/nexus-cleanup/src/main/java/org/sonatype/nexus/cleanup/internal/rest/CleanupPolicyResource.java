@@ -120,7 +120,7 @@ public class CleanupPolicyResource
 
   @GET
   @RequiresAuthentication
-  @RequiresPermissions("nexus:*")
+  @RequiresPermissions("nexus:settings:read")
   public List<CleanupPolicyXO> get(@QueryParam("format") final String format) {
     List<CleanupPolicy> policies = isBlank(format) || format.equals(ALL_FORMATS)
         ? cleanupPolicyStorage.getAll()
@@ -244,9 +244,13 @@ public class CleanupPolicyResource
 
     QueryOptions options = new QueryOptions(request.getFilter(), "name", "asc", 0, PREVIEW_ITEM_COUNT);
 
-    PagedResponse<ComponentXO> response = cleanupPreviewHelper.get().getSearchResults(xo, repository, options);
+    try {
+      PagedResponse<ComponentXO> response = cleanupPreviewHelper.get().getSearchResults(xo, repository, options);
 
-    return new PageResult<>(response.getTotal(), new ArrayList<>(response.getData()));
+      return new PageResult<>(response.getTotal(), new ArrayList<>(response.getData()));
+    } catch (IllegalArgumentException e) {
+      throw new ValidationErrorsException("filter", e.getMessage());
+    }
   }
 
   private CleanupPolicy toCleanupPolicy(final CleanupPolicyXO cleanupPolicyXO) {

@@ -35,7 +35,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -104,7 +104,7 @@ public class HttpClientManagerImplTest
   public void testOnStoreChanged_LocalEvent() {
     when(configEvent.isLocal()).thenReturn(true);
     underTest.onStoreChanged(configEvent);
-    verifyZeroInteractions(eventManager, configStore);
+    verifyNoInteractions(eventManager, configStore);
   }
 
   @Test

@@ -163,6 +163,13 @@
       <artifactId>nexus-orient-console</artifactId>
       <scope>provided</scope>
     </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus2-npm-metadata-export</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
   </dependencies>
 
   <build>
@@ -294,6 +301,9 @@
                 <copy file="${org.sonatype.nexus:nexus-orient-console:jar}"
                       tofile="${project.build.directory}/assembly/lib/support/nexus-orient-console.jar"/>
                 <delete dir="${project.build.directory}/assembly/system/org/sonatype/nexus/nexus-orient-console"/>
+                <copy file="${org.sonatype.nexus:nexus2-npm-metadata-export:jar}"
+                      tofile="${project.build.directory}/assembly/lib/support/nexus2-npm-metadata-export.jar"/>
+                <delete dir="${project.build.directory}/assembly/system/org/sonatype/nexus/nexus2-npm-metadata-export"/>
 
                 <!-- delete some cruft which karaf includes by default -->
                 <delete includeemptydirs="true">

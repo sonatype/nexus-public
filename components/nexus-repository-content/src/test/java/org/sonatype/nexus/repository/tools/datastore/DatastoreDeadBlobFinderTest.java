@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
@@ -44,9 +45,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 
 import static java.util.Collections.emptyList;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -54,9 +53,9 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNull;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.isNotNull;
-import static org.mockito.Matchers.isNull;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -68,8 +67,8 @@ import static org.sonatype.nexus.repository.tools.ResultState.MISSING_BLOB_REF;
 import static org.sonatype.nexus.repository.tools.ResultState.SHA1_DISAGREEMENT;
 import static org.sonatype.nexus.repository.tools.ResultState.UNAVAILABLE_BLOB;
 
-@RunWith(MockitoJUnitRunner.class)
 public class DatastoreDeadBlobFinderTest
+    extends TestSupport
 {
   @Rule
   public ExpectedException thrown = ExpectedException.none();
@@ -282,8 +281,8 @@ public class DatastoreDeadBlobFinderTest
    */
   @SuppressWarnings({"rawtypes", "unchecked"})
   private void mockAssetBrowse(final List<FluentAsset> assets) {
-    when(fluentAssets.browse(anyInt(), isNull(String.class))).thenReturn(new TestContinuation<>(assets, "token"));
-    when(fluentAssets.browse(anyInt(), isNotNull(String.class))).thenReturn(new TestContinuation<>(emptyList(), null));
+    when(fluentAssets.browse(anyInt(), isNull())).thenReturn(new TestContinuation<>(assets, "token"));
+    when(fluentAssets.browse(anyInt(), notNull())).thenReturn(new TestContinuation<>(emptyList(), null));
   }
 
   private static class TestContinuation<E>

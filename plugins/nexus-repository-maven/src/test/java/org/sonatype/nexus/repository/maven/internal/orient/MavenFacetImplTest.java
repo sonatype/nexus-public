@@ -68,9 +68,11 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -156,7 +158,7 @@ public class MavenFacetImplTest
     Blob blob = mock(Blob.class);
     when(blob.getInputStream())
         .thenReturn(getClass().getResourceAsStream("/org/sonatype/nexus/repository/maven/gavMetadata.xml"));
-    when(storageTx.findAssetWithProperty(any(), any(), any(Bucket.class))).thenReturn(asset);
+    when(storageTx.findAssetWithProperty(anyString(), anyString(), nullable(Bucket.class))).thenReturn(asset);
     when(storageTx.requireBlob(any())).thenReturn(blob);
     MavenPath mavenPath = maven2MavenPathParser.parsePath(path);
     Content content = underTest.get(mavenPath);
@@ -175,7 +177,7 @@ public class MavenFacetImplTest
     Blob blob = mock(Blob.class);
     when(blob.getInputStream())
         .thenReturn(getClass().getResourceAsStream("/org/sonatype/nexus/repository/maven/gavMetadata.xml"));
-    when(storageTx.findAssetWithProperty(any(), any(), any(Bucket.class))).thenReturn(asset);
+    when(storageTx.findAssetWithProperty(anyString(), anyString(), nullable(Bucket.class))).thenReturn(asset);
     when(storageTx.requireBlob(any())).thenReturn(blob);
     MavenPath mavenPath = maven2MavenPathParser.parsePath(path);
     Content content = underTest.get(mavenPath);
@@ -228,7 +230,7 @@ public class MavenFacetImplTest
     assertEquals(blobCreatedCaptor.getValue(), uploadedDate);
   }
 
-  private Asset createMetadataAsset(String name, String cacheToken) {
+  private Asset createMetadataAsset(final String name, final String cacheToken) {
     Asset asset = new Asset();
     asset.contentType(TEXT_XML);
     asset.name(name);

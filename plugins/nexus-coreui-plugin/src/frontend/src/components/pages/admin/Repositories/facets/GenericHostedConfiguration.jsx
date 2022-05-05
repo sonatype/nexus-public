@@ -12,17 +12,15 @@
  */
 import React from 'react';
 
-import {Select, FormUtils} from '@sonatype/nexus-ui-plugin';
+import {FormUtils} from '@sonatype/nexus-ui-plugin';
 
-import {NxFormGroup, NxCheckbox} from '@sonatype/react-shared-components';
+import {NxFormGroup, NxCheckbox, NxFieldset, NxFormSelect} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
 
 const {EDITOR} = UIStrings.REPOSITORIES;
 
-const deploymentPolicies = Object.entries(
-  EDITOR.DEPLOYMENT_POLICY_OPTIONS
-);
+const deploymentPolicies = Object.entries(EDITOR.DEPLOYMENT_POLICY_OPTIONS);
 
 export default function GenericHostedConfiguration({parentMachine}) {
   const [currentParent, sendParent] = parentMachine;
@@ -36,30 +34,29 @@ export default function GenericHostedConfiguration({parentMachine}) {
         isRequired
         className="nxrm-form-group-hosted"
       >
-        <Select
-          {...FormUtils.fieldProps('writePolicy', currentParent)}
-          name="writePolicy"
-          onChange={FormUtils.handleUpdate('writePolicy', sendParent)}
+        <NxFormSelect
+          {...FormUtils.selectProps('storage.writePolicy', currentParent)}
+          onChange={FormUtils.handleUpdate('storage.writePolicy', sendParent)}
         >
           {deploymentPolicies?.map(([value, displayName]) => (
             <option key={value} value={value}>
               {displayName}
             </option>
           ))}
-        </Select>
+        </NxFormSelect>
       </NxFormGroup>
 
-      <NxFormGroup
+      <NxFieldset
         label={EDITOR.PROPRIETARY_COMPONENTS_LABEL}
         className="nxrm-form-group-is-proprietary"
       >
         <NxCheckbox
-          {...FormUtils.checkboxProps('proprietaryComponents', currentParent)}
-          onChange={FormUtils.handleUpdate('proprietaryComponents', sendParent)}
+          {...FormUtils.checkboxProps('component.proprietaryComponents', currentParent)}
+          onChange={FormUtils.handleUpdate('component.proprietaryComponents', sendParent)}
         >
           {EDITOR.PROPRIETARY_COMPONENTS_DESCR}
         </NxCheckbox>
-      </NxFormGroup>
+      </NxFieldset>
     </>
   );
 }

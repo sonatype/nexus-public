@@ -24,7 +24,9 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.BindAsLifecycleSupport;
 import org.sonatype.nexus.common.app.FeatureFlag;
+import org.sonatype.nexus.common.app.FeatureFlags;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.quartz.orient.OrientDelegate;
 
 import org.quartz.impl.jdbcjobstore.HSQLDBDelegate;
@@ -55,11 +57,20 @@ public class JobStoreJdbcProvider
 
   private final ConnectionProvider connectionProvider;
 
+  private final boolean datastoreClustered;
+
   private volatile JobStore jobStore;
 
+  private final NodeAccess nodeAccess;
+
   @Inject
-  public JobStoreJdbcProvider(final ConnectionProvider connectionProvider) {
+  public JobStoreJdbcProvider(
+      final ConnectionProvider connectionProvider,
+      final NodeAccess nodeAccess,
+      @Named(FeatureFlags.DATASTORE_CLUSTERED_ENABLED_NAMED) final boolean datastoreClustered) {
     this.connectionProvider = connectionProvider;
+    this.nodeAccess = nodeAccess;
+    this.datastoreClustered = datastoreClustered;
   }
 
   @Override
@@ -96,6 +107,14 @@ public class JobStoreJdbcProvider
       DBConnectionManager.getInstance().addConnectionProvider(QUARTZ_DS, connectionProvider);
       JobStoreTX delegate = new JobStoreTX();
       delegate.setDataSource(QUARTZ_DS);
+
+      if (datastoreClustered) {
+        log.info("Running Quartz in clustered mode");
+        delegate.setIsClustered(true);
+        delegate.setInstanceName(nodeAccess.getId());
+        delegate.setInstanceId("AUTO");
+      }
+
       delegate.setDriverDelegateClass(getDriverDelegateClass());
       return delegate;
     }

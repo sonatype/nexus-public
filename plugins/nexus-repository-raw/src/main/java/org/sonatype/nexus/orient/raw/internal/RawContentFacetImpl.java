@@ -13,10 +13,7 @@
 package org.sonatype.nexus.orient.raw.internal;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -25,7 +22,6 @@ import javax.inject.Named;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
-import org.sonatype.nexus.mime.MimeSupport;
 import org.sonatype.nexus.orient.raw.RawContentFacet;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.Repository;
@@ -52,13 +48,8 @@ import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.hash.HashCode;
-import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.hash.Hashing.sha1;
-import static java.util.Collections.emptyMap;
-import static java.util.Collections.singletonMap;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
@@ -77,12 +68,9 @@ public class RawContentFacetImpl
 
   private final AssetEntityAdapter assetEntityAdapter;
 
-  private final MimeSupport mimeSupport;
-
   @Inject
-  public RawContentFacetImpl(final AssetEntityAdapter assetEntityAdapter, final MimeSupport mimeSupport) {
+  public RawContentFacetImpl(final AssetEntityAdapter assetEntityAdapter) {
     this.assetEntityAdapter = checkNotNull(assetEntityAdapter);
-    this.mimeSupport = checkNotNull(mimeSupport);
   }
 
   // TODO: raw does not have config, this method is here only to have this bundle do Import-Package org.sonatype.nexus.repository.config
@@ -154,6 +142,7 @@ public class RawContentFacetImpl
     return toContent(asset, assetBlob.getBlob());
   }
 
+  @Override
   @TransactionalStoreMetadata
   public Asset getOrCreateAsset(final Repository repository, final String componentName, final String componentGroup,
                                 final String assetName) {
@@ -228,33 +217,11 @@ public class RawContentFacetImpl
     return assetEntityAdapter.exists(tx.getDb(), name, tx.findBucket(getRepository()));
   }
 
-  @Override
-  @TransactionalStoreBlob
-  public void hardLink(Repository repository, Asset asset, String path, Path contentPath) {
-    StorageTx tx = UnitOfWork.currentTx();
-
-    try {
-      Map<HashAlgorithm, HashCode> hashes = singletonMap(SHA1, sha1().hashBytes(Files.readAllBytes(contentPath)));
-      Map<String, String> headers = emptyMap();
-      String contentType = mimeSupport.detectMimeType(Files.newInputStream(contentPath), path);
-      long size = Files.size(contentPath);
-      tx.setBlob(asset, path, contentPath, hashes, headers, contentType, size);
-
-      Content.applyToAsset(asset, new AttributesMap(singletonMap(
-          Content.CONTENT_LAST_MODIFIED, new DateTime(Files.getLastModifiedTime(contentPath).toMillis())
-      )));
-      tx.saveAsset(asset);
-    }
-    catch (IOException e) {
-      log.error("Unable to hard link {} to {}", contentPath, path, e);
-    }
-  }
-
-  private Component findComponent(StorageTx tx, Bucket bucket, String path) {
+  private Component findComponent(final StorageTx tx, final Bucket bucket, final String path) {
     return tx.findComponentWithProperty(P_NAME, path, bucket);
   }
 
-  private Asset findAsset(StorageTx tx, String path) {
+  private Asset findAsset(final StorageTx tx, final String path) {
     return tx.findAssetWithProperty(P_NAME, path, tx.findBucket(getRepository()));
   }
 

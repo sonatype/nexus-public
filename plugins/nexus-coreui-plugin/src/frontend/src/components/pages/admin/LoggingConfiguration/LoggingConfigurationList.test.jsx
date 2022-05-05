@@ -11,10 +11,9 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {act} from 'react-dom/test-utils';
-import {fireEvent, render, wait, waitForElementToBeRemoved} from '@testing-library/react';
+import {fireEvent, waitForElementToBeRemoved} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
-import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
+import {TestUtils} from '@sonatype/nexus-ui-plugin';
 import axios from 'axios';
 
 import LoggingConfigurationList from './LoggingConfigurationList';

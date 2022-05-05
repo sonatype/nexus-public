@@ -22,9 +22,9 @@ import org.slf4j.Logger;
 import org.slf4j.Marker;
 
 import static java.lang.String.format;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyCollection;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.sonatype.nexus.logging.task.ProgressTaskLogger.PROGRESS_LINE;

@@ -29,6 +29,7 @@ import org.sonatype.nexus.datastore.api.Expects;
 import org.sonatype.nexus.datastore.api.SchemaTemplate;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
+import org.sonatype.nexus.repository.content.AssetInfo;
 import org.sonatype.nexus.repository.content.Component;
 
 import org.apache.ibatis.annotations.Param;
@@ -110,6 +111,38 @@ public interface AssetDAO
   Collection<Asset> browseComponentAssets(Component component);
 
   /**
+   * Finds assets where lastUpdated is greater than or equal to the given value.
+   *
+   * @param repositoryId the repository to browse
+   * @param lastUpdated date that assets must have been updated after
+   * @param likeExpressions list of SQL like expressions that match on the path column
+   * @param limit maximum number of assets to return
+   * @return collection of assets
+   */
+  List<Asset> findGreaterThanOrEqualToLastUpdated(
+      @Param("repositoryId") int repositoryId,
+      @Nullable @Param("lastUpdated") OffsetDateTime lastUpdated,
+      @Param("likeExpressions") List<String> likeExpressions,
+      @Param("limit") int limit);
+
+  /**
+   * Finds all assets where lastUpdated equals the given value.
+   *
+   * @param repositoryId the repository to browse
+   * @param startLastUpdated lastUpdated is greater than or equal to this value
+   * @param endLastUpdated lastUpdated is less than this value
+   * @param likeExpressions list of SQL like expressions that match on path column
+   * @param limit maximum number of assets to return
+   * @return collection of assets
+   */
+  List<Asset> findLastUpdatedWithinRange(
+      @Param("repositoryId") int repositoryId,
+      @Param("startLastUpdated") OffsetDateTime startLastUpdated,
+      @Param("endLastUpdated") OffsetDateTime endLastUpdated,
+      @Param("likeExpressions") List<String> likeExpressions,
+      @Param("limit") int limit);
+
+  /**
    * Creates the given asset in the content data store.
    *
    * @param asset the asset to create
@@ -151,6 +184,14 @@ public interface AssetDAO
    * @return asset if it was found
    */
   Optional<Asset> findByBlobRef(@Param("repositoryId") int repositoryId, @Param("blobRef") BlobRef blobRef);
+
+  /**
+   * Find assets by their component ids.
+   *
+   * @param componentIds a set of component ids.
+   * @return collection of {@link AssetInfo}
+   */
+  Collection<AssetInfo> findByComponentIds(@Param("componentIds") Set<Integer> componentIds);
 
   /**
    * Updates the kind of the given asset in the content data store.

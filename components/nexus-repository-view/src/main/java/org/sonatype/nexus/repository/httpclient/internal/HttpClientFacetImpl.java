@@ -15,13 +15,14 @@ package org.sonatype.nexus.repository.httpclient.internal;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.Map;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.validation.Valid;
 
 import org.sonatype.nexus.common.stateguard.Guarded;
+import org.sonatype.nexus.distributed.event.service.api.common.PublisherEvent;
+import org.sonatype.nexus.distributed.event.service.api.common.RepositoryRemoteConnectionStatusEvent;
 import org.sonatype.nexus.httpclient.HttpClientManager;
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.BearerTokenAuthenticationConfiguration;
@@ -49,6 +50,7 @@ import org.apache.http.client.RedirectStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.TargetAuthenticationStrategy;
 import org.apache.http.message.BasicHeader;
+import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
@@ -205,6 +207,12 @@ public class HttpClientFacetImpl
     return httpClient.getStatus();
   }
 
+  @Override
+  @Guarded(by = STARTED)
+  public void setStatus(final RemoteConnectionStatus status) {
+    httpClient.setRemoteConnectionStatus(status);
+  }
+
   @Subscribe
   public void on(final HttpClientConfigurationChangedEvent event) throws IOException {
     closeHttpClient();
@@ -215,6 +223,8 @@ public class HttpClientFacetImpl
   public void onStatusChanged(final RemoteConnectionStatus oldStatus, final RemoteConnectionStatus newStatus) {
     logStatusChange(oldStatus, newStatus);
     getEventManager().post(new RemoteConnectionStatusEvent(newStatus, getRepository()));
+
+    distributeRepositoryConnectionStatusChangedEvent(getRepository().getName(), newStatus);
   }
 
   private void logStatusChange(final RemoteConnectionStatus oldStatus, final RemoteConnectionStatus newStatus) {
@@ -328,5 +338,22 @@ public class HttpClientFacetImpl
     log.debug("Closing HTTP client: {}", httpClient);
     httpClient.close();
     httpClient = null;
+  }
+
+  private void distributeRepositoryConnectionStatusChangedEvent(final String repositoryName,
+                                                                final RemoteConnectionStatus status) {
+    log.debug("Distribute repository block changed event: repository={}:{}", repositoryName, status.getType());
+
+    long blockUntilMillis = status.getBlockedUntil() == null ? DateTime.now().getMillis()
+        : status.getBlockedUntil().getMillis();
+
+    RepositoryRemoteConnectionStatusEvent event = new RepositoryRemoteConnectionStatusEvent(
+        repositoryName,
+        status.getType().ordinal(),
+        status.getReason(),
+        blockUntilMillis,
+        status.getRequestUrl());
+
+    getEventManager().post(new PublisherEvent(event));
   }
 }

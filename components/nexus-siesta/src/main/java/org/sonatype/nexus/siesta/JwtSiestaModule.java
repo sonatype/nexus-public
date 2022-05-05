@@ -33,7 +33,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 /**
  * Siesta plugin module using {@link JwtSecurityFilter}.
  *
- * @since 3.next
+ * @since 3.38
  */
 @Named
 @FeatureFlag(name = JWT_ENABLED)

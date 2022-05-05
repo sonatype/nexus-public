@@ -19,7 +19,7 @@ import org.sonatype.nexus.common.math.Math2;
 /**
  * Blob store metrics to monitor method invocation by type, see {@code OperationType}.
  *
- * @since 3.next
+ * @since 3.38
  */
 public class OperationMetrics
 {

@@ -38,15 +38,15 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isA;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.orient.testsupport.OrientExceptionMocker.mockOrientException;
 
@@ -117,7 +117,7 @@ public class TrustStoreImplTest
       //expected
     }
     verify(keyStoreManager, times(0)).importTrustCertificate(any(Certificate.class), anyString());
-    verifyZeroInteractions(eventManager);
+    verifyNoInteractions(eventManager);
   }
 
   @Test
@@ -140,7 +140,7 @@ public class TrustStoreImplTest
       //expected
     }
     verify(keyStoreManager, times(0)).importTrustCertificate(any(Certificate.class), anyString());
-    verifyZeroInteractions(eventManager);
+    verifyNoInteractions(eventManager);
   }
 
   @Test
@@ -190,7 +190,7 @@ public class TrustStoreImplTest
     }
 
     verify(keyStoreManager, times(0)).removeTrustCertificate(anyString());
-    verifyZeroInteractions(eventManager);
+    verifyNoInteractions(eventManager);
   }
 
   @Test

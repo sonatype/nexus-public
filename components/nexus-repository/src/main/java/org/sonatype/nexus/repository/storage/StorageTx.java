@@ -138,6 +138,16 @@ public interface StorageTx
   Iterable<Asset> browseAssets(Query query, Bucket bucket);
 
   /**
+   * Gets all assets owned by the specified bucket with a limit option.
+   * This method will NOT see uncommitted changes performed in this same TX, if any.
+   * The returned {@link Iterable} may throw {@link RuntimeException} if timeout to
+   * receive new elements is breached.
+   *
+   * For setting the limit @see Continuations.BROWSE_LIMIT
+   */
+  Iterable<Asset> browseAllPartiallyByLimit(Bucket bucket);
+
+  /**
    * Gets all assets owned by the specified bucket for a given query with a limit option.
    * This method will NOT see uncommitted changes performed in this same TX, if any.
    * The returned {@link Iterable} may throw {@link RuntimeException} if timeout to

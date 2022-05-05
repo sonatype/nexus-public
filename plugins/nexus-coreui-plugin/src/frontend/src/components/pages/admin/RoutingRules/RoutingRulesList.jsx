@@ -13,7 +13,7 @@
 import React from 'react';
 import {useMachine} from '@xstate/react';
 
-import {faChevronRight, faInfoCircle, faMapSigns} from '@fortawesome/free-solid-svg-icons';
+import {faMapSigns} from '@fortawesome/free-solid-svg-icons';
 
 import {
   ContentBody,
@@ -30,7 +30,6 @@ import {
 import {
   NxButton,
   NxFilterInput,
-  NxFontAwesomeIcon,
   NxTable,
   NxTableBody,
   NxTableCell,
@@ -43,7 +42,7 @@ import RoutingRulesListMachine from './RoutingRulesListMachine';
 
 import UIStrings from '../../../../constants/UIStrings';
 
-const {ROUTING_RULES} = UIStrings;
+const {ROUTING_RULES: {LIST: LABELS, MENU}} = UIStrings;
 
 export default function RoutingRulesList({onCreate, onEdit}) {
   const [current, send] = useMachine(RoutingRulesListMachine, {devTools: true});
@@ -77,13 +76,13 @@ export default function RoutingRulesList({onCreate, onEdit}) {
 
   return <Page className="nxrm-routing-rules">
     <PageHeader>
-      <PageTitle icon={faMapSigns} {...ROUTING_RULES.MENU}/>
+      <PageTitle icon={faMapSigns} {...MENU}/>
       <PageActions>
         <NxButton variant="tertiary" onClick={preview}>
-          <span>{ROUTING_RULES.LIST.PREVIEW_BUTTON}</span>
+          <span>{LABELS.PREVIEW_BUTTON}</span>
         </NxButton>
         <NxButton variant="primary" onClick={onCreate}>
-          <span>{ROUTING_RULES.LIST.CREATE_BUTTON}</span>
+          <span>{LABELS.CREATE_BUTTON}</span>
         </NxButton>
       </PageActions>
     </PageHeader>
@@ -101,26 +100,26 @@ export default function RoutingRulesList({onCreate, onEdit}) {
           <NxTableHead>
             <NxTableRow>
               <NxTableCell onClick={() => send('SORT_BY_NAME')} isSortable sortDir={nameSortDir}>
-                {ROUTING_RULES.LIST.NAME_LABEL}
+                {LABELS.NAME_LABEL}
               </NxTableCell>
               <NxTableCell onClick={() => send('SORT_BY_DESCRIPTION')} isSortable sortDir={descriptionSortDir}>
-                {ROUTING_RULES.LIST.DESCRIPTION_LABEL}
+                {LABELS.DESCRIPTION_LABEL}
               </NxTableCell>
               <NxTableCell onClick={() => send('SORT_BY_ASSIGNED_REPOSITORY_COUNT')} isSortable sortDir={usedBySortDir}>
-                {ROUTING_RULES.LIST.USED_BY_LABEL}
+                {LABELS.USED_BY_LABEL}
               </NxTableCell>
               <NxTableCell chevron/>
             </NxTableRow>
           </NxTableHead>
-          <NxTableBody isLoading={isLoading} error={error} emptyMessage={ROUTING_RULES.LIST.EMPTY_LIST}>
+          <NxTableBody isLoading={isLoading} error={error} emptyMessage={LABELS.EMPTY_LIST}>
             {data.map(({name, description, assignedRepositoryCount}) => (
                 <NxTableRow key={name} onClick={() => onEdit(name)} isClickable>
                   <NxTableCell>{name}</NxTableCell>
                   <NxTableCell>{description}</NxTableCell>
                   <NxTableCell>
                     {assignedRepositoryCount === 0 ?
-                        <a href="#admin/repository/repositories">{ROUTING_RULES.LIST.NEEDS_ASSIGNMENT}</a> :
-                        <span>{ROUTING_RULES.LIST.USED_BY(assignedRepositoryCount)}</span>
+                        <a href="#admin/repository/repositories">{LABELS.NEEDS_ASSIGNMENT}</a> :
+                        <span>{LABELS.USED_BY(assignedRepositoryCount)}</span>
                     }
                   </NxTableCell>
                   <NxTableCell chevron/>
@@ -129,11 +128,7 @@ export default function RoutingRulesList({onCreate, onEdit}) {
           </NxTableBody>
         </NxTable>
       </Section>
-
-      <HelpTile>
-        <h3><NxFontAwesomeIcon icon={faInfoCircle}/>{ROUTING_RULES.LIST.HELP_TITLE}</h3>
-        <p dangerouslySetInnerHTML={{__html: ROUTING_RULES.LIST.HELP_TEXT}}/>
-      </HelpTile>
+      <HelpTile header={LABELS.HELP_TITLE} body={LABELS.HELP_TEXT}/>
     </ContentBody>
   </Page>;
 }

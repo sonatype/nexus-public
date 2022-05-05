@@ -17,7 +17,7 @@ import org.sonatype.nexus.distributed.event.service.api.DistributedEvent;
 /**
  * The event type associated with a {@link DistributedEvent}
  *
- * @since 3.next
+ * @since 3.38
  */
 public enum EventType
 {

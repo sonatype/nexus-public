@@ -14,22 +14,29 @@ package org.sonatype.nexus.repository.content.store;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DuplicateKeyException;
 import org.sonatype.nexus.repository.content.Asset;
+import org.sonatype.nexus.repository.content.AssetBlob;
+import org.sonatype.nexus.repository.content.AssetInfo;
 import org.sonatype.nexus.repository.content.store.example.TestAssetBlobDAO;
 import org.sonatype.nexus.repository.content.store.example.TestAssetDAO;
 import org.sonatype.nexus.repository.content.store.example.TestAssetData;
 import org.sonatype.nexus.repository.content.store.example.TestComponentDAO;
 import org.sonatype.nexus.repository.content.store.example.TestContentRepositoryDAO;
 
+import com.google.common.collect.ImmutableList;
 import org.hamcrest.collection.IsIterableContainingInAnyOrder;
 import org.hamcrest.collection.IsIterableContainingInOrder;
 import org.junit.Before;
@@ -42,6 +49,7 @@ import static java.util.Arrays.stream;
 import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.summingInt;
 import static java.util.stream.Collectors.toList;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyIterable;
@@ -50,7 +58,6 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertFalse;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
@@ -944,6 +951,121 @@ public class AssetDAOTest
       AssetDAO dao = session.access(TestAssetDAO.class);
       tempResult = dao.findByBlobRef(repositoryId, assetBlob.blobRef()).get();
       assertThat(tempResult.path(), is(path));
+    }
+  }
+
+  @Test
+  public void testFindByComponentIds() {
+    generateConfiguration();
+    EntityId repositoryId = generatedConfigurations().get(0).getRepositoryId();
+    generateSingleRepository(UUID.fromString(repositoryId.getValue()));
+    generateContent(2);
+
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      TestAssetDAO dao = session.access(TestAssetDAO.class);
+      Collection<AssetInfo> assets = dao.findByComponentIds(Collections.singleton(1));
+
+      Optional<AssetInfo> assetOpt = assets.stream().findFirst();
+      assertThat(assetOpt.isPresent(), is(true));
+      AssetInfo asset = assetOpt.get();
+
+      Asset generatedAsset = generatedAssets().get(0);
+      AssetBlob generatedAssetBlob = generatedAssetBlobs().get(0);
+
+      assertThat(asset.path(), is(generatedAsset.path()));
+      assertThat(asset.contentType(), is(generatedAssetBlob.contentType()));
+      assertThat(asset.lastUpdated(), notNullValue());
+      assertThat(asset.checksums(), notNullValue());
+    }
+  }
+
+  @Test
+  public void testFindLastUpdated() {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      TestAssetDAO dao = session.access(TestAssetDAO.class);
+      OffsetDateTime baseTime = OffsetDateTime.of(2022, 4, 24, 15, 18, 22,
+          111111000, ZoneOffset.UTC);
+      Collection<Asset> found = dao.findLastUpdatedWithinRange(repositoryId, baseTime,
+          baseTime.plus(1, ChronoUnit.MILLIS), ImmutableList.of(), 100);
+      assertThat(found, emptyIterable());
+      found = dao.findGreaterThanOrEqualToLastUpdated(repositoryId, baseTime, ImmutableList.of(), 10);
+      assertThat(found, emptyIterable());
+
+      AssetData asset1 = generateAsset(repositoryId, "/asset1/asset1.jar");
+      AssetData asset2 = generateAsset(repositoryId, "/asset2/asset2.jar");
+      AssetData asset3 = generateAsset(repositoryId, "/asset3/asset3.jar");
+      AssetData asset4 = generateAsset(repositoryId, "/asset4/asset4.jar");
+      AssetData asset5 = generateAsset(repositoryId, "/asset5/asset5.jar");
+      AssetData asset6 = generateAsset(repositoryId, "/asset6/asset6.jar");
+
+      asset1.setLastUpdated(baseTime);
+      asset2.setLastUpdated(baseTime);
+      asset3.setLastUpdated(baseTime.plusSeconds(1));
+      asset4.setLastUpdated(baseTime.plusSeconds(2));
+      asset5.setLastUpdated(baseTime.minusSeconds(1));
+      asset6.setLastUpdated(baseTime.minusSeconds(2));
+      asset6.setLastUpdated(baseTime.minusSeconds(3));
+
+      dao.createAsset(asset1);
+      dao.createAsset(asset2);
+      dao.createAsset(asset3);
+      dao.createAsset(asset4);
+      dao.createAsset(asset5);
+      dao.createAsset(asset6);
+
+      found = dao.findLastUpdatedWithinRange(repositoryId, baseTime, baseTime.plus(1, ChronoUnit.MILLIS), ImmutableList.of(),100);
+      assertThat(found.size(), is(2));
+
+      found = dao.findGreaterThanOrEqualToLastUpdated(repositoryId, baseTime, ImmutableList.of(),100);
+      assertThat(found.size(), is(4));
+
+      found = dao.findGreaterThanOrEqualToLastUpdated(repositoryId, baseTime, ImmutableList.of(),1);
+      assertThat(found.size(), is(1));
+
+      found = dao.findGreaterThanOrEqualToLastUpdated(repositoryId, baseTime.minusDays(1), ImmutableList.of("%/asset1/%"), 100);
+      assertThat(found.size(), is(1));
+
+      found = dao.findGreaterThanOrEqualToLastUpdated(repositoryId, baseTime.minusDays(1), ImmutableList.of("%/asset3/%", "%/asset5/%"), 100);
+      assertThat(found.size(), is(2));
+
+      found = dao.findGreaterThanOrEqualToLastUpdated(repositoryId, baseTime.minusDays(1), ImmutableList.of("%/asset_/a%.jar%"), 100);
+      assertThat(found.size(), is(6));
+    }
+  }
+
+  @Test
+  public void testFindLastUpdatedTruncatesToMilliseconds() {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      TestAssetDAO dao = session.access(TestAssetDAO.class);
+      OffsetDateTime baseTime = OffsetDateTime.of(2022, 4, 24, 15, 18, 22,
+          111111000, ZoneOffset.UTC);
+      Collection<Asset> found = dao.findLastUpdatedWithinRange(repositoryId, baseTime, baseTime.plus(1, ChronoUnit.MILLIS), ImmutableList.of(),100);
+      assertThat(found, emptyIterable());
+      found = dao.findGreaterThanOrEqualToLastUpdated(repositoryId, baseTime, ImmutableList.of(), 10);
+      assertThat(found, emptyIterable());
+
+      AssetData asset1 = generateAsset(repositoryId, "/asset1/asset1.jar");
+      AssetData asset2 = generateAsset(repositoryId, "/asset2/asset2.jar");
+      AssetData asset3 = generateAsset(repositoryId, "/asset3/asset3.jar");
+      AssetData asset4 = generateAsset(repositoryId, "/asset4/asset4.jar");
+
+      asset1.setLastUpdated(baseTime);
+      asset2.setLastUpdated(baseTime);
+      // Microsecond level time can be stored in both h2 and postgres. However, the last updated queries should truncate
+      // the time and treat these as identical to baseTime
+      asset3.setLastUpdated(baseTime.plusNanos(5000));
+      asset4.setLastUpdated(baseTime.plusNanos(8000));
+
+      dao.createAsset(asset1);
+      dao.createAsset(asset2);
+      dao.createAsset(asset3);
+      dao.createAsset(asset4);
+
+      found = dao.findLastUpdatedWithinRange(repositoryId, baseTime, baseTime.plus(1, ChronoUnit.MILLIS), ImmutableList.of(),100);
+      assertThat(found.size(), is(4));
+
+      found = dao.findGreaterThanOrEqualToLastUpdated(repositoryId, baseTime.plus(1, ChronoUnit.MILLIS).truncatedTo(ChronoUnit.MILLIS), ImmutableList.of(),100);
+      assertThat(found.size(), is(0));
     }
   }
 

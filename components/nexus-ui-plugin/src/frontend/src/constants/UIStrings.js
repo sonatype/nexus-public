@@ -25,7 +25,7 @@ export default {
     DELETE_BUTTON_LABEL: 'Delete',
 
     READ_ONLY: {
-      WARNING: 'You are currently viewing a Read-only version of this page. You may not have the correct permissions to edit. Contact your Administrator to check permissions.',
+      WARNING: 'You are viewing a read-only version of this page. You do not have permission to edit. Contact your Administrator if you need additional permissions.',
       CHECKBOX: {
         ENABLED: 'Enabled',
         DISABLED: 'Disabled',
@@ -55,7 +55,8 @@ export default {
     INVALID_URI: 'URI should be in the format <protocol>:<path>',
     INVALID_EMAIL: 'This field should be an e-mail address in the format "user@example.com" or "user@example"',
     URL_ERROR: 'URL should be in the format "http://www.example.com"',
-    URL_NEEDS_TRAILING_SLASH: 'URL should be in the format "http://www.example.com/" and must include a trailing slash'
+    URL_NEEDS_TRAILING_SLASH: 'URL should be in the format "http://www.example.com/" and must include a trailing slash',
+    UNKNOWN: 'An unknown error has occurred'
   },
 
   SAVE_SUCCESS: 'The form was saved successfully',
@@ -76,6 +77,8 @@ export default {
     MOVE_UP: 'Move Selection Up',
     MOVE_DOWN: 'Move Selection Down'
   },
+
+  UNAVAILABLE: 'Unavailable',
 
   SSL_CERTIFICATE_DETAILS: {
     TITLE: 'Certificate Details',

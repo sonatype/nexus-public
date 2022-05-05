@@ -60,11 +60,13 @@ public class DatastoreRawTestHelper
       final Repository repository, final String componentName, final String componentGroup, final String assetName)
   {
     try {
-      repository.facet(RawContentFacet.class).put(getGroupAndAsset(componentGroup, assetName), new StringPayload("Test", "text/plain"));
+      String path = getGroupAndAsset(componentGroup, assetName);
+      repository.facet(RawContentFacet.class)
+          .put(path, new StringPayload("Test", "text/plain"));
       Optional<FluentComponent> fluentComponent = repository
           .facet(RawContentFacet.class)
           .components()
-          .name("/" + assetName)
+          .name(path)
           .namespace("/" + componentGroup)
           .find();
 

@@ -14,6 +14,7 @@
 package org.sonatype.nexus.repository.security.internal;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -256,7 +257,7 @@ public class ContentPermissionCheckerImpl
     if (isViewPermitted(repositoryNames, repositoryFormat, action)) {
       return true;
     }
-    return selectorManager.browse().stream()
+    return selectorManager.browseActive(repositoryNames, Collections.singletonList(repositoryFormat)).stream()
         .anyMatch(config -> isContentPermitted(repositoryNames, repositoryFormat, action, config, variableSource));
   }
 

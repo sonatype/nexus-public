@@ -59,7 +59,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
@@ -370,7 +370,6 @@ public class SecurityConfigurationSourceImplTest
 
   @Test
   public void testUserRoleMappings_notCaseSensitive_bySource() throws Exception {
-    testUserRoleMappings_notCaseSensitive("default");
     testUserRoleMappings_notCaseSensitive("ldap");
     testUserRoleMappings_notCaseSensitive("crowd");
   }

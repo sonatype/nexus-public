@@ -14,6 +14,7 @@ package org.sonatype.nexus.upgrade.datastore.internal;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.sql.DataSource;
@@ -66,9 +67,10 @@ abstract class UpgradeManagerSupport<E extends DatabaseMigrationStep>
         .callbacks(log.isTraceEnabled() ? new Callback[]{new TraceLoggingCallback()} : new Callback[0])
         .cleanDisabled(true) // don't empty the database
         .group(false) // don't group all migrations into a single transaction
-        .ignoreMissingMigrations(true) // Removed plugins (e.g. Pro)
+        .ignoreMigrationPatterns("*:missing") // Removed plugins (e.g. Pro)
         .baselineOnMigrate(true) // create flyway tables the first time migration is run
         .locations(new String[0]) // disable scanning for scripts
+        .outOfOrder(true)
         .load();
 
     MigrateResult result = flyway.migrate();
@@ -76,7 +78,13 @@ abstract class UpgradeManagerSupport<E extends DatabaseMigrationStep>
     checkState(datastoreVersionIsAcceptable(flyway),
         "The database appears to be from a later version of Nexus Repository");
 
-    if (result.migrationsExecuted > 0) {
+    int repeatableMigrations = migrations.size() - migrations.stream()
+        .map(E::version)
+        .filter(Optional::isPresent)
+        .collect(Collectors.counting())
+        .intValue();
+
+    if (result.migrationsExecuted > repeatableMigrations) {
       result.migrations.forEach(m -> log.info("{} migrated to v{} in {}s", m.description, m.version, m.executionTime));
       result.warnings.forEach(log::warn);
       log.info("Completed migration from v{} to v{}", result.initialSchemaVersion, result.targetSchemaVersion);

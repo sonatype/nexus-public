@@ -26,7 +26,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import static com.google.common.net.HttpHeaders.X_FRAME_OPTIONS;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 

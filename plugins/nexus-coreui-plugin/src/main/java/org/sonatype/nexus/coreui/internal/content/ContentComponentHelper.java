@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.coreui.internal.content;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -299,7 +300,7 @@ public class ContentComponentHelper
     return componentXO;
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
+  @SuppressWarnings({"unchecked"})
   private static AssetXO toAssetXO(
       final String repositoryName,
       final String containingRepositoryName,
@@ -321,23 +322,33 @@ public class ContentComponentHelper
     if (!Strings2.isEmpty(asset.kind())) {
       if (formatAttributes instanceof Map) {
         ((Map<String, Object>) formatAttributes).put("asset_kind", asset.kind());
-      } else {
+      }
+      else {
         attributes.put(format, Collections.singletonMap("asset_kind", asset.kind()));
       }
     }
 
-    assetXO.setBlobCreated(Date.from(asset.created().toInstant()));
+    OffsetDateTime createdTime = asset.created();
+
+    assetXO.setBlobCreated(Date.from(createdTime.toInstant()));
     asset.blob().ifPresent(blob -> {
+      Date blobCreated = Date.from(blob.blobCreated().toInstant());
+
+      // NEXUS-31391 Asset created time may have been set incorrectly
+      if (blob.blobCreated().isBefore(createdTime)) {
+        assetXO.setBlobCreated(blobCreated);
+      }
+
       assetXO.setBlobRef(blob.blobRef().toString());
       assetXO.setSize(blob.blobSize());
       assetXO.setContentType(blob.contentType());
-      assetXO.setBlobUpdated(Date.from(blob.blobCreated().toInstant()));
+      assetXO.setBlobUpdated(blobCreated);
       attributes.put("checksum", blob.checksums());
       assetXO.setCreatedBy(blob.createdBy().orElse(null));
       assetXO.setCreatedByIp(blob.createdByIp().orElse(null));
     });
 
-    assetXO.setAttributes((Map) attributes);
+    assetXO.setAttributes(attributes);
 
     asset.lastDownloaded().ifPresent(when -> assetXO.setLastDownloaded(Date.from(when.toInstant())));
 

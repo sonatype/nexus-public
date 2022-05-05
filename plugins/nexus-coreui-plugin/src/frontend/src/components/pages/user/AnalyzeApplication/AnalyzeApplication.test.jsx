@@ -14,7 +14,7 @@ import React from 'react';
 import Axios from 'axios';
 import TestUtils from "@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils";
 import AnalyzeApplication from "./AnalyzeApplication";
-import {wait} from "@testing-library/react";
+import { waitForElementToBeRemoved } from "@testing-library/react";
 import '@testing-library/jest-dom/extend-expect';
 import UIStrings from "../../../../constants/UIStrings";
 
@@ -48,7 +48,7 @@ describe('AnalyzeApplication', () => {
 
     let {loadingMask} = render();
 
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(loadingMask());
 
     expect(Axios.get).toHaveBeenCalledTimes(1);
     expect(Axios.get).toHaveBeenCalledWith(`/service/rest/internal/ui/ahc`, {params: {component: componentName}});
@@ -65,7 +65,7 @@ describe('AnalyzeApplication', () => {
       header: () => getByText(UIStrings.HEALTHCHECK_EULA.HEADER)
     }));
 
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(loadingMask());
 
     expect(header()).toBeInTheDocument();
   });
@@ -79,7 +79,7 @@ describe('AnalyzeApplication', () => {
 
     let {header, loadingMask} = render(({getByText}) => ({header: () => getByText(UIStrings.ANALYZE_APPLICATION.HEADER)}));
 
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(loadingMask());
 
     expect(header()).toBeInTheDocument();
   });

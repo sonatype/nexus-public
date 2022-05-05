@@ -25,7 +25,7 @@ import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VER
 import static org.sonatype.nexus.repository.maven.internal.Constants.SNAPSHOT_VERSION_SUFFIX;
 
 /**
- * @since 3.next
+ * @since 3.38
  */
 @Named(Maven2Format.NAME)
 @Singleton

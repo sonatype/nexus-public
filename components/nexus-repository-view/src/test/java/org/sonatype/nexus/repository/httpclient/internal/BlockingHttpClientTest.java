@@ -41,18 +41,18 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.joda.time.DateTime.now;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.internal.util.reflection.Whitebox.setInternalState;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.AUTO_BLOCKED_UNAVAILABLE;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.AVAILABLE;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.BLOCKED;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.OFFLINE;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.READY;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.UNAVAILABLE;
+import static org.sonatype.nexus.test.util.Whitebox.setInternalState;
 
 public class BlockingHttpClientTest
     extends TestSupport
@@ -72,7 +72,7 @@ public class BlockingHttpClientTest
 
   @Mock
   StatusLine statusLine;
-  
+
   @Mock
   AutoBlockConfiguration autoBlockConfiguration;
 
@@ -87,7 +87,7 @@ public class BlockingHttpClientTest
     when(filterable.call()).thenReturn(httpResponse);
     when(httpResponse.getStatusLine()).thenReturn(statusLine);
     when(statusLine.getStatusCode()).thenReturn(SC_OK);
-    
+
     when(autoBlockConfiguration.shouldBlock(SC_UNAUTHORIZED)).thenReturn(true);
     when(autoBlockConfiguration.shouldBlock(SC_BAD_GATEWAY)).thenReturn(true);
     when(autoBlockConfiguration.shouldBlock(SC_PROXY_AUTHENTICATION_REQUIRED)).thenReturn(true);
@@ -241,11 +241,11 @@ public class BlockingHttpClientTest
     verify(statusObserver, times(2)).onStatusChanged(any(), newStatusCaptor.capture());
     assertThat(newStatusCaptor.getAllValues().get(1).getType(), is(equalTo(OFFLINE)));
   }
-  
+
   @Test
   public void shouldNotBlockWhenConfigurationNotSet() throws Exception {
     when(autoBlockConfiguration.shouldBlock(SC_UNAUTHORIZED)).thenReturn(false);
-    
+
     when(statusLine.getStatusCode()).thenReturn(SC_UNAUTHORIZED);
     filterAndHandleException();
     verifyUpdateStatus(AVAILABLE);

@@ -213,6 +213,17 @@ public class SearchFacetImpl
    * Returns the JSON document for the given component in the repository's index.
    */
   private String document(final FluentComponent component) {
-    return searchDocumentProducer.getDocument(component, repositoryFields);
+    try {
+      return searchDocumentProducer.getDocument(component, repositoryFields);
+    }
+    catch (Exception e) {
+      if (log.isDebugEnabled()) {
+        log.warn("Error creating search document for {}", component, e);
+      }
+      else {
+        log.warn("Error '{}' creating search document for component: {}", e.getMessage(), component);
+      }
+    }
+    return null;
   }
 }

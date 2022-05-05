@@ -42,18 +42,18 @@ import com.google.common.io.ByteStreams;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Captor;
-import org.mockito.Matchers;
 import org.mockito.Mock;
 
 import static com.google.common.hash.HashCode.fromString;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -191,7 +191,7 @@ public class StorageFacetImplTest
     byte[] contents = "hello, world".getBytes(StandardCharsets.UTF_8);
     underTest.doConfigure(configuration);
     when(blobStoreManager.get(BLOB_STORE_NAME)).thenReturn(blobStore);
-    when(blobStore.create(any(InputStream.class), Matchers.<Map<String, String>>any())).thenAnswer(
+    when(blobStore.create(any(InputStream.class), ArgumentMatchers.<Map<String, String>>any())).thenAnswer(
         invocationOnMock -> {
           ByteStreams.toByteArray((InputStream) invocationOnMock.getArguments()[0]);
           return blob;
@@ -212,7 +212,7 @@ public class StorageFacetImplTest
     byte[] contents = "hello, world".getBytes(StandardCharsets.UTF_8);
     underTest.doConfigure(configuration);
     when(blobStoreManager.get(BLOB_STORE_NAME)).thenReturn(blobStore);
-    when(blobStore.create(any(InputStream.class), Matchers.<Map<String, String>>any())).thenAnswer(
+    when(blobStore.create(any(InputStream.class), ArgumentMatchers.<Map<String, String>>any())).thenAnswer(
         invocationOnMock -> {
           ByteStreams.toByteArray((InputStream) invocationOnMock.getArguments()[0]);
           return blob;
@@ -232,7 +232,7 @@ public class StorageFacetImplTest
     byte[] contents = "hello, world".getBytes(StandardCharsets.UTF_8);
     underTest.doConfigure(configuration);
     when(blobStoreManager.get(BLOB_STORE_NAME)).thenReturn(blobStore);
-    when(blobStore.create(any(InputStream.class), Matchers.<Map<String, String>> any()))
+    when(blobStore.create(any(InputStream.class), ArgumentMatchers.<Map<String, String>> any()))
         .thenAnswer(invocationOnMock -> {
           ByteStreams.toByteArray((InputStream) invocationOnMock.getArguments()[0]);
           return blob;

@@ -19,6 +19,7 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.core.Response;
 
+import org.sonatype.nexus.ssl.ApiCertificate;
 import com.sonatype.nexus.ssl.plugin.validator.HostnameOrIpAddress;
 import com.sonatype.nexus.ssl.plugin.validator.PemCertificate;
 

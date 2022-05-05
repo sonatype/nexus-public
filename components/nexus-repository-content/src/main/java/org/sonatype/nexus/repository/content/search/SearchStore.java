@@ -12,17 +12,19 @@
  */
 package org.sonatype.nexus.repository.content.search;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
-import org.sonatype.nexus.repository.content.ComponentSearch;
+import org.sonatype.nexus.repository.content.SearchResult;
 import org.sonatype.nexus.repository.content.store.ContentStoreSupport;
+import org.sonatype.nexus.repository.search.SortDirection;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryCondition;
 import org.sonatype.nexus.transaction.Transactional;
 
@@ -47,20 +49,20 @@ public class SearchStore<T extends SearchDAO>
   /**
    * Browse all components that match the given filters
    *
-   * @param limit             maximum number of components to return
-   * @param continuationToken optional token to continue from a previous request
-   * @param filterQuery       optional filter to apply
-   * @return collection of components and the next continuation token
-   * @see Continuation#nextContinuationToken()
-   * @since 3.next
+   * @param limit          maximum number of components to return
+   * @param offset         number of rows to skip in relation to the first row of the first page
+   * @param filterQuery    optional filter to apply
+   * @param sortColumnName optional column name to be used for sorting
+   * @param sortDirection  the sort direction: ascending or descending
+   * @return collection of components
    */
   @Transactional
-  public Continuation<ComponentSearch> searchComponents(
+  public Collection<SearchResult> searchComponents(
       final int limit,
-      @Nullable final String continuationToken,
+      final int offset,
       @Nullable final SqlSearchQueryCondition filterQuery,
-      final boolean isReverseOrder,
-      final SearchViewColumns sortColumnName)
+      final SearchViewColumns sortColumnName,
+      final SortDirection sortDirection)
   {
     String filterFormat = null;
     Map<String, String> formatValues = null;
@@ -69,11 +71,36 @@ public class SearchStore<T extends SearchDAO>
       formatValues = filterQuery.getValues();
     }
 
-    return dao().searchComponents(limit, continuationToken, filterFormat, formatValues, isReverseOrder, sortColumnName);
+    String direction = Optional.ofNullable(sortDirection).orElse(SortDirection.ASC).name();
+
+    SqlSearchRequest request = SqlSearchRequest
+        .builder()
+        .limit(limit)
+        .offset(offset)
+        .searchFilter(filterFormat)
+        .searchFilterValues(formatValues)
+        .sortColumnName(sortColumnName.name())
+        .sortDirection(direction)
+        .defaultSortColumnName(SearchViewColumns.COMPONENT_ID.name())
+        .build();
+
+    return dao().searchComponents(request);
   }
 
-  public int count()
+  /**
+   * Count all {@link SearchResultData} in the given format.
+   *
+   * @return count of all {@link SearchResultData} in the given format
+   */
+  @Transactional
+  public int count(@Nullable final SqlSearchQueryCondition filterQuery)
   {
-    return dao().count();
+    String filterFormat = null;
+    Map<String, String> formatValues = null;
+    if (Objects.nonNull(filterQuery)) {
+      filterFormat = filterQuery.getSqlConditionFormat();
+      formatValues = filterQuery.getValues();
+    }
+    return dao().count(filterFormat, formatValues);
   }
 }

@@ -13,9 +13,8 @@
 import React from 'react';
 import {fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
-import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import axios from 'axios';
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, TestUtils} from '@sonatype/nexus-ui-plugin';
 
 import LoggingConfigurationForm from './LoggingConfigurationForm';
 

@@ -53,7 +53,7 @@ public interface ContentDirector
    * @param destination the repository to copy the component to
    * @return a reference to the component
    *
-   * @since 3.next
+   * @since 3.38
    */
   default FluentComponent copyComponent(final Component source, final Repository destination) {
     ContentFacet content = destination.facet(ContentFacet.class);

@@ -14,12 +14,14 @@ package org.sonatype.nexus.repository.httpbridge.internal;
 
 import com.google.inject.servlet.ServletModule;
 
+import static org.sonatype.nexus.repository.httpbridge.internal.HttpBridgeModule.DOCKER_V1_MOUNT_POINT;
+import static org.sonatype.nexus.repository.httpbridge.internal.HttpBridgeModule.DOCKER_V2_MOUNT_POINT;
 import static org.sonatype.nexus.repository.httpbridge.internal.HttpBridgeModule.MOUNT_POINT;
 
 /**
  * Servlet module for Repository HTTP bridge.
  *
- * @since 3.next
+ * @since 3.38
  */
 public abstract class HttpBridgeServletModule
     extends ServletModule
@@ -27,8 +29,13 @@ public abstract class HttpBridgeServletModule
   @Override
   protected void configureServlets() {
     bind(ViewServlet.class);
-    serve(MOUNT_POINT + "/*").with(ViewServlet.class);
-    bindViewFiltersFor(MOUNT_POINT + "/*");
+    serve(MOUNT_POINT + "/*",
+        DOCKER_V1_MOUNT_POINT + "/*",
+        DOCKER_V2_MOUNT_POINT + "/*")
+        .with(ViewServlet.class);
+    bindViewFiltersFor(MOUNT_POINT + "/*",
+        DOCKER_V1_MOUNT_POINT + "/*",
+        DOCKER_V2_MOUNT_POINT + "/*");
   }
 
   /**

@@ -17,7 +17,7 @@
 import {assign, Machine} from 'xstate';
 
 /**
- * @since 3.next
+ * @since 3.38
  */
 export default class ListMachineUtils {
   /**
@@ -65,6 +65,7 @@ export default class ListMachineUtils {
                             id,
                             initial = 'loading',
                             sortField = 'name',
+                            sortDirection = ListMachineUtils.ASC,
                             sortableFields = {},
                             config = (config) => config,
                             options = (options) => options
@@ -93,8 +94,8 @@ export default class ListMachineUtils {
       context: {
         data: [],
         pristineData: [],
-        sortField: sortField,
-        sortDirection: ListMachineUtils.ASC,
+        sortField,
+        sortDirection,
         filter: '',
         error: ''
       },
@@ -109,7 +110,7 @@ export default class ListMachineUtils {
                 src: 'fetchData',
                 onDone: {
                   target: '#loaded',
-                  actions: ['setData']
+                  actions: ['clearError','setData']
                 },
                 onError: {
                   target: '#error',
@@ -127,11 +128,21 @@ export default class ListMachineUtils {
             FILTER: {
               target: 'loaded',
               actions: ['setFilter']
+            },
+            SET_DATA: {
+              target: 'loaded',
+              actions: ['setData']
             }
           }
         },
         error: {
-          id: 'error'
+          id: 'error',
+          on: {
+            FILTER: {
+              target: 'loaded',
+              actions: ['setFilter']
+            }
+          }
         }
       }
     };
@@ -142,11 +153,15 @@ export default class ListMachineUtils {
 
         setData: assign({
           data: (_, {data}) => data.data,
-          pristineData: (_, {data}) => data.data
+          pristineData: (_, {data}) => data.data,
         }),
 
         setError: assign({
           error: (_, event) => event.data.message
+        }),
+
+        clearError: assign({
+          error: ''
         }),
 
         setFilter: assign({

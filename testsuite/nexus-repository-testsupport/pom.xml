@@ -59,6 +59,16 @@
       <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-blobstore-s3</artifactId>
       <scope>provided</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk-s3</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk-core</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
@@ -195,6 +205,16 @@
       <groupId>org.testcontainers</groupId>
       <artifactId>testcontainers</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-java-sdk-core</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-java-sdk-s3</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
@@ -245,6 +265,10 @@
               org.sonatype.nexus.testsuite.testsupport.cleanup.*;resolution:=optional,
               *
             </Import-Package>
+            <Embed-Dependency>
+              aws-java-sdk-s3,aws-java-sdk-core
+            </Embed-Dependency>
+            <Embed-Transitive>true</Embed-Transitive>
           </instructions>
         </configuration>
       </plugin>

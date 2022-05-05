@@ -66,6 +66,16 @@ public class MergeObjectMapper
   }
 
   /**
+   * Similar to {@link #merge(List)} but only for a single {@link InputStreamSupplier}, allowing for the same manner
+   * of parsing the output map as the merged ones.
+   *
+   * @param inputStream {@link InputStreamSupplier} to parse
+   */
+  public NestedAttributesMap read(final InputStreamSupplier inputStreamSupplier) throws IOException {
+    return merge(singletonList(inputStreamSupplier), null);
+  }
+
+  /**
    * Same as {@link #merge(List, Charset)} but no {@link Charset} needed to be provided.
    *
    * @see #merge(List, Charset)

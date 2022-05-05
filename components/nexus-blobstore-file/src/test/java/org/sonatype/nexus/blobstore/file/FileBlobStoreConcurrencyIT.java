@@ -35,10 +35,11 @@ import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
-import org.sonatype.nexus.blobstore.file.internal.FileBlobStoreMetricsStore;
+import org.sonatype.nexus.blobstore.file.internal.OrientFileBlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.file.internal.FileOperations;
 import org.sonatype.nexus.blobstore.file.internal.SimpleFileOperations;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
@@ -54,7 +55,7 @@ import org.mockito.Mock;
 
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.io.ByteStreams.nullOutputStream;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -80,7 +81,9 @@ public class FileBlobStoreConcurrencyIT
 
   private FileBlobStore underTest;
 
-  private FileBlobStoreMetricsStore metricsStore;
+  private OrientFileBlobStoreMetricsStore metricsStore;
+
+  private BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker;
 
   @Mock
   NodeAccess nodeAccess;
@@ -112,15 +115,13 @@ public class FileBlobStoreConcurrencyIT
     config.attributes(FileBlobStore.CONFIG_KEY).set(FileBlobStore.PATH_KEY, root.toString());
 
     metricsStore = spy(
-        new FileBlobStoreMetricsStore(new PeriodicJobServiceImpl(), nodeAccess, quotaService, QUOTA_CHECK_INTERVAL,
-            fileOperations));
+        new OrientFileBlobStoreMetricsStore(new PeriodicJobServiceImpl(), nodeAccess, fileOperations));
+    blobStoreQuotaUsageChecker = spy(
+        new BlobStoreQuotaUsageChecker(new PeriodicJobServiceImpl(), QUOTA_CHECK_INTERVAL, quotaService));
 
-    this.underTest = new FileBlobStore(content,
-        new DefaultBlobIdLocationResolver(),
-        new SimpleFileOperations(),
-        metricsStore,
-        config,
-        applicationDirectories, nodeAccess, dryRunPrefix, reconciliationLogger, 0L);
+    this.underTest = new FileBlobStore(content, new DefaultBlobIdLocationResolver(), new SimpleFileOperations(),
+        metricsStore, config, applicationDirectories, nodeAccess, dryRunPrefix, reconciliationLogger, 0L,
+        blobStoreQuotaUsageChecker);
     underTest.start();
   }
 

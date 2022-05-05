@@ -12,25 +12,25 @@
  */
 package org.sonatype.nexus.logging.task;
 
+import org.sonatype.goodies.testsupport.TestSupport;
+
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.MDC;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.startsWith;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.verify;
 import static org.sonatype.nexus.logging.task.SeparateTaskLogTaskLogger.TASK_LOG_LOCATION_PREFIX;
 import static org.sonatype.nexus.logging.task.TaskLogger.TASK_LOG_ONLY_MDC;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.NEXUS_LOG_ONLY;
 
-@RunWith(MockitoJUnitRunner.class)
 public class TaskLogOnlyTaskLoggerTest
+    extends TestSupport
 {
   @Mock
   private Logger log;

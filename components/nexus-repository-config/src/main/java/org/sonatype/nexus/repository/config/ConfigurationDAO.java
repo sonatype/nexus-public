@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.repository.config;
 
+import java.util.Collection;
+import java.util.Set;
+
 import org.sonatype.nexus.datastore.api.IterableDataAccess;
 import org.sonatype.nexus.repository.config.internal.ConfigurationData;
 
@@ -23,5 +26,5 @@ import org.sonatype.nexus.repository.config.internal.ConfigurationData;
 public interface ConfigurationDAO
     extends IterableDataAccess.WithName<ConfigurationData>
 {
-  // no additional behaviour
+  Collection<Configuration> readByNames(Set<String> repositoryNames);
 }

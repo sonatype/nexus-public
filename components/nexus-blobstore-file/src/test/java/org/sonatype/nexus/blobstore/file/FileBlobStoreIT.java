@@ -35,9 +35,10 @@ import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
-import org.sonatype.nexus.blobstore.file.internal.FileBlobStoreMetricsStore;
+import org.sonatype.nexus.blobstore.file.internal.OrientFileBlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.file.internal.SimpleFileOperations;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.io.DirectoryHelper;
 import org.sonatype.nexus.common.log.DryRunPrefix;
@@ -66,9 +67,9 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -112,7 +113,9 @@ public class FileBlobStoreIT
 
   private Path contentDirectory;
 
-  private FileBlobStoreMetricsStore metricsStore;
+  private OrientFileBlobStoreMetricsStore metricsStore;
+
+  private BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker;
 
   private SimpleFileOperations fileOperations;
 
@@ -142,17 +145,18 @@ public class FileBlobStoreIT
 
     fileOperations = spy(new SimpleFileOperations());
 
-    metricsStore = new FileBlobStoreMetricsStore(new PeriodicJobServiceImpl(), nodeAccess, quotaService,
-        QUOTA_CHECK_INTERVAL, fileOperations);
+    metricsStore =
+        new OrientFileBlobStoreMetricsStore(new PeriodicJobServiceImpl(), nodeAccess, fileOperations);
+
+    blobStoreQuotaUsageChecker =
+        new BlobStoreQuotaUsageChecker(new PeriodicJobServiceImpl(), QUOTA_CHECK_INTERVAL, quotaService);
 
     blobIdResolver = new DefaultBlobIdLocationResolver();
 
     final BlobStoreConfiguration config = new MockBlobStoreConfiguration();
     config.attributes(FileBlobStore.CONFIG_KEY).set(FileBlobStore.PATH_KEY, blobStoreDirectory.toString());
-    underTest = new FileBlobStore(blobIdResolver,
-        fileOperations,
-        applicationDirectories,
-        metricsStore, nodeAccess, dryRunPrefix, reconciliationLogger, 0L);
+    underTest = new FileBlobStore(blobIdResolver, fileOperations, applicationDirectories, metricsStore, nodeAccess,
+        dryRunPrefix, reconciliationLogger, 0L, blobStoreQuotaUsageChecker);
     underTest.init(config);
     underTest.start();
   }

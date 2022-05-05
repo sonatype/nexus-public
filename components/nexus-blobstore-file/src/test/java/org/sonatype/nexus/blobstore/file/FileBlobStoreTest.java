@@ -32,8 +32,9 @@ import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
-import org.sonatype.nexus.blobstore.file.internal.FileBlobStoreMetricsStore;
+import org.sonatype.nexus.blobstore.file.internal.OrientFileBlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.file.internal.FileOperations;
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
@@ -53,23 +54,22 @@ import org.junit.rules.TemporaryFolder;
 import org.mockito.Mock;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.nio.file.Files.delete;
 import static java.nio.file.Files.write;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.DirectPathLocationStrategy.DIRECT_PATH_ROOT;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
@@ -92,6 +92,8 @@ public class FileBlobStoreTest
 
   private static final byte[] EMPTY_BLOB_STORE_PROPERTIES = ("").getBytes(StandardCharsets.ISO_8859_1);
 
+  private static final String RECONCILIATION = "reconciliation";
+
   private AtomicBoolean cancelled = new AtomicBoolean(false);
 
   @Mock
@@ -104,7 +106,10 @@ public class FileBlobStoreTest
   private ApplicationDirectories appDirs;
 
   @Mock
-  private FileBlobStoreMetricsStore metrics;
+  private OrientFileBlobStoreMetricsStore metrics;
+
+  @Mock
+  private BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker;
 
   @Mock
   private LoadingCache loadingCache;
@@ -159,9 +164,8 @@ public class FileBlobStoreTest
 
     configuration.setAttributes(attributes);
 
-    underTest = new FileBlobStore(util.createTempDir().toPath(),
-        blobIdLocationResolver, fileOperations, metrics, configuration,
-        appDirs, nodeAccess, dryRunPrefix, reconciliationLogger, 0L);
+    underTest = new FileBlobStore(util.createTempDir().toPath(), blobIdLocationResolver, fileOperations, metrics,
+        configuration, appDirs, nodeAccess, dryRunPrefix, reconciliationLogger, 0L, blobStoreQuotaUsageChecker);
 
     when(loadingCache.getUnchecked(any())).thenReturn(underTest.new FileBlob(new BlobId("fakeid")));
 
@@ -201,7 +205,7 @@ public class FileBlobStoreTest
 
     underTest.create(path, TEST_HEADERS, 0, HashCode.fromString("da39a3ee5e6b4b0d3255bfef95601890afd80709"));
 
-    verifyZeroInteractions(reconciliationLogger);
+    verifyNoInteractions(reconciliationLogger);
   }
 
   @Test
@@ -216,7 +220,7 @@ public class FileBlobStoreTest
 
     assertThat(blob.getMetrics().getContentSize(), is(size));
     assertThat(blob.getMetrics().getSha1Hash(), is("356a192b7913b04c54574d18c28d46e6395428ab"));
-    verify(reconciliationLogger).logBlobCreated(eq(underTest), any());
+    verify(reconciliationLogger).logBlobCreated(eq(underTest.getAbsoluteBlobDir().resolve(RECONCILIATION)), any());
   }
 
   @Test
@@ -232,7 +236,8 @@ public class FileBlobStoreTest
     underTest.create(path, TEST_HEADERS, size, sha1);
 
     verify(fileOperations, times(4)).exists(any());
-    verify(reconciliationLogger, times(1)).logBlobCreated(eq(underTest), any());
+    verify(reconciliationLogger, times(1))
+        .logBlobCreated(eq(underTest.getAbsoluteBlobDir().resolve(RECONCILIATION)), any());
   }
 
   @Test

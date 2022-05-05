@@ -23,6 +23,7 @@ import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheInfo;
+import org.sonatype.nexus.repository.cache.RepositoryCacheInvalidationService;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.group.GroupFacetImpl.Config;
@@ -44,7 +45,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -71,13 +72,17 @@ public class GroupFacetImplTest
   @Mock
   private CacheInfo cacheInfo;
 
+  @Mock
+  private RepositoryCacheInvalidationService repositoryCacheInvalidationService;
+
   private GroupType groupType = new GroupType();
 
   private GroupFacetImpl underTest;
 
   @Before
   public void setup() throws Exception {
-    underTest = new GroupFacetImpl(repositoryManager, makeConstraintViolationFactory(), groupType);
+    underTest = new GroupFacetImpl(repositoryManager, makeConstraintViolationFactory(), groupType,
+        repositoryCacheInvalidationService);
     underTest.attach(makeRepositoryUnderTest());
   }
 

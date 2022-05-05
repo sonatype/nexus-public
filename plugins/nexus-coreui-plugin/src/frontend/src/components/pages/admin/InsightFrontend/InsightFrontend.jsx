@@ -15,10 +15,8 @@ import {useMachine} from '@xstate/react';
 import {ResponsiveLine} from '@nivo/line';
 
 import {
-  NxFilterInput,
   NxLoadWrapper,
-  NxInfoAlert,
-  NxTable
+  NxInfoAlert
 } from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
@@ -26,29 +24,17 @@ import {
   Page, PageHeader, PageTitle
 } from '@sonatype/nexus-ui-plugin';
 import './InsightFrontend.scss';
-import InsightFrontendMachine, {
-  FILTER_BY_REPOSITORY_NAME,
-  FILTER_BY_IP_ADDRESS,
-  FILTER_BY_USERNAME
-} from './InsightFrontendMachine';
 import ExtJS from "@sonatype/nexus-ui-plugin/src/frontend/src/interface/ExtJS";
 import {faBinoculars} from "@fortawesome/free-solid-svg-icons";
+import InsightFrontendMachine from './InsightFrontendMachine';
+import DownloadsByRepositoryName from './DownloadsByRepositoryName';
+import DownloadsByUsername from './DownloadsByUsername';
+import DownloadsByIpAddress from './DownloadsByIpAddress';
 
 export default function InsightFrontend() {
-  const [current, send] = useMachine(InsightFrontendMachine, {devTools: true});
-  const {
-    downloadsByRepositoryName,
-    downloadsByIpAddress,
-    downloadsByUsername,
-    downloadsByDay,
-    downloadsByDayNonVulnerable,
-    totalDownloads,
-  } = current.context.data;
-  const {
-    filterByRepositoryNameValue,
-    filterByIpAddressValue,
-    filterByUsernameValue
-  } = current.context.filters;
+  const [state] = useMachine(InsightFrontendMachine, {devTools: true});
+  const isLoading = state.matches('loading');
+  const {downloadsByDay, downloadsByDayNonVulnerable, totalDownloads} = state.context;
 
   const edition = ExtJS.state().getEdition();
   let findAndFixLog4jUrl = 'https://links.sonatype.com/products/nexus/log4j/find-and-fix/oss';
@@ -65,36 +51,6 @@ export default function InsightFrontend() {
     mailAddress = 'mailto:nexus-feedback@sonatype.com?subject=PRO Log4j Visualizer';
   }
 
-  function onFilterByRepositoryName(value) {
-    send({
-      type: 'FILTER_TABLE_BY',
-      value: {
-        filterType: FILTER_BY_REPOSITORY_NAME,
-        filterValue: value
-      }
-    });
-  }
-
-  function onFilterByIpAddress(value) {
-    send({
-      type: 'FILTER_TABLE_BY',
-      value: {
-        filterType: FILTER_BY_IP_ADDRESS,
-        filterValue: value
-      }
-    });
-  }
-
-  function onFilterByUsername(value) {
-    send({
-      type: 'FILTER_TABLE_BY',
-      value: {
-        filterType: FILTER_BY_USERNAME,
-        filterValue: value
-      }
-    });
-  }
-
   function createChartView() {
     return downloadsByDay.length > 0 || downloadsByDayNonVulnerable.length > 0 ?
         <div>
@@ -109,7 +65,7 @@ export default function InsightFrontend() {
                 id: 'log4shell',
                 data: downloadsByDay.map((download) => {
                   return {
-                    x: new Date(download.day.year, download.day.monthValue - 1, download.day.dayOfMonth),
+                    x: new Date(download.day),
                     y: download.downloadCount
                   }
                 })
@@ -119,7 +75,7 @@ export default function InsightFrontend() {
                 id: 'non-log4shell',
                 data: downloadsByDayNonVulnerable.map((download) => {
                   return {
-                    x: new Date(download.day.year, download.day.monthValue - 1, download.day.dayOfMonth),
+                    x: new Date(download.day),
                     y: download.downloadCount
                   }
                 })
@@ -185,7 +141,7 @@ export default function InsightFrontend() {
         <PageHeader>
           <PageTitle icon={faBinoculars} {...UIStrings.LOG4J_VISUALIZER.MENU} />
         </PageHeader>
-        <NxLoadWrapper loading={current.matches('loading')} retryHandler={retry}>
+        <NxLoadWrapper loading={isLoading} retryHandler={retry}>
           {() => <>
             <div className="insight-frontend-frame">
               <div className="insight-frontend-container">
@@ -247,94 +203,12 @@ export default function InsightFrontend() {
                 <div className="insight-frontend-content">
                 <div className="insight-frontend-content-item">
                   {createChartView()}
-                  <div className="nx-scrollable nx-table-container">
-                    <NxTable className="nx-table">
-                      <NxTable.Head>
-                        <NxTable.Row>
-                          <NxTable.Cell>Repository</NxTable.Cell>
-                          <NxTable.Cell>Downloads</NxTable.Cell>
-                        </NxTable.Row>
-                        <NxTable.Row isFilterHeader>
-                          <NxTable.Cell>
-                            <NxFilterInput placeholder="Type a name"
-                                           id="repositoryFilter"
-                                           onChange={onFilterByRepositoryName}
-                                           value={filterByRepositoryNameValue}
-                            />
-                          </NxTable.Cell>
-                        </NxTable.Row>
-                      </NxTable.Head>
-                      <NxTable.Body emptyMessage="No data">
-                        {
-                          downloadsByRepositoryName.map((row, index) => (
-                              <NxTable.Row key={index}>
-                                <NxTable.Cell>{row.identifier}</NxTable.Cell>
-                                <NxTable.Cell>{row.downloadCount}</NxTable.Cell>
-                              </NxTable.Row>
-                          ))
-                        }
-                      </NxTable.Body>
-                    </NxTable>
-                  </div>
+                  <DownloadsByRepositoryName downloadsByRepositoryName={state.context.downloadsByRepositoryName}/>
                 </div>
                 <div className="insight-frontend-content-item">
+                  <DownloadsByUsername downloadsByUsername={state.context.downloadsByUsername}/>
 
-                  <div className="nx-scrollable nx-table-container">
-                    <NxTable className="nx-table">
-                      <NxTable.Head>
-                        <NxTable.Row>
-                          <NxTable.Cell>Username</NxTable.Cell>
-                          <NxTable.Cell>Downloads</NxTable.Cell>
-                        </NxTable.Row>
-                        <NxTable.Row isFilterHeader>
-                          <NxTable.Cell>
-                            <NxFilterInput placeholder="Type a name"
-                                           id="usernameFilter"
-                                           onChange={onFilterByUsername}
-                                           value={filterByUsernameValue}
-                            />
-                          </NxTable.Cell>
-                        </NxTable.Row>
-                      </NxTable.Head>
-                      <NxTable.Body emptyMessage="No data">
-                        {downloadsByUsername.map((row, index) =>
-                            <NxTable.Row key={index}>
-                              <NxTable.Cell>{row.identifier}</NxTable.Cell>
-                              <NxTable.Cell>{row.downloadCount}</NxTable.Cell>
-                            </NxTable.Row>
-                        )}
-                      </NxTable.Body>
-                    </NxTable>
-                  </div>
-
-                  <div className="nx-scrollable nx-table-container">
-                    <NxTable className="nx-table">
-                      <NxTable.Head>
-                        <NxTable.Row>
-                          <NxTable.Cell>IP address</NxTable.Cell>
-                          <NxTable.Cell>Downloads</NxTable.Cell>
-                        </NxTable.Row>
-                        <NxTable.Row isFilterHeader>
-                          <NxTable.Cell>
-                            <NxFilterInput placeholder="Type a name"
-                                           id="ipAddressFilter"
-                                           onChange={onFilterByIpAddress}
-                                           value={filterByIpAddressValue}
-                            />
-                          </NxTable.Cell>
-                        </NxTable.Row>
-                      </NxTable.Head>
-                      <NxTable.Body emptyMessage="No data">
-
-                        {downloadsByIpAddress.map((row, index) =>
-                            <NxTable.Row key={index}>
-                              <NxTable.Cell>{row.identifier}</NxTable.Cell>
-                              <NxTable.Cell>{row.downloadCount}</NxTable.Cell>
-                            </NxTable.Row>
-                        )}
-                      </NxTable.Body>
-                    </NxTable>
-                  </div>
+                  <DownloadsByIpAddress downloadsByIpAddress={state.context.downloadsByIpAddress}/>
 
                 </div>
               </div>

@@ -28,14 +28,16 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import com.google.common.base.Preconditions;
 import com.google.common.hash.HashCode;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * @since 3.35
+ * @deprecated please use the appropriate ingest methods on {@code StorageFacet} and {@code FluentBlobs}
  */
+@Deprecated
 @Named
 @Singleton
 public class HashAlgorithmHelper

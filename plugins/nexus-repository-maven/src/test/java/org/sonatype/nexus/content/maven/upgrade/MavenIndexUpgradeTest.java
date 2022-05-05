@@ -28,16 +28,17 @@ import org.sonatype.nexus.repository.content.ContentRepository;
 import org.sonatype.nexus.repository.content.store.ContentRepositoryData;
 import org.sonatype.nexus.testdb.DataSessionRule;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import com.google.common.collect.ImmutableMap;
 
 import static java.lang.Boolean.TRUE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
+import static org.sonatype.nexus.repository.search.index.SearchUpdateService.SEARCH_INDEX_OUTDATED;
 
 public class MavenIndexUpgradeTest
     extends TestSupport
@@ -55,8 +56,8 @@ public class MavenIndexUpgradeTest
 
   private final MavenIndexUpgrade underTest = new MavenIndexUpgrade() {
     @Override
-    public String version() {
-      return "1.0";
+    public Optional<String> version() {
+      return Optional.of("1.0");
     }
   };
 
@@ -128,7 +129,7 @@ public class MavenIndexUpgradeTest
     contentRepositoryDAO.createContentRepository(repo);
   }
 
-  private boolean isRepositoryMarked(ContentRepository repo) {
-    return TRUE.equals(repo.attributes().get("maven_search_index_outdated"));
+  private boolean isRepositoryMarked(final ContentRepository repo) {
+    return TRUE.equals(repo.attributes().get(SEARCH_INDEX_OUTDATED));
   }
 }

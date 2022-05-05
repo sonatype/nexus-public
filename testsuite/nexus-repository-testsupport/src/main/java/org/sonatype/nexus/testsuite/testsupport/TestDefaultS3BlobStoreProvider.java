@@ -12,9 +12,12 @@
  */
 package org.sonatype.nexus.testsuite.testsupport;
 
+import java.util.Comparator;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.annotation.Priority;
@@ -35,11 +38,20 @@ import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.common.thread.TcclBlock;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
 
-import org.testcontainers.containers.FixedHostPortGenericContainer;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest.KeyVersion;
+import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.KERNEL;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
 /**
@@ -47,7 +59,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
  */
 @FeatureFlag(name = "nexus.test.default.s3")
 @ManagedObject
-@ManagedLifecycle(phase = KERNEL)
+@ManagedLifecycle(phase = SERVICES)
 @Named
 @Singleton
 @Priority(Integer.MAX_VALUE)
@@ -69,7 +81,13 @@ public class TestDefaultS3BlobStoreProvider
 
   private String endpoint;
 
+  private final String prefix;
+
+  private final boolean forcePathStyle;
+
   private final ClassLoader classLoader;
+
+  private BlobStoreConfiguration blobStoreConfiguration;
 
   @Inject
   public TestDefaultS3BlobStoreProvider(
@@ -77,28 +95,38 @@ public class TestDefaultS3BlobStoreProvider
       @Nullable @Named("nexus.test.s3.bucket") final String bucket,
       @Nullable @Named("nexus.test.s3.region") final String region,
       @Nullable @Named("nexus.test.s3.accessKey") final String accessKey,
-      @Nullable @Named("nexus.test.s3.accessSecret") final String accessSecret)
+      @Nullable @Named("nexus.test.s3.accessSecret") final String accessSecret,
+      @Nullable @Named("nexus.test.s3.endpoint") final String endpoint,
+      @Nullable @Named("${nexus.test.s3.forcePathStyle:-true}") final Boolean forcePathStyle)
   {
-    this.useReal = false;
     this.classLoader = classLoader;
     this.s3Bucket = Optional.ofNullable(bucket).orElse(UUID.randomUUID().toString());
     this.region = Optional.ofNullable(region).orElse("us-east-1");
     this.accessKey = Optional.ofNullable(accessKey).orElse("admin");
     this.accessSecret = Optional.ofNullable(accessSecret).orElse("admin");
+    this.forcePathStyle = Optional.ofNullable(forcePathStyle).orElse(true);
+    this.endpoint = endpoint;
+    this.useReal = Objects.nonNull(endpoint);
+    this.prefix = UUID.randomUUID().toString();
   }
 
   @Override
   @Guarded(by = STARTED)
   public BlobStoreConfiguration get(final Supplier<BlobStoreConfiguration> configurationSupplier) {
-    return S3BlobStoreConfigurationBuilder.builder(configurationSupplier, BlobStoreManager.DEFAULT_BLOBSTORE_NAME)
-        .bucket(s3Bucket)
-        .region(region)
-        .endpoint(endpoint)
-        .expiration(0)
-        .accessKey(accessKey)
-        .accessSecret(accessSecret)
-        .forcePathStyle(true)
-        .build();
+    if (Objects.isNull(blobStoreConfiguration)) {
+      blobStoreConfiguration =
+          S3BlobStoreConfigurationBuilder.builder(configurationSupplier, BlobStoreManager.DEFAULT_BLOBSTORE_NAME)
+              .bucket(s3Bucket)
+              .region(region)
+              .endpoint(endpoint)
+              .prefix(prefix)
+              .expiration(0)
+              .accessKey(accessKey)
+              .accessSecret(accessSecret)
+              .forcePathStyle(forcePathStyle)
+              .build();
+    }
+    return blobStoreConfiguration;
   }
 
   @Override
@@ -111,9 +139,9 @@ public class TestDefaultS3BlobStoreProvider
     String mavenMockEndpoint = System.getProperty("mock.s3.service.endpoint");
     if (mavenMockEndpoint == null) {
       int s3MockPort = PortAllocator.nextFreePort();
-      try (TcclBlock block = TcclBlock.begin(classLoader)) {
-        s3MockContainer = new FixedHostPortGenericContainer("docker-all.repo.sonatype.com/adobe/s3mock")
-            .withFixedExposedPort(s3MockPort, 9090)
+      try (TcclBlock ignored = TcclBlock.begin(classLoader)) {
+        s3MockContainer = new GenericContainer<>("docker-all.repo.sonatype.com/adobe/s3mock")
+            .withExposedPorts(s3MockPort, 9090)
             .withEnv("initialBuckets", s3Bucket)
             .waitingFor(Wait.forListeningPort());
 
@@ -127,9 +155,36 @@ public class TestDefaultS3BlobStoreProvider
   }
 
   @Override
-  protected void doStop() throws Exception {
-    if (s3MockContainer != null && s3MockContainer.isRunning()) {
-      s3MockContainer.stop();
+  protected void doStop() {
+    if (Objects.isNull(endpoint)) {
+      if (s3MockContainer != null && s3MockContainer.isRunning()) {
+        s3MockContainer.stop();
+      }
+    }
+    else {
+      AWSStaticCredentialsProvider credentialsProvider =
+          new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, accessSecret));
+      AmazonS3 s3 = AmazonS3ClientBuilder.standard()
+          .withEndpointConfiguration(new EndpointConfiguration(endpoint, region))
+          .withCredentials(credentialsProvider)
+          .withPathStyleAccessEnabled(forcePathStyle)
+          .build();
+      ObjectListing bucketContent = s3.listObjects(s3Bucket, prefix);
+
+      boolean readIncomplete;
+      do {
+        readIncomplete = bucketContent.isTruncated();
+
+        s3.deleteObjects(new DeleteObjectsRequest(s3Bucket).withKeys(
+            bucketContent.getObjectSummaries().stream()
+                .map(S3ObjectSummary::getKey)
+                .sorted(Comparator.reverseOrder())
+                .map(KeyVersion::new)
+                .collect(Collectors.toList())
+        ));
+        bucketContent = s3.listNextBatchOfObjects(bucketContent);
+      }
+      while (readIncomplete);
     }
   }
 }

@@ -45,10 +45,10 @@ import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.startsWith;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -287,7 +287,7 @@ public class DefaultOrientIntegrityCheckStrategyTest
 
     orientDefaultIntegrityCheckStrategy.check(repository, blobStore, cancel, CHECK_FAILED_HANDLER);
 
-    verify(logger).info(startsWith("Checking integrity of assets"), anyString(), anyString());
+    verify(logger).info(startsWith("Checking integrity of assets"), any(), anyString());
 
     // if cancel is invoked, we'll never see the debug line
     if (!cancel.get()) {

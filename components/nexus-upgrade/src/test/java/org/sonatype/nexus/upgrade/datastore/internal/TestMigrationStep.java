@@ -14,6 +14,7 @@ package org.sonatype.nexus.upgrade.datastore.internal;
 
 import java.sql.Connection;
 import java.sql.Statement;
+import java.util.Optional;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
@@ -23,8 +24,8 @@ public class TestMigrationStep
     implements DatabaseMigrationStep
 {
   @Override
-  public String version() {
-    return "1.0";
+  public Optional<String> version() {
+    return Optional.of("1.0");
   }
 
   @Override

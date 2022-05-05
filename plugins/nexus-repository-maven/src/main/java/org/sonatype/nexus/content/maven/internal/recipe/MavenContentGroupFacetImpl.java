@@ -33,6 +33,7 @@ import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
+import org.sonatype.nexus.repository.cache.RepositoryCacheInvalidationService;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetEvent;
@@ -93,9 +94,10 @@ public class MavenContentGroupFacetImpl
   public MavenContentGroupFacetImpl(
       final RepositoryManager repositoryManager,
       final ConstraintViolationFactory constraintViolationFactory,
-      @Named(GroupType.NAME) final Type groupType)
+      @Named(GroupType.NAME) final Type groupType,
+      RepositoryCacheInvalidationService repositoryCacheInvalidationService)
   {
-    super(repositoryManager, constraintViolationFactory, groupType);
+    super(repositoryManager, constraintViolationFactory, groupType, repositoryCacheInvalidationService);
 
     repositoryMetadataMerger = new RepositoryMetadataMerger();
     archetypeCatalogMerger = new ArchetypeCatalogMerger();

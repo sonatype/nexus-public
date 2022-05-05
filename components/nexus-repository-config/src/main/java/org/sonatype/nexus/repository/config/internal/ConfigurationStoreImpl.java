@@ -12,7 +12,9 @@
  */
 package org.sonatype.nexus.repository.config.internal;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -28,8 +30,11 @@ import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.common.collect.ImmutableList;
+import org.apache.commons.collections.CollectionUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.emptyList;
+import static java.util.Optional.ofNullable;
 
 /**
  * MyBatis {@link ConfigurationStore} implementation.
@@ -83,6 +88,15 @@ public class ConfigurationStoreImpl
   public void delete(final Configuration configuration) {
     doDelete(configuration);
     postDeletedEvent(configuration);
+  }
+
+  @Transactional
+  @Override
+  public Collection<Configuration> readByNames(final Set<String> repositoryNames) {
+    return ofNullable(repositoryNames)
+        .filter(CollectionUtils::isNotEmpty)
+        .map(names -> dao().readByNames(names))
+        .orElse(emptyList());
   }
 
   @Transactional

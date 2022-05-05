@@ -60,6 +60,16 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
           },
           {
             xtype: 'fieldcontainer',
+            fieldLabel: NX.I18n.get('Repository_Facet_Docker_Subdomain_FieldLabel'),
+            helpText: NX.I18n.get('Repository_Facet_Docker_Subdomain_HelpText'),
+            layout: 'hbox',
+            items: [
+              me.createCheckbox('subdomain'),
+              me.createSubdomain('subdomain')
+            ]
+          },
+          {
+            xtype: 'fieldcontainer',
             fieldLabel: NX.I18n.get('Repository_Facet_DockerConnectorFacet_HttpPort_FieldLabel'),
             helpText: NX.I18n.get('Repository_Facet_DockerConnectorFacet_HttpPort_HelpText'),
             layout: 'hbox',
@@ -176,13 +186,39 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
       allowExponential: false,
       allowBlank: false,
       disabled: true,
-      width: 565,
+      width: 560,
       style: {
         marginLeft: '5px'
       },
       listeners: {
         /**
          * Check the checkbox if port has value.
+         */
+        change: function() {
+          var checkbox = this.up('form').down('#' + type + 'Enabled');
+          if (this.getValue() && !checkbox.getValue()) {
+            checkbox.setValue(true);
+            checkbox.resetOriginalValue();
+          }
+        }
+      }
+    };
+  },
+
+  createSubdomain: function(type) {
+    return {
+      xtype: 'textfield',
+      name: 'attributes.docker.subdomain',
+      itemId: type + 'Port',
+      allowBlank: false,
+      disabled: true,
+      width: 560,
+      style: {
+        marginLeft: '5px'
+      },
+      listeners: {
+        /**
+         * Check the checkbox if subdomain has value.
          */
         change: function() {
           var checkbox = this.up('form').down('#' + type + 'Enabled');

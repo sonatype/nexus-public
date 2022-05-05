@@ -41,6 +41,15 @@ public abstract class TestSystemSupport
     await().atMost(5, SECONDS).until(eventManager::isCalmPeriod);
   }
 
+  @Override
+  public void before() {
+    doBefore();
+  }
+
+  protected void doBefore() {
+    // Do nothing by default
+  }
+
   protected abstract void doAfter();
 
   @Override

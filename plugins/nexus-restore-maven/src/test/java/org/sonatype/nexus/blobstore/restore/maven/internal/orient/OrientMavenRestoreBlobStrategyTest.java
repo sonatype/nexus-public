@@ -60,9 +60,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -170,8 +170,8 @@ public class OrientMavenRestoreBlobStrategyTest
     when(storageFacet.blobStore()).thenReturn(blobStore);
 
     when(storageTx.findBucket(repository)).thenReturn(bucket);
-    when(storageTx.findComponents(any(Query.class), any(Iterable.class))).thenReturn(ImmutableList.of(component));
-    when(storageTx.findAssetWithProperty(eq(P_NAME), anyString(), any(Bucket.class))).thenReturn(asset);
+    when(storageTx.findComponents(nullable(Query.class), nullable(Iterable.class))).thenReturn(ImmutableList.of(component));
+    when(storageTx.findAssetWithProperty(eq(P_NAME), nullable(String.class), nullable(Bucket.class))).thenReturn(asset);
 
     when(component.getEntityMetadata()).thenReturn(entityMetadata);
 
@@ -197,7 +197,7 @@ public class OrientMavenRestoreBlobStrategyTest
     when(blobStoreConfiguration.getName()).thenReturn(TEST_BLOB_STORE_NAME);
 
     when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
-    when(blobStore.getBlobAttributes(any(BlobId.class))).thenReturn(blobAttributes);
+    when(blobStore.getBlobAttributes(nullable(BlobId.class))).thenReturn(blobAttributes);
 
     when(blobAttributes.isDeleted()).thenReturn(false);
 

@@ -21,23 +21,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Nullable;
-import javax.inject.Named;
-import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.repository.content.search.upgrade.SearchIndexUpgrade;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.sonatype.nexus.repository.maven.internal.tasks.MavenSearchIndexVersionManager.MAVEN_SEARCH_INDEX_OUTDATED;
+import static org.sonatype.nexus.repository.search.index.SearchUpdateService.SEARCH_INDEX_OUTDATED;
 
 /**
  * Upgrade step that marks existing maven repositories (at the time of the upgrade) as needing to be re-indexed.
  *
- * @since 3.next
+ * @deprecated New database migrations should use {@link SearchIndexUpgrade}
+ *
+ * @since 3.38
  */
+@Deprecated
 public abstract class MavenIndexUpgrade
     extends ComponentSupport
     implements DatabaseMigrationStep
@@ -54,9 +56,6 @@ public abstract class MavenIndexUpgrade
   public static final String ID = "id";
 
   @Override
-  public abstract String version();
-
-  @Override
   public void migrate(final Connection connection) throws Exception {
     log.info("Searching for maven repositories that need a search index update");
 
@@ -68,7 +67,7 @@ public abstract class MavenIndexUpgrade
       if (attributes != null) {
         // add the outdated flag to the existing attributes
         ObjectNode json = (ObjectNode) objectMapper.readTree(attributes);
-        json.put(MAVEN_SEARCH_INDEX_OUTDATED, true);
+        json.put(SEARCH_INDEX_OUTDATED, true);
         setRepositoryAttributes(connection, id, objectMapper.writeValueAsBytes(json));
       }
     }

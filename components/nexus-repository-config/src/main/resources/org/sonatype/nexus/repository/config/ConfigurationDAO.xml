@@ -47,6 +47,17 @@
     SELECT * FROM repository WHERE name = #{value};
   </select>
 
+  <select id="readByNames" resultType="ConfigurationData">
+    SELECT * FROM repository
+    <if test="collection != null">
+      <foreach item="repositoryName" index="index" collection="collection"
+               open="WHERE (" separator=" OR " close=")">
+        name LIKE #{repositoryName}
+      </foreach>
+    </if>
+  </select>
+
+
   <update id="update" parameterType="ConfigurationData" useGeneratedKeys="true" keyProperty="id">
     UPDATE repository SET
         <!-- recipe_name is not considered updateable -->

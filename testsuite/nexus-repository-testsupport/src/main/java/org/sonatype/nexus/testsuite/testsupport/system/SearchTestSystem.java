@@ -36,31 +36,17 @@ import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-@Named
-@Singleton
-public class SearchTestSystem
+public interface SearchTestSystem
 {
-  @Inject
-  public ElasticSearchIndexService indexService;
-
-  @Inject
-  public ElasticSearchQueryService elasticSearchQueryService;
-
-  @Inject
-  public EventManager eventManager;
 
   /**
    * Waits for indexing to finish and makes sure any updates are available to search.
    *
    * General flow is component/asset events -> bulk index requests -> search indexing.
    */
-  public void waitForSearch() {
-    await().atMost(30, TimeUnit.SECONDS).until(eventManager::isCalmPeriod);
-    indexService.flush(false); // no need for full fsync here
-    await().atMost(30, TimeUnit.SECONDS).until(indexService::isCalmPeriod);
-  }
+  void waitForSearch();
 
-  public void verifyComponentExists(
+  default void verifyComponentExists(
       final WebTarget nexusSearchWebTarget,
       final String repositoryName,
       final Optional<String> group,
@@ -70,7 +56,7 @@ public class SearchTestSystem
     assertThat(verifyComponentExistsByGAV(nexusSearchWebTarget, repositoryName, group, name, version), is(1));
   }
 
-  public void verifyComponentDoesNotExist(
+  default void verifyComponentDoesNotExist(
       final WebTarget nexusSearchWebTarget,
       final String repositoryName,
       final Optional<String> group,
@@ -80,14 +66,14 @@ public class SearchTestSystem
     assertThat(verifyComponentExistsByGAV(nexusSearchWebTarget, repositoryName, group, name, version), is(0));
   }
 
-  public void verifyComponentExists(
+  default void verifyComponentExists(
       final WebTarget nexusSearchWebTarget,
       final QueryParam queryParam)
   {
     verifyComponentExists(nexusSearchWebTarget, Lists.newArrayList(queryParam));
   }
 
-  public void verifyComponentExists(
+  default void verifyComponentExists(
       final WebTarget nexusSearchWebTarget,
       final Collection<QueryParam> queryParams)
   {
@@ -95,7 +81,7 @@ public class SearchTestSystem
     assertThat(items.size(), is(1));
   }
 
-  private int verifyComponentExistsByGAV(
+  default int verifyComponentExistsByGAV(
       final WebTarget nexusSearchWebTarget,
       final String repositoryName,
       final Optional<String> group,
@@ -113,7 +99,8 @@ public class SearchTestSystem
     return items.size();
   }
 
-  public static class QueryParam {
+  class QueryParam
+  {
     public final String name;
     public final String value;
 
@@ -123,11 +110,7 @@ public class SearchTestSystem
     }
   }
 
-  public ElasticSearchQueryService queryService() {
-    return elasticSearchQueryService;
-  }
-
-  private List<Map<String, Object>> searchForComponentByParams(
+  default List<Map<String, Object>> searchForComponentByParams(
       final WebTarget nexusSearchUrl,
       final Collection<QueryParam> queryParams)
   {
@@ -148,7 +131,7 @@ public class SearchTestSystem
   }
 
   @SuppressWarnings("unchecked")
-  public List<Map<String, Object>> searchByTag(
+  default List<Map<String, Object>> searchByTag(
       final WebTarget nexusSearchUrl,
       final String repository,
       final String tag)

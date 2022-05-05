@@ -112,6 +112,9 @@ export default Utils.buildFormMachine({
             else if (e.id === 'HelperBean.expression') {
               errors.expression = e.message;
             }
+            else if (e.id === 'name') {
+              errors.name = e.message;
+            }
             else {
               console.error('Unhandled backend error', e);
             }

@@ -244,11 +244,26 @@ public class ElasticSearchFacetImpl
   @Transactional
   protected String json(@Nullable final EntityId componentId) {
     if (componentId != null) {
-      StorageTx tx = UnitOfWork.currentTx();
-      Component component = componentEntityAdapter.read(tx.getDb(), componentId);
-      if (component != null) {
-        Iterable<Asset> assets = tx.browseAssets(component);
-        return producer(component).getMetadata(component, assets, repositoryMetadata);
+      Component component = null;
+      Iterable<Asset> assets = null;
+      try {
+        StorageTx tx = UnitOfWork.currentTx();
+        component = componentEntityAdapter.read(tx.getDb(), componentId);
+        if (component != null) {
+          assets = tx.browseAssets(component);
+          return producer(component).getMetadata(component, assets, repositoryMetadata);
+        }
+      }
+      catch (Exception e) {
+        Object loggedComponent = component == null ? componentId : component;
+
+        if (log.isDebugEnabled()) {
+          log.warn("Failed to create JSON document for component: {} assets: {}", loggedComponent, assets, e);
+        }
+        else {
+          log.warn("Failed to create JSON document for component: {} assets: {} error: {}", loggedComponent, assets,
+              e.getMessage());
+        }
       }
     }
     return null;

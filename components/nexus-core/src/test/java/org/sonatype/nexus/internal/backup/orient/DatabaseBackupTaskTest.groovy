@@ -19,6 +19,10 @@ import org.sonatype.nexus.orient.freeze.DatabaseFreezeService
 import org.sonatype.nexus.orient.freeze.FreezeRequest
 import org.sonatype.nexus.orient.freeze.FreezeRequest.InitiatorType
 import org.sonatype.nexus.scheduling.TaskConfiguration
+import org.sonatype.nexus.scheduling.TaskExport.CurrentStateData
+import org.sonatype.nexus.scheduling.TaskExport.TaskInfoData
+import org.sonatype.nexus.scheduling.TaskScheduler
+import org.sonatype.nexus.scheduling.TaskState
 
 import spock.lang.Specification
 
@@ -31,13 +35,15 @@ class DatabaseBackupTaskTest
 
   def databaseBackup = Mock(DatabaseBackup)
   def freezeService = Mock(DatabaseFreezeService)
+  def taskScheduler = Mock(TaskScheduler)
   def mockRequest = new FreezeRequest(InitiatorType.SYSTEM, "DatabaseBackupTaskTest")
 
   def 'task should execute properly'() {
-    def dbBackupTask = new DatabaseBackupTask(databaseBackup, freezeService)
+    def dbBackupTask = new DatabaseBackupTask(databaseBackup, freezeService, taskScheduler)
     dbBackupTask.configure(taskConfiguration())
     freezeService.requestFreeze(_, _) >> mockRequest
     freezeService.releaseRequest(mockRequest) >> true
+    taskScheduler.listsTasks() >> []
 
     when: 'the task is executed with good values'
       dbBackupTask.location = 'target'
@@ -49,10 +55,11 @@ class DatabaseBackupTaskTest
   }
 
   def 'task should fail somewhat gracefully if the file cannot be created'() {
-    def dbBackupTask = new DatabaseBackupTask(databaseBackup, freezeService)
+    def dbBackupTask = new DatabaseBackupTask(databaseBackup, freezeService, taskScheduler)
     dbBackupTask.configure(taskConfiguration())
     freezeService.requestFreeze(_, _) >> mockRequest
     freezeService.releaseRequest(mockRequest) >> true
+    taskScheduler.listsTasks() >> []
 
     when: 'the task is executed with good values'
       dbBackupTask.location = 'target'
@@ -67,10 +74,11 @@ class DatabaseBackupTaskTest
   }
 
   def 'task should try to backup all files when told to do so'() {
-    def dbBackupTask = new DatabaseBackupTask(databaseBackup, freezeService)
+    def dbBackupTask = new DatabaseBackupTask(databaseBackup, freezeService, taskScheduler)
     dbBackupTask.configure(taskConfiguration())
     freezeService.requestFreeze(_, _) >> mockRequest
     freezeService.releaseRequest(mockRequest) >> true
+    taskScheduler.listsTasks() >> []
 
     when: 'the task is executed with good values'
       dbBackupTask.location = 'target'
@@ -84,10 +92,11 @@ class DatabaseBackupTaskTest
   }
 
   def 'task should be okay if one file fails, but others can work'() {
-    def dbBackupTask = new DatabaseBackupTask(databaseBackup, freezeService)
+    def dbBackupTask = new DatabaseBackupTask(databaseBackup, freezeService, taskScheduler)
     dbBackupTask.configure(taskConfiguration())
     freezeService.requestFreeze(_, _) >> mockRequest
     freezeService.releaseRequest(mockRequest) >> true
+    taskScheduler.listsTasks() >> []
 
     when: 'the task is executed with good values'
       dbBackupTask.location = 'target'
@@ -104,10 +113,11 @@ class DatabaseBackupTaskTest
   }
 
   def 'failure to release freeze is treated as a task failure'() {
-    def dbBackupTask = new DatabaseBackupTask(databaseBackup, freezeService)
+    def dbBackupTask = new DatabaseBackupTask(databaseBackup, freezeService, taskScheduler)
     dbBackupTask.configure(taskConfiguration())
     freezeService.requestFreeze(_, _) >> mockRequest
     freezeService.releaseRequest(mockRequest) >> false
+    taskScheduler.listsTasks() >> []
 
     when: 'the task is executed'
       dbBackupTask.location = 'target'
@@ -118,6 +128,33 @@ class DatabaseBackupTaskTest
       1 * databaseBackup.fullBackup('target', 'test', _) >> dumbBackupJob
       MultipleFailuresException exception = thrown()
       exception.getFailures().get(0).getMessage().startsWith('failed to automatically release read-only state')
+  }
+
+  def 'a running reconciliation task stops the db backup'() {
+    def dbBackupTask = new DatabaseBackupTask(databaseBackup, freezeService, taskScheduler)
+    dbBackupTask.configure(taskConfiguration())
+    freezeService.requestFreeze(_, _) >> mockRequest
+    freezeService.releaseRequest(mockRequest) >> true
+
+
+    def currentState = Mock(CurrentStateData)
+    currentState.getState() >> TaskState.RUNNING
+
+    def taskInfoData = Mock(TaskInfoData)
+    taskInfoData.getCurrentState() >> currentState
+    taskInfoData.getTypeId() >> "blobstore.rebuildComponentDB"
+
+    taskScheduler.listsTasks() >> [
+        taskInfoData
+    ]
+
+    when: 'the task is executed with good values'
+      dbBackupTask.location = 'target'
+      dbBackupTask.execute()
+
+    then: 'the database backup is stopped'
+      0 * freezeService.requestFreeze(_, _)
+      thrown(RuntimeException)
   }
 
   def dumbBackupJob = new Callable<Void>() {

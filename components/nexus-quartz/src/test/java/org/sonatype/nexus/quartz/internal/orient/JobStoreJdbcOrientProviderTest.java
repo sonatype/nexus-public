@@ -29,7 +29,8 @@ public class JobStoreJdbcOrientProviderTest
 
   @Override
   protected JobStore createJobStore(String name) {
-    jobStore = new JobStoreJdbcProvider(new ConfigOrientConnectionProvider(database.getInstanceProvider())).get();
+    jobStore = new JobStoreJdbcProvider(new ConfigOrientConnectionProvider(database.getInstanceProvider()),
+        new SimpleNodeAccess(), false).get();
     jobStore.setInstanceId("SINGLE_NODE_TEST");
     jobStore.setInstanceName(name);
 

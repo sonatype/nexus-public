@@ -17,8 +17,6 @@ import {Detail, Master, MasterDetail} from '@sonatype/nexus-ui-plugin';
 import RepositoriesList from './RepositoriesList';
 import RepositoriesForm from './RepositoriesForm';
 
-//import './BlobStores.scss';
-
 export default function Repositories() {
   return <MasterDetail path="admin/repository/repositories-new">
     <Master>

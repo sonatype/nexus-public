@@ -67,6 +67,6 @@ public abstract class SearchResultComponentGeneratorSupport
       }
     }
 
-    return null;
+    return repositoryName;
   }
 }

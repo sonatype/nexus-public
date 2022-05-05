@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.inject.Inject;
@@ -42,10 +41,9 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.common.annotations.VisibleForTesting;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.Long.parseLong;
 import static java.time.format.DateTimeFormatter.ofPattern;
-import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetId;
+import static org.sonatype.nexus.repository.content.store.InternalIds.toExternalId;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.ASSETS;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.ATTRIBUTES;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.CONTENT_TYPE;
@@ -104,7 +102,7 @@ public class DefaultSearchDocumentProducer
     List<Map<String, Object>> assetDocs = new ArrayList<>();
     for (Asset asset : assets) {
       Map<String, Object> assetDoc = new HashMap<>();
-      assetDoc.put(ID, internalAssetId(asset));
+      assetDoc.put(ID, toExternalId(internalAssetId(asset)).getValue());
       assetDoc.put(NAME, asset.path());
       Map<String, Object> attributes = new HashMap<>(asset.attributes().backing());
       assetDoc.put(CONTENT_TYPE, "");

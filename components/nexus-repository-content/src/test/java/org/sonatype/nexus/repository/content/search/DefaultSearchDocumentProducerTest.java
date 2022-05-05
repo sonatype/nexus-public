@@ -27,6 +27,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentAssetImpl;
 import org.sonatype.nexus.repository.content.store.AssetData;
+import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.search.index.SearchConstants;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -45,7 +46,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -115,6 +116,7 @@ public class DefaultSearchDocumentProducerTest
     assertThat(jsonAssets.size(), equalTo(1));
     JsonNode jsonAsset = jsonAssets.get(0);
     assertValue(jsonAsset, SearchConstants.NAME, NAME);
+    assertThat(jsonAsset.get("id").asText(), is(InternalIds.toExternalId(1).getValue()));
 
     verify(searchDocumentExtension).getFields(any(FluentComponent.class));
   }

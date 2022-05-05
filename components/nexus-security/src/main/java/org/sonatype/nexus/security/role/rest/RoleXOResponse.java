@@ -35,6 +35,9 @@ public class RoleXOResponse
   @ApiModelProperty(NexusSecurityApiConstants.ROLE_DESCRIPTION_DESCRIPTION)
   private String description;
 
+  @ApiModelProperty(NexusSecurityApiConstants.ROLE_READONLY_DESCRIPTION)
+  private boolean readOnly;
+
   @ApiModelProperty(NexusSecurityApiConstants.ROLE_PRIVILEGES_DESCRIPTION)
   private Set<String> privileges;
 
@@ -65,6 +68,10 @@ public class RoleXOResponse
     this.description = description;
   }
 
+  public void setReadOnly(final boolean readOnly) {
+    this.readOnly = readOnly;
+  }
+
   public String getSource() {
     return source;
   }
@@ -89,10 +96,14 @@ public class RoleXOResponse
     return description;
   }
 
+  public Boolean getReadOnly() {
+    return readOnly;
+  }
+
   @Override
   public String toString() {
-    return "id: " + id + " name: " + name + " source: " + source + " description: " + description + " roles: " + roles
-        + " privileges: " + privileges;
+    return "id: " + id + " name: " + name + " source: " + source + " description: " + description
+        + " readOnly: " + readOnly + " roles: " + roles + " privileges: " + privileges;
   }
 
   @Override
@@ -121,6 +132,7 @@ public class RoleXOResponse
     role.setName(input.getName() != null ? input.getName() : input.getRoleId());
     role.setPrivileges(input.getPrivileges());
     role.setRoles(input.getRoles());
+    role.setReadOnly(input.isReadOnly());
 
     return role;
   }

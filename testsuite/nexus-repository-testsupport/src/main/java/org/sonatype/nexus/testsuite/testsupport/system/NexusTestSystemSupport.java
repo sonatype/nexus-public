@@ -72,46 +72,79 @@ public abstract class NexusTestSystemSupport<R extends RepositoryTestSystem, C e
     this.capabilities = capabilities;
   }
 
+  /**
+   * Test fixture for managing BlobStores
+   */
   public BlobStoreRule blobStores() {
     return blobstores;
   }
 
+  /**
+   * Test fixture for managing Capabilities
+   */
   public C capabilities() {
     return capabilities;
   }
 
+  /**
+   * Test fixture for managing Cleanup Policies
+   */
   public CleanupTestSystem cleanup() {
     return cleanup;
   }
 
+  /**
+   * Test helpers for verifying Components and Assets in database agnostic ways.
+   */
   public ComponentAssetTestHelper components() {
     return components;
   }
 
+  /**
+   * Test fixture of managing Logger settings
+   */
   public LogTestSystem logs() {
     return logs;
   }
 
+  /**
+   * Test fixture of managing Repositories
+   */
   public R repositories() {
     return repositories;
   }
 
+  /**
+   * Test helpers for making HTTP/REST requests to Nexus
+   */
   public RestTestHelper rest() {
     return restTestHelper;
   }
 
+  /**
+   * Test helpers for verifying ElasticSearch
+   */
   public SearchTestSystem search() {
     return searchTestSystem;
   }
 
+  /**
+   * Test fixture for managing the security subsystem (privileges, roles, users, etc.)
+   */
   public SecurityRule security() {
     return security;
   }
 
+  /**
+   * Test fixture for managing the security realms
+   */
   public SecurityRealmRule securityRealms() {
     return securityRealms;
   }
 
+  /**
+   * Test fixture for managing the tasks
+   */
   public TaskTestSystem tasks() {
     return tasks;
   }
@@ -123,6 +156,7 @@ public abstract class NexusTestSystemSupport<R extends RepositoryTestSystem, C e
   @Override
   protected void before() throws Throwable {
     securityRealms.before();
+    repositories.before();
   }
 
   @Override

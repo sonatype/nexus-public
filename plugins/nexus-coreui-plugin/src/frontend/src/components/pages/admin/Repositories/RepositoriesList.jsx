@@ -38,12 +38,7 @@ import {
   NxTooltip,
 } from '@sonatype/react-shared-components';
 
-import {
-  faChevronRight,
-  faCopy,
-  faDatabase,
-  faInfoCircle
-} from '@fortawesome/free-solid-svg-icons';
+import {faCopy, faDatabase} from '@fortawesome/free-solid-svg-icons';
 
 import RepositoryStatus from './RepositoryStatus';
 import RepositoriesListMachine from './RepositoriesListMachine';
@@ -112,7 +107,7 @@ export default function RepositoriesList({onCreate, onEdit, copyUrl = doCopyUrl}
               <NxTableCell onClick={sortByFormat} isSortable sortDir={formatSortDir}>{COLUMNS.FORMAT}</NxTableCell>
               <NxTableCell onClick={sortByStatus} isSortable sortDir={statusSortDir}>{COLUMNS.STATUS}</NxTableCell>
               <NxTableCell>{COLUMNS.URL}</NxTableCell>
-              <NxTableCell hasIcon/>
+              <NxTableCell chevron/>
             </NxTableRow>
           </NxTableHead>
           <NxTableBody isLoading={isLoading} error={error} emptyMessage={REPOSITORIES.LIST.EMPTY_LIST}>
@@ -126,22 +121,23 @@ export default function RepositoriesList({onCreate, onEdit, copyUrl = doCopyUrl}
                         <RepositoryStatus status={status}/>
                       </NxTableCell>
                       <NxTableCell>
-                        <NxButton variant="icon-only" onClick={e => copyUrl(e, url)} title={"Copy URL to Clipboard"}>
+                        <NxButton
+                            variant="icon-only"
+                            onClick={e => copyUrl(e, url)}
+                            title={REPOSITORIES.LIST.COPY_URL_TITLE}
+                        >
                           <NxFontAwesomeIcon icon={faCopy}/>
                         </NxButton>
                         {url}
                       </NxTableCell>
-                      <NxTableCell hasIcon><NxFontAwesomeIcon icon={faChevronRight}/></NxTableCell>
+                      <NxTableCell chevron/>
                     </NxTableRow>
                 ))}
           </NxTableBody>
         </NxTable>
       </Section>
 
-      <HelpTile>
-        <h3><NxFontAwesomeIcon icon={faInfoCircle}/><span>{REPOSITORIES.LIST.HELP.TITLE}</span></h3>
-        <p dangerouslySetInnerHTML={{__html: REPOSITORIES.LIST.HELP.TEXT}}/>
-      </HelpTile>
+      <HelpTile header={REPOSITORIES.LIST.HELP.TITLE} body={REPOSITORIES.LIST.HELP.TEXT}/>
     </ContentBody>
   </Page>;
 }

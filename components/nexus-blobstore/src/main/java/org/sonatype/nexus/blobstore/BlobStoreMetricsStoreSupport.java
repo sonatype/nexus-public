@@ -24,6 +24,7 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.api.OperationMetrics;
 import org.sonatype.nexus.blobstore.api.OperationType;
+import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsService;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.property.ImplicitSourcePropertiesFile;
@@ -45,6 +46,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 
 public abstract class BlobStoreMetricsStoreSupport<T extends ImplicitSourcePropertiesFile>
     extends StateGuardLifecycleSupport
+    implements BlobStoreMetricsService
 {
   private static final int METRICS_LOADING_DELAY_MILLIS = 200;
 
@@ -77,8 +79,6 @@ public abstract class BlobStoreMetricsStoreSupport<T extends ImplicitSourcePrope
 
   protected BlobStore blobStore;
 
-  protected PeriodicJob quotaCheckingJob;
-
   protected final NodeAccess nodeAccess;
 
   protected T properties;
@@ -87,22 +87,13 @@ public abstract class BlobStoreMetricsStoreSupport<T extends ImplicitSourcePrope
 
   protected PeriodicJob metricsWritingJob;
 
-  protected final BlobStoreQuotaService quotaService;
-
-  protected final int quotaCheckInterval;
-
   private Map<OperationType, OperationMetrics> operationMetrics;
 
   public BlobStoreMetricsStoreSupport(final NodeAccess nodeAccess,
-                                      final PeriodicJobService jobService,
-                                      final BlobStoreQuotaService quotaService,
-                                      final int quotaCheckInterval)
+                                      final PeriodicJobService jobService)
   {
     this.nodeAccess = checkNotNull(nodeAccess);
     this.jobService = checkNotNull(jobService);
-    this.quotaService = checkNotNull(quotaService);
-    checkArgument(quotaCheckInterval > 0);
-    this.quotaCheckInterval = quotaCheckInterval;
   }
 
   @Override
@@ -139,8 +130,6 @@ public abstract class BlobStoreMetricsStoreSupport<T extends ImplicitSourcePrope
         log.error("Cannot write blob store metrics", e);
       }
     }, METRICS_FLUSH_PERIOD_SECONDS);
-
-    quotaCheckingJob = jobService.schedule(createQuotaCheckJob(blobStore, quotaService, log), quotaCheckInterval);
   }
 
   @Override
@@ -148,8 +137,6 @@ public abstract class BlobStoreMetricsStoreSupport<T extends ImplicitSourcePrope
     blobStore = null;
     metricsWritingJob.cancel();
     metricsWritingJob = null;
-    quotaCheckingJob.cancel();
-    quotaCheckingJob = null;
     jobService.stopUsing();
 
     blobCount = null;
@@ -205,12 +192,14 @@ public abstract class BlobStoreMetricsStoreSupport<T extends ImplicitSourcePrope
     return blobStoreMetrics;
   }
 
+  @Override
   public void setBlobStore(final BlobStore blobStore) {
     checkState(this.blobStore == null, "Do not initialize twice");
     checkNotNull(blobStore);
     this.blobStore = blobStore;
   }
 
+  @Override
   @Guarded(by = STARTED)
   public BlobStoreMetrics getMetrics() {
     try {
@@ -222,10 +211,12 @@ public abstract class BlobStoreMetricsStoreSupport<T extends ImplicitSourcePrope
     }
   }
 
+  @Override
   public Map<OperationType, OperationMetrics> getOperationMetrics() {
     return operationMetrics;
   }
 
+  @Override
   @Guarded(by = STARTED)
   public void recordAddition(final long size) {
     blobCount.incrementAndGet();
@@ -233,6 +224,7 @@ public abstract class BlobStoreMetricsStoreSupport<T extends ImplicitSourcePrope
     dirty.set(true);
   }
 
+  @Override
   @Guarded(by = STARTED)
   public void recordDeletion(final long size) {
     blobCount.decrementAndGet();
@@ -295,5 +287,12 @@ public abstract class BlobStoreMetricsStoreSupport<T extends ImplicitSourcePrope
     }
   }
 
+  @Override
+  public void clearOperationMetrics() {
+    getOperationMetricsDelta().values().forEach(OperationMetrics::clear);
+    getOperationMetrics().values().forEach(OperationMetrics::clear);
+  }
+
+  @Override
   public abstract void remove();
 }

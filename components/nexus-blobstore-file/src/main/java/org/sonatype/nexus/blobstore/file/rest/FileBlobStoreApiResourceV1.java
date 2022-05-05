@@ -33,7 +33,7 @@ import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 public class FileBlobStoreApiResourceV1
   extends FileBlobStoreResource
 {
-  public static final String RESOURCE_URI = V1_API_PREFIX + "/blobstores/file";
+  public static final String RESOURCE_URI = V1_API_PREFIX + "/blobstores";
 
   @Inject
   public FileBlobStoreApiResourceV1(final BlobStoreManager blobStoreManager) {

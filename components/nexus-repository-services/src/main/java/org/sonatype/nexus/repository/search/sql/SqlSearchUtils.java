@@ -14,23 +14,26 @@ package org.sonatype.nexus.repository.search.sql;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.repository.search.index.SearchConstants;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
 import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryBuilder.queryBuilder;
 
 /**
  * Translates SearchFilters to a {@link SqlSearchQueryBuilder} containing a condition format string and the search
  * values.
  *
- * @since 3.next
+ * @since 3.38
  */
 @Named
 @Singleton
@@ -55,6 +58,7 @@ public class SqlSearchUtils
     searchFilters.stream()
         .filter(searchFilter -> !isBlank(searchFilter.getValue()))
         .filter(filter -> !FORMAT.equalsIgnoreCase(filter.getProperty()))
+        .filter(filter -> !SearchConstants.REPOSITORY_NAME.equalsIgnoreCase(filter.getProperty()))
         .forEach(searchFilter -> {
           SqlSearchQueryContribution searchContribution = searchContributions
               .getOrDefault(getContributionKey(searchFilter), defaultSqlSearchQueryContribution);
@@ -64,6 +68,20 @@ public class SqlSearchUtils
     log.debug("Query: {}", queryBuilder);
 
     return queryBuilder;
+  }
+
+  public Optional<String> getFormat(final List<SearchFilter> searchFilters) {
+    return searchFilters.stream()
+        .filter(searchFilter -> !isBlank(searchFilter.getValue()))
+        .filter(filter -> FORMAT.equalsIgnoreCase(filter.getProperty()))
+        .findFirst()
+        .map(SearchFilter::getValue);
+  }
+
+  public Optional<SearchFilter> getRepositoryFilter(final List<SearchFilter> filters) {
+    return filters.stream()
+        .filter(searchFilter -> REPOSITORY_NAME.equals(searchFilter.getProperty()))
+        .findFirst();
   }
 
   private String getContributionKey(final SearchFilter searchFilter) {

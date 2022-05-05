@@ -700,7 +700,9 @@ Ext.define('NX.coreui.controller.Repositories', {
             var repoUrl = model.get('url');
 
             if (format === 'nuget') {
-              var nugetVersion = model.get('attributes')['nugetProxy']['nugetVersion'];
+              var nugetProxy = model.get('attributes')['nugetProxy'] || {};
+              var nugetVersion = nugetProxy['nugetVersion'];
+
               if (nugetVersion === 'V3' && !Ext.String.endsWith(repoUrl, 'index.json')) {
                 repoUrl += 'index.json';
                 model.set('url', repoUrl);

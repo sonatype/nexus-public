@@ -26,12 +26,12 @@ import org.sonatype.nexus.repository.view.payloads.StringPayload
 import com.google.common.net.HttpHeaders
 import org.junit.Before
 import org.junit.Test
-import org.mockito.Matchers
 import org.mockito.Mock
 
 import static org.hamcrest.MatcherAssert.assertThat
 import static org.hamcrest.Matchers.equalTo
-import static org.mockito.Matchers.eq
+import static org.mockito.ArgumentMatchers.any
+import static org.mockito.ArgumentMatchers.eq
 import static org.mockito.Mockito.times
 import static org.mockito.Mockito.verify
 import static org.mockito.Mockito.when
@@ -67,7 +67,7 @@ class ConditionalRequestHandlerTest
   void prepare() {
     when(context.getRepository()).thenReturn(repository)
     when(repository.facet(eq(ViewFacet.class))).thenReturn(viewFacet)
-    when(viewFacet.dispatch(Matchers.any(Request))).thenReturn(response200)
+    when(viewFacet.dispatch(any(Request))).thenReturn(response200)
   }
 
   @Test

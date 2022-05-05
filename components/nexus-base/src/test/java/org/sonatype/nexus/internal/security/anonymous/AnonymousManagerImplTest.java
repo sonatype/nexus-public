@@ -29,10 +29,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 public class AnonymousManagerImplTest
@@ -83,7 +83,7 @@ public class AnonymousManagerImplTest
   public void testGetConfiguration_FromStore() {
     when(store.load()).thenReturn(storeConfig);
     assertThat(manager.getConfiguration(), is(storeConfigCopy));
-    verifyZeroInteractions(defaults);
+    verifyNoInteractions(defaults);
   }
 
   @Test

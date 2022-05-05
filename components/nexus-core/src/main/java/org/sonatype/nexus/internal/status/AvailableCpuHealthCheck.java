@@ -40,26 +40,27 @@ public class AvailableCpuHealthCheck
 
   private static final String UNHEALTHY_MESSAGE = HEALTHY_MESSAGE + " A minimum of %d is recommended.";
 
-  private Runtime runtime;
+  private int minCpuCount;
 
-  private Runtime getRuntime() {
-    if (runtime == null) {
-      runtime = Runtime.getRuntime();
-    }
-    return runtime;
+  public AvailableCpuHealthCheck() {
+    this(MIN_RECOMMENDED_CPU_COUNT);
   }
 
   @VisibleForTesting
-  protected void setRuntime(Runtime runtime) {
-    this.runtime = runtime;
+  AvailableCpuHealthCheck(final int minCpuCount) {
+    this.minCpuCount = minCpuCount;
+  }
+
+  private Runtime getRuntime() {
+    return Runtime.getRuntime();
   }
 
   @Override
   protected Result check() {
     int available = getRuntime().availableProcessors();
 
-    if (MIN_RECOMMENDED_CPU_COUNT > available) {
-      return Result.unhealthy(UNHEALTHY_MESSAGE, available, MIN_RECOMMENDED_CPU_COUNT);
+    if (minCpuCount > available) {
+      return Result.unhealthy(UNHEALTHY_MESSAGE, available, minCpuCount);
     }
 
     return Result.healthy(HEALTHY_MESSAGE, available);

@@ -43,7 +43,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.httpclient.internal.HttpClientFacetImpl.CONFIG_KEY;
@@ -61,6 +61,8 @@ public class HttpClientFacetImplTest
   private static final String DOCKER = "docker";
 
   private static final String YUM = "yum";
+
+  private static final String TEST_REPOSITORY_NAME = "test-repository";
 
   private HttpClientFacetImpl underTest;
 
@@ -132,6 +134,8 @@ public class HttpClientFacetImplTest
     underTest.attach(repository);
     underTest.installDependencies(eventManager);
     when(configurationFacet.readSection(configuration, CONFIG_KEY, Config.class)).thenReturn(config);
+
+    when(repository.getName()).thenReturn(TEST_REPOSITORY_NAME);
 
     when(npmFormat.getValue()).thenReturn(NPM);
     when(yumFormat.getValue()).thenReturn(YUM);

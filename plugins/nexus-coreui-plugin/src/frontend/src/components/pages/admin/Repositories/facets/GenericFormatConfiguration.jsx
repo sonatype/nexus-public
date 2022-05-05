@@ -12,9 +12,9 @@
  */
 import React from 'react';
 
-import {Select, FormUtils, useSimpleMachine} from '@sonatype/nexus-ui-plugin';
+import {FormUtils, useSimpleMachine} from '@sonatype/nexus-ui-plugin';
 
-import {NxFormGroup, NxLoadWrapper} from '@sonatype/react-shared-components';
+import {NxFormGroup, NxFormSelect, NxLoadWrapper} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
 
@@ -31,6 +31,9 @@ export default function GenericFormatConfiguration({parentMachine}) {
 
   const [currentParent, sendParent] = parentMachine;
 
+  const {pristineData: {name}} = currentParent.context;
+  const isEdit = !!name;
+
   const {data: recipes, error} = current.context;
 
   const formats = getFormats(recipes);
@@ -41,11 +44,13 @@ export default function GenericFormatConfiguration({parentMachine}) {
 
   const handleFormatUpdate = (event) => {
     const format = event.target.value;
-    const data = {format, memberNames: []};
-    if (type) {
-      data.type = types.get(format)?.includes(type) ? type : '';
-    }
-    sendParent({type: 'UPDATE', data});
+    const repoType = types.get(format)?.includes(type) ? type : '';
+    sendParent({type: 'RESET_DATA', format, repoType});
+  };
+
+  const handleTypeUpdate = (event) => {
+    const repoType = event.target.value;
+    sendParent({type: 'RESET_DATA', format, repoType});
   };
 
   return (
@@ -53,15 +58,11 @@ export default function GenericFormatConfiguration({parentMachine}) {
       <h2 className="nx-h2">{EDITOR.FORMAT_AND_TYPE_CAPTION}</h2>
       <NxLoadWrapper loading={isLoading} error={error} retryHandler={retry}>
         <div className="nx-form-row">
-          <NxFormGroup
-            label={EDITOR.FORMAT_LABEL}
-            isRequired
-            className="nxrm-form-group-format"
-          >
-            <Select
-              {...FormUtils.fieldProps('format', currentParent)}
-              name="format"
+          <NxFormGroup label={EDITOR.FORMAT_LABEL} isRequired className="nxrm-form-group-format">
+            <NxFormSelect
+              {...FormUtils.selectProps('format', currentParent)}
               onChange={handleFormatUpdate}
+              disabled={isEdit}
             >
               <option value="">{EDITOR.SELECT_FORMAT_OPTION}</option>
               {formats?.map((format) => (
@@ -69,19 +70,14 @@ export default function GenericFormatConfiguration({parentMachine}) {
                   {format}
                 </option>
               ))}
-            </Select>
+            </NxFormSelect>
           </NxFormGroup>
 
-          <NxFormGroup
-            label={EDITOR.TYPE_LABEL}
-            isRequired
-            className="nxrm-form-group-type"
-          >
-            <Select
-              {...FormUtils.fieldProps('type', currentParent)}
-              name="type"
-              onChange={FormUtils.handleUpdate('type', sendParent)}
-              disabled={!format}
+          <NxFormGroup label={EDITOR.TYPE_LABEL} isRequired className="nxrm-form-group-type">
+            <NxFormSelect
+              {...FormUtils.selectProps('type', currentParent)}
+              onChange={handleTypeUpdate}
+              disabled={!format || isEdit}
             >
               <option value="">{EDITOR.SELECT_TYPE_OPTION}</option>
               {types?.get(format)?.map((type) => (
@@ -89,7 +85,7 @@ export default function GenericFormatConfiguration({parentMachine}) {
                   {type}
                 </option>
               ))}
-            </Select>
+            </NxFormSelect>
           </NxFormGroup>
         </div>
       </NxLoadWrapper>
@@ -97,8 +93,7 @@ export default function GenericFormatConfiguration({parentMachine}) {
   );
 }
 
-const getFormats = (recipes) =>
-  [...new Set(recipes?.map((r) => r.format))].sort();
+const getFormats = (recipes) => [...new Set(recipes?.map((r) => r.format))].sort();
 
 const getTypes = (recipes) =>
   recipes?.reduce((acc, curr) => {

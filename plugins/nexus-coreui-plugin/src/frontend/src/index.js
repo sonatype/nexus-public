@@ -19,7 +19,7 @@ import AnonymousSettings from './components/pages/admin/AnonymousSettings/Anonym
 import BlobStores from './components/pages/admin/BlobStores/BlobStores';
 import InsightFrontend from './components/pages/admin/InsightFrontend/InsightFrontend';
 import LoggingConfiguration from './components/pages/admin/LoggingConfiguration/LoggingConfiguration';
-import LogViewer from './components/pages/admin/LogViewer/LogViewer';
+import Logs from "./components/pages/admin/Logs/Logs";
 import Repositories from './components/pages/admin/Repositories/Repositories';
 import RoutingRules from './components/pages/admin/RoutingRules/RoutingRules';
 import SystemInformation from './components/pages/admin/SystemInformation/SystemInformation';
@@ -37,6 +37,8 @@ import S3BlobStoreActions from './components/pages/admin/BlobStores/S3/S3BlobSto
 import AzureBlobStoreSettings from './components/pages/admin/BlobStores/Azure/AzureBlobStoreSettings';
 import AzureBlobStoreActions from './components/pages/admin/BlobStores/Azure/AzureBlobStoreActions';
 import IqServer from './components/pages/admin/IqServer/IqServer';
+import Bundles from './components/pages/admin/Bundles/Bundles';
+import ProprietaryRepositories from './components/pages/admin/ProprietaryRepositories/ProprietaryRepositories';
 
 window.ReactComponents = {
   ...window.ReactComponents,
@@ -79,7 +81,8 @@ window.plugins.push({
       visibility: {
         featureFlags: [{key: 'nexus.react.repositories', defaultValue: false}],
         permissions: ['nexus:repository-admin:*:*:read']
-      }
+      },
+      weight: 10,
     },
     {
       mode: 'admin',
@@ -90,7 +93,8 @@ window.plugins.push({
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         permissions: ['nexus:selectors:read']
-      }
+      },
+      weight: 300,
     },
     {
       mode: 'admin',
@@ -101,7 +105,8 @@ window.plugins.push({
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         permissions: ['nexus:*']
-      }
+      },
+      weight: 500,
     },
     {
       mode: 'admin',
@@ -194,9 +199,9 @@ window.plugins.push({
     },
     {
       mode: 'admin',
-      path: '/Support/Logging/LogViewer',
-      ...UIStrings.LOG_VIEWER.MENU,
-      view: LogViewer,
+      path: '/Support/Logs',
+      ...UIStrings.LOGS.MENU,
+      view: Logs,
       iconCls: 'x-fa fa-terminal',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
@@ -212,7 +217,8 @@ window.plugins.push({
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         permissions: ['nexus:*']
-      }
+      },
+      weight: 400,
     },
     {
       mode: 'admin',
@@ -220,6 +226,16 @@ window.plugins.push({
       ...UIStrings.IQ_SERVER.MENU,
       view: IqServer,
       iconCls: 'x-fa fa-shield-alt',
+      visibility: {
+        permissions: ['nexus:settings:read']
+      }
+    },
+    {
+      mode: 'admin',
+      path: '/Repository/Proprietary',
+      ...UIStrings.PROPRIETARY_REPOSITORIES.MENU,
+      view: ProprietaryRepositories,
+      iconCls: 'x-fa fa-door-closed',
       visibility: {
         permissions: ['nexus:settings:read']
       }
@@ -241,6 +257,17 @@ window.plugins.push({
         ],
         permissions: ['nexus:*']
       }
-    }
+    },
+    {
+      mode: 'admin',
+      path: '/System/Bundles',
+      ...UIStrings.BUNDLES.MENU,
+      view: Bundles,
+      iconCls: 'x-fa fa-puzzle-piece',
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        permissions: ['nexus:bundles:read']
+      }
+    },
   ]
 });

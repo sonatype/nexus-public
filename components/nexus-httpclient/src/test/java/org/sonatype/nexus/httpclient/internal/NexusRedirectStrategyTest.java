@@ -30,8 +30,8 @@ import static org.apache.http.HttpStatus.SC_OK;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalToIgnoringCase;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.when;
+import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 import static org.sonatype.nexus.httpclient.internal.NexusRedirectStrategy.CONTENT_RETRIEVAL_MARKER_KEY;
 
 /**

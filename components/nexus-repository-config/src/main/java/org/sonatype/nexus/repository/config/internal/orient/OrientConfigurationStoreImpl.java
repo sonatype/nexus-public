@@ -12,7 +12,9 @@
  */
 package org.sonatype.nexus.repository.config.internal.orient;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import javax.annotation.Priority;
 import javax.inject.Inject;
@@ -98,6 +100,12 @@ public class OrientConfigurationStoreImpl
     checkNotNull(configuration);
 
     inTxRetry(databaseInstance).run(db -> entityAdapter.deleteEntity(db, cast(configuration)));
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public Collection<Configuration> readByNames(final Set<String> repositoryNames) {
+    throw new UnsupportedOperationException();
   }
 
   @Override

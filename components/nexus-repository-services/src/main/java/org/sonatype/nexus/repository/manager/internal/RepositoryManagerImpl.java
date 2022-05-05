@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.manager.internal;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -40,6 +42,7 @@ import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.distributed.event.service.api.EventType;
 import org.sonatype.nexus.distributed.event.service.api.common.PublisherEvent;
 import org.sonatype.nexus.distributed.event.service.api.common.RepositoryConfigurationEvent;
+import org.sonatype.nexus.distributed.event.service.api.common.RepositoryRemoteConnectionStatusEvent;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
 import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.Repository;
@@ -51,6 +54,9 @@ import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.repository.config.ConfigurationUpdatedEvent;
 import org.sonatype.nexus.repository.group.GroupFacet;
+import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
+import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
+import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType;
 import org.sonatype.nexus.repository.manager.ConfigurationValidator;
 import org.sonatype.nexus.repository.manager.DefaultRepositoriesContributor;
 import org.sonatype.nexus.repository.manager.RepositoryCreatedEvent;
@@ -64,6 +70,7 @@ import org.sonatype.nexus.repository.view.ViewFacet;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.eventbus.Subscribe;
+import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -72,7 +79,6 @@ import static java.util.stream.StreamSupport.stream;
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
-import static org.sonatype.nexus.distributed.event.service.api.EphemeralNodeId.NODE_ID;
 import static org.sonatype.nexus.distributed.event.service.api.EventType.CREATED;
 import static org.sonatype.nexus.distributed.event.service.api.EventType.DELETED;
 import static org.sonatype.nexus.distributed.event.service.api.EventType.UPDATED;
@@ -317,9 +323,18 @@ public class RepositoryManagerImpl
   @Override
   @Guarded(by = STARTED)
   public Iterable<Repository> browseForBlobStore(String blobStoreId) {
-    return stream(browse().spliterator(), true)
-        .filter(r -> blobStoreId.equals(r.getConfiguration().attributes(STORAGE).get(BLOB_STORE_NAME)))
-        ::iterator;
+    Iterable<Repository> browseResult = browse();
+
+    if (browseResult != null && browseResult.iterator().hasNext()){
+      return stream(browseResult.spliterator(), true)
+          .filter(Repository::isStarted)
+          .filter(r -> blobStoreId.equals(r.getConfiguration().attributes(STORAGE).get(BLOB_STORE_NAME)))
+          ::iterator;
+    }
+    else {
+      return Collections.emptyList();
+    }
+
   }
 
   @Override
@@ -363,6 +378,8 @@ public class RepositoryManagerImpl
 
     // load old configuration before update
     Configuration oldConfiguration = repository(configuration.getRepositoryName()).getConfiguration().copy();
+    String repositoryName = checkNotNull(configuration.getRepositoryName());
+    validateRepositoryConfiguration(repositoryName, configuration);
 
     // the configuration must be updated before repository restart
     if (!EventHelper.isReplicating()) {
@@ -385,7 +402,7 @@ public class RepositoryManagerImpl
 
     if (!EventHelper.isReplicating()) {
       Optional<Configuration> configuration = repositoryConfiguration(name);
-      configuration.ifPresent(config -> store.delete(config));
+      configuration.ifPresent(store::delete);
     }
 
     eventManager.post(new RepositoryDeletedEvent(repository));
@@ -433,14 +450,8 @@ public class RepositoryManagerImpl
     String repositoryName = checkNotNull(configuration.getRepositoryName());
     log.info("Updating repository in memory: {} -> {}", repositoryName, configuration);
 
-    validateConfiguration(configuration);
-
     Repository repository = repository(repositoryName);
 
-    // ensure configuration sanity
-    repository.validate(configuration);
-
-    Configuration oldConfiguration = repository.getConfiguration().copy();
     repository.stop();
     repository.update(configuration);
     repository.start();
@@ -548,6 +559,21 @@ public class RepositoryManagerImpl
   }
 
   @Subscribe
+  public void on(final RepositoryRemoteConnectionStatusEvent event) {
+    String repositoryName = event.getRepositoryName();
+    RemoteConnectionStatusType statusType = RemoteConnectionStatusType.values()[event.getRemoteConnectionStatusTypeOrdinal()];
+
+    // restore RemoteConnectionStatus from event
+    log.warn("Consume distributed RepositoryRemoteConnectionStatusEvent: repository={}, type={}", repositoryName, statusType);
+
+    RemoteConnectionStatus status = new RemoteConnectionStatus(statusType, event.getReason())
+        .setBlockedUntil(new DateTime(event.getBlockedUntilMillis()))
+        .setRequestUrl(event.getRequestUrl());
+
+    repository(repositoryName).facet(HttpClientFacet.class).setStatus(status);
+  }
+
+  @Subscribe
   public void on(final ConfigurationCreatedEvent event) {
     handleReplication(event, e -> create(e.getConfiguration()));
   }
@@ -632,8 +658,10 @@ public class RepositoryManagerImpl
     Optional<Configuration> configuration = repositoryConfiguration(repositoryName);
     configuration.ifPresent(config -> {
       try {
+        validateConfiguration(config);
         Configuration oldConfiguration = repository(repositoryName).getConfiguration().copy();
-        Repository repository = updateRepositoryInMemory(config);
+        Repository repository = repository(repositoryName);
+        updateRepositoryInMemory(config);
         eventManager.post(new RepositoryUpdatedEvent(repository, oldConfiguration));
       }
       catch (Exception e) {
@@ -661,6 +689,13 @@ public class RepositoryManagerImpl
     log.debug("Distribute repository configuration event: repository={}:{}", repositoryName, eventType);
 
     RepositoryConfigurationEvent configEvent = new RepositoryConfigurationEvent(repositoryName, eventType);
-    eventManager.post(new PublisherEvent(NODE_ID, configEvent));
+    eventManager.post(new PublisherEvent(configEvent));
   }
+
+  private void validateRepositoryConfiguration(String repositoryName, Configuration configuration) throws Exception {
+    Repository repository = repository(repositoryName);
+    // ensure configuration sanity
+    repository.validate(configuration);
+  }
+
 }

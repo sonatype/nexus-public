@@ -17,7 +17,9 @@ import {FormUtils} from '@sonatype/nexus-ui-plugin';
 import {
   NxFormGroup,
   NxCheckbox,
-  NxTextInput
+  NxTextInput,
+  NxFieldset,
+  NxReadOnly
 } from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
@@ -27,31 +29,38 @@ const {EDITOR} = UIStrings.REPOSITORIES;
 export default function GenericNameConfiguration({parentMachine}) {
   const [currentParent, sendParent] = parentMachine;
 
+  const {
+    pristineData: {name},
+    data: {url}
+  } = currentParent.context;
+  const isEdit = !!name;
+
   return (
     <>
       <h2 className="nx-h2">{EDITOR.CONFIGURATION_CAPTION}</h2>
-      <NxFormGroup
-        label={EDITOR.NAME_LABEL}
-        isRequired
-        className="nxrm-form-group-name"
-      >
+      <NxFormGroup label={EDITOR.NAME_LABEL} isRequired className="nxrm-form-group-name">
         <NxTextInput
           {...FormUtils.fieldProps('name', currentParent)}
           onChange={FormUtils.handleUpdate('name', sendParent)}
+          disabled={isEdit}
         />
       </NxFormGroup>
-      <NxFormGroup
-        label={EDITOR.STATUS_LABEL}
-        isRequired
-        className="nxrm-form-group-status"
-      >
+
+      {isEdit && (
+        <NxReadOnly>
+          <NxReadOnly.Label>{EDITOR.URL_LABEL}</NxReadOnly.Label>
+          <NxReadOnly.Data>{url}</NxReadOnly.Data>
+        </NxReadOnly>
+      )}
+
+      <NxFieldset label={EDITOR.STATUS_LABEL} className="nxrm-form-group-status">
         <NxCheckbox
           {...FormUtils.checkboxProps('online', currentParent)}
           onChange={FormUtils.handleUpdate('online', sendParent)}
         >
           {EDITOR.STATUS_DESCR}
         </NxCheckbox>
-      </NxFormGroup>
+      </NxFieldset>
     </>
   );
 }
