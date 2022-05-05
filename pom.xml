@@ -69,7 +69,7 @@
 
     <!-- Define the node and yarn versions used by the frontend-maven-plugin -->
     <node.version>v16.14.2</node.version>
-    <yarn.version>v1.22.0</yarn.version>
+    <yarn.version>v1.22.17</yarn.version>
     <npm.install>install --frozen-lockfile</npm.install>
     <npm.skipTests>false</npm.skipTests>
     <npm.build>build-all</npm.build>
