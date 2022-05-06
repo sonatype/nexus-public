@@ -43,6 +43,15 @@
     SELECT * FROM privilege WHERE id = #{value};
   </select>
 
+  <select id="findByIds" resultType="CPrivilegeData" parameterType="java.util.Set">
+    SELECT * FROM privilege
+    <where>
+      <foreach collection="ids" item="ids" index="index" open="id IN (" close=")" separator=",">
+        #{ids}
+      </foreach>
+    </where>
+  </select>
+
   <update id="update" parameterType="CPrivilegeData">
     UPDATE privilege SET name = #{name}, description = #{description}, type = #{type},
         properties = #{properties}, read_only = #{readOnly}, version = #{version}

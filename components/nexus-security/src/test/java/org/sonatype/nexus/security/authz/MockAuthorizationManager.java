@@ -12,7 +12,9 @@
  */
 package org.sonatype.nexus.security.authz;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException;
@@ -59,5 +61,10 @@ public class MockAuthorizationManager
   @Override
   public Privilege getPrivilege(String privilegeId) throws NoSuchPrivilegeException {
     throw new NoSuchPrivilegeException(privilegeId);
+  }
+
+  @Override
+  public List<Privilege> getPrivileges(final Set<String> privilegeIds) {
+    return Collections.emptyList();
   }
 }

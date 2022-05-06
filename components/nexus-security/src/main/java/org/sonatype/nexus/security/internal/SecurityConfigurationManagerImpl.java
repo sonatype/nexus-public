@@ -20,7 +20,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -52,6 +53,7 @@ import org.sonatype.nexus.security.user.UserNotFoundException;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.common.collect.Sets.SetView;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 import org.apache.shiro.authc.credential.PasswordService;
@@ -231,6 +233,29 @@ public class SecurityConfigurationManagerImpl
     }
 
     throw new NoSuchPrivilegeException(id);
+  }
+
+  @Override
+  public List<CPrivilege> readPrivileges(final Set<String> ids) {
+    List<CPrivilege> inMemoryPrivileges = getMergedConfiguration().getPrivileges(ids);
+    Set<String> foundPrivilegeIds = inMemoryPrivileges.stream().map(CPrivilege::getId).collect(Collectors.toSet());
+    SetView<String> notFoundIds = Sets.difference(ids, foundPrivilegeIds);
+    // in case of found all privileges - just return all of them
+    if (notFoundIds.isEmpty()) {
+      return inMemoryPrivileges;
+    }
+
+    // find the rest privileges from the default config
+    List<CPrivilege> privileges = getDefaultConfiguration().getPrivileges(notFoundIds);
+    foundPrivilegeIds = privileges.stream().map(CPrivilege::getId).collect(Collectors.toSet());
+    notFoundIds = Sets.difference(notFoundIds, foundPrivilegeIds);
+    if (!notFoundIds.isEmpty()) {
+      log.debug("Unable to find privileges for ids={}", notFoundIds);
+    }
+
+    // merge privileges from the Merged and Default configs
+    return Stream.concat(privileges.stream(), inMemoryPrivileges.stream())
+        .collect(Collectors.toList());
   }
 
   @Override

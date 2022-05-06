@@ -15,6 +15,7 @@ package org.sonatype.nexus.security.internal;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -263,6 +264,12 @@ public class AuthorizationManagerImpl
   @Override
   public Privilege getPrivilege(final String privilegeId) throws NoSuchPrivilegeException {
     return this.convert(this.configuration.readPrivilege(privilegeId));
+  }
+
+  @Override
+  public List<Privilege> getPrivileges(final Set<String> privilegeIds) {
+    List<CPrivilege> privileges = configuration.readPrivileges(privilegeIds);
+    return privileges.stream().map(this::convert).collect(Collectors.toList());
   }
 
   @Override

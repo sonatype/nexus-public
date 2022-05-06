@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.security.authz;
 
+import java.util.List;
 import java.util.Set;
 
 import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException;
@@ -70,6 +71,11 @@ public interface AuthorizationManager
    * Returns a Privilege base on an Id.
    */
   Privilege getPrivilege(String privilegeId) throws NoSuchPrivilegeException;
+
+  /**
+   * Returns Privileges base on Ids.
+   */
+  List<Privilege> getPrivileges(Set<String> privilegeIds);
 
   /**
    * Adds a Privilege to this AuthorizationManager.

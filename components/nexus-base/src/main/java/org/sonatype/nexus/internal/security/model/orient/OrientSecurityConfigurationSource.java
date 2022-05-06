@@ -12,11 +12,11 @@
  */
 package org.sonatype.nexus.internal.security.model.orient;
 
+import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-
 import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -44,6 +44,7 @@ import com.google.common.collect.ImmutableList;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import org.apache.shiro.util.CollectionUtils;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -308,6 +309,16 @@ public class OrientSecurityConfigurationSource
       log.trace("Retrieving privilege {}", id);
 
       return inTx(databaseInstance).call(db -> privilegeEntityAdapter.read(db, id));
+    }
+
+    @Override
+    public List<CPrivilege> getPrivileges(final Set<String> ids) {
+      if (CollectionUtils.isEmpty(ids)) {
+        return Collections.emptyList();
+      }
+      log.trace("Retrieving privileges {}", ids);
+
+      return inTxRetry(databaseInstance).call(db -> ImmutableList.copyOf(privilegeEntityAdapter.read(db, ids)));
     }
 
     @Override

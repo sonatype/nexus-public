@@ -153,6 +153,11 @@ public interface SecurityConfigurationManager
   CPrivilege readPrivilege(String id);
 
   /**
+   * Retrieve an existing privileges
+   */
+  List<CPrivilege> readPrivileges(Set<String> ids);
+
+  /**
    * Update an existing privilege
    */
   void updatePrivilege(CPrivilege privilege);

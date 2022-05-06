@@ -12,8 +12,9 @@
  */
 package org.sonatype.nexus.internal.security.model.orient;
 
+import java.util.List;
 import java.util.Map;
-
+import java.util.Set;
 import javax.annotation.Nullable;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -22,6 +23,7 @@ import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 import org.sonatype.nexus.orient.entity.action.DeleteEntityByPropertyAction;
+import org.sonatype.nexus.orient.entity.action.ReadEntitiesByPropertyAction;
 import org.sonatype.nexus.orient.entity.action.ReadEntityByPropertyAction;
 import org.sonatype.nexus.orient.entity.action.UpdateEntityByPropertyAction;
 
@@ -62,6 +64,9 @@ public class OrientCPrivilegeEntityAdapter
       .build();
 
   private final ReadEntityByPropertyAction<OrientCPrivilege> read = new ReadEntityByPropertyAction<>(this, P_ID);
+
+  private final ReadEntitiesByPropertyAction<OrientCPrivilege> readEntities =
+      new ReadEntitiesByPropertyAction<>(this, P_ID);
 
   private final DeleteEntityByPropertyAction delete = new DeleteEntityByPropertyAction(this, P_ID);
 
@@ -122,6 +127,10 @@ public class OrientCPrivilegeEntityAdapter
   @Nullable
   public OrientCPrivilege read(final ODatabaseDocumentTx db, final String id) {
     return read.execute(db, id);
+  }
+
+  public List<OrientCPrivilege> read(final ODatabaseDocumentTx db, final Set<String> ids) {
+    return readEntities.execute(db, ids);
   }
 
   /**

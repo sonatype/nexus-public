@@ -14,9 +14,12 @@ package org.sonatype.nexus.security.config;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 import org.sonatype.nexus.security.config.memory.MemoryCPrivilege;
 import org.sonatype.nexus.security.config.memory.MemoryCRole;
@@ -30,6 +33,7 @@ import org.sonatype.nexus.security.user.UserNotFoundException;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import org.apache.shiro.util.CollectionUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -196,6 +200,18 @@ public class MemorySecurityConfiguration
   public CPrivilege getPrivilege(final String id) {
     checkNotNull(id);
     return privileges.get(id);
+  }
+
+  @Override
+  public List<CPrivilege> getPrivileges(final Set<String> ids) {
+    if (CollectionUtils.isEmpty(ids)) {
+      return Collections.emptyList();
+    }
+
+    return ids.stream()
+        .map(privileges::get)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
   }
 
   @Override

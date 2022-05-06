@@ -29,6 +29,7 @@ import org.sonatype.nexus.security.role.NoSuchRoleException;
 import org.sonatype.nexus.security.user.NoSuchRoleMappingException;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 
+import com.google.common.collect.ImmutableSet;
 import org.apache.shiro.authc.credential.PasswordService;
 import org.junit.Before;
 import org.junit.Rule;
@@ -232,6 +233,20 @@ public class OrientSecurityConfigurationSourceTest
   public void testUserRoleMappings_notCaseSensitive_bySource() throws Exception {
     testUserRoleMappings_notCaseSensitive("ldap");
     testUserRoleMappings_notCaseSensitive("crowd");
+  }
+
+  @Test
+  public void testGetPrivileges() {
+    Set<String> ids = ImmutableSet.of("1", "2", "3");
+    for (String id : ids) {
+      CPrivilege privilege = new OrientCPrivilege();
+      privilege.setId(id);
+      privilege.setName("name");
+      privilege.setType("type");
+      source.getConfiguration().addPrivilege(privilege);
+    }
+
+    assertThat(source.getConfiguration().getPrivileges(ids).size(), is(ids.size()));
   }
 
   private void testUserRoleMappings_notCaseSensitive(final String src) throws Exception {

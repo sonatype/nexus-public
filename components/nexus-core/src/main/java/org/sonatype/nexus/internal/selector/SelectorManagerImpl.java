@@ -18,7 +18,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -41,7 +40,6 @@ import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
-import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException;
 import org.sonatype.nexus.security.privilege.Privilege;
 import org.sonatype.nexus.security.role.Role;
 import org.sonatype.nexus.security.role.RoleIdentifier;
@@ -265,20 +263,19 @@ public class SelectorManagerImpl
       return Collections.emptyList();
     }
 
-    List<String> roleIds = currentUser.getRoles().stream().map(RoleIdentifier::getRoleId)
+    List<String> roleIds = currentUser.getRoles().stream()
+        .map(RoleIdentifier::getRoleId)
         .collect(toList());
 
-    List<Role> roles = getRoles(roleIds, authorizationManager);
+    Set<String> privilegeIds = getRoles(roleIds, authorizationManager).stream()
+        .map(Role::getPrivileges)
+        .flatMap(Collection::stream)
+        .collect(Collectors.toSet());
 
-    List<String> contentSelectorNames = roles.stream().map(Role::getPrivileges).flatMap(Collection::stream).map(id -> {
-      try {
-        return authorizationManager.getPrivilege(id);
-      }
-      catch (NoSuchPrivilegeException e) {
-        log.debug("Unable to find privilege for id={}, continuing to check privileges", id, e);
-        return null;
-      }
-    }).filter(Objects::nonNull).filter(repositoryFormatOrNameMatcher(repositoryNames, formats)).map(this::getContentSelector).collect(toList());
+    List<String> contentSelectorNames = authorizationManager.getPrivileges(privilegeIds).stream()
+        .filter(repositoryFormatOrNameMatcher(repositoryNames, formats))
+        .map(this::getContentSelector)
+        .collect(toList());
 
     return browse().stream().filter(selector -> contentSelectorNames.contains(selector.getName())).collect(toList());
   }

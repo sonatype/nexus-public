@@ -12,7 +12,13 @@
  */
 package org.sonatype.nexus.internal.security.model;
 
+import java.util.List;
+import java.util.Set;
+
 import org.sonatype.nexus.datastore.api.IdentifiedDataAccess;
+import org.sonatype.nexus.security.config.CPrivilege;
+
+import org.apache.ibatis.annotations.Param;
 
 /**
  * {@link CPrivilegeData} access.
@@ -22,5 +28,11 @@ import org.sonatype.nexus.datastore.api.IdentifiedDataAccess;
 public interface CPrivilegeDAO
     extends IdentifiedDataAccess<CPrivilegeData>
 {
-  // no additional behaviour...
+  /**
+   * Find privileges by their ids.
+   *
+   * @param ids a set of privilege ids.
+   * @return a list of {@link CPrivilege}
+   */
+  List<CPrivilege> findByIds(@Param("ids") Set<String> ids);
 }

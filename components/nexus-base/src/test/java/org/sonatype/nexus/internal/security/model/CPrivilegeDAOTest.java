@@ -12,6 +12,10 @@
  */
 package org.sonatype.nexus.internal.security.model;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.datastore.api.DataSession;
@@ -19,6 +23,7 @@ import org.sonatype.nexus.datastore.api.DataStoreManager;
 import org.sonatype.nexus.testdb.DataSessionRule;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import org.junit.After;
 import org.junit.Before;
@@ -98,33 +103,11 @@ public class CPrivilegeDAOTest
 
   @Test
   public void testBrowse() {
-    CPrivilegeData privilege1 = new CPrivilegeData();
-    privilege1.setId("privilege1");
-    privilege1.setName("Privilege1");
-    privilege1.setDescription("Privilege 1");
-    privilege1.setType("Application");
-    privilege1.setProperties(emptyMap());
-    privilege1.setReadOnly(false);
-    CPrivilegeData privilege2 = new CPrivilegeData();
-    privilege2.setId("privilege2");
-    privilege2.setName("Privilege2");
-    privilege2.setDescription("Privilege 2");
-    privilege2.setType("Application");
-    privilege2.setProperties(emptyMap());
-    privilege2.setReadOnly(false);
-    CPrivilegeData privilege3 = new CPrivilegeData();
-    privilege3.setId("privilege3");
-    privilege3.setName("Privilege3");
-    privilege3.setDescription("Privilege 3");
-    privilege3.setType("Application");
-    privilege3.setProperties(emptyMap());
-    privilege3.setReadOnly(false);
+    Set<String> ids = ImmutableSet.of("1", "2", "3");
+    List<CPrivilegeData> privileges = generatePrivileges(ids);
+    privileges.forEach(privilege -> dao.create(privilege));
 
-    dao.create(privilege1);
-    dao.create(privilege2);
-    dao.create(privilege3);
-
-    assertThat(Iterables.size(dao.browse()), is(3));
+    assertThat(Iterables.size(dao.browse()), is(ids.size()));
   }
 
   @Test
@@ -143,5 +126,31 @@ public class CPrivilegeDAOTest
     privilege.setDescription("Privilege 2");
 
     assertThat(dao.update(privilege), is(true));
+  }
+
+  @Test
+  public void testFindByIds() {
+    Set<String> ids = ImmutableSet.of("1", "2", "3");
+    List<CPrivilegeData> privileges = generatePrivileges(ids);
+    privileges.forEach(privilege -> dao.create(privilege));
+
+    assertThat(dao.findByIds(ids).size(), is(ids.size()));
+  }
+
+  private List<CPrivilegeData> generatePrivileges(final Set<String> ids) {
+    List<CPrivilegeData> privileges = new ArrayList<>(ids.size());
+    for (String id : ids) {
+      CPrivilegeData privilege = new CPrivilegeData();
+      privilege.setId(id);
+      privilege.setName("Privilege" + id);
+      privilege.setDescription("Privilege " + id);
+      privilege.setType("Application");
+      privilege.setProperties(emptyMap());
+      privilege.setReadOnly(false);
+
+      privileges.add(privilege);
+    }
+
+    return privileges;
   }
 }
