@@ -3,7 +3,7 @@ version: 2.1
 executors:
   my-executor:
     docker:
-      - image: circleci/openjdk:8-jdk
+      - image: cimg/openjdk:8.0
     resource_class: large
     working_directory: ~/nexus-public
     environment:
