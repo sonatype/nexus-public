@@ -18,6 +18,9 @@
 // https://jestjs.io/docs/en/configuration.html
 
 module.exports = {
+  // Fix Memory problems with jest and workers on CircleCI (public) build
+  maxWorkers: 2,
+
   // All imported modules in your tests should be mocked automatically
   // automock: false,
 

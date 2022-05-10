@@ -12,10 +12,10 @@
  */
 package org.sonatype.nexus.internal.security.model;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -42,6 +42,7 @@ import org.sonatype.nexus.transaction.TransactionalStore;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.collect.ImmutableList;
+import org.apache.shiro.util.CollectionUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
@@ -110,6 +111,16 @@ public class SecurityConfigurationImpl
     checkNotNull(id);
 
     return privilegeDAO().read(id).orElse(null);
+  }
+
+  @Transactional
+  @Override
+  public List<CPrivilege> getPrivileges(final Set<String> ids) {
+    if (CollectionUtils.isEmpty(ids)) {
+      return Collections.emptyList();
+    }
+
+    return privilegeDAO().findByIds(ids);
   }
 
   @Transactional

@@ -14,7 +14,6 @@ package org.sonatype.nexus.security.config;
 
 import java.util.List;
 import java.util.Set;
-
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.security.user.NoSuchRoleMappingException;
@@ -138,6 +137,11 @@ public interface SecurityConfiguration
    */
   @Nullable
   CPrivilege getPrivilege(String id);
+
+  /**
+   * Get a list of existing {@link CPrivilege} by its IDs.
+   */
+  List<CPrivilege> getPrivileges(Set<String> ids);
 
   /**
    * Obtain an instance of {@link CPrivilege} suitable for use with the underlying storage.
