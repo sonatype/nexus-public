@@ -113,6 +113,11 @@ public class OrientConfigurationStoreImpl
     return new OrientConfiguration();
   }
 
+  @Override
+  public boolean exists(final String repositoryName) {
+    return false;
+  }
+
   private OrientConfiguration cast(final Configuration configuration) {
     return (OrientConfiguration) configuration;
   }
