@@ -17,33 +17,65 @@
 <mapper namespace="org.sonatype.nexus.repository.content.search.table.SearchTableDAO">
 
   <insert id="createSchema">
-    CREATE TABLE IF NOT EXISTS components_search
+    CREATE TABLE IF NOT EXISTS component_search
     (
       component_id      INTEGER                  NOT NULL,
       repository_id     INTEGER                  NOT NULL,
       asset_id          INTEGER                  NOT NULL,
       format            VARCHAR                  NOT NULL,
       namespace         VARCHAR                  NOT NULL,
-      component_name    VARCHAR                  NOT NULL,
+      search_component_name    VARCHAR                  NOT NULL,
+      path              VARCHAR                  NOT NULL,
       component_kind    VARCHAR                  NOT NULL,
       version           VARCHAR                  NOT NULL,
       component_created TIMESTAMP WITH TIME ZONE NOT NULL,
-      repository_name   VARCHAR(200)             NOT NULL,
+      search_repository_name   VARCHAR(200)             NOT NULL,
       content_type      VARCHAR                  NOT NULL,
       md5               VARCHAR,
       sha1              VARCHAR,
       sha256            VARCHAR,
       sha512            VARCHAR,
 
-      CONSTRAINT pk_components_search PRIMARY KEY (component_id, repository_id, asset_id, format)
+      CONSTRAINT pk_component_search PRIMARY KEY (component_id, repository_id, asset_id, format)
       );
-    CREATE INDEX IF NOT EXISTS idx_components_search_version ON components_search (version);
-    CREATE INDEX IF NOT EXISTS idx_components_search_namespace ON components_search (namespace);
-    CREATE INDEX IF NOT EXISTS idx_components_search_component_name ON components_search (component_name);
-    CREATE INDEX IF NOT EXISTS idx_components_search_repository_name ON components_search (repository_name);
-    CREATE INDEX IF NOT EXISTS idx_components_search_md5 ON components_search (md5);
-    CREATE INDEX IF NOT EXISTS idx_components_search_sha1 ON components_search (sha1);
-    CREATE INDEX IF NOT EXISTS idx_components_search_sha256 ON components_search (sha256);
-    CREATE INDEX IF NOT EXISTS idx_components_search_sha512 ON components_search (sha512);
+    CREATE INDEX IF NOT EXISTS idx_component_search_version ON component_search (version);
+    CREATE INDEX IF NOT EXISTS idx_component_search_namespace ON component_search (namespace);
+    CREATE INDEX IF NOT EXISTS idx_component_search_component_name ON component_search (search_component_name);
+    CREATE INDEX IF NOT EXISTS idx_component_search_format ON component_search (format);
+    CREATE INDEX IF NOT EXISTS idx_component_search_path ON component_search (path);
+    CREATE INDEX IF NOT EXISTS idx_component_search_repository_name ON component_search (search_repository_name);
+    CREATE INDEX IF NOT EXISTS idx_component_search_md5 ON component_search (md5);
+    CREATE INDEX IF NOT EXISTS idx_component_search_sha1 ON component_search (sha1);
+    CREATE INDEX IF NOT EXISTS idx_component_search_sha256 ON component_search (sha256);
+    CREATE INDEX IF NOT EXISTS idx_component_search_sha512 ON component_search (sha512);
   </insert>
+
+  <resultMap id="searchDataMap" type="org.sonatype.nexus.repository.content.search.SearchResultData">
+    <id property="componentId" column="component_id" />
+    <result property="namespace" column="namespace"/>
+    <result property="componentName" column="search_component_name"/>
+    <result property="version" column="version"/>
+    <result property="repositoryName" column="search_repository_name"/>
+    <result property="format" column="format"/>
+  </resultMap>
+
+  <select id="searchComponents" resultMap="searchDataMap" parameterType="SqlSearchRequest">
+    SELECT component_id, namespace, search_component_name, version, search_repository_name, format
+    FROM component_search
+    <where>
+      <if test="filter != null">(${filter})</if>
+    </where>
+    GROUP BY component_id, namespace, search_component_name, version, search_repository_name, format
+    ORDER BY ${sortColumnName} ${sortDirection}
+    <if test="sortColumnName != defaultSortColumnName">, ${defaultSortColumnName}</if>
+    <if test="limit != null">LIMIT #{limit}</if>
+    OFFSET #{offset};
+  </select>
+
+  <select id="count" resultType="int">
+    SELECT COUNT(DISTINCT component_id) FROM component_search
+    <where>
+      <if test="filter != null">(${filter})</if>
+    </where>
+  </select>
 </mapper>

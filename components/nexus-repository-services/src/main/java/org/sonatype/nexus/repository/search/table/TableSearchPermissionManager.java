@@ -10,23 +10,36 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search.sql;
+package org.sonatype.nexus.repository.search.table;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.rest.SearchFieldSupport;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.search.SqlSearchRepositoryNameUtil;
+import org.sonatype.nexus.repository.search.sql.SqlSearchContentSelectorFilter;
+import org.sonatype.nexus.repository.search.sql.SqlSearchContentSelectorSqlFilterGenerator;
+import org.sonatype.nexus.repository.search.sql.SqlSearchPermissionException;
+import org.sonatype.nexus.repository.search.sql.SqlSearchQueryBuilder;
+import org.sonatype.nexus.repository.search.sql.SqlSearchQueryCondition;
+import org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilder;
+import org.sonatype.nexus.repository.search.sql.SqlSearchRepositoryPermissionUtil;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -51,82 +64,82 @@ import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryContributio
  * @since 3.next
  */
 @Named
-public class SqlSearchPermissionManager
+public class TableSearchPermissionManager
     extends ComponentSupport
 {
   private final SqlSearchQueryConditionBuilder conditionBuilder;
 
   private final SqlSearchRepositoryNameUtil repositoryNameUtil;
 
-  private final SqlSearchRepositoryPermissionUtil repositoryPermissionUtil;
+  private final TableSearchRepositoryPermissionUtil repositoryPermissionUtil;
 
-  private final SqlSearchContentSelectorSqlFilterGenerator contentSelectorFilterGenerator;
+  private final TableSearchContentSelectorSqlFilterGenerator contentSelectorFilterGenerator;
 
   private final Map<String, SearchFieldSupport> fieldMappings;
 
+  private final RepositoryManager repositoryManager;
+
   @Inject
-  public SqlSearchPermissionManager(
+  public TableSearchPermissionManager(
       final SqlSearchQueryConditionBuilder conditionBuilder,
       final SqlSearchRepositoryNameUtil repositoryNameUtil,
-      final SqlSearchRepositoryPermissionUtil repositoryPermissionUtil,
+      final TableSearchRepositoryPermissionUtil repositoryPermissionUtil,
       final Map<String, SearchMappings> searchMappings,
-      final SqlSearchContentSelectorSqlFilterGenerator contentSelectorFilterGenerator)
+      final TableSearchContentSelectorSqlFilterGenerator contentSelectorFilterGenerator,
+      final RepositoryManager repositoryManager)
   {
     this.conditionBuilder = checkNotNull(conditionBuilder);
     this.repositoryNameUtil = checkNotNull(repositoryNameUtil);
     this.repositoryPermissionUtil = checkNotNull(repositoryPermissionUtil);
     this.fieldMappings = unmodifiableMap(fieldMappingsByAttribute(checkNotNull(searchMappings)));
     this.contentSelectorFilterGenerator = checkNotNull(contentSelectorFilterGenerator);
+    this.repositoryManager = repositoryManager;
   }
 
-  /**
-   * Adds permitted repositories and content selectors to the sql search query.
-   *
-   * The intent is that only repositories that the user has browse permissions for and/or content selectors for are
-   * included in the search request.
-   */
   public void addPermissionFilters(
       final SqlSearchQueryBuilder queryBuilder,
-      final String format,
       @Nullable final String searchFilter)
   {
     if (searchFilter != null) {
-      addRepositoryPermissions(queryBuilder, searchFilter, format);
+      addRepositoryPermissions(queryBuilder, searchFilter);
     }
     else {
-      addRepositoryPermissions(queryBuilder, format);
+      addRepositoryPermissions(queryBuilder);
     }
   }
 
   private void addRepositoryPermissions(
       final SqlSearchQueryBuilder queryBuilder,
-      final String repositoryFilter,
-      final String format)
+      final String repositoryFilter)
   {
     Set<String> repositories = repositoryNameUtil.getRepositoryNames(repositoryFilter);
     if (!repositories.isEmpty()) {
-      Set<String> browsableRepositories = getBrowsableRepositories(format, repositories);
+      Set<String> browsableRepositories = getBrowsableRepositories(repositories);
 
       if (!repositories.equals(browsableRepositories)) {
-        addBrowsableRepositoriesAndSelectorPermissions(queryBuilder, format, repositories, browsableRepositories);
+        addBrowsableRepositoriesAndSelectorPermissions(queryBuilder, repositories, browsableRepositories);
       }
       else {
-        createSqlCondition(browsableRepositories, emptySet(), emptyList(), format).ifPresent(queryBuilder::add);
+        createSqlCondition(browsableRepositories, emptySet(), emptyList()).ifPresent(queryBuilder::add);
       }
     }
   }
 
-  private void addRepositoryPermissions(final SqlSearchQueryBuilder queryBuilder, final String format) {
-    Set<String> repositories = repositoryNameUtil.getFormatRepositoryNames(format);
-    Set<String> browsableRepositories = getBrowsableRepositories(format, repositories);
+  private void addRepositoryPermissions(final SqlSearchQueryBuilder queryBuilder) {
+    Set<String> repositories = StreamSupport
+        .stream(repositoryManager.browse().spliterator(), false)
+        .map(Repository::getName)
+        .collect(Collectors.toSet());
+
+    Set<String> browsableRepositories = getBrowsableRepositories(repositories);
 
     if (!repositories.equals(browsableRepositories)) {
-      addBrowsableRepositoriesAndSelectorPermissions(queryBuilder, format, repositories, browsableRepositories);
+      addBrowsableRepositoriesAndSelectorPermissions(queryBuilder, repositories, browsableRepositories);
     }
   }
 
-  private Set<String> getBrowsableRepositories(final String format, final Set<String> repositories) {
-    return repositoryPermissionUtil.browsableAndUnknownRepositories(format, repositories);
+  private Set<String> getBrowsableRepositories(final Set<String> repositories) {
+    return repositoryPermissionUtil.browsableAndUnknownRepositories(repositories);
   }
 
   private Set<String> getSelectorRepositories(final Set<String> repositories, final Set<String> browsableRepositories) {
@@ -135,26 +148,24 @@ public class SqlSearchPermissionManager
     return selectorRepositories;
   }
 
-  private List<SelectorConfiguration> getSelectorConfigurations(final String format, final Set<String> repositories) {
-    return repositoryPermissionUtil.selectorConfigurations(repositories, singletonList(format));
+  private List<SelectorConfiguration> getSelectorConfigurations(final Set<String> repositories) {
+    return repositoryPermissionUtil.selectorConfigurations(repositories);
   }
 
   private void addBrowsableRepositoriesAndSelectorPermissions(
       final SqlSearchQueryBuilder queryBuilder,
-      final String format,
       final Set<String> repositories,
       final Set<String> browsableRepositories)
   {
     Set<String> selectorRepositories = getSelectorRepositories(repositories, browsableRepositories);
-    List<SelectorConfiguration> selectors = getSelectorConfigurations(format, selectorRepositories);
-    createSqlCondition(browsableRepositories, selectorRepositories, selectors, format).ifPresent(queryBuilder::add);
+    List<SelectorConfiguration> selectors = getSelectorConfigurations(selectorRepositories);
+    createSqlCondition(browsableRepositories, selectorRepositories, selectors).ifPresent(queryBuilder::add);
   }
 
   private Optional<SqlSearchQueryCondition> createSqlCondition(
       final Set<String> browsableRepositories,
       final Set<String> selectorRepositories,
-      final List<SelectorConfiguration> selectorConfigs,
-      final String format)
+      final List<SelectorConfiguration> selectorConfigs)
   {
 
     if (browsableRepositories.isEmpty() && selectorConfigs.isEmpty()) {
@@ -163,7 +174,7 @@ public class SqlSearchPermissionManager
 
     List<SqlSearchQueryCondition> conditions = new ArrayList<>();
     of(browsableRepositories).flatMap(this::createRepositoryCondition).ifPresent(conditions::add);
-    of(selectorRepositories).flatMap(repos -> createContentSelectorCondition(selectorConfigs, repos, format))
+    of(selectorRepositories).flatMap(repos -> createContentSelectorCondition(selectorConfigs, repos))
         .ifPresent(conditions::add);
 
     return of(conditions)
@@ -182,15 +193,14 @@ public class SqlSearchPermissionManager
 
   private Optional<SqlSearchQueryCondition> createContentSelectorCondition(
       final List<SelectorConfiguration> selectors,
-      final Set<String> repositories,
-      final String format)
+      final Set<String> repositories)
   {
     if (selectors.isEmpty()) {
       return empty();
     }
 
     SqlSearchContentSelectorFilter contentAuthFilter =
-        contentSelectorFilterGenerator.createFilter(selectors, repositories, format);
+        contentSelectorFilterGenerator.createFilter(selectors, repositories);
 
     if (contentAuthFilter.hasFilters()) {
       return of(new SqlSearchQueryCondition(contentAuthFilter.queryFormat(), contentAuthFilter.queryParameters()));

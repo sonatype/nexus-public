@@ -22,6 +22,8 @@ public interface SearchResult
 {
   Integer componentId();
 
+  String format();
+
   String namespace();
 
   String componentName();

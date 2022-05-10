@@ -23,6 +23,7 @@ import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings;
 import org.sonatype.nexus.repository.rest.sql.ComponentSearchField;
+import org.sonatype.nexus.repository.search.KeywordSqlSearchQueryContribution;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
 
 import com.google.common.collect.ImmutableList;

@@ -49,7 +49,7 @@ public class DefaultSearchMappings
       new SearchMapping("q", "keyword", "Query by keyword"),
       new SearchMapping("repository", REPOSITORY_NAME, "Repository name",
           new RepositorySearchField(SEARCH_REPOSITORY_NAME)),
-      new SearchMapping("format", "format", "Query by format"),
+      new SearchMapping("format", "format", "Query by format", ComponentSearchField.FORMAT),
       new SearchMapping("group", GROUP_RAW, "Component group", ComponentSearchField.NAMESPACE),
       new SearchMapping("name", NAME_RAW, "Component name", ComponentSearchField.NAME),
       new SearchMapping(VERSION, VERSION, "Component version", ComponentSearchField.VERSION),

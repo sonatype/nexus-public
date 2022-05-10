@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search.sql;
+package org.sonatype.nexus.repository.search.table;
 
 import java.util.List;
 import java.util.Map;
@@ -21,25 +21,25 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.repository.search.DefaultSqlSearchQueryContribution;
-import org.sonatype.nexus.repository.search.SqlSearchQueryContribution;
 import org.sonatype.nexus.repository.search.index.SearchConstants;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
+import org.sonatype.nexus.repository.search.DefaultSqlSearchQueryContribution;
+import org.sonatype.nexus.repository.search.sql.SqlSearchQueryBuilder;
+import org.sonatype.nexus.repository.search.SqlSearchQueryContribution;
+import org.sonatype.nexus.repository.search.sql.SqlSearchQueryContributionSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.sonatype.nexus.common.text.Strings2.isBlank;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
 import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryBuilder.queryBuilder;
 
 /**
  * Translates SearchFilters to a {@link SqlSearchQueryBuilder} containing a condition format string and the search
  * values.
- *
- * @since 3.38
  */
 @Named
 @Singleton
-public class SqlSearchUtils
+public class TableSearchUtils
     extends ComponentSupport
 {
   public static final String FORMAT = "format";
@@ -49,7 +49,7 @@ public class SqlSearchUtils
   private final SqlSearchQueryContribution defaultSqlSearchQueryContribution;
 
   @Inject
-  public SqlSearchUtils(final Map<String, SqlSearchQueryContribution> searchContributions) {
+  public TableSearchUtils(final Map<String, SqlSearchQueryContribution> searchContributions) {
     this.searchContributions = checkNotNull(searchContributions);
     this.defaultSqlSearchQueryContribution =
         checkNotNull(searchContributions.get(DefaultSqlSearchQueryContribution.NAME));
@@ -59,7 +59,6 @@ public class SqlSearchUtils
     final SqlSearchQueryBuilder queryBuilder = queryBuilder();
     searchFilters.stream()
         .filter(searchFilter -> !isBlank(searchFilter.getValue()))
-        .filter(filter -> !FORMAT.equalsIgnoreCase(filter.getProperty()))
         .filter(filter -> !SearchConstants.REPOSITORY_NAME.equalsIgnoreCase(filter.getProperty()))
         .forEach(searchFilter -> {
           SqlSearchQueryContribution searchContribution = searchContributions
@@ -70,14 +69,6 @@ public class SqlSearchUtils
     log.debug("Query: {}", queryBuilder);
 
     return queryBuilder;
-  }
-
-  public Optional<String> getFormat(final List<SearchFilter> searchFilters) {
-    return searchFilters.stream()
-        .filter(searchFilter -> !isBlank(searchFilter.getValue()))
-        .filter(filter -> FORMAT.equalsIgnoreCase(filter.getProperty()))
-        .findFirst()
-        .map(SearchFilter::getValue);
   }
 
   public Optional<SearchFilter> getRepositoryFilter(final List<SearchFilter> filters) {

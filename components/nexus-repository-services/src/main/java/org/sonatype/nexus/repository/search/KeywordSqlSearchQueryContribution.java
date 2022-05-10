@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search.sql;
+package org.sonatype.nexus.repository.search;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -27,6 +27,10 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
+import org.sonatype.nexus.repository.search.sql.SqlSearchQueryBuilder;
+import org.sonatype.nexus.repository.search.sql.SqlSearchQueryCondition;
+import org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilder;
+import org.sonatype.nexus.repository.search.sql.SqlSearchQueryContributionSupport;
 
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;

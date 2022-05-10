@@ -10,29 +10,9 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.rest.sql;
+@FeatureFlag(name = DATASTORE_TABLE_SEARCH)
+package org.sonatype.nexus.repository.search.table;
 
-import org.sonatype.nexus.repository.rest.SearchFieldSupport;
+import org.sonatype.nexus.common.app.FeatureFlag;
 
-/**
- * A field on the component table.
- *
- * @since 3.38
- */
-public class ComponentSearchField
-    extends SearchFieldSupport
-{
-  public static final SearchFieldSupport FORMAT = new ComponentSearchField("format");
-
-  private static final String TABLE = "${format}_component";
-
-  public static final ComponentSearchField NAMESPACE = new ComponentSearchField("namespace");
-
-  public static final SearchFieldSupport NAME = new ComponentSearchField("search_component_name");
-
-  public static final SearchFieldSupport VERSION = new ComponentSearchField("version");
-
-  public ComponentSearchField(final String columnName) {
-    super(TABLE, columnName);
-  }
-}
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_TABLE_SEARCH;
