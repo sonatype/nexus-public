@@ -31,7 +31,8 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
    * @override
    */
   initComponent: function() {
-    var me = this;
+    var me = this,
+        subdomainVisibility = (NX.State.getEdition() === 'PRO');
 
     me.items = [
       {
@@ -58,7 +59,7 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
               }
             ]
           },
-          {
+          subdomainVisibility ? {
             xtype: 'fieldcontainer',
             fieldLabel: NX.I18n.get('Repository_Facet_Docker_Subdomain_FieldLabel'),
             helpText: NX.I18n.get('Repository_Facet_Docker_Subdomain_HelpText'),
@@ -67,7 +68,7 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
               me.createCheckbox('subdomain'),
               me.createSubdomain('subdomain')
             ]
-          },
+          } : undefined,
           {
             xtype: 'fieldcontainer',
             fieldLabel: NX.I18n.get('Repository_Facet_DockerConnectorFacet_HttpPort_FieldLabel'),
@@ -156,6 +157,7 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
     return {
       xtype: 'checkbox',
       itemId: type + 'Enabled',
+      name: 'dockercheckbox' + type,
       listeners: {
         /**
          * Enable/Disable the port.
