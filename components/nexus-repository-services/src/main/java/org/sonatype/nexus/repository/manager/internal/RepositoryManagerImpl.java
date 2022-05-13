@@ -176,7 +176,7 @@ public class RepositoryManagerImpl
    * Lookup a repository by name.
    */
   private Repository repository(final String name) {
-    Repository repository = repositories.get(name);
+    Repository repository = repositories.get(name.toLowerCase());
     checkState(repository != null, "Missing repository: %s", name);
     return repository;
   }
@@ -217,7 +217,7 @@ public class RepositoryManagerImpl
     securityContributor.add(repository);
 
     log.debug("Tracking: {}", repository);
-    repositories.put(repository.getName(), repository);
+    repositories.put(repository.getName().toLowerCase(), repository);
   }
 
   /**
@@ -225,7 +225,7 @@ public class RepositoryManagerImpl
    */
   private void untrack(final Repository repository) {
     log.debug("Untracking: {}", repository);
-    repositories.remove(repository.getName());
+    repositories.remove(repository.getName().toLowerCase());
 
     // tear down security
     securityContributor.remove(repository);
@@ -339,7 +339,7 @@ public class RepositoryManagerImpl
 
   @Override
   public boolean exists(final String name) {
-    return stream(browse().spliterator(), false).anyMatch(repository -> repository.getName().equalsIgnoreCase(name));
+    return isRepositoryLoaded(name) || store.exists(name);
   }
 
   @Nullable
@@ -348,7 +348,7 @@ public class RepositoryManagerImpl
   public Repository get(final String name) {
     checkNotNull(name);
 
-    return repositories.get(name);
+    return repositories.get(name.toLowerCase());
   }
 
   @Override
@@ -631,7 +631,7 @@ public class RepositoryManagerImpl
   }
 
   private void handleRepositoryCreated(String repositoryName) {
-    if (exists(repositoryName)) {
+    if (isRepositoryLoaded(repositoryName)) {
       // repository already presented on the current node UI
       return;
     }
@@ -650,7 +650,7 @@ public class RepositoryManagerImpl
   }
 
   private void handleRepositoryUpdated(final String repositoryName) {
-    if (!exists(repositoryName)) {
+    if (!isRepositoryLoaded(repositoryName)) {
       log.debug("Can not find repository configuration {}", repositoryName);
       return;
     }
@@ -671,7 +671,7 @@ public class RepositoryManagerImpl
   }
 
   private void handleRepositoryDeleted(final String repositoryName) {
-    if (!exists(repositoryName)) {
+    if (!isRepositoryLoaded(repositoryName)) {
       log.debug("Repository {} already deleted on the current node", repositoryName);
       return;
     }
@@ -698,4 +698,7 @@ public class RepositoryManagerImpl
     repository.validate(configuration);
   }
 
+  private boolean isRepositoryLoaded(final String repositoryName) {
+    return repositories.containsKey(repositoryName.toLowerCase());
+  }
 }

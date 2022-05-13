@@ -25,6 +25,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.rest.SearchFieldSupport;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
+import org.sonatype.nexus.repository.search.SqlSearchQueryContribution;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
 
 import org.apache.commons.collections.CollectionUtils;

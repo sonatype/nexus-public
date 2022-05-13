@@ -19,6 +19,7 @@ import java.util.Set;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings;
+import org.sonatype.nexus.repository.search.SqlSearchRepositoryNameUtil;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 
 import com.google.common.collect.ImmutableMap;
@@ -36,9 +37,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings.SEARCH_REPOSITORY_NAME;
 
-public class SqlSearchPermissionManagerTest
+public class TableSearchPermissionManagerTest
     extends TestSupport
 {
+
   private static final String REPO1 = "repo1";
 
   private static final String REPO2 = "repo2";

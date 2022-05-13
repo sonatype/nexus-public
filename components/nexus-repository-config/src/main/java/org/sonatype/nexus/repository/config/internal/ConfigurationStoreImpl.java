@@ -100,6 +100,12 @@ public class ConfigurationStoreImpl
   }
 
   @Transactional
+  @Override
+  public boolean exists(final String repositoryName) {
+    return dao().readByName(repositoryName).isPresent();
+  }
+
+  @Transactional
   protected void doDelete(final Configuration configuration) {
     dao().deleteByName(configuration.getRepositoryName());
   }

@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 
+import org.sonatype.nexus.repository.search.SqlSearchQueryContribution;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
 
 import static com.google.common.base.Preconditions.checkArgument;

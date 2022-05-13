@@ -42,4 +42,11 @@ public interface ConfigurationStore
   Configuration newConfiguration();
 
   Collection<Configuration> readByNames(Set<String> repositoryNames);
+
+  /**
+   * Checks whether the database contains an entry with the provided name.<br>
+   *
+   * Note: Underlying implementations may return {@code false} if unsupported.
+   */
+  boolean exists(String repositoryName);
 }

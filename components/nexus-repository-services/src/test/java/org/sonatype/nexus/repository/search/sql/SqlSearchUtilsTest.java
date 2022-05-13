@@ -18,6 +18,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.repository.search.DefaultSqlSearchQueryContribution;
+import org.sonatype.nexus.repository.search.SqlSearchQueryContribution;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
 
 import org.junit.Before;

@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search.sql;
+package org.sonatype.nexus.repository.search;
 
 import java.util.Map;
 
@@ -19,6 +19,9 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.rest.SearchMappings;
+import org.sonatype.nexus.repository.search.sql.SqlSearchQueryBuilder;
+import org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilder;
+import org.sonatype.nexus.repository.search.sql.SqlSearchQueryContributionSupport;
 
 /**
  * Default {@link SqlSearchQueryContribution} which splits the search term/value by whitespace, builds exact or

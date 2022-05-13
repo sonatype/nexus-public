@@ -50,7 +50,12 @@ class RepositoryRule
     repositories.each { Repository repository ->
       if (repositoryManager.exists(repository.name)) {
         log.debug 'Deleting test repository: {}', repository.name
-        repositoryManager.delete(repository.name)
+        try {
+          repositoryManager.delete(repository.name)
+        }
+        catch (Exception e) {
+          log.info("Failed to remove repository {}", repository.name)
+        }
       }
     }
     repositories.clear()

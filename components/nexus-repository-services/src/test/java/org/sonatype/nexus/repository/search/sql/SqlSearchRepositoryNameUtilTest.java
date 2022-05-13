@@ -24,6 +24,7 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.search.SqlSearchRepositoryNameUtil;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 

@@ -18,6 +18,7 @@ import java.util.Map;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings;
+import org.sonatype.nexus.repository.search.DefaultSqlSearchQueryContribution;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
 
 import com.google.common.collect.ImmutableSet;

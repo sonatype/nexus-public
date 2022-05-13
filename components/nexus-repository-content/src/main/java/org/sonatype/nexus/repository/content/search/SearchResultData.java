@@ -28,6 +28,8 @@ public class SearchResultData
 
   private String namespace;
 
+  private String format;
+
   private String componentName;
 
   private String version;
@@ -59,6 +61,11 @@ public class SearchResultData
     return version;
   }
 
+  @Override
+  public String format() {
+    return format;
+  }
+
   public void setComponentId(final Integer componentId) {
     this.componentId = componentId;
   }
@@ -79,11 +86,16 @@ public class SearchResultData
     this.repositoryName = repositoryName;
   }
 
+  public void setFormat(final String format) {
+    this.format = format;
+  }
+
   @Override
   public String toString() {
     return "SearchResultData{" +
         "componentId=" + componentId +
         ", namespace='" + namespace + '\'' +
+        ", format='" + format + '\'' +
         ", componentName='" + componentName + '\'' +
         ", version='" + version + '\'' +
         ", repositoryName='" + repositoryName + '\'' +
