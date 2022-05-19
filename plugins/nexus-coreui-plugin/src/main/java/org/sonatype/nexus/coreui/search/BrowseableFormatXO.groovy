@@ -10,28 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.coreui
+package org.sonatype.nexus.coreui.search
 
 import groovy.transform.ToString
 
-
 /**
- * Repository reference exchange object.
+ * BrowseableFormat exchange object.
  *
- * @since 3.0
+ * @since 3.2.1
  */
 @ToString(includePackage = false, includeNames = true)
-class RepositoryReferenceXO
-    extends ReferenceXO
+class BrowseableFormatXO
 {
-  String type
-  String format
-  String versionPolicy
-  String url
-  RepositoryStatusXO status
-  /**
-   * sortOrder will override the typical alphanumeric ordering in the UI, so the higher your sortOrder, the closer to
-   * the top you will get
-   */
-  int sortOrder = 0
+  String id
 }

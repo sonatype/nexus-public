@@ -190,6 +190,9 @@ Ext.define('NX.coreui.controller.Repositories', {
           OptionalFieldSet enables all child elements each time it is expanded */
           enable: me.disablePreEmptiveAuthCheckboxIfNotHttps
         },
+        'nx-coreui-repository-feature combo[name=attributes.maven.versionPolicy]' : {
+          change: me.handleMaven2VersionPolicyChange
+        },
         'nx-coreui-repository-nugetproxy-facet radiogroup[name=nugetVersion]': {
           change: me.onNugetProxyVersionChange
         },
