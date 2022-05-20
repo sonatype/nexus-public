@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.sonatype.nexus.assemblies</groupId>
     <artifactId>nexus-assemblies</artifactId>
-    <version>3.39.0-SNAPSHOT</version>
+    <version>3.40.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-base-template</artifactId>
@@ -295,6 +295,8 @@
                 <copy file="${org.bouncycastle:bcpkix-jdk15to18:jar}"
                       todir="${project.build.directory}/assembly/lib"/>
                 <copy file="${org.bouncycastle:bcpg-jdk15to18:jar}"
+                      todir="${project.build.directory}/assembly/lib"/>
+                <copy file="${org.bouncycastle:bcutil-jdk15to18:jar}"
                       todir="${project.build.directory}/assembly/lib"/>
 
                 <!-- put nexus-orient-console in lib/support along with its dependencies -->

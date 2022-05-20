@@ -48,6 +48,10 @@ public class RepositoryAdminPermission
     setParts(ImmutableList.of(SYSTEM, DOMAIN, format, name), actions);
   }
 
+  public RepositoryAdminPermission(final String format, final String name, final String... actions) {
+    this(format, name, Arrays.asList(actions));
+  }
+
   /**
    * @since 3.17
    */

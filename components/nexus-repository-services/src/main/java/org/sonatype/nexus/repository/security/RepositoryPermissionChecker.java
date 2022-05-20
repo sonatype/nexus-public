@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -24,7 +26,11 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.repository.Format;
+import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorManager;
@@ -48,15 +54,23 @@ import static org.sonatype.nexus.security.BreadActions.READ;
 @Named
 @Singleton
 public class RepositoryPermissionChecker
+    extends ComponentSupport
 {
   private final SecurityHelper securityHelper;
 
   private final SelectorManager selectorManager;
 
+  private final Map<String, Recipe> recipes;
+
   @Inject
-  public RepositoryPermissionChecker(final SecurityHelper securityHelper, final SelectorManager selectorManager) {
+  public RepositoryPermissionChecker(
+      final SecurityHelper securityHelper,
+      final SelectorManager selectorManager,
+      final Map<String, Recipe> recipes)
+  {
     this.securityHelper = checkNotNull(securityHelper);
     this.selectorManager = checkNotNull(selectorManager);
+    this.recipes = checkNotNull(recipes);
   }
 
   /**
@@ -112,6 +126,24 @@ public class RepositoryPermissionChecker
   }
 
   /**
+   * @param repositories to test against browse permissions and content selector permissions
+   * @return the repositories which the user has access to browse
+   */
+  public List<Configuration> userCanBrowseRepositories(final Configuration... repositories) {
+    Subject subject = securityHelper.subject();
+    List<Configuration> filteredRepositories = new ArrayList<>(Arrays.asList(repositories));
+    List<Configuration> permittedRepositories =
+        userHasPermission(c -> new RepositoryViewPermission(toFormat(c), c.getRepositoryName(), BROWSE), repositories);
+    filteredRepositories.removeAll(permittedRepositories);
+
+    if (!filteredRepositories.isEmpty()) {
+      permittedRepositories.addAll(subjectHasAnyContentSelectorAccessToConfiguration(subject, filteredRepositories));
+    }
+
+    return permittedRepositories;
+  }
+
+  /**
    * Ensures the user has any of the supplied permissions, or a RepositoryAdminPermission with the action to any
    * of the repositories. Throws an AuthorizationException if the user does not have the required permission.
    *
@@ -151,7 +183,7 @@ public class RepositoryPermissionChecker
    * @param actions the admin actions to test the user for
    * @return true if the user has permission to perform the admin actions on the repository
    */
-  public boolean userHasRepositoryAdminPermission(Repository repository, final String... actions) {
+  public boolean userHasRepositoryAdminPermission(final Repository repository, final String... actions) {
     return !userHasPermission(r -> new RepositoryAdminPermission(r, actions), repository).isEmpty();
   }
 
@@ -167,6 +199,19 @@ public class RepositoryPermissionChecker
   {
     Repository[] repos = Iterables.toArray(repositories, Repository.class);
     return userHasPermission(r -> new RepositoryAdminPermission(r, actions), repos);
+  }
+
+  /**
+   * @param configurations to test the actions permission against
+   * @param actions the repository-admin actions
+   * @return the repositories which the user is permitted the admin action
+   */
+  public List<Configuration> userHasRepositoryAdminPermissionFor(
+      final Iterable<Configuration> configurations,
+      final String... actions)
+  {
+    Configuration[] repos = Iterables.toArray(configurations, Configuration.class);
+    return userHasPermission(c -> new RepositoryAdminPermission(toFormat(c), c.getRepositoryName(), actions), repos);
   }
 
   /**
@@ -187,9 +232,9 @@ public class RepositoryPermissionChecker
     securityHelper.ensurePermitted(new RepositoryAdminPermission(format, repositoryName, singletonList(action)));
   }
 
-  private List<Repository> userHasPermission(
-      final Function<Repository, Permission> permissionSupplier,
-      final Repository... repositories)
+  private <U> List<U> userHasPermission(
+      final Function<U, Permission> permissionSupplier,
+      final U... repositories)
   {
     if (repositories.length == 0) {
       return Collections.emptyList();
@@ -198,7 +243,7 @@ public class RepositoryPermissionChecker
     Permission[] permissions = Arrays.stream(repositories).map(permissionSupplier).toArray(Permission[]::new);
     boolean[] results = securityHelper.isPermitted(subject, permissions);
 
-    List<Repository> permittedRepositories = new ArrayList<>();
+    List<U> permittedRepositories = new ArrayList<>();
 
     for (int i = 0; i < results.length; i++) {
       if (results[i]) {
@@ -232,6 +277,44 @@ public class RepositoryPermissionChecker
     }
 
     return permittedRepositories;
+  }
+
+  private List<Configuration> subjectHasAnyContentSelectorAccessToConfiguration(
+      final Subject subject,
+      final List<Configuration> configurations)
+  {
+    List<String> repositoryNames = configurations.stream()
+        .map(Configuration::getRepositoryName)
+        .collect(Collectors.toList());
+    List<String> formats = configurations.stream()
+        .map(this::toFormat)
+        .distinct()
+        .collect(Collectors.toList());
+    List<SelectorConfiguration> selectors = selectorManager.browseActive(repositoryNames, formats);
+
+    if (selectors.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<Configuration> permittedRepositories = new ArrayList<>();
+    for (Configuration configuration : configurations) {
+      Permission[] permissions = selectors.stream()
+          .map(s -> new RepositoryContentSelectorPermission(s.getName(), toFormat(configuration),
+              configuration.getRepositoryName(), singletonList(BROWSE)))
+          .toArray(Permission[]::new);
+      if (securityHelper.anyPermitted(subject, permissions)) {
+        permittedRepositories.add(configuration);
+      }
+    }
+
+    return permittedRepositories;
+  }
+
+  private String toFormat(final Configuration configuration) {
+    return Optional.ofNullable(recipes.get(configuration.getRecipeName()))
+        .map(Recipe::getFormat)
+        .map(Format::getValue)
+        .orElseThrow(() -> new IllegalArgumentException("Unknown repository type: " + configuration.getRecipeName()));
   }
 
   private boolean userHasAnyContentSelectorAccessTo(final Repository repository, final String... actions) {

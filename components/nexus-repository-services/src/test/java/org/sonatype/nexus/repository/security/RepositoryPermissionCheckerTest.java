@@ -21,7 +21,9 @@ import java.util.function.Function;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
+import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.security.privilege.ApplicationPermission;
 import org.sonatype.nexus.selector.SelectorConfiguration;
@@ -62,9 +64,11 @@ public class RepositoryPermissionCheckerTest
 
   private static final String REPOSITORY_NAME_2 = "repositoryName2";
 
-  private static final String REPOSITORY_FORMAT = "repositoryFormat";
+  private static final String REPOSITORY_FORMAT = "maven2";
 
   private static final String SELECTOR_NAME = "theSelector";
+
+  private static final String RECIPE_NAME = "maven2-proxy";
 
   private static final boolean HAS_REPOSITORY_PERMISSION = true;
 
@@ -74,6 +78,15 @@ public class RepositoryPermissionCheckerTest
   public ExpectedException thrown = ExpectedException.none();
 
   @Mock
+  private Configuration configuration;
+
+  @Mock
+  private Configuration configuration1;
+
+  @Mock
+  private Configuration configuration2;
+
+  @Mock
   private Repository repository;
 
   @Mock
@@ -81,6 +94,9 @@ public class RepositoryPermissionCheckerTest
 
   @Mock
   private Repository repository2;
+
+  @Mock
+  private Recipe recipe;
 
   @Mock
   private Format format;
@@ -101,13 +117,22 @@ public class RepositoryPermissionCheckerTest
 
   @Before
   public void setup() {
+    when(recipe.getFormat()).thenReturn(format);
+    when(format.getValue()).thenReturn(REPOSITORY_FORMAT);
+
+    when(configuration.getRepositoryName()).thenReturn(REPOSITORY_NAME);
+    when(configuration.getRecipeName()).thenReturn(RECIPE_NAME);
+    when(configuration1.getRepositoryName()).thenReturn(REPOSITORY_NAME_1);
+    when(configuration1.getRecipeName()).thenReturn(RECIPE_NAME);
+    when(configuration2.getRepositoryName()).thenReturn(REPOSITORY_NAME_2);
+    when(configuration2.getRecipeName()).thenReturn(RECIPE_NAME);
+
     when(repository.getName()).thenReturn(REPOSITORY_NAME);
     when(repository.getFormat()).thenReturn(format);
     when(repository1.getName()).thenReturn(REPOSITORY_NAME_1);
     when(repository1.getFormat()).thenReturn(format);
     when(repository2.getName()).thenReturn(REPOSITORY_NAME_2);
     when(repository2.getFormat()).thenReturn(format);
-    when(format.getValue()).thenReturn(REPOSITORY_FORMAT);
 
     when(selector.getName()).thenReturn(SELECTOR_NAME);
     when(selectorManager.browse()).thenReturn(asList(selector));
@@ -118,7 +143,8 @@ public class RepositoryPermissionCheckerTest
         .thenReturn(new boolean[] { true, false, false });
     when(securityHelper.subject()).thenReturn(subject);
 
-    underTest = new RepositoryPermissionChecker(securityHelper, selectorManager);
+    underTest =
+        new RepositoryPermissionChecker(securityHelper, selectorManager, Collections.singletonMap(RECIPE_NAME, recipe));
   }
 
   @Test
@@ -143,11 +169,34 @@ public class RepositoryPermissionCheckerTest
   }
 
   @Test
+  public void testUserCanBrowseRepositories_byConfigurations() {
+    when(securityHelper.anyPermitted(eq(subject), any(RepositoryContentSelectorPermission.class))).then(i -> {
+      RepositoryContentSelectorPermission p = (RepositoryContentSelectorPermission) i.getArguments()[1];
+      return REPOSITORY_NAME_2.equals(p.getName());
+    });
+    List<Configuration> permittedConfigurations =
+        underTest.userCanBrowseRepositories(configuration, configuration1, configuration2);
+
+    assertThat(permittedConfigurations, contains(configuration, configuration2));
+  }
+
+  @Test
   public void testUserHasRepositoryAdminPermission() {
     List<Repository> permittedRepositories =
         underTest.userHasRepositoryAdminPermission(Arrays.asList(repository, repository1, repository2), READ);
 
     assertThat(permittedRepositories, contains(repository));
+
+    verify(securityHelper).isPermitted(subject,
+        createAdminPermissions(READ, RepositoryAdminPermission::new, repository, repository1, repository2));
+  }
+
+  @Test
+  public void testUserHasRepositoryAdminPermissionFor() {
+    List<Configuration> permittedRepositories =
+        underTest.userHasRepositoryAdminPermissionFor(Arrays.asList(configuration, configuration1, configuration2), READ);
+
+    assertThat(permittedRepositories, contains(configuration));
 
     verify(securityHelper).isPermitted(subject,
         createAdminPermissions(READ, RepositoryAdminPermission::new, repository, repository1, repository2));
