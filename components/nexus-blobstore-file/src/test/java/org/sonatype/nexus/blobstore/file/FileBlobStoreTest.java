@@ -118,6 +118,9 @@ public class FileBlobStoreTest
   private BlobStoreUsageChecker blobStoreUsageChecker;
 
   @Mock
+  private FileBlobDeletionIndex fileBlobDeletionIndex;
+
+  @Mock
   private FileBlobAttributes attributes;
 
   @Mock
@@ -165,7 +168,8 @@ public class FileBlobStoreTest
     configuration.setAttributes(attributes);
 
     underTest = new FileBlobStore(util.createTempDir().toPath(), blobIdLocationResolver, fileOperations, metrics,
-        configuration, appDirs, nodeAccess, dryRunPrefix, reconciliationLogger, 0L, blobStoreQuotaUsageChecker);
+        configuration, appDirs, nodeAccess, dryRunPrefix, reconciliationLogger, 0L, blobStoreQuotaUsageChecker,
+        fileBlobDeletionIndex);
 
     when(loadingCache.getUnchecked(any())).thenReturn(underTest.new FileBlob(new BlobId("fakeid")));
 

@@ -86,6 +86,9 @@ public class FileBlobStoreConcurrencyIT
   private BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker;
 
   @Mock
+  private FileBlobDeletionIndex fileBlobDeletionIndex;
+
+  @Mock
   NodeAccess nodeAccess;
 
   @Mock
@@ -121,7 +124,7 @@ public class FileBlobStoreConcurrencyIT
 
     this.underTest = new FileBlobStore(content, new DefaultBlobIdLocationResolver(), new SimpleFileOperations(),
         metricsStore, config, applicationDirectories, nodeAccess, dryRunPrefix, reconciliationLogger, 0L,
-        blobStoreQuotaUsageChecker);
+        blobStoreQuotaUsageChecker, fileBlobDeletionIndex);
     underTest.start();
   }
 

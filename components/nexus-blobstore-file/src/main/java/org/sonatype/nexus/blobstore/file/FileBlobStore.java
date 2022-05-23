@@ -17,7 +17,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.RandomAccessFile;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.FileStore;
 import java.nio.file.FileVisitResult;
@@ -78,7 +77,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.HashCode;
-import com.squareup.tape.QueueFile;
 import org.apache.commons.io.FileUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -87,7 +85,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.cache.CacheLoader.from;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
 import static java.time.LocalDate.now;
 import static java.util.Arrays.stream;
@@ -144,6 +141,8 @@ public class FileBlobStore
   @VisibleForTesting
   static final int MAX_COLLISION_RETRIES = 8;
 
+  private static final int INTERVAL_IN_SECONDS = 60;
+
   private Path contentDir;
 
   private Path reconciliationLogDir;
@@ -158,7 +157,7 @@ public class FileBlobStore
 
   private LoadingCache<BlobId, FileBlob> liveBlobs;
 
-  private QueueFile deletedBlobIndex;
+  private final FileBlobDeletionIndex blobDeletionIndex;
 
   private final NodeAccess nodeAccess;
 
@@ -184,7 +183,8 @@ public class FileBlobStore
                        final BlobStoreReconciliationLogger reconciliationLogger,
                        @Named("${nexus.blobstore.prune.empty.directory.age.ms:-86400000}")
                        final long pruneEmptyDirectoryAge,
-                       final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker)
+                       final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker,
+                       final FileBlobDeletionIndex blobDeletionIndex)
   {
     super(blobIdLocationResolver, dryRunPrefix);
     this.fileOperations = checkNotNull(fileOperations);
@@ -196,6 +196,7 @@ public class FileBlobStore
     this.reconciliationLogger = checkNotNull(reconciliationLogger);
     this.pruneEmptyDirectoryAge = pruneEmptyDirectoryAge;
     this.blobStoreQuotaUsageChecker = checkNotNull(blobStoreQuotaUsageChecker);
+    this.blobDeletionIndex = checkNotNull(blobDeletionIndex);
   }
 
   @VisibleForTesting
@@ -209,10 +210,12 @@ public class FileBlobStore
                        final DryRunPrefix dryRunPrefix,
                        final BlobStoreReconciliationLogger reconciliationLogger,
                        final long pruneEmptyDirectoryAge,
-                       final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker)
+                       final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker,
+                       final FileBlobDeletionIndex blobDeletionIndex)
+
   {
     this(blobIdLocationResolver, fileOperations, directories, metricsStore, nodeAccess, dryRunPrefix,
-        reconciliationLogger, pruneEmptyDirectoryAge, blobStoreQuotaUsageChecker);
+        reconciliationLogger, pruneEmptyDirectoryAge, blobStoreQuotaUsageChecker, blobDeletionIndex);
     this.contentDir = checkNotNull(contentDir);
     this.blobStoreConfiguration = checkNotNull(configuration);
   }
@@ -234,19 +237,7 @@ public class FileBlobStore
       metadata.store();
     }
     liveBlobs = CacheBuilder.newBuilder().weakValues().build(from(FileBlob::new));
-    File deletedIndexFile = storageDir.resolve(getDeletionsFilename()).toFile();
-    try {
-      maybeUpgradeLegacyIndexFile(deletedIndexFile.toPath());
-      deletedBlobIndex = new QueueFile(deletedIndexFile);
-    }
-    catch (IOException e) {
-      log.error("Unable to load deletions index file {}, run the compact blobstore task to rebuild", deletedIndexFile,
-          e);
-      createEmptyDeletionsIndex(deletedIndexFile);
-      deletedBlobIndex = new QueueFile(deletedIndexFile);
-      metadata.setProperty(REBUILD_DELETED_BLOB_INDEX_KEY, "true");
-      metadata.store();
-    }
+    blobDeletionIndex.initIndex(metadata, this);
     metricsStore.setStorageDir(storageDir);
     metricsStore.setBlobStore(this);
     metricsStore.start();
@@ -266,18 +257,7 @@ public class FileBlobStore
     }
   }
 
-  private void maybeUpgradeLegacyIndexFile(final Path deletedIndexPath) throws IOException {
-    //While Path#getParent can return null we don't expect that from a configured blob store directory.
-    Path legacyDeletionsIndex = deletedIndexPath.getParent().resolve(DELETIONS_FILENAME); //NOSONAR
-
-    if (!Files.exists(deletedIndexPath) && Files.exists(legacyDeletionsIndex)) {
-      log.info("Found 'deletions.index' file in blob store {}, renaming to {}", getAbsoluteBlobDir(),
-          deletedIndexPath);
-      Files.move(legacyDeletionsIndex, deletedIndexPath);
-    }
-  }
-
-  private String getDeletionsFilename() {
+  public String getDeletionsFilename() {
     return nodeAccess.getId() + "-" + DELETIONS_FILENAME;
   }
 
@@ -285,10 +265,9 @@ public class FileBlobStore
   protected void doStop() throws Exception {
     liveBlobs = null;
     try {
-      deletedBlobIndex.close();
+      blobDeletionIndex.stopIndex();
     }
     finally {
-      deletedBlobIndex = null;
       metricsStore.stop();
       blobStoreQuotaUsageChecker.stop();
     }
@@ -531,7 +510,7 @@ public class FileBlobStore
       blobAttributes.store();
 
       // record blob for hard-deletion when the next compact task runs
-      deletedBlobIndex.add(blobId.toString().getBytes(UTF_8));
+      blobDeletionIndex.createRecord(blobId);
       blob.markStale();
 
       return true;
@@ -806,8 +785,7 @@ public class FileBlobStore
   /**
    * Returns the absolute form of the configured blob directory.
    */
-  @VisibleForTesting
-  Path getAbsoluteBlobDir() throws IOException {
+  public Path getAbsoluteBlobDir() throws IOException {
     Path configurationPath = getConfiguredBlobStorePath();
     if (configurationPath.isAbsolute()) {
       return configurationPath;
@@ -837,23 +815,23 @@ public class FileBlobStore
   void doCompactWithDeletedBlobIndex(@Nullable final BlobStoreUsageChecker inUseChecker) throws IOException {
     log.info("Begin deleted blobs processing");
     // only process each blob once (in-use blobs may be re-added to the index)
-    ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60);
-    for (int counter = 0, numBlobs = deletedBlobIndex.size(); counter < numBlobs; counter++) {
-      checkCancellation();
-      byte[] bytes = deletedBlobIndex.peek();
-      if (bytes == null) {
+    ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, INTERVAL_IN_SECONDS);
+    for (int counter = 0, numBlobs = blobDeletionIndex.size(); counter < numBlobs; counter++) {
+      String oldestDeletedRecord = blobDeletionIndex.readOldestRecord();
+      if (Objects.isNull(oldestDeletedRecord)) {
+        log.info("Deleted blobs not found");
         return;
       }
-      BlobId blobId = new BlobId(new String(bytes, UTF_8));
-      FileBlob blob = liveBlobs.getIfPresent(blobId);
-      if (blob == null || blob.isStale()) {
-        maybeCompactBlob(inUseChecker, blobId);
-        deletedBlobIndex.remove();
+      BlobId oldestDeletedBlobId = new BlobId(oldestDeletedRecord);
+      FileBlob blob = liveBlobs.getIfPresent(oldestDeletedBlobId);
+      if (Objects.isNull(blob) || blob.isStale()) {
+        maybeCompactBlob(inUseChecker, oldestDeletedBlobId);
+        blobDeletionIndex.deleteRecord(oldestDeletedBlobId);
       }
       else {
         // still in use, so move it to end of the queue
-        deletedBlobIndex.remove();
-        deletedBlobIndex.add(bytes);
+        blobDeletionIndex.deleteRecord(oldestDeletedBlobId);
+        blobDeletionIndex.createRecord(oldestDeletedBlobId);
       }
 
       progressLogger.info("Elapsed time: {}, processed: {}/{}", progressLogger.getElapsed(),
@@ -887,9 +865,9 @@ public class FileBlobStore
     log.info("Begin deleted blobs processing without deleted blob index");
     //clear the deleted blob index ahead of time, so we won't lose deletes that may occur while the compact is being
     //performed
-    deletedBlobIndex.clear();
+    blobDeletionIndex.deleteAllRecords();
 
-    ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60);
+    ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, INTERVAL_IN_SECONDS);
     AtomicInteger count = new AtomicInteger(0);
 
     //rather than using the blobId stream here, need to use a different means of walking the file tree, as
@@ -945,7 +923,7 @@ public class FileBlobStore
     try {
       if (blob == null || blob.isStale()) {
         if (!maybeCompactBlob(inUseChecker, new BlobId(blobId))) {
-          deletedBlobIndex.add(blobId.getBytes(UTF_8));
+          blobDeletionIndex.createRecord(new BlobId(blobId));
         }
         else {
           progressLogger.info("Elapsed time: {}, processed: {}", progressLogger.getElapsed(),
@@ -953,7 +931,7 @@ public class FileBlobStore
         }
       }
       else {
-        deletedBlobIndex.add(blobId.getBytes(UTF_8));
+        blobDeletionIndex.createRecord(new BlobId(blobId));
       }
     }
     catch (IOException e) {
@@ -979,23 +957,6 @@ public class FileBlobStore
         attributeFile.getName().endsWith(BLOB_FILE_ATTRIBUTES_SUFFIX) &&
         !attributeFile.getName().startsWith(TEMPORARY_BLOB_ID_PREFIX) &&
         !attributeFile.getAbsolutePath().contains(CONTENT_TMP_PATH);
-  }
-
-  private void createEmptyDeletionsIndex(final File deletionsIndex) throws IOException {
-    // copy a fresh index on top of existing index to avoid problems
-    // with removing or renaming open files on Windows
-    Path tempFile = Files.createTempFile(DELETIONS_FILENAME, "tmp");
-    Files.delete(tempFile);
-    try {
-      new QueueFile(tempFile.toFile()).close();
-      try (RandomAccessFile raf = new RandomAccessFile(deletionsIndex, "rw")) {
-        raf.setLength(0);
-        raf.write(Files.readAllBytes(tempFile));
-      }
-    }
-    finally {
-      Files.deleteIfExists(tempFile);
-    }
   }
 
   class FileBlob
