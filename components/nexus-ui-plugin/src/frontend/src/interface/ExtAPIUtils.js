@@ -95,7 +95,7 @@ export default class ExtAPIUtils {
    * @param {string, Object, Array} data [optional] - The request data
    * @return {Promise}
    */
-  static extAPIRequest(action, method, data) {
+  static extAPIRequest(action, method, data = null) {
     return Axios.post(APIConstants.EXT.URL, this.createRequestBody(action, method, data));
   }
 
