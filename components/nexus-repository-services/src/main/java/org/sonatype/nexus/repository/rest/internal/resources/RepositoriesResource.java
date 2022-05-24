@@ -28,7 +28,6 @@ import org.sonatype.nexus.repository.rest.internal.resources.doc.RepositoriesRes
 import org.sonatype.nexus.rest.Resource;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 
@@ -55,10 +54,7 @@ public class RepositoriesResource
   @GET
   @Override
   public List<RepositoryXO> getRepositories() {
-    return repositoryManagerRESTAdapter.getRepositories()
-        .stream()
-        .map(RepositoryXO::fromRepository)
-        .collect(toList());
+    return repositoryManagerRESTAdapter.getRepositories();
   }
 
   @GET

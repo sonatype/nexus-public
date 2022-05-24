@@ -53,7 +53,7 @@ public interface RepositoryManagerRESTAdapter
   /**
    * Retrieve all repositories that the user access to.
    */
-  List<Repository> getRepositories();
+  List<RepositoryXO> getRepositories();
 
   /**
    * Retrieves all group repository names that the specified repository is a member of.
