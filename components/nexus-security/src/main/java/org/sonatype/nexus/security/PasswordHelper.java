@@ -51,7 +51,6 @@ public class PasswordHelper
     }
     // check the input is not already encrypted
     if (mavenCipher.isPasswordCipher(password)) {
-      log.warn("Value appears to be already encrypted", log.isDebugEnabled() ? new IllegalArgumentException() : null);
       return password;
     }
     String encodedPassword = mavenCipher.encrypt(password, phraseService.getPhrase(ENC));
@@ -80,7 +79,6 @@ public class PasswordHelper
   private String encryptCharBuffer(final CharBuffer charBuffer) {
     // check the input is not already encrypted
     if (mavenCipher.isPasswordCipher(charBuffer)) {
-      log.warn("Value appears to be already encrypted", log.isDebugEnabled() ? new IllegalArgumentException() : null);
       return charBuffer.toString();
     }
     String encodedPassword = mavenCipher.encrypt(charBuffer, phraseService.getPhrase(ENC));
@@ -97,7 +95,6 @@ public class PasswordHelper
     }
     // check the input is encrypted
     if (!mavenCipher.isPasswordCipher(encodedPassword)) {
-      log.warn("Value appears to be already decrypted", log.isDebugEnabled() ? new IllegalArgumentException() : null);
       return encodedPassword;
     }
     if (phraseService.usesLegacyEncoding(encodedPassword)) {
@@ -116,7 +113,6 @@ public class PasswordHelper
     }
     // check the input is encrypted
     if (!mavenCipher.isPasswordCipher(encodedPassword)) {
-      log.warn("Value appears to be already decrypted", log.isDebugEnabled() ? new IllegalArgumentException() : null);
       return encodedPassword.toCharArray();
     }
     if (phraseService.usesLegacyEncoding(encodedPassword)) {
