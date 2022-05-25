@@ -33,6 +33,8 @@
       CONSTRAINT pk_${format}_asset_blob_id PRIMARY KEY (asset_blob_id),
       CONSTRAINT uk_${format}_asset_blob_ref UNIQUE (blob_ref)
     );
+
+    CREATE INDEX IF NOT EXISTS idx_${format}_asset_blob_blob_created ON ${format}_asset_blob (blob_created);
     --
   </insert>
 

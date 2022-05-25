@@ -18,7 +18,9 @@ import java.util.Collection;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.repository.content.Asset;
+import org.sonatype.nexus.repository.content.AssetInfo;
 import org.sonatype.nexus.repository.content.facet.ContentFacetFinder;
+import org.sonatype.nexus.repository.content.store.example.TestAssetBlobDAO;
 import org.sonatype.nexus.repository.content.store.example.TestAssetDAO;
 import org.sonatype.nexus.repository.content.store.example.TestContentRepositoryDAO;
 import org.sonatype.nexus.transaction.Transactional;
@@ -45,6 +47,8 @@ public class AssetStoreTest
 
   private AssetStore<TestAssetDAO> underTest = null;
 
+  private AssetBlobStore<TestAssetBlobDAO> assetBlobStore = null;
+
   private int repositoryId;
 
   @Before
@@ -59,6 +63,8 @@ public class AssetStoreTest
 
     underTest = new AssetStore<>(sessionRule, "test", TestAssetDAO.class);
     underTest.setDependencies(contentFacetFinder, eventManager);
+
+    assetBlobStore = new AssetBlobStore<>(sessionRule, "test", TestAssetBlobDAO.class);
   }
 
   private void createContentRepository(final ContentRepositoryData contentRepository) {
@@ -73,36 +79,57 @@ public class AssetStoreTest
   public void testBrowseUpdatedAssetsDifferentDates() {
     OffsetDateTime time = OffsetDateTime.now();
     AssetData asset1 = generateAsset(repositoryId, "/asset1/asset1.jar");
-    asset1.setLastUpdated(time);
     AssetData asset2 = generateAsset(repositoryId, "/asset2/asset2.jar");
-    asset2.setLastUpdated(time.plusSeconds(1));
     AssetData asset3 = generateAsset(repositoryId, "/asset3/asset3.jar");
-    asset3.setLastUpdated(time.plusSeconds(2));
     AssetData asset4 = generateAsset(repositoryId, "/asset4/asset4.jar");
-    asset4.setLastUpdated(time.plusSeconds(3));
     AssetData asset5 = generateAsset(repositoryId, "/asset5/asset5.jar");
-    asset5.setLastUpdated(time.plusSeconds(4));
     AssetData asset6 = generateAsset(repositoryId, "/asset6/asset6.jar");
-    asset6.setLastUpdated(time.plusSeconds(5));
-    AssetData asset7 = generateAsset(repositoryId, "/asset7_asset7%jar");
-    asset7.setLastUpdated(time.plusSeconds(6));
+
+    AssetBlobData assetBlob1 = randomAssetBlob();
+    AssetBlobData assetBlob2 = randomAssetBlob();
+    AssetBlobData assetBlob3 = randomAssetBlob();
+    AssetBlobData assetBlob4 = randomAssetBlob();
+    AssetBlobData assetBlob5 = randomAssetBlob();
+    AssetBlobData assetBlob6 = randomAssetBlob();
+
+    assetBlob1.setBlobCreated(time);
+    assetBlob2.setBlobCreated(time.plusSeconds(1));
+    assetBlob3.setBlobCreated(time.plusSeconds(2));
+    assetBlob4.setBlobCreated(time.plusSeconds(3));
+    assetBlob5.setBlobCreated(time.plusSeconds(4));
+    assetBlob6.setBlobCreated(time.plusSeconds(5));
 
     inTx(() -> {
-      Collection<Asset> assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of(), 2);
+      Collection<AssetInfo> assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of(), 2);
       assertThat(assets, is(empty()));
 
+      assetBlobStore.createAssetBlob(assetBlob1);
+      asset1.setAssetBlob(assetBlob1);
       underTest.createAsset(asset1);
       assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of(), 2);
       assertThat(assets.size(), is(1));
 
+      assetBlobStore.createAssetBlob(assetBlob2);
+      asset2.setAssetBlob(assetBlob2);
       underTest.createAsset(asset2);
+
+      assetBlobStore.createAssetBlob(assetBlob3);
+      asset3.setAssetBlob(assetBlob3);
       underTest.createAsset(asset3);
 
       assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of(),2);
       assertThat(assets.size(), is(2));
 
+      assetBlobStore.createAssetBlob(assetBlob4);
+      asset4.setAssetBlob(assetBlob4);
       underTest.createAsset(asset4);
+
+      assetBlobStore.createAssetBlob(assetBlob5);
+      asset5.setAssetBlob(assetBlob5);
       underTest.createAsset(asset5);
+
+      assetBlobStore.createAssetBlob(assetBlob6);
+      asset6.setAssetBlob(assetBlob6);
       underTest.createAsset(asset6);
 
       assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of("asset5"),100);
@@ -111,38 +138,52 @@ public class AssetStoreTest
       assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of("asset4", "asset5"),100);
       assertThat(assets.size(), is(2));
 
-      assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of("/asset?/a*.jar"),100);
+      assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of("/asset.?/a.*.jar"),100);
       assertThat(assets.size(), is(6));
-
-      underTest.createAsset(asset7);
-      // _ and % should be interpreted literally here so only asset7 will match
-      assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of("/asset?_a*%jar"),100);
-      assertThat(assets.size(), is(1));
     });
   }
 
   @Test
   public void testBrowseUpdatedAssetsIdenticalDates() {
-    OffsetDateTime time = OffsetDateTime.now();
+    OffsetDateTime time1 = OffsetDateTime.now();
     AssetData asset1 = generateAsset(repositoryId, "/asset1/asset1.jar");
-    asset1.setLastUpdated(time);
     AssetData asset2 = generateAsset(repositoryId, "/asset2/asset2.jar");
-    asset2.setLastUpdated(time);
     AssetData asset3 = generateAsset(repositoryId, "/asset3/asset3.jar");
-    asset3.setLastUpdated(time);
     AssetData asset4 = generateAsset(repositoryId, "/asset4/asset4.jar");
-    asset4.setLastUpdated(time);
+
+    AssetBlobData assetBlob1 = randomAssetBlob();
+    AssetBlobData assetBlob2 = randomAssetBlob();
+    AssetBlobData assetBlob3 = randomAssetBlob();
+    AssetBlobData assetBlob4 = randomAssetBlob();
+
+    // times are considered the same if they are at the same millisecond
+    OffsetDateTime time2 = time1.plusNanos(100000);
+    OffsetDateTime time3 = time2.plusNanos(100000);
+    OffsetDateTime time4 = time3.plusNanos(100000);
+
+    assetBlob1.setBlobCreated(time1);
+    assetBlob2.setBlobCreated(time2);
+    assetBlob3.setBlobCreated(time3);
+    assetBlob4.setBlobCreated(time4);
 
     inTx(() -> {
+      assetBlobStore.createAssetBlob(assetBlob1);
+      asset1.setAssetBlob(assetBlob1);
       underTest.createAsset(asset1);
+      assetBlobStore.createAssetBlob(assetBlob2);
+      asset2.setAssetBlob(assetBlob2);
       underTest.createAsset(asset2);
-      Collection<Asset> assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of(),2);
+      Collection<AssetInfo> assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of(),2);
       assertThat(assets.size(), is(2));
 
+      assetBlobStore.createAssetBlob(assetBlob3);
+      asset3.setAssetBlob(assetBlob3);
       underTest.createAsset(asset3);
       assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of(),2);
       assertThat(assets.size(), is(3));
 
+      assetBlobStore.createAssetBlob(assetBlob4);
+      asset4.setAssetBlob(assetBlob4);
       underTest.createAsset(asset4);
       assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of(),2);
       assertThat(assets.size(), is(4));
