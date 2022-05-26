@@ -40,6 +40,11 @@
     ON CONFLICT (id) DO UPDATE SET
         node_id = #{nodeId};
   </insert>
+  
+  <insert id="create" parameterType="java.lang.String">
+    INSERT INTO node_id (id, node_id)
+        VALUES (1, #{nodeId});
+  </insert>
 
   <delete id="clear">
     DELETE FROM node_id WHERE id = 1;

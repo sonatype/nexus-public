@@ -13,6 +13,7 @@
 package org.sonatype.nexus.internal.node.datastore;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -21,8 +22,12 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
+import org.sonatype.nexus.datastore.api.DuplicateKeyException;
+import org.sonatype.nexus.internal.node.NodeIdEncoding;
 import org.sonatype.nexus.node.datastore.NodeIdStore;
 import org.sonatype.nexus.transaction.Transactional;
+
+import com.google.common.hash.Hashing;
 
 /**
  * @since 3.37
@@ -67,5 +72,29 @@ public class NodeIdStoreImpl
   @Override
   public void set(final String nodeId) {
     dao().set(nodeId);
+  }
+
+  @Transactional(retryOn = DuplicateKeyException.class)
+  @Override
+  public String getOrCreate() {
+    return get()
+        .orElseGet(() -> {
+          String newNodeId = generateNodeId();
+          dao().create(newNodeId);
+          return newNodeId;
+        });
+  }
+
+  private String generateNodeId() {
+    log.debug("Generating nodeId");
+
+    // Generate something unique
+    UUID cn = UUID.randomUUID();
+
+    // Hash it to match old certificate style
+    @SuppressWarnings("deprecation")
+    String newNodeId = NodeIdEncoding.nodeIdForSha1(Hashing.sha1().hashBytes(cn.toString().getBytes()).toString());
+
+    return newNodeId;
   }
 }

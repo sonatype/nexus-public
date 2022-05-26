@@ -12,28 +12,20 @@
  */
 package org.sonatype.nexus.internal.node.datastore;
 
-import java.security.cert.Certificate;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
-import org.sonatype.nexus.internal.node.KeyStoreManagerImpl;
-import org.sonatype.nexus.internal.node.NodeIdEncoding;
 import org.sonatype.nexus.node.datastore.NodeIdStore;
-import org.sonatype.nexus.ssl.KeyStoreManager;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.hash.Hashing;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
@@ -49,33 +41,22 @@ public class LocalNodeAccess
     extends StateGuardLifecycleSupport
     implements NodeAccess
 {
-  private final Provider<KeyStoreManager> keyStoreProvider;
+  private final NodeIdStore nodeIdStore;
 
   private String id;
-
-  private NodeIdStore nodeIdStore;
 
   private Map<String, String> memberAliases = Collections.emptyMap();
 
   @Inject
-  public LocalNodeAccess(
-      @Named(KeyStoreManagerImpl.NAME) final Provider<KeyStoreManager> keyStoreProvider,
-      final NodeIdStore nodeIdStore)
+  public LocalNodeAccess(final NodeIdStore nodeIdStore)
   {
-    this.keyStoreProvider = checkNotNull(keyStoreProvider);
     this.nodeIdStore = checkNotNull(nodeIdStore);
   }
 
   @Override
   protected void doStart() throws Exception {
-    Optional<String> nodeId = nodeIdStore.get();
+    this.id = nodeIdStore.getOrCreate();
 
-    if (nodeId.isPresent()) {
-      id = nodeId.get();
-    }
-    else {
-      id = migrateNodeId().orElseGet(this::generateNodeId);
-    }
     log.info("ID: {}", id);
 
     memberAliases = ImmutableMap.of(id, id);
@@ -90,6 +71,12 @@ public class LocalNodeAccess
   @Guarded(by = STARTED)
   public String getId() {
     return id;
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public String getClusterId() {
+    return getId();
   }
 
   @Override
@@ -117,40 +104,5 @@ public class LocalNodeAccess
     return getClass().getSimpleName() + "{" +
         "id='" + id + '\'' +
         '}';
-  }
-
-  private Optional<String> migrateNodeId() throws Exception {
-    KeyStoreManager keyStoreManager = keyStoreProvider.get();
-
-    if (!keyStoreManager.isKeyPairInitialized()) {
-      return Optional.empty();
-    }
-
-    // Migrating an existing key
-    log.info("Migrating to database");
-
-    Certificate certificate = keyStoreManager.getCertificate();
-    log.trace("Certificate:\n{}", certificate);
-
-    String id = NodeIdEncoding.nodeIdForCertificate(certificate);
-
-    nodeIdStore.set(id);
-
-    return Optional.of(id);
-  }
-
-
-  private String generateNodeId() {
-    log.info("Generating");
-
-    // Generate something unique
-    UUID cn = UUID.randomUUID();
-
-    // Hash it to match old certificate style
-    @SuppressWarnings("deprecation")
-    String newNodeId = NodeIdEncoding.nodeIdForSha1(Hashing.sha1().hashBytes(cn.toString().getBytes()).toString());
-
-    nodeIdStore.set(newNodeId);
-    return newNodeId;
   }
 }

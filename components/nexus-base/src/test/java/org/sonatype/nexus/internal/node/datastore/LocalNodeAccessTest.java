@@ -12,24 +12,15 @@
  */
 package org.sonatype.nexus.internal.node.datastore;
 
-import java.io.File;
-import java.security.cert.Certificate;
 import java.util.Collections;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
-import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.datastore.api.DataStoreManager;
-import org.sonatype.nexus.internal.node.KeyStoreManagerConfigurationImpl;
-import org.sonatype.nexus.internal.node.KeyStoreManagerImpl;
-import org.sonatype.nexus.internal.node.KeyStoreStorageManagerImpl;
-import org.sonatype.nexus.internal.node.NodeIdEncoding;
 import org.sonatype.nexus.node.datastore.NodeIdStore;
-import org.sonatype.nexus.ssl.KeyStoreManager;
 import org.sonatype.nexus.testdb.DataSessionRule;
 import org.sonatype.nexus.transaction.TransactionModule;
 import org.sonatype.nexus.transaction.UnitOfWork;
@@ -57,21 +48,12 @@ public class LocalNodeAccessTest
   @Rule
   public DataSessionRule sessionRule = new DataSessionRule().access(NodeIdDAO.class);
 
-  private KeyStoreManager keyStoreManager;
-
   private NodeAccess nodeAccess;
 
   private NodeIdStore store;
 
   @Before
   public void setUp() throws Exception {
-
-    File dir = util.createTempDir("keystores");
-    KeyStoreManagerConfigurationImpl config = new KeyStoreManagerConfigurationImpl();
-    // use lower strength for faster test execution
-    config.setKeyAlgorithmSize(512);
-    keyStoreManager = new KeyStoreManagerImpl(new CryptoHelperImpl(), new KeyStoreStorageManagerImpl(dir), config);
-
     store = Guice.createInjector(new TransactionModule()
     {
       @Provides
@@ -80,7 +62,7 @@ public class LocalNodeAccessTest
       }
     }).getInstance(NodeIdStoreImpl.class);
 
-    nodeAccess = new LocalNodeAccess(() -> keyStoreManager, store);
+    nodeAccess = new LocalNodeAccess(store);
 
     UnitOfWork.beginBatch(() -> sessionRule.openSession(DataStoreManager.DEFAULT_DATASTORE_NAME));
   }
@@ -90,7 +72,6 @@ public class LocalNodeAccessTest
     if (nodeAccess != null) {
       nodeAccess.stop();
     }
-    keyStoreManager.removePrivateKey();
     UnitOfWork.end();
   }
 
@@ -108,22 +89,6 @@ public class LocalNodeAccessTest
     nodeAccess.start();
 
     assertThat(nodeAccess.getId(), is("foo"));
-  }
-
-  @Test
-  public void testMigratesExistingId() throws Exception {
-    UUID cn = UUID.randomUUID();
-    keyStoreManager.generateAndStoreKeyPair(
-        cn.toString(),
-        "Nexus",
-        "Sonatype",
-        "Silver Spring",
-        "MD",
-        "US");
-
-    nodeAccess.start();
-    Certificate cert = keyStoreManager.getCertificate();
-    assertThat(nodeAccess.getId(), equalTo(NodeIdEncoding.nodeIdForCertificate(cert)));
   }
 
   @Test

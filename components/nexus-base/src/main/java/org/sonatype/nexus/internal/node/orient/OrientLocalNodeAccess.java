@@ -120,6 +120,12 @@ public class OrientLocalNodeAccess
   }
 
   @Override
+  @Guarded(by = STARTED)
+  public String getClusterId() {
+    return getId();
+  }
+
+  @Override
   public boolean isClustered() {
     return false;
   }

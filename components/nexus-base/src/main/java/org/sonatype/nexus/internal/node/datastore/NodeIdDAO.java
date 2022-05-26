@@ -22,5 +22,8 @@ import org.sonatype.nexus.datastore.api.SingletonDataAccess;
 public interface NodeIdDAO
     extends SingletonDataAccess<String>
 {
-  // no additional behaviour...
+  /**
+   * Attempts to create the singleton nodeId, may fail with constraint violation if this has already been set.
+   */
+  void create(String nodeId);
 }
