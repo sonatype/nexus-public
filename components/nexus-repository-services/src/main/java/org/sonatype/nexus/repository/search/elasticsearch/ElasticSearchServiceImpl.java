@@ -41,6 +41,7 @@ import org.sonatype.nexus.repository.search.SearchService;
 import org.sonatype.nexus.repository.search.index.ElasticSearchIndexService;
 import org.sonatype.nexus.repository.search.query.ElasticSearchQueryService;
 import org.sonatype.nexus.repository.search.query.ElasticSearchUtils;
+import org.sonatype.nexus.repository.upload.UploadDefinition;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang.StringUtils;
@@ -222,7 +223,9 @@ public class ElasticSearchServiceImpl
     assetSearchResult.setChecksum((Map<String, String>) assetSearchResult.getAttributes().get(CHECKSUM));
     assetSearchResult.setFormat(repository.getFormat().getValue());
     assetSearchResult.setContentType((String) assetMap.get(CONTENT_TYPE));
-    assetSearchResult.setLastModified(calculateLastModified(assetMap));
+    assetSearchResult.setLastModified(calculateLastModified(assetSearchResult.getAttributes()));
+    assetSearchResult.setUploader((String) assetMap.get(UPLOADER));
+    assetSearchResult.setUploaderIp((String) assetMap.get(UPLOADER_IP));
 
     return assetSearchResult;
   }
@@ -248,7 +251,7 @@ public class ElasticSearchServiceImpl
       return Optional.ofNullable(attributes.get("content"))
           .map(Map.class::cast)
           .map(content -> content.get("last_modified"))
-          .map(String.class::cast)
+          .map(Object::toString) // Sometimes last_modified is a string and sometimes a long for unknown reasons
           .map(Long::parseLong)
           .map(Date::new)
           .orElse(null);

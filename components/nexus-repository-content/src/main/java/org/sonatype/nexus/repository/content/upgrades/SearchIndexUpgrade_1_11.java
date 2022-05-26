@@ -10,46 +10,33 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search.index;
+package org.sonatype.nexus.repository.content.upgrades;
+
+import java.util.Map;
+import java.util.Optional;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+
+import org.sonatype.nexus.repository.Recipe;
+import org.sonatype.nexus.repository.content.search.upgrade.SearchIndexUpgrade;
 
 /**
- * Search constants.
- *
- * @since 3.25
+ * Re-index search for all formats to store external id instead of internal id.
  */
-public interface SearchConstants
+@Named
+@Singleton
+public class SearchIndexUpgrade_1_11
+    extends SearchIndexUpgrade
 {
-  String TYPE = "component";
+  @Inject
+  public SearchIndexUpgrade_1_11(final Map<String, Recipe> recipes) {
+    super(recipes);
+  }
 
-  String FORMAT = "format";
-
-  String REPOSITORY_NAME = "repository_name";
-
-  String GROUP = "group";
-
-  String ID = "id";
-
-  String NAME = "name";
-
-  String VERSION = "version";
-
-  String NORMALIZED_VERSION = "normalized_version";
-
-  String IS_PRERELEASE_KEY = "isPrerelease";
-
-  String ASSETS = "assets";
-
-  String ATTRIBUTES = "attributes";
-
-  String CHECKSUM = "checksum";
-
-  String CONTENT_TYPE = "content_type";
-
-  String LAST_BLOB_UPDATED_KEY = "lastBlobUpdated";
-
-  String LAST_DOWNLOADED_KEY = "lastDownloaded";
-
-  String UPLOADER = "uploader";
-
-  String UPLOADER_IP = "uploaderIp";
+  @Override
+  public Optional<String> version() {
+    return Optional.of("1.11");
+  }
 }
