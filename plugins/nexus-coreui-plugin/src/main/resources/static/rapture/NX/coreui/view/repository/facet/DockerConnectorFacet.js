@@ -229,6 +229,17 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
             checkbox.setValue(true);
             checkbox.resetOriginalValue();
           }
+        },
+        enable: function() {
+          if (this.getValue() === '') {
+            const repositoryName = this.up('form').down('#name').value;
+            if (/^[A-Za-z0-9][a-zA-Z0-9\-]{0,61}[A-Za-z0-9]$/.test(repositoryName)) {
+              this.setValue(repositoryName);
+            }
+          }
+        },
+        disable: function() {
+          this.setValue('');
         }
       }
     };
