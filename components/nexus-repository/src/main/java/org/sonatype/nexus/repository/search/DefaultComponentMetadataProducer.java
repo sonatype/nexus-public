@@ -79,6 +79,10 @@ public class DefaultComponentMetadataProducer
 
   public static final String LAST_DOWNLOADED_KEY = "lastDownloaded";
 
+  public static final String UPLOADER = "uploader";
+
+  public static final String UPLOADER_IP = "uploaderIp";
+
   public static final String REGEX_KEY = "regex";
 
   private static final Logger log = LoggerFactory.getLogger(DefaultComponentMetadataProducer.class);
@@ -125,6 +129,8 @@ public class DefaultComponentMetadataProducer
       put(assetMetadata, NAME, asset.name());
       put(assetMetadata, CONTENT_TYPE, asset.contentType());
       put(assetMetadata, ATTRIBUTES, asset.attributes().backing());
+      put(assetMetadata, UPLOADER, asset.createdBy());
+      put(assetMetadata, UPLOADER_IP, asset.createdByIp());
 
       allAssetMetadata.add(assetMetadata);
     }
