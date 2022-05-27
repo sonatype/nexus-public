@@ -15,6 +15,7 @@ package org.sonatype.nexus.internal.node.datastore;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.datastore.api.DataSession;
+import org.sonatype.nexus.datastore.api.DuplicateKeyException;
 import org.sonatype.nexus.testdb.DataSessionRule;
 
 import org.junit.After;
@@ -70,5 +71,27 @@ public class NodeIdDAOTest
     readData = dao.get().orElse(null);
 
     assertThat(readData, nullValue());
+  }
+
+  @Test
+  public void testCreate() {
+    String nodeId = "";
+    dao.create(nodeId);
+
+    String readData = dao.get().orElse(null);
+    assertThat(readData, is(nodeId));
+  }
+
+  @Test(expected = DuplicateKeyException.class)
+  public void testCreate_fail() {
+    String nodeId = "";
+    // setup
+    dao.create(nodeId);
+
+    // sanity check
+    assertThat(dao.get().isPresent(), is(true));
+
+    // call create when it already exists
+    dao.create("b");
   }
 }

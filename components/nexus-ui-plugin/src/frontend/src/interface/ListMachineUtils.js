@@ -251,4 +251,15 @@ export default class ListMachineUtils {
       return null;
     }
   }
+
+  /**
+   * @param {string[]} values [required] An array of field values
+   * @param {string} filter [required]
+   * @return {boolean}
+   */
+  static hasAnyMatches(values = [], filter = '') {
+    return Boolean(values.find(value =>
+        value.toLowerCase().indexOf(filter.toLowerCase()) !== -1
+    ));
+  }
 }

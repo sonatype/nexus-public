@@ -672,6 +672,11 @@ public abstract class AbstractJobStoreTest
     public void stop() throws Exception {
 
     }
+
+    @Override
+    public String getClusterId() {
+      return getId();
+    }
   }
 
 }

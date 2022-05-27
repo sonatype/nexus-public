@@ -75,7 +75,7 @@ class RepositoriesResourceTest
     Repository repository2 =
         createMockRepository(REPOSITORY_2_NAME, REPOSITORY_2_FORMAT, REPOSITORY_2_TYPE, REPOSITORY_2_URL, null)
 
-    when(repositoryManagerRESTAdapter.getRepositories()).thenReturn([repository1, repository2])
+    when(repositoryManagerRESTAdapter.getRepositories()).thenReturn([REPOSITORY_XO_1, REPOSITORY_XO_2])
     when(repositoryManagerRESTAdapter.getReadableRepository(REPOSITORY_1_NAME)).thenReturn(repository1)
     when(repositoryManagerRESTAdapter.getReadableRepository(REPOSITORY_2_NAME)).thenReturn(repository2)
 

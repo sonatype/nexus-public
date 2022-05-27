@@ -26,6 +26,11 @@
   <artifactId>nexus-testsupport</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
 
+  <properties>
+    <!-- this is a bundle used only by tests -->
+    <clm.skip>true</clm.skip>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.sonatype.goodies</groupId>

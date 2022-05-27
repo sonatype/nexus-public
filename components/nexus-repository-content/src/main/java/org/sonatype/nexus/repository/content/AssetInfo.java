@@ -34,4 +34,6 @@ public interface AssetInfo
   OffsetDateTime lastUpdated();
 
   Map<String, String> checksums();
+
+  OffsetDateTime blobCreated();
 }

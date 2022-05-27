@@ -156,7 +156,7 @@ export default class FormUtils {
             src: 'delete',
             onDone: {
               target: 'loaded',
-              actions: ['clearDirtyFlag', 'onDeleteSuccess']
+              actions: ['clearDirtyFlag', 'logDeleteSuccess', 'onDeleteSuccess']
             },
             onError: {
               target: 'loaded',
@@ -186,7 +186,7 @@ export default class FormUtils {
           saveErrorData: ({data}) => data,
           saveError: (_, event) => {
             const data = event.data?.response?.data;
-            return data instanceof String ? data : null;
+            return typeof data === 'string' ? data : null;
           },
           saveErrors: (_, event) => {
             const data = event.data?.response?.data;
@@ -214,6 +214,7 @@ export default class FormUtils {
           ExtJS.showErrorMessage(UIStrings.ERROR.SAVE_ERROR);
         },
         logSaveSuccess: () => ExtJS.showSuccessMessage(UIStrings.SAVE_SUCCESS),
+        logDeleteSuccess: () => {},
 
         setLoadError: assign({
           loadError: (_, event) => event.data?.message

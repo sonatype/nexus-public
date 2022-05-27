@@ -114,32 +114,32 @@ public interface AssetDAO
    * Finds assets where lastUpdated is greater than or equal to the given value.
    *
    * @param repositoryId the repository to browse
-   * @param lastUpdated date that assets must have been updated after
-   * @param likeExpressions list of SQL like expressions that match on the path column
+   * @param blobCreated date that asset content must have been updated after
+   * @param regexExpressions list of SQL regex expressions that match on the path column
    * @param limit maximum number of assets to return
    * @return collection of assets
    */
-  List<Asset> findGreaterThanOrEqualToLastUpdated(
+  List<AssetInfo> findGreaterThanOrEqualToBlobCreated(
       @Param("repositoryId") int repositoryId,
-      @Nullable @Param("lastUpdated") OffsetDateTime lastUpdated,
-      @Param("likeExpressions") List<String> likeExpressions,
+      @Nullable @Param("blobCreated") OffsetDateTime blobCreated,
+      @Param("regexExpressions") List<String> regexExpressions,
       @Param("limit") int limit);
 
   /**
    * Finds all assets where lastUpdated equals the given value.
    *
    * @param repositoryId the repository to browse
-   * @param startLastUpdated lastUpdated is greater than or equal to this value
-   * @param endLastUpdated lastUpdated is less than this value
-   * @param likeExpressions list of SQL like expressions that match on path column
+   * @param startBlobCreated blobCreated on asset content is greater than or equal to this value
+   * @param endBlobCreated blobCreated on asset content is less than this value
+   * @param regexExpressions list of SQL regex expressions that match on path column
    * @param limit maximum number of assets to return
    * @return collection of assets
    */
-  List<Asset> findLastUpdatedWithinRange(
+  List<AssetInfo> findBlobCreatedWithinRange(
       @Param("repositoryId") int repositoryId,
-      @Param("startLastUpdated") OffsetDateTime startLastUpdated,
-      @Param("endLastUpdated") OffsetDateTime endLastUpdated,
-      @Param("likeExpressions") List<String> likeExpressions,
+      @Param("startBlobCreated") OffsetDateTime startBlobCreated,
+      @Param("endBlobCreated") OffsetDateTime endBlobCreated,
+      @Param("regexExpressions") List<String> regexExpressions,
       @Param("limit") int limit);
 
   /**

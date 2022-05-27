@@ -37,6 +37,90 @@ export default {
     }
   },
 
+  ROLES: {
+    MENU: {
+      text: 'Roles',
+      description: 'Manage roles'
+    },
+    LIST: {
+      CREATE_BUTTON: 'Create Role',
+      EMPTY_LIST: 'There are no roles available',
+      COLUMNS: {
+        ID: 'Id',
+        NAME: 'Name',
+        DESCRIPTION: 'Description',
+      },
+      HELP: {
+        TITLE: 'What is a role?',
+        TEXT: <>
+          Roles bring together multiple privileges so that, when you assign a user to the role,
+          that user will automatically have all of those privileges. Roles can comprise both
+          other roles and individual privileges. See our{' '}
+          <NxTextLink external href="http://links.sonatype.com/products/nxrm3/docs/roles">
+            help documentation
+          </NxTextLink>
+          {' '}for more information.
+        </>,
+      },
+    },
+    FORM: {
+      CREATE_TITLE: 'Create Role',
+      EDIT_TILE: (name) => `Edit ${name}`,
+      EDIT_DESCRIPTION: 'Nexus Role',
+      DEFAULT_ROLE_WARNING: 'This is a default role and cannot be modified.',
+      SECTIONS: {
+        TYPE: 'Role Type',
+        SETUP: 'Role Setup',
+        PRIVILEGES: 'Privileges',
+        ROLES: 'Roles',
+      },
+      TYPE: {
+        LABEL: 'Type',
+        OPTIONS: {
+          NEXUS: 'Nexus role',
+          EXTERNAL: 'External Role Mapping',
+        }
+      },
+      EXTERNAL_TYPE: {
+        LABEL: 'External Role Type',
+      },
+      ID: {
+        LABEL: 'Role ID',
+      },
+      MAPPED_ROLE: {
+        LABEL: 'Mapped Role',
+      },
+      NAME: {
+        LABEL: 'Role Name',
+      },
+      DESCRIPTION: {
+        LABEL: 'Role Description',
+      },
+      PRIVILEGES: {
+        LABEL: 'Privileges',
+        AVAILABLE: 'Available',
+        SELECTED: 'Given',
+        EMPTY_LIST: 'This role does not have any privileges.',
+      },
+      ROLES: {
+        LABEL: 'Roles',
+        AVAILABLE: 'Available',
+        SELECTED: 'Contained',
+        EMPTY_LIST: 'This role does not contain any other roles.',
+      },
+    },
+    MESSAGES: {
+      CONFIRM_DELETE: {
+        TITLE: 'Delete Role',
+        MESSAGE: (name) => `Delete the role named ${name}?`,
+        YES: 'Delete',
+        NO: 'Cancel'
+      },
+      TRIM_ERROR: 'A Role ID may not start or end with a space.',
+      DELETE_SUCCESS: (name) => `Role deleted: ${name}`,
+    }
+  },
+
   BLOB_STORES: {
     MENU: {
       text: 'Blob Stores',

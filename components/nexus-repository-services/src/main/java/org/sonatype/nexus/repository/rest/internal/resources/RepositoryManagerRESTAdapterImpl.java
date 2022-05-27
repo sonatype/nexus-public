@@ -14,20 +14,34 @@ package org.sonatype.nexus.repository.rest.internal.resources;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
 
+import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.app.BaseUrlHolder;
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.repository.Format;
+import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.Type;
+import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
+import org.sonatype.nexus.repository.rest.api.RepositoryXO;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
+import org.sonatype.nexus.repository.types.ProxyType;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.singletonMap;
 import static java.util.Optional.ofNullable;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.sonatype.nexus.repository.http.HttpStatus.FORBIDDEN;
 import static org.sonatype.nexus.repository.http.HttpStatus.UNPROCESSABLE_ENTITY;
 
@@ -38,18 +52,27 @@ import static org.sonatype.nexus.repository.http.HttpStatus.UNPROCESSABLE_ENTITY
  */
 @Named
 public class RepositoryManagerRESTAdapterImpl
+    extends ComponentSupport
     implements RepositoryManagerRESTAdapter
 {
   private final RepositoryManager repositoryManager;
+
+  private final ConfigurationStore configurationStore;
+
+  private final Map<String, Recipe> recipes;
 
   private final RepositoryPermissionChecker repositoryPermissionChecker;
 
   @Inject
   public RepositoryManagerRESTAdapterImpl(
       final RepositoryManager repositoryManager,
+      final ConfigurationStore configurationStore,
+      final Map<String, Recipe> recipes,
       final RepositoryPermissionChecker repositoryPermissionChecker)
   {
     this.repositoryManager = checkNotNull(repositoryManager);
+    this.configurationStore = checkNotNull(configurationStore);
+    this.recipes = checkNotNull(recipes);
     this.repositoryPermissionChecker = checkNotNull(repositoryPermissionChecker);
   }
 
@@ -92,8 +115,7 @@ public class RepositoryManagerRESTAdapterImpl
     //  Given - repository = raw-hosted
     //  nx-repository-view-raw-raw-hosted-read - allowed
     //  nx-repository-view-raw-raw-group-read(raw-group contains raw-hosted as a member) - allowed
-    List<String> repositories = new ArrayList<>(repositoryManager
-        .findContainingGroups(repository.getName()));
+    List<String> repositories = new ArrayList<>(repositoryManager.findContainingGroups(repository.getName()));
     repositories.add(repository.getName());
 
     return repositories
@@ -104,12 +126,55 @@ public class RepositoryManagerRESTAdapterImpl
   }
 
   @Override
-  public List<Repository> getRepositories() {
-    return repositoryPermissionChecker.userCanBrowseRepositories(repositoryManager.browse());
+  public List<RepositoryXO> getRepositories() {
+    Configuration[] configurations = configurationStore.list().toArray(new Configuration[0]);
+    return repositoryPermissionChecker.userCanBrowseRepositories(configurations).stream()
+        .map(this::asRepository)
+        .collect(Collectors.toList());
   }
 
   @Override
   public List<String> findContainingGroups(final String repositoryName) {
     return repositoryManager.findContainingGroups(repositoryName);
+  }
+
+  private Type getType(final Configuration configuration) {
+    Recipe recipe = recipes.get(configuration.getRecipeName());
+    return recipe.getType();
+  }
+
+  private Format getFormat(final Configuration configuration) {
+    Recipe recipe = recipes.get(configuration.getRecipeName());
+    return recipe.getFormat();
+  }
+
+  private static String getUrl(final String repositoryName) {
+    return BaseUrlHolder.get() + "/repository/" + repositoryName;
+  }
+
+  private Map<String, Object> attributes(final Configuration configuration) {
+    if (getType(configuration) instanceof ProxyType) {
+      NestedAttributesMap attrs = configuration.attributes("proxy");
+      if (attrs != null) {
+        Object remoteUrl = attrs.get("remoteUrl", EMPTY);
+        return singletonMap("proxy", singletonMap("remoteUrl", remoteUrl));
+      }
+    }
+
+    return emptyMap();
+  }
+
+  private RepositoryXO asRepository(final Configuration configuration) {
+    RepositoryXO xo = new RepositoryXO();
+    String repositoryName = configuration.getRepositoryName();
+    Type type = getType(configuration);
+
+    xo.setName(repositoryName);
+    xo.setType(type.getValue());
+    xo.setFormat(getFormat(configuration).getValue());
+    xo.setUrl(getUrl(repositoryName));
+    xo.setAttributes(attributes(configuration));
+
+    return xo;
   }
 }

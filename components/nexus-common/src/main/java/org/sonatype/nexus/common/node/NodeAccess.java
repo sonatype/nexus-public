@@ -36,6 +36,11 @@ public interface NodeAccess
   String getId();
 
   /**
+   * Retrieve the cluster id, implementations may simply return the ID if they do not support it.
+   */
+  String getClusterId();
+
+  /**
    * Returns true if the node is clustered.
    */
   boolean isClustered();

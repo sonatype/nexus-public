@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import java.time.OffsetDateTime;
 import java.util.Map;
 
 import org.sonatype.nexus.common.entity.ContinuationAware;
@@ -35,6 +36,8 @@ public class AssetInfoData
   private String contentType;
 
   private Map<String, String> checksums;
+
+  private OffsetDateTime blobCreated;
 
   @Override
   public String nextContinuationToken() {
@@ -67,6 +70,11 @@ public class AssetInfoData
   }
 
   @Override
+  public OffsetDateTime blobCreated() {
+    return blobCreated;
+  }
+
+  @Override
   public String toString() {
     return "AssetInfoData{" +
         "assetId=" + assetId +
@@ -74,6 +82,7 @@ public class AssetInfoData
         ", path='" + path + '\'' +
         ", contentType='" + contentType + '\'' +
         ", checksums=" + checksums +
+        ", blobCreated=" + blobCreated +
         '}';
   }
 }

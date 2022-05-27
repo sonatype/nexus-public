@@ -15,6 +15,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import ContentSelectors from './components/pages/admin/ContentSelectors/ContentSelectors';
+import Roles from './components/pages/admin/Roles/Roles';
 import AnonymousSettings from './components/pages/admin/AnonymousSettings/AnonymousSettings';
 import BlobStores from './components/pages/admin/BlobStores/BlobStores';
 import InsightFrontend from './components/pages/admin/InsightFrontend/InsightFrontend';
@@ -107,6 +108,18 @@ window.plugins.push({
         permissions: ['nexus:*']
       },
       weight: 500,
+    },
+    {
+      mode: 'admin',
+      path: '/Security/Roles',
+      ...UIStrings.ROLES.MENU,
+      view: Roles,
+      iconCls: 'x-fa fa-user-tag',
+      weight: 20,
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        permissions: ['nexus:roles:read', 'nexus:privileges:read']
+      }
     },
     {
       mode: 'admin',

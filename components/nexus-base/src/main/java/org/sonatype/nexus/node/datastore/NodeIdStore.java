@@ -36,6 +36,13 @@ public interface NodeIdStore
   Optional<String> get();
 
   /**
+   * Retrieve the current node id if it exists, otherwise create & store a new one.
+   *
+   * @return the node id
+   */
+  String getOrCreate();
+
+  /**
    * Set the current node id, this will not update the {@link NodeAccess}
    * @param nodeId
    */

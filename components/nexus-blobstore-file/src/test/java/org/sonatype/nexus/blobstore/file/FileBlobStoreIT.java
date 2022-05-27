@@ -37,6 +37,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.file.internal.OrientFileBlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.file.internal.SimpleFileOperations;
+import org.sonatype.nexus.blobstore.file.internal.orient.OrientFileBlobDeletionIndex;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
@@ -147,7 +148,6 @@ public class FileBlobStoreIT
 
     metricsStore =
         new OrientFileBlobStoreMetricsStore(new PeriodicJobServiceImpl(), nodeAccess, fileOperations);
-
     blobStoreQuotaUsageChecker =
         new BlobStoreQuotaUsageChecker(new PeriodicJobServiceImpl(), QUOTA_CHECK_INTERVAL, quotaService);
 
@@ -156,7 +156,7 @@ public class FileBlobStoreIT
     final BlobStoreConfiguration config = new MockBlobStoreConfiguration();
     config.attributes(FileBlobStore.CONFIG_KEY).set(FileBlobStore.PATH_KEY, blobStoreDirectory.toString());
     underTest = new FileBlobStore(blobIdResolver, fileOperations, applicationDirectories, metricsStore, nodeAccess,
-        dryRunPrefix, reconciliationLogger, 0L, blobStoreQuotaUsageChecker);
+        dryRunPrefix, reconciliationLogger, 0L, blobStoreQuotaUsageChecker, new OrientFileBlobDeletionIndex());
     underTest.init(config);
     underTest.start();
   }
@@ -378,7 +378,7 @@ public class FileBlobStoreIT
   }
 
   @Test
-  public void testSoftDeleteMetricsOnlyUpdateOnCompact() {
+  public void testSoftDeleteMetricsOnlyUpdateOnCompact() throws IOException {
     long initialBlobCount = underTest.getMetrics().getBlobCount();
     final byte[] content = new byte[TEST_DATA_LENGTH];
 

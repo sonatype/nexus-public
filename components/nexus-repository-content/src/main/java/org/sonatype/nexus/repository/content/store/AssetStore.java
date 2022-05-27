@@ -153,61 +153,59 @@ public class AssetStore<T extends AssetDAO>
   }
 
   /**
-   * Find updated assets. The paging works differently because results are sorted by lastUpdated instead of id. Page
-   * through results by passing the lastUpdated value from the last record in the Collection.
+   * Find updated assets. The paging works differently because results are sorted by blobCreated instead of id. Page
+   * through results by passing the blobCreated value from the last record in the Collection.
    *
    * @param repositoryId the repository to browse
-   * @param lastUpdated lastUpdated from the last record of the previous call.
-   * @param wildcardExpressions  list of wildcard expressions to match on path.
+   * @param blobCreated blobCreated of asset content from the last record of the previous call.
+   * @param regexExpressions  list of wildcard expressions to match on path.
    *                             Supported special characters are * and ?
    * @param batchSize how many assets to fetch in each call. May return more assets than this if there are
-   *                  multiple assets with the same lastUpdated value as the last record.
+   *                  multiple assets with the same blobCreated value as the last record.
    * @return batch of updated assets
    */
   @Transactional
-  public Collection<Asset> findUpdatedAssets(
+  public List<AssetInfo> findUpdatedAssets(
       final int repositoryId,
-      @Nullable final OffsetDateTime lastUpdated,
-      final List<String> wildcardExpressions,
+      @Nullable final OffsetDateTime blobCreated,
+      final List<String> regexExpressions,
       final int batchSize)
   {
-    List<String> pathExpressions = wildcardExpressions.stream().map(this::convertWildcardToLike).collect(Collectors.toList());
-
     // We consider dates the same if they are at the same millisecond. Normalization of the date plus using a >= query has
     // the effect of doing a > query as if the data in the database was truncated to the millisecond.
-    OffsetDateTime lastUpdatedNormalized = null;
-    if (lastUpdated != null) {
-      lastUpdatedNormalized = lastUpdated.plus(1, ChronoUnit.MILLIS).truncatedTo(ChronoUnit.MILLIS);
+    OffsetDateTime blobCreatedNormalized = null;
+    if (blobCreated != null) {
+      blobCreatedNormalized = blobCreated.plus(1, ChronoUnit.MILLIS).truncatedTo(ChronoUnit.MILLIS);
     }
 
-    // Fetch one extra record to check if there are more results with the same lastUpdated value. Most of the time
+    // Fetch one extra record to check if there are more results with the same blobCreated value. Most of the time
     // this won't be the case, and we will not need a query to find them all.
-    List<Asset> assets = dao().findGreaterThanOrEqualToLastUpdated(repositoryId, lastUpdatedNormalized, pathExpressions, batchSize + 1);
+    List<AssetInfo> assets = dao().findGreaterThanOrEqualToBlobCreated(repositoryId, blobCreatedNormalized, regexExpressions, batchSize + 1);
 
     if (assets.size() == batchSize + 1) {
-      if (hasMoreResultsWithSameLastUpdated(assets)) {
-        Set<String> knownPaths = assets.stream().map(Asset::path).collect(Collectors.toSet());
-        Asset lastAsset = assets.get(assets.size() - 1);
+      if (hasMoreResultsWithSameBlobCreated(assets)) {
+        Set<String> knownPaths = assets.stream().map(AssetInfo::path).collect(Collectors.toSet());
+        AssetInfo lastAsset = assets.get(assets.size() - 1);
 
-        OffsetDateTime startLastUpdated = lastAsset.lastUpdated().truncatedTo(ChronoUnit.MILLIS);
-        OffsetDateTime endLastUpdated = startLastUpdated.plus(1, ChronoUnit.MILLIS);
+        OffsetDateTime startBlobCreated = lastAsset.blobCreated().truncatedTo(ChronoUnit.MILLIS);
+        OffsetDateTime endBlobCreated = lastAsset.blobCreated().plus(1, ChronoUnit.MILLIS);
 
         // Add all records that match the timestamp (truncating to millisecond) of the last record. Then we can continue
         // paging with a greater than query.
-        List<Asset> matchLastUpdated =
-            dao().findLastUpdatedWithinRange(repositoryId, startLastUpdated, endLastUpdated, pathExpressions, LAST_UPDATED_LIMIT);
+        List<AssetInfo> matchBlobCreated =
+            dao().findBlobCreatedWithinRange(repositoryId, startBlobCreated, endBlobCreated, regexExpressions, LAST_UPDATED_LIMIT);
 
-        if (matchLastUpdated.size() == LAST_UPDATED_LIMIT) {
+        if (matchBlobCreated.size() == LAST_UPDATED_LIMIT) {
           log.error(
               "Found {} assets with identical last_updated value. Replication is skipping over additional assets with last_updated = {}",
-              LAST_UPDATED_LIMIT, lastAsset.lastUpdated());
+              LAST_UPDATED_LIMIT, lastAsset.blobCreated());
         }
 
         assets.addAll(
-            matchLastUpdated.stream().filter(asset -> !knownPaths.contains(asset.path())).collect(Collectors.toList()));
+            matchBlobCreated.stream().filter(asset -> !knownPaths.contains(asset.path())).collect(Collectors.toList()));
       }
       else {
-        // It's not safe to leave the extra record in. There may be more assets with same lastUpdated value as it.
+        // It's not safe to leave the extra record in. There may be more assets with same blobCreated value as it.
         assets.remove(assets.size() - 1);
       }
     }
@@ -215,20 +213,10 @@ public class AssetStore<T extends AssetDAO>
     return assets;
   }
 
-  private boolean hasMoreResultsWithSameLastUpdated(final List<Asset> assets) {
-    Asset lastResult = assets.get(assets.size() - 1);
-    Asset secondToLastResult = assets.get(assets.size() - 2);
-    return lastResult.lastUpdated().equals(secondToLastResult.lastUpdated());
-  }
-
-  private String convertWildcardToLike(final String wildcardExpression) {
-    // Escape special characters for like statements if they exist in the wildcard expression (\, %, _)
-    String escaped = wildcardExpression.replace("\\", "\\\\")
-        .replace("%", "\\%")
-        .replace("_", "\\_");
-
-    String translated = escaped.replace("*", "%").replace("?", "_");
-    return "%" + translated + "%";
+  private boolean hasMoreResultsWithSameBlobCreated(final List<AssetInfo> assets) {
+    OffsetDateTime lastBlobCreated = assets.get(assets.size() - 1).blobCreated().truncatedTo(ChronoUnit.MILLIS);;
+    OffsetDateTime secondToLastBlobCreated = assets.get(assets.size() - 2).blobCreated().truncatedTo(ChronoUnit.MILLIS);;
+    return lastBlobCreated.equals(secondToLastBlobCreated);
   }
 
   /**

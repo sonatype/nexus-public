@@ -14,19 +14,27 @@ package org.sonatype.nexus.repository.rest.internal.resources;
 
 import java.util.Collections;
 import java.util.List;
-
+import java.util.Map;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.repository.Format;
+import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.Type;
+import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.rest.api.RepositoryXO;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -51,42 +59,91 @@ public class RepositoryManagerRESTAdapterImplTest
 
   private static final String REPOSITORY_FORMAT_3 = "repoFormatThree";
 
+  private static final String RECIPE_NAME = "recipe_1";
+
+  private static final String RECIPE_NAME_2 = "recipe_2";
+
+  private static final String RECIPE_NAME_3 = "recipe_3";
+
   private static final boolean PERMIT_BROWSE = true;
 
   @Mock
-  RepositoryManager repositoryManager;
+  private RepositoryManager repositoryManager;
 
   @Mock
-  Repository repository;
+  private ConfigurationStore store;
 
   @Mock
-  Repository repository2;
+  private Repository repository;
 
   @Mock
-  Repository repository3;
+  private Repository repository2;
 
   @Mock
-  Repository groupRepository;
+  private Repository repository3;
 
   @Mock
-  Format repositoryFormat;
+  private Configuration configuration;
 
   @Mock
-  Format repositoryFormat2;
+  private Configuration configuration2;
 
   @Mock
-  Format repositoryFormat3;
+  private Configuration configuration3;
 
   @Mock
-  RepositoryPermissionChecker repositoryPermissionChecker;
+  private Repository groupRepository;
 
-  RepositoryManagerRESTAdapterImpl underTest;
+  @Mock
+  private Format repositoryFormat;
+
+  @Mock
+  private Format repositoryFormat2;
+
+  @Mock
+  private Format repositoryFormat3;
+
+  @Mock
+  private RepositoryPermissionChecker repositoryPermissionChecker;
+
+  private RepositoryManagerRESTAdapterImpl underTest;
 
   @Before
   public void setUp() throws Exception {
+    BaseUrlHolder.set("http://nexus-url", "");
+
     when(repositoryManager.get(REPOSITORY_NAME)).thenReturn(repository);
     when(repositoryManager.get(REPOSITORY_GROUP_NAME)).thenReturn(groupRepository);
     when(repositoryManager.browse()).thenReturn(asList(repository, repository2, repository3));
+
+    Recipe recipe = Mockito.mock(Recipe.class);
+    Recipe recipe2 = Mockito.mock(Recipe.class);
+    Recipe recipe3 = Mockito.mock(Recipe.class);
+
+    Type type = Mockito.mock(Type.class);
+    Type type2 = Mockito.mock(Type.class);
+    Type type3 = Mockito.mock(Type.class);
+
+    when(recipe.getFormat()).thenReturn(repositoryFormat);
+    when(recipe2.getFormat()).thenReturn(repositoryFormat2);
+    when(recipe3.getFormat()).thenReturn(repositoryFormat3);
+
+    when(recipe.getType()).thenReturn(type);
+    when(recipe2.getType()).thenReturn(type2);
+    when(recipe3.getType()).thenReturn(type3);
+
+    when(repositoryFormat.getValue()).thenReturn(REPOSITORY_FORMAT);
+    when(repositoryFormat2.getValue()).thenReturn(REPOSITORY_FORMAT);
+    when(repositoryFormat3.getValue()).thenReturn(REPOSITORY_FORMAT);
+
+    when(configuration.getRepositoryName()).thenReturn(REPOSITORY_NAME);
+    when(configuration.getRecipeName()).thenReturn(RECIPE_NAME);
+    when(configuration2.getRepositoryName()).thenReturn(REPOSITORY_NAME_2);
+    when(configuration2.getRecipeName()).thenReturn(RECIPE_NAME_2);
+    when(configuration3.getRepositoryName()).thenReturn(REPOSITORY_NAME_3);
+    when(configuration3.getRecipeName()).thenReturn(RECIPE_NAME_3);
+
+    when(store.list()).thenReturn(asList(configuration, configuration2, configuration3));
 
     when(repository.getFormat()).thenReturn(repositoryFormat);
     when(repository2.getFormat()).thenReturn(repositoryFormat2);
@@ -104,7 +161,9 @@ public class RepositoryManagerRESTAdapterImplTest
     when(repositoryManager.findContainingGroups(REPOSITORY_NAME))
         .thenReturn(Collections.singletonList(REPOSITORY_GROUP_NAME));
 
-    underTest = new RepositoryManagerRESTAdapterImpl(repositoryManager, repositoryPermissionChecker);
+    Map<String, Recipe> recipes = ImmutableMap.of(RECIPE_NAME, recipe, RECIPE_NAME_2, recipe2, RECIPE_NAME_3, recipe3);
+    underTest = new RepositoryManagerRESTAdapterImpl(
+        repositoryManager, store, recipes, repositoryPermissionChecker);
   }
 
   @Test
@@ -214,10 +273,22 @@ public class RepositoryManagerRESTAdapterImplTest
 
   @Test
   public void getRepositories() {
-    when(repositoryPermissionChecker.userCanBrowseRepositories(asList(repository, repository2, repository3)))
-        .thenReturn(asList(repository, repository2));
+    when(repositoryPermissionChecker.userCanBrowseRepositories(configuration, configuration2, configuration3))
+        .thenReturn(asList(configuration, configuration2));
 
-    assertThat(underTest.getRepositories(), is(asList(repository, repository2)));
+    RepositoryXO xo = new RepositoryXO();
+    xo.setName(REPOSITORY_NAME);
+    xo.setFormat(REPOSITORY_FORMAT);
+    xo.setUrl("http://nexus-url/repository/repoName");
+    xo.setAttributes(Collections.emptyMap());
+
+    RepositoryXO xo2 = new RepositoryXO();
+    xo2.setName(REPOSITORY_NAME_2);
+    xo2.setFormat(REPOSITORY_FORMAT_2);
+    xo2.setUrl("http://nexus-url/repository/repoNameTwo");
+    xo2.setAttributes(Collections.emptyMap());
+
+    assertThat(underTest.getRepositories(), is(asList(xo, xo2)));
   }
 
   @Test
