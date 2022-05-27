@@ -965,10 +965,19 @@ This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 
       label: 'Enable IQ Server',
       sublabel: 'Enable the use of IQ Server'
     },
+
     IQ_SERVER_URL: {
       label: 'IQ Server URL',
       sublabel: 'This is the address of your IQ server'
     },
+
+    TRUST_STORE: {
+      label: 'Use the Nexus Trust Store',
+      sublabel: 'Use certificate connected to the Nexus Truststore'
+    },
+
+    CERTIFICATE: 'View Certificate',
+
     AUTHENTICATION_TYPE: {
       label: 'Authentication Method',
       USER: 'User Authentication',

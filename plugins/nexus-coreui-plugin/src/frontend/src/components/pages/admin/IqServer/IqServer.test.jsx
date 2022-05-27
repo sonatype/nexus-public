@@ -61,8 +61,11 @@ const selectors = {
   getPropertiesInput: () => screen.getByLabelText(IQ_SERVER.PROPERTIES.label),
   getShowIqServerLinkCheckbox: () => screen.getByLabelText(IQ_SERVER.SHOW_LINK.sublabel),
   getVerifyConnectionButton: () => screen.getByText(IQ_SERVER.VERIFY_CONNECTION_BUTTON_LABEL),
+  getCertificateCheckbox: () => screen.getByLabelText(IQ_SERVER.TRUST_STORE.sublabel),
+  getCertificateButton: () => screen.getByText(IQ_SERVER.CERTIFICATE),
   getDiscardButton: () => screen.getByText(SETTINGS.DISCARD_BUTTON_LABEL),
   getSaveButton: () => screen.getByText(SETTINGS.SAVE_BUTTON_LABEL),
+  getCloseButton: () => screen.queryByText('Close')
 };
 
 const DEFAULT_RESPONSE = {
@@ -96,6 +99,7 @@ describe('IqServer', () => {
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     expect(selectors.getEnabledCheckbox()).not.toBeChecked();
+    expect(selectors.getCertificateCheckbox()).not.toBeChecked();
     expect(selectors.getUrlInput()).toHaveValue("");
     expect(selectors.getAuthenticationMethodSelect()).toHaveValue("");
     expect(selectors.getConnectionTimeoutInput()).toHaveValue("");
@@ -153,6 +157,30 @@ describe('IqServer', () => {
     expect(selectors.getVerifyConnectionButton()).not.toHaveAttribute('disabled');
   });
 
+  it('enables the certificate view button when iq server url is valid', async () => {
+    when(Axios.get).calledWith('/service/rest/v1/iq').mockResolvedValue({
+      data: DEFAULT_RESPONSE
+    });
+
+    render(<IqServer/>);
+
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+    userEvent.click(selectors.getCertificateButton());
+
+    expect(selectors.getCloseButton()).not.toBeInTheDocument();
+
+    await TestUtils.changeField(selectors.getUrlInput, 'https://example.com');
+
+    userEvent.click(selectors.getCertificateButton());
+
+    expect(selectors.getCloseButton()).toBeInTheDocument();
+
+    userEvent.click(selectors.getCloseButton());
+
+    expect(selectors.getCloseButton()).not.toBeInTheDocument();
+  });
+
   it('disables the save button when the form is invalid', async () => {
     when(Axios.get).calledWith('/service/rest/v1/iq').mockResolvedValue({
       data: DEFAULT_RESPONSE
@@ -187,7 +215,7 @@ describe('IqServer', () => {
     expect(selectors.getSaveButton()).not.toHaveAttribute('aria-disabled', 'true');
   });
 
-  it('requires the usename and password for the USER authentication method', async () => {
+  it('requires the username and password for the USER authentication method', async () => {
     when(Axios.get).calledWith('/service/rest/v1/iq').mockResolvedValue({
       data: DEFAULT_RESPONSE
     });
