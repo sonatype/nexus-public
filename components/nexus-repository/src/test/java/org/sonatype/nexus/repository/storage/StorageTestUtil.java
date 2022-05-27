@@ -73,8 +73,6 @@ public class StorageTestUtil
         .format("format-id")
         .name(name)
         .componentId(id(component))
-        .createdBy("anonymous")
-        .createdByIp("127.0.0.1")
         .attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
   }
 

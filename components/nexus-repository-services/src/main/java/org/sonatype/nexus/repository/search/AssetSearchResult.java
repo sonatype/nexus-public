@@ -36,10 +36,6 @@ public class AssetSearchResult
 
   private Date lastModified;
 
-  private String uploader;
-
-  private String uploaderIp;
-
   private Map<String, Object> attributes;
 
   public String getPath() {
@@ -96,22 +92,6 @@ public class AssetSearchResult
 
   public void setLastModified(final Date lastModified) {
     this.lastModified = lastModified;
-  }
-
-  public String getUploader() {
-    return uploader;
-  }
-
-  public void setUploader(final String uploader) {
-    this.uploader = uploader;
-  }
-
-  public String getUploaderIp() {
-    return uploaderIp;
-  }
-
-  public void setUploaderIp(final String uploaderIp) {
-    this.uploaderIp = uploaderIp;
   }
 
   public Map<String, Object> getAttributes() {

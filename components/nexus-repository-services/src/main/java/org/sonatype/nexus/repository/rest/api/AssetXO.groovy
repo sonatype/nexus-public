@@ -83,8 +83,6 @@ class AssetXO
         .contentType(asset.getContentType())
         .attributes(getExpandedAttributes(asset.getAttributes(), asset.getFormat(), assetDescriptors))
         .lastModified(asset.getLastModified())
-        .uploader(asset.getUploader())
-        .uploaderIp(asset.getUploaderIp())
         .build()
   }
 
