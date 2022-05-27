@@ -45,7 +45,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class NodeIdUpgradeStep_1_13_Test
+public class NodeIdUpgradeStep_1_14_Test
     extends TestSupport
 {
   @Rule
@@ -57,7 +57,7 @@ public class NodeIdUpgradeStep_1_13_Test
 
   private NodeIdStore nodeIdStore;
 
-  private NodeIdUpgradeStep_1_13 underTest;
+  private NodeIdUpgradeStep_1_14 underTest;
 
   @Before
   public void setup() {
@@ -75,7 +75,7 @@ public class NodeIdUpgradeStep_1_13_Test
       }
     }).getInstance(NodeIdStoreImpl.class);
 
-    underTest = new NodeIdUpgradeStep_1_13(keyStoreProvider, nodeIdStore);
+    underTest = new NodeIdUpgradeStep_1_14(keyStoreProvider, nodeIdStore);
   }
 
   @After
