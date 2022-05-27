@@ -34,13 +34,6 @@ Ext.define('NX.coreui.app.PluginConfig', {
 
   controllers: [
     {
-      id: 'NX.coreui.controller.Api',
-      active: function() {
-        return NX.State.getValue('api') &&
-            NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
-      }
-    },
-    {
       id: 'NX.coreui.controller.Assets',
       active: function () {
         return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');

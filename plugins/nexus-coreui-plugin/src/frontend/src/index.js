@@ -40,6 +40,7 @@ import AzureBlobStoreActions from './components/pages/admin/BlobStores/Azure/Azu
 import IqServer from './components/pages/admin/IqServer/IqServer';
 import Bundles from './components/pages/admin/Bundles/Bundles';
 import ProprietaryRepositories from './components/pages/admin/ProprietaryRepositories/ProprietaryRepositories';
+import Api from './components/pages/admin/Api/Api';
 
 window.ReactComponents = {
   ...window.ReactComponents,
@@ -280,6 +281,16 @@ window.plugins.push({
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         permissions: ['nexus:bundles:read']
+      }
+    },
+    {
+      mode: 'admin',
+      path: '/System/API',
+      ...UIStrings.API.MENU,
+      view: Api,
+      iconCls: 'x-fa fa-plug',
+      visibility: {
+        permissions: ['nexus:settings:read']
       }
     },
   ]

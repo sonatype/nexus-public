@@ -564,7 +564,7 @@ export default {
         pypi: ' (e.g., https://pypi.org)',
         rubygems: ' (e.g., https://rubygems.org)',
         yum: ' (e.g., http://mirror.centos.org/centos/)',
-        default: ' (e.g., https://example.com)'	
+        default: ' (e.g., https://example.com)'
       },
       DOCKER_CONNECTORS_HELP: <>
         Connectors allow Docker clients to connect directly to hosted registries, but are not always
@@ -1038,6 +1038,13 @@ This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 
         FRAGMENT_LABEL: 'Fragment'
       },
     }
+  },
+
+  API: {
+    MENU: {
+      text: 'API',
+      description: 'Learn how to interact with Nexus Repository Manager programmatically'
+    },
   },
 
   PROPRIETARY_REPOSITORIES: {
