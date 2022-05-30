@@ -63,6 +63,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
+import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
@@ -278,7 +279,7 @@ public class DatastoreBlobstoreRestoreTestHelper
               }
             }
             else {
-              fail("Found missing name or unexpected name: " + name);
+              fail("Found missing name or unexpected name: " + name + " in repository: " + headers.get(REPO_NAME_HEADER));
             }
           });
     });
