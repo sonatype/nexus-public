@@ -16,7 +16,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -30,7 +30,13 @@ import org.sonatype.nexus.repository.content.search.SearchViewColumns;
 import org.sonatype.nexus.repository.content.search.SqlSearchRequest;
 import org.sonatype.nexus.repository.search.SortDirection;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryCondition;
+import org.sonatype.nexus.transaction.Transaction;
 import org.sonatype.nexus.transaction.Transactional;
+import org.sonatype.nexus.transaction.UnitOfWork;
+
+import org.apache.ibatis.annotations.Param;
+
+import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 
 /**
  * Store for the single table search implementation.
@@ -40,11 +46,78 @@ import org.sonatype.nexus.transaction.Transactional;
 public class SearchTableStore
     extends ConfigStoreSupport<SearchTableDAO>
 {
+  private final int deleteBatchSize;
+
   @Inject
   public SearchTableStore(
-      final DataSessionSupplier sessionSupplier)
+      final DataSessionSupplier sessionSupplier,
+      @Named("${nexus.content.deleteBatchSize:-1000}") final int deleteBatchSize)
   {
     super(sessionSupplier, SearchTableDAO.class);
+    this.deleteBatchSize = deleteBatchSize;
+  }
+
+  /**
+   * Creates the given search entry in the content data store.
+   *
+   * @param data the search row to create
+   */
+  @Transactional
+  public void create(final SearchTableData data) {
+    dao().create(data);
+  }
+
+  /**
+   * Update a component kind for the search entry in the content data store.
+   *
+   * @param repositoryId  the content repository identification
+   * @param componentId   the component identification
+   * @param format        the repository format
+   * @param componentKind the new component kind
+   */
+  @Transactional
+  public void updateKind(
+      @Nonnull @Param("repositoryId") final Integer repositoryId,
+      @Nonnull @Param("componentId") final Integer componentId,
+      @Nonnull @Param("format") final String format,
+      @Nonnull @Param("componentKind") final String componentKind)
+  {
+    dao().updateKind(repositoryId, componentId, format, componentKind);
+  }
+
+  /**
+   * Delete the given search entry in the content data store.
+   *
+   * @param repositoryId the content repository identification
+   * @param componentId  the component identification
+   * @param assetId      the asset identification
+   * @param format       the repository format
+   */
+  @Transactional
+  public void delete(
+      @Nonnull @Param("repositoryId") final Integer repositoryId,
+      @Nonnull @Param("componentId") final Integer componentId,
+      @Nonnull @Param("assetId") final Integer assetId,
+      @Nonnull @Param("format") final String format)
+  {
+    dao().delete(repositoryId, componentId, assetId, format);
+  }
+
+  /**
+   * Delete all search entries for given repository.
+   *
+   * @param repositoryId the content repository identification
+   * @param format       the repository format
+   * @return {@code true} if all records were deleted
+   */
+  @Transactional
+  public boolean deleteAllForRepository(final Integer repositoryId, final String format) {
+    boolean deleted = false;
+    while (dao().deleteAllForRepository(repositoryId, format, deleteBatchSize)) {
+      commitChangesSoFar();
+      deleted = true;
+    }
+    return deleted;
   }
 
   /**
@@ -96,5 +169,17 @@ public class SearchTableStore
       formatValues = filterQuery.getValues();
     }
     return dao().count(filterFormat, formatValues);
+  }
+
+  /**
+   * Commits any batched changes so far.
+   * <p>
+   * Also checks to see if the current (potentially long-running) operation has been cancelled.
+   */
+  private void commitChangesSoFar() {
+    Transaction tx = UnitOfWork.currentTx();
+    tx.commit();
+    tx.begin();
+    checkCancellation();
   }
 }

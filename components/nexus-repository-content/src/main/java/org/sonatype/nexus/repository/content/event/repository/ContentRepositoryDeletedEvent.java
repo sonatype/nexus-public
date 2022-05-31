@@ -14,6 +14,8 @@ package org.sonatype.nexus.repository.content.event.repository;
 
 import org.sonatype.nexus.repository.content.ContentRepository;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * Event sent whenever a {@link ContentRepository} is deleted.
  *
@@ -22,7 +24,15 @@ import org.sonatype.nexus.repository.content.ContentRepository;
 public class ContentRepositoryDeletedEvent
     extends ContentRepositoryEvent
 {
-  public ContentRepositoryDeletedEvent(final ContentRepository contentRepository) {
+  private final String format;
+
+  public ContentRepositoryDeletedEvent(final ContentRepository contentRepository, final String format) {
     super(contentRepository);
+    this.format = checkNotNull(format);
+  }
+
+  @Override
+  public String getFormat() {
+    return format;
   }
 }

@@ -14,13 +14,14 @@ package org.sonatype.nexus.repository.content.search.table;
 
 import java.util.Collection;
 import java.util.Map;
-
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.datastore.api.ContentDataAccess;
 import org.sonatype.nexus.repository.content.SearchResult;
 import org.sonatype.nexus.repository.content.search.SearchResultData;
 import org.sonatype.nexus.repository.content.search.SqlSearchRequest;
+
+import org.apache.ibatis.annotations.Param;
 
 /**
  * DAO for access search table entries
@@ -35,7 +36,9 @@ public interface SearchTableDAO
    * @param values optional values map for filter (required if filter is not null)
    * @return number of found components.
    */
-  int count(@Nullable String filter, @Nullable Map<String, String> values);
+  int count(
+      @Nullable @Param("filter") final String filter,
+      @Nullable @Param("filterParams") Map<String, String> values);
 
   /**
    * Search components in the scope of one format.
@@ -43,5 +46,53 @@ public interface SearchTableDAO
    * @param request DTO containing all required params for search
    * @return collection of {@link SearchResultData} representing search results for a given format.
    */
-  Collection<SearchResult> searchComponents(SqlSearchRequest request);
+  Collection<SearchResult> searchComponents(final SqlSearchRequest request);
+
+  /**
+   * Creates the given search entry in the content data store.
+   *
+   * @param data the search row to create
+   */
+  void create(final SearchTableData data);
+
+  /**
+   * Update a component kind for the search entry in the content data store.
+   *
+   * @param repositoryId  the content repository identification
+   * @param componentId   the component identification
+   * @param format        the repository format
+   * @param componentKind the new component kind
+   */
+  void updateKind(
+      @Param("repositoryId") final Integer repositoryId,
+      @Param("componentId") final Integer componentId,
+      @Param("format") final String format,
+      @Param("componentKind") final String componentKind);
+
+  /**
+   * Delete the given search entry in the content data store.
+   *
+   * @param repositoryId the content repository identification
+   * @param componentId  the component identification
+   * @param assetId      the asset identification
+   * @param format       the repository format
+   */
+  void delete(
+      @Param("repositoryId") final Integer repositoryId,
+      @Param("componentId") final Integer componentId,
+      @Param("assetId") final Integer assetId,
+      @Param("format") final String format);
+
+  /**
+   * Delete all search entries for given repository.
+   *
+   * @param repositoryId the content repository identification
+   * @param format       the repository format
+   * @param limit        when positive limits the number of entries deleted per-call
+   * @return {@code true} if any record was deleted
+   */
+  boolean deleteAllForRepository(
+      @Param("repositoryId") final Integer repositoryId,
+      @Param("format") final String format,
+      @Param("limit") int limit);
 }

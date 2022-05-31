@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.content.store;
 
 import java.util.Optional;
 import java.util.function.Supplier;
-
 import javax.inject.Inject;
 
 import org.sonatype.nexus.common.event.EventManager;
@@ -37,7 +36,7 @@ import static org.sonatype.nexus.common.text.Strings2.lower;
 public abstract class ContentStoreEventSupport<T extends ContentDataAccess>
     extends ContentStoreSupport<T>
 {
-  private final String format;
+  protected final String format;
 
   private ContentFacetFinder contentFacetFinder;
 

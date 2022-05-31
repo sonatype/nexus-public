@@ -56,5 +56,13 @@ public interface FeatureFlags
   /*  */
   String DATASTORE_BLOBSTORE_METRICS = "nexus.datastore.blobstore.metrics.enabled";
 
+  /**
+   * Enable searching components via aggregated search table.
+   * Mutual exclusive with:
+   * - ELASTIC_SEARCH_ENABLED;
+   * - DATASTORE_SEARCH_ENABLED;
+   * Dependent from:
+   * - DATASTORE_DEVELOPER;
+   */
   String DATASTORE_TABLE_SEARCH = "nexus.datastore.table.search.enabled";
 }
