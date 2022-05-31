@@ -57,10 +57,15 @@ public class AptApiRepositoryAdapter
             createAptSigningRepositoriesAttributes(repository),
             getComponentAttributes(repository));
       case ProxyType.NAME:
-        return new AptProxyApiRepository(name, url, online, getHostedStorageAttributes(repository),
-            getCleanupPolicyAttributes(repository), createAptProxyRepositoriesAttributes(repository),
-            getProxyAttributes(repository), getNegativeCacheAttributes(repository),
-            getHttpClientAttributes(repository), getRoutingRuleName(repository));
+        return new AptProxyApiRepository(name, url, online,
+            getHostedStorageAttributes(repository),
+            getCleanupPolicyAttributes(repository),
+            createAptProxyRepositoriesAttributes(repository),
+            getProxyAttributes(repository),
+            getNegativeCacheAttributes(repository),
+            getHttpClientAttributes(repository),
+            getRoutingRuleName(repository),
+            getReplicationAttributes(repository));
     }
     return null;
   }

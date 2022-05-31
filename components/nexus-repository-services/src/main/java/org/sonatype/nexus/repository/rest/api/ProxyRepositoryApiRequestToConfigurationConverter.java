@@ -25,6 +25,7 @@ import org.sonatype.nexus.repository.rest.api.model.HttpClientConnectionAuthenti
 import org.sonatype.nexus.repository.rest.api.model.NegativeCacheAttributes;
 import org.sonatype.nexus.repository.rest.api.model.ProxyAttributes;
 import org.sonatype.nexus.repository.rest.api.model.ProxyRepositoryApiRequest;
+import org.sonatype.nexus.repository.rest.api.model.ReplicationAttributes;
 import org.sonatype.nexus.repository.rest.api.model.StorageAttributes;
 import org.sonatype.nexus.repository.routing.RoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
@@ -51,6 +52,7 @@ public class ProxyRepositoryApiRequestToConfigurationConverter<T extends ProxyRe
     this.routingRuleStore = routingRuleStore;
   }
 
+  @Override
   public Configuration convert(final T request) {
     Configuration configuration = super.convert(request);
     convertRoutingRule(request, configuration);
@@ -59,6 +61,7 @@ public class ProxyRepositoryApiRequestToConfigurationConverter<T extends ProxyRe
     convertProxy(request, configuration);
     convertNegativeCache(request, configuration);
     convertHttpClient(request, configuration);
+    convertReplication(request, configuration);
     return configuration;
   }
 
@@ -153,6 +156,15 @@ public class ProxyRepositoryApiRequestToConfigurationConverter<T extends ProxyRe
       if (nonNull(routingRule)) {
         configuration.setRoutingRuleId(routingRule.id());
       }
+    }
+  }
+
+  private void convertReplication(final T request, final Configuration configuration) {
+    ReplicationAttributes replication = request.getReplication();
+    if (nonNull(replication)) {
+      NestedAttributesMap replicationConfiguration = configuration.attributes("replication");
+      replicationConfiguration.set("preemptivePullEnabled", replication.getPreemptivePullEnabled());
+      replicationConfiguration.set("assetPathRegex", replication.getAssetPathRegex());
     }
   }
 }

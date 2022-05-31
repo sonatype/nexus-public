@@ -19,12 +19,17 @@ import org.sonatype.nexus.repository.maven.rest.HttpClientAttributesWithPreempti
 import org.sonatype.nexus.repository.rest.api.model.CleanupPolicyAttributes;
 import org.sonatype.nexus.repository.rest.api.model.NegativeCacheAttributes;
 import org.sonatype.nexus.repository.rest.api.model.ProxyAttributes;
+import org.sonatype.nexus.repository.rest.api.model.ReplicationAttributes;
 import org.sonatype.nexus.repository.rest.api.model.SimpleApiProxyRepository;
 import org.sonatype.nexus.repository.rest.api.model.StorageAttributes;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize.Inclusion;
 
 /**
  * REST API model for a maven proxy repository.
@@ -50,9 +55,13 @@ public class MavenProxyApiRepository
       @JsonProperty("negativeCache") final NegativeCacheAttributes negativeCache,
       @JsonProperty("httpClient") final HttpClientAttributesWithPreemptiveAuth httpClient,
       @JsonProperty("routingRuleName") final String routingRuleName,
-      @JsonProperty("maven") final MavenAttributes maven)
+      @JsonProperty("maven") final MavenAttributes maven,
+      @JsonProperty("replication") @JsonInclude(value= Include.NON_EMPTY, content=Include.NON_NULL)
+      final ReplicationAttributes replication)
+
   {
-    super(name, Maven2Format.NAME, url, online, storage, cleanup, proxy, negativeCache, httpClient, routingRuleName);
+    super(name, Maven2Format.NAME, url, online, storage, cleanup, proxy, negativeCache, httpClient, routingRuleName,
+        replication);
     this.maven = maven;
   }
 
