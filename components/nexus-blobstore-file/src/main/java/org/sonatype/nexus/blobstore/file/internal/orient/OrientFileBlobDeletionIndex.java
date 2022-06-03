@@ -35,7 +35,6 @@ import static org.sonatype.nexus.blobstore.file.FileBlobStore.DELETIONS_FILENAME
 import static org.sonatype.nexus.blobstore.file.FileBlobStore.REBUILD_DELETED_BLOB_INDEX_KEY;
 
 @Named
-@Singleton
 public class OrientFileBlobDeletionIndex
     extends ComponentSupport
     implements FileBlobDeletionIndex
