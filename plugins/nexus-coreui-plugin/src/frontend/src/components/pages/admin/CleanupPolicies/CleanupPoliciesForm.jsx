@@ -182,7 +182,7 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
               </Select>
             </FieldWrapper>
             <FieldWrapper labelText={UIStrings.CLEANUP_POLICIES.NOTES_LABEL}
-                          id="cleanup-notes-group">
+                          id="cleanup-notes-group" isOptional>
               <Textfield
                   {...Utils.fieldProps('notes', current)}
                   onChange={update}/>
