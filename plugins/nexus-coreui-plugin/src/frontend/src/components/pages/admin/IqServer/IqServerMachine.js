@@ -14,12 +14,9 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React, {useState, useEffect} from 'react';
 import {assign} from 'xstate';
 import Axios from 'axios';
-import {ExtJS, FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
-
-import UIStrings from '../../../../constants/UIStrings';
+import {FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 
 const IQ_API = '/service/rest/v1/iq';
 
@@ -40,6 +37,10 @@ export default FormUtils.buildFormMachine({
               VERIFY_CONNECTION: {
                 target: 'verifyingConnection',
                 actions: ['clearVerifyConnectionError']
+              },
+              VIEW_CERTIFICATE: {
+                target: 'viewingCertificate',
+                cond: 'isValidUrl'
               }
             }
           },
@@ -53,6 +54,13 @@ export default FormUtils.buildFormMachine({
               onError: {
                 target: 'error',
                 actions: ['setVerifyConnectionError']
+              }
+            }
+          },
+          viewingCertificate: {
+            on: {
+              CLOSE_CERTIFICATE: {
+                target: 'idle'
               }
             }
           },
@@ -106,7 +114,21 @@ export default FormUtils.buildFormMachine({
     }),
     clearVerifyConnectionError: assign({
       verifyConnectionError: () => null
-    })
+    }),
+    onLoadedEntry: assign({
+      data: ({data}) => {
+        const useTrustStoreForUrl = data.useTrustStoreForUrl && ValidationUtils.isSecureUrl(data.url);
+        const newData = {
+          ...data,
+          useTrustStoreForUrl
+        };
+
+        return newData;
+      }
+    }),
+  },
+  guards: {
+    isValidUrl: (context) => ValidationUtils.isSecureUrl(context.data.url)
   },
   services: {
     fetchData: () => Axios.get(IQ_API),

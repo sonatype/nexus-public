@@ -10,29 +10,40 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.event.repository;
+package org.sonatype.nexus.internal.log.datastore;
 
-import org.sonatype.nexus.repository.content.ContentRepository;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import org.sonatype.nexus.common.entity.ContinuationAware;
 
 /**
- * Event sent whenever a {@link ContentRepository} is deleted.
- *
- * @since 3.26
+ * Data object for the {@code logging_overrides} table.
  */
-public class ContentRepositoryDeletedEvent
-    extends ContentRepositoryEvent
+public class LoggingOverridesData
+    implements ContinuationAware
 {
-  private final String format;
+  Integer id; // NOSONAR: internal id
 
-  public ContentRepositoryDeletedEvent(final ContentRepository contentRepository, final String format) {
-    super(contentRepository);
-    this.format = checkNotNull(format);
+  private String name;
+
+  private String level;
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(final String name) {
+    this.name = name;
+  }
+
+  public String getLevel() {
+    return level;
+  }
+
+  public void setLevel(final String level) {
+    this.level = level;
   }
 
   @Override
-  public String getFormat() {
-    return format;
+  public String nextContinuationToken() {
+    return Integer.toString(id);
   }
 }

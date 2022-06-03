@@ -12,9 +12,14 @@
  */
 package org.sonatype.nexus.repository.rest.api;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.Collection;
 import java.util.Collections;
-
+import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -34,6 +39,7 @@ import org.sonatype.nexus.repository.rest.api.model.HttpClientConnectionAttribut
 import org.sonatype.nexus.repository.rest.api.model.HttpClientConnectionAuthenticationAttributes;
 import org.sonatype.nexus.repository.rest.api.model.NegativeCacheAttributes;
 import org.sonatype.nexus.repository.rest.api.model.ProxyAttributes;
+import org.sonatype.nexus.repository.rest.api.model.ReplicationAttributes;
 import org.sonatype.nexus.repository.rest.api.model.SimpleApiGroupRepository;
 import org.sonatype.nexus.repository.rest.api.model.SimpleApiHostedRepository;
 import org.sonatype.nexus.repository.rest.api.model.SimpleApiProxyRepository;
@@ -44,6 +50,7 @@ import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.reflect.TypeToken;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -61,6 +68,10 @@ public class SimpleApiRepositoryAdapter
   private final RoutingRuleStore routingRuleStore;
 
   @Inject
+  @Named("${nexus.replication.http.enabled:-false}")
+  private boolean replicationFeatureEnabled;
+
+  @Inject
   public SimpleApiRepositoryAdapter(final RoutingRuleStore routingRuleStore) {
     this.routingRuleStore = checkNotNull(routingRuleStore);
   }
@@ -74,7 +85,8 @@ public class SimpleApiRepositoryAdapter
 
     switch (repository.getType().toString()) {
       case GroupType.NAME:
-        return new SimpleApiGroupRepository(name, format, url, online, getStorageAttributes(repository),
+        return new SimpleApiGroupRepository(name, format, url, online,
+            getStorageAttributes(repository),
             getGroupAttributes(repository));
       case HostedType.NAME:
         return new SimpleApiHostedRepository(
@@ -87,10 +99,14 @@ public class SimpleApiRepositoryAdapter
             getComponentAttributes(repository)
         );
       case ProxyType.NAME:
-        return new SimpleApiProxyRepository(name, format, url, online, getStorageAttributes(repository),
-            getCleanupPolicyAttributes(repository), getProxyAttributes(repository),
-            getNegativeCacheAttributes(repository), getHttpClientAttributes(repository),
-            getRoutingRuleName(repository));
+        return new SimpleApiProxyRepository(name, format, url, online,
+            getStorageAttributes(repository),
+            getCleanupPolicyAttributes(repository),
+            getProxyAttributes(repository),
+            getNegativeCacheAttributes(repository),
+            getHttpClientAttributes(repository),
+            getRoutingRuleName(repository),
+            getReplicationAttributes(repository));
       default:
         return null;
     }
@@ -207,6 +223,19 @@ public class SimpleApiRepositoryAdapter
     return new HttpClientAttributes(blocked, autoBlock, connection, authentication);
   }
 
+  protected ReplicationAttributes getReplicationAttributes(final Repository repository) {
+    Configuration configuration = repository.getConfiguration();
+
+    NestedAttributesMap replication = configuration.attributes("replication");
+    if (!replicationFeatureEnabled || replication == null) {
+      return null;
+    }
+
+    Boolean preemptivePull = replication.get("preemptivePullEnabled", Boolean.class, Boolean.FALSE);
+    String assetPathRegex = replication.get("assetPathRegex", String.class);
+    return new ReplicationAttributes(preemptivePull, assetPathRegex);
+  }
+
   protected static String toString(final Object o, final Object defaultValue) {
     return (o == null ? defaultValue : o).toString();
   }
@@ -218,4 +247,5 @@ public class SimpleApiRepositoryAdapter
   protected static Integer toInt(final Number num, final Integer defaultValue) {
     return num == null ? defaultValue : num.intValue();
   }
+
 }

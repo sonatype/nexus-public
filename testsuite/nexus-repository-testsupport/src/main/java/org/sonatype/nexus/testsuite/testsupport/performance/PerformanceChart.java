@@ -28,9 +28,9 @@ import com.google.common.io.Resources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import oshi.SystemInfo;
+import oshi.hardware.CentralProcessor;
+import oshi.hardware.GlobalMemory;
 import oshi.hardware.HardwareAbstractionLayer;
-import oshi.hardware.Memory;
-import oshi.hardware.Processor;
 import oshi.software.os.OperatingSystem;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -76,7 +76,7 @@ public class PerformanceChart
 
     StringBuilder s = new StringBuilder();
 
-    SortedSet<String> testNames = new TreeSet<String>(results.getTests().keySet());
+    SortedSet<String> testNames = new TreeSet<>(results.getTests().keySet());
 
     // Create the header row
     s.append("['# of Client Threads'");
@@ -108,25 +108,21 @@ public class PerformanceChart
 
   private static String buildSystemInfo() {
 
-    StringBuilder b = new StringBuilder();
+    StringBuilder systemSummary = new StringBuilder();
 
     final SystemInfo systemInfo = new SystemInfo();
     final HardwareAbstractionLayer hardware = systemInfo.getHardware();
 
-    final Processor[] processors = hardware.getProcessors();
+    final CentralProcessor processor = hardware.getProcessor();
 
-    b.append("Processor: ").append(processors[0].getIdentifier()).append("\n");
+    systemSummary.append("Processor: ").append(processor.getProcessorIdentifier()).append("\n");
 
-    for (Processor p : processors) {
-      b.append("\t").append(p.getName()).append("\n");
-    }
-
-    final Memory memory = hardware.getMemory();
-    b.append(String.format("Memory: %,d Mb\n", memory.getTotal() / (1024 * 1024)));
+    final GlobalMemory memory = hardware.getMemory();
+    systemSummary.append(String.format("Memory: %,d Mb%n", memory.getTotal() / (1024 * 1024)));
 
     final OperatingSystem os = systemInfo.getOperatingSystem();
-    b.append(String.format("OS: %s %s %s\n", os.getManufacturer(), os.getFamily(), os.getVersion()));
+    systemSummary.append(String.format("OS: %s %s %s%n", os.getManufacturer(), os.getFamily(), os.getVersionInfo()));
 
-    return b.toString();
+    return systemSummary.toString();
   }
 }

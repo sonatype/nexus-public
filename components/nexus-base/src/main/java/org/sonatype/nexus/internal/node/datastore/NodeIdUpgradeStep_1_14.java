@@ -34,7 +34,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * cluster.
  */
 @Named
-public class NodeIdUpgradeStep_1_13
+public class NodeIdUpgradeStep_1_14
     extends ComponentSupport
     implements DatabaseMigrationStep
 {
@@ -43,7 +43,7 @@ public class NodeIdUpgradeStep_1_13
   private final Provider<KeyStoreManager> keyStoreProvider;
 
   @Inject
-  public NodeIdUpgradeStep_1_13(
+  public NodeIdUpgradeStep_1_14(
       @Named(KeyStoreManagerImpl.NAME) final Provider<KeyStoreManager> keyStoreProvider,
       final NodeIdStore nodeIdStore)
   {
@@ -53,7 +53,7 @@ public class NodeIdUpgradeStep_1_13
 
   @Override
   public Optional<String> version() {
-    return Optional.of("1.13");
+    return Optional.of("1.14");
   }
 
   @Override

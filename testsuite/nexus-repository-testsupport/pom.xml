@@ -147,7 +147,7 @@
     </dependency>
 
     <dependency>
-      <groupId>com.github.dblock</groupId>
+      <groupId>com.github.oshi</groupId>
       <artifactId>oshi-core</artifactId>
     </dependency>
 
@@ -263,6 +263,7 @@
               org.sonatype.nexus.repository.attributes.*;resolution:=optional,
               org.sonatype.nexus.repository.vulnerability.*;resolution:=optional,
               org.sonatype.nexus.testsuite.testsupport.cleanup.*;resolution:=optional,
+              oshi.*;resolution:=optional,
               *
             </Import-Package>
             <Embed-Dependency>

@@ -48,4 +48,8 @@ public interface SearchConstants
   String LAST_BLOB_UPDATED_KEY = "lastBlobUpdated";
 
   String LAST_DOWNLOADED_KEY = "lastDownloaded";
+
+  String UPLOADER = "uploader";
+
+  String UPLOADER_IP = "uploaderIp";
 }

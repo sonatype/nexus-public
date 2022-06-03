@@ -16,7 +16,8 @@ import {useMachine} from '@xstate/react';
 import {
   FormUtils,
   Select,
-  ValidationUtils
+  ValidationUtils,
+  SslCertificateDetailsModal
 } from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
@@ -29,7 +30,10 @@ import {
   NxTextInput,
   NxTextLink,
   NxSuccessAlert,
+  NxFormRow,
+  NxFontAwesomeIcon
 } from '@sonatype/react-shared-components';
+import { faCertificate } from '@fortawesome/free-solid-svg-icons';
 
 import UIStrings from '../../../../constants/UIStrings';
 
@@ -43,8 +47,9 @@ export default function IqServerForm() {
   const isLoading = current.matches('loading');
   const isSaving = current.matches('saving')
   const isInvalid = FormUtils.isInvalid(validationErrors);
-
+  const viewingCertificate = current.matches('loaded.viewingCertificate');
   const canOpenIqServerDashboard = pristineData.enabled && ValidationUtils.isUrl(pristineData.url);
+  const hasSecureUrl = ValidationUtils.isSecureUrl(data.url);
 
   function verifyConnection() {
     send('VERIFY_CONNECTION');
@@ -75,6 +80,14 @@ export default function IqServerForm() {
         password: ''
       }
     });
+  }
+
+  function viewCertificate() {
+    send('VIEW_CERTIFICATE');
+  }
+
+  function closeCertificate() {
+    send('CLOSE_CERTIFICATE');
   }
 
   return <NxForm
@@ -120,6 +133,24 @@ export default function IqServerForm() {
                      {...FormUtils.fieldProps('url', current)}
                      onChange={FormUtils.handleUpdate('url', send)}/>
       </NxFormGroup>
+      <NxFormRow>
+        <>
+          <NxFormGroup label={UIStrings.IQ_SERVER.TRUST_STORE.label} isRequired>
+            <NxCheckbox
+              {...FormUtils.checkboxProps('useTrustStoreForUrl', current)}
+              onChange={FormUtils.handleUpdate('useTrustStoreForUrl', send)}
+              disabled={!hasSecureUrl}>
+                {UIStrings.IQ_SERVER.TRUST_STORE.sublabel}
+            </NxCheckbox>
+          </NxFormGroup>
+          <NxButton variant="tertiary" disabled={!hasSecureUrl} onClick={viewCertificate} type="button">
+            <NxFontAwesomeIcon icon={faCertificate}/>
+            <span>{UIStrings.IQ_SERVER.CERTIFICATE}</span>
+          </NxButton>
+        </>
+      </NxFormRow>
+      {viewingCertificate &&
+            <SslCertificateDetailsModal hostUrl={data.url} onCancel={closeCertificate}/>}
       <NxFormGroup label={UIStrings.IQ_SERVER.AUTHENTICATION_TYPE.label} isRequired>
         <Select className="nx-form-select--long"
                 {...FormUtils.fieldProps('authenticationType', current)}

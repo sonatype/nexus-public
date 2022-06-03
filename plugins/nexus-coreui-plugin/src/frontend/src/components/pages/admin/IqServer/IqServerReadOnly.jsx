@@ -29,6 +29,7 @@ export default function IqServerReadOnly() {
   const {data, loadError} = current.context;
   const isLoading = current.matches('loading');
   const enabled = FormUtils.readOnlyCheckboxValueLabel(data.enabled);
+  const useTrustStoreForUrl = FormUtils.readOnlyCheckboxValueLabel(data.useTrustStoreForUrl);
   const authenticationTypeLabel = data.authenticationType === 'USER'
       ? UIStrings.IQ_SERVER.AUTHENTICATION_TYPE.USER
       : UIStrings.IQ_SERVER.AUTHENTICATION_TYPE.PKI;
@@ -47,6 +48,8 @@ export default function IqServerReadOnly() {
       {data.url && <>
         <NxReadOnly.Label>{UIStrings.IQ_SERVER.IQ_SERVER_URL.label}</NxReadOnly.Label>
         <NxReadOnly.Data>{data.url}</NxReadOnly.Data>
+        <NxReadOnly.Label>{UIStrings.IQ_SERVER.TRUST_STORE.label}</NxReadOnly.Label>
+        <NxReadOnly.Data>{useTrustStoreForUrl}</NxReadOnly.Data>
         <NxReadOnly.Label>{UIStrings.IQ_SERVER.AUTHENTICATION_TYPE.label}</NxReadOnly.Label>
         <NxReadOnly.Data>{authenticationTypeLabel}</NxReadOnly.Data>
         {data.authenticationType === 'USER' && <>

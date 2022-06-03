@@ -92,6 +92,8 @@ public class DefaultComponentMetadataProducerTest
     assertThat(jsonAssets.size(), equalTo(1));
     JsonNode jsonAsset = jsonAssets.get(0);
     assertValue(jsonAsset, DefaultComponentMetadataProducer.NAME, NAME);
+    assertValue(jsonAsset, DefaultComponentMetadataProducer.UPLOADER, "anonymous");
+    assertValue(jsonAsset, DefaultComponentMetadataProducer.UPLOADER_IP, "127.0.0.1");
 
     verify(componentMetadataProducerExtension).getComponentMetadata(any(Component.class));
   }

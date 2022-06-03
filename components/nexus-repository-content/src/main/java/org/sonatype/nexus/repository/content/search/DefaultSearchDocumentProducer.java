@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -44,17 +43,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.time.format.DateTimeFormatter.ofPattern;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toExternalId;
-import static org.sonatype.nexus.repository.search.index.SearchConstants.ASSETS;
-import static org.sonatype.nexus.repository.search.index.SearchConstants.ATTRIBUTES;
-import static org.sonatype.nexus.repository.search.index.SearchConstants.CONTENT_TYPE;
-import static org.sonatype.nexus.repository.search.index.SearchConstants.GROUP;
-import static org.sonatype.nexus.repository.search.index.SearchConstants.ID;
-import static org.sonatype.nexus.repository.search.index.SearchConstants.IS_PRERELEASE_KEY;
-import static org.sonatype.nexus.repository.search.index.SearchConstants.LAST_BLOB_UPDATED_KEY;
-import static org.sonatype.nexus.repository.search.index.SearchConstants.LAST_DOWNLOADED_KEY;
-import static org.sonatype.nexus.repository.search.index.SearchConstants.NAME;
-import static org.sonatype.nexus.repository.search.index.SearchConstants.NORMALIZED_VERSION;
-import static org.sonatype.nexus.repository.search.index.SearchConstants.VERSION;
+import static org.sonatype.nexus.repository.search.index.SearchConstants.*;
 
 /**
  * Default {@link SearchDocumentProducer} that combines properties of components and their assets.
@@ -67,9 +56,7 @@ public class DefaultSearchDocumentProducer
     extends ComponentSupport
     implements SearchDocumentProducer
 {
-  private static final Pattern DIGITS_PATTERN = Pattern.compile("\\d+");
-
-  private static final DateTimeFormatter DATE_TIME_FORMATTER = ofPattern("YYYY-MM-dd'T'HH:mm:ss.SSSZ");
+  private static final DateTimeFormatter DATE_TIME_FORMATTER = ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 
   private static final ObjectWriter WRITER = new ObjectMapper().writerWithDefaultPrettyPrinter();
 
@@ -108,7 +95,14 @@ public class DefaultSearchDocumentProducer
       assetDoc.put(CONTENT_TYPE, "");
       asset.blob().ifPresent(blob -> {
         assetDoc.put(CONTENT_TYPE, blob.contentType());
+        assetDoc.put(UPLOADER, blob.createdBy().orElse(null));
+        assetDoc.put(UPLOADER_IP, blob.createdByIp().orElse(null));
         attributes.put("checksum", blob.checksums());
+
+        // Not ideal, but demonstrates why strongly typed objects would be better than Maps of attributes.
+        Map<String, Object> content = new HashMap<>();
+        content.put("last_modified", blob.blobCreated().toInstant().toEpochMilli());
+        attributes.put("content", content);
       });
       assetDoc.put(ATTRIBUTES, attributes);
       assetDocs.add(assetDoc);

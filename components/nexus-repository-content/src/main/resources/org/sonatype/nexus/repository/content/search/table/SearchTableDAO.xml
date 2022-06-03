@@ -19,24 +19,24 @@
   <insert id="createSchema">
     CREATE TABLE IF NOT EXISTS component_search
     (
-      component_id      INTEGER                  NOT NULL,
-      repository_id     INTEGER                  NOT NULL,
-      asset_id          INTEGER                  NOT NULL,
-      format            VARCHAR                  NOT NULL,
-      namespace         VARCHAR                  NOT NULL,
-      search_component_name    VARCHAR                  NOT NULL,
-      path              VARCHAR                  NOT NULL,
-      component_kind    VARCHAR                  NOT NULL,
-      version           VARCHAR                  NOT NULL,
-      component_created TIMESTAMP WITH TIME ZONE NOT NULL,
-      search_repository_name   VARCHAR(200)             NOT NULL,
-      content_type      VARCHAR                  NOT NULL,
-      md5               VARCHAR,
-      sha1              VARCHAR,
-      sha256            VARCHAR,
-      sha512            VARCHAR,
+      repository_id          INTEGER                  NOT NULL,
+      component_id           INTEGER                  NOT NULL,
+      asset_id               INTEGER                  NOT NULL,
+      format                 VARCHAR                  NOT NULL,
+      namespace              VARCHAR                  NOT NULL,
+      search_component_name  VARCHAR                  NOT NULL,
+      path                   VARCHAR                  NOT NULL,
+      component_kind         VARCHAR                  NOT NULL,
+      version                VARCHAR                  NOT NULL,
+      component_created      TIMESTAMP WITH TIME ZONE NOT NULL,
+      search_repository_name VARCHAR(200)             NOT NULL,
+      content_type           VARCHAR                  NOT NULL,
+      md5                    VARCHAR,
+      sha1                   VARCHAR,
+      sha256                 VARCHAR,
+      sha512                 VARCHAR,
 
-      CONSTRAINT pk_component_search PRIMARY KEY (component_id, repository_id, asset_id, format)
+      CONSTRAINT pk_component_search PRIMARY KEY (repository_id, component_id, asset_id, format)
       );
     CREATE INDEX IF NOT EXISTS idx_component_search_version ON component_search (version);
     CREATE INDEX IF NOT EXISTS idx_component_search_namespace ON component_search (namespace);
@@ -49,6 +49,75 @@
     CREATE INDEX IF NOT EXISTS idx_component_search_sha256 ON component_search (sha256);
     CREATE INDEX IF NOT EXISTS idx_component_search_sha512 ON component_search (sha512);
   </insert>
+
+  <sql id="repositoryMatch">
+    repository_id = #{repositoryId}
+    AND format = #{format}
+  </sql>
+
+  <sql id="componentMatch">
+    <include refid="repositoryMatch"/>
+    AND component_id = #{componentId}
+  </sql>
+
+  <sql id="PKMatch">
+    <include refid="componentMatch"/>
+    AND asset_id = #{assetId}
+  </sql>
+
+  <resultMap id="searchTableData" type="org.sonatype.nexus.repository.content.search.table.SearchTableData">
+    <id property="repositoryId" column="repository_id" />
+    <id property="componentId" column="component_id" />
+    <id property="assetId" column="asset_id" />
+    <id property="format" column="format" />
+    <result property="namespace" column="namespace"/>
+    <result property="componentName" column="search_component_name"/>
+    <result property="componentKind" column="component_kind"/>
+    <result property="version" column="version"/>
+    <result property="componentCreated" column="component_created"/>
+    <result property="repositoryName" column="search_repository_name"/>
+    <result property="path" column="path"/>
+    <result property="contentType" column="content_type"/>
+    <result property="md5" column="md5"/>
+    <result property="sha1" column="sha1"/>
+    <result property="sha256" column="sha256"/>
+    <result property="sha512" column="sha512"/>
+  </resultMap>
+
+  <insert id="create" parameterType="SearchTableData">
+    INSERT INTO component_search(repository_id, component_id, asset_id, format, namespace, search_component_name, path,
+                                 component_kind, version, search_repository_name, content_type, md5, sha1, sha256, sha512,
+                                 component_created)
+    VALUES (#{repositoryId}, #{componentId}, #{assetId}, #{format}, #{namespace}, #{componentName}, #{path},
+            #{componentKind}, #{version}, #{repositoryName}, #{contentType}, #{md5}, #{sha1}, #{sha256}, #{sha512},
+            (SELECT created FROM ${format}_component WHERE component_id = #{componentId}));
+  </insert>
+
+  <update id="updateKind" parameterType="SearchTableData">
+    UPDATE component_search
+    SET
+    component_kind = #{componentKind}
+    WHERE <include refid="componentMatch"/>
+  </update>
+
+  <delete id="delete" parameterType="SearchTableData">
+    DELETE
+    FROM component_search
+    WHERE <include refid="PKMatch"/>
+  </delete>
+
+  <delete id="deleteAllForRepository">
+    WITH toBeDeleted as (
+        SELECT component_id, asset_id
+        FROM component_search
+        WHERE <include refid="repositoryMatch"/>
+    <if test="limit gt 0"> LIMIT ${limit}</if>)
+    DELETE
+    FROM component_search cs
+    WHERE <include refid="repositoryMatch"/>
+        AND cs.component_id IN (SELECT td.component_id FROM toBeDeleted td)
+        AND cs.asset_id IN (SELECT td.asset_id FROM toBeDeleted td)
+  </delete>
 
   <resultMap id="searchDataMap" type="org.sonatype.nexus.repository.content.search.SearchResultData">
     <id property="componentId" column="component_id" />

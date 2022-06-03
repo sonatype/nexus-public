@@ -159,7 +159,7 @@ public class DatastoreFileBlobDeletionIndex
       }
     }
 
-    if (oldDeletionIndexFile.exists() && oldDeletionIndexFile.delete()) {
+    if (oldDeletionIndexFile.exists() && !oldDeletionIndexFile.delete()) {
       log.error("Unable to delete 'deletion index' file, path = {}", oldDeletionIndexFile.getAbsolutePath());
     }
   }

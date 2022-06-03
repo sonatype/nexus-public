@@ -24,8 +24,9 @@
     "axios": "=0.21.4",
     "classnames": "=2.3.1",
     "luxon": "=1.27.0",
-    "react": "=16.14.0",
-    "react-dom": "=16.14.0",
+    "react": "=17.0.2",
+    "react-dom": "=17.0.2",
+    "swagger-ui-react": "=4.11.1",
     "xstate": "=4.16.0"
   },
   "devDependencies": {

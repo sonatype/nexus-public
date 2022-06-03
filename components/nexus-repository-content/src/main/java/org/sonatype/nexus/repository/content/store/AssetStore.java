@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -354,9 +353,12 @@ public class AssetStore<T extends AssetDAO>
   @Transactional
   public boolean deleteAsset(final Asset asset) {
     preCommitEvent(() -> new AssetPreDeleteEvent(asset));
-    postCommitEvent(() -> new AssetDeletedEvent(asset));
+    boolean deleted = dao().deleteAsset(asset);
 
-    return dao().deleteAsset(asset);
+    if (deleted) {
+      postCommitEvent(() -> new AssetDeletedEvent(asset));
+    }
+    return deleted;
   }
 
   /**

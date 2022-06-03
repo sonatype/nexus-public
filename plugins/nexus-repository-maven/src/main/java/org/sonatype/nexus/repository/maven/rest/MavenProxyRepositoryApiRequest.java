@@ -21,10 +21,13 @@ import org.sonatype.nexus.repository.rest.api.model.CleanupPolicyAttributes;
 import org.sonatype.nexus.repository.rest.api.model.NegativeCacheAttributes;
 import org.sonatype.nexus.repository.rest.api.model.ProxyAttributes;
 import org.sonatype.nexus.repository.rest.api.model.ProxyRepositoryApiRequest;
+import org.sonatype.nexus.repository.rest.api.model.ReplicationAttributes;
 import org.sonatype.nexus.repository.rest.api.model.StorageAttributes;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -41,7 +44,7 @@ public class MavenProxyRepositoryApiRequest
   @Valid
   protected final HttpClientAttributesWithPreemptiveAuth httpClient;
 
-  @JsonCreator
+  @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
   @SuppressWarnings("squid:S00107") // suppress constructor parameter count
   public MavenProxyRepositoryApiRequest(
       @JsonProperty("name") final String name,
@@ -52,9 +55,11 @@ public class MavenProxyRepositoryApiRequest
       @JsonProperty("negativeCache") final NegativeCacheAttributes negativeCache,
       @JsonProperty("httpClient") final HttpClientAttributesWithPreemptiveAuth httpClient,
       @JsonProperty("routingRule") final String routingRule,
-      @JsonProperty("maven") final MavenAttributes maven)
+      @JsonProperty("maven") final MavenAttributes maven,
+      @JsonProperty("replication") @JsonInclude(value= Include.NON_EMPTY, content=Include.NON_NULL)
+      final ReplicationAttributes replication)
   {
-    super(name, Maven2Format.NAME, online, storage, cleanup, proxy, negativeCache, httpClient, routingRule);
+    super(name, Maven2Format.NAME, online, storage, cleanup, proxy, negativeCache, httpClient, routingRule, replication);
     this.maven = maven;
     this.httpClient = httpClient;
   }

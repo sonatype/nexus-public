@@ -564,7 +564,7 @@ export default {
         pypi: ' (e.g., https://pypi.org)',
         rubygems: ' (e.g., https://rubygems.org)',
         yum: ' (e.g., http://mirror.centos.org/centos/)',
-        default: ' (e.g., https://example.com)'	
+        default: ' (e.g., https://example.com)'
       },
       DOCKER_CONNECTORS_HELP: <>
         Connectors allow Docker clients to connect directly to hosted registries, but are not always
@@ -965,10 +965,19 @@ This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 
       label: 'Enable IQ Server',
       sublabel: 'Enable the use of IQ Server'
     },
+
     IQ_SERVER_URL: {
       label: 'IQ Server URL',
       sublabel: 'This is the address of your IQ server'
     },
+
+    TRUST_STORE: {
+      label: 'Use the Nexus Trust Store',
+      sublabel: 'Use certificate connected to the Nexus Truststore'
+    },
+
+    CERTIFICATE: 'View Certificate',
+
     AUTHENTICATION_TYPE: {
       label: 'Authentication Method',
       USER: 'User Authentication',
@@ -1038,6 +1047,13 @@ This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 
         FRAGMENT_LABEL: 'Fragment'
       },
     }
+  },
+
+  API: {
+    MENU: {
+      text: 'API',
+      description: 'Learn how to interact with Nexus Repository Manager programmatically'
+    },
   },
 
   PROPRIETARY_REPOSITORIES: {

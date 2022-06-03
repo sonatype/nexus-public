@@ -10,29 +10,33 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.event.repository;
+package org.sonatype.nexus.repository.content.upgrades;
 
-import org.sonatype.nexus.repository.content.ContentRepository;
+import java.util.Map;
+import java.util.Optional;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+
+import org.sonatype.nexus.repository.Recipe;
+import org.sonatype.nexus.repository.content.search.upgrade.SearchIndexUpgrade;
 
 /**
- * Event sent whenever a {@link ContentRepository} is deleted.
- *
- * @since 3.26
+ * Re-index search for all formats to store external id instead of internal id.
  */
-public class ContentRepositoryDeletedEvent
-    extends ContentRepositoryEvent
+@Named
+@Singleton
+public class SearchIndexUpgrade_1_15
+    extends SearchIndexUpgrade
 {
-  private final String format;
-
-  public ContentRepositoryDeletedEvent(final ContentRepository contentRepository, final String format) {
-    super(contentRepository);
-    this.format = checkNotNull(format);
+  @Inject
+  public SearchIndexUpgrade_1_15(final Map<String, Recipe> recipes) {
+    super(recipes);
   }
 
   @Override
-  public String getFormat() {
-    return format;
+  public Optional<String> version() {
+    return Optional.of("1.15");
   }
 }

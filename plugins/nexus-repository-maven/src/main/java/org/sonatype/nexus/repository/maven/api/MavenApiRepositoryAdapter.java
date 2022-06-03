@@ -61,10 +61,15 @@ public class MavenApiRepositoryAdapter
             createMavenAttributes(repository),
             getComponentAttributes(repository));
       case ProxyType.NAME:
-        return new MavenProxyApiRepository(name, url, online, getHostedStorageAttributes(repository),
-            getCleanupPolicyAttributes(repository), getProxyAttributes(repository),
-            getNegativeCacheAttributes(repository), getHttpClientAttributes(repository), getRoutingRuleName(repository),
-            createMavenAttributes(repository));
+        return new MavenProxyApiRepository(name, url, online,
+            getHostedStorageAttributes(repository),
+            getCleanupPolicyAttributes(repository),
+            getProxyAttributes(repository),
+            getNegativeCacheAttributes(repository),
+            getHttpClientAttributes(repository),
+            getRoutingRuleName(repository),
+            createMavenAttributes(repository),
+            getReplicationAttributes(repository));
       default:
         return super.adapt(repository);
     }

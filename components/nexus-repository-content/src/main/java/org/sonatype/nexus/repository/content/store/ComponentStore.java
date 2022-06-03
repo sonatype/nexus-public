@@ -16,7 +16,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -243,9 +242,12 @@ public class ComponentStore<T extends ComponentDAO>
   @Transactional
   public boolean deleteComponent(final Component component) {
     preCommitEvent(() -> new ComponentPreDeleteEvent(component));
-    postCommitEvent(() -> new ComponentDeletedEvent(component));
 
-    return dao().deleteComponent(component);
+    boolean deleted = dao().deleteComponent(component);
+    if (deleted) {
+      postCommitEvent(() -> new ComponentDeletedEvent(component));
+    }
+    return deleted;
   }
 
   /**
