@@ -127,7 +127,7 @@ export default class ValidationUtils {
 
   static validateLength(value, length) {
     if (value.length > length) {
-      return UIStrings.ERROR.MAX_CHARS(255);
+      return UIStrings.ERROR.MAX_CHARS(length);
     }
     return null;
   }
@@ -137,10 +137,15 @@ export default class ValidationUtils {
    * @returns {string|null} an error string if name fails {@link ValidationUtils.isName} or null
    */
   static validateName(value) {
-    if (!ValidationUtils.isName(value)) {
-      return UIStrings.ERROR.INVALID_NAME_CHARS;
+    const isValidName = (name) => {
+      if (!ValidationUtils.isName(name)) {
+        return UIStrings.ERROR.INVALID_NAME_CHARS;
+      }
+      return null;
     }
-    return null;
+
+    return ValidationUtils.validateNotBlank(value) ||
+    ValidationUtils.validateLength(value, 255) || isValidName(value);
   }
 
   static validateNotBlank(value) {

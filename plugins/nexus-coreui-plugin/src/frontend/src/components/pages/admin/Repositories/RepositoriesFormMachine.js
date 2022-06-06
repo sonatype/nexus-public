@@ -54,7 +54,7 @@ export default FormUtils.buildFormMachine({
     validate: assign({
       validationErrors: ({data}) => ({
         ...getValidators(data.format, data.type)(data),
-        name: validateName(data.name),
+        name: ValidationUtils.validateName(data.name),
         format: ValidationUtils.validateNotBlank(data.format),
         type: ValidationUtils.validateNotBlank(data.type),
         storage: {
@@ -98,8 +98,3 @@ export default FormUtils.buildFormMachine({
 const isEdit = ({name}) => ValidationUtils.notBlank(name);
 
 const formatFormat = (format) => (format === 'maven2' ? 'maven' : format);
-
-const validateName = (value) =>
-  ValidationUtils.validateNotBlank(value) ||
-  ValidationUtils.validateLength(value, 200) ||
-  ValidationUtils.validateName(value);
