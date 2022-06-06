@@ -85,6 +85,7 @@ class RepositoryInternalResourceTest
   }
 
   @Ignore
+  //TODO NEXUS-32555
   @Test
   void testGetDetails() {
     def maven2 = new Format('maven2') {}
