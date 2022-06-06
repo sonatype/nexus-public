@@ -22,12 +22,14 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLNonBlockingQuery;
+import org.apache.commons.lang.StringUtils;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -41,7 +43,10 @@ class OrientAsyncHelper
 {
   private static final int BUFFER_SIZE = 128;
 
-  private static final long TIMEOUT_SECONDS = 60L;
+  private static final long DEFAULT_TIMEOUT_SECONDS = 60L;
+
+  @VisibleForTesting
+  static long queryTimeout = SystemPropertiesHelper.getLong("nexus.orient.query.timeout.seconds", DEFAULT_TIMEOUT_SECONDS);;
 
   private OrientAsyncHelper() {
     // private
@@ -63,7 +68,7 @@ class OrientAsyncHelper
                                                   final String selectQuery,
                                                   @Nullable final Map<String, Object> parameters)
   {
-    return asyncIterable(db, selectQuery, parameters, BUFFER_SIZE, TIMEOUT_SECONDS);
+    return asyncIterable(db, selectQuery, parameters, BUFFER_SIZE, queryTimeout);
   }
 
   /**
