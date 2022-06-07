@@ -972,8 +972,8 @@ This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 
     },
 
     TRUST_STORE: {
-      label: 'Use the Nexus Trust Store',
-      sublabel: 'Use certificate connected to the Nexus Truststore'
+      label: 'Use the Nexus Repository Truststore',
+      sublabel: 'Use certificate connected to the Nexus Repository Truststore'
     },
 
     CERTIFICATE: 'View Certificate',
