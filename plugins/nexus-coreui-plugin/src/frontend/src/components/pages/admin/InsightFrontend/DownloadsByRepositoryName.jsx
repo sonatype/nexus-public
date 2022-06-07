@@ -40,7 +40,7 @@ export default function DownloadsByRepositoryName({downloadsByRepositoryName}) {
               </NxTable.Cell>
             </NxTable.Row>
           </NxTable.Head>
-          <NxTable.Body emptyMessage="No data">
+          <NxTable.Body emptyMessage="No data" className="nx-table-body-downloads-by-repository-name">
             {byRepositoryName.data.map((row, index) =>
                 <NxTable.Row key={index}>
                   <NxTable.Cell>{row.identifier}</NxTable.Cell>

@@ -1230,6 +1230,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Task_TaskFeature_Delete_Button: 'Delete task',
     Tasks_Delete_Success: 'Task deleted: {0}',
     Task_TaskFeature_Run_Button: 'Run',
+    Task_TaskFeature_Run_Button_Id: 'task_run_button_id',
     Tasks_RunConfirm_Title: 'Confirm?',
     Tasks_RunConfirm_HelpText: 'Run {0} task?',
     Tasks_Run_Success: 'Task started: {0}',

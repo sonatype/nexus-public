@@ -40,7 +40,7 @@ export default function DownloadsByUsername({downloadsByUsername}) {
               </NxTable.Cell>
             </NxTable.Row>
           </NxTable.Head>
-          <NxTable.Body emptyMessage="No data">
+          <NxTable.Body emptyMessage="No data" className="nx-table-body-downloads-by-usernamename">
             {byUser.data.map((row, index) =>
                 <NxTable.Row key={index}>
                   <NxTable.Cell>{row.identifier}</NxTable.Cell>
