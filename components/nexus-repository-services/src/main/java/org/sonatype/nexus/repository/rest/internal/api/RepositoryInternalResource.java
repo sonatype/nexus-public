@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Collection;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -40,6 +40,7 @@ import org.sonatype.nexus.repository.rest.api.AuthorizingRepositoryManager;
 import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositorySelector;
+import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.rest.Resource;
 
@@ -124,7 +125,7 @@ public class RepositoryInternalResource
         .filter(repository -> isBlank(formatParam)
             || formatParam.equals(ALL_FORMATS)
             || formatParam.equals(repository.getFormat().getValue()))
-        .map(repository -> new RepositoryXO(repository.getName(), repository.getName()))
+        .map(this::asRepository)
         .sorted(Comparator.comparing(RepositoryXO::getName))
         .collect(toList());
 
@@ -191,4 +192,38 @@ public class RepositoryInternalResource
         repository.getUrl(),
         new RepositoryStatusXO(online, description, reason));
   }
+
+  private RepositoryXO asRepository(Repository repository) {
+    String format = repository.getFormat().getValue();
+    String name = repository.getName();
+    return format.equals("nuget")
+            ? asNugetRepository(repository)
+            : new RepositoryXO(name, name);
+  }
+
+  @SuppressWarnings("unchecked")
+  private RepositoryXO asNugetRepository(Repository repository) {
+    String name = repository.getName();
+    String type = repository.getType().getValue();
+
+    String nugetVersion = null;
+    Collection<String> memberNames = null;
+
+    if (type.equals(ProxyType.NAME)) {
+      nugetVersion = (String) repository
+              .getConfiguration()
+              .attributes("nugetProxy")
+              .get("nugetVersion");
+    } else if (type.equals(GroupType.NAME)) {
+      memberNames = (Collection<String>) repository
+              .getConfiguration()
+              .attributes("group")
+              .get("memberNames");
+    } else {
+      return new RepositoryXO(name, name);
+    }
+
+    return new RepositoryNugetXO(name, name, nugetVersion, memberNames);
+  }
 }
+
