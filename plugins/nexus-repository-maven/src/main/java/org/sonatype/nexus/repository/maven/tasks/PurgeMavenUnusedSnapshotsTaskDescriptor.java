@@ -19,6 +19,7 @@ import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.NumberTextFormField;
 import org.sonatype.nexus.formfields.RepositoryCombobox;
 import org.sonatype.nexus.repository.maven.PurgeUnusedSnapshotsFacet;
+import org.sonatype.nexus.repository.maven.VersionPolicy;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 import static org.sonatype.nexus.repository.RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID;
@@ -53,7 +54,9 @@ public class PurgeMavenUnusedSnapshotsTaskDescriptor
             "Repository",
             "Select the repository to delete unused snapshot versions from",
             FormField.MANDATORY
-        ).includingAnyOfFacets(PurgeUnusedSnapshotsFacet.class).includeAnEntryForAllRepositories(),
+        ).includingAnyOfFacets(PurgeUnusedSnapshotsFacet.class)
+            .excludingAnyOfVersionPolicies(VersionPolicy.RELEASE.name())
+            .includeAnEntryForAllRepositories(),
         new NumberTextFormField(
             LAST_USED_FIELD_ID,
             "Last used in days",

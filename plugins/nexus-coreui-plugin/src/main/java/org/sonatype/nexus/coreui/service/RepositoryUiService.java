@@ -272,18 +272,18 @@ public class RepositoryUiService
         .map(httpclient -> httpclient.get("authentication"))
         .map(Map.class::cast)
         .ifPresent(authentication -> {
-            String password = (String) authentication.get("password");
-            if (PasswordPlaceholder.is(password)) {
-              Optional.of(repository)
-                  .map(Repository::getConfiguration)
-                  .map(Configuration::getAttributes)
-                  .map(attr -> attr.get("httpclient"))
-                  .map(Map.class::cast)
-                  .map(httpclient -> httpclient.get("authentication"))
-                  .map(Map.class::cast)
-                  .map(storedAuthentication -> storedAuthentication.get("password"))
-                  .ifPresent(storedPassword -> authentication.put("password", storedPassword));
-            }
+          String password = (String) authentication.get("password");
+          if (PasswordPlaceholder.is(password)) {
+            Optional.of(repository)
+                .map(Repository::getConfiguration)
+                .map(Configuration::getAttributes)
+                .map(attr -> attr.get("httpclient"))
+                .map(Map.class::cast)
+                .map(httpclient -> httpclient.get("authentication"))
+                .map(Map.class::cast)
+                .map(storedAuthentication -> storedAuthentication.get("password"))
+                .ifPresent(storedPassword -> authentication.put("password", storedPassword));
+          }
         });
 
     initializeCleanupAttributes(repositoryXO);
@@ -468,22 +468,21 @@ public class RepositoryUiService
       List<Class<Facet>> facetTypes = toFacetList(parameters.getFilter("facets"));
       if (!facetTypes.isEmpty()) {
         configurations = configurations.stream()
-            .filter(configuration -> Optional.ofNullable(repositoryManager.get(configuration.getRecipeName()))
-                  .map(repositoryHasAnyFacet(facetTypes))
-                  .orElse(false)
-             )
+            .filter(configuration -> Optional.ofNullable(repositoryManager.get(configuration.getRepositoryName()))
+                .map(repositoryHasAnyFacet(facetTypes))
+                .orElse(false))
             .collect(Collectors.toList());
       }
       String versionPolicies = parameters.getFilter("versionPolicies");
 
       configurations = filterIn(configurations, versionPolicies, configuration ->
-        Optional.of(configuration)
-            .map(Configuration::getAttributes)
-            .map(attr -> attr.get("maven"))
-            .map(Map.class::cast)
-            .map(maven -> maven.get("versionPolicy"))
-            .map(String.class::cast)
-            .orElse(null)
+          Optional.of(configuration)
+              .map(Configuration::getAttributes)
+              .map(attr -> attr.get("maven"))
+              .map(Map.class::cast)
+              .map(maven -> maven.get("versionPolicy"))
+              .map(String.class::cast)
+              .orElse(null)
       );
     }
 
@@ -540,14 +539,14 @@ public class RepositoryUiService
   }
 
   /**
-   * Filters a collection by evaluating if the field dictated by filteredFieldSelector is in the list of comma
-   * separated values in filter and is not in the list of comma separated values in filter that are prepended by '!'.
-   * NOTE: A list of only excludes will include all other items.
-   * Used to parse the filters build by {@link org.sonatype.nexus.formfields.RepositoryCombobox#getStoreFilters()}
+   * Filters a collection by evaluating if the field dictated by filteredFieldSelector is in the list of comma separated
+   * values in filter and is not in the list of comma separated values in filter that are prepended by '!'. NOTE: A list
+   * of only excludes will include all other items. Used to parse the filters build by
+   * {@link org.sonatype.nexus.formfields.RepositoryCombobox#getStoreFilters()}
    *
-   * @param iterable The iterable to filter
-   * @param filter A comma separated list of values which either match the selected field or, if prepended with '!', do
-   *          not match the field
+   * @param iterable              The iterable to filter
+   * @param filter                A comma separated list of values which either match the selected field or, if
+   *                              prepended with '!', do not match the field
    * @param filteredFieldSelector A selector for the field to match against the supplied filter list
    * @return The filtered iterable
    */
@@ -568,21 +567,21 @@ public class RepositoryUiService
 
     return StreamSupport.stream(iterable.spliterator(), false)
         .filter(result -> {
-            String fieldValue = filteredFieldSelector.apply(result);
+          String fieldValue = filteredFieldSelector.apply(result);
 
-            boolean shouldInclude = allExcludes;
+          boolean shouldInclude = allExcludes;
 
-            for (String strFilter : filters) {
-              if (strFilter.startsWith("!")) {
-                if (Objects.equals(fieldValue, strFilter.substring(1))) {
-                  shouldInclude = false;
-                }
-              }
-              else if (Objects.equals(fieldValue, strFilter)) {
-                shouldInclude = true;
+          for (String strFilter : filters) {
+            if (strFilter.startsWith("!")) {
+              if (Objects.equals(fieldValue, strFilter.substring(1))) {
+                shouldInclude = false;
               }
             }
-            return shouldInclude;
+            else if (Objects.equals(fieldValue, strFilter)) {
+              shouldInclude = true;
+            }
+          }
+          return shouldInclude;
         })
         .collect(Collectors.toList());
   }
