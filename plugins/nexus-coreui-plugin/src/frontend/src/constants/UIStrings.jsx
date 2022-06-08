@@ -436,6 +436,16 @@ export default {
           </NxTextLink>.
         </>,
       },
+      HEALTH_CHECK: {
+        LOADING: 'Loading...',
+        ANALYZING: 'Analyzing...',
+        ANALYZE_BUTTON: 'Analyze',
+        LOADING_ERROR: 'Loading Error',
+        ANALYZE_THIS: (name) => `Analyze '${name}' repository`,
+        ANALYZE_ALL: 'Analyze all repositories',
+        MODAL_CONTENT: (name) => `Do you want to analyze the repository ${name} and others for secuirty vulnerabilities and licence issues?`,
+        MODAL_HEADER: 'Analyze Repository'
+      }
     },
 
     EDITOR: {

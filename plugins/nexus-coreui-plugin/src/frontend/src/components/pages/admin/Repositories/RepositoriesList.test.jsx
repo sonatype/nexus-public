@@ -123,37 +123,37 @@ describe('RepositoriesList', function() {
     expect(tableRow(0).cells[1]).toHaveTextContent('proxy');
     expect(tableRow(0).cells[2]).toHaveTextContent('maven2');
     expect(tableRow(0).cells[3]).toHaveTextContent(/^Online - Ready to Connect$/);
-    expect(tableRow(0).cells[4]).toHaveTextContent('http://localhost:8081/repository/maven-central/');
+    expect(tableRow(0).cells[4].querySelector('button')).toBeVisible();
 
     expect(tableRow(1).cells[0]).toHaveTextContent('maven-public');
     expect(tableRow(1).cells[1]).toHaveTextContent('group');
     expect(tableRow(1).cells[2]).toHaveTextContent('maven2');
     expect(tableRow(1).cells[3]).toHaveTextContent(/^Online$/);
-    expect(tableRow(1).cells[4]).toHaveTextContent('http://localhost:8081/repository/maven-public/');
+    expect(tableRow(1).cells[4].querySelector('button')).toBeVisible();
 
     expect(tableRow(2).cells[0]).toHaveTextContent('maven-releases');
     expect(tableRow(2).cells[1]).toHaveTextContent('hosted');
     expect(tableRow(2).cells[2]).toHaveTextContent('maven2');
     expect(tableRow(2).cells[3]).toHaveTextContent(/^Online$/);
-    expect(tableRow(2).cells[4]).toHaveTextContent('http://localhost:8081/repository/maven-releases/');
+    expect(tableRow(2).cells[4].querySelector('button')).toBeVisible();
 
     expect(tableRow(3).cells[0]).toHaveTextContent('maven-snapshots');
     expect(tableRow(3).cells[1]).toHaveTextContent('hosted');
     expect(tableRow(3).cells[2]).toHaveTextContent('maven2');
     expect(tableRow(3).cells[3]).toHaveTextContent(/^Offline$/);
-    expect(tableRow(3).cells[4]).toHaveTextContent('http://localhost:8081/repository/maven-snapshots/');
+    expect(tableRow(3).cells[4].querySelector('button')).toBeVisible();
 
     expect(tableRow(4).cells[0]).toHaveTextContent('nuget-group');
     expect(tableRow(4).cells[1]).toHaveTextContent('group');
     expect(tableRow(4).cells[2]).toHaveTextContent('nuget');
     expect(tableRow(4).cells[3]).toHaveTextContent(/^Online$/);
-    expect(tableRow(4).cells[4]).toHaveTextContent('http://localhost:8081/repository/nuget-group/');
+    expect(tableRow(4).cells[4].querySelector('button')).toBeVisible();
 
     expect(tableRow(5).cells[0]).toHaveTextContent('nuget-hosted');
     expect(tableRow(5).cells[1]).toHaveTextContent('hosted');
     expect(tableRow(5).cells[2]).toHaveTextContent('nuget');
     expect(tableRow(5).cells[3]).toHaveTextContent(/^Online$/);
-    expect(tableRow(5).cells[4]).toHaveTextContent('http://localhost:8081/repository/nuget-hosted/');
+    expect(tableRow(5).cells[4].querySelector('button')).toBeVisible();
 
     expect(tableRow(6).cells[0]).toHaveTextContent('nuget.org-proxy');
     expect(tableRow(6).cells[1]).toHaveTextContent('proxy');
@@ -161,7 +161,7 @@ describe('RepositoriesList', function() {
     expect(tableRow(6).cells[3]).toHaveTextContent(
       /^Online - Remote Auto Blocked and Unavailable.*java.net.UnknownHostException: api.example.org: nodename nor servname provided, or not known$/
     );
-    expect(tableRow(6).cells[4]).toHaveTextContent('http://localhost:8081/repository/nuget.org-proxy/');
+    expect(tableRow(6).cells[4].querySelector('button')).toBeVisible();
   });
 
   it('sorts the rows by name', async function () {
