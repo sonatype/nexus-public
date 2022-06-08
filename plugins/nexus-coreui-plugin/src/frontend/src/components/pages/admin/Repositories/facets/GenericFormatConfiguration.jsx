@@ -23,15 +23,18 @@ const {EDITOR} = UIStrings.REPOSITORIES;
 export const RECIPES_URL = '/service/rest/internal/ui/repositories/recipes';
 
 export default function GenericFormatConfiguration({parentMachine}) {
-  const {current, retry, isLoading} = useSimpleMachine(
-    'GenericFormatConfigurationMachine',
-    RECIPES_URL,
-    true
-  );
+  const {current, retry, isLoading} = useSimpleMachine({
+    id: 'GenericFormatConfigurationMachine',
+    url: RECIPES_URL,
+    loadOnMount: true
+  });
 
   const [currentParent, sendParent] = parentMachine;
 
-  const {pristineData: {name}} = currentParent.context;
+  const {
+    pristineData: {name}
+  } = currentParent.context;
+
   const isEdit = !!name;
 
   const {data: recipes, error} = current.context;

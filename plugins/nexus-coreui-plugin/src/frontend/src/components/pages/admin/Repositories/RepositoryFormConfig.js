@@ -32,12 +32,15 @@ import NpmConfiguration from './facets/NpmConfiguration';
 import LayoutPolicyConfiguration from './facets/LayoutPolicyConfiguration';
 import RepositoryConnectorsConfiguration from './facets/RepositoryConnectorsConfiguration';
 import RegistryApiSupportConfiguration from './facets/RegistryApiSupportConfiguration';
+import NugetProxyConfiguration from './facets/NugetProxyConfiguration';
+import NugetGroupConfiguration from './facets/NugetGroupConfiguration';
 
 import {genericDefaultValues} from './RepositoryFormDefaultValues';
 import {
   genericValidators,
   validateDockerConnectorPort,
-  validateDockerIndexUrl
+  validateDockerIndexUrl,
+  validateNugetQueryCacheItemMaxAge
 } from './RepositoryFormValidators';
 
 import {mergeDeepRight} from 'ramda';
@@ -260,7 +263,35 @@ const repositoryFormats = {
         httpsPort: validateDockerConnectorPort(data, 'httpsPort')
       }
     })
-  }
+  },
+  nuget_proxy: {
+    facets: [NugetProxyConfiguration, ...genericFacets.proxy],
+    defaultValues: {
+      ...genericDefaultValues.proxy,
+      nugetProxy: {
+        queryCacheItemMaxAge: 3600,
+        nugetVersion: 'V3'
+      }
+    },
+    validators: (data) => ({
+      ...genericValidators.proxy(data),
+      nugetProxy: {
+        queryCacheItemMaxAge: validateNugetQueryCacheItemMaxAge(data)
+      }
+    })
+  },
+  nuget_group: {
+    facets: [
+      GenericStorageConfiguration, 
+      NugetGroupConfiguration
+    ],
+    defaultValues: {
+      ...genericDefaultValues.group
+    },
+    validators: (data) => ({
+      ...genericValidators.group(data)
+    })
+  },
 };
 
 export const getFacets = (format, type) =>

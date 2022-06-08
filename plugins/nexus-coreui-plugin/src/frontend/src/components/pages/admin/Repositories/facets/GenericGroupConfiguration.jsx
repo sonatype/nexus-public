@@ -28,10 +28,10 @@ export const repositoriesUrl = (event) =>
   `/service/rest/internal/ui/repositories?format=${encodeURIComponent(event.format)}`;
 
 export default function GenericGroupConfiguration({parentMachine}) {
-  const {current, load, retry, isLoading} = useSimpleMachine(
-    'GenericGroupConfigurationMachine',
-    repositoriesUrl
-  );
+  const {current, load, retry, isLoading} = useSimpleMachine({
+    id: 'GenericGroupConfigurationMachine',
+    url: repositoriesUrl
+  });
 
   const {data: repositories, error} = current.context;
 

@@ -587,7 +587,23 @@ export default {
           scaling documentation
         </NxTextLink>
         .
-      </>
+      </>,
+      NUGET: {
+        PROTOCOL_VERSION: {
+          LABEL: 'Protocol Version',
+          V2_RADIO_DESCR: 'NuGet V2',
+          V3_RADIO_DESCR: 'NuGet V3'
+        },
+        METADATA_QUERY_CACHE_AGE: {
+          LABEL: 'Metadata Query Cache Age',
+          SUBLABEL: 'How long to cache query results from the proxied repository (in seconds)'
+        },
+        GROUP_VERSION: {
+          LABEL: 'NuGet Type',
+          SUBLABEL: 'Restrict proxy repositories to one NuGet version',
+        }
+      }
+
     }
   },
 

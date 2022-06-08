@@ -107,3 +107,11 @@ export const validateDockerIndexUrl = (data) => {
     ? null
     : ValidationUtils.validateNotBlank(indexUrl) || ValidationUtils.validateIsUrl(indexUrl);
 };
+
+export const validateNugetQueryCacheItemMaxAge = (data) => {
+  const {queryCacheItemMaxAge} = data.nugetProxy;
+  return (
+    ValidationUtils.isInRange({value: queryCacheItemMaxAge, min: 0, allowDecimals: false}) ||
+    ValidationUtils.validateNotBlank(queryCacheItemMaxAge)
+  );
+};
