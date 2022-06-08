@@ -70,6 +70,26 @@ public interface SearchTableDAO
       @Param("componentKind") final String componentKind);
 
   /**
+   * Update custom format fields for a specific record
+   *
+   * @param repositoryId the content repository identification
+   * @param componentId  the component identification
+   * @param assetId      the asset identification
+   * @param format       the repository format
+   * @param formatField1 a format specific field 1
+   * @param formatField2 a format specific field 2
+   * @param formatField3 a format specific field 3
+   */
+  void updateFormatFields(
+      @Param("repositoryId") final Integer repositoryId,
+      @Param("componentId") final Integer componentId,
+      @Param("assetId") final Integer assetId,
+      @Param("format") final String format,
+      @Nullable @Param("formatField1") final String formatField1,
+      @Nullable @Param("formatField2") final String formatField2,
+      @Nullable @Param("formatField3") final String formatField3);
+
+  /**
    * Delete the given search entry in the content data store.
    *
    * @param repositoryId the content repository identification

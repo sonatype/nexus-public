@@ -16,12 +16,14 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.event.asset.AssetAttributesEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentKindEvent;
@@ -76,13 +78,14 @@ public class SearchTableSubscriber
       log.debug("Unable to determine blob for event {}", event);
       return;
     }
+    String format = repository.getFormat().getValue();
 
     SearchTableData data = new SearchTableData();
     //PK
     data.setRepositoryId(InternalIds.contentRepositoryId(event));
     data.setComponentId(InternalIds.internalComponentId(component));
     data.setAssetId(InternalIds.internalAssetId(asset));
-    data.setFormat(event.getFormat());
+    data.setFormat(format);
     //data component
     data.setNamespace(component.namespace());
     data.setComponentName(component.name());
@@ -97,6 +100,12 @@ public class SearchTableSubscriber
     data.setSha1(blob.checksums().get(SHA1.name()));
     data.setSha256(blob.checksums().get(SHA256.name()));
     data.setSha512(blob.checksums().get(SHA512.name()));
+    //Custom format fields
+    NestedAttributesMap nestedAttributesMap = asset.attributes();
+    data.setFormatField1(SearchTableSubscriberHelper.selectFormatField1(format, nestedAttributesMap));
+    data.setFormatField2(SearchTableSubscriberHelper.selectFormatField2(format, nestedAttributesMap));
+    data.setFormatField3(SearchTableSubscriberHelper.selectFormatField3(format, nestedAttributesMap));
+
     log.trace("Creating a new record into component_search table: {}", data);
 
     store.create(data);
@@ -158,5 +167,40 @@ public class SearchTableSubscriber
         repositoryId, format);
 
     store.deleteAllForRepository(repositoryId, format);
+  }
+
+  /**
+   * Handles an event when need to update a format specific fields
+   *
+   * @param event represents an updated asset attributes {@link AssetAttributesEvent}
+   */
+  @Subscribe
+  public void on(final AssetAttributesEvent event) {
+    Repository repository = event.getRepository().orElse(null);
+    if (repository == null) {
+      log.debug("Unable to determine repository for event {}", event);
+      return;
+    }
+    Asset asset = event.getAsset();
+    Component component = asset.component().orElse(null);
+    if (component == null) {
+      log.debug("Unable to determine component for event {}", event);
+      return;
+    }
+    Integer repositoryId = InternalIds.contentRepositoryId(event);
+    Integer componentId = InternalIds.internalComponentId(component);
+    Integer assetId = InternalIds.internalAssetId(asset);
+    String format = repository.getFormat().getValue();
+    //Custom format fields
+    NestedAttributesMap nestedAttributesMap = asset.attributes();
+    String formatField1 = SearchTableSubscriberHelper.selectFormatField1(format, nestedAttributesMap);
+    String formatField2 = SearchTableSubscriberHelper.selectFormatField2(format, nestedAttributesMap);
+    String formatField3 = SearchTableSubscriberHelper.selectFormatField3(format, nestedAttributesMap);
+    log.trace(
+        "Updating format fields in component_search table for repositoryId: {}, componentId: {}, assetId: {}, " +
+            "format: {}, formatField1: {}, formatField2: {}, formatField3: {}",
+        repositoryId, componentId, assetId, format, formatField1, formatField2, formatField3);
+
+    store.updateFormatFields(repositoryId, componentId, assetId, format, formatField1, formatField2, formatField3);
   }
 }
