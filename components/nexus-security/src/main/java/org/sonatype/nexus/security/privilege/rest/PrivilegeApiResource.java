@@ -73,14 +73,14 @@ public class PrivilegeApiResource
   @GET
   @RequiresAuthentication
   @RequiresPermissions("nexus:privileges:read")
-  @Path("{privilegeId}")
-  public ApiPrivilege getPrivilege(@PathParam("privilegeId") final String privilegeId) {
+  @Path("{privilegeName}")
+  public ApiPrivilege getPrivilege(@PathParam("privilegeName") final String privilegeName) {
     try {
-      return toApiPrivilege(getDefaultAuthorizationManager().getPrivilege(privilegeId));
+      return toApiPrivilege(getDefaultAuthorizationManager().getPrivilegeByName(privilegeName));
     }
     catch (NoSuchPrivilegeException e) {
-      log.debug("Attempt to retrieve privilege '{}' failed, as it wasn't found in the system.", privilegeId, e);
-      throw new WebApplicationMessageException(Status.NOT_FOUND, String.format(PRIV_NOT_FOUND, privilegeId),
+      log.debug("Attempt to retrieve privilege '{}' failed, as it wasn't found in the system.", privilegeName, e);
+      throw new WebApplicationMessageException(Status.NOT_FOUND, String.format(PRIV_NOT_FOUND, privilegeName),
           MediaType.APPLICATION_JSON);
     }
   }
@@ -89,19 +89,19 @@ public class PrivilegeApiResource
   @DELETE
   @RequiresAuthentication
   @RequiresPermissions("nexus:privileges:delete")
-  @Path("{privilegeId}")
-  public void deletePrivilege(@PathParam("privilegeId") final String privilegeId) {
+  @Path("{privilegeName}")
+  public void deletePrivilege(@PathParam("privilegeName") final String privilegeName) {
     try {
-      getDefaultAuthorizationManager().deletePrivilege(privilegeId);
+      getDefaultAuthorizationManager().deletePrivilegeByName(privilegeName);
     }
     catch (NoSuchPrivilegeException e) {
-      log.debug("Attempt to delete privilege '{}' failed, as it wasn't found in the system.", privilegeId, e);
-      throw new WebApplicationMessageException(Status.NOT_FOUND, String.format(PRIV_NOT_FOUND, privilegeId),
+      log.debug("Attempt to delete privilege '{}' failed, as it wasn't found in the system.", privilegeName, e);
+      throw new WebApplicationMessageException(Status.NOT_FOUND, String.format(PRIV_NOT_FOUND, privilegeName),
           MediaType.APPLICATION_JSON);
     }
     catch (ReadonlyPrivilegeException e) {
-      log.debug("Attempt to delete privilege '{}' failed, as it is readonly.", privilegeId, e);
-      throw new WebApplicationMessageException(Status.BAD_REQUEST, String.format(PRIV_INTERNAL, privilegeId),
+      log.debug("Attempt to delete privilege '{}' failed, as it is readonly.", privilegeName, e);
+      throw new WebApplicationMessageException(Status.BAD_REQUEST, String.format(PRIV_INTERNAL, privilegeName),
           MediaType.APPLICATION_JSON);
     }
   }
@@ -119,11 +119,11 @@ public class PrivilegeApiResource
   @PUT
   @RequiresAuthentication
   @RequiresPermissions("nexus:privileges:update")
-  @Path("application/{privilegeId}")
-  public void updatePrivilege(@PathParam("privilegeId") final String privilegeId,
+  @Path("application/{privilegeName}")
+  public void updatePrivilege(@PathParam("privilegeName") final String privilegeName,
                               final ApiPrivilegeApplicationRequest privilege)
   {
-    doUpdate(privilegeId, ApplicationPrivilegeDescriptor.TYPE, privilege);
+    doUpdate(privilegeName, ApplicationPrivilegeDescriptor.TYPE, privilege);
   }
 
   @Override
@@ -139,10 +139,10 @@ public class PrivilegeApiResource
   @PUT
   @RequiresAuthentication
   @RequiresPermissions("nexus:privileges:update")
-  @Path("wildcard/{privilegeId}")
-  public void updatePrivilege(@PathParam("privilegeId") final String privilegeId,
+  @Path("wildcard/{privilegeName}")
+  public void updatePrivilege(@PathParam("privilegeName") final String privilegeName,
                               final ApiPrivilegeWildcardRequest privilege)
   {
-    doUpdate(privilegeId, WildcardPrivilegeDescriptor.TYPE, privilege);
+    doUpdate(privilegeName, WildcardPrivilegeDescriptor.TYPE, privilege);
   }
 }

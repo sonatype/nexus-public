@@ -15,6 +15,7 @@ package org.sonatype.nexus.internal.security.model.orient;
 import java.util.ConcurrentModificationException;
 import java.util.Locale;
 import java.util.Set;
+import java.util.UUID;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
@@ -42,6 +43,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -124,7 +128,41 @@ public class OrientSecurityConfigurationSourceTest
   }
 
   @Test
-  public void testUpdateRole_shouldPersistAndPreventConccurentModification() {
+  public void testUpdatePrivilegeByName() {
+    CPrivilege toUpdate = createFakePrivilege("test-privilege-1");
+
+    toUpdate.setDescription("a test privilege");
+
+    source.getConfiguration().updatePrivilegeByName(toUpdate);
+
+    CPrivilege updated = source.getConfiguration().getPrivilegeByName(toUpdate.getName());
+
+    assertNotNull(updated);
+    assertEquals(toUpdate.getId() , updated.getId());
+    assertEquals(toUpdate.getName() , updated.getName());
+    assertEquals(toUpdate.getDescription() , updated.getDescription());
+    assertThat(updated.getVersion() , is(2));
+  }
+
+  @Test
+  public void testDeletePrivilegeByName(){
+    CPrivilege toDelete = createFakePrivilege("test-privilege-delete");
+
+    boolean deleted = source.getConfiguration().removePrivilegeByName(toDelete.getName());
+
+    assertTrue(deleted);
+
+    //try to get the deleted privilege again , should fail
+
+    try {
+      source.getConfiguration().getPrivilegeByName(toDelete.getName());
+    }catch (NoSuchPrivilegeException e){
+      //expected
+    }
+  }
+
+  @Test
+  public void testUpdateRole_shouldPersistAndPreventConcurrentModification() {
     CRole role = new OrientCRole();
     role.setId("test");
     role.setName("test");
@@ -241,12 +279,23 @@ public class OrientSecurityConfigurationSourceTest
     for (String id : ids) {
       CPrivilege privilege = new OrientCPrivilege();
       privilege.setId(id);
-      privilege.setName("name");
+      privilege.setName("name" + id);
       privilege.setType("type");
       source.getConfiguration().addPrivilege(privilege);
     }
 
     assertThat(source.getConfiguration().getPrivileges(ids).size(), is(ids.size()));
+  }
+
+  @Test
+  public void testGetPrivilegeByName(){
+   CPrivilege privilege = createFakePrivilege("test-privilege-2");
+
+    CPrivilege read = source.getConfiguration().getPrivilegeByName(privilege.getName());
+
+    assertNotNull(read);
+    assertEquals(read.getId() , privilege.getId());
+    assertEquals(read.getName() , privilege.getName());
   }
 
   private void testUserRoleMappings_notCaseSensitive(final String src) throws Exception {
@@ -272,5 +321,16 @@ public class OrientSecurityConfigurationSourceTest
     source.getConfiguration().removeUserRoleMapping(userId.toUpperCase(Locale.ENGLISH), src);
 
     assertThat(source.getConfiguration().getUserRoleMapping(userId, src), nullValue());
+  }
+
+  private CPrivilege createFakePrivilege(String privilegeName){
+    CPrivilege privilege = new OrientCPrivilege();
+    privilege.setId(UUID.randomUUID().toString());
+    privilege.setName(privilegeName);
+    privilege.setType("application");
+
+    source.getConfiguration().addPrivilege(privilege);
+
+    return privilege;
   }
 }

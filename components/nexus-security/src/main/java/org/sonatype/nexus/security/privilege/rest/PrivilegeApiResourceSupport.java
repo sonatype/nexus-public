@@ -69,31 +69,31 @@ public abstract class PrivilegeApiResourceSupport
     }
   }
 
-  protected void doUpdate(String privilegeId, String type, ApiPrivilegeRequest apiPrivilege) {
+  protected void doUpdate(String privilegeName, String type, ApiPrivilegeRequest apiPrivilege) {
     try {
-      if (!apiPrivilege.getName().equals(privilegeId)) {
+      if (!apiPrivilege.getName().equals(privilegeName)) {
         throw new WebApplicationMessageException(Status.CONFLICT,
-            String.format(PRIV_CONFLICT, apiPrivilege.getName(), privilegeId), MediaType.APPLICATION_JSON);
+            String.format(PRIV_CONFLICT, apiPrivilege.getName(), privilegeName), MediaType.APPLICATION_JSON);
       }
 
       PrivilegeDescriptor privilegeDescriptor = privilegeDescriptors.get(type);
       privilegeDescriptor.validate(apiPrivilege);
 
       AuthorizationManager authorizationManager = getDefaultAuthorizationManager();
-      Privilege privilege = authorizationManager.getPrivilege(privilegeId);
+      Privilege privilege = authorizationManager.getPrivilegeByName(privilegeName);
       Privilege newPrivilege = apiPrivilege.asPrivilege();
       privilege.setDescription(newPrivilege.getDescription());
       privilege.setProperties(newPrivilege.getProperties());
-      authorizationManager.updatePrivilege(privilege);
+      authorizationManager.updatePrivilegeByName(privilege);
     }
     catch (NoSuchPrivilegeException e) {
-      log.debug("Attempt to update privilege '{}' failed, as it wasn't found in the system.", privilegeId, e);
-      throw new WebApplicationMessageException(Status.NOT_FOUND, String.format(PRIV_NOT_FOUND, privilegeId),
+      log.debug("Attempt to update privilege '{}' failed, as it wasn't found in the system.", privilegeName, e);
+      throw new WebApplicationMessageException(Status.NOT_FOUND, String.format(PRIV_NOT_FOUND, privilegeName),
           MediaType.APPLICATION_JSON);
     }
     catch (ReadonlyPrivilegeException e) {
-      log.debug("Attempt to update internal privilege '{}' failed.", privilegeId, e);
-      throw new WebApplicationMessageException(Status.BAD_REQUEST, String.format(PRIV_INTERNAL, privilegeId),
+      log.debug("Attempt to update internal privilege '{}' failed.", privilegeName, e);
+      throw new WebApplicationMessageException(Status.BAD_REQUEST, String.format(PRIV_INTERNAL, privilegeName),
           MediaType.APPLICATION_JSON);
     }
   }

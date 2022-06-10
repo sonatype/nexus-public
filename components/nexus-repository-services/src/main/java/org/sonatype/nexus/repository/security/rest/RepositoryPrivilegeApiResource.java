@@ -65,11 +65,11 @@ public class RepositoryPrivilegeApiResource
   @PUT
   @RequiresAuthentication
   @RequiresPermissions("nexus:privileges:update")
-  @Path("repository-admin/{privilegeId}")
-  public void updatePrivilege(@PathParam("privilegeId") final String privilegeId,
+  @Path("repository-admin/{privilegeName}")
+  public void updatePrivilege(@PathParam("privilegeName") final String privilegeName,
                               final ApiPrivilegeRepositoryAdminRequest privilege)
   {
-    doUpdate(privilegeId, RepositoryAdminPrivilegeDescriptor.TYPE, privilege);
+    doUpdate(privilegeName, RepositoryAdminPrivilegeDescriptor.TYPE, privilege);
   }
 
   @Override
@@ -85,11 +85,11 @@ public class RepositoryPrivilegeApiResource
   @PUT
   @RequiresAuthentication
   @RequiresPermissions("nexus:privileges:update")
-  @Path("repository-view/{privilegeId}")
-  public void updatePrivilege(@PathParam("privilegeId") final String privilegeId,
+  @Path("repository-view/{privilegeName}")
+  public void updatePrivilege(@PathParam("privilegeName") final String privilegeName,
                               final ApiPrivilegeRepositoryViewRequest privilege)
   {
-    doUpdate(privilegeId, RepositoryViewPrivilegeDescriptor.TYPE, privilege);
+    doUpdate(privilegeName, RepositoryViewPrivilegeDescriptor.TYPE, privilege);
   }
 
   @Override
@@ -105,10 +105,10 @@ public class RepositoryPrivilegeApiResource
   @PUT
   @RequiresAuthentication
   @RequiresPermissions("nexus:privileges:update")
-  @Path("repository-content-selector/{privilegeId}")
-  public void updatePrivilege(@PathParam("privilegeId") final String privilegeId,
+  @Path("repository-content-selector/{privilegeName}")
+  public void updatePrivilege(@PathParam("privilegeName") final String privilegeName,
                               final ApiPrivilegeRepositoryContentSelectorRequest privilege)
   {
-    doUpdate(privilegeId, RepositoryContentSelectorPrivilegeDescriptor.TYPE, privilege);
+    doUpdate(privilegeName, RepositoryContentSelectorPrivilegeDescriptor.TYPE, privilege);
   }
 }

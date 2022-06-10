@@ -49,6 +49,11 @@ public abstract class AbstractReadOnlyAuthorizationManager
   }
 
   @Override
+  public void deletePrivilegeByName(final String privilegeName) throws NoSuchPrivilegeException {
+    throw unsupported();
+  }
+
+  @Override
   public void deleteRole(final String roleId) throws NoSuchRoleException {
     throw unsupported();
   }
@@ -58,6 +63,10 @@ public abstract class AbstractReadOnlyAuthorizationManager
     throw unsupported();
   }
 
+  @Override
+  public Privilege updatePrivilegeByName(final Privilege privilege) throws NoSuchPrivilegeException {
+    return null;
+  }
   @Override
   public Role updateRole(final Role role) throws NoSuchRoleException {
     throw unsupported();

@@ -291,7 +291,7 @@ public class RepositoryPrivilegeApiResourceTest
   public void testUpdatePrivilege_repositoryView() {
     Privilege priv = createPrivilege("repository-view", "priv", "privdesc", false, FORMAT_KEY, "format1", REPOSITORY_KEY,
         "repository1", ACTIONS_KEY, "read,delete");
-    when(authorizationManager.getPrivilege("priv")).thenReturn(priv);
+    when(authorizationManager.getPrivilegeByName("priv")).thenReturn(priv);
 
     ApiPrivilegeRepositoryViewRequest apiPrivilege = new ApiPrivilegeRepositoryViewRequest("priv", "newdescription",
         "format2", "repository2", Collections.singletonList(PrivilegeAction.DELETE));
@@ -299,7 +299,7 @@ public class RepositoryPrivilegeApiResourceTest
     underTest.updatePrivilege("priv", apiPrivilege);
 
     ArgumentCaptor<Privilege> argument = ArgumentCaptor.forClass(Privilege.class);
-    verify(authorizationManager).updatePrivilege(argument.capture());
+    verify(authorizationManager).updatePrivilegeByName(argument.capture());
     assertPrivilege(argument.getValue(), "priv", "newdescription", FORMAT_KEY, "format2", REPOSITORY_KEY,
         "repository2", ACTIONS_KEY, "delete");
   }
@@ -328,7 +328,7 @@ public class RepositoryPrivilegeApiResourceTest
   public void testUpdatePrivilege_repositoryAdmin() {
     Privilege priv = createPrivilege("repository-admin", "priv", "privdesc", false, FORMAT_KEY, "format1",
         REPOSITORY_KEY, "repository1", ACTIONS_KEY, "read,delete");
-    when(authorizationManager.getPrivilege("priv")).thenReturn(priv);
+    when(authorizationManager.getPrivilegeByName("priv")).thenReturn(priv);
 
     ApiPrivilegeRepositoryAdminRequest apiPrivilege = new ApiPrivilegeRepositoryAdminRequest("priv", "newdescription",
         "format2", "repository2", Collections.singletonList(PrivilegeAction.DELETE));
@@ -336,7 +336,7 @@ public class RepositoryPrivilegeApiResourceTest
     underTest.updatePrivilege("priv", apiPrivilege);
 
     ArgumentCaptor<Privilege> argument = ArgumentCaptor.forClass(Privilege.class);
-    verify(authorizationManager).updatePrivilege(argument.capture());
+    verify(authorizationManager).updatePrivilegeByName(argument.capture());
     assertPrivilege(argument.getValue(), "priv", "newdescription", FORMAT_KEY, "format2", REPOSITORY_KEY,
         "repository2", ACTIONS_KEY, "delete");
   }
@@ -365,7 +365,7 @@ public class RepositoryPrivilegeApiResourceTest
   public void testUpdatePrivilege_repositoryContentSelector() {
     Privilege priv = createPrivilege("repository-content-selector", "priv", "privdesc", false, FORMAT_KEY, "format1",
         REPOSITORY_KEY, "repository1", CSEL_KEY, "contentSelector", ACTIONS_KEY, "read,delete");
-    when(authorizationManager.getPrivilege("priv")).thenReturn(priv);
+    when(authorizationManager.getPrivilegeByName("priv")).thenReturn(priv);
 
     ApiPrivilegeRepositoryContentSelectorRequest apiPrivilege = new ApiPrivilegeRepositoryContentSelectorRequest("priv",
         "newdescription", "format2", "repository2", "newcontentSelector",
@@ -374,7 +374,7 @@ public class RepositoryPrivilegeApiResourceTest
     underTest.updatePrivilege("priv", apiPrivilege);
 
     ArgumentCaptor<Privilege> argument = ArgumentCaptor.forClass(Privilege.class);
-    verify(authorizationManager).updatePrivilege(argument.capture());
+    verify(authorizationManager).updatePrivilegeByName(argument.capture());
     assertPrivilege(argument.getValue(), "priv", "newdescription", FORMAT_KEY, "format2", REPOSITORY_KEY,
         "repository2", CSEL_KEY, "newcontentSelector", ACTIONS_KEY, "delete");
   }

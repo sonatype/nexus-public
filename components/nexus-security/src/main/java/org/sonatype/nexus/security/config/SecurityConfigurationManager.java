@@ -153,6 +153,13 @@ public interface SecurityConfigurationManager
   CPrivilege readPrivilege(String id);
 
   /**
+   * Retrieve a privilege by its name
+   * @param name the name of the privilege
+   * @return a  {@link CPrivilege} object if found by name
+   */
+  CPrivilege readPrivilegeByName(String name);
+
+  /**
    * Retrieve an existing privileges
    */
   List<CPrivilege> readPrivileges(Set<String> ids);
@@ -163,9 +170,21 @@ public interface SecurityConfigurationManager
   void updatePrivilege(CPrivilege privilege);
 
   /**
+   * Updates an existing privilege by its name
+   * @param privilege the privilege object to be updated
+   */
+  void updatePrivilegeByName(CPrivilege privilege);
+
+  /**
    * Delete an existing privilege
    */
   void deletePrivilege(String id);
+
+  /**
+   * Delete an existing privilege by its name
+   * @param name the name of the privilege to be deleted
+   */
+  void deletePrivilegeByName(String name);
 
   void cleanRemovedPrivilege(String privilegeId);
 

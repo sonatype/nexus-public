@@ -40,7 +40,7 @@ public interface ScriptPrivilegeApiResourceDoc
   @ApiResponses(value = { @ApiResponse(code = 400, message = NexusSecurityApiConstants.PRIVILEGE_MISCONFIGURED),
       @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
       @ApiResponse(code = 404, message = NexusSecurityApiConstants.PRIVILEGE_NOT_FOUND) })
-  void updatePrivilege(@ApiParam("The id of the privilege to update.") @NotNull final String id,
+  void updatePrivilege(@ApiParam("The name of the privilege to update.") @NotNull final String privilegeName,
                        @ApiParam(
                            "The privilege to update.") @NotNull @Valid final ApiPrivilegeScriptRequest privilege);
 }

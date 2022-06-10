@@ -13,6 +13,7 @@
 package org.sonatype.nexus.internal.security.model;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.sonatype.nexus.datastore.api.IdentifiedDataAccess;
@@ -28,6 +29,22 @@ import org.apache.ibatis.annotations.Param;
 public interface CPrivilegeDAO
     extends IdentifiedDataAccess<CPrivilegeData>
 {
+
+  /**
+   * Retrieve the entity with the given name.
+   */
+  Optional<CPrivilege> readByName(String name);
+
+  /**
+   * Update an entity by its name
+   */
+  boolean updateByName(CPrivilegeData entity);
+
+  /**
+   * Delete an entity with the given name.
+   */
+  boolean deleteByName(String name);
+
   /**
    * Find privileges by their ids.
    *
