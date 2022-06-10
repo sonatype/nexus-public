@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,14 +26,17 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.validation.constraints.NotNull;
 
+import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.content.maven.internal.event.RebuildMavenArchetypeCatalogEvent;
 import org.sonatype.nexus.content.maven.store.GAV;
+import org.sonatype.nexus.content.maven.store.Maven2AssetStore;
 import org.sonatype.nexus.content.maven.store.Maven2ComponentData;
 import org.sonatype.nexus.content.maven.store.Maven2ComponentStore;
 import org.sonatype.nexus.repository.Repository;
@@ -453,10 +457,10 @@ public class MavenContentFacetImpl
     ImmutableMap<String, Object> gabvQueryParameters =
         ImmutableMap.of("groupId", groupId, "artifactId", artifactId, "baseVersion", baseVersion);
     boolean gNonEmpty = components().byFilter("namespace = #{filterParams.groupId}", gabvQueryParameters).count() > 0;
-    boolean gaNonEmpty = components()
+    boolean gaNonEmpty = gNonEmpty && components()
         .byFilter("namespace = #{filterParams.groupId} AND name = #{filterParams.artifactId}", gabvQueryParameters)
         .count() > 0;
-    boolean gabvNonEmpty = components().byFilter(
+    boolean gabvNonEmpty = gaNonEmpty &&  components().byFilter(
         "namespace = #{filterParams.groupId} AND name = #{filterParams.artifactId} AND base_version = #{filterParams.baseVersion}",
         gabvQueryParameters).count() > 0;
 
@@ -510,6 +514,19 @@ public class MavenContentFacetImpl
   }
 
   @Override
+  public Continuation<FluentComponent> findComponentsInGA(
+      final int limit,
+      @Nullable final String continuationToken,
+      final String namespace,
+      final String name)
+  {
+    Map<String, Object> filterParams = ImmutableMap.of("groupId", namespace, "artifactId", name);
+    return components()
+        .byFilter("namespace = #{filterParams.groupId} AND name = #{filterParams.artifactId}", filterParams)
+        .browse(limit, continuationToken);
+  }
+
+  @Override
   public int[] selectSnapshotsAfterRelease(final int gracePeriod) {
     Maven2ComponentStore componentStore = (Maven2ComponentStore) stores().componentStore;
     return componentStore.selectSnapshotsAfterRelease(gracePeriod, contentRepositoryId());
@@ -560,6 +577,39 @@ public class MavenContentFacetImpl
 
     return component;
   }
+
+  @Override
+  public Continuation<Asset> findMavenPluginAssetsForNamespace(
+      final int limit,
+      @Nullable final String continuationToken,
+      final String namespace)
+  {
+    // Ideally a custom FluentAsset could be provided for a format
+    return ((Maven2AssetStore) stores().assetStore).findMavenPluginAssetsForNamespace(contentRepositoryId(), limit,
+        continuationToken, namespace);
+  }
+
+  @Override
+  public Collection<String> getBaseVersions(final String namespace, final String name) {
+    return ((Maven2ComponentStore) stores().componentStore).getBaseVersions(contentRepositoryId(), namespace, name);
+  }
+
+  @Override
+  public Continuation<FluentComponent> findComponentsForBaseVersion(
+      final int limit,
+      @Nullable final String continuationToken,
+      final String namespace,
+      final String name,
+      final String baseVersion)
+  {
+    Map<String, Object> filterParams =
+        ImmutableMap.of("groupId", namespace, "artifactId", name, "baseVersion", baseVersion);
+    return components()
+        .byFilter("namespace = #{filterParams.groupId} AND name = #{filterParams.artifactId} "
+            + "AND base_version = #{filterParams.baseVersion}", filterParams)
+        .browse(limit, continuationToken);
+  }
+
 
   private FluentComponent createOrGetComponent(final Coordinates coordinates) {
     MavenContentFacet facet = getRepository().facet(MavenContentFacet.class);

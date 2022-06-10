@@ -66,4 +66,12 @@
     LIMIT #{limit}
   </select>
 
+  <select id="getBaseVersions" resultType="String">
+    SELECT DISTINCT base_version
+      FROM maven2_component
+     WHERE namespace = #{namespace}
+       AND name = #{name}
+       AND repository_id = #{repositoryId};
+  </select>
+
 </mapper>

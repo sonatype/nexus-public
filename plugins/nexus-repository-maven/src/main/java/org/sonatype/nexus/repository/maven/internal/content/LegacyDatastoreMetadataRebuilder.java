@@ -24,12 +24,14 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.annotation.Priority;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.MultipleFailures;
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.entity.Continuations;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
@@ -62,21 +64,27 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.commons.lang3.StringUtils.prependIfMissing;
 import static org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet.METADATA_FORCE_REBUILD;
 import static org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet.METADATA_REBUILD;
+import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.getPluginPrefix;
 import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.metadataPath;
 import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 
 /**
+ * Legacy datastore metadata rebuilder based on the design of the Orient rebuilder.
+ *
  * @since 3.26
  */
+@Deprecated
+@Priority(Integer.MAX_VALUE)
+@FeatureFlag(name = "nexus.maven.datastore.legacy.rebuild", enabledByDefault = false)
 @Singleton
 @Named
-public class DatastoreMetadataRebuilder
+public class LegacyDatastoreMetadataRebuilder
     extends AbstractMetadataRebuilder
 {
   private static final String PATH_PREFIX = "/";
 
   @Inject
-  public DatastoreMetadataRebuilder(
+  public LegacyDatastoreMetadataRebuilder(
       @Named("${nexus.maven.metadata.rebuild.bufferSize:-1000}") final int bufferSize,
       @Named("${nexus.maven.metadata.rebuild.timeoutSeconds:-60}") final int timeoutSeconds)
   {
@@ -108,24 +116,9 @@ public class DatastoreMetadataRebuilder
   {
     checkNotNull(repository);
     return new DatastoreWorker(repository, update, rebuildChecksums, groupId, artifactId, baseVersion, bufferSize,
-        timeoutSeconds, new DatastoreMetadataUpdater(update, repository)).rebuildMetadata();
+        timeoutSeconds, new LegacyDatastoreMetadataUpdater(update, repository)).rebuildMetadata();
   }
 
-  @Override
-  public boolean refreshInTransaction(
-      final Repository repository,
-      final boolean update,
-      final boolean rebuildChecksums,
-      @Nullable final String groupId,
-      @Nullable final String artifactId,
-      @Nullable final String baseVersion)
-  {
-    checkNotNull(repository);
-    return new DatastoreWorker(repository, update, rebuildChecksums, groupId, artifactId, baseVersion, bufferSize,
-        timeoutSeconds, new DatastoreMetadataUpdater(update, repository)).refreshMetadata();
-  }
-
-  @Transactional
   @Override
   protected Set<String> deleteAllMetadataFiles(
       final Repository repository,
@@ -378,7 +371,10 @@ public class DatastoreMetadataRebuilder
           component.attributes(repository.getFormat().getValue()).get(Attributes.P_PACKAGING, String.class);
       log.debug("POM packaging: {}", packaging);
       if ("maven-plugin".equals(packaging)) {
-        metadataBuilder.addPlugin(getPluginPrefix(mavenPath.locateMainArtifact("jar")), component.name(),
+        MavenPath mainArtifact = mavenPath.locateMainArtifact("jar");
+        metadataBuilder.addPlugin(
+            getPluginPrefix(mavenPath.locateMainArtifact("jar"), () -> get(mainArtifact).openInputStream()),
+            component.name(),
             component.attributes(repository.getFormat().getValue()).get(Attributes.P_POM_NAME, String.class));
       }
     }

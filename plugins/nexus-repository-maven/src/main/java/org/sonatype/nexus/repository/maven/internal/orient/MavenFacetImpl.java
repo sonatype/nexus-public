@@ -46,7 +46,6 @@ import org.sonatype.nexus.repository.maven.VersionPolicy;
 import org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.maven.internal.MavenModels;
-import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataRebuilder;
 import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils;
 import org.sonatype.nexus.repository.maven.internal.validation.MavenMetadataContentValidator;
 import org.sonatype.nexus.repository.storage.Asset;
@@ -82,7 +81,6 @@ import static java.lang.Boolean.TRUE;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_ARTIFACT_ID;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_CLASSIFIER;
@@ -92,6 +90,7 @@ import static org.sonatype.nexus.repository.maven.internal.Attributes.P_PACKAGIN
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_POM_DESCRIPTION;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_POM_NAME;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_VERSION;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
 import static org.sonatype.nexus.repository.maven.internal.Constants.METADATA_FILENAME;
 import static org.sonatype.nexus.repository.maven.internal.orient.MavenFacetUtils.deleteWithHashes;
 import static org.sonatype.nexus.repository.maven.internal.orient.MavenFacetUtils.findAsset;
@@ -164,14 +163,14 @@ public class MavenFacetImpl
 
   private final boolean mavenMetadataValidationEnabled;
 
-  private final MetadataRebuilder metadataRebuilder;
+  private final OrientMetadataRebuilder metadataRebuilder;
 
   @Inject
   public MavenFacetImpl(final Map<String, MavenPathParser> mavenPathParsers,
                         final MavenMetadataContentValidator metadataValidator,
                         @Named("${nexus.maven.metadata.validation.enabled:-true}")
                         final boolean mavenMetadataValidationEnabled,
-                        MetadataRebuilder metadataRebuilder)
+                        final OrientMetadataRebuilder metadataRebuilder)
   {
     this.mavenPathParsers = checkNotNull(mavenPathParsers);
     this.metadataValidator = checkNotNull(metadataValidator);

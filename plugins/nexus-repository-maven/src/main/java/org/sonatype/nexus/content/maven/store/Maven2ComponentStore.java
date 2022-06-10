@@ -65,6 +65,11 @@ public class Maven2ComponentStore
   }
 
   @Transactional
+  public Set<String> getBaseVersions(final int repositoryId, final String namespace, final String name) {
+    return dao().getBaseVersions(repositoryId, namespace, name);
+  }
+
+  @Transactional
   public int[] selectSnapshotsAfterRelease(final int repositoryId, final int gracePeriod) {
     return dao().selectSnapshotsAfterRelease(gracePeriod, repositoryId);
   }
