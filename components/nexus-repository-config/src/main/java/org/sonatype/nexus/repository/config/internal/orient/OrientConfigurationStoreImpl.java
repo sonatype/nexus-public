@@ -13,8 +13,10 @@
 package org.sonatype.nexus.repository.config.internal.orient;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+
 
 import javax.annotation.Priority;
 import javax.inject.Inject;
@@ -105,7 +107,9 @@ public class OrientConfigurationStoreImpl
   @Override
   @Guarded(by = STARTED)
   public Collection<Configuration> readByNames(final Set<String> repositoryNames) {
-    throw new UnsupportedOperationException();
+    //this is currently not required as per - NEXUS-31923
+    //returning empty so the request can continue
+    return Collections.emptySet();
   }
 
   @Override

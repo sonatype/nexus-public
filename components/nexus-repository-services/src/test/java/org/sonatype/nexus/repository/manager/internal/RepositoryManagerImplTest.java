@@ -35,6 +35,8 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.distributed.event.service.api.EventType;
+import org.sonatype.nexus.distributed.event.service.api.common.RepositoryConfigurationEvent;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.Repository;
@@ -48,6 +50,7 @@ import org.sonatype.nexus.repository.manager.DefaultRepositoriesContributor;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.Test.None;
 import org.mockito.Mock;
 
 import static com.google.common.collect.Iterables.size;
@@ -61,6 +64,7 @@ import static java.util.stream.Collectors.toList;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
@@ -516,6 +520,37 @@ public class RepositoryManagerImplTest
     //this would throw an NPE previously
     repositoryManager.findContainingGroups("test");
   }
+
+  @Test
+  public void getFunctionalityShouldFallBackToDbIfMissing() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(false, true);
+
+    when(configurationStore.readByNames(any(Set.class))).thenReturn(Collections.singleton(mavenCentralConfiguration));
+
+    Repository repository = repositoryManager.get("maven-central");
+
+    assertThat(repository.getName(), is("maven-central"));
+  }
+
+  @Test
+  public void repoNotInCacheOrDbReturnsNullForGet() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(false, true);
+
+    when(configurationStore.readByNames(any(Set.class))).thenReturn(Collections.emptySet());
+
+    Repository repository = repositoryManager.get("maven-central");
+
+    assertThat(repository, is(nullValue()));
+  }
+
+  @Test(expected = None.class)
+  public void createEventForAlreadyCreatedRepositoryIsHandledGracefully() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(false, false);
+    RepositoryConfigurationEvent repositoryConfigurationEvent = new RepositoryConfigurationEvent("maven-central", EventType.CREATED);
+
+    repositoryManager.on(repositoryConfigurationEvent);
+  }
+
 
   @SuppressWarnings("unchecked")
   private void assertRepositoryByCleanupPolicy(final List<Repository> repositories, final String cleanupPolicy) {

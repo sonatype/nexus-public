@@ -347,8 +347,25 @@ public class RepositoryManagerImpl
   @Guarded(by = STARTED)
   public Repository get(final String name) {
     checkNotNull(name);
+    Repository repository = repositories.get(name.toLowerCase());
 
-    return repositories.get(name.toLowerCase());
+    if (repository == null) {
+      Collection<Configuration> configurations = store.readByNames(Collections.singleton(name));
+
+      if (configurations.isEmpty()) {
+        return null;
+      }
+
+      try {
+        return loadRepositoryIntoMemory(configurations.stream().findFirst().get());
+      }
+      catch (Exception e) {
+        log.error("Exception loading repository: {} into memory", name, e);
+        return null;
+      }
+    }
+
+    return repository;
   }
 
   @Override
