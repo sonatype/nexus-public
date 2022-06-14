@@ -32,8 +32,7 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
    */
   initComponent: function() {
     var me = this,
-        subdomainVisibility = NX.State.getValue('dockerSubdomainEnabled', false)
-            && (NX.State.getEdition() === 'PRO');
+        subdomainVisibility = (NX.State.getEdition() === 'PRO');
 
     me.items = [
       {
