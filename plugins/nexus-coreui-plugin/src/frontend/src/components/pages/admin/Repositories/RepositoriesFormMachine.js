@@ -44,6 +44,10 @@ export default FormUtils.buildFormMachine({
               target: 'loaded',
               actions: ['update'],
               internal: false
+            },
+            UPDATE_PREEMPTIVE_PULL: {
+              target: 'loaded',
+              actions: ['updatePreemptivePull']
             }
           }
         }
@@ -66,6 +70,15 @@ export default FormUtils.buildFormMachine({
       data: (_, {format, repoType}) => ({
         ...getDefaultValues(format, repoType),
         format
+      })
+    }),
+    updatePreemptivePull: assign({
+      data: ({data}, {checked}) => ({
+        ...data,
+        replication: {
+          preemptivePullEnabled: checked,
+          assetPathRegex: !checked ? null : data.replication.assetPathRegex
+        }
       })
     })
   },

@@ -39,6 +39,10 @@ export const genericDefaultValues = {
       autoBlock: true,
       connection: null,
       authentication: null
+    },
+    replication: {
+      preemptivePullEnabled: false,
+      assetPathRegex: ''
     }
   },
   hosted: {

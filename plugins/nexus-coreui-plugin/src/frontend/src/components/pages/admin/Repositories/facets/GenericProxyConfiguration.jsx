@@ -12,7 +12,7 @@
  */
 import React from 'react';
 
-import {FormUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, FormUtils, Textfield} from '@sonatype/nexus-ui-plugin';
 
 import {NxCheckbox, NxFieldset, NxFormGroup, NxTextInput} from '@sonatype/react-shared-components';
 
@@ -22,10 +22,23 @@ import DockerIndexConfiguration from './DockerIndexConfiguration';
 
 const {EDITOR} = UIStrings.REPOSITORIES;
 
+const REPLICATION_FEATURE = 'replicationFeatureEnabled';
+
 export default function GenericProxyConfiguration({parentMachine}) {
   const [currentParent, sendParent] = parentMachine;
 
-  const {format} = currentParent.context.data;
+  const {format, replication} = currentParent.context.data;
+  const isReplicationEnabled = ExtJS.state().getValue(REPLICATION_FEATURE) || false;
+  const preemptivePullEnabled = replication?.preemptivePullEnabled || false;
+
+  console.log('FE ', isReplicationEnabled)
+
+  function setPreemptivePullEnabled(event) {
+    sendParent({
+      type: 'UPDATE_PREEMPTIVE_PULL',
+      checked: event.currentTarget.checked
+    });
+  }
 
   return (
     <>
@@ -48,6 +61,33 @@ export default function GenericProxyConfiguration({parentMachine}) {
       </NxFormGroup>
 
       {format === 'docker' && <DockerIndexConfiguration parentMachine={parentMachine} />}
+
+      {isReplicationEnabled &&
+          <>
+            <NxFormGroup
+                label={EDITOR.PREEMPTIVE_PULL_LABEL}
+                sublabel={EDITOR.PREEMPTIVE_PULL_SUBLABEL}
+            >
+              <NxCheckbox
+                  isChecked={Boolean(preemptivePullEnabled)}
+                  onChange={setPreemptivePullEnabled}
+              >
+                {EDITOR.ENABLED_CHECKBOX_DESCR}
+              </NxCheckbox>
+            </NxFormGroup>
+
+            <NxFormGroup
+              label={EDITOR.ASSET_NAME_LABEL}
+              sublabel={EDITOR.ASSET_NAME_DESCRIPTION}
+              className="nxrm-form-group-asset-matcher"
+            >
+              <Textfield
+              {...FormUtils.fieldProps('replication.assetPathRegex', currentParent)}
+                onChange={FormUtils.handleUpdate('replication.assetPathRegex', sendParent)}
+                disabled={!Boolean(preemptivePullEnabled)}/>
+            </NxFormGroup>
+          </>
+      }
 
       <NxFieldset label={EDITOR.BLOCKING_LABEL} className="nxrm-form-group-proxy-blocking">
         <NxCheckbox

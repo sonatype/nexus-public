@@ -497,6 +497,16 @@ export default {
       PROXY_CAPTION: 'Proxy Settings',
       REMOTE_STORAGE_LABEL: 'Remote Storage',
       REMOTE_STORAGE_SUBLABEL: 'Location of the remote repository to proxy',
+      PREEMPTIVE_PULL_LABEL: 'Pre-emptive Pull',
+      PREEMPTIVE_PULL_SUBLABEL: 'If enabled, the remote storage will be monitored for changes, and new components will be replicated automatically, and cached locally',
+      ASSET_NAME_LABEL: 'Asset Name Matcher',
+      ASSET_NAME_DESCRIPTION: <>
+        This field allows you to use a RegEx to match search for specific components to help define scope.
+        For more information check out our{' '}
+        <NxTextLink external href="http://links.sonatype.com/products/nxrm3/docs/pull-replication/asset-name-matcher">
+          documentation for format specific options
+        </NxTextLink>.
+      </>,
       URL_PLACEHOLDER: 'Enter a URL',
       BLOCKING_LABEL: 'Blocking',
       BLOCK_DESCR: 'Block outbound connections to the repository',
