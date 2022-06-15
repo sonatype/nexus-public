@@ -130,15 +130,6 @@
     </dependency>
 
     <!--
-    Provide access to Swagger-UI
-    -->
-    <dependency>
-      <groupId>org.webjars</groupId>
-      <artifactId>swagger-ui</artifactId>
-      <scope>provided</scope>
-    </dependency>
-
-    <!--
     HACK: expose orientdb distribution to extract studio.zip plugin
     -->
     <dependency>
@@ -367,15 +358,6 @@
                   </filterchain>
                 </concat>
 
-                <!--
-                Disable URL overrides until https://github.com/swagger-api/swagger-ui/issues/4872 is fixed.
-                Uses regex replace, because it works with minified JavaScript code where single letter variable names
-                can change between version upgrades. Non-minified code can be found at:
-                https://github.com/swagger-api/swagger-ui/blob/v3.52.5/src/core/utils.js#L683
-                -->
-                <replaceregexp file="${project.build.directory}/assembly/public/swagger-ui/swagger-ui-bundle.js"
-                               match=",([a-z]+)=[a-z\.]+\.location\.search;"
-                               replace=",\1=null;" />
                 <!--
                 HACK: Include orientdb-studio plugin.
                 -->
