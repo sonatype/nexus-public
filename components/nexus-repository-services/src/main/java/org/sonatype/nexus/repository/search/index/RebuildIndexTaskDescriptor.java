@@ -35,7 +35,10 @@ public class RebuildIndexTaskDescriptor
   public static final String REPOSITORY_NAME_FIELD_ID = "repositoryName";
 
   @Inject
-  public RebuildIndexTaskDescriptor(final NodeAccess nodeAccess) {
+  public RebuildIndexTaskDescriptor(
+      final NodeAccess nodeAccess,
+      @Named("${nexus.elasticsearch.enabled:-true}") final boolean esEnabled)
+  {
     super(TYPE_ID,
         RebuildIndexTask.class,
         "Repair - Rebuild repository search",
@@ -48,7 +51,7 @@ public class RebuildIndexTaskDescriptor
             true
         ).includingAnyOfFacets(SearchIndexFacet.class).includeAnEntryForAllRepositories(),
 
-        nodeAccess.isClustered() ? newMultinodeFormField().withInitialValue(true) : null
+        esEnabled && nodeAccess.isClustered() ? newMultinodeFormField().withInitialValue(true) : null
     );
   }
 }

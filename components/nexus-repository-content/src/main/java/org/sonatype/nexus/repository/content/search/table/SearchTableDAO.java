@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.search.table;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -36,9 +37,7 @@ public interface SearchTableDAO
    * @param values optional values map for filter (required if filter is not null)
    * @return number of found components.
    */
-  int count(
-      @Nullable @Param("filter") final String filter,
-      @Nullable @Param("filterParams") Map<String, String> values);
+  int count(@Nullable @Param("filter") String filter, @Nullable @Param("filterParams") Map<String, String> values);
 
   /**
    * Search components in the scope of one format.
@@ -46,14 +45,14 @@ public interface SearchTableDAO
    * @param request DTO containing all required params for search
    * @return collection of {@link SearchResultData} representing search results for a given format.
    */
-  Collection<SearchResult> searchComponents(final SqlSearchRequest request);
+  Collection<SearchResult> searchComponents(SqlSearchRequest request);
 
   /**
    * Creates the given search entry in the content data store.
    *
    * @param data the search row to create
    */
-  void create(final SearchTableData data);
+  void create(SearchTableData data);
 
   /**
    * Update a component kind for the search entry in the content data store.
@@ -64,10 +63,10 @@ public interface SearchTableDAO
    * @param componentKind the new component kind
    */
   void updateKind(
-      @Param("repositoryId") final Integer repositoryId,
-      @Param("componentId") final Integer componentId,
-      @Param("format") final String format,
-      @Param("componentKind") final String componentKind);
+      @Param("repositoryId") Integer repositoryId,
+      @Param("componentId") Integer componentId,
+      @Param("format") String format,
+      @Param("componentKind") String componentKind);
 
   /**
    * Update custom format fields for a specific record
@@ -98,10 +97,10 @@ public interface SearchTableDAO
    * @param format       the repository format
    */
   void delete(
-      @Param("repositoryId") final Integer repositoryId,
-      @Param("componentId") final Integer componentId,
-      @Param("assetId") final Integer assetId,
-      @Param("format") final String format);
+      @Param("repositoryId") Integer repositoryId,
+      @Param("componentId") Integer componentId,
+      @Param("assetId") Integer assetId,
+      @Param("format") String format);
 
   /**
    * Delete all search entries for given repository.
@@ -112,7 +111,14 @@ public interface SearchTableDAO
    * @return {@code true} if any record was deleted
    */
   boolean deleteAllForRepository(
-      @Param("repositoryId") final Integer repositoryId,
-      @Param("format") final String format,
+      @Param("repositoryId") Integer repositoryId,
+      @Param("format") String format,
       @Param("limit") int limit);
+
+  /**
+   * Batch Insert data.
+   *
+   * @param searchData data to be saved.
+   */
+  void saveBatch(@Param("searchData") List<SearchTableData> searchData);
 }

@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.search;
+package org.sonatype.nexus.repository.content.search.elasticsearch;
 
 import java.util.Collection;
 import java.util.Map;
@@ -31,6 +31,8 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
+import org.sonatype.nexus.repository.content.search.SearchDocumentProducer;
+import org.sonatype.nexus.repository.content.search.SearchFacet;
 import org.sonatype.nexus.repository.search.index.ElasticSearchIndexService;
 
 import com.google.common.base.Stopwatch;
@@ -47,7 +49,7 @@ import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSIT
 import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 
 /**
- * Default {@link SearchFacet} implementation.
+ * The {@link SearchFacet} implementation for the Elastic Search.
  *
  * @since 3.25
  */

@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.search.table;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -193,6 +194,17 @@ public class SearchTableStore
       formatValues = filterQuery.getValues();
     }
     return dao().count(filterFormat, formatValues);
+  }
+
+  /**
+   * Batch Insert data.
+   *
+   * @param searchData data to be saved.
+   */
+  @Transactional
+  public void saveBatch(final List<SearchTableData> searchData) {
+    log.trace("Saving {} records into the search table", searchData.size());
+    dao().saveBatch(searchData);
   }
 
   /**
