@@ -219,7 +219,11 @@ window.plugins.push({
       iconCls: 'x-fa fa-terminal',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        permissions: ['nexus:logging:read']
+        permissions: ['nexus:logging:read'],
+        featureFlags: [{
+          key: 'log.viewer.enabled',
+          defaultValue: false
+        }],
       }
     },
     {
