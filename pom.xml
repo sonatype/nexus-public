@@ -63,7 +63,7 @@
     These values must always be constants; 'nexus.version' will get update automatically by set-version.
     -->
     <nexus.version>3.41.0-SNAPSHOT</nexus.version>
-    <nexus2.version>2.14.21-02</nexus2.version>
+    <nexus2.version>2.15.1-02</nexus2.version>
 
     <karaf.version>4.3.6</karaf.version>
 
