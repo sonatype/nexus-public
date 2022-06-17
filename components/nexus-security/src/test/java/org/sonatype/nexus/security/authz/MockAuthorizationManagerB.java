@@ -64,6 +64,11 @@ public class MockAuthorizationManagerB
   }
 
   @Override
+  public Privilege getPrivilegeByName(final String privilegeName) throws NoSuchPrivilegeException {
+    return null;
+  }
+
+  @Override
   public List<Privilege> getPrivileges(final Set<String> privilegeIds) {
     return Collections.emptyList();
   }

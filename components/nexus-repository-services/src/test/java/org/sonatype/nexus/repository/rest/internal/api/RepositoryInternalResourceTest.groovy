@@ -18,7 +18,7 @@ import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.Recipe
-import org.sonatype.nexus.repository.config.Configuration
+import org.sonatype.nexus.repository.config.internal.ConfigurationData
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus
 import org.sonatype.nexus.repository.manager.RepositoryManager
@@ -84,7 +84,83 @@ class RepositoryInternalResourceTest
     )
   }
 
+  @Test
+  void testGetRepositories() {
+    def maven2 = new Format('maven2') {}
+    def nuget = new Format('nuget') {}
+
+    def mavenGroupRepository = mockRepository('maven-public', maven2, groupType, 'http://localhost:8081/repository/maven-public/', true)
+    def mavenProxyRepository = mockRepository('maven-central', maven2, proxyType, 'http://localhost:8081/repository/maven-central/', true,
+            [(HttpClientFacet): mockHttpFacet('Ready to Connect', null)])
+    def nugetGroupRepository = mockRepository('nuget-group', nuget, groupType, 'http://localhost:8081/repository/nuget-group/', true)
+    def nugetHostedRepository = mockRepository('nuget-hosted', nuget, hostedType, 'http://localhost:8081/repository/nuget-hosted/', true)
+    def nugetProxyRepository = mockRepository('nuget.org-proxy', nuget, proxyType, 'http://localhost:8081/repository/nuget.org-proxy/', true,
+            [(HttpClientFacet): mockHttpFacet('Ready to Connect', null)])
+
+    def repositories = [
+      nugetProxyRepository,
+      mavenGroupRepository,
+      mavenProxyRepository,
+      nugetHostedRepository,
+      nugetGroupRepository
+    ]
+
+    def sortedRepositories = [
+      mavenProxyRepository,
+      mavenGroupRepository,
+      nugetGroupRepository,
+      nugetHostedRepository,
+      nugetProxyRepository
+    ]
+
+    def nugetProxyAttributes = new HashMap<String, Map<String, Object>>()
+    def nugetProxyAttributesNested = new HashMap<String, String>()
+    nugetProxyAttributesNested.put('nugetVersion', 'V3')
+    nugetProxyAttributes.put('nugetProxy', nugetProxyAttributesNested)
+    nugetProxyRepository.configuration.setAttributes(nugetProxyAttributes)
+
+    def nugetGroupAttributes = new HashMap<String, Map<String, Object>>()
+    def nugetGroupAttributesNested = new HashMap<String, ArrayList<String>>()
+    def nugetGroupMemberNames = new ArrayList<String>()
+    nugetGroupMemberNames.add('nuget-hosted-1')
+    nugetGroupMemberNames.add('nuget-proxy-1')
+    nugetGroupAttributesNested.put('memberNames', nugetGroupMemberNames)
+    nugetGroupAttributes.put('group', nugetGroupAttributesNested)
+    nugetGroupRepository.configuration.setAttributes(nugetGroupAttributes)
+
+    when(repositoryPermissionChecker.userCanBrowseRepositories(repositories)).thenReturn(repositories)
+
+    when(repositoryManager.browse()).thenReturn(repositories)
+
+    def response = underTest.getRepositories(null, false, false, null);
+
+    assert response[0].class == RepositoryXO.class
+    assert response[0].id == sortedRepositories[0].name
+    assert response[0].name == sortedRepositories[0].name
+
+    assert response[1].class == RepositoryXO.class
+    assert response[1].id == sortedRepositories[1].name
+    assert response[1].name == sortedRepositories[1].name
+
+    assert response[2].class == RepositoryNugetXO.class
+    assert response[2].id == sortedRepositories[2].name
+    assert response[2].name == sortedRepositories[2].name
+    assert (response[2] as RepositoryNugetXO).nugetVersion == null
+    assert (response[2] as RepositoryNugetXO).memberNames == nugetGroupMemberNames
+
+    assert response[3].class == RepositoryXO.class
+    assert response[3].id == sortedRepositories[3].name
+    assert response[3].name == sortedRepositories[3].name
+
+    assert response[4].class == RepositoryNugetXO.class
+    assert response[4].id == sortedRepositories[4].name
+    assert response[4].name == sortedRepositories[4].name
+    assert (response[4] as RepositoryNugetXO).nugetVersion == 'V3'
+    assert (response[4] as RepositoryNugetXO).memberNames == null
+  }
+
   @Ignore
+  //TODO NEXUS-32555
   @Test
   void testGetDetails() {
     def maven2 = new Format('maven2') {}
@@ -176,12 +252,12 @@ class RepositoryInternalResourceTest
     when(repository.getFormat()).thenReturn(format)
     when(repository.getType()).thenReturn(type)
     when(repository.getUrl()).thenReturn(url)
-    def configuration = mock(Configuration)
-    when(configuration.isOnline()).thenReturn(online)
+    def configuration = new ConfigurationData()
     when(repository.getConfiguration()).thenReturn(configuration)
     facets.each { clazz, facet ->
       when(repository.facet(clazz)).thenReturn(facet)
     }
+    configuration.setOnline(online)
     return repository
   }
 

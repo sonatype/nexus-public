@@ -13,6 +13,7 @@
 package com.sonatype.nexus.docker.testsupport.framework;
 
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static java.util.UUID.randomUUID;
@@ -47,6 +48,8 @@ public class DockerContainerClientTestIT
   }
 
   @Test
+  @Ignore
+  //TODO NEXUS-31759
   public void when_Exec_YumVersion_On_CentosLatest_Expect_Execution_To_Succeed() {
     underTest = new DockerContainerClient(IMAGE_CENTOS);
     assertTrue(underTest.exec("yum --version").isPresent());
@@ -59,6 +62,8 @@ public class DockerContainerClientTestIT
   }
 
   @Test
+  @Ignore
+  //TODO NEXUS-32586
   public void when_Exec_DockerVersion_On_DockerLatest_Expect_Execution_To_Succeed() {
     underTest = new DockerContainerClient(IMAGE_DOCKER);
     assertTrue(underTest.exec("docker --version").isPresent());

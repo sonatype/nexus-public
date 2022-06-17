@@ -12,16 +12,18 @@
  */
 package org.sonatype.nexus.repository.content.search.table;
 
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
-import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.event.asset.AssetAttributesEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentKindEvent;
@@ -32,10 +34,6 @@ import org.sonatype.nexus.repository.content.store.InternalIds;
 import com.google.common.eventbus.Subscribe;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
-import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
-import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
-import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA512;
 
 /**
  * This class created to support single search table needs.
@@ -65,41 +63,15 @@ public class SearchTableSubscriber
       log.debug("Unable to determine repository for event {}", event);
       return;
     }
-    Asset asset = event.getAsset();
-    Component component = asset.component().orElse(null);
-    if (component == null) {
-      log.debug("Unable to determine component for event {}", event);
+
+    Optional<SearchTableData> searchData = SearchTableDataUtils.convert(event.getAsset(), repository);
+    if (!searchData.isPresent()) {
+      log.debug("Unable to build the search data based on event: {}", event);
       return;
     }
-    AssetBlob blob = asset.blob().orElse(null);
-    if (blob == null) {
-      log.debug("Unable to determine blob for event {}", event);
-      return;
-    }
+    log.trace("Creating a new record into component_search table: {}", searchData.get());
 
-    SearchTableData data = new SearchTableData();
-    //PK
-    data.setRepositoryId(InternalIds.contentRepositoryId(event));
-    data.setComponentId(InternalIds.internalComponentId(component));
-    data.setAssetId(InternalIds.internalAssetId(asset));
-    data.setFormat(event.getFormat());
-    //data component
-    data.setNamespace(component.namespace());
-    data.setComponentName(component.name());
-    data.setComponentKind(component.kind());
-    data.setVersion(component.version());
-    data.setRepositoryName(repository.getName());
-    //data asset
-    data.setPath(asset.path());
-    //data blob
-    data.setContentType(blob.contentType());
-    data.setMd5(blob.checksums().get(MD5.name()));
-    data.setSha1(blob.checksums().get(SHA1.name()));
-    data.setSha256(blob.checksums().get(SHA256.name()));
-    data.setSha512(blob.checksums().get(SHA512.name()));
-    log.trace("Creating a new record into component_search table: {}", data);
-
-    store.create(data);
+    store.create(searchData.get());
   }
 
   /**
@@ -158,5 +130,40 @@ public class SearchTableSubscriber
         repositoryId, format);
 
     store.deleteAllForRepository(repositoryId, format);
+  }
+
+  /**
+   * Handles an event when need to update a format specific fields
+   *
+   * @param event represents an updated asset attributes {@link AssetAttributesEvent}
+   */
+  @Subscribe
+  public void on(final AssetAttributesEvent event) {
+    Repository repository = event.getRepository().orElse(null);
+    if (repository == null) {
+      log.debug("Unable to determine repository for event {}", event);
+      return;
+    }
+    Asset asset = event.getAsset();
+    Component component = asset.component().orElse(null);
+    if (component == null) {
+      log.debug("Unable to determine component for event {}", event);
+      return;
+    }
+    Integer repositoryId = InternalIds.contentRepositoryId(event);
+    Integer componentId = InternalIds.internalComponentId(component);
+    Integer assetId = InternalIds.internalAssetId(asset);
+    String format = repository.getFormat().getValue();
+    //Custom format fields
+    NestedAttributesMap nestedAttributesMap = asset.attributes();
+    String formatField1 = SearchTableSubscriberHelper.selectFormatField1(format, nestedAttributesMap);
+    String formatField2 = SearchTableSubscriberHelper.selectFormatField2(format, nestedAttributesMap);
+    String formatField3 = SearchTableSubscriberHelper.selectFormatField3(format, nestedAttributesMap);
+    log.trace(
+        "Updating format fields in component_search table for repositoryId: {}, componentId: {}, assetId: {}, " +
+            "format: {}, formatField1: {}, formatField2: {}, formatField3: {}",
+        repositoryId, componentId, assetId, format, formatField1, formatField2, formatField3);
+
+    store.updateFormatFields(repositoryId, componentId, assetId, format, formatField1, formatField2, formatField3);
   }
 }

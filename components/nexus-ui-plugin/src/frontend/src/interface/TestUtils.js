@@ -66,7 +66,8 @@ export default class TestUtils {
   static makeExtResult(data) {
     return {
       result: {
-        data
+        data,
+        success: true
       }
     };
   }

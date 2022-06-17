@@ -133,10 +133,18 @@ public interface SecurityConfiguration
   List<CPrivilege> getPrivileges();
 
   /**
-   * Get an existing {@link CPrivilege} by its ID.
+   * Get an existing {@link CPrivilege} by its id.
    */
   @Nullable
   CPrivilege getPrivilege(String id);
+
+  /**
+   * Get an existing {@link CPrivilege} by its id.
+   * @param name the name of the privilege to be retrieved
+   * @return a {@link CPrivilege} object if found
+   */
+  @Nullable
+  CPrivilege getPrivilegeByName(String name);
 
   /**
    * Get a list of existing {@link CPrivilege} by its IDs.
@@ -169,11 +177,24 @@ public interface SecurityConfiguration
   void updatePrivilege(CPrivilege privilege);
 
   /**
+   * Update an existing {@link CPrivilege} by its name in the configuration.
+   * @param privilege an existing privilege to be updated
+   */
+  void updatePrivilegeByName(CPrivilege privilege);
+
+  /**
    * Remove an existing privilege by its ID.
    *
    * @return true if a privilege was removed, false otherwise
    */
   boolean removePrivilege(String id);
+
+  /**
+   * Remove an existing privilege by its name
+   * @param name the name of the privilege to be deleted
+   * @return a {@link Boolean} flag indicating if the delete was successful
+   */
+  boolean removePrivilegeByName(String name);
 
   /**
    * Get the list of {@link CRole}s known to this configuration.

@@ -81,6 +81,21 @@ public interface AssetDAO
                                    @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams);
 
   /**
+   * Browse all assets with corresponding components and blobs in the given repository in a paged fashion.
+   * The returned assets will be sorted by asset id in ascending order. Blob and the Component are eagerly populated.
+   *
+   * @param repositoryId      the repository to browse
+   * @param continuationToken optional token to continue from a previous request
+   * @param limit             maximum number of assets to return
+   * @return collection of assets and the next continuation token
+   * @see Continuation#nextContinuationToken()
+   */
+  Continuation<Asset> browseEagerAssetsInRepository(
+      @Param("repositoryId") int repositoryId,
+      @Nullable @Param("continuationToken") String continuationToken,
+      @Param("limit") int limit);
+
+  /**
    * Browse all assets in the given repositories in a paged fashion. The returned assets will be sorted
    * by asset id in ascending order.
    *

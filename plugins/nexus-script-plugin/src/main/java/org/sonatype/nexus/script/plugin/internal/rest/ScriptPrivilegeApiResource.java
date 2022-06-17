@@ -63,10 +63,10 @@ public class ScriptPrivilegeApiResource
   @PUT
   @RequiresAuthentication
   @RequiresPermissions("nexus:privileges:update")
-  @Path("script/{privilegeId}")
-  public void updatePrivilege(@PathParam("privilegeId") final String privilegeId,
+  @Path("script/{privilegeName}")
+  public void updatePrivilege(@PathParam("privilegeName") final String privilegeName,
                               final ApiPrivilegeScriptRequest privilege)
   {
-    doUpdate(privilegeId, ScriptPrivilegeDescriptor.TYPE, privilege);
+    doUpdate(privilegeName, ScriptPrivilegeDescriptor.TYPE, privilege);
   }
 }

@@ -40,6 +40,9 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   }
 }));
 
+jest.mock("swagger-ui-react", () => jest.fn());
+jest.mock("swagger-ui-react/swagger-ui.css", () => jest.fn());
+
 const blobstoreTypes = {
   data: [{
     "id": "file",

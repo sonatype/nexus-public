@@ -34,7 +34,6 @@ import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.maven.internal.Maven2MavenPathParser;
-import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataRebuilder;
 import org.sonatype.nexus.repository.maven.internal.validation.MavenMetadataContentValidator;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
@@ -98,7 +97,7 @@ public class MavenFacetImplTest
   private MavenMetadataContentValidator mavenMetadataContentValidator;
 
   @Mock
-  private MetadataRebuilder metadataRebuilder;
+  private OrientMetadataRebuilder metadataRebuilder;
 
   @Mock
   private StorageTx storageTx;
@@ -131,7 +130,7 @@ public class MavenFacetImplTest
       protected void configure() {
         bind(EventManager.class).toInstance(eventManager);
         bind(MavenMetadataContentValidator.class).toInstance(mavenMetadataContentValidator);
-        bind(MetadataRebuilder.class).toInstance(metadataRebuilder);
+        bind(OrientMetadataRebuilder.class).toInstance(metadataRebuilder);
         bindConstant().annotatedWith(named("${nexus.maven.metadata.validation.enabled:-true}")).to(true);
         bind(new TypeLiteral<Map<String, MavenPathParser>>() { })
             .toInstance(ImmutableMap.of(Maven2Format.NAME, maven2MavenPathParser));

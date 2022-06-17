@@ -13,7 +13,13 @@
 
 package org.sonatype.nexus.content.maven.store;
 
+import javax.annotation.Nullable;
+
+import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.store.AssetDAO;
+
+import org.apache.ibatis.annotations.Param;
 
 /**
  * @since 3.25
@@ -21,5 +27,20 @@ import org.sonatype.nexus.repository.content.store.AssetDAO;
 public interface Maven2AssetDAO
     extends AssetDAO
 {
-  // nothing to add...
+  /**
+   * Find jar assets associated with Components in the namespace of kind maven-plugin.
+   *
+   * @param repositoryId the repository to search
+   * @param limit maximum number of assets to return
+   * @param continuationToken optional token to continue from a previous request
+   * @param namespace the namespace to find plugins for
+   * @return collection of assets and the next continuation token
+   *
+   * @see Continuation#nextContinuationToken()
+   */
+  Continuation<Asset> findMavenPluginAssetsForNamespace(
+      @Param("repositoryId") int repositoryId,
+      @Param("limit") int limit,
+      @Nullable @Param("continuationToken") String continuationToken,
+      @Param("namespace") String namespace);
 }

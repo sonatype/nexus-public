@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.maven.internal.search;
 
 import java.util.List;
-
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -36,9 +35,12 @@ public class MavenSearchMappings
   private static final List<SearchMapping> MAPPINGS = ImmutableList.of(
       new SearchMapping("maven.groupId", "attributes.maven2.groupId", "Maven groupId", ComponentSearchField.NAMESPACE),
       new SearchMapping("maven.artifactId", "attributes.maven2.artifactId", "Maven artifactId", ComponentSearchField.NAME),
-      new SearchMapping("maven.baseVersion", "attributes.maven2.baseVersion", "Maven base version", ComponentSearchField.VERSION),
-      new SearchMapping("maven.extension", "assets.attributes.maven2.extension", "Maven extension of component's asset"),
-      new SearchMapping("maven.classifier", "assets.attributes.maven2.classifier", "Maven classifier of component's asset")
+      new SearchMapping("maven.baseVersion", "attributes.maven2.baseVersion", "Maven base version",
+          ComponentSearchField.FORMAT_FIELD_1),
+      new SearchMapping("maven.extension", "assets.attributes.maven2.extension",
+          "Maven extension of component's asset", ComponentSearchField.FORMAT_FIELD_2),
+      new SearchMapping("maven.classifier", "assets.attributes.maven2.classifier",
+          "Maven classifier of component's asset", ComponentSearchField.FORMAT_FIELD_3)
   );
 
   @Override

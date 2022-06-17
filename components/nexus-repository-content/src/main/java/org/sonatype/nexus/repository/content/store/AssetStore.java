@@ -43,7 +43,6 @@ import org.sonatype.nexus.repository.content.event.asset.AssetPrePurgeEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetPurgedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetUploadedEvent;
 import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryDeletedEvent;
-import org.sonatype.nexus.repository.content.fluent.internal.FluentAssetImpl;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.inject.assistedinject.Assisted;
@@ -111,6 +110,25 @@ public class AssetStore<T extends AssetDAO>
                                           final int limit)
   {
     return dao().browseAssets(repositoryId, limit, continuationToken, kind, filter, filterParams);
+  }
+
+  /**
+   * Browse all assets with corresponding components and blobs in the given repository in a paged fashion.
+   * The returned assets will be sorted by asset id in ascending order.
+   *
+   * @param repositoryId      the repository to browse
+   * @param continuationToken optional token to continue from a previous request
+   * @param limit             maximum number of assets to return
+   * @return collection of assets and the next continuation token
+   * @see Continuation#nextContinuationToken()
+   */
+  @Transactional
+  public Continuation<Asset> browseEagerAssets(
+      final int repositoryId,
+      @Nullable final String continuationToken,
+      final int limit)
+  {
+    return dao().browseEagerAssetsInRepository(repositoryId, continuationToken, limit);
   }
 
   /**
@@ -456,7 +474,7 @@ public class AssetStore<T extends AssetDAO>
    * @since 3.29
    */
   @Transactional
-  public void created(final FluentAssetImpl asset, final OffsetDateTime created) {
+  public void created(final Asset asset, final OffsetDateTime created) {
     dao().created(InternalIds.internalAssetId(asset), created);
   }
 

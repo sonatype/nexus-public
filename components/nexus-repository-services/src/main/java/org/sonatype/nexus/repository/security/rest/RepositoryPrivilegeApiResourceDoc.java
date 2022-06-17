@@ -44,7 +44,7 @@ public interface RepositoryPrivilegeApiResourceDoc
       @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
       @ApiResponse(code = 404, message = NexusSecurityApiConstants.PRIVILEGE_NOT_FOUND)
   })
-  void updatePrivilege(@ApiParam("The id of the privilege to update.") @NotNull final String id,
+  void updatePrivilege(@ApiParam("The name of the privilege to update.") @NotNull final String privilegeName,
                        @ApiParam(
                            "The privilege to update.") @NotNull @Valid final ApiPrivilegeRepositoryAdminRequest privilege);
 
@@ -62,7 +62,7 @@ public interface RepositoryPrivilegeApiResourceDoc
       @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
       @ApiResponse(code = 404, message = NexusSecurityApiConstants.PRIVILEGE_NOT_FOUND)
   })
-  void updatePrivilege(@ApiParam("The id of the privilege to update.") @NotNull final String id,
+  void updatePrivilege(@ApiParam("The name of the privilege to update.") @NotNull final String privilegeName,
                        @ApiParam(
                            "The privilege to update.") @NotNull @Valid final ApiPrivilegeRepositoryViewRequest privilege);
 
@@ -80,7 +80,7 @@ public interface RepositoryPrivilegeApiResourceDoc
       @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
       @ApiResponse(code = 404, message = NexusSecurityApiConstants.PRIVILEGE_NOT_FOUND)
   })
-  void updatePrivilege(@ApiParam("The id of the privilege to update.") @NotNull final String id,
+  void updatePrivilege(@ApiParam("The name of the privilege to update.") @NotNull final String privilegeName,
                        @ApiParam(
                            "The privilege to update.") @NotNull @Valid final ApiPrivilegeRepositoryContentSelectorRequest privilege);
 }

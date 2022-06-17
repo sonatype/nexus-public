@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -88,10 +89,11 @@ public class SecurityConfigurationManagerImpl
   private boolean firstTimeConfiguration = true;
 
   @Inject
-  public SecurityConfigurationManagerImpl(final SecurityConfigurationSource configurationSource,
-                                          final SecurityConfigurationCleaner configCleaner,
-                                          final PasswordService passwordService,
-                                          final EventManager eventManager)
+  public SecurityConfigurationManagerImpl(
+      final SecurityConfigurationSource configurationSource,
+      final SecurityConfigurationCleaner configCleaner,
+      final PasswordService passwordService,
+      final EventManager eventManager)
   {
     this.configurationSource = configurationSource;
     this.eventManager = eventManager;
@@ -176,6 +178,25 @@ public class SecurityConfigurationManagerImpl
   }
 
   @Override
+  public void deletePrivilegeByName(final String name) {
+    CPrivilege existing = readPrivilegeByName(name);
+   try {
+     getDefaultConfiguration().removePrivilegeByName(name);
+   }catch (NoSuchPrivilegeException e){
+
+     boolean isReadOnly = getMergedConfiguration().getPrivileges().stream().anyMatch(p -> p.getName().equals(name));
+
+     if(isReadOnly){
+       throw new ReadonlyPrivilegeException(name);
+     }
+
+     throw new NoSuchPrivilegeException(name);
+   }
+
+   cleanRemovedPrivilege(existing.getId());
+  }
+
+  @Override
   public void deleteRole(final String id) {
     try {
       getDefaultConfiguration().removeRole(id);
@@ -233,6 +254,14 @@ public class SecurityConfigurationManagerImpl
     }
 
     throw new NoSuchPrivilegeException(id);
+  }
+
+  @Override
+  public CPrivilege readPrivilegeByName(final String name) {
+    return Optional.of(name)
+        .map(n -> getMergedConfiguration().getPrivilegeByName(n))
+        .orElseGet(() ->Optional.ofNullable(getDefaultConfiguration().getPrivilegeByName(name))
+            .orElseThrow(() -> new NoSuchPrivilegeException(name)));
   }
 
   @Override
@@ -297,6 +326,25 @@ public class SecurityConfigurationManagerImpl
     }
 
     getDefaultConfiguration().updatePrivilege(privilege);
+  }
+
+  @Override
+  public void updatePrivilegeByName(final CPrivilege privilege) {
+    boolean onDefaultConfig = Optional.ofNullable(getDefaultConfiguration().getPrivilegeByName(privilege.getName()))
+        .isPresent();
+
+    if (!onDefaultConfig) {
+      //note that readonly check is done here, rather than at orient level, as we dont store readonly flag with
+      //config, basically any privileges added via SecurityContributor impls are marked as readonly
+      boolean isReadOnly = getMergedConfiguration().getPrivileges().stream().anyMatch(p -> p.getName().equals(privilege.getName()));
+
+      if (isReadOnly) {
+        throw new ReadonlyPrivilegeException(privilege.getName());
+      }
+      throw new NoSuchPrivilegeException(privilege.getName());
+    }
+
+    getDefaultConfiguration().updatePrivilegeByName(privilege);
   }
 
   @Override
@@ -522,8 +570,8 @@ public class SecurityConfigurationManagerImpl
   }
 
   /**
-   * Simply validates the existence of each role/privilege assigned
-   * (readRole/readPrivilege throw NoSuch(Role/Privilege)Exception if not found)
+   * Simply validates the existence of each role/privilege assigned (readRole/readPrivilege throw
+   * NoSuch(Role/Privilege)Exception if not found)
    */
   private void validateContainedRolesAndPrivileges(final CRole role) {
     role.getRoles().forEach(this::readRole);
@@ -544,7 +592,7 @@ public class SecurityConfigurationManagerImpl
       if (r.equals(role.getId())) {
         throw new RoleContainsItselfException(role.getId());
       }
-      else if (!checkedRoles.contains(r)){
+      else if (!checkedRoles.contains(r)) {
         checkedRoles.add(r);
         validateRoleDoesntContainItself(role, readRole(r), checkedRoles);
       }

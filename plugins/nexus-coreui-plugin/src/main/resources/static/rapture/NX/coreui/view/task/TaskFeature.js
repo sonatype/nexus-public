@@ -54,6 +54,7 @@ Ext.define('NX.coreui.view.task.TaskFeature', {
           action: 'delete',disabled: true
         },
         {
+          id: NX.I18n.get('Task_TaskFeature_Run_Button_Id'),
           xtype: 'button',
           text: NX.I18n.get('Task_TaskFeature_Run_Button'),
           iconCls: 'x-fa fa-play',

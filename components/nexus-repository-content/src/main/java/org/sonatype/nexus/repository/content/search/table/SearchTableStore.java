@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.search.table;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -83,6 +84,30 @@ public class SearchTableStore
       @Nonnull @Param("componentKind") final String componentKind)
   {
     dao().updateKind(repositoryId, componentId, format, componentKind);
+  }
+
+  /**
+   * Update custom format fields for a specific record
+   *
+   * @param repositoryId the content repository identification
+   * @param componentId  the component identification
+   * @param assetId      the asset identification
+   * @param format       the repository format
+   * @param formatField1 a format specific field 1
+   * @param formatField2 a format specific field 2
+   * @param formatField3 a format specific field 3
+   */
+  @Transactional
+  public void updateFormatFields(
+      @Nonnull @Param("repositoryId") final Integer repositoryId,
+      @Nonnull @Param("componentId") final Integer componentId,
+      @Nonnull @Param("assetId") final Integer assetId,
+      @Nonnull @Param("format") final String format,
+      @Param("formatField1") final String formatField1,
+      @Param("formatField2") final String formatField2,
+      @Param("formatField3") final String formatField3)
+  {
+    dao().updateFormatFields(repositoryId, componentId, assetId, format, formatField1, formatField2, formatField3);
   }
 
   /**
@@ -169,6 +194,17 @@ public class SearchTableStore
       formatValues = filterQuery.getValues();
     }
     return dao().count(filterFormat, formatValues);
+  }
+
+  /**
+   * Batch Insert data.
+   *
+   * @param searchData data to be saved.
+   */
+  @Transactional
+  public void saveBatch(final List<SearchTableData> searchData) {
+    log.trace("Saving {} records into the search table", searchData.size());
+    dao().saveBatch(searchData);
   }
 
   /**

@@ -872,6 +872,29 @@ public class AssetDAOTest
   }
 
   @Test
+  public void testBrowseEagerAssetsInRepository() {
+    generateConfiguration();
+    EntityId entityId = generatedConfigurations().get(0).getRepositoryId();
+    generateSingleRepository(UUID.fromString(entityId.getValue()));
+    repositoryId = generatedRepositories().get(0).repositoryId;
+
+    // create 5 components with assets and blobs
+    generateContent(5);
+
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      AssetDAO dao = session.access(TestAssetDAO.class);
+
+      Continuation<Asset> assets = dao.browseEagerAssetsInRepository(repositoryId, null, 10);
+      assertThat(assets.size(), is(5));
+      // each asset should contain a blob and should belong to a component
+      for (Asset asset : assets) {
+        assertThat(asset.component().isPresent(), is(true));
+        assertThat(asset.blob().isPresent(), is(true));
+      }
+    }
+  }
+
+  @Test
   public void testSetLastDownloaded() {
     AssetData asset1 = randomAsset(repositoryId);
 

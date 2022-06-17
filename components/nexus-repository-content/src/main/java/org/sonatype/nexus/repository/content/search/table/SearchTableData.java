@@ -68,6 +68,13 @@ public class SearchTableData
   //parsed sha512 from checksums column *_asset_blob table
   private String sha512;
 
+  //Custom format attributes
+  private String formatField1;
+
+  private String formatField2;
+
+  private String formatField3;
+
   public Integer getRepositoryId() {
     return repositoryId;
   }
@@ -196,6 +203,30 @@ public class SearchTableData
     this.sha512 = sha512;
   }
 
+  public String getFormatField1() {
+    return formatField1;
+  }
+
+  public void setFormatField1(final String formatField1) {
+    this.formatField1 = formatField1;
+  }
+
+  public String getFormatField2() {
+    return formatField2;
+  }
+
+  public void setFormatField2(final String formatField2) {
+    this.formatField2 = formatField2;
+  }
+
+  public String getFormatField3() {
+    return formatField3;
+  }
+
+  public void setFormatField3(final String formatField3) {
+    this.formatField3 = formatField3;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) {
@@ -204,23 +235,29 @@ public class SearchTableData
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    SearchTableData that = (SearchTableData) o;
-    return Objects.equals(repositoryId, that.repositoryId) &&
-        Objects.equals(componentId, that.componentId) && Objects.equals(assetId, that.assetId) &&
-        Objects.equals(format, that.format) && Objects.equals(namespace, that.namespace) &&
-        Objects.equals(componentName, that.componentName) &&
-        Objects.equals(componentKind, that.componentKind) && Objects.equals(version, that.version) &&
-        Objects.equals(componentCreated, that.componentCreated) &&
-        Objects.equals(repositoryName, that.repositoryName) && Objects.equals(path, that.path) &&
-        Objects.equals(contentType, that.contentType) && Objects.equals(md5, that.md5) &&
-        Objects.equals(sha1, that.sha1) && Objects.equals(sha256, that.sha256) &&
-        Objects.equals(sha512, that.sha512);
+    SearchTableData tableData = (SearchTableData) o;
+    return Objects.equals(repositoryId, tableData.repositoryId) &&
+        Objects.equals(componentId, tableData.componentId) &&
+        Objects.equals(assetId, tableData.assetId) && Objects.equals(format, tableData.format) &&
+        Objects.equals(namespace, tableData.namespace) &&
+        Objects.equals(componentName, tableData.componentName) &&
+        Objects.equals(componentKind, tableData.componentKind) &&
+        Objects.equals(version, tableData.version) &&
+        Objects.equals(componentCreated, tableData.componentCreated) &&
+        Objects.equals(repositoryName, tableData.repositoryName) &&
+        Objects.equals(path, tableData.path) && Objects.equals(contentType, tableData.contentType) &&
+        Objects.equals(md5, tableData.md5) && Objects.equals(sha1, tableData.sha1) &&
+        Objects.equals(sha256, tableData.sha256) && Objects.equals(sha512, tableData.sha512) &&
+        Objects.equals(formatField1, tableData.formatField1) &&
+        Objects.equals(formatField2, tableData.formatField2) &&
+        Objects.equals(formatField3, tableData.formatField3);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(repositoryId, componentId, assetId, format, namespace, componentName, componentKind, version,
-        componentCreated, repositoryName, path, contentType, md5, sha1, sha256, sha512);
+        componentCreated, repositoryName, path, contentType, md5, sha1, sha256, sha512, formatField1, formatField2,
+        formatField3);
   }
 
   @Override
@@ -242,6 +279,9 @@ public class SearchTableData
         .add("sha1='" + sha1 + "'")
         .add("sha256='" + sha256 + "'")
         .add("sha512='" + sha512 + "'")
+        .add("formatField1='" + formatField1 + "'")
+        .add("formatField2='" + formatField2 + "'")
+        .add("formatField3='" + formatField3 + "'")
         .toString();
   }
 }

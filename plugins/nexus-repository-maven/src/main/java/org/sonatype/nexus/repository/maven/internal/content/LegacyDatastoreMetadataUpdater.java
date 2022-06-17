@@ -38,10 +38,10 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * @since 3.26
  */
-public class DatastoreMetadataUpdater
+public class LegacyDatastoreMetadataUpdater
     extends AbstractMetadataUpdater
 {
-  public DatastoreMetadataUpdater(final boolean update, final Repository repository) {
+  public LegacyDatastoreMetadataUpdater(final boolean update, final Repository repository) {
     super(update, repository);
   }
 

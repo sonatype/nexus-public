@@ -197,12 +197,12 @@ describe('RepositoriesForm', () => {
 
   it('filters types by format', async () => {
     when(Axios.get)
-        .calledWith(expect.stringContaining(repositoriesUrl('p2')))
-        .mockResolvedValue({data: []});
+      .calledWith(expect.stringContaining(repositoriesUrl('p2')))
+      .mockResolvedValue({data: []});
 
     when(Axios.get)
-        .calledWith(expect.stringContaining(repositoriesUrl('nuget')))
-        .mockResolvedValue({data: []});
+      .calledWith(expect.stringContaining(repositoriesUrl('nuget')))
+      .mockResolvedValue({data: []});
 
     renderView();
 
@@ -254,8 +254,8 @@ describe('RepositoriesForm', () => {
       const blobStoreResponse = [{name: 'default'}];
       const blobStoreOptions = [{name: EDITOR.SELECT_STORE_OPTION}, ...blobStoreResponse];
       when(Axios.post)
-          .calledWith(EXT_URL, BLOB_STORE_EXT_REQUEST)
-          .mockResolvedValue({data: TestUtils.makeExtResult(blobStoreResponse)});
+        .calledWith(EXT_URL, BLOB_STORE_EXT_REQUEST)
+        .mockResolvedValue({data: TestUtils.makeExtResult(blobStoreResponse)});
 
       renderView();
 
@@ -265,17 +265,17 @@ describe('RepositoriesForm', () => {
       await TestUtils.changeField(selectors.getTypeSelect, 'hosted');
 
       await waitFor(() =>
-          validateSelect(selectors.getBlobStoreSelect(), blobStoreOptions, 'default')
+        validateSelect(selectors.getBlobStoreSelect(), blobStoreOptions, 'default')
       );
 
-      const deploymentPolicyOptions = Object.values(EDITOR.DEPLOYMENT_POLICY_OPTIONS).map((name) => ({
-        name
-      }));
+      const deploymentPolicyOptions = Object.values(EDITOR.DEPLOYMENT_POLICY_OPTIONS).map(
+        (name) => ({
+          name
+        })
+      );
       validateSelect(selectors.getDeploymentPolicySelect(), deploymentPolicyOptions, 'ALLOW_ONCE');
 
-      await waitFor(() =>
-          expect(Axios.post).toHaveBeenCalledWith(EXT_URL, CLEANUP_EXT_REQUEST())
-      );
+      await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(EXT_URL, CLEANUP_EXT_REQUEST()));
 
       MAVEN_CLEANUP_RESPONSE.forEach((policy) => {
         expect(selectors.getTransferListOption(policy.name)).toBeInTheDocument();
@@ -347,10 +347,10 @@ describe('RepositoriesForm', () => {
         type: 'hosted'
       };
       when(Axios.get)
-          .calledWith('/service/rest/internal/ui/repositories/repository/raw-hosted')
-          .mockResolvedValueOnce({
-            data: repo
-          });
+        .calledWith('/service/rest/internal/ui/repositories/repository/raw-hosted')
+        .mockResolvedValueOnce({
+          data: repo
+        });
 
       renderView('raw-hosted');
 
@@ -369,12 +369,12 @@ describe('RepositoriesForm', () => {
       fireEvent.click(selectors.getSaveButton());
 
       expect(Axios.put).toBeCalledWith(
-          '/service/rest/v1/repositories/raw/hosted/raw-hosted',
-          mergeDeepRight(repo, {
-            storage: {
-              strictContentTypeValidation: false
-            }
-          })
+        '/service/rest/v1/repositories/raw/hosted/raw-hosted',
+        mergeDeepRight(repo, {
+          storage: {
+            strictContentTypeValidation: false
+          }
+        })
       );
     });
 
@@ -387,7 +387,7 @@ describe('RepositoriesForm', () => {
       validateSelect(selectors.getRepodataDepthSelect(), null, 0);
       validateSelect(selectors.getLayoutPolicySelect(), null, 'STRICT');
     });
-  })
+  });
 
   describe('proxy', () => {
     const type = 'proxy';
@@ -456,7 +456,7 @@ describe('RepositoriesForm', () => {
       await TestUtils.changeField(getNameInput, payload.name);
       await TestUtils.changeField(getBlobStoreSelect, payload.storage.blobStoreName);
       await TestUtils.changeField(getRemoteUrlInput, payload.proxy.remoteUrl);
-    }
+    };
 
     it('renders the form and shows/hides auth fields when type is proxy', async () => {
       renderView();
@@ -510,10 +510,10 @@ describe('RepositoriesForm', () => {
       });
 
       when(Axios.get)
-          .calledWith('/service/rest/internal/ui/repositories/repository/raw-proxy')
-          .mockResolvedValueOnce({
-            data: repo1
-          });
+        .calledWith('/service/rest/internal/ui/repositories/repository/raw-proxy')
+        .mockResolvedValueOnce({
+          data: repo1
+        });
 
       renderView('raw-proxy');
       await waitForElementToBeRemoved(selectors.queryLoadingMask());
@@ -523,10 +523,10 @@ describe('RepositoriesForm', () => {
       cleanup();
 
       when(Axios.get)
-          .calledWith('/service/rest/internal/ui/repositories/repository/raw-proxy')
-          .mockResolvedValueOnce({
-            data: repo2
-          });
+        .calledWith('/service/rest/internal/ui/repositories/repository/raw-proxy')
+        .mockResolvedValueOnce({
+          data: repo2
+        });
 
       renderView('raw-proxy');
       await waitForElementToBeRemoved(selectors.queryLoadingMask());
@@ -586,24 +586,24 @@ describe('RepositoriesForm', () => {
       await renderAndPopulateRequiredFields(format, payload);
 
       await TestUtils.changeField(
-          selectors.getAuthTypeSelect,
-          payload.httpClient.authentication.type
+        selectors.getAuthTypeSelect,
+        payload.httpClient.authentication.type
       );
       await TestUtils.changeField(
-          selectors.getUsernameInput,
-          payload.httpClient.authentication.username
+        selectors.getUsernameInput,
+        payload.httpClient.authentication.username
       );
       await TestUtils.changeField(
-          selectors.getPasswordInput,
-          payload.httpClient.authentication.password
+        selectors.getPasswordInput,
+        payload.httpClient.authentication.password
       );
       await TestUtils.changeField(
-          selectors.getNtlmHostInput,
-          payload.httpClient.authentication.ntlmHost
+        selectors.getNtlmHostInput,
+        payload.httpClient.authentication.ntlmHost
       );
       await TestUtils.changeField(
-          selectors.getNtlmDomainInput,
-          payload.httpClient.authentication.ntlmDomain
+        selectors.getNtlmDomainInput,
+        payload.httpClient.authentication.ntlmDomain
       );
 
       fireEvent.click(selectors.getCreateButton());
@@ -617,8 +617,8 @@ describe('RepositoriesForm', () => {
       await renderAndPopulateRequiredFields(format, payload);
 
       await TestUtils.changeField(
-          selectors.getUserAgentSuffixInput,
-          payload.httpClient.connection.userAgentSuffix
+        selectors.getUserAgentSuffixInput,
+        payload.httpClient.connection.userAgentSuffix
       );
       await TestUtils.changeField(selectors.getRetriesInput, payload.httpClient.connection.retries);
       await TestUtils.changeField(selectors.getTimeoutInput, payload.httpClient.connection.timeout);
@@ -694,10 +694,10 @@ describe('RepositoriesForm', () => {
         type: 'proxy'
       };
       when(Axios.get)
-          .calledWith('/service/rest/internal/ui/repositories/repository/raw-proxy')
-          .mockResolvedValueOnce({
-            data: repo
-          });
+        .calledWith('/service/rest/internal/ui/repositories/repository/raw-proxy')
+        .mockResolvedValueOnce({
+          data: repo
+        });
 
       renderView('raw-proxy');
 
@@ -708,13 +708,13 @@ describe('RepositoriesForm', () => {
       fireEvent.click(selectors.getSaveButton());
 
       expect(Axios.put).toBeCalledWith(
-          '/service/rest/v1/repositories/raw/proxy/raw-proxy',
-          mergeDeepRight(repo, {
-            proxy: {
-              remoteUrl: 'http://other.com'
-            },
-            routingRule: null
-          })
+        '/service/rest/v1/repositories/raw/proxy/raw-proxy',
+        mergeDeepRight(repo, {
+          proxy: {
+            remoteUrl: 'http://other.com'
+          },
+          routingRule: null
+        })
       );
     });
 
@@ -738,7 +738,7 @@ describe('RepositoriesForm', () => {
       validateSelect(selectors.getLayoutPolicySelect(), null, 'STRICT');
       validateSelect(selectors.getVersionPolicySelect(), null, 'RELEASE');
     });
-  })
+  });
 
   describe('group', () => {
     it('renders the form and populates dropdowns when type is group', async () => {
@@ -763,7 +763,7 @@ describe('RepositoriesForm', () => {
       await waitFor(() => validateSelect(selectors.getBlobStoreSelect(), BLOB_STORES_OPTIONS, ''));
 
       await waitFor(() =>
-          expect(Axios.get).toHaveBeenCalledWith(expect.stringContaining(repositoriesUrl({format})))
+        expect(Axios.get).toHaveBeenCalledWith(expect.stringContaining(repositoriesUrl({format})))
       );
 
       MAVEN_REPOS_RESPONSE.forEach((repo) => {
@@ -839,28 +839,28 @@ describe('RepositoriesForm', () => {
         type: 'group'
       };
       when(Axios.get)
-          .calledWith('/service/rest/internal/ui/repositories/repository/raw-group')
-          .mockResolvedValueOnce({
-            data: repo
-          });
+        .calledWith('/service/rest/internal/ui/repositories/repository/raw-group')
+        .mockResolvedValueOnce({
+          data: repo
+        });
       when(Axios.get)
-          .calledWith('/service/rest/internal/ui/repositories?format=raw')
-          .mockResolvedValueOnce({
-            data: [
-              {
-                id: 'raw-group',
-                name: 'raw-group'
-              },
-              {
-                id: 'raw-hosted',
-                name: 'raw-hosted'
-              },
-              {
-                id: 'raw-proxy',
-                name: 'raw-proxy'
-              }
-            ]
-          });
+        .calledWith('/service/rest/internal/ui/repositories?format=raw')
+        .mockResolvedValueOnce({
+          data: [
+            {
+              id: 'raw-group',
+              name: 'raw-group'
+            },
+            {
+              id: 'raw-hosted',
+              name: 'raw-hosted'
+            },
+            {
+              id: 'raw-proxy',
+              name: 'raw-proxy'
+            }
+          ]
+        });
 
       renderView('raw-group');
 
@@ -871,16 +871,16 @@ describe('RepositoriesForm', () => {
       fireEvent.click(selectors.getSaveButton());
 
       expect(Axios.put).toBeCalledWith(
-          '/service/rest/v1/repositories/raw/group/raw-group',
-          mergeDeepRight(repo, {
-            group: {
-              memberNames: ['raw-proxy']
-            },
-            routingRule: undefined
-          })
+        '/service/rest/v1/repositories/raw/group/raw-group',
+        mergeDeepRight(repo, {
+          group: {
+            memberNames: ['raw-proxy']
+          },
+          routingRule: undefined
+        })
       );
     });
-  })
+  });
 });
 
 const validateSelect = (selectElement, options, value) => {

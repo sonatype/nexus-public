@@ -18,19 +18,160 @@
 import Axios from 'axios';
 import {assign} from 'xstate';
 import {ListMachineUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtAPIUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
+import {mergeDeepRight} from 'ramda';
+
+const {EXT, REST_INTERNAL} = APIConstants;
 
 export default ListMachineUtils.buildListMachine({
   id: 'RepositoriesListMachine',
-  sortableFields: ['name', 'type', 'format', 'status']
+  sortableFields: ['name', 'type', 'format', 'status'],
+
+  config: (config) =>
+    mergeDeepRight(config, {
+      states: {
+        loading: {
+          states: {
+            fetch: {
+              invoke: {
+                onDone: {
+                  target: '#RepositoriesListMachine.readingHealthCheck'
+                }
+              }
+            }
+          }
+        },
+        loaded: {
+          on: {
+            ENABLE_HELTH_CHECK_SINGLE_REPO: {
+              target: 'enablingHealthCheckSingleRepo'
+            },
+            ENABLE_HELTH_CHECK_ALL_REPOS: {
+              target: 'enablingHealthCheckAllRepos'
+            },
+            READ_HELTH_CHECK: {
+              target: 'readingHealthCheck'
+            }
+          }
+        },
+        enablingHealthCheckSingleRepo: {
+          invoke: {
+            src: 'enableHealthCheckSingleRepo',
+            onDone: {
+              target: 'readingHealthCheck',
+              actions: 'clearEnablingHealthCheckRepoName'
+            },
+            onError: {
+              target: 'loaded',
+              actions: ['setEnableHealthCheckError']
+            }
+          },
+          entry: ['setEnablingHealthCheckRepoName', 'clearEnableHealthCheckError']
+        },
+        enablingHealthCheckAllRepos: {
+          invoke: {
+            src: 'enableHealthCheckAllRepos',
+            onDone: {
+              target: 'readingHealthCheck'
+            },
+            onError: {
+              target: 'loaded',
+              actions: ['setEnableHealthCheckError']
+            }
+          },
+          entry: ['clearEnablingHealthCheckRepoName', 'clearEnableHealthCheckError']
+        },
+        readingHealthCheck: {
+          invoke: {
+            src: 'readHealthCheck',
+            onDone: {
+              target: 'loaded',
+              actions: 'setHealthCheck'
+            },
+            onError: {
+              target: 'loaded',
+              actions: ['setReadHealthCheckError']
+            }
+          },
+          entry: ['clearReadHealthCheckError']
+        }
+      }
+    })
 }).withConfig({
   actions: {
+    setData: assign((_, event) => {
+      const data = event.data?.data;
+      return {
+        data: data,
+        pristineData: data
+      };
+    }),
+
     filterData: assign({
-      data: ({filter, data, pristineData}, _) => pristineData.filter(({name}) =>
-          name.toLowerCase().indexOf(filter.toLowerCase()) !== -1
-      )
+      data: ({filter, pristineData}, _) =>
+        pristineData.filter(({name}) => name.toLowerCase().indexOf(filter.toLowerCase()) !== -1)
+    }),
+
+    setHealthCheck: assign({
+      data: ({data}, event) => {
+        data.forEach((repo) => {
+          const health = event.data.find((it) => it.repositoryName === repo.name);
+          if (health) {
+            repo.health = health;
+          }
+        });
+        return data;
+      }
+    }),
+    setEnableHealthCheckError: assign({
+      enableHealthCheckError: (_, event) => event.data?.message
+    }),
+    clearEnableHealthCheckError: assign({
+      enableHealthCheckError: () => null
+    }),
+    setReadHealthCheckError: assign({
+      readHealthCheckError: (_, event) => event.data?.message
+    }),
+    clearReadHealthCheckError: assign({
+      readHealthCheckError: () => null
+    }),
+    setEnablingHealthCheckRepoName: assign({
+      enablingHealthCheckRepoName: (_, event) => event.repoName
+    }),
+    clearEnablingHealthCheckRepoName: assign({
+      enablingHealthCheckRepoName: () => null
     })
   },
   services: {
-    fetchData: () => Axios.get('service/rest/internal/ui/repositories/details')
+    fetchData: () => Axios.get(REST_INTERNAL.REPOSITORIES_DETAILS),
+
+    enableHealthCheckSingleRepo: async (_, event) => {
+      const response = await ExtAPIUtils.extAPIRequest(
+        EXT.HEALTH_CHECK.ACTION,
+        EXT.HEALTH_CHECK.METHODS.UPDATE,
+        [true, event.repoName, true]
+      );
+      ExtAPIUtils.checkForError(response);
+      return ExtAPIUtils.extractResult(response);
+    },
+
+    enableHealthCheckAllRepos: async () => {
+      const response = await ExtAPIUtils.extAPIRequest(
+        EXT.HEALTH_CHECK.ACTION,
+        EXT.HEALTH_CHECK.METHODS.ENABLE_ALL,
+        [true]
+      );
+      ExtAPIUtils.checkForError(response);
+      return ExtAPIUtils.extractResult(response);
+    },
+
+    readHealthCheck: async () => {
+      const response = await ExtAPIUtils.extAPIRequest(
+        EXT.HEALTH_CHECK.ACTION,
+        EXT.HEALTH_CHECK.METHODS.READ
+      );
+      ExtAPIUtils.checkForError(response);
+      return ExtAPIUtils.extractResult(response);
+    }
   }
 });

@@ -32,8 +32,7 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
    */
   initComponent: function() {
     var me = this,
-        subdomainVisibility = NX.State.getValue('dockerSubdomainEnabled', false)
-            && (NX.State.getEdition() === 'PRO');
+        subdomainVisibility = (NX.State.getEdition() === 'PRO');
 
     me.items = [
       {
@@ -216,6 +215,7 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
       allowBlank: false,
       disabled: true,
       width: 560,
+      vtype: 'nx-subdomain',
       style: {
         marginLeft: '5px'
       },
@@ -231,12 +231,8 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
           }
         },
         enable: function() {
-          if (this.getValue() === '') {
-            const repositoryName = this.up('form').down('#name').value;
-            if (/^[A-Za-z0-9][a-zA-Z0-9\-]{0,61}[A-Za-z0-9]$/.test(repositoryName)) {
-              this.setValue(repositoryName);
-            }
-          }
+          const repositoryName = this.up('form').down('#name').value;
+          this.setValue(repositoryName);
         },
         disable: function() {
           this.setValue('');

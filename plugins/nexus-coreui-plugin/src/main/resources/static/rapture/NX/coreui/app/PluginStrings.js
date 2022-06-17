@@ -458,9 +458,9 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_ProxyFacet_Pypi_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://pypi.org',
     Repository_Facet_ProxyFacet_Rubygems_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://rubygems.org',
     Repository_Facet_ProxyFacet_Yum_Remote_HelpText: 'Location of the remote repository being proxied, e.g.  http://mirror.centos.org/centos/',
-    Ssl_SslUseTrustStore_BoxLabel: 'Use the Nexus truststore',
+    Ssl_SslUseTrustStore_BoxLabel: 'Use the Nexus Repository truststore',
     Ssl_SslUseTrustStore_Certificate_Button: 'View certificate',
-    Ssl_SslUseTrustStore_Certificate_HelpText: 'Use certificates stored in the Nexus truststore to connect to external systems',
+    Ssl_SslUseTrustStore_Certificate_HelpText: 'Use certificates stored in the Nexus Repository truststore to connect to external systems',
     Maven2Facet_VersionPolicy_FieldLabel: 'Version policy',
     Maven2Facet_VersionPolicy_HelpText: 'What type of artifacts does this repository store?',
     Maven2Facet_VersionPolicy_EmptyText: 'Select a policy',
@@ -938,7 +938,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
 
     // Admin -> Security -> SSL Certificates
     SslCertificates_Text: 'SSL Certificates',
-    SslCertificates_Description: 'Manage trusted SSL certificates for use with the Nexus truststore',
+    SslCertificates_Description: 'Manage trusted SSL certificates for use with the Nexus Repository truststore',
     SslCertificates_Paste_Title: 'Paste Certificate as PEM',
     Ssl_SslCertificateAddFromPem_Cancel_Button: '@Button_Cancel',
     SslCertificates_Load_Title: 'Load Certificate from Server',
@@ -1230,6 +1230,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Task_TaskFeature_Delete_Button: 'Delete task',
     Tasks_Delete_Success: 'Task deleted: {0}',
     Task_TaskFeature_Run_Button: 'Run',
+    Task_TaskFeature_Run_Button_Id: 'task_run_button_id',
     Tasks_RunConfirm_Title: 'Confirm?',
     Tasks_RunConfirm_HelpText: 'Run {0} task?',
     Tasks_Run_Success: 'Task started: {0}',

@@ -33,6 +33,7 @@ import org.sonatype.nexus.scheduling.CancelableHelper;
 import org.sonatype.nexus.scheduling.TaskInterruptedException;
 
 import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import org.junit.After;
 import org.junit.Before;
@@ -50,7 +51,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.slf4j.Logger.ROOT_LOGGER_NAME;
 
-public class DatastoreMetadataRebuilderTest
+public class NativeDatastoreMetadataRebuilderTest
     extends TestSupport
 {
   @Mock
@@ -63,7 +64,7 @@ public class DatastoreMetadataRebuilderTest
   private Repository repository;
 
   @Mock
-  private Appender mockAppender;
+  private Appender<ILoggingEvent> mockAppender;
 
   @Mock
   private FluentAssets assets;
@@ -102,7 +103,7 @@ public class DatastoreMetadataRebuilderTest
     Thread taskThread = new Thread(() -> {
       CancelableHelper.set(canceled);
 
-      new DatastoreMetadataRebuilder(10, 20).rebuild(repository, true, false, null, null, null);
+      new NativeDatastoreMetadataRebuilder(20).rebuild(repository, true, false, null, null, null);
     });
     taskThread.setUncaughtExceptionHandler((t, e) -> {
       if (e instanceof TaskInterruptedException) {
@@ -126,7 +127,7 @@ public class DatastoreMetadataRebuilderTest
     }
   }
 
-  private Continuation infiniteContinuation(Object returnItem) {
+  private Continuation infiniteContinuation(final Object returnItem) {
     Continuation continuation = mock(Continuation.class);
     Iterator iterator = mock(Iterator.class);
     Spliterator spliterator = mock(Spliterator.class);

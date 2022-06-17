@@ -32,6 +32,12 @@ public class ComponentSearchField
 
   public static final SearchFieldSupport VERSION = new ComponentSearchField("version");
 
+  public static final SearchFieldSupport FORMAT_FIELD_1 = new ComponentSearchField("format_field_1");
+
+  public static final SearchFieldSupport FORMAT_FIELD_2 = new ComponentSearchField("format_field_2");
+
+  public static final SearchFieldSupport FORMAT_FIELD_3 = new ComponentSearchField("format_field_3");
+
   public ComponentSearchField(final String columnName) {
     super(TABLE, columnName);
   }

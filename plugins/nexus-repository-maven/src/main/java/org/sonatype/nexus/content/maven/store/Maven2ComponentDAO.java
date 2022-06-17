@@ -71,6 +71,20 @@ public interface Maven2ComponentDAO
                                                  @Param("releaseVersion") final String releaseVersion);
 
   /**
+   * Retrieve known base versions for a provided GA.
+   *
+   * @param repositoryId the repository containing the components
+   * @param namespace    the namespace for the components
+   * @param name         the name for the components
+   *
+   * @return a unique set of base versions
+   */
+  Set<String> getBaseVersions(
+      @Param("repositoryId") int repositoryId,
+      @Param("namespace") String namespace,
+      @Param("name") String name);
+
+  /**
    * Find snapshots to delete for which a release version exists
    *
    * @param repositoryId the repository to select from

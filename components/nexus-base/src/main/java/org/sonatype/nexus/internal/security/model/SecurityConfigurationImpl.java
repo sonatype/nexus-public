@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -113,6 +114,15 @@ public class SecurityConfigurationImpl
     return privilegeDAO().read(id).orElse(null);
   }
 
+  @Nullable
+  @Transactional
+  @Override
+  public CPrivilege getPrivilegeByName(final String name) {
+    return Optional.of(name)
+        .flatMap(n -> privilegeDAO().readByName(n))
+        .orElse(null);
+  }
+
   @Transactional
   @Override
   public List<CPrivilege> getPrivileges(final Set<String> ids) {
@@ -155,6 +165,18 @@ public class SecurityConfigurationImpl
 
   @Transactional
   @Override
+  public void updatePrivilegeByName(final CPrivilege privilege) {
+    Optional.of(privilege)
+        .map(p -> {
+          p.setVersion(p.getVersion() + 1);
+          return p;
+        })
+        .filter(p -> privilegeDAO().updateByName(convert(p)))
+        .orElseThrow(() -> new NoSuchPrivilegeException(privilege.getName()));
+  }
+
+  @Transactional
+  @Override
   public boolean removePrivilege(final String id) {
     checkNotNull(id);
 
@@ -162,6 +184,15 @@ public class SecurityConfigurationImpl
       throw new NoSuchPrivilegeException(id);
     }
     return true;
+  }
+
+  @Transactional
+  @Override
+  public boolean removePrivilegeByName(final String name) {
+    return Optional.of(name)
+        .map(n -> privilegeDAO().deleteByName(n))
+        .filter(Boolean.TRUE::equals)
+        .orElseThrow( () -> new NoSuchPrivilegeException(name));
   }
 
   // ROLES
@@ -263,7 +294,7 @@ public class SecurityConfigurationImpl
 
   @Transactional
   @Override
-  public void addRoleMapping(final String userId, final Set<String> roles, String source){
+  public void addRoleMapping(final String userId, final Set<String> roles, String source) {
     CUserRoleMappingData mapping = new CUserRoleMappingData();
     mapping.setUserId(userId);
     mapping.setSource(source);

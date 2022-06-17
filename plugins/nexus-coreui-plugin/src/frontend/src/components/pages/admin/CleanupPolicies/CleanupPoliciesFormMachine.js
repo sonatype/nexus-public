@@ -28,20 +28,6 @@ function isEdit({name}) {
   return Utils.notBlank(name);
 }
 
-function validateNameField(field) {
-  if (Utils.isBlank(field)) {
-    return UIStrings.ERROR.FIELD_REQUIRED;
-  }
-  else if (field.length > 255) {
-    return UIStrings.ERROR.MAX_CHARS(255);
-  }
-  else if (!Utils.isName(field)) {
-    return UIStrings.ERROR.INVALID_NAME_CHARS;
-  }
-
-  return null;
-}
-
 function validateCriteriaNumberField(enabled, field) {
   if (enabled) {
     if (Utils.isBlank(field)) {
@@ -113,7 +99,7 @@ export default Utils.buildFormMachine({
   actions: {
     validate: assign({
       validationErrors: ({data, criteriaLastDownloadedEnabled, criteriaLastBlobUpdatedEnabled, criteriaReleaseTypeEnabled, criteriaAssetRegexEnabled}) => ({
-        name: validateNameField(data.name),
+        name: ValidationUtils.validateName(data.name),
         format: Utils.isBlank(data.format) ? UIStrings.ERROR.FIELD_REQUIRED : null,
         criteriaLastDownloaded: validateCriteriaNumberField(criteriaLastDownloadedEnabled, data.criteriaLastDownloaded),
         criteriaLastBlobUpdated: validateCriteriaNumberField(criteriaLastBlobUpdatedEnabled, data.criteriaLastBlobUpdated),

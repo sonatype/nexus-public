@@ -39,15 +39,6 @@ import static java.util.stream.Stream.concat;
 public class RepositoryCombobox
     extends Combobox<String>
 {
-
-  public static final String REGARDLESS_VIEW_PERMISSIONS = "regardlessViewPermissions";
-
-  public static final String FACET = "facet";
-
-  public static final String CONTENT_CLASS = "contentClass";
-
-  public static final String ALL_REPOS_ENTRY = "allReposEntry";
-
   private List<String> includingTypes;
 
   private List<String> excludingTypes;
@@ -150,14 +141,7 @@ public class RepositoryCombobox
    * Repository will be present if is of any of specified formats.
    */
   public RepositoryCombobox includingAnyOfFacets(final Class<?>... facets) {
-    this.includingFacets = Lists.transform(Arrays.asList(facets), new Function<Class<?>, String>()
-    {
-      @Nullable
-      @Override
-      public String apply(final Class<?> input) {
-        return input.getName();
-      }
-    });
+    this.includingFacets = Lists.transform(Arrays.asList(facets), Class::getName);
     return this;
   }
 

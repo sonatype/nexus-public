@@ -436,6 +436,16 @@ export default {
           </NxTextLink>.
         </>,
       },
+      HEALTH_CHECK: {
+        LOADING: 'Loading...',
+        ANALYZING: 'Analyzing...',
+        ANALYZE_BUTTON: 'Analyze',
+        LOADING_ERROR: 'Loading Error',
+        ANALYZE_THIS: (name) => `Analyze '${name}' repository`,
+        ANALYZE_ALL: 'Analyze all repositories',
+        MODAL_CONTENT: (name) => `Do you want to analyze the repository ${name} and others for secuirty vulnerabilities and licence issues?`,
+        MODAL_HEADER: 'Analyze Repository'
+      }
     },
 
     EDITOR: {
@@ -487,6 +497,16 @@ export default {
       PROXY_CAPTION: 'Proxy Settings',
       REMOTE_STORAGE_LABEL: 'Remote Storage',
       REMOTE_STORAGE_SUBLABEL: 'Location of the remote repository to proxy',
+      PREEMPTIVE_PULL_LABEL: 'Pre-emptive Pull',
+      PREEMPTIVE_PULL_SUBLABEL: 'If enabled, the remote storage will be monitored for changes, and new components will be replicated automatically, and cached locally',
+      ASSET_NAME_LABEL: 'Asset Name Matcher',
+      ASSET_NAME_DESCRIPTION: <>
+        This field allows you to use a RegEx to match search for specific components to help define scope.
+        For more information check out our{' '}
+        <NxTextLink external href="http://links.sonatype.com/products/nxrm3/docs/pull-replication/asset-name-matcher">
+          documentation for format specific options
+        </NxTextLink>.
+      </>,
       URL_PLACEHOLDER: 'Enter a URL',
       BLOCKING_LABEL: 'Blocking',
       BLOCK_DESCR: 'Block outbound connections to the repository',
@@ -587,7 +607,23 @@ export default {
           scaling documentation
         </NxTextLink>
         .
-      </>
+      </>,
+      NUGET: {
+        PROTOCOL_VERSION: {
+          LABEL: 'Protocol Version',
+          V2_RADIO_DESCR: 'NuGet V2',
+          V3_RADIO_DESCR: 'NuGet V3'
+        },
+        METADATA_QUERY_CACHE_AGE: {
+          LABEL: 'Metadata Query Cache Age',
+          SUBLABEL: 'How long to cache query results from the proxied repository (in seconds)'
+        },
+        GROUP_VERSION: {
+          LABEL: 'NuGet Type',
+          SUBLABEL: 'Restrict proxy repositories to one NuGet version',
+        }
+      }
+
     }
   },
 
@@ -972,8 +1008,8 @@ This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 
     },
 
     TRUST_STORE: {
-      label: 'Use the Nexus Trust Store',
-      sublabel: 'Use certificate connected to the Nexus Truststore'
+      label: 'Use the Nexus Repository Truststore',
+      sublabel: 'Use certificate connected to the Nexus Repository Truststore'
     },
 
     CERTIFICATE: 'View Certificate',

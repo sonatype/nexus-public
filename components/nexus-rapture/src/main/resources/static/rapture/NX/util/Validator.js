@@ -69,6 +69,12 @@ Ext.define('NX.util.Validator', {
   nxLeadingAndTrailingWhiteSpaceRegex : /^[ \s]+|[ \s]+$/,
 
   /**
+   * Regular expression to validate docker subdomain
+   * @private
+   */
+  nxSubdomainRegex : /^[a-zA-Z](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?$/,
+
+  /**
    * @public
    * @param vtype {object}
    */
@@ -100,7 +106,11 @@ Ext.define('NX.util.Validator', {
         'nx-url': function(val) {
           return NX.util.Validator.nxUrlRegex.test(val);
         },
-        'nx-urlText': NX.I18n.get('Util_Validator_Url')
+        'nx-urlText': NX.I18n.get('Util_Validator_Url'),
+        'nx-subdomain': function(val) {
+          return NX.util.Validator.nxSubdomainRegex.test(val);
+        },
+        'nx-subdomainText': NX.I18n.get('Util_Validator_Subdomain_Text'),
       }
     ];
 

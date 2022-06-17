@@ -38,20 +38,20 @@ public interface PrivilegeApiResourceDoc
   })
   Collection<ApiPrivilege> getPrivileges();
 
-  @ApiOperation("Retrieve a privilege by id.")
+  @ApiOperation("Retrieve a privilege by name.")
   @ApiResponses(value = {
       @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
       @ApiResponse(code = 404, message = NexusSecurityApiConstants.PRIVILEGE_NOT_FOUND)
   })
-  ApiPrivilege getPrivilege(@ApiParam("The id of the privilege to retrieve.") @NotNull final String id);
+  ApiPrivilege getPrivilege(@ApiParam("The name of the privilege to retrieve.") @NotNull final String privilegeName);
 
-  @ApiOperation("Delete a privilege by id.")
+  @ApiOperation("Delete a privilege by name.")
   @ApiResponses(value = {
       @ApiResponse(code = 400, message = NexusSecurityApiConstants.PRIVILEGE_READ_ONLY),
       @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
       @ApiResponse(code = 404, message = NexusSecurityApiConstants.PRIVILEGE_NOT_FOUND)
   })
-  void deletePrivilege(@ApiParam("The id of the privilege to delete.") @NotNull final String id);
+  void deletePrivilege(@ApiParam("The name of the privilege to delete.") @NotNull final String privilegeName);
 
   @ApiOperation("Create an application type privilege.")
   @ApiResponses(value = {
@@ -67,7 +67,7 @@ public interface PrivilegeApiResourceDoc
       @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
       @ApiResponse(code = 404, message = NexusSecurityApiConstants.PRIVILEGE_NOT_FOUND)
   })
-  void updatePrivilege(@ApiParam("The id of the privilege to update.") @NotNull final String id,
+  void updatePrivilege(@ApiParam("The name of the privilege to update.") @NotNull final String privilegeName,
                        @ApiParam(
                            "The privilege to update.") @NotNull @Valid final ApiPrivilegeApplicationRequest privilege);
 
@@ -85,7 +85,7 @@ public interface PrivilegeApiResourceDoc
       @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
       @ApiResponse(code = 404, message = NexusSecurityApiConstants.PRIVILEGE_NOT_FOUND)
   })
-  void updatePrivilege(@ApiParam("The id of the privilege to update.") @NotNull final String id,
+  void updatePrivilege(@ApiParam("The name of the privilege to update.") @NotNull final String privilegeName,
                        @ApiParam(
                            "The privilege to update.") @NotNull @Valid final ApiPrivilegeWildcardRequest privilege);
 }

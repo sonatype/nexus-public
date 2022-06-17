@@ -221,6 +221,20 @@ public class AuthorizationManagerTest
   }
 
   @Test
+  public void testGetPrivilegeByName() throws Exception {
+    AuthorizationManager authzManager = this.getAuthorizationManager();
+
+    Privilege priv3 = authzManager.getPrivilegeByName("3-name");
+
+    Assert.assertEquals("3", priv3.getId());
+    Assert.assertEquals("3-name", priv3.getName());
+    Assert.assertEquals("Privilege Three", priv3.getDescription());
+    Assert.assertEquals("method", priv3.getType());
+    Assert.assertEquals("read", priv3.getPrivilegeProperty("method"));
+    Assert.assertEquals("/some/path/", priv3.getPrivilegeProperty("permission"));
+  }
+
+  @Test
   public void testAddPrivilege() throws Exception {
     AuthorizationManager authzManager = this.getAuthorizationManager();
 
@@ -269,7 +283,28 @@ public class AuthorizationManagerTest
   }
 
   @Test
-  public void testDeleteUser() throws Exception {
+  public void testUpdatePrivilegeByName() throws Exception {
+    AuthorizationManager authzManager = this.getAuthorizationManager();
+
+    Privilege privilege = authzManager.getPrivilegeByName("3-name");
+    privilege.setDescription("updated");
+
+    authzManager.updatePrivilegeByName(privilege);
+
+    CPrivilege persistenPrivilege = this.getConfigurationManager().readPrivilegeByName(privilege.getName());
+
+    Assert.assertEquals(privilege.getId(), persistenPrivilege.getId());
+    Assert.assertEquals(privilege.getName(), persistenPrivilege.getName());
+    Assert.assertEquals(privilege.getDescription(), persistenPrivilege.getDescription());
+    Assert.assertEquals(privilege.getType(), persistenPrivilege.getType());
+
+    Assert.assertEquals("read", persistenPrivilege.getProperty("method"));
+    Assert.assertEquals("/some/path/", persistenPrivilege.getProperty("permission"));
+    Assert.assertEquals(2, persistenPrivilege.getProperties().size());
+  }
+
+  @Test
+  public void testDeletePrivilegeUser() throws Exception {
     AuthorizationManager authzManager = this.getAuthorizationManager();
     try {
       authzManager.deletePrivilege("INVALID-PRIVILEGENAME");
@@ -301,6 +336,21 @@ public class AuthorizationManagerTest
 
     try {
       this.getConfigurationManager().readPrivilege("2");
+      Assert.fail("Expected NoSuchPrivilegeException");
+    }
+    catch (NoSuchPrivilegeException e) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testDeletePrivilegeByName() throws Exception {
+    AuthorizationManager authzManager = this.getAuthorizationManager();
+
+    authzManager.deletePrivilegeByName("3-name");
+
+    try {
+      this.getConfigurationManager().readPrivilegeByName("3-name");
       Assert.fail("Expected NoSuchPrivilegeException");
     }
     catch (NoSuchPrivilegeException e) {

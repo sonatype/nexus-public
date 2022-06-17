@@ -193,6 +193,10 @@ Ext.define('NX.State', {
     return this.getValue('receiving');
   },
 
+  isReplicationEnabled: function() {
+    return this.getValue('replicationFeatureEnabled');
+  },
+
   /**
    * Return whether or not the NXRM instance is a HA-C
    */

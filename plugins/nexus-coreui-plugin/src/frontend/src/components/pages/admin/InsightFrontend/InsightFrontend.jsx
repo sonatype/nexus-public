@@ -137,7 +137,7 @@ export default function InsightFrontend() {
   }
 
   return (
-      <Page>
+      <Page className="insight-frontend-root">
         <PageHeader>
           <PageTitle icon={faBinoculars} {...UIStrings.LOG4J_VISUALIZER.MENU} />
         </PageHeader>
@@ -159,7 +159,7 @@ export default function InsightFrontend() {
                       Organization Insights
                     </h1>
                     <p className="nx-page-title__sub-title">
-                      Total Downloads Affected by Log4shell : <strong>{totalDownloads}</strong>
+                      Total Downloads Affected by Log4shell : <strong className="total-downloads-affected-by-log4j-shell">{totalDownloads}</strong>
                     </p>
                   </hgroup>
                   <div className="nx-page-title__description insight-frontend-title">

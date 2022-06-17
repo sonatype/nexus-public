@@ -30,11 +30,11 @@ const {EDITOR} = UIStrings.REPOSITORIES;
 export const ROUTING_RULES_URL = '/service/rest/internal/ui/routing-rules';
 
 export default function GenericOptionsConfiguration({parentMachine}) {
-  const {current, retry, isLoading} = useSimpleMachine(
-    'GenericOptionsConfigurationMachine',
-    ROUTING_RULES_URL,
-    true
-  );
+  const {current, retry, isLoading} = useSimpleMachine({
+    id: 'GenericOptionsConfigurationMachine',
+    url: ROUTING_RULES_URL,
+    loadOnMount: true
+  });
 
   const [currentParent, sendParent] = parentMachine;
 

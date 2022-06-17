@@ -1003,7 +1003,7 @@
   resolved "https://registry.yarnpkg.com/@babel/runtime-corejs3/-/runtime-corejs3-7.18.0.tgz#eed03023c5226b1e2b2ba32b8b6af5cb0518a6c7"
   integrity sha512-G5FaGZOWORq9zthDjIrjib5XlcddeqLbIiDO3YQsut6j7aGf76xn0umUC/pA6+nApk3hQJF4JzLzg5PCl6ewJg==
   dependencies:
-    core-js-pure "^3.20.2"
+    core-js-pure "^3.22.8"
     regenerator-runtime "^0.13.4"
 
 "@babel/runtime@=7.17.2":
@@ -3167,8 +3167,8 @@ core-js-compat@^3.20.2, core-js-compat@^3.21.0:
     browserslist "^4.20.3"
     semver "7.0.0"
 
-core-js-pure@^3.20.2:
-  version "3.22.5"
+core-js-pure@^3.22.8:
+  version "3.22.8"
   resolved "https://registry.yarnpkg.com/core-js-pure/-/core-js-pure-3.22.5.tgz#bdee0ed2f9b78f2862cda4338a07b13a49b6c9a9"
   integrity sha512-8xo9R00iYD7TcV7OrC98GwxiUEAabVWO3dix+uyWjnYrx9fyASLlIX+f/3p5dW5qByaP2bcZ8X/T47s55et/tA==
 

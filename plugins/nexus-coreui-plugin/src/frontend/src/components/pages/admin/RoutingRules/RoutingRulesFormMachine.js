@@ -17,7 +17,7 @@
 import {assign} from 'xstate';
 import Axios from 'axios';
 
-import {ExtJS, Utils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, Utils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 
@@ -145,13 +145,15 @@ export default Utils.buildFormMachine({
       path: (_, {path}) => path
     }),
     validate: assign(({data}) => {
-      const validationErrors = {};
-      if (Utils.isBlank(data.name)) {
-        validationErrors.name = UIStrings.ERROR.FIELD_REQUIRED;
-      }
+      const validationErrors = {
+        name: ValidationUtils.validateName(data.name)
+      };
 
-      if (data.name === "None") {
-        validationErrors.name = UIStrings.ROUTING_RULES.FORM.NAME_IS_NONE_ERROR
+      // Ignores case sensitive when validating "None".
+      const isNone = data.name.localeCompare("None", undefined, { sensitivity: 'accent' }) === 0;
+
+      if (isNone) {
+        validationErrors.name = UIStrings.ROUTING_RULES.FORM.NAME_IS_NONE_ERROR;
       }
 
       data.matchers.forEach((matcher, index) => {

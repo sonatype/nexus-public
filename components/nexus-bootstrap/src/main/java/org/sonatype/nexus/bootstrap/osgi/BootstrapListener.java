@@ -44,6 +44,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENA
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_DEVELOPER;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_SEARCH_ENABLED;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_TABLE_SEARCH;
 import static org.sonatype.nexus.common.app.FeatureFlags.ELASTIC_SEARCH_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
@@ -252,7 +253,8 @@ public class BootstrapListener
 
     // datastore search mode enables datastore user mode
     // disables elastic search mode
-    if (parseBoolean(properties.getProperty(DATASTORE_SEARCH_ENABLED, "false"))) {
+    if (parseBoolean(properties.getProperty(DATASTORE_SEARCH_ENABLED, "false"))
+        || parseBoolean(properties.getProperty(DATASTORE_TABLE_SEARCH, "false"))) {
       properties.setProperty(DATASTORE_ENABLED, "true");
       properties.setProperty(ELASTIC_SEARCH_ENABLED, "false");
     }
@@ -260,6 +262,7 @@ public class BootstrapListener
     // elastic search disables datastore search mode
     if (parseBoolean(properties.getProperty(ELASTIC_SEARCH_ENABLED, "false"))) {
       properties.setProperty(DATASTORE_SEARCH_ENABLED, "false");
+      properties.setProperty(DATASTORE_TABLE_SEARCH, "false");
     }
 
     if (parseBoolean(properties.getProperty(DATASTORE_ENABLED, "false"))) {

@@ -267,6 +267,11 @@ public class AuthorizationManagerImpl
   }
 
   @Override
+  public Privilege getPrivilegeByName(final String privilegeName) throws NoSuchPrivilegeException {
+    return this.convert(this.configuration.readPrivilegeByName(privilegeName));
+  }
+
+  @Override
   public List<Privilege> getPrivileges(final Set<String> privilegeIds) {
     List<CPrivilege> privileges = configuration.readPrivileges(privilegeIds);
     return privileges.stream().map(this::convert).collect(Collectors.toList());
@@ -304,6 +309,21 @@ public class AuthorizationManagerImpl
   }
 
   @Override
+  public Privilege updatePrivilegeByName(final Privilege privilege) throws NoSuchPrivilegeException {
+    final CPrivilege toUpdate = this.convert(privilege);
+
+    configuration.updatePrivilegeByName(toUpdate);
+
+    firePrivilegeUpdatedEvent(privilege);
+    firePrivilegeConfigurationDistributedEvent(privilege.getId(), UPDATED);
+
+    // notify any listeners that the config changed
+    fireAuthorizationChangedEvent();
+
+    return this.convert(toUpdate);
+  }
+
+  @Override
   public void deletePrivilege(final String privilegeId) throws NoSuchPrivilegeException {
     Privilege privilege = getPrivilege(privilegeId);
     configuration.deletePrivilege(privilegeId);
@@ -311,6 +331,19 @@ public class AuthorizationManagerImpl
     log.info("Removed privilege {}", privilege.getName());
     firePrivilegeDeletedEvent(privilege);
     firePrivilegeConfigurationDistributedEvent(privilegeId, DELETED);
+
+    // notify any listeners that the config changed
+    fireAuthorizationChangedEvent();
+  }
+
+  @Override
+  public void deletePrivilegeByName(final String privilegeName) throws NoSuchPrivilegeException {
+    Privilege privilege = getPrivilegeByName(privilegeName);
+    configuration.deletePrivilegeByName(privilegeName);
+
+    log.info("Removed privilege by name {}", privilegeName);
+    firePrivilegeDeletedEvent(privilege);
+    firePrivilegeConfigurationDistributedEvent(privilegeName, DELETED);
 
     // notify any listeners that the config changed
     fireAuthorizationChangedEvent();

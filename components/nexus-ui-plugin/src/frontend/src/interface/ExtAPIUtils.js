@@ -61,12 +61,13 @@ export default class ExtAPIUtils {
         }),
 
         setError: assign({
-          error: (_, event) => event?.message || UIStrings.ERROR.UNKNOWN
+          error: (_, event) => event?.data?.message || UIStrings.ERROR.UNKNOWN
         })
       },
       services: {
         fetch: async (_, {data = null}) => {
           const response = await this.extAPIRequest(action, method, data);
+          this.checkForError(response);
           return this.extractResult(response, defaultResult);
         }
       }
@@ -83,6 +84,16 @@ export default class ExtAPIUtils {
   static extractResult(response, defaultResult) {
     const extDirectResponse = response.data;
     return extDirectResponse.result.data || defaultResult;
+  }
+
+  static checkForError(response) {
+    const {data} = response;
+    if (data.type === 'exception') {
+      throw Error(data.message);
+    }
+    if (!data.result.success) {
+      throw Error(data.result.message);
+    }
   }
 
   static createRequestBody(action, method, data = null, tid = 1) {

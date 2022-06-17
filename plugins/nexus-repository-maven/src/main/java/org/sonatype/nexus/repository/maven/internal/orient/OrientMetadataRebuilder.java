@@ -68,6 +68,7 @@ import static java.util.stream.StreamSupport.stream;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_PACKAGING;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_POM_NAME;
+import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.getPluginPrefix;
 import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.metadataPath;
 import static org.sonatype.nexus.repository.maven.internal.orient.MavenFacetUtils.findAsset;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;
@@ -130,7 +131,6 @@ public class OrientMetadataRebuilder
         timeoutSeconds, new OrientMetadataUpdater(update, repository)).rebuildMetadata();
   }
 
-  @Override
   public boolean refreshInTransaction(
       final Repository repository,
       final boolean update,
@@ -432,8 +432,9 @@ public class OrientMetadataRebuilder
           final String packaging = component.formatAttributes().get(P_PACKAGING, String.class);
           log.debug("POM packaging: {}", packaging);
           if ("maven-plugin".equals(packaging)) {
-            metadataBuilder.addPlugin(getPluginPrefix(mavenPath.locateMainArtifact("jar")), artifactId,
-                component.formatAttributes().get(P_POM_NAME, String.class));
+            MavenPath mainArtifact = mavenPath.locateMainArtifact("jar");
+            metadataBuilder.addPlugin(getPluginPrefix(mainArtifact, () -> get(mainArtifact).openInputStream()),
+                artifactId, component.formatAttributes().get(P_POM_NAME, String.class));
           }
         }
       }

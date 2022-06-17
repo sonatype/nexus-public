@@ -105,7 +105,7 @@ public class PrivilegeApiResourceTest
     Privilege priv = createPrivilege("application", "priv", "privdesc", true, DOMAIN_KEY, "testDomain", ACTIONS_KEY,
         "create,update");
 
-    when(authorizationManager.getPrivilege("priv")).thenReturn(priv);
+    when(authorizationManager.getPrivilegeByName("priv")).thenReturn(priv);
 
     ApiPrivilege apiPrivilege = underTest.getPrivilege("priv");
 
@@ -117,7 +117,7 @@ public class PrivilegeApiResourceTest
   public void testGetPrivilege_wildcard() {
     Privilege priv = createPrivilege("wildcard", "priv", "privdesc", false, PATTERN_KEY, "a:pattern");
 
-    when(authorizationManager.getPrivilege("priv")).thenReturn(priv);
+    when(authorizationManager.getPrivilegeByName("priv")).thenReturn(priv);
 
     ApiPrivilege apiPrivilege = underTest.getPrivilege("priv");
 
@@ -126,7 +126,7 @@ public class PrivilegeApiResourceTest
 
   @Test
   public void testGetPrivilege_notFound() {
-    when(authorizationManager.getPrivilege("priv")).thenThrow(new NoSuchPrivilegeException("priv"));
+    when(authorizationManager.getPrivilegeByName("priv")).thenThrow(new NoSuchPrivilegeException("priv"));
 
     try {
       underTest.getPrivilege("priv");
@@ -142,16 +142,16 @@ public class PrivilegeApiResourceTest
   @Test
   public void testDeletePrivilege() {
     Privilege priv = createPrivilege("wildcard", "priv", "privdesc", false, PATTERN_KEY, "a:pattern");
-    when(authorizationManager.getPrivilege("priv")).thenReturn(priv);
+    when(authorizationManager.getPrivilegeByName("priv")).thenReturn(priv);
 
     underTest.deletePrivilege("priv");
 
-    verify(authorizationManager).deletePrivilege("priv");
+    verify(authorizationManager).deletePrivilegeByName("priv");
   }
 
   @Test
   public void testDeletePrivilege_readOnly() {
-    doThrow(new ReadonlyPrivilegeException("priv")).when(authorizationManager).deletePrivilege("priv");
+    doThrow(new ReadonlyPrivilegeException("priv")).when(authorizationManager).deletePrivilegeByName("priv");
 
     try {
       underTest.deletePrivilege("priv");
@@ -167,7 +167,7 @@ public class PrivilegeApiResourceTest
 
   @Test
   public void testDeletePrivilege_notFound() {
-    doThrow(new NoSuchPrivilegeException("priv")).when(authorizationManager).deletePrivilege("priv");
+    doThrow(new NoSuchPrivilegeException("priv")).when(authorizationManager).deletePrivilegeByName("priv");
 
     try {
       underTest.deletePrivilege("priv");
@@ -263,7 +263,7 @@ public class PrivilegeApiResourceTest
   public void testUpdatePrivilege_application() {
     Privilege priv = createPrivilege("application", "priv", "privdesc", false, DOMAIN_KEY, "testDomain", ACTIONS_KEY,
         "*");
-    when(authorizationManager.getPrivilege("priv")).thenReturn(priv);
+    when(authorizationManager.getPrivilegeByName("priv")).thenReturn(priv);
 
     ApiPrivilegeApplicationRequest apiPrivilege = new ApiPrivilegeApplicationRequest("priv", "newdescription",
         "newdomain", Arrays
@@ -273,7 +273,7 @@ public class PrivilegeApiResourceTest
     underTest.updatePrivilege("priv", apiPrivilege);
 
     ArgumentCaptor<Privilege> argument = ArgumentCaptor.forClass(Privilege.class);
-    verify(authorizationManager).updatePrivilege(argument.capture());
+    verify(authorizationManager).updatePrivilegeByName(argument.capture());
     assertPrivilege(argument.getValue(), "priv", "newdescription", DOMAIN_KEY, "newdomain", ACTIONS_KEY,
         "create,update,read,delete,associate,disassociate");
   }
@@ -281,20 +281,20 @@ public class PrivilegeApiResourceTest
   @Test
   public void testUpdatePrivilege_wildcard() {
     Privilege priv = createPrivilege("wildcard", "priv", "privdesc", false, PATTERN_KEY, "a:pattern");
-    when(authorizationManager.getPrivilege("priv")).thenReturn(priv);
+    when(authorizationManager.getPrivilegeByName("priv")).thenReturn(priv);
 
     ApiPrivilegeWildcardRequest apiPrivilege = new ApiPrivilegeWildcardRequest("priv", "newdescription", "a:new:pattern");
 
     underTest.updatePrivilege("priv", apiPrivilege);
 
     ArgumentCaptor<Privilege> argument = ArgumentCaptor.forClass(Privilege.class);
-    verify(authorizationManager).updatePrivilege(argument.capture());
+    verify(authorizationManager).updatePrivilegeByName(argument.capture());
     assertPrivilege(argument.getValue(), "priv", "newdescription", PATTERN_KEY, "a:new:pattern");
   }
 
   @Test
   public void testUpdatePrivilege_notFound() {
-    when(authorizationManager.getPrivilege("priv")).thenThrow(new NoSuchPrivilegeException("priv"));
+    when(authorizationManager.getPrivilegeByName("priv")).thenThrow(new NoSuchPrivilegeException("priv"));
 
     ApiPrivilegeWildcardRequest apiPrivilege = new ApiPrivilegeWildcardRequest("priv", "description", "pattern");
 
@@ -312,9 +312,9 @@ public class PrivilegeApiResourceTest
   @Test
   public void testUpdatePrivilege_readOnly() {
     Privilege priv = createPrivilege("wildcard", "priv", "privdesc", true, PATTERN_KEY, "a:pattern");
-    when(authorizationManager.getPrivilege("priv")).thenReturn(priv);
+    when(authorizationManager.getPrivilegeByName("priv")).thenReturn(priv);
 
-    when(authorizationManager.updatePrivilege(priv)).thenThrow(new ReadonlyPrivilegeException("priv"));
+    when(authorizationManager.updatePrivilegeByName(priv)).thenThrow(new ReadonlyPrivilegeException("priv"));
 
     ApiPrivilegeWildcardRequest apiPrivilege = new ApiPrivilegeWildcardRequest("priv", "privdesc", "new_pattern");
 

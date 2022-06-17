@@ -18,12 +18,18 @@ import Axios from 'axios';
 import {assign, Machine} from 'xstate';
 import {useMachine} from '@xstate/react';
 
-export default function useSimpleMachine(id, url, loadOnMount) {
-  const machine = getSimpleMachine(id, url, loadOnMount);
-  const [current, send] = useMachine(machine, {devTools: true});
+export default function useSimpleMachine({
+  id, 
+  url, 
+  loadOnMount, 
+  idleEvents = {}, 
+  options = {}
+}) {
+  const machine = getSimpleMachine(id, url, loadOnMount, idleEvents);
 
-  const load = (eventPayload = {}) =>
-    send({type: 'LOAD_DATA', ...eventPayload});
+  const [current, send] = useMachine(machine, {...options, devTools: true});
+
+  const load = (eventPayload = {}) => send({type: 'LOAD_DATA', ...eventPayload});
 
   const retry = () => send('RETRY');
 
@@ -32,7 +38,7 @@ export default function useSimpleMachine(id, url, loadOnMount) {
   return {current, send, load, retry, isLoading};
 }
 
-const getSimpleMachine = (id, url, loadOnMount) =>
+const getSimpleMachine = (id, url, loadOnMount, idleEvents) =>
   Machine(
     {
       id,
@@ -42,7 +48,8 @@ const getSimpleMachine = (id, url, loadOnMount) =>
           on: {
             LOAD_DATA: {
               target: 'loading'
-            }
+            },
+            ...idleEvents
           }
         },
         loading: {
@@ -83,8 +90,7 @@ const getSimpleMachine = (id, url, loadOnMount) =>
         })
       },
       services: {
-        fetchData: (_, event) =>
-          Axios.get(typeof url === 'function' ? url(event) : url)
+        fetchData: (_, event) => Axios.get(typeof url === 'function' ? url(event) : url)
       }
     }
   );

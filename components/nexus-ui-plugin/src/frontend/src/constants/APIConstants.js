@@ -32,5 +32,18 @@ export default {
         READ_NAMES: 'readNames',
       },
     },
+    HEALTH_CHECK: {
+      ACTION: 'healthcheck_Status',
+      METHODS: {
+        READ: 'read',
+        UPDATE: 'update',
+        ENABLE_ALL: 'enableAll'
+      }
+    }
   },
+  REST_INTERNAL: {
+    BASE_URL: 'service/rest/internal/ui/',
+    get REPOSITORIES() { return `${this.BASE_URL}repositories/`},
+    get REPOSITORIES_DETAILS() {return `${this.REPOSITORIES}details`}
+  }
 };

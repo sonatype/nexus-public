@@ -174,7 +174,7 @@ public class MetadataBuilder
         }));
   }
 
-  private void addBaseVersion(final String baseVersion) {
+  public void addBaseVersion(final String baseVersion) {
     checkNotNull(baseVersion);
     try {
       if (baseVersions.add(versionScheme.parseVersion(baseVersion))) {

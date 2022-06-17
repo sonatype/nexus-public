@@ -69,7 +69,7 @@ window.plugins.push({
       path: '/Repository/Blobstores',
       ...UIStrings.BLOB_STORES.MENU,
       view: BlobStores,
-      iconCls: 'x-fa fa-server',
+      iconCls: 'x-fa fa-hdd',
       visibility: {
         permissions: ['nexus:blobstores:read']
       }
@@ -161,7 +161,7 @@ window.plugins.push({
       path: '/Support/SystemInformation',
       ...UIStrings.SYSTEM_INFORMATION.MENU,
       view: SystemInformation,
-      iconCls: 'x-fa fa-globe',
+      iconCls: 'x-fa fa-info',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         permissions: ['nexus:atlas:read']
@@ -219,7 +219,11 @@ window.plugins.push({
       iconCls: 'x-fa fa-terminal',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        permissions: ['nexus:logging:read']
+        permissions: ['nexus:logging:read'],
+        featureFlags: [{
+          key: 'log.viewer.enabled',
+          defaultValue: false
+        }],
       }
     },
     {

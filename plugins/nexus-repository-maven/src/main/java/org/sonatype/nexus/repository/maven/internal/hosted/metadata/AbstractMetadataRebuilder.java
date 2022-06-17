@@ -20,8 +20,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -35,16 +33,13 @@ import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.sonatype.nexus.repository.maven.internal.Constants;
 import org.sonatype.nexus.repository.maven.internal.DigestExtractor;
-import org.sonatype.nexus.repository.maven.internal.MavenModels;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
 
 import com.google.common.collect.Sets;
 import com.google.common.hash.HashCode;
-import org.codehaus.plexus.util.xml.Xpp3Dom;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptySet;
 import static java.util.Objects.nonNull;
@@ -399,69 +394,5 @@ public abstract class AbstractMetadataRebuilder
     }
 
     protected abstract Optional<HashCode> getChecksum(final MavenPath mavenPath, final HashType hashType);
-
-    /**
-     * Parses the DOM of a XML.
-     */
-    protected Xpp3Dom parse(final MavenPath mavenPath, final InputStream is) {
-      try {
-        return MavenModels.parseDom(is);
-      }
-      catch (IOException e) {
-        log.warn("Could not parse POM: {} @ {}", repository.getName(), mavenPath.getPath(), e);
-        throw new RuntimeException(e);
-      }
-    }
-
-    /**
-     * Returns the plugin prefix of a Maven plugin, by opening up the plugin JAR, and reading the Maven Plugin
-     * Descriptor. If fails, falls back to mangle artifactId (ie. extract XXX from XXX-maven-plugin or
-     * maven-XXX-plugin).
-     */
-    protected String getPluginPrefix(final MavenPath mavenPath) {
-      // sanity checks: is artifact and extension is "jar", only possibility for maven plugins currently
-      checkArgument(mavenPath.getCoordinates() != null);
-      checkArgument(Objects.equals(mavenPath.getCoordinates().getExtension(), "jar"));
-      String prefix = null;
-      try {
-        final Content jarFile = get(mavenPath);
-        if (jarFile != null) {
-          try (ZipInputStream zip = new ZipInputStream(jarFile.openInputStream())) {
-            ZipEntry entry;
-            while ((entry = zip.getNextEntry()) != null) {
-              if (!entry.isDirectory() && "META-INF/maven/plugin.xml".equals(entry.getName())) {
-                final Xpp3Dom dom = parse(mavenPath, zip);
-                prefix = getChildValue(dom, "goalPrefix", null);
-                break;
-              }
-              zip.closeEntry();
-            }
-          }
-        }
-      }
-      catch (IOException e) {
-        log.warn("Unable to read plugin.xml of {}", mavenPath, e);
-      }
-      if (prefix != null) {
-        return prefix;
-      }
-      if ("maven-plugin-plugin".equals(mavenPath.getCoordinates().getArtifactId())) {
-        return "plugin";
-      }
-      else {
-        return mavenPath.getCoordinates().getArtifactId().replaceAll("-?maven-?", "").replaceAll("-?plugin-?", "");
-      }
-    }
-
-    /**
-     * Helper method to get node's immediate child or default.
-     */
-    protected String getChildValue(final Xpp3Dom doc, final String childName, final String defaultValue) {
-      Xpp3Dom child = doc.getChild(childName);
-      if (child == null) {
-        return defaultValue;
-      }
-      return child.getValue();
-    }
   }
 }

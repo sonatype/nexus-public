@@ -68,9 +68,17 @@ public interface AuthorizationManager
   Set<Privilege> listPrivileges();
 
   /**
-   * Returns a Privilege base on an Id.
+   * Returns a Privilege based on its id.
    */
   Privilege getPrivilege(String privilegeId) throws NoSuchPrivilegeException;
+
+  /**
+   * Returns a Privilege based on its name
+   * @param privilegeName the name of the privilege to be queried
+   * @return a {@link Privilege} object if present
+   * @throws NoSuchPrivilegeException if there is no privilege with such name
+   */
+  Privilege getPrivilegeByName(String privilegeName) throws NoSuchPrivilegeException;
 
   /**
    * Returns Privileges base on Ids.
@@ -88,9 +96,24 @@ public interface AuthorizationManager
   Privilege updatePrivilege(Privilege privilege) throws NoSuchPrivilegeException;
 
   /**
+   *  Updates a Privilege by its name in this AuthorizationManager
+   * @param privilege the privilege to be updated
+   * @return a {@link Privilege} object if updated successfully
+   * @throws NoSuchPrivilegeException if there is no privilege with the name sent on the input parameter
+   */
+  Privilege updatePrivilegeByName(Privilege privilege) throws NoSuchPrivilegeException;
+
+  /**
    * Removes a Privilege in this AuthorizationManager.
    */
   void deletePrivilege(String privilegeId) throws NoSuchPrivilegeException;
+
+  /**
+   * Removes a Privilege in this AuthorizationManager.
+   * @param privilegeName the name of the privilege to be deleted
+   * @throws NoSuchPrivilegeException if there is no privilege with such name
+   */
+  void deletePrivilegeByName(String privilegeName) throws NoSuchPrivilegeException;
 
   default String getRealmName() {
     return null;

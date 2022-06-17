@@ -95,4 +95,11 @@ public class OrientAsyncHelperTest
     underTest.end();
     assertThat(queue.poll(), is(OrientAsyncHelper.SENTINEL));
   }
+
+  @Test
+  public void testCustomOrientQueryTimeoutApplied() {
+    System.getProperties().setProperty("nexus.orient.query.timeout.seconds", "220");
+    assertThat(OrientAsyncHelper.queryTimeout, is(220L));
+  }
+
 }

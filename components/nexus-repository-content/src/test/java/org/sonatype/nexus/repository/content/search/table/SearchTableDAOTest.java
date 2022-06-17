@@ -47,6 +47,7 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA512;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
+import static org.sonatype.nexus.repository.rest.sql.ComponentSearchField.FORMAT_FIELD_1;
 import static org.sonatype.nexus.repository.rest.sql.ComponentSearchField.NAME;
 
 /**
@@ -198,8 +199,30 @@ public class SearchTableDAOTest
   @Test
   public void testUpdateKind() {
     SearchTableData tableData = tableRecords.get(0);
-    searchDAO.delete(tableData.getRepositoryId(), tableData.getComponentId(), tableData.getAssetId(), format);
-    int count = searchDAO.count(null, null);
+    searchDAO.updateKind(tableData.getRepositoryId(), tableData.getComponentId(), format, "customKind");
+    SqlSearchQueryConditionBuilder queryConditionBuilder = new SqlSearchQueryConditionBuilder();
+    SqlSearchQueryCondition queryCondition = queryConditionBuilder.condition("component_kind", "customKind");
+    Map<String, String> values = queryCondition.getValues();
+
+    String conditionFormat = queryCondition.getSqlConditionFormat();
+
+    int count = searchDAO.count(conditionFormat, values);
+    assertThat(count, is(1));
+  }
+
+  @Test
+  public void testUpdateFormatFields() {
+    SearchTableData tableData = tableRecords.get(0);
+    searchDAO.updateFormatFields(tableData.getRepositoryId(), tableData.getComponentId(), tableData.getAssetId(),
+        format, "customField1", "customField2", "customField3");
+    SqlSearchQueryConditionBuilder queryConditionBuilder = new SqlSearchQueryConditionBuilder();
+    SqlSearchQueryCondition queryCondition =
+        queryConditionBuilder.condition(FORMAT_FIELD_1.getColumnName(), "customField1");
+    Map<String, String> values = queryCondition.getValues();
+
+    String conditionFormat = queryCondition.getSqlConditionFormat();
+
+    int count = searchDAO.count(conditionFormat, values);
     assertThat(count, is(1));
   }
 

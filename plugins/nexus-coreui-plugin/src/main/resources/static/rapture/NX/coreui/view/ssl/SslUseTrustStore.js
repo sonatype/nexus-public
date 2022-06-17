@@ -17,7 +17,7 @@
 /*global Ext, NX*/
 
 /**
- * Ssl use Nexus Truststore checkbox.
+ * Ssl use Nexus Repository Truststore checkbox.
  *
  * @since 3.0
  */
