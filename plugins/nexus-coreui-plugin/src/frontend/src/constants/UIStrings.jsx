@@ -622,8 +622,17 @@ export default {
           LABEL: 'NuGet Type',
           SUBLABEL: 'Restrict proxy repositories to one NuGet version',
         }
+      },
+      MESSAGES: {
+        DELETE_ERROR: (name) => `Rpository ${name} cannot be deleted\n`,
+        DELETE_SUCCESS: (name) => `Respository deleted: ${name}`,
+        CONFIRM_DELETE: {
+          TITLE: 'Delete repository',
+          MESSAGE: (name) => name,
+          YES: 'Delete',
+          NO: 'Cancel'
+        }
       }
-
     }
   },
 

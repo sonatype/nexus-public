@@ -21,7 +21,7 @@ import {ListMachineUtils} from '@sonatype/nexus-ui-plugin';
 import {ExtAPIUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
 import {mergeDeepRight} from 'ramda';
 
-const {EXT, REST_INTERNAL} = APIConstants;
+const {EXT, REST: {INTERNAL}} = APIConstants;
 
 export default ListMachineUtils.buildListMachine({
   id: 'RepositoriesListMachine',
@@ -143,7 +143,7 @@ export default ListMachineUtils.buildListMachine({
     })
   },
   services: {
-    fetchData: () => Axios.get(REST_INTERNAL.REPOSITORIES_DETAILS),
+    fetchData: () => Axios.get(INTERNAL.REPOSITORIES_DETAILS),
 
     enableHealthCheckSingleRepo: async (_, event) => {
       const response = await ExtAPIUtils.extAPIRequest(

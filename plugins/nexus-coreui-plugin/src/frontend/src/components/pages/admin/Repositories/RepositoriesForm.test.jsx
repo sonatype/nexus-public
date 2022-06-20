@@ -23,16 +23,18 @@ import {
   getByRole,
   queryByRole
 } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+
 import {when} from 'jest-when';
 import '@testing-library/jest-dom/extend-expect';
 import {mergeDeepRight} from 'ramda';
 
-import {TestUtils, ExtAPIUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
+import {TestUtils, ExtAPIUtils, APIConstants, ExtJS} from '@sonatype/nexus-ui-plugin';
 import UIStrings from '../../../../constants/UIStrings';
 
 import RepositoriesForm from './RepositoriesForm';
 
-import {repositoryUrl} from './RepositoriesFormMachine';
+import {getRepositoryUrl, saveRepositoryUrl, deleteRepositoryUrl} from './RepositoriesFormMachine';
 import {repositoriesUrl} from './facets/GenericGroupConfiguration';
 import {RECIPES_URL} from './facets/GenericFormatConfiguration';
 import {ROUTING_RULES_URL} from './facets/GenericOptionsConfiguration';
@@ -42,10 +44,23 @@ jest.mock('axios', () => ({
   ...jest.requireActual('axios'),
   get: jest.fn(),
   put: jest.fn(),
-  post: jest.fn()
+  post: jest.fn(),
+  delete: jest.fn()
 }));
 
-const {EDITOR} = UIStrings.REPOSITORIES;
+jest.mock('@sonatype/nexus-ui-plugin', () => ({
+  ...jest.requireActual('@sonatype/nexus-ui-plugin'),
+  ExtJS: {
+    checkPermission: jest.fn(),
+    requestConfirmation: jest.fn()
+  }
+}));
+
+const {
+  REPOSITORIES: {EDITOR},
+  SETTINGS
+} = UIStrings;
+
 const EXT_URL = APIConstants.EXT.URL;
 
 const BLOB_STORE_EXT_REQUEST = ExtAPIUtils.createRequestBody('coreui_Blobstore', 'readNames');
@@ -73,6 +88,8 @@ describe('RepositoriesForm', () => {
     ...TestUtils.selectors,
     getCreateButton: () => screen.getByText(EDITOR.CREATE_BUTTON, {selector: 'button'}),
     getSaveButton: () => screen.getByText(EDITOR.SAVE_BUTTON, {selector: 'button'}),
+    getDeleteButton: () => screen.queryByRole('button', {name: SETTINGS.DELETE_BUTTON_LABEL}),
+
     getCancelButton: () => screen.queryByText('Cancel'),
     getReadOnlyUrl: () => screen.getByText(EDITOR.URL_LABEL, {selector: 'dt'}),
     getFormatSelect: () => screen.getByLabelText(EDITOR.FORMAT_LABEL),
@@ -288,7 +305,7 @@ describe('RepositoriesForm', () => {
     it('creates hosted repository', async () => {
       const format = 'maven2';
       const type = 'hosted';
-      const url = repositoryUrl(format, type);
+      const url = saveRepositoryUrl(format, type);
       const payload = {
         format,
         type,
@@ -346,11 +363,9 @@ describe('RepositoriesForm', () => {
         },
         type: 'hosted'
       };
-      when(Axios.get)
-        .calledWith('/service/rest/internal/ui/repositories/repository/raw-hosted')
-        .mockResolvedValueOnce({
-          data: repo
-        });
+      when(Axios.get).calledWith(getRepositoryUrl(repo.name)).mockResolvedValueOnce({
+        data: repo
+      });
 
       renderView('raw-hosted');
 
@@ -392,7 +407,7 @@ describe('RepositoriesForm', () => {
   describe('proxy', () => {
     const type = 'proxy';
     const format = 'maven2';
-    const url = repositoryUrl(format, type);
+    const url = saveRepositoryUrl(format, type);
     const data = {
       format,
       type,
@@ -509,11 +524,9 @@ describe('RepositoriesForm', () => {
         }
       });
 
-      when(Axios.get)
-        .calledWith('/service/rest/internal/ui/repositories/repository/raw-proxy')
-        .mockResolvedValueOnce({
-          data: repo1
-        });
+      when(Axios.get).calledWith(getRepositoryUrl(repo1.name)).mockResolvedValueOnce({
+        data: repo1
+      });
 
       renderView('raw-proxy');
       await waitForElementToBeRemoved(selectors.queryLoadingMask());
@@ -522,11 +535,9 @@ describe('RepositoriesForm', () => {
 
       cleanup();
 
-      when(Axios.get)
-        .calledWith('/service/rest/internal/ui/repositories/repository/raw-proxy')
-        .mockResolvedValueOnce({
-          data: repo2
-        });
+      when(Axios.get).calledWith(getRepositoryUrl(repo2.name)).mockResolvedValueOnce({
+        data: repo2
+      });
 
       renderView('raw-proxy');
       await waitForElementToBeRemoved(selectors.queryLoadingMask());
@@ -536,7 +547,7 @@ describe('RepositoriesForm', () => {
 
     it('creates proxy repository', async () => {
       const format = 'p2';
-      const url = repositoryUrl(format, type);
+      const url = saveRepositoryUrl(format, type);
       const payload = {
         format,
         type,
@@ -633,7 +644,7 @@ describe('RepositoriesForm', () => {
 
     it('creates bower proxy repository', async () => {
       const format = 'bower';
-      const url = repositoryUrl(format, type);
+      const url = saveRepositoryUrl(format, type);
       const name = 'bower-proxy-1';
       const payload = {
         ...genericDefaultValues.proxy,
@@ -693,11 +704,9 @@ describe('RepositoriesForm', () => {
         routingRuleName: null,
         type: 'proxy'
       };
-      when(Axios.get)
-        .calledWith('/service/rest/internal/ui/repositories/repository/raw-proxy')
-        .mockResolvedValueOnce({
-          data: repo
-        });
+      when(Axios.get).calledWith(getRepositoryUrl(repo.name)).mockResolvedValueOnce({
+        data: repo
+      });
 
       renderView('raw-proxy');
 
@@ -778,7 +787,7 @@ describe('RepositoriesForm', () => {
     it('creates group repository', async () => {
       const format = 'maven2';
       const type = 'group';
-      const url = repositoryUrl(format, type);
+      const url = saveRepositoryUrl(format, type);
       const payload = {
         format,
         type,
@@ -838,11 +847,9 @@ describe('RepositoriesForm', () => {
 
         type: 'group'
       };
-      when(Axios.get)
-        .calledWith('/service/rest/internal/ui/repositories/repository/raw-group')
-        .mockResolvedValueOnce({
-          data: repo
-        });
+      when(Axios.get).calledWith(getRepositoryUrl(repo.name)).mockResolvedValueOnce({
+        data: repo
+      });
       when(Axios.get)
         .calledWith('/service/rest/internal/ui/repositories?format=raw')
         .mockResolvedValueOnce({
@@ -878,6 +885,59 @@ describe('RepositoriesForm', () => {
           },
           routingRule: undefined
         })
+      );
+    });
+  });
+
+  describe('delete', () => {
+    const repo = {
+      name: 'repo',
+      format: 'raw',
+      type: 'hosted'
+    };
+
+    it('does not display delete button in create mode', async () => {
+      renderView();
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+      expect(selectors.getDeleteButton()).not.toBeInTheDocument();
+    });
+
+    it('disables delete button when permission check is unsatisfied', async () => {
+      when(Axios.get).calledWith(getRepositoryUrl(repo.name)).mockResolvedValueOnce({
+        data: repo
+      });
+
+      when(ExtJS.checkPermission)
+        .calledWith(`nexus:repository-admin:${repo.format}:${repo.name}:delete`)
+        .mockReturnValue(false);
+
+      renderView('repo');
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+      expect(selectors.getDeleteButton()).toBeDisabled();
+    });
+
+    it('deletes repository when user has permissions', async () => {
+      when(Axios.get).calledWith(getRepositoryUrl(repo.name)).mockResolvedValueOnce({
+        data: repo
+      });
+
+      when(ExtJS.checkPermission)
+        .calledWith(`nexus:repository-admin:${repo.format}:${repo.name}:delete`)
+        .mockReturnValue(true);
+
+      ExtJS.requestConfirmation.mockReturnValue(Promise.resolve());
+
+      renderView('repo');
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+      expect(selectors.getDeleteButton()).toBeEnabled();
+
+      userEvent.click(selectors.getDeleteButton());
+
+      await waitFor(() =>
+        expect(Axios.delete).toHaveBeenCalledWith(deleteRepositoryUrl(repo.name))
       );
     });
   });
