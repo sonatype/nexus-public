@@ -231,8 +231,11 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
           }
         },
         enable: function() {
-          const repositoryName = this.up('form').down('#name').value;
-          this.setValue(repositoryName);
+          if (this.getValue() === '') {
+            const subdomainName = this.up('form').down('[name="attributes.docker.subdomain"]').value;
+            const repositoryName = this.up('form').down('#name').value;
+            this.setValue(subdomainName ? subdomainName : repositoryName);
+          }
         },
         disable: function() {
           this.setValue('');
