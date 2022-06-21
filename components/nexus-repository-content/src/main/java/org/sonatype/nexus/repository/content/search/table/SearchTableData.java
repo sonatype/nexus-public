@@ -75,6 +75,29 @@ public class SearchTableData
 
   private String formatField3;
 
+  public SearchTableData() {
+  }
+
+  public SearchTableData(final Integer repositoryId, final String format) {
+    this(repositoryId, null, null, format);
+  }
+
+  public SearchTableData(final Integer repositoryId, final Integer componentId, final String format) {
+    this(repositoryId, componentId, null, format);
+  }
+
+  public SearchTableData(
+      final Integer repositoryId,
+      final Integer componentId,
+      final Integer assetId,
+      final String format)
+  {
+    this.repositoryId = repositoryId;
+    this.componentId = componentId;
+    this.assetId = assetId;
+    this.format = format;
+  }
+
   public Integer getRepositoryId() {
     return repositoryId;
   }
