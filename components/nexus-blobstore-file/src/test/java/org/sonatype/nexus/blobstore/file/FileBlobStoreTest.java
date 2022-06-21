@@ -32,8 +32,8 @@ import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
-import org.sonatype.nexus.blobstore.file.internal.OrientFileBlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.file.internal.FileOperations;
+import org.sonatype.nexus.blobstore.file.internal.OrientFileBlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.log.DryRunPrefix;
@@ -55,10 +55,10 @@ import org.mockito.Mock;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.Files.write;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -68,13 +68,15 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.DirectPathLocationStrategy.DIRECT_PATH_ROOT;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
+import static org.sonatype.nexus.blobstore.file.FileBlobStore.CONTENT;
+import static org.sonatype.nexus.blobstore.file.FileBlobStore.TMP;
 
 /**
  * Tests {@link FileBlobStore}.
@@ -177,10 +179,10 @@ public class FileBlobStoreTest
     underTest.setLiveBlobs(loadingCache);
 
     fullPath = underTest.getAbsoluteBlobDir()
-        .resolve("content").resolve("vol-03").resolve("chap-44");
+        .resolve(CONTENT).resolve("vol-03").resolve("chap-44");
     Files.createDirectories(fullPath);
 
-    directFullPath = underTest.getAbsoluteBlobDir().resolve("content").resolve("directpath");
+    directFullPath = underTest.getAbsoluteBlobDir().resolve(CONTENT).resolve("directpath");
     Files.createDirectories(directFullPath);
 
     when(blobIdLocationResolver.getLocation(any(BlobId.class))).thenAnswer(invocation -> {
@@ -329,6 +331,23 @@ public class FileBlobStoreTest
   }
 
   @Test
+  public void testDeleteBlobTempFiles() throws Exception {
+    underTest.doStart();
+
+    Path tmpFilePath = underTest.getAbsoluteBlobDir()
+        .resolve(CONTENT).resolve(TMP).resolve("tmp$0515c8b9-0de0-49d4-bcf0-7738c40c9c5e.properties");
+
+    tmpFilePath.toFile().getParentFile().mkdirs();
+    write(tmpFilePath, "@BlobStore.created-by=system".getBytes(UTF_8));
+
+    assertThat(tmpFilePath.toFile().exists(), is(true));
+
+    underTest.doDeleteTempFiles();
+
+    assertThat(tmpFilePath.toFile().exists(), is(false));
+  }
+
+  @Test
   public void testUndelete_AttributesNotDeleted() throws IOException {
     when(attributes.isDeleted()).thenReturn(false);
 
@@ -472,7 +491,7 @@ public class FileBlobStoreTest
 
   @Test
   public void getBlobAttributesReturnsNullWhenExceptionIsThrown() throws Exception {
-    Path propertiesPath = underTest.getAbsoluteBlobDir().resolve("content").resolve("test-blob.properties");
+    Path propertiesPath = underTest.getAbsoluteBlobDir().resolve(CONTENT).resolve("test-blob.properties");
     write(propertiesPath, EMPTY_BLOB_STORE_PROPERTIES);
 
     assertNull(underTest.getBlobAttributes(new BlobId("test-blob")));

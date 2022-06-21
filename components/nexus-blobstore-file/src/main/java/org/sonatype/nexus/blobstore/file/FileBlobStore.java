@@ -135,6 +135,10 @@ public class FileBlobStore
   @VisibleForTesting
   public static final String DELETIONS_FILENAME = "deletions.index";
 
+  public static final String CONTENT = "content";
+
+  public static final String TMP = "tmp";
+
   private static final boolean RETRY_ON_COLLISION =
       SystemPropertiesHelper.getBoolean("nexus.blobstore.retryOnCollision", true);
 
@@ -616,6 +620,19 @@ public class FileBlobStore
     }
   }
 
+  @Override
+  protected void doDeleteTempFiles() {
+    try {
+      FileUtils.cleanDirectory(getAbsoluteBlobDir().resolve(CONTENT).resolve(TMP).toFile());
+    }
+    catch (BlobStoreException | TaskInterruptedException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      throw new BlobStoreException(e, null);
+    }
+  }
+
   private boolean maybeCompactBlob(@Nullable final BlobStoreUsageChecker inUseChecker, final BlobId blobId)
   {
     Optional<FileBlobAttributes> attributesOption = ofNullable((FileBlobAttributes) getBlobAttributes(blobId));
@@ -657,7 +674,7 @@ public class FileBlobStore
 
     try {
       Path blobDir = getAbsoluteBlobDir();
-      Path content = blobDir.resolve("content");
+      Path content = blobDir.resolve(CONTENT);
       DirectoryHelper.mkdir(content);
       this.contentDir = content;
       Path reconciliationLogDir = blobDir.resolve("reconciliation");

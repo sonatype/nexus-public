@@ -350,6 +350,12 @@ public class BlobStoreGroup
   }
 
   @Override
+  @Guarded(by = STARTED)
+  public synchronized void deleteTempFiles() {
+    members.get().forEach(BlobStore::deleteTempFiles);
+  }
+
+  @Override
   public boolean undelete(@Nullable final BlobStoreUsageChecker inUseChecker,
                           final BlobId blobId,
                           final BlobAttributes attributes,

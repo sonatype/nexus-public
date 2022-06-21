@@ -231,6 +231,11 @@ public interface BlobStore
   void compact(@Nullable BlobStoreUsageChecker inUseChecker);
 
   /**
+   * Delete blob temporary files
+   */
+  void deleteTempFiles();
+
+  /**
    * Returns the configuration entity for the BlobStore.
    */
   BlobStoreConfiguration getBlobStoreConfiguration();

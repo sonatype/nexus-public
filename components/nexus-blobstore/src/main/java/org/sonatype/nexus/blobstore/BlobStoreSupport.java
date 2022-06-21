@@ -237,6 +237,22 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
   }
 
   @Override
+  @Guarded(by = STARTED)
+  public synchronized void deleteTempFiles() {
+    long start = System.nanoTime();
+    try {
+      doDeleteTempFiles();
+    }
+    finally {
+      updateTimer("delete temp files", System.nanoTime() - start);
+    }
+  }
+
+  protected void doDeleteTempFiles() {
+    // no-op
+  }
+
+  @Override
   public void init(BlobStoreConfiguration configuration) {
     this.blobStoreConfiguration = configuration;
     this.performanceLogger.setBlobStoreName(configuration.getName());
