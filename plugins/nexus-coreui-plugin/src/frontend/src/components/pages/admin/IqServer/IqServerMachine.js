@@ -17,14 +17,18 @@
 import {assign} from 'xstate';
 import Axios from 'axios';
 import {FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
+import UIStrings from '../../../../constants/UIStrings';
 
 const IQ_API = '/service/rest/v1/iq';
+
+const PASSWORD_PLACEHOLDER = '#~NXRM~PLACEHOLDER~PASSWORD~#';
 
 export default FormUtils.buildFormMachine({
   id: 'IQServerMachine',
   context: {
     data: {}
   },
+  stateAfterSave: 'loading',
   config: (config) => ({
     ...config,
     states: {
@@ -41,6 +45,11 @@ export default FormUtils.buildFormMachine({
               VIEW_CERTIFICATE: {
                 target: 'viewingCertificate',
                 cond: 'isValidUrl'
+              },
+              UPDATE_URL: {
+                target: 'idle',
+                actions: ['updateUrl', 'validate'],
+                internal: false
               }
             }
           },
@@ -83,23 +92,40 @@ export default FormUtils.buildFormMachine({
             }
           }
         },
-        ...config.states.loaded,
+        ...config.states.loaded
       }
     }
   })
 }).withConfig({
   actions: {
     validate: assign({
-      validationErrors: ({data}) => ({
+      validationErrors: ({data, pristineData}) => ({
         url: ValidationUtils.validateIsUrl(data.url),
         authenticationType: ValidationUtils.validateNotBlank(data.authenticationType),
         username: data.authenticationType === 'USER' ? ValidationUtils.validateNotBlank(data.username) : null,
-        password: data.authenticationType === 'USER' ? ValidationUtils.validateNotBlank(data.password) : null,
+        password: validatePassword(data, pristineData),
         timeoutSeconds:  ValidationUtils.isInRange({
           value: data.timeoutSeconds,
           min: 1,
           max: 3600
         })
+      })
+    }),
+    updateUrl: assign({
+      data: ({data}, {data:{url}}) => {
+        const newData = {
+          ...data,
+          url
+        };
+        if (isPlaceholder(data.password)) {
+          newData.password = '';
+        }
+
+        return newData;
+      },
+      isTouched: ({data, pristineData, isTouched}) => ({
+        ...isTouched,
+        password: ValidationUtils.isBlank(data.password) || isPlaceholder(pristineData.password)
       })
     }),
     setVerifyConnectionError: assign({
@@ -122,7 +148,6 @@ export default FormUtils.buildFormMachine({
           ...data,
           useTrustStoreForUrl
         };
-
         return newData;
       }
     }),
@@ -136,3 +161,18 @@ export default FormUtils.buildFormMachine({
     verifyConnection: ({data}) => Axios.post('/service/rest/internal/ui/iq/verify-connection', data)
   }
 });
+
+const validatePassword = (data, pristineData) => {
+  if (data.authenticationType === 'USER') {
+    const urlUpdated = ValidationUtils.notBlank(pristineData.url) && (pristineData.url !== data.url);
+
+    if (ValidationUtils.isBlank(data.password) && urlUpdated) {
+      return UIStrings.IQ_SERVER.PASSWORD_ERROR;
+    }
+    else {
+      return ValidationUtils.validateNotBlank(data.password);
+    }
+  }
+}
+
+const isPlaceholder = password => password === PASSWORD_PLACEHOLDER;
