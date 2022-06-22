@@ -624,8 +624,8 @@ export default {
         }
       },
       MESSAGES: {
-        DELETE_ERROR: (name) => `Rpository ${name} cannot be deleted\n`,
-        DELETE_SUCCESS: (name) => `Respository deleted: ${name}`,
+        DELETE_ERROR: (name) => `Repository ${name} cannot be deleted\n`,
+        DELETE_SUCCESS: (name) => `Repository deleted: ${name}`,
         CONFIRM_DELETE: {
           TITLE: 'Delete repository',
           MESSAGE: (name) => name,

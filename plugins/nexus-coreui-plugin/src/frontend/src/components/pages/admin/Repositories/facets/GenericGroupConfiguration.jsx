@@ -30,7 +30,8 @@ export const repositoriesUrl = (event) =>
 export default function GenericGroupConfiguration({parentMachine}) {
   const {current, load, retry, isLoading} = useSimpleMachine({
     id: 'GenericGroupConfigurationMachine',
-    url: repositoriesUrl
+    url: repositoriesUrl,
+    initial: 'loaded'
   });
 
   const {data: repositories, error} = current.context;
