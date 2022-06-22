@@ -52,7 +52,10 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   ...jest.requireActual('@sonatype/nexus-ui-plugin'),
   ExtJS: {
     checkPermission: jest.fn(),
-    requestConfirmation: jest.fn()
+    requestConfirmation: jest.fn(),
+    state: () => ({
+      getValue: jest.fn(() => false)
+    })
   }
 }));
 
@@ -446,6 +449,10 @@ describe('RepositoriesForm', () => {
           ntlmDomain: 'ntlm.domain'
         }
       },
+      replication: {
+        preemptivePullEnabled: false,
+        assetPathRegex: ''
+      },
       maven: {
         contentDisposition: 'INLINE',
         layoutPolicy: 'STRICT',
@@ -573,6 +580,10 @@ describe('RepositoriesForm', () => {
           autoBlock: false,
           connection: null,
           authentication: null
+        },
+        replication: {
+          preemptivePullEnabled: false,
+          assetPathRegex: ''
         }
       };
 
@@ -915,7 +926,7 @@ describe('RepositoriesForm', () => {
       renderView('repo');
       await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
-      expect(selectors.getDeleteButton()).toBeDisabled();
+      expect(selectors.getDeleteButton()).toHaveClass('disabled');
     });
 
     it('deletes repository when user has permissions', async () => {
@@ -940,6 +951,7 @@ describe('RepositoriesForm', () => {
         expect(Axios.delete).toHaveBeenCalledWith(deleteRepositoryUrl(repo.name))
       );
     });
+
   });
 });
 

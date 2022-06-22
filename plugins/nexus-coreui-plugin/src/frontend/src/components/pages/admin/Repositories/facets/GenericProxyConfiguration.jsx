@@ -30,7 +30,7 @@ export default function GenericProxyConfiguration({parentMachine}) {
   const {format, replication} = currentParent.context.data;
   const isReplicationEnabled = ExtJS.state().getValue(REPLICATION_FEATURE) || false;
   const preemptivePullEnabled = replication?.preemptivePullEnabled || false;
-  
+
   function setPreemptivePullEnabled(event) {
     sendParent({
       type: 'UPDATE_PREEMPTIVE_PULL',
