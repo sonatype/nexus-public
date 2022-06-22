@@ -30,8 +30,8 @@ export const EMPTY_DATA = {
 const rolesUrl = '/service/rest/v1/security/roles';
 const privilegesUrl = '/service/rest/v1/security/privileges';
 const sourcesApi = {action: 'coreui_Role', method: 'readSources'};
-const getRolesUrl = source => `${rolesUrl}?source=${source}`;
+const getRolesUrl = (source) => `${rolesUrl}?source=${encodeURIComponent(source)}`;
 const defaultRolesUrl = getRolesUrl('default');
-const singleRoleUrl = (id) => `${rolesUrl}/${id}`;
+const singleRoleUrl = (id) => `${rolesUrl}/${encodeURIComponent(id)}`;
 
 export const URL = {rolesUrl, privilegesUrl, sourcesApi, getRolesUrl, defaultRolesUrl, singleRoleUrl};

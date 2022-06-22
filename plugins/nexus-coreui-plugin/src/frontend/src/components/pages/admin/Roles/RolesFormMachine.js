@@ -26,7 +26,7 @@ import {TYPES, EMPTY_DATA, URL} from './RolesHelper';
 const {ROLES: {MESSAGES: LABELS}} = UIStrings;
 const {rolesUrl, privilegesUrl, sourcesApi, getRolesUrl, defaultRolesUrl, singleRoleUrl} = URL;
 
-const isEdit = ({id}) => ValidationUtils.notBlank(id);
+const isEdit = (id) => ValidationUtils.notBlank(id);
 
 const hasLeadingOrTrailingSpace = (val) => /^\s/.test(val) || /\s$/.test(val);
 
@@ -95,9 +95,7 @@ export default FormUtils.buildFormMachine({
     }),
     setExternalRoleType: assign({
       roleType: TYPES.EXTERNAL,
-      externalRoleType: (_, {externalRoleType}) => {
-        return externalRoleType;
-      }
+      externalRoleType: (_, {externalRoleType}) => externalRoleType,
     }),
     resetData: assign({
       data: () => EMPTY_DATA,
@@ -108,21 +106,21 @@ export default FormUtils.buildFormMachine({
     logDeleteSuccess: ({data}) => ExtJS.showSuccessMessage(LABELS.DELETE_SUCCESS(data.name)),
   },
   services: {
-    fetchData: ({pristineData}) => {
+    fetchData: ({pristineData: {id}}) => {
       return Axios.all([
         Axios.get(defaultRolesUrl),
         Axios.get(privilegesUrl),
-        isEdit(pristineData)
+        isEdit(id)
             ? Promise.resolve({data: []} )
             : ExtAPIUtils.extAPIRequest(sourcesApi.action, sourcesApi.method).then(v => v.data.result),
-        isEdit(pristineData)
-            ? Axios.get(singleRoleUrl(pristineData.id))
+        isEdit(id)
+            ? Axios.get(singleRoleUrl(id))
             : Promise.resolve({data: EMPTY_DATA}),
       ]);
     },
     fetchExternalRoles: ({externalRoleType}) => Axios.get(getRolesUrl(externalRoleType)),
-    saveData: ({data, pristineData}) => {
-      if (isEdit(pristineData)) {
+    saveData: ({data, pristineData: {id}}) => {
+      if (isEdit(id)) {
         return Axios.put(singleRoleUrl(data.id), data);
       } else {
         return Axios.post(rolesUrl, data);

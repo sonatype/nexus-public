@@ -40,7 +40,7 @@ export default function RolesDetails({itemId, onDone}) {
   const [current, , service] = useMachine(Machine, {
     context: {
       pristineData: {
-        id: itemId,
+        id: decodeURIComponent(itemId),
       }
     },
     actions: {
@@ -53,16 +53,16 @@ export default function RolesDetails({itemId, onDone}) {
     devTools: true,
   });
 
-  const {data: {readOnly}, pristineData} = current.context;
+  const {data: {readOnly}, pristineData: {id, name}} = current.context;
 
   const canEdit = hasEditPermissions && !readOnly;
-  const isEdit = ValidationUtils.notBlank(itemId);
+  const isEdit = ValidationUtils.notBlank(id);
   const showReadOnly = isEdit && !canEdit;
 
   return <Page className="nxrm-roles">
     <PageHeader>
       <PageTitle
-          text={isEdit ? LABELS.EDIT_TILE(pristineData.name || '') : LABELS.CREATE_TITLE}
+          text={isEdit ? LABELS.EDIT_TILE(name || '') : LABELS.CREATE_TITLE}
           description={isEdit ? LABELS.EDIT_DESCRIPTION : null}
       />
     </PageHeader>
@@ -71,7 +71,7 @@ export default function RolesDetails({itemId, onDone}) {
         <NxTile.Content>
           {showReadOnly
               ? <RolesReadOnly service={service} onDone={onDone}/>
-              : <RolesForm itemId={itemId} service={service} onDone={onDone}/>
+              : <RolesForm roleId={id} service={service} onDone={onDone}/>
           }
         </NxTile.Content>
       </NxTile>

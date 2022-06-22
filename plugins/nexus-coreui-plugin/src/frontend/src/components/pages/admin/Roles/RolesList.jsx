@@ -106,7 +106,7 @@ export default function RolesList({onCreate, onEdit}) {
           </NxTableHead>
           <NxTableBody isLoading={isLoading} error={error} emptyMessage={LABELS.EMPTY_LIST}>
             {data.map(({id, name, description}) => (
-                <NxTableRow key={id} onClick={() => onEdit(id)} isClickable>
+                <NxTableRow key={id} onClick={() => onEdit(encodeURIComponent(id))} isClickable>
                   <NxTableCell>{id}</NxTableCell>
                   <NxTableCell>{name}</NxTableCell>
                   <NxTableCell>{description}</NxTableCell>
