@@ -49,7 +49,7 @@ export default function Api() {
         <PageTitle icon={faPlug} {...UIStrings.API.MENU}/>
       </PageHeader>
       <ContentBody className="nxrm-api">
-        <SwaggerUI url="/service/rest/swagger.json" requestInterceptor={requestInterceptor} defaultModelsExpandDepth={-1} responseInterceptor={responseInterceptor} />
+        <SwaggerUI url="service/rest/swagger.json" requestInterceptor={requestInterceptor} defaultModelsExpandDepth={-1} responseInterceptor={responseInterceptor} />
       </ContentBody>
     </Page>
   );
