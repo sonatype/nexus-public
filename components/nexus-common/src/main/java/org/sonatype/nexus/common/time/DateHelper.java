@@ -102,7 +102,7 @@ public class DateHelper
 
   /**
    * Converts the Date to a LocalDate (a date, without time). The returned LocalDate will represent the Date of the
-   * provided value in UTC.
+   * provided value without any timezone offset.
    *
    * @since 3.38
    */
@@ -110,7 +110,9 @@ public class DateHelper
     if (date == null) {
       return null;
     }
-    return date.toInstant().atOffset(ZoneOffset.UTC).toLocalDate();
+
+    org.joda.time.LocalDate jodaDate = new org.joda.time.LocalDate(date);
+    return LocalDate.of(jodaDate.getYear(), jodaDate.getMonthOfYear(), jodaDate.getDayOfMonth());
   }
 
   /**
