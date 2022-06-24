@@ -109,7 +109,8 @@
       org.sonatype.goodies.testsupport.group.Perf,
       org.sonatype.goodies.testsupport.group.External,
       org.sonatype.goodies.testsupport.group.Unstable,
-      org.sonatype.nexus.content.testsuite.groups.SQLTestGroup
+      org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
+      org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup
     </it.excludedGroups>
     <clm.skip>false</clm.skip>
 

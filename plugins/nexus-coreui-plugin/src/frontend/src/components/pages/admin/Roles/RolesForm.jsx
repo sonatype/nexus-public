@@ -36,7 +36,7 @@ import {TYPES} from './RolesHelper';
 
 const {ROLES: {FORM: LABELS}} = UIStrings;
 
-export default function RolesForm({itemId, service, onDone}) {
+export default function RolesForm({roleId, service, onDone}) {
   const [current, send] = useService(service);
 
   const {
@@ -56,7 +56,7 @@ export default function RolesForm({itemId, service, onDone}) {
   const isLoading = current.matches('loading');
   const isSaving = current.matches('saving');
   const isInvalid = ValidationUtils.isInvalid(validationErrors);
-  const isCreate = ValidationUtils.isBlank(itemId);
+  const isCreate = ValidationUtils.isBlank(roleId);
   const isEdit = !isCreate;
   const hasDeletePermissions = ExtJS.checkPermission('nexus:roles:delete');
   const canDelete = hasDeletePermissions && !data.readOnly;
@@ -70,7 +70,6 @@ export default function RolesForm({itemId, service, onDone}) {
 
   const hasExternalSources = isCreate && sources && sources.length;
   const privilegesList = privileges?.map((it) => ({id: it.name, displayName: it.name})) || [];
-  const roleId = decodeURIComponent(itemId);
 
   const rolesList = roles?.filter(it => it.id !== roleId)?.map((it) => ({id: it.id, displayName: it.name})) || [];
 

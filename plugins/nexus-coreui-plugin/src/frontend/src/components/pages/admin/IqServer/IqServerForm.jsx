@@ -67,6 +67,15 @@ export default function IqServerForm() {
     send('RETRY');
   }
 
+  function handleUrlChange(url) {
+    send({
+      type: 'UPDATE_URL',
+      data: {
+        url
+      }
+    });
+  }
+
   function dismissValidationMessage() {
     send('DISMISS');
   }
@@ -131,7 +140,7 @@ export default function IqServerForm() {
       <NxFormGroup {...UIStrings.IQ_SERVER.IQ_SERVER_URL} isRequired>
         <NxTextInput className="nx-text-input--long"
                      {...FormUtils.fieldProps('url', current)}
-                     onChange={FormUtils.handleUpdate('url', send)}/>
+                     onChange={handleUrlChange}/>
       </NxFormGroup>
       <NxFormRow>
         <>

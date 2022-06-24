@@ -34,6 +34,11 @@ import org.sonatype.nexus.repository.content.store.InternalIds;
 import com.google.common.eventbus.Subscribe;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.content.search.table.SearchTableEventProcessor.EventType.ASSET_ATTRIBUTES_UPDATED;
+import static org.sonatype.nexus.repository.content.search.table.SearchTableEventProcessor.EventType.ASSET_CREATED;
+import static org.sonatype.nexus.repository.content.search.table.SearchTableEventProcessor.EventType.ASSET_DELETED;
+import static org.sonatype.nexus.repository.content.search.table.SearchTableEventProcessor.EventType.COMPONENT_KIND_UPDATED;
+import static org.sonatype.nexus.repository.content.search.table.SearchTableEventProcessor.EventType.REPOSITORY_DELETED;
 
 /**
  * This class created to support single search table needs.
@@ -44,11 +49,11 @@ public class SearchTableSubscriber
     extends StateGuardLifecycleSupport
     implements EventAware
 {
-  private final SearchTableStore store;
+  private final SearchTableEventProcessor eventProcessor;
 
   @Inject
-  public SearchTableSubscriber(final SearchTableStore store) {
-    this.store = checkNotNull(store);
+  public SearchTableSubscriber(final SearchTableEventProcessor eventProcessor) {
+    this.eventProcessor = checkNotNull(eventProcessor);
   }
 
   /**
@@ -69,9 +74,9 @@ public class SearchTableSubscriber
       log.debug("Unable to build the search data based on event: {}", event);
       return;
     }
-    log.trace("Creating a new record into component_search table: {}", searchData.get());
 
-    store.create(searchData.get());
+    eventProcessor.addEvent(ASSET_CREATED, searchData.get());
+    eventProcessor.checkAndFlush();
   }
 
   /**
@@ -86,11 +91,11 @@ public class SearchTableSubscriber
     Integer componentId = InternalIds.internalComponentId(component);
     String format = event.getFormat();
     String componentKind = component.kind();
-    log.trace(
-        "Updating a component kind in component_search table for repositoryId: {}, componentId: {}, format: {}," +
-            " componentKind: {}", repositoryId, componentId, format, componentKind);
 
-    store.updateKind(repositoryId, componentId, format, componentKind);
+    SearchTableData data = new SearchTableData(repositoryId, componentId, format);
+    data.setComponentKind(componentKind);
+    eventProcessor.addEvent(COMPONENT_KIND_UPDATED, data);
+    eventProcessor.checkAndFlush();
   }
 
   /**
@@ -110,11 +115,9 @@ public class SearchTableSubscriber
     Integer componentId = InternalIds.internalComponentId(component);
     Integer assetId = InternalIds.internalAssetId(asset);
     String format = event.getFormat();
-    log.trace(
-        "Deleting a record from component_search table for repositoryId: {}, componentId: {}, assetId: {}, format: {}",
-        repositoryId, componentId, assetId, format);
 
-    store.delete(repositoryId, componentId, assetId, format);
+    eventProcessor.addEvent(ASSET_DELETED, new SearchTableData(repositoryId, componentId, assetId, format));
+    eventProcessor.checkAndFlush();
   }
 
   /**
@@ -126,10 +129,9 @@ public class SearchTableSubscriber
   public void on(final ContentRepositoryDeletedEvent event) {
     Integer repositoryId = InternalIds.contentRepositoryId(event);
     String format = event.getFormat();
-    log.trace("Deleting all records from component_search table for repository id: {}, format: {}",
-        repositoryId, format);
 
-    store.deleteAllForRepository(repositoryId, format);
+    eventProcessor.addEvent(REPOSITORY_DELETED, new SearchTableData(repositoryId, format));
+    eventProcessor.checkAndFlush();
   }
 
   /**
@@ -159,11 +161,12 @@ public class SearchTableSubscriber
     String formatField1 = SearchTableSubscriberHelper.selectFormatField1(format, nestedAttributesMap);
     String formatField2 = SearchTableSubscriberHelper.selectFormatField2(format, nestedAttributesMap);
     String formatField3 = SearchTableSubscriberHelper.selectFormatField3(format, nestedAttributesMap);
-    log.trace(
-        "Updating format fields in component_search table for repositoryId: {}, componentId: {}, assetId: {}, " +
-            "format: {}, formatField1: {}, formatField2: {}, formatField3: {}",
-        repositoryId, componentId, assetId, format, formatField1, formatField2, formatField3);
 
-    store.updateFormatFields(repositoryId, componentId, assetId, format, formatField1, formatField2, formatField3);
+    SearchTableData data = new SearchTableData(repositoryId, componentId, assetId, format);
+    data.setFormatField1(formatField1);
+    data.setFormatField2(formatField2);
+    data.setFormatField3(formatField3);
+    eventProcessor.addEvent(ASSET_ATTRIBUTES_UPDATED, data);
+    eventProcessor.checkAndFlush();
   }
 }

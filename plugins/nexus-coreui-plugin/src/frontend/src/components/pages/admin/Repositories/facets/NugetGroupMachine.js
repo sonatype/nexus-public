@@ -15,37 +15,25 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import Axios from 'axios';
-import {assign, Machine} from 'xstate';
-import {useMachine} from '@xstate/react';
+import {assign, createMachine} from 'xstate';
+import {APIConstants} from '@sonatype/nexus-ui-plugin';
 
-export default function useSimpleMachine({
-  id, 
-  url, 
-  initial = 'loading'
-}) {
-  const machine = getSimpleMachine(id, url, initial);
+export const url = `${APIConstants.REST.INTERNAL.REPOSITORIES}?format=nuget`;
 
-  const [current, send] = useMachine(machine, {devTools: true});
-
-  const load = (eventPayload = {}) => send({type: 'LOAD_DATA', ...eventPayload});
-
-  const retry = () => send('RETRY');
-
-  const isLoading = current.matches('loading');
-
-  return {current, send, load, retry, isLoading};
-}
-
-const getSimpleMachine = (id, url, initial) =>
-  Machine(
+export const buildMachine = (name) =>
+  createMachine(
     {
-      id,
-      initial,
+      id: 'NugetGroupMachine',
+      initial: 'loading',
       states: {
         loaded: {
           on: {
             LOAD_DATA: {
               target: 'loading'
+            },
+            SET_GROUP_VERSION: {
+              target: 'loaded',
+              actions: ['setGroupVersion']
             }
           }
         },
@@ -76,18 +64,51 @@ const getSimpleMachine = (id, url, initial) =>
     },
     {
       actions: {
-        setData: assign({
-          data: (_, event) => event.data?.data
+        setData: assign((_, event) => {
+          const repositories = event.data?.data;
+
+          const repositoriesMap = repositories.reduce((acc, repo) => {
+            acc[repo.name] = repo;
+            return acc;
+          }, {});
+
+          repositories.forEach((repo) => {
+            if (repo.memberNames) {
+              repo.nugetVersion = getVersionFromMembers(repo.memberNames, repositoriesMap);
+            }
+          });
+
+          const groupVersion = repositoriesMap[name]?.nugetVersion || 'V3';
+
+          return {
+            repositories,
+            groupVersion
+          };
         }),
         setError: assign({
           error: (_, event) => event.data?.message
         }),
         clearError: assign({
           error: () => null
+        }),
+        setGroupVersion: assign({
+          groupVersion: (_, {groupVersion}) => groupVersion
         })
       },
       services: {
-        fetchData: (_, event) => Axios.get(typeof url === 'function' ? url(event) : url)
+        fetchData: () => Axios.get(url)
       }
     }
   );
+
+const getVersionFromMembers = (memberNames, repositoriesMap) => {
+  for (let memberName of memberNames) {
+    const member = repositoriesMap[memberName];
+    if (member.nugetVersion) {
+      return member.nugetVersion;
+    } else if (member.memberNames) {
+      member.nugetVersion = getVersionFromMembers(member.memberNames);
+      return member.nugetVersion;
+    }
+  }
+};

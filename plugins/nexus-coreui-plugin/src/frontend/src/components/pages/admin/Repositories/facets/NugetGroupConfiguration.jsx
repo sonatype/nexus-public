@@ -11,15 +11,17 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {assign} from 'xstate';
-import {FormUtils, useSimpleMachine} from '@sonatype/nexus-ui-plugin';
+import {useMachine} from '@xstate/react';
+
+import {FormUtils} from '@sonatype/nexus-ui-plugin';
+
+import {buildMachine} from './NugetGroupMachine';
 
 import {
   NxFormGroup,
   NxStatefulTransferList,
   NxLoadWrapper,
-  NxRadio,
-  NxFieldset
+  NxFormSelect
 } from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
@@ -29,65 +31,27 @@ const {
   EDITOR: {NUGET}
 } = UIStrings.REPOSITORIES;
 
-export const repositoriesUrl = '/service/rest/internal/ui/repositories?format=nuget';
+const NUGET_VERSIONS = {
+  V2: 'NuGet V2',
+  V3: 'NuGet V3'
+};
 
 export default function NugetGroupConfiguration({parentMachine}) {
-  const [currentParent, sendParent] = parentMachine;
+  const [stateParent, sendParent] = parentMachine;
 
   const {
     data: {
       name,
-      group: {memberNames}
+      group: {memberNames = []}
     }
-  } = currentParent.context;
+  } = stateParent.context;
 
-  const {current, send, retry, isLoading} = useSimpleMachine({
-    id: 'NugetGroupConfigurationMachine',
-    url: repositoriesUrl,
-    loadOnMount: true,
-    idleEvents: {
-      SET_GROUP_VERSION: {
-        target: 'idle',
-        actions: ['setGroupVersion']
-      }
-    },
-    options: {
-      actions: {
-        setData: assign((_, event) => {
-          const repositories = event.data?.data;
+  const [state, send] = useMachine(buildMachine(name), {devTools: true});
 
-          const nameToVersionMap = repositories.reduce((acc, repo) => {
-            acc[repo.name] = repo.nugetVersion;
-            return acc;
-          }, {});
+  const retry = () => send('RETRY');
+  const isLoading = state.matches('loading');
 
-          const findFirstMemberWithVersion = (members) =>
-            members.find((memberName) => !!nameToVersionMap[memberName]);
-
-          // determine group version from the members if exist or set to 'V3' as default  
-          const groupVersion = nameToVersionMap[findFirstMemberWithVersion(memberNames)] || 'V3';
-
-          // add nugetVersion to each group repo based on members versions
-          repositories.forEach((repo) => {
-            if (repo.memberNames) {
-              repo.nugetVersion = nameToVersionMap[findFirstMemberWithVersion(repo.memberNames)];
-            }
-          });
-
-          return {
-            repositories,
-            groupVersion
-          };
-        }),
-
-        setGroupVersion: assign({
-          groupVersion: (_, {groupVersion}) => groupVersion
-        })
-      }
-    }
-  });
-
-  const {repositories, error, groupVersion} = current.context;
+  const {repositories, error, groupVersion} = state.context;
 
   const availableRepositories =
     repositories
@@ -96,7 +60,8 @@ export default function NugetGroupConfiguration({parentMachine}) {
       )
       ?.map((repo) => ({id: repo.id, displayName: repo.name})) || [];
 
-  const updateNugetVersion = (value) => {
+  const updateNugetVersion = (event) => {
+    const value = event.currentTarget.value;
     send({type: 'SET_GROUP_VERSION', groupVersion: value});
     sendParent({type: 'UPDATE', name: 'group.memberNames', value: []});
   };
@@ -107,29 +72,26 @@ export default function NugetGroupConfiguration({parentMachine}) {
       <NxLoadWrapper loading={isLoading} error={error} retryHandler={retry}>
         {availableRepositories.length > 0 && (
           <>
-            <NxFieldset
+            <NxFormGroup
               label={NUGET.GROUP_VERSION.LABEL}
               sublabel={NUGET.GROUP_VERSION.SUBLABEL}
               className="nxrm-form-group-nuget-protocol-version"
               isRequired
             >
-              <NxRadio
-                name="nuget-protocol-version"
-                value="V2"
+              <NxFormSelect
+                id="nuget-version"
+                name="nuget-version"
+                value={groupVersion}
                 onChange={updateNugetVersion}
-                isChecked={groupVersion === 'V2'}
               >
-                {NUGET.PROTOCOL_VERSION.V2_RADIO_DESCR}
-              </NxRadio>
-              <NxRadio
-                name="nuget-protocol-version"
-                value="V3"
-                onChange={updateNugetVersion}
-                isChecked={groupVersion === 'V3'}
-              >
-                {NUGET.PROTOCOL_VERSION.V3_RADIO_DESCR}
-              </NxRadio>
-            </NxFieldset>
+                {Object.entries(NUGET_VERSIONS)?.map(([k, v]) => (
+                  <option key={v} value={k}>
+                    {v}
+                  </option>
+                ))}
+              </NxFormSelect>
+            </NxFormGroup>
+
             <NxFormGroup label={EDITOR.MEMBERS_LABEL} isRequired>
               <NxStatefulTransferList
                 allItems={availableRepositories}

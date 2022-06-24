@@ -25,8 +25,7 @@ export const RECIPES_URL = '/service/rest/internal/ui/repositories/recipes';
 export default function GenericFormatConfiguration({parentMachine}) {
   const {current, retry, isLoading} = useSimpleMachine({
     id: 'GenericFormatConfigurationMachine',
-    url: RECIPES_URL,
-    loadOnMount: true
+    url: RECIPES_URL
   });
 
   const [currentParent, sendParent] = parentMachine;

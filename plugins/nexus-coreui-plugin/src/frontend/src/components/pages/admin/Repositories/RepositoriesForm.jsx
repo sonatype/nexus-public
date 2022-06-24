@@ -20,12 +20,14 @@ import {
   PageTitle,
   Section,
   Utils,
-  FormUtils
+  FormUtils,
+  ExtJS,
+  UIStrings as UIStringsGlobal
 } from '@sonatype/nexus-ui-plugin';
 
-import {NxForm} from '@sonatype/react-shared-components';
+import {NxForm, NxButton, NxFontAwesomeIcon} from '@sonatype/react-shared-components';
 
-import {faDatabase} from '@fortawesome/free-solid-svg-icons';
+import {faDatabase, faTrash} from '@fortawesome/free-solid-svg-icons';
 
 import UIStrings from '../../../../constants/UIStrings';
 import './Repositories.scss';
@@ -73,6 +75,11 @@ export default function RepositoriesForm({itemId, onDone = () => {}}) {
 
   const save = () => send({type: 'SAVE'});
 
+  const canDelete =
+    format && ExtJS.checkPermission(`nexus:repository-admin:${format}:${itemId}:delete`);
+
+  const confirmDelete = () => canDelete && send({type: 'CONFIRM_DELETE'});
+
   const repositoryFacets = getFacets(format, type);
 
   return (
@@ -93,6 +100,20 @@ export default function RepositoriesForm({itemId, onDone = () => {}}) {
             submitBtnText={isEdit ? EDITOR.SAVE_BUTTON : EDITOR.CREATE_BUTTON}
             submitMaskMessage={SAVING}
             validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
+            additionalFooterBtns={
+              isEdit && (
+                <NxButton
+                  type="button"
+                  variant="tertiary"
+                  onClick={confirmDelete}
+                  className={!canDelete ? 'disabled' : ''}
+                  title={!canDelete ? UIStringsGlobal.PERMISSION_ERROR : ''}
+                >
+                  <NxFontAwesomeIcon icon={faTrash} />
+                  <span>{UIStrings.SETTINGS.DELETE_BUTTON_LABEL}</span>
+                </NxButton>
+              )
+            }
           >
             <GenericFormatConfiguration parentMachine={stateMachine} />
             {format && type && (

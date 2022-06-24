@@ -65,7 +65,9 @@ const selectors = {
   getCertificateButton: () => screen.getByText(IQ_SERVER.CERTIFICATE),
   getDiscardButton: () => screen.getByText(SETTINGS.DISCARD_BUTTON_LABEL),
   getSaveButton: () => screen.getByText(SETTINGS.SAVE_BUTTON_LABEL),
-  getCloseButton: () => screen.queryByText('Close')
+  getCloseButton: () => screen.queryByText('Close'),
+  getReenterPasswordError: () => screen.queryByText(UIStrings.IQ_SERVER.PASSWORD_ERROR),
+  getFieldRequiredError: () => screen.queryByText(UIStrings.ERROR.FIELD_REQUIRED)
 };
 
 const DEFAULT_RESPONSE = {
@@ -132,6 +134,42 @@ describe('IqServer', () => {
     expect(selectors.getConnectionTimeoutInput()).toHaveValue("100");
     expect(selectors.getPropertiesInput()).toHaveValue("some\ntext");
     expect(selectors.getShowIqServerLinkCheckbox()).toBeChecked();
+  });
+
+  it('shows contextual error message for empty password', async () => {
+    when(Axios.get).calledWith('/service/rest/v1/iq').mockResolvedValue({
+      data: {
+        "enabled": true,
+        "showLink": true,
+        "url": "http://example.com",
+        "authenticationType": "USER",
+        "username": "user",
+        "password": "#~NXRM~PLACEHOLDER~PASSWORD~#",
+        "useTrustStoreForUrl": false,
+        "timeoutSeconds": 100,
+        "properties": "some\ntext"
+      }
+    });
+
+    render(<IqServer/>);
+
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+    await TestUtils.changeField(selectors.getUrlInput, 'http://example.comxx');
+    expect(selectors.getPasswordInput()).toHaveValue("");
+    expect(selectors.getReenterPasswordError()).toBeInTheDocument();
+    expect(selectors.getFieldRequiredError()).not.toBeInTheDocument();
+    expect(selectors.getSaveButton()).toHaveAttribute('aria-disabled', 'true');
+
+    await TestUtils.changeField(selectors.getUrlInput, 'http://example.com');
+    expect(selectors.getReenterPasswordError()).not.toBeInTheDocument();
+    expect(selectors.getFieldRequiredError()).toBeInTheDocument();
+    expect(selectors.getSaveButton()).toHaveAttribute('aria-disabled', 'true');
+
+    await TestUtils.changeField(selectors.getPasswordInput, 'some');
+    expect(selectors.getReenterPasswordError()).not.toBeInTheDocument();
+    expect(selectors.getFieldRequiredError()).not.toBeInTheDocument();
+    expect(selectors.getSaveButton()).not.toHaveAttribute('aria-disabled', 'true');
   });
 
   it('enables the verify connection button when form is valid', async () => {

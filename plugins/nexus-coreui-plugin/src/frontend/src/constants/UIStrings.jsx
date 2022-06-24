@@ -622,8 +622,17 @@ export default {
           LABEL: 'NuGet Type',
           SUBLABEL: 'Restrict proxy repositories to one NuGet version',
         }
+      },
+      MESSAGES: {
+        DELETE_ERROR: (name) => `Repository ${name} cannot be deleted\n`,
+        DELETE_SUCCESS: (name) => `Repository deleted: ${name}`,
+        CONFIRM_DELETE: {
+          TITLE: 'Delete repository',
+          MESSAGE: (name) => name,
+          YES: 'Delete',
+          NO: 'Cancel'
+        }
       }
-
     }
   },
 
@@ -1052,7 +1061,8 @@ This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 
     VERIFY_CONNECTION_SUCCESSFUL: (msg) => `Connection Successful! Applications: ${msg}`,
     VERIFY_CONNECTION_ERROR: (msg) => `Connection Failed: ${msg}`,
     FORM_NOTES: 'can evaluate application and organizing policies',
-    HELP_TEXT: 'To enable this feature configure the IQ Server URL, username and password'
+    HELP_TEXT: 'To enable this feature configure the IQ Server URL, username and password',
+    PASSWORD_ERROR: 'Reenter your password to validate and save your changes.'
   },
 
   BUNDLES: {

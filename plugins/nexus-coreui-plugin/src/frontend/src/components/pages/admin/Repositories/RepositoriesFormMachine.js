@@ -19,14 +19,22 @@ import Axios from 'axios';
 
 import {mergeDeepRight} from 'ramda';
 
-import {FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
+import {FormUtils, ValidationUtils, ExtJS, APIConstants} from '@sonatype/nexus-ui-plugin';
+
+import UIStrings from '../../../../constants/UIStrings';
 
 import {getDefaultValues, getValidators} from './RepositoryFormConfig';
 
-export const repositoryUrl = (format, type) =>
-  `/service/rest/v1/repositories/${formatFormat(format)}/${type}`;
-export const editRepositoryUrl = (repositoryName) =>
-  `/service/rest/internal/ui/repositories/repository/${repositoryName}`;
+const {CONFIRM_DELETE, DELETE_ERROR, DELETE_SUCCESS} = UIStrings.REPOSITORIES.EDITOR.MESSAGES;
+
+const {INTERNAL, PUBLIC} = APIConstants.REST;
+
+export const saveRepositoryUrl = (format, type, name) =>
+  `${PUBLIC.REPOSITORIES}${encodeURIComponent(formatFormat(format))}/${encodeURIComponent(
+    type
+  )}/${name ? encodeURIComponent(name) : ''}`;
+export const getRepositoryUrl = (name) => INTERNAL.REPOSITORIES_REPOSITORY + name;
+export const deleteRepositoryUrl = (name) => PUBLIC.REPOSITORIES + name;
 
 export default FormUtils.buildFormMachine({
   id: 'RepositoriesFormMachine',
@@ -80,15 +88,23 @@ export default FormUtils.buildFormMachine({
           assetPathRegex: !checked ? null : data.replication.assetPathRegex
         }
       })
-    })
+    }),
+    onDeleteError: ({data}, event) => {
+      const errorDetails = event.data?.message || '';
+      ExtJS.showErrorMessage(DELETE_ERROR(data.name) + errorDetails);
+    },
+    logDeleteSuccess: ({data}) => {
+      ExtJS.showSuccessMessage(DELETE_SUCCESS(data.name));
+    }
   },
   guards: {
-    hasNoBlobStoreName: ({data}) => ValidationUtils.isBlank(data.storage?.blobStoreName)
+    hasNoBlobStoreName: ({data}) => ValidationUtils.isBlank(data.storage?.blobStoreName),
+    canDelete: () => true
   },
   services: {
     fetchData: async ({pristineData}) => {
       if (isEdit(pristineData)) {
-        const response = await Axios.get(editRepositoryUrl(pristineData.name));
+        const response = await Axios.get(getRepositoryUrl(pristineData.name));
         return mergeDeepRight(response, {
           data: {
             routingRule: response.data.routingRuleName
@@ -100,11 +116,20 @@ export default FormUtils.buildFormMachine({
     },
     saveData: ({data, pristineData}) => {
       const {format, type} = data;
+      const {name} = pristineData;
       const payload = data;
       return isEdit(pristineData)
-        ? Axios.put(repositoryUrl(format, type) + '/' + pristineData.name, payload)
-        : Axios.post(repositoryUrl(format, type), payload);
-    }
+        ? Axios.put(saveRepositoryUrl(format, type, name), payload)
+        : Axios.post(saveRepositoryUrl(format, type), payload);
+    },
+    confirmDelete: ({data}) =>
+      ExtJS.requestConfirmation({
+        title: CONFIRM_DELETE.TITLE,
+        message: CONFIRM_DELETE.MESSAGE(data.name),
+        yesButtonText: CONFIRM_DELETE.YES,
+        noButtonText: CONFIRM_DELETE.NO
+      }),
+    delete: ({data}) => Axios.delete(deleteRepositoryUrl(data.name))
   }
 });
 

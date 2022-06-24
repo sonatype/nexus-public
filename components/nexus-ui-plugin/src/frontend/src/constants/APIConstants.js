@@ -23,14 +23,14 @@ export default {
       METHODS: {
         READ: 'read',
         UPDATE: 'update',
-        POSSIBLE_REPOS: 'readPossibleRepos',
-      },
+        POSSIBLE_REPOS: 'readPossibleRepos'
+      }
     },
     BLOBSTORE: {
       ACTION: 'coreui_Blobstore',
       METHODS: {
-        READ_NAMES: 'readNames',
-      },
+        READ_NAMES: 'readNames'
+      }
     },
     HEALTH_CHECK: {
       ACTION: 'healthcheck_Status',
@@ -41,9 +41,24 @@ export default {
       }
     }
   },
-  REST_INTERNAL: {
-    BASE_URL: 'service/rest/internal/ui/',
-    get REPOSITORIES() { return `${this.BASE_URL}repositories/`},
-    get REPOSITORIES_DETAILS() {return `${this.REPOSITORIES}details`}
+  REST: {
+    INTERNAL: {
+      BASE_URL: 'service/rest/internal/ui/',
+      get REPOSITORIES() {
+        return `${this.BASE_URL}repositories/`;
+      },
+      get REPOSITORIES_DETAILS() {
+        return `${this.REPOSITORIES}details/`;
+      },
+      get REPOSITORIES_REPOSITORY() {
+        return `${this.REPOSITORIES}repository/`;
+      }
+    },
+    PUBLIC: {
+      BASE_URL: '/service/rest/v1/',
+      get REPOSITORIES() {
+        return `${this.BASE_URL}repositories/`;
+      }
+    }
   }
 };
