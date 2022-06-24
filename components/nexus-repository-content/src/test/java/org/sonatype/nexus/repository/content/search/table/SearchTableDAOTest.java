@@ -37,6 +37,7 @@ import org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilder;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -53,6 +54,7 @@ import static org.sonatype.nexus.repository.rest.sql.ComponentSearchField.NAME;
 /**
  * Test {@link SearchTableDAO}.
  */
+@Ignore
 public class SearchTableDAOTest
     extends ExampleContentTestSupport
 {
