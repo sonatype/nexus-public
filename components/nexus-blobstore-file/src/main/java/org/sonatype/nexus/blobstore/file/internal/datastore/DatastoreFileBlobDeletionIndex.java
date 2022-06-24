@@ -129,6 +129,11 @@ public class DatastoreFileBlobDeletionIndex
     QueueFile oldDeletionIndex;
 
     File oldDeletionIndexFile = getOldDeletionIndexFile(blobStore);
+    if (!oldDeletionIndexFile.exists()) {
+      log.debug("Skipping deletion file does not exist");
+      return;
+    }
+
     try {
       oldDeletionIndex = new QueueFile(oldDeletionIndexFile);
     }
@@ -145,17 +150,20 @@ public class DatastoreFileBlobDeletionIndex
       log.info("Processing blobstore {}, discovered file-based deletion index. Migrating to DB-based",
           blobStore.getBlobStoreConfiguration().getName());
 
-      ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, INTERVAL_IN_SECONDS);
-      for (int counter = 0, numBlobs = oldDeletionIndex.size(); counter < numBlobs; counter++) {
-        byte[] bytes = oldDeletionIndex.peek();
-        if (bytes == null) {
-          return;
-        }
-        BlobId blobId = new BlobId(new String(bytes, UTF_8));
-        softDeletedBlobsStore.createRecord(blobId, blobStore.getBlobStoreConfiguration().getName());
+      try (ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, INTERVAL_IN_SECONDS)) {
+        for (int counter = 0, numBlobs = oldDeletionIndex.size(); counter < numBlobs; counter++) {
+          byte[] bytes = oldDeletionIndex.peek();
+          if (bytes == null) {
+            log.debug("Queue indicated no more results {} of {}", counter, numBlobs);
+            break;
+          }
+          BlobId blobId = new BlobId(new String(bytes, UTF_8));
+          softDeletedBlobsStore.createRecord(blobId, blobStore.getBlobStoreConfiguration().getName());
 
-        progressLogger.info("Elapsed time: {}, processed: {}/{}", progressLogger.getElapsed(),
-            counter + 1, numBlobs);
+          oldDeletionIndex.remove();
+          progressLogger.info("Elapsed time: {}, processed: {}/{}", progressLogger.getElapsed(),
+              counter + 1, numBlobs);
+        }
       }
     }
 
