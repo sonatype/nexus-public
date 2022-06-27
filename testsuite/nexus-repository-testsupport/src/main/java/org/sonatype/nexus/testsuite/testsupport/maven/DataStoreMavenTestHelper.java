@@ -290,7 +290,8 @@ public class DataStoreMavenTestHelper
 
   @Override
   public void markMetadataForRebuild(final Repository repository, final String path) {
-    Optional<FluentAsset> maybeAsset = repository.facet(MavenContentFacet.class).assets().path(path).find();
+    Optional<FluentAsset> maybeAsset =
+        repository.facet(MavenContentFacet.class).assets().path(prependIfMissing(path, ASSET_PATH_PREFIX)).find();
     assertTrue("Could not set forceRebuild flag, because requested path does not exist", maybeAsset.isPresent());
     FluentAsset asset = maybeAsset.get();
     asset.withAttribute(METADATA_REBUILD, Collections.singletonMap(METADATA_FORCE_REBUILD, true));
