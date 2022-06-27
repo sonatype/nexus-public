@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.maven.internal.orient;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Set;
 
@@ -51,6 +52,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.lang.Boolean.TRUE;
 import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.cache.CacheInfo.extractFromAsset;
+import static org.sonatype.nexus.repository.maven.internal.Constants.METADATA_FILENAME;
 
 /**
  * Utility class containing shared (orient specific) methods for Maven metadata.
@@ -113,8 +115,9 @@ public final class OrientMetadataUtils
     OrientMavenFacet mavenFacet = repository.facet(OrientMavenFacet.class);
     final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     MavenModels.writeMetadata(buffer, metadata);
-    mavenFacet.put(mavenPath, new BytesPayload(buffer.toByteArray(),
-        MavenMimeRulesSource.METADATA_TYPE));
+    final byte[] bytes = buffer.toByteArray();
+    logGAMetadataBlobIfDebug(mavenPath, bytes);
+    mavenFacet.put(mavenPath, new BytesPayload(bytes, MavenMimeRulesSource.METADATA_TYPE));
     final Map<HashAlgorithm, HashCode> hashCodes = mavenFacet.get(mavenPath).getAttributes()
         .require(Content.CONTENT_HASH_CODES_MAP, Content.T_CONTENT_HASH_CODES_MAP);
     checkState(hashCodes != null, "hashCodes");
@@ -123,6 +126,20 @@ public final class OrientMetadataUtils
       HashCode hashCode = hashCodes.get(hashType.getHashAlgorithm());
       checkState(hashCode != null, "hashCode: type=%s", hashType);
       mavenFacet.put(checksumPath, new StringPayload(hashCode.toString(), Constants.CHECKSUM_CONTENT_TYPE));
+    }
+  }
+
+  private static void logGAMetadataBlobIfDebug(
+      final MavenPath mavenPath,
+      final byte[] bytes)
+  {
+    if (log.isDebugEnabled()) {
+      final String path = mavenPath.getPath();
+      if (mavenPath.getFileName().equals(METADATA_FILENAME)
+          && !path.endsWith("-SNAPSHOT/maven-metadata.xml")) {
+        log.debug("Attempting to put GA metadata. Path {}, content = {}", path,
+            new String(bytes, StandardCharsets.UTF_8));
+      }
     }
   }
 

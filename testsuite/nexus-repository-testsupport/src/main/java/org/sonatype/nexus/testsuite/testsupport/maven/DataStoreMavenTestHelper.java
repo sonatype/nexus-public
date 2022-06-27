@@ -64,6 +64,8 @@ import static org.sonatype.nexus.common.entity.Continuations.iterableOf;
 import static org.sonatype.nexus.common.entity.Continuations.streamOf;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
+import static org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet.METADATA_FORCE_REBUILD;
+import static org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet.METADATA_REBUILD;
 
 @Named
 @Singleton
@@ -284,6 +286,14 @@ public class DataStoreMavenTestHelper
         .filter(this::isNotFlaggedForRebuild)
         .map(Asset::path)
         .collect(Collectors.toList());
+  }
+
+  @Override
+  public void markMetadataForRebuild(final Repository repository, final String path) {
+    Optional<FluentAsset> maybeAsset = repository.facet(MavenContentFacet.class).assets().path(path).find();
+    assertTrue("Could not set forceRebuild flag, because requested path does not exist", maybeAsset.isPresent());
+    FluentAsset asset = maybeAsset.get();
+    asset.withAttribute(METADATA_REBUILD, Collections.singletonMap(METADATA_FORCE_REBUILD, true));
   }
 
   private boolean isNotFlaggedForRebuild(final FluentAsset asset) {
