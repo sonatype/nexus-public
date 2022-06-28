@@ -37,6 +37,7 @@ import org.junit.runners.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.utility.DockerImageName;
 
 import static com.google.common.base.Throwables.throwIfUnchecked;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
@@ -49,7 +50,6 @@ import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getBoole
 import static org.sonatype.nexus.common.text.Strings2.isBlank;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.JDBC_URL;
-import static org.sonatype.nexus.testcontainer.TestContainersWorkAround.postgresContainer;
 
 /**
  * JUnit rule to supply {@link DataSession}s without needing the full store ceremony.
@@ -239,7 +239,9 @@ public class DataSessionRule
 
   protected String startPostgres() {
     //11.9 is the minimum support version
-    postgres = postgresContainer("docker-all.repo.sonatype.com/postgres:11.9");
+
+    postgres = new PostgreSQLContainer<>(DockerImageName.parse("docker-all.repo.sonatype.com/postgres:11.9")
+        .asCompatibleSubstituteFor("postgres"));
     postgres.start();
 
     // use the same underlying PostgreSQL database as backing for each store
