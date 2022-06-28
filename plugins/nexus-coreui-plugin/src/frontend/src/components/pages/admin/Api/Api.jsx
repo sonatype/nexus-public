@@ -16,7 +16,8 @@ import {
   Page,
   PageHeader,
   PageTitle,
-  ContentBody
+  ContentBody,
+  ExtJS
 } from '@sonatype/nexus-ui-plugin';
 import { faPlug } from '@fortawesome/free-solid-svg-icons';
 import UIStrings from '../../../../constants/UIStrings';
@@ -49,7 +50,7 @@ export default function Api() {
         <PageTitle icon={faPlug} {...UIStrings.API.MENU}/>
       </PageHeader>
       <ContentBody className="nxrm-api">
-        <SwaggerUI url="service/rest/swagger.json" requestInterceptor={requestInterceptor} defaultModelsExpandDepth={-1} responseInterceptor={responseInterceptor} />
+        <SwaggerUI url={ExtJS.urlOf('/service/rest/swagger.json')} requestInterceptor={requestInterceptor} defaultModelsExpandDepth={-1} responseInterceptor={responseInterceptor} />
       </ContentBody>
     </Page>
   );
