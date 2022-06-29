@@ -243,6 +243,10 @@ public class DefaultIntegrityCheckStrategy
     checkArgument(blobName != null, BLOB_NAME_MISSING);
     checkArgument(assetName != null, ASSET_NAME_MISSING);
 
+    if (assetName.startsWith("/") && !blobName.startsWith("/")) {
+      assetName = assetName.substring(1);
+    }
+
     if (!StringUtils.equals(assetName, blobName)) {
       log.error(NAME_MISMATCH, blobName, assetName);
       return false;
