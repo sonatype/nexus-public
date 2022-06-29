@@ -170,11 +170,11 @@
   <insert id="saveBatch" parameterType="java.util.List">
     INSERT INTO component_search(repository_id, component_id, asset_id, format, namespace, search_component_name, path,
     component_kind, version, search_repository_name, content_type, md5, sha1, sha256, sha512,
-    component_created) VALUES
+    component_created, format_field_1, format_field_2, format_field_3) VALUES
     <foreach collection="searchData" separator="," item="item">
       (#{item.repositoryId}, #{item.componentId}, #{item.assetId}, #{item.format}, #{item.namespace}, #{item.componentName}, #{item.path},
       #{item.componentKind}, #{item.version}, #{item.repositoryName}, #{item.contentType}, #{item.md5}, #{item.sha1}, #{item.sha256}, #{item.sha512},
-      #{item.componentCreated})
+      #{item.componentCreated}, #{item.formatField1}, #{item.formatField2}, #{item.formatField3})
     </foreach>
   </insert>
 </mapper>
