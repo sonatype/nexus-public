@@ -19,8 +19,9 @@ import UIStrings from "../constants/UIStrings";
 const EMAIL_REGEX = /^(")?(?:[^\."])(?:(?:[\.])?(?:[\w\-!#$%&'*+/=?^_`{|}~]))*\1@(\w[\-\w]*\.?){1,5}([A-Za-z]){1,60}$/;
 const NAME_REGEX = /^[a-zA-Z0-9\-]{1}[a-zA-Z0-9_\-\.]*$/;
 const URI_REGEX = /^[a-z]*:.+$/i;
-const URL_REGEX = /^https?:\/\/[^"<>^`{|}]+$/i;
 const SECURE_URL_REGEX = /^https:\/\/[^"<>^`{|}]+$/i;
+const URL_HOSTNAME_REGEX = /^(([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])\.)*([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])$/i;
+const URL_PATHNAME_REGEX = /^([\S]*\S)?$/i;
 
 /**
  * @since 3.31
@@ -63,7 +64,32 @@ export default class ValidationUtils {
    * @returns {boolean} true if the string appears to be a valid url (http/https)
    */
   static isUrl(str) {
-    return str && URL_REGEX.test(str);
+    let url;
+
+    try {
+      url = new URL(str);
+    } catch (_) {
+      return false;
+    }
+
+    // Need to extract hostname manually because URL object has encoded hostname 
+    // that cannot be decoded to original form. 
+    // For exampel 'http://fo£o.bar' encodes to 'xn--foo-cea.bar'.
+    const matches = str.match(/^https?:\/\/([^:/?#]+)/i);
+    const hostname = matches && matches[1];
+
+    // Port is checked by URL function itself, except 0.
+    const {protocol, pathname, port} = url;
+
+    const isProtocolValid = protocol === 'http:' || protocol === 'https:';
+
+    const isHostnameValid = hostname && URL_HOSTNAME_REGEX.test(hostname);
+
+    const isPortValid = port !== '0';
+
+    const isPathnameValid = URL_PATHNAME_REGEX.test(decodeURIComponent(pathname));
+
+    return isProtocolValid && isHostnameValid && isPortValid && isPathnameValid;
   }
 
   /**
