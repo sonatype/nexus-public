@@ -76,6 +76,7 @@ import static org.ops4j.pax.exam.CoreOptions.wrappedBundle;
 import static org.ops4j.pax.exam.OptionUtils.combine;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.*;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_TABLE_SEARCH;
 import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 import static org.testcontainers.containers.BindMode.READ_ONLY;
 
@@ -129,6 +130,8 @@ public abstract class NexusPaxExamSupport
   private static final String DATABASE_KEY = "it.database";
 
   private static final String BLOB_STORE_KEY = "it.blobstore";
+
+  private static final String SQL_SEARCH_KEY = "it.sql_search";
 
   /*
    * Key identifying a system property which if set, should be used as a prefix for {@code it-data} subdirectory
@@ -521,10 +524,12 @@ public abstract class NexusPaxExamSupport
             editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.datastore.nexus.jdbcUrl", configurePostgres()),
             editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.datastore.nexus.username", DB_USER),
             editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.datastore.nexus.password", DB_PASSWORD),
+            sqlSearchOption(),
             systemProperty(TEST_JDBC_URL_PROPERTY).value(configurePostgres())
         );
       case H2:
         return combine(null,
+            sqlSearchOption(),
             editConfigurationFilePut(NEXUS_PROPERTIES_FILE, DATASTORE_ENABLED, "true")
         );
       case ORIENT:
@@ -716,6 +721,14 @@ public abstract class NexusPaxExamSupport
       //fallback to ORIENT if it is invalid
       return TestDatabase.ORIENT;
     }
+  }
+
+  public static Option sqlSearchOption() {
+    boolean sqlSearch = Boolean.valueOf(System.getProperty(SQL_SEARCH_KEY, "false"));
+
+    // SQL Search
+    return when(sqlSearch).useOptions(editConfigurationFilePut(NEXUS_PROPERTIES_FILE, //
+        DATASTORE_TABLE_SEARCH, "true"));
   }
 
   protected boolean isNewDb() {
