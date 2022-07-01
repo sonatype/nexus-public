@@ -238,6 +238,16 @@ public class DefaultOrientIntegrityCheckStrategyTest
     assertThat(checkFailed, is(true));
   }
 
+  /* This will happen in the case of NewDB data migrated to Orient */
+  @Test
+  public void testCheck_BlobNameStartsWithSlash() {
+    runTest("aa", TEST_HASH1, "/aa", TEST_HASH1);
+
+    verifyNoMoreInteractions(logger);
+
+    assertThat(checkFailed, is(false));
+  }
+
   @Test
   public void testCheck_MissingBlobData() {
     runTest("name", TEST_HASH1, "name", TEST_HASH1, () -> false, "name", getMockBlobWithoutData());

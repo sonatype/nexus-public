@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.content.search.table;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -56,15 +58,17 @@ import static org.sonatype.nexus.repository.rest.sql.ComponentSearchField.NAME;
 public class SearchTableDAOTest
     extends ExampleContentTestSupport
 {
-  private final String format = "test";
+  private static final String FORMAT = "test";
 
-  private final int tableRecordsToGenerate = 2;
+  private static final int TABLE_RECORDS_TO_GENERATE = 2;
 
-  private final List<SearchTableData> tableRecords = new ArrayList<>();
+  private static final List<SearchTableData> GENERATED_DATA = new ArrayList<>(TABLE_RECORDS_TO_GENERATE);
 
   private DataSession<?> session;
 
   private SearchTableDAO searchDAO;
+
+  private ContentRepositoryData repository;
 
   public SearchTableDAOTest() {
     super(SearchTableDAO.class);
@@ -80,14 +84,13 @@ public class SearchTableDAOTest
 
     ConfigurationData configuration = generatedConfigurations().get(0);
     generateSingleRepository(UUID.fromString(configuration.getRepositoryId().getValue()));
-    ContentRepositoryData repository = generatedRepositories().get(0);
+    repository = generatedRepositories().get(0);
 
-    generateContent(tableRecordsToGenerate);
+    generateContent(TABLE_RECORDS_TO_GENERATE);
 
     session = sessionRule.openSession(DEFAULT_DATASTORE_NAME);
 
-    tableRecords.clear();
-    for (int i = 0; i < tableRecordsToGenerate; i++) {
+    for (int i = 0; i < TABLE_RECORDS_TO_GENERATE; i++) {
       Component component = generatedComponents().get(i);
       Asset asset = generatedAssets().get(i);
       AssetBlob blob = generatedAssetBlobs().get(i);
@@ -97,13 +100,14 @@ public class SearchTableDAOTest
       tableData.setRepositoryId(repository.contentRepositoryId());
       tableData.setComponentId(InternalIds.internalComponentId(component));
       tableData.setAssetId(InternalIds.internalAssetId(asset));
-      tableData.setFormat(format);
+      tableData.setFormat(FORMAT);
       //tableData component
       tableData.setNamespace(component.namespace() + "_" + i);
       tableData.setComponentName(component.name() + "_" + i);
       tableData.setComponentKind(component.kind() + "_" + i);
       tableData.setVersion(component.version() + "_" + i);
       tableData.setRepositoryName(configuration.getRepositoryName() + "_" + i);
+      tableData.setComponentCreated(OffsetDateTime.of(2022, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC));
       //tableData asset
       tableData.setPath(asset.path() + "_" + i);
       //tableData blob
@@ -112,26 +116,33 @@ public class SearchTableDAOTest
       tableData.setSha1(blob.checksums().get(SHA1.name()) + "_" + i);
       tableData.setSha256(blob.checksums().get(SHA256.name()) + "_" + i);
       tableData.setSha512(blob.checksums().get(SHA512.name()) + "_" + i);
-      tableRecords.add(tableData);
+
+      // custom format attributes
+      tableData.setFormatField1("formatField1_" + i);
+      tableData.setFormatField2("formatField2_" + i);
+      tableData.setFormatField3("formatField3_" + i);
+      GENERATED_DATA.add(tableData);
     }
 
     searchDAO = session.access(SearchTableDAO.class);
-    tableRecords.forEach(searchDAO::create);
   }
 
   @After
   public void destroyContent() {
+    GENERATED_DATA.clear();
     session.close();
   }
 
   @Test
   public void testCreateAndCount() {
+    GENERATED_DATA.forEach(searchDAO::create);
     int count = searchDAO.count(null, null);
     assertThat(count, is(2));
   }
 
   @Test
   public void testSearchComponents() {
+    GENERATED_DATA.forEach(searchDAO::create);
     int count = searchDAO.count(null, null);
     assertThat(count, is(2));
 
@@ -155,6 +166,8 @@ public class SearchTableDAOTest
 
   @Test
   public void testSearchComponentsWithFilter() {
+    GENERATED_DATA.forEach(searchDAO::create);
+
     List<String> componentNames = Arrays.asList("component", "foo_component", "test_component_name", "name");
     generateContent(componentNames);
 
@@ -182,6 +195,7 @@ public class SearchTableDAOTest
 
   @Test
   public void testSearchComponentsWithOffset() {
+    GENERATED_DATA.forEach(searchDAO::create);
     int count = searchDAO.count(null, null);
     assertThat(count, is(2));
     SqlSearchRequest request = SqlSearchRequest.builder()
@@ -198,8 +212,9 @@ public class SearchTableDAOTest
 
   @Test
   public void testUpdateKind() {
-    SearchTableData tableData = tableRecords.get(0);
-    searchDAO.updateKind(tableData.getRepositoryId(), tableData.getComponentId(), format, "customKind");
+    GENERATED_DATA.forEach(searchDAO::create);
+    SearchTableData tableData = GENERATED_DATA.get(0);
+    searchDAO.updateKind(tableData.getRepositoryId(), tableData.getComponentId(), FORMAT, "customKind");
     SqlSearchQueryConditionBuilder queryConditionBuilder = new SqlSearchQueryConditionBuilder();
     SqlSearchQueryCondition queryCondition = queryConditionBuilder.condition("component_kind", "customKind");
     Map<String, String> values = queryCondition.getValues();
@@ -212,9 +227,11 @@ public class SearchTableDAOTest
 
   @Test
   public void testUpdateFormatFields() {
-    SearchTableData tableData = tableRecords.get(0);
+    GENERATED_DATA.forEach(searchDAO::create);
+
+    SearchTableData tableData = GENERATED_DATA.get(0);
     searchDAO.updateFormatFields(tableData.getRepositoryId(), tableData.getComponentId(), tableData.getAssetId(),
-        format, "customField1", "customField2", "customField3");
+        FORMAT, "customField1", "customField2", "customField3");
     SqlSearchQueryConditionBuilder queryConditionBuilder = new SqlSearchQueryConditionBuilder();
     SqlSearchQueryCondition queryCondition =
         queryConditionBuilder.condition(FORMAT_FIELD_1.getColumnName(), "customField1");
@@ -228,25 +245,34 @@ public class SearchTableDAOTest
 
   @Test
   public void testDelete() {
-    SearchTableData tableData = tableRecords.get(0);
-    searchDAO.delete(tableData.getRepositoryId(), tableData.getComponentId(), tableData.getAssetId(), format);
+    GENERATED_DATA.forEach(searchDAO::create);
+    SearchTableData tableData = GENERATED_DATA.get(0);
+    searchDAO.delete(tableData.getRepositoryId(), tableData.getComponentId(), tableData.getAssetId(), FORMAT);
     int count = searchDAO.count(null, null);
     assertThat(count, is(1));
   }
 
   @Test
   public void testDeleteAllForRepository() {
-    SearchTableData tableData = tableRecords.get(0);
-    searchDAO.deleteAllForRepository(tableData.getRepositoryId(), format, 1);
+    GENERATED_DATA.forEach(searchDAO::create);
+    searchDAO.deleteAllForRepository(repository.contentRepositoryId(), FORMAT, 1);
     int count = searchDAO.count(null, null);
     assertThat(count, is(1));
   }
 
   @Test
   public void testDeleteAllForRepositoryWithoutLimit() {
-    SearchTableData tableData = tableRecords.get(0);
-    searchDAO.deleteAllForRepository(tableData.getRepositoryId(), format, 0);
+    GENERATED_DATA.forEach(searchDAO::create);
+    searchDAO.deleteAllForRepository(repository.contentRepositoryId(), FORMAT, 0);
     int count = searchDAO.count(null, null);
     assertThat(count, is(0));
+  }
+
+  @Test
+  public void testSaveBatch() {
+    searchDAO.saveBatch(GENERATED_DATA);
+
+    int count = searchDAO.count(null, null);
+    assertThat(count, is(TABLE_RECORDS_TO_GENERATE));
   }
 }

@@ -202,9 +202,14 @@ public abstract class AbstractMetadataRebuilder
       try {
         List<Map<String, Object>> gavs = browseGAVs();
 
+        log.debug("Beginning metadata rebuild for {} GAVs", gavs.size());
+
         if (!gavs.isEmpty() && nonNull(groupId)) {
+          log.debug("Rebuilding Group: {}", groupId);
+
           metadataBuilder.onEnterGroupId(groupId);
           if (nonNull(artifactId) && nonNull(baseVersion)) {
+            log.debug("Rebuilding Group: {} Artifact: {}", groupId, artifactId);
             rebuildMetadataInner(groupId, artifactId, emptySet(), failures);
           }
           rebuildMetadataExitGroup(groupId, failures);
@@ -215,6 +220,8 @@ public abstract class AbstractMetadataRebuilder
           final String groupId = (String) gav.get("groupId");
           final String artifactId = (String) gav.get("artifactId");
           final Set<String> baseVersions = (Set<String>) gav.get("baseVersions");
+
+          log.debug("Group: {} Artifact: {} Base versions: {}", groupId, artifactId, baseVersions);
 
           final boolean groupChange = !Objects.equals(currentGroupId, groupId);
           if (groupChange) {
@@ -255,9 +262,13 @@ public abstract class AbstractMetadataRebuilder
       try {
         List<Map<String, Object>> gavs = browseGAVs();
 
+        log.debug("Beginning metadata refresh for {} GAVs", gavs.size());
+
         if (!gavs.isEmpty() && nonNull(groupId)) {
+          log.debug("Refreshing Group: {}", groupId);
           metadataBuilder.onEnterGroupId(groupId);
           if (nonNull(artifactId) && nonNull(baseVersion)) {
+            log.debug("Refreshing Group: {} Artifact: {}", groupId, artifactId);
             refreshArtifact(groupId, artifactId, emptySet(), failures);
           }
           rebuildMetadataExitGroup(groupId, failures);
@@ -268,6 +279,8 @@ public abstract class AbstractMetadataRebuilder
           final String g = (String) gav.get("groupId");
           final String a = (String) gav.get("artifactId");
           final Set<String> bv = (Set<String>) gav.get("baseVersions");
+
+          log.debug("Group: {} Artifact: {} Base versions: {}",g, a, bv);
 
           final boolean groupChange = !Objects.equals(prevGroupId, g);
           if (groupChange) {
@@ -289,7 +302,7 @@ public abstract class AbstractMetadataRebuilder
       finally {
         maybeLogFailures(failures);
       }
-
+      log.debug("Finished metadata refresh. Rebuilt {}", rebuilt);
       return rebuilt;
     }
 

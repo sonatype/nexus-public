@@ -37,7 +37,6 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.file.internal.OrientFileBlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.file.internal.SimpleFileOperations;
-import org.sonatype.nexus.blobstore.file.internal.orient.OrientFileBlobDeletionIndex;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
@@ -72,7 +71,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -88,7 +86,7 @@ import static org.sonatype.nexus.blobstore.api.BlobStore.TEMPORARY_BLOB_HEADER;
 /**
  * {@link FileBlobStore} integration tests.
  */
-public class FileBlobStoreIT
+public abstract class FileBlobStoreITSupport
     extends TestSupport
 {
   public static final int TEST_DATA_LENGTH = 10;
@@ -114,10 +112,6 @@ public class FileBlobStoreIT
 
   private Path contentDirectory;
 
-  private OrientFileBlobStoreMetricsStore metricsStore;
-
-  private BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker;
-
   private SimpleFileOperations fileOperations;
 
   private DefaultBlobIdLocationResolver blobIdResolver;
@@ -129,36 +123,46 @@ public class FileBlobStoreIT
   DryRunPrefix dryRunPrefix;
 
   @Mock
+  ApplicationDirectories applicationDirectories;
+
+  @Mock
   private BlobStoreQuotaService quotaService;
 
   @Mock
   private BlobStoreReconciliationLogger reconciliationLogger;
+
+  protected abstract FileBlobDeletionIndex fileBlobDeletionIndex();
 
   @Before
   public void setUp() throws Exception {
     when(nodeAccess.getId()).thenReturn(UUID.randomUUID().toString());
     when(nodeAccess.isOldestNode()).thenReturn(true);
     when(dryRunPrefix.get()).thenReturn("");
-    ApplicationDirectories applicationDirectories = mock(ApplicationDirectories.class);
     blobStoreDirectory = util.createTempDir().toPath();
     contentDirectory = blobStoreDirectory.resolve("content");
     when(applicationDirectories.getWorkDirectory(anyString())).thenReturn(blobStoreDirectory.toFile());
 
     fileOperations = spy(new SimpleFileOperations());
 
-    metricsStore =
-        new OrientFileBlobStoreMetricsStore(new PeriodicJobServiceImpl(), nodeAccess, fileOperations);
-    blobStoreQuotaUsageChecker =
-        new BlobStoreQuotaUsageChecker(new PeriodicJobServiceImpl(), QUOTA_CHECK_INTERVAL, quotaService);
-
     blobIdResolver = new DefaultBlobIdLocationResolver();
 
+    underTest = createBlobStore(UUID.randomUUID().toString(), fileBlobDeletionIndex());
+  }
+
+  protected FileBlobStore createBlobStore(final String name, final FileBlobDeletionIndex index) throws Exception {
+    BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker =
+        new BlobStoreQuotaUsageChecker(new PeriodicJobServiceImpl(), QUOTA_CHECK_INTERVAL, quotaService);
+
+    OrientFileBlobStoreMetricsStore metricsStore =
+        new OrientFileBlobStoreMetricsStore(new PeriodicJobServiceImpl(), nodeAccess, fileOperations);
     final BlobStoreConfiguration config = new MockBlobStoreConfiguration();
+    config.setName(name);
     config.attributes(FileBlobStore.CONFIG_KEY).set(FileBlobStore.PATH_KEY, blobStoreDirectory.toString());
-    underTest = new FileBlobStore(blobIdResolver, fileOperations, applicationDirectories, metricsStore, nodeAccess,
-        dryRunPrefix, reconciliationLogger, 0L, blobStoreQuotaUsageChecker, new OrientFileBlobDeletionIndex());
-    underTest.init(config);
-    underTest.start();
+    FileBlobStore blobstore = new FileBlobStore(blobIdResolver, fileOperations, applicationDirectories, metricsStore,
+        nodeAccess, dryRunPrefix, reconciliationLogger, 0L, blobStoreQuotaUsageChecker, index);
+    blobstore.init(config);
+    blobstore.start();
+    return blobstore;
   }
 
   @After
@@ -170,8 +174,7 @@ public class FileBlobStoreIT
 
   @Test
   public void basicSmokeTest() throws Exception {
-    final byte[] content = new byte[TEST_DATA_LENGTH];
-    new Random().nextBytes(content);
+    final byte[] content = randomBytes();
 
     final Blob blob = underTest.create(new ByteArrayInputStream(content), TEST_HEADERS);
     verifyMoveOperationsAtomic(blob);
@@ -215,8 +218,7 @@ public class FileBlobStoreIT
 
   @Test
   public void createAndDeleteBlobWithDirectPathSuccessful() throws IOException {
-    final byte[] content = new byte[TEST_DATA_LENGTH];
-    new Random().nextBytes(content);
+    final byte[] content = randomBytes();
 
     final Blob blob = underTest.create(new ByteArrayInputStream(content), ImmutableMap.of(
         CREATED_BY_HEADER, "test",
@@ -243,6 +245,12 @@ public class FileBlobStoreIT
 
     final Blob deletedBlob = underTest.get(blob.getId());
     assertThat(deletedBlob, is(nullValue()));
+  }
+
+  protected byte[] randomBytes() {
+    final byte[] content = new byte[TEST_DATA_LENGTH];
+    new Random().nextBytes(content);
+    return content;
   }
 
   @Test
@@ -398,8 +406,7 @@ public class FileBlobStoreIT
 
   @Test
   public void temporaryBlobMoveFallback() throws Exception {
-    final byte[] content = new byte[TEST_DATA_LENGTH];
-    new Random().nextBytes(content);
+    final byte[] content = randomBytes();
 
     doThrow(new AtomicMoveNotSupportedException("", "", "")).when(fileOperations).moveAtomic(any(), any());
 
@@ -415,8 +422,7 @@ public class FileBlobStoreIT
 
   @Test
   public void temporaryBlobMoveFallbackPersists() throws Exception {
-    final byte[] content = new byte[TEST_DATA_LENGTH];
-    new Random().nextBytes(content);
+    final byte[] content = randomBytes();
 
     doThrow(new AtomicMoveNotSupportedException("", "", "")).when(fileOperations).moveAtomic(any(), any());
 
@@ -528,12 +534,11 @@ public class FileBlobStoreIT
   }
 
   private byte[] testData() {
-    final byte[] content = new byte[TEST_DATA_LENGTH];
-    new Random().nextBytes(content);
+    final byte[] content = randomBytes();
     return content;
   }
 
-  private Path testFile(byte[] content) throws IOException {
+  private Path testFile(final byte[] content) throws IOException {
     Path tempFile = util.createTempFile().toPath();
     DirectoryHelper.mkdir(tempFile.getParent());
     Files.write(tempFile, content);
@@ -554,8 +559,7 @@ public class FileBlobStoreIT
 
   @Test
   public void hardDeletePreventsGetDespiteOpenStreams() throws Exception {
-    final byte[] content = new byte[TEST_DATA_LENGTH];
-    new Random().nextBytes(content);
+    final byte[] content = randomBytes();
 
     final Blob blob = underTest.create(new ByteArrayInputStream(content), TEST_HEADERS);
 
@@ -573,8 +577,7 @@ public class FileBlobStoreIT
 
   @Test
   public void blobstoreRemovalPreservesExternalFiles() throws Exception {
-    final byte[] content = new byte[TEST_DATA_LENGTH];
-    new Random().nextBytes(content);
+    final byte[] content = randomBytes();
 
     for (int i = 0; i < 100; i++) {
       underTest.create(new ByteArrayInputStream(content), TEST_HEADERS);
@@ -684,21 +687,21 @@ public class FileBlobStoreIT
     assertThat(bytesPath4.toFile().exists(), is(false));
   }
 
-  private void verifyMoveOperations(Blob blob) throws IOException {
+  private void verifyMoveOperations(final Blob blob) throws IOException {
     Pair<Path, Path> paths = verifyBlobPaths(blob);
 
     verify(fileOperations).move(any(), eq(paths.getLeft()));
     verify(fileOperations).move(any(), eq(paths.getRight()));
   }
 
-  private void verifyMoveOperationsAtomic(Blob blob) throws IOException {
+  private void verifyMoveOperationsAtomic(final Blob blob) throws IOException {
     Pair<Path, Path> paths = verifyBlobPaths(blob);
 
     verify(fileOperations).moveAtomic(any(), eq(paths.getLeft()));
     verify(fileOperations).moveAtomic(any(), eq(paths.getRight()));
   }
 
-  private void verifyOverwriteOperationsAtomic(Blob blob) throws IOException {
+  private void verifyOverwriteOperationsAtomic(final Blob blob) throws IOException {
     Pair<Path, Path> paths = verifyBlobPaths(blob);
 
     verify(fileOperations).overwriteAtomic(any(), eq(paths.getLeft()));

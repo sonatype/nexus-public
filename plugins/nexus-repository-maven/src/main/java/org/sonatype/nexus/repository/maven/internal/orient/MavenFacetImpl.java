@@ -12,8 +12,10 @@
  */
 package org.sonatype.nexus.repository.maven.internal.orient;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -72,6 +74,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Sets;
 import com.google.common.hash.HashCode;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
+import org.apache.commons.io.IOUtils;
 import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.apache.maven.model.Model;
 import org.joda.time.DateTime;
@@ -261,6 +264,7 @@ public class MavenFacetImpl
       }
     }
 
+    logGAMetadataBlobIfDebug(path, blob, "Retrieved GA metadata");
     return toContent(asset, blob);
   }
 
@@ -368,7 +372,10 @@ public class MavenFacetImpl
       contentAttributes = ((Content) payload).getAttributes();
     }
 
-    return doPutAssetBlob(path, contentAttributes, tx, assetBlob);
+    logGAMetadataBlobStorageAttempt(path);
+    Content content = doPutAssetBlob(path, contentAttributes, tx, assetBlob);
+    logGAMetadataBlobIfDebug(path, assetBlob.getBlob(), "PUT GA metadata.");
+    return content;
   }
 
   @TransactionalStoreBlob
@@ -691,5 +698,32 @@ public class MavenFacetImpl
           contentAttributes.get(AssetEntityAdapter.P_CREATED_BY_IP, String.class));
     }
     return headers.isEmpty() ? null : headers;
+  }
+
+  private void logGAMetadataBlobStorageAttempt(final MavenPath path) {
+    final String thePath = path.getPath();
+    if (isGAMetadata(path, thePath)) {
+      log.debug("Attempting to store GA metadata for {} ", thePath);
+    }
+  }
+
+  private void logGAMetadataBlobIfDebug(final MavenPath mavenPath, final Blob blob, final String message) {
+    final String path = mavenPath.getPath();
+    if (log.isDebugEnabled() && isGAMetadata(mavenPath, path)) {
+      try (InputStream in = blob.getInputStream()) {
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        IOUtils.copy(in, out);
+        log.debug("{} Blob id {}, Path {}, content = {}", message, blob.getId().asUniqueString(), path,
+            new String(out.toByteArray(), StandardCharsets.UTF_8));
+      }
+      catch (IOException e) {
+        log.error("Unable to log metadata blob.", e);
+      }
+    }
+  }
+
+  private boolean isGAMetadata(final MavenPath path, final String thePath) {
+    return path.getFileName().equals(METADATA_FILENAME)
+        && !thePath.endsWith("-SNAPSHOT/maven-metadata.xml");
   }
 }

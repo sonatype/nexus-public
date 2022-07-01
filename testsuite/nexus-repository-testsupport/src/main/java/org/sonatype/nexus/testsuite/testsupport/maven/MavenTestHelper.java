@@ -230,4 +230,6 @@ public abstract class MavenTestHelper
   public abstract List<String> findAssets(final Repository repository);
 
   public abstract List<String> findAssetsExcludingFlaggedForRebuild(final Repository repository);
+
+  public abstract void markMetadataForRebuild(final Repository repository, final String path);
 }

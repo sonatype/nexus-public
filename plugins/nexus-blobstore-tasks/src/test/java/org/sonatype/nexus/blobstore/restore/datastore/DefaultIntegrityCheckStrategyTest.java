@@ -245,6 +245,15 @@ public class DefaultIntegrityCheckStrategyTest
     verify(checkFailedHandler).accept(any());
   }
 
+  /* This will happen in the case of Orient data migrated to NewDB */
+  @Test
+  public void testCheck_BlobNameMissingSlash() {
+    runTest("/aa", TEST_HASH1, "aa", TEST_HASH1, () -> false);
+
+    verifyNoMoreInteractions(logger);
+    verify(checkFailedHandler, never()).accept(any());
+  }
+
   @Test
   public void testCheck_MissingBlobData() throws IOException {
     doThrow(new BlobStoreException("bse", new BlobId("blob"))).when(blobData).close();

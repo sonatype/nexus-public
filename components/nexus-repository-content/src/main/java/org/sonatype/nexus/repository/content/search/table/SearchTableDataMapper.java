@@ -12,7 +12,12 @@
  */
 package org.sonatype.nexus.repository.content.search.table;
 
+import java.util.Map;
 import java.util.Optional;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Repository;
@@ -34,9 +39,18 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA512;
 /**
  * Utility class used to build {@link SearchTableData} object from the {@link Asset}
  */
-public class SearchTableDataUtils
+@Named
+@Singleton
+public class SearchTableDataMapper
 {
-  private static final Logger log = LoggerFactory.getLogger(SearchTableDataUtils.class);
+  private static final Logger log = LoggerFactory.getLogger(SearchTableDataMapper.class);
+
+  private final Map<String, SearchCustomFieldContributor> searchCustomFieldContributors;
+
+  @Inject
+  public SearchTableDataMapper(final Map<String, SearchCustomFieldContributor> searchCustomFieldContributors) {
+    this.searchCustomFieldContributors = checkNotNull(searchCustomFieldContributors);
+  }
 
   /**
    * Convert {@link Asset} into the {@link SearchTableData}
@@ -45,7 +59,7 @@ public class SearchTableDataUtils
    * @param repository the repository which belongs to the asset.
    * @return the {@link SearchTableData} object.
    */
-  public static Optional<SearchTableData> convert(final Asset asset, final Repository repository)
+  public Optional<SearchTableData> convert(final Asset asset, final Repository repository)
   {
     checkNotNull(asset);
     checkNotNull(repository);
@@ -87,10 +101,9 @@ public class SearchTableDataUtils
     data.setSha512(blob.checksums().get(SHA512.name()));
 
     //Custom format fields
-    NestedAttributesMap nestedAttributesMap = asset.attributes();
-    data.setFormatField1(SearchTableSubscriberHelper.selectFormatField1(repositoryFormat, nestedAttributesMap));
-    data.setFormatField2(SearchTableSubscriberHelper.selectFormatField2(repositoryFormat, nestedAttributesMap));
-    data.setFormatField3(SearchTableSubscriberHelper.selectFormatField3(repositoryFormat, nestedAttributesMap));
+    if (searchCustomFieldContributors.containsKey(repositoryFormat)) {
+      searchCustomFieldContributors.get(repositoryFormat).populateSearchCustomFields(data, asset);
+    }
 
     return Optional.of(data);
   }

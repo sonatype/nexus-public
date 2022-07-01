@@ -125,6 +125,7 @@ abstract public class AbstractMetadataUpdater
       }
       else {
         write(mavenPath, toMetadata(metadata));
+        log.debug("Wrote new metadata for {}", mavenPath.getPath());
       }
     }
     catch (IOException e) {

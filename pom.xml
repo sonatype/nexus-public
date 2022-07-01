@@ -998,8 +998,6 @@
             <installDirectory>${project.build.directory}</installDirectory>
             <environmentVariables>
               <JEST_SUITE_NAME>React-Tests</JEST_SUITE_NAME>
-              <JEST_JUNIT_OUTPUT_NAME>TEST-react-jest.xml</JEST_JUNIT_OUTPUT_NAME>
-              <JEST_JUNIT_OUTPUT_DIR>${project.build.directory}/jest-reports/</JEST_JUNIT_OUTPUT_DIR>
               <CI>true</CI>
             </environmentVariables>
           </configuration>

@@ -74,7 +74,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertNotNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
+import static org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet.METADATA_FORCE_REBUILD;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.GROUP;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
@@ -368,5 +370,18 @@ public class OrientMavenTestHelper
       }
     }
     return true;
+  }
+
+  @Override
+  public void markMetadataForRebuild(final Repository repository, final String path) {
+    StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get();
+    tx.begin();
+    Bucket bucket = tx.findBucket(repository);
+    Asset metadataAsset = tx.findAssetWithProperty(P_NAME, path, bucket);
+    assertNotNull("Could not set forceRebuild flag, because requested path does not exist", metadataAsset);
+    metadataAsset.formatAttributes().set(METADATA_FORCE_REBUILD, true);
+    tx.saveAsset(metadataAsset);
+    tx.commit();
+    tx.close();
   }
 }

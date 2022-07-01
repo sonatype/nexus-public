@@ -17,7 +17,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.repository.Repository;
@@ -51,9 +50,15 @@ public class SearchTableSubscriber
 {
   private final SearchTableEventProcessor eventProcessor;
 
+  private final SearchTableDataMapper searchTableDataMapper;
+
   @Inject
-  public SearchTableSubscriber(final SearchTableEventProcessor eventProcessor) {
+  public SearchTableSubscriber(
+      final SearchTableEventProcessor eventProcessor,
+      final SearchTableDataMapper searchTableDataMapper)
+  {
     this.eventProcessor = checkNotNull(eventProcessor);
+    this.searchTableDataMapper = checkNotNull(searchTableDataMapper);
   }
 
   /**
@@ -69,7 +74,7 @@ public class SearchTableSubscriber
       return;
     }
 
-    Optional<SearchTableData> searchData = SearchTableDataUtils.convert(event.getAsset(), repository);
+    Optional<SearchTableData> searchData = searchTableDataMapper.convert(event.getAsset(), repository);
     if (!searchData.isPresent()) {
       log.debug("Unable to build the search data based on event: {}", event);
       return;
@@ -152,20 +157,8 @@ public class SearchTableSubscriber
       log.debug("Unable to determine component for event {}", event);
       return;
     }
-    Integer repositoryId = InternalIds.contentRepositoryId(event);
-    Integer componentId = InternalIds.internalComponentId(component);
-    Integer assetId = InternalIds.internalAssetId(asset);
-    String format = repository.getFormat().getValue();
-    //Custom format fields
-    NestedAttributesMap nestedAttributesMap = asset.attributes();
-    String formatField1 = SearchTableSubscriberHelper.selectFormatField1(format, nestedAttributesMap);
-    String formatField2 = SearchTableSubscriberHelper.selectFormatField2(format, nestedAttributesMap);
-    String formatField3 = SearchTableSubscriberHelper.selectFormatField3(format, nestedAttributesMap);
 
-    SearchTableData data = new SearchTableData(repositoryId, componentId, assetId, format);
-    data.setFormatField1(formatField1);
-    data.setFormatField2(formatField2);
-    data.setFormatField3(formatField3);
+    SearchTableData data = searchTableDataMapper.convert(asset, repository).orElse(new SearchTableData());
     eventProcessor.addEvent(ASSET_ATTRIBUTES_UPDATED, data);
     eventProcessor.checkAndFlush();
   }

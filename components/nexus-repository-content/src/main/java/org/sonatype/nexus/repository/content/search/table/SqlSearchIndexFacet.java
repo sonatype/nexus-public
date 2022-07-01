@@ -52,16 +52,20 @@ public class SqlSearchIndexFacet
 
   private final Map<String, FormatStoreManager> formatStoreManagersByFormat;
 
+  private final SearchTableDataMapper searchTableDataMapper;
+
   private final int batchSize;
 
   @Inject
   public SqlSearchIndexFacet(
       final SearchTableStore store,
       final Map<String, FormatStoreManager> formatStoreManagersByFormat,
+      final SearchTableDataMapper searchTableDataMapper,
       @Named("${nexus.rebuild.search.batchSize:-1000}") final int batchSize)
   {
     this.store = checkNotNull(store);
     this.formatStoreManagersByFormat = checkNotNull(formatStoreManagersByFormat);
+    this.searchTableDataMapper = checkNotNull(searchTableDataMapper);
 
     checkState(batchSize >= 1, "batchSize should be greater than 1");
     this.batchSize = batchSize;
@@ -97,7 +101,7 @@ public class SqlSearchIndexFacet
       while (!isEmpty(assets)) {
         List<SearchTableData> searchData = new ArrayList<>(assets.size());
         assets.stream()
-            .map(a -> SearchTableDataUtils.convert(a, repository))
+            .map(a -> searchTableDataMapper.convert(a, repository))
             .filter(Optional::isPresent)
             .forEach(searchTableData -> searchData.add(searchTableData.get()));
 
