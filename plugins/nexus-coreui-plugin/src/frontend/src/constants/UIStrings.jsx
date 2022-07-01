@@ -418,7 +418,7 @@ export default {
         FORMAT: 'Format',
         STATUS: 'Status',
         URL: 'URL',
-        HEALTH_CHECK: 'Health check',
+        HEALTH_CHECK: 'Health Check',
         IQ: 'IQ Policy Violations',
       },
       FILTER_PLACEHOLDER: 'Filter by name',
@@ -444,7 +444,8 @@ export default {
         ANALYZE_THIS: (name) => `Analyze '${name}' repository`,
         ANALYZE_ALL: 'Analyze all repositories',
         MODAL_CONTENT: (name) => `Do you want to analyze the repository ${name} and others for secuirty vulnerabilities and licence issues?`,
-        MODAL_HEADER: 'Analyze Repository'
+        MODAL_HEADER: 'Analyze Repository',
+        NOT_AVAILABLE_TOOLTIP: 'Repository Health Check Unavailable'
       }
     },
 
