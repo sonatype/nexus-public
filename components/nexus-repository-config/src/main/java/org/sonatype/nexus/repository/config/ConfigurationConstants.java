@@ -27,6 +27,8 @@ public interface ConfigurationConstants
 
   String WRITE_POLICY = "writePolicy";
 
+  String LATEST_POLICY = "latestPolicy";
+
   String WRITE_POLICY_DEFAULT = "ALLOW";
 
   String STRICT_CONTENT_TYPE_VALIDATION = "strictContentTypeValidation";
