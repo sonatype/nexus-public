@@ -145,10 +145,11 @@
     <result property="version" column="version"/>
     <result property="repositoryName" column="search_repository_name"/>
     <result property="format" column="format"/>
+    <result property="created" column="component_created" />
   </resultMap>
 
   <select id="searchComponents" resultMap="searchDataMap" parameterType="SqlSearchRequest">
-    SELECT component_id, namespace, search_component_name, version, search_repository_name, format
+    SELECT component_id, namespace, search_component_name, version, search_repository_name, format, component_created
     FROM component_search
     <where>
       <if test="filter != null">(${filter})</if>

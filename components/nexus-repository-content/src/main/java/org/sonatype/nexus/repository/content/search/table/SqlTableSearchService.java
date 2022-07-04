@@ -226,6 +226,7 @@ public class SqlTableSearchService
     componentSearchResult.setName(searchResult.componentName());
     componentSearchResult.setGroup(searchResult.namespace());
     componentSearchResult.setVersion(searchResult.version());
+    componentSearchResult.setLastModified(searchResult.created());
 
     return componentSearchResult;
   }

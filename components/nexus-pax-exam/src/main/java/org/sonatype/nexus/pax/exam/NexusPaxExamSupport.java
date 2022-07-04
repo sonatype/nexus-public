@@ -724,7 +724,7 @@ public abstract class NexusPaxExamSupport
   }
 
   public static Option sqlSearchOption() {
-    boolean sqlSearch = Boolean.valueOf(System.getProperty(SQL_SEARCH_KEY, "false"));
+    boolean sqlSearch = Boolean.parseBoolean(System.getProperty(SQL_SEARCH_KEY, "false"));
 
     // SQL Search
     return when(sqlSearch).useOptions(editConfigurationFilePut(NEXUS_PROPERTIES_FILE, //
