@@ -104,7 +104,7 @@ class CoreApiImpl
   void connectionRetryAttempts(int retries) {
     checkArgument((retries >= 0 && retries <= 10), 'Value must be between 0 and 10')
     HttpClientConfiguration configuration = detachedConfiguration()
-    connection(configuration).maximumRetries = retries
+    connection(configuration).retries = retries
     httpClientManager.configuration = configuration
   }
 

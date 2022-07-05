@@ -21,16 +21,16 @@ import org.apache.http.HttpRequest
 import org.apache.http.client.RedirectStrategy
 import org.apache.http.client.config.CookieSpecs
 import org.apache.http.conn.routing.HttpRoute
-import org.apache.http.impl.client.BasicCookieStore
 import org.apache.http.protocol.HttpContext
 import org.junit.Test
 import org.mockito.Mock
 
 import static org.hamcrest.MatcherAssert.assertThat
 import static org.hamcrest.Matchers.equalTo
-import static org.hamcrest.Matchers.instanceOf
 import static org.hamcrest.Matchers.nullValue
 import static org.mockito.Mockito.mock
+import static org.mockito.Mockito.spy
+import static org.mockito.Mockito.verify
 import static org.mockito.Mockito.when
 import static org.sonatype.nexus.httpclient.HttpSchemes.HTTP
 import static org.sonatype.nexus.httpclient.HttpSchemes.HTTPS
@@ -58,6 +58,16 @@ class ConfigurationCustomizerTest
         https: new ProxyServerConfiguration(host: httpsProxyHost.hostName, port: httpsProxyHost.port, enabled: true),
         nonProxyHosts: nonProxyHosts
     ))
+  }
+
+  @Test
+  void 'setRetryHandler is called when retries are set in the configuration'() {
+    ConnectionConfiguration configuration = new ConnectionConfiguration(retries: 4);
+    when(httpClientConfiguration.getConnection()).thenReturn(configuration)
+    HttpClientPlan plan = new HttpClientPlan()
+    ConfigurationCustomizer spyCustomizer = spy(configurationCustomizer)
+    spyCustomizer.customize(plan)
+    verify(spyCustomizer).setRetryHandler(configuration, plan)
   }
 
   @Test

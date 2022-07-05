@@ -62,7 +62,7 @@ public class HttpClientAuditor
       ConnectionConfiguration connection = configuration.getConnection();
       if (connection != null) {
         attributes.put("connection.timeout", string(connection.getTimeout()));
-        attributes.put("connection.maximumRetries", string(connection.getMaximumRetries()));
+        attributes.put("connection.retries", string(connection.getRetries()));
         attributes.put("connection.userAgentSuffix", string(connection.getUserAgentSuffix()));
         attributes.put("connection.useTrustStore", string(connection.getUseTrustStore()));
       }
