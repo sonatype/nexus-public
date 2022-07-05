@@ -50,7 +50,6 @@ export default function RolesForm({roleId, service, onDone}) {
     sources,
     roleType,
     externalRoleType,
-    externalRoles
   } = current.context;
 
   const isLoading = current.matches('loading');
@@ -65,7 +64,6 @@ export default function RolesForm({roleId, service, onDone}) {
   const isExternalTypeSelected = Boolean(externalRoleType);
   const internalRole = isCreate && roleType === TYPES.INTERNAL;
   const externalRole = isCreate && roleType === TYPES.EXTERNAL;
-  const isMappedRoleSelected = externalRole && Boolean(data.id);
   const isTypeSelected = internalRole || (externalRole && isExternalTypeSelected);
 
   const hasExternalSources = isCreate && sources && sources.length;
@@ -136,29 +134,13 @@ export default function RolesForm({roleId, service, onDone}) {
       </>}
       {(isTypeSelected || isEdit) && <>
         <NxH2>{LABELS.SECTIONS.SETUP}</NxH2>
-        {externalRole &&
-            <NxFormGroup label={LABELS.MAPPED_ROLE.LABEL} isRequired>
-              <NxFormSelect
-                  {...FormUtils.selectProps('id', current)}
-                  onChange={FormUtils.handleUpdate('id', send)}
-              >
-                <option disabled={isMappedRoleSelected} value=""/>
-                {externalRoles?.map(({id, name}) =>
-                    <option key={id} value={id}>{name}</option>
-                )}
-              </NxFormSelect>
-            </NxFormGroup>
-        }
-        {(isEdit || internalRole) &&
-            <NxFormGroup label={LABELS.ID.LABEL} isRequired>
-              <NxTextInput
-                  {...FormUtils.fieldProps('id', current)}
-                  disabled={isEdit}
-                  onChange={FormUtils.handleUpdate('id', send)}
-              />
-            </NxFormGroup>
-        }
-
+        <NxFormGroup label={externalRole ? LABELS.MAPPED_ROLE.LABEL : LABELS.ID.LABEL} isRequired>
+          <NxTextInput
+              {...FormUtils.fieldProps('id', current)}
+              disabled={isEdit}
+              onChange={FormUtils.handleUpdate('id', send)}
+          />
+        </NxFormGroup>
         <NxFormGroup label={LABELS.NAME.LABEL} isRequired>
           <NxTextInput
               {...FormUtils.fieldProps('name', current)}

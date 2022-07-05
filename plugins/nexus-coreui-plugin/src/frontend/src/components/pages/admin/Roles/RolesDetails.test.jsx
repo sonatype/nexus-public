@@ -302,7 +302,7 @@ describe('RolesDetails', function() {
 
     await waitFor(() => expect(Axios.get).toHaveBeenCalledWith(getRolesUrl(crowdType)));
 
-    userEvent.selectOptions(mappedRole(), testCrowdRoleId);
+    await TestUtils.changeField(mappedRole, testCrowdRoleId);
 
     await TestUtils.changeField(name, testRoleName);
     await TestUtils.changeField(description, testRoleDescription);
