@@ -928,14 +928,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Ldap_LdapServerUserAndGroupForm_VerifyGroupMapping_Button: 'Verify user mapping',
     Ldap_LdapServerUserAndGroupForm_VerifyLogin_Button: 'Verify login',
 
-    // Admin -> Security -> Realms
-    RealmSettings_Text: 'Realms',
-    RealmSettings_Description: 'Manage the active security realms and their order',
-    Security_RealmSettings_Update_Error: 'You do not have permission to configure realms',
-    Security_RealmSettings_Update_Success: 'Security realms settings $action',
-    Security_RealmSettings_Available_FromTitle: 'Available',
-    Security_RealmSettings_Available_ToTitle: 'Active',
-
     // Admin -> Security -> SSL Certificates
     SslCertificates_Text: 'SSL Certificates',
     SslCertificates_Description: 'Manage trusted SSL certificates for use with the Nexus Repository truststore',

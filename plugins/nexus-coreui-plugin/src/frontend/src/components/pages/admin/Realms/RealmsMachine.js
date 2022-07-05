@@ -14,15 +14,41 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import '@testing-library/jest-dom/extend-expect';
+import { assign } from 'xstate';
+import Axios from 'axios';
+import { FormUtils, APIConstants } from '@sonatype/nexus-ui-plugin';
 
-let lastValue = 0;
+export default FormUtils.buildFormMachine({
+  id: 'RealmsMachine',
+}).withConfig({
+  actions: {
+    validate: assign({
+      validationErrors: ({ data }) => ({
+        isActiveListEmpty: data.active.length === 0,
+      }),
+    }),
+    setData: assign((_, event) => {
+      const response = event.data || [];
+      const available = response[0]?.data || [];
+      const active = response[1]?.data || [];
+      const data = {
+        available,
+        active,
+      };
 
-window.crypto = {
-  getRandomValues: function(buffer) {
-    buffer.fill(lastValue++);
-  }
-};
-
-window.plugins = [];
-window.BlobStoreTypes = {};
+      return {
+        data,
+        pristineData: data,
+      };
+    }),
+  },
+  services: {
+    fetchData: async () =>
+      Axios.all([
+        Axios.get(APIConstants.REST.PUBLIC.AVAILABLE_REALMS),
+        Axios.get(APIConstants.REST.PUBLIC.ACTIVE_REALMS),
+      ]),
+    saveData: ({ data }) =>
+      Axios.put(APIConstants.REST.PUBLIC.ACTIVE_REALMS, data.active),
+  },
+});

@@ -37,6 +37,23 @@ export default {
     }
   },
 
+  REALMS: {
+    MENU: {
+      text: 'Realms',
+      description: 'Manage the active security realms and their order'
+    },
+    CONFIGURATION: {
+      LABEL: 'Realms Configuration',
+      SUB_LABEL: 'Active Realms',
+      AVAILABLE_TITLE: 'Available',
+      SELECTED_TITLE: 'Active',
+      EMPTY_LIST: 'There are no configured realms for which you have view permissions.',
+    },
+    MESSAGES: {
+      NO_REALMS_CONFIGURED: 'At least one realm must be selected and should include a user that is able to update the list of realms'
+    }
+  },
+
   ROLES: {
     MENU: {
       text: 'Roles',
