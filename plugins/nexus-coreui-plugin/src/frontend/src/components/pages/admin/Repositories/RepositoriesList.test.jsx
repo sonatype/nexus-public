@@ -62,7 +62,8 @@ const selectors = {
     modalMainBtn: () => screen.getByText(ANALYZE_BUTTON, {selector: 'button'}),
     modalOptionsBtn: () => screen.getByLabelText('more options', {selector: 'button'}),
     modalCancelBtn: () => screen.queryByText(CANCEL_BUTTON_LABEL, {selector: 'button'}),
-    columnHeader: () => screen.queryByRole('columnheader', {name: COLUMNS.HEALTH_CHECK})
+    columnHeader: () => screen.queryByRole('columnheader', {name: COLUMNS.HEALTH_CHECK}),
+    modalAnalyzeAllBtn: () => screen.getByText('Analyze all repositories')
   }
 };
 
@@ -516,9 +517,7 @@ describe('RepositoriesList', function () {
 
       userEvent.click(selectors.healthCheck.modalOptionsBtn());
 
-      const modalAnalyzeAllBtn = container.querySelectorAll('.nx-dropdown-button')[1];
-
-      userEvent.click(modalAnalyzeAllBtn);
+      userEvent.click(selectors.healthCheck.modalAnalyzeAllBtn());
 
       userEvent.click(selectors.healthCheck.modalMainBtn());
 
