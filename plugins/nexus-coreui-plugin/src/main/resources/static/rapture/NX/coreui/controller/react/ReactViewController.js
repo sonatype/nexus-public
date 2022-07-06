@@ -43,6 +43,9 @@ Ext.define('NX.coreui.controller.react.ReactViewController', {
     controller: {
       '#Refresh': {
         refresh: 'refresh'
+      },
+      '#Menu': {
+        refresh: 'refresh'
       }
     },
     component: {
@@ -62,5 +65,4 @@ Ext.define('NX.coreui.controller.react.ReactViewController', {
       this.getReactMainContainer().refresh();
     }
   }
-
 });
