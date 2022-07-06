@@ -154,7 +154,7 @@
     <where>
       <if test="filter != null">(${filter})</if>
     </where>
-    GROUP BY component_id, namespace, search_component_name, version, search_repository_name, format
+    GROUP BY component_id, namespace, search_component_name, version, search_repository_name, format, component_created
     ORDER BY ${sortColumnName} ${sortDirection}
     <if test="sortColumnName != defaultSortColumnName">, ${defaultSortColumnName}</if>
     <if test="limit != null">LIMIT #{limit}</if>
