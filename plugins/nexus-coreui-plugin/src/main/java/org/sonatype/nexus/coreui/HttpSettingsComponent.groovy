@@ -78,7 +78,7 @@ class HttpSettingsComponent
     value.connection?.with {
       result.userAgentSuffix = userAgentSuffix
       result.timeout = timeout ? timeout.toSecondsI() : null
-      result.retries = maximumRetries
+      result.retries = retries
     }
 
     value.proxy?.with {
@@ -167,7 +167,7 @@ class HttpSettingsComponent
       connection().timeout = Time.seconds(value.timeout)
     }
     if (value.retries != null) {
-      connection().maximumRetries = value.retries
+      connection().retries = value.retries
     }
 
     // convert proxy configuration

@@ -28,7 +28,7 @@ public class ConnectionConfiguration
   private Time timeout;
 
   @Nullable
-  private Integer maximumRetries;
+  private Integer retries;
 
   @Nullable
   private String userAgentSuffix;
@@ -52,12 +52,12 @@ public class ConnectionConfiguration
   }
 
   @Nullable
-  public Integer getMaximumRetries() {
-    return maximumRetries;
+  public Integer getRetries() {
+    return retries;
   }
 
-  public void setMaximumRetries(@Nullable final Integer maximumRetries) {
-    this.maximumRetries = maximumRetries;
+  public void setRetries(@Nullable final Integer retries) {
+    this.retries = retries;
   }
 
   @Nullable
@@ -121,7 +121,7 @@ public class ConnectionConfiguration
   public String toString() {
     return getClass().getSimpleName() + "{" +
         "timeout=" + timeout +
-        ", maximumRetries=" + maximumRetries +
+        ", retries=" + retries +
         ", userAgentSuffix=" + userAgentSuffix +
         ", useTrustStore=" + useTrustStore +
         ", enableCircularRedirects=" + enableCircularRedirects +

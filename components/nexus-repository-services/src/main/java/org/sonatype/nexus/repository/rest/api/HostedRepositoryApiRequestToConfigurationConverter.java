@@ -35,6 +35,7 @@ import static org.sonatype.nexus.repository.manager.internal.RepositoryManagerIm
 public class HostedRepositoryApiRequestToConfigurationConverter<T extends HostedRepositoryApiRequest>
     extends AbstractRepositoryApiRequestToConfigurationConverter<T>
 {
+  @Override
   public Configuration convert(final T request) {
     Configuration configuration = super.convert(request);
 

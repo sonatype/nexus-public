@@ -25,7 +25,7 @@ import org.elasticsearch.index.query.QueryBuilders;
  *
  * @since 3.15
  */
-@Named("attributes.nuget.tags")
+@Named("assets.attributes.nuget.tags")
 @Singleton
 public class NugetTagsElasticSearchContribution
     extends ElasticSearchContributionSupport

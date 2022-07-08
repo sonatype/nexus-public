@@ -92,7 +92,7 @@ public class HttpClientConfigurationExportTest
 
     ConnectionConfiguration connectionConfiguration = new ConnectionConfiguration();
     connectionConfiguration.setUserAgentSuffix("UserAgentSuffix");
-    connectionConfiguration.setMaximumRetries(10);
+    connectionConfiguration.setRetries(10);
     connectionConfiguration.setUseTrustStore(true);
     connectionConfiguration.setTimeout(new Time(1, TimeUnit.MINUTES));
 

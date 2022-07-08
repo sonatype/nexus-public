@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.upgrade.datastore.internal;
 
+import org.flywaydb.core.api.MigrationInfo;
 import org.flywaydb.core.api.callback.BaseCallback;
 import org.flywaydb.core.api.callback.Context;
 import org.flywaydb.core.api.callback.Event;
@@ -30,7 +31,11 @@ public class TraceLoggingCallback
 
   @Override
   public void handle(final Event event, final Context context) {
-    log.trace("{} Migration Description: \"{}\" State:\"{}\"", event.getId(),
-        context.getMigrationInfo().getDescription(), context.getMigrationInfo().getState());
+    // Strict NULL checking as otherwise startup/migration can break.
+    String eventID = event != null ? event.getId() : "N/A";
+    MigrationInfo migrationInfo = context != null ? context.getMigrationInfo() : null;
+    String description = migrationInfo != null ? migrationInfo.getDescription() : "N/A";
+    String state = migrationInfo != null ? migrationInfo.getState().toString() : "N/A";
+    log.trace("{} Migration Description: \"{}\" State: \"{}\"", eventID, description, state);
   }
 }

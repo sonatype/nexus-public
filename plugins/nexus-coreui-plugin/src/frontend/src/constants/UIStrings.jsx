@@ -37,6 +37,23 @@ export default {
     }
   },
 
+  REALMS: {
+    MENU: {
+      text: 'Realms',
+      description: 'Manage the active security realms and their order'
+    },
+    CONFIGURATION: {
+      LABEL: 'Realms Configuration',
+      SUB_LABEL: 'Active Realms',
+      AVAILABLE_TITLE: 'Available',
+      SELECTED_TITLE: 'Active',
+      EMPTY_LIST: 'There are no configured realms for which you have view permissions.',
+    },
+    MESSAGES: {
+      NO_REALMS_CONFIGURED: 'At least one realm must be selected and should include a user that is able to update the list of realms'
+    }
+  },
+
   ROLES: {
     MENU: {
       text: 'Roles',
@@ -418,7 +435,7 @@ export default {
         FORMAT: 'Format',
         STATUS: 'Status',
         URL: 'URL',
-        HEALTH_CHECK: 'Health check',
+        HEALTH_CHECK: 'Health Check',
         IQ: 'IQ Policy Violations',
       },
       FILTER_PLACEHOLDER: 'Filter by name',
@@ -444,7 +461,8 @@ export default {
         ANALYZE_THIS: (name) => `Analyze '${name}' repository`,
         ANALYZE_ALL: 'Analyze all repositories',
         MODAL_CONTENT: (name) => `Do you want to analyze the repository ${name} and others for secuirty vulnerabilities and licence issues?`,
-        MODAL_HEADER: 'Analyze Repository'
+        MODAL_HEADER: 'Analyze Repository',
+        NOT_AVAILABLE_TOOLTIP: 'Repository Health Check Unavailable'
       }
     },
 

@@ -102,7 +102,7 @@ public abstract class FormatRepositoryTestSystemSupport
     this.tracker = tracker;
   }
 
-  protected Repository doCreate(final Configuration configuration) throws Exception {
+  protected Repository doCreate(final Configuration configuration) {
     boolean baseUrlSet = BaseUrlHolder.isSet();
     try {
       if (!baseUrlSet) {
@@ -113,6 +113,9 @@ public abstract class FormatRepositoryTestSystemSupport
         tracker.accept(repository.getName());
       }
       return repository;
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
     }
     finally {
       if (!baseUrlSet) {

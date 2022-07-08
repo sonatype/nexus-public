@@ -58,7 +58,13 @@ export default {
       BASE_URL: '/service/rest/v1/',
       get REPOSITORIES() {
         return `${this.BASE_URL}repositories/`;
-      }
-    }
-  }
+      },
+      get ACTIVE_REALMS() {
+        return `${this.BASE_URL}security/realms/active`;
+      },
+      get AVAILABLE_REALMS() {
+        return `${this.BASE_URL}security/realms/available`;
+      },
+    },
+  },
 };

@@ -12,14 +12,8 @@
  */
 package org.sonatype.nexus.repository.rest.api;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
 

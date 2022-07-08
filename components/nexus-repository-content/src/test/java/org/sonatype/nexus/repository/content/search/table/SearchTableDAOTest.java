@@ -162,6 +162,7 @@ public class SearchTableDAOTest
     assertThat(searchResult.componentName(), notNullValue());
     assertThat(searchResult.version(), notNullValue());
     assertThat(searchResult.repositoryName(), notNullValue());
+    assertThat(searchResult.created(), notNullValue());
   }
 
   @Test

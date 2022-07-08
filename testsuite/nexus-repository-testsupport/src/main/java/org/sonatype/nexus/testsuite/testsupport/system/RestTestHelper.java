@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -202,8 +203,24 @@ public class RestTestHelper
    */
   public CloseableHttpClient clientWithPreemptiveAuth(final String username, final String password)
   {
-    return clientBuilder(nexusUrl(), username, password).useSystemProperties()
-        .addInterceptorFirst(new PreemptiveAuthHttpRequestInterceptor()).build();
+    return clientWithPreemptiveAuth(username, password, __ -> {});
+  }
+
+  /**
+   * @return a CloseableHttpClient configured for Nexus with the provided authentication and preemptive auth
+   */
+  public CloseableHttpClient clientWithPreemptiveAuth(
+      final String username,
+      final String password,
+      final Consumer<HttpClientBuilder> mutator)
+  {
+    HttpClientBuilder builder = clientBuilder(nexusUrl(), username, password)
+        .useSystemProperties()
+        .addInterceptorFirst(new PreemptiveAuthHttpRequestInterceptor());
+
+    mutator.accept(builder);
+
+    return builder.build();
   }
 
   /**
@@ -211,6 +228,30 @@ public class RestTestHelper
    */
   public CloseableHttpClient client() {
     return clientBuilder().build();
+  }
+
+  /**
+   * Obtain the primary URI for Nexus, this may be secure if the IT suite has been set to force SSL.
+   */
+  public URI nexusUrl() {
+    try {
+      return nexusUrl.toURI();
+    }
+    catch (URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Obtain the secured URI for Nexus.
+   */
+  public URI nexusSecureUrl() {
+    try {
+      return nexusSecureUrl.toURI();
+    }
+    catch (URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -400,15 +441,6 @@ public class RestTestHelper
     return authCache;
   }
 
-  private URI nexusUrl() {
-    try {
-      return nexusUrl.toURI();
-    }
-    catch (URISyntaxException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   /**
    * @return Client that can use self-signed certificates
    */
@@ -434,7 +466,7 @@ public class RestTestHelper
   /**
    * @return SSL socket factory that accepts self-signed certificates from any host
    */
-  private static SSLConnectionSocketFactory sslSocketFactory() {
+  public static SSLConnectionSocketFactory sslSocketFactory() {
     try {
       SSLContext context = SSLContexts.custom().loadTrustMaterial(new TrustSelfSignedStrategy()).build();
       return new SSLConnectionSocketFactory(context, NoopHostnameVerifier.INSTANCE);

@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {NxFontAwesomeIcon} from '@sonatype/react-shared-components';
+import {NxFontAwesomeIcon, NxTooltip} from '@sonatype/react-shared-components';
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
 import {faBan, faShieldAlt, faAward, faExclamationCircle} from '@fortawesome/free-solid-svg-icons';
 import UIStrings from '../../../../../constants/UIStrings';
@@ -59,7 +59,11 @@ export default function RepositoryHealthCheck({name, health, current, openModal}
   }
 
   if (!health || (!health.enabled && !canUpdateHealthCheck)) {
-    return <NxFontAwesomeIcon icon={faBan} />;
+    return (
+      <NxTooltip title={HEALTH_CHECK.NOT_AVAILABLE_TOOLTIP}>
+        <NxFontAwesomeIcon icon={faBan} />
+      </NxTooltip>
+    );
   }
 
   if (!health.enabled) {

@@ -41,6 +41,7 @@ import IqServer from './components/pages/admin/IqServer/IqServer';
 import Bundles from './components/pages/admin/Bundles/Bundles';
 import ProprietaryRepositories from './components/pages/admin/ProprietaryRepositories/ProprietaryRepositories';
 import Api from './components/pages/admin/Api/Api';
+import Realms from './components/pages/admin/Realms/Realms';
 
 window.ReactComponents = {
   ...window.ReactComponents,
@@ -128,6 +129,17 @@ window.plugins.push({
       ...UIStrings.ANONYMOUS_SETTINGS.MENU,
       view: AnonymousSettings,
       iconCls: 'x-fa fa-user',
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        permissions: ['nexus:settings:read']
+      }
+    },
+    {
+      mode: 'admin',
+      path: '/Security/realms',
+      ...UIStrings.REALMS.MENU,
+      view: Realms,
+      iconCls: 'x-fa fa-dungeon',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         permissions: ['nexus:settings:read']

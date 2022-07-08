@@ -147,6 +147,16 @@ public class ConfigurationCustomizer
     }
   }
 
+  @VisibleForTesting
+  void setRetryHandler(final ConnectionConfiguration connection, final HttpClientPlan plan) {
+    if (connection.getRetries() != null) {
+      plan.getClient().setRetryHandler(new StandardHttpRequestRetryHandler(connection.getRetries(), false));
+      if (log.isTraceEnabled()) {
+        log.trace("Set retry handler with {} retries", connection.getRetries());
+      }
+    }
+  }
+
   /**
    * Apply connection configuration to plan.
    */
@@ -158,9 +168,7 @@ public class ConfigurationCustomizer
       plan.getRequest().setSocketTimeout(timeout);
     }
 
-    if (connection.getMaximumRetries() != null) {
-      plan.getClient().setRetryHandler(new StandardHttpRequestRetryHandler(connection.getMaximumRetries(), false));
-    }
+    setRetryHandler(connection, plan);
 
     if (connection.getUserAgentSuffix() != null) {
       checkState(plan.getUserAgentBase() != null, "Default User-Agent not set");

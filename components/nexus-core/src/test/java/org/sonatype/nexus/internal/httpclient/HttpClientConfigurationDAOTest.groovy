@@ -100,7 +100,7 @@ class HttpClientConfigurationDAOTest
 
   def 'Can update connection configuration'() {
     given: 'an item'
-      def connection = new ConnectionConfiguration(maximumRetries: Integer.MAX_VALUE,
+      def connection = new ConnectionConfiguration(retries: Integer.MAX_VALUE,
           timeout: new Time(1, TimeUnit.SECONDS), enableCircularRedirects: false, userAgentSuffix: 'foo',
           enableCookies: true)
 
@@ -114,14 +114,14 @@ class HttpClientConfigurationDAOTest
       def readEntity = dao.get().orElse(null)
 
     then: 'content has been saved'
-      assert readEntity.connection.maximumRetries == Integer.MAX_VALUE
+      assert readEntity.connection.retries == Integer.MAX_VALUE
       assert readEntity.connection.timeout.asSeconds() == new Time(1, TimeUnit.SECONDS).asSeconds()
       assert !readEntity.connection.enableCircularRedirects
       assert readEntity.connection.userAgentSuffix == 'foo'
       assert readEntity.connection.enableCookies
 
     when: 'values are changed'
-      readEntity.connection.maximumRetries = Integer.MIN_VALUE
+      readEntity.connection.retries = Integer.MIN_VALUE
       readEntity.connection.timeout = new Time(5, TimeUnit.MINUTES)
       readEntity.connection.enableCircularRedirects = true
       readEntity.connection.userAgentSuffix = 'bar'
@@ -134,7 +134,7 @@ class HttpClientConfigurationDAOTest
       readEntity = dao.get().orElse(null)
 
     then: 'values have been updated'
-      assert readEntity.connection.maximumRetries == Integer.MIN_VALUE
+      assert readEntity.connection.retries == Integer.MIN_VALUE
       assert readEntity.connection.timeout.asSeconds() == new Time(5, TimeUnit.MINUTES).asSeconds()
       assert readEntity.connection.enableCircularRedirects
       assert readEntity.connection.userAgentSuffix == 'bar'

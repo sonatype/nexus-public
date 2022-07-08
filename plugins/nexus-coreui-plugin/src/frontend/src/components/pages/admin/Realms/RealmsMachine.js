@@ -14,55 +14,41 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext, NX*/
+import { assign } from 'xstate';
+import Axios from 'axios';
+import { FormUtils, APIConstants } from '@sonatype/nexus-ui-plugin';
 
-/**
- * Anonymous Security Settings controller.
- *
- * @since 3.21
- */
-Ext.define('NX.coreui.controller.react.ReactViewController', {
-  extend: 'NX.app.Controller',
+export default FormUtils.buildFormMachine({
+  id: 'RealmsMachine',
+}).withConfig({
+  actions: {
+    validate: assign({
+      validationErrors: ({ data }) => ({
+        isActiveListEmpty: data.active.length === 0,
+      }),
+    }),
+    setData: assign((_, event) => {
+      const response = event.data || [];
+      const available = response[0]?.data || [];
+      const active = response[1]?.data || [];
+      const data = {
+        available,
+        active,
+      };
 
-  views: [
-    'react.MainContainer'
-  ],
-
-  refs: [
-    {
-      ref: 'reactMainContainer',
-      selector: 'nx-coreui-react-main-container'
-    },
-    {
-      ref: 'breadcrumb',
-      selector: 'nx-breadcrumb'
-    }
-  ],
-
-  listen: {
-    controller: {
-      '#Refresh': {
-        refresh: 'refresh'
-      },
-      '#Menu': {
-        refresh: 'refresh'
-      }
-    },
-    component: {
-      'nx-coreui-react-main-container': {
-        render: function() {
-          this.getBreadcrumb().hide();
-        },
-        destroy: function() {
-          this.getBreadcrumb().show();
-        }
-      }
-    }
+      return {
+        data,
+        pristineData: data,
+      };
+    }),
   },
-
-  refresh: function() {
-    if (this.getReactMainContainer()) {
-      this.getReactMainContainer().refresh();
-    }
-  }
+  services: {
+    fetchData: async () =>
+      Axios.all([
+        Axios.get(APIConstants.REST.PUBLIC.AVAILABLE_REALMS),
+        Axios.get(APIConstants.REST.PUBLIC.ACTIVE_REALMS),
+      ]),
+    saveData: ({ data }) =>
+      Axios.put(APIConstants.REST.PUBLIC.ACTIVE_REALMS, data.active),
+  },
 });

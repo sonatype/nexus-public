@@ -353,7 +353,7 @@ class CoreApiImplTest
     then:
       1 * httpClientManager.getConfiguration() >> configuration
       1 * httpClientManager.setConfiguration(_)
-      configuration.connection.maximumRetries == 5
+      configuration.connection.retries == 5
   }
 
   @Test

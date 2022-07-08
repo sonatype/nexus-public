@@ -741,12 +741,18 @@ Ext.define('NX.controller.Menu', {
    * @private
    */
   warnBeforeMenuSelect: function(tree, td, cellIndex, record) {
-    var me = this;
+    var me = this,
+    featurePath = record.data.path,
+    currentPath = me.currentSelectedPath;
 
     return me.warnBeforeNavigate(
       function () {
         me.getFeatureMenu().getSelectionModel().select(record);
         me.getFeatureMenu().fireEvent('itemclick', me.getFeatureMenu(), record);
+
+        if(featurePath === currentPath) {
+          me.fireEvent('refresh');
+        }
       }
     );
   },
