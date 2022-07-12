@@ -14,11 +14,11 @@ package org.sonatype.nexus.repository.rest.internal.api;
 
 import java.util.List;
 import java.util.Optional;
-
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import javax.validation.ValidationException;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.RepositoryCacheInvalidationService;
@@ -88,7 +88,12 @@ public class AuthorizingRepositoryManagerImpl
       updatedConfig.setRoutingRuleId(configuration.getRoutingRuleId());
       updatedConfig.setOnline(configuration.isOnline());
       updatedConfig.setAttributes(configuration.getAttributes());
-      repositoryManager.update(updatedConfig);
+      try {
+        repositoryManager.update(updatedConfig);
+      }
+      catch (ValidationException e) {
+        return false;
+      }
       return true;
     }
     return false;
@@ -98,7 +103,12 @@ public class AuthorizingRepositoryManagerImpl
     Repository repository = repositoryManager.get(name);
     if (repository != null) {
       repositoryPermissionChecker.ensureUserCanAdmin(DELETE, repository);
-      repositoryManager.delete(repository.getName());
+      try {
+        repositoryManager.delete(repository.getName());
+      }
+      catch (ValidationException e) {
+        return false;
+      }
       return true;
     }
     return false;
@@ -131,7 +141,7 @@ public class AuthorizingRepositoryManagerImpl
   /**
    * Trigger rebuild index task for given repository.
    *
-   * @throws RepositoryNotFoundException if repository does not exists
+   * @throws RepositoryNotFoundException     if repository does not exists
    * @throws IncompatibleRepositoryException if is not hosted or proxy type
    */
   @SuppressWarnings("squid:S1160") // suppress warning about two checked exceptions

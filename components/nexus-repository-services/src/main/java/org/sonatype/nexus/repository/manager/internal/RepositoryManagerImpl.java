@@ -21,13 +21,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.validation.ConstraintViolation;
+import javax.validation.ValidationException;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.app.FreezeService;
@@ -136,18 +136,19 @@ public class RepositoryManagerImpl
   private final List<ConfigurationValidator> configurationValidators;
 
   @Inject
-  public RepositoryManagerImpl(final EventManager eventManager,
-                               final ConfigurationStore store,
-                               final RepositoryFactory factory,
-                               final Provider<ConfigurationFacet> configFacet,
-                               final Map<String, Recipe> recipes,
-                               final RepositoryAdminSecurityContributor securityContributor,
-                               final List<DefaultRepositoriesContributor> defaultRepositoriesContributors,
-                               final FreezeService freezeService,
-                               @Named("${nexus.skipDefaultRepositories:-false}") final boolean skipDefaultRepositories,
-                               final BlobStoreManager blobStoreManager,
-                               final GroupMemberMappingCache groupMemberMappingCache,
-                               final List<ConfigurationValidator> configurationValidators)
+  public RepositoryManagerImpl(
+      final EventManager eventManager,
+      final ConfigurationStore store,
+      final RepositoryFactory factory,
+      final Provider<ConfigurationFacet> configFacet,
+      final Map<String, Recipe> recipes,
+      final RepositoryAdminSecurityContributor securityContributor,
+      final List<DefaultRepositoriesContributor> defaultRepositoriesContributors,
+      final FreezeService freezeService,
+      @Named("${nexus.skipDefaultRepositories:-false}") final boolean skipDefaultRepositories,
+      final BlobStoreManager blobStoreManager,
+      final GroupMemberMappingCache groupMemberMappingCache,
+      final List<ConfigurationValidator> configurationValidators)
   {
     this.eventManager = checkNotNull(eventManager);
     this.store = checkNotNull(store);
@@ -177,7 +178,9 @@ public class RepositoryManagerImpl
    */
   private Repository repository(final String name) {
     Repository repository = repositories.get(name.toLowerCase());
-    checkState(repository != null, "Missing repository: %s", name);
+    if (repository == null) {
+      throw new ValidationException("Missing repository: " + name);
+    }
     return repository;
   }
 
@@ -325,7 +328,7 @@ public class RepositoryManagerImpl
   public Iterable<Repository> browseForBlobStore(String blobStoreId) {
     Iterable<Repository> browseResult = browse();
 
-    if (browseResult != null && browseResult.iterator().hasNext()){
+    if (browseResult != null && browseResult.iterator().hasNext()) {
       return stream(browseResult.spliterator(), true)
           .filter(Repository::isStarted)
           .filter(r -> blobStoreId.equals(r.getConfiguration().attributes(STORAGE).get(BLOB_STORE_NAME)))
@@ -334,7 +337,6 @@ public class RepositoryManagerImpl
     else {
       return Collections.emptyList();
     }
-
   }
 
   @Override
@@ -372,7 +374,10 @@ public class RepositoryManagerImpl
   @Guarded(by = STARTED)
   public Repository create(final Configuration configuration) throws Exception {
     checkNotNull(configuration);
-    validateConfiguration(configuration);
+
+    if (isRepositoryLoaded(configuration.getRepositoryName())) {
+      throw new ValidationException("Repository has created already!");
+    }
 
     Repository repository = loadRepositoryIntoMemory(configuration);
     if (!EventHelper.isReplicating()) {
@@ -381,7 +386,6 @@ public class RepositoryManagerImpl
     repository.start();
 
     eventManager.post(new RepositoryCreatedEvent(repository));
-
     distributeRepositoryConfigurationEvent(repository.getName(), CREATED);
 
     return repository;
@@ -404,7 +408,6 @@ public class RepositoryManagerImpl
     }
     Repository repository = updateRepositoryInMemory(configuration);
     eventManager.post(new RepositoryUpdatedEvent(repository, oldConfiguration));
-
     distributeRepositoryConfigurationEvent(repository.getName(), UPDATED);
 
     return repository;
@@ -578,10 +581,12 @@ public class RepositoryManagerImpl
   @Subscribe
   public void on(final RepositoryRemoteConnectionStatusEvent event) {
     String repositoryName = event.getRepositoryName();
-    RemoteConnectionStatusType statusType = RemoteConnectionStatusType.values()[event.getRemoteConnectionStatusTypeOrdinal()];
+    RemoteConnectionStatusType statusType =
+        RemoteConnectionStatusType.values()[event.getRemoteConnectionStatusTypeOrdinal()];
 
     // restore RemoteConnectionStatus from event
-    log.warn("Consume distributed RepositoryRemoteConnectionStatusEvent: repository={}, type={}", repositoryName, statusType);
+    log.warn("Consume distributed RepositoryRemoteConnectionStatusEvent: repository={}, type={}", repositoryName,
+        statusType);
 
     RemoteConnectionStatus status = new RemoteConnectionStatus(statusType, event.getReason())
         .setBlockedUntil(new DateTime(event.getBlockedUntilMillis()))
