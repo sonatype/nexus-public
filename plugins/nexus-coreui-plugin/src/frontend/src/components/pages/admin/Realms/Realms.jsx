@@ -35,10 +35,8 @@ export default function Realms() {
       <PageHeader>
         <PageTitle icon={faDungeon} {...UIStrings.REALMS.MENU} />
       </PageHeader>
-      <ContentBody>
-        <Section>
-          {canEdit ? <RealmsForm/> : <RealmsReadOnly/>}
-        </Section>
+      <ContentBody className="nxrm-realms">
+        <Section>{canEdit ? <RealmsForm /> : <RealmsReadOnly />}</Section>
       </ContentBody>
     </Page>
   );
