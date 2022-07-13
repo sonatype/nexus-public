@@ -75,6 +75,10 @@ public class SearchTableData
 
   private String formatField3;
 
+  private String formatField4;
+
+  private String formatField5;
+
   public SearchTableData() {
   }
 
@@ -250,6 +254,22 @@ public class SearchTableData
     this.formatField3 = formatField3;
   }
 
+  public String getFormatField4() {
+    return formatField4;
+  }
+
+  public void setFormatField4(final String formatField4) {
+    this.formatField4 = formatField4;
+  }
+
+  public String getFormatField5() {
+    return formatField5;
+  }
+
+  public void setFormatField5(final String formatField5) {
+    this.formatField5 = formatField5;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) {
@@ -273,14 +293,16 @@ public class SearchTableData
         Objects.equals(sha256, tableData.sha256) && Objects.equals(sha512, tableData.sha512) &&
         Objects.equals(formatField1, tableData.formatField1) &&
         Objects.equals(formatField2, tableData.formatField2) &&
-        Objects.equals(formatField3, tableData.formatField3);
+        Objects.equals(formatField3, tableData.formatField3) &&
+        Objects.equals(formatField4, tableData.formatField4) &&
+        Objects.equals(formatField5, tableData.formatField5);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(repositoryId, componentId, assetId, format, namespace, componentName, componentKind, version,
         componentCreated, repositoryName, path, contentType, md5, sha1, sha256, sha512, formatField1, formatField2,
-        formatField3);
+        formatField3, formatField4, formatField5);
   }
 
   @Override
@@ -305,6 +327,8 @@ public class SearchTableData
         .add("formatField1='" + formatField1 + "'")
         .add("formatField2='" + formatField2 + "'")
         .add("formatField3='" + formatField3 + "'")
+        .add("formatField4='" + formatField4 + "'")
+        .add("formatField5='" + formatField5 + "'")
         .toString();
   }
 }

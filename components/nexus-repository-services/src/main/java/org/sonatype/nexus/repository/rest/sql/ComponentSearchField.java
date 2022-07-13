@@ -38,6 +38,10 @@ public class ComponentSearchField
 
   public static final SearchFieldSupport FORMAT_FIELD_3 = new ComponentSearchField("format_field_3");
 
+  public static final SearchFieldSupport FORMAT_FIELD_4 = new ComponentSearchField("format_field_4");
+
+  public static final SearchFieldSupport FORMAT_FIELD_5 = new ComponentSearchField("format_field_5");
+
   public ComponentSearchField(final String columnName) {
     super(TABLE, columnName);
   }

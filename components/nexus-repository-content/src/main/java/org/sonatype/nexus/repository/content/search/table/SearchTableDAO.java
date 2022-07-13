@@ -78,6 +78,8 @@ public interface SearchTableDAO
    * @param formatField1 a format specific field 1
    * @param formatField2 a format specific field 2
    * @param formatField3 a format specific field 3
+   * @param formatField4 a format specific field 4
+   * @param formatField5 a format specific field 5
    */
   void updateFormatFields(
       @Param("repositoryId") final Integer repositoryId,
@@ -86,7 +88,9 @@ public interface SearchTableDAO
       @Param("format") final String format,
       @Nullable @Param("formatField1") final String formatField1,
       @Nullable @Param("formatField2") final String formatField2,
-      @Nullable @Param("formatField3") final String formatField3);
+      @Nullable @Param("formatField3") final String formatField3,
+      @Nullable @Param("formatField4") final String formatField4,
+      @Nullable @Param("formatField5") final String formatField5);
 
   /**
    * Delete the given search entry in the content data store.
