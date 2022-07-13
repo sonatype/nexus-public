@@ -123,12 +123,9 @@ public class AuthorizingRepositoryManagerImpl
 
   @Override
   public Optional<Repository> getRepositoryWithAdmin(final String repositoryName) {
-    Repository repository = repositoryManager.get(repositoryName);
-    if (repository == null) {
-      return Optional.empty();
-    }
-    return repositoryPermissionChecker.userHasRepositoryAdminPermission(singletonList(repository), READ).stream()
-        .findFirst();
+    return Optional.ofNullable(repositoryManager.get(repositoryName))
+        .flatMap(repo -> repositoryPermissionChecker.userHasRepositoryAdminPermission(singletonList(repo), READ).stream()
+            .findFirst());
   }
 
   private void ensureHostedOrProxy(final Repository repository) throws IncompatibleRepositoryException {
