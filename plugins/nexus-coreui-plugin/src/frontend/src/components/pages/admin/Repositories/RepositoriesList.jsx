@@ -10,8 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React, {useState} from 'react';
-import {useMachine} from '@xstate/react';
+import React, {useState, useEffect} from 'react';
 
 import {
   ContentBody,
@@ -41,8 +40,9 @@ import {
 
 import {faCopy, faDatabase} from '@fortawesome/free-solid-svg-icons';
 
+import {useRepositoriesService} from './RepositoriesContextProvider';
+
 import RepositoryStatus from './RepositoryStatus';
-import RepositoriesListMachine from './RepositoriesListMachine';
 import UIStrings from '../../../../constants/UIStrings';
 import RepositoryHealthCheck from './HealthCheck/RepositoryHealthCheck';
 import AnalyzeConfirmationModal from './HealthCheck/AnalyzeConfirmationModal';
@@ -51,7 +51,10 @@ const {REPOSITORIES} = UIStrings;
 const {COLUMNS} = REPOSITORIES.LIST;
 
 export default function RepositoriesList({onCreate, onEdit, copyUrl = doCopyUrl}) {
-  const [current, send] = useMachine(RepositoriesListMachine, {devTools: true});
+  const [current, send] = useRepositoriesService();
+
+  useEffect(() => {send('LOAD')}, []);
+
   const isLoading = current.matches('loading');
   const {data, error, filter: filterText} = current.context;
 
@@ -98,10 +101,6 @@ export default function RepositoriesList({onCreate, onEdit, copyUrl = doCopyUrl}
       send({type: 'ENABLE_HELTH_CHECK_ALL_REPOS'});
     }
   };
-
-  function onMainClick() {
-    alert('Clicked the main button!');
-  }
 
   return (
     <Page className="nxrm-repositories">

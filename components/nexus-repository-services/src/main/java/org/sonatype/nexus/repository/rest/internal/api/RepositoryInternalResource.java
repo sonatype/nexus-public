@@ -123,9 +123,9 @@ public class RepositoryInternalResource
         .stream()
         .filter(repository -> isBlank(type) || type.equals(repository.getType().getValue()))
         .filter(repository -> isBlank(formatParam)
-            || formatParam.equals(ALL_FORMATS)
-            || formatParam.equals(repository.getFormat().getValue()))
-        .map(this::asRepository)
+                    || formatParam.equals(ALL_FORMATS)
+                    || formatParam.equals(repository.getFormat().getValue()))
+        .map(repository -> new RepositoryXO(repository.getName(), repository.getName()))
         .sorted(Comparator.comparing(RepositoryXO::getName))
         .collect(toList());
 
@@ -176,35 +176,24 @@ public class RepositoryInternalResource
   }
 
   private RepositoryDetailXO asRepositoryDetail(final Repository repository) {
-    boolean online = repository.getConfiguration().isOnline();
-    String description = null;
-    String reason = null;
-    if (proxyType.equals(repository.getType())) {
-      HttpClientFacet httpClientFacet = repository.facet(HttpClientFacet.class);
-      RemoteConnectionStatus remoteConnectionStatus = httpClientFacet.getStatus();
-      description = remoteConnectionStatus.getDescription();
-      reason = remoteConnectionStatus.getReason();
-    }
-    return new RepositoryDetailXO(
-        repository.getName(),
-        repository.getType().toString(),
-        repository.getFormat().toString(),
-        repository.getUrl(),
-        new RepositoryStatusXO(online, description, reason));
-  }
-
-  private RepositoryXO asRepository(Repository repository) {
-    String format = repository.getFormat().getValue();
     String name = repository.getName();
+    String type = repository.getType().toString();
+    String format = repository.getFormat().toString();
+    String url = repository.getUrl();
+    RepositoryStatusXO statusXO = getStatusXO(repository);
+
     return format.equals("nuget")
             ? asNugetRepository(repository)
-            : new RepositoryXO(name, name);
+            : new RepositoryDetailXO(name, type, format, url, statusXO);
   }
 
   @SuppressWarnings("unchecked")
-  private RepositoryXO asNugetRepository(Repository repository) {
+  private RepositoryDetailXO asNugetRepository(Repository repository) {
     String name = repository.getName();
     String type = repository.getType().getValue();
+    String format = repository.getFormat().getValue();
+    String url = repository.getUrl();
+    RepositoryStatusXO statusXO = getStatusXO(repository);
 
     String nugetVersion = null;
     Collection<String> memberNames = null;
@@ -220,10 +209,37 @@ public class RepositoryInternalResource
               .attributes("group")
               .get("memberNames");
     } else {
-      return new RepositoryXO(name, name);
+      return new RepositoryDetailXO(name, type, format, url, statusXO);
     }
 
-    return new RepositoryNugetXO(name, name, nugetVersion, memberNames);
+    return new RepositoryNugetXO(name, type, format, url, statusXO, nugetVersion, memberNames);
+  }
+
+  private RemoteConnectionStatus getStatus(final Repository repository) {
+    return repository.facet(HttpClientFacet.class).getStatus();
+  }
+
+  private String getStatusDescription(final Repository repository) {
+    String description = null;
+    if (proxyType.equals(repository.getType())) {
+      description = getStatus(repository).getDescription();
+    }
+    return description;
+  }
+
+  private String getStatusReason(final Repository repository) {
+    String reason = null;
+    if (proxyType.equals(repository.getType())) {
+      reason = getStatus(repository).getReason();
+    }
+    return reason;
+  }
+
+  private RepositoryStatusXO getStatusXO(final Repository repository) {
+    boolean online = repository.getConfiguration().isOnline();
+    String description = getStatusDescription(repository);
+    String reason = getStatusReason(repository);
+    return new RepositoryStatusXO(online, description, reason);
   }
 }
 

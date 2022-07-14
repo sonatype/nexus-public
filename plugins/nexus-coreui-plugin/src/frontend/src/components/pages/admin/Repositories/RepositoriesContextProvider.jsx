@@ -10,34 +10,23 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.rest.internal.api;
+import React, {createContext, useContext} from 'react';
+import {useInterpret, useService} from '@xstate/react';
+import RepositoriesListMachine from './RepositoriesListMachine';
 
-import java.util.Collection;
+const RepositoriesContext = createContext({});
 
-public class RepositoryNugetXO extends RepositoryDetailXO
-{
-  private final String nugetVersion;
-  private final Collection<String> memberNames;
+export default function RepositoriesContextProvider(props) {
+  const service = useInterpret(RepositoriesListMachine, {devTools: true});
 
-  public RepositoryNugetXO(
-          final String name,
-          final String type,
-          final String format,
-          final String url,
-          final RepositoryStatusXO status,
-          final String nugetVersion,
-          final Collection<String> memberNames)
-  {
-    super(name, type, format, url, status);
-    this.nugetVersion = nugetVersion;
-    this.memberNames = memberNames;
-  }
+  return (
+    <RepositoriesContext.Provider value={{service}}>
+      {props.children}
+    </RepositoriesContext.Provider>
+  );
+};
 
-  public String getNugetVersion() {
-    return nugetVersion;
-  }
-
-  public Collection<String> getMemberNames() {
-    return memberNames;
-  }
+export const useRepositoriesService = () => {
+  const context = useContext(RepositoriesContext);
+  return useService(context.service);
 }

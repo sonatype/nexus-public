@@ -16,14 +16,19 @@ import {Detail, Master, MasterDetail} from '@sonatype/nexus-ui-plugin';
 
 import RepositoriesList from './RepositoriesList';
 import RepositoriesForm from './RepositoriesForm';
+import RepositoriesContextProvider from './RepositoriesContextProvider';
 
 export default function Repositories() {
-  return <MasterDetail path="admin/repository/repositories-new">
-    <Master>
-      <RepositoriesList/>
-    </Master>
-    <Detail>
-      <RepositoriesForm/>
-    </Detail>
-  </MasterDetail>;
+  return (
+    <RepositoriesContextProvider>
+      <MasterDetail path="admin/repository/repositories-new">
+        <Master>
+          <RepositoriesList />
+        </Master>
+        <Detail>
+          <RepositoriesForm />
+        </Detail>
+      </MasterDetail>
+    </RepositoriesContextProvider>
+  );
 }

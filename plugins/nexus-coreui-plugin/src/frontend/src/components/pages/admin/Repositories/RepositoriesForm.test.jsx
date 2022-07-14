@@ -35,7 +35,6 @@ import UIStrings from '../../../../constants/UIStrings';
 import RepositoriesForm from './RepositoriesForm';
 
 import {getRepositoryUrl, saveRepositoryUrl, deleteRepositoryUrl} from './RepositoriesFormMachine';
-import {repositoriesUrl} from './facets/GenericGroupConfiguration';
 import {RECIPES_URL} from './facets/GenericFormatConfiguration';
 import {ROUTING_RULES_URL} from './facets/GenericOptionsConfiguration';
 import {genericDefaultValues} from './RepositoryFormDefaultValues';
@@ -57,6 +56,24 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
       getValue: jest.fn(() => false)
     })
   }
+}));
+
+const REPOSITORIES_SERVICE = [
+  {
+    context: {
+      data: [
+        {name: 'maven-central', format: 'maven2'},
+        {name: 'maven-releases', format: 'maven2'},
+        {name: 'maven-snapshots', format: 'maven2'},
+        {name: 'raw-group', format: 'raw'},
+        {name: 'raw-hosted', format: 'raw'},
+        {name: 'raw-proxy', format: 'raw'}
+      ]
+    }
+  }
+];
+jest.mock('./RepositoriesContextProvider', () => ({
+  useRepositoriesService: jest.fn(() => REPOSITORIES_SERVICE)
 }));
 
 const {
@@ -181,9 +198,9 @@ describe('RepositoriesForm', () => {
   ];
 
   const MAVEN_REPOS_RESPONSE = [
-    {id: 'maven-central', name: 'maven-central'},
-    {id: 'maven-releases', name: 'maven-releases'},
-    {id: 'maven-snapshots', name: 'maven-snapshots'}
+    {id: 'maven-central', name: 'maven-central', format: 'maven2'},
+    {id: 'maven-releases', name: 'maven-releases', format: 'maven2'},
+    {id: 'maven-snapshots', name: 'maven-snapshots', format: 'maven2'}
   ];
 
   const MAVEN_CLEANUP_RESPONSE = [
@@ -199,9 +216,6 @@ describe('RepositoriesForm', () => {
 
   beforeEach(() => {
     when(Axios.get)
-      .calledWith(expect.stringContaining(repositoriesUrl({format: 'maven2'})))
-      .mockResolvedValue({data: MAVEN_REPOS_RESPONSE});
-    when(Axios.get)
       .calledWith(expect.stringContaining(RECIPES_URL))
       .mockResolvedValue({data: RECIPES_RESPONSE});
     when(Axios.post)
@@ -216,14 +230,6 @@ describe('RepositoriesForm', () => {
   });
 
   it('filters types by format', async () => {
-    when(Axios.get)
-      .calledWith(expect.stringContaining(repositoriesUrl('p2')))
-      .mockResolvedValue({data: []});
-
-    when(Axios.get)
-      .calledWith(expect.stringContaining(repositoriesUrl('nuget')))
-      .mockResolvedValue({data: []});
-
     renderView();
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
@@ -782,10 +788,6 @@ describe('RepositoriesForm', () => {
 
       await waitFor(() => validateSelect(selectors.getBlobStoreSelect(), BLOB_STORES_OPTIONS, ''));
 
-      await waitFor(() =>
-        expect(Axios.get).toHaveBeenCalledWith(expect.stringContaining(repositoriesUrl({format})))
-      );
-
       MAVEN_REPOS_RESPONSE.forEach((repo) => {
         expect(selectors.getTransferListOption(repo.name)).toBeInTheDocument();
       });
@@ -855,30 +857,11 @@ describe('RepositoriesForm', () => {
         group: {
           memberNames: ['raw-hosted', 'raw-proxy']
         },
-
         type: 'group'
       };
       when(Axios.get).calledWith(getRepositoryUrl(repo.name)).mockResolvedValueOnce({
         data: repo
       });
-      when(Axios.get)
-        .calledWith('/service/rest/internal/ui/repositories?format=raw')
-        .mockResolvedValueOnce({
-          data: [
-            {
-              id: 'raw-group',
-              name: 'raw-group'
-            },
-            {
-              id: 'raw-hosted',
-              name: 'raw-hosted'
-            },
-            {
-              id: 'raw-proxy',
-              name: 'raw-proxy'
-            }
-          ]
-        });
 
       renderView('raw-group');
 
@@ -951,7 +934,6 @@ describe('RepositoriesForm', () => {
         expect(Axios.delete).toHaveBeenCalledWith(deleteRepositoryUrl(repo.name))
       );
     });
-
   });
 });
 
