@@ -121,4 +121,24 @@ class SystemInformationGeneratorImplTest
         Mock(BundleService.class),
         Mock(NodeAccess.class))
   }
+
+  def "environment sensitive data is hidden"() {
+    given:
+      def generator = mockSystemInformationGenerator()
+      // we need to exec some command to set up environment variables.
+      def processBuilder = new ProcessBuilder('mvn', 'version')
+      processBuilder.environment().put('AZURE_CLIENT_SECRET', 'azureSecretValue')
+      processBuilder.environment().put('AZURE_TOKEN', 'azureTokenValue')
+      processBuilder.environment().put('MY_PASSWORD_FOR_NXRM', 'admin123')
+      processBuilder.start()
+
+    when:
+      def report = generator.report()
+
+    then:
+      def systemEnvs = report.get('system-environment')
+      assertThat(systemEnvs.get('AZURE_CLIENT_SECRET'), not('azureSecretValue'))
+      assertThat(systemEnvs.get('AZURE_TOKEN'), not('azureTokenValue'))
+      assertThat(systemEnvs.get('MY_PASSWORD_FOR_NXRM'), not('admin123'))
+  }
 }
