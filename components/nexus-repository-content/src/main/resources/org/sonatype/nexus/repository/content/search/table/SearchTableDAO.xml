@@ -35,14 +35,14 @@
       sha1                   VARCHAR,
       sha256                 VARCHAR,
       sha512                 VARCHAR,
-      format_field_1         VARCHAR,
-      format_field_2         VARCHAR,
-      format_field_3         VARCHAR,
 
       CONSTRAINT pk_component_search PRIMARY KEY (repository_id, component_id, asset_id, format)
       );
 
     -- Columns added after this table was included in a release
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS format_field_1 VARCHAR;
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS format_field_2 VARCHAR;
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS format_field_3 VARCHAR;
     ALTER TABLE component_search ADD COLUMN IF NOT EXISTS format_field_4 VARCHAR;
     ALTER TABLE component_search ADD COLUMN IF NOT EXISTS format_field_5 VARCHAR;
 
