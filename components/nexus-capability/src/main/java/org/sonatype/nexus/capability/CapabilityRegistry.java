@@ -109,4 +109,9 @@ public interface CapabilityRegistry
    */
   Collection<? extends CapabilityReference> getAll();
 
+  /**
+   * Update cached 'references' using extracted capabilities data from DB
+   */
+  void pullAndRefreshReferencesFromDB();
+
 }
