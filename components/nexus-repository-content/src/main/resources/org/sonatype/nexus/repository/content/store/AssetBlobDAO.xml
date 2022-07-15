@@ -74,4 +74,9 @@
      WHERE blob_ref = #{blobRef};
   </update>
 
+  <update id="setContentType">
+    UPDATE ${format}_asset_blob SET content_type = #{contentType}
+    WHERE blob_ref = #{blobRef};
+  </update>
+
 </mapper>
