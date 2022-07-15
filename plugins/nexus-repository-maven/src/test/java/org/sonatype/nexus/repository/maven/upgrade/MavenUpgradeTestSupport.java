@@ -51,7 +51,7 @@ class MavenUpgradeTestSupport
       .type("repository")
       .build();
 
-  private static final String I_REPOSITORY_REPOSITORY_NAME = new OIndexNameBuilder()
+  protected static final String I_REPOSITORY_REPOSITORY_NAME = new OIndexNameBuilder()
       .type(REPOSITORY_CLASS)
       .property(P_REPOSITORY_NAME)
       .build();
@@ -94,6 +94,7 @@ class MavenUpgradeTestSupport
       repositoryType.createProperty(P_RECIPE_NAME, OType.STRING)
           .setMandatory(true)
           .setNotNull(true);
+      repositoryType.createProperty(P_ATTRIBUTES, OType.EMBEDDEDMAP);
       repositoryType.createIndex(I_REPOSITORY_REPOSITORY_NAME, INDEX_TYPE.UNIQUE, P_REPOSITORY_NAME);
     }
 
@@ -128,6 +129,14 @@ class MavenUpgradeTestSupport
     ODocument repository = new ODocument(REPOSITORY_CLASS);
     repository.field(P_REPOSITORY_NAME, name);
     repository.field(P_RECIPE_NAME, recipe);
+    repository.save();
+  }
+
+  protected void repository(final String name, final String recipe, final Map<String, Map<String, Object>> attributes) {
+    ODocument repository = new ODocument(REPOSITORY_CLASS);
+    repository.field(P_REPOSITORY_NAME, name);
+    repository.field(P_RECIPE_NAME, recipe);
+    repository.field(P_ATTRIBUTES, attributes);
     repository.save();
   }
 

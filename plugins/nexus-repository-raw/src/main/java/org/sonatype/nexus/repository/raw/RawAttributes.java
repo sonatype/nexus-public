@@ -10,34 +10,27 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
-import {
-  ContentBody,
-  Page,
-  PageHeader,
-  PageTitle,
-  Section,
-  ExtJS,
-} from '@sonatype/nexus-ui-plugin';
+package org.sonatype.nexus.repository.raw;
 
-import { faDungeon } from '@fortawesome/free-solid-svg-icons';
+import javax.validation.constraints.NotEmpty;
 
-import RealmsForm from './RealmsForm';
-import RealmsReadOnly from './RealmsReadOnly';
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.annotations.ApiModelProperty;
 
-import UIStrings from '../../../../constants/UIStrings';
+public class RawAttributes
+{
+  @ApiModelProperty(value = "Content Disposition",
+      allowableValues = "INLINE,ATTACHMENT", example = "ATTACHMENT")
+  @NotEmpty
+  private final String contentDisposition;
 
-export default function Realms() {
-  const canEdit = ExtJS.checkPermission('nexus:settings:update');
+  @JsonCreator
+  public RawAttributes(@JsonProperty("contentDisposition") final String contentDisposition) {
+    this.contentDisposition = contentDisposition;
+  }
 
-  return (
-    <Page>
-      <PageHeader>
-        <PageTitle icon={faDungeon} {...UIStrings.REALMS.MENU} />
-      </PageHeader>
-      <ContentBody className="nxrm-realms">
-        <Section>{canEdit ? <RealmsForm /> : <RealmsReadOnly />}</Section>
-      </ContentBody>
-    </Page>
-  );
+  public String getContentDisposition() {
+    return contentDisposition;
+  }
 }

@@ -224,11 +224,15 @@ public class SearchTableEventProcessor
             String formatField1 = data.getFormatField1();
             String formatField2 = data.getFormatField2();
             String formatField3 = data.getFormatField3();
+            String formatField4 = data.getFormatField4();
+            String formatField5 = data.getFormatField5();
             log.trace("Updating format fields in component_search table for repositoryId: {}, componentId: {}, " +
-                    "assetId: {}, format: {}, formatField1: {}, formatField2: {}, formatField3: {}",
-                repositoryId, componentId, assetId, format, formatField1, formatField2, formatField3);
+                    "assetId: {}, format: {}, formatField1: {}, formatField2: {}, formatField3: {}, " +
+                    "formatField4: {}, formatField5: {}",
+                repositoryId, componentId, assetId, format, formatField1, formatField2, formatField3, formatField4,
+                formatField5);
             store.updateFormatFields(repositoryId, componentId, assetId, format, formatField1, formatField2,
-                formatField3);
+                formatField3, formatField4, formatField5);
             break;
           }
           case ASSET_DELETED: {

@@ -22,6 +22,7 @@ import org.sonatype.nexus.repository.config.Configuration
 import org.sonatype.nexus.repository.config.WritePolicy
 import org.sonatype.nexus.repository.manager.DefaultRepositoriesContributor
 import org.sonatype.nexus.repository.manager.RepositoryManager
+import org.sonatype.nexus.repository.maven.ContentDisposition
 import org.sonatype.nexus.repository.maven.LayoutPolicy
 import org.sonatype.nexus.repository.maven.VersionPolicy
 import org.sonatype.nexus.repository.maven.internal.recipes.Maven2GroupRecipe
@@ -63,7 +64,8 @@ class MavenDefaultRepositoriesContributor
             [
                 maven  : [
                     versionPolicy: VersionPolicy.RELEASE.toString(),
-                    layoutPolicy : LayoutPolicy.STRICT.toString()
+                    layoutPolicy : LayoutPolicy.STRICT.toString(),
+                    contentDisposition: ContentDisposition.INLINE
                 ],
                 storage: [
                     blobStoreName: BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
@@ -76,7 +78,8 @@ class MavenDefaultRepositoriesContributor
             [
                 maven  : [
                     versionPolicy: VersionPolicy.SNAPSHOT.toString(),
-                    layoutPolicy : LayoutPolicy.STRICT.toString()
+                    layoutPolicy : LayoutPolicy.STRICT.toString(),
+                    contentDisposition: ContentDisposition.INLINE
                 ],
                 storage: [
                     blobStoreName: BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
@@ -95,7 +98,8 @@ class MavenDefaultRepositoriesContributor
                 ],
                 maven        : [
                     versionPolicy: VersionPolicy.RELEASE.toString(),
-                    layoutPolicy : LayoutPolicy.PERMISSIVE.toString()
+                    layoutPolicy : LayoutPolicy.PERMISSIVE.toString(),
+                    contentDisposition: ContentDisposition.INLINE
                 ],
                 proxy: [
                     remoteUrl     : 'https://repo1.maven.org/maven2/',

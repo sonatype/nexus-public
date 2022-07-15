@@ -113,50 +113,26 @@ class RepositoryInternalResourceTest
       nugetProxyRepository
     ]
 
-    def nugetProxyAttributes = new HashMap<String, Map<String, Object>>()
-    def nugetProxyAttributesNested = new HashMap<String, String>()
-    nugetProxyAttributesNested.put('nugetVersion', 'V3')
-    nugetProxyAttributes.put('nugetProxy', nugetProxyAttributesNested)
-    nugetProxyRepository.configuration.setAttributes(nugetProxyAttributes)
-
-    def nugetGroupAttributes = new HashMap<String, Map<String, Object>>()
-    def nugetGroupAttributesNested = new HashMap<String, ArrayList<String>>()
-    def nugetGroupMemberNames = new ArrayList<String>()
-    nugetGroupMemberNames.add('nuget-hosted-1')
-    nugetGroupMemberNames.add('nuget-proxy-1')
-    nugetGroupAttributesNested.put('memberNames', nugetGroupMemberNames)
-    nugetGroupAttributes.put('group', nugetGroupAttributesNested)
-    nugetGroupRepository.configuration.setAttributes(nugetGroupAttributes)
-
     when(repositoryPermissionChecker.userCanBrowseRepositories(repositories)).thenReturn(repositories)
 
     when(repositoryManager.browse()).thenReturn(repositories)
 
     def response = underTest.getRepositories(null, false, false, null);
 
-    assert response[0].class == RepositoryXO.class
     assert response[0].id == sortedRepositories[0].name
     assert response[0].name == sortedRepositories[0].name
 
-    assert response[1].class == RepositoryXO.class
     assert response[1].id == sortedRepositories[1].name
     assert response[1].name == sortedRepositories[1].name
 
-    assert response[2].class == RepositoryNugetXO.class
     assert response[2].id == sortedRepositories[2].name
     assert response[2].name == sortedRepositories[2].name
-    assert (response[2] as RepositoryNugetXO).nugetVersion == null
-    assert (response[2] as RepositoryNugetXO).memberNames == nugetGroupMemberNames
 
-    assert response[3].class == RepositoryXO.class
     assert response[3].id == sortedRepositories[3].name
     assert response[3].name == sortedRepositories[3].name
 
-    assert response[4].class == RepositoryNugetXO.class
     assert response[4].id == sortedRepositories[4].name
     assert response[4].name == sortedRepositories[4].name
-    assert (response[4] as RepositoryNugetXO).nugetVersion == 'V3'
-    assert (response[4] as RepositoryNugetXO).memberNames == null
   }
 
   @Ignore

@@ -113,4 +113,9 @@ public class AssetBlobStore<T extends AssetBlobDAO>
   public void setBlobCreated(final AssetBlob blob, final OffsetDateTime blobCreated) {
     dao().setBlobCreated(blob.blobRef(), blobCreated);
   }
+
+  @Transactional
+  public void setContentType(final AssetBlob blob, final String contentType) {
+    dao().setContentType(blob.blobRef(), contentType);
+  }
 }

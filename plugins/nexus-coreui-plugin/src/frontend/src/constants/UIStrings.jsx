@@ -239,7 +239,7 @@ export default {
       },
       AUTHENTICATION: {
         label: 'Authentication',
-        NO_AUTH: 'Use Environment Variables',
+        ENVIRONMENTVARIABLE: 'Use Environment Variables',
         MANAGED: 'Managed Identity (System)',
         ACCOUNT_KEY: {
           label: 'Account Key',

@@ -29,7 +29,7 @@
 
   <properties>
     <sonatype-licensing.version>1.6.0</sonatype-licensing.version>
-    <clm.dto.model.version>1.49.3-01</clm.dto.model.version>
+    <clm.dto.model.version>1.49.5-01</clm.dto.model.version>
     <insight-brain.version>1.133.0-02</insight-brain.version>
     <insight-scanner.version>2.33.6-01</insight-scanner.version>
   </properties>

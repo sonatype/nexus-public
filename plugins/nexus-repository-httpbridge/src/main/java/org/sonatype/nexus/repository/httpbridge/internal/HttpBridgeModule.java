@@ -38,10 +38,6 @@ public class HttpBridgeModule
 {
   public static final String MOUNT_POINT = "/repository";
 
-  public static final String DOCKER_V1_MOUNT_POINT = "/v1";
-
-  public static final String DOCKER_V2_MOUNT_POINT = "/v2";
-
   @Override
   protected void configure() {
     install(new HttpBridgeServletModule()
@@ -52,31 +48,16 @@ public class HttpBridgeModule
       }
     });
 
-    String[] filterChain = {
-        NexusAuthenticationFilter.NAME,
-        ApiKeyAuthenticationFilter.NAME,
-        AnonymousFilter.NAME,
-        AntiCsrfFilter.NAME
-    };
-
-    installFilterChain(filterChain);
-  }
-
-  protected void installFilterChain(final String[] filterChain) {
-    String[] mountPoints = new String[]{
-        MOUNT_POINT,
-        DOCKER_V1_MOUNT_POINT,
-        DOCKER_V2_MOUNT_POINT
-    };
-
-    for (String mountPoint : mountPoints) {
-      install(new FilterChainModule()
-      {
-        @Override
-        protected void configure() {
-          addFilterChain(mountPoint + "/**", filterChain);
-        }
-      });
-    }
+    install(new FilterChainModule()
+    {
+      @Override
+      protected void configure() {
+        addFilterChain(MOUNT_POINT + "/**",
+            NexusAuthenticationFilter.NAME,
+            ApiKeyAuthenticationFilter.NAME,
+            AnonymousFilter.NAME,
+            AntiCsrfFilter.NAME);
+      }
+    });
   }
 }

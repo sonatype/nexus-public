@@ -89,4 +89,12 @@ public interface AssetBlobDAO
    * @since 3.29
    */
   void setBlobCreated(@Param("blobRef") BlobRef blobRef, @Param("blobCreated") OffsetDateTime blobCreated);
+
+  /**
+   * Sets the content type on the asset
+   * 
+   * @param blobRef
+   * @param contentType
+   */
+  void setContentType(@Param("blobRef") BlobRef blobRef, @Param("contentType") String contentType);
 }

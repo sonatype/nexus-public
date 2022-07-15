@@ -16,11 +16,13 @@ import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.RepositoryTaskSupport;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.PurgeUnusedSnapshotsFacet;
 import org.sonatype.nexus.repository.maven.VersionPolicy;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
@@ -71,7 +73,7 @@ public class PurgeMavenUnusedSnapshotsTask
 
   @Override
   protected boolean appliesTo(final Repository repository) {
-    return hasExpectedFormat(repository) && isSnapshotRepo(repository);
+    return hasExpectedFormat(repository) && !isReleaseRepo(repository);
   }
 
   /**
@@ -85,20 +87,9 @@ public class PurgeMavenUnusedSnapshotsTask
         && (hostedType.equals(repository.getType()) || groupType.equals(repository.getType()));
   }
 
-  /**
-   * Determines if the current repository is a snapshot repository
-   *
-   * @return a {@link Boolean} flag representing if the repository is a snapshot one or not
-   */
-  private boolean isSnapshotRepo(final Repository repository) {
-    Configuration configuration = repository.getConfiguration();
-
-    VersionPolicy policy = VersionPolicy.valueOf(
-        Objects.requireNonNull(
-            configuration.attributes(MAVEN)
-                .get(VERSION_POLICY)).toString());
-
-    return !policy.equals(VersionPolicy.RELEASE);
+  private boolean isReleaseRepo(final Repository repository) {
+    VersionPolicy versionPolicy = repository.facet(MavenFacet.class).getVersionPolicy();
+    return VersionPolicy.RELEASE.equals(versionPolicy);
   }
 
   @Override

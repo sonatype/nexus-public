@@ -26,6 +26,7 @@ import {when} from 'jest-when';
 
 import RepositoriesList from './RepositoriesList';
 import UIStrings from '../../../../constants/UIStrings';
+import RepositoriesContextProvider from './RepositoriesContextProvider';
 
 jest.mock('axios', () => ({
   get: jest.fn(),
@@ -127,7 +128,9 @@ describe('RepositoriesList', function () {
 
   function render() {
     return TestUtils.render(
-      <RepositoriesList copyUrl={mockCopyUrl} />,
+      <RepositoriesContextProvider>
+        <RepositoriesList copyUrl={mockCopyUrl} />
+      </RepositoriesContextProvider>,
       ({container, getByText, getByPlaceholderText}) => ({
         tableHeader: (text) => getByText(text, {selector: 'thead *'}),
         filter: () => getByPlaceholderText('Filter by name'),
@@ -145,7 +148,7 @@ describe('RepositoriesList', function () {
 
     const {loadingMask} = render();
 
-    expect(loadingMask()).toBeInTheDocument();
+    await waitFor(() => expect(loadingMask()).toBeInTheDocument());
   });
 
   it('renders the resolved empty text', async function () {

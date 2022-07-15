@@ -26,6 +26,7 @@ const {EXT, REST: {INTERNAL}} = APIConstants;
 export default ListMachineUtils.buildListMachine({
   id: 'RepositoriesListMachine',
   sortableFields: ['name', 'type', 'format', 'status'],
+  initial: 'loaded',
 
   config: (config) =>
     mergeDeepRight(config, {

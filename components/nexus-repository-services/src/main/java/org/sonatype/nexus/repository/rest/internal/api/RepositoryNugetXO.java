@@ -14,18 +14,21 @@ package org.sonatype.nexus.repository.rest.internal.api;
 
 import java.util.Collection;
 
-public class RepositoryNugetXO extends RepositoryXO
+public class RepositoryNugetXO extends RepositoryDetailXO
 {
   private final String nugetVersion;
   private final Collection<String> memberNames;
 
   public RepositoryNugetXO(
-          final String id,
           final String name,
+          final String type,
+          final String format,
+          final String url,
+          final RepositoryStatusXO status,
           final String nugetVersion,
           final Collection<String> memberNames)
   {
-    super(id, name);
+    super(name, type, format, url, status);
     this.nugetVersion = nugetVersion;
     this.memberNames = memberNames;
   }

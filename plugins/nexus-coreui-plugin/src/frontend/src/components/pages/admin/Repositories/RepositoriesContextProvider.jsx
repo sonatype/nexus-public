@@ -10,34 +10,23 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
-import {
-  ContentBody,
-  Page,
-  PageHeader,
-  PageTitle,
-  Section,
-  ExtJS,
-} from '@sonatype/nexus-ui-plugin';
+import React, {createContext, useContext} from 'react';
+import {useInterpret, useService} from '@xstate/react';
+import RepositoriesListMachine from './RepositoriesListMachine';
 
-import { faDungeon } from '@fortawesome/free-solid-svg-icons';
+const RepositoriesContext = createContext({});
 
-import RealmsForm from './RealmsForm';
-import RealmsReadOnly from './RealmsReadOnly';
-
-import UIStrings from '../../../../constants/UIStrings';
-
-export default function Realms() {
-  const canEdit = ExtJS.checkPermission('nexus:settings:update');
+export default function RepositoriesContextProvider(props) {
+  const service = useInterpret(RepositoriesListMachine, {devTools: true});
 
   return (
-    <Page>
-      <PageHeader>
-        <PageTitle icon={faDungeon} {...UIStrings.REALMS.MENU} />
-      </PageHeader>
-      <ContentBody className="nxrm-realms">
-        <Section>{canEdit ? <RealmsForm /> : <RealmsReadOnly />}</Section>
-      </ContentBody>
-    </Page>
+    <RepositoriesContext.Provider value={{service}}>
+      {props.children}
+    </RepositoriesContext.Provider>
   );
+};
+
+export const useRepositoriesService = () => {
+  const context = useContext(RepositoriesContext);
+  return useService(context.service);
 }

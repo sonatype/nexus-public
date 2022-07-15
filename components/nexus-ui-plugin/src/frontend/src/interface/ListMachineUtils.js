@@ -132,6 +132,9 @@ export default class ListMachineUtils {
             SET_DATA: {
               target: 'loaded',
               actions: ['setData']
+            },
+            LOAD: {
+              target: 'loading'
             }
           }
         },

@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.inject.Provider;
+import javax.validation.ValidationException;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
@@ -44,6 +45,7 @@ import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.config.ConfigurationStore;
+import org.sonatype.nexus.repository.config.internal.ConfigurationData;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.DefaultRepositoriesContributor;
 
@@ -438,6 +440,38 @@ public class RepositoryManagerImplTest
     repositoryManager.create(makeRepo("r3"));
     // this call will fail with ConcurrentModificationException if the private repositories map is not thread safe
     iterator.next();
+  }
+
+  /**
+   * Repeatedly repository creation with the same name should throw ValidationException instead of changing repo status
+   *
+   * @throws Exception
+   */
+  @Test(expected = ValidationException.class)
+  public void testCreate_repeatableRepositoryCreationProduceValidationException() throws Exception {
+    RepositoryManagerImpl repositoryManager = buildRepositoryManagerImpl(false, true);
+
+    Configuration configuration = new ConfigurationData();
+    configuration.setRepositoryName("maven-central");
+    configuration.setRecipeName("mockRecipe");
+
+    Map<String, Map<String, Object>> attributes = new HashMap<>();
+    attributes.put("replication", ImmutableMap.of("enabled", false));
+    attributes.put("component", ImmutableMap.of("proprietaryComponents", false));
+    attributes.put("storage", ImmutableMap.of(
+        "dataStoreName", "nexus",
+        "blobStoreName", "default",
+        "strictContentTypeValidation", true,
+        "writePolicy", "ALLOW_ONCE"));
+    attributes.put("maven", ImmutableMap.of(
+        "versionPolicy", "RELEASE",
+        "layoutPolicy", "STRICT",
+        "contentDisposition", "INLINE"
+    ));
+    configuration.setAttributes(attributes);
+
+    repositoryManager.create(configuration);
+    repositoryManager.create(configuration);
   }
 
   private Map<String, Repository> reflectRepositories() {

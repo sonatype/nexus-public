@@ -35,7 +35,6 @@ import org.sonatype.nexus.repository.httpbridge.internal.describe.DescriptionHel
 import org.sonatype.nexus.repository.httpbridge.internal.describe.DescriptionRenderer;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.view.ContentTypes;
-import org.sonatype.nexus.repository.view.DockerRepoPathUtil;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.ViewFacet;
@@ -52,8 +51,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.httpbridge.internal.HttpBridgeModule.DOCKER_V1_MOUNT_POINT;
-import static org.sonatype.nexus.repository.httpbridge.internal.HttpBridgeModule.DOCKER_V2_MOUNT_POINT;
 
 /**
  * Repository view servlet.
@@ -153,17 +150,8 @@ public class ViewServlet
     }
     httpResponse.setHeader(HttpHeaders.X_XSS_PROTECTION, "1; mode=block");
 
-    String pathInfo = null;
-    String requestURI = httpRequest.getRequestURI();
-    if (requestURI != null &&
-        (requestURI.startsWith(DOCKER_V1_MOUNT_POINT) || requestURI.startsWith(DOCKER_V2_MOUNT_POINT))) {
-      pathInfo = DockerRepoPathUtil.getPath(requestURI, httpRequest.getHeader("Host"));
-    }
-    if (pathInfo == null) {
-      pathInfo = httpRequest.getPathInfo();
-    }
     // resolve repository for request
-    RepositoryPath path = RepositoryPath.parse(pathInfo);
+    RepositoryPath path = RepositoryPath.parse(httpRequest.getPathInfo());
     log.debug("Parsed path: {}", path);
 
     Repository repo = repository(path.getRepositoryName());

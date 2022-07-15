@@ -59,6 +59,8 @@ const selectors = {
     screen.getByRole('group', { name: LABELS.CONFIGURATION.SELECTED_TITLE }),
   title: () => screen.getByText(LABELS.CONFIGURATION.SELECTED_TITLE),
   emptyList: () => screen.getByText(LABELS.CONFIGURATION.EMPTY_LIST),
+  allActiveItems: () =>
+    selectors.selectedList().querySelectorAll('.nx-transfer-list__item'),
 };
 
 describe('Realms', () => {
@@ -170,8 +172,8 @@ describe('Realms', () => {
     );
   });
 
-  it('allow reordering the active column', async () => {
-    const { queryLoadingMask, selectedList } = selectors;
+  it('allows reordering the active column', async () => {
+    const { queryLoadingMask, allActiveItems } = selectors;
 
     const expected = 'nx-transfer-list__item--with-reordering';
 
@@ -179,9 +181,7 @@ describe('Realms', () => {
 
     await waitForElementToBeRemoved(queryLoadingMask());
 
-    const activesRealms = selectedList().querySelectorAll(
-      '.nx-transfer-list__item'
-    );
+    const activesRealms = allActiveItems();
 
     expect(activesRealms.length).toBeGreaterThan(0);
 
@@ -193,9 +193,82 @@ describe('Realms', () => {
     });
   });
 
+  it('saves the active realms in the corresponding order', async () => {
+    const {
+      queryLoadingMask,
+      selectedList,
+      availableList,
+      saveButton,
+      allActiveItems,
+    } = selectors;
+
+    render(<Realms />);
+
+    await waitForElementToBeRemoved(queryLoadingMask());
+
+    expect(availableList()).toHaveTextContent(data[0].name);
+    expect(availableList()).toHaveTextContent(data[1].name);
+    expect(selectedList()).toHaveTextContent(data[2].name);
+    expect(selectedList()).toHaveTextContent(data[3].name);
+
+    // Moves elements to the selected list.
+    userEvent.click(screen.getByText(data[0].name));
+    userEvent.click(screen.getByText(data[1].name));
+
+    expect(selectedList()).toHaveTextContent(data[0].name);
+    expect(selectedList()).toHaveTextContent(data[1].name);
+
+    const previousActivesRealms = allActiveItems();
+
+    expect(previousActivesRealms).toHaveLength(4);
+
+    const initialOrder = [data[2], data[3], data[0], data[1]];
+
+    // Checks initial orders.
+    previousActivesRealms.forEach((item, index) => {
+      expect(item).toHaveTextContent(initialOrder[index].name);
+    });
+
+    // Reorders the elements.
+    const secondElement = previousActivesRealms[1];
+    const secondElementButtons = secondElement.querySelectorAll('.nx-btn');
+    const secondElementMoveDownButton = secondElementButtons[1];
+
+    await userEvent.dblClick(secondElementMoveDownButton);
+
+    const firstElement = previousActivesRealms[0];
+    const firstElementButtons = firstElement.querySelectorAll('.nx-btn');
+    const firstElementMoveDownButton = firstElementButtons[1];
+
+    await userEvent.dblClick(firstElementMoveDownButton);
+
+    const currentActivesRealms = allActiveItems();
+
+    expect(currentActivesRealms).toHaveLength(4);
+
+    // Checks new order which should be the same as the data object.
+    currentActivesRealms.forEach((item, index) => {
+      expect(item).toHaveTextContent(data[index].name);
+    });
+
+    expect(saveButton()).not.toHaveClass('disabled');
+
+    await userEvent.click(saveButton());
+
+    expect(Axios.put).toHaveBeenCalledWith(
+      APIConstants.REST.PUBLIC.ACTIVE_REALMS,
+      data.map(({ id }) => id)
+    );
+  });
+
   it('do not allow save if there is not at least 1 realm is marked as active', async () => {
-    const { queryLoadingMask, selectedList, availableList, saveButton } =
-      selectors;
+    const {
+      queryLoadingMask,
+      selectedList,
+      allActiveItems,
+      availableList,
+      saveButton,
+    } = selectors;
 
     render(<Realms />);
 
@@ -209,9 +282,7 @@ describe('Realms', () => {
     expect(availableList()).toHaveTextContent(data[2].name);
     expect(availableList()).toHaveTextContent(data[3].name);
 
-    const activesRealms = selectedList().querySelectorAll(
-      '.nx-transfer-list__item'
-    );
+    const activesRealms = allActiveItems();
 
     expect(activesRealms).toHaveLength(0);
 

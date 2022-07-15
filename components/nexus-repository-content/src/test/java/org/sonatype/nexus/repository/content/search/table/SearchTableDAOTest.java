@@ -121,6 +121,8 @@ public class SearchTableDAOTest
       tableData.setFormatField1("formatField1_" + i);
       tableData.setFormatField2("formatField2_" + i);
       tableData.setFormatField3("formatField3_" + i);
+      tableData.setFormatField4("formatField4_" + i);
+      tableData.setFormatField5("formatField5_" + i);
       GENERATED_DATA.add(tableData);
     }
 
@@ -232,7 +234,7 @@ public class SearchTableDAOTest
 
     SearchTableData tableData = GENERATED_DATA.get(0);
     searchDAO.updateFormatFields(tableData.getRepositoryId(), tableData.getComponentId(), tableData.getAssetId(),
-        FORMAT, "customField1", "customField2", "customField3");
+        FORMAT, "customField1", "customField2", "customField3", "customField4", "customField5");
     SqlSearchQueryConditionBuilder queryConditionBuilder = new SqlSearchQueryConditionBuilder();
     SqlSearchQueryCondition queryCondition =
         queryConditionBuilder.condition(FORMAT_FIELD_1.getColumnName(), "customField1");

@@ -12,62 +12,51 @@
  */
 import React, {useEffect} from 'react';
 
-import {FormUtils, useSimpleMachine} from '@sonatype/nexus-ui-plugin';
+import {FormUtils} from '@sonatype/nexus-ui-plugin';
 
-import {
-  NxFormGroup,
-  NxStatefulTransferList,
-  NxLoadWrapper
-} from '@sonatype/react-shared-components';
+import {useRepositoriesService} from '../RepositoriesContextProvider';
+
+import {NxFormGroup, NxStatefulTransferList} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
 
 const {EDITOR} = UIStrings.REPOSITORIES;
 
-export const repositoriesUrl = (event) =>
-  `/service/rest/internal/ui/repositories?format=${encodeURIComponent(event.format)}`;
-
 export default function GenericGroupConfiguration({parentMachine}) {
-  const {current, load, retry, isLoading} = useSimpleMachine({
-    id: 'GenericGroupConfigurationMachine',
-    url: repositoriesUrl,
-    initial: 'loaded'
-  });
+  const [repositoriesState, repositoriesSend] = useRepositoriesService();
 
-  const {data: repositories, error} = current.context;
-
-  const [currentParent, sendParent] = parentMachine;
-
-  const {
-    name,
-    format,
-    group: {memberNames}
-  } = currentParent.context.data;
+  const repositories = repositoriesState.context.data;
 
   useEffect(() => {
-    load({format});
-  }, [format]);
+    !repositories?.length && repositoriesSend('LOAD');
+  }, []);
+
+  const [parentState, sendParent] = parentMachine;
+
+  const {
+    data: {
+      format,
+      group: {memberNames = []}
+    },
+    pristineData: {name}
+  } = parentState.context;
 
   const availableRepositories =
     repositories
-      ?.filter((it) => it.name !== name)
-      ?.map((it) => ({id: it.id, displayName: it.name})) || [];
+      ?.filter((repo) => repo.name !== name && repo.format === format)
+      ?.map((repo) => ({id: repo.name, displayName: repo.name})) || [];
 
   return (
     <>
       <h2 className="nx-h2">{EDITOR.GROUP_CAPTION}</h2>
-      <NxLoadWrapper loading={isLoading} error={error} retryHandler={retry}>
-        {availableRepositories.length > 0 && (
-          <NxFormGroup label={EDITOR.MEMBERS_LABEL} isRequired>
-            <NxStatefulTransferList
-              allItems={availableRepositories}
-              selectedItems={memberNames}
-              onChange={FormUtils.handleUpdate('group.memberNames', sendParent)}
-              allowReordering
-            />
-          </NxFormGroup>
-        )}
-      </NxLoadWrapper>
+      <NxFormGroup label={EDITOR.MEMBERS_LABEL} isRequired>
+        <NxStatefulTransferList
+          allItems={availableRepositories}
+          selectedItems={availableRepositories.length ? memberNames : []}
+          onChange={FormUtils.handleUpdate('group.memberNames', sendParent)}
+          allowReordering
+        />
+      </NxFormGroup>
     </>
   );
 }

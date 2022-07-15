@@ -96,6 +96,8 @@ public class SearchTableStore
    * @param formatField1 a format specific field 1
    * @param formatField2 a format specific field 2
    * @param formatField3 a format specific field 3
+   * @param formatField4 a format specific field 4
+   * @param formatField5 a format specific field 5
    */
   @Transactional
   public void updateFormatFields(
@@ -103,11 +105,14 @@ public class SearchTableStore
       @Nonnull @Param("componentId") final Integer componentId,
       @Nonnull @Param("assetId") final Integer assetId,
       @Nonnull @Param("format") final String format,
-      @Param("formatField1") final String formatField1,
-      @Param("formatField2") final String formatField2,
-      @Param("formatField3") final String formatField3)
+      @Nullable final String formatField1,
+      @Nullable final String formatField2,
+      @Nullable final String formatField3,
+      @Nullable final String formatField4,
+      @Nullable final String formatField5)
   {
-    dao().updateFormatFields(repositoryId, componentId, assetId, format, formatField1, formatField2, formatField3);
+    dao().updateFormatFields(repositoryId, componentId, assetId, format, formatField1, formatField2, formatField3,
+        formatField4, formatField5);
   }
 
   /**

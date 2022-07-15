@@ -61,6 +61,8 @@ class SystemInformationGeneratorImpl
 
   static final Map UNAVAILABLE = ['unavailable': true].asImmutable()
 
+  static final List SENSITIVE_FIELD_NAMES = ['password', 'secret', 'token'].asImmutable()
+
   @Inject
   SystemInformationGeneratorImpl(final ApplicationDirectories applicationDirectories,
                                  final ApplicationVersion applicationVersion,
@@ -198,11 +200,13 @@ class SystemInformationGeneratorImpl
       return data
     }
 
-    // masks the value of any properties that look like passwords
-    def reportObfuscatedProperties = {properties ->
+    // masks the sensitive values of any properties that look like passwords/secrets/tokens
+    def reportObfuscatedProperties = { properties ->
       return properties.collectEntries {key, value ->
-        if (key.toLowerCase(Locale.US).contains('password')) {
-          value = Strings2.mask(value)
+        SENSITIVE_FIELD_NAMES.each { sensitiveName ->
+          if (key.toLowerCase(Locale.US).contains(sensitiveName)) {
+            value = Strings2.mask(value)
+          }
         }
         return [key, value]
       }.sort()
@@ -211,7 +215,7 @@ class SystemInformationGeneratorImpl
     def sections = [
         'system-time'        : reportTime(),
         'system-properties'  : reportObfuscatedProperties(System.properties),
-        'system-environment' : System.getenv().sort(),
+        'system-environment' : reportObfuscatedProperties(System.getenv().sort()),
         'system-runtime'     : reportRuntime(),
         'system-network'     : reportNetwork(),
         'system-filestores'  : reportFileStores(),
