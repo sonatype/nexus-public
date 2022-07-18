@@ -512,14 +512,14 @@ public class BlobStoreManagerImpl
     checkNotNull(destBlobStore);
 
     BlobAttributes srcBlobAttributes = srcBlobStore.getBlobAttributes(blobId);
-    boolean isSrcDelted = srcBlobAttributes.isDeleted();
+    boolean isSrcDeleted = srcBlobAttributes.isDeleted();
 
     Map<String, String> headers = srcBlobAttributes.getHeaders();
     InputStream srcInputStream = inputStreamOfBlob(srcBlobStore, blobId);
     Blob newBlob = destBlobStore.create(srcInputStream, headers, blobId);
     destBlobStore.setBlobAttributes(blobId, srcBlobAttributes);
 
-    ensureDeletedStateTransferred(blobId, srcBlobStore, destBlobStore, isSrcDelted);
+    ensureDeletedStateTransferred(blobId, srcBlobStore, destBlobStore, isSrcDeleted);
     log.debug("Created blobId {} in blob store '{}'", blobId, destBlobStore.getBlobStoreConfiguration().getName());
 
     try {

@@ -65,7 +65,7 @@ public class SeparateTaskLogTaskLogger
     log.info(TASK_LOG_ONLY, " Type: {}", taskLogInfo.getTypeId());
     log.info(TASK_LOG_ONLY, " Name: {}", taskLogInfo.getName());
     log.info(TASK_LOG_ONLY, " Description: {}", taskLogInfo.getMessage());
-    log.debug(TASK_LOG_ONLY, "Task configuration: {}", taskLogInfo.toString());
+    log.debug(TASK_LOG_ONLY, "Task configuration: {}", taskLogInfo);
 
     writeLogFileNameToNexusLog();
   }
