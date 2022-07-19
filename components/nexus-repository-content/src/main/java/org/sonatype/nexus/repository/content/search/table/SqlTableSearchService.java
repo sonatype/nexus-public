@@ -167,7 +167,7 @@ public class SqlTableSearchService
             componentIdToAsset.get(getFormatComponentKey(component.format(), component.componentId()));
         for (AssetInfo asset : assets) {
           AssetSearchResult assetSearchResult =
-              buildAssetSearch(asset, repositoryName, componentSearchResult.getFormat());
+              buildAssetSearch(asset, repositoryName, component);
           componentSearchResult.addAsset(assetSearchResult);
         }
       }
@@ -231,17 +231,21 @@ public class SqlTableSearchService
     return componentSearchResult;
   }
 
-  private AssetSearchResult buildAssetSearch(final AssetInfo asset, final String repositoryName, final String format) {
+  private AssetSearchResult buildAssetSearch(final AssetInfo asset,
+                                             final String repositoryName,
+                                             final SearchResult componentInfo) {
     AssetSearchResult searchResult = new AssetSearchResult();
 
     searchResult.setId(String.valueOf(asset.assetId()));
     searchResult.setPath(asset.path());
     searchResult.setRepository(repositoryName);
-    searchResult.setFormat(format);
+    searchResult.setFormat(componentInfo.format());
     searchResult.setLastModified(Date.from(asset.lastUpdated().toInstant()));
     searchResult.setAttributes(asset.attributes().backing());
     searchResult.setContentType(asset.contentType());
     searchResult.setChecksum(asset.checksums());
+    searchResult.setUploader(componentInfo.uploader());
+    searchResult.setUploaderIp(componentInfo.uploaderIp());
 
     return searchResult;
   }

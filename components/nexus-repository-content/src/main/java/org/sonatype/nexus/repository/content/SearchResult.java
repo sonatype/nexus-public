@@ -31,4 +31,8 @@ public interface SearchResult
   String repositoryName();
 
   String version();
+
+  String uploader();
+
+  String uploaderIp();
 }
