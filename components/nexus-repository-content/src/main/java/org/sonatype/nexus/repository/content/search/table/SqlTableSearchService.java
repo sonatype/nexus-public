@@ -39,6 +39,7 @@ import org.sonatype.nexus.repository.search.SearchRequest;
 import org.sonatype.nexus.repository.search.SearchResponse;
 import org.sonatype.nexus.repository.search.SearchService;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
+import org.sonatype.nexus.repository.search.sql.SqlSearchPermissionException;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryBuilder;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryCondition;
 import org.sonatype.nexus.repository.search.table.TableSearchPermissionManager;
@@ -95,13 +96,25 @@ public class SqlTableSearchService
 
   @Override
   public long count(final SearchRequest searchRequest) {
-    SqlSearchQueryCondition queryCondition = getSqlSearchQueryCondition(searchRequest);
-    return searchStore.count(queryCondition);
+    try {
+      SqlSearchQueryCondition queryCondition = getSqlSearchQueryCondition(searchRequest);
+      return searchStore.count(queryCondition);
+    }
+    catch (SqlSearchPermissionException e) {
+      log.error(e.getMessage());
+    }
+    return 0L;
   }
 
   private SqlTableSearchService.ComponentSearchResultPage searchComponents(final SearchRequest searchRequest) {
-    SqlSearchQueryCondition queryCondition = getSqlSearchQueryCondition(searchRequest);
-    return doSearch(searchRequest, queryCondition);
+    try {
+      SqlSearchQueryCondition queryCondition = getSqlSearchQueryCondition(searchRequest);
+      return doSearch(searchRequest, queryCondition);
+    }
+    catch (SqlSearchPermissionException e) {
+      log.error(e.getMessage());
+    }
+    return SqlTableSearchService.ComponentSearchResultPage.empty();
   }
 
   private SqlSearchQueryCondition getSqlSearchQueryCondition(final SearchRequest searchRequest) {

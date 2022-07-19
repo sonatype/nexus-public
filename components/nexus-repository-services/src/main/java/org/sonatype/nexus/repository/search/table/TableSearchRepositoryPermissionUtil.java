@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -25,7 +24,6 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.security.SecurityHelper;
@@ -81,7 +79,7 @@ public class TableSearchRepositoryPermissionUtil
     */
     for (String repository : repositories) {
       if (!repositoryManager.exists(repository) ||
-          securityHelper.allPermitted(new RepositoryViewPermission(repository, BROWSE))) {
+          securityHelper.allPermitted(new RepositoryViewPermission(repositoryManager.get(repository), BROWSE))) {
         browsableAndUnknownRepositories.add(repository);
       }
     }
