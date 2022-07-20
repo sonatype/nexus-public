@@ -62,6 +62,8 @@ const REPOSITORIES_SERVICE = [
   {
     context: {
       data: [
+        {name: 'docker-proxy-1', format: 'docker', type: 'proxy'},
+        {name: 'docker-hosted-1', format: 'docker', type: 'hosted'},
         {name: 'maven-central', format: 'maven2'},
         {name: 'maven-releases', format: 'maven2'},
         {name: 'maven-snapshots', format: 'maven2'},
@@ -97,6 +99,13 @@ function CLEANUP_EXT_REQUEST(format = 'maven2') {
     }
   ]);
 }
+
+const getFormatOptions = (recipes) => {
+  const formats = recipes.map(({format}) => format);
+  const uniqFormats = [...new Set(formats)];
+  const formatOptions = uniqFormats.map((format) => ({name: format}));
+  return [{name: EDITOR.SELECT_FORMAT_OPTION}, ...formatOptions];
+};
 
 describe('RepositoriesForm', () => {
   const getCheckbox = (fieldsetLabel) => {
@@ -150,7 +159,20 @@ describe('RepositoriesForm', () => {
     getContentDispositionSelect: () => screen.getByLabelText(EDITOR.CONTENT_DISPOSITION_LABEL),
     getRemoveNonCataloguedCheckbox: () => getCheckbox(EDITOR.REMOVE_NON_CATALOGED_LABEL),
     getRemoveQuarantinedCheckbox: () => getCheckbox(EDITOR.REMOVE_QUARANTINED_LABEL),
-    getVersionPolicySelect: () => screen.getByLabelText(EDITOR.VERSION_POLICY_LABEL)
+    getVersionPolicySelect: () => screen.getByLabelText(EDITOR.VERSION_POLICY_LABEL),
+    getDockerConnectorHttpPortCheckbox: () =>
+      screen.getAllByRole('checkbox', {name: 'Toggle Text Input'})[0],
+    getDockerConnectorHttpsPortCheckbox: () =>
+      screen.getAllByRole('checkbox', {name: 'Toggle Text Input'})[1],
+    getDockerConnectorHttpPort: () =>
+      screen.getAllByPlaceholderText(EDITOR.DOCKER_CONNECTOR_PLACEHOLDER)[0],
+    getDockerConnectorHttpsPort: () =>
+      screen.getAllByPlaceholderText(EDITOR.DOCKER_CONNECTOR_PLACEHOLDER)[1],
+    getDockerApiVersionCheckbox: () =>
+      screen.getByRole('checkbox', {name: EDITOR.REGISTRY_API_SUPPORT_DESCR}),
+    getDockerAnonimousPullCheckbox: () =>
+      screen.getByRole('checkbox', {name: EDITOR.ALLOW_ANON_DOCKER_PULL_DESCR}),
+    getDockerWritableRepositorySelect: () => screen.getByLabelText('Writable Repository')
   };
 
   const renderView = (itemId = '') => {
@@ -161,6 +183,7 @@ describe('RepositoriesForm', () => {
 
   const RECIPES_RESPONSE = [
     {format: 'bower', type: 'proxy'},
+    {format: 'docker', type: 'group'},
     {format: 'maven2', type: 'group'},
     {format: 'maven2', type: 'hosted'},
     {format: 'maven2', type: 'proxy'},
@@ -175,20 +198,11 @@ describe('RepositoriesForm', () => {
     {format: 'yum', type: 'hosted'}
   ];
 
+  const FORMAT_OPTIONS = getFormatOptions(RECIPES_RESPONSE);
+
   const BLOB_STORES_RESPONSE = [{name: 'default'}, {name: 'blob-store-1'}, {name: 'blob-store-2'}];
 
   const BLOB_STORES_OPTIONS = [{name: EDITOR.SELECT_STORE_OPTION}, ...BLOB_STORES_RESPONSE];
-
-  const FORMAT_OPTIONS = [
-    {name: EDITOR.SELECT_FORMAT_OPTION},
-    {name: 'bower'},
-    {name: 'maven2'},
-    {name: 'npm'},
-    {name: 'nuget'},
-    {name: 'p2'},
-    {name: 'raw'},
-    {name: 'yum'}
-  ];
 
   const TYPE_OPTIONS = [
     {name: EDITOR.SELECT_TYPE_OPTION},
@@ -859,6 +873,7 @@ describe('RepositoriesForm', () => {
         },
         type: 'group'
       };
+
       when(Axios.get).calledWith(getRepositoryUrl(repo.name)).mockResolvedValueOnce({
         data: repo
       });
@@ -880,6 +895,124 @@ describe('RepositoriesForm', () => {
           routingRule: undefined
         })
       );
+    });
+
+    it('creates docker group repository', async () => {
+      const repo = {
+        format: 'docker',
+        type: 'group',
+        name: 'docker-group-1',
+        online: true,
+        storage: {
+          blobStoreName: 'default',
+          strictContentTypeValidation: true
+        },
+        group: {
+          memberNames: ['docker-proxy-1', 'docker-hosted-1'],
+          writableMember: 'docker-hosted-1'
+        },
+        docker: {
+          v1Enabled: true,
+          forceBasicAuth: true,
+          httpPort: '333',
+          httpsPort: '444',
+          subdomain: null
+        }
+      };
+
+      renderView();
+
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+      await TestUtils.changeField(selectors.getFormatSelect, repo.format);
+      await TestUtils.changeField(selectors.getTypeSelect, repo.type);
+      await TestUtils.changeField(selectors.getNameInput, repo.name);
+      await TestUtils.changeField(selectors.getBlobStoreSelect, repo.storage.blobStoreName);
+
+      expect(selectors.getDockerConnectorHttpPort()).toBeDisabled();
+      expect(selectors.getDockerConnectorHttpsPort()).toBeDisabled();
+
+      userEvent.click(selectors.getDockerConnectorHttpPortCheckbox());
+      userEvent.click(selectors.getDockerConnectorHttpsPortCheckbox());
+
+      expect(selectors.getDockerConnectorHttpPort()).toBeEnabled();
+      expect(selectors.getDockerConnectorHttpsPort()).toBeEnabled();
+
+      await TestUtils.changeField(selectors.getDockerConnectorHttpPort, repo.docker.httpPort);
+      await TestUtils.changeField(selectors.getDockerConnectorHttpsPort, repo.docker.httpsPort);
+
+      userEvent.click(selectors.getDockerApiVersionCheckbox());
+      userEvent.click(selectors.getDockerAnonimousPullCheckbox());
+
+      userEvent.click(selectors.getTransferListOption(repo.group.memberNames[0]));
+
+      expect(selectors.getDockerWritableRepositorySelect()).toBeDisabled();
+
+      userEvent.click(selectors.getTransferListOption(repo.group.memberNames[1]));
+
+      expect(selectors.getDockerWritableRepositorySelect()).toBeEnabled();
+
+      await TestUtils.changeField(
+        selectors.getDockerWritableRepositorySelect,
+        repo.group.writableMember
+      );
+
+      expect(selectors.getCreateButton()).not.toHaveClass('disabled');
+
+      userEvent.click(selectors.getCreateButton());
+
+      await waitFor(() =>
+        expect(Axios.post).toHaveBeenCalledWith(saveRepositoryUrl(repo.format, repo.type), repo)
+      );
+    });
+
+    it('invalidates form when docker writable repository is not a group member', async () => {
+      const repo = {
+        format: 'docker',
+        type: 'group',
+        name: 'docker-group-1',
+        online: true,
+        storage: {
+          blobStoreName: 'default',
+          strictContentTypeValidation: true
+        },
+        group: {
+          memberNames: ['docker-proxy-1', 'docker-hosted-1'],
+          writableMember: 'docker-hosted-ghost'
+        },
+        docker: {
+          v1Enabled: false,
+          forceBasicAuth: false,
+          httpPort: null,
+          httpsPort: null,
+          subdomain: null
+        }
+      };
+
+      when(Axios.get).calledWith(getRepositoryUrl(repo.name)).mockResolvedValueOnce({
+        data: repo
+      });
+
+      const consoleErrorSpy = jest.spyOn(global.console, 'error');
+
+      renderView(repo.name);
+
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+      userEvent.click(selectors.getDockerApiVersionCheckbox());
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        EDITOR.WRITABLE.VALIDATION_ERROR(repo.group.writableMember)
+      );
+
+      expect(selectors.getSaveButton()).toHaveClass('disabled');
+
+      await TestUtils.changeField(
+        selectors.getDockerWritableRepositorySelect,
+        repo.group.memberNames[1]
+      );
+
+      expect(selectors.getSaveButton()).not.toHaveClass('disabled');
     });
   });
 

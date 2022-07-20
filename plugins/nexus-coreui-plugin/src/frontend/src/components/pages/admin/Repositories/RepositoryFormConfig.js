@@ -34,13 +34,15 @@ import RepositoryConnectorsConfiguration from './facets/RepositoryConnectorsConf
 import RegistryApiSupportConfiguration from './facets/RegistryApiSupportConfiguration';
 import NugetProxyConfiguration from './facets/NugetProxyConfiguration';
 import NugetGroupConfiguration from './facets/NugetGroupConfiguration';
+import WritableRepositoryConfiguration from './facets/WritableRepositoryConfiguration';
 
 import {genericDefaultValues} from './RepositoryFormDefaultValues';
 import {
   genericValidators,
   validateDockerConnectorPort,
   validateDockerIndexUrl,
-  validateNugetQueryCacheItemMaxAge
+  validateNugetQueryCacheItemMaxAge,
+  validateWritableMember
 } from './RepositoryFormValidators';
 
 import {mergeDeepRight} from 'ramda';
@@ -264,6 +266,35 @@ const repositoryFormats = {
       }
     })
   },
+  docker_group: {
+    facets: [
+      RepositoryConnectorsConfiguration,
+      RegistryApiSupportConfiguration,
+      ...genericFacets.group,
+      WritableRepositoryConfiguration
+    ],
+    defaultValues: {
+      ...mergeDeepRight(genericDefaultValues.group, {
+        group: {writableMember: null}
+      }),
+      docker: {
+        httpPort: null,
+        httpsPort: null,
+        forceBasicAuth: false,
+        v1Enabled: false,
+        subdomain: null
+      }
+    },
+    validators: (data) => ({
+      ...mergeDeepRight(genericValidators.group(data), {
+        group: {writableMember: validateWritableMember(data)}
+      }),
+      docker: {
+        httpPort: validateDockerConnectorPort(data, 'httpPort'),
+        httpsPort: validateDockerConnectorPort(data, 'httpsPort')
+      }
+    })
+  },
   nuget_proxy: {
     facets: [NugetProxyConfiguration, ...genericFacets.proxy],
     defaultValues: {
@@ -281,17 +312,14 @@ const repositoryFormats = {
     })
   },
   nuget_group: {
-    facets: [
-      GenericStorageConfiguration, 
-      NugetGroupConfiguration
-    ],
+    facets: [GenericStorageConfiguration, NugetGroupConfiguration],
     defaultValues: {
       ...genericDefaultValues.group
     },
     validators: (data) => ({
       ...genericValidators.group(data)
     })
-  },
+  }
 };
 
 export const getFacets = (format, type) =>

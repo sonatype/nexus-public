@@ -586,7 +586,7 @@ export default {
       ALLOW_ANON_DOCKER_PULL_DESCR: 'Allow anonymous docker pull (Docker Bearer Token Realm required)',
       REGISTRY_API_SUPPORT_CAPTION: 'Docker Registry API Support',
       REGISTRY_API_SUPPORT_LABEL: 'Enable Docker V1 API',
-      REGISTRY_API_SUPPORT_DESCR: 'Allow clients to use the V1 API to interact with this repository ',
+      REGISTRY_API_SUPPORT_DESCR: 'Allow clients to use the V1 API to interact with this repository',
       DOCKER_INDEX_LABEL: 'Docker Index',
       USE_PROXY_REGISTRY_DESCR: 'Use Proxy registry (specified above)',
       USE_DOCKER_HUB_DESCR: 'Use Docker Hub',
@@ -640,6 +640,19 @@ export default {
           LABEL: 'NuGet Type',
           SUBLABEL: 'Restrict proxy repositories to one NuGet version',
         }
+      },
+      WRITABLE: {
+        LABEL: 'Writable Repository',
+        SUBLABEL: <>The member repository to which POST and PUT requests will be routed. When pushing to a group repository, Nexus Repository checks existing layers of all members to avoid pushing those layers. See our {' '}
+          <NxTextLink
+            href="https://help.sonatype.com/repomanager3/nexus-repository-administration/formats/docker-registry/pushing-images-to-a-group-repository"
+            external
+          >
+            documentation
+          </NxTextLink>
+          {' '} for details.'</>,
+        PLACEHOLDER: 'Select repository...',
+        VALIDATION_ERROR: (name) => `Writable repository ${name} is not a group member`
       },
       MESSAGES: {
         DELETE_ERROR: (name) => `Repository ${name} cannot be deleted\n`,
