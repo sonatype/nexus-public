@@ -26,7 +26,7 @@ import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
  * Updates PK for soft_deleted_blobs table
  */
 @Named
-public class SoftDeletedBlobsMigrationStep_1_18
+public class SoftDeletedBlobsMigrationStep_1_19
     extends ComponentSupport
     implements DatabaseMigrationStep
 {
@@ -48,7 +48,7 @@ public class SoftDeletedBlobsMigrationStep_1_18
 
   @Override
   public Optional<String> version() {
-    return Optional.of("1.18");
+    return Optional.of("1.19");
   }
 
   @Override
