@@ -23,7 +23,7 @@
       blob_id VARCHAR(256) NOT NULL,
       source_blob_store_name VARCHAR(256) NOT NULL,
       deleted_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      CONSTRAINT pk_soft_deleted_blobs_blob_id PRIMARY KEY (blob_id)
+      CONSTRAINT pk_soft_deleted_blobs_record_id PRIMARY KEY (record_id)
     );
   </insert>
 

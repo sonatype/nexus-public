@@ -18,9 +18,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Queue;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -149,6 +151,7 @@ public class DatastoreFileBlobDeletionIndex
     if (Objects.nonNull(oldDeletionIndex) && !oldDeletionIndex.isEmpty()) {
       log.info("Processing blobstore {}, discovered file-based deletion index. Migrating to DB-based",
           blobStore.getBlobStoreConfiguration().getName());
+      Set<String> persistedRecords = getPersistedBlobIdsForBlobStore(blobStoreName);
 
       try (ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, INTERVAL_IN_SECONDS)) {
         for (int counter = 0, numBlobs = oldDeletionIndex.size(); counter < numBlobs; counter++) {
@@ -158,7 +161,13 @@ public class DatastoreFileBlobDeletionIndex
             break;
           }
           BlobId blobId = new BlobId(new String(bytes, UTF_8));
-          softDeletedBlobsStore.createRecord(blobId, blobStore.getBlobStoreConfiguration().getName());
+          if (!persistedRecords.contains(blobId.toString())) {
+            softDeletedBlobsStore.createRecord(blobId, blobStore.getBlobStoreConfiguration().getName());
+            persistedRecords.add(blobId.toString());
+          } else {
+            log.debug("Old deletion index contain duplicate entry with blobId - {} for blobstore - {}, " +
+                    "duplicate record will be skipped", blobId, blobStoreName);
+          }
 
           oldDeletionIndex.remove();
           progressLogger.info("Elapsed time: {}, processed: {}/{}", progressLogger.getElapsed(),
@@ -181,6 +190,18 @@ public class DatastoreFileBlobDeletionIndex
       Files.move(legacyDeletionsIndex, deletedIndexPath);
     }
     return deletedIndexFile;
+  }
+
+  private Set<String> getPersistedBlobIdsForBlobStore(String blobStoreName) {
+    Set<String> persistedRecords = new HashSet<>();
+    Continuation<SoftDeletedBlobsData> page = softDeletedBlobsStore.readRecords(null, blobStoreName);
+    while (!page.isEmpty()) {
+      persistedRecords.addAll(page.stream()
+          .map(SoftDeletedBlobsData::getBlobId)
+          .collect(Collectors.toSet()));
+      page = softDeletedBlobsStore.readRecords(page.nextContinuationToken(), blobStoreName);
+    }
+    return persistedRecords;
   }
 }
 
