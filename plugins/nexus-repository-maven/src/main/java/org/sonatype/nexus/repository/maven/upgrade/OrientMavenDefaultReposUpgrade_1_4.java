@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.maven.upgrade;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +29,8 @@ import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.orient.DatabaseUpgradeSupport;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.maven.internal.MavenDefaultRepositoriesContributor;
-import org.sonatype.nexus.repository.maven.internal.recipes.Maven2GroupRecipe;
+import org.sonatype.nexus.repository.maven.internal.recipes.Maven2HostedRecipe;
+import org.sonatype.nexus.repository.maven.internal.recipes.Maven2ProxyRecipe;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -56,7 +58,6 @@ public class OrientMavenDefaultReposUpgrade_1_4
   private static final String FIND_REPO= "SELECT * " +
       "FROM repository " +
       "WHERE repository_name = '%s';";
-
   private static final String UPDATE_REPOS = "UPDATE repository " +
       "SET attributes.maven.contentDisposition = 'INLINE' " +
       "WHERE repository_name = '%s';";
@@ -65,6 +66,8 @@ public class OrientMavenDefaultReposUpgrade_1_4
 
   private final Provider<DatabaseInstance> instanceProvider;
 
+  private final List<String> validRecipes;
+
   @Inject
   public OrientMavenDefaultReposUpgrade_1_4(
       final MavenDefaultRepositoriesContributor defaultRepositoriesContributor,
@@ -72,6 +75,7 @@ public class OrientMavenDefaultReposUpgrade_1_4
   {
     this.defaultRepositoriesContributor = defaultRepositoriesContributor;
     this.instanceProvider = instanceProvider;
+    this.validRecipes = Arrays.asList(Maven2HostedRecipe.NAME , Maven2ProxyRecipe.NAME);
   }
 
   @Override
@@ -80,7 +84,7 @@ public class OrientMavenDefaultReposUpgrade_1_4
   }
 
   /**
-   * Updates the default repos records adding the
+   * Updates the default repos records adding the contentDisposition attribute
    *
    * @param db {@link ODatabaseDocumentTx} a database document object to perform the transaction
    */
@@ -88,7 +92,7 @@ public class OrientMavenDefaultReposUpgrade_1_4
     this.defaultRepositoriesContributor
         .getRepositoryConfigurations()
         .stream()
-        .filter(configuration -> !Maven2GroupRecipe.NAME.equals(configuration.getRecipeName()))
+        .filter(configuration -> validRecipes.contains(configuration.getRecipeName()))
         .map(Configuration::getRepositoryName)
         .forEach(name -> update(db, name, getContentDisposition(db, name)));
   }
@@ -101,8 +105,8 @@ public class OrientMavenDefaultReposUpgrade_1_4
             .findFirst()
             .orElse(Collections.emptyMap());
 
-    return Optional.ofNullable(attributes.get(MAVEN)
-        .get("contentDisposition"));
+    return Optional.ofNullable(attributes.get(MAVEN))
+        .map(maven -> maven.get("contentDisposition"));
   }
 
   private void update(ODatabaseDocumentTx db, String repositoryName, Optional<String> contentDisposition) {
