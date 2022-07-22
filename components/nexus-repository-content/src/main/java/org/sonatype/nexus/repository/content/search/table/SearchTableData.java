@@ -79,6 +79,12 @@ public class SearchTableData
 
   private String formatField5;
 
+  // asset's blob uploaderBy property
+  private String uploader;
+
+  // asset's blob uploaderByIp property
+  private String uploaderIp;
+
   public SearchTableData() {
   }
 
@@ -270,6 +276,22 @@ public class SearchTableData
     this.formatField5 = formatField5;
   }
 
+  public void setUploader(final String uploader) {
+    this.uploader = uploader;
+  }
+
+  public String getUploader() {
+    return uploader;
+  }
+
+  public void setUploaderIp(final String uploaderIp) {
+    this.uploaderIp = uploaderIp;
+  }
+
+  public String getUploaderIp() {
+    return uploaderIp;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) {
@@ -295,14 +317,16 @@ public class SearchTableData
         Objects.equals(formatField2, tableData.formatField2) &&
         Objects.equals(formatField3, tableData.formatField3) &&
         Objects.equals(formatField4, tableData.formatField4) &&
-        Objects.equals(formatField5, tableData.formatField5);
+        Objects.equals(formatField5, tableData.formatField5) &&
+        Objects.equals(uploader, tableData.uploader) &&
+        Objects.equals(uploaderIp, tableData.uploaderIp);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(repositoryId, componentId, assetId, format, namespace, componentName, componentKind, version,
         componentCreated, repositoryName, path, contentType, md5, sha1, sha256, sha512, formatField1, formatField2,
-        formatField3, formatField4, formatField5);
+        formatField3, formatField4, formatField5, uploader, uploaderIp);
   }
 
   @Override
@@ -329,6 +353,8 @@ public class SearchTableData
         .add("formatField3='" + formatField3 + "'")
         .add("formatField4='" + formatField4 + "'")
         .add("formatField5='" + formatField5 + "'")
+        .add("uploader='" + uploader + "'")
+        .add("uploaderIp='" + uploaderIp + "'")
         .toString();
   }
 }

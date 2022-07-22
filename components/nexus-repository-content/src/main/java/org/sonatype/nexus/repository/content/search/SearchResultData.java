@@ -36,6 +36,10 @@ public class SearchResultData
 
   private String repositoryName;
 
+  private String uploader;
+
+  private String uploaderIp;
+
   @Override
   public Integer componentId() {
     return componentId;
@@ -59,6 +63,16 @@ public class SearchResultData
   @Override
   public String version() {
     return version;
+  }
+
+  @Override
+  public String uploader() {
+    return uploader;
+  }
+
+  @Override
+  public String uploaderIp() {
+    return uploaderIp;
   }
 
   @Override
@@ -90,6 +104,14 @@ public class SearchResultData
     this.format = format;
   }
 
+  public void setUploader(final String uploader) {
+    this.uploader = uploader;
+  }
+
+  public void setUploaderIp(final String uploaderIp) {
+    this.uploaderIp = uploaderIp;
+  }
+
   @Override
   public String toString() {
     return "SearchResultData{" +
@@ -99,6 +121,8 @@ public class SearchResultData
         ", componentName='" + componentName + '\'' +
         ", version='" + version + '\'' +
         ", repositoryName='" + repositoryName + '\'' +
+        ", uploader='" + uploader + '\'' +
+        ", uploaderIp='" + uploaderIp + '\'' +
         '}';
   }
 }

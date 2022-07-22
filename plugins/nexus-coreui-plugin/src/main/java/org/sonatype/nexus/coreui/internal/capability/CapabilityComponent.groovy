@@ -87,6 +87,7 @@ class CapabilityComponent
   @ExceptionMetered
   @RequiresPermissions('nexus:capabilities:read')
   List<CapabilityXO> read() {
+    capabilityRegistry.pullAndRefreshReferencesFromDB()
     return capabilityRegistry.get(capabilities()).collect { capability ->
       asCapability(capability)
     }

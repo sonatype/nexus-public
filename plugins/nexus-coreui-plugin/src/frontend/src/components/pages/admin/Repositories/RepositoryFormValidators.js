@@ -115,3 +115,12 @@ export const validateNugetQueryCacheItemMaxAge = (data) => {
     ValidationUtils.validateNotBlank(queryCacheItemMaxAge)
   );
 };
+
+export const validateWritableMember = (data) => {
+  const {memberNames, writableMember} = data.group;
+  if (writableMember && !memberNames.includes(writableMember)) {
+    const message = UIStrings.REPOSITORIES.EDITOR.WRITABLE.VALIDATION_ERROR(writableMember);
+    console.error(message);
+    return message;
+  }
+};

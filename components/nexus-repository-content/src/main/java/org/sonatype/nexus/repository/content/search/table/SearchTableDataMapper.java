@@ -19,7 +19,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
@@ -104,6 +103,10 @@ public class SearchTableDataMapper
     if (searchCustomFieldContributors.containsKey(repositoryFormat)) {
       searchCustomFieldContributors.get(repositoryFormat).populateSearchCustomFields(data, asset);
     }
+
+    // uploader info
+    data.setUploader(blob.createdBy().orElse(null));
+    data.setUploaderIp(blob.createdByIp().orElse(null));
 
     return Optional.of(data);
   }

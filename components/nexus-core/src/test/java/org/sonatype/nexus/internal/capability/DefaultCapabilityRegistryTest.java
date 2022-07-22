@@ -63,6 +63,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -563,5 +564,34 @@ public class DefaultCapabilityRegistryTest
     assertThat(itr.next().hasFailure(), is(false));
     assertThat(itr.next().hasFailure(), is(false));
     assertThat(itr.hasNext(), is(false));
+  }
+
+  @Test
+  public void refreshReferencesOnDemand() {
+    final Map<String, String> oldProps = Maps.newHashMap();
+    oldProps.put("p1", "v1");
+    oldProps.put("p2", "v2");
+
+    final CapabilityStorageItem item = new OrientCapabilityStorageItem(
+        0, CAPABILITY_TYPE.toString(), true, null, oldProps
+    );
+    CapabilityIdentity fooId = capabilityIdentity("foo");
+    when(capabilityStorage.getAll()).thenReturn(ImmutableMap.of(fooId, item));
+
+    underTest.load();
+    Collection<DefaultCapabilityReference> references = underTest.getAll();
+    assertThat(references, hasSize(1));
+    Map<String, String> properties = references.stream().findFirst().get().properties();
+    assertEquals("v1", properties.get("p1"));
+    assertEquals("v2", properties.get("p2"));
+
+    oldProps.put("p1", "v1a");
+    oldProps.put("p2", "v2a");
+    underTest.pullAndRefreshReferencesFromDB();
+
+    assertThat(underTest.getAll(), hasSize(1));
+    properties = references.stream().findFirst().get().properties();
+    assertEquals("v1a", properties.get("p1"));
+    assertEquals("v2a", properties.get("p2"));
   }
 }

@@ -123,6 +123,11 @@ public class SearchTableDAOTest
       tableData.setFormatField3("formatField3_" + i);
       tableData.setFormatField4("formatField4_" + i);
       tableData.setFormatField5("formatField5_" + i);
+
+      // uploader info
+      tableData.setUploader("uploader-name");
+      tableData.setUploaderIp("uploader-ip-address");
+
       GENERATED_DATA.add(tableData);
     }
 
@@ -165,6 +170,8 @@ public class SearchTableDAOTest
     assertThat(searchResult.version(), notNullValue());
     assertThat(searchResult.repositoryName(), notNullValue());
     assertThat(searchResult.created(), notNullValue());
+    assertThat(searchResult.uploader(), notNullValue());
+    assertThat(searchResult.uploaderIp(), notNullValue());
   }
 
   @Test

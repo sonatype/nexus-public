@@ -35,16 +35,19 @@
       sha1                   VARCHAR,
       sha256                 VARCHAR,
       sha512                 VARCHAR,
-      format_field_1         VARCHAR,
-      format_field_2         VARCHAR,
-      format_field_3         VARCHAR,
 
       CONSTRAINT pk_component_search PRIMARY KEY (repository_id, component_id, asset_id, format)
       );
 
     -- Columns added after this table was included in a release
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS format_field_1 VARCHAR;
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS format_field_2 VARCHAR;
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS format_field_3 VARCHAR;
     ALTER TABLE component_search ADD COLUMN IF NOT EXISTS format_field_4 VARCHAR;
     ALTER TABLE component_search ADD COLUMN IF NOT EXISTS format_field_5 VARCHAR;
+
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS uploader VARCHAR;
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS uploader_ip VARCHAR;
 
     CREATE INDEX IF NOT EXISTS idx_component_search_version ON component_search (version);
     CREATE INDEX IF NOT EXISTS idx_component_search_namespace ON component_search (namespace);
@@ -61,6 +64,8 @@
     CREATE INDEX IF NOT EXISTS idx_component_search_format_field_3 ON component_search (format_field_3);
     CREATE INDEX IF NOT EXISTS idx_component_search_format_field_4 ON component_search (format_field_4);
     CREATE INDEX IF NOT EXISTS idx_component_search_format_field_5 ON component_search (format_field_5);
+    CREATE INDEX IF NOT EXISTS idx_component_search_uploader ON component_search (uploader);
+    CREATE INDEX IF NOT EXISTS idx_component_search_uploader_ip ON component_search (uploader_ip);
   </insert>
 
   <sql id="repositoryMatch">
@@ -98,16 +103,19 @@
     <result property="formatField1" column="format_field_1"/>
     <result property="formatField2" column="format_field_2"/>
     <result property="formatField3" column="format_field_3"/>
+    <result property="uploader" column="uploader"/>
+    <result property="uploaderIp" column="uploader_ip"/>
   </resultMap>
 
   <insert id="create" parameterType="SearchTableData">
     INSERT INTO component_search(repository_id, component_id, asset_id, format, namespace, search_component_name, path,
                                  component_kind, version, search_repository_name, content_type, md5, sha1, sha256, sha512,
                                  format_field_1, format_field_2, format_field_3, format_field_4, format_field_5,
-                                 component_created)
+                                 uploader, uploader_ip, component_created)
     VALUES (#{repositoryId}, #{componentId}, #{assetId}, #{format}, #{namespace}, #{componentName}, #{path},
             #{componentKind}, #{version}, #{repositoryName}, #{contentType}, #{md5}, #{sha1}, #{sha256}, #{sha512},
             #{formatField1}, #{formatField2}, #{formatField3}, #{formatField4}, #{formatField5},
+            #{uploader}, #{uploaderIp},
             (SELECT created FROM ${format}_component WHERE component_id = #{componentId}));
   </insert>
 
@@ -156,15 +164,20 @@
     <result property="repositoryName" column="search_repository_name"/>
     <result property="format" column="format"/>
     <result property="created" column="component_created" />
+
+    <result property="uploader" column="uploader" />
+    <result property="uploaderIp" column="uploader_ip" />
   </resultMap>
 
   <select id="searchComponents" resultMap="searchDataMap" parameterType="SqlSearchRequest">
-    SELECT component_id, namespace, search_component_name, version, search_repository_name, format, component_created
+    SELECT component_id, namespace, search_component_name, version, search_repository_name, format, component_created,
+        uploader, uploader_ip
     FROM component_search
     <where>
       <if test="filter != null">(${filter})</if>
     </where>
-    GROUP BY component_id, namespace, search_component_name, version, search_repository_name, format, component_created
+    GROUP BY component_id, namespace, search_component_name, version, search_repository_name, format, component_created,
+        uploader, uploader_ip
     ORDER BY ${sortColumnName} ${sortDirection}
     <if test="sortColumnName != defaultSortColumnName">, ${defaultSortColumnName}</if>
     <if test="limit != null">LIMIT #{limit}</if>
@@ -181,12 +194,12 @@
   <insert id="saveBatch" parameterType="java.util.List">
     INSERT INTO component_search(repository_id, component_id, asset_id, format, namespace, search_component_name, path,
     component_kind, version, search_repository_name, content_type, md5, sha1, sha256, sha512,
-    component_created, format_field_1, format_field_2, format_field_3, format_field_4, format_field_5) VALUES
+    component_created, format_field_1, format_field_2, format_field_3, format_field_4, format_field_5, uploader, uploader_ip) VALUES
     <foreach collection="searchData" separator="," item="item">
       (#{item.repositoryId}, #{item.componentId}, #{item.assetId}, #{item.format}, #{item.namespace}, #{item.componentName}, #{item.path},
       #{item.componentKind}, #{item.version}, #{item.repositoryName}, #{item.contentType}, #{item.md5}, #{item.sha1}, #{item.sha256}, #{item.sha512},
       #{item.componentCreated}, #{item.formatField1}, #{item.formatField2}, #{item.formatField3}, #{item.formatField4},
-      #{item.formatField5})
+      #{item.formatField5}, #{item.uploader}, #{item.uploaderIp})
     </foreach>
   </insert>
 </mapper>
