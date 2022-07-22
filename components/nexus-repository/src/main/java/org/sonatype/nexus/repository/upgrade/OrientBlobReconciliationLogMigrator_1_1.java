@@ -53,7 +53,7 @@ import static org.sonatype.nexus.orient.DatabaseInstanceNames.CONFIG;
  * Moves each reconciliation log from ${karaf.data}/log/blobstore/${blobstore}/%date.log to &lt;blobstore
  * root&gt;/reconciliation/%date.log
  *
- * @since 3.41
+ * @since 3.next
  */
 @Named
 @Singleton

@@ -49,7 +49,7 @@ import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryContributio
  * Expands repository_name {@link SearchFilter} (where provided) into leaf repository names (where applicable). If the
  * repository_name {@link SearchFilter} is not provided, it fetches repository names for the specified format.
  *
- * @since 3.41
+ * @since 3.next
  */
 @Named
 @Singleton

@@ -19,7 +19,7 @@ import UIStrings from '../constants/UIStrings';
 import fileSize from 'file-size';
 
 /**
- * @since 3.41
+ * @since 3.next
  *
  * Utility methods for creating human readable strings from data.
  */

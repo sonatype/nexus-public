@@ -17,7 +17,7 @@ package org.sonatype.nexus.common.cooperation2;
  *
  * This may be due to an interrupt, timeout, or reaching a thread limit.
  *
- * @since 3.41
+ * @since 3.next
  */
 public class CooperationException
     extends RuntimeException

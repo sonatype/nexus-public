@@ -70,7 +70,7 @@ public interface StorageFacet
    * @param requireHardLink  when true ingest will fail if the attempt to hard link fails, otherwise an attempt will be
    *                         made to copy the file content.
    *
-   * @since 3.41
+   * @since 3.next
    */
   TempBlob createTempBlob(Path path, final Iterable<HashAlgorithm> hashAlgorithms, boolean requireHardLink);
 

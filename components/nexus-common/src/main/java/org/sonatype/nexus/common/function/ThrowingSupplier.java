@@ -15,7 +15,7 @@ package org.sonatype.nexus.common.function;
 import java.io.IOException;
 
 /**
- * @since 3.41
+ * @since 3.next
  */
 @FunctionalInterface
 public interface ThrowingSupplier<T>

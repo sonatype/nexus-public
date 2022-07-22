@@ -25,7 +25,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Represents a key used for {@link Cooperation2}, includes the original human readable string, and a reduced length
  * hash useful for storing in a database.
  *
- * @since 3.41
+ * @since 3.next
  */
 public class CooperationKey
 {

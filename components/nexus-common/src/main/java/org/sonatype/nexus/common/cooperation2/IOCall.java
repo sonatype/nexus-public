@@ -17,7 +17,7 @@ import java.io.IOException;
 /**
  * A function encapsulating the work to be done by a Cooperation.
  *
- * @since 3.41
+ * @since 3.next
  */
 @FunctionalInterface
 public interface IOCall<T>

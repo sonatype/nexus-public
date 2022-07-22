@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * @since 3.41
+ * @since 3.next
  */
 public interface Cooperation2
 {

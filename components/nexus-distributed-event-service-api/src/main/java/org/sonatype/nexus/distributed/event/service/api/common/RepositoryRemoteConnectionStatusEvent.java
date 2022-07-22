@@ -21,7 +21,7 @@ import static org.sonatype.nexus.distributed.event.service.api.EventType.UPDATED
 /**
  * Indicates repository is auto-blocked or unblocked.
  *
- * @since 3.41
+ * @since 3.next
  */
 public class RepositoryRemoteConnectionStatusEvent
     extends DistributedEventSupport

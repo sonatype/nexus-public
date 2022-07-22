@@ -51,7 +51,7 @@ public class SeparateTaskLogTaskLoggerTest
     verifyLog(TASK_LOG_ONLY, " Type: {}", taskLogInfo.getTypeId());
     verifyLog(TASK_LOG_ONLY, " Name: {}", taskLogInfo.getName());
     verifyLog(TASK_LOG_ONLY, " Description: {}", taskLogInfo.getMessage());
-    verify(mockLogger).debug(TASK_LOG_ONLY, "Task configuration: {}", taskLogInfo);
+    verify(mockLogger).debug(TASK_LOG_ONLY, "Task configuration: {}", taskLogInfo.toString());
 
     // assert the discriminator ID.
     assertThat(MDC.get(LOGBACK_TASK_DISCRIMINATOR_ID).matches("typeId-\\d{17}\\b"), is(true));

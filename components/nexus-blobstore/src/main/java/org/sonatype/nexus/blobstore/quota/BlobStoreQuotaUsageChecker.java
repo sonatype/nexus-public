@@ -26,7 +26,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.createQuotaCheckJob;
 
 /**
- * @since 3.41
+ * @since 3.next
  */
 @Named
 public class BlobStoreQuotaUsageChecker

@@ -20,7 +20,7 @@ import org.sonatype.nexus.common.cooperation2.Cooperation2Factory.Builder;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * @since 3.41
+ * @since 3.next
  */
 public abstract class MutableConfigSupport
     extends Config

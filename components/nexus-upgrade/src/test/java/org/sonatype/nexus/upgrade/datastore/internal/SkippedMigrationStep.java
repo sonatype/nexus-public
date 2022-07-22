@@ -22,7 +22,7 @@ import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 /**
  * Skipped test migration step
  *
- * @since 3.41
+ * @since 3.next
  */
 public class SkippedMigrationStep
     extends ComponentSupport

@@ -23,7 +23,7 @@ import org.sonatype.nexus.common.cooperation2.internal.DisabledCooperation2;
 import org.sonatype.nexus.common.cooperation2.internal.MutableConfigSupport;
 
 /**
- * @since 3.41
+ * @since 3.next
  */
 @Named("local")
 @Singleton

@@ -27,7 +27,7 @@ import org.sonatype.nexus.common.io.Cooperation;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * @since 3.41
+ * @since 3.next
  */
 public class OrientCooperation2
     extends ComponentSupport

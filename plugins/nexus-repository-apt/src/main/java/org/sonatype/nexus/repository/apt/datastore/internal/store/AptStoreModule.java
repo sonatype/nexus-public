@@ -27,6 +27,7 @@ public class AptStoreModule
     extends FormatStoreModule<AptContentRepositoryDAO,
     AptComponentDAO,
     AptAssetDAO,
-    AptAssetBlobDAO>
+    AptAssetBlobDAO,
+    AptSearchDAO>
 {
 }
