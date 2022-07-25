@@ -14,6 +14,7 @@ package org.sonatype.nexus.internal.capability;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
@@ -103,6 +104,9 @@ public class DefaultCapabilityRegistryTest
   @Mock
   private CapabilityDescriptorRegistry capabilityDescriptorRegistry;
 
+  @Mock
+  private CapabilityDescriptor capabilityDescriptor;
+
   private DefaultCapabilityRegistry underTest;
 
   private ArgumentCaptor<CapabilityEvent> rec;
@@ -131,7 +135,7 @@ public class DefaultCapabilityRegistryTest
     final CapabilityFactoryRegistry capabilityFactoryRegistry = mock(CapabilityFactoryRegistry.class);
     when(capabilityFactoryRegistry.get(CAPABILITY_TYPE)).thenReturn(factory);
 
-    when(capabilityDescriptorRegistry.get(CAPABILITY_TYPE)).thenReturn(mock(CapabilityDescriptor.class));
+    when(capabilityDescriptorRegistry.get(CAPABILITY_TYPE)).thenReturn(capabilityDescriptor);
 
     final ActivationConditionHandlerFactory achf = mock(ActivationConditionHandlerFactory.class);
     when(achf.create(Mockito.<DefaultCapabilityReference>any())).thenReturn(
@@ -568,9 +572,19 @@ public class DefaultCapabilityRegistryTest
 
   @Test
   public void refreshReferencesOnDemand() {
+    when(passwordHelper.decrypt("admin123")).thenReturn("*****");
+    when(passwordHelper.tryDecrypt("*****")).thenReturn("admin123");
+
+    CapabilityDescriptor descriptor = mock(CapabilityDescriptor.class);
+    when(capabilityDescriptorRegistry.get(CAPABILITY_TYPE)).thenReturn(descriptor);
+    when(descriptor.formFields()).thenReturn(Collections.singletonList(
+        new PasswordFormField("password", "password", "Sensitive field", FormField.MANDATORY)
+    ));
+
     final Map<String, String> oldProps = Maps.newHashMap();
     oldProps.put("p1", "v1");
     oldProps.put("p2", "v2");
+    oldProps.put("password", passwordHelper.decrypt("admin123"));
 
     final CapabilityStorageItem item = new OrientCapabilityStorageItem(
         0, CAPABILITY_TYPE.toString(), true, null, oldProps
@@ -593,5 +607,6 @@ public class DefaultCapabilityRegistryTest
     properties = references.stream().findFirst().get().properties();
     assertEquals("v1a", properties.get("p1"));
     assertEquals("v2a", properties.get("p2"));
+    assertEquals("admin123", properties.get("password"));
   }
 }
