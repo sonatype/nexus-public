@@ -27,8 +27,7 @@ public class RawStoreModule
     extends FormatStoreModule<RawContentRepositoryDAO,
                               RawComponentDAO,
                               RawAssetDAO,
-                              RawAssetBlobDAO,
-                              RawSearchDAO>
+                              RawAssetBlobDAO>
 {
   // nothing to add...
 }
