@@ -34,11 +34,9 @@ import org.sonatype.nexus.repository.search.sql.SqlSearchQueryContributionSuppor
 
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
-import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.appendIfMissing;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.apache.commons.lang3.StringUtils.prependIfMissing;
 import static org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings.GROUP_RAW;
 import static org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings.NAME_RAW;
 import static org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings.VERSION;
@@ -113,8 +111,8 @@ public class KeywordSqlSearchQueryContribution
   }
 
   private String toContains(final String value) {
-    String zeroOrMore = ZERO_OR_MORE_CHARACTERS + EMPTY;
-    return appendIfMissing(prependIfMissing(value, zeroOrMore), zeroOrMore);
+    String zeroOrMore = String.valueOf(ZERO_OR_MORE_CHARACTERS);
+    return appendIfMissing(value, zeroOrMore);
   }
 
   private void buildGavQuery(final SqlSearchQueryBuilder queryBuilder, final Matcher gavSearchMatcher) {
@@ -140,7 +138,7 @@ public class KeywordSqlSearchQueryContribution
   }
 
   @Override
-  protected Set<String> split(String value) {
+  protected Set<String> split(final String value) {
     if (isBlank(value)) {
       return new HashSet<>();
     }
