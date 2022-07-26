@@ -50,7 +50,7 @@ import static org.sonatype.nexus.blobstore.file.FileBlobStore.PATH_KEY;
  * Moves each reconciliation log from ${karaf.data}/log/blobstore/${blobstore}/%date.log to &lt;blobstore
  * root&gt;/reconciliation/%date.log
  *
- * @since 3.next
+ * @since 3.41
  */
 @Named
 @Singleton

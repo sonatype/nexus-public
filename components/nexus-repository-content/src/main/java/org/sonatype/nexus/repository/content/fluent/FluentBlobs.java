@@ -59,7 +59,7 @@ public interface FluentBlobs
    * @param requireHardLink  when true ingest will fail if the attempt to hard link fails, otherwise an attempt will be
    *                         made to copy the file content.
    *
-   * @since 3.next
+   * @since 3.41
    */
   TempBlob ingest(Path path, @Nullable String contentType, Iterable<HashAlgorithm> hashing, boolean requireHardLink);
 

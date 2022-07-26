@@ -21,7 +21,7 @@ import org.sonatype.nexus.repository.content.AssetInfo;
 /**
  * {@link AssetInfo} data backed by the content data store.
  *
- * @since 3.next
+ * @since 3.41
  */
 public class AssetInfoData
     extends AbstractRepositoryContent

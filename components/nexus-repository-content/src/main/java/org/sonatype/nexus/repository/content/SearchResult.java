@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.content;
 /**
  * Provides search results.
  *
- * @since 3.next
+ * @since 3.41
  */
 public interface SearchResult
     extends RepositoryContent
