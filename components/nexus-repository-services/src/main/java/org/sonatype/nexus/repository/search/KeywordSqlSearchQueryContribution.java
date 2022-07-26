@@ -34,15 +34,11 @@ import org.sonatype.nexus.repository.search.sql.SqlSearchQueryContributionSuppor
 
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
-import static org.apache.commons.lang3.StringUtils.EMPTY;
-import static org.apache.commons.lang3.StringUtils.appendIfMissing;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.apache.commons.lang3.StringUtils.prependIfMissing;
 import static org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings.GROUP_RAW;
 import static org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings.NAME_RAW;
 import static org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings.VERSION;
-import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilder.ZERO_OR_MORE_CHARACTERS;
 
 /**
  * A keyword search is one where the user does not specify a specific
@@ -112,11 +108,6 @@ public class KeywordSqlSearchQueryContribution
         .collect(toList());
   }
 
-  private String toContains(final String value) {
-    String zeroOrMore = ZERO_OR_MORE_CHARACTERS + EMPTY;
-    return appendIfMissing(prependIfMissing(value, zeroOrMore), zeroOrMore);
-  }
-
   private void buildGavQuery(final SqlSearchQueryBuilder queryBuilder, final Matcher gavSearchMatcher) {
     addMavenAttribute(queryBuilder, "attributes.maven2.groupId", gavSearchMatcher.group("group"));
 
@@ -148,7 +139,7 @@ public class KeywordSqlSearchQueryContribution
     Matcher matcher = SPLITTER.matcher(value);
     List<String> matches = new ArrayList<>();
     while (matcher.find()) {
-      matches.add(toContains(maybeTrimQuotes(matcher.group())));
+      matches.add(maybeTrimQuotes(matcher.group()));
     }
     return new HashSet<>(matches);
   }

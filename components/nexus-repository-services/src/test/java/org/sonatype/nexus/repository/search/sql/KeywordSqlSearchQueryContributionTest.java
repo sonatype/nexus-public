@@ -32,7 +32,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import static java.util.Arrays.asList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -98,8 +97,8 @@ public class KeywordSqlSearchQueryContributionTest
   }
 
   @Test
-  public void splitByAndSearch() {
-    Map<String, String> values = ImmutableMap.of("samplefield0", "*mockito*", "samplefield1", "*junit*");
+  public void splitByAndSearchExactKeywords() {
+    Map<String, String> values = ImmutableMap.of("samplefield0", "mockito", "samplefield1", "junit");
 
     mockCondition(values);
 
@@ -109,17 +108,25 @@ public class KeywordSqlSearchQueryContributionTest
     verify(queryBuilder, times(3)).add(aSqlSearchCondition("conditionFormat", values));
   }
 
-  private void mockCondition(final Map<String, String> values) {
-    Stream.of(NAMESPACE.getColumnName(), NAME.getColumnName(), VERSION.getColumnName()).forEach(column ->
-        when(sqlSearchQueryConditionBuilder.condition(column, new HashSet<>(values.values())))
-            .thenReturn(aSqlSearchCondition("conditionFormat", values))
-    );
+  @Test
+  public void splitByAndSearchWildcardKeywords() {
+    Map<String, String> values = ImmutableMap.of("samplefield0", "mock?t*", "samplefield1", "*uni*");
 
-    when(sqlSearchQueryConditionBuilder.combine(
-        asList(aSqlSearchCondition("conditionFormat", values),
-            aSqlSearchCondition("conditionFormat", values),
-            aSqlSearchCondition("conditionFormat", values))))
-        .thenReturn(aSqlSearchCondition("conditionFormat", values));
+    mockCondition(values);
+
+    Stream.of("mock?t* *uni*", "mock?t*-*uni*", "mock?t*,*uni*")
+        .forEach(value -> underTest.contribute(queryBuilder, new SearchFilter("keyword", value)));
+
+    verify(queryBuilder, times(3)).add(aSqlSearchCondition("conditionFormat", values));
+  }
+
+  private void mockCondition(Map<String, String> paramValues) {
+    Stream.of(NAMESPACE.getColumnName(), NAME.getColumnName(), VERSION.getColumnName()).forEach(column ->
+        when(sqlSearchQueryConditionBuilder.condition(column, new HashSet<>(paramValues.values())))
+            .thenReturn(aSqlSearchCondition(column, paramValues))
+    );
+    when(sqlSearchQueryConditionBuilder.combine(any())).thenReturn(aSqlSearchCondition("conditionFormat", paramValues));
+
   }
 
   private void mockExactGavecSearch() {
