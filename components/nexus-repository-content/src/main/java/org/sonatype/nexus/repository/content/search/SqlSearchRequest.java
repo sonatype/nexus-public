@@ -19,7 +19,7 @@ import javax.annotation.Nullable;
 /**
  * Container that holds fields for SQL search
  *
- * @since 3.next
+ * @since 3.41
  */
 public class SqlSearchRequest
 {

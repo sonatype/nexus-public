@@ -27,7 +27,7 @@ import com.google.common.base.Stopwatch;
  * An implementation of {@link Cooperation2} which doesn't use any concurrency control and each thread proceeds
  * individually. This is used when co-operation is disabled.
  *
- * @since 3.next
+ * @since 3.41
  */
 public class DisabledCooperation2
     extends ComponentSupport

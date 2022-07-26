@@ -17,7 +17,7 @@ import java.time.Duration;
 /**
  * Supplies {@link Cooperation2} points allowing different threads to cooperate on computationally intensive tasks.
  *
- * @since 3.next
+ * @since 3.41
  */
 public interface Cooperation2Factory
 {

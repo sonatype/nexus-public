@@ -35,7 +35,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Service class for consolidating repeated cache-related logic not exclusive to individual facets and components.
  *
- * @since 3.next
+ * @since 3.41
  */
 @Named
 @Singleton

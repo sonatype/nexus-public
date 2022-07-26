@@ -25,7 +25,7 @@ import org.sonatype.nexus.repository.search.query.ElasticSearchQueryService;
 import static org.awaitility.Awaitility.await;
 
 /**
- * @since 3.next
+ * @since 3.41
  */
 @Named
 @Singleton

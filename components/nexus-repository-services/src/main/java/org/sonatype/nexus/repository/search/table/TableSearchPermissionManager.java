@@ -55,7 +55,7 @@ import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryContributio
  * The intent is that only repositories that the user has browse permissions for
  * and/or content selectors for are included in the search request.
  *
- * @since 3.next
+ * @since 3.41
  */
 @Named
 public class TableSearchPermissionManager

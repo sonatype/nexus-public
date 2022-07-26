@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * Indicates that the cache should be invalidated for provided repository
  *
- * @since 3.next
+ * @since 3.41
  */
 public class RepositoryCacheInvalidationEvent
     extends DistributedEventSupport

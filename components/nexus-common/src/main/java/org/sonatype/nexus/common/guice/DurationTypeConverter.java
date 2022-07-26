@@ -31,7 +31,7 @@ import static java.time.temporal.ChronoUnit.SECONDS;
 /**
  * Guice {@link TypeConverter} for {@link Duration} instances.
  *
- * @since 3.next
+ * @since 3.41
  */
 @Named
 public class DurationTypeConverter

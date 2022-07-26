@@ -29,7 +29,7 @@ import static java.util.stream.Collectors.toMap;
 /**
  * Support for class using basic local concurrency controls for {@link Cooperation2Factory}
  *
- * @since 3.next
+ * @since 3.41
  */
 public abstract class ScopedCooperation2Support
     extends ComponentSupport
