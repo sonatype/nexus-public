@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.content.store.example;
 
 import javax.inject.Named;
 
-import org.sonatype.nexus.repository.content.search.SearchStore;
 import org.sonatype.nexus.repository.content.store.AssetBlobStore;
 import org.sonatype.nexus.repository.content.store.BespokeFormatStoreModule;
 import org.sonatype.nexus.repository.content.store.ComponentStore;
@@ -28,8 +27,7 @@ public class TestBespokeStoreModule
     extends BespokeFormatStoreModule<ContentRepositoryStore<TestContentRepositoryDAO>,
                                      ComponentStore<TestComponentDAO>,
                                      TestAssetStore, // adds support for browseFlaggedAssets
-                                     AssetBlobStore<TestAssetBlobDAO>,
-                                     SearchStore<TestSearchDAO>>
+                                     AssetBlobStore<TestAssetBlobDAO>>
 {
   // nothing to add...
 }

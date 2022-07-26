@@ -14,7 +14,6 @@ package org.sonatype.nexus.content.maven.store;
 
 import javax.inject.Named;
 
-import org.sonatype.nexus.repository.content.search.SearchStore;
 import org.sonatype.nexus.repository.content.store.AssetBlobStore;
 import org.sonatype.nexus.repository.content.store.BespokeFormatStoreModule;
 import org.sonatype.nexus.repository.content.store.ContentRepositoryStore;
@@ -30,8 +29,7 @@ public class Maven2StoreModule
     extends BespokeFormatStoreModule<ContentRepositoryStore<Maven2ContentRepositoryDAO>,
                                      Maven2ComponentStore, // adds support for the base_version column
                                      Maven2AssetStore,
-                                     AssetBlobStore<Maven2AssetBlobDAO>,
-                                     SearchStore<Maven2SearchDAO>>
+                                     AssetBlobStore<Maven2AssetBlobDAO>>
 {
   // nothing to add...
 }

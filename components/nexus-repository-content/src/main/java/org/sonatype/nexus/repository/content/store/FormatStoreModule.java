@@ -12,9 +12,6 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
-import org.sonatype.nexus.repository.content.search.SearchDAO;
-import org.sonatype.nexus.repository.content.search.SearchStore;
-
 /**
  * Extend this module if your format uses the standard content store APIs.
  * Declare your DAOs and annotate the module with the name of your format:
@@ -36,14 +33,12 @@ import org.sonatype.nexus.repository.content.search.SearchStore;
 public abstract class FormatStoreModule<CONTENT_REPOSITORY_DAO extends ContentRepositoryDAO,
                                         COMPONENT_DAO extends ComponentDAO,
                                         ASSET_DAO extends AssetDAO,
-                                        ASSET_BLOB_DAO extends AssetBlobDAO,
-                                        SEARCH_DAO extends SearchDAO>
+                                        ASSET_BLOB_DAO extends AssetBlobDAO>
 
     extends BespokeFormatStoreModule<ContentRepositoryStore<CONTENT_REPOSITORY_DAO>,
                                      ComponentStore<COMPONENT_DAO>,
                                      AssetStore<ASSET_DAO>,
-                                     AssetBlobStore<ASSET_BLOB_DAO>,
-                                     SearchStore<SEARCH_DAO>>
+                                     AssetBlobStore<ASSET_BLOB_DAO>>
 {
   // nothing to add...
 }

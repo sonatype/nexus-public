@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
-import org.sonatype.nexus.repository.content.search.SearchStore;
-
 /**
  * Extend this module if your format adds methods to its content store APIs.
  * Declare your stores and annotate the module with the name of your format.
@@ -43,8 +41,7 @@ import org.sonatype.nexus.repository.content.search.SearchStore;
 public abstract class BespokeFormatStoreModule<CONTENT_REPOSITORY_STORE extends ContentRepositoryStore<?>,
                                                COMPONENT_STORE extends ComponentStore<?>,
                                                ASSET_STORE extends AssetStore<?>,
-                                               ASSET_BLOB_STORE extends AssetBlobStore<?>,
-                                               SEARCH_STORE extends SearchStore<?>>
+                                               ASSET_BLOB_STORE extends AssetBlobStore<?>>
     extends ContentStoreModule
 {
   protected BespokeFormatStoreModule() {

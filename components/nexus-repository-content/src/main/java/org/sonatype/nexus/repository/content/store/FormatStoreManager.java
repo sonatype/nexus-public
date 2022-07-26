@@ -17,8 +17,6 @@ import java.util.concurrent.ExecutionException;
 import javax.inject.Inject;
 
 import org.sonatype.nexus.datastore.api.ContentDataAccess;
-import org.sonatype.nexus.repository.content.search.SearchDAO;
-import org.sonatype.nexus.repository.content.search.SearchStore;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -80,13 +78,6 @@ public class FormatStoreManager
    */
   public <T extends AssetBlobStore<?>> T assetBlobStore(final String contentStoreName) {
     return (T) formatStore(contentStoreName, AssetBlobDAO.class);
-  }
-
-  /**
-   * Gets the {@link SearchStore} for this format in the named datastore.
-   */
-  public <T extends SearchStore<?>> T searchStore(final String contentStoreName) {
-    return (T) formatStore(contentStoreName, SearchDAO.class);
   }
 
   /**
