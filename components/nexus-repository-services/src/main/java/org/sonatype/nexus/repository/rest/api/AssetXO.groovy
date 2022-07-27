@@ -23,6 +23,7 @@ import groovy.transform.CompileStatic
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
 import groovy.transform.builder.Builder
+import org.apache.commons.lang.StringUtils
 
 import static org.sonatype.nexus.repository.search.index.SearchConstants.ATTRIBUTES
 import static org.sonatype.nexus.repository.search.index.SearchConstants.CHECKSUM
@@ -75,7 +76,7 @@ class AssetXO
   {
     return builder()
         .path(asset.getPath())
-        .downloadUrl(repository.url + '/' + asset.getPath())
+        .downloadUrl(repository.url + '/' + StringUtils.removeStart(asset.getPath(), "/"))
         .id(new RepositoryItemIDXO(repository.getName(), asset.getId()).getValue())
         .repository(repository.getName())
         .checksum(asset.getChecksum())
