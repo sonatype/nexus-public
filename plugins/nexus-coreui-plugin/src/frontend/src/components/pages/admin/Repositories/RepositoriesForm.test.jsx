@@ -88,16 +88,10 @@ const EXT_URL = APIConstants.EXT.URL;
 const BLOB_STORE_EXT_REQUEST = ExtAPIUtils.createRequestBody('coreui_Blobstore', 'readNames');
 
 function CLEANUP_EXT_REQUEST(format = 'maven2') {
-  return ExtAPIUtils.createRequestBody('cleanup_CleanupPolicy', 'readByFormat', [
-    {
-      filter: [
-        {
-          property: 'format',
-          value: format
-        }
-      ]
-    }
-  ]);
+  return ExtAPIUtils.createRequestBody('cleanup_CleanupPolicy', 'readByFormat', {
+    filterField: 'format',
+    filterValue: format,
+  });
 }
 
 const getFormatOptions = (recipes) => {

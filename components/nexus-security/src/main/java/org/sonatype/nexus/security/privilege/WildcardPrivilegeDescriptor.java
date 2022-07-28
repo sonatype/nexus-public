@@ -53,10 +53,10 @@ public class WildcardPrivilegeDescriptor
     @DefaultMessage("Wildcard")
     String name();
 
-    @DefaultMessage("Pattern")
+    @DefaultMessage("Privilege String")
     String pattern();
 
-    @DefaultMessage("The regex pattern")
+    @DefaultMessage("The internal segment matching algorithm uses Apache Shiro wildcard permissions")
     String patternHelp();
   }
 

@@ -10,9 +10,8 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+import React, {Fragment} from 'react';
 import {useService} from '@xstate/react';
-import {indexBy, prop} from 'ramda';
 
 import {
   NxButton,
@@ -20,65 +19,61 @@ import {
   NxReadOnly,
   NxLoadWrapper,
   NxInfoAlert,
-  NxList,
   NxFooter,
   NxButtonBar,
   NxTile,
 } from '@sonatype/react-shared-components';
+import {FormFieldsFactory} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 
-const {ROLES: {FORM: LABELS}} = UIStrings;
+const {PRIVILEGES: {FORM: LABELS}} = UIStrings;
 
-export default function RolesReadOnly({service, onDone}) {
+export default function PrivilegesReadOnly({service, onDone}) {
   const [current, send] = useService(service);
 
   const {
-    data: {id, name, description, readOnly:isDefaultRole = true, roles:selectedRoles, privileges},
-    roles,
+    data,
+    types = {},
     loadError
   } = current.context;
 
-  const rolesMap = indexBy(prop('id'), roles || []);
-
+  const {type, name, description, readOnly:isDefaultPrivilege = true} = data;
   const isLoading = current.matches('loading');
+  const fields = types[type]?.formFields || [];
 
   const cancel = () => onDone();
 
   const retry = () => send('RETRY');
 
-  return <NxLoadWrapper loading={isLoading} error={loadError ? `${loadError}` : null} retryHandler={retry}>
+  return <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
     <NxTile.Content>
       <NxInfoAlert>
-        {isDefaultRole ? LABELS.DEFAULT_ROLE_WARNING : UIStrings.SETTINGS.READ_ONLY.WARNING}
+        {isDefaultPrivilege ? LABELS.DEFAULT_PRIVILEGE_WARNING : UIStrings.SETTINGS.READ_ONLY.WARNING}
       </NxInfoAlert>
       <NxH2>{LABELS.SECTIONS.SETUP}</NxH2>
       <NxReadOnly>
-        <NxReadOnly.Label>{LABELS.ID.LABEL}</NxReadOnly.Label>
-        <NxReadOnly.Data>{id}</NxReadOnly.Data>
+        <NxReadOnly.Label>{LABELS.TYPE.LABEL}</NxReadOnly.Label>
+        <NxReadOnly.Data>{types[type]?.name}</NxReadOnly.Data>
         <NxReadOnly.Label>{LABELS.NAME.LABEL}</NxReadOnly.Label>
         <NxReadOnly.Data>{name}</NxReadOnly.Data>
         {description && <>
           <NxReadOnly.Label>{LABELS.DESCRIPTION.LABEL}</NxReadOnly.Label>
           <NxReadOnly.Data>{description}</NxReadOnly.Data>
         </>}
+        {FormFieldsFactory.getFields(fields)?.map(({Field, props}) => (
+            <Fragment key={props.id}>
+              <NxReadOnly.Label>{props.label}</NxReadOnly.Label>
+              <NxReadOnly.Data>
+                <Field
+                    id={props.id}
+                    dynamicProps={{...props, readOnly: true}}
+                    current={current}
+                />
+              </NxReadOnly.Data>
+            </Fragment>
+        ))}
       </NxReadOnly>
-      <NxH2>{LABELS.SECTIONS.PRIVILEGES}</NxH2>
-      <NxList emptyMessage={LABELS.PRIVILEGES.EMPTY_LIST}>
-        {(privileges || [])?.map(name => (
-            <NxList.Item key={name}>
-              <NxList.Text>{name}</NxList.Text>
-            </NxList.Item>
-        ))}
-      </NxList>
-      <NxH2>{LABELS.SECTIONS.ROLES}</NxH2>
-      <NxList emptyMessage={LABELS.ROLES.EMPTY_LIST}>
-        {(selectedRoles || [])?.map(roleId => (
-            <NxList.Item key={roleId}>
-              <NxList.Text>{rolesMap[roleId].name}</NxList.Text>
-            </NxList.Item>
-        ))}
-      </NxList>
     </NxTile.Content>
     <NxFooter>
       <NxButtonBar>

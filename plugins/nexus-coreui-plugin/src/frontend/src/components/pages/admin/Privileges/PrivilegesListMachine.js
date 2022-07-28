@@ -14,37 +14,25 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
-import {assign} from 'xstate';
-import {sortBy, prop} from 'ramda';
-import {FormUtils, ExtAPIUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
 
-const {EXT: {PROPRIETARY_REPOSITORIES: {ACTION, METHODS}, }} = APIConstants;
+import {ListMachineUtils, ExtAPIUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
 
-export default FormUtils.buildFormMachine({
-  id: 'ProprietaryRepositoriesMachine',
+const {EXT: {PRIVILEGE: {ACTION, METHODS: {READ}}, BIG_PAGE_SIZE}} = APIConstants;
+
+export default ListMachineUtils.buildListMachine({
+  id: 'PrivilegesListMachine',
+  sortableFields: ['name', 'description', 'type', 'permission'],
+  apiSorting: true,
+  apiFiltering: true,
 }).withConfig({
-  actions: {
-    validate: assign({
-      validationErrors: () => {{}}
-    }),
-    setData: assign((_, event) => {
-      const [selected, possible] = sortBy(prop('tid'), event.data?.data || []);
-      const data = selected?.result?.data;
-      return {
-        data,
-        pristineData: data,
-        possibleRepos: possible?.result?.data,
-      };
-    }),
-  },
   services: {
-    fetchData: () => ExtAPIUtils.extAPIBulkRequest([
-      {action: ACTION, method: METHODS.READ},
-      {action: ACTION, method: METHODS.POSSIBLE_REPOS},
-    ]),
-    saveData: ({data}) => ExtAPIUtils.extAPIRequest(ACTION, METHODS.UPDATE, {
-      data: [{'enabledRepositories': data.enabledRepositories}],
-    }).then(v => v.data.result),
+    fetchData: ({sortField, sortDirection, filter}) => {
+      return ExtAPIUtils.extAPIRequest(ACTION, READ.NAME, {
+        sortField,
+        sortDirection,
+        filterValue: filter,
+        limit: BIG_PAGE_SIZE,
+      }).then(v => v.data.result);
+    },
   }
 });

@@ -14,22 +14,8 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {assign} from 'xstate';
-import Axios from 'axios';
-import {ListMachineUtils} from '@sonatype/nexus-ui-plugin';
 
-export default ListMachineUtils.buildListMachine({
-  id: 'RolesListMachine',
-  sortableFields: ['id', 'name', 'description'],
-  sortField: 'id',
-}).withConfig({
-  actions: {
-    filterData: assign({
-      data: ({filter, pristineData}, _) => pristineData.filter(({id, name, description}) =>
-          ListMachineUtils.hasAnyMatches([id, name, description], filter)
-      )})
-  },
-  services: {
-    fetchData: () => Axios.get('/service/rest/v1/security/roles?source=default')
-  }
-});
+export const SUPPORTED_FIELD_TYPES = {
+  TEXT: ['textfield', 'string', 'password'],
+  COMBOBOX: ['combobox'],
+};

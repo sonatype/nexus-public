@@ -111,7 +111,8 @@ Ext.define('NX.coreui.controller.Privileges', {
         variants: ['x16', 'x32']
       },
       visible: function() {
-        return NX.Permissions.check('nexus:privileges:read');
+        return NX.Permissions.check('nexus:privileges:read') &&
+            !NX.State.getValue('nexus.react.privileges', true);
       },
       weight: 10
     };
@@ -184,7 +185,7 @@ Ext.define('NX.coreui.controller.Privileges', {
     var me = this,
         panel;
 
-    // Show the first panel in the create wizard, and set the breadcrumb
+    // Shows the first panel in the create wizard, and sets the breadcrumb
     me.setItemName(2, NX.I18n.format('Privileges_Create_Title', model.get('name')));
     me.loadCreateWizard(2, panel = Ext.create('widget.nx-coreui-privilege-add'));
     var m = me.getPrivilegeModel().create({ type: model.getId(), readonly: false });
@@ -194,7 +195,7 @@ Ext.define('NX.coreui.controller.Privileges', {
   /**
    * @override
    * @protected
-   * Enable 'New' button when user has 'create' permission and there is at least one privilege type.
+   * Enables 'New' button when user has 'create' permission and there is at least one privilege type.
    */
   bindNewButton: function(button) {
     button.mon(
@@ -215,7 +216,7 @@ Ext.define('NX.coreui.controller.Privileges', {
 
   /**
    * @protected
-   * Enable 'Delete' when user has 'delete' permission and privilege is not read only.
+   * Enables 'Delete' when user has 'delete' permission and privilege is not read only.
    */
   bindDeleteButton: function (button) {
     var me = this;
@@ -329,7 +330,7 @@ Ext.define('NX.coreui.controller.Privileges', {
   showSelectTypePanel: function() {
     var me = this;
 
-    // Show the first panel in the create wizard, and set the breadcrumb
+    // Shows the first panel in the create wizard, and sets the breadcrumb
     me.setItemName(1, NX.I18n.get('Privileges_Select_Title'));
     me.loadCreateWizard(1, Ext.widget({
       xtype: 'panel',

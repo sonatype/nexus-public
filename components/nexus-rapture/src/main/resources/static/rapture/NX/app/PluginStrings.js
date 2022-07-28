@@ -180,7 +180,7 @@ Ext.define('NX.app.PluginStrings', {
     // Field validation messages
     Util_Validator_Text: 'Only letters, digits, underscores(_), hyphens(-), and dots(.) are allowed and may not start with underscore or dot.',
     Util_Validator_Hostname: 'Hostname must be valid',
-    Util_Validator_Trim: 'A Role ID may not start or end with a space.',
+    Util_Validator_Trim: 'This field may not start or end with a space',
     Util_Validator_Url: 'This field should be a URL in the format "http://www.example.com"',
     Util_Validator_Subdomain_Text: 'Subdomain field must be a minimum of 1 and maximum of 63 characters (letters, numbers, and dashes) and must start with a letter and end with a letter or digit',
 

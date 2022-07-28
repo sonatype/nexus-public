@@ -27,6 +27,7 @@ import {
   NxTextInput,
   NxStatefulTransferList,
   NxFormSelect,
+  NxTile,
 } from '@sonatype/react-shared-components';
 
 import {faTrash} from '@fortawesome/free-solid-svg-icons';
@@ -101,7 +102,7 @@ export default function RolesForm({roleId, service, onDone}) {
           </NxButton>
       }
   >
-    <>
+    <NxTile.Content>
       {isCreate && <>
         <NxH2>{LABELS.SECTIONS.TYPE}</NxH2>
         <NxFormGroup label={LABELS.TYPE.LABEL} isRequired>
@@ -177,6 +178,6 @@ export default function RolesForm({roleId, service, onDone}) {
             showMoveAll
         />
       </>}
-    </>
+    </NxTile.Content>
   </NxForm>;
 }

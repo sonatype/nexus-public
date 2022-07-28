@@ -69,7 +69,7 @@ export default Utils.buildFormMachine({
   actions: {
     validate: assign({
       validationErrors: ({data}) => ({
-        name: ValidationUtils.validateName(data.name),
+        name: ValidationUtils.validateNameField(data.name),
         expression: Utils.isBlank(data.expression) ? UIStrings.ERROR.FIELD_REQUIRED : null
       })
     }),

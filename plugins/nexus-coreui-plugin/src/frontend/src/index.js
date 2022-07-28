@@ -15,6 +15,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import ContentSelectors from './components/pages/admin/ContentSelectors/ContentSelectors';
+import Privileges from './components/pages/admin/Privileges/Privileges';
 import Roles from './components/pages/admin/Roles/Roles';
 import AnonymousSettings from './components/pages/admin/AnonymousSettings/AnonymousSettings';
 import BlobStores from './components/pages/admin/BlobStores/BlobStores';
@@ -81,11 +82,11 @@ window.plugins.push({
       ...UIStrings.REPOSITORIES.MENU,
       view: Repositories,
       iconCls: 'x-fa fa-database',
+      weight: 10,
       visibility: {
         featureFlags: [{key: 'nexus.react.repositories', defaultValue: false}],
         permissions: ['nexus:repository-admin:*:*:read']
       },
-      weight: 10,
     },
     {
       mode: 'admin',
@@ -93,11 +94,11 @@ window.plugins.push({
       ...UIStrings.CONTENT_SELECTORS.MENU,
       view: ContentSelectors,
       iconCls: 'x-fa fa-layer-group',
+      weight: 300,
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         permissions: ['nexus:selectors:read']
       },
-      weight: 300,
     },
     {
       mode: 'admin',
@@ -105,11 +106,24 @@ window.plugins.push({
       path: '/Repository/RoutingRules',
       view: RoutingRules,
       iconCls: 'x-fa fa-map-signs',
+      weight: 500,
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         permissions: ['nexus:*']
       },
-      weight: 500,
+    },
+    {
+      mode: 'admin',
+      path: '/Security/Privileges-New',
+      ...UIStrings.PRIVILEGES.MENU,
+      view: Privileges,
+      iconCls: 'x-fa fa-id-badge',
+      weight: 10,
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        featureFlags: [{key: 'nexus.react.privileges', defaultValue: false}],
+        permissions: ['nexus:privileges:read']
+      },
     },
     {
       mode: 'admin',
@@ -244,11 +258,11 @@ window.plugins.push({
       ...UIStrings.CLEANUP_POLICIES.MENU,
       view: CleanupPolicies,
       iconCls: 'x-fa fa-broom',
+      weight: 400,
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         permissions: ['nexus:*']
       },
-      weight: 400,
     },
     {
       mode: 'admin',

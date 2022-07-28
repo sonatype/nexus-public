@@ -15,7 +15,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import {ListMachineUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
+import {ListMachineUtils, ValidationUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
 import {actions, assign, send} from 'xstate';
 import {mergeDeepRight} from 'ramda';
 import Axios from 'axios';
@@ -101,7 +101,7 @@ export default ListMachineUtils.buildListMachine({
       policyData
     }), {
       id: 'cleanup-preview',
-      delay: 500
+      delay: APIConstants.DEBOUNCE_DELAY,
     }),
 
     maybeShowAlert: assign({

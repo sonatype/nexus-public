@@ -28,16 +28,12 @@ const {rolesUrl, privilegesUrl, sourcesApi, getRolesUrl, defaultRolesUrl, single
 
 const isEdit = (id) => ValidationUtils.notBlank(id);
 
-const hasLeadingOrTrailingSpace = (val) => /^\s/.test(val) || /\s$/.test(val);
-
 const validateId = (id) => {
   if (ValidationUtils.isBlank(id)) {
     return UIStrings.ERROR.FIELD_REQUIRED;
+  } else {
+    return ValidationUtils.validateLeadingOrTrailingSpace(id)
   }
-  else if (hasLeadingOrTrailingSpace(id)) {
-    return LABELS.TRIM_ERROR;
-  }
-  return null;
 }
 
 export default FormUtils.buildFormMachine({

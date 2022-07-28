@@ -14,7 +14,11 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {assign, Machine} from 'xstate';
+import {assign, actions, send, Machine} from 'xstate';
+
+import APIConstants from '../constants/APIConstants';
+
+const {SORT_DIRECTIONS: {ASC, DESC}} = APIConstants;
 
 /**
  * @since 3.38
@@ -25,7 +29,7 @@ export default class ListMachineUtils {
    * @since 3.29
    */
   static get ASC() {
-    return 'asc';
+    return ASC;
   }
 
   /**
@@ -33,7 +37,7 @@ export default class ListMachineUtils {
    * @since 3.29
    */
   static get DESC() {
-    return 'desc';
+    return DESC;
   }
 
   /**
@@ -54,9 +58,13 @@ export default class ListMachineUtils {
    *   }
    * });
    *
-   * @param id [required] a unique identifier for this machine
-   * @param sortField [optional] field to sort on, defaults to 'name'
-   * @param initial [optional] the initial state to start in, defaults to 'loading'
+   * @param {string} id [required] - a unique identifier for this machine
+   * @param {string} [initial=loading] [optional] - The initial state to start in
+   * @param {string} [sortField=name] [optional] - The field to sort on
+   * @param {string} [sortDirection="asc", "desc"] [optional] - Sort direction, default to "asc"
+   * @param {string[]} [sortableFields=[]] [optional] - A list of fields to sort
+   * @param {boolean} [apiSorting=false] [optional] - Set to "true" to use API sorting
+   * @param {boolean} [apiFiltering=false] [optional] - Set to "true" to use API filtering
    * @param config [optional] a function used to change the config of the machine
    * @param options [optional] a function used to change the options of the machine
    * @return {StateMachine<any, any, AnyEventObject>}
@@ -66,7 +74,9 @@ export default class ListMachineUtils {
                             initial = 'loading',
                             sortField = 'name',
                             sortDirection = ListMachineUtils.ASC,
-                            sortableFields = {},
+                            sortableFields = [],
+                            apiSorting = false,
+                            apiFiltering = false,
                             config = (config) => config,
                             options = (options) => options
                           })
@@ -77,8 +87,8 @@ export default class ListMachineUtils {
       const eventName = `SORT_BY_${field.replace(/[A-Z]/g, c => '_' + c).toUpperCase()}`;
       const actionName = `setSortBy${field}`;
       sortEvents[eventName] = {
-        target: 'loaded',
-        actions: [actionName]
+        target: apiSorting ? 'loading' : 'loaded',
+        actions: [actionName],
       };
 
       sortActions[actionName] = assign({
@@ -86,6 +96,15 @@ export default class ListMachineUtils {
         sortDirection: ListMachineUtils.nextSortDirection(field)
       });
     });
+
+    const loadedEntry = [];
+    if (!apiFiltering) loadedEntry.push('filterData');
+    if (!apiSorting) loadedEntry.push('sortData');
+
+    let filterActions = ['setFilter'];
+    if (apiFiltering) {
+      filterActions = filterActions.concat(['debounceApiFilter', 'apiFilter'])
+    }
 
     const DEFAULT_CONFIG = {
       id,
@@ -122,12 +141,15 @@ export default class ListMachineUtils {
         },
         loaded: {
           id: 'loaded',
-          entry: ['filterData', 'sortData'],
+          entry: loadedEntry,
           on: {
             ...sortEvents,
             FILTER: {
               target: 'loaded',
-              actions: ['setFilter']
+              actions: filterActions,
+            },
+            API_FILTER: {
+              target: 'loading',
             },
             SET_DATA: {
               target: 'loaded',
@@ -169,6 +191,12 @@ export default class ListMachineUtils {
 
         setFilter: assign({
           filter: (_, {filter}) => filter
+        }),
+
+        debounceApiFilter: actions.cancel('debounced-filter'),
+        apiFilter: send('API_FILTER', {
+          id: 'debounced-filter',
+          delay: APIConstants.DEBOUNCE_DELAY,
         }),
 
         clearFilter: assign({
@@ -260,7 +288,7 @@ export default class ListMachineUtils {
    * @param {string} filter [required]
    * @return {boolean}
    */
-  static hasAnyMatches(values = [], filter = '') {
+  static hasAnyMatches(values, filter) {
     return Boolean(values.find(value =>
         value.toLowerCase().indexOf(filter.toLowerCase()) !== -1
     ));

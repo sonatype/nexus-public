@@ -160,18 +160,21 @@ export default class ValidationUtils {
 
   /**
    * @param value
+   * @returns {string|null} an error string if name does not meet the requirements
+   */
+  static validateNameField(value) {
+    return this.validateNotBlank(value) || this.validateLength(value, 255) || this.validateName(value);
+  }
+
+  /**
+   * @param value
    * @returns {string|null} an error string if name fails {@link ValidationUtils.isName} or null
    */
   static validateName(value) {
-    const isValidName = (name) => {
-      if (!ValidationUtils.isName(name)) {
-        return UIStrings.ERROR.INVALID_NAME_CHARS;
-      }
-      return null;
+    if (!this.isName(value)) {
+      return UIStrings.ERROR.INVALID_NAME_CHARS;
     }
-
-    return ValidationUtils.validateNotBlank(value) ||
-    ValidationUtils.validateLength(value, 255) || isValidName(value);
+    return null;
   }
 
   static validateNotBlank(value) {
@@ -189,6 +192,12 @@ export default class ValidationUtils {
   static validateIsUrl(value) {
     if (ValidationUtils.notUrl(value)) {
       return UIStrings.ERROR.URL_ERROR;
+    }
+  }
+
+  static validateLeadingOrTrailingSpace(value) {
+    if (/^\s/.test(value) || /\s$/.test(value)) {
+      return UIStrings.ERROR.TRIM_ERROR;
     }
   }
 

@@ -48,6 +48,7 @@ export {
   default as CheckboxControlledWrapper
 } from './components/widgets/CheckboxControlledWrapper/CheckboxControlledWrapper';
 export { default as DynamicFormField } from './components/widgets/DynamicFormField/DynamicFormField';
+export { default as FormFieldsFactory } from './components/widgets/FormFieldsFactory/FormFieldsFactory';
 export { default as FieldWrapper } from './components/widgets/FieldWrapper/FieldWrapper';
 export { default as HelpTile } from './components/widgets/HelpTile/HelpTile';
 export { default as Information } from './components/widgets/Information/Information';
