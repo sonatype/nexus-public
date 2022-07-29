@@ -18,19 +18,25 @@
 export default {
   EXT: {
     URL: '/service/extdirect',
+    REPOSITORY: {
+      ACTION: 'coreui_Repository',
+      METHODS: {
+        READ_WITH_FOR_ALL: 'readReferencesAddingEntryForAll',
+      }
+    },
     PROPRIETARY_REPOSITORIES: {
       ACTION: 'coreui_ProprietaryRepositories',
       METHODS: {
         READ: 'read',
         UPDATE: 'update',
-        POSSIBLE_REPOS: 'readPossibleRepos'
-      }
+        POSSIBLE_REPOS: 'readPossibleRepos',
+      },
     },
     BLOBSTORE: {
       ACTION: 'coreui_Blobstore',
       METHODS: {
-        READ_NAMES: 'readNames'
-      }
+        READ_NAMES: 'readNames',
+      },
     },
     HEALTH_CHECK: {
       ACTION: 'healthcheck_Status',
@@ -39,6 +45,45 @@ export default {
         UPDATE: 'update',
         ENABLE_ALL: 'enableAll'
       }
+    },
+    PRIVILEGE: {
+      ACTION: 'coreui_Privilege',
+      METHODS: {
+        READ: {
+          NAME: 'read',
+          DATA: [{
+            page: 1,
+            limit: 300,
+            start: 0,
+            sort: [{
+              direction: 'ASC',
+              property: 'name',
+            }],
+          }],
+        },
+        READ_TYPES: 'readTypes',
+      },
+    },
+    SMALL_PAGE_SIZE: 25,
+    BIG_PAGE_SIZE: 300,
+    DEFAULT_FIELD_CONFIG: {
+      id: 'id',
+      type: 'string',
+      label: 'Label',
+      helpText: 'helpText',
+      required: true,
+      disabled: false,
+      readOnly: false,
+      regexValidation: null,
+      initialValue: null,
+      attributes: {},
+      minValue: null,
+      maxValue: null,
+      storeApi: null,
+      storeFilters: null,
+      idMapping: null,
+      nameMapping: null,
+      allowAutocomplete: false,
     }
   },
   REST: {
@@ -59,6 +104,9 @@ export default {
       get REPOSITORIES() {
         return `${this.BASE_URL}repositories/`;
       },
+      get PRIVILEGES() {
+        return `${this.BASE_URL}security/privileges`;
+      },
       get ACTIVE_REALMS() {
         return `${this.BASE_URL}security/realms/active`;
       },
@@ -66,5 +114,10 @@ export default {
         return `${this.BASE_URL}security/realms/available`;
       },
     },
+  },
+  DEBOUNCE_DELAY: 500,
+  SORT_DIRECTIONS: {
+    DESC: 'desc',
+    ASC: 'asc',
   },
 };

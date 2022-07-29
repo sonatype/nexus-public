@@ -10,35 +10,20 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.search.sql;
+import React from 'react';
 
-import java.util.Collection;
-import javax.inject.Named;
+import {Detail, Master, MasterDetail} from '@sonatype/nexus-ui-plugin';
 
-import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.repository.FacetSupport;
-import org.sonatype.nexus.repository.content.search.SearchFacet;
+import PrivilegesList from './PrivilegesList';
+import PrivilegesDetails from './PrivilegesDetails';
 
-/**
- * The dummy implementation for the SQL search. It doesn't require implementation since we use SQL Views.
- */
-@Named
-public class SqlIndexFacet
-    extends FacetSupport
-    implements SearchFacet
-{
-  @Override
-  public void index(final Collection<EntityId> componentIds) {
-    // no op
-  }
-
-  @Override
-  public void purge(final Collection<EntityId> componentIds) {
-    // no op
-  }
-
-  @Override
-  public void rebuildIndex() {
-    // no op
-  }
+export default function Privileges() {
+  return <MasterDetail path="admin/security/privileges-new">
+    <Master>
+      <PrivilegesList/>
+    </Master>
+    <Detail>
+      <PrivilegesDetails/>
+    </Detail>
+  </MasterDetail>;
 }

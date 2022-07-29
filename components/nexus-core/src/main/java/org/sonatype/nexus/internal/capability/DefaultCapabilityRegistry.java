@@ -451,11 +451,15 @@ public class DefaultCapabilityRegistry
 
  @Override
   public void pullAndRefreshReferencesFromDB() {
-    Map<CapabilityIdentity, CapabilityStorageItem> refreshedCapabilities = capabilityStorage.getAll();
-    references.forEach((capabilityIdentity, capabilityReference) ->
-        Optional.of(refreshedCapabilities.get(capabilityIdentity)) // When working in HA mode it could be null
-            .ifPresent(value -> capabilityReference.update(value.getProperties(), capabilityReference.properties())));
-  }
+   Map<CapabilityIdentity, CapabilityStorageItem> refreshedCapabilities = capabilityStorage.getAll();
+   references.forEach((capabilityIdentity, capabilityReference) ->
+       Optional.of(refreshedCapabilities.get(capabilityIdentity)) // When working in HA mode it could be null
+           .ifPresent(value -> {
+             DefaultCapabilityReference reference = get(capabilityIdentity);
+             Map<String, String> decryptedProps = decryptValuesIfNeeded(reference.descriptor(), value.getProperties());
+             capabilityReference.update(decryptedProps, capabilityReference.properties());
+           }));
+ }
 
   private DefaultCapabilityReference create(final CapabilityIdentity id,
                                             final CapabilityType type,

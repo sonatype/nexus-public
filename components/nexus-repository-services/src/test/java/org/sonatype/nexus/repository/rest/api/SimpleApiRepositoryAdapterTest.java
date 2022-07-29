@@ -365,7 +365,7 @@ public class SimpleApiRepositoryAdapterTest
     repository.update(configuration);
   }
 
-  private static class SimpleConfiguration
+  static class SimpleConfiguration
       implements Configuration
   {
     private String repositoryName;

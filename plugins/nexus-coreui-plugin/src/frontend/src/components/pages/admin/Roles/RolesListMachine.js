@@ -20,7 +20,8 @@ import {ListMachineUtils} from '@sonatype/nexus-ui-plugin';
 
 export default ListMachineUtils.buildListMachine({
   id: 'RolesListMachine',
-  sortableFields: ['id', 'name', 'description']
+  sortableFields: ['id', 'name', 'description'],
+  sortField: 'id',
 }).withConfig({
   actions: {
     filterData: assign({

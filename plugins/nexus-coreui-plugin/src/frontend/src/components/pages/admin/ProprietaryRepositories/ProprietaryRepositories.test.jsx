@@ -154,7 +154,7 @@ describe('ProprietaryRepositories', () => {
 
     expect(Axios.post).toHaveBeenCalledWith(
         URL,
-        ExtAPIUtils.createRequestBody(ACTION, METHODS.UPDATE, [{enabledRepositories: ['maven-releases']}])
+        ExtAPIUtils.createRequestBody(ACTION, METHODS.UPDATE, {data: [{enabledRepositories: ['maven-releases']}]})
     );
   });
 

@@ -24,7 +24,7 @@ import org.sonatype.nexus.common.cooperation2.internal.MutableConfigSupport;
 import org.sonatype.nexus.common.io.CooperationFactory;
 
 /**
- * @since 3.next
+ * @since 3.41
  */
 @Named
 @Singleton

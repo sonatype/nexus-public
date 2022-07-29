@@ -99,7 +99,7 @@ public class KeywordSqlSearchQueryContributionTest
 
   @Test
   public void splitByAndSearch() {
-    Map<String, String> values = ImmutableMap.of("samplefield0", "*mockito*", "samplefield1", "*junit*");
+    Map<String, String> values = ImmutableMap.of("samplefield0", "mockito*", "samplefield1", "junit*");
 
     mockCondition(values);
 

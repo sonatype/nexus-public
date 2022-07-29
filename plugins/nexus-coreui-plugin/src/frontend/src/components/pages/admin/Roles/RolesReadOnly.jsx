@@ -23,6 +23,7 @@ import {
   NxList,
   NxFooter,
   NxButtonBar,
+  NxTile,
 } from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
@@ -47,36 +48,38 @@ export default function RolesReadOnly({service, onDone}) {
   const retry = () => send('RETRY');
 
   return <NxLoadWrapper loading={isLoading} error={loadError ? `${loadError}` : null} retryHandler={retry}>
-    <NxInfoAlert>
-      {isDefaultRole ? LABELS.DEFAULT_ROLE_WARNING : UIStrings.SETTINGS.READ_ONLY.WARNING}
-    </NxInfoAlert>
-    <NxH2>{LABELS.SECTIONS.SETUP}</NxH2>
-    <NxReadOnly>
-      <NxReadOnly.Label>{LABELS.ID.LABEL}</NxReadOnly.Label>
-      <NxReadOnly.Data>{id}</NxReadOnly.Data>
-      <NxReadOnly.Label>{LABELS.NAME.LABEL}</NxReadOnly.Label>
-      <NxReadOnly.Data>{name}</NxReadOnly.Data>
-      {description && <>
-        <NxReadOnly.Label>{LABELS.DESCRIPTION.LABEL}</NxReadOnly.Label>
-        <NxReadOnly.Data>{description}</NxReadOnly.Data>
-      </>}
-    </NxReadOnly>
-    <NxH2>{LABELS.SECTIONS.PRIVILEGES}</NxH2>
-    <NxList emptyMessage={LABELS.PRIVILEGES.EMPTY_LIST}>
-      {(privileges || [])?.map(name => (
-          <NxList.Item key={name}>
-            <NxList.Text>{name}</NxList.Text>
-          </NxList.Item>
-      ))}
-    </NxList>
-    <NxH2>{LABELS.SECTIONS.ROLES}</NxH2>
-    <NxList emptyMessage={LABELS.ROLES.EMPTY_LIST}>
-      {(selectedRoles || [])?.map(roleId => (
-          <NxList.Item key={roleId}>
-            <NxList.Text>{rolesMap[roleId].name}</NxList.Text>
-          </NxList.Item>
-      ))}
-    </NxList>
+    <NxTile.Content>
+      <NxInfoAlert>
+        {isDefaultRole ? LABELS.DEFAULT_ROLE_WARNING : UIStrings.SETTINGS.READ_ONLY.WARNING}
+      </NxInfoAlert>
+      <NxH2>{LABELS.SECTIONS.SETUP}</NxH2>
+      <NxReadOnly>
+        <NxReadOnly.Label>{LABELS.ID.LABEL}</NxReadOnly.Label>
+        <NxReadOnly.Data>{id}</NxReadOnly.Data>
+        <NxReadOnly.Label>{LABELS.NAME.LABEL}</NxReadOnly.Label>
+        <NxReadOnly.Data>{name}</NxReadOnly.Data>
+        {description && <>
+          <NxReadOnly.Label>{LABELS.DESCRIPTION.LABEL}</NxReadOnly.Label>
+          <NxReadOnly.Data>{description}</NxReadOnly.Data>
+        </>}
+      </NxReadOnly>
+      <NxH2>{LABELS.SECTIONS.PRIVILEGES}</NxH2>
+      <NxList emptyMessage={LABELS.PRIVILEGES.EMPTY_LIST}>
+        {(privileges || [])?.map(name => (
+            <NxList.Item key={name}>
+              <NxList.Text>{name}</NxList.Text>
+            </NxList.Item>
+        ))}
+      </NxList>
+      <NxH2>{LABELS.SECTIONS.ROLES}</NxH2>
+      <NxList emptyMessage={LABELS.ROLES.EMPTY_LIST}>
+        {(selectedRoles || [])?.map(roleId => (
+            <NxList.Item key={roleId}>
+              <NxList.Text>{rolesMap[roleId].name}</NxList.Text>
+            </NxList.Item>
+        ))}
+      </NxList>
+    </NxTile.Content>
     <NxFooter>
       <NxButtonBar>
         <NxButton type="button" onClick={cancel}>{UIStrings.SETTINGS.CANCEL_BUTTON_LABEL}</NxButton>

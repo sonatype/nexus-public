@@ -367,9 +367,9 @@ describe('RepositoriesList', function () {
 
     const READ_HEALTH_CHECK_RESPONSE = {data: TestUtils.makeExtResult(READ_HEALTH_CHECK_DATA)};
 
-    const ENABLE_HEALTH_CHECK_ALL_REQUEST = ExtAPIUtils.createRequestBody(ACTION, ENABLE_ALL, [
+    const ENABLE_HEALTH_CHECK_ALL_REQUEST = ExtAPIUtils.createRequestBody(ACTION, ENABLE_ALL, {data: [
       true
-    ]);
+    ]});
 
     const ENABLE_HEALTH_CHECK_ALL_RESPONSE = {
       data: TestUtils.makeExtResult()
@@ -421,11 +421,11 @@ describe('RepositoriesList', function () {
     });
 
     it('enables health check for a single repository', async () => {
-      const enableRequest = ExtAPIUtils.createRequestBody(ACTION, UPDATE, [
+      const enableRequest = ExtAPIUtils.createRequestBody(ACTION, UPDATE, {data: [
         true,
         'maven-central',
         true
-      ]);
+      ]});
 
       const enableData = {
         repositoryName: 'maven-central',

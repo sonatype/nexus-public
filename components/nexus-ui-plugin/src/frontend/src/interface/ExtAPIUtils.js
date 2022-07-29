@@ -22,6 +22,8 @@ import {mergeDeepRight} from 'ramda';
 import UIStrings from '../constants/UIStrings';
 import APIConstants from '../constants/APIConstants';
 
+const {EXT: {URL, SMALL_PAGE_SIZE}, SORT_DIRECTIONS: {ASC}} = APIConstants;
+
 export default class ExtAPIUtils {
   static useExtMachine(action, method, options = {}) {
     const defaultResult = options.defaultResult || [];
@@ -65,8 +67,8 @@ export default class ExtAPIUtils {
         })
       },
       services: {
-        fetch: async (_, {data = null}) => {
-          const response = await this.extAPIRequest(action, method, data);
+        fetch: async (_, {options = null}) => {
+          const response = await this.extAPIRequest(action, method, options);
           this.checkForError(response);
           return this.extractResult(response, defaultResult);
         }
@@ -82,8 +84,8 @@ export default class ExtAPIUtils {
   }
 
   static extractResult(response, defaultResult) {
-    const extDirectResponse = response.data;
-    return extDirectResponse.result.data || defaultResult;
+    const extDirectResponse = response?.data;
+    return extDirectResponse?.result?.data || defaultResult;
   }
 
   static checkForError(response) {
@@ -96,31 +98,95 @@ export default class ExtAPIUtils {
     }
   }
 
-  static createRequestBody(action, method, data = null, tid = 1) {
-    return {action, method, data, type: 'rpc', tid};
-  };
+  /**
+   * @param {Object} options [required] - The request data configuration
+   * @param {*} options.data [optional] - The request data
+   * @param {number} [options.page=1] [optional] - The request page number
+   * @param {number} [options.start=0] [optional] - The request start position
+   * @param {number} [options.limit=25] [optional] - The request page size
+   * @param {string} options.sortField [optional] - The request sort field
+   * @param {string="asc", "desc"} [options.sortDirection=asc] [optional] - The request sort direction
+   * @param {string} options.filterValue [optional] - The request filter value
+   * @param {string} [options.filterField=filter] [optional] - The request filter field
+   * @param {string} options.query [optional] - The request query
+   * @return {Array}
+   */
+  static createData(options) {
+
+    if (!options) return null;
+
+    const {
+      data,
+      page = 1,
+      start = 0,
+      limit = SMALL_PAGE_SIZE,
+      sortField,
+      sortDirection = ASC,
+      filterValue,
+      filterField = 'filter',
+      query,
+    } = options;
+
+    if (data) {
+      return data;
+    }
+
+    let requestData = {page, limit, start};
+
+    if (sortField) {
+      requestData.sort = [{
+        property: sortField,
+        direction: sortDirection.toUpperCase(),
+      }];
+    }
+
+    if (filterValue) {
+      requestData.filter = [{
+        property: filterField,
+        value: filterValue,
+      }];
+    }
+
+    if (query) {
+      requestData.query = query;
+    }
+
+    return [requestData];
+  }
 
   /**
    * @param {string} action [required] the ExtJS action (example: coreui_Bundle, coreui_AnonymousSettings etc.)
    * @param {string} method [required] the method for the request (example: read, write etc.)
-   * @param {string, Object, Array} data [optional] - The request data
+   * @param {Object} options [optional] - The request options
+   * @param {number} tid [optional] - The request ID
+   * @return {Object}
+   */
+  static createRequestBody(action, method, options = null, tid = 1) {
+    const requestData = this.createData(options);
+    return {action, method, data: requestData, type: 'rpc', tid};
+  }
+
+  /**
+   * @param {string} action [required] the ExtJS action (example: coreui_Bundle, coreui_AnonymousSettings etc.)
+   * @param {string} method [required] the method for the request (example: read, write etc.)
+   * @param {Object} options [optional] - The request options
    * @return {Promise}
    */
-  static extAPIRequest(action, method, data = null) {
-    return Axios.post(APIConstants.EXT.URL, this.createRequestBody(action, method, data));
+  static extAPIRequest(action, method, options = null) {
+    return Axios.post(URL, this.createRequestBody(action, method, options));
   }
 
   /**
    * @param {Object[]} requests [required] - The list of requests
    * @param {string} requests[].action [required] - The ExtJS action
    * @param {string} requests[].method [required] - The method for the request
-   * @param {string, Object, Array} requests[].data [optional] - The request data
+   * @param {Object} requests[].options [optional] - The request data configuration
    * @return {Promise}
    */
   static extAPIBulkRequest(requests) {
-    const data = requests.map((request, index) => {
-      return this.createRequestBody(request.action, request.method, request.data, index + 1);
+    const data = requests.map(({action, method, options}, index) => {
+      return this.createRequestBody(action, method, options, index + 1);
     });
-    return Axios.post(APIConstants.EXT.URL, data);
+    return Axios.post(URL, data);
   }
 }

@@ -35,9 +35,6 @@ public interface FeatureFlags
   String DATASTORE_CLUSTERED_ENABLED = "nexus.datastore.clustered.enabled";
   String DATASTORE_CLUSTERED_ENABLED_NAMED = "${nexus.datastore.clustered.enabled:-false}";
 
-  //Enable Datastore search
-  String DATASTORE_SEARCH_ENABLED = "nexus.datastore.search.enabled";
-
   //Enable elastic search
   String ELASTIC_SEARCH_ENABLED = "nexus.elasticsearch.enabled";
 
@@ -60,9 +57,9 @@ public interface FeatureFlags
    * Enable searching components via aggregated search table.
    * Mutual exclusive with:
    * - ELASTIC_SEARCH_ENABLED;
-   * - DATASTORE_SEARCH_ENABLED;
    * Dependent from:
    * - DATASTORE_DEVELOPER;
    */
   String DATASTORE_TABLE_SEARCH = "nexus.datastore.table.search.enabled";
+  String DATASTORE_TABLE_SEARCH_NAMED = "${nexus.datastore.table.search.enabled:-false}";
 }

@@ -99,7 +99,7 @@ export default Utils.buildFormMachine({
   actions: {
     validate: assign({
       validationErrors: ({data, criteriaLastDownloadedEnabled, criteriaLastBlobUpdatedEnabled, criteriaReleaseTypeEnabled, criteriaAssetRegexEnabled}) => ({
-        name: ValidationUtils.validateName(data.name),
+        name: ValidationUtils.validateNameField(data.name),
         format: Utils.isBlank(data.format) ? UIStrings.ERROR.FIELD_REQUIRED : null,
         criteriaLastDownloaded: validateCriteriaNumberField(criteriaLastDownloadedEnabled, data.criteriaLastDownloaded),
         criteriaLastBlobUpdated: validateCriteriaNumberField(criteriaLastBlobUpdatedEnabled, data.criteriaLastBlobUpdated),

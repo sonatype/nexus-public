@@ -80,10 +80,10 @@ public class DefaultSqlSearchQueryContributionTest
   @Test
   public void shouldAddConditionToQueryBuilder() {
     final SqlSearchQueryCondition condition = new SqlSearchQueryCondition("condition", new HashMap<>());
-    when(sqlSearchQueryConditionBuilder.condition(NAMESPACE.getColumnName(), ImmutableSet.of("?unit", "*mockito")))
+    when(sqlSearchQueryConditionBuilder.condition(NAMESPACE.getColumnName(), ImmutableSet.of("unit?", "mockito*")))
         .thenReturn(condition);
 
-    underTest.contribute(queryBuilder, new SearchFilter(GROUP_RAW, "?unit *mockito"));
+    underTest.contribute(queryBuilder, new SearchFilter(GROUP_RAW, "unit? mockito*"));
 
     verify(queryBuilder).add(condition);
   }

@@ -43,8 +43,8 @@ export default FormUtils.buildFormMachine({
       {action: ACTION, method: METHODS.READ},
       {action: ACTION, method: METHODS.POSSIBLE_REPOS},
     ]),
-    saveData: ({data}) => ExtAPIUtils.extAPIRequest(ACTION, METHODS.UPDATE, [
-      {'enabledRepositories': data.enabledRepositories}
-    ]).then(v => v.data.result),
+    saveData: ({data}) => ExtAPIUtils.extAPIRequest(ACTION, METHODS.UPDATE, {
+      data: [{'enabledRepositories': data.enabledRepositories}],
+    }).then(v => v.data.result),
   }
 });

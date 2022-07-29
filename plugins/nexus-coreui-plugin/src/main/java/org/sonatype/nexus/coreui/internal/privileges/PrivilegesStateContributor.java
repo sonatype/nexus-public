@@ -10,15 +10,33 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.content.raw.internal.store;
+package org.sonatype.nexus.coreui.internal.privileges;
 
-import org.sonatype.nexus.repository.content.search.SearchDAO;
+import java.util.Map;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-/**
- * @since 3.38
- */
-public interface RawSearchDAO
-    extends SearchDAO
+import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.rapture.StateContributor;
+
+import com.google.common.collect.ImmutableMap;
+
+@Named
+@Singleton
+public class PrivilegesStateContributor
+    extends ComponentSupport
+    implements StateContributor
 {
+  private final Map<String, Object> state;
 
+  @Inject
+  public PrivilegesStateContributor(@Named("${nexus.react.privileges:-false}") final Boolean featureFlag) {
+    state = ImmutableMap.of("nexus.react.privileges", featureFlag);
+  }
+
+  @Override
+  public Map<String, Object> getState() {
+    return state;
+  }
 }

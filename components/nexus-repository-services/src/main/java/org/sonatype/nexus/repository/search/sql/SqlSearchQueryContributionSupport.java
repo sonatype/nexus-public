@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.search.sql;
 
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -27,6 +28,7 @@ import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.search.SqlSearchQueryContribution;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import org.apache.commons.collections.CollectionUtils;
 
@@ -83,10 +85,36 @@ public abstract class SqlSearchQueryContributionSupport
         .map(SearchFilter::getValue)
         .map(this::split)
         .filter(CollectionUtils::isNotEmpty)
+        .filter(this::validate)
         .map(values -> sqlSearchQueryConditionBuilder.condition(mappedField.getProperty(), values));
   }
 
-  protected Set<String> split(String value) {
+  /*
+   * For SQL search we prohibit leading wildcards for performance reasons.
+   */
+  protected boolean validate(final Set<String> tokens) {
+    ValidationErrorsException validation = new ValidationErrorsException();
+
+    tokens.stream()
+        .filter(Objects::nonNull)
+        .filter(SqlSearchQueryContributionSupport::hasLeadingWildcard)
+        .forEach(__ -> validation.withError("Leading wildcards are prohibited"));
+
+    if (validation.hasValidationErrors()) {
+      log.debug("Found invalid search filters: {}", tokens);
+
+      throw validation;
+    }
+
+    return true;
+  }
+
+  private static boolean hasLeadingWildcard(final String token) {
+    String trimmedToken = token.trim();
+    return trimmedToken.startsWith("*") || trimmedToken.startsWith("?");
+  }
+
+  protected Set<String> split(final String value) {
     if (isBlank(value)) {
       return emptySet();
     }

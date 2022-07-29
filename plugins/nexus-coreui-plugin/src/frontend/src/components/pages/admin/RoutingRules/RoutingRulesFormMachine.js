@@ -146,7 +146,7 @@ export default Utils.buildFormMachine({
     }),
     validate: assign(({data}) => {
       const validationErrors = {
-        name: ValidationUtils.validateName(data.name)
+        name: ValidationUtils.validateNameField(data.name)
       };
 
       // Ignores case sensitive when validating "None".

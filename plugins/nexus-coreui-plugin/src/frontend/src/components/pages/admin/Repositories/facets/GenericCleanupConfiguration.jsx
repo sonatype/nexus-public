@@ -38,16 +38,10 @@ export default function GenericCleanupConfiguration({parentMachine}) {
 
   const loadCleanupPolicies = () => cleanupSend({
     type: 'LOAD',
-    data: [
-      {
-        filter: [
-          {
-            property: 'format',
-            value: format
-          }
-        ]
-      }
-    ]
+    options: {
+      filterField: 'format',
+      filterValue: format,
+    },
   });
 
   useEffect(() => {

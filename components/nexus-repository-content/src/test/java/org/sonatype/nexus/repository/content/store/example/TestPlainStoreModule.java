@@ -24,8 +24,7 @@ public class TestPlainStoreModule
     extends FormatStoreModule<TestContentRepositoryDAO,
                               TestComponentDAO,
                               TestAssetDAO,
-                              TestAssetBlobDAO,
-                              TestSearchDAO>
+                              TestAssetBlobDAO>
 {
   // nothing to add...
 }

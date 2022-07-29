@@ -19,7 +19,7 @@ import org.sonatype.nexus.common.cooperation2.ScopedCooperation2Support;
 /**
  * An implementation of {@link Cooperation2Factory} which uses local concurrency controls.
  *
- * @since 3.next
+ * @since 3.41
  */
 public class LocalCooperation2
     extends ScopedCooperation2Support

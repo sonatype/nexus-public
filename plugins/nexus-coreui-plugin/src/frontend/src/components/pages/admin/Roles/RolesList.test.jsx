@@ -12,6 +12,7 @@
  */
 import React from 'react';
 import {render, screen, within, fireEvent, waitForElementToBeRemoved} from '@testing-library/react';
+import {sort, prop, descend, ascend} from 'ramda';
 import '@testing-library/jest-dom/extend-expect';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
@@ -39,6 +40,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
 
 const selectors = {
   ...TestUtils.selectors,
+  ...TestUtils.tableSelectors,
   emptyMessage: () => screen.getByText(LABELS.EMPTY_LIST),
   tableBody: () => screen.getAllByRole('rowgroup')[1],
   tableHeader: (text) => screen.getByText(text, {selector: 'thead *'}),
@@ -64,123 +66,101 @@ const ROWS = [{
     roles: [],
     source: 'default',
 }, {
-    description: 'Provides privileges required to administer replication connections',
+    description: 'Provides privileges',
     id: 'replication-role',
-    name: 'Replication role',
+    name: 'replication role',
     privileges: ['nx-replication-update'],
     roles: [],
     source: 'default',
 }];
 
+const FIELDS = {
+  ID: 'id',
+  NAME: 'name',
+  DESCRIPTION: 'description',
+};
+
+const sortRoles = (field, order = ascend) => sort(order(prop(field)), ROWS);
+
 describe('RolesList', function() {
+
+  const renderAndWaitForLoad = async () => {
+    render(<RolesList/>);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+  }
+
+  beforeEach(() => {
+    when(Axios.get).calledWith(expect.stringContaining(URL)).mockResolvedValue({
+      data: ROWS
+    });
+  });
+
   it('renders the resolved empty data', async function() {
     when(Axios.get).calledWith(expect.stringContaining(URL)).mockResolvedValue({
       data: []
     });
-
-    render(<RolesList/>);
-    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+    await renderAndWaitForLoad();
 
     expect(selectors.createButton()).not.toHaveClass('disabled');
-
     expect(selectors.emptyMessage()).toBeInTheDocument();
   });
 
   it('renders the resolved data', async function() {
-    when(Axios.get).calledWith(expect.stringContaining(URL)).mockResolvedValue({
-      data: ROWS
-    });
+    await renderAndWaitForLoad();
 
-    render(<RolesList/>);
-    await waitForElementToBeRemoved(selectors.queryLoadingMask());
-
-    const table = within(selectors.tableBody());
-
-    ROWS.forEach((role) => {
-      expect(table.getByText(role.id)).toBeInTheDocument();
-      expect(table.getByText(role.name)).toBeInTheDocument();
-      expect(table.getByText(role.description)).toBeInTheDocument();
-    });
-
-    expect(table.getAllByRole('row')).toHaveLength(3);
+    TestUtils.expectTableHeaders(Object.values(LABELS.COLUMNS));
+    TestUtils.expectTableRows(ROWS, Object.values(FIELDS));
   });
 
   it('renders an error message', async function() {
     const message = 'Error Message !';
+    const {tableAlert} = selectors;
     Axios.get.mockReturnValue(Promise.reject({message}));
 
-    render(<RolesList/>);
-    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+    await renderAndWaitForLoad();
 
-    const table = within(selectors.tableBody());
-
-    expect(table.getByRole('alert')).toHaveTextContent(message);
+    expect(tableAlert()).toHaveTextContent(message);
   });
 
-  it('sorts the rows by name or description', async function () {
-    when(Axios.get).calledWith(expect.stringContaining(URL)).mockResolvedValue({
-      data: ROWS
-    });
+  it('sorts the rows by each columns', async function () {
+    const {headerCell} = selectors;
+    await renderAndWaitForLoad();
 
-    render(<RolesList/>);
-    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+    TestUtils.expectProperRowsOrder(ROWS, FIELDS.ID);
 
-    let rows = within(selectors.tableBody()).getAllByRole('row');
+    fireEvent.click(headerCell(LABELS.COLUMNS.ID));
+    let roles = sortRoles(FIELDS.ID, descend);
+    TestUtils.expectProperRowsOrder(roles, FIELDS.ID);
 
-    expect(rows[0].cells).toHaveLength(4);
+    fireEvent.click(headerCell(LABELS.COLUMNS.NAME));
+    roles = sortRoles(FIELDS.NAME);
+    TestUtils.expectProperRowsOrder(roles, FIELDS.ID);
 
-    expect(rows[0].cells[0]).toHaveTextContent(ROWS[0].id);
-    expect(rows[1].cells[0]).toHaveTextContent(ROWS[1].id);
-    expect(rows[2].cells[0]).toHaveTextContent(ROWS[2].id);
+    fireEvent.click(headerCell(LABELS.COLUMNS.NAME));
+    roles = sortRoles(FIELDS.NAME, descend);
+    TestUtils.expectProperRowsOrder(roles, FIELDS.ID);
 
-    fireEvent.click(selectors.tableHeader(LABELS.COLUMNS.NAME));
-    rows = within(selectors.tableBody()).getAllByRole('row');
-
-    expect(rows[0].cells[0]).toHaveTextContent(ROWS[2].id);
-    expect(rows[1].cells[0]).toHaveTextContent(ROWS[1].id);
-    expect(rows[2].cells[0]).toHaveTextContent(ROWS[0].id);
-
-    fireEvent.click(selectors.tableHeader(LABELS.COLUMNS.DESCRIPTION));
-    rows = within(selectors.tableBody()).getAllByRole('row');
-
-    expect(rows[0].cells[0]).toHaveTextContent(ROWS[0].id);
-    expect(rows[1].cells[0]).toHaveTextContent(ROWS[1].id);
-    expect(rows[2].cells[0]).toHaveTextContent(ROWS[2].id);
+    fireEvent.click(headerCell(LABELS.COLUMNS.DESCRIPTION));
+    roles = sortRoles(FIELDS.DESCRIPTION);
+    TestUtils.expectProperRowsOrder(roles, FIELDS.ID);
   });
 
   it('filters by name and description', async function() {
-    when(Axios.get).calledWith(expect.stringContaining(URL)).mockResolvedValue({
-      data: ROWS
-    });
+    const {filter} = selectors;
 
-    render(<RolesList/>);
-    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+    await renderAndWaitForLoad();
 
-    let rows = within(selectors.tableBody()).getAllByRole('row');
-
-    expect(rows).toHaveLength(3);
-
-    await TestUtils.changeField(selectors.filter, 'nx-an');
-    rows = within(selectors.tableBody()).getAllByRole('row');
-    expect(rows).toHaveLength(1);
-    expect(rows[0].cells[0]).toHaveTextContent(ROWS[1].id);
-
-    await TestUtils.changeField(selectors.filter, 'privileges');
-    rows = within(selectors.tableBody()).getAllByRole('row');
-    expect(rows).toHaveLength(1);
-    expect(rows[0].cells[0]).toHaveTextContent(ROWS[2].id);
-
-    await TestUtils.changeField(selectors.filter, 'admin');
-    rows = within(selectors.tableBody()).getAllByRole('row');
-    expect(rows).toHaveLength(2);
+    await TestUtils.expectProperFilteredItemsCount(filter, '', ROWS.length);
+    await TestUtils.expectProperFilteredItemsCount(filter, 'nx-admin', 1);
+    await TestUtils.expectProperFilteredItemsCount(filter, 'nx-anonymous-name', 1);
+    await TestUtils.expectProperFilteredItemsCount(filter, 'Provides privileges', 1);
   });
 
   it('disables the create button when not enough permissions', async function() {
     Axios.get.mockResolvedValue({data: []});
     ExtJS.checkPermission.mockReturnValue(false);
 
-    render(<RolesList/>);
-    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+    await renderAndWaitForLoad();
 
     expect(selectors.createButton()).toHaveClass('disabled');
   });

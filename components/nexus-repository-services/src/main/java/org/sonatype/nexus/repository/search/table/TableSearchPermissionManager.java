@@ -17,12 +17,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -34,12 +31,10 @@ import org.sonatype.nexus.repository.rest.SearchFieldSupport;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.search.SqlSearchRepositoryNameUtil;
 import org.sonatype.nexus.repository.search.sql.SqlSearchContentSelectorFilter;
-import org.sonatype.nexus.repository.search.sql.SqlSearchContentSelectorSqlFilterGenerator;
 import org.sonatype.nexus.repository.search.sql.SqlSearchPermissionException;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryBuilder;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryCondition;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilder;
-import org.sonatype.nexus.repository.search.sql.SqlSearchRepositoryPermissionUtil;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -47,7 +42,6 @@ import org.apache.commons.collections.CollectionUtils;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
-import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableMap;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
@@ -61,7 +55,7 @@ import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryContributio
  * The intent is that only repositories that the user has browse permissions for
  * and/or content selectors for are included in the search request.
  *
- * @since 3.next
+ * @since 3.41
  */
 @Named
 public class TableSearchPermissionManager

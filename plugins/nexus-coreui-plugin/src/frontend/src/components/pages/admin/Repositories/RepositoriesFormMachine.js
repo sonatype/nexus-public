@@ -66,7 +66,7 @@ export default FormUtils.buildFormMachine({
     validate: assign({
       validationErrors: ({data}) => ({
         ...getValidators(data.format, data.type)(data),
-        name: ValidationUtils.validateName(data.name),
+        name: ValidationUtils.validateNameField(data.name),
         format: ValidationUtils.validateNotBlank(data.format),
         type: ValidationUtils.validateNotBlank(data.type),
         storage: {

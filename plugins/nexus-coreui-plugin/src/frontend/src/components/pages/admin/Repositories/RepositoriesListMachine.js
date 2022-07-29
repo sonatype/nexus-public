@@ -148,9 +148,9 @@ export default ListMachineUtils.buildListMachine({
 
     enableHealthCheckSingleRepo: async (_, event) => {
       const response = await ExtAPIUtils.extAPIRequest(
-        EXT.HEALTH_CHECK.ACTION,
-        EXT.HEALTH_CHECK.METHODS.UPDATE,
-        [true, event.repoName, true]
+          EXT.HEALTH_CHECK.ACTION,
+          EXT.HEALTH_CHECK.METHODS.UPDATE,
+          {data: [true, event.repoName, true]}
       );
       ExtAPIUtils.checkForError(response);
       return ExtAPIUtils.extractResult(response);
@@ -158,9 +158,9 @@ export default ListMachineUtils.buildListMachine({
 
     enableHealthCheckAllRepos: async () => {
       const response = await ExtAPIUtils.extAPIRequest(
-        EXT.HEALTH_CHECK.ACTION,
-        EXT.HEALTH_CHECK.METHODS.ENABLE_ALL,
-        [true]
+          EXT.HEALTH_CHECK.ACTION,
+          EXT.HEALTH_CHECK.METHODS.ENABLE_ALL,
+          {data: [true]}
       );
       ExtAPIUtils.checkForError(response);
       return ExtAPIUtils.extractResult(response);
@@ -168,8 +168,8 @@ export default ListMachineUtils.buildListMachine({
 
     readHealthCheck: async () => {
       const response = await ExtAPIUtils.extAPIRequest(
-        EXT.HEALTH_CHECK.ACTION,
-        EXT.HEALTH_CHECK.METHODS.READ
+          EXT.HEALTH_CHECK.ACTION,
+          EXT.HEALTH_CHECK.METHODS.READ
       );
       ExtAPIUtils.checkForError(response);
       return ExtAPIUtils.extractResult(response);

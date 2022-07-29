@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  * Information about asset and it's blob.
  *
- * @since 3.next
+ * @since 3.41
  */
 public interface AssetInfo
     extends RepositoryContent
