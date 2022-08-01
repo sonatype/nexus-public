@@ -17,7 +17,7 @@
 import {assign, Machine} from 'xstate';
 import ExtJS from './ExtJS';
 import UIStrings from '../constants/UIStrings';
-import {hasPath, join, lensPath, path, pathOr, set, whereEq} from 'ramda';
+import {hasPath, join, lensPath, path, pathOr, set, whereEq, dissocPath} from 'ramda';
 
 const FIELD_ID = 'FIELD ';
 const PARAMETER_ID = 'PARAMETER ';
@@ -109,6 +109,10 @@ export default class FormUtils {
             CONFIRM_DELETE: {
               target: 'confirmDelete',
               cond: 'canDelete'
+            },
+            DELETE_DATA_PROPERTY: {
+              target: 'loaded',
+              actions: 'deleteDataProperty'
             }
           }
         },
@@ -234,6 +238,10 @@ export default class FormUtils {
         reset: assign({
           data: ({pristineData}) => pristineData,
           isTouched: () => ({})
+        }),
+
+        deleteDataProperty: assign({
+          data: ({data}, {propName}) => dissocPath(propName.split('.'), data)
         }),
 
         update: assign({

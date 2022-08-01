@@ -577,6 +577,11 @@ export default {
         DENY: 'Read-only',
         REPLICATION_ONLY: 'Deploy by Replication Only'
       },
+      REDEPLOY_LATEST: {
+        LABEL: 'Allow redeploy only on "latest" tag',
+        DESCRIPTION: 'Allow redeploy on "latest" tag; otherwise, defer to deployment policy',
+        TOOLTIP: 'Only applicable when Deployment Policy is set to "Disable redeploy"'
+      },
       PROXY_CAPTION: 'Proxy Settings',
       REMOTE_STORAGE_LABEL: 'Remote Storage',
       REMOTE_STORAGE_SUBLABEL: 'Location of the remote repository to proxy',
