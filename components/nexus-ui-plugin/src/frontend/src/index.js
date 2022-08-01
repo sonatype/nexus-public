@@ -58,5 +58,8 @@ export {
 } from './components/widgets/SslCertificateDetailsModal/SslCertificateDetailsModal';
 export {default as Textarea} from './components/widgets/Textarea/Textarea';
 export {default as Textfield} from './components/widgets/Textfield/Textfield';
+export {
+  default as UseNexusTruststore
+} from './components/widgets/UseTruststoreCheckbox/UseNexusTruststore';
 
 export { default as TokenMachine } from './components/machines/TokenMachine';

@@ -571,9 +571,6 @@ export default {
       DEPLOYMENT_POLICY_SUBLABEL: 'Controls whether or not to allow updates and deployments to artifacts',
       PROPRIETARY_COMPONENTS_LABEL: 'Proprietary Components',
       PROPRIETARY_COMPONENTS_DESCR: 'Components in this repository count as proprietary for namespace conflict attacks (requires Sonatype Nexus Firewall)',
-      MESSAGES: {
-        SAVE_ERROR: 'An error occurred while saving the repository',
-      },
       DEPLOYMENT_POLICY_OPTIONS: {
         ALLOW: 'Allow redeploy',
         ALLOW_ONCE: 'Disable redeploy',
@@ -723,6 +720,7 @@ export default {
         VALIDATION_ERROR: (name) => `Writable repository ${name} is not a group member`
       },
       MESSAGES: {
+        SAVE_ERROR: 'An error occurred while saving the repository',
         DELETE_ERROR: (name) => `Repository ${name} cannot be deleted\n`,
         DELETE_SUCCESS: (name) => `Repository deleted: ${name}`,
         CONFIRM_DELETE: {

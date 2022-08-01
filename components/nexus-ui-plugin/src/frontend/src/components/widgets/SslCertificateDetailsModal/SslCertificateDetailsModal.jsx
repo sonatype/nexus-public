@@ -28,12 +28,12 @@ import UIStrings from '../../../constants/UIStrings';
 
 /**
  * @since 3.36
- * @param {string} hostUrl the host to retrieve the certificate from
+ * @param {string} remoteUrl the host to retrieve the certificate from
  * @param {function} onCancel a function to fire when the window is closed
  * @returns {JSX.Element}
  */
-export default function SslCertificateDetailsModal({hostUrl, onCancel}) {
-  const url = new URL(hostUrl);
+export default function SslCertificateDetailsModal({remoteUrl, onCancel}) {
+  const url = new URL(remoteUrl);
   const [current, send] = useMachine(SslCertificateDetailsModalMachine, {
     context: {
       host: url.hostname,
