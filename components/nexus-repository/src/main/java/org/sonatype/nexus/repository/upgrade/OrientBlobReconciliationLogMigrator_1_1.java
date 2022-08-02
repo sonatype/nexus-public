@@ -20,6 +20,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import javax.inject.Inject;
@@ -139,7 +140,12 @@ public class OrientBlobReconciliationLogMigrator_1_1
       return results
           .stream()
           .map(doc -> doc.<Map<String, Map<String, Object>>>field(ATTRIBUTES, OType.EMBEDDEDMAP))
-          .map(attr -> Paths.get(attr.get(CONFIG_KEY).get(PATH_KEY).toString()))
+          .map(attr -> attr.get(CONFIG_KEY))
+          .filter(Objects::nonNull)
+          .map(config -> config.get(PATH_KEY))
+          .filter(Objects::nonNull)
+          .map(Object::toString)
+          .map(Paths::get)
           .findFirst();
     }
   }
