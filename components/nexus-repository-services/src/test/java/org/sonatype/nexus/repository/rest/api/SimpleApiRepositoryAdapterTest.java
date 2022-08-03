@@ -31,6 +31,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationConstants;
+import org.sonatype.nexus.repository.db.DatabaseCheck;
 import org.sonatype.nexus.repository.manager.internal.RepositoryImpl;
 import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
 import org.sonatype.nexus.repository.rest.api.model.CleanupPolicyAttributes;
@@ -70,10 +71,15 @@ public class SimpleApiRepositoryAdapterTest
   @Mock
   private RoutingRuleStore routingRuleStore;
 
+  @Mock
+  private DatabaseCheck databaseCheck;
+
   @Before
   public void setup() {
     underTest = new SimpleApiRepositoryAdapter(routingRuleStore);
+    underTest.setDatabaseCheck(databaseCheck);
     BaseUrlHolder.set("http://nexus-url", "");
+    when(databaseCheck.isPostgresql()).thenReturn(true);
   }
 
   @Test

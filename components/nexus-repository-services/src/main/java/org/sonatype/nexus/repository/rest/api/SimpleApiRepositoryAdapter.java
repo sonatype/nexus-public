@@ -23,6 +23,7 @@ import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationConstants;
+import org.sonatype.nexus.repository.db.DatabaseCheck;
 import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
 import org.sonatype.nexus.repository.rest.api.model.CleanupPolicyAttributes;
 import org.sonatype.nexus.repository.rest.api.model.ComponentAttributes;
@@ -44,10 +45,11 @@ import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.reflect.TypeToken;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.COMPONENT;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.GROUP_WRITE_MEMBER;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.PROPRIETARY_COMPONENTS;
@@ -60,6 +62,14 @@ public class SimpleApiRepositoryAdapter
     implements ApiRepositoryAdapter
 {
   private final RoutingRuleStore routingRuleStore;
+
+  private DatabaseCheck databaseCheck;
+
+  @VisibleForTesting
+  @Inject
+  void setDatabaseCheck(DatabaseCheck databaseCheck) {
+    this.databaseCheck = databaseCheck;
+  }
 
   @Inject
   @Named("${nexus.replication.http.enabled:-false}")
@@ -218,10 +228,12 @@ public class SimpleApiRepositoryAdapter
   }
 
   protected ReplicationAttributes getReplicationAttributes(final Repository repository) {
+    boolean isPostgresql = (null == databaseCheck) ? false : databaseCheck.isPostgresql();
+
     Configuration configuration = repository.getConfiguration();
 
     NestedAttributesMap replication = configuration.attributes("replication");
-    if (!replicationFeatureEnabled || replication == null) {
+    if (!replicationFeatureEnabled || replication == null || !isPostgresql) {
       return null;
     }
 
