@@ -148,5 +148,9 @@ public abstract class ITSupport
     return nexusUrl;
   }
 
+  protected URL nexusSecureUrl(){
+    return nexusSecureUrl;
+  }
+
   protected abstract NexusTestSystemSupport<?,?> nexusTestSystem();
 }

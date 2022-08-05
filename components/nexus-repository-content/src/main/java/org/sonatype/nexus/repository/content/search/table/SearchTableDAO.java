@@ -125,4 +125,15 @@ public interface SearchTableDAO
    * @param searchData data to be saved.
    */
   void saveBatch(@Param("searchData") List<SearchTableData> searchData);
+
+  /**
+   * Method designed for selecting a collection of component ids marked with some of specified formats.
+   *
+   * @param tagName tag name
+   * @param formats list of formats
+   * @return collection of format-componentId pairs marked with one of the formats
+   */
+  Collection<SearchResult> findComponentIdsByTag(
+      @Param("tagName") String tagName,
+      @Param("formats") List<String> formats);
 }

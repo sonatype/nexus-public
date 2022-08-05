@@ -45,7 +45,6 @@
     ALTER TABLE component_search ADD COLUMN IF NOT EXISTS format_field_3 VARCHAR;
     ALTER TABLE component_search ADD COLUMN IF NOT EXISTS format_field_4 VARCHAR;
     ALTER TABLE component_search ADD COLUMN IF NOT EXISTS format_field_5 VARCHAR;
-
     ALTER TABLE component_search ADD COLUMN IF NOT EXISTS uploader VARCHAR;
     ALTER TABLE component_search ADD COLUMN IF NOT EXISTS uploader_ip VARCHAR;
 
@@ -103,6 +102,8 @@
     <result property="formatField1" column="format_field_1"/>
     <result property="formatField2" column="format_field_2"/>
     <result property="formatField3" column="format_field_3"/>
+    <result property="formatField4" column="format_field_4"/>
+    <result property="formatField5" column="format_field_5"/>
     <result property="uploader" column="uploader"/>
     <result property="uploaderIp" column="uploader_ip"/>
   </resultMap>
@@ -121,8 +122,7 @@
 
   <update id="updateKind">
     UPDATE component_search
-    SET
-    component_kind = #{componentKind}
+    SET component_kind = #{componentKind}
     WHERE <include refid="componentMatch"/>
   </update>
 
@@ -164,20 +164,43 @@
     <result property="repositoryName" column="search_repository_name"/>
     <result property="format" column="format"/>
     <result property="created" column="component_created" />
-
     <result property="uploader" column="uploader" />
     <result property="uploaderIp" column="uploader_ip" />
   </resultMap>
 
   <select id="searchComponents" resultMap="searchDataMap" parameterType="SqlSearchRequest">
-    SELECT component_id, namespace, search_component_name, version, search_repository_name, format, component_created,
-        uploader, uploader_ip
-    FROM component_search
+    SELECT
+        cs.component_id,
+        cs.namespace,
+        cs.search_component_name,
+        cs.version,
+        cs.search_repository_name,
+        cs.format,
+        cs.component_created,
+        cs.uploader,
+        cs.uploader_ip
+    FROM component_search cs
+    <if test="filterParams != null and filterParams.containsKey('name') and filterParams.containsKey('format')">
+      INNER JOIN ${filterParams.format}_component_tag ctg
+          ON cs.component_id = ctg.component_id AND cs.format = #{filterParams.format}
+      INNER JOIN tag tg ON ctg.tag_id = tg.id
+    </if>
     <where>
+      <if test="tagToComponentIds != null">
+        <foreach collection="tagToComponentIds.entrySet()" index="key" item="value" separator="OR">
+          (cs.format = #{key}
+          AND cs.component_id IN
+          <foreach collection="value" index="idx" item="item" open="(" separator="," close=")">
+            ${item}
+          </foreach>
+          )
+        </foreach>
+      </if>
       <if test="filter != null">(${filter})</if>
     </where>
-    GROUP BY component_id, namespace, search_component_name, version, search_repository_name, format, component_created,
-        uploader, uploader_ip
+    GROUP BY
+        cs.component_id, cs.namespace, cs.search_component_name, cs.version, cs.search_repository_name, cs.format,
+        cs.component_created, cs.uploader, cs.uploader_ip
     ORDER BY ${sortColumnName} ${sortDirection}
     <if test="sortColumnName != defaultSortColumnName">, ${defaultSortColumnName}</if>
     <if test="limit != null">LIMIT #{limit}</if>
@@ -185,7 +208,13 @@
   </select>
 
   <select id="count" resultType="int">
-    SELECT COUNT(DISTINCT component_id) FROM component_search
+    SELECT COUNT(DISTINCT cs.component_id)
+    FROM component_search cs
+    <if test="filterParams != null and filterParams.containsKey('name')">
+      INNER JOIN ${filterParams.format}_component_tag ctg
+          ON cs.component_id = ctg.component_id AND cs.format = #{filterParams.format}
+      INNER JOIN tag tg ON ctg.tag_id = tg.id
+    </if>
     <where>
       <if test="filter != null">(${filter})</if>
     </where>
@@ -193,13 +222,24 @@
 
   <insert id="saveBatch" parameterType="java.util.List">
     INSERT INTO component_search(repository_id, component_id, asset_id, format, namespace, search_component_name, path,
-    component_kind, version, search_repository_name, content_type, md5, sha1, sha256, sha512,
-    component_created, format_field_1, format_field_2, format_field_3, format_field_4, format_field_5, uploader, uploader_ip) VALUES
+    component_kind, version, search_repository_name, content_type, md5, sha1, sha256, sha512, component_created,
+    format_field_1, format_field_2, format_field_3, format_field_4, format_field_5, uploader, uploader_ip)
+    VALUES
     <foreach collection="searchData" separator="," item="item">
       (#{item.repositoryId}, #{item.componentId}, #{item.assetId}, #{item.format}, #{item.namespace}, #{item.componentName}, #{item.path},
-      #{item.componentKind}, #{item.version}, #{item.repositoryName}, #{item.contentType}, #{item.md5}, #{item.sha1}, #{item.sha256}, #{item.sha512},
-      #{item.componentCreated}, #{item.formatField1}, #{item.formatField2}, #{item.formatField3}, #{item.formatField4},
-      #{item.formatField5}, #{item.uploader}, #{item.uploaderIp})
+      #{item.componentKind}, #{item.version}, #{item.repositoryName}, #{item.contentType}, #{item.md5}, #{item.sha1}, #{item.sha256}, #{item.sha512}, #{item.componentCreated},
+       #{item.formatField1}, #{item.formatField2}, #{item.formatField3}, #{item.formatField4}, #{item.formatField5}, #{item.uploader}, #{item.uploaderIp})
     </foreach>
   </insert>
+
+  <select id="findComponentIdsByTag" resultMap="searchDataMap">
+    <foreach collection="formats" index="index" item="format" separator=" UNION ALL ">
+      SELECT
+          '${format}' as format,
+          ct.component_id as component_id
+      FROM tag t
+          INNER JOIN ${format}_component_tag ct on t.id = ct.tag_id AND t.name = #{tagName}
+    </foreach>
+      ORDER BY format, component_id
+  </select>
 </mapper>

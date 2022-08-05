@@ -24,7 +24,7 @@ public class SearchResultData
     extends AbstractRepositoryContent
     implements SearchResult
 {
-  Integer componentId; // NOSONAR: internal id
+  private Integer componentId; // NOSONAR: internal id
 
   private String namespace;
 

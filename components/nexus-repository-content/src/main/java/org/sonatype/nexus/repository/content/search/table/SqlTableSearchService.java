@@ -33,6 +33,7 @@ import org.sonatype.nexus.repository.content.SearchResult;
 import org.sonatype.nexus.repository.content.search.SearchViewColumns;
 import org.sonatype.nexus.repository.content.store.AssetStore;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
+import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.search.AssetSearchResult;
 import org.sonatype.nexus.repository.search.ComponentSearchResult;
 import org.sonatype.nexus.repository.search.SearchRequest;
@@ -224,8 +225,8 @@ public class SqlTableSearchService
       Set<Integer> componentIds = searchResults.stream()
           .map(SearchResult::componentId)
           .collect(Collectors.toSet());
-      componentIdToAsset = assetStore.findByComponentIds(componentIds).stream()
-          .collect(groupingBy(assetInfo -> getFormatComponentKey(stringListEntry.getKey(), assetInfo.componentId())));
+      componentIdToAsset.putAll(assetStore.findByComponentIds(componentIds).stream()
+          .collect(groupingBy(assetInfo -> getFormatComponentKey(stringListEntry.getKey(), assetInfo.componentId()))));
     }
 
     return componentIdToAsset;
@@ -233,7 +234,7 @@ public class SqlTableSearchService
 
   private ComponentSearchResult buildComponentSearchResult(final SearchResult searchResult) {
     ComponentSearchResult componentSearchResult = new ComponentSearchResult();
-    componentSearchResult.setId(String.valueOf(searchResult.componentId()));
+    componentSearchResult.setId(InternalIds.toExternalId(searchResult.componentId()).getValue());
     componentSearchResult.setFormat(searchResult.format());
     componentSearchResult.setRepositoryName(searchResult.repositoryName());
     componentSearchResult.setName(searchResult.componentName());
