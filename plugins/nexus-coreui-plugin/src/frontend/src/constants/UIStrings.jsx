@@ -591,7 +591,7 @@ export default {
       ASSET_NAME_DESCRIPTION: <>
         This field allows you to use a RegEx to match search for specific components to help define scope.
         For more information check out our{' '}
-        <NxTextLink external href="http://links.sonatype.com/products/nxrm3/docs/pull-replication/asset-name-matcher">
+        <NxTextLink external href="https://links.sonatype.com/products/nxrm3/docs/pull-replication/asset-name-matcher">
           documentation for format specific options
         </NxTextLink>.
       </>,

@@ -133,6 +133,10 @@ Ext.define('NX.controller.SettingsForm', {
           }
           form.fireEvent('submitted', form, action);
           me.loadForm(form);
+        },
+        failure: function(basicForm , action){
+          //show a default error popup in case of submit error
+          NX.Messages.error(NX.I18n.get('SettingsForm_Save_Error'));
         }
       });
     }

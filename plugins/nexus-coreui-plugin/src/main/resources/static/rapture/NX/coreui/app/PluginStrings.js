@@ -450,6 +450,13 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_ProxyFacet_Remote_FieldLabel: 'Remote storage',
     Repository_Facet_ProxyFacet_Remote_HelpText: 'Location of the remote repository being proxied',
     Repository_Facet_ProxyFacet_Remote_EmptyText: 'Enter a URL',
+    Repository_Facet_ProxyFacet_PreemptivePull_FieldLabel: 'Pre-emptive Pull',
+    Repository_Facet_ProxyFacet_PreemptivePull_HelpText: 'If enabled, the remote storage will be monitored for changes, and new components will be replicated automatically, and cached locally',
+    Repository_Facet_ProxyFacet_AssetNameMatcher_FieldLabel: 'Asset Name Matcher',
+    Repository_Facet_ProxyFacet_AssetNameMatcher_HelpText: 'This field allows you to use a RegEx to match search for specific components to help define scope.\n' +
+        'For more information check out our <a target="_blank" href="https://links.sonatype.com/products/nxrm3/docs/pull-replication/asset-name-matcher">documentation for format specific options</a>',
+    Repository_Facet_ProxyFacet_AssetNameMatcher_EmptyText: 'Entry',
+    Repository_Facet_ProxyFacet_AssetNameMatcher_InvalidText: 'Invalid Regex',
     Repository_Facet_ProxyFacet_Bower_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://registry.bower.io',
     Repository_Facet_ProxyFacet_Docker_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://registry-1.docker.io',
     Repository_Facet_ProxyFacet_Maven_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://repo1.maven.org/maven2/',
@@ -1289,7 +1296,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     ,
     Task_TaskScheduleManual_HelpText: 'Without recurrence, this service can only be run manually.',
     Task_Script_Creation_Disabled: '<i>Admin - Execute script</i> task creation is disabled. ' +
-         '<a href="https://links.sonatype.com/products/nxrm3/disabled-groovy-scripting">More information</a>',
+        '<a href="https://links.sonatype.com/products/nxrm3/disabled-groovy-scripting">More information</a>',
 
     // Authentication section
     System_AuthenticationSettings_Username_FieldLabel: 'Username',
@@ -1373,6 +1380,9 @@ Ext.define('NX.coreui.app.PluginStrings', {
     ClmSettings_Properties_Verify_Button: 'Verify connection',
     ClmSettings_Show_Link_FieldLabel: 'Show IQ Server Link',
     ClmSettings_Show_Link_HelpText: 'Show IQ Server link in Browse menu when server is enabled',
+
+    //Settings form general error
+    SettingsForm_Save_Error: 'An error occurred while saving the form'
   },
 
   /**
