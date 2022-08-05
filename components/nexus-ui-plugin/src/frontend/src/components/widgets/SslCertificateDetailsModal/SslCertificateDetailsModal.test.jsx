@@ -87,7 +87,7 @@ describe('SslCertificateDetailsModal', () => {
     const UNRESOLVED = new Promise(() => {});
     when(axios.get).calledWith('/service/rest/v1/security/ssl?host=localhost&port=443').mockReturnValue(UNRESOLVED);
 
-    render(<SslCertificateDetailsModal hostUrl="https://localhost" onCancel={onCancel}/>);
+    render(<SslCertificateDetailsModal remoteUrl="https://localhost" onCancel={onCancel}/>);
 
     expect(selectors.queryLoadingMask()).toBeInTheDocument();
     expect(selectors.getAddButton()).not.toBeInTheDocument();
@@ -103,7 +103,7 @@ describe('SslCertificateDetailsModal', () => {
     mockCertificateDetails(certificateDetails);
     mockTruststore([]);
 
-    render(<SslCertificateDetailsModal hostUrl="https://localhost" onCancel={onCancel}/>);
+    render(<SslCertificateDetailsModal remoteUrl="https://localhost" onCancel={onCancel}/>);
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -126,7 +126,7 @@ describe('SslCertificateDetailsModal', () => {
     mockCertificateDetails(certificateDetails, 'localhost', '8443');
     mockTruststore([]);
 
-    render(<SslCertificateDetailsModal hostUrl="https://localhost:8443" onCancel={onCancel}/>);
+    render(<SslCertificateDetailsModal remoteUrl="https://localhost:8443" onCancel={onCancel}/>);
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -149,7 +149,7 @@ describe('SslCertificateDetailsModal', () => {
     mockCertificateDetails(certificateDetails);
     mockTruststore([]);
 
-    render(<SslCertificateDetailsModal hostUrl="https://localhost" onCancel={onCancel}/>);
+    render(<SslCertificateDetailsModal remoteUrl="https://localhost" onCancel={onCancel}/>);
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -169,7 +169,7 @@ describe('SslCertificateDetailsModal', () => {
     mockCertificateDetails(certificateDetails);
     mockTruststore([certificateDetails]);
 
-    render(<SslCertificateDetailsModal hostUrl="https://localhost" onCancel={onCancel}/>);
+    render(<SslCertificateDetailsModal remoteUrl="https://localhost" onCancel={onCancel}/>);
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -191,7 +191,7 @@ describe('SslCertificateDetailsModal', () => {
     mockCertificateDetails(certificateDetails);
     mockTruststore([]);
 
-    render(<SslCertificateDetailsModal hostUrl="https://localhost" onCancel={onCancel}/>);
+    render(<SslCertificateDetailsModal remoteUrl="https://localhost" onCancel={onCancel}/>);
 
     fireEvent.click(selectors.getCloseButton());
 
@@ -204,7 +204,7 @@ describe('SslCertificateDetailsModal', () => {
     when(axios.get).calledWith('/service/rest/v1/security/ssl?host=localhost&port=443').mockRejectedValue('error');
     mockTruststore([]);
 
-    render(<SslCertificateDetailsModal hostUrl="https://localhost" onCancel={onCancel}/>);
+    render(<SslCertificateDetailsModal remoteUrl="https://localhost" onCancel={onCancel}/>);
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -215,7 +215,7 @@ describe('SslCertificateDetailsModal', () => {
     mockCertificateDetails(certificateDetails);
     mockTruststore([]);
 
-    render(<SslCertificateDetailsModal hostUrl="https://localhost" onCancel={onCancel}/>);
+    render(<SslCertificateDetailsModal remoteUrl="https://localhost" onCancel={onCancel}/>);
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -235,7 +235,7 @@ describe('SslCertificateDetailsModal', () => {
     mockCertificateDetails(certificateDetails);
     mockTruststore([certificateDetails]);
 
-    render(<SslCertificateDetailsModal hostUrl="https://localhost" onCancel={onCancel}/>);
+    render(<SslCertificateDetailsModal remoteUrl="https://localhost" onCancel={onCancel}/>);
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 

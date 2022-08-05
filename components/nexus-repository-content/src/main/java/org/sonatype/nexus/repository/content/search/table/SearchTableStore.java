@@ -12,11 +12,14 @@
  */
 package org.sonatype.nexus.repository.content.search.table;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -25,6 +28,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
+import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.content.SearchResult;
 import org.sonatype.nexus.repository.content.search.SearchResultData;
 import org.sonatype.nexus.repository.content.search.SearchViewColumns;
@@ -37,6 +41,7 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 
 import org.apache.ibatis.annotations.Param;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 
 /**
@@ -47,14 +52,18 @@ import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 public class SearchTableStore
     extends ConfigStoreSupport<SearchTableDAO>
 {
+  private final List<Format> formats;
+
   private final int deleteBatchSize;
 
   @Inject
   public SearchTableStore(
+      final List<Format> formats,
       final DataSessionSupplier sessionSupplier,
       @Named("${nexus.content.deleteBatchSize:-1000}") final int deleteBatchSize)
   {
     super(sessionSupplier, SearchTableDAO.class);
+    this.formats = checkNotNull(formats);
     this.deleteBatchSize = deleteBatchSize;
   }
 
@@ -161,27 +170,13 @@ public class SearchTableStore
       final SearchViewColumns sortColumnName,
       final SortDirection sortDirection)
   {
-    String filterFormat = null;
-    Map<String, String> formatValues = null;
-    if (Objects.nonNull(filterQuery)) {
-      filterFormat = filterQuery.getSqlConditionFormat();
-      formatValues = filterQuery.getValues();
+    try {
+      SqlSearchRequest request = prepareSearchRequest(limit, offset, filterQuery, sortColumnName, sortDirection);
+      return dao().searchComponents(request);
     }
-
-    String direction = Optional.ofNullable(sortDirection).orElse(SortDirection.ASC).name();
-
-    SqlSearchRequest request = SqlSearchRequest
-        .builder()
-        .limit(limit)
-        .offset(offset)
-        .searchFilter(filterFormat)
-        .searchFilterValues(formatValues)
-        .sortColumnName(sortColumnName.name())
-        .sortDirection(direction)
-        .defaultSortColumnName(SearchViewColumns.COMPONENT_ID.name())
-        .build();
-
-    return dao().searchComponents(request);
+    catch (NoTaggedComponentsException e){
+      return new ArrayList<>();
+    }
   }
 
   /**
@@ -222,5 +217,70 @@ public class SearchTableStore
     tx.commit();
     tx.begin();
     checkCancellation();
+  }
+
+  private SqlSearchRequest prepareSearchRequest(
+      final int limit,
+      final int offset,
+      final SqlSearchQueryCondition filterQuery,
+      final SearchViewColumns sortViewColumnName,
+      final SortDirection sortDirectionEnum) throws NoTaggedComponentsException
+  {
+    boolean crossFormatSearch = false;
+    String filterFormat = null;
+    Map<String, String> formatValues = null;
+    if (Objects.nonNull(filterQuery)) {
+      filterFormat = filterQuery.getSqlConditionFormat();
+      formatValues = filterQuery.getValues();
+      crossFormatSearch = formatValues.containsKey("name") && !formatValues.containsKey("format");
+    }
+
+    final String defaultSortColumnName = SearchViewColumns.COMPONENT_ID.name();
+    final String sortColumnName = sortViewColumnName.name();
+    final String sortDirection = Optional.ofNullable(sortDirectionEnum).orElse(SortDirection.ASC).name();
+    SqlSearchRequest request;
+    if (crossFormatSearch) {
+      //Cross format search request
+      final String tagName = formatValues.get("name");
+      final List<String> formats = this.formats.stream().map(Format::getValue).collect(Collectors.toList());
+      Collection<SearchResult> taggedComponents = dao().findComponentIdsByTag(tagName, formats);
+      if (taggedComponents.size() == 0) {
+        throw new NoTaggedComponentsException("There are no components marked with specified tag name");
+      }
+      Map<String, List<Integer>> taggedComponentIds = new HashMap<>();
+      for (String format : formats) {
+        List<Integer> componentIds = taggedComponents.stream()
+            .filter(taggedComponent -> Objects.equals(format, taggedComponent.format()))
+            .map(SearchResult::componentId)
+            .collect(Collectors.toList());
+        if (componentIds.size() > 0) {
+          taggedComponentIds.put(format, componentIds);
+        }
+      }
+
+      request = SqlSearchRequest
+          .builder()
+          .limit(limit)
+          .offset(offset)
+          .tagToComponentIds(taggedComponentIds)
+          .sortColumnName(sortColumnName)
+          .sortDirection(sortDirection)
+          .defaultSortColumnName(defaultSortColumnName)
+          .build();
+    }
+    else {
+      //Regular search request
+      request = SqlSearchRequest
+          .builder()
+          .limit(limit)
+          .offset(offset)
+          .searchFilter(filterFormat)
+          .searchFilterValues(formatValues)
+          .sortColumnName(sortColumnName)
+          .sortDirection(sortDirection)
+          .defaultSortColumnName(defaultSortColumnName)
+          .build();
+    }
+    return request;
   }
 }

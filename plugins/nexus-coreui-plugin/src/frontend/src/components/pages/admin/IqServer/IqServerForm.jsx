@@ -159,7 +159,7 @@ export default function IqServerForm() {
         </>
       </NxFormRow>
       {viewingCertificate &&
-            <SslCertificateDetailsModal hostUrl={data.url} onCancel={closeCertificate}/>}
+            <SslCertificateDetailsModal remoteUrl={data.url} onCancel={closeCertificate}/>}
       <NxFormGroup label={UIStrings.IQ_SERVER.AUTHENTICATION_TYPE.label} isRequired>
         <Select className="nx-form-select--long"
                 {...FormUtils.fieldProps('authenticationType', current)}

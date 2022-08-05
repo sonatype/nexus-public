@@ -18,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -146,6 +147,26 @@ public class OrientBlobReconciliationLogMigrator_1_1Test
     assertThat(currentReconciliationLogBaseDir.toFile().exists(), is(false));
   }
 
+  @Test
+  public void shouldNotFailWhenPathMissing() throws Exception {
+    try (ODatabaseDocumentTx db = configDatabase.getInstance().connect()) {
+      createTable(db);
+      createBlobStoreConfiguration(BLOBSTORE_1, Collections.emptyMap());
+      createBlobStoreConfiguration(BLOBSTORE_2, ImmutableMap.of(CONFIG_KEY, Collections.emptyMap()));
+    }
+
+    when(appDirs.getWorkDirectory(BLOBSTORE_LOG_PATH)).thenReturn(currentReconciliationLogBaseDir.toFile());
+    when(appDirs.getWorkDirectory(BASEDIR)).thenReturn(destReconciliationLogFolder.getRoot());
+    createExistingReconciliationLogFiles();
+
+    underTest.apply();
+
+    assertThat(getReconciliationDirectoryPath(destReconciliationLogFolder, BLOBSTORE_1).toFile().listFiles(),
+        is(nullValue()));
+    assertThat(getReconciliationDirectoryPath(destReconciliationLogFolder, BLOBSTORE_2).toFile().listFiles(),
+        is(nullValue()));
+  }
+
   private void createTable(final ODatabaseDocumentTx db) {
     OSchema schema = db.getMetadata().getSchema();
     OClass replicationConnection = schema.createClass(REPOSITORY_BLOBSTORE_CONNECTION);
@@ -153,15 +174,19 @@ public class OrientBlobReconciliationLogMigrator_1_1Test
     replicationConnection.createProperty(NAME, OType.STRING).setMandatory(true).setNotNull(true);
   }
 
-  private void createBlobStoreConfiguration(final String path) {
+  private void createBlobStoreConfiguration(final String blobstoreName) {
+    createBlobStoreConfiguration(blobstoreName, aBlobStoreConfiguration(blobstoreName));
+  }
+
+  private void createBlobStoreConfiguration(final String blobstoreName, final Map<String, Map<String, Object>> attributes) {
     ODocument blobStoreConfig = new ODocument(REPOSITORY_BLOBSTORE_CONNECTION);
-    blobStoreConfig.field(NAME, path);
-    blobStoreConfig.field(ATTRIBUTES, aBlobStoreConfiguration(path));
+    blobStoreConfig.field(NAME, blobstoreName);
+    blobStoreConfig.field(ATTRIBUTES, attributes);
     blobStoreConfig.save();
   }
 
-  private Map<String, Map<String, Object>> aBlobStoreConfiguration(final String path) {
-    return ImmutableMap.of(CONFIG_KEY, ImmutableMap.of(PATH_KEY, path), ROOT_KEY, ImmutableMap.of());
+  private Map<String, Map<String, Object>> aBlobStoreConfiguration(final String blobstoreName) {
+    return ImmutableMap.of(CONFIG_KEY, ImmutableMap.of(PATH_KEY, blobstoreName), ROOT_KEY, ImmutableMap.of());
   }
 
   private Path getReconciliationDirectoryPath(final TemporaryFolder folder, final String blobStoreName) {

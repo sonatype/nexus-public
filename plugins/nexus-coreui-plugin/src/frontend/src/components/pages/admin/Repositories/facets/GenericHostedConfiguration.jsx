@@ -17,17 +17,21 @@ import {FormUtils} from '@sonatype/nexus-ui-plugin';
 import {NxFormGroup, NxCheckbox, NxFieldset, NxFormSelect} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
+import DockerRedeployLatesConfiguration from './DockerRedeployLatesConfiguration';
 
 const {EDITOR} = UIStrings.REPOSITORIES;
 
 const deploymentPolicies = Object.entries(EDITOR.DEPLOYMENT_POLICY_OPTIONS);
 
 export default function GenericHostedConfiguration({parentMachine}) {
-  const [currentParent, sendParent] = parentMachine;
+  const [parentState, sendParent] = parentMachine;
+
+  const {format, type} = parentState.context.data;
 
   return (
     <>
       <h2 className="nx-h2">{EDITOR.HOSTED_CAPTION}</h2>
+
       <NxFormGroup
         label={EDITOR.DEPLOYMENT_POLICY_LABEL}
         sublabel={EDITOR.DEPLOYMENT_POLICY_SUBLABEL}
@@ -35,7 +39,7 @@ export default function GenericHostedConfiguration({parentMachine}) {
         className="nxrm-form-group-hosted"
       >
         <NxFormSelect
-          {...FormUtils.selectProps('storage.writePolicy', currentParent)}
+          {...FormUtils.selectProps('storage.writePolicy', parentState)}
           onChange={FormUtils.handleUpdate('storage.writePolicy', sendParent)}
         >
           {deploymentPolicies?.map(([value, displayName]) => (
@@ -51,12 +55,14 @@ export default function GenericHostedConfiguration({parentMachine}) {
         className="nxrm-form-group-is-proprietary"
       >
         <NxCheckbox
-          {...FormUtils.checkboxProps('component.proprietaryComponents', currentParent)}
+          {...FormUtils.checkboxProps('component.proprietaryComponents', parentState)}
           onChange={FormUtils.handleUpdate('component.proprietaryComponents', sendParent)}
         >
           {EDITOR.PROPRIETARY_COMPONENTS_DESCR}
         </NxCheckbox>
       </NxFieldset>
+
+      {format === 'docker' && <DockerRedeployLatesConfiguration parentMachine={parentMachine} />}
     </>
   );
 }

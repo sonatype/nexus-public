@@ -97,5 +97,11 @@ export default {
     REMOVE_CERTIFICATE: 'Remove certificate from truststore',
     ADD_ERROR: 'An error occurred while attempting to add the certificate to the truststore.',
     REMOVE_ERROR: 'An error occurred while attempting to remove the certificate from the truststore.'
+  },
+
+  USE_TRUST_STORE: {
+    LABEL: 'Use the Nexus Trust Store',
+    DESCRIPTION: 'Use certificates stored in the Nexus Truststore',
+    VIEW_CERTIFICATE: 'View Certificate'
   }
 };

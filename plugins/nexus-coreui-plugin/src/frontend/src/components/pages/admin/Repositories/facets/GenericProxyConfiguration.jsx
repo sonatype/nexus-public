@@ -12,7 +12,7 @@
  */
 import React from 'react';
 
-import {ExtJS, FormUtils, Textfield} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, FormUtils, Textfield, UseNexusTruststore} from '@sonatype/nexus-ui-plugin';
 
 import {NxCheckbox, NxFieldset, NxFormGroup, NxTextInput} from '@sonatype/react-shared-components';
 
@@ -25,9 +25,16 @@ const {EDITOR} = UIStrings.REPOSITORIES;
 const REPLICATION_FEATURE = 'replicationFeatureEnabled';
 
 export default function GenericProxyConfiguration({parentMachine}) {
-  const [currentParent, sendParent] = parentMachine;
+  const [parentState, sendParent] = parentMachine;
 
-  const {format, replication} = currentParent.context.data;
+  const {
+    data: {
+      format,
+      replication,
+      proxy: {remoteUrl}
+    }
+  } = parentState.context;
+
   const isReplicationEnabled = ExtJS.state().getValue(REPLICATION_FEATURE) || false;
   const preemptivePullEnabled = replication?.preemptivePullEnabled || false;
 
@@ -52,50 +59,57 @@ export default function GenericProxyConfiguration({parentMachine}) {
         className="nxrm-form-group-remote-storage"
       >
         <NxTextInput
-          {...FormUtils.fieldProps('proxy.remoteUrl', currentParent)}
+          {...FormUtils.fieldProps('proxy.remoteUrl', parentState)}
           onChange={FormUtils.handleUpdate('proxy.remoteUrl', sendParent)}
           placeholder={EDITOR.URL_PLACEHOLDER}
         />
       </NxFormGroup>
 
+      <UseNexusTruststore
+        remoteUrl={remoteUrl}
+        {...FormUtils.checkboxProps('httpClient.connection.useTrustStore', parentState)}
+        onChange={FormUtils.handleUpdate('httpClient.connection.useTrustStore', sendParent)}
+      />
+
       {format === 'docker' && <DockerIndexConfiguration parentMachine={parentMachine} />}
 
-      {isReplicationEnabled &&
-          <>
-            <NxFormGroup
-                label={EDITOR.PREEMPTIVE_PULL_LABEL}
-                sublabel={EDITOR.PREEMPTIVE_PULL_SUBLABEL}
+      {isReplicationEnabled && (
+        <>
+          <NxFormGroup
+            label={EDITOR.PREEMPTIVE_PULL_LABEL}
+            sublabel={EDITOR.PREEMPTIVE_PULL_SUBLABEL}
+          >
+            <NxCheckbox
+              isChecked={Boolean(preemptivePullEnabled)}
+              onChange={setPreemptivePullEnabled}
             >
-              <NxCheckbox
-                  isChecked={Boolean(preemptivePullEnabled)}
-                  onChange={setPreemptivePullEnabled}
-              >
-                {EDITOR.ENABLED_CHECKBOX_DESCR}
-              </NxCheckbox>
-            </NxFormGroup>
+              {EDITOR.ENABLED_CHECKBOX_DESCR}
+            </NxCheckbox>
+          </NxFormGroup>
 
-            <NxFormGroup
-              label={EDITOR.ASSET_NAME_LABEL}
-              sublabel={EDITOR.ASSET_NAME_DESCRIPTION}
-              className="nxrm-form-group-asset-matcher"
-            >
-              <Textfield
-              {...FormUtils.fieldProps('replication.assetPathRegex', currentParent)}
-                onChange={FormUtils.handleUpdate('replication.assetPathRegex', sendParent)}
-                disabled={!Boolean(preemptivePullEnabled)}/>
-            </NxFormGroup>
-          </>
-      }
+          <NxFormGroup
+            label={EDITOR.ASSET_NAME_LABEL}
+            sublabel={EDITOR.ASSET_NAME_DESCRIPTION}
+            className="nxrm-form-group-asset-matcher"
+          >
+            <Textfield
+              {...FormUtils.fieldProps('replication.assetPathRegex', parentState)}
+              onChange={FormUtils.handleUpdate('replication.assetPathRegex', sendParent)}
+              disabled={!Boolean(preemptivePullEnabled)}
+            />
+          </NxFormGroup>
+        </>
+      )}
 
       <NxFieldset label={EDITOR.BLOCKING_LABEL} className="nxrm-form-group-proxy-blocking">
         <NxCheckbox
-          {...FormUtils.checkboxProps('httpClient.blocked', currentParent)}
+          {...FormUtils.checkboxProps('httpClient.blocked', parentState)}
           onChange={FormUtils.handleUpdate('httpClient.blocked', sendParent)}
         >
           {EDITOR.BLOCK_DESCR}
         </NxCheckbox>
         <NxCheckbox
-          {...FormUtils.checkboxProps('httpClient.autoBlock', currentParent)}
+          {...FormUtils.checkboxProps('httpClient.autoBlock', parentState)}
           onChange={FormUtils.handleUpdate('httpClient.autoBlock', sendParent)}
         >
           {EDITOR.AUTO_BLOCK_DESCR}
@@ -109,7 +123,7 @@ export default function GenericProxyConfiguration({parentMachine}) {
         className="nxrm-form-group-max-component-age"
       >
         <NxTextInput
-          {...FormUtils.fieldProps('proxy.contentMaxAge', currentParent)}
+          {...FormUtils.fieldProps('proxy.contentMaxAge', parentState)}
           onChange={FormUtils.handleUpdate('proxy.contentMaxAge', sendParent)}
           className="nx-text-input--short"
         />
@@ -122,7 +136,7 @@ export default function GenericProxyConfiguration({parentMachine}) {
         className="nxrm-form-group-max-metadata-age"
       >
         <NxTextInput
-          {...FormUtils.fieldProps('proxy.metadataMaxAge', currentParent)}
+          {...FormUtils.fieldProps('proxy.metadataMaxAge', parentState)}
           onChange={FormUtils.handleUpdate('proxy.metadataMaxAge', sendParent)}
           className="nx-text-input--short"
         />

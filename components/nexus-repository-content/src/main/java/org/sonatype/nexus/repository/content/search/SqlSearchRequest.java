@@ -12,8 +12,8 @@
  */
 package org.sonatype.nexus.repository.content.search;
 
+import java.util.List;
 import java.util.Map;
-
 import javax.annotation.Nullable;
 
 /**
@@ -37,6 +37,9 @@ public class SqlSearchRequest
   @Nullable
   public final Map<String, String> filterParams;
 
+  @Nullable
+  public final Map<String, List<Integer>> tagToComponentIds;
+
   // Optional column name to be used for sorting
   public final String sortColumnName;
 
@@ -54,6 +57,7 @@ public class SqlSearchRequest
     this.sortColumnName = builder.sortColumnName;
     this.sortDirection = builder.sortDirection;
     this.defaultSortColumnName = builder.defaultSortColumnName;
+    this.tagToComponentIds = builder.tagToComponentIds;
   }
 
   public static Builder builder() {
@@ -69,6 +73,8 @@ public class SqlSearchRequest
     private String filter;
 
     private Map<String, String> filterParams;
+
+    private Map<String, List<Integer>> tagToComponentIds;
 
     private String sortColumnName;
 
@@ -108,6 +114,11 @@ public class SqlSearchRequest
 
     public Builder defaultSortColumnName(final String defaultSortColumnName) {
       this.defaultSortColumnName = defaultSortColumnName;
+      return this;
+    }
+
+    public Builder tagToComponentIds(final Map<String, List<Integer>> tagToComponentIds) {
+      this.tagToComponentIds = tagToComponentIds;
       return this;
     }
 
