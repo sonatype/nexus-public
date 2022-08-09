@@ -136,4 +136,27 @@ describe('ListMachineUtils', () => {
       })).toBeNull();
     });
   });
+
+  describe('hasAnyMatches', () => {
+    const values = ['111', 'aaa', 'rrr', '###'];
+
+    it('returns "true" if there is at least one match', () => {
+      expect(ListMachineUtils.hasAnyMatches(values, 'a')).toBeTruthy();
+      expect(ListMachineUtils.hasAnyMatches([undefined, ...values, null], '11')).toBeTruthy();
+    });
+
+    it('returns "false" if there are no matches', () => {
+      expect(ListMachineUtils.hasAnyMatches(values, 'b')).toBeFalsy();
+    });
+
+    it('returns "true" if the filter is empty', () => {
+      expect(ListMachineUtils.hasAnyMatches(values, '')).toBeTruthy();
+      expect(ListMachineUtils.hasAnyMatches(values, null)).toBeTruthy();
+      expect(ListMachineUtils.hasAnyMatches(values, undefined)).toBeTruthy();
+    });
+
+    it('returns "false" if "values" contains empty values', () => {
+      expect(ListMachineUtils.hasAnyMatches([null, undefined, ''], 'a')).toBeFalsy();
+    });
+  });
 });

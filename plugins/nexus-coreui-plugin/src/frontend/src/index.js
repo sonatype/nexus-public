@@ -17,6 +17,7 @@
 import ContentSelectors from './components/pages/admin/ContentSelectors/ContentSelectors';
 import Privileges from './components/pages/admin/Privileges/Privileges';
 import Roles from './components/pages/admin/Roles/Roles';
+import SslCertificates from './components/pages/admin/SslCertificates/SslCertificates';
 import AnonymousSettings from './components/pages/admin/AnonymousSettings/AnonymousSettings';
 import BlobStores from './components/pages/admin/BlobStores/BlobStores';
 import InsightFrontend from './components/pages/admin/InsightFrontend/InsightFrontend';
@@ -135,6 +136,18 @@ window.plugins.push({
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         permissions: ['nexus:roles:read', 'nexus:privileges:read']
+      }
+    },
+    {
+      mode: 'admin',
+      path: '/Security/SslCertificates-New',
+      ...UIStrings.SSL_CERTIFICATES.MENU,
+      view: SslCertificates,
+      iconCls: 'x-fa fa-id-badge',
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        featureFlags: [{key: 'nexus.react.sslCertificates', defaultValue: false}],
+        permissions: ['nexus:ssl-truststore:read']
       }
     },
     {

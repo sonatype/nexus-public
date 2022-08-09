@@ -206,6 +206,92 @@ export default {
     }
   },
 
+  SSL_CERTIFICATES: {
+    MENU: {
+      text: 'SSL Certificates',
+      description: 'Manage Trusted SSL Certificates for use with the Nexus truststore'
+    },
+    LIST: {
+      CREATE_BUTTON: 'Load Certificate',
+      EMPTY_LIST: 'There are no SSL Certificates available',
+      COLUMNS: {
+        NAME: 'Name',
+        ISSUED_TO: 'Issued to',
+        ISSUED_BY: 'Issued by',
+        FINGERPRINT: 'Fingerprint',
+      },
+      HELP: {
+        TITLE: 'What is SSL?',
+        TEXT: <>
+          Using Secure Socket Layer (SSL) communication with the repository manager is an important security feature
+          and a recommended best practice. Secure communication can be inbound or outbound. Outbound client
+          communication may include integration with: proxy repository, email servers, LDAPS servers. Inbound client
+          communication includes: web browser HTTPS access, tool access to repository content, usage of REST APIs.
+          For more information check{' '}
+          <NxTextLink external href="http://links.sonatype.com/products/nxrm3/docs/ssl-certificate">
+            the documentation
+          </NxTextLink>.
+        </>,
+      },
+    },
+    FORM: {
+      CREATE_TITLE: 'Load certificate',
+      DETAILS_TILE: (name) => `Certificate Details ${name}`,
+      EDIT_DESCRIPTION: 'Summary',
+      WARNING: 'This certificate was retrieved over an untrusted connection. Always verify the details before adding it.',
+      SECTIONS: {
+        SETUP: 'Load SSL Certificates',
+        SUBJECT: 'Subject',
+        ISSUER: 'Issuer',
+        CERTIFICATE: 'Certificate',
+      },
+      LOAD_FROM_SERVER: {
+        LABEL: 'Load from server',
+      },
+      SERVER: {
+        LABEL: 'Please enter a hostname, hostname:port or a URL to fetch a SSL certificate from',
+      },
+      PASTE_PEM: {
+        LABEL: 'Paste PEM',
+      },
+      PEM: {
+        LABEL: 'Paste Certificate as PEM',
+      },
+      COMMON_NAME: {
+        LABEL: 'Common name',
+      },
+      ORGANIZATION: {
+        LABEL: 'Organization',
+      },
+      UNIT: {
+        LABEL: 'Unit',
+      },
+      ISSUED_ON: {
+        LABEL: 'Issued on',
+      },
+      VALID_UNTIL: {
+        LABEL: 'Valid until',
+      },
+      FINGERPRINT: {
+        LABEL: 'Fingerprint',
+      },
+      BUTTONS: {
+        ADD: 'Add certificate to truststore',
+        REMOVE: 'Remove certificate from truststore',
+        LOAD: 'Load certificate',
+      },
+    },
+    MESSAGES: {
+      CONFIRM_DELETE: {
+        TITLE: 'Delete SSL Certificate',
+        MESSAGE: (name) => `Delete the SSL Certificate named ${name}?`,
+        YES: 'Delete',
+        NO: 'Cancel'
+      },
+      DELETE_SUCCESS: (name) => `SSL Certificate deleted: ${name}`,
+    },
+  },
+
   BLOB_STORES: {
     MENU: {
       text: 'Blob Stores',

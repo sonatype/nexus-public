@@ -289,8 +289,11 @@ export default class ListMachineUtils {
    * @return {boolean}
    */
   static hasAnyMatches(values, filter) {
+    if (!filter) {
+      return true;
+    }
     return Boolean(values.find(value =>
-        value.toLowerCase().indexOf(filter.toLowerCase()) !== -1
+        Boolean(value) && value.toLowerCase().indexOf(filter.toLowerCase()) !== -1
     ));
   }
 }
