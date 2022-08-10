@@ -743,12 +743,20 @@ export default {
       REGISTRY_API_SUPPORT_CAPTION: 'Docker Registry API Support',
       REGISTRY_API_SUPPORT_LABEL: 'Enable Docker V1 API',
       REGISTRY_API_SUPPORT_DESCR: 'Allow clients to use the V1 API to interact with this repository',
-      DOCKER_INDEX_LABEL: 'Docker Index',
-      USE_PROXY_REGISTRY_DESCR: 'Use Proxy registry (specified above)',
-      USE_DOCKER_HUB_DESCR: 'Use Docker Hub',
-      USE_CUSTOM_INDEX_DESCR: 'Custom index',
-      DOCKER_INDEX_URL_LABEL: 'Location of the Docker Index',
-      DOCKER_INDEX_URL_PLACEHOLDER: 'Enter a URL',
+      DOCKER: {
+        INDEX: {
+          LABEL: 'Docker Index',
+          OPTIONS: {
+            REGISTRY: 'Use Proxy registry (specified above)',
+            HUB: 'Use Docker Hub',
+            CUSTOM: 'Custom index'
+          },
+          URL: {
+            LABEL: 'Location of the Docker Index',
+            PLACEHOLDER: 'Enter a URL'
+          }
+        }
+      },
       REMOTE_URL_EXAMPLES: {
         bower: ' (e.g., https://registry.bower.io)',
         docker: ' (e.g., https://registry-1.docker.io)',

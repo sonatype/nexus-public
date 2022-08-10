@@ -19,9 +19,9 @@ import UIStrings from '../../../../../constants/UIStrings';
 
 import {DOCKER_INDEX_TYPES} from '../RepositoryFormConfig';
 
-const {EDITOR} = UIStrings.REPOSITORIES;
+const {INDEX} = UIStrings.REPOSITORIES.EDITOR.DOCKER;
 
-const DOCKER_HUB_URL = 'https://index.docker.io/';
+export const DOCKER_HUB_URL = 'https://index.docker.io/';
 
 export default function DockerIndexConfiguration({parentMachine}) {
   const [currentParent, sendParent] = parentMachine;
@@ -36,14 +36,14 @@ export default function DockerIndexConfiguration({parentMachine}) {
 
   return (
     <>
-      <NxFieldset label={EDITOR.DOCKER_INDEX_LABEL}>
+      <NxFieldset label={INDEX.LABEL} isRequired>
         <NxRadio
           name="indexType"
           value={DOCKER_INDEX_TYPES.registry}
           onChange={updateIndexType}
           isChecked={indexType === DOCKER_INDEX_TYPES.registry}
         >
-          {EDITOR.USE_PROXY_REGISTRY_DESCR}
+          {INDEX.OPTIONS.REGISTRY}
         </NxRadio>
         <NxRadio
           name="indexType"
@@ -51,7 +51,7 @@ export default function DockerIndexConfiguration({parentMachine}) {
           onChange={updateIndexType}
           isChecked={indexType === DOCKER_INDEX_TYPES.hub}
         >
-          {EDITOR.USE_DOCKER_HUB_DESCR}
+          {INDEX.OPTIONS.HUB}
         </NxRadio>
         <NxRadio
           name="indexType"
@@ -59,13 +59,13 @@ export default function DockerIndexConfiguration({parentMachine}) {
           onChange={updateIndexType}
           isChecked={indexType === DOCKER_INDEX_TYPES.custom}
         >
-          {EDITOR.USE_CUSTOM_INDEX_DESCR}
+          {INDEX.OPTIONS.CUSTOM}
         </NxRadio>
       </NxFieldset>
 
       {indexType !== DOCKER_INDEX_TYPES.registry && (
         <NxFormGroup
-          label={EDITOR.DOCKER_INDEX_URL_LABEL}
+          label={INDEX.URL.LABEL}
           className="nxrm-form-group-docker-index-url"
           isRequired
         >
@@ -73,7 +73,7 @@ export default function DockerIndexConfiguration({parentMachine}) {
             {...FormUtils.fieldProps('dockerProxy.indexUrl', currentParent)}
             onChange={FormUtils.handleUpdate('dockerProxy.indexUrl', sendParent)}
             disabled={indexType === DOCKER_INDEX_TYPES.hub}
-            placeholder={EDITOR.DOCKER_INDEX_URL_PLACEHOLDER}
+            placeholder={INDEX.URL.PLACEHOLDER}
           />
         </NxFormGroup>
       )}
