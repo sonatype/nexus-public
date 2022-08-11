@@ -216,12 +216,6 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
 
   @Override
   @Guarded(by = STARTED)
-  public synchronized void compact() {
-    compact(null);
-  }
-
-  @Override
-  @Guarded(by = STARTED)
   public synchronized void compact(@Nullable final BlobStoreUsageChecker inUseChecker) {
     long start = System.nanoTime();
     try {

@@ -195,7 +195,7 @@ public abstract class FileBlobStoreITSupport
 
     final boolean deleted = underTest.delete(blob.getId(), "basicSmokeTest");
     assertThat(deleted, is(equalTo(true)));
-    underTest.compact();
+    underTest.compact(null);
     await().atMost(METRICS_FLUSH_TIMEOUT, SECONDS).until(() -> underTest.getMetrics().getBlobCount(), is(0L));
 
     final Blob deletedBlob = underTest.get(blob.getId());
@@ -208,7 +208,7 @@ public abstract class FileBlobStoreITSupport
     //assertThat(storeMetrics2.getBlobCount(), is(equalTo(0L)));
     //assertThat(storeMetrics2.getTotalSize(), is(equalTo((long) TEST_DATA_LENGTH)));
 
-    underTest.compact();
+    underTest.compact(null);
 
     final BlobStoreMetrics storeMetrics3 = underTest.getMetrics();
 
@@ -240,7 +240,7 @@ public abstract class FileBlobStoreITSupport
 
     final boolean deleted = underTest.delete(blob.getId(), "createAndDeleteBlobWithDirectPathSuccessful");
     assertThat(deleted, is(equalTo(true)));
-    underTest.compact();
+    underTest.compact(null);
     await().atMost(METRICS_FLUSH_TIMEOUT, SECONDS).until(() -> underTest.getMetrics().getBlobCount(), is(0L));
 
     final Blob deletedBlob = underTest.get(blob.getId());
@@ -362,7 +362,7 @@ public abstract class FileBlobStoreITSupport
 
     final boolean deleted = underTest.delete(blob.getId(), " overwriteDirectPathBlobSuccessful");
     assertThat(deleted, is(equalTo(true)));
-    underTest.compact();
+    underTest.compact(null);
     await().atMost(METRICS_FLUSH_TIMEOUT, SECONDS).until(() -> underTest.getMetrics().getBlobCount(), is(0L));
 
     final Blob deletedBlob = underTest.get(blob.getId());
@@ -399,7 +399,7 @@ public abstract class FileBlobStoreITSupport
     assertThat(underTest.getMetrics().getBlobCount(), is(initialBlobCount + 1));
 
     //Compact triggers hard delete, so metrics will be updated
-    underTest.compact();
+    underTest.compact(null);
     await().atMost(METRICS_FLUSH_TIMEOUT, SECONDS)
         .until(() -> underTest.getMetrics().getBlobCount(), is(initialBlobCount));
   }
@@ -679,7 +679,7 @@ public abstract class FileBlobStoreITSupport
     metadataPropertiesFile.setProperty(FileBlobStore.REBUILD_DELETED_BLOB_INDEX_KEY, "true");
     metadataPropertiesFile.store();
 
-    underTest.compact();
+    underTest.compact(null);
 
     assertThat(bytesPath1.toFile().exists(), is(false));
     assertThat(bytesPath2.toFile().exists(), is(true));

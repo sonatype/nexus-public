@@ -416,7 +416,7 @@ public class FileBlobStoreTest
 
     setRebuildMetadataToTrue();
 
-    underTest.compact();
+    underTest.compact(null);
 
     verify(fileOperations, times(2)).delete(any());
   }
@@ -433,7 +433,7 @@ public class FileBlobStoreTest
     cancelled.set(true);
 
     try {
-      underTest.compact();
+      underTest.compact(null);
       fail("Expected exception to be thrown");
     }
     catch (TaskInterruptedException expected) {
