@@ -1318,5 +1318,26 @@ This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 
       {' '}for details on setting up appropriate IQ policies to quarantine public components with the same names
       as your proprietary components.
     </>,
-  }
+  },
+
+  HTTP: {
+    MENU: {
+      text: 'HTTP',
+      description: 'Manage outbound HTTP/HTTPS configuration',
+    },
+    CONFIGURATION: {
+      USER_AGENT: {
+        LABEL: 'User-Agent Customization',
+        SUB_LABEL: 'Custom fragment to append to “User-Agent” header in HTTP requests'
+      },
+      TIMEOUT: {
+        LABEL: 'Connection/Socket Timeout',
+        SUB_LABEL: 'Time (seconds) to wait for activity before stopping and retrying the connection'
+      },
+      ATTEMPTS: {
+        LABEL: 'Connection/Socket Retry Attempts',
+        SUB_LABEL: 'Maximum number of retry attempts if the initial connection attempt suffers a timeout'
+      }
+    }
+  },
 };

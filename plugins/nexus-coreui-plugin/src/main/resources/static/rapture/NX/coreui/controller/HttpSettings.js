@@ -49,7 +49,8 @@ Ext.define('NX.coreui.controller.HttpSettings', {
         variants: ['x16', 'x32']
       },
       visible: function () {
-        return NX.Permissions.check('nexus:settings:read');
+        return NX.Permissions.check('nexus:settings:read') &&
+            !NX.State.getValue('nexus.react.httpSettings', true);
       }
     }, me);
 

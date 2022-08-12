@@ -44,6 +44,7 @@ import Bundles from './components/pages/admin/Bundles/Bundles';
 import ProprietaryRepositories from './components/pages/admin/ProprietaryRepositories/ProprietaryRepositories';
 import Api from './components/pages/admin/Api/Api';
 import Realms from './components/pages/admin/Realms/Realms';
+import HTTP from './components/pages/admin/Http/Http';
 
 window.ReactComponents = {
   ...window.ReactComponents,
@@ -335,6 +336,17 @@ window.plugins.push({
       visibility: {
         permissions: ['nexus:settings:read']
       }
+    },
+    {
+      mode: 'admin',
+      path: '/System/HTTP-new',
+      ...UIStrings.HTTP.MENU,
+      view: HTTP,
+      iconCls: 'x-fa fa-truck',
+      visibility: {
+        featureFlags: [{key: 'nexus.react.httpSettings', defaultValue: false}],
+        permissions: ['nexus:settings:read']
+      },
     },
   ]
 });

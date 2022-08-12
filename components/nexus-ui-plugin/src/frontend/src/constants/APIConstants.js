@@ -84,7 +84,14 @@ export default {
       idMapping: null,
       nameMapping: null,
       allowAutocomplete: false,
-    }
+    },
+    HTTP: {
+      ACTION: 'coreui_HttpSettings',
+      METHODS: {
+        READ: 'read',
+        UPDATE: 'update'
+      }
+    },
   },
   REST: {
     INTERNAL: {
