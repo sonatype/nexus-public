@@ -25,6 +25,7 @@ import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.store.InternalIds;
+import org.sonatype.nexus.repository.search.normalize.VersionNormalizerService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,9 +47,13 @@ public class SearchTableDataMapper
 
   private final Map<String, SearchCustomFieldContributor> searchCustomFieldContributors;
 
+  private final VersionNormalizerService versionNormalizerService;
+
   @Inject
-  public SearchTableDataMapper(final Map<String, SearchCustomFieldContributor> searchCustomFieldContributors) {
+  public SearchTableDataMapper(final Map<String, SearchCustomFieldContributor> searchCustomFieldContributors,
+                               final VersionNormalizerService versionNormalizerService) {
     this.searchCustomFieldContributors = checkNotNull(searchCustomFieldContributors);
+    this.versionNormalizerService = checkNotNull(versionNormalizerService);
   }
 
   /**
@@ -88,6 +93,8 @@ public class SearchTableDataMapper
     data.setComponentName(component.name());
     data.setComponentKind(component.kind());
     data.setVersion(component.version());
+    data.setNormalisedVersion(
+        versionNormalizerService.getNormalizedVersionByFormat(component.version(), repository.getFormat()));
     data.setComponentCreated(component.created());
     data.setRepositoryName(repositoryName);
     //data asset

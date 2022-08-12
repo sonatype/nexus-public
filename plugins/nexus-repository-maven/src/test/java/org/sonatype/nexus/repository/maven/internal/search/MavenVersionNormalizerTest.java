@@ -23,9 +23,9 @@ public class MavenVersionNormalizerTest
 
   @Test
   public void testNullEmpty() {
-    assertEquals("", underTest.getNormalizedValue(null));
-    assertEquals("", underTest.getNormalizedValue(""));
-    assertEquals("", underTest.getNormalizedValue(" "));
+    assertEquals("", underTest.getNormalizedVersion(null));
+    assertEquals("", underTest.getNormalizedVersion(""));
+    assertEquals("", underTest.getNormalizedVersion(" "));
   }
 
   @Test
@@ -126,9 +126,9 @@ public class MavenVersionNormalizerTest
 
   @Test
   public void testUnrecognizedVersionDefaultsToOriginalLogic() {
-    assertEquals("asparagus.schoolbus", underTest.getNormalizedValue("asparagus.schoolbus"));
-    assertEquals("000000001.000000002.000000003.000000004.000000005", underTest.getNormalizedValue("1.2.3.4.5"));
-    assertEquals("develop-020211201.000171404-000000903", underTest.getNormalizedValue("develop-20211201.171404-903"));
+    assertEquals("asparagus.schoolbus", underTest.getNormalizedVersion("asparagus.schoolbus"));
+    assertEquals("000000001.000000002.000000003.000000004.000000005", underTest.getNormalizedVersion("1.2.3.4.5"));
+    assertEquals("develop-020211201.000171404-000000903", underTest.getNormalizedVersion("develop-20211201.171404-903"));
 
     assertInOrder("develop-20211130.182421-895", "develop-20211130.203249-896", "develop-20211201.111154-898",
         "develop-20211202.180605-904");
@@ -137,10 +137,10 @@ public class MavenVersionNormalizerTest
   private void assertInOrder(String... versions) {
     for (int i = 1; i < versions.length; i++) {
       String v1 = versions[i - 1];
-      String n1 = underTest.getNormalizedValue(v1);
+      String n1 = underTest.getNormalizedVersion(v1);
       for (int j = i; j < versions.length; j++) {
         String v2 = versions[j];
-        String n2 = underTest.getNormalizedValue(v2);
+        String n2 = underTest.getNormalizedVersion(v2);
         assertTrue(String.format("expected %s (%s) < %s (%s)", v1, n1, v2, n2), n1.compareTo(n2) < 0);
         assertTrue(String.format("expected %s (%s) > %s (%s)", v2, n2, v1, n1), n2.compareTo(n1) > 0);
       }
@@ -148,6 +148,6 @@ public class MavenVersionNormalizerTest
   }
 
   private void assertVersionsEqual(String v1, String v2) {
-    assertEquals(underTest.getNormalizedValue(v1), underTest.getNormalizedValue(v2));
+    assertEquals(underTest.getNormalizedVersion(v1), underTest.getNormalizedVersion(v2));
   }
 }

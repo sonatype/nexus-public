@@ -34,6 +34,8 @@ public class SearchResultData
 
   private String version;
 
+  private String normalisedVersion;
+
   private String repositoryName;
 
   private String uploader;
@@ -63,6 +65,11 @@ public class SearchResultData
   @Override
   public String version() {
     return version;
+  }
+
+  @Override
+  public String normalisedVersion() {
+    return normalisedVersion;
   }
 
   @Override
@@ -96,6 +103,10 @@ public class SearchResultData
     this.version = version;
   }
 
+  public void setNormalisedVersion(final String normalisedVersion) {
+    this.normalisedVersion = normalisedVersion;
+  }
+
   public void setRepositoryName(final String repositoryName) {
     this.repositoryName = repositoryName;
   }
@@ -120,6 +131,7 @@ public class SearchResultData
         ", format='" + format + '\'' +
         ", componentName='" + componentName + '\'' +
         ", version='" + version + '\'' +
+        ", normalisedVersion='" + normalisedVersion + '\'' +
         ", repositoryName='" + repositoryName + '\'' +
         ", uploader='" + uploader + '\'' +
         ", uploaderIp='" + uploaderIp + '\'' +

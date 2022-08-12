@@ -58,6 +58,6 @@ public class MavenSearchDocumentProducer
 
   @Override
   protected String getNormalizedVersion(final FluentComponent component) {
-    return versionNormalizer.getNormalizedValue(component.version());
+    return versionNormalizer.getNormalizedVersion(component.version());
   }
 }

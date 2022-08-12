@@ -10,31 +10,15 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content;
+package org.sonatype.nexus.repository.search.normalize;
 
 /**
- * Provides search results.
- *
- * @since 3.41
+ * Format specific version normalizer
  */
-public interface SearchResult
-    extends RepositoryContent
+public interface VersionNormalizer
 {
-  Integer componentId();
-
-  String format();
-
-  String namespace();
-
-  String componentName();
-
-  String repositoryName();
-
-  String version();
-
-  String normalisedVersion();
-
-  String uploader();
-
-  String uploaderIp();
+  /**
+   * Return the version in normalized form for specific format
+   */
+  String getNormalizedVersion(final String version);
 }
