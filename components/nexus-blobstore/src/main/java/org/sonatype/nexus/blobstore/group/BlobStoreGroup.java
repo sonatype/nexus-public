@@ -339,12 +339,6 @@ public class BlobStoreGroup
 
   @Override
   @Guarded(by = STARTED)
-  public synchronized void compact() {
-    members.get().stream().forEach((BlobStore member) -> member.compact());
-  }
-
-  @Override
-  @Guarded(by = STARTED)
   public synchronized void compact(@Nullable final BlobStoreUsageChecker inUseChecker) {
     members.get().stream().forEach((BlobStore member) -> member.compact(inUseChecker));
   }

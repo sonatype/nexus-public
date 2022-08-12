@@ -35,6 +35,7 @@ import org.sonatype.nexus.repository.content.store.ContentRepositoryData;
 import org.sonatype.nexus.repository.content.store.ExampleContentTestSupport;
 import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.search.SortDirection;
+import org.sonatype.nexus.repository.search.normalize.VersionNumberExpander;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryCondition;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilder;
 
@@ -107,6 +108,7 @@ public class SearchTableDAOTest
       tableData.setComponentName(component.name() + "_" + i);
       tableData.setComponentKind(component.kind() + "_" + i);
       tableData.setVersion(component.version() + "_" + i);
+      tableData.setNormalisedVersion(VersionNumberExpander.expand(component.version()));
       tableData.setRepositoryName(configuration.getRepositoryName() + "_" + i);
       tableData.setComponentCreated(OffsetDateTime.of(2022, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC));
       //tableData asset

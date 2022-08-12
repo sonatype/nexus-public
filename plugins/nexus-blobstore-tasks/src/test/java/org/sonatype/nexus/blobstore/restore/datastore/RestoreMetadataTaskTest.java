@@ -36,7 +36,6 @@ import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 
@@ -128,7 +127,7 @@ public class RestoreMetadataTaskTest
   @Before
   public void setup() throws Exception {
     integrityCheckStrategies = spy(new HashMap<>());
-    integrityCheckStrategies.put(Maven2Format.NAME, testIntegrityCheckStrategy);
+    integrityCheckStrategies.put("maven2", testIntegrityCheckStrategy);
     integrityCheckStrategies.put(DEFAULT_NAME, defaultIntegrityCheckStrategy);
 
     underTest =

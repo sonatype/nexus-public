@@ -10,31 +10,27 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content;
+package org.sonatype.nexus.common.time.internal;
+
+import java.time.OffsetDateTime;
+
+import javax.inject.Named;
+import javax.inject.Singleton;
+
+import org.sonatype.nexus.common.time.Clock;
 
 /**
- * Provides search results.
+ * A provider of the current time.
  *
- * @since 3.41
+ * @since 3.0
  */
-public interface SearchResult
-    extends RepositoryContent
+@Named
+@Singleton
+public class LocalClock
+    implements Clock
 {
-  Integer componentId();
-
-  String format();
-
-  String namespace();
-
-  String componentName();
-
-  String repositoryName();
-
-  String version();
-
-  String normalisedVersion();
-
-  String uploader();
-
-  String uploaderIp();
+  @Override
+  public OffsetDateTime clusterTime() {
+    return OffsetDateTime.now();
+  }
 }

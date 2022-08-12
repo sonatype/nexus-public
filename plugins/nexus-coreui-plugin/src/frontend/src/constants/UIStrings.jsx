@@ -206,6 +206,92 @@ export default {
     }
   },
 
+  SSL_CERTIFICATES: {
+    MENU: {
+      text: 'SSL Certificates',
+      description: 'Manage Trusted SSL Certificates for use with the Nexus truststore'
+    },
+    LIST: {
+      CREATE_BUTTON: 'Load Certificate',
+      EMPTY_LIST: 'There are no SSL Certificates available',
+      COLUMNS: {
+        NAME: 'Name',
+        ISSUED_TO: 'Issued to',
+        ISSUED_BY: 'Issued by',
+        FINGERPRINT: 'Fingerprint',
+      },
+      HELP: {
+        TITLE: 'What is SSL?',
+        TEXT: <>
+          Using Secure Socket Layer (SSL) communication with the repository manager is an important security feature
+          and a recommended best practice. Secure communication can be inbound or outbound. Outbound client
+          communication may include integration with: proxy repository, email servers, LDAPS servers. Inbound client
+          communication includes: web browser HTTPS access, tool access to repository content, usage of REST APIs.
+          For more information check{' '}
+          <NxTextLink external href="http://links.sonatype.com/products/nxrm3/docs/ssl-certificate">
+            the documentation
+          </NxTextLink>.
+        </>,
+      },
+    },
+    FORM: {
+      CREATE_TITLE: 'Load certificate',
+      DETAILS_TILE: (name) => `Certificate Details ${name}`,
+      EDIT_DESCRIPTION: 'Summary',
+      WARNING: 'This certificate was retrieved over an untrusted connection. Always verify the details before adding it.',
+      SECTIONS: {
+        SETUP: 'Load SSL Certificates',
+        SUBJECT: 'Subject',
+        ISSUER: 'Issuer',
+        CERTIFICATE: 'Certificate',
+      },
+      LOAD_FROM_SERVER: {
+        LABEL: 'Load from server',
+      },
+      SERVER: {
+        LABEL: 'Please enter a hostname, hostname:port or a URL to fetch a SSL certificate from',
+      },
+      PASTE_PEM: {
+        LABEL: 'Paste PEM',
+      },
+      PEM: {
+        LABEL: 'Paste Certificate as PEM',
+      },
+      COMMON_NAME: {
+        LABEL: 'Common name',
+      },
+      ORGANIZATION: {
+        LABEL: 'Organization',
+      },
+      UNIT: {
+        LABEL: 'Unit',
+      },
+      ISSUED_ON: {
+        LABEL: 'Issued on',
+      },
+      VALID_UNTIL: {
+        LABEL: 'Valid until',
+      },
+      FINGERPRINT: {
+        LABEL: 'Fingerprint',
+      },
+      BUTTONS: {
+        ADD: 'Add certificate to truststore',
+        REMOVE: 'Remove certificate from truststore',
+        LOAD: 'Load certificate',
+      },
+    },
+    MESSAGES: {
+      CONFIRM_DELETE: {
+        TITLE: 'Delete SSL Certificate',
+        MESSAGE: (name) => `Delete the SSL Certificate named ${name}?`,
+        YES: 'Delete',
+        NO: 'Cancel'
+      },
+      DELETE_SUCCESS: (name) => `SSL Certificate deleted: ${name}`,
+    },
+  },
+
   BLOB_STORES: {
     MENU: {
       text: 'Blob Stores',
@@ -591,7 +677,7 @@ export default {
       ASSET_NAME_DESCRIPTION: <>
         This field allows you to use a RegEx to match search for specific components to help define scope.
         For more information check out our{' '}
-        <NxTextLink external href="http://links.sonatype.com/products/nxrm3/docs/pull-replication/asset-name-matcher">
+        <NxTextLink external href="https://links.sonatype.com/products/nxrm3/docs/pull-replication/asset-name-matcher">
           documentation for format specific options
         </NxTextLink>.
       </>,
@@ -657,12 +743,20 @@ export default {
       REGISTRY_API_SUPPORT_CAPTION: 'Docker Registry API Support',
       REGISTRY_API_SUPPORT_LABEL: 'Enable Docker V1 API',
       REGISTRY_API_SUPPORT_DESCR: 'Allow clients to use the V1 API to interact with this repository',
-      DOCKER_INDEX_LABEL: 'Docker Index',
-      USE_PROXY_REGISTRY_DESCR: 'Use Proxy registry (specified above)',
-      USE_DOCKER_HUB_DESCR: 'Use Docker Hub',
-      USE_CUSTOM_INDEX_DESCR: 'Custom index',
-      DOCKER_INDEX_URL_LABEL: 'Location of the Docker Index',
-      DOCKER_INDEX_URL_PLACEHOLDER: 'Enter a URL',
+      DOCKER: {
+        INDEX: {
+          LABEL: 'Docker Index',
+          OPTIONS: {
+            REGISTRY: 'Use Proxy registry (specified above)',
+            HUB: 'Use Docker Hub',
+            CUSTOM: 'Custom index'
+          },
+          URL: {
+            LABEL: 'Location of the Docker Index',
+            PLACEHOLDER: 'Enter a URL'
+          }
+        }
+      },
       REMOTE_URL_EXAMPLES: {
         bower: ' (e.g., https://registry.bower.io)',
         docker: ' (e.g., https://registry-1.docker.io)',

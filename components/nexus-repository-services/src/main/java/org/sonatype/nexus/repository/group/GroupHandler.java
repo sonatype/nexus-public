@@ -201,7 +201,7 @@ public class GroupHandler
     return HttpResponses.notFound();
   }
 
-  private boolean isValidResponse(final Response response) {
+  protected boolean isValidResponse(final Response response) {
     return response.getStatus().isSuccessful() ||
         response.getAttributes().contains(USE_DISPATCHED_RESPONSE) ||
         BYPASS_HTTP_ERRORS_HEADER_VALUE.equals(response.getHeaders().get(BYPASS_HTTP_ERRORS_HEADER_NAME));

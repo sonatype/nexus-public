@@ -60,7 +60,7 @@ public class Maven2ComponentMetadataProducer
 
   @Override
   public String getNormalizedVersion(final Component component) {
-      return versionNormalizer.getNormalizedValue(component.version());
+      return versionNormalizer.getNormalizedVersion(component.version());
   }
 }
 

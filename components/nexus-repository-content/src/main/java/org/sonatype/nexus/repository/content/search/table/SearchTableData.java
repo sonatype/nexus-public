@@ -44,6 +44,8 @@ public class SearchTableData
   //version column from *_component table
   private String version;
 
+  private String normalisedVersion;
+
   //created column from *_component table
   private OffsetDateTime componentCreated;
 
@@ -166,6 +168,14 @@ public class SearchTableData
 
   public String getVersion() {
     return version;
+  }
+
+  public void setNormalisedVersion(final String normalisedVersion) {
+    this.normalisedVersion = normalisedVersion;
+  }
+
+  public String getNormalisedVersion() {
+    return normalisedVersion;
   }
 
   public void setVersion(final String version) {
@@ -308,6 +318,7 @@ public class SearchTableData
         Objects.equals(componentName, tableData.componentName) &&
         Objects.equals(componentKind, tableData.componentKind) &&
         Objects.equals(version, tableData.version) &&
+        Objects.equals(normalisedVersion, tableData.normalisedVersion) &&
         Objects.equals(componentCreated, tableData.componentCreated) &&
         Objects.equals(repositoryName, tableData.repositoryName) &&
         Objects.equals(path, tableData.path) && Objects.equals(contentType, tableData.contentType) &&
@@ -325,8 +336,8 @@ public class SearchTableData
   @Override
   public int hashCode() {
     return Objects.hash(repositoryId, componentId, assetId, format, namespace, componentName, componentKind, version,
-        componentCreated, repositoryName, path, contentType, md5, sha1, sha256, sha512, formatField1, formatField2,
-        formatField3, formatField4, formatField5, uploader, uploaderIp);
+        normalisedVersion, componentCreated, repositoryName, path, contentType, md5, sha1, sha256, sha512,
+        formatField1, formatField2, formatField3, formatField4, formatField5, uploader, uploaderIp);
   }
 
   @Override
@@ -340,6 +351,7 @@ public class SearchTableData
         .add("componentName='" + componentName + "'")
         .add("componentKind='" + componentKind + "'")
         .add("version='" + version + "'")
+        .add("normalisedVersion='" + normalisedVersion + "'")
         .add("componentCreated=" + componentCreated)
         .add("repositoryName='" + repositoryName + "'")
         .add("path='" + path + "'")

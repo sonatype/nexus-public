@@ -218,12 +218,6 @@ public interface BlobStore
 
   /**
    * Perform garbage collection, purging blobs marked for deletion or whatever other periodic, implementation-specific
-   * tasks need doing.
-   */
-  void compact();
-
-  /**
-   * Perform garbage collection, purging blobs marked for deletion or whatever other periodic, implementation-specific
    * tasks need doing. Takes an optional {@link BlobStoreUsageChecker} and an optional {@link Logger} from the caller.
    *
    * @since 3.5

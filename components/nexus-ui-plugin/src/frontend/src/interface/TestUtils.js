@@ -87,8 +87,11 @@ export default class TestUtils {
 
     data.forEach((item, index) => {
       const row = rows[index];
+
+      keys.forEach(key => expect(item.hasOwnProperty(key)).toBeTruthy());
+
       Object.values(pick(keys, item)).forEach((value, index)  => {
-        expect(row.cells[index]).toHaveTextContent(value);
+        expect(row.cells[index]).toHaveTextContent(value || '');
       })
     });
   }

@@ -113,6 +113,9 @@ export default {
       get AVAILABLE_REALMS() {
         return `${this.BASE_URL}security/realms/available`;
       },
+      get SSL_CERTIFICATES() {
+        return `${this.BASE_URL}security/ssl/truststore`;
+      },
     },
   },
   DEBOUNCE_DELAY: 500,

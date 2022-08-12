@@ -55,6 +55,12 @@
     </dependency>
 
     <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-blobstore-tasks</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-testsupport</artifactId>
       <scope>test</scope>

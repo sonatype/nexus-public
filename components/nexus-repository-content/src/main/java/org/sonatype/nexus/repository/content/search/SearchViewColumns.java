@@ -25,6 +25,7 @@ public enum SearchViewColumns
   NAMESPACE("namespace"),
   SEARCH_COMPONENT_NAME("componentName"),
   VERSION("version"),
+  NORMALISED_VERSION("normalised_version"),
   REPOSITORY_NAME("repositoryName");
 
   private final String name;
@@ -49,7 +50,7 @@ public enum SearchViewColumns
       case "name":
         return SEARCH_COMPONENT_NAME;
       case "version":
-        return VERSION;
+        return NORMALISED_VERSION;
       default:
         return COMPONENT_ID;
     }

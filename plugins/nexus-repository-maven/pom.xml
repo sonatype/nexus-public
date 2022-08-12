@@ -74,6 +74,12 @@
     </dependency>
 
     <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-blobstore-tasks</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-model</artifactId>
     </dependency>

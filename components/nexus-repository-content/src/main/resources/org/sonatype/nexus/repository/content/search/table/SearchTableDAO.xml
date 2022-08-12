@@ -47,8 +47,9 @@
     ALTER TABLE component_search ADD COLUMN IF NOT EXISTS format_field_5 VARCHAR;
     ALTER TABLE component_search ADD COLUMN IF NOT EXISTS uploader VARCHAR;
     ALTER TABLE component_search ADD COLUMN IF NOT EXISTS uploader_ip VARCHAR;
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS normalised_version VARCHAR NOT NULL;
 
-    CREATE INDEX IF NOT EXISTS idx_component_search_version ON component_search (version);
+    CREATE INDEX IF NOT EXISTS idx_component_search_normalised_version ON component_search (normalised_version);
     CREATE INDEX IF NOT EXISTS idx_component_search_namespace ON component_search (namespace);
     CREATE INDEX IF NOT EXISTS idx_component_search_component_name ON component_search (search_component_name);
     CREATE INDEX IF NOT EXISTS idx_component_search_format ON component_search (format);
@@ -91,6 +92,7 @@
     <result property="componentName" column="search_component_name"/>
     <result property="componentKind" column="component_kind"/>
     <result property="version" column="version"/>
+    <result property="normalisedVersion" column="normalised_version"/>
     <result property="componentCreated" column="component_created"/>
     <result property="repositoryName" column="search_repository_name"/>
     <result property="path" column="path"/>
@@ -110,12 +112,12 @@
 
   <insert id="create" parameterType="SearchTableData">
     INSERT INTO component_search(repository_id, component_id, asset_id, format, namespace, search_component_name, path,
-                                 component_kind, version, search_repository_name, content_type, md5, sha1, sha256, sha512,
-                                 format_field_1, format_field_2, format_field_3, format_field_4, format_field_5,
-                                 uploader, uploader_ip, component_created)
+                                 component_kind, version, normalised_version, search_repository_name, content_type, md5,
+                                 sha1, sha256, sha512, format_field_1, format_field_2, format_field_3, format_field_4,
+                                 format_field_5, uploader, uploader_ip, component_created)
     VALUES (#{repositoryId}, #{componentId}, #{assetId}, #{format}, #{namespace}, #{componentName}, #{path},
-            #{componentKind}, #{version}, #{repositoryName}, #{contentType}, #{md5}, #{sha1}, #{sha256}, #{sha512},
-            #{formatField1}, #{formatField2}, #{formatField3}, #{formatField4}, #{formatField5},
+            #{componentKind}, #{version}, #{normalisedVersion} ,#{repositoryName}, #{contentType}, #{md5}, #{sha1},
+            #{sha256}, #{sha512}, #{formatField1}, #{formatField2}, #{formatField3}, #{formatField4}, #{formatField5},
             #{uploader}, #{uploaderIp},
             (SELECT created FROM ${format}_component WHERE component_id = #{componentId}));
   </insert>
@@ -161,6 +163,7 @@
     <result property="namespace" column="namespace"/>
     <result property="componentName" column="search_component_name"/>
     <result property="version" column="version"/>
+    <result property="normalisedVersion" column="normalised_version"/>
     <result property="repositoryName" column="search_repository_name"/>
     <result property="format" column="format"/>
     <result property="created" column="component_created" />
@@ -174,6 +177,7 @@
         cs.namespace,
         cs.search_component_name,
         cs.version,
+        cs.normalised_version,
         cs.search_repository_name,
         cs.format,
         cs.component_created,
@@ -199,8 +203,8 @@
       <if test="filter != null">(${filter})</if>
     </where>
     GROUP BY
-        cs.component_id, cs.namespace, cs.search_component_name, cs.version, cs.search_repository_name, cs.format,
-        cs.component_created, cs.uploader, cs.uploader_ip
+        cs.component_id, cs.namespace, cs.search_component_name, cs.version, cs.normalised_version,
+        cs.search_repository_name, cs.format, cs.component_created, cs.uploader, cs.uploader_ip
     ORDER BY ${sortColumnName} ${sortDirection}
     <if test="sortColumnName != defaultSortColumnName">, ${defaultSortColumnName}</if>
     <if test="limit != null">LIMIT #{limit}</if>
@@ -222,13 +226,14 @@
 
   <insert id="saveBatch" parameterType="java.util.List">
     INSERT INTO component_search(repository_id, component_id, asset_id, format, namespace, search_component_name, path,
-    component_kind, version, search_repository_name, content_type, md5, sha1, sha256, sha512, component_created,
-    format_field_1, format_field_2, format_field_3, format_field_4, format_field_5, uploader, uploader_ip)
+    component_kind, version, normalised_version, search_repository_name, content_type, md5, sha1, sha256, sha512,
+    component_created, format_field_1, format_field_2, format_field_3, format_field_4, format_field_5, uploader, uploader_ip)
     VALUES
     <foreach collection="searchData" separator="," item="item">
       (#{item.repositoryId}, #{item.componentId}, #{item.assetId}, #{item.format}, #{item.namespace}, #{item.componentName}, #{item.path},
-      #{item.componentKind}, #{item.version}, #{item.repositoryName}, #{item.contentType}, #{item.md5}, #{item.sha1}, #{item.sha256}, #{item.sha512}, #{item.componentCreated},
-       #{item.formatField1}, #{item.formatField2}, #{item.formatField3}, #{item.formatField4}, #{item.formatField5}, #{item.uploader}, #{item.uploaderIp})
+      #{item.componentKind}, #{item.version}, #{item.normalisedVersion}, #{item.repositoryName}, #{item.contentType},
+       #{item.md5}, #{item.sha1}, #{item.sha256}, #{item.sha512}, #{item.componentCreated}, #{item.formatField1}, #{item.formatField2},
+       #{item.formatField3}, #{item.formatField4}, #{item.formatField5}, #{item.uploader}, #{item.uploaderIp})
     </foreach>
   </insert>
 

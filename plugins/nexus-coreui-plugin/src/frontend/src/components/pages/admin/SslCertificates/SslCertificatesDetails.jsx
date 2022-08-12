@@ -10,31 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content;
 
-/**
- * Provides search results.
- *
- * @since 3.41
- */
-public interface SearchResult
-    extends RepositoryContent
-{
-  Integer componentId();
-
-  String format();
-
-  String namespace();
-
-  String componentName();
-
-  String repositoryName();
-
-  String version();
-
-  String normalisedVersion();
-
-  String uploader();
-
-  String uploaderIp();
+export default function SslCertificatesDetails() {
+  return 'SSL Certificate Details';
 }

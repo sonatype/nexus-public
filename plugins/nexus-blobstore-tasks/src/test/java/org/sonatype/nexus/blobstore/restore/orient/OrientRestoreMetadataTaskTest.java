@@ -36,7 +36,6 @@ import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.storage.BucketStore;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
@@ -133,7 +132,7 @@ public class OrientRestoreMetadataTaskTest
   @Before
   public void setup() throws Exception {
     integrityCheckStrategies = spy(new HashMap<>());
-    integrityCheckStrategies.put(Maven2Format.NAME, testOrientIntegrityCheckStrategy);
+    integrityCheckStrategies.put("maven2", testOrientIntegrityCheckStrategy);
     integrityCheckStrategies.put(DEFAULT_NAME, orientDefaultIntegrityCheckStrategy);
 
     underTest =

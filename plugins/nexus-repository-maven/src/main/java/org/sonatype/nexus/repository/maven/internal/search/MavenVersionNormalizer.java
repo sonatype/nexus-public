@@ -20,6 +20,7 @@ import javax.inject.Named;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
+import org.sonatype.nexus.repository.search.normalize.VersionNormalizer;
 import org.sonatype.nexus.repository.search.normalize.VersionNumberExpander;
 
 import static org.sonatype.nexus.common.text.Strings2.isBlank;
@@ -57,6 +58,7 @@ import static org.sonatype.nexus.content.maven.internal.search.Maven2ComponentFi
 @Named(Maven2Format.NAME)
 public class MavenVersionNormalizer
     extends ComponentSupport
+    implements VersionNormalizer
 {
   // major + minor + patch
   private static final int VERSION_LENGTH = 3;
@@ -102,7 +104,8 @@ public class MavenVersionNormalizer
     }
   }
 
-  public String getNormalizedValue(final String originalVersion) {
+  @Override
+  public String getNormalizedVersion(final String originalVersion) {
     if (isBlank(originalVersion)) {
       return "";
     }

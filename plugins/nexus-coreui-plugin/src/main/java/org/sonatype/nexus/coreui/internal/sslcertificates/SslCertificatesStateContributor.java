@@ -10,31 +10,33 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content;
+package org.sonatype.nexus.coreui.internal.sslcertificates;
 
-/**
- * Provides search results.
- *
- * @since 3.41
- */
-public interface SearchResult
-    extends RepositoryContent
+import java.util.Map;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+
+import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.rapture.StateContributor;
+
+import com.google.common.collect.ImmutableMap;
+
+@Named
+@Singleton
+public class SslCertificatesStateContributor
+    extends ComponentSupport
+    implements StateContributor
 {
-  Integer componentId();
+  private final Map<String, Object> state;
 
-  String format();
+  @Inject
+  public SslCertificatesStateContributor(@Named("${nexus.react.sslCertificates:-false}") final Boolean featureFlag) {
+    state = ImmutableMap.of("nexus.react.sslCertificates", featureFlag);
+  }
 
-  String namespace();
-
-  String componentName();
-
-  String repositoryName();
-
-  String version();
-
-  String normalisedVersion();
-
-  String uploader();
-
-  String uploaderIp();
+  @Override
+  public Map<String, Object> getState() {
+    return state;
+  }
 }
