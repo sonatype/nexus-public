@@ -12,45 +12,54 @@
  */
 import React, {useEffect} from 'react';
 
-import {FormUtils} from '@sonatype/nexus-ui-plugin';
+import {FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 
 import {NxCheckbox, NxFieldset, NxTooltip} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
 
-const {LABEL, DESCRIPTION, TOOLTIP} = UIStrings.REPOSITORIES.EDITOR.REDEPLOY_LATEST;
+import './PreEmptiveAuthConfiguration.scss';
 
-const ALLOW_ONCE = 'ALLOW_ONCE';
+const {LABEL, DESCR, TOOLTIP} = UIStrings.REPOSITORIES.EDITOR.PRE_EMPTIVE_AUTH;
 
-const PROP_PATH = 'storage.latestPolicy';
+const PROP_PATH = 'httpClient.authentication.preemptive';
 
-export default function DockerRedeployLatesConfiguration({parentMachine}) {
+export default function PreEmptiveAuthConfiguration({parentMachine}) {
   const [parentState, sendParent] = parentMachine;
 
-  const {writePolicy} = parentState.context.data.storage;
+  const {
+    proxy: {remoteUrl},
+    httpClient: {authentication}
+  } = parentState.context.data;
+
+  const hasSecureRemoteUrl = ValidationUtils.isSecureUrl(remoteUrl);
+  const isDisabled = !hasSecureRemoteUrl;
+  const isVisible = !!authentication;
 
   useEffect(() => {
-    if (writePolicy === ALLOW_ONCE) {
+    if (isVisible && !isDisabled) {
       sendParent({type: 'ADD_DATA_PROPERTY', path: PROP_PATH, value: false});
     } else {
       sendParent({type: 'DELETE_DATA_PROPERTY', path: PROP_PATH});
     }
-  }, [writePolicy]);
-
-  const isDisabled = writePolicy !== ALLOW_ONCE;
+  }, [isVisible, isDisabled]);
 
   return (
-    <NxFieldset label={LABEL}>
-      <NxTooltip title={isDisabled ? TOOLTIP : null}>
-        <NxCheckbox
-          {...FormUtils.checkboxProps(PROP_PATH, parentState)}
-          onChange={FormUtils.handleUpdate(PROP_PATH, sendParent)}
-          disabled={isDisabled}
-          overflowTooltip={!isDisabled}
-        >
-          {DESCRIPTION}
-        </NxCheckbox>
-      </NxTooltip>
-    </NxFieldset>
+    <>
+      {isVisible && (
+        <NxFieldset label={LABEL}>
+          <NxTooltip title={isDisabled ? TOOLTIP : null}>
+            <NxCheckbox
+              {...FormUtils.checkboxProps(PROP_PATH, parentState)}
+              onChange={FormUtils.handleUpdate(PROP_PATH, sendParent)}
+              disabled={isDisabled}
+              overflowTooltip={!isDisabled}
+            >
+              {DESCR}
+            </NxCheckbox>
+          </NxTooltip>
+        </NxFieldset>
+      )}
+    </>
   );
 }

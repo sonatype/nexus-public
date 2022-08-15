@@ -828,6 +828,17 @@ export default {
           YES: 'Delete',
           NO: 'Cancel'
         }
+      },
+      PRE_EMPTIVE_AUTH: {
+        LABEL: 'Use pre-emptive authentication',
+        DESCR: <>
+          <strong>Caution! </strong>
+          Use this only when absolutely necessary.
+          Enabling this option means configured authentication
+          credentials will be sent to the remote URL regardless
+          of whether the remote server has asked for them or not.
+        </>,
+        TOOLTIP: 'Proxy\'s URL must be HTTPS to enable this feature'
       }
     }
   },

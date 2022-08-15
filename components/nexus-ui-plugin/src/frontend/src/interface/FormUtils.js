@@ -113,6 +113,10 @@ export default class FormUtils {
             DELETE_DATA_PROPERTY: {
               target: 'loaded',
               actions: 'deleteDataProperty'
+            },
+            ADD_DATA_PROPERTY: {
+              target: 'loaded',
+              actions: 'addDataProperty'
             }
           }
         },
@@ -241,7 +245,14 @@ export default class FormUtils {
         }),
 
         deleteDataProperty: assign({
-          data: ({data}, {propName}) => dissocPath(propName.split('.'), data)
+          data: ({data}, {path}) => dissocPath(path.split('.'), data)
+        }),
+
+        addDataProperty: assign({
+          data: ({data}, {path, value}) => {
+            const pth = path.split('.');
+            return hasPath(pth, data) ? data : set(lensPath(pth), value, data);
+          }
         }),
 
         update: assign({

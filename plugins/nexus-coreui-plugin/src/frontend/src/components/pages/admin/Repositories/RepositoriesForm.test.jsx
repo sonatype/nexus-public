@@ -20,7 +20,8 @@ import {
   waitForElementToBeRemoved,
   getAllByRole,
   getByRole,
-  queryByRole
+  queryByRole,
+  within
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -193,7 +194,11 @@ describe('RepositoriesForm', () => {
       hub: screen.getByLabelText(EDITOR.DOCKER.INDEX.OPTIONS.HUB),
       custom: screen.getByLabelText(EDITOR.DOCKER.INDEX.OPTIONS.CUSTOM)
     }),
-    getDockerIndexUrlInput: () => screen.queryByLabelText(EDITOR.DOCKER.INDEX.URL.LABEL)
+    getDockerIndexUrlInput: () => screen.queryByLabelText(EDITOR.DOCKER.INDEX.URL.LABEL),
+    getPreemptiveAuthCheckbox: () => {
+      const fieldset = screen.queryByRole('group', {name: EDITOR.PRE_EMPTIVE_AUTH.LABEL});
+      return fieldset ? within(fieldset).getByRole('checkbox') : null;
+    }
   };
 
   const renderView = (itemId = '') => {
@@ -651,14 +656,34 @@ describe('RepositoriesForm', () => {
     });
 
     it('creates proxy repository with authentication type settings', async () => {
-      const repo = mergeDeepRight(data, {httpClient: {connection: null}});
+      const repo = mergeDeepRight(data, {
+        httpClient: {
+          connection: null,
+          authentication: {
+            preemptive: true
+          }
+        }
+      });
 
       await renderViewAndSetRequiredFields(repo);
 
-      await TestUtils.changeField(selectors.getRemoteUrlInput, repo.proxy.remoteUrl);
+      await TestUtils.changeField(
+        selectors.getRemoteUrlInput,
+        repo.proxy.remoteUrl.replace('https', 'http')
+      );
       await TestUtils.changeField(selectors.getBlobStoreSelect, repo.storage.blobStoreName);
 
+      expect(selectors.getPreemptiveAuthCheckbox()).not.toBeInTheDocument();
+
       await TestUtils.changeField(selectors.getAuthTypeSelect, repo.httpClient.authentication.type);
+
+      expect(selectors.getPreemptiveAuthCheckbox()).toBeDisabled();
+
+      await TestUtils.changeField(selectors.getRemoteUrlInput, repo.proxy.remoteUrl);
+
+      expect(selectors.getPreemptiveAuthCheckbox()).toBeEnabled();
+      userEvent.click(selectors.getPreemptiveAuthCheckbox());
+
       await TestUtils.changeField(
         selectors.getUsernameInput,
         repo.httpClient.authentication.username
