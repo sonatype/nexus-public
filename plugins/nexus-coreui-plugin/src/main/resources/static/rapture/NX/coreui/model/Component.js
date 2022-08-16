@@ -23,7 +23,11 @@
  */
 Ext.define('NX.coreui.model.Component', {
   extend: 'Ext.data.Model',
+  idProperty: 'groupingKey',
   fields: [
+    {name:'groupingkey', calculate: function(data) {
+        return data.format + '-' + data.id;
+    }},
     {name: 'id', type: 'string', sortType: 'asUCText'},
     {name: 'repositoryName', type: 'string', sortType: 'asUCText'},
     {name: 'group', type: 'string'},
