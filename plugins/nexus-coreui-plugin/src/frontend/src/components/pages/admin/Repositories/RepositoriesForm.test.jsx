@@ -164,8 +164,10 @@ describe('RepositoriesForm', () => {
     getRepodataDepthSelect: () => screen.getByLabelText(EDITOR.REPODATA_DEPTH_LABEL),
     getLayoutPolicySelect: () => screen.getByLabelText(EDITOR.LAYOUT_POLICY_LABEL),
     getContentDispositionSelect: () => screen.getByLabelText(EDITOR.CONTENT_DISPOSITION_LABEL),
-    getRemoveNonCataloguedCheckbox: () => getCheckbox(EDITOR.REMOVE_NON_CATALOGED_LABEL),
-    getRemoveQuarantinedCheckbox: () => getCheckbox(EDITOR.REMOVE_QUARANTINED_LABEL),
+    getRemoveNonCataloguedCheckbox: () =>
+      screen.getByRole('checkbox', {name: EDITOR.NPM.REMOVE_NON_CATALOGED.DESCR}),
+    getRemoveQuarantinedCheckbox: () =>
+      screen.getByRole('checkbox', {name: EDITOR.NPM.REMOVE_QUARANTINED.DESCR}),
     getVersionPolicySelect: () => screen.getByLabelText(EDITOR.VERSION_POLICY_LABEL),
     getDockerConnectorHttpPortCheckbox: () =>
       screen.getAllByRole('checkbox', {name: 'Toggle Text Input'})[0],

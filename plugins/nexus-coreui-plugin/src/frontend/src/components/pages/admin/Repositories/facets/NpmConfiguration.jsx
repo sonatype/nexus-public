@@ -14,17 +14,25 @@ import React from 'react';
 
 import {FormUtils} from '@sonatype/nexus-ui-plugin';
 
-import {NxCheckbox, NxFieldset, NxTextLink} from '@sonatype/react-shared-components';
+import {
+  NxCheckbox,
+  NxFieldset,
+  NxTextLink,
+  NxWarningAlert
+} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
 
-const {EDITOR} = UIStrings.REPOSITORIES;
+const {
+  NPM: {REMOVE_NON_CATALOGED, REMOVE_QUARANTINED},
+  LEARN_MORE
+} = UIStrings.REPOSITORIES.EDITOR;
 
 const getSubLabel = (txt) => (
   <>
-    {txt}
+    {txt}{' '}
     <NxTextLink href="http://links.sonatype.com/products/nxrm3/docs/npm-with-firewall" external>
-      {EDITOR.LEARN_MORE}
+      {LEARN_MORE}
     </NxTextLink>
   </>
 );
@@ -35,29 +43,30 @@ export default function NpmConfiguration({parentMachine}) {
   return (
     <>
       <NxFieldset
-        label={EDITOR.REMOVE_NON_CATALOGED_LABEL}
-        sublabel={getSubLabel(EDITOR.REMOVE_NON_CATALOGED_SUBLABEL)}
+        label={REMOVE_NON_CATALOGED.LABEL}
+        sublabel={getSubLabel(REMOVE_NON_CATALOGED.SUBLABEL)}
         className="nxrm-form-group-remove-non-cataloged"
       >
         <NxCheckbox
           {...FormUtils.checkboxProps('npm.removeNonCataloged', currentParent)}
           onChange={FormUtils.handleUpdate('npm.removeNonCataloged', sendParent)}
         >
-          {EDITOR.REMOVE_NON_CATALOGED_DESCR}
+          {REMOVE_NON_CATALOGED.DESCR}
         </NxCheckbox>
       </NxFieldset>
 
       <NxFieldset
-        label={EDITOR.REMOVE_QUARANTINED_LABEL}
-        sublabel={getSubLabel(EDITOR.REMOVE_QUARANTINED_SUBLABEL)}
+        label={REMOVE_QUARANTINED.LABEL}
+        sublabel={getSubLabel(REMOVE_QUARANTINED.SUBLABEL)}
         className="nxrm-form-group-remove-quarantined"
       >
         <NxCheckbox
           {...FormUtils.checkboxProps('npm.removeQuarantined', currentParent)}
           onChange={FormUtils.handleUpdate('npm.removeQuarantined', sendParent)}
         >
-          {EDITOR.REMOVE_QUARANTINED_DESCR}
+          {REMOVE_QUARANTINED.DESCR}
         </NxCheckbox>
+        <NxWarningAlert>{REMOVE_QUARANTINED.WARNING}</NxWarningAlert>
       </NxFieldset>
     </>
   );

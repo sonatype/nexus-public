@@ -34,6 +34,13 @@
   .nxrm-form-group-asset-matcher {
     margin-left: var(--nx-spacing-12x);
   }
+
+  .nxrm-form-group-remove-quarantined {
+    .nx-alert--warning {
+      width: fit-content;
+      margin-left: var(--nx-spacing-6x);
+    }
+  }
 }
 
 .nxrm-repositories {

@@ -725,12 +725,19 @@ export default {
       CONTENT_DISPOSITION_SUBLABEL: 'Add Content-Disposition header as "Attachment" to disable some content from being inline in a browser',
       VERSION_POLICY_LABEL: 'Version Policy',
       VERSION_POLICY_SUBLABEL: 'What type of artifacts does this repository store?',
-      REMOVE_NON_CATALOGED_LABEL: 'Remove Non-catalogued Versions',
-      REMOVE_NON_CATALOGED_SUBLABEL: 'IQ Audit and Quarantine capability must be enabled for this feature to take effect. ',
-      REMOVE_NON_CATALOGED_DESCR: 'Remove non-catalogued versions from the package metadata',
-      REMOVE_QUARANTINED_LABEL: 'Remove Quarantined Versions',
-      REMOVE_QUARANTINED_SUBLABEL: 'IQ Audit and Quarantine capability must be enabled for this feature to take effect. ',
-      REMOVE_QUARANTINED_DESCR: 'Remove quarantined versions from the package metadata',
+      NPM: {
+        REMOVE_NON_CATALOGED: {
+          LABEL: 'Remove Non-catalogued Versions',
+          SUBLABEL: 'IQ Audit and Quarantine capability must be enabled for this feature to take effect.',
+          DESCR: 'Remove non-catalogued versions from the package metadata'
+        },
+        REMOVE_QUARANTINED: {
+          LABEL: 'Remove Quarantined Versions',
+          SUBLABEL: 'IQ Audit and Quarantine capability must be enabled for this feature to take effect.',
+          DESCR: 'Remove quarantined versions from the package metadata',
+          WARNING: 'This feature requires IQ Server Release 134 or higher'
+        },
+      },
       LEARN_MORE: 'Learn more',
       REPOSITORY_CONNECTORS_CAPTION: 'Repository Connectors',
       HTTP_CONNECTOR_LABEL: 'HTTP',
