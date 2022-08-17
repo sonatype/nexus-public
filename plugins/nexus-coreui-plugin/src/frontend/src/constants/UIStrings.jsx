@@ -115,7 +115,7 @@ export default {
     MESSAGES: {
       CONFIRM_DELETE: {
         TITLE: 'Delete Privilege',
-        MESSAGE: (name) => `Delete the privilege named ${name}?`,
+        MESSAGE: (name) => `Are you sure you want to delete the privilege named "${name}?"`,
         YES: 'Delete',
         NO: 'Cancel'
       },
@@ -198,12 +198,112 @@ export default {
     MESSAGES: {
       CONFIRM_DELETE: {
         TITLE: 'Delete Role',
-        MESSAGE: (name) => `Delete the role named ${name}?`,
+        MESSAGE: (name) => `Are you sure you want to delete the role named "${name}?"`,
         YES: 'Delete',
         NO: 'Cancel'
       },
       DELETE_SUCCESS: (name) => `Role deleted: ${name}`,
     }
+  },
+
+  USERS: {
+    MENU: {
+      text: 'Users',
+      description: 'Manage Users'
+    },
+    MODAL: {
+      TEXT: 'You must confirm your current password before you are able to change or update the password',
+      CHANGE_PASSWORD: 'Change Password',
+      NEXT: 'Next',
+      CONFIRM_PASSWORD: 'Confirm password',
+      NEW_PASSWORD: 'New password',
+      ADMIN_PASSWORD: 'Admin password',
+      CONFIRMING_ADMIN_PASSWORD: 'Confirming Admin Password',
+      ERROR: {
+        MISSING_PASSWORD: 'Password was not supplied in the body of the request',
+        PERMISSION: 'The user does not have permission to perform the operation.',
+        NOT_FOUND: 'User not found in the system.'
+      }
+    },
+    LIST: {
+      CREATE_BUTTON: 'Create Local User',
+      FILTER_PLACEHOLDER: 'Filter by user ID',
+      EMPTY_LIST: 'There are no users available',
+      COLUMNS: {
+        USER_ID: 'User ID',
+        REALM: 'Realm',
+        FIRST_NAME: 'First Name',
+        LAST_NAME: 'Last Name',
+        EMAIL: 'Email',
+        STATUS: 'Status',
+      },
+      HELP: {
+        TITLE: 'What is a User?',
+        TEXT: <>
+          A user is an individual account attached to a single ID and email address.
+          See our{' '}
+          <NxTextLink external href="http://links.sonatype.com/products/nxrm3/docs/users">
+            documentation
+          </NxTextLink>
+          {' '}for more information.
+        </>,
+      },
+    },
+    FORM: {
+      CREATE_TITLE: 'Create User',
+      EDIT_TILE: (name) => `Edit ${name}`,
+      EDIT_DESCRIPTION: 'Nexus User',
+      DEFAULT_USER_WARNING: 'This is a default user and cannot be modified.',
+      SECTIONS: {
+        SETUP: 'User Setup',
+        ROLES: 'Roles',
+      },
+      ID: {
+        LABEL: 'ID',
+        SUB_LABEL: 'This will be used as the username',
+      },
+      FIRST_NAME: {
+        LABEL: 'First Name',
+      },
+      LAST_NAME: {
+        LABEL: 'Last Name',
+      },
+      EMAIL: {
+        LABEL: 'Email',
+        SUB_LABEL: 'Used for notifications',
+      },
+      PASSWORD: {
+        LABEL: 'Password',
+      },
+      CONFIRM_PASSWORD: {
+        LABEL: 'Confirm password',
+      },
+      STATUS: {
+        LABEL: 'Status',
+        OPTIONS: {
+          ACTIVE: 'Active',
+          DISABLED: 'Disabled',
+        }
+      },
+      ROLES: {
+        AVAILABLE: 'Available',
+        GRANTED: 'Granted',
+        EMPTY_LIST: 'There are no assigned roles.',
+      },
+      EXTERNAL_ROLES: {
+        LABEL: 'External Roles',
+        EMPTY_LIST: 'No roles from the external system were mapped for this user.',
+      },
+    },
+    MESSAGES: {
+      CONFIRM_DELETE: {
+        TITLE: 'Delete User',
+        MESSAGE: (name) => `Are you sure you want to delete the user named "${name}?"`,
+        YES: 'Delete',
+        NO: 'Cancel'
+      },
+      DELETE_SUCCESS: (name) => `User deleted: ${name}`,
+    },
   },
 
   SSL_CERTIFICATES: {
@@ -1042,7 +1142,6 @@ This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 
       LOAD_ERROR: 'An error occurred while loading User Account, see console for more details',
       UPDATE_SUCCESS: 'User account settings updated',
       UPDATE_ERROR: 'An error occurred while updating user account settings',
-      PASSWORD_NO_MATCH_ERROR: 'Passwords do not match',
       PASSWORD_MUST_DIFFER_ERROR: 'New password must be different',
       PASSWORD_CHANGE_SUCCESS: 'Password changed',
       PASSWORD_CHANGE_ERROR: 'Change password failed',

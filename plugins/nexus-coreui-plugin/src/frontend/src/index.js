@@ -18,6 +18,7 @@ import ContentSelectors from './components/pages/admin/ContentSelectors/ContentS
 import EmailServer from './components/pages/admin/EmailServer/EmailServer';
 import Privileges from './components/pages/admin/Privileges/Privileges';
 import Roles from './components/pages/admin/Roles/Roles';
+import Users from './components/pages/admin/Users/Users';
 import SslCertificates from './components/pages/admin/SslCertificates/SslCertificates';
 import AnonymousSettings from './components/pages/admin/AnonymousSettings/AnonymousSettings';
 import BlobStores from './components/pages/admin/BlobStores/BlobStores';
@@ -163,6 +164,19 @@ window.plugins.push({
         featureFlags: [{key: 'nexus.react.sslCertificates', defaultValue: false}],
         permissions: ['nexus:ssl-truststore:read']
       }
+    },
+    {
+      mode: 'admin',
+      path: '/Security/Users-New',
+      ...UIStrings.USERS.MENU,
+      view: Users,
+      iconCls: 'x-fa fa-users',
+      weight: 30,
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        featureFlags: [{key: 'nexus.react.users', defaultValue: false}],
+        permissions: ['nexus:users:read', 'nexus:roles:read'],
+      },
     },
     {
       mode: 'admin',

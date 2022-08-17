@@ -59,6 +59,8 @@ export default {
     URL_NEEDS_TRAILING_SLASH: 'URL should be in the format "http://www.example.com/" and must include a trailing slash',
     UNKNOWN: 'An unknown error has occurred',
     TRIM_ERROR: 'This field may not start or end with a space',
+    PASSWORD_NO_MATCH_ERROR: 'Passwords do not match',
+    NOT_FOUND_ERROR: (name) => `"${name}" not found`,
   },
 
   SAVE_SUCCESS: 'The form was saved successfully',

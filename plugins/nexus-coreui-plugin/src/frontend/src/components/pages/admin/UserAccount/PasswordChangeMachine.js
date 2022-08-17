@@ -54,7 +54,7 @@ export default FormUtils.buildFormMachine({
           passwordNewConfirmError.push(UIStrings.ERROR.FIELD_REQUIRED);
         }
         if (passwordNew !== passwordNewConfirm) {
-          passwordNewConfirmError.push(UIStrings.USER_ACCOUNT.MESSAGES.PASSWORD_NO_MATCH_ERROR);
+          passwordNewConfirmError.push(UIStrings.ERROR.PASSWORD_NO_MATCH_ERROR);
         }
 
         return {

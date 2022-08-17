@@ -122,6 +122,7 @@ export default class ExtAPIUtils {
       limit = SMALL_PAGE_SIZE,
       sortField,
       sortDirection = ASC,
+      filter,
       filterValue,
       filterField = 'filter',
       query,
@@ -140,7 +141,9 @@ export default class ExtAPIUtils {
       }];
     }
 
-    if (filterValue) {
+    if (filter) {
+      requestData.filter = filter;
+    } else if (filterValue) {
       requestData.filter = [{
         property: filterField,
         value: filterValue,

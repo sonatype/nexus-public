@@ -14,6 +14,10 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+import {APIConstants} from '@sonatype/nexus-ui-plugin';
+
+const {REST: {PUBLIC: {ROLES: rolesUrl, PRIVILEGES: privilegesUrl}}} = APIConstants;
+
 export const TYPES = {
   INTERNAL: 'internal',
   EXTERNAL: 'external',
@@ -27,8 +31,6 @@ export const EMPTY_DATA = {
   roles: [],
 };
 
-const rolesUrl = '/service/rest/v1/security/roles';
-const privilegesUrl = '/service/rest/v1/security/privileges';
 const sourcesApi = {action: 'coreui_Role', method: 'readSources'};
 const getRolesUrl = (source) => `${rolesUrl}?source=${encodeURIComponent(source)}`;
 const defaultRolesUrl = getRolesUrl('default');

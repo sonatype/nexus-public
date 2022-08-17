@@ -79,8 +79,8 @@ export default class ValidationUtils {
       return false;
     }
 
-    // Need to extract hostname manually because URL object has encoded hostname 
-    // that cannot be decoded to original form. 
+    // Need to extract hostname manually because URL object has encoded hostname
+    // that cannot be decoded to original form.
     // For exampel 'http://fo£o.bar' encodes to 'xn--foo-cea.bar'.
     const matches = str.match(/^https?:\/\/([^:/?#]+)/i);
     const hostname = matches && matches[1];
@@ -266,5 +266,17 @@ export default class ValidationUtils {
         return this.isInvalid(error);
       }
     }));
+  }
+
+  /**
+   * Checks if two passwords match
+   * @param password
+   * @param passwordConfirmation
+   * @returns {string|null} UIStrings.ERROR.PASSWORD_NO_MATCH_ERROR if the two values differ
+   */
+  static validatePasswordsMatch(password, passwordConfirmation) {
+    if (password !== passwordConfirmation) {
+      return UIStrings.ERROR.PASSWORD_NO_MATCH_ERROR;
+    }
   }
 }
