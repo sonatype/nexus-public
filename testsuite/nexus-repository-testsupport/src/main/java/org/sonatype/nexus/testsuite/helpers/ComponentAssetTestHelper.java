@@ -187,6 +187,11 @@ public interface ComponentAssetTestHelper
   void setLastDownloadedTime(Repository repository, int minusSeconds);
 
   /**
+   * Set the last downloaded time for assets where path matches regex in a repository.
+   */
+  void setLastDownloadedTime(Repository repository, int minusSeconds, String regex);
+
+  /**
    * Set the last updated time for all components in a repository.
    */
   void setComponentLastUpdatedTime(Repository repository, final Date date);
@@ -200,6 +205,8 @@ public interface ComponentAssetTestHelper
    * Set the last updated time for a single asset
    */
   void setAssetLastUpdatedTime(final Repository repository, final String path, final Date date);
+
+  void setAssetBlobUpdatedTime(final Repository repository, final String pathRegex, final Date date);
 
   /**
    * Set null to the last downloaded time column for all assets in a repository.
