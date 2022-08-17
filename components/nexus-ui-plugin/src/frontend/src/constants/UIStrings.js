@@ -45,6 +45,7 @@ export default {
   ERROR: {
     DECIMAL: 'This field must not contain decimal values',
     FIELD_REQUIRED: 'This field is required',
+    HOSTNAME: 'Hostname must be valid',
     NAN: 'This field must contain a numeric value',
     MIN: (min) => `The minimum value for this field is ${min}`,
     MAX: (max) => `The maximum value for this field is ${max}`,

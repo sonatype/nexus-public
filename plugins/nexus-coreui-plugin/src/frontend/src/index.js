@@ -15,6 +15,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import ContentSelectors from './components/pages/admin/ContentSelectors/ContentSelectors';
+import EmailServer from './components/pages/admin/EmailServer/EmailServer';
 import Privileges from './components/pages/admin/Privileges/Privileges';
 import Roles from './components/pages/admin/Roles/Roles';
 import SslCertificates from './components/pages/admin/SslCertificates/SslCertificates';
@@ -125,6 +126,18 @@ window.plugins.push({
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         featureFlags: [{key: 'nexus.react.privileges', defaultValue: false}],
         permissions: ['nexus:privileges:read']
+      },
+    },
+    {
+      mode: 'admin',
+      path: '/System/EmailServer-New',
+      ...UIStrings.EMAIL_SERVER.MENU,
+      view: EmailServer,
+      iconCls: 'x-fa fa-envelope',
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        featureFlags: [{key: 'nexus.react.emailServer', defaultValue: false}],
+        permissions: ['nexus:settings:read']
       },
     },
     {

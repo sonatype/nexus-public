@@ -123,6 +123,12 @@ export default {
       get SSL_CERTIFICATES() {
         return `${this.BASE_URL}security/ssl/truststore`;
       },
+      get EMAIL_SERVER() {
+        return `${this.BASE_URL}email`;
+      },
+      get VERIFY_EMAIL_SERVER() {
+        return `${this.BASE_URL}email/verify`;
+      },
     },
   },
   DEBOUNCE_DELAY: 500,

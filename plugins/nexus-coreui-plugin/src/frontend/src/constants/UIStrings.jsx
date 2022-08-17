@@ -292,6 +292,49 @@ export default {
     },
   },
 
+  EMAIL_SERVER: {
+    MENU: {
+      text: 'Email Server',
+      description: 'Manage email server configuration'
+    },
+    FORM: {
+      SECTIONS: {
+        SETUP: 'Email Server Configuration',
+      },
+      ENABLED: {
+        LABEL: 'Enable Email Server',
+        SUB_LABEL: 'Enabled',
+      },
+      HOST: {
+        LABEL: 'Host',
+      },
+      PORT: {
+        LABEL: 'Port',
+      },
+      USERNAME: {
+        LABEL: 'Username',
+      },
+      PASSWORD: {
+        LABEL: 'Password',
+      },
+      FROM_ADDRESS: {
+        LABEL: 'From Address',
+      },
+      SUBJECT_PREFIX: {
+        LABEL: 'Subject Prefix',
+      },
+      SSL_TLS_OPTIONS: {
+        LABEL: 'SSL/TLS Options',
+        OPTIONS: {
+          ENABLE_STARTTLS: 'Enable STARTTLS support for insecure connections',
+          REQUIRE_STARTTLS: 'Require STARTTLS support',
+          ENABLE_SSL_TLS: 'Enable SSL/TLS encryption upon connection',
+          IDENTITY_CHECK: 'Enable server identity check',
+        },
+      },
+    },
+  },
+
   BLOB_STORES: {
     MENU: {
       text: 'Blob Stores',

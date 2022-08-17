@@ -16,38 +16,32 @@
  */
 import {assign} from 'xstate';
 import Axios from 'axios';
-import {ExtJS, FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
+import {FormUtils, APIConstants, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 
-import UIStrings from '../../../../constants/UIStrings';
+const {REST: {PUBLIC: {EMAIL_SERVER : emailServerUrl}}} = APIConstants;
 
-const userAccountMachine = FormUtils.buildFormMachine({
-  id: 'UserAccount'
+export default FormUtils.buildFormMachine({
+  id: 'EmailServerMachine',
 }).withConfig({
   actions: {
-    logLoadError: ({error}) => {
-      if (error) {
-        console.error(error);
-      }
-      ExtJS.showErrorMessage(UIStrings.USER_ACCOUNT.MESSAGES.LOAD_ERROR);
-    },
-    logSaveSuccess: () => {
-      ExtJS.showSuccessMessage(UIStrings.USER_ACCOUNT.MESSAGES.UPDATE_SUCCESS);
-    },
-
     validate: assign({
-      validationErrors: ({data}) => ({
-        firstName: ValidationUtils.validateNotBlank(data.firstName),
-        lastName: ValidationUtils.validateNotBlank(data.lastName),
-        email: ValidationUtils.validateNotBlank(data.email) || ValidationUtils.validateEmail(data.email),
-      })
-    })
+      validationErrors: ({data: {host, port, fromAddress}}) => {
+        return {
+          host: ValidationUtils.validateNotBlank(host) || ValidationUtils.validateHost(host),
+          port: ValidationUtils.validateNotBlank(port) ||
+              ValidationUtils.isInRange({
+                value: port,
+                min: 1,
+                max: 65535,
+                allowDecimals: false
+              }),
+          fromAddress: ValidationUtils.validateNotBlank(fromAddress) || ValidationUtils.validateEmail(fromAddress),
+        };
+      },
+    }),
   },
   services: {
-    fetchData: () => Axios.get('/service/rest/internal/ui/user'),
-    saveData: ({data}) => {
-      return Axios.put('/service/rest/internal/ui/user', data);
-    }
-  }
+    fetchData: () => Axios.get(emailServerUrl),
+    saveData: ({data}) => Axios.put(emailServerUrl, data),
+  },
 });
-
-export default userAccountMachine;
