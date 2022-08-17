@@ -35,6 +35,7 @@ import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
 import org.sonatype.nexus.common.cooperation2.CooperationException;
 import org.sonatype.nexus.common.cooperation2.datastore.DefaultCooperation2Factory;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheControllerHolder;
@@ -106,6 +107,9 @@ public class ConcurrentProxyTest
 
   @Mock
   Content assetContent;
+
+  @Mock
+  EventManager eventManager;
 
   Cooperation2Factory cooperationFactory = new DefaultCooperation2Factory();
 
@@ -201,6 +205,7 @@ public class ConcurrentProxyTest
 
     when(repository.getName()).thenReturn("test-repo");
 
+    underTest.installDependencies(eventManager);
     underTest.cacheControllerHolder = cacheControllerHolder;
     underTest.attach(repository);
   }

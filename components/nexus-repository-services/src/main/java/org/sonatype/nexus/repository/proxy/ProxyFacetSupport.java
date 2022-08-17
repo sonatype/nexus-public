@@ -267,9 +267,11 @@ public abstract class ProxyFacetSupport
   @Override
   public Content get(final Context context) throws IOException {
     checkNotNull(context);
+    getEventManager().post(new ProxyRequestEvent(getRepository().getFormat().getValue()));
 
     Content content = maybeGetCachedContent(context);
     if (!isStale(context, content)) {
+      getEventManager().post(new ProxyCacheHitEvent(getRepository().getFormat().getValue()));
       return content;
     }
     return get(context, content);
@@ -283,6 +285,7 @@ public abstract class ProxyFacetSupport
         .checkFunction(() -> {
           Content latestContent = maybeGetCachedContent(context);
           if (!isStale(context, latestContent)) {
+            getEventManager().post(new ProxyCacheHitEvent(getRepository().getFormat().getValue()));
             return Optional.of(latestContent);
           }
           return Optional.empty();
@@ -336,7 +339,6 @@ public abstract class ProxyFacetSupport
         Closeables.close(remote, true);
       }
     }
-
     return content;
   }
 
@@ -521,8 +523,7 @@ public abstract class ProxyFacetSupport
   /**
    * Create {@link Content} out of HTTP response.
    */
-  protected Content createContent(final Context context, final HttpResponse response)
-  {
+  protected Content createContent(final Context context, final HttpResponse response) {
     return new Content(new HttpEntityPayload(response, response.getEntity()));
   }
 
@@ -554,8 +555,7 @@ public abstract class ProxyFacetSupport
    * Execute http client request.
    */
   protected HttpResponse execute(final Context context, final HttpClient client, final HttpRequestBase request)
-      throws IOException
-  {
+      throws IOException {
     return client.execute(request);
   }
 
