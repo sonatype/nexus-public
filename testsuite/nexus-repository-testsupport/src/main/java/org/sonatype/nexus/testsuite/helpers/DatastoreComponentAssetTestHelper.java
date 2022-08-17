@@ -425,6 +425,31 @@ public class DatastoreComponentAssetTestHelper
   }
 
   @Override
+  public void setLastDownloadedTime(final Repository repository, final int minusSeconds, final String regex) {
+    int repositoryId = ((ContentFacetSupport) repository.facet(ContentFacet.class)).contentRepositoryId();
+
+    Timestamp time = Timestamp.from(Instant.now().minusSeconds(minusSeconds));
+
+    try (Connection connection = sessionSupplier.openConnection(DEFAULT_DATASTORE_NAME);
+         PreparedStatement stmt = connection.prepareStatement("UPDATE " + repository.getFormat().getValue() + "_asset "
+             + "SET last_downloaded = ? WHERE repository_id = ? AND path ~ ?")) {
+      stmt.setTimestamp(1, time);
+      stmt.setInt(2, repositoryId);
+      stmt.setString(3, regex);
+      stmt.execute();
+      if (stmt.getWarnings() != null) {
+        throw new RuntimeException(UPDATE_TIME_ERROR_MESSAGE + stmt.getWarnings());
+      }
+    }
+    catch (SQLException e) {
+      throw new RuntimeException(e);
+    }
+
+    streamOf(repository.facet(ContentFacet.class).assets()::browse)
+        .forEach(asset -> sendEvent(repository, asset));
+  }
+
+  @Override
   public void setComponentLastUpdatedTime(Repository repository, final Date date) {
     setLastUpdatedTime(repository, date, "component");
   }
@@ -471,6 +496,29 @@ public class DatastoreComponentAssetTestHelper
       stmt.execute();
       if (stmt.getWarnings() != null) {
         throw new RuntimeException("Failed to set updated time: " + stmt.getWarnings());
+      }
+    }
+    catch (SQLException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public void setAssetBlobUpdatedTime(final Repository repository, final String pathRegex, final Date date) {
+    int repositoryId = repository.facet(ContentFacet.class).contentRepositoryId();
+
+    try (Connection connection = sessionSupplier
+        .openConnection(DEFAULT_DATASTORE_NAME); PreparedStatement stmt = connection.prepareStatement(
+        "UPDATE " + repository.getFormat().getValue() + "_asset_blob ab" +
+            " SET blob_created = ?" +
+            " WHERE EXISTS (SELECT * FROM " + repository.getFormat().getValue() + "_asset a" +
+            " WHERE a.asset_blob_id = ab.asset_blob_id AND a.repository_id = ? AND a.path ~ ?)")) {
+      stmt.setTimestamp(1, Timestamp.from(date.toInstant()));
+      stmt.setInt(2, repositoryId);
+      stmt.setString(3, pathRegex);
+      stmt.execute();
+      if (stmt.getWarnings() != null) {
+        throw new RuntimeException("Failed to set blob created time: " + stmt.getWarnings());
       }
     }
     catch (SQLException e) {

@@ -418,6 +418,15 @@ public class OrientComponentAssetTestHelper
   }
 
   @Override
+  public void setLastDownloadedTime(final Repository repository, final int minusSeconds, final String regex) {
+    updateAssets(repository, asset -> {
+      if (asset.name().matches(regex)) {
+        asset.lastDownloaded(DateTime.now().minusSeconds(minusSeconds));
+      }
+    });
+  }
+
+  @Override
   public void setComponentLastUpdatedTime(Repository repository, final Date date) {
     setEntityLastUpdatedTime(repository, date, "component");
   }
@@ -447,6 +456,17 @@ public class OrientComponentAssetTestHelper
     sqlParams.put("repositoryName", repository.getName());
     sqlParams.put("assetName", path);
     sqlParams.put("lastUpdated", date);
+    execute(sql, sqlParams);
+  }
+
+  @Override
+  public void setAssetBlobUpdatedTime(final Repository repository, final String pathRegex, final Date date)  {
+    String sql = "UPDATE asset SET blob_updated = :blobUpdated WHERE bucket.repository_name = :repositoryName" +
+        " AND name MATCHES :pathRegex";
+    HashMap<String, Object> sqlParams = new HashMap<>();
+    sqlParams.put("repositoryName", repository.getName());
+    sqlParams.put("pathRegex", pathRegex);
+    sqlParams.put("blobUpdated", date);
     execute(sql, sqlParams);
   }
 
