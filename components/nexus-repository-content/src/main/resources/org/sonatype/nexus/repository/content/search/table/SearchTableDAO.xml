@@ -207,6 +207,7 @@
         cs.search_repository_name, cs.format, cs.component_created, cs.uploader, cs.uploader_ip
     ORDER BY ${sortColumnName} ${sortDirection}
     <if test="sortColumnName != defaultSortColumnName">, ${defaultSortColumnName}</if>
+    <if test="sortColumnName != secondDefaultSortColumnName">, ${secondDefaultSortColumnName}</if>
     <if test="limit != null">LIMIT #{limit}</if>
     OFFSET #{offset};
   </select>

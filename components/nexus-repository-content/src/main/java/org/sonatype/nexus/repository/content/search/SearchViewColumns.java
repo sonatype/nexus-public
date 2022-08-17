@@ -26,7 +26,8 @@ public enum SearchViewColumns
   SEARCH_COMPONENT_NAME("componentName"),
   VERSION("version"),
   NORMALISED_VERSION("normalised_version"),
-  REPOSITORY_NAME("repositoryName");
+  REPOSITORY_NAME("repositoryName"),
+  FORMAT("format");
 
   private final String name;
 

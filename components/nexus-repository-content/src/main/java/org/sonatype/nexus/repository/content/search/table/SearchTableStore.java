@@ -235,7 +235,6 @@ public class SearchTableStore
       crossFormatSearch = formatValues.containsKey("name") && !formatValues.containsKey("format");
     }
 
-    final String defaultSortColumnName = SearchViewColumns.COMPONENT_ID.name();
     final String sortColumnName = sortViewColumnName.name();
     final String sortDirection = Optional.ofNullable(sortDirectionEnum).orElse(SortDirection.ASC).name();
     SqlSearchRequest request;
@@ -265,7 +264,6 @@ public class SearchTableStore
           .tagToComponentIds(taggedComponentIds)
           .sortColumnName(sortColumnName)
           .sortDirection(sortDirection)
-          .defaultSortColumnName(defaultSortColumnName)
           .build();
     }
     else {
@@ -278,7 +276,6 @@ public class SearchTableStore
           .searchFilterValues(formatValues)
           .sortColumnName(sortColumnName)
           .sortDirection(sortDirection)
-          .defaultSortColumnName(defaultSortColumnName)
           .build();
     }
     return request;

@@ -160,7 +160,6 @@ public class SearchTableDAOTest
         .limit(10)
         .sortColumnName(SearchViewColumns.COMPONENT_ID.name())
         .sortDirection(SortDirection.ASC.name())
-        .defaultSortColumnName(SearchViewColumns.COMPONENT_ID.name())
         .build();
     Collection<SearchResult> actual = searchDAO.searchComponents(request);
     Optional<SearchResult> componentSearch = actual.stream().findFirst();
@@ -198,7 +197,6 @@ public class SearchTableDAOTest
         .searchFilterValues(values)
         .limit(10)
         .sortColumnName(SearchViewColumns.COMPONENT_ID.name())
-        .defaultSortColumnName(SearchViewColumns.COMPONENT_ID.name())
         .build();
     Collection<SearchResult> results = searchDAO.searchComponents(request);
 
@@ -216,7 +214,6 @@ public class SearchTableDAOTest
         .offset(10)
         .sortColumnName(SearchViewColumns.COMPONENT_ID.name())
         .sortDirection(SortDirection.ASC.name())
-        .defaultSortColumnName(SearchViewColumns.COMPONENT_ID.name())
         .build();
 
     Collection<SearchResult> actual = searchDAO.searchComponents(request);
@@ -238,7 +235,6 @@ public class SearchTableDAOTest
         .tagToComponentIds(taggedComponentIds)
         .sortColumnName(SearchViewColumns.COMPONENT_ID.name())
         .sortDirection(SortDirection.ASC.name())
-        .defaultSortColumnName(SearchViewColumns.COMPONENT_ID.name())
         .build();
     List<SearchResult> actual = (List<SearchResult>) searchDAO.searchComponents(request);
     assertThat(actual.size(), is(1));
