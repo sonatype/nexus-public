@@ -47,7 +47,10 @@ public class SqlSearchRequest
   public final String sortDirection;
 
   // Column name to be used for default/secondary sort
-  public final String defaultSortColumnName;
+  public static final String defaultSortColumnName = SearchViewColumns.FORMAT.name();
+
+  // Column name to be used for second default sort
+  public static final String secondDefaultSortColumnName = SearchViewColumns.COMPONENT_ID.name();
 
   private SqlSearchRequest(final Builder builder) {
     this.limit = builder.limit;
@@ -56,7 +59,6 @@ public class SqlSearchRequest
     this.filterParams = builder.filterParams;
     this.sortColumnName = builder.sortColumnName;
     this.sortDirection = builder.sortDirection;
-    this.defaultSortColumnName = builder.defaultSortColumnName;
     this.tagToComponentIds = builder.tagToComponentIds;
   }
 
@@ -79,8 +81,6 @@ public class SqlSearchRequest
     private String sortColumnName;
 
     private String sortDirection;
-
-    private String defaultSortColumnName;
 
     public Builder limit(final int limit) {
       this.limit = limit;
@@ -109,11 +109,6 @@ public class SqlSearchRequest
 
     public Builder sortDirection(final String sortDirection) {
       this.sortDirection = sortDirection;
-      return this;
-    }
-
-    public Builder defaultSortColumnName(final String defaultSortColumnName) {
-      this.defaultSortColumnName = defaultSortColumnName;
       return this;
     }
 

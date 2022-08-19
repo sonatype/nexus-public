@@ -125,7 +125,7 @@ public class BlockingHttpClient
       int statusCode = response.getStatusLine().getStatusCode();
 
       if (autoBlockConfiguration.shouldBlock(statusCode)) {
-        updateStatusToUnavailable(getReason(statusCode), target);
+        updateStatusToUnavailable(getReason(statusCode), statusCode, target);
       }
       else {
         updateStatusToAvailable();
@@ -134,7 +134,7 @@ public class BlockingHttpClient
     }
     catch (IOException e) {
       if (isRemoteUnavailable(e)) {
-        updateStatusToUnavailable(getReason(e), target);
+        updateStatusToUnavailable(getReason(e), null, target);
       }
       throw e;
     }
@@ -149,7 +149,8 @@ public class BlockingHttpClient
     updateStatus(AVAILABLE);
   }
 
-  private synchronized void updateStatusToUnavailable(final String reason, final HttpHost target) {
+  private synchronized void updateStatusToUnavailable(final String reason, @Nullable final Integer statusCode,
+                                                      final HttpHost target) {
     if (autoBlock) {
       // avoid some other thread already increased the sequence
       if (blockedUntil == null || blockedUntil.isBeforeNow()) {
@@ -159,10 +160,10 @@ public class BlockingHttpClient
         // TODO maybe find different means to schedule status checking
         scheduleCheckStatus(uri, blockedUntil);
       }
-      updateStatus(AUTO_BLOCKED_UNAVAILABLE, reason, target.toURI(), blockedUntil.isAfter(status.getBlockedUntil()));
+      updateStatus(AUTO_BLOCKED_UNAVAILABLE, reason, statusCode, target.toURI(), blockedUntil.isAfter(status.getBlockedUntil()));
     }
     else {
-      updateStatus(UNAVAILABLE, reason, target.toURI(), false);
+      updateStatus(UNAVAILABLE, reason, statusCode, target.toURI(), false);
     }
   }
 
@@ -175,12 +176,14 @@ public class BlockingHttpClient
 
   private void updateStatus(final RemoteConnectionStatusType type,
                             final String reason,
+                            @Nullable final Integer statusCode,
                             @Nullable final String url,
                             final boolean autoBlockTimeIncrease)
   {
     if (type != status.getType() || autoBlockTimeIncrease) {
       RemoteConnectionStatus oldStatus = status;
       status = new RemoteConnectionStatus(type, reason)
+          .setStatusCode(statusCode)
           .setBlockedUntil(blockedUntil)
           .setRequestUrl(url);
       statusObserver.onStatusChanged(oldStatus, status);
@@ -188,7 +191,7 @@ public class BlockingHttpClient
   }
 
   private void updateStatus(final RemoteConnectionStatusType type) {
-    updateStatus(type, null, null, false);
+    updateStatus(type, null, null, null, false);
   }
 
   public RemoteConnectionStatus getStatus() {

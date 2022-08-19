@@ -136,6 +136,15 @@ describe('ExtAPIUtils', () => {
         expect(ExtAPIUtils.createData(options)).toEqual(result);
       });
 
+      it('returns unmodified filter parameters when presents', () => {
+        let options = {filter: [{property: 'name', value: 'test'}], filterValue: 'test'};
+        let result = [{
+          ...defaultPaginationParams,
+          filter: options.filter,
+        }];
+        expect(ExtAPIUtils.createData(options)).toEqual(result);
+      });
+
       it('returns sorting parameters', () => {
         let options = {sortField: 'test'};
         let result = [{

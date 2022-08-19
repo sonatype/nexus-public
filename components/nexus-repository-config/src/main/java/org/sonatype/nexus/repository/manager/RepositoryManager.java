@@ -66,4 +66,6 @@ public interface RepositoryManager
    * @since 3.21
    */
   Configuration newConfiguration();
+
+  int count();
 }

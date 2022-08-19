@@ -23,6 +23,8 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.cooperation2.datastore.DefaultCooperation2Factory;
+import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.MissingBlobException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.CacheController;
@@ -135,6 +137,12 @@ public class ProxyFacetSupportTest
   @Mock
   Repository repository;
 
+  @Mock
+  EventManager eventManager;
+
+  @Mock
+  private Format format;
+
   @Before
   public void setUp() throws Exception {
     when(content.getAttributes()).thenReturn(attributesMap);
@@ -152,6 +160,10 @@ public class ProxyFacetSupportTest
     when(missingContext.getRequest()).thenReturn(request);
 
     underTest.cacheControllerHolder = cacheControllerHolder;
+    when(format.getValue()).thenReturn("raw");
+    when(repository.getFormat()).thenReturn(format);
+
+    underTest.installDependencies(eventManager);
     underTest.attach(repository);
     underTest.configureCooperation(new DefaultCooperation2Factory(), false, Duration.ofSeconds(0),
         Duration.ofSeconds(60), 10);

@@ -22,24 +22,18 @@ const {LABEL, DESCRIPTION, TOOLTIP} = UIStrings.REPOSITORIES.EDITOR.REDEPLOY_LAT
 
 const ALLOW_ONCE = 'ALLOW_ONCE';
 
+const PROP_PATH = 'storage.latestPolicy';
+
 export default function DockerRedeployLatesConfiguration({parentMachine}) {
   const [parentState, sendParent] = parentMachine;
 
-  const {
-    data: {
-      storage: {writePolicy, latestPolicy}
-    }
-  } = parentState.context;
-
-  const propName = 'storage.latestPolicy';
+  const {writePolicy} = parentState.context.data.storage;
 
   useEffect(() => {
     if (writePolicy === ALLOW_ONCE) {
-      if (latestPolicy === undefined) {
-        sendParent({type: 'UPDATE', name: propName, value: false});
-      }
+      sendParent({type: 'ADD_DATA_PROPERTY', path: PROP_PATH, value: false});
     } else {
-      sendParent({type: 'DELETE_DATA_PROPERTY', propName});
+      sendParent({type: 'DELETE_DATA_PROPERTY', path: PROP_PATH});
     }
   }, [writePolicy]);
 
@@ -49,8 +43,8 @@ export default function DockerRedeployLatesConfiguration({parentMachine}) {
     <NxFieldset label={LABEL}>
       <NxTooltip title={isDisabled ? TOOLTIP : null}>
         <NxCheckbox
-          {...FormUtils.checkboxProps(propName, parentState)}
-          onChange={FormUtils.handleUpdate(propName, sendParent)}
+          {...FormUtils.checkboxProps(PROP_PATH, parentState)}
+          onChange={FormUtils.handleUpdate(PROP_PATH, sendParent)}
           disabled={isDisabled}
           overflowTooltip={!isDisabled}
         >

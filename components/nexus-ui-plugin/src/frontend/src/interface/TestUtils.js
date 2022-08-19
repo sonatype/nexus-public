@@ -116,4 +116,8 @@ export default class TestUtils {
       }
     };
   }
+
+  static get XSS_STRING() {
+    return 'XSS!<img src="/static/rapture/resources/icons/x16/user.png" onload="alert(0)">';
+  }
 }

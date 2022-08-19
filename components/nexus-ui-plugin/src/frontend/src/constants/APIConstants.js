@@ -64,7 +64,15 @@ export default {
         READ_TYPES: 'readTypes',
       },
     },
+    USER: {
+      ACTION: 'coreui_User',
+      METHODS: {
+        READ: 'read',
+        READ_SOURCES: 'readSources',
+      },
+    },
     SMALL_PAGE_SIZE: 25,
+    MIDDLE_PAGE_SIZE: 50,
     BIG_PAGE_SIZE: 300,
     DEFAULT_FIELD_CONFIG: {
       id: 'id',
@@ -84,7 +92,14 @@ export default {
       idMapping: null,
       nameMapping: null,
       allowAutocomplete: false,
-    }
+    },
+    HTTP: {
+      ACTION: 'coreui_HttpSettings',
+      METHODS: {
+        READ: 'read',
+        UPDATE: 'update'
+      }
+    },
   },
   REST: {
     INTERNAL: {
@@ -97,6 +112,9 @@ export default {
       },
       get REPOSITORIES_REPOSITORY() {
         return `${this.REPOSITORIES}repository/`;
+      },
+      get CURRENT_USER() {
+        return `${this.BASE_URL}user/`;
       }
     },
     PUBLIC: {
@@ -107,6 +125,12 @@ export default {
       get PRIVILEGES() {
         return `${this.BASE_URL}security/privileges`;
       },
+      get USERS() {
+        return `${this.BASE_URL}security/users`;
+      },
+      get ROLES() {
+        return `${this.BASE_URL}security/roles`;
+      },
       get ACTIVE_REALMS() {
         return `${this.BASE_URL}security/realms/active`;
       },
@@ -115,6 +139,12 @@ export default {
       },
       get SSL_CERTIFICATES() {
         return `${this.BASE_URL}security/ssl/truststore`;
+      },
+      get EMAIL_SERVER() {
+        return `${this.BASE_URL}email`;
+      },
+      get VERIFY_EMAIL_SERVER() {
+        return `${this.BASE_URL}email/verify`;
       },
     },
   },

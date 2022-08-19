@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.httpclient;
 
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 import org.joda.time.DateTime;
@@ -29,6 +30,8 @@ public class RemoteConnectionStatus
 
   private final String reason;
 
+  private Integer statusCode;
+
   private DateTime blockedUntil;
 
   private String requestUrl;
@@ -37,7 +40,8 @@ public class RemoteConnectionStatus
     this(type, null);
   }
 
-  public RemoteConnectionStatus(final RemoteConnectionStatusType type, @Nullable final String reason) {
+  public RemoteConnectionStatus(final RemoteConnectionStatusType type,
+                                @Nullable final String reason) {
     this.type = checkNotNull(type);
     this.reason = reason;
   }
@@ -56,6 +60,10 @@ public class RemoteConnectionStatus
   @Nullable
   public String getReason() {
     return reason;
+  }
+
+  public Optional<Integer> getStatusCode() {
+    return Optional.ofNullable(statusCode);
   }
 
   @Override
@@ -96,6 +104,11 @@ public class RemoteConnectionStatus
    */
   public RemoteConnectionStatus setRequestUrl(@Nullable final String requestUrl) {
     this.requestUrl = requestUrl;
+    return this;
+  }
+
+  public RemoteConnectionStatus setStatusCode(@Nullable final Integer statusCode) {
+    this.statusCode = statusCode;
     return this;
   }
 }

@@ -15,8 +15,10 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import ContentSelectors from './components/pages/admin/ContentSelectors/ContentSelectors';
+import EmailServer from './components/pages/admin/EmailServer/EmailServer';
 import Privileges from './components/pages/admin/Privileges/Privileges';
 import Roles from './components/pages/admin/Roles/Roles';
+import Users from './components/pages/admin/Users/Users';
 import SslCertificates from './components/pages/admin/SslCertificates/SslCertificates';
 import AnonymousSettings from './components/pages/admin/AnonymousSettings/AnonymousSettings';
 import BlobStores from './components/pages/admin/BlobStores/BlobStores';
@@ -44,6 +46,7 @@ import Bundles from './components/pages/admin/Bundles/Bundles';
 import ProprietaryRepositories from './components/pages/admin/ProprietaryRepositories/ProprietaryRepositories';
 import Api from './components/pages/admin/Api/Api';
 import Realms from './components/pages/admin/Realms/Realms';
+import HTTP from './components/pages/admin/Http/Http';
 
 window.ReactComponents = {
   ...window.ReactComponents,
@@ -128,6 +131,18 @@ window.plugins.push({
     },
     {
       mode: 'admin',
+      path: '/System/EmailServer-New',
+      ...UIStrings.EMAIL_SERVER.MENU,
+      view: EmailServer,
+      iconCls: 'x-fa fa-envelope',
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        featureFlags: [{key: 'nexus.react.emailServer', defaultValue: false}],
+        permissions: ['nexus:settings:read']
+      },
+    },
+    {
+      mode: 'admin',
       path: '/Security/Roles',
       ...UIStrings.ROLES.MENU,
       view: Roles,
@@ -149,6 +164,19 @@ window.plugins.push({
         featureFlags: [{key: 'nexus.react.sslCertificates', defaultValue: false}],
         permissions: ['nexus:ssl-truststore:read']
       }
+    },
+    {
+      mode: 'admin',
+      path: '/Security/Users-New',
+      ...UIStrings.USERS.MENU,
+      view: Users,
+      iconCls: 'x-fa fa-users',
+      weight: 30,
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        featureFlags: [{key: 'nexus.react.users', defaultValue: false}],
+        permissions: ['nexus:users:read', 'nexus:roles:read'],
+      },
     },
     {
       mode: 'admin',
@@ -335,6 +363,17 @@ window.plugins.push({
       visibility: {
         permissions: ['nexus:settings:read']
       }
+    },
+    {
+      mode: 'admin',
+      path: '/System/HTTP-new',
+      ...UIStrings.HTTP.MENU,
+      view: HTTP,
+      iconCls: 'x-fa fa-truck',
+      visibility: {
+        featureFlags: [{key: 'nexus.react.httpSettings', defaultValue: false}],
+        permissions: ['nexus:settings:read']
+      },
     },
   ]
 });

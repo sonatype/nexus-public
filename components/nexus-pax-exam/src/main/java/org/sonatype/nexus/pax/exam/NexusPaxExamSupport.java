@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeoutException;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.net.ssl.HttpsURLConnection;
@@ -75,8 +74,10 @@ import static org.ops4j.pax.exam.CoreOptions.when;
 import static org.ops4j.pax.exam.CoreOptions.wrappedBundle;
 import static org.ops4j.pax.exam.OptionUtils.combine;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.*;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_TABLE_SEARCH;
+import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 import static org.testcontainers.containers.BindMode.READ_ONLY;
 
@@ -132,6 +133,8 @@ public abstract class NexusPaxExamSupport
   private static final String BLOB_STORE_KEY = "it.blobstore";
 
   private static final String SQL_SEARCH_KEY = "it.sql_search";
+
+  private static final String HA_KEY = "it.ha";
 
   /*
    * Key identifying a system property which if set, should be used as a prefix for {@code it-data} subdirectory
@@ -256,8 +259,7 @@ public abstract class NexusPaxExamSupport
    * Periodically polls function until it returns {@code true} or 30 seconds have elapsed.
    *
    * @throws InterruptedException if the thread is interrupted
-   * @throws TimeoutException if the timeout exceeded
-   *
+   * @throws TimeoutException     if the timeout exceeded
    * @deprecated use the Awaitility.await() helper instead of this method
    */
   @Deprecated
@@ -271,8 +273,7 @@ public abstract class NexusPaxExamSupport
    * Periodically polls function until it returns {@code true} or the timeout has elapsed.
    *
    * @throws InterruptedException if the thread is interrupted
-   * @throws TimeoutException if the timeout exceeded
-   *
+   * @throws TimeoutException     if the timeout exceeded
    * @deprecated use the Awaitility.await() helper instead of this method
    */
   @Deprecated
@@ -355,8 +356,8 @@ public abstract class NexusPaxExamSupport
   // -------------------------------------------------------------------------
 
   /**
-   * To test a different version set the 'it.nexus.bundle.version' system property.<br>
-   * You can also override the 'groupId', 'artifactId', and 'classifier' the same way.
+   * To test a different version set the 'it.nexus.bundle.version' system property.<br> You can also override the
+   * 'groupId', 'artifactId', and 'classifier' the same way.
    *
    * @return Pax-Exam option to install a Nexus distribution based on groupId and artifactId
    */
@@ -365,8 +366,8 @@ public abstract class NexusPaxExamSupport
   }
 
   /**
-   * To test a different version set the 'it.nexus.bundle.version' system property.<br>
-   * You can also override the 'groupId', 'artifactId', and 'classifier' the same way.
+   * To test a different version set the 'it.nexus.bundle.version' system property.<br> You can also override the
+   * 'groupId', 'artifactId', and 'classifier' the same way.
    *
    * @return Pax-Exam option to install a Nexus distribution based on groupId, artifactId and classifier
    */
@@ -510,13 +511,12 @@ public abstract class NexusPaxExamSupport
     switch (getValidTestDatabase()) {
       case POSTGRES:
         postgresContainer = new GenericContainer(POSTGRES_IMAGE) //NOSONAR
-          .withExposedPorts(POSTGRES_PORT)
-          .withEnv("POSTGRES_USER", DB_USER)
-          .withEnv("POSTGRES_PASSWORD", DB_PASSWORD)
-          .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger(NexusPaxExamSupport.class)))
-          .withClasspathResourceMapping("initialize-postgres.sql", "/docker-entrypoint-initdb.d/initialize-postgres.sql", READ_ONLY)
-          .waitingFor(Wait.forLogMessage(".*database system is ready to accept connections.*", 1));
-
+            .withExposedPorts(POSTGRES_PORT)
+            .withEnv("POSTGRES_USER", DB_USER)
+            .withEnv("POSTGRES_PASSWORD", DB_PASSWORD)
+            .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger(NexusPaxExamSupport.class)))
+            .withClasspathResourceMapping("initialize-postgres.sql", "/docker-entrypoint-initdb.d/initialize-postgres.sql", READ_ONLY)
+            .waitingFor(Wait.forLogMessage(".*database system is ready to accept connections.*", 1));
         return combine(null,
             editConfigurationFilePut(NEXUS_PROPERTIES_FILE, DATASTORE_ENABLED, "true"),
             editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.datastore.nexus.name", "nexus"),
@@ -524,6 +524,7 @@ public abstract class NexusPaxExamSupport
             editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.datastore.nexus.jdbcUrl", configurePostgres()),
             editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.datastore.nexus.username", DB_USER),
             editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.datastore.nexus.password", DB_PASSWORD),
+            haOption(),
             sqlSearchOption(),
             systemProperty(TEST_JDBC_URL_PROPERTY).value(configurePostgres())
         );
@@ -588,7 +589,7 @@ public abstract class NexusPaxExamSupport
 
   @AfterClass
   public static final void shutdownPostgres() {
-    if(postgresContainer != null && postgresContainer.isRunning()) {
+    if (postgresContainer != null && postgresContainer.isRunning()) {
       postgresContainer.stop();
     }
   }
@@ -640,8 +641,8 @@ public abstract class NexusPaxExamSupport
   }
 
   /**
-   * Replacement for {@link CoreOptions#options(Option...)} to workaround Pax-Exam 'feature'
-   * where only the last 'editConfigurationFileExtend' for a given property key is honoured.
+   * Replacement for {@link CoreOptions#options(Option...)} to workaround Pax-Exam 'feature' where only the last
+   * 'editConfigurationFileExtend' for a given property key is honoured.
    */
   public static Option[] options(final Option... options) {
     final List<Option> result = new ArrayList<>();
@@ -717,7 +718,8 @@ public abstract class NexusPaxExamSupport
   public static TestDatabase getValidTestDatabase() {
     try {
       return TestDatabase.valueOf(Strings2.upper(System.getProperty(DATABASE_KEY)));
-    } catch (Exception e){
+    }
+    catch (Exception e) {
       //fallback to ORIENT if it is invalid
       return TestDatabase.ORIENT;
     }
@@ -729,6 +731,15 @@ public abstract class NexusPaxExamSupport
     // SQL Search
     return when(sqlSearch).useOptions(editConfigurationFilePut(NEXUS_PROPERTIES_FILE, //
         DATASTORE_TABLE_SEARCH, "true"));
+  }
+
+  public static Option haOption() {
+    boolean ha = Boolean.parseBoolean(System.getProperty(HA_KEY, "false"));
+
+    // HA mode enable
+    Option dsClusteredEnable = editConfigurationFilePut(NEXUS_PROPERTIES_FILE, DATASTORE_CLUSTERED_ENABLED, "true");
+    Option jwtEnabled = editConfigurationFilePut(NEXUS_PROPERTIES_FILE, JWT_ENABLED, "true");
+    return when(ha).useOptions(dsClusteredEnable, jwtEnabled);
   }
 
   protected boolean isNewDb() {

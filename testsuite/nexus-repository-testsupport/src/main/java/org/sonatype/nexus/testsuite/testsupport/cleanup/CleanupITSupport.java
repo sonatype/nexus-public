@@ -13,6 +13,7 @@
 package org.sonatype.nexus.testsuite.testsupport.cleanup;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -91,6 +92,7 @@ public class CleanupITSupport
 
   @Inject
   private CleanupPolicyStorage cleanupPolicyStorage;
+
 
   @Before
   public void setupSearchSecurity() {
@@ -223,6 +225,15 @@ public class CleanupITSupport
     componentAssetTestHelper.setLastDownloadedTime(repositoryManager.get(repositoryName), minusSeconds);
   }
 
+  protected void setLastDownloadedTimes(final String repositoryName, final int minusSeconds, final String regex) {
+    componentAssetTestHelper.setLastDownloadedTime(repositoryManager.get(repositoryName), minusSeconds, regex);
+  }
+
+  protected void setAssetBlobUpdatedTime(Repository repository, Date date, String pathRegex) {
+    componentAssetTestHelper.setAssetBlobUpdatedTime(repository, pathRegex, date);
+  }
+
+
   protected void runCleanupTask() throws Exception {
     searchTestHelper.waitForSearch();
 
@@ -279,6 +290,26 @@ public class CleanupITSupport
     assertThat(countComponents(testName.getMethodName()), is(expectedCountAfterCleanup));
   }
 
+  protected void assertPartialLastBlobUpdatedComponentsNotCleanedUp(
+      final Repository repository,
+      final int startingCount) throws Exception
+  {
+    setPolicyToBeLastBlobUpdatedInSeconds(repository, THREE_SECONDS);
+    runCleanupTask();
+
+    assertThat(countComponents(testName.getMethodName()), is(startingCount));
+    await().untilAsserted(() -> assertBrowseAllHasSize(startingCount));
+
+    // Guarantee that the lastBlobUpdated time has passed
+    awaitLastBlobUpdatedTimePassed(THREE_SECONDS);
+
+    setAssetBlobUpdatedTime(repository, new Date(), ".*-sources.jar");
+
+    runCleanupTask();
+
+    assertThat(countComponents(testName.getMethodName()), is(startingCount));
+  }
+
   private void assertBrowseAllHasSize(final long size) {
     assertThat(browseAll().count(), equalTo(size));
   }
@@ -326,6 +357,29 @@ public class CleanupITSupport
     runCleanupTask();
 
     assertThat(countComponents(testName.getMethodName()), is(expectedCountAfterCleanup));
+  }
+
+  /* Asserts that is some assets under a component match the lastDownloaded criteria but others do not, then the
+     component should not be deleted. Assets whose path matches the regex will be marked as downloaded more recently
+     than the criteria. */
+  protected void assertPartialLastDownloadedComponentsNotCleanedUp(
+      final Repository repository,
+      final String regex,
+      final int startingCount) throws Exception
+  {
+    setPolicyToBeLastDownloadedInSeconds(repository, FIFTY_SECONDS);
+    runCleanupTask();
+
+    assertThat(countComponents(testName.getMethodName()), is(startingCount));
+
+    setLastDownloadedTimes(testName.getMethodName(), ONE_HUNDRED_SECONDS);
+    setLastDownloadedTimes(testName.getMethodName(), THREE_SECONDS, regex);
+    await().untilAsserted(
+        () -> assertThat(size(searchTestHelper.queryService().browse(lastDownloadSet())), is(startingCount)));
+
+    runCleanupTask();
+
+    assertThat(countComponents(testName.getMethodName()), is(startingCount));
   }
 
   protected void assertLastBlobUpdatedAndLastDownloadedComponentsCleanUp(

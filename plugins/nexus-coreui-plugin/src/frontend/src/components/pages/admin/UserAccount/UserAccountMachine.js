@@ -36,9 +36,9 @@ const userAccountMachine = FormUtils.buildFormMachine({
 
     validate: assign({
       validationErrors: ({data}) => ({
-        firstName: ValidationUtils.isBlank(data.firstName) ? UIStrings.ERROR.FIELD_REQUIRED : null,
-        lastName: ValidationUtils.isBlank(data.lastName) ? UIStrings.ERROR.FIELD_REQUIRED : null,
-        email: ValidationUtils.validateEmail(data.email)
+        firstName: ValidationUtils.validateNotBlank(data.firstName),
+        lastName: ValidationUtils.validateNotBlank(data.lastName),
+        email: ValidationUtils.validateNotBlank(data.email) || ValidationUtils.validateEmail(data.email),
       })
     })
   },

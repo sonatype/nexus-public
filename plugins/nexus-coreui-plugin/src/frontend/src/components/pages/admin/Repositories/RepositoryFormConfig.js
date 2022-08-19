@@ -35,6 +35,7 @@ import RegistryApiSupportConfiguration from './facets/RegistryApiSupportConfigur
 import NugetProxyConfiguration from './facets/NugetProxyConfiguration';
 import NugetGroupConfiguration from './facets/NugetGroupConfiguration';
 import WritableRepositoryConfiguration from './facets/WritableRepositoryConfiguration';
+import PreEmptiveAuthConfiguration from './facets/PreEmptiveAuthConfiguration';
 
 import {genericDefaultValues} from './RepositoryFormDefaultValues';
 import {
@@ -136,7 +137,13 @@ const repositoryFormats = {
       VersionPolicyConfiguration,
       LayoutPolicyConfiguration,
       ContentDespositionConfiguration,
-      ...genericFacets.proxy
+      GenericStorageConfiguration,
+      GenericProxyConfiguration,
+      GenericOptionsConfiguration,
+      GenericCleanupConfiguration,
+      GenericHttpAuthConfiguration,
+      PreEmptiveAuthConfiguration,
+      GenericHttpReqConfiguration
     ],
     defaultValues: {
       ...genericDefaultValues.proxy,

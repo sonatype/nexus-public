@@ -556,6 +556,12 @@ public class RepositoryManagerImpl
     return store.newConfiguration();
   }
 
+  @Override
+  @Guarded(by = STARTED)
+  public int count() {
+    return repositories.size();
+  }
+
   @Subscribe
   public void on(final RepositoryConfigurationEvent event) {
     String repositoryName = event.getRepositoryName();
