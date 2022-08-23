@@ -36,6 +36,8 @@ public class StoreLoadParameters
 
   private String query;
 
+  private boolean formatSearch;
+
   public Integer getPage() {
     return page;
   }
@@ -121,6 +123,18 @@ public class StoreLoadParameters
     this.query = query;
   }
 
+  public List<Filter> getFilter() {
+    return filter;
+  }
+
+  public boolean isFormatSearch() {
+    return formatSearch;
+  }
+
+  public void setFormatSearch(final boolean formatSearch) {
+    this.formatSearch = formatSearch;
+  }
+
   @Override
   public String toString() {
     return "StoreLoadParameters{" +
@@ -129,6 +143,7 @@ public class StoreLoadParameters
         ", limit=" + limit +
         ", sort=" + sort +
         ", filter=" + filter +
+        ", formatSearch=" + formatSearch +
         '}';
   }
 

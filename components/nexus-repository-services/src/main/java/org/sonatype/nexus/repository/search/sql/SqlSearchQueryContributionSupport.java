@@ -31,6 +31,7 @@ import org.sonatype.nexus.repository.search.query.SearchFilter;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptySet;
@@ -57,6 +58,8 @@ public abstract class SqlSearchQueryContributionSupport
   private static final String DEFAULT_REGEX = "[^\\s\"]+|\"[^\"]+\"";
 
   private static final Pattern PATTERN = Pattern.compile(DEFAULT_REGEX);
+
+  private static final int MIN_ALLOWED_SYMBOLS_TO_SEARCH = 3;
 
   public static final String NAME_PREFIX = "datastore_search_";
 
@@ -90,7 +93,7 @@ public abstract class SqlSearchQueryContributionSupport
   }
 
   /*
-   * For SQL search we prohibit leading wildcards for performance reasons.
+   * For SQL search we prohibit leading wildcards and less than 3 characters with wildcards for performance reasons.
    */
   protected boolean validate(final Set<String> tokens) {
     ValidationErrorsException validation = new ValidationErrorsException();
@@ -99,6 +102,13 @@ public abstract class SqlSearchQueryContributionSupport
         .filter(Objects::nonNull)
         .filter(SqlSearchQueryContributionSupport::hasLeadingWildcard)
         .forEach(__ -> validation.withError("Leading wildcards are prohibited"));
+
+    tokens.stream()
+        .filter(Objects::nonNull)
+        .filter(SqlSearchQueryContributionSupport::notEnoughSymbols)
+        .forEach(__ -> validation.withError(
+            String.format("%d characters or more are required with the trailing asterisk (*) wildcard",
+                MIN_ALLOWED_SYMBOLS_TO_SEARCH)));
 
     if (validation.hasValidationErrors()) {
       log.debug("Found invalid search filters: {}", tokens);
@@ -112,6 +122,34 @@ public abstract class SqlSearchQueryContributionSupport
   private static boolean hasLeadingWildcard(final String token) {
     String trimmedToken = token.trim();
     return trimmedToken.startsWith("*") || trimmedToken.startsWith("?");
+  }
+
+  /**
+   * Check if a given token contains trailing asterisk wildcard and returns a length of string without wildcard.
+   *
+   * @param token a token to check
+   * @return the {@code true} or {@code false} if a {@code token} contains wildcard
+   *         and a length of string without wildcard.
+   */
+  private static Pair<Boolean, Integer> checkTrailingAsterisk(final String token) {
+    // The escaped asterisk (*) is not a wildcard token.
+    String result = token.replace("\\*", "");
+
+    boolean trailingAsteriskWildcard = result.endsWith("*");
+
+    result = token.replace("*", "");
+
+    return Pair.of(trailingAsteriskWildcard, result.length());
+  }
+
+  private static boolean notEnoughSymbols(final String token) {
+    String trimmedToken = token.trim();
+    Pair<Boolean, Integer> wildcard = checkTrailingAsterisk(trimmedToken);
+    if (wildcard.getKey()) {
+      return wildcard.getValue() < MIN_ALLOWED_SYMBOLS_TO_SEARCH;
+    }
+
+    return false;
   }
 
   protected Set<String> split(final String value) {
