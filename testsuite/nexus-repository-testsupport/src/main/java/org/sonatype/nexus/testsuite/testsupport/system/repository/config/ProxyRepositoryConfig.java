@@ -35,6 +35,14 @@ public interface ProxyRepositoryConfig<THIS>
 
   String getRemoteUrl();
 
+  THIS withPullReplication();
+
+  Boolean isPreemptivePullEnabled();
+
+  THIS withAssetPathRegex(String assetPathRegex);
+
+  String getAssetPathRegex();
+
   THIS withContentMaxAge(final Integer contentMaxAge);
 
   Integer getContentMaxAge();
