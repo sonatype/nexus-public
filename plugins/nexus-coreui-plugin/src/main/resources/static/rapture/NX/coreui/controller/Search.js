@@ -433,6 +433,7 @@ Ext.define('NX.coreui.controller.Search', {
     var me = this,
         searchFilter = me.getFeature().searchFilter,
         bookmarkSegments = NX.Bookmarks.getBookmark().getSegments(),
+        store = me.getStore('SearchResult'),
         bookmarkValues = {},
         criterias = {},
         filterSegments,
@@ -452,12 +453,19 @@ Ext.define('NX.coreui.controller.Search', {
     }
 
     // From the search type (e.g. maven, nuget, custom)
-    if (searchFilter && searchFilter.get('criterias')) {
-      searchFilter.get('criterias').forEach(function(criteria) {
-        if (criteria.value) {
-          criterias[criteria.id] = { value: criteria.value, hidden: criteria.hidden };
-        }
-      });
+    if (searchFilter) {
+      if (searchFilter.id !== 'keyword' && searchFilter.id !== 'custom') {
+        store.proxy.setExtraParam('formatSearch', true);
+      } else {
+        store.proxy.setExtraParam('formatSearch', false);
+      }
+      if (searchFilter.get('criterias')) {
+        searchFilter.get('criterias').forEach(function(criteria) {
+          if (criteria.value) {
+            criterias[criteria.id] = {value: criteria.value, hidden: criteria.hidden};
+          }
+        });
+      }
     }
 
     Ext.Object.each(bookmarkValues, function(key, value) {

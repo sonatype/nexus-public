@@ -39,6 +39,12 @@ public class MavenFormatRepositoryTestSystem
 {
   public static final String ATTRIBUTES_MAP_KEY_MAVEN = "maven";
 
+  public static final String ATTRIBUTES_MAP_KEY_REPLICATION = "replication";
+
+  public static final String ATTRIBUTES_KEY_PULL_REPLICATION_ENABLED = "preemptivePullEnabled";
+
+  public static final String ATTRIBUTES_ASSET_PATH_REGEX = "assetPathRegex";
+
   public static final String ATTRIBUTES_KEY_VERSION_POLICY = "versionPolicy";
 
   public static final String ATTRIBUTES_KEY_LAYOUT_POLICY = "layoutPolicy";
@@ -55,7 +61,9 @@ public class MavenFormatRepositoryTestSystem
 
   public Repository createProxy(final MavenProxyRepositoryConfig config) throws Exception {
     return doCreate(
-        applyMavenAttributes(createProxyConfiguration(config), config.getVersionPolicy(), config.getLayoutPolicy()));
+        applyPullReplicationAttributes(
+            applyMavenAttributes(createProxyConfiguration(config), config.getVersionPolicy(), config.getLayoutPolicy())
+            , config.isPreemptivePullEnabled(), config.getAssetPathRegex()));
   }
 
   public Repository createGroup(final MavenGroupRepositoryConfig config) throws Exception {
@@ -71,6 +79,19 @@ public class MavenFormatRepositoryTestSystem
     NestedAttributesMap maven = configuration.attributes(ATTRIBUTES_MAP_KEY_MAVEN);
     addConfigIfNotNull(maven, ATTRIBUTES_KEY_VERSION_POLICY, versionPolicy);
     addConfigIfNotNull(maven, ATTRIBUTES_KEY_LAYOUT_POLICY, layoutPolicy);
+    return configuration;
+  }
+
+  private Configuration applyPullReplicationAttributes(
+      final Configuration configuration,
+      final boolean replicationEnabled,
+      final String assetPathRegex
+  )
+  {
+    NestedAttributesMap replication = configuration.attributes(ATTRIBUTES_MAP_KEY_REPLICATION);
+    addConfigIfNotNull(replication, ATTRIBUTES_KEY_PULL_REPLICATION_ENABLED, replicationEnabled);
+    addConfigIfNotNull(replication, ATTRIBUTES_ASSET_PATH_REGEX, assetPathRegex);
+
     return configuration;
   }
 }

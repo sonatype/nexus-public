@@ -41,6 +41,7 @@ import org.sonatype.nexus.repository.search.event.SearchEvent;
 import org.sonatype.nexus.repository.search.event.SearchEventSource;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
 import org.sonatype.nexus.repository.search.query.SearchResultsGenerator;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
@@ -50,7 +51,9 @@ import com.softwarementors.extjs.djn.config.annotations.DirectMethod;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
+import static org.sonatype.nexus.repository.search.index.SearchConstants.FORMAT;
 
 /**
  * Search {@link DirectComponent}.
@@ -100,6 +103,17 @@ public class SearchComponent
   @RequiresPermissions("nexus:search:read")
   public LimitedPagedResponse<ComponentXO> read(final StoreLoadParameters parameters) {
     List<SearchFilter> searchFilters = createFilters(parameters.getFilters());
+
+    boolean formatCriteriaOnly = searchFilters.size() == 1 && FORMAT.equals(searchFilters.get(0).getProperty());
+    if (searchFilters.size() == 0 || parameters.isFormatSearch() && formatCriteriaOnly) {
+      /* Format specific and All format search UI should not perform a search query
+       * unless a user specifies a search criteria. */
+      return new LimitedPagedResponse<>(parameters.getLimit(), 0L, emptyList());
+    }
+    else if (formatCriteriaOnly) {
+      // All format search UI should not perform a search query with only format search criteria
+      throw new ValidationErrorsException("Specify at least one more search criteria with the format");
+    }
 
     fireSearchEvent(searchFilters);
 
@@ -187,6 +201,6 @@ public class SearchComponent
   }
 
   private static List<Sort> orEmpty(final List<Sort> sort) {
-    return sort != null ? sort : Collections.emptyList();
+    return sort != null ? sort : emptyList();
   }
 }

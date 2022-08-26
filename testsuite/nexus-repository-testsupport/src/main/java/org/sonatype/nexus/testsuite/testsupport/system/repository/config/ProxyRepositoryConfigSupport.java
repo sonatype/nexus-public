@@ -20,6 +20,10 @@ public abstract class ProxyRepositoryConfigSupport<THIS>
 
   private String remoteUrl;
 
+  private boolean preemptivePullEnabled = false;
+
+  private String assetPathRegex;
+
   private Boolean blocked = false;
 
   private Boolean autoBlocked = true;
@@ -50,6 +54,28 @@ public abstract class ProxyRepositoryConfigSupport<THIS>
   @Override
   public String getRemoteUrl() {
     return remoteUrl;
+  }
+
+  @Override
+  public THIS withPullReplication(){
+    this.preemptivePullEnabled = true;
+    return toTHIS();
+  }
+
+  @Override
+  public Boolean isPreemptivePullEnabled(){
+    return this.preemptivePullEnabled;
+  }
+
+  @Override
+  public THIS withAssetPathRegex(String assetPathRegex){
+    this.assetPathRegex = assetPathRegex;
+    return toTHIS();
+  }
+
+  @Override
+  public String getAssetPathRegex() {
+    return assetPathRegex;
   }
 
   @Override
