@@ -880,6 +880,7 @@
               -->
               <id>jakarta.el</id>
               <id>jakarta.validation-api</id>
+              <id>jetty-util</id>
               <id>paranamer</id>
               <id>httpcore</id>
               <id>httpclient</id>
