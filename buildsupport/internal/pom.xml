@@ -29,9 +29,9 @@
 
   <properties>
     <sonatype-licensing.version>1.6.0</sonatype-licensing.version>
-    <clm.dto.model.version>1.49.6</clm.dto.model.version>
-    <insight-brain.version>1.142.0-02</insight-brain.version>
-    <insight-scanner.version>2.36.15-01</insight-scanner.version>
+    <clm.dto.model.version>1.49.5-01</clm.dto.model.version>
+    <insight-brain.version>1.133.0-02</insight-brain.version>
+    <insight-scanner.version>2.33.6-01</insight-scanner.version>
   </properties>
 
   <dependencyManagement>
