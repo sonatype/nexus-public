@@ -1497,6 +1497,28 @@ This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 
       ATTEMPTS: {
         LABEL: 'Connection/Socket Retry Attempts',
         SUB_LABEL: 'Maximum number of retry attempts if the initial connection attempt suffers a timeout'
+      },
+      PROXY: {
+        LABEL: 'Proxy Settings',
+        SUB_LABEL: 'Provide an IP address or DNS name (e.g., proxy-host or 192.168.1.101), not a URL',
+        HTTP_HOST: 'HTTP Proxy Host',
+        HTTP_PORT: 'HTTP Proxy Port',
+        HTTP_CHECKBOX: 'Enable HTTP proxy',
+        HTTPS_HOST: 'HTTPS Proxy Host',
+        HTTPS_PORT: 'HTTPS Proxy Port',
+        HTTPS_CHECKBOX: 'Enable HTTPS proxy',
+        HTTP_AUTHENTICATION: 'HTTP Authentication',
+        HTTPS_AUTHENTICATION: 'HTTPS Authentication',
+        USERNAME: 'Username',
+        PASSWORD: 'Password',
+        HOST_NAME: 'Windows NTLM Hostname',
+        DOMAIN: 'Windows NTLM Domain'
+      },
+      EXCLUDE: {
+        LABEL: 'Hosts to exclude from HTTP/HTTPS Proxy',
+        SUB_LABEL: 'Accepts Java “http.nonProxyHosts” wildcard patterns (one per line, no “l” hostname delimiters)',
+        ADD: 'Add',
+        REMOVE: 'Remove',
       }
     }
   },
