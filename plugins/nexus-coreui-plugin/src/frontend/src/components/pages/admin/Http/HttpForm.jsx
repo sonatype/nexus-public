@@ -161,6 +161,7 @@ export default function HttpForm() {
       </NxFormGroup>
       <NxTile.Content className="nx-tile-content--accordion-container">
         <NxAccordion
+          title="http-authentication"
           open={httpAuthEnabled}
           onToggle={() =>
             httpEnabled && toggleAuthentication('httpAuthEnabled')
@@ -241,6 +242,7 @@ export default function HttpForm() {
       </NxFormGroup>
       <NxTile.Content className="nx-tile-content--accordion-container">
         <NxAccordion
+          title="https-authentication"
           open={httpsAuthEnabled}
           onToggle={() =>
             isHttpsEnabled && toggleAuthentication('httpsAuthEnabled')
