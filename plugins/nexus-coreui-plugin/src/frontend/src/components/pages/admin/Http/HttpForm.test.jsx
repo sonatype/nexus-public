@@ -129,6 +129,7 @@ describe('HttpForm', () => {
     httpEnabled: false,
     httpsAuthEnabled: false,
     httpsEnabled: false,
+    nonProxyHosts: []
   };
   const dummyHttpProxy = {
     httpPort: '123',
