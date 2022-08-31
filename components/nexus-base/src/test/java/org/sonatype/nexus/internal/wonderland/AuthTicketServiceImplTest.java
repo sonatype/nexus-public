@@ -12,10 +12,8 @@
  */
 package org.sonatype.nexus.internal.wonderland;
 
-import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.wonderland.AuthTicketCache;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -26,7 +24,7 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
 
 /**
- * Tests for {@link AuthTicketCache}.
+ * Tests for {@link AuthTicketServiceImpl}.
  */
 public class AuthTicketServiceImplTest
     extends TestSupport

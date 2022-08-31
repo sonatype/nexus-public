@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.internal.wonderland;
 
+import java.time.Duration;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -21,7 +22,8 @@ import javax.inject.Named;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Mutex;
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.internal.wonderland.UserAuthToken;
+import org.sonatype.nexus.wonderland.AuthTicketCache;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
@@ -35,26 +37,25 @@ import static com.google.common.base.Preconditions.checkState;
  * @since 2.7
  */
 @Named
-public class AuthTicketCache
+public class LocalAuthTicketCache
     extends ComponentSupport
+    implements AuthTicketCache
 {
-  private static final String CPREFIX = "${wonderland.authTicketCache";
-
   private final Mutex lock = new Mutex();
 
   private final Map<UserAuthToken, Long> tokens = Maps.newHashMap();
 
-  private final Time expireAfter;
+  private final Duration expireAfter;
 
   @Inject
-  public AuthTicketCache(@Named(CPREFIX + ".expireAfter:-20s}") final Time expireAfter) {
+  public LocalAuthTicketCache(@Named(EXPIRE) final Duration expireAfter) {
     this.expireAfter = checkNotNull(expireAfter);
     log.debug("Expire after: {}", expireAfter);
   }
 
   @VisibleForTesting
-  public AuthTicketCache() {
-    this(Time.seconds(2));
+  public LocalAuthTicketCache() {
+    this(Duration.ofSeconds(2));
   }
 
   private long now() {
@@ -95,6 +96,7 @@ public class AuthTicketCache
   /**
    * Add token to the cache.
    */
+  @Override
   public void add(final String user, final String token) {
     synchronized (lock) {
       expireTokens();
@@ -110,6 +112,7 @@ public class AuthTicketCache
    *
    * @return True if the token existed (was added and not yet expired)
    */
+  @Override
   public boolean remove(final String user, final String token) {
     synchronized (lock) {
       expireTokens();
