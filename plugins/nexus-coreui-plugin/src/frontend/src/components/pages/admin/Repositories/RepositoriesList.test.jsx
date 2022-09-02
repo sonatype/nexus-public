@@ -27,6 +27,7 @@ import {when} from 'jest-when';
 import RepositoriesList from './RepositoriesList';
 import UIStrings from '../../../../constants/UIStrings';
 import RepositoriesContextProvider from './RepositoriesContextProvider';
+import {canReadFirewallStatus, canReadHealthCheck} from './IQServerColumns/IQServerHelpers';
 
 jest.mock('axios', () => ({
   get: jest.fn(),
@@ -42,12 +43,26 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
   };
 });
 
+jest.mock('./IQServerColumns/IQServerHelpers', () => ({
+  isIqServerEnabled: jest.fn().mockReturnValue(true),
+  canReadHealthCheck: jest.fn().mockReturnValue(true),
+  canUpdateHealthCheck: jest.fn().mockReturnValue(true),
+  canReadFirewallStatus: jest.fn().mockReturnValue(true)
+}));
+
 const mockCopyUrl = jest.fn((event) => event.stopPropagation());
 
 const {
   REPOSITORIES: {
     LIST: {
-      HEALTH_CHECK: {ANALYZE_BUTTON, NOT_AVAILABLE_TOOLTIP, LOADING, ANALYZING, LOADING_ERROR},
+      HEALTH_CHECK: {
+        ANALYZE_BUTTON,
+        NOT_AVAILABLE_TOOLTIP_HC,
+        NOT_AVAILABLE_TOOLTIP_FS,
+        LOADING,
+        ANALYZING,
+        LOADING_ERROR
+      },
       COLUMNS
     }
   },
@@ -65,11 +80,15 @@ const selectors = {
     modalCancelBtn: () => screen.queryByText(CANCEL_BUTTON_LABEL, {selector: 'button'}),
     columnHeader: () => screen.queryByRole('columnheader', {name: COLUMNS.HEALTH_CHECK}),
     modalAnalyzeAllBtn: () => screen.getByText('Analyze all repositories')
+  },
+  iqPolicyViolations: {
+    cell: (rowIndex) => screen.getAllByRole('row')[rowIndex].cells[6],
+    columnHeader: () => screen.queryByRole('columnheader', {name: COLUMNS.IQ})
   }
 };
 
 describe('RepositoriesList', function () {
-  const rows = [
+  const REPOSITORIES_ROWS = [
     {
       name: 'maven-central',
       type: 'proxy',
@@ -162,7 +181,7 @@ describe('RepositoriesList', function () {
   });
 
   it('renders the rows', async function () {
-    axios.get.mockResolvedValue({data: rows});
+    axios.get.mockResolvedValue({data: REPOSITORIES_ROWS});
 
     const {loadingMask, tableRow} = render();
 
@@ -214,7 +233,7 @@ describe('RepositoriesList', function () {
   });
 
   it('sorts the rows by name', async function () {
-    axios.get.mockResolvedValue({data: rows});
+    axios.get.mockResolvedValue({data: REPOSITORIES_ROWS});
 
     const {loadingMask, tableHeader, tableRow} = render();
 
@@ -240,7 +259,7 @@ describe('RepositoriesList', function () {
   });
 
   it('sorts the rows by type', async function () {
-    axios.get.mockResolvedValue({data: rows});
+    axios.get.mockResolvedValue({data: REPOSITORIES_ROWS});
 
     const {loadingMask, tableHeader, tableRow} = render();
 
@@ -268,7 +287,7 @@ describe('RepositoriesList', function () {
   });
 
   it('sorts the rows by format', async function () {
-    axios.get.mockResolvedValue({data: rows});
+    axios.get.mockResolvedValue({data: REPOSITORIES_ROWS});
 
     const {loadingMask, tableHeader, tableRow} = render();
 
@@ -296,7 +315,7 @@ describe('RepositoriesList', function () {
   });
 
   it('filters by name', async function () {
-    axios.get.mockResolvedValue({data: rows});
+    axios.get.mockResolvedValue({data: REPOSITORIES_ROWS});
 
     const {filter, loadingMask, tableRow, tableRows} = render();
 
@@ -309,7 +328,7 @@ describe('RepositoriesList', function () {
   });
 
   it('copies url on button press', async function () {
-    axios.get.mockResolvedValue({data: rows});
+    axios.get.mockResolvedValue({data: REPOSITORIES_ROWS});
 
     const {loadingMask, urlButton} = render();
 
@@ -367,9 +386,9 @@ describe('RepositoriesList', function () {
 
     const READ_HEALTH_CHECK_RESPONSE = {data: TestUtils.makeExtResult(READ_HEALTH_CHECK_DATA)};
 
-    const ENABLE_HEALTH_CHECK_ALL_REQUEST = ExtAPIUtils.createRequestBody(ACTION, ENABLE_ALL, {data: [
-      true
-    ]});
+    const ENABLE_HEALTH_CHECK_ALL_REQUEST = ExtAPIUtils.createRequestBody(ACTION, ENABLE_ALL, {
+      data: [true]
+    });
 
     const ENABLE_HEALTH_CHECK_ALL_RESPONSE = {
       data: TestUtils.makeExtResult()
@@ -379,25 +398,25 @@ describe('RepositoriesList', function () {
       when(axios.post)
         .calledWith(EXT_URL, READ_HEALTH_CHECK_REQUEST)
         .mockResolvedValue(READ_HEALTH_CHECK_RESPONSE);
-      when(axios.get).calledWith(REPOSITORIES_DETAILS).mockResolvedValue({data: rows});
-      ExtJS.checkPermission.mockReturnValue(true);
+      when(axios.get).calledWith(REPOSITORIES_DETAILS).mockResolvedValue({data: REPOSITORIES_ROWS});
+      canReadHealthCheck.mockReturnValue(true);
     });
 
     it('does not display health-check column if user has no read permissions', async () => {
-      ExtJS.checkPermission.mockReturnValue(false);
+      canReadHealthCheck.mockReturnValue(false);
 
       const {loadingMask} = render();
 
       await waitForElementToBeRemoved(loadingMask);
 
       await waitFor(() =>
-        expect(axios.post).toHaveBeenCalledWith(EXT_URL, READ_HEALTH_CHECK_REQUEST)
+        expect(axios.post).not.toHaveBeenCalledWith(EXT_URL, READ_HEALTH_CHECK_REQUEST)
       );
 
       expect(selectors.healthCheck.columnHeader()).not.toBeInTheDocument();
     });
 
-    it('displays correct cell content when repository supports and does not support health-check', async () => {
+    it('displays correct cell content when repository supports or does not support health-check', async () => {
       const {loadingMask} = render();
 
       await waitForElementToBeRemoved(loadingMask);
@@ -410,22 +429,20 @@ describe('RepositoriesList', function () {
         ANALYZE_BUTTON
       );
       expect(selectors.healthCheck.cell(rowIndices.MAVEN_PUBLIC)).toHaveTextContent(
-        NOT_AVAILABLE_TOOLTIP
+        NOT_AVAILABLE_TOOLTIP_HC
       );
       expect(selectors.healthCheck.cell(rowIndices.NUGET_HOSTED)).toHaveTextContent(
-        NOT_AVAILABLE_TOOLTIP
+        NOT_AVAILABLE_TOOLTIP_HC
       );
-      expect(selectors.healthCheck.cell(rowIndices.MAVEN_CENTRAL)).toHaveTextContent(
+      expect(selectors.healthCheck.cell(rowIndices.NUGET_ORG_PROXY)).toHaveTextContent(
         ANALYZE_BUTTON
       );
     });
 
     it('enables health check for a single repository', async () => {
-      const enableRequest = ExtAPIUtils.createRequestBody(ACTION, UPDATE, {data: [
-        true,
-        'maven-central',
-        true
-      ]});
+      const enableRequest = ExtAPIUtils.createRequestBody(ACTION, UPDATE, {
+        data: [true, 'maven-central', true]
+      });
 
       const enableData = {
         repositoryName: 'maven-central',
@@ -608,6 +625,179 @@ describe('RepositoriesList', function () {
       const cell = selectors.healthCheck.cell(rowIndices.MAVEN_CENTRAL);
 
       await waitFor(() => expect(cell).toHaveTextContent(LOADING_ERROR));
+    });
+  });
+
+  describe('IQ Policy Violations Column', () => {
+    const rowIndices = {
+      MAVEN_CENTRAL: 1, // fiewall status available
+      MAVEN_PUBLIC: 2,
+      NUGET_HOSTED: 6,
+      NUGET_ORG_PROXY: 7 // fiewall status available
+    };
+
+    const {
+      EXT: {
+        URL: EXT_URL,
+        FIREWALL_REPOSITORY_STATUS: {
+          ACTION,
+          METHODS: {READ}
+        }
+      },
+      REST: {
+        INTERNAL: {REPOSITORIES_DETAILS}
+      }
+    } = APIConstants;
+
+    const READ_FIREWALL_STATUS_REQUEST = ExtAPIUtils.createRequestBody(ACTION, READ);
+
+    const READ_FIREWALL_STATUS_DATA = [
+      {
+        repositoryName: 'maven-central',
+        affectedComponentCount: 0,
+        criticalComponentCount: 10,
+        moderateComponentCount: 30,
+        quarantinedComponentCount: 15,
+        severeComponentCount: 20,
+        reportUrl:
+          'http://localhost:8070/ui/links/repository/b3b7a0c423014acb9ad1e414b221a111/result',
+        message: null,
+        errorMessage: null
+      },
+      {
+        repositoryName: 'nuget.org-proxy',
+        affectedComponentCount: 0,
+        criticalComponentCount: 11,
+        moderateComponentCount: 33,
+        quarantinedComponentCount: 17,
+        severeComponentCount: 22,
+        reportUrl:
+          'http://localhost:8070/ui/links/repository/b3b7a0c423014acb9ad1e414b221a222/result',
+        message: null,
+        errorMessage: null
+      }
+    ];
+
+    const READ_FIREWALL_STATUS_RESPONSE = {
+      data: TestUtils.makeExtResult(READ_FIREWALL_STATUS_DATA)
+    };
+
+    const getCountersRegexp = (repoName) => {
+      const {
+        criticalComponentCount: c,
+        severeComponentCount: s,
+        moderateComponentCount: m,
+        quarantinedComponentCount: q
+      } = READ_FIREWALL_STATUS_DATA.find((it) => it.repositoryName === repoName);
+      const pattern = `Critical${c}[1-9]{1,3}\\+Severe${s}[1-9]{1,3}\\+Moderate${m}[1-9]{1,3}\\+${q}`;
+      return new RegExp(pattern);
+    };
+
+    beforeEach(() => {
+      when(axios.post)
+        .calledWith(EXT_URL, READ_FIREWALL_STATUS_REQUEST)
+        .mockResolvedValue(READ_FIREWALL_STATUS_RESPONSE);
+      when(axios.get).calledWith(REPOSITORIES_DETAILS).mockResolvedValue({data: REPOSITORIES_ROWS});
+      canReadFirewallStatus.mockReturnValue(true);
+    });
+
+    it('does not display IQ column if user has no read permissions', async () => {
+      canReadFirewallStatus.mockReturnValue(false);
+
+      const {loadingMask} = render();
+
+      await waitForElementToBeRemoved(loadingMask);
+
+      await waitFor(() =>
+        expect(axios.post).not.toHaveBeenCalledWith(EXT_URL, READ_FIREWALL_STATUS_REQUEST)
+      );
+
+      expect(selectors.iqPolicyViolations.columnHeader()).not.toBeInTheDocument();
+    });
+
+    it('displays correct firewall status counters', async () => {
+      const {loadingMask} = render();
+
+      await waitForElementToBeRemoved(loadingMask);
+
+      await waitFor(() =>
+        expect(axios.post).toHaveBeenCalledWith(EXT_URL, READ_FIREWALL_STATUS_REQUEST)
+      );
+
+      expect(selectors.iqPolicyViolations.cell(rowIndices.MAVEN_CENTRAL)).toHaveTextContent(
+        getCountersRegexp('maven-central')
+      );
+      expect(selectors.iqPolicyViolations.cell(rowIndices.MAVEN_PUBLIC)).toHaveTextContent(
+        NOT_AVAILABLE_TOOLTIP_FS
+      );
+      expect(selectors.iqPolicyViolations.cell(rowIndices.NUGET_HOSTED)).toHaveTextContent(
+        NOT_AVAILABLE_TOOLTIP_FS
+      );
+      expect(selectors.iqPolicyViolations.cell(rowIndices.NUGET_ORG_PROXY)).toHaveTextContent(
+        getCountersRegexp('nuget.org-proxy')
+      );
+    });
+
+    it('displays an error message on API call error', async () => {
+      when(axios.post)
+        .calledWith(EXT_URL, READ_FIREWALL_STATUS_REQUEST)
+        .mockResolvedValueOnce('error');
+
+      const {loadingMask} = render();
+
+      await waitForElementToBeRemoved(loadingMask);
+
+      const cell = selectors.iqPolicyViolations.cell(rowIndices.MAVEN_CENTRAL);
+
+      await waitFor(() => expect(cell).toHaveTextContent(LOADING_ERROR));
+    });
+
+    it('displays ExtDirect messages', async () => {
+      const normalMessage = 'normal message 123';
+      const errorMessage = 'error message 123';
+
+      const dataWithMessages = [
+        {
+          repositoryName: 'maven-central',
+          affectedComponentCount: null,
+          criticalComponentCount: null,
+          moderateComponentCount: null,
+          quarantinedComponentCount: null,
+          severeComponentCount: null,
+          reportUrl: null,
+          message: normalMessage,
+          errorMessage: null
+        },
+        {
+          repositoryName: 'nuget.org-proxy',
+          affectedComponentCount: null,
+          criticalComponentCount: null,
+          moderateComponentCount: null,
+          quarantinedComponentCount: null,
+          severeComponentCount: null,
+          reportUrl: null,
+          message: null,
+          errorMessage: errorMessage
+        }
+      ];
+
+      const responseWithMessages = {
+        data: TestUtils.makeExtResult(dataWithMessages)
+      };
+
+      when(axios.post)
+        .calledWith(EXT_URL, READ_FIREWALL_STATUS_REQUEST)
+        .mockResolvedValueOnce(responseWithMessages);
+
+      const {loadingMask} = render();
+
+      await waitForElementToBeRemoved(loadingMask);
+
+      const cell1 = selectors.iqPolicyViolations.cell(rowIndices.MAVEN_CENTRAL);
+      const cell2 = selectors.iqPolicyViolations.cell(rowIndices.NUGET_ORG_PROXY);
+
+      await waitFor(() => expect(cell1).toHaveTextContent(normalMessage));
+      await waitFor(() => expect(cell2).toHaveTextContent(errorMessage));
     });
   });
 });

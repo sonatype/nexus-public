@@ -12,9 +12,9 @@
  */
 package org.sonatype.nexus.repository.content.search.table;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -25,6 +25,7 @@ import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.store.InternalIds;
+import org.sonatype.nexus.repository.content.utils.PreReleaseEvaluator;
 import org.sonatype.nexus.repository.search.normalize.VersionNormalizerService;
 
 import org.slf4j.Logger;
@@ -49,11 +50,17 @@ public class SearchTableDataMapper
 
   private final VersionNormalizerService versionNormalizerService;
 
+  private final Map<String, PreReleaseEvaluator> formatToReleaseEvaluators;
+
   @Inject
-  public SearchTableDataMapper(final Map<String, SearchCustomFieldContributor> searchCustomFieldContributors,
-                               final VersionNormalizerService versionNormalizerService) {
+  public SearchTableDataMapper(
+      final Map<String, SearchCustomFieldContributor> searchCustomFieldContributors,
+      final VersionNormalizerService versionNormalizerService,
+      final Map<String, PreReleaseEvaluator> formatToReleaseEvaluators)
+  {
     this.searchCustomFieldContributors = checkNotNull(searchCustomFieldContributors);
     this.versionNormalizerService = checkNotNull(versionNormalizerService);
+    this.formatToReleaseEvaluators = checkNotNull(formatToReleaseEvaluators);
   }
 
   /**
@@ -114,6 +121,10 @@ public class SearchTableDataMapper
     // uploader info
     data.setUploader(blob.createdBy().orElse(null));
     data.setUploaderIp(blob.createdByIp().orElse(null));
+    //prerelease evaluation false by default for all components
+    PreReleaseEvaluator evaluator = formatToReleaseEvaluators.get(repositoryFormat);
+    boolean preRelease = evaluator != null && evaluator.isPreRelease(component, Collections.singletonList(asset));
+    data.setPrerelease(preRelease);
 
     return Optional.of(data);
   }

@@ -23,27 +23,27 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 /**
- * Tests for {@link AuthTicketCache}.
+ * Tests for {@link LocalAuthTicketCache}.
  */
-public class AuthTicketCacheTest
+public class LocalAuthTicketCacheTest
     extends TestSupport
 {
   @Test
   public void addRemoveIsRemoved() {
-    AuthTicketCache tokens = new AuthTicketCache();
+    LocalAuthTicketCache tokens = new LocalAuthTicketCache();
     tokens.add("user", "foo");
     assertThat(tokens.remove("user", "foo"), is(true));
   }
 
   @Test
   public void neverAddedRemove() {
-    AuthTicketCache tokens = new AuthTicketCache();
+    LocalAuthTicketCache tokens = new LocalAuthTicketCache();
     assertThat(tokens.remove("user","foo"), is(false));
   }
 
   @Test(expected = IllegalStateException.class)
   public void addDoesNotAllowDuplicates() {
-    AuthTicketCache tokens = new AuthTicketCache();
+    LocalAuthTicketCache tokens = new LocalAuthTicketCache();
     tokens.add("user","foo");
     // this should fail
     tokens.add("user","foo");
@@ -52,10 +52,10 @@ public class AuthTicketCacheTest
   @Test
   public void testExpiredRemoveIsFalse() {
     final AtomicBoolean expired = new AtomicBoolean(false);
-    AuthTicketCache tokens = new AuthTicketCache()
+    LocalAuthTicketCache tokens = new LocalAuthTicketCache()
     {
       @Override
-      protected boolean isTokenExpired(long now, Entry<UserAuthToken, Long> entry) {
+      protected boolean isTokenExpired(final long now, final Entry<UserAuthToken, Long> entry) {
         return expired.get();
       }
     };
@@ -71,7 +71,7 @@ public class AuthTicketCacheTest
 
   @Test
   public void testRemoveFailsIfDifferentUser() {
-    AuthTicketCache cache = new AuthTicketCache();
+    LocalAuthTicketCache cache = new LocalAuthTicketCache();
     cache.add("user", "foo");
     assertThat(cache.remove("bad", "foo"), is(false));
   }

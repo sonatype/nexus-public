@@ -42,26 +42,36 @@ import {faCopy, faDatabase} from '@fortawesome/free-solid-svg-icons';
 
 import {useRepositoriesService} from './RepositoriesContextProvider';
 
-import RepositoryStatus from './RepositoryStatus';
 import UIStrings from '../../../../constants/UIStrings';
-import RepositoryHealthCheck from './HealthCheck/RepositoryHealthCheck';
-import AnalyzeConfirmationModal from './HealthCheck/AnalyzeConfirmationModal';
+
+import {
+  isIqServerEnabled,
+  canReadHealthCheck,
+  canReadFirewallStatus
+} from './IQServerColumns/IQServerHelpers';
+
+import RepositoryStatus from './RepositoryStatus';
+import HealthCheckCell from './IQServerColumns/HealthCheckCell';
+import AnalyzeConfirmationModal from './IQServerColumns/AnalyzeConfirmationModal';
+import IqPolicyViolationsCell from './IQServerColumns/IqPolicyViolationsCell';
 
 const {REPOSITORIES} = UIStrings;
 const {COLUMNS} = REPOSITORIES.LIST;
 
 export default function RepositoriesList({onCreate, onEdit, copyUrl = doCopyUrl}) {
-  const [current, send] = useRepositoriesService();
+  const [state, send] = useRepositoriesService();
 
-  useEffect(() => {send('LOAD')}, []);
+  useEffect(() => {
+    send('LOAD');
+  }, []);
 
-  const isLoading = current.matches('loading');
-  const {data, error, filter: filterText} = current.context;
+  const isLoading = state.matches('loading');
+  const {data, error, filter: filterText} = state.context;
 
-  const nameSortDir = ListMachineUtils.getSortDirection('name', current.context);
-  const typeSortDir = ListMachineUtils.getSortDirection('type', current.context);
-  const formatSortDir = ListMachineUtils.getSortDirection('format', current.context);
-  const statusSortDir = ListMachineUtils.getSortDirection('status', current.context);
+  const nameSortDir = ListMachineUtils.getSortDirection('name', state.context);
+  const typeSortDir = ListMachineUtils.getSortDirection('type', state.context);
+  const formatSortDir = ListMachineUtils.getSortDirection('format', state.context);
+  const statusSortDir = ListMachineUtils.getSortDirection('status', state.context);
   const sortByName = () => send('SORT_BY_NAME');
   const sortByType = () => send('SORT_BY_TYPE');
   const sortByFormat = () => send('SORT_BY_FORMAT');
@@ -70,7 +80,9 @@ export default function RepositoriesList({onCreate, onEdit, copyUrl = doCopyUrl}
   const filter = (value) => send({type: 'FILTER', filter: value});
 
   const canCreate = ExtJS.checkPermission('nexus:repository-admin:*:*:add');
-  const canReadHealthCheck = ExtJS.checkPermission('nexus:healthcheck:read');
+
+  const showHealthCheckColumn = isIqServerEnabled() && canReadHealthCheck();
+  const showIqPolicyViolationsColumn = isIqServerEnabled() && canReadFirewallStatus();
 
   function create() {
     if (canCreate) {
@@ -92,15 +104,6 @@ export default function RepositoriesList({onCreate, onEdit, copyUrl = doCopyUrl}
       isOpen: false,
       repoName: ''
     });
-
-  const enableHealthCheck = (name) => {
-    closeHealthCheckModal();
-    if (name) {
-      send({type: 'ENABLE_HELTH_CHECK_SINGLE_REPO', repoName: name});
-    } else {
-      send({type: 'ENABLE_HELTH_CHECK_ALL_REPOS'});
-    }
-  };
 
   return (
     <Page className="nxrm-repositories">
@@ -146,10 +149,13 @@ export default function RepositoriesList({onCreate, onEdit, copyUrl = doCopyUrl}
                   {COLUMNS.STATUS}
                 </NxTableCell>
                 <NxTableCell className="nxrm-table-cell-centered">{COLUMNS.URL}</NxTableCell>
-                {canReadHealthCheck && (
+                {showHealthCheckColumn && (
                   <NxTableCell className="nxrm-table-cell-centered">
                     {COLUMNS.HEALTH_CHECK}
                   </NxTableCell>
+                )}
+                {showIqPolicyViolationsColumn && (
+                  <NxTableCell className="nxrm-table-cell-centered">{COLUMNS.IQ}</NxTableCell>
                 )}
                 <NxTableCell chevron />
               </NxTableRow>
@@ -159,7 +165,7 @@ export default function RepositoriesList({onCreate, onEdit, copyUrl = doCopyUrl}
               error={error}
               emptyMessage={REPOSITORIES.LIST.EMPTY_LIST}
             >
-              {data.map(({name, type, format, url, status, health}) => (
+              {data.map(({name, type, format, url, status, firewallStatus}) => (
                 <NxTableRow key={name} onClick={() => onEdit(name)} isClickable>
                   <NxTableCell>{name}</NxTableCell>
                   <NxTableCell>{type}</NxTableCell>
@@ -178,15 +184,14 @@ export default function RepositoriesList({onCreate, onEdit, copyUrl = doCopyUrl}
                       </NxButton>
                     </NxButtonBar>
                   </NxTableCell>
-                  {canReadHealthCheck && (
+                  {showHealthCheckColumn && (
                     <NxTableCell className="nxrm-table-cell-centered">
-                      <RepositoryHealthCheck
-                        name={name}
-                        health={health}
-                        current={current}
-                        send={send}
-                        openModal={() => openHealthCheckModal(name)}
-                      />
+                      <HealthCheckCell name={name} openModal={() => openHealthCheckModal(name)} />
+                    </NxTableCell>
+                  )}
+                  {showIqPolicyViolationsColumn && (
+                    <NxTableCell className="nxrm-table-cell-centered">
+                      <IqPolicyViolationsCell name={name} />
                     </NxTableCell>
                   )}
                   <NxTableCell chevron />
@@ -201,7 +206,6 @@ export default function RepositoriesList({onCreate, onEdit, copyUrl = doCopyUrl}
       {healthCheckModalState.isOpen && (
         <AnalyzeConfirmationModal
           close={closeHealthCheckModal}
-          enableHealthCheck={enableHealthCheck}
           name={healthCheckModalState.repoName}
         />
       )}

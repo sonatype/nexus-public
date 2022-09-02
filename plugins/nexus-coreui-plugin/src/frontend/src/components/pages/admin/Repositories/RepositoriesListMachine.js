@@ -19,9 +19,18 @@ import Axios from 'axios';
 import {assign} from 'xstate';
 import {ListMachineUtils} from '@sonatype/nexus-ui-plugin';
 import {ExtAPIUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
-import {mergeDeepRight} from 'ramda';
+import {mergeDeepRight, indexBy, prop} from 'ramda';
 
-const {EXT, REST: {INTERNAL}} = APIConstants;
+import {
+  isIqServerEnabled,
+  canReadHealthCheck,
+  canReadFirewallStatus
+} from './IQServerColumns/IQServerHelpers';
+
+const {
+  EXT,
+  REST: {INTERNAL}
+} = APIConstants;
 
 export default ListMachineUtils.buildListMachine({
   id: 'RepositoriesListMachine',
@@ -35,9 +44,22 @@ export default ListMachineUtils.buildListMachine({
           states: {
             fetch: {
               invoke: {
-                onDone: {
-                  target: '#RepositoriesListMachine.readingHealthCheck'
-                }
+                onDone: [
+                  {
+                    target: '#RepositoriesListMachine.readingHealthCheck',
+                    cond: 'shouldRequestHealthCheck',
+                    actions: ['clearError', 'setData']
+                  },
+                  {
+                    target: '#RepositoriesListMachine.readingFirewallStatus',
+                    cond: 'shouldRequestFirewallStatus',
+                    actions: ['clearError', 'setData']
+                  },
+                  {
+                    target: '#loaded',
+                    actions: ['clearError', 'setData']
+                  }
+                ]
               }
             }
           }
@@ -49,11 +71,50 @@ export default ListMachineUtils.buildListMachine({
             },
             ENABLE_HELTH_CHECK_ALL_REPOS: {
               target: 'enablingHealthCheckAllRepos'
-            },
-            READ_HELTH_CHECK: {
-              target: 'readingHealthCheck'
             }
           }
+        },
+        readingHealthCheck: {
+          invoke: {
+            src: 'readHealthCheck',
+            onDone: [
+              {
+                target: '#RepositoriesListMachine.readingFirewallStatus',
+                cond: 'shouldRequestFirewallStatus',
+                actions: ['setHealthCheck']
+              },
+              {
+                target: 'loaded',
+                actions: ['setHealthCheck']
+              }
+            ],
+            onError: [
+              {
+                target: '#RepositoriesListMachine.readingFirewallStatus',
+                cond: 'shouldRequestFirewallStatus',
+                actions: 'setReadHealthCheckError'
+              },
+              {
+                target: 'loaded',
+                actions: ['setReadHealthCheckError']
+              }
+            ]
+          },
+          entry: 'clearReadHealthCheckError'
+        },
+        readingFirewallStatus: {
+          invoke: {
+            src: 'readFirewallRepositoryStatus',
+            onDone: {
+              target: 'loaded',
+              actions: ['setFirewallRepositoryStatus']
+            },
+            onError: {
+              target: 'loaded',
+              actions: 'setFirewallRepositoryStatusError'
+            }
+          },
+          entry: 'clearFirewallRepositoryStatusError'
         },
         enablingHealthCheckSingleRepo: {
           invoke: {
@@ -64,7 +125,7 @@ export default ListMachineUtils.buildListMachine({
             },
             onError: {
               target: 'loaded',
-              actions: ['setEnableHealthCheckError']
+              actions: 'setEnableHealthCheckError'
             }
           },
           entry: ['setEnablingHealthCheckRepoName', 'clearEnableHealthCheckError']
@@ -77,24 +138,10 @@ export default ListMachineUtils.buildListMachine({
             },
             onError: {
               target: 'loaded',
-              actions: ['setEnableHealthCheckError']
+              actions: 'setEnableHealthCheckError'
             }
           },
           entry: ['clearEnablingHealthCheckRepoName', 'clearEnableHealthCheckError']
-        },
-        readingHealthCheck: {
-          invoke: {
-            src: 'readHealthCheck',
-            onDone: {
-              target: 'loaded',
-              actions: 'setHealthCheck'
-            },
-            onError: {
-              target: 'loaded',
-              actions: ['setReadHealthCheckError']
-            }
-          },
-          entry: ['clearReadHealthCheckError']
         }
       }
     })
@@ -114,15 +161,7 @@ export default ListMachineUtils.buildListMachine({
     }),
 
     setHealthCheck: assign({
-      data: ({data}, event) => {
-        data.forEach((repo) => {
-          const health = event.data.find((it) => it.repositoryName === repo.name);
-          if (health) {
-            repo.health = health;
-          }
-        });
-        return data;
-      }
+      healthCheck: (_, event) => indexBy(prop('repositoryName'), event.data)
     }),
     setEnableHealthCheckError: assign({
       enableHealthCheckError: (_, event) => event.data?.message
@@ -141,6 +180,16 @@ export default ListMachineUtils.buildListMachine({
     }),
     clearEnablingHealthCheckRepoName: assign({
       enablingHealthCheckRepoName: () => null
+    }),
+
+    setFirewallRepositoryStatus: assign({
+      firewallStatus: (_, event) => indexBy(prop('repositoryName'), event.data)
+    }),
+    setFirewallRepositoryStatusError: assign({
+      readFirewallRepositoryStatusError: (_, event) => event.data?.message
+    }),
+    clearFirewallRepositoryStatusError: assign({
+      readFirewallRepositoryStatusError: () => null
     })
   },
   services: {
@@ -148,9 +197,9 @@ export default ListMachineUtils.buildListMachine({
 
     enableHealthCheckSingleRepo: async (_, event) => {
       const response = await ExtAPIUtils.extAPIRequest(
-          EXT.HEALTH_CHECK.ACTION,
-          EXT.HEALTH_CHECK.METHODS.UPDATE,
-          {data: [true, event.repoName, true]}
+        EXT.HEALTH_CHECK.ACTION,
+        EXT.HEALTH_CHECK.METHODS.UPDATE,
+        {data: [true, event.repoName, true]}
       );
       ExtAPIUtils.checkForError(response);
       return ExtAPIUtils.extractResult(response);
@@ -158,9 +207,9 @@ export default ListMachineUtils.buildListMachine({
 
     enableHealthCheckAllRepos: async () => {
       const response = await ExtAPIUtils.extAPIRequest(
-          EXT.HEALTH_CHECK.ACTION,
-          EXT.HEALTH_CHECK.METHODS.ENABLE_ALL,
-          {data: [true]}
+        EXT.HEALTH_CHECK.ACTION,
+        EXT.HEALTH_CHECK.METHODS.ENABLE_ALL,
+        {data: [true]}
       );
       ExtAPIUtils.checkForError(response);
       return ExtAPIUtils.extractResult(response);
@@ -168,11 +217,24 @@ export default ListMachineUtils.buildListMachine({
 
     readHealthCheck: async () => {
       const response = await ExtAPIUtils.extAPIRequest(
-          EXT.HEALTH_CHECK.ACTION,
-          EXT.HEALTH_CHECK.METHODS.READ
+        EXT.HEALTH_CHECK.ACTION,
+        EXT.HEALTH_CHECK.METHODS.READ
+      );
+      ExtAPIUtils.checkForError(response);
+      return ExtAPIUtils.extractResult(response);
+    },
+
+    readFirewallRepositoryStatus: async () => {
+      const response = await ExtAPIUtils.extAPIRequest(
+        EXT.FIREWALL_REPOSITORY_STATUS.ACTION,
+        EXT.FIREWALL_REPOSITORY_STATUS.METHODS.READ
       );
       ExtAPIUtils.checkForError(response);
       return ExtAPIUtils.extractResult(response);
     }
+  },
+  guards: {
+    shouldRequestHealthCheck: () => isIqServerEnabled() && canReadHealthCheck(),
+    shouldRequestFirewallStatus: () => isIqServerEnabled() && canReadFirewallStatus()
   }
 });

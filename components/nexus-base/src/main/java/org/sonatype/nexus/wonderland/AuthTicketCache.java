@@ -6,30 +6,30 @@
  * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
  * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
  *
- * Sonatype Nexus (TM) Open Source Version is distributed with Sencha Ext JS pursuant to a FLOSS Exception agreed upon
- * between Sonatype, Inc. and Sencha Inc. Sencha Ext JS is licensed under GPL v3 and cannot be redistributed as part of a
- * closed source work.
- *
  * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import '@testing-library/jest-dom/extend-expect';
+package org.sonatype.nexus.wonderland;
 
-let lastValue = 0;
+/**
+ * Manages cache (and expiration) of authentication tickets.
+ *
+ * @since 2.7
+ */
+public interface AuthTicketCache
+{
+  public static final String EXPIRE = "${wonderland.authTicketCache.expireAfter:-20s}";
 
-window.crypto = {
-  getRandomValues: function (buffer) {
-    buffer.fill(lastValue++);
-  },
-};
+  /**
+   * Add token to the cache.
+   */
+  void add(String user, String token);
 
-window.plugins = [];
-window.BlobStoreTypes = {};
-
-global.NX = {
-  Messages: {
-    success: jest.fn(),
-    error: jest.fn(),
-  },
-};
+  /**
+   * Remove token from cache.
+   *
+   * @return True if the token existed (was added and not yet expired)
+   */
+  boolean remove(String user, String token);
+}

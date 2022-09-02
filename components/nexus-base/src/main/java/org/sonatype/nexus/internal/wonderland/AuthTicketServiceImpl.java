@@ -19,6 +19,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.wonderland.AuthTicketService;
+import org.sonatype.nexus.wonderland.AuthTicketCache;
 
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
@@ -69,7 +70,7 @@ public class AuthTicketServiceImpl
   }
 
   @Override
-  public boolean redeemTicket(String ticket) {
+  public boolean redeemTicket(final String ticket) {
     Subject subject = SecurityUtils.getSubject();
 
     return subject != null && redeemTicket(subject.getPrincipal().toString(), ticket);

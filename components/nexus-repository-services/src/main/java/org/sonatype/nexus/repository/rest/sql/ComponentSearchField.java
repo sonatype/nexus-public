@@ -32,6 +32,8 @@ public class ComponentSearchField
 
   public static final SearchFieldSupport VERSION = new ComponentSearchField("version");
 
+  public static final SearchFieldSupport PRERELEASE = new ComponentSearchField("prerelease");
+
   public static final SearchFieldSupport FORMAT_FIELD_1 = new ComponentSearchField("format_field_1");
 
   public static final SearchFieldSupport FORMAT_FIELD_2 = new ComponentSearchField("format_field_2");

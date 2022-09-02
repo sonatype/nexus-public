@@ -16,5 +16,10 @@
 <features>
   <feature name="${project.artifactId}">
     <bundle start-level="9">${mvn:nexus-pax-logging}</bundle>
+
+    <!--
+    Add slf4j to dependencies of Jetty
+    -->
+    <bundle>wrap:${mvn:jetty-util}$overwrite=merge&amp;Import-Package=org.slf4j,*</bundle>
   </feature>
 </features>

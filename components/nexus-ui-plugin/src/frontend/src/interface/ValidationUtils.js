@@ -246,7 +246,7 @@ export default class ValidationUtils {
   }
 
   /**
-   * Check if the errors object returned contains any error messages
+   * Checks if the errors object returned contains any error messages
    * @param errors {Object | null | undefined}
    * @return {boolean} true if there are any error messages
    */

@@ -48,6 +48,7 @@
     ALTER TABLE component_search ADD COLUMN IF NOT EXISTS uploader VARCHAR;
     ALTER TABLE component_search ADD COLUMN IF NOT EXISTS uploader_ip VARCHAR;
     ALTER TABLE component_search ADD COLUMN IF NOT EXISTS normalised_version VARCHAR NOT NULL;
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS prerelease BOOLEAN NOT NULL DEFAULT false;
 
     CREATE INDEX IF NOT EXISTS idx_component_search_normalised_version ON component_search (normalised_version);
     CREATE INDEX IF NOT EXISTS idx_component_search_namespace ON component_search (namespace);
@@ -66,6 +67,7 @@
     CREATE INDEX IF NOT EXISTS idx_component_search_format_field_5 ON component_search (format_field_5);
     CREATE INDEX IF NOT EXISTS idx_component_search_uploader ON component_search (uploader);
     CREATE INDEX IF NOT EXISTS idx_component_search_uploader_ip ON component_search (uploader_ip);
+    CREATE INDEX IF NOT EXISTS idx_component_search_prerelease ON component_search (prerelease);
   </insert>
 
   <sql id="repositoryMatch">
@@ -108,17 +110,18 @@
     <result property="formatField5" column="format_field_5"/>
     <result property="uploader" column="uploader"/>
     <result property="uploaderIp" column="uploader_ip"/>
+    <result property="prerelease" column="prerelease"/>
   </resultMap>
 
   <insert id="create" parameterType="SearchTableData">
     INSERT INTO component_search(repository_id, component_id, asset_id, format, namespace, search_component_name, path,
                                  component_kind, version, normalised_version, search_repository_name, content_type, md5,
                                  sha1, sha256, sha512, format_field_1, format_field_2, format_field_3, format_field_4,
-                                 format_field_5, uploader, uploader_ip, component_created)
+                                 format_field_5, uploader, uploader_ip, prerelease, component_created)
     VALUES (#{repositoryId}, #{componentId}, #{assetId}, #{format}, #{namespace}, #{componentName}, #{path},
-            #{componentKind}, #{version}, #{normalisedVersion} ,#{repositoryName}, #{contentType}, #{md5}, #{sha1},
+            #{componentKind}, #{version}, #{normalisedVersion}, #{repositoryName}, #{contentType}, #{md5}, #{sha1},
             #{sha256}, #{sha512}, #{formatField1}, #{formatField2}, #{formatField3}, #{formatField4}, #{formatField5},
-            #{uploader}, #{uploaderIp},
+            #{uploader}, #{uploaderIp}, #{prerelease},
             (SELECT created FROM ${format}_component WHERE component_id = #{componentId}));
   </insert>
 
@@ -131,6 +134,7 @@
   <update id="updateFormatFields">
     UPDATE component_search
     SET
+    prerelease = #{preRelease},
     format_field_1 = #{formatField1},
     format_field_2 = #{formatField2},
     format_field_3 = #{formatField3},
@@ -228,13 +232,14 @@
   <insert id="saveBatch" parameterType="java.util.List">
     INSERT INTO component_search(repository_id, component_id, asset_id, format, namespace, search_component_name, path,
     component_kind, version, normalised_version, search_repository_name, content_type, md5, sha1, sha256, sha512,
-    component_created, format_field_1, format_field_2, format_field_3, format_field_4, format_field_5, uploader, uploader_ip)
+    component_created, format_field_1, format_field_2, format_field_3, format_field_4, format_field_5, uploader, uploader_ip,
+    prerelease)
     VALUES
     <foreach collection="searchData" separator="," item="item">
       (#{item.repositoryId}, #{item.componentId}, #{item.assetId}, #{item.format}, #{item.namespace}, #{item.componentName}, #{item.path},
       #{item.componentKind}, #{item.version}, #{item.normalisedVersion}, #{item.repositoryName}, #{item.contentType},
        #{item.md5}, #{item.sha1}, #{item.sha256}, #{item.sha512}, #{item.componentCreated}, #{item.formatField1}, #{item.formatField2},
-       #{item.formatField3}, #{item.formatField4}, #{item.formatField5}, #{item.uploader}, #{item.uploaderIp})
+       #{item.formatField3}, #{item.formatField4}, #{item.formatField5}, #{item.uploader}, #{item.uploaderIp}, #{item.prerelease})
     </foreach>
   </insert>
 

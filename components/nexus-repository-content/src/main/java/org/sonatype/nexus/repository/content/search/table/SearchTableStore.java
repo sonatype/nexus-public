@@ -102,6 +102,7 @@ public class SearchTableStore
    * @param componentId  the component identification
    * @param assetId      the asset identification
    * @param format       the repository format
+   * @param preRelease   is a package pre-release or not
    * @param formatField1 a format specific field 1
    * @param formatField2 a format specific field 2
    * @param formatField3 a format specific field 3
@@ -114,14 +115,15 @@ public class SearchTableStore
       @Nonnull @Param("componentId") final Integer componentId,
       @Nonnull @Param("assetId") final Integer assetId,
       @Nonnull @Param("format") final String format,
+      @Nonnull @Param("preRelease") final boolean preRelease,
       @Nullable final String formatField1,
       @Nullable final String formatField2,
       @Nullable final String formatField3,
       @Nullable final String formatField4,
       @Nullable final String formatField5)
   {
-    dao().updateFormatFields(repositoryId, componentId, assetId, format, formatField1, formatField2, formatField3,
-        formatField4, formatField5);
+    dao().updateFormatFields(repositoryId, componentId, assetId, format, preRelease,
+        formatField1, formatField2, formatField3, formatField4, formatField5);
   }
 
   /**

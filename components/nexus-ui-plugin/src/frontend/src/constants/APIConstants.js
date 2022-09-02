@@ -46,6 +46,12 @@ export default {
         ENABLE_ALL: 'enableAll'
       }
     },
+    FIREWALL_REPOSITORY_STATUS: {
+      ACTION: 'firewall_RepositoryStatus',
+      METHODS: {
+        READ: 'read'
+      }
+    },
     PRIVILEGE: {
       ACTION: 'coreui_Privilege',
       METHODS: {

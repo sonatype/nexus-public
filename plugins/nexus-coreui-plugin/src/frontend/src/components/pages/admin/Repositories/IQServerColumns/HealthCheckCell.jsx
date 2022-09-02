@@ -11,23 +11,27 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {NxFontAwesomeIcon, NxTooltip} from '@sonatype/react-shared-components';
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import {NxFontAwesomeIcon, NxTooltip, NxP} from '@sonatype/react-shared-components';
 import {faBan, faShieldAlt, faAward, faExclamationCircle} from '@fortawesome/free-solid-svg-icons';
 import UIStrings from '../../../../../constants/UIStrings';
+import './IQServerColumns.scss';
+import {useRepositoriesService} from '../RepositoriesContextProvider';
+import {canUpdateHealthCheck} from './IQServerHelpers';
 
 const {HEALTH_CHECK} = UIStrings.REPOSITORIES.LIST;
 
-export default function RepositoryHealthCheck({name, health, current, openModal}) {
-  const {enablingHealthCheckRepoName, enableHealthCheckError, readHealthCheckError} =
-    current.context;
+export default function HealthCheckCell({name, openModal}) {
+  const [state] = useRepositoriesService();
 
-  const canUpdateHealthCheck = ExtJS.checkPermission('nexus:healthcheck:update');
+  const {enablingHealthCheckRepoName, enableHealthCheckError, readHealthCheckError, healthCheck} =
+    state.context;
+
+  const health = healthCheck ? healthCheck[name] : null;
 
   const isLoading =
-    (current.matches('enablingHealthCheckSingleRepo') && enablingHealthCheckRepoName === name) ||
-    (current.matches('enablingHealthCheckAllRepos') && !health?.enabled) ||
-    current.matches('readingHealthCheck');
+    (state.matches('enablingHealthCheckSingleRepo') && enablingHealthCheckRepoName === name) ||
+    (state.matches('enablingHealthCheckAllRepos') && !health?.enabled) ||
+    state.matches('readingHealthCheck');
 
   const isLoadingError =
     (!!enableHealthCheckError && enablingHealthCheckRepoName === name) ||
@@ -35,7 +39,7 @@ export default function RepositoryHealthCheck({name, health, current, openModal}
     !!readHealthCheckError;
 
   const isDisabled =
-    current.matches('enablingHealthCheckSingleRepo') && enablingHealthCheckRepoName !== name;
+    state.matches('enablingHealthCheckSingleRepo') && enablingHealthCheckRepoName !== name;
 
   const showModal = (e) => {
     if (isDisabled) {
@@ -46,53 +50,49 @@ export default function RepositoryHealthCheck({name, health, current, openModal}
   };
 
   if (isLoading) {
-    return <p className="nx-p nxrm-rhc-loading-lbl">{HEALTH_CHECK.LOADING}</p>;
+    return <NxP className="nxrm-rhc-loading-lbl">{HEALTH_CHECK.LOADING}</NxP>;
   }
 
   if (isLoadingError) {
     return (
-      <p className="nx-p nxrm-rhc-loading-error">
+      <NxP className="nxrm-rhc-loading-error">
         <NxFontAwesomeIcon icon={faExclamationCircle} />
         {HEALTH_CHECK.LOADING_ERROR}
-      </p>
+      </NxP>
     );
   }
 
-  if (!health || (!health.enabled && !canUpdateHealthCheck)) {
+  if (!health || (!health.enabled && !canUpdateHealthCheck())) {
     return (
-      <NxTooltip title={HEALTH_CHECK.NOT_AVAILABLE_TOOLTIP}>
-        <NxFontAwesomeIcon icon={faBan} />
+      <NxTooltip title={HEALTH_CHECK.NOT_AVAILABLE_TOOLTIP_HC}>
+        <NxFontAwesomeIcon icon={faBan} className="nxrm-unavailable-icon" />
       </NxTooltip>
     );
   }
 
   if (!health.enabled) {
     return (
-      <>
-        <p
-          className={`nx-p ${
-            isDisabled ? 'nxrm-rhc-analyze-btn-disabled' : 'nxrm-rhc-analyze-btn-enabled'
-          }`}
-          onClick={showModal}
-        >
-          {HEALTH_CHECK.ANALYZE_BUTTON}
-        </p>
-      </>
+      <NxP
+        className={isDisabled ? 'nxrm-rhc-analyze-btn-disabled' : 'nxrm-rhc-analyze-btn-enabled'}
+        onClick={showModal}
+      >
+        {HEALTH_CHECK.ANALYZE_BUTTON}
+      </NxP>
     );
   }
 
   if (health.analyzing) {
-    return <p className="nx-p nxrm-rhc-analyzing-lbl">{HEALTH_CHECK.ANALYZING}</p>;
+    return <NxP className="nxrm-rhc-analyzing-lbl">{HEALTH_CHECK.ANALYZING}</NxP>;
   }
 
   if (health.enabled) {
     return (
-      <div className="nx-p nxrm-health-check-indicators">
+      <NxP className="nxrm-health-check-indicators">
         <NxFontAwesomeIcon icon={faShieldAlt} />
         {health.securityIssueCount}
         <NxFontAwesomeIcon icon={faAward} />
         {health.licenseIssueCount}
-      </div>
+      </NxP>
     );
   }
 }

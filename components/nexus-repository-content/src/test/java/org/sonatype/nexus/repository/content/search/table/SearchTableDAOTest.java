@@ -263,7 +263,7 @@ public class SearchTableDAOTest
 
     SearchTableData tableData = GENERATED_DATA.get(0);
     searchDAO.updateFormatFields(tableData.getRepositoryId(), tableData.getComponentId(), tableData.getAssetId(),
-        FORMAT, "customField1", "customField2", "customField3", "customField4", "customField5");
+        FORMAT, true, "customField1", "customField2", "customField3", "customField4", "customField5");
     SqlSearchQueryConditionBuilder queryConditionBuilder = new SqlSearchQueryConditionBuilder();
     SqlSearchQueryCondition queryCondition =
         queryConditionBuilder.condition(FORMAT_FIELD_1.getColumnName(), "customField1");

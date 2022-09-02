@@ -22,12 +22,24 @@ import {
 } from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
+import {useRepositoriesService} from '../RepositoriesContextProvider';
 import AnalyzeButton from './AnalyzeButton';
 
 const {HEALTH_CHECK} = UIStrings.REPOSITORIES.LIST;
 const {CANCEL_BUTTON_LABEL} = UIStrings.SETTINGS;
 
-export default function AnalyzeConfirmationModal({close, enableHealthCheck, name}) {
+export default function AnalyzeConfirmationModal({close, name}) {  
+  const [, send] = useRepositoriesService();
+
+  const enableHealthCheck = (name) => {
+    close();
+    if (name) {
+      send({type: 'ENABLE_HELTH_CHECK_SINGLE_REPO', repoName: name});
+    } else {
+      send({type: 'ENABLE_HELTH_CHECK_ALL_REPOS'});
+    }
+  };
+
   return (
     <NxModal
       className="nxrm-enable-health-check-modal"

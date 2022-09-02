@@ -45,45 +45,14 @@
 
 .nxrm-repositories {
   .nxrm-repositories-list {
-    .nxrm-health-check-indicators {
-      .nx-icon {
-        margin: 0 var(--nx-spacing-base) 0 0;
-      }
-      .nx-icon:nth-child(2) {
-        margin-left: var(--nx-spacing-2x);
-      }
-    }
-
-    .nxrm-rhc-analyze-btn-enabled {
-      color: var(--nx-swatch-blue-40);
-    }
-
-    .nxrm-rhc-analyze-btn-disabled {
-      color: var(--nx-swatch-grey-60);
-    }
-
-    .nxrm-rhc-loading-lbl,
-    .nxrm-rhc-analyzing-lbl {
-      color: var(--nx-swatch-grey-30);
-    }
-
-    .nxrm-rhc-loading-error {
-      color: var(--nx-swatch-red-40);
-      font-size: var(---nx-font-size-s);
-
-      .nx-icon {
-        margin-left: 0;
-      }
-    }
-
     .nxrm-table-cell-centered {
       text-align: center;
       padding-left: var(--nx-spacing-3x);
       padding-right: var(--nx-spacing-3x);
+      
+      .nx-btn-bar {
+        justify-content: center;
+      }
     }
-  }
-
-  .nxrm-enable-health-check-modal.nx-modal {
-    overflow-y: visible;
   }
 }

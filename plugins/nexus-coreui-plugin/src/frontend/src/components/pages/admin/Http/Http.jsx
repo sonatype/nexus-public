@@ -28,6 +28,8 @@ import HttpReadOnly from './HttpReadOnly';
 
 import UIStrings from '../../../../constants/UIStrings';
 
+import './Http.scss';
+
 export default function Http() {
   const canEdit = ExtJS.checkPermission('nexus:settings:update');
 

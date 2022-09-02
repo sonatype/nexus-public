@@ -14,22 +14,20 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import '@testing-library/jest-dom/extend-expect';
+import {ExtJS} from '@sonatype/nexus-ui-plugin';
 
-let lastValue = 0;
-
-window.crypto = {
-  getRandomValues: function (buffer) {
-    buffer.fill(lastValue++);
-  },
+export const isIqServerEnabled = () => {
+  return ExtJS.state().getValue('clm').enabled;
 };
 
-window.plugins = [];
-window.BlobStoreTypes = {};
+export const canReadHealthCheck = () => {
+  return ExtJS.checkPermission('nexus:healthcheck:read');
+};
 
-global.NX = {
-  Messages: {
-    success: jest.fn(),
-    error: jest.fn(),
-  },
+export const canUpdateHealthCheck = () => {
+    return ExtJS.checkPermission('nexus:healthcheck:update');
+}
+
+export const canReadFirewallStatus = () => {
+  return ExtJS.checkPermission('nexus:iq-violation-summary:read');
 };
