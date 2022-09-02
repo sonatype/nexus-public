@@ -87,6 +87,8 @@ public class SearchTableData
   // asset's blob uploaderByIp property
   private String uploaderIp;
 
+  private boolean prerelease;
+
   public SearchTableData() {
   }
 
@@ -302,6 +304,14 @@ public class SearchTableData
     return uploaderIp;
   }
 
+  public boolean isPrerelease() {
+    return prerelease;
+  }
+
+  public void setPrerelease(final boolean prerelease) {
+    this.prerelease = prerelease;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) {
@@ -330,14 +340,15 @@ public class SearchTableData
         Objects.equals(formatField4, tableData.formatField4) &&
         Objects.equals(formatField5, tableData.formatField5) &&
         Objects.equals(uploader, tableData.uploader) &&
-        Objects.equals(uploaderIp, tableData.uploaderIp);
+        Objects.equals(uploaderIp, tableData.uploaderIp) &&
+        Objects.equals(prerelease, tableData.prerelease);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(repositoryId, componentId, assetId, format, namespace, componentName, componentKind, version,
         normalisedVersion, componentCreated, repositoryName, path, contentType, md5, sha1, sha256, sha512,
-        formatField1, formatField2, formatField3, formatField4, formatField5, uploader, uploaderIp);
+        formatField1, formatField2, formatField3, formatField4, formatField5, uploader, uploaderIp, prerelease);
   }
 
   @Override
@@ -367,6 +378,7 @@ public class SearchTableData
         .add("formatField5='" + formatField5 + "'")
         .add("uploader='" + uploader + "'")
         .add("uploaderIp='" + uploaderIp + "'")
+        .add("prerelease=" + prerelease)
         .toString();
   }
 }
