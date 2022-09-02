@@ -28,8 +28,13 @@ Ext.define('NX.coreui.view.search.SearchFeature', {
   cls: 'nx-coreui-searchfeature',
   iconCls: 'x-fa fa-search',
 
+  requires: [
+    'NX.State'
+  ],
+
   initComponent: function() {
-    var me = this;
+    var me = this,
+        searchItem = NX.State.isSqlSearchEnabled() ? this.getSqlSearchItem() : this.getEsSearchItem();
 
     me.masters = [
       {
@@ -71,12 +76,8 @@ Ext.define('NX.coreui.view.search.SearchFeature', {
             iconCls: NX.Icons.cls('message-danger', 'x16'),
             hidden: true
           },
-          {
-            xtype: 'nx-coreui-search-result-list',
-            cls: 'nx-search-result-list',
-            flex: 1,
-            header: false
-          }
+          // depends on SQL search or Elasticsearch show corresponding message
+          searchItem
         ]
       },
       {
@@ -106,6 +107,36 @@ Ext.define('NX.coreui.view.search.SearchFeature', {
     };
 
     me.callParent();
+  },
+
+  getSqlSearchItem: function() {
+    return {
+      xtype: 'panel',
+      title:
+          {
+            iconCls: 'x-fa fa-info-circle',
+            text: NX.I18n.get('Search_SearchRestrictions')
+          },
+      layout: 'fit',
+      flex: 1,
+      items: [
+        {
+          xtype: 'nx-coreui-search-result-list',
+          cls: 'nx-search-result-list',
+          flex: 1,
+          header: false
+        }
+      ]
+    }
+  },
+
+  getEsSearchItem: function() {
+    return {
+      xtype: 'nx-coreui-search-result-list',
+      cls: 'nx-search-result-list',
+      flex: 1,
+      header: false
+    }
   }
 
 });

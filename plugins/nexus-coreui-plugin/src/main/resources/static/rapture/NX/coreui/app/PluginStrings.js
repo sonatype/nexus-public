@@ -132,6 +132,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     // Browse -> Search
     Search_Text: 'Search',
     Search_Description: 'Search for components by attribute',
+    Search_SearchRestrictions: 'All searches require at least three non-wildcard (*) characters and cannot start with a wildcard',
     Search_SaveSearchFilter_Title: 'Save search filter',
     Search_SaveSearchFilter_Name_FieldLabel: 'Filter name',
     Search_SaveSearchFilter_Description_FieldLabel: 'Filter description',

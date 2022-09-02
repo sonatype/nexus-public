@@ -40,7 +40,7 @@ import static java.util.stream.Collectors.toList;
  */
 @Named
 @Singleton
-class AssetMapUtils
+public class AssetMapUtils
 {
   private static final String EMPTY_PARAM = "";
 
