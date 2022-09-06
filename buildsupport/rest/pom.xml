@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
 
     Sonatype Nexus (TM) Open Source Version
@@ -11,9 +12,7 @@
     of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
     Eclipse Foundation. All other trademarks are the property of their respective owners.
 
--->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+--><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
 
@@ -36,7 +35,7 @@
     -->
     <jackson2.yaml.version>2.12.2</jackson2.yaml.version>
     <jaxb.version>2.3.3</jaxb.version>
-    <resteasy.version>3.15.3.Final</resteasy.version>
+    <resteasy.version>4.6.1.Beta3</resteasy.version>
     <swagger.version>1.6.2</swagger.version>
     <snakeyaml.version>1.28</snakeyaml.version>
   </properties>
