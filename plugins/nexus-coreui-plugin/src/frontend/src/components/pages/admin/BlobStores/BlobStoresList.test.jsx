@@ -13,7 +13,6 @@
 import React from 'react';
 import axios from 'axios';
 import {fireEvent, waitForElementToBeRemoved} from '@testing-library/react'
-import '@testing-library/jest-dom/extend-expect';
 import {TestUtils} from '@sonatype/nexus-ui-plugin';
 
 import BlobStoresList from './BlobStoresList';

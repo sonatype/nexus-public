@@ -15,7 +15,6 @@ import axios from 'axios';
 import {when} from 'jest-when';
 import {fireEvent, screen, waitForElementToBeRemoved} from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
-import '@testing-library/jest-dom/extend-expect';
 import {TestUtils} from '@sonatype/nexus-ui-plugin';
 import S3BlobStoreSettings from './S3/S3BlobStoreSettings';
 import S3BlobStoreWarning from './S3/S3BlobStoreWarning';

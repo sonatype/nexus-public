@@ -12,10 +12,9 @@
  */
 import React from 'react';
 import Axios from 'axios';
-import TestUtils from "@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils";
+import {TestUtils} from '@sonatype/nexus-ui-plugin';
 import AnalyzeApplication from "./AnalyzeApplication";
 import { waitForElementToBeRemoved } from "@testing-library/react";
-import '@testing-library/jest-dom/extend-expect';
 import UIStrings from "../../../../constants/UIStrings";
 
 const componentName = 'componentName';

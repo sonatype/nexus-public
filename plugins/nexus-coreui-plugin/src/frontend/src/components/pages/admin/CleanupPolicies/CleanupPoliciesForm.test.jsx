@@ -13,7 +13,6 @@
 import React from 'react';
 import {fireEvent, screen, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import '@testing-library/jest-dom/extend-expect';
 import {when} from 'jest-when';
 
 import axios from 'axios';

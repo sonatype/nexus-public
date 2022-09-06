@@ -14,7 +14,6 @@ import React from 'react';
 import Axios from 'axios';
 import {act} from 'react-dom/test-utils';
 import {fireEvent, waitFor} from '@testing-library/react';
-import '@testing-library/jest-dom/extend-expect';
 import {TestUtils} from '@sonatype/nexus-ui-plugin';
 
 import NuGetApiToken from './NuGetApiToken';
@@ -22,9 +21,6 @@ import UIStrings from '../../../../constants/UIStrings';
 
 const mockToken = 'fakeToken'
 const mockTokenB64 = 'ZmFrZVRva2Vu'
-
-// TODO: come up with a better solution to this
-window.NX = { Messages: { success: () => {} } };
 
 jest.mock('@sonatype/nexus-ui-plugin', () => {
   return {

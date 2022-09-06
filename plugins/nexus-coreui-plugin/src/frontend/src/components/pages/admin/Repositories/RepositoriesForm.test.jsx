@@ -26,7 +26,6 @@ import {
 import userEvent from '@testing-library/user-event';
 
 import {when} from 'jest-when';
-import '@testing-library/jest-dom/extend-expect';
 import {mergeDeepRight} from 'ramda';
 
 import {TestUtils, ExtAPIUtils, APIConstants, ExtJS} from '@sonatype/nexus-ui-plugin';

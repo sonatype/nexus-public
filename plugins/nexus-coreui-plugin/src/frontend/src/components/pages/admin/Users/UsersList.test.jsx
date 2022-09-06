@@ -13,7 +13,6 @@
 import React from 'react';
 import {render, screen, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import {sort, prop, descend, ascend, clone, toLower, compose} from 'ramda';
-import '@testing-library/jest-dom/extend-expect';
 import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
 import Axios from 'axios';

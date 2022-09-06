@@ -42,13 +42,6 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
 
 const { REALMS: LABELS, SETTINGS } = UIStrings;
 
-global.NX = {
-  Permissions: {
-    check: jest.fn(() => true),
-  },
-  Messages: { success: () => {} },
-};
-
 const selectors = {
   ...TestUtils.selectors,
   discardButton: () => screen.getByText(SETTINGS.DISCARD_BUTTON_LABEL),

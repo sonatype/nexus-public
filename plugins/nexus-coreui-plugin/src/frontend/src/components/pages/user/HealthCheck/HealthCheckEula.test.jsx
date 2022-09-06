@@ -13,7 +13,6 @@
 import React from 'react';
 import {act} from 'react-dom/test-utils';
 import {fireEvent} from '@testing-library/react';
-import '@testing-library/jest-dom/extend-expect';
 import {TestUtils} from '@sonatype/nexus-ui-plugin';
 import UIStrings from '../../../../constants/UIStrings';
 import Axios from 'axios';

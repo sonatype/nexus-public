@@ -14,7 +14,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {APIConstants} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, APIConstants} from '@sonatype/nexus-ui-plugin';
 
 const {REST: {PUBLIC: {USERS: usersUrl, ROLES: rolesUrl}}} = APIConstants;
 
@@ -58,11 +58,11 @@ export const URL = {
   changePasswordUrl
 };
 
-export const isAnonymousUser = (userId) => userId === NX.State.getValue('anonymousUsername');
+export const isAnonymousUser = (userId) => userId === ExtJS.state().getValue('anonymousUsername');
 
 export const isExternalUser = (source) => source !== DEFAULT_SOURCE;
 
-export const isCurrentUser = (userId) => userId === NX.State.getUser().id;
+export const isCurrentUser = (userId) => userId === ExtJS.state().getUser().id;
 
 export const parseIdParameter = (idString) => {
   const [firstParam, secondParam] = idString.split('/');
