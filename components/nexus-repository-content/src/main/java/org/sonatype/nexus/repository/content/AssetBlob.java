@@ -57,6 +57,11 @@ public interface AssetBlob
   OffsetDateTime blobCreated();
 
   /**
+   * When the blob was added to repository.
+   */
+  OffsetDateTime addedToRepository();
+
+  /**
    * The user that triggered creation of this blob; empty if it was an internal request.
    */
   Optional<String> createdBy();

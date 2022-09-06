@@ -170,59 +170,59 @@ public class AssetStore<T extends AssetDAO>
   }
 
   /**
-   * Find updated assets. The paging works differently because results are sorted by blobCreated instead of id. Page
-   * through results by passing the blobCreated value from the last record in the Collection.
+   * Find updated assets. The paging works differently because results are sorted by addedToRepository instead of id. Page
+   * through results by passing the addedToRepository value from the last record in the Collection.
    *
    * @param repositoryId the repository to browse
-   * @param blobCreated blobCreated of asset content from the last record of the previous call.
+   * @param addedToRepository addedToRepository of asset content from the last record of the previous call.
    * @param regexExpressions  list of wildcard expressions to match on path.
    *                             Supported special characters are * and ?
    * @param batchSize how many assets to fetch in each call. May return more assets than this if there are
-   *                  multiple assets with the same blobCreated value as the last record.
+   *                  multiple assets with the same addedToRepository value as the last record.
    * @return batch of updated assets
    */
   @Transactional
   public List<AssetInfo> findUpdatedAssets(
       final int repositoryId,
-      @Nullable final OffsetDateTime blobCreated,
+      @Nullable final OffsetDateTime addedToRepository,
       final List<String> regexExpressions,
       final int batchSize)
   {
     // We consider dates the same if they are at the same millisecond. Normalization of the date plus using a >= query has
     // the effect of doing a > query as if the data in the database was truncated to the millisecond.
-    OffsetDateTime blobCreatedNormalized = null;
-    if (blobCreated != null) {
-      blobCreatedNormalized = blobCreated.plus(1, ChronoUnit.MILLIS).truncatedTo(ChronoUnit.MILLIS);
+    OffsetDateTime addedToRepositoryNormalized = null;
+    if (addedToRepository != null) {
+      addedToRepositoryNormalized = addedToRepository.plus(1, ChronoUnit.MILLIS).truncatedTo(ChronoUnit.MILLIS);
     }
 
-    // Fetch one extra record to check if there are more results with the same blobCreated value. Most of the time
+    // Fetch one extra record to check if there are more results with the same addedToRepository value. Most of the time
     // this won't be the case, and we will not need a query to find them all.
-    List<AssetInfo> assets = dao().findGreaterThanOrEqualToBlobCreated(repositoryId, blobCreatedNormalized, regexExpressions, batchSize + 1);
+    List<AssetInfo> assets = dao().findGreaterThanOrEqualToAddedToRepository(repositoryId, addedToRepositoryNormalized, regexExpressions, batchSize + 1);
 
     if (assets.size() == batchSize + 1) {
       if (hasMoreResultsWithSameBlobCreated(assets)) {
         Set<String> knownPaths = assets.stream().map(AssetInfo::path).collect(Collectors.toSet());
         AssetInfo lastAsset = assets.get(assets.size() - 1);
 
-        OffsetDateTime startBlobCreated = lastAsset.blobCreated().truncatedTo(ChronoUnit.MILLIS);
-        OffsetDateTime endBlobCreated = lastAsset.blobCreated().plus(1, ChronoUnit.MILLIS);
+        OffsetDateTime startAddedToRepository = lastAsset.addedToRepository().truncatedTo(ChronoUnit.MILLIS);
+        OffsetDateTime endAddedToRepository = lastAsset.addedToRepository().plus(1, ChronoUnit.MILLIS);
 
         // Add all records that match the timestamp (truncating to millisecond) of the last record. Then we can continue
         // paging with a greater than query.
-        List<AssetInfo> matchBlobCreated =
-            dao().findBlobCreatedWithinRange(repositoryId, startBlobCreated, endBlobCreated, regexExpressions, LAST_UPDATED_LIMIT);
+        List<AssetInfo> matchAddedToRepository =
+            dao().findAddedToRepositoryWithinRange(repositoryId, startAddedToRepository, endAddedToRepository, regexExpressions, LAST_UPDATED_LIMIT);
 
-        if (matchBlobCreated.size() == LAST_UPDATED_LIMIT) {
+        if (matchAddedToRepository.size() == LAST_UPDATED_LIMIT) {
           log.error(
               "Found {} assets with identical last_updated value. Replication is skipping over additional assets with last_updated = {}",
-              LAST_UPDATED_LIMIT, lastAsset.blobCreated());
+              LAST_UPDATED_LIMIT, lastAsset.addedToRepository());
         }
 
         assets.addAll(
-            matchBlobCreated.stream().filter(asset -> !knownPaths.contains(asset.path())).collect(Collectors.toList()));
+            matchAddedToRepository.stream().filter(asset -> !knownPaths.contains(asset.path())).collect(Collectors.toList()));
       }
       else {
-        // It's not safe to leave the extra record in. There may be more assets with same blobCreated value as it.
+        // It's not safe to leave the extra record in. There may be more assets with same addedToRepository value as it.
         assets.remove(assets.size() - 1);
       }
     }
@@ -231,9 +231,9 @@ public class AssetStore<T extends AssetDAO>
   }
 
   private boolean hasMoreResultsWithSameBlobCreated(final List<AssetInfo> assets) {
-    OffsetDateTime lastBlobCreated = assets.get(assets.size() - 1).blobCreated().truncatedTo(ChronoUnit.MILLIS);;
-    OffsetDateTime secondToLastBlobCreated = assets.get(assets.size() - 2).blobCreated().truncatedTo(ChronoUnit.MILLIS);;
-    return lastBlobCreated.equals(secondToLastBlobCreated);
+    OffsetDateTime lastAddedToRepository = assets.get(assets.size() - 1).addedToRepository().truncatedTo(ChronoUnit.MILLIS);;
+    OffsetDateTime secondToLastAddedToRepository = assets.get(assets.size() - 2).addedToRepository().truncatedTo(ChronoUnit.MILLIS);;
+    return lastAddedToRepository.equals(secondToLastAddedToRepository);
   }
 
   /**

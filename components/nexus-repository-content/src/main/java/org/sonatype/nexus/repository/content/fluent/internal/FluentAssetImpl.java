@@ -287,6 +287,11 @@ public class FluentAssetImpl
   }
 
   @Override
+  public void blobAddedToRepository(final OffsetDateTime addedToRepository) {
+    blob().ifPresent(assetBlob -> facet.stores().assetBlobStore.setAddedToRepository(assetBlob, addedToRepository));
+  }
+
+  @Override
   public void lastDownloaded(final OffsetDateTime lastDownloaded) {
     facet.stores().assetStore.lastDownloaded(this, lastDownloaded);
   }

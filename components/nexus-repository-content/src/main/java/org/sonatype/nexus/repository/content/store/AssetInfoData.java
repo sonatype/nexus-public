@@ -39,6 +39,8 @@ public class AssetInfoData
 
   private OffsetDateTime blobCreated;
 
+  private OffsetDateTime addedToRepository;
+
   @Override
   public String nextContinuationToken() {
     return Integer.toString(assetId);
@@ -75,6 +77,11 @@ public class AssetInfoData
   }
 
   @Override
+  public OffsetDateTime addedToRepository() {
+    return addedToRepository;
+  }
+
+  @Override
   public String toString() {
     return "AssetInfoData{" +
         "assetId=" + assetId +
@@ -83,6 +90,7 @@ public class AssetInfoData
         ", contentType='" + contentType + '\'' +
         ", checksums=" + checksums +
         ", blobCreated=" + blobCreated +
+        ", addedToRepository=" + addedToRepository +
         '}';
   }
 }

@@ -110,6 +110,7 @@
     <result property="blobCreated" column="blob_created" />
     <result property="createdBy" column="created_by" />
     <result property="createdByIp" column="created_by_ip" />
+    <result property="addedToRepository" column="added_to_repository" />
   </resultMap>
 
   <select id="fetchComponent" resultType="ComponentData">
@@ -180,20 +181,20 @@
     </foreach>
   </sql>
 
-  <select id="findGreaterThanOrEqualToBlobCreated" resultType="org.sonatype.nexus.repository.content.store.AssetInfoData">
+  <select id="findGreaterThanOrEqualToAddedToRepository" resultType="org.sonatype.nexus.repository.content.store.AssetInfoData">
     SELECT * FROM ${format}_asset a INNER JOIN ${format}_asset_blob ab USING (asset_blob_id)
     WHERE a.repository_id = #{repositoryId}
-    <if test="blobCreated != null"> AND ab.blob_created >= #{blobCreated}</if>
+    <if test="addedToRepository != null"> AND ab.added_to_repository >= #{addedToRepository}</if>
     <include refid="regexExpressions"/>
-    ORDER BY ab.blob_created LIMIT #{limit}
+    ORDER BY ab.added_to_repository LIMIT #{limit}
   </select>
 
-  <select id="findBlobCreatedWithinRange" resultType="org.sonatype.nexus.repository.content.store.AssetInfoData">
+  <select id="findAddedToRepositoryWithinRange" resultType="org.sonatype.nexus.repository.content.store.AssetInfoData">
     SELECT * FROM ${format}_asset a INNER JOIN ${format}_asset_blob ab USING (asset_blob_id)
     WHERE a.repository_id = #{repositoryId}
-    AND ab.blob_created >= #{startBlobCreated} AND ab.blob_created &lt; #{endBlobCreated}
+    AND ab.added_to_repository >= #{startAddedToRepository} AND ab.added_to_repository &lt; #{endAddedToRepository}
     <include refid="regexExpressions"/>
-    ORDER BY ab.blob_created LIMIT #{limit}
+    ORDER BY ab.added_to_repository LIMIT #{limit}
   </select>
 
   <insert id="createAsset" useGeneratedKeys="true" keyProperty="assetId" parameterType="AssetData">

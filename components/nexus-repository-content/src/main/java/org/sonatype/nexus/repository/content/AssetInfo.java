@@ -36,4 +36,6 @@ public interface AssetInfo
   Map<String, String> checksums();
 
   OffsetDateTime blobCreated();
+
+  OffsetDateTime addedToRepository();
 }

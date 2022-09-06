@@ -115,6 +115,11 @@ public class AssetBlobStore<T extends AssetBlobDAO>
   }
 
   @Transactional
+  public void setAddedToRepository(final AssetBlob blob, final OffsetDateTime addedToRepository) {
+    dao().setAddedToRepository(blob.blobRef(), addedToRepository);
+  }
+
+  @Transactional
   public void setContentType(final AssetBlob blob, final String contentType) {
     dao().setContentType(blob.blobRef(), contentType);
   }

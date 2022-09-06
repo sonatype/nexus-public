@@ -91,6 +91,11 @@ public interface AssetBlobDAO
   void setBlobCreated(@Param("blobRef") BlobRef blobRef, @Param("blobCreated") OffsetDateTime blobCreated);
 
   /**
+   * Sets added to repository on the asset blob.
+   */
+  void setAddedToRepository(@Param("blobRef") BlobRef blobRef, @Param("addedToRepository") OffsetDateTime addedToRepository);
+
+  /**
    * Sets the content type on the asset
    * 
    * @param blobRef

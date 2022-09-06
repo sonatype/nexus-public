@@ -92,12 +92,12 @@ public class AssetStoreTest
     AssetBlobData assetBlob5 = randomAssetBlob();
     AssetBlobData assetBlob6 = randomAssetBlob();
 
-    assetBlob1.setBlobCreated(time);
-    assetBlob2.setBlobCreated(time.plusSeconds(1));
-    assetBlob3.setBlobCreated(time.plusSeconds(2));
-    assetBlob4.setBlobCreated(time.plusSeconds(3));
-    assetBlob5.setBlobCreated(time.plusSeconds(4));
-    assetBlob6.setBlobCreated(time.plusSeconds(5));
+    assetBlob1.setAddedToRepository(time);
+    assetBlob2.setAddedToRepository(time.plusSeconds(1));
+    assetBlob3.setAddedToRepository(time.plusSeconds(2));
+    assetBlob4.setAddedToRepository(time.plusSeconds(3));
+    assetBlob5.setAddedToRepository(time.plusSeconds(4));
+    assetBlob6.setAddedToRepository(time.plusSeconds(5));
 
     inTx(() -> {
       Collection<AssetInfo> assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of(), 2);
@@ -161,10 +161,10 @@ public class AssetStoreTest
     OffsetDateTime time3 = time2.plusNanos(100000);
     OffsetDateTime time4 = time3.plusNanos(100000);
 
-    assetBlob1.setBlobCreated(time1);
-    assetBlob2.setBlobCreated(time2);
-    assetBlob3.setBlobCreated(time3);
-    assetBlob4.setBlobCreated(time4);
+    assetBlob1.setAddedToRepository(time1);
+    assetBlob2.setAddedToRepository(time2);
+    assetBlob3.setAddedToRepository(time3);
+    assetBlob4.setAddedToRepository(time4);
 
     inTx(() -> {
       assetBlobStore.createAssetBlob(assetBlob1);

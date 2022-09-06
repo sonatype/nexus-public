@@ -1003,16 +1003,16 @@ public class AssetDAOTest
   }
 
   @Test
-  public void testFindBlobCreated() {
+  public void testFindAddedToRepository() {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
       AssetBlobDAO blobDao = session.access(TestAssetBlobDAO.class);
       OffsetDateTime baseTime = OffsetDateTime.of(2022, 4, 24, 15, 18, 22,
           111111000, ZoneOffset.UTC);
-      Collection<AssetInfo> found = dao.findBlobCreatedWithinRange(repositoryId, baseTime,
+      Collection<AssetInfo> found = dao.findAddedToRepositoryWithinRange(repositoryId, baseTime,
           baseTime.plus(1, ChronoUnit.MILLIS), ImmutableList.of(), 100);
       assertThat(found, emptyIterable());
-      found = dao.findGreaterThanOrEqualToBlobCreated(repositoryId, baseTime, ImmutableList.of(), 10);
+      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime, ImmutableList.of(), 10);
       assertThat(found, emptyIterable());
 
       AssetData asset1 = generateAsset(repositoryId, "/asset1/asset1.jar");
@@ -1029,12 +1029,12 @@ public class AssetDAOTest
       AssetBlobData assetBlob5 = randomAssetBlob();
       AssetBlobData assetBlob6 = randomAssetBlob();
 
-      assetBlob1.setBlobCreated(baseTime);
-      assetBlob2.setBlobCreated(baseTime);
-      assetBlob3.setBlobCreated(baseTime.plusSeconds(1));
-      assetBlob4.setBlobCreated(baseTime.plusSeconds(2));
-      assetBlob5.setBlobCreated(baseTime.minusSeconds(1));
-      assetBlob6.setBlobCreated(baseTime.minusSeconds(3));
+      assetBlob1.setAddedToRepository(baseTime);
+      assetBlob2.setAddedToRepository(baseTime);
+      assetBlob3.setAddedToRepository(baseTime.plusSeconds(1));
+      assetBlob4.setAddedToRepository(baseTime.plusSeconds(2));
+      assetBlob5.setAddedToRepository(baseTime.minusSeconds(1));
+      assetBlob6.setAddedToRepository(baseTime.minusSeconds(3));
 
       createAssetBlobs(blobDao, assetBlob1, assetBlob2, assetBlob3, assetBlob4, assetBlob5, assetBlob6);
       asset1.setAssetBlob(assetBlob1);
@@ -1046,36 +1046,36 @@ public class AssetDAOTest
 
       createAssets(dao, asset1, asset2, asset3, asset4, asset5, asset6);
 
-      found = dao.findBlobCreatedWithinRange(repositoryId, baseTime, baseTime.plus(1, ChronoUnit.MILLIS), ImmutableList.of(),100);
+      found = dao.findAddedToRepositoryWithinRange(repositoryId, baseTime, baseTime.plus(1, ChronoUnit.MILLIS), ImmutableList.of(),100);
       assertThat(found.size(), is(2));
 
-      found = dao.findGreaterThanOrEqualToBlobCreated(repositoryId, baseTime, ImmutableList.of(),100);
+      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime, ImmutableList.of(),100);
       assertThat(found.size(), is(4));
 
-      found = dao.findGreaterThanOrEqualToBlobCreated(repositoryId, baseTime, ImmutableList.of(),1);
+      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime, ImmutableList.of(),1);
       assertThat(found.size(), is(1));
 
-      found = dao.findGreaterThanOrEqualToBlobCreated(repositoryId, baseTime.minusDays(1), ImmutableList.of(".*/asset1/.*"), 100);
+      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime.minusDays(1), ImmutableList.of(".*/asset1/.*"), 100);
       assertThat(found.size(), is(1));
 
-      found = dao.findGreaterThanOrEqualToBlobCreated(repositoryId, baseTime.minusDays(1), ImmutableList.of(".*/asset3/.*", ".*/asset5/.*"), 100);
+      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime.minusDays(1), ImmutableList.of(".*/asset3/.*", ".*/asset5/.*"), 100);
       assertThat(found.size(), is(2));
 
-      found = dao.findGreaterThanOrEqualToBlobCreated(repositoryId, baseTime.minusDays(1), ImmutableList.of(".*/asset.?/a.*\\.jar.*"), 100);
+      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime.minusDays(1), ImmutableList.of(".*/asset.?/a.*\\.jar.*"), 100);
       assertThat(found.size(), is(6));
     }
   }
 
   @Test
-  public void testFindBlobCreatedTruncatesToMilliseconds() {
+  public void testFindAddedToRepositoryTruncatesToMilliseconds() {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
       AssetBlobDAO blobDao = session.access(TestAssetBlobDAO.class);
       OffsetDateTime baseTime = OffsetDateTime.of(2022, 4, 24, 15, 18, 22,
           111111000, ZoneOffset.UTC);
-      Collection<AssetInfo> found = dao.findBlobCreatedWithinRange(repositoryId, baseTime, baseTime.plus(1, ChronoUnit.MILLIS), ImmutableList.of(),100);
+      Collection<AssetInfo> found = dao.findAddedToRepositoryWithinRange(repositoryId, baseTime, baseTime.plus(1, ChronoUnit.MILLIS), ImmutableList.of(),100);
       assertThat(found, emptyIterable());
-      found = dao.findGreaterThanOrEqualToBlobCreated(repositoryId, baseTime, ImmutableList.of(), 10);
+      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime, ImmutableList.of(), 10);
       assertThat(found, emptyIterable());
 
       AssetData asset1 = generateAsset(repositoryId, "/asset1/asset1.jar");
@@ -1088,12 +1088,12 @@ public class AssetDAOTest
       AssetBlobData assetBlob3 = randomAssetBlob();
       AssetBlobData assetBlob4 = randomAssetBlob();
 
-      assetBlob1.setBlobCreated(baseTime);
-      assetBlob2.setBlobCreated(baseTime);
+      assetBlob1.setAddedToRepository(baseTime);
+      assetBlob2.setAddedToRepository(baseTime);
       // Microsecond level time can be stored in both h2 and postgres. However, the last updated queries should truncate
       // the time and treat these as identical to baseTime
-      assetBlob3.setBlobCreated(baseTime.plusNanos(5000));
-      assetBlob4.setBlobCreated(baseTime.plusNanos(8000));
+      assetBlob3.setAddedToRepository(baseTime.plusNanos(5000));
+      assetBlob4.setAddedToRepository(baseTime.plusNanos(8000));
 
       createAssetBlobs(blobDao, assetBlob1, assetBlob2, assetBlob3, assetBlob4);
 
@@ -1104,10 +1104,10 @@ public class AssetDAOTest
 
       createAssets(dao, asset1, asset2, asset3, asset4);
 
-      found = dao.findBlobCreatedWithinRange(repositoryId, baseTime, baseTime.plus(1, ChronoUnit.MILLIS), ImmutableList.of(),100);
+      found = dao.findAddedToRepositoryWithinRange(repositoryId, baseTime, baseTime.plus(1, ChronoUnit.MILLIS), ImmutableList.of(),100);
       assertThat(found.size(), is(4));
 
-      found = dao.findGreaterThanOrEqualToBlobCreated(repositoryId, baseTime.plus(1, ChronoUnit.MILLIS).truncatedTo(ChronoUnit.MILLIS), ImmutableList.of(),100);
+      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime.plus(1, ChronoUnit.MILLIS).truncatedTo(ChronoUnit.MILLIS), ImmutableList.of(),100);
       assertThat(found.size(), is(0));
     }
   }
