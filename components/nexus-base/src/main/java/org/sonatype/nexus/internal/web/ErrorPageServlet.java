@@ -139,7 +139,10 @@ public class ErrorPageServlet
 
     TemplateParameters params = templateHelper.parameters();
     params.set("errorCode", errorCode);
-    params.set("errorName", Status.fromStatusCode(errorCode).getReasonPhrase());
+    Status errorStatusCode = Status.fromStatusCode(errorCode);
+    if (errorStatusCode != null) {
+      params.set("errorName", errorStatusCode.getReasonPhrase());
+    }
     params.set("errorDescription", errorDescription);
 
     // add cause if ?debug enabled and there is an exception
