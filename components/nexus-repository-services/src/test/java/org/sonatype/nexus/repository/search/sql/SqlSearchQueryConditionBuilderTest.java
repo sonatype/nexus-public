@@ -116,6 +116,66 @@ public class SqlSearchQueryConditionBuilderTest
   }
 
   @Test
+  public void shouldBeExactIfContainsEscapedStar() {
+    final SqlSearchQueryCondition actual = underTest.condition("component", of("abc\\*", "\\*def", "ghi\\*jk"));
+    assertThat(actual.getSqlConditionFormat(),
+        is("component IN (#{filterParams.component0},#{filterParams.component1},#{filterParams.component2})"));
+
+    assertThat(actual.getValues().keySet(),
+        is(ImmutableSet.of("component0", "component1", "component2")));
+
+    assertThat(actual.getValues().values(),
+        containsInAnyOrder("abc*", "*def", "ghi*jk"));
+  }
+
+  @Test
+  public void shouldNotReplaceEscapedSymbolWithPercentIfWildcard() {
+    final SqlSearchQueryCondition actual =
+        underTest.condition("component", of("abc\\**", "\\*def*", "ghi\\*jk*", "?j\\??l"));
+
+    assertThat(actual.getSqlConditionFormat(),
+        is("(component LIKE #{filterParams.component0} OR component LIKE #{filterParams.component1} OR " +
+            "component LIKE #{filterParams.component2} OR component LIKE #{filterParams.component3})"));
+
+    assertThat(actual.getValues().keySet(),
+        is(ImmutableSet.of("component0", "component1", "component2", "component3")));
+
+    assertThat(actual.getValues().values(),
+        containsInAnyOrder("abc*%", "*def%", "ghi*jk%", "_j?_l"));
+  }
+
+  @Test
+  public void shouldEscapePercentIfWildcard() {
+    final SqlSearchQueryCondition actual =
+        underTest.condition("component", of("abc%*", "%def?", "ghi%jk", "jkl%"));
+
+    assertThat(actual.getSqlConditionFormat(),
+        is("(component IN (#{filterParams.component0},#{filterParams.component1}) OR " +
+            "(component LIKE #{filterParams.component2} OR component LIKE #{filterParams.component3}))"));
+
+    assertThat(actual.getValues().keySet(),
+        is(ImmutableSet.of("component0", "component1", "component2", "component3")));
+
+    assertThat(actual.getValues().values(),
+        containsInAnyOrder("abc\\%%", "\\%def_", "ghi%jk", "jkl%"));
+  }
+  @Test
+  public void shouldEscapeUnderscoreIfWildcard() {
+    final SqlSearchQueryCondition actual =
+        underTest.condition("component", of("abc_*", "_def?", "ghi_jk", "jkl_"));
+
+    assertThat(actual.getSqlConditionFormat(),
+        is("(component IN (#{filterParams.component0},#{filterParams.component1}) OR " +
+            "(component LIKE #{filterParams.component2} OR component LIKE #{filterParams.component3}))"));
+
+    assertThat(actual.getValues().keySet(),
+        is(ImmutableSet.of("component0", "component1", "component2", "component3")));
+
+    assertThat(actual.getValues().values(),
+        containsInAnyOrder("abc\\_%", "\\_def_", "ghi_jk", "jkl_"));
+  }
+
+  @Test
   public void shouldCreateExactAndWildcardCondition() {
     SqlSearchQueryCondition actual =
         underTest.condition("repository_name", of("repo1", "repo2", "repo3", "maven*", "raw?"));
