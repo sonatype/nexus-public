@@ -252,6 +252,13 @@ public interface ComponentAssetTestHelper
 
   void modifyAttributes(final Repository repository, String child1, final String child2, final int value);
 
+  /**
+   * Deletes all components from the given repository.
+   *
+   * @param repository the repository  from which all components are going to be deleted
+   */
+  void deleteAllComponents(final Repository repository);
+
   class AssetNotFoundException
       extends RuntimeException
   {
