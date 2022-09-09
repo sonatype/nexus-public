@@ -95,6 +95,11 @@ public interface FluentAsset
   void blobCreated(OffsetDateTime blobCreated);
 
   /**
+   * Sets added to repository on the asset blob.
+   */
+  void blobAddedToRepository(final OffsetDateTime addedToRepository);
+
+  /**
    * Generally it is recommended that this method not be called and let stores manage this value automatically.
    *
    * Sets the created time of the asset associated with the ID to the specified time.

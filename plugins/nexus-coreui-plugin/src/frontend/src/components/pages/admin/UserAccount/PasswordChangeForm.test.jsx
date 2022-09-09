@@ -13,7 +13,6 @@
 import React from 'react';
 import {fireEvent, waitFor} from '@testing-library/react';
 import {act} from "react-dom/test-utils";
-import '@testing-library/jest-dom/extend-expect';
 import PasswordChangeForm from './PasswordChangeForm';
 import UIStrings from '../../../../constants/UIStrings';
 import Axios from 'axios';

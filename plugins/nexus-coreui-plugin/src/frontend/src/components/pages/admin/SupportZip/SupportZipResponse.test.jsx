@@ -13,7 +13,6 @@
 import React from 'react';
 import { act } from 'react-dom/test-utils';
 import {fireEvent, render} from '@testing-library/react';
-import '@testing-library/jest-dom/extend-expect';
 
 import SupportZipResponse from './SupportZipResponse';
 

@@ -12,7 +12,6 @@
  */
 import React from 'react';
 import {waitForElementToBeRemoved} from '@testing-library/react';
-import '@testing-library/jest-dom/extend-expect';
 import {TestUtils} from '@sonatype/nexus-ui-plugin';
 import axios from 'axios';
 

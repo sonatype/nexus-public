@@ -13,7 +13,6 @@
 import React from 'react';
 import {fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import {act} from 'react-dom/test-utils';
-import '@testing-library/jest-dom/extend-expect';
 import axios from 'axios';
 import {ExtJS, TestUtils} from '@sonatype/nexus-ui-plugin';
 

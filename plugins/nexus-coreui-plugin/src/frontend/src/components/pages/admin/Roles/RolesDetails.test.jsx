@@ -15,7 +15,6 @@ import {render, fireEvent, screen, waitFor, waitForElementToBeRemoved} from '@te
 import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
 import {act} from "react-dom/test-utils";
-import '@testing-library/jest-dom/extend-expect';
 import Axios from 'axios';
 import {ExtJS, TestUtils} from '@sonatype/nexus-ui-plugin';
 
@@ -44,13 +43,6 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     showSuccessMessage: jest.fn(),
   },
 }));
-
-global.NX = {
-  Messages: {
-    success: jest.fn(),
-    error: jest.fn(),
-  }
-};
 
 const testRoleId = 'RoleId';
 const testRoleName = 'Test Role Name';

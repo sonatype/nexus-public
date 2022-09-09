@@ -12,11 +12,10 @@
  */
 import React from 'react';
 
-import DownloadsByRepositoryName from './DownloadsByRepositoryName';
-
 import {fireEvent, render, screen, waitFor, within} from '@testing-library/react'
-import '@testing-library/jest-dom/extend-expect';
-import TestUtils from "@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils";
+import {TestUtils} from '@sonatype/nexus-ui-plugin';
+
+import DownloadsByRepositoryName from './DownloadsByRepositoryName';
 
 const NUM_HEADERS = 2;
 const ID = 0;

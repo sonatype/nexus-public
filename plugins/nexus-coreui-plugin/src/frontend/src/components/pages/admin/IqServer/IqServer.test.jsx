@@ -13,7 +13,6 @@
 import React from 'react';
 import {render, screen, waitForElementToBeRemoved, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import '@testing-library/jest-dom/extend-expect';
 import {ExtJS, TestUtils} from '@sonatype/nexus-ui-plugin';
 import {when} from 'jest-when';
 
@@ -43,12 +42,6 @@ jest.mock('axios', () => {  // Mock out parts of axios, has to be done in same s
     post: jest.fn()
   };
 });
-
-global.NX = {
-  Permissions: {
-    check: jest.fn(() => true)
-  }
-}
 
 const selectors = {
   ...TestUtils.selectors,
@@ -85,6 +78,9 @@ const DEFAULT_RESPONSE = {
 describe('IqServer', () => {
   beforeEach(() => {
     window.dirty = [];
+    when(Axios.get).calledWith('/service/rest/v1/iq').mockResolvedValue({
+      data: DEFAULT_RESPONSE
+    });
   });
 
   afterEach(() => {
@@ -92,10 +88,6 @@ describe('IqServer', () => {
   });
 
   it('fetches the empty settings from the backend and displays the empty form', async () => {
-    when(Axios.get).calledWith('/service/rest/v1/iq').mockResolvedValue({
-      data: DEFAULT_RESPONSE
-    });
-
     render(<IqServer/>);
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
@@ -173,10 +165,6 @@ describe('IqServer', () => {
   });
 
   it('enables the verify connection button when form is valid', async () => {
-    when(Axios.get).calledWith('/service/rest/v1/iq').mockResolvedValue({
-      data: DEFAULT_RESPONSE
-    });
-
     render(<IqServer/>);
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
@@ -196,10 +184,6 @@ describe('IqServer', () => {
   });
 
   it('enables the certificate view button when iq server url is valid', async () => {
-    when(Axios.get).calledWith('/service/rest/v1/iq').mockResolvedValue({
-      data: DEFAULT_RESPONSE
-    });
-
     render(<IqServer/>);
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
@@ -220,10 +204,6 @@ describe('IqServer', () => {
   });
 
   it('disables the save button when the form is invalid', async () => {
-    when(Axios.get).calledWith('/service/rest/v1/iq').mockResolvedValue({
-      data: DEFAULT_RESPONSE
-    });
-
     render(<IqServer/>);
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
@@ -239,10 +219,6 @@ describe('IqServer', () => {
   });
 
   it('enables the save button when the form is valid', async () => {
-    when(Axios.get).calledWith('/service/rest/v1/iq').mockResolvedValue({
-      data: DEFAULT_RESPONSE
-    });
-
     render(<IqServer/>);
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
@@ -254,10 +230,6 @@ describe('IqServer', () => {
   });
 
   it('requires the username and password for the USER authentication method', async () => {
-    when(Axios.get).calledWith('/service/rest/v1/iq').mockResolvedValue({
-      data: DEFAULT_RESPONSE
-    });
-
     render(<IqServer/>);
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
@@ -275,10 +247,6 @@ describe('IqServer', () => {
   });
 
   it('requires a connection timeout greater than 0, less than or equal to 3600', async () => {
-    when(Axios.get).calledWith('/service/rest/v1/iq').mockResolvedValue({
-      data: DEFAULT_RESPONSE
-    });
-
     render(<IqServer/>);
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
@@ -311,10 +279,6 @@ describe('IqServer', () => {
   });
 
   it('discards changes', async () => {
-    when(Axios.get).calledWith('/service/rest/v1/iq').mockResolvedValue({
-      data: DEFAULT_RESPONSE
-    });
-
     render(<IqServer/>);
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
@@ -351,10 +315,6 @@ describe('IqServer', () => {
   });
 
   it('runs api calls when click verify connection and save buttons', async () => {
-    when(Axios.get).calledWith('/service/rest/v1/iq').mockResolvedValue({
-      data: DEFAULT_RESPONSE
-    });
-
     const simpleData = {
       authenticationType: 'USER',
       enabled: true,
@@ -409,10 +369,6 @@ describe('IqServer', () => {
 
     it('Shows Iq Server configuration in Read Only mode', async () => {
       ExtJS.checkPermission.mockReturnValueOnce(false);
-
-      when(Axios.get).calledWith('/service/rest/v1/iq').mockResolvedValue({
-        data: DEFAULT_RESPONSE
-      });
 
       render(<IqServer/>);
 

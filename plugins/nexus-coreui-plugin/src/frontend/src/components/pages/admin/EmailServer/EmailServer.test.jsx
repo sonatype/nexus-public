@@ -13,7 +13,6 @@
 import React from 'react';
 import {render, screen, waitForElementToBeRemoved, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import '@testing-library/jest-dom/extend-expect';
 import {ExtJS, TestUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
 import {when} from 'jest-when';
 
@@ -22,7 +21,7 @@ import EmailServer from './EmailServer';
 import UIStrings from "../../../../constants/UIStrings";
 
 const {EMAIL_SERVER: {FORM: LABELS}, SETTINGS, USE_TRUST_STORE, ERROR} = UIStrings;
-const {REST: {PUBLIC: {EMAIL_SERVER : emailServerUrl}}} = APIConstants;
+const {REST: {PUBLIC: {EMAIL_SERVER: emailServerUrl}}} = APIConstants;
 const XSS_STRING = TestUtils.XSS_STRING;
 
 jest.mock('axios', () => ({
@@ -40,13 +39,6 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     showSuccessMessage: jest.fn(),
   },
 }));
-
-global.NX = {
-  Messages: {
-    success: jest.fn(),
-    error: jest.fn(),
-  }
-};
 
 const selectors = {
   ...TestUtils.selectors,

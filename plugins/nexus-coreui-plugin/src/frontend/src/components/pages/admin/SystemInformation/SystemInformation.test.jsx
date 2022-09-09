@@ -14,7 +14,6 @@ import React from 'react';
 import axios from 'axios';
 
 import {render, screen, waitForElementToBeRemoved, within} from '@testing-library/react';
-import '@testing-library/jest-dom/extend-expect';
 import {when} from 'jest-when';
 
 import SystemInformation from './SystemInformation';

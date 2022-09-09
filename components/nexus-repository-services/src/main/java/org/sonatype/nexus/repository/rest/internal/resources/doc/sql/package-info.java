@@ -10,17 +10,9 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
-import {render} from '@testing-library/react';
+@FeatureFlag(name = DATASTORE_TABLE_SEARCH)
+package org.sonatype.nexus.repository.rest.internal.resources.doc.sql;
 
-import PageActions from './PageActions';
+import org.sonatype.nexus.common.app.FeatureFlag;
 
-describe('PageActions', () => {
-  it('renders correctly', () => {
-    const action = 'Page action';
-    const {container} = render(
-        <PageActions><span>{action}</span></PageActions>
-    );
-    expect(container).toHaveTextContent(action);
-  });
-});
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_TABLE_SEARCH;

@@ -12,13 +12,12 @@
  */
 import React from 'react';
 import Axios from 'axios';
-import axios from 'axios';
-import TestUtils from "@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils";
+import {act} from "react-dom/test-utils";
+import {TestUtils} from '@sonatype/nexus-ui-plugin';
 import { fireEvent, waitFor, waitForElementToBeRemoved } from "@testing-library/react";
-import '@testing-library/jest-dom/extend-expect';
+
 import UIStrings from "../../../../constants/UIStrings";
 import AnalyzeApplicationModal from "./AnalyzeApplicationModal";
-import {act} from "react-dom/test-utils";
 
 const component = {
   'componentName': 'foobar',
@@ -57,7 +56,7 @@ describe('AnalyzeApplicationModal', () => {
         selectedAsset: () => getByLabelText(UIStrings.ANALYZE_APPLICATION.SELECT_ASSET.LABEL),
       }));
 
-  axios.get.mockReturnValue(Promise.resolve({
+  Axios.get.mockReturnValue(Promise.resolve({
     data: {
       emailAddress: 'test@sonatype.com',
       reportLabel: 'foo-1.0.0.jar',

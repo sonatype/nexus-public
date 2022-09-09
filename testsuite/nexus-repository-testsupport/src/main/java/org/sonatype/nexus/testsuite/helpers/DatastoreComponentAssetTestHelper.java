@@ -81,6 +81,7 @@ import static org.apache.commons.lang3.StringUtils.substring;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
+import static org.sonatype.nexus.common.entity.Continuations.iterableOf;
 import static org.sonatype.nexus.common.entity.Continuations.streamOf;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.repository.content.AttributeOperation.OVERLAY;
@@ -663,5 +664,11 @@ public class DatastoreComponentAssetTestHelper
   public void modifyAttributes(final Repository repository, String child1, final String child2, final int value) {
     repository.facet(ContentFacet.class)
         .attributes(OVERLAY, child1, ImmutableMap.of(child2, ImmutableMap.of(Integer.class, value)));
+  }
+
+  @Override
+  public void deleteAllComponents(final Repository repository) {
+    iterableOf(repository.facet(ContentFacet.class).components()::browse)
+        .forEach(component -> repository.facet(ContentMaintenanceFacet.class).deleteComponent(component));
   }
 }

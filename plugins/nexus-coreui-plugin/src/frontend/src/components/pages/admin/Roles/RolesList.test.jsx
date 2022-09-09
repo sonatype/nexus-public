@@ -13,7 +13,6 @@
 import React from 'react';
 import {render, screen, within, fireEvent, waitForElementToBeRemoved} from '@testing-library/react';
 import {sort, prop, descend, ascend} from 'ramda';
-import '@testing-library/jest-dom/extend-expect';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
 import {when} from 'jest-when';

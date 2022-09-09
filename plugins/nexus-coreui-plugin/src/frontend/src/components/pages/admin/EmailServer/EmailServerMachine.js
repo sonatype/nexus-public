@@ -18,7 +18,7 @@ import {assign} from 'xstate';
 import Axios from 'axios';
 import {FormUtils, APIConstants, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 
-const {REST: {PUBLIC: {EMAIL_SERVER : emailServerUrl}}} = APIConstants;
+const {REST: {PUBLIC: {EMAIL_SERVER: emailServerUrl}}} = APIConstants;
 
 export default FormUtils.buildFormMachine({
   id: 'EmailServerMachine',

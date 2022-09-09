@@ -13,7 +13,6 @@
 import React from 'react';
 import {render, screen, fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import {sort, prop, descend, ascend, clone} from 'ramda';
-import '@testing-library/jest-dom/extend-expect';
 import {when} from 'jest-when';
 import Axios from 'axios';
 import {ExtJS, TestUtils, APIConstants} from '@sonatype/nexus-ui-plugin';

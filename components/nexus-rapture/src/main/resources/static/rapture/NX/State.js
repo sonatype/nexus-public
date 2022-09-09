@@ -205,6 +205,13 @@ Ext.define('NX.State', {
         this.getValue('nodes', {})['enabled'];
   },
 
+  /**
+   * Return whether or not SQL search is enabled.
+   */
+  isSqlSearchEnabled: function() {
+    return this.getValue('sqlSearchEnabled');
+  },
+
   getValue: function (key, defaultValue) {
     return this.controller().getValue(key, defaultValue);
   },

@@ -13,7 +13,6 @@
 import React from 'react';
 import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
-import '@testing-library/jest-dom/extend-expect';
 import Axios from 'axios';
 import {ExtJS, TestUtils} from '@sonatype/nexus-ui-plugin';
 import {
@@ -53,19 +52,12 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     checkPermission: jest.fn(),
     showErrorMessage: jest.fn(),
     showSuccessMessage: jest.fn(),
+    state: jest.fn().mockReturnValue({
+      getValue: jest.fn(),
+      getUser: jest.fn(),
+    }),
   },
 }));
-
-global.NX = {
-  State: {
-    getValue: jest.fn(),
-    getUser: jest.fn(),
-  },
-  Messages: {
-    success: jest.fn(),
-    error: jest.fn(),
-  }
-};
 
 const testId = 'UserId';
 const testFirstName = 'User First Name';
@@ -175,8 +167,8 @@ describe('UsersDetails', function() {
       readOnly: false,
     }]});
     ExtJS.checkPermission.mockReturnValue(true);
-    NX.State.getValue.mockReturnValue('test');
-    NX.State.getUser.mockReturnValue({id: 'id'});
+    ExtJS.state().getValue.mockReturnValue('test');
+    ExtJS.state().getUser.mockReturnValue({id: 'id'});
   });
 
   describe('Local User Form', function() {
@@ -321,7 +313,8 @@ describe('UsersDetails', function() {
       const anonymousUserId = 'anonymous';
       const anonymousUsernameProp = 'anonymousUsername';
 
-      when(NX.State.getValue).calledWith(anonymousUsernameProp).mockReturnValue(anonymousUserId);
+      when(ExtJS.state().getValue).calledWith(anonymousUsernameProp).mockReturnValue(anonymousUserId);
+
       when(Axios.get).calledWith(findUsersUrl(anonymousUserId, testSource)).mockResolvedValue({data: [{
         ...USER,
         userId: anonymousUserId,
@@ -331,7 +324,7 @@ describe('UsersDetails', function() {
 
       await renderAndWaitForLoad(anonymousUserId);
 
-      expect(NX.State.getValue).toHaveBeenCalledWith(anonymousUsernameProp);
+      expect(ExtJS.state().getValue).toHaveBeenCalledWith(anonymousUsernameProp);
 
       expect(deleteButton()).not.toBeInTheDocument();
     });
@@ -339,7 +332,7 @@ describe('UsersDetails', function() {
     it('does not show delete button for the current user', async function() {
       const {deleteButton} = selectors;
 
-      NX.State.getUser.mockReturnValue({id: testId});
+      ExtJS.state().getUser.mockReturnValue({id: testId});
 
       await renderAndWaitForLoad(testId);
 
@@ -557,9 +550,7 @@ describe('UsersDetails', function() {
         Promise.resolve({ data: 'fakeToken', success: true })
       );
 
-      ExtJS.state = jest.fn().mockReturnValue({
-        getUser: jest.fn().mockReturnValue({id: 'admin'}),
-      });
+      ExtJS.state().getUser.mockReturnValue({id: 'admin'});
     });
 
     it('renders correctly', async () => {
@@ -731,7 +722,7 @@ describe('UsersDetails', function() {
         readOnly: false,
       }]});
 
-      NX.State.getValue.mockReturnValue(userId);
+      ExtJS.state().getValue.mockReturnValue(userId);
 
       const {queryModal} = selectors.modal;
 

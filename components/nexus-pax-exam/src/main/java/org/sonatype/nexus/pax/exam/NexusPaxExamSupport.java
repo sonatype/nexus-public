@@ -30,6 +30,7 @@ import org.sonatype.goodies.testsupport.TestIndex;
 import org.sonatype.goodies.testsupport.junit.TestDataRule;
 import org.sonatype.goodies.testsupport.junit.TestIndexRule;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.common.app.FeatureFlags;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.net.PortAllocator;
 import org.sonatype.nexus.common.text.Strings2;
@@ -77,6 +78,8 @@ import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.*;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_TABLE_SEARCH;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_TABLE_SEARCH_NAMED;
+import static org.sonatype.nexus.common.app.FeatureFlags.ELASTIC_SEARCH_ENABLED_NAMED;
 import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 import static org.testcontainers.containers.BindMode.READ_ONLY;
@@ -174,6 +177,14 @@ public abstract class NexusPaxExamSupport
 
   @Inject
   protected TaskScheduler taskScheduler;
+
+  @Inject
+  @Named(ELASTIC_SEARCH_ENABLED_NAMED)
+  protected Boolean elasticsearch;
+
+  @Inject
+  @Named(DATASTORE_TABLE_SEARCH_NAMED)
+  protected Boolean datastoreTableSearch;
 
   @Inject
   @Named(ORIENT_ENABLED)

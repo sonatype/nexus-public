@@ -40,6 +40,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings.GROUP_RAW;
 import static org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings.NAME_RAW;
 import static org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings.VERSION;
+import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilder.ESCAPE;
 import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilder.ZERO_OR_MORE_CHARACTERS;
 
 /**
@@ -112,6 +113,9 @@ public class KeywordSqlSearchQueryContribution
 
   private String toContains(final String value) {
     String zeroOrMore = String.valueOf(ZERO_OR_MORE_CHARACTERS);
+    if (value.endsWith(ESCAPE + ZERO_OR_MORE_CHARACTERS)) {
+      return value + ZERO_OR_MORE_CHARACTERS;
+    }
     return appendIfMissing(value, zeroOrMore);
   }
 

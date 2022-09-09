@@ -13,7 +13,6 @@
 import React from 'react';
 import {mergeDeepRight} from 'ramda';
 import {render, screen, waitForElementToBeRemoved, waitFor, fireEvent} from '@testing-library/react';
-import '@testing-library/jest-dom/extend-expect';
 import {act} from "react-dom/test-utils";
 import {when} from 'jest-when';
 import {ExtJS, TestUtils, ExtAPIUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
@@ -43,13 +42,6 @@ jest.mock('axios', () => {  // Mock out parts of axios, has to be done in same s
     post: jest.fn()
   };
 });
-
-global.NX = {
-  Permissions: {
-    check: jest.fn(() => true)
-  },
-  Messages: { success: () => {} }
-}
 
 const selectors = {
   ...TestUtils.selectors,

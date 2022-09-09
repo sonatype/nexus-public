@@ -45,6 +45,8 @@ public class AssetBlobData
 
   private OffsetDateTime blobCreated;
 
+  private OffsetDateTime addedToRepository;
+
   @Nullable
   private String createdBy;
 
@@ -86,6 +88,11 @@ public class AssetBlobData
   @Override
   public Optional<String> createdByIp() {
     return ofNullable(createdByIp);
+  }
+
+  @Override
+  public OffsetDateTime addedToRepository() {
+    return addedToRepository;
   }
 
   // MyBatis setters + validation
@@ -132,6 +139,13 @@ public class AssetBlobData
    */
   public void setBlobCreated(final OffsetDateTime blobCreated) {
     this.blobCreated = checkNotNull(blobCreated);
+  }
+
+  /**
+   * Sets when the blob was added to repository.
+   */
+  public void setAddedToRepository(final OffsetDateTime addedToRepository) {
+    this.addedToRepository = checkNotNull(addedToRepository);
   }
 
   /**

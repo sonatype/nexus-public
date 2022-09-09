@@ -129,14 +129,14 @@ public interface AssetDAO
    * Finds assets where lastUpdated is greater than or equal to the given value.
    *
    * @param repositoryId the repository to browse
-   * @param blobCreated date that asset content must have been updated after
+   * @param addedToRepository date that asset content must have been updated after
    * @param regexExpressions list of SQL regex expressions that match on the path column
    * @param limit maximum number of assets to return
    * @return collection of assets
    */
-  List<AssetInfo> findGreaterThanOrEqualToBlobCreated(
+  List<AssetInfo> findGreaterThanOrEqualToAddedToRepository(
       @Param("repositoryId") int repositoryId,
-      @Nullable @Param("blobCreated") OffsetDateTime blobCreated,
+      @Nullable @Param("addedToRepository") OffsetDateTime addedToRepository,
       @Param("regexExpressions") List<String> regexExpressions,
       @Param("limit") int limit);
 
@@ -144,16 +144,16 @@ public interface AssetDAO
    * Finds all assets where lastUpdated equals the given value.
    *
    * @param repositoryId the repository to browse
-   * @param startBlobCreated blobCreated on asset content is greater than or equal to this value
-   * @param endBlobCreated blobCreated on asset content is less than this value
+   * @param startAddedToRepository blobCreated on asset content is greater than or equal to this value
+   * @param endAddedToRepository blobCreated on asset content is less than this value
    * @param regexExpressions list of SQL regex expressions that match on path column
    * @param limit maximum number of assets to return
    * @return collection of assets
    */
-  List<AssetInfo> findBlobCreatedWithinRange(
+  List<AssetInfo> findAddedToRepositoryWithinRange(
       @Param("repositoryId") int repositoryId,
-      @Param("startBlobCreated") OffsetDateTime startBlobCreated,
-      @Param("endBlobCreated") OffsetDateTime endBlobCreated,
+      @Param("startAddedToRepository") OffsetDateTime startAddedToRepository,
+      @Param("endAddedToRepository") OffsetDateTime endAddedToRepository,
       @Param("regexExpressions") List<String> regexExpressions,
       @Param("limit") int limit);
 

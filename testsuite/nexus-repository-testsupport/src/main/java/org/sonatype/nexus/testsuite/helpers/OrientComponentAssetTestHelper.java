@@ -584,4 +584,10 @@ public class OrientComponentAssetTestHelper
     AttributesFacet facet = repository.facet(AttributesFacet.class);
     facet.modifyAttributes(attribute -> attribute.child(child1).child(child2).set(Integer.class, value));
   }
+
+  @Override
+  public void deleteAllComponents(final Repository repository) {
+    findComponents(repository).forEach(
+        entity -> repository.facet(ComponentMaintenance.class).deleteComponent(entity.getEntityMetadata().getId()));
+  }
 }

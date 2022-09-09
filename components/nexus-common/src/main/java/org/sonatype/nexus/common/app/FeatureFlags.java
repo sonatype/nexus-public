@@ -38,6 +38,8 @@ public interface FeatureFlags
   //Enable elastic search
   String ELASTIC_SEARCH_ENABLED = "nexus.elasticsearch.enabled";
 
+  String ELASTIC_SEARCH_ENABLED_NAMED = "${nexus.elasticsearch.enabled:-false}";
+
   /* Orient flag for marking content that is orient only, and should be disabled when datastore is enabled */
   String ORIENT_ENABLED = "nexus.orient.enabled";
 
