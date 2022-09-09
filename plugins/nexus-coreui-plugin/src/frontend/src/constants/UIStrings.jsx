@@ -1521,6 +1521,10 @@ This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 
         SUB_LABEL: 'Accepts Java “http.nonProxyHosts” wildcard patterns (one per line, no “l” hostname delimiters)',
         ADD: 'Add',
         REMOVE: 'Remove',
+      },
+      READ_ONLY: {
+        LABEL: 'HTTP Configuration',
+        WARNING: 'You are viewing a read-only version of this page. Some fields will not appear if they have not changed from their default values or if HTTP/HTTPS authentication is not enabled. Contact your Administrator if you require edit permissions.'
       }
     }
   },
