@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.logging.task;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Stopwatch;
@@ -34,6 +36,12 @@ public class ProgressLogIntervalHelper
 
   private final int internal;
 
+  private static final long SECONDS_PER_MINUTE = 60;
+
+  private static final long SECONDS_PER_HOUR = 60 * SECONDS_PER_MINUTE;
+
+  private static final long SECONDS_PER_DAY = 24 * SECONDS_PER_HOUR;
+
   public ProgressLogIntervalHelper(final Logger logger, int intervalInSeconds) {
     this.logger = checkNotNull(logger);
     this.internal = intervalInSeconds;
@@ -46,7 +54,31 @@ public class ProgressLogIntervalHelper
    * Get elapsed time as a string so it can be included in logs
    */
   public String getElapsed() {
-    return elapsed.toString();
+    return formatDuration(elapsed.elapsed().getSeconds());
+  }
+
+  private String formatDuration(final long durationSeconds) {
+    StringBuilder builder = new StringBuilder();
+    long seconds = durationSeconds;
+
+    long days = seconds / SECONDS_PER_DAY;
+    seconds = seconds - (days * SECONDS_PER_DAY);
+    if (days > 0) {
+      builder.append(days).append("d ");
+    }
+    long hours = seconds / SECONDS_PER_HOUR;
+    seconds = seconds - (hours * SECONDS_PER_HOUR);
+    if (hours > 0 || builder.length() > 0) {
+      builder.append(hours).append("h ");
+    }
+    long minutes = seconds / SECONDS_PER_MINUTE;
+    seconds = seconds - (minutes * SECONDS_PER_MINUTE);
+    if (minutes > 0 || builder.length() > 0) {
+      builder.append(minutes).append("m ");
+    }
+    builder.append(seconds).append("s");
+
+    return builder.toString();
   }
 
   /**
