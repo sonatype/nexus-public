@@ -16,6 +16,7 @@ import javax.annotation.Nullable
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
+import javax.validation.constraints.NotEmpty
 
 import org.sonatype.nexus.common.entity.DetachedEntityId
 import org.sonatype.nexus.extdirect.DirectComponentSupport
@@ -40,7 +41,6 @@ import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import org.apache.shiro.authz.annotation.RequiresAuthentication
 import org.apache.shiro.authz.annotation.RequiresPermissions
-import javax.validation.constraints.NotEmpty
 
 /**
  * Component {@link DirectComponent}.
@@ -157,7 +157,8 @@ class ComponentComponent
   @Validate
   Set<String> deleteAsset(@NotEmpty final String assetId, @NotEmpty final String repositoryName) {
     Repository repository = repositoryManager.get(repositoryName)
-    return componentHelper.deleteAsset(repository, new DetachedEntityId(assetId))
+    // GSON used by DirectJNgine can exclude some of the Guava collection types
+    return new HashSet<>(componentHelper.deleteAsset(repository, new DetachedEntityId(assetId)))
   }
 
   /**
