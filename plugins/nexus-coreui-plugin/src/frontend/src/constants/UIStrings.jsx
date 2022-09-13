@@ -336,8 +336,8 @@ export default {
     },
     FORM: {
       CREATE_TITLE: 'Load certificate',
-      DETAILS_TILE: (name) => `Certificate Details ${name}`,
-      EDIT_DESCRIPTION: 'Summary',
+      DETAILS_TITLE: (name) => `Certificate ${name}`,
+      DETAILS_DESCRIPTION: 'Summary',
       WARNING: 'This certificate was retrieved over an untrusted connection. Always verify the details before adding it.',
       SECTIONS: {
         SETUP: 'Load SSL Certificates',
@@ -376,9 +376,9 @@ export default {
         LABEL: 'Fingerprint',
       },
       BUTTONS: {
-        ADD: 'Add certificate to truststore',
-        REMOVE: 'Remove certificate from truststore',
-        LOAD: 'Load certificate',
+        ADD: 'Add Certificate to Truststore',
+        DELETE: 'Delete Certificate',
+        LOAD: 'Load Certificate',
       },
     },
     MESSAGES: {

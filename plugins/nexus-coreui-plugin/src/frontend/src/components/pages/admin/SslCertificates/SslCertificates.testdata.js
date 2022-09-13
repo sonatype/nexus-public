@@ -31,17 +31,17 @@ export const SSL_CERTIFICATES = [{
   subjectOrganizationalUnit: null,
 }, {
   expiresOn: 1687046399000,
-  fingerprint: 'F6:DB:65:A4:0D:38:75:86:90:96:29:5F:36:EA:44:7F:3D:98:4B:3A',
-  id: 'F6:DB:65:A4:0D:38:75:86:90:96:29:5F:36:EA:44:7F:3D:98:4B:3A',
+  fingerprint: 'F6:DB:65:A4:0D:38:75:86:90:96:29:5F:36:EA:7F:3D:98:4B:3A:2T',
+  id: 'F6:DB:65:A4:0D:38:75:86:90:96:29:5F:36:44:7F:3D:98:4B:3A:5N',
   issuedOn: 1652918400000,
   issuerCommonName: 'Amazon',
-  issuerOrganization: 'Amazon',
+  issuerOrganization: 'Amazon 1',
   issuerOrganizationalUnit: 'Server CA 1B',
   pem: '-----BEGIN CERTIFICATE-----\nMIIF4TCCBMmgAwIBAgIQAllC7',
   serialNumber: '3121928060269049011789892858942813771',
   subjectCommonName: 'test.iq.sonatype.dev',
-  subjectOrganization: null,
-  subjectOrganizationalUnit: null,
+  subjectOrganization: 'test org',
+  subjectOrganizationalUnit: 'Test Unit',
 }, {
   expiresOn: 1689259508000,
   fingerprint: '73:A4:83:C2:E4:22:30:55:EC:16:91:2D:0E:39:90:83:24:BA:A9:6C',
@@ -58,5 +58,3 @@ export const SSL_CERTIFICATES = [{
 }];
 
 export const SSL_CERTIFICATES_MAP = indexBy(prop('id'), SSL_CERTIFICATES);
-
-export const XSS_STRING = 'XSS!<img src="/static/rapture/resources/icons/x16/user.png" onload="alert(0)">';

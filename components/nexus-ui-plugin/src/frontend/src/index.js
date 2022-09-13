@@ -31,6 +31,7 @@ export { default as HumanReadableUtils } from './interface/HumanReadableUtils';
 export { default as ListMachineUtils } from './interface/ListMachineUtils';
 export { default as ValidationUtils } from './interface/ValidationUtils';
 export { default as useSimpleMachine } from './interface/SimpleMachineUtils';
+export { default as DateUtils } from './interface/DateUtils';
 
 export { default as ContentBody } from './components/layout/common/ContentBody/ContentBody';
 export { default as Section } from './components/layout/common/Section/Section';
