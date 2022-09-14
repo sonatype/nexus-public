@@ -16,6 +16,7 @@ import javax.inject.Inject
 import javax.inject.Named
 
 import org.sonatype.nexus.supportzip.SupportZipGenerator
+import org.sonatype.nexus.common.log.SupportZipGeneratorRequest
 
 import org.apache.karaf.shell.api.action.Action
 import org.apache.karaf.shell.api.action.Command
@@ -66,7 +67,7 @@ class SupportZipAction
 
   @Override
   public Object execute() throws Exception {
-    def request = new SupportZipGenerator.Request(
+    def request = new SupportZipGeneratorRequest(
         systemInformation: systemInformation,
         threadDump: threadDump,
         metrics: metrics,

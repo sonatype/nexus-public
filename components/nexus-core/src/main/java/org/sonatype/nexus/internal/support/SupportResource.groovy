@@ -25,6 +25,7 @@ import javax.ws.rs.core.StreamingOutput
 import org.sonatype.goodies.common.ComponentSupport
 import org.sonatype.nexus.rest.Resource
 import org.sonatype.nexus.supportzip.SupportZipGenerator
+import org.sonatype.nexus.common.log.SupportZipGeneratorRequest
 
 import org.apache.shiro.authz.annotation.RequiresAuthentication
 import org.apache.shiro.authz.annotation.RequiresPermissions
@@ -59,7 +60,7 @@ class SupportResource
   @Produces([APPLICATION_OCTET_STREAM])
   @POST
   @Path("/supportzip")
-  Response supportzip(final SupportZipGenerator.Request request) {
+  Response supportzip(final SupportZipGeneratorRequest request) {
     def name = "support-${new Date().format('yyyyMMdd-HHmmss')}-1.zip"
 
     StreamingOutput entity = { OutputStream output ->
@@ -75,7 +76,7 @@ class SupportResource
   @Produces([APPLICATION_JSON])
   @POST
   @Path("/supportzippath")
-  SupportZipXO supportzippath(final SupportZipGenerator.Request request) {
+  SupportZipXO supportzippath(final SupportZipGeneratorRequest request) {
     def result = supportZipGenerator.generate(request)
     return new SupportZipXO(
         file: result.localPath,
