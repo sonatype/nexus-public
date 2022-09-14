@@ -250,7 +250,7 @@ public class SqlSearchQueryConditionBuilder
           if (escapeIndex == -1 || escapeIndex != index - 1) {
             result[index] = wildcardMapping.get(replaceChar);
           }
-          index = value.indexOf(replaceChar, index + 1);
+          index = escapedValue.indexOf(replaceChar, index + 1);
         }
       }
     }
