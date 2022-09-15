@@ -14,7 +14,7 @@ import React from 'react';
 import {render} from '@testing-library/react';
 
 import Textfield from './Textfield';
-import UIStrings from "../../../constants/UIStrings";
+import UIStrings from '../../../constants/UIStrings';
 
 describe('Textfield', () => {
   it('renders correctly without an error message', () => {

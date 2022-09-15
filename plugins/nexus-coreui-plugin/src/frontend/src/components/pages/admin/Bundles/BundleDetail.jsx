@@ -11,9 +11,9 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import { NxBackButton, NxH3, NxLoadWrapper } from '@sonatype/react-shared-components';
-import { ContentBody, Page, Section } from '@sonatype/nexus-ui-plugin';
-import { useService } from '@xstate/react';
+import {NxBackButton, NxH3, NxLoadWrapper} from '@sonatype/react-shared-components';
+import {ContentBody, Page, Section} from '@sonatype/nexus-ui-plugin';
+import {useService} from '@xstate/react';
 import './BundleDetail.scss';
 import UIStrings from '../../../../constants/UIStrings';
 

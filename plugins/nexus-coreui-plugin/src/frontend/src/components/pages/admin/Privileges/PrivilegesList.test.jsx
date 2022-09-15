@@ -11,13 +11,15 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {render, screen, fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
-import {sort, prop, descend, ascend, clone} from 'ramda';
-import {when} from 'jest-when';
 import Axios from 'axios';
+import {when} from 'jest-when';
+import {render, screen, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import {sort, prop, descend, ascend, clone} from 'ramda';
+
 import {ExtJS, TestUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
 
-import UIStrings from "../../../../constants/UIStrings";
+import UIStrings from '../../../../constants/UIStrings';
 import PrivilegesList from './PrivilegesList';
 import {XSS_STRING} from './Privileges.testdata';
 
@@ -174,7 +176,7 @@ describe('PrivilegesList', function() {
       let privileges = sortPrivileges(fieldName, direction);
       when(Axios.post).calledWith(URL, REQUEST).mockResolvedValue({data: TestUtils.makeExtResult(privileges)});
 
-      fireEvent.click(headerCell(columnName));
+      userEvent.click(headerCell(columnName));
       let newRequest = clone(DEFAULT_DATA);
       newRequest.data[0].sort[0] = {
         direction: direction.toUpperCase(),

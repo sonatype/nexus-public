@@ -18,7 +18,7 @@ import {when} from 'jest-when';
 
 import Axios from 'axios';
 import EmailServer from './EmailServer';
-import UIStrings from "../../../../constants/UIStrings";
+import UIStrings from '../../../../constants/UIStrings';
 
 const {EMAIL_SERVER: {FORM: LABELS}, SETTINGS, USE_TRUST_STORE, ERROR} = UIStrings;
 const {REST: {PUBLIC: {EMAIL_SERVER: emailServerUrl}}} = APIConstants;

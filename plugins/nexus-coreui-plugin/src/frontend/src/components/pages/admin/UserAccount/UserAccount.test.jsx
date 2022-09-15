@@ -11,12 +11,14 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
+import Axios from 'axios';
 import {fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+
 import {TestUtils} from '@sonatype/nexus-ui-plugin';
 
-import Axios from 'axios';
-import UserAccount from './UserAccount';
 import UIStrings from '../../../../constants/UIStrings';
+import UserAccount from './UserAccount';
 
 const mockUserAccount = {
   userId: 'admin',
@@ -134,7 +136,7 @@ describe('UserAccount', () => {
 
     expect(Axios.put).toHaveBeenCalledTimes(0);
 
-    fireEvent.click(saveButton());
+    userEvent.click(saveButton());
 
     await waitFor(() => expect(saveButton()).toHaveClass('disabled'));
     expect(discardButton()).toHaveClass('disabled');
@@ -165,7 +167,7 @@ describe('UserAccount', () => {
     expect(saveButton()).not.toHaveClass('disabled');
     expect(discardButton()).not.toHaveClass('disabled');
 
-    fireEvent.click(discardButton());
+    userEvent.click(discardButton());
     await waitFor(() => expect(discardButton()).toHaveClass('disabled'));
 
     expect(lastNameField()).toHaveValue('Admin');
@@ -187,7 +189,7 @@ describe('UserAccount', () => {
 
     expect(window.dirty).toEqual(['UserAccount']);
 
-    fireEvent.click(discardButton());
+    userEvent.click(discardButton());
 
     await waitFor(() => expect(window.dirty).toEqual([]));
   });

@@ -40,7 +40,7 @@ export default function IqServerReadOnly() {
     send('RETRY');
   }
 
-  return <NxLoadWrapper loading={isLoading} error={loadError ? `${loadError}` : null} retryHandler={retry}>
+  return <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
     <NxInfoAlert>{UIStrings.SETTINGS.READ_ONLY.WARNING}</NxInfoAlert>
     <NxReadOnly>
       <NxReadOnly.Label>{UIStrings.IQ_SERVER.ENABLED.label}</NxReadOnly.Label>

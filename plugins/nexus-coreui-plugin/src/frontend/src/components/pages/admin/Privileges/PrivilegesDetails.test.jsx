@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {render, fireEvent, screen, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
+import {render, screen, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
 import {act} from 'react-dom/test-utils';
@@ -238,7 +238,7 @@ describe('PrivilegesDetails', function() {
     await TestUtils.changeField(actions, testActions);
 
     expect(saveButton()).not.toHaveClass('disabled');
-    fireEvent.click(saveButton());
+    userEvent.click(saveButton());
 
     await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(createPrivilegeUrl(TYPE_IDS.SCRIPT), SCRIPT_PRIVILEGE));
     expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
@@ -264,10 +264,10 @@ describe('PrivilegesDetails', function() {
     await TestUtils.changeField(format, testFormat);
 
     await TestUtils.changeField(repositories, 'm');
-    fireEvent.click(screen.getByText(testRepository));
+    userEvent.click(screen.getByText(testRepository));
 
     expect(saveButton()).not.toHaveClass('disabled');
-    fireEvent.click(saveButton());
+    userEvent.click(saveButton());
 
     await waitFor(() => expect(Axios.post).toHaveBeenLastCalledWith(
         createPrivilegeUrl(TYPE_IDS.REPOSITORY_CONTENT_SELECTOR),
@@ -298,7 +298,7 @@ describe('PrivilegesDetails', function() {
 
     expect(saveButton()).not.toHaveClass('disabled');
 
-    fireEvent.click(saveButton());
+    userEvent.click(saveButton());
 
     await waitFor(() => expect(Axios.put).toHaveBeenCalledWith(updatePrivilegeUrl(TYPE_IDS.SCRIPT, testName), data));
     expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
@@ -321,7 +321,7 @@ describe('PrivilegesDetails', function() {
     await TestUtils.changeField(actions, testActions);
 
     expect(saveButton()).not.toHaveClass('disabled');
-    await act(async () => fireEvent.click(saveButton()));
+    await act(async () => userEvent.click(saveButton()));
 
     expect(NX.Messages.error).toHaveBeenCalledWith(UIStrings.ERROR.SAVE_ERROR);
     expect(screen.getByText(new RegExp(message))).toBeInTheDocument();
@@ -334,7 +334,7 @@ describe('PrivilegesDetails', function() {
     await renderAndWaitForLoad(testName);
 
     ExtJS.requestConfirmation.mockReturnValue(CONFIRM);
-    fireEvent.click(deleteButton());
+    userEvent.click(deleteButton());
 
     await waitFor(() => expect(Axios.delete).toBeCalledWith(singlePrivilegeUrl(testName)));
     expect(onDone).toBeCalled();
@@ -345,7 +345,7 @@ describe('PrivilegesDetails', function() {
     const {cancelButton} = selectors;
     await renderAndWaitForLoad();
 
-    fireEvent.click(cancelButton());
+    userEvent.click(cancelButton());
 
     await waitFor(() => expect(onDone).toBeCalled());
   });
@@ -374,7 +374,7 @@ describe('PrivilegesDetails', function() {
       expect(scriptName()).toHaveTextContent(testScriptName);
       expect(actions()).toHaveTextContent(testActions);
 
-      fireEvent.click(cancelButton());
+      userEvent.click(cancelButton());
       await waitFor(() => expect(onDone).toBeCalled());
     });
 
@@ -396,7 +396,7 @@ describe('PrivilegesDetails', function() {
       expect(format()).toHaveTextContent(testFormat);
       expect(repositories()).toHaveTextContent(testRepository);
 
-      fireEvent.click(cancelButton());
+      userEvent.click(cancelButton());
       await waitFor(() => expect(onDone).toBeCalled());
     });
 

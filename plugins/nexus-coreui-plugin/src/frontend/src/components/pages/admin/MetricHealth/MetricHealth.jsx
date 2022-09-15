@@ -37,7 +37,7 @@ import {
 
 import MetricHealthMachine from './MetricHealthMachine';
 
-import UIStrings from "../../../../constants/UIStrings";
+import UIStrings from '../../../../constants/UIStrings';
 
 export default function MetricHealth() {
   const [current, send] = useMachine(MetricHealthMachine, {devTools: true});

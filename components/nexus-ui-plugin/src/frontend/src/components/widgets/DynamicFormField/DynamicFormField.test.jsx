@@ -13,7 +13,7 @@
 import React from 'react';
 import {render, screen} from '@testing-library/react';
 
-import DynamicFormField from "./DynamicFormField";
+import DynamicFormField from './DynamicFormField';
 
 describe('DynamicFormField', () => {
   describe('renders the string type', () => {

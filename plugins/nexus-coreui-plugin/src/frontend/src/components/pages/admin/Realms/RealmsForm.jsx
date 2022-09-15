@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import { useMachine } from '@xstate/react';
+import {useMachine} from '@xstate/react';
 import {
   NxButton,
   NxForm,
@@ -19,7 +19,7 @@ import {
   NxStatefulTransferList,
   NxH2,
 } from '@sonatype/react-shared-components';
-import { FormUtils } from '@sonatype/nexus-ui-plugin';
+import {FormUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 

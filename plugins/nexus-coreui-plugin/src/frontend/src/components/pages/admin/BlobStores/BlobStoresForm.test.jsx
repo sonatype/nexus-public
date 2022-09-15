@@ -13,12 +13,13 @@
 import React from 'react';
 import axios from 'axios';
 import {when} from 'jest-when';
-import {fireEvent, screen, waitForElementToBeRemoved} from '@testing-library/react'
+import {screen, waitForElementToBeRemoved} from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
+
 import {TestUtils} from '@sonatype/nexus-ui-plugin';
+
 import S3BlobStoreSettings from './S3/S3BlobStoreSettings';
 import S3BlobStoreWarning from './S3/S3BlobStoreWarning';
-
 import BlobStoresForm from './BlobStoresForm';
 
 // Include the blob stores types on the window
@@ -329,7 +330,7 @@ describe('BlobStoresForm', function() {
     expect(softQuotaType()).not.toBeInTheDocument();
     expect(softQuotaLimit()).not.toBeInTheDocument();
 
-    fireEvent.click(softQuota());
+    userEvent.click(softQuota());
 
     expect(softQuotaType()).toBeInTheDocument();
     expect(softQuotaLimit()).toBeInTheDocument();
@@ -353,7 +354,7 @@ describe('BlobStoresForm', function() {
 
     expect(saveButton()).not.toHaveClass('disabled');
 
-    fireEvent.click(softQuota());
+    userEvent.click(softQuota());
 
     expect(saveButton()).toHaveClass('disabled');
 
@@ -369,7 +370,7 @@ describe('BlobStoresForm', function() {
 
     expect(saveButton()).toHaveClass('disabled');
 
-    fireEvent.click(softQuota());
+    userEvent.click(softQuota());
 
     expect(saveButton()).not.toHaveClass('disabled');
   });

@@ -11,16 +11,16 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {render, screen, within, fireEvent, waitForElementToBeRemoved} from '@testing-library/react';
-import {sort, prop, descend, ascend} from 'ramda';
-import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
-import {when} from 'jest-when';
 import Axios from 'axios';
+import {when} from 'jest-when';
+import {render, screen, within, waitForElementToBeRemoved} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import {sort, prop, descend, ascend} from 'ramda';
 
+import {ExtJS, TestUtils} from '@sonatype/nexus-ui-plugin';
+
+import UIStrings from '../../../../constants/UIStrings';
 import RolesList from './RolesList';
-
-import UIStrings from "../../../../constants/UIStrings";
 
 const {ROLES: {LIST: LABELS}} = UIStrings;
 
@@ -127,19 +127,19 @@ describe('RolesList', function() {
 
     TestUtils.expectProperRowsOrder(ROWS, FIELDS.ID);
 
-    fireEvent.click(headerCell(LABELS.COLUMNS.ID));
+    userEvent.click(headerCell(LABELS.COLUMNS.ID));
     let roles = sortRoles(FIELDS.ID, descend);
     TestUtils.expectProperRowsOrder(roles, FIELDS.ID);
 
-    fireEvent.click(headerCell(LABELS.COLUMNS.NAME));
+    userEvent.click(headerCell(LABELS.COLUMNS.NAME));
     roles = sortRoles(FIELDS.NAME);
     TestUtils.expectProperRowsOrder(roles, FIELDS.ID);
 
-    fireEvent.click(headerCell(LABELS.COLUMNS.NAME));
+    userEvent.click(headerCell(LABELS.COLUMNS.NAME));
     roles = sortRoles(FIELDS.NAME, descend);
     TestUtils.expectProperRowsOrder(roles, FIELDS.ID);
 
-    fireEvent.click(headerCell(LABELS.COLUMNS.DESCRIPTION));
+    userEvent.click(headerCell(LABELS.COLUMNS.DESCRIPTION));
     roles = sortRoles(FIELDS.DESCRIPTION);
     TestUtils.expectProperRowsOrder(roles, FIELDS.ID);
   });

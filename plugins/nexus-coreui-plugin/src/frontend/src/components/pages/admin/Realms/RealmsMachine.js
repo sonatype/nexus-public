@@ -14,9 +14,9 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import { assign } from 'xstate';
+import {assign} from 'xstate';
 import Axios from 'axios';
-import { FormUtils, APIConstants } from '@sonatype/nexus-ui-plugin';
+import {FormUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
 
 export default FormUtils.buildFormMachine({
   id: 'RealmsMachine',

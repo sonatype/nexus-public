@@ -11,8 +11,9 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import { act } from 'react-dom/test-utils';
-import {fireEvent, render} from '@testing-library/react';
+import {act} from 'react-dom/test-utils';
+import {render} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import SupportZipResponse from './SupportZipResponse';
 
@@ -54,7 +55,7 @@ describe('SupportZipResponse', function() {
     const {container} = await renderView(response, download);
     const downloadButton = container.querySelector('button[type=submit]');
 
-    fireEvent.click(downloadButton);
+    userEvent.click(downloadButton);
 
     expect(download).toBeCalledWith(expect.any(Object), 'support-20200527-095617-6.zip');
   });

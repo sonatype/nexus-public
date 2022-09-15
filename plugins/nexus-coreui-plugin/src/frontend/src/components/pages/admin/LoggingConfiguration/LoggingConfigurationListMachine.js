@@ -19,7 +19,7 @@ import Axios from 'axios';
 
 import {ExtJS, ListMachineUtils} from '@sonatype/nexus-ui-plugin';
 
-import UIStrings from "../../../../constants/UIStrings";
+import UIStrings from '../../../../constants/UIStrings';
 
 export default ListMachineUtils.buildListMachine({
   id: 'LoggingConfigurationListMachine',

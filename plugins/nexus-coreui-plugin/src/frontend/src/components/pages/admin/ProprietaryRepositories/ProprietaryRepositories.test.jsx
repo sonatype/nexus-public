@@ -11,15 +11,17 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
+import Axios from 'axios';
 import {mergeDeepRight} from 'ramda';
-import {render, screen, waitForElementToBeRemoved, waitFor, fireEvent} from '@testing-library/react';
-import {act} from "react-dom/test-utils";
+import {render, screen, waitForElementToBeRemoved, waitFor} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import {act} from 'react-dom/test-utils';
 import {when} from 'jest-when';
+
 import {ExtJS, TestUtils, ExtAPIUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
 
-import Axios from 'axios';
 import ProprietaryRepositories from './ProprietaryRepositories';
-import UIStrings from "../../../../constants/UIStrings";
+import UIStrings from '../../../../constants/UIStrings';
 
 const {PROPRIETARY_REPOSITORIES: LABELS, SETTINGS} = UIStrings;
 const {EXT: {PROPRIETARY_REPOSITORIES: {ACTION, METHODS}, }} = APIConstants;
@@ -102,15 +104,15 @@ describe('ProprietaryRepositories', () => {
 
     expect(discardButton()).toHaveClass('disabled');
 
-    fireEvent.click(screen.getByText('maven-snapshots'));
-    fireEvent.click(screen.getByText('nuget-hosted'));
+    userEvent.click(screen.getByText('maven-snapshots'));
+    userEvent.click(screen.getByText('nuget-hosted'));
 
     expect(selectedList()).toHaveTextContent('maven-snapshots');
     expect(availableList()).toHaveTextContent('maven-releases');
     expect(availableList()).toHaveTextContent('nuget-hosted');
 
     expect(discardButton()).not.toHaveClass('disabled');
-    fireEvent.click(discardButton());
+    userEvent.click(discardButton());
 
     expect(availableList()).toHaveTextContent('maven-snapshots');
     expect(availableList()).toHaveTextContent('maven-releases');
@@ -133,8 +135,8 @@ describe('ProprietaryRepositories', () => {
 
     expect(saveButton()).toHaveClass('disabled');
 
-    fireEvent.click(screen.getByText('maven-releases'));
-    fireEvent.click(screen.getByText('nuget-hosted'));
+    userEvent.click(screen.getByText('maven-releases'));
+    userEvent.click(screen.getByText('nuget-hosted'));
 
     expect(availableList()).toHaveTextContent('nuget-hosted');
     expect(availableList()).toHaveTextContent('maven-snapshots');
@@ -142,7 +144,7 @@ describe('ProprietaryRepositories', () => {
 
     expect(saveButton()).not.toHaveClass('disabled');
 
-    await act(async () => {fireEvent.click(saveButton())});
+    await act(async () => {userEvent.click(saveButton())});
 
     expect(Axios.post).toHaveBeenCalledWith(
         URL,

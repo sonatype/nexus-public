@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import { useMachine } from '@xstate/react';
+import {useMachine} from '@xstate/react';
 
 import {
   NxInfoAlert,
@@ -24,14 +24,14 @@ import UIStrings from '../../../../constants/UIStrings';
 import RealmsMachine from './RealmsMachine';
 
 const {
-  REALMS: { CONFIGURATION: LABELS },
+  REALMS: {CONFIGURATION: LABELS},
   SETTINGS,
 } = UIStrings;
 
 export default function RealmsReadOnly() {
-  const [current, send] = useMachine(RealmsMachine, { devTools: true });
+  const [current, send] = useMachine(RealmsMachine, {devTools: true});
   const {
-    data: { active },
+    data: {active},
     loadError,
   } = current.context;
   const isLoading = current.matches('loading');

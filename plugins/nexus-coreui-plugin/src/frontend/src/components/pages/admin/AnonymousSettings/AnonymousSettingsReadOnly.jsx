@@ -36,7 +36,7 @@ export default function AnonymousSettingsReadOnly() {
     send('RETRY');
   }
 
-  return <NxLoadWrapper loading={isLoading} error={loadError ? `${loadError}` : null} retryHandler={retry}>
+  return <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
     <NxInfoAlert>{UIStrings.SETTINGS.READ_ONLY.WARNING}</NxInfoAlert>
     <NxReadOnly>
       <NxReadOnly.Label>{UIStrings.ANONYMOUS_SETTINGS.ENABLED_CHECKBOX_LABEL}</NxReadOnly.Label>

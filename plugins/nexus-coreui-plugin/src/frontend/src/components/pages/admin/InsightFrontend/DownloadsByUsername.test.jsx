@@ -11,8 +11,9 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
+import {render, screen, waitFor, within} from '@testing-library/react'
+import userEvent from '@testing-library/user-event';
 
-import {fireEvent, render, screen, waitFor, within} from '@testing-library/react'
 import {TestUtils} from '@sonatype/nexus-ui-plugin';
 
 import DownloadsByUsername from './DownloadsByUsername';
@@ -56,7 +57,7 @@ describe('DownloadsByUsername', function() {
     expect(selectors.username(2)).toHaveTextContent('admin');
     expect(selectors.downloadCount(2)).toHaveTextContent('1');
 
-    fireEvent.click(selectors.downloadCountHeader());
+    userEvent.click(selectors.downloadCountHeader());
 
     await waitFor(() => expect(selectors.downloadCountHeader()).toHaveAttribute('aria-sort', 'ascending'));
 
@@ -73,7 +74,7 @@ describe('DownloadsByUsername', function() {
   it('sorts user names ascending, then descending', async function() {
     render(<DownloadsByUsername downloadsByUsername={downloadsByUsername}/>);
 
-    fireEvent.click(selectors.usernameHeader());
+    userEvent.click(selectors.usernameHeader());
 
     await waitFor(() => expect(selectors.usernameHeader()).toHaveAttribute('aria-sort', 'ascending'));
 
@@ -86,7 +87,7 @@ describe('DownloadsByUsername', function() {
     expect(selectors.username(2)).toHaveTextContent('repoAdmin');
     expect(selectors.downloadCount(2)).toHaveTextContent('22');
 
-    fireEvent.click(selectors.usernameHeader());
+    userEvent.click(selectors.usernameHeader());
 
     await waitFor(() => expect(selectors.usernameHeader()).toHaveAttribute('aria-sort', 'descending'));
 

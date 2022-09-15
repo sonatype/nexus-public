@@ -13,8 +13,8 @@
 import React from 'react';
 import {render} from '@testing-library/react';
 
-import Select from "./Select";
-import UIStrings from "../../../constants/UIStrings";
+import Select from './Select';
+import UIStrings from '../../../constants/UIStrings';
 
 describe('Select', () => {
   it('renders select tag', () => {

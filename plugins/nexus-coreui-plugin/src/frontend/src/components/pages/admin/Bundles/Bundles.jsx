@@ -16,7 +16,7 @@ import {Detail, Master, MasterDetail} from '@sonatype/nexus-ui-plugin';
 
 import BundlesList from './BundlesList';
 import BundleDetail from './BundleDetail';
-import { useMachine } from '@xstate/react';
+import {useMachine} from '@xstate/react';
 import BundlesListMachine from './BundlesListMachine';
 
 export default function Bundles() {

@@ -20,7 +20,7 @@ import Axios from 'axios';
 
 import SslCertificatesList from './SslCertificatesList';
 import {URL} from './SslCertificatesHelper';
-import UIStrings from "../../../../constants/UIStrings";
+import UIStrings from '../../../../constants/UIStrings';
 import {SSL_CERTIFICATES} from './SslCertificates.testdata';
 
 const {SORT_DIRECTIONS: {DESC, ASC}} = APIConstants;

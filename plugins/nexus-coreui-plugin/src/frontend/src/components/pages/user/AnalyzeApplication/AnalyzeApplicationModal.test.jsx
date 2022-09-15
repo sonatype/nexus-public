@@ -12,12 +12,13 @@
  */
 import React from 'react';
 import Axios from 'axios';
-import {act} from "react-dom/test-utils";
+import {act} from 'react-dom/test-utils';
 import {TestUtils} from '@sonatype/nexus-ui-plugin';
-import { fireEvent, waitFor, waitForElementToBeRemoved } from "@testing-library/react";
+import {waitFor, waitForElementToBeRemoved} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
-import UIStrings from "../../../../constants/UIStrings";
-import AnalyzeApplicationModal from "./AnalyzeApplicationModal";
+import UIStrings from '../../../../constants/UIStrings';
+import AnalyzeApplicationModal from './AnalyzeApplicationModal';
 
 const component = {
   'componentName': 'foobar',
@@ -113,7 +114,7 @@ describe('AnalyzeApplicationModal', () => {
     await TestUtils.changeField(password, 'foobar');
     expect(analyzeButton()).not.toHaveClass('disabled');
 
-    await act(async () => fireEvent.click(cancelButton()));
+    await act(async () => userEvent.click(cancelButton()));
 
     expect(Axios.post).toHaveBeenCalledTimes(0);
 
@@ -130,7 +131,7 @@ describe('AnalyzeApplicationModal', () => {
     await TestUtils.changeField(packages, 'packageA');
     expect(analyzeButton()).not.toHaveClass('disabled');
 
-    fireEvent.click(analyzeButton());
+    userEvent.click(analyzeButton());
 
     expect(Axios.post).toHaveBeenCalledTimes(1);
     expect(Axios.post).toHaveBeenCalledWith(

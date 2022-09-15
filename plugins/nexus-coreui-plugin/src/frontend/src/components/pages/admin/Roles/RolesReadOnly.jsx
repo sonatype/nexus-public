@@ -47,7 +47,7 @@ export default function RolesReadOnly({service, onDone}) {
 
   const retry = () => send('RETRY');
 
-  return <NxLoadWrapper loading={isLoading} error={loadError ? `${loadError}` : null} retryHandler={retry}>
+  return <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
     <NxTile.Content>
       <NxInfoAlert>
         {isDefaultRole ? LABELS.DEFAULT_ROLE_WARNING : UIStrings.SETTINGS.READ_ONLY.WARNING}

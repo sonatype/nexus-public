@@ -13,7 +13,7 @@
 import React from 'react';
 import {render} from '@testing-library/react';
 
-import Information from "./Information";
+import Information from './Information';
 
 describe('Information', () => {
   it('renders boolean values correctly', () => {

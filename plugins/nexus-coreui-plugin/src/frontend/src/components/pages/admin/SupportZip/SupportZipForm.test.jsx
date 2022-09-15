@@ -11,8 +11,9 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import { act } from 'react-dom/test-utils';
-import {fireEvent, render} from '@testing-library/react';
+import {act} from 'react-dom/test-utils';
+import {render} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import SupportZipForm from './SupportZipForm';
 
@@ -75,7 +76,7 @@ describe('SupportZipForm', function() {
     const {container} = await renderView(params, setParams);
 
     Object.entries(params).forEach(([name, value]) => {
-      fireEvent.click(container.querySelector(`input#${name}`));
+      userEvent.click(container.querySelector(`input#${name}`));
       expect(setParams.mock.calls.slice(-1)[0][0].target.id).toBe(name);
     });
     expect(setParams).toHaveBeenCalledTimes(Object.entries(params).length);

@@ -20,7 +20,7 @@ import {
   ExtJS,
 } from '@sonatype/nexus-ui-plugin';
 
-import { faDungeon } from '@fortawesome/free-solid-svg-icons';
+import {faDungeon} from '@fortawesome/free-solid-svg-icons';
 
 import RealmsForm from './RealmsForm';
 import RealmsReadOnly from './RealmsReadOnly';
