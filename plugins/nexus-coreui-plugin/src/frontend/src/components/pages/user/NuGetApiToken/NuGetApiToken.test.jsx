@@ -13,7 +13,8 @@
 import React from 'react';
 import Axios from 'axios';
 import {act} from 'react-dom/test-utils';
-import {fireEvent, waitFor} from '@testing-library/react';
+import {waitFor} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import {TestUtils} from '@sonatype/nexus-ui-plugin';
 
 import NuGetApiToken from './NuGetApiToken';
@@ -63,7 +64,7 @@ describe('NuGetApiToken', () => {
 
     await waitFor(() =>  expect(nugetKey()).not.toBeInTheDocument());
 
-    await act(async () => fireEvent.click(accessButton()));
+    await act(async () => userEvent.click(accessButton()));
 
     await waitFor(() =>  expect(nugetKey()).toBeInTheDocument());
   });
@@ -71,7 +72,7 @@ describe('NuGetApiToken', () => {
   it('uses the get call when the access button is pressed',  async () => {
     let { accessButton, nugetKey } = renderView(<NuGetApiToken/>);
 
-    await act(async () => fireEvent.click(accessButton()));
+    await act(async () => userEvent.click(accessButton()));
 
     await waitFor(() =>  expect(nugetKey()).toBeInTheDocument());
 
@@ -84,7 +85,7 @@ describe('NuGetApiToken', () => {
   it('uses the delete call when the reset button is pressed',  async () => {
     let { resetButton } =  renderView(<NuGetApiToken/>);
 
-    await act(async () => fireEvent.click(resetButton()));
+    await act(async () => userEvent.click(resetButton()));
 
     expect(Axios.delete).toHaveBeenCalledTimes(1);
     expect(Axios.delete).toHaveBeenCalledWith(

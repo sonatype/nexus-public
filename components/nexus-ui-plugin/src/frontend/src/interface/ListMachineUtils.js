@@ -182,7 +182,10 @@ export default class ListMachineUtils {
         }),
 
         setError: assign({
-          error: (_, event) => event.data.message
+          error: (_, event) => {
+            const message = event.data?.message;
+            return message ? `${message}` : null;
+          },
         }),
 
         clearError: assign({

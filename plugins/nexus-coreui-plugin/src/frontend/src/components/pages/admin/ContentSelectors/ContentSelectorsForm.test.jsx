@@ -11,10 +11,10 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
+import {waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
-import {act} from "react-dom/test-utils";
+import {act} from 'react-dom/test-utils';
 import axios from 'axios';
 import {ExtJS, TestUtils} from '@sonatype/nexus-ui-plugin';
 
@@ -146,7 +146,7 @@ describe('ContentSelectorsForm', function() {
 
     await waitForElementToBeRemoved(loadingMask);
 
-    fireEvent.click(cancelButton());
+    userEvent.click(cancelButton());
 
     await waitFor(() => expect(onDone).toBeCalled());
   });
@@ -174,7 +174,7 @@ describe('ContentSelectorsForm', function() {
     await TestUtils.changeField(name, 'test');
     await TestUtils.changeField(expression, 'format == "maven2');
 
-    fireEvent.click(saveButton());
+    userEvent.click(saveButton());
 
     await waitForElementToBeRemoved(savingMask);
 
@@ -219,7 +219,7 @@ describe('ContentSelectorsForm', function() {
     axios.put.mockReturnValue(Promise.resolve());
 
     ExtJS.requestConfirmation.mockReturnValue(CONFIRM);
-    fireEvent.click(deleteButton());
+    userEvent.click(deleteButton());
 
     await waitFor(() => expect(axios.delete).toBeCalledWith(`/service/rest/v1/security/content-selectors/${itemId}`));
     expect(onDone).toBeCalled();
@@ -260,7 +260,7 @@ describe('ContentSelectorsForm', function() {
     await waitFor(() => expect(window.dirty).toEqual(['ContentSelectorsFormMachine']));
 
     expect(saveButton()).not.toBeDisabled();
-    fireEvent.click(saveButton());
+    userEvent.click(saveButton());
 
     await waitFor(() => expect(axios.post).toHaveBeenCalledWith(
         '/service/rest/v1/security/content-selectors',
@@ -310,7 +310,7 @@ describe('ContentSelectorsForm', function() {
 
       expect(getByText(emptyPreviewMessage)).toBeInTheDocument();
 
-      await act(async () => fireEvent.click(previewButton()));
+      await act(async () => userEvent.click(previewButton()));
 
       expect(getByText('maven-aether-provider')).toBeInTheDocument();
     });
@@ -349,7 +349,7 @@ describe('ContentSelectorsForm', function() {
       const {loadingMask, previewButton, getByText} = renderEditView(itemId);
       await waitForElementToBeRemoved(loadingMask);
 
-      await act(async () => fireEvent.click(previewButton()));
+      await act(async () => userEvent.click(previewButton()));
 
       expect(getByText('An error occurred loading data. Invalid CSEL')).toBeInTheDocument();
     });

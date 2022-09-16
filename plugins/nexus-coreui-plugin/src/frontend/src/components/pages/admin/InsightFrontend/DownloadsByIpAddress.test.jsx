@@ -11,11 +11,12 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
+import {render, screen, waitFor, within} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+
+import {TestUtils} from '@sonatype/nexus-ui-plugin';
 
 import DownloadsByIpAddress from './DownloadsByIpAddress';
-
-import {fireEvent, render, screen, waitFor, within} from '@testing-library/react'
-import {TestUtils} from '@sonatype/nexus-ui-plugin';
 
 const NUM_HEADERS = 2;
 const ID = 0;
@@ -55,7 +56,7 @@ describe('DownloadsByIpAddress', function() {
     expect(selectors.ipAddress(2)).toHaveTextContent('192.168.0.1');
     expect(selectors.downloadCount(2)).toHaveTextContent('1');
 
-    fireEvent.click(selectors.downloadCountHeader());
+    userEvent.click(selectors.downloadCountHeader());
 
     await waitFor(() => expect(selectors.downloadCountHeader()).toHaveAttribute('aria-sort', 'ascending'));
 

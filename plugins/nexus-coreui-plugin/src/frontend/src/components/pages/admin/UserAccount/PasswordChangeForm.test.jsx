@@ -11,12 +11,15 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {fireEvent, waitFor} from '@testing-library/react';
-import {act} from "react-dom/test-utils";
-import PasswordChangeForm from './PasswordChangeForm';
-import UIStrings from '../../../../constants/UIStrings';
 import Axios from 'axios';
+import {waitFor} from '@testing-library/react';
+import {act} from 'react-dom/test-utils';
+import userEvent from '@testing-library/user-event';
+
 import {ExtJS, TestUtils} from '@sonatype/nexus-ui-plugin';
+
+import UIStrings from '../../../../constants/UIStrings';
+import PasswordChangeForm from './PasswordChangeForm';
 
 jest.mock('@sonatype/nexus-ui-plugin', () => {
   return {
@@ -94,7 +97,7 @@ describe('PasswordChangeForm', () => {
     expect(changePasswordButton()).not.toHaveClass('disabled');
     expect(discardButton()).not.toHaveClass('disabled');
 
-    fireEvent.click(changePasswordButton());
+    userEvent.click(changePasswordButton());
 
     await waitFor(() => expect(Axios.put).toHaveBeenCalledTimes(1));
     expect(Axios.put).toHaveBeenCalledWith(
@@ -130,7 +133,7 @@ describe('PasswordChangeForm', () => {
       }
     });
 
-    await act(async () => fireEvent.click(changePasswordButton()));
+    await act(async () => userEvent.click(changePasswordButton()));
 
     expect(ExtJS.showErrorMessage).toHaveBeenCalledWith(apiValidationError);
   });
@@ -147,7 +150,7 @@ describe('PasswordChangeForm', () => {
     expect(changePasswordButton()).not.toHaveClass('disabled');
     expect(discardButton()).not.toHaveClass('disabled');
 
-    fireEvent.click(discardButton());
+    userEvent.click(discardButton());
 
     await waitFor(() => expect(passwordCurrent()).toHaveValue(''));
     expect(passwordNew()).toHaveValue('');

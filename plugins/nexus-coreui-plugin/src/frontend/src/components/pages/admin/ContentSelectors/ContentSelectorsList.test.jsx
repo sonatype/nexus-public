@@ -17,7 +17,7 @@ import axios from 'axios';
 
 import ContentSelectorsList from './ContentSelectorsList';
 
-import UIStrings from "../../../../constants/UIStrings";
+import UIStrings from '../../../../constants/UIStrings';
 
 jest.mock('axios', () => ({
   get: jest.fn()

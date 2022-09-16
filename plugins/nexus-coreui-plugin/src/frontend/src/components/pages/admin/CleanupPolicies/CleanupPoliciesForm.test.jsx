@@ -11,11 +11,11 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {fireEvent, screen, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
+import axios from 'axios';
+import {screen, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
 
-import axios from 'axios';
 import {ExtJS, Utils, TestUtils} from '@sonatype/nexus-ui-plugin';
 
 import CleanupPoliciesForm from './CleanupPoliciesForm';
@@ -186,7 +186,7 @@ describe('CleanupPoliciesForm', function() {
     await TestUtils.changeField(format, 'testformat')
     const lastBlobCheckbox = container.querySelector('#criteria-last-blob-updated-group .nx-radio-checkbox');
 
-    fireEvent.click(lastBlobCheckbox);
+    userEvent.click(lastBlobCheckbox);
     await TestUtils.changeField(criteriaLastBlobUpdated, '4');
     expect(saveButton()).not.toHaveClass('disabled');
 
@@ -205,7 +205,7 @@ describe('CleanupPoliciesForm', function() {
     await TestUtils.changeField(format, 'testformat')
     const lastDownloadedCheckbox = container.querySelector('#criteria-last-downloaded-group .nx-radio-checkbox');
 
-    fireEvent.click(lastDownloadedCheckbox);
+    userEvent.click(lastDownloadedCheckbox);
     await TestUtils.changeField(criteriaLastDownloaded, '5');
     expect(saveButton()).not.toHaveClass('disabled');
 
@@ -218,7 +218,7 @@ describe('CleanupPoliciesForm', function() {
 
     await waitForElementToBeRemoved(loadingMask);
 
-    fireEvent.click(cancelButton());
+    userEvent.click(cancelButton());
 
     await waitFor(() => expect(onDone).toBeCalled());
   });
@@ -238,7 +238,7 @@ describe('CleanupPoliciesForm', function() {
     axios.put.mockReturnValue(Promise.resolve());
 
     ExtJS.requestConfirmation.mockReturnValue(CONFIRM);
-    fireEvent.click(deleteButton());
+    userEvent.click(deleteButton());
 
     await waitFor(() => expect(axios.delete).toBeCalledWith(EDIT_URL(itemId)));
     expect(onDone).toBeCalled();
@@ -260,7 +260,7 @@ describe('CleanupPoliciesForm', function() {
     await waitFor(() => expect(window.dirty).toEqual(['CleanupPoliciesFormMachine']));
 
     expect(saveButton()).not.toBeDisabled();
-    fireEvent.click(saveButton());
+    userEvent.click(saveButton());
 
     await waitFor(() => expect(axios.post).toHaveBeenCalledWith(
         '/service/rest/internal/cleanup-policies',
@@ -301,10 +301,10 @@ describe('CleanupPoliciesForm', function() {
     const releaseTypeCheckbox = container.querySelector('#criteria-release-type-group .nx-radio-checkbox');
     const assetNameCheckbox = container.querySelector('#criteria-asset-name-group .nx-radio-checkbox');
 
-    fireEvent.click(lastBlobCheckbox);
-    fireEvent.click(lastDownloadedCheckbox);
-    fireEvent.click(releaseTypeCheckbox);
-    fireEvent.click(assetNameCheckbox);
+    userEvent.click(lastBlobCheckbox);
+    userEvent.click(lastDownloadedCheckbox);
+    userEvent.click(releaseTypeCheckbox);
+    userEvent.click(assetNameCheckbox);
 
     expect(criteriaLastBlobUpdated()).toBeDisabled();
     expect(criteriaLastDownloaded()).toBeDisabled();
@@ -313,7 +313,7 @@ describe('CleanupPoliciesForm', function() {
 
     expect(saveButton()).not.toHaveClass('disabled');
 
-    fireEvent.click(saveButton());
+    userEvent.click(saveButton());
 
     await waitFor(() => expect(axios.put).toHaveBeenCalledWith(
       '/service/rest/internal/cleanup-policies/' + EDITABLE_ITEM.name,
@@ -367,7 +367,7 @@ describe('CleanupPoliciesForm', function() {
         }
       });
 
-      fireEvent.click(previewButton());
+      userEvent.click(previewButton());
 
       await waitForElementToBeRemoved(loadingMask);
 
@@ -436,7 +436,7 @@ describe('CleanupPoliciesForm', function() {
         }
       });
 
-      fireEvent.click(previewButton());
+      userEvent.click(previewButton());
 
       await waitForElementToBeRemoved(loadingMask);
 

@@ -17,7 +17,6 @@ import Axios from 'axios';
 import {ExtJS, TestUtils} from '@sonatype/nexus-ui-plugin';
 import {
   render,
-  fireEvent,
   screen,
   waitFor,
   waitForElementToBeRemoved,
@@ -157,7 +156,7 @@ describe('UsersDetails', function() {
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
   }
 
-  const clickOnRoles = roles => roles.forEach(it => fireEvent.click(screen.getByText(ROLES[it].name)));
+  const clickOnRoles = roles => roles.forEach(it => userEvent.click(screen.getByText(ROLES[it].name)));
 
   beforeEach(() => {
     when(Axios.get).calledWith(defaultRolesUrl).mockResolvedValue({data: Object.values(ROLES)});
@@ -363,7 +362,7 @@ describe('UsersDetails', function() {
         expect(warning()).toBeInTheDocument();
         shouldSeeDetailsInReadOnlyMode();
 
-        fireEvent.click(cancelButton());
+        userEvent.click(cancelButton());
         await waitFor(() => expect(onDone).toBeCalled());
       });
     });
@@ -447,7 +446,7 @@ describe('UsersDetails', function() {
         shouldSeeDetailsInReadOnlyMode({statusValue});
         shouldSeeExternalRoles();
 
-        fireEvent.click(cancelButton());
+        userEvent.click(cancelButton());
         await waitFor(() => expect(onDone).toBeCalled());
       });
 
@@ -464,7 +463,7 @@ describe('UsersDetails', function() {
         shouldSeeDetailsInReadOnlyMode({statusValue});
         shouldSeeExternalRoles();
 
-        fireEvent.click(cancelButton());
+        userEvent.click(cancelButton());
         await waitFor(() => expect(onDone).toBeCalled());
       });
     });

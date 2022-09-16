@@ -11,8 +11,8 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import { useService } from '@xstate/react';
-import { NxFilterInput, NxTable } from '@sonatype/react-shared-components';
+import {useService} from '@xstate/react';
+import {NxFilterInput, NxTable} from '@sonatype/react-shared-components';
 import {
   ContentBody,
   Page,
@@ -21,7 +21,7 @@ import {
   Section,
   ListMachineUtils
 } from '@sonatype/nexus-ui-plugin';
-import { faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
+import {faPuzzlePiece} from '@fortawesome/free-solid-svg-icons';
 import UIStrings from '../../../../constants/UIStrings';
 
 export default function BundlesList ({ onEdit, service }) {

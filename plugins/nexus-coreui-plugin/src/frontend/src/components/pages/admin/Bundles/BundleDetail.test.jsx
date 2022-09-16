@@ -11,9 +11,9 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import { render, screen, waitForElementToBeRemoved } from '@testing-library/react';
+import {render, screen, waitForElementToBeRemoved} from '@testing-library/react';
 import BundleDetail from './BundleDetail';
-import { interpret } from 'xstate';
+import {interpret} from 'xstate';
 import BundlesListMachine from './BundlesListMachine';
 import mockData from './bundles.testdata';
 import {TestUtils} from '@sonatype/nexus-ui-plugin';

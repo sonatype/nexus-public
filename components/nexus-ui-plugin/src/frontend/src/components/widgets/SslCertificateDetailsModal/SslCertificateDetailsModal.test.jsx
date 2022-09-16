@@ -11,13 +11,14 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {fireEvent, render, screen, waitForElementToBeRemoved} from '@testing-library/react';
-import {when} from 'jest-when';
 import axios from 'axios';
+import {when} from 'jest-when';
+import {render, screen, waitForElementToBeRemoved} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import SslCertificateDetailsModal from './SslCertificateDetailsModal';
-import TestUtils from "../../../interface/TestUtils";
-import DateUtils from "../../../interface/DateUtils";
+import TestUtils from '../../../interface/TestUtils';
+import DateUtils from '../../../interface/DateUtils';
 
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'),
@@ -93,7 +94,7 @@ describe('SslCertificateDetailsModal', () => {
     expect(selectors.getRemoveButton()).not.toBeInTheDocument();
     expect(selectors.getCloseButton()).toBeInTheDocument();
 
-    fireEvent.click(selectors.getCloseButton());
+    userEvent.click(selectors.getCloseButton());
 
     expect(onCancel).toBeCalled();
   });
@@ -157,7 +158,7 @@ describe('SslCertificateDetailsModal', () => {
 
     when(axios.post).calledWith('/service/rest/v1/security/ssl/truststore', certificateDetails.pem).mockResolvedValue();
 
-    fireEvent.click(selectors.getAddButton());
+    userEvent.click(selectors.getAddButton());
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -179,7 +180,7 @@ describe('SslCertificateDetailsModal', () => {
         .calledWith('/service/rest/v1/security/ssl/truststore/' + certificateDetails.id)
         .mockResolvedValue();
 
-    fireEvent.click(selectors.getRemoveButton());
+    userEvent.click(selectors.getRemoveButton());
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -192,7 +193,7 @@ describe('SslCertificateDetailsModal', () => {
 
     render(<SslCertificateDetailsModal remoteUrl="https://localhost" onCancel={onCancel}/>);
 
-    fireEvent.click(selectors.getCloseButton());
+    userEvent.click(selectors.getCloseButton());
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -222,7 +223,7 @@ describe('SslCertificateDetailsModal', () => {
         .calledWith('/service/rest/v1/security/ssl/truststore', certificateDetails.pem)
         .mockRejectedValue('error');
 
-    fireEvent.click(selectors.getAddButton());
+    userEvent.click(selectors.getAddButton());
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -242,7 +243,7 @@ describe('SslCertificateDetailsModal', () => {
         .calledWith('/service/rest/v1/security/ssl/truststore/' + certificateDetails.id)
         .mockRejectedValue('error');
 
-    fireEvent.click(selectors.getRemoveButton());
+    userEvent.click(selectors.getRemoveButton());
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 

@@ -166,7 +166,7 @@ export default function BlobStoresForm({itemId, onDone}) {
     <Section>
       <NxForm className="nxrm-blob-stores-form"
               loading={isLoading}
-              loadError={loadError ? `${loadError}` : null}
+              loadError={loadError}
               doLoad={retry}
               onCancel={cancel}
               onSubmit={save}

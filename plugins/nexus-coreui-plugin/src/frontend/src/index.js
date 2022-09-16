@@ -158,7 +158,7 @@ window.plugins.push({
       path: '/Security/SslCertificates-New',
       ...UIStrings.SSL_CERTIFICATES.MENU,
       view: SslCertificates,
-      iconCls: 'x-fa fa-id-badge',
+      iconCls: 'x-fa fa-id-card-alt',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         featureFlags: [{key: 'nexus.react.sslCertificates', defaultValue: false}],

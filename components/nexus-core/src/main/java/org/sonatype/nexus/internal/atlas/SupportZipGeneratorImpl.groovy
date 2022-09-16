@@ -27,6 +27,7 @@ import org.sonatype.nexus.supportzip.SupportBundle.ContentSource
 import org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type
 import org.sonatype.nexus.supportzip.SupportBundleCustomizer
 import org.sonatype.nexus.supportzip.SupportZipGenerator
+import org.sonatype.nexus.common.log.SupportZipGeneratorRequest
 
 import com.google.common.io.CountingOutputStream
 
@@ -87,7 +88,7 @@ class SupportZipGeneratorImpl
   /**
    * Return set of included content source types.
    */
-  private Set<Type> includedTypes(final Request request) {
+  private Set<Type> includedTypes(final SupportZipGeneratorRequest request) {
     def types = []
     if (request.systemInformation) {
       types << SYSINFO
@@ -125,7 +126,7 @@ class SupportZipGeneratorImpl
   /**
    * Filter only included content sources.
    */
-  private List<ContentSource> filterSources(final Request request, final SupportBundle supportBundle) {
+  private List<ContentSource> filterSources(final SupportZipGeneratorRequest request, final SupportBundle supportBundle) {
     def include = includedTypes(request)
     def sources = []
     supportBundle.sources.each {
@@ -138,12 +139,12 @@ class SupportZipGeneratorImpl
   }
 
   @Override
-  Result generate(final Request request) {
+  Result generate(final SupportZipGeneratorRequest request) {
     generate(request, "support-")
   }
 
   @Override
-  Result generate(final Request request, final String prefix) {
+  Result generate(final SupportZipGeneratorRequest request, final String prefix) {
     checkNotNull(request)
 
     log.info 'Generating support ZIP: {}', request
@@ -171,7 +172,7 @@ class SupportZipGeneratorImpl
   }
 
   @Override
-  boolean generate(final Request request, final String prefix, final OutputStream outputStream) {
+  boolean generate(final SupportZipGeneratorRequest request, final String prefix, final OutputStream outputStream) {
     def bundle = new SupportBundle()
 
     // customize the bundle

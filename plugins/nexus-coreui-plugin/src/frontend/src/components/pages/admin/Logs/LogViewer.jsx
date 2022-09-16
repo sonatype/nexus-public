@@ -36,7 +36,7 @@ import {
 import {faStamp} from '@fortawesome/free-solid-svg-icons';
 
 import LogViewerMachine from "./LogViewerMachine";
-import UIStrings from "../../../../constants/UIStrings";
+import UIStrings from '../../../../constants/UIStrings';
 
 const VIEW = UIStrings.LOGS.VIEW;
 

@@ -11,12 +11,14 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import { fireEvent, render, screen, waitForElementToBeRemoved } from '@testing-library/react';
+import {render, screen, waitForElementToBeRemoved} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+
 import {TestUtils} from '@sonatype/nexus-ui-plugin';
 
 import BundlesList from './BundlesList';
 import BundlesListMachine from './BundlesListMachine';
-import { interpret } from 'xstate';
+import {interpret} from 'xstate';
 import mockData from './bundles.testdata';
 
 const DEFAULT_RESPONSE = () => Promise.resolve({data: mockData});
@@ -77,8 +79,8 @@ fdescribe('BundlesList', function() {
     expect(selectors.getTableRow(1).cells[0]).toHaveTextContent('1');
     expect(selectors.getTableRow(2).cells[0]).toHaveTextContent('2');
 
-    fireEvent.click(selectors.getTableHeader('ID'));
-    fireEvent.click(selectors.getTableHeader('ID'));
+    userEvent.click(selectors.getTableHeader('ID'));
+    userEvent.click(selectors.getTableHeader('ID'));
 
     expect(selectors.getTableRow(1).cells[0]).toHaveTextContent('2');
     expect(selectors.getTableRow(2).cells[0]).toHaveTextContent('1');
@@ -90,8 +92,8 @@ fdescribe('BundlesList', function() {
     expect(selectors.getTableRow(1).cells[1]).toHaveTextContent('testStateData');
     expect(selectors.getTableRow(2).cells[1]).toHaveTextContent('testStateData2');
 
-    fireEvent.click(selectors.getTableHeader('State'));
-    fireEvent.click(selectors.getTableHeader('State'));
+    userEvent.click(selectors.getTableHeader('State'));
+    userEvent.click(selectors.getTableHeader('State'));
 
     expect(selectors.getTableRow(1).cells[1]).toHaveTextContent('testStateData2');
     expect(selectors.getTableRow(2).cells[1]).toHaveTextContent('testStateData');
@@ -103,8 +105,8 @@ fdescribe('BundlesList', function() {
     expect(selectors.getTableRow(1).cells[2]).toHaveTextContent('testStartLevelData');
     expect(selectors.getTableRow(2).cells[2]).toHaveTextContent('testStartLevelData2');
 
-    fireEvent.click(selectors.getTableHeader('Level'));
-    fireEvent.click(selectors.getTableHeader('Level'));
+    userEvent.click(selectors.getTableHeader('Level'));
+    userEvent.click(selectors.getTableHeader('Level'));
 
     expect(selectors.getTableRow(1).cells[2]).toHaveTextContent('testStartLevelData2');
     expect(selectors.getTableRow(2).cells[2]).toHaveTextContent('testStartLevelData');
@@ -116,7 +118,7 @@ fdescribe('BundlesList', function() {
     expect(selectors.getTableRow(1).cells[3]).toHaveTextContent('testNameData');
     expect(selectors.getTableRow(2).cells[3]).toHaveTextContent('testNameData2ForTestingFilter');
 
-    fireEvent.click(selectors.getTableHeader('Name'));
+    userEvent.click(selectors.getTableHeader('Name'));
 
     expect(selectors.getTableRow(1).cells[3]).toHaveTextContent('testNameData2ForTestingFilter');
     expect(selectors.getTableRow(2).cells[3]).toHaveTextContent('testNameData');
@@ -128,8 +130,8 @@ fdescribe('BundlesList', function() {
     expect(selectors.getTableRow(1).cells[4]).toHaveTextContent('testVersionData');
     expect(selectors.getTableRow(2).cells[4]).toHaveTextContent('testVersionData2');
 
-    fireEvent.click(selectors.getTableHeader('Version'));
-    fireEvent.click(selectors.getTableHeader('Version'));
+    userEvent.click(selectors.getTableHeader('Version'));
+    userEvent.click(selectors.getTableHeader('Version'));
 
     expect(selectors.getTableRow(1).cells[4]).toHaveTextContent('testVersionData2');
     expect(selectors.getTableRow(2).cells[4]).toHaveTextContent('testVersionData');

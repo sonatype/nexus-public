@@ -13,7 +13,6 @@
 import React from 'react';
 import axios from 'axios';
 import {
-  fireEvent,
   waitForElementToBeRemoved,
   waitFor,
   getByText,
@@ -246,7 +245,7 @@ describe('RepositoriesList', function () {
     expect(tableRow(5).cells[0]).toHaveTextContent('nuget-hosted');
     expect(tableRow(6).cells[0]).toHaveTextContent('nuget.org-proxy');
 
-    fireEvent.click(tableHeader('Name'));
+    userEvent.click(tableHeader('Name'));
 
     expect(tableRow(0).cells[0]).toHaveTextContent('nuget.org-proxy');
     expect(tableRow(1).cells[0]).toHaveTextContent('nuget-hosted');
@@ -264,7 +263,7 @@ describe('RepositoriesList', function () {
 
     await waitForElementToBeRemoved(loadingMask);
 
-    fireEvent.click(tableHeader('Type'));
+    userEvent.click(tableHeader('Type'));
 
     expect(tableRow(0).cells[1]).toHaveTextContent('group');
     expect(tableRow(1).cells[1]).toHaveTextContent('group');
@@ -274,7 +273,7 @@ describe('RepositoriesList', function () {
     expect(tableRow(5).cells[1]).toHaveTextContent('proxy');
     expect(tableRow(6).cells[1]).toHaveTextContent('proxy');
 
-    fireEvent.click(tableHeader('Type'));
+    userEvent.click(tableHeader('Type'));
 
     expect(tableRow(0).cells[1]).toHaveTextContent('proxy');
     expect(tableRow(1).cells[1]).toHaveTextContent('proxy');
@@ -292,7 +291,7 @@ describe('RepositoriesList', function () {
 
     await waitForElementToBeRemoved(loadingMask);
 
-    fireEvent.click(tableHeader('Format'));
+    userEvent.click(tableHeader('Format'));
 
     expect(tableRow(0).cells[2]).toHaveTextContent('maven2');
     expect(tableRow(1).cells[2]).toHaveTextContent('maven2');
@@ -302,7 +301,7 @@ describe('RepositoriesList', function () {
     expect(tableRow(5).cells[2]).toHaveTextContent('nuget');
     expect(tableRow(6).cells[2]).toHaveTextContent('nuget');
 
-    fireEvent.click(tableHeader('Format'));
+    userEvent.click(tableHeader('Format'));
 
     expect(tableRow(0).cells[2]).toHaveTextContent('nuget');
     expect(tableRow(1).cells[2]).toHaveTextContent('nuget');
@@ -333,7 +332,7 @@ describe('RepositoriesList', function () {
 
     await waitForElementToBeRemoved(loadingMask);
 
-    fireEvent.click(urlButton(0));
+    userEvent.click(urlButton(0));
 
     expect(mockCopyUrl).toBeCalled();
   });

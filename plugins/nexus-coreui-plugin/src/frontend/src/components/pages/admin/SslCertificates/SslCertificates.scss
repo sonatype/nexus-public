@@ -1,4 +1,4 @@
-/*
+/**
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
  * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
@@ -10,34 +10,11 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
-import {
-  ContentBody,
-  Page,
-  PageHeader,
-  PageTitle,
-  Section,
-  ExtJS,
-} from '@sonatype/nexus-ui-plugin';
 
-import {faDungeon} from '@fortawesome/free-solid-svg-icons';
-
-import RealmsForm from './RealmsForm';
-import RealmsReadOnly from './RealmsReadOnly';
-
-import UIStrings from '../../../../constants/UIStrings';
-
-export default function Realms() {
-  const canEdit = ExtJS.checkPermission('nexus:settings:update');
-
-  return (
-    <Page>
-      <PageHeader>
-        <PageTitle icon={faDungeon} {...UIStrings.REALMS.MENU} />
-      </PageHeader>
-      <ContentBody className="nxrm-realms">
-        <Section>{canEdit ? <RealmsForm /> : <RealmsReadOnly />}</Section>
-      </ContentBody>
-    </Page>
-  );
+.nxrm-ssl-certificate {
+  .ellipsis-text {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
 }

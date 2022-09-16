@@ -30,7 +30,7 @@ import {
   NxTableHead,
   NxTableRow,
 } from '@sonatype/react-shared-components';
-import UIStrings from "../../../../constants/UIStrings";
+import UIStrings from '../../../../constants/UIStrings';
 
 import ContentSelectorsPreviewMachine from './ContentSelectorsPreviewMachine';
 

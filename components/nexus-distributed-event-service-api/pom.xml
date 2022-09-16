@@ -34,6 +34,10 @@
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-common</artifactId>
+    </dependency>
   </dependencies>
 
   <artifactId>nexus-distributed-event-service-api</artifactId>

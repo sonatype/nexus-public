@@ -17,7 +17,7 @@ import axios from 'axios';
 
 import LoggingConfigurationList from './LoggingConfigurationList';
 
-import UIStrings from "../../../../constants/UIStrings";
+import UIStrings from '../../../../constants/UIStrings';
 
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'), // Use most functions from actual axios

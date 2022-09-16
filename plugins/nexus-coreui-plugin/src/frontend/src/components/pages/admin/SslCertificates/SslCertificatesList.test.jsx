@@ -20,12 +20,13 @@ import Axios from 'axios';
 
 import SslCertificatesList from './SslCertificatesList';
 import {URL} from './SslCertificatesHelper';
-import UIStrings from "../../../../constants/UIStrings";
-import {SSL_CERTIFICATES, XSS_STRING} from './SslCertificates.testdata';
+import UIStrings from '../../../../constants/UIStrings';
+import {SSL_CERTIFICATES} from './SslCertificates.testdata';
 
 const {SORT_DIRECTIONS: {DESC, ASC}} = APIConstants;
 const {sslCertificatesUrl} = URL;
 const {SSL_CERTIFICATES: {LIST: LABELS}} = UIStrings;
+const XSS_STRING = TestUtils.XSS_STRING;
 
 jest.mock('axios', () => ({
   get: jest.fn()

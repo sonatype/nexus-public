@@ -11,16 +11,16 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {render, fireEvent, screen, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
+import Axios from 'axios';
+import {render, screen, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
-import {act} from "react-dom/test-utils";
-import Axios from 'axios';
+import {act} from 'react-dom/test-utils';
+
 import {ExtJS, TestUtils} from '@sonatype/nexus-ui-plugin';
 
-import RolesDetails from './RolesDetails';
-
 import UIStrings from '../../../../constants/UIStrings';
+import RolesDetails from './RolesDetails';
 import {TYPES, URL} from './RolesHelper';
 
 const {ROLES: {FORM: LABELS}, SETTINGS} = UIStrings;
@@ -146,8 +146,8 @@ const selectors = {
   deleteButton: () => screen.getByText(SETTINGS.DELETE_BUTTON_LABEL),
 };
 
-const clickOnPrivileges = privileges => privileges.forEach(it => fireEvent.click(screen.getByText(it)));
-const clickOnRoles = roles => roles.forEach(it => fireEvent.click(screen.getByText(ROLES[it].name)));
+const clickOnPrivileges = privileges => privileges.forEach(it => userEvent.click(screen.getByText(it)));
+const clickOnRoles = roles => roles.forEach(it => userEvent.click(screen.getByText(ROLES[it].name)));
 
 describe('RolesDetails', function() {
   const CONFIRM = Promise.resolve();
@@ -233,7 +233,7 @@ describe('RolesDetails', function() {
     renderDetails();
     await waitForElementToBeRemoved(queryLoadingMask());
 
-    fireEvent.click(cancelButton());
+    userEvent.click(cancelButton());
 
     await waitFor(() => expect(onDone).toBeCalled());
   });
@@ -246,7 +246,7 @@ describe('RolesDetails', function() {
     await waitForElementToBeRemoved(queryLoadingMask());
 
     ExtJS.requestConfirmation.mockReturnValue(CONFIRM);
-    fireEvent.click(deleteButton());
+    userEvent.click(deleteButton());
 
     await waitFor(() => expect(Axios.delete).toBeCalledWith(singleRoleUrl(testRoleId)));
     expect(onDone).toBeCalled();
@@ -270,7 +270,7 @@ describe('RolesDetails', function() {
     clickOnRoles(ROLE.roles);
 
     expect(saveButton()).not.toHaveClass('disabled');
-    fireEvent.click(saveButton());
+    userEvent.click(saveButton());
 
     await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(rolesUrl, ROLE));
     expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
@@ -302,7 +302,7 @@ describe('RolesDetails', function() {
     clickOnRoles(ROLE.roles);
 
     expect(saveButton()).not.toHaveClass('disabled');
-    fireEvent.click(saveButton());
+    userEvent.click(saveButton());
 
     await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(rolesUrl, externalRole));
     expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
@@ -332,7 +332,7 @@ describe('RolesDetails', function() {
     clickOnRoles(data.roles);
 
     expect(saveButton()).not.toHaveClass('disabled');
-    fireEvent.click(saveButton());
+    userEvent.click(saveButton());
 
     await waitFor(() => expect(Axios.put).toHaveBeenCalledWith(singleRoleUrl(testRoleId), {
       id: testRoleId,
@@ -362,7 +362,7 @@ describe('RolesDetails', function() {
 
     expect(saveButton()).not.toHaveClass('disabled');
 
-    await act(async () => fireEvent.click(saveButton()));
+    await act(async () => userEvent.click(saveButton()));
 
     expect(NX.Messages.error).toHaveBeenCalledWith(UIStrings.ERROR.SAVE_ERROR);
     expect(screen.getByText(new RegExp(message))).toBeInTheDocument();

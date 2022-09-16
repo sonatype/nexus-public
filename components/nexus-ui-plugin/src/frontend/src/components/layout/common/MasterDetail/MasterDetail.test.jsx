@@ -11,7 +11,8 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {fireEvent, render} from '@testing-library/react';
+import {render} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import MasterDetail from './MasterDetail';
 import Master from './Master';
@@ -60,7 +61,7 @@ describe('MasterDetail', () => {
     );
 
     expect(queryByTestId('master')).toBeInTheDocument();
-    fireEvent.click(getByTestId('create'));
+    userEvent.click(getByTestId('create'));
 
     expect(queryByTestId('master')).not.toBeInTheDocument();
     expect(queryByTestId('detail')).toBeInTheDocument();

@@ -33,7 +33,7 @@ import {
   NxFormRow,
   NxFontAwesomeIcon
 } from '@sonatype/react-shared-components';
-import { faCertificate } from '@fortawesome/free-solid-svg-icons';
+import {faCertificate} from '@fortawesome/free-solid-svg-icons';
 
 import UIStrings from '../../../../constants/UIStrings';
 

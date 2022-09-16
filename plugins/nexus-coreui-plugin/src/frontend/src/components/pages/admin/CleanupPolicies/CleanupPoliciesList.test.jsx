@@ -12,12 +12,12 @@
  */
 import React from 'react';
 import axios from 'axios';
-import { waitForElementToBeRemoved } from '@testing-library/react';
+import {waitForElementToBeRemoved} from '@testing-library/react';
 import {TestUtils} from '@sonatype/nexus-ui-plugin';
 
 import CleanupPoliciesList from './CleanupPoliciesList';
 
-import UIStrings from "../../../../constants/UIStrings";
+import UIStrings from '../../../../constants/UIStrings';
 
 jest.mock('axios', () => ({
   get: jest.fn()

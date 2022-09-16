@@ -147,17 +147,18 @@ public class SqlSearchQueryConditionBuilderTest
   @Test
   public void shouldEscapePercentIfWildcard() {
     final SqlSearchQueryCondition actual =
-        underTest.condition("component", of("abc%*", "%def?", "ghi%jk", "jkl%"));
+        underTest.condition("component", of("abc%*", "%def?", "ghi%jk", "jkl%", "m?n_op*"));
 
     assertThat(actual.getSqlConditionFormat(),
         is("(component IN (#{filterParams.component0},#{filterParams.component1}) OR " +
-            "(component LIKE #{filterParams.component2} OR component LIKE #{filterParams.component3}))"));
+            "(component LIKE #{filterParams.component2} OR component LIKE #{filterParams.component3} " +
+            "OR component LIKE #{filterParams.component4}))"));
 
     assertThat(actual.getValues().keySet(),
-        is(ImmutableSet.of("component0", "component1", "component2", "component3")));
+        is(ImmutableSet.of("component0", "component1", "component2", "component3", "component4")));
 
     assertThat(actual.getValues().values(),
-        containsInAnyOrder("abc\\%%", "\\%def_", "ghi%jk", "jkl%"));
+        containsInAnyOrder("abc\\%%", "\\%def_", "ghi%jk", "jkl%", "m_n\\_op%"));
   }
   @Test
   public void shouldEscapeUnderscoreIfWildcard() {

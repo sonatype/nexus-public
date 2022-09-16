@@ -46,7 +46,7 @@ export default function ProprietaryRepositoriesReadOnly() {
         <NxList
             emptyMessage={LABELS.EMPTY_LIST}
             isLoading={isLoading}
-            error={loadError ? `${loadError}` : null}
+            error={loadError}
             retryHandler={retry}
         >
           {enabledRepositories?.map(name => (

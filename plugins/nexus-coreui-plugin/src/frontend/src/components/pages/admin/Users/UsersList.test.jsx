@@ -18,7 +18,7 @@ import {when} from 'jest-when';
 import Axios from 'axios';
 import {ExtJS, TestUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
 
-import UIStrings from "../../../../constants/UIStrings";
+import UIStrings from '../../../../constants/UIStrings';
 import UsersList from './UsersList';
 import {ROWS, SOURCES, DEFAULT_DATA, FIELDS, SOURCES_MAP} from './Users.testdata';
 

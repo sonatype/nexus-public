@@ -17,8 +17,8 @@ import {
   waitForElementToBeRemoved,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TestUtils, ExtJS, APIConstants } from '@sonatype/nexus-ui-plugin';
-import { when } from 'jest-when';
+import {TestUtils, ExtJS, APIConstants} from '@sonatype/nexus-ui-plugin';
+import {when} from 'jest-when';
 import UIStrings from '../../../../constants/UIStrings';
 import Axios from 'axios';
 import Realms from './Realms';

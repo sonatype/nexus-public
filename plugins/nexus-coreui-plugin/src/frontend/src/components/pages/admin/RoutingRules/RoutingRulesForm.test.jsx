@@ -11,14 +11,15 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
-import {act} from 'react-dom/test-utils';
 import axios from 'axios';
+import {act} from 'react-dom/test-utils';
+import {waitFor, waitForElementToBeRemoved} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+
 import {ExtJS, TestUtils} from '@sonatype/nexus-ui-plugin';
 
-import RoutingRulesForm from './RoutingRulesForm';
-
 import UIStrings from '../../../../constants/UIStrings';
+import RoutingRulesForm from './RoutingRulesForm';
 
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'), // Use most functions from actual axios
@@ -131,7 +132,7 @@ describe('RoutingRulesForm', function() {
         ]
       }
     });
-    fireEvent.click(createButton());
+    userEvent.click(createButton());
 
     await waitForElementToBeRemoved(savingMask);
 
@@ -171,7 +172,7 @@ describe('RoutingRulesForm', function() {
 
     await waitForElementToBeRemoved(loadingMask);
 
-    fireEvent.click(cancelButton());
+    userEvent.click(cancelButton());
 
     await waitFor(() => expect(onDone).toBeCalled());
   });
@@ -196,7 +197,7 @@ describe('RoutingRulesForm', function() {
     axios.put.mockResolvedValue(null);
 
     ExtJS.requestConfirmation.mockReturnValue(CONFIRM);
-    fireEvent.click(deleteButton());
+    userEvent.click(deleteButton());
 
     await waitFor(() => expect(axios.delete).toBeCalledWith(ROUTING_RULES_URL(itemId)));
     expect(onDone).toBeCalled();
@@ -220,7 +221,7 @@ describe('RoutingRulesForm', function() {
     await waitFor(() => expect(window.dirty).toEqual(['RoutingRulesFormMachine']));
 
     expect(createButton()).not.toBeDisabled();
-    fireEvent.click(createButton());
+    userEvent.click(createButton());
 
     await waitFor(() => expect(axios.post).toHaveBeenCalledWith(
         ROUTING_RULES_URL(''),
@@ -253,17 +254,17 @@ describe('RoutingRulesForm', function() {
     expect(deleteMatcherButton(1)).toBeInTheDocument();
     expect(deleteMatcherButton(2)).toBeInTheDocument();
 
-    fireEvent.click(deleteMatcherButton(2));
+    userEvent.click(deleteMatcherButton(2));
     expect(matcher(2)).not.toBeInTheDocument();
 
-    fireEvent.click(deleteMatcherButton(1));
+    userEvent.click(deleteMatcherButton(1));
     expect(matcher(1)).not.toBeInTheDocument();
 
     expect(deleteMatcherButton(0)).toBe(undefined);
 
     expect(saveButton()).not.toHaveClass('disabled');
 
-    await act(async () => fireEvent.click(saveButton()));
+    await act(async () => userEvent.click(saveButton()));
 
     expect(axios.put).toHaveBeenLastCalledWith(ROUTING_RULES_URL(itemId), {
       description: 'Allow all requests',

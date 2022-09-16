@@ -336,8 +336,8 @@ export default {
     },
     FORM: {
       CREATE_TITLE: 'Load certificate',
-      DETAILS_TILE: (name) => `Certificate Details ${name}`,
-      EDIT_DESCRIPTION: 'Summary',
+      DETAILS_TITLE: (name) => `Certificate ${name}`,
+      DETAILS_DESCRIPTION: 'Summary',
       WARNING: 'This certificate was retrieved over an untrusted connection. Always verify the details before adding it.',
       SECTIONS: {
         SETUP: 'Load SSL Certificates',
@@ -376,9 +376,9 @@ export default {
         LABEL: 'Fingerprint',
       },
       BUTTONS: {
-        ADD: 'Add certificate to truststore',
-        REMOVE: 'Remove certificate from truststore',
-        LOAD: 'Load certificate',
+        ADD: 'Add Certificate to Truststore',
+        DELETE: 'Delete Certificate',
+        LOAD: 'Load Certificate',
       },
     },
     MESSAGES: {
@@ -1521,6 +1521,10 @@ This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 
         SUB_LABEL: 'Accepts Java “http.nonProxyHosts” wildcard patterns (one per line, no “l” hostname delimiters)',
         ADD: 'Add',
         REMOVE: 'Remove',
+      },
+      READ_ONLY: {
+        LABEL: 'HTTP Configuration',
+        WARNING: 'You are viewing a read-only version of this page. Some fields will not appear if they have not changed from their default values or if HTTP/HTTPS authentication is not enabled. Contact your Administrator if you require edit permissions.'
       }
     }
   },

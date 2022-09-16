@@ -225,7 +225,10 @@ export default class FormUtils {
         logDeleteSuccess: () => {},
 
         setLoadError: assign({
-          loadError: (_, event) => event.data?.message
+          loadError: (_, event) => {
+            const message = event.data?.message;
+            return message ? `${message}` : null;
+          }
         }),
         logLoadError: (_, event) => {
           if (event.data?.message) {

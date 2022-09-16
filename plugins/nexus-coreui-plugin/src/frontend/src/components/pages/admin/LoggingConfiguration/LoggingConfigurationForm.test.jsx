@@ -11,13 +11,15 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import axios from 'axios';
+import {fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+
 import {ExtJS, TestUtils} from '@sonatype/nexus-ui-plugin';
 
-import LoggingConfigurationForm from './LoggingConfigurationForm';
+import UIStrings from '../../../../constants/UIStrings';
 
-import UIStrings from "../../../../constants/UIStrings";
+import LoggingConfigurationForm from './LoggingConfigurationForm';
 
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'), // Use most functions from actual axios
@@ -120,7 +122,7 @@ describe('LoggingConfigurationForm', function() {
 
     await waitForElementToBeRemoved(loadingMask);
 
-    fireEvent.click(cancelButton());
+    userEvent.click(cancelButton());
 
     await waitFor(() => expect(onDone).toBeCalled());
   });
@@ -138,7 +140,7 @@ describe('LoggingConfigurationForm', function() {
 
     axios.get.mockReturnValue(OVERRIDDEN_LOGGER);
     ExtJS.requestConfirmation.mockReturnValue(CONFIRM);
-    fireEvent.click(saveButton());
+    userEvent.click(saveButton());
 
     await waitFor(() => expect(axios.put).toBeCalledWith(
         '/service/rest/internal/ui/loggingConfiguration/name',
@@ -162,7 +164,7 @@ describe('LoggingConfigurationForm', function() {
 
     await waitFor(() => expect(window.dirty).toEqual(['LoggingConfigurationFormMachine']));
 
-    fireEvent.click(saveButton());
+    userEvent.click(saveButton());
 
     await waitFor(() => expect(axios.put).toHaveBeenLastCalledWith(
         '/service/rest/internal/ui/loggingConfiguration/ROOT',
@@ -182,7 +184,7 @@ describe('LoggingConfigurationForm', function() {
 
     ExtJS.requestConfirmation.mockReturnValue(CONFIRM);
     axios.post.mockReturnValue(CONFIRM);
-    fireEvent.click(resetButton());
+    userEvent.click(resetButton());
 
     await waitFor(() => expect(resetMask()).toBeInTheDocument());
 

@@ -19,7 +19,7 @@ import {
   ContentBody,
   ExtJS
 } from '@sonatype/nexus-ui-plugin';
-import { faPlug } from '@fortawesome/free-solid-svg-icons';
+import {faPlug} from '@fortawesome/free-solid-svg-icons';
 import UIStrings from '../../../../constants/UIStrings';
 import 'swagger-ui-react/swagger-ui.css';
 import './Api.scss';

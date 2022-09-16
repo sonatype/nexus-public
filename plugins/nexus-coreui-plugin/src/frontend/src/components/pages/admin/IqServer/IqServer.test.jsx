@@ -18,7 +18,7 @@ import {when} from 'jest-when';
 
 import Axios from 'axios';
 import IqServer from './IqServer';
-import UIStrings from "../../../../constants/UIStrings";
+import UIStrings from '../../../../constants/UIStrings';
 
 const {IQ_SERVER, SETTINGS} = UIStrings;
 

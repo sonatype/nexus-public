@@ -11,15 +11,14 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import axios from "axios";
+import Axios from 'axios';
 import {render, screen, waitForElementToBeRemoved} from '@testing-library/react';
-import {when} from "jest-when";
-import Axios from "axios";
+import {when} from 'jest-when';
 
 import {TestUtils} from '@sonatype/nexus-ui-plugin';
 
-import InsightFrontend from "./InsightFrontend";
-import UIStrings from "../../../../constants/UIStrings";
+import InsightFrontend from './InsightFrontend';
+import UIStrings from '../../../../constants/UIStrings';
 
 jest.mock('axios', () => ({
   get: jest.fn()

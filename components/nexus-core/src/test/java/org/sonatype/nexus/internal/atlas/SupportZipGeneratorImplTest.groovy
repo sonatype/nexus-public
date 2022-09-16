@@ -20,8 +20,7 @@ import org.sonatype.nexus.common.wonderland.DownloadService
 import org.sonatype.nexus.supportzip.GeneratedContentSourceSupport
 import org.sonatype.nexus.supportzip.SupportBundle
 import org.sonatype.nexus.supportzip.SupportBundleCustomizer
-import org.sonatype.nexus.supportzip.SupportZipGenerator
-import org.sonatype.nexus.supportzip.SupportZipGenerator.Request
+import org.sonatype.nexus.common.log.SupportZipGeneratorRequest
 
 import groovy.transform.InheritConstructors
 import spock.lang.Specification
@@ -79,7 +78,7 @@ class SupportZipGeneratorImplTest
 
   def "Support zip is generated from requested sources"() {
     given:
-      def req = new SupportZipGenerator.Request(log: true, taskLog: true, auditLog: true, jmx: false)
+      def req = new SupportZipGeneratorRequest(log: true, taskLog: true, auditLog: true, jmx: false)
       def out = new ByteArrayOutputStream()
       def generator = new SupportZipGeneratorImpl(downloadService, [mockLogCustomizer, mockTaskLogCustomizer, mockAuditLogCustomizer, mockJmxCustomizer],
           ByteSize.bytes(0), ByteSize.bytes(0))
@@ -104,7 +103,7 @@ class SupportZipGeneratorImplTest
       logContentSource.contentSize = 2000
       taskLogContentSource.contentSize = 1000
       jmxContentSource.contentSize = 1000
-      def req = new SupportZipGenerator.Request(log: true, taskLog: true, jmx: true, limitFileSizes: true)
+      def req = new SupportZipGeneratorRequest(log: true, taskLog: true, jmx: true, limitFileSizes: true)
       def out = new ByteArrayOutputStream()
       def generator = new SupportZipGeneratorImpl(downloadService, [mockLogCustomizer, mockTaskLogCustomizer, mockJmxCustomizer],
           ByteSize.bytes(1000), ByteSize.bytes(0))
@@ -129,7 +128,7 @@ class SupportZipGeneratorImplTest
       logContentSource.contentSize = 1000
       taskLogContentSource.contentSize = 1000
       jmxContentSource.contentSize = 1000
-      def req = new SupportZipGenerator.Request(log: true, taskLog: true, jmx: true, limitZipSize: true)
+      def req = new SupportZipGeneratorRequest(log: true, taskLog: true, jmx: true, limitZipSize: true)
       def out = new ByteArrayOutputStream()
       def generator = new SupportZipGeneratorImpl(downloadService, [mockLogCustomizer, mockTaskLogCustomizer, mockJmxCustomizer],
           ByteSize.bytes(0), ByteSize.bytes(2500))
@@ -148,7 +147,7 @@ class SupportZipGeneratorImplTest
 
   def "Source failures will not block generation of support zip"() {
     given:
-      def req = new Request(log: true, taskLog: true, jmx: true, limitFileSizes: true)
+      def req = new SupportZipGeneratorRequest(log: true, taskLog: true, jmx: true, limitFileSizes: true)
       def out = new ByteArrayOutputStream()
       jmxContentSource.contentSize = 1000
       def generator = new SupportZipGeneratorImpl(downloadService, [mockJmxCustomizer, throwExceptionCustomizer],
@@ -167,7 +166,7 @@ class SupportZipGeneratorImplTest
 
   def "Source failures will not block other sources from being included"() {
     given:
-      def req = new Request(log: true, taskLog: true, jmx: true, limitFileSizes: true)
+      def req = new SupportZipGeneratorRequest(log: true, taskLog: true, jmx: true, limitFileSizes: true)
       def out = new ByteArrayOutputStream()
       def generator = new SupportZipGeneratorImpl(downloadService, [throwExceptionInMiddleCustomizer],
           ByteSize.bytes(1000000),

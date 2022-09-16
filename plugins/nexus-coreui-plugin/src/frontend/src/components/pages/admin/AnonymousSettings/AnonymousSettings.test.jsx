@@ -11,11 +11,13 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import { act } from 'react-dom/test-utils';
+import Axios from 'axios';
+import {act} from 'react-dom/test-utils';
 import {fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+
 import {ExtJS, TestUtils} from '@sonatype/nexus-ui-plugin';
 
-import Axios from 'axios';
 import AnonymousSettings from './AnonymousSettings';
 import UIStrings from '../../../../constants/UIStrings';
 
@@ -97,7 +99,7 @@ describe('AnonymousSettings', () => {
 
     await waitForElementToBeRemoved(loadingMask)
 
-    fireEvent.click(enabledField());
+    userEvent.click(enabledField());
     await waitFor(() => expect(enabledField()).not.toBeChecked());
 
     fireEvent.change(userIdField(), {target: {value: 'changed-username'}});
@@ -111,7 +113,7 @@ describe('AnonymousSettings', () => {
 
     expect(Axios.put).toHaveBeenCalledTimes(0);
 
-    await act(async () => fireEvent.click(saveButton()));
+    await act(async () => userEvent.click(saveButton()));
 
     expect(Axios.put).toHaveBeenCalledTimes(1);
     expect(Axios.put).toHaveBeenCalledWith(
@@ -140,7 +142,7 @@ describe('AnonymousSettings', () => {
     expect(saveButton()).toHaveClass('disabled');
     expect(discardButton()).toBeEnabled();
 
-    fireEvent.click(discardButton());
+    userEvent.click(discardButton());
 
     expect(userIdField()).toHaveValue('testUser');
     expect(saveButton()).toHaveClass('disabled');
@@ -161,7 +163,7 @@ describe('AnonymousSettings', () => {
 
     expect(window.dirty).toEqual(['AnonymousSettingsForm']);
 
-    fireEvent.click(discardButton());
+    userEvent.click(discardButton());
 
     expect(window.dirty).toEqual([]);
   });

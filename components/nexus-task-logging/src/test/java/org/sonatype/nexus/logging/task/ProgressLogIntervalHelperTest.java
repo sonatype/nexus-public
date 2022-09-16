@@ -12,15 +12,26 @@
  */
 package org.sonatype.nexus.logging.task;
 
+import java.time.Duration;
+
+import org.sonatype.nexus.test.util.Whitebox;
+
+import junitparams.JUnitParamsRunner;
+import com.google.common.base.Stopwatch;
+import junitparams.Parameters;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 
 import static java.lang.Thread.sleep;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.PROGRESS;
 
+@RunWith(JUnitParamsRunner.class)
 public class ProgressLogIntervalHelperTest
 {
 
@@ -44,4 +55,26 @@ public class ProgressLogIntervalHelperTest
     verify(logger).info(PROGRESS, "Test 2", argArray);
   }
 
+  @Test
+  @Parameters({
+      "0, 0s",
+      "1, 1s",
+      "60, 1m 0s",
+      "61, 1m 1s",
+      "3599, 59m 59s",
+      "3600, 1h 0m 0s",
+      "3601, 1h 0m 1s",
+      "86400, 1d 0h 0m 0s",
+      "1296000, 15d 0h 0m 0s",
+      "2161045, 25d 0h 17m 25s",
+  })
+  public void getElapsedTest(long seconds, String expected) {
+    Logger logger = mock(Logger.class);
+    Stopwatch elapsedStopwatch = mock(Stopwatch.class);
+    when(elapsedStopwatch.elapsed()).thenReturn(Duration.ofSeconds(seconds));
+
+    ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(logger, 1);
+    Whitebox.setInternalState(progressLogger, "elapsed", elapsedStopwatch);
+    assertEquals(expected, progressLogger.getElapsed());
+  }
 }

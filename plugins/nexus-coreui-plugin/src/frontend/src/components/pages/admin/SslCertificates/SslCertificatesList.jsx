@@ -36,7 +36,7 @@ import {
   NxTooltip,
 } from '@sonatype/react-shared-components';
 
-import {faIdBadge} from '@fortawesome/free-solid-svg-icons';
+import {faIdCardAlt} from '@fortawesome/free-solid-svg-icons';
 
 import Machine from './SslCertificatesListMachine';
 import UIStrings from '../../../../constants/UIStrings';
@@ -62,15 +62,15 @@ export default function SslCertificatesList({onCreate, onEdit}) {
   const filter = (value) => send({type: 'FILTER', filter: value});
   const canCreate = ExtJS.checkPermission('nexus:ssl-truststore:create');
 
-  function create() {
-    if (canCreate) {
-      onCreate();
-    }
-  }
+  const create = () => {};
 
   return <Page className="nxrm-ssl-certificates">
     <PageHeader>
-      <PageTitle icon={faIdBadge} {...UIStrings.SSL_CERTIFICATES.MENU} />
+      <PageTitle
+          icon={faIdCardAlt}
+          text={UIStrings.SSL_CERTIFICATES.MENU.text}
+          description={UIStrings.SSL_CERTIFICATES.MENU.description}
+      />
       <PageActions>
         <NxTooltip
             title={!canCreate && UIStrings.PERMISSION_ERROR}

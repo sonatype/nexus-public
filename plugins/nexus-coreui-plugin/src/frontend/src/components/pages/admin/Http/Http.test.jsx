@@ -21,8 +21,13 @@ import {
 } from '@testing-library/react';
 import {when} from 'jest-when';
 import Axios from 'axios';
-import HttpForm from './HttpForm';
-import {TestUtils, APIConstants, ExtAPIUtils} from '@sonatype/nexus-ui-plugin';
+import Http from './Http';
+import {
+  TestUtils,
+  APIConstants,
+  ExtAPIUtils,
+  ExtJS,
+} from '@sonatype/nexus-ui-plugin';
 import userEvent from '@testing-library/user-event';
 import UIStrings from '../../../../constants/UIStrings';
 
@@ -54,7 +59,6 @@ const {
   ERROR,
 } = UIStrings;
 
-const REQUEST = ExtAPIUtils.createRequestBody(ACTION, METHODS.READ);
 const UPDATE = ExtAPIUtils.createRequestBody(ACTION, METHODS.UPDATE);
 
 const selectors = {
@@ -69,10 +73,14 @@ const selectors = {
   proxy: {
     setting: () => screen.getByText(LABELS.PROXY.LABEL),
     httpHost: () => screen.getByLabelText(LABELS.PROXY.HTTP_HOST),
+    queryHttpHost: () => screen.queryByLabelText(LABELS.PROXY.HTTP_HOST),
     httpPort: () => screen.getByLabelText(LABELS.PROXY.HTTP_PORT),
+    queryHttpPort: () => screen.queryByLabelText(LABELS.PROXY.HTTP_PORT),
     httpCheckbox: () => screen.getByLabelText(LABELS.PROXY.HTTP_CHECKBOX),
     httpsHost: () => screen.getByLabelText(LABELS.PROXY.HTTPS_HOST),
+    queryHttpsHost: () => screen.queryByLabelText(LABELS.PROXY.HTTPS_HOST),
     httpsPort: () => screen.getByLabelText(LABELS.PROXY.HTTPS_PORT),
+    queryHttpsPort: () => screen.queryByLabelText(LABELS.PROXY.HTTPS_PORT),
     httpsCheckbox: () => screen.getByLabelText(LABELS.PROXY.HTTPS_CHECKBOX),
     username: (container) =>
       within(container).getByLabelText(LABELS.PROXY.USERNAME),
@@ -82,23 +90,26 @@ const selectors = {
       within(container).getByLabelText(LABELS.PROXY.HOST_NAME),
     ntlmDomain: (container) =>
       within(container).getByLabelText(LABELS.PROXY.DOMAIN),
-    accordions: (container) =>
-      container.querySelectorAll('.nx-accordion') || [],
     httpAccordion: () =>
       selectors.proxy.httpAccordionButton().closest('.nx-accordion'),
+    queryHttpAccordionTitle: () =>
+      screen.queryByText(LABELS.PROXY.HTTP_AUTHENTICATION),
     httpsAccordion: () =>
       selectors.proxy.httpsAccordionButton().closest('.nx-accordion'),
+    queryHttpsAccordionTitle: () =>
+      screen.queryByText(LABELS.PROXY.HTTPS_AUTHENTICATION),
     httpAccordionButton: () =>
       screen.getByText(LABELS.PROXY.HTTP_AUTHENTICATION),
     httpsAccordionButton: () =>
       screen.getByText(LABELS.PROXY.HTTPS_AUTHENTICATION),
     exclude: () => screen.getByLabelText(LABELS.EXCLUDE.LABEL),
+    queryExcludeTitle: () => screen.queryByText(LABELS.EXCLUDE.LABEL),
     addButton: () => screen.getByTitle(LABELS.EXCLUDE.ADD),
     removeButton: () => screen.getByTitle(LABELS.EXCLUDE.REMOVE),
   },
 };
 
-describe('HttpForm', () => {
+describe('Http', () => {
   const mock = {
     userAgentSuffix: null,
     timeout: null,
@@ -121,6 +132,7 @@ describe('HttpForm', () => {
     httpsAuthNtlmDomain: null,
     nonProxyHosts: null,
   };
+
   const dummyData = {
     userAgentSuffix: 'agent',
     timeout: '1000',
@@ -129,20 +141,42 @@ describe('HttpForm', () => {
     httpEnabled: false,
     httpsAuthEnabled: false,
     httpsEnabled: false,
-    nonProxyHosts: []
+    nonProxyHosts: [],
   };
+
   const dummyHttpProxy = {
     httpPort: '123',
     httpHost: 'http.host',
     httpEnabled: true,
   };
+
+  const dummyHttpProxyWithAuth = {
+    ...dummyHttpProxy,
+    httpAuthEnabled: true,
+    httpAuthUsername: 'http.username',
+    httpAuthPassword: 'password',
+    httpAuthNtlmHost: 'http.ntlm.host',
+    httpAuthNtlmDomain: 'http.ntlm.domain',
+  };
+
   const dummyHttpsProxy = {
     httpsPort: '456',
     httpsHost: 'https.host',
     httpsEnabled: true,
   };
 
-  const mockResponse = (data = {}) => {
+  const dummyHttpsProxyWithAuth = {
+    ...dummyHttpsProxy,
+    httpsAuthEnabled: true,
+    httpsAuthUsername: 'https.username',
+    httpsAuthPassword: 'password',
+    httpsAuthNtlmHost: 'https.ntlm.host',
+    httpsAuthNtlmDomain: 'https.ntlm.domain',
+  };
+
+  const nonProxy = 'http.nonProxyHosts';
+
+  const mockResponse = (data = mock) => {
     Axios.post = jest
       .fn()
       .mockReturnValueOnce(
@@ -151,17 +185,17 @@ describe('HttpForm', () => {
   };
 
   const renderAndWaitForLoad = async () => {
-    const result = render(<HttpForm />);
+    const result = render(<Http />);
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
     return result;
   };
 
   beforeEach(() => {
-    when(Axios.post)
-      .calledWith(URL, REQUEST)
-      .mockResolvedValue({
-        data: TestUtils.makeExtResult(mock),
-      });
+    when(ExtJS.checkPermission)
+      .calledWith('nexus:settings:update')
+      .mockReturnValue(true);
+
+    mockResponse();
 
     when(Axios.post)
       .calledWith(URL, UPDATE)
@@ -469,21 +503,20 @@ describe('HttpForm', () => {
 
     it('adds or removes items to the excludes from HTTP/HTTPS Proxy list', async () => {
       const {exclude, addButton, removeButton} = selectors.proxy;
-      const item = 'http.nonProxyHosts';
 
       await renderAndWaitForLoad();
 
-      await TestUtils.changeField(exclude, item);
+      await TestUtils.changeField(exclude, nonProxy);
 
       expect(addButton()).toBeInTheDocument();
 
       await userEvent.click(addButton());
 
-      expect(screen.getByText(item)).toBeInTheDocument();
+      expect(screen.getByText(nonProxy)).toBeInTheDocument();
       expect(removeButton()).toBeInTheDocument();
 
       await userEvent.click(removeButton());
-      expect(screen.queryByText(item)).not.toBeInTheDocument();
+      expect(screen.queryByText(nonProxy)).not.toBeInTheDocument();
     });
   });
 
@@ -573,12 +606,7 @@ describe('HttpForm', () => {
     it('Http Proxy with Authentication requires username', async () => {
       const data = {
         ...dummyData,
-        ...dummyHttpProxy,
-        httpAuthEnabled: true,
-        httpAuthUsername: 'username',
-        httpAuthPassword: 'password',
-        httpAuthNtlmHost: 'ntlm.host',
-        httpAuthNtlmDomain: 'ntlm.domain',
+        ...dummyHttpProxyWithAuth,
       };
       const {
         userAgentInput,
@@ -717,12 +745,7 @@ describe('HttpForm', () => {
       const data = {
         ...dummyData,
         ...dummyHttpProxy,
-        ...dummyHttpsProxy,
-        httpsAuthEnabled: true,
-        httpsAuthUsername: 'username',
-        httpsAuthPassword: 'password',
-        httpsAuthNtlmHost: 'ntlm.host',
-        httpsAuthNtlmDomain: 'ntlm.domain',
+        ...dummyHttpsProxyWithAuth,
       };
       const {
         userAgentInput,
@@ -789,6 +812,43 @@ describe('HttpForm', () => {
 
       expect(saveButton()).not.toHaveAttribute('aria-label');
       expect(saveButton()).not.toHaveAttribute('aria-disabled');
+
+      mockResponse();
+
+      await act(async () => await userEvent.click(saveButton()));
+
+      const expected = {
+        data: [data],
+      };
+
+      expect(Axios.post).toHaveBeenCalledWith(
+        URL,
+        ExtAPIUtils.createRequestBody(ACTION, METHODS.UPDATE, expected)
+      );
+      expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
+    });
+
+    it('Exclude nonProxy host', async () => {
+      const data = {
+        httpAuthEnabled: false,
+        httpEnabled: false,
+        httpsAuthEnabled: false,
+        httpsEnabled: false,
+        nonProxyHost: '',
+        nonProxyHosts: [nonProxy],
+      };
+      const {
+        proxy: {exclude, addButton},
+        saveButton,
+      } = selectors;
+
+      await renderAndWaitForLoad();
+
+      await TestUtils.changeField(exclude, nonProxy);
+
+      expect(addButton()).toBeInTheDocument();
+
+      await userEvent.click(addButton());
 
       mockResponse();
 
@@ -1019,6 +1079,80 @@ describe('HttpForm', () => {
         })
       );
       expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
+    });
+  });
+
+  describe('Read only', () => {
+    beforeEach(() => {
+      when(ExtJS.checkPermission)
+        .calledWith('nexus:settings:update')
+        .mockReturnValue(false);
+
+      mockResponse();
+    });
+
+    it('Basic form', async () => {
+      const response = {
+        ...mock,
+        ...dummyData,
+        ...dummyHttpProxyWithAuth,
+        ...dummyHttpsProxyWithAuth,
+        nonProxyHosts: [nonProxy],
+      };
+
+      mockResponse(response);
+
+      const {retries, userAgent, timeout} = selectors;
+      await renderAndWaitForLoad();
+
+      expect(userAgent()).toBeInTheDocument();
+      expect(timeout()).toBeInTheDocument();
+      expect(retries()).toBeInTheDocument();
+      expect(screen.getByText(response.userAgentSuffix)).toBeInTheDocument();
+      expect(screen.getByText(response.retries)).toBeInTheDocument();
+      expect(screen.getByText(response.timeout)).toBeInTheDocument();
+      expect(screen.getByText(response.httpHost)).toBeInTheDocument();
+      expect(screen.getByText(response.httpPort)).toBeInTheDocument();
+      expect(screen.getByText(response.httpAuthUsername)).toBeInTheDocument();
+      expect(screen.getByText(response.httpAuthNtlmDomain)).toBeInTheDocument();
+      expect(screen.getByText(response.httpAuthNtlmHost)).toBeInTheDocument();
+      expect(screen.getByText(response.httpsHost)).toBeInTheDocument();
+      expect(screen.getByText(response.httpsPort)).toBeInTheDocument();
+      expect(screen.getByText(response.httpsAuthUsername)).toBeInTheDocument();
+      expect(
+        screen.getByText(response.httpsAuthNtlmDomain)
+      ).toBeInTheDocument();
+      expect(screen.getByText(response.httpsAuthNtlmHost)).toBeInTheDocument();
+      expect(screen.getByText(nonProxy)).toBeInTheDocument();
+    });
+
+    it('does not show HTTP Proxy setting if it is not enabled', async () => {
+      const {queryHttpPort, queryHttpHost, queryHttpAccordionTitle} =
+        selectors.proxy;
+
+      await renderAndWaitForLoad();
+
+      expect(queryHttpPort()).not.toBeInTheDocument();
+      expect(queryHttpHost()).not.toBeInTheDocument();
+      expect(queryHttpAccordionTitle()).not.toBeInTheDocument();
+    });
+
+    it('does not show HTTPS Proxy setting if it is not enabled', async () => {
+      const {queryHttpsPort, queryHttpsHost, queryHttpsAccordionTitle} =
+        selectors.proxy;
+
+      await renderAndWaitForLoad();
+
+      expect(queryHttpsPort()).not.toBeInTheDocument();
+      expect(queryHttpsHost()).not.toBeInTheDocument();
+      expect(queryHttpsAccordionTitle()).not.toBeInTheDocument();
+    });
+
+    it('does not show exclude list if it is empty', async () => {
+      const {queryExcludeTitle} = selectors.proxy;
+
+      await renderAndWaitForLoad();
+      expect(queryExcludeTitle()).not.toBeInTheDocument();
     });
   });
 });
