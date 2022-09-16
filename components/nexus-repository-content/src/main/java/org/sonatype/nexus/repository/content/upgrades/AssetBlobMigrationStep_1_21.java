@@ -19,25 +19,18 @@ import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 import static java.util.Objects.requireNonNull;
 
 /**
- * Adds column added_to_repository on each asset_blob table.
- * Creates index for added_to_repository on each asset_blob table.
- * Drops index for blob_created on asset table.
+ * Drops index for blob_created on asset_blob table.
  */
 @Named
 public class AssetBlobMigrationStep_1_21
     implements DatabaseMigrationStep
 {
-  private static final String ADD_COLUMN = "ALTER TABLE %s_asset_blob ADD COLUMN IF NOT EXISTS added_to_repository  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP";
-
-  private static final String CREATE_INDEX = "CREATE INDEX IF NOT EXISTS idx_%s_asset_blob_added_to_repository ON %s_asset_blob (added_to_repository)";
-
   private static final String DROP_INDEX = "DROP INDEX IF EXISTS idx_%s_asset_blob_blob_created";
 
   private final List<Format> formats;
@@ -57,10 +50,7 @@ public class AssetBlobMigrationStep_1_21
   public void migrate(final Connection connection) throws Exception {
     try (Statement st = connection.createStatement()) {
       for (Format format : formats) {
-        String formatValue = format.getValue();
-        st.execute(String.format(ADD_COLUMN, formatValue));
-        st.execute(String.format(CREATE_INDEX, formatValue, formatValue));
-        st.execute(String.format(DROP_INDEX, formatValue));
+        st.execute(String.format(DROP_INDEX, format.getValue()));
       }
     }
   }
