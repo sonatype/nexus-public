@@ -1010,9 +1010,9 @@ public class AssetDAOTest
       OffsetDateTime baseTime = OffsetDateTime.of(2022, 4, 24, 15, 18, 22,
           111111000, ZoneOffset.UTC);
       Collection<AssetInfo> found = dao.findAddedToRepositoryWithinRange(repositoryId, baseTime,
-          baseTime.plus(1, ChronoUnit.MILLIS), ImmutableList.of(), 100);
+          baseTime.plus(1, ChronoUnit.MILLIS), ImmutableList.of(), null, null, 100);
       assertThat(found, emptyIterable());
-      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime, ImmutableList.of(), 10);
+      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime, ImmutableList.of(), null, null, 10);
       assertThat(found, emptyIterable());
 
       AssetData asset1 = generateAsset(repositoryId, "/asset1/asset1.jar");
@@ -1046,22 +1046,22 @@ public class AssetDAOTest
 
       createAssets(dao, asset1, asset2, asset3, asset4, asset5, asset6);
 
-      found = dao.findAddedToRepositoryWithinRange(repositoryId, baseTime, baseTime.plus(1, ChronoUnit.MILLIS), ImmutableList.of(),100);
+      found = dao.findAddedToRepositoryWithinRange(repositoryId, baseTime, baseTime.plus(1, ChronoUnit.MILLIS), ImmutableList.of(), null, null, 100);
       assertThat(found.size(), is(2));
 
-      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime, ImmutableList.of(),100);
+      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime, ImmutableList.of(), null, null, 100);
       assertThat(found.size(), is(4));
 
-      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime, ImmutableList.of(),1);
+      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime, ImmutableList.of(), null, null, 1);
       assertThat(found.size(), is(1));
 
-      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime.minusDays(1), ImmutableList.of(".*/asset1/.*"), 100);
+      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime.minusDays(1), ImmutableList.of(".*/asset1/.*"), null, null, 100);
       assertThat(found.size(), is(1));
 
-      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime.minusDays(1), ImmutableList.of(".*/asset3/.*", ".*/asset5/.*"), 100);
+      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime.minusDays(1), ImmutableList.of(".*/asset3/.*", ".*/asset5/.*"), null, null, 100);
       assertThat(found.size(), is(2));
 
-      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime.minusDays(1), ImmutableList.of(".*/asset.?/a.*\\.jar.*"), 100);
+      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime.minusDays(1), ImmutableList.of(".*/asset.?/a.*\\.jar.*"), null, null, 100);
       assertThat(found.size(), is(6));
     }
   }
@@ -1073,9 +1073,9 @@ public class AssetDAOTest
       AssetBlobDAO blobDao = session.access(TestAssetBlobDAO.class);
       OffsetDateTime baseTime = OffsetDateTime.of(2022, 4, 24, 15, 18, 22,
           111111000, ZoneOffset.UTC);
-      Collection<AssetInfo> found = dao.findAddedToRepositoryWithinRange(repositoryId, baseTime, baseTime.plus(1, ChronoUnit.MILLIS), ImmutableList.of(),100);
+      Collection<AssetInfo> found = dao.findAddedToRepositoryWithinRange(repositoryId, baseTime, baseTime.plus(1, ChronoUnit.MILLIS), ImmutableList.of(), null, null, 100);
       assertThat(found, emptyIterable());
-      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime, ImmutableList.of(), 10);
+      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime, ImmutableList.of(), null, null, 10);
       assertThat(found, emptyIterable());
 
       AssetData asset1 = generateAsset(repositoryId, "/asset1/asset1.jar");
@@ -1104,10 +1104,10 @@ public class AssetDAOTest
 
       createAssets(dao, asset1, asset2, asset3, asset4);
 
-      found = dao.findAddedToRepositoryWithinRange(repositoryId, baseTime, baseTime.plus(1, ChronoUnit.MILLIS), ImmutableList.of(),100);
+      found = dao.findAddedToRepositoryWithinRange(repositoryId, baseTime, baseTime.plus(1, ChronoUnit.MILLIS), ImmutableList.of(), null, null, 100);
       assertThat(found.size(), is(4));
 
-      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime.plus(1, ChronoUnit.MILLIS).truncatedTo(ChronoUnit.MILLIS), ImmutableList.of(),100);
+      found = dao.findGreaterThanOrEqualToAddedToRepository(repositoryId, baseTime.plus(1, ChronoUnit.MILLIS).truncatedTo(ChronoUnit.MILLIS), ImmutableList.of(), null, null, 100);
       assertThat(found.size(), is(0));
     }
   }

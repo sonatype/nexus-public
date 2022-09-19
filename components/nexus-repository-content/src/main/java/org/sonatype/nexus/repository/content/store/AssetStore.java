@@ -186,6 +186,8 @@ public class AssetStore<T extends AssetDAO>
       final int repositoryId,
       @Nullable final OffsetDateTime addedToRepository,
       final List<String> regexExpressions,
+      @Nullable String filter,
+      @Nullable Map<String, Object> filterParams,
       final int batchSize)
   {
     // We consider dates the same if they are at the same millisecond. Normalization of the date plus using a >= query has
@@ -197,7 +199,9 @@ public class AssetStore<T extends AssetDAO>
 
     // Fetch one extra record to check if there are more results with the same addedToRepository value. Most of the time
     // this won't be the case, and we will not need a query to find them all.
-    List<AssetInfo> assets = dao().findGreaterThanOrEqualToAddedToRepository(repositoryId, addedToRepositoryNormalized, regexExpressions, batchSize + 1);
+    List<AssetInfo> assets =
+        dao().findGreaterThanOrEqualToAddedToRepository(repositoryId, addedToRepositoryNormalized, regexExpressions,
+            filter, filterParams, batchSize + 1);
 
     if (assets.size() == batchSize + 1) {
       if (hasMoreResultsWithSameBlobCreated(assets)) {
@@ -210,7 +214,8 @@ public class AssetStore<T extends AssetDAO>
         // Add all records that match the timestamp (truncating to millisecond) of the last record. Then we can continue
         // paging with a greater than query.
         List<AssetInfo> matchAddedToRepository =
-            dao().findAddedToRepositoryWithinRange(repositoryId, startAddedToRepository, endAddedToRepository, regexExpressions, LAST_UPDATED_LIMIT);
+            dao().findAddedToRepositoryWithinRange(repositoryId, startAddedToRepository, endAddedToRepository,
+                regexExpressions, filter, filterParams, LAST_UPDATED_LIMIT);
 
         if (matchAddedToRepository.size() == LAST_UPDATED_LIMIT) {
           log.error(

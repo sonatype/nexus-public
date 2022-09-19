@@ -37,6 +37,8 @@ public class MavenFormatRepositoryTestSystem
                     MavenGroupRepositoryConfig>
     implements FormatRepositoryTestSystem
 {
+  public static final String ATTRIBUTES_MAP_KEY_AUTHENTICATION = "authentication";
+
   public static final String ATTRIBUTES_MAP_KEY_MAVEN = "maven";
 
   public static final String ATTRIBUTES_MAP_KEY_REPLICATION = "replication";
@@ -49,6 +51,10 @@ public class MavenFormatRepositoryTestSystem
 
   public static final String ATTRIBUTES_KEY_LAYOUT_POLICY = "layoutPolicy";
 
+  public static final String ATTRIBUTES_KEY_USERNAME = "username";
+
+  public static final String ATTRIBUTES_KEY_PASSWORD = "password";
+
   @Inject
   public MavenFormatRepositoryTestSystem(final RepositoryManager repositoryManager) {
     super(repositoryManager);
@@ -60,15 +66,27 @@ public class MavenFormatRepositoryTestSystem
   }
 
   public Repository createProxy(final MavenProxyRepositoryConfig config) throws Exception {
-    return doCreate(
-        applyPullReplicationAttributes(
-            applyMavenAttributes(createProxyConfiguration(config), config.getVersionPolicy(), config.getLayoutPolicy())
-            , config.isPreemptivePullEnabled(), config.getAssetPathRegex()));
+    Configuration cfg = applyMavenAttributes(createProxyConfiguration(config), config.getVersionPolicy(), config.getLayoutPolicy());
+    applyAuthenticationAttributes(cfg, config.getUsername(), config.getPassword());
+    applyPullReplicationAttributes(cfg, config.isPreemptivePullEnabled(), config.getAssetPathRegex());
+    return doCreate(cfg);
   }
 
   public Repository createGroup(final MavenGroupRepositoryConfig config) throws Exception {
     return doCreate(
         applyMavenAttributes(createGroupConfiguration(config), config.getVersionPolicy(), config.getLayoutPolicy()));
+  }
+
+  private Configuration applyAuthenticationAttributes(
+      final Configuration configuration,
+      final String username,
+      final String password
+  )
+  {
+    NestedAttributesMap authentication = configuration.attributes(  ATTRIBUTES_MAP_KEY_AUTHENTICATION);
+    addConfigIfNotNull(authentication, ATTRIBUTES_KEY_USERNAME, username);
+    addConfigIfNotNull(authentication, ATTRIBUTES_KEY_PASSWORD, password);
+    return configuration;
   }
 
   private Configuration applyMavenAttributes(

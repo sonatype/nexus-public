@@ -48,12 +48,10 @@ import org.sonatype.nexus.repository.selector.ContentAuthHelper;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.security.SecurityHelper;
-import org.sonatype.nexus.selector.CselSelector;
 import org.sonatype.nexus.selector.JexlSelector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
-import org.sonatype.nexus.selector.SelectorEvaluationException;
+import org.sonatype.nexus.selector.SelectorFilterBuilder;
 import org.sonatype.nexus.selector.SelectorManager;
-import org.sonatype.nexus.selector.SelectorSqlBuilder;
 
 import com.google.common.base.Equivalence;
 import com.google.common.base.Equivalence.Wrapper;
@@ -66,7 +64,6 @@ import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.repository.browse.node.BrowsePath.SLASH;
 import static org.sonatype.nexus.repository.browse.node.BrowsePath.SLASH_CHAR;
-import static org.sonatype.nexus.repository.content.browse.store.BrowseNodeDAO.FILTER_PARAMS;
 import static org.sonatype.nexus.repository.content.facet.ContentFacetFinder.findContentFacets;
 import static org.sonatype.nexus.repository.content.store.InternalIds.contentRepositoryId;
 
@@ -99,6 +96,9 @@ public class BrowseNodeQueryServiceImpl
 
   private final ContentAuthHelper contentAuthHelper;
 
+  private final SelectorFilterBuilder selectorFilterBuilder;
+
+
   @Inject
   public BrowseNodeQueryServiceImpl(
       final SecurityHelper securityHelper,
@@ -106,7 +106,8 @@ public class BrowseNodeQueryServiceImpl
       final Map<String, BrowseNodeFilter> browseNodeFilters,
       final Map<String, BrowseNodeIdentity> browseNodeIdentities,
       final Map<String, BrowseNodeComparator> browseNodeComparators,
-      final ContentAuthHelper contentAuthHelper)
+      final ContentAuthHelper contentAuthHelper,
+      final SelectorFilterBuilder selectorFilterBuilder)
   {
     this.securityHelper = checkNotNull(securityHelper);
     this.selectorManager = checkNotNull(selectorManager);
@@ -115,6 +116,7 @@ public class BrowseNodeQueryServiceImpl
     this.browseNodeComparators = checkNotNull(browseNodeComparators);
     this.defaultBrowseNodeComparator = checkNotNull(browseNodeComparators.get(DefaultBrowseNodeComparator.NAME));
     this.contentAuthHelper = checkNotNull(contentAuthHelper);
+    this.selectorFilterBuilder = checkNotNull(selectorFilterBuilder);
   }
 
   @Override
@@ -223,70 +225,13 @@ public class BrowseNodeQueryServiceImpl
    * Builds a browse node filter in SQL for the current user.
    */
   @Nullable
-  private String buildContentAuthFilter(final Repository repository,
-                                        final List<SelectorConfiguration> selectors,
-                                        final Map<String, Object> filterParameters)
+  private String buildContentAuthFilter(
+      final Repository repository,
+      final List<SelectorConfiguration> selectors,
+      final Map<String, Object> filterParameters)
   {
-    if (selectors.isEmpty()) {
-      return null;
-    }
-
-    StringBuilder filterBuilder = new StringBuilder();
-    appendContentAuthFilter(filterBuilder, repository, selectors, filterParameters);
-    return filterBuilder.toString();
-  }
-
-  /**
-   * Appends a content authentication filter in SQL for the current user.
-   */
-  private void appendContentAuthFilter(final StringBuilder filterBuilder,
-                                       final Repository repository,
-                                       final List<SelectorConfiguration> selectors,
-                                       final Map<String, Object> filterParameters)
-  {
-    String format = repository.getFormat().getValue();
-
-    if (selectors.size() > 1) {
-      filterBuilder.append('(');
-    }
-
-    SelectorSqlBuilder sqlBuilder = new SelectorSqlBuilder()
-        .propertyAlias("path", "B.request_path")
-        .propertyAlias("format", "'" + format + "'")
-        .propertyPrefix("B.")
-        .parameterPrefix("#{" + FILTER_PARAMS + ".")
-        .parameterSuffix("}");
-
-    int selectorCount = 0;
-
-    for (SelectorConfiguration selector : selectors) {
-      if (CselSelector.TYPE.equals(selector.getType())) {
-        try {
-          sqlBuilder.parameterNamePrefix("s" + selectorCount + "p");
-
-          selectorManager.toSql(selector, sqlBuilder);
-
-          if (selectorCount > 0) {
-            filterBuilder.append(" or ");
-          }
-
-          filterBuilder.append('(').append(sqlBuilder.getQueryString()).append(')');
-          filterParameters.putAll(sqlBuilder.getQueryParameters());
-
-          selectorCount++;
-        }
-        catch (SelectorEvaluationException e) {
-          log.warn("Problem evaluating selector {} as SQL", selector.getName(), e);
-        }
-        finally {
-          sqlBuilder.clearQueryString();
-        }
-      }
-    }
-
-    if (selectors.size() > 1) {
-      filterBuilder.append(')');
-    }
+    return selectorFilterBuilder.buildFilter(repository.getFormat().getValue(), "B.request_path", selectors,
+        filterParameters);
   }
 
   @Override

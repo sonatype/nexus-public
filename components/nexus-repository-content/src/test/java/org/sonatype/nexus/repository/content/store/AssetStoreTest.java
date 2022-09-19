@@ -100,13 +100,13 @@ public class AssetStoreTest
     assetBlob6.setAddedToRepository(time.plusSeconds(5));
 
     inTx(() -> {
-      Collection<AssetInfo> assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of(), 2);
+      Collection<AssetInfo> assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of(), null, null, 2);
       assertThat(assets, is(empty()));
 
       assetBlobStore.createAssetBlob(assetBlob1);
       asset1.setAssetBlob(assetBlob1);
       underTest.createAsset(asset1);
-      assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of(), 2);
+      assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of(), null, null, 2);
       assertThat(assets.size(), is(1));
 
       assetBlobStore.createAssetBlob(assetBlob2);
@@ -117,7 +117,7 @@ public class AssetStoreTest
       asset3.setAssetBlob(assetBlob3);
       underTest.createAsset(asset3);
 
-      assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of(),2);
+      assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of(), null, null,2);
       assertThat(assets.size(), is(2));
 
       assetBlobStore.createAssetBlob(assetBlob4);
@@ -132,13 +132,13 @@ public class AssetStoreTest
       asset6.setAssetBlob(assetBlob6);
       underTest.createAsset(asset6);
 
-      assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of("asset5"),100);
+      assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of("asset5"), null, null,100);
       assertThat(assets.size(), is(1));
 
-      assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of("asset4", "asset5"),100);
+      assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of("asset4", "asset5"), null, null,100);
       assertThat(assets.size(), is(2));
 
-      assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of("/asset.?/a.*.jar"),100);
+      assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of("/asset.?/a.*.jar"), null, null,100);
       assertThat(assets.size(), is(6));
     });
   }
@@ -173,19 +173,19 @@ public class AssetStoreTest
       assetBlobStore.createAssetBlob(assetBlob2);
       asset2.setAssetBlob(assetBlob2);
       underTest.createAsset(asset2);
-      Collection<AssetInfo> assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of(),2);
+      Collection<AssetInfo> assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of(), null, null, 2);
       assertThat(assets.size(), is(2));
 
       assetBlobStore.createAssetBlob(assetBlob3);
       asset3.setAssetBlob(assetBlob3);
       underTest.createAsset(asset3);
-      assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of(),2);
+      assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of(), null, null,2);
       assertThat(assets.size(), is(3));
 
       assetBlobStore.createAssetBlob(assetBlob4);
       asset4.setAssetBlob(assetBlob4);
       underTest.createAsset(asset4);
-      assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of(),2);
+      assets = underTest.findUpdatedAssets(repositoryId, null, ImmutableList.of(), null, null,2);
       assertThat(assets.size(), is(4));
     });
   }
