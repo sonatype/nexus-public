@@ -41,6 +41,10 @@
       margin-left: var(--nx-spacing-6x);
     }
   }
+
+  .nx-foreign-layer {
+    margin-left: var(--nx-spacing-8x);
+  }
 }
 
 .nxrm-repositories {
@@ -49,7 +53,7 @@
       text-align: center;
       padding-left: var(--nx-spacing-3x);
       padding-right: var(--nx-spacing-3x);
-      
+
       .nx-btn-bar {
         justify-content: center;
       }

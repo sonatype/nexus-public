@@ -909,6 +909,14 @@ export default {
           }
         }
       },
+      FOREIGN_LAYER: {
+        CACHING: 'Foreign layer Caching',
+        URL: 'Foreign Layer Allowed URLs',
+        URL_SUBLABEL: 'Regular expressions used to identify URLs that are allowed for foreign layer requests',
+        CHECKBOX: 'Allow Nexus Repository Manager to download and cache foreign layers',
+        ADD: 'Add URL pattern',
+        REMOVE: 'Remove',
+      },
       REMOTE_URL_EXAMPLES: {
         bower: ' (e.g., https://registry.bower.io)',
         docker: ' (e.g., https://registry-1.docker.io)',

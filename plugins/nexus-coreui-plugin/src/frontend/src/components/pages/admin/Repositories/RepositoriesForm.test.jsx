@@ -199,6 +199,13 @@ describe('RepositoriesForm', () => {
     getPreemptiveAuthCheckbox: () => {
       const fieldset = screen.queryByRole('group', {name: EDITOR.PRE_EMPTIVE_AUTH.LABEL});
       return fieldset ? within(fieldset).getByRole('checkbox') : null;
+    },
+    getForeignLayerCheckbox: () => screen.getByLabelText(EDITOR.FOREIGN_LAYER.CHECKBOX),
+    getForeignLayerInput: () => screen.getByLabelText(EDITOR.FOREIGN_LAYER.URL),
+    getForeignLayerAddButton: () => screen.getByTitle(EDITOR.FOREIGN_LAYER.ADD),
+    getForeignLayerRemoveButton: (item) => {
+      const listItem = screen.getByText(item).closest('.nx-list__item');
+      return item && within(listItem).getByTitle(EDITOR.FOREIGN_LAYER.REMOVE);
     }
   };
 
@@ -837,6 +844,102 @@ describe('RepositoriesForm', () => {
       );
     });
 
+    it('adds or removes patterns to the foreign layer url white list', async () => {
+      const repo = {
+        name: "docker-proxy",
+        url: "http://localhost:8081/repository/docker-proxy",
+        online: true,
+        storage: {
+          blobStoreName: "default",
+          strictContentTypeValidation: true,
+          writePolicy: "ALLOW"
+        },
+        cleanup: null,
+        docker: {
+          v1Enabled: false,
+          forceBasicAuth: true,
+          httpPort: null,
+          httpsPort: null,
+          subdomain: null
+        },
+        dockerProxy: {
+          indexType: "REGISTRY",
+          indexUrl: null,
+          cacheForeignLayers: false,
+          foreignLayerUrlWhitelist: []
+        },
+        proxy: {
+          remoteUrl: "https://test.com",
+          contentMaxAge: 1440,
+          metadataMaxAge: 1440
+        },
+        negativeCache: {
+          enabled: true,
+          timeToLive: 1440
+        },
+        httpClient: {
+          blocked: false,
+          autoBlock: true,
+          connection: {
+            retries: null,
+            userAgentSuffix: null,
+            timeout: null,
+            enableCircularRedirects: false,
+            enableCookies: false,
+            useTrustStore: false
+          },
+          authentication: null
+        },
+        routingRuleName: null,
+        format: "docker",
+        type: "proxy"
+      }
+
+      const patternUrl = '.test.*';
+      const defaultPatternUrl = '.*';
+
+      when(Axios.get).calledWith(getRepositoryUrl(repo.name)).mockResolvedValueOnce({
+        data: repo
+      });
+
+      renderView(repo.name);
+
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+      expect(selectors.getForeignLayerCheckbox()).toBeInTheDocument();
+      expect(selectors.getForeignLayerCheckbox()).not.toBeChecked();
+
+      await userEvent.click(selectors.getForeignLayerCheckbox());
+
+      expect(selectors.getForeignLayerCheckbox()).toBeChecked();
+      expect(screen.getByText(defaultPatternUrl)).toBeInTheDocument();
+
+      await TestUtils.changeField(selectors.getForeignLayerInput, patternUrl);
+
+      await userEvent.click(selectors.getForeignLayerAddButton());
+
+      expect(screen.getByText(patternUrl)).toBeInTheDocument();
+
+      await userEvent.click(selectors.getForeignLayerRemoveButton(defaultPatternUrl));
+
+      expect(screen.queryByText(defaultPatternUrl)).not.toBeInTheDocument();
+      expect(selectors.getForeignLayerRemoveButton(patternUrl)).toBeDisabled();
+
+      await userEvent.click(selectors.getSaveButton());
+
+      expect(Axios.put).toBeCalledWith(
+        `${REST_PUB_URL}docker/proxy/${repo.name}`,
+        mergeDeepRight(repo, {
+          dockerProxy: {
+            cacheForeignLayers: true,
+            foreignLayer: "",
+            foreignLayerUrlWhitelist:[patternUrl]
+          },
+          routingRule: null
+        })
+      );
+    });
+
     it('renders npm proxy fields with correct default values', async () => {
       await renderViewAndSetRequiredFields({format: 'npm', type: 'proxy'});
       expect(selectors.getRemoveNonCataloguedCheckbox()).not.toBeChecked();
@@ -892,7 +995,9 @@ describe('RepositoriesForm', () => {
         },
         dockerProxy: {
           indexType: 'CUSTOM',
-          indexUrl: 'https://custom.index.com/'
+          indexUrl: 'https://custom.index.com/',
+          cacheForeignLayers: false,
+          foreignLayerUrlWhitelist: []
         }
       };
 

@@ -234,7 +234,9 @@ const repositoryFormats = {
       },
       dockerProxy: {
         indexType: DOCKER_INDEX_TYPES.registry,
-        indexUrl: null
+        indexUrl: null,
+        cacheForeignLayers: false,
+        foreignLayerUrlWhitelist: []
       }
     },
     validators: (data) => ({
