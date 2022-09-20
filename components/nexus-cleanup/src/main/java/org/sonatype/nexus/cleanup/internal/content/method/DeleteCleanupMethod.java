@@ -12,17 +12,16 @@
  */
 package org.sonatype.nexus.cleanup.internal.content.method;
 
+import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
-
 import javax.inject.Named;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.cleanup.internal.method.CleanupMethod;
-import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.maintenance.ContentMaintenanceFacet;
-import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.task.DeletionProgress;
 
 /**
@@ -38,17 +37,13 @@ public class DeleteCleanupMethod
   @Override
   public DeletionProgress run(
       final Repository repository,
-      final Stream<EntityId> components,
+      final Stream<FluentComponent> components,
       final BooleanSupplier cancelledCheck)
   {
     ContentMaintenanceFacet maintenance = repository.facet(ContentMaintenanceFacet.class);
     DeletionProgress progress = new DeletionProgress();
 
-    int[] componentIds = components
-        .mapToInt(InternalIds::toInternalId)
-        .toArray();
-
-    progress.addCount(maintenance.deleteComponents(componentIds));
+    progress.addCount(maintenance.deleteComponents(components));
 
     return progress;
   }

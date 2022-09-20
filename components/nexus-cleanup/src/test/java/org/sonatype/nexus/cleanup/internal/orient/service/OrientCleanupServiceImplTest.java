@@ -17,7 +17,7 @@ import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.cleanup.internal.method.CleanupMethod;
+import org.sonatype.nexus.cleanup.internal.orient.method.CleanupMethod;
 import org.sonatype.nexus.cleanup.internal.orient.search.elasticsearch.OrientCleanupComponentBrowse;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;

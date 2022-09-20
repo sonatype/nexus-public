@@ -20,14 +20,13 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
-
 import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.cleanup.internal.method.CleanupMethod;
+import org.sonatype.nexus.cleanup.internal.orient.method.CleanupMethod;
 import org.sonatype.nexus.cleanup.internal.orient.search.elasticsearch.OrientCleanupComponentBrowse;
 import org.sonatype.nexus.cleanup.service.CleanupService;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;

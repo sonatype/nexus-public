@@ -10,14 +10,13 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.cleanup.internal.method;
+package org.sonatype.nexus.cleanup.internal.orient.method;
 
-import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
 
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.task.DeletionProgress;
 
 /**
@@ -37,6 +36,6 @@ public interface CleanupMethod
    */
   DeletionProgress run(
       Repository repository,
-      Stream<FluentComponent> components,
+      Stream<EntityId> components,
       BooleanSupplier cancelledCheck);
 }

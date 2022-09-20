@@ -13,11 +13,12 @@
 package org.sonatype.nexus.content.maven.internal.recipe;
 
 import java.util.Set;
-
+import java.util.stream.Stream;
 import javax.inject.Named;
 
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.maintenance.LastAssetMaintenanceFacet;
 
 import com.google.common.collect.Sets;
@@ -35,8 +36,8 @@ public class MavenMaintenanceFacet
   }
 
   @Override
-  public int deleteComponents(final int[] componentIds) {
-    return mavenContentFacet().deleteComponents(componentIds);
+  public int deleteComponents(final Stream<FluentComponent> components) {
+    return mavenContentFacet().deleteComponents(components);
   }
 
   private MavenContentFacet mavenContentFacet() {

@@ -13,9 +13,12 @@
 package org.sonatype.nexus.repository.content.store;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -31,7 +34,9 @@ import org.sonatype.nexus.repository.content.event.component.ComponentKindEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentPreDeleteEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentPrePurgeEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentPurgedEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentsPurgedAuditEvent;
 import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryDeletedEvent;
+import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.inject.assistedinject.Assisted;
@@ -342,5 +347,18 @@ public class ComponentStore<T extends ComponentDAO>
     postCommitEvent(() -> new ComponentPurgedEvent(repositoryId, componentIds));
 
     return purged;
+  }
+
+  @Transactional
+  public int purge(
+      final Integer repositoryId,
+      final List<FluentComponent> components)
+  {
+    int[] componentIds = components.stream()
+        .mapToInt(InternalIds::internalComponentId)
+        .toArray();
+    postCommitEvent(() -> new ComponentsPurgedAuditEvent(repositoryId, Collections.unmodifiableList(components)));
+
+    return purge(repositoryId, componentIds);
   }
 }

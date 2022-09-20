@@ -107,7 +107,7 @@ public class RemoveSnapshotsFacetImplTest
     removeSnapshotsFacet.processRepository(repository, config);
 
     verify(removeSnapshotsFacet).processRepository(eq(repository), any());
-    verify(facet, times(dels)).deleteComponents(any());
+    verify(facet, times(dels)).deleteComponents((int[]) any());
   }
 
 
