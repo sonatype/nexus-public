@@ -12,55 +12,53 @@
  */
 package org.sonatype.nexus.internal.node;
 
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.node.DeploymentAccess;
-import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.datastore.ConfigStoreSupport;
+import org.sonatype.nexus.datastore.api.DataSessionSupplier;
+import org.sonatype.nexus.transaction.Transactional;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-/**
- * Simple {@link DeploymentAccess} that just delegates to {@link NodeAccess} and doesn't allow aliases.
- *
- * @since 3.21
- */
 @Named
 @Singleton
-public class SimpleDeploymentAccess
-    implements DeploymentAccess
+public class DeploymentIdStoreImpl
+    extends ConfigStoreSupport<DeploymentIdDAO>
+    implements DeploymentIdStore
 {
-  private final DeploymentIdStore deploymentIdStore;
+  private boolean initialized;
+
+  private Optional<String> deploymentId;
 
   @Inject
-  public SimpleDeploymentAccess(final DeploymentIdStore deploymentIdStore) {
-    this.deploymentIdStore = checkNotNull(deploymentIdStore);
+  public DeploymentIdStoreImpl(final DataSessionSupplier sessionSupplier) {
+    super(sessionSupplier);
   }
 
+  @Transactional
   @Override
-  public String getId() {
-    return deploymentIdStore.get()
-        .orElseThrow(() -> new RuntimeException("Deployment id is absent."));
+  public Optional<String> get() {
+    if (!initialized) {
+      deploymentId = dao().get();
+
+      if (deploymentId.isPresent()) {
+        initialized = true;
+      }
+    }
+
+    return deploymentId;
   }
 
+  @Transactional
   @Override
-  public String getAlias() {
-    return null; // alias is never set
-  }
+  public void set(final String deploymentId) {
+    checkNotNull(deploymentId);
+    dao().set(deploymentId);
 
-  @Override
-  public void setAlias(final String newAlias) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void start() {
-    // no-op
-  }
-
-  @Override
-  public void stop() {
-    // no-op
+    this.deploymentId = Optional.of(deploymentId);
+    this.initialized = true;
   }
 }
