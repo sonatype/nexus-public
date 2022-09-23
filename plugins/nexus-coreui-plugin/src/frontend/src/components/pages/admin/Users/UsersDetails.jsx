@@ -28,6 +28,7 @@ import {
 import Machine from './UsersFormMachine';
 import UsersForm from './UsersForm';
 import UsersReadOnly from './UsersReadOnly';
+import UsersToken from './UsersToken';
 
 import UIStrings from '../../../../constants/UIStrings';
 import {parseIdParameter, fullName} from "./UsersHelper";
@@ -60,6 +61,8 @@ export default function UsersDetails({itemId, onDone}) {
   const canEdit = hasEditPermission && !readOnly;
   const isEdit = ValidationUtils.notBlank(id);
   const showReadOnly = isEdit && !canEdit;
+  const edition = ExtJS.state().getEdition();
+  const isPro = edition === 'PRO';
 
   return <Page className="nxrm-user">
     <PageHeader>
@@ -75,6 +78,11 @@ export default function UsersDetails({itemId, onDone}) {
             : <UsersForm service={service} onDone={onDone}/>
         }
       </NxTile>
+      {isPro && isEdit &&
+        <NxTile>
+          <UsersToken service={service} />
+        </NxTile>
+      }
     </ContentBody>
   </Page>;
 }

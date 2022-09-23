@@ -232,7 +232,12 @@ export default function UsersForm({service, onDone}) {
         aria-labelledby="modal-form-header"
         variant="narrow">
           {confirmingAdminPassword &&
-            <ConfirmAdminPasswordForm actor={current.children.confirmAdminPasswordMachine}/>
+            <ConfirmAdminPasswordForm
+              actor={current.children.confirmAdminPasswordMachine}
+              title={MODAL.CHANGE_PASSWORD}
+              text={MODAL.TEXT}
+              confirmLabel={MODAL.NEXT}
+            />
           }
           {confirmingNewPassword &&
             <ConfirmNewPasswordForm actor={current.children.confirmNewPasswordMachine} />

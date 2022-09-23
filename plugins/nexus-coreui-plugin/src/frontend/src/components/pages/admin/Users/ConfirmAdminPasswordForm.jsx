@@ -27,7 +27,12 @@ import UIStrings from '../../../../constants/UIStrings';
 
 const {MODAL} = UIStrings.USERS;
 
-export default function ConfirmAdminPasswordForm({actor}) {
+export default function ConfirmAdminPasswordForm({
+  actor,
+  title,
+  text,
+  confirmLabel,
+}) {
   const [state, send] = useActor(actor);
   const {isPristine, loadError, saveError, validationErrors} = state.context;
   const isLoading = state.matches('loading');
@@ -48,19 +53,19 @@ export default function ConfirmAdminPasswordForm({actor}) {
     <NxForm
       loading={isLoading}
       loadError={loadError}
-      submitBtnText={MODAL.NEXT}
+      submitBtnText={confirmLabel}
       onSubmit={next}
       submitError={saveError}
       submitMaskState={isSaving ? false : null}
-      submitMaskMessage={MODAL.NEXT}
+      submitMaskMessage={confirmLabel}
       onCancel={cancel}
       validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
     >
       <NxModal.Header>
-        <NxH2 id="modal-form-header">{MODAL.CHANGE_PASSWORD}</NxH2>
+        <NxH2 id="modal-form-header">{title}</NxH2>
       </NxModal.Header>
       <NxModal.Content>
-        <NxP>{MODAL.TEXT}</NxP>
+        <NxP>{text}</NxP>
         <NxFormGroup label={MODAL.ADMIN_PASSWORD} isRequired>
           <NxTextInput
             {...FormUtils.fieldProps('adminPassword', state)}

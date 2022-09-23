@@ -48,6 +48,7 @@ const createUserUrl = usersUrl;
 const getRolesUrl = (source) => `${rolesUrl}?source=${encodeURIComponent(source)}`;
 const defaultRolesUrl = getRolesUrl('default');
 const changePasswordUrl = (userId) => `${usersUrl}/${encodeURIComponent(userId)}/change-password`;
+const resetTokenUrl = (userId, realm) => `${usersUrl}/${encodeURIComponent(userId)}/${realm}/user-token-reset`;
 
 export const URL = {
   usersUrl,
@@ -55,7 +56,8 @@ export const URL = {
   createUserUrl,
   defaultRolesUrl,
   findUsersUrl,
-  changePasswordUrl
+  changePasswordUrl,
+  resetTokenUrl
 };
 
 export const isAnonymousUser = (userId) => userId === ExtJS.state().getValue('anonymousUsername');

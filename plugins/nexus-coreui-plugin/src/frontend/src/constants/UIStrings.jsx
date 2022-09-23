@@ -304,6 +304,19 @@ export default {
       },
       DELETE_SUCCESS: (name) => `User deleted: ${name}`,
     },
+    TOKEN: {
+      LABEL: 'User Token Options',
+      USER_TOKEN: 'User Token',
+      ACTIVE_FEATURE: 'Resetting a user’s token will invalidate their current token and force a new token to be created the next time it is accessed by the user',
+      REQUIRE_ENABLE_FEATURE: <>
+        User tokens allow users to authenticate securely without typical user credentials such as those used by LDAP or Crowd. To use this feature, visit the <NxTextLink href="#admin/system/capabilities">
+        capabilities page </NxTextLink> and create a “User Token” capability.
+      </>,
+      RESET_USER_TOKEN: 'Reset user token',
+      TEXT: 'Resetting user tokens requires validation of your credentials.',
+      AUTHENTICATE: 'Authenticate',
+      SAVE_SUCCESS: (user) => `User token of ${user} has been reset`
+    }
   },
 
   SSL_CERTIFICATES: {

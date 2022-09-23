@@ -14,34 +14,29 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {assign, sendParent} from 'xstate';
+import {sendParent} from 'xstate';
 import {mergeDeepRight} from 'ramda';
+import Axios from 'axios';
+import {ExtJS, FormUtils} from '@sonatype/nexus-ui-plugin';
+import {URL} from './UsersHelper';
+import UIStrings from '../../../../constants/UIStrings';
 
-import {ExtJS, FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
+const {
+  USERS: {TOKEN: LABELS},
+} = UIStrings;
 
 export default FormUtils.buildFormMachine({
-  id: 'confirmAdminPasswordMachine',
-  initial: 'loaded',
+  id: 'resettingTokenMachine',
+  initial: 'saving',
 
   stateAfterSave: 'done',
-
   config: (config) =>
     mergeDeepRight(config, {
-      context: {
-        data: {
-          adminPassword: '',
-        },
-        pristineData: {
-          adminPassword: '',
-        },
-      },
-
       states: {
         done: {
           type: 'final',
         },
       },
-
       on: {
         CANCEL: {
           actions: sendParent('CANCEL'),
@@ -50,31 +45,11 @@ export default FormUtils.buildFormMachine({
     }),
 }).withConfig({
   actions: {
-    validate: assign({
-      validationErrors: ({data: {adminPassword}}, event) => {
-        if (!event?.data?.success && event?.data?.message) {
-          return {
-            adminPassword: event.data.message,
-          };
-        }
-
-        return {
-          adminPassword: ValidationUtils.validateNotBlank(adminPassword),
-        };
-      },
-    }),
+    logSaveSuccess: ({data}) =>
+      ExtJS.showSuccessMessage(LABELS.SAVE_SUCCESS(data.name)),
   },
   services: {
-    saveData: async ({data: {adminPassword}}) => {
-      const adminUserId = ExtJS.state().getUser().id;
-      const result = await ExtJS.fetchAuthenticationToken(
-        adminUserId,
-        adminPassword
-      );
-
-      return result.success
-        ? Promise.resolve(result.success)
-        : Promise.reject(result);
-    },
+    saveData: ({data}) =>
+      Axios.delete(URL.resetTokenUrl(data.userId, data.source)),
   },
 });
