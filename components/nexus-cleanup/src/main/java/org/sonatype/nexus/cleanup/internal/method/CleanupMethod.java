@@ -12,11 +12,12 @@
  */
 package org.sonatype.nexus.cleanup.internal.method;
 
+import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
 
-import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.task.DeletionProgress;
 
 /**
@@ -29,12 +30,13 @@ public interface CleanupMethod
   /**
    * Cleans up the given list of components.
    *
-   * @param repository - the repository containing the components to cleanup
-   * @param components - what to cleanup (delete / move)
+   * @param repository     - the repository containing the components to cleanup
+   * @param components     - what to cleanup (delete / move)
    * @param cancelledCheck - allows the cleanup to be stopped by the caller before finishing iterating the components
    * @return the number of components cleaned up
    */
-  DeletionProgress run(Repository repository,
-                       Stream<EntityId> components,
-                       BooleanSupplier cancelledCheck);
+  DeletionProgress run(
+      Repository repository,
+      Stream<FluentComponent> components,
+      BooleanSupplier cancelledCheck);
 }

@@ -22,7 +22,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -33,14 +32,12 @@ import org.sonatype.nexus.cleanup.internal.datastore.search.criteria.ComponentCl
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.Continuations;
-import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.extdirect.model.PagedResponse;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
-import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.query.QueryOptions;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -68,14 +65,12 @@ public class DataStoreCleanupComponentBrowse
   }
 
   @Override
-  public Stream<EntityId> browse(final CleanupPolicy policy, final Repository repository) {
+  public Stream<FluentComponent> browse(final CleanupPolicy policy, final Repository repository) {
     checkNotNull(policy);
     checkNotNull(repository);
 
     return Continuations.streamOf(browseComponentsFn(repository))
-      .filter(createComponentFilter(repository, policy))
-      .map(InternalIds::internalComponentId)
-      .map(InternalIds::toExternalId);
+        .filter(createComponentFilter(repository, policy));
   }
 
   @Override

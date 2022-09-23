@@ -27,7 +27,6 @@
       content_type  VARCHAR NOT NULL,
       checksums     ${JSON_TYPE} NOT NULL,
       blob_created  TIMESTAMP WITH TIME ZONE NOT NULL,
-      added_to_repository  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP ,
       created_by    VARCHAR,
       created_by_ip VARCHAR,
 
@@ -35,6 +34,7 @@
       CONSTRAINT uk_${format}_asset_blob_ref UNIQUE (blob_ref)
     );
 
+    ALTER TABLE ${format}_asset_blob ADD COLUMN IF NOT EXISTS added_to_repository  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
     CREATE INDEX IF NOT EXISTS idx_${format}_asset_blob_added_to_repository ON ${format}_asset_blob (added_to_repository);
     --
   </insert>

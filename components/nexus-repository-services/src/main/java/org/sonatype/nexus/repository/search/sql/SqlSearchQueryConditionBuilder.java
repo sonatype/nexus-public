@@ -259,7 +259,11 @@ public class SqlSearchQueryConditionBuilder
   }
 
   private static String escapeWildcardSymbolIfExists(final String value) {
-    return value.replace(String.valueOf(SQL_ZERO_OR_MORE_CHARACTERS), ESCAPE + SQL_ZERO_OR_MORE_CHARACTERS)
+    String result = value;
+    if (value.endsWith(ESCAPE) && !value.endsWith(ESCAPE + ESCAPE)){
+      result += ESCAPE;
+    }
+    return result.replace(String.valueOf(SQL_ZERO_OR_MORE_CHARACTERS), ESCAPE + SQL_ZERO_OR_MORE_CHARACTERS)
         .replace(String.valueOf(SQL_ANY_CHARACTER), ESCAPE + SQL_ANY_CHARACTER);
   }
 

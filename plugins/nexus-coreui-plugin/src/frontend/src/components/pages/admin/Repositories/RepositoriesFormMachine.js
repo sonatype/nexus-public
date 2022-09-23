@@ -56,7 +56,7 @@ export default FormUtils.buildFormMachine({
             UPDATE_PREEMPTIVE_PULL: {
               target: 'loaded',
               actions: ['updatePreemptivePull']
-            }
+            },
           }
         }
       }
@@ -95,7 +95,7 @@ export default FormUtils.buildFormMachine({
     },
     logDeleteSuccess: ({data}) => {
       ExtJS.showSuccessMessage(DELETE_SUCCESS(data.name));
-    }
+    },
   },
   guards: {
     hasNoBlobStoreName: ({data}) => ValidationUtils.isBlank(data.storage?.blobStoreName),

@@ -186,6 +186,7 @@
     WHERE a.repository_id = #{repositoryId}
     <if test="addedToRepository != null"> AND ab.added_to_repository >= #{addedToRepository}</if>
     <include refid="regexExpressions"/>
+    <if test="filter != null"> AND (${filter})</if>
     ORDER BY ab.added_to_repository LIMIT #{limit}
   </select>
 
@@ -194,6 +195,7 @@
     WHERE a.repository_id = #{repositoryId}
     AND ab.added_to_repository >= #{startAddedToRepository} AND ab.added_to_repository &lt; #{endAddedToRepository}
     <include refid="regexExpressions"/>
+    <if test="filter != null"> AND (${filter})</if>
     ORDER BY ab.added_to_repository LIMIT #{limit}
   </select>
 

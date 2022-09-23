@@ -12,13 +12,14 @@
  */
 package org.sonatype.nexus.cleanup.internal.content.search;
 
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
-import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.extdirect.model.PagedResponse;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.query.QueryOptions;
 
 /**
@@ -28,7 +29,7 @@ import org.sonatype.nexus.repository.query.QueryOptions;
  */
 public interface CleanupComponentBrowse
 {
-  Stream<EntityId> browse(CleanupPolicy policy, Repository repository);
+  Stream<FluentComponent> browse(CleanupPolicy policy, Repository repository);
 
   /**
    * Returns a paged response of components

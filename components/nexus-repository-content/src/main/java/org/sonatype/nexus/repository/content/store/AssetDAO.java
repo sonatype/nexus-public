@@ -138,6 +138,8 @@ public interface AssetDAO
       @Param("repositoryId") int repositoryId,
       @Nullable @Param("addedToRepository") OffsetDateTime addedToRepository,
       @Param("regexExpressions") List<String> regexExpressions,
+      @Nullable @Param("filter") String filter,
+      @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams,
       @Param("limit") int limit);
 
   /**
@@ -155,6 +157,8 @@ public interface AssetDAO
       @Param("startAddedToRepository") OffsetDateTime startAddedToRepository,
       @Param("endAddedToRepository") OffsetDateTime endAddedToRepository,
       @Param("regexExpressions") List<String> regexExpressions,
+      @Nullable @Param("filter") String filter,
+      @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams,
       @Param("limit") int limit);
 
   /**

@@ -13,7 +13,8 @@
 package org.sonatype.nexus.repository.content.maintenance;
 
 import java.util.Set;
-
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.inject.Named;
 
 import org.sonatype.nexus.repository.FacetSupport;
@@ -72,10 +73,10 @@ public class DefaultMaintenanceFacet
   }
 
   @Override
-  public int deleteComponents(final int[] componentIds) {
+  public int deleteComponents(final Stream<FluentComponent> components) {
     ContentFacetSupport contentFacet = (ContentFacetSupport) contentFacet();
     ComponentStore<?> componentStore = contentFacet.stores().componentStore;
 
-    return componentStore.purge(contentFacet.contentRepositoryId(), componentIds);
+    return componentStore.purge(contentFacet.contentRepositoryId(), components.collect(Collectors.toList()));
   }
 }

@@ -15,13 +15,11 @@ package org.sonatype.nexus.cleanup.internal.orient.method;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.cleanup.internal.method.CleanupMethod;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.ComponentMaintenance;

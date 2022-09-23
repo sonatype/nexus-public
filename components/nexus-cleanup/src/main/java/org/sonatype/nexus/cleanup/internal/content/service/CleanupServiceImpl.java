@@ -20,7 +20,6 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -31,8 +30,8 @@ import org.sonatype.nexus.cleanup.internal.method.CleanupMethod;
 import org.sonatype.nexus.cleanup.service.CleanupService;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
-import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.task.DeletionProgress;
 import org.sonatype.nexus.repository.types.GroupType;
@@ -116,7 +115,7 @@ public class CleanupServiceImpl
     if (!policy.getCriteria().isEmpty()) {
       do {
         try {
-          Stream<EntityId> componentsToDelete = browseService.browse(policy, repository);
+          Stream<FluentComponent> componentsToDelete = browseService.browse(policy, repository);
           DeletionProgress currentProgress = cleanupMethod.run(repository, componentsToDelete, cancelledCheck);
           deletionProgress.update(currentProgress);
         }

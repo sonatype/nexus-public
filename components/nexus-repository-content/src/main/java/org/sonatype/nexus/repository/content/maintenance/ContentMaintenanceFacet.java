@@ -12,11 +12,14 @@
  */
 package org.sonatype.nexus.repository.content.maintenance;
 
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 
 /**
  * @since 3.24
@@ -42,10 +45,9 @@ public interface ContentMaintenanceFacet
   /**
    * Delete a batch of components.
    *
-   * @param componentIds  the componentIds to delete
+   * @param components the components to delete
    * @return number of components purged
-   *
    * @since 3.29
    */
-  int deleteComponents(int[] componentIds);
+  int deleteComponents(Stream<FluentComponent> components);
 }

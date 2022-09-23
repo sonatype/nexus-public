@@ -17,7 +17,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.Continuation;
@@ -90,9 +90,11 @@ public interface MavenContentFacet
 
   int deleteComponents(int[] componentIds);
 
+  int deleteComponents(Stream<FluentComponent> components);
+
   /**
-   * Delete metadata, when no more components of same coordinates; or
-   * Flag metadata for rebuild, when other components share same GAbV (snapshots)
+   * Delete metadata, when no more components of same coordinates; or Flag metadata for rebuild, when other components
+   * share same GAbV (snapshots)
    *
    * @param component for which metadata should be deleted or flagged for rebuild
    * @return paths of deleted assets; empty when just flagging for rebuild

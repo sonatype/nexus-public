@@ -25,7 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -84,15 +85,15 @@ import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW_ONCE;
 import static org.sonatype.nexus.repository.content.AttributeOperation.OVERLAY;
 import static org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet.METADATA_FORCE_REBUILD;
 import static org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet.METADATA_REBUILD;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.ARTIFACT_SUBORDINATE;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_INDEX;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_ARTIFACT_ID;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_CLASSIFIER;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_EXTENSION;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_GROUP_ID;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_VERSION;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.ARTIFACT_SUBORDINATE;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_INDEX;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
 import static org.sonatype.nexus.repository.maven.internal.Constants.METADATA_FILENAME;
 import static org.sonatype.nexus.repository.maven.internal.MavenModels.readModel;
 import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.metadataPath;
@@ -430,6 +431,30 @@ public class MavenContentFacetImpl
         component.namespace(), component.name(),
         component.attributes(Maven2Format.NAME).get(P_BASE_VERSION, String.class)
     };
+  }
+
+  @Override
+  public int deleteComponents(final Stream<FluentComponent> components) {
+    ContentFacetSupport contentFacet = (ContentFacetSupport) facet(ContentFacet.class);
+    ComponentStore<?> componentStore = contentFacet.stores().componentStore;
+    List<FluentComponent> componentsList = components.collect(Collectors.toList());
+
+    if (!ProxyType.NAME.equals(repository().getType().getValue())) {
+      Set<List<String>> gavs = collectGavs(componentsList);
+      int deletedCount = componentStore.purge(contentFacet.contentRepositoryId(), componentsList);
+      gavs.forEach(gav -> deleteMetadataOrFlagForRebuild(gav.get(0), gav.get(1), gav.get(2)));
+      return deletedCount;
+    }
+    else {
+      return componentStore.purge(contentFacet.contentRepositoryId(), componentsList);
+    }
+  }
+
+  private Set<List<String>> collectGavs(final List<FluentComponent> components) {
+    return components.stream()
+        .map(this::collectGabv)
+        .map(Arrays::asList)
+        .collect(toSet());
   }
 
   @Override

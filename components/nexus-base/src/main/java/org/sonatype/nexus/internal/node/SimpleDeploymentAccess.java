@@ -31,16 +31,17 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class SimpleDeploymentAccess
     implements DeploymentAccess
 {
-  private final NodeAccess nodeAccess;
+  private final DeploymentIdStore deploymentIdStore;
 
   @Inject
-  public SimpleDeploymentAccess(final NodeAccess nodeAccess) {
-    this.nodeAccess = checkNotNull(nodeAccess);
+  public SimpleDeploymentAccess(final DeploymentIdStore deploymentIdStore) {
+    this.deploymentIdStore = checkNotNull(deploymentIdStore);
   }
 
   @Override
   public String getId() {
-    return nodeAccess.getId();
+    return deploymentIdStore.get()
+        .orElseThrow(() -> new RuntimeException("Deployment id is absent."));
   }
 
   @Override

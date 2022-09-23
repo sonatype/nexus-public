@@ -177,6 +177,22 @@ public class SqlSearchQueryConditionBuilderTest
   }
 
   @Test
+  public void shouldEscapeTrailingBackslashIfWildcard() {
+    final SqlSearchQueryCondition actual =
+        underTest.condition("component", of("abc*\\", "?def\\", "ghi*\\jk", "\\jkl?"));
+
+    assertThat(actual.getSqlConditionFormat(),
+        is("(component LIKE #{filterParams.component0} OR component LIKE #{filterParams.component1} OR " +
+            "component LIKE #{filterParams.component2} OR component LIKE #{filterParams.component3})"));
+
+    assertThat(actual.getValues().keySet(),
+        is(ImmutableSet.of("component0", "component1", "component2", "component3")));
+
+    assertThat(actual.getValues().values(),
+        containsInAnyOrder("abc%\\\\", "_def\\\\", "ghi%\\jk", "\\jkl_"));
+  }
+
+  @Test
   public void shouldCreateExactAndWildcardCondition() {
     SqlSearchQueryCondition actual =
         underTest.condition("repository_name", of("repo1", "repo2", "repo3", "maven*", "raw?"));

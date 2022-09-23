@@ -14,11 +14,18 @@ import React from 'react';
 
 import {ExtJS, FormUtils, Textfield, UseNexusTruststore} from '@sonatype/nexus-ui-plugin';
 
-import {NxCheckbox, NxFieldset, NxFormGroup, NxTextInput} from '@sonatype/react-shared-components';
+import {
+  NxCheckbox,
+  NxFieldset,
+  NxFormGroup,
+  NxTextInput,
+} from '@sonatype/react-shared-components';
+
 
 import UIStrings from '../../../../../constants/UIStrings';
 
 import DockerIndexConfiguration from './DockerIndexConfiguration';
+import DockerForeignLayerConfiguration from './DockerForeignLayerConfiguration';
 
 const {EDITOR} = UIStrings.REPOSITORIES;
 
@@ -26,14 +33,15 @@ const REPLICATION_FEATURE = 'replicationFeatureEnabled';
 
 export default function GenericProxyConfiguration({parentMachine}) {
   const [parentState, sendParent] = parentMachine;
-
   const {
     data: {
       format,
+      type,
       replication,
       proxy: {remoteUrl}
     }
   } = parentState.context;
+
 
   const isReplicationEnabled = ExtJS.state().getValue(REPLICATION_FEATURE) || false;
   const preemptivePullEnabled = replication?.preemptivePullEnabled || false;
@@ -72,6 +80,8 @@ export default function GenericProxyConfiguration({parentMachine}) {
       />
 
       {format === 'docker' && <DockerIndexConfiguration parentMachine={parentMachine} />}
+
+      {format === 'docker' && type === 'proxy' && <DockerForeignLayerConfiguration parentMachine={parentMachine} />}
 
       {isReplicationEnabled && (
         <>
