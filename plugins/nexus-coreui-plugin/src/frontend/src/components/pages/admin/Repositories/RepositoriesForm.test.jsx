@@ -53,7 +53,8 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     checkPermission: jest.fn(),
     requestConfirmation: jest.fn(),
     state: () => ({
-      getValue: jest.fn(() => false)
+      getValue: jest.fn(() => false),
+      getEdition: jest.fn(() => 'PRO')
     })
   }
 }));
@@ -79,7 +80,12 @@ jest.mock('./RepositoriesContextProvider', () => ({
 }));
 
 const {
-  REPOSITORIES: {EDITOR},
+  REPOSITORIES: {
+    EDITOR,
+    EDITOR: {
+      DOCKER: {INDEX, CONNECTORS}
+    }
+  },
   SETTINGS,
   USE_TRUST_STORE,
   CLOSE
@@ -168,18 +174,22 @@ describe('RepositoriesForm', () => {
     getRemoveQuarantinedCheckbox: () =>
       screen.getByRole('checkbox', {name: EDITOR.NPM.REMOVE_QUARANTINED.DESCR}),
     getVersionPolicySelect: () => screen.getByLabelText(EDITOR.VERSION_POLICY_LABEL),
-    getDockerConnectorHttpPortCheckbox: () =>
+    getDockerSubdomainCheckbox: () =>
       screen.getAllByRole('checkbox', {name: 'Toggle Text Input'})[0],
-    getDockerConnectorHttpsPortCheckbox: () =>
+    getDockerConnectorHttpPortCheckbox: () =>
       screen.getAllByRole('checkbox', {name: 'Toggle Text Input'})[1],
-    getDockerConnectorHttpPort: () =>
-      screen.getAllByPlaceholderText(EDITOR.DOCKER_CONNECTOR_PLACEHOLDER)[0],
-    getDockerConnectorHttpsPort: () =>
-      screen.getAllByPlaceholderText(EDITOR.DOCKER_CONNECTOR_PLACEHOLDER)[1],
+    getDockerConnectorHttpsPortCheckbox: () =>
+      screen.getAllByRole('checkbox', {name: 'Toggle Text Input'})[2],
+    getDockerSubdomainInput: () =>
+      screen.getByPlaceholderText(CONNECTORS.SUBDOMAIN.PLACEHOLDER),
+    getDockerConnectorHttpPortInput: () =>
+      screen.getAllByPlaceholderText(CONNECTORS.HTTP.PLACEHOLDER)[0],
+    getDockerConnectorHttpsPortInput: () =>
+      screen.getAllByPlaceholderText(CONNECTORS.HTTPS.PLACEHOLDER)[1],
     getDockerApiVersionCheckbox: () =>
       screen.getByRole('checkbox', {name: EDITOR.REGISTRY_API_SUPPORT_DESCR}),
     getDockerAnonimousPullCheckbox: () =>
-      screen.getByRole('checkbox', {name: EDITOR.ALLOW_ANON_DOCKER_PULL_DESCR}),
+      screen.getByRole('checkbox', {name: CONNECTORS.ALLOW_ANON_DOCKER_PULL.DESCR}),
     getDockerWritableRepositorySelect: () => screen.getByLabelText(EDITOR.WRITABLE.LABEL),
     getDockerRedeployLatestCheckboxEnabled: () =>
       screen.getByRole('checkbox', {name: EDITOR.REDEPLOY_LATEST.DESCRIPTION}),
@@ -191,9 +201,9 @@ describe('RepositoriesForm', () => {
       screen.getByRole('button', {name: USE_TRUST_STORE.VIEW_CERTIFICATE}),
     getCloseCertificateButton: () => screen.getByText(CLOSE, {selector: 'button'}),
     getDockerIndexRadioButtons: () => ({
-      registry: screen.getByLabelText(EDITOR.DOCKER.INDEX.OPTIONS.REGISTRY),
-      hub: screen.getByLabelText(EDITOR.DOCKER.INDEX.OPTIONS.HUB),
-      custom: screen.getByLabelText(EDITOR.DOCKER.INDEX.OPTIONS.CUSTOM)
+      registry: screen.getByLabelText(INDEX.OPTIONS.REGISTRY),
+      hub: screen.getByLabelText(INDEX.OPTIONS.HUB),
+      custom: screen.getByLabelText(INDEX.OPTIONS.CUSTOM)
     }),
     getDockerIndexUrlInput: () => screen.queryByLabelText(EDITOR.DOCKER.INDEX.URL.LABEL),
     getPreemptiveAuthCheckbox: () => {
@@ -486,6 +496,10 @@ describe('RepositoriesForm', () => {
       expect(selectors.getDockerRedeployLatestCheckboxEnabled()).toBeEnabled();
 
       userEvent.click(selectors.getDockerRedeployLatestCheckboxEnabled());
+
+      userEvent.click(selectors.getDockerSubdomainCheckbox());
+      await TestUtils.changeField(selectors.getDockerSubdomainInput, 'docker-sub-domain');
+      userEvent.click(selectors.getDockerSubdomainCheckbox());
 
       userEvent.click(selectors.getCreateButton());
 
@@ -991,7 +1005,7 @@ describe('RepositoriesForm', () => {
           httpsPort: null,
           forceBasicAuth: false,
           v1Enabled: false,
-          subdomain: null
+          subdomain: 'docker-proxy-2'
         },
         dockerProxy: {
           indexType: 'CUSTOM',
@@ -1025,6 +1039,7 @@ describe('RepositoriesForm', () => {
       expect(selectors.getDockerIndexUrlInput()).toHaveValue(DOCKER_HUB_URL);
       userEvent.click(indexRadioButtons.custom);
       await TestUtils.changeField(selectors.getDockerIndexUrlInput, repo.dockerProxy.indexUrl);
+      userEvent.click(selectors.getDockerSubdomainCheckbox());
 
       userEvent.click(selectors.getCreateButton());
 
@@ -1160,7 +1175,7 @@ describe('RepositoriesForm', () => {
           forceBasicAuth: true,
           httpPort: '333',
           httpsPort: '444',
-          subdomain: null
+          subdomain: 'docker-sub-domain'
         }
       };
 
@@ -1168,17 +1183,22 @@ describe('RepositoriesForm', () => {
 
       await TestUtils.changeField(selectors.getBlobStoreSelect, repo.storage.blobStoreName);
 
-      expect(selectors.getDockerConnectorHttpPort()).toBeDisabled();
-      expect(selectors.getDockerConnectorHttpsPort()).toBeDisabled();
+      expect(selectors.getDockerConnectorHttpPortInput()).toBeDisabled();
+      expect(selectors.getDockerConnectorHttpsPortInput()).toBeDisabled();
+      expect(selectors.getDockerSubdomainInput()).toBeDisabled();
 
       userEvent.click(selectors.getDockerConnectorHttpPortCheckbox());
       userEvent.click(selectors.getDockerConnectorHttpsPortCheckbox());
+      userEvent.click(selectors.getDockerSubdomainCheckbox());
 
-      expect(selectors.getDockerConnectorHttpPort()).toBeEnabled();
-      expect(selectors.getDockerConnectorHttpsPort()).toBeEnabled();
+      expect(selectors.getDockerConnectorHttpPortInput()).toBeEnabled();
+      expect(selectors.getDockerConnectorHttpsPortInput()).toBeEnabled();
+      expect(selectors.getDockerSubdomainInput()).toBeEnabled();
+      expect(selectors.getDockerSubdomainInput()).toHaveValue(repo.name);
 
-      await TestUtils.changeField(selectors.getDockerConnectorHttpPort, repo.docker.httpPort);
-      await TestUtils.changeField(selectors.getDockerConnectorHttpsPort, repo.docker.httpsPort);
+      await TestUtils.changeField(selectors.getDockerConnectorHttpPortInput, repo.docker.httpPort);
+      await TestUtils.changeField(selectors.getDockerConnectorHttpsPortInput, repo.docker.httpsPort);
+      await TestUtils.changeField(selectors.getDockerSubdomainInput, repo.docker.subdomain);
 
       userEvent.click(selectors.getDockerApiVersionCheckbox());
       userEvent.click(selectors.getDockerAnonimousPullCheckbox());

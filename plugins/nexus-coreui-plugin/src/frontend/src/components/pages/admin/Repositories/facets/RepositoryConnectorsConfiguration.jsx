@@ -13,49 +13,65 @@
 import React from 'react';
 
 import {NxH2, NxCheckbox, NxFieldset} from '@sonatype/react-shared-components';
-import {FormUtils} from '@sonatype/nexus-ui-plugin';
+import {FormUtils, ExtJS} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../../constants/UIStrings';
 
 import ToggleableTextInput from './ToggleableTextInput/ToggleableTextInput';
 
-const {EDITOR} = UIStrings.REPOSITORIES;
+const {CONNECTORS} = UIStrings.REPOSITORIES.EDITOR.DOCKER;
 
 export default function RepositoryConnectorsConfiguration({parentMachine}) {
-  const [currentParent, sendParent] = parentMachine;
+  const [parentState, sendParent] = parentMachine;
+
+  const repositoryName = parentState.context.data.name;
+
+  const isProEdition = ExtJS.state().getEdition() === 'PRO';
 
   return (
     <>
-      <NxH2 className="nxrm-docker-connectors-caption">{EDITOR.REPOSITORY_CONNECTORS_CAPTION}</NxH2>
+      <NxH2 className="nxrm-docker-connectors-caption">{CONNECTORS.CAPTION}</NxH2>
 
-      <p className="nxrm-docker-connectors-help">{EDITOR.DOCKER_CONNECTORS_HELP}</p>
+      <p className="nxrm-docker-connectors-help">{CONNECTORS.HELP}</p>
+
+      {isProEdition && (
+        <ToggleableTextInput
+          parentMachine={parentMachine}
+          contextPropName="docker.subdomain"
+          label={CONNECTORS.SUBDOMAIN.LABEL}
+          sublabel={CONNECTORS.SUBDOMAIN.SUBLABEL}
+          defaultValue={repositoryName}
+          placeholder={CONNECTORS.SUBDOMAIN.PLACEHOLDER}
+          className="nxrm-form-group-docker-connector-subdomain"
+        />
+      )}
 
       <ToggleableTextInput
         parentMachine={parentMachine}
         contextPropName="docker.httpPort"
-        label={EDITOR.HTTP_CONNECTOR_LABEL}
-        sublabel={EDITOR.HTTP_CONNECTOR_SUBLABEL}
-        placeholder={EDITOR.DOCKER_CONNECTOR_PLACEHOLDER}
+        label={CONNECTORS.HTTP.LABEL}
+        sublabel={CONNECTORS.HTTP.SUBLABEL}
+        placeholder={CONNECTORS.HTTP.PLACEHOLDER}
         className="nxrm-form-group-docker-connector-http-port"
       />
       <ToggleableTextInput
         parentMachine={parentMachine}
         contextPropName="docker.httpsPort"
-        label={EDITOR.HTTPS_CONNECTOR_LABEL}
-        sublabel={EDITOR.HTTPS_CONNECTOR_SUBLABEL}
-        placeholder={EDITOR.DOCKER_CONNECTOR_PLACEHOLDER}
+        label={CONNECTORS.HTTPS.LABEL}
+        sublabel={CONNECTORS.HTTPS.SUBLABEL}
+        placeholder={CONNECTORS.HTTPS.PLACEHOLDER}
         className="nxrm-form-group-docker-connector-https-port"
       />
 
       <NxFieldset
-        label={EDITOR.ALLOW_ANON_DOCKER_PULL_LABEL}
+        label={CONNECTORS.ALLOW_ANON_DOCKER_PULL.LABEL}
         className="nxrm-form-group-force-basic-auth"
       >
         <NxCheckbox
-          {...FormUtils.checkboxProps('docker.forceBasicAuth', currentParent)}
+          {...FormUtils.checkboxProps('docker.forceBasicAuth', parentState)}
           onChange={FormUtils.handleUpdate('docker.forceBasicAuth', sendParent)}
         >
-          {EDITOR.ALLOW_ANON_DOCKER_PULL_DESCR}
+          {CONNECTORS.ALLOW_ANON_DOCKER_PULL.DESCR}
         </NxCheckbox>
       </NxFieldset>
     </>

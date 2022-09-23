@@ -884,14 +884,6 @@ export default {
         },
       },
       LEARN_MORE: 'Learn more',
-      REPOSITORY_CONNECTORS_CAPTION: 'Repository Connectors',
-      HTTP_CONNECTOR_LABEL: 'HTTP',
-      HTTP_CONNECTOR_SUBLABEL: 'Create an HTTP connector at specified port. Normally used if the server is behind a secure proxy',
-      HTTPS_CONNECTOR_LABEL: 'HTTPS',
-      HTTPS_CONNECTOR_SUBLABEL: 'Create an HTTP connector at specified port. Normally used if the server is configured for https',
-      DOCKER_CONNECTOR_PLACEHOLDER: 'Enter a port number',
-      ALLOW_ANON_DOCKER_PULL_LABEL: 'Allow anonymous docker pull',
-      ALLOW_ANON_DOCKER_PULL_DESCR: 'Allow anonymous docker pull (Docker Bearer Token Realm required)',
       REGISTRY_API_SUPPORT_CAPTION: 'Docker Registry API Support',
       REGISTRY_API_SUPPORT_LABEL: 'Enable Docker V1 API',
       REGISTRY_API_SUPPORT_DESCR: 'Allow clients to use the V1 API to interact with this repository',
@@ -907,6 +899,51 @@ export default {
             LABEL: 'Location of the Docker Index',
             PLACEHOLDER: 'Enter a URL'
           }
+        },
+        CONNECTORS: {
+          CAPTION: 'Repository Connectors',
+          HTTP: {
+            LABEL: 'HTTP',
+            SUBLABEL: 'Create an HTTP connector at specified port. Normally used if the server is behind a secure proxy',
+            PLACEHOLDER: 'Enter a port number'
+          },
+          HTTPS: {
+            LABEL: 'HTTPS',
+            SUBLABEL: 'Create an HTTP connector at specified port. Normally used if the server is configured for https',
+            PLACEHOLDER: 'Enter a port number'
+          },
+          SUBDOMAIN: {
+            LABEL: 'Allow Subdomain Routing',
+            SUBLABEL: 'Use the following subdomain to make push and pull requests for this repository',
+            PLACEHOLDER: 'Enter a subdomain',
+            VALIDATION_ERROR: 'Subdomain field must be a minimum of 1 and maximum of 63 characters (letters, numbers, and dashes) and must start with a letter and end with a letter or digit'
+          },
+          ALLOW_ANON_DOCKER_PULL: {
+            LABEL: 'Allow anonymous docker pull',
+            DESCR: 'Allow anonymous docker pull (Docker Bearer Token Realm required)'
+          },
+          HELP: <>
+            Connectors allow Docker clients to connect directly to hosted registries, but are not always
+            required.
+            <br />
+            Consult our{' '}
+            <NxTextLink
+              href="https://links.sonatype.com/products/nexus/docker-ssl-connector/docs"
+              external
+            >
+              documentation
+            </NxTextLink>
+            {' '}for which connector is appropriate for your use case.
+            <br />
+            For information on scaling see our{' '}
+            <NxTextLink
+              href="https://links.sonatype.com/products/nexus/docker-scaling-repositories/docs"
+              external
+            >
+              scaling documentation
+            </NxTextLink>
+            .
+          </>, 
         }
       },
       FOREIGN_LAYER: {
@@ -928,28 +965,6 @@ export default {
         yum: ' (e.g., http://mirror.centos.org/centos/)',
         default: ' (e.g., https://example.com)'
       },
-      DOCKER_CONNECTORS_HELP: <>
-        Connectors allow Docker clients to connect directly to hosted registries, but are not always
-        required.
-        <br />
-        Consult our{' '}
-        <NxTextLink
-          href="https://links.sonatype.com/products/nexus/docker-ssl-connector/docs"
-          external
-        >
-          documentation
-        </NxTextLink>
-        {' '}for which connector is appropriate for your use case.
-        <br />
-        For information on scaling see our{' '}
-        <NxTextLink
-          href="https://links.sonatype.com/products/nexus/docker-scaling-repositories/docs"
-          external
-        >
-          scaling documentation
-        </NxTextLink>
-        .
-      </>,
       NUGET: {
         PROTOCOL_VERSION: {
           LABEL: 'Protocol Version',

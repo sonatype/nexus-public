@@ -43,7 +43,8 @@ import {
   validateDockerConnectorPort,
   validateDockerIndexUrl,
   validateNugetQueryCacheItemMaxAge,
-  validateWritableMember
+  validateWritableMember,
+  validateDockerSubdomain
 } from './RepositoryFormValidators';
 
 import {mergeDeepRight} from 'ramda';
@@ -243,7 +244,8 @@ const repositoryFormats = {
       ...genericValidators.proxy(data),
       docker: {
         httpPort: validateDockerConnectorPort(data, 'httpPort'),
-        httpsPort: validateDockerConnectorPort(data, 'httpsPort')
+        httpsPort: validateDockerConnectorPort(data, 'httpsPort'),
+        subdomain: validateDockerSubdomain(data)
       },
       dockerProxy: {
         indexUrl: validateDockerIndexUrl(data)
