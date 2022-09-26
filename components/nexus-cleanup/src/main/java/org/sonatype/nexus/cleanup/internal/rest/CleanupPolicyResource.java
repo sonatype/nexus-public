@@ -111,7 +111,7 @@ public class CleanupPolicyResource
     this.cleanupPolicyStorage = checkNotNull(cleanupPolicyStorage);
     this.formats = checkNotNull(formats);
     this.formatNames = formats.stream().map(Format::getValue).collect(Collectors.toList());
-    this.formatNames.add("*");
+    this.formatNames.add(ALL_FORMATS);
     this.cleanupFormatConfigurationMap = checkNotNull(cleanupFormatConfigurationMap);
     this.defaultCleanupFormatConfiguration = checkNotNull(cleanupFormatConfigurationMap.get("default"));
     this.cleanupPreviewHelper = checkNotNull(cleanupPreviewHelper);
@@ -175,12 +175,18 @@ public class CleanupPolicyResource
       throw new ValidationErrorsException("format", "specified format " + cleanupPolicyXO.getFormat() + " is not valid.");
     }
 
+    int inUseCount = (int) repositoryManager.browseForCleanupPolicy(name).count();
+    if (!cleanupPolicyXO.getFormat().equals(ALL_FORMATS) &&
+        !cleanupPolicy.getFormat().equals(cleanupPolicyXO.getFormat()) &&
+        inUseCount > 0) {
+      throw new ValidationErrorsException("format", "You cannot change the format of a policy that is in use.");
+    }
+
     cleanupPolicy.setNotes(cleanupPolicyXO.getNotes());
     cleanupPolicy.setFormat(cleanupPolicyXO.getFormat());
     cleanupPolicy.setCriteria(toCriteriaMap(cleanupPolicyXO));
 
-    return CleanupPolicyXO.fromCleanupPolicy(cleanupPolicyStorage.update(cleanupPolicy),
-        (int) repositoryManager.browseForCleanupPolicy(name).count());
+    return CleanupPolicyXO.fromCleanupPolicy(cleanupPolicyStorage.update(cleanupPolicy), inUseCount);
   }
 
   @DELETE
