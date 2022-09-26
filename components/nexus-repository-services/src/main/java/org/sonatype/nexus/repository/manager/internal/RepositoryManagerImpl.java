@@ -219,8 +219,14 @@ public class RepositoryManagerImpl
     // configure security
     securityContributor.add(repository);
 
-    log.debug("Tracking: {}", repository);
-    repositories.put(repository.getName().toLowerCase(), repository);
+    Repository value = repositories.putIfAbsent(repository.getName().toLowerCase(), repository);
+
+    if (value == null) {
+      log.debug("Tracking: {}", repository);
+    }
+    else {
+      log.debug("An existing repository with the same name is already tracked {}", value);
+    }
   }
 
   /**
