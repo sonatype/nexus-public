@@ -21,7 +21,7 @@ import RepositoriesContextProvider from './RepositoriesContextProvider';
 export default function Repositories() {
   return (
     <RepositoriesContextProvider>
-      <MasterDetail path="admin/repository/repositories-new">
+      <MasterDetail path="admin/repository/repositories">
         <Master>
           <RepositoriesList />
         </Master>

@@ -18,7 +18,7 @@ import UsersList from './UsersList';
 import UsersDetails from './UsersDetails';
 
 export default function Users() {
-  return <MasterDetail path="admin/security/users-new">
+  return <MasterDetail path="admin/security/users">
     <Master>
       <UsersList/>
     </Master>

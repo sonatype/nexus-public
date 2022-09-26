@@ -143,7 +143,7 @@ Ext.define('NX.controller.Features', {
         path = clonedFeature.mode + '/' + path;
         clonedFeature.path = '/' + path;
 
-        model = me.getStore('Feature').getById(clonedFeature.path);
+        model = me.getStore('Feature').getById(clonedFeature.id);
         if (model) {
           me.getStore('Feature').remove(model);
         }

@@ -24,11 +24,12 @@
 Ext.define('NX.model.Feature', {
   extend: 'Ext.data.Model',
 
-  idProperty: 'path',
+  idProperty: 'id',
 
   // FIXME: define types so its clear what this data is!  Also consider comments for further clarity.
 
   fields: [
+    { name: 'id' },
     { name: 'path' },
     { name: 'text' },
     {

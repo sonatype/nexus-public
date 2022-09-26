@@ -82,7 +82,7 @@ window.plugins.push({
     },
     {
       mode: 'admin',
-      path: '/Repository/Repositories-new',
+      path: '/Repository/Repositories',
       ...UIStrings.REPOSITORIES.MENU,
       view: Repositories,
       iconCls: 'x-fa fa-database',
@@ -118,7 +118,7 @@ window.plugins.push({
     },
     {
       mode: 'admin',
-      path: '/Security/Privileges-New',
+      path: '/Security/Privileges',
       ...UIStrings.PRIVILEGES.MENU,
       view: Privileges,
       iconCls: 'x-fa fa-id-badge',
@@ -131,7 +131,7 @@ window.plugins.push({
     },
     {
       mode: 'admin',
-      path: '/System/EmailServer-New',
+      path: '/System/EmailServer',
       ...UIStrings.EMAIL_SERVER.MENU,
       view: EmailServer,
       iconCls: 'x-fa fa-envelope',
@@ -155,7 +155,7 @@ window.plugins.push({
     },
     {
       mode: 'admin',
-      path: '/Security/SslCertificates-New',
+      path: '/Security/SslCertificates',
       ...UIStrings.SSL_CERTIFICATES.MENU,
       view: SslCertificates,
       iconCls: 'x-fa fa-id-card-alt',
@@ -167,7 +167,7 @@ window.plugins.push({
     },
     {
       mode: 'admin',
-      path: '/Security/Users-New',
+      path: '/Security/Users',
       ...UIStrings.USERS.MENU,
       view: Users,
       iconCls: 'x-fa fa-users',
@@ -366,7 +366,7 @@ window.plugins.push({
     },
     {
       mode: 'admin',
-      path: '/System/HTTP-new',
+      path: '/System/HTTP',
       ...UIStrings.HTTP.MENU,
       view: HTTP,
       iconCls: 'x-fa fa-truck',
