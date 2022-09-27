@@ -12,7 +12,6 @@
  */
 import React from 'react';
 import {useMachine} from '@xstate/react';
-import {isNil} from 'ramda';
 import {
   NxReadOnly,
   NxLoadWrapper,
@@ -22,8 +21,11 @@ import {
   NxH2,
 } from '@sonatype/react-shared-components';
 
+import {FormUtils, ReadOnlyField} from '@sonatype/nexus-ui-plugin';
+
 import UIStrings from '../../../../constants/UIStrings';
 
+const {readOnlyRenderField} = FormUtils;
 const {CONFIGURATION: LABELS} = UIStrings.HTTP;
 
 import Machine from './HttpMachine';
@@ -38,29 +40,27 @@ export default function HttpReadOnly() {
 
   const retry = () => send('RETRY');
 
-  const renderField = (label, data) => {
-    return (
-      !isNil(data) && (
-        <>
-          <NxReadOnly.Label>{label}</NxReadOnly.Label>
-          <NxReadOnly.Data>{data}</NxReadOnly.Data>
-        </>
-      )
-    );
-  };
-
   return (
     <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
       <NxH2>{LABELS.READ_ONLY.LABEL}</NxH2>
       <NxInfoAlert>{LABELS.READ_ONLY.WARNING}</NxInfoAlert>
       <NxReadOnly>
-        {renderField(LABELS.USER_AGENT.LABEL, data.userAgentSuffix)}
-        {renderField(LABELS.TIMEOUT.LABEL, data.timeout)}
-        {renderField(LABELS.ATTEMPTS.LABEL, data.retries)}
+        <ReadOnlyField
+          label={LABELS.USER_AGENT.LABEL}
+          value={data.userAgentSuffix}
+        />
+        <ReadOnlyField label={LABELS.TIMEOUT.LABEL} value={data.timeout} />
+        <ReadOnlyField label={LABELS.ATTEMPTS.LABEL} value={data.retries} />
         {httpEnabled && (
           <>
-            {renderField(LABELS.PROXY.HTTP_HOST.LABEL, data.httpHost)}
-            {renderField(LABELS.PROXY.HTTP_PORT, data.httpPort)}
+            <ReadOnlyField
+              label={LABELS.PROXY.HTTP_HOST}
+              value={data.httpHost}
+            />
+            <ReadOnlyField
+              label={LABELS.PROXY.HTTP_PORT}
+              value={data.httpPort}
+            />
           </>
         )}
         {httpEnabled && httpAuthEnabled && (
@@ -71,16 +71,31 @@ export default function HttpReadOnly() {
                   {LABELS.PROXY.HTTP_AUTHENTICATION}
                 </NxAccordion.Title>
               </NxAccordion.Header>
-              {renderField(LABELS.PROXY.USERNAME, data.httpAuthUsername)}
-              {renderField(LABELS.PROXY.HOST_NAME, data.httpAuthNtlmHost)}
-              {renderField(LABELS.PROXY.DOMAIN, data.httpAuthNtlmDomain)}
+              <ReadOnlyField
+                label={LABELS.PROXY.USERNAME}
+                value={data.httpAuthUsername}
+              />
+              <ReadOnlyField
+                label={LABELS.PROXY.HOST_NAME}
+                value={data.httpAuthNtlmHost}
+              />
+              <ReadOnlyField
+                label={LABELS.PROXY.DOMAIN}
+                value={data.httpAuthNtlmDomain}
+              />
             </NxAccordion>
           </NxTile.Content>
         )}
         {isHttpsEnabled && (
           <>
-            {renderField(LABELS.PROXY.HTTPS_HOST, data.httpsHost)}
-            {renderField(LABELS.PROXY.HTTPS_PORT, data.httpsPort)}
+            <ReadOnlyField
+              label={LABELS.PROXY.HTTPS_HOST}
+              value={data.httpsHost}
+            />
+            <ReadOnlyField
+              label={LABELS.PROXY.HTTPS_PORT}
+              value={data.httpsPort}
+            />
           </>
         )}
         {isHttpsEnabled && httpsAuthEnabled && (
@@ -91,9 +106,18 @@ export default function HttpReadOnly() {
                   {LABELS.PROXY.HTTPS_AUTHENTICATION}
                 </NxAccordion.Title>
               </NxAccordion.Header>
-              {renderField(LABELS.PROXY.USERNAME, data.httpsAuthUsername)}
-              {renderField(LABELS.PROXY.HOST_NAME, data.httpsAuthNtlmHost)}
-              {renderField(LABELS.PROXY.DOMAIN, data.httpsAuthNtlmDomain)}
+              <ReadOnlyField
+                label={LABELS.PROXY.USERNAME}
+                value={data.httpsAuthUsername}
+              />
+              <ReadOnlyField
+                label={LABELS.PROXY.HOST_NAME}
+                value={data.httpsAuthNtlmHost}
+              />
+              <ReadOnlyField
+                label={LABELS.PROXY.DOMAIN}
+                value={data.httpsAuthNtlmDomain}
+              />
             </NxAccordion>
           </NxTile.Content>
         )}

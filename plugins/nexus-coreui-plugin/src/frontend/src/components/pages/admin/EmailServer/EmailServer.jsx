@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-
+import {useMachine} from '@xstate/react';
 import {
   NxTile,
 } from '@sonatype/react-shared-components';
@@ -27,11 +27,15 @@ import {faEnvelope} from '@fortawesome/free-solid-svg-icons';
 
 import EmailServerForm from './EmailServerForm';
 import EmailServerReadOnly from './EmailServerReadOnly';
+import EmailVerifyServer from './EmailVerifyServer';
 
 import UIStrings from '../../../../constants/UIStrings';
 
+import Machine from './EmailServerMachine';
+
 export default function EmailServer() {
   const canEdit = ExtJS.checkPermission('nexus:settings:update');
+  const stateMachine = useMachine(Machine, {devTools: true});
 
   return <Page>
     <PageHeader>
@@ -40,10 +44,15 @@ export default function EmailServer() {
     <ContentBody className="nxrm-email-server">
       <NxTile>
         {canEdit
-            ? <EmailServerForm />
+            ? <EmailServerForm parentMachine={stateMachine} />
             : <EmailServerReadOnly />
         }
       </NxTile>
+      {canEdit &&
+        <NxTile>
+          <EmailVerifyServer parentMachine={stateMachine} />
+        </NxTile>
+      }
     </ContentBody>
   </Page>;
 }

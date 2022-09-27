@@ -11,7 +11,13 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {render, screen, waitForElementToBeRemoved, waitFor} from '@testing-library/react';
+import {
+  render,
+  screen,
+  waitForElementToBeRemoved,
+  waitFor,
+  act
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {ExtJS, TestUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
 import {when} from 'jest-when';
@@ -20,7 +26,15 @@ import Axios from 'axios';
 import EmailServer from './EmailServer';
 import UIStrings from '../../../../constants/UIStrings';
 
-const {EMAIL_SERVER: {FORM: LABELS}, SETTINGS, USE_TRUST_STORE, ERROR} = UIStrings;
+const {
+  EMAIL_SERVER: {
+    FORM: LABELS,
+    VERIFY,
+    READ_ONLY
+  },
+  SETTINGS,
+  ERROR
+} = UIStrings;
 const {REST: {PUBLIC: {EMAIL_SERVER: emailServerUrl}}} = APIConstants;
 const XSS_STRING = TestUtils.XSS_STRING;
 
@@ -55,6 +69,45 @@ const selectors = {
   identityCheck: () => screen.queryByLabelText(LABELS.SSL_TLS_OPTIONS.OPTIONS.IDENTITY_CHECK),
   discardButton: () => screen.getByText(SETTINGS.DISCARD_BUTTON_LABEL),
   saveButton: () => screen.getByText(SETTINGS.SAVE_BUTTON_LABEL),
+  test: {
+    input: () => screen.getByLabelText(VERIFY.LABEL),
+    button: () => screen.getByText(VERIFY.TEST),
+    success: () => screen.getByText(VERIFY.SUCCESS),
+    querySuccess: () => screen.queryByText(VERIFY.SUCCESS),
+    failed: () => screen.getByText(VERIFY.ERROR),
+    queryFailed: () => screen.queryByText(VERIFY.ERROR),
+  },
+  readOnly: {
+    title: () => screen.getByText(LABELS.SECTIONS.SETUP),
+    enabled: () => screen.getByText(LABELS.ENABLED.LABEL),
+    enabledValue: () => screen.getByText(LABELS.ENABLED.LABEL).nextSibling,
+    warning: () => screen.getByText(UIStrings.SETTINGS.READ_ONLY.WARNING),
+    host: () => screen.getByText(LABELS.HOST.LABEL),
+    hostValue: () => screen.getByText(LABELS.HOST.LABEL).nextSibling,
+    port: () => screen.getByText(LABELS.PORT.LABEL),
+    portValue: () => screen.getByText(LABELS.PORT.LABEL).nextSibling,
+    username: () => screen.getByText(LABELS.USERNAME.LABEL),
+    usernameValue: () => screen.getByText(LABELS.USERNAME.LABEL).nextSibling,
+    fromAddress: () => screen.getByText(LABELS.FROM_ADDRESS.LABEL),
+    fromAddressValue: () => screen.getByText(LABELS.FROM_ADDRESS.LABEL).nextSibling,
+    subjectPrefix: () => screen.getByText(LABELS.SUBJECT_PREFIX.LABEL),
+    subjectPrefixValue: () => screen.getByText(LABELS.SUBJECT_PREFIX.LABEL).nextSibling,
+    options: () => screen.getByText(LABELS.SSL_TLS_OPTIONS.LABEL),
+    optionsValues: {
+      enable: [
+        () => screen.getByText(READ_ONLY.ENABLE.ENABLE_STARTTLS),
+        () => screen.getByText(READ_ONLY.ENABLE.REQUIRE_STARTTLS),
+        () => screen.getByText(READ_ONLY.ENABLE.ENABLE_SSL_TLS),
+        () => screen.getByText(READ_ONLY.ENABLE.IDENTITY_CHECK)
+      ],
+      notEnable: [
+        () => screen.getByText(READ_ONLY.NOT_ENABLE.ENABLE_STARTTLS),
+        () => screen.getByText(READ_ONLY.NOT_ENABLE.REQUIRE_STARTTLS),
+        () => screen.getByText(READ_ONLY.NOT_ENABLE.ENABLE_SSL_TLS),
+        () => screen.getByText(READ_ONLY.NOT_ENABLE.IDENTITY_CHECK)
+      ]
+    }
+  }
 };
 
 const DATA = {
@@ -121,7 +174,6 @@ const formShouldBeEmpty = () => {
 };
 
 describe('EmailServer', () => {
-
   const renderAndWaitForLoad = async () => {
     render(<EmailServer/>);
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
@@ -272,4 +324,195 @@ describe('EmailServer', () => {
     userEvent.click(discardButton());
     formShouldBeEmpty();
   });
+
+  describe('Verify configuration', () => {
+    const url = `${emailServerUrl}/verify`;
+    const email = 'example@test.com';
+
+    it('renders the empty input field', async () => {
+      const {input, button} = selectors.test;
+
+      await renderAndWaitForLoad();
+
+      expect(input()).toBeInTheDocument();
+      expect(button()).toBeInTheDocument();
+    });
+
+    it('validates the email configuration', async () => {
+      const {input, button, success} = selectors.test;
+
+      when(Axios.post).calledWith(url, email).mockResolvedValue({data: {success: true}});
+
+      await renderAndWaitForLoad();
+
+      await TestUtils.changeField(input, email);
+
+      await act(async () => userEvent.click(button()));
+
+      expect(Axios.post).toHaveBeenCalledWith(url, email);
+      expect(success()).toBeInTheDocument();
+    });
+
+    it('show error message if the validation fails', async () => {
+      const {input, button, failed} = selectors.test;
+
+      when(Axios.post).calledWith(url, email).mockRejectedValue({data: {success: false}});
+
+      await renderAndWaitForLoad();
+
+      await TestUtils.changeField(input, email);
+
+      await act(async () => userEvent.click(button()));
+
+      expect(Axios.post).toHaveBeenCalledWith(url, email);
+      expect(failed()).toBeInTheDocument();
+    });
+
+    it('validate email', async () => {
+      const {input, button} = selectors.test;
+
+      await renderAndWaitForLoad();
+
+      expect(button()).toBeDisabled();
+
+      await TestUtils.changeField(input, 'wrong_email');
+
+      expect(button()).toBeDisabled();
+    });
+
+    it('removes success message if the input value changes', async () => {
+      const {input, button, success, querySuccess} = selectors.test;
+
+      when(Axios.post).calledWith(url, email).mockResolvedValue({data: {success: true}});
+
+      await renderAndWaitForLoad();
+
+      await TestUtils.changeField(input, email);
+
+      await act(async () => userEvent.click(button()));
+
+      expect(Axios.post).toHaveBeenCalledWith(url, email);
+      expect(success()).toBeInTheDocument();
+
+      await TestUtils.changeField(input, 'changes');
+
+      expect(querySuccess()).not.toBeInTheDocument();
+    });
+
+    it('removes error message if the input value changes', async () => {
+      const {input, button, failed, queryFailed} = selectors.test;
+
+      when(Axios.post).calledWith(url, email).mockRejectedValue({data: {success: false}});
+
+      await renderAndWaitForLoad();
+
+      await TestUtils.changeField(input, email);
+
+      await act(async () => userEvent.click(button()));
+
+      expect(Axios.post).toHaveBeenCalledWith(url, email);
+      expect(failed()).toBeInTheDocument();
+
+      await TestUtils.changeField(input, 'changes');
+
+      expect(queryFailed()).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Read only', () => {
+    const data = {
+      enabled: true,
+      host: "smtp.gmail.com",
+      port: 465,
+      username: "my_user@sonatype.com",
+      password: null,
+      fromAddress: "test@sonatype.com",
+      subjectPrefix: "subject",
+      startTlsEnabled: true,
+      startTlsRequired: true,
+      sslOnConnectEnabled: true,
+      sslServerIdentityCheckEnabled: true,
+      nexusTrustStoreEnabled: true
+    }
+
+    beforeEach(() => {
+      when(ExtJS.checkPermission)
+        .calledWith('nexus:settings:update')
+        .mockReturnValue(false);
+
+      when(Axios.get)
+        .calledWith(emailServerUrl)
+        .mockResolvedValue({data});
+    });
+
+    it('shows default information if email server is not enabled', async () => {
+      when(Axios.get).calledWith(emailServerUrl).mockResolvedValue({data: {}});
+
+      const {title, enabled, warning, enabledValue} = selectors.readOnly;
+
+      await renderAndWaitForLoad();
+
+      expect(title()).toBeInTheDocument();
+      expect(warning()).toBeInTheDocument();
+      expect(enabled()).toBeInTheDocument();
+      expect(enabledValue()).toHaveTextContent('Disabled');
+    });
+
+    it('shows the configuration correctly', async () => {
+      const {
+        title,
+        warning,
+        enabled,
+        enabledValue,
+        host,
+        hostValue,
+        port,
+        portValue,
+        username,
+        usernameValue,
+        fromAddress,
+        fromAddressValue,
+        subjectPrefix,
+        subjectPrefixValue,
+        options,
+        optionsValues
+      } = selectors.readOnly;
+
+      await renderAndWaitForLoad();
+
+      expect(title()).toBeInTheDocument();
+      expect(warning()).toBeInTheDocument();
+      expect(enabled()).toBeInTheDocument();
+      expect(enabledValue()).toHaveTextContent('Enabled');
+      expect(host()).toBeInTheDocument();
+      expect(hostValue()).toHaveTextContent(data.host);
+      expect(port()).toBeInTheDocument();
+      expect(portValue()).toHaveTextContent(data.port);
+      expect(username()).toBeInTheDocument();
+      expect(usernameValue()).toHaveTextContent(data.username);
+      expect(fromAddress()).toBeInTheDocument();
+      expect(fromAddressValue()).toHaveTextContent(data.fromAddress);
+      expect(subjectPrefix()).toBeInTheDocument();
+      expect(subjectPrefixValue()).toHaveTextContent(data.subjectPrefix);
+      expect(options()).toBeInTheDocument();
+      optionsValues.enable.forEach((value) => expect(value()).toBeInTheDocument());
+    });
+
+    it('shows the corresponding message when SSL/TLS options are not enabled', async () => {
+      const {optionsValues} = selectors.readOnly;
+      const newData = {
+        ...data,
+        startTlsEnabled: false,
+        startTlsRequired: false,
+        sslOnConnectEnabled: false,
+        sslServerIdentityCheckEnabled: false,
+      }
+
+      when(Axios.get).calledWith(emailServerUrl).mockResolvedValue({data:newData});
+
+      await renderAndWaitForLoad();
+
+      optionsValues.notEnable.forEach((value) => expect(value()).toBeInTheDocument());
+    });
+  })
 });

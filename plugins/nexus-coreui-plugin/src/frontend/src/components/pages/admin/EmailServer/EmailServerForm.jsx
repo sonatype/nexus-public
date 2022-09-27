@@ -11,13 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {useMachine} from '@xstate/react';
-
-import {
-  FormUtils,
-  ValidationUtils,
-  UseNexusTruststore,
-} from '@sonatype/nexus-ui-plugin';
+import {FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 import {
   NxForm,
   NxFormGroup,
@@ -33,16 +27,12 @@ import {
 
 import UIStrings from '../../../../constants/UIStrings';
 
-import Machine from './EmailServerMachine';
-
 const {EMAIL_SERVER: {FORM: LABELS}} = UIStrings;
 
-export default function EmailServerForm() {
-  const [current, send] = useMachine(Machine, {devTools: true});
-
+export default function EmailServerForm({ parentMachine }) {
+  const [current, send] = parentMachine;
   const {
     isPristine,
-    data: {host, port},
     loadError,
     saveError,
     validationErrors,

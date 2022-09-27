@@ -446,6 +446,27 @@ export default {
         },
       },
     },
+    VERIFY: {
+      LABEL: 'Verify Email Server',
+      SUB_LABEL: 'Where do you want to send the test email?',
+      TEST: 'Test',
+      SUCCESS: 'Email server verification email sent successfully',
+      ERROR: 'Email server verification email failed'
+    },
+    READ_ONLY: {
+      ENABLE: {
+        ENABLE_STARTTLS: 'STARTTLS support enabled for insecure connections',
+        REQUIRE_STARTTLS: 'STARTTLS support required',
+        ENABLE_SSL_TLS: 'SSL/TLS encryption enabled upon connection',
+        IDENTITY_CHECK: 'Server identity check enabled',
+      },
+      NOT_ENABLE: {
+        ENABLE_STARTTLS: 'STARTTLS support not enabled for insecure connections',
+        REQUIRE_STARTTLS: 'STARTTLS support not required',
+        ENABLE_SSL_TLS: 'SSL/TLS encryption not enabled upon connection',
+        IDENTITY_CHECK: 'Server identity check not enabled',
+      }
+    }
   },
 
   BLOB_STORES: {
