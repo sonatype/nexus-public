@@ -37,7 +37,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.AdditionalMatchers.not;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -65,7 +65,7 @@ public class AptApiRepositoryAdapterTest
     assertThat(hostedRepository.getAptSigning(), nullValue());
 
     // only include public key if it is encrypted
-    repository.getConfiguration().attributes("apt").set("passphrase", "mypass");
+    repository.getConfiguration().attributes("aptSigning").set("passphrase", "mypass");
     hostedRepository = (AptHostedApiRepository) underTest.adapt(repository);
     assertThat(hostedRepository.getAptSigning().getKeypair(), is("asdf"));
     assertThat(hostedRepository.getAptSigning().getPassphrase(), nullValue());
@@ -97,7 +97,7 @@ public class AptApiRepositoryAdapterTest
     Configuration configuration = mock(Configuration.class);
     when(configuration.isOnline()).thenReturn(true);
     when(configuration.getRepositoryName()).thenReturn(repositoryName);
-    when(configuration.attributes(not(eq("apt")))).thenReturn(new NestedAttributesMap("dummy", newHashMap()));
+    when(configuration.attributes(not(startsWith("apt")))).thenReturn(new NestedAttributesMap("dummy", newHashMap()));
     return configuration;
   }
 
@@ -111,15 +111,22 @@ public class AptApiRepositoryAdapterTest
     Repository repository = new RepositoryImpl(mock(EventManager.class), type, new AptFormat());
 
     Configuration configuration = config("my-repo");
+    Map<String, Object> attributes = newHashMap();
+
     Map<String, Object> apt = newHashMap();
     apt.put("distribution", distribution);
-    apt.put("keypair", keypair);
-    apt.put("passphrase", passphrase);
     apt.put("flat", flat);
-    Map<String, Object> attributes = newHashMap();
     attributes.put("apt", apt);
     NestedAttributesMap aptNested = new NestedAttributesMap("apt", apt);
     when(configuration.attributes("apt")).thenReturn(aptNested);
+
+    Map<String, Object> aptSigning = newHashMap();
+    aptSigning.put("keypair", keypair);
+    aptSigning.put("passphrase", passphrase);
+    attributes.put("aptSigning", aptSigning);
+    NestedAttributesMap aptSigningNested = new NestedAttributesMap("aptSigning", aptSigning);
+    when(configuration.attributes("aptSigning")).thenReturn(aptSigningNested);
+
     repository.init(configuration);
     return repository;
   }

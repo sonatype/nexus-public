@@ -83,6 +83,7 @@ const {
   REPOSITORIES: {
     EDITOR,
     EDITOR: {
+      APT,
       DOCKER: {INDEX, CONNECTORS}
     }
   },
@@ -216,7 +217,11 @@ describe('RepositoriesForm', () => {
     getForeignLayerRemoveButton: (item) => {
       const listItem = screen.getByText(item).closest('.nx-list__item');
       return item && within(listItem).getByTitle(EDITOR.FOREIGN_LAYER.REMOVE);
-    }
+    },
+    getAptDistributionInput: () => screen.getByLabelText(APT.DISTRIBUTION.LABEL),
+    getAptFlatCheckbox: () => screen.getByRole('checkbox', {name: APT.FLAT.DESCR}),
+    getAptKeyInput: () => screen.getByLabelText(APT.SIGNING.KEY.LABEL),
+    getAptPassphraseInput: () => screen.getByLabelText(APT.SIGNING.PASSPHRASE.LABEL)
   };
 
   const renderView = (itemId = '') => {
@@ -238,6 +243,8 @@ describe('RepositoriesForm', () => {
   const onDone = jest.fn();
 
   const RECIPES_RESPONSE = [
+    {format: 'apt', type: 'hosted'},
+    {format: 'apt', type: 'proxy'},
     {format: 'bower', type: 'proxy'},
     {format: 'docker', type: 'proxy'},
     {format: 'docker', type: 'hosted'},
@@ -500,6 +507,43 @@ describe('RepositoriesForm', () => {
       userEvent.click(selectors.getDockerSubdomainCheckbox());
       await TestUtils.changeField(selectors.getDockerSubdomainInput, 'docker-sub-domain');
       userEvent.click(selectors.getDockerSubdomainCheckbox());
+
+      userEvent.click(selectors.getCreateButton());
+
+      await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(getSaveUrl(repo), repo));
+    });
+
+    it('creates apt hosted repository', async () => {
+      const repo = {
+        format: 'apt',
+        type: 'hosted',
+        name: 'apt-hosted-1',
+        online: true,
+        storage: {
+          blobStoreName: 'default',
+          strictContentTypeValidation: true,
+          writePolicy: 'ALLOW_ONCE'
+        },
+        component: {
+          proprietaryComponents: false
+        },
+        cleanup: null,
+        apt: {
+          distribution: 'bionic'
+        },
+        aptSigning: {
+          keypair: 'apt-key-pair',
+          passphrase: 'apt-key-pass'
+        }
+      };
+
+      await renderViewAndSetRequiredFields(repo);
+
+      await TestUtils.changeField(selectors.getBlobStoreSelect, repo.storage.blobStoreName);
+
+      await TestUtils.changeField(selectors.getAptDistributionInput, repo.apt.distribution);
+      await TestUtils.changeField(selectors.getAptKeyInput, repo.aptSigning.keypair);
+      await TestUtils.changeField(selectors.getAptPassphraseInput, repo.aptSigning.passphrase);
 
       userEvent.click(selectors.getCreateButton());
 
@@ -1040,6 +1084,56 @@ describe('RepositoriesForm', () => {
       userEvent.click(indexRadioButtons.custom);
       await TestUtils.changeField(selectors.getDockerIndexUrlInput, repo.dockerProxy.indexUrl);
       userEvent.click(selectors.getDockerSubdomainCheckbox());
+
+      userEvent.click(selectors.getCreateButton());
+
+      await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(getSaveUrl(repo), repo));
+    });
+
+    it('creates apt proxy repository', async () => {
+      const repo = {
+        format: 'apt',
+        type: 'proxy',
+        name: 'apt-proxy-1',
+        online: true,
+        routingRule: '',
+        storage: {
+          blobStoreName: 'default',
+          strictContentTypeValidation: true
+        },
+        cleanup: null,
+        proxy: {
+          remoteUrl: 'https://foo.bar',
+          contentMaxAge: 1440,
+          metadataMaxAge: 1440
+        },
+        negativeCache: {
+          enabled: true,
+          timeToLive: 1440
+        },
+        httpClient: {
+          blocked: false,
+          autoBlock: true,
+          authentication: null,
+          connection: null
+        },
+        replication: {
+          preemptivePullEnabled: false,
+          assetPathRegex: ''
+        },
+        apt: {
+          distribution: 'bionic',
+          flat: true
+        }
+      };
+
+      await renderViewAndSetRequiredFields(repo);
+
+      await TestUtils.changeField(selectors.getRemoteUrlInput, repo.proxy.remoteUrl);
+      await TestUtils.changeField(selectors.getBlobStoreSelect, repo.storage.blobStoreName);
+
+      await TestUtils.changeField(selectors.getAptDistributionInput, repo.apt.distribution);
+      userEvent.click(selectors.getAptFlatCheckbox());
 
       userEvent.click(selectors.getCreateButton());
 

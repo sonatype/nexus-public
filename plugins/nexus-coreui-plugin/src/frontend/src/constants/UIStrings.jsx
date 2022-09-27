@@ -883,6 +883,27 @@ export default {
       CONTENT_DISPOSITION_SUBLABEL: 'Add Content-Disposition header as "Attachment" to disable some content from being inline in a browser',
       VERSION_POLICY_LABEL: 'Version Policy',
       VERSION_POLICY_SUBLABEL: 'What type of artifacts does this repository store?',
+      APT: {
+        CAPTION: 'APT Settings',
+        DISTRIBUTION: {
+          LABEL: 'Distribution',
+          SUBLABEL: 'Distribution to fetch (e.g., bionic)'
+        },
+        FLAT: {
+          LABEL: 'Flat',
+          DESCR: 'Is this repository flat?'
+        },
+        SIGNING: {
+          KEY: {
+            LABEL: 'Signing key',
+            SUBLABEL: 'PGP signing key pair (armored private key e.g., gpg --export-secret-key --armor)',
+            PLACEHOLDER: 'Entry'
+          },
+          PASSPHRASE: {
+            LABEL: 'Passphrase'
+          }
+        }
+      },
       NPM: {
         REMOVE_NON_CATALOGED: {
           LABEL: 'Remove Non-catalogued Versions',
