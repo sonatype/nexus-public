@@ -209,7 +209,7 @@ export default {
   USERS: {
     MENU: {
       text: 'Users',
-      description: 'Manage Users'
+      description: 'Manage users',
     },
     MODAL: {
       TEXT: 'You must confirm your current password before you are able to change or update the password',
