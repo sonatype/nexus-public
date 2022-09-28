@@ -142,7 +142,21 @@ public class SelectorFilterBuilderImplTest
     Map<String, Object> filterParameters = new HashMap<>();
     String filter = underTest.buildFilter("raw", "request_path", ImmutableList.of(selector), filterParameters);
 
-    assertThat(filter, is(""));
+    assertThat(filter, nullValue());
+    assertThat(filterParameters.size(), is(0));
+  }
+
+  // Jexl expressions are not put into the filter, they need to be checked in code
+  @Test
+  public void testMultipleJexl() {
+    SelectorConfiguration selector1 = createSelectorConfiguration(JexlSelector.TYPE, "selector1", "path.size() > 5");
+    SelectorConfiguration selector2 = createSelectorConfiguration(JexlSelector.TYPE, "selector2", "format == 'raw'");
+
+    Map<String, Object> filterParameters = new HashMap<>();
+    String filter =
+        underTest.buildFilter("raw", "request_path", ImmutableList.of(selector1, selector2), filterParameters);
+
+    assertThat(filter, nullValue());
     assertThat(filterParameters.size(), is(0));
   }
 
@@ -156,8 +170,7 @@ public class SelectorFilterBuilderImplTest
     String filter =
         underTest.buildFilter("raw", "request_path", ImmutableList.of(selector1, selector2), filterParameters);
 
-    // appends extra parenthesis because it expected more than one expression
-    assertThat(filter, is("((request_path = #{filterParams.s0p0}))"));
+    assertThat(filter, is("(request_path = #{filterParams.s0p0})"));
     assertThat(filterParameters.size(), is(1));
     assertThat(filterParameters.get("s0p0"), is("/baz/"));
   }
