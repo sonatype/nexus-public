@@ -12,6 +12,10 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.system.repository.config;
 
+import java.util.function.Function;
+
+import org.sonatype.nexus.repository.Repository;
+
 import static org.sonatype.nexus.testsuite.testsupport.system.RepositoryTestSystem.FORMAT_APT;
 
 public class AptProxyRepositoryConfig
@@ -20,6 +24,10 @@ public class AptProxyRepositoryConfig
   private String distribution;
 
   private Boolean flat;
+
+  public AptProxyRepositoryConfig(final Function<AptProxyRepositoryConfig, Repository> factory) {
+    super(factory);
+  }
 
   @Override
   public String getFormat() {

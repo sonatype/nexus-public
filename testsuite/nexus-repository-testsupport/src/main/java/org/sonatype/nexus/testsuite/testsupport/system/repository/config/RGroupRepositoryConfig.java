@@ -12,11 +12,19 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.system.repository.config;
 
+import java.util.function.Function;
+
+import org.sonatype.nexus.repository.Repository;
+
 import static org.sonatype.nexus.testsuite.testsupport.system.RepositoryTestSystem.FORMAT_R;
 
 public class RGroupRepositoryConfig
     extends GroupRepositoryConfigSupport<RGroupRepositoryConfig>
 {
+  public RGroupRepositoryConfig(final Function<RGroupRepositoryConfig, Repository> factory) {
+    super(factory);
+  }
+
   @Override
   public String getFormat() {
     return FORMAT_R;

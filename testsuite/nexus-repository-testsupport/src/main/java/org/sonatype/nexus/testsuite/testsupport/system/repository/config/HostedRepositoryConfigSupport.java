@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.system.repository.config;
 
+import java.util.function.Function;
+
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.WritePolicy;
 
 public abstract class HostedRepositoryConfigSupport<THIS>
@@ -23,8 +26,12 @@ public abstract class HostedRepositoryConfigSupport<THIS>
   private WritePolicy writePolicy = WritePolicy.ALLOW;
 
   private Boolean latestPolicy = false;
-  
+
   private Boolean replicationEnabled = false;
+
+  public HostedRepositoryConfigSupport(final Function<THIS, Repository> factory) {
+    super(factory);
+  }
 
   @Override
   public String getRecipe() {
@@ -59,6 +66,7 @@ public abstract class HostedRepositoryConfigSupport<THIS>
     return toTHIS();
   }
 
+  @Override
   public Boolean isReplicationEnabled() {
     return replicationEnabled;
   }

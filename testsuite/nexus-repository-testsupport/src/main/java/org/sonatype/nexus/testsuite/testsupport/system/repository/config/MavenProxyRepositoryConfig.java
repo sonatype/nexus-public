@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.system.repository.config;
 
+import java.util.function.Function;
+
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.LayoutPolicy;
 import org.sonatype.nexus.repository.maven.VersionPolicy;
 
@@ -23,6 +26,10 @@ public class MavenProxyRepositoryConfig
   private VersionPolicy versionPolicy = VersionPolicy.MIXED;
 
   private LayoutPolicy layoutPolicy = LayoutPolicy.STRICT;
+
+  public MavenProxyRepositoryConfig(final Function<MavenProxyRepositoryConfig, Repository> repositoryFactory) {
+    super(repositoryFactory);
+  }
 
   @Override
   public String getFormat() {

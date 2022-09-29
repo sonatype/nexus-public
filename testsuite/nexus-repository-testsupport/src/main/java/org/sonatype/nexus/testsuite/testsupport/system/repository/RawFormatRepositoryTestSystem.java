@@ -34,6 +34,7 @@ public class RawFormatRepositoryTestSystem
 {
   @Inject
   public RawFormatRepositoryTestSystem(final RepositoryManager repositoryManager) {
-    super(repositoryManager);
+    super(repositoryManager, RawHostedRepositoryConfig.class, RawProxyRepositoryConfig.class,
+        RawGroupRepositoryConfig.class);
   }
 }

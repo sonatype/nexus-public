@@ -48,17 +48,32 @@ public class MavenFormatRepositoryTestSystem
     super(repositoryManager);
   }
 
-  public Repository createHosted(final MavenHostedRepositoryConfig config) throws Exception {
+  public MavenHostedRepositoryConfig hosted(final String name) {
+    return new MavenHostedRepositoryConfig(this::createHosted).withName(name);
+  }
+
+  public Repository createHosted(final MavenHostedRepositoryConfig config) {
     return doCreate(
         applyMavenAttributes(createHostedConfiguration(config), config.getVersionPolicy(), config.getLayoutPolicy()));
   }
 
-  public Repository createProxy(final MavenProxyRepositoryConfig config) throws Exception {
-    Configuration cfg = applyMavenAttributes(createProxyConfiguration(config), config.getVersionPolicy(), config.getLayoutPolicy());
+  public MavenProxyRepositoryConfig proxy(final String name) {
+    return new MavenProxyRepositoryConfig(this::createProxy)
+         .withName(name);
+  }
+
+  public Repository createProxy(final MavenProxyRepositoryConfig config) {
+    Configuration cfg =
+        applyMavenAttributes(createProxyConfiguration(config), config.getVersionPolicy(), config.getLayoutPolicy());
     return doCreate(cfg);
   }
 
-  public Repository createGroup(final MavenGroupRepositoryConfig config) throws Exception {
+  public MavenGroupRepositoryConfig group(final String name) {
+    return new MavenGroupRepositoryConfig(this::createGroup)
+        .withName(name);
+  }
+
+  public Repository createGroup(final MavenGroupRepositoryConfig config) {
     return doCreate(
         applyMavenAttributes(createGroupConfiguration(config), config.getVersionPolicy(), config.getLayoutPolicy()));
   }

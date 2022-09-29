@@ -12,6 +12,10 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.system.repository.config;
 
+import java.util.function.Function;
+
+import org.sonatype.nexus.repository.Repository;
+
 public abstract class GroupRepositoryConfigSupport<THIS>
     extends RepositoryConfigSupport<THIS>
     implements GroupRepositoryConfig<THIS>
@@ -21,6 +25,10 @@ public abstract class GroupRepositoryConfigSupport<THIS>
   private String[] members;
 
   private String groupWriteMember = "None";
+
+  public GroupRepositoryConfigSupport(final Function<THIS, Repository> factory) {
+    super(factory);
+  }
 
   @Override
   public String getRecipe() {

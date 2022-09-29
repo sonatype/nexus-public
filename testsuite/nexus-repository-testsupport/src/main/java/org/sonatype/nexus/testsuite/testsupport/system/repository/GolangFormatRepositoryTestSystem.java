@@ -34,6 +34,7 @@ public class GolangFormatRepositoryTestSystem
 {
   @Inject
   public GolangFormatRepositoryTestSystem(final RepositoryManager repositoryManager) {
-    super(repositoryManager);
+    super(repositoryManager, GolangHostedRepositoryConfig.class, GolangProxyRepositoryConfig.class,
+        GolangGroupRepositoryConfig.class);
   }
 }
