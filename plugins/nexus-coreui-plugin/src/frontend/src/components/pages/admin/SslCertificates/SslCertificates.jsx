@@ -18,7 +18,7 @@ import SslCertificatesList from './SslCertificatesList';
 import SslCertificatesDetails from './SslCertificatesDetails';
 
 export default function SslCertificates() {
-  return <MasterDetail path="admin/security/sslcertificates-new">
+  return <MasterDetail path="admin/security/sslcertificates">
     <Master>
       <SslCertificatesList/>
     </Master>

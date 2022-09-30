@@ -81,17 +81,6 @@ Ext.define('NX.coreui.controller.FeatureGroups', {
           variants: ['x16', 'x32']
         }
       },
-      {
-        mode: 'browse',
-        path: '/Upload',
-        text: NX.I18n.get('FeatureGroups_Upload_Text'),
-        description: NX.I18n.get('FeatureGroups_Upload_Description'),
-        group: true,
-        iconConfig: {
-          file: 'upload.png',
-          variants: ['x16', 'x32']
-        }
-      }
     ]);
   }
 });

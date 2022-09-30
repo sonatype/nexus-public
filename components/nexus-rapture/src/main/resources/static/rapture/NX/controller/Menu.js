@@ -245,7 +245,7 @@ Ext.define('NX.controller.Menu', {
       if (me.bookmarkingEnabled) {
         me.bookmark(featureMenuModel);
       }
-      me.selectFeature(me.getStore('Feature').getById(featureMenuModel.get('path')));
+      me.selectFeature(me.getStore('Feature').getById(featureMenuModel.get('id')));
       me.populateFeatureGroupStore(featureMenuModel);
     }
   },
@@ -287,7 +287,7 @@ Ext.define('NX.controller.Menu', {
     // add all children of the record to the group store, but do not include the node for the current record
     record.eachChild(function (node) {
       node.cascadeBy(function (child) {
-        features.push(featureStore.getById(child.get('path')));
+        features.push(featureStore.getById(child.get('id')));
       });
     });
 
@@ -571,6 +571,7 @@ Ext.define('NX.controller.Menu', {
                 expanded: nodeExpandMap[feature.path] === undefined ? feature.expanded : nodeExpandMap[feature.path],
                 helpKeyword: feature.helpKeyword,
                 iconName: feature.iconName,
+                id: feature.id,
                 mode: feature.mode,
                 path: feature.path,
                 text: feature.text,
@@ -629,6 +630,7 @@ Ext.define('NX.controller.Menu', {
    */
   createNotAvailableFeature: function (feature) {
     return this.getFeatureModel().create({
+      id: feature.get('id'),
       text: feature.get('text'),
       path: feature.get('path'),
       description: feature.get('description'),

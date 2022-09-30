@@ -62,4 +62,12 @@ public interface RoutingRuleHelper
    * Ensures that the user has the necessary permissions to Read routing rules
    */
   void ensureUserHasPermissionToRead();
+
+  /**
+   * Determine if the repository has a routing rule configured.
+   *
+   * @param repository the repository for the context of this request
+   * @return true if the repository has a routing rule configured
+   */
+  boolean hasRoutingRule(final Repository repository);
 }

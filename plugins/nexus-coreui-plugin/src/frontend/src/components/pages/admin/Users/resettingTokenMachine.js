@@ -14,42 +14,42 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext*/
+import {sendParent} from 'xstate';
+import {mergeDeepRight} from 'ramda';
+import Axios from 'axios';
+import {ExtJS, FormUtils} from '@sonatype/nexus-ui-plugin';
+import {URL} from './UsersHelper';
+import UIStrings from '../../../../constants/UIStrings';
 
-/**
- * Feature model.
- *
- * @since 3.0
- */
-Ext.define('NX.model.Feature', {
-  extend: 'Ext.data.Model',
+const {
+  USERS: {TOKEN: LABELS},
+} = UIStrings;
 
-  idProperty: 'id',
+export default FormUtils.buildFormMachine({
+  id: 'resettingTokenMachine',
+  initial: 'saving',
 
-  // FIXME: define types so its clear what this data is!  Also consider comments for further clarity.
-
-  fields: [
-    { name: 'id' },
-    { name: 'path' },
-    { name: 'text' },
-    {
-      /**
-       * Mode name.
-       */
-      name: 'mode',
-      type: 'string',
-
-      // FIXME: why is this defaulting to 'admin'?
-      defaultValue: 'admin'
-    },
-    { name: 'weight', defaultValue: 100 },
-    { name: 'group', defaultValue: false },
-    { name: 'view', defaultValue: undefined },
-    { name: 'visible', defaultValue: true },
-    { name: 'expanded', defaultValue: true },
-    { name: 'bookmark', defaultValue: undefined },
-    { name: 'iconName', defaultValue: undefined },
-    { name: 'description', defaultValue: undefined },
-    { name: 'authenticationRequired', defaultValue: true }
-  ]
+  stateAfterSave: 'done',
+  config: (config) =>
+    mergeDeepRight(config, {
+      states: {
+        done: {
+          type: 'final',
+        },
+      },
+      on: {
+        CANCEL: {
+          actions: sendParent('CANCEL'),
+        },
+      },
+    }),
+}).withConfig({
+  actions: {
+    logSaveSuccess: ({data}) =>
+      ExtJS.showSuccessMessage(LABELS.SAVE_SUCCESS(data.name)),
+  },
+  services: {
+    saveData: ({data}) =>
+      Axios.delete(URL.resetTokenUrl(data.userId, data.source)),
+  },
 });

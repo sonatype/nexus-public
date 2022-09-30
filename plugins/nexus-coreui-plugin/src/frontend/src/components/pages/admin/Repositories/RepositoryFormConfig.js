@@ -36,6 +36,9 @@ import NugetProxyConfiguration from './facets/NugetProxyConfiguration';
 import NugetGroupConfiguration from './facets/NugetGroupConfiguration';
 import WritableRepositoryConfiguration from './facets/WritableRepositoryConfiguration';
 import PreEmptiveAuthConfiguration from './facets/PreEmptiveAuthConfiguration';
+import AptDistributionConfiguration from './facets/AptDistributionConfiguration';
+import AptSigningConfiguration from './facets/AptSigningConfiguration';
+import AptFlatConfiguration from './facets/AptFlatConfiguration';
 
 import {genericDefaultValues} from './RepositoryFormDefaultValues';
 import {
@@ -43,10 +46,13 @@ import {
   validateDockerConnectorPort,
   validateDockerIndexUrl,
   validateNugetQueryCacheItemMaxAge,
-  validateWritableMember
+  validateWritableMember,
+  validateDockerSubdomain
 } from './RepositoryFormValidators';
 
 import {mergeDeepRight} from 'ramda';
+
+import {ValidationUtils} from '@sonatype/nexus-ui-plugin';
 
 export const DOCKER_INDEX_TYPES = {
   registry: 'REGISTRY',
@@ -73,6 +79,44 @@ const genericFacets = {
 };
 
 const repositoryFormats = {
+  apt_hosted: {
+    facets: [AptDistributionConfiguration, AptSigningConfiguration, ...genericFacets.hosted],
+    defaultValues: {
+      ...genericDefaultValues.hosted,
+      apt: {
+        distribution: null
+      },
+      aptSigning: {
+        keypair: null,
+        passphrase: null
+      }
+    },
+    validators: (data) => ({
+      ...genericValidators.hosted(data),
+      apt: {
+        distribution: ValidationUtils.validateNotBlank(data.apt?.distribution)
+      },
+      aptSigning: {
+        keypair: ValidationUtils.validateNotBlank(data.aptSigning?.keypair),
+      }
+    })
+  },
+  apt_proxy: {
+    facets: [AptDistributionConfiguration, AptFlatConfiguration, ...genericFacets.proxy],
+    defaultValues: {
+      ...genericDefaultValues.proxy,
+      apt: {
+        distribution: null,
+        flat: false
+      }
+    },
+    validators: (data) => ({
+      ...genericValidators.proxy(data),
+      apt: {
+        distribution: ValidationUtils.validateNotBlank(data.apt?.distribution)
+      }
+    })
+  },
   bower_proxy: {
     facets: [RewritePackageUrlsConfiguration, ...genericFacets.proxy],
     defaultValues: {
@@ -243,7 +287,8 @@ const repositoryFormats = {
       ...genericValidators.proxy(data),
       docker: {
         httpPort: validateDockerConnectorPort(data, 'httpPort'),
-        httpsPort: validateDockerConnectorPort(data, 'httpsPort')
+        httpsPort: validateDockerConnectorPort(data, 'httpsPort'),
+        subdomain: validateDockerSubdomain(data)
       },
       dockerProxy: {
         indexUrl: validateDockerIndexUrl(data)

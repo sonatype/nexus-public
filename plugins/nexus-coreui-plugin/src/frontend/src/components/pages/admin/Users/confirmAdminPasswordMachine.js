@@ -44,7 +44,7 @@ export default FormUtils.buildFormMachine({
 
       on: {
         CANCEL: {
-          actions: sendParent('CANCEL_CHANGE_PASSWORD'),
+          actions: sendParent('CANCEL'),
         },
       },
     }),

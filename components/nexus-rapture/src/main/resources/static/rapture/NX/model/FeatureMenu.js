@@ -26,9 +26,8 @@ Ext.define('NX.model.FeatureMenu', {
 
   // FIXME: define types so its clear what this data is!  Also consider comments for further clarity.
 
-  // FIXME: Set ID for module... unsure what this should be in a tree though
-
   fields: [
+    { name: 'id' },
     { name: 'path' },
     {
       /**

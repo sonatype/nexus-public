@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.system.repository;
 
+import java.util.function.Function;
+
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.testsuite.testsupport.system.repository.config.GroupRepositoryConfig;
@@ -24,19 +26,60 @@ public abstract class SimpleFormatRepositoryTestSystemSupport
         GROUP extends GroupRepositoryConfig<?>>
     extends FormatRepositoryTestSystemSupport<HOSTED, PROXY, GROUP>
 {
-  protected SimpleFormatRepositoryTestSystemSupport(final RepositoryManager repositoryManager) {
+  private Class<HOSTED> hostedClass;
+
+  private Class<PROXY> proxyClass;
+
+  private Class<GROUP> groupClass;
+
+  public SimpleFormatRepositoryTestSystemSupport(
+      final RepositoryManager repositoryManager,
+      final Class<HOSTED> hostedClass,
+      final Class<PROXY> proxyClass,
+      final Class<GROUP> groupClass)
+  {
     super(repositoryManager);
+    this.hostedClass = hostedClass;
+    this.proxyClass = proxyClass;
+    this.groupClass = groupClass;
   }
 
-  public Repository createHosted(final HOSTED config) throws Exception {
+  public Repository createHosted(final HOSTED config) {
     return doCreate(createHostedConfiguration(config));
   }
 
-  public Repository createProxy(final PROXY config) throws Exception {
+  public Repository createProxy(final PROXY config) {
     return doCreate(createProxyConfiguration(config));
   }
 
-  public Repository createGroup(final GROUP config) throws Exception {
+  public Repository createGroup(final GROUP config) {
     return doCreate(createGroupConfiguration(config));
+  }
+
+  @SuppressWarnings("unchecked")
+  public HOSTED hosted(final String name) {
+    return (HOSTED) create(hostedClass, this::createHosted)
+        .withName(name);
+  }
+
+  @SuppressWarnings("unchecked")
+  public PROXY proxy(final String name) {
+    return (PROXY) create(proxyClass, this::createProxy)
+        .withName(name);
+  }
+
+  @SuppressWarnings("unchecked")
+  public GROUP group(final String name) {
+    return (GROUP) create(groupClass, this::createGroup)
+        .withName(name);
+  }
+
+  private static <E> E create(final Class<E> clazz, final Function<E, Repository> factory) {
+    try {
+      return clazz.getConstructor(Function.class).newInstance(factory);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 }

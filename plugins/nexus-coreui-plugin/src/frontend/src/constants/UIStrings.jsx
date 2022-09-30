@@ -209,7 +209,7 @@ export default {
   USERS: {
     MENU: {
       text: 'Users',
-      description: 'Manage Users'
+      description: 'Manage users',
     },
     MODAL: {
       TEXT: 'You must confirm your current password before you are able to change or update the password',
@@ -304,6 +304,19 @@ export default {
       },
       DELETE_SUCCESS: (name) => `User deleted: ${name}`,
     },
+    TOKEN: {
+      LABEL: 'User Token Options',
+      USER_TOKEN: 'User Token',
+      ACTIVE_FEATURE: 'Resetting a user’s token will invalidate their current token and force a new token to be created the next time it is accessed by the user',
+      REQUIRE_ENABLE_FEATURE: <>
+        User tokens allow users to authenticate securely without typical user credentials such as those used by LDAP or Crowd. To use this feature, visit the <NxTextLink href="#admin/system/capabilities">
+        capabilities page </NxTextLink> and create a “User Token” capability.
+      </>,
+      RESET_USER_TOKEN: 'Reset user token',
+      TEXT: 'Resetting user tokens requires validation of your credentials.',
+      AUTHENTICATE: 'Authenticate',
+      SAVE_SUCCESS: (user) => `User token of ${user} has been reset`
+    }
   },
 
   SSL_CERTIFICATES: {
@@ -433,6 +446,27 @@ export default {
         },
       },
     },
+    VERIFY: {
+      LABEL: 'Verify Email Server',
+      SUB_LABEL: 'Where do you want to send the test email?',
+      TEST: 'Test',
+      SUCCESS: 'Email server verification email sent successfully',
+      ERROR: 'Email server verification email failed'
+    },
+    READ_ONLY: {
+      ENABLE: {
+        ENABLE_STARTTLS: 'STARTTLS support enabled for insecure connections',
+        REQUIRE_STARTTLS: 'STARTTLS support required',
+        ENABLE_SSL_TLS: 'SSL/TLS encryption enabled upon connection',
+        IDENTITY_CHECK: 'Server identity check enabled',
+      },
+      NOT_ENABLE: {
+        ENABLE_STARTTLS: 'STARTTLS support not enabled for insecure connections',
+        REQUIRE_STARTTLS: 'STARTTLS support not required',
+        ENABLE_SSL_TLS: 'SSL/TLS encryption not enabled upon connection',
+        IDENTITY_CHECK: 'Server identity check not enabled',
+      }
+    }
   },
 
   BLOB_STORES: {
@@ -870,6 +904,27 @@ export default {
       CONTENT_DISPOSITION_SUBLABEL: 'Add Content-Disposition header as "Attachment" to disable some content from being inline in a browser',
       VERSION_POLICY_LABEL: 'Version Policy',
       VERSION_POLICY_SUBLABEL: 'What type of artifacts does this repository store?',
+      APT: {
+        CAPTION: 'APT Settings',
+        DISTRIBUTION: {
+          LABEL: 'Distribution',
+          SUBLABEL: 'Distribution to fetch (e.g., bionic)'
+        },
+        FLAT: {
+          LABEL: 'Flat',
+          DESCR: 'Is this repository flat?'
+        },
+        SIGNING: {
+          KEY: {
+            LABEL: 'Signing key',
+            SUBLABEL: 'PGP signing key pair (armored private key e.g., gpg --export-secret-key --armor)',
+            PLACEHOLDER: 'Entry'
+          },
+          PASSPHRASE: {
+            LABEL: 'Passphrase'
+          }
+        }
+      },
       NPM: {
         REMOVE_NON_CATALOGED: {
           LABEL: 'Remove Non-catalogued Versions',
@@ -884,14 +939,6 @@ export default {
         },
       },
       LEARN_MORE: 'Learn more',
-      REPOSITORY_CONNECTORS_CAPTION: 'Repository Connectors',
-      HTTP_CONNECTOR_LABEL: 'HTTP',
-      HTTP_CONNECTOR_SUBLABEL: 'Create an HTTP connector at specified port. Normally used if the server is behind a secure proxy',
-      HTTPS_CONNECTOR_LABEL: 'HTTPS',
-      HTTPS_CONNECTOR_SUBLABEL: 'Create an HTTP connector at specified port. Normally used if the server is configured for https',
-      DOCKER_CONNECTOR_PLACEHOLDER: 'Enter a port number',
-      ALLOW_ANON_DOCKER_PULL_LABEL: 'Allow anonymous docker pull',
-      ALLOW_ANON_DOCKER_PULL_DESCR: 'Allow anonymous docker pull (Docker Bearer Token Realm required)',
       REGISTRY_API_SUPPORT_CAPTION: 'Docker Registry API Support',
       REGISTRY_API_SUPPORT_LABEL: 'Enable Docker V1 API',
       REGISTRY_API_SUPPORT_DESCR: 'Allow clients to use the V1 API to interact with this repository',
@@ -907,6 +954,51 @@ export default {
             LABEL: 'Location of the Docker Index',
             PLACEHOLDER: 'Enter a URL'
           }
+        },
+        CONNECTORS: {
+          CAPTION: 'Repository Connectors',
+          HTTP: {
+            LABEL: 'HTTP',
+            SUBLABEL: 'Create an HTTP connector at specified port. Normally used if the server is behind a secure proxy',
+            PLACEHOLDER: 'Enter a port number'
+          },
+          HTTPS: {
+            LABEL: 'HTTPS',
+            SUBLABEL: 'Create an HTTP connector at specified port. Normally used if the server is configured for https',
+            PLACEHOLDER: 'Enter a port number'
+          },
+          SUBDOMAIN: {
+            LABEL: 'Allow Subdomain Routing',
+            SUBLABEL: 'Use the following subdomain to make push and pull requests for this repository',
+            PLACEHOLDER: 'Enter a subdomain',
+            VALIDATION_ERROR: 'Subdomain field must be a minimum of 1 and maximum of 63 characters (letters, numbers, and dashes) and must start with a letter and end with a letter or digit'
+          },
+          ALLOW_ANON_DOCKER_PULL: {
+            LABEL: 'Allow anonymous docker pull',
+            DESCR: 'Allow anonymous docker pull (Docker Bearer Token Realm required)'
+          },
+          HELP: <>
+            Connectors allow Docker clients to connect directly to hosted registries, but are not always
+            required.
+            <br />
+            Consult our{' '}
+            <NxTextLink
+              href="https://links.sonatype.com/products/nexus/docker-ssl-connector/docs"
+              external
+            >
+              documentation
+            </NxTextLink>
+            {' '}for which connector is appropriate for your use case.
+            <br />
+            For information on scaling see our{' '}
+            <NxTextLink
+              href="https://links.sonatype.com/products/nexus/docker-scaling-repositories/docs"
+              external
+            >
+              scaling documentation
+            </NxTextLink>
+            .
+          </>, 
         }
       },
       FOREIGN_LAYER: {
@@ -928,28 +1020,6 @@ export default {
         yum: ' (e.g., http://mirror.centos.org/centos/)',
         default: ' (e.g., https://example.com)'
       },
-      DOCKER_CONNECTORS_HELP: <>
-        Connectors allow Docker clients to connect directly to hosted registries, but are not always
-        required.
-        <br />
-        Consult our{' '}
-        <NxTextLink
-          href="https://links.sonatype.com/products/nexus/docker-ssl-connector/docs"
-          external
-        >
-          documentation
-        </NxTextLink>
-        {' '}for which connector is appropriate for your use case.
-        <br />
-        For information on scaling see our{' '}
-        <NxTextLink
-          href="https://links.sonatype.com/products/nexus/docker-scaling-repositories/docs"
-          external
-        >
-          scaling documentation
-        </NxTextLink>
-        .
-      </>,
       NUGET: {
         PROTOCOL_VERSION: {
           LABEL: 'Protocol Version',

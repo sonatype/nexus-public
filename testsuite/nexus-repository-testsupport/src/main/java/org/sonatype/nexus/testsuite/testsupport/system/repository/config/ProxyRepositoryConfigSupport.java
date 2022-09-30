@@ -12,6 +12,10 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.system.repository.config;
 
+import java.util.function.Function;
+
+import org.sonatype.nexus.repository.Repository;
+
 public abstract class ProxyRepositoryConfigSupport<THIS>
     extends RepositoryConfigSupport<THIS>
     implements ProxyRepositoryConfig<THIS>
@@ -39,6 +43,10 @@ public abstract class ProxyRepositoryConfigSupport<THIS>
   private String username;
 
   private String password;
+
+  public ProxyRepositoryConfigSupport(final Function<THIS, Repository> factory) {
+    super(factory);
+  }
 
   @Override
   public String getRecipe() {
@@ -68,7 +76,7 @@ public abstract class ProxyRepositoryConfigSupport<THIS>
   }
 
   @Override
-  public THIS withAssetPathRegex(String assetPathRegex){
+  public THIS withAssetPathRegex(final String assetPathRegex){
     this.assetPathRegex = assetPathRegex;
     return toTHIS();
   }

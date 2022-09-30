@@ -14,6 +14,7 @@ package org.sonatype.nexus.internal.selector;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -21,7 +22,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.selector.CselSelector;
+import org.sonatype.nexus.selector.JexlSelector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorEvaluationException;
 import org.sonatype.nexus.selector.SelectorFilterBuilder;
@@ -52,13 +53,16 @@ public class SelectorFilterBuilderImpl
       final List<SelectorConfiguration> selectors,
       final Map<String, Object> filterParameters)
   {
-    if (selectors.isEmpty()) {
+    List<SelectorConfiguration> activeSelectors =
+        selectors.stream().filter(s -> !JexlSelector.TYPE.equals(s.getType())).collect(Collectors.toList());
+
+    if (activeSelectors.isEmpty()) {
       return null;
     }
 
     StringBuilder filterBuilder = new StringBuilder();
 
-    if (selectors.size() > 1) {
+    if (activeSelectors.size() > 1) {
       filterBuilder.append('(');
     }
 
@@ -68,9 +72,9 @@ public class SelectorFilterBuilderImpl
         .parameterPrefix("#{" + FILTER_PARAMS + ".")
         .parameterSuffix("}");
 
-    appendSelectors(filterBuilder, sqlBuilder, selectors, filterParameters);
+    appendSelectors(filterBuilder, sqlBuilder, activeSelectors, filterParameters);
 
-    if (selectors.size() > 1) {
+    if (activeSelectors.size() > 1) {
       filterBuilder.append(')');
     }
 
@@ -86,27 +90,25 @@ public class SelectorFilterBuilderImpl
     int selectorCount = 0;
 
     for (SelectorConfiguration selector : selectors) {
-      if (CselSelector.TYPE.equals(selector.getType())) {
-        try {
-          sqlBuilder.parameterNamePrefix("s" + selectorCount + "p");
+      try {
+        sqlBuilder.parameterNamePrefix("s" + selectorCount + "p");
 
-          selectorManager.toSql(selector, sqlBuilder);
+        selectorManager.toSql(selector, sqlBuilder);
 
-          if (selectorCount > 0) {
-            filterBuilder.append(" or ");
-          }
-
-          filterBuilder.append('(').append(sqlBuilder.getQueryString()).append(')');
-          filterParameters.putAll(sqlBuilder.getQueryParameters());
-
-          selectorCount++;
+        if (selectorCount > 0) {
+          filterBuilder.append(" or ");
         }
-        catch (SelectorEvaluationException e) {
-          log.warn("Problem evaluating selector {} as SQL", selector.getName(), e);
-        }
-        finally {
-          sqlBuilder.clearQueryString();
-        }
+
+        filterBuilder.append('(').append(sqlBuilder.getQueryString()).append(')');
+        filterParameters.putAll(sqlBuilder.getQueryParameters());
+
+        selectorCount++;
+      }
+      catch (SelectorEvaluationException e) {
+        log.warn("Problem evaluating selector {} as SQL", selector.getName(), log.isDebugEnabled() ? e : null);
+      }
+      finally {
+        sqlBuilder.clearQueryString();
       }
     }
   }

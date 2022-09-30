@@ -23,6 +23,7 @@ import './ToggleableTextInput.scss';
 export default function ToggleableTextInput({
   parentMachine,
   contextPropName,
+  defaultValue = '',
   label,
   sublabel = '',
   placeholder = '',
@@ -33,14 +34,25 @@ export default function ToggleableTextInput({
   const actualValue = path(contextPropName.split('.'), currentParent.context.data);
 
   const [isEnabled, setIsEnabled] = useState(!!actualValue);
+
   const [displayedValue, setDisplayedValue] = useState(actualValue ? actualValue.toString() : '');
 
   const updateActualValue = (value) => sendParent({type: 'UPDATE', name: contextPropName, value});
 
   const toggleCheckbox = () => {
     const newIsEnabled = !isEnabled;
-    const value = newIsEnabled ? displayedValue : null;
-    updateActualValue(value);
+
+    if (newIsEnabled) {
+      if (displayedValue) {
+          updateActualValue(displayedValue);
+      } else {
+        updateActualValue(defaultValue);
+        setDisplayedValue(defaultValue);
+      }
+    } else {
+      updateActualValue(null)
+    }
+
     setIsEnabled(newIsEnabled);
   };
 

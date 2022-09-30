@@ -37,56 +37,45 @@ public class MavenFormatRepositoryTestSystem
                     MavenGroupRepositoryConfig>
     implements FormatRepositoryTestSystem
 {
-  public static final String ATTRIBUTES_MAP_KEY_AUTHENTICATION = "authentication";
-
   public static final String ATTRIBUTES_MAP_KEY_MAVEN = "maven";
-
-  public static final String ATTRIBUTES_MAP_KEY_REPLICATION = "replication";
-
-  public static final String ATTRIBUTES_KEY_PULL_REPLICATION_ENABLED = "preemptivePullEnabled";
-
-  public static final String ATTRIBUTES_ASSET_PATH_REGEX = "assetPathRegex";
 
   public static final String ATTRIBUTES_KEY_VERSION_POLICY = "versionPolicy";
 
   public static final String ATTRIBUTES_KEY_LAYOUT_POLICY = "layoutPolicy";
-
-  public static final String ATTRIBUTES_KEY_USERNAME = "username";
-
-  public static final String ATTRIBUTES_KEY_PASSWORD = "password";
 
   @Inject
   public MavenFormatRepositoryTestSystem(final RepositoryManager repositoryManager) {
     super(repositoryManager);
   }
 
-  public Repository createHosted(final MavenHostedRepositoryConfig config) throws Exception {
+  public MavenHostedRepositoryConfig hosted(final String name) {
+    return new MavenHostedRepositoryConfig(this::createHosted).withName(name);
+  }
+
+  public Repository createHosted(final MavenHostedRepositoryConfig config) {
     return doCreate(
         applyMavenAttributes(createHostedConfiguration(config), config.getVersionPolicy(), config.getLayoutPolicy()));
   }
 
-  public Repository createProxy(final MavenProxyRepositoryConfig config) throws Exception {
-    Configuration cfg = applyMavenAttributes(createProxyConfiguration(config), config.getVersionPolicy(), config.getLayoutPolicy());
-    applyAuthenticationAttributes(cfg, config.getUsername(), config.getPassword());
-    applyPullReplicationAttributes(cfg, config.isPreemptivePullEnabled(), config.getAssetPathRegex());
+  public MavenProxyRepositoryConfig proxy(final String name) {
+    return new MavenProxyRepositoryConfig(this::createProxy)
+         .withName(name);
+  }
+
+  public Repository createProxy(final MavenProxyRepositoryConfig config) {
+    Configuration cfg =
+        applyMavenAttributes(createProxyConfiguration(config), config.getVersionPolicy(), config.getLayoutPolicy());
     return doCreate(cfg);
   }
 
-  public Repository createGroup(final MavenGroupRepositoryConfig config) throws Exception {
-    return doCreate(
-        applyMavenAttributes(createGroupConfiguration(config), config.getVersionPolicy(), config.getLayoutPolicy()));
+  public MavenGroupRepositoryConfig group(final String name) {
+    return new MavenGroupRepositoryConfig(this::createGroup)
+        .withName(name);
   }
 
-  private Configuration applyAuthenticationAttributes(
-      final Configuration configuration,
-      final String username,
-      final String password
-  )
-  {
-    NestedAttributesMap authentication = configuration.attributes(  ATTRIBUTES_MAP_KEY_AUTHENTICATION);
-    addConfigIfNotNull(authentication, ATTRIBUTES_KEY_USERNAME, username);
-    addConfigIfNotNull(authentication, ATTRIBUTES_KEY_PASSWORD, password);
-    return configuration;
+  public Repository createGroup(final MavenGroupRepositoryConfig config) {
+    return doCreate(
+        applyMavenAttributes(createGroupConfiguration(config), config.getVersionPolicy(), config.getLayoutPolicy()));
   }
 
   private Configuration applyMavenAttributes(
@@ -97,19 +86,6 @@ public class MavenFormatRepositoryTestSystem
     NestedAttributesMap maven = configuration.attributes(ATTRIBUTES_MAP_KEY_MAVEN);
     addConfigIfNotNull(maven, ATTRIBUTES_KEY_VERSION_POLICY, versionPolicy);
     addConfigIfNotNull(maven, ATTRIBUTES_KEY_LAYOUT_POLICY, layoutPolicy);
-    return configuration;
-  }
-
-  private Configuration applyPullReplicationAttributes(
-      final Configuration configuration,
-      final boolean replicationEnabled,
-      final String assetPathRegex
-  )
-  {
-    NestedAttributesMap replication = configuration.attributes(ATTRIBUTES_MAP_KEY_REPLICATION);
-    addConfigIfNotNull(replication, ATTRIBUTES_KEY_PULL_REPLICATION_ENABLED, replicationEnabled);
-    addConfigIfNotNull(replication, ATTRIBUTES_ASSET_PATH_REGEX, assetPathRegex);
-
     return configuration;
   }
 }

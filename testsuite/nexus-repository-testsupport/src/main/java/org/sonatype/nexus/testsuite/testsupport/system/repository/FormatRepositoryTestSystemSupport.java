@@ -89,6 +89,10 @@ public abstract class FormatRepositoryTestSystemSupport
 
   public static final String ATTRIBUTES_KEY_REPLICATION_ENABLED = "enabled";
 
+  public static final String ATTRIBUTES_KEY_PULL_REPLICATION_ENABLED = "preemptivePullEnabled";
+
+  public static final String ATTRIBUTES_ASSET_PATH_REGEX = "assetPathRegex";
+
   private final RepositoryManager repositoryManager;
 
   private Consumer<String> tracker;
@@ -167,9 +171,8 @@ public abstract class FormatRepositoryTestSystemSupport
   private Configuration applyProxyAttributes(Configuration configuration, PROXY config) {
     NestedAttributesMap httpclient = configuration.attributes(ATTRIBUTES_MAP_KEY_HTTPCLIENT);
 
-    addToMapCreateIfNeeded(httpclient, ATTRIBUTES_MAP_KEY_CONNECTION, ATTRIBUTES_KEY_BLOCKED, config.isBlocked());
-    addToMapCreateIfNeeded(httpclient, ATTRIBUTES_MAP_KEY_CONNECTION, ATTRIBUTES_KEY_AUTO_BLOCKED,
-        config.isAutoBlocked());
+    addConfigIfNotNull(httpclient, ATTRIBUTES_KEY_BLOCKED, config.isBlocked());
+    addConfigIfNotNull(httpclient, ATTRIBUTES_KEY_AUTO_BLOCKED, config.isAutoBlocked());
 
     addToMapCreateIfNeeded(httpclient, ATTRIBUTES_MAP_KEY_AUTHENTICATION, ATTRIBUTES_KEY_USERNAME,
         config.getUsername());
@@ -186,6 +189,10 @@ public abstract class FormatRepositoryTestSystemSupport
     NestedAttributesMap negativeCache = configuration.attributes(ATTRIBUTES_MAP_KEY_NEGATIVE_CACHE);
     addConfigIfNotNull(negativeCache, ATTRIBUTES_KEY_NC_ENABLED, config.isNegativeCacheEnabled());
     addConfigIfNotNull(negativeCache, ATTRIBUTES_KEY_NC_TTL, config.getNegativeCacheTimeToLive());
+
+    NestedAttributesMap replication = configuration.attributes(ATTRIBUTES_MAP_KEY_REPLICATION);
+    addConfigIfNotNull(replication, ATTRIBUTES_KEY_PULL_REPLICATION_ENABLED, config.isPreemptivePullEnabled());
+    addConfigIfNotNull(replication, ATTRIBUTES_ASSET_PATH_REGEX, config.getAssetPathRegex());
 
     return configuration;
   }

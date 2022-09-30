@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.system.repository.config;
 
+import org.sonatype.nexus.repository.Repository;
+
 public interface RepositoryConfig<THIS>
 {
   THIS withName(final String name);
@@ -37,4 +39,6 @@ public interface RepositoryConfig<THIS>
   THIS withStrictContentTypeValidation(final Boolean strictContentTypeValidation);
 
   Boolean isStrictContentTypeValidation();
+
+  Repository create();
 }

@@ -28,6 +28,7 @@ import UIStrings from '../../../../constants/UIStrings';
 import {EMPTY_DATA, URL, fullName} from './UsersHelper';
 import confirmAdminPasswordMachine from './confirmAdminPasswordMachine';
 import confirmNewPasswordMachine from './confirmNewPasswordMachine';
+import resettingTokenMachine from './resettingTokenMachine';
 
 const {USERS: {MESSAGES: LABELS}} = UIStrings;
 
@@ -50,7 +51,8 @@ export default FormUtils.buildFormMachine({
       loaded: {
         id: 'loaded',
         on: {
-          CHANGE_PASSWORD: 'changingPassword'
+          CHANGE_PASSWORD: 'changingPassword',
+          RESET_TOKEN: 'resetToken',
         }
       },
       changingPassword: {
@@ -85,7 +87,38 @@ export default FormUtils.buildFormMachine({
         },
 
         on: {
-          CANCEL_CHANGE_PASSWORD: '#loaded'
+          CANCEL: '#loaded'
+        }
+      },
+      resetToken: {
+        initial: 'confirmAdminPassword',
+
+        states: {
+          confirmAdminPassword: {
+            invoke: {
+              id: 'confirmAdminPasswordMachine',
+              src: 'confirmAdminPasswordMachine',
+              onDone: 'resetting'
+            }
+          },
+          resetting: {
+            invoke: {
+              id: 'resettingTokenMachine',
+              src: 'resettingTokenMachine',
+              data: ({data}) => ({
+                data: {
+                  userId: data.userId,
+                  source: data.source,
+                  name: data.firstName
+                }
+              }),
+              onDone: '#loaded'
+            }
+          }
+        },
+
+        on: {
+          CANCEL: '#loaded'
         }
       }
     }
@@ -146,6 +179,7 @@ export default FormUtils.buildFormMachine({
     delete: ({data}) => Axios.delete(singleUserUrl(data.userId)),
 
     confirmAdminPasswordMachine,
-    confirmNewPasswordMachine
+    confirmNewPasswordMachine,
+    resettingTokenMachine
   }
 });

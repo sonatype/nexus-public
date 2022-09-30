@@ -32,9 +32,23 @@ import {ROLES} from './Users.testdata';
 
 import {DEFAULT_SOURCE, URL, STATUSES} from './UsersHelper';
 
-const {singleUserUrl, createUserUrl, defaultRolesUrl, findUsersUrl, changePasswordUrl} = URL;
+const {
+  singleUserUrl,
+  createUserUrl,
+  defaultRolesUrl,
+  findUsersUrl,
+  changePasswordUrl,
+  resetTokenUrl
+} = URL;
 
-const {USERS: {FORM: LABELS, MODAL}, SETTINGS} = UIStrings;
+const {
+  USERS: {
+    FORM: LABELS,
+    MODAL,
+    TOKEN
+  },
+  SETTINGS
+} = UIStrings;
 
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'),
@@ -53,6 +67,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     showSuccessMessage: jest.fn(),
     state: jest.fn().mockReturnValue({
       getValue: jest.fn(),
+      getEdition: jest.fn(),
       getUser: jest.fn(),
     }),
   },
@@ -120,6 +135,20 @@ const selectors = {
     querySave: () => queryByText(selectors.modal.container(), SETTINGS.SAVE_BUTTON_LABEL),
     retryButton: () => screen.queryByText('Retry'),
   },
+  token: {
+    container: () => screen.getByLabelText(TOKEN.RESET_USER_TOKEN),
+    queryModal: () => screen.queryByLabelText(TOKEN.RESET_USER_TOKEN),
+    cancel: () => getByText(selectors.token.container(), SETTINGS.CANCEL_BUTTON_LABEL),
+    title: () => screen.getByText(TOKEN.LABEL),
+    queryTitle: () => screen.queryByText(TOKEN.LABEL),
+    link: () => screen.getByText('capabilities page'),
+    queryResetButton: () => screen.queryByText(TOKEN.RESET_USER_TOKEN),
+    resetButton: () => screen.getByText(TOKEN.RESET_USER_TOKEN, {ignore: 'span'}),
+    activeLabel: () => screen.getByText(TOKEN.TEXT),
+    modalText: () => screen.getByText(TOKEN.ACTIVE_FEATURE),
+    authenticate: () => screen.getByText(TOKEN.AUTHENTICATE),
+    queryAuthenticate: () => screen.queryByText(TOKEN.AUTHENTICATE),
+  }
 };
 
 const shouldSeeDetailsInReadOnlyMode = ({statusValue = testStatus} = {}) => {
@@ -549,7 +578,11 @@ describe('UsersDetails', function() {
         Promise.resolve({ data: 'fakeToken', success: true })
       );
 
-      ExtJS.state().getUser.mockReturnValue({id: 'admin'});
+      ExtJS.state = jest.fn().mockReturnValue({
+        getUser: jest.fn().mockReturnValue({id: 'admin'}),
+        getEdition: jest.fn().mockReturnValue('PRO'),
+        getValue: jest.fn()
+      });
     });
 
     it('renders correctly', async () => {
@@ -689,11 +722,18 @@ describe('UsersDetails', function() {
     });
 
     it('closes modal when pressing cancel button', async () => {
+      ExtJS.fetchAuthenticationToken = jest.fn(() =>
+        Promise.resolve({ data: 'fakeToken', success: true })
+      );
+
       const {
         openButton,
         queryModal,
         container,
-        cancel
+        cancel,
+        next,
+        inputAdminPassword,
+        save
       } = selectors.modal;
 
       await renderAndWaitForLoad(testId);
@@ -704,6 +744,21 @@ describe('UsersDetails', function() {
 
       expect(container()).toBeInTheDocument();
       expect(cancel()).toBeInTheDocument();
+
+      await userEvent.click(cancel());
+
+      expect(queryModal()).not.toBeInTheDocument();
+
+      await userEvent.click(openButton());
+
+      await TestUtils.changeField(inputAdminPassword, 'admin123');
+
+      await userEvent.click(next());
+
+      await waitFor(() => {
+        expect(cancel()).toBeInTheDocument();
+        expect(save()).toBeInTheDocument();
+      });
 
       await userEvent.click(cancel());
 
@@ -785,6 +840,156 @@ describe('UsersDetails', function() {
           expect(retryButton()).toBeInTheDocument();
           expect(querySave()).not.toBeInTheDocument();
       });
+    });
+  });
+
+  describe('Reset Token', () => {
+    beforeEach(() => {
+      ExtJS.state = jest.fn().mockReturnValue({
+        getUser: jest.fn().mockReturnValue({id: 'admin'}),
+        getEdition: jest.fn().mockReturnValue('PRO'),
+        getValue: jest.fn().mockReturnValue(['usertoken'])
+      });
+    });
+
+    it('renders correctly', async () => {
+      ExtJS.state = jest.fn().mockReturnValue({
+        getUser: jest.fn().mockReturnValue({id: 'admin'}),
+        getEdition: jest.fn().mockReturnValue('PRO'),
+        getValue: jest.fn(),
+      });
+
+      const {
+        title,
+        link,
+        queryResetButton,
+      } = selectors.token;
+
+      await renderAndWaitForLoad(testId);
+
+      expect(title()).toBeInTheDocument();
+      expect(link()).toBeInTheDocument();
+      expect(queryResetButton()).not.toBeInTheDocument();
+    });
+
+    it('does not show reset token user section if it is not nexus pro', async () => {
+      const {queryTitle, queryResetButton} = selectors.token;
+
+      ExtJS.state = jest.fn().mockReturnValue({
+        getUser: jest.fn().mockReturnValue({id: 'admin'}),
+        getEdition: jest.fn().mockReturnValue('FREE'),
+        getValue: jest.fn(),
+      });
+
+      await renderAndWaitForLoad(testId);
+
+      expect(queryTitle()).not.toBeInTheDocument();
+      expect(queryResetButton()).not.toBeInTheDocument();
+    });
+
+    it('show reset button if the capability is enabled', async () => {
+      const {resetButton} = selectors.token;
+
+      await renderAndWaitForLoad(testId);
+
+      expect(resetButton()).toBeInTheDocument();
+    });
+
+    it('requires authentication to be able to reset the token', async () => {
+      const {
+        token: {
+          resetButton,
+          activeLabel,
+          modalText,
+          authenticate
+        },
+        modal: {
+          inputAdminPassword
+        }
+      } = selectors;
+
+      ExtJS.fetchAuthenticationToken = jest.fn(() =>
+        Promise.resolve({ data: "Invalid", success: false, message: 'Authentication failed' })
+      );
+
+      await renderAndWaitForLoad(testId);
+
+      await userEvent.click(resetButton());
+
+      expect(activeLabel()).toBeInTheDocument();
+      expect(modalText()).toBeInTheDocument();
+      expect(authenticate()).toBeInTheDocument();
+
+      await TestUtils.changeField(inputAdminPassword, 'incorrect');
+      await userEvent.click(authenticate());
+
+      await waitFor(() => {
+        expect(inputAdminPassword()).toHaveErrorMessage('Authentication failed');
+      });
+    });
+
+    it('reset button is disabled if the user does not have enough permissions', async () => {
+      const {resetButton} = selectors.token;
+
+      when(ExtJS.checkPermission)
+        .calledWith('nexus:usertoken-settings:update').mockReturnValue(false);
+
+      await renderAndWaitForLoad(testId);
+
+      expect(resetButton()).toBeDisabled();
+    });
+
+    it('reset token properly', async () => {
+      when(Axios.delete)
+        .calledWith(resetTokenUrl(testId, 'default'))
+        .mockResolvedValue();
+
+      ExtJS.fetchAuthenticationToken = jest.fn(() =>
+        Promise.resolve({ data: 'fakeToken', success: true })
+      );
+
+      const {
+        token: {
+          resetButton,
+          authenticate,
+          queryAuthenticate
+        },
+        modal: {
+          inputAdminPassword
+        }
+      } = selectors;
+
+      await renderAndWaitForLoad(testId);
+
+      expect(resetButton()).not.toBeDisabled();
+
+      await userEvent.click(resetButton());
+
+      await TestUtils.changeField(inputAdminPassword, 'admin123');
+
+      await act(async () => userEvent.click(authenticate()));
+
+      await waitFor(() => {
+        expect(Axios.delete).toHaveBeenCalledTimes(1);
+        expect(Axios.delete).toHaveBeenCalledWith(resetTokenUrl(testId, 'default'));
+        expect(queryAuthenticate()).not.toBeInTheDocument();
+      });
+    });
+
+    it('closes modal when pressing cancel button', async () => {
+      const {resetButton, cancel, queryModal} = selectors.token;
+
+      await renderAndWaitForLoad(testId);
+
+      expect(resetButton()).not.toBeDisabled();
+
+      await userEvent.click(resetButton());
+
+      expect(cancel()).toBeInTheDocument();
+
+      await userEvent.click(cancel());
+
+      expect(queryModal()).not.toBeInTheDocument();
     });
   });
 });

@@ -95,6 +95,13 @@ public class RoutingRuleHelperImpl
   }
 
   @Override
+  public boolean hasRoutingRule(final Repository repository) {
+    RoutingRule routingRule = routingRuleCache.getRoutingRule(repository);
+
+    return routingRule != null;
+  }
+
+  @Override
   public void ensureUserHasPermissionToRead() {
     List<Permission> permissions = getRepositoryAddPermissions();
     if (!permissions.isEmpty()) { // avoid log-spam when we start NXRM with no recipes

@@ -108,6 +108,27 @@ export const validateDockerIndexUrl = (data) => {
     : ValidationUtils.validateNotBlank(indexUrl) || ValidationUtils.validateIsUrl(indexUrl);
 };
 
+export const validateDockerSubdomain = (data) => {
+  const {subdomain} = data.docker;
+
+  if (subdomain === null) {
+    return null;
+  }
+
+  const notBlank = ValidationUtils.validateNotBlank(subdomain);
+
+  if (notBlank) {
+    return notBlank;
+  }
+
+  const subdomainRegex = /^[A-Za-z][A-Za-z0-9\-]{0,61}[A-Za-z0-9]$/;
+  const isSubdomain = subdomainRegex.test(subdomain);
+
+  if (!isSubdomain) {
+    return UIStrings.REPOSITORIES.EDITOR.DOCKER.CONNECTORS.SUBDOMAIN.VALIDATION_ERROR;
+  }
+};
+
 export const validateNugetQueryCacheItemMaxAge = (data) => {
   const {queryCacheItemMaxAge} = data.nugetProxy;
   return (

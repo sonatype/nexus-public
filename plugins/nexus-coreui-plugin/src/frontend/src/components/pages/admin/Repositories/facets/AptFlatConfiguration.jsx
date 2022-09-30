@@ -10,23 +10,27 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.testsuite.testsupport.system.repository.config;
+import React from 'react';
 
-import java.util.function.Function;
+import {FormUtils} from '@sonatype/nexus-ui-plugin';
 
-import org.sonatype.nexus.repository.Repository;
+import {NxFieldset, NxCheckbox} from '@sonatype/react-shared-components';
 
-import static org.sonatype.nexus.testsuite.testsupport.system.RepositoryTestSystem.FORMAT_RAW;
+import UIStrings from '../../../../../constants/UIStrings';
 
-public class RawHostedRepositoryConfig
-    extends HostedRepositoryConfigSupport<RawHostedRepositoryConfig>
-{
-  public RawHostedRepositoryConfig(final Function<RawHostedRepositoryConfig, Repository> factory) {
-    super(factory);
-  }
+const {LABEL, DESCR} = UIStrings.REPOSITORIES.EDITOR.APT.FLAT;
 
-  @Override
-  public String getFormat() {
-    return FORMAT_RAW;
-  }
+export default function AptFlatConfiguration({parentMachine}) {
+  const [parentState, sendParent] = parentMachine;
+
+  return (
+    <NxFieldset label={LABEL} isRequired>
+      <NxCheckbox
+        {...FormUtils.checkboxProps('apt.flat', parentState)}
+        onChange={FormUtils.handleUpdate('apt.flat', sendParent)}
+      >
+        {DESCR}
+      </NxCheckbox>
+    </NxFieldset>
+  );
 }

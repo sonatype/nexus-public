@@ -18,7 +18,7 @@ import PrivilegesList from './PrivilegesList';
 import PrivilegesDetails from './PrivilegesDetails';
 
 export default function Privileges() {
-  return <MasterDetail path="admin/security/privileges-new">
+  return <MasterDetail path="admin/security/privileges">
     <Master>
       <PrivilegesList/>
     </Master>

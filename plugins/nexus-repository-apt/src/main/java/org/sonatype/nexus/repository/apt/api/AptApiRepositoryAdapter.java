@@ -76,7 +76,7 @@ public class AptApiRepositoryAdapter
   }
 
   private AptSigningRepositoriesAttributes createAptSigningRepositoriesAttributes(final Repository repository) {
-    NestedAttributesMap aptAttributes = repository.getConfiguration().attributes(AptFormat.NAME);
+    NestedAttributesMap aptAttributes = repository.getConfiguration().attributes("aptSigning");
     String keypair = aptAttributes.get("keypair", String.class);
     String passphrase = aptAttributes.get("passphrase", String.class);
     if (!Strings2.isBlank(passphrase)) {

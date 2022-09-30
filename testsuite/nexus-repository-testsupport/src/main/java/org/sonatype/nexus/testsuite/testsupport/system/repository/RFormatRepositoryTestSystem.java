@@ -34,6 +34,6 @@ public class RFormatRepositoryTestSystem
 {
   @Inject
   public RFormatRepositoryTestSystem(final RepositoryManager repositoryManager) {
-    super(repositoryManager);
+    super(repositoryManager, RHostedRepositoryConfig.class, RProxyRepositoryConfig.class, RGroupRepositoryConfig.class);
   }
 }

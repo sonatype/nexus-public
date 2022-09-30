@@ -12,23 +12,30 @@
  */
 import React from 'react';
 
-import {Detail, Master, MasterDetail} from '@sonatype/nexus-ui-plugin';
+import {FormUtils} from '@sonatype/nexus-ui-plugin';
 
-import RepositoriesList from './RepositoriesList';
-import RepositoriesForm from './RepositoriesForm';
-import RepositoriesContextProvider from './RepositoriesContextProvider';
+import {NxFormGroup, NxTextInput, NxH2} from '@sonatype/react-shared-components';
 
-export default function Repositories() {
+import UIStrings from '../../../../../constants/UIStrings';
+
+const {
+  CAPTION,
+  DISTRIBUTION: {LABEL, SUBLABEL}
+} = UIStrings.REPOSITORIES.EDITOR.APT;
+
+export default function AptDistributionConfiguration({parentMachine}) {
+  const [parentState, sendParent] = parentMachine;
+
   return (
-    <RepositoriesContextProvider>
-      <MasterDetail path="admin/repository/repositories">
-        <Master>
-          <RepositoriesList />
-        </Master>
-        <Detail>
-          <RepositoriesForm />
-        </Detail>
-      </MasterDetail>
-    </RepositoriesContextProvider>
+    <>
+      <NxH2>{CAPTION}</NxH2>
+      <NxFormGroup label={LABEL} sublabel={SUBLABEL} isRequired>
+        <NxTextInput
+          {...FormUtils.fieldProps('apt.distribution', parentState)}
+          onChange={FormUtils.handleUpdate('apt.distribution', sendParent)}
+          className="nx-text-input--long"
+        />
+      </NxFormGroup>
+    </>
   );
 }

@@ -14,42 +14,47 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext*/
+import {assign} from 'xstate';
+import Axios from 'axios';
+import {
+  FormUtils,
+  APIConstants,
+  ValidationUtils,
+} from '@sonatype/nexus-ui-plugin';
 
-/**
- * Feature model.
- *
- * @since 3.0
- */
-Ext.define('NX.model.Feature', {
-  extend: 'Ext.data.Model',
+const {
+  REST: {
+    PUBLIC: {VERIFY_EMAIL_SERVER},
+  },
+} = APIConstants;
 
-  idProperty: 'id',
-
-  // FIXME: define types so its clear what this data is!  Also consider comments for further clarity.
-
-  fields: [
-    { name: 'id' },
-    { name: 'path' },
-    { name: 'text' },
-    {
-      /**
-       * Mode name.
-       */
-      name: 'mode',
-      type: 'string',
-
-      // FIXME: why is this defaulting to 'admin'?
-      defaultValue: 'admin'
-    },
-    { name: 'weight', defaultValue: 100 },
-    { name: 'group', defaultValue: false },
-    { name: 'view', defaultValue: undefined },
-    { name: 'visible', defaultValue: true },
-    { name: 'expanded', defaultValue: true },
-    { name: 'bookmark', defaultValue: undefined },
-    { name: 'iconName', defaultValue: undefined },
-    { name: 'description', defaultValue: undefined },
-    { name: 'authenticationRequired', defaultValue: true }
-  ]
+export default FormUtils.buildFormMachine({
+  id: 'EmailVerifyServerMachine',
+  initial: 'loaded',
+}).withConfig({
+  actions: {
+    validate: assign({
+      validationErrors: ({data}) => ({
+        email:
+          ValidationUtils.notBlank(data.email) &&
+          ValidationUtils.validateEmail(data.email),
+      }),
+    }),
+    logSaveSuccess: () => {},
+    logLoadError: () => {},
+    setSavedData: assign({
+      isTouched: () => ({}),
+      testResult: (_, event) => {
+        const result = event.data.data;
+        return result.success;
+      },
+    }),
+    setSaveError: assign({
+      isTouched: () => ({}),
+      testResult: () => false,
+    }),
+  },
+  services: {
+    saveData: ({data: {email}}) => Axios.post(VERIFY_EMAIL_SERVER, email),
+  },
 });

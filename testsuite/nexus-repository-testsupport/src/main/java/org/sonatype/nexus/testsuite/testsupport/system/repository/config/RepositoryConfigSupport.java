@@ -12,6 +12,10 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.system.repository.config;
 
+import java.util.function.Function;
+
+import org.sonatype.nexus.repository.Repository;
+
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
@@ -27,6 +31,12 @@ public abstract class RepositoryConfigSupport<THIS>
   private Boolean online = true;
 
   private Boolean strictContentTypeValidation = true;
+
+  private Function<THIS, Repository> factory;
+
+  RepositoryConfigSupport(final Function<THIS, Repository> factory) {
+    this.factory = factory;
+  }
 
   @Override
   public THIS withName(final String name) {
@@ -81,6 +91,11 @@ public abstract class RepositoryConfigSupport<THIS>
   @Override
   public Boolean isStrictContentTypeValidation() {
     return strictContentTypeValidation;
+  }
+
+  @Override
+  public Repository create() {
+    return factory.apply(toTHIS());
   }
 
   protected THIS toTHIS() {

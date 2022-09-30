@@ -10,23 +10,24 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.testsuite.testsupport.system.repository.config;
+import React from 'react';
+import {NxReadOnly} from '@sonatype/react-shared-components';
+import {isNil, isEmpty} from 'ramda';
 
-import java.util.function.Function;
+/**
+ * @param {string} label
+ * @param value [required]
+ * @return {ReactNode}
+ */
+export default function ReadOnlyField({label, value}) {
+  const valid = !isNil(value) && !isEmpty(value);
 
-import org.sonatype.nexus.repository.Repository;
-
-import static org.sonatype.nexus.testsuite.testsupport.system.RepositoryTestSystem.FORMAT_RAW;
-
-public class RawHostedRepositoryConfig
-    extends HostedRepositoryConfigSupport<RawHostedRepositoryConfig>
-{
-  public RawHostedRepositoryConfig(final Function<RawHostedRepositoryConfig, Repository> factory) {
-    super(factory);
-  }
-
-  @Override
-  public String getFormat() {
-    return FORMAT_RAW;
-  }
+  return (
+    valid && (
+      <>
+        <NxReadOnly.Label>{label}</NxReadOnly.Label>
+        <NxReadOnly.Data>{value}</NxReadOnly.Data>
+      </>
+    )
+  );
 }
