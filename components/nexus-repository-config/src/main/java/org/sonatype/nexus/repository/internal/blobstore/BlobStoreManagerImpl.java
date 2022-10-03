@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.internal.blobstore;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
 
@@ -218,13 +219,13 @@ public class BlobStoreManagerImpl
   @Guarded(by = STARTED)
   public BlobStore create(final BlobStoreConfiguration configuration) throws Exception {
     checkNotNull(configuration);
-    log.debug("Creating BlobStore: {} with attributes: {}", configuration.getName(),
-        configuration.getAttributes());
+    log.debug("Creating BlobStore: {} with attributes: {}", configuration.getName(), configuration.getAttributes());
     BlobStore blobStore = getBlobStoreForCreate(configuration);
 
     if (!EventHelper.isReplicating()) {
       try {
         store.create(configuration);
+        log.debug("BlobStore: {} created.", configuration.getName());
       }
       catch (Exception e) {
         try {
@@ -239,6 +240,7 @@ public class BlobStoreManagerImpl
     }
 
     doCreate(blobStore, configuration);
+    log.debug("BlobStore: {} saved into local cache", configuration.getName());
     eventManager.post(new PublisherEvent(
         new BlobStoreDistributedConfigurationEvent(configuration.getName(), EventType.CREATED)));
 
@@ -258,10 +260,15 @@ public class BlobStoreManagerImpl
   }
 
   private void doCreate(final BlobStore blobStore, final BlobStoreConfiguration configuration) throws Exception {
-    track(configuration.getName(), blobStore);
-    blobStore.start();
+    checkNotNull(blobStore, "blobStore param is NULL");
+    checkNotNull(configuration, "configuration param is NULL");
+    final String blobStoreName = configuration.getName();
+    if (!stores.containsKey(blobStoreName)) {
+      track(blobStoreName, blobStore);
+      blobStore.start();
 
-    eventManager.post(new BlobStoreCreatedEvent(blobStore));
+      eventManager.post(new BlobStoreCreatedEvent(blobStore));
+    }
   }
 
   @Override
@@ -330,7 +337,23 @@ public class BlobStoreManagerImpl
   public BlobStore get(final String name) {
     checkNotNull(name);
 
-    return stores.get(name);
+    BlobStore blobStore = stores.get(name);
+    if (blobStore == null) {
+      final BlobStoreConfiguration configuration = store.read(name);
+      if (Objects.isNull(configuration)) {
+        return null;
+      }
+      try {
+        BlobStore validBS = getBlobStoreForCreate(configuration);
+        doCreate(validBS, configuration);
+        blobStore = stores.get(name);
+      }
+      catch (Exception e) {
+        throw new BlobStoreException("Could not start blobstore: " + name + ", reason: " + e.getMessage(), e, null);
+      }
+    }
+
+    return blobStore;
   }
 
   @Override
@@ -494,6 +517,7 @@ public class BlobStoreManagerImpl
 
   @Override
   public void validateConfiguration(final BlobStoreConfiguration configuration, final boolean sanitize) {
+    checkNotNull(configuration, "configuration param is NULL");
     BlobStoreDescriptor blobStoreDescriptor = blobStoreDescriptors.get(configuration.getType());
     if (sanitize) {
       blobStoreDescriptor.sanitizeConfig(configuration);
@@ -565,5 +589,4 @@ public class BlobStoreManagerImpl
       throw new BlobInputStreamException(ex, ex.getBlobId());
     }
   }
-
 }
