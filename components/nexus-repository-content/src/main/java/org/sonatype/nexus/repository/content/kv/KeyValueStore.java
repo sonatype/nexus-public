@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.kv;
 
+import java.util.List;
 import java.util.Optional;
 
 import javax.inject.Inject;
@@ -24,6 +25,7 @@ import org.sonatype.nexus.repository.content.store.ContentStoreSupport;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.inject.assistedinject.Assisted;
+import org.apache.ibatis.annotations.Param;
 
 @Named
 public class KeyValueStore<T extends KeyValueDAO>
@@ -56,6 +58,9 @@ public class KeyValueStore<T extends KeyValueDAO>
     dao().remove(repositoryId, type, key);
   }
 
+  /*
+   * Transactional is intentionally omitted
+   */
   public void removeAll(final int repositoryId, final String type) {
     int count;
     do {
@@ -69,6 +74,9 @@ public class KeyValueStore<T extends KeyValueDAO>
     return dao().removeAll(repositoryId, type, DELETE_BATCH_SIZE_DEFAULT);
   }
 
+  /*
+   * Transactional is intentionally omitted
+   */
   public void removeRepository(final int repositoryId) {
     int count;
     do {
@@ -92,6 +100,11 @@ public class KeyValueStore<T extends KeyValueDAO>
     return dao().browse(repositoryId, type, limit, continuationToken);
   }
 
+  @Transactional
+  public List<String> browseCategories(@Param("repositoryId") final int repositoryId) {
+    return dao().browseCategories(repositoryId);
+  }
+
   /**
    * Browse all entries within the repository.
    */
@@ -101,5 +114,10 @@ public class KeyValueStore<T extends KeyValueDAO>
       final String type)
   {
     return dao().count(repositoryId, type);
+  }
+
+  @Transactional
+  public List<String> findCategories(final int repositoryId, final String key) {
+    return dao().findCategories(repositoryId, key);
   }
 }

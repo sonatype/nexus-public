@@ -29,17 +29,21 @@
 
     CREATE UNIQUE INDEX IF NOT EXISTS uk_${format}_repository_category_key
         ON ${format}_key_value (repository_id, category, key);
+
+    CREATE INDEX IF NOT EXISTS idx_${format}_key_value_repository_key
+        ON ${format}_key_value(repository_id, key);
   </insert>
 
   <resultMap id="kvResult" type="org.sonatype.nexus.repository.content.kv.KeyValue">
     <!-- non-standard field mappings -->
     <result property="keyValueId" column="key_value_id"/>
+    <result property="category" column="category"/>
     <result property="key" column="key"/>
     <result property="value" column="value"/>
   </resultMap>
 
   <select id="browse" resultMap="kvResult">
-      SELECT key_value_id, key, value
+      SELECT key_value_id, category, key, value
         FROM ${format}_key_value
        WHERE repository_id = #{repositoryId}
          AND category = #{category}
@@ -48,11 +52,24 @@
        LIMIT #{limit};
   </select>
 
+  <select id="browseCategories" resultType="String">
+      SELECT DISTINCT category
+        FROM ${format}_key_value
+       WHERE repository_id = #{repositoryId};
+  </select>
+
   <select id="count" resultType="int">
       SELECT count(*)
         FROM ${format}_key_value
        WHERE repository_id = #{repositoryId}
          AND category = #{category};
+  </select>
+
+  <select id="findCategories" resultType="String">
+    SELECT category
+      FROM ${format}_key_value
+     WHERE repository_id = #{repositoryId}
+       AND key = #{key};
   </select>
 
   <select id="get" resultType="String">

@@ -19,9 +19,19 @@ public class KeyValue
 {
   Integer keyValueId;
 
+  private String category;
+
   private String key;
 
   private String value;
+
+  public String getCategory() {
+    return category;
+  }
+
+  public void setCategory(final String category) {
+    this.category = category;
+  }
 
   public String getKey() {
     return key;
