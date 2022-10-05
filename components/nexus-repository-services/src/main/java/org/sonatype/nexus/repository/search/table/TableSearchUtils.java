@@ -21,17 +21,17 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.repository.search.DefaultSqlSearchQueryContribution;
+import org.sonatype.nexus.repository.search.SearchRequest;
+import org.sonatype.nexus.repository.search.SqlSearchQueryContribution;
 import org.sonatype.nexus.repository.search.index.SearchConstants;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
-import org.sonatype.nexus.repository.search.DefaultSqlSearchQueryContribution;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryBuilder;
-import org.sonatype.nexus.repository.search.SqlSearchQueryContribution;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryContributionSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.text.Strings2.isBlank;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
-import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryBuilder.queryBuilder;
 
 /**
  * Translates SearchFilters to a {@link SqlSearchQueryBuilder} containing a condition format string and the search
@@ -55,9 +55,10 @@ public class TableSearchUtils
         checkNotNull(searchContributions.get(DefaultSqlSearchQueryContribution.NAME));
   }
 
-  public SqlSearchQueryBuilder buildQuery(final List<SearchFilter> searchFilters) {
-    final SqlSearchQueryBuilder queryBuilder = queryBuilder();
-    searchFilters.stream()
+  public SqlSearchQueryBuilder buildQuery(final SearchRequest request) {
+    final SqlSearchQueryBuilder queryBuilder = request.isConjunction() ? SqlSearchQueryBuilder.conjunctionBuilder()
+        : SqlSearchQueryBuilder.disjunctionBuilder();
+    request.getSearchFilters().stream()
         .filter(searchFilter -> !isBlank(searchFilter.getValue()))
         .filter(filter -> !SearchConstants.REPOSITORY_NAME.equalsIgnoreCase(filter.getProperty()))
         .forEach(searchFilter -> {

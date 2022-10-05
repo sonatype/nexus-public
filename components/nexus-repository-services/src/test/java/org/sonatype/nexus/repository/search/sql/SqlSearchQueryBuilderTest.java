@@ -26,26 +26,49 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInAnyOrder;
 import static org.hamcrest.core.Is.is;
-import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryBuilder.queryBuilder;
+import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryBuilder.conjunctionBuilder;
+import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryBuilder.disjunctionBuilder;
 
 public class SqlSearchQueryBuilderTest
     extends TestSupport
 {
   @Test
-  public void buildQueryShouldBeEmpty() {
-    assertThat(queryBuilder().buildQuery(), is(empty()));
+  public void conjunctionBuilderShouldStartEmpty() {
+    assertThat(conjunctionBuilder().buildQuery(), is(empty()));
   }
 
   @Test
-  public void queryBuilderShouldReturnASqlSearchQueryBuilder() {
-    final SqlSearchQueryBuilder actual = queryBuilder();
+  public void conjunctionBuilderShouldReturnASqlSearchQueryBuilder() {
+    final SqlSearchQueryBuilder actual = conjunctionBuilder();
 
     assertThat(actual, is(notNullValue()));
-    assertThat(actual.equals(queryBuilder()), is(false));
+    assertThat(actual.equals(conjunctionBuilder()), is(false));
   }
 
   @Test
-  public void buildQueryShouldAndAllConditions() {
+  public void testConjunctionBuilderShouldAndConditions() {
+    verifyQueryBuilderUsesOperatorForAllConditions(conjunctionBuilder(), " AND ");
+  }
+
+  @Test
+  public void disjunctionBuilderShouldStartEmpty() {
+    assertThat(disjunctionBuilder().buildQuery(), is(empty()));
+  }
+
+  @Test
+  public void disjunctionBuilderShouldReturnASqlSearchQueryBuilder() {
+    final SqlSearchQueryBuilder actual = disjunctionBuilder();
+
+    assertThat(actual, is(notNullValue()));
+    assertThat(actual.equals(disjunctionBuilder()), is(false));
+  }
+
+  @Test
+  public void testDisjunctionBuilderShouldAndConditions() {
+    verifyQueryBuilderUsesOperatorForAllConditions(disjunctionBuilder(), " OR ");
+  }
+
+  private void verifyQueryBuilderUsesOperatorForAllConditions(final SqlSearchQueryBuilder underTest, final String operator) {
     final String conditionFormat1 = "(namespace = ?)";
     final String conditionFormat2 = "(repository_name IN (?,?,?))";
     final String conditionFormat3 = "(name LIKE ? OR name LIKE ?)";
@@ -55,7 +78,6 @@ public class SqlSearchQueryBuilderTest
         "repository_name2", "repo3");
     final Map<String, String> values3 = of("name0", "abc%", "name1", "_def");
 
-    final SqlSearchQueryBuilder underTest = queryBuilder();
     underTest.add(aSqlSearchCondition(conditionFormat1, values1));
     underTest.add(aSqlSearchCondition(conditionFormat2, values2));
     underTest.add(aSqlSearchCondition(conditionFormat3, values3));
@@ -64,7 +86,7 @@ public class SqlSearchQueryBuilderTest
 
     assertThat(actual.isPresent(), is(true));
     assertThat(actual.get().getSqlConditionFormat(), is(
-        String.join(" AND ", conditionFormat1, conditionFormat2, conditionFormat3)));
+        String.join(operator, conditionFormat1, conditionFormat2, conditionFormat3)));
 
     final Map<String, String> expectedValues = joinAllValues(values1, values2, values3);
 

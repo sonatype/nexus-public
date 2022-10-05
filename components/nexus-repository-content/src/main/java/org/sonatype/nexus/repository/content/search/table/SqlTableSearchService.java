@@ -119,7 +119,7 @@ public class SqlTableSearchService
   }
 
   private SqlSearchQueryCondition getSqlSearchQueryCondition(final SearchRequest searchRequest) {
-    SqlSearchQueryBuilder queryBuilder = searchUtils.buildQuery(searchRequest.getSearchFilters());
+    SqlSearchQueryBuilder queryBuilder = searchUtils.buildQuery(searchRequest);
     addPermissionFilters(queryBuilder, searchRequest.getSearchFilters());
     return queryBuilder.buildQuery().orElse(null);
   }

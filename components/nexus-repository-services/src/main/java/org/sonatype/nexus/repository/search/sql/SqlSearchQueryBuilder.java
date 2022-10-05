@@ -39,10 +39,14 @@ public class SqlSearchQueryBuilder
 {
   private static final String AND = " AND ";
 
+  private static final String OR = " OR ";
+
   private final List<SqlSearchQueryCondition> conditions = new ArrayList<>();
 
-  private SqlSearchQueryBuilder() {
-    //no-op
+  private final String operator;
+
+  private SqlSearchQueryBuilder(final String operator) {
+    this.operator = operator;
   }
 
   public SqlSearchQueryBuilder add(final SqlSearchQueryCondition condition) {
@@ -51,8 +55,18 @@ public class SqlSearchQueryBuilder
     return this;
   }
 
-  public static SqlSearchQueryBuilder queryBuilder() {
-    return new SqlSearchQueryBuilder();
+  /**
+   * Create a query builder with the AND operator
+   */
+  public static SqlSearchQueryBuilder conjunctionBuilder() {
+    return new SqlSearchQueryBuilder(AND);
+  }
+
+  /**
+   * Create a query builder with the OR operator
+   */
+  public static SqlSearchQueryBuilder disjunctionBuilder() {
+    return new SqlSearchQueryBuilder(OR);
   }
 
   /**
@@ -77,7 +91,7 @@ public class SqlSearchQueryBuilder
   private String joinQueryFormats() {
     return conditions.stream()
         .map(SqlSearchQueryCondition::getSqlConditionFormat)
-        .collect(joining(AND));
+        .collect(joining(operator));
   }
 
   private Map<String, String> getValues() {
