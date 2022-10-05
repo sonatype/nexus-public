@@ -12,7 +12,10 @@
  */
 package org.sonatype.nexus.repository.content.browse;
 
+import java.time.Duration;
+
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.cooperation2.datastore.DefaultCooperation2Factory;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent;
@@ -42,7 +45,9 @@ public class BrowseEventHandlerTest
 
   @Before
   public void setup() {
-    underTest = new BrowseEventHandler(periodicJobService, eventManager, 100, 2, true);
+    DefaultCooperation2Factory cooperation = new DefaultCooperation2Factory();
+    underTest = new BrowseEventHandler(cooperation, periodicJobService, eventManager, true, Duration.ofSeconds(0),
+        Duration.ofSeconds(30), 100, 2, true);
   }
 
   @Test
