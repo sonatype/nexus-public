@@ -53,14 +53,14 @@
     "xstate": "=4.16.0"
   },
   "peerDependencies": {
+    "@sonatype/react-shared-components": "=10.0.5",
     "react": "=16.14.0",
     "react-dom": "=16.14.0",
-    "xstate": "=4.16.0",
-    "@sonatype/react-shared-components": "=10.0.5"
+    "xstate": "=4.16.0"
   },
   "jest-junit": {
     "outputDirectory": "target/jest-reports",
     "outputName": "TEST-react-jest.xml",
-    "reportTestSuiteErrors":  true
+    "reportTestSuiteErrors": true
   }
 }

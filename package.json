@@ -6,8 +6,5 @@
     "plugins/nexus-coreui-plugin",
     "private/plugins/nexus-proui-plugin"
   ],
-  "packageManager": "yarn@1.22.17",
-  "engines": {
-    "yarn": "1.22.17"
-  }
+  "packageManager": "yarn@3.2.3"
 }
