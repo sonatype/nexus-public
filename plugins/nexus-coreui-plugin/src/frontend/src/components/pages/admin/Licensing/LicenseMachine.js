@@ -14,48 +14,22 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+import {assign} from 'xstate';
+import Axios from 'axios';
+import {FormUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
 
-/**
- * @since 3.36
- *
- * Utilities for working with dates
- */
+const {REST: {PUBLIC: {LICENSE: licenseUrl}}} = APIConstants;
 
-const ERROR_MESSAGE = value => `Unable to convert timestamp (${value}) to date string, returning null`;
-
-export default class DateUtils {
-  /**
-   * @param {number} timestamp a numerical timestamp
-   * @returns {string|null} a human-friendly date string
-   */
-  static timestampToString(timestamp) {
-    try {
-      return new Date(timestamp).toString();
-    }
-    catch (e) {
-      console.debug(ERROR_MESSAGE(timestamp));
-      return null;
-    }
-  }
-
-  /**
-   * @param {number} timestamp a numerical timestamp
-   * @returns {string|null} a "ddd, MMM D, YYYY" date format string. For example "Mon, Oct 3, 2022".
-   */
-  static prettyDate(timestamp) {
-    try {
-      const options = {
-        weekday: 'short',
-        month: 'short',
-        year: 'numeric',
-        day: 'numeric',
-      };
-
-      return new Date(timestamp).toLocaleDateString("en-US", options);
-    }
-    catch (e) {
-      console.debug(ERROR_MESSAGE(timestamp));
-      return null;
-    }
-  }
-}
+export default FormUtils.buildFormMachine({
+  id: 'LicenseMachine',
+}).withConfig({
+  actions: {
+    validate: assign({
+      validationErrors: () => ({})
+    }),
+    logLoadError: () => {},
+  },
+  services: {
+    fetchData: () => Axios.get(licenseUrl),
+  },
+});

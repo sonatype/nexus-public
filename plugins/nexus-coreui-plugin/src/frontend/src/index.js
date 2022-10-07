@@ -47,6 +47,7 @@ import ProprietaryRepositories from './components/pages/admin/ProprietaryReposit
 import Api from './components/pages/admin/Api/Api';
 import Realms from './components/pages/admin/Realms/Realms';
 import HTTP from './components/pages/admin/Http/Http';
+import Licensing from './components/pages/admin/Licensing/Licensing';
 
 window.ReactComponents = {
   ...window.ReactComponents,
@@ -373,6 +374,17 @@ window.plugins.push({
       visibility: {
         featureFlags: [{key: 'nexus.react.httpSettings', defaultValue: false}],
         permissions: ['nexus:settings:read']
+      },
+    },
+    {
+      mode: 'admin',
+      path: '/System/Licensing',
+      ...UIStrings.LICENSING.MENU,
+      view: Licensing,
+      iconCls: 'x-fa fa-wallet',
+      visibility: {
+        featureFlags: [{key: 'nexus.react.licensing', defaultValue: false}],
+        permissions: ['nexus:licensing:read']
       },
     },
   ]

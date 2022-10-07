@@ -152,6 +152,9 @@ export default {
       get VERIFY_EMAIL_SERVER() {
         return `${this.BASE_URL}email/verify`;
       },
+      get LICENSE() {
+        return `${this.BASE_URL}system/license`;
+      },
     },
   },
   DEBOUNCE_DELAY: 500,

@@ -469,6 +469,54 @@ export default {
     }
   },
 
+  LICENSING: {
+    MENU: {
+      text: 'Licensing',
+      description: 'A valid license is required for PRO features; manage it here'
+    },
+    DETAILS: {
+      SECTIONS: {
+        DETAILS: 'Licensing',
+        INSTALL: 'Install License',
+      },
+      COMPANY: {
+        LABEL: 'Company',
+      },
+      NAME: {
+        LABEL: 'Name',
+      },
+      EMAIL: {
+        LABEL: 'Email',
+      },
+      EFFECTIVE_DATE: {
+        LABEL: 'Effective Date',
+      },
+      LICENSE_TYPES: {
+        LABEL: 'License Type(s)',
+      },
+      EXPIRATION_DATE: {
+        LABEL: 'Expiration Date',
+      },
+      NUMBER_OF_USERS: {
+        LABEL: 'Number of Licensed Users',
+      },
+      FINGERPRINT: {
+        LABEL: 'Fingerprint',
+      },
+    },
+    INSTALL: {
+      LABEL: 'License',
+      DESCRIPTION: 'Installing a new license requires restarting the server to take effect',
+      MESSAGES: {
+        NO_LICENSE: 'No license selected',
+      },
+      BUTTONS: {
+        CHOOSE: 'Choose License',
+        UPLOAD: 'Upload License',
+      }
+    },
+  },
+
   BLOB_STORES: {
     MENU: {
       text: 'Blob Stores',
