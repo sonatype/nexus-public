@@ -84,6 +84,8 @@ public class SupportZipGeneratorRequest
    */
   private boolean limitZipSize;
 
+  private String hostname;
+
   public boolean isSystemInformation() {
     return systemInformation;
   }
@@ -180,6 +182,14 @@ public class SupportZipGeneratorRequest
     this.limitZipSize = limitZipSize;
   }
 
+  public String getHostname() {
+    return this.hostname;
+  }
+
+  public void setHostname(final String hostname) {
+    this.hostname = hostname;
+  }
+
   @Override
   public String toString() {
     return getClass().getSimpleName() + "{" +
@@ -195,6 +205,7 @@ public class SupportZipGeneratorRequest
         ", replication=" + replication +
         ", limitFileSizes=" + limitFileSizes +
         ", limitZipSize=" + limitZipSize +
+        ", hostname=" + hostname +
         '}';
   }
 }

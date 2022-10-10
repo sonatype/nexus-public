@@ -1327,6 +1327,7 @@ This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 
       text: 'Support ZIP',
       description: 'Creates a ZIP file containing useful support information about your server'
     },
+
     DESCRIPTION: '<p>No information will be sent to Sonatype when creating the support ZIP file.</p>' +
         '<p>Support ZIP creation may take a few minutes to complete.</p>',
     CONTENTS: 'Contents',
@@ -1351,7 +1352,22 @@ This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 
     CREATED_SIZE_LABEL: 'Size:',
     CREATED_PATH_LABEL: 'Path:',
     CREATED_DOWNLOAD_BUTTON: 'Download',
-    AUTHENTICATE_TEXT: 'Downloading support ZIP requires validation of your credentials.'
+    AUTHENTICATE_TEXT: 'Downloading support ZIP requires validation of your credentials.',
+
+    MENU_HA: {
+      text: 'Support ZIP',
+      description: 'Manage your support zips'
+    },
+
+    AVAILABLE_NODES: 'Available Nodes',
+    NODE_IS_ACTIVE: 'Node Active',
+    ZIP_UPDATED: 'Zip updated',
+    NO_ZIP_CREATED: 'No Zip created',
+    DOWNLOAD_ZIP: 'Download Zip',
+    CREATING_ZIP: 'Creating Zip...',
+    CREATE_SUPPORT_ZIP: 'Create Support zip',
+
+    CREATE_SUPPORT_ZIP_MODAL_HEADER: 'Options for Export'
   },
 
   HEALTHCHECK_EULA: {

@@ -1,4 +1,4 @@
-/*
+/**
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
  * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
@@ -10,18 +10,28 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+.nxrm-nodes-container {
+  justify-content: start;
+  margin-top: 40px;
+}
 
-import SupportZipHa from "./HA/SupportZipHa";
-import SupportZipSingleNode from "./SupportZipSingleNode";
+.nx-node-green-checkmark {
+  color: green;
+}
 
-import {ExtJS} from "@sonatype/nexus-ui-plugin";
+.nx-node-name-container {
+  align-items: center;
+  margin-bottom: 0;
+}
 
-export default function SupportZip() {
-  const isClustered = ExtJS.state().getValue('nexus.datastore.clustered.enabled');
+.nx-p-zip-updated {
+  margin: 0;
+}
 
-  return <>
-    {isClustered && <SupportZipHa />}
-    {!isClustered && <SupportZipSingleNode /> }
-  </>;
+.nx-underline {
+  text-decoration: underline;
+}
+
+.nx-support-zip-modal-form-vertical-spacer {
+  margin-top: 8px;
 }

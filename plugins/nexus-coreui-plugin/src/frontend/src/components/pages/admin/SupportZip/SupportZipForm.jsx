@@ -15,8 +15,12 @@ import UIStrings from '../../../../constants/UIStrings';
 import {NxButton, NxCheckbox, NxFieldset, NxFontAwesomeIcon} from '@sonatype/react-shared-components';
 import {faFileArchive} from '@fortawesome/free-solid-svg-icons';
 
-export default function SupportZipForm({params, setParams, submit, clustered, hazips}) {
+export default function SupportZipForm({params, setParams, submit, clustered, hazips, cancel}) {
   return <div className="nx-form">
+    {cancel
+        && <div className='nx-support-zip-modal-form-vertical-spacer' />
+    }
+
     <div dangerouslySetInnerHTML={{__html: UIStrings.SUPPORT_ZIP.DESCRIPTION}}/>
     <NxFieldset label={UIStrings.SUPPORT_ZIP.CONTENTS}>
       <NxCheckbox
@@ -108,6 +112,12 @@ export default function SupportZipForm({params, setParams, submit, clustered, ha
     </NxFieldset>
     <footer className="nx-footer">
       <div className="nx-btn-bar">
+        {cancel &&
+            <NxButton variant='secondary' onClick={cancel}>
+              <span>{UIStrings.SETTINGS.CANCEL_BUTTON_LABEL}</span>
+            </NxButton>
+        }
+
         <NxButton variant='primary' onClick={submit} type='submit'>
           <NxFontAwesomeIcon icon={faFileArchive}/>
           <span>Create support ZIP</span>

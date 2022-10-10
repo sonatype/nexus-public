@@ -121,6 +121,18 @@ export default {
       },
       get CURRENT_USER() {
         return `${this.BASE_URL}user/`;
+      },
+      get SUPPORT_ZIP() {
+        return `${this.BASE_URL}supportzip/`;
+      },
+      get GET_SUPPORT_ZIP_ACTIVE_NODES() {
+        return `${this.BASE_URL}supportzip/activenodes`;
+      },
+      get GET_ZIP_STATUS() {
+        return `${this.BASE_URL}supportzip/status/`;
+      },
+      get CLEAR_SUPPORT_ZIP_HISTORY() {
+        return `${this.BASE_URL}supportzip/clear/`;
       }
     },
     PUBLIC: {
