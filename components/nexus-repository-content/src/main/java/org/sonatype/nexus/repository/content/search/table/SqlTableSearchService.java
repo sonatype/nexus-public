@@ -17,11 +17,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -49,6 +49,7 @@ import org.sonatype.nexus.repository.search.table.TableSearchUtils;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.groupingBy;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
+import static org.sonatype.nexus.repository.search.index.SearchConstants.CHECKSUM;
 
 /**
  * {@link SearchService} implementation that uses a single search table.
@@ -206,27 +207,26 @@ public class SqlTableSearchService
     // <Format+Component ID, List<Asset>>
     Map<String, List<AssetInfo>> componentIdToAsset = new HashMap<>();
     // <Format, List<component id>>
-    Map<String, List<Integer>> formatComponentIdMap = new HashMap<>();
+    Map<String, List<Integer>> componentIdsByFormat = new HashMap<>();
 
     //sort the components into their respective format buckets
     for (SearchResult searchResult : searchResults) {
-      if (formatComponentIdMap.containsKey(searchResult.format())) {
-        formatComponentIdMap.get(searchResult.format()).add(searchResult.componentId());
+      if (componentIdsByFormat.containsKey(searchResult.format())) {
+        componentIdsByFormat.get(searchResult.format()).add(searchResult.componentId());
       }
       else {
         List<Integer> componentIds = new ArrayList<>();
         componentIds.add(searchResult.componentId());
-        formatComponentIdMap.put(searchResult.format(), componentIds);
+        componentIdsByFormat.put(searchResult.format(), componentIds);
       }
     }
     //for each format, get the asset store and fetch all the assets for the components
-    for (Entry<String, List<Integer>> stringListEntry : formatComponentIdMap.entrySet()) {
-      AssetStore<?> assetStore = getAssetStore(stringListEntry.getKey());
-      Set<Integer> componentIds = searchResults.stream()
-          .map(SearchResult::componentId)
-          .collect(Collectors.toSet());
+    for (Entry<String, List<Integer>> formatComponentIds : componentIdsByFormat.entrySet()) {
+      AssetStore<?> assetStore = getAssetStore(formatComponentIds.getKey());
+      Set<Integer> componentIds = new HashSet<>(formatComponentIds.getValue());
       componentIdToAsset.putAll(assetStore.findByComponentIds(componentIds).stream()
-          .collect(groupingBy(assetInfo -> getFormatComponentKey(stringListEntry.getKey(), assetInfo.componentId()))));
+          .collect(groupingBy(assetInfo ->
+              getFormatComponentKey(formatComponentIds.getKey(), assetInfo.componentId()))));
     }
 
     return componentIdToAsset;
@@ -256,6 +256,7 @@ public class SqlTableSearchService
     searchResult.setFormat(componentInfo.format());
     searchResult.setLastModified(Date.from(asset.lastUpdated().toInstant()));
     searchResult.setAttributes(asset.attributes().backing());
+    searchResult.getAttributes().put(CHECKSUM, asset.checksums());
     searchResult.setContentType(asset.contentType());
     searchResult.setChecksum(asset.checksums());
     searchResult.setUploader(componentInfo.uploader());
