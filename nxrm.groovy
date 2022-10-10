@@ -984,7 +984,6 @@ def checkOrient() {
     List<String> files = new FileNameFinder().getFileNames("$TARGET_DIR", "nexus*/**/nexus*.properties")
     files.each {
       ensurePresentInFile(new File(it), "nexus.orient.binaryListenerEnabled=true")
-      ensurePresentInFile(new File(it), "nexus.orient.httpListenerEnabled=true")
       ensurePresentInFile(new File(it), "nexus.orient.dynamicPlugins=true")
     }
   }

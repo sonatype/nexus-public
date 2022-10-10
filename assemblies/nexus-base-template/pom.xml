@@ -122,22 +122,6 @@
     </dependency>
 
     <!--
-    HACK: expose orientdb distribution to extract studio.zip plugin
-    -->
-    <dependency>
-      <groupId>com.orientechnologies</groupId>
-      <artifactId>orientdb-community</artifactId>
-      <type>zip</type>
-      <scope>runtime</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>*</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <!--
       Included to get access to nexus-orient-console. This provides a convenience
       jar for starting up the orientdb console app.
     -->
@@ -348,21 +332,6 @@
                     <trim/>
                   </filterchain>
                 </concat>
-
-                <!--
-                HACK: Include orientdb-studio plugin.
-                -->
-                <property name="studio.dir" value="${project.build.directory}/sonatype-work/nexus3/orient/plugins"/>
-                <property name="studio.file" value="${studio.dir}/studio.zip"/>
-                <unzip src="${com.orientechnologies:orientdb-community:zip}" dest="${studio.dir}">
-                  <mergemapper to="studio.zip"/>
-                  <patternset>
-                    <include name="*/plugins/*studio-*.zip"/>
-                  </patternset>
-                </unzip>
-                <!-- ensure that plugin is actually copied -->
-                <available file="${studio.file}" property="studio.exists"/>
-                <fail message="File missing: ${studio.file}" unless="studio.exists"/>
 
                 <!-- move karaf config to etc/karaf -->
                 <move todir="${project.build.directory}/assembly/etc/karaf">

@@ -135,13 +135,6 @@
       </dependency>
 
       <dependency>
-        <groupId>com.orientechnologies</groupId>
-        <artifactId>orientdb-community</artifactId>
-        <version>${orientdb.version}</version>
-        <type>zip</type>
-      </dependency>
-
-      <dependency>
         <groupId>mysql</groupId>
         <artifactId>mysql-connector-java</artifactId>
         <version>5.1.36</version>

@@ -39,7 +39,7 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
 
 public class DatabaseServerImplTest
-  extends TestSupport
+    extends TestSupport
 {
   @Rule
   public TemporaryFolder tempDir = new TemporaryFolder();
@@ -63,10 +63,8 @@ public class DatabaseServerImplTest
         applicationDirectories,
         Collections.emptyList(),
         Collections.emptyList(),
-        ClassLoader.getSystemClassLoader(),
-        false, false, false,
-        "2424-2430", "2480-2490",
-        0,
+        ClassLoader.getSystemClassLoader(), false, false,
+        "2424-2430", 0,
         nodeAccess,
         new EntityHook(eventManager));
   }
