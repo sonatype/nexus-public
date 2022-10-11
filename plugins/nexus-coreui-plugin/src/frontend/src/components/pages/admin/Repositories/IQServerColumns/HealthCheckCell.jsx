@@ -10,15 +10,24 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+import React, {useState, useRef} from 'react';
 import {NxFontAwesomeIcon, NxTooltip, NxP} from '@sonatype/react-shared-components';
 import {faBan, faShieldAlt, faAward, faExclamationCircle} from '@fortawesome/free-solid-svg-icons';
 import UIStrings from '../../../../../constants/UIStrings';
 import './IQServerColumns.scss';
 import {useRepositoriesService} from '../RepositoriesContextProvider';
-import {canUpdateHealthCheck} from './IQServerHelpers';
+import {canUpdateHealthCheck, canReadHealthCheckSummary} from './IQServerHelpers';
+import HealthCheckSummary from './HealthCheckSummary';
+import {Utils} from '@sonatype/nexus-ui-plugin';
 
-const {HEALTH_CHECK} = UIStrings.REPOSITORIES.LIST;
+const {
+  LOADING,
+  LOADING_ERROR,
+  NOT_AVAILABLE_TOOLTIP_HC,
+  ANALYZE_BUTTON,
+  ANALYZING,
+  SUMMARY: {NO_PERMISSION}
+} = UIStrings.REPOSITORIES.LIST.HEALTH_CHECK;
 
 export default function HealthCheckCell({name, openModal}) {
   const [state] = useRepositoriesService();
@@ -27,6 +36,8 @@ export default function HealthCheckCell({name, openModal}) {
     state.context;
 
   const health = healthCheck ? healthCheck[name] : null;
+
+  const canReadSummary = canReadHealthCheckSummary();
 
   const isLoading =
     (state.matches('enablingHealthCheckSingleRepo') && enablingHealthCheckRepoName === name) ||
@@ -49,22 +60,29 @@ export default function HealthCheckCell({name, openModal}) {
     openModal();
   };
 
+  const indicatorsRef = useRef();
+  const getSummaryBaseTopPosition = () => indicatorsRef.current.getBoundingClientRect().y;
+
+  const [openSummary, setOpenSummary] = useState(false);
+  const [showSummary, cancelShowSummary] = Utils.useDebounce(setOpenSummary, true, 500);
+  const closeSummary = () => setOpenSummary(false); 
+
   if (isLoading) {
-    return <NxP className="nxrm-rhc-loading-lbl">{HEALTH_CHECK.LOADING}</NxP>;
+    return <NxP className="nxrm-rhc-loading-lbl">{LOADING}</NxP>;
   }
 
   if (isLoadingError) {
     return (
       <NxP className="nxrm-rhc-loading-error">
         <NxFontAwesomeIcon icon={faExclamationCircle} />
-        {HEALTH_CHECK.LOADING_ERROR}
+        {LOADING_ERROR}
       </NxP>
     );
   }
 
   if (!health || (!health.enabled && !canUpdateHealthCheck())) {
     return (
-      <NxTooltip title={HEALTH_CHECK.NOT_AVAILABLE_TOOLTIP_HC}>
+      <NxTooltip title={NOT_AVAILABLE_TOOLTIP_HC}>
         <NxFontAwesomeIcon icon={faBan} className="nxrm-unavailable-icon" />
       </NxTooltip>
     );
@@ -76,23 +94,39 @@ export default function HealthCheckCell({name, openModal}) {
         className={isDisabled ? 'nxrm-rhc-analyze-btn-disabled' : 'nxrm-rhc-analyze-btn-enabled'}
         onClick={showModal}
       >
-        {HEALTH_CHECK.ANALYZE_BUTTON}
+        {ANALYZE_BUTTON}
       </NxP>
     );
   }
 
   if (health.analyzing) {
-    return <NxP className="nxrm-rhc-analyzing-lbl">{HEALTH_CHECK.ANALYZING}</NxP>;
+    return <NxP className="nxrm-rhc-analyzing-lbl">{ANALYZING}</NxP>;
   }
 
   if (health.enabled) {
     return (
-      <NxP className="nxrm-health-check-indicators">
-        <NxFontAwesomeIcon icon={faShieldAlt} />
-        {health.securityIssueCount}
-        <NxFontAwesomeIcon icon={faAward} />
-        {health.licenseIssueCount}
-      </NxP>
+      <>
+        <NxTooltip title={!canReadSummary && NO_PERMISSION}>
+          <NxP
+            className="nxrm-health-check-indicators"
+            onMouseEnter={showSummary}
+            onMouseLeave={cancelShowSummary}
+            ref={indicatorsRef}
+          >
+            <NxFontAwesomeIcon icon={faShieldAlt} />
+            {health.securityIssueCount}
+            <NxFontAwesomeIcon icon={faAward} />
+            {health.licenseIssueCount}
+          </NxP>
+        </NxTooltip>
+        {openSummary && canReadSummary && (
+          <HealthCheckSummary
+            healthCheckData={health}
+            baseTopPosition={getSummaryBaseTopPosition()}
+            close={closeSummary}
+          />
+        )}
+      </>
     );
   }
 }

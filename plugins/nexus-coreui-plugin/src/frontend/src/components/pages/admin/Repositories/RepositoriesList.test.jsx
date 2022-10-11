@@ -16,7 +16,8 @@ import {
   waitForElementToBeRemoved,
   waitFor,
   getByText,
-  screen
+  screen,
+  within
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {ExtJS, TestUtils, ExtAPIUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
@@ -37,6 +38,9 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
     ...jest.requireActual('@sonatype/nexus-ui-plugin'),
     ExtJS: {
       checkPermission: jest.fn().mockReturnValue(true)
+    },
+    Utils: {
+      useDebounce: (fun, args) => [() => fun(args), () => {}]
     }
   };
 });
@@ -45,7 +49,9 @@ jest.mock('./IQServerColumns/IQServerHelpers', () => ({
   isIqServerEnabled: jest.fn().mockReturnValue(true),
   canReadHealthCheck: jest.fn().mockReturnValue(true),
   canUpdateHealthCheck: jest.fn().mockReturnValue(true),
-  canReadFirewallStatus: jest.fn().mockReturnValue(true)
+  canReadFirewallStatus: jest.fn().mockReturnValue(true),
+  canReadHealthCheckSummary: jest.fn().mockReturnValue(true),
+  canReadHealthCheckDetail: jest.fn().mockReturnValue(true)
 }));
 
 const mockCopyUrl = jest.fn((event) => event.stopPropagation());
@@ -55,11 +61,13 @@ const {
     LIST: {
       HEALTH_CHECK: {
         ANALYZE_BUTTON,
+        ANALYZE_ALL,
         NOT_AVAILABLE_TOOLTIP_HC,
         NOT_AVAILABLE_TOOLTIP_FS,
         LOADING,
         ANALYZING,
-        LOADING_ERROR
+        LOADING_ERROR,
+        SUMMARY: {CAPTION, HELP_BUTTON, DETAILS_BUTTON}
       },
       COLUMNS
     }
@@ -77,7 +85,13 @@ const selectors = {
     modalOptionsBtn: () => screen.getByLabelText('more options', {selector: 'button'}),
     modalCancelBtn: () => screen.queryByText(CANCEL_BUTTON_LABEL, {selector: 'button'}),
     columnHeader: () => screen.queryByRole('columnheader', {name: COLUMNS.HEALTH_CHECK}),
-    modalAnalyzeAllBtn: () => screen.getByText('Analyze all repositories')
+    modalAnalyzeAllBtn: () => screen.getByText(ANALYZE_ALL),
+    healthIndicators: (cell, indicatorsValue) => within(cell).getByText(indicatorsValue),
+    summaryContainer: (cell) => within(cell).queryByTestId('nxrm-health-check-summary'),
+    summaryHeader: (cell) => within(cell).getByText(CAPTION),
+    summaryHelpButton: (cell) => within(cell).getByRole('button', {name: HELP_BUTTON}),
+    summaryDetailsButton: (cell) => within(cell).getByRole('button', {name: DETAILS_BUTTON}),
+    summaryIframe: (cell) => within(cell).getByTitle(CAPTION)
   },
   iqPolicyViolations: {
     cell: (rowIndex) => screen.getAllByRole('row')[rowIndex].cells[6],
@@ -581,8 +595,24 @@ describe('RepositoriesList', function () {
 
       const {securityIssueCount, licenseIssueCount} = readData[0];
 
+      const indicators = selectors.healthCheck.healthIndicators(
+        cell,
+        '' + securityIssueCount + licenseIssueCount
+      );
+      expect(indicators).toBeInTheDocument();
+
+      userEvent.hover(indicators);
+
+      await waitFor(() => expect(selectors.healthCheck.summaryContainer(cell)).toBeInTheDocument());
+      expect(selectors.healthCheck.summaryHeader(cell)).toBeInTheDocument();
+      expect(selectors.healthCheck.summaryHelpButton(cell)).toBeInTheDocument();
+      expect(selectors.healthCheck.summaryDetailsButton(cell)).toBeInTheDocument();
+      expect(selectors.healthCheck.summaryIframe(cell)).toBeInTheDocument();
+
+      userEvent.unhover(selectors.healthCheck.summaryContainer(cell))
+
       await waitFor(() =>
-        expect(cell).toHaveTextContent('' + securityIssueCount + licenseIssueCount)
+        expect(selectors.healthCheck.summaryContainer(cell)).not.toBeInTheDocument()
       );
     });
 

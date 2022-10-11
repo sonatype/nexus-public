@@ -843,7 +843,13 @@ export default {
         MODAL_HEADER: 'Analyze Repository',
         NOT_AVAILABLE_TOOLTIP_HC: 'Repository Health Check Unavailable',
         NOT_AVAILABLE_TOOLTIP_FS: 'Repository Firewall Status Unavailable',
-        QUARANTINED_TOOLTIP: 'Quarantined'
+        QUARANTINED_TOOLTIP: 'Quarantined',
+        SUMMARY: {
+          CAPTION: 'Repository Health Check',
+          HELP_BUTTON: 'What should I do with this?',
+          DETAILS_BUTTON: 'View Detailed Report',
+          NO_PERMISSION: 'This user account does not have permission to view the summary report'
+        }
       }
     },
 
