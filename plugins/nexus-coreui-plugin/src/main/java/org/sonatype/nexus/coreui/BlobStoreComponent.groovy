@@ -18,6 +18,7 @@ import javax.inject.Named
 import javax.inject.Provider
 import javax.inject.Singleton
 import javax.validation.Valid
+import javax.validation.constraints.NotEmpty
 import javax.validation.constraints.NotNull
 import javax.validation.groups.Default
 
@@ -26,6 +27,7 @@ import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreException
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
+import org.sonatype.nexus.blobstore.api.ChangeRepositoryBlobstoreDataService
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup
 import org.sonatype.nexus.blobstore.group.BlobStoreGroupService
 import org.sonatype.nexus.blobstore.group.FillPolicy
@@ -36,20 +38,19 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters
 import org.sonatype.nexus.rapture.PasswordPlaceholder
+import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker
 import org.sonatype.nexus.security.privilege.ApplicationPermission
 import org.sonatype.nexus.validation.Validate
 import org.sonatype.nexus.validation.group.Create
 import org.sonatype.nexus.validation.group.Update
-import org.sonatype.nexus.blobstore.api.ChangeRepositoryBlobstoreDataService
 
 import com.codahale.metrics.annotation.ExceptionMetered
 import com.codahale.metrics.annotation.Timed
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import org.apache.shiro.authz.annotation.RequiresPermissions
-import javax.validation.constraints.NotEmpty
 
 import static java.util.Collections.singletonList
 import static org.sonatype.nexus.security.BreadActions.READ
@@ -68,6 +69,9 @@ class BlobStoreComponent
 
   @Inject
   BlobStoreManager blobStoreManager
+
+  @Inject
+  BlobStoreConfigurationStore store;
 
   @Inject
   Map<String, BlobStoreDescriptor> blobStoreDescriptors
@@ -107,7 +111,7 @@ class BlobStoreComponent
     def blobStoreGroups = blobStores.findAll { it.blobStoreConfiguration.type == BlobStoreGroup.TYPE }.
         collect { it as BlobStoreGroup }
 
-    blobStores.collect { asBlobStoreXO(it, blobStoreGroups) }
+    store.list().collect { asBlobStoreXO(it, blobStoreGroups) }
   }
 
   @DirectMethod
@@ -119,11 +123,8 @@ class BlobStoreComponent
         READ,
         repositoryManager.browse()
     )
-    def blobStores = blobStoreManager.browse()
-    def blobStoreGroups = blobStores.findAll { it.blobStoreConfiguration.type == BlobStoreGroup.TYPE }.
-        collect { it as BlobStoreGroup }
-
-    blobStores.collect { asBlobStoreXO(it, blobStoreGroups, true) }
+    store.list()
+        .collect { new BlobStoreXO(name: it.name) }
   }
 
   @DirectMethod
@@ -139,11 +140,11 @@ class BlobStoreComponent
       !selectedBlobStoreName || it.blobStoreConfiguration.name != selectedBlobStoreName
     }
 
-    blobStores.findAll {
+    store.list().findAll {
       it.isGroupable() &&
           !repositoryManager.browseForBlobStore(it.blobStoreConfiguration.name).any() &&
           !otherGroups.any { group -> group.members.contains(it) }
-    }.collect { asBlobStoreXO(it) }
+    }.collect { asBlobStoreXO(it.getBlobStoreConfiguration()) }
   }
 
   @DirectMethod
@@ -151,7 +152,8 @@ class BlobStoreComponent
   @ExceptionMetered
   @RequiresPermissions('nexus:blobstores:read')
   List<BlobStoreXO> readGroups() {
-    blobStoreManager.browse().findAll{ it.blobStoreConfiguration.type == 'Group' }.collect { asBlobStoreXO(it) }
+    store.list().findAll{ it.type == 'Group' }
+        .collect { asBlobStoreXO(it.getBlobStoreConfiguration()) }
   }
 
   @DirectMethod
@@ -194,7 +196,7 @@ class BlobStoreComponent
   @RequiresPermissions('nexus:blobstores:create')
   @Validate(groups = [Create, Default])
   BlobStoreXO create(final @NotNull @Valid BlobStoreXO blobStore) {
-    return asBlobStoreXO(blobStoreManager.create(asConfiguration(blobStore)))
+    return asBlobStoreXO(blobStoreManager.create(asConfiguration(blobStore)).getBlobStoreConfiguration())
   }
 
   @DirectMethod
@@ -215,7 +217,7 @@ class BlobStoreComponent
       blobStoreXO.attributes["azure cloud storage"].accountKey =
           blobStore.blobStoreConfiguration.attributes["azure cloud storage"].accountKey
     }
-    return asBlobStoreXO(blobStoreManager.update(asConfiguration(blobStoreXO)))
+    return asBlobStoreXO(blobStoreManager.update(asConfiguration(blobStoreXO)).getBlobStoreConfiguration())
   }
 
   @DirectMethod
@@ -264,28 +266,27 @@ class BlobStoreComponent
     'on'.equalsIgnoreCase(value)  || '1'.equalsIgnoreCase(value))
   }
 
-  BlobStoreXO asBlobStoreXO(final BlobStore blobStore, final Collection<BlobStoreGroup> blobStoreGroups = [],
-                            final boolean namesOnly = false)
+  BlobStoreXO asBlobStoreXO(
+      final BlobStoreConfiguration blobStoreConfiguration,
+      final Collection<BlobStoreGroup> blobStoreGroups = [])
   {
-    NestedAttributesMap quotaAttributes = blobStore.getBlobStoreConfiguration().attributes(BlobStoreQuotaSupport.ROOT_KEY)
-    if (namesOnly) {
-      return new BlobStoreXO(name: blobStore.blobStoreConfiguration.name)
-    }
+    NestedAttributesMap quotaAttributes = blobStoreConfiguration.attributes(BlobStoreQuotaSupport.ROOT_KEY)
     def blobStoreXO = new BlobStoreXO(
-        name: blobStore.blobStoreConfiguration.name,
-        type: blobStore.blobStoreConfiguration.type,
-        attributes: filterAttributes(blobStore.blobStoreConfiguration.attributes),
-        repositoryUseCount: repositoryManager.blobstoreUsageCount(blobStore.blobStoreConfiguration.name),
-        taskUseCount: blobstoreInChangeRepoTaskCount(blobStore.blobStoreConfiguration.name),
-        blobStoreUseCount: blobStoreManager.blobStoreUsageCount(blobStore.blobStoreConfiguration.name),
-        inUse: repositoryManager.isBlobstoreUsed(blobStore.blobStoreConfiguration.name),
-        convertable: blobStoreManager.isConvertable(blobStore.blobStoreConfiguration.name),
+        name: blobStoreConfiguration.name,
+        type: blobStoreConfiguration.type,
+        attributes: filterAttributes(blobStoreConfiguration.attributes),
+        repositoryUseCount: repositoryManager.blobstoreUsageCount(blobStoreConfiguration.name),
+        taskUseCount: blobstoreInChangeRepoTaskCount(blobStoreConfiguration.name),
+        blobStoreUseCount: blobStoreManager.blobStoreUsageCount(blobStoreConfiguration.name),
+        inUse: repositoryManager.isBlobstoreUsed(blobStoreConfiguration.name),
+        convertable: blobStoreManager.isConvertable(blobStoreConfiguration.name),
         isQuotaEnabled: !quotaAttributes.isEmpty(),
         quotaType: quotaAttributes.get(BlobStoreQuotaSupport.TYPE_KEY),
         quotaLimit: quotaAttributes.get(BlobStoreQuotaSupport.LIMIT_KEY, Number.class)?.div(MILLION)?.toLong(),
         groupName: blobStoreGroups.find { it.members.contains(blobStore) }?.blobStoreConfiguration?.name
     )
-    if (blobStore.isStarted()) {
+    BlobStore blobStore = blobStoreManager.getByName().get(blobStoreConfiguration.getName())
+    if (blobStore != null && blobStore.isStarted()) {
       def metrics = blobStore.metrics
       blobStoreXO.with {
         blobCount = metrics.blobCount

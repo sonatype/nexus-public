@@ -20,7 +20,6 @@ import org.sonatype.nexus.blobstore.api.BlobStoreException
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics
 import org.sonatype.nexus.blobstore.api.ChangeRepositoryBlobstoreDataService
-import org.sonatype.nexus.blobstore.group.BlobStoreGroup
 import org.sonatype.nexus.blobstore.group.BlobStoreGroupService
 import org.sonatype.nexus.common.app.ApplicationDirectories
 import org.sonatype.nexus.rapture.PasswordPlaceholder
@@ -75,6 +74,7 @@ class BlobStoreComponentTest
                                                                                      quotaLimit: 10L]])
       BlobStore blobStore = Mock()
       1 * blobStoreManager.newConfiguration() >> Mock(BlobStoreConfiguration)
+      1 * blobStoreManager.getByName() >> ['myblobs' : blobStore]
 
     when: 'The blobstore is created'
       def createdXO = blobStoreComponent.create(blobStoreXO)
@@ -119,10 +119,11 @@ class BlobStoreComponentTest
 
   def 'given a blob store with a quota, create a proper blobStoreXO'() {
     setup:
-      def blobStore = Mock(BlobStore) {
-        getBlobStoreConfiguration() >> new MockBlobStoreConfiguration(name: "test",
+      def config = new MockBlobStoreConfiguration(name: "test",
             attributes: [file: [path: 'path'], blobStoreQuotaConfig: [quotaType: 'spaceUsedQuota', quotaLimitBytes:
                 quotaLimitBytes]])
+      def blobStore = Mock(BlobStore) {
+        getBlobStoreConfiguration() >> config
         getMetrics() >> Mock(BlobStoreMetrics) {
           getBlobCount() >> 1L
           getTotalSize() >> 500L
@@ -130,9 +131,10 @@ class BlobStoreComponentTest
           isUnlimited() >> false
         }
       }
+      1 * blobStoreManager.getByName() >> ['test' : blobStore]
 
     when: 'create the XO'
-      def blobStoreXO = blobStoreComponent.asBlobStoreXO(blobStore)
+      def blobStoreXO = blobStoreComponent.asBlobStoreXO(config)
 
     then: 'proper object created'
       blobStoreXO.isQuotaEnabled == 'true'
@@ -169,13 +171,15 @@ class BlobStoreComponentTest
 
   def 'requesting blobstore names only does not set other properties'() {
     setup:
-      def blobStore = Mock(BlobStore) {
-        getBlobStoreConfiguration() >> new MockBlobStoreConfiguration(name: "test",
+      def config = new MockBlobStoreConfiguration(name: "test",
             attributes: [file: [path: 'path'], blobStoreQuotaConfig: [quotaType: 'spaceUsedQuota', quotaLimitBytes: 7]])
+      def blobStore = Mock(BlobStore) {
+        getBlobStoreConfiguration() >> config
       }
+      1 * blobStoreManager.getByName() >> ['test' : blobStore]
 
     when: 'create the XO with namesOnly'
-      def blobStoreXO = blobStoreComponent.asBlobStoreXO(blobStore, [], true)
+      def blobStoreXO = blobStoreComponent.asBlobStoreXO(config, [])
 
     then: 'only name is set'
       blobStoreXO.name == 'test'
@@ -193,6 +197,7 @@ class BlobStoreComponentTest
       BlobStore blobStore = Mock()
       1 * blobStoreManager.get('myblobs') >> blobStore
       1 * blobStoreManager.newConfiguration() >> new MockBlobStoreConfiguration();
+      1 * blobStoreManager.getByName() >> ['myblobs' : blobStore]
 
     when: 'The blobstore is updated'
       def updatedXO = blobStoreComponent.update(blobStoreXO)
@@ -217,6 +222,7 @@ class BlobStoreComponentTest
       BlobStore blobStore = Mock()
       1 * blobStoreManager.get('myblobs') >> blobStore
       1 * blobStoreManager.newConfiguration() >> new MockBlobStoreConfiguration();
+      1 * blobStoreManager.getByName() >> ['myblobs' : blobStore]
 
     when: 'The blobstore is updated'
       def updatedXO = blobStoreComponent.update(blobStoreXO)

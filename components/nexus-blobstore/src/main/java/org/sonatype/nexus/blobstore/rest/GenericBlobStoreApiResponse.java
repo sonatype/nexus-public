@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.blobstore.rest;
 
+import javax.annotation.Nullable;
+
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
@@ -43,10 +45,13 @@ public class GenericBlobStoreApiResponse
   }
 
   public GenericBlobStoreApiResponse(final BlobStore blobStore) {
-    super(blobStore.getBlobStoreConfiguration());
-    BlobStoreConfiguration configuration = blobStore.getBlobStoreConfiguration();
+    this(blobStore.getBlobStoreConfiguration(), blobStore);
+  }
 
-    if (blobStore.isStarted()) {
+  public GenericBlobStoreApiResponse(final BlobStoreConfiguration configuration, @Nullable final BlobStore blobStore) {
+    super(configuration);
+
+    if (blobStore != null && blobStore.isStarted()) {
       BlobStoreMetrics metrics = blobStore.getMetrics();
       unavailable = metrics.isUnavailable();
       blobCount = metrics.getBlobCount();

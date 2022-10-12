@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.internal.blobstore;
 
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -588,5 +589,10 @@ public class BlobStoreManagerImpl
     catch (BlobStoreException ex) {
       throw new BlobInputStreamException(ex, ex.getBlobId());
     }
+  }
+
+  @Override
+  public Map<String, BlobStore> getByName() {
+    return Collections.unmodifiableMap(stores);
   }
 }

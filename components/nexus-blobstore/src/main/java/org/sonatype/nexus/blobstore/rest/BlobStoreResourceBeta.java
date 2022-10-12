@@ -23,6 +23,7 @@ import javax.ws.rs.core.Response.Status;
 import org.sonatype.nexus.blobstore.ConnectionChecker;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
+import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 
 import io.swagger.annotations.Api;
@@ -48,10 +49,11 @@ public class BlobStoreResourceBeta
 
   @Inject
   public BlobStoreResourceBeta(final BlobStoreManager blobStoreManager,
+                               final BlobStoreConfigurationStore store,
                                final BlobStoreQuotaService quotaService,
                                final Map<String, ConnectionChecker> connectionCheckers)
   {
-    super(blobStoreManager, quotaService, connectionCheckers);
+    super(blobStoreManager, store, quotaService, connectionCheckers);
   }
 
   @Override
