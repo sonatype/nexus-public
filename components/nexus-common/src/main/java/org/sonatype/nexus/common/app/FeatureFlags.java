@@ -64,4 +64,6 @@ public interface FeatureFlags
    */
   String DATASTORE_TABLE_SEARCH = "nexus.datastore.table.search.enabled";
   String DATASTORE_TABLE_SEARCH_NAMED = "${nexus.datastore.table.search.enabled:-false}";
+
+  String CONAN_REVISIONS_ENABLED = "nexus.conan.revisions.enabled";
 }
