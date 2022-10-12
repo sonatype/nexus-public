@@ -54,7 +54,7 @@
         <if test="continuationToken != null">
           AND B.asset_blob_id > #{continuationToken}
         </if>
-        ORDER BY B.asset_blob_id LIMIT #{limit};
+        LIMIT #{limit};
   </select>
 
   <insert id="createAssetBlob" useGeneratedKeys="true" keyProperty="assetBlobId" parameterType="AssetBlobData">
@@ -73,6 +73,14 @@
 
   <delete id="deleteAssetBlob">
     DELETE FROM ${format}_asset_blob WHERE blob_ref = #{blobRef};
+  </delete>
+
+  <delete id="deleteAssetBlobBatch" databaseId="PostgreSQL">
+    DELETE FROM ${format}_asset_blob WHERE blob_ref = ANY(#{blobRefIds}::varchar[]);
+  </delete>
+
+  <delete id="deleteAssetBlobBatch">
+    DELETE FROM ${format}_asset_blob WHERE blob_ref = ANY(#{blobRefIds});
   </delete>
 
   <update id="setBlobCreated">

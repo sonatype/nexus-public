@@ -84,6 +84,14 @@ public interface AssetBlobDAO
   boolean deleteAssetBlob(@Param("blobRef") BlobRef blobRef);
 
   /**
+   * Deletes batch of asset blobs from the content data store.
+   *
+   * @param blobRefIds the array of String with blobRefs
+   * @return {@code true} if the asset blob was deleted
+   */
+  boolean deleteAssetBlobBatch(@Param("blobRefIds") String[] blobRefIds);
+
+  /**
    * Generally it is recommended that this method not be called and let stores manage this value.
    *
    * @since 3.29

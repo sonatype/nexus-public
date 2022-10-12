@@ -12,8 +12,11 @@
  */
 package org.sonatype.nexus.repository.content.store.internal;
 
+import java.util.List;
 import java.util.Map;
-
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -25,11 +28,14 @@ import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.logging.task.TaskLogging;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.store.AssetBlobStore;
+import org.sonatype.nexus.repository.content.store.BlobRefTypeHandler;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.TaskSupport;
+import org.sonatype.nexus.thread.NexusThreadFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getBoolean;
 import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getInteger;
 import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getString;
@@ -56,9 +62,22 @@ public class AssetBlobCleanupTask
 
   static final boolean HARD_DELETE = getBoolean(PROPERTY_PREFIX + "hardDelete", false);
 
+  /**
+   * Comma-separated formats that will use batch deletion. Default value null.
+   * maven2,npm
+   */
+  static final String BATCH_DELETE_FORMATS = getString(PROPERTY_PREFIX + "batchDeleteForFormat", null);
+
+  static final int BATCH_DELETE_POOL_SIZE = getInteger(
+      PROPERTY_PREFIX + "batchDeleteThreadPoolSize", 8);
+
   private final Map<String, FormatStoreManager> formatStoreManagers;
 
   private final BlobStoreManager blobStoreManager;
+
+  private Boolean batchDeleteEnabled = false;
+
+  private ExecutorService batchDeleteExecutorService;
 
   @Inject
   public AssetBlobCleanupTask(
@@ -69,17 +88,34 @@ public class AssetBlobCleanupTask
     this.blobStoreManager = checkNotNull(blobStoreManager);
   }
 
+  protected void initBatchDeleteIfEnabled(final String format) {
+    if (BATCH_DELETE_FORMATS != null && format != null && BATCH_DELETE_FORMATS.contains(format)) {
+      batchDeleteEnabled = true;
+      batchDeleteExecutorService = newFixedThreadPool(
+          BATCH_DELETE_POOL_SIZE,
+          new NexusThreadFactory("blobstore", "async-ops")
+      );
+    }
+  }
+
   @Override
   protected Void execute() throws Exception {
 
     String format = getConfiguration().getString(FORMAT_FIELD_ID);
     String contentStore = getConfiguration().getString(CONTENT_STORE_FIELD_ID);
+    initBatchDeleteIfEnabled(format);
 
     FormatStoreManager formatStoreManager = formatStoreManagers.get(format);
     if (formatStoreManager != null) {
       log.debug("Checking for unused {} blobs from {}", format, contentStore);
       AssetBlobStore<?> assetBlobStore = formatStoreManager.assetBlobStore(contentStore);
-      int deleteCount = deleteUnusedAssetBlobs(assetBlobStore, format, contentStore);
+      int deleteCount;
+      if (batchDeleteEnabled) {
+        deleteCount = deleteUnusedAssetBlobsBatch(assetBlobStore, format, contentStore);
+      }
+      else {
+        deleteCount = deleteUnusedAssetBlobs(assetBlobStore, format, contentStore);
+      }
       if (deleteCount > 0) {
         log.info("Deleted {} unused {} blobs from {}", deleteCount, format, contentStore);
       }
@@ -130,6 +166,37 @@ public class AssetBlobCleanupTask
   }
 
   /**
+   * Deletes unused {@link AssetBlob}s for the given format and content store in a batch manner.
+   *
+   * @return count of deleted asset blobs
+   */
+  private int deleteUnusedAssetBlobsBatch(
+      final AssetBlobStore<?> assetBlobStore,
+      final String format,
+      final String contentStore)
+  {
+    int deleteCount = 0;
+    Continuation<AssetBlob> unusedAssetBlobs = assetBlobStore.browseUnusedAssetBlobs(BATCH_SIZE, null);
+    while (!isCanceled() && !unusedAssetBlobs.isEmpty()) {
+      if (isCanceled()) {
+        break;
+      }
+      log.debug("Found {} unused {} blobs in {}", unusedAssetBlobs.size(), format, contentStore);
+      List<BlobRef> blobRefAll = extractBlobRefsFromAssetBlobs(unusedAssetBlobs);
+      deleteAssetBlobsExecutorService(blobRefAll);
+
+      String[] blobRefIds = blobRefAll.stream()
+          .map(BlobRefTypeHandler::toPersistableString)
+          .toArray(String[]::new);
+      assetBlobStore.deleteAssetBlobBatch(blobRefIds);
+      deleteCount += blobRefAll.size();
+
+      unusedAssetBlobs = assetBlobStore.browseUnusedAssetBlobs(BATCH_SIZE, unusedAssetBlobs.nextContinuationToken());
+    }
+    return deleteCount;
+  }
+
+  /**
    * Deletes the {@link AssetBlob} and associated {@link Blob}.
    *
    * @return {@code true} if the asset blob was deleted; otherwise {@code false}
@@ -154,6 +221,33 @@ public class AssetBlobCleanupTask
   }
 
   /**
+   * Deletes batch of {@link Blob}.
+   */
+  private void deleteAssetBlobsExecutorService(final List<BlobRef> blobRefs) {
+    CountDownLatch latch = new CountDownLatch(blobRefs.size());
+    for (BlobRef blobRef : blobRefs) {
+      batchDeleteExecutorService.submit(() -> {
+        latch.countDown();
+        BlobStore blobStore = blobStoreManager.get(blobRef.getStore());
+        if (blobStore == null) {
+          // postpone delete if the store is temporarily AWOL
+          log.warn("Could not find blob store for {}", blobRef);
+        }
+        else if (!deleteBlobContent(blobStore, blobRef)) {
+          // still report asset blob as deleted...
+          log.warn("Could not delete blob content under {}", blobRef);
+        }
+      });
+    }
+    try {
+      latch.await();
+    }
+    catch (InterruptedException ex) {
+      log.debug("CountDownLatch interrupted", ex);
+    }
+  }
+
+  /**
    * Deletes the {@link Blob} from its {@link BlobStore}.
    *
    * @return {@code true} if the asset blob was deleted; otherwise {@code false}
@@ -167,8 +261,23 @@ public class AssetBlobCleanupTask
     }
   }
 
+  private List<BlobRef> extractBlobRefsFromAssetBlobs(final Continuation<AssetBlob> assetBlobs) {
+    return assetBlobs.stream()
+        .map(AssetBlob::blobRef)
+        .filter(blobRef -> blobStoreManager.get(blobRef.getStore()) != null)
+        .collect(Collectors.toList());
+  }
+
   @Override
   public String getMessage() {
     return getName();
+  }
+
+  @Override
+  public void cancel() {
+    super.cancel();
+    if (batchDeleteExecutorService != null) {
+      batchDeleteExecutorService.shutdown();
+    }
   }
 }

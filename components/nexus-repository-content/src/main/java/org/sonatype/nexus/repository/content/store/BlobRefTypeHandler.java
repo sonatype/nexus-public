@@ -73,7 +73,7 @@ public class BlobRefTypeHandler
    *
    * @since 3.26
    */
-  public String toPersistableString(final BlobRef blobRef) {
+  public static String toPersistableString(final BlobRef blobRef) {
     return String.format("%s:%s@%s", blobRef.getStore(), blobRef.getBlob(), blobRef.getNode());
   }
 

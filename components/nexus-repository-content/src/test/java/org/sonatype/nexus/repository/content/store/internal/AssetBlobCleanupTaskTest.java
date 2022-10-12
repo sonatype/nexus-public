@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.content.store.internal;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.UUID;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -21,8 +23,10 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.mybatis.ContinuationArrayList;
+import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.store.AssetBlobData;
 import org.sonatype.nexus.repository.content.store.AssetBlobStore;
+import org.sonatype.nexus.repository.content.store.BlobRefTypeHandler;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 
@@ -69,6 +73,8 @@ public class AssetBlobCleanupTaskTest
   @Mock
   private BlobRef blobRefBecomesUsed;
 
+  ContinuationArrayList<AssetBlobData> firstPage;
+
   @SuppressWarnings({"unchecked", "rawtypes"})
   @Before
   public void setUp() {
@@ -76,7 +82,7 @@ public class AssetBlobCleanupTaskTest
     when(blobRefBecomesUsed.getStore()).thenReturn("default");
     when(blobRefBecomesUsed.getBlobId()).thenReturn(mock(BlobId.class));
 
-    ContinuationArrayList<AssetBlobData> firstPage = new ContinuationArrayList<>();
+    firstPage = new ContinuationArrayList<>();
     firstPage.add(newAssetBlob());
     firstPage.add(newAssetBlob());
     firstPage.add(newAssetBlob(blobRefMissingStore));
@@ -97,6 +103,7 @@ public class AssetBlobCleanupTaskTest
     when(assetBlobStore.browseUnusedAssetBlobs(BATCH_SIZE, "EOL")).thenReturn((Continuation) emptyPage);
 
     when(assetBlobStore.deleteAssetBlob(any())).thenReturn(true);
+    when(assetBlobStore.deleteAssetBlobBatch(any())).thenReturn(true);
 
     when(formatStoreManager.assetBlobStore("content")).thenReturn(assetBlobStore);
 
@@ -147,6 +154,42 @@ public class AssetBlobCleanupTaskTest
     inOrder.verify(assetBlobStore).browseUnusedAssetBlobs(BATCH_SIZE, "EOL");
 
     inOrder.verifyNoMoreInteractions();
+  }
+
+  @Test
+  public void testUnusedBlobsAreDeletedBatch() throws Exception {
+    AssetBlobCleanupTask task = new AssetBlobCleanupTask(ImmutableMap.of("raw", formatStoreManager), blobStoreManager);
+    setBatchDeleteFinalField("raw");
+    TaskConfiguration taskConfiguration = new TaskConfiguration();
+    taskConfiguration.setString(FORMAT_FIELD_ID, "raw");
+    taskConfiguration.setString(CONTENT_STORE_FIELD_ID, "content");
+    taskConfiguration.setId(UUID.randomUUID().toString());
+    taskConfiguration.setTypeId(TYPE_ID);
+    task.configure(taskConfiguration);
+
+    InOrder inOrder = Mockito.inOrder(assetBlobStore, blobStore);
+
+    task.execute();
+
+    inOrder.verify(assetBlobStore).browseUnusedAssetBlobs(BATCH_SIZE, null);
+    String[] blobRefIds = firstPage.stream()
+        .map(AssetBlob::blobRef)
+        .filter(blobRef -> blobStoreManager.get(blobRef.getStore()) != null)
+        .map(BlobRefTypeHandler::toPersistableString)
+        .toArray(String[]::new);
+    inOrder.verify(blobStore).delete(firstPage.get(0).blobRef().getBlobId(), EXPECTED_REASON);
+    inOrder.verify(assetBlobStore).deleteAssetBlobBatch(blobRefIds);
+
+    setBatchDeleteFinalField(null);
+  }
+
+  private void setBatchDeleteFinalField(String batchDeleteFormats) throws NoSuchFieldException, IllegalAccessException {
+    Field field = AssetBlobCleanupTask.class.getDeclaredField("BATCH_DELETE_FORMATS");
+    field.setAccessible(true);
+    Field modifiers = Field.class.getDeclaredField("modifiers");
+    modifiers.setAccessible(true);
+    modifiers.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+    field.set(null, batchDeleteFormats);
   }
 
   private AssetBlobData newAssetBlob() {
