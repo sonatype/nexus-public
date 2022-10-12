@@ -52,6 +52,11 @@ public interface FeatureFlags
   /* HTTP Replication. Available values: true, false. Default value: false */
   String REPLICATION_HTTP_ENABLED = "nexus.replication.http.enabled";
 
+  /* flag for skipping blob store with soft-quota violation (for Round Robin group policy)
+  *  Available values: true, false. Default value: false
+  */
+  String BLOBSTORE_SKIP_ON_SOFTQUOTA_VIOLATION = "nexus.blobstore.skipOnSoftQuotaViolation";
+
   /*  */
   String DATASTORE_BLOBSTORE_METRICS = "nexus.datastore.blobstore.metrics.enabled";
 

@@ -18,16 +18,20 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 import org.sonatype.nexus.blobstore.group.FillPolicy;
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaResult;
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 
 import com.google.common.annotations.VisibleForTesting;
 
 import static java.util.Collections.rotate;
+import static org.sonatype.nexus.common.app.FeatureFlags.BLOBSTORE_SKIP_ON_SOFTQUOTA_VIOLATION;
 
 /**
  * {@link FillPolicy} that divides writes to member blob stores evenly based upon a round robin selection.
@@ -45,6 +49,13 @@ public class RoundRobinFillPolicy
 
   private AtomicInteger sequence = new AtomicInteger();
 
+  @Inject
+  private BlobStoreQuotaService quotaService;
+
+  @Inject
+  @Named("${" + BLOBSTORE_SKIP_ON_SOFTQUOTA_VIOLATION + ":-false}")
+  boolean skipOnSoftQuotaViolation;
+
   @Override
   public String getName() {
     return NAME;
@@ -52,7 +63,8 @@ public class RoundRobinFillPolicy
 
   @Override
   @Nullable
-  public BlobStore chooseBlobStore(final BlobStoreGroup blobStoreGroup, final Map<String, String> headers) {
+  public BlobStore chooseBlobStore(final BlobStoreGroup blobStoreGroup,
+                                   final Map<String, String> headers) {
     return nextMember(blobStoreGroup.getMembers());
   }
 
@@ -76,6 +88,7 @@ public class RoundRobinFillPolicy
     return rotatedMembers.stream()
         .filter(BlobStore::isWritable)
         .filter(BlobStore::isStorageAvailable)
+        .filter(skipOnSoftQuotaViolation ? this::hasNoQuotaViolation : s -> true)
         .findFirst()
         .orElse(null);
   }
@@ -86,5 +99,19 @@ public class RoundRobinFillPolicy
       i += 1;
       return i < 0 ? 0 : i;
     });
+  }
+
+  private boolean hasNoQuotaViolation(final BlobStore blobStore) {
+    BlobStoreQuotaResult result = quotaService.checkQuota(blobStore);
+    if (result != null && result.isViolation()) {
+      if (log.isTraceEnabled()) {
+        log.info("Skipping blobStore {} due to soft-quota violation: {}", result.getBlobStoreName(), result.getMessage());
+      }
+      else {
+        log.info("Skipping blobStore {} due to soft-quota violation", result.getBlobStoreName());
+      }
+      return false;
+    }
+    return true;
   }
 }

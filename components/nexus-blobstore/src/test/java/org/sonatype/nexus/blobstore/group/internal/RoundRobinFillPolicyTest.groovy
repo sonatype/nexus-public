@@ -15,6 +15,8 @@ package org.sonatype.nexus.blobstore.group.internal
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaResult
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService
 
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -25,7 +27,15 @@ import spock.lang.Unroll
 class RoundRobinFillPolicyTest
     extends Specification
 {
+  BlobStoreQuotaService blobStoreQuotaService = Mock(BlobStoreQuotaService)
+
+  BlobStoreQuotaResult blobStoreQuotaResult = new BlobStoreQuotaResult(true, "", "");;
+
   RoundRobinFillPolicy roundRobinFillPolicy = new RoundRobinFillPolicy()
+
+  void setup() {
+    roundRobinFillPolicy.quotaService = blobStoreQuotaService;
+  }
 
   @Unroll
   def 'nextIndex gives expected value when starting at #initialValue'() {
@@ -133,10 +143,71 @@ class RoundRobinFillPolicyTest
   }
 
   private BlobStore mockMember(final String name, final boolean writable) {
-    Mock(BlobStore) {
+      Mock(BlobStore) {
+        isStorageAvailable() >> true
+        isWritable() >> writable
+        getBlobStoreConfiguration() >> Mock(BlobStoreConfiguration) { getName() >> name }
+      }
+    }
+
+  def 'It will not skip members with quota violation'() {
+    given: 'A group with some members having quota violation'
+      BlobStoreGroup blobStoreGroup = Mock() {
+        getMembers() >> [
+            mockMember("One", blobStoreQuotaResult),
+            mockMember("Two", null),
+            mockMember("Three", blobStoreQuotaResult),
+        ]
+      }
+    when: 'the policy tries to select the blob store member'
+      def store = roundRobinFillPolicy.chooseBlobStore(blobStoreGroup, [:]);
+    then: 'the result is as expected'
+      store.blobStoreConfiguration.name == 'One'
+  }
+
+  def 'It will skip all members with quota violation'() {
+    given: 'A group with all members having quota violation'
+      BlobStoreGroup blobStoreGroup = Mock() {
+        getMembers() >> [
+            mockMember("One", blobStoreQuotaResult),
+            mockMember("Three", blobStoreQuotaResult)
+        ]
+      }
+    when: 'the policy tries to select the blob store member'
+      roundRobinFillPolicy.skipOnSoftQuotaViolation = true
+      BlobStore store = roundRobinFillPolicy.chooseBlobStore(blobStoreGroup, [:]);
+    then: 'the result is null'
+      store == null
+    }
+
+  def 'It will skip members with quota violation'() {
+    given: 'A group with some members having quota violation'
+      BlobStoreGroup blobStoreGroup = Mock() {
+        getMembers() >> [
+            mockMember("One", blobStoreQuotaResult),
+            mockMember("Two", null),
+            mockMember("Three", blobStoreQuotaResult),
+            mockMember("Four", null)
+        ]
+      }
+    when: 'the policy tries to select the blob store member'
+      roundRobinFillPolicy.skipOnSoftQuotaViolation = true
+      def store = roundRobinFillPolicy.chooseBlobStore(blobStoreGroup, [:]);
+    then: 'the result is as expected'
+      store.blobStoreConfiguration.name == 'Two'
+    when: 'the policy tries to select the blob store member'
+      def store2 = roundRobinFillPolicy.chooseBlobStore(blobStoreGroup, [:]);
+    then: 'the result is as expected'
+      store2.blobStoreConfiguration.name == 'Four'
+  }
+
+  private BlobStore mockMember(final String name, final BlobStoreQuotaResult result) {
+    BlobStore b = Mock(BlobStore) {
       isStorageAvailable() >> true
-      isWritable() >> writable
+      isWritable() >> true
       getBlobStoreConfiguration() >> Mock(BlobStoreConfiguration) { getName() >> name }
     }
+    blobStoreQuotaService.checkQuota(b) >> result
+    return b;
   }
 }
