@@ -32,4 +32,7 @@ global.NX = {
     success: jest.fn(),
     error: jest.fn(),
   },
+  Permissions: {
+    check: jest.fn()
+  }
 };

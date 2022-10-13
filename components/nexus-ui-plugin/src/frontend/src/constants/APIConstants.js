@@ -158,6 +158,9 @@ export default {
       get SSL_CERTIFICATES() {
         return `${this.BASE_URL}security/ssl/truststore`;
       },
+      get SSL_CERTIFICATE_DETAILS() {
+        return `${this.BASE_URL}security/ssl`;
+      },
       get EMAIL_SERVER() {
         return `${this.BASE_URL}email`;
       },

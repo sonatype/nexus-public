@@ -17,9 +17,10 @@
 import axios from 'axios';
 import {assign, createMachine} from 'xstate';
 import {includes} from 'ramda';
+import APIConstants from '../../../constants/APIConstants';
 
-const CERTIFICATE_DETAILS_URL = '/service/rest/v1/security/ssl';
-const TRUSTSTORE_URL = '/service/rest/v1/security/ssl/truststore';
+const CERTIFICATE_DETAILS_URL = APIConstants.REST.PUBLIC.SSL_CERTIFICATE_DETAILS;
+const TRUSTSTORE_URL = APIConstants.REST.PUBLIC.SSL_CERTIFICATES;
 const REMOVE_CERTIFICATE_URL = (id) => `${TRUSTSTORE_URL}/${id}`;
 
 /**

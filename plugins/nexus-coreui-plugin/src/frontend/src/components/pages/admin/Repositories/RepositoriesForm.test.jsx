@@ -95,7 +95,11 @@ const {
 const {
   EXT: {URL: EXT_URL},
   REST: {
-    PUBLIC: {REPOSITORIES: REST_PUB_URL}
+    PUBLIC: {
+      REPOSITORIES: REST_PUB_URL,
+      SSL_CERTIFICATES,
+      CERTIFICATE_DETAILS
+    }
   }
 } = APIConstants;
 
@@ -1012,6 +1016,15 @@ describe('RepositoriesForm', () => {
     });
 
     it('creates docker proxy repository', async () => {
+      when(global.NX.Permissions.check)
+        .calledWith('nexus:ssl-truststore:read')
+        .mockReturnValue(true);
+      when(global.NX.Permissions.check)
+        .calledWith('nexus:ssl-truststore:create')
+        .mockReturnValue(true);
+      when(global.NX.Permissions.check)
+        .calledWith('nexus:ssl-truststore:update')
+        .mockReturnValue(true);
       const repo = {
         format: 'docker',
         type: 'proxy',
@@ -1058,6 +1071,27 @@ describe('RepositoriesForm', () => {
           foreignLayerUrlWhitelist: []
         }
       };
+      const certificateDetails = {
+        'expiresOn': 1654300799000,
+        'fingerprint': 'C2:56:90:5E:91:65:A5:D1:6E:DC:98:65:CD:8D:34:32:B2:B1:45:40',
+        'id': 'C2:56:90:5E:91:65:A5:D1:6E:DC:98:65:CD:8D:34:32:B2:B1:45:40',
+        'issuedOn': 1622764800000,
+        'issuerCommonName': 'issuer common name',
+        'issuerOrganization': 'issuer organization',
+        'issuerOrganizationalUnit': 'issuer unit',
+        'pem': '-----BEGIN CERTIFICATE-----\ncertificate_text\n-----END CERTIFICATE-----\n',
+        'serialNumber': '8987777501424561459122707745365601310',
+        'subjectCommonName': 'subject common name',
+        'subjectOrganization': 'subject organization',
+        'subjectOrganizationalUnit': 'subject organizational unit'
+      };
+
+      when(Axios.get)
+        .calledWith(CERTIFICATE_DETAILS)
+        .mockResolvedValue({data: certificateDetails});
+      when(Axios.get)
+        .calledWith(SSL_CERTIFICATES)
+        .mockResolvedValue({data: [certificateDetails]});
 
       await renderViewAndSetRequiredFields(repo);
 
@@ -1069,7 +1103,8 @@ describe('RepositoriesForm', () => {
       );
 
       expect(selectors.getUseNexusTruststoreCheckbox()).toBeDisabled();
-      expect(selectors.getUseNexusTruststoreButton()).toBeDisabled();
+      expect(selectors.getUseNexusTruststoreButton()).toHaveClass('disabled');
+      expect(selectors.getUseNexusTruststoreButton()).toHaveAttribute('aria-disabled', 'true');
       await TestUtils.changeField(selectors.getRemoteUrlInput, repo.proxy.remoteUrl);
       userEvent.click(selectors.getUseNexusTruststoreCheckbox());
       userEvent.click(selectors.getUseNexusTruststoreButton());

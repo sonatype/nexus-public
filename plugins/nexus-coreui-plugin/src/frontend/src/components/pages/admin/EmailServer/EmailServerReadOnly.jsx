@@ -33,6 +33,9 @@ export default function EmailServerReadOnly() {
   const {data, loadError} = current.context;
   const isLoading = current.matches('loading');
   const enabled = readOnlyCheckboxValueLabel(data.enabled);
+  const nexusTrustStoreEnabled = readOnlyCheckboxValueLabel(
+    data.nexusTrustStoreEnabled
+  );
   const retry = () => send('RETRY');
 
   const renderData = (label, value) => {
@@ -50,6 +53,10 @@ export default function EmailServerReadOnly() {
           <>
             <ReadOnlyField label={LABELS.HOST.LABEL} value={data.host} />
             <ReadOnlyField label={LABELS.PORT.LABEL} value={data.port} />
+            <ReadOnlyField
+              label={UIStrings.USE_TRUST_STORE.LABEL}
+              value={nexusTrustStoreEnabled}
+            />
             <ReadOnlyField
               label={LABELS.USERNAME.LABEL}
               value={data.username}

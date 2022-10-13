@@ -11,13 +11,16 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React, {useState} from 'react';
-
 import {
   NxFieldset,
   NxCheckbox,
   NxButton,
-  NxFontAwesomeIcon
+  NxFontAwesomeIcon,
+  NxTooltip,
 } from '@sonatype/react-shared-components';
+import classNames from 'classnames';
+
+import ExtJS from '../../../interface/ExtJS';
 
 import {faCertificate} from '@fortawesome/free-solid-svg-icons';
 
@@ -27,33 +30,67 @@ import SslCertificateDetailsModal from '../SslCertificateDetailsModal/SslCertifi
 import UIStrings from '../../../constants/UIStrings';
 import './UseNexusTruststore.scss';
 
-const {LABEL, DESCRIPTION, VIEW_CERTIFICATE} = UIStrings.USE_TRUST_STORE;
+const {
+  USE_TRUST_STORE: {LABEL, DESCRIPTION, VIEW_CERTIFICATE, NOT_SECURE_URL},
+} = UIStrings;
 
-export default function UseNexusTruststore({remoteUrl, ...checkboxPorps}) {
+export default function UseNexusTruststore({remoteUrl, ...checkboxProps}) {
   const [showModal, setShowModal] = useState(false);
-
+  const canCreate = ExtJS.checkPermission('nexus:ssl-truststore:create');
+  const canUpdate = ExtJS.checkPermission('nexus:ssl-truststore:update');
+  const canRead = ExtJS.checkPermission('nexus:ssl-truststore:read');
+  const canMarkAsChecked = canCreate && canUpdate;
   const hasSecureRemoteUrl = ValidationUtils.isSecureUrl(remoteUrl);
+  const disabledCheckbox = !canMarkAsChecked || !hasSecureRemoteUrl;
+  const disabledViewCertificate = !canRead || !hasSecureRemoteUrl;
+  const viewCertificateClasses = classNames({
+    disabled: disabledViewCertificate,
+  });
+  let message;
 
-  const openModal = () => setShowModal(true);
+  if (!canMarkAsChecked) {
+    message = UIStrings.PERMISSION_ERROR;
+  } else if (!hasSecureRemoteUrl) {
+    message = NOT_SECURE_URL;
+  }
+
+  const openModal = () => {
+    if(!disabledViewCertificate){
+      setShowModal(true);
+    }
+  }
   const closeModal = () => setShowModal(false);
 
   return (
     <NxFieldset label={LABEL}>
       <div className="nxrm-use-nexus-trust-store">
-        <NxCheckbox {...checkboxPorps} disabled={!hasSecureRemoteUrl}>
-          {DESCRIPTION}
-        </NxCheckbox>
-        <NxButton
-          variant="tertiary"
-          disabled={!hasSecureRemoteUrl}
-          onClick={openModal}
-          type="button"
+        <NxTooltip title={disabledCheckbox && message}>
+          <span>
+            <NxCheckbox {...checkboxProps} disabled={disabledCheckbox}>
+              {DESCRIPTION}
+            </NxCheckbox>
+          </span>
+        </NxTooltip>
+        <NxTooltip
+          title={disabledViewCertificate && UIStrings.PERMISSION_ERROR}
         >
-          <NxFontAwesomeIcon icon={faCertificate} />
-          <span>{VIEW_CERTIFICATE}</span>
-        </NxButton>
+          <NxButton
+            variant="tertiary"
+            onClick={openModal}
+            className={viewCertificateClasses}
+            type="button"
+          >
+            <NxFontAwesomeIcon icon={faCertificate} />
+            <span>{VIEW_CERTIFICATE}</span>
+          </NxButton>
+        </NxTooltip>
       </div>
-      {showModal && <SslCertificateDetailsModal remoteUrl={remoteUrl} onCancel={closeModal} />}
+      {showModal && (
+        <SslCertificateDetailsModal
+          remoteUrl={remoteUrl}
+          onCancel={closeModal}
+        />
+      )}
     </NxFieldset>
   );
 }

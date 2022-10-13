@@ -15,6 +15,8 @@ import axios from 'axios';
 import {when} from 'jest-when';
 import {render, screen, waitForElementToBeRemoved} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import ExtJS from '../../../interface/ExtJS';
+import APIConstants from '../../../constants/APIConstants';
 
 import SslCertificateDetailsModal from './SslCertificateDetailsModal';
 import TestUtils from '../../../interface/TestUtils';
@@ -27,6 +29,8 @@ jest.mock('axios', () => ({
   post: jest.fn(),
   delete: jest.fn()
 }));
+
+const spyExtJS = jest.spyOn(ExtJS, 'checkPermission');
 
 const selectors = {
   ...TestUtils.selectors,
@@ -64,30 +68,47 @@ describe('SslCertificateDetailsModal', () => {
   };
 
   const onCancel = jest.fn();
+  const baseUrl = APIConstants.REST.PUBLIC.SSL_CERTIFICATE_DETAILS;
+  const truststoreUrl = APIConstants.REST.PUBLIC.SSL_CERTIFICATES;
+  const localhost = 'localhost';
+  const defaultPort = '443';
 
-  function mockCertificateDetails(response, hostname, port) {
-    if (!hostname) {
-      hostname = 'localhost';
-    }
-    if (!port) {
-      port = '443';
-    }
-    when(axios.get).calledWith('/service/rest/v1/security/ssl?host=' + hostname + '&port=' + port).mockReturnValue({
+  function mockCertificateDetails(response, hostname = localhost, port = defaultPort) {
+    when(axios.get).calledWith(`${baseUrl}?host=${hostname}&port=${port}`).mockReturnValue({
       data: response
     });
   }
 
   function mockTruststore(truststore) {
-    when(axios.get).calledWith('/service/rest/v1/security/ssl/truststore').mockResolvedValue({
+    when(axios.get).calledWith(truststoreUrl).mockResolvedValue({
       data: truststore
     });
   }
 
+  const renderView = async (url, cancel) => {
+    const remoteUrl = url || 'https://localhost';
+    const handleCancel = cancel || onCancel;
+    const result = render(<SslCertificateDetailsModal remoteUrl={remoteUrl} onCancel={handleCancel}/>);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+    return result;
+  }
+
+  const renderViewAndMocks = async ({url, cancel, certificate, truststore} = {}) => {
+    mockCertificateDetails(certificate || certificateDetails);
+    mockTruststore(truststore || []);
+    await renderView(url, cancel);
+  }
+
+  beforeEach(() => {
+    spyExtJS.mockReturnValue(true)
+  });
+
   it('renders correctly when loading', async function() {
     const UNRESOLVED = new Promise(() => {});
-    when(axios.get).calledWith('/service/rest/v1/security/ssl?host=localhost&port=443').mockReturnValue(UNRESOLVED);
+    when(axios.get).calledWith(`${baseUrl}?host=${localhost}&port=${defaultPort}`).mockReturnValue(UNRESOLVED);
 
-    render(<SslCertificateDetailsModal remoteUrl="https://localhost" onCancel={onCancel}/>);
+    renderView();
 
     expect(selectors.queryLoadingMask()).toBeInTheDocument();
     expect(selectors.getAddButton()).not.toBeInTheDocument();
@@ -100,12 +121,7 @@ describe('SslCertificateDetailsModal', () => {
   });
 
   it('renders the certificate details', async function() {
-    mockCertificateDetails(certificateDetails);
-    mockTruststore([]);
-
-    render(<SslCertificateDetailsModal remoteUrl="https://localhost" onCancel={onCancel}/>);
-
-    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+    await renderViewAndMocks();
 
     expect(selectors.getSubjectCommonName().nextSibling).toHaveTextContent(certificateDetails.subjectCommonName);
     expect(selectors.getSubjectOrganization().nextSibling).toHaveTextContent(certificateDetails.subjectOrganization);
@@ -126,9 +142,7 @@ describe('SslCertificateDetailsModal', () => {
     mockCertificateDetails(certificateDetails, 'localhost', '8443');
     mockTruststore([]);
 
-    render(<SslCertificateDetailsModal remoteUrl="https://localhost:8443" onCancel={onCancel}/>);
-
-    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+    await renderView('https://localhost:8443')
 
     expect(selectors.getSubjectCommonName().nextSibling).toHaveTextContent(certificateDetails.subjectCommonName);
     expect(selectors.getSubjectOrganization().nextSibling).toHaveTextContent(certificateDetails.subjectOrganization);
@@ -146,17 +160,12 @@ describe('SslCertificateDetailsModal', () => {
   });
 
   it('adds the certificate to the truststore', async function() {
-    mockCertificateDetails(certificateDetails);
-    mockTruststore([]);
-
-    render(<SslCertificateDetailsModal remoteUrl="https://localhost" onCancel={onCancel}/>);
-
-    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+    await renderViewAndMocks();
 
     expect(selectors.getAddButton()).toBeEnabled();
     expect(onCancel).not.toBeCalled();
 
-    when(axios.post).calledWith('/service/rest/v1/security/ssl/truststore', certificateDetails.pem).mockResolvedValue();
+    when(axios.post).calledWith(truststoreUrl, certificateDetails.pem).mockResolvedValue();
 
     userEvent.click(selectors.getAddButton());
 
@@ -166,18 +175,13 @@ describe('SslCertificateDetailsModal', () => {
   });
 
   it('removes the certificate from the truststore', async function() {
-    mockCertificateDetails(certificateDetails);
-    mockTruststore([certificateDetails]);
-
-    render(<SslCertificateDetailsModal remoteUrl="https://localhost" onCancel={onCancel}/>);
-
-    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+    await renderViewAndMocks({truststore: [certificateDetails]});
 
     expect(selectors.getRemoveButton()).toBeEnabled();
     expect(onCancel).not.toBeCalled();
 
     when(axios.delete)
-        .calledWith('/service/rest/v1/security/ssl/truststore/' + certificateDetails.id)
+        .calledWith(`${truststoreUrl}/${certificateDetails.id}`)
         .mockResolvedValue();
 
     userEvent.click(selectors.getRemoveButton());
@@ -188,39 +192,27 @@ describe('SslCertificateDetailsModal', () => {
   });
 
   it('closes when close is clicked', async function() {
-    mockCertificateDetails(certificateDetails);
-    mockTruststore([]);
-
-    render(<SslCertificateDetailsModal remoteUrl="https://localhost" onCancel={onCancel}/>);
+    await renderViewAndMocks();
 
     userEvent.click(selectors.getCloseButton());
-
-    await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     expect(onCancel).toBeCalled();
   });
 
   it('renders an error when the load fails', async function() {
-    when(axios.get).calledWith('/service/rest/v1/security/ssl?host=localhost&port=443').mockRejectedValue('error');
+    when(axios.get).calledWith(`${baseUrl}?host=${localhost}&port=${defaultPort}`).mockRejectedValue('error');
     mockTruststore([]);
 
-    render(<SslCertificateDetailsModal remoteUrl="https://localhost" onCancel={onCancel}/>);
-
-    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+    await renderView();
 
     expect(screen.getByText('An error occurred loading data. error')).toBeInTheDocument();
   });
 
   it('renders an error when adding the certificate fails', async function() {
-    mockCertificateDetails(certificateDetails);
-    mockTruststore([]);
-
-    render(<SslCertificateDetailsModal remoteUrl="https://localhost" onCancel={onCancel}/>);
-
-    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+    await renderViewAndMocks();
 
     when(axios.post)
-        .calledWith('/service/rest/v1/security/ssl/truststore', certificateDetails.pem)
+        .calledWith(truststoreUrl, certificateDetails.pem)
         .mockRejectedValue('error');
 
     userEvent.click(selectors.getAddButton());
@@ -232,15 +224,10 @@ describe('SslCertificateDetailsModal', () => {
   });
 
   it('renders an error when removing the certificate fails', async function() {
-    mockCertificateDetails(certificateDetails);
-    mockTruststore([certificateDetails]);
-
-    render(<SslCertificateDetailsModal remoteUrl="https://localhost" onCancel={onCancel}/>);
-
-    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+    await renderViewAndMocks({truststore: [certificateDetails]});
 
     when(axios.delete)
-        .calledWith('/service/rest/v1/security/ssl/truststore/' + certificateDetails.id)
+        .calledWith(`${truststoreUrl}/${certificateDetails.id}`)
         .mockRejectedValue('error');
 
     userEvent.click(selectors.getRemoveButton());
@@ -249,5 +236,23 @@ describe('SslCertificateDetailsModal', () => {
 
     expect(screen.getByText('An error occurred while attempting to remove the certificate from the truststore. error'))
         .toBeInTheDocument();
+  });
+
+  it('can not add the truststore certificate if user does not have enough permissions', async () => {
+    when(ExtJS.checkPermission).calledWith('nexus:ssl-truststore:create').mockReturnValue(false);
+
+    await renderViewAndMocks();
+
+    expect(selectors.getAddButton()).toHaveAttribute('aria-disabled', 'true');
+    expect(selectors.getAddButton()).toHaveClass('disabled');
+  });
+
+  it('can not remove the truststore certificate if user does not have enough permissions', async () => {
+    when(ExtJS.checkPermission).calledWith('nexus:ssl-truststore:delete').mockReturnValue(false);
+
+    await renderViewAndMocks({truststore: [certificateDetails]});
+
+    expect(selectors.getRemoveButton()).toHaveAttribute('aria-disabled', 'true');
+    expect(selectors.getRemoveButton()).toHaveClass('disabled');
   });
 });

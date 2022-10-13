@@ -32,6 +32,7 @@ const {
     VERIFY,
     READ_ONLY
   },
+  USE_TRUST_STORE,
   SETTINGS,
   ERROR
 } = UIStrings;
@@ -61,6 +62,7 @@ const selectors = {
   port: () => screen.getByLabelText(LABELS.PORT.LABEL),
   username: () => screen.queryByLabelText(LABELS.USERNAME.LABEL),
   password: () => screen.queryByLabelText(LABELS.PASSWORD.LABEL),
+  useTruststore: () => screen.queryByLabelText(USE_TRUST_STORE.DESCRIPTION),
   fromAddress: () => screen.queryByLabelText(LABELS.FROM_ADDRESS.LABEL),
   subjectPrefix: () => screen.queryByLabelText(LABELS.SUBJECT_PREFIX.LABEL),
   enableStarttls: () => screen.queryByLabelText(LABELS.SSL_TLS_OPTIONS.OPTIONS.ENABLE_STARTTLS),
@@ -86,6 +88,8 @@ const selectors = {
     hostValue: () => screen.getByText(LABELS.HOST.LABEL).nextSibling,
     port: () => screen.getByText(LABELS.PORT.LABEL),
     portValue: () => screen.getByText(LABELS.PORT.LABEL).nextSibling,
+    useTruststore: () => screen.getByText(USE_TRUST_STORE.LABEL),
+    useTruststoreValue: () => screen.getByText(USE_TRUST_STORE.LABEL).nextSibling,
     username: () => screen.getByText(LABELS.USERNAME.LABEL),
     usernameValue: () => screen.getByText(LABELS.USERNAME.LABEL).nextSibling,
     fromAddress: () => screen.getByText(LABELS.FROM_ADDRESS.LABEL),
@@ -118,6 +122,7 @@ const DATA = {
   port: 1234,
   sslOnConnectEnabled: true,
   sslServerIdentityCheckEnabled: true,
+  nexusTrustStoreEnabled: true,
   startTlsEnabled: true,
   startTlsRequired: true,
   subjectPrefix: 'prefix',
@@ -140,12 +145,13 @@ const EMPTY_DATA = {
 
 const populateForm = () => {
   const {enabled, host, port, username, password, fromAddress, subjectPrefix,
-    enableStarttls, requireStarttls, enableSslTls, identityCheck} = selectors;
+    enableStarttls, requireStarttls, enableSslTls, identityCheck, useTruststore} = selectors;
 
   userEvent.click(enabled());
   userEvent.type(host(), DATA.host);
   userEvent.clear(port());
   userEvent.type(port(), DATA.port.toString());
+  userEvent.click(useTruststore());
   userEvent.type(username(), DATA.username);
   userEvent.type(password(), DATA.password);
   userEvent.type(fromAddress(), DATA.fromAddress);
@@ -296,6 +302,16 @@ describe('EmailServer', () => {
 
   it('creates email server configuration', async () => {
     const {saveButton} = selectors;
+
+    when(global.NX.Permissions.check)
+      .calledWith('nexus:ssl-truststore:read')
+      .mockReturnValue(true);
+    when(global.NX.Permissions.check)
+      .calledWith('nexus:ssl-truststore:create')
+      .mockReturnValue(true);
+    when(global.NX.Permissions.check)
+      .calledWith('nexus:ssl-truststore:update')
+      .mockReturnValue(true);
 
     when(Axios.put).calledWith(emailServerUrl, expect.anything()).mockResolvedValue({data: {}});
 
@@ -468,6 +484,8 @@ describe('EmailServer', () => {
         hostValue,
         port,
         portValue,
+        useTruststore,
+        useTruststoreValue,
         username,
         usernameValue,
         fromAddress,
@@ -488,6 +506,8 @@ describe('EmailServer', () => {
       expect(hostValue()).toHaveTextContent(data.host);
       expect(port()).toBeInTheDocument();
       expect(portValue()).toHaveTextContent(data.port);
+      expect(useTruststore()).toBeInTheDocument();
+      expect(useTruststoreValue()).toHaveTextContent('Enabled');
       expect(username()).toBeInTheDocument();
       expect(usernameValue()).toHaveTextContent(data.username);
       expect(fromAddress()).toBeInTheDocument();
