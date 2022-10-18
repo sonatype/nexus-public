@@ -310,23 +310,24 @@ public class BrowseEventHandler
         requestsByRepository.put(entry.getValue(), assetId(entry.getKey()));
         itr.remove();
       }
+
+      // deliver requests to the relevant repositories
+      requestsByRepository.asMap().forEach((repository, assetIds) -> {
+        try {
+          cooperation.on(() -> {
+            repository.optionalFacet(BrowseFacet.class).ifPresent(browseFacet -> browseFacet.addPathsToAssets(assetIds));
+            return null;
+          })
+          // We always need to process our assets regardless of what the remote node did
+          .checkFunction(Optional::empty)
+          .cooperate(repository.getName());
+        }
+        catch (IOException e) {
+          logWarning("An error occurred while processing browse nodes for {}", repository, e);
+        }
+      });
     }
 
-    // deliver requests to the relevant repositories
-    requestsByRepository.asMap().forEach((repository, assetIds) -> {
-      try {
-        cooperation.on(() -> {
-          repository.optionalFacet(BrowseFacet.class).ifPresent(browseFacet -> browseFacet.addPathsToAssets(assetIds));
-          return null;
-        })
-        // We always need to process our assets
-        .checkFunction(Optional::empty)
-        .cooperate(repository.getName());
-      }
-      catch (IOException e) {
-        logWarning("An error occurred while processing browse nodes for {}", repository, e);
-      }
-    });
   }
 
   /**
