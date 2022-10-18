@@ -32,32 +32,14 @@ import AnonymousMachine from './AnonymousMachine';
 
 export default function AnonymousSettingsForm() {
   const [current, send] = useMachine(AnonymousMachine, {devTools: true});
-  const {data, isPristine, loadError, realms, saveError, validationErrors} = current.context;
-  const isLoading = current.matches('loading');
-  const isSaving = current.matches('saving')
-  const isInvalid = FormUtils.isInvalid(validationErrors);
+  const {data, isPristine, realms} = current.context;
 
   function discard() {
     send('RESET');
   }
 
-  function save() {
-    send('SAVE');
-  }
-
-  function retry() {
-    send('RETRY');
-  }
-
   return <NxForm
-      loading={isLoading}
-      loadError={loadError}
-      doLoad={retry}
-      onSubmit={save}
-      submitError={saveError}
-      submitMaskState={isSaving ? false : null}
-      submitBtnText={UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
-      validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
+      {...FormUtils.formProps(current, send)}
       additionalFooterBtns={
         <NxTooltip title={FormUtils.discardTooltip({isPristine})}>
           <NxButton type="button" className={isPristine && 'disabled'} onClick={discard}>
