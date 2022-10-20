@@ -58,8 +58,6 @@ class AssetXO
 
   Date lastModified
 
-  Date lastDownloaded
-
   String uploader
 
   String uploaderIp
