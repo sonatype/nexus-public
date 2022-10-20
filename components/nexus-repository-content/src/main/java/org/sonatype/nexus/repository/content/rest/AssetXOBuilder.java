@@ -72,7 +72,6 @@ public class AssetXOBuilder
         .format(format)
         .contentType(contentType)
         .lastModified(lastModified)
-        .lastDownloaded(getLastDownloaded(asset))
         .attributes(getExpandedAttributes(asset, format, assetDescriptors))
         .uploader(uploader)
         .uploaderIp(uploaderIp)
