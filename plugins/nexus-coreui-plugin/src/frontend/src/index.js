@@ -14,6 +14,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+import {Permissions} from '@sonatype/nexus-ui-plugin';
 import ContentSelectors from './components/pages/admin/ContentSelectors/ContentSelectors';
 import EmailServer from './components/pages/admin/EmailServer/EmailServer';
 import Privileges from './components/pages/admin/Privileges/Privileges';
@@ -78,7 +79,7 @@ window.plugins.push({
       view: BlobStores,
       iconCls: 'x-fa fa-hdd',
       visibility: {
-        permissions: ['nexus:blobstores:read']
+        permissions: [Permissions.BLOB_STORES.READ]
       }
     },
     {
@@ -102,7 +103,7 @@ window.plugins.push({
       weight: 300,
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        permissions: ['nexus:selectors:read']
+        permissions: [Permissions.SELECTORS.READ]
       },
     },
     {
@@ -114,7 +115,7 @@ window.plugins.push({
       weight: 500,
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        permissions: ['nexus:*']
+        permissions: [Permissions.ADMIN]
       },
     },
     {
@@ -127,7 +128,7 @@ window.plugins.push({
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         featureFlags: [{key: 'nexus.react.privileges', defaultValue: false}],
-        permissions: ['nexus:privileges:read']
+        permissions: [Permissions.PRIVILEGES.READ]
       },
     },
     {
@@ -139,7 +140,7 @@ window.plugins.push({
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         featureFlags: [{key: 'nexus.react.emailServer', defaultValue: false}],
-        permissions: ['nexus:settings:read']
+        permissions: [Permissions.SETTINGS.READ]
       },
     },
     {
@@ -163,7 +164,7 @@ window.plugins.push({
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         featureFlags: [{key: 'nexus.react.sslCertificates', defaultValue: false}],
-        permissions: ['nexus:ssl-truststore:read']
+        permissions: [Permissions.SSL_TRUSTSTORE.READ]
       }
     },
     {
@@ -176,7 +177,7 @@ window.plugins.push({
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         featureFlags: [{key: 'nexus.react.users', defaultValue: false}],
-        permissions: ['nexus:users:read', 'nexus:roles:read'],
+        permissions: [Permissions.USERS.READ, Permissions.ROLES.READ]
       },
     },
     {
@@ -187,7 +188,7 @@ window.plugins.push({
       iconCls: 'x-fa fa-user',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        permissions: ['nexus:settings:read']
+        permissions: [Permissions.SETTINGS.READ]
       }
     },
     {
@@ -198,7 +199,7 @@ window.plugins.push({
       iconCls: 'x-fa fa-dungeon',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        permissions: ['nexus:settings:read']
+        permissions: [Permissions.SETTINGS.READ]
       }
     },
     {
@@ -209,7 +210,7 @@ window.plugins.push({
       iconCls: 'x-fa fa-scroll',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        permissions: ['nexus:logging:read']
+        permissions: [Permissions.LOGGING.READ]
       }
     },
     {
@@ -220,7 +221,7 @@ window.plugins.push({
       iconCls: 'x-fa fa-user-circle',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        permissions: ['nexus:atlas:create'],
+        permissions: [Permissions.ATLAS.CREATE],
         editions: ['PRO']
       }
     },
@@ -232,7 +233,7 @@ window.plugins.push({
       iconCls: 'x-fa fa-info',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        permissions: ['nexus:atlas:read']
+        permissions: [Permissions.ATLAS.READ]
       }
     },
     {
@@ -265,7 +266,7 @@ window.plugins.push({
       iconCls: 'x-fa fa-medkit',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        permissions: ['nexus:metrics:read']
+        permissions: [Permissions.METRICS.READ]
       }
     },
     {
@@ -276,7 +277,7 @@ window.plugins.push({
       iconCls: 'x-fa fa-file-archive',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        permissions: ['nexus:metrics:read']
+        permissions: [Permissions.METRICS.READ]
       }
     },
     {
@@ -287,7 +288,7 @@ window.plugins.push({
       iconCls: 'x-fa fa-terminal',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        permissions: ['nexus:logging:read'],
+        permissions: [Permissions.LOGGING.READ],
         featureFlags: [{
           key: 'log.viewer.enabled',
           defaultValue: false
@@ -303,7 +304,7 @@ window.plugins.push({
       weight: 400,
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        permissions: ['nexus:*']
+        permissions: [Permissions.ADMIN]
       },
     },
     {
@@ -313,7 +314,7 @@ window.plugins.push({
       view: IqServer,
       iconCls: 'x-fa fa-shield-alt',
       visibility: {
-        permissions: ['nexus:settings:read']
+        permissions: [Permissions.SETTINGS.READ]
       }
     },
     {
@@ -323,7 +324,7 @@ window.plugins.push({
       view: ProprietaryRepositories,
       iconCls: 'x-fa fa-door-closed',
       visibility: {
-        permissions: ['nexus:settings:read']
+        permissions: [Permissions.SETTINGS.READ]
       }
     },
     {
@@ -341,7 +342,7 @@ window.plugins.push({
             defaultValue: {enabled: false}
           }
         ],
-        permissions: ['nexus:*']
+        permissions: [Permissions.ADMIN]
       }
     },
     {
@@ -352,7 +353,7 @@ window.plugins.push({
       iconCls: 'x-fa fa-puzzle-piece',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        permissions: ['nexus:bundles:read']
+        permissions: [Permissions.BUNDLES.READ]
       }
     },
     {
@@ -362,7 +363,7 @@ window.plugins.push({
       view: Api,
       iconCls: 'x-fa fa-plug',
       visibility: {
-        permissions: ['nexus:settings:read']
+        permissions: [Permissions.SETTINGS.READ]
       }
     },
     {
@@ -373,7 +374,7 @@ window.plugins.push({
       iconCls: 'x-fa fa-truck',
       visibility: {
         featureFlags: [{key: 'nexus.react.httpSettings', defaultValue: false}],
-        permissions: ['nexus:settings:read']
+        permissions: [Permissions.SETTINGS.READ]
       },
     },
     {
@@ -384,7 +385,7 @@ window.plugins.push({
       iconCls: 'x-fa fa-wallet',
       visibility: {
         featureFlags: [{key: 'nexus.react.licensing', defaultValue: false}],
-        permissions: ['nexus:licensing:read']
+        permissions: [Permissions.LICENSING.READ]
       },
     },
   ]

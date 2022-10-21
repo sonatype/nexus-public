@@ -19,6 +19,7 @@ import './styles/_global.scss';
 
 export { default as UIStrings } from './constants/UIStrings';
 export { default as APIConstants } from './constants/APIConstants';
+export { default as Permissions } from './constants/Permissions';
 
 export { default as ExtJS } from './interface/ExtJS';
 export { default as ExtAPIUtils } from './interface/ExtAPIUtils';

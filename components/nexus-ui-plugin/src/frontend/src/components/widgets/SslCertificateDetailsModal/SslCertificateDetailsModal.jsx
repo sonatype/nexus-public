@@ -27,6 +27,7 @@ import ReadOnlyField from '../ReadOnlyField/ReadOnlyField';
 import SslCertificateDetailsModalMachine from './SslCertificateDetailsModalMachine';
 import DateUtils from '../../../interface/DateUtils';
 import UIStrings from '../../../constants/UIStrings';
+import Permissions from '../../../constants/Permissions';
 
 /**
  *
@@ -56,8 +57,8 @@ export default function SslCertificateDetailsModal({remoteUrl, onCancel}) {
   const issuedDate = DateUtils.timestampToString(certificateDetails?.issuedOn);
   const expiredDate = DateUtils.timestampToString(certificateDetails?.expiresOn);
 
-  const canCreate = ExtJS.checkPermission('nexus:ssl-truststore:create');
-  const canDelete = ExtJS.checkPermission('nexus:ssl-truststore:delete');
+  const canCreate = ExtJS.checkPermission(Permissions.SSL_TRUSTSTORE.CREATE);
+  const canDelete = ExtJS.checkPermission(Permissions.SSL_TRUSTSTORE.DELETE);
   const addCertificateClasses = classNames({
     disabled: !canCreate,
   });

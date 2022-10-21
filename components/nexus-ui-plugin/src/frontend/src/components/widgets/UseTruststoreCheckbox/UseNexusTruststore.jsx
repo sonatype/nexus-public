@@ -21,6 +21,7 @@ import {
 import classNames from 'classnames';
 
 import ExtJS from '../../../interface/ExtJS';
+import Permissions from '../../../constants/Permissions';
 
 import {faCertificate} from '@fortawesome/free-solid-svg-icons';
 
@@ -36,9 +37,9 @@ const {
 
 export default function UseNexusTruststore({remoteUrl, ...checkboxProps}) {
   const [showModal, setShowModal] = useState(false);
-  const canCreate = ExtJS.checkPermission('nexus:ssl-truststore:create');
-  const canUpdate = ExtJS.checkPermission('nexus:ssl-truststore:update');
-  const canRead = ExtJS.checkPermission('nexus:ssl-truststore:read');
+  const canCreate = ExtJS.checkPermission(Permissions.SSL_TRUSTSTORE.CREATE);
+  const canUpdate = ExtJS.checkPermission(Permissions.SSL_TRUSTSTORE.UPDATE);
+  const canRead = ExtJS.checkPermission(Permissions.SSL_TRUSTSTORE.READ);
   const canMarkAsChecked = canCreate && canUpdate;
   const hasSecureRemoteUrl = ValidationUtils.isSecureUrl(remoteUrl);
   const disabledCheckbox = !canMarkAsChecked || !hasSecureRemoteUrl;
