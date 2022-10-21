@@ -19,7 +19,6 @@ import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.Properties;
 import java.util.Set;
-
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -48,6 +47,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.ELASTIC_SEARCH_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.SESSION_ENABLED;
+import static org.sonatype.nexus.common.app.FeatureFlags.SQL_DISTRIBUTED_CACHE;
 
 /**
  * {@link ServletContextListener} that bootstraps an OSGi-based application.
@@ -248,6 +248,7 @@ public class BootstrapListener
     // datastore clustered mode includes datastore user mode
     if (parseBoolean(properties.getProperty(DATASTORE_CLUSTERED_ENABLED, "false"))) {
       properties.setProperty(DATASTORE_ENABLED, "true");
+      properties.setProperty(SQL_DISTRIBUTED_CACHE, "true");
     }
 
     // datastore search mode enables datastore user mode
