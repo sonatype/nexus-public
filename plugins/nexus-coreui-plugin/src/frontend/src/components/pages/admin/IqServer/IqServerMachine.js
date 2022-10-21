@@ -16,6 +16,7 @@
  */
 import {assign} from 'xstate';
 import Axios from 'axios';
+import {mergeDeepRight} from 'ramda';
 import {FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 import UIStrings from '../../../../constants/UIStrings';
 
@@ -29,10 +30,8 @@ export default FormUtils.buildFormMachine({
     data: {}
   },
   stateAfterSave: 'loading',
-  config: (config) => ({
-    ...config,
+  config: (config) => mergeDeepRight(config, {
     states: {
-      ...config.states,
       loaded: {
         initial: 'idle',
         states: {
@@ -42,13 +41,9 @@ export default FormUtils.buildFormMachine({
                 target: 'verifyingConnection',
                 actions: ['clearVerifyConnectionError']
               },
-              VIEW_CERTIFICATE: {
-                target: 'viewingCertificate',
-                cond: 'isValidUrl'
-              },
               UPDATE_URL: {
                 target: 'idle',
-                actions: ['updateUrl', 'validate'],
+                actions: ['updateUrl', 'validate', 'setDirtyFlag', 'setIsPristine'],
                 internal: false
               }
             }
@@ -63,13 +58,6 @@ export default FormUtils.buildFormMachine({
               onError: {
                 target: 'error',
                 actions: ['setVerifyConnectionError']
-              }
-            }
-          },
-          viewingCertificate: {
-            on: {
-              CLOSE_CERTIFICATE: {
-                target: 'idle'
               }
             }
           },
@@ -92,7 +80,6 @@ export default FormUtils.buildFormMachine({
             }
           }
         },
-        ...config.states.loaded
       }
     }
   })
@@ -113,8 +100,10 @@ export default FormUtils.buildFormMachine({
     }),
     updateUrl: assign({
       data: ({data}, {data:{url}}) => {
+        const useTrustStoreForUrl = data.useTrustStoreForUrl && ValidationUtils.isSecureUrl(url);
         const newData = {
           ...data,
+          useTrustStoreForUrl,
           url
         };
         if (isPlaceholder(data.password)) {
@@ -125,6 +114,7 @@ export default FormUtils.buildFormMachine({
       },
       isTouched: ({data, pristineData, isTouched}) => ({
         ...isTouched,
+        url: data.url !== pristineData.url,
         password: ValidationUtils.isBlank(data.password) || isPlaceholder(pristineData.password)
       })
     }),

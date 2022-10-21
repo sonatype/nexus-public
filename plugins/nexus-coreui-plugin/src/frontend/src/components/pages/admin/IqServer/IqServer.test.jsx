@@ -184,6 +184,16 @@ describe('IqServer', () => {
   });
 
   it('enables the certificate view button when iq server url is valid', async () => {
+    when(global.NX.Permissions.check)
+      .calledWith('nexus:ssl-truststore:read')
+      .mockReturnValue(true);
+    when(global.NX.Permissions.check)
+      .calledWith('nexus:ssl-truststore:create')
+      .mockReturnValue(true);
+    when(global.NX.Permissions.check)
+      .calledWith('nexus:ssl-truststore:update')
+      .mockReturnValue(true);
+
     render(<IqServer/>);
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
