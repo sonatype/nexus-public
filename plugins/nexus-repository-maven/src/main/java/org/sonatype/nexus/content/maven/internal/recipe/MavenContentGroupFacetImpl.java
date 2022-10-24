@@ -35,6 +35,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.cache.RepositoryCacheInvalidationService;
 import org.sonatype.nexus.repository.content.Asset;
+import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetPurgedEvent;
@@ -172,11 +173,10 @@ public class MavenContentGroupFacetImpl
   private Content cache(
       final MavenPath mavenPath,
       final TempBlob tempBlob,
-      final String contentType)
+      final String contentType) throws IOException
   {
-    Content content = null;
     try {
-      content = new Content(getRepository().facet(MavenContentFacet.class)
+      Content content = new Content(getRepository().facet(MavenContentFacet.class)
           .put(mavenPath, new BlobPayload(tempBlob.getBlob(), contentType)));
 
       maintainCacheInfo(content.getAttributes());
@@ -186,15 +186,23 @@ public class MavenContentGroupFacetImpl
         getRepository().facet(MavenContentFacet.class)
             .put(mavenPath.hash(entry.getKey()), new StringPayload(entry.getValue().toString(), TEXT_PLAIN));
       }
+
+      return content;
     }
     catch (Exception e) {
       log.warn("Problem caching merged content {} : {}",
           getRepository().getName(), mavenPath.getPath(), e);
     }
 
+    // Handle exception by forcing re-merge on next request and retrieving content from TempBlob
     getRepository().facet(ContentFacet.class).assets().path(prependIfMissing(mavenPath.getPath(), "/")).find()
         .ifPresent(FluentAsset::markAsStale);
-    return content;
+
+    try (InputStream in = tempBlob.get()) {
+      // load bytes in memory before tempBlob vanishes; metadata shouldn't be too large
+      // (don't include cache-related attributes since this content has not been cached)
+      return new Content(new BytesPayload(toByteArray(in), contentType));
+    }
   }
 
   private <T> T merge(
@@ -296,6 +304,12 @@ public class MavenContentGroupFacetImpl
     if (sha1HashCode != null) {
       attributesMap.set(Content.CONTENT_ETAG, "{SHA1{" + sha1HashCode + "}}");
     }
+  }
+
+  @Subscribe
+  @AllowConcurrentEvents
+  public void onAssetCreatedEvent(final AssetCreatedEvent event) {
+    handleAssetEvent(event, false);
   }
 
   @Subscribe
