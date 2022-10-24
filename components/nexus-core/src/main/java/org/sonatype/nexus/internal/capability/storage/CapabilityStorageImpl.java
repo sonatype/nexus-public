@@ -24,6 +24,9 @@ import org.sonatype.nexus.common.entity.EntityUUID;
 import org.sonatype.nexus.common.entity.HasEntityId;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
+import org.sonatype.nexus.internal.capability.storage.datastore.CapabilityStorageItemCreatedEventImpl;
+import org.sonatype.nexus.internal.capability.storage.datastore.CapabilityStorageItemDeletedEventImpl;
+import org.sonatype.nexus.internal.capability.storage.datastore.CapabilityStorageItemUpdatedEventImpl;
 import org.sonatype.nexus.transaction.Transactional;
 
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
@@ -66,6 +69,7 @@ public class CapabilityStorageImpl
   @Transactional
   @Override
   public CapabilityIdentity add(final CapabilityStorageItem item) {
+    postCommitEvent(() -> new CapabilityStorageItemCreatedEventImpl((CapabilityStorageItemData) item));
     dao().create((CapabilityStorageItemData) item);
     return capabilityIdentity(item);
   }
@@ -73,6 +77,7 @@ public class CapabilityStorageImpl
   @Transactional
   @Override
   public boolean update(final CapabilityIdentity id, final CapabilityStorageItem item) {
+    postCommitEvent(() -> new CapabilityStorageItemUpdatedEventImpl((CapabilityStorageItemData) item));
     ((HasEntityId)item).setId(entityId(id));
     return dao().update((CapabilityStorageItemData) item);
   }
@@ -80,20 +85,25 @@ public class CapabilityStorageImpl
   @Transactional
   @Override
   public boolean remove(final CapabilityIdentity id) {
+    getAll().values().stream()
+        .filter(capability -> id.equals(capabilityIdentity(capability)))
+        .findFirst()
+        .map(CapabilityStorageItemData.class::cast)
+        .ifPresent(item -> postCommitEvent(() -> new CapabilityStorageItemDeletedEventImpl(item)));
     return dao().delete(entityId(id));
   }
 
   @Transactional
   @Override
   public Map<CapabilityIdentity, CapabilityStorageItem> getAll() {
-    return stream(dao().browse()).collect(toImmutableMap(this::capabilityIdentity, identity()));
+    return stream(dao().browse()).collect(toImmutableMap(CapabilityStorageImpl::capabilityIdentity, identity()));
   }
 
-  private CapabilityIdentity capabilityIdentity(final CapabilityStorageItem item) {
+  public static CapabilityIdentity capabilityIdentity(final CapabilityStorageItem item) {
     return new CapabilityIdentity(((HasEntityId)item).getId().getValue());
   }
 
-  private EntityId entityId(final CapabilityIdentity id) {
+  private static EntityId entityId(final CapabilityIdentity id) {
     return new EntityUUID(fromString(id.toString()));
   }
 }

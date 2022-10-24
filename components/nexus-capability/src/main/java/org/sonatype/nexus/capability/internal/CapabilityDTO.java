@@ -10,90 +10,79 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.capability.storage;
+package org.sonatype.nexus.capability.internal;
 
 import java.util.Map;
 
-import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.common.entity.HasEntityId;
+import org.sonatype.nexus.capability.CapabilityContext;
+import org.sonatype.nexus.capability.CapabilityReference;
 
-/**
- * {@link CapabilityStorageItem} data.
- *
- * @since 3.21
- */
-public class CapabilityStorageItemData
-    implements HasEntityId, CapabilityStorageItem
+import static com.google.common.base.Preconditions.checkNotNull;
+
+public class CapabilityDTO
 {
-  private EntityId id;
-
-  private int version;
+  private String id;
 
   private String type;
 
-  private boolean enabled;
-
   private String notes;
+
+  private boolean enabled;
 
   private Map<String, String> properties;
 
-  @Override
-  public EntityId getId() {
+  protected CapabilityDTO() {
+    // deserialization
+  }
+
+  public CapabilityDTO(final CapabilityReference reference) {
+    checkNotNull(reference);
+    CapabilityContext context = checkNotNull(reference.context());
+
+    id = context.id().toString();
+    type = context.type().toString();
+    enabled = context.isEnabled();
+    notes = context.notes();
+    properties = CapabilityResource.filterProperties(context.properties(), reference.capability());
+  }
+
+  public String getId() {
     return id;
   }
 
-  @Override
-  public void setId(final EntityId id) {
-    this.id = id;
-  }
-
-  @Override
-  public int getVersion() {
-    return version;
-  }
-
-  @Override
-  public void setVersion(final int version) {
-    this.version = version;
-  }
-
-  @Override
-  public String getType() {
-    return type;
-  }
-
-  @Override
-  public void setType(final String type) {
-    this.type = type;
-  }
-
-  @Override
-  public boolean isEnabled() {
-    return enabled;
-  }
-
-  @Override
-  public void setEnabled(final boolean enabled) {
-    this.enabled = enabled;
-  }
-
-  @Override
   public String getNotes() {
     return notes;
   }
 
-  @Override
-  public void setNotes(final String notes) {
-    this.notes = notes;
-  }
-
-  @Override
   public Map<String, String> getProperties() {
     return properties;
   }
 
-  @Override
+  public String getType() {
+    return type;
+  }
+
+  public boolean isEnabled() {
+    return enabled;
+  }
+
+  public void setEnabled(final boolean enabled) {
+    this.enabled = enabled;
+  }
+
+  public void setId(final String id) {
+    this.id = id;
+  }
+
+  public void setNotes(final String notes) {
+    this.notes = notes;
+  }
+
   public void setProperties(final Map<String, String> properties) {
     this.properties = properties;
+  }
+
+  public void setType(final String type) {
+    this.type = type;
   }
 }
