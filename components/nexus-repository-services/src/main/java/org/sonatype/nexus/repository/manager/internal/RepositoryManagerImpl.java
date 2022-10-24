@@ -593,18 +593,20 @@ public class RepositoryManagerImpl
   @Subscribe
   public void on(final RepositoryRemoteConnectionStatusEvent event) {
     String repositoryName = event.getRepositoryName();
-    RemoteConnectionStatusType statusType =
-        RemoteConnectionStatusType.values()[event.getRemoteConnectionStatusTypeOrdinal()];
 
-    // restore RemoteConnectionStatus from event
-    log.warn("Consume distributed RepositoryRemoteConnectionStatusEvent: repository={}, type={}", repositoryName,
-        statusType);
+    if (isRepositoryLoaded(repositoryName)) {
+      //Event shouldn't be propagated if repository isn't propagated yet to the current node
+      RemoteConnectionStatusType statusType =
+          RemoteConnectionStatusType.values()[event.getRemoteConnectionStatusTypeOrdinal()];
+      // restore RemoteConnectionStatus from event
+      log.warn("Consume distributed RepositoryRemoteConnectionStatusEvent: repository={}, type={}",
+          repositoryName, statusType);
+      RemoteConnectionStatus status = new RemoteConnectionStatus(statusType, event.getReason())
+          .setBlockedUntil(new DateTime(event.getBlockedUntilMillis()))
+          .setRequestUrl(event.getRequestUrl());
 
-    RemoteConnectionStatus status = new RemoteConnectionStatus(statusType, event.getReason())
-        .setBlockedUntil(new DateTime(event.getBlockedUntilMillis()))
-        .setRequestUrl(event.getRequestUrl());
-
-    repository(repositoryName).facet(HttpClientFacet.class).setStatus(status);
+      repository(repositoryName).facet(HttpClientFacet.class).setStatus(status);
+    }
   }
 
   @Subscribe
