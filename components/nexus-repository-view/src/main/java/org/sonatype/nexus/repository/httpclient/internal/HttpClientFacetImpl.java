@@ -15,13 +15,13 @@ package org.sonatype.nexus.repository.httpclient.internal;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.Map;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.validation.Valid;
 
 import org.sonatype.nexus.common.stateguard.Guarded;
-import org.sonatype.nexus.distributed.event.service.api.common.PublisherEvent;
 import org.sonatype.nexus.distributed.event.service.api.common.RepositoryRemoteConnectionStatusEvent;
 import org.sonatype.nexus.httpclient.HttpClientManager;
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
@@ -354,6 +354,6 @@ public class HttpClientFacetImpl
         blockUntilMillis,
         status.getRequestUrl());
 
-    getEventManager().post(new PublisherEvent(event));
+    getEventManager().post(event);
   }
 }

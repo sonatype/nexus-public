@@ -15,6 +15,7 @@ package org.sonatype.nexus.datastore.internal
 import javax.inject.Provider
 
 import org.sonatype.goodies.testsupport.TestSupport
+import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.datastore.DataStoreConfigurationManager
 import org.sonatype.nexus.datastore.DataStoreDescriptor
 import org.sonatype.nexus.datastore.DataStoreRestorer
@@ -72,6 +73,9 @@ class DataStoreManagerImplTest
   @Mock
   BeanLocator beanLocator
 
+  @Mock
+  EventManager eventManager
+
   DataStoreManagerImpl underTest
 
   @Before
@@ -85,6 +89,7 @@ class DataStoreManagerImplTest
     when(configurationManager.load()).thenReturn(ImmutableList.of())
 
     underTest = new DataStoreManagerImpl(true,
+        eventManager,
         [test: descriptorTest, jdbc: descriptorJdbc],
         [test: prototypeTest, jdbc: prototypeJdbc],
         configurationManager,

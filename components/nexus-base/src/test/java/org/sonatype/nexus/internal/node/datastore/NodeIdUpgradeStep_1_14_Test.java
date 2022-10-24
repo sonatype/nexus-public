@@ -20,6 +20,7 @@ import java.util.UUID;
 import javax.inject.Provider;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.internal.node.KeyStoreManagerConfigurationImpl;
@@ -37,6 +38,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -50,6 +52,9 @@ public class NodeIdUpgradeStep_1_14_Test
 {
   @Rule
   public DataSessionRule sessionRule = new DataSessionRule().access(NodeIdDAO.class);
+
+  @Mock
+  private EventManager eventManager;
 
   private KeyStoreManager keyStoreManager;
 
@@ -72,6 +77,11 @@ public class NodeIdUpgradeStep_1_14_Test
       @Provides
       DataSessionSupplier getDataSessionSupplier() {
         return sessionRule;
+      }
+
+      @Provides
+      EventManager getEventManager() {
+        return eventManager;
       }
     }).getInstance(NodeIdStoreImpl.class);
 

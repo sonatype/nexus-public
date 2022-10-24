@@ -21,6 +21,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -40,7 +41,6 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.distributed.event.service.api.EventType;
-import org.sonatype.nexus.distributed.event.service.api.common.PublisherEvent;
 import org.sonatype.nexus.distributed.event.service.api.common.RepositoryConfigurationEvent;
 import org.sonatype.nexus.distributed.event.service.api.common.RepositoryRemoteConnectionStatusEvent;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
@@ -331,7 +331,7 @@ public class RepositoryManagerImpl
 
   @Override
   @Guarded(by = STARTED)
-  public Iterable<Repository> browseForBlobStore(String blobStoreId) {
+  public Iterable<Repository> browseForBlobStore(final String blobStoreId) {
     Iterable<Repository> browseResult = browse();
 
     if (browseResult != null && browseResult.iterator().hasNext()) {
@@ -437,7 +437,7 @@ public class RepositoryManagerImpl
     log.info("Deleted repository: {}", name);
   }
 
-  private Repository deleteRepositoryFromMemory(String name) throws Exception {
+  private Repository deleteRepositoryFromMemory(final String name) throws Exception {
     checkNotNull(name);
     freezeService.checkWritable("Unable to delete repository when database is frozen.");
 
@@ -570,6 +570,9 @@ public class RepositoryManagerImpl
 
   @Subscribe
   public void on(final RepositoryConfigurationEvent event) {
+    if (!EventHelper.isReplicating()) {
+      return;
+    }
     String repositoryName = event.getRepositoryName();
     EventType eventType = event.getEventType();
 
@@ -592,6 +595,9 @@ public class RepositoryManagerImpl
 
   @Subscribe
   public void on(final RepositoryRemoteConnectionStatusEvent event) {
+    if (!EventHelper.isReplicating()) {
+      return;
+    }
     String repositoryName = event.getRepositoryName();
 
     if (isRepositoryLoaded(repositoryName)) {
@@ -666,7 +672,7 @@ public class RepositoryManagerImpl
     return Optional.empty();
   }
 
-  private void handleRepositoryCreated(String repositoryName) {
+  private void handleRepositoryCreated(final String repositoryName) {
     if (isRepositoryLoaded(repositoryName)) {
       // repository already presented on the current node UI
       return;
@@ -721,14 +727,14 @@ public class RepositoryManagerImpl
     }
   }
 
-  private void distributeRepositoryConfigurationEvent(String repositoryName, final EventType eventType) {
+  private void distributeRepositoryConfigurationEvent(final String repositoryName, final EventType eventType) {
     log.debug("Distribute repository configuration event: repository={}:{}", repositoryName, eventType);
 
     RepositoryConfigurationEvent configEvent = new RepositoryConfigurationEvent(repositoryName, eventType);
-    eventManager.post(new PublisherEvent(configEvent));
+    eventManager.post(configEvent);
   }
 
-  private void validateRepositoryConfiguration(String repositoryName, Configuration configuration) throws Exception {
+  private void validateRepositoryConfiguration(final String repositoryName, final Configuration configuration) throws Exception {
     Repository repository = repository(repositoryName);
     // ensure configuration sanity
     repository.validate(configuration);

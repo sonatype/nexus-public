@@ -24,11 +24,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.distributed.event.service.api.common.JWTSecretChangedEvent;
-import org.sonatype.nexus.distributed.event.service.api.common.PublisherEvent;
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.rest.Resource;
-import org.sonatype.nexus.security.jwt.JwtSecretChanged;
 import org.sonatype.nexus.security.jwt.SecretStore;
 
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
@@ -36,8 +33,9 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.OK;
+import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 import static org.sonatype.nexus.security.jwt.rest.JwtSecretApiResourceV1.PATH;
 
@@ -46,6 +44,7 @@ import static org.sonatype.nexus.security.jwt.rest.JwtSecretApiResourceV1.PATH;
  *
  * @since 3.38
  */
+@FeatureFlag(name = JWT_ENABLED)
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
 @Path(PATH)
@@ -59,12 +58,9 @@ public class JwtSecretApiResourceV1
 
   private final SecretStore secretStore;
 
-  private final EventManager eventManager;
-
   @Inject
-  public JwtSecretApiResourceV1(final SecretStore secretStore, final EventManager eventManager) {
+  public JwtSecretApiResourceV1(final SecretStore secretStore) {
     this.secretStore = checkNotNull(secretStore);
-    this.eventManager = checkNotNull(eventManager);
   }
 
   @PUT
@@ -74,8 +70,6 @@ public class JwtSecretApiResourceV1
   public Response resetSecret() {
     String secret = UUID.randomUUID().toString();
     secretStore.setSecret(secret);
-    eventManager.post(new JwtSecretChanged(secret));
-    eventManager.post(new PublisherEvent(new JWTSecretChangedEvent()));
     return status(OK).build();
   }
 }

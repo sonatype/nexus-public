@@ -26,7 +26,6 @@ import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
-import org.sonatype.nexus.distributed.event.service.api.common.JWTSecretChangedEvent;
 import org.sonatype.nexus.security.jwt.JwtSecretChanged;
 import org.sonatype.nexus.security.jwt.JwtVerificationException;
 import org.sonatype.nexus.security.jwt.JwtVerifier;
@@ -92,8 +91,7 @@ public class JwtHelper
     // the new secret will be generated as UUID only if it is not presented yet.
     secretStoreProvider.get().generateNewSecret();
     // we have to read the generated secret from the DB since another node may write it
-    verifier = new JwtVerifier(secretStoreProvider.get().getSecret()
-        .orElseThrow(() -> new IllegalStateException("JWT secret not found  in datastore")));
+    verifier = new JwtVerifier(loadSecret());
   }
 
   /**
@@ -143,19 +141,7 @@ public class JwtHelper
   @Subscribe
   public void on(final JwtSecretChanged event) {
     log.debug("JWT secret has changed. Reset the cookies");
-    verifier = new JwtVerifier(event.getSecret());
-  }
-
-  /**
-   * Handles a JWT secret change event from another node .
-   *
-   * @param event the {@link JWTSecretChangedEvent} with the new secret.
-   */
-  @Subscribe
-  public void on(final JWTSecretChangedEvent event) {
-    log.debug("JWT secret has changed on a remote node. Reset the cookies");
-    verifier = new JwtVerifier(secretStoreProvider.get().getSecret()
-        .orElseThrow(() -> new IllegalStateException("JWT secret not found in datastore")));
+    verifier = new JwtVerifier(loadSecret());
   }
 
   private Cookie createJwtCookie(final String user, final String realm) {
@@ -192,5 +178,11 @@ public class JwtHelper
 
   private Date getExpiresAt(final Date issuedAt) {
     return new Date(issuedAt.getTime() + TimeUnit.SECONDS.toMillis(this.expirySeconds));
+  }
+
+  private String loadSecret() {
+    return secretStoreProvider.get()
+        .getSecret()
+        .orElseThrow(() -> new IllegalStateException("JWT secret not found in datastore"));
   }
 }

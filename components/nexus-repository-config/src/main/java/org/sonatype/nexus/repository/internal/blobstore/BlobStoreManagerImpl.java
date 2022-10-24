@@ -53,7 +53,6 @@ import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.distributed.event.service.api.EventType;
 import org.sonatype.nexus.distributed.event.service.api.common.BlobStoreDistributedConfigurationEvent;
-import org.sonatype.nexus.distributed.event.service.api.common.PublisherEvent;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
 import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -242,8 +241,7 @@ public class BlobStoreManagerImpl
 
     doCreate(blobStore, configuration);
     log.debug("BlobStore: {} saved into local cache", configuration.getName());
-    eventManager.post(new PublisherEvent(
-        new BlobStoreDistributedConfigurationEvent(configuration.getName(), EventType.CREATED)));
+    eventManager.post(new BlobStoreDistributedConfigurationEvent(configuration.getName(), EventType.CREATED));
 
     return blobStore;
   }
@@ -284,8 +282,7 @@ public class BlobStoreManagerImpl
 
     doUpdate(blobStore, configuration);
 
-    eventManager.post(new PublisherEvent(
-        new BlobStoreDistributedConfigurationEvent(configuration.getName(), UPDATED)));
+    eventManager.post(new BlobStoreDistributedConfigurationEvent(configuration.getName(), UPDATED));
 
     return blobStore;
   }
@@ -391,8 +388,7 @@ public class BlobStoreManagerImpl
       store.delete(blobStore.getBlobStoreConfiguration());
     }
     eventManager.post(new BlobStoreDeletedEvent(blobStore));
-    eventManager.post(new PublisherEvent(
-        new BlobStoreDistributedConfigurationEvent(name, DELETED)));
+    eventManager.post(new BlobStoreDistributedConfigurationEvent(name, DELETED));
   }
 
   private BlobStore doForceDelete(final String blobStoreName) {
@@ -435,6 +431,9 @@ public class BlobStoreManagerImpl
 
   @Subscribe
   public void on(final BlobStoreDistributedConfigurationEvent event) throws Exception {
+    if (!EventHelper.isReplicating()) {
+      return;
+    }
     final BlobStoreConfiguration configuration = store.read(event.getBlobStoreName());
     String blobStoreName = event.getBlobStoreName();
     EventType eventType = event.getEventType();

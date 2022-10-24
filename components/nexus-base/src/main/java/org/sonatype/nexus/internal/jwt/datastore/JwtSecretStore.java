@@ -14,6 +14,7 @@ package org.sonatype.nexus.internal.jwt.datastore;
 
 import java.util.Optional;
 import java.util.UUID;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -21,6 +22,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
+import org.sonatype.nexus.security.jwt.JwtSecretChanged;
 import org.sonatype.nexus.security.jwt.SecretStore;
 import org.sonatype.nexus.transaction.Transactional;
 
@@ -52,12 +54,15 @@ public class JwtSecretStore
   @Transactional
   @Override
   public void setSecret(final String secret) {
+    postCommitEvent(JwtSecretChanged::new);
     dao().set(secret);
   }
 
   @Transactional
   @Override
   public void generateNewSecret() {
-    dao().setIfEmpty(UUID.randomUUID().toString());
+    String secret = UUID.randomUUID().toString();
+    postCommitEvent(JwtSecretChanged::new);
+    dao().setIfEmpty(secret);
   }
 }

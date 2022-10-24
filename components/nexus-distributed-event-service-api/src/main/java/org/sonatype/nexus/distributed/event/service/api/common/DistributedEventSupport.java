@@ -12,18 +12,13 @@
  */
 package org.sonatype.nexus.distributed.event.service.api.common;
 
-import org.sonatype.nexus.distributed.event.service.api.DistributedEvent;
+import org.sonatype.nexus.common.event.EventWithSource;
 import org.sonatype.nexus.distributed.event.service.api.EventType;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-/**
- * DistributedEvent support class
- *
- * @since 3.38
- */
 public abstract class DistributedEventSupport
-    implements DistributedEvent
+    extends EventWithSource
 {
   private final EventType eventType;
 
@@ -31,7 +26,6 @@ public abstract class DistributedEventSupport
     this.eventType = checkNotNull(eventType);
   }
 
-  @Override
   public EventType getEventType() {
     return eventType;
   }

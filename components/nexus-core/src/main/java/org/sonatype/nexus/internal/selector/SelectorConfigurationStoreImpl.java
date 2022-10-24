@@ -13,6 +13,7 @@
 package org.sonatype.nexus.internal.selector;
 
 import java.util.List;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -22,7 +23,6 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.distributed.event.service.api.EventType;
-import org.sonatype.nexus.distributed.event.service.api.common.PublisherEvent;
 import org.sonatype.nexus.distributed.event.service.api.common.SelectorConfigurationChangedEvent;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.transaction.Transactional;
@@ -127,6 +127,6 @@ public class SelectorConfigurationStoreImpl
   }
 
   private void postDesEvent(final EventType eventType) {
-    eventManager.post(new PublisherEvent(new SelectorConfigurationChangedEvent(eventType)));
+    eventManager.post(new SelectorConfigurationChangedEvent(eventType));
   }
 }

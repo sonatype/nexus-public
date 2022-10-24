@@ -12,6 +12,11 @@
  */
 package org.sonatype.nexus.datastore;
 
+import java.util.function.Supplier;
+
+import javax.inject.Inject;
+
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.datastore.api.DataAccess;
 import org.sonatype.nexus.datastore.api.DataSession;
@@ -38,6 +43,8 @@ public abstract class ConfigStoreSupport<T extends DataAccess>
 
   private final Class<T> daoClass;
 
+  private EventManager eventManager;
+
   @SuppressWarnings({ "rawtypes", "unchecked" })
   protected ConfigStoreSupport(final DataSessionSupplier sessionSupplier) {
     this.sessionSupplier = checkNotNull(sessionSupplier);
@@ -45,6 +52,19 @@ public abstract class ConfigStoreSupport<T extends DataAccess>
     // use generic type information to discover the DAO class from the concrete implementation
     TypeLiteral<?> superType = TypeLiteral.get(getClass()).getSupertype(ConfigStoreSupport.class);
     this.daoClass = (Class) TypeArguments.get(superType, 0).getRawType();
+  }
+
+  @Inject
+  protected void setDependencies(final EventManager eventManager) {
+    this.eventManager = checkNotNull(eventManager);
+  }
+
+  public void postCommitEvent(final Supplier<?> eventSupplier) {
+    thisSession().postCommit(() -> postEvent(eventSupplier));
+  }
+
+  private void postEvent(final Supplier<?> eventSupplier) {
+    eventManager.post(eventSupplier.get());
   }
 
   // alternative constructor that overrides discovery of the DAO class
