@@ -10,36 +10,24 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content;
-
-import java.time.OffsetDateTime;
-import java.util.Map;
+package org.sonatype.nexus.repository.rest.sql;
 
 /**
- * Information about asset and it's blob.
+ * Indicates how the column should be queried. That is, does it use normal operators (i.e. '=', 'LIKE' and 'IN')
+ * or is it a Full text query (i.e. queried using &lt;column&gt; @@ to_tsvector('simple', 'foo'))
  *
- * @since 3.41
+ * @see org.sonatype.nexus.repository.rest.SearchFieldSupport
  */
-public interface AssetInfo
-    extends RepositoryContent
+public enum TextualQueryType
 {
-  Integer assetId();
+  /**
+   * This means default text column querying approach i.e. using '=', 'IN', 'LIKE'
+   */
+  DEFAULT_TEXT_QUERY,
 
-  Integer componentId();
-
-  String path();
-
-  String contentType();
-
-  String createdBy();
-
-  String createdByIp();
-
-  OffsetDateTime lastUpdated();
-
-  Map<String, String> checksums();
-
-  OffsetDateTime blobCreated();
-
-  OffsetDateTime addedToRepository();
+  /**
+   * For postgres: this means querying of a full text column using postgres's tsquery()
+   * For h2: this means querying an ARRAY type column
+   */
+  FULL_TEXT_SEARCH_QUERY
 }

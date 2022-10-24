@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.content.store;
 
 import java.util.Optional;
 import java.util.function.Supplier;
+
 import javax.inject.Inject;
 
 import org.sonatype.nexus.common.event.EventManager;

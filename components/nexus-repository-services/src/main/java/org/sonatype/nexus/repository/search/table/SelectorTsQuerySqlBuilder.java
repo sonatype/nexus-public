@@ -10,36 +10,28 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content;
+package org.sonatype.nexus.repository.search.table;
 
-import java.time.OffsetDateTime;
-import java.util.Map;
+import org.sonatype.nexus.selector.SelectorSqlBuilder;
 
 /**
- * Information about asset and it's blob.
- *
- * @since 3.41
+ * Builds TSQUERY conditions for content selectors so that they can be used for querying the component_search.paths
+ * TSVECTOR column
  */
-public interface AssetInfo
-    extends RepositoryContent
+public class SelectorTsQuerySqlBuilder
+    extends SelectorSqlBuilder
 {
-  Integer assetId();
+  private static final String TS_QUERY_CONFIG = "'simple'";
 
-  Integer componentId();
+  private static final String TO_TSQUERY_FUNCTION = "TO_TSQUERY";
 
-  String path();
+  private static final char LEFT_PARENTHESIS = '(';
 
-  String contentType();
+  private static final char RIGHT_PARENTHESIS = ')';
 
-  String createdBy();
-
-  String createdByIp();
-
-  OffsetDateTime lastUpdated();
-
-  Map<String, String> checksums();
-
-  OffsetDateTime blobCreated();
-
-  OffsetDateTime addedToRepository();
+  public void appendTsQueryFunction(final String argument) {
+    queryBuilder.append(TO_TSQUERY_FUNCTION).append(LEFT_PARENTHESIS).append(TS_QUERY_CONFIG).append(", ");
+    appendLiteral(argument);
+    queryBuilder.append(RIGHT_PARENTHESIS);
+  }
 }

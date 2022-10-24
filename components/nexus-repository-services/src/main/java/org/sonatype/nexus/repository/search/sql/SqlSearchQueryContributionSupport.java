@@ -63,15 +63,15 @@ public abstract class SqlSearchQueryContributionSupport
 
   public static final String NAME_PREFIX = "datastore_search_";
 
-  protected final SqlSearchQueryConditionBuilder sqlSearchQueryConditionBuilder;
+  protected final SqlSearchQueryConditionBuilderMapping conditionBuilders;
 
   protected final Map<String, SearchFieldSupport> fieldMappings;
 
   protected SqlSearchQueryContributionSupport(
-      final SqlSearchQueryConditionBuilder sqlSearchQueryConditionBuilder,
+      final SqlSearchQueryConditionBuilderMapping conditionBuilders,
       final Map<String, SearchMappings> searchMappings)
   {
-    this.sqlSearchQueryConditionBuilder = checkNotNull(sqlSearchQueryConditionBuilder);
+    this.conditionBuilders = checkNotNull(conditionBuilders);
     this.fieldMappings = unmodifiableMap(fieldMappingsByAttribute(checkNotNull(searchMappings)));
   }
 
@@ -83,13 +83,17 @@ public abstract class SqlSearchQueryContributionSupport
   }
 
   protected Optional<SqlSearchQueryCondition> buildQueryCondition(final SearchFilter searchFilter) {
+    final SearchFieldSupport fieldMappingDef = fieldMappings.get(searchFilter.getProperty());
+    log.debug("Mapping for {} is {}", searchFilter, fieldMappingDef);
+    final SqlSearchQueryConditionBuilder builder = conditionBuilders.getConditionBuilder(fieldMappingDef);
+
     final SearchFilter mappedField = getFieldMapping(searchFilter);
     return ofNullable(mappedField)
         .map(SearchFilter::getValue)
         .map(this::split)
         .filter(CollectionUtils::isNotEmpty)
         .filter(this::validate)
-        .map(values -> sqlSearchQueryConditionBuilder.condition(mappedField.getProperty(), values));
+        .map(values -> builder.condition(mappedField.getProperty(), values));
   }
 
   /*

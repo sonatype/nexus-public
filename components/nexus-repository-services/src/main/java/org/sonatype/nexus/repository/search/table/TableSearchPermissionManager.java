@@ -20,6 +20,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -35,6 +36,7 @@ import org.sonatype.nexus.repository.search.sql.SqlSearchPermissionException;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryBuilder;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryCondition;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilder;
+import org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilderMapping;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -45,7 +47,6 @@ import static java.util.Collections.emptySet;
 import static java.util.Collections.unmodifiableMap;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
-import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
 import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryContributionSupport.fieldMappingsByAttribute;
 
@@ -61,7 +62,7 @@ import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryContributio
 public class TableSearchPermissionManager
     extends ComponentSupport
 {
-  private final SqlSearchQueryConditionBuilder conditionBuilder;
+  private final SqlSearchQueryConditionBuilderMapping conditionBuilders;
 
   private final SqlSearchRepositoryNameUtil repositoryNameUtil;
 
@@ -75,14 +76,14 @@ public class TableSearchPermissionManager
 
   @Inject
   public TableSearchPermissionManager(
-      final SqlSearchQueryConditionBuilder conditionBuilder,
+      final SqlSearchQueryConditionBuilderMapping conditionBuilders,
       final SqlSearchRepositoryNameUtil repositoryNameUtil,
       final TableSearchRepositoryPermissionUtil repositoryPermissionUtil,
       final Map<String, SearchMappings> searchMappings,
       final TableSearchContentSelectorSqlFilterGenerator contentSelectorFilterGenerator,
       final RepositoryManager repositoryManager)
   {
-    this.conditionBuilder = checkNotNull(conditionBuilder);
+    this.conditionBuilders = checkNotNull(conditionBuilders);
     this.repositoryNameUtil = checkNotNull(repositoryNameUtil);
     this.repositoryPermissionUtil = checkNotNull(repositoryPermissionUtil);
     this.fieldMappings = unmodifiableMap(fieldMappingsByAttribute(checkNotNull(searchMappings)));
@@ -166,8 +167,13 @@ public class TableSearchPermissionManager
       throw new SqlSearchPermissionException("User is not permitted.");
     }
 
+    SearchFieldSupport fieldMapping = fieldMappings.get(REPOSITORY_NAME);
+    SqlSearchQueryConditionBuilder conditionBuilder = conditionBuilders.getConditionBuilder(fieldMapping);
+
     List<SqlSearchQueryCondition> conditions = new ArrayList<>();
-    of(browsableRepositories).flatMap(this::createRepositoryCondition).ifPresent(conditions::add);
+    of(browsableRepositories)
+        .flatMap(repositories -> createRepositoryCondition(fieldMapping, repositories, conditionBuilder))
+        .ifPresent(conditions::add);
     of(selectorRepositories).flatMap(repos -> createContentSelectorCondition(selectorConfigs, repos))
         .ifPresent(conditions::add);
 
@@ -176,13 +182,14 @@ public class TableSearchPermissionManager
         .map(conditionBuilder::combine);
   }
 
-  private Optional<SqlSearchQueryCondition> createRepositoryCondition(final Set<String> repositories) {
-    if (repositories.isEmpty()) {
-      return empty();
-    }
-    return ofNullable(fieldMappings.get(REPOSITORY_NAME))
-        .map(SearchFieldSupport::getColumnName)
-        .map(field -> conditionBuilder.condition(field, repositories));
+  private Optional<SqlSearchQueryCondition> createRepositoryCondition(
+      final SearchFieldSupport fieldMapping,
+      final Set<String> repositories,
+      final SqlSearchQueryConditionBuilder conditionBuilder)
+  {
+    return of(repositories)
+        .filter(CollectionUtils::isNotEmpty)
+        .map(repositoryNames -> conditionBuilder.condition(fieldMapping.getColumnName(), repositoryNames));
   }
 
   private Optional<SqlSearchQueryCondition> createContentSelectorCondition(

@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeoutException;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.net.ssl.HttpsURLConnection;
@@ -30,7 +31,6 @@ import org.sonatype.goodies.testsupport.TestIndex;
 import org.sonatype.goodies.testsupport.junit.TestDataRule;
 import org.sonatype.goodies.testsupport.junit.TestIndexRule;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
-import org.sonatype.nexus.common.app.FeatureFlags;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.net.PortAllocator;
 import org.sonatype.nexus.common.text.Strings2;

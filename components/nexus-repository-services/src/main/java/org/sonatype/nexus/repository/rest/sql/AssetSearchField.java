@@ -24,6 +24,6 @@ public class AssetSearchField extends SearchFieldSupport
   private static final String TABLE = "${format}_asset";
 
   public AssetSearchField(final String columnName) {
-    super(TABLE, columnName);
+    super(TABLE, columnName, TextualQueryType.DEFAULT_TEXT_QUERY);
   }
 }

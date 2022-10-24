@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search;
+package org.sonatype.nexus.content.maven.internal.search.table;
 
 import java.util.Map;
 
@@ -19,29 +19,42 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.rest.SearchMappings;
+import org.sonatype.nexus.repository.search.query.SearchFilter;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryBuilder;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilderMapping;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryContributionSupport;
 
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.sonatype.nexus.content.maven.internal.search.table.MavenSearchCustomFieldContributor.getBaseVersion;
+
 /**
- * Default {@link SqlSearchQueryContribution} which splits the search term/value by whitespace, builds exact or
- * wildcard sql query conditions and stores them in the supplied {@link SqlSearchQueryBuilder}.
- *
- * @see SqlSearchQueryBuilder
- * @since 3.38
+ * Creates match sql query conditions for the assets.attributes.nuget.tags search term.
  */
-@Named(DefaultSqlSearchQueryContribution.NAME)
+@Named(MavenBaseVersionSqlSearchQueryContribution.NAME)
 @Singleton
-public class DefaultSqlSearchQueryContribution
+public class MavenBaseVersionSqlSearchQueryContribution
     extends SqlSearchQueryContributionSupport
 {
-  public static final String NAME = SqlSearchQueryContributionSupport.NAME_PREFIX + "defaultSqlSearchContribution";
+  protected static final String BASE_VERSION = "attributes.maven2.baseVersion";
+
+  public static final String NAME = SqlSearchQueryContributionSupport.NAME_PREFIX + BASE_VERSION;
 
   @Inject
-  public DefaultSqlSearchQueryContribution(
-      SqlSearchQueryConditionBuilderMapping conditionBuilders,
+  public MavenBaseVersionSqlSearchQueryContribution(
+      final SqlSearchQueryConditionBuilderMapping conditionBuilders,
       final Map<String, SearchMappings> searchMappings)
   {
     super(conditionBuilders, searchMappings);
+  }
+
+  @Override
+  public void contribute(final SqlSearchQueryBuilder queryBuilder, final SearchFilter searchFilter) {
+    String value = searchFilter.getValue();
+    if (isNotBlank(value)) {
+      super.contribute(queryBuilder, new SearchFilter(searchFilter.getProperty(), getBaseVersion(value)));
+    }
+    else {
+      super.contribute(queryBuilder, searchFilter);
+    }
   }
 }

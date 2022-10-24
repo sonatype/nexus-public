@@ -28,11 +28,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInAnyOrder;
 import static org.hamcrest.core.Is.is;
 
-public class SqlSearchQueryConditionBuilderTest
+public class DefaultSqlSearchQueryConditionBuilderTest
     extends TestSupport
 {
   @InjectMocks
-  private SqlSearchQueryConditionBuilder underTest;
+  private DefaultSqlSearchQueryConditionBuilder underTest;
 
   @Test
   public void shouldCombineConditionsIntoOne() {
@@ -221,6 +221,18 @@ public class SqlSearchQueryConditionBuilderTest
 
     assertThat(underTest.condition("repository_name", singleton(value), parameterPrefix),
         is(aSqlSearchCondition(expectedFormat, expectedValues)));
+  }
+
+  @Test
+  public void shouldReplaceWildcard() {
+    assertThat(underTest.replaceWildcards("foo?"),
+        is("foo_"));
+
+    assertThat(underTest.replaceWildcards("foo???"),
+        is("foo___"));
+
+    assertThat(underTest.replaceWildcards("bar*"),
+        is("bar%"));
   }
 
   private SqlSearchQueryCondition aSqlSearchCondition(final String conditionFormat, final Map<String, String> values) {

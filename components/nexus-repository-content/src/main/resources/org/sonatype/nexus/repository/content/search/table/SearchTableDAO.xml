@@ -15,60 +15,118 @@
 -->
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.sonatype.nexus.repository.content.search.table.SearchTableDAO">
-
-  <insert id="createSchema">
+  <insert id="createSchema" >
     CREATE TABLE IF NOT EXISTS component_search
     (
       repository_id          INTEGER                  NOT NULL,
       component_id           INTEGER                  NOT NULL,
-      asset_id               INTEGER                  NOT NULL,
       format                 VARCHAR                  NOT NULL,
       namespace              VARCHAR                  NOT NULL,
       search_component_name  VARCHAR                  NOT NULL,
-      path                   VARCHAR                  NOT NULL,
       component_kind         VARCHAR                  NOT NULL,
       version                VARCHAR                  NOT NULL,
       component_created      TIMESTAMP WITH TIME ZONE NOT NULL,
       search_repository_name VARCHAR(200)             NOT NULL,
-      content_type           VARCHAR                  NOT NULL,
-      md5                    VARCHAR,
-      sha1                   VARCHAR,
-      sha256                 VARCHAR,
-      sha512                 VARCHAR,
-
-      CONSTRAINT pk_component_search PRIMARY KEY (repository_id, component_id, asset_id, format)
+      CONSTRAINT pk_component_search PRIMARY KEY (repository_id, component_id, format)
       );
 
     -- Columns added after this table was included in a release
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS format_field_1 VARCHAR;
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS format_field_2 VARCHAR;
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS format_field_3 VARCHAR;
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS format_field_4 VARCHAR;
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS format_field_5 VARCHAR;
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS uploader VARCHAR;
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS uploader_ip VARCHAR;
     ALTER TABLE component_search ADD COLUMN IF NOT EXISTS normalised_version VARCHAR NOT NULL;
     ALTER TABLE component_search ADD COLUMN IF NOT EXISTS prerelease BOOLEAN NOT NULL DEFAULT false;
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS uploader VARCHAR;
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS uploader_ip VARCHAR;
 
     CREATE INDEX IF NOT EXISTS idx_component_search_normalised_version ON component_search (normalised_version);
     CREATE INDEX IF NOT EXISTS idx_component_search_namespace ON component_search (namespace);
     CREATE INDEX IF NOT EXISTS idx_component_search_component_name ON component_search (search_component_name);
     CREATE INDEX IF NOT EXISTS idx_component_search_format ON component_search (format);
-    CREATE INDEX IF NOT EXISTS idx_component_search_path ON component_search (path);
     CREATE INDEX IF NOT EXISTS idx_component_search_repository_name ON component_search (search_repository_name);
-    CREATE INDEX IF NOT EXISTS idx_component_search_md5 ON component_search (md5);
-    CREATE INDEX IF NOT EXISTS idx_component_search_sha1 ON component_search (sha1);
-    CREATE INDEX IF NOT EXISTS idx_component_search_sha256 ON component_search (sha256);
-    CREATE INDEX IF NOT EXISTS idx_component_search_sha512 ON component_search (sha512);
-    CREATE INDEX IF NOT EXISTS idx_component_search_format_field_1 ON component_search (format_field_1);
-    CREATE INDEX IF NOT EXISTS idx_component_search_format_field_2 ON component_search (format_field_2);
-    CREATE INDEX IF NOT EXISTS idx_component_search_format_field_3 ON component_search (format_field_3);
-    CREATE INDEX IF NOT EXISTS idx_component_search_format_field_4 ON component_search (format_field_4);
-    CREATE INDEX IF NOT EXISTS idx_component_search_format_field_5 ON component_search (format_field_5);
+    CREATE INDEX IF NOT EXISTS idx_component_search_prerelease ON component_search (prerelease);
     CREATE INDEX IF NOT EXISTS idx_component_search_uploader ON component_search (uploader);
     CREATE INDEX IF NOT EXISTS idx_component_search_uploader_ip ON component_search (uploader_ip);
-    CREATE INDEX IF NOT EXISTS idx_component_search_prerelease ON component_search (prerelease);
+
+    <include refid="createFullTextSearchColumns"/>
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS last_event_time TIMESTAMP WITH TIME ZONE;
+
   </insert>
+
+  <sql id="createFullTextSearchColumns" databaseId="PostgreSQL">
+    -- Only included for upgrades i.e. when upgrading from a version which has the old component_search schema
+    ALTER TABLE component_search DROP COLUMN IF EXISTS asset_id;
+    ALTER TABLE component_search DROP COLUMN IF EXISTS path;
+    ALTER TABLE component_search DROP COLUMN IF EXISTS content_type;
+    ALTER TABLE component_search DROP COLUMN IF EXISTS md5;
+    ALTER TABLE component_search DROP COLUMN IF EXISTS sha1;
+    ALTER TABLE component_search DROP COLUMN IF EXISTS sha256;
+    ALTER TABLE component_search DROP COLUMN IF EXISTS sha512;
+    ALTER TABLE component_search DROP COLUMN IF EXISTS format_field_1;
+    ALTER TABLE component_search DROP COLUMN IF EXISTS format_field_2;
+    ALTER TABLE component_search DROP COLUMN IF EXISTS format_field_3;
+    ALTER TABLE component_search DROP COLUMN IF EXISTS format_field_4;
+    ALTER TABLE component_search DROP COLUMN IF EXISTS format_field_5;
+    ALTER TABLE component_search DROP CONSTRAINT IF EXISTS pk_component_search;
+    ALTER TABLE component_search DROP COLUMN IF EXISTS uploader;
+    ALTER TABLE component_search DROP COLUMN IF EXISTS uploader_ip;
+
+    -- Only included for uprades i.e. when upgrading from a version which has indexes based on the old component_search schema
+    DROP INDEX IF EXISTS idx_component_search_path;
+    DROP INDEX IF EXISTS idx_component_search_md5;
+    DROP INDEX IF EXISTS idx_component_search_sha1;
+    DROP INDEX IF EXISTS idx_component_search_sha256;
+    DROP INDEX IF EXISTS idx_component_search_sha512;
+    DROP INDEX IF EXISTS idx_component_search_format_field_1;
+    DROP INDEX IF EXISTS idx_component_search_format_field_2;
+    DROP INDEX IF EXISTS idx_component_search_format_field_3;
+    DROP INDEX IF EXISTS idx_component_search_format_field_4;
+    DROP INDEX IF EXISTS idx_component_search_format_field_5;
+    DROP INDEX IF EXISTS idx_component_search_uploader;
+    DROP INDEX IF EXISTS idx_component_search_uploader_ip;
+
+
+    ALTER TABLE component_search ADD CONSTRAINT pk_component_search PRIMARY KEY (repository_id, component_id, format);
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS keywords                         TSVECTOR;
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS md5                              TSVECTOR;
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS sha1                             TSVECTOR;
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS sha256                           TSVECTOR;
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS sha512                           TSVECTOR;
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS format_field_values_1            TSVECTOR;
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS format_field_values_2            TSVECTOR;
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS format_field_values_3            TSVECTOR;
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS format_field_values_4            TSVECTOR;
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS format_field_values_5            TSVECTOR;
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS uploaders                        TSVECTOR;
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS uploader_ips                     TSVECTOR;
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS paths                            VARCHAR;
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS tsvector_paths                   TSVECTOR;
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS tsvector_format                  TSVECTOR NOT NULL;
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS tsvector_namespace               TSVECTOR NOT NULL;
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS tsvector_search_component_name   TSVECTOR NOT NULL;
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS tsvector_version                 TSVECTOR NOT NULL;
+    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS tsvector_search_repository_name  TSVECTOR NOT NULL;
+
+    CREATE INDEX IF NOT EXISTS idx_component_search_keywords ON component_search USING GIN (keywords);
+    CREATE INDEX IF NOT EXISTS idx_component_search_md5 ON component_search USING GIN (md5);
+    CREATE INDEX IF NOT EXISTS idx_component_search_sha1 ON component_search USING GIN (sha1);
+    CREATE INDEX IF NOT EXISTS idx_component_search_sha256 ON component_search USING GIN (sha256);
+    CREATE INDEX IF NOT EXISTS idx_component_search_sha512 ON component_search USING GIN (sha512);
+    CREATE INDEX IF NOT EXISTS idx_component_search_format_field_values_1 ON component_search USING GIN (format_field_values_1);
+    CREATE INDEX IF NOT EXISTS idx_component_search_format_field_values_2 ON component_search USING GIN (format_field_values_2);
+    CREATE INDEX IF NOT EXISTS idx_component_search_format_field_values_3 ON component_search USING GIN (format_field_values_3);
+    CREATE INDEX IF NOT EXISTS idx_component_search_format_field_values_4 ON component_search USING GIN (format_field_values_4);
+    CREATE INDEX IF NOT EXISTS idx_component_search_format_field_values_5 ON component_search USING GIN (format_field_values_5);
+    CREATE INDEX IF NOT EXISTS idx_component_search_format_uploaders ON component_search USING GIN (uploaders);
+    CREATE INDEX IF NOT EXISTS idx_component_search_format_uploader_ips ON component_search USING GIN (uploader_ips);
+    CREATE INDEX IF NOT EXISTS idx_component_search_paths ON component_search (paths);
+    CREATE INDEX IF NOT EXISTS idx_component_search_tsvector_paths ON component_search USING GIN (tsvector_paths);
+
+    CREATE INDEX IF NOT EXISTS idx_component_search_tsvector_format ON component_search USING GIN (tsvector_format);
+    CREATE INDEX IF NOT EXISTS idx_component_search_tsvector_namespace ON component_search USING GIN (tsvector_namespace);
+    CREATE INDEX IF NOT EXISTS idx_component_search_tsvector_search_component_name ON component_search USING GIN (tsvector_search_component_name);
+    CREATE INDEX IF NOT EXISTS idx_component_search_tsvector_version ON component_search USING GIN (tsvector_version);
+    CREATE INDEX IF NOT EXISTS idx_component_search_tsvector_search_repository_name ON component_search USING GIN (tsvector_search_repository_name);
+  </sql>
+
+  <sql id = "createFullTextSearchColumns"/>
 
   <sql id="repositoryMatch">
     repository_id = #{repositoryId}
@@ -82,13 +140,11 @@
 
   <sql id="PKMatch">
     <include refid="componentMatch"/>
-    AND asset_id = #{assetId}
   </sql>
 
   <resultMap id="searchTableData" type="org.sonatype.nexus.repository.content.search.table.SearchTableData">
     <id property="repositoryId" column="repository_id" />
     <id property="componentId" column="component_id" />
-    <id property="assetId" column="asset_id" />
     <id property="format" column="format" />
     <result property="namespace" column="namespace"/>
     <result property="componentName" column="search_component_name"/>
@@ -97,51 +153,68 @@
     <result property="normalisedVersion" column="normalised_version"/>
     <result property="componentCreated" column="component_created"/>
     <result property="repositoryName" column="search_repository_name"/>
-    <result property="path" column="path"/>
-    <result property="contentType" column="content_type"/>
-    <result property="md5" column="md5"/>
-    <result property="sha1" column="sha1"/>
-    <result property="sha256" column="sha256"/>
-    <result property="sha512" column="sha512"/>
-    <result property="formatField1" column="format_field_1"/>
-    <result property="formatField2" column="format_field_2"/>
-    <result property="formatField3" column="format_field_3"/>
-    <result property="formatField4" column="format_field_4"/>
-    <result property="formatField5" column="format_field_5"/>
-    <result property="uploader" column="uploader"/>
-    <result property="uploaderIp" column="uploader_ip"/>
     <result property="prerelease" column="prerelease"/>
   </resultMap>
 
-  <insert id="create" parameterType="SearchTableData">
-    INSERT INTO component_search(repository_id, component_id, asset_id, format, namespace, search_component_name, path,
-                                 component_kind, version, normalised_version, search_repository_name, content_type, md5,
-                                 sha1, sha256, sha512, format_field_1, format_field_2, format_field_3, format_field_4,
-                                 format_field_5, uploader, uploader_ip, prerelease, component_created)
-    VALUES (#{repositoryId}, #{componentId}, #{assetId}, #{format}, #{namespace}, #{componentName}, #{path},
-            #{componentKind}, #{version}, #{normalisedVersion}, #{repositoryName}, #{contentType}, #{md5}, #{sha1},
-            #{sha256}, #{sha512}, #{formatField1}, #{formatField2}, #{formatField3}, #{formatField4}, #{formatField5},
-            #{uploader}, #{uploaderIp}, #{prerelease},
-            (SELECT created FROM ${format}_component WHERE component_id = #{componentId}));
+  <insert id="save" parameterType="SearchTableData" databaseId="PostgreSQL">
+
+    -- Only insert if the component still exists - we achieve this by using the FROM clause below to check the existence of the component
+    -- In a multi node setup, as we can't use distributed cooperation for processing a if one node has deleted all the component records for a given repository in response to a
+    -- ContentRepositoryDeleted event, for a  then we don't want a delayed update from another node to re-introduce
+    -- any of those records.
+      INSERT INTO component_search(repository_id, component_id, format, namespace, search_component_name, version,
+          search_repository_name, tsvector_format, tsvector_namespace, tsvector_search_component_name,
+          tsvector_version, tsvector_search_repository_name, component_kind, normalised_version, prerelease, last_event_time,
+          paths, uploaders, uploader_ips, tsvector_paths, keywords, md5, sha1, sha256, sha512, format_field_values_1, format_field_values_2,
+          format_field_values_3, format_field_values_4, format_field_values_5, component_created)
+        SELECT
+           #{repositoryId}, #{componentId}, #{format}, #{namespace}, #{componentName}, #{version}, #{repositoryName},
+            to_tsvector('simple', coalesce(#{format}, '')), to_tsvector('simple', coalesce(#{namespace}, '')),
+            to_tsvector('simple', coalesce(#{componentName}, '')), to_tsvector('simple', coalesce(#{version}, '')),
+            to_tsvector('simple', coalesce(#{repositoryName}, '')),
+            #{componentKind}, #{normalisedVersion}, #{prerelease}, #{lastEventTime},
+            <include refid="join"><property name="thePaths" value="paths"/></include>,
+            <include refid="toTsVector"><property name="tokens" value="uploaders"/></include>,
+            <include refid="toTsVector"><property name="tokens" value="uploaderIps"/></include>,
+            <include refid="toTsVector"><property name="tokens" value="paths"/></include>,
+            <include refid="toTsVector"><property name="tokens" value="keywords"/></include>,
+            <include refid="toTsVector"><property name="tokens" value="md5"/></include>,
+            <include refid="toTsVector"><property name="tokens" value="sha1"/></include>,
+            <include refid="toTsVector"><property name="tokens" value="sha256"/></include>,
+            <include refid="toTsVector"><property name="tokens" value="sha512"/></include>,
+            <include refid="toTsVector"><property name="tokens" value="formatFieldValues1"/></include>,
+            <include refid="toTsVector"><property name="tokens" value="formatFieldValues2"/></include>,
+            <include refid="toTsVector"><property name="tokens" value="formatFieldValues3"/></include>,
+            <include refid="toTsVector"><property name="tokens" value="formatFieldValues4"/></include>,
+            <include refid="toTsVector"><property name="tokens" value="formatFieldValues5"/></include>,
+            comp.created
+        FROM ${format}_component comp WHERE component_id = #{componentId}
+        -- The WHERE clause above ensures the component still exists
+        -- Thereby helping us avoid the need for DELET'ing threads to lock component ids
+      ON CONFLICT ON CONSTRAINT pk_component_search
+      DO
+        UPDATE SET
+          last_event_time = #{lastEventTime},
+          component_kind = #{componentKind},
+          prerelease = #{prerelease},
+          uploaders = <include refid="toTsVector"><property name="tokens" value="uploaders"/></include>,
+          uploader_ips = <include refid="toTsVector"><property name="tokens" value="uploaderIps"/></include>,
+          paths = <include refid="join"><property name="thePaths" value="paths"/></include>,
+          tsvector_paths = <include refid="toTsVector"><property name="tokens" value="paths"/></include>,
+          keywords = <include refid="toTsVector"><property name="tokens" value="keywords"/></include>,
+          md5 = <include refid="toTsVector"><property name="tokens" value="md5"/></include>,
+          sha1 = <include refid="toTsVector"><property name="tokens" value="sha1"/></include>,
+          sha256 = <include refid="toTsVector"><property name="tokens" value="sha256"/></include>,
+          sha512 = <include refid="toTsVector"><property name="tokens" value="sha512"/></include>,
+          format_field_values_1 = <include refid="toTsVector"><property name="tokens" value="formatFieldValues1"/></include>,
+          format_field_values_2 = <include refid="toTsVector"><property name="tokens" value="formatFieldValues2"/></include>,
+          format_field_values_3 = <include refid="toTsVector"><property name="tokens" value="formatFieldValues3"/></include>,
+          format_field_values_4 = <include refid="toTsVector"><property name="tokens" value="formatFieldValues4"/></include>,
+          format_field_values_5 = <include refid="toTsVector"><property name="tokens" value="formatFieldValues5"/></include>
+        WHERE EXISTS(SELECT component_id FROM ${format}_component WHERE component_id = #{componentId})
+        -- The EXISTS clause above ensures the component still exists
+        -- Thereby helping us avoid the need for DELET'ing threads to lock component ids
   </insert>
-
-  <update id="updateKind">
-    UPDATE component_search
-    SET component_kind = #{componentKind}
-    WHERE <include refid="componentMatch"/>
-  </update>
-
-  <update id="updateFormatFields">
-    UPDATE component_search
-    SET
-    prerelease = #{preRelease},
-    format_field_1 = #{formatField1},
-    format_field_2 = #{formatField2},
-    format_field_3 = #{formatField3},
-    format_field_4 = #{formatField4},
-    format_field_5 = #{formatField5}
-    WHERE <include refid="PKMatch"/>
-  </update>
 
   <delete id="delete">
     DELETE
@@ -149,9 +222,19 @@
     WHERE <include refid="PKMatch"/>
   </delete>
 
+  <delete id="deleteComponentIds">
+    DELETE
+    FROM component_search
+    WHERE repository_id = #{repositoryId}
+      AND format = #{format}
+      <foreach collection="componentIds" item="componentId" open="AND component_id IN (" separator="," close=")">
+        ${componentId}
+      </foreach>
+  </delete>
+
   <delete id="deleteAllForRepository">
     WITH toBeDeleted as (
-        SELECT component_id, asset_id
+        SELECT component_id
         FROM component_search
         WHERE <include refid="repositoryMatch"/>
     <if test="limit gt 0"> LIMIT ${limit}</if>)
@@ -159,11 +242,11 @@
     FROM component_search cs
     WHERE <include refid="repositoryMatch"/>
         AND cs.component_id IN (SELECT td.component_id FROM toBeDeleted td)
-        AND cs.asset_id IN (SELECT td.asset_id FROM toBeDeleted td)
   </delete>
 
   <resultMap id="searchDataMap" type="org.sonatype.nexus.repository.content.search.SearchResultData">
     <id property="componentId" column="component_id" />
+    <id property="repositoryId" column="repository_id" />
     <result property="namespace" column="namespace"/>
     <result property="componentName" column="search_component_name"/>
     <result property="version" column="version"/>
@@ -171,8 +254,6 @@
     <result property="repositoryName" column="search_repository_name"/>
     <result property="format" column="format"/>
     <result property="created" column="component_created" />
-    <result property="uploader" column="uploader" />
-    <result property="uploaderIp" column="uploader_ip" />
   </resultMap>
 
   <select id="searchComponents" resultMap="searchDataMap" parameterType="SqlSearchRequest">
@@ -184,9 +265,7 @@
         cs.normalised_version,
         cs.search_repository_name,
         cs.format,
-        cs.component_created,
-        cs.uploader,
-        cs.uploader_ip
+        cs.component_created
     FROM component_search cs
     <if test="filterParams != null and filterParams.containsKey('name') and filterParams.containsKey('format')">
       INNER JOIN ${filterParams.format}_component_tag ctg
@@ -206,9 +285,6 @@
       </if>
       <if test="filter != null">(${filter})</if>
     </where>
-    GROUP BY
-        cs.component_id, cs.namespace, cs.search_component_name, cs.version, cs.normalised_version,
-        cs.search_repository_name, cs.format, cs.component_created, cs.uploader, cs.uploader_ip
     ORDER BY ${sortColumnName} ${sortDirection}
     <if test="sortColumnName != defaultSortColumnName">, ${defaultSortColumnName}</if>
     <if test="sortColumnName != secondDefaultSortColumnName">, ${secondDefaultSortColumnName}</if>
@@ -217,7 +293,7 @@
   </select>
 
   <select id="count" resultType="int">
-    SELECT COUNT(DISTINCT cs.component_id)
+    SELECT COUNT(cs.component_id)
     FROM component_search cs
     <if test="filterParams != null and filterParams.containsKey('name')">
       INNER JOIN ${filterParams.format}_component_tag ctg
@@ -229,19 +305,56 @@
     </where>
   </select>
 
-  <insert id="saveBatch" parameterType="java.util.List">
-    INSERT INTO component_search(repository_id, component_id, asset_id, format, namespace, search_component_name, path,
-    component_kind, version, normalised_version, search_repository_name, content_type, md5, sha1, sha256, sha512,
-    component_created, format_field_1, format_field_2, format_field_3, format_field_4, format_field_5, uploader, uploader_ip,
-    prerelease)
-    VALUES
+  <insert id="saveBatch" parameterType="java.util.List" databaseId="PostgreSQL">
+    INSERT INTO component_search(repository_id, component_id, format, namespace, search_component_name, version,
+      search_repository_name, tsvector_format, tsvector_namespace, tsvector_search_component_name,
+      tsvector_version, tsvector_search_repository_name, component_kind, normalised_version, component_created,
+      prerelease, last_event_time, paths, uploaders, uploader_ips, tsvector_paths, keywords, md5, sha1, sha256, sha512, format_field_values_1,
+      format_field_values_2, format_field_values_3, format_field_values_4, format_field_values_5) VALUES
     <foreach collection="searchData" separator="," item="item">
-      (#{item.repositoryId}, #{item.componentId}, #{item.assetId}, #{item.format}, #{item.namespace}, #{item.componentName}, #{item.path},
-      #{item.componentKind}, #{item.version}, #{item.normalisedVersion}, #{item.repositoryName}, #{item.contentType},
-       #{item.md5}, #{item.sha1}, #{item.sha256}, #{item.sha512}, #{item.componentCreated}, #{item.formatField1}, #{item.formatField2},
-       #{item.formatField3}, #{item.formatField4}, #{item.formatField5}, #{item.uploader}, #{item.uploaderIp}, #{item.prerelease})
+      (#{item.repositoryId}, #{item.componentId},  #{item.format}, #{item.namespace},
+       #{item.componentName},#{item.version}, #{item.repositoryName},
+       to_tsvector('simple', coalesce(#{item.format}, '')), to_tsvector('simple', coalesce(#{item.namespace}, '')),
+       to_tsvector('simple', coalesce(#{item.componentName}, '')), to_tsvector('simple', coalesce(#{item.version}, '')),
+       to_tsvector('simple', coalesce(#{item.repositoryName}, '')), #{item.componentKind}, #{item.normalisedVersion},
+       #{item.componentCreated}, #{item.prerelease}, CURRENT_TIMESTAMP,
+      <include refid="join"><property name="thePaths" value="item.paths"/></include>,
+      <include refid="toTsVector"><property name="tokens" value="item.uploaders"/></include>,
+      <include refid="toTsVector"><property name="tokens" value="item.uploaderIps"/></include>,
+      <include refid="toTsVector"><property name="tokens" value="item.paths"/></include>,
+      <include refid="toTsVector"><property name="tokens" value="item.keywords"/></include>,
+      <include refid="toTsVector"><property name="tokens" value="item.md5"/></include>,
+      <include refid="toTsVector"><property name="tokens" value="item.sha1"/></include>,
+      <include refid="toTsVector"><property name="tokens" value="item.sha256"/></include>,
+      <include refid="toTsVector"><property name="tokens" value="item.sha512"/></include>,
+      <include refid="toTsVector"><property name="tokens" value="item.formatFieldValues1"/></include>,
+      <include refid="toTsVector"><property name="tokens" value="item.formatFieldValues2"/></include>,
+      <include refid="toTsVector"><property name="tokens" value="item.formatFieldValues3"/></include>,
+      <include refid="toTsVector"><property name="tokens" value="item.formatFieldValues4"/></include>,
+      <include refid="toTsVector"><property name="tokens" value="item.formatFieldValues5"/></include>
+       )
     </foreach>
   </insert>
+
+  <sql id="toTsVector" databaseId="PostgreSQL">
+    <choose>
+      <when test="${tokens}.isEmpty()">null</when>
+      <otherwise>
+        <foreach collection="${tokens}" separator="||" item="token" open="(" close=")">
+          to_tsvector('simple', coalesce(#{token}, ''))
+        </foreach>
+      </otherwise>
+    </choose>
+  </sql>
+
+  <sql id="join" databaseId="PostgreSQL">
+    <choose>
+      <when test="${thePaths}.isEmpty()">null</when>
+      <otherwise>
+        CONCAT_WS(' ',<foreach collection="${thePaths}" separator=", " item="path">'{' || #{path}::VARCHAR || '}'</foreach>)
+      </otherwise>
+    </choose>
+  </sql>
 
   <select id="findComponentIdsByTag" resultMap="searchDataMap">
     <foreach collection="formats" index="index" item="format" separator=" UNION ALL ">

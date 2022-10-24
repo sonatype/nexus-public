@@ -23,6 +23,6 @@ public class RepositorySearchField
   private static final String TABLE = "repository";
 
   public RepositorySearchField(final String columnName) {
-    super(TABLE, columnName);
+    super(TABLE, columnName, TextualQueryType.FULL_TEXT_SEARCH_QUERY);
   }
 }

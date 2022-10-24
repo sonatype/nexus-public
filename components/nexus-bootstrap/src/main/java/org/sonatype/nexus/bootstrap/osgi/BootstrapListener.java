@@ -19,6 +19,7 @@ import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.Properties;
 import java.util.Set;
+
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -83,6 +84,8 @@ public class BootstrapListener
 
   private FilterTracker filterTracker;
 
+  private Path workDirPath;
+
   @Override
   public void contextInitialized(final ServletContextEvent event) {
     log.info("Initializing");
@@ -100,7 +103,7 @@ public class BootstrapListener
       requireProperty(properties, "karaf.data");
 
       File workDir = new File(properties.getProperty("karaf.data")).getCanonicalFile();
-      Path workDirPath = workDir.toPath();
+      workDirPath = workDir.toPath();
       DirectoryHelper.mkdir(workDirPath);
 
       if (hasProFeature(properties)) {
@@ -239,20 +242,23 @@ public class BootstrapListener
     }
   }
 
-  private static void selectDatastoreFeature(final Properties properties) {
+  private void selectDatastoreFeature(final Properties properties) {
     // datastore developer mode includes datastore user mode
     if (parseBoolean(properties.getProperty(DATASTORE_DEVELOPER, "false"))) {
       properties.setProperty(DATASTORE_ENABLED, "true");
     }
 
-    // datastore clustered mode includes datastore user mode
+    // table search should only be turned on via clustered flag
     if (parseBoolean(properties.getProperty(DATASTORE_CLUSTERED_ENABLED, "false"))) {
       properties.setProperty(DATASTORE_ENABLED, "true");
+      properties.setProperty(DATASTORE_TABLE_SEARCH, "true");
+      properties.setProperty(ELASTIC_SEARCH_ENABLED, "false");
       properties.setProperty(SQL_DISTRIBUTED_CACHE, "true");
     }
 
     // datastore search mode enables datastore user mode
     // disables elastic search mode
+    // table search should only be turned on via clustered flag
     if (parseBoolean(properties.getProperty(DATASTORE_TABLE_SEARCH, "false"))) {
       properties.setProperty(DATASTORE_ENABLED, "true");
       properties.setProperty(ELASTIC_SEARCH_ENABLED, "false");

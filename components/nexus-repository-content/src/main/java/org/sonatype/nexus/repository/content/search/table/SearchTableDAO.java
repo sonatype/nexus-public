@@ -15,6 +15,8 @@ package org.sonatype.nexus.repository.content.search.table;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.datastore.api.ContentDataAccess;
@@ -48,64 +50,34 @@ public interface SearchTableDAO
   Collection<SearchResult> searchComponents(SqlSearchRequest request);
 
   /**
-   * Creates the given search entry in the content data store.
+   * Saves the given search entry in the content data store by performing an upsert.
    *
-   * @param data the search row to create
+   * @param searchTableData the search row to create
    */
-  void create(SearchTableData data);
-
-  /**
-   * Update a component kind for the search entry in the content data store.
-   *
-   * @param repositoryId  the content repository identification
-   * @param componentId   the component identification
-   * @param format        the repository format
-   * @param componentKind the new component kind
-   */
-  void updateKind(
-      @Param("repositoryId") Integer repositoryId,
-      @Param("componentId") Integer componentId,
-      @Param("format") String format,
-      @Param("componentKind") String componentKind);
-
-  /**
-   * Update custom format fields for a specific record
-   *
-   * @param repositoryId the content repository identification
-   * @param componentId  the component identification
-   * @param assetId      the asset identification
-   * @param format       the repository format
-   * @param preRelease   is a package pre-release or not
-   * @param formatField1 a format specific field 1
-   * @param formatField2 a format specific field 2
-   * @param formatField3 a format specific field 3
-   * @param formatField4 a format specific field 4
-   * @param formatField5 a format specific field 5
-   */
-  void updateFormatFields(
-      @Param("repositoryId") final Integer repositoryId,
-      @Param("componentId") final Integer componentId,
-      @Param("assetId") final Integer assetId,
-      @Param("format") final String format,
-      @Param("preRelease") final boolean preRelease,
-      @Nullable @Param("formatField1") final String formatField1,
-      @Nullable @Param("formatField2") final String formatField2,
-      @Nullable @Param("formatField3") final String formatField3,
-      @Nullable @Param("formatField4") final String formatField4,
-      @Nullable @Param("formatField5") final String formatField5);
+  void save(SearchTableData searchTableData);
 
   /**
    * Delete the given search entry in the content data store.
    *
    * @param repositoryId the content repository identification
    * @param componentId  the component identification
-   * @param assetId      the asset identification
    * @param format       the repository format
    */
   void delete(
       @Param("repositoryId") Integer repositoryId,
       @Param("componentId") Integer componentId,
-      @Param("assetId") Integer assetId,
+      @Param("format") String format);
+
+  /**
+   * Delete records for the specified repository, format and component ids.
+   *
+   * @param repositoryId the content repository id
+   * @param componentIds the component ids to delete
+   * @param format       the format
+   */
+  void deleteComponentIds(
+      @Param("repositoryId") Integer repositoryId,
+      @Param("componentIds") Set<Integer> componentIds,
       @Param("format") String format);
 
   /**

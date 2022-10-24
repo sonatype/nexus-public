@@ -10,36 +10,15 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content;
-
-import java.time.OffsetDateTime;
-import java.util.Map;
+package org.sonatype.nexus.repository.content.search.table;
 
 /**
- * Information about asset and it's blob.
- *
- * @since 3.41
+ * An exception which indicates a problem occurred whilst attempting to refresh data in the search table.
  */
-public interface AssetInfo
-    extends RepositoryContent
+public class SearchTableDataRefreshException
+    extends RuntimeException
 {
-  Integer assetId();
-
-  Integer componentId();
-
-  String path();
-
-  String contentType();
-
-  String createdBy();
-
-  String createdByIp();
-
-  OffsetDateTime lastUpdated();
-
-  Map<String, String> checksums();
-
-  OffsetDateTime blobCreated();
-
-  OffsetDateTime addedToRepository();
+  public SearchTableDataRefreshException(final Exception exception) {
+    super(exception);
+  }
 }

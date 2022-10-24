@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -259,8 +260,8 @@ public class SqlTableSearchService
     searchResult.getAttributes().put(CHECKSUM, asset.checksums());
     searchResult.setContentType(asset.contentType());
     searchResult.setChecksum(asset.checksums());
-    searchResult.setUploader(componentInfo.uploader());
-    searchResult.setUploaderIp(componentInfo.uploaderIp());
+    searchResult.setUploader(asset.createdBy());
+    searchResult.setUploaderIp(asset.createdByIp());
 
     return searchResult;
   }

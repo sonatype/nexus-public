@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.content.store;
 
 import java.util.Collection;
 import java.util.Optional;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;

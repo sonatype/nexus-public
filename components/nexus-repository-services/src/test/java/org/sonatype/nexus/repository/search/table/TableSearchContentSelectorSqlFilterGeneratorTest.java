@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search.sql;
+package org.sonatype.nexus.repository.search.table;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,6 +20,10 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.rest.SearchFieldSupport;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings;
+import org.sonatype.nexus.repository.search.sql.SqlSearchContentSelectorFilter;
+import org.sonatype.nexus.repository.search.sql.SqlSearchQueryCondition;
+import org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilder;
+import org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilderMapping;
 import org.sonatype.nexus.selector.CselSelector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorManager;
@@ -41,7 +45,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings.SEARCH_REPOSITORY_NAME;
 
-public class SqlSearchContentSelectorSqlFilterGeneratorTest
+public class TableSearchContentSelectorSqlFilterGeneratorTest
     extends TestSupport
 {
   public static final String REPOSITORY_CONDITION_FORMAT = "repositoryConditionFormat";
@@ -60,17 +64,20 @@ public class SqlSearchContentSelectorSqlFilterGeneratorTest
   private SelectorManager selectorManager;
 
   @Mock
-  private SqlSearchQueryConditionBuilder conditionBuilder;
+  private SqlSearchQueryConditionBuilderMapping conditionBuilders;
 
-  protected Map<String, SearchFieldSupport> fieldMappings;
+  @Mock
+  private SqlSearchQueryConditionBuilder sqlSearchQueryConditionBuilder;
 
-  private SqlSearchContentSelectorSqlFilterGenerator underTest;
+  private TableSearchContentSelectorSqlFilterGenerator underTest;
 
   @Before
   public void setup() {
     Map<String, SearchMappings> searchMappings = new HashMap<>();
     searchMappings.put("default", new DefaultSearchMappings());
-    underTest = new SqlSearchContentSelectorSqlFilterGenerator(selectorManager, conditionBuilder, searchMappings);
+    when(conditionBuilders.getConditionBuilder(any(SearchFieldSupport.class)))
+        .thenReturn(sqlSearchQueryConditionBuilder);
+    underTest = new TableSearchContentSelectorSqlFilterGenerator(selectorManager, conditionBuilders, searchMappings);
   }
 
   @Test
@@ -80,7 +87,7 @@ public class SqlSearchContentSelectorSqlFilterGeneratorTest
     mockCondition(repositories);
 
     SqlSearchContentSelectorFilter filter =
-        underTest.createFilter(asList(configuration1, configuration2), repositories, "raw");
+        underTest.createFilter(asList(configuration1, configuration2), repositories);
 
     assertThat(filter.hasFilters(), is(true));
     assertThat(filter.queryFormat(),
@@ -95,8 +102,10 @@ public class SqlSearchContentSelectorSqlFilterGeneratorTest
   private void mockCondition(final Set<String> repositories) {
     Map<String, String> params = ImmutableMap.of(REPOSITORY_NAME_PARAM, REPOSITORY_NAME_VALUE);
     SqlSearchQueryCondition repositoryCondition = getRepositoryCondition(params);
-    when(conditionBuilder.condition(SEARCH_REPOSITORY_NAME, repositories, "s0p_")).thenReturn(repositoryCondition);
-    when(conditionBuilder.condition(SEARCH_REPOSITORY_NAME, repositories, "s1p_")).thenReturn(repositoryCondition);
+    when(sqlSearchQueryConditionBuilder.condition(SEARCH_REPOSITORY_NAME, repositories, "s0p_"))
+        .thenReturn(repositoryCondition);
+    when(sqlSearchQueryConditionBuilder.condition(SEARCH_REPOSITORY_NAME, repositories, "s1p_"))
+        .thenReturn(repositoryCondition);
   }
 
   private SqlSearchQueryCondition getRepositoryCondition(final Map<String, String> params) {

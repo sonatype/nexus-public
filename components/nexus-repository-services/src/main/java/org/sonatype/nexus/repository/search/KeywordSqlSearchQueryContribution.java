@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,21 +24,16 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.repository.rest.SearchFieldSupport;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryBuilder;
-import org.sonatype.nexus.repository.search.sql.SqlSearchQueryCondition;
-import org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilder;
+import org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilderMapping;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryContributionSupport;
 
-import static java.util.Arrays.asList;
-import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.appendIfMissing;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings.GROUP_RAW;
-import static org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings.NAME_RAW;
-import static org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings.VERSION;
 import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilder.ESCAPE;
 import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilder.ZERO_OR_MORE_CHARACTERS;
 
@@ -47,13 +41,10 @@ import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBu
  * A keyword search is one where the user does not specify a specific
  * search field, rather expects the term to be matched across a number of core fields.
  *
- * A wildcard condition is created for each search term.
- *
  * A search term of the form: "group:name[:version][:extension][:classifier]" results in an exact search condition for
  * maven components with the specified group, name, version and optional extension and classifier.
  *
- * Otherwise wildcard conditions are created for checking each search term in the component's namespace, name and
- * version.
+ * Otherwise we check the keywords field in the search index
  *
  * @since 3.38
  */
@@ -63,8 +54,6 @@ public class KeywordSqlSearchQueryContribution
     extends SqlSearchQueryContributionSupport
 {
   protected static final String NAME = NAME_PREFIX + "keyword";
-
-  private static final List<String> KEYWORD_FIELDS = asList(GROUP_RAW, NAME_RAW, VERSION);
 
   private static final String SPLIT_REGEX = "[^-,\\s\"]+|\"[^\"]+\"";
 
@@ -78,10 +67,10 @@ public class KeywordSqlSearchQueryContribution
 
   @Inject
   public KeywordSqlSearchQueryContribution(
-      final SqlSearchQueryConditionBuilder sqlSearchQueryConditionBuilder,
+      final SqlSearchQueryConditionBuilderMapping conditionBuilders,
       final Map<String, SearchMappings> searchMappings)
   {
-    super(sqlSearchQueryConditionBuilder, searchMappings);
+    super(conditionBuilders, searchMappings);
   }
 
   @Override
@@ -98,17 +87,8 @@ public class KeywordSqlSearchQueryContribution
       buildGavQuery(queryBuilder, gavSearchMatcher);
     }
     else {
-      queryBuilder.add(sqlSearchQueryConditionBuilder.combine(buildKeywordQuery(value)));
+      buildQueryCondition(searchFilter).ifPresent(queryBuilder::add);
     }
-  }
-
-  private List<SqlSearchQueryCondition> buildKeywordQuery(final String value) {
-    return KEYWORD_FIELDS.stream()
-        .map(field -> new SearchFilter(field, value))
-        .map(this::buildQueryCondition)
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        .collect(toList());
   }
 
   private String toContains(final String value) {
@@ -133,12 +113,10 @@ public class KeywordSqlSearchQueryContribution
 
   private void addMavenAttribute(final SqlSearchQueryBuilder queryBuilder, final String attribute, final String value) {
     if (isNotBlank(value)) {
-      queryBuilder.add(sqlSearchQueryConditionBuilder.condition(getColumnName(attribute), value));
+      SearchFieldSupport fieldMapping = fieldMappings.get(attribute);
+      String columnName = fieldMapping.getColumnName();
+      queryBuilder.add(conditionBuilders.getConditionBuilder(fieldMapping).condition(columnName, value));
     }
-  }
-
-  private String getColumnName(final String attribute) {
-    return fieldMappings.get(attribute).getColumnName();
   }
 
   @Override

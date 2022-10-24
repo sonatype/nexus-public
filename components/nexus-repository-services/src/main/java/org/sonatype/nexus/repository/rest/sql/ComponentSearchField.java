@@ -14,6 +14,9 @@ package org.sonatype.nexus.repository.rest.sql;
 
 import org.sonatype.nexus.repository.rest.SearchFieldSupport;
 
+import static org.sonatype.nexus.repository.rest.sql.TextualQueryType.DEFAULT_TEXT_QUERY;
+import static org.sonatype.nexus.repository.rest.sql.TextualQueryType.FULL_TEXT_SEARCH_QUERY;
+
 /**
  * A field on the component table.
  *
@@ -22,29 +25,53 @@ import org.sonatype.nexus.repository.rest.SearchFieldSupport;
 public class ComponentSearchField
     extends SearchFieldSupport
 {
-  public static final SearchFieldSupport FORMAT = new ComponentSearchField("format");
+  public static final SearchFieldSupport FORMAT =
+      new ComponentSearchField("tsvector_format", FULL_TEXT_SEARCH_QUERY);
 
   private static final String TABLE = "${format}_component";
 
-  public static final ComponentSearchField NAMESPACE = new ComponentSearchField("namespace");
+  public static final ComponentSearchField NAMESPACE =
+      new ComponentSearchField("tsvector_namespace", FULL_TEXT_SEARCH_QUERY);
 
-  public static final SearchFieldSupport NAME = new ComponentSearchField("search_component_name");
+  public static final SearchFieldSupport NAME =
+      new ComponentSearchField("tsvector_search_component_name", FULL_TEXT_SEARCH_QUERY);
 
-  public static final SearchFieldSupport VERSION = new ComponentSearchField("version");
+  public static final SearchFieldSupport VERSION =
+      new ComponentSearchField("tsvector_version", FULL_TEXT_SEARCH_QUERY);
 
-  public static final SearchFieldSupport PRERELEASE = new ComponentSearchField("prerelease");
+  public static final SearchFieldSupport KEYWORD = new ComponentSearchField("keywords", FULL_TEXT_SEARCH_QUERY);
 
-  public static final SearchFieldSupport FORMAT_FIELD_1 = new ComponentSearchField("format_field_1");
+  public static final SearchFieldSupport PRERELEASE = new ComponentSearchField("prerelease",
+      DEFAULT_TEXT_QUERY);
 
-  public static final SearchFieldSupport FORMAT_FIELD_2 = new ComponentSearchField("format_field_2");
+  public static final SearchFieldSupport MD5 = new ComponentSearchField("md5", FULL_TEXT_SEARCH_QUERY);
 
-  public static final SearchFieldSupport FORMAT_FIELD_3 = new ComponentSearchField("format_field_3");
+  public static final SearchFieldSupport SHA1 = new ComponentSearchField("sha1", FULL_TEXT_SEARCH_QUERY);
 
-  public static final SearchFieldSupport FORMAT_FIELD_4 = new ComponentSearchField("format_field_4");
+  public static final SearchFieldSupport SHA256 = new ComponentSearchField("sha256", FULL_TEXT_SEARCH_QUERY);
 
-  public static final SearchFieldSupport FORMAT_FIELD_5 = new ComponentSearchField("format_field_5");
+  public static final SearchFieldSupport SHA512 = new ComponentSearchField("sha512", FULL_TEXT_SEARCH_QUERY);
+
+  public static final SearchFieldSupport FORMAT_FIELD_1 = new ComponentSearchField("format_field_values_1",
+      FULL_TEXT_SEARCH_QUERY);
+
+  public static final SearchFieldSupport FORMAT_FIELD_2 = new ComponentSearchField("format_field_values_2",
+      FULL_TEXT_SEARCH_QUERY);
+
+  public static final SearchFieldSupport FORMAT_FIELD_3 = new ComponentSearchField("format_field_values_3",
+      FULL_TEXT_SEARCH_QUERY);
+
+  public static final SearchFieldSupport FORMAT_FIELD_4 = new ComponentSearchField("format_field_values_4",
+      FULL_TEXT_SEARCH_QUERY);
+
+  public static final SearchFieldSupport FORMAT_FIELD_5 = new ComponentSearchField("format_field_values_5",
+      FULL_TEXT_SEARCH_QUERY);
 
   public ComponentSearchField(final String columnName) {
-    super(TABLE, columnName);
+    this(columnName, TextualQueryType.DEFAULT_TEXT_QUERY);
+  }
+
+  public ComponentSearchField(final String columnName, final TextualQueryType columnType) {
+    super(TABLE, columnName, columnType);
   }
 }

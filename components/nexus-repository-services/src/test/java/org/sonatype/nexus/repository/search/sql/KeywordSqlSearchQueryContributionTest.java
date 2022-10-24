@@ -39,6 +39,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.rest.sql.ComponentSearchField.KEYWORD;
 import static org.sonatype.nexus.repository.rest.sql.ComponentSearchField.NAME;
 import static org.sonatype.nexus.repository.rest.sql.ComponentSearchField.NAMESPACE;
 import static org.sonatype.nexus.repository.rest.sql.ComponentSearchField.VERSION;
@@ -57,6 +58,9 @@ public class KeywordSqlSearchQueryContributionTest
   public static final String CLASSIFIER_CONDITION_FORMAT = "CLASSIFIER_CONDITION";
 
   @Mock
+  private SqlSearchQueryConditionBuilderMapping conditionBuilders;
+
+  @Mock
   private SqlSearchQueryConditionBuilder sqlSearchQueryConditionBuilder;
 
   @Mock
@@ -73,7 +77,10 @@ public class KeywordSqlSearchQueryContributionTest
     fieldMappings.put("maven", searchMappings);
     fieldMappings.put("default", new DefaultSearchMappings());
     when(searchMappings.get()).thenReturn(searchMappings());
-    underTest = new KeywordSqlSearchQueryContribution(sqlSearchQueryConditionBuilder, fieldMappings);
+    when(conditionBuilders.getConditionBuilder(any(SearchFieldSupport.class)))
+        .thenReturn(sqlSearchQueryConditionBuilder);
+
+    underTest = new KeywordSqlSearchQueryContribution(conditionBuilders, fieldMappings);
   }
 
   @Test
@@ -110,10 +117,8 @@ public class KeywordSqlSearchQueryContributionTest
   }
 
   private void mockCondition(final Map<String, String> values) {
-    Stream.of(NAMESPACE.getColumnName(), NAME.getColumnName(), VERSION.getColumnName()).forEach(column ->
-        when(sqlSearchQueryConditionBuilder.condition(column, new HashSet<>(values.values())))
-            .thenReturn(aSqlSearchCondition("conditionFormat", values))
-    );
+    when(sqlSearchQueryConditionBuilder.condition(KEYWORD.getColumnName(), new HashSet<>(values.values())))
+        .thenReturn(aSqlSearchCondition("conditionFormat", values));
 
     when(sqlSearchQueryConditionBuilder.combine(
         asList(aSqlSearchCondition("conditionFormat", values),

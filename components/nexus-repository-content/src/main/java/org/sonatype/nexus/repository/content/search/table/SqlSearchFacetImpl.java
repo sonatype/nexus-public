@@ -12,11 +12,8 @@
  */
 package org.sonatype.nexus.repository.content.search.table;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -26,46 +23,41 @@ import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
+import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 import org.sonatype.nexus.repository.content.search.SearchFacet;
-import org.sonatype.nexus.repository.content.store.AssetStore;
-import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 
 import com.google.common.base.Stopwatch;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.apache.shiro.util.CollectionUtils.isEmpty;
-import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
+import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 
 /**
  * The {@link SearchFacet} implementation for the SQL Table search.
  */
 @Named
-public class SqlSearchIndexFacet
+public class SqlSearchFacetImpl
     extends FacetSupport
     implements SearchFacet
 {
   private final SearchTableStore store;
 
-  private final Map<String, FormatStoreManager> formatStoreManagersByFormat;
-
-  private final SearchTableDataMapper searchTableDataMapper;
+  private final SqlSearchIndexService sqlSearchIndexService;
 
   private final int batchSize;
 
   @Inject
-  public SqlSearchIndexFacet(
+  public SqlSearchFacetImpl(
       final SearchTableStore store,
-      final Map<String, FormatStoreManager> formatStoreManagersByFormat,
-      final SearchTableDataMapper searchTableDataMapper,
-      @Named("${nexus.rebuild.search.batchSize:-1000}") final int batchSize)
+      final SqlSearchIndexService sqlSearchIndexService,
+      @Named("${nexus.rebuild.search.batchSize:-500}") final int batchSize)
   {
     this.store = checkNotNull(store);
-    this.formatStoreManagersByFormat = checkNotNull(formatStoreManagersByFormat);
-    this.searchTableDataMapper = checkNotNull(searchTableDataMapper);
+    this.sqlSearchIndexService = checkNotNull(sqlSearchIndexService);
 
     checkState(batchSize >= 1, "batchSize should be greater than 1");
     this.batchSize = batchSize;
@@ -92,41 +84,40 @@ public class SqlSearchIndexFacet
     // delete the old search data
     store.deleteAllForRepository(repositoryId, repositoryFormat);
 
-    AssetStore<?> assetStore = getAssetStore(repositoryFormat);
+    populateComponents(repository);
+  }
+
+  private void populateComponents(final Repository repository) {
+    final FluentComponents fluentComponents = facet(ContentFacet.class).components();
     long processed = 0L;
-    int totalAssets = assetStore.countAssets(repositoryId, null, "component_id is not null", null);
+    int totalComponents = fluentComponents.count();
     try (ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60)) {
       Stopwatch sw = Stopwatch.createStarted();
-      Continuation<Asset> assets = assetStore.browseEagerAssets(repositoryId, null, batchSize);
-      while (!isEmpty(assets)) {
-        List<SearchTableData> searchData = new ArrayList<>(assets.size());
-        assets.stream()
-            .map(a -> searchTableDataMapper.convert(a, repository))
-            .filter(Optional::isPresent)
-            .forEach(searchTableData -> searchData.add(searchTableData.get()));
+      Continuation<FluentComponent> components = fluentComponents.browse(batchSize, null);
+      while (!isEmpty(components)) {
+        checkCancellation();
+        sqlSearchIndexService.indexBatch(components, repository);
+        processed += components.size();
+        progressLogger
+            .info("Indexed {} / {} {} components in {}", processed, totalComponents, repository.getName(), sw);
 
-        store.saveBatch(searchData);
-        processed += searchData.size();
-        progressLogger.info("Indexed {} / {} {} assets in {}", processed, totalAssets, repository.getName(), sw);
-
-        assets = assetStore.browseEagerAssets(repositoryId, assets.nextContinuationToken(), batchSize);
+        components = fluentComponents.browse(batchSize, components.nextContinuationToken());
       }
       progressLogger.flush(); // ensure the final progress message is flushed
     }
   }
 
-  private AssetStore<?> getAssetStore(final String format) {
-    FormatStoreManager formatStoreManager = formatStoreManagersByFormat.get(format);
-    return formatStoreManager.assetStore(DEFAULT_DATASTORE_NAME);
-  }
-
+  @Guarded(by = STARTED)
   @Override
   public void index(final Collection<EntityId> componentIds) {
-    // no op (is used for ES only)
+    log.debug("Indexing..." + componentIds);
+    sqlSearchIndexService.index(componentIds, getRepository());
   }
 
+  @Guarded(by = STARTED)
   @Override
   public void purge(final Collection<EntityId> componentIds) {
-    // no op (is used for ES only)
+    log.debug("Purging..." + componentIds);
+    sqlSearchIndexService.purge(componentIds, getRepository());
   }
 }

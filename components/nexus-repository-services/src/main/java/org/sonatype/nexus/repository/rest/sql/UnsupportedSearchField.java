@@ -27,6 +27,6 @@ public final class UnsupportedSearchField
   public static final SearchFieldSupport INSTANCE = new UnsupportedSearchField();
 
   private UnsupportedSearchField() {
-    super(UNSUPPORTED, UNSUPPORTED);
+    super(UNSUPPORTED, UNSUPPORTED, TextualQueryType.DEFAULT_TEXT_QUERY);
   }
 }

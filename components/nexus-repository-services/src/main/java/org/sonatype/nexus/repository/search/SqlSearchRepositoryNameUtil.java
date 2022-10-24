@@ -42,7 +42,10 @@ import static java.util.Collections.unmodifiableSet;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilder.replaceWildcards;
+import static org.sonatype.nexus.repository.search.sql.DefaultSqlSearchQueryConditionBuilder.ANY_CHARACTER;
+import static org.sonatype.nexus.repository.search.sql.DefaultSqlSearchQueryConditionBuilder.SQL_ANY_CHARACTER;
+import static org.sonatype.nexus.repository.search.sql.DefaultSqlSearchQueryConditionBuilder.SQL_ZERO_OR_MORE_CHARACTERS;
+import static org.sonatype.nexus.repository.search.sql.DefaultSqlSearchQueryConditionBuilder.ZERO_OR_MORE_CHARACTERS;
 import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryContributionSupport.maybeTrimQuotes;
 
 /**
@@ -87,8 +90,11 @@ public class SqlSearchRepositoryNameUtil
 
     Set<String> wildcards = getWildcardRepositoryNames(repositories);
     if (!wildcards.isEmpty()) {
-      repositories.removeAll(wildcards);
-      repositories.addAll(getMatchingRepositoryNames(wildcards));
+      Set<String> matchingRepositoryNames = getMatchingRepositoryNames(wildcards);
+      if (!matchingRepositoryNames.isEmpty()) {
+        repositories.removeAll(wildcards);
+      }
+      repositories.addAll(matchingRepositoryNames);
     }
     return unmodifiableSet(expandRepositories(repositories));
   }
@@ -102,6 +108,17 @@ public class SqlSearchRepositoryNameUtil
     }
 
     return unmodifiableSet(expandRepositories(getFormatRepositories(format)));
+  }
+
+  public Set<String> replaceWildcards(final Set<String> values) {
+    return values.stream()
+        .map(SqlSearchRepositoryNameUtil::replaceWildcards)
+        .collect(toSet());
+  }
+
+  private static String replaceWildcards(String value) {
+    return value.replace(ANY_CHARACTER, SQL_ANY_CHARACTER)
+        .replace(ZERO_OR_MORE_CHARACTERS, SQL_ZERO_OR_MORE_CHARACTERS);
   }
 
   private Set<String> getMatchingRepositoryNames(final Set<String> wildcards) {
@@ -121,10 +138,10 @@ public class SqlSearchRepositoryNameUtil
         .collect(toSet());
   }
 
-  private Set<String> expandRepositories(final Set<String> values) {
-    Set<String> repositories = getLeafMembers(values);
-    repositories.addAll(excludeGroupRepositories(values));
-    return repositories;
+  private Set<String> expandRepositories(final Set<String> repositories) {
+    Set<String> leafRepositories = getLeafMembers(repositories);
+    leafRepositories.addAll(excludeGroupRepositories(repositories));
+    return leafRepositories;
   }
 
   private Set<String> excludeGroupRepositories(final Set<String> values) {

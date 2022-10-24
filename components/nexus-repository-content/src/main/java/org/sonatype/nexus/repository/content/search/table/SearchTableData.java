@@ -13,8 +13,18 @@
 package org.sonatype.nexus.repository.content.search.table;
 
 import java.time.OffsetDateTime;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.StringJoiner;
+
+import org.apache.commons.lang3.StringUtils;
+
+import static java.util.Collections.unmodifiableCollection;
+import static java.util.stream.Collectors.toList;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 public class SearchTableData
 {
@@ -24,9 +34,6 @@ public class SearchTableData
 
   //A PK from *_component tables
   private Integer componentId;
-
-  //A PK from *_asset tables
-  private Integer assetId;
 
   //A component type: raw, npm, maven2, etc.
   private String format;
@@ -49,43 +56,40 @@ public class SearchTableData
   //created column from *_component table
   private OffsetDateTime componentCreated;
 
+  //The last time this record was updated
+  private OffsetDateTime lastEventTime;
+
   //name column from repository table
   private String repositoryName;
 
-  //path column from *_asset table
-  private String path;
+  // uploaderBy property for asset blobs
+  private final Set<String> uploaders = new HashSet<>();
 
-  //content_type field from *_asset_blob table
-  private String contentType;
+  // uploaderByIp property for asset blobs
+  private final Set<String> uploaderIps = new HashSet<>();
 
-  //parsed md5 from checksums column *_asset_blob table
-  private String md5;
+  //asset paths
+  private final Set<String> paths = new HashSet<>();
 
-  //parsed sha1 from checksums column *_asset_blob table
-  private String sha1;
+  private final Set<String> keywords = new HashSet<>();
 
-  //parsed sha256 from checksums column *_asset_blob table
-  private String sha256;
+  private final Set<String> md5 = new HashSet<>();
 
-  //parsed sha512 from checksums column *_asset_blob table
-  private String sha512;
+  private final Set<String> sha1 = new HashSet<>();
 
-  //Custom format attributes
-  private String formatField1;
+  private final Set<String> sha256 = new HashSet<>();
 
-  private String formatField2;
+  private final Set<String> sha512 = new HashSet<>();
 
-  private String formatField3;
+  private final Set<String> formatFieldValues1 = new HashSet<>();
 
-  private String formatField4;
+  private final Set<String> formatFieldValues2 = new HashSet<>();
 
-  private String formatField5;
+  private final Set<String> formatFieldValues3 = new HashSet<>();
 
-  // asset's blob uploaderBy property
-  private String uploader;
+  private final Set<String> formatFieldValues4 = new HashSet<>();
 
-  // asset's blob uploaderByIp property
-  private String uploaderIp;
+  private final Set<String> formatFieldValues5 = new HashSet<>();
 
   private boolean prerelease;
 
@@ -93,22 +97,12 @@ public class SearchTableData
   }
 
   public SearchTableData(final Integer repositoryId, final String format) {
-    this(repositoryId, null, null, format);
+    this(repositoryId, null, format);
   }
 
   public SearchTableData(final Integer repositoryId, final Integer componentId, final String format) {
-    this(repositoryId, componentId, null, format);
-  }
-
-  public SearchTableData(
-      final Integer repositoryId,
-      final Integer componentId,
-      final Integer assetId,
-      final String format)
-  {
     this.repositoryId = repositoryId;
     this.componentId = componentId;
-    this.assetId = assetId;
     this.format = format;
   }
 
@@ -126,14 +120,6 @@ public class SearchTableData
 
   public void setComponentId(final Integer componentId) {
     this.componentId = componentId;
-  }
-
-  public Integer getAssetId() {
-    return assetId;
-  }
-
-  public void setAssetId(final Integer assetId) {
-    this.assetId = assetId;
   }
 
   public String getFormat() {
@@ -192,6 +178,14 @@ public class SearchTableData
     this.componentCreated = componentCreated;
   }
 
+  public OffsetDateTime getLastEventTime() {
+    return lastEventTime;
+  }
+
+  public void setLastEventTime(final OffsetDateTime lastEventTime) {
+    this.lastEventTime = lastEventTime;
+  }
+
   public String getRepositoryName() {
     return repositoryName;
   }
@@ -200,108 +194,140 @@ public class SearchTableData
     this.repositoryName = repositoryName;
   }
 
-  public String getPath() {
-    return path;
+  public void addKeywords(final List<String> values) {
+    if (values != null) {
+      this.keywords.addAll(values.stream().filter(StringUtils::isNotBlank).collect(toList()));
+    }
   }
 
-  public void setPath(final String path) {
-    this.path = path;
+  public void addKeyword(final String value) {
+    if (isNotBlank(value)) {
+      this.keywords.add(value);
+    }
   }
 
-  public String getContentType() {
-    return contentType;
+  public Collection<String> getKeywords() {
+    return unmodifiableCollection(keywords);
   }
 
-  public void setContentType(final String contentType) {
-    this.contentType = contentType;
+  public void addMd5(final String md5) {
+    if (isNotBlank(md5)) {
+      this.md5.add(md5);
+    }
   }
 
-  public String getMd5() {
-    return md5;
+  public void addSha1(final String sha1) {
+    if (isNotBlank(sha1)) {
+      this.sha1.add(sha1);
+    }
   }
 
-  public void setMd5(final String md5) {
-    this.md5 = md5;
+  public void addSha256(final String sha256) {
+    if (isNotBlank(sha256)) {
+      this.sha256.add(sha256);
+    }
   }
 
-  public String getSha1() {
-    return sha1;
+  public void addSha512(final String sha512) {
+    if (isNotBlank(sha512)) {
+      this.sha512.add(sha512);
+    }
   }
 
-  public void setSha1(final String sha1) {
-    this.sha1 = sha1;
+  public Collection<String> getMd5() {
+    return unmodifiableCollection(md5);
   }
 
-  public String getSha256() {
-    return sha256;
+  public Collection<String> getSha1() {
+    return unmodifiableCollection(sha1);
   }
 
-  public void setSha256(final String sha256) {
-    this.sha256 = sha256;
+  public Collection<String> getSha256() {
+    return unmodifiableCollection(sha256);
   }
 
-  public String getSha512() {
-    return sha512;
+  public Collection<String> getSha512() {
+    return unmodifiableCollection(sha512);
   }
 
-  public void setSha512(final String sha512) {
-    this.sha512 = sha512;
+  public void addFormatFieldValue1(final String formatFieldValue1) {
+    if (isNotBlank(formatFieldValue1)) {
+      this.formatFieldValues1.add(formatFieldValue1);
+    }
   }
 
-  public String getFormatField1() {
-    return formatField1;
+  public Collection<String> getFormatFieldValues1() {
+    return unmodifiableCollection(formatFieldValues1);
   }
 
-  public void setFormatField1(final String formatField1) {
-    this.formatField1 = formatField1;
+  public void addFormatFieldValue2(final String formatFieldValue2) {
+    if (isNotBlank(formatFieldValue2)) {
+      this.formatFieldValues2.add(formatFieldValue2);
+    }
   }
 
-  public String getFormatField2() {
-    return formatField2;
+  public Collection<String> getFormatFieldValues2() {
+    return unmodifiableCollection(formatFieldValues2);
   }
 
-  public void setFormatField2(final String formatField2) {
-    this.formatField2 = formatField2;
+  public void addFormatFieldValue3(final String formatFieldValue3) {
+    if (isNotBlank(formatFieldValue3)) {
+      this.formatFieldValues3.add(formatFieldValue3);
+    }
   }
 
-  public String getFormatField3() {
-    return formatField3;
+  public Collection<String> getFormatFieldValues3() {
+    return unmodifiableCollection(formatFieldValues3);
   }
 
-  public void setFormatField3(final String formatField3) {
-    this.formatField3 = formatField3;
+  public void addFormatFieldValue4(final String formatFieldValues4) {
+    if (isNotBlank(formatFieldValues4)) {
+      this.formatFieldValues4.add(formatFieldValues4);
+    }
   }
 
-  public String getFormatField4() {
-    return formatField4;
+  public Collection<String> getFormatFieldValues4() {
+    return unmodifiableCollection(formatFieldValues4);
   }
 
-  public void setFormatField4(final String formatField4) {
-    this.formatField4 = formatField4;
+  public void addFormatFieldValue5(final String formatFieldValue5) {
+    if (isNotBlank(formatFieldValue5)) {
+      this.formatFieldValues5.add(formatFieldValue5);
+    }
   }
 
-  public String getFormatField5() {
-    return formatField5;
+  public Collection<String> getFormatFieldValues5() {
+    return unmodifiableCollection(formatFieldValues5);
   }
 
-  public void setFormatField5(final String formatField5) {
-    this.formatField5 = formatField5;
+  public void addUploader(final String uploader) {
+    if (isNotBlank(uploader)) {
+      this.uploaders.add(uploader);
+    }
   }
 
-  public void setUploader(final String uploader) {
-    this.uploader = uploader;
+  public Collection<String> getUploaders() {
+    return unmodifiableCollection(uploaders);
   }
 
-  public String getUploader() {
-    return uploader;
+  public void addUploaderIp(final String uploaderIp) {
+    if (isNotBlank(uploaderIp)) {
+      this.uploaderIps.add(uploaderIp);
+    }
   }
 
-  public void setUploaderIp(final String uploaderIp) {
-    this.uploaderIp = uploaderIp;
+  public Collection<String> getUploaderIps() {
+    return unmodifiableCollection(uploaderIps);
   }
 
-  public String getUploaderIp() {
-    return uploaderIp;
+  public void addPath(final String path) {
+    if (isNotBlank(path)) {
+      this.paths.add(path);
+    }
+  }
+
+  public Collection<String> getPaths() {
+    return unmodifiableCollection(paths);
   }
 
   public boolean isPrerelease() {
@@ -323,32 +349,37 @@ public class SearchTableData
     SearchTableData tableData = (SearchTableData) o;
     return Objects.equals(repositoryId, tableData.repositoryId) &&
         Objects.equals(componentId, tableData.componentId) &&
-        Objects.equals(assetId, tableData.assetId) && Objects.equals(format, tableData.format) &&
+        Objects.equals(format, tableData.format) &&
         Objects.equals(namespace, tableData.namespace) &&
         Objects.equals(componentName, tableData.componentName) &&
         Objects.equals(componentKind, tableData.componentKind) &&
         Objects.equals(version, tableData.version) &&
         Objects.equals(normalisedVersion, tableData.normalisedVersion) &&
         Objects.equals(componentCreated, tableData.componentCreated) &&
+        Objects.equals(lastEventTime, tableData.lastEventTime) &&
         Objects.equals(repositoryName, tableData.repositoryName) &&
-        Objects.equals(path, tableData.path) && Objects.equals(contentType, tableData.contentType) &&
-        Objects.equals(md5, tableData.md5) && Objects.equals(sha1, tableData.sha1) &&
-        Objects.equals(sha256, tableData.sha256) && Objects.equals(sha512, tableData.sha512) &&
-        Objects.equals(formatField1, tableData.formatField1) &&
-        Objects.equals(formatField2, tableData.formatField2) &&
-        Objects.equals(formatField3, tableData.formatField3) &&
-        Objects.equals(formatField4, tableData.formatField4) &&
-        Objects.equals(formatField5, tableData.formatField5) &&
-        Objects.equals(uploader, tableData.uploader) &&
-        Objects.equals(uploaderIp, tableData.uploaderIp) &&
-        Objects.equals(prerelease, tableData.prerelease);
+        Objects.equals(prerelease, tableData.prerelease) &&
+        Objects.equals(uploaders, tableData.uploaders) &&
+        Objects.equals(uploaderIps, tableData.uploaderIps) &&
+        Objects.equals(paths, tableData.paths) &&
+        Objects.equals(keywords, tableData.keywords) &&
+        Objects.equals(md5, tableData.md5) &&
+        Objects.equals(sha1, tableData.sha1) &&
+        Objects.equals(sha256, tableData.sha256) &&
+        Objects.equals(sha512, tableData.sha512) &&
+        Objects.equals(formatFieldValues1, tableData.formatFieldValues1) &&
+        Objects.equals(formatFieldValues2, tableData.formatFieldValues2) &&
+        Objects.equals(formatFieldValues3, tableData.formatFieldValues3) &&
+        Objects.equals(formatFieldValues4, tableData.formatFieldValues4) &&
+        Objects.equals(formatFieldValues5, tableData.formatFieldValues5);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(repositoryId, componentId, assetId, format, namespace, componentName, componentKind, version,
-        normalisedVersion, componentCreated, repositoryName, path, contentType, md5, sha1, sha256, sha512,
-        formatField1, formatField2, formatField3, formatField4, formatField5, uploader, uploaderIp, prerelease);
+    return Objects.hash(repositoryId, componentId, format, namespace, componentName, componentKind,
+        version, normalisedVersion, componentCreated, lastEventTime, repositoryName,
+        prerelease, uploaders, uploaderIps, paths, keywords, md5, sha1, sha256, sha512, formatFieldValues1, formatFieldValues2,
+        formatFieldValues3, formatFieldValues4, formatFieldValues5);
   }
 
   @Override
@@ -356,7 +387,6 @@ public class SearchTableData
     return new StringJoiner(", ", SearchTableData.class.getSimpleName() + "[", "]")
         .add("repositoryId=" + repositoryId)
         .add("componentId=" + componentId)
-        .add("assetId=" + assetId)
         .add("format='" + format + "'")
         .add("namespace='" + namespace + "'")
         .add("componentName='" + componentName + "'")
@@ -364,21 +394,22 @@ public class SearchTableData
         .add("version='" + version + "'")
         .add("normalisedVersion='" + normalisedVersion + "'")
         .add("componentCreated=" + componentCreated)
+        .add("lastEventTime=" + lastEventTime)
         .add("repositoryName='" + repositoryName + "'")
-        .add("path='" + path + "'")
-        .add("contentType='" + contentType + "'")
+        .add("prerelease=" + prerelease)
+        .add("uploader='" + uploaders + "'")
+        .add("uploaderIp='" + uploaderIps + "'")
+        .add("paths='" + paths + "'")
+        .add("keywords='" + keywords + "'")
         .add("md5='" + md5 + "'")
         .add("sha1='" + sha1 + "'")
         .add("sha256='" + sha256 + "'")
         .add("sha512='" + sha512 + "'")
-        .add("formatField1='" + formatField1 + "'")
-        .add("formatField2='" + formatField2 + "'")
-        .add("formatField3='" + formatField3 + "'")
-        .add("formatField4='" + formatField4 + "'")
-        .add("formatField5='" + formatField5 + "'")
-        .add("uploader='" + uploader + "'")
-        .add("uploaderIp='" + uploaderIp + "'")
-        .add("prerelease=" + prerelease)
+        .add("formatFieldValues1='" + formatFieldValues1 + "'")
+        .add("formatFieldValues2='" + formatFieldValues2 + "'")
+        .add("formatFieldValues3='" + formatFieldValues3 + "'")
+        .add("formatFieldValues4='" + formatFieldValues4 + "'")
+        .add("formatFieldValues5='" + formatFieldValues5 + "'")
         .toString();
   }
 }

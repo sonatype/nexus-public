@@ -14,6 +14,7 @@ package org.sonatype.nexus.content.maven.internal.search.table;
 
 import java.util.Collections;
 import java.util.Map;
+
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -22,9 +23,11 @@ import org.sonatype.nexus.repository.content.search.table.SearchCustomFieldContr
 import org.sonatype.nexus.repository.content.search.table.SearchTableData;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 
+import static org.apache.commons.lang3.StringUtils.endsWithIgnoreCase;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_CLASSIFIER;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_EXTENSION;
+import static org.sonatype.nexus.repository.maven.internal.Constants.SNAPSHOT_VERSION_SUFFIX;
 
 @Singleton
 @Named(Maven2Format.NAME)
@@ -40,8 +43,16 @@ public class MavenSearchCustomFieldContributor
     Map<String, String> attributes =
         formatAttributes instanceof Map ? (Map<String, String>) formatAttributes : Collections.emptyMap();
 
-    searchTableData.setFormatField1(attributes.get(P_BASE_VERSION));
-    searchTableData.setFormatField2(attributes.get(P_EXTENSION));
-    searchTableData.setFormatField3(attributes.get(P_CLASSIFIER));
+    searchTableData.addFormatFieldValue1(getBaseVersion(attributes.get(P_BASE_VERSION)));
+    searchTableData.addFormatFieldValue2(attributes.get(P_EXTENSION));
+    searchTableData.addFormatFieldValue3(attributes.get(P_CLASSIFIER));
+  }
+
+  public static String getBaseVersion(final String baseVersion) {
+    if (endsWithIgnoreCase(baseVersion, SNAPSHOT_VERSION_SUFFIX)) {
+      //Needed so that to_tsvector doesn't tokenize
+      return baseVersion.replace('-', '.');
+    }
+    return baseVersion;
   }
 }

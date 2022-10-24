@@ -89,5 +89,13 @@ public interface UploadManager
     public List<String> getAssetPaths() {
       return this.assetPaths;
     }
+
+    @Override
+    public String toString() {
+      return "UIUploadEvent{" +
+          "repository=" + repository +
+          ", assetPaths=" + assetPaths +
+          '}';
+    }
   }
 }

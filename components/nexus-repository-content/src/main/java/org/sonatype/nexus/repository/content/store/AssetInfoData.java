@@ -35,6 +35,10 @@ public class AssetInfoData
 
   private String contentType;
 
+  private String createdBy;
+
+  private String createdByIp;
+
   private Map<String, String> checksums;
 
   private OffsetDateTime blobCreated;
@@ -67,6 +71,16 @@ public class AssetInfoData
   }
 
   @Override
+  public String createdBy() {
+    return createdBy;
+  }
+
+  @Override
+  public String createdByIp() {
+    return createdByIp;
+  }
+
+  @Override
   public Map<String, String> checksums() {
     return checksums;
   }
@@ -88,6 +102,8 @@ public class AssetInfoData
         ", componentId=" + componentId +
         ", path='" + path + '\'' +
         ", contentType='" + contentType + '\'' +
+        ", createdBy='" + createdBy + '\'' +
+        ", createdByIp='" + createdByIp + '\'' +
         ", checksums=" + checksums +
         ", blobCreated=" + blobCreated +
         ", addedToRepository=" + addedToRepository +

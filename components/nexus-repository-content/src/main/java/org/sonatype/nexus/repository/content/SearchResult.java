@@ -22,6 +22,8 @@ public interface SearchResult
 {
   Integer componentId();
 
+  Integer repositoryId();
+
   String format();
 
   String namespace();
@@ -33,8 +35,4 @@ public interface SearchResult
   String version();
 
   String normalisedVersion();
-
-  String uploader();
-
-  String uploaderIp();
 }

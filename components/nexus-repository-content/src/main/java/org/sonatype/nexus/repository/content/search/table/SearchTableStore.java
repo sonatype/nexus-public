@@ -19,7 +19,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -68,62 +70,14 @@ public class SearchTableStore
   }
 
   /**
-   * Creates the given search entry in the content data store.
+   * Saves the given search entry in the content data store.
    *
-   * @param data the search row to create
+   * @param data the search row to save.
    */
   @Transactional
-  public void create(final SearchTableData data) {
-    dao().create(data);
-  }
-
-  /**
-   * Update a component kind for the search entry in the content data store.
-   *
-   * @param repositoryId  the content repository identification
-   * @param componentId   the component identification
-   * @param format        the repository format
-   * @param componentKind the new component kind
-   */
-  @Transactional
-  public void updateKind(
-      @Nonnull @Param("repositoryId") final Integer repositoryId,
-      @Nonnull @Param("componentId") final Integer componentId,
-      @Nonnull @Param("format") final String format,
-      @Nonnull @Param("componentKind") final String componentKind)
-  {
-    dao().updateKind(repositoryId, componentId, format, componentKind);
-  }
-
-  /**
-   * Update custom format fields for a specific record
-   *
-   * @param repositoryId the content repository identification
-   * @param componentId  the component identification
-   * @param assetId      the asset identification
-   * @param format       the repository format
-   * @param preRelease   is a package pre-release or not
-   * @param formatField1 a format specific field 1
-   * @param formatField2 a format specific field 2
-   * @param formatField3 a format specific field 3
-   * @param formatField4 a format specific field 4
-   * @param formatField5 a format specific field 5
-   */
-  @Transactional
-  public void updateFormatFields(
-      @Nonnull @Param("repositoryId") final Integer repositoryId,
-      @Nonnull @Param("componentId") final Integer componentId,
-      @Nonnull @Param("assetId") final Integer assetId,
-      @Nonnull @Param("format") final String format,
-      @Nonnull @Param("preRelease") final boolean preRelease,
-      @Nullable final String formatField1,
-      @Nullable final String formatField2,
-      @Nullable final String formatField3,
-      @Nullable final String formatField4,
-      @Nullable final String formatField5)
-  {
-    dao().updateFormatFields(repositoryId, componentId, assetId, format, preRelease,
-        formatField1, formatField2, formatField3, formatField4, formatField5);
+  public void save(final SearchTableData data) {
+    log.debug("Saving {}", data);
+    dao().save(data);
   }
 
   /**
@@ -131,17 +85,30 @@ public class SearchTableStore
    *
    * @param repositoryId the content repository identification
    * @param componentId  the component identification
-   * @param assetId      the asset identification
    * @param format       the repository format
    */
   @Transactional
   public void delete(
       @Nonnull @Param("repositoryId") final Integer repositoryId,
       @Nonnull @Param("componentId") final Integer componentId,
-      @Nonnull @Param("assetId") final Integer assetId,
       @Nonnull @Param("format") final String format)
   {
-    dao().delete(repositoryId, componentId, assetId, format);
+    dao().delete(repositoryId, componentId, format);
+  }
+
+  /**
+   * Delete records for the specified repository, format and component ids.
+   * @param repositoryId the content repository id
+   * @param componentIds the component ids to delete
+   * @param format the format
+   */
+  @Transactional
+  public void deleteComponentIds(
+      @Nonnull @Param("repositoryId") final Integer repositoryId,
+      @Nonnull @Param("componentIds") final Set<Integer> componentIds,
+      @Nonnull @Param("format") final String format)
+  {
+    dao().deleteComponentIds(repositoryId, componentIds, format);
   }
 
   /**
@@ -176,7 +143,7 @@ public class SearchTableStore
       SqlSearchRequest request = prepareSearchRequest(limit, offset, filterQuery, sortColumnName, sortDirection);
       return dao().searchComponents(request);
     }
-    catch (NoTaggedComponentsException e){
+    catch (NoTaggedComponentsException e) {
       return new ArrayList<>();
     }
   }

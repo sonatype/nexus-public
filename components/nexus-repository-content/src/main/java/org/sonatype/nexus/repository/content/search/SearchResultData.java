@@ -26,6 +26,8 @@ public class SearchResultData
 {
   private Integer componentId; // NOSONAR: internal id
 
+  private Integer repositoryId; // NOSONAR: internal id
+
   private String namespace;
 
   private String format;
@@ -38,13 +40,14 @@ public class SearchResultData
 
   private String repositoryName;
 
-  private String uploader;
-
-  private String uploaderIp;
-
   @Override
   public Integer componentId() {
     return componentId;
+  }
+
+  @Override
+  public Integer repositoryId() {
+    return repositoryId;
   }
 
   @Override
@@ -73,22 +76,16 @@ public class SearchResultData
   }
 
   @Override
-  public String uploader() {
-    return uploader;
-  }
-
-  @Override
-  public String uploaderIp() {
-    return uploaderIp;
-  }
-
-  @Override
   public String format() {
     return format;
   }
 
   public void setComponentId(final Integer componentId) {
     this.componentId = componentId;
+  }
+
+  public void setRepositoryId(final int repositoryId) {
+    this.repositoryId = repositoryId;
   }
 
   public void setNamespace(final String namespace) {
@@ -115,26 +112,17 @@ public class SearchResultData
     this.format = format;
   }
 
-  public void setUploader(final String uploader) {
-    this.uploader = uploader;
-  }
-
-  public void setUploaderIp(final String uploaderIp) {
-    this.uploaderIp = uploaderIp;
-  }
-
   @Override
   public String toString() {
     return "SearchResultData{" +
         "componentId=" + componentId +
+        ", repositoryId=" + repositoryId +
         ", namespace='" + namespace + '\'' +
         ", format='" + format + '\'' +
         ", componentName='" + componentName + '\'' +
         ", version='" + version + '\'' +
         ", normalisedVersion='" + normalisedVersion + '\'' +
         ", repositoryName='" + repositoryName + '\'' +
-        ", uploader='" + uploader + '\'' +
-        ", uploaderIp='" + uploaderIp + '\'' +
         '}';
   }
 }

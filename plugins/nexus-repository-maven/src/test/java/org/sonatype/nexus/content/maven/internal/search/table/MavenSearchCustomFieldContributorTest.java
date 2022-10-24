@@ -22,9 +22,11 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNull.nullValue;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.maven.internal.Constants.SNAPSHOT_VERSION_SUFFIX;
 
 public class MavenSearchCustomFieldContributorTest
 {
@@ -56,9 +58,9 @@ public class MavenSearchCustomFieldContributorTest
     when(asset.attributes()).thenReturn(attributes);
 
     underTest.populateSearchCustomFields(searchTableData, asset);
-    assertThat(searchTableData.getFormatField1(), is("1.1.1"));
-    assertThat(searchTableData.getFormatField2(), is("testExtension"));
-    assertThat(searchTableData.getFormatField3(), is("testClassifier"));
+    assertThat(searchTableData.getFormatFieldValues1(), hasItems("1.1.1"));
+    assertThat(searchTableData.getFormatFieldValues2(), hasItems("testExtension"));
+    assertThat(searchTableData.getFormatFieldValues3(), hasItems("testClassifier"));
   }
 
   @Test
@@ -69,8 +71,30 @@ public class MavenSearchCustomFieldContributorTest
 
     underTest.populateSearchCustomFields(searchTableData, asset);
 
-    assertThat(searchTableData.getFormatField1(), is(nullValue()));
-    assertThat(searchTableData.getFormatField2(), is(nullValue()));
-    assertThat(searchTableData.getFormatField3(), is(nullValue()));
+    assertThat(searchTableData.getFormatFieldValues1(), is(empty()));
+    assertThat(searchTableData.getFormatFieldValues2(), is(empty()));
+    assertThat(searchTableData.getFormatFieldValues3(), is(empty()));
+  }
+
+  @Test
+  public void replaceHyphenWithDotWhenBaseVersionIsSnapshot() {
+    SearchTableData searchTableData = new SearchTableData();
+
+    childAttributes.set("baseVersion", "1.1-" + SNAPSHOT_VERSION_SUFFIX);
+    when(asset.attributes()).thenReturn(attributes);
+
+    underTest.populateSearchCustomFields(searchTableData, asset);
+    assertThat(searchTableData.getFormatFieldValues1(), hasItems("1.1." + SNAPSHOT_VERSION_SUFFIX));
+  }
+
+  @Test
+  public void baseVersionShouldBeSameWhenReleaseVersion() {
+    SearchTableData searchTableData = new SearchTableData();
+
+    childAttributes.set("baseVersion", "1.1.0" );
+    when(asset.attributes()).thenReturn(attributes);
+
+    underTest.populateSearchCustomFields(searchTableData, asset);
+    assertThat(searchTableData.getFormatFieldValues1(), hasItems("1.1.0"));
   }
 }

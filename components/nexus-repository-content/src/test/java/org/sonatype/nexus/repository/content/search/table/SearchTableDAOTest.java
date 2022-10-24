@@ -23,9 +23,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.repository.config.internal.ConfigurationData;
-import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.SearchResult;
@@ -38,10 +38,12 @@ import org.sonatype.nexus.repository.search.SortDirection;
 import org.sonatype.nexus.repository.search.normalize.VersionNumberExpander;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryCondition;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilder;
+import org.sonatype.nexus.repository.search.sql.textsearch.PostgresFullTextSearchQueryBuilder;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -57,6 +59,7 @@ import static org.sonatype.nexus.repository.rest.sql.ComponentSearchField.NAME;
 /**
  * Test {@link SearchTableDAO}.
  */
+@Category(PostgresTestGroup.class)
 public class SearchTableDAOTest
     extends ExampleContentTestSupport
 {
@@ -94,14 +97,12 @@ public class SearchTableDAOTest
 
     for (int i = 0; i < TABLE_RECORDS_TO_GENERATE; i++) {
       Component component = generatedComponents().get(i);
-      Asset asset = generatedAssets().get(i);
       AssetBlob blob = generatedAssetBlobs().get(i);
 
       SearchTableData tableData = new SearchTableData();
       //PK
       tableData.setRepositoryId(repository.contentRepositoryId());
       tableData.setComponentId(InternalIds.internalComponentId(component));
-      tableData.setAssetId(InternalIds.internalAssetId(asset));
       tableData.setFormat(FORMAT);
       //tableData component
       tableData.setNamespace(component.namespace() + "_" + i);
@@ -111,25 +112,23 @@ public class SearchTableDAOTest
       tableData.setNormalisedVersion(VersionNumberExpander.expand(component.version()));
       tableData.setRepositoryName(configuration.getRepositoryName() + "_" + i);
       tableData.setComponentCreated(OffsetDateTime.of(2022, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC));
-      //tableData asset
-      tableData.setPath(asset.path() + "_" + i);
       //tableData blob
-      tableData.setContentType(blob.contentType());
-      tableData.setMd5(blob.checksums().get(MD5.name()) + "_" + i);
-      tableData.setSha1(blob.checksums().get(SHA1.name()) + "_" + i);
-      tableData.setSha256(blob.checksums().get(SHA256.name()) + "_" + i);
-      tableData.setSha512(blob.checksums().get(SHA512.name()) + "_" + i);
+      tableData.addKeyword(blob.contentType());
+      tableData.addMd5(blob.checksums().get(MD5.name()) + "_" + i);
+      tableData.addSha1(blob.checksums().get(SHA1.name()) + "_" + i);
+      tableData.addSha256(blob.checksums().get(SHA256.name()) + "_" + i);
+      tableData.addSha512(blob.checksums().get(SHA512.name()) + "_" + i);
 
       // custom format attributes
-      tableData.setFormatField1("formatField1_" + i);
-      tableData.setFormatField2("formatField2_" + i);
-      tableData.setFormatField3("formatField3_" + i);
-      tableData.setFormatField4("formatField4_" + i);
-      tableData.setFormatField5("formatField5_" + i);
+      tableData.addFormatFieldValue1("formatField1_" + i);
+      tableData.addFormatFieldValue2("formatField2_" + i);
+      tableData.addFormatFieldValue3("formatField3_" + i);
+      tableData.addFormatFieldValue3("formatField4_" + i);
+      tableData.addFormatFieldValue3("formatField5_" + i);
 
       // uploader info
-      tableData.setUploader("uploader-name");
-      tableData.setUploaderIp("uploader-ip-address");
+      tableData.addUploader("uploader-name");
+      tableData.addUploaderIp("uploader-ip-address");
 
       GENERATED_DATA.add(tableData);
     }
@@ -145,14 +144,14 @@ public class SearchTableDAOTest
 
   @Test
   public void testCreateAndCount() {
-    GENERATED_DATA.forEach(searchDAO::create);
+    GENERATED_DATA.forEach(searchDAO::save);
     int count = searchDAO.count(null, null);
     assertThat(count, is(2));
   }
 
   @Test
   public void testSearchComponents() {
-    GENERATED_DATA.forEach(searchDAO::create);
+    GENERATED_DATA.forEach(searchDAO::save);
     int count = searchDAO.count(null, null);
     assertThat(count, is(2));
 
@@ -172,19 +171,17 @@ public class SearchTableDAOTest
     assertThat(searchResult.version(), notNullValue());
     assertThat(searchResult.repositoryName(), notNullValue());
     assertThat(searchResult.created(), notNullValue());
-    assertThat(searchResult.uploader(), notNullValue());
-    assertThat(searchResult.uploaderIp(), notNullValue());
   }
 
   @Test
   public void testSearchComponentsWithFilter() {
-    GENERATED_DATA.forEach(searchDAO::create);
+    GENERATED_DATA.forEach(searchDAO::save);
 
     List<String> componentNames = Arrays.asList("component", "foo_component", "test_component_name", "name");
     generateContent(componentNames);
 
-    SqlSearchQueryConditionBuilder queryConditionBuilder = new SqlSearchQueryConditionBuilder();
-    SqlSearchQueryCondition queryCondition = queryConditionBuilder.condition(NAME.getColumnName(), "*component*");
+    SqlSearchQueryConditionBuilder queryConditionBuilder = new PostgresFullTextSearchQueryBuilder();
+    SqlSearchQueryCondition queryCondition = queryConditionBuilder.condition(NAME.getColumnName(), "component*");
     Map<String, String> values = queryCondition.getValues();
 
     String conditionFormat = queryCondition.getSqlConditionFormat();
@@ -206,7 +203,7 @@ public class SearchTableDAOTest
 
   @Test
   public void testSearchComponentsWithOffset() {
-    GENERATED_DATA.forEach(searchDAO::create);
+    GENERATED_DATA.forEach(searchDAO::save);
     int count = searchDAO.count(null, null);
     assertThat(count, is(2));
     SqlSearchRequest request = SqlSearchRequest.builder()
@@ -222,7 +219,7 @@ public class SearchTableDAOTest
 
   @Test
   public void testCrossFormatSearch() {
-    GENERATED_DATA.forEach(searchDAO::create);
+    GENERATED_DATA.forEach(searchDAO::save);
     int count = searchDAO.count(null, null);
     assertThat(count, is(2));
 
@@ -243,28 +240,27 @@ public class SearchTableDAOTest
   }
 
   @Test
-  public void testUpdateKind() {
-    GENERATED_DATA.forEach(searchDAO::create);
-    SearchTableData tableData = GENERATED_DATA.get(0);
-    searchDAO.updateKind(tableData.getRepositoryId(), tableData.getComponentId(), FORMAT, "customKind");
-    SqlSearchQueryConditionBuilder queryConditionBuilder = new SqlSearchQueryConditionBuilder();
-    SqlSearchQueryCondition queryCondition = queryConditionBuilder.condition("component_kind", "customKind");
-    Map<String, String> values = queryCondition.getValues();
-
-    String conditionFormat = queryCondition.getSqlConditionFormat();
-
-    int count = searchDAO.count(conditionFormat, values);
-    assertThat(count, is(1));
-  }
-
-  @Test
-  public void testUpdateFormatFields() {
-    GENERATED_DATA.forEach(searchDAO::create);
+  public void testUpdate() {
+    GENERATED_DATA.forEach(searchDAO::save);
 
     SearchTableData tableData = GENERATED_DATA.get(0);
-    searchDAO.updateFormatFields(tableData.getRepositoryId(), tableData.getComponentId(), tableData.getAssetId(),
-        FORMAT, true, "customField1", "customField2", "customField3", "customField4", "customField5");
-    SqlSearchQueryConditionBuilder queryConditionBuilder = new SqlSearchQueryConditionBuilder();
+    final SearchTableData searchTableData = new SearchTableData();
+    searchTableData.setRepositoryId(tableData.getRepositoryId());
+    searchTableData.setComponentId(tableData.getComponentId());
+    searchTableData.setFormat(tableData.getFormat());
+    searchTableData.setNamespace(tableData.getNamespace());
+    searchTableData.setRepositoryName(tableData.getRepositoryName());
+    searchTableData.setComponentName(tableData.getComponentName());
+    searchTableData.setVersion(tableData.getVersion());
+    searchTableData.setNormalisedVersion(tableData.getNormalisedVersion());
+    searchTableData.setComponentKind("jar");
+    searchTableData.addFormatFieldValue1("customField1");
+    searchTableData.addFormatFieldValue2("customField2");
+    searchTableData.addFormatFieldValue3("customField3");
+    searchTableData.addFormatFieldValue4("customField4");
+    searchTableData.addFormatFieldValue5("customField5");
+    searchDAO.save(searchTableData);
+    SqlSearchQueryConditionBuilder queryConditionBuilder = new PostgresFullTextSearchQueryBuilder();
     SqlSearchQueryCondition queryCondition =
         queryConditionBuilder.condition(FORMAT_FIELD_1.getColumnName(), "customField1");
     Map<String, String> values = queryCondition.getValues();
@@ -277,16 +273,16 @@ public class SearchTableDAOTest
 
   @Test
   public void testDelete() {
-    GENERATED_DATA.forEach(searchDAO::create);
+    GENERATED_DATA.forEach(searchDAO::save);
     SearchTableData tableData = GENERATED_DATA.get(0);
-    searchDAO.delete(tableData.getRepositoryId(), tableData.getComponentId(), tableData.getAssetId(), FORMAT);
+    searchDAO.delete(tableData.getRepositoryId(), tableData.getComponentId(), FORMAT);
     int count = searchDAO.count(null, null);
     assertThat(count, is(1));
   }
 
   @Test
   public void testDeleteAllForRepository() {
-    GENERATED_DATA.forEach(searchDAO::create);
+    GENERATED_DATA.forEach(searchDAO::save);
     searchDAO.deleteAllForRepository(repository.contentRepositoryId(), FORMAT, 1);
     int count = searchDAO.count(null, null);
     assertThat(count, is(1));
@@ -294,7 +290,7 @@ public class SearchTableDAOTest
 
   @Test
   public void testDeleteAllForRepositoryWithoutLimit() {
-    GENERATED_DATA.forEach(searchDAO::create);
+    GENERATED_DATA.forEach(searchDAO::save);
     searchDAO.deleteAllForRepository(repository.contentRepositoryId(), FORMAT, 0);
     int count = searchDAO.count(null, null);
     assertThat(count, is(0));

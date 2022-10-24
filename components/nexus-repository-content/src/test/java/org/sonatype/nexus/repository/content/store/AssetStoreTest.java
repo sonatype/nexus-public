@@ -17,7 +17,6 @@ import java.util.Collection;
 
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.datastore.api.DataSession;
-import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetInfo;
 import org.sonatype.nexus.repository.content.facet.ContentFacetFinder;
 import org.sonatype.nexus.repository.content.store.example.TestAssetBlobDAO;

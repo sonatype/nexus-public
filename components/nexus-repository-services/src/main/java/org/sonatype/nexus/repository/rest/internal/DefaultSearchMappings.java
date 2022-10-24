@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.rest.internal;
 
 import java.util.List;
+
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -42,21 +43,27 @@ public class DefaultSearchMappings
 
   public static final String VERSION = "version";
 
-  public static final String SEARCH_REPOSITORY_NAME = "search_repository_name";
+  public static final String SEARCH_REPOSITORY_NAME = "tsvector_search_repository_name";
+
+  public static final String PRERELEASE = "prerelease";
 
   private static final List<SearchMapping> MAPPINGS = ImmutableList.of(
-      new SearchMapping("q", "keyword", "Query by keyword"),
+      new SearchMapping("q", "keyword", "Query by keyword", ComponentSearchField.KEYWORD),
       new SearchMapping("repository", REPOSITORY_NAME, "Repository name",
           new RepositorySearchField(SEARCH_REPOSITORY_NAME)),
       new SearchMapping("format", "format", "Query by format", ComponentSearchField.FORMAT),
       new SearchMapping("group", GROUP_RAW, "Component group", ComponentSearchField.NAMESPACE),
       new SearchMapping("name", NAME_RAW, "Component name", ComponentSearchField.NAME),
       new SearchMapping(VERSION, VERSION, "Component version", ComponentSearchField.VERSION),
-      new SearchMapping("prerelease", IS_PRERELEASE_KEY, "Prerelease version flag", ComponentSearchField.PRERELEASE),
-      new SearchMapping("md5", "assets.attributes.checksum.md5", "Specific MD5 hash of component's asset"),
-      new SearchMapping("sha1", "assets.attributes.checksum.sha1", "Specific SHA-1 hash of component's asset"),
-      new SearchMapping("sha256", "assets.attributes.checksum.sha256", "Specific SHA-256 hash of component's asset"),
-      new SearchMapping("sha512", "assets.attributes.checksum.sha512", "Specific SHA-512 hash of component's asset")
+      new SearchMapping(PRERELEASE, IS_PRERELEASE_KEY, "Prerelease version flag", ComponentSearchField.PRERELEASE),
+      new SearchMapping("md5", "assets.attributes.checksum.md5",
+          "Specific MD5 hash of component's asset", ComponentSearchField.MD5),
+      new SearchMapping("sha1", "assets.attributes.checksum.sha1",
+          "Specific SHA-1 hash of component's asset", ComponentSearchField.SHA1),
+      new SearchMapping("sha256", "assets.attributes.checksum.sha256",
+          "Specific SHA-256 hash of component's asset", ComponentSearchField.SHA256),
+      new SearchMapping("sha512", "assets.attributes.checksum.sha512",
+          "Specific SHA-512 hash of component's asset", ComponentSearchField.SHA512)
   );
 
   @Override

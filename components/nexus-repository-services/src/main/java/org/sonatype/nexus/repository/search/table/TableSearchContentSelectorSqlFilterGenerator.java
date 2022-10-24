@@ -24,7 +24,7 @@ import org.sonatype.nexus.repository.rest.SearchFieldSupport;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.search.sql.SqlSearchContentSelectorFilter;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryCondition;
-import org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilder;
+import org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilderMapping;
 import org.sonatype.nexus.selector.CselSelector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorEvaluationException;
@@ -44,9 +44,19 @@ import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryContributio
 public class TableSearchContentSelectorSqlFilterGenerator
     extends ComponentSupport
 {
+  public static final String PATHS = "paths";
+
   private static final String FILTER_PARAMS = "filterParams";
 
   private static final String PATH = "path";
+
+  private static final String PATH_ALIAS = "tsvector_paths";
+
+  private static final String FORMAT = "format";
+
+  private static final String FORMAT_ALIAS = "tsvector_format";
+
+  private static final String PATHS_ALIAS = "paths";
 
   private static final String LEFT_PARENTHESIS = "(";
 
@@ -56,18 +66,18 @@ public class TableSearchContentSelectorSqlFilterGenerator
 
   private final SelectorManager selectorManager;
 
-  private final SqlSearchQueryConditionBuilder conditionBuilder;
+  private final SqlSearchQueryConditionBuilderMapping conditionBuilders;
 
   protected final Map<String, SearchFieldSupport> fieldMappings;
 
   @Inject
   public TableSearchContentSelectorSqlFilterGenerator(
       final SelectorManager selectorManager,
-      final SqlSearchQueryConditionBuilder conditionBuilder,
+      final SqlSearchQueryConditionBuilderMapping conditionBuilders,
       final Map<String, SearchMappings> searchMappings)
   {
     this.selectorManager = checkNotNull(selectorManager);
-    this.conditionBuilder = checkNotNull(conditionBuilder);
+    this.conditionBuilders = checkNotNull(conditionBuilders);
     this.fieldMappings = unmodifiableMap(fieldMappingsByAttribute(checkNotNull(searchMappings)));
   }
 
@@ -103,9 +113,10 @@ public class TableSearchContentSelectorSqlFilterGenerator
   }
 
   private static SelectorSqlBuilder createSelectorSqlBuilder() {
-    return new SelectorSqlBuilder()
-        .propertyAlias(PATH, PATH)
-
+    return new SelectorTsQuerySqlBuilder()
+        .propertyAlias(PATH, PATH_ALIAS)
+        .propertyAlias(PATHS, PATHS_ALIAS)
+        .propertyAlias(FORMAT, FORMAT_ALIAS)
         .parameterPrefix("#{" + FILTER_PARAMS + ".")
         .parameterSuffix("}");
   }
@@ -152,6 +163,8 @@ public class TableSearchContentSelectorSqlFilterGenerator
       final Set<String> repositories,
       final String namePrefix)
   {
-    return conditionBuilder.condition(fieldMappings.get(REPOSITORY_NAME).getColumnName(), repositories, namePrefix);
+    SearchFieldSupport fieldMapping = fieldMappings.get(REPOSITORY_NAME);
+    return conditionBuilders.getConditionBuilder(fieldMapping)
+        .condition(fieldMapping.getColumnName(), repositories, namePrefix);
   }
 }
