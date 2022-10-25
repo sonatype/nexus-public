@@ -13,10 +13,14 @@
 package org.sonatype.nexus.blobstore.file;
 
 import org.sonatype.nexus.blobstore.file.internal.orient.OrientFileBlobDeletionIndex;
+import org.sonatype.nexus.content.testsuite.groups.OrientTestGroup;
+
+import org.junit.experimental.categories.Category;
 
 /**
  * {@link FileBlobStore} integration tests.
  */
+@Category(OrientTestGroup.class)
 public class OrientFileBlobStoreIT
     extends FileBlobStoreITSupport
 {

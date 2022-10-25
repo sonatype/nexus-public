@@ -24,6 +24,8 @@ import org.sonatype.nexus.blobstore.file.internal.orient.OrientFileBlobDeletionI
 import org.sonatype.nexus.blobstore.file.store.SoftDeletedBlobsData;
 import org.sonatype.nexus.blobstore.file.store.SoftDeletedBlobsStore;
 import org.sonatype.nexus.blobstore.file.store.internal.SoftDeletedBlobsDAO;
+import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.testdb.DataSessionRule;
 import org.sonatype.nexus.transaction.TransactionModule;
@@ -33,6 +35,8 @@ import com.google.inject.Guice;
 import com.google.inject.Provides;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -43,11 +47,15 @@ import static org.sonatype.nexus.blobstore.api.BlobStore.DIRECT_PATH_BLOB_HEADER
 /**
  * {@link FileBlobStore} integration tests.
  */
+@Category(SQLTestGroup.class)
 public class DatastoreFileBlobStoreIT
     extends FileBlobStoreITSupport
 {
   @Rule
   public DataSessionRule sessionRule = new DataSessionRule().access(SoftDeletedBlobsDAO.class);
+
+  @Mock
+  private EventManager eventManager;
 
   private SoftDeletedBlobsStore store;
 
@@ -59,6 +67,11 @@ public class DatastoreFileBlobStoreIT
         @Provides
         DataSessionSupplier getDataSessionSupplier() {
           return sessionRule;
+        }
+
+        @Provides
+        EventManager getEventManager() {
+          return eventManager;
         }
       }).getInstance(SoftDeletedBlobsStoreImpl.class);
     }
