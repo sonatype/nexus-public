@@ -170,6 +170,9 @@ export default {
       get LICENSE() {
         return `${this.BASE_URL}system/license`;
       },
+      get LDAP_SERVERS() {
+        return `${this.BASE_URL}security/ldap`;
+      },
     },
   },
   DEBOUNCE_DELAY: 500,

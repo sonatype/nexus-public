@@ -135,7 +135,7 @@ Ext.define('NX.coreui.controller.Repositories', {
       visible: function() {
         // Show feature if the current user is permitted any repository-admin permissions
         return NX.Permissions.checkExistsWithPrefix('nexus:repository-admin') &&
-          !NX.State.getValue('nexus.react.repositories', true);
+          !NX.State.getValue('nexus.react.repositories', false);
       },
       weight: 10
     };

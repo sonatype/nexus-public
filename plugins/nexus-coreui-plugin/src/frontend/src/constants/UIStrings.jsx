@@ -405,6 +405,38 @@ export default {
     },
   },
 
+  LDAP_SERVERS: {
+    MENU: {
+      text: 'LDAP',
+      description: 'Lightweight directory access protocol setup',
+    },
+    LIST: {
+      EMPTY_LIST: 'There are no LDAP servers available',
+      COLUMNS: {
+        ORDER: 'Order',
+        NAME: 'Name',
+        URL: 'Url',
+      },
+      BUTTONS: {
+        CREATE: 'Create connection',
+        CHANGE_ORDER: 'Change Order',
+        CLEAR_CACHE: 'Clear cache',
+      },
+      HELP: {
+        TITLE: 'What is LDAP?',
+        TEXT: <>
+          You can configure your NXRM instance to use LDAP for authentication and user role mapping. The repository
+          manager can cache authentication information and supports multiple LDAP servers and user/group mappings
+          to take advantage of the central authentication set up across your organization in all your repository managers.
+          For more information check{' '}
+          <NxTextLink external href="http://links.sonatype.com/products/nxrm3/docs/ldap">
+            the documentation
+          </NxTextLink>.
+        </>,
+      },
+    },
+  },
+
   EMAIL_SERVER: {
     MENU: {
       text: 'Email Server',

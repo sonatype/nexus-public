@@ -50,7 +50,7 @@ Ext.define('NX.coreui.controller.HttpSettings', {
       },
       visible: function () {
         return NX.Permissions.check('nexus:settings:read') &&
-            !NX.State.getValue('nexus.react.httpSettings', true);
+            !NX.State.getValue('nexus.react.httpSettings', false);
       }
     }, me);
 

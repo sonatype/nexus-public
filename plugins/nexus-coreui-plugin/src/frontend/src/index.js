@@ -21,6 +21,7 @@ import Privileges from './components/pages/admin/Privileges/Privileges';
 import Roles from './components/pages/admin/Roles/Roles';
 import Users from './components/pages/admin/Users/Users';
 import SslCertificates from './components/pages/admin/SslCertificates/SslCertificates';
+import LdapServers from './components/pages/admin/LdapServers/LdapServers';
 import AnonymousSettings from './components/pages/admin/AnonymousSettings/AnonymousSettings';
 import BlobStores from './components/pages/admin/BlobStores/BlobStores';
 import InsightFrontend from './components/pages/admin/InsightFrontend/InsightFrontend';
@@ -165,6 +166,18 @@ window.plugins.push({
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         featureFlags: [{key: 'nexus.react.sslCertificates', defaultValue: false}],
         permissions: [Permissions.SSL_TRUSTSTORE.READ]
+      }
+    },
+    {
+      mode: 'admin',
+      path: '/Security/LDAP',
+      ...UIStrings.LDAP_SERVERS.MENU,
+      view: LdapServers,
+      iconCls: 'x-fa fa-book',
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        featureFlags: [{key: 'nexus.react.ldap', defaultValue: false}],
+        permissions: ['nexus:ldap:read']
       }
     },
     {
