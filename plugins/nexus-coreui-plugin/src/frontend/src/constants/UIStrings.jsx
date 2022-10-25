@@ -325,7 +325,7 @@ export default {
       description: 'Manage Trusted SSL Certificates for use with the Nexus truststore'
     },
     LIST: {
-      CREATE_BUTTON: 'Load Certificate',
+      CREATE_BUTTON: 'Add Certificate',
       EMPTY_LIST: 'There are no SSL Certificates available',
       COLUMNS: {
         NAME: 'Name',
@@ -347,8 +347,20 @@ export default {
         </>,
       },
     },
+    ADD_FORM: {
+      CAPTION: 'Add SSL Certificate',
+      LOAD_BUTTON: 'Load Certificate',
+      PEM: {
+        RADIO_DESCRIPTION: 'Paste PEM',
+        LABEL: 'Paste Certificate as PEM',
+        PLACEHOLDER: 'Entry'
+      },
+      SERVER: {
+        LABEL: 'Please enter a hostname, hostname:port or a URL to fetch a SSL certificate from',
+        RADIO_DESCRIPTION: 'Load from server'
+      }
+    },
     FORM: {
-      CREATE_TITLE: 'Load certificate',
       DETAILS_TITLE: (name) => `Certificate ${name}`,
       DETAILS_DESCRIPTION: 'Summary',
       WARNING: 'This certificate was retrieved over an untrusted connection. Always verify the details before adding it.',
@@ -357,18 +369,6 @@ export default {
         SUBJECT: 'Subject',
         ISSUER: 'Issuer',
         CERTIFICATE: 'Certificate',
-      },
-      LOAD_FROM_SERVER: {
-        LABEL: 'Load from server',
-      },
-      SERVER: {
-        LABEL: 'Please enter a hostname, hostname:port or a URL to fetch a SSL certificate from',
-      },
-      PASTE_PEM: {
-        LABEL: 'Paste PEM',
-      },
-      PEM: {
-        LABEL: 'Paste Certificate as PEM',
       },
       COMMON_NAME: {
         LABEL: 'Common name',

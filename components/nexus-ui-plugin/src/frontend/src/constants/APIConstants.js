@@ -106,6 +106,13 @@ export default {
         UPDATE: 'update'
       }
     },
+    SSL: {
+      ACTION: 'ssl_Certificate',
+      METHODS: {
+        DETAILS: 'details',
+        RETRIEVE_FROM_HOST: 'retrieveFromHost'
+      }
+    }
   },
   REST: {
     INTERNAL: {

@@ -33,25 +33,37 @@ import {
   NxTableCell,
   NxTableHead,
   NxTableRow,
-  NxTooltip,
+  NxTooltip
 } from '@sonatype/react-shared-components';
 
 import {faIdCardAlt} from '@fortawesome/free-solid-svg-icons';
 
 import Machine from './SslCertificatesListMachine';
 import UIStrings from '../../../../constants/UIStrings';
+import {canCreateCertificate} from './SslCertificatesHelper';
 
-const {SSL_CERTIFICATES: {LIST: LABELS}} = UIStrings;
-const {COLUMNS} = LABELS;
+const {
+  LIST: {COLUMNS},
+  LIST: LABELS
+} = UIStrings.SSL_CERTIFICATES;
 
 export default function SslCertificatesList({onCreate, onEdit}) {
   const [current, send] = useMachine(Machine, {devTools: true});
   const isLoading = current.matches('loading');
   const {data, error, filter: filterText} = current.context;
 
-  const subjectCommonNameSortDir = ListMachineUtils.getSortDirection('subjectCommonName', current.context);
-  const subjectOrganizationSortDir = ListMachineUtils.getSortDirection('subjectOrganization', current.context);
-  const issuerOrganizationSortDir = ListMachineUtils.getSortDirection('issuerOrganization', current.context);
+  const subjectCommonNameSortDir = ListMachineUtils.getSortDirection(
+    'subjectCommonName',
+    current.context
+  );
+  const subjectOrganizationSortDir = ListMachineUtils.getSortDirection(
+    'subjectOrganization',
+    current.context
+  );
+  const issuerOrganizationSortDir = ListMachineUtils.getSortDirection(
+    'issuerOrganization',
+    current.context
+  );
   const fingerprintSortDir = ListMachineUtils.getSortDirection('fingerprint', current.context);
 
   const sortBySubjectCommonName = () => send('SORT_BY_SUBJECT_COMMON_NAME');
@@ -60,68 +72,88 @@ export default function SslCertificatesList({onCreate, onEdit}) {
   const sortByFingerprint = () => send('SORT_BY_FINGERPRINT');
 
   const filter = (value) => send({type: 'FILTER', filter: value});
-  const canCreate = ExtJS.checkPermission('nexus:ssl-truststore:create');
 
-  const create = () => {};
+  const canCreate = canCreateCertificate();
 
-  return <Page className="nxrm-ssl-certificates">
-    <PageHeader>
-      <PageTitle
+  return (
+    <Page className="nxrm-ssl-certificates">
+      <PageHeader>
+        <PageTitle
           icon={faIdCardAlt}
           text={UIStrings.SSL_CERTIFICATES.MENU.text}
           description={UIStrings.SSL_CERTIFICATES.MENU.description}
-      />
-      <PageActions>
-        <NxTooltip
-            title={!canCreate && UIStrings.PERMISSION_ERROR}
-            placement="bottom"
-        >
-          <NxButton
+        />
+        <PageActions>
+          <NxTooltip title={!canCreate && UIStrings.PERMISSION_ERROR} placement="bottom">
+            <NxButton
               type="button"
               variant="primary"
               className={!canCreate && 'disabled'}
-              onClick={create}
-          >
-            {LABELS.CREATE_BUTTON}
-          </NxButton>
-        </NxTooltip>
-      </PageActions>
-    </PageHeader>
-    <ContentBody className="nxrm-ssl-certificates-list">
-      <Section>
-        <SectionToolbar>
-          <div className="nxrm-spacer"/>
-          <NxFilterInput
+              onClick={() => canCreate && onCreate()}
+            >
+              {LABELS.CREATE_BUTTON}
+            </NxButton>
+          </NxTooltip>
+        </PageActions>
+      </PageHeader>
+      <ContentBody className="nxrm-ssl-certificates-list">
+        <Section>
+          <SectionToolbar>
+            <div className="nxrm-spacer" />
+            <NxFilterInput
               id="filter"
               onChange={filter}
               value={filterText}
               placeholder={UIStrings.FILTER}
-          />
-        </SectionToolbar>
-        <NxTable>
-          <NxTableHead>
-            <NxTableRow>
-              <NxTableCell onClick={sortBySubjectCommonName} isSortable sortDir={subjectCommonNameSortDir}>{COLUMNS.NAME}</NxTableCell>
-              <NxTableCell onClick={sortBySubjectOrganization} isSortable sortDir={subjectOrganizationSortDir}>{COLUMNS.ISSUED_TO}</NxTableCell>
-              <NxTableCell onClick={sortByIssuerOrganization} isSortable sortDir={issuerOrganizationSortDir}>{COLUMNS.ISSUED_BY}</NxTableCell>
-              <NxTableCell onClick={sortByFingerprint} isSortable sortDir={fingerprintSortDir}>{COLUMNS.FINGERPRINT}</NxTableCell>
-              <NxTableCell chevron/>
-            </NxTableRow>
-          </NxTableHead>
-          <NxTableBody isLoading={isLoading} error={error} emptyMessage={LABELS.EMPTY_LIST}>
-            {data.map(({id, subjectCommonName, subjectOrganization, issuerOrganization, fingerprint}) => (
-                <NxTableRow key={id} onClick={() => onEdit(id)} isClickable>
-                  <NxTableCell>{subjectCommonName}</NxTableCell>
-                  <NxTableCell>{subjectOrganization}</NxTableCell>
-                  <NxTableCell>{issuerOrganization}</NxTableCell>
-                  <NxTableCell>{fingerprint}</NxTableCell>
-                  <NxTableCell chevron/>
-                </NxTableRow>
-            ))}
-          </NxTableBody>
-        </NxTable>
-      </Section>
-      <HelpTile header={LABELS.HELP.TITLE} body={LABELS.HELP.TEXT}/>
-    </ContentBody>
-  </Page>;
+            />
+          </SectionToolbar>
+          <NxTable>
+            <NxTableHead>
+              <NxTableRow>
+                <NxTableCell
+                  onClick={sortBySubjectCommonName}
+                  isSortable
+                  sortDir={subjectCommonNameSortDir}
+                >
+                  {COLUMNS.NAME}
+                </NxTableCell>
+                <NxTableCell
+                  onClick={sortBySubjectOrganization}
+                  isSortable
+                  sortDir={subjectOrganizationSortDir}
+                >
+                  {COLUMNS.ISSUED_TO}
+                </NxTableCell>
+                <NxTableCell
+                  onClick={sortByIssuerOrganization}
+                  isSortable
+                  sortDir={issuerOrganizationSortDir}
+                >
+                  {COLUMNS.ISSUED_BY}
+                </NxTableCell>
+                <NxTableCell onClick={sortByFingerprint} isSortable sortDir={fingerprintSortDir}>
+                  {COLUMNS.FINGERPRINT}
+                </NxTableCell>
+                <NxTableCell chevron />
+              </NxTableRow>
+            </NxTableHead>
+            <NxTableBody isLoading={isLoading} error={error} emptyMessage={LABELS.EMPTY_LIST}>
+              {data.map(
+                ({id, subjectCommonName, subjectOrganization, issuerOrganization, fingerprint}) => (
+                  <NxTableRow key={id} onClick={() => onEdit(id)} isClickable>
+                    <NxTableCell>{subjectCommonName}</NxTableCell>
+                    <NxTableCell>{subjectOrganization}</NxTableCell>
+                    <NxTableCell>{issuerOrganization}</NxTableCell>
+                    <NxTableCell>{fingerprint}</NxTableCell>
+                    <NxTableCell chevron />
+                  </NxTableRow>
+                )
+              )}
+            </NxTableBody>
+          </NxTable>
+        </Section>
+        <HelpTile header={LABELS.HELP.TITLE} body={LABELS.HELP.TEXT} />
+      </ContentBody>
+    </Page>
+  );
 }

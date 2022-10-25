@@ -19,12 +19,12 @@ import Axios from 'axios';
 import {ExtJS, TestUtils, DateUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
-import SslCertificatesDetails from './SslCertificatesDetails';
-import {URL} from './SslCertificatesHelper';
+import SslCertificatesForm from './SslCertificatesForm';
+import {URLS} from './SslCertificatesHelper';
 import {SSL_CERTIFICATES, SSL_CERTIFICATES_MAP} from './SslCertificates.testdata';
 
 const XSS_STRING = TestUtils.XSS_STRING;
-const {sslCertificatesUrl, singleSslCertificatesUrl, createSslCertificatesUrl} = URL;
+const {sslCertificatesUrl, singleSslCertificatesUrl, createSslCertificatesUrl} = URLS;
 
 const {SSL_CERTIFICATES: {FORM: LABELS}, SETTINGS} = UIStrings;
 
@@ -73,7 +73,7 @@ describe('SslCertificatesDetails', function() {
   const CONFIRM = Promise.resolve();
 
   const renderAndWaitForLoad = async (itemId) => {
-    const {debug} = render(<SslCertificatesDetails itemId={itemId || ''} onDone={onDone}/>);
+    const {debug} = render(<SslCertificatesForm itemId={itemId || ''} onDone={onDone}/>);
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     return debug;

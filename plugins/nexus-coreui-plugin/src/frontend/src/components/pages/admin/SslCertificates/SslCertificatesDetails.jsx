@@ -11,7 +11,6 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {useMachine} from '@xstate/react';
 
 import {
   NxTile,
@@ -30,45 +29,42 @@ import {
   Page,
   PageHeader,
   PageTitle,
-  ExtJS,
   DateUtils,
+  ReadOnlyField
 } from '@sonatype/nexus-ui-plugin';
 
 import {faIdCardAlt} from '@fortawesome/free-solid-svg-icons';
-
-import Machine from './SslCertificatesDetailsMachine';
+import {canDeleteCertificate} from './SslCertificatesHelper';
 import UIStrings from '../../../../constants/UIStrings';
-
 import './SslCertificates.scss';
 
 const {SSL_CERTIFICATES: {FORM: LABELS}} = UIStrings;
 
-export default function SslCertificatesDetails({itemId, onDone}) {
+export default function SslCertificatesDetails({machine, onDone}) {
+  const [state, send] = machine;
+  const {data, loadError, shouldLoadNew} = state.context;
+  
+  const canDelete = canDeleteCertificate();
 
-  const canDelete = ExtJS.checkPermission('nexus:ssl-truststore:delete');
+  const {
+    issuedOn,
+    expiresOn,
+    subjectCommonName,
+    subjectOrganization,
+    subjectOrganizationalUnit,
+    issuerCommonName,
+    issuerOrganization,
+    issuerOrganizationalUnit,
+    fingerprint,
+    inTrustStore
+  } = data?.certificate || {};
 
-  const [current, send] = useMachine(Machine, {
-    context: {
-      pristineData: {
-        id: decodeURIComponent(itemId),
-      }
-    },
-    actions: {
-      onSaveSuccess: onDone,
-      onDeleteSuccess: onDone,
-    },
-    guards: {
-      canDelete: () => canDelete,
-    },
-    devTools: true,
-  });
+  const issuedDate = issuedOn ? DateUtils.timestampToString(issuedOn) : '';
+  const expiredDate = expiresOn ? DateUtils.timestampToString(expiresOn) : '';
 
-  const {data, loadError} = current.context;
+  const isLoading = state.matches('loading');
 
-  const issuedDate = DateUtils.timestampToString(data?.issuedOn);
-  const expiredDate = DateUtils.timestampToString(data?.expiresOn);
-  const isLoading = current.matches('loading');
-
+  const save = () => send('SAVE');
   const retry = () => send('RETRY');
 
   const confirmDelete = () => {
@@ -81,7 +77,7 @@ export default function SslCertificatesDetails({itemId, onDone}) {
     <PageHeader>
       <PageTitle
           icon={faIdCardAlt}
-          text={LABELS.DETAILS_TITLE(data.subjectCommonName || '')}
+          text={LABELS.DETAILS_TITLE(subjectCommonName || '')}
           description={LABELS.DETAILS_DESCRIPTION}
       />
     </PageHeader>
@@ -94,23 +90,17 @@ export default function SslCertificatesDetails({itemId, onDone}) {
                 <NxGrid.Column className="nx-grid-col--33">
                   <NxH2>{LABELS.SECTIONS.SUBJECT}</NxH2>
                   <NxReadOnly>
-                    <NxReadOnly.Label>{LABELS.COMMON_NAME.LABEL}</NxReadOnly.Label>
-                    <NxReadOnly.Data>{data.subjectCommonName}</NxReadOnly.Data>
-                    <NxReadOnly.Label>{LABELS.ORGANIZATION.LABEL}</NxReadOnly.Label>
-                    <NxReadOnly.Data>{data.subjectOrganization}</NxReadOnly.Data>
-                    <NxReadOnly.Label>{LABELS.UNIT.LABEL}</NxReadOnly.Label>
-                    <NxReadOnly.Data>{data.subjectOrganizationalUnit}</NxReadOnly.Data>
+                    <ReadOnlyField label={LABELS.COMMON_NAME.LABEL} value={subjectCommonName} />
+                    <ReadOnlyField label={LABELS.ORGANIZATION.LABEL} value={subjectOrganization} />
+                    <ReadOnlyField label={LABELS.UNIT.LABEL} value={subjectOrganizationalUnit} />
                   </NxReadOnly>
                 </NxGrid.Column>
                 <NxGrid.Column className="nx-grid-col--33">
                   <NxH2>{LABELS.SECTIONS.ISSUER}</NxH2>
                   <NxReadOnly>
-                    <NxReadOnly.Label>{LABELS.COMMON_NAME.LABEL}</NxReadOnly.Label>
-                    <NxReadOnly.Data>{data.issuerCommonName}</NxReadOnly.Data>
-                    <NxReadOnly.Label>{LABELS.ORGANIZATION.LABEL}</NxReadOnly.Label>
-                    <NxReadOnly.Data>{data.issuerOrganization}</NxReadOnly.Data>
-                    <NxReadOnly.Label>{LABELS.UNIT.LABEL}</NxReadOnly.Label>
-                    <NxReadOnly.Data>{data.issuerOrganizationalUnit}</NxReadOnly.Data>
+                    <ReadOnlyField label={LABELS.COMMON_NAME.LABEL} value={issuerCommonName} />
+                    <ReadOnlyField label={LABELS.ORGANIZATION.LABEL} value={issuerOrganization} />
+                    <ReadOnlyField label={LABELS.UNIT.LABEL} value={issuerOrganizationalUnit} />
                   </NxReadOnly>
                 </NxGrid.Column>
                 <NxGrid.Column className="nx-grid-col--33">
@@ -130,8 +120,8 @@ export default function SslCertificatesDetails({itemId, onDone}) {
                     </NxReadOnly.Data>
                     <NxReadOnly.Label>{LABELS.FINGERPRINT.LABEL}</NxReadOnly.Label>
                     <NxReadOnly.Data>
-                      <NxTooltip title={data.fingerprint}>
-                        <div className="ellipsis-text">{data.fingerprint}</div>
+                      <NxTooltip title={fingerprint}>
+                        <div className="ellipsis-text">{fingerprint}</div>
                       </NxTooltip>
                     </NxReadOnly.Data>
                   </NxReadOnly>
@@ -142,21 +132,31 @@ export default function SslCertificatesDetails({itemId, onDone}) {
               <NxWarningAlert>{LABELS.WARNING}</NxWarningAlert>
               <NxButtonBar>
                 <NxButton
-                    type="button"
-                    onClick={onDone}
+                  type="button"
+                  onClick={onDone}
                 >
                   {UIStrings.SETTINGS.CANCEL_BUTTON_LABEL}
                 </NxButton>
-                <NxTooltip title={!canDelete && UIStrings.PERMISSION_ERROR}>
-                  <NxButton
+                {shouldLoadNew && !inTrustStore ? (
+                    <NxButton
                       type="button"
                       variant="primary"
-                      onClick={confirmDelete}
-                      className={!canDelete && 'disabled'}
-                  >
-                    {LABELS.BUTTONS.DELETE}
-                  </NxButton>
-                </NxTooltip>
+                      onClick={save}
+                    >
+                      {LABELS.BUTTONS.ADD}
+                    </NxButton>
+                  ) : (
+                    <NxTooltip title={!canDelete && UIStrings.PERMISSION_ERROR}>
+                      <NxButton
+                        type="button"
+                        variant="primary"
+                        onClick={confirmDelete}
+                        className={!canDelete ?'disabled' : ''}
+                      >
+                        {LABELS.BUTTONS.DELETE}
+                      </NxButton>
+                    </NxTooltip>
+                  )}
               </NxButtonBar>
             </NxFooter>
           </NxLoadWrapper>
