@@ -28,17 +28,17 @@
   <packaging>pom</packaging>
 
   <properties>
-    <jackson2.version>2.13.2</jackson2.version>
-    <jackson2.databind.version>2.13.4.2</jackson2.databind.version>
+    <jackson2.version>2.14.0-rc2</jackson2.version>
+    <jackson2.databind.version>2.14.0-rc2</jackson2.databind.version>
     <!-- The behavior of the jackson-dataformat-yaml has changed in 2.12.3
          and it breaks the com.sonatype.repository.helm.internal.util.YamlParser class
          (and its tests in com.sonatype.repository.helm.internal.util.YamlParserTest).
     -->
-    <jackson2.yaml.version>2.12.2</jackson2.yaml.version>
+    <jackson2.yaml.version>2.14.0-rc2</jackson2.yaml.version>
     <jaxb.version>2.3.3</jaxb.version>
     <resteasy.version>3.15.3.Final</resteasy.version>
     <swagger.version>1.6.2</swagger.version>
-    <snakeyaml.version>1.32</snakeyaml.version>
+    <snakeyaml.version>1.33</snakeyaml.version>
   </properties>
 
   <dependencyManagement>

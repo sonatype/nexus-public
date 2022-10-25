@@ -68,6 +68,11 @@
     -->
     <bundle>wrap:${mvn:quartz}$overwrite=merge&amp;Import-Package=*;resolution:=optional</bundle>
 
+    <!-- Remove errant capability requirement. Only required as a work around
+         in jackson-core:2.14.0-rc2 specifically. https://github.com/FasterXML/jackson-core/pull/822
+    -->
+    <bundle>wrap:${mvn:jackson-core}$overwrite=merge&amp;Require-Capability="</bundle>
+
     <!--
     Give our extender bundle its own start level (distinct from the boot start-level)
     -->

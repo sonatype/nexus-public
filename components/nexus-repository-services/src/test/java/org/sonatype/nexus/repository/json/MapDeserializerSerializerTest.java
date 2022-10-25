@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.deser.ValueInstantiator;
 import com.fasterxml.jackson.databind.deser.std.MapDeserializer;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Answers;
 import org.mockito.Mock;
 
 import static com.fasterxml.jackson.core.JsonToken.FIELD_NAME;
@@ -34,7 +35,7 @@ import static org.mockito.Mockito.when;
 public class MapDeserializerSerializerTest
     extends TestSupport
 {
-  @Mock
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private MapDeserializer rootDeserializer;
 
   @Mock
