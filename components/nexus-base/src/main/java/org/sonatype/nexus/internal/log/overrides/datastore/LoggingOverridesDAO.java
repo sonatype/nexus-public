@@ -10,12 +10,11 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.log.datastore;
+package org.sonatype.nexus.internal.log.overrides.datastore;
 
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.Continuation;
-import org.sonatype.nexus.common.log.LoggerLevel;
 import org.sonatype.nexus.datastore.api.DataAccess;
 
 import org.apache.ibatis.annotations.Param;
@@ -29,12 +28,9 @@ public interface LoggingOverridesDAO
   /**
    * Create new record
    *
-   * @param name  the name of the logger this record is related to
-   * @param level log level for this logger. For all acceptable options see {@link LoggerLevel}
+   * @param data represents logger configuration
    */
-  void createRecord(
-      @Param("name") String name,
-      @Param("level") String level);
+  void createRecord(LoggingOverridesData data);
 
   /**
    * Return all records stored in DB, the continuationToken to be used when amount more than single page (>1000 rows)
@@ -45,14 +41,21 @@ public interface LoggingOverridesDAO
   Continuation<LoggingOverridesData> readRecords(@Nullable @Param("continuationToken") String continuationToken);
 
   /**
-   * Delete single record by provided 'ID'
+   * Delete single record by provided 'NAME'
    *
-   * @param id the record ID
+   * @param name the record ID
    */
-  void deleteRecord(@Param("id") String id);
+  void deleteRecord(@Param("name") String name);
 
   /**
    * Delete all records
    */
   void deleteAllRecords();
+
+  /**
+   * Update record by name
+   *
+   * @param data represents logger configuration
+   */
+  void updateRecord(LoggingOverridesData data);
 }

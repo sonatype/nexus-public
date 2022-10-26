@@ -10,13 +10,13 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.log.datastore;
+package org.sonatype.nexus.internal.log.overrides.datastore;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.entity.Continuation;
-import org.sonatype.nexus.common.log.LoggerLevel;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.transaction.Transactional;
@@ -25,6 +25,7 @@ import org.sonatype.nexus.transaction.Transactional;
  * Store for accessing the logging-overrides related data
  */
 @Named("mybatis")
+@Singleton
 public class LoggingOverridesStore
     extends ConfigStoreSupport<LoggingOverridesDAO>
 {
@@ -33,36 +34,30 @@ public class LoggingOverridesStore
     super(sessionSupplier);
   }
 
-  /**
-   * Create new record
-   *
-   * @param name  the name of the logger this record is related to
-   * @param level log level for this logger, see {@link LoggerLevel}
-   */
   @Transactional
-  public void createRecord(final String name, final LoggerLevel level) {
-    dao().createRecord(name, level.toString());
+  public void create(final LoggingOverridesData data) {
+    dao().createRecord(data);
   }
 
-  /**
-   * Return all records stored in DB, the continuationToken to be used when amount more than single page (>1000 rows)
-   *
-   * @param continuationToken the record id used for pagination
-   * @return all records
-   */
   @Transactional
-  public Continuation<LoggingOverridesData> readRecords(final String continuationToken) {
-    return dao().readRecords(continuationToken);
+  public Continuation<LoggingOverridesData> readRecords() {
+    return dao().readRecords(null);
   }
 
-  /**
-   * Delete single record by provided 'ID'
-   *
-   * @param id the record ID
-   */
   @Transactional
-  public void deleteRecord(final String id) {
-    dao().deleteRecord(id);
+  public boolean exists(final String name) {
+    return readRecords().stream()
+        .anyMatch(level -> level.getName().equals(name));
+  }
+
+  @Transactional
+  public void update(final LoggingOverridesData data) {
+    dao().updateRecord(data);
+  }
+
+  @Transactional
+  public void deleteByName(final String name) {
+    dao().deleteRecord(name);
   }
 
   /**

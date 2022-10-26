@@ -31,7 +31,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -43,6 +42,7 @@ import org.sonatype.nexus.common.log.LogConfigurationCustomizer;
 import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.common.log.LoggerLevel;
 import org.sonatype.nexus.common.log.LoggerLevelChangedEvent;
+import org.sonatype.nexus.common.log.LoggerOverridesReloadEvent;
 import org.sonatype.nexus.common.log.LoggersResetEvent;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
@@ -54,6 +54,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.FileAppender;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.eventbus.Subscribe;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Key;
 import org.apache.commons.io.FilenameUtils;
@@ -125,6 +126,8 @@ public class LogbackLogManager
 
     // watch for LogConfigurationCustomizer components
     beanLocator.watch(Key.get(LogConfigurationCustomizer.class, Named.class), new CustomizerMediator(), this);
+
+    eventManager.register(this);
   }
 
   private void configure() {
@@ -135,15 +138,14 @@ public class LogbackLogManager
 
     // load and apply overrides
     overrides.load();
-    for (Entry<String, LoggerLevel> entry : overrides) {
-      setLogbackLoggerLevel(entry.getKey(), LogbackLevels.convert(entry.getValue()));
-    }
+    applyOverrides();
   }
 
   @Override
   protected void doStop() throws Exception {
     // inform logback to shutdown
     loggerContext().stop();
+    eventManager.unregister(this);
   }
 
   @Override
@@ -393,6 +395,17 @@ public class LogbackLogManager
   private void setLogbackLoggerLevel(final String name, @Nullable final Level level) {
     log.trace("Set logback logger level: {}={}", name, level);
     loggerContext().getLogger(name).setLevel(level);
+  }
+
+  @Subscribe
+  public void on(final LoggerOverridesReloadEvent event) {
+    log.error("Received event {}. Reload logger overrides", event);
+    applyOverrides();
+  }
+
+  private void applyOverrides() {
+    overrides.forEach(entry ->
+        setLogbackLoggerLevel(entry.getKey(), LogbackLevels.convert(entry.getValue())));
   }
 
   //

@@ -12,10 +12,19 @@
  */
 package org.sonatype.nexus.internal.log;
 
+import java.util.Map;
+
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.log.LogConfigurationCustomizer;
 import org.sonatype.nexus.common.log.LoggerLevel;
+import org.sonatype.nexus.common.log.LoggerOverridesReloadEvent;
+import org.sonatype.nexus.datastore.mybatis.ContinuationArrayList;
+import org.sonatype.nexus.internal.log.overrides.datastore.DatastoreLoggerOverrides;
+import org.sonatype.nexus.internal.log.overrides.datastore.LoggingOverridesData;
+import org.sonatype.nexus.internal.log.overrides.datastore.LoggingOverridesStore;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
@@ -24,12 +33,16 @@ import ch.qos.logback.core.FileAppender;
 import org.eclipse.sisu.inject.BeanLocator;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.internal.log.LogbackLogManager.getLogFor;
 
@@ -123,5 +136,32 @@ public class LogbackLogManagerTest
     assertThat(getLogFor("nexus.log", asList(notFile, nexusLog, clusterLog)).get(), is("nexus.log"));
     assertThat(getLogFor("clustered.log", asList(notFile, nexusLog, clusterLog)).get(), is("clustered.log"));
     assertThat(getLogFor("not_a_log.log", asList(notFile, nexusLog, clusterLog)).isPresent(), is(false));
+  }
+
+  @Test
+  public void testReloadOverridesFromDatastoreInvoked() throws Exception {
+    EventManager eventManager = mock(EventManager.class);
+    LoggingOverridesStore store = mock(LoggingOverridesStore.class);
+
+    Continuation<LoggingOverridesData> data = new ContinuationArrayList<LoggingOverridesData>() {{
+      add(new LoggingOverridesData("logger-name", LoggerLevel.DEBUG.toString()));
+    }};
+    when(store.readRecords()).thenReturn(data);
+
+    DatastoreLoggerOverrides overrides = new DatastoreLoggerOverrides(
+        mock(ApplicationDirectories.class), store, eventManager);
+
+    LogbackLogManager underTest = new LogbackLogManager(eventManager, mock(BeanLocator.class), overrides);
+
+    overrides.start();
+
+    ArgumentCaptor<LoggerOverridesReloadEvent> eventCaptor = ArgumentCaptor.forClass(LoggerOverridesReloadEvent.class);
+    verify(eventManager).post(eventCaptor.capture());
+
+    assertThat(eventCaptor.getValue(), instanceOf(LoggerOverridesReloadEvent.class));
+
+    Map<String, LoggerLevel> overriddenLoggers = underTest.getOverriddenLoggers();
+    assertThat(overriddenLoggers.size(), is(1));
+    assertThat(overriddenLoggers.get("logger-name").toString(), is(LoggerLevel.DEBUG.toString()));
   }
 }

@@ -10,9 +10,11 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.log.datastore;
+package org.sonatype.nexus.internal.log.overrides.datastore;
 
 import org.sonatype.nexus.common.entity.ContinuationAware;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Data object for the {@code logging_overrides} table.
@@ -25,6 +27,13 @@ public class LoggingOverridesData
   private String name;
 
   private String level;
+
+  public LoggingOverridesData() {}
+
+  public LoggingOverridesData(final String name, final String level) {
+    this.name = checkNotNull(name);
+    this.level = checkNotNull(level);
+  }
 
   public String getName() {
     return name;
