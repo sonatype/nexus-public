@@ -15,8 +15,8 @@
 -->
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.sonatype.nexus.repository.content.search.table.SearchTableDAO">
-  <insert id="createSchema" >
-    CREATE TABLE IF NOT EXISTS component_search
+  <insert id="createSchema" databaseId="PostgreSQL">
+    CREATE TABLE IF NOT EXISTS search_components
     (
       repository_id          INTEGER                  NOT NULL,
       component_id           INTEGER                  NOT NULL,
@@ -27,106 +27,87 @@
       version                VARCHAR                  NOT NULL,
       component_created      TIMESTAMP WITH TIME ZONE NOT NULL,
       search_repository_name VARCHAR(200)             NOT NULL,
-      CONSTRAINT pk_component_search PRIMARY KEY (repository_id, component_id, format)
+      normalised_version     VARCHAR                  NOT NULL,
+      prerelease             BOOLEAN                  NOT NULL DEFAULT false,
+      keywords                         TSVECTOR,
+      md5                              TSVECTOR,
+      sha1                             TSVECTOR,
+      sha256                           TSVECTOR,
+      sha512                           TSVECTOR,
+      format_field_values_1            TSVECTOR,
+      format_field_values_2            TSVECTOR,
+      format_field_values_3            TSVECTOR,
+      format_field_values_4            TSVECTOR,
+      format_field_values_5            TSVECTOR,
+      uploaders                        TSVECTOR,
+      uploader_ips                     TSVECTOR,
+      paths                            VARCHAR,
+      tsvector_paths                   TSVECTOR,
+      tsvector_format                  TSVECTOR       NOT NULL,
+      tsvector_namespace               TSVECTOR       NOT NULL,
+      tsvector_search_component_name   TSVECTOR       NOT NULL,
+      tsvector_version                 TSVECTOR       NOT NULL,
+      tsvector_search_repository_name  TSVECTOR       NOT NULL,
+      last_event_time                  TIMESTAMP      WITH TIME ZONE,
+      CONSTRAINT pk_search_components PRIMARY KEY (repository_id, component_id, format)
       );
 
-    -- Columns added after this table was included in a release
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS normalised_version VARCHAR NOT NULL;
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS prerelease BOOLEAN NOT NULL DEFAULT false;
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS uploader VARCHAR;
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS uploader_ip VARCHAR;
-
-    CREATE INDEX IF NOT EXISTS idx_component_search_normalised_version ON component_search (normalised_version);
-    CREATE INDEX IF NOT EXISTS idx_component_search_namespace ON component_search (namespace);
-    CREATE INDEX IF NOT EXISTS idx_component_search_component_name ON component_search (search_component_name);
-    CREATE INDEX IF NOT EXISTS idx_component_search_format ON component_search (format);
-    CREATE INDEX IF NOT EXISTS idx_component_search_repository_name ON component_search (search_repository_name);
-    CREATE INDEX IF NOT EXISTS idx_component_search_prerelease ON component_search (prerelease);
-    CREATE INDEX IF NOT EXISTS idx_component_search_uploader ON component_search (uploader);
-    CREATE INDEX IF NOT EXISTS idx_component_search_uploader_ip ON component_search (uploader_ip);
-
-    <include refid="createFullTextSearchColumns"/>
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS last_event_time TIMESTAMP WITH TIME ZONE;
-
+    CREATE INDEX IF NOT EXISTS idx_search_components_normalised_version ON search_components (normalised_version);
+    CREATE INDEX IF NOT EXISTS idx_search_components_namespace ON search_components (namespace);
+    CREATE INDEX IF NOT EXISTS idx_search_components_component_name ON search_components (search_component_name);
+    CREATE INDEX IF NOT EXISTS idx_search_components_format ON search_components (format);
+    CREATE INDEX IF NOT EXISTS idx_search_components_repository_name ON search_components (search_repository_name);
+    CREATE INDEX IF NOT EXISTS idx_search_components_prerelease ON search_components (prerelease);
+    CREATE INDEX IF NOT EXISTS idx_search_components_keywords ON search_components USING GIN (keywords);
+    CREATE INDEX IF NOT EXISTS idx_search_components_md5 ON search_components USING GIN (md5);
+    CREATE INDEX IF NOT EXISTS idx_search_components_sha1 ON search_components USING GIN (sha1);
+    CREATE INDEX IF NOT EXISTS idx_search_components_sha256 ON search_components USING GIN (sha256);
+    CREATE INDEX IF NOT EXISTS idx_search_components_sha512 ON search_components USING GIN (sha512);
+    CREATE INDEX IF NOT EXISTS idx_search_components_format_field_values_1 ON search_components USING GIN (format_field_values_1);
+    CREATE INDEX IF NOT EXISTS idx_search_components_format_field_values_2 ON search_components USING GIN (format_field_values_2);
+    CREATE INDEX IF NOT EXISTS idx_search_components_format_field_values_3 ON search_components USING GIN (format_field_values_3);
+    CREATE INDEX IF NOT EXISTS idx_search_components_format_field_values_4 ON search_components USING GIN (format_field_values_4);
+    CREATE INDEX IF NOT EXISTS idx_search_components_format_field_values_5 ON search_components USING GIN (format_field_values_5);
+    CREATE INDEX IF NOT EXISTS idx_search_components_format_uploaders ON search_components USING GIN (uploaders);
+    CREATE INDEX IF NOT EXISTS idx_search_components_format_uploader_ips ON search_components USING GIN (uploader_ips);
+    CREATE INDEX IF NOT EXISTS idx_search_components_paths ON search_components (paths);
+    CREATE INDEX IF NOT EXISTS idx_search_components_tsvector_paths ON search_components USING GIN (tsvector_paths);
+    CREATE INDEX IF NOT EXISTS idx_search_components_tsvector_format ON search_components USING GIN (tsvector_format);
+    CREATE INDEX IF NOT EXISTS idx_search_components_tsvector_namespace ON search_components USING GIN (tsvector_namespace);
+    CREATE INDEX IF NOT EXISTS idx_search_components_tsvector_search_component_name ON search_components USING GIN (tsvector_search_component_name);
+    CREATE INDEX IF NOT EXISTS idx_search_components_tsvector_version ON search_components USING GIN (tsvector_version);
+    CREATE INDEX IF NOT EXISTS idx_search_components_tsvector_search_repository_name ON search_components USING GIN (tsvector_search_repository_name);
   </insert>
 
-  <sql id="createFullTextSearchColumns" databaseId="PostgreSQL">
-    -- Only included for upgrades i.e. when upgrading from a version which has the old component_search schema
-    ALTER TABLE component_search DROP COLUMN IF EXISTS asset_id;
-    ALTER TABLE component_search DROP COLUMN IF EXISTS path;
-    ALTER TABLE component_search DROP COLUMN IF EXISTS content_type;
-    ALTER TABLE component_search DROP COLUMN IF EXISTS md5;
-    ALTER TABLE component_search DROP COLUMN IF EXISTS sha1;
-    ALTER TABLE component_search DROP COLUMN IF EXISTS sha256;
-    ALTER TABLE component_search DROP COLUMN IF EXISTS sha512;
-    ALTER TABLE component_search DROP COLUMN IF EXISTS format_field_1;
-    ALTER TABLE component_search DROP COLUMN IF EXISTS format_field_2;
-    ALTER TABLE component_search DROP COLUMN IF EXISTS format_field_3;
-    ALTER TABLE component_search DROP COLUMN IF EXISTS format_field_4;
-    ALTER TABLE component_search DROP COLUMN IF EXISTS format_field_5;
-    ALTER TABLE component_search DROP CONSTRAINT IF EXISTS pk_component_search;
-    ALTER TABLE component_search DROP COLUMN IF EXISTS uploader;
-    ALTER TABLE component_search DROP COLUMN IF EXISTS uploader_ip;
+  <insert id="createSchema" databaseId="H2">
+    CREATE TABLE IF NOT EXISTS search_components
+    (
+    repository_id          INTEGER                  NOT NULL,
+    component_id           INTEGER                  NOT NULL,
+    format                 VARCHAR                  NOT NULL,
+    namespace              VARCHAR                  NOT NULL,
+    search_component_name  VARCHAR                  NOT NULL,
+    component_kind         VARCHAR                  NOT NULL,
+    version                VARCHAR                  NOT NULL,
+    component_created      TIMESTAMP WITH TIME ZONE NOT NULL,
+    search_repository_name VARCHAR(200)             NOT NULL,
+    normalised_version     VARCHAR                  NOT NULL,
+    prerelease             BOOLEAN                  NOT NULL DEFAULT false,
+    uploaders              VARCHAR,
+    uploader_ips           VARCHAR,
+    last_event_time        TIMESTAMP WITH TIME ZONE,
+    CONSTRAINT pk_search_components PRIMARY KEY (repository_id, component_id, format)
+    );
 
-    -- Only included for uprades i.e. when upgrading from a version which has indexes based on the old component_search schema
-    DROP INDEX IF EXISTS idx_component_search_path;
-    DROP INDEX IF EXISTS idx_component_search_md5;
-    DROP INDEX IF EXISTS idx_component_search_sha1;
-    DROP INDEX IF EXISTS idx_component_search_sha256;
-    DROP INDEX IF EXISTS idx_component_search_sha512;
-    DROP INDEX IF EXISTS idx_component_search_format_field_1;
-    DROP INDEX IF EXISTS idx_component_search_format_field_2;
-    DROP INDEX IF EXISTS idx_component_search_format_field_3;
-    DROP INDEX IF EXISTS idx_component_search_format_field_4;
-    DROP INDEX IF EXISTS idx_component_search_format_field_5;
-    DROP INDEX IF EXISTS idx_component_search_uploader;
-    DROP INDEX IF EXISTS idx_component_search_uploader_ip;
-
-
-    ALTER TABLE component_search ADD CONSTRAINT pk_component_search PRIMARY KEY (repository_id, component_id, format);
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS keywords                         TSVECTOR;
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS md5                              TSVECTOR;
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS sha1                             TSVECTOR;
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS sha256                           TSVECTOR;
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS sha512                           TSVECTOR;
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS format_field_values_1            TSVECTOR;
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS format_field_values_2            TSVECTOR;
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS format_field_values_3            TSVECTOR;
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS format_field_values_4            TSVECTOR;
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS format_field_values_5            TSVECTOR;
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS uploaders                        TSVECTOR;
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS uploader_ips                     TSVECTOR;
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS paths                            VARCHAR;
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS tsvector_paths                   TSVECTOR;
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS tsvector_format                  TSVECTOR NOT NULL;
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS tsvector_namespace               TSVECTOR NOT NULL;
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS tsvector_search_component_name   TSVECTOR NOT NULL;
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS tsvector_version                 TSVECTOR NOT NULL;
-    ALTER TABLE component_search ADD COLUMN IF NOT EXISTS tsvector_search_repository_name  TSVECTOR NOT NULL;
-
-    CREATE INDEX IF NOT EXISTS idx_component_search_keywords ON component_search USING GIN (keywords);
-    CREATE INDEX IF NOT EXISTS idx_component_search_md5 ON component_search USING GIN (md5);
-    CREATE INDEX IF NOT EXISTS idx_component_search_sha1 ON component_search USING GIN (sha1);
-    CREATE INDEX IF NOT EXISTS idx_component_search_sha256 ON component_search USING GIN (sha256);
-    CREATE INDEX IF NOT EXISTS idx_component_search_sha512 ON component_search USING GIN (sha512);
-    CREATE INDEX IF NOT EXISTS idx_component_search_format_field_values_1 ON component_search USING GIN (format_field_values_1);
-    CREATE INDEX IF NOT EXISTS idx_component_search_format_field_values_2 ON component_search USING GIN (format_field_values_2);
-    CREATE INDEX IF NOT EXISTS idx_component_search_format_field_values_3 ON component_search USING GIN (format_field_values_3);
-    CREATE INDEX IF NOT EXISTS idx_component_search_format_field_values_4 ON component_search USING GIN (format_field_values_4);
-    CREATE INDEX IF NOT EXISTS idx_component_search_format_field_values_5 ON component_search USING GIN (format_field_values_5);
-    CREATE INDEX IF NOT EXISTS idx_component_search_format_uploaders ON component_search USING GIN (uploaders);
-    CREATE INDEX IF NOT EXISTS idx_component_search_format_uploader_ips ON component_search USING GIN (uploader_ips);
-    CREATE INDEX IF NOT EXISTS idx_component_search_paths ON component_search (paths);
-    CREATE INDEX IF NOT EXISTS idx_component_search_tsvector_paths ON component_search USING GIN (tsvector_paths);
-
-    CREATE INDEX IF NOT EXISTS idx_component_search_tsvector_format ON component_search USING GIN (tsvector_format);
-    CREATE INDEX IF NOT EXISTS idx_component_search_tsvector_namespace ON component_search USING GIN (tsvector_namespace);
-    CREATE INDEX IF NOT EXISTS idx_component_search_tsvector_search_component_name ON component_search USING GIN (tsvector_search_component_name);
-    CREATE INDEX IF NOT EXISTS idx_component_search_tsvector_version ON component_search USING GIN (tsvector_version);
-    CREATE INDEX IF NOT EXISTS idx_component_search_tsvector_search_repository_name ON component_search USING GIN (tsvector_search_repository_name);
-  </sql>
-
-  <sql id = "createFullTextSearchColumns"/>
+    CREATE INDEX IF NOT EXISTS idx_search_components_normalised_version ON search_components (normalised_version);
+    CREATE INDEX IF NOT EXISTS idx_search_components_namespace ON search_components (namespace);
+    CREATE INDEX IF NOT EXISTS idx_search_components_component_name ON search_components (search_component_name);
+    CREATE INDEX IF NOT EXISTS idx_search_components_format ON search_components (format);
+    CREATE INDEX IF NOT EXISTS idx_search_components_repository_name ON search_components (search_repository_name);
+    CREATE INDEX IF NOT EXISTS idx_search_components_prerelease ON search_components (prerelease);
+    CREATE INDEX IF NOT EXISTS idx_search_components_uploaders ON search_components (uploaders);
+    CREATE INDEX IF NOT EXISTS idx_search_components_uploader_ips ON search_components (uploader_ips);
+  </insert>
 
   <sql id="repositoryMatch">
     repository_id = #{repositoryId}
@@ -157,12 +138,11 @@
   </resultMap>
 
   <insert id="save" parameterType="SearchTableData" databaseId="PostgreSQL">
-
     -- Only insert if the component still exists - we achieve this by using the FROM clause below to check the existence of the component
     -- In a multi node setup, as we can't use distributed cooperation for processing a if one node has deleted all the component records for a given repository in response to a
     -- ContentRepositoryDeleted event, for a  then we don't want a delayed update from another node to re-introduce
     -- any of those records.
-      INSERT INTO component_search(repository_id, component_id, format, namespace, search_component_name, version,
+      INSERT INTO search_components(repository_id, component_id, format, namespace, search_component_name, version,
           search_repository_name, tsvector_format, tsvector_namespace, tsvector_search_component_name,
           tsvector_version, tsvector_search_repository_name, component_kind, normalised_version, prerelease, last_event_time,
           paths, uploaders, uploader_ips, tsvector_paths, keywords, md5, sha1, sha256, sha512, format_field_values_1, format_field_values_2,
@@ -191,7 +171,7 @@
         FROM ${format}_component comp WHERE component_id = #{componentId}
         -- The WHERE clause above ensures the component still exists
         -- Thereby helping us avoid the need for DELET'ing threads to lock component ids
-      ON CONFLICT ON CONSTRAINT pk_component_search
+      ON CONFLICT ON CONSTRAINT pk_search_components
       DO
         UPDATE SET
           last_event_time = #{lastEventTime},
@@ -218,13 +198,13 @@
 
   <delete id="delete">
     DELETE
-    FROM component_search
+    FROM search_components
     WHERE <include refid="PKMatch"/>
   </delete>
 
   <delete id="deleteComponentIds">
     DELETE
-    FROM component_search
+    FROM search_components
     WHERE repository_id = #{repositoryId}
       AND format = #{format}
       <foreach collection="componentIds" item="componentId" open="AND component_id IN (" separator="," close=")">
@@ -235,11 +215,11 @@
   <delete id="deleteAllForRepository">
     WITH toBeDeleted as (
         SELECT component_id
-        FROM component_search
+        FROM search_components
         WHERE <include refid="repositoryMatch"/>
     <if test="limit gt 0"> LIMIT ${limit}</if>)
     DELETE
-    FROM component_search cs
+    FROM search_components cs
     WHERE <include refid="repositoryMatch"/>
         AND cs.component_id IN (SELECT td.component_id FROM toBeDeleted td)
   </delete>
@@ -266,7 +246,7 @@
         cs.search_repository_name,
         cs.format,
         cs.component_created
-    FROM component_search cs
+    FROM search_components cs
     <if test="filterParams != null and filterParams.containsKey('name') and filterParams.containsKey('format')">
       INNER JOIN ${filterParams.format}_component_tag ctg
           ON cs.component_id = ctg.component_id AND cs.format = #{filterParams.format}
@@ -294,7 +274,7 @@
 
   <select id="count" resultType="int">
     SELECT COUNT(cs.component_id)
-    FROM component_search cs
+    FROM search_components cs
     <if test="filterParams != null and filterParams.containsKey('name')">
       INNER JOIN ${filterParams.format}_component_tag ctg
           ON cs.component_id = ctg.component_id AND cs.format = #{filterParams.format}
@@ -306,7 +286,7 @@
   </select>
 
   <insert id="saveBatch" parameterType="java.util.List" databaseId="PostgreSQL">
-    INSERT INTO component_search(repository_id, component_id, format, namespace, search_component_name, version,
+    INSERT INTO search_components(repository_id, component_id, format, namespace, search_component_name, version,
       search_repository_name, tsvector_format, tsvector_namespace, tsvector_search_component_name,
       tsvector_version, tsvector_search_repository_name, component_kind, normalised_version, component_created,
       prerelease, last_event_time, paths, uploaders, uploader_ips, tsvector_paths, keywords, md5, sha1, sha256, sha512, format_field_values_1,

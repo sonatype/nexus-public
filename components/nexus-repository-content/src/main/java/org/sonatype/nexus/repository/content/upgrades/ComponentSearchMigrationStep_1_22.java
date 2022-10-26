@@ -14,26 +14,34 @@ package org.sonatype.nexus.repository.content.upgrades;
 
 import java.sql.Connection;
 import java.sql.Statement;
+import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
+import static java.util.Objects.requireNonNull;
+
 /**
- * This migration step was deleted and is no longer available since the component_search table was deleted in a later step
+ * Deletes the component_search table.
  */
 @Named
-public class ComponentSearchMigrationStep_1_16
+public class ComponentSearchMigrationStep_1_22
     implements DatabaseMigrationStep
 {
+  private static final String DROP_COMPONENT_SEARCH = "DROP TABLE IF EXISTS component_search";
 
   @Override
   public Optional<String> version() {
-    return Optional.of("1.16");
+    return Optional.of("1.22");
   }
 
   @Override
   public void migrate(final Connection connection) throws Exception {
+    try (Statement st = connection.createStatement()) {
+      st.execute(DROP_COMPONENT_SEARCH);
+    }
   }
 }
