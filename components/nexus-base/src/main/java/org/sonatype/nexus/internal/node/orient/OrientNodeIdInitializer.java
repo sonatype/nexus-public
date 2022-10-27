@@ -10,38 +10,22 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.node.datastore;
+package org.sonatype.nexus.internal.node.orient;
 
-import java.sql.Connection;
-import java.util.Optional;
-
-import javax.inject.Inject;
+import javax.annotation.Priority;
 import javax.inject.Named;
+import javax.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
+import org.sonatype.nexus.internal.node.NodeIdInitializer;
 
-/**
- * Originally migrated the legacy on disk node identifier to the database where it may be used to identify a single
- * node, or a cluster. Now a no-op {@see NodeIdInitializerimpl}
- */
 @Named
-public class NodeIdUpgradeStep_1_14
-    extends ComponentSupport
-    implements DatabaseMigrationStep
+@Priority(Integer.MAX_VALUE)
+@Singleton
+public class OrientNodeIdInitializer
+    implements NodeIdInitializer
 {
-  @Inject
-  public NodeIdUpgradeStep_1_14()
-  {
-  }
-
   @Override
-  public Optional<String> version() {
-    return Optional.of("1.14");
-  }
-
-  @Override
-  public void migrate(final Connection connection) throws Exception {
-    // no-op
+  public void initialize() {
+    // nothing to do
   }
 }
