@@ -344,25 +344,13 @@ public abstract class NexusITSupport
   }
 
   /**
-   * @return the header containing our session cookie; {@code null} if it doesn't exist
+   * @return the last header containing a cookie; {@code null} if it doesn't exist
    */
   @Nullable
-  protected Header getSessionCookieHeader(@Nonnull final Header[] headers) {
-    for (Header header : headers) {
-      if (header.getValue().startsWith(DEFAULT_SESSION_COOKIE_NAME + "=")) {
-        return header;
-      }
-    }
-    return null;
-  }
-
-  /**
-   * @return the header containing our jwt cookie; {@code null} if it doesn't exist
-   */
-  @Nullable
-  protected Header getJwtCookieHeader(@Nonnull final Header[] headers) {
-    for (Header header : headers) {
-      if (header.getValue().startsWith(DEFAULT_JWT_COOKIE_NAME + "=")) {
+  protected Header getLastCookieHeader(@Nonnull final Header[] headers, final String cookieName) {
+    for (int i = headers.length - 1; i >= 0; i--) {
+      Header header = headers[i];
+      if (header.getValue().startsWith(cookieName + "=")) {
         return header;
       }
     }
