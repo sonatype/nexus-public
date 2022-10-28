@@ -166,7 +166,7 @@ public abstract class SqlSearchQueryConditionBuilder
           ImmutableMap.of(parameterPrefix + field, escapeSymbols(value)));
     }
     return new SqlSearchQueryCondition(wildcard(field, placeholder(parameterPrefix + field)),
-        ImmutableMap.of(parameterPrefix + field, escapeSymbols(replaceWildcards(value))));
+        ImmutableMap.of(parameterPrefix + field, sanitise(value)));
   }
 
   /**
@@ -241,6 +241,10 @@ public abstract class SqlSearchQueryConditionBuilder
   protected abstract String wildcards(final String fieldName, final List<String> placeholders);
 
   protected abstract Map<Character, String> getWildcardMapping();
+
+  public String sanitise(final String value) {
+    return replaceWildcards(escapeSymbols(value));
+  }
 
   protected String escapeSymbols(String value) {
     return replaceEscapedWildcardSymbol(value);

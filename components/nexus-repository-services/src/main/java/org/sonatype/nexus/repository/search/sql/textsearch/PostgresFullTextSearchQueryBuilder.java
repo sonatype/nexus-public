@@ -55,7 +55,11 @@ public class PostgresFullTextSearchQueryBuilder
   @Override
   public String replaceWildcards(final String value) {
     String wildcardReplacedValue = super.replaceWildcards(value);
-    if (!wildcardReplacedValue.trim().endsWith(PREFIX_MATCHER)) {
+    return convertInfixWildcardToSuffix(wildcardReplacedValue);
+  }
+
+  private String convertInfixWildcardToSuffix(final String wildcardReplacedValue) {
+    if (wildcardReplacedValue.contains(PREFIX_MATCHER) && !wildcardReplacedValue.trim().endsWith(PREFIX_MATCHER)) {
       int prefixMatcherPosition = wildcardReplacedValue.indexOf(PREFIX_MATCHER);
       if (prefixMatcherPosition > 0) {
         return wildcardReplacedValue.substring(0, prefixMatcherPosition + PREFIX_MATCHER.length());

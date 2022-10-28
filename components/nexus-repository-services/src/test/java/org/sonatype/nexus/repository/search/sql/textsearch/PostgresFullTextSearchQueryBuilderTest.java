@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.search.sql.textsearch;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 
+import org.hamcrest.core.Is;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
@@ -53,5 +54,11 @@ public class PostgresFullTextSearchQueryBuilderTest
 
     assertThat(underTest.replaceWildcards("bar*"),
         is("bar:*"));
+  }
+
+  @Test
+  public void shouldEscapeSymbolBeforeReplacingWildcards() {
+    assertThat(underTest.sanitise("foo:*"),
+        Is.is("foo\\::*"));
   }
 }
