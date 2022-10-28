@@ -89,6 +89,7 @@ public class SearchTableDataProducer
     data.setFormat(repositoryFormat);
     data.setNamespace(component.namespace());
     data.setComponentName(component.name());
+    data.addAliasComponentName(component.name());
     data.setComponentKind(component.kind());
     data.setVersion(component.version());
     data.setNormalisedVersion(

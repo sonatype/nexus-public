@@ -45,6 +45,8 @@ public class SearchTableData
   //name column from *_component table
   private String componentName;
 
+  private Set<String> aliasComponentNames = new HashSet<>();
+
   //kind column from *_component table
   private String componentKind;
 
@@ -144,6 +146,16 @@ public class SearchTableData
 
   public void setComponentName(final String componentName) {
     this.componentName = componentName;
+  }
+
+  public Collection<String> getAliasComponentNames() {
+    return unmodifiableCollection(aliasComponentNames);
+  }
+
+  public void addAliasComponentName(final String aliasComponentName) {
+    if (isNotBlank(aliasComponentName)) {
+      this.aliasComponentNames.add(aliasComponentName);
+    }
   }
 
   public String getComponentKind() {
@@ -352,6 +364,7 @@ public class SearchTableData
         Objects.equals(format, tableData.format) &&
         Objects.equals(namespace, tableData.namespace) &&
         Objects.equals(componentName, tableData.componentName) &&
+        Objects.equals(aliasComponentNames, tableData.aliasComponentNames) &&
         Objects.equals(componentKind, tableData.componentKind) &&
         Objects.equals(version, tableData.version) &&
         Objects.equals(normalisedVersion, tableData.normalisedVersion) &&
@@ -376,7 +389,7 @@ public class SearchTableData
 
   @Override
   public int hashCode() {
-    return Objects.hash(repositoryId, componentId, format, namespace, componentName, componentKind,
+    return Objects.hash(repositoryId, componentId, format, namespace, componentName, aliasComponentNames, componentKind,
         version, normalisedVersion, componentCreated, lastEventTime, repositoryName,
         prerelease, uploaders, uploaderIps, paths, keywords, md5, sha1, sha256, sha512, formatFieldValues1, formatFieldValues2,
         formatFieldValues3, formatFieldValues4, formatFieldValues5);
@@ -390,6 +403,7 @@ public class SearchTableData
         .add("format='" + format + "'")
         .add("namespace='" + namespace + "'")
         .add("componentName='" + componentName + "'")
+        .add("aliasComponentNames='" + aliasComponentNames + "'")
         .add("componentKind='" + componentKind + "'")
         .add("version='" + version + "'")
         .add("normalisedVersion='" + normalisedVersion + "'")
