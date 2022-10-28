@@ -274,6 +274,7 @@ public class CselToTsQuerySqlDbTest
       //tableData component
       tableData.setNamespace(component.namespace() + "_" + i);
       tableData.setComponentName(component.name() + "_" + i);
+      tableData.addAliasComponentName(component.name() + "_" + i);
       tableData.setComponentKind(component.kind() + "_" + i);
       tableData.setVersion(component.version() + "_" + i);
       tableData.setNormalisedVersion(VersionNumberExpander.expand(component.version()));
