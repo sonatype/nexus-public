@@ -692,6 +692,7 @@
             <excludes>
               <exclude>**/Abstract*</exclude>
               <exclude>**/*$*</exclude>
+              <exclude>**/*Tests</exclude>
             </excludes>
             <excludedGroups>${it.excludedGroups}</excludedGroups>
           </configuration>
@@ -721,19 +722,6 @@
               <include>${it.includes}</include>
             </includes>
             <excludedGroups>${it.excludedGroups}</excludedGroups>
-          </configuration>
-        </plugin>
-
-        <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>animal-sniffer-maven-plugin</artifactId>
-          <version>1.16</version>
-          <configuration>
-            <signature>
-              <groupId>org.codehaus.mojo.signature</groupId>
-              <artifactId>java18</artifactId>
-              <version>1.0</version>
-            </signature>
           </configuration>
         </plugin>
 
@@ -1329,22 +1317,6 @@
                 </bannedDependencies>
               </rules>
             </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>com.sonatype.clm</groupId>
-        <artifactId>clm-maven-plugin</artifactId>
-        <version>2.30.5-01</version>
-        <configuration>
-          <skip>${clm.skip}</skip>
-        </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>index</goal>
-            </goals>
           </execution>
         </executions>
       </plugin>
@@ -2198,6 +2170,67 @@
       </build>
     </profile>
 
+    <!-- Enable CLM maven plugin on supported JDK -->
+    <profile>
+      <id>clm</id>
+      <activation>
+        <jdk>(,11]</jdk>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.sonatype.clm</groupId>
+            <artifactId>clm-maven-plugin</artifactId>
+            <version>2.30.5-01</version>
+            <configuration>
+              <skip>${clm.skip}</skip>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>index</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <!-- Check APIs on newer versions of Java -->
+    <profile>
+      <id>java-8-api-on-new</id>
+      <activation>
+        <jdk>[9,)</jdk>
+      </activation>
+      <properties>
+        <maven.compiler.release>8</maven.compiler.release>
+      </properties>
+    </profile>
+
+    <!-- Check APIs on Java8 -->
+    <profile>
+      <id>java-8-api</id>
+      <activation>
+        <jdk>(,8]</jdk>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>animal-sniffer-maven-plugin</artifactId>
+            <version>1.21</version>
+            <configuration>
+              <signature>
+                <groupId>org.codehaus.mojo.signature</groupId>
+                <artifactId>java18</artifactId>
+                <version>1.0</version>
+              </signature>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
   </profiles>
 
 </project>
