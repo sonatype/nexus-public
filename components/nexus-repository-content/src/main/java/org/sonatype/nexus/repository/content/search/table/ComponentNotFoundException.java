@@ -17,7 +17,7 @@ package org.sonatype.nexus.repository.content.search.table;
  * search table.
  *
  * @see SqlSearchIndexService
- * @since 3.next
+ * @since 3.43
  */
 public class ComponentNotFoundException
     extends RuntimeException

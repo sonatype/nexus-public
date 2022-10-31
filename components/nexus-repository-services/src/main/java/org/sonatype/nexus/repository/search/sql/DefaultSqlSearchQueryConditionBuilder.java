@@ -28,7 +28,7 @@ import static java.util.stream.Collectors.joining;
  * Query building utility for none full text search columns
  *
  * @see TextualQueryType#DEFAULT_TEXT_QUERY
- * @since 3.next
+ * @since 3.43
  */
 @Named(DefaultSqlSearchQueryConditionBuilder.NAME)
 @Singleton
