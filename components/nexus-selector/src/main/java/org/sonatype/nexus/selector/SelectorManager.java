@@ -119,6 +119,13 @@ public interface SelectorManager
       throws SelectorEvaluationException;
 
   /**
+   * Use the specified CselToSql implementation to convert the selector configuration to SQL for use as a 'where'
+   * clause
+   */
+  void toSql(SelectorConfiguration selector, SelectorSqlBuilder sqlBuilder, CselToSql cselToSql)
+      throws SelectorEvaluationException;
+
+  /**
    * @return new instance of SelectorConfiguration
    *
    * @since 3.20

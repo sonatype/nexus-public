@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -46,6 +47,7 @@ import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserManager;
 import org.sonatype.nexus.security.user.UserNotFoundException;
+import org.sonatype.nexus.selector.CselToSql;
 import org.sonatype.nexus.selector.Selector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorEvaluationException;
@@ -234,6 +236,21 @@ public class SelectorManagerImpl
   {
     try {
       selectorCache.get(selectorConfiguration).toSql(sqlBuilder);
+    }
+    catch (Exception e) {
+      throw new SelectorEvaluationException(
+          "Selector '" + selectorConfiguration.getName() + "' cannot be represented as SQL", e);
+    }
+  }
+
+  @Override
+  public void toSql(
+      final SelectorConfiguration selectorConfiguration,
+      final SelectorSqlBuilder sqlBuilder,
+      final CselToSql cselToSql) throws SelectorEvaluationException
+  {
+    try {
+      selectorCache.get(selectorConfiguration).toSql(sqlBuilder, cselToSql);
     }
     catch (Exception e) {
       throw new SelectorEvaluationException(

@@ -12,11 +12,6 @@
  */
 package org.sonatype.nexus.repository.content.search.table.internal;
 
-import javax.annotation.Priority;
-import javax.inject.Named;
-import javax.inject.Singleton;
-
-import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.repository.search.table.SelectorTsQuerySqlBuilder;
 import org.sonatype.nexus.selector.CselToSql;
 import org.sonatype.nexus.selector.ParserVisitorSupport;
@@ -39,16 +34,12 @@ import org.apache.commons.jexl3.parser.JexlNode;
 
 import static org.apache.commons.lang3.StringUtils.removeEnd;
 import static org.apache.commons.lang3.StringUtils.removeStart;
-import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_TABLE_SEARCH;
 import static org.sonatype.nexus.repository.search.table.TableSearchContentSelectorSqlFilterGenerator.PATHS;
 
 /**
  * Walks the script,transforming CSEL expressions into Postgres Full Text Search queries.
  */
-@Named("mybatis")
-@Singleton
-@Priority(Integer.MAX_VALUE)
-@FeatureFlag(name = DATASTORE_TABLE_SEARCH)
+//Don't inject
 public class CselToTsQuerySql
     extends ParserVisitorSupport
     implements CselToSql

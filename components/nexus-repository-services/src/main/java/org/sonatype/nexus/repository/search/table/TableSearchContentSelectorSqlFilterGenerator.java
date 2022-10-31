@@ -20,12 +20,14 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.repository.content.search.table.internal.CselToTsQuerySql;
 import org.sonatype.nexus.repository.rest.SearchFieldSupport;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.search.sql.SqlSearchContentSelectorFilter;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryCondition;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilderMapping;
 import org.sonatype.nexus.selector.CselSelector;
+import org.sonatype.nexus.selector.CselToSql;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorEvaluationException;
 import org.sonatype.nexus.selector.SelectorManager;
@@ -88,6 +90,7 @@ public class TableSearchContentSelectorSqlFilterGenerator
 
     SqlSearchContentSelectorFilter filters = new SqlSearchContentSelectorFilter();
     SelectorSqlBuilder selectorSqlBuilder = createSelectorSqlBuilder();
+    CselToSql cselToTsQuerySql =  new CselToTsQuerySql();
     for (int selectorCount = 0; selectorCount < selectors.size(); ++selectorCount) {
       final SelectorConfiguration selector = selectors.get(selectorCount);
 
@@ -97,7 +100,7 @@ public class TableSearchContentSelectorSqlFilterGenerator
         }
         try {
           String namePrefix = "s" + selectorCount + "p";
-          transformSelectorToSql(selectorSqlBuilder, selector, namePrefix);
+          transformSelectorToSql(cselToTsQuerySql, selectorSqlBuilder, selector, namePrefix);
           collectGeneratedSql(filters, selectorSqlBuilder, selectorRepositories, namePrefix);
         }
         catch (SelectorEvaluationException e) {
@@ -132,12 +135,12 @@ public class TableSearchContentSelectorSqlFilterGenerator
   }
 
   private void transformSelectorToSql(
-      final SelectorSqlBuilder sqlBuilder,
+      final CselToSql cselToTsQuerySql, final SelectorSqlBuilder sqlBuilder,
       final SelectorConfiguration selector,
       final String namePrefix) throws SelectorEvaluationException
   {
     sqlBuilder.parameterNamePrefix(namePrefix);
-    selectorManager.toSql(selector, sqlBuilder);
+    selectorManager.toSql(selector, sqlBuilder, cselToTsQuerySql);
   }
 
   private void collectGeneratedSql(

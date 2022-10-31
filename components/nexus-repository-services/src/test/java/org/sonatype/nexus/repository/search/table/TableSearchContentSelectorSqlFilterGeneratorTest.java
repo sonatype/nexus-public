@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.repository.content.search.table.internal.CselToTsQuerySql;
 import org.sonatype.nexus.repository.rest.SearchFieldSupport;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings;
@@ -121,6 +122,6 @@ public class TableSearchContentSelectorSqlFilterGeneratorTest
       SelectorSqlBuilder selectorSqlBuilder = (SelectorSqlBuilder) arguments[1];
       selectorSqlBuilder.appendLiteral("value");
       return invocationOnMock;
-    }).when(selectorManager).toSql(any(), any());
+    }).when(selectorManager).toSql(any(), any(), any(CselToTsQuerySql.class));
   }
 }

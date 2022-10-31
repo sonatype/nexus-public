@@ -36,4 +36,12 @@ public interface Selector
    * @since 3.16
    */
   void toSql(SelectorSqlBuilder sqlBuilder);
+
+  /**
+   * Returns SQL representing this selector for use as a 'where' clause against some queryable values.
+   *
+   * @param sqlBuilder used to accumulate 'where' clauses for content selectors
+   * @param cselToSql  transforms selector expressions into sql
+   */
+  void toSql(SelectorSqlBuilder sqlBuilder, final CselToSql cselToSql);
 }
