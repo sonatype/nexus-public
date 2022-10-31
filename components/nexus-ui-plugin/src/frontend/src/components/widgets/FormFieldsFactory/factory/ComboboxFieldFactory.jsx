@@ -53,7 +53,8 @@ const Field = ({id, dynamicProps, current:parentCurrent, onChange}) => {
     }
   };
 
-  const onSelect = (item) => {
+  const onSelect = (item, event) => {
+    event.preventDefault();
     onChange(id, item.id);
   };
 

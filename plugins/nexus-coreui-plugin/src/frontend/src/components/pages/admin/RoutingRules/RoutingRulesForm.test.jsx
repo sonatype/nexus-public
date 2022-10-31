@@ -13,7 +13,7 @@
 import React from 'react';
 import axios from 'axios';
 import {act} from 'react-dom/test-utils';
-import {waitFor, waitForElementToBeRemoved, within, screen} from '@testing-library/react';
+import {waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {ExtJS, TestUtils} from '@sonatype/nexus-ui-plugin';
@@ -73,7 +73,7 @@ describe('RoutingRulesForm', function() {
       description: () => queryByLabelText(UIStrings.ROUTING_RULES.FORM.DESCRIPTION_LABEL),
       mode: () => queryByLabelText(UIStrings.ROUTING_RULES.FORM.MODE_LABEL),
       matcher: (index) => queryByLabelText(UIStrings.ROUTING_RULES.FORM.MATCHER_LABEL(index)),
-      matcherButton: (index) => within(screen.getByText('Matchers').closest('.nx-form-group')).getAllByRole('button')[index],
+      deleteMatcherButton: (index) => queryAllByTitle(UIStrings.ROUTING_RULES.FORM.DELETE_MATCHER_BUTTON)[index],
       createButton: () => queryByText(UIStrings.ROUTING_RULES.FORM.CREATE_BUTTON, {selector: '.nx-btn'}),
       saveButton: () => queryByText(UIStrings.SETTINGS.SAVE_BUTTON_LABEL),
       cancelButton: () => queryByText(UIStrings.SETTINGS.CANCEL_BUTTON_LABEL),
@@ -242,7 +242,7 @@ describe('RoutingRulesForm', function() {
       }
     });
 
-    const {loadingMask, matcher, saveButton, matcherButton} = renderEditView(itemId);
+    const {loadingMask, matcher, saveButton, deleteMatcherButton} = renderEditView(itemId);
 
     await waitForElementToBeRemoved(loadingMask);
 
@@ -250,15 +250,17 @@ describe('RoutingRulesForm', function() {
     expect(matcher(1)).toHaveValue('b');
     expect(matcher(2)).toHaveValue('c');
 
-    expect(matcherButton(0)).toBeInTheDocument();
-    expect(matcherButton(1)).toBeInTheDocument();
-    expect(matcherButton(2)).toBeInTheDocument();
+    expect(deleteMatcherButton(0)).toBeInTheDocument();
+    expect(deleteMatcherButton(1)).toBeInTheDocument();
+    expect(deleteMatcherButton(2)).toBeInTheDocument();
 
-    userEvent.click(matcherButton(2));
+    userEvent.click(deleteMatcherButton(2));
     expect(matcher(2)).not.toBeInTheDocument();
 
-    userEvent.click(matcherButton(1));
+    userEvent.click(deleteMatcherButton(1));
     expect(matcher(1)).not.toBeInTheDocument();
+
+    expect(deleteMatcherButton(0)).toBe(undefined);
 
     expect(saveButton()).not.toHaveClass('disabled');
 

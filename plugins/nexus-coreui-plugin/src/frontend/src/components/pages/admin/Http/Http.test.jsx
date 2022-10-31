@@ -104,8 +104,8 @@ const selectors = {
       screen.getByText(LABELS.PROXY.HTTPS_AUTHENTICATION),
     exclude: () => screen.getByLabelText(LABELS.EXCLUDE.LABEL),
     queryExcludeTitle: () => screen.queryByText(LABELS.EXCLUDE.LABEL),
-    addButton: (container) => container.querySelector('[data-icon="plus-circle"]'),
-    removeButton: (container) => container.querySelector('[data-icon="trash-alt"]'),
+    addButton: () => screen.getByTitle(LABELS.EXCLUDE.ADD),
+    removeButton: () => screen.getByTitle(LABELS.EXCLUDE.REMOVE),
   },
 };
 
@@ -504,18 +504,18 @@ describe('Http', () => {
     it('adds or removes items to the excludes from HTTP/HTTPS Proxy list', async () => {
       const {exclude, addButton, removeButton} = selectors.proxy;
 
-      const {container} = await renderAndWaitForLoad();
+      await renderAndWaitForLoad();
 
       await TestUtils.changeField(exclude, nonProxy);
 
-      expect(addButton(container)).toBeInTheDocument();
+      expect(addButton()).toBeInTheDocument();
 
-      await userEvent.click(addButton(container));
+      await userEvent.click(addButton());
 
       expect(screen.getByText(nonProxy)).toBeInTheDocument();
-      expect(removeButton(container)).toBeInTheDocument();
+      expect(removeButton()).toBeInTheDocument();
 
-      await userEvent.click(removeButton(container));
+      await userEvent.click(removeButton());
       expect(screen.queryByText(nonProxy)).not.toBeInTheDocument();
     });
   });
@@ -842,13 +842,13 @@ describe('Http', () => {
         saveButton,
       } = selectors;
 
-      const {container} = await renderAndWaitForLoad();
+      await renderAndWaitForLoad();
 
       await TestUtils.changeField(exclude, nonProxy);
 
-      expect(addButton(container)).toBeInTheDocument();
+      expect(addButton()).toBeInTheDocument();
 
-      await userEvent.click(addButton(container));
+      await userEvent.click(addButton());
 
       mockResponse();
 

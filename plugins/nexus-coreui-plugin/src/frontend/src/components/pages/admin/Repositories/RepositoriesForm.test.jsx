@@ -196,8 +196,10 @@ describe('RepositoriesForm', () => {
     getDockerAnonimousPullCheckbox: () =>
       screen.getByRole('checkbox', {name: CONNECTORS.ALLOW_ANON_DOCKER_PULL.DESCR}),
     getDockerWritableRepositorySelect: () => screen.getByLabelText(EDITOR.WRITABLE.LABEL),
-    getDockerRedeployLatestCheckbox: () => screen.getByLabelText(EDITOR.REDEPLOY_LATEST.DESCRIPTION),
-    getDockerRedeployLatestLabel: () => screen.getByText(EDITOR.REDEPLOY_LATEST.DESCRIPTION),
+    getDockerRedeployLatestCheckboxEnabled: () =>
+      screen.getByRole('checkbox', {name: EDITOR.REDEPLOY_LATEST.DESCRIPTION}),
+    getDockerRedeployLatestCheckboxDisabled: () =>
+      screen.getByRole('checkbox', {name: EDITOR.REDEPLOY_LATEST.TOOLTIP}),
     getUseNexusTruststoreCheckbox: () =>
       screen.getByRole('checkbox', {name: USE_TRUST_STORE.DESCRIPTION}),
     getUseNexusTruststoreButton: () =>
@@ -215,10 +217,10 @@ describe('RepositoriesForm', () => {
     },
     getForeignLayerCheckbox: () => screen.getByLabelText(EDITOR.FOREIGN_LAYER.CHECKBOX),
     getForeignLayerInput: () => screen.getByLabelText(EDITOR.FOREIGN_LAYER.URL),
-    getForeignLayerAddButton: (container) => container.querySelector('[data-icon="plus-circle"]'),
+    getForeignLayerAddButton: () => screen.getByTitle(EDITOR.FOREIGN_LAYER.ADD),
     getForeignLayerRemoveButton: (item) => {
       const listItem = screen.getByText(item).closest('.nx-list__item');
-      return item && within(listItem).getByRole('img', {hidden: true}).closest('button');
+      return item && within(listItem).getByTitle(EDITOR.FOREIGN_LAYER.REMOVE);
     },
     getAptDistributionInput: () => screen.getByLabelText(APT.DISTRIBUTION.LABEL),
     getAptFlatCheckbox: () => screen.getByRole('checkbox', {name: APT.FLAT.DESCR}),
@@ -497,15 +499,14 @@ describe('RepositoriesForm', () => {
 
       await renderViewAndSetRequiredFields(repo);
 
-      expect(selectors.getDockerRedeployLatestCheckbox()).toBeDisabled();
-      await TestUtils.expectToSeeTooltipOnHover(selectors.getDockerRedeployLatestLabel(), EDITOR.REDEPLOY_LATEST.TOOLTIP);
+      expect(selectors.getDockerRedeployLatestCheckboxDisabled()).toBeDisabled();
 
       await TestUtils.changeField(selectors.getDeploymentPolicySelect, repo.storage.writePolicy);
       await TestUtils.changeField(selectors.getBlobStoreSelect, repo.storage.blobStoreName);
 
-      expect(selectors.getDockerRedeployLatestCheckbox()).toBeEnabled();
+      expect(selectors.getDockerRedeployLatestCheckboxEnabled()).toBeEnabled();
 
-      userEvent.click(selectors.getDockerRedeployLatestCheckbox());
+      userEvent.click(selectors.getDockerRedeployLatestCheckboxEnabled());
 
       userEvent.click(selectors.getDockerSubdomainCheckbox());
       await TestUtils.changeField(selectors.getDockerSubdomainInput, 'docker-sub-domain');
@@ -963,7 +964,7 @@ describe('RepositoriesForm', () => {
         data: repo
       });
 
-      const {container} = renderView(repo.name);
+      renderView(repo.name);
 
       await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -977,14 +978,14 @@ describe('RepositoriesForm', () => {
 
       await TestUtils.changeField(selectors.getForeignLayerInput, patternUrl);
 
-      await userEvent.click(selectors.getForeignLayerAddButton(container));
+      await userEvent.click(selectors.getForeignLayerAddButton());
 
       expect(screen.getByText(patternUrl)).toBeInTheDocument();
 
       await userEvent.click(selectors.getForeignLayerRemoveButton(defaultPatternUrl));
 
       expect(screen.queryByText(defaultPatternUrl)).not.toBeInTheDocument();
-      expect(selectors.getForeignLayerRemoveButton(patternUrl)).toHaveClass('disabled');
+      expect(selectors.getForeignLayerRemoveButton(patternUrl)).toBeDisabled();
 
       await userEvent.click(selectors.getSaveButton());
 
