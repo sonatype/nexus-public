@@ -17,13 +17,13 @@
 import {assign} from 'xstate';
 import Axios from 'axios';
 
-import {ExtJS, FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, Utils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 
 const url = (name) => `/service/rest/internal/ui/routing-rules/${name}`;
 
-export default FormUtils.buildFormMachine({
+export default Utils.buildFormMachine({
   id: 'RoutingRulesFormMachine',
 
   config: (config) => ({
@@ -157,7 +157,7 @@ export default FormUtils.buildFormMachine({
       }
 
       data.matchers.forEach((matcher, index) => {
-        if (ValidationUtils.isBlank(matcher)) {
+        if (Utils.isBlank(matcher)) {
           validationErrors[`matcher[${index}]`] = UIStrings.ERROR.FIELD_REQUIRED
         }
       });
@@ -176,7 +176,7 @@ export default FormUtils.buildFormMachine({
   },
   services: {
     fetchData: ({pristineData}) => {
-      if (ValidationUtils.notBlank(pristineData.name)) { // Edit
+      if (Utils.notBlank(pristineData.name)) { // Edit
         return Axios.get(url(pristineData.name));
       }
       else { // New
@@ -191,7 +191,7 @@ export default FormUtils.buildFormMachine({
       }
     },
     saveData: ({data, pristineData}) => {
-      if (ValidationUtils.notBlank(pristineData.name)) {
+      if (Utils.notBlank(pristineData.name)) {
         return Axios.put(url(pristineData.name), data);
       }
       return Axios.post(url(''), data);

@@ -14,6 +14,7 @@ import React from 'react';
 import {useMachine} from '@xstate/react';
 import {
   FormUtils,
+  Select,
   ValidationUtils,
   UseNexusTruststore
 } from '@sonatype/nexus-ui-plugin';
@@ -23,7 +24,6 @@ import {
   NxErrorAlert,
   NxForm,
   NxFormGroup,
-  NxFormSelect,
   NxLoadWrapper,
   NxTooltip,
   NxTextInput,
@@ -39,7 +39,9 @@ import './IqServer.scss';
 
 export default function IqServerForm() {
   const [state, send] = useMachine(Machine, {devTools: true});
-  const {data, pristineData, isPristine, validationErrors, verifyConnectionError, verifyConnectionSuccessMessage} = state.context;
+  const {data, pristineData, isPristine, loadError, saveError, validationErrors, verifyConnectionError, verifyConnectionSuccessMessage} = state.context;
+  const isLoading = state.matches('loading');
+  const isSaving = state.matches('saving')
   const isInvalid = FormUtils.isInvalid(validationErrors);
   const canOpenIqServerDashboard = pristineData.enabled && ValidationUtils.isUrl(pristineData.url);
 
@@ -84,7 +86,14 @@ export default function IqServerForm() {
   }
 
   return <NxForm
-      {...FormUtils.formProps(state, send)}
+      loading={isLoading}
+      loadError={loadError}
+      doLoad={retry}
+      onSubmit={save}
+      submitError={saveError}
+      submitMaskState={isSaving ? false : null}
+      submitBtnText={UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
+      validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
       additionalFooterBtns={<>
         <NxButton type="button" variant="tertiary" disabled={isInvalid} onClick={verifyConnection}>
           {UIStrings.IQ_SERVER.VERIFY_CONNECTION_BUTTON_LABEL}
@@ -125,13 +134,13 @@ export default function IqServerForm() {
         onChange={FormUtils.handleUpdate('useTrustStoreForUrl', send)}
       />
       <NxFormGroup label={UIStrings.IQ_SERVER.AUTHENTICATION_TYPE.label} isRequired>
-        <NxFormSelect className="nx-form-select--long"
-                {...FormUtils.selectProps('authenticationType', state)}
+        <Select className="nx-form-select--long"
+                {...FormUtils.fieldProps('authenticationType', state)}
                 onChange={handleAuthTypeChange}>
           <option value=""/>
           <option value="USER">{UIStrings.IQ_SERVER.AUTHENTICATION_TYPE.USER}</option>
           <option value="PKI">{UIStrings.IQ_SERVER.AUTHENTICATION_TYPE.PKI}</option>
-        </NxFormSelect>
+        </Select>
       </NxFormGroup>
       {data.authenticationType === 'USER' && <>
         <NxFormGroup {...UIStrings.IQ_SERVER.USERNAME} isRequired>

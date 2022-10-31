@@ -12,75 +12,24 @@
  */
 import React from 'react';
 import {useMachine} from '@xstate/react';
+import UserAccountSettings from './UserAccountSettings';
 import PasswordChangeForm from './PasswordChangeForm';
 import {faUser} from '@fortawesome/free-solid-svg-icons';
-import {ContentBody, FormUtils, Page, PageHeader, PageTitle} from '@sonatype/nexus-ui-plugin';
+import {ContentBody, Page, PageHeader, PageTitle} from '@sonatype/nexus-ui-plugin';
 
 import './UserAccount.scss';
 import UserAccountMachine from './UserAccountMachine';
 import UIStrings from '../../../../constants/UIStrings';
-import {NxButton, NxForm, NxFormGroup, NxTextInput, NxTile, NxTooltip} from '@sonatype/react-shared-components';
 
 export default function UserAccount() {
-  const [state, send] = useMachine(UserAccountMachine, {devTools: true});
-  const {isPristine} = state.context;
-  const isLoading = state.matches('loading');
-  const isExternal = !isLoading && state.context.data.external === true;
-  const isInternal = !isLoading && state.context.data.external === false;
-  const userId = state.context.data?.userId;
+  const [current, _, userAccountService] = useMachine(UserAccountMachine, {devTools: true});
 
-  function discard() {
-    send('RESET');
-  }
+  return <Page>
+    <PageHeader><PageTitle icon={faUser} {...UIStrings.USER_ACCOUNT.MENU}/></PageHeader>
+    <ContentBody className='nxrm-user-account'>
+      <UserAccountSettings service={userAccountService}/>
 
-  return (
-      <Page>
-        <PageHeader><PageTitle icon={faUser} {...UIStrings.USER_ACCOUNT.MENU}/></PageHeader>
-        <ContentBody className="nxrm-user-account">
-          <NxTile className="user-account-settings">
-            <NxForm
-                {...FormUtils.formProps(state, send)}
-                additionalFooterBtns={
-                  <NxTooltip title={FormUtils.discardTooltip({isPristine})}>
-                    <NxButton type="button" className={(isExternal || isPristine) && 'disabled'} onClick={discard}>
-                      {UIStrings.SETTINGS.DISCARD_BUTTON_LABEL}
-                    </NxButton>
-                  </NxTooltip>
-                }>
-              <NxFormGroup label={UIStrings.USER_ACCOUNT.ID_FIELD_LABEL} isRequired>
-                <NxTextInput
-                    {...FormUtils.fieldProps('userId', state)}
-                    disabled
-                />
-              </NxFormGroup>
-              <NxFormGroup label={UIStrings.USER_ACCOUNT.FIRST_FIELD_LABEL} isRequired>
-                <NxTextInput
-                    {...FormUtils.fieldProps('firstName', state)}
-                    onChange={FormUtils.handleUpdate('firstName', send)}
-                    disabled={isExternal}
-                />
-              </NxFormGroup>
-              <NxFormGroup label={UIStrings.USER_ACCOUNT.LAST_FIELD_LABEL} isRequired>
-                <NxTextInput
-                    {...FormUtils.fieldProps('lastName', state)}
-                    onChange={FormUtils.handleUpdate('lastName', send)}
-                    disabled={isExternal}
-                />
-              </NxFormGroup>
-              <NxFormGroup label={UIStrings.USER_ACCOUNT.EMAIL_FIELD_LABEL} isRequired>
-                <NxTextInput
-                    {...FormUtils.fieldProps('email', state)}
-                    onChange={FormUtils.handleUpdate('email', send)}
-                    disabled={isExternal}
-                />
-              </NxFormGroup>
-            </NxForm>
-          </NxTile>
-
-          {isInternal && <PasswordChangeForm userId={userId}/>}
-        </ContentBody>
-      </Page>
-  );
+    { current.context.data?.external === false &&  <PasswordChangeForm userId={current.context.data.userId}/> }
+    </ContentBody>
+  </Page>;
 }
-
-

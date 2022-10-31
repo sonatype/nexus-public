@@ -15,13 +15,14 @@ import {useMachine} from '@xstate/react';
 
 import {
   ContentBody,
-  FormUtils,
   Page,
   PageHeader,
   PageTitle,
   Section,
   Select,
-  Textfield
+  Textfield,
+  Utils,
+  FormUtils,
 } from '@sonatype/nexus-ui-plugin';
 
 import {
@@ -61,13 +62,14 @@ export default function RoutingRulesForm({itemId, onDone}) {
     devTools: true
   });
 
-  const {data, path, testError, testResult} = current.context;
+  const {isPristine, data, loadError, path, saveError, testError, testResult, validationErrors} = current.context;
+  const isLoading = current.matches('loading');
+  const isSaving = current.matches('saving');
   const isTesting = current.matches('testing');
+  const isInvalid = Utils.isInvalid(validationErrors);
   const hasData = data && data !== {};
-  const assignedRepositoryCount = data?.assignedRepositoryCount || 0;
-  const assignedRepositoryNames = data?.assignedRepositoryNames || [];
   const isEdit = Boolean(itemId);
-  const hasAssignedRepositories = assignedRepositoryCount > 0;
+  const hasAssignedRepositories = data?.assignedRepositoryCount > 0;
 
   function addMatcher() {
     send({type: 'ADD_MATCHER'});
@@ -85,6 +87,10 @@ export default function RoutingRulesForm({itemId, onDone}) {
     send({type: 'UPDATE', data: {[event.target.name]: event.target.value}});
   }
 
+  function save() {
+    send({type: 'SAVE'});
+  }
+
   function cancel() {
     send({type: 'CANCEL'});
   }
@@ -93,6 +99,10 @@ export default function RoutingRulesForm({itemId, onDone}) {
     if (!e.currentTarget.classList.contains('disabled')) {
       send({type: 'DELETE'});
     }
+  }
+
+  function retry() {
+    send({type: 'RETRY'});
   }
 
   function updatePath(event) {
@@ -107,7 +117,7 @@ export default function RoutingRulesForm({itemId, onDone}) {
     {isEdit &&
     <NxInfoAlert>
       {!hasAssignedRepositories && <span dangerouslySetInnerHTML={{__html: ROUTING_RULES.FORM.UNUSED}}/>}
-      {hasAssignedRepositories && <span dangerouslySetInnerHTML={{__html: ROUTING_RULES.FORM.USED_BY(assignedRepositoryNames)}}/>}
+      {hasAssignedRepositories && <span dangerouslySetInnerHTML={{__html: ROUTING_RULES.FORM.USED_BY(data.assignedRepositoryNames)}}/>}
     </NxInfoAlert>}
     <PageHeader>
       <PageTitle text={itemId ? ROUTING_RULES.FORM.EDIT_TITLE : ROUTING_RULES.FORM.CREATE_TITLE}/>
@@ -115,11 +125,19 @@ export default function RoutingRulesForm({itemId, onDone}) {
     <ContentBody>
       <Section className="nxrm-routing-rules-form">
         <NxForm
-            {...FormUtils.formProps(current, send)}
+            loading={isLoading}
+            loadError={loadError}
             onCancel={cancel}
+            doLoad={retry}
+            onSubmit={save}
+            submitError={saveError}
+            submitMaskState={isSaving ? false : null}
             submitBtnText={itemId ? SETTINGS.SAVE_BUTTON_LABEL : ROUTING_RULES.FORM.CREATE_BUTTON}
+            submitMaskMessage={UIStrings.SAVING}
+            validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
             additionalFooterBtns={itemId &&
-              <NxTooltip title={assignedRepositoryCount > 0 ? ROUTING_RULES.FORM.CANNOT_DELETE(assignedRepositoryNames) : undefined}>
+              <NxTooltip title={data.assignedRepositoryCount > 0 ? ROUTING_RULES.FORM.CANNOT_DELETE(
+                  data.assignedRepositoryNames) : undefined}>
                 <NxButton type="button" variant="tertiary" onClick={remove} className={hasAssignedRepositories && 'disabled'}>
                   <NxFontAwesomeIcon icon={faTrash}/>
                   <span>{SETTINGS.DELETE_BUTTON_LABEL}</span>
@@ -130,20 +148,20 @@ export default function RoutingRulesForm({itemId, onDone}) {
           {hasData && <>
             <NxFormGroup label={ROUTING_RULES.FORM.NAME_LABEL} isRequired>
               <Textfield
-                  {...FormUtils.fieldProps('name', current)}
+                  {...Utils.fieldProps('name', current)}
                   onChange={update}/>
             </NxFormGroup>
             <NxFormGroup label={ROUTING_RULES.FORM.DESCRIPTION_LABEL}>
               <Textfield
                   className="nx-text-input--long"
-                  {...FormUtils.fieldProps('description', current)}
+                  {...Utils.fieldProps('description', current)}
                   onChange={update}/>
             </NxFormGroup>
             <NxFormGroup
                 id="nxrm-routing-rules-mode"
                 label={ROUTING_RULES.FORM.MODE_LABEL}
                 sublabel={ROUTING_RULES.FORM.MODE_DESCRIPTION} isRequired>
-              <Select {...FormUtils.fieldProps('mode', current)} onChange={update}>
+              <Select {...Utils.fieldProps('mode', current)} onChange={update}>
                 <option value="ALLOW">{ROUTING_RULES.FORM.MODE.ALLOW}</option>
                 <option value="BLOCK">{ROUTING_RULES.FORM.MODE.BLOCK}</option>
               </Select>
@@ -163,7 +181,7 @@ export default function RoutingRulesForm({itemId, onDone}) {
                             aria-label={ROUTING_RULES.FORM.MATCHER_LABEL(index)}
                             aria-describedby="matchers-description"
                             className="nx-text-input--long"
-                            {...FormUtils.fieldProps(`matchers[${index}]`, current)}
+                            {...Utils.fieldProps(`matchers[${index}]`, current)}
                             value={value}
                             onChange={(event) => updateMatcher(event, index)}/>
                       </label>

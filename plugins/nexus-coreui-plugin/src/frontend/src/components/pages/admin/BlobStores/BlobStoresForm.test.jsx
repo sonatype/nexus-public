@@ -114,8 +114,7 @@ const quotaTypes = {
 
 const selectors = {
   ...TestUtils.selectors,
-  maxConnectionPoolSize: () => screen.queryByLabelText('Max Connection Pool Size'),
-  cancelButton: () => screen.getByText('Cancel')
+  maxConnectionPoolSize: () => screen.queryByLabelText('Max Connection Pool Size')
 }
 
 describe('BlobStoresForm', function() {
@@ -152,6 +151,7 @@ describe('BlobStoresForm', function() {
           softQuotaType: () => queryByLabelText('Constraint Type'),
           softQuotaLimit: () => queryByLabelText('Constraint Limit (in MB)'),
           saveButton: () => getByText('Save'),
+          cancelButton: () => getByText('Cancel'),
           convertToGroup: () => queryByText('Convert to Group')
         }));
   }
@@ -172,7 +172,6 @@ describe('BlobStoresForm', function() {
 
     await waitForElementToBeRemoved(loadingMask);
 
-    expect(selectors.cancelButton()).toBeEnabled();
     expect(typeSelect().options.length).toBe(4);
     expect(Array.from(typeSelect().options).map(option => option.textContent)).toEqual(expect.arrayContaining([
         '',
