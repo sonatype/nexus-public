@@ -85,7 +85,7 @@ public class NodeIdInitializerImpl
   }
 
   private void generateNodeId() {
-    log.info("Unable to get node-id from KeyStore - Generating a new node-id");
+    log.warn("Unable to get node-id from KeyStore - Generating a new node-id");
     nodeIdStore.getOrCreate();
   }
 }
