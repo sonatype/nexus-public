@@ -280,10 +280,8 @@ describe('Realms', () => {
     expect(activesRealms).toHaveLength(0);
 
     expect(saveButton()).toHaveClass('disabled');
-    expect(saveButton()).toHaveAttribute(
-      'title',
-      LABELS.MESSAGES.NO_REALMS_CONFIGURED
-    );
+
+    await TestUtils.expectToSeeTooltipOnHover(saveButton(), LABELS.MESSAGES.NO_REALMS_CONFIGURED);
   });
 
   describe('Read Only Mode', () => {

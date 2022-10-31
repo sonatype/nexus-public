@@ -168,7 +168,7 @@ describe('RepositoriesList', function () {
         tableRow: (index) => container.querySelectorAll('tbody tr')[index],
         tableRows: () => container.querySelectorAll('tbody tr'),
         urlButton: (index) =>
-          container.querySelectorAll('button[title="Copy URL to Clipboard"]')[index],
+          container.querySelectorAll('[data-icon="copy"]')[index],
         createButton: () => getByText(UIStrings.REPOSITORIES.LIST.CREATE_BUTTON)
       })
     );
@@ -440,12 +440,10 @@ describe('RepositoriesList', function () {
       expect(selectors.healthCheck.cell(rowIndices.MAVEN_CENTRAL)).toHaveTextContent(
         ANALYZE_BUTTON
       );
-      expect(selectors.healthCheck.cell(rowIndices.MAVEN_PUBLIC)).toHaveTextContent(
-        NOT_AVAILABLE_TOOLTIP_HC
-      );
-      expect(selectors.healthCheck.cell(rowIndices.NUGET_HOSTED)).toHaveTextContent(
-        NOT_AVAILABLE_TOOLTIP_HC
-      );
+      expect(within(selectors.healthCheck.cell(rowIndices.MAVEN_PUBLIC)).getByRole('img', {hidden: true}))
+          .toHaveAttribute('data-icon', 'ban');
+      expect(within(selectors.healthCheck.cell(rowIndices.NUGET_HOSTED)).getByRole('img', {hidden: true}))
+          .toHaveAttribute('data-icon', 'ban');
       expect(selectors.healthCheck.cell(rowIndices.NUGET_ORG_PROXY)).toHaveTextContent(
         ANALYZE_BUTTON
       );

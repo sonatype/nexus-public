@@ -11,19 +11,37 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {render, screen} from '@testing-library/react';
+import {act, render, screen} from '@testing-library/react';
 import {when} from 'jest-when';
+import Axios from 'axios';
 import userEvent from '@testing-library/user-event';
+import TestUtils from '../../../interface/TestUtils';
+import APIConstants from '../../../constants/APIConstants';
 import FormUtils from '../../../interface/FormUtils';
 import UseNexusTruststore from './UseNexusTruststore';
-
 import UIStrings from '../../../constants/UIStrings';
+
+const {
+  REST: {
+    PUBLIC: {
+      SSL_CERTIFICATE_DETAILS: sslCertificateDetailsUrl,
+      SSL_CERTIFICATES: sslCertificateUrl,
+    }
+  }
+} = APIConstants;
 
 const {
   USE_TRUST_STORE: LABELS,
   PERMISSION_ERROR,
   SSL_CERTIFICATE_DETAILS,
 } = UIStrings;
+
+jest.mock('axios', () => {
+  return {
+    ...jest.requireActual('axios'),
+    get: jest.fn(),
+  };
+});
 
 describe('UseNexusTruststore', () => {
   const selectors = {
@@ -82,6 +100,12 @@ describe('UseNexusTruststore', () => {
   };
 
   beforeAll(() => {
+    when(Axios.get).calledWith(`${sslCertificateDetailsUrl}?host=${host}&port=${port}`).mockResolvedValue({
+      data: [{}],
+    });
+    when(Axios.get).calledWith(sslCertificateUrl).mockResolvedValue({
+      data: [{}],
+    });
     global.NX = {
       Permissions: {check: mock},
     };
@@ -97,7 +121,7 @@ describe('UseNexusTruststore', () => {
     expect(selectors.viewCertificate()).toBeInTheDocument();
   });
 
-  it('users can not mark checkbox if user does not have enough permissions', () => {
+  it('users can not mark checkbox if user does not have enough permissions', async () => {
     const {tooltipMessage, checkbox} = selectors;
 
     mockPermission(permissions.create, false);
@@ -105,7 +129,8 @@ describe('UseNexusTruststore', () => {
     const {rerender} = renderView();
 
     expect(checkbox()).toBeDisabled();
-    expect(tooltipMessage(checkbox)).toHaveAttribute('title', PERMISSION_ERROR);
+
+    await TestUtils.expectToSeeTooltipOnHover(tooltipMessage(checkbox), PERMISSION_ERROR);
 
     mockPermission(permissions.create);
     mockPermission(permissions.update, false);
@@ -113,7 +138,8 @@ describe('UseNexusTruststore', () => {
     rerenderView(rerender);
 
     expect(checkbox()).toBeDisabled();
-    expect(tooltipMessage(checkbox)).toHaveAttribute('title', PERMISSION_ERROR);
+
+    await TestUtils.expectToSeeTooltipOnHover(tooltipMessage(checkbox), PERMISSION_ERROR);
 
     mockPermission(permissions.update);
     mockPermission(permissions.create);
@@ -123,7 +149,7 @@ describe('UseNexusTruststore', () => {
     expect(selectors.checkbox()).not.toBeDisabled();
   });
 
-  it('users can not view certificate if user does not have enough permissions', () => {
+  it('users can not view certificate if user does not have enough permissions', async () => {
     const {viewCertificate} = selectors;
 
     mockPermission(permissions.read, false);
@@ -132,7 +158,8 @@ describe('UseNexusTruststore', () => {
 
     expect(viewCertificate()).toHaveClass('disabled');
     expect(viewCertificate()).toHaveAttribute('aria-disabled', 'true');
-    expect(viewCertificate()).toHaveAttribute('title', PERMISSION_ERROR);
+
+    await TestUtils.expectToSeeTooltipOnHover(viewCertificate(), PERMISSION_ERROR);
 
     mockPermission(permissions.read);
 
@@ -141,7 +168,7 @@ describe('UseNexusTruststore', () => {
     expect(selectors.viewCertificate()).not.toBeDisabled();
   });
 
-  it('users can not add certificate if the url is not secure', () => {
+  it('users can not add certificate if the url is not secure', async () => {
     const {tooltipMessage, viewCertificate, checkbox} = selectors;
 
     mockPermission(permissions.read);
@@ -151,17 +178,15 @@ describe('UseNexusTruststore', () => {
     renderView(notSecureUrl);
 
     expect(checkbox()).toBeDisabled();
-    expect(tooltipMessage(checkbox)).toHaveAttribute(
-      'title',
-      LABELS.NOT_SECURE_URL
-    );
-    console.log(viewCertificate());
+
+    await TestUtils.expectToSeeTooltipOnHover(tooltipMessage(checkbox), LABELS.NOT_SECURE_URL);
+
     expect(viewCertificate()).toHaveClass('disabled');
     expect(viewCertificate()).toHaveAttribute('aria-disabled', 'true');
     expect(viewCertificate()).toHaveAttribute('title', PERMISSION_ERROR);
   });
 
-  it('users can view certificate', () => {
+  it('users can view certificate', async () => {
     const {viewCertificate} = selectors;
 
     mockPermission(permissions.read);
@@ -172,7 +197,7 @@ describe('UseNexusTruststore', () => {
 
     expect(viewCertificate()).not.toBeDisabled();
 
-    userEvent.click(viewCertificate());
+    await act(async () => userEvent.click(viewCertificate()));
 
     expect(screen.getByText(SSL_CERTIFICATE_DETAILS.TITLE)).toBeInTheDocument();
   });
@@ -193,7 +218,7 @@ describe('UseNexusTruststore', () => {
     expect(send).toHaveBeenCalled();
   });
 
-  it('shows the corresponding tooltip error message', () => {
+  it('shows the corresponding tooltip error message', async () => {
     const {tooltipMessage, checkbox} = selectors;
 
     mockPermission(permissions.create);
@@ -201,13 +226,10 @@ describe('UseNexusTruststore', () => {
 
     const {rerender} = renderView(notSecureUrl);
 
-    expect(tooltipMessage(checkbox)).toHaveAttribute(
-      'title',
-      LABELS.NOT_SECURE_URL
-    );
+    await TestUtils.expectToSeeTooltipOnHover(tooltipMessage(checkbox), LABELS.NOT_SECURE_URL);
 
     rerenderView(rerender);
 
-    expect(tooltipMessage(checkbox)).toHaveAttribute('title', PERMISSION_ERROR);
+    await TestUtils.expectToSeeTooltipOnHover(tooltipMessage(checkbox), PERMISSION_ERROR);
   });
 });
