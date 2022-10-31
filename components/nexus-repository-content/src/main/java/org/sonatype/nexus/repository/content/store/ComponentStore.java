@@ -24,7 +24,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.entity.Continuation;
-import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.AttributeOperation;
 import org.sonatype.nexus.repository.content.Component;
@@ -54,8 +53,6 @@ import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttrib
 public class ComponentStore<T extends ComponentDAO>
     extends ContentStoreEventSupport<T>
 {
-  private static final int BATCH_SIZE = SystemPropertiesHelper.getInteger("nexus.component.purge.size", 100);
-
   @Inject
   public ComponentStore(final DataSessionSupplier sessionSupplier,
                         @Assisted final String contentStoreName,
@@ -331,53 +328,13 @@ public class ComponentStore<T extends ComponentDAO>
    *
    * @since 3.29
    */
-  public int purge(final int repositoryId, final int[] componentIds) {
-    final int iterations = componentIds.length / BATCH_SIZE + 1;
-
-    int purged = 0;
-    for(int i=0; i<iterations; i++) {
-      int startIndex = i * BATCH_SIZE;
-      int[] page = new int[Math.min(BATCH_SIZE, componentIds.length - startIndex)];
-
-      System.arraycopy(componentIds, startIndex, page, 0, page.length);
-      purged += purgeBatch(repositoryId, page, Optional.empty());
-    }
-    return purged;
-  }
-
-  public int purge(
-      final Integer repositoryId,
-      final List<FluentComponent> components)
-  {
-    final int iterations = components.size() / BATCH_SIZE + 1;
-
-    int purged = 0;
-    for(int i=0; i<iterations; i++) {
-      int start = i * BATCH_SIZE;
-      int end = Math.min(start + BATCH_SIZE, components.size());
-      List<FluentComponent> page = components.subList(start, end);
-      int[] componentIds = page.stream()
-          .mapToInt(InternalIds::internalComponentId)
-          .toArray();
-
-      purged += purgeBatch(repositoryId, componentIds, Optional.of(page));
-    }
-
-    return purged;
-  }
-
   @Transactional
-  protected int purgeBatch(
-      final int repositoryId,
-      final int[] componentIds,
-      final Optional<List<FluentComponent>> components)
-  {
+  public int purge(final int repositoryId, final int[] componentIds) {
     int purged = 0;
 
     if (componentIds.length == 0) {
       return purged; // nothing to purge
     }
-
     if ("H2".equals(thisSession().sqlDialect())) {
       // workaround lack of primitive array support in H2 (should be fixed in H2 1.4.201?)
       purged += dao().purgeSelectedComponents(stream(componentIds).boxed().toArray(Integer[]::new));
@@ -386,12 +343,22 @@ public class ComponentStore<T extends ComponentDAO>
       purged += dao().purgeSelectedComponents(componentIds);
     }
 
-    components.ifPresent(
-        c -> postCommitEvent(() -> new ComponentsPurgedAuditEvent(repositoryId, Collections.unmodifiableList(c))));
-
     preCommitEvent(() -> new ComponentPrePurgeEvent(repositoryId, componentIds));
     postCommitEvent(() -> new ComponentPurgedEvent(repositoryId, componentIds));
 
     return purged;
+  }
+
+  @Transactional
+  public int purge(
+      final Integer repositoryId,
+      final List<FluentComponent> components)
+  {
+    int[] componentIds = components.stream()
+        .mapToInt(InternalIds::internalComponentId)
+        .toArray();
+    postCommitEvent(() -> new ComponentsPurgedAuditEvent(repositoryId, Collections.unmodifiableList(components)));
+
+    return purge(repositoryId, componentIds);
   }
 }
