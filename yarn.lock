@@ -1530,7 +1530,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fortawesome/fontawesome-common-types@npm:^0.2.25, @fortawesome/fontawesome-common-types@npm:^0.2.36":
+"@fortawesome/fontawesome-common-types@npm:^0.2.25, @fortawesome/fontawesome-common-types@npm:^0.2.29, @fortawesome/fontawesome-common-types@npm:^0.2.36":
   version: 0.2.36
   resolution: "@fortawesome/fontawesome-common-types@npm:0.2.36"
   checksum: d604ac51da0b1597127fde70c64157b70ead6af7f2643ab7dfca268ef99d4ed0b4cc823afba206362422a622e389828408bec573df802bf4f02b118d0fa18dc8
@@ -1559,6 +1559,15 @@ __metadata:
   dependencies:
     "@fortawesome/fontawesome-common-types": ^0.3.0
   checksum: 78be521be3aac56cf81695c5f3fefda8a0e0dcbd37cd734f09b74a3657dd9c073cb86c5adf60a4904e584936fe9a63ee913d932c03105092bd8c44bb92f3aad6
+  languageName: node
+  linkType: hard
+
+"@fortawesome/free-brands-svg-icons@npm:=5.13.1":
+  version: 5.13.1
+  resolution: "@fortawesome/free-brands-svg-icons@npm:5.13.1"
+  dependencies:
+    "@fortawesome/fontawesome-common-types": ^0.2.29
+  checksum: f71c9f03400f789753f646e488e1a3185784aacc196fecde6c9f4eba3a1bc30891e2ed162bc9d96cf2d2a97b70de104a1d7697ab2da8282bf710ce009c673550
   languageName: node
   linkType: hard
 
@@ -1602,15 +1611,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fortawesome/react-fontawesome@npm:^0.1.14":
-  version: 0.1.18
-  resolution: "@fortawesome/react-fontawesome@npm:0.1.18"
+"@fortawesome/react-fontawesome@npm:^0.1.18":
+  version: 0.1.19
+  resolution: "@fortawesome/react-fontawesome@npm:0.1.19"
   dependencies:
     prop-types: ^15.8.1
   peerDependencies:
     "@fortawesome/fontawesome-svg-core": ~1 || ~6
     react: ">=16.x"
-  checksum: eba711234541928e1877435905bcd94ab6aea1cf228833a55fc7c6a2fc18dd08d3f7f327ca4af0f3ba365188ad0869d7ecd31be5940d27f4e2bbe7e12cbcf520
+  checksum: 77dbe1d5fa156a2ff4aa069d6c11f0ba1fcf43df72c9f03f1eec353d23798513a1f2773957a2bc3107fb8dc79fa606999ed91bf21659745bcc166abc4072819e
   languageName: node
   linkType: hard
 
@@ -2437,7 +2446,7 @@ __metadata:
     "@nivo/core": ^0.79.0
     "@nivo/line": ^0.79.0
     "@sonatype/nexus-ui-plugin": "workspace:*"
-    "@sonatype/react-shared-components": =10.0.5
+    "@sonatype/react-shared-components": =11.5.21
     "@testing-library/jest-dom": =5.14.1
     "@testing-library/react": =12.1.2
     "@testing-library/user-event": =12.8.3
@@ -2473,6 +2482,51 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@sonatype/nexus-proui-plugin@workspace:private/plugins/nexus-proui-plugin":
+  version: 0.0.0-use.local
+  resolution: "@sonatype/nexus-proui-plugin@workspace:private/plugins/nexus-proui-plugin"
+  dependencies:
+    "@babel/core": =7.17.5
+    "@babel/plugin-proposal-optional-chaining": =7.16.7
+    "@babel/plugin-transform-runtime": =7.17.0
+    "@babel/preset-env": =7.16.11
+    "@babel/preset-react": =7.16.7
+    "@babel/runtime": =7.17.2
+    "@fortawesome/fontawesome-svg-core": =1.2.25
+    "@fortawesome/free-brands-svg-icons": =5.13.1
+    "@fortawesome/free-solid-svg-icons": =5.11.2
+    "@sonatype/nexus-ui-plugin": "workspace:*"
+    "@sonatype/react-shared-components": =11.5.21
+    "@testing-library/jest-dom": =5.14.1
+    "@testing-library/react": =12.1.2
+    "@xstate/react": =1.3.4
+    acorn: =7.0.0
+    axios: =0.21.4
+    babel-jest: =24.8.0
+    babel-loader: =8.2.3
+    babel-polyfill: =6.26.0
+    classnames: =2.3.1
+    copy-modules-webpack-plugin: =2.2.1
+    css-loader: =6.6.0
+    css-minimizer-webpack-plugin: =3.4.1
+    file-loader: =6.2.0
+    jest: =26.6.3
+    jest-junit: =13.2.0
+    jest-when: =3.1.0
+    mini-css-extract-plugin: =2.5.3
+    npm-run-all: =4.1.5
+    react: =17.0.2
+    react-dom: =17.0.2
+    sass: =1.38.0
+    sass-loader: =12.6.0
+    terser-webpack-plugin: =5.3.1
+    webpack: =5.69.1
+    webpack-cli: =4.9.2
+    webpack-merge: =5.8.0
+    xstate: =4.16.0
+  languageName: unknown
+  linkType: soft
+
 "@sonatype/nexus-rapture@workspace:components/nexus-rapture":
   version: 0.0.0-use.local
   resolution: "@sonatype/nexus-rapture@workspace:components/nexus-rapture"
@@ -2488,7 +2542,7 @@ __metadata:
     "@fortawesome/free-solid-svg-icons": =5.11.2
     "@fortawesome/react-fontawesome": =0.1.4
     "@sonatype/nexus-ui-plugin": "workspace:*"
-    "@sonatype/react-shared-components": =10.0.5
+    "@sonatype/react-shared-components": =11.5.21
     "@xstate/inspect": =0.4.1
     axios: =0.21.4
     babel-loader: =8.2.3
@@ -2526,7 +2580,7 @@ __metadata:
     "@fortawesome/fontawesome-svg-core": =1.2.25
     "@fortawesome/free-solid-svg-icons": =5.11.2
     "@fortawesome/react-fontawesome": =0.1.4
-    "@sonatype/react-shared-components": =10.0.5
+    "@sonatype/react-shared-components": =11.5.21
     "@testing-library/jest-dom": =5.14.1
     "@testing-library/react": =12.1.2
     "@testing-library/user-event": =12.8.3
@@ -2544,7 +2598,7 @@ __metadata:
     react-test-renderer: =16.14.0
     xstate: =4.16.0
   peerDependencies:
-    "@sonatype/react-shared-components": =10.0.5
+    "@sonatype/react-shared-components": =11.5.21
     react: =16.14.0
     react-dom: =16.14.0
     xstate: =4.16.0
@@ -2565,14 +2619,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sonatype/react-shared-components@npm:=10.0.5":
-  version: 10.0.5
-  resolution: "@sonatype/react-shared-components@npm:10.0.5"
+"@sonatype/react-shared-components@npm:=11.5.21":
+  version: 11.5.21
+  resolution: "@sonatype/react-shared-components@npm:11.5.21"
   dependencies:
     "@fortawesome/fontawesome-svg-core": ^1.2.32
     "@fortawesome/free-regular-svg-icons": ^5.15.4
     "@fortawesome/free-solid-svg-icons": ^5.15.4
-    "@fortawesome/react-fontawesome": ^0.1.14
+    "@fortawesome/react-fontawesome": ^0.1.18
     "@material-ui/core": ^4.11.2
     "@react-hook/merged-ref": ^1.3.0
     "@react-hook/resize-observer": ^1.2.5
@@ -2583,12 +2637,13 @@ __metadata:
     "@types/ramda": ^0.27.64
     classnames: ^2.2.6
     fuse.js: ^6.4.6
+    pretty-bytes: ^6.0.0
     prop-types: ^15.7.2
     ramda: ^0.28.0
   peerDependencies:
     react: ^16.10.1
     react-dom: ^16.10.1
-  checksum: 95df4deddeb17bf413bb729aeabbe0799da79fc0ee95db41318d08772a36b4ea2c46507c92770167ddf89df7b371b09cb7abc9b88d76057ff7c71dde39897221
+  checksum: dad2c4d29c9dd0579c76972319473b885576e2d2b85eecdf6dcdd6bcd8ba849570ced7438a42a731ed908087eb5f6e5335c647daa6a3a3b1ed41f0806af82ce7
   languageName: node
   linkType: hard
 
@@ -9734,6 +9789,13 @@ __metadata:
   version: 0.2.0
   resolution: "preserve@npm:0.2.0"
   checksum: dd31d4fd0e6b218cac7178712ae0683c96e6eaa3e5490a37aba6d47095f87c47ffe980a3061ebe72ca07cb2a9a4f1a41bbeecee8944ec77be311c294e05b2e43
+  languageName: node
+  linkType: hard
+
+"pretty-bytes@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "pretty-bytes@npm:6.0.0"
+  checksum: 0bb9f95e617236404b29a8392c6efd82d65805f622f5e809ecd70068102be857d4e3276c86d2a32fa2ef851cc29472e380945dab7bec83ec79bd57a19a10faf7
   languageName: node
   linkType: hard
 

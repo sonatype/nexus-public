@@ -13,19 +13,19 @@
 import React from 'react';
 import {render, screen} from '@testing-library/react';
 
-import NodeCard from "./NodeCard";
-import nxrmnodesTestdata from "./nxrmnodes.testdata";
+import NodeCard from './NodeCard';
+import NodeCardTestData from './NodeCard.testdata';
 
 describe('NodeCard', function () {
-    const testNodes = nxrmnodesTestdata;
+    const testNodes = NodeCardTestData;
 
-    const NODE_ACTIVE_INDICATOR = "Node Active";
+    const NODE_ACTIVE_INDICATOR = 'Node Active';
 
-    const DOWNLOAD_ZIP_STATUS = "Download Zip";
-    const CREATE_ZIP_STATUS = "Create Support zip";
-    const CREATING_ZIP_STATUS = "Creating Zip...";
+    const DOWNLOAD_ZIP_STATUS = 'Download Zip';
+    const CREATE_ZIP_STATUS = 'Create Support zip';
+    const CREATING_ZIP_STATUS = 'Creating Zip...';
 
-    const NO_ZIP_CREATED = "No Zip created";
+    const NO_ZIP_CREATED = 'No Zip created';
 
     const ACTIVE_NODE_INDEX = 0;
     const ZIP_CREATED_NODE_INDEX = 0;
@@ -33,8 +33,8 @@ describe('NodeCard', function () {
     const ZIP_CREATING_NODE_INDEX = 4;
 
     const selectors = {
-        nodeHostName: (hostame) => screen.getByText(hostame),
-        activeIndicator: () => screen.getByText(NODE_ACTIVE_INDICATOR),
+        nodeHostName: (hostname) => screen.getByText(hostname),
+        activeIndicator: async () => await screen.findByText(NODE_ACTIVE_INDICATOR),
         downloadZipStatus: () => screen.getByText(DOWNLOAD_ZIP_STATUS),
         noZipCreated: () => screen.getByText(NO_ZIP_CREATED),
         zipCreate: () => screen.getByText(CREATE_ZIP_STATUS),
@@ -47,40 +47,40 @@ describe('NodeCard', function () {
         );
     };
 
-    it('renders node card',function () {
+    it('renders node card', async () => {
         const activeNode = testNodes[ACTIVE_NODE_INDEX];
         renderView(activeNode);
 
         expect(selectors.nodeHostName(activeNode.hostname)).toBeInTheDocument();
-        expect(selectors.activeIndicator()).toBeInTheDocument();
+        expect(await selectors.activeIndicator()).toBeInTheDocument();
     });
 
 
-    it('renders zip is created',function() {
+    it('renders zip is created', async () => {
         const node = testNodes[ZIP_CREATED_NODE_INDEX];
         renderView(node);
 
         expect(selectors.nodeHostName(node.hostname)).toBeInTheDocument();
-        expect(selectors.activeIndicator()).toBeInTheDocument();
+        expect(await selectors.activeIndicator()).toBeInTheDocument();
         expect(selectors.downloadZipStatus()).toBeInTheDocument();
     });
 
-    it('renders zip is not created',function() {
+    it('renders zip is not created', async () => {
         const node = testNodes[ZIP_NOT_CREATED_NODE_INDEX];
         renderView(node);
 
         expect(selectors.nodeHostName(node.hostname)).toBeInTheDocument();
-        expect(selectors.activeIndicator()).toBeInTheDocument();
+        expect(await selectors.activeIndicator()).toBeInTheDocument();
         expect(selectors.noZipCreated()).toBeInTheDocument();
         expect(selectors.zipCreate()).toBeInTheDocument();
     });
 
-    it('renders zip creation in progress',function() {
+    it('renders zip creation in progress', async () => {
         const node = testNodes[ZIP_CREATING_NODE_INDEX];
         renderView(node);
 
         expect(selectors.nodeHostName(node.hostname)).toBeInTheDocument();
-        expect(selectors.activeIndicator()).toBeInTheDocument();
+        expect(await selectors.activeIndicator()).toBeInTheDocument();
         expect(selectors.zipCreating()).toBeInTheDocument();
     });
 });

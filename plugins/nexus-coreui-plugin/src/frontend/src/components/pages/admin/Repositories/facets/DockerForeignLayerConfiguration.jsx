@@ -88,12 +88,14 @@ export default function DockerForeignLayerConfiguration({parentMachine}) {
   };
 
   const removeUrlPattern = (index) => {
-    const whiteList = dockerProxy.foreignLayerUrlWhitelist.filter(
-      (_, i) => i !== index
-    );
+    if (foreignLayerUrlWhitelist.length > 1) {
+      const whiteList = dockerProxy.foreignLayerUrlWhitelist.filter(
+          (_, i) => i !== index
+      );
 
-    updateForeignLayerUrlWhiteList(whiteList);
-    setWhitelist(whiteList);
+      updateForeignLayerUrlWhiteList(whiteList);
+      setWhitelist(whiteList);
+    }
   };
 
   const handleEnter = (event) => {
@@ -158,7 +160,7 @@ export default function DockerForeignLayerConfiguration({parentMachine}) {
                   title={EDITOR.FOREIGN_LAYER.REMOVE}
                   variant="icon-only"
                   onClick={() => removeUrlPattern(index)}
-                  disabled={foreignLayerUrlWhitelist.length < 2}
+                  className={foreignLayerUrlWhitelist.length <= 1 ? 'disabled' : null}
                   type="button"
                 >
                   <NxFontAwesomeIcon icon={faTrashAlt} />

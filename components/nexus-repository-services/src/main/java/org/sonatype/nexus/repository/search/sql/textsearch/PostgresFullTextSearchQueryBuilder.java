@@ -29,7 +29,7 @@ import static java.util.stream.Collectors.joining;
  * Query building utility for full text search columns
  *
  * @see TextualQueryType#FULL_TEXT_SEARCH_QUERY
- * @since 3.43
+ * @since 3.next
  */
 @Singleton
 @Named(PostgresFullTextSearchQueryBuilder.NAME)

@@ -17,7 +17,6 @@ import org.sonatype.nexus.internal.atlas.customizers.InstallConfigurationCustomi
 import org.sonatype.nexus.internal.atlas.customizers.InstallConfigurationCustomizer.SanitizedHazelcastFileSource
 import org.sonatype.nexus.internal.atlas.customizers.InstallConfigurationCustomizer.SanitizedJettyFileSource
 
-import org.junit.Ignore
 import org.junit.Test
 import org.xmlunit.builder.DiffBuilder
 import org.xmlunit.builder.Input
@@ -29,7 +28,6 @@ import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.CON
 /**
  * Tests for {@link InstallConfigurationCustomizer}.
  */
-@Ignore("Disabled only for release 3.43.0")
 class InstallConfigurationCustomizerTest
     extends TestSupport
 {

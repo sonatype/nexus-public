@@ -43,6 +43,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
         }
       })
     },
+    formProps: jest.requireActual('@sonatype/nexus-ui-plugin').FormUtils.formProps,
     fieldProps: jest.requireActual('@sonatype/nexus-ui-plugin').FormUtils.fieldProps,
     saveTooltip: jest.requireActual('@sonatype/nexus-ui-plugin').FormUtils.saveTooltip,
     discardTooltip: jest.requireActual('@sonatype/nexus-ui-plugin').FormUtils.discardTooltip

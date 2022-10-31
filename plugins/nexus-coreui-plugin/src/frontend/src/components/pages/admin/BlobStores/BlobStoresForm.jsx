@@ -23,7 +23,6 @@ import {
   PageHeader,
   PageTitle,
   Section,
-  SectionFooter,
   Select,
   Textfield,
   FormUtils,
@@ -33,13 +32,14 @@ import {
   NxCheckbox,
   NxErrorAlert,
   NxFontAwesomeIcon,
-  NxTooltip,
-  NxInfoAlert,
   NxForm,
+  NxFormGroup,
+  NxFormSelect,
+  NxInfoAlert,
+  NxLoadWrapper,
   NxModal,
   NxTextInput,
-  NxFormGroup,
-  NxLoadWrapper
+  NxTooltip
 } from '@sonatype/react-shared-components';
 import BlobStoresFormMachine from './BlobStoresFormMachine';
 import UIStrings from '../../../../constants/UIStrings';
@@ -68,8 +68,6 @@ export default function BlobStoresForm({itemId, onDone}) {
     devTools: true
   });
 
-  const isLoading = current.matches('loading');
-  const isSaving = current.matches('saving');
   const showConvertToGroupModal = current.matches('modalConvertToGroup');
   const isConvertingToGroup = current.matches('convertToGroup');
   const isCreate = itemId === '';
@@ -77,16 +75,11 @@ export default function BlobStoresForm({itemId, onDone}) {
   const {
     blobStoreUsage,
     data,
-    isPristine,
-    saveError,
-    loadError,
     quotaTypes,
     repositoryUsage,
     type,
-    types,
-    validationErrors
+    types
   } = current.context;
-  const isInvalid = FormUtils.isInvalid(validationErrors);
   const hasSoftQuota = path(['softQuota', 'enabled'], data);
   const cannotDelete = blobStoreUsage > 0 || repositoryUsage > 0;
   const deleteTooltip = cannotDelete ?
@@ -117,14 +110,6 @@ export default function BlobStoresForm({itemId, onDone}) {
     send({type: 'UPDATE_SOFT_QUOTA', name, value});
   }
 
-  function retry() {
-    send({type: 'RETRY'});
-  }
-
-  function save() {
-    send({type: 'SAVE'});
-  }
-
   function cancel() {
     onDone();
   }
@@ -153,7 +138,6 @@ export default function BlobStoresForm({itemId, onDone}) {
   }
 
   return <Page className="nxrm-blob-stores">
-    {saveError && <NxErrorAlert>{saveError}</NxErrorAlert>}
     <PageHeader>
       <PageTitle text={isEdit ? FORM.EDIT_TILE(pristineData.name) : FORM.CREATE_TITLE}
                  description={isEdit ? FORM.EDIT_DESCRIPTION(type?.name || pristineData.type) : null}/>
@@ -165,16 +149,8 @@ export default function BlobStoresForm({itemId, onDone}) {
     </PageHeader>
     <Section>
       <NxForm className="nxrm-blob-stores-form"
-              loading={isLoading}
-              loadError={loadError}
-              doLoad={retry}
+              {...FormUtils.formProps(current, send)}
               onCancel={cancel}
-              onSubmit={save}
-              submitError={saveError}
-              submitMaskState={isSaving ? false : null}
-              submitMaskMessage={UIStrings.SAVING}
-              submitBtnText={UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
-              validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
               additionalFooterBtns={itemId &&
               <NxTooltip title={deleteTooltip}>
                 <NxButton variant="tertiary" className={cannotDelete && 'disabled'} onClick={confirmDelete}>
@@ -186,10 +162,10 @@ export default function BlobStoresForm({itemId, onDone}) {
         {isEdit && <NxInfoAlert>{FORM.EDIT_WARNING}</NxInfoAlert>}
         {isCreate &&
         <FieldWrapper labelText={FORM.TYPE.label} description={FORM.TYPE.sublabel}>
-          <Select id="type" name="type" value={type?.id} onChange={setType}>
+          <NxFormSelect id="type" name="type" value={type?.id} onChange={setType}>
             <option disabled={isTypeSelected} value=""></option>
             {types.map(({id, name}) => <option key={id} value={id}>{name}</option>)}
-          </Select>
+          </NxFormSelect>
         </FieldWrapper>
         }
         {isTypeSelected &&

@@ -19,9 +19,29 @@ import Axios from 'axios';
 import {ExtJS, FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
+import {mergeDeepRight} from 'ramda';
 
 const userAccountMachine = FormUtils.buildFormMachine({
-  id: 'UserAccount'
+  id: 'UserAccount',
+
+  context: {
+    data: {
+      external: null,
+      userId: null
+    }
+  },
+
+  config: (config) => (mergeDeepRight(config, {
+    states: {
+      loaded: {
+        on: {
+          RESET: {
+            cond: 'isInternal'
+          }
+        }
+      }
+    }
+  }))
 }).withConfig({
   actions: {
     logLoadError: ({error}) => {
@@ -42,6 +62,11 @@ const userAccountMachine = FormUtils.buildFormMachine({
       })
     })
   },
+
+  guards: {
+    isInternal: ({data: {external}}) => !Boolean(external)
+  },
+
   services: {
     fetchData: () => Axios.get('/service/rest/internal/ui/user'),
     saveData: ({data}) => {

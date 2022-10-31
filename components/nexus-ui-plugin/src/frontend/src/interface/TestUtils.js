@@ -14,7 +14,8 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {fireEvent, render, screen, waitFor, within} from '@testing-library/react';
+import {fireEvent, render, screen, waitFor, within, waitForElementToBeRemoved} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import {pick} from 'ramda';
 
 /**
@@ -106,6 +107,18 @@ export default class TestUtils {
   static async expectProperFilteredItemsCount(filter, query, count) {
     await this.changeField(filter, query);
     expect(this.tableSelectors.rows()).toHaveLength(count);
+  }
+
+  static async expectToSeeTooltipOnHover(element, tooltipMessage) {
+    let tooltip = screen.queryByRole('tooltip', {name: tooltipMessage});
+    expect(tooltip).not.toBeInTheDocument();
+
+    userEvent.hover(element);
+    tooltip = await screen.findByRole('tooltip', {name: tooltipMessage});
+    expect(tooltip).toBeInTheDocument();
+
+    userEvent.unhover(element);
+    await waitForElementToBeRemoved(tooltip);
   }
 
   static makeExtResult(data) {
