@@ -605,7 +605,7 @@ public class RepositoryManagerImpl
       RemoteConnectionStatusType statusType =
           RemoteConnectionStatusType.values()[event.getRemoteConnectionStatusTypeOrdinal()];
       // restore RemoteConnectionStatus from event
-      log.warn("Consume distributed RepositoryRemoteConnectionStatusEvent: repository={}, type={}",
+      log.debug("Consume distributed RepositoryRemoteConnectionStatusEvent: repository={}, type={}",
           repositoryName, statusType);
       RemoteConnectionStatus status = new RemoteConnectionStatus(statusType, event.getReason())
           .setBlockedUntil(new DateTime(event.getBlockedUntilMillis()))

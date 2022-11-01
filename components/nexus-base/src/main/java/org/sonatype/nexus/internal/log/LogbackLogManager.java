@@ -399,7 +399,7 @@ public class LogbackLogManager
 
   @Subscribe
   public void on(final LoggerOverridesReloadEvent event) {
-    log.error("Received event {}. Reload logger overrides", event);
+    log.debug("Received event {}. Reload logger overrides", event);
     applyOverrides();
   }
 
