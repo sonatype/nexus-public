@@ -261,6 +261,8 @@ public class SearchTableDAOTest
     searchTableData.addFormatFieldValue3("customField3");
     searchTableData.addFormatFieldValue4("customField4");
     searchTableData.addFormatFieldValue5("customField5");
+    searchTableData.addFormatFieldValue6("customField6");
+    searchTableData.addFormatFieldValue7("customField7");
     searchDAO.save(searchTableData);
     SqlSearchQueryConditionBuilder queryConditionBuilder = new PostgresFullTextSearchQueryBuilder();
     SqlSearchQueryCondition queryCondition =

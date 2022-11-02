@@ -67,6 +67,12 @@ public class ComponentSearchField
   public static final SearchFieldSupport FORMAT_FIELD_5 = new ComponentSearchField("format_field_values_5",
       FULL_TEXT_SEARCH_QUERY);
 
+  public static final SearchFieldSupport FORMAT_FIELD_6 = new ComponentSearchField("format_field_values_6",
+      FULL_TEXT_SEARCH_QUERY);
+
+  public static final SearchFieldSupport FORMAT_FIELD_7 = new ComponentSearchField("format_field_values_7",
+      FULL_TEXT_SEARCH_QUERY);
+
   public ComponentSearchField(final String columnName) {
     this(columnName, TextualQueryType.DEFAULT_TEXT_QUERY);
   }

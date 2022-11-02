@@ -39,6 +39,8 @@
       format_field_values_3            TSVECTOR,
       format_field_values_4            TSVECTOR,
       format_field_values_5            TSVECTOR,
+      format_field_values_6            TSVECTOR,
+      format_field_values_7            TSVECTOR,
       uploaders                        TSVECTOR,
       uploader_ips                     TSVECTOR,
       paths                            VARCHAR,
@@ -68,6 +70,8 @@
     CREATE INDEX IF NOT EXISTS idx_search_components_format_field_values_3 ON search_components USING GIN (format_field_values_3);
     CREATE INDEX IF NOT EXISTS idx_search_components_format_field_values_4 ON search_components USING GIN (format_field_values_4);
     CREATE INDEX IF NOT EXISTS idx_search_components_format_field_values_5 ON search_components USING GIN (format_field_values_5);
+    CREATE INDEX IF NOT EXISTS idx_search_components_format_field_values_6 ON search_components USING GIN (format_field_values_6);
+    CREATE INDEX IF NOT EXISTS idx_search_components_format_field_values_7 ON search_components USING GIN (format_field_values_7);
     CREATE INDEX IF NOT EXISTS idx_search_components_format_uploaders ON search_components USING GIN (uploaders);
     CREATE INDEX IF NOT EXISTS idx_search_components_format_uploader_ips ON search_components USING GIN (uploader_ips);
     CREATE INDEX IF NOT EXISTS idx_search_components_paths ON search_components (paths);
@@ -146,7 +150,7 @@
           search_repository_name, tsvector_format, tsvector_namespace, tsvector_version, tsvector_search_repository_name, component_kind,
           normalised_version, prerelease, last_event_time, paths, tsvector_search_component_name, uploaders, uploader_ips, tsvector_paths,
           keywords, md5, sha1, sha256, sha512, format_field_values_1, format_field_values_2,
-          format_field_values_3, format_field_values_4, format_field_values_5, component_created)
+          format_field_values_3, format_field_values_4, format_field_values_5, format_field_values_6, format_field_values_7, component_created)
         SELECT
            #{repositoryId}, #{componentId}, #{format}, #{namespace}, #{componentName}, #{version}, #{repositoryName},
             to_tsvector('simple', coalesce(#{format}, '')), to_tsvector('simple', coalesce(#{namespace}, '')),
@@ -168,6 +172,8 @@
             <include refid="toTsVector"><property name="tokens" value="formatFieldValues3"/></include>,
             <include refid="toTsVector"><property name="tokens" value="formatFieldValues4"/></include>,
             <include refid="toTsVector"><property name="tokens" value="formatFieldValues5"/></include>,
+            <include refid="toTsVector"><property name="tokens" value="formatFieldValues6"/></include>,
+            <include refid="toTsVector"><property name="tokens" value="formatFieldValues7"/></include>,
             comp.created
         FROM ${format}_component comp WHERE component_id = #{componentId}
         -- The WHERE clause above ensures the component still exists
@@ -191,7 +197,9 @@
           format_field_values_2 = <include refid="toTsVector"><property name="tokens" value="formatFieldValues2"/></include>,
           format_field_values_3 = <include refid="toTsVector"><property name="tokens" value="formatFieldValues3"/></include>,
           format_field_values_4 = <include refid="toTsVector"><property name="tokens" value="formatFieldValues4"/></include>,
-          format_field_values_5 = <include refid="toTsVector"><property name="tokens" value="formatFieldValues5"/></include>
+          format_field_values_5 = <include refid="toTsVector"><property name="tokens" value="formatFieldValues5"/></include>,
+          format_field_values_6 = <include refid="toTsVector"><property name="tokens" value="formatFieldValues6"/></include>,
+          format_field_values_7 = <include refid="toTsVector"><property name="tokens" value="formatFieldValues7"/></include>
         WHERE EXISTS(SELECT component_id FROM ${format}_component WHERE component_id = #{componentId})
         -- The EXISTS clause above ensures the component still exists
         -- Thereby helping us avoid the need for DELET'ing threads to lock component ids
@@ -291,7 +299,7 @@
       search_repository_name, tsvector_format, tsvector_namespace, tsvector_version, tsvector_search_repository_name,
       component_kind, normalised_version, component_created, prerelease, last_event_time, paths, uploaders,
       uploader_ips, tsvector_search_component_name, tsvector_paths, keywords, md5, sha1, sha256, sha512,
-      format_field_values_1, format_field_values_2, format_field_values_3, format_field_values_4, format_field_values_5)
+      format_field_values_1, format_field_values_2, format_field_values_3, format_field_values_4, format_field_values_5, format_field_values_6, format_field_values_7)
     VALUES
     <foreach collection="searchData" separator="," item="item">
       (#{item.repositoryId}, #{item.componentId},  #{item.format}, #{item.namespace},
@@ -314,7 +322,9 @@
       <include refid="toTsVector"><property name="tokens" value="item.formatFieldValues2"/></include>,
       <include refid="toTsVector"><property name="tokens" value="item.formatFieldValues3"/></include>,
       <include refid="toTsVector"><property name="tokens" value="item.formatFieldValues4"/></include>,
-      <include refid="toTsVector"><property name="tokens" value="item.formatFieldValues5"/></include>
+      <include refid="toTsVector"><property name="tokens" value="item.formatFieldValues5"/></include>,
+      <include refid="toTsVector"><property name="tokens" value="item.formatFieldValues6"/></include>,
+      <include refid="toTsVector"><property name="tokens" value="item.formatFieldValues7"/></include>
        )
     </foreach>
   </insert>

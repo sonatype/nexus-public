@@ -93,6 +93,10 @@ public class SearchTableData
 
   private final Set<String> formatFieldValues5 = new HashSet<>();
 
+  private final Set<String> formatFieldValues6 = new HashSet<>();
+
+  private final Set<String> formatFieldValues7 = new HashSet<>();
+
   private boolean prerelease;
 
   public SearchTableData() {
@@ -312,6 +316,26 @@ public class SearchTableData
     return unmodifiableCollection(formatFieldValues5);
   }
 
+  public void addFormatFieldValue6(final String formatFieldValues6) {
+    if (isNotBlank(formatFieldValues6)) {
+      this.formatFieldValues6.add(formatFieldValues6);
+    }
+  }
+
+  public Collection<String> getFormatFieldValues6() {
+    return unmodifiableCollection(formatFieldValues6);
+  }
+
+  public void addFormatFieldValue7(final String formatFieldValues7) {
+    if (isNotBlank(formatFieldValues7)) {
+      this.formatFieldValues7.add(formatFieldValues7);
+    }
+  }
+
+  public Collection<String> getFormatFieldValues7() {
+    return unmodifiableCollection(formatFieldValues7);
+  }
+
   public void addUploader(final String uploader) {
     if (isNotBlank(uploader)) {
       this.uploaders.add(uploader);
@@ -384,15 +408,18 @@ public class SearchTableData
         Objects.equals(formatFieldValues2, tableData.formatFieldValues2) &&
         Objects.equals(formatFieldValues3, tableData.formatFieldValues3) &&
         Objects.equals(formatFieldValues4, tableData.formatFieldValues4) &&
-        Objects.equals(formatFieldValues5, tableData.formatFieldValues5);
+        Objects.equals(formatFieldValues5, tableData.formatFieldValues5) &&
+        Objects.equals(formatFieldValues6, tableData.formatFieldValues6) &&
+        Objects.equals(formatFieldValues7, tableData.formatFieldValues7);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(repositoryId, componentId, format, namespace, componentName, aliasComponentNames, componentKind,
         version, normalisedVersion, componentCreated, lastEventTime, repositoryName,
-        prerelease, uploaders, uploaderIps, paths, keywords, md5, sha1, sha256, sha512, formatFieldValues1, formatFieldValues2,
-        formatFieldValues3, formatFieldValues4, formatFieldValues5);
+        prerelease, uploaders, uploaderIps, paths, keywords, md5, sha1, sha256, sha512, formatFieldValues1,
+        formatFieldValues2, formatFieldValues3, formatFieldValues4, formatFieldValues5, formatFieldValues6,
+        formatFieldValues7);
   }
 
   @Override
@@ -424,6 +451,8 @@ public class SearchTableData
         .add("formatFieldValues3='" + formatFieldValues3 + "'")
         .add("formatFieldValues4='" + formatFieldValues4 + "'")
         .add("formatFieldValues5='" + formatFieldValues5 + "'")
+        .add("formatFieldValues6='" + formatFieldValues6 + "'")
+        .add("formatFieldValues7='" + formatFieldValues7 + "'")
         .toString();
   }
 }
