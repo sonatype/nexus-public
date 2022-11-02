@@ -20,6 +20,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
@@ -125,7 +129,7 @@ public class RepositoryManagerImpl
 
   private final List<DefaultRepositoriesContributor> defaultRepositoriesContributors;
 
-  private final Map<String, Repository> repositories = Maps.newConcurrentMap();
+  private final Map<String, Repo> repositories = Maps.newConcurrentMap();
 
   private final boolean skipDefaultRepositories;
 
@@ -174,14 +178,14 @@ public class RepositoryManagerImpl
   }
 
   /**
-   * Lookup a repository by name.
+   * Lookup a repository cache pair by name.
    */
-  private Repository repository(final String name) {
-    Repository repository = repositories.get(name.toLowerCase());
-    if (repository == null) {
+  private Repo repoCachePair(final String name) {
+    Repo repo = repositories.get(name.toLowerCase());
+    if (repo == null) {
       throw new ValidationException("Missing repository: " + name);
     }
-    return repository;
+    return repo;
   }
 
   /**
@@ -215,17 +219,20 @@ public class RepositoryManagerImpl
   /**
    * Track repository.
    */
-  private void track(final Repository repository) {
+  private Repo track(final Repo repo) {
+    Repository repository = repo.repository;
     // configure security
     securityContributor.add(repository);
 
-    Repository value = repositories.putIfAbsent(repository.getName().toLowerCase(), repository);
+    Repo value = repositories.putIfAbsent(repository.getName().toLowerCase(), repo);
 
     if (value == null) {
       log.debug("Tracking: {}", repository);
+      return repo;
     }
     else {
-      log.debug("An existing repository with the same name is already tracked {}", value);
+      log.debug("An existing repository with the same name is already tracked {}", value.repository);
+      return value;
     }
   }
 
@@ -288,7 +295,7 @@ public class RepositoryManagerImpl
     for (Configuration configuration : configurations) {
       log.debug("Restoring repository: {}", configuration);
       Repository repository = newRepository(configuration);
-      track(repository);
+      track(new Repo(repository));
 
       eventManager.post(new RepositoryLoadedEvent(repository));
     }
@@ -296,7 +303,8 @@ public class RepositoryManagerImpl
 
   private void startRepositories() throws Exception {
     log.debug("Starting {} repositories", repositories.size());
-    for (Repository repository : repositories.values()) {
+    for (Repo repo : repositories.values()) {
+      Repository repository = repo.repository;
       log.debug("Starting repository: {}", repository);
       repository.start();
 
@@ -307,13 +315,15 @@ public class RepositoryManagerImpl
   @Override
   protected void doStop() throws Exception {
     log.debug("Stopping {} repositories", repositories.size());
-    for (Repository repository : repositories.values()) {
+    for (Repo repo : repositories.values()) {
+      Repository repository = repo.repository;
       log.debug("Stopping repository: {}", repository);
       repository.stop();
     }
 
     log.debug("Destroying {} repositories", repositories.size());
-    for (Repository repository : repositories.values()) {
+    for (Repo repo : repositories.values()) {
+      Repository repository = repo.repository;
       log.debug("Destroying repository: {}", repository);
       repository.destroy();
     }
@@ -326,7 +336,10 @@ public class RepositoryManagerImpl
   @Override
   @Guarded(by = STARTED)
   public Iterable<Repository> browse() {
-    return ImmutableList.copyOf(repositories.values());
+    List<Repository> localCacheRepositories = repositories.values().stream()
+        .map(repo -> repo.repository)
+        .collect(Collectors.toList());
+    return ImmutableList.copyOf(localCacheRepositories);
   }
 
   @Override
@@ -355,9 +368,9 @@ public class RepositoryManagerImpl
   @Guarded(by = STARTED)
   public Repository get(final String name) {
     checkNotNull(name);
-    Repository repository = repositories.get(name.toLowerCase());
+    Repo repo = repositories.get(name.toLowerCase());
 
-    if (repository == null) {
+    if (repo == null) {
       Collection<Configuration> configurations = store.readByNames(Collections.singleton(name));
 
       if (configurations.isEmpty()) {
@@ -373,7 +386,13 @@ public class RepositoryManagerImpl
       }
     }
 
-    return repository;
+    try {
+      repo.readLock.lock();
+      return repo.repository;
+    }
+    finally {
+      repo.readLock.unlock();
+    }
   }
 
   @Override
@@ -404,53 +423,63 @@ public class RepositoryManagerImpl
     validateConfiguration(configuration);
 
     // load old configuration before update
-    Configuration oldConfiguration = repository(configuration.getRepositoryName()).getConfiguration().copy();
-    String repositoryName = checkNotNull(configuration.getRepositoryName());
-    validateRepositoryConfiguration(repositoryName, configuration);
+    Repo repo = repoCachePair(configuration.getRepositoryName());
+    try {
+      repo.writeLock.lock();
 
-    // the configuration must be updated before repository restart
-    if (!EventHelper.isReplicating()) {
-      store.update(configuration);
+      Configuration oldConfiguration = repo.repository.getConfiguration().copy();
+      String repositoryName = checkNotNull(configuration.getRepositoryName());
+      validateRepositoryConfiguration(repositoryName, configuration);
+
+      // the configuration must be updated before repository restart
+      if (!EventHelper.isReplicating()) {
+        store.update(configuration);
+      }
+      Repository repository = updateRepositoryInMemory(configuration);
+      eventManager.post(new RepositoryUpdatedEvent(repository, oldConfiguration));
+      distributeRepositoryConfigurationEvent(repository.getName(), UPDATED);
+
+      return repository;
     }
-    Repository repository = updateRepositoryInMemory(configuration);
-    eventManager.post(new RepositoryUpdatedEvent(repository, oldConfiguration));
-    distributeRepositoryConfigurationEvent(repository.getName(), UPDATED);
-
-    return repository;
+    finally {
+      repo.writeLock.unlock();
+    }
   }
 
   @Override
   @Guarded(by = STARTED)
-  public void delete(final String name) throws Exception {
-    checkNotNull(name);
+  public void delete(final String repositoryName) throws Exception {
+    checkNotNull(repositoryName);
 
-    Repository repository = deleteRepositoryFromMemory(name);
+    Repo repo = repoCachePair(repositoryName);
+    try {
+      repo.writeLock.lock();
 
-    if (!EventHelper.isReplicating()) {
-      Optional<Configuration> configuration = repositoryConfiguration(name);
-      configuration.ifPresent(store::delete);
+      Repository repository = deleteRepositoryFromMemory(repo.repository);
+
+      if (!EventHelper.isReplicating()) {
+        Optional<Configuration> configuration = repositoryConfiguration(repositoryName);
+        configuration.ifPresent(store::delete);
+      }
+
+      eventManager.post(new RepositoryDeletedEvent(repository));
+      distributeRepositoryConfigurationEvent(repositoryName, DELETED);
     }
-
-    eventManager.post(new RepositoryDeletedEvent(repository));
-    distributeRepositoryConfigurationEvent(name, DELETED);
-
-    log.info("Deleted repository: {}", name);
+    finally {
+      repo.writeLock.unlock();
+    }
+    log.info("Deleted repository: {}", repositoryName);
   }
 
-  private Repository deleteRepositoryFromMemory(final String name) throws Exception {
-    checkNotNull(name);
+  private Repository deleteRepositoryFromMemory(final Repository repository) throws Exception {
     freezeService.checkWritable("Unable to delete repository when database is frozen.");
 
-    log.info("Deleting repository from memory: {}", name);
-
-    Repository repository = repository(name);
+    log.info("Deleting repository from memory: {}", repository.getName());
 
     removeRepositoryFromAllGroups(repository);
-
     repository.stop();
     repository.delete();
     repository.destroy();
-
     untrack(repository);
 
     return repository;
@@ -465,9 +494,7 @@ public class RepositoryManagerImpl
     validateConfiguration(configuration);
 
     Repository repository = newRepository(configuration);
-    track(repository);
-
-    return repository;
+    return track(new Repo(repository)).repository;
   }
 
   private Repository updateRepositoryInMemory(final Configuration configuration) throws Exception {
@@ -476,7 +503,7 @@ public class RepositoryManagerImpl
     String repositoryName = checkNotNull(configuration.getRepositoryName());
     log.info("Updating repository in memory: {} -> {}", repositoryName, configuration);
 
-    Repository repository = repository(repositoryName);
+    Repository repository = repoCachePair(repositoryName).repository;
 
     repository.stop();
     repository.update(configuration);
@@ -501,7 +528,8 @@ public class RepositoryManagerImpl
   }
 
   private void removeRepositoryFromAllGroups(final Repository repositoryToRemove) throws Exception {
-    for (Repository group : repositories.values()) {
+    for (Repo repo : repositories.values()) {
+      Repository group = repo.repository;
       Optional<GroupFacet> groupFacet = group.optionalFacet(GroupFacet.class);
       if (groupFacet.isPresent() && groupFacet.get().member(repositoryToRemove)) {
         removeRepositoryFromGroup(repositoryToRemove, group);
@@ -611,7 +639,7 @@ public class RepositoryManagerImpl
           .setBlockedUntil(new DateTime(event.getBlockedUntilMillis()))
           .setRequestUrl(event.getRequestUrl());
 
-      repository(repositoryName).facet(HttpClientFacet.class).setStatus(status);
+      repoCachePair(repositoryName).repository.facet(HttpClientFacet.class).setStatus(status);
     }
   }
 
@@ -701,10 +729,19 @@ public class RepositoryManagerImpl
     configuration.ifPresent(config -> {
       try {
         validateConfiguration(config);
-        Configuration oldConfiguration = repository(repositoryName).getConfiguration().copy();
-        Repository repository = repository(repositoryName);
-        updateRepositoryInMemory(config);
-        eventManager.post(new RepositoryUpdatedEvent(repository, oldConfiguration));
+        Repo repo = repoCachePair(repositoryName);
+        try {
+          repo.writeLock.lock();
+
+          Configuration oldConfiguration = repo.repository.getConfiguration().copy();
+          Repository repository = repoCachePair(repositoryName).repository;
+          updateRepositoryInMemory(config);
+
+          eventManager.post(new RepositoryUpdatedEvent(repository, oldConfiguration));
+        }
+        finally {
+          repo.writeLock.unlock();
+        }
       }
       catch (Exception e) {
         log.error("Error updating repository configuration on UI", e);
@@ -718,12 +755,18 @@ public class RepositoryManagerImpl
       return;
     }
 
+    Repo repo = repoCachePair(repositoryName);
     try {
-      Repository repository = deleteRepositoryFromMemory(repositoryName);
+      repo.writeLock.lock();
+
+      Repository repository = deleteRepositoryFromMemory(repo.repository);
       eventManager.post(new RepositoryDeletedEvent(repository));
     }
     catch (Exception e) {
       log.error("Error deleting repository on the current node.", e);
+    }
+    finally {
+      repo.writeLock.unlock();
     }
   }
 
@@ -735,12 +778,27 @@ public class RepositoryManagerImpl
   }
 
   private void validateRepositoryConfiguration(final String repositoryName, final Configuration configuration) throws Exception {
-    Repository repository = repository(repositoryName);
+    Repository repository = repoCachePair(repositoryName).repository;
     // ensure configuration sanity
     repository.validate(configuration);
   }
 
   private boolean isRepositoryLoaded(final String repositoryName) {
     return repositories.containsKey(repositoryName.toLowerCase());
+  }
+
+  private static class Repo
+  {
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
+
+    private final Lock readLock = lock.readLock();
+
+    private final Lock writeLock = lock.writeLock();
+
+    private final Repository repository;
+
+    public Repo(final Repository repository) {
+      this.repository = checkNotNull(repository);
+    }
   }
 }
