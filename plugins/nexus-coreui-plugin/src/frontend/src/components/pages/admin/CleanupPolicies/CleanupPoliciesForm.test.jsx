@@ -16,7 +16,8 @@ import {screen, waitFor, waitForElementToBeRemoved} from '@testing-library/react
 import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
 
-import {ExtJS, Utils, TestUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, Utils} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import CleanupPoliciesForm from './CleanupPoliciesForm';
 

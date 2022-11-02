@@ -13,7 +13,7 @@
 import React from 'react';
 import {render, waitForElementToBeRemoved} from '@testing-library/react';
 import axios from 'axios';
-import {TestUtils} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import MetricHealth from './MetricHealth';
 

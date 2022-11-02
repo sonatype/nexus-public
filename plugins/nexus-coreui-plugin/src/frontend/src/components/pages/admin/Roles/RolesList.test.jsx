@@ -16,8 +16,8 @@ import {when} from 'jest-when';
 import {render, screen, within, waitForElementToBeRemoved} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {sort, prop, descend, ascend} from 'ramda';
-
-import {ExtJS, TestUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import UIStrings from '../../../../constants/UIStrings';
 import RolesList from './RolesList';

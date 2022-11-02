@@ -12,7 +12,7 @@
  */
 import React from 'react';
 import Axios from 'axios';
-import {TestUtils} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import AnalyzeApplication from './AnalyzeApplication';
 import {waitForElementToBeRemoved} from '@testing-library/react';
 import UIStrings from '../../../../constants/UIStrings';

@@ -16,7 +16,7 @@ import {when} from 'jest-when';
 import {screen, waitForElementToBeRemoved} from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 
-import {TestUtils} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import S3BlobStoreSettings from './S3/S3BlobStoreSettings';
 import S3BlobStoreWarning from './S3/S3BlobStoreWarning';

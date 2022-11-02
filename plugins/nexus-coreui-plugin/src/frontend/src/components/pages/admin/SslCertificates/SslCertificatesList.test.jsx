@@ -14,7 +14,8 @@ import React from 'react';
 import {render, screen, waitForElementToBeRemoved} from '@testing-library/react';
 import {sort, prop, descend, ascend} from 'ramda';
 import userEvent from '@testing-library/user-event';
-import {ExtJS, TestUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, APIConstants} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import {when} from 'jest-when';
 import Axios from 'axios';
 

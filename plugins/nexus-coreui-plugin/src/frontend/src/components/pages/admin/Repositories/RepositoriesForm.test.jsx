@@ -28,7 +28,8 @@ import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
 import {mergeDeepRight} from 'ramda';
 
-import {TestUtils, ExtAPIUtils, APIConstants, ExtJS} from '@sonatype/nexus-ui-plugin';
+import {ExtAPIUtils, APIConstants, ExtJS} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import UIStrings from '../../../../constants/UIStrings';
 
 import RepositoriesForm from './RepositoriesForm';

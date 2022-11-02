@@ -15,7 +15,7 @@ import Axios from 'axios';
 import {act} from 'react-dom/test-utils';
 import {waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {TestUtils} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import NuGetApiToken from './NuGetApiToken';
 import UIStrings from '../../../../constants/UIStrings';

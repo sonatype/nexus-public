@@ -17,7 +17,8 @@ import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
 import {act} from 'react-dom/test-utils';
 
-import {ExtJS, TestUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import UIStrings from '../../../../constants/UIStrings';
 import RolesDetails from './RolesDetails';

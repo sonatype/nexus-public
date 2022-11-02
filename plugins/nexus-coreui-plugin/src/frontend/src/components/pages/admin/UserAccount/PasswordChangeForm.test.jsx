@@ -16,7 +16,8 @@ import {waitFor} from '@testing-library/react';
 import {act} from 'react-dom/test-utils';
 import userEvent from '@testing-library/user-event';
 
-import {ExtJS, TestUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import UIStrings from '../../../../constants/UIStrings';
 import PasswordChangeForm from './PasswordChangeForm';

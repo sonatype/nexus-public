@@ -17,7 +17,8 @@ import {when} from 'jest-when';
 import {act} from 'react-dom/test-utils';
 import Axios from 'axios';
 import {clone} from 'ramda';
-import {ExtJS, APIConstants, TestUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, APIConstants} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import UIStrings from '../../../../constants/UIStrings';
 import PrivilegesDetails from './PrivilegesDetails';

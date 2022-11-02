@@ -16,7 +16,8 @@ import {sort, prop, descend, ascend, clone, toLower, compose} from 'ramda';
 import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
 import Axios from 'axios';
-import {ExtJS, TestUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, APIConstants} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import UIStrings from '../../../../constants/UIStrings';
 import UsersList from './UsersList';

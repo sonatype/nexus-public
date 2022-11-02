@@ -20,7 +20,8 @@ import {
   within
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {ExtJS, TestUtils, ExtAPIUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, ExtAPIUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import {when} from 'jest-when';
 
 import RepositoriesList from './RepositoriesList';

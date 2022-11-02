@@ -18,7 +18,8 @@ import userEvent from '@testing-library/user-event';
 import {act} from 'react-dom/test-utils';
 import {when} from 'jest-when';
 
-import {ExtJS, TestUtils, ExtAPIUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, ExtAPIUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import ProprietaryRepositories from './ProprietaryRepositories';
 import UIStrings from '../../../../constants/UIStrings';

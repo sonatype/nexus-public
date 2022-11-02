@@ -12,7 +12,7 @@
  */
 import React from 'react';
 import {fireEvent, waitForElementToBeRemoved} from '@testing-library/react';
-import {TestUtils} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import axios from 'axios';
 
 import LoggingConfigurationList from './LoggingConfigurationList';

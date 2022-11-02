@@ -16,7 +16,8 @@ import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
 import Axios from 'axios';
 
-import {ExtJS, TestUtils, DateUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, DateUtils} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import UIStrings from '../../../../constants/UIStrings';
 import SslCertificatesForm from './SslCertificatesForm';

@@ -14,7 +14,7 @@ import React from 'react';
 import {render, screen, waitForElementToBeRemoved} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import {TestUtils} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import BundlesList from './BundlesList';
 import BundlesListMachine from './BundlesListMachine';

@@ -14,8 +14,7 @@ import React from 'react';
 import axios from 'axios';
 import {waitForElementToBeRemoved} from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
-
-import {TestUtils} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import BlobStoresList from './BlobStoresList';
 

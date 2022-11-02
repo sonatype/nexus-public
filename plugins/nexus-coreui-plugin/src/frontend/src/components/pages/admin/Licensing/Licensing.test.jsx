@@ -22,10 +22,10 @@ import {
 
 import {
   ExtJS,
-  TestUtils,
   APIConstants,
   DateUtils,
 } from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import Licensing from './Licensing';
 import UIStrings from '../../../../constants/UIStrings';

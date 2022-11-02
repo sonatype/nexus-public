@@ -17,7 +17,8 @@ import {render, screen, waitFor, waitForElementToBeRemoved} from '@testing-libra
 import userEvent from '@testing-library/user-event';
 import {sort, prop, descend, ascend, clone} from 'ramda';
 
-import {ExtJS, TestUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, APIConstants} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import UIStrings from '../../../../constants/UIStrings';
 import PrivilegesList from './PrivilegesList';

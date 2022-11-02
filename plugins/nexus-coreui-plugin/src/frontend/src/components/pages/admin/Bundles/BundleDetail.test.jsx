@@ -16,7 +16,7 @@ import BundleDetail from './BundleDetail';
 import {interpret} from 'xstate';
 import BundlesListMachine from './BundlesListMachine';
 import mockData from './bundles.testdata';
-import {TestUtils} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 const DEFAULT_RESPONSE = () => Promise.resolve({data: mockData});
 
