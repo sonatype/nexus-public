@@ -21,7 +21,7 @@ import {
   APIConstants,
   ValidationUtils,
 } from '@sonatype/nexus-ui-plugin';
-import {omit, isNil, whereEq} from 'ramda';
+import {omit, isNil, whereEq, mergeDeepRight, hasIn} from 'ramda';
 
 const {
   EXT: {
@@ -115,7 +115,7 @@ const removeEmptyValues = (obj) => {
 };
 
 const update = assign((_, event) => {
-  const data = event.data?.data?.result?.data || {};
+  const data = ExtAPIUtils.extractResult(event.data) || {};
   const result = {
     ...data,
     httpEnabled: data.httpEnabled || false,
@@ -123,6 +123,7 @@ const update = assign((_, event) => {
     httpAuthEnabled: data.httpAuthEnabled || false,
     httpsAuthEnabled: data.httpsAuthEnabled || false,
     nonProxyHosts: data.nonProxyHosts || [],
+    nonProxyHost: '',
   };
 
   return {
@@ -133,45 +134,39 @@ const update = assign((_, event) => {
 
 export default FormUtils.buildFormMachine({
   id: 'HttpMachine',
-  config: (config) => ({
-    ...config,
+  config: (config) =>
+    mergeDeepRight(config, {
+      states: {
+        loaded: {
+          on: {
+            ADD_NON_PROXY_HOST: {
+              target: 'loaded',
+              actions: 'addNonProxyHost',
+            },
 
-    states: {
-      ...config.states,
+            REMOVE_NON_PROXY_HOST: {
+              target: 'loaded',
+              actions: 'removeNonProxyHost',
+            },
 
-      loaded: {
-        ...config.states.loaded,
-        on: {
-          ...config.states.loaded.on,
+            TOGGLE_AUTHENTICATION: {
+              target: 'loaded',
+              actions: 'toggleAuthentication',
+            },
 
-          ADD_NON_PROXY_HOST: {
-            target: 'loaded',
-            actions: 'addNonProxyHost',
-          },
+            TOGGLE_HTTP_PROXY: {
+              target: 'loaded',
+              actions: 'toggleHttpProxy',
+            },
 
-          REMOVE_NON_PROXY_HOST: {
-            target: 'loaded',
-            actions: 'removeNonProxyHost',
-          },
-
-          TOGGLE_AUTHENTICATION: {
-            target: 'loaded',
-            actions: 'toggleAuthentication',
-          },
-
-          TOGGLE_HTTP_PROXY: {
-            target: 'loaded',
-            actions: 'toggleHttpProxy',
-          },
-
-          TOGGLE_HTTPS_PROXY: {
-            target: 'loaded',
-            actions: 'toggleHttpsProxy',
+            TOGGLE_HTTPS_PROXY: {
+              target: 'loaded',
+              actions: 'toggleHttpsProxy',
+            },
           },
         },
       },
-    },
-  }),
+    }),
 }).withConfig({
   actions: {
     validate: assign({
@@ -192,6 +187,7 @@ export default FormUtils.buildFormMachine({
             min: 0,
             max: 10,
           }),
+          nonProxyHost: ValidationUtils.validateWhiteSpace(data.nonProxyHost),
           ...proxyErrors,
         };
       },
@@ -214,11 +210,16 @@ export default FormUtils.buildFormMachine({
       }),
     }),
     addNonProxyHost: assign({
-      data: ({data: {nonProxyHost, nonProxyHosts, ...rest}}) => {
+      data: ({data}) => {
+        const {nonProxyHost, nonProxyHosts, ...rest} = data;
         const current = nonProxyHosts || [];
-        const arr = ValidationUtils.isBlank(nonProxyHost)
-          ? current
-          : [...current, nonProxyHost];
+        const notValid = ValidationUtils.isBlank(nonProxyHost) || ValidationUtils.hasWhiteSpace(nonProxyHost);
+
+        if (notValid) {
+          return data;
+        }
+
+        const arr = current.includes(nonProxyHost) ? current : [...current, nonProxyHost];
 
         return {
           ...rest,
@@ -263,18 +264,38 @@ export default FormUtils.buildFormMachine({
     }),
     setData: update,
     onSaveSuccess: update,
+    setSaveError: assign({
+      saveErrors: (_, event) => {
+        const error = JSON.parse(event.data.message);
+
+        if (hasIn('nonProxyHosts', error)) {
+          return {
+            nonProxyHost: error.nonProxyHosts,
+          };
+        }
+
+        return error;
+      },
+      saveErrorData: ({data}) => data,
+      saveError: (_, event) => {
+        const data = event.data?.response?.data;
+        return typeof data === 'string' ? data : null;
+      },
+    }),
   },
   services: {
     fetchData: () => ExtAPIUtils.extAPIRequest(ACTION, METHODS.READ),
-    saveData: ({data}) => {
+    saveData: async ({data}) => {
       let saveData = validateAuthentication(data, 'http');
 
       saveData = validateAuthentication(saveData, 'https');
       saveData = removeEmptyValues(saveData);
 
-      return ExtAPIUtils.extAPIRequest(ACTION, METHODS.UPDATE, {
+      const response = await ExtAPIUtils.extAPIRequest(ACTION, METHODS.UPDATE, {
         data: [saveData],
       });
+
+      return ExtAPIUtils.checkForError(response) || response;
     },
   },
 });

@@ -76,6 +76,13 @@ export default function HttpForm() {
 
   const handleHttpsCheckbox = () => send('TOGGLE_HTTPS_PROXY');
 
+  const handleEnter = (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      addNonProxyHost();
+    }
+  };
+
   return (
     <NxForm
       loading={isLoading}
@@ -292,30 +299,33 @@ export default function HttpForm() {
           </NxFormGroup>
         </NxAccordion>
       </NxTile.Content>
-      <NxFormRow>
-        <>
-          <NxFormGroup
-            label={LABELS.EXCLUDE.LABEL}
-            sublabel={LABELS.EXCLUDE.SUB_LABEL}
-            isRequired
-          >
-            <NxTextInput
-              className="nx-text-input--long"
-              {...FormUtils.fieldProps('nonProxyHost', current)}
-              onChange={FormUtils.handleUpdate('nonProxyHost', send)}
-            />
-          </NxFormGroup>
-          <NxButton
-            variant="icon-only"
-            title={LABELS.EXCLUDE.ADD}
-            onClick={addNonProxyHost}
-            type="button"
-          >
-            <NxFontAwesomeIcon icon={faPlusCircle} />
-          </NxButton>
-        </>
-      </NxFormRow>
-      {list.length > 0 && (
+      {httpEnabled && (
+        <NxFormRow>
+          <>
+            <NxFormGroup
+              label={LABELS.EXCLUDE.LABEL}
+              sublabel={LABELS.EXCLUDE.SUB_LABEL}
+              isRequired
+            >
+              <NxTextInput
+                className="nx-text-input--long"
+                {...FormUtils.fieldProps('nonProxyHost', current)}
+                onChange={FormUtils.handleUpdate('nonProxyHost', send)}
+                onKeyDown={handleEnter}
+              />
+            </NxFormGroup>
+            <NxButton
+              variant="icon-only"
+              title={LABELS.EXCLUDE.ADD}
+              onClick={addNonProxyHost}
+              type="button"
+            >
+              <NxFontAwesomeIcon icon={faPlusCircle} />
+            </NxButton>
+          </>
+        </NxFormRow>
+      )}
+      {httpEnabled && list.length > 0 && (
         <NxList>
           {list.map((item, index) => (
             <NxList.Item key={item}>

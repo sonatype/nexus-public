@@ -166,6 +166,14 @@ export default class ValidationUtils {
     }
   }
 
+  /**
+   * @param value {string}
+   * @returns {boolean} true if the value has white spaces.
+   */
+  static hasWhiteSpace (value){
+    return  /\s/g.test(value);
+  }
+
   static validateLength(value, length) {
     if (value.length > length) {
       return UIStrings.ERROR.MAX_CHARS(length);
@@ -219,6 +227,13 @@ export default class ValidationUtils {
   static validateLeadingOrTrailingSpace(value) {
     if (/^\s/.test(value) || /\s$/.test(value)) {
       return UIStrings.ERROR.TRIM_ERROR;
+    }
+  }
+
+
+  static validateWhiteSpace(value) {
+    if(ValidationUtils.hasWhiteSpace(value)) {
+      return UIStrings.ERROR.WHITE_SPACE_ERROR;
     }
   }
 

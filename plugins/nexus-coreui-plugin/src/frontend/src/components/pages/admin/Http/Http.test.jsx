@@ -22,11 +22,7 @@ import {
 import {when} from 'jest-when';
 import Axios from 'axios';
 import Http from './Http';
-import {
-  APIConstants,
-  ExtAPIUtils,
-  ExtJS,
-} from '@sonatype/nexus-ui-plugin';
+import {APIConstants, ExtAPIUtils, ExtJS} from '@sonatype/nexus-ui-plugin';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import userEvent from '@testing-library/user-event';
 import UIStrings from '../../../../constants/UIStrings';
@@ -104,8 +100,10 @@ const selectors = {
       screen.getByText(LABELS.PROXY.HTTPS_AUTHENTICATION),
     exclude: () => screen.getByLabelText(LABELS.EXCLUDE.LABEL),
     queryExcludeTitle: () => screen.queryByText(LABELS.EXCLUDE.LABEL),
-    addButton: (container) => container.querySelector('[data-icon="plus-circle"]'),
-    removeButton: (container) => container.querySelector('[data-icon="trash-alt"]'),
+    addButton: (container) =>
+      container.querySelector('[data-icon="plus-circle"]'),
+    removeButton: (container) =>
+      container.querySelector('[data-icon="trash-alt"]'),
   },
 };
 
@@ -142,6 +140,7 @@ describe('Http', () => {
     httpsAuthEnabled: false,
     httpsEnabled: false,
     nonProxyHosts: [],
+    nonProxyHost: '',
   };
 
   const dummyHttpProxy = {
@@ -502,9 +501,11 @@ describe('Http', () => {
     });
 
     it('adds or removes items to the excludes from HTTP/HTTPS Proxy list', async () => {
-      const {exclude, addButton, removeButton} = selectors.proxy;
+      const {exclude, addButton, removeButton, httpCheckbox} = selectors.proxy;
 
       const {container} = await renderAndWaitForLoad();
+
+      await userEvent.click(httpCheckbox());
 
       await TestUtils.changeField(exclude, nonProxy);
 
@@ -517,6 +518,18 @@ describe('Http', () => {
 
       await userEvent.click(removeButton(container));
       expect(screen.queryByText(nonProxy)).not.toBeInTheDocument();
+    });
+
+    it('show error message if the non proxy host value is not valid', async () => {
+      const {exclude, httpCheckbox} = selectors.proxy;
+
+      await renderAndWaitForLoad();
+
+      await userEvent.click(httpCheckbox());
+
+      await TestUtils.changeField(exclude, ` ${nonProxy} `);
+
+      expect(screen.getByText(ERROR.WHITE_SPACE_ERROR)).toBeInTheDocument();
     });
   });
 
@@ -836,13 +849,19 @@ describe('Http', () => {
         httpsEnabled: false,
         nonProxyHost: '',
         nonProxyHosts: [nonProxy],
+        ...dummyHttpProxy,
       };
       const {
-        proxy: {exclude, addButton},
+        proxy: {exclude, addButton, httpCheckbox, httpHost, httpPort},
         saveButton,
       } = selectors;
 
       const {container} = await renderAndWaitForLoad();
+
+      await userEvent.click(httpCheckbox());
+
+      await TestUtils.changeField(httpHost, data.httpHost);
+      await TestUtils.changeField(httpPort, data.httpPort);
 
       await TestUtils.changeField(exclude, nonProxy);
 
