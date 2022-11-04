@@ -33,7 +33,7 @@ export const remoteHostRequestData = (value) => {
   
     const {protocol, hostname, port} = new URL(urlStr);
   
-    const portNumber = parseInt(port);
+    const portNumber = parseInt(port) || null;
     const protocolHint = hasProtocol ? protocol : null;
   
     return [hostname, portNumber, protocolHint];

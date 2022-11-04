@@ -45,7 +45,7 @@ export default function SslCerticatesAddForm({onDone, machine}) {
           description={UIStrings.SSL_CERTIFICATES.MENU.description}
         />
       </PageHeader>
-      <ContentBody className="nxrm-ssl-certificates-list">
+      <ContentBody className="nxrm-ssl-certificates-add-form">
         <NxTile>
           <NxTile.Content>
             <NxForm

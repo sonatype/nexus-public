@@ -16,7 +16,7 @@ import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
 import Axios from 'axios';
 
-import {ExtJS, DateUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, DateUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import UIStrings from '../../../../constants/UIStrings';
@@ -24,10 +24,18 @@ import SslCertificatesForm from './SslCertificatesForm';
 import {URLS} from './SslCertificatesHelper';
 import {SSL_CERTIFICATES, SSL_CERTIFICATES_MAP} from './SslCertificates.testdata';
 
+const {EXT} = APIConstants;
+
 const XSS_STRING = TestUtils.XSS_STRING;
 const {sslCertificatesUrl, singleSslCertificatesUrl, createSslCertificatesUrl} = URLS;
 
-const {SSL_CERTIFICATES: {FORM: LABELS}, SETTINGS} = UIStrings;
+const {
+  SSL_CERTIFICATES: {
+    FORM: LABELS,
+    ADD_FORM: {CAPTION: ADD_FORM_CAPTION, LOAD_BUTTON, PEM, SERVER}
+  },
+  SETTINGS: {CANCEL_BUTTON_LABEL}
+} = UIStrings;
 
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'),
@@ -65,8 +73,14 @@ const selectors = {
   expiresOn: () => within(selectors.certificateSection()).getByText(LABELS.VALID_UNTIL.LABEL).nextSibling,
   fingerprint: () => within(selectors.certificateSection()).getByText(LABELS.FINGERPRINT.LABEL).nextSibling,
   warning: () => screen.getByText(LABELS.WARNING),
-  cancelButton: () => screen.getByText(SETTINGS.CANCEL_BUTTON_LABEL),
+  cancelButton: () => screen.getByText(CANCEL_BUTTON_LABEL),
   deleteButton: () => screen.getByText(LABELS.BUTTONS.DELETE),
+  addFormTitle: () => screen.queryByText(ADD_FORM_CAPTION),
+  loadFromServerRadioButton: () => screen.getByLabelText(SERVER.RADIO_DESCRIPTION),
+  loadFromPemRadioButton: () => screen.getByLabelText(PEM.RADIO_DESCRIPTION),
+  remoteHostUrlInput: () => screen.getByLabelText(SERVER.LABEL),
+  pemInput: () => screen.getByLabelText(PEM.LABEL),
+  loadCertificateButton: () => screen.getByText(LOAD_BUTTON),
 };
 
 describe('SslCertificatesDetails', function() {
@@ -196,5 +210,144 @@ describe('SslCertificatesDetails', function() {
     expect(singleSslCertificatesUrl(testId)).toBe('/service/rest/v1/security/ssl/truststore/F6%3ADB%3A65%3AA4%3A0D%3A38%3A75%3A86%3A90%3A96%3A29%3A5F%3A36%3A44%3A7F%3A3D%3A98%3A4B%3A3A%3A5N');
     expect(singleSslCertificatesUrl('G33:$($%?)')).toBe('/service/rest/v1/security/ssl/truststore/G33%3A%24(%24%25%3F)');
     expect(createSslCertificatesUrl).toBe('/service/rest/v1/security/ssl/truststore');
+  });
+});
+
+describe('SslCertificatesAddForm', function () {
+  const onDone = jest.fn();
+
+  const renderAddForm = async () => {
+    const result = render(<SslCertificatesForm itemId="" onDone={onDone} />);
+    await waitFor(() => expect(selectors.addFormTitle()).toBeInTheDocument());
+    return result;
+  };
+
+  const loadFromServerExtReqBody = (remoteHostUrl) => ({
+    action: EXT.SSL.ACTION,
+    method: EXT.SSL.METHODS.RETRIEVE_FROM_HOST,
+    data: [remoteHostUrl, null, null],
+    type: 'rpc',
+    tid: 1
+  });
+
+  const loadFromPemExtReqBody = (pem) => ({
+    action: EXT.SSL.ACTION,
+    method: EXT.SSL.METHODS.DETAILS,
+    data: [pem],
+    type: 'rpc',
+    tid: 1
+  });
+
+  const loadFromServerExtErrorRespBody = (errorMsg) => ({
+    action: EXT.SSL.ACTION,
+    method: EXT.SSL.METHODS.RETRIEVE_FROM_HOST,
+    result: {
+      message: errorMsg,
+      authenticationRequired: false,
+      success: false,
+      data: []
+    },
+    type: 'rpc',
+    tid: 1
+  });
+
+  beforeEach(() => {
+    ExtJS.checkPermission.mockReturnValue(true);
+  });
+
+  it('renders correct initial state', async function () {
+    await renderAddForm();
+
+    const {
+      loadFromServerRadioButton,
+      loadFromPemRadioButton,
+      remoteHostUrlInput,
+      pemInput,
+      loadCertificateButton
+    } = selectors;
+
+    expect(loadFromServerRadioButton()).toBeChecked();
+    expect(loadFromPemRadioButton()).not.toBeChecked();
+    expect(remoteHostUrlInput()).toBeEnabled();
+    expect(pemInput()).toBeDisabled();
+    expect(loadCertificateButton()).toHaveClass('disabled');
+  });
+
+  it('loads certificate from server', async function () {
+    await renderAddForm();
+
+    const {remoteHostUrlInput, loadCertificateButton} = selectors;
+
+    const remoteHost = 'foo.bar';
+
+    await TestUtils.changeField(remoteHostUrlInput, remoteHost);
+
+    expect(loadCertificateButton()).not.toHaveClass('disabled');
+
+    userEvent.click(loadCertificateButton());
+
+    await waitFor(() => expect(Axios.post).toBeCalledWith(EXT.URL, loadFromServerExtReqBody(remoteHost)));
+  });
+
+  it('loads certificate from pem', async function () {
+    await renderAddForm();
+
+    const {
+      pemInput, 
+      remoteHostUrlInput, 
+      loadFromPemRadioButton, 
+      loadCertificateButton 
+    } = selectors;
+
+    const pemContent = 'CORRECTPEMCONTENT';
+
+    await waitFor(() => expect(pemInput()).toBeDisabled());
+
+    userEvent.click(loadFromPemRadioButton());
+
+    expect(remoteHostUrlInput()).toBeDisabled();
+    expect(pemInput()).toBeEnabled();
+
+    await TestUtils.changeField(pemInput, pemContent);
+
+    expect(loadCertificateButton()).not.toHaveClass('disabled');
+
+    userEvent.click(loadCertificateButton());
+
+    await waitFor(() => expect(Axios.post).toBeCalledWith(EXT.URL, loadFromPemExtReqBody(pemContent)));
+  });
+
+  it('shows add form with error toast on load from server error', async function () {
+    const remoteHost = 'bad.host';
+
+    const response = {
+      data: loadFromServerExtErrorRespBody('Could not retrieve an SSL certificate')
+    }
+
+    when(Axios.post).calledWith(EXT.URL, loadFromServerExtReqBody(remoteHost)).mockResolvedValue(response);
+    
+    await renderAddForm();
+
+    const {remoteHostUrlInput, loadCertificateButton} = selectors;
+
+    await TestUtils.changeField(remoteHostUrlInput, remoteHost);
+
+    userEvent.click(loadCertificateButton());
+
+    await waitFor(() => expect(Axios.post).toBeCalledWith(EXT.URL, loadFromServerExtReqBody(remoteHost)));
+
+    expect(remoteHostUrlInput()).toBeVisible();
+
+    expect(ExtJS.showErrorMessage).toHaveBeenCalledWith(response.data.result.message);  
+  });
+
+  it('fires onDone when cancelled', async function() {
+    const {cancelButton} = selectors;
+
+    await renderAddForm();
+
+    userEvent.click(cancelButton());
+
+    await waitFor(() => expect(onDone).toBeCalled());
   });
 });
