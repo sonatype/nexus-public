@@ -10,11 +10,10 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.view.handlers;
+package org.sonatype.nexus.repository;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -25,8 +24,8 @@ import static java.lang.String.format;
 import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getBoolean;
 
 /**
- * Verifies availability of the repository dependent on clustering mode of NXRM
- * and the clustering configuration property of the repository.
+ * Verifies availability of the repository dependent on clustering mode of NXRM and the clustering configuration
+ * property of the repository.
  *
  * @since 3.17
  */
@@ -41,12 +40,19 @@ public class HighAvailabilitySupportChecker
   @Inject
   public HighAvailabilitySupportChecker(final NodeAccess nodeAccess) {
     isNexusClustered = nodeAccess.isClustered();
+
+    // Formats enabled by default
+    formatHAStates.put("maven2", queryFormat("maven2", true));
+    formatHAStates.put("npm", queryFormat("npm", true));
+    formatHAStates.put("docker", queryFormat("docker", true));
   }
 
   public boolean isSupported(final String formatName) {
-    boolean formatForcedEnabled =
-        formatHAStates.computeIfAbsent(formatName,
-            f -> getBoolean(format("nexus.%s.ha.supported", formatName), false));
-    return !isNexusClustered || formatForcedEnabled;
+    boolean formatEnabled = formatHAStates.computeIfAbsent(formatName, f -> queryFormat(formatName, false));
+    return !isNexusClustered || formatEnabled;
+  }
+
+  private boolean queryFormat(final String formatName, final boolean defaultValue) {
+    return getBoolean(format("nexus.%s.ha.supported", formatName), defaultValue);
   }
 }

@@ -20,11 +20,11 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
-import org.sonatype.nexus.repository.apt.orient.AptRestoreFacet;
 import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.apt.internal.AptRecipeSupport;
 import org.sonatype.nexus.repository.apt.internal.AptSecurityFacet;
 import org.sonatype.nexus.repository.apt.internal.snapshot.AptSnapshotHandler;
+import org.sonatype.nexus.repository.apt.orient.AptRestoreFacet;
 import org.sonatype.nexus.repository.apt.orient.internal.OrientAptFacetImpl;
 import org.sonatype.nexus.repository.attributes.AttributesFacet;
 import org.sonatype.nexus.repository.cache.NegativeCacheFacet;
@@ -49,7 +49,6 @@ import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler;
 import org.sonatype.nexus.repository.view.handlers.ExceptionHandler;
 import org.sonatype.nexus.repository.view.handlers.FormatHighAvailabilitySupportHandler;
 import org.sonatype.nexus.repository.view.handlers.HandlerContributor;
-import org.sonatype.nexus.repository.view.handlers.HighAvailabilitySupportChecker;
 import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler;
 import org.sonatype.nexus.repository.view.handlers.TimingHandler;
 import org.sonatype.nexus.repository.view.matchers.AlwaysMatcher;
@@ -149,10 +148,9 @@ public class OrientAptProxyRecipe
   HandlerContributor handlerContributor;
 
   @Inject
-  public OrientAptProxyRecipe(final HighAvailabilitySupportChecker highAvailabilitySupportChecker,
-                              @Named(ProxyType.NAME) final Type type, @Named(AptFormat.NAME) final Format format)
+  public OrientAptProxyRecipe(@Named(ProxyType.NAME) final Type type, @Named(AptFormat.NAME) final Format format)
   {
-    super(highAvailabilitySupportChecker, type, format);
+    super(type, format);
   }
 
   @Override

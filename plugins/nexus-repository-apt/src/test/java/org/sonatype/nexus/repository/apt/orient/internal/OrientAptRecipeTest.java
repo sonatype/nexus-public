@@ -13,11 +13,11 @@
 package org.sonatype.nexus.repository.apt.orient.internal;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.repository.HighAvailabilitySupportChecker;
 import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.apt.orient.internal.hosted.OrientAptHostedRecipe;
 import org.sonatype.nexus.repository.apt.orient.internal.proxy.OrientAptProxyRecipe;
 import org.sonatype.nexus.repository.types.ProxyType;
-import org.sonatype.nexus.repository.view.handlers.HighAvailabilitySupportChecker;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -49,8 +49,10 @@ public class OrientAptRecipeTest
 
   @Before
   public void setUp() {
-    hostedRecipe = new OrientAptHostedRecipe(highAvailabilitySupportChecker, new ProxyType(), format);
-    proxyRecipe = new OrientAptProxyRecipe(highAvailabilitySupportChecker, new ProxyType(), format);
+    hostedRecipe = new OrientAptHostedRecipe(new ProxyType(), format);
+    hostedRecipe.setHighAvailabilitySupportChecker(highAvailabilitySupportChecker);
+    proxyRecipe = new OrientAptProxyRecipe(new ProxyType(), format);
+    proxyRecipe.setHighAvailabilitySupportChecker(highAvailabilitySupportChecker);
     when(format.getValue()).thenReturn(APT_NAME);
   }
 
