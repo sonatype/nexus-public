@@ -42,7 +42,7 @@ public class SqlSearchQueryConditionBuilderMapping
   }
 
   public SqlSearchQueryConditionBuilder getConditionBuilder(final SearchFieldSupport fieldMapping) {
-    if (FULL_TEXT_SEARCH_QUERY == fieldMapping.getTextualQueryType()) {
+    if (fieldMapping != null && FULL_TEXT_SEARCH_QUERY == fieldMapping.getTextualQueryType()) {
       return conditionBuilders.get(PostgresFullTextSearchQueryBuilder.NAME);
     }
     return conditionBuilders.get(DefaultSqlSearchQueryConditionBuilder.NAME);
