@@ -17,22 +17,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
-import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.search.index.ElasticSearchIndexService;
-import org.sonatype.nexus.repository.search.query.ElasticSearchQueryService;
-
 import com.google.common.collect.Lists;
+import org.awaitility.core.ConditionFactory;
 
-import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -45,6 +35,12 @@ public interface SearchTestSystem
    * General flow is component/asset events -> bulk index requests -> search indexing.
    */
   void waitForSearch();
+
+  /**
+   * Create the {@link ConditionFactory} which is suitable for a search requests.
+   * @return the {@link ConditionFactory} object.
+   */
+  ConditionFactory waitForSearchResults();
 
   default void verifyComponentExists(
       final WebTarget nexusSearchWebTarget,
