@@ -36,6 +36,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.app.FeatureFlag;
+import org.sonatype.nexus.common.app.FeatureFlags;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.Repository;
@@ -78,6 +80,7 @@ import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 @Path(SearchResource.RESOURCE_URI)
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
+@FeatureFlag(name = FeatureFlags.ELASTIC_SEARCH_ENABLED, enabledByDefault = true)
 public class SearchResource
     extends ComponentSupport
     implements Resource, SearchResourceDoc

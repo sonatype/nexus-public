@@ -48,6 +48,7 @@ import static org.sonatype.nexus.repository.search.SearchUtils.SORT_FIELD;
  */
 @Named
 @Singleton
+@Path(SearchResource.RESOURCE_URI)
 public class SqlSearchResource
     extends SearchResource
 {
