@@ -42,7 +42,10 @@ public class PostgresFullTextSearchQueryBuilder
 
   private static final String PIPE = "||";
 
-  private static final String TS_QUERY_FORMAT = "TO_TSQUERY('simple', %s)";
+  private static final String TS_QUERY_FORMAT = "PLAINTO_TSQUERY('simple', %s)";
+
+  private static final String WILDCARD_TS_QUERY_FORMAT =
+      "TO_TSQUERY('simple', PLAINTO_TSQUERY('simple', %s)::text || ':*')";
 
   private static final String LEFT_PARENTHESIS = "(";
 
@@ -70,22 +73,22 @@ public class PostgresFullTextSearchQueryBuilder
 
   @Override
   protected String equalTo(final String field, final String placeholder) {
-    return getCondition(field, tsQuery(placeholder));
+    return getCondition(field, tsQuery(placeholder, TS_QUERY_FORMAT));
   }
 
   @Override
   protected String in(final String field, final List<String> placeholders) {
-    return getCondition(field, tsQuery(placeholders));
+    return getCondition(field, tsQuery(placeholders, TS_QUERY_FORMAT));
   }
 
   @Override
   protected String wildcard(final String fieldName, final String placeholder) {
-    return getCondition(fieldName, tsQuery(placeholder));
+    return getCondition(fieldName, tsQuery(placeholder, WILDCARD_TS_QUERY_FORMAT));
   }
 
   @Override
   protected String wildcards(final String fieldName, final List<String> placeholders) {
-    return getCondition(fieldName, tsQuery(placeholders));
+    return getCondition(fieldName, tsQuery(placeholders, WILDCARD_TS_QUERY_FORMAT));
   }
 
   @Override
@@ -104,12 +107,13 @@ public class PostgresFullTextSearchQueryBuilder
    * used for searching a TSVECTOR column for matches.
    *
    * @param searchTerms The texts to search for
+   * @param queryFormat Preformatted string contains pattern for query creation
    * @return Returns <code>TS_TSQUERY('simple', searchTerm1) || TS_TSQUERY('simple', searchTerm2) ||
    * TS_TSQUERY('simple', searchTermN)</code>
    */
-  private static String tsQuery(final List<String> searchTerms) {
+  private static String tsQuery(final List<String> searchTerms, final String queryFormat) {
     return searchTerms.stream()
-        .map(PostgresFullTextSearchQueryBuilder::tsQuery)
+        .map(searchTerm -> tsQuery(searchTerm, queryFormat))
         .collect(joining(PIPE, LEFT_PARENTHESIS, RIGHT_PARENTHESIS));
   }
 
@@ -122,9 +126,10 @@ public class PostgresFullTextSearchQueryBuilder
    * for searching a TSVECTOR column for matches.
    *
    * @param searchTerm The text to search for
+   * @param queryFormat Preformatted string contains pattern for query creation
    * @return Returns <code>TS_TSQUERY('simple', text)</code>
    */
-  private static String tsQuery(final String searchTerm) {
-    return String.format(TS_QUERY_FORMAT, searchTerm);
+  private static String tsQuery(final String searchTerm, final String queryFormat) {
+    return String.format(queryFormat, searchTerm);
   }
 }

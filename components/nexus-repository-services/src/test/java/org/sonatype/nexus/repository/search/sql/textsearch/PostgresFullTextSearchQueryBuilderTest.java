@@ -31,20 +31,21 @@ public class PostgresFullTextSearchQueryBuilderTest
 
     assertThat(underTest.in("repository_name", asList("repo1", "repo2", "repo3")),
         is("repository_name @@ " +
-            "(TO_TSQUERY('simple', repo1)||TO_TSQUERY('simple', repo2)||TO_TSQUERY('simple', repo3))"));
+            "(PLAINTO_TSQUERY('simple', repo1)||PLAINTO_TSQUERY('simple', repo2)||PLAINTO_TSQUERY('simple', repo3))"));
 
     assertThat(underTest.wildcards("repository_name", asList("repo1", "repo2", "repo3")),
-        is("repository_name @@ " +
-            "(TO_TSQUERY('simple', repo1)||TO_TSQUERY('simple', repo2)||TO_TSQUERY('simple', repo3))"));
+        is("repository_name @@ (TO_TSQUERY('simple', PLAINTO_TSQUERY('simple', repo1)::text || ':*')" +
+            "||TO_TSQUERY('simple', PLAINTO_TSQUERY('simple', repo2)::text || ':*')" +
+            "||TO_TSQUERY('simple', PLAINTO_TSQUERY('simple', repo3)::text || ':*'))"));
   }
 
   @Test
   public void shouldBeATsQuery() {
     assertThat(underTest.equalTo("repository_name", "repo"),
-        is("repository_name @@ TO_TSQUERY('simple', repo)"));
+        is("repository_name @@ PLAINTO_TSQUERY('simple', repo)"));
 
     assertThat(underTest.wildcard("repository_name", "repo"),
-        is("repository_name @@ TO_TSQUERY('simple', repo)"));
+        is("repository_name @@ TO_TSQUERY('simple', PLAINTO_TSQUERY('simple', repo)::text || ':*')"));
   }
 
   @Test
