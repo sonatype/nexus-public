@@ -14,14 +14,10 @@ import React from 'react';
 import {useMachine} from '@xstate/react';
 
 import {
-  NxTile,
-} from '@sonatype/react-shared-components';
-import {
   ContentBody,
   Page,
   PageHeader,
   PageTitle,
-  ExtJS,
 } from '@sonatype/nexus-ui-plugin';
 
 import {faWallet} from '@fortawesome/free-solid-svg-icons';
@@ -29,19 +25,18 @@ import {faWallet} from '@fortawesome/free-solid-svg-icons';
 import LicenseDetails from './LicenseDetails';
 import InstallLicense from './InstallLicense';
 
-import UIStrings from '../../../../constants/UIStrings';
-
 import Machine from './LicenseMachine';
+
+import UIStrings from '../../../../constants/UIStrings';
 
 import './Licensing.scss';
 
 const {LICENSING: {MENU}} = UIStrings;
 
 export default function Licensing() {
-  const canEdit = ExtJS.checkPermission('nexus:licensing:create');
-  const [current, , service] = useMachine(Machine, {devTools: true});
+  const [state, , service] = useMachine(Machine, {devTools: true});
 
-  const {data, loadError} = current.context;
+  const {data, loadError} = state.context;
   const showDetails = !loadError && data.contactCompany;
 
   return <Page>
@@ -53,16 +48,8 @@ export default function Licensing() {
       />
     </PageHeader>
     <ContentBody className="nxrm-licensing">
-      {showDetails &&
-          <LicenseDetails service={service}/>
-      }
-      {canEdit &&
-          <NxTile>
-            <NxTile.Content>
-              <InstallLicense/>
-            </NxTile.Content>
-          </NxTile>
-      }
+      {showDetails && <LicenseDetails service={service}/>}
+      <InstallLicense service={service}/>
     </ContentBody>
   </Page>;
 }

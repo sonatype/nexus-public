@@ -27,10 +27,10 @@ import {
 
 import UIStrings from '../../../../constants/UIStrings';
 
-const {LICENSING: {DETAILS: LABELS}} = UIStrings;
+const {LICENSING: {DETAILS: LABELS}, LICENSING} = UIStrings;
 
 export default function LicenseDetails({service}) {
-  const [current, send] = useService(service);
+  const [state, send] = useService(service);
 
   const {
     data: {
@@ -44,8 +44,8 @@ export default function LicenseDetails({service}) {
       fingerprint,
     },
     loadError,
-  } = current.context;
-  const isLoading = current.matches('loading');
+  } = state.context;
+  const isLoading = state.matches('loading');
 
   const licenseTypes = licenseType?.split(',');
   const effectiveDateLabel = DateUtils.prettyDate(effectiveDate);
@@ -57,7 +57,7 @@ export default function LicenseDetails({service}) {
       <NxTile>
         <NxTile.Content>
           <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
-            <NxH2>{LABELS.SECTIONS.DETAILS}</NxH2>
+            <NxH2>{LICENSING.SECTIONS.DETAILS}</NxH2>
             <NxGrid.Row>
               <NxGrid.Column className="nx-grid-col--25">
                 <NxReadOnly>

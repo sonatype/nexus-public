@@ -14,23 +14,21 @@ import React from 'react';
 import Axios from 'axios';
 import {when} from 'jest-when';
 import {act} from 'react-dom/test-utils';
-
-import {
-  render,
-  screen,
-} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import {render, screen, waitFor} from '@testing-library/react';
 
 import {
   ExtJS,
   APIConstants,
   DateUtils,
+  Permissions,
 } from '@sonatype/nexus-ui-plugin';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import Licensing from './Licensing';
 import UIStrings from '../../../../constants/UIStrings';
 
-const {LICENSING: {DETAILS: LABELS}} = UIStrings;
+const {LICENSING: {DETAILS, INSTALL, AGREEMENT}, LICENSING} = UIStrings;
 
 const {REST: {PUBLIC: {LICENSE: licenseUrl}}} = APIConstants;
 const XSS_STRING = TestUtils.XSS_STRING;
@@ -38,6 +36,7 @@ const XSS_STRING = TestUtils.XSS_STRING;
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'),
   get: jest.fn(),
+  post: jest.fn(),
 }));
 
 jest.mock('@sonatype/nexus-ui-plugin', () => ({
@@ -46,21 +45,30 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     checkPermission: jest.fn(),
     showErrorMessage: jest.fn(),
     showSuccessMessage: jest.fn(),
+    proLicenseUrl: jest.fn().mockReturnValue('http://localhost:8081/PRO-LICENSE.html'),
   },
 }));
 
 const selectors = {
   ...TestUtils.selectors,
-  contactCompany: () => screen.getByText(LABELS.COMPANY.LABEL).nextSibling,
-  contactName: () => screen.getByText(LABELS.NAME.LABEL).nextSibling,
-  contactEmail: () => screen.getByText(LABELS.EMAIL.LABEL).nextSibling,
-  effectiveDate: () => screen.getByText(LABELS.EFFECTIVE_DATE.LABEL).nextSibling,
-  expirationDate: () => screen.getByText(LABELS.EXPIRATION_DATE.LABEL).nextSibling,
-  licenseType: () => screen.getByText(LABELS.LICENSE_TYPES.LABEL),
-  licensedUsers: () => screen.getByText(LABELS.NUMBER_OF_USERS.LABEL).nextSibling,
-  fingerprint: () => screen.getByText(LABELS.FINGERPRINT.LABEL).nextSibling,
-  detailsSection: () => screen.queryByRole('heading', {name: LABELS.SECTIONS.DETAILS, level: 2}),
-  installSection: () => screen.queryByRole('heading', {name: LABELS.SECTIONS.INSTALL, level: 2}),
+  contactCompany: () => screen.getByText(DETAILS.COMPANY.LABEL).nextSibling,
+  contactName: () => screen.getByText(DETAILS.NAME.LABEL).nextSibling,
+  contactEmail: () => screen.getByText(DETAILS.EMAIL.LABEL).nextSibling,
+  effectiveDate: () => screen.getByText(DETAILS.EFFECTIVE_DATE.LABEL).nextSibling,
+  expirationDate: () => screen.getByText(DETAILS.EXPIRATION_DATE.LABEL).nextSibling,
+  licenseType: () => screen.getByText(DETAILS.LICENSE_TYPES.LABEL),
+  licensedUsers: () => screen.getByText(DETAILS.NUMBER_OF_USERS.LABEL).nextSibling,
+  fingerprint: () => screen.getByText(DETAILS.FINGERPRINT.LABEL).nextSibling,
+  detailsSection: () => screen.queryByRole('heading', {name: LICENSING.SECTIONS.DETAILS, level: 2}),
+  installSection: () => screen.queryByRole('heading', {name: LICENSING.SECTIONS.INSTALL, level: 2}),
+  uploadInput: () => screen.queryByLabelText(INSTALL.LABEL, {hidden: true}),
+  uploadButton: () => screen.queryByText(INSTALL.BUTTONS.UPLOAD),
+  readOnlyWarning: () => screen.queryByText(UIStrings.SETTINGS.READ_ONLY.WARNING),
+  agreement: {
+    modal: () => screen.queryByText(AGREEMENT.CAPTION),
+    acceptButton: () => screen.getByText(AGREEMENT.BUTTONS.ACCEPT),
+    declineButton: () => screen.getByText(AGREEMENT.BUTTONS.DECLINE),
+  },
 };
 
 const DATA = {
@@ -102,6 +110,9 @@ describe('Licensing', () => {
 
   beforeEach(() => {
     when(Axios.get).calledWith(licenseUrl).mockResolvedValue({
+      data: DATA
+    });
+    when(Axios.post).calledWith(licenseUrl, expect.anything(), expect.anything()).mockResolvedValue({
       data: DATA
     });
     ExtJS.checkPermission.mockReturnValue(true);
@@ -148,6 +159,50 @@ describe('Licensing', () => {
 
     expect(detailsSection()).not.toBeInTheDocument();
     expect(installSection()).toBeInTheDocument();
+  });
+
+  it('renders warning alert in the Read-Only mode', async function() {
+    const {installSection, readOnlyWarning, uploadButton, uploadInput} = selectors;
+
+    when(ExtJS.checkPermission).calledWith(Permissions.LICENSING.CREATE).mockReturnValue(false);
+
+    await renderComponent();
+
+    expectLicenseDetails(DATA);
+    expect(installSection()).toBeInTheDocument();
+    expect(readOnlyWarning()).toBeInTheDocument();
+    expect(uploadButton()).not.toBeInTheDocument();
+    expect(uploadInput()).not.toBeInTheDocument();
+  });
+
+  it('installs license', async function() {
+    const {detailsSection, uploadButton, uploadInput, agreement: {modal, acceptButton, declineButton}} = selectors;
+
+    when(Axios.get).calledWith(licenseUrl).mockRejectedValue({message: 'Error'});
+
+    await renderComponent();
+
+    expect(detailsSection()).not.toBeInTheDocument();
+    expect(uploadInput()).not.toBeDisabled();
+    expect(uploadButton()).toBeDisabled();
+
+    const file = new File([new ArrayBuffer(1)], 'file.lic');
+    userEvent.upload(uploadInput(), file);
+    expect(uploadButton()).not.toHaveClass('disabled');
+
+    userEvent.click(uploadButton());
+    expect(modal()).toBeVisible();
+
+    userEvent.click(declineButton());
+    expect(modal()).not.toBeInTheDocument();
+
+    userEvent.click(uploadButton());
+    expect(modal()).toBeVisible();
+
+    when(Axios.get).calledWith(licenseUrl).mockResolvedValue({data: DATA});
+
+    userEvent.click(acceptButton());
+    expect(modal()).not.toBeInTheDocument();
   });
 
   it('uses proper url', function() {

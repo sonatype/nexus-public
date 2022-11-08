@@ -506,11 +506,11 @@ export default {
       text: 'Licensing',
       description: 'A valid license is required for PRO features; manage it here'
     },
+    SECTIONS: {
+      DETAILS: 'Licensing',
+      INSTALL: 'Install License',
+    },
     DETAILS: {
-      SECTIONS: {
-        DETAILS: 'Licensing',
-        INSTALL: 'Install License',
-      },
       COMPANY: {
         LABEL: 'Company',
       },
@@ -540,11 +540,19 @@ export default {
       LABEL: 'License',
       DESCRIPTION: 'Installing a new license requires restarting the server to take effect',
       MESSAGES: {
-        NO_LICENSE: 'No license selected',
+        ERROR: (error) => `Unable to update license for the reason identified below. Verify that you selected the correct file. If the problem persists, contact our support team. Reason: ${error}`,
+        SUCCESS: 'License installed. Restart is only required if you are enabling new PRO features.',
       },
       BUTTONS: {
-        CHOOSE: 'Choose License',
         UPLOAD: 'Upload License',
+      }
+    },
+    AGREEMENT: {
+      CAPTION: 'Nexus Repository Manager License Agreement',
+      BUTTONS: {
+        DECLINE: 'I Decline',
+        ACCEPT: 'I Accept',
+        DOWNLOAD: 'Download a copy of the agreement'
       }
     },
   },

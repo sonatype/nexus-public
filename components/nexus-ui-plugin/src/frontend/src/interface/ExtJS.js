@@ -46,6 +46,13 @@ export default class {
   }
 
   /**
+   *@returns a complete url for the PRO-LICENSE.html
+   */
+  static proLicenseUrl() {
+    return this.urlOf('/PRO-LICENSE.html');
+  }
+
+  /**
    * Set the global dirty status to prevent accidental navigation
    * @param key - a unique key for the view that is dirty
    * @param isDirty - whether the view is dirty or not

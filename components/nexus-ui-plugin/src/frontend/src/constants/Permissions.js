@@ -23,6 +23,7 @@ const DELETE = 'DELETE';
 const BROWSE = 'BROWSE';
 const EDIT = 'EDIT';
 const ADD = 'ADD';
+const UNINSTALL = 'UNINSTALL';
 
 // default options.
 const crudOptions = [CREATE, READ, UPDATE, DELETE];
@@ -53,5 +54,5 @@ export default {
   ATLAS: generatePermissions('atlas', [READ, CREATE]),
   METRICS: generatePermissions('metrics', [READ]),
   BUNDLES: generatePermissions('bundles', [READ]),
-  LICENSING: generatePermissions('licensing', [READ]),
+  LICENSING: generatePermissions('licensing', [READ, CREATE, UNINSTALL]),
 };

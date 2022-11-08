@@ -16,20 +16,77 @@
  */
 import {assign} from 'xstate';
 import Axios from 'axios';
-import {FormUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
+import {mergeDeepRight, whereEq} from 'ramda';
+import {FormUtils, APIConstants, ValidationUtils, ExtJS} from '@sonatype/nexus-ui-plugin';
+
+import UIStrings from '../../../../constants/UIStrings';
+
+import {readFile} from "./LicenseHelper";
 
 const {REST: {PUBLIC: {LICENSE: licenseUrl}}} = APIConstants;
+const {LICENSING: LABELS} = UIStrings;
 
 export default FormUtils.buildFormMachine({
   id: 'LicenseMachine',
+  stateAfterSave: 'loading',
+  config: (config) =>
+      mergeDeepRight(config, {
+        states: {
+          loaded: {
+            on: {
+              SHOW_AGREEMENT_MODAL: {
+                target: 'agreement',
+              },
+              SET_FILES: {
+                target: 'loaded',
+                actions: ['reset', 'clearSaveError', 'update']
+              },
+            },
+          },
+          loading: {
+            invoke: {
+              onError: {
+                target: 'loaded',
+              }
+            }
+          },
+          agreement: {
+            on: {
+              ACCEPT: {
+                target: 'saving',
+              },
+              DECLINE: {
+                target: 'loaded',
+              },
+            },
+          },
+        },
+      })
 }).withConfig({
   actions: {
     validate: assign({
-      validationErrors: () => ({})
+      validationErrors: ({data}) => ({
+        files: ValidationUtils.validateNotBlank(data.files),
+      })
     }),
     logLoadError: () => {},
+    logSaveError: ({saveError}) => {
+      ExtJS.showErrorMessage(`${UIStrings.ERROR.SAVE_ERROR}. ${saveError || ''}`);
+    },
+    logSaveSuccess: () => ExtJS.showSuccessMessage(LABELS.INSTALL.MESSAGES.SUCCESS),
+    setIsPristine: assign({
+      isPristine: ({data, pristineData}) => whereEq(data)(pristineData),
+    }),
   },
   services: {
     fetchData: () => Axios.get(licenseUrl),
+    saveData: async ({data}) => {
+      const file = await readFile(data.files.item(0));
+      return Axios.post(licenseUrl, file, {
+        headers: {
+          'Content-Type': 'application/octet-stream',
+        }
+      });
+    },
   },
 });
