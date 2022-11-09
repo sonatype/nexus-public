@@ -183,7 +183,7 @@ public class ElasticSearchServiceImpl
   @SuppressWarnings("unchecked")
   private ComponentSearchResult toComponentSearchResult(final SearchHit componentHit) {
     Map<String, Object> componentMap = checkNotNull(componentHit.getSource());
-    Repository repository = elasticSearchUtils.getRepository((String) componentMap.get(REPOSITORY_NAME));
+    Repository repository = elasticSearchUtils.getReadableRepository((String) componentMap.get(REPOSITORY_NAME));
 
     ComponentSearchResult componentSearchResult = new ComponentSearchResult();
 

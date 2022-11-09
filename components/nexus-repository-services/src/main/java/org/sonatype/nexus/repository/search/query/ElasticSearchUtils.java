@@ -107,6 +107,10 @@ public class ElasticSearchUtils
     return repoAdapter.getRepository(repository);
   }
 
+  public Repository getReadableRepository(final String repository) {
+    return repoAdapter.getReadableRepository(repository);
+  }
+
   /**
    * Constructs a query from the provided search filters using conjunction (AND)
    */
