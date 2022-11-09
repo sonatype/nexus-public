@@ -40,15 +40,7 @@ import static java.lang.Boolean.parseBoolean;
 import static java.util.prefs.Preferences.userRoot;
 import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshBundles;
 import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshManagedBundles;
-import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED;
-import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_DEVELOPER;
-import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
-import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_TABLE_SEARCH;
-import static org.sonatype.nexus.common.app.FeatureFlags.ELASTIC_SEARCH_ENABLED;
-import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
-import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
-import static org.sonatype.nexus.common.app.FeatureFlags.SESSION_ENABLED;
-import static org.sonatype.nexus.common.app.FeatureFlags.SQL_DISTRIBUTED_CACHE;
+import static org.sonatype.nexus.common.app.FeatureFlags.*;
 
 /**
  * {@link ServletContextListener} that bootstraps an OSGi-based application.
@@ -254,6 +246,10 @@ public class BootstrapListener
       properties.setProperty(DATASTORE_TABLE_SEARCH, "true");
       properties.setProperty(ELASTIC_SEARCH_ENABLED, "false");
       properties.setProperty(SQL_DISTRIBUTED_CACHE, "true");
+
+      // JWT and Blobstore Metrics should also be enabled for clustered
+      properties.setProperty(JWT_ENABLED, "true");
+      properties.setProperty(DATASTORE_BLOBSTORE_METRICS, "true");
     }
 
     // datastore search mode enables datastore user mode
