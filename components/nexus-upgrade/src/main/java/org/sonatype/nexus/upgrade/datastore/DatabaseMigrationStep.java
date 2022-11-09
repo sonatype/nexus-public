@@ -91,4 +91,17 @@ public interface DatabaseMigrationStep
       throw new UnsupportedOperationException();
     }
   }
+
+  default boolean columnExists(final Connection conn, final String tableName, final String columnName)
+      throws SQLException
+  {
+    String sql = "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE UPPER(TABLE_NAME) = ? AND UPPER(COLUMN_NAME) = ?";
+    try (PreparedStatement statement = conn.prepareStatement(sql)) {
+      statement.setString(1, tableName.toUpperCase());
+      statement.setString(2, columnName.toUpperCase());
+      try (ResultSet results = statement.executeQuery()) {
+        return results.next();
+      }
+    }
+  }
 }
