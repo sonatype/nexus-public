@@ -51,6 +51,7 @@ public class AnonymousConfigurationStoreImpl
   @Transactional
   @Override
   public void save(final AnonymousConfiguration configuration) {
+    postCommitEvent(() -> new AnonymousConfigurationUpdatedEvent((AnonymousConfigurationData) configuration));
     dao().set((AnonymousConfigurationData) configuration);
   }
 }
