@@ -78,7 +78,7 @@ public abstract class DatastoreBlobStoreMetricsServiceSupport
   }
 
   @Override
-  public void stop() throws Exception {
+  public void doStop() throws Exception {
     metricsWritingJob.cancel();
     metricsWritingJob = null;
     jobService.stopUsing();
