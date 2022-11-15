@@ -54,6 +54,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions
 
 import static java.util.Collections.singletonList
 import static org.sonatype.nexus.security.BreadActions.READ
+
 /**
  * BlobStore {@link org.sonatype.nexus.extdirect.DirectComponent}.
  *
@@ -141,10 +142,10 @@ class BlobStoreComponent
     }
 
     store.list().findAll {
-      it.isGroupable() &&
-          !repositoryManager.browseForBlobStore(it.blobStoreConfiguration.name).any() &&
+      it.type != BlobStoreGroup.TYPE &&
+          !repositoryManager.browseForBlobStore(it.name).any() &&
           !otherGroups.any { group -> group.members.contains(it) }
-    }.collect { asBlobStoreXO(it.getBlobStoreConfiguration()) }
+    }.collect { asBlobStoreXO(it) }
   }
 
   @DirectMethod
@@ -153,7 +154,7 @@ class BlobStoreComponent
   @RequiresPermissions('nexus:blobstores:read')
   List<BlobStoreXO> readGroups() {
     store.list().findAll{ it.type == 'Group' }
-        .collect { asBlobStoreXO(it.getBlobStoreConfiguration()) }
+        .collect { asBlobStoreXO(it) }
   }
 
   @DirectMethod
@@ -283,7 +284,7 @@ class BlobStoreComponent
         isQuotaEnabled: !quotaAttributes.isEmpty(),
         quotaType: quotaAttributes.get(BlobStoreQuotaSupport.TYPE_KEY),
         quotaLimit: quotaAttributes.get(BlobStoreQuotaSupport.LIMIT_KEY, Number.class)?.div(MILLION)?.toLong(),
-        groupName: blobStoreGroups.find { it.members.contains(blobStore) }?.blobStoreConfiguration?.name
+        groupName: blobStoreGroups.find { it.members.contains(blobStoreConfiguration) }?.blobStoreConfiguration?.name
     )
     BlobStore blobStore = blobStoreManager.getByName().get(blobStoreConfiguration.getName())
     if (blobStore != null && blobStore.isStarted()) {

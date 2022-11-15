@@ -220,6 +220,7 @@ public class BlobStoreManagerImpl
   public BlobStore create(final BlobStoreConfiguration configuration) throws Exception {
     checkNotNull(configuration);
     log.debug("Creating BlobStore: {} with attributes: {}", configuration.getName(), configuration.getAttributes());
+    validateConfiguration(configuration, true);
     BlobStore blobStore = getBlobStoreForCreate(configuration);
 
     if (!EventHelper.isReplicating()) {
@@ -247,8 +248,6 @@ public class BlobStoreManagerImpl
   }
 
   private BlobStore getBlobStoreForCreate(final BlobStoreConfiguration configuration) throws Exception {
-    validateConfiguration(configuration, true);
-
     BlobStore blobStore = blobStorePrototypes.get(configuration.getType()).get();
     blobStore.init(configuration);
     replicationBlobStoreStatusManager.initializeReplicationStatus(configuration);
@@ -441,6 +440,7 @@ public class BlobStoreManagerImpl
 
     switch (eventType) {
       case CREATED:
+        validateConfiguration(configuration, true);
         doCreate(getBlobStoreForCreate(configuration), configuration);
         break;
       case UPDATED:
