@@ -49,9 +49,7 @@ public class MetadataDatabase
 {
   private static final Path PATH = Paths.get("work");
 
-  private static final String CONFIG_FILE_NAME = "config_ds_info.properties";
-
-  private static final String SECURITY_FILE_NAME = "security_ds_info.properties";
+  private static final String DB_INFO_FILE_NAME = "db_info.properties";
 
   private final DataStoreManager dataStoreManager;
 
@@ -62,8 +60,7 @@ public class MetadataDatabase
 
   @Override
   public void customize(final SupportBundle supportBundle) {
-    supportBundle.add(getDbInfo(CONFIG_FILE_NAME));
-    supportBundle.add(getDbInfo(SECURITY_FILE_NAME));
+    supportBundle.add(getDbInfo(DB_INFO_FILE_NAME));
   }
 
   private GeneratedContentSourceSupport getDbInfo(final String fileName) {
