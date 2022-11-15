@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 
@@ -241,7 +242,10 @@ public class BootstrapListener
     }
 
     // table search should only be turned on via clustered flag
-    if (parseBoolean(properties.getProperty(DATASTORE_CLUSTERED_ENABLED, "false"))) {
+    if (parseBoolean(properties.getProperty(DATASTORE_CLUSTERED_ENABLED,
+        Optional.ofNullable(System.getenv("DATASTORE_CLUSTERED_ENABLED")).orElse("false")))) {
+      // As we read the ENV variable we need to enable feature flagged classes using in-memory properties hashtable
+      properties.setProperty(DATASTORE_CLUSTERED_ENABLED, "true");
       properties.setProperty(DATASTORE_ENABLED, "true");
       properties.setProperty(DATASTORE_TABLE_SEARCH, "true");
       properties.setProperty(ELASTIC_SEARCH_ENABLED, "false");
