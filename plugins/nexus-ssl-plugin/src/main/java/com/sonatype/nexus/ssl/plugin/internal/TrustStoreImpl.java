@@ -38,6 +38,8 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.FreezeService;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.distributed.event.service.api.EventType;
+import org.sonatype.nexus.distributed.event.service.api.common.CertificateDistributedEvent;
 import org.sonatype.nexus.ssl.CertificateCreatedEvent;
 import org.sonatype.nexus.ssl.CertificateDeletedEvent;
 import org.sonatype.nexus.ssl.KeyStoreManager;
@@ -101,6 +103,7 @@ public class TrustStoreImpl
     keyStoreManager.importTrustCertificate(certificate, alias);
 
     eventManager.post(new CertificateCreatedEvent(alias, certificate));
+    eventManager.post(new CertificateDistributedEvent(EventType.CREATED));
 
     log.info("Certificate added successfully in trust-store with Fingerprint: {}, Name: {} and SHA1 Identifier: {} ",
         alias,
@@ -138,6 +141,7 @@ public class TrustStoreImpl
     sslcontext = null;
 
     eventManager.post(new CertificateDeletedEvent(alias, certificate));
+    eventManager.post(new CertificateDistributedEvent(EventType.DELETED));
 
     log.info(
         "Certificate removed successfully from trust-store with Fingerprint : {}, Name : {} and SHA1 Identifier : {}",
@@ -175,6 +179,16 @@ public class TrustStoreImpl
   @Subscribe
   public void onKeyStoreDataUpdated(final KeyStoreDataEvent event) {
     sslcontext = null;
+  }
+
+  @Subscribe
+  public void on(final CertificateDistributedEvent event) throws Exception {
+    if (!event.isLocal()) {
+      keyStoreManager.reloadTrustedKeystore();
+      if (EventType.DELETED.equals(event.getEventType())) {
+        sslcontext = null;
+      }
+    }
   }
 
   private TrustManager[] getTrustManagers() throws Exception {

@@ -430,4 +430,9 @@ public class KeyStoreManagerImpl
       privateKeyStoreLock.writeLock().unlock();
     }
   }
+
+  @Override
+  public void reloadTrustedKeystore() throws KeystoreException {
+    trustedKeyStore.reloadIfReplicating(config.getTrustedKeyStorePassword());
+  }
 }

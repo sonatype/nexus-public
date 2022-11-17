@@ -142,4 +142,12 @@ public interface KeystoreInstance
    * @param alias Alias of the certificate
    */
   Certificate getCertificate(String alias);
+
+  /**
+   * Loads keystore data from storage if it's invoked in thread replicating
+   * remote events from another node.
+   *
+   * @param storePassword The password used to access the keystore
+   */
+  void reloadIfReplicating(char[] storePassword) throws KeystoreException;
 }

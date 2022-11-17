@@ -128,4 +128,14 @@ public interface KeyStoreManager
   void removePrivateKey() throws KeystoreException;
 
   PrivateKey getPrivateKey() throws KeystoreException;
+
+  /**
+   * Makes trusted keystore reload its data from storage.
+   * Keystore will be reloaded only if it's invoked in thread replicating
+   * remote events from another node.
+   *
+   * @throws KeystoreException thrown if the KeyStore has not been initialized, the key could not be found, or an
+   *                           error updating the KeyStore.
+   */
+  void reloadTrustedKeystore() throws KeystoreException;
 }
