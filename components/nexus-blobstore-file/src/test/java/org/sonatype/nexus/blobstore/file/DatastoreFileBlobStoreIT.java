@@ -13,6 +13,7 @@
 package org.sonatype.nexus.blobstore.file;
 
 import java.io.ByteArrayInputStream;
+import java.time.Duration;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,12 +28,14 @@ import org.sonatype.nexus.blobstore.file.store.internal.SoftDeletedBlobsDAO;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
+import org.sonatype.nexus.scheduling.PeriodicJobService;
 import org.sonatype.nexus.testdb.DataSessionRule;
 import org.sonatype.nexus.transaction.TransactionModule;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Guice;
 import com.google.inject.Provides;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -40,6 +43,9 @@ import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doAnswer;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.DIRECT_PATH_BLOB_HEADER;
@@ -57,7 +63,21 @@ public class DatastoreFileBlobStoreIT
   @Mock
   private EventManager eventManager;
 
+  @Mock
+  private PeriodicJobService periodicJobService;
+
   private SoftDeletedBlobsStore store;
+
+  @Before
+  public void setupPeriodicJobService() {
+    // Setup synchronous running of the soft deleted blob index for the tests
+    doAnswer(invocation -> {
+        invocation.getArgument(0, Runnable.class).run();
+        return null;
+      })
+      .when(periodicJobService)
+      .runOnce(any(Runnable.class), anyInt());
+  }
 
   @Override
   protected FileBlobDeletionIndex fileBlobDeletionIndex() {
@@ -76,7 +96,7 @@ public class DatastoreFileBlobStoreIT
       }).getInstance(SoftDeletedBlobsStoreImpl.class);
     }
 
-    return new DatastoreFileBlobDeletionIndex(store);
+    return new DatastoreFileBlobDeletionIndex(store, periodicJobService, Duration.ofSeconds(1));
   }
 
   @Test

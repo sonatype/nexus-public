@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -37,9 +38,11 @@ import org.sonatype.nexus.blobstore.file.store.SoftDeletedBlobsStore;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.property.PropertiesFile;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
+import org.sonatype.nexus.scheduling.PeriodicJobService;
 
 import com.squareup.tape.QueueFile;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Comparator.comparing;
@@ -53,7 +56,13 @@ public class DatastoreFileBlobDeletionIndex
     extends ComponentSupport
     implements FileBlobDeletionIndex
 {
+  private static final int INTERVAL_IN_SECONDS = 60;
+
   private final SoftDeletedBlobsStore softDeletedBlobsStore;
+
+  private final PeriodicJobService periodicJobService;
+
+  private final Duration migrationDelay;
 
   private FileBlobStore blobStore;
 
@@ -61,19 +70,25 @@ public class DatastoreFileBlobDeletionIndex
 
   private Queue<String> deletedRecordsCache;
 
-  private static final int INTERVAL_IN_SECONDS = 60;
-
   @Inject
-  public DatastoreFileBlobDeletionIndex(final SoftDeletedBlobsStore softDeletedBlobsStore) {
+  public DatastoreFileBlobDeletionIndex(
+      final SoftDeletedBlobsStore softDeletedBlobsStore,
+      final PeriodicJobService periodicJobService,
+      @Named("${nexus.file.deletion.migrate.delay:-60s}") final Duration migrationDelay)
+  {
     this.softDeletedBlobsStore = checkNotNull(softDeletedBlobsStore);
+    this.periodicJobService = checkNotNull(periodicJobService);
+    this.migrationDelay = checkNotNull(migrationDelay);
+    checkArgument(!migrationDelay.isNegative(), "Non-negative nexus.file.deletion.migrate.delay required");
   }
 
   @Override
   public final void initIndex(final PropertiesFile metadata, final FileBlobStore blobStore) throws IOException {
     this.blobStore = blobStore;
     this.blobStoreName = blobStore.getBlobStoreConfiguration().getName();
-    migrateDeletionIndexFromFileIfExists(metadata);
+    scheduleMigrateIndex(metadata);
     deletedRecordsCache = new ArrayDeque<>();
+
   }
 
   @Override
@@ -125,6 +140,19 @@ public class DatastoreFileBlobDeletionIndex
   @Override
   public final int size() throws IOException {
     return softDeletedBlobsStore.count(blobStoreName);
+  }
+
+  private void scheduleMigrateIndex(final PropertiesFile metadata) {
+    invoke(periodicJobService::startUsing);
+    periodicJobService.runOnce(() -> {
+      try {
+        migrateDeletionIndexFromFileIfExists(metadata);
+      }
+      catch (IOException e) {
+        log.error("Failed to migrate soft deleted blobs to the database", e);
+      }
+      invoke(periodicJobService::stopUsing);
+    }, (int) migrationDelay.getSeconds());
   }
 
   private void migrateDeletionIndexFromFileIfExists(final PropertiesFile metadata) throws IOException {
@@ -192,7 +220,7 @@ public class DatastoreFileBlobDeletionIndex
     return deletedIndexFile;
   }
 
-  private Set<String> getPersistedBlobIdsForBlobStore(String blobStoreName) {
+  private Set<String> getPersistedBlobIdsForBlobStore(final String blobStoreName) {
     Set<String> persistedRecords = new HashSet<>();
     Continuation<SoftDeletedBlobsData> page = softDeletedBlobsStore.readRecords(null, blobStoreName);
     while (!page.isEmpty()) {
@@ -202,6 +230,21 @@ public class DatastoreFileBlobDeletionIndex
       page = softDeletedBlobsStore.readRecords(page.nextContinuationToken(), blobStoreName);
     }
     return persistedRecords;
+  }
+
+  private void invoke(final ThrowingRunnable callable) {
+    try {
+      callable.run();
+    }
+    catch (Exception e) {
+      log.debug("Failed to start or stop using the PeriodicJobService", e);
+    }
+  }
+
+  @FunctionalInterface
+  private static interface ThrowingRunnable
+  {
+    void run() throws Exception;
   }
 }
 
