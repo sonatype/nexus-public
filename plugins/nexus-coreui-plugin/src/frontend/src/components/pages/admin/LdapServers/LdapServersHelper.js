@@ -14,11 +14,30 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {APIConstants} from '@sonatype/nexus-ui-plugin';
+import {APIConstants, ExtJS, Permissions} from '@sonatype/nexus-ui-plugin';
 
-const {REST: {PUBLIC: {LDAP_SERVERS: ldapServersUrl}}} = APIConstants;
+const {
+  REST: {
+    PUBLIC: {LDAP_SERVERS: ldapServersUrl, LDAP_CHANGE_ORDER: ldapChangeOrderUrl},
+  },
+} = APIConstants;
 
-const singleLdapServersUrl = (id) => `${ldapServersUrl}/${encodeURIComponent(id)}`;
+const singleLdapServersUrl = (id) =>
+  `${ldapServersUrl}/${encodeURIComponent(id)}`;
 const createLdapServersUrl = ldapServersUrl;
+const changeLdapServersUrl = ldapChangeOrderUrl;
 
-export const URL = {ldapServersUrl, singleLdapServersUrl, createLdapServersUrl};
+export const URL = {
+  ldapServersUrl,
+  singleLdapServersUrl,
+  createLdapServersUrl,
+  changeLdapServersUrl,
+};
+
+export const canClearLDAPCache = () => {
+  return ExtJS.checkPermission(Permissions.LDAP.DELETE);
+};
+
+export const canChangeLDAPOrder = () => {
+  return ExtJS.checkPermission(Permissions.LDAP.UPDATE);
+};

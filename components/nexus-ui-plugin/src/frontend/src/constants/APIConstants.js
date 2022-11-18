@@ -112,6 +112,12 @@ export default {
         DETAILS: 'details',
         RETRIEVE_FROM_HOST: 'retrieveFromHost'
       }
+    },
+    LDAP: {
+      ACTION: 'ldap_LdapServer',
+      METHODS: {
+        CLEAR_CACHE: 'clearCache',
+      }
     }
   },
   REST: {
@@ -179,6 +185,9 @@ export default {
       },
       get LDAP_SERVERS() {
         return `${this.BASE_URL}security/ldap`;
+      },
+      get LDAP_CHANGE_ORDER() {
+        return `${this.BASE_URL}security/ldap/change-order`;
       },
     },
   },

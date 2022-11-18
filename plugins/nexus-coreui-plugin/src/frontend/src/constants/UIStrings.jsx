@@ -411,6 +411,7 @@ export default {
       description: 'Lightweight directory access protocol setup',
     },
     LIST: {
+      LABEL: 'LDAP Connections',
       EMPTY_LIST: 'There are no LDAP servers available',
       COLUMNS: {
         ORDER: 'Order',
@@ -434,6 +435,15 @@ export default {
           </NxTextLink>.
         </>,
       },
+      MODAL: {
+        LABEL: 'Change LDAP servers ordering',
+        SUB_LABEL: 'Reorder servers',
+        FOOTER: (value) => `${value} Items`,
+      },
+      MESSAGES: {
+        LIST_CHANGED: 'LDAP server order changed',
+        CACHE_CLEARED: 'LDAP cache has been cleared'
+      }
     },
   },
 
@@ -1092,7 +1102,7 @@ export default {
               scaling documentation
             </NxTextLink>
             .
-          </>, 
+          </>,
         }
       },
       FOREIGN_LAYER: {

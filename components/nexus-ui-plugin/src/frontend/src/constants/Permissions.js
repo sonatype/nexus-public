@@ -55,4 +55,5 @@ export default {
   METRICS: generatePermissions('metrics', [READ]),
   BUNDLES: generatePermissions('bundles', [READ]),
   LICENSING: generatePermissions('licensing', [READ, CREATE, UNINSTALL]),
+  LDAP: generatePermissions('ldap', [CREATE, DELETE, UPDATE]),
 };
