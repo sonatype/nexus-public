@@ -34,4 +34,9 @@ public interface CacheManager<K, V>
    * @return the newly created {@link NexusCache}
    */
   NexusCache<K, V> getCache(String cacheName, Class<K> keyType, Class<V> valueType, Duration expiryAfter);
+  
+  /**
+   * Destroys the {@link NexusCache} specified by cacheName.
+   */
+  void destroyCache(String cacheName);
 }

@@ -43,6 +43,12 @@ public class LocalCacheManager<K, V>
     this.cacheHelper = checkNotNull(cacheHelper);
   }
 
+  /**
+   * Warning:
+   * If the cache specified by cacheName already exists, then the existing cache is returned and
+   * the expiryAfter is ignored.
+   * The cache must be destroyed before a new expiryAfter can be specified.
+   */
   @Override
   public NexusCache<K, V> getCache(
       final String cacheName,
@@ -52,5 +58,10 @@ public class LocalCacheManager<K, V>
   {
     return new LocalCache<>(
         cacheHelper.maybeCreateCache(cacheName, keyType, valueType, CreatedExpiryPolicy.factoryOf(expiryAfter)));
+  }
+  
+  @Override
+  public void destroyCache(final String cacheName) {
+    cacheHelper.maybeDestroyCache(cacheName);
   }
 }
