@@ -218,7 +218,7 @@ public class BootstrapListener
   }
 
   boolean isNullNexusLicenseFile() {
-    return System.getProperty("nexus.licenseFile") == null;
+    return System.getProperty("nexus.licenseFile") == null && System.getenv("NEXUS_LICENSE_FILE") == null;
   }
 
   boolean isNullJavaPrefLicense() {
