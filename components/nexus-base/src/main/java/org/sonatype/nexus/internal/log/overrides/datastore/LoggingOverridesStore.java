@@ -21,6 +21,9 @@ import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.transaction.Transactional;
 
+import static org.sonatype.nexus.internal.log.overrides.datastore.LoggerOverridesEvent.Action.RESET;
+import static org.sonatype.nexus.internal.log.overrides.datastore.LoggerOverridesEvent.Action.CHANGE;
+
 /**
  * Store for accessing the logging-overrides related data
  */
@@ -37,6 +40,7 @@ public class LoggingOverridesStore
   @Transactional
   public void create(final LoggingOverridesData data) {
     dao().createRecord(data);
+    postCommitEvent(() -> new LoggerOverridesEvent(data.getName(), data.getLevel(), CHANGE));
   }
 
   @Transactional
@@ -53,11 +57,13 @@ public class LoggingOverridesStore
   @Transactional
   public void update(final LoggingOverridesData data) {
     dao().updateRecord(data);
+    postCommitEvent(() -> new LoggerOverridesEvent(data.getName(), data.getLevel(), CHANGE));
   }
 
   @Transactional
   public void deleteByName(final String name) {
     dao().deleteRecord(name);
+    postCommitEvent(() -> new LoggerOverridesEvent(name, null, CHANGE));
   }
 
   /**
@@ -66,5 +72,6 @@ public class LoggingOverridesStore
   @Transactional
   public void deleteAllRecords() {
     dao().deleteAllRecords();
+    postCommitEvent(() -> new LoggerOverridesEvent(null, null, RESET));
   }
 }

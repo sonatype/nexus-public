@@ -12,11 +12,12 @@
  */
 package org.sonatype.nexus.internal.log.overrides.datastore;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -52,7 +53,9 @@ public class DatastoreLoggerOverrides
 
   private final EventManager eventManager;
 
-  private final Map<String, LoggerLevel> loggerLevels = new HashMap<>();
+  private final Map<String, LoggerLevel> loggerLevels = new ConcurrentHashMap<>();
+
+  private final ReentrantReadWriteLock loggerLevelsLock = new ReentrantReadWriteLock();
 
   @Inject
   public DatastoreLoggerOverrides(
@@ -82,10 +85,7 @@ public class DatastoreLoggerOverrides
   @Override
   protected void doStart() throws Exception {
     log.debug("Load overrides from datastore");
-
-    // reload logger overrides from datastore
-    Continuation<LoggingOverridesData> levels = loggingLevelsStore.readRecords();
-    levels.forEach(data -> loggerLevels.put(data.getName(), LoggerLevel.valueOf(data.getLevel())));
+    synchroniseLocalMapWithDB();
 
     // if override level is loaded from xml file but not presented in db - migrate it
 
@@ -98,6 +98,16 @@ public class DatastoreLoggerOverrides
     eventManager.post(new LoggerOverridesReloadEvent());
 
     levelsMigrateToDb.forEach(loggingLevelsStore::create);
+  }
+
+  /**
+   * Reload logger overrides from datastore
+   */
+  public void synchroniseLocalMapWithDB() {
+    loggerLevelsLock.writeLock().lock();
+    Continuation<LoggingOverridesData> levels = loggingLevelsStore.readRecords();
+    levels.forEach(data -> loggerLevels.put(data.getName(), LoggerLevel.valueOf(data.getLevel())));
+    loggerLevelsLock.writeLock().unlock();
   }
 
   @Override

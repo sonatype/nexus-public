@@ -46,6 +46,9 @@ import org.sonatype.nexus.common.log.LoggerOverridesReloadEvent;
 import org.sonatype.nexus.common.log.LoggersResetEvent;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.internal.log.overrides.datastore.DatastoreLoggerOverrides;
+import org.sonatype.nexus.internal.log.overrides.datastore.LoggerOverridesEvent;
+import org.sonatype.nexus.internal.log.overrides.datastore.LoggerOverridesEvent.Action;
 import org.sonatype.nexus.logging.task.TaskLogHome;
 
 import ch.qos.logback.classic.Level;
@@ -401,6 +404,33 @@ public class LogbackLogManager
   public void on(final LoggerOverridesReloadEvent event) {
     log.debug("Received event {}. Reload logger overrides", event);
     applyOverrides();
+  }
+
+  @Subscribe
+  public void on(final LoggerOverridesEvent loggerOverridesEvent) {
+    if (loggerOverridesEvent.isLocal()) {
+      return;
+    }
+    log.debug("Received event {}. Propagating logger overrides changes", loggerOverridesEvent);
+    LoggerContext context = loggerContext();
+    String name = loggerOverridesEvent.getName();
+    String strLevel = loggerOverridesEvent.getLevel();
+    Level level = Objects.isNull(strLevel) ? null : Level.toLevel(strLevel);
+    if (overrides instanceof DatastoreLoggerOverrides) {
+      ((DatastoreLoggerOverrides)overrides).synchroniseLocalMapWithDB();
+    }
+
+    if (loggerOverridesEvent.getAction() == Action.CHANGE) {
+      log.trace("Setting log level to {} for logger named '{}' in the scope of log overrides propagation", name, level);
+      context.getLogger(name).setLevel(level);
+    }
+    else if (loggerOverridesEvent.getAction() == Action.RESET) {
+      log.trace("Resetting all logger levels in the scope of log overrides propagation");
+      context.reset();
+      overrides.forEach(e -> overrides.remove(e.getKey()));
+    }
+    eventManager.post(
+        new LoggerLevelChangedEvent(name, Objects.isNull(strLevel) ? null : LoggerLevel.valueOf(strLevel)));
   }
 
   private void applyOverrides() {

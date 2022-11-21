@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.internal.log;
 
+import java.time.Duration;
 import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -23,8 +24,11 @@ import org.sonatype.nexus.common.log.LoggerLevel;
 import org.sonatype.nexus.common.log.LoggerOverridesReloadEvent;
 import org.sonatype.nexus.datastore.mybatis.ContinuationArrayList;
 import org.sonatype.nexus.internal.log.overrides.datastore.DatastoreLoggerOverrides;
+import org.sonatype.nexus.internal.log.overrides.datastore.LoggerOverridesEvent;
+import org.sonatype.nexus.internal.log.overrides.datastore.LoggerOverridesEvent.Action;
 import org.sonatype.nexus.internal.log.overrides.datastore.LoggingOverridesData;
 import org.sonatype.nexus.internal.log.overrides.datastore.LoggingOverridesStore;
+import org.sonatype.nexus.testcommon.event.SimpleEventManager;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
@@ -36,11 +40,13 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -163,5 +169,29 @@ public class LogbackLogManagerTest
     Map<String, LoggerLevel> overriddenLoggers = underTest.getOverriddenLoggers();
     assertThat(overriddenLoggers.size(), is(1));
     assertThat(overriddenLoggers.get("logger-name").toString(), is(LoggerLevel.DEBUG.toString()));
+  }
+
+  @Test
+  public void testLoggerOverridesEventProcessed() {
+    EventManager eventManager = new SimpleEventManager();
+    LogbackLogManager underTest = new LogbackLogManager(eventManager, mock(BeanLocator.class),
+        mock(DatastoreLoggerOverrides.class));
+    String testName = "test";
+    String testLevel = "TRACE";
+
+    eventManager.register(underTest);
+    LoggerOverridesEvent event = new LoggerOverridesEvent(testName, testLevel, Action.CHANGE);
+    event.setRemoteNodeId("nodeId");
+    eventManager.post(event);
+    LoggerContext context = LogbackLogManager.loggerContext();
+
+    await().atMost(10, SECONDS).untilAsserted(() ->
+        assertThat(context.getLogger(testName).getLevel(), is(Level.toLevel(testLevel))));
+
+    event.setAction(Action.RESET);
+    eventManager.post(event);
+
+    await().atMost(10, SECONDS).untilAsserted(() ->
+        assertThat(context.getLogger(testName).getLevel(), is(nullValue())));
   }
 }
