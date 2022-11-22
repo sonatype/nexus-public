@@ -33,6 +33,7 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.MultipleFailures;
 import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.entity.Continuations;
+import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
@@ -373,9 +374,23 @@ public class LegacyDatastoreMetadataRebuilder
       if ("maven-plugin".equals(packaging)) {
         MavenPath mainArtifact = mavenPath.locateMainArtifact("jar");
         metadataBuilder.addPlugin(
-            getPluginPrefix(mavenPath.locateMainArtifact("jar"), () -> get(mainArtifact).openInputStream()),
+            getPluginPrefix(mavenPath.locateMainArtifact("jar"), getInputStreamSupplier(mainArtifact)),
             component.name(),
             component.attributes(repository.getFormat().getValue()).get(Attributes.P_POM_NAME, String.class));
+      }
+    }
+
+    private InputStreamSupplier getInputStreamSupplier(MavenPath artifact) {
+
+      try {
+        Content content = get(artifact);
+        if (content == null) {
+          return null;
+        }
+        return () -> content.openInputStream();
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
       }
     }
 

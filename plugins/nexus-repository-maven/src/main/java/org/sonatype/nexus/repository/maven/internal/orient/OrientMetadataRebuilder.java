@@ -28,6 +28,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.MultipleFailures;
+import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.orient.entity.AttachedEntityHelper;
 import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.repository.Repository;
@@ -449,10 +450,24 @@ public class OrientMetadataRebuilder
           log.debug("POM packaging: {}", packaging);
           if ("maven-plugin".equals(packaging)) {
             MavenPath mainArtifact = mavenPath.locateMainArtifact("jar");
-            metadataBuilder.addPlugin(getPluginPrefix(mainArtifact, () -> get(mainArtifact).openInputStream()),
+            metadataBuilder.addPlugin(getPluginPrefix(mainArtifact, getInputStreamSupplier(mainArtifact)),
                 artifactId, component.formatAttributes().get(P_POM_NAME, String.class));
           }
         }
+      }
+    }
+
+    private InputStreamSupplier getInputStreamSupplier(MavenPath artifact) {
+
+      try {
+        Content content = get(artifact);
+        if (content == null) {
+          return null;
+        }
+        return () -> content.openInputStream();
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
       }
     }
 
