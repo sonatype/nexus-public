@@ -750,7 +750,12 @@ public abstract class NexusPaxExamSupport
     // HA mode enable
     Option dsClusteredEnable = editConfigurationFilePut(NEXUS_PROPERTIES_FILE, DATASTORE_CLUSTERED_ENABLED, "true");
     Option jwtEnabled = editConfigurationFilePut(NEXUS_PROPERTIES_FILE, JWT_ENABLED, "true");
-    return when(ha).useOptions(dsClusteredEnable, jwtEnabled);
+    // For tests ensure the default blobstore & repositories are created
+    Option blobstoreProvisionDefaults =
+        editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.blobstore.provisionDefaults", "true");
+    Option repositoryProvisionDefaults =
+        editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.skipDefaultRepositories", "false");
+    return when(ha).useOptions(dsClusteredEnable, jwtEnabled, blobstoreProvisionDefaults, repositoryProvisionDefaults);
   }
 
   protected boolean isNewDb() {
