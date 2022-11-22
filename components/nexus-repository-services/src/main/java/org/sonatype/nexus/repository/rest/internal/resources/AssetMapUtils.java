@@ -167,7 +167,8 @@ public class AssetMapUtils
    */
    static boolean keepAsset(final AssetSearchResult asset, final String paramKey, final String paramValue) {
     return getValueFromAssetMap(asset, paramKey)
-        .map(result -> result.equals(paramValue))
+        .map(Object::toString)
+        .map(result -> result.toLowerCase().contains(paramValue.toLowerCase()))
         .orElse(false);
   }
 

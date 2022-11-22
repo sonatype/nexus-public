@@ -31,6 +31,7 @@ import org.mockito.Mock;
 import static com.google.common.collect.ImmutableMap.of;
 import static java.util.Optional.empty;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -65,7 +66,8 @@ public class AssetMapUtilsTest
     when(repository.getUrl()).thenReturn("http://localhost/repository/maven/");
     assetMap = createAsset("antlr.jar", "maven2", "first-sha1", of("extension", "jar"));
     assetMapWithClassifier =
-        createAsset("antlr.jar", "maven2", "first-sha1", of("extension", "jar", "classifier", "sources"));
+        createAsset("antlr.jar", "maven2", "first-sha1", of("extension", "jar", "classifier", "sources", "description",
+            "Reindeer have antlrs"));
     underTest = new AssetMapUtils(searchUtils);
   }
 
@@ -77,6 +79,12 @@ public class AssetMapUtilsTest
   @Test
   public void testGetValueFromAssetMap_MavenExtension() {
     runGetValueFromAssetMapTest(assetMap, "assets.attributes.maven2.extension", "jar");
+  }
+
+  @Test
+  public void testKeepAsset_partialMatch() {
+    assertThat(AssetMapUtils.keepAsset(assetMapWithClassifier, "assets.attributes.maven2.description", "HAVE"),
+        is(true));
   }
 
   @Test
