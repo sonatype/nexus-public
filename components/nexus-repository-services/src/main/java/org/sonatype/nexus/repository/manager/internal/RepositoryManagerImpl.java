@@ -20,10 +20,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
@@ -32,7 +28,6 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.validation.ConstraintViolation;
-import javax.validation.ValidationException;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.app.FreezeService;
@@ -44,8 +39,6 @@ import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
-import org.sonatype.nexus.distributed.event.service.api.EventType;
-import org.sonatype.nexus.distributed.event.service.api.common.RepositoryConfigurationEvent;
 import org.sonatype.nexus.distributed.event.service.api.common.RepositoryRemoteConnectionStatusEvent;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
 import org.sonatype.nexus.repository.Recipe;
@@ -83,9 +76,6 @@ import static java.util.stream.StreamSupport.stream;
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
-import static org.sonatype.nexus.distributed.event.service.api.EventType.CREATED;
-import static org.sonatype.nexus.distributed.event.service.api.EventType.DELETED;
-import static org.sonatype.nexus.distributed.event.service.api.EventType.UPDATED;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.BLOB_STORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.DATA_STORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
@@ -129,7 +119,7 @@ public class RepositoryManagerImpl
 
   private final List<DefaultRepositoriesContributor> defaultRepositoriesContributors;
 
-  private final Map<String, Repo> repositories = Maps.newConcurrentMap();
+  private final Map<String, Repository> repositories = Maps.newConcurrentMap();
 
   private final boolean skipDefaultRepositories;
 
@@ -140,19 +130,18 @@ public class RepositoryManagerImpl
   private final List<ConfigurationValidator> configurationValidators;
 
   @Inject
-  public RepositoryManagerImpl(
-      final EventManager eventManager,
-      final ConfigurationStore store,
-      final RepositoryFactory factory,
-      final Provider<ConfigurationFacet> configFacet,
-      final Map<String, Recipe> recipes,
-      final RepositoryAdminSecurityContributor securityContributor,
-      final List<DefaultRepositoriesContributor> defaultRepositoriesContributors,
-      final FreezeService freezeService,
-      @Named("${nexus.skipDefaultRepositories:-false}") final boolean skipDefaultRepositories,
-      final BlobStoreManager blobStoreManager,
-      final GroupMemberMappingCache groupMemberMappingCache,
-      final List<ConfigurationValidator> configurationValidators)
+  public RepositoryManagerImpl(final EventManager eventManager,
+                               final ConfigurationStore store,
+                               final RepositoryFactory factory,
+                               final Provider<ConfigurationFacet> configFacet,
+                               final Map<String, Recipe> recipes,
+                               final RepositoryAdminSecurityContributor securityContributor,
+                               final List<DefaultRepositoriesContributor> defaultRepositoriesContributors,
+                               final FreezeService freezeService,
+                               @Named("${nexus.skipDefaultRepositories:-false}") final boolean skipDefaultRepositories,
+                               final BlobStoreManager blobStoreManager,
+                               final GroupMemberMappingCache groupMemberMappingCache,
+                               final List<ConfigurationValidator> configurationValidators)
   {
     this.eventManager = checkNotNull(eventManager);
     this.store = checkNotNull(store);
@@ -178,14 +167,12 @@ public class RepositoryManagerImpl
   }
 
   /**
-   * Lookup a repository cache pair by name.
+   * Lookup a repository by name.
    */
-  private Repo repoCachePair(final String name) {
-    Repo repo = repositories.get(name.toLowerCase());
-    if (repo == null) {
-      throw new ValidationException("Missing repository: " + name);
-    }
-    return repo;
+  private Repository repository(final String name) {
+    Repository repository = repositories.get(name.toLowerCase());
+    checkState(repository != null, "Missing repository: %s", name);
+    return repository;
   }
 
   /**
@@ -219,20 +206,16 @@ public class RepositoryManagerImpl
   /**
    * Track repository.
    */
-  private Repo track(final Repo repo) {
-    Repository repository = repo.repository;
+  private void track(final Repository repository) {
     // configure security
     securityContributor.add(repository);
 
-    Repo value = repositories.putIfAbsent(repository.getName().toLowerCase(), repo);
-
+    Repository value = repositories.putIfAbsent(repository.getName().toLowerCase(), repository);
     if (value == null) {
       log.debug("Tracking: {}", repository);
-      return repo;
     }
     else {
-      log.debug("An existing repository with the same name is already tracked {}", value.repository);
-      return value;
+      log.debug("An existing repository with the same name is already tracked {}", value);
     }
   }
 
@@ -295,7 +278,7 @@ public class RepositoryManagerImpl
     for (Configuration configuration : configurations) {
       log.debug("Restoring repository: {}", configuration);
       Repository repository = newRepository(configuration);
-      track(new Repo(repository));
+      track(repository);
 
       eventManager.post(new RepositoryLoadedEvent(repository));
     }
@@ -303,8 +286,7 @@ public class RepositoryManagerImpl
 
   private void startRepositories() throws Exception {
     log.debug("Starting {} repositories", repositories.size());
-    for (Repo repo : repositories.values()) {
-      Repository repository = repo.repository;
+    for (Repository repository : repositories.values()) {
       log.debug("Starting repository: {}", repository);
       repository.start();
 
@@ -314,16 +296,15 @@ public class RepositoryManagerImpl
 
   @Override
   protected void doStop() throws Exception {
+
     log.debug("Stopping {} repositories", repositories.size());
-    for (Repo repo : repositories.values()) {
-      Repository repository = repo.repository;
+    for (Repository repository : repositories.values()) {
       log.debug("Stopping repository: {}", repository);
       repository.stop();
     }
 
     log.debug("Destroying {} repositories", repositories.size());
-    for (Repo repo : repositories.values()) {
-      Repository repository = repo.repository;
+    for (Repository repository : repositories.values()) {
       log.debug("Destroying repository: {}", repository);
       repository.destroy();
     }
@@ -336,10 +317,7 @@ public class RepositoryManagerImpl
   @Override
   @Guarded(by = STARTED)
   public Iterable<Repository> browse() {
-    List<Repository> localCacheRepositories = repositories.values().stream()
-        .map(repo -> repo.repository)
-        .collect(Collectors.toList());
-    return ImmutableList.copyOf(localCacheRepositories);
+    return ImmutableList.copyOf(repositories.values());
   }
 
   @Override
@@ -347,7 +325,7 @@ public class RepositoryManagerImpl
   public Iterable<Repository> browseForBlobStore(final String blobStoreId) {
     Iterable<Repository> browseResult = browse();
 
-    if (browseResult != null && browseResult.iterator().hasNext()) {
+    if (browseResult != null && browseResult.iterator().hasNext()){
       return stream(browseResult.spliterator(), true)
           .filter(Repository::isStarted)
           .filter(r -> blobStoreId.equals(r.getConfiguration().attributes(STORAGE).get(BLOB_STORE_NAME)))
@@ -356,6 +334,7 @@ public class RepositoryManagerImpl
     else {
       return Collections.emptyList();
     }
+
   }
 
   @Override
@@ -368,50 +347,53 @@ public class RepositoryManagerImpl
   @Guarded(by = STARTED)
   public Repository get(final String name) {
     checkNotNull(name);
-    Repo repo = repositories.get(name.toLowerCase());
 
-    if (repo == null) {
-      Collection<Configuration> configurations = store.readByNames(Collections.singleton(name));
+    String lcName = name.toLowerCase();
+    Repository repository = repositories.get(lcName);
 
-      if (configurations.isEmpty()) {
-        return null;
-      }
-
-      try {
-        return loadRepositoryIntoMemory(configurations.stream().findFirst().get());
-      }
-      catch (Exception e) {
-        log.error("Exception loading repository: {} into memory", name, e);
-        return null;
-      }
+    if (repository != null) {
+      return repository;
     }
 
-    try {
-      repo.readLock.lock();
-      return repo.repository;
-    }
-    finally {
-      repo.readLock.unlock();
-    }
+    log.debug("Repository not found, attempting to load from database");
+
+    return repository = retrieveConfigurationByName(lcName)
+      .map(config -> EventHelper.asReplicating(() -> {
+          log.debug("Found repository in DB, attempting to load {}", config);
+          try {
+            // Don't return this, return the tracked one just in case
+            create(config);
+          }
+          catch (Exception e) {
+            // Don't return null, an event happened while we were working
+            log.debug("An error occurred loading repository from storage", e);
+          }
+          return repositories.get(lcName);
+      }))
+      .orElse(null);
   }
 
   @Override
   @Guarded(by = STARTED)
   public Repository create(final Configuration configuration) throws Exception {
     checkNotNull(configuration);
+    String repositoryName = checkNotNull(configuration.getRepositoryName());
 
-    if (isRepositoryLoaded(configuration.getRepositoryName())) {
-      throw new ValidationException("Repository has created already!");
-    }
+    log.info("Creating repository: {} -> {}", repositoryName, configuration);
 
-    Repository repository = loadRepositoryIntoMemory(configuration);
+    validateConfiguration(configuration);
+
+    Repository repository = newRepository(configuration);
+
     if (!EventHelper.isReplicating()) {
       store.create(configuration);
     }
+
     repository.start();
 
+    track(repository);
+
     eventManager.post(new RepositoryCreatedEvent(repository));
-    distributeRepositoryConfigurationEvent(repository.getName(), CREATED);
 
     return repository;
   }
@@ -420,106 +402,77 @@ public class RepositoryManagerImpl
   @Guarded(by = STARTED)
   public Repository update(final Configuration configuration) throws Exception {
     checkNotNull(configuration);
-    validateConfiguration(configuration);
-
-    // load old configuration before update
-    Repo repo = repoCachePair(configuration.getRepositoryName());
-    try {
-      repo.writeLock.lock();
-
-      Configuration oldConfiguration = repo.repository.getConfiguration().copy();
-      String repositoryName = checkNotNull(configuration.getRepositoryName());
-      validateRepositoryConfiguration(repositoryName, configuration);
-
-      // the configuration must be updated before repository restart
-      if (!EventHelper.isReplicating()) {
-        store.update(configuration);
-      }
-      Repository repository = updateRepositoryInMemory(configuration);
-      eventManager.post(new RepositoryUpdatedEvent(repository, oldConfiguration));
-      distributeRepositoryConfigurationEvent(repository.getName(), UPDATED);
-
-      return repository;
-    }
-    finally {
-      repo.writeLock.unlock();
-    }
-  }
-
-  @Override
-  @Guarded(by = STARTED)
-  public void delete(final String repositoryName) throws Exception {
-    checkNotNull(repositoryName);
-
-    Repo repo = repoCachePair(repositoryName);
-    try {
-      repo.writeLock.lock();
-
-      Repository repository = deleteRepositoryFromMemory(repo.repository);
-
-      if (!EventHelper.isReplicating()) {
-        Optional<Configuration> configuration = repositoryConfiguration(repositoryName);
-        configuration.ifPresent(store::delete);
-      }
-
-      eventManager.post(new RepositoryDeletedEvent(repository));
-      distributeRepositoryConfigurationEvent(repositoryName, DELETED);
-    }
-    finally {
-      repo.writeLock.unlock();
-    }
-    log.info("Deleted repository: {}", repositoryName);
-  }
-
-  private Repository deleteRepositoryFromMemory(final Repository repository) throws Exception {
-    freezeService.checkWritable("Unable to delete repository when database is frozen.");
-
-    log.info("Deleting repository from memory: {}", repository.getName());
-
-    removeRepositoryFromAllGroups(repository);
-    repository.stop();
-    repository.delete();
-    repository.destroy();
-    untrack(repository);
-
-    return repository;
-  }
-
-  private Repository loadRepositoryIntoMemory(final Configuration configuration) throws Exception {
-    checkNotNull(configuration);
     String repositoryName = checkNotNull(configuration.getRepositoryName());
 
-    log.info("Creating repository in memory: {} -> {}", repositoryName, configuration);
+    log.info("Updating repository: {} -> {}", repositoryName, configuration);
 
     validateConfiguration(configuration);
 
-    Repository repository = newRepository(configuration);
-    return track(new Repo(repository)).repository;
-  }
+    Repository repository = repository(repositoryName);
 
-  private Repository updateRepositoryInMemory(final Configuration configuration) throws Exception {
-    checkNotNull(configuration);
+    // ensure configuration sanity
+    repository.validate(configuration);
 
-    String repositoryName = checkNotNull(configuration.getRepositoryName());
-    log.info("Updating repository in memory: {} -> {}", repositoryName, configuration);
+    if (!EventHelper.isReplicating()) {
+      store.update(configuration);
+    }
 
-    Repository repository = repoCachePair(repositoryName).repository;
+    Configuration oldConfiguration = repository.getConfiguration().copy();
 
     repository.stop();
     repository.update(configuration);
     repository.start();
 
+    eventManager.post(new RepositoryUpdatedEvent(repository, oldConfiguration));
+
     return repository;
   }
 
+  private void validateConfiguration(final Configuration configuration) {
+    Set<ConstraintViolation<?>> violations = new HashSet<>();
+    configurationValidators.forEach(
+        validator -> maybeAdd(violations, validator.validate(configuration))
+    );
+    maybePropagate(violations, log);
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public void delete(final String name) throws Exception {
+    checkNotNull(name);
+    freezeService.checkWritable("Unable to delete repository when database is frozen.");
+
+    log.info("Deleting repository: {}", name);
+
+    Repository repository = repository(name);
+    Configuration configuration = repository.getConfiguration().copy();
+
+    removeRepositoryFromAllGroups(repository);
+
+    repository.stop();
+    repository.delete();
+    repository.destroy();
+
+    if (!EventHelper.isReplicating()) {
+      store.delete(configuration);
+    }
+
+    untrack(repository);
+
+    eventManager.post(new RepositoryDeletedEvent(repository));
+
+    log.info("Deleted repository: {}", name);
+  }
+
   /**
-   * Retrieve a list of all groups that contain the desired repository, either directly or transitively through another
-   * group.
+   * Retrieve a list of all groups that contain the desired repository, either directly or transitively through
+   * another group.
+   *
+   * @since 3.14
    *
    * @param repositoryName
    * @return List of group(s) that contain the supplied repository.  Ordered from closest to the repo to farthest away
    * i.e. if group A contains group B which contains repo C the returned list would be ordered B,A
-   * @since 3.14
    */
   @Override
   @Guarded(by = STARTED)
@@ -528,8 +481,7 @@ public class RepositoryManagerImpl
   }
 
   private void removeRepositoryFromAllGroups(final Repository repositoryToRemove) throws Exception {
-    for (Repo repo : repositories.values()) {
-      Repository group = repo.repository;
+    for (Repository group : repositories.values()) {
       Optional<GroupFacet> groupFacet = group.optionalFacet(GroupFacet.class);
       if (groupFacet.isPresent() && groupFacet.get().member(repositoryToRemove)) {
         removeRepositoryFromGroup(repositoryToRemove, group);
@@ -597,33 +549,8 @@ public class RepositoryManagerImpl
   }
 
   @Subscribe
-  public void on(final RepositoryConfigurationEvent event) {
-    if (!EventHelper.isReplicating()) {
-      return;
-    }
-    String repositoryName = event.getRepositoryName();
-    EventType eventType = event.getEventType();
-
-    log.debug("Consume distributed RepositoryConfigurationEvent: repository={}, type={}", repositoryName, eventType);
-
-    switch (eventType) {
-      case CREATED:
-        handleRepositoryCreated(repositoryName);
-        break;
-      case UPDATED:
-        handleRepositoryUpdated(repositoryName);
-        break;
-      case DELETED:
-        handleRepositoryDeleted(repositoryName);
-        break;
-      default:
-        log.error("Unknown event type {}", eventType);
-    }
-  }
-
-  @Subscribe
   public void on(final RepositoryRemoteConnectionStatusEvent event) {
-    if (!EventHelper.isReplicating()) {
+    if (event.isLocal()) {
       return;
     }
     String repositoryName = event.getRepositoryName();
@@ -633,29 +560,41 @@ public class RepositoryManagerImpl
       RemoteConnectionStatusType statusType =
           RemoteConnectionStatusType.values()[event.getRemoteConnectionStatusTypeOrdinal()];
       // restore RemoteConnectionStatus from event
-      log.debug("Consume distributed RepositoryRemoteConnectionStatusEvent: repository={}, type={}",
+      log.warn("Consume distributed RepositoryRemoteConnectionStatusEvent: repository={}, type={}",
           repositoryName, statusType);
       RemoteConnectionStatus status = new RemoteConnectionStatus(statusType, event.getReason())
           .setBlockedUntil(new DateTime(event.getBlockedUntilMillis()))
           .setRequestUrl(event.getRequestUrl());
 
-      repoCachePair(repositoryName).repository.facet(HttpClientFacet.class).setStatus(status);
+      repository(repositoryName).facet(HttpClientFacet.class).setStatus(status);
     }
   }
 
   @Subscribe
   public void on(final ConfigurationCreatedEvent event) {
-    handleReplication(event, e -> create(e.getConfiguration()));
+    handleReplication(event, e -> create(retrieveConfigurationByName(e.getRepositoryName())
+        .orElseThrow(() -> new RuntimeException("Missing configuration: " + e.getRepositoryName()))));
   }
 
   @Subscribe
   public void on(final ConfigurationUpdatedEvent event) {
-    handleReplication(event, e -> update(e.getConfiguration()));
+    handleReplication(event, e -> update(retrieveConfigurationByName(e.getRepositoryName())
+        .orElseThrow(() -> new RuntimeException("Missing configuration: " + e.getRepositoryName()))));
   }
 
   @Subscribe
   public void on(final ConfigurationDeletedEvent event) {
     handleReplication(event, e -> delete(e.getRepositoryName()));
+  }
+
+  /*
+   * Use the ConfigurationStore to find a Configuration by name if it exists.
+   */
+  private Optional<Configuration> retrieveConfigurationByName(final String name) {
+    String lcName = name.toLowerCase();
+    return store.list().stream()
+        .filter(candidate -> lcName.equals(candidate.getRepositoryName().toLowerCase()))
+        .findAny();
   }
 
   private void handleReplication(final ConfigurationEvent event, final EventConsumer<ConfigurationEvent> consumer) {
@@ -680,125 +619,7 @@ public class RepositoryManagerImpl
         .isPresent();
   }
 
-  private void validateConfiguration(final Configuration configuration) {
-    Set<ConstraintViolation<?>> violations = new HashSet<>();
-    configurationValidators.forEach(
-        validator -> maybeAdd(violations, validator.validate(configuration))
-    );
-    maybePropagate(violations, log);
-  }
-
-  private Optional<Configuration> repositoryConfiguration(final String repositoryName) {
-    checkNotNull(repositoryName);
-
-    List<Configuration> configurations = store.list();
-    if (!configurations.isEmpty()) {
-      return configurations.stream()
-          .filter(config -> config.getRepositoryName().equals(repositoryName))
-          .findFirst();
-    }
-    return Optional.empty();
-  }
-
-  private void handleRepositoryCreated(final String repositoryName) {
-    if (isRepositoryLoaded(repositoryName)) {
-      // repository already presented on the current node UI
-      return;
-    }
-    // try to the repository on current the node UI based on its configuration
-    Optional<Configuration> configuration = repositoryConfiguration(repositoryName);
-    configuration.ifPresent(config -> {
-      try {
-        Repository repository = loadRepositoryIntoMemory(config);
-        repository.start();
-        eventManager.post(new RepositoryCreatedEvent(repository));
-      }
-      catch (Exception e) {
-        log.error("Error updating repository on the current node UI.", e);
-      }
-    });
-  }
-
-  private void handleRepositoryUpdated(final String repositoryName) {
-    if (!isRepositoryLoaded(repositoryName)) {
-      log.debug("Can not find repository configuration {}", repositoryName);
-      return;
-    }
-
-    Optional<Configuration> configuration = repositoryConfiguration(repositoryName);
-    configuration.ifPresent(config -> {
-      try {
-        validateConfiguration(config);
-        Repo repo = repoCachePair(repositoryName);
-        try {
-          repo.writeLock.lock();
-
-          Configuration oldConfiguration = repo.repository.getConfiguration().copy();
-          Repository repository = repoCachePair(repositoryName).repository;
-          updateRepositoryInMemory(config);
-
-          eventManager.post(new RepositoryUpdatedEvent(repository, oldConfiguration));
-        }
-        finally {
-          repo.writeLock.unlock();
-        }
-      }
-      catch (Exception e) {
-        log.error("Error updating repository configuration on UI", e);
-      }
-    });
-  }
-
-  private void handleRepositoryDeleted(final String repositoryName) {
-    if (!isRepositoryLoaded(repositoryName)) {
-      log.debug("Repository {} already deleted on the current node", repositoryName);
-      return;
-    }
-
-    Repo repo = repoCachePair(repositoryName);
-    try {
-      repo.writeLock.lock();
-
-      Repository repository = deleteRepositoryFromMemory(repo.repository);
-      eventManager.post(new RepositoryDeletedEvent(repository));
-    }
-    catch (Exception e) {
-      log.error("Error deleting repository on the current node.", e);
-    }
-    finally {
-      repo.writeLock.unlock();
-    }
-  }
-
-  private void distributeRepositoryConfigurationEvent(final String repositoryName, final EventType eventType) {
-    log.debug("Distribute repository configuration event: repository={}:{}", repositoryName, eventType);
-
-    RepositoryConfigurationEvent configEvent = new RepositoryConfigurationEvent(repositoryName, eventType);
-    eventManager.post(configEvent);
-  }
-
-  private void validateRepositoryConfiguration(final String repositoryName, final Configuration configuration) throws Exception {
-    Repository repository = repoCachePair(repositoryName).repository;
-    // ensure configuration sanity
-    repository.validate(configuration);
-  }
-
   private boolean isRepositoryLoaded(final String repositoryName) {
     return repositories.containsKey(repositoryName.toLowerCase());
-  }
-
-  private static class Repo
-  {
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
-
-    private final Lock readLock = lock.readLock();
-
-    private final Lock writeLock = lock.writeLock();
-
-    private final Repository repository;
-
-    public Repo(final Repository repository) {
-      this.repository = checkNotNull(repository);
-    }
   }
 }

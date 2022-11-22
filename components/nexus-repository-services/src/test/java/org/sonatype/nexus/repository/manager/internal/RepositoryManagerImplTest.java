@@ -27,17 +27,15 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.inject.Provider;
-import javax.validation.ValidationException;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.app.FreezeService;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityMetadata;
+import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.node.NodeAccess;
-import org.sonatype.nexus.distributed.event.service.api.EventType;
-import org.sonatype.nexus.distributed.event.service.api.common.RepositoryConfigurationEvent;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.Repository;
@@ -45,6 +43,7 @@ import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.config.ConfigurationStore;
+import org.sonatype.nexus.repository.config.internal.ConfigurationCreatedEvent;
 import org.sonatype.nexus.repository.config.internal.ConfigurationData;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.DefaultRepositoriesContributor;
@@ -71,6 +70,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -121,7 +121,7 @@ public class RepositoryManagerImplTest
   private DefaultRepositoriesContributor defaultRepositoriesContributor;
 
   @Mock
-  private Configuration mavenCentralConfiguration;
+  private ConfigurationData mavenCentralConfiguration;
 
   @Mock
   private Repository mavenCentralRepository;
@@ -442,38 +442,6 @@ public class RepositoryManagerImplTest
     iterator.next();
   }
 
-  /**
-   * Repeatedly repository creation with the same name should throw ValidationException instead of changing repo status
-   *
-   * @throws Exception
-   */
-  @Test(expected = ValidationException.class)
-  public void testCreate_repeatableRepositoryCreationProduceValidationException() throws Exception {
-    RepositoryManagerImpl repositoryManager = buildRepositoryManagerImpl(false, true);
-
-    Configuration configuration = new ConfigurationData();
-    configuration.setRepositoryName("maven-central");
-    configuration.setRecipeName("mockRecipe");
-
-    Map<String, Map<String, Object>> attributes = new HashMap<>();
-    attributes.put("replication", ImmutableMap.of("enabled", false));
-    attributes.put("component", ImmutableMap.of("proprietaryComponents", false));
-    attributes.put("storage", ImmutableMap.of(
-        "dataStoreName", "nexus",
-        "blobStoreName", "default",
-        "strictContentTypeValidation", true,
-        "writePolicy", "ALLOW_ONCE"));
-    attributes.put("maven", ImmutableMap.of(
-        "versionPolicy", "RELEASE",
-        "layoutPolicy", "STRICT",
-        "contentDisposition", "INLINE"
-    ));
-    configuration.setAttributes(attributes);
-
-    repositoryManager.create(configuration);
-    repositoryManager.create(configuration);
-  }
-
   private Map<String, Repository> reflectRepositories() {
     try {
       Field field = RepositoryManagerImpl.class.getDeclaredField("repositories");
@@ -559,7 +527,7 @@ public class RepositoryManagerImplTest
   public void getFunctionalityShouldFallBackToDbIfMissing() throws Exception {
     repositoryManager = buildRepositoryManagerImpl(false, true);
 
-    when(configurationStore.readByNames(any(Set.class))).thenReturn(Collections.singleton(mavenCentralConfiguration));
+    when(configurationStore.list()).thenReturn(Collections.singletonList(mavenCentralConfiguration));
 
     Repository repository = repositoryManager.get("maven-central");
 
@@ -579,10 +547,14 @@ public class RepositoryManagerImplTest
 
   @Test(expected = None.class)
   public void createEventForAlreadyCreatedRepositoryIsHandledGracefully() throws Exception {
-    repositoryManager = buildRepositoryManagerImpl(false, false);
-    RepositoryConfigurationEvent repositoryConfigurationEvent = new RepositoryConfigurationEvent("maven-central", EventType.CREATED);
+    repositoryManager = buildRepositoryManagerImpl(true, true);
+    ConfigurationCreatedEvent repositoryConfigurationEvent = new ConfigurationCreatedEvent(mavenCentralConfiguration);
+    repositoryConfigurationEvent.setRemoteNodeId("remote");
 
-    repositoryManager.on(repositoryConfigurationEvent);
+    EventHelper.asReplicating(() -> repositoryManager.on(repositoryConfigurationEvent));
+
+    verify(configurationStore, times(2)).list();
+    verify(configurationStore, never()).create(any());
   }
 
 

@@ -10,33 +10,32 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.config.internal.orient;
+package org.sonatype.nexus.repository.config.internal;
 
-import org.sonatype.nexus.common.entity.EntityCreatedEvent;
-import org.sonatype.nexus.common.entity.EntityMetadata;
-import org.sonatype.nexus.repository.config.Configuration;
-import org.sonatype.nexus.repository.config.ConfigurationCreatedEvent;
+import org.sonatype.nexus.common.event.EventWithSource;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-/**
- * Repository {@link Configuration} created event.
- *
- * @since 3.1
- */
-public class OrientConfigurationCreatedEvent
-    extends EntityCreatedEvent
-    implements ConfigurationCreatedEvent
+public class ConfigurationCreatedEvent
+    extends EventWithSource
+    implements org.sonatype.nexus.repository.config.ConfigurationCreatedEvent
 {
-  private final String repositoryName;
+  private String repositoryName;
 
-  public OrientConfigurationCreatedEvent(final EntityMetadata metadata, final String repositoryName) {
-    super(metadata);
-    this.repositoryName = checkNotNull(repositoryName);
+  public ConfigurationCreatedEvent() {
+    // deserialization
+  }
+
+  public ConfigurationCreatedEvent(final ConfigurationData configuration) {
+    this.repositoryName = checkNotNull(configuration).getRepositoryName();
   }
 
   @Override
   public String getRepositoryName() {
     return repositoryName;
+  }
+
+  public void setRepositoryName(final String repositoryName) {
+    this.repositoryName = repositoryName;
   }
 }

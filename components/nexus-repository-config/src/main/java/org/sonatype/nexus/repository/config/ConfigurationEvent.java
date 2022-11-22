@@ -22,9 +22,8 @@ import org.sonatype.nexus.common.event.HasLocality;
 public interface ConfigurationEvent
     extends HasLocality
 {
+  @Override
   boolean isLocal();
 
   String getRepositoryName();
-
-  Configuration getConfiguration();
 }

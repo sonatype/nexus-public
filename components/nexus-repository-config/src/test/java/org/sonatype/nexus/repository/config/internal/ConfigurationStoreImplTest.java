@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.config.internal;
 import java.util.Collection;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.config.Configuration;
 
@@ -33,14 +32,11 @@ public class ConfigurationStoreImplTest
   @Mock
   private DataSessionSupplier sessionSupplier;
 
-  @Mock
-  private EventManager eventManager;
-
   private ConfigurationStoreImpl underTest;
 
   @Before
   public void setup() {
-    underTest = new ConfigurationStoreImpl(sessionSupplier, eventManager);
+    underTest = new ConfigurationStoreImpl(sessionSupplier);
   }
 
   @Test
