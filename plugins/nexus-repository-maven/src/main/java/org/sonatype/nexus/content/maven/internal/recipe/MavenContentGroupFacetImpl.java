@@ -187,6 +187,9 @@ public class MavenContentGroupFacetImpl
             .put(mavenPath.hash(entry.getKey()), new StringPayload(entry.getValue().toString(), TEXT_PLAIN));
       }
 
+      getRepository().facet(ContentFacet.class).assets().path(prependIfMissing(mavenPath.getPath(), "/")).find()
+          .ifPresent(a -> a.markAsCached(content));
+
       return content;
     }
     catch (Exception e) {
