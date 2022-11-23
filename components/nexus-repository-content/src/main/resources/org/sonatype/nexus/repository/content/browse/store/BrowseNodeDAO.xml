@@ -49,6 +49,9 @@
 
     CREATE INDEX IF NOT EXISTS idx_${format}_browse_node_tree
         ON ${format}_browse_node (repository_id, parent_id, display_name);
+
+    CREATE INDEX IF NOT EXISTS idx_${format}_browse_node_component_id
+      ON ${format}_browse_node (component_id);
     --
   </insert>
 
