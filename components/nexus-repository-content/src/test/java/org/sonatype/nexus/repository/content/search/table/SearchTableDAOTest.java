@@ -29,7 +29,6 @@ import org.sonatype.nexus.repository.config.internal.ConfigurationData;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.SearchResult;
-import org.sonatype.nexus.repository.content.search.SearchViewColumns;
 import org.sonatype.nexus.repository.content.search.SqlSearchRequest;
 import org.sonatype.nexus.repository.content.store.ContentRepositoryData;
 import org.sonatype.nexus.repository.content.store.ExampleContentTestSupport;
@@ -158,7 +157,6 @@ public class SearchTableDAOTest
 
     SqlSearchRequest request = SqlSearchRequest.builder()
         .limit(10)
-        .sortColumnName(SearchViewColumns.COMPONENT_ID.name())
         .sortDirection(SortDirection.ASC.name())
         .build();
     Collection<SearchResult> actual = searchDAO.searchComponents(request);
@@ -194,7 +192,6 @@ public class SearchTableDAOTest
         .searchFilter(conditionFormat)
         .searchFilterValues(values)
         .limit(10)
-        .sortColumnName(SearchViewColumns.COMPONENT_ID.name())
         .build();
     Collection<SearchResult> results = searchDAO.searchComponents(request);
 
@@ -210,7 +207,6 @@ public class SearchTableDAOTest
     SqlSearchRequest request = SqlSearchRequest.builder()
         .limit(10)
         .offset(10)
-        .sortColumnName(SearchViewColumns.COMPONENT_ID.name())
         .sortDirection(SortDirection.ASC.name())
         .build();
 
@@ -231,7 +227,6 @@ public class SearchTableDAOTest
         .limit(10)
         .offset(0)
         .tagToComponentIds(taggedComponentIds)
-        .sortColumnName(SearchViewColumns.COMPONENT_ID.name())
         .sortDirection(SortDirection.ASC.name())
         .build();
     List<SearchResult> actual = (List<SearchResult>) searchDAO.searchComponents(request);

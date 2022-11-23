@@ -27,7 +27,6 @@ import org.sonatype.nexus.repository.config.internal.ConfigurationData;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.SearchResult;
-import org.sonatype.nexus.repository.content.search.SearchViewColumns;
 import org.sonatype.nexus.repository.content.search.SqlSearchRequest;
 import org.sonatype.nexus.repository.content.search.table.SearchTableDAO;
 import org.sonatype.nexus.repository.content.search.table.SearchTableData;
@@ -238,7 +237,6 @@ public class CselToTsQuerySqlDbTest
   private SqlSearchRequest searchRequest() {
     return SqlSearchRequest.builder()
         .limit(10)
-        .sortColumnName(SearchViewColumns.COMPONENT_ID.name())
         .sortDirection(SortDirection.ASC.name())
         .searchFilter(builder.getQueryString())
         .searchFilterValues(builder.getQueryParameters())

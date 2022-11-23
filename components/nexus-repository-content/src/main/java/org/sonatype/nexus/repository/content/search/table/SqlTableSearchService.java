@@ -23,7 +23,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -31,10 +34,11 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.content.AssetInfo;
 import org.sonatype.nexus.repository.content.SearchResult;
-import org.sonatype.nexus.repository.content.search.SearchViewColumns;
 import org.sonatype.nexus.repository.content.store.AssetStore;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.content.store.InternalIds;
+import org.sonatype.nexus.repository.rest.SearchMapping;
+import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.search.AssetSearchResult;
 import org.sonatype.nexus.repository.search.ComponentSearchResult;
 import org.sonatype.nexus.repository.search.SearchRequest;
@@ -69,10 +73,13 @@ public class SqlTableSearchService
 
   private final Map<String, FormatStoreManager> formatStoreManagersByFormat;
 
+  private final Map<String, String> aliasToColumn;
+
   @Inject
   public SqlTableSearchService(
       final TableSearchUtils searchUtils,
       final SearchTableStore searchStore,
+      final List<SearchMappings> searchMappings,
       final Map<String, FormatStoreManager> formatStoreManagersByFormat,
       final TableSearchPermissionManager sqlSearchPermissionManager)
   {
@@ -80,6 +87,11 @@ public class SqlTableSearchService
     this.searchStore = checkNotNull(searchStore);
     this.sqlSearchPermissionManager = checkNotNull(sqlSearchPermissionManager);
     this.formatStoreManagersByFormat = checkNotNull(formatStoreManagersByFormat);
+
+    this.aliasToColumn = checkNotNull(searchMappings).stream()
+        .map(SearchMappings::get)
+        .flatMap(iterable -> StreamSupport.stream(iterable.spliterator(), false))
+        .collect(Collectors.toMap(SearchMapping::getAlias, mapping -> mapping.getField().getColumnName()));
   }
 
   @Override
@@ -164,7 +176,7 @@ public class SqlTableSearchService
         searchRequest.getLimit(),
         offset,
         queryCondition,
-        SearchViewColumns.fromSortFieldName(searchRequest.getSortField()),
+        getSortField(searchRequest.getSortField()),
         searchRequest.getSortDirection());
 
     if (searchResults.isEmpty()) {
@@ -264,6 +276,14 @@ public class SqlTableSearchService
     searchResult.setUploaderIp(asset.createdByIp());
 
     return searchResult;
+  }
+
+  @Nullable
+  private String getSortField(@Nullable final String sortColumnAlias) {
+    return Optional.ofNullable(sortColumnAlias)
+        .map(alias -> alias.startsWith("attributes.") ? alias.substring("attributes.".length()) : alias)
+        .map(aliasToColumn::get)
+        .orElse(null);
   }
 
   private static class ComponentSearchResultPage

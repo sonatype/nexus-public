@@ -102,7 +102,7 @@ public class SqlSearchRequest
       return this;
     }
 
-    public Builder sortColumnName(final String sortColumnName) {
+    public Builder sortColumnName(@Nullable final String sortColumnName) {
       this.sortColumnName = sortColumnName;
       return this;
     }

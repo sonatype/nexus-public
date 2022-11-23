@@ -33,7 +33,6 @@ import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.content.SearchResult;
 import org.sonatype.nexus.repository.content.search.SearchResultData;
-import org.sonatype.nexus.repository.content.search.SearchViewColumns;
 import org.sonatype.nexus.repository.content.search.SqlSearchRequest;
 import org.sonatype.nexus.repository.search.SortDirection;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryCondition;
@@ -136,7 +135,7 @@ public class SearchTableStore
       final int limit,
       final int offset,
       @Nullable final SqlSearchQueryCondition filterQuery,
-      final SearchViewColumns sortColumnName,
+      @Nullable final String sortColumnName,
       final SortDirection sortDirection)
   {
     try {
@@ -192,7 +191,7 @@ public class SearchTableStore
       final int limit,
       final int offset,
       final SqlSearchQueryCondition filterQuery,
-      final SearchViewColumns sortViewColumnName,
+      @Nullable final String sortColumnName,
       final SortDirection sortDirectionEnum) throws NoTaggedComponentsException
   {
     boolean crossFormatSearch = false;
@@ -204,7 +203,6 @@ public class SearchTableStore
       crossFormatSearch = formatValues.containsKey("name") && !formatValues.containsKey("format");
     }
 
-    final String sortColumnName = sortViewColumnName.name();
     final String sortDirection = Optional.ofNullable(sortDirectionEnum).orElse(SortDirection.ASC).name();
     SqlSearchRequest request;
     if (crossFormatSearch) {

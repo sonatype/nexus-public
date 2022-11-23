@@ -274,10 +274,16 @@
       </if>
       <if test="filter != null">(${filter})</if>
     </where>
-    ORDER BY ${sortColumnName} ${sortDirection}
-    <if test="sortColumnName != defaultSortColumnName">, ${defaultSortColumnName}</if>
-    <if test="sortColumnName != secondDefaultSortColumnName">, ${secondDefaultSortColumnName}</if>
-    <if test="limit != null">LIMIT #{limit}</if>
+    ORDER BY <if test="sortColumnName != null">
+               ${sortColumnName} ${sortDirection}
+               <if test="sortColumnName != defaultSortColumnName">, ${defaultSortColumnName}</if>
+               <if test="sortColumnName != secondDefaultSortColumnName">, ${secondDefaultSortColumnName}</if>
+               <if test="limit != null">LIMIT #{limit}</if>
+             </if>
+             <if test="sortColumnName == null">
+               ${defaultSortColumnName} <if test="sortDirection != null">${sortDirection}</if>,
+               ${secondDefaultSortColumnName} <if test="sortDirection != null">${sortDirection}</if>
+             </if>
     OFFSET #{offset};
   </select>
 
