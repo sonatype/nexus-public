@@ -1287,7 +1287,8 @@ This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 
 
   LOG4J_VISUALIZER: {
     MENU: {
-      text: 'Log4j Visualizer'
+      text: 'Log4j Visualizer',
+      description: 'Overview of vulnerability risk from open-source supply chain'
     }
   },
 
