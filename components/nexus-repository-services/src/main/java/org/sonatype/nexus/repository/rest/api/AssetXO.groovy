@@ -64,7 +64,7 @@ class AssetXO
 
   String uploaderIp
 
-  long fileSize
+  Long fileSize
 
   @JsonIgnore
   Map attributes
@@ -84,6 +84,8 @@ class AssetXO
         .contentType(asset.getContentType())
         .attributes(getExpandedAttributes(asset.getAttributes(), asset.getFormat(), assetDescriptors))
         .lastModified(asset.getLastModified())
+        .lastDownloaded(asset.getLastDownloaded())
+        .fileSize(asset.getFileSize())
         .uploader(asset.getUploader())
         .uploaderIp(asset.getUploaderIp())
         .build()

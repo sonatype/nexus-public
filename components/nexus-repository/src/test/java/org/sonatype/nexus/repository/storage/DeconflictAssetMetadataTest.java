@@ -52,7 +52,7 @@ public class DeconflictAssetMetadataTest
   @Rule
   public DatabaseInstanceRule database = DatabaseInstanceRule.inMemory("test");
 
-  private final DateTime TEST_LAST_DOWNLOADED = DateTime.parse("2018-07-31T13:20");
+  private final DateTime TEST_LAST_DOWNLOADED = DateTime.parse("2022-12-12T13:20");
 
   private final DateTime TEST_LAST_MODIFIED = DateTime.parse("2018-07-31T14:30");
 

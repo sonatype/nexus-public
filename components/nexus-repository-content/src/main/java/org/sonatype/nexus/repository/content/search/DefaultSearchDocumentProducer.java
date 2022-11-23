@@ -97,6 +97,8 @@ public class DefaultSearchDocumentProducer
         assetDoc.put(CONTENT_TYPE, blob.contentType());
         assetDoc.put(UPLOADER, blob.createdBy().orElse(null));
         assetDoc.put(UPLOADER_IP, blob.createdByIp().orElse(null));
+        assetDoc.put(FILE_SIZE, blob.blobSize());
+        asset.lastDownloaded().ifPresent(dateTime -> assetDoc.put(LAST_DOWNLOADED_KEY, format(dateTime)));
         attributes.put("checksum", blob.checksums());
 
         // Not ideal, but demonstrates why strongly typed objects would be better than Maps of attributes.

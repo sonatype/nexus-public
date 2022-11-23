@@ -226,8 +226,17 @@ public class ElasticSearchServiceImpl
     assetSearchResult.setLastModified(calculateLastModified(assetSearchResult.getAttributes()));
     assetSearchResult.setUploader((String) assetMap.get(UPLOADER));
     assetSearchResult.setUploaderIp((String) assetMap.get(UPLOADER_IP));
+    assetSearchResult.setLastDownloaded(calculateLastDownloaded(assetMap));
+    assetSearchResult.setFileSize(getFileSize(assetMap));
 
     return assetSearchResult;
+  }
+
+  private Long getFileSize(final Map<String, Object> attributes) {
+    return Optional.ofNullable(attributes.get(FILE_SIZE))
+        .map(Number.class::cast)
+        .map(Number::longValue)
+        .orElse(null);
   }
 
   private OffsetDateTime calculateOffsetDateTime(final Map<String, Object> attributes, final String field) {
@@ -242,6 +251,21 @@ public class ElasticSearchServiceImpl
     catch (Exception ignored) {
       log.debug("Unable to retrieve {}", field, ignored);
       // Nothing we can do here for invalid data. It shouldn't happen but date parsing will blow out the results.
+      return null;
+    }
+  }
+
+  private Date calculateLastDownloaded(final Map<String, Object> attributes) {
+    try {
+      return Optional.ofNullable(attributes.get(LAST_DOWNLOADED_KEY))
+          .map(String.class::cast)
+          .map(DATE_TIME_FORMATTER::parse)
+          .map(Instant::from)
+          .map(Date::from)
+          .orElse(null);
+    }
+    catch (Exception ignored) {
+      log.debug("Unable to retrieve last_downloaded", ignored);
       return null;
     }
   }
