@@ -127,8 +127,11 @@ public interface ComponentDAO
    * Creates the given component in the content data store.
    *
    * @param component the component to create
+   * @param entityVersionEnabled whether to version this component
    */
-  void createComponent(ComponentData component);
+  void createComponent(
+      @Param("component") ComponentData component,
+      @Param("entityVersionEnabled") boolean entityVersionEnabled);
 
   /**
    * Retrieves a component from the content data store.
@@ -157,9 +160,12 @@ public interface ComponentDAO
    *
    * @param component the component to update
    *
+   * @param entityVersionEnabled whether to version this component
    * @since 3.25
    */
-  void updateComponentKind(Component component);
+  void updateComponentKind(
+      @Param("component") Component component,
+      @Param("entityVersionEnabled") boolean entityVersionEnabled);
 
   /**
    * Retrieves the latest attributes of the given component in the content data store.
@@ -171,10 +177,12 @@ public interface ComponentDAO
 
   /**
    * Updates the attributes of the given component in the content data store.
-   *
-   * @param component the component to update
+   *  @param component the component to update
+   * @param entityVersionEnabled whether to version this component
    */
-  void updateComponentAttributes(Component component);
+  void updateComponentAttributes(
+      @Param("component") Component component,
+      @Param("entityVersionEnabled") boolean entityVersionEnabled);
 
   /**
    * Deletes a component from the content data store.

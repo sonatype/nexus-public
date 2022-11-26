@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 
 import org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup;
 import org.sonatype.nexus.datastore.api.DataSession;
@@ -30,20 +32,24 @@ import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.SearchResult;
 import org.sonatype.nexus.repository.content.search.SqlSearchRequest;
+import org.sonatype.nexus.repository.content.store.ComponentDAO;
 import org.sonatype.nexus.repository.content.store.ContentRepositoryData;
 import org.sonatype.nexus.repository.content.store.ExampleContentTestSupport;
-import org.sonatype.nexus.repository.content.store.InternalIds;
+import org.sonatype.nexus.repository.content.store.example.TestComponentDAO;
 import org.sonatype.nexus.repository.search.SortDirection;
 import org.sonatype.nexus.repository.search.normalize.VersionNumberExpander;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryCondition;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilder;
 import org.sonatype.nexus.repository.search.sql.textsearch.PostgresFullTextSearchQueryBuilder;
 
+import com.google.common.collect.ImmutableSet;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import static java.lang.Math.max;
+import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -52,7 +58,9 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA512;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
+import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
 import static org.sonatype.nexus.repository.rest.sql.ComponentSearchField.FORMAT_FIELD_1;
+import static org.sonatype.nexus.repository.rest.sql.ComponentSearchField.KEYWORD;
 import static org.sonatype.nexus.repository.rest.sql.ComponentSearchField.NAME;
 
 /**
@@ -74,12 +82,23 @@ public class SearchTableDAOTest
 
   private ContentRepositoryData repository;
 
+  private CountDownLatch beginWork;
+
+  private CountDownLatch workDone;
+
+  private final ExecutorService executorService = newFixedThreadPool(2);
+
+  private final SqlSearchQueryConditionBuilder conditionBuilder = new PostgresFullTextSearchQueryBuilder();
+
   public SearchTableDAOTest() {
     super(SearchTableDAO.class);
   }
 
   @Before
   public void setupContent() {
+    beginWork = new CountDownLatch(1);
+    workDone = new CountDownLatch(2);
+
     generateRandomNamespaces(5);
     generateRandomNames(5);
     generateRandomVersions(10);
@@ -90,9 +109,10 @@ public class SearchTableDAOTest
     generateSingleRepository(UUID.fromString(configuration.getRepositoryId().getValue()));
     repository = generatedRepositories().get(0);
 
-    generateContent(TABLE_RECORDS_TO_GENERATE);
+    generateContent(TABLE_RECORDS_TO_GENERATE, true);
 
     session = sessionRule.openSession(DEFAULT_DATASTORE_NAME);
+    TestComponentDAO componentDAO = session.access(TestComponentDAO.class);
 
     for (int i = 0; i < TABLE_RECORDS_TO_GENERATE; i++) {
       Component component = generatedComponents().get(i);
@@ -101,7 +121,7 @@ public class SearchTableDAOTest
       SearchTableData tableData = new SearchTableData();
       //PK
       tableData.setRepositoryId(repository.contentRepositoryId());
-      tableData.setComponentId(InternalIds.internalComponentId(component));
+      tableData.setComponentId(internalComponentId(component));
       tableData.setFormat(FORMAT);
       //tableData component
       tableData.setNamespace(component.namespace() + "_" + i);
@@ -130,6 +150,9 @@ public class SearchTableDAOTest
       tableData.addUploader("uploader-name");
       tableData.addUploaderIp("uploader-ip-address");
 
+      componentDAO.readComponent(internalComponentId(component))
+          .map(Component::entityVersion).ifPresent(tableData::setEntityVersion);
+
       GENERATED_DATA.add(tableData);
     }
 
@@ -143,10 +166,61 @@ public class SearchTableDAOTest
   }
 
   @Test
-  public void testCreateAndCount() {
+  public void shouldAcceptUpdatesWithCurrentEntityVersion() {
+    assertEntityVersionsAreSameAsSearchTableDataToSave();
+
     GENERATED_DATA.forEach(searchDAO::save);
+
     int count = searchDAO.count(null, null);
+
     assertThat(count, is(2));
+  }
+
+  @Test
+  public void ignoreUpdatesWithLesserEntityVersion() {
+    assertEntityVersionsAreSameAsSearchTableDataToSave();
+
+    GENERATED_DATA.forEach(data -> {
+      data.setEntityVersion(data.getEntityVersion() - 1);
+      searchDAO.save(data);
+    });
+
+    int count = searchDAO.count(null, null);
+
+    assertThat(count, is(0));
+  }
+
+  @Test
+  public void concurrentlyAcceptUpdatesWithCurrentEntityVersion() throws Exception {
+    assertThat(GENERATED_DATA.get(0).getEntityVersion(), is(GENERATED_DATA.get(1).getEntityVersion()));
+
+    GENERATED_DATA.get(0).addKeyword("path-1");
+    GENERATED_DATA.get(1).addKeyword("path-2");
+
+    runConcurrentUpdate();
+
+    SqlSearchQueryCondition condition = conditionBuilder.condition(KEYWORD.getColumnName(), ImmutableSet.of("path-1", "path-2"));
+
+    int count = searchDAO.count(condition.getSqlConditionFormat(), condition.getValues());
+
+    assertThat(count, is(2));
+  }
+
+  @Test
+  public void concurrentlyIgnoreUpdatesWithLesserEntityVersion() throws Exception {
+    GENERATED_DATA.get(0).setEntityVersion(GENERATED_DATA.get(0).getEntityVersion() - 1);
+    GENERATED_DATA.get(0).addKeyword("path-1");
+    GENERATED_DATA.get(1).addKeyword("path-2");
+
+    runConcurrentUpdate();
+
+    SqlSearchQueryCondition condition = conditionBuilder.condition(KEYWORD.getColumnName(), "path-1");
+
+    assertThat(searchDAO.count(condition.getSqlConditionFormat(), condition.getValues()), is(0));
+
+    condition = conditionBuilder.condition(KEYWORD.getColumnName(), "path-2");
+
+    assertThat(searchDAO.count(condition.getSqlConditionFormat(), condition.getValues()), is(1));
   }
 
   @Test
@@ -177,7 +251,7 @@ public class SearchTableDAOTest
     GENERATED_DATA.forEach(searchDAO::save);
 
     List<String> componentNames = Arrays.asList("component", "foo_component", "test_component_name", "name");
-    generateContent(componentNames);
+    generateContent(componentNames, false);
 
     SqlSearchQueryConditionBuilder queryConditionBuilder = new PostgresFullTextSearchQueryBuilder();
     SqlSearchQueryCondition queryCondition = queryConditionBuilder.condition(NAME.getColumnName(), "component*");
@@ -241,6 +315,7 @@ public class SearchTableDAOTest
 
     SearchTableData tableData = GENERATED_DATA.get(0);
     final SearchTableData searchTableData = new SearchTableData();
+    searchTableData.setEntityVersion(tableData.getEntityVersion());
     searchTableData.setRepositoryId(tableData.getRepositoryId());
     searchTableData.setComponentId(tableData.getComponentId());
     searchTableData.setFormat(tableData.getFormat());
@@ -259,9 +334,8 @@ public class SearchTableDAOTest
     searchTableData.addFormatFieldValue6("customField6");
     searchTableData.addFormatFieldValue7("customField7");
     searchDAO.save(searchTableData);
-    SqlSearchQueryConditionBuilder queryConditionBuilder = new PostgresFullTextSearchQueryBuilder();
     SqlSearchQueryCondition queryCondition =
-        queryConditionBuilder.condition(FORMAT_FIELD_1.getColumnName(), "customField1");
+        conditionBuilder.condition(FORMAT_FIELD_1.getColumnName(), "customField1");
     Map<String, String> values = queryCondition.getValues();
 
     String conditionFormat = queryCondition.getSqlConditionFormat();
@@ -301,5 +375,35 @@ public class SearchTableDAOTest
 
     int count = searchDAO.count(null, null);
     assertThat(count, is(TABLE_RECORDS_TO_GENERATE));
+  }
+
+  private void assertEntityVersionsAreSameAsSearchTableDataToSave() {
+    ComponentDAO componentDAO = session.access(TestComponentDAO.class);
+    Optional<Component> savedComponent1 = componentDAO.readComponent(internalComponentId(generatedComponents().get(0)));
+    assertThat(savedComponent1.isPresent(), is(true));
+    assertThat(GENERATED_DATA.get(0).getEntityVersion(), is(savedComponent1.get().entityVersion()));
+
+    Optional<Component> savedComponent2 = componentDAO.readComponent(internalComponentId(generatedComponents().get(1)));
+    assertThat(savedComponent2.isPresent(), is(true));
+    assertThat(GENERATED_DATA.get(1).getEntityVersion(), is(savedComponent2.get().entityVersion()));
+  }
+
+  private void runConcurrentUpdate() throws InterruptedException {
+    executorService.submit(() -> queueUpdate(GENERATED_DATA.get(0)));
+    executorService.submit(() -> queueUpdate(GENERATED_DATA.get(1)));
+    beginWork.countDown();
+    executorService.shutdown();
+    workDone.await();
+  }
+
+  private void queueUpdate(final SearchTableData searchTableData) {
+    try {
+      beginWork.await();
+      searchDAO.save(searchTableData);
+      workDone.countDown();
+    }
+    catch (InterruptedException e) {
+      e.printStackTrace();
+    }
   }
 }

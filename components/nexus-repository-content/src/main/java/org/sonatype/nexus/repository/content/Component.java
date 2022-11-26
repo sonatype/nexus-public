@@ -43,10 +43,16 @@ public interface Component
    */
   String version();
 
+  /**
+   * The entity version
+   */
+  Integer entityVersion();
+
   default String toStringExternal() {
     return "namespace=" + namespace() +
         ", name=" + name() +
         ", kind=" + kind() +
-        ", version=" + version();
+        ", version=" + version() +
+        ", entityVersion=" + entityVersion();
   }
 }

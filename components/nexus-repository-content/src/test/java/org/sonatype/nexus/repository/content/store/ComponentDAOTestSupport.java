@@ -14,7 +14,10 @@ package org.sonatype.nexus.repository.content.store;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.time.UTC;
@@ -27,13 +30,12 @@ import org.sonatype.nexus.repository.content.store.example.TestContentRepository
 
 import org.hamcrest.collection.IsIterableContainingInAnyOrder;
 import org.hamcrest.collection.IsIterableContainingInOrder;
-import org.junit.Before;
-import org.junit.Test;
 
 import static com.google.common.collect.Sets.newHashSet;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.summingInt;
 import static java.util.stream.Collectors.toList;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyIterable;
@@ -41,24 +43,24 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 /**
- * Test {@link ComponentDAO}.
+ * Support class for ComponentDao tests.
  */
-public class ComponentDAOTest
+public class ComponentDAOTestSupport
     extends ExampleContentTestSupport
 {
-  private ContentRepositoryData contentRepository;
-
   private int repositoryId;
 
-  @Before
-  public void setupContent() {
-    contentRepository = randomContentRepository();
+  private boolean entityVersionEnabled;
+
+  public void setupContent(final boolean entityVersionEnabled) {
+    this.entityVersionEnabled = entityVersionEnabled;
+
+    ContentRepositoryData contentRepository = randomContentRepository();
 
     createContentRepository(contentRepository);
 
@@ -70,15 +72,6 @@ public class ComponentDAOTest
     generateRandomPaths(100);
   }
 
-  private void createContentRepository(final ContentRepositoryData contentRepository) {
-    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
-      ContentRepositoryDAO dao = session.access(TestContentRepositoryDAO.class);
-      dao.createContentRepository(contentRepository);
-      session.getTransaction().commit();
-    }
-  }
-
-  @Test
   public void testCrudOperations() throws InterruptedException {
 
     ComponentData component1 = randomComponent(repositoryId);
@@ -115,19 +108,24 @@ public class ComponentDAOTest
 
       assertThat(browseComponents(dao, repositoryId, null, 10, null), emptyIterable());
 
-      dao.createComponent(component1);
+      dao.createComponent(component1, entityVersionEnabled);
 
       assertThat(browseComponents(dao, repositoryId, null, 10, null),
           contains(allOf(sameCoordinates(component1), sameKind(component1), sameAttributes(component1))));
 
-      dao.createComponent(component2);
-      dao.createComponent(component3);
+      dao.createComponent(component2, entityVersionEnabled);
+      dao.createComponent(component3, entityVersionEnabled);
 
       //browse all components
-      assertThat(browseComponents(dao, repositoryId, null, 10, null),
-          contains(allOf(sameCoordinates(component1), sameKind(component1), sameAttributes(component1)),
-              allOf(sameCoordinates(component2), sameKind(component2), sameAttributes(component2)),
-              allOf(sameCoordinates(component3), sameKind(component3), sameAttributes(component3))));
+      Continuation<Component> components = browseComponents(dao, repositoryId, null, 10, null);
+      assertThat(components, contains(
+          allOf(sameCoordinates(component1), sameKind(component1), sameAttributes(component1)),
+          allOf(sameCoordinates(component2), sameKind(component2), sameAttributes(component2)),
+          allOf(sameCoordinates(component3), sameKind(component3), sameAttributes(component3))));
+
+      assertEntityVersion(dao, component1, entityVersionEnabled ? 1 : null);
+      assertEntityVersion(dao, component2, entityVersionEnabled ? 1 : null);
+      assertEntityVersion(dao, component3, entityVersionEnabled ? 1 : null);
 
       //browse by kind
       assertThat(browseComponents(dao, repositoryId, anotherKind, 10, null),
@@ -149,7 +147,7 @@ public class ComponentDAOTest
       duplicate.setVersion(component1.version());
       duplicate.setKind(component1.kind());
       duplicate.setAttributes(newAttributes("duplicate"));
-      dao.createComponent(duplicate);
+      dao.createComponent(duplicate, entityVersionEnabled);
 
       session.getTransaction().commit();
       fail("Cannot create the same component twice");
@@ -169,11 +167,17 @@ public class ComponentDAOTest
       assertThat(tempResult, sameCoordinates(component1));
       assertThat(tempResult, sameKind(component1));
       assertThat(tempResult, sameAttributes(component1));
+      assertEntityVersion(tempResult, entityVersionEnabled ? 1 : null);
 
       tempResult = dao.readCoordinate(repositoryId, namespace2, name2, version2).get();
       assertThat(tempResult, sameCoordinates(component2));
       assertThat(tempResult, sameKind(component2));
       assertThat(tempResult, sameAttributes(component2));
+      assertEntityVersion(tempResult, entityVersionEnabled ? 1 : null);
+
+      tempResult =
+          dao.readCoordinate(repositoryId, component3.namespace(), component3.name(), component3.version()).get();
+      assertEntityVersion(tempResult, entityVersionEnabled ? 1 : null);
     }
 
     // UPDATE
@@ -191,14 +195,17 @@ public class ComponentDAOTest
       OffsetDateTime oldLastUpdated = tempResult.lastUpdated();
 
       component1.attributes("custom-section-1").set("custom-key-1", "more-test-values-1");
-      dao.updateComponentAttributes(component1);
+      dao.updateComponentAttributes(component1, entityVersionEnabled);
+      assertEntityVersion(dao, component1.componentId, entityVersionEnabled ? 2 : null);
+
       component1.setKind("new-kind-1");
-      dao.updateComponentKind(component1);
+      dao.updateComponentKind(component1, entityVersionEnabled);
 
       tempResult = dao.readCoordinate(repositoryId, namespace1, name1, version1).get();
       assertThat(tempResult, sameCoordinates(component1));
       assertThat(tempResult, sameKind(component1));
       assertThat(tempResult, sameAttributes(component1));
+      assertEntityVersion(tempResult, entityVersionEnabled ? 3 : null);
       assertThat(tempResult.created(), is(oldCreated));
       assertTrue(tempResult.lastUpdated().isAfter(oldLastUpdated)); // should change as attributes have changed
 
@@ -209,14 +216,18 @@ public class ComponentDAOTest
 
       component2.componentId = null; // check a 'detached' entity with no internal id can be updated
       component2.attributes("custom-section-2").set("custom-key-2", "more-test-values-2");
-      dao.updateComponentAttributes(component2);
+      dao.updateComponentAttributes(component2, entityVersionEnabled);
+      assertEntityVersion(dao.readCoordinate(repositoryId, namespace2, name2, version2).get(),
+          entityVersionEnabled ? 2 : null);
+
       component2.setKind("new-kind-2");
-      dao.updateComponentKind(component2);
+      dao.updateComponentKind(component2, entityVersionEnabled);
 
       tempResult = dao.readCoordinate(repositoryId, namespace2, name2, version2).get();
       assertThat(tempResult, sameCoordinates(component2));
       assertThat(tempResult, sameKind(component2));
       assertThat(tempResult, sameAttributes(component2));
+      assertEntityVersion(tempResult, entityVersionEnabled ? 3 : null);
       assertThat(tempResult.created(), is(oldCreated));
       assertTrue(tempResult.lastUpdated().isAfter(oldLastUpdated)); // should change as attributes have changed
 
@@ -238,12 +249,13 @@ public class ComponentDAOTest
       OffsetDateTime oldLastUpdated = tempResult.lastUpdated();
 
       component1.attributes("custom-section-1").set("custom-key-1", "more-test-values-again");
-      dao.updateComponentAttributes(component1);
+      dao.updateComponentAttributes(component1, entityVersionEnabled);
 
       tempResult = dao.readCoordinate(repositoryId, namespace1, name1, version1).get();
       assertThat(tempResult, sameCoordinates(component1));
       assertThat(tempResult, sameKind(component1));
       assertThat(tempResult, sameAttributes(component1));
+      assertEntityVersion(tempResult, entityVersionEnabled ? 4 : null);
       assertThat(tempResult.created(), is(oldCreated));
       assertTrue(tempResult.lastUpdated().isAfter(oldLastUpdated)); // should change as attributes changed again
 
@@ -252,12 +264,14 @@ public class ComponentDAOTest
       oldCreated = tempResult.created();
       oldLastUpdated = tempResult.lastUpdated();
 
-      dao.updateComponentAttributes(component2);
+      dao.updateComponentAttributes(component2, entityVersionEnabled);
 
       tempResult = dao.readCoordinate(repositoryId, namespace2, name2, version2).get();
       assertThat(tempResult, sameCoordinates(component2));
       assertThat(tempResult, sameKind(component2));
       assertThat(tempResult, sameAttributes(component2));
+      assertEntityVersion(tempResult, entityVersionEnabled ? 3 : null);
+
       assertThat(tempResult.created(), is(oldCreated));
       assertThat(tempResult.lastUpdated(), is(oldLastUpdated)); // won't have changed as attributes haven't changed
 
@@ -271,9 +285,17 @@ public class ComponentDAOTest
 
       assertTrue(dao.deleteComponent(component1));
 
-      assertThat(browseComponents(dao, repositoryId, null, 10, null),
+      Continuation<Component> components = browseComponents(dao, repositoryId, null, 10, null);
+      assertThat(components,
           contains(allOf(sameCoordinates(component2), sameKind(component2), sameAttributes(component2)),
               allOf(sameCoordinates(component3), sameKind(component3), sameAttributes(component3))));
+
+      assertEntityVersion(
+          dao.readCoordinate(repositoryId, component2.namespace(), component2.name(), component2.version()).get(),
+          entityVersionEnabled ? 3 : null);
+      assertEntityVersion(
+          dao.readCoordinate(repositoryId, component3.namespace(), component3.name(), component3.version()).get(),
+          entityVersionEnabled ? 1 : null);
 
       assertTrue(dao.deleteComponents(repositoryId, 0));
 
@@ -288,12 +310,11 @@ public class ComponentDAOTest
     }
   }
 
-  @Test
   public void testBrowseComponentCoordinates() {
 
     // scatter components and assets
     generateRandomRepositories(10);
-    generateRandomContent(10, 100);
+    generateRandomContent(10, 100, entityVersionEnabled);
 
     List<Component> browsedComponents = new ArrayList<>();
 
@@ -311,18 +332,17 @@ public class ComponentDAOTest
                   dao.browseVersions(r.repositoryId, ns, n).forEach(v ->
                       browsedComponents.add(
                           dao.readCoordinate(r.repositoryId, ns, n, v).get())
-      ))));
+                  ))));
     }
 
     // we should have the same components, but maybe in a different order
     // (use hamcrest class directly as javac picks the wrong static varargs method)
     assertThat(browsedComponents, new IsIterableContainingInAnyOrder<>(
         generatedComponents().stream()
-        .map(ExampleContentTestSupport::sameCoordinates)
-        .collect(toList())));
+            .map(ExampleContentTestSupport::sameCoordinates)
+            .collect(toList())));
   }
 
-  @Test
   public void testContinuationBrowsing() {
 
     generateRandomNamespaces(1000);
@@ -330,7 +350,7 @@ public class ComponentDAOTest
     generateRandomVersions(1000);
     generateRandomPaths(10000);
     generateRandomRepositories(1);
-    generateRandomContent(1000, 1000);
+    generateRandomContent(1000, 1000, entityVersionEnabled);
 
     repositoryId = generatedRepositories().get(0).repositoryId;
 
@@ -353,6 +373,7 @@ public class ComponentDAOTest
                 .collect(toList())));
 
         components = browseComponents(dao, repositoryId, null, 10, components.nextContinuationToken());
+        assertSameEntityVersion(components, entityVersionEnabled ? 1 : null);
 
         page++;
       }
@@ -360,12 +381,12 @@ public class ComponentDAOTest
       assertThat(page, is(100));
     }
   }
-  @Test
+
   public void testDeleteAllComponents() {
 
     // scatter components and assets
     generateRandomRepositories(1);
-    generateRandomContent(100, 100);
+    generateRandomContent(100, 100, entityVersionEnabled);
 
     repositoryId = generatedRepositories().get(0).contentRepositoryId();
 
@@ -397,7 +418,6 @@ public class ComponentDAOTest
     }
   }
 
-  @Test
   public void testPurgeOperation() {
     ComponentData component1 = randomComponent(repositoryId);
     ComponentData component2 = randomComponent(repositoryId);
@@ -405,8 +425,8 @@ public class ComponentDAOTest
 
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ComponentDAO dao = session.access(TestComponentDAO.class);
-      dao.createComponent(component1);
-      dao.createComponent(component2);
+      dao.createComponent(component1, entityVersionEnabled);
+      dao.createComponent(component2, entityVersionEnabled);
       session.getTransaction().commit();
     }
 
@@ -421,8 +441,8 @@ public class ComponentDAOTest
 
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO dao = session.access(TestAssetDAO.class);
-      dao.createAsset(asset1);
-      dao.createAsset(asset2);
+      dao.createAsset(asset1, entityVersionEnabled);
+      dao.createAsset(asset2, entityVersionEnabled);
       session.getTransaction().commit();
     }
 
@@ -430,10 +450,15 @@ public class ComponentDAOTest
       ComponentDAO componentDao = session.access(TestComponentDAO.class);
       AssetDAO assetDao = session.access(TestAssetDAO.class);
 
-      assertTrue(componentDao.readCoordinate(repositoryId,
-          component1.namespace(), component1.name(), component1.version()).isPresent());
-      assertTrue(componentDao.readCoordinate(repositoryId,
-          component2.namespace(), component2.name(), component2.version()).isPresent());
+      Optional<Component> component = componentDao.readCoordinate(repositoryId,
+          component1.namespace(), component1.name(), component1.version());
+      assertTrue(component.isPresent());
+      assertEntityVersion(component.get(), entityVersionEnabled ? 2 : null);
+
+      component = componentDao.readCoordinate(repositoryId,
+          component2.namespace(), component2.name(), component2.version());
+      assertTrue(component.isPresent());
+      assertEntityVersion(component.get(), entityVersionEnabled ? 2 : null);
 
       assertTrue(assetDao.readPath(repositoryId, asset1.path()).isPresent());
       assertTrue(assetDao.readPath(repositoryId, asset2.path()).isPresent());
@@ -448,8 +473,11 @@ public class ComponentDAOTest
         componentDao.purgeSelectedComponents(componentIds);
       }
 
-      assertTrue(componentDao.readCoordinate(repositoryId,
-          component1.namespace(), component1.name(), component1.version()).isPresent());
+      component = componentDao.readCoordinate(repositoryId,
+          component1.namespace(), component1.name(), component1.version());
+      assertTrue(component.isPresent());
+      assertEntityVersion(component.get(), entityVersionEnabled ? 2 : null);
+
       assertFalse(componentDao.readCoordinate(repositoryId,
           component2.namespace(), component2.name(), component2.version()).isPresent());
 
@@ -458,7 +486,6 @@ public class ComponentDAOTest
     }
   }
 
-  @Test
   public void testRoundTrip() {
     ComponentData component1 = randomComponent(repositoryId);
     ComponentData component2 = randomComponent(repositoryId);
@@ -466,8 +493,8 @@ public class ComponentDAOTest
 
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ComponentDAO dao = session.access(TestComponentDAO.class);
-      dao.createComponent(component1);
-      dao.createComponent(component2);
+      dao.createComponent(component1, entityVersionEnabled);
+      dao.createComponent(component2, entityVersionEnabled);
       session.getTransaction().commit();
     }
 
@@ -480,15 +507,16 @@ public class ComponentDAOTest
       assertThat(tempResult, sameCoordinates(component1));
       assertThat(tempResult, sameKind(component1));
       assertThat(tempResult, sameAttributes(component1));
+      assertEntityVersion(tempResult, entityVersionEnabled ? 1 : null);
 
       tempResult = dao.readComponent(component2.componentId).get();
       assertThat(tempResult, sameCoordinates(component2));
       assertThat(tempResult, sameKind(component2));
       assertThat(tempResult, sameAttributes(component2));
+      assertEntityVersion(tempResult, entityVersionEnabled ? 1 : null);
     }
   }
 
-  @Test
   public void testBrowseComponentsInRepositories() {
     ContentRepositoryData anotherContentRepository = randomContentRepository();
     createContentRepository(anotherContentRepository);
@@ -506,7 +534,6 @@ public class ComponentDAOTest
     component2.setVersion("1.2");
     component2.setKind(anotherKind);
 
-
     // CREATE
 
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
@@ -516,25 +543,30 @@ public class ComponentDAOTest
           dao.browseComponentsInRepositories(newHashSet(repositoryId, anotherRepositoryId), 10, null),
           emptyIterable());
 
-      dao.createComponent(component1);
+      dao.createComponent(component1, entityVersionEnabled);
 
-      assertThat(
-          dao.browseComponentsInRepositories(newHashSet(repositoryId, anotherRepositoryId), 10, null),
-          contains(allOf(sameCoordinates(component1), sameKind(component1), sameAttributes(component1))));
+      Continuation<Component> components =
+          dao.browseComponentsInRepositories(newHashSet(repositoryId, anotherRepositoryId), 10, null);
+      assertThat(components,
+          contains(allOf(sameCoordinates(component1), sameKind(component1),
+              sameAttributes(component1))));
 
-      dao.createComponent(component2);
+      assertEntityVersion(dao, component1, entityVersionEnabled ? 1 : null);
+
+      dao.createComponent(component2, entityVersionEnabled);
 
       //browse all components
+      components = dao.browseComponentsInRepositories(newHashSet(repositoryId, anotherRepositoryId), 10, null);
       assertThat(
-          dao.browseComponentsInRepositories(newHashSet(repositoryId, anotherRepositoryId), 10, null),
+          components,
           contains(allOf(sameCoordinates(component1), sameKind(component1), sameAttributes(component1)),
               allOf(sameCoordinates(component2), sameKind(component2), sameAttributes(component2))));
+      assertSameEntityVersion(components, entityVersionEnabled ? 1 : null);
 
       session.getTransaction().commit();
     }
   }
 
-  @Test
   public void testFilterClauseIsolation() {
     ContentRepositoryData anotherContentRepository = randomContentRepository();
     createContentRepository(anotherContentRepository);
@@ -545,11 +577,23 @@ public class ComponentDAOTest
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ComponentDAO dao = session.access(TestComponentDAO.class);
 
-      dao.createComponent(component1);
-      dao.createComponent(component2);
+      dao.createComponent(component1, entityVersionEnabled);
+      dao.createComponent(component2, entityVersionEnabled);
 
-      assertThat(dao.browseComponents(repositoryId, 1000, null, null, "true or true", null), hasSize(1));
+      Continuation<Component> components =
+          dao.browseComponents(repositoryId, 1000, null, null, "true or true", null);
+      assertThat(components, hasSize(1));
       assertThat(dao.countComponents(repositoryId, null, "true or true", null), equalTo(1));
+
+      assertSameEntityVersion(components, entityVersionEnabled ? 1 : null);
+    }
+  }
+
+  protected void createContentRepository(final ContentRepositoryData contentRepository) {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      ContentRepositoryDAO dao = session.access(TestContentRepositoryDAO.class);
+      dao.createContentRepository(contentRepository);
+      session.getTransaction().commit();
     }
   }
 
@@ -557,12 +601,43 @@ public class ComponentDAOTest
     return dao.countComponents(repositoryId, null, null, null);
   }
 
-  static Continuation<Component> browseComponents(final ComponentDAO dao,
-                                                  final int repositoryId,
-                                                  final String kind,
-                                                  final int limit,
-                                                  final String continuationToken)
+  static Continuation<Component> browseComponents(
+      final ComponentDAO dao,
+      final int repositoryId,
+      final String kind,
+      final int limit,
+      final String continuationToken)
   {
     return dao.browseComponents(repositoryId, limit, continuationToken, kind, null, null);
+  }
+
+  private static void assertEntityVersion(
+      final ComponentDAO dao,
+      final ComponentData component,
+      final Integer expectedEntityVersion)
+  {
+    Optional<Component> result =
+        dao.readCoordinate(component.repositoryId, component.namespace(), component.name(), component.version());
+    assertThat(result.isPresent(), is(true));
+    assertThat(result.get().entityVersion(), is(expectedEntityVersion));
+  }
+
+  private static void assertEntityVersion(
+      final ComponentDAO dao,
+      final Integer componentId,
+      final Integer expectedEntityVersion)
+  {
+    Optional<Component> component = dao.readComponent(componentId);
+    assertThat(component.isPresent(), is(true));
+    assertThat(component.get().entityVersion(), is(expectedEntityVersion));
+  }
+
+  private static void assertSameEntityVersion(final Collection<Component> components, final Integer expectedEntityVersion) {
+    assertThat(components.stream().map(Component::entityVersion)
+        .allMatch(entityVersion -> Objects.equals(entityVersion, expectedEntityVersion)), is(true));
+  }
+
+  private static void assertEntityVersion(final Component component, final Integer expectedEntityVersion) {
+    assertThat(component.entityVersion(), is(expectedEntityVersion));
   }
 }

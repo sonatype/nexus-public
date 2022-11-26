@@ -199,11 +199,25 @@
     ORDER BY ab.added_to_repository LIMIT #{limit}
   </select>
 
-  <insert id="createAsset" useGeneratedKeys="true" keyProperty="assetId" parameterType="AssetData">
-    INSERT INTO ${format}_asset (repository_id, path, kind, component_id, asset_blob_id, last_updated, last_downloaded,
-                                 attributes)
-        VALUES (#{repositoryId}, #{path}, #{kind}, #{componentId}, #{assetBlobId}, #{lastUpdated}, #{lastDownloaded},
-                #{attributes});
+  <insert id="createAsset">
+    <selectKey keyProperty="asset.assetId" resultType="int" order="BEFORE">
+        <if test="_databaseId == 'PostgreSQL'">
+          SELECT NEXTVAL('${format}_asset_asset_id_seq');
+        </if>
+        <if test="_databaseId == 'H2'">
+            SELECT NEXTVAL(CAST((SELECT SEQUENCE_NAME FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE LOWER(table_name) = '${format}_asset' AND LOWER(COLUMN_NAME) = 'asset_id') AS VARCHAR));
+        </if>
+    </selectKey>
+
+    INSERT INTO ${format}_asset (asset_id, repository_id, path, kind, component_id, asset_blob_id, last_updated, last_downloaded,
+        attributes)
+    VALUES (#{asset.assetId}, #{asset.repositoryId}, #{asset.path}, #{asset.kind}, #{asset.componentId}, #{asset.assetBlobId},
+      #{asset.lastUpdated}, #{asset.lastDownloaded},  #{asset.attributes});
+
+    <if test="updateComponentEntityVersion and asset.componentId != null">
+        <include refid="componentEntityVersionIncrement"/> WHERE component_id = #{asset.componentId};
+    </if>
   </insert>
 
   <update id="created">
@@ -243,7 +257,19 @@
     ORDER BY asset_id
   </select>
 
-  <update id="updateAssetKind" parameterType="AssetData">
+  <update id="updateAssetKind">
+    <bind name="repositoryId" value="asset.repositoryId"/>
+    <bind name="assetId" value="asset.assetId"/>
+    <bind name="path" value="asset.path"/>
+    <bind name="attributes" value="asset.attributes"/>
+    <bind name="kind" value="asset.kind"/>
+
+    <if test="updateComponentEntityVersion">
+      <include refid="componentEntityVersionIncrement"/>
+          WHERE component_id IN (SELECT component_id FROM ${format}_asset
+                                 WHERE <include refid="assetMatch"/> AND kind != #{kind});
+    </if>
+
     UPDATE ${format}_asset SET kind = #{kind}, last_updated = CURRENT_TIMESTAMP
         WHERE <include refid="assetMatch"/> AND kind != #{kind};
   </update>
@@ -252,12 +278,35 @@
     SELECT attributes FROM ${format}_asset WHERE <include refid="assetMatch"/>;
   </select>
 
-  <update id="updateAssetAttributes" parameterType="AssetData">
+  <update id="updateAssetAttributes">
+    <bind name="repositoryId" value="asset.repositoryId"/>
+    <bind name="assetId" value="asset.assetId"/>
+    <bind name="path" value="asset.path"/>
+    <bind name="attributes" value="asset.attributes"/>
+    <bind name="kind" value="asset.kind"/>
+
+    <if test="updateComponentEntityVersion">
+      <include refid="componentEntityVersionIncrement"/>
+          WHERE component_id IN (SELECT component_id FROM ${format}_asset
+                                 WHERE <include refid="assetMatch"/> AND attributes != #{attributes});
+    </if>
+
     UPDATE ${format}_asset SET attributes = #{attributes}, last_updated = CURRENT_TIMESTAMP
         WHERE <include refid="assetMatch"/> AND attributes != #{attributes};
   </update>
 
   <update id="updateAssetBlobLink" parameterType="AssetData">
+    <bind name="assetId" value="asset.assetId"/>
+    <bind name="repositoryId" value="asset.repositoryId"/>
+    <bind name="path" value="asset.path"/>
+    <bind name="assetBlobId" value="asset.assetBlobId"/>
+
+    <if test="updateComponentEntityVersion">
+      <include refid="componentEntityVersionIncrement"/>
+          WHERE component_id IN (SELECT component_id FROM ${format}_asset
+                                 WHERE <include refid="assetMatch"/> AND asset_blob_id IS DISTINCT FROM #{assetBlobId});
+    </if>
+
     UPDATE ${format}_asset SET asset_blob_id = #{assetBlobId}, last_updated = CURRENT_TIMESTAMP
         WHERE <include refid="assetMatch"/> AND asset_blob_id IS DISTINCT FROM #{assetBlobId};
   </update>
@@ -269,12 +318,12 @@
 
   <update id="lastDownloaded">
     UPDATE ${format}_asset SET last_downloaded = #{lastDownloaded}
-     WHERE <include refid="assetMatch"/>;
+        WHERE <include refid="assetMatch"/>;
   </update>
 
   <update id="lastUpdated">
     UPDATE ${format}_asset SET last_updated = #{lastUpdated}
-     WHERE <include refid="assetMatch"/>;
+      WHERE <include refid="assetMatch"/>;
   </update>
 
   <delete id="deleteAsset" parameterType="AssetData">
@@ -282,12 +331,18 @@
   </delete>
 
   <delete id="deleteAssets">
+    -- No need to update entity_version for components because
+    -- deleting all assets for repository, will
+    -- cause the system to delete the associated components
     DELETE FROM ${format}_asset WHERE
         repository_id = #{repositoryId}
         <if test="limit gt 0"> LIMIT #{limit}</if>;
   </delete>
 
   <delete id="deleteAssets" databaseId="PostgreSQL">
+    -- No need to update entity_version for components because
+    -- deleting all assets for repository, will
+    -- cause the system to delete the associated components
     DELETE FROM ${format}_asset WHERE
         <if test="limit gt 0"> asset_id IN (SELECT asset_id FROM ${format}_asset WHERE </if>
         repository_id = #{repositoryId}
@@ -295,6 +350,17 @@
   </delete>
 
   <delete id="deleteAssetsByPaths">
+    <if test="updateComponentEntityVersion">
+      <include refid="componentEntityVersionIncrement"/>
+          WHERE component_id IN (
+              SELECT component_id FROM ${format}_asset
+                  WHERE path IN
+                  <foreach item="path" index="index" collection="paths" open="(" separator="," close=")">
+                      #{path}
+                  </foreach>
+              );
+    </if>
+
     DELETE FROM ${format}_asset WHERE repository_id = #{repositoryId} AND path IN
     <foreach item="path" index="index" collection="paths" open="(" separator="," close=")">
       #{path}
@@ -309,11 +375,44 @@
   </select>
 
   <delete id="purgeSelectedAssets">
+    -- Can't update component entity_version as these assets don't have a component
     DELETE FROM ${format}_asset WHERE asset_id = ANY(#{assetIds});
   </delete>
 
   <delete id="purgeSelectedAssets" databaseId="PostgreSQL">
+    -- Can't update component entity_version as these assets don't have a component
     DELETE FROM ${format}_asset WHERE asset_id = ANY(#{assetIds}::int[]);
   </delete>
 
+  <update id="updateEntityVersion" parameterType="AssetData">
+    <if test="updateComponentEntityVersion">
+      <include refid="componentEntityVersionIncrement"/>
+          WHERE component_id = #{componentId};
+    </if>
+  </update>
+
+  <update id="updateEntityVersions">
+    <if test="updateComponentEntityVersion">
+      <include refid="componentEntityVersionIncrement"/>
+      <where>
+          <foreach collection="componentIds" item="componentId" open="component_id IN (" separator="," close=")">
+            ${componentId}
+          </foreach>
+      </where>
+    </if>
+  </update>
+
+  <select id="selectComponentIds" resultType="int">
+    SELECT component_id FROM ${format}_asset
+    <where>
+      <foreach collection="assetIds" item="assetId" open="asset_id IN (" separator="," close=")">
+        ${assetId}
+      </foreach>
+    </where>
+  </select>
+
+  <sql id="componentEntityVersionIncrement">
+    UPDATE ${format}_component SET
+      entity_version = COALESCE(entity_version, 1) + 1
+  </sql>
 </mapper>

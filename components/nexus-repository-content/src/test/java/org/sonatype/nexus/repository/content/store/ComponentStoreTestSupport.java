@@ -39,8 +39,6 @@ import com.google.inject.Guice;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
 import org.eclipse.sisu.wire.WireModule;
-import org.junit.Before;
-import org.junit.Test;
 import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -55,7 +53,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
-public class ComponentStoreTest
+public class ComponentStoreTestSupport
     extends ExampleContentTestSupport
 {
   private final int componentCount = 201;
@@ -76,8 +74,10 @@ public class ComponentStoreTest
 
   private Integer repositoryId;
 
-  @Before
-  public void setup() {
+  private boolean entityVersioningEnabled;
+
+  public void initialiseStores(final boolean entityVersioningEnabled) {
+    this.entityVersioningEnabled = entityVersioningEnabled;
     when(contentFacetFinder.findRepository(eq("test"), anyInt())).thenReturn(Optional.of(repository));
     FormatStoreManager fsm = Guice.createInjector(new WireModule(new TestBespokeStoreModule(),
                 new AbstractModule()
@@ -103,7 +103,6 @@ public class ComponentStoreTest
     }
   }
 
-  @Test
   public void testPurge_byComponentIds() {
     int[] componentIds = getComponentIds();
     assertThat("Sanity check", componentIds.length, is(componentCount));
@@ -119,7 +118,6 @@ public class ComponentStoreTest
     verifyNoMoreInteractions(eventManager);
   }
 
-  @Test
   public void testPurge_byComponent() {
     List<FluentComponent> componentIds = getComponents();
     assertThat("Sanity check", componentIds, hasSize(componentCount));
@@ -156,11 +154,11 @@ public class ComponentStoreTest
   private void createComponentWithAsset(final int num) {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ComponentData component = randomComponent(repositoryId, "" + num);
-      session.access(TestComponentDAO.class).createComponent(component);
+      session.access(TestComponentDAO.class).createComponent(component, entityVersioningEnabled);
 
       TestAssetData asset = generateAsset(repositoryId, "/" + num);
       asset.setComponent(component);
-      session.access(TestAssetDAO.class).createAsset(asset);
+      session.access(TestAssetDAO.class).createAsset(asset, entityVersioningEnabled);
       session.getTransaction().commit();
     }
   }

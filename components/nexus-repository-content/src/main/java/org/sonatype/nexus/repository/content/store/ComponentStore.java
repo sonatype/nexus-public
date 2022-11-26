@@ -43,6 +43,7 @@ import org.sonatype.nexus.transaction.Transactional;
 import com.google.inject.assistedinject.Assisted;
 
 import static java.util.Arrays.stream;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED_NAMED;
 import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttributeChange;
 
 /**
@@ -56,12 +57,17 @@ public class ComponentStore<T extends ComponentDAO>
 {
   private static final int BATCH_SIZE = SystemPropertiesHelper.getInteger("nexus.component.purge.size", 100);
 
+  private final boolean clustered;
+
   @Inject
-  public ComponentStore(final DataSessionSupplier sessionSupplier,
-                        @Assisted final String contentStoreName,
-                        @Assisted final Class<T> daoClass)
+  public ComponentStore(
+      final DataSessionSupplier sessionSupplier,
+      @Named(DATASTORE_CLUSTERED_ENABLED_NAMED) final boolean clustered,
+      @Assisted final String contentStoreName,
+      @Assisted final Class<T> daoClass)
   {
     super(sessionSupplier, contentStoreName, daoClass);
+    this.clustered = clustered;
   }
 
   /**
@@ -172,7 +178,7 @@ public class ComponentStore<T extends ComponentDAO>
    */
   @Transactional
   public void createComponent(final ComponentData component) {
-    dao().createComponent(component);
+    dao().createComponent(component, clustered);
 
     postCommitEvent(() -> new ComponentCreatedEvent(component));
   }
@@ -213,7 +219,7 @@ public class ComponentStore<T extends ComponentDAO>
    */
   @Transactional
   public void updateComponentKind(final Component component) {
-    dao().updateComponentKind(component);
+    dao().updateComponentKind(component, clustered);
 
     postCommitEvent(() -> new ComponentKindEvent(component));
   }
@@ -234,7 +240,7 @@ public class ComponentStore<T extends ComponentDAO>
       ((ComponentData) component).setAttributes(attributes);
 
       if (applyAttributeChange(attributes, change, key, value)) {
-        dao().updateComponentAttributes(component);
+        dao().updateComponentAttributes(component, clustered);
 
         postCommitEvent(() -> new ComponentAttributesEvent(component, change, key, value));
       }

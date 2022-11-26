@@ -33,7 +33,7 @@ public class TestAssetStore
   public TestAssetStore(final DataSessionSupplier sessionSupplier,
                         @Assisted final String storeName)
   {
-    super(sessionSupplier, storeName, TestAssetDAO.class);
+    super(sessionSupplier, false, storeName, TestAssetDAO.class);
   }
 
   /**

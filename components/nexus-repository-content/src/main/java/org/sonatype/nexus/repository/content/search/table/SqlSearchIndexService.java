@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.content.search.table;
 
-import java.io.IOException;
-import java.time.Duration;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
@@ -23,8 +21,6 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.cooperation2.Cooperation2;
-import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
@@ -32,7 +28,6 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.search.SearchEventHandler;
 import org.sonatype.nexus.repository.content.store.InternalIds;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
@@ -61,25 +56,13 @@ public class SqlSearchIndexService
 
   private final SearchTableStore searchStore;
 
-  private final Cooperation2 cooperation2;
-
   @Inject
   public SqlSearchIndexService(
       final SearchTableDataProducer searchTableDataProducer,
-      final SearchTableStore searchStore,
-      final Cooperation2Factory cooperationFactory,
-      @Named("${nexus.datastore.table.search.cooperation.majorTimeout:-0s}") final Duration majorTimeout,
-      @Named("${nexus.datastore.table.search.cooperation.minorTimeout:-30s}") final Duration minorTimeout,
-      @Named("${nexus.datastore.table.search.cooperation.threadsPerKey:-100}") final int threadsPerKey)
+      final SearchTableStore searchStore)
   {
-    checkArgument(minorTimeout.getSeconds() >= 0, "Must use a non-negative timeout");
     this.searchTableDataProducer = checkNotNull(searchTableDataProducer);
     this.searchStore = checkNotNull(searchStore);
-    this.cooperation2 = checkNotNull(cooperationFactory).configure()
-        .majorTimeout(majorTimeout)
-        .minorTimeout(minorTimeout)
-        .threadsPerKey(threadsPerKey)
-        .build(SqlSearchIndexService.class.getSimpleName());
   }
 
   public void indexBatch(final Collection<FluentComponent> components, final Repository repository) {
@@ -95,8 +78,6 @@ public class SqlSearchIndexService
   }
 
   public void purge(final Collection<EntityId> componentIds, final Repository repository) {
-    //We don't need cooperation for this because the SQL for SearchTableDao.save checks for the existence
-    //of the component before saving. This solves any race conditions between DELETES and INSERT/UPDATES
     ContentFacet facet = repository.facet(ContentFacet.class);
     Set<Integer> internalIds = componentIds.stream().map(InternalIds::toInternalId).collect(toSet());
     log.debug("Purging indexes for component ids: {} and repository: {}", componentIds, repository.getName());
@@ -110,12 +91,7 @@ public class SqlSearchIndexService
   private void indexSearchData(final EntityId componentId, final Repository repository) {
     try {
       log.debug("Indexing component id: {}, repository: {}", componentId, repository.getName());
-      cooperation2.on(() -> refreshComponentData(componentId, repository))
-          .checkFunction(Optional::empty)
-          .cooperate(cooperationKey(componentId, repository));
-    }
-    catch (IOException ex) {
-      throw new SearchTableDataRefreshException(ex);
+      refreshComponentData(componentId, repository);
     }
     catch (ComponentNotFoundException ex) {
       log.debug("Skipping refresh because: {}", ex.getMessage());
@@ -136,11 +112,6 @@ public class SqlSearchIndexService
               return null;
             })
     );
-  }
-
-  private String cooperationKey(final EntityId componentId, final Repository repository) {
-    String format = repository.getFormat().getValue();
-    return String.format("refresh-%s-%s-%d", repository.getName(), format, toInternalId(componentId));
   }
 
   private FluentComponent fetchComponentFromDb(final EntityId componentId, final Repository repository) {

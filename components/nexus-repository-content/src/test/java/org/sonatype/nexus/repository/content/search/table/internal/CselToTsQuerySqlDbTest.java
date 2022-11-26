@@ -33,6 +33,7 @@ import org.sonatype.nexus.repository.content.search.table.SearchTableData;
 import org.sonatype.nexus.repository.content.store.ContentRepositoryData;
 import org.sonatype.nexus.repository.content.store.ExampleContentTestSupport;
 import org.sonatype.nexus.repository.content.store.InternalIds;
+import org.sonatype.nexus.repository.content.store.example.TestComponentDAO;
 import org.sonatype.nexus.repository.search.SortDirection;
 import org.sonatype.nexus.repository.search.normalize.VersionNumberExpander;
 import org.sonatype.nexus.repository.search.table.SelectorTsQuerySqlBuilder;
@@ -49,6 +50,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
+import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
 
 /**
  * Demonstrates regex matching of paths stored in the component_search.paths
@@ -256,9 +258,10 @@ public class CselToTsQuerySqlDbTest
     generateSingleRepository(UUID.fromString(configuration.getRepositoryId().getValue()));
     ContentRepositoryData repository = generatedRepositories().get(0);
 
-    generateContent(TABLE_RECORDS_TO_GENERATE);
+    generateContent(TABLE_RECORDS_TO_GENERATE, true);
 
     session = sessionRule.openSession(DEFAULT_DATASTORE_NAME);
+    TestComponentDAO componentDAO = session.access(TestComponentDAO.class);
 
     for (int i = 0; i < TABLE_RECORDS_TO_GENERATE; i++) {
       Component component = generatedComponents().get(i);
@@ -283,6 +286,10 @@ public class CselToTsQuerySqlDbTest
       paths.get(i).forEach(tableData::addPath);
       componentIdToSearchTableData.put(tableData.getComponentId(), tableData);
       componentIdToPaths.put(tableData.getComponentId(), paths.get(i));
+
+      componentDAO.readComponent(internalComponentId(component))
+          .map(Component::entityVersion).ifPresent(tableData::setEntityVersion);
+
       GENERATED_DATA.add(tableData);
     }
     searchDAO = session.access(SearchTableDAO.class);

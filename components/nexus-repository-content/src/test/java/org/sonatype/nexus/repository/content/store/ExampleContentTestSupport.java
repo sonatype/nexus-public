@@ -212,12 +212,12 @@ public class ExampleContentTestSupport
     }
   }
 
-  protected void generateRandomContent(final int maxComponents, final int maxAssets) {
+  protected void generateRandomContent(final int maxComponents, final int maxAssets, final boolean entityVersionEnabled) {
     components = new ArrayList<>();
     while (components.size() < maxComponents) {
       int repositoryId = repositories.get(random.nextInt(repositories.size())).repositoryId;
       ComponentData component = randomComponent(repositoryId);
-      if (doCommit(session -> session.access(TestComponentDAO.class).createComponent(component))) {
+      if (doCommit(session -> session.access(TestComponentDAO.class).createComponent(component, entityVersionEnabled))) {
         components.add(component);
       }
     }
@@ -230,14 +230,14 @@ public class ExampleContentTestSupport
       if (random.nextInt(100) > 10) {
         asset.setComponent(component);
       }
-      if (doCommit(session -> session.access(TestAssetDAO.class).createAsset(asset))) {
+      if (doCommit(session -> session.access(TestAssetDAO.class).createAsset(asset, false))) {
         assets.add(asset);
         AssetBlobData assetBlob = randomAssetBlob();
         if (doCommit(session -> {
           session.access(TestAssetBlobDAO.class).createAssetBlob(assetBlob);
           if (random.nextInt(100) > 10) {
             asset.setAssetBlob(assetBlob);
-            session.access(TestAssetDAO.class).updateAssetBlobLink(asset);
+            session.access(TestAssetDAO.class).updateAssetBlobLink(asset, false);
           }
         })) {
           assetBlobs.add(assetBlob);
@@ -247,22 +247,22 @@ public class ExampleContentTestSupport
   }
 
   // Generate the component with asset and blob
-  protected void generateContent(final int maxComponents) {
+  protected void generateContent(final int maxComponents, final boolean entityVersionEnabled) {
     List<String> componentNames = new ArrayList<>(maxComponents);
     IntStream
         .range(0, maxComponents)
         .forEach(i -> componentNames.add("component_name" + i));
-    generateContent(componentNames);
+    generateContent(componentNames, entityVersionEnabled);
   }
 
   // Generate the components with asset and blob
-  protected void generateContent(final List<String> componentNames) {
+  protected void generateContent(final List<String> componentNames, final boolean entityVersionEnabled) {
     int maxComponents = componentNames.size();
     components = new ArrayList<>(maxComponents);
     for (String componentName : componentNames) {
       int repositoryId = repositories.get(random.nextInt(repositories.size())).repositoryId;
       ComponentData component = randomComponent(repositoryId, componentName);
-      if (doCommit(session -> session.access(TestComponentDAO.class).createComponent(component))) {
+      if (doCommit(session -> session.access(TestComponentDAO.class).createComponent(component, entityVersionEnabled))) {
         components.add(component);
       }
     }
@@ -274,13 +274,13 @@ public class ExampleContentTestSupport
       asset.setAssetId(component.componentId);
       asset.setComponent(component);
 
-      if (doCommit(session -> session.access(TestAssetDAO.class).createAsset(asset))) {
+      if (doCommit(session -> session.access(TestAssetDAO.class).createAsset(asset, false))) {
         assets.add(asset);
         AssetBlobData assetBlob = randomAssetBlob();
         if (doCommit(session -> {
           session.access(TestAssetBlobDAO.class).createAssetBlob(assetBlob);
           asset.setAssetBlob(assetBlob);
-          session.access(TestAssetDAO.class).updateAssetBlobLink(asset);
+          session.access(TestAssetDAO.class).updateAssetBlobLink(asset, false);
         })) {
           assetBlobs.add(assetBlob);
         }
@@ -410,6 +410,10 @@ public class ExampleContentTestSupport
 
   protected static Matcher<RepositoryContent> sameLastUpdated(final RepositoryContent expected) {
     return new FieldMatcher<>(expected, RepositoryContent::lastUpdated);
+  }
+
+  protected static Matcher<Component> sameEntityVersion(final Component expected) {
+    return new FieldMatcher<>(expected, Component::entityVersion);
   }
 
   protected static class FieldMatcher<T>

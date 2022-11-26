@@ -73,6 +73,11 @@ public class FluentComponentImpl
   }
 
   @Override
+  public Integer entityVersion() {
+    return component.entityVersion();
+  }
+
+  @Override
   public NestedAttributesMap attributes() {
     return component.attributes();
   }

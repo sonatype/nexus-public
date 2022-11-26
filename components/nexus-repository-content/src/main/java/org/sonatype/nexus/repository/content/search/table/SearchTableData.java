@@ -99,6 +99,8 @@ public class SearchTableData
 
   private boolean prerelease;
 
+  private Integer entityVersion;
+
   public SearchTableData() {
   }
 
@@ -374,6 +376,14 @@ public class SearchTableData
     this.prerelease = prerelease;
   }
 
+  public void setEntityVersion(final Integer entityVersion) {
+    this.entityVersion = entityVersion;
+  }
+
+  public Integer getEntityVersion() {
+    return entityVersion;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) {
@@ -404,6 +414,7 @@ public class SearchTableData
         Objects.equals(sha1, tableData.sha1) &&
         Objects.equals(sha256, tableData.sha256) &&
         Objects.equals(sha512, tableData.sha512) &&
+        Objects.equals(entityVersion, tableData.entityVersion) &&
         Objects.equals(formatFieldValues1, tableData.formatFieldValues1) &&
         Objects.equals(formatFieldValues2, tableData.formatFieldValues2) &&
         Objects.equals(formatFieldValues3, tableData.formatFieldValues3) &&
@@ -417,9 +428,9 @@ public class SearchTableData
   public int hashCode() {
     return Objects.hash(repositoryId, componentId, format, namespace, componentName, aliasComponentNames, componentKind,
         version, normalisedVersion, componentCreated, lastEventTime, repositoryName,
-        prerelease, uploaders, uploaderIps, paths, keywords, md5, sha1, sha256, sha512, formatFieldValues1,
-        formatFieldValues2, formatFieldValues3, formatFieldValues4, formatFieldValues5, formatFieldValues6,
-        formatFieldValues7);
+        prerelease, uploaders, uploaderIps, paths, keywords, md5, sha1, sha256, sha512, entityVersion,
+        formatFieldValues1, formatFieldValues2, formatFieldValues3, formatFieldValues4, formatFieldValues5,
+        formatFieldValues6, formatFieldValues7);
   }
 
   @Override
@@ -446,6 +457,7 @@ public class SearchTableData
         .add("sha1='" + sha1 + "'")
         .add("sha256='" + sha256 + "'")
         .add("sha512='" + sha512 + "'")
+        .add("entityVersion='" + entityVersion + "'")
         .add("formatFieldValues1='" + formatFieldValues1 + "'")
         .add("formatFieldValues2='" + formatFieldValues2 + "'")
         .add("formatFieldValues3='" + formatFieldValues3 + "'")

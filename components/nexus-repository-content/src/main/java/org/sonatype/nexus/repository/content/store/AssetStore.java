@@ -14,8 +14,10 @@ package org.sonatype.nexus.repository.content.store;
 
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -50,7 +52,9 @@ import com.google.inject.assistedinject.Assisted;
 import org.apache.shiro.util.CollectionUtils;
 
 import static java.util.Arrays.stream;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED_NAMED;
 import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttributeChange;
+import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
 
 /**
  * {@link Asset} store.
@@ -63,12 +67,17 @@ public class AssetStore<T extends AssetDAO>
 {
   private static final int LAST_UPDATED_LIMIT = 1000;
 
+  private final boolean clustered;
+
   @Inject
-  public AssetStore(final DataSessionSupplier sessionSupplier,
-                    @Assisted final String contentStoreName,
-                    @Assisted final Class<T> daoClass)
+  public AssetStore(
+      final DataSessionSupplier sessionSupplier,
+      @Named(DATASTORE_CLUSTERED_ENABLED_NAMED) final boolean clustered,
+      @Assisted final String contentStoreName,
+      @Assisted final Class<T> daoClass)
   {
     super(sessionSupplier, contentStoreName, daoClass);
+    this.clustered = clustered;
   }
 
   /**
@@ -249,7 +258,7 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public void createAsset(final AssetData asset) {
-    dao().createAsset(asset);
+    dao().createAsset(asset, clustered);
 
     postCommitEvent(() -> new AssetCreatedEvent(asset));
   }
@@ -314,7 +323,7 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public void updateAssetKind(final Asset asset) {
-    dao().updateAssetKind(asset);
+    dao().updateAssetKind(asset, clustered);
 
     postCommitEvent(() -> new AssetKindEvent(asset));
   }
@@ -337,7 +346,7 @@ public class AssetStore<T extends AssetDAO>
           .reduce((a, b) -> a || b)
           .orElse(false);
       if (changesApplied) {
-        dao().updateAssetAttributes(asset);
+        dao().updateAssetAttributes(asset, clustered);
 
         postCommitEvent(() -> new AssetAttributesEvent(asset, changeSet.getChanges()));
       }
@@ -351,7 +360,7 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public void updateAssetBlobLink(final Asset asset) {
-    dao().updateAssetBlobLink(asset);
+    dao().updateAssetBlobLink(asset, clustered);
 
     postCommitEvent(() -> new AssetUploadedEvent(asset));
   }
@@ -380,6 +389,8 @@ public class AssetStore<T extends AssetDAO>
     boolean deleted = dao().deleteAsset(asset);
 
     if (deleted) {
+      asset.component()
+          .ifPresent(component -> dao().updateEntityVersion(internalComponentId(component), clustered));
       postCommitEvent(() -> new AssetDeletedEvent(asset));
     }
     return deleted;
@@ -414,7 +425,7 @@ public class AssetStore<T extends AssetDAO>
 
     Collection<Asset> assets = dao().readPathsFromRepository(repositoryId, paths);
 
-    if(assets.isEmpty()){
+    if (assets.isEmpty()) {
       return 0;
     }
 
@@ -422,7 +433,16 @@ public class AssetStore<T extends AssetDAO>
     preCommitEvent(() -> new AssetPrePurgeEvent(repositoryId, assetIds));
     postCommitEvent(() -> new AssetPurgedEvent(repositoryId, assetIds));
 
-    return purgeAssets(assetIds);
+    int[] componentIds = new int[0];
+    if (clustered) {
+      componentIds = Arrays.stream(dao().selectComponentIds(assetIds)).distinct().toArray();
+    }
+
+    int count = purgeAssets(assetIds);
+    if (clustered) {
+      dao().updateEntityVersions(componentIds, clustered);
+    }
+    return count;
   }
 
   /**
@@ -514,7 +534,7 @@ public class AssetStore<T extends AssetDAO>
       return dao().purgeSelectedAssets(stream(assetIds).boxed().toArray(Integer[]::new));
     }
     else {
-      return dao().purgeSelectedAssets(assetIds);
+      return dao().purgeSelectedAssets(assetIds, clustered);
     }
   }
 }

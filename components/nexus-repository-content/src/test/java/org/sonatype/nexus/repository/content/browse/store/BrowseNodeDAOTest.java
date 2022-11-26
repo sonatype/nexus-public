@@ -115,11 +115,11 @@ public class BrowseNodeDAOTest
       ComponentDAO componentDao = session.access(TestComponentDAO.class);
       AssetDAO assetDao = session.access(TestAssetDAO.class);
 
-      componentDao.createComponent(component1);
-      componentDao.createComponent(component2);
+      componentDao.createComponent(component1, false);
+      componentDao.createComponent(component2, false);
 
-      assetDao.createAsset(asset1);
-      assetDao.createAsset(asset2);
+      assetDao.createAsset(asset1, false);
+      assetDao.createAsset(asset2, false);
 
       session.getTransaction().commit();
     }

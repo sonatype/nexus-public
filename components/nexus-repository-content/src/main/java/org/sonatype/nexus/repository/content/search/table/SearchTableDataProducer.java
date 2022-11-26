@@ -97,6 +97,7 @@ public class SearchTableDataProducer
     data.setComponentCreated(component.created());
     data.setRepositoryName(repositoryName);
     data.addKeywords(asList(component.namespace(), component.name(), component.version()));
+    data.setEntityVersion(component.entityVersion());
 
     Collection<FluentAsset> assets = component.assets();
     if (assets.isEmpty()) {

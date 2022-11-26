@@ -81,6 +81,10 @@
     CREATE INDEX IF NOT EXISTS idx_search_components_tsvector_search_component_name ON search_components USING GIN (tsvector_search_component_name);
     CREATE INDEX IF NOT EXISTS idx_search_components_tsvector_version ON search_components USING GIN (tsvector_version);
     CREATE INDEX IF NOT EXISTS idx_search_components_tsvector_search_repository_name ON search_components USING GIN (tsvector_search_repository_name);
+
+    ALTER TABLE search_components DROP COLUMN IF EXISTS last_event_time;
+    ALTER TABLE search_components ADD COLUMN IF NOT EXISTS entity_version INT;
+    CREATE INDEX IF NOT EXISTS idx_search_components_entity_version ON search_components (entity_version);
   </insert>
 
   <insert id="createSchema" databaseId="H2">
@@ -148,7 +152,7 @@
     -- any of those records.
       INSERT INTO search_components(repository_id, component_id, format, namespace, search_component_name, version,
           search_repository_name, tsvector_format, tsvector_namespace, tsvector_version, tsvector_search_repository_name, component_kind,
-          normalised_version, prerelease, last_event_time, paths, tsvector_search_component_name, uploaders, uploader_ips, tsvector_paths,
+          normalised_version, prerelease, entity_version, paths, tsvector_search_component_name, uploaders, uploader_ips, tsvector_paths,
           keywords, md5, sha1, sha256, sha512, format_field_values_1, format_field_values_2,
           format_field_values_3, format_field_values_4, format_field_values_5, format_field_values_6, format_field_values_7, component_created)
         SELECT
@@ -156,7 +160,7 @@
             to_tsvector('simple', coalesce(#{format}, '')), to_tsvector('simple', coalesce(#{namespace}, '')),
             to_tsvector('simple', coalesce(#{version}, '')),
             to_tsvector('simple', coalesce(#{repositoryName}, '')),
-            #{componentKind}, #{normalisedVersion}, #{prerelease}, #{lastEventTime},
+            #{componentKind}, #{normalisedVersion}, #{prerelease}, #{entityVersion},
             <include refid="join"><property name="thePaths" value="paths"/></include>,
             <include refid="toTsVector"><property name="tokens" value="aliasComponentNames"/></include>,
             <include refid="toTsVector"><property name="tokens" value="uploaders"/></include>,
@@ -175,13 +179,13 @@
             <include refid="toTsVector"><property name="tokens" value="formatFieldValues6"/></include>,
             <include refid="toTsVector"><property name="tokens" value="formatFieldValues7"/></include>,
             comp.created
-        FROM ${format}_component comp WHERE component_id = #{componentId}
+        FROM ${format}_component comp WHERE component_id = #{componentId} AND #{entityVersion} = comp.entity_version
         -- The WHERE clause above ensures the component still exists
         -- Thereby helping us avoid the need for DELET'ing threads to lock component ids
       ON CONFLICT ON CONSTRAINT pk_search_components
       DO
         UPDATE SET
-          last_event_time = #{lastEventTime},
+          entity_version = #{entityVersion},
           component_kind = #{componentKind},
           prerelease = #{prerelease},
           uploaders = <include refid="toTsVector"><property name="tokens" value="uploaders"/></include>,
@@ -200,7 +204,8 @@
           format_field_values_5 = <include refid="toTsVector"><property name="tokens" value="formatFieldValues5"/></include>,
           format_field_values_6 = <include refid="toTsVector"><property name="tokens" value="formatFieldValues6"/></include>,
           format_field_values_7 = <include refid="toTsVector"><property name="tokens" value="formatFieldValues7"/></include>
-        WHERE EXISTS(SELECT component_id FROM ${format}_component WHERE component_id = #{componentId})
+        WHERE EXISTS(SELECT component_id FROM ${format}_component WHERE component_id = #{componentId}
+                        AND #{entityVersion} = entity_version)
         -- The EXISTS clause above ensures the component still exists
         -- Thereby helping us avoid the need for DELET'ing threads to lock component ids
   </insert>
@@ -303,17 +308,17 @@
   <insert id="saveBatch" parameterType="java.util.List" databaseId="PostgreSQL">
     INSERT INTO search_components(repository_id, component_id, format, namespace, search_component_name, version,
       search_repository_name, tsvector_format, tsvector_namespace, tsvector_version, tsvector_search_repository_name,
-      component_kind, normalised_version, component_created, prerelease, last_event_time, paths, uploaders,
+      component_kind, normalised_version, component_created, prerelease, entity_version, paths, uploaders,
       uploader_ips, tsvector_search_component_name, tsvector_paths, keywords, md5, sha1, sha256, sha512,
       format_field_values_1, format_field_values_2, format_field_values_3, format_field_values_4, format_field_values_5, format_field_values_6, format_field_values_7)
     VALUES
     <foreach collection="searchData" separator="," item="item">
       (#{item.repositoryId}, #{item.componentId},  #{item.format}, #{item.namespace},
        #{item.componentName},#{item.version}, #{item.repositoryName},
-       to_tsvector('simple', coalesce(#{item.format}, '')), to_tsvector('simple', coalesce(#{item.namespace}, '')),
-       to_tsvector('simple', coalesce(#{item.version}, '')),
-       to_tsvector('simple', coalesce(#{item.repositoryName}, '')), #{item.componentKind}, #{item.normalisedVersion},
-       #{item.componentCreated}, #{item.prerelease}, CURRENT_TIMESTAMP,
+       to_tsvector('simple', COALESCE(#{item.format}, '')), to_tsvector('simple', COALESCE(#{item.namespace}, '')),
+       to_tsvector('simple', COALESCE(#{item.version}, '')),
+       to_tsvector('simple', COALESCE(#{item.repositoryName}, '')), #{item.componentKind}, #{item.normalisedVersion},
+       #{item.componentCreated}, #{item.prerelease}, COALESCE(#{item.entityVersion}, 1),
       <include refid="join"><property name="thePaths" value="item.paths"/></include>,
       <include refid="toTsVector"><property name="tokens" value="item.uploaders"/></include>,
       <include refid="toTsVector"><property name="tokens" value="item.uploaderIps"/></include>,

@@ -18,12 +18,15 @@ import java.util.List;
 import java.util.Set;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.store.ComponentStore;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.inject.assistedinject.Assisted;
+
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED_NAMED;
 
 /**
  * @since 3.29
@@ -32,10 +35,12 @@ public class Maven2ComponentStore
     extends ComponentStore<Maven2ComponentDAO>
 {
   @Inject
-  public Maven2ComponentStore(final DataSessionSupplier sessionSupplier,
-                              @Assisted final String storeName)
+  public Maven2ComponentStore(
+      final DataSessionSupplier sessionSupplier,
+      @Named(DATASTORE_CLUSTERED_ENABLED_NAMED) final boolean clustered,
+      @Assisted final String storeName)
   {
-    super(sessionSupplier, storeName, Maven2ComponentDAO.class);
+    super(sessionSupplier, clustered, storeName, Maven2ComponentDAO.class);
   }
 
   /**
