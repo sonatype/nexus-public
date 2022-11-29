@@ -123,7 +123,6 @@ const update = assign((_, event) => {
     httpAuthEnabled: data.httpAuthEnabled || false,
     httpsAuthEnabled: data.httpsAuthEnabled || false,
     nonProxyHosts: data.nonProxyHosts || [],
-    nonProxyHost: '',
   };
 
   return {
@@ -132,6 +131,14 @@ const update = assign((_, event) => {
   };
 });
 
+const resetNonProxyHosts = (data) => {
+  const {httpEnabled, httpsEnabled, nonProxyHosts} = data;
+  return {
+    ...data,
+    nonProxyHosts: (httpEnabled || httpsEnabled) ? nonProxyHosts : []
+  }
+} 
+
 export default FormUtils.buildFormMachine({
   id: 'HttpMachine',
   config: (config) =>
@@ -139,6 +146,11 @@ export default FormUtils.buildFormMachine({
       states: {
         loaded: {
           on: {
+            SET_NON_PROXY_HOST: {
+              target: 'loaded',
+              actions: 'setNonProxyHost'
+            },
+
             ADD_NON_PROXY_HOST: {
               target: 'loaded',
               actions: 'addNonProxyHost',
@@ -187,7 +199,6 @@ export default FormUtils.buildFormMachine({
             min: 0,
             max: 10,
           }),
-          nonProxyHost: ValidationUtils.validateWhiteSpace(data.nonProxyHost),
           ...proxyErrors,
         };
       },
@@ -203,30 +214,35 @@ export default FormUtils.buildFormMachine({
         return whereEq(pristine)(currentData);
       },
     }),
+    setNonProxyHost: assign({
+      nonProxyHost: (_, {value}) => value 
+    }),
     removeNonProxyHost: assign({
       data: ({data}, {index}) => ({
         ...data,
         nonProxyHosts: data.nonProxyHosts.filter((_, i) => i !== index),
       }),
     }),
-    addNonProxyHost: assign({
-      data: ({data}) => {
-        const {nonProxyHost, nonProxyHosts, ...rest} = data;
-        const current = nonProxyHosts || [];
-        const notValid = ValidationUtils.isBlank(nonProxyHost) || ValidationUtils.hasWhiteSpace(nonProxyHost);
+    addNonProxyHost: assign(({data, nonProxyHost}) => {
+      const currentList = data.nonProxyHosts || [];
+      const notValid =
+        ValidationUtils.isBlank(nonProxyHost) || 
+        ValidationUtils.hasWhiteSpace(nonProxyHost) ||
+        currentList.includes(nonProxyHost);
 
-        if (notValid) {
-          return data;
-        }
+      if (notValid) {
+        return;
+      }
 
-        const arr = current.includes(nonProxyHost) ? current : [...current, nonProxyHost];
-
-        return {
-          ...rest,
-          nonProxyHost: '',
-          nonProxyHosts: arr,
-        };
-      },
+      return {
+        data: {
+          ...data,
+          nonProxyHosts: currentList.includes(nonProxyHost)
+            ? currentList
+            : [...currentList, nonProxyHost]
+        },
+        nonProxyHost: ''
+      };
     }),
     toggleAuthentication: assign({
       data: ({data}, {name, value}) => ({
@@ -289,6 +305,7 @@ export default FormUtils.buildFormMachine({
       let saveData = validateAuthentication(data, 'http');
 
       saveData = validateAuthentication(saveData, 'https');
+      saveData = resetNonProxyHosts(saveData);
       saveData = removeEmptyValues(saveData);
 
       const response = await ExtAPIUtils.extAPIRequest(ACTION, METHODS.UPDATE, {

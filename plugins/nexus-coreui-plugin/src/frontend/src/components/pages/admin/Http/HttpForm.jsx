@@ -28,7 +28,7 @@ import {
   NxFieldset,
   NxTile,
 } from '@sonatype/react-shared-components';
-import {FormUtils} from '@sonatype/nexus-ui-plugin';
+import {FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 import {faTrashAlt, faPlusCircle} from '@fortawesome/free-solid-svg-icons';
 import UIStrings from '../../../../constants/UIStrings';
 
@@ -50,6 +50,7 @@ export default function HttpForm() {
     loadError,
     saveError,
     validationErrors,
+    nonProxyHost = '',
   } = current.context;
   const isLoading = current.matches('loading');
   const isSaving = current.matches('saving');
@@ -82,6 +83,12 @@ export default function HttpForm() {
       addNonProxyHost();
     }
   };
+
+  const handleSetNonProxyHost = (value) => send({type: 'SET_NON_PROXY_HOST', value});
+
+  const validateNonProxyHost = () =>
+    ValidationUtils.validateWhiteSpace(nonProxyHost) || 
+      (nonProxyHosts.includes(nonProxyHost) ? LABELS.EXCLUDE.ALREADY_ADDED : null)
 
   return (
     <NxForm
@@ -309,9 +316,14 @@ export default function HttpForm() {
             >
               <NxTextInput
                 className="nx-text-input--long"
-                {...FormUtils.fieldProps('nonProxyHost', current)}
-                onChange={FormUtils.handleUpdate('nonProxyHost', send)}
+                id="nonProxyHost"
+                name="nonProxyHost"
+                value={nonProxyHost}
+                isPristine={nonProxyHost === ''}
+                onChange={handleSetNonProxyHost}
                 onKeyDown={handleEnter}
+                validatable
+                validationErrors={validateNonProxyHost()}
               />
             </NxFormGroup>
             <NxButton

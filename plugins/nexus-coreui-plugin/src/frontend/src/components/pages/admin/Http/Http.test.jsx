@@ -139,8 +139,7 @@ describe('Http', () => {
     httpEnabled: false,
     httpsAuthEnabled: false,
     httpsEnabled: false,
-    nonProxyHosts: [],
-    nonProxyHost: '',
+    nonProxyHosts: []
   };
 
   const dummyHttpProxy = {
@@ -847,7 +846,6 @@ describe('Http', () => {
         httpEnabled: false,
         httpsAuthEnabled: false,
         httpsEnabled: false,
-        nonProxyHost: '',
         nonProxyHosts: [nonProxy],
         ...dummyHttpProxy,
       };

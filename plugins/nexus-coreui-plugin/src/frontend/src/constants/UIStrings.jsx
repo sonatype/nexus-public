@@ -1720,6 +1720,7 @@ This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 
         SUB_LABEL: 'Accepts Java “http.nonProxyHosts” wildcard patterns (one per line, no “l” hostname delimiters)',
         ADD: 'Add',
         REMOVE: 'Remove',
+        ALREADY_ADDED: 'The pattern has already been added to the list'
       },
       READ_ONLY: {
         LABEL: 'HTTP Configuration',
