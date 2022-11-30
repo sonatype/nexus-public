@@ -10,20 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.rest.sql;
+package org.sonatype.nexus.repository.content.search.table;
 
-import org.sonatype.nexus.repository.rest.SearchFieldSupport;
+import org.sonatype.nexus.repository.content.SearchResult;
+import org.sonatype.nexus.repository.search.ComponentSearchResult;
 
 /**
- * A field on the asset table.
- *
- * @since 3.38
+ * Allows for data to be contributed to the {@link ComponentSearchResult}. Implement this interface when you need to
+ * contribute data depending on format, field or some other condition which is not true for every row in the search
+ * table.
  */
-public class AssetSearchField extends SearchFieldSupport
+public interface TableSearchResultDecorator
 {
-  private static final String TABLE = "${format}_asset";
-
-  public AssetSearchField(final String columnName) {
-    super(TABLE, columnName, TextualQueryType.DEFAULT_TEXT_QUERY);
-  }
+  void updateComponent(ComponentSearchResult component, SearchResult searchResult);
 }

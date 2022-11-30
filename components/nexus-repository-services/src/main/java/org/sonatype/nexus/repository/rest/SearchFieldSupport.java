@@ -29,11 +29,19 @@ public abstract class SearchFieldSupport
 
   private final String columnName;
 
+  private final String sortColumnName;
+
   private final TextualQueryType textualQueryType;
 
-  protected SearchFieldSupport(final String table, final String columnName, final TextualQueryType textualQueryType) {
+  protected SearchFieldSupport(
+      final String table,
+      final String columnName,
+      final String sortColumnName,
+      final TextualQueryType textualQueryType)
+  {
     this.table = checkNotNull(table);
     this.columnName = checkNotNull(columnName);
+    this.sortColumnName = checkNotNull(sortColumnName);
     this.textualQueryType = checkNotNull(textualQueryType);
   }
 
@@ -51,6 +59,10 @@ public abstract class SearchFieldSupport
     return table;
   }
 
+  public String getSortColumnName() {
+    return sortColumnName;
+  }
+
   /**
    * Indicates whether this column in a full text search column or a basic column such as string, int etc
    */
@@ -60,7 +72,7 @@ public abstract class SearchFieldSupport
 
   @Override
   public int hashCode() {
-    return Objects.hash(columnName, table, textualQueryType);
+    return Objects.hash(columnName, sortColumnName, table, textualQueryType);
   }
 
   @Override
@@ -77,12 +89,12 @@ public abstract class SearchFieldSupport
 
     SearchFieldSupport other = (SearchFieldSupport) obj;
 
-    return Objects.equals(columnName, other.columnName) && Objects.equals(table, other.table) &&
-        Objects.equals(textualQueryType, other.textualQueryType);
+    return Objects.equals(columnName, other.columnName) && Objects.equals(sortColumnName, other.sortColumnName) &&
+        Objects.equals(table, other.table) && Objects.equals(textualQueryType, other.textualQueryType);
   }
 
   @Override
   public String toString() {
-    return table + '.' + textualQueryType + '.' + columnName;
+    return table + '.' + textualQueryType + '.' + columnName + '.' + sortColumnName;
   }
 }

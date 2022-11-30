@@ -20,8 +20,6 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
-import org.sonatype.nexus.repository.config.Configuration;
-import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.search.SqlSearchRepositoryNameUtil;
@@ -34,14 +32,12 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import static java.util.Arrays.asList;
-import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static java.util.Optional.empty;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.emptyCollectionOf;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -55,7 +51,7 @@ public class SqlSearchRepositoryNameUtilTest
 
   private static final String HOSTED_REPO_2 = "hosted-repo2";
 
-  private static final String HOSTED_REPO_1 = "hosted-repo-1";
+  private static final String HOSTED_REPO_1 = "hosted-repo1";
 
   private static final String GROUP_REPO = "group-repo";
 
@@ -89,22 +85,13 @@ public class SqlSearchRepositoryNameUtilTest
   @Mock
   private Format format2;
 
-  @Mock
-  private ConfigurationStore configurationStore;
-
-  @Mock
-  private Configuration configuration1;
-
-  @Mock
-  private Configuration configuration2;
-
   private SqlSearchRepositoryNameUtil underTest;
 
   public static final String RAW = "raw";
 
   @Before
   public void setup() {
-    underTest = new SqlSearchRepositoryNameUtil(repositoryManager, configurationStore);
+    underTest = new SqlSearchRepositoryNameUtil(repositoryManager);
   }
 
   @Test
@@ -120,7 +107,7 @@ public class SqlSearchRepositoryNameUtilTest
     Set<String> repositoryNames = underTest.getRepositoryNames(HOSTED_REPO_2 + " " + HOSTED_REPO_1);
 
     assertThat(repositoryNames, containsInAnyOrder(HOSTED_REPO_1, HOSTED_REPO_2));
-    verify(configurationStore, never()).readByNames(any());
+    verify(repositoryManager, never()).browse();
     verifyGroupFacetNotChecked();
   }
 
@@ -129,7 +116,7 @@ public class SqlSearchRepositoryNameUtilTest
     Set<String> repositoryNames = underTest.getRepositoryNames(HOSTED_REPO_2 + " " + HOSTED_REPO_1);
 
     assertThat(repositoryNames, containsInAnyOrder(HOSTED_REPO_1, HOSTED_REPO_2));
-    verify(configurationStore, never()).readByNames(any());
+    verify(repositoryManager, never()).browse();
     verifyGroupFacetNotChecked();
   }
 
@@ -140,17 +127,17 @@ public class SqlSearchRepositoryNameUtilTest
     Set<String> repositoryNames = underTest.getRepositoryNames(GROUP_REPO + " " + HOSTED_REPO_4);
 
     assertThat(repositoryNames, containsInAnyOrder(HOSTED_REPO_1, HOSTED_REPO_2, HOSTED_REPO_3, HOSTED_REPO_4));
-    verify(configurationStore, never()).readByNames(any());
+    verify(repositoryManager, never()).browse();
   }
 
   @Test
   public void shouldFindMatchingRepositoriesWhenWildcardSpecified() {
-    mockRepositoryConfiguration("hosted%");
-    assertThat(underTest.getRepositoryNames("hosted*" + " " + HOSTED_REPO_3),
+    mockRepositoryConfiguration();
+    assertThat(underTest.getRepositoryNames("hosted.*" + " " + HOSTED_REPO_3),
         containsInAnyOrder(HOSTED_REPO_1, HOSTED_REPO_2, HOSTED_REPO_3));
 
-    mockRepositoryConfiguration("hosted_");
-    assertThat(underTest.getRepositoryNames("hosted?" + " " + HOSTED_REPO_3),
+    mockRepositoryConfiguration();
+    assertThat(underTest.getRepositoryNames("hosted-repo?" + " " + HOSTED_REPO_3),
         containsInAnyOrder(HOSTED_REPO_1, HOSTED_REPO_2, HOSTED_REPO_3));
   }
 
@@ -224,9 +211,9 @@ public class SqlSearchRepositoryNameUtilTest
     verify(hostedRepo2, never()).optionalFacet(GroupFacet.class);
   }
 
-  private void mockRepositoryConfiguration(final String repositoryName) {
-    when(configurationStore.readByNames(singleton(repositoryName))).thenReturn(asList(configuration1, configuration2));
-    when(configuration1.getRepositoryName()).thenReturn(HOSTED_REPO_1);
-    when(configuration2.getRepositoryName()).thenReturn(HOSTED_REPO_2);
+  private void mockRepositoryConfiguration() {
+    when(repositoryManager.browse()).thenReturn(asList(hostedRepo1, hostedRepo2));
+    when(hostedRepo1.getName()).thenReturn(HOSTED_REPO_1);
+    when(hostedRepo2.getName()).thenReturn(HOSTED_REPO_2);
   }
 }

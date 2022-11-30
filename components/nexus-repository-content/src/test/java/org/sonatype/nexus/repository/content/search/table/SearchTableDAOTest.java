@@ -17,7 +17,6 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -286,27 +285,6 @@ public class SearchTableDAOTest
 
     Collection<SearchResult> actual = searchDAO.searchComponents(request);
     assertThat(actual.isEmpty(), is(true));
-  }
-
-  @Test
-  public void testCrossFormatSearch() {
-    GENERATED_DATA.forEach(searchDAO::save);
-    int count = searchDAO.count(null, null);
-    assertThat(count, is(2));
-
-    Map<String, List<Integer>> taggedComponentIds = new HashMap<>();
-    taggedComponentIds.put(FORMAT, Arrays.asList(1, 3));
-    SqlSearchRequest request = SqlSearchRequest
-        .builder()
-        .limit(10)
-        .offset(0)
-        .tagToComponentIds(taggedComponentIds)
-        .sortDirection(SortDirection.ASC.name())
-        .build();
-    List<SearchResult> actual = (List<SearchResult>) searchDAO.searchComponents(request);
-    assertThat(actual.size(), is(1));
-    assertThat(actual.get(0).componentId(), is(1));
-    assertThat(actual.get(0).format(), is(FORMAT));
   }
 
   @Test

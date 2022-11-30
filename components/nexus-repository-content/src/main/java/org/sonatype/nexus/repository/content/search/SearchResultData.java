@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.content.search;
 
+import java.util.List;
+
 import org.sonatype.nexus.repository.content.SearchResult;
 import org.sonatype.nexus.repository.content.store.AbstractRepositoryContent;
 
@@ -39,6 +41,8 @@ public class SearchResultData
   private String normalisedVersion;
 
   private String repositoryName;
+
+  private List<String> tags;
 
   @Override
   public Integer componentId() {
@@ -73,6 +77,11 @@ public class SearchResultData
   @Override
   public String normalisedVersion() {
     return normalisedVersion;
+  }
+
+  @Override
+  public List<String> tags() {
+    return tags;
   }
 
   @Override
@@ -112,6 +121,10 @@ public class SearchResultData
     this.format = format;
   }
 
+  public void setTags(final List<String> tags) {
+    this.tags = tags;
+  }
+
   @Override
   public String toString() {
     return "SearchResultData{" +
@@ -123,6 +136,7 @@ public class SearchResultData
         ", version='" + version + '\'' +
         ", normalisedVersion='" + normalisedVersion + '\'' +
         ", repositoryName='" + repositoryName + '\'' +
+        ", tags='" + tags + '\'' +
         '}';
   }
 }

@@ -10,33 +10,25 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content;
+package org.sonatype.nexus.repository.apt.datastore.internal.search.sql;
 
-import java.util.List;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-/**
- * Provides search results.
- *
- * @since 3.41
- */
-public interface SearchResult
-    extends RepositoryContent
+import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.repository.apt.AptFormat;
+import org.sonatype.nexus.repository.content.Asset;
+import org.sonatype.nexus.repository.content.search.table.SearchCustomFieldContributor;
+import org.sonatype.nexus.repository.content.search.table.SearchTableData;
+
+@Named(AptFormat.NAME)
+@Singleton
+public class AptSearchCustomFieldContributor
+    extends ComponentSupport
+    implements SearchCustomFieldContributor
 {
-  Integer componentId();
-
-  Integer repositoryId();
-
-  String format();
-
-  String namespace();
-
-  String componentName();
-
-  String repositoryName();
-
-  String version();
-
-  String normalisedVersion();
-
-  List<String> tags();
+  @Override
+  public void populateSearchCustomFields(final SearchTableData searchTableData, final Asset asset) {
+    searchTableData.addKeyword(asset.path().substring(1));
+  }
 }

@@ -22,7 +22,6 @@ import org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings;
 import org.sonatype.nexus.repository.search.DefaultSqlSearchQueryContribution;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Before;
 import org.junit.Test;

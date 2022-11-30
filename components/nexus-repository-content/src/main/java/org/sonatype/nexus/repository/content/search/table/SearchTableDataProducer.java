@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.content.search.table;
 
 import java.time.OffsetDateTime;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -32,18 +31,17 @@ import org.sonatype.nexus.repository.content.RepositoryContent;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.search.SearchTableDataExtension;
 import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.content.utils.PreReleaseEvaluator;
 import org.sonatype.nexus.repository.search.normalize.VersionNormalizerService;
 
 import com.google.common.collect.Iterables;
-import org.apache.commons.lang3.StringUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static java.util.Comparator.comparing;
-import static org.apache.commons.lang3.StringUtils.substring;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
@@ -59,23 +57,25 @@ public class SearchTableDataProducer
 {
   private static final String PATH_SPLIT_REGEX = "[/]+";
 
-  private static final char PATH_SEPARATOR = '/';
-
   private final Map<String, SearchCustomFieldContributor> searchCustomFieldContributors;
 
   private final VersionNormalizerService versionNormalizerService;
 
   private final Map<String, PreReleaseEvaluator> formatToReleaseEvaluators;
 
+  private final Set<SearchTableDataExtension> searchTableDataExtensions;
+
   @Inject
   public SearchTableDataProducer(
       final Map<String, SearchCustomFieldContributor> searchCustomFieldContributors,
       final VersionNormalizerService versionNormalizerService,
-      final Map<String, PreReleaseEvaluator> formatToReleaseEvaluators)
+      final Map<String, PreReleaseEvaluator> formatToReleaseEvaluators,
+      final Set<SearchTableDataExtension> searchTableDataExtensions)
   {
     this.searchCustomFieldContributors = checkNotNull(searchCustomFieldContributors);
     this.versionNormalizerService = checkNotNull(versionNormalizerService);
     this.formatToReleaseEvaluators = checkNotNull(formatToReleaseEvaluators);
+    this.searchTableDataExtensions = checkNotNull(searchTableDataExtensions);
   }
 
   public Optional<SearchTableData> createSearchTableData(final FluentComponent component, final Repository repository) {
@@ -98,6 +98,7 @@ public class SearchTableDataProducer
     data.setRepositoryName(repositoryName);
     data.addKeywords(asList(component.namespace(), component.name(), component.version()));
     data.setEntityVersion(component.entityVersion());
+    data.setAttributes(component.attributes());
 
     Collection<FluentAsset> assets = component.assets();
     if (assets.isEmpty()) {
@@ -107,6 +108,7 @@ public class SearchTableDataProducer
 
     assets.forEach(asset -> addAssetData(data, component, asset, repository));
     data.setLastEventTime(getLatestUpdatedTime(component, assets));
+    addSearchExtensions(data, component);
     return Optional.of(data);
   }
 
@@ -166,11 +168,13 @@ public class SearchTableDataProducer
   private static void splitAssetPathToKeywords(final SearchTableData searchTableData, final Asset asset) {
     String path = asset.path();
     searchTableData.addPath(path);
-    searchTableData.addKeywords(singletonList(path));
     searchTableData.addKeywords(asList(path.split(PATH_SPLIT_REGEX)));
-    Optional.of(substring(path, path.lastIndexOf(PATH_SEPARATOR)))
-        .filter(StringUtils::isNotBlank)
-        .map(Collections::singletonList)
-        .ifPresent(searchTableData::addKeywords);
+    searchTableData.addKeywords(singletonList(path));
+  }
+
+  private void addSearchExtensions(final SearchTableData searchTableData, final FluentComponent component) {
+    for (SearchTableDataExtension extension : searchTableDataExtensions) {
+      extension.contribute(searchTableData, component);
+    }
   }
 }

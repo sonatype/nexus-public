@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import javax.annotation.Nullable;
@@ -30,6 +29,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.rest.SearchFieldSupport;
 import org.sonatype.nexus.repository.rest.SearchMappings;
+import org.sonatype.nexus.repository.search.SqlSearchQueryContribution;
 import org.sonatype.nexus.repository.search.SqlSearchRepositoryNameUtil;
 import org.sonatype.nexus.repository.search.sql.SqlSearchContentSelectorFilter;
 import org.sonatype.nexus.repository.search.sql.SqlSearchPermissionException;
@@ -47,6 +47,7 @@ import static java.util.Collections.emptySet;
 import static java.util.Collections.unmodifiableMap;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
+import static java.util.stream.Collectors.toSet;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
 import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryContributionSupport.fieldMappingsByAttribute;
 
@@ -124,7 +125,7 @@ public class TableSearchPermissionManager
     Set<String> repositories = StreamSupport
         .stream(repositoryManager.browse().spliterator(), false)
         .map(Repository::getName)
-        .collect(Collectors.toSet());
+        .collect(toSet());
 
     Set<String> browsableRepositories = getBrowsableRepositories(repositories);
 
@@ -189,6 +190,7 @@ public class TableSearchPermissionManager
   {
     return of(repositories)
         .filter(CollectionUtils::isNotEmpty)
+        .map(SqlSearchQueryContribution::preventTokenization)  //see repository name storage in SearchTableDAO.xml
         .map(repositoryNames -> conditionBuilder.condition(fieldMapping.getColumnName(), repositoryNames));
   }
 

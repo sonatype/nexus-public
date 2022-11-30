@@ -28,8 +28,6 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.config.Configuration;
-import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
@@ -42,10 +40,6 @@ import static java.util.Collections.unmodifiableSet;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.sonatype.nexus.repository.search.sql.DefaultSqlSearchQueryConditionBuilder.ANY_CHARACTER;
-import static org.sonatype.nexus.repository.search.sql.DefaultSqlSearchQueryConditionBuilder.SQL_ANY_CHARACTER;
-import static org.sonatype.nexus.repository.search.sql.DefaultSqlSearchQueryConditionBuilder.SQL_ZERO_OR_MORE_CHARACTERS;
-import static org.sonatype.nexus.repository.search.sql.DefaultSqlSearchQueryConditionBuilder.ZERO_OR_MORE_CHARACTERS;
 import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryContributionSupport.maybeTrimQuotes;
 
 /**
@@ -67,21 +61,15 @@ public class SqlSearchRepositoryNameUtil
 
   private final RepositoryManager repositoryManager;
 
-  private final ConfigurationStore configurationStore;
-
   @Inject
-  public SqlSearchRepositoryNameUtil(
-      final RepositoryManager repositoryManager,
-      final ConfigurationStore configurationStore)
-  {
+  public SqlSearchRepositoryNameUtil(final RepositoryManager repositoryManager) {
     this.repositoryManager = checkNotNull(repositoryManager);
-    this.configurationStore = checkNotNull(configurationStore);
   }
 
   /**
-   * Splits by space and expands the specified <code>repositoryNameFilter</code> into leaf repository names (where
-   * applicable). Wildcard repository names are evaluated and the matching repositories are expanded into their leaf
-   * repository names (where applicable).
+   * Splits by space and expands each of the specified <code>repositoryNameFilter</code> into leaf repository names
+   * (where applicable). Wildcard repository names are evaluated and the matching repositories are expanded into their
+   * leaf repository names (where applicable).
    */
   public Set<String> getRepositoryNames(@Nullable final String repositoryNameFilter) {
     Set<String> repositories = ofNullable(repositoryNameFilter)
@@ -110,20 +98,25 @@ public class SqlSearchRepositoryNameUtil
     return unmodifiableSet(expandRepositories(getFormatRepositories(format)));
   }
 
-  public Set<String> replaceWildcards(final Set<String> values) {
+  private static Set<String> replaceWildcards(final Set<String> values) {
     return values.stream()
         .map(SqlSearchRepositoryNameUtil::replaceWildcards)
         .collect(toSet());
   }
 
   private static String replaceWildcards(String value) {
-    return value.replace(ANY_CHARACTER, SQL_ANY_CHARACTER)
-        .replace(ZERO_OR_MORE_CHARACTERS, SQL_ZERO_OR_MORE_CHARACTERS);
+    return value.replace("?", ".")
+        .replace("*", ".*");
   }
 
   private Set<String> getMatchingRepositoryNames(final Set<String> wildcards) {
-    return configurationStore.readByNames(replaceWildcards(wildcards)).stream()
-        .map(Configuration::getRepositoryName)
+    final Set<Pattern> repoNamePatterns = replaceWildcards(wildcards).stream().map(Pattern::compile).collect(toSet());
+    return StreamSupport.stream(repositoryManager.browse().spliterator(), false)
+        .map(Repository::getName)
+        .filter(repoName -> !repoNamePatterns.stream()
+            .filter(repoNamePattern -> repoNamePattern.matcher(repoName).matches())
+            .collect(toSet())
+            .isEmpty())
         .collect(toSet());
   }
 

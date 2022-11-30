@@ -45,6 +45,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings.SEARCH_REPOSITORY_NAME;
+import static org.sonatype.nexus.repository.search.SqlSearchQueryContribution.preventTokenization;
 
 public class TableSearchContentSelectorSqlFilterGeneratorTest
     extends TestSupport
@@ -103,9 +104,9 @@ public class TableSearchContentSelectorSqlFilterGeneratorTest
   private void mockCondition(final Set<String> repositories) {
     Map<String, String> params = ImmutableMap.of(REPOSITORY_NAME_PARAM, REPOSITORY_NAME_VALUE);
     SqlSearchQueryCondition repositoryCondition = getRepositoryCondition(params);
-    when(sqlSearchQueryConditionBuilder.condition(SEARCH_REPOSITORY_NAME, repositories, "s0p_"))
+    when(sqlSearchQueryConditionBuilder.condition(SEARCH_REPOSITORY_NAME, preventTokenization(repositories), "s0p_"))
         .thenReturn(repositoryCondition);
-    when(sqlSearchQueryConditionBuilder.condition(SEARCH_REPOSITORY_NAME, repositories, "s1p_"))
+    when(sqlSearchQueryConditionBuilder.condition(SEARCH_REPOSITORY_NAME, preventTokenization(repositories), "s1p_"))
         .thenReturn(repositoryCondition);
   }
 

@@ -15,6 +15,8 @@ package org.sonatype.nexus.repository.content.search.table;
 import org.sonatype.nexus.repository.content.Asset;
 
 /**
+ * Allows contribution of data from assets to {@link SearchTableData}
+ *
  * May be used by formats to contribute custom fields to search indexes.
  */
 public interface SearchCustomFieldContributor

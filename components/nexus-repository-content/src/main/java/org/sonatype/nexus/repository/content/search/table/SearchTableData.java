@@ -13,15 +13,20 @@
 package org.sonatype.nexus.repository.content.search.table;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.StringJoiner;
 
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
+
 import org.apache.commons.lang3.StringUtils;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.unmodifiableCollection;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
@@ -73,7 +78,7 @@ public class SearchTableData
   //asset paths
   private final Set<String> paths = new HashSet<>();
 
-  private final Set<String> keywords = new HashSet<>();
+  private final List<String> keywords = new ArrayList<>();//Need to maintain order because of ranking
 
   private final Set<String> md5 = new HashSet<>();
 
@@ -97,9 +102,13 @@ public class SearchTableData
 
   private final Set<String> formatFieldValues7 = new HashSet<>();
 
+  private NestedAttributesMap attributes = new NestedAttributesMap("attributes", new HashMap<>());
+
   private boolean prerelease;
 
   private Integer entityVersion;
+
+  private final Set<String> tags = new HashSet<>();
 
   public SearchTableData() {
   }
@@ -338,6 +347,14 @@ public class SearchTableData
     return unmodifiableCollection(formatFieldValues7);
   }
 
+  public NestedAttributesMap attributes() {
+    return attributes;
+  }
+
+  public void setAttributes(final NestedAttributesMap attributes) {
+    this.attributes = checkNotNull(attributes);
+  }
+
   public void addUploader(final String uploader) {
     if (isNotBlank(uploader)) {
       this.uploaders.add(uploader);
@@ -384,6 +401,16 @@ public class SearchTableData
     return entityVersion;
   }
 
+  public void setTags(final Collection<String> values) {
+    if (!values.isEmpty()) {
+      this.tags.addAll(values);
+    }
+  }
+
+  public Collection<String> getTags() {
+    return unmodifiableCollection(tags);
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) {
@@ -421,7 +448,9 @@ public class SearchTableData
         Objects.equals(formatFieldValues4, tableData.formatFieldValues4) &&
         Objects.equals(formatFieldValues5, tableData.formatFieldValues5) &&
         Objects.equals(formatFieldValues6, tableData.formatFieldValues6) &&
-        Objects.equals(formatFieldValues7, tableData.formatFieldValues7);
+        Objects.equals(formatFieldValues7, tableData.formatFieldValues7) &&
+        Objects.equals(attributes, tableData.attributes) &&
+        Objects.equals(tags, tableData.tags);
   }
 
   @Override
@@ -430,7 +459,7 @@ public class SearchTableData
         version, normalisedVersion, componentCreated, lastEventTime, repositoryName,
         prerelease, uploaders, uploaderIps, paths, keywords, md5, sha1, sha256, sha512, entityVersion,
         formatFieldValues1, formatFieldValues2, formatFieldValues3, formatFieldValues4, formatFieldValues5,
-        formatFieldValues6, formatFieldValues7);
+        formatFieldValues6, formatFieldValues7, attributes, tags);
   }
 
   @Override
@@ -465,6 +494,8 @@ public class SearchTableData
         .add("formatFieldValues5='" + formatFieldValues5 + "'")
         .add("formatFieldValues6='" + formatFieldValues6 + "'")
         .add("formatFieldValues7='" + formatFieldValues7 + "'")
+        .add("attributes='" + attributes + "'")
+        .add("tags='" + tags + "'")
         .toString();
   }
 }

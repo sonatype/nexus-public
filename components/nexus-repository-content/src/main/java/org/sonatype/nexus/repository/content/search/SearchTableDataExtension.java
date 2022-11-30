@@ -10,33 +10,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content;
+package org.sonatype.nexus.repository.content.search;
 
-import java.util.List;
+import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.search.table.SearchTableData;
 
 /**
- * Provides search results.
+ * Allows contribution of data from a component to {@link SearchTableData}
  *
- * @since 3.41
+ * This abstraction allows content to be contributed to a {@link SearchTableData}
+ * from modules outside the nexus-repository-content (such as the nexus-tags-plugin module)
+ *
  */
-public interface SearchResult
-    extends RepositoryContent
+public interface SearchTableDataExtension
 {
-  Integer componentId();
-
-  Integer repositoryId();
-
-  String format();
-
-  String namespace();
-
-  String componentName();
-
-  String repositoryName();
-
-  String version();
-
-  String normalisedVersion();
-
-  List<String> tags();
+  void contribute(final SearchTableData searchTableData, final FluentComponent component);
 }

@@ -32,6 +32,8 @@ public class MavenSearchMappings
     extends ComponentSupport
     implements SearchMappings
 {
+  public static final String GAVEC = "gavec";
+
   private static final List<SearchMapping> MAPPINGS = ImmutableList.of(
       new SearchMapping("maven.groupId", "attributes.maven2.groupId", "Maven groupId", ComponentSearchField.NAMESPACE),
       new SearchMapping("maven.artifactId", "attributes.maven2.artifactId", "Maven artifactId", ComponentSearchField.NAME),
@@ -40,7 +42,9 @@ public class MavenSearchMappings
       new SearchMapping("maven.extension", "assets.attributes.maven2.extension",
           "Maven extension of component's asset", ComponentSearchField.FORMAT_FIELD_2),
       new SearchMapping("maven.classifier", "assets.attributes.maven2.classifier",
-          "Maven classifier of component's asset", ComponentSearchField.FORMAT_FIELD_3)
+          "Maven classifier of component's asset", ComponentSearchField.FORMAT_FIELD_3),
+      new SearchMapping(GAVEC, GAVEC,
+          "Group asset version extension classifier", ComponentSearchField.FORMAT_FIELD_4)
   );
 
   @Override

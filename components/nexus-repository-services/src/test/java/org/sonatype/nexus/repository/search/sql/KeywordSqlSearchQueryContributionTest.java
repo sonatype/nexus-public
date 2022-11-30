@@ -26,36 +26,26 @@ import org.sonatype.nexus.repository.rest.sql.ComponentSearchField;
 import org.sonatype.nexus.repository.search.KeywordSqlSearchQueryContribution;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.rest.sql.ComponentSearchField.FORMAT_FIELD_4;
 import static org.sonatype.nexus.repository.rest.sql.ComponentSearchField.KEYWORD;
-import static org.sonatype.nexus.repository.rest.sql.ComponentSearchField.NAME;
-import static org.sonatype.nexus.repository.rest.sql.ComponentSearchField.NAMESPACE;
-import static org.sonatype.nexus.repository.rest.sql.ComponentSearchField.VERSION;
 
 public class KeywordSqlSearchQueryContributionTest
     extends TestSupport
 {
-  public static final String NAMESPACE_CONDITION_FORMAT = "NAMESPACE_CONDITION";
-
-  public static final String NAME_CONDITION_FORMAT = "NAME_CONDITION";
-
-  public static final String VERSION_CONDITION_FORMAT = "VERSION_CONDITION";
-
-  public static final String EXT_CONDITION_FORMAT = "EXT_CONDITION";
-
-  public static final String CLASSIFIER_CONDITION_FORMAT = "CLASSIFIER_CONDITION";
+  public static final String GAVEC_CONDITION_FORMAT = "GAVEC_CONDITION";
 
   @Mock
   private SqlSearchQueryConditionBuilderMapping conditionBuilders;
@@ -97,11 +87,7 @@ public class KeywordSqlSearchQueryContributionTest
 
     underTest.contribute(queryBuilder, new SearchFilter("keyword", "org.mockito:mockito-core:3.24:jar:tests"));
 
-    verify(queryBuilder).add(aSqlSearchCondition(NAMESPACE_CONDITION_FORMAT, "org.mockito"));
-    verify(queryBuilder).add(aSqlSearchCondition(NAME_CONDITION_FORMAT, "mockito-core"));
-    verify(queryBuilder).add(aSqlSearchCondition(VERSION_CONDITION_FORMAT, "3.24"));
-    verify(queryBuilder).add(aSqlSearchCondition(EXT_CONDITION_FORMAT, "jar"));
-    verify(queryBuilder).add(aSqlSearchCondition(CLASSIFIER_CONDITION_FORMAT, "tests"));
+    verify(queryBuilder).add(aSqlSearchCondition());
   }
 
   @Test
@@ -110,10 +96,10 @@ public class KeywordSqlSearchQueryContributionTest
 
     mockCondition(values);
 
-    Stream.of("mockito junit", "mockito-junit", "mockito,junit")
+    Stream.of("mockito junit", "mockito-junit", "mockito,junit", "mockito/junit")
         .forEach(value -> underTest.contribute(queryBuilder, new SearchFilter("keyword", value)));
 
-    verify(queryBuilder, times(3)).add(aSqlSearchCondition("conditionFormat", values));
+    verify(queryBuilder, times(4)).add(aSqlSearchCondition("conditionFormat", values));
   }
 
   private void mockCondition(final Map<String, String> values) {
@@ -128,20 +114,14 @@ public class KeywordSqlSearchQueryContributionTest
   }
 
   private void mockExactGavecSearch() {
-    when(sqlSearchQueryConditionBuilder.condition(NAMESPACE.getColumnName(), "org.mockito"))
-        .thenReturn(aSqlSearchCondition(NAMESPACE_CONDITION_FORMAT, "org.mockito"));
-    when(sqlSearchQueryConditionBuilder.condition(NAME.getColumnName(), "mockito-core"))
-        .thenReturn(aSqlSearchCondition(NAME_CONDITION_FORMAT, "mockito-core"));
-    when(sqlSearchQueryConditionBuilder.condition(VERSION.getColumnName(), "3.24"))
-        .thenReturn(aSqlSearchCondition(VERSION_CONDITION_FORMAT, "3.24"));
-    when(sqlSearchQueryConditionBuilder.condition("extension", "jar"))
-        .thenReturn(aSqlSearchCondition(EXT_CONDITION_FORMAT, "jar"));
-    when(sqlSearchQueryConditionBuilder.condition("classifier", "tests"))
-        .thenReturn(aSqlSearchCondition(CLASSIFIER_CONDITION_FORMAT, "tests"));
+    when(sqlSearchQueryConditionBuilder.condition(FORMAT_FIELD_4.getColumnName(),
+        "/org.mockito<->/mockito-core<->/3.24<->/jar<->/tests"))
+        .thenReturn(aSqlSearchCondition());
   }
 
-  private SqlSearchQueryCondition aSqlSearchCondition(final String nameConditionFormat, final String value) {
-    return aSqlSearchCondition(nameConditionFormat, ImmutableMap.of("name", value));
+  private SqlSearchQueryCondition aSqlSearchCondition() {
+    return aSqlSearchCondition(KeywordSqlSearchQueryContributionTest.GAVEC_CONDITION_FORMAT,
+        ImmutableMap.of("name", "g:a:v:e:c"));
   }
 
   private SqlSearchQueryCondition aSqlSearchCondition(
@@ -152,27 +132,7 @@ public class KeywordSqlSearchQueryContributionTest
   }
 
   private Iterable<SearchMapping> searchMappings() {
-    return ImmutableList.of(
-        searchMapping("maven.groupId", "attributes.maven2.groupId", "Maven groupId", NAMESPACE),
-        searchMapping("maven.artifactId", "attributes.maven2.artifactId", "Maven artifactId", NAME),
-        searchMapping("maven.baseVersion", "attributes.maven2.baseVersion", "Maven base version", VERSION),
-        searchMapping("maven.extension", "assets.attributes.maven2.extension", "Maven extension of component's asset",
-            componentSearchField("extension")),
-        searchMapping("maven.classifier", "assets.attributes.maven2.classifier",
-            "Maven classifier of component's asset", componentSearchField("classifier"))
-    );
-  }
-
-  private ComponentSearchField componentSearchField(final String classifier) {
-    return new ComponentSearchField(classifier);
-  }
-
-  private SearchMapping searchMapping(
-      final String alias,
-      final String attribute,
-      final String description,
-      final SearchFieldSupport searchFieldSupport)
-  {
-    return new SearchMapping(alias, attribute, description, searchFieldSupport);
+    return singletonList(new SearchMapping("gavec", "gavec", "Group asset version extension classifier",
+        ComponentSearchField.FORMAT_FIELD_4));
   }
 }

@@ -254,12 +254,6 @@ public class BootstrapListener
       // JWT and Blobstore Metrics should also be enabled for clustered
       properties.setProperty(JWT_ENABLED, "true");
       properties.setProperty(DATASTORE_BLOBSTORE_METRICS, "true");
-
-      // Do not provision default blobstore
-      properties.setProperty("nexus.blobstore.provisionDefaults", "false");
-
-      // Do not provision default repositories
-      properties.setProperty("nexus.skipDefaultRepositories", "false");
     }
 
     // datastore search mode enables datastore user mode

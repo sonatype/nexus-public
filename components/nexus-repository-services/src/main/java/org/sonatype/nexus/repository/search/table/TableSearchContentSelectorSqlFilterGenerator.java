@@ -35,6 +35,7 @@ import org.sonatype.nexus.selector.SelectorSqlBuilder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.unmodifiableMap;
+import static org.sonatype.nexus.repository.search.SqlSearchQueryContribution.preventTokenization;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
 import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryContributionSupport.fieldMappingsByAttribute;
 
@@ -168,6 +169,7 @@ public class TableSearchContentSelectorSqlFilterGenerator
   {
     SearchFieldSupport fieldMapping = fieldMappings.get(REPOSITORY_NAME);
     return conditionBuilders.getConditionBuilder(fieldMapping)
-        .condition(fieldMapping.getColumnName(), repositories, namePrefix);
+        .condition(fieldMapping.getColumnName(), preventTokenization(repositories),
+            namePrefix);//see repository name storage in SearchTableDAO.xml
   }
 }

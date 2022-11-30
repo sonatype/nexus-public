@@ -26,18 +26,18 @@ public class ComponentSearchField
     extends SearchFieldSupport
 {
   public static final SearchFieldSupport FORMAT =
-      new ComponentSearchField("tsvector_format", FULL_TEXT_SEARCH_QUERY);
+      new ComponentSearchField("tsvector_format", "format", FULL_TEXT_SEARCH_QUERY);
 
   private static final String TABLE = "${format}_component";
 
   public static final ComponentSearchField NAMESPACE =
-      new ComponentSearchField("tsvector_namespace", FULL_TEXT_SEARCH_QUERY);
+      new ComponentSearchField("tsvector_namespace", "namespace", FULL_TEXT_SEARCH_QUERY);
 
-  public static final SearchFieldSupport NAME =
-      new ComponentSearchField("tsvector_search_component_name", FULL_TEXT_SEARCH_QUERY);
+  public static final SearchFieldSupport NAME = new ComponentSearchField(
+      "tsvector_search_component_name", "search_component_name", FULL_TEXT_SEARCH_QUERY);
 
   public static final SearchFieldSupport VERSION =
-      new ComponentSearchField("tsvector_version", FULL_TEXT_SEARCH_QUERY);
+      new ComponentSearchField("tsvector_version", "normalised_version", FULL_TEXT_SEARCH_QUERY);
 
   public static final SearchFieldSupport KEYWORD = new ComponentSearchField("keywords", FULL_TEXT_SEARCH_QUERY);
 
@@ -52,32 +52,42 @@ public class ComponentSearchField
 
   public static final SearchFieldSupport SHA512 = new ComponentSearchField("sha512", FULL_TEXT_SEARCH_QUERY);
 
+  public static final String ATTRIBUTES = "attributes";
+
   public static final SearchFieldSupport FORMAT_FIELD_1 = new ComponentSearchField("format_field_values_1",
-      FULL_TEXT_SEARCH_QUERY);
+      ATTRIBUTES, FULL_TEXT_SEARCH_QUERY);
 
   public static final SearchFieldSupport FORMAT_FIELD_2 = new ComponentSearchField("format_field_values_2",
-      FULL_TEXT_SEARCH_QUERY);
+      ATTRIBUTES, FULL_TEXT_SEARCH_QUERY);
 
   public static final SearchFieldSupport FORMAT_FIELD_3 = new ComponentSearchField("format_field_values_3",
-      FULL_TEXT_SEARCH_QUERY);
+      ATTRIBUTES, FULL_TEXT_SEARCH_QUERY);
 
   public static final SearchFieldSupport FORMAT_FIELD_4 = new ComponentSearchField("format_field_values_4",
-      FULL_TEXT_SEARCH_QUERY);
+      ATTRIBUTES, FULL_TEXT_SEARCH_QUERY);
 
   public static final SearchFieldSupport FORMAT_FIELD_5 = new ComponentSearchField("format_field_values_5",
-      FULL_TEXT_SEARCH_QUERY);
+      ATTRIBUTES, FULL_TEXT_SEARCH_QUERY);
 
   public static final SearchFieldSupport FORMAT_FIELD_6 = new ComponentSearchField("format_field_values_6",
-      FULL_TEXT_SEARCH_QUERY);
+      ATTRIBUTES, FULL_TEXT_SEARCH_QUERY);
 
   public static final SearchFieldSupport FORMAT_FIELD_7 = new ComponentSearchField("format_field_values_7",
-      FULL_TEXT_SEARCH_QUERY);
+      ATTRIBUTES, FULL_TEXT_SEARCH_QUERY);
 
-  public ComponentSearchField(final String columnName) {
-    this(columnName, TextualQueryType.DEFAULT_TEXT_QUERY);
+  public ComponentSearchField(final String searchedColumnName) {
+    this(searchedColumnName, TextualQueryType.DEFAULT_TEXT_QUERY);
   }
 
-  public ComponentSearchField(final String columnName, final TextualQueryType columnType) {
-    super(TABLE, columnName, columnType);
+  public ComponentSearchField(final String searchedColumnName, final TextualQueryType columnType) {
+    this(searchedColumnName, searchedColumnName, columnType);
+  }
+
+  public ComponentSearchField(
+      final String searchedColumnName,
+      final String sortColumnName,
+      final TextualQueryType columnType)
+  {
+    super(TABLE, searchedColumnName, sortColumnName, columnType);
   }
 }

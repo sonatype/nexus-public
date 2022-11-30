@@ -21,7 +21,7 @@ package org.sonatype.nexus.repository.rest.sql;
 public enum TextualQueryType
 {
   /**
-   * This means default text column querying approach i.e. using '=', 'IN', 'LIKE'
+   * This means default text column querying approach i.e. using '=', 'IN'
    */
   DEFAULT_TEXT_QUERY,
 

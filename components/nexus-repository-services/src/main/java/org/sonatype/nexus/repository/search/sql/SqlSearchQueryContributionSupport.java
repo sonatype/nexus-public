@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.search.sql;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
@@ -26,6 +27,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.rest.SearchFieldSupport;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
+import org.sonatype.nexus.repository.rest.sql.ComponentSearchField;
 import org.sonatype.nexus.repository.search.SqlSearchQueryContribution;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
 import org.sonatype.nexus.rest.ValidationErrorsException;
@@ -62,6 +64,8 @@ public abstract class SqlSearchQueryContributionSupport
   private static final int MIN_ALLOWED_SYMBOLS_TO_SEARCH = 3;
 
   public static final String NAME_PREFIX = "datastore_search_";
+
+  public static final String GAVEC = "gavec";
 
   protected final SqlSearchQueryConditionBuilderMapping conditionBuilders;
 
@@ -133,7 +137,7 @@ public abstract class SqlSearchQueryContributionSupport
    *
    * @param token a token to check
    * @return the {@code true} or {@code false} if a {@code token} contains wildcard
-   *         and a length of string without wildcard.
+   * and a length of string without wildcard.
    */
   private static Pair<Boolean, Integer> checkTrailingAsterisk(final String token) {
     // The escaped asterisk (*) is not a wildcard token.
@@ -180,9 +184,16 @@ public abstract class SqlSearchQueryContributionSupport
   }
 
   public static Map<String, SearchFieldSupport> fieldMappingsByAttribute(final Map<String, SearchMappings> searchMappings) {
-    return searchMappings.entrySet().stream()
+    final Map<String, SearchFieldSupport> byAttribute = searchMappings.entrySet().stream()
         .flatMap(e -> stream(e.getValue().get().spliterator(), false))
         .collect(toMap(SearchMapping::getAttribute, SearchMapping::getField));
+    return addCustomMappings(byAttribute);
+  }
+
+  private static Map<String, SearchFieldSupport> addCustomMappings(final Map<String, SearchFieldSupport> byAttribute) {
+    Map<String, SearchFieldSupport> mappings = new HashMap<>(byAttribute);
+    mappings.put(GAVEC, ComponentSearchField.FORMAT_FIELD_4);
+    return mappings;
   }
 
   @Nullable

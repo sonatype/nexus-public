@@ -16,9 +16,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -31,6 +33,7 @@ import org.sonatype.nexus.repository.search.sql.SqlSearchQueryBuilder;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilderMapping;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryContributionSupport;
 
+import static java.util.stream.Collectors.joining;
 import static org.apache.commons.lang3.StringUtils.appendIfMissing;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
@@ -55,7 +58,7 @@ public class KeywordSqlSearchQueryContribution
 {
   protected static final String NAME = NAME_PREFIX + "keyword";
 
-  private static final String SPLIT_REGEX = "[^-,\\s\"]+|\"[^\"]+\"";
+  private static final String SPLIT_REGEX = "[^-,\\s\"/]+|\"[^\"]+\"";
 
   private static final String GAVEC_REGEX =
       "^(?<group>[^\\s:]+):(?<name>[^\\s:]+)(:(?<version>[^\\s:]+))?(:(?<extension>[^\\s:]+))?(:(?<classifier>[^\\s:]+))?$";
@@ -64,6 +67,12 @@ public class KeywordSqlSearchQueryContribution
   private static final Pattern GAVEC_SPLITTER = Pattern.compile(GAVEC_REGEX);
 
   private static final Pattern SPLITTER = Pattern.compile(SPLIT_REGEX);
+
+  private static final String SLASH = "/";
+
+  private static final String GAVEC = "gavec";
+
+  private static final String POSTGRES_FOLLOWED_BY_OPERATOR = "<->";
 
   @Inject
   public KeywordSqlSearchQueryContribution(
@@ -100,22 +109,19 @@ public class KeywordSqlSearchQueryContribution
   }
 
   private void buildGavQuery(final SqlSearchQueryBuilder queryBuilder, final Matcher gavSearchMatcher) {
-    addMavenAttribute(queryBuilder, "attributes.maven2.groupId", gavSearchMatcher.group("group"));
+    String gavec = Stream.of(gavSearchMatcher.group("group"),
+        gavSearchMatcher.group("name"),
+        gavSearchMatcher.group("version"),
+        gavSearchMatcher.group("extension"),
+        gavSearchMatcher.group("classifier")
+    ).filter(Objects::nonNull)
+        .map(SqlSearchQueryContribution::matchUntokenizedValue)
+        .collect(joining(POSTGRES_FOLLOWED_BY_OPERATOR));
 
-    addMavenAttribute(queryBuilder, "attributes.maven2.artifactId", gavSearchMatcher.group("name"));
-
-    addMavenAttribute(queryBuilder, "attributes.maven2.baseVersion", gavSearchMatcher.group("version"));
-
-    addMavenAttribute(queryBuilder, "assets.attributes.maven2.extension", gavSearchMatcher.group("extension"));
-
-    addMavenAttribute(queryBuilder, "assets.attributes.maven2.classifier", gavSearchMatcher.group("classifier"));
-  }
-
-  private void addMavenAttribute(final SqlSearchQueryBuilder queryBuilder, final String attribute, final String value) {
-    if (isNotBlank(value)) {
-      SearchFieldSupport fieldMapping = fieldMappings.get(attribute);
+    if (isNotBlank(gavec)) {
+      SearchFieldSupport fieldMapping = fieldMappings.get(GAVEC);
       String columnName = fieldMapping.getColumnName();
-      queryBuilder.add(conditionBuilders.getConditionBuilder(fieldMapping).condition(columnName, value));
+      queryBuilder.add(conditionBuilders.getConditionBuilder(fieldMapping).condition(columnName, gavec));
     }
   }
 

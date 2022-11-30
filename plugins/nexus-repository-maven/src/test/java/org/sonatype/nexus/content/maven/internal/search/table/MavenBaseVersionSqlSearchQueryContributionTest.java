@@ -67,11 +67,11 @@ public class MavenBaseVersionSqlSearchQueryContributionTest
   @Test
   public void shouldContributeCustomisedBaseVersion() {
     String baseVersion = "1.0-snapshot";
-    String customisedBaseVersion = "1.0.snapshot";
-    Map<String, String> values = ImmutableMap.of("field0", customisedBaseVersion);
+    String storedBaseVersion = "/1.0-snapshot";
+    Map<String, String> values = ImmutableMap.of("field0", storedBaseVersion);
 
     when(sqlSearchQueryConditionBuilder
-        .condition(FORMAT_FIELD_1.getColumnName(), ImmutableSet.of(customisedBaseVersion)))
+        .condition(FORMAT_FIELD_1.getColumnName(), ImmutableSet.of(storedBaseVersion)))
         .thenReturn(new SqlSearchQueryCondition(FORMAT_FIELD_1.getColumnName(), values));
 
     underTest.contribute(queryBuilder, new SearchFilter(BASE_VERSION, baseVersion));

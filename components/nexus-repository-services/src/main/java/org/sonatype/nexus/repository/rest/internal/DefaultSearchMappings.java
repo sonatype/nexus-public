@@ -39,6 +39,8 @@ public class DefaultSearchMappings
 {
   public static final String NAME_RAW = "name.raw";
 
+  public static final String NAME_RAW_ALIAS = "name";
+
   public static final String GROUP_RAW = "group.raw";
 
   public static final String VERSION = "version";
@@ -50,10 +52,10 @@ public class DefaultSearchMappings
   private static final List<SearchMapping> MAPPINGS = ImmutableList.of(
       new SearchMapping("q", "keyword", "Query by keyword", ComponentSearchField.KEYWORD),
       new SearchMapping("repository", REPOSITORY_NAME, "Repository name",
-          new RepositorySearchField(SEARCH_REPOSITORY_NAME)),
+          new RepositorySearchField(SEARCH_REPOSITORY_NAME, "search_repository_name")),
       new SearchMapping("format", "format", "Query by format", ComponentSearchField.FORMAT),
       new SearchMapping("group", GROUP_RAW, "Component group", ComponentSearchField.NAMESPACE),
-      new SearchMapping("name", NAME_RAW, "Component name", ComponentSearchField.NAME),
+      new SearchMapping(NAME_RAW_ALIAS, NAME_RAW, "Component name", ComponentSearchField.NAME),
       new SearchMapping(VERSION, VERSION, "Component version", ComponentSearchField.VERSION),
       new SearchMapping(PRERELEASE, IS_PRERELEASE_KEY, "Prerelease version flag", ComponentSearchField.PRERELEASE),
       new SearchMapping("md5", "assets.attributes.checksum.md5",

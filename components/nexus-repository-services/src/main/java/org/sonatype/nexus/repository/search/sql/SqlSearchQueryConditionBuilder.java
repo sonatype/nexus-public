@@ -79,19 +79,16 @@ public abstract class SqlSearchQueryConditionBuilder
   private static final char[] REGEX_IDENTIFIERS = {'*', '?'};
 
   /**
-   * Creates a SqlSearchQueryCondition of the form <code>SqlSearchQueryCondition("field = #{field}",
-   * {field=value})</code> if the specified value is an exact value or a SqlSearchQueryCondition of the form
-   * <code>SqlSearchQueryCondition("field LIKE #{field}", {field=value})</code> if the specified value is a wildcard.
+   * Creates a SqlSearchQueryCondition of the form <code>SqlSearchQueryCondition("field &lt;operator&gt; #{field}",
+   * {field=value})</code>
    */
   public SqlSearchQueryCondition condition(final String field, final String value) {
     return createCondition(field, value, EMPTY);
   }
 
   /**
-   * Creates a SqlSearchQueryCondition of the form <code>SqlSearchQueryCondition("field = #{field}",
-   * {field=value})</code> if the specified value is an exact value or a SqlSearchQueryCondition of the form
-   * <code>SqlSearchQueryCondition("field LIKE #{field}", {field=value})</code> if the specified value is a wildcard.
-   *
+   * Creates a SqlSearchQueryCondition of the form <code>SqlSearchQueryCondition("field &lt;operator&gt; #{field}",
+   * {field=value})</code>
    * The keys of the parameters Map contained in the created <code>SqlQueryCondition</code> are prefixed with the
    * specified <code>parameterPrefix</code>.
    */
@@ -288,7 +285,7 @@ public abstract class SqlSearchQueryConditionBuilder
   private Map<String, String> nameValues(final List<String> valueNames, final Set<String> values) {
     List<String> theValues = new ArrayList<>(values);
     return IntStream.range(0, Math.min(valueNames.size(), theValues.size()))
-        .mapToObj(index -> new SimpleImmutableEntry<>(valueNames.get(index), escapeSymbols(theValues.get(index))))
+        .mapToObj(index -> new SimpleImmutableEntry<>(valueNames.get(index), theValues.get(index)))
         .collect(toMap(Entry::getKey, Entry::getValue));
   }
 
@@ -315,7 +312,8 @@ public abstract class SqlSearchQueryConditionBuilder
   {
     final List<String> exactPlaceholders = placeholders.subList(0, values.size());
     final List<String> exactValueNames = valueNames.subList(0, values.size());
-    return new SqlSearchQueryCondition(in(fieldName, exactPlaceholders), nameValues(exactValueNames, values));
+    final Set<String> escapedValues = values.stream().map(this::escapeSymbols).collect(toSet());
+    return new SqlSearchQueryCondition(in(fieldName, exactPlaceholders), nameValues(exactValueNames, escapedValues));
   }
 
   private static Map<String, String> flattenValues(final Stream<Map<String, String>> stream) {

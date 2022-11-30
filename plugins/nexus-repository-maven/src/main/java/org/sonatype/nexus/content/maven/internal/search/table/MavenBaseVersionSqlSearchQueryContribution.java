@@ -13,6 +13,7 @@
 package org.sonatype.nexus.content.maven.internal.search.table;
 
 import java.util.Map;
+import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -25,10 +26,10 @@ import org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilderMa
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryContributionSupport;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.sonatype.nexus.content.maven.internal.search.table.MavenSearchCustomFieldContributor.getBaseVersion;
+import static org.sonatype.nexus.content.maven.internal.search.table.MavenSearchCustomFieldContributor.toStoredBaseVersionFormat;
 
 /**
- * Creates match sql query conditions for the assets.attributes.nuget.tags search term.
+ * Creates sql query conditions for the assets.attributes.baseVersion search term.
  */
 @Named(MavenBaseVersionSqlSearchQueryContribution.NAME)
 @Singleton
@@ -51,10 +52,15 @@ public class MavenBaseVersionSqlSearchQueryContribution
   public void contribute(final SqlSearchQueryBuilder queryBuilder, final SearchFilter searchFilter) {
     String value = searchFilter.getValue();
     if (isNotBlank(value)) {
-      super.contribute(queryBuilder, new SearchFilter(searchFilter.getProperty(), getBaseVersion(value)));
+      super.contribute(queryBuilder, new SearchFilter(searchFilter.getProperty(), value));
     }
     else {
       super.contribute(queryBuilder, searchFilter);
     }
+  }
+
+  @Override
+  protected Set<String> split(final String baseVersion) {
+    return toStoredBaseVersionFormat(super.split(baseVersion));
   }
 }
