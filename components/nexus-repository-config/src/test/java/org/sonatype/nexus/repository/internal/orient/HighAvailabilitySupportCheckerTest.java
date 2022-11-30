@@ -10,10 +10,11 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository;
+package org.sonatype.nexus.repository.internal.orient;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.repository.HighAvailabilitySupportChecker;
 
 import com.google.common.base.Strings;
 import org.junit.AfterClass;
@@ -57,7 +58,7 @@ public class HighAvailabilitySupportCheckerTest
   @Test
   public void returnTrue_IfNexusHAIsFalseAndFormatHAIsFalse() {
     when(nodeAccess.isClustered()).thenReturn(false);
-    highAvailabilitySupportChecker = new HighAvailabilitySupportChecker(nodeAccess);
+    highAvailabilitySupportChecker = new OrientHighAvailabilitySupportChecker(nodeAccess);
     System.setProperty(HA_SUPPORTED_PROPERTY, "false");
     assertThat(highAvailabilitySupportChecker.isSupported(FORMAT_NAME), is(true));
   }
@@ -65,7 +66,7 @@ public class HighAvailabilitySupportCheckerTest
   @Test
   public void returnFalse_IfNexusHAIsTrueAndFormatHAIsFalse() {
     when(nodeAccess.isClustered()).thenReturn(true);
-    highAvailabilitySupportChecker = new HighAvailabilitySupportChecker(nodeAccess);
+    highAvailabilitySupportChecker = new OrientHighAvailabilitySupportChecker(nodeAccess);
     System.setProperty(HA_SUPPORTED_PROPERTY, "false");
     assertThat(highAvailabilitySupportChecker.isSupported(FORMAT_NAME), is(false));
   }
@@ -73,7 +74,7 @@ public class HighAvailabilitySupportCheckerTest
   @Test
   public void returnTrue_IfNexusHAIsTrueAndFormatHAIsTrue() {
     when(nodeAccess.isClustered()).thenReturn(true);
-    highAvailabilitySupportChecker = new HighAvailabilitySupportChecker(nodeAccess);
+    highAvailabilitySupportChecker = new OrientHighAvailabilitySupportChecker(nodeAccess);
     System.setProperty(HA_SUPPORTED_PROPERTY, "true");
     assertThat(highAvailabilitySupportChecker.isSupported(FORMAT_NAME), is(true));
   }
@@ -81,7 +82,7 @@ public class HighAvailabilitySupportCheckerTest
   @Test
   public void returnTrue_IfNexusHAIsFalseAndFormatHAIsTrue() {
     when(nodeAccess.isClustered()).thenReturn(false);
-    highAvailabilitySupportChecker = new HighAvailabilitySupportChecker(nodeAccess);
+    highAvailabilitySupportChecker = new OrientHighAvailabilitySupportChecker(nodeAccess);
     System.setProperty(HA_SUPPORTED_PROPERTY, "true");
     assertThat(highAvailabilitySupportChecker.isSupported(FORMAT_NAME), is(true));
   }

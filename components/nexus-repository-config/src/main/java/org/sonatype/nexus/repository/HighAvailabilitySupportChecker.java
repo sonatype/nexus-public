@@ -12,11 +12,9 @@
  */
 package org.sonatype.nexus.repository;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.node.NodeAccess;
 
@@ -29,23 +27,25 @@ import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getBoole
  *
  * @since 3.17
  */
-@Named
-@Singleton
-public class HighAvailabilitySupportChecker
+public abstract class HighAvailabilitySupportChecker
 {
   private final boolean isNexusClustered;
 
   private final Map<String, Boolean> formatHAStates = new ConcurrentHashMap<>();
 
-  @Inject
   public HighAvailabilitySupportChecker(final NodeAccess nodeAccess) {
     isNexusClustered = nodeAccess.isClustered();
 
     // Formats enabled by default
-    formatHAStates.put("maven2", queryFormat("maven2", true));
-    formatHAStates.put("npm", queryFormat("npm", true));
-    formatHAStates.put("docker", queryFormat("docker", true));
+    getEnabledFormats().forEach(format -> formatHAStates.put(format, queryFormat(format, true)));
   }
+
+  /**
+   * Get formats enabled by default.
+   *
+   * @return a list of formats which are enabled by default in the cluster mode.
+   */
+  protected abstract List<String> getEnabledFormats();
 
   public boolean isSupported(final String formatName) {
     boolean formatEnabled = formatHAStates.computeIfAbsent(formatName, f -> queryFormat(formatName, false));
