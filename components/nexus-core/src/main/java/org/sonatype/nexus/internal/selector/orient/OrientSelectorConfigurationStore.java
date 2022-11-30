@@ -25,7 +25,7 @@ import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.datastore.api.DuplicateKeyException;
-import org.sonatype.nexus.internal.selector.SelectorConfigurationStore;
+import org.sonatype.nexus.selector.SelectorConfigurationStore;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.selector.OrientSelectorConfiguration;

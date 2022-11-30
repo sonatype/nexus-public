@@ -21,6 +21,7 @@ import org.sonatype.goodies.testsupport.inject.InjectedTestSupport;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.selector.CselSelector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
+import org.sonatype.nexus.selector.SelectorConfigurationStore;
 import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
@@ -58,6 +59,8 @@ public class SelectorComponentTest
 
   private SelectorManager mockSelectorManager = mock(SelectorManager.class);
 
+  private SelectorConfigurationStore mockStore = mock(SelectorConfigurationStore.class);
+
   @Override
   public void configure(final Binder binder) {
     binder.bind(Boolean.class).annotatedWith(Names.named(ORIENT_ENABLED)).toInstance(true);
@@ -66,6 +69,7 @@ public class SelectorComponentTest
     SecuritySystem securitySystem = mock(SecuritySystem.class);
     binder.bind(ConstraintViolationFactory.class).toInstance(constraintViolationFactory);
     binder.bind(SelectorManager.class).toInstance(mockSelectorManager);
+    binder.bind(SelectorConfigurationStore.class).toInstance(mockStore);
     binder.bind(SecuritySystem.class).toInstance(securitySystem);
     when(constraintViolationFactory.createViolation(eq("expression"), anyString())).thenReturn(constraintViolation);
     when(constraintViolation.getPropertyPath()).thenReturn(path);

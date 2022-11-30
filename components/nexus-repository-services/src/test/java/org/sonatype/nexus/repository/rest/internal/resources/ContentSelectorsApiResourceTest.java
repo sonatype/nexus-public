@@ -25,6 +25,7 @@ import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.selector.CselSelector;
 import org.sonatype.nexus.selector.OrientSelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorConfiguration;
+import org.sonatype.nexus.selector.SelectorConfigurationStore;
 import org.sonatype.nexus.selector.SelectorFactory;
 import org.sonatype.nexus.selector.SelectorManager;
 
@@ -64,9 +65,12 @@ public class ContentSelectorsApiResourceTest
   @Mock
   private SelectorManager selectorManager;
 
+  @Mock
+  private SelectorConfigurationStore store;
+
   @Before
   public void setup() {
-    underTest = new ContentSelectorsApiResource(selectorFactory, selectorManager);
+    underTest = new ContentSelectorsApiResource(selectorFactory, selectorManager, store);
   }
 
   @Test
@@ -76,7 +80,7 @@ public class ContentSelectorsApiResourceTest
     selectorConfiguration.setType("csel");
     selectorConfiguration.setDescription("description");
     selectorConfiguration.setAttributes(singletonMap("expression", "test-expression"));
-    when(selectorManager.browse()).thenReturn(asList(selectorConfiguration));
+    when(store.browse()).thenReturn(asList(selectorConfiguration));
 
     List<ContentSelectorApiResponse> response = underTest.getContentSelectors();
 

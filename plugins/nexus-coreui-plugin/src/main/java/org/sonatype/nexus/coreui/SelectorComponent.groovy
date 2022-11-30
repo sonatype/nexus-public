@@ -28,6 +28,7 @@ import org.sonatype.nexus.repository.security.RepositoryContentSelectorPrivilege
 import org.sonatype.nexus.security.SecuritySystem
 import org.sonatype.nexus.security.privilege.Privilege
 import org.sonatype.nexus.selector.SelectorConfiguration
+import org.sonatype.nexus.selector.SelectorConfigurationStore
 import org.sonatype.nexus.selector.SelectorFactory
 import org.sonatype.nexus.selector.SelectorManager
 import org.sonatype.nexus.validation.ConstraintViolationFactory
@@ -67,6 +68,9 @@ class SelectorComponent
   @Inject
   SecuritySystem securitySystem
 
+  @Inject
+  SelectorConfigurationStore store
+
   /**
    * @return a list of selectors
    */
@@ -76,7 +80,7 @@ class SelectorComponent
   @RequiresPermissions('nexus:selectors:read')
   List<SelectorXO> read() {
     def privileges = securitySystem.listPrivileges()
-    return selectorManager.browse().collect { asSelector(it, privileges) }
+    return store.browse().collect { asSelector(it, privileges) }
   }
 
   /**

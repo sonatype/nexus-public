@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.rest.internal.resources;
 
 import java.util.List;
-
 import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
@@ -34,6 +33,7 @@ import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.selector.CselSelector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
+import org.sonatype.nexus.selector.SelectorConfigurationStore;
 import org.sonatype.nexus.selector.SelectorFactory;
 import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.validation.Validate;
@@ -60,10 +60,17 @@ public class ContentSelectorsApiResource
 
   private final SelectorManager selectorManager;
 
+  private final SelectorConfigurationStore store;
+
   @Inject
-  public ContentSelectorsApiResource(final SelectorFactory selectorFactory, final SelectorManager selectorManager) {
+  public ContentSelectorsApiResource(
+      final SelectorFactory selectorFactory,
+      final SelectorManager selectorManager,
+      final SelectorConfigurationStore store)
+  {
     this.selectorFactory = checkNotNull(selectorFactory);
     this.selectorManager = checkNotNull(selectorManager);
+    this.store = checkNotNull(store);
   }
 
   @GET
@@ -71,8 +78,8 @@ public class ContentSelectorsApiResource
   @RequiresPermissions("nexus:selectors:read")
   @NotCacheable
   public List<ContentSelectorApiResponse> getContentSelectors() {
-    // The selector manager has a built-in cache of all content selectors which should bound the performance
-    return selectorManager.browse().stream().map(ContentSelectorsApiResource::fromSelectorConfiguration)
+    return store.browse().stream()
+        .map(ContentSelectorsApiResource::fromSelectorConfiguration)
         .collect(toList());
   }
 

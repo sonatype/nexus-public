@@ -19,6 +19,7 @@ import javax.ws.rs.Path;
 
 import org.sonatype.nexus.rest.APIConstants;
 import org.sonatype.nexus.security.internal.rest.SecurityApiResourceBeta;
+import org.sonatype.nexus.selector.SelectorConfigurationStore;
 import org.sonatype.nexus.selector.SelectorFactory;
 import org.sonatype.nexus.selector.SelectorManager;
 
@@ -43,8 +44,9 @@ public class ContentSelectorsApiResourceBeta
   @Inject
   public ContentSelectorsApiResourceBeta(
       final SelectorFactory selectorFactory,
-      final SelectorManager selectorManager)
+      final SelectorManager selectorManager,
+      final SelectorConfigurationStore store)
   {
-    super(selectorFactory, selectorManager);
+    super(selectorFactory, selectorManager, store);
   }
 }
