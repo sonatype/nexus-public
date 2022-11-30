@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.store;
 
 import java.time.OffsetDateTime;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -110,4 +111,12 @@ public interface AssetBlobDAO
    * @param contentType
    */
   void setContentType(@Param("blobRef") BlobRef blobRef, @Param("contentType") String contentType);
+
+  /**
+   * Sets the checksums on the asset blob
+   *
+   * @param blobRef
+   * @param checksums
+   */
+  void setChecksums(@Param("blobRef") BlobRef blobRef, @Param("checksums") Map<String, String> checksums);
 }

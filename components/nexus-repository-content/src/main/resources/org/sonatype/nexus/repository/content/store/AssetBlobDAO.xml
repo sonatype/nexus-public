@@ -98,4 +98,8 @@
     WHERE blob_ref = #{blobRef};
   </update>
 
+  <update id="setChecksums" parameterType="AssetBlobData">
+    UPDATE ${format}_asset_blob SET checksums = #{checksums}
+    WHERE blob_ref = #{blobRef};
+  </update>
 </mapper>

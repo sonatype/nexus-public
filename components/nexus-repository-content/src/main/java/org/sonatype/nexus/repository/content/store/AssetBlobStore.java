@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.store;
 
 import java.time.OffsetDateTime;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -133,5 +134,10 @@ public class AssetBlobStore<T extends AssetBlobDAO>
   @Transactional
   public void setContentType(final AssetBlob blob, final String contentType) {
     dao().setContentType(blob.blobRef(), contentType);
+  }
+
+  @Transactional
+  public void setChecksums(final AssetBlob blob, final Map<String, String> checksums) {
+    dao().setChecksums(blob.blobRef(), checksums);
   }
 }
