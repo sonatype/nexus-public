@@ -26,7 +26,7 @@ export default function RepositoryConnectorsConfiguration({parentMachine}) {
 
   const repositoryName = parentState.context.data.name;
 
-  const isProEdition = ExtJS.state().getEdition() === 'PRO';
+  const isProEdition = ExtJS.isProEdition();
 
   return (
     <>

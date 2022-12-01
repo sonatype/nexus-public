@@ -252,7 +252,8 @@ export default {
     FORM: {
       CREATE_TITLE: 'Create User',
       EDIT_TILE: (name) => `Edit ${name}`,
-      EDIT_DESCRIPTION: 'Nexus User',
+      EDIT_DESCRIPTION: (source) => `${source} User`,
+      LOCAL_USER_SOURCE: 'Local',
       DEFAULT_USER_WARNING: 'This is a default user and cannot be modified.',
       SECTIONS: {
         SETUP: 'User Setup',

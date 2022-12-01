@@ -25,7 +25,7 @@ import {
 } from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
-import {EMPTY_DATA, URL, fullName} from './UsersHelper';
+import {EMPTY_DATA, URL, fullName, isExternalUser, STATUSES} from './UsersHelper';
 import confirmAdminPasswordMachine from './confirmAdminPasswordMachine';
 import confirmNewPasswordMachine from './confirmNewPasswordMachine';
 import resettingTokenMachine from './resettingTokenMachine';
@@ -126,16 +126,19 @@ export default FormUtils.buildFormMachine({
 }).withConfig({
   actions: {
     validate: assign({
-      validationErrors: ({pristineData, data}) => ({
-        userId: ValidationUtils.validateNotBlank(data.userId),
-        firstName: ValidationUtils.validateNotBlank(data.firstName),
-        lastName: ValidationUtils.validateNotBlank(data.lastName),
-        emailAddress: ValidationUtils.validateNotBlank(data.emailAddress) || ValidationUtils.validateEmail(data.emailAddress),
-        password: !isEdit(pristineData.userId) ? ValidationUtils.validateNotBlank(data.password): null,
-        passwordConfirm: !isEdit(pristineData.userId) ? validatePasswordConfirm(data.password, data.passwordConfirm) : null,
-        status: ValidationUtils.validateNotBlank(data.status),
-        roles: data.roles?.length ? null : UIStrings.ERROR.FIELD_REQUIRED,
-      })
+      validationErrors: ({pristineData, data}) => {
+        const isNexusUser = !isExternalUser(data.source);
+        const isCreate = !isEdit(pristineData.userId);
+        return {
+          userId: ValidationUtils.validateNotBlank(data.userId),
+          firstName: isNexusUser ? ValidationUtils.validateNotBlank(data.firstName) : null,
+          lastName: isNexusUser ? ValidationUtils.validateNotBlank(data.lastName) : null,
+          emailAddress: isNexusUser ? ValidationUtils.validateNotBlank(data.emailAddress) || ValidationUtils.validateEmail(data.emailAddress) : null,
+          password: isCreate ? ValidationUtils.validateNotBlank(data.password): null,
+          passwordConfirm: isCreate ? validatePasswordConfirm(data.password, data.passwordConfirm) : null,
+          roles: data.roles?.length ? null : UIStrings.ERROR.FIELD_REQUIRED,
+        }
+      }
     }),
     setData: assign(({pristineData: {userId, source}}, {data: [roles, users]}) => {
       let user = users?.data?.find(it => it.userId === userId && it.source === source);
@@ -144,6 +147,11 @@ export default FormUtils.buildFormMachine({
         ExtJS.showErrorMessage(UIStrings.ERROR.NOT_FOUND_ERROR(userId));
         user = EMPTY_DATA;
       }
+
+      user = {
+        ...user,
+        status: user.status === STATUSES.active.id,
+      };
 
       return {
         allRoles: roles?.data,
@@ -164,10 +172,15 @@ export default FormUtils.buildFormMachine({
       ]);
     },
     saveData: ({data, pristineData: {userId}}) => {
+      const modifiedData = {
+        ...data,
+        status: data.status ? STATUSES.active.id : STATUSES.disabled.id,
+      };
+
       if (isEdit(userId)) {
-        return Axios.put(singleUserUrl(data.userId), data);
+        return Axios.put(singleUserUrl(userId), modifiedData);
       } else {
-        return Axios.post(createUserUrl, data);
+        return Axios.post(createUserUrl, modifiedData);
       }
     },
     confirmDelete: ({data}) => ExtJS.requestConfirmation({

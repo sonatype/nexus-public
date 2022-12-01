@@ -55,8 +55,8 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     requestConfirmation: jest.fn(),
     state: () => ({
       getValue: jest.fn(() => false),
-      getEdition: jest.fn(() => 'PRO')
-    })
+    }),
+    isProEdition: jest.fn().mockReturnValue(true),
   }
 }));
 

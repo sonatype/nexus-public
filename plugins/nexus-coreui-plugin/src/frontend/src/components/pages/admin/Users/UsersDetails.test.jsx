@@ -69,9 +69,9 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     showSuccessMessage: jest.fn(),
     state: jest.fn().mockReturnValue({
       getValue: jest.fn(),
-      getEdition: jest.fn(),
       getUser: jest.fn(),
     }),
+    isProEdition: jest.fn().mockReturnValue(true),
   },
 }));
 
@@ -103,9 +103,9 @@ const selectors = {
   password: () => screen.queryByLabelText(LABELS.PASSWORD.LABEL),
   confirmPassword: () => screen.queryByLabelText(LABELS.CONFIRM_PASSWORD.LABEL),
   email: () => screen.queryByLabelText(LABELS.EMAIL.LABEL),
-  status: () => screen.queryByLabelText(LABELS.STATUS.LABEL),
+  status: () => screen.queryByLabelText(LABELS.STATUS.OPTIONS.ACTIVE),
   roles: () => screen.queryByRole('group', {name: LABELS.ROLES.GRANTED}),
-  externalRolesLabel: () => screen.getByText(LABELS.EXTERNAL_ROLES.LABEL),
+  externalRoles: () => screen.queryByLabelText(LABELS.EXTERNAL_ROLES.LABEL),
   requiredValidation: () => screen.queryByText(UIStrings.ERROR.FIELD_REQUIRED),
   passwordNoMatchValidation: () => screen.queryByText(UIStrings.ERROR.PASSWORD_NO_MATCH_ERROR),
   invalidEmailValidation: () => screen.queryByText(UIStrings.ERROR.INVALID_EMAIL),
@@ -117,7 +117,7 @@ const selectors = {
     status: () => screen.getByText(LABELS.STATUS.LABEL).nextSibling,
     roles: () => screen.queryAllByRole('list')[0],
     warning: () => screen.getByText(SETTINGS.READ_ONLY.WARNING),
-    defaultUserWarning: () => screen.getByText(LABELS.DEFAULT_USER_WARNING),
+    externalRoles: () => screen.getByText(LABELS.EXTERNAL_ROLES.LABEL).nextSibling,
   },
   cancelButton: () => screen.getByText(SETTINGS.CANCEL_BUTTON_LABEL),
   saveButton: () => screen.getByText(SETTINGS.SAVE_BUTTON_LABEL),
@@ -167,14 +167,14 @@ const shouldSeeDetailsInReadOnlyMode = ({statusValue = testStatus} = {}) => {
   });
 };
 
-const shouldSeeExternalRoles = () => {
-  const {externalRolesLabel} = selectors;
+const expectToHaveStatus = (value) => {
+  const {status} = selectors;
 
-  let externalRole = externalRolesLabel();
-  testExternalRoles.forEach(it => {
-    externalRole = externalRole.nextSibling;
-    expect(externalRole).toHaveTextContent(it);
-  });
+  if (value === STATUSES.active.id) {
+    expect(status()).toBeChecked();
+  } else {
+    expect(status()).not.toBeChecked();
+  }
 };
 
 describe('UsersDetails', function() {
@@ -199,6 +199,7 @@ describe('UsersDetails', function() {
     ExtJS.checkPermission.mockReturnValue(true);
     ExtJS.state().getValue.mockReturnValue('test');
     ExtJS.state().getUser.mockReturnValue({id: 'id'});
+    ExtJS.isProEdition.mockReturnValue(true);
   });
 
   describe('Local User Form', function() {
@@ -212,7 +213,7 @@ describe('UsersDetails', function() {
       expect(firstName()).toHaveValue(testFirstName);
       expect(lastName()).toHaveValue(testLastName);
       expect(email()).toHaveValue(testEmail);
-      expect(status()).toHaveValue(testStatus);
+      expectToHaveStatus(testStatus);
 
       testRoles.forEach(it => {
         expect(roles()).toHaveTextContent(ROLES[it].name);
@@ -267,7 +268,7 @@ describe('UsersDetails', function() {
       expect(saveButton()).toHaveClass('disabled');
 
       clickOnRoles(testRoles);
-      userEvent.selectOptions(status(), testStatus);
+      userEvent.click(status());
 
       expect(saveButton()).not.toHaveClass('disabled');
     });
@@ -291,7 +292,6 @@ describe('UsersDetails', function() {
       await TestUtils.changeField(email, testEmail);
       await TestUtils.changeField(password, testPassword);
       await TestUtils.changeField(confirmPassword, testPassword);
-      userEvent.selectOptions(status(), testStatus);
       clickOnRoles(testRoles);
 
       expect(saveButton()).not.toHaveClass('disabled');
@@ -323,7 +323,7 @@ describe('UsersDetails', function() {
       await TestUtils.changeField(firstName, data.firstName);
       await TestUtils.changeField(lastName, data.lastName);
       await TestUtils.changeField(email, data.emailAddress);
-      userEvent.selectOptions(status(), data.status);
+      userEvent.click(status());
       clickOnRoles(testRoles);
       clickOnRoles(data.roles);
 
@@ -415,7 +415,7 @@ describe('UsersDetails', function() {
     });
 
     it('renders external user resolved data', async function() {
-      const {id, firstName, lastName, email, status, roles, saveButton, deleteButton} = selectors;
+      const {id, firstName, lastName, email, status, roles, externalRoles, saveButton, deleteButton} = selectors;
 
       await renderAndWaitForLoad(testId, crowdSource);
 
@@ -427,14 +427,14 @@ describe('UsersDetails', function() {
       expect(lastName()).toBeDisabled();
       expect(email()).toHaveValue(testEmail);
       expect(email()).toBeDisabled();
-      expect(status()).toHaveValue(statusValue);
+      expectToHaveStatus(statusValue);
       expect(status()).toBeDisabled();
 
       testRoles.forEach(it => {
         expect(roles()).toHaveTextContent(ROLES[it].name);
       });
-
-      shouldSeeExternalRoles();
+      expect(externalRoles()).toBeDisabled();
+      expect(externalRoles()).toHaveValue(testExternalRoles.join('\n'));
 
       expect(deleteButton()).not.toBeInTheDocument();
       expect(saveButton()).toHaveClass('disabled');
@@ -468,31 +468,15 @@ describe('UsersDetails', function() {
 
     describe('Read-Only Mode', function() {
       it('renders external user details without edit permissions', async () => {
-        const {readOnly: {warning}, cancelButton} = selectors;
+        const {readOnly: {warning, externalRoles}, cancelButton} = selectors;
         when(ExtJS.checkPermission).calledWith('nexus:users:update').mockReturnValue(false);
 
         await renderAndWaitForLoad(testId, crowdSource);
 
         expect(warning()).toBeInTheDocument();
         shouldSeeDetailsInReadOnlyMode({statusValue});
-        shouldSeeExternalRoles();
 
-        userEvent.click(cancelButton());
-        await waitFor(() => expect(onDone).toBeCalled());
-      });
-
-      it('renders default external user details', async () => {
-        const {readOnly: {defaultUserWarning}, cancelButton} = selectors;
-
-        when(Axios.get).calledWith(findUsersUrl(testId, crowdSource)).mockResolvedValue({
-          data: [{...EXTERNAL, readOnly: true}]
-        });
-
-        await renderAndWaitForLoad(testId, crowdSource);
-
-        expect(defaultUserWarning()).toBeInTheDocument();
-        shouldSeeDetailsInReadOnlyMode({statusValue});
-        shouldSeeExternalRoles();
+        expect(externalRoles()).toHaveTextContent(testExternalRoles.join(''))
 
         userEvent.click(cancelButton());
         await waitFor(() => expect(onDone).toBeCalled());
@@ -525,7 +509,7 @@ describe('UsersDetails', function() {
     await TestUtils.changeField(email, testEmail);
     await TestUtils.changeField(password, testPassword);
     await TestUtils.changeField(confirmPassword, testPassword);
-    userEvent.selectOptions(status(), testStatus);
+    userEvent.click(status());
     clickOnRoles(testRoles);
 
     expect(saveButton()).not.toHaveClass('disabled');
@@ -582,7 +566,6 @@ describe('UsersDetails', function() {
 
       ExtJS.state = jest.fn().mockReturnValue({
         getUser: jest.fn().mockReturnValue({id: 'admin'}),
-        getEdition: jest.fn().mockReturnValue('PRO'),
         getValue: jest.fn()
       });
     });
@@ -795,7 +778,7 @@ describe('UsersDetails', function() {
 
       await renderAndWaitForLoad(testId);
 
-      expect(openButton()).toBeDisabled();
+      expect(openButton()).toHaveClass('disabled')
     });
 
     it('show error message in case there is something wrong when changing the password', async () => {
@@ -849,7 +832,6 @@ describe('UsersDetails', function() {
     beforeEach(() => {
       ExtJS.state = jest.fn().mockReturnValue({
         getUser: jest.fn().mockReturnValue({id: 'admin'}),
-        getEdition: jest.fn().mockReturnValue('PRO'),
         getValue: jest.fn().mockReturnValue(['usertoken'])
       });
     });
@@ -857,7 +839,6 @@ describe('UsersDetails', function() {
     it('renders correctly', async () => {
       ExtJS.state = jest.fn().mockReturnValue({
         getUser: jest.fn().mockReturnValue({id: 'admin'}),
-        getEdition: jest.fn().mockReturnValue('PRO'),
         getValue: jest.fn(),
       });
 
@@ -877,11 +858,7 @@ describe('UsersDetails', function() {
     it('does not show reset token user section if it is not nexus pro', async () => {
       const {queryTitle, queryResetButton} = selectors.token;
 
-      ExtJS.state = jest.fn().mockReturnValue({
-        getUser: jest.fn().mockReturnValue({id: 'admin'}),
-        getEdition: jest.fn().mockReturnValue('FREE'),
-        getValue: jest.fn(),
-      });
+      ExtJS.isProEdition = jest.fn().mockReturnValue(false);
 
       await renderAndWaitForLoad(testId);
 
@@ -938,7 +915,7 @@ describe('UsersDetails', function() {
 
       await renderAndWaitForLoad(testId);
 
-      expect(resetButton()).toBeDisabled();
+      expect(resetButton()).toHaveClass('disabled');
     });
 
     it('reset token properly', async () => {
@@ -962,8 +939,7 @@ describe('UsersDetails', function() {
       } = selectors;
 
       await renderAndWaitForLoad(testId);
-
-      expect(resetButton()).not.toBeDisabled();
+      expect(resetButton()).not.toHaveClass('disabled');
 
       await userEvent.click(resetButton());
 

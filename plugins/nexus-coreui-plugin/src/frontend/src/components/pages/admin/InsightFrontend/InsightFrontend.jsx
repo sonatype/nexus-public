@@ -20,12 +20,9 @@ import {
 } from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
-import {
-  Page, PageHeader, PageTitle
-} from '@sonatype/nexus-ui-plugin';
+import {Page, PageHeader, PageTitle, ExtJS} from '@sonatype/nexus-ui-plugin';
 import './InsightFrontend.scss';
-import ExtJS from "@sonatype/nexus-ui-plugin/src/frontend/src/interface/ExtJS";
-import {faBinoculars} from "@fortawesome/free-solid-svg-icons";
+import {faBinoculars} from '@fortawesome/free-solid-svg-icons';
 import InsightFrontendMachine from './InsightFrontendMachine';
 import DownloadsByRepositoryName from './DownloadsByRepositoryName';
 import DownloadsByUsername from './DownloadsByUsername';
@@ -36,13 +33,13 @@ export default function InsightFrontend() {
   const isLoading = state.matches('loading');
   const {downloadsByDay, downloadsByDayNonVulnerable, totalDownloads} = state.context;
 
-  const edition = ExtJS.state().getEdition();
+  const isProEdition = ExtJS.isProEdition();
   let findAndFixLog4jUrl = 'https://links.sonatype.com/products/nexus/log4j/find-and-fix/oss';
   let resourceCentreUrl = 'https://links.sonatype.com/products/nexus/log4j/resource-center/oss';
   let lifecycleUrl = 'https://links.sonatype.com/products/nexus/log4j/lifecycle/oss';
   let firewallUrl = 'https://links.sonatype.com/products/nexus/log4j/firewall/oss';
 
-  if (edition === 'PRO') {
+  if (isProEdition) {
     findAndFixLog4jUrl = 'https://links.sonatype.com/products/nexus/log4j/find-and-fix/pro';
     resourceCentreUrl = 'https://links.sonatype.com/products/nexus/log4j/resource-center/pro';
     lifecycleUrl = 'https://links.sonatype.com/products/nexus/log4j/lifecycle/pro';

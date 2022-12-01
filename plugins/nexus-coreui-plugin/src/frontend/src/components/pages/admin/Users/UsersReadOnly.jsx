@@ -40,7 +40,7 @@ export default function UsersReadOnly({service, onDone}) {
     loadError
   } = current.context;
 
-  const {userId, firstName, lastName, emailAddress, status, roles, externalRoles = [], source, readOnly:isDefaultUser = true} = data;
+  const {userId, firstName, lastName, emailAddress, status, roles, externalRoles = [], source} = data;
   const isLoading = current.matches('loading');
   const isExternal = isExternalUser(source);
   const hasExternalRoles = Boolean(externalRoles.length);
@@ -52,9 +52,7 @@ export default function UsersReadOnly({service, onDone}) {
 
   return <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
     <NxTile.Content>
-      <NxInfoAlert>
-        {isDefaultUser ? LABELS.DEFAULT_USER_WARNING : UIStrings.SETTINGS.READ_ONLY.WARNING}
-      </NxInfoAlert>
+      <NxInfoAlert>{UIStrings.SETTINGS.READ_ONLY.WARNING}</NxInfoAlert>
       <NxH2>{LABELS.SECTIONS.SETUP}</NxH2>
       <NxReadOnly>
         <NxReadOnly.Label>{LABELS.ID.LABEL}</NxReadOnly.Label>
@@ -66,7 +64,7 @@ export default function UsersReadOnly({service, onDone}) {
         <NxReadOnly.Label>{LABELS.EMAIL.LABEL}</NxReadOnly.Label>
         <NxReadOnly.Data>{emailAddress}</NxReadOnly.Data>
         <NxReadOnly.Label>{LABELS.STATUS.LABEL}</NxReadOnly.Label>
-        <NxReadOnly.Data>{STATUSES[status]?.label}</NxReadOnly.Data>
+        <NxReadOnly.Data>{status ? STATUSES.active.label : STATUSES.disabled.label}</NxReadOnly.Data>
       </NxReadOnly>
       <NxH2>{LABELS.SECTIONS.ROLES}</NxH2>
       <NxList emptyMessage={LABELS.ROLES.EMPTY_LIST}>
@@ -79,9 +77,11 @@ export default function UsersReadOnly({service, onDone}) {
       {isExternal &&
           <NxReadOnly>
             <NxReadOnly.Label>{LABELS.EXTERNAL_ROLES.LABEL}</NxReadOnly.Label>
-            {hasExternalRoles && externalRoles.map(name => (
-                <NxReadOnly.Data key={name}>{name}</NxReadOnly.Data>
-            ))}
+            <div className="read-only-external-roles">
+              {hasExternalRoles && externalRoles.map(name => (
+                  <NxReadOnly.Data key={name}>{name}</NxReadOnly.Data>
+              ))}
+            </div>
             {!hasExternalRoles &&
                 <NxReadOnly.Data>{LABELS.EXTERNAL_ROLES.EMPTY_LIST}</NxReadOnly.Data>
             }
