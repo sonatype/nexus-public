@@ -72,6 +72,11 @@ Ext.define('NX.coreui.view.search.TextSearchCriteria', {
     me.triggers.remove.setHidden(!me.removable);
 
     me.callParent();
+  },
+
+  onValueChange: function(trigger, value) {
+    this.setValue(value);
+    this.resetOriginalValue();
   }
 
 });

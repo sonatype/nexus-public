@@ -478,17 +478,17 @@ Ext.define('NX.coreui.controller.Search', {
       }
     });
 
-    Ext.Object.each(criterias, function(id, criteria) {
-      if (criteria.value) {
-        me.applyFilter({
-          criteriaId: id,
-          filter: {
-            property: id,
-            value: criteria.value
-          }
-        }, false);
+    const filters = Object.entries(criterias).map(function(criteriaEntry) {
+      return {
+        id: criteriaEntry[0],
+        property: criteriaEntry[0],
+        value: criteriaEntry[1].value
       }
+    }).filter(function(criteria) {
+      return criteria.value;
     });
+
+    me.applyFilters(filters, false);
   },
 
   /**
@@ -612,40 +612,46 @@ Ext.define('NX.coreui.controller.Search', {
    * @private
    * Synchronize store filters with search criteria.
    * @param searchCriteria criteria to be synced
-   * @param apply if filter should be applied on store ( = remote call)
+   * @param performSearchAfter if filter should be applied on store ( = remote call)
    */
-  applyFilter: function(searchCriteria, apply) {
-    var me = this,
-        store = me.getStore('SearchResult'),
-        filter = searchCriteria.filter;
+  applyFilter: function(searchCriteria, performSearchAfter) {
+    const allCriteria = this.getFeature().query('#criteria component[criteriaId]:visible');
+    const filters = allCriteria.filter(function(criteria) {
+      return criteria.getValue();
+    }).map(function (criteria) {
+      return {
+        id: criteria.criteriaId,
+        property: criteria.criteriaId,
+        value: criteria.getValue()
+      };
+    });
 
-    me.getSearchResult().getSelectionModel().deselectAll();
+    this.applyFilters(filters, performSearchAfter)
+  },
 
-    if (filter && Ext.isFunction(filter) && !(filter instanceof Ext.util.Filter)) {
-      filter = searchCriteria.filter();
-    }
+  /**
+   * @private
+   * Applies a set of filters to the SearchResult store.
+   * @param filters {[{property:string, value:string}]}
+   * @param performSearchAfter {boolean} if the filters should be applied to the store (performs a remote search)
+   */
+  applyFilters: function (filters, performSearchAfter) {
+    const SUPPRESS_EVENTS = true;
+    const searchResultStore = this.getStore('SearchResult');
 
-    if (filter) {
-      store.addFilter([Ext.apply(filter, { id: searchCriteria.criteriaId })], apply);
-    }
-    else {
-      // TODO code below is a workaround stores not removing filters when remoteFilter = true
-      store.removeFilter(searchCriteria.criteriaId);
-      if (store.getFilters().removeAtKey(searchCriteria.criteriaId) && apply) {
-        if (store.getFilters().length) {
-          store.filter();
-        }
-        else {
-          store.clearFilter();
-        }
-        store.fireEvent('filterchange', store, store.getFilters().items);
-      }
-    }
+    this.getSearchResult().getSelectionModel().deselectAll();
 
-    if (apply) {
-      store.load();
-      me.onSearchResultSelection(null);
-      me.bookmarkFilters();
+    searchResultStore.clearFilter(SUPPRESS_EVENTS);
+    filters.forEach(function(filter) {
+      // Setting all filters all at once causes bugs.
+      // Fortunately, only one search is generated if we add all the filters and then apply them by loading the store.
+      searchResultStore.addFilter(filter, SUPPRESS_EVENTS);
+    });
+
+    if (performSearchAfter) {
+      searchResultStore.load();
+      this.onSearchResultSelection(null);
+      this.bookmarkFilters();
     }
   },
 
@@ -783,6 +789,7 @@ Ext.define('NX.coreui.controller.Search', {
     else {
       me.showChild(0, true);
       searchFeature.down('#criteria component[criteriaId=keyword]').setValue(searchValue);
+      searchFeature.down('#criteria component[criteriaId=keyword]').search(searchValue);
     }
   }
 
