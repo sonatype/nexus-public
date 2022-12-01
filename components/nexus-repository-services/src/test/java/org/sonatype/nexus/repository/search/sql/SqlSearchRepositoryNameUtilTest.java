@@ -25,10 +25,13 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.search.SqlSearchRepositoryNameUtil;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import com.google.common.collect.ImmutableList;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 
 import static java.util.Arrays.asList;
@@ -54,6 +57,9 @@ public class SqlSearchRepositoryNameUtilTest
   private static final String HOSTED_REPO_1 = "hosted-repo1";
 
   private static final String GROUP_REPO = "group-repo";
+
+  @Rule
+  public final ExpectedException expectedException = ExpectedException.none();
 
   @Mock
   private RepositoryManager repositoryManager;
@@ -160,6 +166,20 @@ public class SqlSearchRepositoryNameUtilTest
   public void shouldBeEmptyCollectionWhenFormatIsBlank() {
     assertThat(underTest.getFormatRepositoryNames(null), emptyCollectionOf(String.class));
     assertThat(underTest.getFormatRepositoryNames(EMPTY), emptyCollectionOf(String.class));
+  }
+
+  @Test
+  public void shouldThrowExceptionWhenLeadingWildcard() {
+    expectedException.expect(ValidationErrorsException.class);
+    expectedException.expectMessage("Leading wildcards are prohibited");
+    underTest.getRepositoryNames("*osted-repo1");
+  }
+
+  @Test
+  public void shouldThrowExceptionWhenWildcardHasLessThenThreeSymbols() {
+    expectedException.expect(ValidationErrorsException.class);
+    expectedException.expectMessage("3 characters or more are required with the trailing asterisk (*) wildcard");
+    underTest.getRepositoryNames("ho*");
   }
 
   private void mockGroupRepositories() {

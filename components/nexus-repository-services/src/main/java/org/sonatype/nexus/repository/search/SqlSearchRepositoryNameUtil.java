@@ -26,7 +26,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -51,7 +50,7 @@ import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryContributio
 @Named
 @Singleton
 public class SqlSearchRepositoryNameUtil
-    extends ComponentSupport
+    extends SqlSearchValidationSupport
 {
   public static final String SPACE = " ";
 
@@ -74,6 +73,7 @@ public class SqlSearchRepositoryNameUtil
   public Set<String> getRepositoryNames(@Nullable final String repositoryNameFilter) {
     Set<String> repositories = ofNullable(repositoryNameFilter)
         .map(this::split)
+        .filter(this::validate)
         .orElse(new HashSet<>());
 
     Set<String> wildcards = getWildcardRepositoryNames(repositories);
