@@ -292,8 +292,6 @@ describe('RolesDetails', function() {
     userEvent.selectOptions(type(), TYPES.EXTERNAL);
     userEvent.selectOptions(externalRoleType(), crowdType);
 
-    await waitFor(() => expect(Axios.get).toHaveBeenCalledWith(getRolesUrl(crowdType)));
-
     await TestUtils.changeField(mappedRole, testCrowdRoleId);
 
     await TestUtils.changeField(name, testRoleName);

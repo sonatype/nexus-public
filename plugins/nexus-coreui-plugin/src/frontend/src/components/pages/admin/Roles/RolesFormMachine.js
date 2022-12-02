@@ -48,24 +48,11 @@ export default FormUtils.buildFormMachine({
                 actions: ['clearSaveError', 'resetData', 'setRoleType']
               },
               SET_EXTERNAL_ROLE_TYPE: {
-                target: 'loadingExternalRoles',
+                target: 'loaded',
                 actions: ['clearSaveError', 'resetData', 'setExternalRoleType'],
               },
             }
           },
-          loadingExternalRoles: {
-            invoke: {
-              src: 'fetchExternalRoles',
-              onDone: {
-                target: 'loaded',
-                actions: ['setExternalRoles']
-              },
-              onError: {
-                target: 'loadError',
-                actions: ['setLoadError', 'logLoadError']
-              }
-            }
-          }
         }
       })
 }).withConfig({
@@ -82,9 +69,6 @@ export default FormUtils.buildFormMachine({
       sources: (_, {data: [, , sources]}) => sources.data,
       data: (_, {data: [, , , role]}) => role.data,
       pristineData: (_, {data: [, , , role]}) => role.data,
-    }),
-    setExternalRoles: assign({
-      externalRoles: (_, event) => event.data?.data,
     }),
     setRoleType: assign({
       roleType: (_, {roleType}) => roleType
@@ -114,7 +98,6 @@ export default FormUtils.buildFormMachine({
             : Promise.resolve({data: EMPTY_DATA}),
       ]);
     },
-    fetchExternalRoles: ({externalRoleType}) => Axios.get(getRolesUrl(externalRoleType)),
     saveData: ({data, pristineData: {id}}) => {
       if (isEdit(id)) {
         return Axios.put(singleRoleUrl(data.id), data);
