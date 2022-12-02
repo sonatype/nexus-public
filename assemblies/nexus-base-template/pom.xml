@@ -70,6 +70,20 @@
       <type>xml</type>
     </dependency>
 
+    <!-- override to exclude sshd-osgi from dependency list -->
+    <dependency>
+      <groupId>org.apache.karaf</groupId>
+      <artifactId>org.apache.karaf.client</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- override to exclude sshd-osgi from dependency list -->
+    <dependency>
+      <groupId>org.apache.karaf.shell</groupId>
+      <artifactId>org.apache.karaf.shell.core</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
     <!--
     Installed/boot features (runtime-scope)
     -->

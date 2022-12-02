@@ -84,6 +84,30 @@
       </dependency>
 
       <dependency>
+        <groupId>org.apache.karaf</groupId>
+        <artifactId>org.apache.karaf.client</artifactId>
+        <version>${karaf.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.sshd</groupId>
+            <artifactId>sshd-osgi</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.karaf.shell</groupId>
+        <artifactId>org.apache.karaf.shell.core</artifactId>
+        <version>${karaf.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.sshd</groupId>
+            <artifactId>sshd-osgi</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
         <groupId>org.apache.karaf.features</groupId>
         <artifactId>framework</artifactId>
         <version>${karaf.version}</version>
@@ -138,12 +162,24 @@
         <groupId>org.apache.karaf.shell</groupId>
         <artifactId>org.apache.karaf.shell.core</artifactId>
         <version>${karaf.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.sshd</groupId>
+            <artifactId>sshd-osgi</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>
         <groupId>org.apache.karaf.shell</groupId>
         <artifactId>org.apache.karaf.shell.commands</artifactId>
         <version>${karaf.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.sshd</groupId>
+            <artifactId>sshd-osgi</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
     </dependencies>
   </dependencyManagement>
