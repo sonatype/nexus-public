@@ -47,6 +47,8 @@ public class DockerContainerConfig
 
   private List<String> env;
 
+  private String workingDir;
+
   private HostConfig.Builder hostConfigBuilder;
 
   private DefaultDockerClient.Builder dockerClientBuilder;
@@ -54,6 +56,7 @@ public class DockerContainerConfig
   private DockerContainerConfig(Builder builder) {
     this.image = imageTag(builder.image);
     this.env = builder.env;
+    this.workingDir = builder.workingDir;
     this.hostConfigBuilder = builder.hostConfigBuilder;
     this.dockerClientBuilder = builder.dockerClientBuilder;
   }
@@ -79,6 +82,8 @@ public class DockerContainerConfig
     private String image;
 
     private List<String> env = new ArrayList<>();
+
+    private String workingDir;
 
     private HostConfig.Builder hostConfigBuilder;
 
@@ -108,6 +113,11 @@ public class DockerContainerConfig
 
     public Builder env(String... env) {
       this.env.addAll(asList(env));
+      return this;
+    }
+
+    public Builder workingDir(String workingDir) {
+      this.workingDir = workingDir;
       return this;
     }
 
@@ -147,6 +157,10 @@ public class DockerContainerConfig
 
   public List<String> getEnv() {
     return env;
+  }
+
+  public String getWorkingDir() {
+    return workingDir;
   }
 
   public HostConfig.Builder getHostConfigBuilder() {
