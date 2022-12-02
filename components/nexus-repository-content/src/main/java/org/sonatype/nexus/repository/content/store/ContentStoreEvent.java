@@ -17,6 +17,7 @@ import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.common.event.Event;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 
@@ -29,6 +30,7 @@ import static com.google.common.base.Preconditions.checkState;
  * @since 3.26
  */
 public class ContentStoreEvent
+    implements Event
 {
   final int contentRepositoryId;
 

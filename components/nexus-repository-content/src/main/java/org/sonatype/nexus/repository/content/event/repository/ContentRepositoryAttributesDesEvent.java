@@ -10,18 +10,30 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.event;
+package org.sonatype.nexus.repository.content.event.repository;
+
+import org.sonatype.nexus.common.event.EventWithSource;
+import org.sonatype.nexus.repository.content.ContentRepository;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Event mix-in to determine whether or not an event is local in a distributed configuration.
- *
- * @since 3.21
+ * Event sent whenever a {@link ContentRepository}'s attributes change between all nodes.
  */
-public interface HasLocality
-    extends Event
+public class ContentRepositoryAttributesDesEvent
+    extends EventWithSource
 {
-  /**
-   * @return {@code true} if this is a local event
-   */
-  boolean isLocal();
+  private final String repoName;
+
+  @JsonCreator
+  public ContentRepositoryAttributesDesEvent(@JsonProperty("repoName") final String repoName) {
+    this.repoName = checkNotNull(repoName);
+  }
+
+  public String getRepoName() {
+    return repoName;
+  }
 }
