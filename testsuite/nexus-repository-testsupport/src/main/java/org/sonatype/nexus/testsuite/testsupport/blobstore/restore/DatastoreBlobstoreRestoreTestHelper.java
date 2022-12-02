@@ -131,7 +131,11 @@ public class DatastoreBlobstoreRestoreTestHelper
 
   @Override
   public void simulateComponentMetadataLoss() {
-    manager.browse().forEach(repo -> getComponentStore(repo).deleteComponents(getContentRepositoryId(repo)));
+    manager.browse().forEach(repo -> {
+      int repoId = getContentRepositoryId(repo);
+      getAssetStore(repo).deleteAssets(repoId);
+      getComponentStore(repo).deleteComponents(repoId);
+    });
   }
 
   private int getContentRepositoryId(final Repository repo) {
