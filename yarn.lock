@@ -3650,11 +3650,11 @@ __metadata:
   linkType: hard
 
 "autolinker@npm:^3.11.0":
-  version: 3.15.0
-  resolution: "autolinker@npm:3.15.0"
+  version: 3.16.1
+  resolution: "autolinker@npm:3.16.1"
   dependencies:
     tslib: ^2.3.0
-  checksum: 2fce8f3ceaae48bf392762e226038026675a045e1de166f383004fd67705d3392e40bee51bc5dabdb5671d340ccc50668a8d09cc52039eb67f04055e19fc097e
+  checksum: 776ad59519f602fb3efa8c2f754037dfcd023964c89ca63068bf6d29a17016820dc094bbf49b5343b763224ac8f127e45eb8a707e5665dd6cc51f2bf2ffb977e
   languageName: node
   linkType: hard
 
