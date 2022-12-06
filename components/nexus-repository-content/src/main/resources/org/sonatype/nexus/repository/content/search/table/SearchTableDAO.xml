@@ -93,6 +93,24 @@
     -- No index on them because they are not searched (i.e. not searchable)
     ALTER TABLE search_components ADD COLUMN IF NOT EXISTS attributes ${JSON_TYPE};
     ALTER TABLE search_components ADD COLUMN IF NOT EXISTS tags ${JSON_TYPE};
+
+    CREATE OR REPLACE FUNCTION enable_pg_trgm() RETURNS VOID AS $$
+        DECLARE
+            version_number INTEGER;
+            db_version VARCHAR;
+        BEGIN
+            SELECT LOWER(version()) INTO db_version;
+            IF db_version ~ '^postgresql \d\d' THEN
+                SELECT SUBSTRING(db_version, CHAR_LENGTH('postgresql') + 2, 2) INTO version_number;
+                IF version_number >= 13 THEN
+                    CREATE EXTENSION IF NOT EXISTS pg_trgm;
+                    CREATE INDEX IF NOT EXISTS trgm_idx_search_components_paths ON search_components USING GIST (paths gist_trgm_ops);
+                END IF;
+            END IF;
+        END;
+    $$ LANGUAGE plpgsql;
+
+    SELECT enable_pg_trgm();
   </insert>
 
   <insert id="createSchema" databaseId="H2">
