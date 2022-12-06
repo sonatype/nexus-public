@@ -66,6 +66,7 @@ import org.sonatype.nexus.datastore.mybatis.handlers.PasswordCharacterArrayTypeH
 import org.sonatype.nexus.datastore.mybatis.handlers.PrincipalCollectionTypeHandler;
 import org.sonatype.nexus.datastore.mybatis.handlers.SetTypeHandler;
 import org.sonatype.nexus.security.PasswordHelper;
+import org.sonatype.nexus.transaction.TransactionIsolation;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
@@ -275,8 +276,13 @@ public class MyBatisDataStore
 
   @Guarded(by = STARTED)
   @Override
-  public MyBatisDataSession openSerializableTransactionSession() {
-    return new MyBatisDataSession(new DataAccessSqlSession(mybatisConfig, SERIALIZABLE));
+  public MyBatisDataSession openSession(final TransactionIsolation isolationLevel) {
+    switch (isolationLevel) {
+      case SERIALIZABLE:
+        return new MyBatisDataSession(new DataAccessSqlSession(mybatisConfig, SERIALIZABLE));
+      default:
+        return new MyBatisDataSession(new DataAccessSqlSession(mybatisConfig));
+    }
   }
 
   @Guarded(by = STARTED)

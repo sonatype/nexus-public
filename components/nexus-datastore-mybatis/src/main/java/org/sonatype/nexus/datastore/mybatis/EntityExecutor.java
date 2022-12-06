@@ -24,6 +24,7 @@ import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityUUID;
 import org.sonatype.nexus.common.entity.HasEntityId;
 import org.sonatype.nexus.datastore.api.DuplicateKeyException;
+import org.sonatype.nexus.datastore.api.SerializedAccessException;
 
 import org.apache.ibatis.cache.CacheKey;
 import org.apache.ibatis.cursor.Cursor;
@@ -84,6 +85,8 @@ final class EntityExecutor
       switch (e.getSQLState()) {
         case DuplicateKeyException.SQL_STATE:
           throw new DuplicateKeyException(e);
+        case SerializedAccessException.SQL_STATE:
+          throw new SerializedAccessException(e);
         default:
           throw e;
       }

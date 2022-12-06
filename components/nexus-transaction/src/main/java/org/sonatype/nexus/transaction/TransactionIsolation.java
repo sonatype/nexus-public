@@ -12,30 +12,16 @@
  */
 package org.sonatype.nexus.transaction;
 
-/**
- * Represents some kind of storage with transactional behaviour.
- *
- * @since 3.19
- */
-public interface TransactionalStore<S extends TransactionalSession<?>>
+public enum TransactionIsolation
 {
-  /**
-   * Opens a new {@link TransactionalSession}.
-   */
-  S openSession();
+  STANDARD,
 
   /**
-   * Open a new {@link TransactionalSession} with the provided {@link TransactionIsolation} level. May not be supported
-   * by all types of stores.
+   * Serializable isolation level requires that the statements must be executed as if there were no other interleaved
+   * transactions. This can lead to concurrency issues under load and stress testing should be performed before using
+   * level.
    *
-   * @param isolationLevel the isolation level to use for the transaction
+   * See also {@link SerializedAccessException} which will be thrown on failure.
    */
-  default S openSession(final TransactionIsolation isolationLevel) {
-    switch(isolationLevel) {
-      case STANDARD:
-        return openSession();
-      default:
-        throw new UnsupportedOperationException();
-    }
-  }
+  SERIALIZABLE
 }

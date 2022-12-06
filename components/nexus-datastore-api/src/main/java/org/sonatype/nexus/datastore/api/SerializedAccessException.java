@@ -10,32 +10,16 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.transaction;
+package org.sonatype.nexus.datastore.api;
 
-/**
- * Represents some kind of storage with transactional behaviour.
- *
- * @since 3.19
- */
-public interface TransactionalStore<S extends TransactionalSession<?>>
+public class SerializedAccessException
+    extends DataAccessException
 {
-  /**
-   * Opens a new {@link TransactionalSession}.
-   */
-  S openSession();
+  private static final long serialVersionUID = 98739582308995723L;
 
-  /**
-   * Open a new {@link TransactionalSession} with the provided {@link TransactionIsolation} level. May not be supported
-   * by all types of stores.
-   *
-   * @param isolationLevel the isolation level to use for the transaction
-   */
-  default S openSession(final TransactionIsolation isolationLevel) {
-    switch(isolationLevel) {
-      case STANDARD:
-        return openSession();
-      default:
-        throw new UnsupportedOperationException();
-    }
+  public static final String SQL_STATE = "40001";
+
+  public SerializedAccessException(final Throwable cause) {
+    super("Duplicate key", cause);
   }
 }

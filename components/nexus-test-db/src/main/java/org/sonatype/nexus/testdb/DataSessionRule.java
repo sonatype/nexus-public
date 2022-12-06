@@ -28,6 +28,7 @@ import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
 import org.sonatype.nexus.datastore.api.DataStoreNotFoundException;
 import org.sonatype.nexus.datastore.mybatis.MyBatisDataStore;
+import org.sonatype.nexus.transaction.TransactionIsolation;
 
 import org.apache.ibatis.plugin.Interceptor;
 import org.apache.ibatis.type.TypeHandler;
@@ -213,7 +214,7 @@ public class DataSessionRule
   @Override
   public DataSession<?> openSerializableTransactionSession(final String storeName) {
     return ofNullable(stores.get(storeName)).orElseThrow(() -> new DataStoreNotFoundException(storeName))
-        .openSerializableTransactionSession();
+        .openSession(TransactionIsolation.SERIALIZABLE);
   }
 
   @Override

@@ -42,6 +42,7 @@ import org.sonatype.nexus.datastore.api.DataStoreManager;
 import org.sonatype.nexus.datastore.api.DataStoreNotFoundException;
 import org.sonatype.nexus.distributed.event.service.api.common.DataStoreConfigurationEvent;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
+import org.sonatype.nexus.transaction.TransactionIsolation;
 
 import com.google.inject.Key;
 import org.eclipse.sisu.BeanEntry;
@@ -147,7 +148,7 @@ public class DataStoreManagerImpl
   @Override
   public DataSession<?> openSerializableTransactionSession(final String storeName) {
     return get(storeName).orElseThrow(() -> new DataStoreNotFoundException(storeName))
-        .openSerializableTransactionSession();
+        .openSession(TransactionIsolation.SERIALIZABLE);
   }
 
   @Override

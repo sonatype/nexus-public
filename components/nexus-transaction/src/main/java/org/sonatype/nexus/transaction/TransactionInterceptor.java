@@ -20,8 +20,8 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 
-import static org.sonatype.nexus.transaction.UnitOfWork.peekTransaction;
 import static org.sonatype.nexus.transaction.UnitOfWork.openSession;
+import static org.sonatype.nexus.transaction.UnitOfWork.peekTransaction;
 
 /**
  * Opens a transaction when entering a transactional method and closes it on exit.
@@ -51,7 +51,7 @@ final class TransactionInterceptor
       return proceedWithTransaction(mi, tx);
     }
 
-    try (TransactionalSession<?> session = openSession(store)) {
+    try (TransactionalSession<?> session = openSession(store, findSpec(mi.getMethod()).isolation())) {
       return proceedWithTransaction(mi, session.getTransaction());
     }
   }

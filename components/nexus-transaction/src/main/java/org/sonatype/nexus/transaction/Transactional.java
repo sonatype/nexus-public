@@ -58,6 +58,11 @@ public @interface Transactional
   Class<? extends Exception>[] swallow() default {};
 
   /**
+   * Sets the isolation level to be used for the transaction. Note this is unsupported on OrientDB.
+   */
+  TransactionIsolation isolation() default TransactionIsolation.STANDARD;
+
+  /**
    * Helper to apply this transactional behaviour to lambdas.
    *
    * @since 3.2
