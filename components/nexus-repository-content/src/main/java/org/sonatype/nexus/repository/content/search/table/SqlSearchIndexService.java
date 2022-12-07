@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.search.table;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -68,13 +69,22 @@ public class SqlSearchIndexService
   public void indexBatch(final Collection<FluentComponent> components, final Repository repository) {
     log.debug("Saving batch of components for repository: {}", repository.getName());
 
-    //This is a batch update not an incremental update and only
-    // one instance of the RebuildIndexTask can be running in a HA cluster.
-    searchStore.saveBatch(components.stream()
+    List<SearchTableData> searchData = components.stream()
         .map(component -> searchTableDataProducer.createSearchTableData(component, repository))
         .filter(Optional::isPresent)
         .map(Optional::get)
-        .collect(toList()));
+        .collect(toList());
+
+    //This is a batch update not an incremental update and only
+    // one instance of the RebuildIndexTask can be running in a HA cluster.
+    try {
+      searchStore.saveBatch(searchData);
+    }
+    catch (Exception batchError) {
+      log.debug("Failed batch insertion, retrying components", batchError);
+
+      searchData.forEach(this::saveToStore);
+    }
   }
 
   public void purge(final Collection<EntityId> componentIds, final Repository repository) {
@@ -126,7 +136,19 @@ public class SqlSearchIndexService
   private SearchTableData saveToStore(final SearchTableData data)
   {
     log.debug("Saving {} to component_search table", data);
-    searchStore.save(data);
+    try {
+      searchStore.save(data);
+    }
+    catch (Exception e) {
+      if (log.isDebugEnabled()) {
+        log.warn("Failed to update search record for {}:{}:{} in {} cause {}", data.getNamespace(),
+            data.getComponentName(), data.getVersion(), data.getRepositoryName(), e.getMessage());
+      }
+      else {
+        log.warn("Failed to update search record for {}:{}:{} in {}", data.getNamespace(), data.getComponentName(),
+            data.getVersion(), data.getRepositoryName(), e);
+      }
+    }
     return data;
   }
 }
