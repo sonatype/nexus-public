@@ -117,6 +117,7 @@ export default {
       ACTION: 'ldap_LdapServer',
       METHODS: {
         CLEAR_CACHE: 'clearCache',
+        VERIFY_CONNECTION: 'verifyConnection',
       }
     }
   },

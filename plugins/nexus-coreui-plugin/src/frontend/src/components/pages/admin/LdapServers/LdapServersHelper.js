@@ -14,11 +14,24 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {APIConstants, ExtJS, Permissions} from '@sonatype/nexus-ui-plugin';
+import {
+  APIConstants,
+  ExtJS,
+  Permissions,
+  ValidationUtils,
+} from '@sonatype/nexus-ui-plugin';
+import UIStrings from '../../../../constants/UIStrings';
+
+const {
+  LDAP_SERVERS: {FORM},
+} = UIStrings;
 
 const {
   REST: {
-    PUBLIC: {LDAP_SERVERS: ldapServersUrl, LDAP_CHANGE_ORDER: ldapChangeOrderUrl},
+    PUBLIC: {
+      LDAP_SERVERS: ldapServersUrl,
+      LDAP_CHANGE_ORDER: ldapChangeOrderUrl,
+    },
   },
 } = APIConstants;
 
@@ -40,4 +53,42 @@ export const canClearLDAPCache = () => {
 
 export const canChangeLDAPOrder = () => {
   return ExtJS.checkPermission(Permissions.LDAP.UPDATE);
+};
+
+export const isAnonymousAuth = (authScheme) => {
+  const anonymousAuth = FORM.AUTHENTICATION.OPTIONS.anonymous.id;
+  return anonymousAuth === authScheme;
+};
+
+export const isSimpleAuth = (authScheme) => {
+  const simpleAuth = FORM.AUTHENTICATION.OPTIONS.simple.id;
+
+  return simpleAuth === authScheme;
+};
+
+export const isDigestAuth = (authScheme) => {
+  const digestAuth = FORM.AUTHENTICATION.OPTIONS.digest.id;
+  return digestAuth === authScheme;
+};
+
+export const isCramtAuth = (authScheme) => {
+  const cramAuth = FORM.AUTHENTICATION.OPTIONS.cram.id;
+  return cramAuth === authScheme;
+};
+
+export const isLdapsProtocol = (protocol) => {
+  return FORM.PROTOCOL.OPTIONS.ldaps === protocol;
+};
+
+export const validateUrlValues = (protocol, host, port) => {
+  return (
+    isLdapsProtocol(protocol) &&
+    ValidationUtils.notBlank(protocol) &&
+    ValidationUtils.notBlank(host) &&
+    ValidationUtils.notBlank(port)
+  );
+};
+
+export const generateUrl = (protocol, host, port) => {
+  return `${protocol}://${host}:${port}`;
 };

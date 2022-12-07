@@ -446,6 +446,80 @@ export default {
         CACHE_CLEARED: 'LDAP cache has been cleared'
       }
     },
+    FORM: {
+      NAME: 'Name',
+      CONFIGURATION: 'Configuration',
+      SETTINGS: {
+        LABEL: 'LDAP Settings',
+        SUB_LABEL: 'The LDAP server usually listens on port 389 (ldap://) or port 636 (ldaps://)',
+      },
+      PROTOCOL: {
+        LABEL: 'Protocol',
+        OPTIONS: {
+          ldap: 'ldap',
+          ldaps: 'ldaps',
+        }
+      },
+      HOSTNAME: 'Hostname',
+      PORT: 'Port',
+      SEARCH: {
+        LABEL: 'Search base DN',
+        SUB_LABEL: 'LDAP location to be added to the connection URL (e.g. "dc=example,dc=com")'
+      },
+      AUTHENTICATION: {
+        LABEL: 'Authentication method',
+        OPTIONS: {
+          simple: {
+            id: 'simple',
+            label: 'Simple Authentication'
+          },
+          anonymous: {
+            id: 'Anonymous Authentication',
+            label: 'Anonymous Authentication'
+          },
+          digest: {
+            id: 'DIGEST-MD5',
+            label: 'DIGEST-MD5'
+          },
+          cram: {
+            id: 'CRAM-MD5',
+            label: 'CRAM-MD5'
+          }
+        }
+      },
+      SASL_REALM: {
+        LABEL: 'SASL realm',
+        SUB_LABEL: 'The SASL realm to bind to (e.g. mydomain.com)'
+      },
+      USERNAME: {
+        LABEL: 'Username or DN',
+        SUB_LABEL: 'This must be a fully qualified username if simple authentication is used'
+      },
+      PASSWORD: {
+        LABEL: 'Password',
+        SUB_LABEL: 'The password to bind with'
+      },
+      CONNECTION_RULES: {
+        LABEL: 'Connection Rules',
+        SUB_LABEL:'Set timeout parameters and max connection attempts to avoid being blacklisted'
+      },
+      WAIT_TIMEOUT: {
+        LABEL: 'Wait timeout',
+        SUB_LABEL: 'Seconds to wait before timeout'
+      },
+      RETRY_TIMEOUT: {
+        LABEL: 'Retry Timeout',
+        SUB_LABEL: 'Seconds to wait before retrying'
+      },
+      MAX_RETRIES: {
+        LABEL: 'Max Retries',
+        SUB_LABEL: 'Number of retry attempts'
+      },
+      VERIFY_CONNECTION: 'Verify connection',
+      NEXT: 'Next',
+      SUCCESS_MESSAGE: (url) => `Connection to LDAP server verified: ${url}`,
+      VERIFYING_MESSAGE: (url) => `Checking connection to ${url}`,
+    }
   },
 
   EMAIL_SERVER: {

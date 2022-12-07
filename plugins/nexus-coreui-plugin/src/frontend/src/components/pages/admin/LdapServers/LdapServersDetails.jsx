@@ -11,6 +11,45 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-export default function LdapServersDetails() {
-  return 'LDAP Server Details';
+import React from 'react';
+import {useMachine} from '@xstate/react';
+import {Page, PageHeader, PageTitle} from '@sonatype/nexus-ui-plugin';
+import {NxTile} from '@sonatype/react-shared-components';
+import {faBook} from '@fortawesome/free-solid-svg-icons';
+
+import LdapServerConfigurationForm from './LdapServerConfigurationForm';
+import LdapServerUserAndGroupForm from './LdapServerUserAndGroupForm';
+
+import Machine from './LdapServersDetailsMachine';
+
+import UIStrings from '../../../../constants/UIStrings';
+
+const {
+  LDAP_SERVERS: {MENU},
+} = UIStrings;
+
+export default function LdapServersDetails({onDone}) {
+  const [state, send] = useMachine(Machine, {
+    devTools: true,
+  });
+  const userAndGroup = state.matches('loaded.creatingUserAndGroup');
+
+  return (
+    <Page className="nxrm-ldap-servers">
+      <PageHeader>
+        <PageTitle icon={faBook} {...MENU} />
+      </PageHeader>
+      <NxTile>
+        {userAndGroup ? (
+          <LdapServerUserAndGroupForm />
+        ) : (
+          <LdapServerConfigurationForm
+            parentState={state}
+            parentSend={send}
+            onDone={onDone}
+          />
+        )}
+      </NxTile>
+    </Page>
+  );
 }

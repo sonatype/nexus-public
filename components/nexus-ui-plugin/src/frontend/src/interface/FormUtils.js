@@ -534,5 +534,4 @@ export default class FormUtils {
       return IDLE;
     }
   }
-
 }

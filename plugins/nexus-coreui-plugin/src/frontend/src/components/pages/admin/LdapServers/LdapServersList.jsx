@@ -22,7 +22,7 @@ import {
   PageTitle,
   PageActions,
   SectionToolbar,
-  Permissions
+  Permissions,
 } from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
@@ -88,7 +88,12 @@ export default function LdapServersList({onCreate, onEdit}) {
   const filter = (value) => send({type: 'FILTER', filter: value});
   const canCreate = ExtJS.checkPermission(Permissions.LDAP.CREATE);
 
-  const create = () => {};
+  const create = () => {
+    if (canCreate) {
+      onCreate();
+    }
+  };
+
   const change = () => send({type: 'TOGGLE_ORDER_MODAL', value: true});
   const clear = () => send('CLEAR_CACHE');
 

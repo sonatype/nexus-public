@@ -56,10 +56,10 @@ export default function UseNexusTruststore({remoteUrl, ...checkboxProps}) {
   }
 
   const openModal = () => {
-    if(!disabledViewCertificate){
+    if (!disabledViewCertificate) {
       setShowModal(true);
     }
-  }
+  };
   const closeModal = () => setShowModal(false);
 
   return (
