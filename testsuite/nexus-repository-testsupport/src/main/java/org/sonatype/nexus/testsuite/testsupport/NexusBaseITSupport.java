@@ -14,16 +14,13 @@ package org.sonatype.nexus.testsuite.testsupport;
 
 import javax.inject.Inject;
 
+import org.sonatype.nexus.pax.exam.distribution.NexusTestDistribution.Distribution;
+import org.sonatype.nexus.pax.exam.distribution.NexusTestDistributionService;
 import org.sonatype.nexus.testsuite.testsupport.system.NexusTestSystem;
 import org.sonatype.nexus.testsuite.testsupport.system.NexusTestSystemSupport;
 
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
-
-import static org.ops4j.pax.exam.CoreOptions.maven;
-import static org.ops4j.pax.exam.CoreOptions.wrappedBundle;
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFileExtend;
-import static org.ops4j.pax.exam.options.WrappedUrlProvisionOption.OverwriteMode.MERGE;
 
 /**
  * Base class for Nexus public distribution tests. Tests should be direct subclasses of this, shared code should be
@@ -44,21 +41,7 @@ public abstract class NexusBaseITSupport
    * Configure Nexus base with out-of-the box settings (no HTTPS).
    */
   public static Option[] configureNexusBase() {
-    return options(
-        nexusDistribution("org.sonatype.nexus.assemblies", "nexus-base-template"),
-
-        editConfigurationFileExtend(SYSTEM_PROPERTIES_FILE, "nexus.loadAsOSS", "true"),
-        editConfigurationFileExtend(SYSTEM_PROPERTIES_FILE, "nexus.security.randompassword", "false"),
-        editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.scripts.allowCreation", "true"),
-        editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.search.event.handler.flushOnCount", "1"),
-
-        // Feature for NexusTestSystem
-        editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.test.base", "true"),
-
-        // install common test-support features
-        nexusFeature("org.sonatype.nexus.testsuite", "nexus-repository-testsupport"),
-        wrappedBundle(maven("org.awaitility", "awaitility").versionAsInProject()).overwriteManifest(MERGE)
-            .imports("*"));
+    return NexusTestDistributionService.getInstance().getDistribution(Distribution.BASE);
   }
 
   @Override

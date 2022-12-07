@@ -35,6 +35,8 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriBuilder;
 
 import org.sonatype.nexus.pax.exam.NexusPaxExamSupport;
+import org.sonatype.nexus.pax.exam.distribution.NexusTestDistribution.Distribution;
+import org.sonatype.nexus.pax.exam.distribution.NexusTestDistributionService;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.tools.DeadBlobFinder;
 import org.sonatype.nexus.repository.tools.DeadBlobResult;
@@ -90,13 +92,6 @@ import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 
 import static org.codehaus.groovy.runtime.InvokerHelper.asList;
-import static org.ops4j.pax.exam.CoreOptions.maven;
-import static org.ops4j.pax.exam.CoreOptions.when;
-import static org.ops4j.pax.exam.CoreOptions.wrappedBundle;
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFileExtend;
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
-import static org.ops4j.pax.exam.options.WrappedUrlProvisionOption.OverwriteMode.MERGE;
-import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_DEVELOPER;
 
 /**
  * Support for Nexus integration tests.
@@ -152,19 +147,7 @@ public abstract class NexusITSupport
    * Configure Nexus base with out-of-the box settings (no HTTPS).
    */
   public static Option[] configureNexusBase() {
-    return options(
-        nexusDistribution("org.sonatype.nexus.assemblies", "nexus-base-template"),
-
-        editConfigurationFileExtend(SYSTEM_PROPERTIES_FILE, "nexus.loadAsOSS", "true"),
-        editConfigurationFileExtend(SYSTEM_PROPERTIES_FILE, "nexus.security.randompassword", "false"),
-        editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.scripts.allowCreation", "true"),
-        editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.search.event.handler.flushOnCount", "1"),
-        // install common test-support features
-        nexusFeature("org.sonatype.nexus.testsuite", "nexus-repository-testsupport"),
-        wrappedBundle(maven("org.awaitility", "awaitility").versionAsInProject()).overwriteManifest(MERGE).imports("*"),
-        when(getValidTestDatabase().isUseContentStore()).useOptions(editConfigurationFilePut(NEXUS_PROPERTIES_FILE,
-            DATASTORE_DEVELOPER, "true"))
-    );
+    return NexusTestDistributionService.getInstance().getDistribution(Distribution.BASE);
   }
 
   /**

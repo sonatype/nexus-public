@@ -373,7 +373,7 @@ public abstract class NexusPaxExamSupport
    * @return Pax-Exam option to install a Nexus distribution based on groupId and artifactId
    */
   public static Option nexusDistribution(final String groupId, final String artifactId) {
-    return nexusDistribution(maven(groupId, artifactId).versionAsInProject().type("zip"));
+    return nexusDistribution(maven(groupId, artifactId).version(nexusVersion()).type("zip"));
   }
 
   /**
@@ -383,7 +383,14 @@ public abstract class NexusPaxExamSupport
    * @return Pax-Exam option to install a Nexus distribution based on groupId, artifactId and classifier
    */
   public static Option nexusDistribution(final String groupId, final String artifactId, final String classifier) {
-    return nexusDistribution(maven(groupId, artifactId).classifier(classifier).versionAsInProject().type("zip"));
+    return nexusDistribution(maven(groupId, artifactId).classifier(classifier).version(nexusVersion()).type("zip"));
+  }
+
+  /**
+   * Uses a publicly available assembly to compute the version of Nexus
+   */
+  private static String nexusVersion() {
+    return MavenUtils.getArtifactVersion("org.sonatype.nexus.assemblies", "nexus-base-template");
   }
 
   /**
@@ -625,8 +632,8 @@ public abstract class NexusPaxExamSupport
    * @return Pax-Exam option to change the Nexus edition based on groupId and artifactId
    */
   public static Option nexusEdition(final String groupId, final String artifactId) {
-    return nexusEdition(maven(groupId, artifactId).versionAsInProject().classifier("features").type("xml"),
-        artifactId + '/' + MavenUtils.getArtifactVersion(groupId, artifactId));
+    return nexusEdition(maven(groupId, artifactId).version(nexusVersion()).classifier("features").type("xml"),
+        artifactId + '/' + nexusVersion());
   }
 
   /**
@@ -640,8 +647,8 @@ public abstract class NexusPaxExamSupport
    * @return Pax-Exam option to install a Nexus plugin based on groupId and artifactId
    */
   public static Option nexusFeature(final String groupId, final String artifactId) {
-    return nexusFeature(maven(groupId, artifactId).versionAsInProject().classifier("features").type("xml"),
-        artifactId + '/' + MavenUtils.getArtifactVersion(groupId, artifactId));
+    return nexusFeature(maven(groupId, artifactId).version(nexusVersion()).classifier("features").type("xml"),
+        artifactId + '/' + nexusVersion());
   }
 
   /**
