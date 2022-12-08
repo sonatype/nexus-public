@@ -78,4 +78,9 @@ public interface FeatureFlags
    * At best should be replaced by Redis cache or Apache Ignite or other.
    */
   String SQL_DISTRIBUTED_CACHE = "nexus.datastore.sql.cache.enabled";
+
+  /**
+   * Validates attribute from the node_heartbeat.node_info to determine if the deployment is valid.
+   */
+  String DATASTORE_DEPLOYMENT_VALIDATOR = "nexus.datastore.deployment.validator.enabled";
 }
