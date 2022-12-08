@@ -39,8 +39,6 @@
       format_field_values_3            TSVECTOR,
       format_field_values_4            TSVECTOR,
       format_field_values_5            TSVECTOR,
-      format_field_values_6            TSVECTOR,
-      format_field_values_7            TSVECTOR,
       uploaders                        TSVECTOR,
       uploader_ips                     TSVECTOR,
       paths                            VARCHAR,
@@ -70,8 +68,6 @@
     CREATE INDEX IF NOT EXISTS idx_search_components_format_field_values_3 ON search_components USING GIN (format_field_values_3);
     CREATE INDEX IF NOT EXISTS idx_search_components_format_field_values_4 ON search_components USING GIN (format_field_values_4);
     CREATE INDEX IF NOT EXISTS idx_search_components_format_field_values_5 ON search_components USING GIN (format_field_values_5);
-    CREATE INDEX IF NOT EXISTS idx_search_components_format_field_values_6 ON search_components USING GIN (format_field_values_6);
-    CREATE INDEX IF NOT EXISTS idx_search_components_format_field_values_7 ON search_components USING GIN (format_field_values_7);
     CREATE INDEX IF NOT EXISTS idx_search_components_format_uploaders ON search_components USING GIN (uploaders);
     CREATE INDEX IF NOT EXISTS idx_search_components_format_uploader_ips ON search_components USING GIN (uploader_ips);
     CREATE INDEX IF NOT EXISTS idx_search_components_paths ON search_components (paths);
@@ -93,6 +89,11 @@
     -- No index on them because they are not searched (i.e. not searchable)
     ALTER TABLE search_components ADD COLUMN IF NOT EXISTS attributes ${JSON_TYPE};
     ALTER TABLE search_components ADD COLUMN IF NOT EXISTS tags ${JSON_TYPE};
+
+    ALTER TABLE search_components ADD COLUMN IF NOT EXISTS format_field_values_6 TSVECTOR;
+    ALTER TABLE search_components ADD COLUMN IF NOT EXISTS format_field_values_7 TSVECTOR;
+    CREATE INDEX IF NOT EXISTS idx_search_components_format_field_values_6 ON search_components USING GIN (format_field_values_6);
+    CREATE INDEX IF NOT EXISTS idx_search_components_format_field_values_7 ON search_components USING GIN (format_field_values_7);
 
     CREATE OR REPLACE FUNCTION enable_pg_trgm() RETURNS VOID AS $$
         DECLARE
