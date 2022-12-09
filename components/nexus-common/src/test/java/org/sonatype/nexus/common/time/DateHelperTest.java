@@ -64,7 +64,7 @@ public class DateHelperTest
   public void toLocalDateTest() throws ParseException {
     LocalDate javaLocalDate = LocalDate.of(2022, 6, 21);
 
-    Date javaDate = Date.from(javaLocalDate.atStartOfDay(ZoneId.of("UTC")).toInstant());
+    Date javaDate = Date.from(javaLocalDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
 
     assertThat(toLocalDate(javaDate), equalTo(javaLocalDate));
   }
