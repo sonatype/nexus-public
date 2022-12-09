@@ -24,7 +24,6 @@ import org.sonatype.nexus.internal.atlas.customizers.InstallConfigurationCustomi
 import org.sonatype.nexus.internal.atlas.customizers.InstallConfigurationCustomizer.SanitizedHazelcastFileSource;
 import org.sonatype.nexus.internal.atlas.customizers.InstallConfigurationCustomizer.SanitizedJettyFileSource;
 
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -49,7 +48,6 @@ public class InstallConfigurationCustomizerTest
 
   // SanitizedJettyFileSource can correctly apply XSLT to jetty-https to remove text from known password fields
   @Test
-  @Ignore("NEXUS-36012")
   public void testSanitizedJettyFileSource() throws Exception {
     File temp = tempFolder.newFile("test-.xml");
 
