@@ -120,10 +120,10 @@ public class CleanupServiceImpl
           deletionProgress.update(currentProgress);
         }
         catch (Exception e) {
+          deletionProgress.setAttempts(deletionProgress.getAttempts() + 1);
           deletionProgress.setFailed(true);
           if (ExceptionUtils.getRootCause(e) instanceof SearchContextMissingException) {
             log.warn("Search scroll timed out, continuing with new scrollId.", log.isDebugEnabled() ? e : null);
-            deletionProgress.setAttempts(0);
           }
           else {
             log.error("Failed to delete components.", e);

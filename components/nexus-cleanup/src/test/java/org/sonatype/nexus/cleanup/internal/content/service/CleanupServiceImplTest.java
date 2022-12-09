@@ -10,25 +10,23 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.cleanup.internal.orient.service;
+package org.sonatype.nexus.cleanup.internal.content.service;
 
 import java.util.Map;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.cleanup.internal.orient.method.CleanupMethod;
-import org.sonatype.nexus.cleanup.internal.orient.search.elasticsearch.OrientCleanupComponentBrowse;
+import org.sonatype.nexus.cleanup.internal.content.search.CleanupComponentBrowse;
+import org.sonatype.nexus.cleanup.internal.method.CleanupMethod;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
-import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.storage.DefaultComponentMaintenanceImpl.DeletionProgress;
-import org.sonatype.nexus.repository.storage.StorageFacet;
-import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.types.GroupType;
 
 import com.google.common.collect.ImmutableList;
@@ -56,7 +54,7 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_DOWNLOADED_KEY;
 import static org.sonatype.nexus.testcommon.matchers.NexusMatchers.streamContains;
 
-public class OrientCleanupServiceImplTest
+public class CleanupServiceImplTest
     extends TestSupport
 {
   private static final String POLICY_1_NAME = "policy1";
@@ -72,7 +70,7 @@ public class OrientCleanupServiceImplTest
   private Repository repository1, repository2, repository3;
 
   @Mock
-  private OrientCleanupComponentBrowse browseService;
+  private CleanupComponentBrowse browseService;
 
   @Mock
   private CleanupPolicyStorage cleanupPolicyStorage;
@@ -84,16 +82,10 @@ public class OrientCleanupServiceImplTest
   private CleanupMethod cleanupMethod;
 
   @Mock
-  private StorageFacet storageFacet;
-
-  @Mock
-  private EntityId component1, component2, component3;
+  private FluentComponent component1, component2, component3;
 
   @Mock
   private Type type;
-
-  @Mock
-  private StorageTx tx;
 
   @Mock
   private BooleanSupplier cancelledCheck;
@@ -101,18 +93,16 @@ public class OrientCleanupServiceImplTest
   @Mock
   private DeletionProgress deletionProgress;
 
-  private OrientCleanupServiceImpl underTest;
+  private CleanupServiceImpl underTest;
 
   @Before
   public void setup() throws Exception {
-    underTest = new OrientCleanupServiceImpl(repositoryManager, browseService, cleanupPolicyStorage, cleanupMethod,
+    underTest = new CleanupServiceImpl(repositoryManager, browseService, cleanupPolicyStorage, cleanupMethod,
         new GroupType(), RETRY_LIMIT);
 
     setupRepository(repository1, POLICY_1_NAME);
     setupRepository(repository2, POLICY_2_NAME);
     setupRepository(repository3, null);
-
-    when(storageFacet.txSupplier()).thenReturn(() -> tx);
 
     when(repositoryManager.browse()).thenReturn(ImmutableList.of(repository1, repository2));
 
@@ -142,10 +132,10 @@ public class OrientCleanupServiceImplTest
   @Test
   public void fetchMultiplePoliciesForEachRepositoryAndRunCleanup() {
     String[] policyNamesForRepo1 = {"abc", "def", "ghi"};
-    Stream<EntityId> componentsForRepo1 = setupForMultiplePolicies(repository1, policyNamesForRepo1);
+    Stream<FluentComponent> componentsForRepo1 = setupForMultiplePolicies(repository1, policyNamesForRepo1);
 
     String[] policyNamesForRepo2 = {"qwe", "rty", "uio"};
-    Stream<EntityId> componentsForRepo2 = setupForMultiplePolicies(repository2, policyNamesForRepo2);
+    Stream<FluentComponent> componentsForRepo2 = setupForMultiplePolicies(repository2, policyNamesForRepo2);
 
     underTest.cleanup(cancelledCheck);
 
@@ -297,18 +287,17 @@ public class OrientCleanupServiceImplTest
 
     when(repository.getType()).thenReturn(type);
 
-    when(repository.facet(StorageFacet.class)).thenReturn(storageFacet);
   }
 
-  private Stream<EntityId> setupForMultiplePolicies(final Repository repository, final String... policyNames) {
+  private Stream<FluentComponent> setupForMultiplePolicies(final Repository repository, final String... policyNames) {
     setupRepository(repository, policyNames);
     return setupComponents(repository, policyNames);
   }
 
-  private Stream<EntityId> setupComponents(final Repository repository,
+  private Stream<FluentComponent> setupComponents(final Repository repository,
                                            final String... policyNames)
   {
-    Stream<EntityId> components = ImmutableList.of(mock(EntityId.class), mock(EntityId.class)).stream();
+    Stream<FluentComponent> components = ImmutableList.of(mock(FluentComponent.class), mock(FluentComponent.class)).stream();
 
     asList(policyNames).forEach(policyName -> {
       CleanupPolicy cleanupPolicy = mock(CleanupPolicy.class);
