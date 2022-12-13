@@ -24,6 +24,4 @@ public interface CapabilityStorageItemEvent
   boolean isLocal();
 
   CapabilityIdentity getCapabilityId();
-
-  CapabilityStorageItem getCapabilityStorageItem();
 }

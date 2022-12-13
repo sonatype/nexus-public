@@ -155,7 +155,13 @@ public class DefaultCapabilityRegistry
   public void on(final CapabilityStorageItemCreatedEvent event) {
     if (!event.isLocal()) {
       CapabilityIdentity id = event.getCapabilityId();
-      CapabilityStorageItem item = event.getCapabilityStorageItem();
+      CapabilityStorageItem item = capabilityStorage.getAll().get(id);
+
+      if (item == null) {
+        log.debug("Failed to locate capability with id {} in storage", id);
+        return;
+      }
+
       CapabilityType type = capabilityType(item.getType());
 
       try {
@@ -227,7 +233,12 @@ public class DefaultCapabilityRegistry
   public void on(final CapabilityStorageItemUpdatedEvent event) {
     if (!event.isLocal()) {
       CapabilityIdentity id = event.getCapabilityId();
-      CapabilityStorageItem item = event.getCapabilityStorageItem();
+      CapabilityStorageItem item = capabilityStorage.getAll().get(id);
+
+      if (item == null) {
+        log.debug("Failed to locate capability with id {} in storage", id);
+        return;
+      }
 
       try {
         lock.writeLock().lock();
