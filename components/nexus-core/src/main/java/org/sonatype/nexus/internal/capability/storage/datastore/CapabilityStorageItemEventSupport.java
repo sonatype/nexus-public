@@ -15,38 +15,31 @@ package org.sonatype.nexus.internal.capability.storage.datastore;
 import org.sonatype.nexus.capability.CapabilityIdentity;
 import org.sonatype.nexus.common.event.EventWithSource;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageImpl;
-import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItem;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemData;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemEvent;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class CapabilityStorageItemEventSupport
     extends EventWithSource
     implements CapabilityStorageItemEvent
 {
-  private CapabilityStorageItemData item;
+  private CapabilityIdentity capabilityId;
 
   protected CapabilityStorageItemEventSupport() {
     // deserialization
   }
 
   protected CapabilityStorageItemEventSupport(final CapabilityStorageItemData item) {
-    this.item = item;
+    this.capabilityId = CapabilityStorageImpl.capabilityIdentity(checkNotNull(item));
   }
 
-  @JsonIgnore
   @Override
   public CapabilityIdentity getCapabilityId() {
-    return CapabilityStorageImpl.capabilityIdentity(item);
+    return capabilityId;
   }
 
-  @Override
-  public CapabilityStorageItem getCapabilityStorageItem() {
-    return item;
-  }
-
-  public void setCapabilityStorageItem(final CapabilityStorageItemData item) {
-    this.item = item;
+  public void setCapabilityId(final CapabilityIdentity capabilityId) {
+    this.capabilityId = capabilityId;
   }
 }
