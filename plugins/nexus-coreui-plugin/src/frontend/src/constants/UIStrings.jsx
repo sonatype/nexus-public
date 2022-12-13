@@ -1803,4 +1803,41 @@ This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 
       }
     }
   },
+
+  USER_TOKEN: {
+    MENU: {
+      text: 'User Tokens',
+      description: 'Manage user token configuration'
+    },
+    CAPTION: 'Token Configuration',
+    HELP_TEXT: <>
+    The user tokens feature allows users to authenticate securely without typical 
+    user credentials such as those used by LDAP or Crowd. User tokens generated for 
+    this server are only valid for use on this server. Once enabled, users can access 
+    their user token from  {' '}
+    <NxTextLink href="#user/usertoken">user mode</NxTextLink>.
+    </>,
+    USER_TOKENS_CHECKBOX: {
+      LABEL: 'User tokens',
+      DESCRIPTION: 'Enable'
+    },
+    REPOSITORY_AUTHENTICATION_CHECKBOX: {
+      LABEL: 'Require user token for repository authentication',
+      DESCRIPTION: 'This does not affect UI access'
+    },
+    RESET_ALL_TOKENS_BUTTON: 'Reset all user tokens',
+    RESET_ERROR_MSG: 'An error occurred while resetting user tokens',
+    RESET_SUCCESS_MSG: 'User tokens successfully reset',
+    RESET_CONFIRMATION: {
+      CAPTION: 'Reset User Tokens',
+      CONFIRMATION_STRING: 'Reset all user tokens',
+      VALIDATION_ERROR: 'The confirmation string provided is incorrect',
+      LABEL: 'Verify Reset',
+      get SUBLABEL() {
+        return `Type ‘${this.CONFIRMATION_STRING}’ to confirm this action and  proceed`
+      },
+      WARNING: 'Reset will invalidate ALL existing user tokens and force new tokens to be created the next time they are accessed.',
+      BUTTON: 'Reset User Tokens',
+    }
+  }
 };

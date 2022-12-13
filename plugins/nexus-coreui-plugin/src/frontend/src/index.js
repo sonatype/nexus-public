@@ -50,6 +50,7 @@ import Api from './components/pages/admin/Api/Api';
 import Realms from './components/pages/admin/Realms/Realms';
 import HTTP from './components/pages/admin/Http/Http';
 import Licensing from './components/pages/admin/Licensing/Licensing';
+import UserTokens from './components/pages/admin/UserTokens/UserTokens';
 
 window.ReactComponents = {
   ...window.ReactComponents,
@@ -399,6 +400,23 @@ window.plugins.push({
       visibility: {
         featureFlags: [{key: 'nexus.react.licensing', defaultValue: false}],
         permissions: [Permissions.LICENSING.READ]
+      },
+    },
+    {
+      mode: 'admin',
+      path: '/Security/UserToken',
+      ...UIStrings.USER_TOKEN.MENU,
+      view: UserTokens,
+      iconCls: 'x-fa fa-key',
+      visibility: {
+        permissions: [Permissions.USER_TOKENS_SETTINGS.READ],
+        editions: ['PRO'],
+        licenseValid: [
+          {
+            key: 'usertoken',
+            defaultValue: false
+          }
+        ],
       },
     },
   ]

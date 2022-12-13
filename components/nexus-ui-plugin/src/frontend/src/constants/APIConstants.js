@@ -190,6 +190,9 @@ export default {
       get LDAP_CHANGE_ORDER() {
         return `${this.BASE_URL}security/ldap/change-order`;
       },
+      get USER_TOKENS() {
+        return `${this.BASE_URL}security/user-tokens`;
+      },
     },
   },
   DEBOUNCE_DELAY: 500,

@@ -25,7 +25,10 @@ import {faIdCardAlt} from '@fortawesome/free-solid-svg-icons';
 import UIStrings from '../../../../constants/UIStrings';
 import {SOURCES} from './SslCertificatesFormMachine';
 
-const {CAPTION, LOAD_BUTTON, PEM, SERVER} = UIStrings.SSL_CERTIFICATES.ADD_FORM;
+const {
+  ADD_FORM: {CAPTION, LOAD_BUTTON, PEM, SERVER},
+  MENU
+} = UIStrings.SSL_CERTIFICATES;
 
 export default function SslCerticatesAddForm({onDone, machine}) {
   const [state, send] = machine;
@@ -39,11 +42,7 @@ export default function SslCerticatesAddForm({onDone, machine}) {
   return (
     <Page className="nxrm-ssl-certificates">
       <PageHeader>
-        <PageTitle
-          icon={faIdCardAlt}
-          text={UIStrings.SSL_CERTIFICATES.MENU.text}
-          description={UIStrings.SSL_CERTIFICATES.MENU.description}
-        />
+        <PageTitle icon={faIdCardAlt} {...MENU} />
       </PageHeader>
       <ContentBody className="nxrm-ssl-certificates-add-form">
         <NxTile>
