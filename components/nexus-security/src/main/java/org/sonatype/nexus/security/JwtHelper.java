@@ -55,7 +55,7 @@ public class JwtHelper
     extends StateGuardLifecycleSupport
     implements EventAware
 {
-  public static final String JWT_COOKIE_NAME = "NXJWT";
+  public static final String JWT_COOKIE_NAME = "NXSESSIONID";
 
   public static final String ISSUER = "sonatype";
 
