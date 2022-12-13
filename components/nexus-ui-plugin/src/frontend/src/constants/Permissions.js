@@ -56,4 +56,6 @@ export default {
   BUNDLES: generatePermissions('bundles', [READ]),
   LICENSING: generatePermissions('licensing', [READ, CREATE, UNINSTALL]),
   LDAP: generatePermissions('ldap', [CREATE, DELETE, UPDATE]),
+  USER_TOKENS_SETTINGS: generatePermissions('usertoken-settings', [READ, UPDATE]),
+  USER_TOKENS_USERS: generatePermissions('usertoken-users', [DELETE]),
 };
