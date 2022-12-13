@@ -104,7 +104,7 @@ public abstract class NexusITSupport
 {
   protected static final String DEFAULT_SESSION_COOKIE_NAME = "NXSESSIONID";
 
-  protected static final String DEFAULT_JWT_COOKIE_NAME = "NXJWT";
+  protected static final String DEFAULT_JWT_COOKIE_NAME = "NXSESSIONID";
 
   protected static final String REST_SERVICE_PATH = "service/rest";
 
@@ -313,18 +313,6 @@ public abstract class NexusITSupport
     return null;
   }
 
-  /**
-   * @return our jwt cookie; {@code null} if it doesn't exist
-   */
-  @Nullable
-  protected Cookie getJwtCookie(final CookieStore cookieStore) {
-    for (Cookie cookie : cookieStore.getCookies()) {
-      if (DEFAULT_JWT_COOKIE_NAME.equals(cookie.getName())) {
-        return cookie;
-      }
-    }
-    return null;
-  }
 
   /**
    * @return the last header containing a cookie; {@code null} if it doesn't exist

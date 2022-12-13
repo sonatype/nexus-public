@@ -17,6 +17,7 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
@@ -64,6 +65,7 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 import static org.ops4j.pax.exam.CoreOptions.composite;
 import static org.ops4j.pax.exam.CoreOptions.maven;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
@@ -762,7 +764,13 @@ public abstract class NexusPaxExamSupport
         editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.blobstore.provisionDefaults", "true");
     Option repositoryProvisionDefaults =
         editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.skipDefaultRepositories", "false");
-    return when(ha).useOptions(dsClusteredEnable, jwtEnabled, blobstoreProvisionDefaults, repositoryProvisionDefaults);
+
+    Option haFormats = composite(Arrays.asList("apt", "conan", "go", "helm", "nuget", "p2", "pypi", "r", "yum").stream()
+        .map(format -> editConfigurationFilePut(NEXUS_PROPERTIES_FILE, format("nexus.%s.ha.supported", format), "true"))
+        .toArray(Option[]::new));
+
+    return when(ha).useOptions(dsClusteredEnable, jwtEnabled, blobstoreProvisionDefaults, repositoryProvisionDefaults,
+        haFormats);
   }
 
   protected boolean isNewDb() {
