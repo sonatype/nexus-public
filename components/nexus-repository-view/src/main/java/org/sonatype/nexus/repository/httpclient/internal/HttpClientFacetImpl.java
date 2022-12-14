@@ -21,6 +21,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.validation.Valid;
 
+import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.distributed.event.service.api.common.RepositoryRemoteConnectionStatusEvent;
 import org.sonatype.nexus.httpclient.HttpClientManager;
@@ -340,8 +341,15 @@ public class HttpClientFacetImpl
     httpClient = null;
   }
 
-  private void distributeRepositoryConnectionStatusChangedEvent(final String repositoryName,
-                                                                final RemoteConnectionStatus status) {
+  private void distributeRepositoryConnectionStatusChangedEvent(
+      final String repositoryName,
+      final RemoteConnectionStatus status)
+  {
+    if (EventHelper.isReplicating()) {
+      log.debug("Originally triggered by remote event");
+      return;
+    }
+
     log.debug("Distribute repository block changed event: repository={}:{}", repositoryName, status.getType());
 
     long blockUntilMillis = status.getBlockedUntil() == null ? DateTime.now().getMillis()
