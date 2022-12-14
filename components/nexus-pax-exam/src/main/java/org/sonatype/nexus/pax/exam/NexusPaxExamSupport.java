@@ -765,7 +765,7 @@ public abstract class NexusPaxExamSupport
     Option repositoryProvisionDefaults =
         editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.skipDefaultRepositories", "false");
 
-    Option haFormats = composite(Arrays.asList("apt", "conan", "go", "helm", "nuget", "p2", "pypi", "r", "yum").stream()
+    Option haFormats = composite(Arrays.asList("apt", "conan", "go", "helm", "nuget", "p2", "pypi", "r", "raw", "yum").stream()
         .map(format -> editConfigurationFilePut(NEXUS_PROPERTIES_FILE, format("nexus.%s.ha.supported", format), "true"))
         .toArray(Option[]::new));
 
