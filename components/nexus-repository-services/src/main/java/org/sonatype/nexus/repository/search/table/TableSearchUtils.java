@@ -12,9 +12,13 @@
  */
 package org.sonatype.nexus.repository.search.table;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -24,7 +28,6 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.search.DefaultSqlSearchQueryContribution;
 import org.sonatype.nexus.repository.search.SearchRequest;
 import org.sonatype.nexus.repository.search.SqlSearchQueryContribution;
-import org.sonatype.nexus.repository.search.index.SearchConstants;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryBuilder;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryContributionSupport;
@@ -58,10 +61,14 @@ public class TableSearchUtils
   public SqlSearchQueryBuilder buildQuery(final SearchRequest request) {
     final SqlSearchQueryBuilder queryBuilder = request.isConjunction() ? SqlSearchQueryBuilder.conjunctionBuilder()
         : SqlSearchQueryBuilder.disjunctionBuilder();
-    request.getSearchFilters().stream()
+    List<SearchFilter> searchFilters = request.getSearchFilters().stream()
         .filter(searchFilter -> !isBlank(searchFilter.getValue()))
-        .filter(filter -> !SearchConstants.REPOSITORY_NAME.equalsIgnoreCase(filter.getProperty()))
-        .forEach(searchFilter -> {
+        .filter(filter -> !REPOSITORY_NAME.equalsIgnoreCase(filter.getProperty()))
+        .collect(Collectors.toList());
+
+    generalizeDuplicateProperties(searchFilters);
+
+    searchFilters.forEach(searchFilter -> {
           SqlSearchQueryContribution searchContribution = searchContributions
               .getOrDefault(getContributionKey(searchFilter), defaultSqlSearchQueryContribution);
           searchContribution.contribute(queryBuilder, searchFilter);
@@ -70,6 +77,31 @@ public class TableSearchUtils
     log.debug("Query: {}", queryBuilder);
 
     return queryBuilder;
+  }
+
+  private void generalizeDuplicateProperties(final List<SearchFilter> searchFilters) {
+    List<String> properties = searchFilters.stream()
+        .map(SearchFilter::getProperty)
+        .collect(Collectors.toList());
+    Set<String> duplicates = properties.stream()
+        .filter(property -> Collections.frequency(properties, property) > 1)
+        .collect(Collectors.toSet());
+
+    duplicates.forEach(property -> {
+      List<SearchFilter> filters =
+          searchFilters.stream().filter(sf -> sf.getProperty().equals(property)).collect(Collectors.toList());
+      searchFilters.removeAll(filters);
+
+      String prop = filters.get(0).getProperty();
+      StringBuilder value = new StringBuilder();
+      filters.forEach(filter -> {
+        if (value.length() > 0) {
+          value.append(" ");
+        }
+        value.append(filter.getValue());
+      });
+      searchFilters.add(new SearchFilter(prop, value.toString()));
+    });
   }
 
   public Optional<SearchFilter> getRepositoryFilter(final List<SearchFilter> filters) {
