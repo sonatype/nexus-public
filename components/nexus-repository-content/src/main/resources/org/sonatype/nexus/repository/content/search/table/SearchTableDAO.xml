@@ -356,6 +356,31 @@
       #{item.tags, typeHandler=ListTypeHandler}
        )
     </foreach>
+    ON CONFLICT ON CONSTRAINT pk_search_components
+    DO
+      UPDATE SET
+        attributes = "excluded".attributes,
+        entity_version = "excluded".entity_version,
+        component_kind = "excluded".component_kind,
+        prerelease = "excluded".prerelease,
+        uploaders = "excluded".uploaders,
+        uploader_ips = "excluded".uploader_ips,
+        paths = "excluded".paths,
+        tsvector_paths = "excluded".tsvector_paths,
+        keywords = "excluded".keywords,
+        md5 = "excluded".md5,
+        sha1 = "excluded".sha1,
+        sha256 = "excluded".sha256,
+        sha512 = "excluded".sha512,
+        format_field_values_1 = "excluded".format_field_values_1,
+        format_field_values_2 = "excluded".format_field_values_2,
+        format_field_values_3 = "excluded".format_field_values_3,
+        format_field_values_4 = "excluded".format_field_values_4,
+        format_field_values_5 = "excluded".format_field_values_5,
+        format_field_values_6 = "excluded".format_field_values_6,
+        format_field_values_7 = "excluded".format_field_values_7,
+        tsvector_tags = "excluded".tsvector_tags,
+        tags = "excluded".tags
   </insert>
 
   <sql id="toTsVector" databaseId="PostgreSQL">
