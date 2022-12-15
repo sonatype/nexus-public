@@ -583,6 +583,11 @@ public abstract class NexusPaxExamSupport
             getS3OptionalCompositeOption(endpoint, System.getProperty(endpoint)),
             getS3OptionalCompositeOption(forcePathStyle, System.getProperty(forcePathStyle))
         );
+      case "azure":
+        return composite(
+            // enable azure default
+            editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.test.default.azure", Boolean.TRUE.toString())
+        );
       default:
         return composite();
     }
