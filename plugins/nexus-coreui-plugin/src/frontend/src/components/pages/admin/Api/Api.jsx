@@ -25,7 +25,8 @@ import 'swagger-ui-react/swagger-ui.css';
 import './Api.scss';
 
 function requestInterceptor(request) {
-  request.headers['NX-ANTI-CSRF-TOKEN']=(document.cookie.match('(^|; )NX-ANTI-CSRF-TOKEN=([^;]*)')||0)[2];
+  request.headers['NX-ANTI-CSRF-TOKEN'] = (document.cookie.match('(^|; )NX-ANTI-CSRF-TOKEN=([^;]*)')||0)[2];
+  request.headers['X-Nexus-UI'] = true;
   return request;
 }
 
