@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.internal.datastore;
 
 import java.util.List;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -55,6 +56,7 @@ public class DatastoreHighAvailabilitySupportChecker
         .add("rubygems")
         .add("helm")
         .add("apt")
+        .add("yum")
         .build();
   }
 }
