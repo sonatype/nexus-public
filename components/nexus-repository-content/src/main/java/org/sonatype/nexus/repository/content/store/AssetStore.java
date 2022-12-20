@@ -17,13 +17,11 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -439,7 +437,7 @@ public class AssetStore<T extends AssetDAO>
     }
 
     int count = purgeAssets(assetIds);
-    if (clustered) {
+    if (clustered && componentIds.length > 0) {
       dao().updateEntityVersions(componentIds, clustered);
     }
     return count;
