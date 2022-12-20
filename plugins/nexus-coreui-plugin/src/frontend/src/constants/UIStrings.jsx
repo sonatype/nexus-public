@@ -372,7 +372,7 @@ export default {
         CERTIFICATE: 'Certificate',
       },
       COMMON_NAME: {
-        LABEL: 'Common name',
+        LABEL: 'Common Name',
       },
       ORGANIZATION: {
         LABEL: 'Organization',
@@ -381,10 +381,10 @@ export default {
         LABEL: 'Unit',
       },
       ISSUED_ON: {
-        LABEL: 'Issued on',
+        LABEL: 'Issued On',
       },
       VALID_UNTIL: {
-        LABEL: 'Valid until',
+        LABEL: 'Valid Until',
       },
       FINGERPRINT: {
         LABEL: 'Fingerprint',
@@ -1811,9 +1811,9 @@ This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 
     },
     CAPTION: 'Token Configuration',
     HELP_TEXT: <>
-    The user tokens feature allows users to authenticate securely without typical 
-    user credentials such as those used by LDAP or Crowd. User tokens generated for 
-    this server are only valid for use on this server. Once enabled, users can access 
+    The user tokens feature allows users to authenticate securely without typical
+    user credentials such as those used by LDAP or Crowd. User tokens generated for
+    this server are only valid for use on this server. Once enabled, users can access
     their user token from  {' '}
     <NxTextLink href="#user/usertoken">user mode</NxTextLink>.
     </>,
