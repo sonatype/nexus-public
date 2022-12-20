@@ -403,8 +403,9 @@
   </update>
 
   <select id="selectComponentIds" resultType="int">
-    SELECT component_id FROM ${format}_asset
+    SELECT DISTINCT component_id FROM ${format}_asset
     <where>
+      component_id IS NOT NULL AND
       <foreach collection="assetIds" item="assetId" open="asset_id IN (" separator="," close=")">
         ${assetId}
       </foreach>
