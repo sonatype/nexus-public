@@ -23,6 +23,7 @@ import {
   NxWarningAlert,
   NxGrid,
   NxTooltip,
+  NxDivider,
 } from '@sonatype/react-shared-components';
 import {
   ContentBody,
@@ -30,7 +31,7 @@ import {
   PageHeader,
   PageTitle,
   DateUtils,
-  ReadOnlyField
+  ReadOnlyField,
 } from '@sonatype/nexus-ui-plugin';
 
 import {faIdCardAlt} from '@fortawesome/free-solid-svg-icons';
@@ -38,12 +39,14 @@ import {canDeleteCertificate} from './SslCertificatesHelper';
 import UIStrings from '../../../../constants/UIStrings';
 import './SslCertificates.scss';
 
-const {SSL_CERTIFICATES: {FORM: LABELS}} = UIStrings;
+const {
+  SSL_CERTIFICATES: {FORM: LABELS},
+} = UIStrings;
 
 export default function SslCertificatesDetails({machine, onDone}) {
   const [state, send] = machine;
   const {data, loadError, shouldLoadNew} = state.context;
-  
+
   const canDelete = canDeleteCertificate();
 
   const {
@@ -56,7 +59,7 @@ export default function SslCertificatesDetails({machine, onDone}) {
     issuerOrganization,
     issuerOrganizationalUnit,
     fingerprint,
-    inTrustStore
+    inTrustStore,
   } = data?.certificate || {};
 
   const issuedDate = issuedOn ? DateUtils.timestampToString(issuedOn) : '';
@@ -73,76 +76,89 @@ export default function SslCertificatesDetails({machine, onDone}) {
     }
   };
 
-  return <Page className="nxrm-ssl-certificate">
-    <PageHeader>
-      <PageTitle
+  return (
+    <Page className="nxrm-ssl-certificate">
+      <PageHeader>
+        <PageTitle
           icon={faIdCardAlt}
           text={LABELS.DETAILS_TITLE(subjectCommonName || '')}
           description={LABELS.DETAILS_DESCRIPTION}
-      />
-    </PageHeader>
-    <ContentBody className="nxrm-ssl-certificate-form">
-      <NxTile>
-        <NxTile.Content>
-          <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
-            <NxTile.Content>
+        />
+      </PageHeader>
+      <ContentBody className="nxrm-ssl-certificate-form">
+        <NxTile>
+          <NxTile.Content>
+            <NxLoadWrapper
+              loading={isLoading}
+              error={loadError}
+              retryHandler={retry}
+            >
+              <NxH2>{LABELS.SECTIONS.CERTIFICATE}</NxH2>
+              <NxReadOnly>
+                <NxReadOnly.Label>{LABELS.FINGERPRINT.LABEL}</NxReadOnly.Label>
+                <NxReadOnly.Data>
+                  <NxTooltip title={fingerprint}>
+                    <div className="ellipsis-text">{fingerprint}</div>
+                  </NxTooltip>
+                </NxReadOnly.Data>
+                <NxReadOnly.Label>{LABELS.VALID_UNTIL.LABEL}</NxReadOnly.Label>
+                <NxReadOnly.Data>
+                  <NxTooltip title={expiredDate}>
+                    <div className="ellipsis-text">{expiredDate}</div>
+                  </NxTooltip>
+                </NxReadOnly.Data>
+                <NxReadOnly.Label>{LABELS.ISSUED_ON.LABEL}</NxReadOnly.Label>
+                <NxReadOnly.Data className="ellipsis-text">
+                  <NxTooltip title={issuedDate}>
+                    <div className="ellipsis-text">{issuedDate}</div>
+                  </NxTooltip>
+                </NxReadOnly.Data>
+              </NxReadOnly>
+              <NxDivider />
               <NxGrid.Row>
-                <NxGrid.Column className="nx-grid-col--33">
+                <NxGrid.Column>
                   <NxH2>{LABELS.SECTIONS.SUBJECT}</NxH2>
                   <NxReadOnly>
-                    <ReadOnlyField label={LABELS.COMMON_NAME.LABEL} value={subjectCommonName} />
-                    <ReadOnlyField label={LABELS.ORGANIZATION.LABEL} value={subjectOrganization} />
-                    <ReadOnlyField label={LABELS.UNIT.LABEL} value={subjectOrganizationalUnit} />
+                    <ReadOnlyField
+                      label={LABELS.COMMON_NAME.LABEL}
+                      value={subjectCommonName}
+                    />
+                    <ReadOnlyField
+                      label={LABELS.ORGANIZATION.LABEL}
+                      value={subjectOrganization}
+                    />
+                    <ReadOnlyField
+                      label={LABELS.UNIT.LABEL}
+                      value={subjectOrganizationalUnit}
+                    />
                   </NxReadOnly>
                 </NxGrid.Column>
-                <NxGrid.Column className="nx-grid-col--33">
+                <NxGrid.Column>
                   <NxH2>{LABELS.SECTIONS.ISSUER}</NxH2>
                   <NxReadOnly>
-                    <ReadOnlyField label={LABELS.COMMON_NAME.LABEL} value={issuerCommonName} />
-                    <ReadOnlyField label={LABELS.ORGANIZATION.LABEL} value={issuerOrganization} />
-                    <ReadOnlyField label={LABELS.UNIT.LABEL} value={issuerOrganizationalUnit} />
-                  </NxReadOnly>
-                </NxGrid.Column>
-                <NxGrid.Column className="nx-grid-col--33">
-                  <NxH2>{LABELS.SECTIONS.CERTIFICATE}</NxH2>
-                  <NxReadOnly>
-                    <NxReadOnly.Label>{LABELS.ISSUED_ON.LABEL}</NxReadOnly.Label>
-                    <NxReadOnly.Data className="ellipsis-text">
-                      <NxTooltip title={issuedDate}>
-                        <div className="ellipsis-text">{issuedDate}</div>
-                      </NxTooltip>
-                    </NxReadOnly.Data>
-                    <NxReadOnly.Label>{LABELS.VALID_UNTIL.LABEL}</NxReadOnly.Label>
-                    <NxReadOnly.Data>
-                      <NxTooltip title={expiredDate}>
-                        <div className="ellipsis-text">{expiredDate}</div>
-                      </NxTooltip>
-                    </NxReadOnly.Data>
-                    <NxReadOnly.Label>{LABELS.FINGERPRINT.LABEL}</NxReadOnly.Label>
-                    <NxReadOnly.Data>
-                      <NxTooltip title={fingerprint}>
-                        <div className="ellipsis-text">{fingerprint}</div>
-                      </NxTooltip>
-                    </NxReadOnly.Data>
+                    <ReadOnlyField
+                      label={LABELS.COMMON_NAME.LABEL}
+                      value={issuerCommonName}
+                    />
+                    <ReadOnlyField
+                      label={LABELS.ORGANIZATION.LABEL}
+                      value={issuerOrganization}
+                    />
+                    <ReadOnlyField
+                      label={LABELS.UNIT.LABEL}
+                      value={issuerOrganizationalUnit}
+                    />
                   </NxReadOnly>
                 </NxGrid.Column>
               </NxGrid.Row>
-            </NxTile.Content>
-            <NxFooter>
-              <NxWarningAlert>{LABELS.WARNING}</NxWarningAlert>
-              <NxButtonBar>
-                <NxButton
-                  type="button"
-                  onClick={onDone}
-                >
-                  {UIStrings.SETTINGS.CANCEL_BUTTON_LABEL}
-                </NxButton>
-                {shouldLoadNew && !inTrustStore ? (
-                    <NxButton
-                      type="button"
-                      variant="primary"
-                      onClick={save}
-                    >
+              <NxFooter>
+                <NxWarningAlert>{LABELS.WARNING}</NxWarningAlert>
+                <NxButtonBar>
+                  <NxButton type="button" onClick={onDone}>
+                    {UIStrings.SETTINGS.CANCEL_BUTTON_LABEL}
+                  </NxButton>
+                  {shouldLoadNew && !inTrustStore ? (
+                    <NxButton type="button" variant="primary" onClick={save}>
                       {LABELS.BUTTONS.ADD}
                     </NxButton>
                   ) : (
@@ -151,17 +167,18 @@ export default function SslCertificatesDetails({machine, onDone}) {
                         type="button"
                         variant="primary"
                         onClick={confirmDelete}
-                        className={!canDelete ?'disabled' : ''}
+                        className={!canDelete ? 'disabled' : ''}
                       >
                         {LABELS.BUTTONS.DELETE}
                       </NxButton>
                     </NxTooltip>
                   )}
-              </NxButtonBar>
-            </NxFooter>
-          </NxLoadWrapper>
-        </NxTile.Content>
-      </NxTile>
-    </ContentBody>
-  </Page>;
+                </NxButtonBar>
+              </NxFooter>
+            </NxLoadWrapper>
+          </NxTile.Content>
+        </NxTile>
+      </ContentBody>
+    </Page>
+  );
 }
