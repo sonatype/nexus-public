@@ -16,7 +16,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -25,12 +25,6 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.scheduling.ExternalTaskState;
-import org.sonatype.nexus.scheduling.TaskConfiguration;
-import org.sonatype.nexus.scheduling.TaskDescriptor;
-import org.sonatype.nexus.scheduling.TaskFactory;
-import org.sonatype.nexus.scheduling.TaskInfo;
-import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.events.TaskScheduledEvent;
 import org.sonatype.nexus.scheduling.schedule.Schedule;
 import org.sonatype.nexus.scheduling.schedule.ScheduleFactory;
@@ -39,6 +33,7 @@ import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static org.sonatype.nexus.common.app.FeatureFlags.CHANGE_REPO_BLOBSTORE_TASK_ENABLED_NAMED;
 
 /**
  * Default {@link TaskScheduler} implementation.
@@ -51,11 +46,18 @@ public class TaskSchedulerImpl
     extends ComponentSupport
     implements TaskScheduler
 {
+
+  protected static final String REPO_MOVE_TYPE_ID = "repository.move";
+
   private final EventManager eventManager;
 
   private final TaskFactory taskFactory;
 
   private final Provider<SchedulerSPI> scheduler;
+
+  @Inject
+  @Named(CHANGE_REPO_BLOBSTORE_TASK_ENABLED_NAMED)
+  protected boolean changeRepoBlobstoreTaskEnabled;
 
   @Inject
   public TaskSchedulerImpl(final EventManager eventManager,
@@ -126,12 +128,23 @@ public class TaskSchedulerImpl
   @Override
   public TaskInfo getTaskById(final String id) {
     checkNotNull(id);
-    return getScheduler().getTaskById(id);
+    TaskInfo taskInfo = getScheduler().getTaskById(id);
+    if (null != taskInfo && includeRepoMoveTask(taskInfo)) {
+      return taskInfo;
+    }
+    return null;
   }
 
   @Override
   public List<TaskInfo> listsTasks() {
-    return getScheduler().listsTasks();
+    return getScheduler().listsTasks()
+        .stream()
+        .filter(this::includeRepoMoveTask)
+        .collect(Collectors.toList());
+  }
+
+  private boolean includeRepoMoveTask(TaskInfo taskInfo) {
+    return (changeRepoBlobstoreTaskEnabled || !taskInfo.getTypeId().equals(REPO_MOVE_TYPE_ID));
   }
 
   @Override
