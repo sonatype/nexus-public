@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.search.table;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -45,8 +44,6 @@ import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSIT
 public class TableSearchUtils
     extends ComponentSupport
 {
-  public static final String FORMAT = "format";
-
   private final Map<String, SqlSearchQueryContribution> searchContributions;
 
   private final SqlSearchQueryContribution defaultSqlSearchQueryContribution;
