@@ -92,3 +92,11 @@ export const validateUrlValues = (protocol, host, port) => {
 export const generateUrl = (protocol, host, port) => {
   return `${protocol}://${host}:${port}`;
 };
+
+export const isDynamicGroup = (groupType) => {
+  return groupType === FORM.GROUP_TYPE.OPTIONS.dynamic.id;
+};
+
+export const isStaticGroup = (groupType) => {
+  return groupType === FORM.GROUP_TYPE.OPTIONS.static.id;
+};

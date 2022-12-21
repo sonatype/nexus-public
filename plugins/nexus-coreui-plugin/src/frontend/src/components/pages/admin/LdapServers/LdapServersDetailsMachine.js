@@ -14,7 +14,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {assign} from 'xstate';
+import {assign, spawn} from 'xstate';
 import {mergeDeepRight, omit} from 'ramda';
 
 import {
@@ -24,6 +24,8 @@ import {
   ExtAPIUtils,
   ExtJS,
 } from '@sonatype/nexus-ui-plugin';
+
+import LdapServerUserAndGroupMachine from './LdapServerUserAndGroupMachine';
 
 import UIStrings from '../../../../constants/UIStrings';
 
@@ -47,24 +49,13 @@ const initialState = {
   authPassword: '',
   connectionRetryDelay: 300,
   connectionTimeout: 30,
-  groupType: null,
   host: '',
   id: '',
-  ldapGroupsAsRoles: true,
   maxIncidentsCount: 3,
   name: '',
   port: '',
   protocol: '',
   searchBase: '',
-  template: null,
-  userBaseDn: '',
-  userEmailAddressAttribute: '',
-  userIdAttribute: '',
-  userLdapFilter: '',
-  userObjectClass: '',
-  userPasswordAttribute: '',
-  userRealNameAttribute: '',
-  userSubtree: false,
   useTrustStore: false,
 };
 
@@ -72,6 +63,9 @@ export default FormUtils.buildFormMachine({
   id: 'LdapServersDetailsMachine',
   config: (config) =>
     mergeDeepRight(config, {
+      context: {
+        userAndGroup: null,
+      },
       states: {
         loaded: {
           initial: 'creatingConnection',
@@ -102,7 +96,9 @@ export default FormUtils.buildFormMachine({
                 },
               },
             },
-            creatingUserAndGroup: {},
+            creatingUserAndGroup: {
+              entry: ['initUserAndGroupActor', 'sendData'],
+            },
           },
         },
       },
@@ -147,7 +143,7 @@ export default FormUtils.buildFormMachine({
     verificationSuccess: ({data: {protocol, host, port}}) => {
       const url = generateUrl(protocol, host, port);
 
-      ExtJS.showSuccessMessage(LABELS.SUCCESS_MESSAGE(url));
+      ExtJS.showSuccessMessage(LABELS.VERIFY_SUCCESS_MESSAGE(url));
     },
     verificationError: (_, {data}) => ExtJS.showErrorMessage(data),
     updateProtocol: assign({
@@ -165,6 +161,21 @@ export default FormUtils.buildFormMachine({
         };
       },
     }),
+    initUserAndGroupActor: assign({
+      userAndGroup: () => spawn(LdapServerUserAndGroupMachine, 'userAndGroup'),
+    }),
+    sendData: assign(({userAndGroup, data}) => {
+      userAndGroup.send(
+        {
+          type: 'CONNECTION_READY',
+          data,
+        },
+        {to: userAndGroup}
+      );
+    }),
+    logSaveSuccess: ({data}) => {
+      ExtJS.showSuccessMessage(LABELS.SAVE_SUCCESS_MESSAGE(data.name));
+    },
   },
   services: {
     fetchData: () => {
@@ -176,10 +187,8 @@ export default FormUtils.buildFormMachine({
       if (isAnonymousAuth(requestObject.authScheme)) {
         requestObject.authUsername = '';
         requestObject.authPassword = '';
-        requestObject.authScheme = 'none';
         requestObject = omit(['authRealm'], requestObject);
       } else if (isSimpleAuth(requestObject.authScheme)) {
-        requestObject.authScheme = 'simple';
         requestObject = omit(['authRealm'], requestObject);
       }
 
@@ -189,9 +198,10 @@ export default FormUtils.buildFormMachine({
         {data: [requestObject]}
       );
 
-      ExtAPIUtils.checkForError(response)
+      ExtAPIUtils.checkForError(response);
 
       return response;
     },
+    saveData: () => Promise.resolve(),
   },
 });

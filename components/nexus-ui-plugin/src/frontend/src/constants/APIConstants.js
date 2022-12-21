@@ -118,6 +118,7 @@ export default {
       METHODS: {
         CLEAR_CACHE: 'clearCache',
         VERIFY_CONNECTION: 'verifyConnection',
+        READ_TEMPLATES: 'readTemplates'
       }
     }
   },
