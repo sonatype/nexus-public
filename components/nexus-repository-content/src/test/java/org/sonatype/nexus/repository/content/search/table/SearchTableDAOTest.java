@@ -47,7 +47,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import static java.lang.Math.max;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -71,9 +70,9 @@ public class SearchTableDAOTest
 {
   private static final String FORMAT = "test";
 
-  private static final int TABLE_RECORDS_TO_GENERATE = 2;
+  private static final long TABLE_RECORDS_TO_GENERATE = 2L;
 
-  private static final List<SearchTableData> GENERATED_DATA = new ArrayList<>(TABLE_RECORDS_TO_GENERATE);
+  private static final List<SearchTableData> GENERATED_DATA = new ArrayList<>((int) TABLE_RECORDS_TO_GENERATE);
 
   private DataSession<?> session;
 
@@ -108,7 +107,7 @@ public class SearchTableDAOTest
     generateSingleRepository(UUID.fromString(configuration.getRepositoryId().getValue()));
     repository = generatedRepositories().get(0);
 
-    generateContent(TABLE_RECORDS_TO_GENERATE, true);
+    generateContent((int) TABLE_RECORDS_TO_GENERATE, true);
 
     session = sessionRule.openSession(DEFAULT_DATASTORE_NAME);
     TestComponentDAO componentDAO = session.access(TestComponentDAO.class);
@@ -170,9 +169,9 @@ public class SearchTableDAOTest
 
     GENERATED_DATA.forEach(searchDAO::save);
 
-    int count = searchDAO.count(null, null);
+    long count = searchDAO.count(null, null);
 
-    assertThat(count, is(2));
+    assertThat(count, is(2L));
   }
 
   @Test
@@ -184,9 +183,9 @@ public class SearchTableDAOTest
       searchDAO.save(data);
     });
 
-    int count = searchDAO.count(null, null);
+    long count = searchDAO.count(null, null);
 
-    assertThat(count, is(0));
+    assertThat(count, is(0L));
   }
 
   @Test
@@ -200,9 +199,9 @@ public class SearchTableDAOTest
 
     SqlSearchQueryCondition condition = conditionBuilder.condition(KEYWORD.getColumnName(), ImmutableSet.of("path-1", "path-2"));
 
-    int count = searchDAO.count(condition.getSqlConditionFormat(), condition.getValues());
+    long count = searchDAO.count(condition.getSqlConditionFormat(), condition.getValues());
 
-    assertThat(count, is(2));
+    assertThat(count, is(2L));
   }
 
   @Test
@@ -215,18 +214,18 @@ public class SearchTableDAOTest
 
     SqlSearchQueryCondition condition = conditionBuilder.condition(KEYWORD.getColumnName(), "path-1");
 
-    assertThat(searchDAO.count(condition.getSqlConditionFormat(), condition.getValues()), is(0));
+    assertThat(searchDAO.count(condition.getSqlConditionFormat(), condition.getValues()), is(0L));
 
     condition = conditionBuilder.condition(KEYWORD.getColumnName(), "path-2");
 
-    assertThat(searchDAO.count(condition.getSqlConditionFormat(), condition.getValues()), is(1));
+    assertThat(searchDAO.count(condition.getSqlConditionFormat(), condition.getValues()), is(1L));
   }
 
   @Test
   public void testSearchComponents() {
     GENERATED_DATA.forEach(searchDAO::save);
-    int count = searchDAO.count(null, null);
-    assertThat(count, is(2));
+    long count = searchDAO.count(null, null);
+    assertThat(count, is(2L));
 
     SqlSearchRequest request = SqlSearchRequest.builder()
         .limit(10)
@@ -258,8 +257,8 @@ public class SearchTableDAOTest
 
     String conditionFormat = queryCondition.getSqlConditionFormat();
 
-    int count = searchDAO.count(conditionFormat, values);
-    assertThat(count, is(2));
+    long count = searchDAO.count(conditionFormat, values);
+    assertThat(count, is(2L));
 
     SqlSearchRequest request = SqlSearchRequest.builder()
         .searchFilter(conditionFormat)
@@ -275,8 +274,8 @@ public class SearchTableDAOTest
   @Test
   public void testSearchComponentsWithOffset() {
     GENERATED_DATA.forEach(searchDAO::save);
-    int count = searchDAO.count(null, null);
-    assertThat(count, is(2));
+    long count = searchDAO.count(null, null);
+    assertThat(count, is(2L));
     SqlSearchRequest request = SqlSearchRequest.builder()
         .limit(10)
         .offset(10)
@@ -318,8 +317,8 @@ public class SearchTableDAOTest
 
     String conditionFormat = queryCondition.getSqlConditionFormat();
 
-    int count = searchDAO.count(conditionFormat, values);
-    assertThat(count, is(1));
+    long count = searchDAO.count(conditionFormat, values);
+    assertThat(count, is(1L));
   }
 
   @Test
@@ -327,31 +326,31 @@ public class SearchTableDAOTest
     GENERATED_DATA.forEach(searchDAO::save);
     SearchTableData tableData = GENERATED_DATA.get(0);
     searchDAO.delete(tableData.getRepositoryId(), tableData.getComponentId(), FORMAT);
-    int count = searchDAO.count(null, null);
-    assertThat(count, is(1));
+    long count = searchDAO.count(null, null);
+    assertThat(count, is(1L));
   }
 
   @Test
   public void testDeleteAllForRepository() {
     GENERATED_DATA.forEach(searchDAO::save);
     searchDAO.deleteAllForRepository(repository.contentRepositoryId(), FORMAT, 1);
-    int count = searchDAO.count(null, null);
-    assertThat(count, is(1));
+    long count = searchDAO.count(null, null);
+    assertThat(count, is(1L));
   }
 
   @Test
   public void testDeleteAllForRepositoryWithoutLimit() {
     GENERATED_DATA.forEach(searchDAO::save);
     searchDAO.deleteAllForRepository(repository.contentRepositoryId(), FORMAT, 0);
-    int count = searchDAO.count(null, null);
-    assertThat(count, is(0));
+    long count = searchDAO.count(null, null);
+    assertThat(count, is(0L));
   }
 
   @Test
   public void testSaveBatch() {
     searchDAO.saveBatch(GENERATED_DATA);
 
-    int count = searchDAO.count(null, null);
+    long count = searchDAO.count(null, null);
     assertThat(count, is(TABLE_RECORDS_TO_GENERATE));
   }
 

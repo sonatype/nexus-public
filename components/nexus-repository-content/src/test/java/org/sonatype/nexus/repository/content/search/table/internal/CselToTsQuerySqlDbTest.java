@@ -232,8 +232,8 @@ public class CselToTsQuerySqlDbTest
 
   private void saveData() {
     GENERATED_DATA.forEach(searchDAO::save);
-    int count = searchDAO.count(null, null);
-    assertThat(count, is(TABLE_RECORDS_TO_GENERATE));
+    long count = searchDAO.count(null, null);
+    assertThat(count, is((long) TABLE_RECORDS_TO_GENERATE));
   }
 
   private SqlSearchRequest searchRequest() {

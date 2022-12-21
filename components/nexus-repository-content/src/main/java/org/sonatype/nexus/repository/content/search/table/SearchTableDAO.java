@@ -39,7 +39,7 @@ public interface SearchTableDAO
    * @param values optional values map for filter (required if filter is not null)
    * @return number of found components.
    */
-  int count(@Nullable @Param("filter") String filter, @Nullable @Param("filterParams") Map<String, String> values);
+  long count(@Nullable @Param("filter") String filter, @Nullable @Param("filterParams") Map<String, String> values);
 
   /**
    * Search components in the scope of one format.

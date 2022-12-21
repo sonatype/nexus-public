@@ -313,7 +313,7 @@
     OFFSET #{offset};
   </select>
 
-  <select id="count" resultType="int">
+  <select id="count" resultType="long">
     SELECT COUNT(cs.component_id)
     FROM search_components cs
     <where>

@@ -142,7 +142,7 @@ public class SearchTableStore
    * @return count of all {@link SearchResultData} in the given format
    */
   @Transactional
-  public int count(@Nullable final SqlSearchQueryCondition filterQuery)
+  public long count(@Nullable final SqlSearchQueryCondition filterQuery)
   {
     String filterFormat = null;
     Map<String, String> formatValues = null;

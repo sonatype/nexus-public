@@ -92,12 +92,16 @@ public class TableSearchPermissionManager
     this.repositoryManager = repositoryManager;
   }
 
+  /**
+   * @param queryBuilder the {@link SqlSearchQueryBuilder} to append to.
+   * @param repositoryFilter a space separated list of repository names
+   */
   public void addPermissionFilters(
       final SqlSearchQueryBuilder queryBuilder,
-      @Nullable final String searchFilter)
+      @Nullable final String repositoryFilter)
   {
-    if (searchFilter != null) {
-      addRepositoryPermissions(queryBuilder, searchFilter);
+    if (repositoryFilter != null) {
+      addRepositoryPermissions(queryBuilder, repositoryFilter);
     }
     else {
       addRepositoryPermissions(queryBuilder);
