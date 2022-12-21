@@ -83,4 +83,7 @@ public interface FeatureFlags
    * Validates attribute from the node_heartbeat.node_info to determine if the deployment is valid.
    */
   String DATASTORE_DEPLOYMENT_VALIDATOR = "nexus.datastore.deployment.validator.enabled";
+
+  String CHANGE_REPO_BLOBSTORE_TASK_ENABLED = "nexus.change.repo.blobstore.task.enabled";
+  String CHANGE_REPO_BLOBSTORE_TASK_ENABLED_NAMED = "${nexus.change.repo.blobstore.task.enabled:-false}";
 }

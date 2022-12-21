@@ -110,6 +110,7 @@ public class BootstrapListener
 
       selectDatastoreFeature(properties);
       selectAuthenticationFeature(properties);
+      readEnvironmentVariables(properties);
 
       // pass bootstrap properties to embedded servlet listener
       servletContext.setAttribute("nexus.properties", properties);
@@ -233,6 +234,12 @@ public class BootstrapListener
     finally {
       currentThread.setContextClassLoader(tccl);
     }
+  }
+
+  private void readEnvironmentVariables(final Properties properties) {
+
+    properties.setProperty(CHANGE_REPO_BLOBSTORE_TASK_ENABLED,
+      Optional.ofNullable(System.getenv("CHANGE_REPO_BLOBSTORE_TASK_ENABLED")).orElse("false"));
   }
 
   private void selectDatastoreFeature(final Properties properties) {
