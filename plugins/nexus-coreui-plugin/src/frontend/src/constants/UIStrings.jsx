@@ -474,7 +474,7 @@ export default {
             label: 'Simple Authentication'
           },
           anonymous: {
-            id: 'Anonymous Authentication',
+            id: 'none',
             label: 'Anonymous Authentication'
           },
           digest: {
@@ -517,7 +517,78 @@ export default {
       },
       VERIFY_CONNECTION: 'Verify connection',
       NEXT: 'Next',
-      SUCCESS_MESSAGE: (url) => `Connection to LDAP server verified: ${url}`,
+      TEMPLATE: {
+        LABEL: 'Configuration template',
+      },
+      USER_RELATIVE_DN: {
+        LABEL: 'User relative DN',
+        SUB_LABEL: 'The relative DN where user objects are found (e.g. ou=people). This value will have the Search base DN value appended to form the full User search base DN'
+      },
+      USER_SUBTREE: {
+        LABEL: 'User subtree',
+        SUB_LABEL: 'Are users located in the structures below the user base DN?'
+      },
+      OBJECT_CLASS:{
+        LABEL: 'Object class',
+        SUB_LABEL: 'LDAP class for user objects (e.g. inetOrgPerson)'
+      },
+      USER_FILTER: {
+        LABEL: 'User filter',
+        SUB_LABEL: 'LDAP search filter to limit user search (e.g. "attribute=foo" or "(|(mail=*@example.com)(uid=dom*))")'
+      },
+      USER_ID_ATTRIBUTE:'User ID attribute',
+      REAL_NAME_ATTRIBUTE: 'Real name attribute',
+      EMAIL_ATTRIBUTE: 'Email attribute',
+      PASSWORD_ATTRIBUTE: {
+        LABEL: 'Password attribute',
+        SUB_LABEL: 'If this field is left blank the user will be authenticated against a bind with the LDAP server'
+      },
+      MAP_LDAP:{
+        LABEL: 'Map LDAP groups as roles',
+        SUB_LABEL: 'ENABLE'
+      },
+      GROUP_TYPE: {
+        LABEL: 'Group type',
+        OPTIONS: {
+          dynamic: {
+            id: 'dynamic',
+            label: 'Dynamic Groups'
+          },
+          static: {
+            id: 'static',
+            label: 'Static Groups'
+          }
+        }
+      },
+      GROUP_MEMBER_OF_ATTRIBUTE : {
+        LABEL: 'Group member of attribute',
+        SUB_LABEL: 'Set this to the attribute used to store the attribute which holds groups DN in the user object'
+      },
+      GROUP_DN: {
+        LABEL: 'Group relative DN',
+        SUB_LABEL: 'The relative DN where group objects are found (e.g. ou=Group). This value will have the Search base DN value appended to form the full group search base DN',
+      },
+      GROUP_SUBTREE: {
+        LABEL: 'Group subtree',
+        SUB_LABEL: 'Are groups located in structures below the group base DN'
+      },
+      GROUP_OBJECT_CLASS: {
+        LABEL: 'Group object class',
+        SUB_LABEL: "LDAP class for group objects (e.g. posixGroup)"
+      },
+      GROUP_ID_ATTRIBUTE: {
+        LABEL: 'Group ID attribute'
+      },
+      GROUP_MEMBER_ATTRIBUTE: {
+        LABEL: 'Group member attribute',
+        SUB_LABEL: 'LDAP attribute containing the usernames for the group.'
+      },
+      GROUP_MEMBER_FORMAT: {
+        LABEL: 'Group member format',
+        SUB_LABEL: 'The format of user ID stored in the group member attribute (e.g. "uid=${username},ou=people,dc=example,dc=com")'
+      },
+      VERIFY_SUCCESS_MESSAGE: (url) => `Connection to LDAP server verified: ${url}`,
+      SAVE_SUCCESS_MESSAGE: (name) => `LDAP server created: ${name}`,
       VERIFYING_MESSAGE: (url) => `Checking connection to ${url}`,
     }
   },

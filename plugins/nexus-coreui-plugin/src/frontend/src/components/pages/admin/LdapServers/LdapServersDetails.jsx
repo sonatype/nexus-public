@@ -31,6 +31,10 @@ const {
 export default function LdapServersDetails({onDone}) {
   const [state, send] = useMachine(Machine, {
     devTools: true,
+    actions: {
+      onSaveSuccess: onDone,
+      onDeleteSuccess: onDone,
+    },
   });
   const userAndGroup = state.matches('loaded.creatingUserAndGroup');
 
@@ -41,7 +45,10 @@ export default function LdapServersDetails({onDone}) {
       </PageHeader>
       <NxTile>
         {userAndGroup ? (
-          <LdapServerUserAndGroupForm />
+          <LdapServerUserAndGroupForm
+            actor={state.context.userAndGroup}
+            onDone={onDone}
+          />
         ) : (
           <LdapServerConfigurationForm
             parentState={state}
