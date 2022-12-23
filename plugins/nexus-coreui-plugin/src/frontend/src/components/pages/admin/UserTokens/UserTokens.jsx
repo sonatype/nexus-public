@@ -29,7 +29,6 @@ import UserTokensReadOnly from './UserTokensReadOnly';
 import UserTokensMachine from './UserTokensMachine';
 import UIStrings from '../../../../constants/UIStrings';
 import UserTokensForm from './UserTokensForm';
-import './UserTokens.scss'; 
 
 const {
   USER_TOKEN: {MENU}

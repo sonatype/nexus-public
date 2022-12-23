@@ -3,7 +3,8 @@
   "workspaces": [
     "components/nexus-ui-plugin",
     "components/nexus-rapture",
-    "plugins/nexus-coreui-plugin"
+    "plugins/nexus-coreui-plugin",
+    "private/plugins/nexus-proui-plugin"
   ],
   "packageManager": "yarn@3.2.3"
 }

@@ -26,6 +26,4 @@ public interface ConfigurationEvent
   boolean isLocal();
 
   String getRepositoryName();
-
-  Configuration getConfiguration();
 }

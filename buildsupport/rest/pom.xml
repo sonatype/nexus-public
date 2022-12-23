@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>3.45.1-SNAPSHOT</version>
+    <version>3.46.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-rest</artifactId>
@@ -86,7 +86,7 @@
       <dependency>
         <groupId>com.thoughtworks.xstream</groupId>
         <artifactId>xstream</artifactId>
-        <version>1.4.20</version>
+        <version>1.4.19</version>
         <exclusions>
           <exclusion>
             <groupId>xmlpull</groupId>
@@ -193,11 +193,6 @@
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
           </exclusion>
-          <exclusion>
-            <groupId>org.apache.james</groupId>
-            <artifactId>apache-mime4j</artifactId>
-          </exclusion>
-
         </exclusions>
       </dependency>
 

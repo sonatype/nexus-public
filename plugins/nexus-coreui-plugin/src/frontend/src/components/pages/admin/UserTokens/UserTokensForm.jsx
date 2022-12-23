@@ -86,21 +86,13 @@ export default function UserTokensForm({service}) {
         <NxH2>{CAPTION}</NxH2>
         <NxP>{HELP_TEXT}</NxP>
 
-        <NxFieldset
-          label={USER_TOKENS_CHECKBOX.LABEL}
-          sublabel={USER_TOKENS_CHECKBOX.SUBLABEL}
-          isRequired
-        >
+        <NxFieldset label={USER_TOKENS_CHECKBOX.LABEL} isRequired>
           <NxCheckbox {...FormUtils.checkboxProps('enabled', state)} onChange={setEnabled}>
             {USER_TOKENS_CHECKBOX.DESCRIPTION}
           </NxCheckbox>
         </NxFieldset>
 
-        <NxFieldset
-          label={REPOSITORY_AUTHENTICATION_CHECKBOX.LABEL}
-          sublabel={REPOSITORY_AUTHENTICATION_CHECKBOX.SUBLABEL}
-          isRequired
-        >
+        <NxFieldset label={REPOSITORY_AUTHENTICATION_CHECKBOX.LABEL} isRequired>
           <NxCheckbox
             {...FormUtils.checkboxProps('protectContent', state)}
             onChange={FormUtils.handleUpdate('protectContent', send)}
@@ -110,7 +102,7 @@ export default function UserTokensForm({service}) {
           </NxCheckbox>
         </NxFieldset>
       </NxForm>
-
+      
       {resetConfirmation && <UserTokensResetModal service={service} />}
     </>
   );

@@ -84,26 +84,24 @@ const validatePristine = (data, prefix, name, value) => {
   return omit(omitValues, data);
 };
 
-const validateProxyFields = (data, prefix) => {
+const validateAuthenticationFields = (data, prefix) => {
   const proxyErrors = {};
-  const fieldName = (name) => `${prefix}${name}`;
+  const _ = (name) => `${prefix}${name}`;
 
-  if (data[fieldName('Enabled')]) {
-    proxyErrors[fieldName('Host')] = 
-      ValidationUtils.validateNotBlank(data[fieldName('Host')]) || 
-      ValidationUtils.validateHost(data[fieldName('Host')]);
+  if (data[_('Enabled')]) {
+    proxyErrors[_('Host')] = ValidationUtils.validateNotBlank(data[_('Host')]);
 
-    proxyErrors[fieldName('Port')] =
-      ValidationUtils.validateNotBlank(data[fieldName('Port')]) ||
+    proxyErrors[_('Port')] =
+      ValidationUtils.validateNotBlank(data[_('Port')]) ||
       ValidationUtils.isInRange({
-        value: data[fieldName('Port')],
+        value: data[_('Port')],
         min: 1,
         max: 65535,
       });
 
-    if (data[fieldName('AuthEnabled')]) {
-      proxyErrors[fieldName('AuthUsername')] = ValidationUtils.validateNotBlank(
-        data[fieldName('AuthUsername')]
+    if (data[_('AuthEnabled')]) {
+      proxyErrors[_('AuthUsername')] = ValidationUtils.validateNotBlank(
+        data[_('AuthUsername')]
       );
     }
   }
@@ -186,8 +184,8 @@ export default FormUtils.buildFormMachine({
     validate: assign({
       validationErrors: ({data}) => {
         const proxyErrors = {
-          ...validateProxyFields(data, 'http'),
-          ...validateProxyFields(data, 'https'),
+          ...validateAuthenticationFields(data, 'http'),
+          ...validateAuthenticationFields(data, 'https'),
         };
 
         return {
@@ -284,14 +282,15 @@ export default FormUtils.buildFormMachine({
     onSaveSuccess: update,
     setSaveError: assign({
       saveErrors: (_, event) => {
-        const {message} = event.data;
-        try {
-          const error = JSON.parse(event.data.message);
-          if (hasIn('nonProxyHosts', error)) {
-            return {nonProxyHost: error.nonProxyHosts};
-          }
-        } catch (e) {}
-        return message;
+        const error = JSON.parse(event.data.message);
+
+        if (hasIn('nonProxyHosts', error)) {
+          return {
+            nonProxyHost: error.nonProxyHosts,
+          };
+        }
+
+        return error;
       },
       saveErrorData: ({data}) => data,
       saveError: (_, event) => {
@@ -301,10 +300,7 @@ export default FormUtils.buildFormMachine({
     }),
   },
   services: {
-    fetchData: async () => {
-      const response = await ExtAPIUtils.extAPIRequest(ACTION, METHODS.READ);
-      return ExtAPIUtils.checkForError(response) || response;
-    },
+    fetchData: () => ExtAPIUtils.extAPIRequest(ACTION, METHODS.READ),
     saveData: async ({data}) => {
       let saveData = validateAuthentication(data, 'http');
 
