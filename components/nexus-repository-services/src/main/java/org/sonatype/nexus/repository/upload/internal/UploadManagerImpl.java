@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -32,6 +31,7 @@ import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.importtask.ImportFileConfiguration;
+import org.sonatype.nexus.repository.importtask.ImportResult;
 import org.sonatype.nexus.repository.rest.ComponentUploadExtension;
 import org.sonatype.nexus.repository.rest.internal.resources.ComponentUploadUtils;
 import org.sonatype.nexus.repository.types.HostedType;
@@ -164,6 +164,13 @@ public class UploadManagerImpl
           importFileConfiguration.getAssetName()
       );
     }
+  }
+
+  @Override
+  public void handleAfterImport(final ImportResult importResult) throws IOException {
+    Repository repository = importResult.getRepository();
+    UploadHandler uploadHandler = getUploadHandler(repository);
+    uploadHandler.handleAfterImport(importResult);
   }
 
   private ComponentUpload create(final Repository repository, final HttpServletRequest request)

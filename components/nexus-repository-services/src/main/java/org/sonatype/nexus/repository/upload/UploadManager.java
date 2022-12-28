@@ -15,13 +15,12 @@ package org.sonatype.nexus.repository.upload;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.importtask.ImportResult;
 import org.sonatype.nexus.repository.importtask.ImportFileConfiguration;
+import org.sonatype.nexus.repository.importtask.ImportResult;
 import org.sonatype.nexus.repository.view.Content;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -67,12 +66,9 @@ public interface UploadManager
 
   /**
    * This is a hook that allows to handle situations where additional work is required.
-   *
    * One example of this is when some repository-spanning metadata can be updated after they are processed.
    */
-  default void handleAfterImport(final ImportResult importResult) throws IOException {
-    // No implementation
-  }
+  void handleAfterImport(final ImportResult importResult) throws IOException;
 
   class UIUploadEvent {
     private final Repository repository;
