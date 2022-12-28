@@ -19,7 +19,7 @@ import {
   NxModal,
   NxFormGroup,
   NxTextInput,
-  NxStatefulWarningAlert
+  NxWarningAlert
 } from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
@@ -43,7 +43,7 @@ export default function UserTokensResetModal({service}) {
         <NxH2>{RESET_CONFIRMATION.CAPTION}</NxH2>
       </NxModal.Header>
       <NxModal.Content>
-        <NxStatefulWarningAlert>{RESET_CONFIRMATION.WARNING}</NxStatefulWarningAlert>
+        <NxWarningAlert >{RESET_CONFIRMATION.WARNING}</NxWarningAlert>
         <NxForm
           onSubmit={resetUserTokens}
           submitBtnText={RESET_CONFIRMATION.BUTTON}
