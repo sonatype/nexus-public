@@ -1889,12 +1889,14 @@ This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 
     <NxTextLink href="#user/usertoken">user mode</NxTextLink>.
     </>,
     USER_TOKENS_CHECKBOX: {
-      LABEL: 'User tokens',
+      LABEL: 'User Tokens',
+      SUBLABEL: "Allow user tokens for repository access",
       DESCRIPTION: 'Enable'
     },
     REPOSITORY_AUTHENTICATION_CHECKBOX: {
-      LABEL: 'Require user token for repository authentication',
-      DESCRIPTION: 'This does not affect UI access'
+      LABEL: 'Require User Tokens for Repository Authentication',
+      SUBLABEL: "When enabled, any format clients must use a user token to access content. REST APIs and the UI will continue to allow normal logins",
+      DESCRIPTION: 'Enable'
     },
     RESET_ALL_TOKENS_BUTTON: 'Reset all user tokens',
     RESET_ERROR_MSG: 'An error occurred while resetting user tokens',
@@ -1905,7 +1907,7 @@ This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 
       VALIDATION_ERROR: 'The confirmation string provided is incorrect',
       LABEL: 'Verify Reset',
       get SUBLABEL() {
-        return `Type ‘${this.CONFIRMATION_STRING}’ to confirm this action and  proceed`
+        return <>Type ‘<strong>{this.CONFIRMATION_STRING}</strong>’ to confirm this action and  proceed</>
       },
       WARNING: 'Reset will invalidate ALL existing user tokens and force new tokens to be created the next time they are accessed.',
       BUTTON: 'Reset User Tokens',

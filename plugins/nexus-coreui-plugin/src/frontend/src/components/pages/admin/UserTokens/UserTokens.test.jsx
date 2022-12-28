@@ -57,17 +57,17 @@ jest.mock('axios', () => {
 
 const selectors = {
   ...TestUtils.selectors,
-  userTokensCheckbox: () => screen.getByLabelText(USER_TOKENS_CHECKBOX.DESCRIPTION),
+  userTokensCheckbox: () => screen.getAllByLabelText(USER_TOKENS_CHECKBOX.DESCRIPTION)[0],
   repositoryUserTokensCheckbox: () =>
-    screen.getByLabelText(REPOSITORY_AUTHENTICATION_CHECKBOX.DESCRIPTION),
+    screen.getAllByLabelText(REPOSITORY_AUTHENTICATION_CHECKBOX.DESCRIPTION)[1],
   saveButton: () => screen.queryByText(SAVE_BUTTON_LABEL),
   discardButton: () => screen.getByText(DISCARD_BUTTON_LABEL),
   resetButton: () => screen.queryByText(RESET_ALL_TOKENS_BUTTON),
   readOnlyWarning: () => screen.getByText(READ_ONLY_WARNING),
   confirmation: {
     modal: () => screen.queryByRole('dialog'),
-    cancelButton: () => within(selectors.confirmation.modal()).queryAllByRole('button')[1],
-    submitButton: () => within(selectors.confirmation.modal()).queryAllByRole('button')[2],
+    cancelButton: () => within(selectors.confirmation.modal()).queryAllByRole('button')[0],
+    submitButton: () => within(selectors.confirmation.modal()).queryAllByRole('button')[1],
     input: () => within(selectors.confirmation.modal()).getByLabelText(RESET_CONFIRMATION.LABEL)
   }
 };
@@ -240,6 +240,7 @@ describe('reset user tokens', () => {
     await waitFor(() => expect(modal()).toBeInTheDocument());
 
     expect(submitButton()).toHaveClass('disabled');
+
     expect(cancelButton()).toBeInTheDocument();
 
     await TestUtils.changeField(input, 'abracadabra');
