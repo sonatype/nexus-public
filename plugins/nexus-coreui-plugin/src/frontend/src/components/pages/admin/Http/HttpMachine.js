@@ -282,15 +282,14 @@ export default FormUtils.buildFormMachine({
     onSaveSuccess: update,
     setSaveError: assign({
       saveErrors: (_, event) => {
-        const error = JSON.parse(event.data.message);
-
-        if (hasIn('nonProxyHosts', error)) {
-          return {
-            nonProxyHost: error.nonProxyHosts,
-          };
-        }
-
-        return error;
+        const {message} = event.data;
+        try {
+          const error = JSON.parse(event.data.message);
+          if (hasIn('nonProxyHosts', error)) {
+            return {nonProxyHost: error.nonProxyHosts};
+          }
+        } catch (e) {}
+        return message;
       },
       saveErrorData: ({data}) => data,
       saveError: (_, event) => {
@@ -300,7 +299,10 @@ export default FormUtils.buildFormMachine({
     }),
   },
   services: {
-    fetchData: () => ExtAPIUtils.extAPIRequest(ACTION, METHODS.READ),
+    fetchData: async () => {
+      const response = await ExtAPIUtils.extAPIRequest(ACTION, METHODS.READ);
+      return ExtAPIUtils.checkForError(response) || response;
+    },
     saveData: async ({data}) => {
       let saveData = validateAuthentication(data, 'http');
 
