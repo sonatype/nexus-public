@@ -84,24 +84,26 @@ const validatePristine = (data, prefix, name, value) => {
   return omit(omitValues, data);
 };
 
-const validateAuthenticationFields = (data, prefix) => {
+const validateProxyFields = (data, prefix) => {
   const proxyErrors = {};
-  const _ = (name) => `${prefix}${name}`;
+  const fieldName = (name) => `${prefix}${name}`;
 
-  if (data[_('Enabled')]) {
-    proxyErrors[_('Host')] = ValidationUtils.validateNotBlank(data[_('Host')]);
+  if (data[fieldName('Enabled')]) {
+    proxyErrors[fieldName('Host')] = 
+      ValidationUtils.validateNotBlank(data[fieldName('Host')]) || 
+      ValidationUtils.validateHost(data[fieldName('Host')]);
 
-    proxyErrors[_('Port')] =
-      ValidationUtils.validateNotBlank(data[_('Port')]) ||
+    proxyErrors[fieldName('Port')] =
+      ValidationUtils.validateNotBlank(data[fieldName('Port')]) ||
       ValidationUtils.isInRange({
-        value: data[_('Port')],
+        value: data[fieldName('Port')],
         min: 1,
         max: 65535,
       });
 
-    if (data[_('AuthEnabled')]) {
-      proxyErrors[_('AuthUsername')] = ValidationUtils.validateNotBlank(
-        data[_('AuthUsername')]
+    if (data[fieldName('AuthEnabled')]) {
+      proxyErrors[fieldName('AuthUsername')] = ValidationUtils.validateNotBlank(
+        data[fieldName('AuthUsername')]
       );
     }
   }
@@ -184,8 +186,8 @@ export default FormUtils.buildFormMachine({
     validate: assign({
       validationErrors: ({data}) => {
         const proxyErrors = {
-          ...validateAuthenticationFields(data, 'http'),
-          ...validateAuthenticationFields(data, 'https'),
+          ...validateProxyFields(data, 'http'),
+          ...validateProxyFields(data, 'https'),
         };
 
         return {
