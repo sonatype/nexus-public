@@ -39,4 +39,9 @@ public class OrientConfigurationCreatedEvent
   public String getRepositoryName() {
     return repositoryName;
   }
+
+  @Override
+  public Configuration getConfiguration() {
+    return getEntity();
+  }
 }

@@ -25,7 +25,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import javax.inject.Provider;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -33,7 +32,6 @@ import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.app.FreezeService;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityMetadata;
-import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.Format;
@@ -50,6 +48,7 @@ import org.sonatype.nexus.repository.manager.DefaultRepositoriesContributor;
 
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.Test.None;
 import org.mockito.Mock;
@@ -546,12 +545,14 @@ public class RepositoryManagerImplTest
   }
 
   @Test(expected = None.class)
+  @Ignore("NEXUS-36615")
   public void createEventForAlreadyCreatedRepositoryIsHandledGracefully() throws Exception {
     repositoryManager = buildRepositoryManagerImpl(true, true);
     ConfigurationCreatedEvent repositoryConfigurationEvent = new ConfigurationCreatedEvent(mavenCentralConfiguration);
     repositoryConfigurationEvent.setRemoteNodeId("remote");
 
-    EventHelper.asReplicating(() -> repositoryManager.on(repositoryConfigurationEvent));
+    // TODO should be uncomment after NEXUS-36640
+    //EventHelper.asReplicating(() -> repositoryManager.on(repositoryConfigurationEvent));
 
     verify(configurationStore, times(2)).list();
     verify(configurationStore, never()).create(any());
