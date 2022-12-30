@@ -21,7 +21,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -34,7 +33,6 @@ import org.sonatype.nexus.common.app.FreezeService;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.event.EventAware;
-import org.sonatype.nexus.common.event.EventConsumer;
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.Guarded;
@@ -44,12 +42,8 @@ import org.sonatype.nexus.jmx.reflect.ManagedObject;
 import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
-import org.sonatype.nexus.repository.config.ConfigurationCreatedEvent;
-import org.sonatype.nexus.repository.config.ConfigurationDeletedEvent;
-import org.sonatype.nexus.repository.config.ConfigurationEvent;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.config.ConfigurationStore;
-import org.sonatype.nexus.repository.config.ConfigurationUpdatedEvent;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
@@ -570,42 +564,15 @@ public class RepositoryManagerImpl
     }
   }
 
-  @Subscribe
-  public void on(final ConfigurationCreatedEvent event) {
-    handleReplication(event, e -> create(retrieveConfigurationByName(e.getRepositoryName())
-        .orElseThrow(() -> new RuntimeException("Missing configuration: " + e.getRepositoryName()))));
-  }
-
-  @Subscribe
-  public void on(final ConfigurationUpdatedEvent event) {
-    handleReplication(event, e -> update(retrieveConfigurationByName(e.getRepositoryName())
-        .orElseThrow(() -> new RuntimeException("Missing configuration: " + e.getRepositoryName()))));
-  }
-
-  @Subscribe
-  public void on(final ConfigurationDeletedEvent event) {
-    handleReplication(event, e -> delete(e.getRepositoryName()));
-  }
-
   /*
    * Use the ConfigurationStore to find a Configuration by name if it exists.
    */
-  private Optional<Configuration> retrieveConfigurationByName(final String name) {
+  @Override
+  public Optional<Configuration> retrieveConfigurationByName(final String name) {
     String lcName = name.toLowerCase();
     return store.list().stream()
         .filter(candidate -> lcName.equals(candidate.getRepositoryName().toLowerCase()))
         .findAny();
-  }
-
-  private void handleReplication(final ConfigurationEvent event, final EventConsumer<ConfigurationEvent> consumer) {
-    if (!event.isLocal()) {
-      try {
-        consumer.accept(event);
-      }
-      catch (Exception e) {
-        log.error("Failed to replicate: {}", event, e);
-      }
-    }
   }
 
   private boolean repositoryHasCleanupPolicy(final Repository repository, final String cleanupPolicyName) {

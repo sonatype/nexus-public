@@ -13,6 +13,9 @@
 package org.sonatype.nexus.repository.config.internal;
 
 import org.sonatype.nexus.common.event.EventWithSource;
+import org.sonatype.nexus.repository.config.Configuration;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -37,5 +40,11 @@ public class ConfigurationDeletedEvent
 
   public void setRepositoryName(final String repositoryName) {
     this.repositoryName = repositoryName;
+  }
+
+  @JsonIgnore
+  @Override
+  public Configuration getConfiguration() {
+    throw new UnsupportedOperationException("Configuration is not available in the event, use DB instead");
   }
 }
