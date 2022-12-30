@@ -63,8 +63,6 @@ const {
       HEALTH_CHECK: {
         ANALYZE_BUTTON,
         ANALYZE_ALL,
-        NOT_AVAILABLE_TOOLTIP_HC,
-        NOT_AVAILABLE_TOOLTIP_FS,
         LOADING,
         ANALYZING,
         LOADING_ERROR,
@@ -77,6 +75,8 @@ const {
 } = UIStrings;
 
 const selectors = {
+  row: (repoName) => screen.getAllByRole('row').find((el) => el.textContent.startsWith(repoName)),
+  unavailableIcons: (repoName) => selectors.row(repoName).querySelectorAll('.nxrm-unavailable-icon'),
   healthCheck: {
     cell: (rowIndex) => screen.getAllByRole('row')[rowIndex].cells[5],
     get analyzeBtn() {
@@ -96,7 +96,7 @@ const selectors = {
   },
   iqPolicyViolations: {
     cell: (rowIndex) => screen.getAllByRole('row')[rowIndex].cells[6],
-    columnHeader: () => screen.queryByRole('columnheader', {name: COLUMNS.IQ})
+    columnHeader: () => screen.queryByRole('columnheader', {name: COLUMNS.IQ}),
   }
 };
 
@@ -751,18 +751,20 @@ describe('RepositoriesList', function () {
         expect(axios.post).toHaveBeenCalledWith(EXT_URL, READ_FIREWALL_STATUS_REQUEST)
       );
 
+      const {healthCheck, iqPolicyViolations, unavailableIcons} = selectors;
+
+      expect(healthCheck.columnHeader()).toBeVisible();
+      expect(iqPolicyViolations.columnHeader()).toBeVisible();
+
       expect(selectors.iqPolicyViolations.cell(rowIndices.MAVEN_CENTRAL)).toHaveTextContent(
         getCountersRegexp('maven-central')
-      );
-      expect(selectors.iqPolicyViolations.cell(rowIndices.MAVEN_PUBLIC)).toHaveTextContent(
-        NOT_AVAILABLE_TOOLTIP_FS
-      );
-      expect(selectors.iqPolicyViolations.cell(rowIndices.NUGET_HOSTED)).toHaveTextContent(
-        NOT_AVAILABLE_TOOLTIP_FS
       );
       expect(selectors.iqPolicyViolations.cell(rowIndices.NUGET_ORG_PROXY)).toHaveTextContent(
         getCountersRegexp('nuget.org-proxy')
       );
+
+      expect(unavailableIcons('maven-public')).toHaveLength(2);
+      expect(unavailableIcons('nuget-hosted')).toHaveLength(2);
     });
 
     it('displays an error message on API call error', async () => {
