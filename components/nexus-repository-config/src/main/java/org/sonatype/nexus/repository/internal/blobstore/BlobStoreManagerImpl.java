@@ -273,6 +273,7 @@ public class BlobStoreManagerImpl
   @Guarded(by = STARTED)
   public BlobStore update(final BlobStoreConfiguration configuration) throws Exception {
     checkNotNull(configuration);
+    validateConfiguration(configuration, false);
     BlobStore blobStore = getBlobStoreForUpdate(configuration);
 
     if (!EventHelper.isReplicating()) {
@@ -292,7 +293,6 @@ public class BlobStoreManagerImpl
     blobStore.validateCanCreateAndUpdate();
     log.debug("Updating BlobStore: {} with attributes: {}", configuration.getName(),
         configuration.getAttributes());
-    validateConfiguration(configuration, false);
 
     return blobStore;
   }
