@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+import React, {useEffect} from 'react';
 
 import {
   NxTile,
@@ -43,9 +43,9 @@ const {
   SSL_CERTIFICATES: {FORM: LABELS},
 } = UIStrings;
 
-export default function SslCertificatesDetails({machine, onDone}) {
+export default function SslCertificatesDetails({itemId, machine, onDone}) {
   const [state, send] = machine;
-  const {data, loadError, shouldLoadNew} = state.context;
+  const {data, loadError} = state.context;
 
   const canDelete = canDeleteCertificate();
 
@@ -59,7 +59,7 @@ export default function SslCertificatesDetails({machine, onDone}) {
     issuerOrganization,
     issuerOrganizationalUnit,
     fingerprint,
-    inTrustStore,
+    inTrustStore
   } = data?.certificate || {};
 
   const issuedDate = issuedOn ? DateUtils.timestampToString(issuedOn) : '';
@@ -69,12 +69,19 @@ export default function SslCertificatesDetails({machine, onDone}) {
 
   const save = () => send('SAVE');
   const retry = () => send('RETRY');
+  const loadForId = (id) => send({type: 'LOAD_FOR_ID', value: id});
 
   const confirmDelete = () => {
     if (canDelete) {
       send('CONFIRM_DELETE');
     }
   };
+
+  useEffect(() => {
+    if (!fingerprint) {
+      loadForId(itemId)
+    }
+  }, [itemId]);
 
   return (
     <Page className="nxrm-ssl-certificate">
@@ -157,11 +164,7 @@ export default function SslCertificatesDetails({machine, onDone}) {
                   <NxButton type="button" onClick={onDone}>
                     {UIStrings.SETTINGS.CANCEL_BUTTON_LABEL}
                   </NxButton>
-                  {shouldLoadNew && !inTrustStore ? (
-                    <NxButton type="button" variant="primary" onClick={save}>
-                      {LABELS.BUTTONS.ADD}
-                    </NxButton>
-                  ) : (
+                  {itemId || inTrustStore ? (
                     <NxTooltip title={!canDelete && UIStrings.PERMISSION_ERROR}>
                       <NxButton
                         type="button"
@@ -172,6 +175,10 @@ export default function SslCertificatesDetails({machine, onDone}) {
                         {LABELS.BUTTONS.DELETE}
                       </NxButton>
                     </NxTooltip>
+                  ) : (
+                    <NxButton type="button" variant="primary" onClick={save}>
+                      {LABELS.BUTTONS.ADD}
+                    </NxButton>
                   )}
                 </NxButtonBar>
               </NxFooter>

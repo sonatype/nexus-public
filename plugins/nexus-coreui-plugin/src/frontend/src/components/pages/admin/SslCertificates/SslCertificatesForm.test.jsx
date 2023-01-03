@@ -32,7 +32,16 @@ const {sslCertificatesUrl, singleSslCertificatesUrl, createSslCertificatesUrl} =
 const {
   SSL_CERTIFICATES: {
     FORM: LABELS,
-    ADD_FORM: {CAPTION: ADD_FORM_CAPTION, LOAD_BUTTON, PEM, SERVER}
+    ADD_FORM: {
+      CAPTION: ADD_FORM_CAPTION, 
+      LOAD_BUTTON, 
+      PEM, 
+      SERVER,
+      MODAL: {
+        VIEW_BUTTON,
+        CONTENT: MODAL_CONTENT
+      }
+    }
   },
   SETTINGS: {CANCEL_BUTTON_LABEL}
 } = UIStrings;
@@ -81,6 +90,9 @@ const selectors = {
   remoteHostUrlInput: () => screen.getByLabelText(SERVER.LABEL),
   pemInput: () => screen.getByLabelText(PEM.LABEL),
   loadCertificateButton: () => screen.getByText(LOAD_BUTTON),
+  alreadyExistsModal: () => screen.queryByRole('dialog'),
+  viewExistingCertificateButton: () => within(selectors.alreadyExistsModal()).getByText(VIEW_BUTTON),
+  alreadyExistsModalContent: () => within(selectors.alreadyExistsModal()).getByText(MODAL_CONTENT)
 };
 
 describe('SslCertificatesDetails', function() {
@@ -251,6 +263,17 @@ describe('SslCertificatesAddForm', function () {
     tid: 1
   });
 
+  const loadFromServerExtRespBody = (certificate) => ({
+    action: EXT.SSL.ACTION,
+    method: EXT.SSL.METHODS.RETRIEVE_FROM_HOST,
+    result: {
+      success: true,
+      data: certificate
+    },
+    type: 'rpc',
+    tid: 1,
+  });
+
   beforeEach(() => {
     ExtJS.checkPermission.mockReturnValue(true);
   });
@@ -349,5 +372,37 @@ describe('SslCertificatesAddForm', function () {
     userEvent.click(cancelButton());
 
     await waitFor(() => expect(onDone).toBeCalled());
+  });
+
+  it('shows modal when trying to add existing certificate', async function () {
+    const remoteHost = 'foo.bar';
+
+    const certificate = SSL_CERTIFICATES[3];
+
+    const response = {data: loadFromServerExtRespBody(certificate)};
+
+    when(Axios.post).calledWith(EXT.URL, loadFromServerExtReqBody(remoteHost)).mockResolvedValue(response);
+
+    await renderAddForm();
+
+    const {
+      remoteHostUrlInput, 
+      loadCertificateButton, 
+      alreadyExistsModal, 
+      alreadyExistsModalContent,
+      viewExistingCertificateButton
+    } = selectors;
+
+    await TestUtils.changeField(remoteHostUrlInput, remoteHost);
+
+    userEvent.click(loadCertificateButton());
+
+    await waitFor(() => expect(Axios.post).toBeCalledWith(EXT.URL, loadFromServerExtReqBody(remoteHost)));
+
+    expect(alreadyExistsModal()).toBeVisible();
+
+    expect(alreadyExistsModalContent()).toBeVisible();
+
+    expect(viewExistingCertificateButton()).toBeVisible();
   });
 });

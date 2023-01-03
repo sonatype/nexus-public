@@ -359,6 +359,11 @@ export default {
       SERVER: {
         LABEL: 'Please enter a hostname, hostname:port or a URL to fetch a SSL certificate from',
         RADIO_DESCRIPTION: 'Load from server'
+      },
+      MODAL: {
+        HEADER: 'Certificate Already Exists',
+        CONTENT: 'This Certificate already exists and cannot be added again. Would you like to view the existing Certificate?',
+        VIEW_BUTTON: 'View Certificate'
       }
     },
     FORM: {

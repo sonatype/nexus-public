@@ -55,6 +55,20 @@ export const SSL_CERTIFICATES = [{
   subjectCommonName: 'repo1.maven.org',
   subjectOrganization: null,
   subjectOrganizationalUnit: null,
+}, {
+  id: 'CC:92:D5:FD:41:33:CC:C4:9F:7D:A1:5A:04:F1:11:20:04:3D:FB:48',
+  fingerprint: 'CC:92:D5:FD:41:33:CC:C4:9F:7D:A1:5A:04:F1:11:20:04:3D:FB:48',
+  pem: '-----BEGIN CERTIFICATE-----\nMIIOHDCQA==\n-----END CERTIFICATE-----\n',
+  serialNumber: '312562198579271308107566801634569296046',
+  subjectCommonName: '*.google.com',
+  subjectOrganization: null,
+  subjectOrganizationalUnit: null,
+  issuerCommonName: 'GTS CA 1C3',
+  issuerOrganization: 'Google Trust Services LLC',
+  issuerOrganizationalUnit: null,
+  issuedOn: 1669623431000,
+  expiresOn: 1676881030000,
+  inTrustStore: true
 }];
 
 export const SSL_CERTIFICATES_MAP = indexBy(prop('id'), SSL_CERTIFICATES);

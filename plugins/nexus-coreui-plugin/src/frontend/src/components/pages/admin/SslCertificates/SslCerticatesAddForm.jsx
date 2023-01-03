@@ -24,6 +24,7 @@ import {ContentBody, Page, PageHeader, PageTitle, FormUtils} from '@sonatype/nex
 import {faIdCardAlt} from '@fortawesome/free-solid-svg-icons';
 import UIStrings from '../../../../constants/UIStrings';
 import {SOURCES} from './SslCertificatesFormMachine';
+import SslCertificatesAlreadyExistsModal from './SslCertificatesAlreadyExistsModal';
 
 const {
   ADD_FORM: {CAPTION, LOAD_BUTTON, PEM, SERVER},
@@ -33,11 +34,13 @@ const {
 export default function SslCerticatesAddForm({onDone, machine}) {
   const [state, send] = machine;
 
-  const {isPristine, isInvalid, source} = state.context;
+  const {isPristine, isInvalid, source, data} = state.context;
+
+  const {inTrustStore, id} = data?.certificate || {};
 
   const updateSource = (value) => send({type: 'SET_SOURCE', value});
 
-  const load = () => send('LOAD_NEW');
+  const load = () => send('LOAD');
 
   return (
     <Page className="nxrm-ssl-certificates">
@@ -100,6 +103,8 @@ export default function SslCerticatesAddForm({onDone, machine}) {
           </NxTile.Content>
         </NxTile>
       </ContentBody>
+
+      {inTrustStore && <SslCertificatesAlreadyExistsModal certificateId={id} cancel={onDone} />}
     </Page>
   );
 }

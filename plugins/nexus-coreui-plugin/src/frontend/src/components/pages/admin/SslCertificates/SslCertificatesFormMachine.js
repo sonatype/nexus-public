@@ -51,8 +51,11 @@ export default FormUtils.buildFormMachine({
               actions: 'setSource',
               target: 'loaded'
             },
-            LOAD_NEW: {
-              actions: 'setLoadNew',
+            LOAD: {
+              target: 'loading'
+            },
+            LOAD_FOR_ID: {
+              actions: 'setId',
               target: 'loading'
             }
           }
@@ -108,8 +111,8 @@ export default FormUtils.buildFormMachine({
         }
       };
     }),
-    setLoadNew: assign({
-      shouldLoadNew: () => true
+    setId: assign({
+      id: (_, {value}) => value
     }),
     onDeleteError: (_, event) => ExtJS.showErrorMessage(event.data?.response?.data),
     logDeleteSuccess: ({data: {certificate}}) =>
@@ -125,12 +128,7 @@ export default FormUtils.buildFormMachine({
     }
   },
   services: {
-    fetchData: async ({id, shouldLoadNew, data}) => {
-      const isCreate = !id && !shouldLoadNew;
-      if (isCreate) {
-        return {data: {}};
-      }
-      const {remoteHostUrl, pemContent} = data;
+    fetchData: async ({id, data: {remoteHostUrl, pemContent}}) => {
       if (id) {
         return Axios.get(sslCertificatesUrl);
       } else if (remoteHostUrl) {

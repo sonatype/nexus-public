@@ -40,13 +40,15 @@ export default function SslCertificatesForm({itemId, onDone}) {
 
   const [state] = machine;
 
-  const {shouldLoadNew, loadError} = state.context;
+  const {loadError, data} = state.context;
 
-  const showAddForm = (!itemId && !shouldLoadNew) || (shouldLoadNew && loadError);
+  const {inTrustStore, fingerprint} = data?.certificate || {};
+
+  const showAddForm = !itemId && (!fingerprint || inTrustStore || loadError);
 
   return showAddForm ? (
     <SslCerticatesAddForm machine={machine} onDone={onDone} />
   ) : (
-    <SslCertificatesDetails machine={machine} onDone={onDone} />
+    <SslCertificatesDetails itemId={itemId} machine={machine} onDone={onDone} />
   );
 }
