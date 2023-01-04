@@ -96,18 +96,6 @@
       </dependency>
 
       <dependency>
-        <groupId>org.apache.karaf.shell</groupId>
-        <artifactId>org.apache.karaf.shell.core</artifactId>
-        <version>${karaf.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.apache.sshd</groupId>
-            <artifactId>sshd-osgi</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
         <groupId>org.apache.karaf.features</groupId>
         <artifactId>framework</artifactId>
         <version>${karaf.version}</version>
