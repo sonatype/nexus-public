@@ -22,19 +22,14 @@ import {
   Section,
   Textarea,
   Textfield,
-  Utils,
   FormUtils,
 } from '@sonatype/nexus-ui-plugin';
 
 import {
-  NxForm,
-  NxErrorAlert,
   NxButton,
   NxFontAwesomeIcon,
-  NxLoadWrapper,
-  NxSubmitMask,
-  NxTooltip,
-  NxP
+  NxP,
+  NxStatefulForm
 } from '@sonatype/react-shared-components';
 
 import ContentSelectorsFormMachine from './ContentSelectorsFormMachine';
@@ -59,18 +54,11 @@ export default function ContentSelectorsForm({itemId, onDone}) {
     devTools: true
   });
 
-  const {isPristine, pristineData, data, loadError, saveError, validationErrors} = current.context;
-  const isLoading = current.matches('loading');
-  const isSaving = current.matches('saving');
-  const isInvalid = Utils.isInvalid(validationErrors);
+  const {pristineData, data, loadError} = current.context;
   const hasData = data && data !== {};
 
   function update(event) {
     send('UPDATE', {data: {[event.target.name]: event.target.value}});
-  }
-
-  function save() {
-    send('SAVE');
   }
 
   function cancel() {
@@ -81,25 +69,13 @@ export default function ContentSelectorsForm({itemId, onDone}) {
     send('CONFIRM_DELETE');
   }
 
-  function retry() {
-    send('RETRY');
-  }
-
   return <Page className="nxrm-content-selectors">
     <PageHeader><PageTitle icon={faScroll} {...UIStrings.CONTENT_SELECTORS.MENU}/></PageHeader>
     <ContentBody>
       <Section className="nxrm-content-selectors-form">
-        <NxForm
-          loading={isLoading}
-          loadError={loadError}
+        <NxStatefulForm
+            {...FormUtils.formProps(current, send)}
           onCancel={cancel}
-          doLoad={retry}
-          onSubmit={save}
-          submitError={saveError}
-          submitMaskState={isSaving ? false : null}
-          submitBtnText={UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
-          submitMaskMessage={UIStrings.SAVING}
-          validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
           additionalFooterBtns={itemId &&
             <NxButton variant="tertiary" onClick={confirmDelete}>
               <NxFontAwesomeIcon icon={faTrash}/>
@@ -111,7 +87,7 @@ export default function ContentSelectorsForm({itemId, onDone}) {
             <FieldWrapper labelText={UIStrings.CONTENT_SELECTORS.NAME_LABEL}>
               <Textfield
                   className="nx-text-input--long"
-                  {...Utils.fieldProps('name', current)}
+                  {...FormUtils.fieldProps('name', current)}
                   disabled={pristineData.name}
                   onChange={update}/>
             </FieldWrapper>
@@ -123,14 +99,14 @@ export default function ContentSelectorsForm({itemId, onDone}) {
             <FieldWrapper labelText={UIStrings.CONTENT_SELECTORS.DESCRIPTION_LABEL} isOptional>
               <Textfield
                   className="nx-text-input--long"
-                  {...Utils.fieldProps('description', current)}
+                  {...FormUtils.fieldProps('description', current)}
                   onChange={update}/>
             </FieldWrapper>
             <FieldWrapper labelText={UIStrings.CONTENT_SELECTORS.EXPRESSION_LABEL}
                           descriptionText={UIStrings.CONTENT_SELECTORS.EXPRESSION_DESCRIPTION}>
               <Textarea
                   className="nx-text-input--long"
-                  {...Utils.fieldProps('expression', current)}
+                  {...FormUtils.fieldProps('expression', current)}
                   onChange={update}
               />
             </FieldWrapper>
@@ -145,7 +121,7 @@ export default function ContentSelectorsForm({itemId, onDone}) {
               {' '}<code className="nx-code">format == "maven2" and path =^ "/org"</code>
             </NxP>
           </>}
-        </NxForm>
+        </NxStatefulForm>
       </Section>
       {!loadError && <ContentSelectorsPreview type={data?.type} expression={data?.expression}/>}
     </ContentBody>

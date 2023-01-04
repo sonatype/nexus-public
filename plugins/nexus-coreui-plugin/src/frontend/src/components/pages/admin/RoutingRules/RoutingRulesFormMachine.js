@@ -158,7 +158,7 @@ export default FormUtils.buildFormMachine({
 
       data.matchers.forEach((matcher, index) => {
         if (ValidationUtils.isBlank(matcher)) {
-          validationErrors[`matcher[${index}]`] = UIStrings.ERROR.FIELD_REQUIRED
+          validationErrors[`matchers[${index}]`] = UIStrings.ERROR.FIELD_REQUIRED
         }
       });
       return {validationErrors};

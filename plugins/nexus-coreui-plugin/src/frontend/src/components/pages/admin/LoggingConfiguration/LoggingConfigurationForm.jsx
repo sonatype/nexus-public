@@ -24,9 +24,9 @@ import {
 
 import {
   NxButton,
-  NxForm,
   NxFormGroup,
   NxFormSelect,
+  NxStatefulForm,
   NxTextInput
 } from '@sonatype/react-shared-components';
 
@@ -95,13 +95,13 @@ export default function LoggingConfigurationForm({itemId, onDone}) {
     <PageHeader><PageTitle icon={faScroll} {...UIStrings.LOGGING.MENU}/></PageHeader>
     <ContentBody>
       <Section className="nxrm-logging-configuration-form" onKeyPress={handleEnter}>
-        <NxForm
+        <NxStatefulForm
             {...FormUtils.formProps(current, send)}
             onCancel={cancel}
             submitMaskState={(isSaving || isResetting) ? false : null}
             submitMaskMessage={isSaving ? UIStrings.SAVING : UIStrings.LOGGING.MESSAGES.RESETTING}
             additionalFooterBtns={
-              itemId && <NxButton variant="error" onClick={reset}>{UIStrings.LOGGING.RESET_BUTTON}</NxButton>
+              itemId && <NxButton type="button" variant="error" onClick={reset}>{UIStrings.LOGGING.RESET_BUTTON}</NxButton>
             }
         >
           {() => <>
@@ -112,7 +112,7 @@ export default function LoggingConfigurationForm({itemId, onDone}) {
                   disabled={pristineData.name}
                   onChange={updateName}/>
             </NxFormGroup>
-            <NxFormGroup label={UIStrings.LOGGING.LEVEL_LABEL} isRequired>
+            <NxFormGroup label={UIStrings.LOGGING.LEVEL_LABEL}>
               <NxFormSelect name="level" value={data.level} onChange={updateLevel}>
                 {['OFF', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'].map(logLevel =>
                     <option key={logLevel} value={logLevel}>{logLevel}</option>
@@ -120,7 +120,7 @@ export default function LoggingConfigurationForm({itemId, onDone}) {
               </NxFormSelect>
             </NxFormGroup>
           </>}
-        </NxForm>
+        </NxStatefulForm>
       </Section>
     </ContentBody>
   </Page>;

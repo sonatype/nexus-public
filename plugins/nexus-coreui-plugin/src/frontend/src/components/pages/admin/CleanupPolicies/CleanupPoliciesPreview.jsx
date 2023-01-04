@@ -15,14 +15,15 @@ import {useMachine} from '@xstate/react';
 
 import {
   ListMachineUtils,
-  Section, SectionToolbar,
-  Select,
+  Section,
+  SectionToolbar,
   ValidationUtils
 } from '@sonatype/nexus-ui-plugin';
 
 import {
   NxButton,
   NxFilterInput,
+  NxFormSelect,
   NxLoadWrapper,
   NxTable,
   NxTableBody,
@@ -96,16 +97,19 @@ export default function CleanupPoliciesPreview({policyData}) {
             {UIStrings.CLEANUP_POLICIES.PREVIEW.REPOSITORY_DESCRIPTION}
           </div>
           <div className="nx-form-row">
-            <Select name="repository"
-                    onChange={repositoryChangeHandler}
-                    value={repository}
-                    aria-describedby="preview-repository-sub-label"
-                    disabled={!policyData.format}>
+            <NxFormSelect
+                id="repository"
+                name="repository"
+                onChange={repositoryChangeHandler}
+                value={repository}
+                aria-describedby="preview-repository-sub-label"
+                disabled={!policyData.format}
+            >
               <option value="">{UIStrings.CLEANUP_POLICIES.REPOSITORY_SELECT}</option>
               {repositories.map(({id, name}) =>
                   <option key={id} value={id}>{name}</option>
               )}
-            </Select>
+            </NxFormSelect>
             <NxTooltip title={previewUnavailable ? UIStrings.CLEANUP_POLICIES.PREVIEW.BUTTON_TOOLTIP : undefined}>
               <NxButton className={previewUnavailable ? 'disabled' : ''} onClick={previewHandler}>
                 {UIStrings.CLEANUP_POLICIES.PREVIEW.BUTTON}

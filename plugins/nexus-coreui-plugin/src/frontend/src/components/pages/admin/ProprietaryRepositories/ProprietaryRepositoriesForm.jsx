@@ -16,8 +16,8 @@ import {useMachine} from '@xstate/react';
 import {FormUtils} from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
-  NxForm,
   NxTooltip,
+  NxStatefulForm,
   NxStatefulTransferList,
 } from '@sonatype/react-shared-components';
 
@@ -48,7 +48,7 @@ export default function ProprietaryRepositories() {
 
   const repositories = possibleRepos?.map((it) => ({id: it.id, displayName: it.name})) || [];
 
-  return <NxForm
+  return <NxStatefulForm
       loading={isLoading}
       loadError={loadError}
       doLoad={retry}
@@ -76,5 +76,5 @@ export default function ProprietaryRepositories() {
           showMoveAll
       />
     </>}
-  </NxForm>;
+  </NxStatefulForm>;
 }

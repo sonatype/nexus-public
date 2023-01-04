@@ -19,17 +19,17 @@ import {
   ExtJS,
 } from '@sonatype/nexus-ui-plugin';
 import {
-  NxForm,
   NxFormGroup,
   NxButton,
+  NxCheckbox,
   NxFontAwesomeIcon,
   NxH2,
+  NxModal,
+  NxStatefulForm,
+  NxStatefulTransferList,
   NxTextInput,
   NxTile,
-  NxStatefulTransferList,
-  NxModal,
-  NxTooltip,
-  NxCheckbox,
+  NxTooltip
 } from '@sonatype/react-shared-components';
 
 import {faTrash} from '@fortawesome/free-solid-svg-icons';
@@ -51,17 +51,10 @@ export default function UsersForm({service, onDone}) {
   const {
     data: {externalRoles = [], source, roles = []},
     pristineData: {userId},
-    loadError,
-    saveError,
     allRoles,
-    isPristine,
-    validationErrors,
     hasDeletePermission,
   } = current.context;
 
-  const isLoading = current.matches('loading');
-  const isSaving = current.matches('saving');
-  const isInvalid = ValidationUtils.isInvalid(validationErrors);
   const isCreate = ValidationUtils.isBlank(userId);
   const isExternal = isExternalUser(source);
   const isEdit = !isCreate;
@@ -72,13 +65,9 @@ export default function UsersForm({service, onDone}) {
 
   const allRolesList = allRoles?.map((it) => ({id: it.id, displayName: it.name})) || [];
 
-  const save = () => send('SAVE');
-
   const cancel = onDone;
 
   const confirmDelete = () => send('CONFIRM_DELETE');
-
-  const retry = () => send('RETRY');
 
   const changePassword = () => {
     if (canChangePassword) {
@@ -91,17 +80,9 @@ export default function UsersForm({service, onDone}) {
   const showChangePassword = isEdit && !isExternal && !isAnonymousUser(userId);
 
   return <>
-    <NxForm
-        loading={isLoading}
-        loadError={loadError}
+    <NxStatefulForm
+        {...FormUtils.formProps(current, send)}
         onCancel={cancel}
-        doLoad={retry}
-        onSubmit={save}
-        submitError={saveError}
-        submitMaskState={isSaving ? false : null}
-        submitBtnText={UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
-        submitMaskMessage={UIStrings.SAVING}
-        validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
         additionalFooterBtns={showDeleteButton &&
         <NxButton variant="tertiary" onClick={confirmDelete}>
           <NxFontAwesomeIcon icon={faTrash}/>
@@ -226,7 +207,7 @@ export default function UsersForm({service, onDone}) {
             </NxFormGroup>
         }
       </NxTile.Content>
-    </NxForm>
+    </NxStatefulForm>
     {isChangingPassword &&
       <NxModal
         onCancel={cancelChangePassword}

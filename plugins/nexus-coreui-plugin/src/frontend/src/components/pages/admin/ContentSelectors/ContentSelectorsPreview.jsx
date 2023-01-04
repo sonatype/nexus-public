@@ -15,14 +15,15 @@ import {useMachine} from '@xstate/react';
 
 import {
   FieldWrapper,
-  Section, SectionToolbar,
-  Select,
+  Section,
+  SectionToolbar,
   Utils
 } from '@sonatype/nexus-ui-plugin';
 
 import {
   NxButton,
   NxFilterInput,
+  NxFormSelect,
   NxLoadWrapper,
   NxTable,
   NxTableBody,
@@ -55,11 +56,11 @@ export default function ContentSelectorsPreview({type, expression}) {
       <FieldWrapper labelText={UIStrings.CONTENT_SELECTORS.PREVIEW.REPOSITORY_LABEL}
                     descriptionText={UIStrings.CONTENT_SELECTORS.PREVIEW.REPOSITORY_DESCRIPTION}>
         <div className="nx-form-row">
-          <Select name="repository" onChange={repositoryChangeHandler} value={repositories}>
+          <NxFormSelect name="repository" onChange={repositoryChangeHandler} value={repositories}>
             {allRepositories.map(({id, name}) =>
                 <option key={id} value={id}>{name}</option>
             )}
-          </Select>
+          </NxFormSelect>
           <NxButton disabled={previewUnavailable} onClick={previewHandler}>{UIStrings.CONTENT_SELECTORS.PREVIEW.BUTTON}</NxButton>
         </div>
       </FieldWrapper>

@@ -51,6 +51,7 @@ jest.mock('axios', () => ({
 
 const selectors = {
   ...TestUtils.selectors,
+  ...TestUtils.formSelectors,
   title: () => screen.queryByText(LABELS.CONFIGURATION),
   cancelButton: () => screen.queryByText(SETTINGS.CANCEL_BUTTON_LABEL),
   createConnection: {
@@ -241,7 +242,6 @@ describe('LdapServersDetails', () => {
         search,
         username,
         password,
-        nextButton,
         verifyConnectionButton,
       } = selectors.createConnection;
 
@@ -251,42 +251,42 @@ describe('LdapServersDetails', () => {
 
       await TestUtils.changeField(name, '');
 
-      expect(nextButton()).toHaveClass('disabled');
+      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
       expect(verifyConnectionButton()).toHaveClass('disabled');
 
       await fillConnectionForm();
 
       await TestUtils.changeField(host, '');
 
-      expect(nextButton()).toHaveClass('disabled');
+      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
       expect(verifyConnectionButton()).toHaveClass('disabled');
 
       await fillConnectionForm();
 
       await TestUtils.changeField(port, '');
 
-      expect(nextButton()).toHaveClass('disabled');
+      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
       expect(verifyConnectionButton()).toHaveClass('disabled');
 
       await fillConnectionForm();
 
       await TestUtils.changeField(search, '');
 
-      expect(nextButton()).toHaveClass('disabled');
+      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
       expect(verifyConnectionButton()).toHaveClass('disabled');
 
       await fillConnectionForm();
 
       await TestUtils.changeField(username, '');
 
-      expect(nextButton()).toHaveClass('disabled');
+      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
       expect(verifyConnectionButton()).toHaveClass('disabled');
 
       await fillConnectionForm();
 
       await TestUtils.changeField(password, '');
 
-      expect(nextButton()).toHaveClass('disabled');
+      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
       expect(verifyConnectionButton()).toHaveClass('disabled');
     });
 
@@ -450,7 +450,7 @@ describe('LdapServersDetails', () => {
 
       await renderViewUserAndGroup();
 
-      expect(saveButton()).toHaveClass('disabled');
+      expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
 
       userEvent.selectOptions(template(), templateData.name);
 
@@ -489,46 +489,46 @@ describe('LdapServersDetails', () => {
       } = selectors.userAndGroup;
       await renderViewUserAndGroup();
 
-      expect(saveButton()).toHaveClass('disabled');
+      expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
 
       await TestUtils.changeField(userRelativeDN, userAndGroupData.userBaseDn);
-      expect(saveButton()).toHaveClass('disabled');
+      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
       userEvent.click(userSubtree());
-      expect(saveButton()).toHaveClass('disabled');
+      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
       await TestUtils.changeField(
         objectClass,
         userAndGroupData.userObjectClass
       );
-      expect(saveButton()).toHaveClass('disabled');
+      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
       await TestUtils.changeField(userFilter, userAndGroupData.userLdapFilter);
-      expect(saveButton()).toHaveClass('disabled');
+      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
       await TestUtils.changeField(
         userIdAttribute,
         userAndGroupData.userIdAttribute
       );
-      expect(saveButton()).toHaveClass('disabled');
+      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
       await TestUtils.changeField(
         realNameAttribute,
         userAndGroupData.userRealNameAttribute
       );
-      expect(saveButton()).toHaveClass('disabled');
+      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
       await TestUtils.changeField(
         emailAttribute,
         userAndGroupData.userEmailAddressAttribute
       );
-      expect(saveButton()).toHaveClass('disabled');
+      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
       await TestUtils.changeField(
         passwordAttribute,
         userAndGroupData.userPasswordAttribute
       );
-      expect(saveButton()).toHaveClass('disabled');
+      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
       userEvent.click(mapLdap());
 
@@ -561,7 +561,7 @@ describe('LdapServersDetails', () => {
 
       await renderViewUserAndGroup();
 
-      expect(saveButton()).toHaveClass('disabled');
+      expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
 
       userEvent.selectOptions(template(), templateData.name);
 

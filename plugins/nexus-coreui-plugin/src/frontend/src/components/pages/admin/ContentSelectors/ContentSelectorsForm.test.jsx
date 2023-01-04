@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {waitFor, waitForElementToBeRemoved} from '@testing-library/react';
+import {waitFor, waitForElementToBeRemoved, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
 import {act} from 'react-dom/test-utils';
@@ -57,6 +57,11 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   }
 }));
 
+const selectors = {
+  ...TestUtils.selectors,
+  ...TestUtils.formSelectors
+};
+
 describe('ContentSelectorsForm', function() {
   const CONFIRM = Promise.resolve();
   const onDone = jest.fn();
@@ -75,7 +80,6 @@ describe('ContentSelectorsForm', function() {
       type: () => queryByLabelText(UIStrings.CONTENT_SELECTORS.TYPE_LABEL),
       description: () => queryByLabelText(UIStrings.CONTENT_SELECTORS.DESCRIPTION_LABEL),
       expression: () => queryByLabelText(UIStrings.CONTENT_SELECTORS.EXPRESSION_LABEL),
-      saveButton: () => queryByText(UIStrings.SETTINGS.SAVE_BUTTON_LABEL),
       cancelButton: () => queryByText(UIStrings.SETTINGS.CANCEL_BUTTON_LABEL),
       deleteButton: () => queryByText(UIStrings.SETTINGS.DELETE_BUTTON_LABEL),
       previewButton: () => queryByText(UIStrings.CONTENT_SELECTORS.PREVIEW.BUTTON)
@@ -101,7 +105,7 @@ describe('ContentSelectorsForm', function() {
       }
     });
 
-    const {loadingMask, name, type, description, expression, saveButton} = renderEditView(itemId);
+    const {loadingMask, name, type, description, expression} = renderEditView(itemId);
 
     await waitForElementToBeRemoved(loadingMask);
 
@@ -109,7 +113,10 @@ describe('ContentSelectorsForm', function() {
     expect(type()).toHaveTextContent('CSEL');
     expect(description()).toHaveValue('description');
     expect(expression()).toHaveValue('format == "raw"');
-    expect(saveButton()).toHaveClass('disabled');
+
+    userEvent.click(selectors.querySubmitButton());
+
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
   });
 
   it('renders an error message', async function() {
@@ -125,21 +132,27 @@ describe('ContentSelectorsForm', function() {
   it('requires the name and expression fields when creating a new content selector', async function() {
     axios.get.mockReturnValue(Promise.resolve({data: []}));
 
-    const {loadingMask, name, expression, saveButton} = renderCreateView();
+    const {loadingMask, name, expression} = renderCreateView();
 
     await waitForElementToBeRemoved(loadingMask);
 
+    userEvent.click(selectors.querySubmitButton());
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
+
     await TestUtils.changeField(name, '');
     await TestUtils.changeField(expression, 'format == "raw"');
-    expect(saveButton()).toHaveClass('disabled');
+
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     await TestUtils.changeField(name, 'name');
     await TestUtils.changeField(expression, '');
-    expect(saveButton()).toHaveClass('disabled');
+
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     await TestUtils.changeField(name, 'name');
     await TestUtils.changeField(expression, 'format == "raw"');
-    expect(saveButton()).not.toHaveClass('disabled');
+
+    expect(selectors.queryFormError()).not.toBeInTheDocument();
   });
 
   it('fires onDone when cancelled', async function() {
@@ -168,17 +181,16 @@ describe('ContentSelectorsForm', function() {
       }
     });
 
-    const {expression, getByText, loadingMask, name, saveButton, savingMask} = renderCreateView();
+    const {expression, getByText, loadingMask, name} = renderCreateView();
 
     await waitForElementToBeRemoved(loadingMask);
 
     await TestUtils.changeField(name, 'test');
     await TestUtils.changeField(expression, 'format == "maven2');
 
-    userEvent.click(saveButton());
+    userEvent.click(selectors.querySubmitButton());
 
-    await waitForElementToBeRemoved(savingMask);
-
+    await waitForElementToBeRemoved(selectors.querySavingMask());
     expect(getByText('An error occurred with the name field')).toBeInTheDocument();
     expect(getByText('Invalid CSEL: tokenization error in \'"maven2\' at line 1 column 18')).toBeInTheDocument();
   });
@@ -248,7 +260,7 @@ describe('ContentSelectorsForm', function() {
     axios.get.mockReturnValue(Promise.resolve({data: []}));
     axios.post.mockReturnValue(Promise.resolve());
 
-    const {loadingMask, name, description, expression, saveButton} = renderCreateView();
+    const {loadingMask, name, description, expression} = renderCreateView();
 
     await waitForElementToBeRemoved(loadingMask);
 
@@ -260,13 +272,15 @@ describe('ContentSelectorsForm', function() {
 
     await waitFor(() => expect(window.dirty).toEqual(['ContentSelectorsFormMachine']));
 
-    expect(saveButton()).not.toBeDisabled();
-    userEvent.click(saveButton());
+    expect(selectors.querySubmitButton()).not.toBeDisabled();
+    userEvent.click(selectors.querySubmitButton());
 
-    await waitFor(() => expect(axios.post).toHaveBeenCalledWith(
+    await waitForElementToBeRemoved(selectors.querySavingMask());
+
+    expect(axios.post).toHaveBeenCalledWith(
         '/service/rest/v1/security/content-selectors',
         {name: 'test', description: 'description', expression: 'format == "raw"'}
-    ));
+    );
     expect(window.dirty).toEqual([]);
   });
 

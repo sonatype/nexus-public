@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {render, screen, waitFor, within, waitForElementToBeRemoved} from '@testing-library/react';
+import {render, screen, waitFor, within, waitForElementToBeRemoved, act} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
 import Axios from 'axios';
@@ -33,9 +33,9 @@ const {
   SSL_CERTIFICATES: {
     FORM: LABELS,
     ADD_FORM: {
-      CAPTION: ADD_FORM_CAPTION, 
-      LOAD_BUTTON, 
-      PEM, 
+      CAPTION: ADD_FORM_CAPTION,
+      LOAD_BUTTON,
+      PEM,
       SERVER,
       MODAL: {
         VIEW_BUTTON,
@@ -274,6 +274,10 @@ describe('SslCertificatesAddForm', function () {
     tid: 1,
   });
 
+  const mockResponse = (response = {}, remoteHost = '') =>{
+    when(Axios.post).calledWith(EXT.URL, loadFromServerExtReqBody(remoteHost)).mockResolvedValue(response);
+  }
+
   beforeEach(() => {
     ExtJS.checkPermission.mockReturnValue(true);
   });
@@ -285,15 +289,13 @@ describe('SslCertificatesAddForm', function () {
       loadFromServerRadioButton,
       loadFromPemRadioButton,
       remoteHostUrlInput,
-      pemInput,
-      loadCertificateButton
+      pemInput
     } = selectors;
 
     expect(loadFromServerRadioButton()).toBeChecked();
     expect(loadFromPemRadioButton()).not.toBeChecked();
     expect(remoteHostUrlInput()).toBeEnabled();
     expect(pemInput()).toBeDisabled();
-    expect(loadCertificateButton()).toHaveClass('disabled');
   });
 
   it('loads certificate from server', async function () {
@@ -305,21 +307,19 @@ describe('SslCertificatesAddForm', function () {
 
     await TestUtils.changeField(remoteHostUrlInput, remoteHost);
 
-    expect(loadCertificateButton()).not.toHaveClass('disabled');
+    await act(async () => userEvent.click(loadCertificateButton()));
 
-    userEvent.click(loadCertificateButton());
-
-    await waitFor(() => expect(Axios.post).toBeCalledWith(EXT.URL, loadFromServerExtReqBody(remoteHost)));
+    expect(Axios.post).toBeCalledWith(EXT.URL, loadFromServerExtReqBody(remoteHost));
   });
 
   it('loads certificate from pem', async function () {
     await renderAddForm();
 
     const {
-      pemInput, 
-      remoteHostUrlInput, 
-      loadFromPemRadioButton, 
-      loadCertificateButton 
+      pemInput,
+      remoteHostUrlInput,
+      loadFromPemRadioButton,
+      loadCertificateButton
     } = selectors;
 
     const pemContent = 'CORRECTPEMCONTENT';
@@ -333,11 +333,13 @@ describe('SslCertificatesAddForm', function () {
 
     await TestUtils.changeField(pemInput, pemContent);
 
-    expect(loadCertificateButton()).not.toHaveClass('disabled');
+    mockResponse();
 
     userEvent.click(loadCertificateButton());
 
-    await waitFor(() => expect(Axios.post).toBeCalledWith(EXT.URL, loadFromPemExtReqBody(pemContent)));
+    await waitFor(() => {
+      expect(Axios.post).toBeCalledWith(EXT.URL, loadFromPemExtReqBody(pemContent));
+    });
   });
 
   it('shows add form with error toast on load from server error', async function () {
@@ -347,21 +349,19 @@ describe('SslCertificatesAddForm', function () {
       data: loadFromServerExtErrorRespBody('Could not retrieve an SSL certificate')
     }
 
-    when(Axios.post).calledWith(EXT.URL, loadFromServerExtReqBody(remoteHost)).mockResolvedValue(response);
-    
+    mockResponse(response, remoteHost);
+
     await renderAddForm();
 
     const {remoteHostUrlInput, loadCertificateButton} = selectors;
 
     await TestUtils.changeField(remoteHostUrlInput, remoteHost);
 
-    userEvent.click(loadCertificateButton());
+    await act(async () => userEvent.click(loadCertificateButton()));
 
-    await waitFor(() => expect(Axios.post).toBeCalledWith(EXT.URL, loadFromServerExtReqBody(remoteHost)));
-
+    expect(Axios.post).toBeCalledWith(EXT.URL, loadFromServerExtReqBody(remoteHost));
     expect(remoteHostUrlInput()).toBeVisible();
-
-    expect(ExtJS.showErrorMessage).toHaveBeenCalledWith(response.data.result.message);  
+    expect(ExtJS.showErrorMessage).toHaveBeenCalledWith(response.data.result.message);
   });
 
   it('fires onDone when cancelled', async function() {
@@ -386,9 +386,9 @@ describe('SslCertificatesAddForm', function () {
     await renderAddForm();
 
     const {
-      remoteHostUrlInput, 
-      loadCertificateButton, 
-      alreadyExistsModal, 
+      remoteHostUrlInput,
+      loadCertificateButton,
+      alreadyExistsModal,
       alreadyExistsModalContent,
       viewExistingCertificateButton
     } = selectors;

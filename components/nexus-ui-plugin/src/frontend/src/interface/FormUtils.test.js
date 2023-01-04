@@ -30,7 +30,11 @@ describe('FormUtils', () => {
     });
 
     it('sets validation errors from save errors', () => {
-      const context = makeContext({saveErrors: {test: 'error'}});
+      const context = makeContext({
+        data: {test: 'saved-value'},
+        saveErrorData: {test: 'saved-value'},
+        saveErrors: {test: 'error'}
+      });
 
       expect(FormUtils.fieldProps('test', context).validationErrors).toBe('error');
       expect(FormUtils.fieldProps(['test'], context).validationErrors).toBe('error');

@@ -14,7 +14,7 @@ import React from 'react';
 import {useMachine} from '@xstate/react';
 import './SslCertificates.scss';
 import SslCertificatesDetails from './SslCertificatesDetails';
-import SslCerticatesAddForm from './SslCerticatesAddForm';
+import SslCertificatesAddForm from './SslCertificatesAddForm';
 import SslCertificatesFormMachine, {SOURCES} from './SslCertificatesFormMachine';
 import {canDeleteCertificate} from './SslCertificatesHelper';
 
@@ -47,7 +47,7 @@ export default function SslCertificatesForm({itemId, onDone}) {
   const showAddForm = !itemId && (!fingerprint || inTrustStore || loadError);
 
   return showAddForm ? (
-    <SslCerticatesAddForm machine={machine} onDone={onDone} />
+    <SslCertificatesAddForm machine={machine} onDone={onDone} />
   ) : (
     <SslCertificatesDetails itemId={itemId} machine={machine} onDone={onDone} />
   );

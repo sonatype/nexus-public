@@ -13,16 +13,16 @@
 import React from 'react';
 import {FormUtils, ValidationUtils, UseNexusTruststore} from '@sonatype/nexus-ui-plugin';
 import {
-  NxForm,
-  NxFormGroup,
   NxButton,
-  NxH2,
-  NxTextInput,
-  NxFormRow,
-  NxFieldset,
-  NxTooltip,
   NxCheckbox,
+  NxFieldset,
+  NxFormGroup,
+  NxFormRow,
+  NxH2,
+  NxStatefulForm,
+  NxTextInput,
   NxTile,
+  NxTooltip,
 } from '@sonatype/react-shared-components';
 import {isEmpty} from 'ramda';
 
@@ -34,32 +34,15 @@ export default function EmailServerForm({ parentMachine }) {
   const [state, send] = parentMachine;
   const {
     data,
-    isPristine,
-    loadError,
-    saveError,
-    validationErrors,
+    isPristine
   } = state.context;
 
-  const isLoading = state.matches('loading');
-  const isSaving = state.matches('saving');
-  const isInvalid = ValidationUtils.isInvalid(validationErrors);
-
-  const save = () => send('SAVE');
-  const retry = () => send('RETRY');
   const discard = () => send('RESET');
 
   const remoteUrl = !isEmpty(data) ? `https://${data.host}:${data.port}` : '';
 
-  return <NxForm
-      loading={isLoading}
-      loadError={loadError}
-      doLoad={retry}
-      onSubmit={save}
-      submitError={saveError}
-      submitMaskState={isSaving ? false : null}
-      submitBtnText={UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
-      submitMaskMessage={UIStrings.SAVING}
-      validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
+  return <NxStatefulForm
+      {...FormUtils.formProps(state, send)}
       additionalFooterBtns={<>
         <NxTooltip title={FormUtils.discardTooltip({isPristine})}>
           <NxButton type="button" className={isPristine && 'disabled'} onClick={discard}>
@@ -154,5 +137,5 @@ export default function EmailServerForm({ parentMachine }) {
         </NxCheckbox>
       </NxFieldset>
     </NxTile.Content>
-  </NxForm>;
+  </NxStatefulForm>;
 }

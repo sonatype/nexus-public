@@ -58,6 +58,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
 
 const selectors = {
   ...TestUtils.selectors,
+  ...TestUtils.formSelectors,
   enabled: () => screen.getByLabelText(LABELS.ENABLED.SUB_LABEL),
   host: () => screen.getByLabelText(LABELS.HOST.LABEL),
   port: () => screen.getByLabelText(LABELS.PORT.LABEL),
@@ -71,7 +72,6 @@ const selectors = {
   enableSslTls: () => screen.queryByLabelText(LABELS.SSL_TLS_OPTIONS.OPTIONS.ENABLE_SSL_TLS),
   identityCheck: () => screen.queryByLabelText(LABELS.SSL_TLS_OPTIONS.OPTIONS.IDENTITY_CHECK),
   discardButton: () => screen.getByText(SETTINGS.DISCARD_BUTTON_LABEL),
-  saveButton: () => screen.getByText(SETTINGS.SAVE_BUTTON_LABEL),
   test: {
     input: () => screen.getByLabelText(VERIFY.LABEL),
     button: () => screen.getByText(VERIFY.TEST),
@@ -194,19 +194,33 @@ describe('EmailServer', () => {
   });
 
   it('renders the empty form', async () => {
-    const {discardButton, saveButton} = selectors;
+    const {discardButton, queryFormError} = selectors;
 
     await renderAndWaitForLoad();
 
     formShouldBeEmpty();
 
-    expect(saveButton()).toHaveClass('disabled');
+    expect(queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
     expect(discardButton()).toHaveClass('disabled');
   });
 
   it('renders the resolved data', async () => {
-    const {enabled, host, port, username, password, fromAddress, subjectPrefix,
-      enableStarttls, requireStarttls, enableSslTls, identityCheck, discardButton, saveButton} = selectors;
+    const {
+      enabled,
+      host,
+      port,
+      username,
+      password,
+      fromAddress,
+      subjectPrefix,
+      enableStarttls,
+      requireStarttls,
+      enableSslTls,
+      identityCheck,
+      discardButton,
+      querySubmitButton,
+      queryFormError
+    } = selectors;
 
     when(Axios.get).calledWith(emailServerUrl).mockResolvedValue({
       data: DATA
@@ -226,8 +240,9 @@ describe('EmailServer', () => {
     expect(enableSslTls()).toBeChecked();
     expect(identityCheck()).toBeChecked();
 
-    expect(saveButton()).toHaveClass('disabled');
     expect(discardButton()).toHaveClass('disabled');
+    userEvent.click(querySubmitButton());
+    expect(queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
   });
 
   it('renders the resolved data with XSS', async () => {
@@ -254,22 +269,27 @@ describe('EmailServer', () => {
   });
 
   it('enables the save button when the form is valid', async () => {
-    const {host, port, fromAddress, saveButton} = selectors;
+    const {host, port, fromAddress, querySubmitButton, queryFormError} = selectors;
 
     await renderAndWaitForLoad();
 
-    expect(saveButton()).toHaveClass('disabled');
+    userEvent.click(querySubmitButton());
+    expect(queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
+
     userEvent.type(host(), DATA.host);
     userEvent.type(port(), DATA.port.toString());
     userEvent.type(fromAddress(), DATA.fromAddress);
 
-    expect(saveButton()).not.toHaveClass('disabled');
+    expect(queryFormError()).not.toBeInTheDocument();
   });
 
   it('shows validation errors', async () => {
-    const {host, port, fromAddress, saveButton} = selectors;
+    const {host, port, fromAddress, querySubmitButton, queryFormError} = selectors;
 
     await renderAndWaitForLoad();
+
+    userEvent.click(querySubmitButton());
+    expect(queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
 
     userEvent.type(host(), 'host+');
     expect(host()).toHaveErrorMessage(ERROR.HOSTNAME);
@@ -298,11 +318,11 @@ describe('EmailServer', () => {
     userEvent.type(fromAddress(), DATA.fromAddress);
     expect(fromAddress()).not.toHaveErrorMessage();
 
-    expect(saveButton()).not.toHaveClass('disabled');
+    expect(queryFormError()).not.toBeInTheDocument();
   });
 
   it('creates email server configuration', async () => {
-    const {saveButton} = selectors;
+    const {querySubmitButton, queryFormError, querySavingMask} = selectors;
 
     when(global.NX.Permissions.check)
       .calledWith('nexus:ssl-truststore:read')
@@ -318,13 +338,17 @@ describe('EmailServer', () => {
 
     await renderAndWaitForLoad();
 
-    expect(saveButton()).toHaveClass('disabled');
+    userEvent.click(querySubmitButton());
+    expect(queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
+
     populateForm();
-    expect(saveButton()).not.toHaveClass('disabled');
 
-    userEvent.click(saveButton());
+    expect(queryFormError()).not.toBeInTheDocument();
 
-    await waitFor(() => expect(Axios.put).toHaveBeenCalledWith(emailServerUrl, {...DATA, port: DATA.port.toString()}));
+    userEvent.click(querySubmitButton());
+    await waitForElementToBeRemoved(querySavingMask);
+
+    expect(Axios.put).toHaveBeenCalledWith(emailServerUrl, {...DATA, port: DATA.port.toString()});
     expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
   });
 

@@ -29,6 +29,7 @@ const {
     RESET_CONFIRMATION
   },
   SETTINGS: {
+    CANCEL_BUTTON_LABEL,
     SAVE_BUTTON_LABEL,
     DISCARD_BUTTON_LABEL,
     READ_ONLY: {WARNING: READ_ONLY_WARNING}
@@ -66,8 +67,8 @@ const selectors = {
   readOnlyWarning: () => screen.getByText(READ_ONLY_WARNING),
   confirmation: {
     modal: () => screen.queryByRole('dialog'),
-    cancelButton: () => within(selectors.confirmation.modal()).queryAllByRole('button')[0],
-    submitButton: () => within(selectors.confirmation.modal()).queryAllByRole('button')[1],
+    cancelButton: () => within(selectors.confirmation.modal()).getByRole('button', {name: CANCEL_BUTTON_LABEL}),
+    submitButton: () => within(selectors.confirmation.modal()).getByRole('button', {name: RESET_CONFIRMATION.CAPTION}),
     input: () => within(selectors.confirmation.modal()).getByLabelText(RESET_CONFIRMATION.LABEL)
   }
 };
@@ -104,7 +105,6 @@ describe('user tokens', () => {
     expect(userTokensCheckbox()).not.toBeChecked();
     expect(repositoryUserTokensCheckbox()).not.toBeChecked();
     expect(repositoryUserTokensCheckbox()).toBeDisabled();
-    expect(saveButton()).toHaveClass('disabled');
     expect(discardButton()).toHaveClass('disabled');
     expect(resetButton()).not.toBeInTheDocument();
 
@@ -112,7 +112,6 @@ describe('user tokens', () => {
 
     expect(repositoryUserTokensCheckbox()).not.toBeChecked();
     expect(repositoryUserTokensCheckbox()).toBeEnabled();
-    expect(saveButton()).not.toHaveClass('disabled');
     expect(discardButton()).not.toHaveClass('disabled');
     expect(resetButton()).not.toBeInTheDocument();
 
@@ -120,7 +119,6 @@ describe('user tokens', () => {
 
     expect(repositoryUserTokensCheckbox()).not.toBeChecked();
     expect(repositoryUserTokensCheckbox()).toBeDisabled();
-    expect(saveButton()).toHaveClass('disabled');
     expect(discardButton()).toHaveClass('disabled');
     expect(resetButton()).not.toBeInTheDocument();
   });
@@ -239,17 +237,11 @@ describe('reset user tokens', () => {
 
     await waitFor(() => expect(modal()).toBeInTheDocument());
 
-    expect(submitButton()).toHaveClass('disabled');
-
     expect(cancelButton()).toBeInTheDocument();
 
     await TestUtils.changeField(input, 'abracadabra');
 
-    expect(submitButton()).toHaveClass('disabled');
-
     await TestUtils.changeField(input, RESET_CONFIRMATION.CONFIRMATION_STRING);
-
-    expect(submitButton()).not.toHaveClass('disabled');
 
     userEvent.click(submitButton());
 

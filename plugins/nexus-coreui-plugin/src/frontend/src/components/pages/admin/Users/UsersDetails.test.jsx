@@ -97,6 +97,7 @@ const USER = {
 
 const selectors = {
   ...TestUtils.selectors,
+  ...TestUtils.formSelectors,
   id: () => screen.queryByLabelText(LABELS.ID.LABEL),
   firstName: () => screen.queryByLabelText(LABELS.FIRST_NAME.LABEL),
   lastName: () => screen.queryByLabelText(LABELS.LAST_NAME.LABEL),
@@ -120,7 +121,6 @@ const selectors = {
     externalRoles: () => screen.getByText(LABELS.EXTERNAL_ROLES.LABEL).nextSibling,
   },
   cancelButton: () => screen.getByText(SETTINGS.CANCEL_BUTTON_LABEL),
-  saveButton: () => screen.getByText(SETTINGS.SAVE_BUTTON_LABEL),
   deleteButton: () => screen.queryByText(SETTINGS.DELETE_BUTTON_LABEL),
   modal: {
     openButton: () => screen.getByText(MODAL.CHANGE_PASSWORD),
@@ -136,6 +136,7 @@ const selectors = {
     save: () => getByText(selectors.modal.container(), SETTINGS.SAVE_BUTTON_LABEL),
     querySave: () => queryByText(selectors.modal.container(), SETTINGS.SAVE_BUTTON_LABEL),
     retryButton: () => screen.queryByText('Retry'),
+    queryChangePasswordMask: () => screen.queryByText('Confirming Admin Password')
   },
   token: {
     container: () => screen.getByLabelText(TOKEN.RESET_USER_TOKEN),
@@ -204,7 +205,7 @@ describe('UsersDetails', function() {
 
   describe('Local User Form', function() {
     it('renders local user resolved data', async function() {
-      const {id, firstName, lastName, email, status, roles, saveButton} = selectors;
+      const {id, firstName, lastName, email, roles, querySubmitButton, queryFormError} = selectors;
 
       await renderAndWaitForLoad(testId);
 
@@ -218,11 +219,23 @@ describe('UsersDetails', function() {
       testRoles.forEach(it => {
         expect(roles()).toHaveTextContent(ROLES[it].name);
       });
-      expect(saveButton()).toHaveClass('disabled');
+      userEvent.click(querySubmitButton());
+      expect(queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
     });
 
     it('renders local user validation messages', async function() {
-      const {id, firstName, lastName, email, status, password, confirmPassword, roles, saveButton} = selectors;
+      const {
+        id,
+        firstName,
+        lastName,
+        email,
+        status,
+        password,
+        confirmPassword,
+        roles,
+        querySubmitButton,
+        queryFormError
+      } = selectors;
       const {requiredValidation, invalidEmailValidation, passwordNoMatchValidation} = selectors;
 
       const expectRequiredValidation = async (field) => {
@@ -265,16 +278,17 @@ describe('UsersDetails', function() {
       expect(requiredValidation()).not.toBeInTheDocument();
       expect(passwordNoMatchValidation()).not.toBeInTheDocument();
 
-      expect(saveButton()).toHaveClass('disabled');
+      userEvent.click(querySubmitButton());
+      expect(queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
       clickOnRoles(testRoles);
       userEvent.click(status());
 
-      expect(saveButton()).not.toHaveClass('disabled');
+      expect(queryFormError()).not.toBeInTheDocument();
     });
 
     it('creates local user', async function() {
-      const {id, firstName, lastName, email, status, password, confirmPassword, roles, saveButton} = selectors;
+      const {id, firstName, lastName, email, password, confirmPassword, querySubmitButton, querySavingMask} = selectors;
 
       const REQUEST = {
         ...USER,
@@ -294,15 +308,24 @@ describe('UsersDetails', function() {
       await TestUtils.changeField(confirmPassword, testPassword);
       clickOnRoles(testRoles);
 
-      expect(saveButton()).not.toHaveClass('disabled');
-      userEvent.click(saveButton());
+      userEvent.click(querySubmitButton());
+      await waitForElementToBeRemoved(querySavingMask());
 
-      await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(createUserUrl, REQUEST));
+      expect(Axios.post).toHaveBeenCalledWith(createUserUrl, REQUEST);
       expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
     });
 
     it('updates local user', async function() {
-      const {firstName, lastName, email, status, password, confirmPassword, saveButton} = selectors;
+      const {
+        firstName,
+        lastName,
+        email,
+        status,
+        password,
+        confirmPassword,
+        querySubmitButton,
+        querySavingMask
+      } = selectors;
 
       const data = {
         userId: testId,
@@ -330,11 +353,10 @@ describe('UsersDetails', function() {
       expect(password()).not.toBeInTheDocument();
       expect(confirmPassword()).not.toBeInTheDocument();
 
-      expect(saveButton()).not.toHaveClass('disabled');
+      userEvent.click(querySubmitButton());
+      await waitForElementToBeRemoved(querySavingMask());
 
-      userEvent.click(saveButton());
-
-      await waitFor(() => expect(Axios.put).toHaveBeenCalledWith(singleUserUrl(testId), data));
+      expect(Axios.put).toHaveBeenCalledWith(singleUserUrl(testId), data);
       expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
     });
 
@@ -415,7 +437,7 @@ describe('UsersDetails', function() {
     });
 
     it('renders external user resolved data', async function() {
-      const {id, firstName, lastName, email, status, roles, externalRoles, saveButton, deleteButton} = selectors;
+      const {id, firstName, lastName, email, status, roles, externalRoles, querySubmitButton, queryFormError, deleteButton} = selectors;
 
       await renderAndWaitForLoad(testId, crowdSource);
 
@@ -437,11 +459,12 @@ describe('UsersDetails', function() {
       expect(externalRoles()).toHaveValue(testExternalRoles.join('\n'));
 
       expect(deleteButton()).not.toBeInTheDocument();
-      expect(saveButton()).toHaveClass('disabled');
+      userEvent.click(querySubmitButton());
+      expect(queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
     });
 
     it('updates external user', async function() {
-      const {password, confirmPassword, saveButton} = selectors;
+      const {password, confirmPassword, querySubmitButton, querySavingMask} = selectors;
 
       const data = {
         ...EXTERNAL,
@@ -458,9 +481,8 @@ describe('UsersDetails', function() {
       expect(password()).not.toBeInTheDocument();
       expect(confirmPassword()).not.toBeInTheDocument();
 
-      expect(saveButton()).not.toHaveClass('disabled');
-
-      userEvent.click(saveButton());
+      userEvent.click(querySubmitButton());
+      await waitForElementToBeRemoved(querySavingMask());
 
       await waitFor(() => expect(Axios.put).toHaveBeenCalledWith(singleUserUrl(testId), data));
       expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
@@ -496,7 +518,7 @@ describe('UsersDetails', function() {
 
   it('shows save API errors', async function() {
     const message = 'Use a unique userId';
-    const {id, firstName, lastName, email, status, password, confirmPassword, saveButton} = selectors;
+    const {id, firstName, lastName, email, status, password, confirmPassword, querySubmitButton, querySavingMask, queryFormError} = selectors;
 
     when(Axios.post).calledWith(createUserUrl, expect.objectContaining({userId: testId}))
         .mockRejectedValue({response: {data: message}});
@@ -512,12 +534,12 @@ describe('UsersDetails', function() {
     userEvent.click(status());
     clickOnRoles(testRoles);
 
-    expect(saveButton()).not.toHaveClass('disabled');
-    userEvent.click(saveButton());
+    userEvent.click(querySubmitButton());
+    await waitForElementToBeRemoved(querySavingMask());
 
-    await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(createUserUrl, expect.anything()));
+    expect(Axios.post).toHaveBeenCalledWith(createUserUrl, expect.anything());
 
-    expect(NX.Messages.error).toHaveBeenCalledWith(UIStrings.ERROR.SAVE_ERROR);
+    waitFor(() => expect(NX.Messages.error).toHaveBeenCalledWith(UIStrings.ERROR.SAVE_ERROR));
     expect(screen.getByText(new RegExp(message))).toBeInTheDocument();
   });
 
@@ -645,8 +667,11 @@ describe('UsersDetails', function() {
         inputNewPassword,
         inputConfirmPassword,
         next,
-        save,
+        save
       } = selectors.modal;
+      const {
+        queryFormError
+      } = selectors;
 
       await renderAndWaitForLoad(testId);
 
@@ -666,7 +691,8 @@ describe('UsersDetails', function() {
       await TestUtils.changeField(inputNewPassword, '123456');
       await TestUtils.changeField(inputConfirmPassword, '1234');
 
-      expect(save()).toHaveAttribute('aria-disabled', 'true');
+      userEvent.click(save());
+      expect(queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
     });
 
     it('sends the correct password change request', async () => {
@@ -678,6 +704,7 @@ describe('UsersDetails', function() {
         inputConfirmPassword,
         next,
         save,
+        queryChangePasswordMask
       } = selectors.modal;
 
       await renderAndWaitForLoad(testId);
@@ -694,16 +721,15 @@ describe('UsersDetails', function() {
       await TestUtils.changeField(inputNewPassword, expectedPassword);
       await TestUtils.changeField(inputConfirmPassword, expectedPassword);
 
-      await act(async () => userEvent.click(save()));
+      userEvent.click(save());
+      await waitForElementToBeRemoved(queryChangePasswordMask());
 
-      await waitFor(() => {
-        expect(Axios.put).toHaveBeenCalledTimes(1);
-        expect(Axios.put).toHaveBeenCalledWith(
-            changePasswordUrl(testId),
-            expectedPassword,
-            { headers: { 'Content-Type': 'text/plain' } }
-          );
-      });
+      expect(Axios.put).toHaveBeenCalledTimes(1);
+      expect(Axios.put).toHaveBeenCalledWith(
+          changePasswordUrl(testId),
+          expectedPassword,
+          {headers: {'Content-Type': 'text/plain'}}
+      );
     });
 
     it('closes modal when pressing cancel button', async () => {
@@ -791,7 +817,8 @@ describe('UsersDetails', function() {
         inputConfirmPassword,
         inputAdminPassword,
         retryButton,
-        querySave
+        querySave,
+        queryChangePasswordMask
       } = selectors.modal;
 
       await renderAndWaitForLoad(testId);
@@ -813,18 +840,16 @@ describe('UsersDetails', function() {
 
       expect(save()).toBeInTheDocument();
 
-      await act(async () => userEvent.click(save()));
+      userEvent.click(save());
+      await waitForElementToBeRemoved(queryChangePasswordMask());
 
-      await waitFor(() => {
-        expect(Axios.put).toHaveBeenCalledTimes(1);
-        expect(Axios.put).toHaveBeenCalledWith(
+      expect(Axios.put).toHaveBeenCalledTimes(1);
+      expect(Axios.put).toHaveBeenCalledWith(
           changePasswordUrl(testId),
           mockPassword,
-          { headers: { 'Content-Type': 'text/plain' } }
-          );
-          expect(retryButton()).toBeInTheDocument();
-          expect(querySave()).not.toBeInTheDocument();
-      });
+          {headers: {'Content-Type': 'text/plain'}}
+      );
+      expect(retryButton()).toBeInTheDocument();
     });
   });
 

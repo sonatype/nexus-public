@@ -21,6 +21,13 @@ import {ExtJS, Utils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 
+const EMPTY_DATA = {
+  name: '',
+  notes: '',
+  format: '',
+  inUseCount: 0
+};
+
 const baseUrl = '/service/rest/internal/cleanup-policies';
 const url = (name) => `${baseUrl}/${name}`;
 
@@ -43,25 +50,10 @@ function validateCriteriaNumberField(enabled, field) {
 
 export default Utils.buildFormMachine({
   id: 'CleanupPoliciesFormMachine',
-  initial: 'loadingFormatCriteria',
   config: (config) => ({
     ...config,
     states: {
       ...config.states,
-      loadingFormatCriteria: {
-        invoke: {
-          id: 'fetchCriteriaByFormat',
-          src: 'fetchCriteriaByFormat',
-          onDone: {
-            target: 'loading',
-            actions: ['setCriteriaByFormatData']
-          },
-          onError: {
-            target: 'loadError',
-            actions: ['setLoadError', 'logLoadError']
-          }
-        }
-      },
       loaded: {
         ...config.states.loaded,
         on: {
@@ -107,9 +99,6 @@ export default Utils.buildFormMachine({
         criteriaAssetRegex: criteriaAssetRegexEnabled && Utils.isBlank(data.criteriaAssetRegex) ? UIStrings.ERROR.FIELD_REQUIRED : null
       })
     }),
-    setCriteriaByFormatData: assign({
-      criteriaByFormat: (_, event) => event.data?.data
-    }),
     setCriteriaLastDownloadedEnabled: assign({
       criteriaLastDownloadedEnabled: (_, {checked}) => checked
     }),
@@ -122,12 +111,12 @@ export default Utils.buildFormMachine({
     setCriteriaAssetRegexEnabled: assign({
       criteriaAssetRegexEnabled: (_, {checked}) => checked
     }),
-    postProcessData: assign({
-      criteriaLastDownloadedEnabled: (_, event) => event.data?.data.criteriaLastDownloaded,
-      criteriaLastBlobUpdatedEnabled: (_, event) => event.data?.data.criteriaLastBlobUpdated,
-      criteriaReleaseTypeEnabled: (_, event) => event.data?.data.criteriaReleaseType,
-      criteriaAssetRegexEnabled: (_, event) => event.data?.data.criteriaAssetRegex
-    }),
+    postProcessData: assign((_, {data: [, details]}) => ({
+      criteriaLastDownloadedEnabled: details?.data?.criteriaLastDownloaded,
+      criteriaLastBlobUpdatedEnabled: details?.data?.criteriaLastBlobUpdated,
+      criteriaReleaseTypeEnabled: details?.data?.criteriaReleaseType,
+      criteriaAssetRegexEnabled: details?.data?.criteriaAssetRegex
+    })),
 
     clearCriteria: assign((ctx, event) => {
       if (event.data.format !== ctx.format) {
@@ -148,7 +137,11 @@ export default Utils.buildFormMachine({
       }
       return ctx;
     }),
-
+    setData: assign(({pristineData}, {data: [criteria, details]}) => ({
+      criteriaByFormat: criteria?.data,
+      data: details?.data,
+      pristineData: details?.data,
+    })),
     onDeleteError: ({data}) => ExtJS.showErrorMessage(UIStrings.CLEANUP_POLICIES.MESSAGES.DELETE_ERROR(data.name)),
   },
   guards: {
@@ -156,23 +149,13 @@ export default Utils.buildFormMachine({
     canDelete: () => true
   },
   services: {
-    fetchCriteriaByFormat: () => {
-      return Axios.get('/service/rest/internal/cleanup-policies/criteria/formats');
-    },
     fetchData: ({pristineData}) => {
-      if (isEdit(pristineData)) {
-        return Axios.get(url(pristineData.name));
-      }
-      else { // New
-        return Promise.resolve({
-          data: {
-            name: '',
-            notes: '',
-            format: '',
-            inUseCount: 0
-          }
-        });
-      }
+      return Axios.all([
+        Axios.get('/service/rest/internal/cleanup-policies/criteria/formats'),
+        isEdit(pristineData)
+            ? Axios.get(url(pristineData.name))
+            : Promise.resolve({data: EMPTY_DATA}),
+      ]);
     },
     saveData: ({data, pristineData}) => {
       if (isEdit(pristineData)) {

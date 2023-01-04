@@ -19,12 +19,12 @@ import {
   ExtJS,
 } from '@sonatype/nexus-ui-plugin';
 import {
-  NxForm,
   NxFormGroup,
   NxButton,
   NxFontAwesomeIcon,
   NxH2,
   NxTextInput,
+  NxStatefulForm,
   NxStatefulTransferList,
   NxFormSelect,
   NxTile,
@@ -41,11 +41,7 @@ export default function RolesForm({roleId, service, onDone}) {
   const [current, send] = useService(service);
 
   const {
-    isPristine,
     data,
-    loadError,
-    saveError,
-    validationErrors,
     roles,
     privileges,
     sources,
@@ -53,9 +49,6 @@ export default function RolesForm({roleId, service, onDone}) {
     externalRoleType,
   } = current.context;
 
-  const isLoading = current.matches('loading');
-  const isSaving = current.matches('saving');
-  const isInvalid = ValidationUtils.isInvalid(validationErrors);
   const isCreate = ValidationUtils.isBlank(roleId);
   const isEdit = !isCreate;
   const hasDeletePermissions = ExtJS.checkPermission('nexus:roles:delete');
@@ -72,29 +65,17 @@ export default function RolesForm({roleId, service, onDone}) {
 
   const rolesList = roles?.filter(it => it.id !== roleId)?.map((it) => ({id: it.id, displayName: it.name})) || [];
 
-  const save = () => send('SAVE');
-
   const cancel = () => onDone();
 
   const confirmDelete = () => send('CONFIRM_DELETE');
-
-  const retry = () => send('RETRY');
 
   const setRoleType = (event) => send({type: 'SET_ROLE_TYPE', roleType: event.target.value});
 
   const setExternalRoleType = (event) => send({type: 'SET_EXTERNAL_ROLE_TYPE', externalRoleType: event.target.value});
 
-  return <NxForm
-      loading={isLoading}
-      loadError={loadError}
+  return <NxStatefulForm
+      {...FormUtils.formProps(current, send)}
       onCancel={cancel}
-      doLoad={retry}
-      onSubmit={save}
-      submitError={saveError}
-      submitMaskState={isSaving ? false : null}
-      submitBtnText={UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
-      submitMaskMessage={UIStrings.SAVING}
-      validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
       additionalFooterBtns={isEdit && canDelete &&
           <NxButton variant="tertiary" onClick={confirmDelete}>
             <NxFontAwesomeIcon icon={faTrash}/>
@@ -179,5 +160,5 @@ export default function RolesForm({roleId, service, onDone}) {
         />
       </>}
     </NxTile.Content>
-  </NxForm>;
+  </NxStatefulForm>;
 }

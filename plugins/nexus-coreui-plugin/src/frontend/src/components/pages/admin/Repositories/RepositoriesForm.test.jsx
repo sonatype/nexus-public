@@ -133,8 +133,8 @@ describe('RepositoriesForm', () => {
 
   const selectors = {
     ...TestUtils.selectors,
+    ...TestUtils.formSelectors,
     getCreateButton: () => screen.getByText(EDITOR.CREATE_BUTTON, {selector: 'button'}),
-    getSaveButton: () => screen.getByText(EDITOR.SAVE_BUTTON, {selector: 'button'}),
     getDeleteButton: () => screen.queryByRole('button', {name: SETTINGS.DELETE_BUTTON_LABEL}),
 
     getCancelButton: () => screen.queryByText(SETTINGS.CANCEL_BUTTON_LABEL),
@@ -453,7 +453,7 @@ describe('RepositoriesForm', () => {
 
       expect(selectors.getContentValidationCheckbox()).not.toBeChecked();
 
-      userEvent.click(selectors.getSaveButton());
+      userEvent.click(selectors.querySubmitButton());
 
       expect(Axios.put).toBeCalledWith(
         REST_PUB_URL + 'raw/hosted/raw-hosted',
@@ -893,7 +893,7 @@ describe('RepositoriesForm', () => {
 
       await TestUtils.changeField(selectors.getRemoteUrlInput, 'http://other.com');
 
-      userEvent.click(selectors.getSaveButton());
+      userEvent.click(selectors.querySubmitButton());
 
       expect(Axios.put).toBeCalledWith(
         REST_PUB_URL + 'raw/proxy/raw-proxy',
@@ -987,7 +987,7 @@ describe('RepositoriesForm', () => {
       expect(screen.queryByText(defaultPatternUrl)).not.toBeInTheDocument();
       expect(selectors.getForeignLayerRemoveButton(patternUrl)).toHaveClass('disabled');
 
-      await userEvent.click(selectors.getSaveButton());
+      await userEvent.click(selectors.querySubmitButton());
 
       expect(Axios.put).toBeCalledWith(
         `${REST_PUB_URL}docker/proxy/${repo.name}`,
@@ -1229,21 +1229,19 @@ describe('RepositoriesForm', () => {
 
       await renderViewAndSetRequiredFields(repo);
 
-      expect(selectors.getCreateButton()).toHaveClass('disabled');
-
       await TestUtils.changeField(selectors.getNameInput, repo.name);
 
       userEvent.click(selectors.getStatusCheckbox());
+      expect(selectors.getStatusCheckbox()).not.toBeChecked();
 
       await TestUtils.changeField(selectors.getBlobStoreSelect, repo.storage.blobStoreName);
 
       userEvent.click(selectors.getTransferListOption(repo.group.memberNames[0]));
       userEvent.click(selectors.getTransferListOption(repo.group.memberNames[1]));
 
-      expect(selectors.getCreateButton()).not.toHaveClass('disabled');
-
       userEvent.click(selectors.getCreateButton());
-      await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(getSaveUrl(repo), repo));
+      expect(selectors.querySavingMask()).toBeInTheDocument();
+      expect(Axios.post).toHaveBeenCalledWith(getSaveUrl(repo), repo);
     });
 
     it('edits raw group repositories', async function () {
@@ -1272,7 +1270,7 @@ describe('RepositoriesForm', () => {
 
       userEvent.click(screen.getByLabelText('raw-hosted'));
 
-      userEvent.click(selectors.getSaveButton());
+      userEvent.click(selectors.querySubmitButton());
 
       expect(Axios.put).toBeCalledWith(
         REST_PUB_URL + 'raw/group/raw-group',
@@ -1345,8 +1343,6 @@ describe('RepositoriesForm', () => {
         repo.group.writableMember
       );
 
-      expect(selectors.getCreateButton()).not.toHaveClass('disabled');
-
       userEvent.click(selectors.getCreateButton());
 
       await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(getSaveUrl(repo), repo));
@@ -1391,14 +1387,15 @@ describe('RepositoriesForm', () => {
         EDITOR.WRITABLE.VALIDATION_ERROR(repo.group.writableMember)
       );
 
-      expect(selectors.getSaveButton()).toHaveClass('disabled');
+      userEvent.click(selectors.querySubmitButton());
+      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
       await TestUtils.changeField(
         selectors.getDockerWritableRepositorySelect,
         repo.group.memberNames[1]
       );
 
-      expect(selectors.getSaveButton()).not.toHaveClass('disabled');
+      expect(selectors.queryFormError()).not.toBeInTheDocument();
     });
   });
 

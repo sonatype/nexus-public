@@ -59,6 +59,10 @@ jest.mock('axios', () => {  // Mock out parts of axios, has to be done in same s
   };
 });
 
+const selectors = {
+  ...TestUtils.formSelectors
+};
+
 describe('AnonymousSettings', () => {
   beforeEach(() => {
     window.dirty = [];
@@ -80,7 +84,7 @@ describe('AnonymousSettings', () => {
 
   it('fetches the values of fields from the API and updates them as expected', async () => {
     let {
-      loadingMask, enabledField, userIdField, realmField, saveButton, discardButton
+      loadingMask, enabledField, userIdField, realmField, discardButton
     } = renderView(<AnonymousSettings/>);
 
     await waitForElementToBeRemoved(loadingMask);
@@ -89,7 +93,7 @@ describe('AnonymousSettings', () => {
     expect(enabledField()).toBeChecked();
     expect(userIdField()).toHaveValue('testUser');
     expect(realmField()).toHaveValue('r2');
-    expect(saveButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
     expect(discardButton()).toHaveClass('disabled');
   });
 
@@ -111,6 +115,7 @@ describe('AnonymousSettings', () => {
 
     expect(saveButton()).toBeEnabled();
     expect(discardButton()).toBeEnabled();
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).not.toBeInTheDocument();
 
     expect(Axios.put).toHaveBeenCalledTimes(0);
 
@@ -126,27 +131,26 @@ describe('AnonymousSettings', () => {
         }
     );
 
-    expect(saveButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
     expect(discardButton()).toHaveClass('disabled');
   });
 
   it('Resets the form on discard', async () => {
     let {
-      loadingMask, userIdField, saveButton, discardButton
+      loadingMask, userIdField, discardButton
     } = renderView(<AnonymousSettings/>);
 
     await waitForElementToBeRemoved(loadingMask);
 
     fireEvent.change(userIdField(), {target: {value: ''}})
     await waitFor(() => expect(userIdField()).toHaveValue(''));
-
-    expect(saveButton()).toHaveClass('disabled');
+    expect(userIdField()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
     expect(discardButton()).toBeEnabled();
 
     userEvent.click(discardButton());
-
     expect(userIdField()).toHaveValue('testUser');
-    expect(saveButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
     expect(discardButton()).toHaveClass('disabled');
   });
 

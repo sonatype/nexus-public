@@ -19,7 +19,14 @@ import {ContentBody, FormUtils, Page, PageHeader, PageTitle} from '@sonatype/nex
 import './UserAccount.scss';
 import UserAccountMachine from './UserAccountMachine';
 import UIStrings from '../../../../constants/UIStrings';
-import {NxButton, NxForm, NxFormGroup, NxTextInput, NxTile, NxTooltip} from '@sonatype/react-shared-components';
+import {
+  NxButton,
+  NxFormGroup,
+  NxStatefulForm,
+  NxTextInput,
+  NxTile,
+  NxTooltip
+} from '@sonatype/react-shared-components';
 
 export default function UserAccount() {
   const [state, send] = useMachine(UserAccountMachine, {devTools: true});
@@ -38,7 +45,7 @@ export default function UserAccount() {
         <PageHeader><PageTitle icon={faUser} {...UIStrings.USER_ACCOUNT.MENU}/></PageHeader>
         <ContentBody className="nxrm-user-account">
           <NxTile className="user-account-settings">
-            <NxForm
+            <NxStatefulForm
                 {...FormUtils.formProps(state, send)}
                 additionalFooterBtns={
                   <NxTooltip title={FormUtils.discardTooltip({isPristine})}>
@@ -74,7 +81,7 @@ export default function UserAccount() {
                     disabled={isExternal}
                 />
               </NxFormGroup>
-            </NxForm>
+            </NxStatefulForm>
           </NxTile>
 
           {isInternal && <PasswordChangeForm userId={userId}/>}

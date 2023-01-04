@@ -17,13 +17,11 @@ import {faTrash} from "@fortawesome/free-solid-svg-icons";
 
 import {
   DynamicFormField,
-  FieldWrapper,
   Page,
   PageActions,
   PageHeader,
   PageTitle,
   Section,
-  Select,
   Textfield,
   FormUtils,
 } from '@sonatype/nexus-ui-plugin';
@@ -31,13 +29,14 @@ import {
   NxButton,
   NxCheckbox,
   NxErrorAlert,
+  NxFieldset,
   NxFontAwesomeIcon,
-  NxForm,
   NxFormGroup,
   NxFormSelect,
   NxInfoAlert,
   NxLoadWrapper,
   NxModal,
+  NxStatefulForm,
   NxTextInput,
   NxTooltip
 } from '@sonatype/react-shared-components';
@@ -148,7 +147,7 @@ export default function BlobStoresForm({itemId, onDone}) {
       }
     </PageHeader>
     <Section>
-      <NxForm className="nxrm-blob-stores-form"
+      <NxStatefulForm className="nxrm-blob-stores-form"
               {...FormUtils.formProps(current, send)}
               onCancel={cancel}
               additionalFooterBtns={itemId &&
@@ -161,59 +160,59 @@ export default function BlobStoresForm({itemId, onDone}) {
               }>
         {isEdit && <NxInfoAlert>{FORM.EDIT_WARNING}</NxInfoAlert>}
         {isCreate &&
-        <FieldWrapper labelText={FORM.TYPE.label} description={FORM.TYPE.sublabel}>
+        <NxFormGroup label={FORM.TYPE.label} sublabel={FORM.TYPE.sublabel} isRequired>
           <NxFormSelect id="type" name="type" value={type?.id} onChange={setType}>
             <option disabled={isTypeSelected} value=""></option>
             {types.map(({id, name}) => <option key={id} value={id}>{name}</option>)}
           </NxFormSelect>
-        </FieldWrapper>
+        </NxFormGroup>
         }
         {isTypeSelected &&
         <>
           <BlobStoreWarning type={type}/>
           {isCreate &&
-          <FieldWrapper labelText={FORM.NAME.label}>
+          <NxFormGroup label={FORM.NAME.label} isRequired>
             <Textfield {...FormUtils.fieldProps('name', current)} onChange={FormUtils.handleUpdate('name', send)}/>
-          </FieldWrapper>
+          </NxFormGroup>
           }
           <CustomBlobStoreSettings type={type} service={service}/>
           {type?.fields?.map(field =>
-              <FieldWrapper key={field.id}
-                            labelText={field.label}
-                            descriptionText={field.helpText}
-                            isOptional={!field.required}>
+              <NxFormGroup key={field.id}
+                           label={field.label}
+                           sublabel={field.helpText}
+                           isRequired={field.required}>
                 <DynamicFormField
                     id={field.id}
                     current={current}
                     initialValue={field.initialValue}
                     onChange={updateDynamicField}
                     dynamicProps={field}/>
-              </FieldWrapper>
+              </NxFormGroup>
           )}
           <div className="nxrm-soft-quota">
-            <FieldWrapper labelText={FORM.SOFT_QUOTA.ENABLED.label} descriptionText={FORM.SOFT_QUOTA.ENABLED.sublabel}>
+            <NxFieldset label={FORM.SOFT_QUOTA.ENABLED.label} sublabel={FORM.SOFT_QUOTA.ENABLED.sublabel}>
               <NxCheckbox {...FormUtils.checkboxProps(['softQuota', 'enabled'], current)} onChange={toggleSoftQuota}>
                 {FORM.SOFT_QUOTA.ENABLED.text}
               </NxCheckbox>
-            </FieldWrapper>
+            </NxFieldset>
 
             {hasSoftQuota &&
             <>
-              <FieldWrapper labelText={FORM.SOFT_QUOTA.TYPE.label} descriptionText={FORM.SOFT_QUOTA.TYPE.sublabel}>
-                <Select {...FormUtils.fieldProps(['softQuota', 'type'], current)} onChange={updateQuotaField}>
+              <NxFormGroup label={FORM.SOFT_QUOTA.TYPE.label} sublabel={FORM.SOFT_QUOTA.TYPE.sublabel} isRequired>
+                <NxFormSelect {...FormUtils.fieldProps(['softQuota', 'type'], current)} validatable onChange={updateQuotaField}>
                   <option value="" disabled></option>
                   {quotaTypes.map(({id, name}) => <option key={id} value={id}>{name}</option>)}
-                </Select>
-              </FieldWrapper>
-              <FieldWrapper labelText={FORM.SOFT_QUOTA.LIMIT.label}>
+                </NxFormSelect>
+              </NxFormGroup>
+              <NxFormGroup label={FORM.SOFT_QUOTA.LIMIT.label} isRequired>
                 <Textfield {...FormUtils.fieldProps(['softQuota', 'limit'], current)} onChange={updateQuotaField}/>
-              </FieldWrapper>
+              </NxFormGroup>
             </>
             }
           </div>
         </>
         }
-      </NxForm>
+      </NxStatefulForm>
     </Section>
     {(showConvertToGroupModal || isConvertingToGroup) &&
     <NxModal onCancel={modalConvertToGroupClose}>

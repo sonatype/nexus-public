@@ -114,7 +114,7 @@ export default function AzureBlobStoreSettings({service}) {
               {...FormUtils.fieldProps(['bucketConfiguration', 'containerName'], current)}
               onChange={handleContainerNameChange}/>
         </NxFormGroup>
-        <NxFieldset label={AZURE.AUTHENTICATION.label} isRequired>
+        <NxFieldset label={AZURE.AUTHENTICATION.label}>
           <NxRadio
               radioId="useEnvironmentVariables"
               name="bucketConfiguration.authentication.authenticationMethod"

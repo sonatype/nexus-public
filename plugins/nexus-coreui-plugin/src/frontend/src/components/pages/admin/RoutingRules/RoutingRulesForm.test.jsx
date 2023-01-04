@@ -14,6 +14,7 @@ import React from 'react';
 import axios from 'axios';
 import {act} from 'react-dom/test-utils';
 import {waitFor, waitForElementToBeRemoved, within, screen} from '@testing-library/react';
+import {when} from 'jest-when';
 import userEvent from '@testing-library/user-event';
 
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
@@ -55,6 +56,11 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   }
 }));
 
+const selectors = {
+  ...TestUtils.selectors,
+  ...TestUtils.formSelectors,
+};
+
 describe('RoutingRulesForm', function() {
   const CONFIRM = Promise.resolve();
   const onDone = jest.fn();
@@ -69,7 +75,7 @@ describe('RoutingRulesForm', function() {
   }
 
   function renderView(view) {
-    return TestUtils.render(view, ({queryByLabelText, queryByText, queryAllByTitle}) => ({
+    return TestUtils.render(view, ({queryByLabelText, queryByText}) => ({
       name: () => queryByLabelText(UIStrings.ROUTING_RULES.FORM.NAME_LABEL),
       description: () => queryByLabelText(UIStrings.ROUTING_RULES.FORM.DESCRIPTION_LABEL),
       mode: () => queryByLabelText(UIStrings.ROUTING_RULES.FORM.MODE_LABEL),
@@ -94,7 +100,7 @@ describe('RoutingRulesForm', function() {
       }
     });
 
-    const {loadingMask, name, description, mode, matcher, saveButton} = renderEditView(itemId);
+    const {loadingMask, name, description, mode, matcher} = renderEditView(itemId);
 
     await waitForElementToBeRemoved(loadingMask);
 
@@ -102,7 +108,7 @@ describe('RoutingRulesForm', function() {
     expect(description()).toHaveValue('Allow all requests');
     expect(mode()).toHaveValue('ALLOW');
     expect(matcher(0)).toHaveValue('.*');
-    expect(saveButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
   });
 
   it('renders an error message', async function() {
@@ -116,14 +122,15 @@ describe('RoutingRulesForm', function() {
   });
 
   it('renders an error message when saving an invalid field', async function() {
-    const {loadingMask, name, matcher, createButton, getByText, savingMask} = renderCreateView();
+    const {name, matcher, createButton, getByText} = renderCreateView();
 
-    await waitForElementToBeRemoved(loadingMask);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     await TestUtils.changeField(name, 'newValue');
     await TestUtils.changeField(() => matcher(0), '.*');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
-    axios.post.mockRejectedValue({
+    when(axios.post).calledWith('/service/rest/internal/ui/routing-rules/', expect.any(Object)).mockRejectedValue({
       response: {
         data: [
           {
@@ -133,39 +140,39 @@ describe('RoutingRulesForm', function() {
         ]
       }
     });
+
     userEvent.click(createButton());
-
-    await waitForElementToBeRemoved(savingMask);
-
+    await waitForElementToBeRemoved(selectors.querySavingMask());
     expect(getByText('A rule with the same name already exists. Name must be unique.')).toBeInTheDocument();
   });
 
   it('requires the name, description, and at least one matcher', async function() {
     axios.get.mockResolvedValue({data: []});
 
-    const {loadingMask, name, description, matcher, createButton} = renderCreateView();
+    const {name, description, matcher} = renderCreateView();
 
-    await waitForElementToBeRemoved(loadingMask);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
     await TestUtils.changeField(name, '');
     await TestUtils.changeField(description, '');
     await TestUtils.changeField(() => matcher(0), '.*');
-    expect(createButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     await TestUtils.changeField(name, 'name');
     await TestUtils.changeField(description, '')
     await TestUtils.changeField(() => matcher(0), '');
-    expect(createButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     await TestUtils.changeField(name, '');
     await TestUtils.changeField(description, 'description');
     await TestUtils.changeField(() => matcher(0), '');
-    expect(createButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     await TestUtils.changeField(name, 'name');
     await TestUtils.changeField(description, 'description');
     await TestUtils.changeField(() => matcher(0), '.*');
-    expect(createButton()).not.toHaveClass('disabled');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('fires onDone when cancelled', async function() {

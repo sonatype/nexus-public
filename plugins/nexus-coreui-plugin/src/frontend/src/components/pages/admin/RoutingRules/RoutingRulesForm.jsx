@@ -20,18 +20,18 @@ import {
   PageHeader,
   PageTitle,
   Section,
-  Select,
   Textfield
 } from '@sonatype/nexus-ui-plugin';
 
 import {
-  NxForm,
   NxButton,
   NxErrorAlert,
   NxFontAwesomeIcon,
   NxFormGroup,
+  NxFormSelect,
   NxInfoAlert,
   NxLoadWrapper,
+  NxStatefulForm,
   NxSuccessAlert,
   NxTooltip,
 } from '@sonatype/react-shared-components';
@@ -114,7 +114,7 @@ export default function RoutingRulesForm({itemId, onDone}) {
     </PageHeader>
     <ContentBody>
       <Section className="nxrm-routing-rules-form">
-        <NxForm
+        <NxStatefulForm
             {...FormUtils.formProps(current, send)}
             onCancel={cancel}
             submitBtnText={itemId ? SETTINGS.SAVE_BUTTON_LABEL : ROUTING_RULES.FORM.CREATE_BUTTON}
@@ -142,11 +142,11 @@ export default function RoutingRulesForm({itemId, onDone}) {
             <NxFormGroup
                 id="nxrm-routing-rules-mode"
                 label={ROUTING_RULES.FORM.MODE_LABEL}
-                sublabel={ROUTING_RULES.FORM.MODE_DESCRIPTION} isRequired>
-              <Select {...FormUtils.fieldProps('mode', current)} onChange={update}>
+                sublabel={ROUTING_RULES.FORM.MODE_DESCRIPTION}>
+              <NxFormSelect {...FormUtils.fieldProps('mode', current)} onChange={update}>
                 <option value="ALLOW">{ROUTING_RULES.FORM.MODE.ALLOW}</option>
                 <option value="BLOCK">{ROUTING_RULES.FORM.MODE.BLOCK}</option>
-              </Select>
+              </NxFormSelect>
             </NxFormGroup>
             <div className="nx-form-group">
               <div id="matchers-label" className="nx-label">
@@ -188,7 +188,7 @@ export default function RoutingRulesForm({itemId, onDone}) {
               </div>
             </div>
           </>}
-        </NxForm>
+        </NxStatefulForm>
       </Section>
 
       <Section className="nxrm-routing-rules-preview">

@@ -21,13 +21,13 @@ import {
   NxButton,
   NxCheckbox,
   NxErrorAlert,
-  NxForm,
   NxFormGroup,
   NxFormSelect,
   NxLoadWrapper,
   NxTooltip,
   NxTextInput,
   NxTextLink,
+  NxStatefulForm,
   NxSuccessAlert
 } from '@sonatype/react-shared-components';
 
@@ -49,14 +49,6 @@ export default function IqServerForm() {
 
   function discard() {
     send('RESET');
-  }
-
-  function save() {
-    send('SAVE');
-  }
-
-  function retry() {
-    send('RETRY');
   }
 
   function handleUrlChange(url) {
@@ -83,7 +75,7 @@ export default function IqServerForm() {
     });
   }
 
-  return <NxForm
+  return <NxStatefulForm
       {...FormUtils.formProps(state, send)}
       additionalFooterBtns={<>
         <NxButton type="button" variant="tertiary" disabled={isInvalid} onClick={verifyConnection}>
@@ -126,8 +118,9 @@ export default function IqServerForm() {
       />
       <NxFormGroup label={UIStrings.IQ_SERVER.AUTHENTICATION_TYPE.label} isRequired>
         <NxFormSelect className="nx-form-select--long"
-                {...FormUtils.selectProps('authenticationType', state)}
-                onChange={handleAuthTypeChange}>
+                {...FormUtils.fieldProps('authenticationType', state)}
+                onChange={handleAuthTypeChange}
+                validatable>
           <option value=""/>
           <option value="USER">{UIStrings.IQ_SERVER.AUTHENTICATION_TYPE.USER}</option>
           <option value="PKI">{UIStrings.IQ_SERVER.AUTHENTICATION_TYPE.PKI}</option>
@@ -158,7 +151,7 @@ export default function IqServerForm() {
                      {...FormUtils.fieldProps('properties', state)}
                      onChange={FormUtils.handleUpdate('properties', send)}/>
       </NxFormGroup>
-      <NxFormGroup label={UIStrings.IQ_SERVER.SHOW_LINK.label} isRequired>
+      <NxFormGroup label={UIStrings.IQ_SERVER.SHOW_LINK.label}>
         <NxCheckbox{...FormUtils.checkboxProps('showLink', state)}
                    onChange={FormUtils.handleUpdate('showLink', send)}>
           {UIStrings.IQ_SERVER.SHOW_LINK.sublabel}
@@ -178,5 +171,5 @@ export default function IqServerForm() {
         </NxLoadWrapper>}
       </div>
     </>}
-  </NxForm>;
+  </NxStatefulForm>;
 }

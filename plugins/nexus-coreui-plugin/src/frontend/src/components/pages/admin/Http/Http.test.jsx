@@ -59,13 +59,13 @@ const UPDATE = ExtAPIUtils.createRequestBody(ACTION, METHODS.UPDATE);
 
 const selectors = {
   ...TestUtils.selectors,
+  ...TestUtils.formSelectors,
   userAgent: () => screen.getByText(LABELS.USER_AGENT.LABEL),
   userAgentInput: () => screen.getByLabelText(LABELS.USER_AGENT.LABEL),
   timeout: () => screen.getByText(LABELS.TIMEOUT.LABEL),
   timeoutInput: () => screen.getByLabelText(LABELS.TIMEOUT.LABEL),
   retries: () => screen.getByText(LABELS.ATTEMPTS.LABEL),
   retriesInput: () => screen.getByLabelText(LABELS.ATTEMPTS.LABEL),
-  saveButton: () => screen.getByText(UIStrings.SETTINGS.SAVE_BUTTON_LABEL),
   proxy: {
     setting: () => screen.getByText(LABELS.PROXY.LABEL),
     httpHost: () => screen.getByLabelText(LABELS.PROXY.HTTP_HOST),
@@ -212,49 +212,44 @@ describe('Http', () => {
   });
 
   it('connection timeout should be greater than 0, less than or equal to 3600', async () => {
-    const {timeoutInput, saveButton} = selectors;
+    const {timeoutInput} = selectors;
 
     await renderAndWaitForLoad();
+
+    userEvent.click(selectors.querySubmitButton());
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
 
     await TestUtils.changeField(timeoutInput, 'text');
     expect(screen.getByText(ERROR.NAN)).toBeInTheDocument();
 
     await TestUtils.changeField(timeoutInput, '0');
-    expect(saveButton()).toHaveAttribute('aria-disabled', 'true');
-    expect(saveButton()).toHaveAttribute(
-      'aria-label',
-      'Submit disabled: Validation errors are present'
-    );
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     await TestUtils.changeField(timeoutInput, '3601');
-    expect(saveButton()).toHaveAttribute('aria-disabled', 'true');
-    expect(saveButton()).toHaveAttribute(
-      'aria-label',
-      'Submit disabled: Validation errors are present'
-    );
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     await TestUtils.changeField(timeoutInput, '1');
     expect(timeoutInput()).toHaveValue('1');
+    expect(selectors.queryFormError()).not.toBeInTheDocument();
   });
 
   it('connection attempts should be greater or equal to 0, less than or equal to 10', async () => {
-    const {retriesInput, saveButton} = selectors;
+    const {retriesInput} = selectors;
 
     await renderAndWaitForLoad();
+
+    userEvent.click(selectors.querySubmitButton());
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
 
     await TestUtils.changeField(retriesInput, 'text');
     expect(screen.getByText(ERROR.NAN)).toBeInTheDocument();
 
     await TestUtils.changeField(retriesInput, '11');
-    expect(saveButton()).toHaveAttribute('aria-disabled', 'true');
-    expect(saveButton()).toHaveAttribute(
-      'aria-label',
-      'Submit disabled: Validation errors are present'
-    );
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     await TestUtils.changeField(retriesInput, '1');
-
     expect(retriesInput()).toHaveValue('1');
+    expect(selectors.queryFormError()).not.toBeInTheDocument();
   });
 
   describe('Proxy', () => {
@@ -533,8 +528,21 @@ describe('Http', () => {
   });
 
   describe('Save change', () => {
+    async function submitAndExpect(data) {
+      mockResponse();
+
+      userEvent.click(selectors.querySubmitButton());
+      await waitForElementToBeRemoved(selectors.querySavingMask());
+
+      expect(Axios.post).toHaveBeenCalledWith(
+          URL,
+          ExtAPIUtils.createRequestBody(ACTION, METHODS.UPDATE, {data})
+      );
+      expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
+    }
+
     it('Base form only', async () => {
-      const {retriesInput, userAgentInput, timeoutInput, saveButton} =
+      const {retriesInput, userAgentInput, timeoutInput} =
         selectors;
 
       await renderAndWaitForLoad();
@@ -543,19 +551,7 @@ describe('Http', () => {
       await TestUtils.changeField(retriesInput, dummyData.retries);
       await TestUtils.changeField(timeoutInput, dummyData.timeout);
 
-      mockResponse();
-
-      await act(async () => await userEvent.click(saveButton()));
-
-      const expected = {
-        data: [dummyData],
-      };
-
-      expect(Axios.post).toHaveBeenCalledWith(
-        URL,
-        ExtAPIUtils.createRequestBody(ACTION, METHODS.UPDATE, expected)
-      );
-      expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
+      await submitAndExpect([dummyData]);
     });
 
     it('Http Proxy requires host and port', async () => {
@@ -567,7 +563,6 @@ describe('Http', () => {
         userAgentInput,
         retriesInput,
         timeoutInput,
-        saveButton,
         proxy: {httpHost, httpPort, httpCheckbox},
       } = selectors;
 
@@ -581,38 +576,19 @@ describe('Http', () => {
 
       await TestUtils.changeField(httpHost, data.httpHost);
 
-      expect(saveButton()).toHaveAttribute(
-        'aria-label',
-        'Submit disabled: Validation errors are present'
-      );
+      userEvent.click(selectors.querySubmitButton());
+      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
       await TestUtils.changeField(httpHost, '');
-
       await TestUtils.changeField(httpPort, data.httpPort);
 
-      expect(saveButton()).toHaveAttribute(
-        'aria-label',
-        'Submit disabled: Validation errors are present'
-      );
+      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
       await TestUtils.changeField(httpHost, data.httpHost);
 
-      expect(saveButton()).not.toHaveAttribute('aria-label');
-      expect(saveButton()).not.toHaveAttribute('aria-disabled');
+      expect(selectors.queryFormError()).not.toBeInTheDocument();
 
-      mockResponse();
-
-      await act(async () => await userEvent.click(saveButton()));
-
-      const expected = {
-        data: [data],
-      };
-
-      expect(Axios.post).toHaveBeenCalledWith(
-        URL,
-        ExtAPIUtils.createRequestBody(ACTION, METHODS.UPDATE, expected)
-      );
-      expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
+      await submitAndExpect([data]);
     });
 
     it('Http Proxy with Authentication requires username', async () => {
@@ -624,7 +600,6 @@ describe('Http', () => {
         userAgentInput,
         retriesInput,
         timeoutInput,
-        saveButton,
         proxy: {
           httpHost,
           httpPort,
@@ -665,32 +640,17 @@ describe('Http', () => {
         data.httpAuthNtlmDomain
       );
 
-      expect(saveButton()).toHaveAttribute(
-        'aria-label',
-        'Submit disabled: Validation errors are present'
-      );
+      userEvent.click(selectors.querySubmitButton());
+      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
       await TestUtils.changeField(
         () => username(accordion),
         data.httpAuthUsername
       );
 
-      expect(saveButton()).not.toHaveAttribute('aria-label');
-      expect(saveButton()).not.toHaveAttribute('aria-disabled');
+      expect(selectors.queryFormError()).not.toBeInTheDocument();
 
-      mockResponse();
-
-      await act(async () => await userEvent.click(saveButton()));
-
-      const expected = {
-        data: [data],
-      };
-
-      expect(Axios.post).toHaveBeenCalledWith(
-        URL,
-        ExtAPIUtils.createRequestBody(ACTION, METHODS.UPDATE, expected)
-      );
-      expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
+      await submitAndExpect([data]);
     });
 
     it('Https Proxy requires host and port', async () => {
@@ -703,7 +663,6 @@ describe('Http', () => {
         userAgentInput,
         retriesInput,
         timeoutInput,
-        saveButton,
         proxy: {
           httpHost,
           httpPort,
@@ -727,30 +686,15 @@ describe('Http', () => {
 
       await userEvent.click(httpsCheckbox());
 
-      expect(saveButton()).toHaveAttribute(
-        'aria-label',
-        'Submit disabled: Validation errors are present'
-      );
+      userEvent.click(selectors.querySubmitButton());
+      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
       await TestUtils.changeField(httpsHost, data.httpsHost);
       await TestUtils.changeField(httpsPort, data.httpsPort);
 
-      expect(saveButton()).not.toHaveAttribute('aria-label');
-      expect(saveButton()).not.toHaveAttribute('aria-disabled');
+      expect(selectors.queryFormError()).not.toBeInTheDocument();
 
-      mockResponse();
-
-      await act(async () => await userEvent.click(saveButton()));
-
-      const expected = {
-        data: [data],
-      };
-
-      expect(Axios.post).toHaveBeenCalledWith(
-        URL,
-        ExtAPIUtils.createRequestBody(ACTION, METHODS.UPDATE, expected)
-      );
-      expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
+      await submitAndExpect([data]);
     });
 
     it('Https Proxy with Authentication requires username', async () => {
@@ -763,7 +707,6 @@ describe('Http', () => {
         userAgentInput,
         retriesInput,
         timeoutInput,
-        saveButton,
         proxy: {
           httpHost,
           httpPort,
@@ -812,32 +755,17 @@ describe('Http', () => {
         data.httpsAuthNtlmDomain
       );
 
-      expect(saveButton()).toHaveAttribute(
-        'aria-label',
-        'Submit disabled: Validation errors are present'
-      );
+      userEvent.click(selectors.querySubmitButton());
+      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
       await TestUtils.changeField(
         () => username(accordion),
         data.httpsAuthUsername
       );
 
-      expect(saveButton()).not.toHaveAttribute('aria-label');
-      expect(saveButton()).not.toHaveAttribute('aria-disabled');
+      expect(selectors.queryFormError()).not.toBeInTheDocument();
 
-      mockResponse();
-
-      await act(async () => await userEvent.click(saveButton()));
-
-      const expected = {
-        data: [data],
-      };
-
-      expect(Axios.post).toHaveBeenCalledWith(
-        URL,
-        ExtAPIUtils.createRequestBody(ACTION, METHODS.UPDATE, expected)
-      );
-      expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
+      await submitAndExpect([data]);
     });
 
     it('Exclude nonProxy host', async () => {
@@ -850,8 +778,7 @@ describe('Http', () => {
         ...dummyHttpProxy,
       };
       const {
-        proxy: {exclude, addButton, httpCheckbox, httpHost, httpPort},
-        saveButton,
+        proxy: {exclude, addButton, httpCheckbox, httpHost, httpPort}
       } = selectors;
 
       const {container} = await renderAndWaitForLoad();
@@ -867,19 +794,7 @@ describe('Http', () => {
 
       await userEvent.click(addButton(container));
 
-      mockResponse();
-
-      await act(async () => await userEvent.click(saveButton()));
-
-      const expected = {
-        data: [data],
-      };
-
-      expect(Axios.post).toHaveBeenCalledWith(
-        URL,
-        ExtAPIUtils.createRequestBody(ACTION, METHODS.UPDATE, expected)
-      );
-      expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
+      await submitAndExpect([data]);
     });
   });
 
@@ -898,7 +813,6 @@ describe('Http', () => {
         userAgentInput,
         retriesInput,
         timeoutInput,
-        saveButton,
         proxy: {
           httpHost,
           httpPort,
@@ -910,6 +824,8 @@ describe('Http', () => {
           ntlmHost,
           ntlmDomain,
         },
+        querySubmitButton,
+        querySavingMask
       } = selectors;
 
       const {container} = await renderAndWaitForLoad();
@@ -946,7 +862,8 @@ describe('Http', () => {
 
       mockResponse(data);
 
-      await act(async () => await userEvent.click(saveButton()));
+      userEvent.click(querySubmitButton());
+      await waitForElementToBeRemoved(querySavingMask());
 
       const expected = {
         data: [data],
@@ -966,11 +883,10 @@ describe('Http', () => {
       expect(ntlmDomain(accordion)).toHaveValue(data.httpAuthNtlmDomain);
       expect(ntlmHost(accordion)).toHaveValue(data.httpAuthNtlmHost);
 
-      expect(saveButton()).not.toHaveAttribute('aria-label');
-
       mockResponse();
 
-      await act(async () => await userEvent.click(saveButton()));
+      userEvent.click(querySubmitButton());
+      await waitForElementToBeRemoved(querySavingMask());
 
       const newResponse = {
         ...dummyData,
@@ -1001,7 +917,6 @@ describe('Http', () => {
         userAgentInput,
         retriesInput,
         timeoutInput,
-        saveButton,
         proxy: {
           httpHost,
           httpPort,
@@ -1057,7 +972,8 @@ describe('Http', () => {
 
       mockResponse(data);
 
-      await act(async () => await userEvent.click(saveButton()));
+      userEvent.click(selectors.querySubmitButton());
+      await waitForElementToBeRemoved(selectors.querySavingMask());
 
       const expected = {
         data: [data],
@@ -1077,11 +993,11 @@ describe('Http', () => {
       expect(ntlmDomain(accordion)).toHaveValue(data.httpAuthNtlmDomain);
       expect(ntlmHost(accordion)).toHaveValue(data.httpAuthNtlmHost);
 
-      expect(saveButton()).not.toHaveAttribute('aria-label');
 
       mockResponse();
 
-      await act(async () => await userEvent.click(saveButton()));
+      userEvent.click(selectors.querySubmitButton());
+      await waitForElementToBeRemoved(selectors.querySavingMask());
 
       const newResponse = {
         ...dummyData,

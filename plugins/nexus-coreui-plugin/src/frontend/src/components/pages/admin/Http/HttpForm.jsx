@@ -14,19 +14,19 @@
 import React from 'react';
 import {useMachine} from '@xstate/react';
 import {
-  NxForm,
-  NxFormGroup,
-  NxTextInput,
-  NxH2,
-  NxCheckbox,
   NxAccordion,
   NxButton,
-  NxFontAwesomeIcon,
-  NxFormRow,
-  NxList,
-  NxTooltip,
+  NxCheckbox,
   NxFieldset,
+  NxFontAwesomeIcon,
+  NxFormGroup,
+  NxFormRow,
+  NxH2,
+  NxList,
+  NxStatefulForm,
+  NxTextInput,
   NxTile,
+  NxTooltip
 } from '@sonatype/react-shared-components';
 import {FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 import {faTrashAlt, faPlusCircle} from '@fortawesome/free-solid-svg-icons';
@@ -47,23 +47,13 @@ export default function HttpForm() {
       httpsAuthEnabled,
     },
     isPristine,
-    loadError,
-    saveError,
-    validationErrors,
-    nonProxyHost = '',
+    nonProxyHost = ''
   } = current.context;
-  const isLoading = current.matches('loading');
-  const isSaving = current.matches('saving');
-  const isInvalid = FormUtils.isInvalid(validationErrors);
   const isHttpsEnabled = httpsEnabled && httpEnabled;
 
   const list = nonProxyHosts || [];
 
   const discard = () => send('RESET');
-
-  const save = () => send('SAVE');
-
-  const retry = () => send('RETRY');
 
   const removeNonProxyHost = (index) =>
     send({type: 'REMOVE_NON_PROXY_HOST', index});
@@ -91,15 +81,8 @@ export default function HttpForm() {
       (nonProxyHosts.includes(nonProxyHost) ? LABELS.EXCLUDE.ALREADY_ADDED : null)
 
   return (
-    <NxForm
-      loading={isLoading}
-      loadError={loadError}
-      doLoad={retry}
-      onSubmit={save}
-      submitError={saveError}
-      submitMaskState={isSaving ? false : null}
-      submitBtnText={UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
-      validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
+    <NxStatefulForm
+      {...FormUtils.formProps(current, send)}
       additionalFooterBtns={
         <NxTooltip title={FormUtils.discardTooltip({isPristine})}>
           <NxButton
@@ -355,6 +338,6 @@ export default function HttpForm() {
           ))}
         </NxList>
       )}
-    </NxForm>
+    </NxStatefulForm>
   );
 }

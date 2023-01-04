@@ -14,12 +14,12 @@ import React from 'react';
 import {
   NxTile,
   NxFormGroup,
-  NxForm,
   NxFormSelect,
   NxH2,
   NxTextInput,
   NxFieldset,
   NxCheckbox,
+  NxStatefulForm,
 } from '@sonatype/react-shared-components';
 import {FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 import UIStrings from '../../../../constants/UIStrings';
@@ -49,7 +49,10 @@ export default function LdapServerUserAndGroupForm({actor, onDone}) {
   return (
     <NxTile.Content>
       <NxH2>{LABELS.CONFIGURATION}</NxH2>
-      <NxForm {...FormUtils.formProps(state, send)} onCancel={onDone}>
+      <NxStatefulForm
+          {...FormUtils.formProps(state, send)}
+          onCancel={onDone}
+      >
         <NxFormGroup label={LABELS.TEMPLATE.LABEL}>
           <NxFormSelect onChange={updateTemplate}>
             <option value="" disabled={isTemplateSelected} />
@@ -226,7 +229,7 @@ export default function LdapServerUserAndGroupForm({actor, onDone}) {
             )}
           </>
         )}
-      </NxForm>
+      </NxStatefulForm>
     </NxTile.Content>
   );
 }

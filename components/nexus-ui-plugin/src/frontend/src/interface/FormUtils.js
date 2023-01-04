@@ -221,9 +221,8 @@ export default class FormUtils {
         }),
         logSaveError: (_, event) => {
           if (event.data?.message) {
-            console.log(`Load Error: ${event.data?.message}`);
+            console.log(`Save Error: ${event.data?.message}`);
           }
-          ExtJS.showErrorMessage(UIStrings.ERROR.SAVE_ERROR);
         },
         logSaveSuccess: () => ExtJS.showSuccessMessage(UIStrings.SAVE_SUCCESS),
         logDeleteSuccess: () => {},
@@ -349,7 +348,7 @@ export default class FormUtils {
    * @returns {{submitError, submitMaskMessage: string, doLoad: doLoad, loadError, onSubmit: onSubmit, validationErrors: (string|null), submitBtnText: string, loading, submitMaskState: boolean}}
    */
   static formProps(state, send) {
-    const {isPristine, loadError, saveError, validationErrors} = state.context;
+    const {data = {}, saveErrorData = {}, isPristine, loadError, saveError, saveErrors, validationErrors} = state.context;
     const isInvalid = FormUtils.isInvalid(validationErrors);
     const loading = state.matches('loading');
     const saveTooltip = FormUtils.saveTooltip({isPristine, isInvalid});
@@ -357,12 +356,15 @@ export default class FormUtils {
     const submitMaskMessage = UIStrings.SAVING;
     const submitMaskState = FormUtils.submitMaskState(state);
 
-    function doLoad() {
-      send({type: 'RETRY'});
-    }
+    const doLoad = () => send('RETRY');
+    const onSubmit = () => send('SAVE');
 
-    function onSubmit() {
-      send({type: 'SAVE'});
+    let submitError = saveError;
+    if (!submitError && FormUtils.isInvalid(saveErrors)) {
+      submitError = UIStrings.ERROR.SAVE_ERROR;
+    }
+    if (!whereEq(data, saveErrorData)) {
+      submitError = null;
     }
 
     return {
@@ -371,7 +373,7 @@ export default class FormUtils {
       loadError,
       onSubmit,
       submitBtnText,
-      submitError: saveError,
+      submitError,
       submitMaskMessage,
       submitMaskState,
       validationErrors: saveTooltip
@@ -398,11 +400,17 @@ export default class FormUtils {
       name = name.split('.');
     }
 
+    const saveError = path(name, saveErrors);
+    const savedValue = path(name, saveErrorData);
+    const currentValue = path(name, data);
+    const validationError = path(name, validationErrors);
+
     let errors = null;
-    if (path(name, isTouched) && path(name, validationErrors)) {
-      errors = path(name, validationErrors);
-    } else if (path(name, saveErrors) && path(name, saveErrorData) === path(name, data)) {
-      errors = path(name, saveErrors);
+    if (Boolean(savedValue) && saveError && currentValue === savedValue) {
+      errors = saveError;
+    }
+    else if (Boolean(validationError)) {
+      errors = validationError;
     }
 
     return {
@@ -534,4 +542,5 @@ export default class FormUtils {
       return IDLE;
     }
   }
+
 }

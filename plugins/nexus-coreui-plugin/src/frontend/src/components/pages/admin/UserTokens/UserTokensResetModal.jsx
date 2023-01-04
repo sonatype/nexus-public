@@ -14,12 +14,12 @@ import React from 'react';
 import {useService} from '@xstate/react';
 
 import {
-  NxForm,
   NxH2,
-  NxModal,
   NxFormGroup,
-  NxTextInput,
-  NxWarningAlert
+  NxModal,
+  NxStatefulForm,
+  NxStatefulWarningAlert,
+  NxTextInput
 } from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
@@ -43,8 +43,8 @@ export default function UserTokensResetModal({service}) {
         <NxH2>{RESET_CONFIRMATION.CAPTION}</NxH2>
       </NxModal.Header>
       <NxModal.Content>
-        <NxWarningAlert >{RESET_CONFIRMATION.WARNING}</NxWarningAlert>
-        <NxForm
+        <NxStatefulWarningAlert>{RESET_CONFIRMATION.WARNING}</NxStatefulWarningAlert>
+        <NxStatefulForm
           onSubmit={resetUserTokens}
           submitBtnText={RESET_CONFIRMATION.BUTTON}
           onCancel={cancelResetConfirmation}
@@ -65,7 +65,7 @@ export default function UserTokensResetModal({service}) {
               isPristine={confirmationString === ''}
             />
           </NxFormGroup>
-        </NxForm>
+        </NxStatefulForm>
       </NxModal.Content>
     </NxModal>
   );

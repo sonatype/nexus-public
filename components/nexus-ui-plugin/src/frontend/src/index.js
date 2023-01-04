@@ -53,7 +53,6 @@ export { default as FormFieldsFactory } from './components/widgets/FormFieldsFac
 export { default as FieldWrapper } from './components/widgets/FieldWrapper/FieldWrapper';
 export { default as HelpTile } from './components/widgets/HelpTile/HelpTile';
 export { default as Information } from './components/widgets/Information/Information';
-export { default as Select } from './components/widgets/Select/Select';
 export { default as ReadOnlyField } from './components/widgets/ReadOnlyField/ReadOnlyField';
 export {
   default as SslCertificateDetailsModal

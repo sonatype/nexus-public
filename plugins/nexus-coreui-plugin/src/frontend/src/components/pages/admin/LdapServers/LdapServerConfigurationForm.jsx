@@ -18,16 +18,16 @@ import {
   UseNexusTruststore,
 } from '@sonatype/nexus-ui-plugin';
 import {
-  NxTile,
-  NxTextInput,
-  NxFormGroup,
-  NxH2,
-  NxP,
-  NxFormSelect,
-  NxForm,
   NxButton,
   NxButtonBar,
+  NxFormGroup,
+  NxFormSelect,
+  NxH2,
+  NxP,
+  NxStatefulForm,
   NxStatefulSubmitMask,
+  NxTextInput,
+  NxTile
 } from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
@@ -81,7 +81,7 @@ export default function LdapServerConfigurationForm({
   return (
     <NxTile.Content>
       <NxH2>{LABELS.CONFIGURATION}</NxH2>
-      <NxForm
+      <NxStatefulForm
         {...FormUtils.formProps(parentState, parentSend)}
         onSubmit={next}
         submitBtnText={LABELS.NEXT}
@@ -248,7 +248,7 @@ export default function LdapServerConfigurationForm({
             message={LABELS.VERIFYING_MESSAGE(urlMessage)}
           />
         )}
-      </NxForm>
+      </NxStatefulForm>
     </NxTile.Content>
   );
 }

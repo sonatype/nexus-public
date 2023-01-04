@@ -41,20 +41,16 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
   };
 });
 
-const { REALMS: LABELS, SETTINGS } = UIStrings;
+const {REALMS: LABELS} = UIStrings;
 
 const selectors = {
   ...TestUtils.selectors,
-  discardButton: () => screen.getByText(SETTINGS.DISCARD_BUTTON_LABEL),
-  saveButton: () => screen.getByText(SETTINGS.SAVE_BUTTON_LABEL),
-  availableList: () =>
-    screen.getByRole('group', { name: LABELS.CONFIGURATION.AVAILABLE_TITLE }),
-  selectedList: () =>
-    screen.getByRole('group', { name: LABELS.CONFIGURATION.SELECTED_TITLE }),
+  ...TestUtils.formSelectors,
+  availableList: () => screen.getByRole('group', {name: LABELS.CONFIGURATION.AVAILABLE_TITLE}),
+  selectedList: () => screen.getByRole('group', {name: LABELS.CONFIGURATION.SELECTED_TITLE}),
   title: () => screen.getByText(LABELS.CONFIGURATION.SELECTED_TITLE),
   emptyList: () => screen.getByText(LABELS.CONFIGURATION.EMPTY_LIST),
-  allActiveItems: () =>
-    selectors.selectedList().querySelectorAll('.nx-transfer-list__item'),
+  allActiveItems: () => selectors.selectedList().querySelectorAll('.nx-transfer-list__item'),
 };
 
 describe('Realms', () => {
@@ -77,6 +73,11 @@ describe('Realms', () => {
     },
   ];
 
+  const renderAndWaitForLoad = async () => {
+    render(<Realms />);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+  }
+
   beforeEach(() => {
     when(Axios.get)
       .calledWith(APIConstants.REST.PUBLIC.ACTIVE_REALMS)
@@ -91,10 +92,9 @@ describe('Realms', () => {
   });
 
   it('renders the resolved data', async () => {
-    const { queryLoadingMask, availableList, selectedList } = selectors;
+    const {availableList, selectedList} = selectors;
 
-    render(<Realms />);
-    await waitForElementToBeRemoved(queryLoadingMask());
+    await renderAndWaitForLoad();
 
     expect(availableList()).toHaveTextContent(data[0].name);
     expect(availableList()).toHaveTextContent(data[1].name);
@@ -103,19 +103,16 @@ describe('Realms', () => {
   });
 
   it('discards changes', async () => {
-    const { queryLoadingMask, availableList, selectedList, discardButton } =
-      selectors;
+    const {availableList, selectedList, queryDiscardButton} = selectors;
 
-    render(<Realms />);
-
-    await waitForElementToBeRemoved(queryLoadingMask());
+    await renderAndWaitForLoad();
 
     expect(availableList()).toHaveTextContent(data[0].name);
     expect(availableList()).toHaveTextContent(data[1].name);
     expect(selectedList()).toHaveTextContent(data[2].name);
     expect(selectedList()).toHaveTextContent(data[3].name);
 
-    expect(discardButton()).toHaveClass('disabled');
+    expect(queryDiscardButton()).toHaveClass('disabled');
 
     userEvent.click(screen.getByText(data[0].name));
     expect(selectedList()).toHaveTextContent(data[0].name);
@@ -123,17 +120,16 @@ describe('Realms', () => {
     userEvent.click(screen.getByText(data[2].name));
     expect(availableList()).toHaveTextContent(data[2].name);
 
-    expect(discardButton()).not.toHaveClass('disabled');
+    expect(queryDiscardButton()).not.toHaveClass('disabled');
 
-    userEvent.click(discardButton());
+    userEvent.click(queryDiscardButton());
 
     expect(availableList()).toHaveTextContent(data[0].name);
     expect(selectedList()).toHaveTextContent(data[2].name);
   });
 
   it('edits the Realms Form', async () => {
-    const { queryLoadingMask, availableList, selectedList, saveButton } =
-      selectors;
+    const {availableList, selectedList, querySubmitButton} = selectors;
 
     when(Axios.put)
       .calledWith(
@@ -144,11 +140,9 @@ describe('Realms', () => {
         data: [{ active: [data[0].id, data[3].id] }],
       });
 
-    render(<Realms />);
+    await renderAndWaitForLoad();
 
-    await waitForElementToBeRemoved(queryLoadingMask());
-
-    expect(saveButton()).toHaveClass('disabled');
+    userEvent.click(selectors.querySubmitButton());
 
     userEvent.click(screen.getByText(data[0].name));
     userEvent.click(screen.getByText(data[2].name));
@@ -156,9 +150,9 @@ describe('Realms', () => {
     expect(selectedList()).toHaveTextContent(data[0].name);
     expect(availableList()).toHaveTextContent(data[2].name);
 
-    expect(saveButton()).not.toHaveClass('disabled');
+    expect(querySubmitButton()).not.toHaveClass('disabled');
 
-    await userEvent.click(saveButton());
+    await userEvent.click(querySubmitButton());
 
     expect(Axios.put).toHaveBeenCalledWith(
       APIConstants.REST.PUBLIC.ACTIVE_REALMS,
@@ -167,13 +161,10 @@ describe('Realms', () => {
   });
 
   it('allows reordering the active column', async () => {
-    const { queryLoadingMask, allActiveItems } = selectors;
-
+    const {allActiveItems} = selectors;
     const expected = 'nx-transfer-list__item--with-reordering';
 
-    render(<Realms />);
-
-    await waitForElementToBeRemoved(queryLoadingMask());
+    await renderAndWaitForLoad();
 
     const activesRealms = allActiveItems();
 
@@ -189,16 +180,13 @@ describe('Realms', () => {
 
   it('saves the active realms in the corresponding order', async () => {
     const {
-      queryLoadingMask,
       selectedList,
       availableList,
-      saveButton,
+      querySubmitButton,
       allActiveItems,
     } = selectors;
 
-    render(<Realms />);
-
-    await waitForElementToBeRemoved(queryLoadingMask());
+    await renderAndWaitForLoad();
 
     expect(availableList()).toHaveTextContent(data[0].name);
     expect(availableList()).toHaveTextContent(data[1].name);
@@ -245,9 +233,9 @@ describe('Realms', () => {
       expect(item).toHaveTextContent(data[index].name);
     });
 
-    expect(saveButton()).not.toHaveClass('disabled');
+    expect(querySubmitButton()).not.toHaveClass('disabled');
 
-    await userEvent.click(saveButton());
+    await userEvent.click(querySubmitButton());
 
     expect(Axios.put).toHaveBeenCalledWith(
       APIConstants.REST.PUBLIC.ACTIVE_REALMS,
@@ -257,16 +245,14 @@ describe('Realms', () => {
 
   it('do not allow save if there is not at least 1 realm is marked as active', async () => {
     const {
-      queryLoadingMask,
       selectedList,
       allActiveItems,
       availableList,
-      saveButton,
+      queryFormError,
     } = selectors;
 
-    render(<Realms />);
+    await renderAndWaitForLoad();
 
-    await waitForElementToBeRemoved(queryLoadingMask());
     expect(selectedList()).toHaveTextContent(data[2].name);
     expect(selectedList()).toHaveTextContent(data[3].name);
 
@@ -277,25 +263,18 @@ describe('Realms', () => {
     expect(availableList()).toHaveTextContent(data[3].name);
 
     const activesRealms = allActiveItems();
-
     expect(activesRealms).toHaveLength(0);
-
-    expect(saveButton()).toHaveClass('disabled');
-
-    await TestUtils.expectToSeeTooltipOnHover(saveButton(), LABELS.MESSAGES.NO_REALMS_CONFIGURED);
+    expect(queryFormError(LABELS.MESSAGES.NO_REALMS_CONFIGURED)).toBeInTheDocument();
   });
 
   describe('Read Only Mode', () => {
     const listItemClass = 'nx-list__text';
 
     it('shows Realms configuration in Read Only mode', async () => {
+      const {title} = selectors;
       ExtJS.checkPermission.mockReturnValueOnce(false);
 
-      const { queryLoadingMask, title } = selectors;
-
-      render(<Realms />);
-
-      await waitForElementToBeRemoved(queryLoadingMask());
+      await renderAndWaitForLoad();
 
       expect(title()).toBeInTheDocument();
 
@@ -305,7 +284,7 @@ describe('Realms', () => {
     it('Shows empty Realms page in Read Only mode', async () => {
       ExtJS.checkPermission.mockReturnValueOnce(false);
 
-      const { queryLoadingMask, emptyList, title } = selectors;
+      const {emptyList, title} = selectors;
 
       when(Axios.get)
         .calledWith(APIConstants.REST.PUBLIC.ACTIVE_REALMS)
@@ -313,9 +292,7 @@ describe('Realms', () => {
           data: [],
         });
 
-      render(<Realms />);
-
-      await waitForElementToBeRemoved(queryLoadingMask());
+      await renderAndWaitForLoad();
 
       expect(title()).toBeInTheDocument();
       expect(emptyList()).toBeInTheDocument();

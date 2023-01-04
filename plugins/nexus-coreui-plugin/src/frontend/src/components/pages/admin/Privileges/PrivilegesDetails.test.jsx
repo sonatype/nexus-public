@@ -77,6 +77,7 @@ const REPO_SELECTOR_PRIVILEGE = {
 
 const selectors = {
   ...TestUtils.selectors,
+  ...TestUtils.formSelectors,
   type: () => screen.queryByLabelText(LABELS.TYPE.LABEL),
   name: () => screen.queryByLabelText(LABELS.NAME.LABEL),
   description: () => screen.queryByLabelText(LABELS.DESCRIPTION.LABEL),
@@ -85,7 +86,6 @@ const selectors = {
   contentSelector: () => screen.queryByLabelText(FIELDS.CONTENT_SELECTOR.LABEL),
   format: () => screen.queryByLabelText(FIELDS.FORMAT.LABEL),
   repositories: () => screen.getByPlaceholderText('Search'),
-  requiredValidation: () => screen.queryByText(UIStrings.ERROR.FIELD_REQUIRED),
   readOnly: {
     type: () => screen.getByText(LABELS.TYPE.LABEL).nextSibling,
     name: () => screen.getByText(LABELS.NAME.LABEL).nextSibling,
@@ -97,7 +97,6 @@ const selectors = {
     repositories: () => screen.getByText(FIELDS.REPOSITORY.LABEL).nextSibling,
   },
   cancelButton: () => screen.getByText(SETTINGS.CANCEL_BUTTON_LABEL),
-  saveButton: () => screen.getByText(SETTINGS.SAVE_BUTTON_LABEL),
   deleteButton: () => screen.getByText(SETTINGS.DELETE_BUTTON_LABEL),
 };
 
@@ -120,7 +119,7 @@ describe('PrivilegesDetails', function() {
   });
 
   it('renders the resolved data', async function() {
-    const {type, name, description, scriptName, actions, saveButton} = selectors;
+    const {type, name, description, scriptName, actions, querySubmitButton, queryFormError} = selectors;
 
     await renderAndWaitForLoad(testName);
 
@@ -132,7 +131,8 @@ describe('PrivilegesDetails', function() {
     expect(scriptName()).toHaveValue(testScriptName);
     expect(actions()).toHaveValue(testActions);
 
-    expect(saveButton()).toHaveClass('disabled');
+    userEvent.click(querySubmitButton());
+    expect(queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
   });
 
   it('renders the resolved data with XSS', async function() {
@@ -187,9 +187,12 @@ describe('PrivilegesDetails', function() {
   });
 
   it('renders validation messages', async function() {
-    const {type, name, description, scriptName, actions, requiredValidation, saveButton} = selectors;
+    const {type, name, description, scriptName, actions, requiredValidation, querySubmitButton, queryFormError} = selectors;
 
     await renderAndWaitForLoad();
+
+    userEvent.click(querySubmitButton());
+    expect(queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
 
     expect(type()).toBeInTheDocument();
     expect(name()).toBeInTheDocument();
@@ -200,33 +203,33 @@ describe('PrivilegesDetails', function() {
     userEvent.selectOptions(type(), TYPE_IDS.SCRIPT);
     expect(scriptName()).toBeInTheDocument();
     expect(actions()).toBeInTheDocument();
-    expect(saveButton()).toHaveClass('disabled');
+    expect(queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     await TestUtils.changeField(name, testName);
     userEvent.clear(name());
-    expect(requiredValidation()).toBeInTheDocument();
+    expect(name()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
     await TestUtils.changeField(name, testName);
-    expect(requiredValidation()).not.toBeInTheDocument()
+    expect(name()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
 
     await TestUtils.changeField(description, testDescription);
 
     await TestUtils.changeField(scriptName, testScriptName);
     userEvent.clear(scriptName());
-    expect(requiredValidation()).toBeInTheDocument();
+    expect(scriptName()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
     await TestUtils.changeField(scriptName, testScriptName);
-    expect(requiredValidation()).not.toBeInTheDocument()
+    expect(scriptName()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
 
     await TestUtils.changeField(actions, testActions);
     userEvent.clear(actions());
-    expect(requiredValidation()).toBeInTheDocument();
+    expect(actions()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
     await TestUtils.changeField(actions, testActions);
-    expect(requiredValidation()).not.toBeInTheDocument();
+    expect(actions()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
 
-    expect(saveButton()).not.toHaveClass('disabled');
+    expect(queryFormError()).not.toBeInTheDocument();
   });
 
   it('creates Script privilege', async function() {
-    const {type, name, description, scriptName, actions, saveButton} = selectors;
+    const {type, name, description, scriptName, actions, querySubmitButton, querySavingMask} = selectors;
 
     when(Axios.post).calledWith(createPrivilegeUrl(TYPE_IDS.SCRIPT), SCRIPT_PRIVILEGE).mockResolvedValue({data: {}});
 
@@ -238,15 +241,25 @@ describe('PrivilegesDetails', function() {
     await TestUtils.changeField(scriptName, testScriptName);
     await TestUtils.changeField(actions, testActions);
 
-    expect(saveButton()).not.toHaveClass('disabled');
-    userEvent.click(saveButton());
+    userEvent.click(querySubmitButton());
+    await waitForElementToBeRemoved(selectors.querySavingMask());
 
-    await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(createPrivilegeUrl(TYPE_IDS.SCRIPT), SCRIPT_PRIVILEGE));
+    expect(Axios.post).toHaveBeenCalledWith(createPrivilegeUrl(TYPE_IDS.SCRIPT), SCRIPT_PRIVILEGE);
     expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
   });
 
   it('creates Repository Content Selector privilege', async function() {
-    const {type, name, description, contentSelector, actions, repositories, saveButton, format} = selectors;
+    const {
+      type,
+      name,
+      description,
+      contentSelector,
+      actions,
+      repositories,
+      querySubmitButton,
+      querySavingMask,
+      format
+    } = selectors;
 
     when(Axios.post).calledWith(EXT_URL, expect.objectContaining({method: 'readReferencesAddingEntryForAll'}))
         .mockResolvedValue({data: TestUtils.makeExtResult(clone(REPOSITORIES))});
@@ -267,18 +280,18 @@ describe('PrivilegesDetails', function() {
     await TestUtils.changeField(repositories, 'm');
     userEvent.click(screen.getByText(testRepository));
 
-    expect(saveButton()).not.toHaveClass('disabled');
-    userEvent.click(saveButton());
+    userEvent.click(querySubmitButton());
+    await waitForElementToBeRemoved(querySavingMask());
 
-    await waitFor(() => expect(Axios.post).toHaveBeenLastCalledWith(
+    expect(Axios.post).toHaveBeenLastCalledWith(
         createPrivilegeUrl(TYPE_IDS.REPOSITORY_CONTENT_SELECTOR),
         REPO_SELECTOR_PRIVILEGE
-    ));
+    );
     expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
   });
 
   it('updates Script privilege', async function() {
-    const {description, scriptName, actions, saveButton} = selectors;
+    const {description, scriptName, actions, querySubmitButton, querySavingMask} = selectors;
 
     const data = {
       type: TYPE_IDS.SCRIPT,
@@ -297,17 +310,16 @@ describe('PrivilegesDetails', function() {
     await TestUtils.changeField(scriptName, data.scriptName);
     await TestUtils.changeField(actions, data.actions.join(','));
 
-    expect(saveButton()).not.toHaveClass('disabled');
+    userEvent.click(querySubmitButton());
+    await waitForElementToBeRemoved(querySavingMask());
 
-    userEvent.click(saveButton());
-
-    await waitFor(() => expect(Axios.put).toHaveBeenCalledWith(updatePrivilegeUrl(TYPE_IDS.SCRIPT, testName), data));
+    expect(Axios.put).toHaveBeenCalledWith(updatePrivilegeUrl(TYPE_IDS.SCRIPT, testName), data);
     expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
   });
 
   it('shows save API errors', async function() {
     const message = "Use a unique privilegeId";
-    const {type, name, description, scriptName, actions, saveButton} = selectors;
+    const {type, name, description, scriptName, actions, querySubmitButton, querySavingMask, querySaveError} = selectors;
 
     when(Axios.post).calledWith(createPrivilegeUrl(TYPE_IDS.SCRIPT), expect.objectContaining({name: testName}))
         .mockRejectedValue({response: {data: message}});
@@ -321,10 +333,9 @@ describe('PrivilegesDetails', function() {
     await TestUtils.changeField(scriptName, testScriptName);
     await TestUtils.changeField(actions, testActions);
 
-    expect(saveButton()).not.toHaveClass('disabled');
-    await act(async () => userEvent.click(saveButton()));
+    userEvent.click(querySubmitButton());
+    await waitForElementToBeRemoved(querySavingMask());
 
-    expect(NX.Messages.error).toHaveBeenCalledWith(UIStrings.ERROR.SAVE_ERROR);
     expect(screen.getByText(new RegExp(message))).toBeInTheDocument();
   });
 

@@ -48,6 +48,7 @@ jest.mock('axios', () => {  // Mock out parts of axios, has to be done in same s
 
 const selectors = {
   ...TestUtils.selectors,
+  ...TestUtils.formSelectors,
   discardButton: () => screen.getByText(SETTINGS.DISCARD_BUTTON_LABEL),
   saveButton: () => screen.getByText(SETTINGS.SAVE_BUTTON_LABEL),
   availableList: () => screen.getByRole('group', {name: LABELS.CONFIGURATION.AVAILABLE_TITLE}),
@@ -121,7 +122,7 @@ describe('ProprietaryRepositories', () => {
   });
 
   it('edits the Proprietary Repositories Form', async () => {
-    const {availableList, selectedList, saveButton} = selectors;
+    const {availableList, selectedList, saveButton, queryFormError} = selectors;
 
     when(Axios.post).calledWith(URL, expect.objectContaining({method: 'update'}))
       .mockResolvedValue({
@@ -133,8 +134,7 @@ describe('ProprietaryRepositories', () => {
     });
 
     await waitFor(() => expect(Axios.post).toHaveBeenCalledTimes(1));
-
-    expect(saveButton()).toHaveClass('disabled');
+    expect(queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
 
     userEvent.click(screen.getByText('maven-releases'));
     userEvent.click(screen.getByText('nuget-hosted'));

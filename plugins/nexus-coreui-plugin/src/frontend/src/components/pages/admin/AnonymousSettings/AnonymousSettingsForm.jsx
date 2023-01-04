@@ -15,14 +15,14 @@ import {useMachine} from '@xstate/react';
 
 import {
   FormUtils,
-  Select,
   Textfield
 } from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
   NxCheckbox,
-  NxForm,
   NxFormGroup,
+  NxFormSelect,
+  NxStatefulForm,
   NxTooltip,
 } from '@sonatype/react-shared-components';
 
@@ -38,7 +38,7 @@ export default function AnonymousSettingsForm() {
     send('RESET');
   }
 
-  return <NxForm
+  return <NxStatefulForm
       {...FormUtils.formProps(current, send)}
       additionalFooterBtns={
         <NxTooltip title={FormUtils.discardTooltip({isPristine})}>
@@ -59,12 +59,12 @@ export default function AnonymousSettingsForm() {
         <Textfield{...FormUtils.fieldProps('userId', current)} onChange={FormUtils.handleUpdate('userId', send)}/>
       </NxFormGroup>
       <NxFormGroup label={UIStrings.ANONYMOUS_SETTINGS.REALM_SELECT_LABEL} isRequired>
-        <Select name='realmName' value={data.realmName} onChange={FormUtils.handleUpdate('realmName', send)}>
+        <NxFormSelect name='realmName' value={data.realmName} onChange={FormUtils.handleUpdate('realmName', send)}>
           {realms?.map((realm) =>
               <option key={realm.id} value={realm.id}>{realm.name}</option>
           )}
-        </Select>
+        </NxFormSelect>
       </NxFormGroup>
     </>}
-  </NxForm>;
+  </NxStatefulForm>;
 }

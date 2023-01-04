@@ -31,7 +31,7 @@ const {
   MENU
 } = UIStrings.SSL_CERTIFICATES;
 
-export default function SslCerticatesAddForm({onDone, machine}) {
+export default function SslCertificatesAddForm({onDone, machine}) {
   const [state, send] = machine;
 
   const {isPristine, isInvalid, source, data} = state.context;
@@ -51,6 +51,7 @@ export default function SslCerticatesAddForm({onDone, machine}) {
         <NxTile>
           <NxTile.Content>
             <NxForm
+              showValidationErrors={true}
               onSubmit={load}
               submitBtnText={LOAD_BUTTON}
               onCancel={onDone}

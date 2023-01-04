@@ -13,7 +13,7 @@
 import React from 'react';
 import axios from 'axios';
 import {when} from 'jest-when';
-import {screen, waitForElementToBeRemoved} from '@testing-library/react'
+import {screen, waitForElementToBeRemoved, within} from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
@@ -114,8 +114,12 @@ const quotaTypes = {
 
 const selectors = {
   ...TestUtils.selectors,
+  ...TestUtils.formSelectors,
   maxConnectionPoolSize: () => screen.queryByLabelText('Max Connection Pool Size'),
-  cancelButton: () => screen.getByText('Cancel')
+  cancelButton: () => screen.getByText('Cancel'),
+  getSoftQuota: () => within(screen.getByRole('group', {name: 'Soft Quota'})).getByLabelText('Enabled'),
+  getUsePathStyle: () => within(screen.getByRole('group', {name: 'Use path-style access'})).getByLabelText(
+      'Setting this flag will result in path-style access being used for all requests')
 }
 
 describe('BlobStoresForm', function() {
@@ -145,13 +149,10 @@ describe('BlobStoresForm', function() {
           kmsKeyId: () => getByLabelText('KMS Key ID (Optional)'),
           endpointURL: () => getByLabelText('Endpoint URL'),
           signatureVersion: () => getByLabelText('Signature Version'),
-          usePathStyle: () => getByLabelText('Use path-style access'),
           availableMembers: () => getByRole('group', {name: 'Available Items'}),
           selectedMembers: () => getByRole('group', {name: 'Transferred Items'}),
-          softQuota: () => getByLabelText('Soft Quota'),
           softQuotaType: () => queryByLabelText('Constraint Type'),
           softQuotaLimit: () => queryByLabelText('Constraint Limit (in MB)'),
-          saveButton: () => getByText('Save'),
           convertToGroup: () => queryByText('Convert to Group')
         }));
   }
@@ -224,8 +225,7 @@ describe('BlobStoresForm', function() {
       encryptionType,
       kmsKeyId,
       endpointURL,
-      signatureVersion,
-      usePathStyle
+      signatureVersion
     } = render();
 
     await waitForElementToBeRemoved(loadingMask);
@@ -245,7 +245,7 @@ describe('BlobStoresForm', function() {
     expect(encryptionType()).toBeInTheDocument();
     expect(kmsKeyId()).toBeInTheDocument();
     expect(signatureVersion()).toBeInTheDocument();
-    expect(usePathStyle()).toBeInTheDocument();
+    expect(selectors.getUsePathStyle()).toBeInTheDocument();
   });
 
   it('enables the save button when the minimum fields are filled in S3 blobstore', async function() {
@@ -256,7 +256,6 @@ describe('BlobStoresForm', function() {
       name,
       loadingMask,
       typeSelect,
-      saveButton,
       expiration,
       bucket,
       accessKeyId,
@@ -266,36 +265,39 @@ describe('BlobStoresForm', function() {
 
     await waitForElementToBeRemoved(loadingMask);
 
+    userEvent.click(selectors.querySubmitButton());
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
+
     userEvent.selectOptions(typeSelect(), 's3');
     expect(typeSelect()).toHaveValue('s3');
     expect(expiration()).toHaveValue('3');
 
-    expect(saveButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
 
     userEvent.type(name(), 'test');
     expect(name()).toHaveValue('test');
 
     userEvent.type(bucket(), 'bucket');
     expect(bucket()).toHaveValue('bucket');
-    expect(saveButton()).not.toHaveClass('disabled');
+    expect(selectors.queryFormError()).not.toBeInTheDocument();
 
     userEvent.type(accessKeyId(), 'someAccessKey');
     expect(accessKeyId()).toHaveValue('someAccessKey');
-    expect(saveButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     userEvent.type(secretAccessKey(), 'SomeSecretAccessKey');
     expect(secretAccessKey()).toHaveValue('SomeSecretAccessKey');
-    expect(saveButton()).not.toHaveClass('disabled');
+    expect(selectors.queryFormError()).not.toBeInTheDocument();
 
     userEvent.type(endpointURL(), 'invalidURL');
     expect(endpointURL()).toHaveValue('invalidURL');
-    expect(saveButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     userEvent.clear(endpointURL());
     expect(endpointURL()).toHaveValue('');
     userEvent.type(endpointURL(), 'http://www.fakeurl.com');
     expect(endpointURL()).toHaveValue('http://www.fakeurl.com');
-    expect(saveButton()).not.toHaveClass('disabled');
+    expect(selectors.queryFormError()).not.toBeInTheDocument();
   });
 
 
@@ -320,18 +322,18 @@ describe('BlobStoresForm', function() {
     when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
     when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
 
-    const {loadingMask, typeSelect, softQuota, softQuotaType, softQuotaLimit} = render();
+    const {loadingMask, typeSelect, softQuotaType, softQuotaLimit} = render();
 
     await waitForElementToBeRemoved(loadingMask);
 
     userEvent.selectOptions(typeSelect(), 'file');
     expect(typeSelect()).toHaveValue('file');
 
-    expect(softQuota()).toBeInTheDocument();
+    expect(selectors.getSoftQuota()).toBeInTheDocument();
     expect(softQuotaType()).not.toBeInTheDocument();
     expect(softQuotaLimit()).not.toBeInTheDocument();
 
-    userEvent.click(softQuota());
+    userEvent.click(selectors.getSoftQuota());
 
     expect(softQuotaType()).toBeInTheDocument();
     expect(softQuotaLimit()).toBeInTheDocument();
@@ -341,46 +343,49 @@ describe('BlobStoresForm', function() {
     when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
     when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
 
-    const {loadingMask, typeSelect, name, softQuota, softQuotaType, softQuotaLimit, saveButton} = render();
+    const {loadingMask, typeSelect, name, softQuotaType, softQuotaLimit} = render();
 
     await waitForElementToBeRemoved(loadingMask);
+
+    userEvent.click(selectors.querySubmitButton());
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
 
     userEvent.selectOptions(typeSelect(), 'file');
     expect(typeSelect()).toHaveValue('file');
 
-    expect(saveButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
 
     userEvent.type(name(), 'test');
     expect(name()).toHaveValue('test');
 
-    expect(saveButton()).not.toHaveClass('disabled');
+    expect(selectors.queryFormError()).not.toBeInTheDocument();
 
-    userEvent.click(softQuota());
+    userEvent.click(selectors.getSoftQuota());
 
-    expect(saveButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     userEvent.selectOptions(softQuotaType(), 'spaceRemainingQuota');
     expect(softQuotaType()).toHaveValue('spaceRemainingQuota');
     userEvent.type(softQuotaLimit(), '100');
     expect(softQuotaLimit()).toHaveValue('100');
 
-    expect(saveButton()).not.toHaveClass('disabled');
+    expect(selectors.queryFormError()).not.toBeInTheDocument();
 
     userEvent.clear(softQuotaLimit());
     expect(softQuotaLimit()).toHaveValue('');
 
-    expect(saveButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
-    userEvent.click(softQuota());
+    userEvent.click(selectors.getSoftQuota());
 
-    expect(saveButton()).not.toHaveClass('disabled');
+    expect(selectors.queryFormError()).not.toBeInTheDocument();
   });
 
   it('creates a new file blob store', async function() {
     when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
     when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
 
-    const {loadingMask, typeSelect, name, path, softQuota, softQuotaType, softQuotaLimit, saveButton} = render();
+    const {loadingMask, typeSelect, name, path, softQuotaType, softQuotaLimit} = render();
 
     await waitForElementToBeRemoved(loadingMask);
 
@@ -392,12 +397,12 @@ describe('BlobStoresForm', function() {
     userEvent.clear(path());
     userEvent.type(path(), 'testPath');
     expect(path()).toHaveValue('testPath');
-    userEvent.click(softQuota());
+    userEvent.click(selectors.getSoftQuota());
     userEvent.selectOptions(softQuotaType(), 'spaceRemainingQuota');
     expect(softQuotaType()).toHaveValue('spaceRemainingQuota');
     userEvent.type(softQuotaLimit(), SOFT_QUOTA_1_TERABYTE_IN_MEGABYTES);
     expect(softQuotaLimit()).toHaveValue(SOFT_QUOTA_1_TERABYTE_IN_MEGABYTES);
-    userEvent.click(saveButton());
+    userEvent.click(selectors.querySubmitButton());
 
     expect(axios.post).toHaveBeenCalledWith(
         '/service/rest/v1/blobstores/file',
@@ -421,7 +426,6 @@ describe('BlobStoresForm', function() {
       name,
       loadingMask,
       typeSelect,
-      saveButton,
       expiration,
       bucket,
       accessKeyId,
@@ -435,32 +439,32 @@ describe('BlobStoresForm', function() {
     expect(typeSelect()).toHaveValue('s3');
     expect(expiration()).toHaveValue('3');
 
-    expect(saveButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
 
     userEvent.type(name(), 'test');
     expect(name()).toHaveValue('test');
 
     userEvent.type(bucket(), 'bucket');
     expect(bucket()).toHaveValue('bucket');
-    expect(saveButton()).not.toHaveClass('disabled');
+    expect(selectors.queryFormError()).not.toBeInTheDocument();
 
     userEvent.type(accessKeyId(), 'someAccessKey');
     expect(accessKeyId()).toHaveValue('someAccessKey');
-    expect(saveButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     userEvent.type(secretAccessKey(), 'SomeSecretAccessKey');
     expect(secretAccessKey()).toHaveValue('SomeSecretAccessKey');
-    expect(saveButton()).not.toHaveClass('disabled');
+    expect(selectors.queryFormError()).not.toBeInTheDocument();
 
     userEvent.type(endpointURL(), 'invalidURL');
     expect(endpointURL()).toHaveValue('invalidURL');
-    expect(saveButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     userEvent.clear(endpointURL());
     expect(endpointURL()).toHaveValue('');
     userEvent.type(endpointURL(), 'http://www.fakeurl.com');
     expect(endpointURL()).toHaveValue('http://www.fakeurl.com');
-    expect(saveButton()).not.toHaveClass('disabled');
+    expect(selectors.queryFormError()).not.toBeInTheDocument();
 
     userEvent.type(selectors.maxConnectionPoolSize(), '0');
     expect(selectors.maxConnectionPoolSize()).toHaveErrorMessage('The minimum value for this field is 1');
@@ -471,7 +475,7 @@ describe('BlobStoresForm', function() {
     userEvent.type(selectors.maxConnectionPoolSize(), '1');
     expect(selectors.maxConnectionPoolSize()).not.toHaveErrorMessage(expect.anything());
 
-    userEvent.click(saveButton());
+    userEvent.click(selectors.querySubmitButton());
 
     expect(axios.post).toHaveBeenCalledWith(
         '/service/rest/v1/blobstores/s3',
@@ -590,7 +594,6 @@ describe('BlobStoresForm', function() {
       name,
       path,
       title,
-      softQuota,
       softQuotaType,
       softQuotaLimit,
       typeSelect
@@ -606,7 +609,7 @@ describe('BlobStoresForm', function() {
     expect(name()).not.toBeInTheDocument();
 
     expect(path()).toHaveValue('testPath');
-    expect(softQuota()).toBeChecked();
+    expect(selectors.getSoftQuota()).toBeChecked();
     expect(softQuotaType()).toHaveValue('spaceRemainingQuota');
     expect(softQuotaLimit()).toHaveValue('100');
   });

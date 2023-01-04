@@ -17,14 +17,14 @@ import {faKey} from '@fortawesome/free-solid-svg-icons';
 import {ExtJS, Permissions, FormUtils} from '@sonatype/nexus-ui-plugin';
 
 import {
-  NxForm,
-  NxH2,
-  NxCheckbox,
-  NxTooltip,
   NxButton,
-  NxP,
+  NxCheckbox,
   NxFieldset,
-  NxFontAwesomeIcon
+  NxFontAwesomeIcon,
+  NxH2,
+  NxP,
+  NxStatefulForm,
+  NxTooltip
 } from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
@@ -60,7 +60,7 @@ export default function UserTokensForm({service}) {
 
   return (
     <>
-      <NxForm
+      <NxStatefulForm
         {...FormUtils.formProps(state, send)}
         additionalFooterBtns={
           <>
@@ -109,7 +109,7 @@ export default function UserTokensForm({service}) {
             {REPOSITORY_AUTHENTICATION_CHECKBOX.DESCRIPTION}
           </NxCheckbox>
         </NxFieldset>
-      </NxForm>
+      </NxStatefulForm>
 
       {resetConfirmation && <UserTokensResetModal service={service} />}
     </>

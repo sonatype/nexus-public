@@ -51,6 +51,10 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   }
 }));
 
+const selectors = {
+  ...TestUtils.formSelectors
+};
+
 describe('LoggingConfigurationForm', function() {
   const CONFIRM = Promise.resolve();
   const OVERRIDDEN_LOGGER = Promise.resolve({data: {override: true}});
@@ -85,13 +89,13 @@ describe('LoggingConfigurationForm', function() {
       data: {name: 'ROOT', level: 'INFO'}
     });
 
-    const {loadingMask, name, level, saveButton} = renderEditView();
+    const {loadingMask, name, level} = renderEditView();
 
     await waitForElementToBeRemoved(loadingMask);
 
     expect(name()).toHaveValue('ROOT');
     expect(level()).toHaveValue('INFO');
-    expect(saveButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
   });
 
   it('renders an error message', async function() {
@@ -108,15 +112,17 @@ describe('LoggingConfigurationForm', function() {
 
   it('requires the name field when creating a new logging configuration', async function() {
     const {loadingMask, name, level, saveButton} = renderCreateView();
-
     await waitForElementToBeRemoved(loadingMask);
 
-    expect(saveButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
     expect(level()).toHaveValue('INFO');
 
-    await changeFieldAndAssertValue(name, 'name');
+    userEvent.click(saveButton())
+    expect(name()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
 
-    expect(saveButton()).not.toHaveClass('disabled');
+    await changeFieldAndAssertValue(name, 'name');
+    expect(name()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).not.toBeInTheDocument();
   });
 
   it('fires onDone when cancelled', async function() {

@@ -13,8 +13,8 @@
 import React from 'react';
 import PropTypes from "prop-types";
 import {faKey} from "@fortawesome/free-solid-svg-icons";
-import {FieldWrapper, Select, Textfield, Utils} from '@sonatype/nexus-ui-plugin';
-import {NxButton, NxFontAwesomeIcon, NxLoadWrapper} from '@sonatype/react-shared-components';
+import {FieldWrapper, Textfield, Utils} from '@sonatype/nexus-ui-plugin';
+import {NxButton, NxFontAwesomeIcon, NxFormSelect, NxLoadWrapper} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
 import {useMachine} from "@xstate/react";
@@ -99,12 +99,12 @@ export default function AnalyzeApplicationModal(props) {
           <FieldWrapper
               labelText={UIStrings.ANALYZE_APPLICATION.SELECT_ASSET.LABEL}
               descriptionText={UIStrings.ANALYZE_APPLICATION.SELECT_ASSET.DESCRIPTION}>
-            <Select {...Utils.fieldProps('selectedAsset', state)} disabled={!enableAssetSelection}
+            <NxFormSelect {...Utils.fieldProps('selectedAsset', state)} disabled={!enableAssetSelection}
                     onChange={handleAssetChange}>
               {Object.entries(assetMap).map(([key, value]) =>
                   <option key={key} value={key}>{value}</option>
               )}
-            </Select>
+            </NxFormSelect>
           </FieldWrapper>
           <FieldWrapper
               labelText={UIStrings.ANALYZE_APPLICATION.REPORT.LABEL}

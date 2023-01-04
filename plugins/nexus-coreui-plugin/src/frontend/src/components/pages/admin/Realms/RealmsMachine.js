@@ -18,13 +18,17 @@ import {assign} from 'xstate';
 import Axios from 'axios';
 import {FormUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
 
+import UIStrings from '../../../../constants/UIStrings';
+
+const {REALMS: {MESSAGES}} = UIStrings;
+
 export default FormUtils.buildFormMachine({
   id: 'RealmsMachine',
 }).withConfig({
   actions: {
     validate: assign({
-      validationErrors: ({ data }) => ({
-        isActiveListEmpty: data.active.length === 0,
+      validationErrors: ({data}) => ({
+        active: data.active.length ? null : MESSAGES.NO_REALMS_CONFIGURED,
       }),
     }),
     setData: assign((_, event) => {

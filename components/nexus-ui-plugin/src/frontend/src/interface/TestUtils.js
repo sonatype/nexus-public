@@ -16,12 +16,20 @@
  */
 import {fireEvent, render, screen, waitFor, within, waitForElementToBeRemoved} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import UIStrings from "../constants/UIStrings";
 import {pick} from 'ramda';
+
+const {SETTINGS: {SAVE_BUTTON_LABEL, DISCARD_BUTTON_LABEL}} = UIStrings;
 
 /**
  * @since 3.24
  */
 export default class TestUtils {
+  static REQUIRED_MESSAGE = 'This field is required';
+  static VALIDATION_ERRORS_MESSAGE = 'Validation errors are present';
+  static NO_CHANGES_MESSAGE = 'There are no changes';
+  static THERE_WERE_ERRORS = 'There were validation errors.';
+
   static get UNRESOLVED() {
     return new Promise(() => {});
   }
@@ -60,10 +68,33 @@ export default class TestUtils {
   }
 
   static selectors = {
-    queryLoadingMask: () => screen.queryByText('Loading…'),
+    queryLoadingMask: () => screen.queryByText(/loading/i),
     querySavingMask: () => screen.queryByText(/saving/i),
     querySubmittingMask: () => screen.queryByText(/submitting/i),
+    queryLoadError: (message) => {
+      const options = {selector: '.nx-load-error__message'};
+      if (message) {
+        return screen.queryByText('An error occurred loading data. ' + message, options);
+      }
+      else {
+        return screen.queryByText(/an error occurred loading data/i, options);
+      }
+    }
   }
+
+  static formSelectors = {
+    querySubmitButton: () => screen.queryByRole('button', {name: SAVE_BUTTON_LABEL}),
+    queryDiscardButton: () => screen.queryByRole('button', {name: DISCARD_BUTTON_LABEL}),
+    queryFormError: (message) => {
+      const options = {selector: '.nx-form__validation-errors .nx-alert__content'};
+      if (message) {
+        return screen.queryByText(`${TestUtils.THERE_WERE_ERRORS} ${message}`, options);
+      }
+      else {
+        return screen.queryByText(/there were validation errors/i, options);
+      }
+    }
+  };
 
   static tableSelectors = {
     table: () => screen.getByRole('table'),
