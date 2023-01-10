@@ -18,6 +18,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Optional;
 
+import javax.annotation.Nullable;
+
 /**
  * @since 3.29
  */
@@ -103,5 +105,49 @@ public interface DatabaseMigrationStep
         return results.next();
       }
     }
+  }
+
+  default boolean indexExists(final Connection conn, final String indexName)
+      throws SQLException
+  {
+    if (isPostgresql(conn)) {
+      String schema = schema(conn);
+      String sql = "SELECT * FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS" +
+          " WHERE UPPER(constraint_name) = ?" +
+          "   AND UPPER(constraint_schema) = ?";
+      try (PreparedStatement statement = conn.prepareStatement(sql)) {
+        statement.setString(1, indexName.toUpperCase());
+        statement.setString(2, schema.toUpperCase());
+        try (ResultSet results = statement.executeQuery()) {
+          return results.next();
+        }
+      }
+    }
+    else if (isH2(conn)) {
+      String sql = "SELECT * FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS" +
+          " WHERE UPPER(constraint_name) = ?";
+      try (PreparedStatement statement = conn.prepareStatement(sql)) {
+        statement.setString(1, indexName.toUpperCase());
+        try (ResultSet results = statement.executeQuery()) {
+          return results.next();
+        }
+      }
+    }
+    throw new UnsupportedOperationException();
+  }
+
+  @Nullable
+  default String schema(final Connection conn)
+      throws SQLException
+  {
+    String sql = "show search_path";
+    try (PreparedStatement statement = conn.prepareStatement(sql)) {
+      try (ResultSet results = statement.executeQuery()) {
+        if (results.next()) {
+          return results.getString(1);
+        }
+      }
+    }
+    throw new IllegalStateException("Unable to determine database schema");
   }
 }

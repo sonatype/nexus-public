@@ -10,29 +10,31 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.upgrade.datastore;
+package org.sonatype.nexus.upgrade.datastore.internal.steps;
 
+import java.sql.Connection;
 import java.util.Optional;
 
-import org.sonatype.goodies.common.ComponentSupport;
+import javax.inject.Named;
+import javax.inject.Singleton;
+
+import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 /**
- * Support class for repeatable migrations
+ * This is a placeholder for a removed migration step
  */
-public abstract class RepeatableDatabaseMigrationStep
-    extends ComponentSupport
+@Named
+@Singleton
+public class SqlCacheMigrationStep_1_26
     implements DatabaseMigrationStep
 {
   @Override
-  public final Optional<String> version() {
-    return Optional.empty();
+  public Optional<String> version() {
+    return Optional.of("1.26");
   }
 
-  /**
-   * Migrations will run when the checksum changes.
-   *
-   * Flyway considers the checksum prior to the first run as {@code null}
-   */
   @Override
-  public abstract Integer getChecksum();
+  public void migrate(final Connection connection) throws Exception {
+    // noop
+  }
 }
