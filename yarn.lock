@@ -2735,7 +2735,7 @@ __metadata:
     jest: 27.5.1
     jest-junit: 15.0.0
     jest-when: 3.1.0
-    luxon: 1.27.0
+    luxon: 1.28.1
     mini-css-extract-plugin: 2.5.3
     npm-run-all: 4.1.5
     prop-types: 15.7.2
@@ -2821,7 +2821,7 @@ __metadata:
     copy-modules-webpack-plugin: 2.2.1
     core-js: 2.6.11
     css-minimizer-webpack-plugin: 3.4.1
-    luxon: 1.27.0
+    luxon: 1.28.1
     mini-css-extract-plugin: 2.5.3
     npm-run-all: 4.1.5
     react: 17.0.2
@@ -8604,10 +8604,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"luxon@npm:1.27.0":
-  version: 1.27.0
-  resolution: "luxon@npm:1.27.0"
-  checksum: 5e6b17cb01c010c59fc50335c08c58fdf79219b3dc92f968ccedd81cfdfe5db19465108ee9198c4f1882b1fbc6cf33c98b74483b6a18a15656e0e305bade332c
+"luxon@npm:1.28.1":
+  version: 1.28.1
+  resolution: "luxon@npm:1.28.1"
+  checksum: 2c62999adea79645fd1e931d685f61aeb33eda7f39fbf79b84261a233b62f9590f48336654ee9efd405848bd9e13dc7fe087c701b7126187201a88998dc68b04
   languageName: node
   linkType: hard
 

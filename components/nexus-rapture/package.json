@@ -19,7 +19,7 @@
     "@xstate/inspect": "0.4.1",
     "axios": "0.21.4",
     "core-js": "2.6.11",
-    "luxon": "1.27.0",
+    "luxon": "1.28.1",
     "react": "17.0.2",
     "react-dom": "17.0.2",
     "xstate": "4.16.0"
