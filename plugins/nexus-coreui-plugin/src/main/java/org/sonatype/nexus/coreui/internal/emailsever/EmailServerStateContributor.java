@@ -31,7 +31,7 @@ public class EmailServerStateContributor
   private final Map<String, Object> state;
 
   @Inject
-  public EmailServerStateContributor(@Named("${nexus.react.emailServer:-false}") final Boolean featureFlag) {
+  public EmailServerStateContributor(@Named("${nexus.react.emailServer:-true}") final Boolean featureFlag) {
     state = ImmutableMap.of("nexus.react.emailServer", featureFlag);
   }
 

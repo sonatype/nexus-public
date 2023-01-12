@@ -70,7 +70,7 @@ Ext.define('NX.coreui.controller.SmtpSettings', {
       },
       visible: function () {
         return NX.Permissions.check('nexus:settings:read') &&
-            !NX.State.getValue('nexus.react.emailServer', false);
+            !NX.State.getValue('nexus.react.emailServer', true);
       }
     }, me);
 

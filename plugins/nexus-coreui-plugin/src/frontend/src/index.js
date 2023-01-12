@@ -141,7 +141,7 @@ window.plugins.push({
       iconCls: 'x-fa fa-envelope',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        featureFlags: [{key: 'nexus.react.emailServer', defaultValue: false}],
+        featureFlags: [{key: 'nexus.react.emailServer', defaultValue: true}],
         permissions: [Permissions.SETTINGS.READ]
       },
     },
