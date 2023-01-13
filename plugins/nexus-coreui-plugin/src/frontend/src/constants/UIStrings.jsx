@@ -786,6 +786,13 @@ export default {
       EDIT_TILE: (name) => `Edit ${name}`,
       EDIT_DESCRIPTION: (type) => `${type} Blob Store`,
       CONVERT_TO_GROUP_BUTTON: 'Convert to Group',
+      CONVERT_TO_GROUP_MODAL: {
+        HEADER: 'Convert to Group Blob Store',
+        LABEL: 'Rename Original Blob Store',
+        SUBLABEL: 'Assign a new name to the original blob store',
+        ALERT: 'You are converting to a group blob store. This action cannot be undone.',
+        CONVERT_BUTTON: 'Convert'
+      },
       TYPE: {
         label: 'Type',
         sublabel: 'Select the type of the blob store'

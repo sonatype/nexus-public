@@ -18,7 +18,7 @@
 import axios from 'axios';
 import {assign} from 'xstate';
 import {ExtJS, FormUtils, ValidationUtils, UnitUtil} from '@sonatype/nexus-ui-plugin';
-import {map, omit, propOr, replace, lensPath, set} from 'ramda';
+import {map, omit, propOr, replace} from 'ramda';
 
 import UIStrings from '../../../../constants/UIStrings';
 import Axios from "axios";
@@ -47,6 +47,11 @@ function deriveDynamicFieldData(type) {
 
   return result;
 }
+
+export const SPACE_USED_QUOTA_ID = 'spaceUsedQuota';
+
+export const canUseSpaceUsedQuotaOnly = (storeType) => 
+  ['azure', 's3'].includes(storeType.id);
 
 export default FormUtils.buildFormMachine({
   id: 'BlobStoresFormMachine',
@@ -214,16 +219,20 @@ export default FormUtils.buildFormMachine({
     }),
 
     toggleSoftQuota: assign({
-      data: ({data}, {name, value}) => {
+      data: ({data, type}, {name, value}) => {
         const softQuota = data.softQuota || {};
+        const newSoftQuota = {
+          limit: '',
+          type: '',
+          ...softQuota,
+          [name]: value
+        }
+        if (canUseSpaceUsedQuotaOnly(type)) {
+          newSoftQuota.type = SPACE_USED_QUOTA_ID;
+        }
         return {
           ...data,
-          softQuota: {
-            limit: '',
-            type: '',
-            ...softQuota,
-            [name]: value
-          }
+          softQuota: newSoftQuota
         }
       },
       isTouched: ({isTouched}, {name, value}) => {

@@ -57,7 +57,7 @@ const blobstoreTypes = {
         "readOnly": false,
         "label": "Path",
         "attributes": {
-          tokenReplacement: "/<data-directory>/blobs/${name}",
+          "tokenReplacement": "/<data-directory>/blobs/${name}",
           "long": true
         },
         "type": "string",
@@ -96,6 +96,10 @@ const blobstoreTypes = {
     {
       "id": "s3",
       "name": "S3"
+    },
+    {
+      "id": "azure",
+      "name": "Azure Cloud Storage"
     }
   ]
 };
@@ -153,7 +157,10 @@ describe('BlobStoresForm', function() {
           selectedMembers: () => getByRole('group', {name: 'Transferred Items'}),
           softQuotaType: () => queryByLabelText('Constraint Type'),
           softQuotaLimit: () => queryByLabelText('Constraint Limit (in MB)'),
-          convertToGroup: () => queryByText('Convert to Group')
+          spaceUsedQuotaLabel: () => getByText('Space Used'),
+          convertToGroup: () => queryByText('Convert to Group'),
+          azureAccountName: () => queryByLabelText('Account Name'),
+          azureContainerName: () => queryByLabelText('Container Name')
         }));
   }
 
@@ -174,7 +181,7 @@ describe('BlobStoresForm', function() {
     await waitForElementToBeRemoved(loadingMask);
 
     expect(selectors.cancelButton()).toBeEnabled();
-    expect(typeSelect().options.length).toBe(4);
+    expect(typeSelect().options.length).toBe(5);
     expect(Array.from(typeSelect().options).map(option => option.textContent)).toEqual(expect.arrayContaining([
         '',
         'File',
@@ -430,7 +437,10 @@ describe('BlobStoresForm', function() {
       bucket,
       accessKeyId,
       secretAccessKey,
-      endpointURL
+      endpointURL,
+      softQuotaType,
+      softQuotaLimit,
+      spaceUsedQuotaLabel
     } = render();
 
     await waitForElementToBeRemoved(loadingMask);
@@ -475,6 +485,11 @@ describe('BlobStoresForm', function() {
     userEvent.type(selectors.maxConnectionPoolSize(), '1');
     expect(selectors.maxConnectionPoolSize()).not.toHaveErrorMessage(expect.anything());
 
+    userEvent.click(selectors.getSoftQuota());
+    expect(softQuotaType()).not.toBeInTheDocument();
+    expect(spaceUsedQuotaLabel()).toBeInTheDocument();
+    userEvent.type(softQuotaLimit(), '1');
+
     userEvent.click(selectors.querySubmitButton());
 
     expect(axios.post).toHaveBeenCalledWith(
@@ -493,8 +508,64 @@ describe('BlobStoresForm', function() {
               maxConnectionPoolSize: '1',
               forcePathStyle: false
             }
+          },
+          softQuota: {
+            enabled: true,
+            limit: 1048576,
+            type: 'spaceUsedQuota'
           }
         }
+    );
+  });
+
+  it('creates a new Azure blob store', async function() {
+    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+
+    const {
+      name,
+      loadingMask,
+      typeSelect,
+      azureAccountName,
+      azureContainerName,
+      softQuotaType,
+      softQuotaLimit,
+      spaceUsedQuotaLabel
+    } = render();
+
+    const data = {
+      name: 'azure-blob-store',
+      bucketConfiguration: {
+        authentication: {
+          authenticationMethod: 'MANAGEDIDENTITY'
+        },
+        accountName: 'azure-account',
+        containerName: 'azure-container'
+      },
+      softQuota: {
+        limit: 1048576,
+        type: 'spaceUsedQuota',
+        enabled: true
+      }
+    };
+
+    await waitForElementToBeRemoved(loadingMask);
+
+    userEvent.selectOptions(typeSelect(), 'Azure Cloud Storage');
+    userEvent.type(name(), data.name);
+    userEvent.type(azureAccountName(), data.bucketConfiguration.accountName);
+    userEvent.type(azureContainerName(), data.bucketConfiguration.containerName);
+
+    userEvent.click(selectors.getSoftQuota());
+    expect(softQuotaType()).not.toBeInTheDocument();
+    expect(spaceUsedQuotaLabel()).toBeInTheDocument();
+    userEvent.type(softQuotaLimit(), '1');
+
+    userEvent.click(selectors.querySubmitButton());
+
+    expect(axios.post).toHaveBeenCalledWith(
+      '/service/rest/v1/blobstores/azure',
+      data
     );
   });
 

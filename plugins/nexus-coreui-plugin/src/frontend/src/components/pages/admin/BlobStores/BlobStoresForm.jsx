@@ -27,25 +27,36 @@ import {
 } from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
+  NxButtonBar,
   NxCheckbox,
   NxErrorAlert,
   NxFieldset,
   NxFontAwesomeIcon,
+  NxFooter,
   NxFormGroup,
   NxFormSelect,
+  NxH2,
   NxInfoAlert,
   NxLoadWrapper,
   NxModal,
+  NxP,
   NxStatefulForm,
   NxTextInput,
   NxTooltip
 } from '@sonatype/react-shared-components';
-import BlobStoresFormMachine from './BlobStoresFormMachine';
+import BlobStoresFormMachine,
+  {SPACE_USED_QUOTA_ID, canUseSpaceUsedQuotaOnly} from './BlobStoresFormMachine';
 import UIStrings from '../../../../constants/UIStrings';
 import CustomBlobStoreSettings from './CustomBlobStoreSettings';
 import BlobStoreWarning from './BlobStoreWarning';
 
-const FORM = UIStrings.BLOB_STORES.FORM;
+const {
+  BLOB_STORES: {
+    FORM,
+    FORM: {CONVERT_TO_GROUP_MODAL}
+  },
+  CLOSE
+} = UIStrings;
 
 export default function BlobStoresForm({itemId, onDone}) {
   const idParts = itemId.split('/');
@@ -136,6 +147,8 @@ export default function BlobStoresForm({itemId, onDone}) {
     });
   }
 
+  const spaceUsedQuotaName = quotaTypes?.find((it) => it.id === SPACE_USED_QUOTA_ID).name;
+
   return <Page className="nxrm-blob-stores">
     <PageHeader>
       <PageTitle text={isEdit ? FORM.EDIT_TILE(pristineData.name) : FORM.CREATE_TITLE}
@@ -148,16 +161,17 @@ export default function BlobStoresForm({itemId, onDone}) {
     </PageHeader>
     <Section>
       <NxStatefulForm className="nxrm-blob-stores-form"
-              {...FormUtils.formProps(current, send)}
-              onCancel={cancel}
-              additionalFooterBtns={itemId &&
-              <NxTooltip title={deleteTooltip}>
-                <NxButton variant="tertiary" className={cannotDelete && 'disabled'} onClick={confirmDelete}>
-                  <NxFontAwesomeIcon icon={faTrash}/>
-                  <span>{UIStrings.SETTINGS.DELETE_BUTTON_LABEL}</span>
-                </NxButton>
-              </NxTooltip>
-              }>
+        {...FormUtils.formProps(current, send)}
+        onCancel={cancel}
+        additionalFooterBtns={itemId &&
+          <NxTooltip title={deleteTooltip}>
+            <NxButton variant="tertiary" className={cannotDelete && 'disabled'} onClick={confirmDelete}>
+              <NxFontAwesomeIcon icon={faTrash}/>
+              <span>{UIStrings.SETTINGS.DELETE_BUTTON_LABEL}</span>
+            </NxButton>
+          </NxTooltip>
+        }
+      >
         {isEdit && <NxInfoAlert>{FORM.EDIT_WARNING}</NxInfoAlert>}
         {isCreate &&
         <NxFormGroup label={FORM.TYPE.label} sublabel={FORM.TYPE.sublabel} isRequired>
@@ -198,11 +212,14 @@ export default function BlobStoresForm({itemId, onDone}) {
 
             {hasSoftQuota &&
             <>
-              <NxFormGroup label={FORM.SOFT_QUOTA.TYPE.label} sublabel={FORM.SOFT_QUOTA.TYPE.sublabel} isRequired>
-                <NxFormSelect {...FormUtils.fieldProps(['softQuota', 'type'], current)} validatable onChange={updateQuotaField}>
-                  <option value="" disabled></option>
-                  {quotaTypes.map(({id, name}) => <option key={id} value={id}>{name}</option>)}
-                </NxFormSelect>
+              <NxFormGroup label={FORM.SOFT_QUOTA.TYPE.label} isRequired>
+                {canUseSpaceUsedQuotaOnly(type) 
+                  ? <NxP>{spaceUsedQuotaName}</NxP>
+                  : <NxFormSelect {...FormUtils.fieldProps(['softQuota', 'type'], current)} validatable onChange={updateQuotaField}>
+                      <option value="" disabled></option>
+                      {quotaTypes.map(({ id, name }) => <option key={id} value={id}>{name}</option>)}
+                    </NxFormSelect>
+                }
               </NxFormGroup>
               <NxFormGroup label={FORM.SOFT_QUOTA.LIMIT.label} isRequired>
                 <Textfield {...FormUtils.fieldProps(['softQuota', 'limit'], current)} onChange={updateQuotaField}/>
@@ -216,37 +233,40 @@ export default function BlobStoresForm({itemId, onDone}) {
     </Section>
     {(showConvertToGroupModal || isConvertingToGroup) &&
     <NxModal onCancel={modalConvertToGroupClose}>
-      <header className="nx-modal-header">
-        <h2 className="nx-h2">Convert to Group Blob Store</h2>
-      </header>
-      <div className="nx-modal-content">
-        <p className="nx-p">
+      <NxModal.Header>
+        <NxH2>{CONVERT_TO_GROUP_MODAL.HEADER}</NxH2>
+      </NxModal.Header>
+      <NxModal.Content>
+        <NxP>
           <strong>
-            Rename Original Blob Store
+            {CONVERT_TO_GROUP_MODAL.LABEL}
           </strong>
-        </p>
+        </NxP>
         <NxFormGroup
-            sublabel="Assign a new name to the original blob store"
-            isRequired
+          label=""
+          sublabel={CONVERT_TO_GROUP_MODAL.SUBLABEL}
         >
           <NxTextInput
-              disabled={isConvertingToGroup}
-              value={data.modalConvertToGroupNewBlobName}
-              onChange={handleModalConvertToGroupValue}
+            disabled={isConvertingToGroup}
+            value={data.modalConvertToGroupNewBlobName}
+            onChange={handleModalConvertToGroupValue}
+            isPristine={false}
           />
         </NxFormGroup>
-      </div>
-      <footer className="nx-footer">
+      </NxModal.Content>
+      <NxFooter>
         <NxErrorAlert>
-          You are converting to a group blob store. This action cannot be undone.
+          {CONVERT_TO_GROUP_MODAL.ALERT}
         </NxErrorAlert>
-        <div className="nx-btn-bar">
-          <NxLoadWrapper loading={isConvertingToGroup}>
-            <NxButton onClick={modalConvertToGroupClose}>Close</NxButton>
-            <NxButton onClick={modalConvertToGroupSave} variant="primary">Convert</NxButton>
+        <NxButtonBar>
+          <NxLoadWrapper loading={isConvertingToGroup} retryHandler={()=>{}}>
+            <NxButton onClick={modalConvertToGroupClose}>{CLOSE}</NxButton>
+            <NxButton onClick={modalConvertToGroupSave} variant="primary">
+              {CONVERT_TO_GROUP_MODAL.CONVERT_BUTTON}
+            </NxButton>
           </NxLoadWrapper>
-        </div>
-      </footer>
+        </NxButtonBar>
+      </NxFooter>
     </NxModal>
     }
   </Page>;
