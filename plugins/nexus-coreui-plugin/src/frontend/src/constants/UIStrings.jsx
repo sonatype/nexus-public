@@ -1226,12 +1226,13 @@ export default {
             LABEL: 'Allow Subdomain Routing',
             SUBLABEL: 'Use the following subdomain to make push and pull requests for this repository',
             PLACEHOLDER: 'Enter a subdomain',
-            VALIDATION_ERROR: 'Subdomain field must be a minimum of 1 and maximum of 63 characters (letters, numbers, and dashes) and must start with a letter and end with a letter or digit'
+            VALIDATION_ERROR: <>Subdomain field must be a minimum of 1 and maximum of 63 characters (letters, numbers, and dashes) <br /> and must start with a letter and end with a letter or digit</>
           },
           ALLOW_ANON_DOCKER_PULL: {
             LABEL: 'Allow anonymous docker pull',
             DESCR: 'Allow anonymous docker pull (Docker Bearer Token Realm required)'
           },
+          SAME_PORTS_ERROR: 'HTTP and HTTPS ports must be different',
           HELP: <>
             Connectors allow Docker clients to connect directly to hosted registries, but are not always
             required.

@@ -42,6 +42,7 @@ export default function RepositoryConnectorsConfiguration({parentMachine}) {
           sublabel={CONNECTORS.SUBDOMAIN.SUBLABEL}
           defaultValue={repositoryName}
           placeholder={CONNECTORS.SUBDOMAIN.PLACEHOLDER}
+          clearIfDisabled
           className="nxrm-form-group-docker-connector-subdomain"
         />
       )}
@@ -52,6 +53,7 @@ export default function RepositoryConnectorsConfiguration({parentMachine}) {
         label={CONNECTORS.HTTP.LABEL}
         sublabel={CONNECTORS.HTTP.SUBLABEL}
         placeholder={CONNECTORS.HTTP.PLACEHOLDER}
+        clearIfDisabled
         className="nxrm-form-group-docker-connector-http-port"
       />
       <ToggleableTextInput
@@ -60,6 +62,7 @@ export default function RepositoryConnectorsConfiguration({parentMachine}) {
         label={CONNECTORS.HTTPS.LABEL}
         sublabel={CONNECTORS.HTTPS.SUBLABEL}
         placeholder={CONNECTORS.HTTPS.PLACEHOLDER}
+        clearIfDisabled
         className="nxrm-form-group-docker-connector-https-port"
       />
 

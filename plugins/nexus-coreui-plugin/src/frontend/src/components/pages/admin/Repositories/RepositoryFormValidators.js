@@ -89,6 +89,12 @@ const validateHttpConnectionTimeout = (data) =>
   });
 
 export const validateDockerConnectorPort = (data, attrName) => {
+  const {httpPort, httpsPort} = data.docker;
+
+  if (httpPort && httpsPort && parseInt(httpPort) === parseInt(httpsPort)) {
+    return UIStrings.REPOSITORIES.EDITOR.DOCKER.CONNECTORS.SAME_PORTS_ERROR;
+  }
+
   const port = data.docker[attrName];
   return port === null
     ? null

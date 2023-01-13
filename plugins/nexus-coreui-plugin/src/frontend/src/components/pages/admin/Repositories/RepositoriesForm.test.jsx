@@ -192,6 +192,8 @@ describe('RepositoriesForm', () => {
       screen.getAllByPlaceholderText(CONNECTORS.HTTP.PLACEHOLDER)[0],
     getDockerConnectorHttpsPortInput: () =>
       screen.getAllByPlaceholderText(CONNECTORS.HTTPS.PLACEHOLDER)[1],
+    getDockerConnectorSamePortsError: () =>
+      screen.getAllByText(CONNECTORS.SAME_PORTS_ERROR),
     getDockerApiVersionCheckbox: () =>
       screen.getByRole('checkbox', {name: EDITOR.REGISTRY_API_SUPPORT_DESCR}),
     getDockerAnonimousPullCheckbox: () =>
@@ -511,6 +513,7 @@ describe('RepositoriesForm', () => {
       userEvent.click(selectors.getDockerSubdomainCheckbox());
       await TestUtils.changeField(selectors.getDockerSubdomainInput, 'docker-sub-domain');
       userEvent.click(selectors.getDockerSubdomainCheckbox());
+      expect(selectors.getDockerSubdomainInput()).toHaveValue('');
 
       userEvent.click(selectors.getCreateButton());
 
@@ -1323,8 +1326,21 @@ describe('RepositoriesForm', () => {
       expect(selectors.getDockerSubdomainInput()).toBeEnabled();
       expect(selectors.getDockerSubdomainInput()).toHaveValue(repo.name);
 
+      await TestUtils.changeField(selectors.getDockerConnectorHttpPortInput, '1111');
+      await TestUtils.changeField(selectors.getDockerConnectorHttpsPortInput, '1111');
+      expect(selectors.getDockerConnectorSamePortsError()).toHaveLength(2);
+
       await TestUtils.changeField(selectors.getDockerConnectorHttpPortInput, repo.docker.httpPort);
       await TestUtils.changeField(selectors.getDockerConnectorHttpsPortInput, repo.docker.httpsPort);
+      userEvent.click(selectors.getDockerConnectorHttpPortCheckbox());
+      userEvent.click(selectors.getDockerConnectorHttpsPortCheckbox());
+      expect(selectors.getDockerConnectorHttpPortInput()).toHaveValue('');
+      expect(selectors.getDockerConnectorHttpsPortInput()).toHaveValue('');
+      userEvent.click(selectors.getDockerConnectorHttpPortCheckbox());
+      userEvent.click(selectors.getDockerConnectorHttpsPortCheckbox());
+      expect(selectors.getDockerConnectorHttpPortInput()).toHaveValue(repo.docker.httpPort);
+      expect(selectors.getDockerConnectorHttpsPortInput()).toHaveValue(repo.docker.httpsPort);
+
       await TestUtils.changeField(selectors.getDockerSubdomainInput, repo.docker.subdomain);
 
       userEvent.click(selectors.getDockerApiVersionCheckbox());

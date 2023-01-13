@@ -27,7 +27,8 @@ export default function ToggleableTextInput({
   label,
   sublabel = '',
   placeholder = '',
-  className = ''
+  className = '',
+  clearIfDisabled = false
 }) {
   const [currentParent, sendParent] = parentMachine;
 
@@ -35,7 +36,7 @@ export default function ToggleableTextInput({
 
   const [isEnabled, setIsEnabled] = useState(!!actualValue);
 
-  const [displayedValue, setDisplayedValue] = useState(actualValue ? actualValue.toString() : '');
+  const [tempValue, setTempValue] = useState(actualValue ? actualValue.toString() : '');
 
   const updateActualValue = (value) => sendParent({type: 'UPDATE', name: contextPropName, value});
 
@@ -43,11 +44,11 @@ export default function ToggleableTextInput({
     const newIsEnabled = !isEnabled;
 
     if (newIsEnabled) {
-      if (displayedValue) {
-          updateActualValue(displayedValue);
+      if (tempValue) {
+          updateActualValue(tempValue);
       } else {
         updateActualValue(defaultValue);
-        setDisplayedValue(defaultValue);
+        setTempValue(defaultValue);
       }
     } else {
       updateActualValue(null)
@@ -58,8 +59,10 @@ export default function ToggleableTextInput({
 
   const handleTextInputChange = (value) => {
     updateActualValue(value);
-    setDisplayedValue(value);
+    setTempValue(value);
   };
+
+  const displayedValue = !isEnabled && clearIfDisabled ? '' : tempValue;
 
   return (
     <NxFieldset label={label} sublabel={sublabel} className={className}>
