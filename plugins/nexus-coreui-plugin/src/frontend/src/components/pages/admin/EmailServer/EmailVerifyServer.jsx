@@ -71,7 +71,6 @@ export default function EmailVerifyServer({parentMachine}) {
           <NxFormGroup
             label={LABELS.VERIFY.LABEL}
             sublabel={LABELS.VERIFY.SUB_LABEL}
-            isRequired
           >
             <NxTextInput
               {...FormUtils.fieldProps('email', current)}

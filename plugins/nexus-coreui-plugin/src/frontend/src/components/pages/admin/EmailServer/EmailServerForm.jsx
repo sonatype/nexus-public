@@ -39,7 +39,7 @@ export default function EmailServerForm({ parentMachine }) {
 
   const discard = () => send('RESET');
 
-  const remoteUrl = !isEmpty(data) ? `https://${data.host}:${data.port}` : '';
+  const remoteUrl = !isEmpty(data.host) ? `https://${data.host}:${data.port}` : '';
 
   return <NxStatefulForm
       {...FormUtils.formProps(state, send)}
