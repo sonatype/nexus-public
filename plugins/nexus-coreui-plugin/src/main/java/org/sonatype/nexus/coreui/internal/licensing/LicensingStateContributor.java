@@ -31,7 +31,7 @@ public class LicensingStateContributor
   private final Map<String, Object> state;
 
   @Inject
-  public LicensingStateContributor(@Named("${nexus.react.licensing:-false}") final Boolean featureFlag) {
+  public LicensingStateContributor(@Named("${nexus.react.licensing:-true}") final Boolean featureFlag) {
     state = ImmutableMap.of("nexus.react.licensing", featureFlag);
   }
 

@@ -61,7 +61,7 @@ Ext.define('NX.coreui.controller.Licensing', {
       },
       visible: function () {
         return NX.Permissions.check('nexus:licensing:read') &&
-            !NX.State.getValue('nexus.react.licensing', false);
+            !NX.State.getValue('nexus.react.licensing', true);
       }
     }, me);
 
