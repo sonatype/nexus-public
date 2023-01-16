@@ -52,6 +52,7 @@ public class RealmConfigurationStoreImpl
   @Transactional
   @Override
   public void save(final RealmConfiguration configuration) {
+    postCommitEvent(() -> new RealmConfigurationChangedEvent((RealmConfigurationData) configuration));
     dao().set((RealmConfigurationData) configuration);
   }
 }
