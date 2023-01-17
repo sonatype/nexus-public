@@ -193,11 +193,6 @@
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
           </exclusion>
-          <exclusion>
-            <groupId>org.apache.james</groupId>
-            <artifactId>apache-mime4j</artifactId>
-          </exclusion>
-
         </exclusions>
       </dependency>
 
