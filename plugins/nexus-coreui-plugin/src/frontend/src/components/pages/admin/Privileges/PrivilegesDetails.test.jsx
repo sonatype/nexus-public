@@ -14,7 +14,6 @@ import React from 'react';
 import {render, screen, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
-import {act} from 'react-dom/test-utils';
 import Axios from 'axios';
 import {clone} from 'ramda';
 import {ExtJS, APIConstants} from '@sonatype/nexus-ui-plugin';
@@ -85,7 +84,7 @@ const selectors = {
   actions: () => screen.queryByLabelText(FIELDS.ACTIONS.LABEL),
   contentSelector: () => screen.queryByLabelText(FIELDS.CONTENT_SELECTOR.LABEL),
   format: () => screen.queryByLabelText(FIELDS.FORMAT.LABEL),
-  repositories: () => screen.getByPlaceholderText('Search'),
+  repository: () => screen.queryByLabelText(FIELDS.REPOSITORY.LABEL),
   readOnly: {
     type: () => screen.getByText(LABELS.TYPE.LABEL).nextSibling,
     name: () => screen.getByText(LABELS.NAME.LABEL).nextSibling,
@@ -94,7 +93,7 @@ const selectors = {
     actions: () => screen.getByText(FIELDS.ACTIONS.LABEL).nextSibling,
     contentSelector: () => screen.getByText(FIELDS.CONTENT_SELECTOR.LABEL).nextSibling,
     format: () => screen.getByText(FIELDS.FORMAT.LABEL).nextSibling,
-    repositories: () => screen.getByText(FIELDS.REPOSITORY.LABEL).nextSibling,
+    repository: () => screen.getByText(FIELDS.REPOSITORY.LABEL).nextSibling,
   },
   cancelButton: () => screen.getByText(SETTINGS.CANCEL_BUTTON_LABEL),
   deleteButton: () => screen.getByText(SETTINGS.DELETE_BUTTON_LABEL),
@@ -186,8 +185,8 @@ describe('PrivilegesDetails', function() {
     });
   });
 
-  it('renders validation messages', async function() {
-    const {type, name, description, scriptName, actions, requiredValidation, querySubmitButton, queryFormError} = selectors;
+  it('renders validation messages for the Script privilege', async function() {
+    const {type, name, description, scriptName, actions, querySubmitButton, queryFormError} = selectors;
 
     await renderAndWaitForLoad();
 
@@ -229,7 +228,7 @@ describe('PrivilegesDetails', function() {
   });
 
   it('creates Script privilege', async function() {
-    const {type, name, description, scriptName, actions, querySubmitButton, querySavingMask} = selectors;
+    const {type, name, description, scriptName, actions, querySubmitButton} = selectors;
 
     when(Axios.post).calledWith(createPrivilegeUrl(TYPE_IDS.SCRIPT), SCRIPT_PRIVILEGE).mockResolvedValue({data: {}});
 
@@ -248,6 +247,38 @@ describe('PrivilegesDetails', function() {
     expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
   });
 
+  it('renders validation messages for the Repository Content Selector privilege', async function() {
+    const {type, name, description, contentSelector, actions, repository, querySubmitButton,
+      queryFormError, format} = selectors;
+
+    when(Axios.post).calledWith(EXT_URL, expect.objectContaining({action: 'coreui_Selector'}))
+        .mockResolvedValue({data: TestUtils.makeExtResult(clone(SELECTORS))});
+
+    await renderAndWaitForLoad();
+    expect(Axios.post).toHaveBeenCalledWith(EXT_URL, expect.objectContaining({method: READ_TYPES}));
+
+    userEvent.selectOptions(type(), TYPE_IDS.REPOSITORY_CONTENT_SELECTOR);
+    await waitFor(() => {
+      expect(Axios.post).toHaveBeenCalledWith(EXT_URL, expect.objectContaining({action: 'coreui_Selector'}));
+      expect(Axios.post).not.toHaveBeenCalledWith(EXT_URL, expect.objectContaining({method: 'readReferencesAddingEntryForAll'}));
+    });
+
+    expect(name()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
+    expect(description()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
+    expect(contentSelector()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
+    expect(actions()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
+    expect(format()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
+    expect(repository()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
+
+    userEvent.click(querySubmitButton());
+    expect(queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
+    expect(name()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
+    expect(contentSelector()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
+    expect(actions()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
+    expect(format()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
+    expect(repository()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
+  });
+
   it('creates Repository Content Selector privilege', async function() {
     const {
       type,
@@ -255,7 +286,7 @@ describe('PrivilegesDetails', function() {
       description,
       contentSelector,
       actions,
-      repositories,
+      repository,
       querySubmitButton,
       querySavingMask,
       format
@@ -277,7 +308,8 @@ describe('PrivilegesDetails', function() {
     await TestUtils.changeField(actions, testActions);
     await TestUtils.changeField(format, testFormat);
 
-    await TestUtils.changeField(repositories, 'm');
+    await TestUtils.changeField(repository, 'm');
+    await waitFor(() => expect(screen.getByText(testRepository)).toBeInTheDocument());
     userEvent.click(screen.getByText(testRepository));
 
     userEvent.click(querySubmitButton());
@@ -319,7 +351,7 @@ describe('PrivilegesDetails', function() {
 
   it('shows save API errors', async function() {
     const message = "Use a unique privilegeId";
-    const {type, name, description, scriptName, actions, querySubmitButton, querySavingMask, querySaveError} = selectors;
+    const {type, name, description, scriptName, actions, querySubmitButton, querySavingMask} = selectors;
 
     when(Axios.post).calledWith(createPrivilegeUrl(TYPE_IDS.SCRIPT), expect.objectContaining({name: testName}))
         .mockRejectedValue({response: {data: message}});
@@ -391,7 +423,7 @@ describe('PrivilegesDetails', function() {
     });
 
     it('renders Repository Content Selector privilege in Read Only Mode', async () => {
-      const {cancelButton, readOnly: {contentSelector, format, repositories}} = selectors;
+      const {cancelButton, readOnly: {contentSelector, format, repository}} = selectors;
 
       const warning = () => screen.getByText(LABELS.DEFAULT_PRIVILEGE_WARNING);
 
@@ -406,7 +438,7 @@ describe('PrivilegesDetails', function() {
 
       expect(contentSelector()).toHaveTextContent(testContentSelector);
       expect(format()).toHaveTextContent(testFormat);
-      expect(repositories()).toHaveTextContent(testRepository);
+      expect(repository()).toHaveTextContent(testRepository);
 
       userEvent.click(cancelButton());
       await waitFor(() => expect(onDone).toBeCalled());
