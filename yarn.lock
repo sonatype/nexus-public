@@ -1515,7 +1515,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fortawesome/fontawesome-common-types@npm:^0.2.25, @fortawesome/fontawesome-common-types@npm:^0.2.29, @fortawesome/fontawesome-common-types@npm:^0.2.36":
+"@fortawesome/fontawesome-common-types@npm:^0.2.25, @fortawesome/fontawesome-common-types@npm:^0.2.36":
   version: 0.2.36
   resolution: "@fortawesome/fontawesome-common-types@npm:0.2.36"
   checksum: d604ac51da0b1597127fde70c64157b70ead6af7f2643ab7dfca268ef99d4ed0b4cc823afba206362422a622e389828408bec573df802bf4f02b118d0fa18dc8
@@ -1537,15 +1537,6 @@ __metadata:
   dependencies:
     "@fortawesome/fontawesome-common-types": ^0.2.36
   checksum: 3011d8c1452b5df52a62eaee8b1ec925b9fdfabcc170fd6da5eaac7cfdef56258b9292ddd06c30f03a6a8ed6faa886565211f2e469fee3c9831c32f93e9383d8
-  languageName: node
-  linkType: hard
-
-"@fortawesome/free-brands-svg-icons@npm:=5.13.1":
-  version: 5.13.1
-  resolution: "@fortawesome/free-brands-svg-icons@npm:5.13.1"
-  dependencies:
-    "@fortawesome/fontawesome-common-types": ^0.2.29
-  checksum: f71c9f03400f789753f646e488e1a3185784aacc196fecde6c9f4eba3a1bc30891e2ed162bc9d96cf2d2a97b70de104a1d7697ab2da8282bf710ce009c673550
   languageName: node
   linkType: hard
 
@@ -2507,51 +2498,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@sonatype/nexus-proui-plugin@workspace:private/plugins/nexus-proui-plugin":
-  version: 0.0.0-use.local
-  resolution: "@sonatype/nexus-proui-plugin@workspace:private/plugins/nexus-proui-plugin"
-  dependencies:
-    "@babel/core": =7.17.5
-    "@babel/plugin-proposal-optional-chaining": =7.16.7
-    "@babel/plugin-transform-runtime": =7.17.0
-    "@babel/preset-env": =7.16.11
-    "@babel/preset-react": =7.16.7
-    "@babel/runtime": =7.17.2
-    "@fortawesome/fontawesome-svg-core": =1.2.25
-    "@fortawesome/free-brands-svg-icons": =5.13.1
-    "@fortawesome/free-solid-svg-icons": =5.11.2
-    "@sonatype/nexus-ui-plugin": "workspace:*"
-    "@sonatype/react-shared-components": =11.5.21
-    "@testing-library/jest-dom": =5.14.1
-    "@testing-library/react": =12.1.2
-    "@xstate/react": =1.3.4
-    acorn: =7.0.0
-    axios: =0.21.4
-    babel-jest: =24.8.0
-    babel-loader: =8.2.3
-    babel-polyfill: =6.26.0
-    classnames: =2.3.1
-    copy-modules-webpack-plugin: =2.2.1
-    css-loader: =6.6.0
-    css-minimizer-webpack-plugin: =3.4.1
-    file-loader: =6.2.0
-    jest: =26.6.3
-    jest-junit: =13.2.0
-    jest-when: =3.1.0
-    mini-css-extract-plugin: =2.5.3
-    npm-run-all: =4.1.5
-    react: =17.0.2
-    react-dom: =17.0.2
-    sass: =1.38.0
-    sass-loader: =12.6.0
-    terser-webpack-plugin: =5.3.1
-    webpack: =5.69.1
-    webpack-cli: =4.9.2
-    webpack-merge: =5.8.0
-    xstate: =4.16.0
-  languageName: unknown
-  linkType: soft
-
 "@sonatype/nexus-rapture@workspace:components/nexus-rapture":
   version: 0.0.0-use.local
   resolution: "@sonatype/nexus-rapture@workspace:components/nexus-rapture"
@@ -3256,7 +3202,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@xstate/react@npm:1.3.4, @xstate/react@npm:=1.3.4":
+"@xstate/react@npm:1.3.4":
   version: 1.3.4
   resolution: "@xstate/react@npm:1.3.4"
   dependencies:
@@ -3329,7 +3275,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"acorn@npm:7.0.0, acorn@npm:=7.0.0":
+"acorn@npm:7.0.0":
   version: 7.0.0
   resolution: "acorn@npm:7.0.0"
   bin:
@@ -3701,7 +3647,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:0.21.4, axios@npm:=0.21.4":
+"axios@npm:0.21.4":
   version: 0.21.4
   resolution: "axios@npm:0.21.4"
   dependencies:
@@ -3710,7 +3656,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"babel-jest@npm:24.8.0, babel-jest@npm:=24.8.0":
+"babel-jest@npm:24.8.0":
   version: 24.8.0
   resolution: "babel-jest@npm:24.8.0"
   dependencies:
@@ -3745,7 +3691,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"babel-loader@npm:8.2.3, babel-loader@npm:=8.2.3":
+"babel-loader@npm:8.2.3":
   version: 8.2.3
   resolution: "babel-loader@npm:8.2.3"
   dependencies:
@@ -3842,7 +3788,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"babel-polyfill@npm:6.26.0, babel-polyfill@npm:=6.26.0":
+"babel-polyfill@npm:6.26.0":
   version: 6.26.0
   resolution: "babel-polyfill@npm:6.26.0"
   dependencies:
@@ -4601,7 +4547,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"copy-modules-webpack-plugin@npm:2.2.1, copy-modules-webpack-plugin@npm:=2.2.1":
+"copy-modules-webpack-plugin@npm:2.2.1":
   version: 2.2.1
   resolution: "copy-modules-webpack-plugin@npm:2.2.1"
   dependencies:
@@ -4719,7 +4665,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"css-loader@npm:6.6.0, css-loader@npm:=6.6.0":
+"css-loader@npm:6.6.0":
   version: 6.6.0
   resolution: "css-loader@npm:6.6.0"
   dependencies:
@@ -4737,7 +4683,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"css-minimizer-webpack-plugin@npm:3.4.1, css-minimizer-webpack-plugin@npm:=3.4.1":
+"css-minimizer-webpack-plugin@npm:3.4.1":
   version: 3.4.1
   resolution: "css-minimizer-webpack-plugin@npm:3.4.1"
   dependencies:
@@ -5870,7 +5816,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"file-loader@npm:6.2.0, file-loader@npm:=6.2.0":
+"file-loader@npm:6.2.0":
   version: 6.2.0
   resolution: "file-loader@npm:6.2.0"
   dependencies:
@@ -8052,7 +7998,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-when@npm:3.1.0, jest-when@npm:=3.1.0":
+"jest-when@npm:3.1.0":
   version: 3.1.0
   resolution: "jest-when@npm:3.1.0"
   dependencies:
@@ -8797,7 +8743,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mini-css-extract-plugin@npm:2.5.3, mini-css-extract-plugin@npm:=2.5.3":
+"mini-css-extract-plugin@npm:2.5.3":
   version: 2.5.3
   resolution: "mini-css-extract-plugin@npm:2.5.3"
   dependencies:
@@ -10949,7 +10895,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sass-loader@npm:12.6.0, sass-loader@npm:=12.6.0":
+"sass-loader@npm:12.6.0":
   version: 12.6.0
   resolution: "sass-loader@npm:12.6.0"
   dependencies:
@@ -10974,7 +10920,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sass@npm:1.38.0, sass@npm:=1.38.0":
+"sass@npm:1.38.0":
   version: 1.38.0
   resolution: "sass@npm:1.38.0"
   dependencies:
@@ -11821,7 +11767,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"terser-webpack-plugin@npm:5.3.1, terser-webpack-plugin@npm:=5.3.1":
+"terser-webpack-plugin@npm:5.3.1":
   version: 5.3.1
   resolution: "terser-webpack-plugin@npm:5.3.1"
   dependencies:
@@ -12409,7 +12355,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack-cli@npm:4.9.2, webpack-cli@npm:=4.9.2":
+"webpack-cli@npm:4.9.2":
   version: 4.9.2
   resolution: "webpack-cli@npm:4.9.2"
   dependencies:
@@ -12442,7 +12388,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack-merge@npm:5.8.0, webpack-merge@npm:=5.8.0, webpack-merge@npm:^5.7.3":
+"webpack-merge@npm:5.8.0, webpack-merge@npm:^5.7.3":
   version: 5.8.0
   resolution: "webpack-merge@npm:5.8.0"
   dependencies:
@@ -12459,7 +12405,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack@npm:5.69.1, webpack@npm:=5.69.1":
+"webpack@npm:5.69.1":
   version: 5.69.1
   resolution: "webpack@npm:5.69.1"
   dependencies:
