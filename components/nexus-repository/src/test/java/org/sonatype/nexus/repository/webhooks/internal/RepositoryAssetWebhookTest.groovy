@@ -30,6 +30,7 @@ import org.sonatype.nexus.webhooks.WebhookRequestSendEvent
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentCaptor
+import org.mockito.Captor
 import org.mockito.Mock
 
 import static org.mockito.ArgumentMatchers.any
@@ -60,6 +61,9 @@ class RepositoryAssetWebhookTest
 
   @Mock
   private AssetDeletedEvent assetDeletedEvent
+
+  @Captor
+  private ArgumentCaptor<WebhookRequestSendEvent> assetArgumentCaptor
 
   @Before
   void before() {
@@ -131,7 +135,6 @@ class RepositoryAssetWebhookTest
 
     repositoryAssetWebhook.on(assetEvent)
 
-    def assetArgumentCaptor = new ArgumentCaptor<WebhookRequestSendEvent>()
     verify(eventManager).post(assetArgumentCaptor.capture())
 
     def assetPayload = (RepositoryAssetWebhookPayload) assetArgumentCaptor.value.request.payload

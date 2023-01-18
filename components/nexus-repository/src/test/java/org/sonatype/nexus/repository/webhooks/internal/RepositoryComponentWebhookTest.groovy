@@ -30,6 +30,7 @@ import org.sonatype.nexus.webhooks.WebhookRequestSendEvent
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentCaptor
+import org.mockito.Captor
 import org.mockito.Mock
 
 import static org.mockito.ArgumentMatchers.any
@@ -60,6 +61,9 @@ class RepositoryComponentWebhookTest
 
   @Mock
   private ComponentDeletedEvent componentDeletedEvent
+
+  @Captor
+  private ArgumentCaptor<WebhookRequestSendEvent> argumentCaptor
 
   @Before
   void before() {
@@ -133,7 +137,6 @@ class RepositoryComponentWebhookTest
 
     repositoryComponentWebhook.on(componentEvent)
 
-    def argumentCaptor = new ArgumentCaptor<WebhookRequestSendEvent>()
     verify(eventManager).post(argumentCaptor.capture())
 
     def componentPayload = (RepositoryComponentWebhookPayload) argumentCaptor.value.request.payload
