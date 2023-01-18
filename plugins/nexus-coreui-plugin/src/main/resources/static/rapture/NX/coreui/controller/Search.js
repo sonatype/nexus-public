@@ -515,6 +515,7 @@ Ext.define('NX.coreui.controller.Search', {
     var searchPanel = this.getFeature(),
         searchCriteriaPanel = searchPanel.down('#criteria'),
         addButton = searchCriteriaPanel.down('#addButton'),
+        searchInfo = searchPanel.down('#searchInfo'),
         criteria = menuitem.criteria,
         cmpClass = Ext.ClassManager.getByAlias('widget.nx-coreui-searchcriteria-' + criteria.getId()),
         cmp;
@@ -530,6 +531,10 @@ Ext.define('NX.coreui.controller.Search', {
     searchCriteriaPanel.add(cmp);
     cmp.focus();
     searchCriteriaPanel.add(addButton);
+
+    if (criteria.getId() === 'keyword') {
+      searchInfo.setTitle(NX.I18n.get('Search_KeywordSearchRestrictions'));
+    }
   },
 
   /**

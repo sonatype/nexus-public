@@ -91,7 +91,7 @@ public abstract class SqlSearchQueryContributionSupport
         .map(SearchFilter::getValue)
         .map(this::split)
         .filter(CollectionUtils::isNotEmpty)
-        .filter(this::validate)
+        .map(this::getValidTokens)
         .map(values -> builder.condition(mappedField.getProperty(), values));
   }
 

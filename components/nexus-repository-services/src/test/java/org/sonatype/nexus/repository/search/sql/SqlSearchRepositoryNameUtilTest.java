@@ -178,7 +178,7 @@ public class SqlSearchRepositoryNameUtilTest
   @Test
   public void shouldThrowExceptionWhenWildcardHasLessThenThreeSymbols() {
     expectedException.expect(ValidationErrorsException.class);
-    expectedException.expectMessage("3 characters or more are required with the trailing asterisk (*) wildcard");
+    expectedException.expectMessage("3 characters or more are required with a trailing wildcard (*)");
     underTest.getRepositoryNames("ho*");
   }
 

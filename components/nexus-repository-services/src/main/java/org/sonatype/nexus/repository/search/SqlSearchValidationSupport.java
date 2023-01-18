@@ -12,11 +12,12 @@
  */
 package org.sonatype.nexus.repository.search;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.repository.search.sql.SqlSearchQueryContributionSupport;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -32,28 +33,40 @@ public abstract class SqlSearchValidationSupport
   /*
    * For SQL search we prohibit leading wildcards and less than 3 characters with wildcards for performance reasons.
    */
-  protected boolean validate(final Set<String> tokens) {
+  protected Set<String> getValidTokens(final Set<String> tokens) {
     ValidationErrorsException validation = new ValidationErrorsException();
+    Set<String> validTokens = new HashSet<>(tokens);
 
-    tokens.stream()
+    Set<String> invalidTokens = tokens.stream()
         .filter(Objects::nonNull)
         .filter(SqlSearchValidationSupport::hasLeadingWildcard)
-        .forEach(__ -> validation.withError("Leading wildcards are prohibited"));
+        .collect(Collectors.toSet());
+    if (!invalidTokens.isEmpty()) {
+      String errorMsg = "Leading wildcards are prohibited";
+      validation.withError(errorMsg);
+      log.debug(errorMsg + " for tokens: {}", invalidTokens);
+      validTokens.removeAll(invalidTokens);
+    }
 
-    tokens.stream()
-        .filter(Objects::nonNull)
-        .filter(SqlSearchValidationSupport::notEnoughSymbols)
-        .forEach(__ -> validation.withError(
-            String.format("%d characters or more are required with the trailing asterisk (*) wildcard",
-                MIN_ALLOWED_SYMBOLS_TO_SEARCH)));
+    invalidTokens = tokens.stream()
+            .filter(Objects::nonNull)
+            .filter(SqlSearchValidationSupport::notEnoughSymbols)
+            .collect(Collectors.toSet());
+    if (!invalidTokens.isEmpty()) {
+      String errorMsg = String.format("%d characters or more are required with a trailing wildcard (*)",
+          MIN_ALLOWED_SYMBOLS_TO_SEARCH);
+      validation.withError(errorMsg);
+      log.debug(errorMsg + " for tokens: {}", invalidTokens);
+      validTokens.removeAll(invalidTokens);
+    }
 
-    if (validation.hasValidationErrors()) {
-      log.debug("Found invalid search filters: {}", tokens);
+    if (validTokens.isEmpty()) {
+      log.debug("No valid search tokens");
 
       throw validation;
     }
 
-    return true;
+    return validTokens;
   }
 
   private static boolean hasLeadingWildcard(final String token) {

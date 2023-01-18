@@ -118,6 +118,7 @@ public class SqlTableSearchService
   private SqlTableSearchService.ComponentSearchResultPage searchComponents(final SearchRequest searchRequest) {
     try {
       SqlSearchQueryCondition queryCondition = getSqlSearchQueryCondition(searchRequest);
+      log.debug("Query: {}", queryCondition);
       return doSearch(searchRequest, queryCondition);
     }
     catch (SqlSearchPermissionException e) {

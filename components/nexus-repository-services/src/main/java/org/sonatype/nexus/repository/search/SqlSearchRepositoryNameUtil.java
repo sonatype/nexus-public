@@ -33,6 +33,8 @@ import org.sonatype.nexus.repository.search.query.SearchFilter;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilder;
 import org.sonatype.nexus.repository.types.GroupType;
 
+import org.apache.commons.collections.CollectionUtils;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.unmodifiableSet;
@@ -73,7 +75,8 @@ public class SqlSearchRepositoryNameUtil
   public Set<String> getRepositoryNames(@Nullable final String repositoryNameFilter) {
     Set<String> repositories = ofNullable(repositoryNameFilter)
         .map(this::split)
-        .filter(this::validate)
+        .filter(CollectionUtils::isNotEmpty)
+        .map(this::getValidTokens)
         .orElse(new HashSet<>());
 
     Set<String> wildcards = getWildcardRepositoryNames(repositories);

@@ -110,12 +110,17 @@ Ext.define('NX.coreui.view.search.SearchFeature', {
   },
 
   getSqlSearchItem: function() {
+    var isKeywordSearch = this.searchFilter.getId() === 'keyword';
+
     return {
       xtype: 'panel',
+      cls: 'searchInfo',
+      itemId: 'searchInfo',
       title:
           {
             iconCls: 'x-fa fa-info-circle',
-            text: NX.I18n.get('Search_SearchRestrictions')
+            text: isKeywordSearch ? NX.I18n.get('Search_KeywordSearchRestrictions')
+                : NX.I18n.get('Search_SearchRestrictions')
           },
       layout: 'fit',
       flex: 1,

@@ -71,8 +71,6 @@ public class TableSearchUtils
           searchContribution.contribute(queryBuilder, searchFilter);
         });
 
-    log.debug("Query: {}", queryBuilder);
-
     return queryBuilder;
   }
 

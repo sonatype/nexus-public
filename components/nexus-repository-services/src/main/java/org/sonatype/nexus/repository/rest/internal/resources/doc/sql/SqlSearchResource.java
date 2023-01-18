@@ -53,7 +53,8 @@ public class SqlSearchResource
     extends SearchResource
 {
   private static final String SQL_SEARCH_RESTRICTIONS =
-      "All searches require at least one criterion of at least three characters and cannot start with a wildcard (*).";
+      "All searches require at least one criterion of at least three characters before a trailing wildcard (\\*) and cannot start with a wildcard (\\*). " +
+      "Enclose your criteria in quotation marks to search an exact phrase; otherwise, search criteria will be split by any commas, spaces, dashes, or forward slashes.";
 
   @Inject
   public SqlSearchResource(
