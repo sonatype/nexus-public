@@ -23,11 +23,28 @@
     </sift>
   </appender>
 
+  <appender name="replicationlogfile" class="ch.qos.logback.classic.sift.SiftingAppender">
+    <filter class="org.sonatype.nexus.pax.logging.ReplicationLogsFilter" />
+    <discriminator>
+      <key>repositoryName</key>
+      <defaultValue>unknown</defaultValue>
+    </discriminator>
+    <sift>
+      <appender name="replicationAppender" class="ch.qos.logback.core.FileAppender">
+        <file>${project.build.directory}/test/log/replication/replication-${repositoryName}.log</file>
+        <encoder class="org.sonatype.nexus.pax.logging.NexusLayoutEncoder">
+          <pattern>%d{"yyyy-MM-dd HH:mm:ss,SSSZ"} %-5p [%thread] %node %mdc{userId:-*SYSTEM} %c - %m%n</pattern>
+        </encoder>
+      </appender>
+    </sift>
+  </appender>
+
   <logger name="org.sonatype.nexus.common" level="DEBUG"/>
 
   <root level="${test.log.level:-INFO}">
     <appender-ref ref="CONSOLE"/>
     <appender-ref ref="tasklogfile"/>
+    <appender-ref ref="replicationlogfile"/>
   </root>
 
 </configuration>

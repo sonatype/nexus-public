@@ -36,7 +36,6 @@ import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.PROGRESS;
  * - Thread must be executing in a task (determined by presence of discriminator in MDC)
  * - Must NOT have the NEXUS_LOG marker. This prevents double entry for the progress update to the nexus.log
  * - Also sets progress entries into the TaskLoggerHelper
- *
  * @since 3.5
  */
 public class TaskLogsFilter
@@ -51,8 +50,7 @@ public class TaskLogsFilter
       TaskLoggerHelper.progress(toTaskLoggerEvent(event));
     }
 
-    if (MDC.get(LOGBACK_TASK_DISCRIMINATOR_ID) == null) {
-      // not executing in a task...
+    if (!isExecutingInTask()) {
       return DENY;
     }
 
@@ -64,7 +62,12 @@ public class TaskLogsFilter
     return NEUTRAL;
   }
 
-  private TaskLoggingEvent toTaskLoggerEvent(final ILoggingEvent event) {
+  protected boolean isExecutingInTask() {
+    // if null then not executing in a task...
+    return MDC.get(LOGBACK_TASK_DISCRIMINATOR_ID) != null;
+  }
+
+  protected TaskLoggingEvent toTaskLoggerEvent(final ILoggingEvent event) {
     Logger logger = LoggerFactory.getLogger(event.getLoggerName());
     return new TaskLoggingEvent(logger, event.getMessage(), event.getArgumentArray());
   }

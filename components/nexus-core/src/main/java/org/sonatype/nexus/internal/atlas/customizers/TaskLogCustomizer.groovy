@@ -78,6 +78,6 @@ class TaskLogCustomizer
 
   @VisibleForTesting
   String getTaskLogHome() {
-    return TaskLogHome.getTaskLogHome()
+    return TaskLogHome.getTaskLogsHome()
   }
 }

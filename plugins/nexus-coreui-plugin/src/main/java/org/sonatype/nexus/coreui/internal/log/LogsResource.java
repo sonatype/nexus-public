@@ -80,7 +80,7 @@ public class LogsResource
     Predicate<java.nio.file.Path> isValidLog = path -> path.getFileName().toString().toLowerCase().endsWith(".log");
 
     Set<LogXO> logs = logManager.getLogFiles().stream().map(file -> new LogXO(file.toPath())).collect(toSet());
-    try (Stream<java.nio.file.Path> directory = Files.list(Paths.get(TaskLogHome.getTaskLogHome()))) {
+    try (Stream<java.nio.file.Path> directory = Files.list(Paths.get(TaskLogHome.getTaskLogsHome()))) {
       Set<LogXO> taskLogs = directory
           .filter(isValidLog)
           .map(LogXO::new).collect(toSet());

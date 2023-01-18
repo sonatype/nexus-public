@@ -513,7 +513,7 @@ public class LogbackLogManager
    */
   private Optional<Set<File>> getAllLogFiles(final String fileName) {
     if (fileName.startsWith(TASKS_PREFIX) && fileName.endsWith(".log")) {
-      try(Stream<Path> tasks = Files.list(Paths.get(requireNonNull(TaskLogHome.getTaskLogHome())))) {
+      try(Stream<Path> tasks = Files.list(Paths.get(requireNonNull(TaskLogHome.getTaskLogsHome())))) {
         return Optional.of(tasks.map(Path::toFile).collect(toSet()));
       }
       catch (IOException e) {

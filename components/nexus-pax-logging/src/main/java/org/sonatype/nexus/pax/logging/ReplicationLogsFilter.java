@@ -10,32 +10,18 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.logging.task;
+package org.sonatype.nexus.pax.logging;
 
-import java.util.Optional;
-import javax.annotation.Nullable;
+import org.slf4j.MDC;
 
-/**
- * Expose task information for the per task logs. See the TaskConfiguration class.
- *
- * @since 3.5
- */
-public interface TaskLogInfo
+import static org.sonatype.nexus.logging.task.ReplicationTaskLogger.REPLICATION_DISCRIMINATOR_ID;
+
+public class ReplicationLogsFilter
+    extends TaskLogsFilter
 {
-  String getId();
-
-  String getTypeId();
-
-  String getName();
-
-  String getMessage();
-
-  @Nullable
-  String getString(final String key);
-
-  boolean getBoolean(final String key, final boolean defaultValue);
-
-  int getInteger(final String key, final int defaultValue);
-
-  String toString();
+  @Override
+  protected boolean isExecutingInTask() {
+    // if null then not running a replication task
+    return MDC.get(REPLICATION_DISCRIMINATOR_ID) != null;
+  }
 }

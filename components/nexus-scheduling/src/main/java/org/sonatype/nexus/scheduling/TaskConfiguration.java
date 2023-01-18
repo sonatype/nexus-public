@@ -302,6 +302,7 @@ public class TaskConfiguration
     setString(key, date, d -> new DateTime(d).toString());
   }
 
+  @Override
   public boolean getBoolean(final String key, final boolean defaultValue) {
     return Boolean.parseBoolean(getString(key, String.valueOf(defaultValue)));
   }
@@ -309,7 +310,7 @@ public class TaskConfiguration
   public void setBoolean(final String key, final boolean value) {
     setString(key, value, String::valueOf);
   }
-
+  @Override
   public int getInteger(final String key, final int defaultValue) {
     return Integer.parseInt(getString(key, String.valueOf(defaultValue)));
   }
@@ -326,6 +327,7 @@ public class TaskConfiguration
     setString(key, value, String::valueOf);
   }
 
+  @Override
   @Nullable
   public String getString(final String key) {
     return getString(key, null);

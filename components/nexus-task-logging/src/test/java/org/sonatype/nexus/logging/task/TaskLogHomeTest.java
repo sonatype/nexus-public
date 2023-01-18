@@ -17,6 +17,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import javax.annotation.Nullable;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 
@@ -33,17 +34,27 @@ public class TaskLogHomeTest
     extends TestSupport
 {
   @Test
-  public void getTaskLogHome() {
-    Path taskLogHome = Paths.get(TaskLogHome.getTaskLogHome());
+  public void getTaskLogsHome() {
+    Path taskLogHome = Paths.get(TaskLogHome.getTaskLogsHome());
     assertTrue(taskLogHome.endsWith(Paths.get("test", "log", "tasks")));
 
     Path file = taskLogHome.resolve("temp.log");
     assertFalse("temp file was not deleted", Files.exists(file));
   }
 
+  @Test
+  public void getReplicationLogsHome() {
+    Path taskLogHome = Paths.get(TaskLogHome.getReplicationLogsHome().get());
+    assertTrue(taskLogHome.endsWith(Paths.get("test", "log", "replication")));
+
+    Path file = taskLogHome.resolve("temp.log");
+    assertFalse("temp file was not deleted", Files.exists(file));
+  }
+
+
   /**
    * Tests that the task log appender is active after starting a task logger and using a temp appender to determine
-   * the log path via {@link TaskLogHome#getTaskLogHome()}
+   * the log path via {@link TaskLogHome#getTaskLogsHome()}
    *
    * Edge case test stemming from NEXUS-13587 and NEXUS-14052
    *
@@ -64,7 +75,7 @@ public class TaskLogHomeTest
     logger.error("initialize error");
 
     // explicitly call target method, start task logger and log a few messages
-    TaskLogHome.getTaskLogHome();
+    TaskLogHome.getTaskLogsHome();
     taskLogger.start();
     logger.info(infoLogMsg);
     logger.error(errorLogMsg, new RuntimeException("runtimeException"));
@@ -100,6 +111,22 @@ public class TaskLogHomeTest
       public String getMessage() {
         return "appender test";
       }
+
+      @Nullable
+      @Override
+      public String getString(final String key) {
+        return null;
+      }
+
+      @Override
+      public boolean getBoolean(final String key, final boolean defaultValue) {
+        return false;
+      }
+
+      @Override
+      public int getInteger(final String key, final int defaultValue) {
+        return 0;
+      }
     };
   }
 
@@ -108,7 +135,7 @@ public class TaskLogHomeTest
    * of the first matching file
    */
   private String getLogFileContents(String typeId) throws IOException {
-    Path logDirectory = Paths.get(TaskLogHome.getTaskLogHome());
+    Path logDirectory = Paths.get(TaskLogHome.getTaskLogsHome());
 
     try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(logDirectory, String.format("%s-*.log", typeId))) {
       for (Path file : dirStream) {

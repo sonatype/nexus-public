@@ -71,7 +71,7 @@ public class SeparateTaskLogTaskLogger
   }
 
   protected void writeLogFileNameToNexusLog() {
-    String taskLogsHome = TaskLogHome.getTaskLogHome();
+    String taskLogsHome = TaskLogHome.getTaskLogsHome();
     if (taskLogsHome != null) {
       String filename = format("%s/%s", taskLogsHome, getTaskLogIdentifier());
       log.info(NEXUS_LOG_ONLY, TASK_LOG_LOCATION_PREFIX + filename);

@@ -59,6 +59,26 @@
     </sift>
   </appender>
 
+  <appender name="replicationlogfile" class="ch.qos.logback.classic.sift.SiftingAppender">
+    <filter class="org.sonatype.nexus.pax.logging.ReplicationLogsFilter" />
+    <discriminator>
+      <key>repositoryName</key>
+      <defaultValue>unknown</defaultValue>
+    </discriminator>
+    <sift>
+      <appender name="replicationAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${karaf.data}/log/replication/replication-${repositoryName}.log</file>
+        <encoder class="org.sonatype.nexus.pax.logging.NexusLayoutEncoder">
+          <pattern>%d{"yyyy-MM-dd HH:mm:ss,SSSZ"} %-5p [%thread] %node %mdc{userId:-*SYSTEM} %c - %m%n</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+          <fileNamePattern>${karaf.data}/log/replication/replication-${repositoryName}-%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+          <maxHistory>90</maxHistory>
+        </rollingPolicy>
+      </appender>
+    </sift>
+  </appender>
+
   <appender name="auditlogfile" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <File>${karaf.data}/log/audit/audit.log</File>
     <Append>true</Append>
@@ -114,6 +134,7 @@
     <appender-ref ref="logfile"/>
     <appender-ref ref="clusterlogfile"/>
     <appender-ref ref="tasklogfile"/>
+    <appender-ref ref="replicationlogfile"/>
     <appender-ref ref="metrics"/>
   </root>
 </configuration>
