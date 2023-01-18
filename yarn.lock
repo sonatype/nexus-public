@@ -2736,7 +2736,7 @@ __metadata:
     jest-junit: 15.0.0
     jest-when: 3.1.0
     luxon: 1.28.1
-    mini-css-extract-plugin: 2.5.3
+    mini-css-extract-plugin: 2.7.2
     npm-run-all: 4.1.5
     prop-types: 15.7.2
     ramda: 0.28.0
@@ -2784,7 +2784,7 @@ __metadata:
     jest: 27.5.1
     jest-junit: 15.0.0
     jest-when: 3.1.0
-    mini-css-extract-plugin: 2.5.3
+    mini-css-extract-plugin: 2.7.2
     npm-run-all: 4.1.5
     react: 17.0.2
     react-dom: 17.0.2
@@ -2822,7 +2822,7 @@ __metadata:
     core-js: 2.6.11
     css-minimizer-webpack-plugin: 3.4.1
     luxon: 1.28.1
-    mini-css-extract-plugin: 2.5.3
+    mini-css-extract-plugin: 2.7.2
     npm-run-all: 4.1.5
     react: 17.0.2
     react-dom: 17.0.2
@@ -8828,14 +8828,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mini-css-extract-plugin@npm:2.5.3":
-  version: 2.5.3
-  resolution: "mini-css-extract-plugin@npm:2.5.3"
+"mini-css-extract-plugin@npm:2.7.2":
+  version: 2.7.2
+  resolution: "mini-css-extract-plugin@npm:2.7.2"
   dependencies:
     schema-utils: ^4.0.0
   peerDependencies:
     webpack: ^5.0.0
-  checksum: de53fbded09fd2ae81174b11754bc955fcf0e0a85b2c4df7e179fcc8a81533362498824395d43d50960b0bc93550eb2bd9cd1ded113eaa21bd84ab50ef29e65c
+  checksum: cd65611d6dc452f230c6ebba8a47bc5f5146b813b13b0b402c6f4a69f6451242eeea781152bebd31cad8ca7c7e95dac91e7e464087f18fb65b2d1097b58cf4ae
   languageName: node
   linkType: hard
 
