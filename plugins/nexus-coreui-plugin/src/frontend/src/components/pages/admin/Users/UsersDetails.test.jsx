@@ -14,7 +14,7 @@ import React from 'react';
 import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
 import Axios from 'axios';
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, APIConstants, ExtAPIUtils} from '@sonatype/nexus-ui-plugin';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import {
@@ -24,7 +24,7 @@ import {
   waitForElementToBeRemoved,
   getByText,
   queryByText,
-  act
+  act,
 } from '@testing-library/react';
 
 import UIStrings from '../../../../constants/UIStrings';
@@ -51,6 +51,8 @@ const {
   },
   SETTINGS
 } = UIStrings;
+
+const {EXT: {USER: {ACTION, METHODS}, URL: EXT_URL}} = APIConstants;
 
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'),
@@ -471,7 +473,7 @@ describe('UsersDetails', function() {
         roles: ['replication-role'],
       };
 
-      Axios.put.mockReturnValue(Promise.resolve());
+      Axios.post.mockReturnValue({data: TestUtils.makeExtResult({})});
 
       await renderAndWaitForLoad(testId, crowdSource);
 
@@ -484,7 +486,35 @@ describe('UsersDetails', function() {
       userEvent.click(querySubmitButton());
       await waitForElementToBeRemoved(querySavingMask());
 
-      await waitFor(() => expect(Axios.put).toHaveBeenCalledWith(singleUserUrl(testId), data));
+      await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(
+          EXT_URL,
+          ExtAPIUtils.createRequestBody(ACTION, METHODS.UPDATE_ROLE_MAPPINGS, {
+            data: [{realm: EXTERNAL.source, roles: data.roles, userId: EXTERNAL.userId}]
+          })
+      ));
+
+      expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
+    });
+
+    it('removes all roles', async function() {
+      const {querySubmitButton, querySavingMask} = selectors;
+
+      Axios.post.mockReturnValue({data: TestUtils.makeExtResult({})});
+
+      await renderAndWaitForLoad(testId, crowdSource);
+
+      clickOnRoles(testRoles);
+
+      userEvent.click(querySubmitButton());
+      await waitForElementToBeRemoved(querySavingMask());
+
+      await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(
+          EXT_URL,
+          ExtAPIUtils.createRequestBody(ACTION, METHODS.UPDATE_ROLE_MAPPINGS, {
+            data: [{realm: EXTERNAL.source, roles: [], userId: EXTERNAL.userId}]
+          })
+      ));
+
       expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
     });
 
@@ -518,7 +548,7 @@ describe('UsersDetails', function() {
 
   it('shows save API errors', async function() {
     const message = 'Use a unique userId';
-    const {id, firstName, lastName, email, status, password, confirmPassword, querySubmitButton, querySavingMask, queryFormError} = selectors;
+    const {id, firstName, lastName, email, status, password, confirmPassword, querySubmitButton, querySavingMask} = selectors;
 
     when(Axios.post).calledWith(createUserUrl, expect.objectContaining({userId: testId}))
         .mockRejectedValue({response: {data: message}});
@@ -817,7 +847,6 @@ describe('UsersDetails', function() {
         inputConfirmPassword,
         inputAdminPassword,
         retryButton,
-        querySave,
         queryChangePasswordMask
       } = selectors.modal;
 

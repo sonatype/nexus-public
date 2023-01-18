@@ -197,7 +197,7 @@ export default class FormUtils {
         setSaveError: assign({
           saveErrorData: ({data}) => data,
           saveError: (_, event) => {
-            const data = event.data?.response?.data;
+            const data = event.data?.response?.data || event.data?.message;
             return typeof data === 'string' ? data : null;
           },
           saveErrors: (_, event) => {

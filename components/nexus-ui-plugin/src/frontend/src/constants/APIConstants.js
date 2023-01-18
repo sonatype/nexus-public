@@ -75,6 +75,7 @@ export default {
       METHODS: {
         READ: 'read',
         READ_SOURCES: 'readSources',
+        UPDATE_ROLE_MAPPINGS: 'updateRoleMappings',
       },
     },
     SMALL_PAGE_SIZE: 25,

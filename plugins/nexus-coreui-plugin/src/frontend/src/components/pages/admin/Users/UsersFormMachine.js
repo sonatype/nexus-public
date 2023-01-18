@@ -22,6 +22,8 @@ import {
   ExtJS,
   FormUtils,
   ValidationUtils,
+  ExtAPIUtils,
+  APIConstants,
 } from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
@@ -31,6 +33,7 @@ import confirmNewPasswordMachine from './confirmNewPasswordMachine';
 import resettingTokenMachine from './resettingTokenMachine';
 
 const {USERS: {MESSAGES: LABELS}} = UIStrings;
+const {EXT: {USER: {ACTION, METHODS}}} = APIConstants;
 
 const {singleUserUrl, createUserUrl, defaultRolesUrl, findUsersUrl} = URL;
 
@@ -136,7 +139,7 @@ export default FormUtils.buildFormMachine({
           emailAddress: isNexusUser ? ValidationUtils.validateNotBlank(data.emailAddress) || ValidationUtils.validateEmail(data.emailAddress) : null,
           password: isCreate ? ValidationUtils.validateNotBlank(data.password): null,
           passwordConfirm: isCreate ? validatePasswordConfirm(data.password, data.passwordConfirm) : null,
-          roles: data.roles?.length ? null : UIStrings.ERROR.FIELD_REQUIRED,
+          roles: !isNexusUser || data.roles?.length ? null : UIStrings.ERROR.FIELD_REQUIRED,
         }
       }
     }),
@@ -171,14 +174,25 @@ export default FormUtils.buildFormMachine({
             : Promise.resolve({data: [EMPTY_DATA]}),
       ]);
     },
-    saveData: ({data, pristineData: {userId}}) => {
+    saveData: async ({data, pristineData: {userId}, pristineData}) => {
       const modifiedData = {
         ...data,
         status: data.status ? STATUSES.active.id : STATUSES.disabled.id,
       };
 
       if (isEdit(userId)) {
-        return Axios.put(singleUserUrl(userId), modifiedData);
+        if (isExternalUser(pristineData.source)) {
+          const response = await ExtAPIUtils.extAPIRequest(ACTION, METHODS.UPDATE_ROLE_MAPPINGS, {
+            data: [{
+              realm: pristineData.source,
+              userId: pristineData.userId,
+              roles: data.roles,
+            }],
+          });
+          return ExtAPIUtils.checkForError(response) || response;
+        } else {
+          return Axios.put(singleUserUrl(userId), modifiedData);
+        }
       } else {
         return Axios.post(createUserUrl, modifiedData);
       }
