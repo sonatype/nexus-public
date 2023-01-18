@@ -62,6 +62,17 @@ public interface SearchTestSystem
     assertThat(verifyComponentExistsByGAV(nexusSearchWebTarget, repositoryName, group, name, version), is(0));
   }
 
+  default void verifyComponentDoesNotExist(final WebTarget nexusSearchWebTarget,
+                                           final QueryParam queryParam){
+    verifyComponentDoesNotExist(nexusSearchWebTarget, Lists.newArrayList(queryParam));
+  }
+
+  default void verifyComponentDoesNotExist(final WebTarget nexusSearchWebTarget,
+                                           Collection<QueryParam> queryParams){
+    List<Map<String, Object>> items = searchForComponentByParams(nexusSearchWebTarget, queryParams);
+    assertThat(items.size(), is(0));
+  }
+
   default void verifyComponentExists(
       final WebTarget nexusSearchWebTarget,
       final QueryParam queryParam)
@@ -75,6 +86,23 @@ public interface SearchTestSystem
   {
     List<Map<String, Object>> items = searchForComponentByParams(nexusSearchWebTarget, queryParams);
     assertThat(items.size(), is(1));
+  }
+
+  default void verifyNumberOfComponentsAppearances(
+      final WebTarget nexusSearchWebTarget,
+      final QueryParam queryParam,
+      final int numberOfAppearances)
+  {
+    verifyNumberOfComponentsAppearances(nexusSearchWebTarget, Lists.newArrayList(queryParam), numberOfAppearances);
+  }
+
+  default void verifyNumberOfComponentsAppearances(
+      final WebTarget nexusSearchWebTarget,
+      final Collection<QueryParam> queryParams,
+      final int numberOfAppearances)
+  {
+    List<Map<String, Object>> items = searchForComponentByParams(nexusSearchWebTarget, queryParams);
+    assertThat(items.size(), is(numberOfAppearances));
   }
 
   default int verifyComponentExistsByGAV(
