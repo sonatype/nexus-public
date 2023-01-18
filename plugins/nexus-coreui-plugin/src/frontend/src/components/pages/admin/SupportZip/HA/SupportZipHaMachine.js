@@ -96,10 +96,8 @@ export default FormUtils.buildFormMachine({
       const node = event?.data?.node || null;
 
       if (node) {
-        ExtJS.requestAuthenticationToken(LABELS.AUTHENTICATE_TEXT).then(authToken => {
-          const url = ExtJS.urlOf(`service/rest/wonderland/download/${node.blobRef}?t=${btoa(authToken)}`);
-          ExtJS.downloadUrl(url);
-        });
+        const url = ExtJS.urlOf(`service/rest/wonderland/download/${node.blobRef}`);
+        ExtJS.downloadUrl(url);
       }
     }
   },

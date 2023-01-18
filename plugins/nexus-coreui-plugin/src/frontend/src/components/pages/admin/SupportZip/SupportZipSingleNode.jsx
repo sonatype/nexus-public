@@ -61,10 +61,8 @@ export default function SupportZipSingleNode() {
 
   function download(event, filename) {
     event.preventDefault();
-    ExtJS.requestAuthenticationToken(UIStrings.SUPPORT_ZIP.AUTHENTICATE_TEXT).then(authToken => {
-      const url = ExtJS.urlOf(`service/rest/wonderland/download/${filename}?t=${btoa(authToken)}`);
-      ExtJS.downloadUrl(url);
-    });
+    const url = ExtJS.urlOf(`service/rest/wonderland/download/${filename}`);
+    ExtJS.downloadUrl(url);
   }
 
   return <Page>
