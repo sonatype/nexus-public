@@ -3945,7 +3945,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"autolinker@npm:^3.11.0":
+"autolinker@npm:3.16.1":
   version: 3.16.1
   resolution: "autolinker@npm:3.16.1"
   dependencies:
