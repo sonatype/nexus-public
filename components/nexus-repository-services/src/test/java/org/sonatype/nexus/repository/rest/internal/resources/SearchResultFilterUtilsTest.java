@@ -12,18 +12,25 @@
  */
 package org.sonatype.nexus.repository.rest.internal.resources;
 
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.search.AssetSearchResult;
+import org.sonatype.nexus.repository.search.ComponentSearchResult;
 import org.sonatype.nexus.repository.search.SearchUtils;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -31,16 +38,16 @@ import org.mockito.Mock;
 import static com.google.common.collect.ImmutableMap.of;
 import static java.util.Optional.empty;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.repository.rest.internal.resources.AssetMapUtils.getValueFromAssetMap;
-import static org.sonatype.nexus.repository.rest.internal.resources.ResourcesTestUtils.createAsset;
+import static org.sonatype.nexus.repository.rest.internal.resources.SearchResultFilterUtils.getValueFromAssetMap;
 
-public class AssetMapUtilsTest
+public class SearchResultFilterUtilsTest
     extends TestSupport
 {
   private static final String CLASSIFIER_ATTRIBUTE_NAME = "assets.attributes.maven2.classifier";
@@ -49,11 +56,13 @@ public class AssetMapUtilsTest
 
   private static final String ARTIFACT_ID_ATTRIBUTE_NAME = "assets.attributes.maven2.artifactId";
 
-  private AssetSearchResult assetMap;
+  private AssetSearchResult asset;
 
-  private AssetSearchResult assetMapWithClassifier;
+  private AssetSearchResult assetWithClassifier;
 
-  private AssetMapUtils underTest;
+  private ComponentSearchResult component;
+
+  private SearchResultFilterUtils underTest;
 
   @Mock
   private Repository repository;
@@ -61,45 +70,64 @@ public class AssetMapUtilsTest
   @Mock
   private SearchUtils searchUtils;
 
+  @Mock
+  private SearchMapping extMapping;
+
+  @Mock
+  private SearchMapping descriptionMapping;
+
   @Before
   public void setup() {
     when(repository.getUrl()).thenReturn("http://localhost/repository/maven/");
-    assetMap = createAsset("antlr.jar", "maven2", "first-sha1", of("extension", "jar"));
-    assetMapWithClassifier =
-        createAsset("antlr.jar", "maven2", "first-sha1", of("extension", "jar", "classifier", "sources", "description",
-            "Reindeer have antlrs"));
-    underTest = new AssetMapUtils(searchUtils);
+
+    asset = createAsset("antlr.jar", "maven2", "first-sha1", of("extension", "jar"));
+    assetWithClassifier =
+        createAsset("antlr-sources.jar", "maven2", "first-sha1",
+            of("extension", "jar",
+                "classifier", "sources",
+                "description", "Reindeer have antlrs"));
+
+    component = new ComponentSearchResult();
+    component.setAssets(Arrays.asList(asset, assetWithClassifier));
+
+    when(extMapping.getAttribute()).thenReturn("assets.attributes.maven2.extension");
+    when(extMapping.isExactMatch()).thenReturn(true);
+    when(descriptionMapping.getAttribute()).thenReturn("assets.attributes.maven2.description");
+    when(descriptionMapping.isExactMatch()).thenReturn(false);
+    List<SearchMapping> mappings = Arrays.asList(extMapping, descriptionMapping);
+
+    underTest = new SearchResultFilterUtils(searchUtils, mappings);
   }
 
   @Test
   public void testGetValueFromAssetMap_sha1() {
-    runGetValueFromAssetMapTest(assetMap, "assets.attributes.checksum.sha1", "first-sha1");
+    runGetValueFromAssetMapTest(asset, "assets.attributes.checksum.sha1", "first-sha1");
   }
 
   @Test
   public void testGetValueFromAssetMap_MavenExtension() {
-    runGetValueFromAssetMapTest(assetMap, "assets.attributes.maven2.extension", "jar");
+    runGetValueFromAssetMapTest(asset, "assets.attributes.maven2.extension", "jar");
   }
 
   @Test
   public void testKeepAsset_partialMatch() {
-    assertThat(AssetMapUtils.keepAsset(assetMapWithClassifier, "assets.attributes.maven2.description", "HAVE"),
+    assertThat(underTest.keepAsset(assetWithClassifier, "assets.attributes.maven2.description", "HAVE"),
         is(true));
   }
 
   @Test
   public void testGetValueFromAssetMap_BadQueryParam_ReturnsEmpty() {
-    runGetValueFromAssetMapTest(assetMap, "junk", null);
+    runGetValueFromAssetMapTest(asset, "junk", null);
   }
 
   @Test
   public void testGetValueFromAssetMap_BadQueryParam2_ReturnsEmpty() {
-    runGetValueFromAssetMapTest(assetMap, "junk.junk", null);
+    runGetValueFromAssetMapTest(asset, "junk.junk", null);
   }
 
   @Test
   public void testGetValueFromAssetMap_MissingIdentifier_ReturnsEmpty() {
-    runGetValueFromAssetMapTest(assetMap, null, null);
+    runGetValueFromAssetMapTest(asset, null, null);
   }
 
   @Test
@@ -109,14 +137,14 @@ public class AssetMapUtilsTest
 
   @Test
   public void testGetValueFromAssetMap_IncludeClassifierFlag_ReturnsOne() {
-    Optional<Object> value = getValueFromAssetMap(assetMapWithClassifier, CLASSIFIER_ATTRIBUTE_NAME);
+    Optional<Object> value = getValueFromAssetMap(assetWithClassifier, CLASSIFIER_ATTRIBUTE_NAME);
     assertTrue(value.isPresent());
     assertThat(value.get(), equalTo("sources"));
   }
 
   @Test
   public void testGetValueFromAssetMap_IncludeClassifierFlag() {
-    Optional<Object> value = getValueFromAssetMap(assetMap, EXTENSION_ATTRIBUTE_NAME);
+    Optional<Object> value = getValueFromAssetMap(asset, EXTENSION_ATTRIBUTE_NAME);
     assertTrue(value.isPresent());
     assertThat(value.get(), equalTo("jar"));
   }
@@ -124,81 +152,85 @@ public class AssetMapUtilsTest
   @Test
   public void testFilterAsset_AssetMapClassifier_AssetParamClassifier() {
     when(searchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(CLASSIFIER_ATTRIBUTE_NAME);
-    MultivaluedMap<String, String>  assetParams = new MultivaluedHashMap<>();
-    assetParams.add(CLASSIFIER_ATTRIBUTE_NAME, "sources");
+    Map<String, String>  assetParams = new HashMap<>();
+    assetParams.put(CLASSIFIER_ATTRIBUTE_NAME, "sources");
 
-    assertTrue(underTest.filterAsset(assetMapWithClassifier, assetParams));
+    assertTrue(underTest.filterAsset(assetWithClassifier, assetParams));
   }
 
   @Test
   public void testFilterAsset_AssetMapNoClassifier_AssetParamNoClassifier() {
     when(searchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(EXTENSION_ATTRIBUTE_NAME);
-    MultivaluedMap<String, String>  assetParams = new MultivaluedHashMap<>();
-    assetParams.add(EXTENSION_ATTRIBUTE_NAME, "jar");
+    Map<String, String>  assetParams = new HashMap<>();
+    assetParams.put(EXTENSION_ATTRIBUTE_NAME, "jar");
 
-    assertTrue(underTest.filterAsset(assetMap, assetParams));
+    assertTrue(underTest.filterAsset(asset, assetParams));
   }
 
   @Test
   public void testFilterAsset_AssetMapNoClassifier_AssetParamClassifier() {
     when(searchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(CLASSIFIER_ATTRIBUTE_NAME);
-    MultivaluedMap<String, String>  assetParams = new MultivaluedHashMap<>();
-    assetParams.add(CLASSIFIER_ATTRIBUTE_NAME, "sources");
+    Map<String, String>  assetParams = new HashMap<>();
+    assetParams.put(CLASSIFIER_ATTRIBUTE_NAME, "sources");
 
-    assertFalse(underTest.filterAsset(assetMap, assetParams));
+    assertFalse(underTest.filterAsset(asset, assetParams));
   }
 
   @Test
   public void testFilterAsset_AssetMapClassifier_AssetParamNoClassifier() {
     when(searchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(EXTENSION_ATTRIBUTE_NAME);
-    MultivaluedMap<String, String>  assetParams = new MultivaluedHashMap<>();
-    assetParams.add(EXTENSION_ATTRIBUTE_NAME, "sources");
+    Map<String, String>  assetParams = new HashMap<>();
+    assetParams.put(EXTENSION_ATTRIBUTE_NAME, "sources");
 
-    assertFalse(underTest.filterAsset(assetMapWithClassifier, assetParams));
+    assertFalse(underTest.filterAsset(assetWithClassifier, assetParams));
   }
 
   @Test
-  public void testFilterAsset_AssetMapNoClassifier_AssetParamEmptyClassifier() {
+  public void testFilterComponent_AssetMapNoClassifier_AssetParamEmptyClassifier() {
     when(searchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(CLASSIFIER_ATTRIBUTE_NAME);
     MultivaluedMap<String, String>  assetParams = new MultivaluedHashMap<>();
     assetParams.add(CLASSIFIER_ATTRIBUTE_NAME, "");
 
-    assertTrue(underTest.filterAsset(assetMap, assetParams));
+    List<?> assets = underTest.filterComponentAssets(component, assetParams).collect(Collectors.toList());
+    assertThat(assets, hasSize(1));
   }
 
   @Test
   public void testFilterAsset_AssetMapClassifier_AssetParamEmptyClassifier() {
     when(searchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(CLASSIFIER_ATTRIBUTE_NAME);
-    MultivaluedMap<String, String>  assetParams = new MultivaluedHashMap<>();
-    assetParams.add(CLASSIFIER_ATTRIBUTE_NAME, "");
+    Map<String, String>  assetParams = new HashMap<>();
+    assetParams.put(CLASSIFIER_ATTRIBUTE_NAME, "");
 
-    assertFalse(underTest.filterAsset(assetMapWithClassifier, assetParams));
+    assertFalse(underTest.filterAsset(assetWithClassifier, assetParams));
   }
 
   @Test
   public void testFilterAsset_AssetMapClassifier_EmptyAssetParam() {
     when(searchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(CLASSIFIER_ATTRIBUTE_NAME);
-    MultivaluedMap<String, String>  assetParams = new MultivaluedHashMap<>();
+    Map<String, String>  assetParams = new HashMap<>();
 
-    assertTrue(underTest.filterAsset(assetMapWithClassifier, assetParams));
+    assertTrue(underTest.filterAsset(assetWithClassifier, assetParams));
   }
 
   @Test
   public void testFilterAsset_MultipleAssetParams() {
     when(searchUtils.getFullAssetAttributeName(CLASSIFIER_ATTRIBUTE_NAME)).thenReturn(CLASSIFIER_ATTRIBUTE_NAME);
     when(searchUtils.getFullAssetAttributeName(EXTENSION_ATTRIBUTE_NAME)).thenReturn(EXTENSION_ATTRIBUTE_NAME);
-    MultivaluedMap<String, String>  assetParams = new MultivaluedHashMap<>();
-    assetParams.add(CLASSIFIER_ATTRIBUTE_NAME, "sources");
-    assetParams.add(EXTENSION_ATTRIBUTE_NAME, "jar");
+    Map<String, String>  assetParams = new HashMap<>();
+    assetParams.put(CLASSIFIER_ATTRIBUTE_NAME, "sources");
+    assetParams.put(EXTENSION_ATTRIBUTE_NAME, "jar");
 
-    assertTrue(underTest.filterAsset(assetMapWithClassifier, assetParams));
-    assertFalse(underTest.filterAsset(assetMap, assetParams));
+    assertTrue(underTest.filterAsset(assetWithClassifier, assetParams));
+    assertFalse(underTest.filterAsset(asset, assetParams));
   }
 
   @Test
   public void testFilterAsset_GetEmptyAssetParams() {
     when(searchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(any(String.class));
-    List<String> emptyAssetParamsList = underTest.getEmptyAssetParams(getPopulatedMultiValueMap());
+
+    Map<String, String> params = ImmutableMap.of(CLASSIFIER_ATTRIBUTE_NAME, "", EXTENSION_ATTRIBUTE_NAME, "jar",
+        ARTIFACT_ID_ATTRIBUTE_NAME, "foo");
+    List<String> emptyAssetParamsList = underTest.getEmptyAssetParams(params);
 
     assertThat(emptyAssetParamsList.size(), equalTo(1));
   }
@@ -218,11 +250,11 @@ public class AssetMapUtilsTest
     assertFalse(nonEmptyAssetParamsList.containsKey(CLASSIFIER_ATTRIBUTE_NAME));
   }
 
-  private MultivaluedMap<String, String> getPopulatedMultiValueMap() {
-    MultivaluedMap<String, String>  assetParams = new MultivaluedHashMap<>();
-    assetParams.add(CLASSIFIER_ATTRIBUTE_NAME, "");
-    assetParams.add(EXTENSION_ATTRIBUTE_NAME, "jar");
-    assetParams.add(ARTIFACT_ID_ATTRIBUTE_NAME, "foo");
+  private Map<String, String> getPopulatedMultiValueMap() {
+    Map<String, String>  assetParams = new HashMap<>();
+    assetParams.put(CLASSIFIER_ATTRIBUTE_NAME, "");
+    assetParams.put(EXTENSION_ATTRIBUTE_NAME, "jar");
+    assetParams.put(ARTIFACT_ID_ATTRIBUTE_NAME, "foo");
     return assetParams;
   }
 
@@ -235,5 +267,33 @@ public class AssetMapUtilsTest
       assertTrue(value.isPresent());
       assertThat(value.get(), equalTo(match));
     }
+  }
+
+  private static AssetSearchResult createAsset(
+      final String name,
+      final String format,
+      final String sha1,
+      final Map<String, Object> formatAttributes)
+  {
+    return createAsset(name, format, "maven-central", sha1, formatAttributes);
+  }
+
+  private static AssetSearchResult createAsset(
+      final String name,
+      final String format,
+      final String repositoryName,
+      final String sha1,
+      final Map<String, Object> formatAttributes)
+  {
+    AssetSearchResult asset = new AssetSearchResult();
+    asset.setPath(name);
+    asset.setFormat(format);
+    asset.setChecksum(of("sha1", sha1));
+    asset.setId(UUID.randomUUID().toString());
+    asset.setRepository(repositoryName);
+    Map<String, Object> attributes = of("cache", of("last_verified", 1234), "checksum", of("sha1", sha1), format,
+        formatAttributes);
+    asset.setAttributes(attributes);
+    return asset;
   }
 }

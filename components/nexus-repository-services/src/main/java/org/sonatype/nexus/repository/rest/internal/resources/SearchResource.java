@@ -93,7 +93,7 @@ public class SearchResource
 
   private final SearchUtils searchUtils;
 
-  private final AssetMapUtils assetMapUtils;
+  private final SearchResultFilterUtils searchResultFilterUtils;
 
   private final SearchService searchService;
 
@@ -110,7 +110,7 @@ public class SearchResource
   @Inject
   public SearchResource(
       final SearchUtils searchUtils,
-      final AssetMapUtils assetMapUtils,
+      final SearchResultFilterUtils searchResultFilterUtils,
       final SearchService searchService,
       final ComponentXOFactory componentXOFactory,
       final Set<SearchResourceExtension> searchResourceExtensions,
@@ -118,7 +118,7 @@ public class SearchResource
       @Nullable final Map<String, AssetXODescriptor> assetDescriptors)
   {
     this.searchUtils = checkNotNull(searchUtils);
-    this.assetMapUtils = checkNotNull(assetMapUtils);
+    this.searchResultFilterUtils = checkNotNull(searchResultFilterUtils);
     this.searchService = checkNotNull(searchService);
     this.componentXOFactory = checkNotNull(componentXOFactory);
     this.searchResourceExtensions = checkNotNull(searchResourceExtensions);
@@ -191,10 +191,9 @@ public class SearchResource
 
     MultivaluedMap<String, String> assetParams = getAssetParams(uriInfo);
 
+    // Filter Assets by the criteria
     List<AssetXO> assets = response.getSearchResults().stream()
-        .map(ComponentSearchResult::getAssets)
-        .flatMap(List::stream)
-        .filter(asset -> assetMapUtils.filterAsset(asset, assetParams))
+        .flatMap(component -> searchResultFilterUtils.filterComponentAssets(component, assetParams))
         .map(asset -> AssetXO.from(asset, searchUtils.getRepository(asset.getRepository()), assetDescriptors))
         .collect(toList());
 

@@ -57,16 +57,6 @@ class ResourcesTestUtils
     return component;
   }
 
-
-  static AssetSearchResult createAsset(
-      final String name,
-      final String format,
-      final String sha1,
-      final Map<String, Object> formatAttributes)
-  {
-    return createAsset(name, format, "maven-central", sha1, formatAttributes);
-  }
-
   static AssetSearchResult createAsset(
       final String name,
       final String format,
