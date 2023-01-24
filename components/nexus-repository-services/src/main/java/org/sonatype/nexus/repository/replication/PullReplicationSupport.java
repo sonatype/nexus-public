@@ -17,7 +17,9 @@ import org.sonatype.nexus.repository.Repository;
 /**
  * Contains any per-format customizations needed for pull replication. Not all formats will need this.
  */
-public interface PullReplicationPathTranslator
+public interface PullReplicationSupport
 {
+  String IS_REPLICATION_REQUEST = "IS_REPLICATION_REQUEST";
+
   String translatePath(Repository repository, String path);
 }
