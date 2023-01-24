@@ -49,7 +49,6 @@ public class JwtExtDirectModule
       protected void configure() {
         addFilterChain(MOUNT_POINT + "/**",
             NexusAuthenticationFilter.NAME,
-            JwtFilter.NAME,
             AnonymousFilter.NAME,
             AntiCsrfFilter.NAME);
       }
