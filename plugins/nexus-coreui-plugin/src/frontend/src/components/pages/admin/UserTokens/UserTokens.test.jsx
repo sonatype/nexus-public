@@ -22,7 +22,7 @@ import UserTokens from './UserTokens';
 import UIStrings from '../../../../constants/UIStrings';
 
 const {
-  USER_TOKEN: {
+  USER_TOKEN_CONFIGURATION: {
     USER_TOKENS_CHECKBOX,
     REPOSITORY_AUTHENTICATION_CHECKBOX,
     RESET_ALL_TOKENS_BUTTON,

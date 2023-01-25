@@ -19,7 +19,7 @@ import {NxInfoAlert} from '@sonatype/react-shared-components';
 import UIStrings from '../../../../constants/UIStrings';
 
 const {
-  USER_TOKEN: {USER_TOKENS_CHECKBOX, REPOSITORY_AUTHENTICATION_CHECKBOX},
+  USER_TOKEN_CONFIGURATION: {USER_TOKENS_CHECKBOX, REPOSITORY_AUTHENTICATION_CHECKBOX},
   SETTINGS: {
     READ_ONLY: {WARNING}
   }

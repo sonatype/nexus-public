@@ -51,6 +51,11 @@ import Realms from './components/pages/admin/Realms/Realms';
 import HTTP from './components/pages/admin/Http/Http';
 import Licensing from './components/pages/admin/Licensing/Licensing';
 import UserTokens from './components/pages/admin/UserTokens/UserTokens';
+import CrowdSettings from "./components/pages/admin/CrowdSettings/CrowdSettings";
+import SamlConfiguration from "./components/pages/admin/SamlConfiguration/SamlConfiguration";
+import Replication from "./components/pages/admin/Replication/Replication";
+import DataStoreConfiguration from "./components/pages/admin/DataStoreConfiguration/DataStoreConfiguration";
+import UserToken from "./components/pages/user/UserToken/UserToken";
 
 window.ReactComponents = {
   ...window.ReactComponents,
@@ -405,7 +410,7 @@ window.plugins.push({
     {
       mode: 'admin',
       path: '/Security/UserToken',
-      ...UIStrings.USER_TOKEN.MENU,
+      ...UIStrings.USER_TOKEN_CONFIGURATION.MENU,
       view: UserTokens,
       iconCls: 'x-fa fa-key',
       visibility: {
@@ -419,5 +424,90 @@ window.plugins.push({
         ],
       },
     },
+    {
+      mode: 'admin',
+      path: '/Security/AtlassianCrowd',
+      text: UIStrings.CROWD_SETTINGS.MENU.text,
+      description: UIStrings.CROWD_SETTINGS.MENU.description,
+      view: CrowdSettings,
+      iconCls: 'x-fab fa-atlassian',
+      visibility: {
+        bundle: 'com.sonatype.nexus.plugins.nexus-crowd-plugin',
+        licenseValid: [
+          {
+            key: 'crowd',
+            defaultValue: false
+          }
+        ],
+        permissions: ['nexus:crowd:read']
+      }
+    },
+    {
+      mode: 'admin',
+      path: '/Security/Saml',
+      text: UIStrings.SAML_CONFIGURATION.MENU.text,
+      description: UIStrings.SAML_CONFIGURATION.MENU.description,
+      view: SamlConfiguration,
+      iconCls: 'x-fa fa-id-card',
+      visibility: {
+        bundle: 'com.sonatype.nexus.plugins.nexus-saml-plugin',
+        permissions: ['nexus:*'],
+        editions: ['PRO']
+      }
+    },
+    {
+      mode: 'user',
+      path: '/User Token',
+      text: UIStrings.USER_TOKEN.MENU.text,
+      description: UIStrings.USER_TOKEN.MENU.description,
+      view: UserToken,
+      iconCls: 'x-fa fa-key',
+      visibility: {
+        bundle: 'com.sonatype.nexus.plugins.nexus-usertoken-plugin',
+        statesEnabled: [
+          {
+            key: 'usertoken',
+            defaultValue: {enabled: false}
+          }
+        ],
+        permissions: ['nexus:usertoken-current:read'],
+        editions: ['PRO']
+      }
+    },
+    {
+      mode: 'admin',
+      path: '/Repository/DataStore',
+      text: UIStrings.DATASTORE_CONFIGURATION.MENU.text,
+      description: UIStrings.DATASTORE_CONFIGURATION.MENU.description,
+      view: DataStoreConfiguration,
+      iconCls: 'x-fa fa-database',
+      visibility: {
+        bundle: 'com.sonatype.nexus.plugins.nexus-pro-datastore-plugin',
+        featureFlags: [{
+          key: 'datastores',
+          defaultValue: false
+        }],
+        permissions: ['nexus:*'],
+        editions: ['PRO']
+      }
+    },
+    {
+      mode: 'admin',
+      text: UIStrings.REPLICATION.MENU.text,
+      description: UIStrings.REPLICATION.MENU.description,
+      path: '/Repository/Replication',
+      view: Replication,
+      iconCls: 'x-fa fa-copy',
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        statesEnabled: [
+          {
+            key: 'replicationCapabilityState',
+            defaultValue: {enabled: false}
+          }
+        ],
+        permissions: ['nexus:replication:read']
+      }
+    }
   ]
 });

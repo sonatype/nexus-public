@@ -31,7 +31,7 @@ import UIStrings from '../../../../constants/UIStrings';
 import UserTokensResetModal from './UserTokensResetModal';
 
 const {
-  USER_TOKEN: {
+  USER_TOKEN_CONFIGURATION: {
     CAPTION,
     HELP_TEXT,
     USER_TOKENS_CHECKBOX,

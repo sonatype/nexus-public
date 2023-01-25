@@ -32,7 +32,7 @@ import UserTokensForm from './UserTokensForm';
 import './UserTokens.scss'; 
 
 const {
-  USER_TOKEN: {MENU}
+  USER_TOKEN_CONFIGURATION: {MENU}
 } = UIStrings;
 
 export default function UserTokens() {

@@ -25,7 +25,7 @@ import {
 import UIStrings from '../../../../constants/UIStrings';
 
 const {
-  USER_TOKEN: {RESET_CONFIRMATION}
+  USER_TOKEN_CONFIGURATION: {RESET_CONFIRMATION}
 } = UIStrings;
 
 export default function UserTokensResetModal({service}) {

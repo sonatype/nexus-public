@@ -22,7 +22,7 @@ import {assign} from 'xstate';
 
 const API_URL = APIConstants.REST.PUBLIC.USER_TOKENS;
 
-const {RESET_CONFIRMATION, RESET_ERROR_MSG, RESET_SUCCESS_MSG} = UIStrings.USER_TOKEN;
+const {RESET_CONFIRMATION, RESET_ERROR_MSG, RESET_SUCCESS_MSG} = UIStrings.USER_TOKEN_CONFIGURATION;
 
 export default FormUtils.buildFormMachine({
   id: 'UserTokensMachine',
