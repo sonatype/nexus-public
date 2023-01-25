@@ -383,7 +383,7 @@ public class QuartzSchedulerSPI
   {
     log.debug("Initializing task-state: jobDetail={}, trigger={}", jobDetail, trigger);
     Schedule schedule = triggerConverter.convert(trigger);
-    return attachJobListener(jobDetail, trigger, schedule);
+    return attachJobListener(jobDetail, trigger, schedule, schedule);
   }
 
   /**
@@ -391,24 +391,25 @@ public class QuartzSchedulerSPI
    */
   private QuartzTaskJobListener attachJobListener(final JobDetail jobDetail,
                                                   final Trigger trigger,
-                                                  final Schedule schedule) throws SchedulerException
+                                                  final Schedule taskSchedule,
+                                                  final Schedule taskFutureSchedule) throws SchedulerException
   {
     Date taskStart = new Date();
     TaskConfiguration taskConfiguration = configurationOf(jobDetail);
     QuartzTaskState taskState = new QuartzTaskState(
         taskConfiguration,
-        schedule,
+        taskSchedule,
         trigger.getFireTimeAfter(taskStart)
     );
 
     QuartzTaskFuture future = null;
-    if (schedule instanceof Now) {
+    if (taskFutureSchedule instanceof Now) {
       future = new QuartzTaskFuture(
           this,
           jobDetail.getKey(),
           taskConfiguration.getTaskLogName(),
           taskStart,
-          schedule,
+          taskFutureSchedule,
           null
       );
     }
@@ -788,7 +789,7 @@ public class QuartzSchedulerSPI
       /* BLOCKED means that the trigger is prevented from being fired
          because it relates to a StatefulJob that is already executing. */
       Schedule schedule = scheduleFactory.now();
-      return attachJobListener(jobDetail, trigger, schedule);
+      return attachJobListener(jobDetail, trigger, triggerConverter.convert(trigger), schedule);
     }
 
     return attachJobListener(jobDetail, trigger);
