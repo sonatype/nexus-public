@@ -27,6 +27,7 @@ import {
 
 import {
   NxButton,
+  NxFieldset,
   NxFontAwesomeIcon,
   NxFormSelect,
   NxStatefulForm
@@ -166,10 +167,8 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
                   onChange={update}/>
             </FieldWrapper>
             {isAnyFieldApplicable() &&
-            <fieldset className="nx-fieldset">
-              <legend className="nx-label nx-legend__text">
-                {UIStrings.CLEANUP_POLICIES.CRITERIA_LABEL}
-              </legend>
+
+            <NxFieldset label={UIStrings.CLEANUP_POLICIES.CRITERIA_LABEL} isRequired>
               {isFieldApplicable('lastBlobUpdated') &&
               <CheckboxControlledWrapper isChecked={Boolean(criteriaLastBlobUpdatedEnabled)}
                                          onChange={setCriteriaLastBlobUpdatedEnabled}
@@ -178,7 +177,8 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
                                              criteriaLastBlobUpdatedEnabled
                                          )}>
                 <FieldWrapper labelText={UIStrings.CLEANUP_POLICIES.LAST_UPDATED_LABEL}
-                              descriptionText={UIStrings.CLEANUP_POLICIES.LAST_UPDATED_DESCRIPTION}>
+                              descriptionText={UIStrings.CLEANUP_POLICIES.LAST_UPDATED_DESCRIPTION}
+                              isOptional={!criteriaLastBlobUpdatedEnabled}>
                   <Textfield
                       {...FormUtils.fieldProps('criteriaLastBlobUpdated', current)}
                       onChange={update}
@@ -197,7 +197,8 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
                                              criteriaLastDownloadedEnabled
                                          )}>
                 <FieldWrapper labelText={UIStrings.CLEANUP_POLICIES.LAST_DOWNLOADED_LABEL}
-                              descriptionText={UIStrings.CLEANUP_POLICIES.LAST_DOWNLOADED_DESCRIPTION}>
+                              descriptionText={UIStrings.CLEANUP_POLICIES.LAST_DOWNLOADED_DESCRIPTION}
+                              isOptional={!criteriaLastDownloadedEnabled}>
                   <Textfield
                       {...FormUtils.fieldProps('criteriaLastDownloaded', current)}
                       onChange={update}
@@ -216,7 +217,8 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
                                              criteriaReleaseTypeEnabled
                                          )}>
                 <FieldWrapper labelText={UIStrings.CLEANUP_POLICIES.RELEASE_TYPE_LABEL}
-                              descriptionText={UIStrings.CLEANUP_POLICIES.RELEASE_TYPE_DESCRIPTION}>
+                              descriptionText={UIStrings.CLEANUP_POLICIES.RELEASE_TYPE_DESCRIPTION}
+                              isOptional={!criteriaReleaseTypeEnabled}>
                   <NxFormSelect
                       {...FormUtils.fieldProps('criteriaReleaseType', current)}
                       onChange={update}
@@ -237,7 +239,8 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
                                              criteriaAssetRegexEnabled
                                          )}>
                 <FieldWrapper labelText={UIStrings.CLEANUP_POLICIES.ASSET_NAME_LABEL}
-                              descriptionText={UIStrings.CLEANUP_POLICIES.ASSET_NAME_DESCRIPTION}>
+                              descriptionText={UIStrings.CLEANUP_POLICIES.ASSET_NAME_DESCRIPTION}
+                              isOptional={!criteriaAssetRegexEnabled}>
                   <Textfield
                       {...FormUtils.fieldProps('criteriaAssetRegex', current)}
                       onChange={update}
@@ -245,7 +248,7 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
                 </FieldWrapper>
               </CheckboxControlledWrapper>
               }
-            </fieldset>
+            </NxFieldset>
             }
           </>}
         </NxStatefulForm>

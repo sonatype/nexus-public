@@ -135,14 +135,14 @@ export default function LogViewer({itemId}) {
           <div className="nxrm-spacer" />
 
           <div className="nx-form-row">
-            <NxFormGroup label={VIEW.REFRESH.RATE_LABEL} isRequired>
+            <NxFormGroup label={VIEW.REFRESH.RATE_LABEL}>
               <NxFormSelect name="period" id="period" value={selectedPeriod} onChange={onChangePeriod}>
                 {refreshPeriods.map(([period, label]) =>
                     <option key={period} value={period}>{label}</option>
                 )}
               </NxFormSelect>
             </NxFormGroup>
-            <NxFormGroup className="log-viewer-size" label={VIEW.REFRESH.SIZE_LABEL} isRequired>
+            <NxFormGroup className="log-viewer-size" label={VIEW.REFRESH.SIZE_LABEL}>
               <NxFormSelect name="size" value={selectedSize} onChange={onChangeSize}>
                 {refreshSizes.map(([size, label]) =>
                     <option key={size} value={size}>{label}</option>

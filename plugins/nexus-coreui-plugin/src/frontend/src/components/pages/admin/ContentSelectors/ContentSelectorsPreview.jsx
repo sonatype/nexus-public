@@ -54,7 +54,9 @@ export default function ContentSelectorsPreview({type, expression}) {
     <h2>{UIStrings.CONTENT_SELECTORS.TITLE}</h2>
     <NxLoadWrapper isLoading={isLoading} retryHandler={retry}>
       <FieldWrapper labelText={UIStrings.CONTENT_SELECTORS.PREVIEW.REPOSITORY_LABEL}
-                    descriptionText={UIStrings.CONTENT_SELECTORS.PREVIEW.REPOSITORY_DESCRIPTION}>
+                    descriptionText={UIStrings.CONTENT_SELECTORS.PREVIEW.REPOSITORY_DESCRIPTION}
+                    isOptional={true}
+      >
         <div className="nx-form-row">
           <NxFormSelect name="repository" onChange={repositoryChangeHandler} value={repositories}>
             {allRepositories.map(({id, name}) =>

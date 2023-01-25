@@ -19,6 +19,8 @@ export default {
       text: 'Content Selectors'
     },
 
+    EDIT_TITLE: (name) => `Edit ${name}`,
+
     EMPTY_MESSAGE: 'No content selectors were found',
 
     HELP_TITLE: 'What is a content selector?',

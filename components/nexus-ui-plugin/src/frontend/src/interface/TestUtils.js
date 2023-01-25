@@ -83,6 +83,7 @@ export default class TestUtils {
   }
 
   static formSelectors = {
+    queryTitle: () => screen.queryByRole('heading', {level: 1}),
     querySubmitButton: () => screen.queryByRole('button', {name: SAVE_BUTTON_LABEL}),
     queryDiscardButton: () => screen.queryByRole('button', {name: DISCARD_BUTTON_LABEL}),
     queryFormError: (message) => {

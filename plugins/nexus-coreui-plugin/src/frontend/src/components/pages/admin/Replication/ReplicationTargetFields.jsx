@@ -119,9 +119,10 @@ export default function ReplicationTargetFields({service}) {
 
           <NxFormGroup label={FORM.TARGET_REPO_LABEL} isRequired>
             <NxFormSelect {...FormUtils.fieldProps('destinationRepositoryName', state)}
-                    className={testStatus !== 200 ? 'disabled' : ''}
-                    disabled={testStatus !== 200}
-                    onChange={FormUtils.handleUpdate('destinationRepositoryName', send)}>
+                          className={testStatus !== 200 ? 'disabled' : ''}
+                          disabled={testStatus !== 200}
+                          onChange={FormUtils.handleUpdate('destinationRepositoryName', send)}
+                          validatable>
               <option value=""/>
               {destinationRepositories?.map(({id, name}) =>
                   <option key={'destinationRepositoryName' + id} value={id}>{name}</option>

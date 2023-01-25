@@ -108,7 +108,6 @@ export default function HttpForm() {
       <NxFormGroup
         label={LABELS.TIMEOUT.LABEL}
         sublabel={LABELS.TIMEOUT.SUB_LABEL}
-        isRequired
       >
         <NxTextInput
           className="nx-text-input--short"
@@ -119,7 +118,6 @@ export default function HttpForm() {
       <NxFormGroup
         label={LABELS.ATTEMPTS.LABEL}
         sublabel={LABELS.ATTEMPTS.SUB_LABEL}
-        isRequired
       >
         <NxTextInput
           className="nx-text-input--short"
@@ -128,7 +126,7 @@ export default function HttpForm() {
         />
       </NxFormGroup>
       <NxH2>{LABELS.PROXY.LABEL}</NxH2>
-      <NxFieldset label="" isRequired>
+      <NxFieldset label="">
         <NxCheckbox
           {...FormUtils.checkboxProps('httpEnabled', current)}
           onChange={handleHttpCheckbox}
@@ -171,7 +169,7 @@ export default function HttpForm() {
           </NxAccordion.Header>
           <NxFormRow>
             <>
-              <NxFormGroup label={LABELS.PROXY.USERNAME} isRequired>
+              <NxFormGroup label={LABELS.PROXY.USERNAME} isRequired={httpEnabled}>
                 <NxTextInput
                   className="nx-text-input"
                   {...FormUtils.fieldProps('httpAuthUsername', current)}
@@ -208,7 +206,7 @@ export default function HttpForm() {
           </NxFormGroup>
         </NxAccordion>
       </NxTile.Content>
-      <NxFieldset label="" isRequired>
+      <NxFieldset label="">
         <NxCheckbox
           {...FormUtils.checkboxProps('httpsEnabled', current)}
           onChange={handleHttpsCheckbox}
@@ -220,7 +218,7 @@ export default function HttpForm() {
       <NxFormGroup
         label={LABELS.PROXY.HTTPS_HOST}
         sublabel={LABELS.PROXY.SUB_LABEL}
-        isRequired
+        isRequired={isHttpsEnabled}
       >
         <NxTextInput
           className="nx-text-input--long"
@@ -229,7 +227,7 @@ export default function HttpForm() {
           disabled={!isHttpsEnabled}
         />
       </NxFormGroup>
-      <NxFormGroup label={LABELS.PROXY.HTTPS_PORT} isRequired>
+      <NxFormGroup label={LABELS.PROXY.HTTPS_PORT} isRequired={isHttpsEnabled}>
         <NxTextInput
           className="nx-text-input--short"
           {...FormUtils.fieldProps('httpsPort', current)}
@@ -252,7 +250,7 @@ export default function HttpForm() {
           </NxAccordion.Header>
           <NxFormRow>
             <>
-              <NxFormGroup label={LABELS.PROXY.USERNAME} isRequired>
+              <NxFormGroup label={LABELS.PROXY.USERNAME} isRequired={isHttpsEnabled}>
                 <NxTextInput
                   className="nx-text-input"
                   {...FormUtils.fieldProps('httpsAuthUsername', current)}
@@ -295,7 +293,6 @@ export default function HttpForm() {
             <NxFormGroup
               label={LABELS.EXCLUDE.LABEL}
               sublabel={LABELS.EXCLUDE.SUB_LABEL}
-              isRequired
             >
               <NxTextInput
                 className="nx-text-input--long"

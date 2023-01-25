@@ -17,7 +17,7 @@ import {
   NxH2,
   NxStatefulForm,
   NxTooltip,
-  NxStatefulTransferList,
+  NxStatefulTransferList, NxErrorAlert,
 } from '@sonatype/react-shared-components';
 import {FormUtils} from '@sonatype/nexus-ui-plugin';
 
@@ -29,7 +29,7 @@ const {REALMS: {CONFIGURATION: LABELS}, SETTINGS} = UIStrings;
 
 export default function RealmsForm() {
   const [current, send] = useMachine(RealmsMachine, {devTools: true});
-  const { data, validationErrors, isPristine } = current.context;
+  const { data, isInvalid, isPristine, validationErrors } = current.context;
 
   const discard = () => send('RESET');
 
@@ -42,7 +42,7 @@ export default function RealmsForm() {
   return (
     <NxStatefulForm
         {...FormUtils.formProps(current, send)}
-        validationErrors={validationErrors.active}
+        validationErrors={validationErrors?.active || FormUtils.saveTooltip({isPristine, isInvalid})}
         additionalFooterBtns={
           <NxTooltip title={FormUtils.discardTooltip({isPristine})}>
             <NxButton

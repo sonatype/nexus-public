@@ -77,7 +77,7 @@ export default function PrivilegesForm({itemId, service, onDone}) {
             value={type}
             disabled={isEdit}
             onChange={setType}
-        >
+            validatable>
           <option disabled={isTypeSelected} value=""/>
           {Object.values(types)?.map(({id, name}) => <option key={id} value={id}>{name}</option>)}
         </NxFormSelect>

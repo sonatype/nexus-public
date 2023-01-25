@@ -59,7 +59,7 @@ export default function SslCertificatesAddForm({onDone, machine}) {
             >
               <NxH2>{CAPTION}</NxH2>
 
-              <NxFieldset label="" isRequired>
+              <NxFieldset label="">
                 <NxRadio
                   name="source"
                   value={SOURCES.REMOTE_HOST}
@@ -70,7 +70,7 @@ export default function SslCertificatesAddForm({onDone, machine}) {
                 </NxRadio>
               </NxFieldset>
 
-              <NxFormGroup label={SERVER.LABEL} isRequired>
+              <NxFormGroup label={SERVER.LABEL} isRequired={source === SOURCES.REMOTE_HOST}>
                 <NxTextInput
                   {...FormUtils.fieldProps('remoteHostUrl', state)}
                   onChange={FormUtils.handleUpdate('remoteHostUrl', send)}
@@ -79,7 +79,7 @@ export default function SslCertificatesAddForm({onDone, machine}) {
                 />
               </NxFormGroup>
 
-              <NxFieldset label="" isRequired>
+              <NxFieldset label="">
                 <NxRadio
                   name="source"
                   value={SOURCES.PEM}
@@ -90,7 +90,7 @@ export default function SslCertificatesAddForm({onDone, machine}) {
                 </NxRadio>
               </NxFieldset>
 
-              <NxFormGroup label={PEM.LABEL} isRequired>
+              <NxFormGroup label={PEM.LABEL} isRequired ={source === SOURCES.PEM}>
                 <NxTextInput
                   type="textarea"
                   {...FormUtils.fieldProps('pemContent', state)}

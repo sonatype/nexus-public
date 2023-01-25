@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {waitFor, waitForElementToBeRemoved, within} from '@testing-library/react';
+import {screen, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
 import {act} from 'react-dom/test-utils';
@@ -59,7 +59,9 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
 
 const selectors = {
   ...TestUtils.selectors,
-  ...TestUtils.formSelectors
+  ...TestUtils.formSelectors,
+
+  getType: () => screen.getByText(UIStrings.CONTENT_SELECTORS.TYPE_LABEL).nextSibling
 };
 
 describe('ContentSelectorsForm', function() {
@@ -77,7 +79,6 @@ describe('ContentSelectorsForm', function() {
   function renderView(view) {
     return TestUtils.render(view, ({queryByLabelText, queryByText}) => ({
       name: () => queryByLabelText(UIStrings.CONTENT_SELECTORS.NAME_LABEL),
-      type: () => queryByLabelText(UIStrings.CONTENT_SELECTORS.TYPE_LABEL),
       description: () => queryByLabelText(UIStrings.CONTENT_SELECTORS.DESCRIPTION_LABEL),
       expression: () => queryByLabelText(UIStrings.CONTENT_SELECTORS.EXPRESSION_LABEL),
       cancelButton: () => queryByText(UIStrings.SETTINGS.CANCEL_BUTTON_LABEL),
@@ -93,7 +94,7 @@ describe('ContentSelectorsForm', function() {
       if (url === `/service/rest/v1/security/content-selectors/${itemId}`) {
         return Promise.resolve({
           data: {
-            'name' : 'xss<img src="/static/rapture/resources/icons/x16/user.png" onload="alert(0)">',
+            'name' : 'content-selector-name',
             'type' : 'csel',
             'description' : 'description',
             'expression' : 'format == "raw"'
@@ -105,12 +106,12 @@ describe('ContentSelectorsForm', function() {
       }
     });
 
-    const {loadingMask, name, type, description, expression} = renderEditView(itemId);
+    const {loadingMask, description, expression} = renderEditView(itemId);
 
     await waitForElementToBeRemoved(loadingMask);
 
-    expect(name()).toHaveValue('xss<img src="/static/rapture/resources/icons/x16/user.png" onload="alert(0)">');
-    expect(type()).toHaveTextContent('CSEL');
+    expect(selectors.queryTitle()).toHaveTextContent('Edit content-selector-name');
+    expect(selectors.getType()).toHaveTextContent('CSEL');
     expect(description()).toHaveValue('description');
     expect(expression()).toHaveValue('format == "raw"');
 

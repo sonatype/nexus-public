@@ -62,7 +62,8 @@ export default function ReplicationInformationFields({isEdit, service}) {
 
         <NxFormGroup label={FORM.SOURCE_REPO_LABEL} sublabel={FORM.SOURCE_REPO_DESCRIPTION} isRequired>
           <NxFormSelect {...FormUtils.fieldProps('sourceRepositoryName', current)}
-                  onChange={FormUtils.handleUpdate('sourceRepositoryName', send, 'UPDATE_TEST_CONNECTION')}>
+                        onChange={FormUtils.handleUpdate('sourceRepositoryName', send, 'UPDATE_TEST_CONNECTION')}
+                        validatable>
             <option value=""/>
             {sourceRepositories.map(({id, name}) =>
                 <option key={'sourceRepositoryName' + id} value={id}>{name}</option>

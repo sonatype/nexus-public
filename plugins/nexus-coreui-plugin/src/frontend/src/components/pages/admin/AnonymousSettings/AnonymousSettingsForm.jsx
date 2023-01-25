@@ -59,7 +59,7 @@ export default function AnonymousSettingsForm() {
         <Textfield{...FormUtils.fieldProps('userId', current)} onChange={FormUtils.handleUpdate('userId', send)}/>
       </NxFormGroup>
       <NxFormGroup label={UIStrings.ANONYMOUS_SETTINGS.REALM_SELECT_LABEL} isRequired>
-        <NxFormSelect name='realmName' value={data.realmName} onChange={FormUtils.handleUpdate('realmName', send)}>
+        <NxFormSelect name='realmName' value={data.realmName} onChange={FormUtils.handleUpdate('realmName', send)} validatable>
           {realms?.map((realm) =>
               <option key={realm.id} value={realm.id}>{realm.name}</option>
           )}

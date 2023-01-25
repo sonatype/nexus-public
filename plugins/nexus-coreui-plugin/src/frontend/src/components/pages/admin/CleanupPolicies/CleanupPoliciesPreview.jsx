@@ -90,7 +90,7 @@ export default function CleanupPoliciesPreview({policyData}) {
     <NxLoadWrapper loading={isLoadingRepositories} error={repositoryLoadError} retryHandler={retryForm}>
       {() => <>
         <div className="nx-form-group cleanup-preview-repository-group">
-          <label id="preview-repository-label" className="nx-label" htmlFor="repository">
+          <label id="preview-repository-label" className="nx-label nx-label--optional" htmlFor="repository">
             <span className="nx-label__text">{UIStrings.CLEANUP_POLICIES.PREVIEW.REPOSITORY_LABEL}</span>
           </label>
           <div id="preview-repository-sub-label" className="nx-sub-label">
