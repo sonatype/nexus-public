@@ -17,6 +17,7 @@ import org.junit.Test;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.isEmptyOrNullString;
 
 /**
  * Tests for {@link BlobRef}.
@@ -32,5 +33,37 @@ public class BlobRefTest
     final BlobRef reconstituted = BlobRef.parse(spec);
 
     assertThat(reconstituted, is(equalTo(blobRef)));
+  }
+
+  @Test
+  public void testParseBlobRefWithNodeId() {
+    String storeName = "test-store";
+    String blobId = "test-blob-id";
+    String nodeId = "test-node-id";
+
+    String blobRefString = String.format("%s:%s@%s", storeName, blobId, nodeId);
+    BlobRef parsed = BlobRef.parse(blobRefString);
+
+    assertThat(parsed.getBlob(), is(equalTo(blobId)));
+    assertThat(parsed.getStore(), is(equalTo(storeName)));
+    assertThat(parsed.getNode(), isEmptyOrNullString());
+  }
+
+  @Test
+  public void testParseBlobRefWithoutNodeId() {
+    String storeName = "test-store";
+    String blobId = "test-blob-id";
+
+    String blobRefString = String.format("%s@%s", storeName, blobId);
+    BlobRef parsed = BlobRef.parse(blobRefString);
+
+    assertThat(parsed.getBlob(), is(equalTo(blobId)));
+    assertThat(parsed.getStore(), is(equalTo(storeName)));
+    assertThat(parsed.getNode(), isEmptyOrNullString());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testBlobRefIllegalFormat() {
+    BlobRef.parse("wrong-blobref-format/string");
   }
 }
