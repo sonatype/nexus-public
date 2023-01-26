@@ -16,6 +16,7 @@ import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
 import javax.annotation.Nullable;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -73,7 +74,7 @@ public class BlobRefTypeHandler
    * @since 3.26
    */
   public static String toPersistableString(final BlobRef blobRef) {
-    return blobRef.toString();
+    return String.format("%s:%s@%s", blobRef.getStore(), blobRef.getBlob(), blobRef.getNode());
   }
 
   /**
@@ -82,6 +83,14 @@ public class BlobRefTypeHandler
    * @since 3.26
    */
   public static BlobRef parsePersistableFormat(final String spec) {
-    return BlobRef.parse(spec);
+    int colon = spec.indexOf(':');
+    int at = spec.lastIndexOf('@');
+
+    if (colon > 0 && at > 0 && at-1 > colon && at < spec.length()-1) {
+      return new BlobRef(spec.substring(at+1), spec.substring(0, colon), spec.substring(colon+1, at));
+    }
+    else {
+      throw new IllegalArgumentException("Not a valid blob reference: " + spec);
+    }
   }
 }

@@ -12,70 +12,33 @@
  */
 package org.sonatype.nexus.blobstore.api;
 
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Provides a pointer to a blob in a given store.
+ * Provides a pointer to a blob on a given node, in a given store.
  *
  * @since 3.0
  */
 public class BlobRef
 {
-  /**
-   * Handle both {@code store-name@blob-id} and {@code store-name:blob-id@node-id} blob ref formats
-   */
-  private static final Pattern BLOB_REF_PATTERN = Pattern.compile("([^@]+)@(.+)");
-
-  private static final Pattern SPLIT_PATTERN = Pattern.compile("([^@:]+):([^@:].+)");
-
-  private static final String BLOB_REF_SIMPLE_FORMAT = "%s@%s";
-
   private final String node;
 
   private final String store;
 
   private final String blob;
 
-  public BlobRef(final String store, final String blob) {
-    this(null, store, blob);
-  }
+  public static final Pattern BLOB_REF_PATTERN = Pattern.compile("([^@]+)@([^:]+):(.*)");
 
-  public BlobRef(@Nullable final String node, final String store, final String blob) {
-    this.node = node;
+  public BlobRef(final String node, final String store, final String blob) {
+    this.node = checkNotNull(node);
     this.store = checkNotNull(store);
     this.blob = checkNotNull(blob);
   }
 
-  public static BlobRef parse(final String spec) {
-    Matcher matcher = BLOB_REF_PATTERN.matcher(spec);
-    checkArgument(matcher.matches(), "Not a valid blob reference");
-
-    String firstPart = matcher.group(1);
-    if (firstPart.contains(":")) {
-      Matcher splitMatcher = SPLIT_PATTERN.matcher(firstPart);
-      checkArgument(splitMatcher.matches(), "Not a valid blob reference");
-
-      String store = splitMatcher.group(1);
-      String blobId = splitMatcher.group(2);
-      return new BlobRef(store, blobId);
-    } else {
-      String store = firstPart;
-      String blobId = matcher.group(2);
-      if (store.isEmpty() || blobId.isEmpty()) {
-        throw new IllegalArgumentException("Not a valid blob reference");
-      } else {
-        return new BlobRef(store, blobId);
-      }
-    }
-  }
-
-  @Nullable
   public String getNode() {
     return node;
   }
@@ -92,12 +55,18 @@ public class BlobRef
     return new BlobId(getBlob());
   }
 
+  public static BlobRef parse(final String spec) {
+    final Matcher matcher = BLOB_REF_PATTERN.matcher(spec);
+    checkArgument(matcher.matches(), "Not a valid blob reference");
+
+    return new BlobRef(matcher.group(2), matcher.group(1), matcher.group(3));
+  }
+
   /**
-   * @return the blob ref encoded as a string, using the syntax {@code store@blob-id}
+   * @return the blob ref encoded as a string, using the syntax {@code store@node:blob-id}
    */
-  @Override
   public String toString() {
-    return String.format(BLOB_REF_SIMPLE_FORMAT, getStore(), getBlob());
+    return String.format("%s@%s:%s", getStore(), getNode(), getBlob());
   }
 
   @Override
@@ -110,11 +79,25 @@ public class BlobRef
     }
 
     BlobRef blobRef = (BlobRef) o;
-    return Objects.equals(blob, blobRef.blob) && Objects.equals(store, blobRef.store);
+
+    if (!blob.equals(blobRef.blob)) {
+      return false;
+    }
+    if (!node.equals(blobRef.node)) {
+      return false;
+    }
+    if (!store.equals(blobRef.store)) {
+      return false;
+    }
+
+    return true;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(store, blob);
+    int result = node.hashCode();
+    result = 31 * result + store.hashCode();
+    result = 31 * result + blob.hashCode();
+    return result;
   }
 }
