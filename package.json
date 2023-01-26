@@ -7,6 +7,6 @@
   ],
   "packageManager": "yarn@3.2.3",
   "resolutions": {
-    "autolinker": "3.16.1"
+    "autolinker": "=3.16.1"
   }
 }
