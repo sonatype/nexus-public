@@ -15,17 +15,20 @@ import {useMachine} from "@xstate/react";
 
 import {
   NxCard, NxFontAwesomeIcon, NxFormRow,
-  NxH3, NxP, NxTextLink, NxTooltip
+  NxH3, NxP, NxTextLink, NxTooltip,
+  NxLoadingSpinner
 } from "@sonatype/react-shared-components";
 
 import UIStrings from "../../../../../constants/UIStrings";
-import {faCheckCircle} from "@fortawesome/free-solid-svg-icons";
+import {faCheckCircle, faTimesCircle} from "@fortawesome/free-solid-svg-icons";
 
 import './SupportZipHa.scss';
 
 import NodeCardMachine from "./NodeCardMachine";
 
 const {SUPPORT_ZIP: LABELS} = UIStrings;
+
+const NODE_UNAVAILABLE = 'NODE_UNAVAILABLE';
 
 export default function NodeCard({initial, createZip, downloadZip}) {
   const [current] = useMachine(NodeCardMachine, {
@@ -50,7 +53,12 @@ export default function NodeCard({initial, createZip, downloadZip}) {
   const statusActionLabel = zipStatusLabels[node.status];
 
   const zipLastUpdatedHtml = () => {
-    if (zipNotCreated) {
+    if (node.blobRef == null && !isNodeActive()) {
+      return <NxP className="nx-p-zip-updated">
+        {LABELS.NODE_UNAVAILABLE_CANNOT_CREATE}
+      </NxP>;
+    }
+    if (zipNotCreated || node.blobRef === null) {
       return <NxP className="nx-p-zip-updated">
         {LABELS.NO_ZIP_CREATED}
       </NxP>;
@@ -59,17 +67,21 @@ export default function NodeCard({initial, createZip, downloadZip}) {
     const updatedDate = new Date(node.lastUpdated).toLocaleDateString();
     return <NxP className="nx-p-zip-updated">
       {LABELS.ZIP_UPDATED}&nbsp;<b>{updatedDate}</b>
-    </NxP>
+    </NxP>;
   };
+
+  const isNodeActive = () => node.status !== NODE_UNAVAILABLE;
 
   return <NxCard.Container>
     <NxTooltip
-        title={LABELS.NODE_IS_ACTIVE} open placement="top">
+        title={isNodeActive() ? LABELS.NODE_IS_ACTIVE : LABELS.NODE_IS_INACTIVE} open placement="top">
       <NxCard>
         <NxCard.Content>
           <NxFormRow className="nx-node-name-container">
             <>
-              <NxFontAwesomeIcon icon={faCheckCircle} className="nx-node-green-checkmark"/>
+              {isNodeActive() ?
+                  <NxFontAwesomeIcon icon={faCheckCircle} className="nx-node-green-checkmark"/> :
+                  <NxFontAwesomeIcon icon={faTimesCircle}/>}
               <NxH3>{node.hostname}</NxH3>
             </>
           </NxFormRow>
@@ -78,6 +90,13 @@ export default function NodeCard({initial, createZip, downloadZip}) {
 
         </NxCard.Content>
         <NxCard.Footer>
+          {!isNodeActive() && !zipCreated
+              &&
+              <NxCard.Text id={"nx-support-zip-offline-" + node.nodeId}>
+                {LABELS.OFFLINE}
+              </NxCard.Text>
+          }
+
           {zipNotCreated
               &&
               <NxTextLink className="nx-underline" onClick={createZip}>
@@ -95,7 +114,9 @@ export default function NodeCard({initial, createZip, downloadZip}) {
           {zipCreating
               &&
               <NxCard.Text id="nx-zip-creating-inprogress">
-                {statusActionLabel}
+                <NxLoadingSpinner>
+                  {statusActionLabel}
+                </NxLoadingSpinner>
               </NxCard.Text>
           }
         </NxCard.Footer>
