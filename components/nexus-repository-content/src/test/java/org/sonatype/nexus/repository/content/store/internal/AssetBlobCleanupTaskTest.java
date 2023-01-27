@@ -32,7 +32,6 @@ import org.sonatype.nexus.scheduling.TaskConfiguration;
 
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
@@ -157,7 +156,6 @@ public class AssetBlobCleanupTaskTest
     inOrder.verifyNoMoreInteractions();
   }
 
-  @Ignore
   @Test
   public void testUnusedBlobsAreDeletedBatch() throws Exception {
     AssetBlobCleanupTask task = new AssetBlobCleanupTask(ImmutableMap.of("raw", formatStoreManager), blobStoreManager);
