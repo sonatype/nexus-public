@@ -63,14 +63,14 @@ public class OrientDeleteCleanupMethodTest
   @Test
   public void deleteComponent() throws Exception {
     DeletionProgress deletionProgress = new DeletionProgress();
-    deletionProgress.addCount(2L);
+    deletionProgress.addComponentCount(2L);
 
     when(componentMaintenance.deleteComponents(any(), any(), anyInt())).thenReturn(deletionProgress);
 
     DeletionProgress response =
         underTest.run(repository, ImmutableList.of(component1, component2).stream(), cancelledCheck);
 
-    assertThat(response.getCount(), equalTo(2L));
+    assertThat(response.getComponentCount(), equalTo(2L));
 
     verify(componentMaintenance).deleteComponents(eq(ImmutableList.of(component1, component2)), eq(cancelledCheck),
         eq(BATCH_SIZE));

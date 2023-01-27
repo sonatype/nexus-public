@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.cleanup.internal.method;
 
-import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
 

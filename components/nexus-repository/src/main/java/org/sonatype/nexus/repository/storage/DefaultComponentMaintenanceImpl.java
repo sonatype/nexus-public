@@ -119,7 +119,8 @@ public class DefaultComponentMaintenanceImpl
         }
 
         DeletionProgress batchDeletion = doBatchDelete(entityIds, cancelledCheck);
-        deletionProgress.addCount(batchDeletion.getCount());
+        deletionProgress.addComponentCount(batchDeletion.getComponentCount());
+        deletionProgress.addAssetCount(batchDeletion.getAssetCount());
         if (batchDeletion.isFailed()) {
           deletionProgress.setFailed(true);
           break;
@@ -155,11 +156,16 @@ public class DefaultComponentMaintenanceImpl
             DeletionResult deletionResult = deleteComponentTx(component, true);
 
             if (deletionResult.getComponent() != null) {
-              deletionProgress.addCount(1);
+              deletionProgress.addComponentCount(1);
+
+            if (!deletionResult.getAssets().isEmpty()) {
+              deletionProgress.addAssetCount(deletionResult.getAssets().size());
+            }
 
               log.info("Deleted component with ID '{}', Attributes '{}' and Assets '{}' from repository {}", component,
                   deletionResult.getComponent().toStringExternal(), deletionResult.getAssets(), getRepository());
             }
+
           }
           catch (Exception e) {
             log.debug("Unable to delete component with ID {}", component, e);

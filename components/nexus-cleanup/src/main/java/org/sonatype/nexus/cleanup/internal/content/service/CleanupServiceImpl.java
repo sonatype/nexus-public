@@ -134,7 +134,7 @@ public class CleanupServiceImpl
       if (deletionProgress.isFailed()) {
         log.warn("Deletion attempts exceeded for repository {}", repository.getName());
       }
-      return deletionProgress.getCount();
+      return deletionProgress.getComponentCount();
     }
     else {
       log.info("Policy {} has no criteria and will therefore be ignored (i.e. no components will be deleted)",

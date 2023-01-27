@@ -19,7 +19,9 @@ package org.sonatype.nexus.repository.task;
  */
 public class DeletionProgress
 {
-  private long count = 0L;
+  private long componentCount = 0L;
+
+  private long assetCount = 0L;
 
   private boolean failed;
 
@@ -35,12 +37,20 @@ public class DeletionProgress
     this.retryLimit = retryLimit;
   }
 
-  public long getCount() {
-    return count;
+  public long getComponentCount() {
+    return componentCount;
   }
 
-  public void addCount(final long count) {
-    this.count += count;
+  public void addComponentCount(final long count) {
+    this.componentCount += count;
+  }
+
+  public long getAssetCount() {
+    return assetCount;
+  }
+
+  public void addAssetCount(final long count) {
+    this.assetCount += count;
   }
 
   public boolean isFailed() {
@@ -61,7 +71,8 @@ public class DeletionProgress
 
   public void update(final DeletionProgress progress) {
     failed = progress.isFailed();
-    count += progress.getCount();
+    componentCount += progress.getComponentCount();
+    assetCount += progress.getAssetCount();
     if (progress.isFailed()) {
       attempts++;
     }
