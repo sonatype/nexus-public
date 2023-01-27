@@ -58,6 +58,13 @@ public final class Strings2
   }
 
   /**
+   * Returns {@code true} if given string is not null, or length is greater tan zero after {@link String#trim()}.
+   */
+  public static boolean notBlank(@Nullable final String value) {
+    return !isBlank(value);
+  }
+
+  /**
    * Returns standard password {@link #MASK} for given value unless null.
    */
   @Nullable

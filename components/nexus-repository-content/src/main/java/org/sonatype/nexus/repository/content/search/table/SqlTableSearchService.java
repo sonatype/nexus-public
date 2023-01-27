@@ -21,11 +21,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ForbiddenException;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.content.AssetInfo;
@@ -94,7 +98,11 @@ public class SqlTableSearchService
     SearchResponse response = new SearchResponse();
     response.setSearchResults(searchResultPage.componentSearchResults);
     response.setTotalHits((long) searchResultPage.componentSearchResults.size());
-    response.setContinuationToken(String.valueOf(searchResultPage.offset));
+
+    searchResultPage.nextOffset
+        .map(String::valueOf)
+        .ifPresent(response::setContinuationToken);
+
     return response;
   }
 
@@ -122,9 +130,8 @@ public class SqlTableSearchService
       return doSearch(searchRequest, queryCondition);
     }
     catch (SqlSearchPermissionException e) {
-      log.error(e.getMessage());
+      throw new ForbiddenException(e.getMessage());
     }
-    return SqlTableSearchService.ComponentSearchResultPage.empty();
   }
 
   private SqlSearchQueryCondition getSqlSearchQueryCondition(final SearchRequest searchRequest) {
@@ -152,21 +159,16 @@ public class SqlTableSearchService
       final SearchRequest searchRequest,
       final SqlSearchQueryCondition queryCondition)
   {
-    int offset = 0;
-    String continuationToken = searchRequest.getContinuationToken();
-    try {
-      if (continuationToken != null) {
-        offset = Integer.parseInt(continuationToken);
-        if (offset < 0) {
-          log.error("Continuation token [{}] should be a positive number", continuationToken);
-          return SqlTableSearchService.ComponentSearchResultPage.empty();
-        }
-      }
+    Integer offset = offsetFromToken(searchRequest.getContinuationToken())
+        .orElseGet(searchRequest::getOffset);
+
+    if (offset == null) {
+      offset = 0;
     }
-    catch (NumberFormatException e) {
-      log.error("Continuation token [{}] should be a number", continuationToken);
-      return SqlTableSearchService.ComponentSearchResultPage.empty();
+    else if (offset < 0) {
+      throw new BadRequestException("Continuation token must be positive");
     }
+
     Collection<SearchResult> searchResults = searchStore.searchComponents(
         searchRequest.getLimit(),
         offset,
@@ -175,7 +177,7 @@ public class SqlTableSearchService
         searchRequest.getSortDirection());
 
     if (searchResults.isEmpty()) {
-      return new SqlTableSearchService.ComponentSearchResultPage(0, Collections.emptyList());
+      return SqlTableSearchService.ComponentSearchResultPage.empty();
     }
 
     Map<String, List<AssetInfo>> componentIdToAsset =
@@ -197,10 +199,26 @@ public class SqlTableSearchService
       componentSearchResults.add(componentSearchResult);
     }
 
-    return new SqlTableSearchService.ComponentSearchResultPage(searchResults.size(), componentSearchResults);
+    Optional<Integer> nextOffset = Optional.empty();
+    if (searchResults.size() == searchRequest.getLimit()) {
+      // Only provide a reference for the next page if this one matched the provided limit.
+      nextOffset = Optional.of(offset + searchRequest.getLimit());
+    }
+
+    return new SqlTableSearchService.ComponentSearchResultPage(nextOffset, componentSearchResults);
   }
 
-  private String getFormatComponentKey(String format, Integer componentId) {
+  private static Optional<Integer> offsetFromToken(@Nullable final String continuationToken) {
+    try {
+      return Optional.ofNullable(continuationToken)
+           .map(Integer::parseInt);
+    }
+    catch (NumberFormatException e) {
+      throw new BadRequestException("Continuation token should be a number");
+    }
+  }
+
+  private String getFormatComponentKey(final String format, final Integer componentId) {
     return format + componentId;
   }
 
@@ -276,20 +294,20 @@ public class SqlTableSearchService
 
   private static class ComponentSearchResultPage
   {
-    private final int offset;
+    private final Optional<Integer> nextOffset;
 
     private final List<ComponentSearchResult> componentSearchResults;
 
     public ComponentSearchResultPage(
-        final int offset,
+        final Optional<Integer> nextOffset,
         final List<ComponentSearchResult> componentSearchResults)
     {
-      this.offset = offset;
+      this.nextOffset = nextOffset;
       this.componentSearchResults = checkNotNull(componentSearchResults);
     }
 
     private static SqlTableSearchService.ComponentSearchResultPage empty() {
-      return new SqlTableSearchService.ComponentSearchResultPage(0, Collections.emptyList());
+      return new SqlTableSearchService.ComponentSearchResultPage(Optional.empty(), Collections.emptyList());
     }
   }
 }

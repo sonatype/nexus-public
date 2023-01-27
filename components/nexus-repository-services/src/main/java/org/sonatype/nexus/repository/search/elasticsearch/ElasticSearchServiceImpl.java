@@ -31,6 +31,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.rest.internal.resources.TokenEncoder;
 import org.sonatype.nexus.repository.search.AssetSearchResult;
@@ -41,10 +42,8 @@ import org.sonatype.nexus.repository.search.SearchService;
 import org.sonatype.nexus.repository.search.index.ElasticSearchIndexService;
 import org.sonatype.nexus.repository.search.query.ElasticSearchQueryService;
 import org.sonatype.nexus.repository.search.query.ElasticSearchUtils;
-import org.sonatype.nexus.repository.upload.UploadDefinition;
 
 import com.google.common.collect.ImmutableList;
-import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
 
@@ -94,14 +93,10 @@ public class ElasticSearchServiceImpl
   public SearchResponse search(final SearchRequest searchRequest) {
     QueryBuilder queryBuilder = elasticSearchUtils.buildQuery(searchRequest);
 
-    int from = 0;
-
-    if (StringUtils.isNotEmpty(searchRequest.getContinuationToken())) {
-      from = decodeFrom(searchRequest, queryBuilder);
-    }
-    else {
-      from = searchRequest.getOffset();
-    }
+    int from = Optional.ofNullable(searchRequest.getContinuationToken())
+        .filter(Strings2::notBlank)
+        .map(__ -> decodeFrom(searchRequest, queryBuilder))
+        .orElseGet(() -> Optional.ofNullable(searchRequest.getOffset()).orElse(0));
 
     org.elasticsearch.action.search.SearchResponse searchResponse =
         elasticSearchQueryService.search(queryBuilder, from, searchRequest.getLimit());
