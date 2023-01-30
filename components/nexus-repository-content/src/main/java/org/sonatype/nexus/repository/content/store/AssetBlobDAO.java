@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.store;
 
 import java.time.OffsetDateTime;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 
@@ -119,4 +120,38 @@ public interface AssetBlobDAO
    * @param checksums
    */
   void setChecksums(@Param("blobRef") BlobRef blobRef, @Param("checksums") Map<String, String> checksums);
+
+  /**
+   * Browse asset blobs with legacy blobRef format {@code store-name:blob-id@node-id} in a paged fashion.
+   *
+   * @param limit maximum number of asset blobs to return
+   * @param continuationToken optional token to continue from a previous request
+   * @return collection of asset blobs and the next continuation token
+   */
+  Continuation<AssetBlob> browseAssetsWithLegacyBlobRef(
+      @Param("limit") int limit,
+      @Param("continuationToken") @Nullable String continuationToken);
+
+  /**
+   * Update asset blobs in a batch fashion.
+   *
+   * @param assetBlobs asset blobs for update
+   * @return {code true} if asset blobs were updated
+   */
+  boolean updateBlobRefs(@Param("assetBlobs") Collection<AssetBlob> assetBlobs);
+
+  /**
+   * Update asset blob.
+   *
+   * @param assetBlob asset blob for update
+   * @return {code true} if asset blob was updated
+   */
+  boolean updateBlobRef(@Param("assetBlobData") AssetBlob assetBlob);
+
+  /**
+   * Count asset blobs with legacy blobRef format {@code store-name:blob-id@node-id}.
+   *
+   * @return asset blobs count
+   */
+  int countNotMigratedAssetBlobs();
 }
