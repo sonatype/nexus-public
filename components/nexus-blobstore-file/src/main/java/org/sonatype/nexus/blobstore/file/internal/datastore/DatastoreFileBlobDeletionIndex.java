@@ -14,8 +14,6 @@ package org.sonatype.nexus.blobstore.file.internal.datastore;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -26,6 +24,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -48,7 +47,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.naturalOrder;
 import static java.util.Comparator.nullsLast;
-import static org.sonatype.nexus.blobstore.file.FileBlobStore.DELETIONS_FILENAME;
 import static org.sonatype.nexus.blobstore.file.FileBlobStore.REBUILD_DELETED_BLOB_INDEX_KEY;
 
 @Named
@@ -146,7 +144,7 @@ public class DatastoreFileBlobDeletionIndex
     invoke(periodicJobService::startUsing);
     periodicJobService.runOnce(() -> {
       try {
-        migrateDeletionIndexFromFileIfExists(metadata);
+        migrateDeletionIndexFromFiles(metadata);
       }
       catch (IOException e) {
         log.error("Failed to migrate soft deleted blobs to the database", e);
@@ -155,14 +153,25 @@ public class DatastoreFileBlobDeletionIndex
     }, (int) migrationDelay.getSeconds());
   }
 
-  private void migrateDeletionIndexFromFileIfExists(final PropertiesFile metadata) throws IOException {
-    QueueFile oldDeletionIndex;
+  private void migrateDeletionIndexFromFiles(final PropertiesFile metadata) throws IOException {
+    blobStore.getDeletionIndexFiles()
+        .forEach(deletionIndexFile -> {
+          try {
+            migrateDeletionIndexFromFile(metadata, deletionIndexFile);
+          }
+          catch (IOException e) {
+            log.error("An error occurred while attempting to migrate the deletions index {} for {}", deletionIndexFile,
+                blobStoreName);
+          }
+        });
+  }
 
-    File oldDeletionIndexFile = getOldDeletionIndexFile(blobStore);
-    if (!oldDeletionIndexFile.exists()) {
-      log.debug("Skipping deletion file does not exist");
-      return;
-    }
+  private void migrateDeletionIndexFromFile(
+      final PropertiesFile metadata,
+      final @Nullable File oldDeletionIndexFile) throws IOException
+  {
+    QueueFile oldDeletionIndex;
+    log.debug("Starting migration in {} for {}", blobStoreName, oldDeletionIndexFile);
 
     try {
       oldDeletionIndex = new QueueFile(oldDeletionIndexFile);
@@ -207,17 +216,6 @@ public class DatastoreFileBlobDeletionIndex
     if (oldDeletionIndexFile.exists() && !oldDeletionIndexFile.delete()) {
       log.error("Unable to delete 'deletion index' file, path = {}", oldDeletionIndexFile.getAbsolutePath());
     }
-  }
-
-  private File getOldDeletionIndexFile(final FileBlobStore blobStore) throws IOException {
-    Path blobDir = blobStore.getAbsoluteBlobDir();
-    File deletedIndexFile = blobDir.resolve(blobStore.getDeletionsFilename()).toFile();
-    Path deletedIndexPath = deletedIndexFile.toPath();
-    Path legacyDeletionsIndex = deletedIndexPath.getParent().resolve(DELETIONS_FILENAME);
-    if (!Files.exists(deletedIndexPath) && Files.exists(legacyDeletionsIndex)) {
-      Files.move(legacyDeletionsIndex, deletedIndexPath);
-    }
-    return deletedIndexFile;
   }
 
   private Set<String> getPersistedBlobIdsForBlobStore(final String blobStoreName) {

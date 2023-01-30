@@ -15,6 +15,7 @@ package org.sonatype.nexus.blobstore.file;
 import java.io.ByteArrayInputStream;
 import java.time.Duration;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.sonatype.nexus.blobstore.api.Blob;
@@ -46,6 +47,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.DIRECT_PATH_BLOB_HEADER;
@@ -120,6 +122,9 @@ public class DatastoreFileBlobStoreIT
     underTest.delete(blob2.getId(), "deleted");
 
     underTest.stop();
+
+    // Change the NodeID so the file doesn't match the current node.
+    when(nodeAccess.getId()).thenReturn(UUID.randomUUID().toString());
 
     // User has upgraded to SQL
     underTest = createBlobStore("migration-test", fileBlobDeletionIndex());
