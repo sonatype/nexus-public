@@ -86,7 +86,7 @@ abstract class UpgradeManagerSupport<E extends DatabaseMigrationStep>
         .intValue();
 
     if (result.migrationsExecuted > repeatableMigrations) {
-      result.migrations.forEach(m -> log.info("{} migrated to v{} in {}s", m.description, m.version, m.executionTime));
+      result.migrations.forEach(m -> log.info("{} migrated to v{} in {}ms", m.description, m.version, m.executionTime));
       result.warnings.forEach(log::warn);
       log.info("Completed migration from v{} to v{}", result.initialSchemaVersion, result.targetSchemaVersion);
     }
