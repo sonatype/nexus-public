@@ -51,6 +51,8 @@ public class HttpClientConfigurationStoreImpl
   @Transactional
   @Override
   public void save(final HttpClientConfiguration configuration) {
+    postCommitEvent(HttpClientConfigurationChanged::new);
+
     dao().set((HttpClientConfigurationData) configuration);
   }
 }
