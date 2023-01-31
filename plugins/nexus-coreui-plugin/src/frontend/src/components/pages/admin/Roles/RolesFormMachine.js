@@ -14,17 +14,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {assign} from 'xstate';
+import {assign, spawn} from 'xstate';
 import Axios from 'axios';
 import {mergeDeepRight} from 'ramda';
 
 import {ExtJS, FormUtils, ValidationUtils, ExtAPIUtils} from '@sonatype/nexus-ui-plugin';
 
+import ExternalRolesComboboxMachine from './ExternalRolesComboboxMachine';
+
 import UIStrings from '../../../../constants/UIStrings';
 import {TYPES, EMPTY_DATA, URL} from './RolesHelper';
 
 const {ROLES: {MESSAGES: LABELS}} = UIStrings;
-const {rolesUrl, privilegesUrl, sourcesApi, getRolesUrl, defaultRolesUrl, singleRoleUrl} = URL;
+const {rolesUrl, privilegesUrl, sourcesApi, defaultRolesUrl, singleRoleUrl} = URL;
 
 const isEdit = (id) => ValidationUtils.notBlank(id);
 
@@ -49,7 +51,13 @@ export default FormUtils.buildFormMachine({
               },
               SET_EXTERNAL_ROLE_TYPE: {
                 target: 'loaded',
-                actions: ['clearSaveError', 'resetData', 'setExternalRoleType'],
+                actions: [
+                    'clearSaveError',
+                    'resetData',
+                    'setExternalRoleType',
+                    'initExternalRolesActor',
+                    'sendDataToActor',
+                ],
               },
             }
           },
@@ -57,6 +65,13 @@ export default FormUtils.buildFormMachine({
       })
 }).withConfig({
   actions: {
+    initExternalRolesActor: assign({
+      externalRolesRef: ({externalRolesRef}) =>
+          externalRolesRef || spawn(ExternalRolesComboboxMachine, 'externalRolesCombobox'),
+    }),
+    sendDataToActor: ({externalRoleType, externalRolesRef}) => externalRolesRef.send(
+        {type: 'UPDATE_TYPE', externalRoleType}, {to: 'externalRolesCombobox'}
+    ),
     validate: assign({
       validationErrors: ({data}) => ({
         id: validateId(data?.id),

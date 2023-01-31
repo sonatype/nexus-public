@@ -30,6 +30,8 @@ import {
   NxTile,
 } from '@sonatype/react-shared-components';
 
+import ExternalRolesCombobox from './ExternalRolesCombobox'
+
 import {faTrash} from '@fortawesome/free-solid-svg-icons';
 
 import UIStrings from '../../../../constants/UIStrings';
@@ -38,7 +40,8 @@ import {TYPES} from './RolesHelper';
 const {ROLES: {FORM: LABELS}} = UIStrings;
 
 export default function RolesForm({roleId, service, onDone}) {
-  const [current, send] = useService(service);
+  const stateMachine = useService(service);
+  const [state, send] = stateMachine;
 
   const {
     data,
@@ -47,7 +50,7 @@ export default function RolesForm({roleId, service, onDone}) {
     sources,
     roleType,
     externalRoleType,
-  } = current.context;
+  } = state.context;
 
   const isCreate = ValidationUtils.isBlank(roleId);
   const isEdit = !isCreate;
@@ -74,7 +77,7 @@ export default function RolesForm({roleId, service, onDone}) {
   const setExternalRoleType = (event) => send({type: 'SET_EXTERNAL_ROLE_TYPE', externalRoleType: event.target.value});
 
   return <NxStatefulForm
-      {...FormUtils.formProps(current, send)}
+      {...FormUtils.formProps(state, send)}
       onCancel={cancel}
       additionalFooterBtns={isEdit && canDelete &&
           <NxButton variant="tertiary" onClick={confirmDelete}>
@@ -88,7 +91,7 @@ export default function RolesForm({roleId, service, onDone}) {
         <NxH2>{LABELS.SECTIONS.TYPE}</NxH2>
         <NxFormGroup label={LABELS.TYPE.LABEL} isRequired>
           <NxFormSelect
-              {...FormUtils.selectProps('roleType', current)}
+              {...FormUtils.selectProps('roleType', state)}
               value={roleType}
               onChange={setRoleType}
           >
@@ -102,7 +105,7 @@ export default function RolesForm({roleId, service, onDone}) {
         {externalRole &&
             <NxFormGroup label={LABELS.EXTERNAL_TYPE.LABEL} isRequired>
               <NxFormSelect
-                  {...FormUtils.selectProps('externalRoleType', current)}
+                  {...FormUtils.selectProps('externalRoleType', state)}
                   value={externalRoleType}
                   onChange={setExternalRoleType}
               >
@@ -116,23 +119,32 @@ export default function RolesForm({roleId, service, onDone}) {
       </>}
       {(isTypeSelected || isEdit) && <>
         <NxH2>{LABELS.SECTIONS.SETUP}</NxH2>
-        <NxFormGroup label={externalRole ? LABELS.MAPPED_ROLE.LABEL : LABELS.ID.LABEL} isRequired>
-          <NxTextInput
-              {...FormUtils.fieldProps('id', current)}
-              disabled={isEdit}
-              onChange={FormUtils.handleUpdate('id', send)}
-          />
-        </NxFormGroup>
+        {externalRole &&
+            <ExternalRolesCombobox
+                actor={state.context.externalRolesRef}
+                parentMachine={stateMachine}
+            />
+        }
+        {(isEdit || internalRole) &&
+            <NxFormGroup label={LABELS.ID.LABEL} isRequired>
+              <NxTextInput
+                  {...FormUtils.fieldProps('id', state)}
+                  disabled={isEdit}
+                  onChange={FormUtils.handleUpdate('id', send)}
+              />
+            </NxFormGroup>
+        }
+
         <NxFormGroup label={LABELS.NAME.LABEL} isRequired>
           <NxTextInput
-              {...FormUtils.fieldProps('name', current)}
+              {...FormUtils.fieldProps('name', state)}
               onChange={FormUtils.handleUpdate('name', send)}
           />
         </NxFormGroup>
         <NxFormGroup label={LABELS.DESCRIPTION.LABEL}>
           <NxTextInput
               className="nx-text-input--long"
-              {...FormUtils.fieldProps('description', current)}
+              {...FormUtils.fieldProps('description', state)}
               onChange={FormUtils.handleUpdate('description', send)}
           />
         </NxFormGroup>

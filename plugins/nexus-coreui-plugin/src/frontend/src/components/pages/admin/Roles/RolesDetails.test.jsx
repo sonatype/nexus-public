@@ -15,7 +15,6 @@ import Axios from 'axios';
 import {render, screen, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
-import {act} from 'react-dom/test-utils';
 
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
@@ -289,6 +288,8 @@ describe('RolesDetails', function() {
 
     userEvent.selectOptions(type(), TYPES.EXTERNAL);
     userEvent.selectOptions(externalRoleType(), crowdType);
+
+    await waitFor(() => expect(Axios.get).toHaveBeenCalledWith(getRolesUrl(crowdType)));
 
     await TestUtils.changeField(mappedRole, testCrowdRoleId);
 

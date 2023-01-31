@@ -39,6 +39,7 @@ export default function RolesDetails({itemId, onDone}) {
 
   const [current, , service] = useMachine(Machine, {
     context: {
+      externalRolesRef: null,
       pristineData: {
         id: decodeURIComponent(itemId),
       }
