@@ -11,96 +11,117 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
+import {useMachine} from '@xstate/react';
+
 import {
   NxTile,
-  NxForm,
   NxH2,
   NxFormGroup,
   NxTextInput,
   NxFieldset,
-  NxRadio
+  NxRadio,
+  NxStatefulForm,
 } from '@sonatype/react-shared-components';
-import {ContentBody, Page, PageHeader, PageTitle, FormUtils} from '@sonatype/nexus-ui-plugin';
+import {
+  ContentBody,
+  Page,
+  PageHeader,
+  PageTitle,
+  FormUtils
+} from '@sonatype/nexus-ui-plugin';
+
 import {faIdCardAlt} from '@fortawesome/free-solid-svg-icons';
+
 import UIStrings from '../../../../constants/UIStrings';
-import {SOURCES} from './SslCertificatesFormMachine';
+
 import SslCertificatesAlreadyExistsModal from './SslCertificatesAlreadyExistsModal';
+import SslCertificatesDetails from "./SslCertificatesDetails";
 
-const {
-  ADD_FORM: {CAPTION, LOAD_BUTTON, PEM, SERVER},
-  MENU
-} = UIStrings.SSL_CERTIFICATES;
+import Machine, {SOURCES} from "./SslCertificatesAddFormMachine";
 
-export default function SslCertificatesAddForm({onDone, machine}) {
-  const [state, send] = machine;
+const {ADD_FORM: {CAPTION, LOAD_BUTTON, PEM, SERVER}, MENU, FORM} = UIStrings.SSL_CERTIFICATES;
 
-  const {isPristine, isInvalid, source, data} = state.context;
+export default function SslCertificatesAddForm({onDone}) {
+  const [state, send] = useMachine(Machine, {
+    actions: {
+      onSaveSuccess: onDone,
+    },
+    devTools: true,
+  });
 
-  const {inTrustStore, id} = data?.certificate || {};
+  const {source, data} = state.context;
+  const {id, inTrustStore} = data;
+
+  const showAddForm = FormUtils.isInState(state, ['loaded', 'loadingDetails']);
+  const showDetails = FormUtils.isInState(state, ['previewDetails', 'saving']);
+  const submitMaskState = FormUtils.submitMaskState(state, ['loadingDetails', 'saving']);
+  const submitMaskMessage = showAddForm ? UIStrings.LOADING : UIStrings.SAVING;
 
   const updateSource = (value) => send({type: 'SET_SOURCE', value});
-
-  const load = () => send('LOAD');
+  const onSubmit = () => showAddForm ? send('LOAD_DETAILS') : send('ADD_CERTIFICATE');
 
   return (
-    <Page className="nxrm-ssl-certificates">
+    <Page className="nxrm-ssl-certificate">
       <PageHeader>
         <PageTitle icon={faIdCardAlt} {...MENU} />
       </PageHeader>
-      <ContentBody className="nxrm-ssl-certificates-add-form">
+      <ContentBody className="nxrm-ssl-certificate-add-form">
         <NxTile>
           <NxTile.Content>
-            <NxForm
-              showValidationErrors={true}
-              onSubmit={load}
-              submitBtnText={LOAD_BUTTON}
-              onCancel={onDone}
-              validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
+            <NxStatefulForm
+                {...FormUtils.formProps(state, send)}
+                onSubmit={onSubmit}
+                submitBtnText={showAddForm ? LOAD_BUTTON : FORM.BUTTONS.ADD}
+                onCancel={onDone}
+                submitMaskMessage={submitMaskMessage}
+                submitMaskState={submitMaskState}
             >
               <NxH2>{CAPTION}</NxH2>
+              {showAddForm && (
+                <>
+                  <NxFieldset label="">
+                    <NxRadio
+                        name="source"
+                        value={SOURCES.REMOTE_HOST}
+                        onChange={updateSource}
+                        isChecked={source === SOURCES.REMOTE_HOST}
+                    >
+                      {SERVER.RADIO_DESCRIPTION}
+                    </NxRadio>
+                  </NxFieldset>
+                  <NxFormGroup label={SERVER.LABEL} isRequired={source === SOURCES.REMOTE_HOST}>
+                    <NxTextInput
+                        {...FormUtils.fieldProps('remoteHostUrl', state)}
+                        onChange={FormUtils.handleUpdate('remoteHostUrl', send)}
+                        className="nx-text-input--long"
+                        disabled={source === SOURCES.PEM}
+                    />
+                  </NxFormGroup>
+                  <NxFieldset label="">
+                    <NxRadio
+                        name="source"
+                        value={SOURCES.PEM}
+                        onChange={updateSource}
+                        isChecked={source === SOURCES.PEM}
+                    >
+                      {PEM.RADIO_DESCRIPTION}
+                    </NxRadio>
+                  </NxFieldset>
+                  <NxFormGroup label={PEM.LABEL} isRequired ={source === SOURCES.PEM}>
+                    <NxTextInput
+                        type="textarea"
+                        {...FormUtils.fieldProps('pemContent', state)}
+                        onChange={FormUtils.handleUpdate('pemContent', send)}
+                        className="nx-text-input--long"
+                        placeholder={PEM.PLACEHOLDER}
+                        disabled={source === SOURCES.REMOTE_HOST}
+                    />
+                  </NxFormGroup>
+                </>
+              )}
+              {showDetails && <SslCertificatesDetails data={data} />}
+            </NxStatefulForm>
 
-              <NxFieldset label="">
-                <NxRadio
-                  name="source"
-                  value={SOURCES.REMOTE_HOST}
-                  onChange={updateSource}
-                  isChecked={source === SOURCES.REMOTE_HOST}
-                >
-                  {SERVER.RADIO_DESCRIPTION}
-                </NxRadio>
-              </NxFieldset>
-
-              <NxFormGroup label={SERVER.LABEL} isRequired={source === SOURCES.REMOTE_HOST}>
-                <NxTextInput
-                  {...FormUtils.fieldProps('remoteHostUrl', state)}
-                  onChange={FormUtils.handleUpdate('remoteHostUrl', send)}
-                  className="nx-text-input--long"
-                  disabled={source === SOURCES.PEM}
-                />
-              </NxFormGroup>
-
-              <NxFieldset label="">
-                <NxRadio
-                  name="source"
-                  value={SOURCES.PEM}
-                  onChange={updateSource}
-                  isChecked={source === SOURCES.PEM}
-                >
-                  {PEM.RADIO_DESCRIPTION}
-                </NxRadio>
-              </NxFieldset>
-
-              <NxFormGroup label={PEM.LABEL} isRequired ={source === SOURCES.PEM}>
-                <NxTextInput
-                  type="textarea"
-                  {...FormUtils.fieldProps('pemContent', state)}
-                  onChange={FormUtils.handleUpdate('pemContent', send)}
-                  className="nx-text-input--long"
-                  placeholder={PEM.PLACEHOLDER}
-                  disabled={source === SOURCES.REMOTE_HOST}
-                />
-              </NxFormGroup>
-            </NxForm>
           </NxTile.Content>
         </NxTile>
       </ContentBody>

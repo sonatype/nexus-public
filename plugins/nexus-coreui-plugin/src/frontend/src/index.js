@@ -170,7 +170,7 @@ window.plugins.push({
       iconCls: 'x-fa fa-id-card-alt',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        featureFlags: [{key: 'nexus.react.sslCertificates', defaultValue: false}],
+        featureFlags: [{key: 'nexus.react.sslCertificates', defaultValue: true}],
         permissions: [Permissions.SSL_TRUSTSTORE.READ]
       }
     },

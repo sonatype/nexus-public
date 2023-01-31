@@ -12,9 +12,8 @@
  */
 
 .nxrm-ssl-certificate {
-  .ellipsis-text {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+  .ssl-certificate-alert {
+    margin-left: auto;
+    margin-right: auto;
   }
 }

@@ -27,7 +27,7 @@ const {
 
 export default function SslCertificatesAlreadyExistsModal({certificateId, cancel}) {
   const goToCertificate = () => {
-    window.location.hash += ':' + certificateId;
+    window.location.hash += ':' + encodeURIComponent(certificateId);
   };
 
   return (

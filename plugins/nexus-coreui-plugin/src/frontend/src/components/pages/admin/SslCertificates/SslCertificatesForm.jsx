@@ -11,44 +11,15 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {useMachine} from '@xstate/react';
-import './SslCertificates.scss';
-import SslCertificatesDetails from './SslCertificatesDetails';
+import SslCertificatesDetailsForm from './SslCertificatesDetailsForm';
 import SslCertificatesAddForm from './SslCertificatesAddForm';
-import SslCertificatesFormMachine, {SOURCES} from './SslCertificatesFormMachine';
-import {canDeleteCertificate} from './SslCertificatesHelper';
+
+import './SslCertificates.scss';
 
 export default function SslCertificatesForm({itemId, onDone}) {
-  const machine = useMachine(SslCertificatesFormMachine, {
-    context: {
-      id: decodeURIComponent(itemId),
-      pristineData: {
-        remoteHostUrl: '',
-        pemContent: ''
-      },
-      source: SOURCES.REMOTE_HOST
-    },
-    actions: {
-      onSaveSuccess: onDone,
-      onDeleteSuccess: onDone
-    },
-    guards: {
-      canDelete: () => canDeleteCertificate()
-    },
-    devTools: true
-  });
-
-  const [state] = machine;
-
-  const {loadError, data} = state.context;
-
-  const {inTrustStore, fingerprint} = data?.certificate || {};
-
-  const showAddForm = !itemId && (!fingerprint || inTrustStore || loadError);
-
-  return showAddForm ? (
-    <SslCertificatesAddForm machine={machine} onDone={onDone} />
+  return itemId ? (
+      <SslCertificatesDetailsForm itemId={itemId} onDone={onDone} />
   ) : (
-    <SslCertificatesDetails itemId={itemId} machine={machine} onDone={onDone} />
+      <SslCertificatesAddForm onDone={onDone} />
   );
-}
+};

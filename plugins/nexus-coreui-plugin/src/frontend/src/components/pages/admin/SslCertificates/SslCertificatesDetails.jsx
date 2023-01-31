@@ -10,45 +10,27 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React, {useEffect} from 'react';
+import React from 'react';
 
 import {
-  NxTile,
-  NxLoadWrapper,
   NxReadOnly,
-  NxFooter,
-  NxButtonBar,
-  NxButton,
   NxH2,
-  NxWarningAlert,
   NxGrid,
-  NxTooltip,
   NxDivider,
+  NxWarningAlert,
 } from '@sonatype/react-shared-components';
 import {
-  ContentBody,
-  Page,
-  PageHeader,
-  PageTitle,
   DateUtils,
   ReadOnlyField,
 } from '@sonatype/nexus-ui-plugin';
 
-import {faIdCardAlt} from '@fortawesome/free-solid-svg-icons';
-import {canDeleteCertificate} from './SslCertificatesHelper';
 import UIStrings from '../../../../constants/UIStrings';
-import './SslCertificates.scss';
 
 const {
   SSL_CERTIFICATES: {FORM: LABELS},
 } = UIStrings;
 
-export default function SslCertificatesDetails({itemId, machine, onDone}) {
-  const [state, send] = machine;
-  const {data, loadError} = state.context;
-
-  const canDelete = canDeleteCertificate();
-
+export default function SslCertificatesDetails({data}) {
   const {
     issuedOn,
     expiresOn,
@@ -59,133 +41,36 @@ export default function SslCertificatesDetails({itemId, machine, onDone}) {
     issuerOrganization,
     issuerOrganizationalUnit,
     fingerprint,
-    inTrustStore
-  } = data?.certificate || {};
+  } = data;
 
   const issuedDate = issuedOn ? DateUtils.timestampToString(issuedOn) : '';
   const expiredDate = expiresOn ? DateUtils.timestampToString(expiresOn) : '';
 
-  const isLoading = state.matches('loading');
-
-  const save = () => send('SAVE');
-  const retry = () => send('RETRY');
-  const loadForId = (id) => send({type: 'LOAD_FOR_ID', value: id});
-
-  const confirmDelete = () => {
-    if (canDelete) {
-      send('CONFIRM_DELETE');
-    }
-  };
-
-  useEffect(() => {
-    if (!fingerprint) {
-      loadForId(itemId)
-    }
-  }, [itemId]);
-
-  return (
-    <Page className="nxrm-ssl-certificate">
-      <PageHeader>
-        <PageTitle
-          icon={faIdCardAlt}
-          text={LABELS.DETAILS_TITLE(subjectCommonName || '')}
-          description={LABELS.DETAILS_DESCRIPTION}
-        />
-      </PageHeader>
-      <ContentBody className="nxrm-ssl-certificate-form">
-        <NxTile>
-          <NxTile.Content>
-            <NxLoadWrapper
-              loading={isLoading}
-              error={loadError}
-              retryHandler={retry}
-            >
-              <NxH2>{LABELS.SECTIONS.CERTIFICATE}</NxH2>
-              <NxReadOnly>
-                <NxReadOnly.Label>{LABELS.FINGERPRINT.LABEL}</NxReadOnly.Label>
-                <NxReadOnly.Data>
-                  <NxTooltip title={fingerprint}>
-                    <div className="ellipsis-text">{fingerprint}</div>
-                  </NxTooltip>
-                </NxReadOnly.Data>
-                <NxReadOnly.Label>{LABELS.VALID_UNTIL.LABEL}</NxReadOnly.Label>
-                <NxReadOnly.Data>
-                  <NxTooltip title={expiredDate}>
-                    <div className="ellipsis-text">{expiredDate}</div>
-                  </NxTooltip>
-                </NxReadOnly.Data>
-                <NxReadOnly.Label>{LABELS.ISSUED_ON.LABEL}</NxReadOnly.Label>
-                <NxReadOnly.Data className="ellipsis-text">
-                  <NxTooltip title={issuedDate}>
-                    <div className="ellipsis-text">{issuedDate}</div>
-                  </NxTooltip>
-                </NxReadOnly.Data>
-              </NxReadOnly>
-              <NxDivider />
-              <NxGrid.Row>
-                <NxGrid.Column>
-                  <NxH2>{LABELS.SECTIONS.SUBJECT}</NxH2>
-                  <NxReadOnly>
-                    <ReadOnlyField
-                      label={LABELS.COMMON_NAME.LABEL}
-                      value={subjectCommonName}
-                    />
-                    <ReadOnlyField
-                      label={LABELS.ORGANIZATION.LABEL}
-                      value={subjectOrganization}
-                    />
-                    <ReadOnlyField
-                      label={LABELS.UNIT.LABEL}
-                      value={subjectOrganizationalUnit}
-                    />
-                  </NxReadOnly>
-                </NxGrid.Column>
-                <NxGrid.Column>
-                  <NxH2>{LABELS.SECTIONS.ISSUER}</NxH2>
-                  <NxReadOnly>
-                    <ReadOnlyField
-                      label={LABELS.COMMON_NAME.LABEL}
-                      value={issuerCommonName}
-                    />
-                    <ReadOnlyField
-                      label={LABELS.ORGANIZATION.LABEL}
-                      value={issuerOrganization}
-                    />
-                    <ReadOnlyField
-                      label={LABELS.UNIT.LABEL}
-                      value={issuerOrganizationalUnit}
-                    />
-                  </NxReadOnly>
-                </NxGrid.Column>
-              </NxGrid.Row>
-              <NxFooter>
-                <NxWarningAlert>{LABELS.WARNING}</NxWarningAlert>
-                <NxButtonBar>
-                  <NxButton type="button" onClick={onDone}>
-                    {UIStrings.SETTINGS.CANCEL_BUTTON_LABEL}
-                  </NxButton>
-                  {itemId || inTrustStore ? (
-                    <NxTooltip title={!canDelete && UIStrings.PERMISSION_ERROR}>
-                      <NxButton
-                        type="button"
-                        variant="primary"
-                        onClick={confirmDelete}
-                        className={!canDelete ? 'disabled' : ''}
-                      >
-                        {LABELS.BUTTONS.DELETE}
-                      </NxButton>
-                    </NxTooltip>
-                  ) : (
-                    <NxButton type="button" variant="primary" onClick={save}>
-                      {LABELS.BUTTONS.ADD}
-                    </NxButton>
-                  )}
-                </NxButtonBar>
-              </NxFooter>
-            </NxLoadWrapper>
-          </NxTile.Content>
-        </NxTile>
-      </ContentBody>
-    </Page>
-  );
+  return <>
+    <NxReadOnly>
+      <ReadOnlyField label={LABELS.FINGERPRINT.LABEL} value={fingerprint}/>
+      <ReadOnlyField label={LABELS.VALID_UNTIL.LABEL} value={expiredDate}/>
+      <ReadOnlyField label={LABELS.ISSUED_ON.LABEL} value={issuedDate}/>
+    </NxReadOnly>
+    <NxDivider />
+    <NxGrid.Row>
+      <NxGrid.Column>
+        <NxH2>{LABELS.SECTIONS.SUBJECT}</NxH2>
+        <NxReadOnly>
+          <ReadOnlyField label={LABELS.COMMON_NAME.LABEL} value={subjectCommonName}/>
+          <ReadOnlyField label={LABELS.ORGANIZATION.LABEL} value={subjectOrganization}/>
+          <ReadOnlyField label={LABELS.UNIT.LABEL} value={subjectOrganizationalUnit}/>
+        </NxReadOnly>
+      </NxGrid.Column>
+      <NxGrid.Column>
+        <NxH2>{LABELS.SECTIONS.ISSUER}</NxH2>
+        <NxReadOnly>
+          <ReadOnlyField label={LABELS.COMMON_NAME.LABEL} value={issuerCommonName}/>
+          <ReadOnlyField label={LABELS.ORGANIZATION.LABEL} value={issuerOrganization}/>
+          <ReadOnlyField label={LABELS.UNIT.LABEL} value={issuerOrganizationalUnit}/>
+        </NxReadOnly>
+      </NxGrid.Column>
+    </NxGrid.Row>
+    <NxWarningAlert className="ssl-certificate-alert">{LABELS.WARNING}</NxWarningAlert>
+  </>;
 }

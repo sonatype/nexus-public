@@ -15,7 +15,6 @@ import {useMachine} from '@xstate/react';
 
 import {
   ContentBody,
-  ExtJS,
   HelpTile,
   ListMachineUtils,
   Page,
@@ -140,7 +139,7 @@ export default function SslCertificatesList({onCreate, onEdit}) {
             <NxTableBody isLoading={isLoading} error={error} emptyMessage={LABELS.EMPTY_LIST}>
               {data.map(
                 ({id, subjectCommonName, subjectOrganization, issuerOrganization, fingerprint}) => (
-                  <NxTableRow key={id} onClick={() => onEdit(id)} isClickable>
+                  <NxTableRow key={id} onClick={() => onEdit(encodeURIComponent(id))} isClickable>
                     <NxTableCell>{subjectCommonName}</NxTableCell>
                     <NxTableCell>{subjectOrganization}</NxTableCell>
                     <NxTableCell>{issuerOrganization}</NxTableCell>

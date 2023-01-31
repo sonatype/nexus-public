@@ -88,7 +88,7 @@ Ext.define('NX.coreui.controller.SslCertificates', {
       },
       visible: function() {
         return NX.Permissions.check('nexus:ssl-truststore:read') &&
-            !NX.State.getValue('nexus.react.sslCertificates', false);
+            !NX.State.getValue('nexus.react.sslCertificates', true);
       },
     };
 

@@ -17,7 +17,7 @@
 import {assign, Machine} from 'xstate';
 import ExtJS from './ExtJS';
 import UIStrings from '../constants/UIStrings';
-import {hasPath, join, lensPath, path, pathOr, set, whereEq, dissocPath} from 'ramda';
+import {hasPath, join, lensPath, path, pathOr, set, whereEq, dissocPath, any} from 'ramda';
 
 const FIELD_ID = 'FIELD ';
 const PARAMETER_ID = 'PARAMETER ';
@@ -528,11 +528,12 @@ export default class FormUtils {
   /**
    * Determine the submit mask state. False when submitting, true when submitted, and null otherwise.
    *
-   * @param state
+   * @param state [required] a machine state
+   * @param submittingStates [optional] {string[]} an array of submitting states
    * @returns {null|boolean}
    */
-  static submitMaskState(state) {
-    if (state.matches('saving')) {
+  static submitMaskState(state, submittingStates = ['saving']) {
+    if (this.isInState(state, submittingStates)) {
       return SUBMITTING;
     }
     else if (state.matches('saved')) {
@@ -543,4 +544,14 @@ export default class FormUtils {
     }
   }
 
+  /**
+   * Returns true if the machine is in one of the given states, and false otherwise.
+   *
+   * @param state [required] a machine state
+   * @param states [required] {string[]} a states to check
+   * @returns {boolean}
+   */
+  static isInState(state, states) {
+    return any(it => state.matches(it), states);
+  }
 }

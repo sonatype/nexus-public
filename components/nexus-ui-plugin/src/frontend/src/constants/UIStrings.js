@@ -34,6 +34,7 @@ export default {
   },
 
   SAVING: 'Saving...',
+  LOADING: 'Loading...',
   FILTER: 'Filter',
   CLOSE: 'Close',
 

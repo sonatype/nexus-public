@@ -95,7 +95,7 @@ const selectors = {
   alreadyExistsModalContent: () => within(selectors.alreadyExistsModal()).getByText(MODAL_CONTENT)
 };
 
-describe('SslCertificatesDetails', function() {
+describe('SslCertificatesForm', function() {
   const onDone = jest.fn();
   const CONFIRM = Promise.resolve();
 
@@ -344,9 +344,10 @@ describe('SslCertificatesAddForm', function () {
 
   it('shows add form with error toast on load from server error', async function () {
     const remoteHost = 'bad.host';
+    const errorMessage = 'Could not retrieve an SSL certificate';
 
     const response = {
-      data: loadFromServerExtErrorRespBody('Could not retrieve an SSL certificate')
+      data: loadFromServerExtErrorRespBody(errorMessage)
     }
 
     mockResponse(response, remoteHost);
@@ -361,7 +362,7 @@ describe('SslCertificatesAddForm', function () {
 
     expect(Axios.post).toBeCalledWith(EXT.URL, loadFromServerExtReqBody(remoteHost));
     expect(remoteHostUrlInput()).toBeVisible();
-    expect(ExtJS.showErrorMessage).toHaveBeenCalledWith(response.data.result.message);
+    expect(screen.getByRole('alert')).toHaveTextContent(errorMessage);
   });
 
   it('fires onDone when cancelled', async function() {

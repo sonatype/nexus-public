@@ -31,7 +31,7 @@ public class SslCertificatesStateContributor
   private final Map<String, Object> state;
 
   @Inject
-  public SslCertificatesStateContributor(@Named("${nexus.react.sslCertificates:-false}") final Boolean featureFlag) {
+  public SslCertificatesStateContributor(@Named("${nexus.react.sslCertificates:-true}") final Boolean featureFlag) {
     state = ImmutableMap.of("nexus.react.sslCertificates", featureFlag);
   }
 
