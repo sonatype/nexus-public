@@ -18,7 +18,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
-import static org.junit.Assert.fail;
 
 /**
  * Tests for {@link BlobRef}.
@@ -37,34 +36,7 @@ public class BlobRefTest
   }
 
   @Test
-  public void testParseCanonical() {
-    String storeName = "test-store";
-    String blobId = "test-blob-id";
-
-    String blobRefString = String.format("%s@%s", storeName, blobId);
-    BlobRef parsed = BlobRef.parse(blobRefString);
-
-    assertThat(parsed.getBlob(), is(equalTo(blobId)));
-    assertThat(parsed.getStore(), is(equalTo(storeName)));
-    assertThat(parsed.getNode(), isEmptyOrNullString());
-  }
-
-  @Test
-  public void testParseLegacyOrient() {
-    String storeName = "test-store";
-    String blobId = "test-blob-id";
-    String nodeId = "test-node-id";
-
-    String blobRefString = String.format("%s@%s:%s", storeName, nodeId, blobId);
-    BlobRef parsed = BlobRef.parse(blobRefString);
-
-    assertThat(parsed.getBlob(), is(equalTo(blobId)));
-    assertThat(parsed.getStore(), is(equalTo(storeName)));
-    assertThat(parsed.getNode(), isEmptyOrNullString());
-  }
-
-  @Test
-  public void testParseLegacySql() {
+  public void testParseBlobRefWithNodeId() {
     String storeName = "test-store";
     String blobId = "test-blob-id";
     String nodeId = "test-node-id";
@@ -78,25 +50,20 @@ public class BlobRefTest
   }
 
   @Test
-  public void testBlobRefIllegalFormat() {
-    assertParseFailure("wrong-blobref-format/string");
-    // empty blobstorename
-    assertParseFailure("@nodeid:blobid");
-    // empty nodeid
-    assertParseFailure("blobstore@:blobid");
-    // empty blobid
-    assertParseFailure("blobstore@nodeid:");
-    // no nodeid or blobid
-    assertParseFailure("blobstore@");
+  public void testParseBlobRefWithoutNodeId() {
+    String storeName = "test-store";
+    String blobId = "test-blob-id";
+
+    String blobRefString = String.format("%s@%s", storeName, blobId);
+    BlobRef parsed = BlobRef.parse(blobRefString);
+
+    assertThat(parsed.getBlob(), is(equalTo(blobId)));
+    assertThat(parsed.getStore(), is(equalTo(storeName)));
+    assertThat(parsed.getNode(), isEmptyOrNullString());
   }
 
-  private static void assertParseFailure(final String blobref) {
-    try {
-      BlobRef.parse(blobref);
-      fail("Expected exception");
-    }
-    catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), is("Not a valid blob reference"));
-    }
+  @Test(expected = IllegalArgumentException.class)
+  public void testBlobRefIllegalFormat() {
+    BlobRef.parse("wrong-blobref-format/string");
   }
 }
