@@ -31,56 +31,47 @@ public interface SupportZipGenerator
   {
     private static final long serialVersionUID = -3253827134366752809L;
 
+    private boolean truncated;
+
+    private String filename;
+
+    private String localPath;
+
+    private long size;
+
+    public Result(final boolean truncated, final String filename, final String localPath, final long size) {
+      this.truncated = truncated;
+      this.filename = filename;
+      this.localPath = localPath;
+      this.size = size;
+    }
+
     /**
      * True if the ZIP or any of its contents had been truncated.
      */
-    private boolean truncated;
-
-    /**
-     * The name of the generated ZIP file.
-     */
-    private String filename;
-
-    /**
-     * The local path of the generated ZIP file.
-     */
-    private String localPath;
-
-    /**
-     * The size of the generated ZIP file.
-     */
-    private long size;
-
     public boolean isTruncated() {
       return truncated;
     }
 
-    public void setTruncated(final boolean truncated) {
-      this.truncated = truncated;
-    }
-
+    /**
+     * The name of the generated ZIP file.
+     */
     public String getFilename() {
       return filename;
     }
 
-    public void setFilename(final String filename) {
-      this.filename = filename;
-    }
-
+    /**
+     * The local path of the generated ZIP file.
+     */
     public String getLocalPath() {
       return localPath;
     }
 
-    public void setLocalPath(final String localPath) {
-      this.localPath = localPath;
-    }
-
+    /**
+     * The size of the generated ZIP file.
+     */
     public long getSize() {
       return size;
-    }
-
-    public void setSize(final long size) {
-      this.size = size;
     }
 
     @Override
