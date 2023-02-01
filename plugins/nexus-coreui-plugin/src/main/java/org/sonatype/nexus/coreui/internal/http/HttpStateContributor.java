@@ -31,7 +31,7 @@ public class HttpStateContributor
   private final Map<String, Object> state;
 
   @Inject
-  public HttpStateContributor(@Named("${nexus.react.httpSettings:-false}") final Boolean featureFlag) {
+  public HttpStateContributor(@Named("${nexus.react.httpSettings:-true}") final Boolean featureFlag) {
     state = ImmutableMap.of("nexus.react.httpSettings", featureFlag);
   }
 

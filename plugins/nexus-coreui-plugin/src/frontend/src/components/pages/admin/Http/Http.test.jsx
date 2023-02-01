@@ -16,7 +16,6 @@ import {
   render,
   screen,
   waitForElementToBeRemoved,
-  act,
   within,
 } from '@testing-library/react';
 import {when} from 'jest-when';
@@ -73,11 +72,13 @@ const selectors = {
     httpPort: () => screen.getByLabelText(LABELS.PROXY.HTTP_PORT),
     queryHttpPort: () => screen.queryByLabelText(LABELS.PROXY.HTTP_PORT),
     httpCheckbox: () => screen.getByLabelText(LABELS.PROXY.HTTP_CHECKBOX),
+    httpAuthCheckbox: () => screen.getByLabelText(LABELS.PROXY.HTTP_AUTH_CHECKBOX),
     httpsHost: () => screen.getByLabelText(LABELS.PROXY.HTTPS_HOST),
     queryHttpsHost: () => screen.queryByLabelText(LABELS.PROXY.HTTPS_HOST),
     httpsPort: () => screen.getByLabelText(LABELS.PROXY.HTTPS_PORT),
     queryHttpsPort: () => screen.queryByLabelText(LABELS.PROXY.HTTPS_PORT),
     httpsCheckbox: () => screen.getByLabelText(LABELS.PROXY.HTTPS_CHECKBOX),
+    httpsAuthCheckbox: () => screen.getByLabelText(LABELS.PROXY.HTTPS_AUTH_CHECKBOX),
     username: (container) =>
       within(container).getByLabelText(LABELS.PROXY.USERNAME),
     password: (container) =>
@@ -177,9 +178,7 @@ describe('Http', () => {
   const mockResponse = (data = mock) => {
     Axios.post = jest
       .fn()
-      .mockReturnValueOnce(
-        Promise.resolve({data: TestUtils.makeExtResult(data)})
-      );
+      .mockResolvedValueOnce({data: TestUtils.makeExtResult(data)});
   };
 
   const renderAndWaitForLoad = async () => {
@@ -275,34 +274,28 @@ describe('Http', () => {
       expect(httpsCheckbox()).toBeInTheDocument();
     });
 
-    it('requires http checkbox marked as checked to be able to fill the http host, port and open the http authentication accordion', async () => {
+    it('requires http checkbox marked as checked to be able to fill the http host and port', async () => {
       const {
         httpHost,
         httpPort,
-        httpCheckbox,
-        httpAccordion,
-        httpAccordionButton,
+        httpCheckbox
       } = selectors.proxy;
 
-      const {container} = await renderAndWaitForLoad();
-      const accordion = httpAccordion(container);
+      await renderAndWaitForLoad();
 
       expect(httpCheckbox()).not.toBeChecked();
       expect(httpHost()).toBeDisabled();
       expect(httpPort()).toBeDisabled();
 
-      await userEvent.click(httpAccordionButton());
-
-      expect(accordion).toHaveAttribute('aria-expanded', 'false');
-
-      await userEvent.click(httpCheckbox());
+      userEvent.click(httpCheckbox());
 
       expect(httpHost()).not.toBeDisabled();
+
+      expect(httpPort()).toBeDisabled();
+
+      await TestUtils.changeField(httpHost, 'test');
+
       expect(httpPort()).not.toBeDisabled();
-
-      await userEvent.click(httpAccordionButton());
-
-      expect(accordion).toHaveAttribute('aria-expanded', 'true');
     });
 
     it('requires http authentication accordion to be open to be able to fill the username, password, hostname and domain', async () => {
@@ -316,15 +309,15 @@ describe('Http', () => {
         httpCheckbox,
       } = selectors.proxy;
 
-      const {container} = await renderAndWaitForLoad();
-      const accordion = httpAccordion(container);
+      await renderAndWaitForLoad();
+      const accordion = httpAccordion();
 
       expect(username(accordion)).toBeDisabled();
       expect(password(accordion)).toBeDisabled();
       expect(ntlmHost(accordion)).toBeDisabled();
       expect(ntlmDomain(accordion)).toBeDisabled();
 
-      await userEvent.click(httpCheckbox());
+      userEvent.click(httpCheckbox());
 
       expect(httpCheckbox()).toBeChecked();
       expect(accordion).toHaveAttribute('aria-expanded', 'false');
@@ -333,56 +326,13 @@ describe('Http', () => {
       expect(ntlmHost(accordion)).not.toBeVisible();
       expect(ntlmDomain(accordion)).not.toBeVisible();
 
-      await userEvent.click(httpAccordionButton());
+      userEvent.click(httpAccordionButton());
 
       expect(accordion).toHaveAttribute('aria-expanded', 'true');
       expect(username(accordion)).toBeVisible();
       expect(password(accordion)).toBeVisible();
       expect(ntlmHost(accordion)).toBeVisible();
       expect(ntlmDomain(accordion)).toBeVisible();
-    });
-
-    it('the http authentication accordion closes if the http checkbox is unchecked', async () => {
-      const {
-        httpAccordion,
-        httpAccordionButton,
-        httpCheckbox,
-        username,
-        password,
-        ntlmDomain,
-        ntlmHost,
-      } = selectors.proxy;
-      const {container} = await renderAndWaitForLoad();
-      const accordion = httpAccordion(container);
-
-      await userEvent.click(httpCheckbox());
-      await userEvent.click(httpAccordionButton());
-
-      expect(accordion).toHaveAttribute('aria-expanded', 'true');
-      expect(username(accordion)).toBeVisible();
-      expect(password(accordion)).toBeVisible();
-      expect(ntlmHost(accordion)).toBeVisible();
-      expect(ntlmDomain(accordion)).toBeVisible();
-
-      await userEvent.click(httpCheckbox());
-
-      expect(accordion).toHaveAttribute('aria-expanded', 'false');
-      expect(username(accordion)).not.toBeVisible();
-      expect(password(accordion)).not.toBeVisible();
-      expect(ntlmHost(accordion)).not.toBeVisible();
-      expect(ntlmDomain(accordion)).not.toBeVisible();
-    });
-
-    it('requires http checkbox marked as checked to be able to mark as check the https checkbox', async () => {
-      const {httpsCheckbox, httpCheckbox} = selectors.proxy;
-
-      await renderAndWaitForLoad();
-
-      expect(httpsCheckbox()).toBeDisabled();
-
-      await userEvent.click(httpCheckbox());
-
-      expect(httpsCheckbox()).not.toBeDisabled();
     });
 
     it('requires https checkbox marked as checked to be able to fill the https host, port and open the https authentication accordion', async () => {
@@ -390,108 +340,26 @@ describe('Http', () => {
         httpsHost,
         httpsPort,
         httpCheckbox,
-        httpsCheckbox,
-        httpsAccordionButton,
-        httpsAccordion,
-        username,
-        password,
-        ntlmDomain,
-        ntlmHost,
+        httpsCheckbox
       } = selectors.proxy;
 
-      const {container} = await renderAndWaitForLoad();
-      const accordion = httpsAccordion(container);
+      await renderAndWaitForLoad();
 
-      await userEvent.click(httpCheckbox());
+      userEvent.click(httpCheckbox());
 
       expect(httpCheckbox()).toBeChecked();
       expect(httpsCheckbox()).not.toBeChecked();
       expect(httpsHost()).toBeDisabled();
       expect(httpsPort()).toBeDisabled();
-      expect(accordion).toHaveAttribute('aria-expanded', 'false');
 
-      await userEvent.click(httpsCheckbox());
+      userEvent.click(httpsCheckbox());
 
       expect(httpsHost()).not.toBeDisabled();
+      expect(httpsPort()).toBeDisabled();
+
+      await TestUtils.changeField(httpsHost, 'test');
+
       expect(httpsPort()).not.toBeDisabled();
-      expect(username(accordion)).not.toBeVisible();
-      expect(password(accordion)).not.toBeVisible();
-      expect(ntlmHost(accordion)).not.toBeVisible();
-      expect(ntlmDomain(accordion)).not.toBeVisible();
-
-      await userEvent.click(httpsAccordionButton());
-
-      expect(accordion).toHaveAttribute('aria-expanded', 'true');
-      expect(username(accordion)).toBeVisible();
-      expect(password(accordion)).toBeVisible();
-      expect(ntlmHost(accordion)).toBeVisible();
-      expect(ntlmDomain(accordion)).toBeVisible();
-    });
-
-    it('the https authentication accordion closes if the https checkbox is unchecked', async () => {
-      const {
-        httpsAccordion,
-        httpCheckbox,
-        httpsCheckbox,
-        httpsAccordionButton,
-        username,
-        password,
-        ntlmDomain,
-        ntlmHost,
-      } = selectors.proxy;
-      const {container} = await renderAndWaitForLoad();
-      const accordion = httpsAccordion(container);
-
-      await userEvent.click(httpCheckbox());
-      await userEvent.click(httpsCheckbox());
-      await userEvent.click(httpsAccordionButton());
-
-      expect(accordion).toHaveAttribute('aria-expanded', 'true');
-      expect(username(accordion)).toBeVisible();
-      expect(password(accordion)).toBeVisible();
-      expect(ntlmHost(accordion)).toBeVisible();
-      expect(ntlmDomain(accordion)).toBeVisible();
-
-      await userEvent.click(httpsCheckbox());
-
-      expect(accordion).toHaveAttribute('aria-expanded', 'false');
-      expect(username(accordion)).not.toBeVisible();
-      expect(password(accordion)).not.toBeVisible();
-      expect(ntlmHost(accordion)).not.toBeVisible();
-      expect(ntlmDomain(accordion)).not.toBeVisible();
-    });
-
-    it('the https authentication accordion closes if the http checkbox is unchecked', async () => {
-      const {
-        httpsAccordion,
-        httpCheckbox,
-        httpsCheckbox,
-        httpsAccordionButton,
-        username,
-        password,
-        ntlmDomain,
-        ntlmHost,
-      } = selectors.proxy;
-      const {container} = await renderAndWaitForLoad();
-      const accordion = httpsAccordion(container);
-
-      await userEvent.click(httpCheckbox());
-      await userEvent.click(httpsCheckbox());
-      await userEvent.click(httpsAccordionButton());
-
-      expect(accordion).toHaveAttribute('aria-expanded', 'true');
-      expect(username(accordion)).toBeVisible();
-      expect(password(accordion)).toBeVisible();
-      expect(ntlmHost(accordion)).toBeVisible();
-      expect(ntlmDomain(accordion)).toBeVisible();
-
-      await userEvent.click(httpCheckbox());
-
-      expect(accordion).toHaveAttribute('aria-expanded', 'false');
-      expect(username(accordion)).not.toBeVisible();
-      expect(password(accordion)).not.toBeVisible();
-      expect(ntlmHost(accordion)).not.toBeVisible();
-      expect(ntlmDomain(accordion)).not.toBeVisible();
     });
 
     it('adds or removes items to the excludes from HTTP/HTTPS Proxy list', async () => {
@@ -499,18 +367,18 @@ describe('Http', () => {
 
       const {container} = await renderAndWaitForLoad();
 
-      await userEvent.click(httpCheckbox());
+      userEvent.click(httpCheckbox());
 
       await TestUtils.changeField(exclude, nonProxy);
 
       expect(addButton(container)).toBeInTheDocument();
 
-      await userEvent.click(addButton(container));
+      userEvent.click(addButton(container));
 
       expect(screen.getByText(nonProxy)).toBeInTheDocument();
       expect(removeButton(container)).toBeInTheDocument();
 
-      await userEvent.click(removeButton(container));
+      userEvent.click(removeButton(container));
       expect(screen.queryByText(nonProxy)).not.toBeInTheDocument();
     });
 
@@ -519,7 +387,7 @@ describe('Http', () => {
 
       await renderAndWaitForLoad();
 
-      await userEvent.click(httpCheckbox());
+      userEvent.click(httpCheckbox());
 
       await TestUtils.changeField(exclude, ` ${nonProxy} `);
 
@@ -572,7 +440,7 @@ describe('Http', () => {
       await TestUtils.changeField(retriesInput, data.retries);
       await TestUtils.changeField(timeoutInput, data.timeout);
 
-      await userEvent.click(httpCheckbox());
+      userEvent.click(httpCheckbox());
 
       await TestUtils.changeField(httpHost, data.httpHost);
 
@@ -610,22 +478,25 @@ describe('Http', () => {
           password,
           ntlmHost,
           ntlmDomain,
+          httpAuthCheckbox
         },
       } = selectors;
 
-      const {container} = await renderAndWaitForLoad();
-      const accordion = httpAccordion(container);
+      await renderAndWaitForLoad();
+      const accordion = httpAccordion();
 
       await TestUtils.changeField(userAgentInput, data.userAgentSuffix);
       await TestUtils.changeField(retriesInput, data.retries);
       await TestUtils.changeField(timeoutInput, data.timeout);
 
-      await userEvent.click(httpCheckbox());
+      userEvent.click(httpCheckbox());
 
       await TestUtils.changeField(httpHost, data.httpHost);
       await TestUtils.changeField(httpPort, data.httpPort);
 
-      await userEvent.click(httpAccordionButton());
+      userEvent.click(httpAccordionButton());
+
+      userEvent.click(httpAuthCheckbox());
 
       await TestUtils.changeField(
         () => password(accordion),
@@ -679,12 +550,12 @@ describe('Http', () => {
       await TestUtils.changeField(retriesInput, data.retries);
       await TestUtils.changeField(timeoutInput, data.timeout);
 
-      await userEvent.click(httpCheckbox());
+      userEvent.click(httpCheckbox());
 
       await TestUtils.changeField(httpHost, data.httpHost);
       await TestUtils.changeField(httpPort, data.httpPort);
 
-      await userEvent.click(httpsCheckbox());
+      userEvent.click(httpsCheckbox());
 
       userEvent.click(selectors.querySubmitButton());
       expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
@@ -700,7 +571,6 @@ describe('Http', () => {
     it('Https Proxy with Authentication requires username', async () => {
       const data = {
         ...dummyData,
-        ...dummyHttpProxy,
         ...dummyHttpsProxyWithAuth,
       };
       const {
@@ -708,9 +578,6 @@ describe('Http', () => {
         retriesInput,
         timeoutInput,
         proxy: {
-          httpHost,
-          httpPort,
-          httpCheckbox,
           httpsCheckbox,
           httpsHost,
           httpsPort,
@@ -720,27 +587,25 @@ describe('Http', () => {
           ntlmHost,
           ntlmDomain,
           username,
+          httpsAuthCheckbox
         },
       } = selectors;
 
-      const {container} = await renderAndWaitForLoad();
-      const accordion = httpsAccordion(container);
+      await renderAndWaitForLoad();
+      const accordion = httpsAccordion();
 
       await TestUtils.changeField(userAgentInput, data.userAgentSuffix);
       await TestUtils.changeField(retriesInput, data.retries);
       await TestUtils.changeField(timeoutInput, data.timeout);
 
-      await userEvent.click(httpCheckbox());
-
-      await TestUtils.changeField(httpHost, data.httpHost);
-      await TestUtils.changeField(httpPort, data.httpPort);
-
-      await userEvent.click(httpsCheckbox());
+      userEvent.click(httpsCheckbox());
 
       await TestUtils.changeField(httpsHost, data.httpsHost);
       await TestUtils.changeField(httpsPort, data.httpsPort);
 
-      await userEvent.click(httpsAccordionButton());
+      userEvent.click(httpsAccordionButton());
+
+      userEvent.click(httpsAuthCheckbox());
 
       await TestUtils.changeField(
         () => password(accordion),
@@ -776,6 +641,8 @@ describe('Http', () => {
         httpsEnabled: false,
         nonProxyHosts: [nonProxy],
         ...dummyHttpProxy,
+        retries: null,
+        timeout: null
       };
       const {
         proxy: {exclude, addButton, httpCheckbox, httpHost, httpPort}
@@ -783,16 +650,14 @@ describe('Http', () => {
 
       const {container} = await renderAndWaitForLoad();
 
-      await userEvent.click(httpCheckbox());
+      userEvent.click(httpCheckbox());
 
       await TestUtils.changeField(httpHost, data.httpHost);
       await TestUtils.changeField(httpPort, data.httpPort);
 
       await TestUtils.changeField(exclude, nonProxy);
 
-      expect(addButton(container)).toBeInTheDocument();
-
-      await userEvent.click(addButton(container));
+      userEvent.click(addButton(container));
 
       await submitAndExpect([data]);
     });
@@ -823,24 +688,27 @@ describe('Http', () => {
           password,
           ntlmHost,
           ntlmDomain,
+          httpAuthCheckbox
         },
         querySubmitButton,
         querySavingMask
       } = selectors;
 
-      const {container} = await renderAndWaitForLoad();
-      const accordion = httpAccordion(container);
+      await renderAndWaitForLoad();
+      const accordion = httpAccordion();
 
       await TestUtils.changeField(userAgentInput, data.userAgentSuffix);
       await TestUtils.changeField(retriesInput, data.retries);
       await TestUtils.changeField(timeoutInput, data.timeout);
 
-      await userEvent.click(httpCheckbox());
+      userEvent.click(httpCheckbox());
 
       await TestUtils.changeField(httpHost, data.httpHost);
       await TestUtils.changeField(httpPort, data.httpPort);
 
-      await userEvent.click(httpAccordionButton());
+      userEvent.click(httpAccordionButton());
+
+      userEvent.click(httpAuthCheckbox());
 
       await TestUtils.changeField(
         () => password(accordion),
@@ -862,6 +730,10 @@ describe('Http', () => {
 
       mockResponse(data);
 
+      when(Axios.post)
+        .calledWith(URL, ExtAPIUtils.createRequestBody(ACTION, METHODS.READ, null))
+        .mockResolvedValueOnce({data: TestUtils.makeExtResult(data)});
+
       userEvent.click(querySubmitButton());
       await waitForElementToBeRemoved(querySavingMask());
 
@@ -875,13 +747,7 @@ describe('Http', () => {
       );
       expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
 
-      await userEvent.click(httpAccordionButton());
-
-      expect(accordion).toHaveAttribute('aria-expanded', 'false');
-      expect(password(accordion)).toHaveValue(data.httpAuthPassword);
-      expect(username(accordion)).toHaveValue(data.httpAuthUsername);
-      expect(ntlmDomain(accordion)).toHaveValue(data.httpAuthNtlmDomain);
-      expect(ntlmHost(accordion)).toHaveValue(data.httpAuthNtlmHost);
+      userEvent.click(httpAuthCheckbox());
 
       mockResponse();
 
@@ -930,27 +796,30 @@ describe('Http', () => {
           password,
           ntlmHost,
           ntlmDomain,
+          httpsAuthCheckbox
         },
       } = selectors;
 
-      const {container} = await renderAndWaitForLoad();
-      const accordion = httpsAccordion(container);
+      await renderAndWaitForLoad();
+      const accordion = httpsAccordion();
 
       await TestUtils.changeField(userAgentInput, data.userAgentSuffix);
       await TestUtils.changeField(retriesInput, data.retries);
       await TestUtils.changeField(timeoutInput, data.timeout);
 
-      await userEvent.click(httpCheckbox());
+      userEvent.click(httpCheckbox());
 
       await TestUtils.changeField(httpHost, data.httpHost);
       await TestUtils.changeField(httpPort, data.httpPort);
 
-      await userEvent.click(httpsCheckbox());
+      userEvent.click(httpsCheckbox());
 
       await TestUtils.changeField(httpsHost, data.httpsHost);
       await TestUtils.changeField(httpsPort, data.httpsPort);
 
-      await userEvent.click(httpsAccordionButton());
+      userEvent.click(httpsAccordionButton());
+
+      userEvent.click(httpsAuthCheckbox());
 
       await TestUtils.changeField(
         () => password(accordion),
@@ -972,6 +841,10 @@ describe('Http', () => {
 
       mockResponse(data);
 
+      when(Axios.post)
+        .calledWith(URL, ExtAPIUtils.createRequestBody(ACTION, METHODS.READ, null))
+        .mockResolvedValueOnce({data: TestUtils.makeExtResult(data)});
+
       userEvent.click(selectors.querySubmitButton());
       await waitForElementToBeRemoved(selectors.querySavingMask());
 
@@ -985,14 +858,7 @@ describe('Http', () => {
       );
       expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
 
-      await userEvent.click(httpsAccordionButton());
-
-      expect(accordion).toHaveAttribute('aria-expanded', 'false');
-      expect(password(accordion)).toHaveValue(data.httpAuthPassword);
-      expect(username(accordion)).toHaveValue(data.httpAuthUsername);
-      expect(ntlmDomain(accordion)).toHaveValue(data.httpAuthNtlmDomain);
-      expect(ntlmHost(accordion)).toHaveValue(data.httpAuthNtlmHost);
-
+      userEvent.click(httpsAuthCheckbox());
 
       mockResponse();
 

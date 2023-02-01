@@ -14,6 +14,7 @@
 import React from 'react';
 import {useMachine} from '@xstate/react';
 import {
+  NxStatefulAccordion,
   NxAccordion,
   NxButton,
   NxCheckbox,
@@ -45,13 +46,18 @@ export default function HttpForm() {
       httpEnabled,
       httpAuthEnabled,
       httpsAuthEnabled,
+      httpHost,
+      httpsHost
     },
     isPristine,
     nonProxyHost = ''
   } = current.context;
-  const isHttpsEnabled = httpsEnabled && httpEnabled;
 
   const list = nonProxyHosts || [];
+
+  const isProxyEnabled = httpEnabled || httpsEnabled;
+  const isHttpAuthEnabled =  httpEnabled && httpAuthEnabled;
+  const isHttpsAuthEnabled =  httpsEnabled && httpsAuthEnabled;
 
   const discard = () => send('RESET');
 
@@ -137,7 +143,7 @@ export default function HttpForm() {
       <NxFormGroup
         label={LABELS.PROXY.HTTP_HOST}
         sublabel={LABELS.PROXY.SUB_LABEL}
-        isRequired
+        isRequired={httpEnabled}
       >
         <NxTextInput
           className="nx-text-input--long"
@@ -146,35 +152,47 @@ export default function HttpForm() {
           disabled={!httpEnabled}
         />
       </NxFormGroup>
-      <NxFormGroup label={LABELS.PROXY.HTTP_PORT} isRequired>
+      <NxFormGroup 
+        label={LABELS.PROXY.HTTP_PORT} 
+        isRequired={!!httpHost}
+      >
         <NxTextInput
           className="nx-text-input--short"
           {...FormUtils.fieldProps('httpPort', current)}
           onChange={FormUtils.handleUpdate('httpPort', send)}
-          disabled={!httpEnabled}
+          disabled={!httpEnabled || !httpHost}
         />
       </NxFormGroup>
       <NxTile.Content className="nx-tile-content--accordion-container">
-        <NxAccordion
+        <NxStatefulAccordion 
           title="http-authentication"
-          open={httpAuthEnabled}
-          onToggle={() =>
-            httpEnabled && toggleAuthentication('httpAuthEnabled')
-          }
+          defaultOpen={httpAuthEnabled}
         >
           <NxAccordion.Header>
             <NxAccordion.Title>
               {LABELS.PROXY.HTTP_AUTHENTICATION}
             </NxAccordion.Title>
           </NxAccordion.Header>
+          <NxFieldset label="">
+            <NxCheckbox
+              {...FormUtils.checkboxProps('httpAuthEnabled', current)}
+              onChange={() => toggleAuthentication('httpAuthEnabled')}
+              disabled={!httpEnabled}
+            >
+              {LABELS.PROXY.HTTP_AUTH_CHECKBOX}
+            </NxCheckbox>
+          </NxFieldset>
           <NxFormRow>
             <>
-              <NxFormGroup label={LABELS.PROXY.USERNAME} isRequired={httpEnabled}>
+              <NxFormGroup 
+                label={LABELS.PROXY.USERNAME} 
+                isRequired={httpAuthEnabled}
+              >
                 <NxTextInput
                   className="nx-text-input"
                   {...FormUtils.fieldProps('httpAuthUsername', current)}
                   onChange={FormUtils.handleUpdate('httpAuthUsername', send)}
-                  disabled={!httpEnabled}
+                  disabled={!isHttpAuthEnabled}
                 />
               </NxFormGroup>
               <NxFormGroup label={LABELS.PROXY.PASSWORD}>
@@ -183,7 +201,7 @@ export default function HttpForm() {
                   {...FormUtils.fieldProps('httpAuthPassword', current)}
                   onChange={FormUtils.handleUpdate('httpAuthPassword', send)}
                   type="password"
-                  disabled={!httpEnabled}
+                  disabled={!isHttpAuthEnabled}
                 />
               </NxFormGroup>
             </>
@@ -193,7 +211,7 @@ export default function HttpForm() {
               className="nx-text-input--long"
               {...FormUtils.fieldProps('httpAuthNtlmHost', current)}
               onChange={FormUtils.handleUpdate('httpAuthNtlmHost', send)}
-              disabled={!httpEnabled}
+              disabled={!isHttpAuthEnabled}
             />
           </NxFormGroup>
           <NxFormGroup label={LABELS.PROXY.DOMAIN}>
@@ -201,16 +219,15 @@ export default function HttpForm() {
               className="nx-text-input--long"
               {...FormUtils.fieldProps('httpAuthNtlmDomain', current)}
               onChange={FormUtils.handleUpdate('httpAuthNtlmDomain', send)}
-              disabled={!httpEnabled}
+              disabled={!isHttpAuthEnabled}
             />
           </NxFormGroup>
-        </NxAccordion>
+        </NxStatefulAccordion>
       </NxTile.Content>
       <NxFieldset label="">
         <NxCheckbox
           {...FormUtils.checkboxProps('httpsEnabled', current)}
           onChange={handleHttpsCheckbox}
-          disabled={!httpEnabled}
         >
           {LABELS.PROXY.HTTPS_CHECKBOX}
         </NxCheckbox>
@@ -218,44 +235,56 @@ export default function HttpForm() {
       <NxFormGroup
         label={LABELS.PROXY.HTTPS_HOST}
         sublabel={LABELS.PROXY.SUB_LABEL}
-        isRequired={isHttpsEnabled}
+        isRequired={httpsEnabled}
       >
         <NxTextInput
           className="nx-text-input--long"
           {...FormUtils.fieldProps('httpsHost', current)}
           onChange={FormUtils.handleUpdate('httpsHost', send)}
-          disabled={!isHttpsEnabled}
+          disabled={!httpsEnabled}
         />
       </NxFormGroup>
-      <NxFormGroup label={LABELS.PROXY.HTTPS_PORT} isRequired={isHttpsEnabled}>
+      <NxFormGroup 
+        label={LABELS.PROXY.HTTPS_PORT} 
+        isRequired={!!httpsHost}
+      >
         <NxTextInput
           className="nx-text-input--short"
           {...FormUtils.fieldProps('httpsPort', current)}
           onChange={FormUtils.handleUpdate('httpsPort', send)}
-          disabled={!isHttpsEnabled}
+          disabled={!httpsEnabled || !httpsHost}
         />
       </NxFormGroup>
       <NxTile.Content className="nx-tile-content--accordion-container">
-        <NxAccordion
+        <NxStatefulAccordion
           title="https-authentication"
-          open={httpsAuthEnabled}
-          onToggle={() =>
-            isHttpsEnabled && toggleAuthentication('httpsAuthEnabled')
-          }
+          defaultOpen={httpsAuthEnabled}
         >
           <NxAccordion.Header>
             <NxAccordion.Title>
               {LABELS.PROXY.HTTPS_AUTHENTICATION}
             </NxAccordion.Title>
           </NxAccordion.Header>
+          <NxFieldset label="">
+            <NxCheckbox
+              {...FormUtils.checkboxProps('httpsAuthEnabled', current)}
+              onChange={() => toggleAuthentication('httpsAuthEnabled')}
+              disabled={!httpsEnabled}
+            >
+              {LABELS.PROXY.HTTPS_AUTH_CHECKBOX}
+            </NxCheckbox>
+          </NxFieldset>
           <NxFormRow>
             <>
-              <NxFormGroup label={LABELS.PROXY.USERNAME} isRequired={isHttpsEnabled}>
+              <NxFormGroup 
+                label={LABELS.PROXY.USERNAME} 
+                isRequired={httpsAuthEnabled}
+              >
                 <NxTextInput
                   className="nx-text-input"
                   {...FormUtils.fieldProps('httpsAuthUsername', current)}
                   onChange={FormUtils.handleUpdate('httpsAuthUsername', send)}
-                  disabled={!isHttpsEnabled}
+                  disabled={!isHttpsAuthEnabled}
                 />
               </NxFormGroup>
               <NxFormGroup label={LABELS.PROXY.PASSWORD}>
@@ -264,7 +293,7 @@ export default function HttpForm() {
                   {...FormUtils.fieldProps('httpsAuthPassword', current)}
                   onChange={FormUtils.handleUpdate('httpsAuthPassword', send)}
                   type="password"
-                  disabled={!isHttpsEnabled}
+                  disabled={!isHttpsAuthEnabled}
                 />
               </NxFormGroup>
             </>
@@ -274,7 +303,7 @@ export default function HttpForm() {
               className="nx-text-input--long"
               {...FormUtils.fieldProps('httpsAuthNtlmHost', current)}
               onChange={FormUtils.handleUpdate('httpsAuthNtlmHost', send)}
-              disabled={!isHttpsEnabled}
+              disabled={!isHttpsAuthEnabled}
             />
           </NxFormGroup>
           <NxFormGroup label={LABELS.PROXY.DOMAIN}>
@@ -282,12 +311,12 @@ export default function HttpForm() {
               className="nx-text-input--long"
               {...FormUtils.fieldProps('httpsAuthNtlmDomain', current)}
               onChange={FormUtils.handleUpdate('httpsAuthNtlmDomain', send)}
-              disabled={!isHttpsEnabled}
+              disabled={!isHttpsAuthEnabled}
             />
           </NxFormGroup>
-        </NxAccordion>
+        </NxStatefulAccordion>
       </NxTile.Content>
-      {httpEnabled && (
+      {isProxyEnabled && (
         <NxFormRow>
           <>
             <NxFormGroup
@@ -317,7 +346,7 @@ export default function HttpForm() {
           </>
         </NxFormRow>
       )}
-      {httpEnabled && list.length > 0 && (
+      {isProxyEnabled && list.length > 0 && (
         <NxList>
           {list.map((item, index) => (
             <NxList.Item key={item}>

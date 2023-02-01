@@ -141,8 +141,15 @@ const resetNonProxyHosts = (data) => {
   }
 } 
 
+const normalizeNumericValues = (data) => ({
+  ...data,
+  timeout: data.timeout || null,
+  retries: data.retries || null 
+})
+
 export default FormUtils.buildFormMachine({
   id: 'HttpMachine',
+  stateAfterSave: 'loading',
   config: (config) =>
     mergeDeepRight(config, {
       states: {
@@ -268,16 +275,14 @@ export default FormUtils.buildFormMachine({
       data: ({data}) => ({
         ...data,
         httpEnabled: !data.httpEnabled,
-        httpsEnabled: data.httpEnabled && !data.httpEnabled,
-        httpAuthEnabled: data.httpEnabled && !data.httpEnabled,
-        httpsAuthEnabled: data.httpEnabled && !data.httpEnabled,
+        httpAuthEnabled: false,
       }),
     }),
     toggleHttpsProxy: assign({
       data: ({data}) => ({
         ...data,
         httpsEnabled: !data.httpsEnabled,
-        httpsAuthEnabled: data.httpsEnabled && !data.httpsEnabled,
+        httpsAuthEnabled: false,
       }),
     }),
     setData: update,
@@ -311,6 +316,7 @@ export default FormUtils.buildFormMachine({
       saveData = validateAuthentication(saveData, 'https');
       saveData = resetNonProxyHosts(saveData);
       saveData = removeEmptyValues(saveData);
+      saveData = normalizeNumericValues(saveData);
 
       const response = await ExtAPIUtils.extAPIRequest(ACTION, METHODS.UPDATE, {
         data: [saveData],

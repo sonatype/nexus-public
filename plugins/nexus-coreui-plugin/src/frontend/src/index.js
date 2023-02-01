@@ -392,7 +392,7 @@ window.plugins.push({
       view: HTTP,
       iconCls: 'x-fa fa-truck',
       visibility: {
-        featureFlags: [{key: 'nexus.react.httpSettings', defaultValue: false}],
+        featureFlags: [{key: 'nexus.react.httpSettings', defaultValue: true}],
         permissions: [Permissions.SETTINGS.READ]
       },
     },

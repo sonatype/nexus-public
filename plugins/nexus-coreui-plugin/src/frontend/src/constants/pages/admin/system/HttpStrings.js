@@ -44,6 +44,8 @@ export default {
         HTTPS_CHECKBOX: 'Enable HTTPS proxy',
         HTTP_AUTHENTICATION: 'HTTP Authentication',
         HTTPS_AUTHENTICATION: 'HTTPS Authentication',
+        HTTP_AUTH_CHECKBOX: 'Enable HTTP Authentication',
+        HTTPS_AUTH_CHECKBOX: 'Enable HTTPS Authentication',
         USERNAME: 'Username',
         PASSWORD: 'Password',
         HOST_NAME: 'Windows NTLM Hostname',
