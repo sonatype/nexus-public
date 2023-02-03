@@ -63,7 +63,7 @@ if exist "C:\Program Files\7-Zip\7z.exe" (
 )
 
 cd nexus*\bin
-
+set JAVA_DEBUG_PORT=5005
 nexus /run
 
 cd %here%
