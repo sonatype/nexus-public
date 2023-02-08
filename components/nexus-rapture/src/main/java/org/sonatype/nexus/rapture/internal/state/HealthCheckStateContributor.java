@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.rapture.internal.state;
 
+import java.util.Collection;
 import java.util.Map;
 
 import javax.annotation.Nullable;
@@ -21,7 +22,8 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.rapture.StateContributor;
-import org.sonatype.nexus.rapture.internal.HealthCheckCacheManager;
+import org.sonatype.nexus.systemchecks.NodeSystemCheckResult;
+import org.sonatype.nexus.systemchecks.SystemCheckService;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
@@ -42,17 +44,23 @@ public class HealthCheckStateContributor
   @VisibleForTesting
   protected static final String HC_FAILED_KEY = "health_checks_failed";
 
-  private HealthCheckCacheManager healthCheckCacheManager;
+  private SystemCheckService systemCheckService;
 
   @Inject
-  public HealthCheckStateContributor(final HealthCheckCacheManager healthCheckCacheManager) {
-    this.healthCheckCacheManager = checkNotNull(healthCheckCacheManager);
+  public HealthCheckStateContributor(final SystemCheckService systemCheckService) {
+    this.systemCheckService = checkNotNull(systemCheckService);
   }
 
   @Nullable
   @Override
   public Map<String, Object> getState() {
-    return ImmutableMap.of(HC_FAILED_KEY,
-        healthCheckCacheManager.getResults().values().stream().anyMatch(result -> !result.isHealthy()));
+
+    boolean failed = systemCheckService.getResults()
+        .map(NodeSystemCheckResult::getResult)
+        .map(Map::values)
+        .flatMap(Collection::stream)
+        .anyMatch(result -> !result.isHealthy());
+
+    return ImmutableMap.of(HC_FAILED_KEY, failed);
   }
 }

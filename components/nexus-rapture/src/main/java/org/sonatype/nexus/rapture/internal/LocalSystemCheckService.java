@@ -12,7 +12,13 @@
  */
 package org.sonatype.nexus.rapture.internal;
 
-import java.util.Map;
+import java.io.InputStream;
+import java.net.InetAddress;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -23,12 +29,15 @@ import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.scheduling.PeriodicJobService;
 import org.sonatype.nexus.scheduling.PeriodicJobService.PeriodicJob;
+import org.sonatype.nexus.systemchecks.NodeSystemCheckResult;
+import org.sonatype.nexus.systemchecks.SystemCheckService;
 
 import com.codahale.metrics.health.HealthCheck.Result;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import org.apache.commons.io.IOUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
@@ -43,10 +52,13 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 @Named
 @Singleton
 @ManagedLifecycle(phase = SERVICES)
-public class HealthCheckCacheManager
+public class LocalSystemCheckService
     extends StateGuardLifecycleSupport
+    implements SystemCheckService
 {
   private final PeriodicJobService jobService;
+
+  private String hostname;
 
   private LoadingCache<String, Result> cache;
 
@@ -57,9 +69,11 @@ public class HealthCheckCacheManager
   private PeriodicJob metricsWritingJob;
 
   @Inject
-  public HealthCheckCacheManager(final PeriodicJobService jobService,
-                                 final HealthCheckRegistry registry,
-                                 @Named("${nexus.healthcheck.refreshInterval:-15}") final int refreshInterval) {
+  public LocalSystemCheckService(
+      final PeriodicJobService jobService,
+      final HealthCheckRegistry registry,
+      @Named("${nexus.healthcheck.refreshInterval:-15}") final int refreshInterval)
+  {
     this.jobService = checkNotNull(jobService);
     this.registry = checkNotNull(registry);
     this.refreshInterval = refreshInterval;
@@ -69,6 +83,10 @@ public class HealthCheckCacheManager
   protected void doStart() throws Exception {
     cache = CacheBuilder.newBuilder().build(cacheLoader());
     jobService.startUsing();
+
+    // Retrieving the hostname may be expensive so do this asynchronously
+    jobService.runOnce(this::setHostname, 1);
+
     metricsWritingJob = jobService.schedule(() -> {
       registry.getNames().forEach(k -> {
         Result oldResult = cache.getUnchecked(k);
@@ -100,8 +118,48 @@ public class HealthCheckCacheManager
     };
   }
 
+  @Override
   @Guarded(by = STARTED)
-  public Map<String, Result> getResults() {
-    return cache.asMap();
+  public Stream<NodeSystemCheckResult> getResults() {
+    return Collections.singleton(new NodeSystemCheckResult(hostname, cache.asMap())).stream();
+  }
+
+  /*
+   * Set the hostname
+   */
+  private void setHostname() {
+    hostname = getHostname();
+  }
+
+  /*
+   * Get the hostname, calling this may be expensive
+   */
+  private String getHostname() {
+    Optional<String> hostname = Optional.empty();
+    try {
+      Process process = Runtime.getRuntime().exec("hostname");
+      process.waitFor(5, TimeUnit.SECONDS);
+      if (process.exitValue() == 0) {
+        try (InputStream in = process.getInputStream()) {
+          hostname = Optional.ofNullable(IOUtils.toString(in, StandardCharsets.UTF_8));
+        }
+      }
+    }
+    catch (Exception e) { //NOSONAR
+      log.debug("Failed retrieve hostname from external process", e);
+    }
+
+    if (hostname.isPresent()) {
+      return hostname.get();
+    }
+
+    try {
+      hostname = Optional.ofNullable(InetAddress.getLocalHost().getHostName());
+    }
+    catch (Exception e) { //NOSONAR
+      log.debug("Failed to retrieve hostname from InetAddress", e);
+    }
+
+    return hostname.orElse("Unknown hostname");
   }
 }
