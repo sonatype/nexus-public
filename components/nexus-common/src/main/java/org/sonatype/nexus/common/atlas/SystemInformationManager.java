@@ -15,14 +15,12 @@ package org.sonatype.nexus.common.atlas;
 import java.util.Map;
 
 /**
- * Generates system information report.
- *
- * @since 2.7
+ * System information report manager.
  */
-public interface SystemInformationGenerator
+public interface SystemInformationManager
 {
   /**
-   * Generates a tree-structured report of critical system information details.
+   * Gets system information report.
    */
-  Map<String, Object> report();
+  Map<String, Object> getSystemInfo();
 }
