@@ -121,7 +121,14 @@ export default {
         VERIFY_CONNECTION: 'verifyConnection',
         READ_TEMPLATES: 'readTemplates'
       }
-    }
+    },
+    TASK: {
+      ACTION: 'coreui_Task',
+      METHODS: {
+        READ: 'read',
+        READ_TYPES: 'readTypes',
+      }
+    },
   },
   REST: {
     INTERNAL: {

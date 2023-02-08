@@ -201,5 +201,3 @@ export const REPOSITORIES = [
     name: '(All Repositories)'
   }
 ];
-
-export const XSS_STRING = 'XSS!<img src="/static/rapture/resources/icons/x16/user.png" onload="alert(0)">';

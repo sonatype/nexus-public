@@ -22,6 +22,7 @@ import Roles from './components/pages/admin/Roles/Roles';
 import Users from './components/pages/admin/Users/Users';
 import SslCertificates from './components/pages/admin/SslCertificates/SslCertificates';
 import LdapServers from './components/pages/admin/LdapServers/LdapServers';
+import Tasks from './components/pages/admin/Tasks/Tasks';
 import AnonymousSettings from './components/pages/admin/AnonymousSettings/AnonymousSettings';
 import BlobStores from './components/pages/admin/BlobStores/BlobStores';
 import InsightFrontend from './components/pages/admin/InsightFrontend/InsightFrontend';
@@ -184,6 +185,18 @@ window.plugins.push({
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         featureFlags: [{key: 'nexus.react.ldap', defaultValue: false}],
         permissions: ['nexus:ldap:read']
+      }
+    },
+    {
+      mode: 'admin',
+      path: '/System/Tasks',
+      ...UIStrings.TASKS.MENU,
+      view: Tasks,
+      iconCls: 'x-fa fa-clock',
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        featureFlags: [{key: 'nexus.react.tasks', defaultValue: false}],
+        permissions: [Permissions.TASKS.READ]
       }
     },
     {

@@ -23,6 +23,8 @@ const DELETE = 'DELETE';
 const BROWSE = 'BROWSE';
 const EDIT = 'EDIT';
 const ADD = 'ADD';
+const START = 'START';
+const STOP = 'STOP';
 const UNINSTALL = 'UNINSTALL';
 
 // default options.
@@ -50,6 +52,7 @@ export default {
   SETTINGS: generatePermissions('settings', [READ]),
   USERS: generatePermissions('users', [READ]),
   ROLES: generatePermissions('roles', [READ]),
+  TASKS: generatePermissions('tasks', [...crudOptions, START, STOP]),
   LOGGING: generatePermissions('logging', [READ]),
   ATLAS: generatePermissions('atlas', [READ, CREATE]),
   METRICS: generatePermissions('metrics', [READ]),

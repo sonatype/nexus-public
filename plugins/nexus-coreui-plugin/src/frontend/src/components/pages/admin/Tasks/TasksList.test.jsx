@@ -15,22 +15,23 @@ import Axios from 'axios';
 import {when} from 'jest-when';
 import {render, screen, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {sort, prop, descend, ascend, clone} from 'ramda';
+import {sort, prop, descend, ascend, compose, toLower} from 'ramda';
 
 import {ExtJS, APIConstants} from '@sonatype/nexus-ui-plugin';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import UIStrings from '../../../../constants/UIStrings';
-import PrivilegesList from './PrivilegesList';
+import TasksList from './TasksList';
+import {ROWS} from './Tasks.testdata';
 
 const XSS_STRING = TestUtils.XSS_STRING;
-const {PRIVILEGES: {LIST: LABELS}} = UIStrings;
-const {EXT: {URL, PRIVILEGE: {ACTION, METHODS}}, SORT_DIRECTIONS: {DESC, ASC}} = APIConstants;
+const {TASKS: {LIST: LABELS}} = UIStrings;
+const {EXT: {URL, TASK: {ACTION, METHODS}}, SORT_DIRECTIONS: {DESC, ASC}} = APIConstants;
 
 jest.mock('axios', () => {
   return {
     ...jest.requireActual('axios'),
-    post: jest.fn()
+    post: jest.fn(),
   };
 });
 
@@ -51,67 +52,27 @@ const selectors = {
   createButton: () => screen.getByText(LABELS.CREATE_BUTTON),
 };
 
-const ROWS = [{
-  description: 'All permissions for Logging',
-  id: 'nx-logging-all',
-  name: 'nx-logging-all',
-  permission: 'nexus:logging:*',
-  readOnly: true,
-  type: 'application',
-}, {
-  description: 'Browse permissions for Scripts',
-  id: 'nx-script-*-browse',
-  name: 'nx-script-*-browse',
-  permission: 'nexus:script:*:browse,read',
-  readOnly: true,
-  type: 'script',
-}, {
-  description: 'All permissions for Settings',
-  id: 'nx-settings-all',
-  name: 'nx-settings-all',
-  permission: 'nexus:settings:*',
-  readOnly: true,
-  type: 'application',
-}];
-
 const REQUEST = expect.objectContaining({
   action: ACTION,
-  method: METHODS.READ.NAME,
+  method: METHODS.READ,
 });
 
 const FIELDS = {
   NAME: 'name',
-  DESCRIPTION: 'description',
-  TYPE: 'type',
-  PERMISSION: 'permission',
+  TYPE: 'typeName',
+  STATUS: 'statusDescription',
+  SCHEDULE: 'schedule',
+  NEXT_RUN: 'nextRun',
+  LAST_RUN: 'lastRun',
+  LAST_RESULT: 'lastRunResult',
 };
 
-const DEFAULT_DATA = {
-  action: ACTION,
-  data: [
-    {
-      limit: 300,
-      page: 1,
-      sort: [
-        {
-          direction: ASC.toUpperCase(),
-          property: "name"
-        }
-      ],
-      start: 0
-    }
-  ],
-  method: METHODS.READ.NAME,
-  tid: 1,
-  type: 'rpc'
-};
+const sortTasks = (field, order = ASC) => sort((order === ASC ? ascend : descend)(compose(toLower, prop(field))), ROWS);
 
-const sortPrivileges = (field, order = ASC) => sort((order === ASC ? ascend : descend)(prop(field)), ROWS);
-
-describe('PrivilegesList', function() {
+describe('TasksList', function() {
 
   const renderAndWaitForLoad = async () => {
-    render(<PrivilegesList/>);
+    render(<TasksList/>);
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
   }
 
@@ -145,9 +106,13 @@ describe('PrivilegesList', function() {
   it('renders the resolved data with XSS', async function() {
     const XSS_ROWS = [{
       ...ROWS[0],
-      description: XSS_STRING,
       name: XSS_STRING,
-      permission: XSS_STRING,
+      typeName: XSS_STRING,
+      statusDescription: XSS_STRING,
+      schedule: XSS_STRING,
+      nextRun: XSS_STRING,
+      lastRun: XSS_STRING,
+      lastRunResult: XSS_STRING,
     }];
 
     when(Axios.post).calledWith(URL, REQUEST).mockResolvedValue({
@@ -170,59 +135,41 @@ describe('PrivilegesList', function() {
     expect(tableAlert()).toHaveTextContent(message);
   });
 
-  describe('Sorting', function() {
-    const expectProperOrder = async (fieldName, columnName, direction) => {
-      const {headerCell} = selectors;
+  it('sorts the rows by every columns', async function () {
+    const {headerCell} = selectors;
+    await renderAndWaitForLoad();
 
-      let privileges = sortPrivileges(fieldName, direction);
-      when(Axios.post).calledWith(URL, REQUEST).mockResolvedValue({data: TestUtils.makeExtResult(privileges)});
+    let tasks = sortTasks(FIELDS.NAME);
+    TestUtils.expectProperRowsOrder(tasks);
 
-      userEvent.click(headerCell(columnName));
-      let newRequest = clone(DEFAULT_DATA);
-      newRequest.data[0].sort[0] = {
-        direction: direction.toUpperCase(),
-        property: fieldName,
-      };
-      await waitFor(() => expect(Axios.post).toHaveBeenLastCalledWith(URL, newRequest));
+    userEvent.click(headerCell(LABELS.COLUMNS.NAME));
+    tasks = sortTasks(FIELDS.NAME, DESC);
+    TestUtils.expectProperRowsOrder(tasks);
 
-      TestUtils.expectProperRowsOrder(privileges);
-    }
+    userEvent.click(headerCell(LABELS.COLUMNS.TYPE));
+    tasks = sortTasks(FIELDS.TYPE);
+    TestUtils.expectProperRowsOrder(tasks);
 
-    it('sorts the rows by each columns', async function () {
-      await renderAndWaitForLoad();
-      await waitFor(() => expect(Axios.post).toHaveBeenLastCalledWith(URL, REQUEST));
-      TestUtils.expectProperRowsOrder(ROWS);
+    userEvent.click(headerCell(LABELS.COLUMNS.STATUS));
+    tasks = sortTasks(FIELDS.STATUS);
+    TestUtils.expectProperRowsOrder(tasks);
 
-      await expectProperOrder(FIELDS.NAME, LABELS.COLUMNS.NAME, DESC);
-      await expectProperOrder(FIELDS.DESCRIPTION, LABELS.COLUMNS.DESCRIPTION, ASC);
-      await expectProperOrder(FIELDS.DESCRIPTION, LABELS.COLUMNS.DESCRIPTION, DESC);
-      await expectProperOrder(FIELDS.TYPE, LABELS.COLUMNS.TYPE, ASC);
-      await expectProperOrder(FIELDS.PERMISSION, LABELS.COLUMNS.PERMISSION, ASC);
-      await expectProperOrder(FIELDS.PERMISSION, LABELS.COLUMNS.PERMISSION, DESC);
-    });
+    userEvent.click(headerCell(LABELS.COLUMNS.SCHEDULE));
+    userEvent.click(headerCell(LABELS.COLUMNS.SCHEDULE));
+    tasks = sortTasks(FIELDS.SCHEDULE, DESC);
+    TestUtils.expectProperRowsOrder(tasks);
   });
 
-  it('filters by each columns', async function() {
-    const {filter, rows} = selectors;
-    const filterString = 'test';
+  it('filters by every columns', async function() {
+    const {filter} = selectors;
 
     await renderAndWaitForLoad();
 
-    when(Axios.post).calledWith(URL, REQUEST).mockResolvedValue({data: TestUtils.makeExtResult([ROWS[0]])});
-
-    await TestUtils.changeField(filter, filterString);
-
-    let newRequest = clone(DEFAULT_DATA);
-    newRequest.data = [{
-      ...newRequest.data[0],
-      filter: [{
-        value: filterString,
-        property: 'filter',
-      }],
-    }];
-
-    await waitFor(() => expect(Axios.post).toHaveBeenLastCalledWith(URL, newRequest));
-    expect(rows()).toHaveLength(1);
+    await TestUtils.expectProperFilteredItemsCount(filter, '', ROWS.length);
+    await TestUtils.expectProperFilteredItemsCount(filter, 'a-t', 1);
+    await TestUtils.expectProperFilteredItemsCount(filter, 'poli', 1);
+    await TestUtils.expectProperFilteredItemsCount(filter, 'once', 1);
+    await TestUtils.expectProperFilteredItemsCount(filter, 'rep', 2);
   });
 
   it('disables the create button when not enough permissions', async function() {

@@ -22,11 +22,12 @@ import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/Test
 import UIStrings from '../../../../constants/UIStrings';
 import PrivilegesDetails from './PrivilegesDetails';
 import {TYPES as TYPE_IDS, FIELDS} from './PrivilegesHelper';
-import {TYPES, TYPES_MAP, SELECTORS, REPOSITORIES, XSS_STRING} from './Privileges.testdata';
+import {TYPES, TYPES_MAP, SELECTORS, REPOSITORIES} from './Privileges.testdata';
 import {URL} from './PrivilegesHelper';
 
 const {privilegesUrl, singlePrivilegeUrl, updatePrivilegeUrl, createPrivilegeUrl} = URL;
 
+const XSS_STRING = TestUtils.XSS_STRING;
 const {PRIVILEGES: {FORM: LABELS}, SETTINGS} = UIStrings;
 const {EXT: {PRIVILEGE: {METHODS: {READ_TYPES}}, URL: EXT_URL}} = APIConstants;
 
