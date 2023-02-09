@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.internal.node.datastore;
 
+import java.util.Map;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -22,13 +24,14 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.node.datastore.NodeHeartbeatManager;
 import org.sonatype.nexus.node.datastore.NodeIdStore;
 import org.sonatype.nexus.rest.Resource;
 
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 
@@ -51,21 +54,21 @@ public class NodeIdApiResource
 
   private final NodeIdStore nodeIdStore;
 
-  private final NodeAccess nodeAccess;
+  private final NodeHeartbeatManager nodeHeartbeatManager;
 
   @Inject
-  public NodeIdApiResource(final NodeIdStore nodeIdStore, final NodeAccess nodeAccess) {
+  public NodeIdApiResource(final NodeIdStore nodeIdStore,
+                           final NodeHeartbeatManager nodeHeartbeatManager) {
     this.nodeIdStore = nodeIdStore;
-    this.nodeAccess = nodeAccess;
+    this.nodeHeartbeatManager = checkNotNull(nodeHeartbeatManager);
   }
 
   @Override
   @GET
   @RequiresAuthentication
   @RequiresPermissions("nexus:*")
-  public NodeInformation getNodeId() {
-    // we return an object here to maintain an API similar to multi-node
-    return new NodeInformation(nodeAccess.getId());
+  public Map<String, Map<String, Object>> getNodesInformation() {
+    return nodeHeartbeatManager.getSystemInformationForNodes();
   }
 
   @Override
@@ -74,13 +77,5 @@ public class NodeIdApiResource
   @RequiresPermissions("nexus:*")
   public void clear() {
     nodeIdStore.clear();
-  }
-
-  public static class NodeInformation {
-    public final String nodeId;
-
-    public NodeInformation(final String nodeId) {
-      this.nodeId = nodeId;
-    }
   }
 }

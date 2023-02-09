@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.internal.node.datastore;
 
-import org.sonatype.nexus.internal.node.datastore.NodeIdApiResource.NodeInformation;
+import java.util.Map;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -27,9 +27,9 @@ import io.swagger.annotations.ApiResponses;
 @Api(value = "System: Nodes")
 public interface NodeIdApiResourceDoc
 {
-  @ApiOperation("Get information about this node")
-  @ApiResponses(value = {@ApiResponse(code = 403, message = "Insufficient permissions to update settings")})
-  NodeInformation getNodeId();
+  @ApiOperation("Get information about all nodes")
+  @ApiResponses(value = {@ApiResponse(code = 403, message = "Insufficient permissions to request this data")})
+  Map<String, Map<String, Object>> getNodesInformation();
 
   @ApiOperation("Reset the ID for this node. Takes effect after restart and should only be used when cloning an instance")
   @ApiResponses(value = {@ApiResponse(code = 403, message = "Insufficient permissions to update settings")})
