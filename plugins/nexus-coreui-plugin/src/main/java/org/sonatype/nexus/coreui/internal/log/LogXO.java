@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.sonatype.nexus.common.log.LogManager;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,8 +42,11 @@ public class LogXO
   public LogXO(Path path) {
     checkNotNull(path);
     try {
-      if (path.getParent().getFileName().toString().equals("tasks")) {
-        this.fileName = "tasks/" + path.getFileName().toString();
+      if (LogManager.TASKS_PREFIX.startsWith(path.getParent().getFileName().toString())) {
+        this.fileName = LogManager.TASKS_PREFIX + path.getFileName().toString();
+      }
+      else if (LogManager.REPLICATION_PREFIX.startsWith(path.getParent().getFileName().toString())) {
+        this.fileName = LogManager.REPLICATION_PREFIX + path.getFileName().toString();
       }
       else {
         this.fileName = path.getFileName().toString();

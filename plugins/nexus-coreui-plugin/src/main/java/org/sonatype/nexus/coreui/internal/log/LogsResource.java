@@ -17,9 +17,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -37,7 +35,6 @@ import org.sonatype.nexus.logging.task.TaskLogHome;
 import org.sonatype.nexus.rest.APIConstants;
 import org.sonatype.nexus.rest.Resource;
 
-import com.google.common.collect.Sets;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -77,14 +74,25 @@ public class LogsResource
   @Produces({APPLICATION_JSON})
   @RequiresPermissions("nexus:logging:read")
   public Set<LogXO> listLogs() throws IOException {
-    Predicate<java.nio.file.Path> isValidLog = path -> path.getFileName().toString().toLowerCase().endsWith(".log");
 
     Set<LogXO> logs = logManager.getLogFiles().stream().map(file -> new LogXO(file.toPath())).collect(toSet());
-    try (Stream<java.nio.file.Path> directory = Files.list(Paths.get(TaskLogHome.getTaskLogsHome()))) {
-      Set<LogXO> taskLogs = directory
-          .filter(isValidLog)
-          .map(LogXO::new).collect(toSet());
-      return Sets.union(logs, taskLogs);
+
+    if (TaskLogHome.getTaskLogsHome() != null) {
+      aggregateLogs(logs, TaskLogHome.getTaskLogsHome());
+    }
+
+    if (TaskLogHome.getReplicationLogsHome().isPresent()) {
+      aggregateLogs(logs, TaskLogHome.getReplicationLogsHome().get());
+    }
+
+    return logs;
+  }
+
+  private void aggregateLogs(final Set<LogXO> logs, final String pathname) throws IOException {
+    if (pathname != null) {
+      try (Stream<java.nio.file.Path> paths = Files.list(Paths.get(pathname))) {
+        paths.filter(logManager::isValidLogFile).forEach(path -> logs.add(new LogXO(path)));
+      }
     }
   }
 
@@ -95,9 +103,10 @@ public class LogsResource
   @Path("/{filename: .*\\.log}")
   @Produces({TEXT_PLAIN})
   @RequiresPermissions("nexus:logging:read")
-  public Response get(@PathParam("filename") final String filename,
-                      @QueryParam("fromByte") final Long fromByte,
-                      @QueryParam("bytesCount") final Long bytesCount)
+  public Response get(
+      @PathParam("filename") final String filename,
+      @QueryParam("fromByte") final Long fromByte,
+      @QueryParam("bytesCount") final Long bytesCount)
       throws NotFoundException, IOException
   {
     Long from = fromByte;

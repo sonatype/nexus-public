@@ -15,6 +15,7 @@ package org.sonatype.nexus.common.log;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -30,10 +31,16 @@ public interface LogManager
 {
   String DEFAULT_LOGGER = "logfile";
 
+  static final String TASKS_PREFIX = "tasks/";
+
+  static final String REPLICATION_PREFIX = "replication/";
+
   Set<File> getLogFiles();
 
   @Nullable
   File getLogFile(String fileName);
+
+  boolean isValidLogFile(Path filepath);
 
   /**
    * If the named logger is a file based log, return the file name associated with it.
