@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.RepositoryContent;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAttributes;
@@ -30,6 +31,10 @@ public class FormatAttributesUtils
 {
   public static Map<String, Object> getFormatAttributes(final FluentAsset fluent) {
     return getFormatAttributes(fluent.repository().getFormat().getValue(), fluent);
+  }
+
+  public static Map<String, Object> getFormatAttributes(final Asset asset, final String formatName) {
+    return getFormatAttributes(formatName, asset);
   }
 
   public static Map<String, Object> getFormatAttributes(final FluentComponent fluent) {
