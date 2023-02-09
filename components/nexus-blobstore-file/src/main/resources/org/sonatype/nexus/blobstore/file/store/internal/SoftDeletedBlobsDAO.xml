@@ -25,6 +25,9 @@
       deleted_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
       CONSTRAINT pk_soft_deleted_blobs_record_id PRIMARY KEY (record_id)
     );
+
+    CREATE INDEX IF NOT EXISTS idx_soft_deleted_blobs_source_blob_store_name
+        ON soft_deleted_blobs (source_blob_store_name, blob_id);
   </insert>
 
   <insert id="createRecord">

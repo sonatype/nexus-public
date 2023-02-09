@@ -26,6 +26,8 @@
 
       CONSTRAINT pk_cleanup_policy_name PRIMARY KEY (name)
     );
+
+    CREATE INDEX IF NOT EXISTS idx_cleanup_policy_format ON cleanup_policy (format);
   </insert>
 
   <select id="browse" resultType="CleanupPolicyData">
