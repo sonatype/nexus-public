@@ -15,6 +15,7 @@ package org.sonatype.nexus.blobstore.api;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -28,11 +29,33 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class BlobRef
 {
   /**
-   * Handle both {@code store-name@blob-id} and {@code store-name:blob-id@node-id} blob ref formats
+   * The delimiters for blobref segments. This regexp matches non-delimiter text that has at least 1-character
    */
-  private static final Pattern BLOB_REF_PATTERN = Pattern.compile("([^@]+)@(.+)");
+  private static final String NON_SEPARATOR = "[^:@]+";
 
-  private static final Pattern SPLIT_PATTERN = Pattern.compile("([^@:]+):([^@:].+)");
+  /**
+   * String of the pattern used on 3.47.1 and newer for blobref. Matches {@code store@blob-id}
+   */
+  private static final String CANONICAL_PATTERN =
+      String.format("(?<store>%s)@(?<blobid>%s)", NON_SEPARATOR, NON_SEPARATOR);
+
+  /**
+   * String of the pattern used on OrientDB installs prior to 3.47.0. Matches {@code store@node-id:blob-id}
+   */
+  private static final String ORIENT_PATTERN =
+      String.format("(?<ostore>%s)@(%s):(?<oblobid>%s)", NON_SEPARATOR, NON_SEPARATOR, NON_SEPARATOR);
+
+  /**
+   * String of the pattern used on SQL installs prior to 3.47.0. Matches {@code store:blob-id@node-id}
+   */
+  private static final String SQL_PATTERN =
+      String.format("(?<sstore>%s):(?<sblobid>%s)@(%s)", NON_SEPARATOR, NON_SEPARATOR, NON_SEPARATOR);
+
+  /**
+   * Matcher which matches all 3 formats
+   */
+  private static final Pattern BLOB_REF_PATTERN =
+      Pattern.compile(String.format("(%s)|(%s)|(%s)", CANONICAL_PATTERN, ORIENT_PATTERN, SQL_PATTERN));
 
   private static final String BLOB_REF_SIMPLE_FORMAT = "%s@%s";
 
@@ -56,23 +79,25 @@ public class BlobRef
     Matcher matcher = BLOB_REF_PATTERN.matcher(spec);
     checkArgument(matcher.matches(), "Not a valid blob reference");
 
-    String firstPart = matcher.group(1);
-    if (firstPart.contains(":")) {
-      Matcher splitMatcher = SPLIT_PATTERN.matcher(firstPart);
-      checkArgument(splitMatcher.matches(), "Not a valid blob reference");
-
-      String store = splitMatcher.group(1);
-      String blobId = splitMatcher.group(2);
-      return new BlobRef(store, blobId);
-    } else {
-      String store = firstPart;
-      String blobId = matcher.group(2);
-      if (store.isEmpty() || blobId.isEmpty()) {
-        throw new IllegalArgumentException("Not a valid blob reference");
-      } else {
-        return new BlobRef(store, blobId);
-      }
+    String store = matcher.group("store");
+    if (store != null) {
+      // canonical pattern
+      return new BlobRef(store, matcher.group("blobid"));
     }
+
+    store = matcher.group("ostore");
+    if (store != null) {
+      // orient pattern
+      return new BlobRef(store, matcher.group("oblobid"));
+    }
+
+    store = matcher.group("sstore");
+    if (store != null) {
+      // sql pattern
+      return new BlobRef(store, matcher.group("sblobid"));
+    }
+
+    throw new IllegalArgumentException("Not a valid blob reference");
   }
 
   @Nullable
