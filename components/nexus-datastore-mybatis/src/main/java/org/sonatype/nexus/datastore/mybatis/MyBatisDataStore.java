@@ -51,6 +51,7 @@ import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
 import org.sonatype.nexus.crypto.internal.MavenCipherImpl;
 import org.sonatype.nexus.datastore.DataStoreSupport;
 import org.sonatype.nexus.datastore.api.DataAccess;
+import org.sonatype.nexus.datastore.api.DataAccessException;
 import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.datastore.api.Expects;
 import org.sonatype.nexus.datastore.api.SchemaTemplate;
@@ -257,7 +258,16 @@ public class MyBatisDataStore
     info("Creating schema for {}", accessType.getSimpleName());
     try (SqlSession session = new DataAccessSqlSession(mybatisConfig)) {
       DataAccess dao = session.getMapper(accessType);
-      dao.createSchema();
+      boolean done = false;
+      do {
+        try {
+          dao.createSchema();
+          done = true;
+        }
+        catch (DataAccessException dae) {
+          //ignore
+        }
+      } while (!done);
       dao.extendSchema();
       session.commit();
     }
