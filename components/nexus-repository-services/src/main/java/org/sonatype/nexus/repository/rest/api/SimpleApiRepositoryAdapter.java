@@ -50,6 +50,7 @@ import com.google.common.reflect.TypeToken;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.requireNonNull;
+import static org.sonatype.nexus.common.app.FeatureFlags.REPLICATION_HTTP_ENABLED;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.COMPONENT;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.GROUP_WRITE_MEMBER;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.PROPRIETARY_COMPONENTS;
@@ -72,7 +73,7 @@ public class SimpleApiRepositoryAdapter
   }
 
   @Inject
-  @Named("${nexus.replication.http.enabled:-false}")
+  @Named("${" + REPLICATION_HTTP_ENABLED + ":-true}")
   private boolean replicationFeatureEnabled;
 
   @Inject
