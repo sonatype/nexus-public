@@ -57,9 +57,7 @@ public class EmailAuditor
       attributes.put("username", configuration.getUsername());
       attributes.put("fromAddress", configuration.getFromAddress());
       attributes.put("subjectPrefix", configuration.getSubjectPrefix());
-
-      // TODO: various ssl/tls/trust-store shit
-
+      
       record(data);
     }
   }
