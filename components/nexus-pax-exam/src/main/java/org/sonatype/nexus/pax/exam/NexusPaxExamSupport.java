@@ -771,7 +771,7 @@ public abstract class NexusPaxExamSupport
         editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.skipDefaultRepositories", "false");
 
     List<String> formats = Arrays.asList("apt", "cocoapods", "conan", "conda", "gitlfs", "go", "helm", "nuget",
-        "p2", "pypi", "r", "raw", "rubygems", "yum");
+        "p2", "pypi", "raw", "rubygems", "yum");
     Option haFormats = composite(formats.stream()
         .map(format -> editConfigurationFilePut(NEXUS_PROPERTIES_FILE, format("nexus.%s.ha.supported", format), "true"))
         .toArray(Option[]::new));

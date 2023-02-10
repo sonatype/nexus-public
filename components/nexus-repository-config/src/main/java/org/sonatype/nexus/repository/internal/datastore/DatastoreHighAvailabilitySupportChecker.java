@@ -42,6 +42,7 @@ public class DatastoreHighAvailabilitySupportChecker
         .add("docker")
         .add("maven2")
         .add("npm")
+        .add("r")
         .build();
   }
 }
