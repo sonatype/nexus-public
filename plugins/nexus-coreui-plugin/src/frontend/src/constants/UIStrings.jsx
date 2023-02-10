@@ -48,12 +48,14 @@ import DataStoreStrings from './pages/admin/repository/DataStoreStrings';
 import ReplicationStrings from './pages/admin/repository/ReplicationStrings';
 import UserTokenConfigurationStrings from './pages/admin/security/UserTokenStrings';
 import UserTokenStrings from './pages/user/UserTokenStrings';
+import TagsStrings from './pages/browse/tags/TagsStrings';
 
 export default {
   ...UIStrings,
 
   // browse
   ...Log4jVisualizerStrings,
+  ...TagsStrings,
 
   // admin
   ...IqServerStrings,

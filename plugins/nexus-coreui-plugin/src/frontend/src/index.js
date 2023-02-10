@@ -57,6 +57,7 @@ import SamlConfiguration from "./components/pages/admin/SamlConfiguration/SamlCo
 import Replication from "./components/pages/admin/Replication/Replication";
 import DataStoreConfiguration from "./components/pages/admin/DataStoreConfiguration/DataStoreConfiguration";
 import UserToken from "./components/pages/user/UserToken/UserToken";
+import Tags from './components/pages/browse/Tags/Tags';
 
 window.ReactComponents = {
   ...window.ReactComponents,
@@ -521,6 +522,22 @@ window.plugins.push({
         ],
         permissions: ['nexus:replication:read']
       }
-    }
+    },
+    {
+      mode: 'browse',
+      path: '/Tags',
+      ...UIStrings.TAGS.MENU,
+      view: Tags,
+      iconCls: 'x-fa fa-tags',
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        featureFlags: [{
+          key: 'nexus.react.tags',
+          defaultValue: false
+        }],
+        permissions: [Permissions.TAGS.READ],
+        editions: ['PRO']
+      },
+    },
   ]
 });

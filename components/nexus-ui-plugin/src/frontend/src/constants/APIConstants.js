@@ -202,6 +202,9 @@ export default {
       get USER_TOKENS() {
         return `${this.BASE_URL}security/user-tokens`;
       },
+      get TAGS() {
+        return `${this.BASE_URL}tags`;
+      },
     },
   },
   DEBOUNCE_DELAY: 500,
