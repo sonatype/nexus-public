@@ -33,7 +33,7 @@ export default {
     AUDITLOGFILES_LABEL: 'Audit log files',
     METRICS_LABEL: 'System and component metrics',
     JMX_LABEL: 'JMX information',
-    REPLICATION_LABEL: 'Native replication logs (rsync or awscli)',
+    REPLICATION_LABEL: 'Replication log files',
     LIMITFILESIZES_LABEL: 'Limit files in the ZIP archive to 30 MB apiece',
     LIMITZIPSIZE_LABEL: 'Limit the ZIP archive to 20 MB',
     CREATED_TITLE: 'Support ZIP Created',

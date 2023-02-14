@@ -68,6 +68,13 @@ export default function SupportZipForm({params, setParams, submit, clustered, ha
             {UIStrings.SUPPORT_ZIP.TASKLOGFILES_LABEL}
           </NxCheckbox>
           <NxCheckbox
+              checkboxId='replication'
+              isChecked={params.replication}
+              onChange={setParams}
+          >
+            {UIStrings.SUPPORT_ZIP.REPLICATION_LABEL}
+          </NxCheckbox>
+          <NxCheckbox
               checkboxId='auditLog'
               isChecked={params.auditLog}
               onChange={setParams}
@@ -87,13 +94,6 @@ export default function SupportZipForm({params, setParams, submit, clustered, ha
               onChange={setParams}
           >
             {UIStrings.SUPPORT_ZIP.JMX_LABEL}
-          </NxCheckbox>
-          <NxCheckbox
-              checkboxId='replication'
-              isChecked={params.replication}
-              onChange={setParams}
-          >
-            {UIStrings.SUPPORT_ZIP.REPLICATION_LABEL}
           </NxCheckbox>
         </NxFieldset>
         <NxFieldset label={UIStrings.SUPPORT_ZIP.OPTIONS}>
