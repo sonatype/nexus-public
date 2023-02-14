@@ -58,6 +58,7 @@ import Replication from "./components/pages/admin/Replication/Replication";
 import DataStoreConfiguration from "./components/pages/admin/DataStoreConfiguration/DataStoreConfiguration";
 import UserToken from "./components/pages/user/UserToken/UserToken";
 import Tags from './components/pages/browse/Tags/Tags';
+import Nodes from "./components/pages/admin/Nodes/NodeList";
 
 window.ReactComponents = {
   ...window.ReactComponents,
@@ -419,6 +420,22 @@ window.plugins.push({
       visibility: {
         featureFlags: [{key: 'nexus.react.licensing', defaultValue: true}],
         permissions: [Permissions.LICENSING.READ]
+      },
+    },
+    {
+      mode: 'admin',
+      path: '/System/Nodes',
+      ...UIStrings.NODES.MENU,
+      view: Nodes,
+      iconCls: 'x-fa fa-archive',
+      visibility: {  
+        permissions: [Permissions.ADMIN],      
+        statesEnabled: [
+          {
+            key: 'nexus.datastore.clustered.enabled',
+            defaultValue: false
+          }
+        ]
       },
     },
     {

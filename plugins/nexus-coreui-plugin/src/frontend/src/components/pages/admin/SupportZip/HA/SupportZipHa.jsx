@@ -89,12 +89,12 @@ export default function SupportZipHa() {
     });
   }
 
-  return <Page>
+  return <Page className="nxrm-support-zip-ha">
     <PageHeader>
       <PageTitle icon={faArchive} {...LABELS.MENU_HA}/>
     </PageHeader>
 
-    <ContentBody className="nxrm-support-zip">
+    <ContentBody>
       <NxPageTitle>
         <NxH2>
           {LABELS.AVAILABLE_NODES}

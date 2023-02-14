@@ -78,6 +78,13 @@ export default {
         UPDATE_ROLE_MAPPINGS: 'updateRoleMappings',
       },
     },
+    FREEZE: {
+      ACTION: 'coreui_Freeze',
+      METHODS: {
+        UPDATE: 'update',
+        FORCE_RELEASE: 'forceRelease'
+      }
+    },
     SMALL_PAGE_SIZE: 25,
     MIDDLE_PAGE_SIZE: 50,
     BIG_PAGE_SIZE: 300,

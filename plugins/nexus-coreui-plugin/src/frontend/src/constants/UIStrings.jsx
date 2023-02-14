@@ -49,6 +49,7 @@ import ReplicationStrings from './pages/admin/repository/ReplicationStrings';
 import UserTokenConfigurationStrings from './pages/admin/security/UserTokenStrings';
 import UserTokenStrings from './pages/user/UserTokenStrings';
 import TagsStrings from './pages/browse/tags/TagsStrings';
+import NodesStrings from './pages/admin/system/NodesStrings';
 
 export default {
   ...UIStrings,
@@ -96,6 +97,7 @@ export default {
   ...HttpStrings,
   ...TasksStrings,
   ...LicensingStrings,
+  ...NodesStrings,
   ...SystemInformationStrings,
 
   // user

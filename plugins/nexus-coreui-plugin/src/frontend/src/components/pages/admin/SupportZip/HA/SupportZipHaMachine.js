@@ -19,10 +19,6 @@ import {assign} from 'xstate';
 
 import {APIConstants, ExtJS, FormUtils} from "@sonatype/nexus-ui-plugin";
 
-import UIStrings from "../../../../../constants/UIStrings";
-
-const {SUPPORT_ZIP: LABELS} = UIStrings;
-
 export default FormUtils.buildFormMachine({
   id: 'SupportZipHaMachine',
 
@@ -105,7 +101,7 @@ export default FormUtils.buildFormMachine({
   services: {
     fetchData: () => Axios.get(APIConstants.REST.INTERNAL.GET_SUPPORT_ZIP_ACTIVE_NODES),
 
-    createHaZip: (context, event) => {
+    createHaZip: (_, event) => {
       const node = event?.data?.node || null;
       const zipParams = event?.data?.params || null;
 

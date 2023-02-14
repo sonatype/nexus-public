@@ -34,7 +34,6 @@ describe('NodeCard', function () {
 
     const selectors = {
         nodeHostName: (hostname) => screen.getByText(hostname),
-        activeIndicator: async () => await screen.findByText(NODE_ACTIVE_INDICATOR),
         downloadZipStatus: () => screen.getByText(DOWNLOAD_ZIP_STATUS),
         noZipCreated: () => screen.getByText(NO_ZIP_CREATED),
         zipCreate: () => screen.getByText(CREATE_ZIP_STATUS),
@@ -52,7 +51,6 @@ describe('NodeCard', function () {
         renderView(activeNode);
 
         expect(selectors.nodeHostName(activeNode.hostname)).toBeInTheDocument();
-        expect(await selectors.activeIndicator()).toBeInTheDocument();
     });
 
 
@@ -61,7 +59,6 @@ describe('NodeCard', function () {
         renderView(node);
 
         expect(selectors.nodeHostName(node.hostname)).toBeInTheDocument();
-        expect(await selectors.activeIndicator()).toBeInTheDocument();
         expect(selectors.downloadZipStatus()).toBeInTheDocument();
     });
 
@@ -70,7 +67,6 @@ describe('NodeCard', function () {
         renderView(node);
 
         expect(selectors.nodeHostName(node.hostname)).toBeInTheDocument();
-        expect(await selectors.activeIndicator()).toBeInTheDocument();
         expect(selectors.noZipCreated()).toBeInTheDocument();
         expect(selectors.zipCreate()).toBeInTheDocument();
     });
@@ -80,7 +76,6 @@ describe('NodeCard', function () {
         renderView(node);
 
         expect(selectors.nodeHostName(node.hostname)).toBeInTheDocument();
-        expect(await selectors.activeIndicator()).toBeInTheDocument();
         expect(selectors.zipCreating()).toBeInTheDocument();
     });
 });

@@ -105,7 +105,10 @@ function registerFeature(feature) {
       }
 
       if (isVisible && visibility.statesEnabled) {
-        isVisible = visibility.statesEnabled.every(state => NX.State.getValue(state.key, state.defaultValue)['enabled']);
+        isVisible = visibility.statesEnabled.every(state => {
+          const stateValue = NX.State.getValue(state.key, state.defaultValue);
+          return typeof stateValue === "boolean" ? stateValue : stateValue.enabled;
+        });
         console.debug("statesEnabled="+isVisible, visibility.statesEnabled);
       }
 
