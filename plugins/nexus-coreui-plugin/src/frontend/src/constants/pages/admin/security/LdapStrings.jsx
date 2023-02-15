@@ -64,8 +64,8 @@ export default {
       PROTOCOL: {
         LABEL: 'Protocol',
         OPTIONS: {
-          ldap: 'ldap',
-          ldaps: 'ldaps',
+          ldap: 'LDAP',
+          ldaps: 'LDAPS',
         }
       },
       HOSTNAME: 'Hostname',
@@ -78,19 +78,19 @@ export default {
         LABEL: 'Authentication method',
         OPTIONS: {
           simple: {
-            id: 'simple',
+            id: 'SIMPLE',
             label: 'Simple Authentication'
           },
           anonymous: {
-            id: 'none',
+            id: 'NONE',
             label: 'Anonymous Authentication'
           },
           digest: {
-            id: 'DIGEST-MD5',
+            id: 'DIGEST_MD5',
             label: 'DIGEST-MD5'
           },
           cram: {
-            id: 'CRAM-MD5',
+            id: 'CRAM_MD5',
             label: 'CRAM-MD5'
           }
         }
@@ -107,6 +107,7 @@ export default {
         LABEL: 'Password',
         SUB_LABEL: 'The password to bind with'
       },
+      CHANGE_PASSWORD: 'Change password',
       CONNECTION_RULES: {
         LABEL: 'Connection Rules',
         SUB_LABEL:'Set timeout parameters and max connection attempts to avoid being blacklisted'
@@ -159,11 +160,11 @@ export default {
         LABEL: 'Group type',
         OPTIONS: {
           dynamic: {
-            id: 'dynamic',
+            id: 'DYNAMIC',
             label: 'Dynamic Groups'
           },
           static: {
-            id: 'static',
+            id: 'STATIC',
             label: 'Static Groups'
           }
         }
@@ -195,9 +196,28 @@ export default {
         LABEL: 'Group member format',
         SUB_LABEL: 'The format of user ID stored in the group member attribute (e.g. "uid=${username},ou=people,dc=example,dc=com")'
       },
+      ALERT: 'Proceed to the User and Group tab to confirm changes and save.',
+      DELETE_BUTTON: 'Delete Connection',
+      MODAL_DELETE: {
+        LABEL: 'Confirm deletion',
+        YES: 'YES',
+        NO: 'NO'
+      },
+      MODAL_PASSWORD: {
+        TITLE: 'LDAP Server system password',
+        LABEL: 'Password',
+        SUB_LABEL: 'The password to bind with'
+      },
+      TABS: {
+        CONNECTION: 'Connection',
+        USER_AND_GROUP: 'User and Group'
+      },
       VERIFY_SUCCESS_MESSAGE: (url) => `Connection to LDAP server verified: ${url}`,
+      DELETE_SUCCESS_MESSAGE: (name) => `LDAP server deleted: ${name}`,
       SAVE_SUCCESS_MESSAGE: (name) => `LDAP server created: ${name}`,
+      UPDATE_SUCCESS_MESSAGE: (name) => `LDAP server updated: ${name}`,
       VERIFYING_MESSAGE: (url) => `Checking connection to ${url}`,
+      CHANGING_PASSWORD_MESSAGE: (url) => `Changing password to ${url}`,
     }
   }
 };

@@ -44,7 +44,7 @@ import {
 } from '@sonatype/react-shared-components';
 import {faSortNumericUp, faTrashAlt} from '@fortawesome/free-solid-svg-icons';
 
-import {canClearLDAPCache, canChangeLDAPOrder} from './LdapServersHelper';
+import {canDelete, canUpdate} from './LdapServersHelper';
 
 import {faBook} from '@fortawesome/free-solid-svg-icons';
 
@@ -140,13 +140,13 @@ export default function LdapServersList({onCreate, onEdit}) {
           <NxPageTitle>
             <NxH2>{LABELS.LABEL}</NxH2>
             <NxButtonBar>
-              {canChangeLDAPOrder() && (
+              {canUpdate() && (
                 <NxButton type="button" onClick={change} variant="tertiary">
                   <NxFontAwesomeIcon icon={faSortNumericUp} />
                   <span>{LABELS.BUTTONS.CHANGE_ORDER}</span>
                 </NxButton>
               )}
-              {canClearLDAPCache() && (
+              {canDelete() && (
                 <NxButton type="button" onClick={clear} variant="tertiary">
                   <NxFontAwesomeIcon icon={faTrashAlt} />
                   <span>{LABELS.BUTTONS.CLEAR_CACHE}</span>
@@ -196,7 +196,11 @@ export default function LdapServersList({onCreate, onEdit}) {
               emptyMessage={LABELS.EMPTY_LIST}
             >
               {data.map(({id, order, name, url}) => (
-                <NxTableRow key={id} onClick={() => onEdit(id)} isClickable>
+                <NxTableRow
+                  key={id}
+                  onClick={() => onEdit(encodeURIComponent(name))}
+                  isClickable
+                >
                   <NxTableCell>{order}</NxTableCell>
                   <NxTableCell>{name}</NxTableCell>
                   <NxTableCell>{url}</NxTableCell>

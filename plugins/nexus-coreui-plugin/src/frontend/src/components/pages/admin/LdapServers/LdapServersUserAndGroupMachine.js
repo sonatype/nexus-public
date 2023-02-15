@@ -23,20 +23,38 @@ import {
   ValidationUtils,
   ExtJS,
 } from '@sonatype/nexus-ui-plugin';
-import {mergeDeepRight, omit, dissoc} from 'ramda';
+import {
+  mergeDeepRight,
+  omit,
+  dissoc,
+  lensProp,
+  set,
+  toUpper,
+  modify,
+} from 'ramda';
 
-import {isDynamicGroup, isStaticGroup} from './LdapServersHelper';
+import {
+  isDynamicGroup,
+  isStaticGroup,
+  isAnonymousAuth,
+  URL,
+} from './LdapServersHelper';
+
+import UIStrings from '../../../../constants/UIStrings';
+
+const {
+  LDAP_SERVERS: {FORM: LABELS},
+} = UIStrings;
+
+const {singleLdapServersUrl, ldapServersUrl} = URL;
 
 const {
   EXT: {
     LDAP: {ACTION, METHODS},
   },
-  REST: {
-    PUBLIC: {LDAP_SERVERS},
-  },
 } = APIConstants;
 
-const initialState = {
+export const initialState = {
   userBaseDn: '',
   userSubtree: false,
   ldapGroupsAsRoles: true,
@@ -46,39 +64,78 @@ const initialState = {
   userRealNameAttribute: '',
   userEmailAddressAttribute: '',
   userPasswordAttribute: '',
-  groupType: 'dynamic',
-  userMemberOfAttribute: '',
-  groupBaseDn: '',
+  groupType: LABELS.GROUP_TYPE.OPTIONS.dynamic.id,
+  userMemberOfAttribute: null,
+  groupBaseDn: null,
   groupSubtree: false,
-  groupObjectClass: '',
-  groupIdAttribute: '',
-  groupMemberAttribute: '',
-  groupMemberFormat: '',
+  groupObjectClass: null,
+  groupIdAttribute: null,
+  groupMemberAttribute: null,
+  groupMemberFormat: null,
 };
 
 export default FormUtils.buildFormMachine({
   id: 'LdapServersUserAndGroupMachine',
   config: (config) =>
     mergeDeepRight(config, {
-      context: {
-        templates: [],
-        template: '',
-        data: initialState,
-        pristineData: initialState,
-      },
       states: {
-        loading: {
-          on: {
-            CONNECTION_READY: {
-              actions: 'saveConnectionData',
-            },
-          },
+        saving: {
+          id: 'saving',
         },
         loaded: {
+          id: 'loaded',
           on: {
+            SAVE: [
+              {
+                target: 'askingPassword.verifyingConnection',
+                cond: 'isEditAndAnonymous',
+              },
+              {
+                target: 'askingPassword',
+                cond: 'isEdit',
+              },
+              {
+                target: 'saving',
+                cond: 'canSave',
+              },
+            ],
             UPDATE_TEMPLATE: {
               target: 'loaded',
               actions: 'updateTemplate',
+            },
+            UPDATE_DATA: {
+              target: 'loaded',
+              actions: 'updateData',
+            },
+            CLEAR_PASSWORD: {
+              actions: ['clearPassword', 'setIsPristine'],
+            },
+          },
+        },
+        askingPassword: {
+          initial: 'idle',
+          on: {
+            CANCEL: {
+              target: 'loaded',
+            },
+            DONE: {
+              target: '.verifyingConnection',
+              actions: ['update', 'validate', 'setDirtyFlag', 'setIsPristine'],
+            },
+          },
+          states: {
+            idle: {},
+            verifyingConnection: {
+              entry: 'verifyConnection',
+              on: {
+                CONNECTION_CORRECT: {
+                  target: '#saving',
+                },
+                CONNECTION_ERROR: {
+                  target: '#loaded',
+                  actions: 'showPasswordError',
+                },
+              },
             },
           },
         },
@@ -134,13 +191,28 @@ export default FormUtils.buildFormMachine({
         };
       },
     }),
+    clearPassword: assign({
+      pristineData: ({pristineData}) =>
+        set(lensProp('authPassword'), '', pristineData),
+    }),
+    showPasswordError: assign({
+      saveError: (_, event) => event.errorMessage,
+      saveErrors: (_, event) => ({
+        authPassword: event.errorMessage,
+      }),
+      saveErrorData: ({data}) => data,
+    }),
+    verifyConnection: sendParent(({data}) => ({
+      type: 'VERIFY_CONNECTION',
+      data,
+    })),
     setData: assign((ctx, event) => {
-      const templates = ExtAPIUtils.extractResult(event.data) || {};
+      const templates = ExtAPIUtils.extractResult(event.data) || ctx.templates;
 
-      return {
-        ...ctx,
-        templates,
-      };
+      return mergeDeepRight(ctx, {templates});
+    }),
+    updateData: assign({
+      data: (ctx, {data}) => mergeDeepRight(ctx.data, data),
     }),
     updateTemplate: assign((ctx, {value}) => {
       const template = ctx.templates.find(
@@ -148,20 +220,27 @@ export default FormUtils.buildFormMachine({
       );
 
       // Omits the template name to no override the current name key.
-      const data = dissoc('name', template);
+      let data = dissoc('name', template);
+
+      data = modify('groupType', toUpper, data);
 
       return mergeDeepRight(ctx, {template: value, data});
     }),
-    saveConnectionData: assign((ctx, {data}) => mergeDeepRight(ctx, {data})),
     onSaveSuccess: sendParent('SAVE'),
-    logSaveSuccess: () => ({}),
+    logSaveSuccess: assign((context) => context),
     logSaveError: (_, {data}) => {
       ExtJS.showErrorMessage(data.response.data);
     },
   },
+  guards: {
+    isEdit: (context, event) => !event.isParent && context.isEdit,
+    isEditAndAnonymous: (context) =>
+      context.isEdit && isAnonymousAuth(context.data?.authScheme),
+  },
   services: {
-    fetchData: () => ExtAPIUtils.extAPIRequest(ACTION, METHODS.READ_TEMPLATES),
-    saveData: async ({data}) => {
+    fetchData: async () =>
+      await ExtAPIUtils.extAPIRequest(ACTION, METHODS.READ_TEMPLATES),
+    saveData: async ({data, isEdit}) => {
       let request = data;
 
       // There is a mismatch between REST api and Ext api
@@ -170,19 +249,23 @@ export default FormUtils.buildFormMachine({
       request.connectionTimeoutSeconds = data.connectionTimeout;
 
       if (!data.ldapGroupsAsRoles || isDynamicGroup(data.groupType)) {
-        request.groupBaseDn = '';
-        request.groupSubtree = false;
-        request.groupObjectClass = '';
-        request.groupIdAttribute = '';
-        request.groupMemberAttribute = '';
-        request.groupMemberFormat = '';
+        request.groupBaseDn = initialState.groupBaseDn;
+        request.groupSubtree = initialState.groupSubtree;
+        request.groupObjectClass = initialState.groupObjectClass;
+        request.groupIdAttribute = initialState.groupIdAttribute;
+        request.groupMemberAttribute = initialState.groupMemberAttribute;
+        request.groupMemberFormat = initialState.groupMemberFormat;
       }
 
       if (!data.ldapGroupsAsRoles || isStaticGroup(data.groupType)) {
-        request.userMemberOfAttribute = '';
+        request.userMemberOfAttribute = initialState.userMemberOfAttribute;
       }
 
-      return Axios.post(LDAP_SERVERS, request);
+      if (isEdit) {
+        return Axios.put(singleLdapServersUrl(request.name), request);
+      }
+
+      return Axios.post(ldapServersUrl, request);
     },
   },
 });

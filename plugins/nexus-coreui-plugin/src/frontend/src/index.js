@@ -186,7 +186,7 @@ window.plugins.push({
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         featureFlags: [{key: 'nexus.react.ldap', defaultValue: false}],
-        permissions: ['nexus:ldap:read']
+        permissions: [Permissions.LDAP.READ]
       }
     },
     {

@@ -58,7 +58,7 @@ export default {
   METRICS: generatePermissions('metrics', [READ]),
   BUNDLES: generatePermissions('bundles', [READ]),
   LICENSING: generatePermissions('licensing', [READ, CREATE, UNINSTALL]),
-  LDAP: generatePermissions('ldap', [CREATE, DELETE, UPDATE]),
+  LDAP: generatePermissions('ldap'),
   USER_TOKENS_SETTINGS: generatePermissions('usertoken-settings', [READ, UPDATE]),
   USER_TOKENS_USERS: generatePermissions('usertoken-users', [DELETE]),
   TAGS: generatePermissions('tags', [READ]),

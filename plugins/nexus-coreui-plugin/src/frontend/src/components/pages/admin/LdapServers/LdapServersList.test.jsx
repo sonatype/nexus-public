@@ -34,7 +34,7 @@ const {
     }
   }
 } = APIConstants;
-const {ldapServersUrl, changeLdapServersUrl} = URL;
+const {ldapServersUrl, changeLdapServersOrderUrl} = URL;
 const {LDAP_SERVERS: {LIST: LABELS}, SETTINGS} = UIStrings;
 const XSS_STRING = TestUtils.XSS_STRING;
 
@@ -280,7 +280,7 @@ describe('LdapServersList', function() {
       });
 
       when(Axios.post)
-        .calledWith(changeLdapServersUrl)
+        .calledWith(changeLdapServersOrderUrl)
         .mockResolvedValue({});
 
       const downButton = listItemDownButton(firstItem);
@@ -291,7 +291,7 @@ describe('LdapServersList', function() {
 
       const expectedOrder = [...names].reverse();
 
-      expect(Axios.post).toHaveBeenCalledWith(changeLdapServersUrl, expectedOrder);
+      expect(Axios.post).toHaveBeenCalledWith(changeLdapServersOrderUrl, expectedOrder);
 
       expect(queryTitle()).not.toBeInTheDocument();
       expect(ExtJS.showSuccessMessage).toHaveBeenCalledWith(LABELS.MESSAGES.LIST_CHANGED);

@@ -164,7 +164,7 @@ export default ListMachineUtils.buildListMachine({
     fetchData: () => Axios.get(URL.ldapServersUrl),
     saveData: async ({transferListData}) => {
       const list = transferListData.map((item) => item.name);
-      return Axios.post(URL.changeLdapServersUrl, list);
+      return Axios.post(URL.changeLdapServersOrderUrl, list);
     },
     clearCache: async () => {
       const response = await ExtAPIUtils.extAPIRequest(

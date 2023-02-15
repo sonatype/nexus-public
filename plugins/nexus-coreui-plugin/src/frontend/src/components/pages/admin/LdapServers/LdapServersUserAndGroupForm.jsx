@@ -11,6 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
+import {useActor} from '@xstate/react';
 import {
   NxTile,
   NxFormGroup,
@@ -22,10 +23,9 @@ import {
   NxStatefulForm,
 } from '@sonatype/react-shared-components';
 import {FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
+
 import UIStrings from '../../../../constants/UIStrings';
-
-import {useActor} from '@xstate/react';
-
+import LdapServersModalPassword from './LdapServersModalPassword';
 import {isDynamicGroup, isStaticGroup} from './LdapServersHelper';
 
 const {
@@ -34,7 +34,6 @@ const {
 
 export default function LdapServerUserAndGroupForm({actor, onDone}) {
   const [state, send] = useActor(actor);
-
   const {
     templates,
     template,
@@ -42,6 +41,7 @@ export default function LdapServerUserAndGroupForm({actor, onDone}) {
   } = state.context;
 
   const isTemplateSelected = ValidationUtils.notBlank(template);
+  const askingPassword = state.matches('askingPassword.idle');
 
   const updateTemplate = (e) =>
     send({type: 'UPDATE_TEMPLATE', value: e.target.value});
@@ -49,12 +49,9 @@ export default function LdapServerUserAndGroupForm({actor, onDone}) {
   return (
     <NxTile.Content>
       <NxH2>{LABELS.CONFIGURATION}</NxH2>
-      <NxStatefulForm
-          {...FormUtils.formProps(state, send)}
-          onCancel={onDone}
-      >
+      <NxStatefulForm {...FormUtils.formProps(state, send)} onCancel={onDone}>
         <NxFormGroup label={LABELS.TEMPLATE.LABEL}>
-          <NxFormSelect onChange={updateTemplate}>
+          <NxFormSelect onChange={updateTemplate} value={template}>
             <option value="" disabled={isTemplateSelected} />
             {templates.map(({name}) => (
               <option value={name} key={name}>
@@ -141,8 +138,9 @@ export default function LdapServerUserAndGroupForm({actor, onDone}) {
           <>
             <NxFormGroup label={LABELS.GROUP_TYPE.LABEL} isRequired>
               <NxFormSelect
-                {...FormUtils.selectProps('groupType', state)}
+                {...FormUtils.fieldProps('groupType', state)}
                 onChange={FormUtils.handleUpdate('groupType', send)}
+                validatable
               >
                 {Object.values(LABELS.GROUP_TYPE.OPTIONS).map(({id, label}) => (
                   <option key={id} value={id}>
@@ -177,7 +175,7 @@ export default function LdapServerUserAndGroupForm({actor, onDone}) {
                     onChange={FormUtils.handleUpdate('groupBaseDn', send)}
                   />
                 </NxFormGroup>
-                <NxFieldset label={LABELS.GROUP_SUBTREE.LABEL} isRequired>
+                <NxFieldset label={LABELS.GROUP_SUBTREE.LABEL}>
                   <NxCheckbox
                     {...FormUtils.checkboxProps('groupSubtree', state)}
                     onChange={FormUtils.handleUpdate('groupSubtree', send)}
@@ -230,6 +228,14 @@ export default function LdapServerUserAndGroupForm({actor, onDone}) {
           </>
         )}
       </NxStatefulForm>
+      {askingPassword && (
+        <LdapServersModalPassword
+          onCancel={() => send('CANCEL')}
+          onSubmit={({value}) =>
+            send({type: 'DONE', name: 'authPassword', value})
+          }
+        />
+      )}
     </NxTile.Content>
   );
 }

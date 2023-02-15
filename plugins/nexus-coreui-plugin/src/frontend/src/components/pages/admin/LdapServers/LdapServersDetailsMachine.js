@@ -14,18 +14,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+import Axios from 'axios';
 import {assign, spawn} from 'xstate';
 import {mergeDeepRight, omit} from 'ramda';
 
-import {
-  FormUtils,
-  APIConstants,
-  ValidationUtils,
-  ExtAPIUtils,
-  ExtJS,
-} from '@sonatype/nexus-ui-plugin';
+import {FormUtils, ExtJS} from '@sonatype/nexus-ui-plugin';
 
-import LdapServerUserAndGroupMachine from './LdapServerUserAndGroupMachine';
+import {TABS_INDEX, URL} from './LdapServersHelper';
+import LdapServersUserAndGroupMachine, {
+  initialState as initialStateUserAndGroup,
+} from './LdapServersUserAndGroupMachine';
+import LdapServersConfigurationMachine, {
+  initialState as initialStateConfiguration,
+} from './LdapServersConfigurationMachine';
 
 import UIStrings from '../../../../constants/UIStrings';
 
@@ -33,175 +34,220 @@ const {
   LDAP_SERVERS: {FORM: LABELS},
 } = UIStrings;
 
-import {
-  isAnonymousAuth,
-  isSimpleAuth,
-  validateUrlValues,
-  generateUrl,
-} from './LdapServersHelper';
-
-const {EXT} = APIConstants;
-
-const initialState = {
-  authScheme: '',
-  authRealm: '',
-  authUsername: '',
-  authPassword: '',
-  connectionRetryDelay: 300,
-  connectionTimeout: 30,
-  host: '',
-  id: '',
-  maxIncidentsCount: 3,
-  name: '',
-  port: '',
-  protocol: '',
-  searchBase: '',
-  useTrustStore: false,
-};
-
 export default FormUtils.buildFormMachine({
   id: 'LdapServersDetailsMachine',
   config: (config) =>
     mergeDeepRight(config, {
       context: {
         userAndGroup: null,
+        createConnection: null,
+        activeTab: TABS_INDEX.CREATE_CONNECTION,
       },
       states: {
+        delete: {
+          id: 'delete',
+        },
         loaded: {
+          id: 'loaded',
           initial: 'creatingConnection',
           states: {
             creatingConnection: {
+              entry: ['initConnectionActor', 'initUserAndGroupActor'],
               on: {
-                VERIFY_CONNECTION: {
-                  target: 'verifyingConnection',
-                },
                 NEXT: {
                   target: 'creatingUserAndGroup',
+                  actions: 'updateData',
                 },
-                UPDATE_PROTOCOL: {
-                  actions: 'updateProtocol',
+                DELETE: {
+                  target: '#delete',
                 },
-              },
-            },
-            verifyingConnection: {
-              invoke: {
-                src: 'verifyConnection',
-                onDone: {
-                  target: 'creatingConnection',
-                  actions: 'verificationSuccess',
+                SAVE_FORM: {
+                  actions: [
+                    'clearPassword',
+                    'updateUserAndGroupActor',
+                    'saveForm',
+                  ],
                 },
-                onError: {
-                  target: 'creatingConnection',
-                  actions: 'verificationError',
+                SAVE: {
+                  target: '#loaded',
+                  actions: 'logSaveSuccess',
                 },
               },
             },
             creatingUserAndGroup: {
-              entry: ['initUserAndGroupActor', 'sendData'],
+              entry: ['updateUserAndGroupActor', 'moveToUserAndGroup'],
+              on: {
+                CREATE_CONNECTION: {
+                  target: 'creatingConnection',
+                },
+                SAVE: {
+                  target: 'success',
+                },
+                VERIFY_CONNECTION: {
+                  actions: 'verifyConnection',
+                },
+                CONNECTION_STATUS: {
+                  actions: 'connectionStatus',
+                },
+              },
+            },
+            success: {
+              type: 'final',
             },
           },
+          onDone: 'saving',
         },
       },
     }),
 }).withConfig({
   actions: {
     validate: assign({
-      validationErrors: ({data}) => {
-        return {
-          name: ValidationUtils.validateNotBlank(data.name),
-          protocol: ValidationUtils.validateNotBlank(data.protocol),
-          host:
-            ValidationUtils.validateNotBlank(data.host) ||
-            ValidationUtils.validateHost(data.host),
-          port:
-            ValidationUtils.validateNotBlank(data.port) ||
-            ValidationUtils.isInRange({
-              value: data.port,
-              min: 1,
-              max: 65535,
-              allowDecimals: false,
-            }),
-          searchBase: ValidationUtils.validateNotBlank(data.searchBase),
-          authUsername: isAnonymousAuth(data.authScheme)
-            ? null
-            : ValidationUtils.validateNotBlank(data.authUsername),
-          authPassword: isAnonymousAuth(data.authScheme)
-            ? null
-            : ValidationUtils.validateNotBlank(data.authPassword),
-          connectionTimeout: ValidationUtils.validateNotBlank(
-            data.connectionTimeout
-          ),
-          connectionRetryDelay: ValidationUtils.validateNotBlank(
-            data.connectionRetryDelay
-          ),
-          maxIncidentsCount: ValidationUtils.validateNotBlank(
-            data.maxIncidentsCount
-          ),
-        };
-      },
+      validationErrors: () => {},
     }),
-    verificationSuccess: ({data: {protocol, host, port}}) => {
-      const url = generateUrl(protocol, host, port);
-
-      ExtJS.showSuccessMessage(LABELS.VERIFY_SUCCESS_MESSAGE(url));
-    },
-    verificationError: (_, {data}) => ExtJS.showErrorMessage(data),
-    updateProtocol: assign({
-      data: ({data}, {value}) => {
-        const useTrustStore = validateUrlValues(
-          data.protocol,
-          data.host,
-          data.port
-        );
-
-        return {
-          ...data,
-          useTrustStore,
-          protocol: value,
+    initConnectionActor: assign({
+      createConnection: ({
+        isEdit,
+        itemId,
+        createConnection,
+        data,
+        pristineData,
+      }) => {
+        const contextData = {
+          data,
+          pristineData,
+          itemId,
+          isEdit,
         };
+
+        return (
+          createConnection ||
+          spawn(
+            LdapServersConfigurationMachine.withContext(contextData),
+            'createConnection'
+          )
+        );
       },
+
+      activeTab: TABS_INDEX.CREATE_CONNECTION,
     }),
     initUserAndGroupActor: assign({
-      userAndGroup: () => spawn(LdapServerUserAndGroupMachine, 'userAndGroup'),
-    }),
-    sendData: assign(({userAndGroup, data}) => {
-      userAndGroup.send(
-        {
-          type: 'CONNECTION_READY',
-          data,
-        },
-        {to: userAndGroup}
-      );
-    }),
-    logSaveSuccess: ({data}) => {
-      ExtJS.showSuccessMessage(LABELS.SAVE_SUCCESS_MESSAGE(data.name));
-    },
-  },
-  services: {
-    fetchData: () => {
-      return Promise.resolve({data: initialState});
-    },
-    verifyConnection: async ({data}) => {
-      let requestObject = data;
+      userAndGroup: (context) => {
+        const {isEdit} = context;
 
-      if (isAnonymousAuth(requestObject.authScheme)) {
-        requestObject.authUsername = '';
-        requestObject.authPassword = '';
-        requestObject = omit(['authRealm'], requestObject);
-      } else if (isSimpleAuth(requestObject.authScheme)) {
-        requestObject = omit(['authRealm'], requestObject);
+        const contextData = {
+          data: context.data,
+          pristineData: context.pristineData,
+          templates: [],
+          template: '',
+          isEdit,
+        };
+
+        return (
+          context.userAndGroup ||
+          spawn(
+            LdapServersUserAndGroupMachine.withContext(contextData),
+            'userAndGroup'
+          )
+        );
+      },
+    }),
+    updateUserAndGroupActor: assign((context, event) => {
+      const data = event.type === 'SAVE_FORM' ? event.data : context.data;
+
+      context.userAndGroup.send({
+        type: 'UPDATE_DATA',
+        data,
+      });
+
+      return context;
+    }),
+    clearPassword: assign((context) =>
+      context.userAndGroup.send('CLEAR_PASSWORD')
+    ),
+    connectionStatus: assign((context, event) => {
+      const isCorrect = event.data?.data?.result.success;
+      const errorMessage = isCorrect ? null : event.data?.message;
+      const type = isCorrect ? 'CONNECTION_CORRECT' : 'CONNECTION_ERROR';
+
+      context.userAndGroup.send({
+        type,
+        errorMessage,
+      });
+
+      return context;
+    }),
+    verifyConnection: assign((context, event) =>
+      context.createConnection.send({
+        type: 'VERIFY_CONNECTION',
+        data: event.data,
+        isParent: true,
+      })
+    ),
+    moveToUserAndGroup: assign({
+      activeTab: TABS_INDEX.USER_AND_GROUP,
+    }),
+    saveForm: assign((context) =>
+      context.userAndGroup.send({type: 'SAVE', isParent: true})
+    ),
+    logSaveSuccess: assign((context) => {
+      const data = context?.context?.data || context.data;
+      const isEdit = context?.isEdit;
+
+      if (isEdit) {
+        ExtJS.showSuccessMessage(LABELS.UPDATE_SUCCESS_MESSAGE(data.name));
+      } else {
+        ExtJS.showSuccessMessage(LABELS.SAVE_SUCCESS_MESSAGE(data.name));
+      }
+      return context;
+    }),
+    logDeleteSuccess: ({data: {itemId}}) => {
+      ExtJS.showSuccessMessage(LABELS.DELETE_SUCCESS_MESSAGE(itemId));
+    },
+    updateData: assign((ctx, {data, pristineData}) =>
+      mergeDeepRight(ctx, {data, pristineData})
+    ),
+    setData: assign(({isEdit}, event) => {
+      const response = event.data?.data || {};
+
+      if (isEdit) {
+        let data = response;
+
+        // There is a mismatch between REST api and Ext api
+        data.connectionRetryDelay = response.connectionRetryDelaySeconds;
+        data.connectionTimeout = response.connectionTimeoutSeconds;
+        data = omit(
+          ['connectionRetryDelaySeconds', 'connectionTimeoutSeconds'],
+          data
+        );
+        // Since this values is not part of the payload, it's needed to be able to check the pristine state.
+        data.authPassword = initialStateConfiguration.authPassword;
+
+        return {
+          data,
+          pristineData: data,
+        };
       }
 
-      const response = await ExtAPIUtils.extAPIRequest(
-        EXT.LDAP.ACTION,
-        EXT.LDAP.METHODS.VERIFY_CONNECTION,
-        {data: [requestObject]}
-      );
+      return {
+        data: response,
+        pristineData: response,
+      };
+    }),
+  },
+  services: {
+    fetchData: async ({itemId, isEdit}) => {
+      if (isEdit) {
+        return Axios.get(URL.singleLdapServersUrl(itemId));
+      }
 
-      ExtAPIUtils.checkForError(response);
-
-      return response;
+      return Promise.resolve({
+        data: mergeDeepRight(
+          initialStateConfiguration,
+          initialStateUserAndGroup
+        ),
+      });
     },
     saveData: () => Promise.resolve(),
+    delete: () => Promise.resolve(),
   },
 });

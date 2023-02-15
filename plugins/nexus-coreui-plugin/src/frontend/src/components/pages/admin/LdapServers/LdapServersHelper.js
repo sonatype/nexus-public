@@ -35,23 +35,28 @@ const {
   },
 } = APIConstants;
 
-const singleLdapServersUrl = (id) =>
-  `${ldapServersUrl}/${encodeURIComponent(id)}`;
+const singleLdapServersUrl = (name) =>
+  `${ldapServersUrl}/${encodeURIComponent(name)}`;
 const createLdapServersUrl = ldapServersUrl;
-const changeLdapServersUrl = ldapChangeOrderUrl;
+const changeLdapServersOrderUrl = ldapChangeOrderUrl;
 
 export const URL = {
   ldapServersUrl,
   singleLdapServersUrl,
   createLdapServersUrl,
-  changeLdapServersUrl,
+  changeLdapServersOrderUrl,
 };
 
-export const canClearLDAPCache = () => {
+export const TABS_INDEX = {
+  CREATE_CONNECTION: 0,
+  USER_AND_GROUP: 1,
+};
+
+export const canDelete = () => {
   return ExtJS.checkPermission(Permissions.LDAP.DELETE);
 };
 
-export const canChangeLDAPOrder = () => {
+export const canUpdate = () => {
   return ExtJS.checkPermission(Permissions.LDAP.UPDATE);
 };
 

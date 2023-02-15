@@ -10,13 +10,14 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+import React, {forwardRef} from 'react';
 import classNames from 'classnames';
 import {
   FormUtils,
   ValidationUtils,
   UseNexusTruststore,
 } from '@sonatype/nexus-ui-plugin';
+import {useActor} from '@xstate/react';
 import {
   NxButton,
   NxButtonBar,
@@ -27,8 +28,17 @@ import {
   NxStatefulForm,
   NxStatefulSubmitMask,
   NxTextInput,
-  NxTile
+  NxTile,
+  NxInfoAlert,
+  NxPageTitle,
+  NxFontAwesomeIcon,
+  NxTooltip,
+  NxModal,
+  NxFooter,
 } from '@sonatype/react-shared-components';
+import {faTrashAlt} from '@fortawesome/free-solid-svg-icons';
+
+import LdapServersModalPassword from './LdapServersModalPassword';
 
 import UIStrings from '../../../../constants/UIStrings';
 
@@ -36,23 +46,25 @@ import {
   isSimpleAuth,
   isDigestAuth,
   isCramtAuth,
+  isAnonymousAuth,
   validateUrlValues,
   generateUrl,
+  canDelete,
 } from './LdapServersHelper';
 
 const {
   LDAP_SERVERS: {FORM: LABELS},
+  PERMISSION_ERROR,
 } = UIStrings;
 
-export default function LdapServerConfigurationForm({
-  parentState,
-  parentSend,
-  onDone,
-}) {
+export default forwardRef(({actor, onDone}, ref) => {
+  const [state, send] = useActor(actor);
   const {
-    data: {protocol, authScheme, host, port},
+    isEdit,
+    data: {protocol, authScheme, host, port, name},
+    isPristine,
     validationErrors,
-  } = parentState.context;
+  } = state.context;
   const isProtocolSelected = ValidationUtils.notBlank(protocol);
   const isAuthMethodSelected = ValidationUtils.notBlank(authScheme);
   const showRealmAuth = isDigestAuth(authScheme) || isCramtAuth(authScheme);
@@ -62,30 +74,51 @@ export default function LdapServerConfigurationForm({
   const url = generateUrl('https', host, port);
   const urlMessage = generateUrl(protocol, host, port);
   const showUseTrustStore = validateUrlValues(protocol, host, port);
-  const verifyingConnection = parentState.matches('loaded.verifyingConnection');
+  const verifyingConnection = state.matches('verifyingConnection');
+  const changingPassword = state.matches('changingPassword');
+  const changingPasswordMessage = state.matches(
+    'changingPassword.verifyingConnection'
+  );
+  const askingPassword = state.matches('askingPassword') || (changingPassword && !changingPasswordMessage);
+  const confirmingDelete = state.matches('confirmingDelete');
 
-  const cancel = () => onDone();
-
-  const next = () => parentSend('NEXT');
+  const next = () => send('NEXT');
 
   const verify = () => {
     if (canVerify) {
-      parentSend('VERIFY_CONNECTION');
+      send('VERIFY_CONNECTION');
     }
   };
 
-  const updateProtocol = (e) => {
-    parentSend({type: 'UPDATE_PROTOCOL', value: e.target.value});
+  const onDelete = () => {
+    if (canDelete()) {
+      send('DELETE_CONNECTION');
+    }
+  };
+
+  const updateProtocol = (e) =>
+    send({type: 'UPDATE_PROTOCOL', value: e.target.value});
+
+  const onChangePassword = () => send('CHANGE_PASSWORD');
+
+  const validations = () => {
+    if (isEdit && isPristine) {
+      return undefined;
+    }
+
+    return (
+      validationErrors?.active || FormUtils.saveTooltip({isPristine, isInvalid})
+    );
   };
 
   return (
     <NxTile.Content>
-      <NxH2>{LABELS.CONFIGURATION}</NxH2>
       <NxStatefulForm
-        {...FormUtils.formProps(parentState, parentSend)}
+        {...FormUtils.formProps(state, send)}
+        validationErrors={validations()}
         onSubmit={next}
         submitBtnText={LABELS.NEXT}
-        onCancel={cancel}
+        onCancel={onDone}
         additionalFooterBtns={
           <NxButtonBar>
             <NxButton
@@ -97,20 +130,40 @@ export default function LdapServerConfigurationForm({
             </NxButton>
           </NxButtonBar>
         }
+        ref={ref}
       >
+        <NxPageTitle>
+          <NxH2>{LABELS.CONFIGURATION}</NxH2>
+          {isEdit && (
+            <NxButtonBar>
+              <NxTooltip title={!canDelete() && PERMISSION_ERROR}>
+                <NxButton
+                  onClick={onDelete}
+                  className={classNames({disabled: !canDelete()})}
+                  variant="tertiary"
+                  type="button"
+                >
+                  <NxFontAwesomeIcon icon={faTrashAlt} />
+                  <span>{LABELS.DELETE_BUTTON}</span>
+                </NxButton>
+              </NxTooltip>
+            </NxButtonBar>
+          )}
+        </NxPageTitle>
         <NxFormGroup label={LABELS.NAME} isRequired>
           <NxTextInput
-            {...FormUtils.fieldProps('name', parentState)}
-            onChange={FormUtils.handleUpdate('name', parentSend)}
+            {...FormUtils.fieldProps('name', state)}
+            onChange={FormUtils.handleUpdate('name', send)}
           />
         </NxFormGroup>
         <NxH2>{LABELS.SETTINGS.LABEL}</NxH2>
         <NxP>{LABELS.SETTINGS.SUB_LABEL}</NxP>
         <NxFormGroup label={LABELS.PROTOCOL.LABEL} isRequired>
           <NxFormSelect
-            {...FormUtils.selectProps('protocol', parentState)}
+            {...FormUtils.fieldProps('protocol', state)}
             onChange={updateProtocol}
             className="nx-form-select--short"
+            validatable
           >
             <option value="" disabled={isProtocolSelected} />
             {Object.values(LABELS.PROTOCOL.OPTIONS).map((label) => (
@@ -123,22 +176,22 @@ export default function LdapServerConfigurationForm({
         <NxFormGroup label={LABELS.HOSTNAME} isRequired>
           <NxTextInput
             className="nx-text-input--long"
-            {...FormUtils.fieldProps('host', parentState)}
-            onChange={FormUtils.handleUpdate('host', parentSend)}
+            {...FormUtils.fieldProps('host', state)}
+            onChange={FormUtils.handleUpdate('host', send)}
           />
         </NxFormGroup>
         <NxFormGroup label={LABELS.PORT} isRequired>
           <NxTextInput
             className="nx-text-input--short"
-            {...FormUtils.fieldProps('port', parentState)}
-            onChange={FormUtils.handleUpdate('port', parentSend)}
+            {...FormUtils.fieldProps('port', state)}
+            onChange={FormUtils.handleUpdate('port', send)}
           />
         </NxFormGroup>
         {showUseTrustStore && (
           <UseNexusTruststore
             remoteUrl={url}
-            {...FormUtils.checkboxProps('useTrustStore', parentState)}
-            onChange={FormUtils.handleUpdate('useTrustStore', parentSend)}
+            {...FormUtils.checkboxProps('useTrustStore', state)}
+            onChange={FormUtils.handleUpdate('useTrustStore', send)}
           />
         )}
         <NxFormGroup
@@ -148,14 +201,14 @@ export default function LdapServerConfigurationForm({
         >
           <NxTextInput
             className="nx-text-input--long"
-            {...FormUtils.fieldProps('searchBase', parentState)}
-            onChange={FormUtils.handleUpdate('searchBase', parentSend)}
+            {...FormUtils.fieldProps('searchBase', state)}
+            onChange={FormUtils.handleUpdate('searchBase', send)}
           />
         </NxFormGroup>
         <NxFormGroup label={LABELS.AUTHENTICATION.LABEL} isRequired>
           <NxFormSelect
-            {...FormUtils.selectProps('authScheme', parentState)}
-            onChange={FormUtils.handleUpdate('authScheme', parentSend)}
+            {...FormUtils.fieldProps('authScheme', state)}
+            onChange={FormUtils.handleUpdate('authScheme', send)}
           >
             <option value="" disabled={isAuthMethodSelected} />
             {Object.values(LABELS.AUTHENTICATION.OPTIONS).map((option) => (
@@ -174,8 +227,8 @@ export default function LdapServerConfigurationForm({
                 sublabel={LABELS.SASL_REALM.SUB_LABEL}
               >
                 <NxTextInput
-                  {...FormUtils.fieldProps('authRealm', parentState)}
-                  onChange={FormUtils.handleUpdate('authRealm', parentSend)}
+                  {...FormUtils.fieldProps('authRealm', state)}
+                  onChange={FormUtils.handleUpdate('authRealm', send)}
                 />
               </NxFormGroup>
             )}
@@ -186,22 +239,35 @@ export default function LdapServerConfigurationForm({
             >
               <NxTextInput
                 className="nx-text-input--long"
-                {...FormUtils.fieldProps('authUsername', parentState)}
-                onChange={FormUtils.handleUpdate('authUsername', parentSend)}
+                {...FormUtils.fieldProps('authUsername', state)}
+                onChange={FormUtils.handleUpdate('authUsername', send)}
               />
             </NxFormGroup>
-            <NxFormGroup
-              className="nx-text-input--long"
-              label={LABELS.PASSWORD.LABEL}
-              sublabel={LABELS.PASSWORD.SUB_LABEL}
-              isRequired
-            >
-              <NxTextInput
-                {...FormUtils.fieldProps('authPassword', parentState)}
-                onChange={FormUtils.handleUpdate('authPassword', parentSend)}
-                type="password"
-              />
-            </NxFormGroup>
+            {!isEdit && (
+              <NxFormGroup
+                label={LABELS.PASSWORD.LABEL}
+                sublabel={LABELS.PASSWORD.SUB_LABEL}
+                isRequired
+              >
+                <NxTextInput
+                  {...FormUtils.fieldProps('authPassword', state)}
+                  onChange={FormUtils.handleUpdate('authPassword', send)}
+                  type="password"
+                />
+              </NxFormGroup>
+            )}
+            {isEdit && !isAnonymousAuth(authScheme) && (
+              <NxFormGroup label="">
+                <NxButton
+                  variant="tertiary"
+                  className="change-password"
+                  type="button"
+                  onClick={onChangePassword}
+                >
+                  {LABELS.CHANGE_PASSWORD}
+                </NxButton>
+              </NxFormGroup>
+            )}
           </>
         )}
 
@@ -214,8 +280,8 @@ export default function LdapServerConfigurationForm({
         >
           <NxTextInput
             className="nx-text-input--short"
-            {...FormUtils.fieldProps('connectionTimeout', parentState)}
-            onChange={FormUtils.handleUpdate('connectionTimeout', parentSend)}
+            {...FormUtils.fieldProps('connectionTimeout', state)}
+            onChange={FormUtils.handleUpdate('connectionTimeout', send)}
           />
         </NxFormGroup>
         <NxFormGroup
@@ -225,11 +291,8 @@ export default function LdapServerConfigurationForm({
         >
           <NxTextInput
             className="nx-text-input--short"
-            {...FormUtils.fieldProps('connectionRetryDelay', parentState)}
-            onChange={FormUtils.handleUpdate(
-              'connectionRetryDelay',
-              parentSend
-            )}
+            {...FormUtils.fieldProps('connectionRetryDelay', state)}
+            onChange={FormUtils.handleUpdate('connectionRetryDelay', send)}
           />
         </NxFormGroup>
         <NxFormGroup
@@ -239,16 +302,50 @@ export default function LdapServerConfigurationForm({
         >
           <NxTextInput
             className="nx-text-input--short"
-            {...FormUtils.fieldProps('maxIncidentsCount', parentState)}
-            onChange={FormUtils.handleUpdate('maxIncidentsCount', parentSend)}
+            {...FormUtils.fieldProps('maxIncidentsCount', state)}
+            onChange={FormUtils.handleUpdate('maxIncidentsCount', send)}
           />
         </NxFormGroup>
+        {isEdit && <NxInfoAlert>{LABELS.ALERT}</NxInfoAlert>}
         {verifyingConnection && (
           <NxStatefulSubmitMask
             message={LABELS.VERIFYING_MESSAGE(urlMessage)}
           />
         )}
+        {changingPasswordMessage && (
+          <NxStatefulSubmitMask message={LABELS.CHANGING_PASSWORD_MESSAGE(urlMessage)} />
+        )}
       </NxStatefulForm>
+      {askingPassword && (
+        <LdapServersModalPassword
+          onCancel={() => send('CANCEL')}
+          onSubmit={({value}) =>
+            send({type: 'DONE', name: 'authPassword', value})
+          }
+        />
+      )}
+      {confirmingDelete && (
+        <NxModal aria-labelledby="modal-header-confirm-delete" variant="narrow">
+          <NxModal.Header>
+            <NxH2 id="modal-header-confirm-delete">
+              {LABELS.MODAL_DELETE.LABEL}
+            </NxH2>
+          </NxModal.Header>
+          <NxModal.Content>
+            <NxP>{name}</NxP>
+          </NxModal.Content>
+          <NxFooter>
+            <NxButtonBar>
+              <NxButton onClick={() => send('CANCEL')}>
+                {LABELS.MODAL_DELETE.NO}
+              </NxButton>
+              <NxButton onClick={() => send('ACCEPT')} variant="primary">
+                {LABELS.MODAL_DELETE.YES}
+              </NxButton>
+            </NxButtonBar>
+          </NxFooter>
+        </NxModal>
+      )}
     </NxTile.Content>
   );
-}
+});

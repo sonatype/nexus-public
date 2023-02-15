@@ -11,32 +11,80 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React from 'react';
+import React, {useRef} from 'react';
 import {useMachine} from '@xstate/react';
 import {Page, PageHeader, PageTitle} from '@sonatype/nexus-ui-plugin';
-import {NxTile} from '@sonatype/react-shared-components';
+import {
+  NxTile,
+  NxTabs,
+  NxTabList,
+  NxTab,
+  NxTabPanel,
+  NxLoadWrapper
+} from '@sonatype/react-shared-components';
 import {faBook} from '@fortawesome/free-solid-svg-icons';
 
-import LdapServerConfigurationForm from './LdapServerConfigurationForm';
-import LdapServerUserAndGroupForm from './LdapServerUserAndGroupForm';
+import LdapServersConfigurationForm from './LdapServersConfigurationForm';
+import LdapServersUserAndGroupForm from './LdapServersUserAndGroupForm';
 
 import Machine from './LdapServersDetailsMachine';
 
 import UIStrings from '../../../../constants/UIStrings';
 
 const {
-  LDAP_SERVERS: {MENU},
+  LDAP_SERVERS: {MENU, FORM},
 } = UIStrings;
+import {TABS_INDEX} from './LdapServersHelper';
+import {isNil} from 'ramda';
 
-export default function LdapServersDetails({onDone}) {
+export default function LdapServersDetails({itemId, onDone}) {
+  const isEdit = Boolean(itemId);
+  const ref = useRef();
   const [state, send] = useMachine(Machine, {
     devTools: true,
+    context: {
+      itemId: decodeURIComponent(itemId),
+      isEdit,
+    },
     actions: {
       onSaveSuccess: onDone,
       onDeleteSuccess: onDone,
     },
   });
+  const connection = state.matches('loaded.creatingConnection');
   const userAndGroup = state.matches('loaded.creatingUserAndGroup');
+  const {activeTab} = state.context;
+
+  const onTabSelected = (value) => {
+    if (TABS_INDEX.CREATE_CONNECTION === value) {
+      send('CREATE_CONNECTION');
+    }
+
+    if (TABS_INDEX.USER_AND_GROUP === value && !isNil(ref.current)) {
+      // We use the submit event instead of xstate events to be able use the same validation defined for the form.
+      const submitButton = ref.current.querySelector('.nx-form__submit-btn');
+      submitButton.click();
+    }
+  };
+
+  const retryHandler = () => send({type: 'RETRY'});
+  const isLoading = state.matches('loading');
+  const hasLoadError = state.matches('loadError');
+
+  const configurationForm = connection && (
+    <LdapServersConfigurationForm
+      actor={state.context.createConnection}
+      onDone={onDone}
+      ref={ref}
+    />
+  );
+
+  const userAndGroupForm = userAndGroup && (
+    <LdapServersUserAndGroupForm
+      actor={state.context.userAndGroup}
+      onDone={onDone}
+    />
+  );
 
   return (
     <Page className="nxrm-ldap-servers">
@@ -44,18 +92,27 @@ export default function LdapServersDetails({onDone}) {
         <PageTitle icon={faBook} {...MENU} />
       </PageHeader>
       <NxTile>
-        {userAndGroup ? (
-          <LdapServerUserAndGroupForm
-            actor={state.context.userAndGroup}
-            onDone={onDone}
-          />
-        ) : (
-          <LdapServerConfigurationForm
-            parentState={state}
-            parentSend={send}
-            onDone={onDone}
-          />
-        )}
+        <NxLoadWrapper
+          retryHandler={retryHandler}
+          loading={isLoading}
+          error={hasLoadError && error}
+        >
+          {isEdit ? (
+            <NxTabs activeTab={activeTab} onTabSelect={onTabSelected}>
+              <NxTabList>
+                <NxTab>{FORM.TABS.CONNECTION}</NxTab>
+                <NxTab>{FORM.TABS.USER_AND_GROUP}</NxTab>
+              </NxTabList>
+              <NxTabPanel>{configurationForm}</NxTabPanel>
+              <NxTabPanel> {userAndGroupForm}</NxTabPanel>
+            </NxTabs>
+          ) : (
+            <>
+              {configurationForm}
+              {userAndGroupForm}
+            </>
+          )}
+        </NxLoadWrapper>
       </NxTile>
     </Page>
   );

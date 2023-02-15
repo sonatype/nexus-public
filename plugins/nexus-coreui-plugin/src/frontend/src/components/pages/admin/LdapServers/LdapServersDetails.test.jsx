@@ -13,21 +13,26 @@
 import React from 'react';
 import Axios from 'axios';
 import {when} from 'jest-when';
+import {omit} from 'ramda';
 import {
   render,
   screen,
   waitForElementToBeRemoved,
   act,
+  within,
 } from '@testing-library/react';
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, Permissions, APIConstants} from '@sonatype/nexus-ui-plugin';
 import userEvent from '@testing-library/user-event';
 import LdapServersDetails from './LdapServersDetails';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
-
 import UIStrings from '../../../../constants/UIStrings';
-import {USER_AND_GROUP_TEMPLATE} from './LdapServers.testdata';
+import {USER_AND_GROUP_TEMPLATE, LDAP_SERVERS} from './LdapServers.testdata';
 
-import {generateUrl} from './LdapServersHelper';
+const {EXT} = APIConstants;
+
+import {generateUrl, URL} from './LdapServersHelper';
+
+const {singleLdapServersUrl} = URL;
 
 const {
   LDAP_SERVERS: {FORM: LABELS},
@@ -47,6 +52,9 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'),
   post: jest.fn(),
+  get: jest.fn(),
+  delete: jest.fn(),
+  put: jest.fn(),
 }));
 
 const selectors = {
@@ -74,6 +82,15 @@ const selectors = {
     verifyConnectionButton: () => screen.getByText(LABELS.VERIFY_CONNECTION),
     nextButton: () => screen.queryByText(LABELS.NEXT),
     useTruststore: () => screen.queryByLabelText(USE_TRUST_STORE.DESCRIPTION),
+    deleteButton: () =>
+      screen.queryByText(LABELS.DELETE_BUTTON).closest('button'),
+    changePasswordButton: () => {
+      const element = screen.queryByText(LABELS.CHANGE_PASSWORD);
+      return element?.closest('button') || element;
+    },
+    confirmDeleteLabel: () => screen.queryByText(LABELS.MODAL_DELETE.LABEL),
+    yesButton: () => screen.queryByText(LABELS.MODAL_DELETE.YES),
+    noButton: () => screen.queryByText(LABELS.MODAL_DELETE.NO),
   },
   userAndGroup: {
     template: () => screen.getByLabelText(LABELS.TEMPLATE.LABEL),
@@ -100,15 +117,37 @@ const selectors = {
       screen.getByLabelText(LABELS.GROUP_MEMBER_ATTRIBUTE.LABEL),
     groupMemberFormat: () =>
       screen.getByLabelText(LABELS.GROUP_MEMBER_FORMAT.LABEL),
-    saveButton: () => screen.getByText(UIStrings.SETTINGS.SAVE_BUTTON_LABEL),
+    saveButton: () => screen.queryByText(UIStrings.SETTINGS.SAVE_BUTTON_LABEL),
+  },
+  tabs: {
+    tablist: () => screen.getByRole('tablist'),
+    tabConnection: () => screen.getAllByRole('tab')[0],
+    tabUserAndGroup: () => screen.getAllByRole('tab')[1],
+  },
+  modalPassword: {
+    title: () => screen.queryByText(LABELS.MODAL_PASSWORD.TITLE),
+    password: () => screen.queryByLabelText(LABELS.MODAL_PASSWORD.LABEL),
+    container: () => screen.queryByRole('dialog'),
+    submit: () =>
+      within(selectors.modalPassword.container()).queryByText('Submit'),
+    cancel: () =>
+      within(selectors.modalPassword.container()).queryByText(
+        SETTINGS.CANCEL_BUTTON_LABEL
+      ),
+    errorMessage: () =>
+      within(selectors.modalPassword.container()).queryByText(
+        'An error occurred saving data. This field is required'
+      ),
   },
 };
 
 describe('LdapServersDetails', () => {
   const onDoneMock = jest.fn();
 
-  const renderView = async () => {
-    const result = render(<LdapServersDetails onDone={onDoneMock} />);
+  const renderView = async (itemId) => {
+    const result = render(
+      <LdapServersDetails onDone={onDoneMock} itemId={itemId} />
+    );
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
     return result;
   };
@@ -120,12 +159,12 @@ describe('LdapServersDetails', () => {
 
   const connectionData = {
     name: 'test-connection',
-    protocol: 'ldap',
+    protocol: 'LDAP',
     host: 'host.example.com',
     port: '610',
-    search: 'dc=win,dc=blackforest,dc=local',
-    method: 'Simple Authentication',
-    username: 'this is my test username',
+    searchBase: 'dc=win,dc=blackforest,dc=local',
+    authScheme: 'SIMPLE',
+    authUsername: 'this is my test username',
     password: 'this is the test password',
   };
 
@@ -141,7 +180,7 @@ describe('LdapServersDetails', () => {
     userPasswordAttribute: '',
   };
 
-  const fillConnectionForm = async () => {
+  const fillConnectionForm = async (data = connectionData, isEdit = false) => {
     const {
       name,
       protocol,
@@ -153,15 +192,23 @@ describe('LdapServersDetails', () => {
       password,
     } = selectors.createConnection;
 
-    await TestUtils.changeField(name, connectionData.name);
-    userEvent.selectOptions(protocol(), connectionData.protocol);
-    await TestUtils.changeField(host, connectionData.host);
-    await TestUtils.changeField(port, connectionData.port);
-    await TestUtils.changeField(search, connectionData.search);
-    userEvent.selectOptions(authenticationMethod(), connectionData.method);
-    await TestUtils.changeField(username, connectionData.username);
-    await TestUtils.changeField(password, connectionData.password);
+    await TestUtils.changeField(name, data.name);
+    userEvent.selectOptions(protocol(), data.protocol);
+    await TestUtils.changeField(host, data.host);
+    await TestUtils.changeField(port, data.port);
+    await TestUtils.changeField(search, data.searchBase);
+    userEvent.selectOptions(authenticationMethod(), data.authScheme);
+    await TestUtils.changeField(username, data.authUsername);
+
+    if (!isEdit) {
+      await TestUtils.changeField(password, data.password);
+    }
   };
+
+  const VERIFY_CONNECTION_REQUEST = expect.objectContaining({
+    action: EXT.LDAP.ACTION,
+    method: EXT.LDAP.METHODS.VERIFY_CONNECTION,
+  });
 
   describe('Create Connection', () => {
     it('renders the form correctly', async () => {
@@ -251,42 +298,54 @@ describe('LdapServersDetails', () => {
 
       await TestUtils.changeField(name, '');
 
-      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
+      expect(
+        selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
+      ).toBeInTheDocument();
       expect(verifyConnectionButton()).toHaveClass('disabled');
 
       await fillConnectionForm();
 
       await TestUtils.changeField(host, '');
 
-      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
+      expect(
+        selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
+      ).toBeInTheDocument();
       expect(verifyConnectionButton()).toHaveClass('disabled');
 
       await fillConnectionForm();
 
       await TestUtils.changeField(port, '');
 
-      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
+      expect(
+        selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
+      ).toBeInTheDocument();
       expect(verifyConnectionButton()).toHaveClass('disabled');
 
       await fillConnectionForm();
 
       await TestUtils.changeField(search, '');
 
-      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
+      expect(
+        selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
+      ).toBeInTheDocument();
       expect(verifyConnectionButton()).toHaveClass('disabled');
 
       await fillConnectionForm();
 
       await TestUtils.changeField(username, '');
 
-      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
+      expect(
+        selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
+      ).toBeInTheDocument();
       expect(verifyConnectionButton()).toHaveClass('disabled');
 
       await fillConnectionForm();
 
       await TestUtils.changeField(password, '');
 
-      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
+      expect(
+        selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
+      ).toBeInTheDocument();
       expect(verifyConnectionButton()).toHaveClass('disabled');
     });
 
@@ -320,6 +379,10 @@ describe('LdapServersDetails', () => {
 
         await act(async () => userEvent.click(verifyConnectionButton()));
 
+        expect(Axios.post).toHaveBeenCalledWith(
+          EXT.URL,
+          VERIFY_CONNECTION_REQUEST
+        );
         expect(ExtJS.showSuccessMessage).toHaveBeenCalledWith(
           LABELS.VERIFY_SUCCESS_MESSAGE(
             generateUrl(
@@ -358,12 +421,11 @@ describe('LdapServersDetails', () => {
       const {nextButton} = selectors.createConnection;
       const response = {data: TestUtils.makeExtResult(USER_AND_GROUP_TEMPLATE)};
 
-      Axios.post.mockResolvedValueOnce(response);
+      Axios.post.mockResolvedValue(response);
 
       await renderView();
       await fillConnectionForm();
       await userEvent.click(nextButton());
-      await waitForElementToBeRemoved(selectors.queryLoadingMask());
     };
 
     const templateData = USER_AND_GROUP_TEMPLATE[0];
@@ -450,8 +512,6 @@ describe('LdapServersDetails', () => {
 
       await renderViewUserAndGroup();
 
-      expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
-
       userEvent.selectOptions(template(), templateData.name);
 
       expect(userRelativeDN()).toHaveValue(templateData.userBaseDn);
@@ -489,46 +549,60 @@ describe('LdapServersDetails', () => {
       } = selectors.userAndGroup;
       await renderViewUserAndGroup();
 
-      expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
-
       await TestUtils.changeField(userRelativeDN, userAndGroupData.userBaseDn);
-      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
+      expect(
+        selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
+      ).toBeInTheDocument();
 
       userEvent.click(userSubtree());
-      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
+      expect(
+        selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
+      ).toBeInTheDocument();
 
       await TestUtils.changeField(
         objectClass,
         userAndGroupData.userObjectClass
       );
-      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
+      expect(
+        selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
+      ).toBeInTheDocument();
 
       await TestUtils.changeField(userFilter, userAndGroupData.userLdapFilter);
-      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
+      expect(
+        selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
+      ).toBeInTheDocument();
 
       await TestUtils.changeField(
         userIdAttribute,
         userAndGroupData.userIdAttribute
       );
-      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
+      expect(
+        selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
+      ).toBeInTheDocument();
 
       await TestUtils.changeField(
         realNameAttribute,
         userAndGroupData.userRealNameAttribute
       );
-      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
+      expect(
+        selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
+      ).toBeInTheDocument();
 
       await TestUtils.changeField(
         emailAttribute,
         userAndGroupData.userEmailAddressAttribute
       );
-      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
+      expect(
+        selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
+      ).toBeInTheDocument();
 
       await TestUtils.changeField(
         passwordAttribute,
         userAndGroupData.userPasswordAttribute
       );
-      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
+      expect(
+        selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
+      ).toBeInTheDocument();
 
       userEvent.click(mapLdap());
 
@@ -561,8 +635,6 @@ describe('LdapServersDetails', () => {
 
       await renderViewUserAndGroup();
 
-      expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
-
       userEvent.selectOptions(template(), templateData.name);
 
       expect(saveButton()).not.toHaveClass('disabled');
@@ -573,6 +645,431 @@ describe('LdapServersDetails', () => {
 
       expect(onDoneMock).not.toHaveBeenCalled();
       expect(ExtJS.showErrorMessage).toHaveBeenCalledWith(errorMessage);
+    });
+  });
+
+  describe('Edit form', () => {
+    const itemId = 'test-item-id';
+    const data = LDAP_SERVERS[0];
+    const anonymousData = {
+      ...data,
+      authScheme: 'NONE',
+    };
+
+    beforeEach(() => {
+      when(ExtJS.checkPermission)
+        .calledWith(Permissions.LDAP.DELETE)
+        .mockReturnValue(true);
+
+      when(Axios.get)
+        .calledWith(singleLdapServersUrl(itemId))
+        .mockReturnValue({data});
+
+      const response = {
+        data: TestUtils.makeExtResult(USER_AND_GROUP_TEMPLATE),
+      };
+
+      Axios.post.mockResolvedValue(response);
+    });
+
+    it('Users can see and use tabs to switch between the connection form and user and group form', async () => {
+      const {tabConnection, tabUserAndGroup, tablist} = selectors.tabs;
+
+      await renderView(itemId);
+
+      expect(tablist()).toBeInTheDocument();
+      expect(tabConnection().textContent).toContain(LABELS.TABS.CONNECTION);
+      expect(tabUserAndGroup().textContent).toContain(
+        LABELS.TABS.USER_AND_GROUP
+      );
+    });
+
+    it('Users move between the forms using the tabs', async () => {
+      const {
+        tabs: {tabConnection, tabUserAndGroup, tablist},
+        createConnection: {nextButton},
+        userAndGroup: {saveButton},
+      } = selectors;
+
+      await renderView(itemId);
+
+      expect(tablist()).toBeInTheDocument();
+      expect(nextButton()).toBeInTheDocument();
+      expect(saveButton()).not.toBeInTheDocument();
+
+      await act(async () => userEvent.click(tabUserAndGroup()));
+
+      expect(nextButton()).not.toBeInTheDocument();
+      expect(saveButton()).toBeInTheDocument();
+
+      await act(async () => userEvent.click(tabConnection()));
+
+      expect(nextButton()).toBeInTheDocument();
+      expect(saveButton()).not.toBeInTheDocument();
+    });
+
+    it('Users cannot move to the User and Group tab if there is invalid value', async () => {
+      const {
+        tabs: {tabUserAndGroup},
+        createConnection: {nextButton, name},
+        userAndGroup: {saveButton},
+      } = selectors;
+
+      await renderView(itemId);
+
+      expect(nextButton()).toBeInTheDocument();
+      expect(saveButton()).not.toBeInTheDocument();
+
+      await TestUtils.changeField(name, '');
+
+      await act(async () => userEvent.click(tabUserAndGroup()));
+
+      expect(nextButton()).toBeInTheDocument();
+      expect(saveButton()).not.toBeInTheDocument();
+      expect(
+        selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
+      ).toBeInTheDocument();
+    });
+
+    it('The LDAP server configuration is loaded properly', async () => {
+      const {
+        createConnection: {
+          name,
+          protocol,
+          host,
+          port,
+          search,
+          authenticationMethod,
+          username,
+          waitTimeout,
+          retryTimeout,
+          maxRetries,
+          nextButton,
+        },
+        userAndGroup: {
+          userRelativeDN,
+          userSubtree,
+          objectClass,
+          userFilter,
+          userIdAttribute,
+          realNameAttribute,
+          emailAttribute,
+          passwordAttribute,
+          mapLdap,
+          groupType,
+          userMemberOfAttribute,
+        },
+      } = selectors;
+
+      await renderView(itemId);
+
+      expect(name()).toHaveValue(data.name);
+      expect(protocol()).toHaveValue(data.protocol);
+      expect(host()).toHaveValue(data.host);
+      expect(port()).toHaveValue(String(data.port));
+      expect(search()).toHaveValue(data.searchBase);
+      expect(authenticationMethod()).toHaveValue(data.authScheme);
+      expect(username()).toHaveValue(data.authUsername);
+      expect(waitTimeout()).toHaveValue(String(data.connectionTimeoutSeconds));
+      expect(retryTimeout()).toHaveValue(
+        String(data.connectionRetryDelaySeconds)
+      );
+      expect(maxRetries()).toHaveValue(String(data.maxIncidentsCount));
+
+      userEvent.click(nextButton());
+
+      expect(userRelativeDN()).toHaveValue(data.userBaseDn);
+      expect(userSubtree()).not.toBeChecked();
+      expect(objectClass()).toHaveValue(data.userObjectClass);
+      expect(userFilter()).toHaveValue(data.userLdapFilter);
+      expect(userIdAttribute()).toHaveValue(data.userIdAttribute);
+      expect(realNameAttribute()).toHaveValue(data.userRealNameAttribute);
+      expect(emailAttribute()).toHaveValue(data.userEmailAddressAttribute);
+      expect(passwordAttribute()).toHaveValue(data.userPasswordAttribute);
+      expect(mapLdap()).toBeChecked();
+      expect(groupType()).toHaveValue(data.groupType);
+      expect(userMemberOfAttribute()).toHaveValue(data.userMemberOfAttribute);
+    });
+
+    it('Users can delete the LDAP Server configuration', async () => {
+      const {deleteButton, confirmDeleteLabel, yesButton, noButton} =
+        selectors.createConnection;
+
+      await renderView(itemId);
+
+      expect(deleteButton()).toBeInTheDocument();
+
+      userEvent.click(deleteButton());
+
+      expect(confirmDeleteLabel()).toBeInTheDocument();
+      expect(yesButton()).toBeInTheDocument();
+      expect(noButton()).toBeInTheDocument();
+
+      userEvent.click(noButton());
+
+      expect(confirmDeleteLabel()).not.toBeInTheDocument();
+
+      userEvent.click(deleteButton());
+
+      await act(async () => userEvent.click(yesButton()));
+
+      expect(Axios.delete).toHaveBeenCalledWith(
+        singleLdapServersUrl(data.name)
+      );
+    });
+
+    it('Users cannot delete the LDAP Server configuration if they do not have enough permissions', async () => {
+      when(ExtJS.checkPermission)
+        .calledWith(Permissions.LDAP.DELETE)
+        .mockReturnValue(false);
+
+      const {deleteButton} = selectors.createConnection;
+
+      await renderView(itemId);
+
+      expect(deleteButton()).toBeInTheDocument();
+      expect(deleteButton()).toHaveClass('disabled');
+    });
+
+    it('Users see a modal when trying to change the password, then the form is saved', async () => {
+      const {
+        createConnection: {changePasswordButton},
+        modalPassword: {title, password, submit, cancel, errorMessage},
+      } = selectors;
+
+      await renderView(itemId);
+
+      expect(changePasswordButton()).toBeInTheDocument();
+      expect(changePasswordButton()).not.toHaveClass('disabled');
+
+      userEvent.click(changePasswordButton());
+
+      expect(title()).toBeInTheDocument();
+      expect(password()).toBeInTheDocument();
+
+      userEvent.click(cancel());
+
+      expect(title()).not.toBeInTheDocument();
+      expect(password()).not.toBeInTheDocument();
+
+      userEvent.click(changePasswordButton());
+
+      expect(title()).toBeInTheDocument();
+      expect(password()).toBeInTheDocument();
+
+      userEvent.click(submit());
+
+      expect(errorMessage()).toBeInTheDocument();
+
+      await TestUtils.changeField(password, connectionData.password);
+
+      await act(async () => userEvent.click(submit()));
+
+      expect(title()).not.toBeInTheDocument();
+      expect(password()).not.toBeInTheDocument();
+
+      const expected = {
+        ...omit(['connectionRetryDelay', 'connectionTimeout'], data),
+        authPassword: connectionData.password,
+      };
+
+      expect(Axios.post).toHaveBeenCalledWith(
+        EXT.URL,
+        VERIFY_CONNECTION_REQUEST
+      );
+      expect(ExtJS.showSuccessMessage).toHaveBeenCalledWith(
+        LABELS.UPDATE_SUCCESS_MESSAGE(data.name)
+      );
+      expect(Axios.put).toHaveBeenCalledWith(
+        singleLdapServersUrl(data.name),
+        expected
+      );
+    });
+
+    it('if the auth scheme is anonymous should not show the change password button', async () => {
+      when(Axios.get)
+        .calledWith(singleLdapServersUrl(itemId))
+        .mockReturnValue({data: anonymousData});
+
+      const {
+        createConnection: {changePasswordButton},
+      } = selectors;
+
+      await renderView(itemId);
+
+      expect(changePasswordButton()).not.toBeInTheDocument();
+    });
+
+    it('if the auth scheme is anonymous should not ask for the password when verifying the connection', async () => {
+      when(Axios.get)
+        .calledWith(singleLdapServersUrl(itemId))
+        .mockReturnValue({data: anonymousData});
+
+      const {
+        createConnection: {verifyConnectionButton},
+        modalPassword: {title, password},
+      } = selectors;
+
+      await renderView(itemId);
+
+      await act(async () => userEvent.click(verifyConnectionButton()));
+
+      expect(title()).not.toBeInTheDocument();
+      expect(password()).not.toBeInTheDocument();
+
+      const response = {data: TestUtils.makeExtResult({})};
+
+      Axios.post.mockResolvedValue(response);
+
+      expect(Axios.post).toHaveBeenCalledWith(
+        EXT.URL,
+        VERIFY_CONNECTION_REQUEST
+      );
+      expect(ExtJS.showSuccessMessage).toHaveBeenCalledWith(
+        LABELS.VERIFY_SUCCESS_MESSAGE(
+          generateUrl(data.protocol, data.host, data.port)
+        )
+      );
+    });
+
+    it('Users can verify connection with the new values', async () => {
+      const {
+        createConnection: {verifyConnectionButton},
+        modalPassword: {title, password, submit},
+      } = selectors;
+
+      await renderView(itemId);
+
+      expect(verifyConnectionButton()).not.toHaveClass('disabled');
+
+      userEvent.click(verifyConnectionButton());
+
+      expect(title()).toBeInTheDocument();
+      expect(password()).toBeInTheDocument();
+
+      await TestUtils.changeField(password, connectionData.password);
+
+      await act(async () => userEvent.click(submit()));
+
+      const response = {data: TestUtils.makeExtResult({})};
+
+      Axios.post.mockResolvedValue(response);
+
+      expect(Axios.post).toHaveBeenCalledWith(
+        EXT.URL,
+        VERIFY_CONNECTION_REQUEST
+      );
+      expect(ExtJS.showSuccessMessage).toHaveBeenCalledWith(
+        LABELS.VERIFY_SUCCESS_MESSAGE(
+          generateUrl(data.protocol, data.host, data.port)
+        )
+      );
+    });
+
+    it('Users should be able to change and save the configuration', async () => {
+      let newData = LDAP_SERVERS[1];
+      newData.port = String(newData.port);
+
+      const templateData = USER_AND_GROUP_TEMPLATE[1];
+
+      const {
+        createConnection: {nextButton},
+        userAndGroup: {template, saveButton},
+        modalPassword: {title, password, submit},
+      } = selectors;
+
+      await renderView(itemId);
+
+      await fillConnectionForm(newData, true);
+
+      await act(async () => userEvent.click(nextButton()));
+
+      userEvent.selectOptions(template(), templateData.name);
+
+      await act(async () => userEvent.click(saveButton()));
+
+      expect(title()).toBeInTheDocument();
+      expect(password()).toBeInTheDocument();
+
+      await TestUtils.changeField(password, connectionData.password);
+
+      await act(async () => userEvent.click(submit()));
+
+      expect(ExtJS.showSuccessMessage).toHaveBeenCalledWith(
+        LABELS.UPDATE_SUCCESS_MESSAGE(newData.name)
+      );
+
+      const expected = {
+        ...omit(['connectionRetryDelay', 'connectionTimeout'], data), // Omits not needed values.
+        ...omit(['id', 'order'], newData), // We cannot change the id and order, so keeps the original values.
+        ...omit(['name'], templateData), // Omits the template name, not needed
+        authPassword: connectionData.password,
+      };
+
+      expect(Axios.post).toHaveBeenCalledWith(
+        EXT.URL,
+        VERIFY_CONNECTION_REQUEST
+      );
+      expect(ExtJS.showSuccessMessage).toHaveBeenCalledWith(
+        LABELS.UPDATE_SUCCESS_MESSAGE(expected.name)
+      );
+      expect(Axios.put).toHaveBeenCalledWith(
+        singleLdapServersUrl(expected.name),
+        expected
+      );
+    });
+
+    it('if the auth scheme is anonymous should not ask for the password when saving the form', async () => {
+      const authScheme = 'NONE';
+      let newData = LDAP_SERVERS[1];
+      newData.port = String(newData.port);
+
+      const templateData = USER_AND_GROUP_TEMPLATE[1];
+
+      const {
+        createConnection: {nextButton, authenticationMethod},
+        userAndGroup: {template, saveButton},
+        modalPassword: {title, password},
+      } = selectors;
+
+      await renderView(itemId);
+
+      await fillConnectionForm(newData, true);
+
+      userEvent.selectOptions(authenticationMethod(), authScheme);
+
+      await act(async () => userEvent.click(nextButton()));
+
+      userEvent.selectOptions(template(), templateData.name);
+
+      await act(async () => userEvent.click(saveButton()));
+
+      expect(title()).not.toBeInTheDocument();
+      expect(password()).not.toBeInTheDocument();
+
+      expect(ExtJS.showSuccessMessage).toHaveBeenCalledWith(
+        LABELS.UPDATE_SUCCESS_MESSAGE(newData.name)
+      );
+
+      const expected = {
+        ...omit(['connectionRetryDelay', 'connectionTimeout'], data), // Omits not needed values.
+        ...omit(['id', 'order'], newData), // We cannot change the id and order, so keeps the original values.
+        ...omit(['name'], templateData), // Omits the template name, not needed
+        authPassword: '',
+        authScheme,
+      };
+
+      expect(Axios.post).toHaveBeenCalledWith(
+        EXT.URL,
+        VERIFY_CONNECTION_REQUEST
+      );
+      expect(ExtJS.showSuccessMessage).toHaveBeenCalledWith(
+        LABELS.UPDATE_SUCCESS_MESSAGE(expected.name)
+      );
+      expect(Axios.put).toHaveBeenCalledWith(
+        singleLdapServersUrl(expected.name),
+        expected
+      );
     });
   });
 });
