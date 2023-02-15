@@ -16,8 +16,10 @@ import userEvent from '@testing-library/user-event';
 import axios from 'axios';
 import {sort, prop, descend, ascend} from 'ramda';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
+import {interpret} from 'xstate';
 
 import TagsList from './TagsList';
+import TagsListMachine from './TagsListMachine';
 import UIStrings from '../../../../constants/UIStrings';
 
 jest.mock('axios', () => ({
@@ -62,7 +64,9 @@ describe('TagsList', function() {
 
   async function renderView(data) {
     axios.get.mockResolvedValue({data});
-    render(<TagsList />);
+    const service = interpret(TagsListMachine).start();
+
+    render(<TagsList service={service} />);
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
   };
 
@@ -74,7 +78,8 @@ describe('TagsList', function() {
 
   it('renders the error message', async function() {
     axios.get.mockRejectedValue({message: 'Error'});
-    render(<TagsList />);
+    const service = interpret(TagsListMachine).start();
+    render(<TagsList service={service}/>);
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
     const error = selectors.tableAlert();
 

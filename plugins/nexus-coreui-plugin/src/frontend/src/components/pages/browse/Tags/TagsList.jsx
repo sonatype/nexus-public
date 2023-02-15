@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {useMachine} from '@xstate/react';
+import { useService } from '@xstate/react';
 
 import {
   ContentBody,
@@ -34,14 +34,13 @@ import {
 } from '@sonatype/react-shared-components';
 
 import { faTags } from '@fortawesome/free-solid-svg-icons';
-import TagsListMachine from './TagsListMachine';
 import UIStrings from '../../../../constants/UIStrings';
 
 const {TAGS} = UIStrings;
 const {COLUMNS} = TAGS.LIST;
 
-export default function TagsList({onEdit}) {
-  const [state, send] = useMachine(TagsListMachine, {devTools: true});
+export default function TagsList({onEdit, service}) {
+  const [state, send] = useService(service);
   const {data, error, filter: filterText} = state.context;
   const isLoading = state.matches('loading');
 

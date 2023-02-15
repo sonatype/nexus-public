@@ -17,7 +17,7 @@ export default {
   TAGS: {
     MENU: {
       text: 'Tags',
-      description: 'View created tags'
+      description: 'View created tags',
     },
     EMPTY_MESSAGE: 'No tags found.',
     HELP_MESSAGE: {
@@ -40,7 +40,19 @@ export default {
         FIRST_CREATED: 'First created time',
         LAST_UPDATED: 'Last Updated Time',
       },
-      FILTER_PLACEHOLDER: 'Filter by Name'
+     FILTER_PLACEHOLDER: 'Filter by Name',
+    },
+    DETAILS: {
+      HEADER: {
+        text: 'Tags',
+        description: 'View tag details',
+      },
+      TILE_HEADER: 'Tag Details',
+      BACK_TO_TAGS_TABLE: 'Back to Tags Table View',
+      ATTRIBUTES: 'Attributes',
+      FIND_TAGGED: 'Find Tagged Components',
+      FIRST_CREATED: 'First Created Time',
+      LAST_UPDATED: 'Last Updated Time',
     }
   }
 };

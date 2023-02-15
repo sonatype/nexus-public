@@ -11,17 +11,23 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
+import { useMachine } from '@xstate/react';
 
-import {Detail, Master, MasterDetail} from '@sonatype/nexus-ui-plugin';
+import { Detail, Master, MasterDetail } from '@sonatype/nexus-ui-plugin';
 
 import TagsList from './TagsList';
+import TagsDetails from './TagsDetails';
+import TagsListMachine from './TagsListMachine.js'
 
 export default function Tags() {
+  const service = useMachine(TagsListMachine, {devTools: true})[2];
+
   return <MasterDetail path="browse/tags">
     <Master>
-      <TagsList />
+      <TagsList service={service}/>
     </Master>
     <Detail>
+      <TagsDetails service={service}/>
     </Detail>
   </MasterDetail>;
 }
