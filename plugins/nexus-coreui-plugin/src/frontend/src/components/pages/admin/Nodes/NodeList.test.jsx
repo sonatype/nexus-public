@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {render, screen, waitForElementToBeRemoved, waitFor} from '@testing-library/react';
+import {render, screen, waitForElementToBeRemoved, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {ExtJS, APIConstants} from '@sonatype/nexus-ui-plugin';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
@@ -42,7 +42,6 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   ExtJS: {
     showErrorMessage: jest.fn(),
     showSuccessMessage: jest.fn(),
-    requestConfirmation: jest.fn().mockResolvedValue(),
     state: jest.fn().mockReturnValue({
       getValue: jest.fn()
     })
@@ -54,10 +53,23 @@ const selectors = {
   enableReadOnlyButton: () => screen.getByRole('button', {name: READ_ONLY.ENABLE.BUTTON}),
   disableReadOnlyButton: () => screen.getByRole('button', {name: READ_ONLY.DISABLE.BUTTON}),
   nodeHostname: (hostname) => screen.getByText(hostname),
-  helpHeader: () => screen.getByText(HELP.TITLE)
+  helpHeader: () => screen.getByText(HELP.TITLE),
+  enableReadOnlyModal: () => screen.getByRole('dialog', {name: READ_ONLY.ENABLE.TITLE}),
+  disableReadOnlyModal: () => screen.getByRole('dialog', {name: READ_ONLY.DISABLE.TITLE}),
+  enableReadOnlyModalButton: () =>
+    within(selectors.enableReadOnlyModal()).getByRole('button', {name: READ_ONLY.ENABLE.BUTTON}),
+  disableReadOnlyModalButton: () =>
+    within(selectors.disableReadOnlyModal()).getByRole('button', {name: READ_ONLY.DISABLE.BUTTON}),
+  disableReadOnlyForciblyModal: () =>
+    screen.getByRole('dialog', {name: READ_ONLY.DISABLE.FORCIBLY.TITLE}),
+  disableReadOnlyForciblyModalButton: () =>
+    within(selectors.disableReadOnlyForciblyModal()).getByRole('button', {
+      name: READ_ONLY.DISABLE.FORCIBLY.BUTTON
+    }),
+  togglingReadOnlyMask: () => screen.queryByRole('status')
 };
 
-describe('EmailServer', () => {
+describe('NodeList', () => {
   const nodes = [
     {
       nodeId: '111',
@@ -120,16 +132,13 @@ describe('EmailServer', () => {
     tid: 1
   };
 
-  const unfreezeForciblyExtResBody = {
-    result: {
-      data: {frozen: false},
-      success: true
-    }
-  };
-
   const renderAndWaitForLoad = async () => {
     render(<NodeList />);
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
+  };
+
+  const waitForTogglingMaskToBeRemoved = async () => {
+    await waitFor(() => expect(selectors.togglingReadOnlyMask()).not.toBeInTheDocument());
   };
 
   beforeEach(() => {
@@ -154,7 +163,12 @@ describe('EmailServer', () => {
 
     await renderAndWaitForLoad();
 
-    const {enableReadOnlyButton, disableReadOnlyButton} = selectors;
+    const {
+      enableReadOnlyButton,
+      disableReadOnlyButton,
+      enableReadOnlyModalButton,
+      disableReadOnlyModalButton
+    } = selectors;
 
     // freeze
     expect(enableReadOnlyButton()).toBeInTheDocument();
@@ -162,9 +176,9 @@ describe('EmailServer', () => {
       .calledWith(EXT.URL, freezeExtReqBody)
       .mockResolvedValue({data: freezeExtResBody});
     userEvent.click(enableReadOnlyButton());
-    await waitFor(() => expect(ExtJS.requestConfirmation).toBeCalled());
+    userEvent.click(enableReadOnlyModalButton());
     expect(Axios.post).toBeCalledWith(EXT.URL, freezeExtReqBody);
-    expect(disableReadOnlyButton()).toBeInTheDocument();
+    await waitForTogglingMaskToBeRemoved();
 
     // unfreeze
     when(Axios.post)
@@ -172,8 +186,9 @@ describe('EmailServer', () => {
       .mockResolvedValue({data: unfreezeExtResBody});
     when(ExtJS.state().getValue).calledWith('frozenManually').mockReturnValue(true);
     userEvent.click(disableReadOnlyButton());
-    await waitFor(() => expect(ExtJS.requestConfirmation).toBeCalled());
+    userEvent.click(disableReadOnlyModalButton());
     expect(Axios.post).toBeCalledWith(EXT.URL, unfreezeExtReqBody);
+    await waitForTogglingMaskToBeRemoved();
     expect(enableReadOnlyButton()).toBeInTheDocument();
   });
 
@@ -183,20 +198,22 @@ describe('EmailServer', () => {
 
     await renderAndWaitForLoad();
 
-    const {enableReadOnlyButton, disableReadOnlyButton} = selectors;
+    const {enableReadOnlyButton, disableReadOnlyButton, disableReadOnlyForciblyModalButton} =
+      selectors;
 
     expect(disableReadOnlyButton()).toBeInTheDocument();
 
     when(Axios.post)
       .calledWith(EXT.URL, unfreezeForciblyExtReqBody)
       .mockResolvedValue({data: unfreezeExtResBody});
-    
-    userEvent.click(disableReadOnlyButton());
 
-    await waitFor(() => expect(ExtJS.requestConfirmation).toBeCalled());
+    userEvent.click(disableReadOnlyButton());
+    userEvent.click(disableReadOnlyForciblyModalButton());
 
     expect(Axios.post).toBeCalledWith(EXT.URL, unfreezeForciblyExtReqBody);
-    
+
+    await waitForTogglingMaskToBeRemoved();
+
     expect(enableReadOnlyButton()).toBeInTheDocument();
   });
 });

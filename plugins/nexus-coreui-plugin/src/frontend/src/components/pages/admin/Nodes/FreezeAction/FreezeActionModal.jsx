@@ -53,8 +53,8 @@ export default function FreezeActionModal({service}) {
   const LABELS = getLabels(frozen, frozenManually);
 
   return (
-    <NxModal onCancel={close}>
-      <NxModal.Header>
+    <NxModal onCancel={close} aria-labelledby="modal-header-text">
+      <NxModal.Header id="modal-header-text">
         <NxH2>
           <NxFontAwesomeIcon icon={faQuestionCircle} />
           <span>{LABELS.TITLE}</span>
@@ -63,7 +63,7 @@ export default function FreezeActionModal({service}) {
       <NxModal.Content>{LABELS.MESSAGE}</NxModal.Content>
       <NxFooter>
         <NxButtonBar>
-          <NxButton onClick={action}>{LABELS.BUTTON}</NxButton>
+          <NxButton onClick={action} variant="primary">{LABELS.BUTTON}</NxButton>
           <NxButton onClick={close}>{CANCEL_BUTTON_LABEL}</NxButton>
         </NxButtonBar>
       </NxFooter>
