@@ -305,7 +305,7 @@ public final class OrientMavenIndexPublisher extends MavenIndexPublisher
     @Override
     public void close() throws IOException {
       if (path != null) {
-        mavenFacet.put(mavenPath, createStreamPayload(path, contentType));
+        mavenFacet.put(mavenPath, createPayload(path, contentType));
         Files.delete(path);
         path = null;
       }

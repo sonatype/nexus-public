@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.maven.internal.utils;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -26,7 +25,7 @@ import java.util.Map.Entry;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.view.Payload;
-import org.sonatype.nexus.repository.view.payloads.StreamPayload;
+import org.sonatype.nexus.repository.view.payloads.PathPayload;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
 
 import com.google.common.hash.HashCode;
@@ -66,7 +65,7 @@ public final class MavenIOUtils
   {
     Map<HashAlgorithm, HashingOutputStream> hashingStreams = writeToPath(path, writer);
     Map<HashAlgorithm, HashCode> hashCodes = generateHashCodes(hashingStreams);
-    return new HashedPayload(aStreamPayload(path, contentType), hashCodes);
+    return new HashedPayload(asPayload(path, contentType), hashCodes);
   }
 
   private static Map<HashAlgorithm, HashingOutputStream> writeToPath(final Path path, final Writer writer)
@@ -95,11 +94,8 @@ public final class MavenIOUtils
     return hashCodes;
   }
 
-  private static StreamPayload aStreamPayload(final Path path, final String contentType) throws IOException {
-    return new StreamPayload(() -> new BufferedInputStream(Files.newInputStream(path)),
-        Files.size(path),
-        contentType
-    );
+  private static Payload asPayload(final Path path, final String contentType) throws IOException {
+    return new PathPayload(path, contentType);
   }
 
   public static Map<HashType, Payload> hashesToPayloads(final Map<HashAlgorithm, HashCode> hashCodes)

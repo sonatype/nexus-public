@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.maven;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,7 +26,7 @@ import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.view.Payload;
-import org.sonatype.nexus.repository.view.payloads.StreamPayload;
+import org.sonatype.nexus.repository.view.payloads.PathPayload;
 import org.sonatype.nexus.testsuite.testsupport.RepositoryITSupport;
 
 import org.apache.http.auth.AuthScope;
@@ -161,12 +160,8 @@ public abstract class MavenITSupport
     mavenTestHelper.writeWithoutValidation(repository, path, payload);
   }
 
-  protected StreamPayload filePayload(final File file, final String contentType) {
-    return new StreamPayload(
-        () -> new BufferedInputStream(java.nio.file.Files.newInputStream(file.toPath())),
-        file.length(),
-        contentType
-    );
+  protected Payload filePayload(final File file, final String contentType) {
+    return new PathPayload(file.toPath(), contentType);
   }
 
   protected Payload read(final Repository repository, final String path) throws IOException {
