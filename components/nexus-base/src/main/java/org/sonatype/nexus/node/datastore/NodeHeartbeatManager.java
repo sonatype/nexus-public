@@ -28,8 +28,6 @@ public interface NodeHeartbeatManager
 
   String NODE_ID = "nodeId";
 
-  String HEALTH_CHECK = "healthCheck";
-
   String CACHE_KEY = "nodes";
 
   /**
@@ -48,11 +46,6 @@ public interface NodeHeartbeatManager
    * Determines if the current node is in a clustered mode
    */
   boolean isCurrentNodeClustered();
-
-  /**
-   * Calculates and returns the latest current node information
-   */
-  Map<String, Object> getLatestNodeInfo(String nodeId);
 
   /**
    * Collects and transforms system info from heartbeat table

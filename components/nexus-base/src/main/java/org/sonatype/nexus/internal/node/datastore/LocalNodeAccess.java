@@ -21,8 +21,8 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.common.node.NodeAccessSupport;
 import org.sonatype.nexus.common.stateguard.Guarded;
-import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.node.datastore.NodeIdStore;
 
 import com.google.common.collect.ImmutableMap;
@@ -38,8 +38,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 @Named("local")
 @Singleton
 public class LocalNodeAccess
-    extends StateGuardLifecycleSupport
-    implements NodeAccess
+    extends NodeAccessSupport
 {
   private final NodeIdStore nodeIdStore;
 

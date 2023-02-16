@@ -24,9 +24,9 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.common.node.NodeAccessSupport;
 import org.sonatype.nexus.common.node.orient.OrientNodeAccess;
 import org.sonatype.nexus.common.stateguard.Guarded;
-import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.internal.node.KeyStoreManagerImpl;
 import org.sonatype.nexus.internal.node.NodeIdEncoding;
 import org.sonatype.nexus.ssl.CertificateUtil;
@@ -45,7 +45,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 @Named("local")
 @Singleton
 public class OrientLocalNodeAccess
-    extends StateGuardLifecycleSupport
+    extends NodeAccessSupport
     implements OrientNodeAccess
 {
   private final Provider<KeyStoreManager> keyStoreProvider;

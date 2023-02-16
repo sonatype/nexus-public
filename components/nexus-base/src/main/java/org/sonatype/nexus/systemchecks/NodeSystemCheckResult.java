@@ -23,11 +23,25 @@ public class NodeSystemCheckResult
 {
   private final String hostname;
 
+  private final String nodeId;
+
   private final Map<String, Result> systemChecks;
 
-  public NodeSystemCheckResult(final String hostname, final Map<String, Result> systemChecks) {
+  public NodeSystemCheckResult(
+      final String nodeId,
+      final String hostname,
+      final Map<String, Result> systemChecks)
+  {
+    this.nodeId = nodeId;
     this.hostname = hostname;
     this.systemChecks = systemChecks;
+  }
+
+  /**
+   * The nodeId of the system which generated this result
+   */
+  public String getNodeId() {
+    return nodeId;
   }
 
   /**

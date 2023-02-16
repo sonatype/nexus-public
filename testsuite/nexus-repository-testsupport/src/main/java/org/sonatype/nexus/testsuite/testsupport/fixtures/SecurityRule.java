@@ -232,8 +232,9 @@ public class SecurityRule
         Arrays.stream(privilegeNames).map(this::getPrivilege).filter(Objects::nonNull).collect(Collectors.toList());
 
     if (privileges.size() != privilegeNames.length) {
+      String privilegeNamesStr = Arrays.asList(privilegeNames).stream().collect(Collectors.joining(", "));
       throw new IllegalStateException(
-          String.format("Missing privileges names: %s privileges: %s", privilegeNames, privileges));
+          String.format("Missing privileges names: %s privileges: %s", privilegeNamesStr, privileges));
     }
 
     List<Role> roles = Arrays.stream(roleIds).map(this::getRole).filter(Objects::nonNull).collect(Collectors.toList());

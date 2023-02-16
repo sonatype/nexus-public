@@ -12,12 +12,7 @@
  */
 package org.sonatype.nexus.rapture.internal;
 
-import java.io.InputStream;
-import java.net.InetAddress;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import javax.inject.Inject;
@@ -25,6 +20,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.scheduling.PeriodicJobService;
@@ -37,7 +33,6 @@ import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import org.apache.commons.io.IOUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
@@ -58,6 +53,8 @@ public class LocalSystemCheckService
 {
   private final PeriodicJobService jobService;
 
+  private final NodeAccess nodeAccess;
+
   private String hostname;
 
   private LoadingCache<String, Result> cache;
@@ -72,10 +69,12 @@ public class LocalSystemCheckService
   public LocalSystemCheckService(
       final PeriodicJobService jobService,
       final HealthCheckRegistry registry,
+      final NodeAccess nodeAccess,
       @Named("${nexus.healthcheck.refreshInterval:-15}") final int refreshInterval)
   {
     this.jobService = checkNotNull(jobService);
     this.registry = checkNotNull(registry);
+    this.nodeAccess = checkNotNull(nodeAccess);
     this.refreshInterval = refreshInterval;
   }
 
@@ -85,7 +84,12 @@ public class LocalSystemCheckService
     jobService.startUsing();
 
     // Retrieving the hostname may be expensive so do this asynchronously
-    jobService.runOnce(this::setHostname, 1);
+    nodeAccess.getHostName()
+      .thenAccept(value -> hostname = value)
+      .exceptionally(ex -> {
+        hostname = nodeAccess.getId();
+        return null;
+      });
 
     metricsWritingJob = jobService.schedule(() -> {
       registry.getNames().forEach(k -> {
@@ -121,45 +125,6 @@ public class LocalSystemCheckService
   @Override
   @Guarded(by = STARTED)
   public Stream<NodeSystemCheckResult> getResults() {
-    return Collections.singleton(new NodeSystemCheckResult(hostname, cache.asMap())).stream();
-  }
-
-  /*
-   * Set the hostname
-   */
-  private void setHostname() {
-    hostname = getHostname();
-  }
-
-  /*
-   * Get the hostname, calling this may be expensive
-   */
-  private String getHostname() {
-    Optional<String> hostname = Optional.empty();
-    try {
-      Process process = Runtime.getRuntime().exec("hostname");
-      process.waitFor(5, TimeUnit.SECONDS);
-      if (process.exitValue() == 0) {
-        try (InputStream in = process.getInputStream()) {
-          hostname = Optional.ofNullable(IOUtils.toString(in, StandardCharsets.UTF_8));
-        }
-      }
-    }
-    catch (Exception e) { //NOSONAR
-      log.debug("Failed retrieve hostname from external process", e);
-    }
-
-    if (hostname.isPresent()) {
-      return hostname.get();
-    }
-
-    try {
-      hostname = Optional.ofNullable(InetAddress.getLocalHost().getHostName());
-    }
-    catch (Exception e) { //NOSONAR
-      log.debug("Failed to retrieve hostname from InetAddress", e);
-    }
-
-    return hostname.orElse("Unknown hostname");
+    return Collections.singleton(new NodeSystemCheckResult(nodeAccess.getId(), hostname, cache.asMap())).stream();
   }
 }
