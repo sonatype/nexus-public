@@ -31,7 +31,6 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.MultipleFailures;
-import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.Continuations;
 import org.sonatype.nexus.common.stateguard.InvalidStateException;
@@ -78,10 +77,9 @@ import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 /**
  * A maven2 metadata rebuilder written to take advantage of the SQL database design.
  */
-@FeatureFlag(name = "nexus.maven.native.rebuild", enabledByDefault = true)
 @Singleton
 @Named
-public class NativeDatastoreMetadataRebuilder
+public class MavenMetadataRebuilder
     extends ComponentSupport
     implements MetadataRebuilder
 {
@@ -92,13 +90,11 @@ public class NativeDatastoreMetadataRebuilder
   private final VersionScheme versionScheme;
 
   @Inject
-  public NativeDatastoreMetadataRebuilder(@Named("${nexus.maven.metadata.rebuild.bufferSize:-1000}") final int bufferSize) {
+  public MavenMetadataRebuilder(@Named("${nexus.maven.metadata.rebuild.bufferSize:-1000}") final int bufferSize) {
     checkArgument(bufferSize > 0, "Buffer size must be greater than 0");
 
     this.bufferSize = bufferSize;
     this.versionScheme = new GenericVersionScheme();
-
-    log.debug("Chose {} for maven meadata rebuilds");
   }
 
   @Override
@@ -203,7 +199,7 @@ public class NativeDatastoreMetadataRebuilder
 
     private final MavenPathParser mavenPathParser;
 
-    private final LegacyDatastoreMetadataUpdater metadataUpdater;
+    private final DatastoreMetadataUpdater metadataUpdater;
 
     private final Optional<String> groupId;
 
@@ -220,7 +216,7 @@ public class NativeDatastoreMetadataRebuilder
         @Nullable final String artifactId,
         @Nullable final String baseVersion)
     {
-      metadataUpdater = new LegacyDatastoreMetadataUpdater(update, repository);
+      metadataUpdater = new DatastoreMetadataUpdater(update, repository);
       content = repository.facet(MavenContentFacet.class);
       mavenPathParser = repository.facet(MavenContentFacet.class).getMavenPathParser();
 

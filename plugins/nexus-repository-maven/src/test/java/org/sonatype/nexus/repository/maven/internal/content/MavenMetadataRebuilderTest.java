@@ -51,7 +51,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.slf4j.Logger.ROOT_LOGGER_NAME;
 
-public class NativeDatastoreMetadataRebuilderTest
+public class MavenMetadataRebuilderTest
     extends TestSupport
 {
   @Mock
@@ -103,7 +103,7 @@ public class NativeDatastoreMetadataRebuilderTest
     Thread taskThread = new Thread(() -> {
       CancelableHelper.set(canceled);
 
-      new NativeDatastoreMetadataRebuilder(20).rebuild(repository, true, false, null, null, null);
+      new MavenMetadataRebuilder(20).rebuild(repository, true, false, null, null, null);
     });
     taskThread.setUncaughtExceptionHandler((t, e) -> {
       if (e instanceof TaskInterruptedException) {
