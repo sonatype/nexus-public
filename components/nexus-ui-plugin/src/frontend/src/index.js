@@ -64,3 +64,6 @@ export {
 } from './components/widgets/UseTruststoreCheckbox/UseNexusTruststore';
 
 export { default as TokenMachine } from './components/machines/TokenMachine';
+
+export * from './interface/urlUtil';
+export * from './interface/versionUtil';

@@ -14,43 +14,24 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext*/
+import { toURIParams} from './urlUtil';
 
-/**
- * Dashboard controller.
- *
- * @since 3.0
- */
-Ext.define('NX.controller.Dashboard', {
-  extend: 'NX.app.Controller',
-  requires: [
-    'NX.I18n'
-  ],
-
-  views: [
-    'dashboard.Welcome'
-  ],
-
-  /**
-   * @override
-   */
-  init: function () {
-    this.getApplication().getFeaturesController().registerFeature({
-      path: '/Welcome',
-      mode: 'browse',
-      view: 'NX.view.dashboard.Welcome',
-      text: NX.I18n.get('Dashboard_Title'),
-      description: NX.I18n.get('Dashboard_Description'),
-      iconConfig: {
-        file: 'sonatype.png',
-        variants: ['x16', 'x32']
-      },
-      weight: 10,
-      authenticationRequired: false,
-      visible: function() {
-        return !NX.State.getValue('nexus.react.welcome', false);
-      }
+describe('urlUtil', function () {
+  describe('toURIParams', function () {
+    it('encodes only defined parameters', function () {
+      const params = {
+        foo: null,
+        'f o o': '?x=шеллы',
+        baz: undefined,
+        bar: '?x=test',
+        qwerty: 'as df'
+      };
+      expect(toURIParams(params))
+          .toEqual('f%20o%20o=%3Fx%3D%D1%88%D0%B5%D0%BB%D0%BB%D1%8B&bar=%3Fx%3Dtest&qwerty=as%20df');
     });
-  }
 
+    it('handles empty object', function () {
+      expect(toURIParams({})).toEqual('');
+    });
+  });
 });

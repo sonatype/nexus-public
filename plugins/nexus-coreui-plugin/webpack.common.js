@@ -60,7 +60,10 @@ module.exports = {
           {
             loader: MiniCssExtractPlugin.loader
           },
-          'css-loader',
+          {
+            loader: 'css-loader',
+            options: { url: false } // disable build-tile resolution of url() paths
+          },
           'sass-loader'
         ]
       },

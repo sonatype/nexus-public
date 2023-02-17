@@ -161,4 +161,49 @@ export default class {
   static checkPermission(permission) {
     return NX.Permissions.check(permission)
   }
+
+  /**
+   * @returns {{id: string, authenticated: boolean, administrator: boolean, authenticatedRealms: string[]} | undefined}
+   */
+  static useUser() {
+    return this.useState(() => NX.State.getUser());
+  }
+
+  /**
+   * @returns {{version: string, edition: string}}
+   */
+  static useStatus() {
+    return this.useState(() => NX.State.getValue('status'));
+  }
+
+  /**
+   * @returns {{daysToExpiry: number}}
+   */
+  static useLicense() {
+    return this.useState(() => NX.State.getValue('license'));
+  }
+
+  /**
+   * A hook that automatically re-evaluates whenever any state is changed
+   * @param getValue - A function to get the value from the state subsystem
+   * @returns {unknown}
+   */
+  static useState(getValue) {
+    const [value, setValue] = useState(getValue());
+
+    useEffect(() => {
+      function handleChange() {
+        const newValue = getValue();
+        if (value !== newValue) {
+          setValue(newValue);
+        }
+      }
+
+      const state = Ext.getApplication().getStore('State');
+      state.on('datachanged', handleChange);
+      return () => state.un('datachanged', handleChange);
+    }, [value]);
+
+    return value;
+  }
 }

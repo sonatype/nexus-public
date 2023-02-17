@@ -48,11 +48,15 @@ import DataStoreStrings from './pages/admin/repository/DataStoreStrings';
 import ReplicationStrings from './pages/admin/repository/ReplicationStrings';
 import UserTokenConfigurationStrings from './pages/admin/security/UserTokenStrings';
 import UserTokenStrings from './pages/user/UserTokenStrings';
+import WelcomeStrings from './pages/user/WelcomeStrings';
 import TagsStrings from './pages/browse/tags/TagsStrings';
 import NodesStrings from './pages/admin/system/NodesStrings';
 
 export default {
   ...UIStrings,
+
+  // welcome page
+  ...WelcomeStrings,
 
   // browse
   ...Log4jVisualizerStrings,

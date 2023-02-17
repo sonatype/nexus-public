@@ -57,6 +57,7 @@ import SamlConfiguration from "./components/pages/admin/SamlConfiguration/SamlCo
 import Replication from "./components/pages/admin/Replication/Replication";
 import DataStoreConfiguration from "./components/pages/admin/DataStoreConfiguration/DataStoreConfiguration";
 import UserToken from "./components/pages/user/UserToken/UserToken";
+import Welcome from './components/pages/user/Welcome/Welcome';
 import Tags from './components/pages/browse/Tags/Tags';
 import Nodes from "./components/pages/admin/Nodes/NodeList";
 
@@ -82,6 +83,21 @@ window.plugins.push({
   id: 'nexus-coreui-plugin',
 
   features: [
+    {
+      mode: 'browse',
+      path: '/Welcome',
+      view: Welcome,
+      ...UIStrings.WELCOME.MENU,
+      iconConfig: {
+        file: 'sonatype.png',
+        variants: ['x16', 'x32']
+      },
+      weight: 10,
+      authenticationRequired: false,
+      visibility: {
+        featureFlags: [{key: 'nexus.react.welcome', defaultValue: false}]
+      },
+    },
     {
       mode: 'admin',
       path: '/Repository/Blobstores',

@@ -136,6 +136,14 @@ export default {
         READ_TYPES: 'readTypes',
       }
     },
+    OUTREACH: {
+      ACTION: 'outreach_Outreach',
+      METHODS: {
+        READ_STATUS: 'readStatus',
+        GET_PROXY_DOWNLOAD_NUMBERS: 'getProxyDownloadNumbers',
+        IS_LOG4J_CAPABILITY_ACTIVE: 'isAvailableLog4jDisclaimer'
+      }
+    }
   },
   REST: {
     INTERNAL: {

@@ -1,4 +1,4 @@
-/**
+/*
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
  * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
@@ -10,36 +10,33 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+package org.sonatype.nexus.coreui.internal.welcome;
 
-/*
-  Style overrides for the react-shared-components. Once we've fully converted to React we should remove these overrides.
-*/
+import java.util.Map;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-.x-body {
-  line-height: var(--nx-line-height);
+import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.rapture.StateContributor;
 
-  .nx-btn {
-    white-space: nowrap;
+import com.google.common.collect.ImmutableMap;
+
+@Named
+@Singleton
+public class WelcomeStateContributor
+    extends ComponentSupport
+    implements StateContributor
+{
+  private final Map<String, Object> state;
+
+  @Inject
+  public WelcomeStateContributor(@Named("${nexus.react.welcome:-false}") final Boolean featureFlag) {
+    state = ImmutableMap.of("nexus.react.welcome", featureFlag);
   }
-}
 
-.nx-accordion__header {
-  list-style-type: none;
-
-  &::-webkit-details-marker {
-    display: none;
-  }
-
-  > .nx-accordion__summary-wrapper {
-    padding-left: 0;
-  }
-}
-
-.nxrm-react-main-container {
-  display: grid;
-  grid-template: 100% / 100%;
-
-  > .nx-page-main {
-    grid-area: unset;
+  @Override
+  public Map<String, Object> getState() {
+    return state;
   }
 }
