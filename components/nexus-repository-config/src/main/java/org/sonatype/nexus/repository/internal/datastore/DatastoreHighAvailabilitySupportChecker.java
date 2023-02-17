@@ -43,6 +43,16 @@ public class DatastoreHighAvailabilitySupportChecker
         .add("maven2")
         .add("npm")
         .add("r")
+        .add("raw")
+        .add("pypi")
+        .add("conan")
+        .add("conda")
+        .add("gitlfs")
+        .add("cocoapods")
+        .add("go")
+        .add("p2")
+        .add("nuget")
+        .add("rubygems")
         .build();
   }
 }
