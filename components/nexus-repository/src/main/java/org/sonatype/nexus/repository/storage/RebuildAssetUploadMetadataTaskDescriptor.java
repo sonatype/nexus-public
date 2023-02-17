@@ -32,8 +32,10 @@ public class RebuildAssetUploadMetadataTaskDescriptor
   public static final String TYPE_ID = "rebuild.asset.uploadMetadata";
 
   @Inject
-  public RebuildAssetUploadMetadataTaskDescriptor(final NodeAccess nodeAccess,
-                                                  final RebuildAssetUploadMetadataConfiguration configuration) {
+  public RebuildAssetUploadMetadataTaskDescriptor(
+      final NodeAccess nodeAccess,
+      final RebuildAssetUploadMetadataConfiguration configuration)
+  {
     super(
         TYPE_ID,
         RebuildAssetUploadMetadataTask.class,
