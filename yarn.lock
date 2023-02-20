@@ -2556,7 +2556,7 @@ __metadata:
     babel-loader: 8.2.3
     babel-polyfill: 6.26.0
     copy-modules-webpack-plugin: 2.2.1
-    core-js: 2.6.11
+    core-js: 3.28.0
     css-minimizer-webpack-plugin: 3.4.1
     luxon: 1.28.1
     mini-css-extract-plugin: 2.7.2
@@ -4612,10 +4612,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"core-js@npm:2.6.11":
-  version: 2.6.11
-  resolution: "core-js@npm:2.6.11"
-  checksum: 6944011e7aa2d86dae6c42fbb15c94bf20b7499c4f5ebd5e5d11bdde7101d3724788afacc8ab93fbacb2c881d634ef9ee783e1cf724cfbaaf501e882abda957f
+"core-js@npm:3.28.0":
+  version: 3.28.0
+  resolution: "core-js@npm:3.28.0"
+  checksum: 3155fd0ec16d0089106b145e9595280a4ea4bde0d7ff26aa14364cd4f1c203baf6620c3025acd284f363d08b9f21104101692766ca9a36ffeee7307bdf3e1881
   languageName: node
   linkType: hard
 
