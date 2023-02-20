@@ -36,9 +36,9 @@ import static java.lang.String.format;
 /**
  * Inform on the health of all BlobStores based on their configured soft quota.
  */
-@Named("Blob Stores")
+@Named("Blob Stores Quota")
 @Singleton
-public class BlobStoreHealthCheck
+public class BlobStoreQuotaHealthCheck
     extends HealthCheck
 {
   private final Provider<BlobStoreManager> blobStoreManagerProvider;
@@ -46,8 +46,8 @@ public class BlobStoreHealthCheck
   private final Provider<BlobStoreQuotaService> quotaServiceProvider;
 
   @Inject
-  public BlobStoreHealthCheck(final Provider<BlobStoreManager> blobStoreManagerProvider,
-                              final Provider<BlobStoreQuotaService> quotaServiceProvider)
+  public BlobStoreQuotaHealthCheck(final Provider<BlobStoreManager> blobStoreManagerProvider,
+                                   final Provider<BlobStoreQuotaService> quotaServiceProvider)
   {
     this.blobStoreManagerProvider = Preconditions.checkNotNull(blobStoreManagerProvider);
     this.quotaServiceProvider = Preconditions.checkNotNull(quotaServiceProvider);

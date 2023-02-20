@@ -24,7 +24,7 @@ import spock.lang.Specification
 import spock.lang.Subject
 
 
-class BlobStoreHealthCheckTest
+class BlobStoreQuotaHealthCheckTest
     extends Specification
 {
   BlobStoreManager blobStoreManager = Mock()
@@ -40,7 +40,7 @@ class BlobStoreHealthCheckTest
   BlobStoreQuotaResult quotaResult = Mock()
 
   @Subject
-  BlobStoreHealthCheck blobStoreHealthCheck = new BlobStoreHealthCheck({ -> blobStoreManager}, { -> quotaService })
+  BlobStoreQuotaHealthCheck blobStoreHealthCheck = new BlobStoreQuotaHealthCheck({ -> blobStoreManager}, { -> quotaService })
 
   def "Healthy response with no BlobStores configured"() {
     when:
