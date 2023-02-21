@@ -53,6 +53,7 @@ export default {
       FIND_TAGGED: 'Find Tagged Components',
       FIRST_CREATED: 'First Created Time',
       LAST_UPDATED: 'Last Updated Time',
+      TAG_NOT_FOUND: 'Tag was not found'
     }
   }
 };

@@ -38,39 +38,43 @@ const {TAGS} = UIStrings;
 export default function TagsDetails({itemId, service}) {
   const [state] = useService(service);
   const isLoading = state.matches('loading');
-  const data = state.context.data.find(v => v.name == itemId);
-  const error = state.context.error;
+  const tagData = state.context.data.find(v => v.name == itemId);
+  const tagsExist = (state.context.data.length > 0);
+  const tagsExistButNotTheCurrentTag = tagsExist && typeof tagData == 'undefined';
+  const error = tagsExistButNotTheCurrentTag ? TAGS.DETAILS.TAG_NOT_FOUND : state.context.error;
 
   return <Page className="nxrm-tags">
     <div>
       <PageTitle icon={faTags} {...TAGS.DETAILS.HEADER}/>
-      <NxBackButton href="/#browse/tags" text={TAGS.DETAILS.BACK_TO_TAGS_TABLE}/>
+      <NxBackButton href="#browse/tags" text={TAGS.DETAILS.BACK_TO_TAGS_TABLE}/>
     </div>
     <ContentBody>
-      <NxLoadWrapper retryHandler={() => {}} loading={isLoading} error={error}>
-        {() => (
-          <NxTile>
-            <NxTile.Header>
-              <NxTile.HeaderTitle>
-                <NxH2>{data.name} {TAGS.DETAILS.TILE_HEADER}</NxH2>
-              </NxTile.HeaderTitle>
-              <NxTile.HeaderActions>
-                <NxTextLink href={'/#browse/search/custom=' + encodeURIComponent(`tags="${data.name}"`)}>{TAGS.DETAILS.FIND_TAGGED}</NxTextLink>
-              </NxTile.HeaderActions>
-            </NxTile.Header>
-            <NxTile.Content>
+      <NxTile>
+        <NxLoadWrapper retryHandler={() => {}} loading={isLoading} error={error}>
+          {() => (
+            <>
+              <NxTile.Header>
+                <NxTile.HeaderTitle>
+                  <NxH2>{tagData.name} {TAGS.DETAILS.TILE_HEADER}</NxH2>
+                </NxTile.HeaderTitle>
+                <NxTile.HeaderActions>
+                  <NxTextLink href={'#browse/search/custom=' + encodeURIComponent(`tags="${tagData.name}"`)}>{TAGS.DETAILS.FIND_TAGGED}</NxTextLink>
+                </NxTile.HeaderActions>
+              </NxTile.Header>
+              <NxTile.Content>
                 <NxReadOnly>
-                  <ReadOnlyField label={TAGS.DETAILS.FIRST_CREATED} value={new Date(data.firstCreated).toLocaleString()}/>
-                  <ReadOnlyField label={TAGS.DETAILS.LAST_UPDATED} value={new Date(data.lastUpdated).toLocaleString()}/>
+                  <ReadOnlyField label={TAGS.DETAILS.FIRST_CREATED} value={new Date(tagData.firstCreated).toLocaleString()}/>
+                  <ReadOnlyField label={TAGS.DETAILS.LAST_UPDATED} value={new Date(tagData.lastUpdated).toLocaleString()}/>
                 </NxReadOnly>
                 <NxCopyToClipboard 
                   label={TAGS.DETAILS.ATTRIBUTES}
-                  content={JSON.stringify(data.attributes, null, 2)} 
+                  content={JSON.stringify(tagData.attributes, null, 2)} 
                 />
-            </NxTile.Content>
-          </NxTile>
-        )}
-      </NxLoadWrapper>
+              </NxTile.Content>
+            </>
+          )}
+        </NxLoadWrapper>
+      </NxTile>
     </ContentBody>
   </Page>
 }

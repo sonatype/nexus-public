@@ -62,15 +62,29 @@ async function renderView() {
 
 describe('TagsDetails', function() {
 
-  it('renders load error message', async function() {
-    axios.get.mockRejectedValue({message: 'Error'});
-    const service = interpret(TagsListMachine).start();
-    render(<TagsDetails service={service} itemId="test-tag"/>);
-    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+  describe('renders an error message when ', function() {
 
-    expect(selectors.getLoadError()).toBeInTheDocument();
-    expect(selectors.getLoadError()).toHaveTextContent('Error');
-  })
+    it('a promise is rejected', async function() {
+      axios.get.mockRejectedValue({message: 'Error'});
+      const service = interpret(TagsListMachine).start();
+      render(<TagsDetails service={service} itemId="test-tag"/>);
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
+  
+      expect(selectors.getLoadError()).toBeInTheDocument();
+      expect(selectors.getLoadError()).toHaveTextContent('Error');
+    });
+  
+    it('a tag is not found', async function() {
+      axios.get.mockResolvedValue({data: testTag});
+      const service = interpret(TagsListMachine).start();
+      render(<TagsDetails service={service} itemId="tag-does-not-exist"/>);
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
+  
+      const error = selectors.queryLoadError('Tag was not found');
+      expect(error).toBeInTheDocument();
+    });
+
+  });
 
   describe('correctly renders the following based on the test tag: ', function() {
 
@@ -79,7 +93,7 @@ describe('TagsDetails', function() {
 
       expect(selectors.queryTitle()).toHaveTextContent(TAGS.DETAILS.HEADER.text);
       expect(selectors.getBacklink()).toBeInTheDocument();
-      expect(selectors.getBacklink()).toHaveAttribute('href','/#browse/tags');
+      expect(selectors.getBacklink()).toHaveAttribute('href','#browse/tags');
     });
 
     it('the tile', async function() {
@@ -87,7 +101,7 @@ describe('TagsDetails', function() {
 
       expect(selectors.getTileHeader()).toHaveTextContent(`test-tag ${TAGS.DETAILS.TILE_HEADER}`);
       expect(selectors.getSearchTaggedComponentsLink()).toBeInTheDocument();
-      expect(selectors.getSearchTaggedComponentsLink()).toHaveAttribute('href','/#browse/search/custom=tags%3D%22test-tag%22');
+      expect(selectors.getSearchTaggedComponentsLink()).toHaveAttribute('href','#browse/search/custom=tags%3D%22test-tag%22');
       expect(selectors.getFirstCreatedLabel()).toBeInTheDocument();
       expect(screen.queryByText('1/1/2023, 7:00:00 AM')).toBeInTheDocument();
       expect(selectors.getLastUpdatedLabel()).toBeInTheDocument();
