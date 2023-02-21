@@ -81,7 +81,7 @@
       SELECT count(*)
         FROM ${format}_key_value
        WHERE repository_id = #{repositoryId}
-         AND category = #{category};
+       <if test="category != null"> AND category = #{category}</if>;
   </select>
 
   <select id="findCategories" resultType="String">
@@ -97,6 +97,14 @@
        WHERE repository_id = #{repositoryId}
          AND category = #{category}
          AND key = #{key};
+  </select>
+
+  <select id="findByCategoryAndKeyLike" resultMap="kvResult">
+    SELECT key_value_id, category, key, value
+      FROM ${format}_key_value
+     WHERE repository_id = #{repositoryId}
+       <if test="category != null"> AND category = #{category}</if>
+       AND key LIKE #{keyLike};
   </select>
 
   <update id="set" databaseId="PostgreSQL">
@@ -130,8 +138,8 @@
 
   <delete id="removeAll">
     DELETE FROM ${format}_key_value
-     WHERE repository_id = #{repositoryId} 
-       AND category = #{category}
+     WHERE repository_id = #{repositoryId}
+      <if test="category != null"> AND category = #{category}</if>
       <if test="limit gt 0"> LIMIT #{limit}</if>;
   </delete>
 
@@ -140,7 +148,7 @@
      WHERE key_value_id IN (SELECT key_value_id
                               FROM ${format}_key_value
                              WHERE repository_id = #{repositoryId}
-                               AND category = #{category}
+                                <if test="category != null"> AND category = #{category}</if>
       <if test="limit gt 0"> LIMIT #{limit}</if>);
   </delete>
 

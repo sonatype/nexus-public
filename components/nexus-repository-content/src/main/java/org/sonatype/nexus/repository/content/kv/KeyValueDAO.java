@@ -88,6 +88,12 @@ public interface KeyValueDAO
    */
   List<String> findCategories(@Param("repositoryId") final int repositoryId, @Param("key") String key);
 
+  List<KeyValue> findByCategoryAndKeyLike(
+      @Param("repositoryId") int repositoryId,
+      @Nullable @Param("category") String category,
+      @Param("keyLike") String keyLike
+  );
+
   /**
    * Set the value for a specific key in the provided category for the repository.
    *
@@ -120,7 +126,7 @@ public interface KeyValueDAO
    *
    * @return the number of records removed
    */
-  int removeAll(@Param("repositoryId") int repositoryId, @Param("category") String category, @Param("limit") int limit);
+  int removeAll(@Param("repositoryId") int repositoryId, @Nullable @Param("category") String category, @Param("limit") int limit);
 
   /**
    * Remove all data associated with a repository

@@ -53,6 +53,7 @@ public class DatastoreHighAvailabilitySupportChecker
         .add("p2")
         .add("nuget")
         .add("rubygems")
+        .add("helm")
         .build();
   }
 }

@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.content.kv;
 
 import java.util.List;
 import java.util.Optional;
-
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -61,17 +61,17 @@ public class KeyValueStore<T extends KeyValueDAO>
   /*
    * Transactional is intentionally omitted
    */
-  public void removeAll(final int repositoryId, final String type) {
+  public void removeAll(final int repositoryId, @Nullable final String category) {
     int count;
     do {
-      count = removeCategoryPage(repositoryId, type);
+      count = removeCategoryPage(repositoryId, category);
     }
     while (count > 0);
   }
 
   @Transactional
-  protected int removeCategoryPage(final int repositoryId, final String type) {
-    return dao().removeAll(repositoryId, type, DELETE_BATCH_SIZE_DEFAULT);
+  protected int removeCategoryPage(final int repositoryId, @Nullable final String category) {
+    return dao().removeAll(repositoryId, category, DELETE_BATCH_SIZE_DEFAULT);
   }
 
   /*
@@ -111,13 +111,18 @@ public class KeyValueStore<T extends KeyValueDAO>
   @Transactional
   public int count(
       final int repositoryId,
-      final String type)
+      @Nullable final String category)
   {
-    return dao().count(repositoryId, type);
+    return dao().count(repositoryId, category);
   }
 
   @Transactional
   public List<String> findCategories(final int repositoryId, final String key) {
     return dao().findCategories(repositoryId, key);
+  }
+
+  @Transactional
+  public List<KeyValue> findByCategoryAndKeyLike(final int repositoryId, @Nullable final String category, final String keyLike) {
+    return dao().findByCategoryAndKeyLike(repositoryId, category, keyLike);
   }
 }

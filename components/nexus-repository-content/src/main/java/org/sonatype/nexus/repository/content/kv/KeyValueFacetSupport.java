@@ -21,6 +21,7 @@ import javax.inject.Inject;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.stateguard.Guarded;
+import org.sonatype.nexus.repository.Facet.Exposed;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
@@ -34,6 +35,7 @@ import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 /**
  * Support class encapsulating the key-value store actions.
  */
+@Exposed
 public abstract class KeyValueFacetSupport<DAO extends KeyValueDAO, STORE extends KeyValueStore<DAO>>
     extends FacetSupport
 {
@@ -78,6 +80,11 @@ public abstract class KeyValueFacetSupport<DAO extends KeyValueDAO, STORE extend
     return dataStore.get(repositoryId(), category, key);
   }
 
+  @Guarded(by = {ATTACHED, STARTED})
+  public List<KeyValue> findByCategoryAndKeyLike(@Nullable final String category, final String keyLike) {
+    return dataStore.findByCategoryAndKeyLike(repositoryId(), category, keyLike);
+  }
+
   /**
    * Set the value for the key in the specified category.
    *
@@ -107,8 +114,16 @@ public abstract class KeyValueFacetSupport<DAO extends KeyValueDAO, STORE extend
    * @param category the category to remove associated content from
    */
   @Guarded(by = {ATTACHED, STARTED})
-  protected void removeAll(final String category) {
+  public void removeAll(final String category) {
     dataStore.removeAll(repositoryId(), category);
+  }
+
+  /**
+   * Remove all data in the specified category for the attached repository.
+   */
+  @Guarded(by = {ATTACHED, STARTED})
+  public void removeAll() {
+    dataStore.removeAll(repositoryId(), null);
   }
 
   /**
@@ -147,9 +162,18 @@ public abstract class KeyValueFacetSupport<DAO extends KeyValueDAO, STORE extend
    * @return
    */
   @Guarded(by = {ATTACHED, STARTED})
-  protected int countValues(final String category)
+  public int countValues(final String category)
   {
     return dataStore.count(repositoryId(), category);
+  }
+
+  /**
+   * Count all the values stored with a category
+   */
+  @Guarded(by = {ATTACHED, STARTED})
+  public int countValues()
+  {
+    return dataStore.count(repositoryId(), null);
   }
 
   /**
