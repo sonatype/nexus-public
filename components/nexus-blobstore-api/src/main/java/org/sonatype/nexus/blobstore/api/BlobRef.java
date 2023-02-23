@@ -29,33 +29,33 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class BlobRef
 {
   /**
-   * The delimiters for blobref segments. This regexp matches non-delimiter text that has at least 1-character
+   * The pattern to match node-id and blob-id segments with 30 or more characters.
    */
-  private static final String NON_SEPARATOR = "[^:@]+";
+  private static final String ID_MATCHER = "[\\w-]{30,}";
 
   /**
    * String of the pattern used on 3.47.1 and newer for blobref. Matches {@code store@blob-id}
    */
   private static final String CANONICAL_PATTERN =
-      String.format("(?<store>%s)@(?<blobid>%s)", NON_SEPARATOR, NON_SEPARATOR);
+      String.format("(?<store>.+)@(?<blobid>%s$)", ID_MATCHER);
 
   /**
    * String of the pattern used on OrientDB installs prior to 3.47.0. Matches {@code store@node-id:blob-id}
    */
   private static final String ORIENT_PATTERN =
-      String.format("(?<ostore>%s)@(%s):(?<oblobid>%s)", NON_SEPARATOR, NON_SEPARATOR, NON_SEPARATOR);
+      String.format("(?<ostore>.+)@(%s):(?<oblobid>%s$)", ID_MATCHER, ID_MATCHER);
 
   /**
    * String of the pattern used on SQL installs prior to 3.47.0. Matches {@code store:blob-id@node-id}
    */
   private static final String SQL_PATTERN =
-      String.format("(?<sstore>%s):(?<sblobid>%s)@(%s)", NON_SEPARATOR, NON_SEPARATOR, NON_SEPARATOR);
+      String.format("(?<sstore>.+):(?<sblobid>%s)@(%s$)", ID_MATCHER, ID_MATCHER);
 
   /**
    * Matcher which matches all 3 formats
    */
   private static final Pattern BLOB_REF_PATTERN =
-      Pattern.compile(String.format("(%s)|(%s)|(%s)", CANONICAL_PATTERN, ORIENT_PATTERN, SQL_PATTERN));
+      Pattern.compile(String.format("%s|%s|%s", ORIENT_PATTERN, SQL_PATTERN, CANONICAL_PATTERN));
 
   private static final String BLOB_REF_SIMPLE_FORMAT = "%s@%s";
 

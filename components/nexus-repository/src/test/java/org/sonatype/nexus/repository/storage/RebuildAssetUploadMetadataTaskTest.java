@@ -52,6 +52,9 @@ public class RebuildAssetUploadMetadataTaskTest
   private static final int PAGE_SIZE = 1;
   private static final String REPOSITORY_NAME = "repositoryName";
 
+  private static final String BLOB1 = "9bb2cd9b-1700-41ae-946c-f67bf709b1eb";
+  private static final String BLOB2 = "e123ba9b-3064-4ad9-8044-c3b4b6ee28c1";
+
   private RebuildAssetUploadMetadataTask task;
 
   @Rule
@@ -103,7 +106,7 @@ public class RebuildAssetUploadMetadataTaskTest
   public void executeCancelledTaskThrowsTaskInterruptedException() {
     task.cancel();
 
-    Blob blob = createMockBlob("blobId");
+    Blob blob = createMockBlob(BLOB1);
     Asset asset = createAsset(blob);
     assetStore.save(asset);
 
@@ -112,7 +115,7 @@ public class RebuildAssetUploadMetadataTaskTest
 
   @Test
   public void executeUpdatesCandidateAssets() {
-    Blob blob = createMockBlob("blobId");
+    Blob blob = createMockBlob(BLOB1);
     Asset asset = createAsset(blob);
     assetStore.save(asset);
 
@@ -127,7 +130,7 @@ public class RebuildAssetUploadMetadataTaskTest
 
   @Test
   public void executeSkipsAssetsWithANonEmptyCreatedBy() {
-    Blob blob = createMockBlob("blobId");
+    Blob blob = createMockBlob(BLOB1);
     Asset asset = createAsset(blob);
     asset.createdBy("somebody");
     assetStore.save(asset);
@@ -156,13 +159,13 @@ public class RebuildAssetUploadMetadataTaskTest
 
   @Test
   public void executeSkipsFirstAssetWithAnEmptyCreatedBy() {
-    Blob blob = createMockBlob("blobId");
+    Blob blob = createMockBlob(BLOB1);
     when(blob.getHeaders()).thenReturn(Collections.singletonMap(CREATED_BY_IP_HEADER, "192.168.0.1"));
     Asset asset = createAsset(blob);
     asset.createdBy("alreadySet");
     assetStore.save(asset);
 
-    Blob blob2 = createMockBlob("blobId2");
+    Blob blob2 = createMockBlob(BLOB2);
     when(blob2.getHeaders()).thenReturn(Collections.singletonMap(CREATED_BY_IP_HEADER, "192.168.0.2"));
     Asset asset2 = createAsset(blob2);
     asset2.createdBy(null);

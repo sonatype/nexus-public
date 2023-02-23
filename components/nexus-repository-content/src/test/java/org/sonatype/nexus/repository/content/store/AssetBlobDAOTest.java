@@ -47,6 +47,10 @@ import static org.sonatype.nexus.testcommon.matchers.NexusMatchers.time;
 public class AssetBlobDAOTest
     extends ExampleContentTestSupport
 {
+  private static final String NODE_ID = "ab761d55-5d9c22b6-3f38315a-75b3db34-0922a4d5";
+
+  private static final String BLOB_ID = "a8f3f56f-e895-4b6e-984a-1cf1f5107d36";
+
   @Test
   public void testCrudOperations() {
 
@@ -103,7 +107,7 @@ public class AssetBlobDAOTest
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
 
-      assertFalse(dao.readAssetBlob(new BlobRef("test-node", "test-store", "test-blob")).isPresent());
+      assertFalse(dao.readAssetBlob(new BlobRef(NODE_ID, "test-store", BLOB_ID)).isPresent());
 
       tempResult = dao.readAssetBlob(blobRef1).get();
       assertThat(tempResult, sameBlob(assetBlob1));
@@ -127,7 +131,7 @@ public class AssetBlobDAOTest
 
       assertThat(dao.browseUnusedAssetBlobs(1, null), emptyIterable());
 
-      assertFalse(dao.deleteAssetBlob(new BlobRef("test-node", "test-store", "test-blob")));
+      assertFalse(dao.deleteAssetBlob(new BlobRef(NODE_ID, "test-store", BLOB_ID)));
     }
   }
 
@@ -273,7 +277,7 @@ public class AssetBlobDAOTest
       dao.browseAssetBlobs(legacyAssetsCount, null).forEach(assetBlob -> {
         BlobRef blobRef = assetBlob.blobRef();
         String id = ((AssetBlobData) assetBlob).assetBlobId.toString();
-        String legacyBlobRef = String.format("%s:%s@%s", blobRef.getStore(), blobRef.getBlob(), "test-node-id");
+        String legacyBlobRef = String.format("%s:%s@%s", blobRef.getStore(), blobRef.getBlob(), NODE_ID);
         String sql = String.format("UPDATE test_asset_blob SET blob_ref='%s' WHERE asset_blob_id=%s", legacyBlobRef, id);
 
         try {
