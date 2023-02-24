@@ -54,6 +54,7 @@ public class DatastoreHighAvailabilitySupportChecker
         .add("nuget")
         .add("rubygems")
         .add("helm")
+        .add("apt")
         .build();
   }
 }

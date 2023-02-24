@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.apt.datastore.internal;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -39,6 +40,7 @@ import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.fluent.FluentQuery;
 import org.sonatype.nexus.repository.content.store.AssetDAO;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.content.utils.FormatAttributesUtils;
@@ -246,5 +248,14 @@ public class AptContentFacetImpl
         "pathParam", pathPrefix + "%");
 
     iterableOf(assets().byFilter(filter, params)::browse).forEach(FluentAsset::delete);
+  }
+
+  @Override
+  public Iterable<FluentAsset> getAptPackageAssets() {
+    FluentQuery<FluentAsset> query = assets().byFilter(
+        "kind = #{" + AssetDAO.FILTER_PARAMS + ".assetKindFilter}",
+        Collections.singletonMap("assetKindFilter", DEB)
+    );
+    return iterableOf(query::browse);
   }
 }

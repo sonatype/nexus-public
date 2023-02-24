@@ -21,8 +21,10 @@ import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.RecipeSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
-import org.sonatype.nexus.repository.apt.datastore.AptContentFacet;
 import org.sonatype.nexus.repository.apt.AptFormat;
+import org.sonatype.nexus.repository.apt.datastore.AptContentFacet;
+import org.sonatype.nexus.repository.apt.datastore.internal.data.AptKeyValueFacet;
+import org.sonatype.nexus.repository.apt.datastore.internal.hosted.metadata.AptHostedMetadataFacet;
 import org.sonatype.nexus.repository.apt.internal.AptSecurityFacet;
 import org.sonatype.nexus.repository.apt.internal.gpg.AptSigningFacet;
 import org.sonatype.nexus.repository.apt.internal.snapshot.AptSnapshotHandler;
@@ -82,6 +84,12 @@ public class AptHostedRecipe
   Provider<AptHostedSnapshotFacet> hostedSnapshotFacet;
 
   @Inject
+  Provider<AptKeyValueFacet> aptKeyValueFacet;
+
+  @Inject
+  Provider<AptHostedMetadataFacet> aptHostedMetadataFacet;
+
+  @Inject
   TimingHandler timingHandler;
 
   @Inject
@@ -133,6 +141,8 @@ public class AptHostedRecipe
     repository.attach(browseFacet.get());
     repository.attach(searchFacet.get());
     repository.attach(hostedSnapshotFacet.get());
+    repository.attach(aptKeyValueFacet.get());
+    repository.attach(aptHostedMetadataFacet.get());
   }
 
   private ViewFacet configure(final ConfigurableViewFacet facet) {

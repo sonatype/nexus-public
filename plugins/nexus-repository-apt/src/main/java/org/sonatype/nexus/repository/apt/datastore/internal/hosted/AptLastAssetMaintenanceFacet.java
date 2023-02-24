@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 import javax.inject.Named;
 
+import org.sonatype.nexus.repository.apt.datastore.internal.hosted.metadata.AptHostedMetadataFacet;
 import org.sonatype.nexus.repository.apt.internal.hosted.AssetAction;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
@@ -42,27 +43,19 @@ public class AptLastAssetMaintenanceFacet
   public Set<String> deleteAsset(final Asset asset) {
     final Set<String> deleteAssetPaths = super.deleteAsset(asset);
     final FluentAsset fluentAsset = contentFacet().assets().with(asset);
-    rebuildMetadata(Collections.singletonList(fluentAsset));
+    metadata().removePackageMetadata(fluentAsset);
+    metadata().removeInReleaseIndex();
     return deleteAssetPaths;
   }
 
   @Override
   public Set<String> deleteComponent(final Component component) {
-    FluentComponent fluentComponent = contentFacet().components().with(component);
     Set<String> deleteAssetPaths = super.deleteComponent(component);
-    rebuildMetadata(fluentComponent.assets());
+    metadata().removeInReleaseIndex();
     return deleteAssetPaths;
   }
 
-  private void rebuildMetadata(final Collection<FluentAsset> fluentAssets) {
-    try {
-      final List<AssetChange> assetChanges = fluentAssets.stream()
-          .map(fluentAsset -> new AssetChange(AssetAction.REMOVED, fluentAsset))
-          .collect(Collectors.toList());
-      getRepository().facet(AptHostedFacet.class).rebuildMetadata(assetChanges);
-    }
-    catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
+  private AptHostedMetadataFacet metadata() {
+    return facet(AptHostedMetadataFacet.class);
   }
 }
