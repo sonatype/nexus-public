@@ -51,6 +51,7 @@ import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
 import org.sonatype.nexus.crypto.internal.MavenCipherImpl;
 import org.sonatype.nexus.datastore.DataStoreSupport;
 import org.sonatype.nexus.datastore.api.DataAccess;
+import org.sonatype.nexus.datastore.api.DataAccessException;
 import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.datastore.api.Expects;
 import org.sonatype.nexus.datastore.api.SchemaTemplate;
@@ -257,9 +258,33 @@ public class MyBatisDataStore
     info("Creating schema for {}", accessType.getSimpleName());
     try (SqlSession session = new DataAccessSqlSession(mybatisConfig)) {
       DataAccess dao = session.getMapper(accessType);
-      dao.createSchema();
-      dao.extendSchema();
-      session.commit();
+      // Creating schema with retry mechanism to avoid failures in HA mode when nodes run simultaneously
+      DataAccessException exception = null;
+      int tries = 0;
+      while (tries < 5) {
+        try {
+          dao.createSchema();
+          dao.extendSchema();
+          session.commit();
+          exception = null;
+          break;
+        }
+        catch (DataAccessException dae) {
+          exception = dae;
+          log.debug("Schema creation failed", dae);
+          session.rollback();
+          try {
+            Thread.sleep(100L);
+          }
+          catch (InterruptedException e) {
+            log.warn("Schema creation thread interrupted, proceeding with creation");
+          }
+          tries++;
+        }
+      }
+      if (exception != null) {
+        throw exception;
+      }
     }
   }
 
