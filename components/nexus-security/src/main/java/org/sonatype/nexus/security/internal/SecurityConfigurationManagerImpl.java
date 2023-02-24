@@ -248,7 +248,7 @@ public class SecurityConfigurationManagerImpl
       return privilege;
     }
 
-    privilege = getDefaultConfiguration().getPrivilege(id);
+    privilege = validateExistingPrivilege(id);
     if (privilege != null) {
       return privilege;
     }
@@ -597,5 +597,15 @@ public class SecurityConfigurationManagerImpl
         validateRoleDoesntContainItself(role, readRole(r), checkedRoles);
       }
     });
+  }
+
+  private CPrivilege validateExistingPrivilege(final String identifier) {
+    CPrivilege privilege;
+    privilege = getDefaultConfiguration().getPrivilege(identifier);
+    if (privilege == null) {
+      privilege = getDefaultConfiguration().getPrivilegeByName(identifier);
+      return privilege;
+    }
+    return privilege;
   }
 }
