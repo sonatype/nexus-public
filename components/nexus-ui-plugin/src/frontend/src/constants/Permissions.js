@@ -62,4 +62,5 @@ export default {
   USER_TOKENS_SETTINGS: generatePermissions('usertoken-settings', [READ, UPDATE]),
   USER_TOKENS_USERS: generatePermissions('usertoken-users', [DELETE]),
   TAGS: generatePermissions('tags', [READ]),
+  COMPONENT: generatePermissions('component', [CREATE]),
 };

@@ -59,6 +59,7 @@ import DataStoreConfiguration from "./components/pages/admin/DataStoreConfigurat
 import UserToken from "./components/pages/user/UserToken/UserToken";
 import Welcome from './components/pages/user/Welcome/Welcome';
 import Tags from './components/pages/browse/Tags/Tags';
+import Upload from './components/pages/browse/Upload/Upload';
 import Nodes from "./components/pages/admin/Nodes/NodeList";
 
 window.ReactComponents = {
@@ -570,6 +571,21 @@ window.plugins.push({
         }],
         permissions: [Permissions.TAGS.READ],
         editions: ['PRO']
+      },
+    },
+    {
+      mode: 'browse',
+      path: '/Upload',
+      ...UIStrings.UPLOAD.MENU,
+      view: Upload,
+      iconCls: 'x-fa fa-upload',
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        featureFlags: [{
+          key: 'nexus.react.upload',
+          defaultValue: false
+        }],
+        permissions: [Permissions.COMPONENT.CREATE],
       },
     },
   ]

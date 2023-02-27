@@ -50,6 +50,7 @@ import UserTokenConfigurationStrings from './pages/admin/security/UserTokenStrin
 import UserTokenStrings from './pages/user/UserTokenStrings';
 import WelcomeStrings from './pages/user/WelcomeStrings';
 import TagsStrings from './pages/browse/tags/TagsStrings';
+import UploadStrings from './pages/browse/upload/UploadStrings';
 import NodesStrings from './pages/admin/system/NodesStrings';
 
 export default {
@@ -61,6 +62,7 @@ export default {
   // browse
   ...Log4jVisualizerStrings,
   ...TagsStrings,
+  ...UploadStrings,
 
   // admin
   ...IqServerStrings,

@@ -136,6 +136,12 @@ export default {
         READ_TYPES: 'readTypes',
       }
     },
+    UPLOAD: {
+      ACTION: 'coreui_Upload',
+      METHODS: {
+        GET_UPLOAD_DEFINITIONS: 'getUploadDefinitions'
+      }
+    },
     OUTREACH: {
       ACTION: 'outreach_Outreach',
       METHODS: {
@@ -222,6 +228,9 @@ export default {
       },
       get TAGS() {
         return `${this.BASE_URL}tags`;
+      },
+      get UPLOAD() {
+        return `${this.BASE_URL}repositorySettings`;
       },
     },
     SYSTEM_INFORMATION: '/service/rest/atlas/system-information'
