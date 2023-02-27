@@ -20,7 +20,8 @@ export default {
       text: 'System Information'
     },
     ACTIONS: {
-      download: 'Download as JSON'
+      download: 'Download as JSON',
+      nodeSelector: 'Node Selector'
     },
     LOAD_ERROR: 'An error occurred while fetching the system information'
   }

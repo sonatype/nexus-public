@@ -16,6 +16,9 @@
  */
 import {assign, Machine} from 'xstate';
 import Axios from "axios";
+import {APIConstants} from '@sonatype/nexus-ui-plugin';
+
+const {SYSTEM_INFORMATION} = APIConstants.REST;
 
 export default Machine(
 {
@@ -32,32 +35,33 @@ export default Machine(
         src: 'fetchData',
         onDone: {
           target: 'loaded',
-          actions: ['setData', 'logSuccess']
+          actions: ['setData']
         },
         onError: {
-          target: 'loaded',
+          target: 'loadError',
           actions: ['logError']
         }
       }
     },
     loaded: {},
-    error: {}
-  },
-  on: {
-    'RETRY': {
-      target: 'loading'
+    loadError: {  
+      on: {
+        'RETRY': {
+          target: 'loading'
+        }
+      }
     }
-  }
+  },
+
 },
 {
   actions: {
     setData: assign({
       systemInformation: (_, event) => event.data?.data
     }),
-    logDone: (_, event) => console.log(event),
     logError: (_, event) => console.error('Failed to load System Information', event)
   },
   services: {
-    fetchData: () => Axios.get('/service/rest/atlas/system-information')
+    fetchData: () => Axios.get(SYSTEM_INFORMATION)
   }
 });
