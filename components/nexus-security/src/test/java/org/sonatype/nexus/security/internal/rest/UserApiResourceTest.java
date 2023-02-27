@@ -22,6 +22,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.goodies.testsupport.hamcrest.BeanMatchers;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
+import org.sonatype.nexus.security.ErrorMessageUtil;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.config.AdminPasswordFileManager;
 import org.sonatype.nexus.security.internal.AdminPasswordFileManagerImpl;
@@ -382,7 +383,8 @@ public class UserApiResourceTest
         if (item instanceof WebApplicationMessageException) {
           WebApplicationMessageException e = (WebApplicationMessageException) item;
           return e.getResponse().getStatus() == status.getStatusCode()
-              && ("\"" + message + "\"").equals(e.getResponse().getEntity().toString())
+              && (ErrorMessageUtil.getFormattedMessage("\"" + message + "\""))
+                  .equals(e.getResponse().getEntity().toString())
               && MediaType.APPLICATION_JSON_TYPE.equals(e.getResponse().getMediaType());
         }
         return false;
@@ -390,7 +392,8 @@ public class UserApiResourceTest
 
       @Override
       public void describeTo(final Description description) {
-        description.appendText("WebApplicationMessageException(" + status.getStatusCode() + "," + message + ")");
+        description.appendText("WebApplicationMessageException(" + status.getStatusCode() + ","
+                + ErrorMessageUtil.getFormattedMessage(message) + ")");
       }
     };
   }

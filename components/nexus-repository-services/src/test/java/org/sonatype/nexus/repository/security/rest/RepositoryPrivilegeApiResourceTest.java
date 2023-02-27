@@ -148,7 +148,8 @@ public class RepositoryPrivilegeApiResourceTest
     catch (WebApplicationMessageException e) {
       assertThat(e.getResponse().getStatus(), is(400));
       assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
-      assertThat(e.getResponse().getEntity().toString(), is("\"Invalid repository 'invalid' supplied.\""));
+      assertThat(e.getResponse().getEntity().toString(),
+              is("ValidationErrorXO{id='*', message='\"Invalid repository 'invalid' supplied.\"'}"));
     }
   }
 
@@ -168,7 +169,8 @@ public class RepositoryPrivilegeApiResourceTest
     catch (WebApplicationMessageException e) {
       assertThat(e.getResponse().getStatus(), is(400));
       assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
-      assertThat(e.getResponse().getEntity().toString(), is("\"Invalid format 'invalid' supplied.\""));
+      assertThat(e.getResponse().getEntity().toString(),
+              is("ValidationErrorXO{id='*', message='\"Invalid format 'invalid' supplied.\"'}"));
     }
   }
 
@@ -189,7 +191,7 @@ public class RepositoryPrivilegeApiResourceTest
       assertThat(e.getResponse().getStatus(), is(400));
       assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
       assertThat(e.getResponse().getEntity().toString(),
-          is("\"Invalid format 'invalid' supplied for repository 'repository1'.\""));
+          is("ValidationErrorXO{id='*', message='\"Invalid format 'invalid' supplied for repository 'repository1'.\"'}"));
     }
   }
 
@@ -226,7 +228,8 @@ public class RepositoryPrivilegeApiResourceTest
     catch (WebApplicationMessageException e) {
       assertThat(e.getResponse().getStatus(), is(400));
       assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
-      assertThat(e.getResponse().getEntity().toString(), is("\"Invalid repository 'invalid' supplied.\""));
+      assertThat(e.getResponse().getEntity().toString(),
+              is("ValidationErrorXO{id='*', message='\"Invalid repository 'invalid' supplied.\"'}"));
     }
   }
 
@@ -263,7 +266,8 @@ public class RepositoryPrivilegeApiResourceTest
     catch (WebApplicationMessageException e) {
       assertThat(e.getResponse().getStatus(), is(400));
       assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
-      assertThat(e.getResponse().getEntity().toString(), is("\"Invalid repository 'invalid' supplied.\""));
+      assertThat(e.getResponse().getEntity().toString(),
+              is("ValidationErrorXO{id='*', message='\"Invalid repository 'invalid' supplied.\"'}"));
     }
   }
 
@@ -283,7 +287,8 @@ public class RepositoryPrivilegeApiResourceTest
     catch (WebApplicationMessageException e) {
       assertThat(e.getResponse().getStatus(), is(400));
       assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
-      assertThat(e.getResponse().getEntity().toString(), is("\"Invalid selector 'invalid' supplied.\""));
+      assertThat(e.getResponse().getEntity().toString(),
+              is("ValidationErrorXO{id='*', message='\"Invalid selector 'invalid' supplied.\"'}"));
     }
   }
 
@@ -320,7 +325,8 @@ public class RepositoryPrivilegeApiResourceTest
     catch (WebApplicationMessageException e) {
       assertThat(e.getResponse().getStatus(), is(400));
       assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
-      assertThat(e.getResponse().getEntity().toString(), is("\"Invalid repository 'invalid' supplied.\""));
+      assertThat(e.getResponse().getEntity().toString(),
+              is("ValidationErrorXO{id='*', message='\"Invalid repository 'invalid' supplied.\"'}"));
     }
   }
 
@@ -357,7 +363,8 @@ public class RepositoryPrivilegeApiResourceTest
     catch (WebApplicationMessageException e) {
       assertThat(e.getResponse().getStatus(), is(400));
       assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
-      assertThat(e.getResponse().getEntity().toString(), is("\"Invalid repository 'invalid' supplied.\""));
+      assertThat(e.getResponse().getEntity().toString(),
+              is("ValidationErrorXO{id='*', message='\"Invalid repository 'invalid' supplied.\"'}"));
     }
   }
 
@@ -395,7 +402,8 @@ public class RepositoryPrivilegeApiResourceTest
     catch (WebApplicationMessageException e) {
       assertThat(e.getResponse().getStatus(), is(400));
       assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
-      assertThat(e.getResponse().getEntity().toString(), is("\"Invalid repository 'invalid' supplied.\""));
+      assertThat(e.getResponse().getEntity().toString(),
+              is("ValidationErrorXO{id='*', message='\"Invalid repository 'invalid' supplied.\"'}"));
     }
   }
 
@@ -415,7 +423,8 @@ public class RepositoryPrivilegeApiResourceTest
     catch (WebApplicationMessageException e) {
       assertThat(e.getResponse().getStatus(), is(400));
       assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
-      assertThat(e.getResponse().getEntity().toString(), is("\"Invalid selector 'invalid' supplied.\""));
+      assertThat(e.getResponse().getEntity().toString(),
+              is("ValidationErrorXO{id='*', message='\"Invalid selector 'invalid' supplied.\"'}"));
     }
   }
 

@@ -23,6 +23,7 @@ import javax.ws.rs.core.MediaType;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
+import org.sonatype.nexus.security.ErrorMessageUtil;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
@@ -135,7 +136,8 @@ public class RoleApiResourceTest
     catch (WebApplicationMessageException e) {
       assertThat(e.getResponse().getStatus(), is(404));
       assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
-      assertThat(e.getResponse().getEntity().toString(), is("\"Role 'roleId' not found.\""));
+      assertThat(e.getResponse().getEntity().toString(), is(ErrorMessageUtil.getFormattedMessage(
+          "\"Role 'roleId' not found.\"")));
     }
   }
 
@@ -150,7 +152,8 @@ public class RoleApiResourceTest
     catch (WebApplicationMessageException e) {
       assertThat(e.getResponse().getStatus(), is(400));
       assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
-      assertThat(e.getResponse().getEntity().toString(), is("\"Source 'bad' not found.\""));
+      assertThat(e.getResponse().getEntity().toString(), is(ErrorMessageUtil.getFormattedMessage(
+          "\"Source 'bad' not found.\"")));
     }
   }
 
@@ -190,7 +193,8 @@ public class RoleApiResourceTest
     catch (WebApplicationMessageException e) {
       assertThat(e.getResponse().getStatus(), is(400));
       assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
-      assertThat(e.getResponse().getEntity().toString(), is("\"Role 'roleId' already exists, use a unique roleId.\""));
+      assertThat(e.getResponse().getEntity().toString(), is(ErrorMessageUtil.getFormattedMessage(
+          "\"Role 'roleId' already exists, use a unique roleId.\"")));
     }
   }
 
@@ -212,7 +216,8 @@ public class RoleApiResourceTest
     catch (WebApplicationMessageException e) {
       assertThat(e.getResponse().getStatus(), is(404));
       assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
-      assertThat(e.getResponse().getEntity().toString(), is("\"Role 'roleId' not found.\""));
+      assertThat(e.getResponse().getEntity().toString(), is(ErrorMessageUtil.getFormattedMessage(
+          "\"Role 'roleId' not found.\"")));
     }
   }
 
@@ -228,7 +233,8 @@ public class RoleApiResourceTest
       assertThat(e.getResponse().getStatus(), is(400));
       assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
       assertThat(e.getResponse().getEntity().toString(),
-          is("\"Role 'roleId' is internal and cannot be modified or deleted.\""));
+          is(ErrorMessageUtil.getFormattedMessage(
+              "\"Role 'roleId' is internal and cannot be modified or deleted.\"")));
     }
   }
 
@@ -262,7 +268,8 @@ public class RoleApiResourceTest
     catch (WebApplicationMessageException e) {
       assertThat(e.getResponse().getStatus(), is(404));
       assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
-      assertThat(e.getResponse().getEntity().toString(), is("\"Role 'id1' not found.\""));
+      assertThat(e.getResponse().getEntity().toString(), is(ErrorMessageUtil.getFormattedMessage(
+          "\"Role 'id1' not found.\"")));
     }
   }
 
@@ -285,7 +292,8 @@ public class RoleApiResourceTest
       assertThat(e.getResponse().getStatus(), is(400));
       assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
       assertThat(e.getResponse().getEntity().toString(),
-          is("\"Role 'id' is internal and cannot be modified or deleted.\""));
+          is(ErrorMessageUtil.getFormattedMessage(
+              "\"Role 'id' is internal and cannot be modified or deleted.\"")));
     }
   }
 
@@ -302,7 +310,8 @@ public class RoleApiResourceTest
       assertThat(e.getResponse().getStatus(), is(409));
       assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
       assertThat(e.getResponse().getEntity().toString(),
-          is("\"The Role id 'id' does not match the id used in the path 'bad'.\""));
+          is(ErrorMessageUtil.getFormattedMessage(
+              "\"The Role id 'id' does not match the id used in the path 'bad'.\"")));
     }
   }
 

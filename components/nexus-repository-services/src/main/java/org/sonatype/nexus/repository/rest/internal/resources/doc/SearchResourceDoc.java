@@ -78,7 +78,7 @@ public interface SearchResourceDoc
     notes = "Returns a 302 Found with location header field set to download URL. "
       + "Unless a sort parameter is supplied, the search must return a single asset to receive download URL.")
   @ApiResponses(value = {
-      @ApiResponse(code = 400, message = SEARCH_RETURNED_MULTIPLE_ASSETS),
+      @ApiResponse(code = 400, message = "ValidationErrorXO{id='*', message='" + SEARCH_RETURNED_MULTIPLE_ASSETS + "'}"),
       @ApiResponse(code = 404, message = NO_SEARCH_RESULTS_FOUND)
   })
   Response searchAndDownloadAssets(

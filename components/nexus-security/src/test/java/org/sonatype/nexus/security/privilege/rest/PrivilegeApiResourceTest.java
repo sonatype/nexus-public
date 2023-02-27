@@ -24,6 +24,7 @@ import javax.ws.rs.core.MediaType;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
+import org.sonatype.nexus.security.ErrorMessageUtil;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.privilege.ApplicationPrivilegeDescriptor;
@@ -135,7 +136,8 @@ public class PrivilegeApiResourceTest
     catch (WebApplicationMessageException e) {
       assertThat(e.getResponse().getStatus(), is(404));
       assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
-      assertThat(e.getResponse().getEntity().toString(), is("\"Privilege 'priv' not found.\""));
+      assertThat(e.getResponse().getEntity().toString(),
+              is(ErrorMessageUtil.getFormattedMessage("\"Privilege 'priv' not found.\"")));
     }
   }
 
@@ -161,7 +163,8 @@ public class PrivilegeApiResourceTest
       assertThat(e.getResponse().getStatus(), is(400));
       assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
       assertThat(e.getResponse().getEntity().toString(),
-          is("\"Privilege 'priv' is internal and cannot be modified or deleted.\""));
+          is(ErrorMessageUtil.getFormattedMessage(
+              "\"Privilege 'priv' is internal and cannot be modified or deleted.\"")));
     }
   }
 
@@ -176,7 +179,8 @@ public class PrivilegeApiResourceTest
     catch (WebApplicationMessageException e) {
       assertThat(e.getResponse().getStatus(), is(404));
       assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
-      assertThat(e.getResponse().getEntity().toString(), is("\"Privilege 'priv' not found.\""));
+      assertThat(e.getResponse().getEntity().toString(),
+          is(ErrorMessageUtil.getFormattedMessage("\"Privilege 'priv' not found.\"")));
     }
   }
 
@@ -236,7 +240,8 @@ public class PrivilegeApiResourceTest
     catch (WebApplicationMessageException e) {
       assertThat(e.getResponse().getStatus(), is(400));
       assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
-      assertThat(e.getResponse().getEntity().toString(), is("\"Privilege 'name' already exists, use a unique name.\""));
+      assertThat(e.getResponse().getEntity().toString(),
+          is(ErrorMessageUtil.getFormattedMessage("\"Privilege 'name' already exists, use a unique name.\"")));
     }
   }
 
@@ -255,7 +260,8 @@ public class PrivilegeApiResourceTest
       assertThat(e.getResponse().getStatus(), is(400));
       assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
       assertThat(e.getResponse().getEntity().toString(),
-          is("\"Privilege of type 'application' cannot use action(s) of type 'RUN'.\""));
+          is(ErrorMessageUtil.getFormattedMessage(
+              "\"Privilege of type 'application' cannot use action(s) of type 'RUN'.\"")));
     }
   }
 
@@ -305,7 +311,8 @@ public class PrivilegeApiResourceTest
     catch (WebApplicationMessageException e) {
       assertThat(e.getResponse().getStatus(), is(404));
       assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
-      assertThat(e.getResponse().getEntity().toString(), is("\"Privilege 'priv' not found.\""));
+      assertThat(e.getResponse().getEntity().toString(),
+          is(ErrorMessageUtil.getFormattedMessage("\"Privilege 'priv' not found.\"")));
     }
   }
 
@@ -326,7 +333,8 @@ public class PrivilegeApiResourceTest
       assertThat(e.getResponse().getStatus(), is(400));
       assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
       assertThat(e.getResponse().getEntity().toString(),
-          is("\"Privilege 'priv' is internal and cannot be modified or deleted.\""));
+          is(ErrorMessageUtil.getFormattedMessage(
+              "\"Privilege 'priv' is internal and cannot be modified or deleted.\"")));
     }
   }
 
@@ -345,7 +353,8 @@ public class PrivilegeApiResourceTest
       assertThat(e.getResponse().getStatus(), is(409));
       assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
       assertThat(e.getResponse().getEntity().toString(),
-          is("\"The privilege name 'privnotmatching' does not match the name used in the path 'priv'.\""));
+          is(ErrorMessageUtil.getFormattedMessage("\"The privilege name 'privnotmatching'"
+              + " does not match the name used in the path 'priv'.\"")));
     }
   }
 

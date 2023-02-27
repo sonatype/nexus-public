@@ -13,6 +13,7 @@
 package org.sonatype.nexus.rest;
 
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
@@ -32,6 +33,8 @@ public class WebApplicationMessageException
   }
 
   public WebApplicationMessageException(final Status status, final Object message, final String mediaType) {
-    super(Response.status(checkNotNull(status)).entity(checkNotNull(message)).type(mediaType).build());
+    super(Response.status(checkNotNull(status))
+        .entity(new GenericEntity<>(new ValidationErrorXO(checkNotNull(message).toString()), ValidationErrorXO.class))
+        .type(mediaType).build());
   }
 }
