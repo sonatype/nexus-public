@@ -78,6 +78,8 @@ public class RestoreMetadataTaskTest
 {
   public static final String BLOBSTORE_NAME = "test";
 
+  public static final String MAVEN_2 = "maven2";
+
   @Mock
   BlobStoreManager blobStoreManager;
 
@@ -114,6 +116,9 @@ public class RestoreMetadataTaskTest
   @Mock
   MaintenanceService maintenanceService;
 
+  @Mock
+  private AssetBlobRefFormatCheck assetBlobRefFormatCheck;
+
   RestoreMetadataTask underTest;
 
   Map<String, IntegrityCheckStrategy> integrityCheckStrategies;
@@ -127,12 +132,12 @@ public class RestoreMetadataTaskTest
   @Before
   public void setup() throws Exception {
     integrityCheckStrategies = spy(new HashMap<>());
-    integrityCheckStrategies.put("maven2", testIntegrityCheckStrategy);
+    integrityCheckStrategies.put(MAVEN_2, testIntegrityCheckStrategy);
     integrityCheckStrategies.put(DEFAULT_NAME, defaultIntegrityCheckStrategy);
 
     underTest =
-        new RestoreMetadataTask(blobStoreManager, repositoryManager, ImmutableMap.of("maven2", restoreBlobStrategy),
-            blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies, maintenanceService);
+        new RestoreMetadataTask(blobStoreManager, repositoryManager, ImmutableMap.of(MAVEN_2, restoreBlobStrategy),
+            blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies, maintenanceService, assetBlobRefFormatCheck);
 
     reset(integrityCheckStrategies); // reset this mock so we more easily verify calls
 
@@ -144,7 +149,7 @@ public class RestoreMetadataTaskTest
     when(repositoryManager.get("maven-central")).thenReturn(repository);
     when(repository.isStarted()).thenReturn(true);
     when(repository.getFormat()).thenReturn(mavenFormat);
-    when(mavenFormat.getValue()).thenReturn("maven2");
+    when(mavenFormat.getValue()).thenReturn(MAVEN_2);
 
     URL resource = Resources
         .getResource("test-restore/content/vol-1/chp-1/86e20baa-0bca-4915-a7dc-9a4f34e72321.properties");
@@ -176,6 +181,36 @@ public class RestoreMetadataTaskTest
     Properties properties = propertiesArgumentCaptor.getValue();
 
     assertThat(properties.getProperty("@BlobStore.blob-name"), is("org/codehaus/plexus/plexus/3.1/plexus-3.1.pom"));
+  }
+
+  @Test
+  public void shouldNotRestoreMetadataWhenAssetBlobRefNotMigrated() throws Exception {
+    configuration.setBoolean(RESTORE_BLOBS, true);
+    configuration.setBoolean(UNDELETE_BLOBS, true);
+    configuration.setBoolean(INTEGRITY_CHECK, false);
+    underTest.configure(configuration);
+    when(assetBlobRefFormatCheck.isAssetBlobRefNotMigrated(repository)).thenReturn(true);
+
+    underTest.execute();
+
+    ArgumentCaptor<Properties> propertiesArgumentCaptor = ArgumentCaptor.forClass(Properties.class);
+    verify(restoreBlobStrategy, never()).restore(propertiesArgumentCaptor.capture(), eq(blob), eq(blobStore), eq(false));
+    verify(blobStore, never()).undelete(blobstoreUsageChecker, blobId, blobAttributes, false);
+  }
+
+  @Test
+  public void shouldNotRestoreMetadataWhenExceptionDeterminingAssetBlobRefStatus() throws Exception {
+    configuration.setBoolean(RESTORE_BLOBS, true);
+    configuration.setBoolean(UNDELETE_BLOBS, true);
+    configuration.setBoolean(INTEGRITY_CHECK, false);
+    underTest.configure(configuration);
+    doThrow(new RuntimeException("Error!!!")).when(assetBlobRefFormatCheck).isAssetBlobRefNotMigrated(repository);
+
+    underTest.execute();
+
+    ArgumentCaptor<Properties> propertiesArgumentCaptor = ArgumentCaptor.forClass(Properties.class);
+    verify(restoreBlobStrategy, never()).restore(propertiesArgumentCaptor.capture(), eq(blob), eq(blobStore), eq(false));
+    verify(blobStore, never()).undelete(blobstoreUsageChecker, blobId, blobAttributes, false);
   }
 
   @Test
@@ -371,8 +406,8 @@ public class RestoreMetadataTaskTest
     configuration.setBoolean(INTEGRITY_CHECK, false);
 
     RestoreMetadataTask underTest =
-        new RestoreMetadataTask(blobStoreManager, repositoryManager, ImmutableMap.of("maven2", restoreBlobStrategy),
-            blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies, maintenanceService)
+        new RestoreMetadataTask(blobStoreManager, repositoryManager, ImmutableMap.of(MAVEN_2, restoreBlobStrategy),
+            blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies, maintenanceService, assetBlobRefFormatCheck)
         {
           @Override
           public boolean isCanceled() {

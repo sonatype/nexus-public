@@ -13,6 +13,7 @@
 package org.sonatype.nexus.blobstore.restore.datastore;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -80,6 +81,10 @@ public class RestoreMetadataTask
 
   private final MaintenanceService maintenanceService;
 
+  private final AssetBlobRefFormatCheck assetBlobRefFormatCheck;
+
+  private final Map<String, Boolean> formatAssetBlobRefMigrated;
+
   @Inject
   public RestoreMetadataTask(
       final BlobStoreManager blobStoreManager,
@@ -88,7 +93,8 @@ public class RestoreMetadataTask
       final BlobStoreUsageChecker blobStoreUsageChecker,
       final DryRunPrefix dryRunPrefix,
       final Map<String, IntegrityCheckStrategy> integrityCheckStrategies,
-      final MaintenanceService maintenanceService)
+      final MaintenanceService maintenanceService,
+      final AssetBlobRefFormatCheck assetBlobRefFormatCheck)
   {
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.repositoryManager = checkNotNull(repositoryManager);
@@ -98,6 +104,8 @@ public class RestoreMetadataTask
     this.defaultIntegrityCheckStrategy = checkNotNull(integrityCheckStrategies.get(DEFAULT_NAME));
     this.integrityCheckStrategies = checkNotNull(integrityCheckStrategies);
     this.maintenanceService = checkNotNull(maintenanceService);
+    this.assetBlobRefFormatCheck = checkNotNull(assetBlobRefFormatCheck);
+    formatAssetBlobRefMigrated = new HashMap<>();
   }
 
   @Override
@@ -145,6 +153,7 @@ public class RestoreMetadataTask
       log.info("{}Actions will be logged, but no changes will be made.", logPrefix);
     }
 
+    formatAssetBlobRefMigrated.clear();
     try (ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60)) {
       for (BlobId blobId : getBlobIdStream(blobStore, sinceDays)) {
         try {
@@ -156,6 +165,11 @@ public class RestoreMetadataTask
           Optional<Context> optionalContext = buildContext(blobStore, blobId);
           if (optionalContext.isPresent()) {
             Context context = optionalContext.get();
+
+            if (isAssetBlobRefNotMigrated(context.repository)) {
+              continue;
+            }
+
             if (restore && context.restoreBlobStrategy != null && !context.blobAttributes.isDeleted()) {
               context.restoreBlobStrategy.restore(context.properties, context.blob, context.blobStore, dryRun);
             }
@@ -181,6 +195,18 @@ public class RestoreMetadataTask
       }
 
       updateAssets(touchedRepositories, updateAssets);
+    }
+  }
+
+  private boolean isAssetBlobRefNotMigrated(final Repository repository) {
+    try {
+      return formatAssetBlobRefMigrated.computeIfAbsent(repository.getFormat().getValue(),
+          __ -> assetBlobRefFormatCheck.isAssetBlobRefNotMigrated(repository));
+    }
+    catch (Exception e) {
+      log.error("Error occurred determining asset blob ref migration status. " +
+          "Will assume asset blob refs are not migrated.", e);
+      return true;
     }
   }
 
