@@ -16,6 +16,7 @@
  */
 import {assign, createMachine} from 'xstate';
 import { isNil } from 'ramda';
+import { SUBMIT_MASK_SUCCESS_VISIBLE_TIME_MS } from '@sonatype/react-shared-components';
 
 import { ExtAPIUtils, ExtJS, APIConstants } from '@sonatype/nexus-ui-plugin';
 
@@ -60,6 +61,7 @@ const welcomeMachine = createMachine({
       }
     },
     redirectingToLog4j: {
+      type: 'final',
       invoke: {
         src: 'redirectToLog4j'
       }
@@ -132,13 +134,48 @@ const welcomeMachine = createMachine({
       };
     },
     enableLog4j: async () => {
-      const response = await ExtAPIUtils.extAPIRequest('outreach_Outreach', 'setLog4JVisualizerEnabled',
-          { data: [true] });
+      const response = await ExtAPIUtils.extAPIRequest('outreach_Outreach', 'setLog4JVisualizerEnabled', {
+            data: [true]
+          }),
+          state = ExtJS.state(),
+          stateStore = Ext.getApplication().getStore('State'),
+          isCapabilityEnabled = () => state.getValue('vulnerabilityCapabilityState', {enabled: false}).enabled;
 
       ExtAPIUtils.checkForError(response);
+
+      if (isCapabilityEnabled()) {
+        return true;
+      }
+      else {
+        return new Promise((resolve, reject) => {
+          function handleChange() {
+            if (isCapabilityEnabled()) {
+              listener.destroy();
+              resolve();
+            }
+          }
+
+          const uiSettings = state.getValue('uiSettings') ?? {},
+
+              // NOTE: measured in seconds
+              { requestTimeout = 60, statusIntervalAuthenticated = 5 } = uiSettings;
+
+          const listener = stateStore.on('datachanged', handleChange, undefined, {
+            destroyable: true
+          });
+
+          // A timeout on waiting for the capability to be enabled
+          setTimeout(() => {
+            listener.destroy();
+            reject({ message: 'Timeout while enabling capability' });
+          }, 1000 * (2 * statusIntervalAuthenticated + requestTimeout));
+        });
+      }
     },
     redirectToLog4j: () => {
-      window.location.hash = '#admin/repository/insightfrontend';
+      setTimeout(() => {
+        window.location.hash = '#admin/repository/insightfrontend';
+      }, SUBMIT_MASK_SUCCESS_VISIBLE_TIME_MS);
     }
   }
 });

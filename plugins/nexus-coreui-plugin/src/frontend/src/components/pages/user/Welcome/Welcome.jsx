@@ -13,8 +13,17 @@
 import React, { useEffect } from 'react';
 import { useMachine } from '@xstate/react';
 import { ExtAPIUtils , ExtJS, toURIParams, getVersionMajorMinor } from '@sonatype/nexus-ui-plugin';
-import { NxButton, NxButtonBar, NxLoadWrapper, NxPageMain, NxPageTitle, NxH1, NxWarningAlert, NxLoadError }
-  from '@sonatype/react-shared-components';
+import {
+  NxButton,
+  NxButtonBar,
+  NxLoadWrapper,
+  NxPageMain,
+  NxPageTitle,
+  NxH1,
+  NxWarningAlert,
+  NxLoadError,
+  NxSubmitMask
+} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
 import welcomeMachine from './WelcomeMachine';
@@ -38,6 +47,8 @@ function getUserType(user) {
 export default function Welcome() {
   const [state, send] = useMachine(welcomeMachine, { devtools: true }),
       loading = state.value === 'loading',
+      showSubmitMask = ['enablingLog4j', 'redirectingToLog4j'].some(state.matches),
+      submitMaskSuccess = state.value === 'redirectingToLog4j',
       error = state.value === 'error' ? state.context.error : null,
       proxyDownloadNumberParams = state.context.data?.proxyDownloadNumberParams;
 
@@ -80,6 +91,9 @@ export default function Welcome() {
           <NxPageTitle.Subtitle>{UIStrings.WELCOME.MENU.description}</NxPageTitle.Subtitle>
         </NxPageTitle.Headings>
       </NxPageTitle>
+      { showSubmitMask &&
+        <NxSubmitMask message={UIStrings.WELCOME.LOG4J_SUBMIT_MASK_MESSAGE} success={submitMaskSuccess} />
+      }
       <NxLoadWrapper loading={loading} error={error} retryHandler={load}>
         { state.context.data?.showLog4jAlert &&
           <section aria-label="Log4j Capability Notice">

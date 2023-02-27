@@ -32,6 +32,7 @@ export default {
         that the visualizer does not currently identify or track other log4j vulnerabilities.
       </>
     ),
-    LOG4J_ENABLE_BUTTON_CONTENT: 'Enable Capability'
+    LOG4J_ENABLE_BUTTON_CONTENT: 'Enable Capability',
+    LOG4J_SUBMIT_MASK_MESSAGE: 'Enabling…'
   }
 };
