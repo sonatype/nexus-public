@@ -392,10 +392,12 @@ Ext.define('NX.controller.Menu', {
         shouldRefresh = false;
 
     me.getStore('Feature').each(function (feature) {
-      var visible, previousVisible;
+      var visible, previousVisible, featureId;
       if (feature.get('mode') === me.mode) {
-        visible = feature.get('visible')();
-        previousVisible = me.getStore('FeatureMenu').getRootNode().findChild('path', feature.get('path'), true) !== null;
+        visible = Boolean(feature.get('visible')());
+        featureId = feature.getId();
+
+        previousVisible = Boolean(me.getStore('FeatureMenu').getNodeById(featureId));
         shouldRefresh = (visible !== previousVisible);
       }
       return !shouldRefresh;
