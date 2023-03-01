@@ -148,7 +148,7 @@ module.exports = {
   snapshotSerializers: [],
 
   // The test environment that will be used for testing
-  testEnvironment: "jest-environment-jsdom",
+  testEnvironment: "jsdom",
 
   // Options that will be passed to the testEnvironment
   // testEnvironmentOptions: {},
@@ -182,11 +182,13 @@ module.exports = {
   // timers: "real",
 
   // A map from regular expressions to paths to transformers
-  // transform: null,
+  transform: {
+    "\\.[jt]sx?$": ["babel-jest", { configFile: './babel.config.js' }]
+  },
 
   // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation
   transformIgnorePatterns: [
-    "/node_modules/(?!@sonatype\/react-shared-components|pretty-bytes)"
+    "/node_modules/(?!@sonatype\/react-shared-components|pretty-bytes|@react-hook)"
   ],
 
   // An array of regexp pattern strings that are matched against all modules before the module loader will automatically return a mock for them

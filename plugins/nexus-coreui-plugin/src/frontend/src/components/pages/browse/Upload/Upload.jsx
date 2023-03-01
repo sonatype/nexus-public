@@ -15,6 +15,7 @@ import React from 'react';
 import {Detail, Master, MasterDetail} from '@sonatype/nexus-ui-plugin';
 
 import UploadList from './UploadList';
+import UploadDetails from './UploadDetails';
 
 export default function Upload() {
   return <MasterDetail path="browse/upload">
@@ -22,6 +23,7 @@ export default function Upload() {
       <UploadList />
     </Master>
     <Detail>
+      <UploadDetails />
     </Detail>
   </MasterDetail>;
 }

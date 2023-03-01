@@ -24,6 +24,14 @@ export default {
         URL: 'URL',
       },
       COPY_URL_TITLE: 'Copy URL to Clipboard',
+      FILTER_PLACEHOLDER: 'Filter'
+    },
+    DETAILS: {
+      TITLE: 'Upload',
+      DESCRIPTION: 'Upload content to the hosted repository',
+      TILE_TITLE: repoName => `Choose Assets/Components for ${repoName} Repository`,
+      FILE_UPLOAD_LABEL: 'File',
+      SUBMIT_BTN_LABEL: 'Upload'
     },
     URL_COPIED_MESSAGE: 'URL Copied to Clipboard',
   }

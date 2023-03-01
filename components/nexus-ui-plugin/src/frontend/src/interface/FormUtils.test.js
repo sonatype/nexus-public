@@ -156,6 +156,59 @@ describe('FormUtils', () => {
     });
   });
 
+  describe('fileUploadProps', () => {
+    it('returns the file list data as the files prop', () => {
+      // FileList itself does not have a public constructor, so the most convenient way to make a FileList is
+      // via an <input>
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      const fileList = fileInput.files;
+
+      const {files} = FormUtils.fileUploadProps('test', makeContext({data: {test: fileList}}));
+      expect(files).toBe(fileList);
+    });
+
+    it('is pristine for a field not included in isTouched', () => {
+      expect(FormUtils.fileUploadProps('test', makeContext({})).isPristine).toBe(true);
+    });
+
+    it('is pristine for an untouched field', () => {
+      expect(FormUtils.fileUploadProps('test', makeContext({
+        isTouched: {
+          test: false
+        }
+      })).isPristine).toBe(true);
+    });
+
+    it('is not pristine for a touched field', () => {
+      expect(FormUtils.fileUploadProps('test', makeContext({
+        isTouched: {
+          test: true
+        }
+      })).isPristine).toBe(false);
+    });
+
+    it('is pristine for a nested field that is not touched', () => {
+      expect(FormUtils.fileUploadProps(['test', 'nested'], makeContext({
+        isTouched: {
+          test: {
+            nested: false
+          }
+        }
+      })).isPristine).toBe(true);
+    });
+
+    it('is not pristine for a nested field that has been touched', () => {
+      expect(FormUtils.fileUploadProps(['test', 'nested'], makeContext({
+        isTouched: {
+          test: {
+            nested: true
+          }
+        }
+      })).isPristine).toBe(false);
+    });
+  });
+
   describe('isInvalid', () => {
     it('returns false for a null or undefined errors object', () => {
       expect(FormUtils.isInvalid(null)).toBe(false);

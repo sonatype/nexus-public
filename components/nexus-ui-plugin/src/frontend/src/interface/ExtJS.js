@@ -75,9 +75,24 @@ export default class {
     const [path, setPath] = useState(Ext.History.getToken());
 
     useEffect(() => {
-      Ext.History.on('change', setPath);
-      return () => Ext.History.un('change', setPath);
-    });
+      // When the unmount is occurring due to a route change, Ext seems to already commit
+      // to firing the change handler even though the useEffect cleanup function fires before it does.
+      // This causes React memory leak warnings if the state mutator gets called at that point. So we need this
+      // extra variable to check whether the unmount has in fact occurred
+      let unmounted = false;
+
+      function _setPath(p) {
+        if (!unmounted) {
+          setPath(p);
+        }
+      }
+
+      Ext.History.on('change', _setPath);
+      return () => {
+        unmounted = true;
+        Ext.History.un('change', _setPath);
+      };
+    }, []);
 
     return {
       location: {
