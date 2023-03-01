@@ -18,10 +18,7 @@ import {assign, Machine} from 'xstate';
 import Axios from 'axios';
 import {APIConstants} from '@sonatype/nexus-ui-plugin';
 
-const {
-  PUBLIC: {NODE},
-  SYSTEM_INFORMATION
-} = APIConstants.REST;
+const {SYSTEM_INFORMATION_HA, SYSTEM_INFORMATION} = APIConstants.REST;
 
 export default Machine(
   {
@@ -89,7 +86,7 @@ export default Machine(
       logError: (_, event) => console.error('Failed to load System Information', event)
     },
     services: {
-      fetchData: () => Axios.all([Axios.get(SYSTEM_INFORMATION), Axios.get(NODE)])
+      fetchData: () => Axios.all([Axios.get(SYSTEM_INFORMATION), Axios.get(SYSTEM_INFORMATION_HA)])
     }
   }
 );

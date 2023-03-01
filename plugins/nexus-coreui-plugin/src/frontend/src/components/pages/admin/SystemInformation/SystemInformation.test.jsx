@@ -26,10 +26,7 @@ import {
   multiNodeResponse
 } from './SystemInformation.testdata';
 
-const {
-  PUBLIC: {NODE},
-  SYSTEM_INFORMATION
-} = APIConstants.REST;
+const {SYSTEM_INFORMATION_HA, SYSTEM_INFORMATION} = APIConstants.REST;
 
 const {ACTIONS} = UIStrings.SYSTEM_INFORMATION;
 
@@ -76,7 +73,7 @@ describe('SystemInformation HA', () => {
     when(axios.get).calledWith(SYSTEM_INFORMATION).mockResolvedValue({
       data: singleNodeResponse1
     });
-    when(axios.get).calledWith(NODE).mockResolvedValue({
+    when(axios.get).calledWith(SYSTEM_INFORMATION_HA).mockResolvedValue({
       data: multiNodeResponse
     });
 

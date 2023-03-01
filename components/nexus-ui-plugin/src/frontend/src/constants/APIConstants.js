@@ -217,9 +217,6 @@ export default {
       get LICENSE() {
         return `${this.BASE_URL}system/license`;
       },
-      get NODE() {
-        return `${this.BASE_URL}system/node`;
-      },
       get LDAP_SERVERS() {
         return `${this.BASE_URL}security/ldap`;
       },
@@ -236,7 +233,8 @@ export default {
         return `${this.BASE_URL}repositorySettings`;
       },
     },
-    SYSTEM_INFORMATION: '/service/rest/atlas/system-information'
+    SYSTEM_INFORMATION: '/service/rest/atlas/system-information',
+    SYSTEM_INFORMATION_HA: '/service/rest/beta/system/information'
   },
   DEBOUNCE_DELAY: 500,
   SORT_DIRECTIONS: {
