@@ -63,10 +63,11 @@ public class AssetBlobCleanupTask
   static final boolean HARD_DELETE = getBoolean(PROPERTY_PREFIX + "hardDelete", false);
 
   /**
-   * Comma-separated formats that will use batch deletion. Default value null.
+   * Comma-separated formats that will ignore batch deletion. Default value null.
    * maven2,npm
    */
-  static final String BATCH_DELETE_FORMATS = getString(PROPERTY_PREFIX + "batchDeleteForFormat", null);
+  static final String BATCH_DELETE_IGNORE_FORMATS =
+      getString(PROPERTY_PREFIX + "batchDeleteIgnoreForFormat", null);
 
   static final int BATCH_DELETE_POOL_SIZE = getInteger(
       PROPERTY_PREFIX + "batchDeleteThreadPoolSize", 8);
@@ -75,7 +76,7 @@ public class AssetBlobCleanupTask
 
   private final BlobStoreManager blobStoreManager;
 
-  private Boolean batchDeleteEnabled = false;
+  private Boolean batchDeleteEnabled = true;
 
   private ExecutorService batchDeleteExecutorService;
 
@@ -89,8 +90,10 @@ public class AssetBlobCleanupTask
   }
 
   protected void initBatchDeleteIfEnabled(final String format) {
-    if (BATCH_DELETE_FORMATS != null && format != null && BATCH_DELETE_FORMATS.contains(format)) {
-      batchDeleteEnabled = true;
+    if (BATCH_DELETE_IGNORE_FORMATS != null && format != null
+        && BATCH_DELETE_IGNORE_FORMATS.contains(format)) {
+      batchDeleteEnabled = false;
+    } else {
       batchDeleteExecutorService = newFixedThreadPool(
           BATCH_DELETE_POOL_SIZE,
           new NexusThreadFactory("blobstore", "async-ops")
@@ -131,7 +134,9 @@ public class AssetBlobCleanupTask
    * Deletes unused {@link AssetBlob}s for the given format and content store.
    *
    * @return count of deleted asset blobs
+   * @deprecated use {@link #deleteUnusedAssetBlobsBatch(AssetBlobStore, String, String)}} instead
    */
+  @Deprecated
   private int deleteUnusedAssetBlobs(
       final AssetBlobStore<?> assetBlobStore,
       final String format,

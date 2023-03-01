@@ -116,6 +116,8 @@ public class AssetBlobCleanupTaskTest
   public void testUnusedBlobsAreDeleted() throws Exception {
     AssetBlobCleanupTask task = new AssetBlobCleanupTask(ImmutableMap.of("raw", formatStoreManager), blobStoreManager);
 
+    setBatchDeleteIgnoreFinalField("raw");
+
     TaskConfiguration taskConfiguration = new TaskConfiguration();
     taskConfiguration.setString(FORMAT_FIELD_ID, "raw");
     taskConfiguration.setString(CONTENT_STORE_FIELD_ID, "content");
@@ -155,13 +157,16 @@ public class AssetBlobCleanupTaskTest
     inOrder.verify(assetBlobStore).browseUnusedAssetBlobs(BATCH_SIZE, "EOL");
 
     inOrder.verifyNoMoreInteractions();
+
+    setBatchDeleteIgnoreFinalField(null);
   }
 
-  @Ignore
   @Test
   public void testUnusedBlobsAreDeletedBatch() throws Exception {
     AssetBlobCleanupTask task = new AssetBlobCleanupTask(ImmutableMap.of("raw", formatStoreManager), blobStoreManager);
-    setBatchDeleteFinalField("raw");
+
+    setBatchDeleteIgnoreFinalField(null);
+
     TaskConfiguration taskConfiguration = new TaskConfiguration();
     taskConfiguration.setString(FORMAT_FIELD_ID, "raw");
     taskConfiguration.setString(CONTENT_STORE_FIELD_ID, "content");
@@ -169,24 +174,26 @@ public class AssetBlobCleanupTaskTest
     taskConfiguration.setTypeId(TYPE_ID);
     task.configure(taskConfiguration);
 
-    InOrder inOrder = Mockito.inOrder(assetBlobStore, blobStore);
+    ArgumentCaptor<String[]> blobRefIdCaptor = forClass(String[].class);
+    InOrder inOrder = Mockito.inOrder(assetBlobStore);
 
     task.execute();
 
+    // first page
     inOrder.verify(assetBlobStore).browseUnusedAssetBlobs(BATCH_SIZE, null);
-    String[] blobRefIds = firstPage.stream()
-        .map(AssetBlob::blobRef)
-        .filter(blobRef -> blobStoreManager.get(blobRef.getStore()) != null)
-        .map(BlobRefTypeHandler::toPersistableString)
-        .toArray(String[]::new);
-    inOrder.verify(blobStore).delete(firstPage.get(0).blobRef().getBlobId(), EXPECTED_REASON);
-    inOrder.verify(assetBlobStore).deleteAssetBlobBatch(blobRefIds);
+    inOrder.verify(assetBlobStore).deleteAssetBlobBatch(blobRefIdCaptor.capture());
+    when(assetBlobStore.deleteAssetBlobBatch(
+        new String[]{blobRefBecomesUsed.getBlobId().toString()})).thenReturn(false);
+    inOrder.verify(assetBlobStore).browseUnusedAssetBlobs(BATCH_SIZE, "NEXT");
+    inOrder.verify(assetBlobStore).deleteAssetBlobBatch(blobRefIdCaptor.capture());
+    inOrder.verify(assetBlobStore).browseUnusedAssetBlobs(BATCH_SIZE, "EOL");
 
-    setBatchDeleteFinalField(null);
+    inOrder.verifyNoMoreInteractions();
   }
 
-  private void setBatchDeleteFinalField(String batchDeleteFormats) throws NoSuchFieldException, IllegalAccessException {
-    Field field = AssetBlobCleanupTask.class.getDeclaredField("BATCH_DELETE_FORMATS");
+  private void setBatchDeleteIgnoreFinalField(String batchDeleteFormats)
+      throws NoSuchFieldException, IllegalAccessException {
+    Field field = AssetBlobCleanupTask.class.getDeclaredField("BATCH_DELETE_IGNORE_FORMATS");
     field.setAccessible(true);
     Field modifiers = Field.class.getDeclaredField("modifiers");
     modifiers.setAccessible(true);
