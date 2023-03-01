@@ -75,6 +75,11 @@ public interface UserManager
   User getUser(String userId) throws UserNotFoundException;
 
   /**
+   * Optimized version of getUser when roleIds are known, so we don't fetch them again.
+   */
+  User getUser(String userId, Set<String> roleIds) throws UserNotFoundException;
+
+  /**
    * Update a users password.
    */
   void changePassword(String userId, String newPassword) throws UserNotFoundException;

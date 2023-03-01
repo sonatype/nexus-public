@@ -104,7 +104,7 @@ public class UserManagerImpl
     return secUser;
   }
 
-  protected User toUser(CUser cUser) {
+  protected User toUser(CUser cUser, Set<String> roleIds) {
     if (cUser == null) {
       return null;
     }
@@ -120,7 +120,11 @@ public class UserManagerImpl
     user.setStatus(UserStatus.valueOf(cUser.getStatus()));
 
     try {
-      user.setRoles(this.getUsersRoles(cUser.getId(), DEFAULT_SOURCE));
+      if (roleIds != null) {
+        user.setRoles(getUsersRoles(roleIds));
+      } else {
+        user.setRoles(getUsersRoles(cUser.getId(), DEFAULT_SOURCE));
+      }
     }
     catch (UserNotFoundException e) {
       // We should NEVER get here
@@ -151,7 +155,7 @@ public class UserManagerImpl
     Set<User> users = new HashSet<User>();
 
     for (CUser user : configuration.listUsers()) {
-      users.add(toUser(user));
+      users.add(toUser(user, null));
     }
 
     return users;
@@ -170,7 +174,12 @@ public class UserManagerImpl
 
   @Override
   public User getUser(String userId) throws UserNotFoundException {
-    return toUser(configuration.readUser(userId));
+    return getUser(userId, null);
+  }
+
+  @Override
+  public User getUser(final String userId, final Set<String> roleIds) throws UserNotFoundException {
+    return toUser(configuration.readUser(userId), roleIds);
   }
 
   @Override
@@ -233,17 +242,12 @@ public class UserManagerImpl
 
   @Override
   public Set<RoleIdentifier> getUsersRoles(final String userId, final String source) throws UserNotFoundException {
-    final Set<RoleIdentifier> roles = new HashSet<RoleIdentifier>();
+    Set<RoleIdentifier> roles = new HashSet<>();
 
     try {
       CUserRoleMapping roleMapping = configuration.readUserRoleMapping(userId, source);
       if (roleMapping != null) {
-        for (String roleId : roleMapping.getRoles()) {
-          RoleIdentifier role = toRole(roleId, DEFAULT_SOURCE);
-          if (role != null) {
-            roles.add(role);
-          }
-        }
+        roles = getUsersRoles(roleMapping.getRoles());
       }
     }
     catch (NoSuchRoleMappingException e) {
@@ -253,32 +257,48 @@ public class UserManagerImpl
     return roles;
   }
 
+  private Set<RoleIdentifier> getUsersRoles(final Set<String> roleIds) {
+    final Set<RoleIdentifier> roles = new HashSet<>();
+    for (String roleId : roleIds) {
+      RoleIdentifier role = toRole(roleId, DEFAULT_SOURCE);
+      if (role != null) {
+        roles.add(role);
+      }
+    }
+    return roles;
+  }
+
+  /**
+   * Returns all users from the DEFAULT source that fit the criteria. If no source is specified in the source
+   * criteria then it will also add all external users that have role mappings.
+   */
   @Override
   public Set<User> searchUsers(final UserSearchCriteria criteria) {
     final Set<User> users = new HashSet<User>();
 
     users.addAll(filterListInMemeory(listUsers(), criteria));
 
-    // we also need to search through the user role mappings.
+    if (criteria.getSource() == null) {
+      // we also need to search through the user role mappings.
+      List<CUserRoleMapping> roleMappings = configuration.listUserRoleMappings();
+      for (CUserRoleMapping roleMapping : roleMappings) {
+        if (!DEFAULT_SOURCE.equals(roleMapping.getSource())) {
+          if (matchesCriteria(roleMapping.getUserId(), roleMapping.getSource(), roleMapping.getRoles(),
+              criteria)) {
+            try {
+              User user = securitySystem.getUser(roleMapping.getUserId(), roleMapping.getSource());
+              users.add(user);
+            }
+            catch (UserNotFoundException e) {
+              log.debug("User: '{}' of source: '{}' could not be found.",
+                  roleMapping.getUserId(), roleMapping.getSource(), e);
+            }
+            catch (NoSuchUserManagerException e) {
+              log.warn("User: '{}' of source: '{}' could not be found.",
+                  roleMapping.getUserId(), roleMapping.getSource(), e);
+            }
 
-    List<CUserRoleMapping> roleMappings = configuration.listUserRoleMappings();
-    for (CUserRoleMapping roleMapping : roleMappings) {
-      if (!DEFAULT_SOURCE.equals(roleMapping.getSource())) {
-        if (matchesCriteria(roleMapping.getUserId(), roleMapping.getSource(), roleMapping.getRoles(),
-            criteria)) {
-          try {
-            User user = getSecuritySystem().getUser(roleMapping.getUserId(), roleMapping.getSource());
-            users.add(user);
           }
-          catch (UserNotFoundException e) {
-            log.debug("User: '{}' of source: '{}' could not be found.",
-                roleMapping.getUserId(), roleMapping.getSource(), e);
-          }
-          catch (NoSuchUserManagerException e) {
-            log.warn("User: '{}' of source: '{}' could not be found.",
-                roleMapping.getUserId(), roleMapping.getSource(), e);
-          }
-
         }
       }
     }
