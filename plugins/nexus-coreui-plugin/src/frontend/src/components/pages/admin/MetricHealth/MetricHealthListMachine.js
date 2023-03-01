@@ -15,42 +15,51 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import Axios from 'axios';
-import {toPairs, map, mergeRight, sortBy, compose, toLower, prop} from 'ramda';
-import {ListMachineUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
+import {toPairs, map, filter} from 'ramda';
 import {assign} from 'xstate';
-import {URL, isClustered} from './MetricHealthHelper';
+import {ListMachineUtils} from '@sonatype/nexus-ui-plugin';
+import {URL} from './MetricHealthHelper';
 
-export const convert = (result) => {
-  const list = map(
-    ([name, metrics]) => mergeRight({name}, metrics),
-    toPairs(result)
-  );
-  const sortByNameCaseInsensitive = sortBy(compose(toLower, prop('name')));
+export const convert = (data) => {
+  return map(({hostname, nodeId, results}) => {
+    const errors = filter(([_, value]) => !value.healthy, toPairs(results));
+    const errorsNumber = errors.length;
+    const oneError = errorsNumber === 1;
+    const multipleErrors = errorsNumber > 1;
 
-  return sortByNameCaseInsensitive(list);
+    const name = hostname;
+    const status = '';
+    let error = '';
+    let message = '';
+
+    if (oneError) {
+      const [key, value] = errors[0];
+      error = key;
+      message = value.message;
+    }
+
+    if (multipleErrors) {
+      error = `(${errorsNumber}) Errors found`;
+      message = 'Click to see details';
+    }
+
+    return {name, status, error, message, nodeId};
+  }, data);
 };
 
-const setData = (_, event) => {
-  const result = isClustered() ? event.data.data.results : event.data.data;
-  return convert(result);
-};
+const setData = (_, event) => convert(event.data.data);
 
 export default ListMachineUtils.buildListMachine({
-  id: 'MetricHealthMachineDetails',
-  sortableFields: ['name', 'message', 'error'],
+  id: 'MetricHealthListMachine',
+  sortableFields: ['name', 'status', 'error', 'message'],
 }).withConfig({
   actions: {
     setData: assign({
       data: setData,
       pristineData: (_, event) => event.data.data,
-      name: (_, event) => event.data.data.hostname,
     }),
   },
   services: {
-    fetchData: ({itemId}) => {
-      return isClustered()
-        ? Axios.get(URL.singleNodeUrl(itemId))
-        : Axios.get(APIConstants.REST.INTERNAL.GET_STATUS);
-    },
+    fetchData: () => Axios.get(URL.nodesUrl),
   },
 });

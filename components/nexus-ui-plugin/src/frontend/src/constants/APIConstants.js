@@ -177,6 +177,9 @@ export default {
       },
       get CLEAR_SUPPORT_ZIP_HISTORY() {
         return `${this.BASE_URL}supportzip/clear/`;
+      },
+      get GET_STATUS() {
+        return `${this.BASE_URL}status-check`;
       }
     },
     PUBLIC: {
