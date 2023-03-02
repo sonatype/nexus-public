@@ -26,7 +26,6 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -66,7 +65,6 @@ import org.quartz.JobBuilder;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
-import org.quartz.JobListener;
 import org.quartz.JobPersistenceException;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
@@ -780,11 +778,6 @@ public class QuartzSchedulerSPI
     if (jobDetail == null) {
       log.error("Missing job detail for key: {}", jobKey);
       return null;
-    }
-
-    JobListener jobListener = scheduler.getListenerManager().getJobListener(listenerName(jobDetail.getKey()));
-    if (jobListener instanceof QuartzTaskJobListener) {
-      return (QuartzTaskJobListener) jobListener;
     }
 
     TriggerKey triggerKey = triggerKey(jobKey.getName(), jobKey.getGroup());
