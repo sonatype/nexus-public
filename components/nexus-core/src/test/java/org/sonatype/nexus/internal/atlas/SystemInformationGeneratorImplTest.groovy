@@ -18,6 +18,7 @@ import java.nio.file.FileSystems
 import org.sonatype.nexus.common.app.ApplicationDirectories
 import org.sonatype.nexus.common.app.ApplicationLicense
 import org.sonatype.nexus.common.app.ApplicationVersion
+import org.sonatype.nexus.common.node.DeploymentAccess
 import org.sonatype.nexus.common.node.NodeAccess
 
 import org.apache.karaf.bundle.core.BundleService
@@ -119,7 +120,8 @@ class SystemInformationGeneratorImplTest
         Collections.emptyMap(),
         Mock(BundleContext.class),
         Mock(BundleService.class),
-        Mock(NodeAccess.class))
+        Mock(NodeAccess.class),
+        Mock(DeploymentAccess.class))
   }
 
   def "environment sensitive data is hidden"() {
