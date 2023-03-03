@@ -49,7 +49,7 @@ export default {
   BLOB_STORES: generatePermissions('blobstores', [READ]),
   SELECTORS: generatePermissions('selectors', [READ]),
   PRIVILEGES: generatePermissions('privileges', [READ]),
-  SETTINGS: generatePermissions('settings', [READ]),
+  SETTINGS: generatePermissions('settings', [READ, UPDATE]),
   USERS: generatePermissions('users', [READ]),
   ROLES: generatePermissions('roles', [READ]),
   TASKS: generatePermissions('tasks', [...crudOptions, START, STOP]),

@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {FormUtils, ValidationUtils, UseNexusTruststore} from '@sonatype/nexus-ui-plugin';
+import {FormUtils, UseNexusTruststore} from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
   NxCheckbox,
@@ -41,6 +41,9 @@ export default function EmailServerForm({ parentMachine }) {
 
   const remoteUrl = !isEmpty(data.host) ? `https://${data.host}:${data.port}` : '';
 
+  const updateHost = (value) => FormUtils.handleUpdate('host', send, 'UPDATE_AND_CLEAR_PASSWORD')(value);
+  const updatePort = (value) => FormUtils.handleUpdate('port', send, 'UPDATE_AND_CLEAR_PASSWORD')(value);
+
   return <NxStatefulForm
       {...FormUtils.formProps(state, send)}
       additionalFooterBtns={<>
@@ -65,14 +68,14 @@ export default function EmailServerForm({ parentMachine }) {
         <NxTextInput
             className="nx-text-input--long"
             {...FormUtils.fieldProps('host', state)}
-            onChange={FormUtils.handleUpdate('host', send)}
+            onChange={updateHost}
         />
       </NxFormGroup>
       <NxFormGroup label={LABELS.PORT.LABEL} isRequired>
         <NxTextInput
             className="nx-text-input--short"
             {...FormUtils.fieldProps('port', state)}
-            onChange={FormUtils.handleUpdate('port', send)}
+            onChange={updatePort}
         />
       </NxFormGroup>
       <UseNexusTruststore
@@ -130,8 +133,8 @@ export default function EmailServerForm({ parentMachine }) {
           {LABELS.SSL_TLS_OPTIONS.OPTIONS.ENABLE_SSL_TLS}
         </NxCheckbox>
         <NxCheckbox
-            {...FormUtils.checkboxProps('sslServerIdentityCheckEnabled', state)}
-            onChange={FormUtils.handleUpdate('sslServerIdentityCheckEnabled', send)}
+            {...FormUtils.checkboxProps('sslCheckServerIdentityEnabled', state)}
+            onChange={FormUtils.handleUpdate('sslCheckServerIdentityEnabled', send)}
         >
           {LABELS.SSL_TLS_OPTIONS.OPTIONS.IDENTITY_CHECK}
         </NxCheckbox>

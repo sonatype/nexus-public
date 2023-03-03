@@ -136,6 +136,14 @@ export default {
         READ_TYPES: 'readTypes',
       }
     },
+    EMAIL_SERVER: {
+      ACTION:'coreui_Email',
+      METHODS: {
+        VERIFY: 'sendVerification',
+        READ: 'read',
+        UPDATE: 'update'
+      }
+    },
     UPLOAD: {
       ACTION: 'coreui_Upload',
       METHODS: {
