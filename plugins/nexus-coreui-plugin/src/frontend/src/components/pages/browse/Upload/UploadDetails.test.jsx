@@ -89,6 +89,19 @@ const sampleUploadDefinitions = {
           name: 'field5',
           optional: true,
           type: 'CHECKBOX'
+        }],
+        assetFields: [{
+          displayName: 'Field 6',
+          helpText: 'SIX',
+          name: 'field6',
+          optional: false,
+          type: 'STRING'
+        }, {
+          displayName: 'Field 7',
+          helpText: 'SEVEN',
+          name: 'field7',
+          optional: true,
+          type: 'STRING'
         }]
       }, {
         format: 'bar'
@@ -373,15 +386,14 @@ describe('UploadDetails', function() {
     expect(h2).toHaveTextContent(expectedHeading);
   });
 
-  it('renders a file upload within the "Choose Assets..." region with a name of "asset0", an accessible ' +
-      'name of "File", and an initial accessible description of "No file selected"', async function() {
+  it('renders a file upload within the "Choose Assets..." region with an accessible name of "File", and an ' +
+      'initial accessible description of "No file selected"', async function() {
     render();
 
     const region = await selectors.chooseAssetsRegion('find'),
         fileUpload = region.querySelector('input[type=file]');
 
     expect(fileUpload).toBeInTheDocument();
-    expect(fileUpload).toHaveAttribute('name', 'asset0');
     expect(fileUpload).toHaveAccessibleName('File');
     expect(fileUpload).toHaveAccessibleDescription('No file selected');
   });
@@ -415,6 +427,17 @@ describe('UploadDetails', function() {
         expect(fileUpload).toHaveAccessibleDescription('numbers.txt 6.0 B');
       }
   );
+
+  it('renders the asset fields within the "Choose Assets..." region', async function() {
+      render();
+
+      const region = await selectors.chooseAssetsRegion('find'),
+        field6 = screen.getByRole('textbox', { name: 'Field 6' }),
+        field7 = screen.getByRole('textbox', { name: 'Field 7' });
+
+    expect(region).toContainElement(field6);
+    expect(region).toContainElement(field7);
+  });
 
   it('renders a region for each group in the upload definition component fields', async function() {
     render();
@@ -452,12 +475,16 @@ describe('UploadDetails', function() {
         field1 = screen.getByRole('textbox', { name: 'Field 1' }),
         field2 = screen.getByRole('textbox', { name: 'Field 2' }),
         field3 = screen.getByRole('textbox', { name: 'Field 3' }),
-        field4 = screen.getByRole('textbox', { name: 'Field 4' });
+        field4 = screen.getByRole('textbox', { name: 'Field 4' }),
+        field6 = screen.getByRole('textbox', { name: 'Field 6' }),
+        field7 = screen.getByRole('textbox', { name: 'Field 7' });
 
     expect(field1).not.toBeRequired();
     expect(field2).toBeRequired();
     expect(field3).not.toBeRequired();
     expect(field4).toBeRequired();
+    expect(field6).toBeRequired();
+    expect(field7).not.toBeRequired();
   });
 
   it('allows values to be set into the text fields', async function() {
@@ -466,17 +493,23 @@ describe('UploadDetails', function() {
     const field1 = await screen.findByRole('textbox', { name: 'Field 1' }),
         field2 = screen.getByRole('textbox', { name: 'Field 2' }),
         field3 = screen.getByRole('textbox', { name: 'Field 3' }),
-        field4 = screen.getByRole('textbox', { name: 'Field 4' });
+        field4 = screen.getByRole('textbox', { name: 'Field 4' }),
+        field6 = screen.getByRole('textbox', { name: 'Field 6' }),
+        field7 = screen.getByRole('textbox', { name: 'Field 7' });
 
     await userEvent.type(field1, 'foo');
     await userEvent.type(field2, 'bar');
     await userEvent.type(field3, 'baz');
     await userEvent.type(field4, 'qwerty');
+    await userEvent.type(field6, 'asdf');
+    await userEvent.type(field7, '12345');
 
     expect(field1).toHaveValue('foo');
     expect(field2).toHaveValue('bar');
     expect(field3).toHaveValue('baz');
     expect(field4).toHaveValue('qwerty');
+    expect(field6).toHaveValue('asdf');
+    expect(field7).toHaveValue('12345');
   });
 
   it('allows a file to be set into the file input and renders its name and size', async function() {
@@ -522,47 +555,65 @@ describe('UploadDetails', function() {
           const field1 = await screen.findByRole('textbox', { name: 'Field 1' }),
               field2 = screen.getByRole('textbox', { name: 'Field 2' }),
               field3 = screen.getByRole('textbox', { name: 'Field 3' }),
-              field4 = screen.getByRole('textbox', { name: 'Field 4' });
+              field4 = screen.getByRole('textbox', { name: 'Field 4' }),
+              field6 = screen.getByRole('textbox', { name: 'Field 6' }),
+              field7 = screen.getByRole('textbox', { name: 'Field 7' });
 
           expect(screen.queryByText('This field is required')).not.toBeInTheDocument();
           expect(field1).not.toHaveErrorMessage();
           expect(field2).not.toHaveErrorMessage();
           expect(field3).not.toHaveErrorMessage();
           expect(field4).not.toHaveErrorMessage();
+          expect(field6).not.toHaveErrorMessage();
+          expect(field7).not.toHaveErrorMessage();
           expect(field1).toBeValid();
           expect(field2).toBeValid();
           expect(field3).toBeValid();
           expect(field4).toBeValid();
+          expect(field6).toBeValid();
+          expect(field7).toBeValid();
 
           await userEvent.type(field1, 'foo');
           await userEvent.type(field2, 'bar');
           await userEvent.type(field3, 'baz');
           await userEvent.type(field4, 'qwerty');
+          await userEvent.type(field6, 'asdf');
+          await userEvent.type(field7, '12345');
 
           expect(screen.queryByText('This field is required')).not.toBeInTheDocument();
           expect(field1).not.toHaveErrorMessage();
           expect(field2).not.toHaveErrorMessage();
           expect(field3).not.toHaveErrorMessage();
           expect(field4).not.toHaveErrorMessage();
+          expect(field6).not.toHaveErrorMessage();
+          expect(field7).not.toHaveErrorMessage();
           expect(field1).toBeValid();
           expect(field2).toBeValid();
           expect(field3).toBeValid();
           expect(field4).toBeValid();
+          expect(field6).toBeValid();
+          expect(field7).toBeValid();
 
           await userEvent.clear(field1);
           await userEvent.clear(field2);
           await userEvent.clear(field3);
           await userEvent.clear(field4);
+          await userEvent.clear(field6);
+          await userEvent.clear(field7);
 
-          expect(screen.getAllByText('This field is required')).toHaveLength(2);
+          expect(screen.getAllByText('This field is required')).toHaveLength(3);
           expect(field1).not.toHaveErrorMessage();
           expect(field2).toHaveErrorMessage('This field is required');
           expect(field3).not.toHaveErrorMessage();
           expect(field4).toHaveErrorMessage('This field is required');
+          expect(field6).toHaveErrorMessage('This field is required');
+          expect(field7).not.toHaveErrorMessage();
           expect(field1).toBeValid();
           expect(field2).toBeInvalid();
           expect(field3).toBeValid();
           expect(field4).toBeInvalid();
+          expect(field6).toBeInvalid();
+          expect(field7).toBeValid();
         }
     );
 
@@ -619,19 +670,51 @@ describe('UploadDetails', function() {
       const form = await selectors.form('find'),
           uploadBtn = selectors.uploadBtn(),
           fileUpload = form.querySelector('input[type=file]'),
+          field2 = screen.getByRole('textbox', { name: 'Field 2' }),
+          field4 = screen.getByRole('textbox', { name: 'Field 4' }),
+          field6 = screen.getByRole('textbox', { name: 'Field 6' }),
+          file = new File(['test'], 'test.txt', { type: 'text-plain' });
+
+      await userEvent.type(field2, 'bar');
+      await userEvent.type(field4, 'qwerty');
+      await userEvent.type(field6, 'asdf');
+      setFileUploadValue(fileUpload, file);
+
+      expect(postedFormData).not.toBeDefined();
+
+      await userEvent.click(uploadBtn);
+
+      await waitFor(() => expect(postedFormData).toBeDefined());
+    });
+
+    it('adds the component fields to the FormData by name', async function() {
+      let postedFormData;
+
+      when(axios.post).calledWith('service/rest/internal/ui/upload/repo-id', expect.anything())
+          .mockImplementation((_, formData) => {
+            postedFormData = formData;
+            return new Promise(() => {});
+          });
+
+      render();
+
+      const form = await selectors.form('find'),
+          uploadBtn = selectors.uploadBtn(),
+          fileUpload = form.querySelector('input[type=file]'),
           field1 = screen.getByRole('textbox', { name: 'Field 1' }),
           field2 = screen.getByRole('textbox', { name: 'Field 2' }),
           field3 = screen.getByRole('textbox', { name: 'Field 3' }),
           field4 = screen.getByRole('textbox', { name: 'Field 4' }),
+          field6 = screen.getByRole('textbox', { name: 'Field 6' }),
+          field7 = screen.getByRole('textbox', { name: 'Field 7' }),
           file = new File(['test'], 'test.txt', { type: 'text-plain' });
 
       await userEvent.type(field1, 'foo');
       await userEvent.type(field2, 'bar');
       await userEvent.type(field3, 'baz');
       await userEvent.type(field4, 'qwerty');
+      await userEvent.type(field6, 'asdf');
       setFileUploadValue(fileUpload, file);
-
-      expect(postedFormData).not.toBeDefined();
 
       await userEvent.click(uploadBtn);
 
@@ -640,7 +723,69 @@ describe('UploadDetails', function() {
       expect(postedFormData.get('field2')).toBe('bar');
       expect(postedFormData.get('field3')).toBe('baz');
       expect(postedFormData.get('field4')).toBe('qwerty');
-      expect(postedFormData.get('asset0')).toEqual(file);
+    });
+
+    it('adds the file to the FormData under the name "asset0"', async function() {
+      let postedFormData;
+
+      when(axios.post).calledWith('service/rest/internal/ui/upload/repo-id', expect.anything())
+          .mockImplementation((_, formData) => {
+            postedFormData = formData;
+            return new Promise(() => {});
+          });
+
+      render();
+
+      const form = await selectors.form('find'),
+          uploadBtn = selectors.uploadBtn(),
+          fileUpload = form.querySelector('input[type=file]'),
+          field2 = screen.getByRole('textbox', { name: 'Field 2' }),
+          field4 = screen.getByRole('textbox', { name: 'Field 4' }),
+          field6 = screen.getByRole('textbox', { name: 'Field 6' }),
+          file = new File(['test'], 'test.txt', { type: 'text-plain' });
+
+      await userEvent.type(field2, 'bar');
+      await userEvent.type(field4, 'qwerty');
+      await userEvent.type(field6, 'asdf');
+      setFileUploadValue(fileUpload, file);
+
+      await userEvent.click(uploadBtn);
+
+      await waitFor(() => expect(postedFormData).toBeDefined());
+      expect(postedFormData.get('asset0')).toBe(file);
+    });
+
+    it('adds the assetFields to the FormData under their name prefixed by "asset0."', async function() {
+      let postedFormData;
+
+      when(axios.post).calledWith('service/rest/internal/ui/upload/repo-id', expect.anything())
+          .mockImplementation((_, formData) => {
+            postedFormData = formData;
+            return new Promise(() => {});
+          });
+
+      render();
+
+      const form = await selectors.form('find'),
+          uploadBtn = selectors.uploadBtn(),
+          fileUpload = form.querySelector('input[type=file]'),
+          field2 = screen.getByRole('textbox', { name: 'Field 2' }),
+          field4 = screen.getByRole('textbox', { name: 'Field 4' }),
+          field6 = screen.getByRole('textbox', { name: 'Field 6' }),
+          field7 = screen.getByRole('textbox', { name: 'Field 7' }),
+          file = new File(['test'], 'test.txt', { type: 'text-plain' });
+
+      await userEvent.type(field2, 'bar');
+      await userEvent.type(field4, 'qwerty');
+      await userEvent.type(field6, 'asdf');
+      await userEvent.type(field7, '12345');
+      setFileUploadValue(fileUpload, file);
+
+      await userEvent.click(uploadBtn);
+
+      await waitFor(() => expect(postedFormData).toBeDefined());
+      expect(postedFormData.get('asset0.field6')).toBe('asdf');
+      expect(postedFormData.get('asset0.field7')).toBe('12345');
     });
 
     it('redirects to the search page with the keyword param set to the response data after the form is submitted',
@@ -658,12 +803,16 @@ describe('UploadDetails', function() {
               field2 = screen.getByRole('textbox', { name: 'Field 2' }),
               field3 = screen.getByRole('textbox', { name: 'Field 3' }),
               field4 = screen.getByRole('textbox', { name: 'Field 4' }),
+              field6 = screen.getByRole('textbox', { name: 'Field 6' }),
+              field7 = screen.getByRole('textbox', { name: 'Field 7' }),
               file = new File(['test'], 'test.txt', { type: 'text-plain' });
 
           await userEvent.type(field1, 'foo');
           await userEvent.type(field2, 'bar');
           await userEvent.type(field3, 'baz');
           await userEvent.type(field4, 'qwerty');
+          await userEvent.type(field6, 'asdf');
+          await userEvent.type(field7, '12345');
           setFileUploadValue(fileUpload, file);
 
           await userEvent.click(uploadBtn);
@@ -689,12 +838,16 @@ describe('UploadDetails', function() {
             field2 = screen.getByRole('textbox', { name: 'Field 2' }),
             field3 = screen.getByRole('textbox', { name: 'Field 3' }),
             field4 = screen.getByRole('textbox', { name: 'Field 4' }),
+            field6 = screen.getByRole('textbox', { name: 'Field 6' }),
+            field7 = screen.getByRole('textbox', { name: 'Field 7' }),
             file = new File(['test'], 'test.txt', { type: 'text-plain' });
 
         await userEvent.type(field1, 'foo');
         await userEvent.type(field2, 'bar');
         await userEvent.type(field3, 'baz');
         await userEvent.type(field4, 'qwerty');
+        await userEvent.type(field6, 'adsf');
+        await userEvent.type(field7, '12345');
         setFileUploadValue(fileUpload, file);
 
         await userEvent.click(uploadBtn);
@@ -714,7 +867,9 @@ describe('UploadDetails', function() {
           field1 = screen.getByRole('textbox', { name: 'Field 1' }),
           field2 = screen.getByRole('textbox', { name: 'Field 2' }),
           field3 = screen.getByRole('textbox', { name: 'Field 3' }),
-          field4 = screen.getByRole('textbox', { name: 'Field 4' });
+          field4 = screen.getByRole('textbox', { name: 'Field 4' }),
+          field6 = screen.getByRole('textbox', { name: 'Field 6' }),
+          field7 = screen.getByRole('textbox', { name: 'Field 7' });
 
       await userEvent.click(uploadBtn);
 
@@ -739,6 +894,12 @@ describe('UploadDetails', function() {
 
       expect(field5).not.toHaveErrorMessage();
       expect(field5).toBeValid();
+
+      expect(field6).toHaveErrorMessage('This field is required');
+      expect(field6).toBeInvalid();
+
+      expect(field7).not.toHaveErrorMessage();
+      expect(field7).toBeValid();
     });
 
     it('renders validation error messages when Upload is clicked with only the file missing', async function() {
@@ -750,10 +911,14 @@ describe('UploadDetails', function() {
           field1 = screen.getByRole('textbox', { name: 'Field 1' }),
           field2 = screen.getByRole('textbox', { name: 'Field 2' }),
           field3 = screen.getByRole('textbox', { name: 'Field 3' }),
-          field4 = screen.getByRole('textbox', { name: 'Field 4' });
+          field4 = screen.getByRole('textbox', { name: 'Field 4' }),
+          field6 = screen.getByRole('textbox', { name: 'Field 6' }),
+          field7 = screen.getByRole('textbox', { name: 'Field 7' });
 
       await userEvent.type(field2, 'bar');
       await userEvent.type(field4, 'bar');
+      await userEvent.type(field6, 'bar');
+      await userEvent.type(field7, 'bar');
       await userEvent.click(uploadBtn);
 
       const formValidationAlert = selectors.errorAlert('getAll').find(el => el.textContent.includes('validation'));
@@ -778,6 +943,8 @@ describe('UploadDetails', function() {
           field2 = screen.getByRole('textbox', { name: 'Field 2' }),
           field3 = screen.getByRole('textbox', { name: 'Field 3' }),
           field4 = screen.getByRole('textbox', { name: 'Field 4' }),
+          field6 = screen.getByRole('textbox', { name: 'Field 6' }),
+          field7 = screen.getByRole('textbox', { name: 'Field 7' }),
           file = new File(['test'], 'test.txt', { type: 'text-plain' });
 
       await userEvent.click(uploadBtn);
@@ -792,6 +959,8 @@ describe('UploadDetails', function() {
       expect(field2).toBeInvalid();
       expect(field4).toHaveErrorMessage('This field is required');
       expect(field4).toBeInvalid();
+      expect(field6).toHaveErrorMessage('This field is required');
+      expect(field6).toBeInvalid();
 
       setFileUploadValue(fileUpload, file);
       expect(fileUpload).not.toHaveErrorMessage();
@@ -804,6 +973,10 @@ describe('UploadDetails', function() {
       await userEvent.type(field4, 'qwerty');
       expect(field4).not.toHaveErrorMessage();
       expect(field4).toBeValid();
+
+      await userEvent.type(field6, 'qwerty');
+      expect(field6).not.toHaveErrorMessage();
+      expect(field6).toBeValid();
       expect(formValidationAlert).not.toBeInTheDocument();
 
       await userEvent.click(selectors.uploadBtn());
@@ -828,12 +1001,16 @@ describe('UploadDetails', function() {
           field2 = screen.getByRole('textbox', { name: 'Field 2' }),
           field3 = screen.getByRole('textbox', { name: 'Field 3' }),
           field4 = screen.getByRole('textbox', { name: 'Field 4' }),
+          field6 = screen.getByRole('textbox', { name: 'Field 6' }),
+          field7 = screen.getByRole('textbox', { name: 'Field 7' }),
           file = new File(['test'], 'test.txt', { type: 'text-plain' });
 
       await userEvent.type(field1, 'foo');
       await userEvent.type(field2, 'bar');
       await userEvent.type(field3, 'baz');
       await userEvent.type(field4, 'qwerty');
+      await userEvent.type(field6, 'qwerty');
+      await userEvent.type(field7, 'qwerty');
       setFileUploadValue(fileUpload, file);
 
       await userEvent.click(uploadBtn);
@@ -860,10 +1037,14 @@ describe('UploadDetails', function() {
           fileUpload = form.querySelector('input[type=file]'),
           field2 = screen.getByRole('textbox', { name: 'Field 2' }),
           field4 = screen.getByRole('textbox', { name: 'Field 4' }),
+          field6 = screen.getByRole('textbox', { name: 'Field 6' }),
+          field7 = screen.getByRole('textbox', { name: 'Field 7' }),
           file = new File(['test'], 'test.txt', { type: 'text-plain' });
 
       await userEvent.type(field2, 'bar');
       await userEvent.type(field4, 'qwerty');
+      await userEvent.type(field6, 'qwerty');
+      await userEvent.type(field7, 'qwerty');
       setFileUploadValue(fileUpload, file);
 
       await userEvent.click(uploadBtn);

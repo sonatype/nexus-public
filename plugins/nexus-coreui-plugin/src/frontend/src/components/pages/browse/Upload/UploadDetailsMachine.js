@@ -19,10 +19,14 @@ import axios from 'axios';
 import {
   __,
   complement,
+  compose,
+  concat,
+  defaultTo,
   flatten,
   flip,
   fromPairs,
   groupBy,
+  lensPath,
   map,
   mergeDeepRight,
   pair,
@@ -32,13 +36,30 @@ import {
   filter,
   find,
   propEq,
+  set,
+  split,
   toPairs,
-  values
+  transduce,
+  values,
+  view
 } from 'ramda';
 import { SUBMIT_MASK_SUCCESS_VISIBLE_TIME_MS } from '@sonatype/react-shared-components';
 
 import { APIConstants, ExtJS, FormUtils, ValidationUtils, ExtAPIUtils, UIStrings, Utils }
   from '@sonatype/nexus-ui-plugin';
+
+/**
+ * @param defs a list of componentField or assetField definition objects as returned by the backend
+ * @return an object containing a key for each input field's name, with each key having a value of ''
+ */
+const mkStateObjFromFieldDefs = pipe(defaultTo([]), map(field => [field.name, '']), fromPairs);
+
+/**
+ * @param defs a list of componentField or assetField definition objects, with the assetField definitions transformed
+ * to use fully-qualified dot-separated names (e.g. `asset0.pathId` rather than just `pathId`)
+ * @return a list of the names of the fields which are required, as path arrays (e.g. split on the dot)
+ */
+const getRequiredFieldNames = pipe(filter(complement(prop('optional'))), map(pipe(prop('name'), split('.'))));
 
 /**
  * Construct initial form field data structures for the machine's `data` field
@@ -47,10 +68,56 @@ import { APIConstants, ExtJS, FormUtils, ValidationUtils, ExtAPIUtils, UIStrings
 function mkFieldStates(uploadDefinition) {
   return {
     // The first (of potentially several) file uploads
-    asset0: null,
-    ...fromPairs(map(({name}) => [name, ''], uploadDefinition.componentFields ?? []))
+    asset0: {
+      // we use the `_` subkey to denote the value that should be submitted as the parent key itself, e.g. the file
+      // upload's FileList
+      _: null,
+      ...mkStateObjFromFieldDefs(uploadDefinition.assetFields)
+    },
+    ...mkStateObjFromFieldDefs(uploadDefinition.componentFields)
   };
 }
+
+/**
+ * Transform nested data structure into flat iteration of pairs with dot-separated key strings
+ */
+function * flattenDataForSubmit(data) {
+  for (const [key, val] of toPairs(data)) {
+    if (typeof val === 'object' && !(val instanceof FileList)) {
+      for (const [subkey, val] of flattenDataForSubmit(val)) {
+        if (subkey === '_') {
+          // The _ subkey is treated as the value of the parent key
+          yield [key, val];
+        }
+        else {
+          yield [`${key}.${subkey}`, val];
+        }
+      }
+    }
+    else {
+      yield [key, val];
+    }
+  }
+}
+
+/**
+ * Given a list of property paths, a transformation function, and an object,
+ * return an object with all of the child paths listed in pathList where each corresponding leaf value is
+ * the result of applying the fn to the value at the corresponding path on the input obj
+ */
+function applyToPaths(pathList, fn, obj) {
+  const mapPathsToLenses = map(lensPath),
+      mapLensesToPairs = map(lens => [lens, fn(view(lens, obj))]),
+
+      // Note: transducers effectively compose backwards.
+      // The data flows through mapPathsToLenses first followed by mapLensesToPairs
+      mapPathsToPairs = compose(mapPathsToLenses, mapLensesToPairs),
+      reduceToRetval = (acc, [lens, val]) => set(lens, val, acc);
+
+  return transduce(mapPathsToPairs, reduceToRetval, {}, pathList);
+}
+
+const fileValidator = f => f === null ? UIStrings.ERROR.FIELD_REQUIRED : null;
 
 export default FormUtils.buildFormMachine({
   id: 'UploadDetailsMachine',
@@ -80,23 +147,22 @@ export default FormUtils.buildFormMachine({
 }).withConfig({
   actions: {
     setData: assign({
+      // The following two context fields expose the field definitions to the view logic. The actual state of those
+      // field is stored in the `data` context field
       componentFieldsByGroup: flip(pipe(path(['data', 'uploadDefinition', 'componentFields']), groupBy(prop('group')))),
+      assetFields: (_, { data: { uploadDefinition: { assetFields } } }) =>
+          map(field => ({ ...field, name: `asset0.${field.name}` }), assetFields),
+
       data: (_, { data: { uploadDefinition } }) => mkFieldStates(uploadDefinition),
       repoSettings: (_, { data: { repoSettings } }) => repoSettings
     }),
 
-    // TODO: this code presumably implements required field validation, but I cannot test it in NEXUS-35097
-    // because none of the formats implemented in that ticket actually have required fields. Revisit when needed
-    // in a future ticket
-    validate: assign(({ data, componentFieldsByGroup }) => {
-      const fields = flatten(values(componentFieldsByGroup)),
-          requiredFields = map(prop('name'), filter(complement(prop('optional')), fields)),
-          missingRequiredFields = filter(f => ValidationUtils.isBlank(data[f]), requiredFields),
-          missingFileUploads = data.asset0 === null ? { asset0: UIStrings.ERROR.FIELD_REQUIRED } : null,
-          validationErrors = {
-            ...fromPairs(map(pair(__, UIStrings.ERROR.FIELD_REQUIRED), missingRequiredFields)),
-            ...missingFileUploads
-          };
+    validate: assign(({ data, componentFieldsByGroup, assetFields }) => {
+      const fields = flatten([values(componentFieldsByGroup), assetFields]),
+          requiredFields = getRequiredFieldNames(fields),
+          fieldValidationErrors = applyToPaths(requiredFields, ValidationUtils.validateNotBlank, data),
+          fileUploadValidationErrors = applyToPaths([['asset0', '_']], fileValidator, data),
+          validationErrors = mergeDeepRight(fieldValidationErrors, fileUploadValidationErrors);
 
       return { ...data, validationErrors };
     }),
@@ -108,7 +174,15 @@ export default FormUtils.buildFormMachine({
   services: {
     async fetchData({pristineData: {id}}) {
       const repoSettingsPromise = axios.get(APIConstants.REST.PUBLIC.UPLOAD)
-              .then(pipe(prop('data'), find(propEq('name', id)))),
+              .then(({ data }) => {
+                const repoSettings = find(propEq('name', id), data);
+                if (!repoSettings) {
+                  throw new Error(`Unable to find repository "${id}"`);
+                }
+                else {
+                  return repoSettings;
+                }
+              }),
           uploadDefinitionsPromise = ExtAPIUtils.extAPIRequest(
               APIConstants.EXT.UPLOAD.ACTION,
               APIConstants.EXT.UPLOAD.METHODS.GET_UPLOAD_DEFINITIONS
@@ -125,7 +199,7 @@ export default FormUtils.buildFormMachine({
     },
     async saveData({ repoSettings: { name }, data }) {
       const formData = new FormData();
-      for (const [key, value] of toPairs(data)) {
+      for (const [key, value] of flattenDataForSubmit(data)) {
         if (value instanceof FileList) {
           for (const file of Array.from(value)) {
             formData.append(key, file);

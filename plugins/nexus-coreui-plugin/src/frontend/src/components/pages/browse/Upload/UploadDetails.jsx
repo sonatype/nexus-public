@@ -23,7 +23,8 @@ import {
   NxForm,
   NxFormGroup,
   NxTextInput,
-  NxFileUpload
+  NxFileUpload,
+  NxFormRow
 } from '@sonatype/react-shared-components';
 import { faUpload} from '@fortawesome/free-solid-svg-icons';
 import { map, mapObjIndexed, values } from 'ramda';
@@ -35,10 +36,10 @@ import UploadStrings from '../../../../constants/pages/browse/upload/UploadStrin
 import machine from './UploadDetailsMachine.js';
 
 /**
- * React component that renders a form group from a componentField structure and the
+ * React component that renders a form group from a componentField/assetField structure and the
  * machine state
  */
-function ComponentField({ displayName, helpText, name, optional, machineState, send }) {
+function Field({ displayName, helpText, name, optional, machineState, send }) {
   return (
     <NxFormGroup label={displayName} sublabel={helpText} isRequired={!optional}>
       <NxTextInput { ...FormUtils.fieldProps(name, machineState) }
@@ -57,7 +58,9 @@ export default function UploadDetails({ itemId }) {
         },
         devTools: true
       }),
-      { repoSettings, componentFieldsByGroup, data } = state.context;
+      { repoSettings, componentFieldsByGroup, assetFields, data } = state.context;
+
+  const mkField = field => <Field key={field.name} { ...field } machineState={state} send={send} />;
 
   return (
     <NxPageMain>
@@ -90,9 +93,10 @@ export default function UploadDetails({ itemId }) {
                 </NxTile.SubsectionHeader>
                 <NxFormGroup label={UploadStrings.UPLOAD.DETAILS.FILE_UPLOAD_LABEL} isRequired>
                   <NxFileUpload isRequired
-                                { ...FormUtils.fileUploadProps('asset0', state) }
-                                onChange={FormUtils.handleUpdate('asset0', send)} />
+                                { ...FormUtils.fileUploadProps('asset0._', state) }
+                                onChange={FormUtils.handleUpdate('asset0._', send)} />
                 </NxFormGroup>
+                <NxFormRow>{ map(mkField, assetFields) }</NxFormRow>
               </NxTile.Subsection>
               { values(mapObjIndexed((fields, group) => {
                   const sectionId = `upload-details-group-${group.toLowerCase().replace(' ', '-')}`;
@@ -101,11 +105,7 @@ export default function UploadDetails({ itemId }) {
                       <NxTile.SubsectionHeader>
                         <NxH2 id={sectionId}>{group}</NxH2>
                       </NxTile.SubsectionHeader>
-                      { map(
-                          field => <ComponentField key={field.name} { ...field } machineState={state} send={send} />,
-                          fields
-                        )
-                      }
+                      { map(mkField, fields) }
                     </NxTile.Subsection>
                   );
                 }, componentFieldsByGroup))
