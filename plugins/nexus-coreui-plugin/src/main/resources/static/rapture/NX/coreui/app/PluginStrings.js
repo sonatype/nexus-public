@@ -292,6 +292,9 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchConan_Description: 'Search for components in Conan repositories',
     SearchConan_BaseVersion_FieldLabel: 'Base Version',
     SearchConan_Channel_FieldLabel: 'Channel',
+    SearchConan_RecipeRevision_FieldLabel: 'Recipe Revision',
+    SearchConan_PackageId_FieldLabel: 'Package Id',
+    SearchConan_PackageRevision_FieldLabel: 'Package Revision',
 
     // Browse -> Search -> Conda
     SearchConda_Text: 'Conda',
