@@ -104,7 +104,7 @@ public class QuartzTaskInfo
     final TaskConfiguration config = taskState.getConfiguration();
 
     if (this.state == null) {
-      log.debug("Task {} : state={}", config.getTaskLogName(), newState);
+      log.info("Task {} : state={}", config.getTaskLogName(), newState);
     }
     else {
       if (this.state != newState) {
