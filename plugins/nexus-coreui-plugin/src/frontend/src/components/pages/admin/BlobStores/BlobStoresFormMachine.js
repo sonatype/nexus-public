@@ -18,7 +18,7 @@
 import axios from 'axios';
 import {assign} from 'xstate';
 import {ExtJS, FormUtils, ValidationUtils, UnitUtil} from '@sonatype/nexus-ui-plugin';
-import {map, omit, propOr, replace} from 'ramda';
+import {map, omit, propOr, replace, clone} from 'ramda';
 
 import UIStrings from '../../../../constants/UIStrings';
 import Axios from "axios";
@@ -50,7 +50,7 @@ function deriveDynamicFieldData(type) {
 
 export const SPACE_USED_QUOTA_ID = 'spaceUsedQuota';
 
-export const canUseSpaceUsedQuotaOnly = (storeType) => 
+export const canUseSpaceUsedQuotaOnly = (storeType) =>
   ['azure', 's3'].includes(storeType.id);
 
 export default FormUtils.buildFormMachine({
@@ -353,7 +353,7 @@ export default FormUtils.buildFormMachine({
     },
 
     saveData: ({data, pristineData, type}) => {
-      let saveData = data.softQuota.enabled ? data : omit(['softQuota'], data);
+      let saveData = data.softQuota.enabled ? clone(data) : omit(['softQuota'], data);
       saveData = map((value) => typeof value === 'string' ? value.trim() : value, saveData);
       if (saveData.softQuota?.limit) {
         saveData.softQuota.limit = UnitUtil.megaBytesToBytes(saveData.softQuota.limit);
