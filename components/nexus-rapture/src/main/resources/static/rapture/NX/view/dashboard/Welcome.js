@@ -28,6 +28,6 @@ Ext.define('NX.view.dashboard.Welcome', {
     'NX.Icons'
   ],
 
-  cls: 'nx-iframe-full',
+  cls: 'nx-iframe-full nxrm-browse-welcome-page',
   width: '100%'
 });
