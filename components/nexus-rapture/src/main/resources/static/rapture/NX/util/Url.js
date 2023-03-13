@@ -72,6 +72,10 @@ Ext.define('NX.util.Url', {
     return this.baseUrl;
   },
 
+  absolutePath: function (path) {
+    return this.baseUrl + '/' + path;
+  },
+
   licenseUrl: function () {
     var edition = NX.State.getEdition();
     if ('EVAL' === edition || 'OSS' === edition) {

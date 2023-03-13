@@ -28,7 +28,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
     ...jest.requireActual('@sonatype/nexus-ui-plugin'),
     ExtJS: {
       requestAuthenticationToken: jest.fn(() => Promise.resolve(mockToken)),
-      urlOf: jest.fn(() => 'http://localhost:4242/repository/fakeUrl')
+      absolutePath: jest.fn(() => 'http://localhost:4242/repository/fakeUrl')
     }
   };
 });

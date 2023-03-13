@@ -46,6 +46,13 @@ export default class {
   }
 
   /**
+   * @returns an absolute path when given a relative path.
+   */
+  static absolutePath(path) {
+    return NX.util.Url.absolutePath(path); 
+  }
+
+  /**
    *@returns a complete url for the PRO-LICENSE.html
    */
   static proLicenseUrl() {
