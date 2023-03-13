@@ -96,11 +96,11 @@ export default function Welcome() {
       }
       <NxLoadWrapper loading={loading} error={error} retryHandler={load}>
         { state.context.data?.showLog4jAlert &&
-          <section aria-label="Log4j Capability Notice">
+          <section id="nxrm-welcome-log4j-notice" aria-label="Log4j Capability Notice">
             <NxWarningAlert>
               <p className="nxrm-log4j-alert-content">{UIStrings.WELCOME.LOG4J_ALERT_CONTENT}</p>
               <NxButtonBar>
-                <NxButton variant="primary" onClick={enableLog4j}>
+                <NxButton id="nxrm-welcome-log4j-enable-btn" variant="primary" onClick={enableLog4j}>
                   {UIStrings.WELCOME.LOG4J_ENABLE_BUTTON_CONTENT}
                 </NxButton>
               </NxButtonBar>
@@ -113,7 +113,8 @@ export default function Welcome() {
                        retryHandler={enableLog4j} />
         }
         { state.context.data?.showOutreachIframe &&
-          <iframe role="document"
+          <iframe id="nxrm-welcome-outreach-frame"
+                  role="document"
                   aria-label="Outreach Frame"
                   src={`${iframeUrlPath}?${toURIParams(iframeProps)}${proxyDownloadNumberParams ?? ''}`}
                   className="nx-viewport-sized__scrollable nxrm-welcome__outreach-frame" />
