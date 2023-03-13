@@ -258,6 +258,9 @@ export default {
       get BLOB_STORES_CONVERT_TO_GROUP() {
         return `${this.BASE_URL}blobstores/group/convert`;
       },
+      get NODE_ID() {
+        return `${this.BASE_URL}system/node`;
+      },
     },
     SYSTEM_INFORMATION: '/service/rest/atlas/system-information',
     SYSTEM_INFORMATION_HA: '/service/rest/beta/system/information'

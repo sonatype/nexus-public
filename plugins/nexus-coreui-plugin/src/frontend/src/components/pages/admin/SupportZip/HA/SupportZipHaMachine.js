@@ -17,7 +17,7 @@
 import Axios from 'axios';
 import {assign} from 'xstate';
 
-import {APIConstants, ExtJS, FormUtils} from "@sonatype/nexus-ui-plugin";
+import {APIConstants, ExtJS, FormUtils, UIStrings} from "@sonatype/nexus-ui-plugin";
 
 export default FormUtils.buildFormMachine({
   id: 'SupportZipHaMachine',
@@ -29,7 +29,8 @@ export default FormUtils.buildFormMachine({
       ...config.context,
       nxrmNodes: [],
       selectedNode: null,
-      showCreateZipModal: false
+      showCreateZipModal: false,
+      targetNode: null
     },
 
     states: {
@@ -50,8 +51,16 @@ export default FormUtils.buildFormMachine({
             target: 'creatingNodeSupportZip'
           },
           DOWNLOAD_ZIP: {
-            actions: 'downloadZip'
+            target: 'initSupportZipDownload',
+            actions: 'setTargetNode'
           }
+        }
+      },
+
+      downloadingZip: {
+        entry: 'downloadZip',
+        always: {
+          target: 'loaded'
         }
       },
 
@@ -68,6 +77,19 @@ export default FormUtils.buildFormMachine({
         },
         after: {
           target: 'loaded'
+        }
+      },
+
+      initSupportZipDownload: {
+        invoke: {
+          src: 'verifyIsZipCanBeDownloaded',
+          onDone: {
+            target: 'downloadingZip'
+          },
+          onError: {
+            target: 'loaded',
+            actions: ['setCreateError']
+          }
         }
       }
     }
@@ -88,14 +110,22 @@ export default FormUtils.buildFormMachine({
       selectedNode: null
     }),
 
-    downloadZip: (_, event) => {
-      const node = event?.data?.node || null;
+    downloadZip: (ctx) => {
+      const { targetNode } = ctx;
 
-      if (node) {
-        const url = ExtJS.urlOf(`service/rest/wonderland/download/${node.blobRef}`);
+      if (targetNode) {
+        const url = ExtJS.urlOf(`service/rest/wonderland/download/${targetNode.blobRef}`);
         ExtJS.downloadUrl(url);
       }
-    }
+    },
+
+    setCreateError: () => {
+      ExtJS.showErrorMessage(UIStrings.ERROR.NOT_FOUND_ERROR("Support zip"))
+    },
+
+    setTargetNode: assign({
+      targetNode: (_, event) => event?.data?.node
+    })
   },
 
   services: {
@@ -112,6 +142,16 @@ export default FormUtils.buildFormMachine({
           hostname: node.hostname
         };
         return Axios.post(APIConstants.REST.INTERNAL.SUPPORT_ZIP + selectedNodeId, params);
+      }
+      return Promise.reject();
+    },
+
+    verifyIsZipCanBeDownloaded: async (ctx) => {
+      const { targetNode } = ctx;
+
+      const { data } = await axios.get(APIConstants.REST.PUBLIC.NODE_ID)
+      if (targetNode && data.nodeId === targetNode.nodeId) {
+        return Promise.resolve();
       }
       return Promise.reject();
     }
