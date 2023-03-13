@@ -86,8 +86,8 @@ const blobstoreTypes = {
         "label": "Members",
         "initialValue": null,
         "attributes": {
-          "toTitle": "Selected",
-          "fromTitle": "Available",
+          "toTitle": "Selected Blob Stores",
+          "fromTitle": "Available Blob Stores",
           "buttons": ["up", "add", "remove", "down"],
           "options": ["default", "test", "test-converted"]
         },
@@ -173,8 +173,8 @@ describe('BlobStoresForm', function() {
           kmsKeyId: () => getByLabelText('KMS Key ID (Optional)'),
           endpointURL: () => getByLabelText('Endpoint URL'),
           signatureVersion: () => getByLabelText('Signature Version'),
-          availableMembers: () => getByRole('group', {name: 'Available Items'}),
-          selectedMembers: () => getByRole('group', {name: 'Transferred Items'}),
+          availableMembers: () => getByRole('group', {name: 'Available Blob Stores'}),
+          selectedMembers: () => getByRole('group', {name: 'Selected Blob Stores'}),
           softQuotaType: () => queryByLabelText('Constraint Type'),
           softQuotaLimit: () => queryByLabelText('Constraint Limit (in MB)'),
           spaceUsedQuotaLabel: () => getByText('Space Used'),

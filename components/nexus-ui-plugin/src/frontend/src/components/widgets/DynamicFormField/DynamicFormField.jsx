@@ -36,6 +36,8 @@ export default function DynamicFormField({current, dynamicProps, id, initialValu
     return <NxStatefulTransferList
       allItems={allItems}
       selectedItems={selectedItems}
+      availableItemsLabel={dynamicProps.attributes.fromTitle}
+      selectedItemsLabel={dynamicProps.attributes.toTitle}
       onChange={(value) => onChange(id, value)}
       allowReordering
     />
