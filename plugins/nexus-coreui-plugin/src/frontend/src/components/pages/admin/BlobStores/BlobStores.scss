@@ -27,4 +27,10 @@
       color: var(--nx-swatch-blue-40);
     }
   }
+
+  .blob-store-name, .blob-store-new-name {
+    .nx-field-validation-message {
+      white-space: nowrap;
+    }
+  }
 }

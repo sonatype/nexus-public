@@ -29,6 +29,8 @@ export default class TestUtils {
   static VALIDATION_ERRORS_MESSAGE = 'Validation errors are present';
   static NO_CHANGES_MESSAGE = 'There are no changes';
   static THERE_WERE_ERRORS = 'There were validation errors.';
+  static SAVE_ERROR = 'An error occurred saving data.';
+  static NAME_VALIDATION_MESSAGE = 'Only letters, digits, underscores(_), hyphens(-), and dots(.) are allowed and may not start with underscore or dot.';
 
   static get UNRESOLVED() {
     return new Promise(() => {});
@@ -93,6 +95,14 @@ export default class TestUtils {
       }
       else {
         return screen.queryByText(/there were validation errors/i, options);
+      }
+    },
+    querySaveError: (message) => {
+      const options = {selector: '.nx-alert__content .nx-load-error__message'};
+      if (message) {
+        return screen.queryByText(`${TestUtils.SAVE_ERROR} ${message}`, options);
+      } else {
+        return screen.queryByText(new RegExp(TestUtils.SAVE_ERROR), options);
       }
     }
   };

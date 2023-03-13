@@ -17,11 +17,12 @@
 
 import axios from 'axios';
 import {assign} from 'xstate';
-import {ExtJS, FormUtils, ValidationUtils, UnitUtil} from '@sonatype/nexus-ui-plugin';
 import {map, omit, propOr, replace, clone} from 'ramda';
 
+import {ExtJS, FormUtils, ValidationUtils, UnitUtil} from '@sonatype/nexus-ui-plugin';
 import UIStrings from '../../../../constants/UIStrings';
-import Axios from "axios";
+
+import {URLs} from './BlobStoresHelper';
 
 /*
  * Used to extract token strings "${name}" => "name"
@@ -112,32 +113,12 @@ export default FormUtils.buildFormMachine({
         }
       },
       modalConvertToGroup: {
-        entry: 'modalConvertToGroupSetInitValueToNewBlobName',
         on: {
           MODAL_CONVERT_TO_GROUP_CLOSE: {
-            target: 'loaded'
-          },
-          MODAL_CONVERT_TO_GROUP_SAVE: {
-            target: 'convertToGroup',
-          },
-          MODAL_CONVERT_TO_GROUP_SET_NEW_BLOB_NAME: {
-            actions: ['modalConvertToGroupSetNewBlobName'],
+            target: 'loaded',
           },
         },
       },
-      convertToGroup: {
-        invoke: {
-          src: 'convertToGroupService',
-          onDone: {
-            target: 'loaded',
-            actions: ['onSaveSuccess']
-          },
-          onError: {
-            target: 'loaded',
-            actions: ['onConvertError']
-          }
-        }
-      }
     }
   })
 }).withConfig({
@@ -173,20 +154,6 @@ export default FormUtils.buildFormMachine({
         repositoryUsage: event.data[3]?.data?.repositoryUsage || 0,
         blobStoreUsage: event.data[3]?.data?.blobStoreUsage || 0
       };
-    }),
-
-    modalConvertToGroupSetNewBlobName: assign({
-      data: ({data}, {value}) => ({
-        ...data,
-        modalConvertToGroupNewBlobName: value
-      })
-    }),
-
-    modalConvertToGroupSetInitValueToNewBlobName: assign({
-      data: ({data}) => ({
-        ...data,
-        modalConvertToGroupNewBlobName: `${data.name}-original`
-      })
     }),
 
     setType: assign({
@@ -255,12 +222,13 @@ export default FormUtils.buildFormMachine({
     }),
 
     validate: assign({
-      validationErrors: ({data, type}) => {
+      validationErrors: ({pristineData, data, type}) => {
+        const isCreate = !ValidationUtils.notBlank(pristineData.name);
         const Actions = type && window.BlobStoreTypes[type.id]?.Actions;
         const validationErrors = {
           ...(Actions?.validation(data) || {}),
           type: ValidationUtils.validateNotBlank(type),
-          name: ValidationUtils.validateNotBlank(data.name)
+          name: isCreate ? ValidationUtils.validateNameField(data.name) : null,
         };
 
         type?.fields?.forEach(field => {
@@ -303,8 +271,6 @@ export default FormUtils.buildFormMachine({
 
     onDeleteError: (_, event) => ExtJS.showErrorMessage(event.data?.message),
 
-    onConvertError: (_, event) => ExtJS.showErrorMessage(event.data?.response?.data),
-
     logSaveError: (_, event) => {
       let saveErrors = event.data?.response?.data ? event.data.response.data : UIStrings.ERROR.SAVE_ERROR;
       var errorMessage = '';
@@ -336,18 +302,18 @@ export default FormUtils.buildFormMachine({
     fetchData: ({pristineData}) => {
       if (ValidationUtils.notBlank(pristineData.name)) {
         return axios.all([
-          axios.get('/service/rest/internal/ui/blobstores/types'),
-          axios.get('/service/rest/internal/ui/blobstores/quotaTypes'),
-          axios.get(`/service/rest/v1/blobstores/${pristineData.type}/${pristineData.name}`),
-          axios.get(`/service/rest/internal/ui/blobstores/usage/${pristineData.name}`)
+          axios.get(URLs.blobStoreTypesUrl),
+          axios.get(URLs.blobStoreQuotaTypesUrl),
+          axios.get(URLs.singleBlobStoreUrl(pristineData.type, pristineData.name)),
+          axios.get(URLs.blobStoreUsageUrl(pristineData.name)),
         ]);
       }
       else {
         return axios.all([
-          axios.get('/service/rest/internal/ui/blobstores/types'),
-          axios.get('/service/rest/internal/ui/blobstores/quotaTypes'),
+          axios.get(URLs.blobStoreTypesUrl),
+          axios.get(URLs.blobStoreQuotaTypesUrl),
           Promise.resolve({data: {}}),
-          Promise.resolve({data: 0})
+          Promise.resolve({data: 0}),
         ]);
       }
     },
@@ -359,10 +325,10 @@ export default FormUtils.buildFormMachine({
         saveData.softQuota.limit = UnitUtil.megaBytesToBytes(saveData.softQuota.limit);
       }
       if (ValidationUtils.notBlank(pristineData.name)) {
-        return axios.put(`/service/rest/v1/blobstores/${type.id}/${data.name}`, saveData);
+        return axios.put(URLs.singleBlobStoreUrl(type.id, data.name), saveData);
       }
       else {
-        return axios.post(`/service/rest/v1/blobstores/${type.id}`, saveData);
+        return axios.post(URLs.createBlobStoreUrl(type.id), saveData);
       }
     },
 
@@ -380,8 +346,6 @@ export default FormUtils.buildFormMachine({
       message: data.name
     }),
 
-    delete: ({data}) => Axios.delete(`/service/rest/v1/blobstores/${data.name}`),
-
-    convertToGroupService: ({data}) => Axios.post(`/service/rest/v1/blobstores/group/convert/${data.name}/${data.modalConvertToGroupNewBlobName}`)
+    delete: ({data}) => axios.delete(URLs.deleteBlobStoreUrl(data.name)),
   }
 });

@@ -199,7 +199,13 @@ export default class FormUtils {
           saveErrorData: ({data}) => data,
           saveError: (_, event) => {
             const data = event.data?.response?.data || event.data?.message;
-            return typeof data === 'string' ? data : null;
+            let error = null;
+            if (typeof data === 'string') {
+              error = data;
+            } else if (typeof data === 'object' && data.id === '*') {
+              error = data.message
+            }
+            return error;
           },
           saveErrors: (_, event) => {
             const data = event.data?.response?.data;

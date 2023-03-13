@@ -191,7 +191,16 @@ export default {
       },
       get GET_STATUS() {
         return `${this.BASE_URL}status-check`;
-      }
+      },
+      get BLOB_STORES_TYPES() {
+        return `${this.BASE_URL}blobstores/types`;
+      },
+      get BLOB_STORES_QUOTA_TYPES() {
+        return `${this.BASE_URL}blobstores/quotaTypes`;
+      },
+      get BLOB_STORES_USAGE() {
+        return `${this.BASE_URL}blobstores/usage`;
+      },
     },
     PUBLIC: {
       BASE_URL: '/service/rest/v1/',
@@ -242,6 +251,12 @@ export default {
       },
       get UPLOAD() {
         return `${this.BASE_URL}repositorySettings`;
+      },
+      get BLOB_STORES() {
+        return `${this.BASE_URL}blobstores`;
+      },
+      get BLOB_STORES_CONVERT_TO_GROUP() {
+        return `${this.BASE_URL}blobstores/group/convert`;
       },
     },
     SYSTEM_INFORMATION: '/service/rest/atlas/system-information',

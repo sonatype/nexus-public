@@ -27,36 +27,26 @@ import {
 } from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
-  NxButtonBar,
   NxCheckbox,
-  NxErrorAlert,
   NxFieldset,
   NxFontAwesomeIcon,
-  NxFooter,
   NxFormGroup,
   NxFormSelect,
-  NxH2,
   NxInfoAlert,
-  NxLoadWrapper,
-  NxModal,
   NxP,
   NxStatefulForm,
   NxTextInput,
   NxTooltip
 } from '@sonatype/react-shared-components';
+
 import BlobStoresFormMachine,
   {SPACE_USED_QUOTA_ID, canUseSpaceUsedQuotaOnly} from './BlobStoresFormMachine';
 import UIStrings from '../../../../constants/UIStrings';
 import CustomBlobStoreSettings from './CustomBlobStoreSettings';
 import BlobStoreWarning from './BlobStoreWarning';
+import BlobStoresConvertModal from './BlobStoresConvertModal';
 
-const {
-  BLOB_STORES: {
-    FORM,
-    FORM: {CONVERT_TO_GROUP_MODAL}
-  },
-  CLOSE
-} = UIStrings;
+const {BLOB_STORES: {FORM}} = UIStrings;
 
 export default function BlobStoresForm({itemId, onDone}) {
   const idParts = itemId.split('/');
@@ -79,7 +69,6 @@ export default function BlobStoresForm({itemId, onDone}) {
   });
 
   const showConvertToGroupModal = current.matches('modalConvertToGroup');
-  const isConvertingToGroup = current.matches('convertToGroup');
   const isCreate = itemId === '';
   const isEdit = !isCreate;
   const {
@@ -97,11 +86,9 @@ export default function BlobStoresForm({itemId, onDone}) {
       null;
   const isTypeSelected = Boolean(type)
 
-  function setType(event) {
-    send({type: 'SET_TYPE', value: event.currentTarget.value});
-  }
+  const setType = (event) => send({type: 'SET_TYPE', value: event.currentTarget.value});
 
-  function updateDynamicField(name, value) {
+  const updateDynamicField = (name, value) => {
     send({
       type: 'UPDATE',
       data: {
@@ -110,42 +97,19 @@ export default function BlobStoresForm({itemId, onDone}) {
     });
   }
 
-  function toggleSoftQuota(event) {
+  const toggleSoftQuota = (event) => {
     send({type: 'UPDATE_SOFT_QUOTA', name: 'enabled', value: event.currentTarget.checked, data});
   }
 
-  function updateQuotaField(event) {
+  const updateQuotaField = (event) => {
     const name = event.target.name.replace('softQuota.', '');
     const value = event.target.value;
     send({type: 'UPDATE_SOFT_QUOTA', name, value});
   }
 
-  function cancel() {
-    onDone();
-  }
-
-  function confirmDelete() {
-    send({type: 'CONFIRM_DELETE'});
-  }
-
-  function modalConvertToGroupOpen() {
-    send({type: 'MODAL_CONVERT_TO_GROUP_OPEN'});
-  }
-
-  function modalConvertToGroupClose() {
-    send({type: 'MODAL_CONVERT_TO_GROUP_CLOSE'});
-  }
-
-  function modalConvertToGroupSave() {
-    send({type: 'MODAL_CONVERT_TO_GROUP_SAVE'});
-  }
-
-  function handleModalConvertToGroupValue(value) {
-    send({
-      type: 'MODAL_CONVERT_TO_GROUP_SET_NEW_BLOB_NAME',
-      value
-    });
-  }
+  const confirmDelete = () => send({type: 'CONFIRM_DELETE'});
+  const modalConvertToGroupOpen = () => send({type: 'MODAL_CONVERT_TO_GROUP_OPEN'});
+  const modalConvertToGroupClose = () => send({type: 'MODAL_CONVERT_TO_GROUP_CLOSE'});
 
   const spaceUsedQuotaName = quotaTypes?.find((it) => it.id === SPACE_USED_QUOTA_ID).name;
 
@@ -162,7 +126,7 @@ export default function BlobStoresForm({itemId, onDone}) {
     <Section>
       <NxStatefulForm className="nxrm-blob-stores-form"
         {...FormUtils.formProps(current, send)}
-        onCancel={cancel}
+        onCancel={onDone}
         additionalFooterBtns={itemId &&
           <NxTooltip title={deleteTooltip}>
             <NxButton variant="tertiary" className={cannotDelete && 'disabled'} onClick={confirmDelete}>
@@ -185,9 +149,16 @@ export default function BlobStoresForm({itemId, onDone}) {
         <>
           <BlobStoreWarning type={type}/>
           {isCreate &&
-          <NxFormGroup label={FORM.NAME.label} isRequired>
-            <Textfield {...FormUtils.fieldProps('name', current)} onChange={FormUtils.handleUpdate('name', send)}/>
-          </NxFormGroup>
+              <NxFormGroup
+                  className="blob-store-name"
+                  label={FORM.NAME.label}
+                  isRequired
+              >
+                <NxTextInput
+                    {...FormUtils.fieldProps('name', current)}
+                    onChange={FormUtils.handleUpdate('name', send)}
+                />
+              </NxFormGroup>
           }
           <CustomBlobStoreSettings type={type} service={service}/>
           {type?.fields?.map(field =>
@@ -231,43 +202,12 @@ export default function BlobStoresForm({itemId, onDone}) {
         }
       </NxStatefulForm>
     </Section>
-    {(showConvertToGroupModal || isConvertingToGroup) &&
-    <NxModal onCancel={modalConvertToGroupClose}>
-      <NxModal.Header>
-        <NxH2>{CONVERT_TO_GROUP_MODAL.HEADER}</NxH2>
-      </NxModal.Header>
-      <NxModal.Content>
-        <NxP>
-          <strong>
-            {CONVERT_TO_GROUP_MODAL.LABEL}
-          </strong>
-        </NxP>
-        <NxFormGroup
-          label=""
-          sublabel={CONVERT_TO_GROUP_MODAL.SUBLABEL}
-        >
-          <NxTextInput
-            disabled={isConvertingToGroup}
-            value={data.modalConvertToGroupNewBlobName}
-            onChange={handleModalConvertToGroupValue}
-            isPristine={false}
-          />
-        </NxFormGroup>
-      </NxModal.Content>
-      <NxFooter>
-        <NxErrorAlert>
-          {CONVERT_TO_GROUP_MODAL.ALERT}
-        </NxErrorAlert>
-        <NxButtonBar>
-          <NxLoadWrapper loading={isConvertingToGroup} retryHandler={()=>{}}>
-            <NxButton onClick={modalConvertToGroupClose}>{CLOSE}</NxButton>
-            <NxButton onClick={modalConvertToGroupSave} variant="primary">
-              {CONVERT_TO_GROUP_MODAL.CONVERT_BUTTON}
-            </NxButton>
-          </NxLoadWrapper>
-        </NxButtonBar>
-      </NxFooter>
-    </NxModal>
+    {showConvertToGroupModal &&
+        <BlobStoresConvertModal
+            name={data.name}
+            onDone={onDone}
+            onCancel={modalConvertToGroupClose}
+        />
     }
   </Page>;
 }
