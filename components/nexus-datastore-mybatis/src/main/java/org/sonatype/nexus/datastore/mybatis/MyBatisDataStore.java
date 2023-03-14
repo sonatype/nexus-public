@@ -442,7 +442,7 @@ public class MyBatisDataStore
     }
 
     // generate new entity ids on-demand
-    register(new EntityInterceptor(frozenMarker));
+    register(new EntityInterceptor(new FrozenChecker(frozenMarker, uberClassLoader)));
 
     // security handlers that used to only exist in the config store
     register(new PasswordCharacterArrayTypeHandler(passwordHelper));
