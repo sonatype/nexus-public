@@ -30,11 +30,7 @@ import org.sonatype.nexus.common.app.FreezeRequest;
 import org.sonatype.nexus.common.app.FreezeService;
 import org.sonatype.nexus.common.app.FrozenException;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
-import org.sonatype.nexus.common.event.EventAware;
-import org.sonatype.nexus.common.event.EventHelper;
-import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
-import org.sonatype.nexus.distributed.event.service.api.common.FreezeRequestDistributedEvent;
 import org.sonatype.nexus.security.ClientInfo;
 import org.sonatype.nexus.security.ClientInfoProvider;
 
@@ -43,8 +39,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.eventbus.Subscribe;
-import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -66,7 +60,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
 @Singleton
 public class LocalFreezeService
     extends StateGuardLifecycleSupport
-    implements FreezeService, EventAware
+    implements FreezeService
 {
   private static final String MARKER_FILE = "frozen.marker";
 
@@ -80,18 +74,14 @@ public class LocalFreezeService
 
   private final List<Freezable> freezables;
 
-  private final EventManager eventManager;
-
   @Inject
   public LocalFreezeService(final ApplicationDirectories directories,
                             final ClientInfoProvider clientInfoProvider,
-                            final List<Freezable> freezables,
-                            final EventManager eventManager)
+                            final List<Freezable> freezables)
   {
     this.markerFile = new File(directories.getWorkDirectory("db"), MARKER_FILE);
     this.clientInfoProvider = checkNotNull(clientInfoProvider);
     this.freezables = checkNotNull(freezables);
-    this.eventManager = checkNotNull(eventManager);
   }
 
   @Override
@@ -153,25 +143,8 @@ public class LocalFreezeService
     }
   }
 
-  @Subscribe
-  public void on(final FreezeRequestDistributedEvent event) {
-    if (!event.isLocal()) {
-      if (event.isFrozen()) {
-        addRequest(event.getToken(), new FreezeRequest(event.getToken(), event.getReason(),
-            DateTime.parse(event.getFrozenAt()), event.getFrozenBy(), event.getFrozenByIp()));
-      }
-      else {
-        removeRequest(event.getToken());
-      }
-    }
-  }
-
   private void addRequest(@Nullable final String token, final String reason) {
     FreezeRequest request = newRequest(token, reason);
-    addRequest(token, request);
-  }
-
-  private void addRequest(@Nullable final String token, final FreezeRequest request) {
     synchronized (freezeRequests) {
       checkState(!any(freezeRequests, sameToken(token)), "Freeze has already been requested");
       if (token == null) {
@@ -179,9 +152,6 @@ public class LocalFreezeService
       }
       freezeRequests.add(request);
       if (freezeRequests.size() == 1) {
-        if (!EventHelper.isReplicating()) {
-          eventManager.post(new FreezeRequestDistributedEvent(true, request));
-        }
         freezables.forEach(this::tryFreeze);
       }
     }
@@ -195,9 +165,6 @@ public class LocalFreezeService
       checkState(freezeRequests.removeIf(sameToken(token)), "Cannot find freeze request to cancel");
       if (freezeRequests.size() == 0) {
         reverse(freezables).forEach(this::tryUnfreeze);
-        if (!EventHelper.isReplicating()) {
-          eventManager.post(new FreezeRequestDistributedEvent(false, null, null, null, null, null));
-        }
       }
     }
   }
