@@ -73,8 +73,6 @@ public interface FeatureFlags
   String DATASTORE_TABLE_SEARCH = "nexus.datastore.table.search.enabled";
   String DATASTORE_TABLE_SEARCH_NAMED = "${nexus.datastore.table.search.enabled:-false}";
 
-  String CONAN_REVISIONS_ENABLED = "nexus.conan.revisions.enabled";
-
   /**
    * The Key-Value DB storage which can be used as a distributed cache. Use it intelligently,
    * for example it makes sense to cache IQ results in a DB rather than request IQ Server each time.
