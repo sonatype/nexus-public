@@ -14,13 +14,16 @@ package org.sonatype.nexus.coreui.service;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.app.GlobalComponentLookupHelper;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.coreui.RepositoryReferenceXO;
+import org.sonatype.nexus.coreui.RepositoryXO;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Recipe;
@@ -41,6 +44,8 @@ import org.mockito.Mock;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -88,6 +93,9 @@ public class RepositoryUiServiceTest
   private Repository repository;
 
   @Mock
+  private RepositoryXO repositoryXO;
+
+  @Mock
   private Configuration configuration;
 
   private RepositoryUiService underTest;
@@ -98,9 +106,18 @@ public class RepositoryUiServiceTest
     when(format.getValue()).thenReturn("format");
     when(repositoryManager.browse()).thenReturn(Collections.singleton(repository));
     when(configurationStore.list()).thenReturn(Collections.singletonList(configuration));
+    when(repositoryManager.get(anyString())).thenReturn(repository);
+    when(repository.getConfiguration()).thenReturn(configuration);
+    when(configuration.copy()).thenReturn(configuration);
 
     underTest = new RepositoryUiService(repositoryCacheInvalidationService, repositoryManager, configurationStore,
-        securityHelper, recipes, taskScheduler, typeLookup, formats, repositoryPermissionChecker);
+        securityHelper, recipes, taskScheduler, typeLookup, formats, repositoryPermissionChecker)
+    {
+      @Override
+      RepositoryXO asRepository(final Repository input) {
+        return repositoryXO;
+      }
+    };
   }
 
   @Test
@@ -119,6 +136,40 @@ public class RepositoryUiServiceTest
     assertThat(result, hasSize(2));
     assertThat(result.get(0).getName(), is("nuget-proxy"));
     assertThat(result.get(1).getName(), is("nuget-hosted"));
+  }
+
+  @Test
+  public void testRoutingRuleSet() throws Exception {
+    when(repositoryXO.getName()).thenReturn("test");
+    when(repositoryXO.getFormat()).thenReturn("format");
+
+    Map<String, Map<String, Object>> testAttributes = new HashMap<>();
+    when(repositoryXO.getOnline()).thenReturn(true);
+    when(repositoryXO.getRoutingRuleId()).thenReturn("test");
+    when(repositoryXO.getAttributes()).thenReturn(testAttributes);
+
+    underTest.update(repositoryXO);
+
+    verify(configuration).setOnline(true);
+    verify(configuration).setRoutingRuleId(any(EntityId.class));
+    verify(configuration).setAttributes(testAttributes);
+  }
+
+  @Test
+  public void testRoutingRuleCleared() throws Exception {
+    when(repositoryXO.getName()).thenReturn("test");
+    when(repositoryXO.getFormat()).thenReturn("format");
+
+    Map<String, Map<String, Object>> testAttributes = new HashMap<>();
+    when(repositoryXO.getOnline()).thenReturn(true);
+    when(repositoryXO.getRoutingRuleId()).thenReturn(null);
+    when(repositoryXO.getAttributes()).thenReturn(testAttributes);
+
+    underTest.update(repositoryXO);
+
+    verify(configuration).setOnline(true);
+    verify(configuration).setRoutingRuleId(null);
+    verify(configuration).setAttributes(testAttributes);
   }
 
   private List<RepositoryReferenceXO> getTestRepositories() {
