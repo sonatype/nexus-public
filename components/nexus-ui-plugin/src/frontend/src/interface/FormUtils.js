@@ -168,14 +168,18 @@ export default class FormUtils {
           invoke: {
             src: 'delete',
             onDone: {
-              target: 'loaded',
-              actions: ['clearDirtyFlag', 'logDeleteSuccess', 'onDeleteSuccess']
+              target: 'ended',
+              actions: ['clearDirtyFlag', 'logDeleteSuccess']
             },
             onError: {
               target: 'loaded',
               actions: 'onDeleteError'
             }
           }
+        },
+        ended: {
+          type: 'final',
+          entry: 'onDeleteSuccess'
         }
       },
       on: {

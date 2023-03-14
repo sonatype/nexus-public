@@ -15,6 +15,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import FormUtils from './FormUtils';
+import {interpret} from 'xstate';
 
 describe('FormUtils', () => {
   describe('fieldProps', () => {
@@ -239,6 +240,43 @@ describe('FormUtils', () => {
 
     it('returns true for arrays of error messages', () => {
       expect(FormUtils.isInvalid({test: ['error']})).toBe(true);
+    });
+  });
+
+  describe('machine', () => {
+    it('When delete service is finish successfully, the dirty flag should be removed', (done) => {
+      const machineId = 'mock';
+
+      // Sets dirty flag
+      global.dirty = [machineId]
+
+      const machineMock = FormUtils.buildFormMachine({id: machineId, initial: 'loaded'})
+        .withConfig({
+          actions: {
+            onDeleteSuccess: () => ({}),
+            validate: () => ({}),
+          },
+          services: {
+            confirmDelete:  () => Promise.resolve('success'),
+            delete: () => Promise.resolve('success')
+          },
+          guards: {
+            canDelete: () => true
+          }
+        });
+
+
+      expect(global.dirty).toEqual([machineId])
+
+      const fetchService = interpret(machineMock).onTransition((state) => {
+        if (state.matches('ended')) {
+          expect(global.dirty).toEqual([]);
+          done();
+        }
+      });
+
+      fetchService.start();
+      fetchService.send({ type: 'CONFIRM_DELETE' });
     });
   });
 });

@@ -129,7 +129,7 @@ export default function BlobStoresForm({itemId, onDone}) {
         onCancel={onDone}
         additionalFooterBtns={itemId &&
           <NxTooltip title={deleteTooltip}>
-            <NxButton variant="tertiary" className={cannotDelete && 'disabled'} onClick={confirmDelete}>
+            <NxButton variant="tertiary" className={cannotDelete && 'disabled'} onClick={confirmDelete} type="button">
               <NxFontAwesomeIcon icon={faTrash}/>
               <span>{UIStrings.SETTINGS.DELETE_BUTTON_LABEL}</span>
             </NxButton>
@@ -184,7 +184,7 @@ export default function BlobStoresForm({itemId, onDone}) {
             {hasSoftQuota &&
             <>
               <NxFormGroup label={FORM.SOFT_QUOTA.TYPE.label} isRequired>
-                {canUseSpaceUsedQuotaOnly(type) 
+                {canUseSpaceUsedQuotaOnly(type)
                   ? <NxP>{spaceUsedQuotaName}</NxP>
                   : <NxFormSelect {...FormUtils.fieldProps(['softQuota', 'type'], current)} validatable onChange={updateQuotaField}>
                       <option value="" disabled></option>
