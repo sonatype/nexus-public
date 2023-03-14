@@ -87,9 +87,11 @@ public class JwtHelper
 
   @Override
   protected void doStart() throws Exception {
-    super.doStart();
-    // the new secret will be generated as UUID only if it is not presented yet.
-    secretStoreProvider.get().generateNewSecret();
+    SecretStore store = secretStoreProvider.get();
+    if (!store.getSecret().isPresent()) {
+      // the new secret will be generated as UUID only if it is not presented yet.
+      store.generateNewSecret();
+    }
     // we have to read the generated secret from the DB since another node may write it
     verifier = new JwtVerifier(loadSecret());
   }
