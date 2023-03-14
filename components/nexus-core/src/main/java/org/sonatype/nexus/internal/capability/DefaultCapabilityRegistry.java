@@ -17,9 +17,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -154,11 +154,23 @@ public class DefaultCapabilityRegistry
   @Subscribe
   public void on(final CapabilityStorageItemCreatedEvent event) {
     if (!event.isLocal()) {
+      pullAndRefreshReferencesFromDB();
+
       CapabilityIdentity id = event.getCapabilityId();
+      if (references.containsKey(id)) {
+        log.debug("Capability {} already loaded and registered. Skipping it.", id);
+        return;
+      }
+
       CapabilityStorageItem item = capabilityStorage.getAll().get(id);
 
       if (item == null) {
         log.debug("Failed to locate capability with id {} in storage", id);
+        return;
+      }
+
+      if (capabilityAlreadyRegistered(item)) {
+        log.debug("Capability {}:{} already loaded and registered. Skipping it.", item.getType(), item.getProperties());
         return;
       }
 
@@ -175,6 +187,13 @@ public class DefaultCapabilityRegistry
         lock.writeLock().unlock();
       }
     }
+  }
+
+  private boolean capabilityAlreadyRegistered(final CapabilityStorageItem capability) {
+    return references.values().stream()
+        .anyMatch(f ->
+            Objects.equals(f.type().toString(), capability.getType()) &&
+            Objects.equals(f.properties(), capability.getProperties()));
   }
 
   private CapabilityReference doAdd(final CapabilityIdentity id,

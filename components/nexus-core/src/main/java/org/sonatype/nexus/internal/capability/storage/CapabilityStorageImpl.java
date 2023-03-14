@@ -12,8 +12,10 @@
  */
 package org.sonatype.nexus.internal.capability.storage;
 
+import java.util.List;
 import java.util.Map;
-
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -24,6 +26,7 @@ import org.sonatype.nexus.common.entity.EntityUUID;
 import org.sonatype.nexus.common.entity.HasEntityId;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
+import org.sonatype.nexus.datastore.api.DuplicateKeyException;
 import org.sonatype.nexus.internal.capability.storage.datastore.CapabilityStorageItemCreatedEventImpl;
 import org.sonatype.nexus.internal.capability.storage.datastore.CapabilityStorageItemDeletedEventImpl;
 import org.sonatype.nexus.internal.capability.storage.datastore.CapabilityStorageItemUpdatedEventImpl;
@@ -70,7 +73,12 @@ public class CapabilityStorageImpl
   @Override
   public CapabilityIdentity add(final CapabilityStorageItem item) {
     postCommitEvent(() -> new CapabilityStorageItemCreatedEventImpl((CapabilityStorageItemData) item));
-    dao().create((CapabilityStorageItemData) item);
+    try {
+      dao().create((CapabilityStorageItemData) item);
+    }
+    catch (DuplicateKeyException e) {
+      log.debug("Trying to add duplicate for {} capability. Ignore it.", item);
+    }
     return capabilityIdentity(item);
   }
 
@@ -97,6 +105,28 @@ public class CapabilityStorageImpl
   @Override
   public Map<CapabilityIdentity, CapabilityStorageItem> getAll() {
     return stream(dao().browse()).collect(toImmutableMap(CapabilityStorageImpl::capabilityIdentity, identity()));
+  }
+
+  @Transactional
+  @Override
+  public Map<CapabilityStorageItem, List<CapabilityIdentity>> browseCapabilityDuplicates() {
+    return getAll().entrySet().stream()
+        .collect(Collectors.groupingBy(Entry::getValue))
+        .entrySet().stream()
+        .filter(f -> f.getValue().size() > 1)
+        .collect(Collectors.toMap(
+            Entry::getKey,
+            entry -> entry.getValue().stream()
+                .map(Entry::getKey)
+                .collect(Collectors.toList())
+        ));
+  }
+
+  @Override
+  public boolean isDuplicatesFound() {
+    Map<CapabilityStorageItem, List<CapabilityIdentity>> duplicates = browseCapabilityDuplicates();
+    log.debug("Found {} capability duplicates", duplicates.size());
+    return !duplicates.isEmpty();
   }
 
   public static CapabilityIdentity capabilityIdentity(final CapabilityStorageItem item) {
