@@ -26,7 +26,7 @@ public abstract class MutableConfigSupport
     extends Config
     implements Builder
 {
-  protected boolean enabled;
+  protected boolean enabled = true;
 
   @Override
   public Builder majorTimeout(final Duration majorTimeout) {

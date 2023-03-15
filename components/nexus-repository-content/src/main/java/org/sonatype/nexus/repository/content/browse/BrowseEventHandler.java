@@ -131,7 +131,7 @@ public class BrowseEventHandler
         .majorTimeout(majorTimeout)
         .minorTimeout(minorTimeout)
         .enabled(cooperationEnabled)
-        .build(getClass().getSimpleName());
+        .build(getClass());
 
     this.periodicJobService = checkNotNull(periodicJobService);
     this.eventManager = checkNotNull(eventManager);

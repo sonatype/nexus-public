@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.common.cooperation2.internal.orient;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -59,5 +62,31 @@ public class OrientCooperation2Factory
           .threadsPerKey(threadsPerKey)
           .build(id));
     }
+
+    @Override
+    public Cooperation2 build(final Class<?> id, final String... keys) {
+      if (!enabled) {
+        log.debug("Disabled cooperation: {}", id);
+        return new DisabledCooperation2(stripGuice(id, keys));
+      }
+      return new OrientCooperation2(cooperationFactory.configure()
+          .majorTimeout(majorTimeout())
+          .minorTimeout(minorTimeout())
+          .threadsPerKey(threadsPerKey)
+          .build(stripGuice(id, keys)));
+    }
+  }
+
+  /*
+   * When classes are enhanced by Guice AOP they can have random strings and we need them to be consistent
+   */
+  protected static String stripGuice(final Class<?> clazz, final String... keys) {
+    String simpleName = clazz.getSimpleName();
+    // this is the normal case due to method interceptors
+    if (simpleName.contains("EnhancerByGuice") && clazz.getSuperclass() != null) {
+      return stripGuice(clazz.getSuperclass());
+    }
+
+    return Arrays.asList(keys).stream().collect(Collectors.joining("-", simpleName + '-', ""));
   }
 }

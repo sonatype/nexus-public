@@ -57,5 +57,12 @@ public interface Cooperation2Factory
      * @param id unique identifier for this cooperation point
      */
     Cooperation2 build(String id);
+
+    /**
+     * Builds a new {@link Cooperation2} point with this configuration.
+     *
+     * @param id unique identifier for this cooperation point
+     */
+    Cooperation2 build(Class<?> id, String...keys);
   }
 }
