@@ -12,7 +12,9 @@
  */
 package org.sonatype.nexus.internal.log;
 
+import java.io.File;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -38,6 +40,7 @@ import org.eclipse.sisu.inject.BeanLocator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.testcontainers.shaded.com.google.common.collect.ImmutableSet;
 
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -46,8 +49,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.internal.log.LogbackLogManager.getLogFor;
@@ -193,5 +200,35 @@ public class LogbackLogManagerTest
 
     await().atMost(10, SECONDS).untilAsserted(() ->
         assertThat(context.getLogger(testName).getLevel(), is(nullValue())));
+  }
+
+  @Test
+  public void testLoggerLevelWhenLogNotFound() {
+    EventManager eventManager = new SimpleEventManager();
+    LogbackLogManager underTest = spy(new LogbackLogManager(eventManager, mock(BeanLocator.class),
+        mock(DatastoreLoggerOverrides.class)));
+    String testFileName = "foo";
+
+    when(underTest.getAllLogFiles(testFileName)).thenReturn(Collections.emptySet());
+
+    underTest.getLogFile(testFileName);
+
+    verify(underTest).logFileNotFound(testFileName);
+  }
+
+  @Test
+  public void testNoLogWhenFileFound() {
+    EventManager eventManager = new SimpleEventManager();
+    LogbackLogManager underTest = spy(new LogbackLogManager(eventManager, mock(BeanLocator.class),
+        mock(DatastoreLoggerOverrides.class)));
+    String testFileName = "foo";
+
+    when(underTest.getAllLogFiles(testFileName)).thenReturn(ImmutableSet.of(new File(testFileName)));
+
+    File result = underTest.getLogFile(testFileName);
+
+    verify(underTest, times(0)).logFileNotFound(any());
+
+    assertEquals(testFileName, result.getName());
   }
 }

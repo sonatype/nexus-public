@@ -199,9 +199,14 @@ public class LogbackLogManager
         .filter(file -> fileName.equals(filePrefix + file.getName()))
         .findFirst()
         .orElseGet(() -> {
-          log.error("Unable to find log file");
+          logFileNotFound(fileName);
           return null;
         });
+  }
+
+  @VisibleForTesting
+  void logFileNotFound (String fileName) {
+    log.info("Unable to find log file: {}", fileName);
   }
 
   @Override
@@ -219,7 +224,7 @@ public class LogbackLogManager
 
     File file = getLogFile(fileName);
     if (file == null || !file.exists()) {
-      log.warn("Log file does not exist");
+      log.info("Log file does not exist: {}", fileName);
       log.debug("Failed to find logfile: {}", fileName);
       return null;
     }
@@ -518,7 +523,8 @@ public class LogbackLogManager
   /**
    * Helper to get log files
    */
-  private Set<File> getAllLogFiles(final String fileName) {
+  @VisibleForTesting
+  Set<File> getAllLogFiles(final String fileName) {
 
     if (fileName.startsWith(TASKS_PREFIX) && fileName.endsWith(".log")) {
       try (Stream<Path> tasks = Files.list(Paths.get(requireNonNull(TaskLogHome.getTaskLogsHome())))) {
