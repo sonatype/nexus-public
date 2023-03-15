@@ -58,7 +58,7 @@ public class KeywordSqlSearchQueryContribution
 {
   protected static final String NAME = NAME_PREFIX + "keyword";
 
-  private static final String SPLIT_REGEX = "[^-,\\s\"/]+|\"[^\"]+\"";
+  private static final String SPLIT_REGEX = "[^-*,\\s\"/]+|\"[^\"]+\"";
 
   private static final String GAVEC_REGEX =
       "^(?<group>[^\\s:]+):(?<name>[^\\s:]+)(:(?<version>[^\\s:]+))?(:(?<extension>[^\\s:]+))?(:(?<classifier>[^\\s:]+))?$";

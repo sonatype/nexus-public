@@ -23,7 +23,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -49,7 +50,10 @@ import org.sonatype.nexus.repository.search.sql.SqlSearchQueryCondition;
 import org.sonatype.nexus.repository.search.table.TableSearchPermissionManager;
 import org.sonatype.nexus.repository.search.table.TableSearchUtils;
 
+import com.google.common.collect.Lists;
+
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static java.util.stream.Collectors.groupingBy;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.CHECKSUM;
@@ -63,6 +67,8 @@ public class SqlTableSearchService
     extends ComponentSupport
     implements SearchService
 {
+  private static final String SEARCH_ANY_SYMBOLS = "*";
+
   private final TableSearchUtils searchUtils;
 
   private final SearchTableStore searchStore;
@@ -161,6 +167,7 @@ public class SqlTableSearchService
   {
     Integer offset = offsetFromToken(searchRequest.getContinuationToken())
         .orElseGet(searchRequest::getOffset);
+    Optional<Integer> nextOffset = Optional.empty();
 
     if (offset == null) {
       offset = 0;
@@ -179,6 +186,18 @@ public class SqlTableSearchService
     if (searchResults.isEmpty()) {
       return SqlTableSearchService.ComponentSearchResultPage.empty();
     }
+    searchResults = maybeFilterSearchResults(searchResults, offset, searchRequest, queryCondition);
+    // Cut search results to satisfy the page size in the search request.
+    if (searchResults.size() > searchRequest.getLimit()) {
+      nextOffset = Optional.of(offset + searchResults.size());
+      searchResults = searchResults.stream()
+          .limit(searchRequest.getLimit())
+          .collect(Collectors.toList());
+    }
+    else if (searchResults.size() == searchRequest.getLimit()) {
+      // Only provide a reference for the next page if this one matched the provided limit.
+      nextOffset = Optional.of(offset + searchRequest.getLimit());
+    }
 
     Map<String, List<AssetInfo>> componentIdToAsset =
         getAssetsForComponents(searchResults, searchRequest.isIncludeAssets());
@@ -190,22 +209,96 @@ public class SqlTableSearchService
       if (searchRequest.isIncludeAssets()) {
         List<AssetInfo> assets =
             componentIdToAsset.get(getFormatComponentKey(component.format(), component.componentId()));
-        for (AssetInfo asset : assets) {
-          AssetSearchResult assetSearchResult =
-              buildAssetSearch(asset, repositoryName, component);
-          componentSearchResult.addAsset(assetSearchResult);
-        }
+        assets.stream()
+            .map(asset -> buildAssetSearch(asset, repositoryName, component))
+            .forEach(componentSearchResult::addAsset);
       }
       componentSearchResults.add(componentSearchResult);
     }
 
-    Optional<Integer> nextOffset = Optional.empty();
-    if (searchResults.size() == searchRequest.getLimit()) {
-      // Only provide a reference for the next page if this one matched the provided limit.
-      nextOffset = Optional.of(offset + searchRequest.getLimit());
+    return new SqlTableSearchService.ComponentSearchResultPage(nextOffset, componentSearchResults);
+  }
+
+  /**
+   * Filter out search results for the Keyword search criteria only in case of wildcard search request.
+   */
+  private Collection<SearchResult> maybeFilterSearchResults(
+      final Collection<SearchResult> searchResults,
+      final int offset,
+      final SearchRequest searchRequest,
+      final SqlSearchQueryCondition queryCondition)
+  {
+    Optional<SearchFilter> keywordRegexFilter = searchRequest.getSearchFilters().stream()
+        .filter(filter -> "keyword".equals(filter.getProperty()) && filter.getValue().contains(SEARCH_ANY_SYMBOLS))
+        .findFirst();
+    if (keywordRegexFilter.isPresent()) {
+      // replace a user's search request to use regex
+      String regex = keywordRegexFilter.get().getValue().replace(SEARCH_ANY_SYMBOLS, ".*");
+      Pattern searchPattern = Pattern.compile(regex, CASE_INSENSITIVE);
+      Collection<SearchResult> filteredResults = filterSearchResults(searchResults, searchPattern);
+
+      int nextOffset = offset + searchResults.size();
+      fetchMoreResults(nextOffset, searchRequest, queryCondition, searchPattern, filteredResults);
+
+      return filteredResults;
     }
 
-    return new SqlTableSearchService.ComponentSearchResultPage(nextOffset, componentSearchResults);
+    return searchResults;
+  }
+
+  /**
+   * Filter search results for wildcard matching in Format, Group, Name, Version
+   * and all other component metadata values.
+   *
+   * @param searchResults the collection with components to filter out.
+   * @param searchPattern the wildcard search pattern.
+   * @return the new collection with filtered search results.
+   */
+  private static Collection<SearchResult> filterSearchResults(
+      final Collection<SearchResult> searchResults,
+      final Pattern searchPattern)
+  {
+    Collection<SearchResult> results = new ArrayList<>();
+    for (SearchResult searchResult : searchResults) {
+      boolean matched = searchPattern.matcher(searchResult.componentName()).find();
+      matched |= searchPattern.matcher(searchResult.format()).find();
+      matched |= searchPattern.matcher(searchResult.version()).find();
+      matched |= searchPattern.matcher(searchResult.normalisedVersion()).find();
+      matched |= searchPattern.matcher(searchResult.repositoryName()).find();
+      matched |= searchPattern.matcher(searchResult.namespace()).find();
+      matched |= searchPattern.matcher(searchResult.attributes().toString()).find();
+      if (matched) {
+        results.add(searchResult);
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Return enough results to satisfy the page size in the search request.
+   */
+  private void fetchMoreResults(
+      final int offset,
+      final SearchRequest searchRequest,
+      final SqlSearchQueryCondition queryCondition,
+      final Pattern searchPattern,
+      final Collection<SearchResult> filteredSearchResults)
+  {
+    int nextOffset = offset;
+    while (filteredSearchResults.size() < searchRequest.getLimit()) {
+      Collection<SearchResult> results = searchStore.searchComponents(
+          searchRequest.getLimit(),
+          nextOffset,
+          queryCondition,
+          sqlSearchSortUtil.getSortExpression(searchRequest.getSortField()).orElse(null),
+          searchRequest.getSortDirection());
+      if (results.isEmpty()) {
+        break;
+      }
+      nextOffset += results.size();
+      filteredSearchResults.addAll(filterSearchResults(results, searchPattern));
+    }
   }
 
   private static Optional<Integer> offsetFromToken(@Nullable final String continuationToken) {
@@ -241,8 +334,7 @@ public class SqlTableSearchService
         componentIdsByFormat.get(searchResult.format()).add(searchResult.componentId());
       }
       else {
-        List<Integer> componentIds = new ArrayList<>();
-        componentIds.add(searchResult.componentId());
+        List<Integer> componentIds = Lists.newArrayList(searchResult.componentId());
         componentIdsByFormat.put(searchResult.format(), componentIds);
       }
     }
