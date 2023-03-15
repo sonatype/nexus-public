@@ -175,9 +175,9 @@
     </choose>
   </select>
 
-  <sql id="regexExpressions">
-    <foreach collection="regexExpressions" item="regexExpression" open="AND (" close=")" separator=" OR ">
-      path ~ #{regexExpression}
+  <sql id="regexList">
+    <foreach collection="regexList" item="regex" open="AND (" close=")" separator=" OR ">
+      path ~ #{regex}
     </foreach>
   </sql>
 
@@ -185,7 +185,7 @@
     SELECT * FROM ${format}_asset a INNER JOIN ${format}_asset_blob ab USING (asset_blob_id)
     WHERE a.repository_id = #{repositoryId}
     <if test="addedToRepository != null"> AND ab.added_to_repository >= #{addedToRepository}</if>
-    <include refid="regexExpressions"/>
+    <include refid="regexList"/>
     <if test="filter != null"> AND (${filter})</if>
     ORDER BY ab.added_to_repository LIMIT #{limit}
   </select>
@@ -194,7 +194,7 @@
     SELECT * FROM ${format}_asset a INNER JOIN ${format}_asset_blob ab USING (asset_blob_id)
     WHERE a.repository_id = #{repositoryId}
     AND ab.added_to_repository >= #{startAddedToRepository} AND ab.added_to_repository &lt; #{endAddedToRepository}
-    <include refid="regexExpressions"/>
+    <include refid="regexList"/>
     <if test="filter != null"> AND (${filter})</if>
     ORDER BY ab.added_to_repository LIMIT #{limit}
   </select>

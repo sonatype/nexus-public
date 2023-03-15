@@ -130,14 +130,14 @@ public interface AssetDAO
    *
    * @param repositoryId the repository to browse
    * @param addedToRepository date that asset content must have been updated after
-   * @param regexExpressions list of SQL regex expressions that match on the path column
+   * @param regexList list of SQL regex expressions that match on the path column
    * @param limit maximum number of assets to return
    * @return collection of assets
    */
   List<AssetInfo> findGreaterThanOrEqualToAddedToRepository(
       @Param("repositoryId") int repositoryId,
       @Nullable @Param("addedToRepository") OffsetDateTime addedToRepository,
-      @Param("regexExpressions") List<String> regexExpressions,
+      @Param("regexList") List<String> regexList,
       @Nullable @Param("filter") String filter,
       @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams,
       @Param("limit") int limit);
@@ -148,7 +148,7 @@ public interface AssetDAO
    * @param repositoryId the repository to browse
    * @param startAddedToRepository blobCreated on asset content is greater than or equal to this value
    * @param endAddedToRepository blobCreated on asset content is less than this value
-   * @param regexExpressions list of SQL regex expressions that match on path column
+   * @param regexList list of SQL regex expressions that match on path column
    * @param limit maximum number of assets to return
    * @return collection of assets
    */
@@ -156,7 +156,7 @@ public interface AssetDAO
       @Param("repositoryId") int repositoryId,
       @Param("startAddedToRepository") OffsetDateTime startAddedToRepository,
       @Param("endAddedToRepository") OffsetDateTime endAddedToRepository,
-      @Param("regexExpressions") List<String> regexExpressions,
+      @Param("regexList") List<String> regexList,
       @Nullable @Param("filter") String filter,
       @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams,
       @Param("limit") int limit);

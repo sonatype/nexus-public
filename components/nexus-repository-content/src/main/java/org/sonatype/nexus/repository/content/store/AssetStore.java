@@ -183,7 +183,7 @@ public class AssetStore<T extends AssetDAO>
    *
    * @param repositoryId the repository to browse
    * @param addedToRepository addedToRepository of asset content from the last record of the previous call.
-   * @param regexExpressions  list of wildcard expressions to match on path.
+   * @param regexList  list of wildcard expressions to match on path.
    *                             Supported special characters are * and ?
    * @param batchSize how many assets to fetch in each call. May return more assets than this if there are
    *                  multiple assets with the same addedToRepository value as the last record.
@@ -193,7 +193,7 @@ public class AssetStore<T extends AssetDAO>
   public List<AssetInfo> findUpdatedAssets(
       final int repositoryId,
       @Nullable final OffsetDateTime addedToRepository,
-      final List<String> regexExpressions,
+      final List<String> regexList,
       @Nullable String filter,
       @Nullable Map<String, Object> filterParams,
       final int batchSize)
@@ -208,7 +208,7 @@ public class AssetStore<T extends AssetDAO>
     // Fetch one extra record to check if there are more results with the same addedToRepository value. Most of the time
     // this won't be the case, and we will not need a query to find them all.
     List<AssetInfo> assets =
-        dao().findGreaterThanOrEqualToAddedToRepository(repositoryId, addedToRepositoryNormalized, regexExpressions,
+        dao().findGreaterThanOrEqualToAddedToRepository(repositoryId, addedToRepositoryNormalized, regexList,
             filter, filterParams, batchSize + 1);
 
     if (assets.size() == batchSize + 1) {
@@ -223,7 +223,7 @@ public class AssetStore<T extends AssetDAO>
         // paging with a greater than query.
         List<AssetInfo> matchAddedToRepository =
             dao().findAddedToRepositoryWithinRange(repositoryId, startAddedToRepository, endAddedToRepository,
-                regexExpressions, filter, filterParams, LAST_UPDATED_LIMIT);
+                regexList, filter, filterParams, LAST_UPDATED_LIMIT);
 
         if (matchAddedToRepository.size() == LAST_UPDATED_LIMIT) {
           log.error(
