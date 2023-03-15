@@ -41,8 +41,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 import static java.lang.Thread.currentThread;
 import static java.util.Locale.ENGLISH;
+import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.AUTO_BLOCKED_UNAVAILABLE;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.AVAILABLE;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.BLOCKED;
@@ -125,7 +127,12 @@ public class BlockingHttpClient
       int statusCode = response.getStatusLine().getStatusCode();
 
       if (autoBlockConfiguration.shouldBlock(statusCode)) {
-        updateStatusToUnavailable(getReason(statusCode), statusCode, target);
+        if (!autoBlock && statusCode == SC_UNAUTHORIZED) {
+          updateStatusToAvailableWithParams(getReason(statusCode), statusCode, target);
+        }
+        else {
+          updateStatusToUnavailable(getReason(statusCode), statusCode, target);
+        }
       }
       else {
         updateStatusToAvailable();
@@ -147,6 +154,15 @@ public class BlockingHttpClient
       autoBlockSequence.reset();
     }
     updateStatus(AVAILABLE);
+  }
+
+  private synchronized void updateStatusToAvailableWithParams(final String reason , @Nullable final Integer statusCode, final HttpHost target) {
+    if (autoBlock && blockedUntil != null) {
+      blockedUntil = null;
+      interruptCheckStatusThread();
+      autoBlockSequence.reset();
+    }
+    updateStatus(AVAILABLE, format("(Last Request %s)" , reason), statusCode, target.toURI(), false);
   }
 
   private synchronized void updateStatusToUnavailable(final String reason, @Nullable final Integer statusCode,
