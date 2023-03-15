@@ -315,7 +315,7 @@ public abstract class ContentFacetSupport
    * Override this method to customize the write-policy of selected assets.
    */
   protected WritePolicy writePolicy(final Asset asset) {
-    return ofNullable(config.writePolicy).orElse(ALLOW);
+    return ofNullable(config).map(config -> config.writePolicy).orElse(ALLOW);
   }
 
   /**
