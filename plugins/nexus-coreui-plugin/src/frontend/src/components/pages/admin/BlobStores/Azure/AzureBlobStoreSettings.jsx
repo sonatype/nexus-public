@@ -36,6 +36,8 @@ export default function AzureBlobStoreSettings({service}) {
 
   const [azureState, sendAzureEvent] = useMachine(AzureBlobStoreSettingsMachine, {
     context: {
+      // blobStoreName will only contain a value when the form is being edited
+      blobStoreName: current.context.data.name,
       accountName: bucketConfiguration.accountName,
       containerName: bucketConfiguration.containerName,
       authenticationMethod: bucketConfiguration.authentication?.authenticationMethod,
