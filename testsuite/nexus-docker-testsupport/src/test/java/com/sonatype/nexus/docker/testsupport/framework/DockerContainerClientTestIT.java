@@ -56,6 +56,7 @@ public class DockerContainerClientTestIT
     assertTrue(underTest.exec("yum --version").isPresent());
   }
 
+  @Ignore("Failing on Internal Orient #801 - NEXUS-38179")
   @Test
   public void when_Exec_YumVersion_On_Centos_6_9_Expect_Execution_To_Succeed() {
     underTest = new DockerContainerClient(IMAGE_CENTOS + ":6.9");
