@@ -47,7 +47,7 @@ import org.junit.experimental.categories.Category;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
@@ -215,7 +215,7 @@ public class CselToTsQuerySqlDbTest
   private void assertResult(final SearchResult searchResult, final String expectedPath) {
     SearchTableData expected = componentIdToSearchTableData.get(searchResult.componentId());
     assertComponent(searchResult, expected);
-    assertThat(expected.getPaths(), hasItem(expectedPath));
+    assertThat(expected.getPaths(), containsString(expectedPath));
   }
 
   private void assertComponent(final SearchResult searchResult, final SearchTableData expected) {

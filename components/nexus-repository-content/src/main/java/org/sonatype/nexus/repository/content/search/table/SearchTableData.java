@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
@@ -381,8 +382,10 @@ public class SearchTableData
     }
   }
 
-  public Collection<String> getPaths() {
-    return unmodifiableCollection(paths);
+  public String getPaths() {
+    return this.paths.stream()
+        .map(path -> "{" + path + "}")
+        .collect(Collectors.joining(" "));
   }
 
   public boolean isPrerelease() {

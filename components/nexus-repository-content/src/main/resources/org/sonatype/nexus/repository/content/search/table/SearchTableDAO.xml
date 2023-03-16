@@ -70,7 +70,6 @@
     CREATE INDEX IF NOT EXISTS idx_search_components_format_field_values_5 ON search_components USING GIN (format_field_values_5);
     CREATE INDEX IF NOT EXISTS idx_search_components_format_uploaders ON search_components USING GIN (uploaders);
     CREATE INDEX IF NOT EXISTS idx_search_components_format_uploader_ips ON search_components USING GIN (uploader_ips);
-    CREATE INDEX IF NOT EXISTS idx_search_components_paths ON search_components (paths);
     CREATE INDEX IF NOT EXISTS idx_search_components_tsvector_paths ON search_components USING GIN (tsvector_paths);
     CREATE INDEX IF NOT EXISTS idx_search_components_tsvector_format ON search_components USING GIN (tsvector_format);
     CREATE INDEX IF NOT EXISTS idx_search_components_tsvector_namespace ON search_components USING GIN (tsvector_namespace);
@@ -94,6 +93,8 @@
     ALTER TABLE search_components ADD COLUMN IF NOT EXISTS format_field_values_7 TSVECTOR;
     CREATE INDEX IF NOT EXISTS idx_search_components_format_field_values_6 ON search_components USING GIN (format_field_values_6);
     CREATE INDEX IF NOT EXISTS idx_search_components_format_field_values_7 ON search_components USING GIN (format_field_values_7);
+
+    DROP INDEX IF EXISTS idx_search_components_paths;
 
     CREATE OR REPLACE FUNCTION enable_pg_trgm() RETURNS VOID AS $$
         DECLARE
@@ -187,12 +188,11 @@
             to_tsvector('simple', coalesce(#{format}, '')), to_tsvector('simple', coalesce(#{namespace}, '')),
             to_tsvector('simple', coalesce(#{version}, '')),
             to_tsvector('simple', CONCAT('/', coalesce(#{repositoryName}, ''))),
-            #{componentKind}, #{normalisedVersion}, #{prerelease}, #{attributes}, #{entityVersion},
-            <include refid="join"><property name="thePaths" value="paths"/></include>,
+            #{componentKind}, #{normalisedVersion}, #{prerelease}, #{attributes}, #{entityVersion}, #{paths},
             <include refid="toTsVector"><property name="tokens" value="aliasComponentNames"/></include>,
             <include refid="toTsVector"><property name="tokens" value="uploaders"/></include>,
             <include refid="toTsVector"><property name="tokens" value="uploaderIps"/></include>,
-            <include refid="toTsVector"><property name="tokens" value="paths"/></include>,
+            to_tsvector('simple', COALESCE(#{paths}, '')),
             <include refid="toTsVector"><property name="tokens" value="keywords"/></include>,
             <include refid="toTsVector"><property name="tokens" value="md5"/></include>,
             <include refid="toTsVector"><property name="tokens" value="sha1"/></include>,
@@ -220,8 +220,8 @@
           prerelease = #{prerelease},
           uploaders = <include refid="toTsVector"><property name="tokens" value="uploaders"/></include>,
           uploader_ips = <include refid="toTsVector"><property name="tokens" value="uploaderIps"/></include>,
-          paths = <include refid="join"><property name="thePaths" value="paths"/></include>,
-          tsvector_paths = <include refid="toTsVector"><property name="tokens" value="paths"/></include>,
+          paths = #{paths},
+          tsvector_paths = to_tsvector('simple', COALESCE(#{paths}, '')),
           keywords = <include refid="toTsVector"><property name="tokens" value="keywords"/></include>,
           md5 = <include refid="toTsVector"><property name="tokens" value="md5"/></include>,
           sha1 = <include refid="toTsVector"><property name="tokens" value="sha1"/></include>,
@@ -335,11 +335,11 @@
        to_tsvector('simple', COALESCE(#{item.version}, '')),
        to_tsvector('simple', CONCAT('/', coalesce(#{item.repositoryName}, ''))), #{item.componentKind}, #{item.normalisedVersion},
        #{item.componentCreated}, #{item.prerelease}, #{item.attributes}, COALESCE(#{item.entityVersion}, 1),
-      <include refid="join"><property name="thePaths" value="item.paths"/></include>,
+      #{item.paths},
       <include refid="toTsVector"><property name="tokens" value="item.uploaders"/></include>,
       <include refid="toTsVector"><property name="tokens" value="item.uploaderIps"/></include>,
       <include refid="toTsVector"><property name="tokens" value="item.aliasComponentNames"/></include>,
-      <include refid="toTsVector"><property name="tokens" value="item.paths"/></include>,
+      to_tsvector('simple', COALESCE(#{item.paths}, '')),
       <include refid="toTsVector"><property name="tokens" value="item.keywords"/></include>,
       <include refid="toTsVector"><property name="tokens" value="item.md5"/></include>,
       <include refid="toTsVector"><property name="tokens" value="item.sha1"/></include>,
@@ -390,15 +390,6 @@
         <foreach collection="${tokens}" separator="||" item="token" open="(" close=")">
           to_tsvector('simple', coalesce(#{token}, ''))
         </foreach>
-      </otherwise>
-    </choose>
-  </sql>
-
-  <sql id="join" databaseId="PostgreSQL">
-    <choose>
-      <when test="${thePaths}.isEmpty()">null</when>
-      <otherwise>
-        CONCAT_WS(' ',<foreach collection="${thePaths}" separator=", " item="path">'{' || #{path}::VARCHAR || '}'</foreach>)
       </otherwise>
     </choose>
   </sql>
