@@ -16,8 +16,9 @@
  */
 import {assign} from 'xstate';
 import Axios from 'axios';
+import { mergeDeepRight } from 'ramda';
 
-import {ExtJS, Utils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 
@@ -32,12 +33,12 @@ const baseUrl = '/service/rest/internal/cleanup-policies';
 const url = (name) => `${baseUrl}/${name}`;
 
 function isEdit({name}) {
-  return Utils.notBlank(name);
+  return ValidationUtils.notBlank(name);
 }
 
 function validateCriteriaNumberField(enabled, field) {
   if (enabled) {
-    if (Utils.isBlank(field)) {
+    if (ValidationUtils.isBlank(field)) {
       return UIStrings.ERROR.FIELD_REQUIRED;
     }
     else {
@@ -48,16 +49,12 @@ function validateCriteriaNumberField(enabled, field) {
   return null;
 }
 
-export default Utils.buildFormMachine({
+export default FormUtils.buildFormMachine({
   id: 'CleanupPoliciesFormMachine',
-  config: (config) => ({
-    ...config,
+  config: (config) => mergeDeepRight(config,{
     states: {
-      ...config.states,
       loaded: {
-        ...config.states.loaded,
         on: {
-          ...config.states.loaded.on,
           SET_CRITERIA_LAST_DOWNLOADED_ENABLED: {
             target: 'loaded',
             actions: ['setCriteriaLastDownloadedEnabled']
@@ -75,7 +72,6 @@ export default Utils.buildFormMachine({
             actions: ['setCriteriaAssetRegexEnabled']
           },
           UPDATE: {
-            ...config.states.loaded.on.UPDATE,
             actions: [...config.states.loaded.on.UPDATE.actions, 'clearCriteria']
           }
         }
@@ -92,11 +88,11 @@ export default Utils.buildFormMachine({
     validate: assign({
       validationErrors: ({data, criteriaLastDownloadedEnabled, criteriaLastBlobUpdatedEnabled, criteriaReleaseTypeEnabled, criteriaAssetRegexEnabled}) => ({
         name: ValidationUtils.validateNameField(data.name),
-        format: Utils.isBlank(data.format) ? UIStrings.ERROR.FIELD_REQUIRED : null,
+        format: ValidationUtils.isBlank(data.format) ? UIStrings.ERROR.FIELD_REQUIRED : null,
         criteriaLastDownloaded: validateCriteriaNumberField(criteriaLastDownloadedEnabled, data.criteriaLastDownloaded),
         criteriaLastBlobUpdated: validateCriteriaNumberField(criteriaLastBlobUpdatedEnabled, data.criteriaLastBlobUpdated),
-        criteriaReleaseType: criteriaReleaseTypeEnabled && Utils.isBlank(data.criteriaReleaseType) ? UIStrings.ERROR.FIELD_REQUIRED : null,
-        criteriaAssetRegex: criteriaAssetRegexEnabled && Utils.isBlank(data.criteriaAssetRegex) ? UIStrings.ERROR.FIELD_REQUIRED : null
+        criteriaReleaseType: criteriaReleaseTypeEnabled && ValidationUtils.isBlank(data.criteriaReleaseType) ? UIStrings.ERROR.FIELD_REQUIRED : null,
+        criteriaAssetRegex: criteriaAssetRegexEnabled && ValidationUtils.isBlank(data.criteriaAssetRegex) ? UIStrings.ERROR.FIELD_REQUIRED : null
       })
     }),
     setCriteriaLastDownloadedEnabled: assign({
@@ -137,7 +133,7 @@ export default Utils.buildFormMachine({
       }
       return ctx;
     }),
-    setData: assign(({pristineData}, {data: [criteria, details]}) => ({
+    setData: assign((_, {data: [criteria, details]}) => ({
       criteriaByFormat: criteria?.data,
       data: details?.data,
       pristineData: details?.data,

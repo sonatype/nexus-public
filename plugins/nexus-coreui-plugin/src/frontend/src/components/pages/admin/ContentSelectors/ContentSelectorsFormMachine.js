@@ -17,7 +17,7 @@
 import {assign} from 'xstate';
 import Axios from 'axios';
 
-import {ExtJS, Utils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 
@@ -25,52 +25,17 @@ const baseUrl = '/service/rest/v1/security/content-selectors';
 const url = (name) => `${baseUrl}/${name}`;
 
 function isEdit({name}) {
-  return Utils.notBlank(name);
+  return ValidationUtils.notBlank(name);
 }
 
-export default Utils.buildFormMachine({
+export default FormUtils.buildFormMachine({
   id: 'ContentSelectorsFormMachine',
-  config: (config) => ({
-    ...config,
-    states: {
-      ...config.states,
-      loaded: {
-        ...config.states.loaded,
-        on: {
-          ...config.states.loaded.on,
-          'CONFIRM_DELETE': {
-            target: 'confirmDelete'
-          }
-        }
-      },
-      confirmDelete: {
-        invoke: {
-          src: 'confirmDelete',
-          onDone: 'delete',
-          onError: 'loaded'
-        }
-      },
-      delete: {
-        invoke: {
-          src: 'delete',
-          onDone: {
-            target: 'loaded',
-            actions: 'onDeleteSuccess'
-          },
-          onError: {
-            target: 'loaded',
-            actions: 'onDeleteError'
-          }
-        }
-      }
-    }
-  })
 }).withConfig({
   actions: {
     validate: assign({
       validationErrors: ({data}) => ({
         name: ValidationUtils.validateNameField(data.name),
-        expression: Utils.isBlank(data.expression) ? UIStrings.ERROR.FIELD_REQUIRED : null
+        expression: ValidationUtils.isBlank(data.expression) ? UIStrings.ERROR.FIELD_REQUIRED : null
       })
     }),
 
@@ -118,7 +83,8 @@ export default Utils.buildFormMachine({
     })
   },
   guards: {
-    isEdit: ({pristineData}) => isEdit(pristineData)
+    isEdit: ({pristineData}) => isEdit(pristineData),
+    canDelete: () => true
   },
   services: {
     fetchData: ({pristineData}) => {

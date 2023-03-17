@@ -63,7 +63,7 @@ export default function PrivilegesForm({itemId, service, onDone}) {
       {...FormUtils.formProps(current, send)}
       onCancel={cancel}
       additionalFooterBtns={isEdit && canDelete &&
-          <NxButton variant="tertiary" onClick={confirmDelete}>
+          <NxButton variant="tertiary" onClick={confirmDelete} type="button">
             <NxFontAwesomeIcon icon={faTrash}/>
             <span>{UIStrings.SETTINGS.DELETE_BUTTON_LABEL}</span>
           </NxButton>

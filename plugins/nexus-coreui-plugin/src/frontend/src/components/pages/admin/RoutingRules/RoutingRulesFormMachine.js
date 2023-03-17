@@ -76,26 +76,6 @@ export default FormUtils.buildFormMachine({
           }
         }
       },
-      confirmDelete: {
-        invoke: {
-          src: 'confirmDelete',
-          onDone: 'delete',
-          onError: 'loaded'
-        }
-      },
-      delete: {
-        invoke: {
-          src: 'delete',
-          onDone: {
-            target: 'loaded',
-            actions: 'onDeleteSuccess'
-          },
-          onError: {
-            target: 'loaded',
-            actions: 'onDeleteError'
-          }
-        }
-      },
       testing: {
         invoke: {
           src: 'test',

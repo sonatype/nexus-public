@@ -84,7 +84,7 @@ export default function UsersForm({service, onDone}) {
         {...FormUtils.formProps(current, send)}
         onCancel={cancel}
         additionalFooterBtns={showDeleteButton &&
-        <NxButton variant="tertiary" onClick={confirmDelete}>
+        <NxButton variant="tertiary" onClick={confirmDelete} type="button">
           <NxFontAwesomeIcon icon={faTrash}/>
           <span>{UIStrings.SETTINGS.DELETE_BUTTON_LABEL}</span>
         </NxButton>
