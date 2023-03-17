@@ -620,7 +620,7 @@ Ext.define('NX.coreui.controller.Search', {
    * @param performSearchAfter if filter should be applied on store ( = remote call)
    */
   applyFilter: function(searchCriteria, performSearchAfter) {
-    const allCriteria = this.getFeature().query('#criteria component[criteriaId]:visible');
+    const allCriteria = this.getFeature().query('#criteria component[criteriaId]');
     const filters = allCriteria.filter(function(criteria) {
       return criteria.getValue();
     }).map(function (criteria) {
