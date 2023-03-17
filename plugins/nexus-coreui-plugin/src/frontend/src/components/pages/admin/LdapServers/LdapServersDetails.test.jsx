@@ -89,8 +89,17 @@ const selectors = {
       return element?.closest('button') || element;
     },
     confirmDeleteLabel: () => screen.queryByText(LABELS.MODAL_DELETE.LABEL),
-    yesButton: () => screen.queryByText(LABELS.MODAL_DELETE.YES),
-    noButton: () => screen.queryByText(LABELS.MODAL_DELETE.NO),
+    modalDelete: {
+      container: () => screen.queryByRole('dialog'),
+      confirmButton: () =>
+        within(selectors.createConnection.modalDelete.container()).queryByText(
+          LABELS.MODAL_DELETE.CONFIRM
+        ),
+      cancelButton: () =>
+        within(selectors.createConnection.modalDelete.container()).queryByText(
+          SETTINGS.CANCEL_BUTTON_LABEL
+        ),
+    },
   },
   userAndGroup: {
     template: () => screen.getByLabelText(LABELS.TEMPLATE.LABEL),
@@ -792,8 +801,11 @@ describe('LdapServersDetails', () => {
     });
 
     it('Users can delete the LDAP Server configuration', async () => {
-      const {deleteButton, confirmDeleteLabel, yesButton, noButton} =
-        selectors.createConnection;
+      const {
+        deleteButton,
+        confirmDeleteLabel,
+        modalDelete: {confirmButton, cancelButton},
+      } = selectors.createConnection;
 
       await renderView(itemId);
 
@@ -802,16 +814,16 @@ describe('LdapServersDetails', () => {
       userEvent.click(deleteButton());
 
       expect(confirmDeleteLabel()).toBeInTheDocument();
-      expect(yesButton()).toBeInTheDocument();
-      expect(noButton()).toBeInTheDocument();
+      expect(confirmButton()).toBeInTheDocument();
+      expect(cancelButton()).toBeInTheDocument();
 
-      userEvent.click(noButton());
+      userEvent.click(cancelButton());
 
       expect(confirmDeleteLabel()).not.toBeInTheDocument();
 
       userEvent.click(deleteButton());
 
-      await act(async () => userEvent.click(yesButton()));
+      await act(async () => userEvent.click(confirmButton()));
 
       expect(Axios.delete).toHaveBeenCalledWith(
         singleLdapServersUrl(data.name)

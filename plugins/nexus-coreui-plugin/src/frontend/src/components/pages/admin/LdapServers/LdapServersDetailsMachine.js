@@ -200,8 +200,8 @@ export default FormUtils.buildFormMachine({
       }
       return context;
     }),
-    logDeleteSuccess: ({data: {itemId}}) => {
-      ExtJS.showSuccessMessage(LABELS.DELETE_SUCCESS_MESSAGE(itemId));
+    logDeleteSuccess: ({data}) => {
+      ExtJS.showSuccessMessage(LABELS.DELETE_SUCCESS_MESSAGE(data.name));
     },
     updateData: assign((ctx, {data, pristineData}) =>
       mergeDeepRight(ctx, {data, pristineData})

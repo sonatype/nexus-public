@@ -200,8 +200,7 @@ export default {
       DELETE_BUTTON: 'Delete Connection',
       MODAL_DELETE: {
         LABEL: 'Confirm deletion',
-        YES: 'YES',
-        NO: 'NO'
+        CONFIRM: 'Delete Connection',
       },
       MODAL_PASSWORD: {
         TITLE: 'LDAP Server system password',
@@ -213,6 +212,7 @@ export default {
         USER_AND_GROUP: 'User and Group'
       },
       VERIFY_SUCCESS_MESSAGE: (url) => `Connection to LDAP server verified: ${url}`,
+      VERIFY_DELETE_MESSAGE: (name) => `Are you sure you want to delete the ${name} LDAP connection?`,
       DELETE_SUCCESS_MESSAGE: (name) => `LDAP server deleted: ${name}`,
       SAVE_SUCCESS_MESSAGE: (name) => `LDAP server created: ${name}`,
       UPDATE_SUCCESS_MESSAGE: (name) => `LDAP server updated: ${name}`,

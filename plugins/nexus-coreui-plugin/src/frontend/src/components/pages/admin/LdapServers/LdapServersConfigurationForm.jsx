@@ -54,6 +54,7 @@ import {
 
 const {
   LDAP_SERVERS: {FORM: LABELS},
+  SETTINGS,
   PERMISSION_ERROR,
 } = UIStrings;
 
@@ -79,7 +80,9 @@ export default forwardRef(({actor, onDone}, ref) => {
   const changingPasswordMessage = state.matches(
     'changingPassword.verifyingConnection'
   );
-  const askingPassword = state.matches('askingPassword') || (changingPassword && !changingPasswordMessage);
+  const askingPassword =
+    state.matches('askingPassword') ||
+    (changingPassword && !changingPasswordMessage);
   const confirmingDelete = state.matches('confirmingDelete');
 
   const next = () => send('NEXT');
@@ -313,7 +316,9 @@ export default forwardRef(({actor, onDone}, ref) => {
           />
         )}
         {changingPasswordMessage && (
-          <NxStatefulSubmitMask message={LABELS.CHANGING_PASSWORD_MESSAGE(urlMessage)} />
+          <NxStatefulSubmitMask
+            message={LABELS.CHANGING_PASSWORD_MESSAGE(urlMessage)}
+          />
         )}
       </NxStatefulForm>
       {askingPassword && (
@@ -332,15 +337,15 @@ export default forwardRef(({actor, onDone}, ref) => {
             </NxH2>
           </NxModal.Header>
           <NxModal.Content>
-            <NxP>{name}</NxP>
+            <NxP>{LABELS.VERIFY_DELETE_MESSAGE(name)}</NxP>
           </NxModal.Content>
           <NxFooter>
             <NxButtonBar>
               <NxButton onClick={() => send('CANCEL')}>
-                {LABELS.MODAL_DELETE.NO}
+                {SETTINGS.CANCEL_BUTTON_LABEL}
               </NxButton>
               <NxButton onClick={() => send('ACCEPT')} variant="primary">
-                {LABELS.MODAL_DELETE.YES}
+                {LABELS.MODAL_DELETE.CONFIRM}
               </NxButton>
             </NxButtonBar>
           </NxFooter>
