@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.content.search.table;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -21,7 +22,8 @@ import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.search.DefaultSqlSearchQueryContribution;
 import org.sonatype.nexus.repository.search.SearchRequest;
 import org.sonatype.nexus.repository.search.SqlSearchQueryContribution;
-import org.sonatype.nexus.repository.search.table.TableSearchPermissionManager;
+import org.sonatype.nexus.repository.search.sql.SqlSearchQueryBuilder;
+import org.sonatype.nexus.repository.search.table.SqlSearchPermissionBuilder;
 import org.sonatype.nexus.repository.search.table.TableSearchUtils;
 
 import org.junit.Before;
@@ -58,7 +60,7 @@ public class SqlSearchServiceTest
   private Map<String, FormatStoreManager> formatStoreManagersByFormat;
 
   @Mock
-  private TableSearchPermissionManager sqlSearchPermissionManager;
+  private SqlSearchPermissionBuilder sqlSearchPermissionManager;
 
   private TableSearchUtils searchUtils = new TableSearchUtils(
       Collections.singletonMap(DefaultSqlSearchQueryContribution.NAME, mock(SqlSearchQueryContribution.class)));
@@ -76,11 +78,15 @@ public class SqlSearchServiceTest
     String repositoryFilter = String.format("%s %s   %s", REPO_1, REPO_2, REPO_3);
     SearchRequest searchRequest = SearchRequest.builder().searchFilter(REPOSITORY_NAME, repositoryFilter).build();
 
+    SqlSearchQueryBuilder queryBuilderWithPermission = mock(SqlSearchQueryBuilder.class);
+    when(sqlSearchPermissionManager.build(any(), eq(searchRequest))).thenReturn(queryBuilderWithPermission);
+    when(queryBuilderWithPermission.buildQuery()).thenReturn(Optional.empty());
+
     long count = 99L;
     when(searchStore.count(any())).thenReturn(count);
 
     assertEquals(underTest.count(searchRequest), count);
 
-    verify(sqlSearchPermissionManager).addPermissionFilters(any(), eq(repositoryFilter));
+    verify(sqlSearchPermissionManager).build(any(), eq(searchRequest));
   }
 }

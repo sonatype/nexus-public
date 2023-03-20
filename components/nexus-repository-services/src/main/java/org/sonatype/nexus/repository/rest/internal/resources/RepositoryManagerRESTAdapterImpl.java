@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.ws.rs.NotFoundException;
@@ -77,12 +78,17 @@ public class RepositoryManagerRESTAdapterImpl
   }
 
   @Override
-  public Repository getRepository(final String repositoryId) {
+  public Repository toRepository(final String repositoryId) {
     if (repositoryId == null) {
       throw new WebApplicationException("repositoryId is required.", UNPROCESSABLE_ENTITY);
     }
-    Repository repository = ofNullable(repositoryManager.get(repositoryId))
+    return ofNullable(repositoryManager.get(repositoryId))
         .orElseThrow(() -> new NotFoundException("Unable to locate repository with id " + repositoryId));
+  }
+
+  @Override
+  public Repository getRepository(final String repositoryId) {
+    Repository repository = toRepository(repositoryId);
 
     if (repositoryPermissionChecker.userCanReadOrBrowse(repository)) {
       //browse or read implies complete access to the repository.

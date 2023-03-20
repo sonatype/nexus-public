@@ -156,7 +156,7 @@ public class SearchRequest
       return this;
     }
 
-    public Builder repositories(final List<String> repositoryNames) {
+    public Builder repositories(final Collection<String> repositoryNames) {
       this.repositories.addAll(repositoryNames);
       return this;
     }

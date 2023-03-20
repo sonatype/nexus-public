@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.search.table;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -21,7 +22,6 @@ import org.sonatype.nexus.repository.content.search.table.internal.CselToTsQuery
 import org.sonatype.nexus.repository.rest.SearchFieldSupport;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings;
-import org.sonatype.nexus.repository.search.sql.SqlSearchContentSelectorFilter;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryCondition;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilder;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilderMapping;
@@ -36,11 +36,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.hamcrest.collection.IsMapContaining.hasKey;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
@@ -88,17 +88,17 @@ public class TableSearchContentSelectorSqlFilterGeneratorTest
     mockSelectorConfiguration();
     mockCondition(repositories);
 
-    SqlSearchContentSelectorFilter filter =
-        underTest.createFilter(asList(configuration1, configuration2), repositories);
+    Optional<SqlSearchQueryCondition> filter = underTest.createFilter(configuration1, repositories, 0);
 
-    assertThat(filter.hasFilters(), is(true));
-    assertThat(filter.queryFormat(),
-        is("((#{filterParams.s0p0} AND repositoryConditionFormat)" +
-            " OR (#{filterParams.s1p0} AND repositoryConditionFormat))"));
+    assertTrue(filter.isPresent());
 
-    assertThat(filter.queryParameters(), hasEntry(REPOSITORY_NAME_PARAM, REPOSITORY_NAME_VALUE));
-    assertThat(filter.queryParameters(), hasKey("s0p0"));
-    assertThat(filter.queryParameters(), hasKey("s1p0"));
+    SqlSearchQueryCondition condition = filter.get();
+
+    assertThat(condition.getSqlConditionFormat(),
+        is("(#{filterParams.s0p0} AND repositoryConditionFormat)"));
+
+    assertThat(condition.getValues(), hasEntry(REPOSITORY_NAME_PARAM, REPOSITORY_NAME_VALUE));
+    assertThat(condition.getValues(), hasKey("s0p0"));
   }
 
   private void mockCondition(final Set<String> repositories) {

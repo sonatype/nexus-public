@@ -25,12 +25,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.BadRequestException;
-import javax.ws.rs.ForbiddenException;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.content.AssetInfo;
@@ -47,8 +47,9 @@ import org.sonatype.nexus.repository.search.query.SearchFilter;
 import org.sonatype.nexus.repository.search.sql.SqlSearchPermissionException;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryBuilder;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryCondition;
-import org.sonatype.nexus.repository.search.table.TableSearchPermissionManager;
+import org.sonatype.nexus.repository.search.table.SqlSearchPermissionBuilder;
 import org.sonatype.nexus.repository.search.table.TableSearchUtils;
+import org.sonatype.nexus.repository.search.table.UnknownRepositoriesException;
 
 import com.google.common.collect.Lists;
 
@@ -73,7 +74,7 @@ public class SqlTableSearchService
 
   private final SearchTableStore searchStore;
 
-  private final TableSearchPermissionManager sqlSearchPermissionManager;
+  private final SqlSearchPermissionBuilder sqlSearchPermissionBuilder;
 
   private final Map<String, FormatStoreManager> formatStoreManagersByFormat;
 
@@ -87,12 +88,12 @@ public class SqlTableSearchService
       final SearchTableStore searchStore,
       final SqlSearchSortUtil sqlSearchSortUtil,
       final Map<String, FormatStoreManager> formatStoreManagersByFormat,
-      final TableSearchPermissionManager sqlSearchPermissionManager,
+      final SqlSearchPermissionBuilder sqlSearchPermissionBuilder,
       final Set<TableSearchResultDecorator> decorators)
   {
     this.searchUtils = checkNotNull(searchUtils);
     this.searchStore = checkNotNull(searchStore);
-    this.sqlSearchPermissionManager = checkNotNull(sqlSearchPermissionManager);
+    this.sqlSearchPermissionBuilder = checkNotNull(sqlSearchPermissionBuilder);
     this.formatStoreManagersByFormat = checkNotNull(formatStoreManagersByFormat);
     this.sqlSearchSortUtil = checkNotNull(sqlSearchSortUtil);
     this.decorators = checkNotNull(decorators);
@@ -123,7 +124,7 @@ public class SqlTableSearchService
       SqlSearchQueryCondition queryCondition = getSqlSearchQueryCondition(searchRequest);
       return searchStore.count(queryCondition);
     }
-    catch (SqlSearchPermissionException e) {
+    catch (SqlSearchPermissionException | UnknownRepositoriesException e) {
       log.error(e.getMessage());
     }
     return 0L;
@@ -135,25 +136,17 @@ public class SqlTableSearchService
       log.debug("Query: {}", queryCondition);
       return doSearch(searchRequest, queryCondition);
     }
-    catch (SqlSearchPermissionException e) {
-      throw new ForbiddenException(e.getMessage());
+    catch (SqlSearchPermissionException | UnknownRepositoriesException e) {
+      log.error(e.getMessage());
     }
+    return SqlTableSearchService.ComponentSearchResultPage.empty();
   }
 
   private SqlSearchQueryCondition getSqlSearchQueryCondition(final SearchRequest searchRequest) {
     SqlSearchQueryBuilder queryBuilder = searchUtils.buildQuery(searchRequest);
-    addPermissionFilters(queryBuilder, searchRequest.getSearchFilters());
-    return queryBuilder.buildQuery().orElse(null);
-  }
 
-  private void addPermissionFilters(
-      final SqlSearchQueryBuilder queryBuilder,
-      final List<SearchFilter> searchFilters)
-  {
-    sqlSearchPermissionManager.addPermissionFilters(
-        queryBuilder,
-        searchUtils.getRepositoryFilter(searchFilters).map(SearchFilter::getValue).orElse(null)
-    );
+    return sqlSearchPermissionBuilder.build(queryBuilder, searchRequest).buildQuery()
+        .orElse(null);
   }
 
   private AssetStore<?> getAssetStore(final String format) {

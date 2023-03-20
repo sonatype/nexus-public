@@ -26,8 +26,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static java.util.Collections.emptyMap;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 public class SearchUtilsTest
     extends TestSupport
@@ -52,7 +55,7 @@ public class SearchUtilsTest
         )
     );
 
-    underTest = new SearchUtils(repositoryManagerRESTAdapter, searchMappings);
+    underTest = new SearchUtils(repositoryManagerRESTAdapter, searchMappings, false);
   }
 
   @Test
@@ -88,5 +91,27 @@ public class SearchUtilsTest
   @Test
   public void testIsFullAssetAttributeName_MappedAlias_ReturnsFalse() {
     assertFalse(underTest.isFullAssetAttributeName(SHA1_ALIAS));
+  }
+
+  @Test
+  public void shouldCallGetRepositoryWhenDatastoreClusteredIsFalse() {
+    underTest = new SearchUtils(repositoryManagerRESTAdapter, emptyMap(), false);
+
+    String repositoryId = "repositoryId";
+    underTest.getRepository(repositoryId);
+
+    verify(repositoryManagerRESTAdapter).getRepository(repositoryId);
+    verify(repositoryManagerRESTAdapter, never()).toRepository(repositoryId);
+  }
+
+  @Test
+  public void shouldCallToRepositoryWhenDatastoreClusteredIsTrue() {
+    underTest = new SearchUtils(repositoryManagerRESTAdapter, emptyMap(), true);
+
+    String repositoryId = "repositoryId";
+    underTest.getRepository(repositoryId);
+
+    verify(repositoryManagerRESTAdapter).toRepository(repositoryId);
+    verify(repositoryManagerRESTAdapter, never()).getRepository(repositoryId);
   }
 }

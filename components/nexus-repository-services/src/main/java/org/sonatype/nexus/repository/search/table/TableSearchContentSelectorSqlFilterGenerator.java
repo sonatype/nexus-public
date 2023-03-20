@@ -12,8 +12,8 @@
  */
 package org.sonatype.nexus.repository.search.table;
 
-import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -65,8 +65,6 @@ public class TableSearchContentSelectorSqlFilterGenerator
 
   private static final String RIGHT_PARENTHESIS = ")";
 
-  private static final String OR = " OR ";
-
   private final SelectorManager selectorManager;
 
   private final SqlSearchQueryConditionBuilderMapping conditionBuilders;
@@ -84,36 +82,39 @@ public class TableSearchContentSelectorSqlFilterGenerator
     this.fieldMappings = unmodifiableMap(fieldMappingsByAttribute(checkNotNull(searchMappings)));
   }
 
-  public SqlSearchContentSelectorFilter createFilter(
-      final List<SelectorConfiguration> selectors,
-      final Set<String> selectorRepositories)
+  /**
+   * Maybe create a {@link SqlSearchQueryCondition} for a Content Selector and the repositories to which it applies.
+   *
+   * @param selector the content selector
+   * @param repositories the repository names to which this content selector applies
+   * @param index used as part of parameter names to ensure unique names
+   * @return
+   */
+  public Optional<SqlSearchQueryCondition> createFilter(
+      final SelectorConfiguration selector,
+      final Set<String> repositories,
+      final int index)
   {
+    if (!CselSelector.TYPE.equals(selector.getType())) {
+      log.debug("Content selector is not CSEL: {}", selector.getName());
+      return Optional.empty();
+    }
 
     SqlSearchContentSelectorFilter filters = new SqlSearchContentSelectorFilter();
     SelectorSqlBuilder selectorSqlBuilder = createSelectorSqlBuilder();
     CselToSql cselToTsQuerySql =  new CselToTsQuerySql();
-    for (int selectorCount = 0; selectorCount < selectors.size(); ++selectorCount) {
-      final SelectorConfiguration selector = selectors.get(selectorCount);
 
-      if (CselSelector.TYPE.equals(selector.getType())) {
-        if (selectorCount > 0) {
-          filters.appendQueryFormatPart(OR);
-        }
-        try {
-          String namePrefix = "s" + selectorCount + "p";
-          transformSelectorToSql(cselToTsQuerySql, selectorSqlBuilder, selector, namePrefix);
-          collectGeneratedSql(filters, selectorSqlBuilder, selectorRepositories, namePrefix);
-        }
-        catch (SelectorEvaluationException e) {
-          log.warn("Problem evaluating selector {} as SQL", selector.getName(), e);
-        }
-        finally {
-          selectorSqlBuilder.clearQueryString();
-        }
-      }
+    try {
+      String namePrefix = "s" + index + "p";
+      transformSelectorToSql(cselToTsQuerySql, selectorSqlBuilder, selector, namePrefix);
+      collectGeneratedSql(filters, selectorSqlBuilder, repositories, namePrefix);
     }
-    maybeAddOuterParentheses(selectors.size(), filters);
-    return filters;
+    catch (SelectorEvaluationException e) {
+      log.warn("Problem evaluating selector {} as SQL", selector.getName(), e);
+      return Optional.empty();
+    }
+
+    return Optional.of(new SqlSearchQueryCondition(filters.queryFormat(), filters.queryParameters()));
   }
 
   private static SelectorSqlBuilder createSelectorSqlBuilder() {
@@ -123,16 +124,6 @@ public class TableSearchContentSelectorSqlFilterGenerator
         .propertyAlias(FORMAT, FORMAT_ALIAS)
         .parameterPrefix("#{" + FILTER_PARAMS + ".")
         .parameterSuffix("}");
-  }
-
-  private static void maybeAddOuterParentheses(
-      final int numberOfSelectors,
-      final SqlSearchContentSelectorFilter filter)
-  {
-    if (numberOfSelectors > 1) {
-      filter.insert(0, LEFT_PARENTHESIS);
-      filter.appendQueryFormatPart(RIGHT_PARENTHESIS);
-    }
   }
 
   private void transformSelectorToSql(

@@ -90,7 +90,7 @@ public abstract class RepositoryResourceTestSupport
     storageTxSupplier = () -> storageTx;
     when(storageFacet.txSupplier()).thenReturn(storageTxSupplier);
 
-    searchUtils = new SearchUtils(repositoryManagerRESTAdapter, searchMappings);
+    searchUtils = new SearchUtils(repositoryManagerRESTAdapter, searchMappings, false);
   }
 
   protected void configureMockedRepository(final Repository repository,
