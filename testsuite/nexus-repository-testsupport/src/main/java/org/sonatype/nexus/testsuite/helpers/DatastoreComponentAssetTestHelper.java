@@ -632,12 +632,9 @@ public class DatastoreComponentAssetTestHelper
 
   @Override
   public Optional<Blob> getBlob(final Repository repository, final String assetPath) {
-    BlobStore blobStore = blobStoreManager.get(DEFAULT_BLOBSTORE_NAME);
     return findAssetByPath(repository, assetPath)
         .flatMap(Asset::blob)
-        .map(AssetBlob::blobRef)
-        .map(BlobRef::getBlobId)
-        .map(blobStore::get);
+        .flatMap(assetBlob -> repository.facet(ContentFacet.class).blobs().blob(assetBlob.blobRef()));
   }
 
   @Override
