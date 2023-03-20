@@ -22,6 +22,7 @@ export default {
       ACTION: 'coreui_Repository',
       METHODS: {
         READ_WITH_FOR_ALL: 'readReferencesAddingEntryForAll',
+        READ_REFERENCES: 'readReferences',
       }
     },
     PROPRIETARY_REPOSITORIES: {

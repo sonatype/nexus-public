@@ -101,7 +101,10 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
       description: NX.I18n.get('FeatureGroups_Browse_Description'),
       view: 'NX.coreui.view.browse.ComponentAssetTreeFeature',
       iconCls: 'x-fa fa-database',
-      authenticationRequired: false
+      authenticationRequired: false,
+      visible: function() {
+        return !NX.State.getValue('nexus.react.browse', false);
+      }
     };
 
     me.callParent();

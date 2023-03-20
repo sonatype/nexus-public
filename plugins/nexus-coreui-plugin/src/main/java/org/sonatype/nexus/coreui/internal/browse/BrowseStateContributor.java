@@ -10,23 +10,34 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React, {createContext, useContext} from 'react';
-import {useInterpret, useService} from '@xstate/react';
-import RepositoriesListMachine from './RepositoriesListMachine';
+package org.sonatype.nexus.coreui.internal.browse;
 
-const RepositoriesContext = createContext({});
+import java.util.Map;
 
-export default function RepositoriesContextProvider(props) {
-  const service = props.service ?? useInterpret(RepositoriesListMachine, {devTools: true});
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-  return (
-    <RepositoriesContext.Provider value={{service}}>
-      {props.children}
-    </RepositoriesContext.Provider>
-  );
-};
+import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.rapture.StateContributor;
 
-export const useRepositoriesService = () => {
-  const context = useContext(RepositoriesContext);
-  return useService(context.service);
+import com.google.common.collect.ImmutableMap;
+
+@Named
+@Singleton
+public class BrowseStateContributor
+    extends ComponentSupport
+    implements StateContributor
+{
+  private final Map<String, Object> state;
+
+  @Inject
+  public BrowseStateContributor(@Named("${nexus.react.browse:-false}") final boolean featureFlag) {
+    state = ImmutableMap.of("nexus.react.browse", featureFlag);
+  }
+
+  @Override
+  public Map<String, Object> getState() {
+    return state;
+  }
 }

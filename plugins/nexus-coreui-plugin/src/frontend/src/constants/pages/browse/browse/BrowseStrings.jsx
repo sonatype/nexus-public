@@ -10,23 +10,26 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React, {createContext, useContext} from 'react';
-import {useInterpret, useService} from '@xstate/react';
-import RepositoriesListMachine from './RepositoriesListMachine';
-
-const RepositoriesContext = createContext({});
-
-export default function RepositoriesContextProvider(props) {
-  const service = props.service ?? useInterpret(RepositoriesListMachine, {devTools: true});
-
-  return (
-    <RepositoriesContext.Provider value={{service}}>
-      {props.children}
-    </RepositoriesContext.Provider>
-  );
+export default {
+  BROWSE: {
+    MENU: {
+      text: 'Browse',
+      description: 'Browse assets and components',
+    },
+    LIST: {
+      COLUMNS: {
+        NAME: 'Name',
+        TYPE: 'Type',
+        FORMAT: 'Format',
+        STATUS: 'Status',
+        URL: 'URL',
+        HEALTH_CHECK: 'Health Check',
+        IQ_POLICY_VIOLATIONS: 'IQ Policy Violations',
+      },
+      FILTER_PLACEHOLDER: 'Filter by name',
+      EMPTY_MESSAGE: 'There are no repositories available',
+      COPY_URL_TITLE: 'Copy URL to Clipboard',
+      URL_COPIED_MESSAGE: 'URL Copied to Clipboard',
+    }
+  }
 };
-
-export const useRepositoriesService = () => {
-  const context = useContext(RepositoriesContext);
-  return useService(context.service);
-}

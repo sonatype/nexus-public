@@ -27,7 +27,7 @@ import {when} from 'jest-when';
 import RepositoriesList from './RepositoriesList';
 import UIStrings from '../../../../constants/UIStrings';
 import RepositoriesContextProvider from './RepositoriesContextProvider';
-import {canReadFirewallStatus, canReadHealthCheck} from './IQServerColumns/IQServerHelpers';
+import {canReadFirewallStatus, canUpdateHealthCheck} from './IQServerColumns/IQServerHelpers';
 
 jest.mock('axios', () => ({
   get: jest.fn(),
@@ -412,11 +412,11 @@ describe('RepositoriesList', function () {
         .calledWith(EXT_URL, READ_HEALTH_CHECK_REQUEST)
         .mockResolvedValue(READ_HEALTH_CHECK_RESPONSE);
       when(axios.get).calledWith(REPOSITORIES_DETAILS).mockResolvedValue({data: REPOSITORIES_ROWS});
-      canReadHealthCheck.mockReturnValue(true);
+      canUpdateHealthCheck.mockReturnValue(true);
     });
 
-    it('does not display health-check column if user has no read permissions', async () => {
-      canReadHealthCheck.mockReturnValue(false);
+    it('does not display health-check column if user has no update permissions', async () => {
+      canUpdateHealthCheck.mockReturnValue(false);
 
       const {loadingMask} = render();
 

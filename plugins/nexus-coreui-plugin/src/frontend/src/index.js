@@ -61,6 +61,7 @@ import Welcome from './components/pages/user/Welcome/Welcome';
 import Tags from './components/pages/browse/Tags/Tags';
 import Upload from './components/pages/browse/Upload/Upload';
 import Nodes from "./components/pages/admin/Nodes/NodeList";
+import Browse from './components/pages/browse/Browse/Browse';
 
 window.ReactComponents = {
   ...window.ReactComponents,
@@ -572,6 +573,25 @@ window.plugins.push({
         permissions: [Permissions.TAGS.READ],
         editions: ['PRO']
       },
+    },
+    {
+      mode: 'browse',
+      path: '/Browse',
+      ...UIStrings.BROWSE.MENU,
+      view: Browse,
+      iconCls: 'x-fa fa-database',
+      authenticationRequired: false,
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        featureFlags: [{
+          key: 'nexus.react.browse',
+          defaultValue: false
+        }],
+        statesEnabled: [{
+          key: 'browseableformats',
+          defaultValue: []
+        }],
+      }
     },
     {
       mode: 'browse',

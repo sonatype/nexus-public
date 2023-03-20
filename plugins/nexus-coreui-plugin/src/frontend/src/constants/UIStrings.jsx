@@ -52,6 +52,7 @@ import WelcomeStrings from './pages/user/WelcomeStrings';
 import TagsStrings from './pages/browse/tags/TagsStrings';
 import UploadStrings from './pages/browse/upload/UploadStrings';
 import NodesStrings from './pages/admin/system/NodesStrings';
+import BrowseStrings from './pages/browse/browse/BrowseStrings';
 
 export default {
   ...UIStrings,
@@ -62,6 +63,7 @@ export default {
   // browse
   ...Log4jVisualizerStrings,
   ...TagsStrings,
+  ...BrowseStrings,
   ...UploadStrings,
 
   // admin

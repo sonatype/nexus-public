@@ -13,8 +13,8 @@
 @use '~@sonatype/react-shared-components/scss-shared/nx-container-helpers';
 @use '~@sonatype/react-shared-components/scss-shared/nx-text-helpers';
 
-.nxrm-repositories {
-  .nxrm-repositories-list {
+.nxrm-repositories, .nxrm-browse {
+  .nxrm-repositories-list, .nxrm-browse-list {
     .nxrm-health-check-indicators {
       margin: 0;
 
