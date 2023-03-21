@@ -134,8 +134,6 @@ public class SearchTableDataProducer
     Optional<AssetBlob> blob = asset.blob();
     String repositoryFormat = repository.getFormat().getValue();
 
-    splitAssetPathToKeywords(searchTableData, asset);
-
     if (blob.isPresent()) {
       addBlobInfo(blob.get(), searchTableData);
     }
@@ -143,8 +141,15 @@ public class SearchTableDataProducer
       log.debug("Unable to determine blob for asset {}", asset.path());
     }
 
-    if (searchCustomFieldContributors.containsKey(repositoryFormat)) {
-      searchCustomFieldContributors.get(repositoryFormat).populateSearchCustomFields(searchTableData, asset);
+    SearchCustomFieldContributor contributor = searchCustomFieldContributors.get(repositoryFormat);
+    if (contributor != null) {
+      if (contributor.isEnableSearchByPath(asset.path())) {
+        splitAssetPathToKeywords(searchTableData, asset);
+      }
+      contributor.populateSearchCustomFields(searchTableData, asset);
+    }
+    else {
+      splitAssetPathToKeywords(searchTableData, asset);
     }
 
     //prerelease evaluation false by default for all components
