@@ -31,7 +31,10 @@ export default {
       DESCRIPTION: 'Upload content to the hosted repository',
       TILE_TITLE: repoName => `Choose Assets/Components for ${repoName} Repository`,
       FILE_UPLOAD_LABEL: 'File',
-      SUBMIT_BTN_LABEL: 'Upload'
+      SUBMIT_BTN_LABEL: 'Upload',
+      ADD_ANOTHER_ASSET_BTN_LABEL: 'Add another asset',
+      ASSET_GROUP_NAME: assetNum => `Asset ${assetNum}`,
+      ASSET_NOT_UNIQUE_MESSAGE: 'Asset not unique'
     },
     URL_COPIED_MESSAGE: 'URL Copied to Clipboard',
   }

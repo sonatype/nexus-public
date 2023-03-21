@@ -12,7 +12,7 @@
  */
 import React from 'react';
 import axios from 'axios';
-import { fireEvent, render as rtlRender, screen, waitFor, waitForElementToBeRemoved, within }
+import { render as rtlRender, screen, waitFor, waitForElementToBeRemoved, within }
   from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { when } from 'jest-when';
@@ -21,7 +21,10 @@ import UploadDetails from './UploadDetails.jsx';
 
 // Creates a selector function that uses getByRole by default but which can be customized per-use to use
 // queryByRole, findByRole, etc instead
-const selectorQuery = (...queryParams) => queryType => screen[`${queryType ?? 'get'}ByRole`].apply(screen, queryParams);
+const selectorQuery = (...queryParams) => (queryType, container) => {
+  const queryRoot = container ? within(container) : screen;
+  return queryRoot[`${queryType ?? 'get'}ByRole`].apply(queryRoot, queryParams);
+}
 
 const selectors = {
   main: () => screen.getByRole('main'),
@@ -36,76 +39,112 @@ const selectors = {
   regionC: selectorQuery('region', { name: 'C' }),
   cancelBtn: selectorQuery('button', { name: 'Cancel' }),
   uploadBtn: selectorQuery('button', { name: 'Upload' }),
-  dismissUploadBtn: selectorQuery('button', { name: 'Dismiss Upload' })
+  dismissUploadBtn: selectorQuery('button', { name: 'Dismiss Upload' }),
+  addAssetBtn: selectorQuery('button', { name: 'Add another asset' }),
+  assetGroup: (groupDisplayNum, queryType) => selectorQuery('group', { name: `Asset ${groupDisplayNum}` })(queryType),
+  fieldByNumAndGroup: (fieldNum, assetGroup, queryType) =>
+      selectorQuery('textbox', { name: `Field ${fieldNum}` })(queryType, assetGroup),
+  deleteBtnByGroup: (assetGroup, queryType) =>
+      selectorQuery('button', { name: 'Delete' })(queryType, assetGroup),
+  fileUploadByGroup: (assetGroup) => assetGroup.querySelector('input[type=file]')
 };
 
 const sampleRepoSettings = {
   data: [
-    { name: 'other-repo', format: 'maven2' },
-    { name: 'repo-id', format: 'nuget' }
+    { name: 'multi-repo', format: 'maven2' },
+    { name: 'simple-repo', format: 'nuget' },
+    { name: 'regex-map-repo', format: 'foo-format' }
   ]
+};
+
+const simpleUploadDefinition = {
+  format: 'nuget',
+  multipleUpload: false,
+  componentFields: [{
+    displayName: 'Field 1',
+    group: 'A',
+    helpText: null,
+    name: 'field1',
+    optional: true,
+    type: 'STRING'
+  }, {
+    displayName: 'Field 2',
+    group: 'B',
+    helpText: 'This is the second field',
+    name: 'field2',
+    optional: false,
+    type: 'STRING'
+  }, {
+    displayName: 'Field 3',
+    group: 'A',
+    helpText: null,
+    name: 'field3',
+    optional: true,
+    type: 'STRING'
+  }, {
+    displayName: 'Field 4',
+    group: 'C',
+    helpText: 'FOUR',
+    name: 'field4',
+    optional: false,
+    type: 'STRING'
+  }, {
+    displayName: 'Field 5',
+    group: 'C',
+    helpText: null,
+    name: 'field5',
+    optional: true,
+    type: 'CHECKBOX'
+  }],
+  assetFields: [{
+    displayName: 'Field 6',
+    helpText: null,
+    name: 'field6',
+    optional: false,
+    type: 'STRING'
+  }, {
+    displayName: 'Field 7',
+    helpText: null,
+    name: 'field7',
+    optional: true,
+    type: 'STRING'
+  }]
+};
+
+const multiUploadDefinition = {
+  ...simpleUploadDefinition,
+  format: 'maven2',
+  multipleUpload: true
+};
+
+const regexUploadDefinition = {
+  ...simpleUploadDefinition,
+  format: 'foo-format',
+  multipleUpload: true,
+  assetFields: [{
+    displayName: 'Field 6',
+    helpText: null,
+    name: 'field6',
+    optional: false,
+    type: 'STRING'
+  }, {
+    displayName: 'Field 7',
+    helpText: null,
+    name: 'field7',
+    optional: false,
+    type: 'STRING'
+  }],
+  regexMap: {
+    regex: String.raw`([^-]+)\.(.*)`,
+    fieldList: ['field6', 'field7']
+  }
 };
 
 const sampleUploadDefinitions = {
   data: {
     result: {
       success: true,
-      data: [{
-        format: 'foo'
-      }, {
-        format: 'nuget',
-        componentFields: [{
-          displayName: 'Field 1',
-          group: 'A',
-          helpText: null,
-          name: 'field1',
-          optional: true,
-          type: 'STRING'
-        }, {
-          displayName: 'Field 2',
-          group: 'B',
-          helpText: 'This is the second field',
-          name: 'field2',
-          optional: false,
-          type: 'STRING'
-        }, {
-          displayName: 'Field 3',
-          group: 'A',
-          helpText: null,
-          name: 'field3',
-          optional: true,
-          type: 'STRING'
-        }, {
-          displayName: 'Field 4',
-          group: 'C',
-          helpText: 'FOUR',
-          name: 'field4',
-          optional: false,
-          type: 'STRING'
-        }, {
-          displayName: 'Field 5',
-          group: 'C',
-          helpText: null,
-          name: 'field5',
-          optional: true,
-          type: 'CHECKBOX'
-        }],
-        assetFields: [{
-          displayName: 'Field 6',
-          helpText: 'SIX',
-          name: 'field6',
-          optional: false,
-          type: 'STRING'
-        }, {
-          displayName: 'Field 7',
-          helpText: 'SEVEN',
-          name: 'field7',
-          optional: true,
-          type: 'STRING'
-        }]
-      }, {
-        format: 'bar'
-      }]
+      data: [simpleUploadDefinition, multiUploadDefinition, regexUploadDefinition]
     }
   }
 };
@@ -141,7 +180,10 @@ function mockFileInputFilesSetter() {
     Object.defineProperty(HTMLInputElement.prototype, 'files', {
       enumerable: true,
       set(val) {
+        const file1 = val.item(0);
+
         filesMap.set(this, val);
+        valueMap.set(this, file1 ? `C:\\fakepath\\${file1.name}` : '');
       },
       get() {
         return filesMap.get(this) ?? emptyFileList;
@@ -153,7 +195,7 @@ function mockFileInputFilesSetter() {
       set(val) {
         if (val === '') {
           // In real file inputs, setting the value to the empty string clears the file selection
-          this.files = emptyFileList;
+          filesMap.set(this, emptyFileList);
         }
 
         valueMap.set(this, val);
@@ -180,7 +222,7 @@ function mockWindowLocation() {
         configurable: true,
         enumerable: true,
         set: () => {},
-        get: () => 'browse/upload:repo-id'
+        get: () => 'browse/upload:simple-repo'
       }
     });
 
@@ -200,6 +242,9 @@ function fakeFileList(...files) {
     item(i) {
       return files[i];
     },
+    toString() {
+      return `fakeFileList ${files}`;
+    },
     length: files.length
   };
 
@@ -208,12 +253,15 @@ function fakeFileList(...files) {
   return retval;
 }
 
+/**
+ * Set the files as a FileList on the file input.
+ * Not using userEvent.upload because it incorrectly makes the input's `files` property not-writable,
+ * and not using fireEvent.change because it sets its own property descriptor on the input's `files` property,
+ * preventing the descriptor we set in mockFileInputFilesSetter from operating
+ */
 function setFileUploadValue(fileUpload, ...files) {
-  fireEvent.change(fileUpload, {
-    target: {
-      files: fakeFileList(...files)
-    }
-  });
+  fileUpload.files = fakeFileList(...files);
+  fileUpload.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
 describe('UploadDetails', function() {
@@ -233,8 +281,8 @@ describe('UploadDetails', function() {
     ).mockResolvedValue(sampleUploadDefinitions);
   });
 
-  function render() {
-    return rtlRender(<UploadDetails itemId="repo-id" />);
+  function render(itemId = 'simple-repo') {
+    return rtlRender(<UploadDetails itemId={itemId} />);
   }
 
   it('renders a main content area', function() {
@@ -374,7 +422,7 @@ describe('UploadDetails', function() {
 
   it('renders a region within the form with a heading and accessible name of ' +
       '"Choose Assets/Components for <props.itemId> Repository"', async function() {
-    const expectedHeading = 'Choose Assets/Components for repo-id Repository';
+    const expectedHeading = 'Choose Assets/Components for simple-repo Repository';
 
     render();
 
@@ -386,23 +434,32 @@ describe('UploadDetails', function() {
     expect(h2).toHaveTextContent(expectedHeading);
   });
 
-  it('renders a file upload within the "Choose Assets..." region with an accessible name of "File", and an ' +
+  it('renders a group within the "Choose Asset..." region with a name of "Asset 1"', async function() {
+    render();
+
+    const region = await selectors.chooseAssetsRegion('find'),
+        group = selectors.assetGroup('1');
+
+    expect(region).toContainElement(group);
+  });
+
+  it('renders a file upload within the "Asset 1" group with an accessible name of "File", and an ' +
       'initial accessible description of "No file selected"', async function() {
     render();
 
     const region = await selectors.chooseAssetsRegion('find'),
-        fileUpload = region.querySelector('input[type=file]');
+        fileUpload = selectors.fileUploadByGroup(region);
 
     expect(fileUpload).toBeInTheDocument();
     expect(fileUpload).toHaveAccessibleName('File');
     expect(fileUpload).toHaveAccessibleDescription('No file selected');
   });
 
-  it('renders an aria-hidden "Choose File" button within the "Choose Assets..." region', async function() {
+  it('renders an aria-hidden "Choose File" button within the "Asset 1" group', async function() {
     render();
 
     const region = await selectors.chooseAssetsRegion('find'),
-        fileUpload = region.querySelector('input[type=file]'),
+        fileUpload = selectors.fileUploadByGroup(region),
         button = within(region).getByRole('button', { hidden: true });
 
     expect(button).toHaveTextContent('Choose File');
@@ -417,9 +474,8 @@ describe('UploadDetails', function() {
         render();
 
         const region = await selectors.chooseAssetsRegion('find'),
-            fileUpload = region.querySelector('input[type=file]');
+            fileUpload = selectors.fileUploadByGroup(region);
 
-        // NOTE: not using userEvent.upload because it incorrectly makes the input's files' property not-writable
         setFileUploadValue(fileUpload, new File(['123456'], 'numbers.txt', { type: 'text/plain' }));
 
         expect(region).toHaveTextContent('numbers.txt');
@@ -428,15 +484,276 @@ describe('UploadDetails', function() {
       }
   );
 
-  it('renders the asset fields within the "Choose Assets..." region', async function() {
+  it('renders the asset fields within the "Asset 1" group', async function() {
       render();
 
       const region = await selectors.chooseAssetsRegion('find'),
-        field6 = screen.getByRole('textbox', { name: 'Field 6' }),
-        field7 = screen.getByRole('textbox', { name: 'Field 7' });
+        field6 = selectors.fieldByNumAndGroup(6),
+        field7 = selectors.fieldByNumAndGroup(7);
 
     expect(region).toContainElement(field6);
     expect(region).toContainElement(field7);
+  });
+
+  describe('"Add another asset" button', function() {
+    it('does not render if multipleUpload is not true', async function() {
+      render();
+
+      const form = await selectors.form('find');
+
+      expect(selectors.addAssetBtn('query')).not.toBeInTheDocument();
+    });
+
+    it('renders if multipleUpload is true', async function() {
+      render('multi-repo');
+
+      const form = await selectors.form('find');
+
+      expect(selectors.addAssetBtn()).toBeInTheDocument();
+    });
+
+    it('adds another asset group with the next higher number, containing another file upload and set of asset fields',
+        async function() {
+          render('multi-repo');
+
+          const region = await selectors.chooseAssetsRegion('find'),
+              firstAssetGroup = selectors.assetGroup('1'),
+              fileUpload_1 = selectors.fileUploadByGroup(firstAssetGroup),
+              field6_1 = selectors.fieldByNumAndGroup(6, firstAssetGroup),
+              field7_1 = selectors.fieldByNumAndGroup(7, firstAssetGroup),
+              addAssetBtn = selectors.addAssetBtn();
+
+          expect(selectors.assetGroup('2', 'query')).not.toBeInTheDocument();
+
+          await userEvent.click(addAssetBtn);
+
+          const secondAssetGroup = selectors.assetGroup('2'),
+              fileUpload_2 = selectors.fileUploadByGroup(secondAssetGroup),
+              field6_2 = selectors.fieldByNumAndGroup(6, secondAssetGroup),
+              field7_2 = selectors.fieldByNumAndGroup(7, secondAssetGroup);
+
+          expect(secondAssetGroup).toBeInTheDocument();
+          expect(region).toContainElement(secondAssetGroup);
+          expect(fileUpload_2).toBeInTheDocument();
+          expect(fileUpload_2).toHaveAccessibleName('File');
+          expect(fileUpload_2).toHaveAccessibleDescription('No file selected');
+          expect(fileUpload_1).toBeInTheDocument();
+          expect(field6_2).toBeInTheDocument();
+          expect(field7_2).toBeInTheDocument();
+          expect(field6_1).toBeInTheDocument();
+          expect(field6_1).toBeInTheDocument();
+
+          await userEvent.click(addAssetBtn);
+
+          const thirdAssetGroup = selectors.assetGroup('2'),
+              fileUpload_3 = selectors.fileUploadByGroup(thirdAssetGroup),
+              field6_3 = selectors.fieldByNumAndGroup(6, thirdAssetGroup),
+              field7_3 = selectors.fieldByNumAndGroup(7, thirdAssetGroup);
+
+          expect(thirdAssetGroup).toBeInTheDocument();
+          expect(region).toContainElement(thirdAssetGroup);
+          expect(fileUpload_3).toBeInTheDocument();
+          expect(fileUpload_3).toHaveAccessibleName('File');
+          expect(fileUpload_3).toHaveAccessibleDescription('No file selected');
+          expect(fileUpload_1).toBeInTheDocument();
+          expect(fileUpload_2).toBeInTheDocument();
+          expect(field6_3).toBeInTheDocument();
+          expect(field7_3).toBeInTheDocument();
+          expect(field6_1).toBeInTheDocument();
+          expect(field6_1).toBeInTheDocument();
+          expect(field6_2).toBeInTheDocument();
+          expect(field6_2).toBeInTheDocument();
+        }
+    );
+  });
+
+  describe('regexMap', function() {
+    it('fills in the corresponding asset fields according to the regexMap when a file is selected', async function() {
+      render('regex-map-repo');
+
+      await userEvent.click(await selectors.addAssetBtn('find'));
+
+      const assetGroup1 = selectors.assetGroup('1'),
+          assetGroup2 = selectors.assetGroup('2'),
+          fileUpload1 = assetGroup1.querySelector('input[type=file]'),
+          field6 = selectors.fieldByNumAndGroup(6, assetGroup1),
+          field7 = selectors.fieldByNumAndGroup(7, assetGroup1),
+          field6_2 = selectors.fieldByNumAndGroup(6, assetGroup2),
+          field7_2 = selectors.fieldByNumAndGroup(7, assetGroup2);
+
+      setFileUploadValue(fileUpload1, new File(['123456'], 'numbers.txt', { type: 'text/plain' }));
+
+      expect(field6).toHaveValue('numbers');
+      expect(field7).toHaveValue('txt');
+
+      expect(field6_2).toHaveValue('');
+      expect(field7_2).toHaveValue('');
+    });
+
+    it('does overwrite existing content in the asset fields', async function() {
+      render('regex-map-repo');
+
+      const form = await selectors.form('find'),
+          fileUpload = form.querySelector('input[type=file]'),
+          field6 = selectors.fieldByNumAndGroup(6),
+          field7 = selectors.fieldByNumAndGroup(7);
+
+      await userEvent.type(field7, 'csv');
+      setFileUploadValue(fileUpload, new File(['123456'], 'numbers.txt', { type: 'text/plain' }));
+
+      expect(field6).toHaveValue('numbers');
+      expect(field7).toHaveValue('txt');
+    });
+
+    it('does trigger validation on regex autofill', async function() {
+      render('regex-map-repo');
+
+      const form = await selectors.form('find'),
+          fileUpload = form.querySelector('input[type=file]'),
+          field6 = selectors.fieldByNumAndGroup(6),
+          field7 = selectors.fieldByNumAndGroup(7);
+
+      await userEvent.type(field7, 'a');
+      setFileUploadValue(fileUpload, new File(['123456'], 'numbers.', { type: 'text/plain' }));
+
+      expect(field6).toHaveValue('numbers');
+      expect(field6).toBeValid();
+      expect(field6).not.toHaveErrorMessage();
+
+      expect(field7).toHaveValue('');
+      expect(field7).toBeInvalid();
+      expect(field7).toHaveErrorMessage('This field is required');
+    });
+
+    it('does not change the field values, trigger validation, or show an error if the regex does not match',
+        async function() {
+          render('regex-map-repo');
+
+          const form = await selectors.form('find'),
+              fileUpload = form.querySelector('input[type=file]'),
+              field6 = selectors.fieldByNumAndGroup(6),
+              field7 = selectors.fieldByNumAndGroup(7);
+
+          setFileUploadValue(fileUpload, new File(['123456'], '-.txt', { type: 'text/plain' }));
+
+          expect(field6).toHaveValue('');
+          expect(field6).toBeValid();
+          expect(field6).not.toHaveErrorMessage();
+
+          expect(field7).toHaveValue('');
+          expect(field7).toBeValid();
+          expect(field7).not.toHaveErrorMessage();
+
+          // NOTE: can't test presence of form-level validation alert because it is in the DOM but hidden
+          // via CSS (which isn't loaded in unit tests)
+        }
+    );
+
+    it('removes validation errors on fields as appropriate', async function() {
+      render('regex-map-repo');
+
+      const form = await selectors.form('find'),
+          fileUpload = form.querySelector('input[type=file]'),
+          field6 = selectors.fieldByNumAndGroup(6),
+          field7 = selectors.fieldByNumAndGroup(7);
+
+      await userEvent.type(field6, 'a');
+      await userEvent.type(field7, 'a');
+      await userEvent.clear(field6);
+      await userEvent.clear(field7);
+
+      // both fields invalid before selecting file
+      expect(field6).toBeInvalid();
+      expect(field7).toBeInvalid();
+
+      setFileUploadValue(fileUpload, new File(['123456'], 'numbers.', { type: 'text/plain' }));
+
+      // file was selected and field 6 was autofilled; no longer invalid
+      expect(field6).toBeValid();
+      expect(field6).not.toHaveErrorMessage();
+
+      // field7 however was autofilled with an empty capture; still invalid
+      expect(field7).toHaveValue('');
+      expect(field7).toBeInvalid();
+      expect(field7).toHaveErrorMessage('This field is required');
+    });
+  });
+
+  describe('"Delete" button', function() {
+    it('does not appear if multipleUpload is not enabled', async function() {
+      render();
+
+      const form = await selectors.form('find');
+
+      expect(selectors.deleteBtnByGroup(undefined, 'query')).not.toBeInTheDocument();
+    });
+
+    it('appears on all asset groups once multiple asset groups are present', async function() {
+      render('multi-repo');
+
+      const form = await selectors.form('find');
+
+      expect(selectors.deleteBtnByGroup(undefined, 'query')).not.toBeInTheDocument();
+
+      await userEvent.click(selectors.addAssetBtn());
+
+      const assetGroup1 = selectors.assetGroup('1'),
+          assetGroup2 = selectors.assetGroup('2');
+
+      expect(selectors.deleteBtnByGroup(assetGroup1)).toBeInTheDocument();
+      expect(selectors.deleteBtnByGroup(assetGroup2)).toBeInTheDocument();
+    });
+
+    it('removes the asset group when clicked', async function() {
+      render('multi-repo');
+
+      await userEvent.click(await selectors.addAssetBtn('find'));
+
+      const assetGroup1 = selectors.assetGroup('1'),
+          assetGroup2 = selectors.assetGroup('2'),
+          fileUpload = selectors.fileUploadByGroup(assetGroup1),
+          fileUpload2 = selectors.fileUploadByGroup(assetGroup2),
+          field6 = selectors.fieldByNumAndGroup(6, assetGroup1),
+          field7 = selectors.fieldByNumAndGroup(7, assetGroup1),
+          field6_2 = selectors.fieldByNumAndGroup(6, assetGroup2),
+          field7_2 = selectors.fieldByNumAndGroup(7, assetGroup2),
+          file = new File(['test'], 'test.txt', { type: 'text-plain' }),
+          file2 = new File(['tset'], 'tset.txt', { type: 'text-plain' });
+
+      await userEvent.type(field6, 'a');
+      await userEvent.type(field7, 'b');
+      await userEvent.type(field6_2, 'c');
+      await userEvent.type(field7_2, 'd');
+      setFileUploadValue(fileUpload, file);
+      setFileUploadValue(fileUpload2, file2);
+
+      // Delete the first asset group. The result should be that only a single asset group remains, and it has the
+      // values of the formerly-second asset group
+      await userEvent.click(selectors.deleteBtnByGroup(assetGroup1));
+
+      const assetGroupAfterDelete = selectors.assetGroup('1'),
+          fileUploadAfterDelete = selectors.fileUploadByGroup(assetGroupAfterDelete),
+          field6AfterDelete = selectors.fieldByNumAndGroup(6, assetGroupAfterDelete),
+          field7AfterDelete = selectors.fieldByNumAndGroup(7, assetGroupAfterDelete);
+
+      expect(selectors.assetGroup('2', 'query')).not.toBeInTheDocument();
+      expect(fileUploadAfterDelete.files.item(0)).toBe(file2);
+      expect(field6AfterDelete).toHaveValue('c');
+      expect(field7AfterDelete).toHaveValue('d');
+    });
+
+    it('hides the Delete button when the number of asset groups is reduced to one', async function() {
+      render('multi-repo');
+
+      await userEvent.click(await selectors.addAssetBtn('find'));
+
+      const assetGroup1 = selectors.assetGroup('1'),
+          assetGroup2 = selectors.assetGroup('2');
+
+      await userEvent.click(selectors.deleteBtnByGroup(assetGroup1));
+
+      expect(selectors.deleteBtnByGroup(undefined, 'query')).not.toBeInTheDocument();
+    });
   });
 
   it('renders a region for each group in the upload definition component fields', async function() {
@@ -457,10 +774,10 @@ describe('UploadDetails', function() {
     const regionA = await selectors.regionA('find'),
         regionB = selectors.regionB(),
         regionC = selectors.regionC(),
-        field1 = screen.getByRole('textbox', { name: 'Field 1' }),
-        field2 = screen.getByRole('textbox', { name: 'Field 2' }),
-        field3 = screen.getByRole('textbox', { name: 'Field 3' }),
-        field4 = screen.getByRole('textbox', { name: 'Field 4' });
+        field1 = selectors.fieldByNumAndGroup(1),
+        field2 = selectors.fieldByNumAndGroup(2),
+        field3 = selectors.fieldByNumAndGroup(3),
+        field4 = selectors.fieldByNumAndGroup(4);
 
     expect(regionA).toContainElement(field1);
     expect(regionA).toContainElement(field3);
@@ -468,16 +785,32 @@ describe('UploadDetails', function() {
     expect(regionC).toContainElement(field4);
   });
 
-  it('marks the text fields that do not have the optional flag set as required', async function() {
+  it('renders the helpText for each component field as a sublabel and a11y description', async function() {
     render();
 
+    const field1 = await selectors.fieldByNumAndGroup(1, undefined, 'find'),
+        field2 = selectors.fieldByNumAndGroup(2),
+        field3 = selectors.fieldByNumAndGroup(3),
+        field4 = selectors.fieldByNumAndGroup(4);
+
+    expect(field1).not.toHaveAccessibleDescription();
+    expect(field2).toHaveAccessibleDescription('This is the second field');
+    expect(screen.getByText('This is the second field')).toBeInTheDocument();
+    expect(field3).not.toHaveAccessibleDescription();
+    expect(field4).toHaveAccessibleDescription('FOUR');
+    expect(screen.getByText('FOUR')).toBeInTheDocument();
+  });
+
+  it('marks the text fields that do not have the optional flag set as required', async function() {
+    render('multi-repo');
+
     const form = await selectors.form('find'),
-        field1 = screen.getByRole('textbox', { name: 'Field 1' }),
-        field2 = screen.getByRole('textbox', { name: 'Field 2' }),
-        field3 = screen.getByRole('textbox', { name: 'Field 3' }),
-        field4 = screen.getByRole('textbox', { name: 'Field 4' }),
-        field6 = screen.getByRole('textbox', { name: 'Field 6' }),
-        field7 = screen.getByRole('textbox', { name: 'Field 7' });
+        field1 = selectors.fieldByNumAndGroup(1),
+        field2 = selectors.fieldByNumAndGroup(2),
+        field3 = selectors.fieldByNumAndGroup(3),
+        field4 = selectors.fieldByNumAndGroup(4),
+        field6 = selectors.fieldByNumAndGroup(6),
+        field7 = selectors.fieldByNumAndGroup(7);
 
     expect(field1).not.toBeRequired();
     expect(field2).toBeRequired();
@@ -485,17 +818,25 @@ describe('UploadDetails', function() {
     expect(field4).toBeRequired();
     expect(field6).toBeRequired();
     expect(field7).not.toBeRequired();
+
+    await userEvent.click(selectors.addAssetBtn());
+    const assetGroup2 = selectors.assetGroup('2'),
+        field6_2 = selectors.fieldByNumAndGroup(6, assetGroup2),
+        field7_2 = selectors.fieldByNumAndGroup(7, assetGroup2);
+
+    expect(field6_2).toBeRequired();
+    expect(field7_2).not.toBeRequired();
   });
 
   it('allows values to be set into the text fields', async function() {
-    render();
+    render('multi-repo');
 
-    const field1 = await screen.findByRole('textbox', { name: 'Field 1' }),
-        field2 = screen.getByRole('textbox', { name: 'Field 2' }),
-        field3 = screen.getByRole('textbox', { name: 'Field 3' }),
-        field4 = screen.getByRole('textbox', { name: 'Field 4' }),
-        field6 = screen.getByRole('textbox', { name: 'Field 6' }),
-        field7 = screen.getByRole('textbox', { name: 'Field 7' });
+    const field1 = await selectors.fieldByNumAndGroup(1, undefined, 'find'),
+        field2 = selectors.fieldByNumAndGroup(2),
+        field3 = selectors.fieldByNumAndGroup(3),
+        field4 = selectors.fieldByNumAndGroup(4),
+        field6 = selectors.fieldByNumAndGroup(6),
+        field7 = selectors.fieldByNumAndGroup(7);
 
     await userEvent.type(field1, 'foo');
     await userEvent.type(field2, 'bar');
@@ -510,25 +851,48 @@ describe('UploadDetails', function() {
     expect(field4).toHaveValue('qwerty');
     expect(field6).toHaveValue('asdf');
     expect(field7).toHaveValue('12345');
+
+    await userEvent.click(selectors.addAssetBtn());
+    const assetGroup2 = selectors.assetGroup('2'),
+        field6_2 = selectors.fieldByNumAndGroup(6, assetGroup2),
+        field7_2 = selectors.fieldByNumAndGroup(7, assetGroup2);
+
+    await userEvent.type(field6_2, 'zxcv');
+    await userEvent.type(field7_2, '098-0');
+
+    expect(field6_2).toHaveValue('zxcv');
+    expect(field7_2).toHaveValue('098-0');
+    expect(field6).toHaveValue('asdf');
+    expect(field7).toHaveValue('12345');
   });
 
   it('allows a file to be set into the file input and renders its name and size', async function() {
-    render();
+    render('multi-repo');
 
     const form = await selectors.form('find'),
-        fileUpload = form.querySelector('input[type=file]');
+        fileUpload = selectors.fileUploadByGroup(form);
 
     setFileUploadValue(fileUpload, new File(['123456'], 'numbers.txt', { type: 'text/plain' }));
     expect(screen.getByText('numbers.txt')).toBeInTheDocument();
     expect(screen.getByText('6.0 B')).toBeInTheDocument();
     expect(fileUpload).toHaveAccessibleDescription('numbers.txt 6.0 B');
+
+    await userEvent.click(selectors.addAssetBtn());
+    const assetGroup2 = selectors.assetGroup('2'),
+        fileUpload2 = selectors.fileUploadByGroup(assetGroup2);
+
+    setFileUploadValue(fileUpload2, new File(['@@'], 'at.txt', { type: 'text/plain' }));
+
+    expect(within(assetGroup2).getByText('at.txt')).toBeInTheDocument();
+    expect(within(assetGroup2).getByText('2.0 B')).toBeInTheDocument();
+    expect(fileUpload2).toHaveAccessibleDescription('at.txt 2.0 B');
   });
 
   it('renders a button to clear the selected file when there is one', async function() {
-    render();
+    render('regex-map-repo');
 
     const form = await selectors.form('find'),
-        fileUpload = form.querySelector('input[type=file]');
+        fileUpload = selectors.fileUploadByGroup(form);
 
     expect(selectors.dismissUploadBtn('query')).not.toBeInTheDocument();
 
@@ -536,6 +900,17 @@ describe('UploadDetails', function() {
 
     const dismissBtn = selectors.dismissUploadBtn();
     expect(dismissBtn).toBeInTheDocument();
+
+    await userEvent.click(selectors.addAssetBtn());
+    const assetGroup2 = selectors.assetGroup('2'),
+        fileUpload2 = selectors.fileUploadByGroup(assetGroup2);
+
+    setFileUploadValue(fileUpload2, new File(['@@'], 'at.txt', { type: 'text/plain' }));
+
+    const dismissBtn2 = within(assetGroup2).getByRole('button', { name: 'Dismiss Upload' });
+    expect(dismissBtn2).toBeInTheDocument();
+
+    expect(fileUpload).not.toHaveValue('');
 
     await userEvent.click(dismissBtn);
 
@@ -545,19 +920,40 @@ describe('UploadDetails', function() {
     expect(screen.queryByText('6.0 B')).not.toBeInTheDocument();
     expect(fileUpload).toHaveAccessibleDescription('No file selected');
     expect(dismissBtn).not.toBeInTheDocument();
+
+    // File upload 2 unaffected by file upload 1's dismiss btn
+    expect(fileUpload2).not.toHaveValue('');
+    expect(fileUpload2.files).toHaveLength(1);
+    expect(within(assetGroup2).getByText('at.txt')).toBeInTheDocument();
+    expect(within(assetGroup2).getByText('2.0 B')).toBeInTheDocument();
+    expect(fileUpload2).toHaveAccessibleDescription('at.txt 2.0 B');
+
+    await userEvent.click(dismissBtn2);
+
+    expect(fileUpload2).toHaveValue('');
+    expect(fileUpload2.files).toHaveLength(0);
+    expect(screen.queryByText('at.txt')).not.toBeInTheDocument();
+    expect(screen.queryByText('2.0 B')).not.toBeInTheDocument();
+    expect(fileUpload2).toHaveAccessibleDescription('No file selected');
   });
 
   describe('field validation', function() {
     it('adds "This field is required" error text to required text inputs when they are empty and non-pristine',
         async function() {
-          render();
+          render('multi-repo');
 
-          const field1 = await screen.findByRole('textbox', { name: 'Field 1' }),
-              field2 = screen.getByRole('textbox', { name: 'Field 2' }),
-              field3 = screen.getByRole('textbox', { name: 'Field 3' }),
-              field4 = screen.getByRole('textbox', { name: 'Field 4' }),
-              field6 = screen.getByRole('textbox', { name: 'Field 6' }),
-              field7 = screen.getByRole('textbox', { name: 'Field 7' });
+          await userEvent.click(await selectors.addAssetBtn('find'));
+
+          const assetGroup1 = selectors.assetGroup('1'),
+              assetGroup2 = selectors.assetGroup('2'),
+              field1 = await selectors.fieldByNumAndGroup(1),
+              field2 = selectors.fieldByNumAndGroup(2),
+              field3 = selectors.fieldByNumAndGroup(3),
+              field4 = selectors.fieldByNumAndGroup(4),
+              field6 = selectors.fieldByNumAndGroup(6, assetGroup1),
+              field7 = selectors.fieldByNumAndGroup(7, assetGroup1),
+              field6_2 = selectors.fieldByNumAndGroup(6, assetGroup2),
+              field7_2 = selectors.fieldByNumAndGroup(7, assetGroup2);
 
           expect(screen.queryByText('This field is required')).not.toBeInTheDocument();
           expect(field1).not.toHaveErrorMessage();
@@ -566,12 +962,16 @@ describe('UploadDetails', function() {
           expect(field4).not.toHaveErrorMessage();
           expect(field6).not.toHaveErrorMessage();
           expect(field7).not.toHaveErrorMessage();
+          expect(field6_2).not.toHaveErrorMessage();
+          expect(field7_2).not.toHaveErrorMessage();
           expect(field1).toBeValid();
           expect(field2).toBeValid();
           expect(field3).toBeValid();
           expect(field4).toBeValid();
           expect(field6).toBeValid();
           expect(field7).toBeValid();
+          expect(field6_2).toBeValid();
+          expect(field7_2).toBeValid();
 
           await userEvent.type(field1, 'foo');
           await userEvent.type(field2, 'bar');
@@ -579,6 +979,8 @@ describe('UploadDetails', function() {
           await userEvent.type(field4, 'qwerty');
           await userEvent.type(field6, 'asdf');
           await userEvent.type(field7, '12345');
+          await userEvent.type(field6_2, 'zxcv');
+          await userEvent.type(field7_2, '0987');
 
           expect(screen.queryByText('This field is required')).not.toBeInTheDocument();
           expect(field1).not.toHaveErrorMessage();
@@ -587,12 +989,16 @@ describe('UploadDetails', function() {
           expect(field4).not.toHaveErrorMessage();
           expect(field6).not.toHaveErrorMessage();
           expect(field7).not.toHaveErrorMessage();
+          expect(field6_2).not.toHaveErrorMessage();
+          expect(field7_2).not.toHaveErrorMessage();
           expect(field1).toBeValid();
           expect(field2).toBeValid();
           expect(field3).toBeValid();
           expect(field4).toBeValid();
           expect(field6).toBeValid();
           expect(field7).toBeValid();
+          expect(field6_2).toBeValid();
+          expect(field7_2).toBeValid();
 
           await userEvent.clear(field1);
           await userEvent.clear(field2);
@@ -600,47 +1006,184 @@ describe('UploadDetails', function() {
           await userEvent.clear(field4);
           await userEvent.clear(field6);
           await userEvent.clear(field7);
+          await userEvent.clear(field6_2);
+          await userEvent.clear(field7_2);
 
-          expect(screen.getAllByText('This field is required')).toHaveLength(3);
+          expect(screen.getAllByText('This field is required')).toHaveLength(4);
           expect(field1).not.toHaveErrorMessage();
           expect(field2).toHaveErrorMessage('This field is required');
           expect(field3).not.toHaveErrorMessage();
           expect(field4).toHaveErrorMessage('This field is required');
           expect(field6).toHaveErrorMessage('This field is required');
           expect(field7).not.toHaveErrorMessage();
+          expect(field6_2).toHaveErrorMessage('This field is required');
+          expect(field7_2).not.toHaveErrorMessage();
           expect(field1).toBeValid();
           expect(field2).toBeInvalid();
           expect(field3).toBeValid();
           expect(field4).toBeInvalid();
           expect(field6).toBeInvalid();
           expect(field7).toBeValid();
+          expect(field6_2).toBeInvalid();
+          expect(field7_2).toBeValid();
         }
     );
 
     it('adds "This field is required!" error text to the file upload when it is empty and non-pristine',
         async function() {
-          render();
+          render('multi-repo');
 
-          const form = await selectors.form('find'),
-              fileUpload = form.querySelector('input[type=file]');
+          await userEvent.click(await selectors.addAssetBtn('find'));
+
+          const assetGroup1 = selectors.assetGroup('1'),
+              assetGroup2 = selectors.assetGroup('2'),
+              fileUpload = selectors.fileUploadByGroup(assetGroup1),
+              fileUpload2 = selectors.fileUploadByGroup(assetGroup2);
 
           expect(screen.queryByText('This field is required!')).not.toBeInTheDocument();
           expect(fileUpload).not.toHaveErrorMessage();
           expect(fileUpload).toBeValid();
+          expect(fileUpload2).not.toHaveErrorMessage();
+          expect(fileUpload2).toBeValid();
 
           setFileUploadValue(fileUpload, new File(['test'], 'test.txt', { type: 'text-plain' }));
+          setFileUploadValue(fileUpload2, new File(['tset'], 'tset.txt', { type: 'text-plain' }));
 
           expect(screen.queryByText('This field is required!')).not.toBeInTheDocument();
           expect(fileUpload).not.toHaveErrorMessage();
           expect(fileUpload).toBeValid();
+          expect(fileUpload2).not.toHaveErrorMessage();
+          expect(fileUpload2).toBeValid();
 
           setFileUploadValue(fileUpload);
 
-          expect(screen.getByText('This field is required!')).toBeInTheDocument();
+          expect(within(assetGroup1).getByText('This field is required!')).toBeInTheDocument();
           expect(fileUpload).toHaveErrorMessage('This field is required!');
           expect(fileUpload).toBeInvalid();
+          expect(within(assetGroup2).queryByText('This field is required!')).not.toBeInTheDocument();
+          expect(fileUpload2).not.toHaveErrorMessage();
+          expect(fileUpload2).toBeValid();
+
+          setFileUploadValue(fileUpload2);
+
+          expect(within(assetGroup1).getByText('This field is required!')).toBeInTheDocument();
+          expect(fileUpload).toHaveErrorMessage('This field is required!');
+          expect(fileUpload).toBeInvalid();
+          expect(within(assetGroup2).getByText('This field is required!')).toBeInTheDocument();
+          expect(fileUpload2).toHaveErrorMessage('This field is required!');
+          expect(fileUpload2).toBeInvalid();
         }
     );
+
+    it('does not immediately add validation errors to asset fields that have been deleted and re-added', async function() {
+      render('multi-repo');
+
+      await userEvent.click(await selectors.addAssetBtn('find'));
+
+      const assetGroup2 = selectors.assetGroup('2'),
+          fileUpload2 = selectors.fileUploadByGroup(assetGroup2),
+          field6_2 = selectors.fieldByNumAndGroup(6, assetGroup2),
+          field7_2 = selectors.fieldByNumAndGroup(7, assetGroup2),
+          file2 = new File(['tset'], 'tset.txt', { type: 'text-plain' });
+
+      await userEvent.type(field6_2, 'zxcv');
+      await userEvent.type(field7_2, '0987');
+
+      await userEvent.click(selectors.deleteBtnByGroup(assetGroup2));
+      await userEvent.click(selectors.addAssetBtn());
+
+      expect(screen.queryByText('This field is required')).not.toBeInTheDocument();
+      expect(field6_2).not.toHaveErrorMessage();
+      expect(field7_2).not.toHaveErrorMessage();
+      expect(field6_2).toBeValid();
+      expect(field7_2).toBeValid();
+    });
+
+    it('adds "Asset not unique" text to all relevant asset fields when they match between multiple asset groups',
+        async function() {
+          render('multi-repo');
+
+          await userEvent.click(await selectors.addAssetBtn('find'));
+          await userEvent.click(selectors.addAssetBtn());
+          await userEvent.click(selectors.addAssetBtn());
+
+          const assetGroup1 = selectors.assetGroup('1'),
+              assetGroup2 = selectors.assetGroup('2'),
+              assetGroup3 = selectors.assetGroup('3'),
+              assetGroup4 = selectors.assetGroup('4'),
+              field6 = selectors.fieldByNumAndGroup(6, assetGroup1),
+              field7 = selectors.fieldByNumAndGroup(7, assetGroup1),
+              field6_2 = selectors.fieldByNumAndGroup(6, assetGroup2),
+              field7_2 = selectors.fieldByNumAndGroup(7, assetGroup2),
+              field6_3 = selectors.fieldByNumAndGroup(6, assetGroup3),
+              field7_3 = selectors.fieldByNumAndGroup(7, assetGroup3),
+              field6_4 = selectors.fieldByNumAndGroup(6, assetGroup4),
+              field7_4 = selectors.fieldByNumAndGroup(7, assetGroup4);
+
+          // groups 1, 2, and 4 are the same while 3 is different
+          await userEvent.type(field6, 'a');
+          await userEvent.type(field7, 'b');
+          await userEvent.type(field6_2, 'a');
+          await userEvent.type(field7_2, 'b');
+          await userEvent.type(field6_3, 'c');
+          await userEvent.type(field7_3, 'd');
+          await userEvent.type(field6_4, 'a');
+          await userEvent.type(field7_4, 'b');
+
+          expect(field6).toBeInvalid();
+          expect(field6).toHaveErrorMessage('Asset not unique');
+          expect(field7).toBeInvalid();
+          expect(field7).toHaveErrorMessage('Asset not unique');
+
+          expect(field6_2).toBeInvalid();
+          expect(field6_2).toHaveErrorMessage('Asset not unique');
+          expect(field7_2).toBeInvalid();
+          expect(field7_2).toHaveErrorMessage('Asset not unique');
+
+          expect(field6_3).toBeValid();
+          expect(field6_3).not.toHaveErrorMessage();
+          expect(field7_3).toBeValid();
+          expect(field7_3).not.toHaveErrorMessage();
+
+          expect(field6_4).toBeInvalid();
+          expect(field6_4).toHaveErrorMessage('Asset not unique');
+          expect(field7_4).toBeInvalid();
+          expect(field7_4).toHaveErrorMessage('Asset not unique');
+        }
+    );
+
+    it('shows the required field message in favor of the unique asset message', async function() {
+      render('multi-repo');
+
+      await userEvent.click(await selectors.addAssetBtn('find'));
+
+      const assetGroup1 = selectors.assetGroup('1'),
+          assetGroup2 = selectors.assetGroup('2'),
+          field6 = selectors.fieldByNumAndGroup(6, assetGroup1),
+          field7 = selectors.fieldByNumAndGroup(7, assetGroup1),
+          field6_2 = selectors.fieldByNumAndGroup(6, assetGroup2),
+          field7_2 = selectors.fieldByNumAndGroup(7, assetGroup2);
+
+      await userEvent.type(field6, 'a');
+      await userEvent.type(field7, 'b');
+      await userEvent.type(field6_2, 'a');
+      await userEvent.type(field7_2, 'b');
+
+      await userEvent.clear(field6);
+      await userEvent.clear(field7);
+      await userEvent.clear(field6_2);
+      await userEvent.clear(field7_2);
+
+      expect(field6).toBeInvalid();
+      expect(field6).toHaveErrorMessage('This field is required');
+      expect(field7).toBeValid();
+      expect(field7).not.toHaveErrorMessage();
+
+      expect(field6_2).toBeInvalid();
+      expect(field6_2).toHaveErrorMessage('This field is required');
+      expect(field7_2).toBeValid();
+      expect(field7_2).not.toHaveErrorMessage();
+    });
   });
 
   it('has a cancel button that navigates to the Upload List page when clicked', async function() {
@@ -659,26 +1202,34 @@ describe('UploadDetails', function() {
     it('has an upload button that submits the form data when clicked', async function() {
       let postedFormData;
 
-      when(axios.post).calledWith('service/rest/internal/ui/upload/repo-id', expect.anything())
+      when(axios.post).calledWith('service/rest/internal/ui/upload/multi-repo', expect.anything())
           .mockImplementation((_, formData) => {
             postedFormData = formData;
             return new Promise(() => {});
           });
 
-      render();
+      render('multi-repo');
 
-      const form = await selectors.form('find'),
-          uploadBtn = selectors.uploadBtn(),
-          fileUpload = form.querySelector('input[type=file]'),
-          field2 = screen.getByRole('textbox', { name: 'Field 2' }),
-          field4 = screen.getByRole('textbox', { name: 'Field 4' }),
-          field6 = screen.getByRole('textbox', { name: 'Field 6' }),
-          file = new File(['test'], 'test.txt', { type: 'text-plain' });
+      await userEvent.click(await selectors.addAssetBtn('find'));
+
+      const uploadBtn = selectors.uploadBtn(),
+          assetGroup1 = selectors.assetGroup('1'),
+          assetGroup2 = selectors.assetGroup('2'),
+          fileUpload = selectors.fileUploadByGroup(assetGroup1),
+          fileUpload2 = selectors.fileUploadByGroup(assetGroup2),
+          field2 = selectors.fieldByNumAndGroup(2),
+          field4 = selectors.fieldByNumAndGroup(4),
+          field6 = selectors.fieldByNumAndGroup(6, assetGroup1),
+          field6_2 = selectors.fieldByNumAndGroup(6, assetGroup2),
+          file = new File(['test'], 'test.txt', { type: 'text-plain' }),
+          file2 = new File(['tset'], 'tset.txt', { type: 'text-plain' });
 
       await userEvent.type(field2, 'bar');
       await userEvent.type(field4, 'qwerty');
       await userEvent.type(field6, 'asdf');
+      await userEvent.type(field6_2, 'zxcv');
       setFileUploadValue(fileUpload, file);
+      setFileUploadValue(fileUpload2, file2);
 
       expect(postedFormData).not.toBeDefined();
 
@@ -690,7 +1241,7 @@ describe('UploadDetails', function() {
     it('adds the component fields to the FormData by name', async function() {
       let postedFormData;
 
-      when(axios.post).calledWith('service/rest/internal/ui/upload/repo-id', expect.anything())
+      when(axios.post).calledWith('service/rest/internal/ui/upload/simple-repo', expect.anything())
           .mockImplementation((_, formData) => {
             postedFormData = formData;
             return new Promise(() => {});
@@ -700,13 +1251,13 @@ describe('UploadDetails', function() {
 
       const form = await selectors.form('find'),
           uploadBtn = selectors.uploadBtn(),
-          fileUpload = form.querySelector('input[type=file]'),
-          field1 = screen.getByRole('textbox', { name: 'Field 1' }),
-          field2 = screen.getByRole('textbox', { name: 'Field 2' }),
-          field3 = screen.getByRole('textbox', { name: 'Field 3' }),
-          field4 = screen.getByRole('textbox', { name: 'Field 4' }),
-          field6 = screen.getByRole('textbox', { name: 'Field 6' }),
-          field7 = screen.getByRole('textbox', { name: 'Field 7' }),
+          fileUpload = selectors.fileUploadByGroup(form),
+          field1 = selectors.fieldByNumAndGroup(1),
+          field2 = selectors.fieldByNumAndGroup(2),
+          field3 = selectors.fieldByNumAndGroup(3),
+          field4 = selectors.fieldByNumAndGroup(4),
+          field6 = selectors.fieldByNumAndGroup(6),
+          field7 = selectors.fieldByNumAndGroup(7),
           file = new File(['test'], 'test.txt', { type: 'text-plain' });
 
       await userEvent.type(field1, 'foo');
@@ -725,86 +1276,189 @@ describe('UploadDetails', function() {
       expect(postedFormData.get('field4')).toBe('qwerty');
     });
 
-    it('adds the file to the FormData under the name "asset0"', async function() {
+    it('adds the files to the FormData under the names "asset0", "asset1", ...', async function() {
       let postedFormData;
 
-      when(axios.post).calledWith('service/rest/internal/ui/upload/repo-id', expect.anything())
+      when(axios.post).calledWith('service/rest/internal/ui/upload/multi-repo', expect.anything())
           .mockImplementation((_, formData) => {
             postedFormData = formData;
             return new Promise(() => {});
           });
 
-      render();
+      render('multi-repo');
 
-      const form = await selectors.form('find'),
-          uploadBtn = selectors.uploadBtn(),
-          fileUpload = form.querySelector('input[type=file]'),
-          field2 = screen.getByRole('textbox', { name: 'Field 2' }),
-          field4 = screen.getByRole('textbox', { name: 'Field 4' }),
-          field6 = screen.getByRole('textbox', { name: 'Field 6' }),
-          file = new File(['test'], 'test.txt', { type: 'text-plain' });
+      await userEvent.click(await selectors.addAssetBtn('find'));
+      await userEvent.click(selectors.addAssetBtn());
+
+      const uploadBtn = selectors.uploadBtn(),
+          assetGroup1 = selectors.assetGroup('1'),
+          assetGroup2 = selectors.assetGroup('2'),
+          assetGroup3 = selectors.assetGroup('3'),
+          fileUpload = selectors.fileUploadByGroup(assetGroup1),
+          fileUpload2 = selectors.fileUploadByGroup(assetGroup2),
+          fileUpload3 = selectors.fileUploadByGroup(assetGroup3),
+          field2 = selectors.fieldByNumAndGroup(2),
+          field4 = selectors.fieldByNumAndGroup(4),
+          field6 = selectors.fieldByNumAndGroup(6, assetGroup1),
+          field6_2 = selectors.fieldByNumAndGroup(6, assetGroup2),
+          field6_3 = selectors.fieldByNumAndGroup(6, assetGroup3),
+          file = new File(['test'], 'test.txt', { type: 'text-plain' }),
+          file2 = new File(['tset'], 'tset.txt', { type: 'text-plain' }),
+          file3 = new File(['asdf'], 'asdf.txt', { type: 'text-plain' });
 
       await userEvent.type(field2, 'bar');
       await userEvent.type(field4, 'qwerty');
       await userEvent.type(field6, 'asdf');
+      await userEvent.type(field6_2, 'zxvc');
+      await userEvent.type(field6_3, 'bnm,');
       setFileUploadValue(fileUpload, file);
+      setFileUploadValue(fileUpload2, file2);
+      setFileUploadValue(fileUpload3, file3);
 
       await userEvent.click(uploadBtn);
 
       await waitFor(() => expect(postedFormData).toBeDefined());
       expect(postedFormData.get('asset0')).toBe(file);
+      expect(postedFormData.get('asset1')).toBe(file2);
+      expect(postedFormData.get('asset2')).toBe(file3);
     });
 
-    it('adds the assetFields to the FormData under their name prefixed by "asset0."', async function() {
+    it('adds the assetFields to the FormData under their name prefixed by "asset0.", "asset1.", etc', async function() {
       let postedFormData;
 
-      when(axios.post).calledWith('service/rest/internal/ui/upload/repo-id', expect.anything())
+      when(axios.post).calledWith('service/rest/internal/ui/upload/multi-repo', expect.anything())
           .mockImplementation((_, formData) => {
             postedFormData = formData;
             return new Promise(() => {});
           });
 
-      render();
+      render('multi-repo');
 
-      const form = await selectors.form('find'),
-          uploadBtn = selectors.uploadBtn(),
-          fileUpload = form.querySelector('input[type=file]'),
-          field2 = screen.getByRole('textbox', { name: 'Field 2' }),
-          field4 = screen.getByRole('textbox', { name: 'Field 4' }),
-          field6 = screen.getByRole('textbox', { name: 'Field 6' }),
-          field7 = screen.getByRole('textbox', { name: 'Field 7' }),
-          file = new File(['test'], 'test.txt', { type: 'text-plain' });
+      await userEvent.click(await selectors.addAssetBtn('find'));
+      await userEvent.click(selectors.addAssetBtn());
+
+      const uploadBtn = selectors.uploadBtn(),
+          assetGroup1 = selectors.assetGroup('1'),
+          assetGroup2 = selectors.assetGroup('2'),
+          assetGroup3 = selectors.assetGroup('3'),
+          fileUpload = selectors.fileUploadByGroup(assetGroup1),
+          fileUpload2 = selectors.fileUploadByGroup(assetGroup2),
+          fileUpload3 = selectors.fileUploadByGroup(assetGroup3),
+          field2 = selectors.fieldByNumAndGroup(2),
+          field4 = selectors.fieldByNumAndGroup(4),
+          field6 = selectors.fieldByNumAndGroup(6, assetGroup1),
+          field7 = selectors.fieldByNumAndGroup(7, assetGroup1),
+          field6_2 = selectors.fieldByNumAndGroup(6, assetGroup2),
+          field7_2 = selectors.fieldByNumAndGroup(7, assetGroup2),
+          field6_3 = selectors.fieldByNumAndGroup(6, assetGroup3),
+          field7_3 = selectors.fieldByNumAndGroup(7, assetGroup3),
+          file = new File(['test'], 'test.txt', { type: 'text-plain' }),
+          file2 = new File(['tset'], 'tset.txt', { type: 'text-plain' }),
+          file3 = new File(['asdf'], 'asdf.txt', { type: 'text-plain' });
 
       await userEvent.type(field2, 'bar');
       await userEvent.type(field4, 'qwerty');
       await userEvent.type(field6, 'asdf');
       await userEvent.type(field7, '12345');
+      await userEvent.type(field6_2, 'zxcv');
+      await userEvent.type(field7_2, '0987');
+      await userEvent.type(field6_3, 'xcvb');
+      await userEvent.type(field7_3, ';lkj');
       setFileUploadValue(fileUpload, file);
+      setFileUploadValue(fileUpload2, file2);
+      setFileUploadValue(fileUpload3, file3);
 
       await userEvent.click(uploadBtn);
 
       await waitFor(() => expect(postedFormData).toBeDefined());
       expect(postedFormData.get('asset0.field6')).toBe('asdf');
       expect(postedFormData.get('asset0.field7')).toBe('12345');
+      expect(postedFormData.get('asset1.field6')).toBe('zxcv');
+      expect(postedFormData.get('asset1.field7')).toBe('0987');
+      expect(postedFormData.get('asset2.field6')).toBe('xcvb');
+      expect(postedFormData.get('asset2.field7')).toBe(';lkj');
+    });
+
+    it('adds asset fields and files according to the asset key matching their final order after ' +
+        'deletions are considered', async function() {
+      let postedFormData;
+
+      when(axios.post).calledWith('service/rest/internal/ui/upload/multi-repo', expect.anything())
+          .mockImplementation((_, formData) => {
+            postedFormData = formData;
+            return new Promise(() => {});
+          });
+
+      render('multi-repo');
+
+      await userEvent.click(await selectors.addAssetBtn('find'));
+      await userEvent.click(selectors.addAssetBtn());
+
+      const uploadBtn = selectors.uploadBtn(),
+          assetGroup1 = selectors.assetGroup('1'),
+          assetGroup2 = selectors.assetGroup('2'),
+          assetGroup3 = selectors.assetGroup('3'),
+          fileUpload = selectors.fileUploadByGroup(assetGroup1),
+          fileUpload2 = selectors.fileUploadByGroup(assetGroup2),
+          fileUpload3 = selectors.fileUploadByGroup(assetGroup3),
+          field2 = selectors.fieldByNumAndGroup(2),
+          field4 = selectors.fieldByNumAndGroup(4),
+          field6 = selectors.fieldByNumAndGroup(6, assetGroup1),
+          field7 = selectors.fieldByNumAndGroup(7, assetGroup1),
+          field6_2 = selectors.fieldByNumAndGroup(6, assetGroup2),
+          field7_2 = selectors.fieldByNumAndGroup(7, assetGroup2),
+          field6_3 = selectors.fieldByNumAndGroup(6, assetGroup3),
+          field7_3 = selectors.fieldByNumAndGroup(7, assetGroup3),
+          file = new File(['test'], 'test.txt', { type: 'text-plain' }),
+          file2 = new File(['tset'], 'tset.txt', { type: 'text-plain' }),
+          file3 = new File(['asdf'], 'asdf.txt', { type: 'text-plain' });
+
+      await userEvent.type(field2, 'bar');
+      await userEvent.type(field4, 'qwerty');
+      await userEvent.type(field6, 'asdf');
+      await userEvent.type(field7, '12345');
+      await userEvent.type(field6_2, 'zxcv');
+      await userEvent.type(field7_2, '0987');
+      await userEvent.type(field6_3, 'xcvb');
+      await userEvent.type(field7_3, ';lkj');
+      setFileUploadValue(fileUpload, file);
+      setFileUploadValue(fileUpload2, file2);
+      setFileUploadValue(fileUpload3, file3);
+
+      await userEvent.click(selectors.deleteBtnByGroup(assetGroup2));
+      await userEvent.click(uploadBtn);
+
+      await waitFor(() => expect(postedFormData).toBeDefined());
+      expect(postedFormData.get('asset0')).toBe(file);
+      expect(postedFormData.get('asset0.field6')).toBe('asdf');
+      expect(postedFormData.get('asset0.field7')).toBe('12345');
+
+      // not asset2
+      expect(postedFormData.get('asset1')).toBe(file3);
+      expect(postedFormData.get('asset1.field6')).toBe('xcvb');
+      expect(postedFormData.get('asset1.field7')).toBe(';lkj');
+
+      expect(postedFormData.get('field2')).toBe('bar');
+      expect(postedFormData.get('field4')).toBe('qwerty');
     });
 
     it('redirects to the search page with the keyword param set to the response data after the form is submitted',
         async function() {
           const hashSpy = jest.spyOn(window.location, 'hash', 'set');
-          when(axios.post).calledWith('service/rest/internal/ui/upload/repo-id', expect.anything())
+          when(axios.post).calledWith('service/rest/internal/ui/upload/simple-repo', expect.anything())
               .mockResolvedValue({ data: { success: true, data: 'foo#?% bar' } });
 
           render();
 
           const form = await selectors.form('find'),
               uploadBtn = selectors.uploadBtn(),
-              fileUpload = form.querySelector('input[type=file]'),
-              field1 = screen.getByRole('textbox', { name: 'Field 1' }),
-              field2 = screen.getByRole('textbox', { name: 'Field 2' }),
-              field3 = screen.getByRole('textbox', { name: 'Field 3' }),
-              field4 = screen.getByRole('textbox', { name: 'Field 4' }),
-              field6 = screen.getByRole('textbox', { name: 'Field 6' }),
-              field7 = screen.getByRole('textbox', { name: 'Field 7' }),
+              fileUpload = selectors.fileUploadByGroup(form),
+              field1 = selectors.fieldByNumAndGroup(1),
+              field2 = selectors.fieldByNumAndGroup(2),
+              field3 = selectors.fieldByNumAndGroup(3),
+              field4 = selectors.fieldByNumAndGroup(4),
+              field6 = selectors.fieldByNumAndGroup(6),
+              field7 = selectors.fieldByNumAndGroup(7),
               file = new File(['test'], 'test.txt', { type: 'text-plain' });
 
           await userEvent.type(field1, 'foo');
@@ -826,20 +1480,20 @@ describe('UploadDetails', function() {
 
     it('renders a submit mask while the form is submitting', async function() {
         const hashSpy = jest.spyOn(window.location, 'hash', 'set');
-        when(axios.post).calledWith('service/rest/internal/ui/upload/repo-id', expect.anything())
+        when(axios.post).calledWith('service/rest/internal/ui/upload/simple-repo', expect.anything())
             .mockResolvedValue({ data: { success: true, data: 'foo#?% bar' } });
 
         render();
 
         const form = await selectors.form('find'),
             uploadBtn = selectors.uploadBtn(),
-            fileUpload = form.querySelector('input[type=file]'),
-            field1 = screen.getByRole('textbox', { name: 'Field 1' }),
-            field2 = screen.getByRole('textbox', { name: 'Field 2' }),
-            field3 = screen.getByRole('textbox', { name: 'Field 3' }),
-            field4 = screen.getByRole('textbox', { name: 'Field 4' }),
-            field6 = screen.getByRole('textbox', { name: 'Field 6' }),
-            field7 = screen.getByRole('textbox', { name: 'Field 7' }),
+            fileUpload = selectors.fileUploadByGroup(form),
+            field1 = selectors.fieldByNumAndGroup(1),
+            field2 = selectors.fieldByNumAndGroup(2),
+            field3 = selectors.fieldByNumAndGroup(3),
+            field4 = selectors.fieldByNumAndGroup(4),
+            field6 = selectors.fieldByNumAndGroup(6),
+            field7 = selectors.fieldByNumAndGroup(7),
             file = new File(['test'], 'test.txt', { type: 'text-plain' });
 
         await userEvent.type(field1, 'foo');
@@ -859,17 +1513,23 @@ describe('UploadDetails', function() {
     });
 
     it('renders validation error messages when Upload is clicked with data missing', async function() {
-      render();
+      render('multi-repo');
 
-      const form = await selectors.form('find'),
-          uploadBtn = selectors.uploadBtn(),
-          fileUpload = form.querySelector('input[type=file]'),
-          field1 = screen.getByRole('textbox', { name: 'Field 1' }),
-          field2 = screen.getByRole('textbox', { name: 'Field 2' }),
-          field3 = screen.getByRole('textbox', { name: 'Field 3' }),
-          field4 = screen.getByRole('textbox', { name: 'Field 4' }),
-          field6 = screen.getByRole('textbox', { name: 'Field 6' }),
-          field7 = screen.getByRole('textbox', { name: 'Field 7' });
+      await userEvent.click(await selectors.addAssetBtn('find'));
+
+      const uploadBtn = selectors.uploadBtn(),
+          assetGroup1 = selectors.assetGroup('1'),
+          assetGroup2 = selectors.assetGroup('2'),
+          fileUpload = selectors.fileUploadByGroup(assetGroup1),
+          fileUpload2 = selectors.fileUploadByGroup(assetGroup2),
+          field1 = selectors.fieldByNumAndGroup(1),
+          field2 = selectors.fieldByNumAndGroup(2),
+          field3 = selectors.fieldByNumAndGroup(3),
+          field4 = selectors.fieldByNumAndGroup(4),
+          field6 = selectors.fieldByNumAndGroup(6, assetGroup1),
+          field7 = selectors.fieldByNumAndGroup(7, assetGroup1),
+          field6_2 = selectors.fieldByNumAndGroup(6, assetGroup2),
+          field7_2 = selectors.fieldByNumAndGroup(7, assetGroup2);
 
       await userEvent.click(uploadBtn);
 
@@ -900,6 +1560,12 @@ describe('UploadDetails', function() {
 
       expect(field7).not.toHaveErrorMessage();
       expect(field7).toBeValid();
+
+      expect(field6_2).toHaveErrorMessage('This field is required');
+      expect(field6_2).toBeInvalid();
+
+      expect(field7_2).not.toHaveErrorMessage();
+      expect(field7_2).toBeValid();
     });
 
     it('renders validation error messages when Upload is clicked with only the file missing', async function() {
@@ -907,13 +1573,13 @@ describe('UploadDetails', function() {
 
       const form = await selectors.form('find'),
           uploadBtn = selectors.uploadBtn(),
-          fileUpload = form.querySelector('input[type=file]'),
-          field1 = screen.getByRole('textbox', { name: 'Field 1' }),
-          field2 = screen.getByRole('textbox', { name: 'Field 2' }),
-          field3 = screen.getByRole('textbox', { name: 'Field 3' }),
-          field4 = screen.getByRole('textbox', { name: 'Field 4' }),
-          field6 = screen.getByRole('textbox', { name: 'Field 6' }),
-          field7 = screen.getByRole('textbox', { name: 'Field 7' });
+          fileUpload = selectors.fileUploadByGroup(form),
+          field1 = selectors.fieldByNumAndGroup(1),
+          field2 = selectors.fieldByNumAndGroup(2),
+          field3 = selectors.fieldByNumAndGroup(3),
+          field4 = selectors.fieldByNumAndGroup(4),
+          field6 = selectors.fieldByNumAndGroup(6),
+          field7 = selectors.fieldByNumAndGroup(7);
 
       await userEvent.type(field2, 'bar');
       await userEvent.type(field4, 'bar');
@@ -929,23 +1595,76 @@ describe('UploadDetails', function() {
       expect(fileUpload).toBeInvalid();
     });
 
+    it('renders validation error messages when Upload is clicked with non-unique assets', async function() {
+      render('multi-repo');
+
+      await userEvent.click(await selectors.addAssetBtn('find'));
+
+      const uploadBtn = selectors.uploadBtn(),
+          assetGroup1 = selectors.assetGroup('1'),
+          assetGroup2 = selectors.assetGroup('2'),
+          fileUpload = selectors.fileUploadByGroup(assetGroup1),
+          fileUpload2 = selectors.fileUploadByGroup(assetGroup2),
+          field1 = selectors.fieldByNumAndGroup(1),
+          field2 = selectors.fieldByNumAndGroup(2),
+          field3 = selectors.fieldByNumAndGroup(3),
+          field4 = selectors.fieldByNumAndGroup(4),
+          field6 = selectors.fieldByNumAndGroup(6, assetGroup1),
+          field7 = selectors.fieldByNumAndGroup(7, assetGroup1),
+          field6_2 = selectors.fieldByNumAndGroup(6, assetGroup2),
+          field7_2 = selectors.fieldByNumAndGroup(7, assetGroup2);
+
+      await userEvent.type(field2, 'asdf');
+      await userEvent.type(field4, 'qwerty');
+
+      await userEvent.type(field6, 'a');
+      await userEvent.type(field7, 'b');
+      await userEvent.type(field6_2, 'a');
+      await userEvent.type(field7_2, 'b');
+
+      await userEvent.click(uploadBtn);
+
+      const formValidationAlert = selectors.errorAlert('getAll').find(el => el.textContent.includes('validation'));
+      expect(formValidationAlert).toBeInTheDocument();
+      expect(selectors.errorRetryBtn('query')).not.toBeInTheDocument();
+
+      expect(field6).toHaveErrorMessage('Asset not unique');
+      expect(field6).toBeInvalid();
+
+      expect(field7).toHaveErrorMessage('Asset not unique');
+      expect(field7).toBeInvalid();
+
+      expect(field6_2).toHaveErrorMessage('Asset not unique');
+      expect(field6_2).toBeInvalid();
+
+      expect(field7_2).toHaveErrorMessage('Asset not unique');
+      expect(field7_2).toBeInvalid();
+    });
+
     it('submits the upload successfully after validation errors are fixed', async function() {
       const hashSpy = jest.spyOn(window.location, 'hash', 'set');
-      when(axios.post).calledWith('service/rest/internal/ui/upload/repo-id', expect.anything())
+      when(axios.post).calledWith('service/rest/internal/ui/upload/multi-repo', expect.anything())
           .mockResolvedValue({ data: { success: true, data: 'foobar' } });
 
-      render();
+      render('multi-repo');
 
-      const form = await selectors.form('find'),
-          uploadBtn = selectors.uploadBtn(),
-          fileUpload = form.querySelector('input[type=file]'),
-          field1 = screen.getByRole('textbox', { name: 'Field 1' }),
-          field2 = screen.getByRole('textbox', { name: 'Field 2' }),
-          field3 = screen.getByRole('textbox', { name: 'Field 3' }),
-          field4 = screen.getByRole('textbox', { name: 'Field 4' }),
-          field6 = screen.getByRole('textbox', { name: 'Field 6' }),
-          field7 = screen.getByRole('textbox', { name: 'Field 7' }),
-          file = new File(['test'], 'test.txt', { type: 'text-plain' });
+      await userEvent.click(await selectors.addAssetBtn('find'));
+
+      const uploadBtn = selectors.uploadBtn(),
+          assetGroup1 = selectors.assetGroup('1'),
+          assetGroup2 = selectors.assetGroup('2'),
+          fileUpload = selectors.fileUploadByGroup(assetGroup1),
+          fileUpload2 = selectors.fileUploadByGroup(assetGroup2),
+          field1 = selectors.fieldByNumAndGroup(1),
+          field2 = selectors.fieldByNumAndGroup(2),
+          field3 = selectors.fieldByNumAndGroup(3),
+          field4 = selectors.fieldByNumAndGroup(4),
+          field6 = selectors.fieldByNumAndGroup(6, assetGroup1),
+          field7 = selectors.fieldByNumAndGroup(7, assetGroup1),
+          field6_2 = selectors.fieldByNumAndGroup(6, assetGroup2),
+          field7_2 = selectors.fieldByNumAndGroup(7, assetGroup2),
+          file = new File(['test'], 'test.txt', { type: 'text-plain' }),
+          file2 = new File(['tset'], 'tset.txt', { type: 'text-plain' });
 
       await userEvent.click(uploadBtn);
 
@@ -955,16 +1674,24 @@ describe('UploadDetails', function() {
 
       expect(fileUpload).toHaveErrorMessage('This field is required!');
       expect(fileUpload).toBeInvalid();
+      expect(fileUpload2).toHaveErrorMessage('This field is required!');
+      expect(fileUpload2).toBeInvalid();
       expect(field2).toHaveErrorMessage('This field is required');
       expect(field2).toBeInvalid();
       expect(field4).toHaveErrorMessage('This field is required');
       expect(field4).toBeInvalid();
       expect(field6).toHaveErrorMessage('This field is required');
       expect(field6).toBeInvalid();
+      expect(field6_2).toHaveErrorMessage('This field is required');
+      expect(field6_2).toBeInvalid();
 
       setFileUploadValue(fileUpload, file);
       expect(fileUpload).not.toHaveErrorMessage();
       expect(fileUpload).toBeValid();
+
+      setFileUploadValue(fileUpload2, file2);
+      expect(fileUpload2).not.toHaveErrorMessage();
+      expect(fileUpload2).toBeValid();
 
       await userEvent.type(field2, 'bar');
       expect(field2).not.toHaveErrorMessage();
@@ -977,6 +1704,22 @@ describe('UploadDetails', function() {
       await userEvent.type(field6, 'qwerty');
       expect(field6).not.toHaveErrorMessage();
       expect(field6).toBeValid();
+
+      await userEvent.type(field6_2, 'qwerty');
+      expect(field6).toHaveErrorMessage('Asset not unique');
+      expect(field6).toBeInvalid();
+      expect(field6_2).toHaveErrorMessage('Asset not unique');
+      expect(field6_2).toBeInvalid();
+
+      await userEvent.type(field6_2, '2');
+      expect(field6).not.toHaveErrorMessage();
+      expect(field6).toBeValid();
+      expect(field7).not.toHaveErrorMessage();
+      expect(field7).toBeValid();
+      expect(field6_2).not.toHaveErrorMessage();
+      expect(field6_2).toBeValid();
+      expect(field7_2).not.toHaveErrorMessage();
+      expect(field7_2).toBeValid();
       expect(formValidationAlert).not.toBeInTheDocument();
 
       await userEvent.click(selectors.uploadBtn());
@@ -989,20 +1732,20 @@ describe('UploadDetails', function() {
 
     it('renders an error with a retry button if the form POST fails', async function() {
       const hashSpy = jest.spyOn(window.location, 'hash', 'set');
-      when(axios.post).calledWith('service/rest/internal/ui/upload/repo-id', expect.anything())
+      when(axios.post).calledWith('service/rest/internal/ui/upload/simple-repo', expect.anything())
           .mockRejectedValue({ message: 'foobar' });
 
       render();
 
       const form = await selectors.form('find'),
           uploadBtn = selectors.uploadBtn(),
-          fileUpload = form.querySelector('input[type=file]'),
-          field1 = screen.getByRole('textbox', { name: 'Field 1' }),
-          field2 = screen.getByRole('textbox', { name: 'Field 2' }),
-          field3 = screen.getByRole('textbox', { name: 'Field 3' }),
-          field4 = screen.getByRole('textbox', { name: 'Field 4' }),
-          field6 = screen.getByRole('textbox', { name: 'Field 6' }),
-          field7 = screen.getByRole('textbox', { name: 'Field 7' }),
+          fileUpload = selectors.fileUploadByGroup(form),
+          field1 = selectors.fieldByNumAndGroup(1),
+          field2 = selectors.fieldByNumAndGroup(2),
+          field3 = selectors.fieldByNumAndGroup(3),
+          field4 = selectors.fieldByNumAndGroup(4),
+          field6 = selectors.fieldByNumAndGroup(6),
+          field7 = selectors.fieldByNumAndGroup(7),
           file = new File(['test'], 'test.txt', { type: 'text-plain' });
 
       await userEvent.type(field1, 'foo');
@@ -1025,20 +1768,20 @@ describe('UploadDetails', function() {
 
     it('retries the POST if the submit retry button is clicked', async function() {
       const hashSpy = jest.spyOn(window.location, 'hash', 'set');
-      when(axios.post).calledWith('service/rest/internal/ui/upload/repo-id', expect.anything())
+      when(axios.post).calledWith('service/rest/internal/ui/upload/simple-repo', expect.anything())
           .mockRejectedValueOnce({ message: 'foobar' });
-      when(axios.post).calledWith('service/rest/internal/ui/upload/repo-id', expect.anything())
+      when(axios.post).calledWith('service/rest/internal/ui/upload/simple-repo', expect.anything())
           .mockResolvedValueOnce({ data: { success: true, data: 'asdf' } });
 
       render();
 
       const form = await selectors.form('find'),
           uploadBtn = selectors.uploadBtn(),
-          fileUpload = form.querySelector('input[type=file]'),
-          field2 = screen.getByRole('textbox', { name: 'Field 2' }),
-          field4 = screen.getByRole('textbox', { name: 'Field 4' }),
-          field6 = screen.getByRole('textbox', { name: 'Field 6' }),
-          field7 = screen.getByRole('textbox', { name: 'Field 7' }),
+          fileUpload = selectors.fileUploadByGroup(form),
+          field2 = selectors.fieldByNumAndGroup(2),
+          field4 = selectors.fieldByNumAndGroup(4),
+          field6 = selectors.fieldByNumAndGroup(6),
+          field7 = selectors.fieldByNumAndGroup(7),
           file = new File(['test'], 'test.txt', { type: 'text-plain' });
 
       await userEvent.type(field2, 'bar');
