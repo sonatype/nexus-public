@@ -10,18 +10,18 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.quartz.internal;
+package org.sonatype.nexus.quartz.internal.datastore;
 
-import org.sonatype.nexus.datastore.api.DataAccess;
+import org.quartz.TriggerKey;
 
-import org.quartz.impl.jdbcjobstore.JobStoreTX;
-
-/**
- * Quartz data access object used to create the schema that {@link JobStoreTX} expects.
- *
- * @since 3.19
- */
-public interface QuartzDAO
-    extends DataAccess
+public class TriggerUpdatedEvent
+    extends TriggerEventSupport
 {
+  TriggerUpdatedEvent() {
+    // deserialization
+  }
+
+  public TriggerUpdatedEvent(final TriggerKey triggerKey) {
+    super(triggerKey);
+  }
 }

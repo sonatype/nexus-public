@@ -19,6 +19,7 @@ import javax.ws.rs.WebApplicationException
 import javax.ws.rs.core.Response.Status
 
 import org.sonatype.nexus.scheduling.CurrentState
+import org.sonatype.nexus.scheduling.ExternalTaskState
 import org.sonatype.nexus.scheduling.TaskConfiguration
 import org.sonatype.nexus.scheduling.TaskInfo
 import org.sonatype.nexus.scheduling.TaskScheduler
@@ -70,6 +71,7 @@ class TasksResourceTest
 
     then:
       1 * taskScheduler.listsTasks() >> testTasks
+      3 * taskScheduler.toExternalTaskState(_) >>> [new ExternalTaskState(testTasks[1]), new ExternalTaskState(testTasks[2]), new ExternalTaskState(testTasks[3])]
       page.items.size() == 3
       page.items*.id == ['task1', 'task2', 'task3']
       page.items*.name == ['Task 1', 'Task 2', 'Task 3']
@@ -83,6 +85,7 @@ class TasksResourceTest
 
     then:
       1 * taskScheduler.listsTasks() >> testTasks
+      2 * taskScheduler.toExternalTaskState(_) >>> [new ExternalTaskState(testTasks[1]), new ExternalTaskState(testTasks[3])]
       page.items.size() == 2
       page.items*.id == ['task1', 'task3']
   }
@@ -93,6 +96,7 @@ class TasksResourceTest
 
     then: 'expected task is returned'
       1 * taskScheduler.getTaskById(_) >> { String id -> testTasks.find { it.id == id } }
+      1 * taskScheduler.toExternalTaskState(_) >> new ExternalTaskState(testTasks[1])
       validTaskXO.id == 'task1'
       validTaskXO.name == 'Task 1'
       validTaskXO.type == 'anotherType'
@@ -136,14 +140,14 @@ class TasksResourceTest
   def 'stop cancels running tasks'() {
     when: 'stop called with valid id for a running task'
       tasksResource.stop('task2')
-      
+
     then: 'task found and cancelled'
       1 * taskScheduler.getTaskById(_) >> { String id -> testTasks.find { it.id == id } }
       testTasks.find { it.id == 'task2' }.currentState.future.isCancelled()
 
     when: 'stop called with valid id for a non-running task'
       tasksResource.stop('task1')
-      
+
     then: 'task found, a 409 is generated'
       1 * taskScheduler.getTaskById(_) >> { String id -> testTasks.find { it.id == id } }
       WebApplicationException exception1 = thrown()
@@ -159,7 +163,7 @@ class TasksResourceTest
 
     when: 'stop called with invalid id'
       tasksResource.stop('nosuchtask')
-      
+
     then: 'a 404 response is generated'
       1 * taskScheduler.getTaskById(_) >> { String id -> testTasks.find { it.id == id } }
       WebApplicationException exception3 = thrown()
@@ -167,7 +171,7 @@ class TasksResourceTest
 
     when: 'an error occurs'
       tasksResource.stop('error')
-      
+
     then: 'a 500 response is generated'
       1 * taskScheduler.getTaskById(_) >> { String id -> throw new RuntimeException("error") }
       WebApplicationException exception4 = thrown()

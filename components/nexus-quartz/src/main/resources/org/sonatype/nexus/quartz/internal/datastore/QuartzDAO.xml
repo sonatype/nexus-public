@@ -14,7 +14,7 @@
 
 -->
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="org.sonatype.nexus.quartz.internal.QuartzDAO">
+<mapper namespace="org.sonatype.nexus.quartz.internal.datastore.QuartzDAO">
 
   <insert id="createSchema">
     CREATE TABLE IF NOT EXISTS qrtz_job_details
@@ -188,4 +188,29 @@
     CREATE INDEX IF NOT EXISTS idx_qrtz_ft_t_g ON qrtz_fired_triggers(sched_name, trigger_name, trigger_group);
     CREATE INDEX IF NOT EXISTS idx_qrtz_ft_tg ON qrtz_fired_triggers(sched_name, trigger_group);
   </insert>
+
+  <resultMap id="quartzTaskResultMap" type="org.sonatype.nexus.quartz.internal.datastore.QuartzTaskStateData">
+    <result property="jobName" column="job_name"/>
+    <result property="jobData" column="job_data" />
+    <result property="state" column="state"/>
+  </resultMap>
+  
+  <sql id="selectState">
+       SELECT D.job_name,
+              D.job_data,
+              F.state
+         FROM qrtz_job_details D
+    LEFT JOIN qrtz_fired_triggers F
+           ON D.job_name = F.job_name
+  </sql>
+
+  <select id="getStates" resultMap="quartzTaskResultMap">
+    <include refid="selectState"/>;
+  </select>
+
+  <select id="getState" resultMap="quartzTaskResultMap">
+    <include refid="selectState"/>
+    WHERE D.job_name = #{value};
+  </select>
+
 </mapper>

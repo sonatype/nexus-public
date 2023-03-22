@@ -10,33 +10,18 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.quartz.internal;
+package org.sonatype.nexus.quartz.internal.datastore;
 
-import java.util.List;
+import org.quartz.JobKey;
 
-import org.sonatype.nexus.datastore.api.DataAccess;
-
-import org.apache.ibatis.annotations.Param;
-
-public interface QuartzTestDAO
-    extends DataAccess
+public class JobCreatedEvent
+    extends JobEventSupport
 {
-  List<String> tables();
+  JobCreatedEvent() {
+    // deserialization
+  }
 
-  List<String> primaryKeys();
-
-  List<String> foreignKeys();
-
-  List<String> indexes();
-
-  Integer expectedIndexes();
-
-  /**
-   * Get column type from information schema
-   *
-   * @param tableName  table that column belongs to
-   * @param columnName column witch type needs to be received
-   * @return return the type of specified column
-   */
-  String getTableColumnType(@Param("table_name") String tableName, @Param("column_name") String columnName);
+  public JobCreatedEvent(final JobKey jobKey) {
+    super(jobKey);
+  }
 }

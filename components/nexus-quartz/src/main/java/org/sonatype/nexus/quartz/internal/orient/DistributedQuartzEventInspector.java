@@ -19,7 +19,6 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.event.EventAware;
-import org.sonatype.nexus.quartz.internal.QuartzSchedulerSPI;
 
 import com.google.common.eventbus.Subscribe;
 import org.quartz.SchedulerException;
@@ -38,10 +37,10 @@ public class DistributedQuartzEventInspector
     extends ComponentSupport
     implements EventAware, EventAware.Asynchronous
 {
-  private final QuartzSchedulerSPI schedulerSPI;
+  private final OrientQuartzSchedulerSPI schedulerSPI;
 
   @Inject
-  public DistributedQuartzEventInspector(final QuartzSchedulerSPI schedulerSPI) {
+  public DistributedQuartzEventInspector(final OrientQuartzSchedulerSPI schedulerSPI) {
     this.schedulerSPI = checkNotNull(schedulerSPI);
   }
 

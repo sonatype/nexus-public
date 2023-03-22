@@ -10,23 +10,16 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.quartz.internal
+package org.sonatype.nexus.quartz.internal.datastore
 
 import javax.inject.Provider
 
 import org.sonatype.goodies.testsupport.TestSupport
+import org.sonatype.nexus.common.event.EventHelper
 import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.common.log.LastShutdownTimeService
 import org.sonatype.nexus.common.node.NodeAccess
-import org.sonatype.nexus.quartz.internal.orient.DistributedQuartzEventInspector
-import org.sonatype.nexus.quartz.internal.orient.JobCreatedEvent
-import org.sonatype.nexus.quartz.internal.orient.JobDeletedEvent
-import org.sonatype.nexus.quartz.internal.orient.JobDetailEntity
-import org.sonatype.nexus.quartz.internal.orient.JobUpdatedEvent
-import org.sonatype.nexus.quartz.internal.orient.TriggerCreatedEvent
-import org.sonatype.nexus.quartz.internal.orient.TriggerDeletedEvent
-import org.sonatype.nexus.quartz.internal.orient.TriggerEntity
-import org.sonatype.nexus.quartz.internal.orient.TriggerUpdatedEvent
+import org.sonatype.nexus.quartz.internal.QuartzSchedulerProvider
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskInfo
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskJobListener
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskState
@@ -69,10 +62,6 @@ import static junit.framework.TestCase.assertEquals
 import static org.hamcrest.MatcherAssert.assertThat
 import static org.hamcrest.Matchers.equalTo
 import static org.hamcrest.Matchers.hasSize
-import static org.mockito.ArgumentMatchers.any
-import static org.mockito.ArgumentMatchers.isNotNull
-import static org.mockito.ArgumentMatchers.eq
-import static org.mockito.ArgumentMatchers.notNull
 import static org.mockito.Mockito.*
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED
 import static org.sonatype.nexus.scheduling.TaskConfiguration.LAST_RUN_STATE_END_STATE
@@ -89,13 +78,13 @@ import static org.sonatype.nexus.scheduling.TaskState.WAITING
  *
  * @since 3.0
  */
-class QuartzSchedulerSPITest
+class DatastoreQuartzSchedulerSPITest
     extends TestSupport
 {
   @Rule
   public final ExpectedException thrown = ExpectedException.none()
 
-  QuartzSchedulerSPI underTest
+  DatastoreQuartzSchedulerSPI underTest
 
   JobStore jobStore
 
@@ -119,8 +108,8 @@ class QuartzSchedulerSPITest
     def statusDelayedExecutor = mock(DatabaseStatusDelayedExecutor.class)
     doAnswer({ it.getArguments()[0].run() }).when(statusDelayedExecutor).execute(any(Runnable.class))
 
-    underTest = new QuartzSchedulerSPI(
-        eventManager, nodeAccess, provider, scheduler, lastShutdownTimeService, statusDelayedExecutor, true, true
+    underTest = new DatastoreQuartzSchedulerSPI(
+        eventManager, nodeAccess, provider, scheduler, lastShutdownTimeService, statusDelayedExecutor, true
     )
     scheduler.start()
     underTest.start()
@@ -154,18 +143,25 @@ class QuartzSchedulerSPITest
 
   @Test
   void 'Exercise job events'() {
-    def jobDetailEntity = mockJobDetailEntity()
+    def jobKey = mockJobDetail()
+    mockTrigger(jobKey, new Manual())
 
     def schedulerListener = mock(SchedulerListener)
     underTest.scheduler.getListenerManager().addSchedulerListener(schedulerListener)
 
-    eventManager.register(new DistributedQuartzEventInspector(underTest))
+    Trigger trigger = mock(OperableTrigger)
+    JobDataMap map = new JobDataMap(new Now().asMap());
+    map.put(".id", "my-id")
+    map.put(".typeId", "type-id")
+    when(trigger.getJobDataMap()).thenReturn(map)
+    when(jobStore.retrieveTrigger(any())).thenReturn(trigger)
+
+    eventManager.register(underTest)
 
     // on(JobCreatedEvent)
 
-    def jobCreatedEvent = mock(JobCreatedEvent)
-    when(jobCreatedEvent.job).thenReturn(jobDetailEntity)
-    eventManager.post(jobCreatedEvent)
+    def jobCreatedEvent = new JobCreatedEvent(new JobKey('testJobKeyName', 'testJobKeyGroup'))
+    EventHelper.asReplicating({ eventManager.post(jobCreatedEvent) })
 
     def recordCreate = ArgumentCaptor.forClass(JobDetail)
     verify(schedulerListener).jobAdded(recordCreate.capture())
@@ -175,9 +171,8 @@ class QuartzSchedulerSPITest
 
     // on(JobUpdatedEvent)
 
-    def jobUpdateEvent = mock(JobUpdatedEvent)
-    when(jobUpdateEvent.job).thenReturn(jobDetailEntity)
-    eventManager.post(jobUpdateEvent)
+    def jobUpdateEvent = new JobUpdatedEvent(new JobKey('testJobKeyName', 'testJobKeyGroup'))
+    EventHelper.asReplicating({ eventManager.post(jobUpdateEvent) })
 
     def recordUpdate = ArgumentCaptor.forClass(JobDetail)
     verify(schedulerListener).jobAdded(recordUpdate.capture())
@@ -187,9 +182,8 @@ class QuartzSchedulerSPITest
 
     // on(JobDeletedEvent)
 
-    def jobDeletedEvent = mock(JobDeletedEvent)
-    when(jobDeletedEvent.job).thenReturn(jobDetailEntity)
-    eventManager.post(jobDeletedEvent)
+    def jobDeletedEvent = new JobDeletedEvent(new JobKey('testJobKeyName', 'testJobKeyGroup'))
+    EventHelper.asReplicating({ eventManager.post(jobDeletedEvent) })
 
     def recordDelete = ArgumentCaptor.forClass(JobKey)
     verify(schedulerListener).jobDeleted(recordDelete.capture())
@@ -198,21 +192,19 @@ class QuartzSchedulerSPITest
 
   @Test
   void 'Exercise scheduled trigger events'() {
-    def jobDetailEntity = mockJobDetailEntity()
-    def jobKey = jobDetailEntity.value.key
+    def jobKey = mockJobDetail()
     def startAt = DateTime.parse('2010-06-30T01:20')
-    def triggerEntity = mockTriggerEntity(jobKey, new Daily(startAt.toDate()))
+    def triggerKey = mockTrigger(jobKey, new Daily(startAt.toDate()))
 
     def schedulerListener = mock(SchedulerListener)
     underTest.scheduler.getListenerManager().addSchedulerListener(schedulerListener)
 
-    eventManager.register(new DistributedQuartzEventInspector(underTest))
+    eventManager.register(underTest)
 
     // on(TriggerCreatedEvent)
 
-    def triggerCreatedEvent = mock(TriggerCreatedEvent)
-    when(triggerCreatedEvent.trigger).thenReturn(triggerEntity)
-    eventManager.post(triggerCreatedEvent)
+    def triggerCreatedEvent = new TriggerCreatedEvent(triggerKey)
+    EventHelper.asReplicating({ eventManager.post(triggerCreatedEvent) })
 
     def recordCreate = ArgumentCaptor.forClass(Trigger)
     verify(schedulerListener).jobScheduled(recordCreate.capture())
@@ -222,9 +214,8 @@ class QuartzSchedulerSPITest
 
     // on(TriggerUpdatedEvent)
 
-    def triggerUpdatedEvent = mock(TriggerUpdatedEvent)
-    when(triggerUpdatedEvent.trigger).thenReturn(triggerEntity)
-    eventManager.post(triggerUpdatedEvent)
+    def triggerUpdatedEvent = new TriggerUpdatedEvent(triggerKey)
+    EventHelper.asReplicating({ eventManager.post(triggerUpdatedEvent) })
 
     def recordUpdateUnschedule = ArgumentCaptor.forClass(TriggerKey)
     verify(schedulerListener).jobUnscheduled(recordUpdateUnschedule.capture())
@@ -238,9 +229,8 @@ class QuartzSchedulerSPITest
 
     // on(TriggerDeletedEvent)
 
-    def triggerDeletedEvent = mock(TriggerDeletedEvent)
-    when(triggerDeletedEvent.trigger).thenReturn(triggerEntity)
-    eventManager.post(triggerDeletedEvent)
+    def triggerDeletedEvent = new TriggerDeletedEvent(triggerKey)
+    EventHelper.asReplicating({ eventManager.post(triggerDeletedEvent) })
 
     def recordDelete = ArgumentCaptor.forClass(TriggerKey)
     verify(schedulerListener).jobUnscheduled(recordDelete.capture())
@@ -249,34 +239,30 @@ class QuartzSchedulerSPITest
 
   @Test
   void 'Exercise run-now trigger events'() {
-    def jobDetailEntity = mockJobDetailEntity()
-    def jobKey = jobDetailEntity.value.key
-    def triggerEntity = mockTriggerEntity(jobKey, new Now())
+    def jobKey = mockJobDetail()
+    def triggerKey = mockTrigger(jobKey, new Now())
 
     def schedulerListener = mock(SchedulerListener)
     underTest.scheduler.getListenerManager().addSchedulerListener(schedulerListener)
 
     // on(TriggerCreatedEvent)
 
-    def triggerCreatedEvent = mock(TriggerCreatedEvent)
-    when(triggerCreatedEvent.trigger).thenReturn(triggerEntity)
-    eventManager.post(triggerCreatedEvent)
+    def triggerCreatedEvent = new TriggerCreatedEvent(triggerKey)
+    EventHelper.asReplicating({ eventManager.post(triggerCreatedEvent) })
 
     verifyNoMoreInteractions(schedulerListener) // run-now triggers don't affect remote schedulerListeners
 
     // on(TriggerUpdatedEvent)
 
-    def triggerUpdatedEvent = mock(TriggerUpdatedEvent)
-    when(triggerUpdatedEvent.trigger).thenReturn(triggerEntity)
-    eventManager.post(triggerUpdatedEvent)
+    def triggerUpdatedEvent = new TriggerUpdatedEvent(triggerKey)
+    EventHelper.asReplicating({ eventManager.post(triggerUpdatedEvent) })
 
     verifyNoMoreInteractions(schedulerListener) // run-now triggers don't affect remote schedulerListeners
 
     // on(TriggerDeletedEvent)
 
-    def triggerDeletedEvent = mock(TriggerDeletedEvent)
-    when(triggerDeletedEvent.trigger).thenReturn(triggerEntity)
-    eventManager.post(triggerDeletedEvent)
+    def triggerDeletedEvent = new TriggerDeletedEvent(triggerKey)
+    EventHelper.asReplicating({ eventManager.post(triggerDeletedEvent) })
 
     verifyNoMoreInteractions(schedulerListener) // run-now triggers don't affect remote schedulerListeners
   }
@@ -521,6 +507,7 @@ class QuartzSchedulerSPITest
     Trigger trigger = mock(Trigger)
     when(scheduler.getTrigger(eq(TriggerKey.triggerKey(key.getName(), key.getGroup())))).thenReturn(trigger)
     when(trigger.getJobDataMap()).thenReturn(jobDataMap)
+    when(trigger.getJobKey()).thenReturn(new JobKey('testJobKeyName', 'testJobKeyGroup'))
 
     TriggerKey triggerKey = TriggerKey.triggerKey(keyName, 'nexus')
     when(trigger.getKey()).thenReturn(triggerKey)
@@ -586,30 +573,39 @@ class QuartzSchedulerSPITest
 
   }
 
-  private JobDetailEntity mockJobDetailEntity() {
-    def jobDetailEntity = mock(JobDetailEntity)
-    def jobDetail = mock(JobDetail)
+  private JobKey mockJobDetail() {
     def jobKey = new JobKey('testJobKeyName', 'testJobKeyGroup')
-    when(jobDetailEntity.value).thenReturn(jobDetail)
+    def jobDetail = mock(JobDetail)
+    JobDataMap map = new JobDataMap(new Manual().asMap());
+    map.put(".id", "my-id")
+    map.put(".typeId", "type-id")
+
     when(jobDetail.key).thenReturn(jobKey)
     when(jobDetail.description).thenReturn('test job description')
     when(jobDetail.jobClass).thenReturn(Job)
-    when(jobDetail.jobDataMap).thenReturn(new JobDataMap())
+    when(jobDetail.jobDataMap).thenReturn(map)
     when(jobDetail.durable).thenReturn(false)
     when(jobDetail.requestsRecovery()).thenReturn(false)
     when(jobStore.retrieveJob(jobKey)).thenReturn(jobDetail)
-    return jobDetailEntity
+
+    return jobKey
   }
 
-  private TriggerEntity mockTriggerEntity(JobKey jobKey, Schedule schedule) {
-    def triggerEntity = mock(TriggerEntity)
+  private TriggerKey mockTrigger(JobKey jobKey, Schedule schedule) {
     def trigger = mock(OperableTrigger)
     def triggerKey = new TriggerKey('testTriggerKeyName', 'testTriggerKeyGroup')
-    when(triggerEntity.value).thenReturn(trigger)
+
     when(trigger.key).thenReturn(triggerKey)
     when(trigger.jobKey).thenReturn(jobKey)
     when(trigger.description).thenReturn('test trigger description')
-    when(trigger.jobDataMap).thenReturn(new JobDataMap(schedule.asMap()))
-    return triggerEntity
+
+    JobDataMap map = new JobDataMap(new Manual().asMap());
+    map.put(".id", "my-id")
+    map.put(".typeId", "type-id")
+    when(trigger.jobDataMap).thenReturn(map)
+
+    when(jobStore.retrieveTrigger(triggerKey)).thenReturn(trigger);
+
+   return triggerKey;
   }
 }

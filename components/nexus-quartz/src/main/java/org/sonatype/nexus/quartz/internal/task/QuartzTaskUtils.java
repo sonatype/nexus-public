@@ -87,8 +87,19 @@ public class QuartzTaskUtils {
    */
   public static TaskConfiguration configurationOf(final JobDetail jobDetail) {
     checkNotNull(jobDetail);
+
+    return configurationOf(jobDetail.getJobDataMap());
+  }
+
+  /**
+   * Extracts {@link TaskConfiguration} from given {@link JobDetail}.
+   *
+   * Only copies string values from job-data map.
+   */
+  public static TaskConfiguration configurationOf(final JobDataMap jobDataMap) {
+    checkNotNull(jobDataMap);
     TaskConfiguration config = new TaskConfiguration();
-    for (Entry<String, Object> entry : jobDetail.getJobDataMap().entrySet()) {
+    for (Entry<String, Object> entry : jobDataMap.entrySet()) {
       if (entry.getValue() instanceof String) {
         config.setString(entry.getKey(), (String) entry.getValue());
       }

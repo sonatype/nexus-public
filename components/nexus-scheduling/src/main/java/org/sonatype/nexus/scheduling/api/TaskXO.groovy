@@ -12,15 +12,16 @@
  */
 package org.sonatype.nexus.scheduling.api
 
+import org.sonatype.nexus.scheduling.ExternalTaskState
+import org.sonatype.nexus.scheduling.TaskInfo
+
 import groovy.transform.CompileStatic
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
 
-import org.sonatype.nexus.scheduling.TaskInfo
-
 /**
  * Task transfer object for REST APIs.
- * 
+ *
  * @since 3.6
  */
 @CompileStatic
@@ -44,19 +45,17 @@ class TaskXO
 
   Date lastRun
 
-  static TaskXO fromTaskInfo(final TaskInfo taskInfo) {
+  static TaskXO fromTaskInfo(final TaskInfo taskInfo, ExternalTaskState externalTaskState) {
     TaskXO taskXO = new TaskXO()
 
     taskXO.id = taskInfo.id
     taskXO.name = taskInfo.name
     taskXO.type = taskInfo.typeId
     taskXO.message = taskInfo.message
-    taskXO.currentState = taskInfo.currentState.state.toString()
+    taskXO.currentState = externalTaskState.getState()?.toString()
     taskXO.nextRun = taskInfo.currentState.nextRun
-    if (taskInfo.lastRunState != null) {
-      taskXO.lastRunResult = taskInfo.lastRunState.endState?.toString()
-      taskXO.lastRun = taskInfo.lastRunState.runStarted
-    }
+    taskXO.lastRunResult = externalTaskState.getLastEndState()?.toString()
+    taskXO.lastRun = externalTaskState.getLastRunStarted()
     return taskXO
   }
 }

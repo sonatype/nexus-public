@@ -21,8 +21,8 @@ import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotAllowedException;
-import javax.ws.rs.POST;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -32,8 +32,8 @@ import javax.ws.rs.WebApplicationException;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.Resource;
-import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.TaskInfo;
+import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.api.TaskXO;
 import org.sonatype.nexus.scheduling.internal.resources.doc.TasksResourceDoc;
 
@@ -72,6 +72,7 @@ public class TasksResource
     this.taskScheduler = checkNotNull(taskScheduler);
   }
 
+  @Override
   @GET
   @RequiresAuthentication
   @RequiresPermissions("nexus:tasks:read")
@@ -79,20 +80,23 @@ public class TasksResource
     List<TaskXO> taskXOs = taskScheduler.listsTasks().stream()
         .filter(taskInfo -> taskInfo.getConfiguration().isVisible())
         .filter(taskInfo -> typeParameterMatches(type, taskInfo))
-        .map(TaskXO::fromTaskInfo)
+        .map(taskInfo -> TaskXO.fromTaskInfo(taskInfo, taskScheduler.toExternalTaskState(taskInfo)))
         .collect(toList());
 
     return new Page<>(taskXOs, null);
   }
 
+  @Override
   @GET
   @Path("/{id}")
   @RequiresAuthentication
   @RequiresPermissions("nexus:tasks:read")
   public TaskXO getTaskById(@PathParam("id") final String id) {
-    return TaskXO.fromTaskInfo(getTaskInfo(id));
+    TaskInfo task = getTaskInfo(id);
+    return TaskXO.fromTaskInfo(task, taskScheduler.toExternalTaskState(task));
   }
 
+  @Override
   @POST
   @Path("/{id}/run")
   @RequiresAuthentication
@@ -116,6 +120,7 @@ public class TasksResource
     }
   }
 
+  @Override
   @POST
   @Path("/{id}/stop")
   @RequiresAuthentication
