@@ -51,7 +51,6 @@ export default {
         PROXIES: 'All Proxy Repositories'
       },
       PATH_LABEL: 'Path',
-      PATH_DESCRIPTION: 'Enter a request path to check if it would be blocked or allowed. Requests always start with a leading slash.',
       COLUMNS: {
         REPOSITORY: 'Repository',
         TYPE: 'Type',
