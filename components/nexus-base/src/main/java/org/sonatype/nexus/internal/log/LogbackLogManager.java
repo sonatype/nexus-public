@@ -47,7 +47,6 @@ import org.sonatype.nexus.common.log.LoggerOverridesReloadEvent;
 import org.sonatype.nexus.common.log.LoggersResetEvent;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
-import org.sonatype.nexus.internal.log.overrides.datastore.DatastoreLoggerOverrides;
 import org.sonatype.nexus.internal.log.overrides.datastore.LoggerOverridesEvent;
 import org.sonatype.nexus.internal.log.overrides.datastore.LoggerOverridesEvent.Action;
 import org.sonatype.nexus.logging.task.TaskLogHome;
@@ -430,9 +429,7 @@ public class LogbackLogManager
     String name = loggerOverridesEvent.getName();
     String strLevel = loggerOverridesEvent.getLevel();
     Level level = Objects.isNull(strLevel) ? null : Level.toLevel(strLevel);
-    if (overrides instanceof DatastoreLoggerOverrides) {
-      ((DatastoreLoggerOverrides) overrides).synchroniseLocalMapWithDB();
-    }
+    overrides.syncWithDBAndGet();
 
     if (loggerOverridesEvent.getAction() == Action.CHANGE) {
       log.trace("Setting log level to {} for logger named '{}' in the scope of log overrides propagation", name, level);
@@ -555,5 +552,16 @@ public class LogbackLogManager
       log.debug("File {} skipped as not valid log file", path.getFileName().toString());
     }
     return isValid;
+  }
+
+  public Map<String, LoggerLevel> getEffectiveLoggersUpdatedByFetchedOverrides() {
+    Map<String, LoggerLevel> loggersOverrides = overrides.syncWithDBAndGet();
+    Map<String, LoggerLevel> loggers = getLoggers();
+    if (Objects.isNull(loggersOverrides) || loggersOverrides.isEmpty()) {
+      return loggers;
+    }
+
+    loggers.putAll(loggersOverrides);
+    return loggers;
   }
 }

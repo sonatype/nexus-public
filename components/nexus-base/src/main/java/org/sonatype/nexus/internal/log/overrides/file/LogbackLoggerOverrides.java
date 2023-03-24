@@ -13,6 +13,7 @@
 package org.sonatype.nexus.internal.log.overrides.file;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -83,6 +84,12 @@ public class LogbackLoggerOverrides
       Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
+  }
+
+  @Override
+  public Map<String, LoggerLevel> syncWithDBAndGet() {
+    // Not applicable to Orient
+    return loggerLevels;
   }
 
   @Override

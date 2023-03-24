@@ -108,4 +108,10 @@ public interface LogManager
    * @since 2.7
    */
   LoggerLevel getLoggerEffectiveLevel(String name);
+
+  /**
+   * Return effective loggers map(logger name - log level), updated by latest overrides fetched from datastore
+   * that might not be yet propagated by DES
+   */
+  Map<String, LoggerLevel> getEffectiveLoggersUpdatedByFetchedOverrides();
 }

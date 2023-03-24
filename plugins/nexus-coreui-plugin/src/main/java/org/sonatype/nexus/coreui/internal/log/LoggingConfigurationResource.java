@@ -68,7 +68,11 @@ public class LoggingConfigurationResource
   public Collection<LoggerXO> readAll() {
     lock.readLock().lock();
     try {
-      return logManager.getLoggers().entrySet().stream().map(LoggerXO::fromEntry).collect(toSet());
+      return logManager.getEffectiveLoggersUpdatedByFetchedOverrides()
+          .entrySet()
+          .stream()
+          .map(LoggerXO::fromEntry)
+          .collect(toSet());
     }
     finally {
       lock.readLock().unlock();

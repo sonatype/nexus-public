@@ -85,7 +85,7 @@ public class DatastoreLoggerOverrides
   @Override
   protected void doStart() throws Exception {
     log.debug("Load overrides from datastore");
-    synchroniseLocalMapWithDB();
+    syncWithDBAndGet();
 
     // if override level is loaded from xml file but not presented in db - migrate it
 
@@ -100,14 +100,13 @@ public class DatastoreLoggerOverrides
     levelsMigrateToDb.forEach(loggingLevelsStore::create);
   }
 
-  /**
-   * Reload logger overrides from datastore
-   */
-  public void synchroniseLocalMapWithDB() {
+  @Override
+  public Map<String, LoggerLevel> syncWithDBAndGet() {
     loggerLevelsLock.writeLock().lock();
     Continuation<LoggingOverridesData> levels = loggingLevelsStore.readRecords();
     levels.forEach(data -> loggerLevels.put(data.getName(), LoggerLevel.valueOf(data.getLevel())));
     loggerLevelsLock.writeLock().unlock();
+    return loggerLevels;
   }
 
   @Override
