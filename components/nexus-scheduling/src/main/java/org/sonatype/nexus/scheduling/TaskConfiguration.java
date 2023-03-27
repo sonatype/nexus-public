@@ -311,6 +311,14 @@ public class TaskConfiguration
   public void setBoolean(final String key, final boolean value) {
     setString(key, value, String::valueOf);
   }
+
+  @Nullable
+  public Integer getInteger(final String key) {
+    return Optional.ofNullable(getString(key))
+        .map(Integer::parseInt)
+        .orElse(null);
+  }
+
   @Override
   public int getInteger(final String key, final int defaultValue) {
     return Integer.parseInt(getString(key, String.valueOf(defaultValue)));

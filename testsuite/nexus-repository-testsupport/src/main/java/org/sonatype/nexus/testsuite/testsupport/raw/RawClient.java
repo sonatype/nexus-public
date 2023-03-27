@@ -21,6 +21,7 @@ import org.sonatype.nexus.testsuite.testsupport.FormatClientSupport;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.entity.EntityBuilder;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -55,7 +56,7 @@ public class RawClient
     return status(execute(put));
   }
 
-  public HttpResponse put(String path, HttpEntity entity) throws IOException {
+  public CloseableHttpResponse put(final String path, final HttpEntity entity) throws IOException {
     final URI uri = resolve(path);
     final HttpPut put = new HttpPut(uri);
     put.setEntity(entity);
