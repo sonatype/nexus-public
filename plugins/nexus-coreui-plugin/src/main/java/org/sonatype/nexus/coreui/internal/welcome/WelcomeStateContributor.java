@@ -31,7 +31,7 @@ public class WelcomeStateContributor
   private final Map<String, Object> state;
 
   @Inject
-  public WelcomeStateContributor(@Named("${nexus.react.welcome:-false}") final Boolean featureFlag) {
+  public WelcomeStateContributor(@Named("${nexus.react.welcome:-true}") final Boolean featureFlag) {
     state = ImmutableMap.of("nexus.react.welcome", featureFlag);
   }
 

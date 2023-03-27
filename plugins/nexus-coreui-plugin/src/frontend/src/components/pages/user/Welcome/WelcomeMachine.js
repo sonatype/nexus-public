@@ -121,7 +121,10 @@ const welcomeMachine = createMachine({
         ExtAPIUtils.checkForError(wrappedLog4jResponse);
       }
 
-      const showOutreachIframe = Boolean(outreachStatusResponse?.result?.success),
+      // the outreach response includes a `data` property that is a long hexadecimal string (when the iframe should
+      // be enabled) or null when the iframe should be disabled
+      const showOutreachIframe =
+              Boolean(outreachStatusResponse?.result?.success) && outreachStatusResponse?.result?.data !== null,
           isAvailableLog4jDisclaimer = isAdmin ? ExtAPIUtils.extractResult(wrappedLog4jResponse) : null,
           proxyDownloadNumberParams = ExtAPIUtils.extractResult(wrappedProxyDownloadNumbersResponse);
 
