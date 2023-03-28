@@ -104,6 +104,11 @@ export default class ExtAPIUtils {
     }
   }
 
+  static checkForErrorAndExtract(response) {
+    ExtAPIUtils.checkForError(response);
+    return ExtAPIUtils.extractResult(response);
+  }
+
   /**
    * @param {Object} options [required] - The request data configuration
    * @param {*} options.data [optional] - The request data

@@ -18,7 +18,7 @@ import Axios from 'axios';
 import {assign} from 'xstate';
 import {APIConstants, ExtAPIUtils, ListMachineUtils} from '@sonatype/nexus-ui-plugin';
 
-const {REST: {PUBLIC: {UPLOAD: uploadUrl}}, EXT: {UPLOAD: {ACTION, METHODS}}} = APIConstants;
+const {EXT: {UPLOAD: {ACTION, METHODS}, REPOSITORY}} = APIConstants;
 
 export default ListMachineUtils.buildListMachine({
   id: 'UploadListMachine',
@@ -29,12 +29,11 @@ export default ListMachineUtils.buildListMachine({
       const formats = new Set();
       definitions.data.forEach((def) => formats.add(def.format));
 
-      const filteredRepos = repositories.data.filter((repo) => (
+      const filteredRepos = repositories.filter((repo) => (
         formats.has(repo.format)
         && repo.type === 'hosted'
-        && repo.online !== false
-        && (repo.storage?.writePolicy === 'ALLOW' || repo.storage?.writePolicy === 'ALLOW_ONCE')
-        && repo.maven?.versionPolicy !== 'SNAPSHOT'
+        && (repo.status == null || repo.status?.online !== false)
+        && repo.versionPolicy !== 'SNAPSHOT'
       ));
 
       return {
@@ -50,7 +49,8 @@ export default ListMachineUtils.buildListMachine({
   services: {
     fetchData: () => {
       return Axios.all([
-        Axios.get(uploadUrl),
+        ExtAPIUtils.extAPIRequest(REPOSITORY.ACTION, REPOSITORY.METHODS.READ_REFERENCES, {})
+            .then(ExtAPIUtils.checkForErrorAndExtract),
         ExtAPIUtils.extAPIRequest(ACTION, METHODS.GET_UPLOAD_DEFINITIONS).then(v => v.data.result),
       ])
     },

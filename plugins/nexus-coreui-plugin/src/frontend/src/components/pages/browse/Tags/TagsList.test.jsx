@@ -90,8 +90,8 @@ describe('TagsList', function() {
   it('renders the resolved data', async function() {
     await renderView(tags);
 
-    expect(TestUtils.expectTableHeaders(Object.values(COLUMNS)));
-    expect(TestUtils.expectTableRows(tags.items, Object.values(FIELDS)));
+    TestUtils.expectTableHeaders(Object.values(COLUMNS));
+    TestUtils.expectTableRows(tags.items, Object.values(FIELDS));
   });
 
   it('renders a "Filter" text input', async function() {

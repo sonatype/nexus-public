@@ -125,7 +125,7 @@ describe('BrowseList', function() {
   it('renders the resolved data', async function() {
     await renderView({data:REPOS});
 
-    expect(TestUtils.expectTableHeaders(Object.values(COLUMNS)));
+    TestUtils.expectTableHeaders(Object.values(COLUMNS));
 
     const rows = selectors.rows();
     const keys = Object.values(FIELDS);

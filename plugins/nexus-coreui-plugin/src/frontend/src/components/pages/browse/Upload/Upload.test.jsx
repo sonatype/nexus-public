@@ -12,49 +12,69 @@
  */
 import React from 'react';
 import axios from 'axios';
+import {when} from 'jest-when';
 import {render, screen, waitForElementToBeRemoved, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {sort, prop, descend, ascend} from 'ramda';
+import {APIConstants} from '@sonatype/nexus-ui-plugin';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import UploadList from './UploadList';
 import{REPOS, FORMATS, FIELDS} from './UploadList.testdata';
 import UIStrings from '../../../../constants/UIStrings';
 
+const {COLUMNS} = UIStrings.UPLOAD.LIST;
+const {EXT: {URL, UPLOAD, REPOSITORY}} = APIConstants;
+
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'),
-  get: jest.fn(),
   post: jest.fn(),
 }));
 
+const selectors = {
+  ...TestUtils.selectors,
+  ...TestUtils.tableSelectors,
+  getEmptyMessage: () => screen.getByText('No repositories found.'),
+  getFilterInput: () => screen.getByPlaceholderText('Filter'),
+};
+
+const REPOS_REQUEST = expect.objectContaining({
+  action: REPOSITORY.ACTION,
+  method: REPOSITORY.METHODS.READ_REFERENCES,
+});
+
+const FORMATS_REQUEST = expect.objectContaining({
+  action: UPLOAD.ACTION,
+  method: UPLOAD.METHODS.GET_UPLOAD_DEFINITIONS,
+});
+
 describe('UploadList', function() {
-  const {COLUMNS} = UIStrings.UPLOAD.LIST;
-  const selectors = {
-    ...TestUtils.selectors,
-    ...TestUtils.tableSelectors,
-    getEmptyMessage: () => screen.getByText('No repositories found.'),
-    getFilterInput: () => screen.getByPlaceholderText('Filter'),
+  const mockApiResponses = (data) => {
+    when(axios.post).calledWith(URL, REPOS_REQUEST).mockResolvedValue({data: TestUtils.makeExtResult(data)});
+    when(axios.post).calledWith(URL, FORMATS_REQUEST).mockResolvedValue({data: TestUtils.makeExtResult(FORMATS)});
   };
+
+  async function renderView(data = REPOS) {
+    mockApiResponses(data);
+    render(<UploadList />);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+  }
 
   const sortRepos = (field, order = ascend) => sort(order(prop(field)), REPOS);
 
-  async function renderView(data) {
-    axios.get.mockResolvedValue(data);
-    axios.post.mockResolvedValue({data: TestUtils.makeExtResult(FORMATS)});
-    render(<UploadList />);
-    await waitForElementToBeRemoved(selectors.queryLoadingMask());
-  };
-
   it('renders the resolved empty text', async function() {
-    await renderView({data:[]})
+    await renderView([])
 
     expect(selectors.getEmptyMessage()).toBeInTheDocument();
   });
 
   it('renders the error message', async function() {
-    axios.get.mockRejectedValue({message: 'Error'});
+    const message = 'Error Message!';
+    when(axios.post).calledWith(URL, REPOS_REQUEST).mockRejectedValue({message});
+
     render(<UploadList />);
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
     const error = selectors.tableAlert();
 
     expect(error).toBeInTheDocument();
@@ -62,15 +82,15 @@ describe('UploadList', function() {
   });
 
   it('renders the resolved data', async function() {
-    await renderView({data: REPOS});
+    await renderView();
 
-    expect(TestUtils.expectTableHeaders(Object.values(COLUMNS)));
-    expect(TestUtils.expectTableRows(REPOS, Object.values(FIELDS)));
+    TestUtils.expectTableHeaders(Object.values(COLUMNS));
+    TestUtils.expectTableRows(REPOS, Object.values(FIELDS));
   });
 
   it('renders copy button in each row with tooltips of "Copy URL to Clipboard" when hovering',
     async function() {
-      await renderView({data: REPOS});
+      await renderView();
       const rows = selectors.rows(),
         row1CopyBtn = within(rows[0]).getAllByRole('button')[0],
         row2CopyBtn = within(rows[1]).getAllByRole('button')[0],
@@ -86,8 +106,9 @@ describe('UploadList', function() {
 
   it('calls onCopyUrl when copy button is clicked', async function () {
     const onCopyUrl = jest.fn((event) => event.stopPropagation());
-    axios.get.mockResolvedValue({data: REPOS});
-    axios.post.mockResolvedValue({data: TestUtils.makeExtResult(FORMATS)});
+
+    mockApiResponses(REPOS);
+
     render(<UploadList copyUrl={onCopyUrl} />);
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -100,13 +121,13 @@ describe('UploadList', function() {
   });
 
   it('renders a "Filter" text input', async function() {
-    await renderView({data: REPOS});
+    await renderView();
 
     expect(selectors.getFilterInput()).toBeInTheDocument();
   });
 
   it('filters by the text value when the user types into the filter', async function() {
-    await renderView({data: REPOS});
+    await renderView();
 
     await TestUtils.expectProperFilteredItemsCount(selectors.getFilterInput, '', REPOS.length);
     await TestUtils.expectProperFilteredItemsCount(selectors.getFilterInput, 'maven', 2);
@@ -114,7 +135,7 @@ describe('UploadList', function() {
   });
 
   it('unfilters when the clear button is pressed', async function() {
-    await renderView({data: REPOS});
+    await renderView();
 
     await TestUtils.expectProperFilteredItemsCount(selectors.getFilterInput, '', REPOS.length);
     await TestUtils.expectProperFilteredItemsCount(selectors.getFilterInput, 'maven', 2);
@@ -126,7 +147,7 @@ describe('UploadList', function() {
   });
 
   it('unfilters when the ESC key is pressed', async function() {
-    await renderView({data: REPOS});
+    await renderView();
 
     await TestUtils.expectProperFilteredItemsCount(selectors.getFilterInput, '', REPOS.length);
     await TestUtils.expectProperFilteredItemsCount(selectors.getFilterInput, 'maven', 2);
@@ -136,7 +157,7 @@ describe('UploadList', function() {
   });
 
   it('sorts the rows by name', async function() {
-    await renderView({data: REPOS});
+    await renderView();
 
     const nameHeader = selectors.headerCell(COLUMNS.NAME);
 
@@ -152,7 +173,7 @@ describe('UploadList', function() {
   });
 
   it('sorts the rows by format', async function() {
-    await renderView({data: REPOS});
+    await renderView();
 
     const nameHeader = selectors.headerCell(COLUMNS.FORMAT);
 
@@ -168,7 +189,7 @@ describe('UploadList', function() {
   });
 
   it('renders tooltips of sorting direction when hovering', async function() {
-    await renderView({data: REPOS});
+    await renderView();
 
     const headerBtn = within(selectors.headerCell(COLUMNS.FORMAT)).getByRole('button');
 
