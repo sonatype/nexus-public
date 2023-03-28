@@ -34,7 +34,8 @@ export default {
       SUBMIT_BTN_LABEL: 'Upload',
       ADD_ANOTHER_ASSET_BTN_LABEL: 'Add another asset',
       ASSET_GROUP_NAME: assetNum => `Asset ${assetNum}`,
-      ASSET_NOT_UNIQUE_MESSAGE: 'Asset not unique'
+      ASSET_NOT_UNIQUE_MESSAGE: 'Asset not unique',
+      COORDINATES_EXTRACTED_FROM_POM_MESSAGE: 'Component details will be extracted from the provided POM file.'
     },
     URL_COPIED_MESSAGE: 'URL Copied to Clipboard',
   }

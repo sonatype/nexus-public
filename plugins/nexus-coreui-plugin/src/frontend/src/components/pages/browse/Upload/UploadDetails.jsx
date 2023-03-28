@@ -15,6 +15,7 @@ import { useMachine } from '@xstate/react';
 import {
   NxButton,
   NxButtonBar,
+  NxCheckbox,
   NxFileUpload,
   NxFontAwesomeIcon,
   NxForm,
@@ -22,6 +23,7 @@ import {
   NxFormRow,
   NxH1,
   NxH2,
+  NxInfoAlert,
   NxPageMain,
   NxPageTitle,
   NxStatefulForm,
@@ -29,28 +31,37 @@ import {
   NxTile
 } from '@sonatype/react-shared-components';
 import { faPlus, faUpload, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
-import { filter, isEmpty, keys, map, match, mapObjIndexed, test, values } from 'ramda';
+import { filter, isEmpty, keys, map, match, mapObjIndexed, path, split, test, values } from 'ramda';
 
 import { FormUtils } from '@sonatype/nexus-ui-plugin';
 
 import UploadStrings from '../../../../constants/pages/browse/upload/UploadStrings';
 
 import machine from './UploadDetailsMachine.js';
-import { COMPOUND_FIELD_PARENT_NAME, ASSET_NUM_MATCHER } from './UploadDetailsUtils.js';
+import { COMPOUND_FIELD_PARENT_NAME, ASSET_NUM_MATCHER, MAVEN_FORMAT, MAVEN_COMPONENT_COORDS_GROUP }
+  from './UploadDetailsUtils.js';
+
 import './UploadDetails.scss';
 
 /**
  * React component that renders a form group from a componentField/assetField structure and the
  * machine state
  */
-function Field({ displayName, helpText, name, optional, machineState, send, validatable }) {
-  return (
-    <NxFormGroup label={displayName} sublabel={helpText} isRequired={!optional}>
-      <NxTextInput { ...FormUtils.fieldProps(name, machineState) }
-                   validatable={!optional || validatable}
-                   onChange={FormUtils.handleUpdate(name, send)} />
-    </NxFormGroup>
-  );
+function Field({ displayName, helpText, name, type, optional, machineState, send, validatable }) {
+  const disabled = !!path(split('.', name), machineState.context.disabledFields);
+
+  return type === 'BOOLEAN' ?
+      <NxCheckbox { ...FormUtils.checkboxProps(name, machineState) }
+                  disabled={disabled}
+                  onChange={FormUtils.handleUpdate(name, send)}>
+        {displayName}
+      </NxCheckbox> :
+      <NxFormGroup label={displayName} sublabel={helpText} isRequired={!optional}>
+        <NxTextInput { ...FormUtils.fieldProps(name, machineState) }
+                      disabled={disabled}
+                     onChange={FormUtils.handleUpdate(name, send)}
+                     validatable={!optional || validatable} />
+      </NxFormGroup>;
 }
 
 export default function UploadDetails({ itemId }) {
@@ -60,7 +71,7 @@ export default function UploadDetails({ itemId }) {
         },
         devTools: true
       }),
-      { multipleUpload, repoSettings, componentFieldsByGroup, assetFields, data } = state.context,
+      { multipleUpload, repoSettings, componentFieldsByGroup, assetFields, data, hasPomExtension } = state.context,
       assetStateKeys = filter(test(ASSET_NUM_MATCHER), keys(data));
 
   const mkField = field => <Field key={field.name} { ...field } machineState={state} send={send} />,
@@ -144,12 +155,19 @@ export default function UploadDetails({ itemId }) {
                 }
               </NxTile.Subsection>
               { values(mapObjIndexed((fields, group) => {
-                  const sectionId = `upload-details-group-${group.toLowerCase().replace(' ', '-')}`;
+                  const sectionId = `upload-details-group-${group.toLowerCase().replace(' ', '-')}`,
+                      isMavenComponentCoords =
+                          repoSettings.format === MAVEN_FORMAT && group === MAVEN_COMPONENT_COORDS_GROUP,
+                      disabled = isMavenComponentCoords && hasPomExtension;
+
                   return (
                     <NxTile.Subsection aria-labelledby={sectionId} key={group}>
                       <NxTile.SubsectionHeader>
                         <NxH2 id={sectionId}>{group}</NxH2>
                       </NxTile.SubsectionHeader>
+                      { disabled &&
+                        <NxInfoAlert>{UploadStrings.UPLOAD.DETAILS.COORDINATES_EXTRACTED_FROM_POM_MESSAGE}</NxInfoAlert>
+                      }
                       { map(mkField, fields) }
                     </NxTile.Subsection>
                   );

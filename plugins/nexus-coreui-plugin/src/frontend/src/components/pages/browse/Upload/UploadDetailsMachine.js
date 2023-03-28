@@ -22,6 +22,7 @@ import {
   complement,
   compose,
   concat,
+  chain,
   defaultTo,
   dissoc,
   evolve,
@@ -33,6 +34,7 @@ import {
   fromPairs,
   groupBy,
   head,
+  includes,
   is,
   isEmpty,
   isNil,
@@ -49,6 +51,7 @@ import {
   pair,
   path,
   prop,
+  pickBy,
   pipe,
   propEq,
   reject,
@@ -68,7 +71,14 @@ import { SUBMIT_MASK_SUCCESS_VISIBLE_TIME_MS, combineValidationErrors, hasValida
 import { APIConstants, ExtJS, FormUtils, ValidationUtils, ExtAPIUtils, UIStrings, Utils }
   from '@sonatype/nexus-ui-plugin';
 
-import { COMPOUND_FIELD_PARENT_NAME, ASSET_NUM_MATCHER } from './UploadDetailsUtils';
+import {
+  COMPOUND_FIELD_PARENT_NAME,
+  ASSET_NUM_MATCHER,
+  MAVEN_FORMAT,
+  MAVEN_GENERATE_POM_FIELD_NAME,
+  MAVEN_PACKAGING_FIELD_NAME,
+  MAVEN_COMPONENT_COORDS_GROUP
+} from './UploadDetailsUtils';
 import UploadStrings from '../../../../constants/pages/browse/upload/UploadStrings';
 
 /**
@@ -78,11 +88,26 @@ import UploadStrings from '../../../../constants/pages/browse/upload/UploadStrin
 const mkStateObjFromFieldDefs = pipe(defaultTo([]), map(field => [field.name, '']), fromPairs);
 
 /**
- * @param defs a list of componentField or assetField definition objects, with the assetField definitions transformed
- * to use fully-qualified dot-separated names (e.g. `asset0.pathId` rather than just `pathId`)
  * @return a list of the names of the fields which are required, as path arrays (e.g. split on the dot)
  */
-const getRequiredFieldNames = pipe(filter(complement(prop('optional'))), map(pipe(prop('name'), split('.'))));
+function getRequiredFieldNames(componentFieldsByGroup, assetFields, assetKeys, hasPomExtension) {
+  // For each assetKey (e.g. "asset0") and each assetField definition object, construct an assetField
+  // definition object with the fully qualified field name (e.g. "asset0.pathId")
+  const assetFieldsWithFullNames = map(
+          assetKey => map(evolve({ name: concat(`${assetKey}.`) }), assetFields),
+          assetKeys
+      ),
+
+      // If we have a POM extension, the "Component coordinates" section is disabled and should
+      // not be validated
+      filteredComponentFieldsByGroup =
+          hasPomExtension ? dissoc(MAVEN_COMPONENT_COORDS_GROUP, componentFieldsByGroup) : componentFieldsByGroup,
+
+      fields = flatten([values(filteredComponentFieldsByGroup), assetFieldsWithFullNames]),
+      requiredFields = filter(complement(prop('optional')), fields);
+
+  return map(pipe(prop('name'), split('.')), requiredFields);
+}
 
 /**
  * For each file upload present on the form, an object of this structure is present
@@ -169,9 +194,15 @@ const fileValidator = f => f === null ? UIStrings.ERROR.FIELD_REQUIRED : null;
 /**
  * @param regexMap an object containing the regex to apply and the list of fields to set based on its capture groups
  * @return a function which takes a string and returns an object with keys from the fieldList and values
- * derived from the regex capture groups
+ * derived from the regex capture groups. If a capture group results in undefined, the object will have that key's
+ * value set to ''
  */
-const mkRegexMapper = ({ regex, fieldList }) => pipe(match(new RegExp(regex)), tail, zipObj(fieldList));
+const mkRegexMapper = ({ regex, fieldList }) => pipe(
+  match(new RegExp(regex)),
+  tail,
+  map(defaultTo('')),
+  zipObj(fieldList)
+);
 
 /**
  * Check asset fields for uniqueness and return object containing field-level validation errors
@@ -228,6 +259,35 @@ const objHasValidationErrors = pipe(filter(hasValidationErrors), complement(isEm
  */
 const getAssetKeysWithoutValidationErrors = pipe(filter(is(Object)), reject(objHasValidationErrors), keys);
 
+/*
+ * Special behaviors for the Maven format:
+ * If any "Extension" asset field is set to "pom", disable all fields within the "Component coordinates" group.
+ * If the "Generate a POM file with these coordinates" box is checked, disable the "Packaging" field.
+ */
+const setDisabledAction = assign(context => {
+  const { componentFieldsByGroup, data, repoSettings } = context;
+
+  if (repoSettings.format === MAVEN_FORMAT) {
+    const extensionFieldValues =
+            chain(([k, v]) => test(ASSET_NUM_MATCHER, k) ? [v.extension.trim()] : [], toPairs(data)),
+        hasPomExtension = includes('pom', extensionFieldValues),
+        componentCoordFieldNames = map(prop('name'), componentFieldsByGroup[MAVEN_COMPONENT_COORDS_GROUP]),
+        generatePomValue = data[MAVEN_GENERATE_POM_FIELD_NAME],
+        disabledByExtension = fromPairs(map(pair(__, hasPomExtension), componentCoordFieldNames));
+
+    return {
+      disabledFields: {
+        ...disabledByExtension,
+        [MAVEN_PACKAGING_FIELD_NAME]: disabledByExtension[MAVEN_PACKAGING_FIELD_NAME] || !generatePomValue
+      },
+      hasPomExtension
+    };
+  }
+  else {
+    return context;
+  }
+});
+
 export default FormUtils.buildFormMachine({
   id: 'UploadDetailsMachine',
   stateAfterSave: 'saved',
@@ -249,7 +309,7 @@ export default FormUtils.buildFormMachine({
           loaded: {
             on: {
               UPDATE: {
-                actions: ['update', 'processRegexMaps']
+                actions: ['update', 'processRegexMaps', 'setDisabled']
               }
             }
           }
@@ -262,7 +322,7 @@ export default FormUtils.buildFormMachine({
             actions: ['addAsset', 'validate']
           },
           DELETE_ASSET: {
-            actions: ['deleteAsset', 'validate']
+            actions: ['deleteAsset', 'validate', 'setDisabled']
           }
         }
       })
@@ -321,20 +381,12 @@ export default FormUtils.buildFormMachine({
     }),
 
     validate: assign({
-      validationErrors: ({ data, componentFieldsByGroup, assetFields }) => {
+      validationErrors: ({ data, componentFieldsByGroup, assetFields, hasPomExtension }) => {
         const assetKeys = filter(test(ASSET_NUM_MATCHER), keys(data)),
-
-            // For each assetKey (e.g. "asset0") and each assetField definition object, construct an assetField
-            // definition object with the fully qualified field name (e.g. "asset0.pathId")
-            assetFieldsWithFullNames = map(
-                assetKey => map(evolve({ name: concat(`${assetKey}.`) }), assetFields),
-                assetKeys
-            ),
-            fileUploadFullNamePaths = map(pair(__, COMPOUND_FIELD_PARENT_NAME), assetKeys),
-
-            fields = flatten([values(componentFieldsByGroup), assetFieldsWithFullNames]),
-            requiredFields = getRequiredFieldNames(fields),
+            requiredFields = getRequiredFieldNames(componentFieldsByGroup, assetFields, assetKeys, hasPomExtension),
             fieldValidationErrors = applyToPaths(requiredFields, ValidationUtils.validateNotBlank, data),
+
+            fileUploadFullNamePaths = map(pair(__, COMPOUND_FIELD_PARENT_NAME), assetKeys),
             fileUploadValidationErrors = applyToPaths(fileUploadFullNamePaths, fileValidator, data),
 
             assetKeysWithoutFieldValidationErrors = getAssetKeysWithoutValidationErrors(fieldValidationErrors),
@@ -376,6 +428,9 @@ export default FormUtils.buildFormMachine({
       }
     }),
 
+    setDisabled: setDisabledAction,
+    postProcessData: setDisabledAction,
+
     onSaveSuccess: assign({
       // The string returned from the backend upload API
       savedComponentName: (_, { data }) => data
@@ -407,9 +462,14 @@ export default FormUtils.buildFormMachine({
 
       return { uploadDefinition, repoSettings };
     },
-    async saveData({ repoSettings: { name }, data }) {
-      const formData = new FormData();
-      for (const [key, value] of flattenDataForSubmit(data)) {
+    async saveData({ repoSettings: { name }, data, disabledFields }) {
+      const formData = new FormData(),
+          disabledFieldNames = map(head, filter(([_, isDisabled]) => isDisabled, toPairs(disabledFields))),
+
+          // Disabled fields should not be included in the form submission
+          dataToUpload = pickBy((_, key) => !includes(key, disabledFieldNames), data);
+
+      for (const [key, value] of flattenDataForSubmit(dataToUpload)) {
         if (value instanceof FileList) {
           for (const file of Array.from(value)) {
             formData.append(key, file);

@@ -17,7 +17,9 @@ import { render as rtlRender, screen, waitFor, waitForElementToBeRemoved, within
 import userEvent from '@testing-library/user-event';
 import { when } from 'jest-when';
 
+
 import UploadDetails from './UploadDetails.jsx';
+import * as testData from './UploadDetails.testdata';
 
 // Creates a selector function that uses getByRole by default but which can be customized per-use to use
 // queryByRole, findByRole, etc instead
@@ -44,110 +46,22 @@ const selectors = {
   assetGroup: (groupDisplayNum, queryType) => selectorQuery('group', { name: `Asset ${groupDisplayNum}` })(queryType),
   fieldByNumAndGroup: (fieldNum, assetGroup, queryType) =>
       selectorQuery('textbox', { name: `Field ${fieldNum}` })(queryType, assetGroup),
+  checkboxFieldByNumAndGroup: (fieldNum, assetGroup, queryType) =>
+      selectorQuery('checkbox', { name: `Field ${fieldNum}` })(queryType, assetGroup),
   deleteBtnByGroup: (assetGroup, queryType) =>
       selectorQuery('button', { name: 'Delete' })(queryType, assetGroup),
-  fileUploadByGroup: (assetGroup) => assetGroup.querySelector('input[type=file]')
+  fileUploadByGroup: (assetGroup) => assetGroup.querySelector('input[type=file]'),
+  mavenExtensionField: (assetGroup, queryType) =>
+      selectorQuery('textbox', { name: 'Extension' })(queryType, assetGroup),
+  mavenClassifierField: (assetGroup, queryType) =>
+      selectorQuery('textbox', { name: 'Classifier' })(queryType, assetGroup),
+  mavenGroupField: selectorQuery('textbox', { name: 'Group ID' }),
+  mavenArtifactField: selectorQuery('textbox', { name: 'Artifact ID' }),
+  mavenVersionField: selectorQuery('textbox', { name: 'Version' }),
+  mavenGeneratePomField: selectorQuery('checkbox', { name: 'Generate a POM file with these coordinates' }),
+  mavenPackagingField: selectorQuery('textbox', { name: 'Packaging' })
 };
 
-const sampleRepoSettings = {
-  data: [
-    { name: 'multi-repo', format: 'maven2' },
-    { name: 'simple-repo', format: 'nuget' },
-    { name: 'regex-map-repo', format: 'foo-format' }
-  ]
-};
-
-const simpleUploadDefinition = {
-  format: 'nuget',
-  multipleUpload: false,
-  componentFields: [{
-    displayName: 'Field 1',
-    group: 'A',
-    helpText: null,
-    name: 'field1',
-    optional: true,
-    type: 'STRING'
-  }, {
-    displayName: 'Field 2',
-    group: 'B',
-    helpText: 'This is the second field',
-    name: 'field2',
-    optional: false,
-    type: 'STRING'
-  }, {
-    displayName: 'Field 3',
-    group: 'A',
-    helpText: null,
-    name: 'field3',
-    optional: true,
-    type: 'STRING'
-  }, {
-    displayName: 'Field 4',
-    group: 'C',
-    helpText: 'FOUR',
-    name: 'field4',
-    optional: false,
-    type: 'STRING'
-  }, {
-    displayName: 'Field 5',
-    group: 'C',
-    helpText: null,
-    name: 'field5',
-    optional: true,
-    type: 'CHECKBOX'
-  }],
-  assetFields: [{
-    displayName: 'Field 6',
-    helpText: null,
-    name: 'field6',
-    optional: false,
-    type: 'STRING'
-  }, {
-    displayName: 'Field 7',
-    helpText: null,
-    name: 'field7',
-    optional: true,
-    type: 'STRING'
-  }]
-};
-
-const multiUploadDefinition = {
-  ...simpleUploadDefinition,
-  format: 'maven2',
-  multipleUpload: true
-};
-
-const regexUploadDefinition = {
-  ...simpleUploadDefinition,
-  format: 'foo-format',
-  multipleUpload: true,
-  assetFields: [{
-    displayName: 'Field 6',
-    helpText: null,
-    name: 'field6',
-    optional: false,
-    type: 'STRING'
-  }, {
-    displayName: 'Field 7',
-    helpText: null,
-    name: 'field7',
-    optional: false,
-    type: 'STRING'
-  }],
-  regexMap: {
-    regex: String.raw`([^-]+)\.(.*)`,
-    fieldList: ['field6', 'field7']
-  }
-};
-
-const sampleUploadDefinitions = {
-  data: {
-    result: {
-      success: true,
-      data: [simpleUploadDefinition, multiUploadDefinition, regexUploadDefinition]
-    }
-  }
-};
 
 function getEmptyFileList() {
   const input = document.createElement('input');
@@ -273,12 +187,12 @@ describe('UploadDetails', function() {
     jest.spyOn(axios, 'post');
 
     when(axios.get).calledWith('/service/rest/v1/repositorySettings')
-        .mockResolvedValue(sampleRepoSettings);
+        .mockResolvedValue(testData.sampleRepoSettings);
 
     when(axios.post).calledWith(
         '/service/extdirect',
         expect.objectContaining({ action: 'coreui_Upload', method: 'getUploadDefinitions' })
-    ).mockResolvedValue(sampleUploadDefinitions);
+    ).mockResolvedValue(testData.sampleUploadDefinitions);
   });
 
   function render(itemId = 'simple-repo') {
@@ -380,7 +294,7 @@ describe('UploadDetails', function() {
         async function() {
           when(axios.get).calledWith('/service/rest/v1/repositorySettings')
               .mockRejectedValueOnce({ message: 'foobar' })
-              .mockResolvedValueOnce(sampleRepoSettings);
+              .mockResolvedValueOnce(testData.sampleRepoSettings);
 
           render();
 
@@ -785,7 +699,18 @@ describe('UploadDetails', function() {
     expect(regionC).toContainElement(field4);
   });
 
-  it('renders the helpText for each component field as a sublabel and a11y description', async function() {
+  it('renders a checkbox field for each component field with type: BOOLEAN in its corresponding group',
+      async function() {
+        render();
+
+        const regionC = await selectors.regionC('find'),
+            field5 = selectors.checkboxFieldByNumAndGroup(5);
+
+        expect(regionC).toContainElement(field5);
+      }
+  );
+
+  it('renders the helpText for each component STRING field as a sublabel and a11y description', async function() {
     render();
 
     const field1 = await selectors.fieldByNumAndGroup(1, undefined, 'find'),
@@ -1403,6 +1328,7 @@ describe('UploadDetails', function() {
           fileUpload3 = selectors.fileUploadByGroup(assetGroup3),
           field2 = selectors.fieldByNumAndGroup(2),
           field4 = selectors.fieldByNumAndGroup(4),
+          field5 = selectors.checkboxFieldByNumAndGroup(5),
           field6 = selectors.fieldByNumAndGroup(6, assetGroup1),
           field7 = selectors.fieldByNumAndGroup(7, assetGroup1),
           field6_2 = selectors.fieldByNumAndGroup(6, assetGroup2),
@@ -1421,6 +1347,7 @@ describe('UploadDetails', function() {
       await userEvent.type(field7_2, '0987');
       await userEvent.type(field6_3, 'xcvb');
       await userEvent.type(field7_3, ';lkj');
+      await userEvent.click(field5);
       setFileUploadValue(fileUpload, file);
       setFileUploadValue(fileUpload2, file2);
       setFileUploadValue(fileUpload3, file3);
@@ -1440,6 +1367,7 @@ describe('UploadDetails', function() {
 
       expect(postedFormData.get('field2')).toBe('bar');
       expect(postedFormData.get('field4')).toBe('qwerty');
+      expect(postedFormData.get('field5')).toBe('true');
     });
 
     it('redirects to the search page with the keyword param set to the response data after the form is submitted',
@@ -1798,5 +1726,197 @@ describe('UploadDetails', function() {
           { timeout: 1500 }
       );
     });
+  });
+
+  describe('maven special rules', function() {
+    it('disables the Group ID, Artifact ID, Version, "Generate a POM file...", and Packaging fields when at least ' +
+        'one asset extension is "pom" after trimming', async function() {
+      render('maven-repo');
+
+      await userEvent.click(await selectors.addAssetBtn('find'));
+
+      const assetGroup1 = selectors.assetGroup('1'),
+          assetGroup2 = selectors.assetGroup('2'),
+          fileUpload = selectors.fileUploadByGroup(assetGroup1),
+          fileUpload2 = selectors.fileUploadByGroup(assetGroup2),
+          extension1 = selectors.mavenExtensionField(assetGroup1),
+          extension2 = selectors.mavenExtensionField(assetGroup2),
+          group = selectors.mavenGroupField(),
+          artifact = selectors.mavenArtifactField(),
+          version = selectors.mavenVersionField(),
+          generatePom = selectors.mavenGeneratePomField(),
+          packaging = selectors.mavenPackagingField(),
+          file = new File(['test'], 'test-1.0.jar', { type: 'text-plain' }),
+          file2 = new File(['tset'], 'tset-1.0.pom', { type: 'text-plain' });
+
+      expect(group).toBeEnabled();
+      expect(artifact).toBeEnabled();
+      expect(version).toBeEnabled();
+      expect(generatePom).toBeEnabled();
+
+      await userEvent.type(extension1, ' po');
+
+      expect(group).toBeEnabled();
+      expect(artifact).toBeEnabled();
+      expect(version).toBeEnabled();
+      expect(generatePom).toBeEnabled();
+
+      await userEvent.type(extension1, 'm ');
+
+      expect(group).toBeDisabled();
+      expect(artifact).toBeDisabled();
+      expect(version).toBeDisabled();
+      expect(generatePom).toBeDisabled();
+      expect(packaging).toBeDisabled();
+
+      await userEvent.type(extension1, 'm');
+
+      expect(group).toBeEnabled();
+      expect(artifact).toBeEnabled();
+      expect(version).toBeEnabled();
+      expect(generatePom).toBeEnabled();
+
+      await userEvent.clear(extension1);
+
+      expect(group).toBeEnabled();
+      expect(artifact).toBeEnabled();
+      expect(version).toBeEnabled();
+      expect(generatePom).toBeEnabled();
+
+      setFileUploadValue(fileUpload, file);
+
+      expect(group).toBeEnabled();
+      expect(artifact).toBeEnabled();
+      expect(version).toBeEnabled();
+      expect(generatePom).toBeEnabled();
+
+      setFileUploadValue(fileUpload2, file2);
+
+      expect(extension2).toHaveValue('pom');
+      expect(group).toBeDisabled();
+      expect(artifact).toBeDisabled();
+      expect(version).toBeDisabled();
+      expect(generatePom).toBeDisabled();
+      expect(packaging).toBeDisabled();
+
+      await userEvent.click(selectors.deleteBtnByGroup(assetGroup2));
+
+      expect(group).toBeEnabled();
+      expect(artifact).toBeEnabled();
+      expect(version).toBeEnabled();
+      expect(generatePom).toBeEnabled();
+    });
+
+    it('disables the Packaging field whenever the "Generate..." checkbox is unchecked', async function() {
+      render('maven-repo');
+
+      const extension = await selectors.mavenExtensionField(undefined, 'find'),
+          generatePom = selectors.mavenGeneratePomField(),
+          packaging = selectors.mavenPackagingField();
+
+      expect(generatePom).not.toBeChecked();
+      expect(packaging).toBeDisabled();
+
+      await userEvent.click(generatePom);
+      expect(packaging).toBeEnabled();
+
+      await userEvent.click(generatePom);
+      expect(packaging).toBeDisabled();
+
+      await userEvent.click(generatePom);
+      expect(packaging).toBeEnabled();
+
+      // If there's a pom extension, packaging should be disabled regardless of the checkbox state
+      await userEvent.type(extension, 'pom');
+      expect(packaging).toBeDisabled();
+    });
+
+    it('excludes the group, artifact, and version fields from validation when they are disabled', async function() {
+      let postedFormData;
+
+      when(axios.post).calledWith('service/rest/internal/ui/upload/maven-repo', expect.anything())
+          .mockImplementation((_, formData) => {
+            postedFormData = formData;
+            return new Promise(() => {});
+          });
+
+      render('maven-repo');
+
+      const assetGroup1 = await selectors.assetGroup('1', 'find'),
+          fileUpload = selectors.fileUploadByGroup(assetGroup1),
+          extension = selectors.mavenExtensionField(),
+          group = selectors.mavenGroupField(),
+          artifact = selectors.mavenArtifactField(),
+          version = selectors.mavenVersionField(),
+          generatePom = selectors.mavenGeneratePomField(),
+          packaging = selectors.mavenPackagingField(),
+          submit = selectors.uploadBtn(),
+          file = new File(['tset'], 'tset-1.0.pom', { type: 'text-plain' });
+
+      setFileUploadValue(fileUpload, file);
+      await userEvent.clear(extension);
+      await userEvent.click(submit);
+
+      expect(group).toHaveErrorMessage('This field is required');
+      expect(artifact).toHaveErrorMessage('This field is required');
+      expect(version).toHaveErrorMessage('This field is required');
+
+      await userEvent.type(extension, 'pom');
+
+      // check validation on all three
+      expect(group).toBeValid();
+      expect(artifact).toBeValid();
+      expect(version).toBeValid();
+
+      // temporarily re-enable the fields so we can set values into some of them so we can assert those values
+      // don't end up in the submitted FormData.  Don't add values to all of them however, because we also want
+      // to check that the form is submittable when these otherwise-required fields are empty and disabled
+      await userEvent.clear(extension);
+      await userEvent.type(group, 'g');
+      await userEvent.type(extension, 'pom');
+
+      await userEvent.click(submit);
+
+      expect(postedFormData.has('groupId')).toBe(false);
+      expect(postedFormData.has('artifactId')).toBe(false);
+      expect(postedFormData.has('version')).toBe(false);
+    });
+
+    it('sets "" as the uploaded value of the classifier field when nothing is extracted from the regex for that field',
+        async function() {
+          let postedFormData;
+
+          when(axios.post).calledWith('service/rest/internal/ui/upload/maven-repo', expect.anything())
+              .mockImplementation((_, formData) => {
+                postedFormData = formData;
+                return new Promise(() => {});
+              });
+
+          render('maven-repo');
+
+          await userEvent.click(await selectors.addAssetBtn('find'));
+
+          const assetGroup1 = selectors.assetGroup('1'),
+              assetGroup2 = selectors.assetGroup('2'),
+              fileUpload = selectors.fileUploadByGroup(assetGroup1),
+              fileUpload2 = selectors.fileUploadByGroup(assetGroup2),
+              classifier1 = selectors.mavenClassifierField(assetGroup1),
+              classifier2 = selectors.mavenClassifierField(assetGroup2),
+              submit = selectors.uploadBtn(),
+              file = new File(['tset'], 'tset-1.0-sources.pom', { type: 'text-plain' }),
+              file2 = new File(['tset'], 'tset-1.0.pom', { type: 'text-plain' });
+
+          setFileUploadValue(fileUpload, file);
+          setFileUploadValue(fileUpload2, file2);
+
+          expect(classifier1).toHaveValue('sources');
+          expect(classifier2).toHaveValue('');
+
+          await userEvent.click(submit);
+
+          expect(postedFormData.get('asset0.classifier')).toBe('sources');
+          expect(postedFormData.get('asset1.classifier')).toBe('');
+        }
+    );
   });
 });

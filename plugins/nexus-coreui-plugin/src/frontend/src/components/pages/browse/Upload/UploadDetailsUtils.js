@@ -27,3 +27,8 @@ export const COMPOUND_FIELD_PARENT_NAME = '_';
  * the numeric id of the asset in its first (and only) capture group
  */
 export const ASSET_NUM_MATCHER = /^asset(\d+)$/;
+
+export const MAVEN_FORMAT = 'maven2';
+export const MAVEN_COMPONENT_COORDS_GROUP = 'Component coordinates';
+export const MAVEN_GENERATE_POM_FIELD_NAME = 'generate-pom';
+export const MAVEN_PACKAGING_FIELD_NAME = 'packaging';
