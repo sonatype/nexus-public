@@ -86,11 +86,17 @@ public class BlobStoreUIResource
     return store.list().stream()
         .map(configuration -> {
             final String typeId = blobStoreDescriptors.get(configuration.getType()).getId();
-            BlobStoreMetrics metrics = Optional.ofNullable(blobStoreManager.getByName().get(configuration.getName()))
-                .map(BlobStore::getMetrics)
+            BlobStoreMetrics metrics = Optional.ofNullable(blobStoreManager.get(configuration.getName()))
+                .map(BlobStoreUIResource::getBlobStoreMetrics)
                 .orElse(null);
             return new BlobStoreUIResponse(typeId, configuration, metrics);
         }).collect(toList());
+  }
+
+  // If a blobstore hasn't started due to an error we still want to return it from the api.
+  // To achieve this, we use a null metrics object which will show the BlobStore as unavailable.
+  private static BlobStoreMetrics getBlobStoreMetrics(BlobStore bs) {
+    return bs.isStarted() ? bs.getMetrics() : null;
   }
 
   @RequiresAuthentication

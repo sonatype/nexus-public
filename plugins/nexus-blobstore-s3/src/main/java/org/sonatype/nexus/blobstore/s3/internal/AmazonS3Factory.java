@@ -102,14 +102,11 @@ public class AmazonS3Factory
       builder = builder.withCredentials(credentialsProvider);
     }
 
-    if (!isNullOrEmptyOrDefault(region)) {
-      String endpoint = s3Configuration.get(ENDPOINT_KEY, String.class);
-      if (!isNullOrEmpty(endpoint)) {
-        builder = builder.withEndpointConfiguration(new AmazonS3ClientBuilder.EndpointConfiguration(endpoint, region));
-      }
-      else {
-        builder = builder.withRegion(region);
-      }
+    String endpoint = s3Configuration.get(ENDPOINT_KEY, String.class);
+    if (!isNullOrEmpty(endpoint)) {
+      builder = builder.withEndpointConfiguration(new AmazonS3ClientBuilder.EndpointConfiguration(endpoint, region));
+    } else if (!isNullOrEmptyOrDefault(region)) {
+      builder = builder.withRegion(region);
     }
 
     ClientConfiguration clientConfiguration = PredefinedClientConfigurations.defaultConfig();
