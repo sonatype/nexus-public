@@ -30,6 +30,7 @@ export default class TestUtils {
   static NO_CHANGES_MESSAGE = 'There are no changes';
   static THERE_WERE_ERRORS = 'There were validation errors.';
   static SAVE_ERROR = 'An error occurred saving data.';
+  static LOADING_ERROR = 'An error occurred loading data.';
   static NAME_VALIDATION_MESSAGE = 'Only letters, digits, underscores(_), hyphens(-), and dots(.) are allowed and may not start with underscore or dot.';
 
   static get UNRESOLVED() {

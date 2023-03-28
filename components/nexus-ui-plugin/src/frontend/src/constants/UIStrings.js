@@ -86,6 +86,8 @@ export default {
 
   UNAVAILABLE: 'Unavailable',
 
+  EMPTY_MESSAGE: 'No data',
+
   SSL_CERTIFICATE_DETAILS: {
     TITLE: 'Certificate Details',
     NAME: 'Common Name',

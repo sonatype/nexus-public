@@ -63,7 +63,7 @@ export default function LdapServersModalPassword({onSubmit, onCancel}) {
         showValidationErrors={showValidationErrors}
       >
         <NxModal.Header>
-          <NxH2 id="modal-narrow-header">{FORM.MODAL_PASSWORD.TITLE}</NxH2>
+          <NxH2 id="modal-form-header">{FORM.MODAL_PASSWORD.TITLE}</NxH2>
         </NxModal.Header>
         <NxModal.Content>
           <NxFormGroup

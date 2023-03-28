@@ -14,27 +14,6 @@
   TODO: Remove this custom css once the NxTransferListHalf unlock the ability to turn this icon off officially.
   https://issues.sonatype.org/browse/RSC-1254
 */
-.nxrm-ldap-servers {
-  .nx-transfer-list__select {
-    .nx-icon {
-      display: none;
-    }
-  }
-
-  .change-password {
-    margin-left: 0;
-  }
-
-  .nxrm-ldap-user-mapping-modal {
-    .nx-cell {
-      text-overflow: ellipsis;
-      max-width: 238px;
-      white-space: nowrap;
-      overflow: hidden;
-
-      .nx-alert {
-        white-space: normal;
-      }
-    }
-  }
+.nxrm-back-button.nx-text-link{
+  text-decoration: none;
 }

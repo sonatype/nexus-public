@@ -110,15 +110,30 @@ export default FormUtils.buildFormMachine({
             CLEAR_PASSWORD: {
               actions: ['clearPassword', 'setIsPristine'],
             },
-          },
+            VERIFY_LOGIN: [
+              {
+                target: 'askingPassword.verifyingLogin',
+                cond: 'shouldAskPassword'
+              },
+              {
+                target: 'showingVerifyLoginModal'
+              }
+            ],
+            VERIFY_USER_MAPPING: [
+              {
+                target: 'askingPassword.verifyingUserMapping',
+                cond: 'shouldAskPassword'
+              },
+              {
+                target: 'showingVerifyUserMappingModal'
+              }
+            ]
+          }
         },
         askingPassword: {
           initial: 'idle',
           on: {
-            CANCEL: {
-              target: 'loaded',
-            },
-            DONE: {
+            SET_PASSWORD: {
               target: '.verifyingConnection',
               actions: ['update', 'validate', 'setDirtyFlag', 'setIsPristine'],
             },
@@ -137,10 +152,37 @@ export default FormUtils.buildFormMachine({
                 },
               },
             },
-          },
+            verifyingLogin: {
+              on: {
+                SET_PASSWORD: {
+                  target: '#showingVerifyLoginModal',
+                  actions: ['update', 'validate', 'setDirtyFlag', 'setIsPristine']
+                }
+              }
+            },
+            verifyingUserMapping: {
+              on: {
+                SET_PASSWORD: {
+                  target: '#showingVerifyUserMappingModal',
+                  actions: ['update', 'validate', 'setDirtyFlag', 'setIsPristine']
+                }
+              }
+            }
+          }
         },
+        showingVerifyLoginModal: {
+          id: 'showingVerifyLoginModal'
+        },
+        showingVerifyUserMappingModal: {
+          id: 'showingVerifyUserMappingModal'
+        }
       },
-    }),
+      on: {
+        CANCEL: {
+          target: 'loaded'
+        }
+      }
+    })
 }).withConfig({
   actions: {
     validate: assign({
@@ -236,6 +278,9 @@ export default FormUtils.buildFormMachine({
     isEdit: (context, event) => !event.isParent && context.isEdit,
     isEditAndAnonymous: (context) =>
       context.isEdit && isAnonymousAuth(context.data?.authScheme),
+    shouldAskPassword: (context, event) =>
+      !event.isParent && context.isEdit && !context.data.authPassword
+  
   },
   services: {
     fetchData: async () =>

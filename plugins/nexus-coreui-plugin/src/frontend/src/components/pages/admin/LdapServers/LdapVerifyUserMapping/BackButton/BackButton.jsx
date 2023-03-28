@@ -1,4 +1,4 @@
-/**
+/*
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
  * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
@@ -10,31 +10,16 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*
-  TODO: Remove this custom css once the NxTransferListHalf unlock the ability to turn this icon off officially.
-  https://issues.sonatype.org/browse/RSC-1254
-*/
-.nxrm-ldap-servers {
-  .nx-transfer-list__select {
-    .nx-icon {
-      display: none;
-    }
-  }
+import React from 'react';
+import {NxFontAwesomeIcon} from '@sonatype/react-shared-components';
+import {faChevronLeft} from '@fortawesome/free-solid-svg-icons';
+import './BackButton.scss';
 
-  .change-password {
-    margin-left: 0;
-  }
-
-  .nxrm-ldap-user-mapping-modal {
-    .nx-cell {
-      text-overflow: ellipsis;
-      max-width: 238px;
-      white-space: nowrap;
-      overflow: hidden;
-
-      .nx-alert {
-        white-space: normal;
-      }
-    }
-  }
+export default function BackButton({onClick, text}) {
+  return (
+        <button className="nxrm-back-button nx-text-link" onClick={onClick}>
+          <NxFontAwesomeIcon icon={faChevronLeft} />
+          <span>{text}</span>
+        </button>
+  );
 }

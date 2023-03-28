@@ -127,7 +127,9 @@ export default {
       METHODS: {
         CLEAR_CACHE: 'clearCache',
         VERIFY_CONNECTION: 'verifyConnection',
-        READ_TEMPLATES: 'readTemplates'
+        READ_TEMPLATES: 'readTemplates',
+        VERIFY_USER_MAPPING: 'verifyUserMapping',
+        VERIFY_LOGIN: 'verifyLogin'
       }
     },
     TASK: {

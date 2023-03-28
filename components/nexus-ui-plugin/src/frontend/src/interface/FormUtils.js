@@ -544,6 +544,12 @@ export default class FormUtils {
     return null;
   }
 
+  static getValidationErrorsMessage(state) {
+    const {isPristine, validationErrors} = state.context;
+    const isInvalid = this.isInvalid(validationErrors);
+    return this.saveTooltip({isPristine, isInvalid});
+  }
+
   static discardTooltip({isPristine}) {
     if (isPristine) {
       return UIStrings.PRISTINE_TOOLTIP;

@@ -18,8 +18,8 @@ import {
   render,
   screen,
   waitForElementToBeRemoved,
-  act,
   within,
+  waitFor,
 } from '@testing-library/react';
 import {
   ExtJS,
@@ -45,9 +45,19 @@ import {
 const {singleLdapServersUrl} = URL;
 
 const {
-  LDAP_SERVERS: {FORM: LABELS},
+  LDAP_SERVERS: {
+    FORM: LABELS,
+    FORM: {
+      VERIFY_USER_MAPPING_BUTTON,
+      VERIFY_LOGIN_BUTTON,
+      MODAL_PASSWORD,
+      MODAL_VERIFY_LOGIN,
+      MODAL_VERIFY_USER_MAPPING
+  }
+  },
   SETTINGS,
   USE_TRUST_STORE,
+  CLOSE
 } = UIStrings;
 
 jest.mock('@sonatype/nexus-ui-plugin', () => ({
@@ -147,7 +157,7 @@ const selectors = {
   modalPassword: {
     title: () => screen.queryByText(LABELS.MODAL_PASSWORD.TITLE),
     password: () => screen.queryByLabelText(LABELS.MODAL_PASSWORD.LABEL),
-    container: () => screen.queryByRole('dialog'),
+    container: () => screen.queryByRole('dialog', {name: MODAL_PASSWORD.TITLE}),
     submit: () =>
       within(selectors.modalPassword.container()).queryByText('Submit'),
     cancel: () =>
@@ -159,6 +169,31 @@ const selectors = {
         'An error occurred saving data. This field is required'
       ),
   },
+  modalVerifyLogin: {
+    modal: () => screen.queryByRole('dialog', {name: MODAL_VERIFY_LOGIN.TITLE}),
+    usernameInput: () => within(selectors.modalVerifyLogin.modal()).getByLabelText(MODAL_VERIFY_LOGIN.USERNAME.LABEL),
+    passwordInput: () => within(selectors.modalVerifyLogin.modal()).getByLabelText(MODAL_VERIFY_LOGIN.PASSWORD.LABEL),
+    testConnectionButton: () => within(selectors.modalVerifyLogin.modal()).getByText(MODAL_VERIFY_LOGIN.TEST_CONNECTION_BUTTON),
+    cancelButton: () => within(selectors.modalVerifyLogin.modal()).getByText(SETTINGS.CANCEL_BUTTON_LABEL),
+    errorMessage: () => within(selectors.modalVerifyLogin.modal())
+      .getByText((str) => str.startsWith(MODAL_VERIFY_LOGIN.ERROR_MESSAGE)),
+    successMessage: () => within(selectors.modalVerifyLogin.modal())
+      .getByText((str) => str.startsWith(MODAL_VERIFY_LOGIN.SUCCESS_MESSAGE))
+  },
+  modalVerifyUserMapping: {
+    modal: () => screen.queryByRole('dialog', {name: MODAL_VERIFY_USER_MAPPING.TITLE}),
+    closeButton: () => within(selectors.modalVerifyUserMapping.modal()).getByText(CLOSE),
+    rows: () => within(selectors.modalVerifyUserMapping.modal()).getAllByRole('row'),
+    errorMessage: () => within(selectors.modalVerifyUserMapping.modal())
+      .getByText((str) => str.startsWith(TestUtils.LOADING_ERROR)),
+  },
+  modalVerifyUserMappingItem: {
+    modal: (name) => screen.queryByRole('dialog', {name}),
+    backButton: (name) => within(selectors.modalVerifyUserMappingItem.modal(name))
+      .getByText(MODAL_VERIFY_USER_MAPPING.ITEM.BACK_BUTTON),
+  },
+  verifyLoginButton: () => screen.queryByText(VERIFY_LOGIN_BUTTON),
+  verifyUserMappingButton: () => screen.queryByText(VERIFY_USER_MAPPING_BUTTON)
 };
 
 describe('LdapServersDetails', () => {
@@ -170,6 +205,23 @@ describe('LdapServersDetails', () => {
     );
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
     return result;
+  };
+
+  const renderViewUserAndGroup = async () => {
+    const {nextButton} = selectors.createConnection;
+
+    const response = {data: TestUtils.makeExtResult(USER_AND_GROUP_TEMPLATE)};
+
+    when(Axios.post)
+      .calledWith(EXT.URL, expect.objectContaining({
+        action: EXT.LDAP.ACTION,
+        method: EXT.LDAP.METHODS.READ_TEMPLATES
+      }))
+      .mockResolvedValue(response)
+
+    await renderView();
+    await fillConnectionForm();
+    userEvent.click(nextButton());
   };
 
   beforeEach(() => {
@@ -289,7 +341,7 @@ describe('LdapServersDetails', () => {
 
       expect(nextButton()).not.toHaveClass('disabled');
 
-      await userEvent.click(nextButton());
+      userEvent.click(nextButton());
 
       expect(nextButton()).not.toBeInTheDocument();
     });
@@ -402,12 +454,12 @@ describe('LdapServersDetails', () => {
 
         Axios.post.mockResolvedValueOnce(response);
 
-        await act(async () => userEvent.click(verifyConnectionButton()));
+        userEvent.click(verifyConnectionButton());
 
-        expect(Axios.post).toHaveBeenCalledWith(
+        await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(
           EXT.URL,
           VERIFY_CONNECTION_REQUEST
-        );
+        ));
         expect(ExtJS.showSuccessMessage).toHaveBeenCalledWith(
           LABELS.VERIFY_SUCCESS_MESSAGE(
             generateUrl(
@@ -434,25 +486,14 @@ describe('LdapServersDetails', () => {
 
         Axios.post.mockRejectedValueOnce(response);
 
-        await act(async () => userEvent.click(verifyConnectionButton()));
+        userEvent.click(verifyConnectionButton());
 
-        expect(ExtJS.showErrorMessage).toHaveBeenCalledWith(response);
+        await waitFor(() => expect(ExtJS.showErrorMessage).toHaveBeenCalledWith(response));
       });
     });
   });
 
   describe('User and Groups', () => {
-    const renderViewUserAndGroup = async () => {
-      const {nextButton} = selectors.createConnection;
-      const response = {data: TestUtils.makeExtResult(USER_AND_GROUP_TEMPLATE)};
-
-      Axios.post.mockResolvedValue(response);
-
-      await renderView();
-      await fillConnectionForm();
-      await userEvent.click(nextButton());
-    };
-
     const templateData = USER_AND_GROUP_TEMPLATE[0];
 
     it('renders the form correctly', async () => {
@@ -513,7 +554,7 @@ describe('LdapServersDetails', () => {
 
       expect(cancelButton()).toBeInTheDocument();
 
-      await userEvent.click(cancelButton());
+      userEvent.click(cancelButton());
 
       expect(onDoneMock).toHaveBeenCalled();
     });
@@ -645,9 +686,9 @@ describe('LdapServersDetails', () => {
 
       Axios.post.mockResolvedValueOnce({});
 
-      await act(async () => userEvent.click(saveButton()));
+      userEvent.click(saveButton());
 
-      expect(onDoneMock).toHaveBeenCalled();
+      await waitFor(() => expect(onDoneMock).toHaveBeenCalled());
 
       expect(ExtJS.showSuccessMessage).toHaveBeenCalledWith(
         LABELS.SAVE_SUCCESS_MESSAGE(connectionData.name)
@@ -666,9 +707,9 @@ describe('LdapServersDetails', () => {
 
       Axios.post.mockRejectedValueOnce({response: {data: errorMessage}});
 
-      await act(async () => userEvent.click(saveButton()));
+      userEvent.click(saveButton());
 
-      expect(onDoneMock).not.toHaveBeenCalled();
+      await waitFor(() => expect(onDoneMock).not.toHaveBeenCalled());
       expect(ExtJS.showErrorMessage).toHaveBeenCalledWith(errorMessage);
     });
   });
@@ -725,12 +766,12 @@ describe('LdapServersDetails', () => {
       expect(nextButton()).toBeInTheDocument();
       expect(saveButton()).not.toBeInTheDocument();
 
-      await act(async () => userEvent.click(tabUserAndGroup()));
+      userEvent.click(tabUserAndGroup());
 
       expect(nextButton()).not.toBeInTheDocument();
       expect(saveButton()).toBeInTheDocument();
 
-      await act(async () => userEvent.click(tabConnection()));
+      userEvent.click(tabConnection());
 
       expect(nextButton()).toBeInTheDocument();
       expect(saveButton()).not.toBeInTheDocument();
@@ -750,9 +791,9 @@ describe('LdapServersDetails', () => {
 
       await TestUtils.changeField(name, '');
 
-      await act(async () => userEvent.click(tabUserAndGroup()));
+      userEvent.click(tabUserAndGroup());
 
-      expect(nextButton()).toBeInTheDocument();
+      await waitFor(() => expect(nextButton()).toBeInTheDocument());
       expect(saveButton()).not.toBeInTheDocument();
       expect(
         selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
@@ -842,11 +883,11 @@ describe('LdapServersDetails', () => {
 
       userEvent.click(deleteButton());
 
-      await act(async () => userEvent.click(confirmButton()));
+      userEvent.click(confirmButton());
 
-      expect(Axios.delete).toHaveBeenCalledWith(
+      await waitFor(() => expect(Axios.delete).toHaveBeenCalledWith(
         singleLdapServersUrl(data.name)
-      );
+      ));
     });
 
     it('Users cannot delete the LDAP Server configuration if they do not have enough permissions', async () => {
@@ -894,9 +935,9 @@ describe('LdapServersDetails', () => {
 
       await TestUtils.changeField(password, connectionData.password);
 
-      await act(async () => userEvent.click(submit()));
+      userEvent.click(submit());
 
-      expect(title()).not.toBeInTheDocument();
+      await waitFor(() => expect(title()).not.toBeInTheDocument());
       expect(password()).not.toBeInTheDocument();
 
       const expected = {
@@ -943,9 +984,9 @@ describe('LdapServersDetails', () => {
 
       await renderView(itemId);
 
-      await act(async () => userEvent.click(verifyConnectionButton()));
+      userEvent.click(verifyConnectionButton());
 
-      expect(title()).not.toBeInTheDocument();
+      await waitFor(() => expect(title()).not.toBeInTheDocument());
       expect(password()).not.toBeInTheDocument();
 
       const response = {data: TestUtils.makeExtResult({})};
@@ -980,16 +1021,15 @@ describe('LdapServersDetails', () => {
 
       await TestUtils.changeField(password, connectionData.password);
 
-      await act(async () => userEvent.click(submit()));
-
       const response = {data: TestUtils.makeExtResult({})};
-
       Axios.post.mockResolvedValue(response);
 
-      expect(Axios.post).toHaveBeenCalledWith(
+      userEvent.click(submit());
+
+      await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(
         EXT.URL,
         VERIFY_CONNECTION_REQUEST
-      );
+      ));
       expect(ExtJS.showSuccessMessage).toHaveBeenCalledWith(
         LABELS.VERIFY_SUCCESS_MESSAGE(
           generateUrl(data.protocol, data.host, data.port)
@@ -1013,22 +1053,22 @@ describe('LdapServersDetails', () => {
 
       await fillConnectionForm(newData, true);
 
-      await act(async () => userEvent.click(nextButton()));
+      userEvent.click(nextButton());
 
       userEvent.selectOptions(template(), templateData.name);
 
-      await act(async () => userEvent.click(saveButton()));
+      userEvent.click(saveButton());
 
-      expect(title()).toBeInTheDocument();
+      await waitFor(() => expect(title()).toBeInTheDocument());
       expect(password()).toBeInTheDocument();
 
       await TestUtils.changeField(password, connectionData.password);
 
-      await act(async () => userEvent.click(submit()));
+      userEvent.click(submit());
 
-      expect(ExtJS.showSuccessMessage).toHaveBeenCalledWith(
+      await waitFor(() => expect(ExtJS.showSuccessMessage).toHaveBeenCalledWith(
         LABELS.UPDATE_SUCCESS_MESSAGE(newData.name)
-      );
+      ));
 
       const expected = {
         ...omit(['connectionRetryDelay', 'connectionTimeout'], data), // Omits not needed values.
@@ -1069,13 +1109,13 @@ describe('LdapServersDetails', () => {
 
       userEvent.selectOptions(authenticationMethod(), authScheme);
 
-      await act(async () => userEvent.click(nextButton()));
+      userEvent.click(nextButton());
 
       userEvent.selectOptions(template(), templateData.name);
 
-      await act(async () => userEvent.click(saveButton()));
+      userEvent.click(saveButton());
 
-      expect(title()).not.toBeInTheDocument();
+      await waitFor(() => expect(title()).not.toBeInTheDocument());
       expect(password()).not.toBeInTheDocument();
 
       expect(ExtJS.showSuccessMessage).toHaveBeenCalledWith(
@@ -1182,6 +1222,193 @@ describe('LdapServersDetails', () => {
       expect(
         within(panel()).queryByText(data.userMemberOfAttribute)
       ).toBeInTheDocument();
+    });
+  });
+
+  describe('verify login', () => {
+    const itemId = 'test-item-id';
+    const ldapConfig = LDAP_SERVERS[0];
+    const authPassword = 'LdapSystemPassword';
+    const username = 'ldap-user-1';
+    const password = 'ldap-user-1-password';
+
+    beforeEach(() => {
+      when(ExtJS.checkPermission)
+        .calledWith(Permissions.LDAP.DELETE)
+        .mockReturnValue(true);
+
+      when(Axios.get)
+        .calledWith(singleLdapServersUrl(itemId))
+        .mockReturnValue({ldapConfig});
+
+      when(Axios.post)
+        .calledWith(EXT.URL, expect.objectContaining({
+          action: EXT.LDAP.ACTION,
+          method: EXT.LDAP.METHODS.VERIFY_LOGIN
+        }))
+        .mockResolvedValue({data: TestUtils.makeExtResult({})});
+    });
+
+    const {
+      verifyLoginButton, 
+      modalVerifyLogin: {
+        modal,
+        usernameInput,
+        passwordInput,
+        testConnectionButton,
+        cancelButton,
+        successMessage,
+        errorMessage
+      }, 
+      modalPassword,
+      tabs: {tabUserAndGroup}
+    } = selectors;
+
+    it('verifies login in create mode; handles cancel; shows success message', async () => {
+      await renderViewUserAndGroup();
+
+      userEvent.click(verifyLoginButton());
+      expect(modal()).toBeInTheDocument();
+
+      userEvent.click(cancelButton());
+      expect(modal()).not.toBeInTheDocument();
+
+      userEvent.click(verifyLoginButton());
+
+      await TestUtils.changeField(usernameInput, username);
+      await TestUtils.changeField(passwordInput, password);
+
+      userEvent.click(testConnectionButton());
+
+      await waitFor(() => expect(successMessage()).toBeInTheDocument());
+    });
+
+    it('verifies login in edit mode; asks system password; shows error message', async () => {
+      when(Axios.post)
+        .calledWith(EXT.URL, expect.objectContaining({
+          action: EXT.LDAP.ACTION,
+          method: EXT.LDAP.METHODS.VERIFY_LOGIN
+        }))
+        .mockRejectedValueOnce({});
+
+      await renderView(itemId);
+      userEvent.click(tabUserAndGroup());
+
+      userEvent.click(verifyLoginButton());
+
+      await TestUtils.changeField(modalPassword.password, authPassword);
+      userEvent.click(modalPassword.submit());
+      expect(modal()).toBeInTheDocument();
+
+      await TestUtils.changeField(usernameInput, username);
+      await TestUtils.changeField(passwordInput, password);
+
+      userEvent.click(testConnectionButton());
+
+      await waitFor(() => expect(errorMessage()).toBeInTheDocument());
+    });
+  });
+
+  describe('verify user mapping', () => {
+    const itemId = 'test-item-id';
+    const ldapConfig = LDAP_SERVERS[0];
+    const authPassword = 'LdapSystemPassword';
+
+    const userMapping = [
+      {
+        username: 'administrator',
+        realName: 'Admin Administrator',
+        email: 'admin@example.com',
+        membership: [
+          'Domain Admins',
+          'Enterprise Admins',
+          'Administrators',
+          'Schema Admins'
+        ]
+      },
+      {
+        username: 'jdoe',
+        realName: 'John Doe',
+        email: 'jdoe@example.com',
+        membership: [
+          'Users'
+        ]
+      }
+    ];
+
+    beforeEach(() => {
+      when(ExtJS.checkPermission)
+        .calledWith(Permissions.LDAP.DELETE)
+        .mockReturnValue(true);
+
+      when(Axios.get)
+        .calledWith(singleLdapServersUrl(itemId))
+        .mockReturnValue({ldapConfig});
+
+      when(Axios.post)
+        .calledWith(EXT.URL, expect.objectContaining({
+          action: EXT.LDAP.ACTION,
+          method: EXT.LDAP.METHODS.VERIFY_USER_MAPPING
+        }))
+        .mockResolvedValue({data: TestUtils.makeExtResult(userMapping)});
+    });
+
+    const {
+      verifyUserMappingButton, 
+      modalVerifyUserMapping,
+      modalVerifyUserMappingItem,
+      modalPassword,
+      tabs: {tabUserAndGroup}
+    } = selectors;
+
+    it('verifies user mapping in create mode', async () => {
+      await renderViewUserAndGroup();
+
+      userEvent.click(verifyUserMappingButton());
+      expect(modalVerifyUserMapping.modal()).toBeInTheDocument();
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+      userEvent.click(modalVerifyUserMapping.closeButton());
+      expect(modalVerifyUserMapping.modal()).not.toBeInTheDocument();
+
+      userEvent.click(verifyUserMappingButton());
+
+      await waitFor(() => expect(modalVerifyUserMapping.rows()).toHaveLength(3)); 
+
+      userEvent.click(modalVerifyUserMapping.rows()[1]);
+
+      const item = userMapping[0];
+
+      const itemModal = modalVerifyUserMappingItem.modal(item.realName);
+
+      expect(itemModal).toBeInTheDocument();
+
+      const content = itemModal.textContent;
+
+      expect(content).toContain(item.username);
+      expect(content).toContain(item.realName);
+      expect(content).toContain(item.email);
+      expect(content).toContain(item.membership.join(', '));
+    });
+
+    it('verifies user mapping in edit mode', async () => {
+      when(Axios.post)
+        .calledWith(EXT.URL, expect.objectContaining({
+          action: EXT.LDAP.ACTION,
+          method: EXT.LDAP.METHODS.VERIFY_USER_MAPPING
+        }))
+        .mockRejectedValueOnce({});
+
+      await renderView(itemId);
+      userEvent.click(tabUserAndGroup());
+
+      userEvent.click(verifyUserMappingButton());
+
+      await TestUtils.changeField(modalPassword.password, authPassword);
+      userEvent.click(modalPassword.submit());
+      expect(modalVerifyUserMapping.modal()).toBeInTheDocument();
+
+      await waitFor(() => expect(modalVerifyUserMapping.errorMessage()).toBeInTheDocument());
     });
   });
 });

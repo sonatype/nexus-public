@@ -207,10 +207,47 @@ export default {
         LABEL: 'Password',
         SUB_LABEL: 'The password to bind with'
       },
+      MODAL_VERIFY_LOGIN: {
+        TITLE: 'Login Credentials',
+        DESCRIPTION: 'Enter LDAP Username and password to verify',
+        USERNAME: {
+          LABEL: 'LDAP Server Username',
+          PLACEHOLDER: 'Username'
+        },
+        PASSWORD: {
+          LABEL: 'LDAP Server Password',
+          PLACEHOLDER: 'Password'
+        },
+        TEST_CONNECTION_BUTTON: 'Test Connection',
+        SUCCESS_MESSAGE: 'LDAP login completed successfully on: ',
+        ERROR_MESSAGE: 'An error occurred.'
+      },
+      MODAL_VERIFY_USER_MAPPING: {
+        LIST: {
+          HEADER: 'Verify User Mapping',
+          TABLE: {
+            USER_ID: 'USER ID',
+            NAME: 'NAME',
+            EMAIL: 'EMAIL',
+            ROLES: 'ROLES'
+          }
+        },
+        ITEM: {
+          BACK_BUTTON: 'Back to User Mapping List',
+          LABELS: {
+            USER_ID: 'User ID',
+            NAME: 'Name',
+            EMAIL: 'Email',
+            ROLES: 'Roles'
+          }
+        }
+      },
       TABS: {
         CONNECTION: 'Connection',
         USER_AND_GROUP: 'User and Group'
       },
+      VERIFY_USER_MAPPING_BUTTON: 'Verify User Mapping',
+      VERIFY_LOGIN_BUTTON: 'Verify Login',
       VERIFY_SUCCESS_MESSAGE: (url) => `Connection to LDAP server verified: ${url}`,
       VERIFY_DELETE_MESSAGE: (name) => `Are you sure you want to delete the ${name} LDAP connection?`,
       DELETE_SUCCESS_MESSAGE: (name) => `LDAP server deleted: ${name}`,

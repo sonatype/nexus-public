@@ -21,12 +21,14 @@ import {
   NxFieldset,
   NxCheckbox,
   NxStatefulForm,
+  NxButton,
 } from '@sonatype/react-shared-components';
 import {FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
-
 import UIStrings from '../../../../constants/UIStrings';
 import LdapServersModalPassword from './LdapServersModalPassword';
 import {isDynamicGroup, isStaticGroup} from './LdapServersHelper';
+import LdapVerifyUserMappingModal from './LdapVerifyUserMapping/LdapVerifyUserMappingModal';
+import LdapVerifyLoginModal from './LdapVerifyLogin/LdapVerifyLoginModal';
 
 const {
   LDAP_SERVERS: {FORM: LABELS},
@@ -38,18 +40,50 @@ export default function LdapServerUserAndGroupForm({actor, onDone}) {
     templates,
     template,
     data: {ldapGroupsAsRoles, groupType},
+    data,
+    validationErrors,
   } = state.context;
 
   const isTemplateSelected = ValidationUtils.notBlank(template);
-  const askingPassword = state.matches('askingPassword.idle');
+
+  const askingPassword = state.matches('askingPassword');
+  const showingVerifyLoginModal = state.matches('showingVerifyLoginModal');
+  const showingVerifyUserMappingModal = state.matches('showingVerifyUserMappingModal');
+
+  const isInvalid = FormUtils.isInvalid(validationErrors);
 
   const updateTemplate = (e) =>
     send({type: 'UPDATE_TEMPLATE', value: e.target.value});
+  const setSystemPassword = (value) => send({type: 'SET_PASSWORD', name: 'authPassword', value})
+  const verifyLogin = () => send('VERIFY_LOGIN');
+  const verifyUserMapping = () => send('VERIFY_USER_MAPPING');
+  const cancel = () => send('CANCEL');
 
   return (
     <NxTile.Content>
       <NxH2>{LABELS.CONFIGURATION}</NxH2>
-      <NxStatefulForm {...FormUtils.formProps(state, send)} onCancel={onDone}>
+      <NxStatefulForm 
+        {...FormUtils.formProps(state, send)} 
+        onCancel={onDone}
+        additionalFooterBtns={
+          <>
+            <NxButton
+              className={isInvalid ? 'disabled' : ''}
+              onClick={verifyUserMapping}
+              type="button"
+            >
+              {LABELS.VERIFY_USER_MAPPING_BUTTON}
+            </NxButton>
+            <NxButton
+              className={isInvalid ? 'disabled' : ''}
+              onClick={verifyLogin}
+              type="button"
+            >
+              {LABELS.VERIFY_LOGIN_BUTTON}
+            </NxButton>
+          </>
+        }
+      >
         <NxFormGroup label={LABELS.TEMPLATE.LABEL}>
           <NxFormSelect onChange={updateTemplate} value={template}>
             <option value="" disabled={isTemplateSelected} />
@@ -230,11 +264,15 @@ export default function LdapServerUserAndGroupForm({actor, onDone}) {
       </NxStatefulForm>
       {askingPassword && (
         <LdapServersModalPassword
-          onCancel={() => send('CANCEL')}
-          onSubmit={({value}) =>
-            send({type: 'DONE', name: 'authPassword', value})
-          }
+          onCancel={cancel}
+          onSubmit={({value}) => setSystemPassword(value)}
         />
+      )}
+      {showingVerifyLoginModal && (
+        <LdapVerifyLoginModal ldapConfig={data} onCancel={cancel} />
+      )}
+      {showingVerifyUserMappingModal && (
+        <LdapVerifyUserMappingModal ldapConfig={data} onCancel={cancel} />
       )}
     </NxTile.Content>
   );
