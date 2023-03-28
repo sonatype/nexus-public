@@ -18,7 +18,7 @@ import {indexBy, prop} from 'ramda';
 
 export const LDAP_SERVERS = [
   {
-    name: 'win-clm01.sonatype.dev',
+    name: 'win-clm01.sonatype.dev-name',
     protocol: 'LDAP',
     useTrustStore: false,
     host: 'win-clm01.sonatype.dev',

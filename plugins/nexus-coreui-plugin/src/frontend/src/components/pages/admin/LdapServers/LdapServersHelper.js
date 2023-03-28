@@ -52,6 +52,10 @@ export const TABS_INDEX = {
   USER_AND_GROUP: 1,
 };
 
+export const canCreate = () => {
+  return ExtJS.checkPermission(Permissions.LDAP.CREATE);
+};
+
 export const canDelete = () => {
   return ExtJS.checkPermission(Permissions.LDAP.DELETE);
 };
@@ -104,4 +108,16 @@ export const isDynamicGroup = (groupType) => {
 
 export const isStaticGroup = (groupType) => {
   return groupType === FORM.GROUP_TYPE.OPTIONS.static.id;
+};
+
+const findOptionById = (value, list) => {
+  return Object.values(list).find((item) => item.id === value);
+};
+
+export const findAuthMethod = (value) => {
+  return findOptionById(value, FORM.AUTHENTICATION.OPTIONS);
+};
+
+export const findGroupType = (value) => {
+  return findOptionById(value, FORM.GROUP_TYPE.OPTIONS);
 };

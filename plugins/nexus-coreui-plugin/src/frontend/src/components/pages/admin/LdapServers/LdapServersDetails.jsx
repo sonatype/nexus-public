@@ -20,13 +20,15 @@ import {
   NxTabList,
   NxTab,
   NxTabPanel,
-  NxLoadWrapper
+  NxLoadWrapper,
 } from '@sonatype/react-shared-components';
 import {faBook} from '@fortawesome/free-solid-svg-icons';
 
 import LdapServersConfigurationForm from './LdapServersConfigurationForm';
 import LdapServersUserAndGroupForm from './LdapServersUserAndGroupForm';
-
+import LdapServersConfigurationFormReadOnly from './LdapServersConfigurationFormReadOnly';
+import LdapServersUserAndGroupFormReadOnly from './LdapServersUserAndGroupFormReadOnly';
+import {canUpdate} from './LdapServersHelper';
 import Machine from './LdapServersDetailsMachine';
 
 import UIStrings from '../../../../constants/UIStrings';
@@ -38,12 +40,15 @@ import {TABS_INDEX} from './LdapServersHelper';
 import {isNil} from 'ramda';
 
 export default function LdapServersDetails({itemId, onDone}) {
-  const isEdit = Boolean(itemId);
+  const readOnly = !canUpdate();
+  const isEdit = canUpdate() && Boolean(itemId);
+  const isCreate = !isEdit && canUpdate();
+
   const ref = useRef();
   const [state, send] = useMachine(Machine, {
     devTools: true,
     context: {
-      itemId: decodeURIComponent(itemId),
+      itemId: itemId ? decodeURIComponent(itemId) : null,
       isEdit,
     },
     actions: {
@@ -55,7 +60,7 @@ export default function LdapServersDetails({itemId, onDone}) {
   const userAndGroup = state.matches('loaded.creatingUserAndGroup');
   const {activeTab} = state.context;
 
-  const onTabSelected = (value) => {
+  const onTabSelectedEditMode = (value) => {
     if (TABS_INDEX.CREATE_CONNECTION === value) {
       send('CREATE_CONNECTION');
     }
@@ -67,24 +72,46 @@ export default function LdapServersDetails({itemId, onDone}) {
     }
   };
 
+  const onTabSelectedReadOnlyMode = (value) => {
+    if (TABS_INDEX.CREATE_CONNECTION === value) {
+      send('CREATE_CONNECTION');
+    }
+
+    if (TABS_INDEX.USER_AND_GROUP === value) {
+      send('NEXT');
+    }
+  };
+
+  const onTabSelected = (value) => {
+    if (isEdit) {
+      onTabSelectedEditMode(value);
+    }
+
+    if (readOnly) {
+      onTabSelectedReadOnlyMode(value);
+    }
+  };
+
   const retryHandler = () => send({type: 'RETRY'});
   const isLoading = state.matches('loading');
   const hasLoadError = state.matches('loadError');
 
-  const configurationForm = connection && (
-    <LdapServersConfigurationForm
-      actor={state.context.createConnection}
-      onDone={onDone}
-      ref={ref}
-    />
-  );
+  const configurationForm = () =>
+    connection && (
+      <LdapServersConfigurationForm
+        actor={state.context.createConnection}
+        onDone={onDone}
+        ref={ref}
+      />
+    );
 
-  const userAndGroupForm = userAndGroup && (
-    <LdapServersUserAndGroupForm
-      actor={state.context.userAndGroup}
-      onDone={onDone}
-    />
-  );
+  const userAndGroupForm = () =>
+    userAndGroup && (
+      <LdapServersUserAndGroupForm
+        actor={state.context.userAndGroup}
+        onDone={onDone}
+      />
+    );
 
   return (
     <Page className="nxrm-ldap-servers">
@@ -97,19 +124,34 @@ export default function LdapServersDetails({itemId, onDone}) {
           loading={isLoading}
           error={hasLoadError && error}
         >
-          {isEdit ? (
+          {(isEdit || readOnly) && (
             <NxTabs activeTab={activeTab} onTabSelect={onTabSelected}>
               <NxTabList>
                 <NxTab>{FORM.TABS.CONNECTION}</NxTab>
                 <NxTab>{FORM.TABS.USER_AND_GROUP}</NxTab>
               </NxTabList>
-              <NxTabPanel>{configurationForm}</NxTabPanel>
-              <NxTabPanel> {userAndGroupForm}</NxTabPanel>
+              <NxTabPanel>
+                {isEdit && configurationForm()}
+                {readOnly && (
+                  <LdapServersConfigurationFormReadOnly
+                    actor={state.context.createConnection}
+                  />
+                )}
+              </NxTabPanel>
+              <NxTabPanel>
+                {isEdit && userAndGroupForm()}
+                {readOnly && (
+                  <LdapServersUserAndGroupFormReadOnly
+                    actor={state.context.userAndGroup}
+                  />
+                )}
+              </NxTabPanel>
             </NxTabs>
-          ) : (
+          )}
+          {isCreate && (
             <>
-              {configurationForm}
-              {userAndGroupForm}
+              {configurationForm()}
+              {userAndGroupForm()}
             </>
           )}
         </NxLoadWrapper>

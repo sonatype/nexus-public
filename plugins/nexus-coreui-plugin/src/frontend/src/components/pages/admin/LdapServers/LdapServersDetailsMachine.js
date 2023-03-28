@@ -16,7 +16,7 @@
  */
 import Axios from 'axios';
 import {assign, spawn} from 'xstate';
-import {mergeDeepRight, omit} from 'ramda';
+import {mergeDeepRight, omit, isEmpty, isNil} from 'ramda';
 
 import {FormUtils, ExtJS} from '@sonatype/nexus-ui-plugin';
 
@@ -203,7 +203,7 @@ export default FormUtils.buildFormMachine({
     logDeleteSuccess: ({data}) => {
       ExtJS.showSuccessMessage(LABELS.DELETE_SUCCESS_MESSAGE(data.name));
     },
-    updateData: assign((ctx, {data, pristineData}) =>
+    updateData: assign((ctx, {data = {}, pristineData = {}}) =>
       mergeDeepRight(ctx, {data, pristineData})
     ),
     setData: assign(({isEdit}, event) => {
@@ -235,8 +235,8 @@ export default FormUtils.buildFormMachine({
     }),
   },
   services: {
-    fetchData: async ({itemId, isEdit}) => {
-      if (isEdit) {
+    fetchData: async ({itemId}) => {
+      if (!isNil(itemId) && !isEmpty(itemId)) {
         return Axios.get(URL.singleLdapServersUrl(itemId));
       }
 

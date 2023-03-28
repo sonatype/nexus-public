@@ -21,7 +21,12 @@ import {
   act,
   within,
 } from '@testing-library/react';
-import {ExtJS, Permissions, APIConstants} from '@sonatype/nexus-ui-plugin';
+import {
+  ExtJS,
+  Permissions,
+  APIConstants,
+  FormUtils,
+} from '@sonatype/nexus-ui-plugin';
 import userEvent from '@testing-library/user-event';
 import LdapServersDetails from './LdapServersDetails';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
@@ -30,7 +35,12 @@ import {USER_AND_GROUP_TEMPLATE, LDAP_SERVERS} from './LdapServers.testdata';
 
 const {EXT} = APIConstants;
 
-import {generateUrl, URL} from './LdapServersHelper';
+import {
+  generateUrl,
+  URL,
+  findAuthMethod,
+  findGroupType,
+} from './LdapServersHelper';
 
 const {singleLdapServersUrl} = URL;
 
@@ -62,6 +72,7 @@ const selectors = {
   ...TestUtils.formSelectors,
   title: () => screen.queryByText(LABELS.CONFIGURATION),
   cancelButton: () => screen.queryByText(SETTINGS.CANCEL_BUTTON_LABEL),
+  panel: () => screen.getByRole('tabpanel'),
   createConnection: {
     name: () => screen.getByLabelText(LABELS.NAME),
     setting: () => screen.getByText(LABELS.SETTINGS.LABEL),
@@ -162,7 +173,10 @@ describe('LdapServersDetails', () => {
   };
 
   beforeEach(() => {
-    when(ExtJS.checkPermission).mockReturnValue(true);
+    when(ExtJS.checkPermission)
+      .calledWith(Permissions.LDAP.UPDATE)
+      .mockReturnValue(true);
+
     onDoneMock.mockReset();
   });
 
@@ -218,6 +232,8 @@ describe('LdapServersDetails', () => {
     action: EXT.LDAP.ACTION,
     method: EXT.LDAP.METHODS.VERIFY_CONNECTION,
   });
+
+  const itemId = 'test-item-id';
 
   describe('Create Connection', () => {
     it('renders the form correctly', async () => {
@@ -658,7 +674,6 @@ describe('LdapServersDetails', () => {
   });
 
   describe('Edit form', () => {
-    const itemId = 'test-item-id';
     const data = LDAP_SERVERS[0];
     const anonymousData = {
       ...data,
@@ -668,6 +683,10 @@ describe('LdapServersDetails', () => {
     beforeEach(() => {
       when(ExtJS.checkPermission)
         .calledWith(Permissions.LDAP.DELETE)
+        .mockReturnValue(true);
+
+      when(ExtJS.checkPermission)
+        .calledWith(Permissions.LDAP.UPDATE)
         .mockReturnValue(true);
 
       when(Axios.get)
@@ -1082,6 +1101,87 @@ describe('LdapServersDetails', () => {
         singleLdapServersUrl(expected.name),
         expected
       );
+    });
+  });
+
+  describe('Read only', () => {
+    const data = LDAP_SERVERS[0];
+
+    beforeEach(() => {
+      when(ExtJS.checkPermission)
+        .calledWith(Permissions.LDAP.UPDATE)
+        .mockReturnValue(false);
+
+      when(Axios.get)
+        .calledWith(singleLdapServersUrl(itemId))
+        .mockReturnValue({data});
+    });
+
+    it('should render properly', async () => {
+      const {
+        panel,
+        tabs: {tabConnection, tabUserAndGroup, tablist},
+      } = selectors;
+
+      await renderView(itemId);
+      const authMethod = findAuthMethod(data.authScheme);
+      const useTrustStore = FormUtils.readOnlyCheckboxValueLabel(
+        data.useTrustStore
+      );
+      const userSubtree = FormUtils.readOnlyCheckboxValueLabel(
+        data.userSubtree
+      );
+      const mapLdap = FormUtils.readOnlyCheckboxValueLabel(
+        data.ldapGroupsAsRoles
+      );
+      const groupType = findGroupType(data.groupType);
+
+      expect(tablist()).toBeInTheDocument();
+      expect(tabConnection().textContent).toContain(LABELS.TABS.CONNECTION);
+      expect(tabUserAndGroup().textContent).toContain(
+        LABELS.TABS.USER_AND_GROUP
+      );
+
+      expect(within(panel()).queryByText(data.name)).toBeInTheDocument();
+      expect(within(panel()).queryByText(data.protocol)).toBeInTheDocument();
+      expect(within(panel()).queryByText(data.host)).toBeInTheDocument();
+      expect(within(panel()).queryByText(data.port)).toBeInTheDocument();
+      expect(within(panel()).queryByText(useTrustStore)).toBeInTheDocument();
+      expect(within(panel()).queryByText(authMethod.label)).toBeInTheDocument();
+      expect(
+        within(panel()).queryByText(data.authUsername)
+      ).toBeInTheDocument();
+      expect(
+        within(panel()).queryByText(data.connectionTimeoutSeconds)
+      ).toBeInTheDocument();
+      expect(
+        within(panel()).queryByText(data.connectionRetryDelaySeconds)
+      ).toBeInTheDocument();
+      expect(
+        within(panel()).queryByText(data.maxIncidentsCount)
+      ).toBeInTheDocument();
+
+      userEvent.click(tabUserAndGroup());
+
+      expect(within(panel()).queryByText(data.userBaseDn)).toBeInTheDocument();
+      expect(within(panel()).queryByText(userSubtree)).toBeInTheDocument();
+      expect(
+        within(panel()).queryByText(data.userObjectClass)
+      ).toBeInTheDocument();
+      expect(
+        within(panel()).queryByText(data.userIdAttribute)
+      ).toBeInTheDocument();
+      expect(
+        within(panel()).queryByText(data.userRealNameAttribute)
+      ).toBeInTheDocument();
+      expect(
+        within(panel()).queryByText(data.userEmailAddressAttribute)
+      ).toBeInTheDocument();
+      expect(within(panel()).queryByText(mapLdap)).toBeInTheDocument();
+      expect(within(panel()).queryByText(groupType.label)).toBeInTheDocument();
+      expect(
+        within(panel()).queryByText(data.userMemberOfAttribute)
+      ).toBeInTheDocument();
     });
   });
 });

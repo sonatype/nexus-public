@@ -44,7 +44,7 @@ import {
 } from '@sonatype/react-shared-components';
 import {faSortNumericUp, faTrashAlt} from '@fortawesome/free-solid-svg-icons';
 
-import {canDelete, canUpdate} from './LdapServersHelper';
+import {canDelete, canUpdate, canCreate} from './LdapServersHelper';
 
 import {faBook} from '@fortawesome/free-solid-svg-icons';
 
@@ -73,6 +73,7 @@ export default function LdapServersList({onCreate, onEdit}) {
     error,
     filter: filterText,
   } = state.context;
+  const hasCreatePermission = canCreate();
 
   const orderSortDir = ListMachineUtils.getSortDirection(
     'order',
@@ -86,10 +87,9 @@ export default function LdapServersList({onCreate, onEdit}) {
   const sortByUrl = () => send('SORT_BY_URL');
 
   const filter = (value) => send({type: 'FILTER', filter: value});
-  const canCreate = ExtJS.checkPermission(Permissions.LDAP.CREATE);
 
   const create = () => {
-    if (canCreate) {
+    if (hasCreatePermission) {
       onCreate();
     }
   };
@@ -121,13 +121,13 @@ export default function LdapServersList({onCreate, onEdit}) {
         />
         <PageActions>
           <NxTooltip
-            title={!canCreate && UIStrings.PERMISSION_ERROR}
+            title={!hasCreatePermission && UIStrings.PERMISSION_ERROR}
             placement="bottom"
           >
             <NxButton
               type="button"
               variant="primary"
-              className={!canCreate && 'disabled'}
+              className={!hasCreatePermission && 'disabled'}
               onClick={create}
             >
               {LABELS.BUTTONS.CREATE}
