@@ -11,29 +11,24 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {render, screen, waitForElementToBeRemoved} from '@testing-library/react';
+import {render, screen, waitForElementToBeRemoved, act} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import axios from 'axios';
-import {interpret} from 'xstate';
 
 import TagStrings from '../../../../constants/pages/browse/tags/TagsStrings';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import TagsDetails from './TagsDetails';
-import TagsListMachine from './TagsListMachine';
 
 jest.mock('axios', () => ({
   get: jest.fn()
 }));
 
 const testTag = {
-  items: [
-    {
-      name: 'test-tag',
-      firstCreated: '1/1/2023, 7:00:00 AM',
-      lastUpdated: '1/2/2023, 8:00:00 AM',
-      attributes: {"additionalProp1": {}},
-    }
-  ]};
+  name: 'test-tag',
+  firstCreated: '1/1/2023, 7:00:00 AM',
+  lastUpdated: '1/2/2023, 8:00:00 AM',
+  attributes: {"additionalProp1": {}},
+};
 
 const selectors = {
   ...TestUtils.selectors,
@@ -47,14 +42,14 @@ const selectors = {
   getLastUpdatedLabel: () => screen.queryByText(TAGS.DETAILS.LAST_UPDATED),
   getTagAttributesLabel: () => screen.queryByText(TAGS.DETAILS.ATTRIBUTES),
   getCopyToClipboardButton: () => screen.queryByRole('button', {name:'Copy to Clipboard'}),
+  getRetryButton: () => screen.queryByRole('button', {name:'Retry'}),
 }
 
 const {TAGS} = TagStrings;
 
 async function renderView() {
   axios.get.mockResolvedValue({data: testTag});
-  const service = interpret(TagsListMachine).start();
-  render(<TagsDetails service={service} itemId="test-tag"/>);
+  render(<TagsDetails itemId="test-tag"/>);
   await waitForElementToBeRemoved(selectors.queryLoadingMask());
 };
 
@@ -64,8 +59,7 @@ describe('TagsDetails', function() {
 
     it('a promise is rejected', async function() {
       axios.get.mockRejectedValue({message: 'Error'});
-      const service = interpret(TagsListMachine).start();
-      render(<TagsDetails service={service} itemId="test-tag"/>);
+      render(<TagsDetails itemId="test-tag"/>);
       await waitForElementToBeRemoved(selectors.queryLoadingMask());
   
       expect(selectors.getLoadError()).toBeInTheDocument();
@@ -73,11 +67,10 @@ describe('TagsDetails', function() {
     });
   
     it('a tag is not found', async function() {
-      axios.get.mockResolvedValue({data: testTag});
-      const service = interpret(TagsListMachine).start();
-      render(<TagsDetails service={service} itemId="tag-does-not-exist"/>);
+      axios.get.mockRejectedValue({message: 'Request failed with status code 404'});
+      render(<TagsDetails itemId="tag-does-not-exist"/>);
       await waitForElementToBeRemoved(selectors.queryLoadingMask());
-  
+
       const error = selectors.queryLoadError('Tag was not found');
       expect(error).toBeInTheDocument();
     });
@@ -130,6 +123,16 @@ describe('TagsDetails', function() {
 
     userEvent.click(selectors.getCopyToClipboardButton());
     expect(window.navigator.clipboard.writeText).toHaveBeenCalledWith(clipboardContentWithExpectedPrettyPrint);
+  });
+
+  it('has its error retry button load tag data upon cleared error', async function() {
+    axios.get.mockRejectedValue({message: 'Error'});
+    render(<TagsDetails itemId="test-tag"/>);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+    axios.get.mockResolvedValue({data: testTag});
+    await act(async () => userEvent.click(selectors.getRetryButton()));
+    expect(selectors.getTileHeader()).toHaveTextContent(`test-tag ${TAGS.DETAILS.TILE_HEADER}`);
   });
 
 });

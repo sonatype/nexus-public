@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import { useService } from '@xstate/react';
+import { useMachine } from '@xstate/react';
 
 import {
   ContentBody,
@@ -33,23 +33,24 @@ import {
   NxTile
 } from '@sonatype/react-shared-components';
 
+import TagsListMachine from './TagsListMachine';
 import { faTags } from '@fortawesome/free-solid-svg-icons';
 import UIStrings from '../../../../constants/UIStrings';
 
 const {TAGS} = UIStrings;
 const {COLUMNS} = TAGS.LIST;
 
-export default function TagsList({onEdit, service}) {
-  const [state, send] = useService(service);
+export default function TagsList({onEdit}) {
+  const [state, send] = useMachine(TagsListMachine, {devTools: true});
   const {data, error, filter: filterText} = state.context;
   const isLoading = state.matches('loading');
 
-  const nameSortDir = ListMachineUtils.getSortDirection('name', state.context);
-  const firstCreatedSortDir = ListMachineUtils.getSortDirection('firstCreated', state.context);
-  const lastUpdatedSortDir = ListMachineUtils.getSortDirection('lastUpdated', state.context);
-  const sortByName = () => send('SORT_BY_NAME');
-  const sortByFirstCreated = () => send('SORT_BY_FIRST_CREATED');
-  const sortByLastUpdated = () => send('SORT_BY_LAST_UPDATED');
+  const idSortDir = ListMachineUtils.getSortDirection('id', state.context);
+  const firstCreatedSortDir = ListMachineUtils.getSortDirection('firstCreatedTime', state.context);
+  const lastUpdatedSortDir = ListMachineUtils.getSortDirection('lastUpdatedTime', state.context);
+  const sortById = () => send('SORT_BY_ID');
+  const sortByFirstCreated = () => send('SORT_BY_FIRST_CREATED_TIME');
+  const sortByLastUpdated = () => send('SORT_BY_LAST_UPDATED_TIME');
 
   const filter = (value) => send({type: 'FILTER', filter: value});
 
@@ -75,7 +76,7 @@ export default function TagsList({onEdit, service}) {
           <NxTable>
             <NxTableHead>
               <NxTableRow>
-                <NxTableCell onClick={sortByName} isSortable sortDir={nameSortDir}>{COLUMNS.NAME}</NxTableCell>
+                <NxTableCell onClick={sortById} isSortable sortDir={idSortDir}>{COLUMNS.NAME}</NxTableCell>
                 <NxTableCell onClick={sortByFirstCreated} isSortable sortDir={firstCreatedSortDir}>{COLUMNS.FIRST_CREATED}</NxTableCell>
                 <NxTableCell onClick={sortByLastUpdated} isSortable sortDir={lastUpdatedSortDir}>{COLUMNS.LAST_UPDATED}</NxTableCell>
                 <NxTableCell chevron/>
@@ -83,11 +84,11 @@ export default function TagsList({onEdit, service}) {
             </NxTableHead>
             <NxTableBody isLoading={isLoading} error={error} emptyMessage={TAGS.EMPTY_MESSAGE}>
               {data.map(
-                ({name, firstCreated, lastUpdated}) => (
-                  <NxTableRow key={name} isClickable onClick={() => onEdit(name)}>
-                    <NxTableCell>{name}</NxTableCell>
-                    <NxTableCell>{new Date(firstCreated).toLocaleString()}</NxTableCell>
-                    <NxTableCell>{new Date(lastUpdated).toLocaleString()}</NxTableCell>
+                ({id, firstCreatedTime, lastUpdatedTime}) => (
+                  <NxTableRow key={id} isClickable onClick={() => onEdit(id)}>
+                    <NxTableCell>{id}</NxTableCell>
+                    <NxTableCell>{new Date(firstCreatedTime).toLocaleString()}</NxTableCell>
+                    <NxTableCell>{new Date(lastUpdatedTime).toLocaleString()}</NxTableCell>
                     <NxTableCell chevron/>
                   </NxTableRow>
               ))}

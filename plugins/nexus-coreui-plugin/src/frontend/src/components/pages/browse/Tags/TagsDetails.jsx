@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import { useService } from '@xstate/react';
+import {useMachine} from '@xstate/react';
 
 import {
   ContentBody,
@@ -30,18 +30,28 @@ import {
   NxCopyToClipboard
 } from '@sonatype/react-shared-components';
 
+import TagsDetailsMachine from './TagsDetailsMachine';
 import { faTags } from '@fortawesome/free-solid-svg-icons';
 import UIStrings from '../../../../constants/UIStrings';
 
 const {TAGS} = UIStrings;
 
-export default function TagsDetails({itemId, service}) {
-  const [state] = useService(service);
+export default function TagsDetails({itemId}) {
+  const [state, send] = useMachine(TagsDetailsMachine, {
+    context: {
+      pristineData: {
+        name: itemId
+      }
+    },
+    devTools: true
+  });
   const isLoading = state.matches('loading');
-  const tagData = state.context.data.find(v => v.name == itemId);
-  const tagsExist = (state.context.data.length > 0);
-  const tagsExistButNotTheCurrentTag = tagsExist && typeof tagData == 'undefined';
-  const error = tagsExistButNotTheCurrentTag ? TAGS.DETAILS.TAG_NOT_FOUND : state.context.error;
+  const tagData = state.context.data;
+  const hasLoadError = state.matches('loadError') ? state.context.error : null;
+
+  function retry() {
+    send({type: 'RETRY'});
+  }
 
   return <Page className="nxrm-tags">
     <div>
@@ -50,7 +60,7 @@ export default function TagsDetails({itemId, service}) {
     </div>
     <ContentBody>
       <NxTile>
-        <NxLoadWrapper retryHandler={() => {}} loading={isLoading} error={error}>
+        <NxLoadWrapper retryHandler={retry} loading={isLoading} error={hasLoadError}>
           {() => (
             <>
               <NxTile.Header>

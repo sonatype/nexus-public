@@ -16,44 +16,39 @@ import userEvent from '@testing-library/user-event';
 import axios from 'axios';
 import {sort, prop, descend, ascend} from 'ramda';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
-import {interpret} from 'xstate';
 
 import TagsList from './TagsList';
-import TagsListMachine from './TagsListMachine';
 import UIStrings from '../../../../constants/UIStrings';
 
 jest.mock('axios', () => ({
-  get: jest.fn()
+  post: jest.fn()
 }));
 
 describe('TagsList', function() {
-  const tags = {
-    items: [
-      {
-        name: 'tag1',
-        firstCreated: '2/3/2023, 7:39:20 AM',
-        lastUpdated: '2/3/2023, 7:39:20 AM'
-      },
-      {
-        name: 'tag2',
-        firstCreated: '2/3/2023, 8:39:20 AM',
-        lastUpdated: '2/3/2023, 8:39:20 AM'
-      }
-    ]},
-    emptyTag = {
-      items: []
-  };
+  const tags = [
+    {
+      id: 'tag1',
+      firstCreatedTime: '1/1/2020, 1:00:00 AM',
+      lastUpdatedTime: '1/2/2020, 2:00:00 AM'
+    },
+    {
+      id: 'tag2',
+      firstCreatedTime: '2/2/2020, 1:00:00 AM',
+      lastUpdatedTime: '2/3/2020, 2:00:00 AM'
+    }
+  ],
+  emptyTag = [];
 
   const FIELDS = {
-    NAME: 'name',
-    FIRST_CREATED: 'firstCreated',
-    LAST_UPDATED: 'lastUpdated'
+    ID: 'id',
+    FIRST_CREATED: 'firstCreatedTime',
+    LAST_UPDATED: 'lastUpdatedTime'
   };
 
   const {NAME, FIRST_CREATED, LAST_UPDATED} = UIStrings.TAGS.LIST.COLUMNS;
   const {COLUMNS} = UIStrings.TAGS.LIST;
 
-  const sortTags = (field, order = ascend) => sort(order(prop(field)), tags.items);
+  const sortTags = (field, order = ascend) => sort(order(prop(field)), tags);
 
   const selectors = {
     ...TestUtils.selectors,
@@ -63,23 +58,20 @@ describe('TagsList', function() {
   };
 
   async function renderView(data) {
-    axios.get.mockResolvedValue({data});
-    const service = interpret(TagsListMachine).start();
+    axios.post.mockResolvedValue({data: TestUtils.makeExtResult(data)});
 
-    render(<TagsList service={service} />);
+    render(<TagsList/>);
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
   };
 
   it('renders the resolved empty text', async function() {
     await renderView(emptyTag);
-
     expect(selectors.getEmptyMessage()).toBeInTheDocument();
   });
 
   it('renders the error message', async function() {
-    axios.get.mockRejectedValue({message: 'Error'});
-    const service = interpret(TagsListMachine).start();
-    render(<TagsList service={service}/>);
+    axios.post.mockRejectedValue({message: 'Error'});
+    render(<TagsList/>);
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
     const error = selectors.tableAlert();
 
@@ -91,7 +83,7 @@ describe('TagsList', function() {
     await renderView(tags);
 
     TestUtils.expectTableHeaders(Object.values(COLUMNS));
-    TestUtils.expectTableRows(tags.items, Object.values(FIELDS));
+    TestUtils.expectTableRows(tags, Object.values(FIELDS));
   });
 
   it('renders a "Filter" text input', async function() {
@@ -103,7 +95,7 @@ describe('TagsList', function() {
   it('filters by the text value when the user types into the filter', async function() {
     await renderView(tags);
 
-    await TestUtils.expectProperFilteredItemsCount(selectors.getFilterInput, '', tags.items.length);
+    await TestUtils.expectProperFilteredItemsCount(selectors.getFilterInput, '', tags.length);
     await TestUtils.expectProperFilteredItemsCount(selectors.getFilterInput, 'tag1', 1);
     await TestUtils.expectProperFilteredItemsCount(selectors.getFilterInput, 'tag2', 1);
   });
@@ -111,7 +103,7 @@ describe('TagsList', function() {
   it('unfilters when the clear button is pressed', async function() {
     await renderView(tags);
 
-    await TestUtils.expectProperFilteredItemsCount(selectors.getFilterInput, '', tags.items.length);
+    await TestUtils.expectProperFilteredItemsCount(selectors.getFilterInput, '', tags.length);
     await TestUtils.expectProperFilteredItemsCount(selectors.getFilterInput, 'tag1', 1);
 
     const clearBtn = await screen.findByRole('button', {name: 'Clear filter'});
@@ -123,7 +115,7 @@ describe('TagsList', function() {
   it('unfilters when the ESC key is pressed', async function() {
     await renderView(tags);
 
-    await TestUtils.expectProperFilteredItemsCount(selectors.getFilterInput, '', tags.items.length);
+    await TestUtils.expectProperFilteredItemsCount(selectors.getFilterInput, '', tags.length);
     await TestUtils.expectProperFilteredItemsCount(selectors.getFilterInput, 'tag1', 1);
 
     userEvent.type(selectors.getFilterInput(), '{esc}');
@@ -135,15 +127,15 @@ describe('TagsList', function() {
 
     const nameHeader = selectors.headerCell(NAME);
 
-    TestUtils.expectProperRowsOrder(tags.items, FIELDS.NAME);
+    TestUtils.expectProperRowsOrder(tags, FIELDS.ID);
 
     userEvent.click(nameHeader);
-    let sortedTags = sortTags(FIELDS.NAME, descend);
-    TestUtils.expectProperRowsOrder(sortedTags, FIELDS.NAME);
+    let sortedTags = sortTags(FIELDS.ID, descend);
+    TestUtils.expectProperRowsOrder(sortedTags, FIELDS.ID);
 
     userEvent.click(nameHeader);
-    sortedTags = sortTags(FIELDS.NAME);
-    TestUtils.expectProperRowsOrder(sortedTags, FIELDS.NAME);
+    sortedTags = sortTags(FIELDS.ID);
+    TestUtils.expectProperRowsOrder(sortedTags, FIELDS.ID);
   });
 
   it('sorts the rows by firstCreated', async function() {
@@ -151,15 +143,15 @@ describe('TagsList', function() {
 
     const firstCreatedHeader = selectors.headerCell(FIRST_CREATED);
 
-    TestUtils.expectProperRowsOrder(tags.items, FIELDS.NAME);
+    TestUtils.expectProperRowsOrder(tags, FIELDS.ID);
 
     userEvent.click(firstCreatedHeader);
     let sortedTags = sortTags(FIELDS.FIRST_CREATED);
-    TestUtils.expectProperRowsOrder(sortedTags, FIELDS.NAME);
+    TestUtils.expectProperRowsOrder(sortedTags, FIELDS.ID);
 
     userEvent.click(firstCreatedHeader);
     sortedTags = sortTags(FIELDS.FIRST_CREATED, descend);
-    TestUtils.expectProperRowsOrder(sortedTags, FIELDS.NAME);
+    TestUtils.expectProperRowsOrder(sortedTags, FIELDS.ID);
   });
 
   it('sorts the rows by lastUpdated', async function() {
@@ -167,15 +159,15 @@ describe('TagsList', function() {
 
     const lastUpdatedHeader = selectors.headerCell(LAST_UPDATED);
 
-    TestUtils.expectProperRowsOrder(tags.items, FIELDS.NAME);
+    TestUtils.expectProperRowsOrder(tags, FIELDS.ID);
 
     userEvent.click(lastUpdatedHeader);
     let sortedTags = sortTags(FIELDS.LAST_UPDATED);
-    TestUtils.expectProperRowsOrder(sortedTags, FIELDS.NAME);
+    TestUtils.expectProperRowsOrder(sortedTags, FIELDS.ID);
 
     userEvent.click(lastUpdatedHeader);
     sortedTags = sortTags(FIELDS.LAST_UPDATED, descend);
-    TestUtils.expectProperRowsOrder(sortedTags, FIELDS.NAME);
+    TestUtils.expectProperRowsOrder(sortedTags, FIELDS.ID);
   });
 
   it('renders tooltips of sorting direction when hovering', async function() {

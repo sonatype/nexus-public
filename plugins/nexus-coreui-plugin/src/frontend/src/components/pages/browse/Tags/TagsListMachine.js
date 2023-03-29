@@ -14,24 +14,28 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import Axios from 'axios';
 import {assign} from 'xstate';
-import {ListMachineUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
+import {APIConstants, ExtAPIUtils, ListMachineUtils} from '@sonatype/nexus-ui-plugin';
 
-const {REST: {PUBLIC: {TAGS: tagsUrl}}} = APIConstants;
+const {EXT: {TAGS_LIST: {ACTION, METHODS}}} = APIConstants;
 
 export default ListMachineUtils.buildListMachine({
   id: 'TagsListMachine',
-  sortableFields: ['name', 'firstCreated', 'lastUpdated']
+  sortField : 'id',
+  sortableFields: ['id', 'firstCreatedTime', 'lastUpdatedTime'],
 }).withConfig({
   actions: {
     filterData: assign({
-      data: ({filter, pristineData}, _) => pristineData.items.filter(
-        ({name}) => ListMachineUtils.hasAnyMatches([name], filter)
+      data: ({filter, pristineData}, _) => pristineData.filter(
+        ({id}) => ListMachineUtils.hasAnyMatches([id], filter)
       )
     })
   },
   services: {
-    fetchData: () => Axios.get(tagsUrl)
+    fetchData: async () => {
+      const tagListData = await ExtAPIUtils.extAPIRequest(ACTION, METHODS.READ_TAGS);
+      ExtAPIUtils.checkForError(tagListData);
+      return tagListData.data.result;
+    }
   }
 });

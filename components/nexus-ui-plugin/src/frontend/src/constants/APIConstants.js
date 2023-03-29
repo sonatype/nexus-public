@@ -165,7 +165,13 @@ export default {
         GET_PROXY_DOWNLOAD_NUMBERS: 'getProxyDownloadNumbers',
         IS_LOG4J_CAPABILITY_ACTIVE: 'isAvailableLog4jDisclaimer'
       }
-    }
+    },
+    TAGS_LIST: {
+      ACTION: 'proui_TagList',
+      METHODS: {
+        READ_TAGS: 'readTags'
+      }
+    },
   },
   REST: {
     INTERNAL: {
