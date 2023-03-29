@@ -74,21 +74,42 @@ public class AttributesMap
     if (value != null) {
       // TODO: PropertyEditor coercion?
       log.trace("Coerce: {} -> {}", value, type);
+      try {
+        // special handling for when Date has become a long (ms since epoch)
+        if (value instanceof Number) {
+          if (Date.class.equals(type.getRawType())) {
+            return (T) new Date(((Number) value).longValue());
+          }
+          else if (DateTime.class.equals(type.getRawType())) {
+            return (T) new DateTime(((Number) value).longValue());
+          }
+          else if (OffsetDateTime.class.equals(type.getRawType())) {
+            return (T) OffsetDateTime.ofInstant(Instant.ofEpochMilli(((Number) value).longValue()), ZoneOffset.UTC);
+          }
+        }
 
-      // special handling for when Date has become a long (ms since epoch)
-      if (value instanceof Number) {
-        if (Date.class.equals(type.getRawType())) {
-          return (T) new Date(((Number) value).longValue());
+        // special handling for booleans from string
+        if (Boolean.class.equals(type.getRawType()) && value instanceof String) {
+          T result = (T) Boolean.valueOf((String)value);
+          Throwable stackThrow = null;
+          if (log.isDebugEnabled()) {
+            stackThrow = new Throwable("Unexpected Attribute Coercion. Stack trace output to locate area of concern:");
+          }
+          log.warn("Coerced Boolean Attribute from String. value={}, result={}", value, result, stackThrow);
+          return result;
         }
-        else if (DateTime.class.equals(type.getRawType())) {
-          return (T) new DateTime(((Number) value).longValue());
-        }
-        else if (OffsetDateTime.class.equals(type.getRawType())) {
-          return (T) OffsetDateTime.ofInstant(Instant.ofEpochMilli(((Number) value).longValue()), ZoneOffset.UTC);
-        }
+
+        return (T) type.getRawType().cast(value);
       }
-
-      return (T) type.getRawType().cast(value);
+      catch (ClassCastException ex) {
+        // Failure is unexpected but should at least be reported.
+        log.warn("Invalid attempt to coerce Attribute into a {}. Original type {}. value={}",
+            type.getType().getTypeName(),
+            value.getClass().getName(),
+            value,
+            log.isDebugEnabled() ? ex : null);
+        return null;
+      }
     }
     return null;
   }
