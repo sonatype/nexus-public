@@ -18,7 +18,6 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -42,6 +41,7 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.httpclient.RemoteBlockedIOException;
+import org.sonatype.nexus.repository.replication.PullReplicationSupport;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.payloads.HttpEntityPayload;
@@ -79,7 +79,6 @@ public abstract class ProxyFacetSupport
     extends FacetSupport
     implements ProxyFacet
 {
-
   public static final String BYPASS_HTTP_ERRORS_HEADER_NAME = "BYPASS_HTTP_ERRORS";
 
   public static final String BYPASS_HTTP_ERRORS_HEADER_VALUE = "true";
@@ -163,10 +162,9 @@ public abstract class ProxyFacetSupport
    * Configures content {@link Cooperation} for this proxy; a timeout of 0 means wait indefinitely.
    *
    * @param cooperationEnabled should threads attempt to cooperate when downloading resources
-   * @param majorTimeout when waiting for the main I/O request
-   * @param minorTimeout when waiting for any I/O dependencies
-   * @param threadsPerKey limits the threads waiting under each key
-   *
+   * @param majorTimeout       when waiting for the main I/O request
+   * @param minorTimeout       when waiting for any I/O dependencies
+   * @param threadsPerKey      limits the threads waiting under each key
    * @since 3.4
    */
   @Inject
@@ -177,11 +175,11 @@ public abstract class ProxyFacetSupport
       @Named("${nexus.proxy.cooperation.minorTimeout:-30s}") final Duration minorTimeout,
       @Named("${nexus.proxy.cooperation.threadsPerKey:-100}") final int threadsPerKey)
   {
-      this.cooperationBuilder = cooperationFactory.configure()
-          .enabled(cooperationEnabled)
-          .majorTimeout(majorTimeout)
-          .minorTimeout(minorTimeout)
-          .threadsPerKey(threadsPerKey);
+    this.cooperationBuilder = cooperationFactory.configure()
+        .enabled(cooperationEnabled)
+        .majorTimeout(majorTimeout)
+        .minorTimeout(minorTimeout)
+        .threadsPerKey(threadsPerKey);
   }
 
   @VisibleForTesting
@@ -267,11 +265,12 @@ public abstract class ProxyFacetSupport
   @Override
   public Content get(final Context context) throws IOException {
     checkNotNull(context);
-    getEventManager().post(new ProxyRequestEvent(getRepository().getFormat().getValue()));
-
     Content content = maybeGetCachedContent(context);
+    boolean isReplication = PullReplicationSupport.isReplicationRequest(context);
+    String format = getRepository().getFormat().getValue();
+    getEventManager().post(new ProxyRequestEvent(format, isReplication));
     if (!isStale(context, content)) {
-      getEventManager().post(new ProxyCacheHitEvent(getRepository().getFormat().getValue()));
+      getEventManager().post(new ProxyCacheHitEvent(format, isReplication));
       return content;
     }
     return get(context, content);
@@ -285,7 +284,8 @@ public abstract class ProxyFacetSupport
         .checkFunction(() -> {
           Content latestContent = maybeGetCachedContent(context);
           if (!isStale(context, latestContent)) {
-            getEventManager().post(new ProxyCacheHitEvent(getRepository().getFormat().getValue()));
+            boolean isReplication = PullReplicationSupport.isReplicationRequest(context);
+            getEventManager().post(new ProxyCacheHitEvent(getRepository().getFormat().getValue(), isReplication));
             return Optional.of(latestContent);
           }
           return Optional.empty();
@@ -329,7 +329,8 @@ public abstract class ProxyFacetSupport
       logContentOrThrow(content, context, null, e); // note this also takes care of RemoteBlockedIOException
     }
     catch (UncheckedIOException e) {
-      logContentOrThrow(content, context, null, e.getCause()); // "special" path (for now) for npm and similar peculiar formats
+      logContentOrThrow(content, context, null,
+          e.getCause()); // "special" path (for now) for npm and similar peculiar formats
     }
     finally {
       if (!nested) {
@@ -343,21 +344,21 @@ public abstract class ProxyFacetSupport
   }
 
   /**
-   * Path + query parameters provide a unique enough request key for known formats.
-   * If a format needs to add more context then they should customize this method.
+   * Path + query parameters provide a unique enough request key for known formats. If a format needs to add more
+   * context then they should customize this method.
    *
    * @return key that uniquely identifies this upstream request from other contexts
-   *
    * @since 3.4
    */
   protected String getRequestKey(final Context context) {
     return context.getRequest().getPath() + '?' + context.getRequest().getParameters();
   }
 
-  protected <X extends Throwable> void logContentOrThrow(@Nullable final Content content,
-                                                         final Context context,
-                                                         @Nullable final StatusLine statusLine,
-                                                         final X exception) throws X
+  protected <X extends Throwable> void logContentOrThrow(
+      @Nullable final Content content,
+      final Context context,
+      @Nullable final StatusLine statusLine,
+      final X exception) throws X
   {
     String logMessage = buildLogContentMessage(content, statusLine);
     String repositoryName = context.getRepository().getName();
@@ -382,8 +383,9 @@ public abstract class ProxyFacetSupport
   }
 
   @VisibleForTesting
-  <X extends Throwable> String buildLogContentMessage(@Nullable final Content content,
-                                                      @Nullable final StatusLine statusLine)
+  <X extends Throwable> String buildLogContentMessage(
+      @Nullable final Content content,
+      @Nullable final StatusLine statusLine)
   {
     StringBuilder message = new StringBuilder("Exception {} checking remote for update");
 
@@ -435,7 +437,7 @@ public abstract class ProxyFacetSupport
 
   /**
    * Store a new Payload, freshly fetched from the remote URL.
-   *
+   * <p>
    * The Context indicates which component was being requested.
    *
    * @throws IOException
@@ -487,7 +489,8 @@ public abstract class ProxyFacetSupport
 
     try {
       cacheInfo = getCacheController(context).current();
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       log.trace("Exception getting cache controller for context", e);
       HttpClientUtils.closeQuietly(response);
       throw e;
@@ -500,7 +503,8 @@ public abstract class ProxyFacetSupport
       final Content result = createContent(context, response);
       result.getAttributes().set(Content.CONTENT_LAST_MODIFIED, extractLastModified(request, response));
       final Header etagHeader = response.getLastHeader(HttpHeaders.ETAG);
-      result.getAttributes().set(Content.CONTENT_ETAG, etagHeader == null ? null : ETagHeaderUtils.extract(etagHeader.getValue()));
+      result.getAttributes()
+          .set(Content.CONTENT_ETAG, etagHeader == null ? null : ETagHeaderUtils.extract(etagHeader.getValue()));
 
       result.getAttributes().set(CacheInfo.class, cacheInfo);
       return result;
@@ -555,7 +559,8 @@ public abstract class ProxyFacetSupport
    * Execute http client request.
    */
   protected HttpResponse execute(final Context context, final HttpClient client, final HttpRequestBase request)
-      throws IOException {
+      throws IOException
+  {
     return client.execute(request);
   }
 
@@ -595,7 +600,6 @@ public abstract class ProxyFacetSupport
    */
   protected abstract String getUrl(@Nonnull final Context context);
 
-
   /**
    * Get the appropriate cache controller for the type of content being requested. Must never return {@code null}.
    */
@@ -612,7 +616,7 @@ public abstract class ProxyFacetSupport
 
     final CacheInfo cacheInfo = content.getAttributes().get(CacheInfo.class);
 
-    if(isNull(cacheInfo)) {
+    if (isNull(cacheInfo)) {
       log.warn("CacheInfo missing for {}, assuming stale content.", content);
       return true;
     }
