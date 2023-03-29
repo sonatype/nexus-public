@@ -136,6 +136,11 @@ export default {
       ACTION: 'coreui_Task',
       METHODS: {
         READ: 'read',
+        CREATE: 'create',
+        UPDATE: 'update',
+        DELETE: 'remove',
+        RUN: 'run',
+        STOP: 'stop',
         READ_TYPES: 'readTypes',
       }
     },
@@ -251,6 +256,9 @@ export default {
       },
       get TAGS() {
         return `${this.BASE_URL}tags`;
+      },
+      get TASKS() {
+        return `${this.BASE_URL}tasks`;
       },
       get UPLOAD() {
         return `${this.BASE_URL}repositorySettings`;

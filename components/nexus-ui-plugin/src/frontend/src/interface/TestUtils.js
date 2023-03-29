@@ -148,7 +148,8 @@ export default class TestUtils {
   }
 
   static async expectProperFilteredItemsCount(filter, query, count) {
-    await this.changeField(filter, query);
+    userEvent.clear(filter());
+    userEvent.type(filter(), query);
     expect(this.tableSelectors.rows()).toHaveLength(count);
   }
 

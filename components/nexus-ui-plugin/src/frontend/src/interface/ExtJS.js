@@ -169,6 +169,10 @@ export default class {
     return NX.State;
   }
 
+  static formatDate(date, format) {
+    return Ext.Date.format(date, format);
+  }
+
   /**
    * @returns {boolean} true if the edition is PRO
    */

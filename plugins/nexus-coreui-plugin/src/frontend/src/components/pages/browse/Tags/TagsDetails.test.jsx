@@ -47,8 +47,6 @@ const selectors = {
   getLastUpdatedLabel: () => screen.queryByText(TAGS.DETAILS.LAST_UPDATED),
   getTagAttributesLabel: () => screen.queryByText(TAGS.DETAILS.ATTRIBUTES),
   getCopyToClipboardButton: () => screen.queryByRole('button', {name:'Copy to Clipboard'}),
-  getClipboardContent: () => screen.queryByRole('textbox')
-
 }
 
 const {TAGS} = TagStrings;

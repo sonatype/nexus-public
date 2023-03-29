@@ -39,24 +39,23 @@ import {faClock} from '@fortawesome/free-solid-svg-icons';
 import Machine from './TasksListMachine';
 import {canCreateTask} from './TasksHelper';
 
-import './TasksList.scss';
 import UIStrings from '../../../../constants/UIStrings';
 
 const {TASKS: {LIST: LABELS}} = UIStrings;
 const {COLUMNS} = LABELS;
 
 export default function TasksList({onCreate, onEdit}) {
-  const [current, send] = useMachine(Machine, {devTools: true});
-  const isLoading = current.matches('loading');
-  const {data, error, filter: filterText} = current.context;
+  const [state, send] = useMachine(Machine, {devTools: true});
+  const isLoading = state.matches('loading');
+  const {data, error, filter: filterText} = state.context;
 
-  const nameSortDir = ListMachineUtils.getSortDirection('name', current.context);
-  const typeNameSortDir = ListMachineUtils.getSortDirection('typeName', current.context);
-  const statusDescriptionSortDir = ListMachineUtils.getSortDirection('statusDescription', current.context);
-  const scheduleSortDir = ListMachineUtils.getSortDirection('schedule', current.context);
-  const nextRunSortDir = ListMachineUtils.getSortDirection('nextRun', current.context);
-  const lastRunSortDir = ListMachineUtils.getSortDirection('lastRun', current.context);
-  const lastRunResultSortDir = ListMachineUtils.getSortDirection('lastRunResult', current.context);
+  const nameSortDir = ListMachineUtils.getSortDirection('name', state.context);
+  const typeNameSortDir = ListMachineUtils.getSortDirection('typeName', state.context);
+  const statusDescriptionSortDir = ListMachineUtils.getSortDirection('statusDescription', state.context);
+  const scheduleSortDir = ListMachineUtils.getSortDirection('schedule', state.context);
+  const nextRunSortDir = ListMachineUtils.getSortDirection('nextRun', state.context);
+  const lastRunSortDir = ListMachineUtils.getSortDirection('lastRun', state.context);
+  const lastRunResultSortDir = ListMachineUtils.getSortDirection('lastRunResult', state.context);
 
   const sortByName = () => send('SORT_BY_NAME');
   const sortByTypeName = () => send('SORT_BY_TYPE_NAME');

@@ -22,7 +22,7 @@ import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/Test
 
 import UIStrings from '../../../../constants/UIStrings';
 import TasksList from './TasksList';
-import {ROWS} from './Tasks.testdata';
+import {TASKS} from './Tasks.testdata';
 
 const XSS_STRING = TestUtils.XSS_STRING;
 const {TASKS: {LIST: LABELS}} = UIStrings;
@@ -67,7 +67,7 @@ const FIELDS = {
   LAST_RESULT: 'lastRunResult',
 };
 
-const sortTasks = (field, order = ASC) => sort((order === ASC ? ascend : descend)(compose(toLower, prop(field))), ROWS);
+const sortTasks = (field, order = ASC) => sort((order === ASC ? ascend : descend)(compose(toLower, prop(field))), TASKS);
 
 describe('TasksList', function() {
 
@@ -78,7 +78,7 @@ describe('TasksList', function() {
 
   beforeEach(() => {
     when(Axios.post).calledWith(URL, REQUEST).mockResolvedValue({
-      data: TestUtils.makeExtResult(ROWS)
+      data: TestUtils.makeExtResult(TASKS)
     });
   });
 
@@ -99,13 +99,15 @@ describe('TasksList', function() {
 
     await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(URL, REQUEST));
 
+    const tasks = sortTasks(FIELDS.NAME);
+
     TestUtils.expectTableHeaders(Object.values(LABELS.COLUMNS));
-    TestUtils.expectTableRows(ROWS, Object.values(FIELDS));
+    TestUtils.expectTableRows(tasks, Object.values(FIELDS));
   });
 
   it('renders the resolved data with XSS', async function() {
     const XSS_ROWS = [{
-      ...ROWS[0],
+      ...TASKS[0],
       name: XSS_STRING,
       typeName: XSS_STRING,
       statusDescription: XSS_STRING,
@@ -165,11 +167,13 @@ describe('TasksList', function() {
 
     await renderAndWaitForLoad();
 
-    await TestUtils.expectProperFilteredItemsCount(filter, '', ROWS.length);
-    await TestUtils.expectProperFilteredItemsCount(filter, 'a-t', 1);
-    await TestUtils.expectProperFilteredItemsCount(filter, 'poli', 1);
-    await TestUtils.expectProperFilteredItemsCount(filter, 'once', 1);
-    await TestUtils.expectProperFilteredItemsCount(filter, 'rep', 2);
+    await TestUtils.expectProperFilteredItemsCount(filter, '', TASKS.length);
+    await TestUtils.expectProperFilteredItemsCount(filter, 'tag', 1);
+    await TestUtils.expectProperFilteredItemsCount(filter, 'de', 1);
+    await TestUtils.expectProperFilteredItemsCount(filter, 'script', 1);
+    await TestUtils.expectProperFilteredItemsCount(filter, 'ser', 1);
+    await TestUtils.expectProperFilteredItemsCount(filter, 'cleanup s', 1);
+    await TestUtils.expectProperFilteredItemsCount(filter, 'blob', 1);
   });
 
   it('disables the create button when not enough permissions', async function() {
