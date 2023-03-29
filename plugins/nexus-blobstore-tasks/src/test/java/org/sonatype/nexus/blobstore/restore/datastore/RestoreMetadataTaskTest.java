@@ -194,7 +194,8 @@ public class RestoreMetadataTaskTest
     underTest.execute();
 
     ArgumentCaptor<Properties> propertiesArgumentCaptor = ArgumentCaptor.forClass(Properties.class);
-    verify(restoreBlobStrategy, never()).restore(propertiesArgumentCaptor.capture(), eq(blob), eq(blobStore), eq(false));
+    verify(restoreBlobStrategy, never()).restore(propertiesArgumentCaptor.capture(), eq(blob), eq(blobStore),
+        eq(false));
     verify(blobStore, never()).undelete(blobstoreUsageChecker, blobId, blobAttributes, false);
   }
 
@@ -209,7 +210,8 @@ public class RestoreMetadataTaskTest
     underTest.execute();
 
     ArgumentCaptor<Properties> propertiesArgumentCaptor = ArgumentCaptor.forClass(Properties.class);
-    verify(restoreBlobStrategy, never()).restore(propertiesArgumentCaptor.capture(), eq(blob), eq(blobStore), eq(false));
+    verify(restoreBlobStrategy, never()).restore(propertiesArgumentCaptor.capture(), eq(blob), eq(blobStore),
+        eq(false));
     verify(blobStore, never()).undelete(blobstoreUsageChecker, blobId, blobAttributes, false);
   }
 
@@ -342,7 +344,7 @@ public class RestoreMetadataTaskTest
 
     underTest.execute();
 
-    verify(defaultIntegrityCheckStrategy).check(any(), any(), any(), any());
+    verify(defaultIntegrityCheckStrategy).check(any(), any(), any(), anyInt(), any());
     verifyNoInteractions(testIntegrityCheckStrategy);
   }
 
@@ -358,7 +360,7 @@ public class RestoreMetadataTaskTest
     underTest.execute();
 
     verifyNoInteractions(defaultIntegrityCheckStrategy);
-    verify(testIntegrityCheckStrategy).check(eq(repository), eq(blobStore), any(), any());
+    verify(testIntegrityCheckStrategy).check(eq(repository), eq(blobStore), any(), anyInt(), any());
   }
 
   @Test

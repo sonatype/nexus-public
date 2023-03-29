@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.restore.datastore;
 
+import java.time.LocalDate;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
@@ -41,6 +42,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.apache.commons.lang.StringUtils;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static java.time.LocalDate.now;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
@@ -102,6 +104,7 @@ public class DefaultIntegrityCheckStrategy
       final Repository repository,
       final BlobStore blobStore,
       final BooleanSupplier isCancelled,
+      final int sinceDays,
       @Nullable final Consumer<Asset> integrityCheckFailedHandler)
   {
     log.info("Checking integrity of assets in repository '{}' with blob store '{}'", repository.getName(),
@@ -109,6 +112,11 @@ public class DefaultIntegrityCheckStrategy
 
     long processed = 0;
     long failures = 0;
+
+    LocalDate sinceDate = null;
+    if (sinceDays > 0) {
+      sinceDate = now().minusDays(sinceDays);
+    }
 
     try (ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60)) {
       FluentAssets fluentAssets = repository.facet(ContentFacet.class).assets();
@@ -118,6 +126,13 @@ public class DefaultIntegrityCheckStrategy
           if (isCancelled.getAsBoolean()) {
             log.warn(CANCEL_WARNING);
             return;
+          }
+
+          if (sinceDate != null) {
+            LocalDate assetDate = asset.blob().get().blobCreated().toLocalDate();
+            if (sinceDate.isAfter(assetDate)) {
+              continue;
+            }
           }
 
           log.debug("Checking asset {}", asset.path());

@@ -40,5 +40,6 @@ public interface IntegrityCheckStrategy
       final Repository repository,
       final BlobStore blobStore,
       final BooleanSupplier isCancelled,
+      final int sinceDays,
       @Nullable final Consumer<Asset> integrityCheckFailedHandler);
 }

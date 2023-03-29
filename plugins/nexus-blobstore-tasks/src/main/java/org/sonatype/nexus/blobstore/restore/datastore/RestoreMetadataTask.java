@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.restore.datastore;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,7 +24,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -45,6 +45,7 @@ import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.time.LocalDate.now;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
@@ -126,7 +127,7 @@ public class RestoreMetadataTask
 
     restore(blobStore, restoreBlobs, undeleteBlobs, dryRun, sinceDays);
 
-    blobStoreIntegrityCheck(integrityCheck, blobStoreId, dryRun);
+    blobStoreIntegrityCheck(integrityCheck, blobStoreId, dryRun, sinceDays);
 
     return null;
   }
@@ -229,7 +230,12 @@ public class RestoreMetadataTask
     }
   }
 
-  private void blobStoreIntegrityCheck(final boolean integrityCheck, final String blobStoreId, final boolean dryRun) {
+  private void blobStoreIntegrityCheck(
+      final boolean integrityCheck,
+      final String blobStoreId,
+      final boolean dryRun,
+      final int sinceDays)
+  {
     if (!integrityCheck) {
       log.warn("Integrity check operation not selected");
       return;
@@ -254,7 +260,7 @@ public class RestoreMetadataTask
         .forEach(repository ->
             integrityCheckStrategies
                 .getOrDefault(repository.getFormat().getValue(), defaultIntegrityCheckStrategy)
-                .check(repository, blobStore, this::isCanceled,
+                .check(repository, blobStore, this::isCanceled, sinceDays,
                     a -> this.integrityCheckFailedHandler(repository, a, dryRun))
         );
   }
