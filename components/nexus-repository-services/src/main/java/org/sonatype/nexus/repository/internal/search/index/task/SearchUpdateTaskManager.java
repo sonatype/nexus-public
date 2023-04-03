@@ -14,7 +14,8 @@ package org.sonatype.nexus.repository.internal.search.index.task;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -32,7 +33,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 import static org.sonatype.nexus.repository.internal.search.index.task.SearchUpdateTaskDescriptor.REPOSITORY_NAMES_FIELD_ID;
 
 /**
- * Ad-hoc "manager" class that checks to see if any repository indexes are out of date and need to be updated and
+ * Ad-hoc "manager" class that checks to see if any repository indexes are out of date, missed or need to be updated and
  * schedules a task to do so.
  *
  * @since 3.37
@@ -70,12 +71,11 @@ public class SearchUpdateTaskManager
       return;
     }
     try {
-      List<String> reindexList = new ArrayList<>();
-      for (Repository repository : repositoryManager.browse()) {
-        if (searchUpdateService.needsReindex(repository)) {
-          reindexList.add(repository.getName());
-        }
-      }
+      List<String> reindexList = StreamSupport.stream(repositoryManager.browse().spliterator(), false)
+          .filter(searchUpdateService::needsReindex)
+          .map(Repository::getName)
+          .collect(Collectors.toList());
+
       if (!reindexList.isEmpty()) {
         boolean existingTask = taskScheduler.findAndSubmit(SearchUpdateTaskDescriptor.TYPE_ID);
         if (!existingTask) {

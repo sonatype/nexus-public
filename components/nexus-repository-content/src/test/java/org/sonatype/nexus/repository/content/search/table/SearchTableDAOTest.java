@@ -51,6 +51,8 @@ import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
@@ -352,6 +354,19 @@ public class SearchTableDAOTest
 
     long count = searchDAO.count(null, null);
     assertThat(count, is(TABLE_RECORDS_TO_GENERATE));
+  }
+
+  @Test
+  public void testCountRepositorySearchIndexes() {
+    GENERATED_DATA.forEach(data -> {
+      assertFalse(searchDAO.hasRepositoryEntries(data.getRepositoryName()));
+    });
+
+    searchDAO.saveBatch(GENERATED_DATA);
+
+    GENERATED_DATA.forEach(data -> {
+      assertTrue(searchDAO.hasRepositoryEntries(data.getRepositoryName()));
+    });
   }
 
   private void assertEntityVersionsAreSameAsSearchTableDataToSave() {

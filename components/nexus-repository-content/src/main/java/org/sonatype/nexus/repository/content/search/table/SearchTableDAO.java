@@ -99,4 +99,12 @@ public interface SearchTableDAO
    * @param searchData data to be saved.
    */
   void saveBatch(@Param("searchData") List<SearchTableData> searchData);
+
+  /**
+   * Check repository has search entries.
+   *
+   * @param repositoryName repository
+   * @return {@code true} if any records exists
+   */
+  boolean hasRepositoryEntries(@Param("repositoryName") final String repositoryName);
 }

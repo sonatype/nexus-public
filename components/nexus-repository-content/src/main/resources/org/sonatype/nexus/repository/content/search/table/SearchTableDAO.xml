@@ -403,4 +403,8 @@
       </otherwise>
     </choose>
   </sql>
+
+  <select id="hasRepositoryEntries" resultType="boolean">
+    SELECT EXISTS(SELECT 1 FROM search_components WHERE search_repository_name = #{repositoryName} LIMIT 1)
+  </select>
 </mapper>

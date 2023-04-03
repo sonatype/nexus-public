@@ -166,6 +166,17 @@ public class SearchTableStore
   }
 
   /**
+   * Check if repository search index should be re-indexed.
+   *
+   * @param repositoryName repository id
+   * @return check result
+   */
+  @Transactional
+  public boolean repositoryNeedsReindex(final String repositoryName) {
+    return !dao().hasRepositoryEntries(repositoryName);
+  }
+
+  /**
    * Commits any batched changes so far.
    * <p>
    * Also checks to see if the current (potentially long-running) operation has been cancelled.
