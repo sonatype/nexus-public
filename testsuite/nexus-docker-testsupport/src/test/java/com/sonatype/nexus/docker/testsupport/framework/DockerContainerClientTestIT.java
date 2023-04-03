@@ -13,8 +13,8 @@
 package com.sonatype.nexus.docker.testsupport.framework;
 
 import org.junit.After;
-import org.junit.Ignore;
 import org.junit.Test;
+import spock.lang.Ignore;
 
 import static java.util.UUID.randomUUID;
 import static org.junit.Assert.assertFalse;
