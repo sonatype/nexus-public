@@ -243,6 +243,33 @@ describe('FormUtils', () => {
     });
   });
 
+  describe('extractSaveErrorMessage', () => {
+    it('returns an error message when possible', () => {
+      const error = 'Error';
+
+      let event = {};
+      expect(FormUtils.extractSaveErrorMessage(event)).toBe(null);
+
+      event = {data: error};
+      expect(FormUtils.extractSaveErrorMessage(event)).toBe(error);
+
+      event = {data: {message: error}};
+      expect(FormUtils.extractSaveErrorMessage(event)).toBe(error);
+
+      event = {data: {response: {data: error}}};
+      expect(FormUtils.extractSaveErrorMessage(event)).toBe(error);
+
+      event = {data: {response: {data: {id: '*', message: error}}}};
+      expect(FormUtils.extractSaveErrorMessage(event)).toBe(error);
+
+      event = {data: {response: {data: {id: 'name', message: error}}}};
+      expect(FormUtils.extractSaveErrorMessage(event)).toBe(null);
+
+      event = {data: {response: {data: []}}};
+      expect(FormUtils.extractSaveErrorMessage(event)).toBe(null);
+    });
+  });
+
   describe('machine', () => {
     it('When delete service is finish successfully, the dirty flag should be removed', (done) => {
       const machineId = 'mock';

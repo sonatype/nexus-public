@@ -200,12 +200,15 @@ describe('SslCertificateDetailsModal', () => {
   });
 
   it('renders an error when the load fails', async function() {
-    when(axios.get).calledWith(`${baseUrl}?host=${localhost}&port=${defaultPort}`).mockRejectedValue('error');
+    const message = "\"Could not retrieve an SSL certificate from 'google1.com:1'\"";
+    when(axios.get).calledWith(`${baseUrl}?host=${localhost}&port=${defaultPort}`).mockRejectedValue({
+      response: {data: {id: '*', message}}
+    });
     mockTruststore([]);
 
     await renderView();
 
-    expect(screen.getByText('An error occurred loading data. error')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent(message);
   });
 
   it('renders an error when adding the certificate fails', async function() {

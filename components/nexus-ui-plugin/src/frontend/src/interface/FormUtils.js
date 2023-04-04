@@ -201,16 +201,7 @@ export default class FormUtils {
 
         setSaveError: assign({
           saveErrorData: ({data}) => data,
-          saveError: (_, event) => {
-            const data = event.data?.response?.data || event.data?.message;
-            let error = null;
-            if (typeof data === 'string') {
-              error = data;
-            } else if (typeof data === 'object' && data.id === '*') {
-              error = data.message
-            }
-            return error;
-          },
+          saveError: (_, event) => FormUtils.extractSaveErrorMessage(event),
           saveErrors: (_, event) => {
             const data = event.data?.response?.data;
             if (data instanceof Array) {
@@ -326,6 +317,22 @@ export default class FormUtils {
     };
 
     return Machine(config(DEFAULT_CONFIG), options(DEFAULT_OPTIONS));
+  }
+
+  /**
+   * Extract api error message if possible
+   * @param event
+   * @return {string|null}
+   */
+  static extractSaveErrorMessage(event) {
+    const data = event.data?.response?.data || event.data?.message || event.data;
+    let error = null;
+    if (typeof data === 'string') {
+      error = data;
+    } else if (typeof data === 'object' && data.id === '*') {
+      error = data.message
+    }
+    return error;
   }
 
   /**
