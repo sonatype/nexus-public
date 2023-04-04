@@ -53,6 +53,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -150,6 +151,29 @@ public class SelectorManagerImplTest
     List<SelectorConfiguration> selectors = manager.browseActive(asList("anyRepository"), asList("anyFormat"));
 
     assertThat(selectors, contains(is(nestedRoleConfig)));
+  }
+
+  @Test
+  public void browseActiveCachesRolesList()  throws Exception{
+    // initial setup calls securitySystem.listRoles twice times
+    createSelectorConfiguration("roleId", "rolePrivilegeId", "roleSelectorName", "repository");
+    securitySystem.listRoles(UserManager.DEFAULT_SOURCE).stream().findFirst().get().getRoles().add("nestedRoleId");
+    verify(securitySystem, times(2)).listRoles(UserManager.DEFAULT_SOURCE);
+
+    manager.browseActive(asList("anyRepository"), asList("anyFormat"));
+    verify(securitySystem, times(3)).listRoles(UserManager.DEFAULT_SOURCE);
+
+    manager.browseActive(asList("anyRepository"), asList("anyFormat"));
+    verify(securitySystem, times(3)).listRoles(UserManager.DEFAULT_SOURCE);
+
+    // configuration change clears cache
+    createSelectorConfiguration("nestedRoleId", "nestedRolePrivilegeId",
+        "nestedRoleSelectorName", ALL);
+    manager.browseActive(asList("anyRepository"), asList("anyFormat"));
+    verify(securitySystem, times(4)).listRoles(UserManager.DEFAULT_SOURCE);
+
+    manager.browseActive(asList("anyRepository"), asList("anyFormat"));
+    verify(securitySystem, times(4)).listRoles(UserManager.DEFAULT_SOURCE);
   }
 
   @Test
