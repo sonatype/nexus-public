@@ -32,4 +32,20 @@ global.NX = {
     success: jest.fn(),
     error: jest.fn(),
   },
+  Permissions: {
+    check: jest.fn()
+  }
 };
+
+// Add missing getBoundingClientRect
+Range.prototype.getBoundingClientRect = jest.fn(() => {
+  return {
+    width: 100,
+    height: 100,
+    top: 100,
+    left: 100,
+    bottom: 100,
+    right: 100
+  };
+});
+

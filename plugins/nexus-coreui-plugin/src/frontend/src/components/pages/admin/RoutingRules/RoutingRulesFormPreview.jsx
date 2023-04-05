@@ -32,7 +32,14 @@ export default function RoutingRulesPreview({value, onChange, onTest}) {
       <div className="nx-form-group">
         {/* Ensure the button is at the correct height and prepend with a / */}
         <label className="nx-label nxrm-path">
-          <Textfield name="path" value={value} onChange={onChange} onKeyPress={handleEnter} validatable={false}/>
+          <Textfield
+            className="nx-text-input--long"
+            name="path"
+            value={value}
+            onChange={onChange}
+            onKeyPress={handleEnter}
+            validatable={false}
+          />
         </label>
       </div>
       <div className="nx-btn-bar">

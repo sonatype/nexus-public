@@ -19,7 +19,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>3.43.0-SNAPSHOT</version>
+    <version>3.52.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-it-deps</artifactId>
@@ -42,7 +42,7 @@
     <dependency>
       <groupId>org.ops4j.pax.exam</groupId>
       <artifactId>pax-exam-invoker-junit</artifactId>
-      <version>4.13.3</version>
+      <version>4.13.5</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -54,7 +54,7 @@
     <dependency>
       <groupId>org.ops4j.pax.exam</groupId>
       <artifactId>pax-exam-inject</artifactId>
-      <version>4.13.3</version>
+      <version>4.13.5</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -66,7 +66,7 @@
     <dependency>
       <groupId>org.ops4j.pax.exam</groupId>
       <artifactId>pax-exam-extender-service</artifactId>
-      <version>4.13.3</version>
+      <version>4.13.5</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

@@ -17,7 +17,7 @@ import RepositoriesListMachine from './RepositoriesListMachine';
 const RepositoriesContext = createContext({});
 
 export default function RepositoriesContextProvider(props) {
-  const service = useInterpret(RepositoriesListMachine, {devTools: true});
+  const service = props.service ?? useInterpret(RepositoriesListMachine, {devTools: true});
 
   return (
     <RepositoriesContext.Provider value={{service}}>

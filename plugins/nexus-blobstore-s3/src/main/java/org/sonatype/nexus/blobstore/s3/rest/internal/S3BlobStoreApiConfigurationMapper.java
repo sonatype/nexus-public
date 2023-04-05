@@ -31,7 +31,6 @@ import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.LIMIT_KEY
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.ROOT_KEY;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.TYPE_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.*;
-import static org.sonatype.nexus.blobstore.s3.rest.internal.S3BlobStoreApiModelMapper.ONE_MILLION;
 
 /**
  * Transforms a {@link BlobStoreConfiguration} to an {@link S3BlobStoreApiModel}.
@@ -56,7 +55,7 @@ public final class S3BlobStoreApiConfigurationMapper
       if (nonNull(quotaType) && nonNull(quotaLimit)) {
         final BlobStoreApiSoftQuota blobStoreApiSoftQuota = new BlobStoreApiSoftQuota();
         blobStoreApiSoftQuota.setType(quotaType);
-        blobStoreApiSoftQuota.setLimit(parseLong(quotaLimit) / ONE_MILLION);
+        blobStoreApiSoftQuota.setLimit(parseLong(quotaLimit));
         return blobStoreApiSoftQuota;
       }
     }

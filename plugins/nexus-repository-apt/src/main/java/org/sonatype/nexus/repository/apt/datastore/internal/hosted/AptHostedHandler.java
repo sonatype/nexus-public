@@ -35,8 +35,11 @@ import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.payloads.StreamPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
+import static org.sonatype.nexus.repository.apt.internal.ReleaseName.INRELEASE;
+import static org.sonatype.nexus.repository.apt.internal.ReleaseName.RELEASE;
+import static org.sonatype.nexus.repository.apt.internal.ReleaseName.RELEASE_GPG;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
 import static org.sonatype.nexus.repository.http.HttpMethods.POST;
@@ -62,7 +65,7 @@ public class AptHostedHandler
     switch (method) {
       case GET:
       case HEAD:
-        return doGet(path, contentFacet);
+        return doGet(context, path, contentFacet);
       case POST:
         return doPost(context, path, contentFacet);
       default:
@@ -70,7 +73,14 @@ public class AptHostedHandler
     }
   }
 
-  private Response doGet(final String path, final AptContentFacet contentFacet) {
+  private Response doGet(
+      final Context context,
+      final String path,
+      final AptContentFacet contentFacet) throws IOException
+  {
+    if (isMetadataRebuildRequired(path, contentFacet)) {
+      context.getRepository().facet(AptHostedFacet.class).rebuildMetadata();
+    }
     Optional<Content> content = contentFacet.get(path);
     return content.isPresent() ? HttpResponses.ok(content.get()) : HttpResponses.notFound(path);
   }
@@ -103,6 +113,16 @@ public class AptHostedHandler
     else {
       return HttpResponses.methodNotAllowed(POST, GET, HEAD);
     }
+  }
+
+  private boolean isMetadataRebuildRequired(final String path, final AptContentFacet contentFacet)
+  {
+    if (StringUtils.startsWith(path, "dists")
+        && StringUtils.endsWithAny(path, INRELEASE, RELEASE, RELEASE_GPG, "/Packages")) {
+      String inReleasePath = "dists/" + contentFacet.getDistribution() + "/" + INRELEASE;
+      return !contentFacet.get(inReleasePath).isPresent();
+    }
+    return false;
   }
 
   private String assetPath(final Context context) {

@@ -15,7 +15,7 @@ import Axios from 'axios';
 import {act} from 'react-dom/test-utils';
 import {waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {TestUtils} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import NuGetApiToken from './NuGetApiToken';
 import UIStrings from '../../../../constants/UIStrings';
@@ -28,7 +28,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
     ...jest.requireActual('@sonatype/nexus-ui-plugin'),
     ExtJS: {
       requestAuthenticationToken: jest.fn(() => Promise.resolve(mockToken)),
-      urlOf: jest.fn(() => 'http://localhost:4242/repository/fakeUrl')
+      absolutePath: jest.fn(() => 'http://localhost:4242/repository/fakeUrl')
     }
   };
 });

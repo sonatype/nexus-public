@@ -14,32 +14,24 @@ import React from 'react';
 import {useActor} from '@xstate/react';
 
 import {
-  NxForm,
   NxFormGroup,
-  NxTextInput,
-  NxModal,
   NxH2,
+  NxModal,
+  NxStatefulForm,
+  NxTextInput
 } from '@sonatype/react-shared-components';
 import {FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 
 const {
-  USERS: { MODAL },
-  SETTINGS,
+  USERS: { MODAL }
 } = UIStrings;
 
 export default function ConfirmNewPasswordForm({ actor }) {
   const [state, send] = useActor(actor);
-  const { isPristine, loadError, saveError, validationErrors } = state.context;
-  const isLoading = state.matches('loading');
-  const isSaving = state.matches('saving');
+  const { isPristine, validationErrors } = state.context;
   const isInvalid = ValidationUtils.isInvalid(validationErrors);
-
-  const save = () =>
-    send({
-      type: 'SAVE',
-    });
 
   const cancel = () =>
     send({
@@ -47,13 +39,8 @@ export default function ConfirmNewPasswordForm({ actor }) {
     });
 
   return (
-    <NxForm
-      loading={isLoading}
-      loadError={loadError}
-      submitBtnText={SETTINGS.SAVE_BUTTON_LABEL}
-      onSubmit={save}
-      submitError={saveError}
-      submitMaskState={isSaving ? false : null}
+    <NxStatefulForm
+      {...FormUtils.formProps(state, send)}
       submitMaskMessage={MODAL.CONFIRMING_ADMIN_PASSWORD}
       onCancel={cancel}
       validationErrors={FormUtils.saveTooltip({ isPristine, isInvalid })}
@@ -79,6 +66,6 @@ export default function ConfirmNewPasswordForm({ actor }) {
           />
         </NxFormGroup>
       </NxModal.Content>
-    </NxForm>
+    </NxStatefulForm>
   );
 }

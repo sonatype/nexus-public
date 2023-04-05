@@ -101,6 +101,10 @@ import static org.sonatype.nexus.repository.content.AttributeOperation.SET;
 public class FormatStoreManagerTest
     extends TestSupport
 {
+  private static final String NODE_ID = "ab761d55-5d9c22b6-3f38315a-75b3db34-0922a4d5";
+
+  private static final String BLOB_ID = "a8f3f56f-e895-4b6e-984a-1cf1f5107d36";
+  
   @Rule
   public DataSessionRule sessionRule = new DataSessionRule(DEFAULT_DATASTORE_NAME)
       .handle(new BlobRefTypeHandler())
@@ -196,7 +200,7 @@ public class FormatStoreManagerTest
     assetStore.createAsset(asset);
 
     AssetBlobData assetBlob = new AssetBlobData();
-    assetBlob.setBlobRef(new BlobRef("local", "default", "testBlob"));
+    assetBlob.setBlobRef(new BlobRef(NODE_ID, "default", BLOB_ID));
     assetBlob.setBlobSize(0);
     assetBlob.setContentType("text/plain");
     assetBlob.setChecksums(ImmutableMap.of());
@@ -208,7 +212,7 @@ public class FormatStoreManagerTest
 
     Optional<Asset> result = assetStore.readPath(repository.repositoryId, "/path/to/asset");
     assertThat(result.get().component().get().name(), is("testComponent"));
-    assertThat(result.get().blob().get().blobRef().getBlob(), is("testBlob"));
+    assertThat(result.get().blob().get().blobRef().getBlob(), is(BLOB_ID));
   }
 
   @Test
@@ -307,7 +311,7 @@ public class FormatStoreManagerTest
     assetStore.createAsset(asset);
 
     AssetBlobData assetBlob = new AssetBlobData();
-    assetBlob.setBlobRef(new BlobRef("local", "default", "testBlob"));
+    assetBlob.setBlobRef(new BlobRef(NODE_ID, "default", BLOB_ID));
     assetBlob.setBlobSize(0);
     assetBlob.setContentType("text/plain");
     assetBlob.setChecksums(ImmutableMap.of());
@@ -392,7 +396,7 @@ public class FormatStoreManagerTest
     assetStore.createAsset(asset);
 
     AssetBlobData assetBlob = new AssetBlobData();
-    assetBlob.setBlobRef(new BlobRef("local", "default", "testBlob"));
+    assetBlob.setBlobRef(new BlobRef(NODE_ID, "default", BLOB_ID));
     assetBlob.setBlobSize(0);
     assetBlob.setContentType("text/plain");
     assetBlob.setChecksums(ImmutableMap.of());
@@ -468,7 +472,7 @@ public class FormatStoreManagerTest
     componentStore.createComponent(component);
 
     AssetBlobData assetBlob = new AssetBlobData();
-    assetBlob.setBlobRef(new BlobRef("local", "default", "testBlob"));
+    assetBlob.setBlobRef(new BlobRef(NODE_ID, "default", BLOB_ID));
     assetBlob.setBlobSize(0);
     assetBlob.setContentType("text/plain");
     assetBlob.setChecksums(ImmutableMap.of());

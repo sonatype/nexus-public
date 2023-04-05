@@ -42,7 +42,11 @@ export default function UsersToken({service}) {
   );
   const canReset = ExtJS.checkPermission('nexus:usertoken-settings:update');
 
-  const reset = () => send('RESET_TOKEN');
+  const reset = () => {
+    if (canReset) {
+      send('RESET_TOKEN');
+    }
+  };
 
   return (
     <>
@@ -74,7 +78,7 @@ export default function UsersToken({service}) {
                     type="button"
                     variant="tertiary"
                     onClick={reset}
-                    disabled={!canReset}
+                    className={!canReset ? 'disabled' : ''}
                   >
                     {LABELS.RESET_USER_TOKEN}
                   </NxButton>

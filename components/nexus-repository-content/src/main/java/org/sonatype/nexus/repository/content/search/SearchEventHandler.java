@@ -26,13 +26,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Nullable;
-import javax.inject.Inject;
 import javax.inject.Named;
-import javax.inject.Singleton;
 
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
-import org.sonatype.nexus.common.app.FeatureFlag;
-import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.repository.Repository;
@@ -66,8 +62,6 @@ import static java.lang.Integer.parseInt;
 import static java.lang.Thread.MIN_PRIORITY;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
-import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.repository.content.search.SearchEventHandler.RequestType.INDEX;
 import static org.sonatype.nexus.repository.content.search.SearchEventHandler.RequestType.PURGE;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
@@ -85,23 +79,19 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.toExternal
  *
  * @since 3.26
  */
-@FeatureFlag(name = DATASTORE_ENABLED)
-@ManagedLifecycle(phase = SERVICES)
-@Named
-@Singleton
-public class SearchEventHandler
+public abstract class SearchEventHandler
     extends LifecycleSupport
     implements EventAware // warning: don't make this EventAware.Asynchronous
 {
   private static final String HANDLER_KEY_PREFIX = "nexus.search.event.handler.";
 
-  private static final String FLUSH_ON_COUNT_KEY = HANDLER_KEY_PREFIX + "flushOnCount";
+  protected static final String FLUSH_ON_COUNT_KEY = HANDLER_KEY_PREFIX + "flushOnCount";
 
-  private static final String FLUSH_ON_SECONDS_KEY = HANDLER_KEY_PREFIX + "flushOnSeconds";
+  protected static final String FLUSH_ON_SECONDS_KEY = HANDLER_KEY_PREFIX + "flushOnSeconds";
 
-  private static final String NO_PURGE_DELAY_KEY = HANDLER_KEY_PREFIX + "noPurgeDelay";
+  protected static final String NO_PURGE_DELAY_KEY = HANDLER_KEY_PREFIX + "noPurgeDelay";
 
-  private static final String FLUSH_POOL_SIZE = HANDLER_KEY_PREFIX + "flushPoolSize";
+  protected static final String FLUSH_POOL_SIZE = HANDLER_KEY_PREFIX + "flushPoolSize";
 
   enum RequestType
   {
@@ -124,7 +114,7 @@ public class SearchEventHandler
 
   private final int poolSize;
 
-  private ThreadPoolExecutor threadPoolExecutor;
+  protected ThreadPoolExecutor threadPoolExecutor;
 
   private Object flushMutex = new Object();
 
@@ -132,7 +122,6 @@ public class SearchEventHandler
 
   private boolean processEvents = true;
 
-  @Inject
   public SearchEventHandler(
       final RepositoryManager repositoryManager,
       final PeriodicJobService periodicJobService,
@@ -166,8 +155,12 @@ public class SearchEventHandler
         0L, // keep-alive
         TimeUnit.MILLISECONDS,
         new LinkedBlockingQueue<>(), // allow queueing up of requests
-        new NexusThreadFactory("searchEventHandler", "flushAndPurge", MIN_PRIORITY),
+        new NexusThreadFactory(getThreadPoolId(), "flushAndPurge", MIN_PRIORITY),
         new AbortPolicy());
+  }
+
+  protected String getThreadPoolId() {
+    return "searchEventHandler";
   }
 
   @Override
@@ -323,7 +316,7 @@ public class SearchEventHandler
   }
 
   // no need to watch for AssetPurgeEvent because that's only sent when purging assets without components
-  private void requestIndex(final ComponentEvent event) {
+  protected void requestIndex(final ComponentEvent event) {
     Optional<Repository> repository = event.getRepository();
 
     if (!repository.isPresent()) {

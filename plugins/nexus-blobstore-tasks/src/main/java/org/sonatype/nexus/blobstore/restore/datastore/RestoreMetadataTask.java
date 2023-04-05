@@ -12,7 +12,9 @@
  */
 package org.sonatype.nexus.blobstore.restore.datastore;
 
+import java.time.LocalDate;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +24,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -44,6 +45,7 @@ import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.time.LocalDate.now;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
@@ -80,6 +82,10 @@ public class RestoreMetadataTask
 
   private final MaintenanceService maintenanceService;
 
+  private final AssetBlobRefFormatCheck assetBlobRefFormatCheck;
+
+  private final Map<String, Boolean> formatAssetBlobRefMigrated;
+
   @Inject
   public RestoreMetadataTask(
       final BlobStoreManager blobStoreManager,
@@ -88,7 +94,8 @@ public class RestoreMetadataTask
       final BlobStoreUsageChecker blobStoreUsageChecker,
       final DryRunPrefix dryRunPrefix,
       final Map<String, IntegrityCheckStrategy> integrityCheckStrategies,
-      final MaintenanceService maintenanceService)
+      final MaintenanceService maintenanceService,
+      final AssetBlobRefFormatCheck assetBlobRefFormatCheck)
   {
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.repositoryManager = checkNotNull(repositoryManager);
@@ -98,6 +105,8 @@ public class RestoreMetadataTask
     this.defaultIntegrityCheckStrategy = checkNotNull(integrityCheckStrategies.get(DEFAULT_NAME));
     this.integrityCheckStrategies = checkNotNull(integrityCheckStrategies);
     this.maintenanceService = checkNotNull(maintenanceService);
+    this.assetBlobRefFormatCheck = checkNotNull(assetBlobRefFormatCheck);
+    formatAssetBlobRefMigrated = new HashMap<>();
   }
 
   @Override
@@ -118,7 +127,7 @@ public class RestoreMetadataTask
 
     restore(blobStore, restoreBlobs, undeleteBlobs, dryRun, sinceDays);
 
-    blobStoreIntegrityCheck(integrityCheck, blobStoreId, dryRun);
+    blobStoreIntegrityCheck(integrityCheck, blobStoreId, dryRun, sinceDays);
 
     return null;
   }
@@ -145,6 +154,7 @@ public class RestoreMetadataTask
       log.info("{}Actions will be logged, but no changes will be made.", logPrefix);
     }
 
+    formatAssetBlobRefMigrated.clear();
     try (ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60)) {
       for (BlobId blobId : getBlobIdStream(blobStore, sinceDays)) {
         try {
@@ -156,6 +166,11 @@ public class RestoreMetadataTask
           Optional<Context> optionalContext = buildContext(blobStore, blobId);
           if (optionalContext.isPresent()) {
             Context context = optionalContext.get();
+
+            if (isAssetBlobRefNotMigrated(context.repository)) {
+              continue;
+            }
+
             if (restore && context.restoreBlobStrategy != null && !context.blobAttributes.isDeleted()) {
               context.restoreBlobStrategy.restore(context.properties, context.blob, context.blobStore, dryRun);
             }
@@ -184,6 +199,18 @@ public class RestoreMetadataTask
     }
   }
 
+  private boolean isAssetBlobRefNotMigrated(final Repository repository) {
+    try {
+      return formatAssetBlobRefMigrated.computeIfAbsent(repository.getFormat().getValue(),
+          __ -> assetBlobRefFormatCheck.isAssetBlobRefNotMigrated(repository));
+    }
+    catch (Exception e) {
+      log.error("Error occurred determining asset blob ref migration status. " +
+          "Will assume asset blob refs are not migrated.", e);
+      return true;
+    }
+  }
+
   private Iterable<BlobId> getBlobIdStream(final BlobStore store, final Integer sinceDays) {
     if (isNull(sinceDays) || sinceDays < 0) {
       log.info("Will process all blobs");
@@ -203,7 +230,12 @@ public class RestoreMetadataTask
     }
   }
 
-  private void blobStoreIntegrityCheck(final boolean integrityCheck, final String blobStoreId, final boolean dryRun) {
+  private void blobStoreIntegrityCheck(
+      final boolean integrityCheck,
+      final String blobStoreId,
+      final boolean dryRun,
+      final int sinceDays)
+  {
     if (!integrityCheck) {
       log.warn("Integrity check operation not selected");
       return;
@@ -228,7 +260,7 @@ public class RestoreMetadataTask
         .forEach(repository ->
             integrityCheckStrategies
                 .getOrDefault(repository.getFormat().getValue(), defaultIntegrityCheckStrategy)
-                .check(repository, blobStore, this::isCanceled,
+                .check(repository, blobStore, this::isCanceled, sinceDays,
                     a -> this.integrityCheckFailedHandler(repository, a, dryRun))
         );
   }

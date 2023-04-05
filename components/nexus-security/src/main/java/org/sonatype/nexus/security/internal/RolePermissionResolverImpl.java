@@ -26,6 +26,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.distributed.event.service.api.common.AuthorizationChangedDistributedEvent;
 import org.sonatype.nexus.security.authz.AuthorizationConfigurationChanged;
@@ -110,7 +111,9 @@ public class RolePermissionResolverImpl
   @AllowConcurrentEvents
   @Subscribe
   public void on(final AuthorizationChangedDistributedEvent event) {
-    invalidate();
+    if (EventHelper.isReplicating()) {
+      invalidate();
+    }
   }
 
   @Override

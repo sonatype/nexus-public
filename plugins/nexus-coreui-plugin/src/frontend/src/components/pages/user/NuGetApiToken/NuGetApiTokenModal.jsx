@@ -27,7 +27,7 @@ import './NugetApiToken.scss';
 export default function NuGetApiTokenModal({apiKey, onCloseClick}) {
   const exampleCode = UIStrings.NUGET_API_KEY.DETAILS.REGISTER_COMMAND
       .replace('{0}', apiKey)
-      .replace('{1}', ExtJS.urlOf('repository/{repository name}/'));
+      .replace('{1}', ExtJS.absolutePath('repository/{repository name}/'));
 
   return <NxModal id="nuget-api-key-modal" className="nx-modal--wide" onClose={onCloseClick}>
     <header className="nx-modal-header">

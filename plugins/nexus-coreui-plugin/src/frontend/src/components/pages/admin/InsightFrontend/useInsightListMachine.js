@@ -15,7 +15,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import {ListMachineUtils} from '@sonatype/nexus-ui-plugin/src/frontend/src';
+import {ListMachineUtils} from '@sonatype/nexus-ui-plugin';
 import {useMachine} from '@xstate/react';
 import {useEffect} from 'react';
 import {assign} from "xstate";

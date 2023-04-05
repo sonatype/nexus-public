@@ -3,11 +3,14 @@
   "workspaces": [
     "components/nexus-ui-plugin",
     "components/nexus-rapture",
-    "plugins/nexus-coreui-plugin",
-    "private/plugins/nexus-proui-plugin"
+    "plugins/nexus-coreui-plugin"
   ],
-  "packageManager": "yarn@1.22.17",
-  "engines": {
-    "yarn": "1.22.17"
+  "packageManager": "yarn@3.2.3",
+  "resolutions": {
+    "autolinker": "=3.16.1",
+    "core-js-pure": "=3.28.0"
+  },
+  "dependencies": {
+    "core-js-pure": "^3.28.0"
   }
 }

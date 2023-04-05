@@ -50,10 +50,19 @@ class AssetXOBuilder
         .contentType(asset.contentType())
         .attributes(getExpandedAttributes(asset, format, assetDescriptors))
         .lastModified(calculateLastModified(asset))
+        .lastDownloaded(getLastDownloaded(asset))
         .uploader(asset.createdBy())
         .uploaderIp(asset.createdByIp())
         .fileSize(asset.size())
         .build()
+  }
+
+  @Nullable
+  private static Date getLastDownloaded(final Asset asset) {
+    if(asset.lastDownloaded() == null) {
+      return null;
+    }
+    return asset.lastDownloaded().toDate();
   }
 
   private static Date calculateLastModified(final Asset asset) {
@@ -70,7 +79,6 @@ class AssetXOBuilder
   {
     Map expanded = [:]
     expanded["blobCreated"] = asset.blobCreated()?.toDate()
-    expanded["lastDownloaded"] = asset.lastDownloaded()?.toDate()
 
     Set<String> exposedAttributeKeys = assetDescriptors?.get(format)?.listExposedAttributeKeys()
 

@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.store.example;
 
+import java.util.List;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -62,4 +63,12 @@ public interface TestAssetDAO
    * @return asset if it was found
    */
   Optional<TestAssetData> readPathTest(@Param("repositoryId") int repositoryId, @Param("path") String path);
+
+  /**
+   * Deletes assets by paths
+   */
+  void deleteAssetsByPaths(
+      @Param("repositoryId") int repositoryId,
+      @Param("paths") List<String> paths,
+      @Param("updateComponentEntityVersion") boolean updateComponentEntityVersion);
 }

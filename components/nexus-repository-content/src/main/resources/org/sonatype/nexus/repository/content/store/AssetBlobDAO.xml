@@ -54,7 +54,7 @@
         <if test="continuationToken != null">
           AND B.asset_blob_id > #{continuationToken}
         </if>
-        ORDER BY B.asset_blob_id LIMIT #{limit};
+        LIMIT #{limit};
   </select>
 
   <insert id="createAssetBlob" useGeneratedKeys="true" keyProperty="assetBlobId" parameterType="AssetBlobData">
@@ -75,6 +75,14 @@
     DELETE FROM ${format}_asset_blob WHERE blob_ref = #{blobRef};
   </delete>
 
+  <delete id="deleteAssetBlobBatch" databaseId="PostgreSQL">
+    DELETE FROM ${format}_asset_blob WHERE blob_ref = ANY(#{blobRefIds}::varchar[]);
+  </delete>
+
+  <delete id="deleteAssetBlobBatch">
+    DELETE FROM ${format}_asset_blob WHERE blob_ref = ANY(#{blobRefIds});
+  </delete>
+
   <update id="setBlobCreated">
     UPDATE ${format}_asset_blob SET blob_created = #{blobCreated}
      WHERE blob_ref = #{blobRef};
@@ -90,4 +98,36 @@
     WHERE blob_ref = #{blobRef};
   </update>
 
+  <update id="setChecksums" parameterType="AssetBlobData">
+    UPDATE ${format}_asset_blob SET checksums = #{checksums}
+    WHERE blob_ref = #{blobRef};
+  </update>
+  
+  <select id="browseAssetsWithLegacyBlobRef" resultType="AssetBlobData">
+    SELECT * FROM ${format}_asset_blob
+    WHERE blob_ref LIKE '%:%'
+    <if test="continuationToken != null">
+      AND asset_blob_id > #{continuationToken}
+    </if>
+    ORDER BY asset_blob_id LIMIT #{limit};
+  </select>
+
+  <update id="updateBlobRefs" parameterType="org.sonatype.nexus.common.entity.Continuation">
+    <foreach collection="assetBlobs" item="assetBlobData" index="index" separator=";">
+      UPDATE ${format}_asset_blob
+      SET blob_ref = #{assetBlobData.blobRef}
+      WHERE asset_blob_id = #{assetBlobData.assetBlobId}
+    </foreach>
+  </update>
+
+  <update id="updateBlobRef" parameterType="AssetBlobData">
+    UPDATE ${format}_asset_blob
+    SET blob_ref = #{assetBlobData.blobRef}
+    WHERE asset_blob_id = #{assetBlobData.assetBlobId}
+  </update>
+
+  <select id="countNotMigratedAssetBlobs" resultType="int">
+    SELECT COUNT(*) FROM ${format}_asset_blob
+    WHERE blob_ref LIKE '%:%'
+  </select>
 </mapper>

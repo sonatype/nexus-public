@@ -119,7 +119,8 @@ public class ScriptPrivilegeApiResourceTest
     catch (WebApplicationMessageException e) {
       assertThat(e.getResponse().getStatus(), is(400));
       assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
-      assertThat(e.getResponse().getEntity().toString(), is("\"Invalid script 'invalid' supplied.\""));
+      assertThat(e.getResponse().getEntity().toString(),
+          is("ValidationErrorXO{id='*', message='\"Invalid script 'invalid' supplied.\"'}"));
     }
   }
 

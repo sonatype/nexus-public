@@ -34,7 +34,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
 import org.sonatype.nexus.repository.rest.api.model.AbstractRepositoryApiRequest;
-import org.sonatype.nexus.repository.view.handlers.HighAvailabilitySupportChecker;
+import org.sonatype.nexus.repository.HighAvailabilitySupportChecker;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.rest.WebApplicationMessageException;

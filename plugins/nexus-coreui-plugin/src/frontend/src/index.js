@@ -14,12 +14,15 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+import {Permissions} from '@sonatype/nexus-ui-plugin';
 import ContentSelectors from './components/pages/admin/ContentSelectors/ContentSelectors';
 import EmailServer from './components/pages/admin/EmailServer/EmailServer';
 import Privileges from './components/pages/admin/Privileges/Privileges';
 import Roles from './components/pages/admin/Roles/Roles';
 import Users from './components/pages/admin/Users/Users';
 import SslCertificates from './components/pages/admin/SslCertificates/SslCertificates';
+import LdapServers from './components/pages/admin/LdapServers/LdapServers';
+import Tasks from './components/pages/admin/Tasks/Tasks';
 import AnonymousSettings from './components/pages/admin/AnonymousSettings/AnonymousSettings';
 import BlobStores from './components/pages/admin/BlobStores/BlobStores';
 import InsightFrontend from './components/pages/admin/InsightFrontend/InsightFrontend';
@@ -47,6 +50,18 @@ import ProprietaryRepositories from './components/pages/admin/ProprietaryReposit
 import Api from './components/pages/admin/Api/Api';
 import Realms from './components/pages/admin/Realms/Realms';
 import HTTP from './components/pages/admin/Http/Http';
+import Licensing from './components/pages/admin/Licensing/Licensing';
+import UserTokens from './components/pages/admin/UserTokens/UserTokens';
+import CrowdSettings from "./components/pages/admin/CrowdSettings/CrowdSettings";
+import SamlConfiguration from "./components/pages/admin/SamlConfiguration/SamlConfiguration";
+import Replication from "./components/pages/admin/Replication/Replication";
+import DataStoreConfiguration from "./components/pages/admin/DataStoreConfiguration/DataStoreConfiguration";
+import UserToken from "./components/pages/user/UserToken/UserToken";
+import Welcome from './components/pages/user/Welcome/Welcome';
+import Tags from './components/pages/browse/Tags/Tags';
+import Upload from './components/pages/browse/Upload/Upload';
+import Nodes from "./components/pages/admin/Nodes/NodeList";
+import Browse from './components/pages/browse/Browse/Browse';
 
 window.ReactComponents = {
   ...window.ReactComponents,
@@ -71,13 +86,28 @@ window.plugins.push({
 
   features: [
     {
+      mode: 'browse',
+      path: '/Welcome',
+      view: Welcome,
+      ...UIStrings.WELCOME.MENU,
+      iconConfig: {
+        file: 'sonatype.png',
+        variants: ['x16', 'x32']
+      },
+      weight: 10,
+      authenticationRequired: false,
+      visibility: {
+        featureFlags: [{key: 'nexus.react.welcome', defaultValue: false}]
+      },
+    },
+    {
       mode: 'admin',
       path: '/Repository/Blobstores',
       ...UIStrings.BLOB_STORES.MENU,
       view: BlobStores,
       iconCls: 'x-fa fa-hdd',
       visibility: {
-        permissions: ['nexus:blobstores:read']
+        permissions: [Permissions.BLOB_STORES.READ]
       }
     },
     {
@@ -101,7 +131,7 @@ window.plugins.push({
       weight: 300,
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        permissions: ['nexus:selectors:read']
+        permissions: [Permissions.SELECTORS.READ]
       },
     },
     {
@@ -113,7 +143,7 @@ window.plugins.push({
       weight: 500,
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        permissions: ['nexus:*']
+        permissions: [Permissions.ADMIN]
       },
     },
     {
@@ -126,7 +156,7 @@ window.plugins.push({
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         featureFlags: [{key: 'nexus.react.privileges', defaultValue: false}],
-        permissions: ['nexus:privileges:read']
+        permissions: [Permissions.PRIVILEGES.READ]
       },
     },
     {
@@ -137,8 +167,8 @@ window.plugins.push({
       iconCls: 'x-fa fa-envelope',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        featureFlags: [{key: 'nexus.react.emailServer', defaultValue: false}],
-        permissions: ['nexus:settings:read']
+        featureFlags: [{key: 'nexus.react.emailServer', defaultValue: true}],
+        permissions: [Permissions.SETTINGS.READ]
       },
     },
     {
@@ -161,8 +191,32 @@ window.plugins.push({
       iconCls: 'x-fa fa-id-card-alt',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        featureFlags: [{key: 'nexus.react.sslCertificates', defaultValue: false}],
-        permissions: ['nexus:ssl-truststore:read']
+        featureFlags: [{key: 'nexus.react.sslCertificates', defaultValue: true}],
+        permissions: [Permissions.SSL_TRUSTSTORE.READ]
+      }
+    },
+    {
+      mode: 'admin',
+      path: '/Security/LDAP',
+      ...UIStrings.LDAP_SERVERS.MENU,
+      view: LdapServers,
+      iconCls: 'x-fa fa-book',
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        featureFlags: [{key: 'nexus.react.ldap', defaultValue: false}],
+        permissions: [Permissions.LDAP.READ]
+      }
+    },
+    {
+      mode: 'admin',
+      path: '/System/Tasks',
+      ...UIStrings.TASKS.MENU,
+      view: Tasks,
+      iconCls: 'x-fa fa-clock',
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        featureFlags: [{key: 'nexus.react.tasks', defaultValue: false}],
+        permissions: [Permissions.TASKS.READ]
       }
     },
     {
@@ -175,7 +229,7 @@ window.plugins.push({
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         featureFlags: [{key: 'nexus.react.users', defaultValue: false}],
-        permissions: ['nexus:users:read', 'nexus:roles:read'],
+        permissions: [Permissions.USERS.READ, Permissions.ROLES.READ]
       },
     },
     {
@@ -186,7 +240,7 @@ window.plugins.push({
       iconCls: 'x-fa fa-user',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        permissions: ['nexus:settings:read']
+        permissions: [Permissions.SETTINGS.READ]
       }
     },
     {
@@ -197,7 +251,7 @@ window.plugins.push({
       iconCls: 'x-fa fa-dungeon',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        permissions: ['nexus:settings:read']
+        permissions: [Permissions.SETTINGS.READ]
       }
     },
     {
@@ -208,7 +262,7 @@ window.plugins.push({
       iconCls: 'x-fa fa-scroll',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        permissions: ['nexus:logging:read']
+        permissions: [Permissions.LOGGING.READ]
       }
     },
     {
@@ -219,7 +273,7 @@ window.plugins.push({
       iconCls: 'x-fa fa-user-circle',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        permissions: ['nexus:atlas:create'],
+        permissions: [Permissions.ATLAS.CREATE],
         editions: ['PRO']
       }
     },
@@ -231,7 +285,7 @@ window.plugins.push({
       iconCls: 'x-fa fa-info',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        permissions: ['nexus:atlas:read']
+        permissions: [Permissions.ATLAS.READ]
       }
     },
     {
@@ -264,7 +318,7 @@ window.plugins.push({
       iconCls: 'x-fa fa-medkit',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        permissions: ['nexus:metrics:read']
+        permissions: [Permissions.METRICS.READ]
       }
     },
     {
@@ -275,7 +329,7 @@ window.plugins.push({
       iconCls: 'x-fa fa-file-archive',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        permissions: ['nexus:metrics:read']
+        permissions: [Permissions.METRICS.READ]
       }
     },
     {
@@ -286,7 +340,7 @@ window.plugins.push({
       iconCls: 'x-fa fa-terminal',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        permissions: ['nexus:logging:read'],
+        permissions: [Permissions.LOGGING.READ],
         featureFlags: [{
           key: 'log.viewer.enabled',
           defaultValue: false
@@ -302,7 +356,7 @@ window.plugins.push({
       weight: 400,
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        permissions: ['nexus:*']
+        permissions: [Permissions.ADMIN]
       },
     },
     {
@@ -312,7 +366,7 @@ window.plugins.push({
       view: IqServer,
       iconCls: 'x-fa fa-shield-alt',
       visibility: {
-        permissions: ['nexus:settings:read']
+        permissions: [Permissions.SETTINGS.READ]
       }
     },
     {
@@ -322,7 +376,7 @@ window.plugins.push({
       view: ProprietaryRepositories,
       iconCls: 'x-fa fa-door-closed',
       visibility: {
-        permissions: ['nexus:settings:read']
+        permissions: [Permissions.SETTINGS.READ]
       }
     },
     {
@@ -340,7 +394,7 @@ window.plugins.push({
             defaultValue: {enabled: false}
           }
         ],
-        permissions: ['nexus:*']
+        permissions: [Permissions.ADMIN]
       }
     },
     {
@@ -351,7 +405,7 @@ window.plugins.push({
       iconCls: 'x-fa fa-puzzle-piece',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        permissions: ['nexus:bundles:read']
+        permissions: [Permissions.BUNDLES.READ]
       }
     },
     {
@@ -361,7 +415,7 @@ window.plugins.push({
       view: Api,
       iconCls: 'x-fa fa-plug',
       visibility: {
-        permissions: ['nexus:settings:read']
+        permissions: [Permissions.SETTINGS.READ]
       }
     },
     {
@@ -371,8 +425,187 @@ window.plugins.push({
       view: HTTP,
       iconCls: 'x-fa fa-truck',
       visibility: {
-        featureFlags: [{key: 'nexus.react.httpSettings', defaultValue: false}],
-        permissions: ['nexus:settings:read']
+        featureFlags: [{key: 'nexus.react.httpSettings', defaultValue: true}],
+        permissions: [Permissions.SETTINGS.READ]
+      },
+    },
+    {
+      mode: 'admin',
+      path: '/System/Licensing',
+      ...UIStrings.LICENSING.MENU,
+      view: Licensing,
+      iconCls: 'x-fa fa-wallet',
+      visibility: {
+        featureFlags: [{key: 'nexus.react.licensing', defaultValue: true}],
+        permissions: [Permissions.LICENSING.READ]
+      },
+    },
+    {
+      mode: 'admin',
+      path: '/System/Nodes',
+      ...UIStrings.NODES.MENU,
+      view: Nodes,
+      iconCls: 'x-fa fa-archive',
+      visibility: {  
+        permissions: [Permissions.ADMIN],      
+        statesEnabled: [
+          {
+            key: 'nexus.datastore.clustered.enabled',
+            defaultValue: false
+          }
+        ]
+      },
+    },
+    {
+      mode: 'admin',
+      path: '/Security/UserToken',
+      ...UIStrings.USER_TOKEN_CONFIGURATION.MENU,
+      view: UserTokens,
+      iconCls: 'x-fa fa-key',
+      visibility: {
+        permissions: [Permissions.USER_TOKENS_SETTINGS.READ],
+        editions: ['PRO'],
+        licenseValid: [
+          {
+            key: 'usertoken',
+            defaultValue: false
+          }
+        ],
+      },
+    },
+    {
+      mode: 'admin',
+      path: '/Security/AtlassianCrowd',
+      text: UIStrings.CROWD_SETTINGS.MENU.text,
+      description: UIStrings.CROWD_SETTINGS.MENU.description,
+      view: CrowdSettings,
+      iconCls: 'x-fab fa-atlassian',
+      visibility: {
+        bundle: 'com.sonatype.nexus.plugins.nexus-crowd-plugin',
+        licenseValid: [
+          {
+            key: 'crowd',
+            defaultValue: false
+          }
+        ],
+        permissions: ['nexus:crowd:read']
+      }
+    },
+    {
+      mode: 'admin',
+      path: '/Security/Saml',
+      text: UIStrings.SAML_CONFIGURATION.MENU.text,
+      description: UIStrings.SAML_CONFIGURATION.MENU.description,
+      view: SamlConfiguration,
+      iconCls: 'x-fa fa-id-card',
+      visibility: {
+        bundle: 'com.sonatype.nexus.plugins.nexus-saml-plugin',
+        permissions: ['nexus:*'],
+        editions: ['PRO']
+      }
+    },
+    {
+      mode: 'user',
+      path: '/User Token',
+      text: UIStrings.USER_TOKEN.MENU.text,
+      description: UIStrings.USER_TOKEN.MENU.description,
+      view: UserToken,
+      iconCls: 'x-fa fa-key',
+      visibility: {
+        bundle: 'com.sonatype.nexus.plugins.nexus-usertoken-plugin',
+        statesEnabled: [
+          {
+            key: 'usertoken',
+            defaultValue: {enabled: false}
+          }
+        ],
+        permissions: ['nexus:usertoken-current:read'],
+        editions: ['PRO']
+      }
+    },
+    {
+      mode: 'admin',
+      path: '/Repository/DataStore',
+      text: UIStrings.DATASTORE_CONFIGURATION.MENU.text,
+      description: UIStrings.DATASTORE_CONFIGURATION.MENU.description,
+      view: DataStoreConfiguration,
+      iconCls: 'x-fa fa-database',
+      visibility: {
+        bundle: 'com.sonatype.nexus.plugins.nexus-pro-datastore-plugin',
+        featureFlags: [{
+          key: 'datastores',
+          defaultValue: false
+        }],
+        permissions: ['nexus:*'],
+        editions: ['PRO']
+      }
+    },
+    {
+      mode: 'admin',
+      text: UIStrings.REPLICATION.MENU.text,
+      description: UIStrings.REPLICATION.MENU.description,
+      path: '/Repository/Replication',
+      view: Replication,
+      iconCls: 'x-fa fa-copy',
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        statesEnabled: [
+          {
+            key: 'replicationCapabilityState',
+            defaultValue: {enabled: false}
+          }
+        ],
+        permissions: ['nexus:replication:read']
+      }
+    },
+    {
+      mode: 'browse',
+      path: '/Tags',
+      ...UIStrings.TAGS.MENU,
+      view: Tags,
+      iconCls: 'x-fa fa-tags',
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        featureFlags: [{
+          key: 'nexus.react.tags',
+          defaultValue: false
+        }],
+        permissions: [Permissions.TAGS.READ],
+        editions: ['PRO']
+      },
+    },
+    {
+      mode: 'browse',
+      path: '/Browse',
+      ...UIStrings.BROWSE.MENU,
+      view: Browse,
+      iconCls: 'x-fa fa-database',
+      authenticationRequired: false,
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        featureFlags: [{
+          key: 'nexus.react.browse',
+          defaultValue: false
+        }],
+        statesEnabled: [{
+          key: 'browseableformats',
+          defaultValue: []
+        }],
+      }
+    },
+    {
+      mode: 'browse',
+      path: '/Upload',
+      ...UIStrings.UPLOAD.MENU,
+      view: Upload,
+      iconCls: 'x-fa fa-upload',
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        featureFlags: [{
+          key: 'nexus.react.upload',
+          defaultValue: false
+        }],
+        permissions: [Permissions.COMPONENT.CREATE],
       },
     },
   ]

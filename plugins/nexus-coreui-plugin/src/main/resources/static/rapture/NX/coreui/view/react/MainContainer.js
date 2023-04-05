@@ -31,6 +31,8 @@ Ext.define('NX.coreui.view.react.MainContainer', {
 
   scrollable: true,
 
+  cls: 'nxrm-react-main-container',
+
   listeners: {
     afterrender: 'initReactView',
     beforedestroy: 'destroyReactView'

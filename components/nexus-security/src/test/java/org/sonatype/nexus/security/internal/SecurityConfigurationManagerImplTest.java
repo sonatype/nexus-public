@@ -263,6 +263,31 @@ public class SecurityConfigurationManagerImplTest
     manager.updateRole(role);
   }
 
+  @Test
+  public void testCreateRole_usingPrivilegeNameIfIdNotFound() {
+    when(memorySecurityConfiguration.getPrivilege("priv1")).thenReturn(null);
+    when(memorySecurityConfiguration.getPrivilegeByName("priv1")).thenReturn(mock(CPrivilege.class));
+    when(memorySecurityConfiguration.getRole("role1")).thenReturn(mock(CRole.class));
+
+    CRole role = addSimpleRoleWithPrivilege();
+    try {
+      manager.createRole(role);
+    }
+    catch (Exception e) {
+      fail("expected role creation to succeed");
+    }
+  }
+
+  @Test(expected = NoSuchPrivilegeException.class)
+  public void failCreateRole_ifPrivilegeIdOrNameDoesntExist() {
+    when(memorySecurityConfiguration.getPrivilege("priv1")).thenReturn(null);
+    when(memorySecurityConfiguration.getPrivilegeByName("priv1")).thenReturn(null);
+    when(memorySecurityConfiguration.getRole("role1")).thenReturn(mock(CRole.class));
+
+    CRole role = addSimpleRoleWithPrivilege();
+    manager.createRole(role);
+  }
+
   private void addSimpleRoleContributor(final String roleName) {
     manager.addContributor(() -> {
       SecurityConfiguration config = new MemorySecurityConfiguration();
@@ -283,5 +308,14 @@ public class SecurityConfigurationManagerImplTest
       config.addPrivilege(readonlyPriv);
       return config;
     });
+  }
+
+  private CRole addSimpleRoleWithPrivilege() {
+    CRole role = manager.newRole();
+    role.setId("new");
+    role.setName("new");
+    role.addRole("role1");
+    role.addPrivilege("priv1");
+    return role;
   }
 }

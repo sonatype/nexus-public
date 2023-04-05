@@ -15,11 +15,11 @@ import {
   render,
   screen,
   waitForElementToBeRemoved,
-  waitFor,
-  act
+  act,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {ExtJS, TestUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, APIConstants, ExtAPIUtils} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import {when} from 'jest-when';
 
 import Axios from 'axios';
@@ -27,15 +27,19 @@ import EmailServer from './EmailServer';
 import UIStrings from '../../../../constants/UIStrings';
 
 const {
-  EMAIL_SERVER: {
-    FORM: LABELS,
-    VERIFY,
-    READ_ONLY
-  },
+  EMAIL_SERVER: {FORM: LABELS, VERIFY, READ_ONLY},
+  USE_TRUST_STORE,
   SETTINGS,
-  ERROR
+  ERROR,
 } = UIStrings;
-const {REST: {PUBLIC: {EMAIL_SERVER: emailServerUrl}}} = APIConstants;
+
+const {
+  EXT: {
+    URL,
+    EMAIL_SERVER: {ACTION, METHODS},
+  },
+} = APIConstants;
+
 const XSS_STRING = TestUtils.XSS_STRING;
 
 jest.mock('axios', () => ({
@@ -56,19 +60,24 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
 
 const selectors = {
   ...TestUtils.selectors,
+  ...TestUtils.formSelectors,
   enabled: () => screen.getByLabelText(LABELS.ENABLED.SUB_LABEL),
   host: () => screen.getByLabelText(LABELS.HOST.LABEL),
   port: () => screen.getByLabelText(LABELS.PORT.LABEL),
   username: () => screen.queryByLabelText(LABELS.USERNAME.LABEL),
   password: () => screen.queryByLabelText(LABELS.PASSWORD.LABEL),
+  useTruststore: () => screen.queryByLabelText(USE_TRUST_STORE.DESCRIPTION),
   fromAddress: () => screen.queryByLabelText(LABELS.FROM_ADDRESS.LABEL),
   subjectPrefix: () => screen.queryByLabelText(LABELS.SUBJECT_PREFIX.LABEL),
-  enableStarttls: () => screen.queryByLabelText(LABELS.SSL_TLS_OPTIONS.OPTIONS.ENABLE_STARTTLS),
-  requireStarttls: () => screen.queryByLabelText(LABELS.SSL_TLS_OPTIONS.OPTIONS.REQUIRE_STARTTLS),
-  enableSslTls: () => screen.queryByLabelText(LABELS.SSL_TLS_OPTIONS.OPTIONS.ENABLE_SSL_TLS),
-  identityCheck: () => screen.queryByLabelText(LABELS.SSL_TLS_OPTIONS.OPTIONS.IDENTITY_CHECK),
+  enableStarttls: () =>
+    screen.queryByLabelText(LABELS.SSL_TLS_OPTIONS.OPTIONS.ENABLE_STARTTLS),
+  requireStarttls: () =>
+    screen.queryByLabelText(LABELS.SSL_TLS_OPTIONS.OPTIONS.REQUIRE_STARTTLS),
+  enableSslTls: () =>
+    screen.queryByLabelText(LABELS.SSL_TLS_OPTIONS.OPTIONS.ENABLE_SSL_TLS),
+  identityCheck: () =>
+    screen.queryByLabelText(LABELS.SSL_TLS_OPTIONS.OPTIONS.IDENTITY_CHECK),
   discardButton: () => screen.getByText(SETTINGS.DISCARD_BUTTON_LABEL),
-  saveButton: () => screen.getByText(SETTINGS.SAVE_BUTTON_LABEL),
   test: {
     input: () => screen.getByLabelText(VERIFY.LABEL),
     button: () => screen.getByText(VERIFY.TEST),
@@ -86,38 +95,44 @@ const selectors = {
     hostValue: () => screen.getByText(LABELS.HOST.LABEL).nextSibling,
     port: () => screen.getByText(LABELS.PORT.LABEL),
     portValue: () => screen.getByText(LABELS.PORT.LABEL).nextSibling,
+    useTruststore: () => screen.getByText(USE_TRUST_STORE.LABEL),
+    useTruststoreValue: () =>
+      screen.getByText(USE_TRUST_STORE.LABEL).nextSibling,
     username: () => screen.getByText(LABELS.USERNAME.LABEL),
     usernameValue: () => screen.getByText(LABELS.USERNAME.LABEL).nextSibling,
     fromAddress: () => screen.getByText(LABELS.FROM_ADDRESS.LABEL),
-    fromAddressValue: () => screen.getByText(LABELS.FROM_ADDRESS.LABEL).nextSibling,
+    fromAddressValue: () =>
+      screen.getByText(LABELS.FROM_ADDRESS.LABEL).nextSibling,
     subjectPrefix: () => screen.getByText(LABELS.SUBJECT_PREFIX.LABEL),
-    subjectPrefixValue: () => screen.getByText(LABELS.SUBJECT_PREFIX.LABEL).nextSibling,
+    subjectPrefixValue: () =>
+      screen.getByText(LABELS.SUBJECT_PREFIX.LABEL).nextSibling,
     options: () => screen.getByText(LABELS.SSL_TLS_OPTIONS.LABEL),
     optionsValues: {
       enable: [
         () => screen.getByText(READ_ONLY.ENABLE.ENABLE_STARTTLS),
         () => screen.getByText(READ_ONLY.ENABLE.REQUIRE_STARTTLS),
         () => screen.getByText(READ_ONLY.ENABLE.ENABLE_SSL_TLS),
-        () => screen.getByText(READ_ONLY.ENABLE.IDENTITY_CHECK)
+        () => screen.getByText(READ_ONLY.ENABLE.IDENTITY_CHECK),
       ],
       notEnable: [
         () => screen.getByText(READ_ONLY.NOT_ENABLE.ENABLE_STARTTLS),
         () => screen.getByText(READ_ONLY.NOT_ENABLE.REQUIRE_STARTTLS),
         () => screen.getByText(READ_ONLY.NOT_ENABLE.ENABLE_SSL_TLS),
-        () => screen.getByText(READ_ONLY.NOT_ENABLE.IDENTITY_CHECK)
-      ]
-    }
-  }
+        () => screen.getByText(READ_ONLY.NOT_ENABLE.IDENTITY_CHECK),
+      ],
+    },
+  },
 };
 
 const DATA = {
   enabled: true,
   fromAddress: 'test@test.com',
   host: 'example.com',
-  password: null,
+  password: '#~NXRM~PLACEHOLDER~PASSWORD~#',
   port: 1234,
   sslOnConnectEnabled: true,
-  sslServerIdentityCheckEnabled: true,
+  sslCheckServerIdentityEnabled: true,
+  nexusTrustStoreEnabled: true,
   startTlsEnabled: true,
   startTlsRequired: true,
   subjectPrefix: 'prefix',
@@ -135,17 +150,30 @@ const EMPTY_DATA = {
   startTlsEnabled: false,
   startTlsRequired: false,
   sslOnConnectEnabled: false,
-  sslServerIdentityCheckEnabled: false,
+  sslCheckServerIdentityEnabled: false,
 };
 
 const populateForm = () => {
-  const {enabled, host, port, username, password, fromAddress, subjectPrefix,
-    enableStarttls, requireStarttls, enableSslTls, identityCheck} = selectors;
+  const {
+    enabled,
+    host,
+    port,
+    username,
+    password,
+    fromAddress,
+    subjectPrefix,
+    enableStarttls,
+    requireStarttls,
+    enableSslTls,
+    identityCheck,
+    useTruststore,
+  } = selectors;
 
   userEvent.click(enabled());
   userEvent.type(host(), DATA.host);
   userEvent.clear(port());
   userEvent.type(port(), DATA.port.toString());
+  userEvent.click(useTruststore());
   userEvent.type(username(), DATA.username);
   userEvent.type(password(), DATA.password);
   userEvent.type(fromAddress(), DATA.fromAddress);
@@ -157,8 +185,19 @@ const populateForm = () => {
 };
 
 const formShouldBeEmpty = () => {
-  const {enabled, host, port, username, password, fromAddress, subjectPrefix,
-    enableStarttls, requireStarttls, enableSslTls, identityCheck} = selectors;
+  const {
+    enabled,
+    host,
+    port,
+    username,
+    password,
+    fromAddress,
+    subjectPrefix,
+    enableStarttls,
+    requireStarttls,
+    enableSslTls,
+    identityCheck,
+  } = selectors;
 
   expect(enabled()).not.toBeChecked();
   expect(host()).toHaveValue('');
@@ -174,68 +213,93 @@ const formShouldBeEmpty = () => {
 };
 
 describe('EmailServer', () => {
+  const REQUEST = ExtAPIUtils.createRequestBody(ACTION, METHODS.READ, null);
   const renderAndWaitForLoad = async () => {
-    render(<EmailServer/>);
+    render(<EmailServer />);
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
-  }
+  };
 
   beforeEach(() => {
-    when(Axios.get).calledWith(emailServerUrl).mockResolvedValue({
-      data: EMPTY_DATA
-    });
-    ExtJS.checkPermission.mockReturnValue(true);
+    Axios.post.mockReset();
+
+    when(ExtJS.checkPermission)
+      .calledWith('nexus:settings:update')
+      .mockReturnValue(true);
   });
 
   it('renders the empty form', async () => {
-    const {discardButton, saveButton} = selectors;
+    when(Axios.post)
+      .calledWith(URL, REQUEST)
+      .mockResolvedValueOnce({
+        data: TestUtils.makeExtResult(EMPTY_DATA),
+      });
+
+    const {discardButton, queryFormError} = selectors;
 
     await renderAndWaitForLoad();
 
     formShouldBeEmpty();
 
-    expect(saveButton()).toHaveClass('disabled');
+    expect(queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
     expect(discardButton()).toHaveClass('disabled');
   });
 
   it('renders the resolved data', async () => {
-    const {enabled, host, port, username, password, fromAddress, subjectPrefix,
-      enableStarttls, requireStarttls, enableSslTls, identityCheck, discardButton, saveButton} = selectors;
+    const {
+      enabled,
+      host,
+      port,
+      username,
+      password,
+      fromAddress,
+      subjectPrefix,
+      enableStarttls,
+      requireStarttls,
+      enableSslTls,
+      identityCheck,
+      discardButton,
+      querySubmitButton,
+      queryFormError,
+    } = selectors;
 
-    when(Axios.get).calledWith(emailServerUrl).mockResolvedValue({
-      data: DATA
-    });
+    when(Axios.post)
+      .calledWith(URL, REQUEST)
+      .mockResolvedValue({data: TestUtils.makeExtResult(DATA)});
 
     await renderAndWaitForLoad();
 
     expect(enabled()).toBeChecked();
-    expect(host()).toHaveValue('example.com');
-    expect(port()).toHaveValue('1234');
-    expect(username()).toHaveValue('test');
-    expect(password()).toHaveValue('');
-    expect(fromAddress()).toHaveValue('test@test.com');
-    expect(subjectPrefix()).toHaveValue('prefix');
+    expect(host()).toHaveValue(DATA.host);
+    expect(port()).toHaveValue(DATA.port.toString());
+    expect(username()).toHaveValue(DATA.username);
+    expect(password()).toHaveValue(DATA.password);
+    expect(fromAddress()).toHaveValue(DATA.fromAddress);
+    expect(subjectPrefix()).toHaveValue(DATA.subjectPrefix);
     expect(enableStarttls()).toBeChecked();
     expect(requireStarttls()).toBeChecked();
     expect(enableSslTls()).toBeChecked();
     expect(identityCheck()).toBeChecked();
 
-    expect(saveButton()).toHaveClass('disabled');
     expect(discardButton()).toHaveClass('disabled');
+    userEvent.click(querySubmitButton());
+    expect(queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
   });
 
   it('renders the resolved data with XSS', async () => {
-    const {host,username, password, fromAddress, subjectPrefix} = selectors;
+    const {host, username, password, fromAddress, subjectPrefix} = selectors;
 
-    when(Axios.get).calledWith(emailServerUrl).mockResolvedValue({
-      data: {
-        ...DATA,
-        fromAddress: XSS_STRING,
-        host: XSS_STRING,
-        password: XSS_STRING,
-        subjectPrefix: XSS_STRING,
-        username: XSS_STRING,
-      }
-    });
+    when(Axios.post)
+      .calledWith(URL, REQUEST)
+      .mockResolvedValue({
+        data: TestUtils.makeExtResult({
+          ...DATA,
+          fromAddress: XSS_STRING,
+          host: XSS_STRING,
+          password: XSS_STRING,
+          subjectPrefix: XSS_STRING,
+          username: XSS_STRING,
+        }),
+      });
 
     await renderAndWaitForLoad();
 
@@ -247,22 +311,41 @@ describe('EmailServer', () => {
   });
 
   it('enables the save button when the form is valid', async () => {
-    const {host, port, fromAddress, saveButton} = selectors;
+    when(Axios.post)
+      .calledWith(URL, REQUEST)
+      .mockResolvedValueOnce({
+        data: TestUtils.makeExtResult(EMPTY_DATA),
+      });
+
+    const {host, port, fromAddress, querySubmitButton, queryFormError} =
+      selectors;
 
     await renderAndWaitForLoad();
 
-    expect(saveButton()).toHaveClass('disabled');
+    userEvent.click(querySubmitButton());
+    expect(queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
+
     userEvent.type(host(), DATA.host);
     userEvent.type(port(), DATA.port.toString());
     userEvent.type(fromAddress(), DATA.fromAddress);
 
-    expect(saveButton()).not.toHaveClass('disabled');
+    expect(queryFormError()).not.toBeInTheDocument();
   });
 
   it('shows validation errors', async () => {
-    const {host, port, fromAddress, saveButton} = selectors;
+    when(Axios.post)
+      .calledWith(URL, REQUEST)
+      .mockResolvedValueOnce({
+        data: TestUtils.makeExtResult(EMPTY_DATA),
+      });
+
+    const {host, port, fromAddress, querySubmitButton, queryFormError} =
+      selectors;
 
     await renderAndWaitForLoad();
+
+    userEvent.click(querySubmitButton());
+    expect(queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
 
     userEvent.type(host(), 'host+');
     expect(host()).toHaveErrorMessage(ERROR.HOSTNAME);
@@ -291,28 +374,62 @@ describe('EmailServer', () => {
     userEvent.type(fromAddress(), DATA.fromAddress);
     expect(fromAddress()).not.toHaveErrorMessage();
 
-    expect(saveButton()).not.toHaveClass('disabled');
+    expect(queryFormError()).not.toBeInTheDocument();
   });
 
   it('creates email server configuration', async () => {
-    const {saveButton} = selectors;
+    when(global.NX.Permissions.check)
+      .calledWith('nexus:ssl-truststore:read')
+      .mockReturnValue(true);
+    when(global.NX.Permissions.check)
+      .calledWith('nexus:ssl-truststore:create')
+      .mockReturnValue(true);
+    when(global.NX.Permissions.check)
+      .calledWith('nexus:ssl-truststore:update')
+      .mockReturnValue(true);
 
-    when(Axios.put).calledWith(emailServerUrl, expect.anything()).mockResolvedValue({data: {}});
+    when(Axios.post)
+      .calledWith(URL, REQUEST)
+      .mockResolvedValue({
+        data: TestUtils.makeExtResult(EMPTY_DATA),
+      });
+
+    const {querySubmitButton, queryFormError, querySavingMask} = selectors;
 
     await renderAndWaitForLoad();
 
-    expect(saveButton()).toHaveClass('disabled');
+    userEvent.click(querySubmitButton());
+    expect(queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
+
     populateForm();
-    expect(saveButton()).not.toHaveClass('disabled');
 
-    userEvent.click(saveButton());
+    expect(queryFormError()).not.toBeInTheDocument();
 
-    await waitFor(() => expect(Axios.put).toHaveBeenCalledWith(emailServerUrl, {...DATA, port: DATA.port.toString()}));
+    const NEW_UPDATE = ExtAPIUtils.createRequestBody(ACTION, METHODS.UPDATE, {
+      data: [{...DATA, port: DATA.port.toString()}],
+    });
+
+    when(Axios.post)
+      .calledWith(URL, NEW_UPDATE)
+      .mockResolvedValueOnce({
+        data: TestUtils.makeExtResult(DATA),
+      });
+
+    userEvent.click(querySubmitButton());
+    await waitForElementToBeRemoved(querySavingMask);
+
+    expect(Axios.post).toHaveBeenCalledWith(URL, NEW_UPDATE);
+
     expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
   });
 
-
   it('discards changes', async () => {
+    when(Axios.post)
+      .calledWith(URL, REQUEST)
+      .mockResolvedValue({
+        data: TestUtils.makeExtResult(EMPTY_DATA),
+      });
+
     const {discardButton} = selectors;
 
     await renderAndWaitForLoad();
@@ -325,11 +442,54 @@ describe('EmailServer', () => {
     formShouldBeEmpty();
   });
 
+  it('if the user changes the host the password is cleared', async () => {
+    when(Axios.post)
+      .calledWith(URL, REQUEST)
+      .mockResolvedValue({
+        data: TestUtils.makeExtResult(DATA),
+      });
+    const {host, password} = selectors;
+
+    await renderAndWaitForLoad();
+
+    expect(host()).toHaveValue(DATA.host);
+    expect(password()).toHaveValue(DATA.password);
+
+    await TestUtils.changeField(host, 'new@email.com');
+
+    expect(password()).toHaveValue('');
+  });
+
+  it('if the user changes the port the password is cleared', async () => {
+    when(Axios.post)
+      .calledWith(URL, REQUEST)
+      .mockResolvedValue({
+        data: TestUtils.makeExtResult(DATA),
+      });
+    const {port, password} = selectors;
+
+    await renderAndWaitForLoad();
+
+    expect(port()).toHaveValue(DATA.port.toString());
+    expect(password()).toHaveValue(DATA.password);
+
+    await TestUtils.changeField(port, '123');
+
+    expect(password()).toHaveValue('');
+  });
+
   describe('Verify configuration', () => {
-    const url = `${emailServerUrl}/verify`;
-    const email = 'example@test.com';
+    const email = 'example@testcom';
+    const VERIFY = ExtAPIUtils.createRequestBody(ACTION, METHODS.VERIFY, {
+      data: [EMPTY_DATA, email],
+    });
 
     it('renders the empty input field', async () => {
+      when(Axios.post)
+        .calledWith(URL, REQUEST)
+        .mockResolvedValue({
+          data: TestUtils.makeExtResult(EMPTY_DATA),
+        });
       const {input, button} = selectors.test;
 
       await renderAndWaitForLoad();
@@ -339,24 +499,38 @@ describe('EmailServer', () => {
     });
 
     it('validates the email configuration', async () => {
-      const {input, button, success} = selectors.test;
+      when(Axios.post)
+        .calledWith(URL, REQUEST)
+        .mockResolvedValue({
+          data: TestUtils.makeExtResult(EMPTY_DATA),
+        });
 
-      when(Axios.post).calledWith(url, email).mockResolvedValue({data: {success: true}});
+      const {input, button, success} = selectors.test;
 
       await renderAndWaitForLoad();
 
       await TestUtils.changeField(input, email);
 
+      when(Axios.post)
+        .calledWith(URL, VERIFY)
+        .mockResolvedValue({
+          data: TestUtils.makeExtResult(EMPTY_DATA),
+        });
+
       await act(async () => userEvent.click(button()));
 
-      expect(Axios.post).toHaveBeenCalledWith(url, email);
+      expect(Axios.post).toHaveBeenCalledWith(URL, REQUEST);
       expect(success()).toBeInTheDocument();
     });
 
     it('show error message if the validation fails', async () => {
-      const {input, button, failed} = selectors.test;
+      when(Axios.post)
+        .calledWith(URL, REQUEST)
+        .mockResolvedValue({
+          data: TestUtils.makeExtResult(DATA),
+        });
 
-      when(Axios.post).calledWith(url, email).mockRejectedValue({data: {success: false}});
+      const {input, button, failed} = selectors.test;
 
       await renderAndWaitForLoad();
 
@@ -364,11 +538,24 @@ describe('EmailServer', () => {
 
       await act(async () => userEvent.click(button()));
 
-      expect(Axios.post).toHaveBeenCalledWith(url, email);
+      when(Axios.post)
+        .calledWith(URL, VERIFY)
+        .mockRejectedValueOnce({
+          data: TestUtils.makeExtResult(DATA),
+        });
+
+      expect(Axios.post).toHaveBeenCalledWith(URL, REQUEST);
+
       expect(failed()).toBeInTheDocument();
     });
 
     it('validate email', async () => {
+      when(Axios.post)
+        .calledWith(URL, REQUEST)
+        .mockResolvedValue({
+          data: TestUtils.makeExtResult(DATA),
+        });
+
       const {input, button} = selectors.test;
 
       await renderAndWaitForLoad();
@@ -383,15 +570,30 @@ describe('EmailServer', () => {
     it('removes success message if the input value changes', async () => {
       const {input, button, success, querySuccess} = selectors.test;
 
-      when(Axios.post).calledWith(url, email).mockResolvedValue({data: {success: true}});
+      when(Axios.post)
+        .calledWith(URL, REQUEST)
+        .mockResolvedValue({
+          data: TestUtils.makeExtResult(DATA),
+        });
 
       await renderAndWaitForLoad();
 
       await TestUtils.changeField(input, email);
 
+      when(Axios.post)
+        .calledWith(
+          URL,
+          ExtAPIUtils.createRequestBody(ACTION, METHODS.VERIFY, {
+            data: [DATA, email],
+          })
+        )
+        .mockResolvedValue({
+          data: TestUtils.makeExtResult(DATA),
+        });
+
       await act(async () => userEvent.click(button()));
 
-      expect(Axios.post).toHaveBeenCalledWith(url, email);
+      expect(Axios.post).toHaveBeenCalledWith(URL, REQUEST);
       expect(success()).toBeInTheDocument();
 
       await TestUtils.changeField(input, 'changes');
@@ -402,15 +604,30 @@ describe('EmailServer', () => {
     it('removes error message if the input value changes', async () => {
       const {input, button, failed, queryFailed} = selectors.test;
 
-      when(Axios.post).calledWith(url, email).mockRejectedValue({data: {success: false}});
+      when(Axios.post)
+        .calledWith(URL, REQUEST)
+        .mockResolvedValue({
+          data: TestUtils.makeExtResult(DATA),
+        });
 
       await renderAndWaitForLoad();
 
       await TestUtils.changeField(input, email);
 
+      when(Axios.post)
+        .calledWith(
+          URL,
+          ExtAPIUtils.createRequestBody(ACTION, METHODS.VERIFY, {
+            data: [DATA, email],
+          })
+        )
+        .mockRejectedValueOnce({
+          data: TestUtils.makeExtResult({}),
+        });
+
       await act(async () => userEvent.click(button()));
 
-      expect(Axios.post).toHaveBeenCalledWith(url, email);
+      expect(Axios.post).toHaveBeenCalledWith(URL, REQUEST);
       expect(failed()).toBeInTheDocument();
 
       await TestUtils.changeField(input, 'changes');
@@ -422,31 +639,33 @@ describe('EmailServer', () => {
   describe('Read only', () => {
     const data = {
       enabled: true,
-      host: "smtp.gmail.com",
+      host: 'smtp.gmail.com',
       port: 465,
-      username: "my_user@sonatype.com",
+      username: 'my_user@sonatype.com',
       password: null,
-      fromAddress: "test@sonatype.com",
-      subjectPrefix: "subject",
+      fromAddress: 'test@sonatype.com',
+      subjectPrefix: 'subject',
       startTlsEnabled: true,
       startTlsRequired: true,
       sslOnConnectEnabled: true,
       sslServerIdentityCheckEnabled: true,
-      nexusTrustStoreEnabled: true
-    }
+      nexusTrustStoreEnabled: true,
+    };
 
     beforeEach(() => {
       when(ExtJS.checkPermission)
         .calledWith('nexus:settings:update')
         .mockReturnValue(false);
 
-      when(Axios.get)
-        .calledWith(emailServerUrl)
-        .mockResolvedValue({data});
+      Axios.post.mockReset();
     });
 
     it('shows default information if email server is not enabled', async () => {
-      when(Axios.get).calledWith(emailServerUrl).mockResolvedValue({data: {}});
+      when(Axios.post)
+        .calledWith(URL, REQUEST)
+        .mockResolvedValue({
+          data: TestUtils.makeExtResult(EMPTY_DATA),
+        });
 
       const {title, enabled, warning, enabledValue} = selectors.readOnly;
 
@@ -459,6 +678,12 @@ describe('EmailServer', () => {
     });
 
     it('shows the configuration correctly', async () => {
+      when(Axios.post)
+        .calledWith(URL, REQUEST)
+        .mockResolvedValue({
+          data: TestUtils.makeExtResult(data),
+        });
+
       const {
         title,
         warning,
@@ -468,6 +693,8 @@ describe('EmailServer', () => {
         hostValue,
         port,
         portValue,
+        useTruststore,
+        useTruststoreValue,
         username,
         usernameValue,
         fromAddress,
@@ -475,7 +702,7 @@ describe('EmailServer', () => {
         subjectPrefix,
         subjectPrefixValue,
         options,
-        optionsValues
+        optionsValues,
       } = selectors.readOnly;
 
       await renderAndWaitForLoad();
@@ -488,6 +715,8 @@ describe('EmailServer', () => {
       expect(hostValue()).toHaveTextContent(data.host);
       expect(port()).toBeInTheDocument();
       expect(portValue()).toHaveTextContent(data.port);
+      expect(useTruststore()).toBeInTheDocument();
+      expect(useTruststoreValue()).toHaveTextContent('Enabled');
       expect(username()).toBeInTheDocument();
       expect(usernameValue()).toHaveTextContent(data.username);
       expect(fromAddress()).toBeInTheDocument();
@@ -495,7 +724,9 @@ describe('EmailServer', () => {
       expect(subjectPrefix()).toBeInTheDocument();
       expect(subjectPrefixValue()).toHaveTextContent(data.subjectPrefix);
       expect(options()).toBeInTheDocument();
-      optionsValues.enable.forEach((value) => expect(value()).toBeInTheDocument());
+      optionsValues.enable.forEach((value) =>
+        expect(value()).toBeInTheDocument()
+      );
     });
 
     it('shows the corresponding message when SSL/TLS options are not enabled', async () => {
@@ -506,13 +737,19 @@ describe('EmailServer', () => {
         startTlsRequired: false,
         sslOnConnectEnabled: false,
         sslServerIdentityCheckEnabled: false,
-      }
+      };
 
-      when(Axios.get).calledWith(emailServerUrl).mockResolvedValue({data:newData});
+      when(Axios.post)
+        .calledWith(URL, REQUEST)
+        .mockResolvedValue({
+          data: TestUtils.makeExtResult(newData),
+        });
 
       await renderAndWaitForLoad();
 
-      optionsValues.notEnable.forEach((value) => expect(value()).toBeInTheDocument());
+      optionsValues.notEnable.forEach((value) =>
+        expect(value()).toBeInTheDocument()
+      );
     });
-  })
+  });
 });

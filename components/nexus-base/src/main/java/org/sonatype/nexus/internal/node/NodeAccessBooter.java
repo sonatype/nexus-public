@@ -36,15 +36,19 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
 public class NodeAccessBooter
     implements Lifecycle
 {
+  private final NodeIdInitializer nodeIdInitializer;
+
   private final NodeAccess nodeAccess;
 
   @Inject
-  public NodeAccessBooter(final NodeAccess nodeAccess) {
+  public NodeAccessBooter(final NodeIdInitializer nodeIdInitializer, final NodeAccess nodeAccess) {
+    this.nodeIdInitializer = checkNotNull(nodeIdInitializer);
     this.nodeAccess = checkNotNull(nodeAccess);
   }
 
   @Override
   public void start() throws Exception {
+    nodeIdInitializer.initialize();
     nodeAccess.start();
   }
 

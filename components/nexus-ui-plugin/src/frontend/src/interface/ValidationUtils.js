@@ -19,7 +19,7 @@ import UIStrings from "../constants/UIStrings";
 const EMAIL_REGEX = /^(")?(?:[^\."])(?:(?:[\.])?(?:[\w\-!#$%&'*+/=?^_`{|}~]))*\1@(\w[\-\w]*\.?){1,5}([A-Za-z]){1,60}$/;
 const NAME_REGEX = /^[a-zA-Z0-9\-]{1}[a-zA-Z0-9_\-\.]*$/;
 const URI_REGEX = /^[a-z]*:.+$/i;
-const SECURE_URL_REGEX = /^https:\/\/[^"<>^`{|}]+$/i;
+const SECURE_URL_REGEX = /^(https|ldaps):\/\/[^"<>^`{|}]+$/i;
 const URL_HOSTNAME_REGEX = /^(([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])\.)*([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])$/i;
 const URL_PATHNAME_REGEX = /^([\S]*\S)?$/i;
 const RFC_1123_HOST_REGEX = new RegExp(
@@ -166,6 +166,14 @@ export default class ValidationUtils {
     }
   }
 
+  /**
+   * @param value {string}
+   * @returns {boolean} true if the value has white spaces.
+   */
+  static hasWhiteSpace (value){
+    return  /\s/g.test(value);
+  }
+
   static validateLength(value, length) {
     if (value.length > length) {
       return UIStrings.ERROR.MAX_CHARS(length);
@@ -219,6 +227,13 @@ export default class ValidationUtils {
   static validateLeadingOrTrailingSpace(value) {
     if (/^\s/.test(value) || /\s$/.test(value)) {
       return UIStrings.ERROR.TRIM_ERROR;
+    }
+  }
+
+
+  static validateWhiteSpace(value) {
+    if(ValidationUtils.hasWhiteSpace(value)) {
+      return UIStrings.ERROR.WHITE_SPACE_ERROR;
     }
   }
 

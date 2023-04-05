@@ -39,6 +39,7 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
+import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.crypto.CryptoHelper;
 import org.sonatype.nexus.ssl.CertificateUtil;
 import org.sonatype.nexus.ssl.KeyNotFoundException;
@@ -340,6 +341,13 @@ public class FileKeystoreInstance
       log.error("Unable to read certificate from keystore", e);
     }
     return null;
+  }
+
+  @Override
+  public void reloadIfReplicating(final char[] keystorePassword) throws KeystoreException {
+    if (EventHelper.isReplicating()) {
+      loadKeystoreData(keystorePassword);
+    }
   }
 
   // ==================== Internals =====================

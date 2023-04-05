@@ -25,19 +25,34 @@ import 'swagger-ui-react/swagger-ui.css';
 import './Api.scss';
 
 function requestInterceptor(request) {
-  request.headers['NX-ANTI-CSRF-TOKEN']=(document.cookie.match('(^|; )NX-ANTI-CSRF-TOKEN=([^;]*)')||0)[2];
+  request.headers['NX-ANTI-CSRF-TOKEN'] = (document.cookie.match('(^|; )NX-ANTI-CSRF-TOKEN=([^;]*)')||0)[2];
+  request.headers['X-Nexus-UI'] = true;
   return request;
 }
 
 function responseInterceptor(response) {
-  const data = JSON.parse(response.data);
+  let data = response.data;
+
+  if (typeof response.data === 'string') {
+    try {
+      data = JSON.parse(response.data);
+    } catch (e) {
+      console.error(e);
+    }
+  }
 
   if(data.tags) {
     const tags = data.tags.sort((a, b) => a.name.localeCompare(b.name));
-    const text = JSON.parse(response.text);
+
     response.body.tags = tags;
-    response.data = { ...data, tags };
-    response.text = JSON.stringify({...text, tags });
+    response.data = {...data, tags};
+    
+    try {
+      const text = JSON.parse(response.text);
+      response.text = JSON.stringify({...text, tags});
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   return response;
@@ -47,10 +62,15 @@ export default function Api() {
   return (
     <Page>
       <PageHeader>
-        <PageTitle icon={faPlug} {...UIStrings.API.MENU}/>
+        <PageTitle icon={faPlug} {...UIStrings.API.MENU} />
       </PageHeader>
       <ContentBody className="nxrm-api">
-        <SwaggerUI url={ExtJS.urlOf('/service/rest/swagger.json')} requestInterceptor={requestInterceptor} defaultModelsExpandDepth={-1} responseInterceptor={responseInterceptor} />
+        <SwaggerUI
+          url={ExtJS.urlOf('/service/rest/swagger.json')}
+          requestInterceptor={requestInterceptor}
+          responseInterceptor={responseInterceptor}
+          defaultModelsExpandDepth={-1}
+        />
       </ContentBody>
     </Page>
   );

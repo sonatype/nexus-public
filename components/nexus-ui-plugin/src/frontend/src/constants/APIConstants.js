@@ -22,6 +22,7 @@ export default {
       ACTION: 'coreui_Repository',
       METHODS: {
         READ_WITH_FOR_ALL: 'readReferencesAddingEntryForAll',
+        READ_REFERENCES: 'readReferences',
       }
     },
     PROPRIETARY_REPOSITORIES: {
@@ -75,7 +76,15 @@ export default {
       METHODS: {
         READ: 'read',
         READ_SOURCES: 'readSources',
+        UPDATE_ROLE_MAPPINGS: 'updateRoleMappings',
       },
+    },
+    FREEZE: {
+      ACTION: 'coreui_Freeze',
+      METHODS: {
+        UPDATE: 'update',
+        FORCE_RELEASE: 'forceRelease'
+      }
     },
     SMALL_PAGE_SIZE: 25,
     MIDDLE_PAGE_SIZE: 50,
@@ -106,6 +115,63 @@ export default {
         UPDATE: 'update'
       }
     },
+    SSL: {
+      ACTION: 'ssl_Certificate',
+      METHODS: {
+        DETAILS: 'details',
+        RETRIEVE_FROM_HOST: 'retrieveFromHost'
+      }
+    },
+    LDAP: {
+      ACTION: 'ldap_LdapServer',
+      METHODS: {
+        CLEAR_CACHE: 'clearCache',
+        VERIFY_CONNECTION: 'verifyConnection',
+        READ_TEMPLATES: 'readTemplates',
+        VERIFY_USER_MAPPING: 'verifyUserMapping',
+        VERIFY_LOGIN: 'verifyLogin'
+      }
+    },
+    TASK: {
+      ACTION: 'coreui_Task',
+      METHODS: {
+        READ: 'read',
+        CREATE: 'create',
+        UPDATE: 'update',
+        DELETE: 'remove',
+        RUN: 'run',
+        STOP: 'stop',
+        READ_TYPES: 'readTypes',
+      }
+    },
+    EMAIL_SERVER: {
+      ACTION:'coreui_Email',
+      METHODS: {
+        VERIFY: 'sendVerification',
+        READ: 'read',
+        UPDATE: 'update'
+      }
+    },
+    UPLOAD: {
+      ACTION: 'coreui_Upload',
+      METHODS: {
+        GET_UPLOAD_DEFINITIONS: 'getUploadDefinitions'
+      }
+    },
+    OUTREACH: {
+      ACTION: 'outreach_Outreach',
+      METHODS: {
+        READ_STATUS: 'readStatus',
+        GET_PROXY_DOWNLOAD_NUMBERS: 'getProxyDownloadNumbers',
+        IS_LOG4J_CAPABILITY_ACTIVE: 'isAvailableLog4jDisclaimer'
+      }
+    },
+    TAGS_LIST: {
+      ACTION: 'proui_TagList',
+      METHODS: {
+        READ_TAGS: 'readTags'
+      }
+    },
   },
   REST: {
     INTERNAL: {
@@ -121,7 +187,37 @@ export default {
       },
       get CURRENT_USER() {
         return `${this.BASE_URL}user/`;
-      }
+      },
+      get SUPPORT_ZIP() {
+        return `${this.BASE_URL}supportzip/`;
+      },
+      get GET_SUPPORT_ZIP_ACTIVE_NODES() {
+        return `${this.BASE_URL}supportzip/activenodes`;
+      },
+      get GET_ZIP_STATUS() {
+        return `${this.BASE_URL}supportzip/status/`;
+      },
+      get CLEAR_SUPPORT_ZIP_HISTORY() {
+        return `${this.BASE_URL}supportzip/clear/`;
+      },
+      get UPLOAD() {
+        return `${this.BASE_URL}upload/`;
+      },
+      get GET_STATUS() {
+        return `${this.BASE_URL}status-check`;
+      },
+      get BLOB_STORES_TYPES() {
+        return `${this.BASE_URL}blobstores/types`;
+      },
+      get BLOB_STORES_QUOTA_TYPES() {
+        return `${this.BASE_URL}blobstores/quotaTypes`;
+      },
+      get BLOB_STORES_USAGE() {
+        return `${this.BASE_URL}blobstores/usage`;
+      },
+      get SAML() {
+        return `${this.BASE_URL}saml`;
+      },
     },
     PUBLIC: {
       BASE_URL: '/service/rest/v1/',
@@ -146,13 +242,48 @@ export default {
       get SSL_CERTIFICATES() {
         return `${this.BASE_URL}security/ssl/truststore`;
       },
+      get SSL_CERTIFICATE_DETAILS() {
+        return `${this.BASE_URL}security/ssl`;
+      },
       get EMAIL_SERVER() {
         return `${this.BASE_URL}email`;
       },
       get VERIFY_EMAIL_SERVER() {
         return `${this.BASE_URL}email/verify`;
       },
+      get LICENSE() {
+        return `${this.BASE_URL}system/license`;
+      },
+      get LDAP_SERVERS() {
+        return `${this.BASE_URL}security/ldap`;
+      },
+      get LDAP_CHANGE_ORDER() {
+        return `${this.BASE_URL}security/ldap/change-order`;
+      },
+      get USER_TOKENS() {
+        return `${this.BASE_URL}security/user-tokens`;
+      },
+      get TAGS() {
+        return `${this.BASE_URL}tags`;
+      },
+      get TASKS() {
+        return `${this.BASE_URL}tasks`;
+      },
+      get UPLOAD() {
+        return `${this.BASE_URL}repositorySettings`;
+      },
+      get BLOB_STORES() {
+        return `${this.BASE_URL}blobstores`;
+      },
+      get BLOB_STORES_CONVERT_TO_GROUP() {
+        return `${this.BASE_URL}blobstores/group/convert`;
+      },
+      get NODE_ID() {
+        return `${this.BASE_URL}system/node`;
+      },
     },
+    SYSTEM_INFORMATION: '/service/rest/atlas/system-information',
+    SYSTEM_INFORMATION_HA: '/service/rest/beta/system/information'
   },
   DEBOUNCE_DELAY: 500,
   SORT_DIRECTIONS: {

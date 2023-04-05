@@ -36,6 +36,10 @@ public class AssetSearchResult
 
   private Date lastModified;
 
+  private Date lastDownloaded;
+
+  private Long fileSize;
+
   private String uploader;
 
   private String uploaderIp;
@@ -64,6 +68,22 @@ public class AssetSearchResult
 
   public void setRepository(final String repository) {
     this.repository = repository;
+  }
+
+  public Long getFileSize() {
+    return fileSize;
+  }
+
+  public void setFileSize(final Long fileSize) {
+    this.fileSize = fileSize;
+  }
+
+  public Date getLastDownloaded() {
+    return lastDownloaded;
+  }
+
+  public void setLastDownloaded(final Date lastDownloaded) {
+    this.lastDownloaded = lastDownloaded;
   }
 
   public String getFormat() {
@@ -125,7 +145,8 @@ public class AssetSearchResult
   @Override
   public String toString() {
     return "AssetSearchResult [path=" + path + ", id=" + id + ", repository=" + repository + ", format=" + format
-        + ", checksum=" + checksum + ", contentType=" + contentType + ", lastModified=" + lastModified + ", attributes="
+        + ", checksum=" + checksum + ", contentType=" + contentType + ", lastModified=" + lastModified
+        + ", lastDownloaded=" + lastDownloaded + ", fileSize=" + fileSize + ", attributes="
         + attributes + "]";
   }
 }

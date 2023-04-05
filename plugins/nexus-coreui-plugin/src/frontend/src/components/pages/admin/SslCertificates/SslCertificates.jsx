@@ -15,15 +15,17 @@ import React from 'react';
 import {Detail, Master, MasterDetail} from '@sonatype/nexus-ui-plugin';
 
 import SslCertificatesList from './SslCertificatesList';
-import SslCertificatesDetails from './SslCertificatesDetails';
+import SslCertificatesForm from './SslCertificatesForm';
 
 export default function SslCertificates() {
-  return <MasterDetail path="admin/security/sslcertificates">
-    <Master>
-      <SslCertificatesList/>
-    </Master>
-    <Detail>
-      <SslCertificatesDetails/>
-    </Detail>
-  </MasterDetail>;
+  return (
+    <MasterDetail path="admin/security/sslcertificates">
+      <Master>
+        <SslCertificatesList />
+      </Master>
+      <Detail>
+        <SslCertificatesForm />
+      </Detail>
+    </MasterDetail>
+  );
 }

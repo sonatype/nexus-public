@@ -64,6 +64,7 @@ export default FormUtils.buildFormMachine({
       ),
 
     setSaveError: assign({
+      saveErrorData: ({data}) => data,
       saveError: (_, event) => {
         const status = event.data?.response?.status;
 

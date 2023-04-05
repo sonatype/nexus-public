@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>3.43.0-SNAPSHOT</version>
+    <version>3.52.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-testing</artifactId>
@@ -28,8 +28,8 @@
   <packaging>pom</packaging>
 
   <properties>
-    <pax-exam.version>4.13.3</pax-exam.version>
-    <testcontainers.version>1.17.3</testcontainers.version>
+    <pax-exam.version>4.13.5</pax-exam.version>
+    <testcontainers.version>1.17.6</testcontainers.version>
   </properties>
 
   <dependencyManagement>
@@ -62,7 +62,7 @@
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-inline</artifactId>
-        <version>4.4.0</version>
+        <version>4.11.0</version>
       </dependency>
 
       <dependency>
@@ -296,6 +296,12 @@
       <dependency>
         <groupId>org.testcontainers</groupId>
         <artifactId>testcontainers</artifactId>
+        <version>${testcontainers.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>junit-jupiter</artifactId>
         <version>${testcontainers.version}</version>
       </dependency>
 

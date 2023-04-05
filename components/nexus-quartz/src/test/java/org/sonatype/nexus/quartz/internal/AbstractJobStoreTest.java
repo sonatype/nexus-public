@@ -32,6 +32,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.node.NodeAccess;
@@ -611,27 +612,33 @@ public abstract class AbstractJobStoreTest
   public static class SampleSignaler implements SchedulerSignaler {
     volatile int fMisfireCount = 0;
 
-    public void notifyTriggerListenersMisfired(Trigger trigger) {
+    @Override
+    public void notifyTriggerListenersMisfired(final Trigger trigger) {
       System.out.println("Trigger misfired: " + trigger.getKey() + ", fire time: " + trigger.getNextFireTime());
       fMisfireCount++;
     }
 
-    public void signalSchedulingChange(long candidateNewNextFireTime) {
+    @Override
+    public void signalSchedulingChange(final long candidateNewNextFireTime) {
     }
 
-    public void notifySchedulerListenersFinalized(Trigger trigger) {
+    @Override
+    public void notifySchedulerListenersFinalized(final Trigger trigger) {
     }
 
-    public void notifySchedulerListenersJobDeleted(JobKey jobKey) {
+    @Override
+    public void notifySchedulerListenersJobDeleted(final JobKey jobKey) {
     }
 
-    public void notifySchedulerListenersError(String string, SchedulerException jpe) {
+    @Override
+    public void notifySchedulerListenersError(final String string, final SchedulerException jpe) {
     }
   }
 
   /** An empty job for testing purpose. */
   public static class MyJob implements Job {
-    public void execute(JobExecutionContext context) throws JobExecutionException {
+    @Override
+    public void execute(final JobExecutionContext context) throws JobExecutionException {
       //
     }
   }
@@ -676,6 +683,11 @@ public abstract class AbstractJobStoreTest
     @Override
     public String getClusterId() {
       return getId();
+    }
+
+    @Override
+    public CompletionStage<String> getHostName() {
+      return null;
     }
   }
 

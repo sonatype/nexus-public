@@ -17,7 +17,9 @@ package org.sonatype.nexus.common.event;
  *
  * @since 3.21
  */
-public interface HasLocality {
+public interface HasLocality
+    extends Event
+{
   /**
    * @return {@code true} if this is a local event
    */

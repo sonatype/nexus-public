@@ -40,7 +40,9 @@
 
     CREATE INDEX IF NOT EXISTS idx_${format}_component_kind ON ${format}_component (kind);
 
-    --
+    --Note: index intentionally not added because this column is intended to be used
+    -- with the component_id which is indexed
+    ALTER TABLE ${format}_component ADD COLUMN IF NOT EXISTS entity_version INT;
   </insert>
 
   <sql id="componentNamespaceMatch">
@@ -99,9 +101,12 @@
     SELECT version FROM ${format}_component WHERE <include refid="componentNamespaceMatch"/> AND name = #{name};
   </select>
 
-  <insert id="createComponent" useGeneratedKeys="true" keyProperty="componentId" parameterType="ComponentData">
-    INSERT INTO ${format}_component (repository_id, namespace, name, kind, version, attributes)
-        VALUES (#{repositoryId}, #{namespace}, #{name}, #{kind}, #{version}, #{attributes});
+  <insert id="createComponent" useGeneratedKeys="true" keyProperty="component.componentId">
+    INSERT INTO ${format}_component (repository_id, namespace, name, kind, version, attributes
+        <if test="entityVersionEnabled">, entity_version</if>
+    ) VALUES (#{component.repositoryId}, #{component.namespace}, #{component.name},
+        #{component.kind}, #{component.version}, #{component.attributes} <if test="entityVersionEnabled">, 1</if>
+    );
   </insert>
 
   <select id="readComponent" resultType="ComponentData">
@@ -112,8 +117,18 @@
     SELECT * FROM ${format}_component WHERE <include refid="componentCoordinateMatch"/>;
   </select>
 
-  <update id="updateComponentKind" parameterType="ComponentData">
-    UPDATE ${format}_component SET kind = #{kind}, last_updated = CURRENT_TIMESTAMP
+  <update id="updateComponentKind">
+    <bind name="repositoryId" value="component.repositoryId"/>
+    <bind name="componentId" value="component.componentId"/>
+    <bind name="namespace" value="component.namespace"/>
+    <bind name="name" value="component.name"/>
+    <bind name="version" value="component.version"/>
+    <bind name="kind" value="component.kind"/>
+
+    UPDATE ${format}_component SET
+        kind = #{kind},
+        last_updated = CURRENT_TIMESTAMP
+        <if test="entityVersionEnabled">, entity_version = COALESCE(entity_version, 1) + 1</if>
         WHERE <include refid="componentMatch"/> AND kind != #{kind};
   </update>
 
@@ -121,13 +136,23 @@
     SELECT attributes FROM ${format}_component WHERE <include refid="componentMatch"/>;
   </select>
 
-  <update id="updateComponentAttributes" parameterType="ComponentData">
-    UPDATE ${format}_component SET attributes = #{attributes}, last_updated = CURRENT_TIMESTAMP
+  <update id="updateComponentAttributes">
+    <bind name="repositoryId" value="component.repositoryId"/>
+    <bind name="componentId" value="component.componentId"/>
+    <bind name="namespace" value="component.namespace"/>
+    <bind name="name" value="component.name"/>
+    <bind name="version" value="component.version"/>
+    <bind name="attributes" value="component.attributes"/>
+
+    UPDATE ${format}_component SET
+        attributes = #{component.attributes},
+        last_updated = CURRENT_TIMESTAMP
+        <if test="entityVersionEnabled">, entity_version = COALESCE(entity_version, 1) + 1</if>
         WHERE <include refid="componentMatch"/> AND attributes != #{attributes};
   </update>
 
   <delete id="deleteComponent" parameterType="ComponentData">
-    DELETE FROM ${format}_component WHERE <include refid="componentMatch"/>;
+    DELETE FROM ${format}_component WHERE <include refid="componentMatch" />;
   </delete>
 
   <delete id="deleteComponents">

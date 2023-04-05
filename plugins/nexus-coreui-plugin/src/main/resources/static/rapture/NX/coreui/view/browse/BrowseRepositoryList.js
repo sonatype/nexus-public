@@ -35,6 +35,7 @@ Ext.define('NX.coreui.view.browse.BrowseRepositoryList', {
 
   tbar: {
     xtype: 'nx-actions'
-  }
+  },
 
+  cls: 'nxrm-browse-browse-repository-list'
 });

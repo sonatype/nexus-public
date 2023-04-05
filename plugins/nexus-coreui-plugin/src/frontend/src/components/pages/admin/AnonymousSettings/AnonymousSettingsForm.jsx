@@ -15,14 +15,14 @@ import {useMachine} from '@xstate/react';
 
 import {
   FormUtils,
-  Select,
   Textfield
 } from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
   NxCheckbox,
-  NxForm,
   NxFormGroup,
+  NxFormSelect,
+  NxStatefulForm,
   NxTooltip,
 } from '@sonatype/react-shared-components';
 
@@ -32,32 +32,14 @@ import AnonymousMachine from './AnonymousMachine';
 
 export default function AnonymousSettingsForm() {
   const [current, send] = useMachine(AnonymousMachine, {devTools: true});
-  const {data, isPristine, loadError, realms, saveError, validationErrors} = current.context;
-  const isLoading = current.matches('loading');
-  const isSaving = current.matches('saving')
-  const isInvalid = FormUtils.isInvalid(validationErrors);
+  const {data, isPristine, realms} = current.context;
 
   function discard() {
     send('RESET');
   }
 
-  function save() {
-    send('SAVE');
-  }
-
-  function retry() {
-    send('RETRY');
-  }
-
-  return <NxForm
-      loading={isLoading}
-      loadError={loadError}
-      doLoad={retry}
-      onSubmit={save}
-      submitError={saveError}
-      submitMaskState={isSaving ? false : null}
-      submitBtnText={UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
-      validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
+  return <NxStatefulForm
+      {...FormUtils.formProps(current, send)}
       additionalFooterBtns={
         <NxTooltip title={FormUtils.discardTooltip({isPristine})}>
           <NxButton type="button" className={isPristine && 'disabled'} onClick={discard}>
@@ -77,12 +59,12 @@ export default function AnonymousSettingsForm() {
         <Textfield{...FormUtils.fieldProps('userId', current)} onChange={FormUtils.handleUpdate('userId', send)}/>
       </NxFormGroup>
       <NxFormGroup label={UIStrings.ANONYMOUS_SETTINGS.REALM_SELECT_LABEL} isRequired>
-        <Select name='realmName' value={data.realmName} onChange={FormUtils.handleUpdate('realmName', send)}>
+        <NxFormSelect name='realmName' value={data.realmName} onChange={FormUtils.handleUpdate('realmName', send)} validatable>
           {realms?.map((realm) =>
               <option key={realm.id} value={realm.id}>{realm.name}</option>
           )}
-        </Select>
+        </NxFormSelect>
       </NxFormGroup>
     </>}
-  </NxForm>;
+  </NxStatefulForm>;
 }

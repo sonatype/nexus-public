@@ -53,6 +53,7 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.time.DateHelper;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
@@ -84,6 +85,8 @@ import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTOR
 import static org.sonatype.nexus.common.entity.Continuations.iterableOf;
 import static org.sonatype.nexus.common.entity.Continuations.streamOf;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
+import static org.sonatype.nexus.repository.cache.CacheInfo.CACHE_TOKEN;
+import static org.sonatype.nexus.repository.cache.CacheInfo.LAST_VERIFIED;
 import static org.sonatype.nexus.repository.content.AttributeOperation.OVERLAY;
 
 @Named
@@ -92,7 +95,7 @@ public class DatastoreComponentAssetTestHelper
     implements ComponentAssetTestHelper
 {
   private static final String SNAPSHOT_VERSION_SUFFIX = "-SNAPSHOT";
-  
+
   private static final String UPDATE_TIME_ERROR_MESSAGE = "Failed to set download time: ";
 
   private static final DateTimeFormatter YEAR_MONTH_DAY_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
@@ -629,12 +632,9 @@ public class DatastoreComponentAssetTestHelper
 
   @Override
   public Optional<Blob> getBlob(final Repository repository, final String assetPath) {
-    BlobStore blobStore = blobStoreManager.get(DEFAULT_BLOBSTORE_NAME);
     return findAssetByPath(repository, assetPath)
         .flatMap(Asset::blob)
-        .map(AssetBlob::blobRef)
-        .map(BlobRef::getBlobId)
-        .map(blobStore::get);
+        .flatMap(assetBlob -> repository.facet(ContentFacet.class).blobs().blob(assetBlob.blobRef()));
   }
 
   @Override
@@ -670,5 +670,14 @@ public class DatastoreComponentAssetTestHelper
   public void deleteAllComponents(final Repository repository) {
     iterableOf(repository.facet(ContentFacet.class).components()::browse)
         .forEach(component -> repository.facet(ContentMaintenanceFacet.class).deleteComponent(component));
+  }
+
+  @Override
+  public CacheInfo getCacheInfo(final Repository repository, final String path) {
+    return findAssetByPath(repository, path)
+        .map(FluentAsset::attributes)
+        .map(attr -> attr.child(CacheInfo.CACHE))
+        .map(map -> new CacheInfo(new DateTime(map.get(LAST_VERIFIED)), map.get(CACHE_TOKEN, String.class)))
+        .orElse(null);
   }
 }

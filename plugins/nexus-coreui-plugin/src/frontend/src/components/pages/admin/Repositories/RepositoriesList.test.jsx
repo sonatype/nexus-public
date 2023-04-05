@@ -16,16 +16,18 @@ import {
   waitForElementToBeRemoved,
   waitFor,
   getByText,
-  screen
+  screen,
+  within
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {ExtJS, TestUtils, ExtAPIUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, ExtAPIUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import {when} from 'jest-when';
 
 import RepositoriesList from './RepositoriesList';
 import UIStrings from '../../../../constants/UIStrings';
 import RepositoriesContextProvider from './RepositoriesContextProvider';
-import {canReadFirewallStatus, canReadHealthCheck} from './IQServerColumns/IQServerHelpers';
+import {canReadFirewallStatus, canUpdateHealthCheck} from './IQServerColumns/IQServerHelpers';
 
 jest.mock('axios', () => ({
   get: jest.fn(),
@@ -37,6 +39,9 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
     ...jest.requireActual('@sonatype/nexus-ui-plugin'),
     ExtJS: {
       checkPermission: jest.fn().mockReturnValue(true)
+    },
+    Utils: {
+      useDebounce: (fun, args) => [() => fun(args), () => {}]
     }
   };
 });
@@ -45,7 +50,9 @@ jest.mock('./IQServerColumns/IQServerHelpers', () => ({
   isIqServerEnabled: jest.fn().mockReturnValue(true),
   canReadHealthCheck: jest.fn().mockReturnValue(true),
   canUpdateHealthCheck: jest.fn().mockReturnValue(true),
-  canReadFirewallStatus: jest.fn().mockReturnValue(true)
+  canReadFirewallStatus: jest.fn().mockReturnValue(true),
+  canReadHealthCheckSummary: jest.fn().mockReturnValue(true),
+  canReadHealthCheckDetail: jest.fn().mockReturnValue(true)
 }));
 
 const mockCopyUrl = jest.fn((event) => event.stopPropagation());
@@ -55,11 +62,11 @@ const {
     LIST: {
       HEALTH_CHECK: {
         ANALYZE_BUTTON,
-        NOT_AVAILABLE_TOOLTIP_HC,
-        NOT_AVAILABLE_TOOLTIP_FS,
+        ANALYZE_ALL,
         LOADING,
         ANALYZING,
-        LOADING_ERROR
+        LOADING_ERROR,
+        SUMMARY: {CAPTION, HELP_BUTTON, DETAILS_BUTTON}
       },
       COLUMNS
     }
@@ -68,6 +75,8 @@ const {
 } = UIStrings;
 
 const selectors = {
+  row: (repoName) => screen.getAllByRole('row').find((el) => el.textContent.startsWith(repoName)),
+  unavailableIcons: (repoName) => selectors.row(repoName).querySelectorAll('.nxrm-unavailable-icon'),
   healthCheck: {
     cell: (rowIndex) => screen.getAllByRole('row')[rowIndex].cells[5],
     get analyzeBtn() {
@@ -77,11 +86,17 @@ const selectors = {
     modalOptionsBtn: () => screen.getByLabelText('more options', {selector: 'button'}),
     modalCancelBtn: () => screen.queryByText(CANCEL_BUTTON_LABEL, {selector: 'button'}),
     columnHeader: () => screen.queryByRole('columnheader', {name: COLUMNS.HEALTH_CHECK}),
-    modalAnalyzeAllBtn: () => screen.getByText('Analyze all repositories')
+    modalAnalyzeAllBtn: () => screen.getByText(ANALYZE_ALL),
+    healthIndicators: (cell, indicatorsValue) => within(cell).getByText(indicatorsValue),
+    summaryContainer: (cell) => within(cell).queryByTestId('nxrm-health-check-summary'),
+    summaryHeader: (cell) => within(cell).getByText(CAPTION),
+    summaryHelpButton: (cell) => within(cell).getByRole('button', {name: HELP_BUTTON}),
+    summaryDetailsButton: (cell) => within(cell).getByRole('button', {name: DETAILS_BUTTON}),
+    summaryIframe: (cell) => within(cell).getByTitle(CAPTION)
   },
   iqPolicyViolations: {
     cell: (rowIndex) => screen.getAllByRole('row')[rowIndex].cells[6],
-    columnHeader: () => screen.queryByRole('columnheader', {name: COLUMNS.IQ})
+    columnHeader: () => screen.queryByRole('columnheader', {name: COLUMNS.IQ}),
   }
 };
 
@@ -154,7 +169,7 @@ describe('RepositoriesList', function () {
         tableRow: (index) => container.querySelectorAll('tbody tr')[index],
         tableRows: () => container.querySelectorAll('tbody tr'),
         urlButton: (index) =>
-          container.querySelectorAll('button[title="Copy URL to Clipboard"]')[index],
+          container.querySelectorAll('[data-icon="copy"]')[index],
         createButton: () => getByText(UIStrings.REPOSITORIES.LIST.CREATE_BUTTON)
       })
     );
@@ -397,11 +412,11 @@ describe('RepositoriesList', function () {
         .calledWith(EXT_URL, READ_HEALTH_CHECK_REQUEST)
         .mockResolvedValue(READ_HEALTH_CHECK_RESPONSE);
       when(axios.get).calledWith(REPOSITORIES_DETAILS).mockResolvedValue({data: REPOSITORIES_ROWS});
-      canReadHealthCheck.mockReturnValue(true);
+      canUpdateHealthCheck.mockReturnValue(true);
     });
 
-    it('does not display health-check column if user has no read permissions', async () => {
-      canReadHealthCheck.mockReturnValue(false);
+    it('does not display health-check column if user has no update permissions', async () => {
+      canUpdateHealthCheck.mockReturnValue(false);
 
       const {loadingMask} = render();
 
@@ -426,12 +441,10 @@ describe('RepositoriesList', function () {
       expect(selectors.healthCheck.cell(rowIndices.MAVEN_CENTRAL)).toHaveTextContent(
         ANALYZE_BUTTON
       );
-      expect(selectors.healthCheck.cell(rowIndices.MAVEN_PUBLIC)).toHaveTextContent(
-        NOT_AVAILABLE_TOOLTIP_HC
-      );
-      expect(selectors.healthCheck.cell(rowIndices.NUGET_HOSTED)).toHaveTextContent(
-        NOT_AVAILABLE_TOOLTIP_HC
-      );
+      expect(within(selectors.healthCheck.cell(rowIndices.MAVEN_PUBLIC)).getByRole('img', {hidden: true}))
+          .toHaveAttribute('data-icon', 'ban');
+      expect(within(selectors.healthCheck.cell(rowIndices.NUGET_HOSTED)).getByRole('img', {hidden: true}))
+          .toHaveAttribute('data-icon', 'ban');
       expect(selectors.healthCheck.cell(rowIndices.NUGET_ORG_PROXY)).toHaveTextContent(
         ANALYZE_BUTTON
       );
@@ -581,8 +594,24 @@ describe('RepositoriesList', function () {
 
       const {securityIssueCount, licenseIssueCount} = readData[0];
 
+      const indicators = selectors.healthCheck.healthIndicators(
+        cell,
+        '' + securityIssueCount + licenseIssueCount
+      );
+      expect(indicators).toBeInTheDocument();
+
+      userEvent.hover(indicators);
+
+      await waitFor(() => expect(selectors.healthCheck.summaryContainer(cell)).toBeInTheDocument());
+      expect(selectors.healthCheck.summaryHeader(cell)).toBeInTheDocument();
+      expect(selectors.healthCheck.summaryHelpButton(cell)).toBeInTheDocument();
+      expect(selectors.healthCheck.summaryDetailsButton(cell)).toBeInTheDocument();
+      expect(selectors.healthCheck.summaryIframe(cell)).toBeInTheDocument();
+
+      userEvent.unhover(selectors.healthCheck.summaryContainer(cell))
+
       await waitFor(() =>
-        expect(cell).toHaveTextContent('' + securityIssueCount + licenseIssueCount)
+        expect(selectors.healthCheck.summaryContainer(cell)).not.toBeInTheDocument()
       );
     });
 
@@ -722,18 +751,20 @@ describe('RepositoriesList', function () {
         expect(axios.post).toHaveBeenCalledWith(EXT_URL, READ_FIREWALL_STATUS_REQUEST)
       );
 
+      const {healthCheck, iqPolicyViolations, unavailableIcons} = selectors;
+
+      expect(healthCheck.columnHeader()).toBeVisible();
+      expect(iqPolicyViolations.columnHeader()).toBeVisible();
+
       expect(selectors.iqPolicyViolations.cell(rowIndices.MAVEN_CENTRAL)).toHaveTextContent(
         getCountersRegexp('maven-central')
-      );
-      expect(selectors.iqPolicyViolations.cell(rowIndices.MAVEN_PUBLIC)).toHaveTextContent(
-        NOT_AVAILABLE_TOOLTIP_FS
-      );
-      expect(selectors.iqPolicyViolations.cell(rowIndices.NUGET_HOSTED)).toHaveTextContent(
-        NOT_AVAILABLE_TOOLTIP_FS
       );
       expect(selectors.iqPolicyViolations.cell(rowIndices.NUGET_ORG_PROXY)).toHaveTextContent(
         getCountersRegexp('nuget.org-proxy')
       );
+
+      expect(unavailableIcons('maven-public')).toHaveLength(2);
+      expect(unavailableIcons('nuget-hosted')).toHaveLength(2);
     });
 
     it('displays an error message on API call error', async () => {

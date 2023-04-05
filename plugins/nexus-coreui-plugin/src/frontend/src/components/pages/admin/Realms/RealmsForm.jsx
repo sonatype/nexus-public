@@ -14,10 +14,10 @@ import React from 'react';
 import {useMachine} from '@xstate/react';
 import {
   NxButton,
-  NxForm,
-  NxTooltip,
-  NxStatefulTransferList,
   NxH2,
+  NxStatefulForm,
+  NxTooltip,
+  NxStatefulTransferList, NxErrorAlert,
 } from '@sonatype/react-shared-components';
 import {FormUtils} from '@sonatype/nexus-ui-plugin';
 
@@ -25,32 +25,13 @@ import UIStrings from '../../../../constants/UIStrings';
 
 import RealmsMachine from './RealmsMachine';
 
-const {
-  REALMS: { CONFIGURATION: LABELS, MESSAGES },
-  SETTINGS,
-} = UIStrings;
+const {REALMS: {CONFIGURATION: LABELS}, SETTINGS} = UIStrings;
 
 export default function RealmsForm() {
-  const [current, send] = useMachine(RealmsMachine, {
-    devTools: true,
-  });
-  const { data, validationErrors, isPristine, saveError, loadError } =
-    current.context;
-  const isLoading = current.matches('loading');
-  const isSaving = current.matches('saving');
-  const isInvalid = FormUtils.isInvalid(validationErrors);
+  const [current, send] = useMachine(RealmsMachine, {devTools: true});
+  const { data, isInvalid, isPristine, validationErrors } = current.context;
 
-  function discard() {
-    send('RESET');
-  }
-
-  function save() {
-    send('SAVE');
-  }
-
-  function retry() {
-    send('RETRY');
-  }
+  const discard = () => send('RESET');
 
   const available =
     data?.available?.map(({ id, name: displayName }) => ({
@@ -58,42 +39,25 @@ export default function RealmsForm() {
       displayName,
     })) || [];
 
-  function errorMessages() {
-    if (validationErrors.isActiveListEmpty) {
-      return MESSAGES.NO_REALMS_CONFIGURED;
-    }
-    return FormUtils.saveTooltip({
-      isPristine,
-      isInvalid,
-    });
-  }
-
   return (
-    <NxForm
-      loading={isLoading}
-      loadError={loadError}
-      doLoad={retry}
-      onSubmit={save}
-      submitError={saveError}
-      submitMaskState={isSaving ? false : null}
-      submitBtnText={SETTINGS.SAVE_BUTTON_LABEL}
-      validationErrors={errorMessages()}
-      additionalFooterBtns={
-        <NxTooltip title={FormUtils.discardTooltip({ isPristine })}>
-          <NxButton
-            type="button"
-            className={isPristine && 'disabled'}
-            onClick={discard}
-          >
-            {SETTINGS.DISCARD_BUTTON_LABEL}
-          </NxButton>
-        </NxTooltip>
-      }
+    <NxStatefulForm
+        {...FormUtils.formProps(current, send)}
+        validationErrors={validationErrors?.active || FormUtils.saveTooltip({isPristine, isInvalid})}
+        additionalFooterBtns={
+          <NxTooltip title={FormUtils.discardTooltip({isPristine})}>
+            <NxButton
+              type="button"
+              className={isPristine && 'disabled'}
+              onClick={discard}
+            >
+              {SETTINGS.DISCARD_BUTTON_LABEL}
+            </NxButton>
+          </NxTooltip>
+        }
     >
-      {() => (
-        <>
-          <NxH2>{LABELS.SUB_LABEL}</NxH2>
-          <NxStatefulTransferList
+      <>
+        <NxH2>{LABELS.SUB_LABEL}</NxH2>
+        <NxStatefulTransferList
             id="realms_select"
             availableItemsLabel={LABELS.AVAILABLE_TITLE}
             selectedItemsLabel={LABELS.SELECTED_TITLE}
@@ -102,9 +66,8 @@ export default function RealmsForm() {
             onChange={FormUtils.handleUpdate('active', send)}
             showMoveAll
             allowReordering
-          />
-        </>
-      )}
-    </NxForm>
+        />
+      </>
+    </NxStatefulForm>
   );
 }

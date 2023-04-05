@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.cleanup.internal.content.method;
 
-import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
 import javax.inject.Named;
@@ -43,7 +42,9 @@ public class DeleteCleanupMethod
     ContentMaintenanceFacet maintenance = repository.facet(ContentMaintenanceFacet.class);
     DeletionProgress progress = new DeletionProgress();
 
-    progress.addCount(maintenance.deleteComponents(components));
+
+    progress.addComponentCount(maintenance.deleteComponents(components));
+    
 
     return progress;
   }

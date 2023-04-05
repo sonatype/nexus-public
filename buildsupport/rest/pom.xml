@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>3.43.0-SNAPSHOT</version>
+    <version>3.52.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-rest</artifactId>
@@ -28,17 +28,13 @@
   <packaging>pom</packaging>
 
   <properties>
-    <jackson2.version>2.13.2</jackson2.version>
-    <jackson2.databind.version>2.13.2.1</jackson2.databind.version>
-    <!-- The behavior of the jackson-dataformat-yaml has changed in 2.12.3
-         and it breaks the com.sonatype.repository.helm.internal.util.YamlParser class
-         (and its tests in com.sonatype.repository.helm.internal.util.YamlParserTest).
-    -->
-    <jackson2.yaml.version>2.12.2</jackson2.yaml.version>
+    <jackson2.version>2.14.1</jackson2.version>
+    <jackson2.databind.version>2.14.1</jackson2.databind.version>
+    <jackson2.yaml.version>2.14.1</jackson2.yaml.version>
     <jaxb.version>2.3.3</jaxb.version>
     <resteasy.version>3.15.3.Final</resteasy.version>
     <swagger.version>1.6.2</swagger.version>
-    <snakeyaml.version>1.32</snakeyaml.version>
+    <snakeyaml.version>1.33</snakeyaml.version>
   </properties>
 
   <dependencyManagement>
@@ -90,7 +86,7 @@
       <dependency>
         <groupId>com.thoughtworks.xstream</groupId>
         <artifactId>xstream</artifactId>
-        <version>1.4.19</version>
+        <version>1.4.20</version>
         <exclusions>
           <exclusion>
             <groupId>xmlpull</groupId>
@@ -197,6 +193,11 @@
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>org.apache.james</groupId>
+            <artifactId>apache-mime4j</artifactId>
+          </exclusion>
+
         </exclusions>
       </dependency>
 

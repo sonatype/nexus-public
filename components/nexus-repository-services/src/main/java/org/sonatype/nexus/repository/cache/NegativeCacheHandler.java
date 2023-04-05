@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.cache;
 
 import java.util.Set;
-
 import javax.annotation.Nonnull;
 
 import org.sonatype.goodies.common.ComponentSupport;
@@ -26,9 +25,10 @@ import org.sonatype.nexus.repository.view.Status;
 
 import com.google.common.collect.ImmutableSet;
 
+import static org.sonatype.nexus.repository.replication.PullReplicationSupport.IS_REPLICATION_REQUEST;
+
 /**
  * Handler that caches 404 responses.
- *
  * When context invocation returns 404, it caches the 404 status to avoid future invocations (if cached status is
  * present).
  *
@@ -39,7 +39,7 @@ public class NegativeCacheHandler
     implements Handler
 {
   private static final Set<String> NFC_CACHEABLE_ACTIONS = ImmutableSet.of(HttpMethods.GET, HttpMethods.HEAD);
-  
+
   @Nonnull
   @Override
   public Response handle(@Nonnull final Context context) throws Exception {
@@ -47,8 +47,21 @@ public class NegativeCacheHandler
     if (!NFC_CACHEABLE_ACTIONS.contains(action)) {
       return context.proceed();
     }
+
     NegativeCacheFacet negativeCache = context.getRepository().facet(NegativeCacheFacet.class);
     NegativeCacheKey key = negativeCache.getCacheKey(context);
+
+    log.debug("Handling NotFoundCache for {}", key);
+
+    if (context.getAttributes() != null && Boolean.TRUE.equals(
+        context.getAttributes().get(IS_REPLICATION_REQUEST, Boolean.class, false))) {
+      log.debug("Skipping NotFoundCache for {} as this is a replication request.", key);
+      Response response = context.proceed();
+      if (response.getStatus().isSuccessful()) {
+        negativeCache.invalidate(key);
+      }
+      return response;
+    }
 
     Response response;
     Status status = negativeCache.get(key);
@@ -56,9 +69,11 @@ public class NegativeCacheHandler
       response = context.proceed();
       if (isNotFound(response)) {
         negativeCache.put(key, response.getStatus());
+        log.debug("Couldn't find {} - adding to NFC", key);
       }
       else if (response.getStatus().isSuccessful()) {
         negativeCache.invalidate(key);
+        log.debug("Found {} - invalidating NFC", key);
       }
     }
     else {
@@ -68,15 +83,14 @@ public class NegativeCacheHandler
     }
     return response;
   }
-  
+
   protected Response buildResponse(final Status status, final Context context) {
     return new Response.Builder()
         .status(status)
-        .build();  
+        .build();
   }
-  
+
   private boolean isNotFound(final Response response) {
     return HttpStatus.NOT_FOUND == response.getStatus().getCode();
   }
-
 }

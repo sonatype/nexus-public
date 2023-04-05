@@ -125,6 +125,13 @@ public class CapabilitiesRule
         .ifPresent(capabilityRegistryProvider.get()::remove);
   }
 
+  protected boolean isCapabilityInstalledAndEnabled(final String capabilityType) {
+    return find(capabilityType)
+        .map(CapabilityReference::context)
+        .map(CapabilityContext::isEnabled)
+        .orElse(false);
+  }
+
   private Optional<? extends CapabilityReference> find(final String capabilityType) {
     CapabilityType type = CapabilityType.capabilityType(capabilityType);
     return capabilityRegistryProvider.get().getAll().stream().filter(ref -> ref.context().type().equals(type))

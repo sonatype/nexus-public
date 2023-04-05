@@ -17,9 +17,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -154,8 +154,26 @@ public class DefaultCapabilityRegistry
   @Subscribe
   public void on(final CapabilityStorageItemCreatedEvent event) {
     if (!event.isLocal()) {
+      pullAndRefreshReferencesFromDB();
+
       CapabilityIdentity id = event.getCapabilityId();
-      CapabilityStorageItem item = event.getCapabilityStorageItem();
+      if (references.containsKey(id)) {
+        log.debug("Capability {} already loaded and registered. Skipping it.", id);
+        return;
+      }
+
+      CapabilityStorageItem item = capabilityStorage.getAll().get(id);
+
+      if (item == null) {
+        log.debug("Failed to locate capability with id {} in storage", id);
+        return;
+      }
+
+      if (capabilityAlreadyRegistered(item)) {
+        log.debug("Capability {}:{} already loaded and registered. Skipping it.", item.getType(), item.getProperties());
+        return;
+      }
+
       CapabilityType type = capabilityType(item.getType());
 
       try {
@@ -169,6 +187,13 @@ public class DefaultCapabilityRegistry
         lock.writeLock().unlock();
       }
     }
+  }
+
+  private boolean capabilityAlreadyRegistered(final CapabilityStorageItem capability) {
+    return references.values().stream()
+        .anyMatch(f ->
+            Objects.equals(f.type().toString(), capability.getType()) &&
+            Objects.equals(f.properties(), capability.getProperties()));
   }
 
   private CapabilityReference doAdd(final CapabilityIdentity id,
@@ -227,7 +252,12 @@ public class DefaultCapabilityRegistry
   public void on(final CapabilityStorageItemUpdatedEvent event) {
     if (!event.isLocal()) {
       CapabilityIdentity id = event.getCapabilityId();
-      CapabilityStorageItem item = event.getCapabilityStorageItem();
+      CapabilityStorageItem item = capabilityStorage.getAll().get(id);
+
+      if (item == null) {
+        log.debug("Failed to locate capability with id {} in storage", id);
+        return;
+      }
 
       try {
         lock.writeLock().lock();
@@ -453,7 +483,7 @@ public class DefaultCapabilityRegistry
   public void pullAndRefreshReferencesFromDB() {
    Map<CapabilityIdentity, CapabilityStorageItem> refreshedCapabilities = capabilityStorage.getAll();
    references.forEach((capabilityIdentity, capabilityReference) ->
-       Optional.of(refreshedCapabilities.get(capabilityIdentity)) // When working in HA mode it could be null
+       Optional.ofNullable(refreshedCapabilities.get(capabilityIdentity)) // When working in HA mode it could be null
            .ifPresent(value -> {
              DefaultCapabilityReference reference = get(capabilityIdentity);
              Map<String, String> decryptedProps = decryptValuesIfNeeded(reference.descriptor(), value.getProperties());

@@ -51,6 +51,11 @@ public class JexlSelector
   }
 
   @Override
+  public void toSql(final SelectorSqlBuilder sqlBuilder, final CselToSql cselToSql) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public String toString() {
     return expression.getParsedText();
   }

@@ -54,4 +54,6 @@ public interface AptContentFacet
   TempBlob getTempBlob(InputStream in, @Nullable String contentType);
 
   void deleteAssetsByPrefix(String pathPrefix);
+
+  Iterable<FluentAsset> getAptPackageAssets();
 }

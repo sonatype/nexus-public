@@ -14,6 +14,8 @@ package org.sonatype.nexus.repository.rest.api;
 
 import java.util.List;
 
+import javax.ws.rs.WebApplicationException;
+
 import org.sonatype.nexus.repository.Repository;
 
 /**
@@ -29,6 +31,16 @@ public interface RepositoryManagerRESTAdapter
    * Retrieve a repository. Will throw a {@link javax.ws.rs.WebApplicationException} with status code 422 if the
    * supplied  repository id is null, and throws a {@link javax.ws.rs.NotFoundException} if no repository with the
    * supplied id exists.
+   */
+  Repository toRepository(String repositoryId);
+
+  /**
+   * Retrieve a repository. Will throw a {@link javax.ws.rs.WebApplicationException} with status code 422 if the
+   * supplied  repository id is null and throws a {@link javax.ws.rs.NotFoundException} if no repository with the
+   * supplied id exists.
+   *
+   * It throws a {@link WebApplicationException} with 403 status code if the repository exists and the user doesn't have
+   * BROWSE permissions for it.
    */
   Repository getRepository(String repositoryId);
 

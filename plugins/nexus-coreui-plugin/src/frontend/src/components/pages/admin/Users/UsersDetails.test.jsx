@@ -14,7 +14,9 @@ import React from 'react';
 import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
 import Axios from 'axios';
-import {ExtJS, TestUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, APIConstants, ExtAPIUtils} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
+
 import {
   render,
   screen,
@@ -22,7 +24,7 @@ import {
   waitForElementToBeRemoved,
   getByText,
   queryByText,
-  act
+  act,
 } from '@testing-library/react';
 
 import UIStrings from '../../../../constants/UIStrings';
@@ -50,6 +52,8 @@ const {
   SETTINGS
 } = UIStrings;
 
+const {EXT: {USER: {ACTION, METHODS}, URL: EXT_URL}} = APIConstants;
+
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'),
   get: jest.fn(),
@@ -67,9 +71,9 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     showSuccessMessage: jest.fn(),
     state: jest.fn().mockReturnValue({
       getValue: jest.fn(),
-      getEdition: jest.fn(),
       getUser: jest.fn(),
     }),
+    isProEdition: jest.fn().mockReturnValue(true),
   },
 }));
 
@@ -95,15 +99,16 @@ const USER = {
 
 const selectors = {
   ...TestUtils.selectors,
+  ...TestUtils.formSelectors,
   id: () => screen.queryByLabelText(LABELS.ID.LABEL),
   firstName: () => screen.queryByLabelText(LABELS.FIRST_NAME.LABEL),
   lastName: () => screen.queryByLabelText(LABELS.LAST_NAME.LABEL),
   password: () => screen.queryByLabelText(LABELS.PASSWORD.LABEL),
   confirmPassword: () => screen.queryByLabelText(LABELS.CONFIRM_PASSWORD.LABEL),
   email: () => screen.queryByLabelText(LABELS.EMAIL.LABEL),
-  status: () => screen.queryByLabelText(LABELS.STATUS.LABEL),
+  status: () => screen.queryByLabelText(LABELS.STATUS.OPTIONS.ACTIVE),
   roles: () => screen.queryByRole('group', {name: LABELS.ROLES.GRANTED}),
-  externalRolesLabel: () => screen.getByText(LABELS.EXTERNAL_ROLES.LABEL),
+  externalRoles: () => screen.queryByLabelText(LABELS.EXTERNAL_ROLES.LABEL),
   requiredValidation: () => screen.queryByText(UIStrings.ERROR.FIELD_REQUIRED),
   passwordNoMatchValidation: () => screen.queryByText(UIStrings.ERROR.PASSWORD_NO_MATCH_ERROR),
   invalidEmailValidation: () => screen.queryByText(UIStrings.ERROR.INVALID_EMAIL),
@@ -115,10 +120,9 @@ const selectors = {
     status: () => screen.getByText(LABELS.STATUS.LABEL).nextSibling,
     roles: () => screen.queryAllByRole('list')[0],
     warning: () => screen.getByText(SETTINGS.READ_ONLY.WARNING),
-    defaultUserWarning: () => screen.getByText(LABELS.DEFAULT_USER_WARNING),
+    externalRoles: () => screen.getByText(LABELS.EXTERNAL_ROLES.LABEL).nextSibling,
   },
   cancelButton: () => screen.getByText(SETTINGS.CANCEL_BUTTON_LABEL),
-  saveButton: () => screen.getByText(SETTINGS.SAVE_BUTTON_LABEL),
   deleteButton: () => screen.queryByText(SETTINGS.DELETE_BUTTON_LABEL),
   modal: {
     openButton: () => screen.getByText(MODAL.CHANGE_PASSWORD),
@@ -134,6 +138,7 @@ const selectors = {
     save: () => getByText(selectors.modal.container(), SETTINGS.SAVE_BUTTON_LABEL),
     querySave: () => queryByText(selectors.modal.container(), SETTINGS.SAVE_BUTTON_LABEL),
     retryButton: () => screen.queryByText('Retry'),
+    queryChangePasswordMask: () => screen.queryByText('Confirming Admin Password')
   },
   token: {
     container: () => screen.getByLabelText(TOKEN.RESET_USER_TOKEN),
@@ -165,14 +170,14 @@ const shouldSeeDetailsInReadOnlyMode = ({statusValue = testStatus} = {}) => {
   });
 };
 
-const shouldSeeExternalRoles = () => {
-  const {externalRolesLabel} = selectors;
+const expectToHaveStatus = (value) => {
+  const {status} = selectors;
 
-  let externalRole = externalRolesLabel();
-  testExternalRoles.forEach(it => {
-    externalRole = externalRole.nextSibling;
-    expect(externalRole).toHaveTextContent(it);
-  });
+  if (value === STATUSES.active.id) {
+    expect(status()).toBeChecked();
+  } else {
+    expect(status()).not.toBeChecked();
+  }
 };
 
 describe('UsersDetails', function() {
@@ -197,11 +202,12 @@ describe('UsersDetails', function() {
     ExtJS.checkPermission.mockReturnValue(true);
     ExtJS.state().getValue.mockReturnValue('test');
     ExtJS.state().getUser.mockReturnValue({id: 'id'});
+    ExtJS.isProEdition.mockReturnValue(true);
   });
 
   describe('Local User Form', function() {
     it('renders local user resolved data', async function() {
-      const {id, firstName, lastName, email, status, roles, saveButton} = selectors;
+      const {id, firstName, lastName, email, roles, querySubmitButton, queryFormError} = selectors;
 
       await renderAndWaitForLoad(testId);
 
@@ -210,16 +216,28 @@ describe('UsersDetails', function() {
       expect(firstName()).toHaveValue(testFirstName);
       expect(lastName()).toHaveValue(testLastName);
       expect(email()).toHaveValue(testEmail);
-      expect(status()).toHaveValue(testStatus);
+      expectToHaveStatus(testStatus);
 
       testRoles.forEach(it => {
         expect(roles()).toHaveTextContent(ROLES[it].name);
       });
-      expect(saveButton()).toHaveClass('disabled');
+      userEvent.click(querySubmitButton());
+      expect(queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
     });
 
     it('renders local user validation messages', async function() {
-      const {id, firstName, lastName, email, status, password, confirmPassword, roles, saveButton} = selectors;
+      const {
+        id,
+        firstName,
+        lastName,
+        email,
+        status,
+        password,
+        confirmPassword,
+        roles,
+        querySubmitButton,
+        queryFormError
+      } = selectors;
       const {requiredValidation, invalidEmailValidation, passwordNoMatchValidation} = selectors;
 
       const expectRequiredValidation = async (field) => {
@@ -262,16 +280,17 @@ describe('UsersDetails', function() {
       expect(requiredValidation()).not.toBeInTheDocument();
       expect(passwordNoMatchValidation()).not.toBeInTheDocument();
 
-      expect(saveButton()).toHaveClass('disabled');
+      userEvent.click(querySubmitButton());
+      expect(queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
       clickOnRoles(testRoles);
-      userEvent.selectOptions(status(), testStatus);
+      userEvent.click(status());
 
-      expect(saveButton()).not.toHaveClass('disabled');
+      expect(queryFormError()).not.toBeInTheDocument();
     });
 
     it('creates local user', async function() {
-      const {id, firstName, lastName, email, status, password, confirmPassword, roles, saveButton} = selectors;
+      const {id, firstName, lastName, email, password, confirmPassword, querySubmitButton, querySavingMask} = selectors;
 
       const REQUEST = {
         ...USER,
@@ -289,18 +308,26 @@ describe('UsersDetails', function() {
       await TestUtils.changeField(email, testEmail);
       await TestUtils.changeField(password, testPassword);
       await TestUtils.changeField(confirmPassword, testPassword);
-      userEvent.selectOptions(status(), testStatus);
       clickOnRoles(testRoles);
 
-      expect(saveButton()).not.toHaveClass('disabled');
-      userEvent.click(saveButton());
+      userEvent.click(querySubmitButton());
+      await waitForElementToBeRemoved(querySavingMask());
 
-      await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(createUserUrl, REQUEST));
+      expect(Axios.post).toHaveBeenCalledWith(createUserUrl, REQUEST);
       expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
     });
 
     it('updates local user', async function() {
-      const {firstName, lastName, email, status, password, confirmPassword, saveButton} = selectors;
+      const {
+        firstName,
+        lastName,
+        email,
+        status,
+        password,
+        confirmPassword,
+        querySubmitButton,
+        querySavingMask
+      } = selectors;
 
       const data = {
         userId: testId,
@@ -321,18 +348,17 @@ describe('UsersDetails', function() {
       await TestUtils.changeField(firstName, data.firstName);
       await TestUtils.changeField(lastName, data.lastName);
       await TestUtils.changeField(email, data.emailAddress);
-      userEvent.selectOptions(status(), data.status);
+      userEvent.click(status());
       clickOnRoles(testRoles);
       clickOnRoles(data.roles);
 
       expect(password()).not.toBeInTheDocument();
       expect(confirmPassword()).not.toBeInTheDocument();
 
-      expect(saveButton()).not.toHaveClass('disabled');
+      userEvent.click(querySubmitButton());
+      await waitForElementToBeRemoved(querySavingMask());
 
-      userEvent.click(saveButton());
-
-      await waitFor(() => expect(Axios.put).toHaveBeenCalledWith(singleUserUrl(testId), data));
+      expect(Axios.put).toHaveBeenCalledWith(singleUserUrl(testId), data);
       expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
     });
 
@@ -413,7 +439,7 @@ describe('UsersDetails', function() {
     });
 
     it('renders external user resolved data', async function() {
-      const {id, firstName, lastName, email, status, roles, saveButton, deleteButton} = selectors;
+      const {id, firstName, lastName, email, status, roles, externalRoles, querySubmitButton, queryFormError, deleteButton} = selectors;
 
       await renderAndWaitForLoad(testId, crowdSource);
 
@@ -425,28 +451,29 @@ describe('UsersDetails', function() {
       expect(lastName()).toBeDisabled();
       expect(email()).toHaveValue(testEmail);
       expect(email()).toBeDisabled();
-      expect(status()).toHaveValue(statusValue);
+      expectToHaveStatus(statusValue);
       expect(status()).toBeDisabled();
 
       testRoles.forEach(it => {
         expect(roles()).toHaveTextContent(ROLES[it].name);
       });
-
-      shouldSeeExternalRoles();
+      expect(externalRoles()).toBeDisabled();
+      expect(externalRoles()).toHaveValue(testExternalRoles.join('\n'));
 
       expect(deleteButton()).not.toBeInTheDocument();
-      expect(saveButton()).toHaveClass('disabled');
+      userEvent.click(querySubmitButton());
+      expect(queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
     });
 
     it('updates external user', async function() {
-      const {password, confirmPassword, saveButton} = selectors;
+      const {password, confirmPassword, querySubmitButton, querySavingMask} = selectors;
 
       const data = {
         ...EXTERNAL,
         roles: ['replication-role'],
       };
 
-      Axios.put.mockReturnValue(Promise.resolve());
+      Axios.post.mockReturnValue({data: TestUtils.makeExtResult({})});
 
       await renderAndWaitForLoad(testId, crowdSource);
 
@@ -456,41 +483,52 @@ describe('UsersDetails', function() {
       expect(password()).not.toBeInTheDocument();
       expect(confirmPassword()).not.toBeInTheDocument();
 
-      expect(saveButton()).not.toHaveClass('disabled');
+      userEvent.click(querySubmitButton());
+      await waitForElementToBeRemoved(querySavingMask());
 
-      userEvent.click(saveButton());
+      await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(
+          EXT_URL,
+          ExtAPIUtils.createRequestBody(ACTION, METHODS.UPDATE_ROLE_MAPPINGS, {
+            data: [{realm: EXTERNAL.source, roles: data.roles, userId: EXTERNAL.userId}]
+          })
+      ));
 
-      await waitFor(() => expect(Axios.put).toHaveBeenCalledWith(singleUserUrl(testId), data));
+      expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
+    });
+
+    it('removes all roles', async function() {
+      const {querySubmitButton, querySavingMask} = selectors;
+
+      Axios.post.mockReturnValue({data: TestUtils.makeExtResult({})});
+
+      await renderAndWaitForLoad(testId, crowdSource);
+
+      clickOnRoles(testRoles);
+
+      userEvent.click(querySubmitButton());
+      await waitForElementToBeRemoved(querySavingMask());
+
+      await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(
+          EXT_URL,
+          ExtAPIUtils.createRequestBody(ACTION, METHODS.UPDATE_ROLE_MAPPINGS, {
+            data: [{realm: EXTERNAL.source, roles: [], userId: EXTERNAL.userId}]
+          })
+      ));
+
       expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
     });
 
     describe('Read-Only Mode', function() {
       it('renders external user details without edit permissions', async () => {
-        const {readOnly: {warning}, cancelButton} = selectors;
+        const {readOnly: {warning, externalRoles}, cancelButton} = selectors;
         when(ExtJS.checkPermission).calledWith('nexus:users:update').mockReturnValue(false);
 
         await renderAndWaitForLoad(testId, crowdSource);
 
         expect(warning()).toBeInTheDocument();
         shouldSeeDetailsInReadOnlyMode({statusValue});
-        shouldSeeExternalRoles();
 
-        userEvent.click(cancelButton());
-        await waitFor(() => expect(onDone).toBeCalled());
-      });
-
-      it('renders default external user details', async () => {
-        const {readOnly: {defaultUserWarning}, cancelButton} = selectors;
-
-        when(Axios.get).calledWith(findUsersUrl(testId, crowdSource)).mockResolvedValue({
-          data: [{...EXTERNAL, readOnly: true}]
-        });
-
-        await renderAndWaitForLoad(testId, crowdSource);
-
-        expect(defaultUserWarning()).toBeInTheDocument();
-        shouldSeeDetailsInReadOnlyMode({statusValue});
-        shouldSeeExternalRoles();
+        expect(externalRoles()).toHaveTextContent(testExternalRoles.join(''))
 
         userEvent.click(cancelButton());
         await waitFor(() => expect(onDone).toBeCalled());
@@ -510,7 +548,7 @@ describe('UsersDetails', function() {
 
   it('shows save API errors', async function() {
     const message = 'Use a unique userId';
-    const {id, firstName, lastName, email, status, password, confirmPassword, saveButton} = selectors;
+    const {id, firstName, lastName, email, status, password, confirmPassword, querySubmitButton, querySavingMask} = selectors;
 
     when(Axios.post).calledWith(createUserUrl, expect.objectContaining({userId: testId}))
         .mockRejectedValue({response: {data: message}});
@@ -523,15 +561,15 @@ describe('UsersDetails', function() {
     await TestUtils.changeField(email, testEmail);
     await TestUtils.changeField(password, testPassword);
     await TestUtils.changeField(confirmPassword, testPassword);
-    userEvent.selectOptions(status(), testStatus);
+    userEvent.click(status());
     clickOnRoles(testRoles);
 
-    expect(saveButton()).not.toHaveClass('disabled');
-    userEvent.click(saveButton());
+    userEvent.click(querySubmitButton());
+    await waitForElementToBeRemoved(querySavingMask());
 
-    await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(createUserUrl, expect.anything()));
+    expect(Axios.post).toHaveBeenCalledWith(createUserUrl, expect.anything());
 
-    expect(NX.Messages.error).toHaveBeenCalledWith(UIStrings.ERROR.SAVE_ERROR);
+    waitFor(() => expect(NX.Messages.error).toHaveBeenCalledWith(UIStrings.ERROR.SAVE_ERROR));
     expect(screen.getByText(new RegExp(message))).toBeInTheDocument();
   });
 
@@ -580,7 +618,6 @@ describe('UsersDetails', function() {
 
       ExtJS.state = jest.fn().mockReturnValue({
         getUser: jest.fn().mockReturnValue({id: 'admin'}),
-        getEdition: jest.fn().mockReturnValue('PRO'),
         getValue: jest.fn()
       });
     });
@@ -660,8 +697,11 @@ describe('UsersDetails', function() {
         inputNewPassword,
         inputConfirmPassword,
         next,
-        save,
+        save
       } = selectors.modal;
+      const {
+        queryFormError
+      } = selectors;
 
       await renderAndWaitForLoad(testId);
 
@@ -681,7 +721,8 @@ describe('UsersDetails', function() {
       await TestUtils.changeField(inputNewPassword, '123456');
       await TestUtils.changeField(inputConfirmPassword, '1234');
 
-      expect(save()).toHaveAttribute('aria-disabled', 'true');
+      userEvent.click(save());
+      expect(queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
     });
 
     it('sends the correct password change request', async () => {
@@ -693,6 +734,7 @@ describe('UsersDetails', function() {
         inputConfirmPassword,
         next,
         save,
+        queryChangePasswordMask
       } = selectors.modal;
 
       await renderAndWaitForLoad(testId);
@@ -709,16 +751,15 @@ describe('UsersDetails', function() {
       await TestUtils.changeField(inputNewPassword, expectedPassword);
       await TestUtils.changeField(inputConfirmPassword, expectedPassword);
 
-      await act(async () => userEvent.click(save()));
+      userEvent.click(save());
+      await waitForElementToBeRemoved(queryChangePasswordMask());
 
-      await waitFor(() => {
-        expect(Axios.put).toHaveBeenCalledTimes(1);
-        expect(Axios.put).toHaveBeenCalledWith(
-            changePasswordUrl(testId),
-            expectedPassword,
-            { headers: { 'Content-Type': 'text/plain' } }
-          );
-      });
+      expect(Axios.put).toHaveBeenCalledTimes(1);
+      expect(Axios.put).toHaveBeenCalledWith(
+          changePasswordUrl(testId),
+          expectedPassword,
+          {headers: {'Content-Type': 'text/plain'}}
+      );
     });
 
     it('closes modal when pressing cancel button', async () => {
@@ -793,7 +834,7 @@ describe('UsersDetails', function() {
 
       await renderAndWaitForLoad(testId);
 
-      expect(openButton()).toBeDisabled();
+      expect(openButton()).toHaveClass('disabled')
     });
 
     it('show error message in case there is something wrong when changing the password', async () => {
@@ -806,7 +847,7 @@ describe('UsersDetails', function() {
         inputConfirmPassword,
         inputAdminPassword,
         retryButton,
-        querySave
+        queryChangePasswordMask
       } = selectors.modal;
 
       await renderAndWaitForLoad(testId);
@@ -828,18 +869,16 @@ describe('UsersDetails', function() {
 
       expect(save()).toBeInTheDocument();
 
-      await act(async () => userEvent.click(save()));
+      userEvent.click(save());
+      await waitForElementToBeRemoved(queryChangePasswordMask());
 
-      await waitFor(() => {
-        expect(Axios.put).toHaveBeenCalledTimes(1);
-        expect(Axios.put).toHaveBeenCalledWith(
+      expect(Axios.put).toHaveBeenCalledTimes(1);
+      expect(Axios.put).toHaveBeenCalledWith(
           changePasswordUrl(testId),
           mockPassword,
-          { headers: { 'Content-Type': 'text/plain' } }
-          );
-          expect(retryButton()).toBeInTheDocument();
-          expect(querySave()).not.toBeInTheDocument();
-      });
+          {headers: {'Content-Type': 'text/plain'}}
+      );
+      expect(retryButton()).toBeInTheDocument();
     });
   });
 
@@ -847,7 +886,6 @@ describe('UsersDetails', function() {
     beforeEach(() => {
       ExtJS.state = jest.fn().mockReturnValue({
         getUser: jest.fn().mockReturnValue({id: 'admin'}),
-        getEdition: jest.fn().mockReturnValue('PRO'),
         getValue: jest.fn().mockReturnValue(['usertoken'])
       });
     });
@@ -855,7 +893,6 @@ describe('UsersDetails', function() {
     it('renders correctly', async () => {
       ExtJS.state = jest.fn().mockReturnValue({
         getUser: jest.fn().mockReturnValue({id: 'admin'}),
-        getEdition: jest.fn().mockReturnValue('PRO'),
         getValue: jest.fn(),
       });
 
@@ -875,11 +912,7 @@ describe('UsersDetails', function() {
     it('does not show reset token user section if it is not nexus pro', async () => {
       const {queryTitle, queryResetButton} = selectors.token;
 
-      ExtJS.state = jest.fn().mockReturnValue({
-        getUser: jest.fn().mockReturnValue({id: 'admin'}),
-        getEdition: jest.fn().mockReturnValue('FREE'),
-        getValue: jest.fn(),
-      });
+      ExtJS.isProEdition = jest.fn().mockReturnValue(false);
 
       await renderAndWaitForLoad(testId);
 
@@ -936,7 +969,7 @@ describe('UsersDetails', function() {
 
       await renderAndWaitForLoad(testId);
 
-      expect(resetButton()).toBeDisabled();
+      expect(resetButton()).toHaveClass('disabled');
     });
 
     it('reset token properly', async () => {
@@ -960,8 +993,7 @@ describe('UsersDetails', function() {
       } = selectors;
 
       await renderAndWaitForLoad(testId);
-
-      expect(resetButton()).not.toBeDisabled();
+      expect(resetButton()).not.toHaveClass('disabled');
 
       await userEvent.click(resetButton());
 

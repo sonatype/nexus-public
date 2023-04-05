@@ -14,17 +14,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {assign} from 'xstate';
+import {assign, spawn} from 'xstate';
 import Axios from 'axios';
 import {mergeDeepRight} from 'ramda';
 
 import {ExtJS, FormUtils, ValidationUtils, ExtAPIUtils} from '@sonatype/nexus-ui-plugin';
 
+import ExternalRolesComboboxMachine from './ExternalRolesComboboxMachine';
+
 import UIStrings from '../../../../constants/UIStrings';
 import {TYPES, EMPTY_DATA, URL} from './RolesHelper';
 
 const {ROLES: {MESSAGES: LABELS}} = UIStrings;
-const {rolesUrl, privilegesUrl, sourcesApi, getRolesUrl, defaultRolesUrl, singleRoleUrl} = URL;
+const {rolesUrl, privilegesUrl, sourcesApi, defaultRolesUrl, singleRoleUrl} = URL;
 
 const isEdit = (id) => ValidationUtils.notBlank(id);
 
@@ -48,28 +50,28 @@ export default FormUtils.buildFormMachine({
                 actions: ['clearSaveError', 'resetData', 'setRoleType']
               },
               SET_EXTERNAL_ROLE_TYPE: {
-                target: 'loadingExternalRoles',
-                actions: ['clearSaveError', 'resetData', 'setExternalRoleType'],
+                target: 'loaded',
+                actions: [
+                    'clearSaveError',
+                    'resetData',
+                    'setExternalRoleType',
+                    'initExternalRolesActor',
+                    'sendDataToActor',
+                ],
               },
             }
           },
-          loadingExternalRoles: {
-            invoke: {
-              src: 'fetchExternalRoles',
-              onDone: {
-                target: 'loaded',
-                actions: ['setExternalRoles']
-              },
-              onError: {
-                target: 'loadError',
-                actions: ['setLoadError', 'logLoadError']
-              }
-            }
-          }
         }
       })
 }).withConfig({
   actions: {
+    initExternalRolesActor: assign({
+      externalRolesRef: ({externalRolesRef}) =>
+          externalRolesRef || spawn(ExternalRolesComboboxMachine, 'externalRolesCombobox'),
+    }),
+    sendDataToActor: ({externalRoleType, externalRolesRef}) => externalRolesRef.send(
+        {type: 'UPDATE_TYPE', externalRoleType}, {to: 'externalRolesCombobox'}
+    ),
     validate: assign({
       validationErrors: ({data}) => ({
         id: validateId(data?.id),
@@ -82,9 +84,6 @@ export default FormUtils.buildFormMachine({
       sources: (_, {data: [, , sources]}) => sources.data,
       data: (_, {data: [, , , role]}) => role.data,
       pristineData: (_, {data: [, , , role]}) => role.data,
-    }),
-    setExternalRoles: assign({
-      externalRoles: (_, event) => event.data?.data,
     }),
     setRoleType: assign({
       roleType: (_, {roleType}) => roleType
@@ -114,7 +113,6 @@ export default FormUtils.buildFormMachine({
             : Promise.resolve({data: EMPTY_DATA}),
       ]);
     },
-    fetchExternalRoles: ({externalRoleType}) => Axios.get(getRolesUrl(externalRoleType)),
     saveData: ({data, pristineData: {id}}) => {
       if (isEdit(id)) {
         return Axios.put(singleRoleUrl(data.id), data);

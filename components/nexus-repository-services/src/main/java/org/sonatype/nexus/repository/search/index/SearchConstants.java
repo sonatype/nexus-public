@@ -49,6 +49,8 @@ public interface SearchConstants
 
   String LAST_DOWNLOADED_KEY = "lastDownloaded";
 
+  String FILE_SIZE = "fileSize";
+
   String UPLOADER = "uploader";
 
   String UPLOADER_IP = "uploaderIp";

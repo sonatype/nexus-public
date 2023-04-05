@@ -13,10 +13,12 @@
 import React from 'react';
 import axios from 'axios';
 import {act} from 'react-dom/test-utils';
-import {waitFor, waitForElementToBeRemoved} from '@testing-library/react';
+import {waitFor, waitForElementToBeRemoved, within, screen} from '@testing-library/react';
+import {when} from 'jest-when';
 import userEvent from '@testing-library/user-event';
 
-import {ExtJS, TestUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import UIStrings from '../../../../constants/UIStrings';
 import RoutingRulesForm from './RoutingRulesForm';
@@ -54,6 +56,11 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   }
 }));
 
+const selectors = {
+  ...TestUtils.selectors,
+  ...TestUtils.formSelectors,
+};
+
 describe('RoutingRulesForm', function() {
   const CONFIRM = Promise.resolve();
   const onDone = jest.fn();
@@ -68,12 +75,12 @@ describe('RoutingRulesForm', function() {
   }
 
   function renderView(view) {
-    return TestUtils.render(view, ({queryByLabelText, queryByText, queryAllByTitle}) => ({
+    return TestUtils.render(view, ({queryByLabelText, queryByText}) => ({
       name: () => queryByLabelText(UIStrings.ROUTING_RULES.FORM.NAME_LABEL),
       description: () => queryByLabelText(UIStrings.ROUTING_RULES.FORM.DESCRIPTION_LABEL),
       mode: () => queryByLabelText(UIStrings.ROUTING_RULES.FORM.MODE_LABEL),
       matcher: (index) => queryByLabelText(UIStrings.ROUTING_RULES.FORM.MATCHER_LABEL(index)),
-      deleteMatcherButton: (index) => queryAllByTitle(UIStrings.ROUTING_RULES.FORM.DELETE_MATCHER_BUTTON)[index],
+      matcherButton: (index) => within(screen.getByText('Matchers').closest('.nx-form-group')).getAllByRole('button')[index],
       createButton: () => queryByText(UIStrings.ROUTING_RULES.FORM.CREATE_BUTTON, {selector: '.nx-btn'}),
       saveButton: () => queryByText(UIStrings.SETTINGS.SAVE_BUTTON_LABEL),
       cancelButton: () => queryByText(UIStrings.SETTINGS.CANCEL_BUTTON_LABEL),
@@ -93,7 +100,7 @@ describe('RoutingRulesForm', function() {
       }
     });
 
-    const {loadingMask, name, description, mode, matcher, saveButton} = renderEditView(itemId);
+    const {loadingMask, name, description, mode, matcher} = renderEditView(itemId);
 
     await waitForElementToBeRemoved(loadingMask);
 
@@ -101,7 +108,7 @@ describe('RoutingRulesForm', function() {
     expect(description()).toHaveValue('Allow all requests');
     expect(mode()).toHaveValue('ALLOW');
     expect(matcher(0)).toHaveValue('.*');
-    expect(saveButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
   });
 
   it('renders an error message', async function() {
@@ -115,14 +122,15 @@ describe('RoutingRulesForm', function() {
   });
 
   it('renders an error message when saving an invalid field', async function() {
-    const {loadingMask, name, matcher, createButton, getByText, savingMask} = renderCreateView();
+    const {name, matcher, createButton, getByText} = renderCreateView();
 
-    await waitForElementToBeRemoved(loadingMask);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     await TestUtils.changeField(name, 'newValue');
     await TestUtils.changeField(() => matcher(0), '.*');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
-    axios.post.mockRejectedValue({
+    when(axios.post).calledWith('/service/rest/internal/ui/routing-rules/', expect.any(Object)).mockRejectedValue({
       response: {
         data: [
           {
@@ -132,39 +140,39 @@ describe('RoutingRulesForm', function() {
         ]
       }
     });
+
     userEvent.click(createButton());
-
-    await waitForElementToBeRemoved(savingMask);
-
+    await waitForElementToBeRemoved(selectors.querySavingMask());
     expect(getByText('A rule with the same name already exists. Name must be unique.')).toBeInTheDocument();
   });
 
   it('requires the name, description, and at least one matcher', async function() {
     axios.get.mockResolvedValue({data: []});
 
-    const {loadingMask, name, description, matcher, createButton} = renderCreateView();
+    const {name, description, matcher} = renderCreateView();
 
-    await waitForElementToBeRemoved(loadingMask);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
     await TestUtils.changeField(name, '');
     await TestUtils.changeField(description, '');
     await TestUtils.changeField(() => matcher(0), '.*');
-    expect(createButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     await TestUtils.changeField(name, 'name');
     await TestUtils.changeField(description, '')
     await TestUtils.changeField(() => matcher(0), '');
-    expect(createButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     await TestUtils.changeField(name, '');
     await TestUtils.changeField(description, 'description');
     await TestUtils.changeField(() => matcher(0), '');
-    expect(createButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     await TestUtils.changeField(name, 'name');
     await TestUtils.changeField(description, 'description');
     await TestUtils.changeField(() => matcher(0), '.*');
-    expect(createButton()).not.toHaveClass('disabled');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('fires onDone when cancelled', async function() {
@@ -242,7 +250,7 @@ describe('RoutingRulesForm', function() {
       }
     });
 
-    const {loadingMask, matcher, saveButton, deleteMatcherButton} = renderEditView(itemId);
+    const {loadingMask, matcher, saveButton, matcherButton} = renderEditView(itemId);
 
     await waitForElementToBeRemoved(loadingMask);
 
@@ -250,17 +258,15 @@ describe('RoutingRulesForm', function() {
     expect(matcher(1)).toHaveValue('b');
     expect(matcher(2)).toHaveValue('c');
 
-    expect(deleteMatcherButton(0)).toBeInTheDocument();
-    expect(deleteMatcherButton(1)).toBeInTheDocument();
-    expect(deleteMatcherButton(2)).toBeInTheDocument();
+    expect(matcherButton(0)).toBeInTheDocument();
+    expect(matcherButton(1)).toBeInTheDocument();
+    expect(matcherButton(2)).toBeInTheDocument();
 
-    userEvent.click(deleteMatcherButton(2));
+    userEvent.click(matcherButton(2));
     expect(matcher(2)).not.toBeInTheDocument();
 
-    userEvent.click(deleteMatcherButton(1));
+    userEvent.click(matcherButton(1));
     expect(matcher(1)).not.toBeInTheDocument();
-
-    expect(deleteMatcherButton(0)).toBe(undefined);
 
     expect(saveButton()).not.toHaveClass('disabled');
 

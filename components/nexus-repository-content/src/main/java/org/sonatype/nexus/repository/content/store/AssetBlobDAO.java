@@ -13,6 +13,8 @@
 package org.sonatype.nexus.repository.content.store;
 
 import java.time.OffsetDateTime;
+import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -84,6 +86,14 @@ public interface AssetBlobDAO
   boolean deleteAssetBlob(@Param("blobRef") BlobRef blobRef);
 
   /**
+   * Deletes batch of asset blobs from the content data store.
+   *
+   * @param blobRefIds the array of String with blobRefs
+   * @return {@code true} if the asset blob was deleted
+   */
+  boolean deleteAssetBlobBatch(@Param("blobRefIds") String[] blobRefIds);
+
+  /**
    * Generally it is recommended that this method not be called and let stores manage this value.
    *
    * @since 3.29
@@ -102,4 +112,46 @@ public interface AssetBlobDAO
    * @param contentType
    */
   void setContentType(@Param("blobRef") BlobRef blobRef, @Param("contentType") String contentType);
+
+  /**
+   * Sets the checksums on the asset blob
+   *
+   * @param blobRef
+   * @param checksums
+   */
+  void setChecksums(@Param("blobRef") BlobRef blobRef, @Param("checksums") Map<String, String> checksums);
+
+  /**
+   * Browse asset blobs with legacy blobRef format {@code store-name:blob-id@node-id} in a paged fashion.
+   *
+   * @param limit maximum number of asset blobs to return
+   * @param continuationToken optional token to continue from a previous request
+   * @return collection of asset blobs and the next continuation token
+   */
+  Continuation<AssetBlob> browseAssetsWithLegacyBlobRef(
+      @Param("limit") int limit,
+      @Param("continuationToken") @Nullable String continuationToken);
+
+  /**
+   * Update asset blobs in a batch fashion.
+   *
+   * @param assetBlobs asset blobs for update
+   * @return {code true} if asset blobs were updated
+   */
+  boolean updateBlobRefs(@Param("assetBlobs") Collection<AssetBlob> assetBlobs);
+
+  /**
+   * Update asset blob.
+   *
+   * @param assetBlob asset blob for update
+   * @return {code true} if asset blob was updated
+   */
+  boolean updateBlobRef(@Param("assetBlobData") AssetBlob assetBlob);
+
+  /**
+   * Count asset blobs with legacy blobRef format {@code store-name:blob-id@node-id}.
+   *
+   * @return asset blobs count
+   */
+  int countNotMigratedAssetBlobs();
 }

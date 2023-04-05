@@ -31,6 +31,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.rest.internal.resources.TokenEncoder;
 import org.sonatype.nexus.repository.search.AssetSearchResult;
@@ -41,10 +42,8 @@ import org.sonatype.nexus.repository.search.SearchService;
 import org.sonatype.nexus.repository.search.index.ElasticSearchIndexService;
 import org.sonatype.nexus.repository.search.query.ElasticSearchQueryService;
 import org.sonatype.nexus.repository.search.query.ElasticSearchUtils;
-import org.sonatype.nexus.repository.upload.UploadDefinition;
 
 import com.google.common.collect.ImmutableList;
-import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
 
@@ -94,14 +93,10 @@ public class ElasticSearchServiceImpl
   public SearchResponse search(final SearchRequest searchRequest) {
     QueryBuilder queryBuilder = elasticSearchUtils.buildQuery(searchRequest);
 
-    int from = 0;
-
-    if (StringUtils.isNotEmpty(searchRequest.getContinuationToken())) {
-      from = decodeFrom(searchRequest, queryBuilder);
-    }
-    else {
-      from = searchRequest.getOffset();
-    }
+    int from = Optional.ofNullable(searchRequest.getContinuationToken())
+        .filter(Strings2::notBlank)
+        .map(__ -> decodeFrom(searchRequest, queryBuilder))
+        .orElseGet(() -> Optional.ofNullable(searchRequest.getOffset()).orElse(0));
 
     org.elasticsearch.action.search.SearchResponse searchResponse =
         elasticSearchQueryService.search(queryBuilder, from, searchRequest.getLimit());
@@ -183,7 +178,7 @@ public class ElasticSearchServiceImpl
   @SuppressWarnings("unchecked")
   private ComponentSearchResult toComponentSearchResult(final SearchHit componentHit) {
     Map<String, Object> componentMap = checkNotNull(componentHit.getSource());
-    Repository repository = elasticSearchUtils.getRepository((String) componentMap.get(REPOSITORY_NAME));
+    Repository repository = elasticSearchUtils.getReadableRepository((String) componentMap.get(REPOSITORY_NAME));
 
     ComponentSearchResult componentSearchResult = new ComponentSearchResult();
 
@@ -226,8 +221,17 @@ public class ElasticSearchServiceImpl
     assetSearchResult.setLastModified(calculateLastModified(assetSearchResult.getAttributes()));
     assetSearchResult.setUploader((String) assetMap.get(UPLOADER));
     assetSearchResult.setUploaderIp((String) assetMap.get(UPLOADER_IP));
+    assetSearchResult.setLastDownloaded(calculateLastDownloaded(assetMap));
+    assetSearchResult.setFileSize(getFileSize(assetMap));
 
     return assetSearchResult;
+  }
+
+  private Long getFileSize(final Map<String, Object> attributes) {
+    return Optional.ofNullable(attributes.get(FILE_SIZE))
+        .map(Number.class::cast)
+        .map(Number::longValue)
+        .orElse(null);
   }
 
   private OffsetDateTime calculateOffsetDateTime(final Map<String, Object> attributes, final String field) {
@@ -242,6 +246,21 @@ public class ElasticSearchServiceImpl
     catch (Exception ignored) {
       log.debug("Unable to retrieve {}", field, ignored);
       // Nothing we can do here for invalid data. It shouldn't happen but date parsing will blow out the results.
+      return null;
+    }
+  }
+
+  private Date calculateLastDownloaded(final Map<String, Object> attributes) {
+    try {
+      return Optional.ofNullable(attributes.get(LAST_DOWNLOADED_KEY))
+          .map(String.class::cast)
+          .map(DATE_TIME_FORMATTER::parse)
+          .map(Instant::from)
+          .map(Date::from)
+          .orElse(null);
+    }
+    catch (Exception ignored) {
+      log.debug("Unable to retrieve last_downloaded", ignored);
       return null;
     }
   }

@@ -35,6 +35,8 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriBuilder;
 
 import org.sonatype.nexus.pax.exam.NexusPaxExamSupport;
+import org.sonatype.nexus.pax.exam.distribution.NexusTestDistribution.Distribution;
+import org.sonatype.nexus.pax.exam.distribution.NexusTestDistributionService;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.tools.DeadBlobFinder;
 import org.sonatype.nexus.repository.tools.DeadBlobResult;
@@ -90,13 +92,6 @@ import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 
 import static org.codehaus.groovy.runtime.InvokerHelper.asList;
-import static org.ops4j.pax.exam.CoreOptions.maven;
-import static org.ops4j.pax.exam.CoreOptions.when;
-import static org.ops4j.pax.exam.CoreOptions.wrappedBundle;
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFileExtend;
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
-import static org.ops4j.pax.exam.options.WrappedUrlProvisionOption.OverwriteMode.MERGE;
-import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_DEVELOPER;
 
 /**
  * Support for Nexus integration tests.
@@ -109,7 +104,7 @@ public abstract class NexusITSupport
 {
   protected static final String DEFAULT_SESSION_COOKIE_NAME = "NXSESSIONID";
 
-  protected static final String DEFAULT_JWT_COOKIE_NAME = "NXJWT";
+  protected static final String DEFAULT_JWT_COOKIE_NAME = "NXSESSIONID";
 
   protected static final String REST_SERVICE_PATH = "service/rest";
 
@@ -152,19 +147,7 @@ public abstract class NexusITSupport
    * Configure Nexus base with out-of-the box settings (no HTTPS).
    */
   public static Option[] configureNexusBase() {
-    return options(
-        nexusDistribution("org.sonatype.nexus.assemblies", "nexus-base-template"),
-
-        editConfigurationFileExtend(SYSTEM_PROPERTIES_FILE, "nexus.loadAsOSS", "true"),
-        editConfigurationFileExtend(SYSTEM_PROPERTIES_FILE, "nexus.security.randompassword", "false"),
-        editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.scripts.allowCreation", "true"),
-        editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.search.event.handler.flushOnCount", "1"),
-        // install common test-support features
-        nexusFeature("org.sonatype.nexus.testsuite", "nexus-repository-testsupport"),
-        wrappedBundle(maven("org.awaitility", "awaitility").versionAsInProject()).overwriteManifest(MERGE).imports("*"),
-        when(getValidTestDatabase().isUseContentStore()).useOptions(editConfigurationFilePut(NEXUS_PROPERTIES_FILE,
-            DATASTORE_DEVELOPER, "true"))
-    );
+    return NexusTestDistributionService.getInstance().getDistribution(Distribution.BASE);
   }
 
   /**
@@ -330,39 +313,15 @@ public abstract class NexusITSupport
     return null;
   }
 
-  /**
-   * @return our jwt cookie; {@code null} if it doesn't exist
-   */
-  @Nullable
-  protected Cookie getJwtCookie(final CookieStore cookieStore) {
-    for (Cookie cookie : cookieStore.getCookies()) {
-      if (DEFAULT_JWT_COOKIE_NAME.equals(cookie.getName())) {
-        return cookie;
-      }
-    }
-    return null;
-  }
 
   /**
-   * @return the header containing our session cookie; {@code null} if it doesn't exist
+   * @return the last header containing a cookie; {@code null} if it doesn't exist
    */
   @Nullable
-  protected Header getSessionCookieHeader(@Nonnull final Header[] headers) {
-    for (Header header : headers) {
-      if (header.getValue().startsWith(DEFAULT_SESSION_COOKIE_NAME + "=")) {
-        return header;
-      }
-    }
-    return null;
-  }
-
-  /**
-   * @return the header containing our jwt cookie; {@code null} if it doesn't exist
-   */
-  @Nullable
-  protected Header getJwtCookieHeader(@Nonnull final Header[] headers) {
-    for (Header header : headers) {
-      if (header.getValue().startsWith(DEFAULT_JWT_COOKIE_NAME + "=")) {
+  protected Header getLastCookieHeader(@Nonnull final Header[] headers, final String cookieName) {
+    for (int i = headers.length - 1; i >= 0; i--) {
+      Header header = headers[i];
+      if (header.getValue().startsWith(cookieName + "=")) {
         return header;
       }
     }

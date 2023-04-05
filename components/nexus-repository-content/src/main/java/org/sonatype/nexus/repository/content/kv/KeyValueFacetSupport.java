@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.kv;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -20,6 +21,7 @@ import javax.inject.Inject;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.stateguard.Guarded;
+import org.sonatype.nexus.repository.Facet.Exposed;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
@@ -33,17 +35,21 @@ import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 /**
  * Support class encapsulating the key-value store actions.
  */
-public abstract class KeyValueFacetSupport
+@Exposed
+public abstract class KeyValueFacetSupport<DAO extends KeyValueDAO, STORE extends KeyValueStore<DAO>>
     extends FacetSupport
 {
   private final String format;
 
+  private final Class<DAO> daoClass;
+
   private FormatStoreManager formatStoreManager;
 
-  private KeyValueStore<KeyValueDAO> dataStore;
+  protected STORE dataStore;
 
-  protected KeyValueFacetSupport(final String formatName) {
+  protected KeyValueFacetSupport(final String formatName, final Class<DAO> daoClass) {
     this.format = checkNotNull(formatName);
+    this.daoClass = checkNotNull(daoClass);
   }
 
   @Inject
@@ -58,7 +64,7 @@ public abstract class KeyValueFacetSupport
 
     String storeName = contentFacet.stores().contentStoreName;
 
-    dataStore = formatStoreManager.formatStore(storeName, KeyValueDAO.class);
+    dataStore = formatStoreManager.formatStore(storeName, daoClass);
   }
 
   /**
@@ -70,8 +76,13 @@ public abstract class KeyValueFacetSupport
    * @return An optional containing the value, or empty if the value is unset.
    */
   @Guarded(by = {ATTACHED, STARTED})
-  public Optional<String> get(final String category, final String key) {
+  protected Optional<String> get(final String category, final String key) {
     return dataStore.get(repositoryId(), category, key);
+  }
+
+  @Guarded(by = {ATTACHED, STARTED})
+  public List<KeyValue> findByCategoryAndKeyLike(@Nullable final String category, final String keyLike) {
+    return dataStore.findByCategoryAndKeyLike(repositoryId(), category, keyLike);
   }
 
   /**
@@ -82,7 +93,7 @@ public abstract class KeyValueFacetSupport
    * @param value     the value to store
    */
   @Guarded(by = {ATTACHED, STARTED})
-  public void set(final String category, final String key, final String value) {
+  protected void set(final String category, final String key, final String value) {
     dataStore.set(repositoryId(), category, key, value);
   }
 
@@ -93,7 +104,7 @@ public abstract class KeyValueFacetSupport
    * @param key      the key identifying the value
    */
   @Guarded(by = {ATTACHED, STARTED})
-  public void remove(final String category, final String key) {
+  protected void remove(final String category, final String key) {
     dataStore.remove(repositoryId(), category, key);
   }
 
@@ -108,6 +119,14 @@ public abstract class KeyValueFacetSupport
   }
 
   /**
+   * Remove all data in the specified category for the attached repository.
+   */
+  @Guarded(by = {ATTACHED, STARTED})
+  public void removeAll() {
+    dataStore.removeAll(repositoryId(), null);
+  }
+
+  /**
    * Browse all the values stored with a category.
    *
    * @param category          the category to browse content for
@@ -117,12 +136,23 @@ public abstract class KeyValueFacetSupport
    * @return the page of results.
    */
   @Guarded(by = {ATTACHED, STARTED})
-  public Continuation<KeyValue> browseValues(
+  protected Continuation<KeyValue> browseValues(
       final String category,
       final int limit,
       @Nullable final String continuationToken)
   {
     return dataStore.browse(repositoryId(), category, limit, continuationToken);
+  }
+
+  /**
+   * Browse all the categories for the repository.
+   *
+   * @return the distinct categories.
+   */
+  @Guarded(by = {ATTACHED, STARTED})
+  protected List<String> browseCategories()
+  {
+    return dataStore.browseCategories(repositoryId());
   }
 
   /**
@@ -137,7 +167,28 @@ public abstract class KeyValueFacetSupport
     return dataStore.count(repositoryId(), category);
   }
 
-  private int repositoryId() {
+  /**
+   * Count all the values stored with a category
+   */
+  @Guarded(by = {ATTACHED, STARTED})
+  public int countValues()
+  {
+    return dataStore.count(repositoryId(), null);
+  }
+
+  /**
+   * Find categories which contain the provided key.
+   *
+   * @param key the key
+   *
+   * @return a list of categories
+   */
+  @Guarded(by = {ATTACHED, STARTED})
+  protected List<String> findCategories(final String key) {
+    return dataStore.findCategories(repositoryId(), key);
+  }
+
+  protected int repositoryId() {
     return InternalIds.contentRepositoryId(getRepository())
         .orElseThrow(IllegalStateException::new);
   }

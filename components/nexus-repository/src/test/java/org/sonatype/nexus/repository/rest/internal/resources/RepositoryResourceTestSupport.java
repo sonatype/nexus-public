@@ -80,8 +80,6 @@ public abstract class RepositoryResourceTestSupport
 
   SearchUtils searchUtils;
 
-  AssetMapUtils assetMapUtils;
-
   @Before
   public void init() {
     configureMockedRepository(mavenReleases, mavenReleasesId, "http://localhost:8081/repository/maven-releases");
@@ -92,9 +90,7 @@ public abstract class RepositoryResourceTestSupport
     storageTxSupplier = () -> storageTx;
     when(storageFacet.txSupplier()).thenReturn(storageTxSupplier);
 
-    searchUtils = new SearchUtils(repositoryManagerRESTAdapter, searchMappings);
-
-    assetMapUtils = new AssetMapUtils(searchUtils);
+    searchUtils = new SearchUtils(repositoryManagerRESTAdapter, searchMappings, false);
   }
 
   protected void configureMockedRepository(final Repository repository,

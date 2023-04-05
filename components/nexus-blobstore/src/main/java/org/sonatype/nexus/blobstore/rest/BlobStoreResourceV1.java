@@ -22,6 +22,7 @@ import javax.ws.rs.Path;
 import org.sonatype.nexus.blobstore.ConnectionChecker;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
+import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
 
 import static org.sonatype.nexus.blobstore.rest.BlobStoreResourceV1.RESOURCE_URI;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
@@ -42,8 +43,10 @@ public class BlobStoreResourceV1
   @Inject
   public BlobStoreResourceV1(
       final BlobStoreManager blobStoreManager,
-      final BlobStoreQuotaService quotaService, final Map<String, ConnectionChecker> connectionCheckers)
+      final BlobStoreConfigurationStore store,
+      final BlobStoreQuotaService quotaService,
+      final Map<String, ConnectionChecker> connectionCheckers)
   {
-    super(blobStoreManager, quotaService, connectionCheckers);
+    super(blobStoreManager, store, quotaService, connectionCheckers);
   }
 }

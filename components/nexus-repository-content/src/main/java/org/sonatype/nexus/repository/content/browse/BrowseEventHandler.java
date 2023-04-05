@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.content.browse;
 
+import java.io.IOException;
+import java.time.Duration;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -27,6 +29,8 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.cooperation2.Cooperation2;
+import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
@@ -105,18 +109,30 @@ public class BrowseEventHandler
 
   private final AtomicBoolean needsTrim = new AtomicBoolean();
 
+  private final Cooperation2 cooperation;
+
   private Object flushMutex = new Object();
 
   private PeriodicJob flushTask;
 
   @Inject
   public BrowseEventHandler(
+      final Cooperation2Factory cooperation2Factory,
       final PeriodicJobService periodicJobService,
       final EventManager eventManager,
+      @Named("${nexus.browse.cooperation.enabled:-true}") final boolean cooperationEnabled,
+      @Named("${nexus.browse.cooperation.majorTimeout:-0s}") final Duration majorTimeout,
+      @Named("${nexus.browse.cooperation.minorTimeout:-30s}") final Duration minorTimeout,
       @Named("${" + FLUSH_ON_COUNT_KEY + ":-100}") final int flushOnCount,
       @Named("${" + FLUSH_ON_SECONDS_KEY + ":-2}") final int flushOnSeconds,
       @Named("${" + NO_PURGE_DELAY_KEY + ":-true}") final boolean noPurgeDelay)
   {
+    this.cooperation = checkNotNull(cooperation2Factory).configure()
+        .majorTimeout(majorTimeout)
+        .minorTimeout(minorTimeout)
+        .enabled(cooperationEnabled)
+        .build(getClass());
+
     this.periodicJobService = checkNotNull(periodicJobService);
     this.eventManager = checkNotNull(eventManager);
     checkArgument(flushOnCount > 0, FLUSH_ON_COUNT_KEY + " must be positive");
@@ -294,12 +310,24 @@ public class BrowseEventHandler
         requestsByRepository.put(entry.getValue(), assetId(entry.getKey()));
         itr.remove();
       }
+
+      // deliver requests to the relevant repositories
+      requestsByRepository.asMap().forEach((repository, assetIds) -> {
+        try {
+          cooperation.on(() -> {
+            repository.optionalFacet(BrowseFacet.class).ifPresent(browseFacet -> browseFacet.addPathsToAssets(assetIds));
+            return null;
+          })
+          // We always need to process our assets regardless of what the remote node did
+          .checkFunction(Optional::empty)
+          .cooperate(repository.getName());
+        }
+        catch (IOException e) {
+          logWarning("An error occurred while processing browse nodes for {}", repository, e);
+        }
+      });
     }
 
-    // deliver requests to the relevant repositories
-    requestsByRepository.asMap().forEach(
-        (repository, assetIds) -> repository.optionalFacet(BrowseFacet.class).ifPresent(
-            browseFacet -> browseFacet.addPathsToAssets(assetIds)));
   }
 
   /**
@@ -307,19 +335,35 @@ public class BrowseEventHandler
    */
   void maybeTrimRepositories() {
     if (needsTrim.getAndSet(false)) {
-
-      // only allow one thread to remove entries at a time while still allowing other threads to add entries
-      synchronized (flushMutex) {
-
-        Iterator<Repository> itr = repositoriesToTrim.iterator();
-        while (itr.hasNext()) {
-          Repository nextRepository = itr.next();
-          itr.remove(); //do the removal first so other threads can add the same repository to the set to trim
-          nextRepository.optionalFacet(BrowseFacet.class).ifPresent(BrowseFacet::trimBrowseNodes);
+      Iterator<Repository> itr = repositoriesToTrim.iterator();
+      while (itr.hasNext()) {
+        Repository nextRepository = itr.next();
+        itr.remove(); //do the removal first so other threads can add the same repository to the set to trim
+        try {
+          cooperation.on(() -> {
+              nextRepository.optionalFacet(BrowseFacet.class).ifPresent(BrowseFacet::trimBrowseNodes);
+              return null;
+            })
+            // In order to guarantee the repository is trimmed we return an empty result if another thread initially won
+            .checkFunction(Optional::empty)
+            .cooperate(nextRepository.getName());
+        }
+        catch (IOException e) {
+          logWarning("An error occurred while trying to trim {}", nextRepository, e);
         }
       }
     }
   }
+
+  private void logWarning(final String message, final Repository repository, final Exception e) {
+    if (log.isDebugEnabled()) {
+      log.warn(message, repository.getName(), e);
+    }
+    else {
+      log.warn(message + " - {}", repository.getName(), e.getMessage());
+    }
+  }
+
 
   /**
    * Binds the format with the asset id to get a unique request key.

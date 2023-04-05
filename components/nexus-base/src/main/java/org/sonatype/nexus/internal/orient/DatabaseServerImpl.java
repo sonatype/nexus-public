@@ -105,13 +105,9 @@ public class DatabaseServerImpl
 
   private final boolean binaryListenerEnabled;
 
-  private final boolean httpListenerEnabled;
-
   private boolean dynamicPlugins;
 
   private final String binaryPortRange;
-
-  private final String httpPortRange;
 
   private final int binaryMaxLengthKB;
 
@@ -123,10 +119,8 @@ public class DatabaseServerImpl
                             final List<OrientConfigCustomizer> configCustomizers,
                             @Named("nexus-uber") final ClassLoader uberClassLoader,
                             @Named("${nexus.orient.binaryListenerEnabled:-false}") final boolean binaryListenerEnabled,
-                            @Named("${nexus.orient.httpListenerEnabled:-false}") final boolean httpListenerEnabled,
                             @Named("${nexus.orient.dynamicPlugins:-false}") final boolean dynamicPlugins,
                             @Named("${nexus.orient.binaryListener.portRange:-2424-2430}") final String binaryPortRange,
-                            @Named("${nexus.orient.httpListener.portRange:-2480-2490}") final String httpPortRange,
                             @Named("${nexus.orient.network.binary.maxLengthKB:-0}") final int binaryMaxLengthKB,
                             final NodeAccess nodeAccess,
                             final EntityHook entityHook)
@@ -135,10 +129,8 @@ public class DatabaseServerImpl
     this.injectedHandlers = checkNotNull(injectedHandlers);
     this.configCustomizers = checkNotNull(configCustomizers);
     this.uberClassLoader = checkNotNull(uberClassLoader);
-    this.httpListenerEnabled = httpListenerEnabled;
     this.dynamicPlugins = dynamicPlugins;
     this.binaryPortRange = binaryPortRange;
-    this.httpPortRange = httpPortRange;
     this.entityHook = checkNotNull(entityHook);
 
     checkArgument(binaryMaxLengthKB >= 0, "Must specify a non-negative integer");
@@ -159,11 +151,6 @@ public class DatabaseServerImpl
   @ManagedAttribute
   public boolean isBinaryListenerEnabled() {
     return binaryListenerEnabled;
-  }
-
-  @ManagedAttribute
-  public boolean isHttpListenerEnabled() {
-    return httpListenerEnabled;
   }
 
   // FIXME: May need to revisit embedded configuration strategy, this is quite nasty
@@ -207,6 +194,7 @@ public class DatabaseServerImpl
     Orient.instance().addDbLifecycleListener(entityHook);
 
     server.activate();
+    log.info("OrientDB Studio has been deprecated and it's no longer available");
     log.info("Activated");
 
     this.orientServer = server;
@@ -269,11 +257,6 @@ public class DatabaseServerImpl
       config.network.listeners.add(binaryListener);
     }
 
-    if (httpListenerEnabled) {
-      httpListener = createHttpListener(httpPortRange);
-      config.network.listeners.add(httpListener);
-    }
-
     config.storages = new OServerStorageConfiguration[]{};
 
     config.users = new OServerUserConfiguration[]{
@@ -287,7 +270,7 @@ public class DatabaseServerImpl
     // latest advice is to disable DB compression as it doesn't buy much,
     // also snappy has issues with use of native lib (unpacked under tmp)
     OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue("nothing");
-    
+
     // ensure we don't set a file lock, which can behave badly on NFS https://issues.sonatype.org/browse/NEXUS-11289
     OGlobalConfiguration.FILE_LOCK.setValue(false);
 
@@ -417,7 +400,7 @@ public class DatabaseServerImpl
   /**
    * Until OrientDB cleans up its logging infrastructure, this synchronizes its global minimum log level to the minimum
    * log level configured for any of its loggers.
-   * 
+   *
    * @see http://www.prjhub.com/#/issues/3744
    * @see http://www.prjhub.com/#/issues/5327
    */

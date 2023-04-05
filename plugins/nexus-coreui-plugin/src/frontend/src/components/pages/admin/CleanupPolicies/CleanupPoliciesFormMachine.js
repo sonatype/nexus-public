@@ -16,21 +16,29 @@
  */
 import {assign} from 'xstate';
 import Axios from 'axios';
+import { mergeDeepRight } from 'ramda';
 
-import {ExtJS, Utils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
+
+const EMPTY_DATA = {
+  name: '',
+  notes: '',
+  format: '',
+  inUseCount: 0
+};
 
 const baseUrl = '/service/rest/internal/cleanup-policies';
 const url = (name) => `${baseUrl}/${name}`;
 
 function isEdit({name}) {
-  return Utils.notBlank(name);
+  return ValidationUtils.notBlank(name);
 }
 
 function validateCriteriaNumberField(enabled, field) {
   if (enabled) {
-    if (Utils.isBlank(field)) {
+    if (ValidationUtils.isBlank(field)) {
       return UIStrings.ERROR.FIELD_REQUIRED;
     }
     else {
@@ -41,31 +49,12 @@ function validateCriteriaNumberField(enabled, field) {
   return null;
 }
 
-export default Utils.buildFormMachine({
+export default FormUtils.buildFormMachine({
   id: 'CleanupPoliciesFormMachine',
-  initial: 'loadingFormatCriteria',
-  config: (config) => ({
-    ...config,
+  config: (config) => mergeDeepRight(config,{
     states: {
-      ...config.states,
-      loadingFormatCriteria: {
-        invoke: {
-          id: 'fetchCriteriaByFormat',
-          src: 'fetchCriteriaByFormat',
-          onDone: {
-            target: 'loading',
-            actions: ['setCriteriaByFormatData']
-          },
-          onError: {
-            target: 'loadError',
-            actions: ['setLoadError', 'logLoadError']
-          }
-        }
-      },
       loaded: {
-        ...config.states.loaded,
         on: {
-          ...config.states.loaded.on,
           SET_CRITERIA_LAST_DOWNLOADED_ENABLED: {
             target: 'loaded',
             actions: ['setCriteriaLastDownloadedEnabled']
@@ -83,7 +72,6 @@ export default Utils.buildFormMachine({
             actions: ['setCriteriaAssetRegexEnabled']
           },
           UPDATE: {
-            ...config.states.loaded.on.UPDATE,
             actions: [...config.states.loaded.on.UPDATE.actions, 'clearCriteria']
           }
         }
@@ -100,15 +88,12 @@ export default Utils.buildFormMachine({
     validate: assign({
       validationErrors: ({data, criteriaLastDownloadedEnabled, criteriaLastBlobUpdatedEnabled, criteriaReleaseTypeEnabled, criteriaAssetRegexEnabled}) => ({
         name: ValidationUtils.validateNameField(data.name),
-        format: Utils.isBlank(data.format) ? UIStrings.ERROR.FIELD_REQUIRED : null,
+        format: ValidationUtils.isBlank(data.format) ? UIStrings.ERROR.FIELD_REQUIRED : null,
         criteriaLastDownloaded: validateCriteriaNumberField(criteriaLastDownloadedEnabled, data.criteriaLastDownloaded),
         criteriaLastBlobUpdated: validateCriteriaNumberField(criteriaLastBlobUpdatedEnabled, data.criteriaLastBlobUpdated),
-        criteriaReleaseType: criteriaReleaseTypeEnabled && Utils.isBlank(data.criteriaReleaseType) ? UIStrings.ERROR.FIELD_REQUIRED : null,
-        criteriaAssetRegex: criteriaAssetRegexEnabled && Utils.isBlank(data.criteriaAssetRegex) ? UIStrings.ERROR.FIELD_REQUIRED : null
+        criteriaReleaseType: criteriaReleaseTypeEnabled && ValidationUtils.isBlank(data.criteriaReleaseType) ? UIStrings.ERROR.FIELD_REQUIRED : null,
+        criteriaAssetRegex: criteriaAssetRegexEnabled && ValidationUtils.isBlank(data.criteriaAssetRegex) ? UIStrings.ERROR.FIELD_REQUIRED : null
       })
-    }),
-    setCriteriaByFormatData: assign({
-      criteriaByFormat: (_, event) => event.data?.data
     }),
     setCriteriaLastDownloadedEnabled: assign({
       criteriaLastDownloadedEnabled: (_, {checked}) => checked
@@ -122,12 +107,12 @@ export default Utils.buildFormMachine({
     setCriteriaAssetRegexEnabled: assign({
       criteriaAssetRegexEnabled: (_, {checked}) => checked
     }),
-    postProcessData: assign({
-      criteriaLastDownloadedEnabled: (_, event) => event.data?.data.criteriaLastDownloaded,
-      criteriaLastBlobUpdatedEnabled: (_, event) => event.data?.data.criteriaLastBlobUpdated,
-      criteriaReleaseTypeEnabled: (_, event) => event.data?.data.criteriaReleaseType,
-      criteriaAssetRegexEnabled: (_, event) => event.data?.data.criteriaAssetRegex
-    }),
+    postProcessData: assign((_, {data: [, details]}) => ({
+      criteriaLastDownloadedEnabled: details?.data?.criteriaLastDownloaded,
+      criteriaLastBlobUpdatedEnabled: details?.data?.criteriaLastBlobUpdated,
+      criteriaReleaseTypeEnabled: details?.data?.criteriaReleaseType,
+      criteriaAssetRegexEnabled: details?.data?.criteriaAssetRegex
+    })),
 
     clearCriteria: assign((ctx, event) => {
       if (event.data.format !== ctx.format) {
@@ -148,7 +133,11 @@ export default Utils.buildFormMachine({
       }
       return ctx;
     }),
-
+    setData: assign((_, {data: [criteria, details]}) => ({
+      criteriaByFormat: criteria?.data,
+      data: details?.data,
+      pristineData: details?.data,
+    })),
     onDeleteError: ({data}) => ExtJS.showErrorMessage(UIStrings.CLEANUP_POLICIES.MESSAGES.DELETE_ERROR(data.name)),
   },
   guards: {
@@ -156,23 +145,13 @@ export default Utils.buildFormMachine({
     canDelete: () => true
   },
   services: {
-    fetchCriteriaByFormat: () => {
-      return Axios.get('/service/rest/internal/cleanup-policies/criteria/formats');
-    },
     fetchData: ({pristineData}) => {
-      if (isEdit(pristineData)) {
-        return Axios.get(url(pristineData.name));
-      }
-      else { // New
-        return Promise.resolve({
-          data: {
-            name: '',
-            notes: '',
-            format: '',
-            inUseCount: 0
-          }
-        });
-      }
+      return Axios.all([
+        Axios.get('/service/rest/internal/cleanup-policies/criteria/formats'),
+        isEdit(pristineData)
+            ? Axios.get(url(pristineData.name))
+            : Promise.resolve({data: EMPTY_DATA}),
+      ]);
     },
     saveData: ({data, pristineData}) => {
       if (isEdit(pristineData)) {

@@ -74,7 +74,7 @@ public abstract class ITSupport
   @Named("https://localhost:${application-port-ssl}${nexus-context-path}")
   private URL nexusSecureUrl;
 
-  protected static Option[] configureNexus(final Option distribution) {
+  public static Option[] configureNexus(final Option distribution) {
     return NexusPaxExamSupport.options(
         distribution,
 

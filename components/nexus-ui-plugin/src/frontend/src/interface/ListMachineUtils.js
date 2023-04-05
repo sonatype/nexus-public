@@ -296,7 +296,7 @@ export default class ListMachineUtils {
       return true;
     }
     return Boolean(values.find(value =>
-        Boolean(value) && value.toLowerCase().indexOf(filter.toLowerCase()) !== -1
+        Boolean(value) && value.toString().toLowerCase().indexOf(filter.toLowerCase()) !== -1
     ));
   }
 }

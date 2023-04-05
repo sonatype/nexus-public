@@ -25,11 +25,17 @@ public interface TransactionalStore<S extends TransactionalSession<?>>
   S openSession();
 
   /**
-   * Opens a new {@link TransactionalSession} with the Serializable isolation level.
+   * Open a new {@link TransactionalSession} with the provided {@link TransactionIsolation} level. May not be supported
+   * by all types of stores.
    *
-   * @since 3.38
+   * @param isolationLevel the isolation level to use for the transaction
    */
-  default S openSerializableTransactionSession() {
-    throw new UnsupportedOperationException();
+  default S openSession(final TransactionIsolation isolationLevel) {
+    switch(isolationLevel) {
+      case STANDARD:
+        return openSession();
+      default:
+        throw new UnsupportedOperationException();
+    }
   }
 }

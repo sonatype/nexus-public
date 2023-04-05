@@ -59,9 +59,9 @@ class OrientFileBlobStoreUsageCheckerTest
     configDatabase.instance.connect().withCloseable { db ->
       OSchema schema = db.metadata.schema
       schema.createClass(ASSET)
-      asset(BLOB_NAME, "$DEFAULT@some-node-id:$BLOB_ID_STRING")
-      asset(BLOB_NAME, "$DEFAULT@some-other-node-id:$BLOB_ID_STRING")
-      asset(BLOB_NAME, "notdefault@some-other-node-id:0")
+      asset(BLOB_NAME, "$DEFAULT@$BLOB_ID_STRING")
+      asset(BLOB_NAME, "$DEFAULT@$BLOB_ID_STRING")
+      asset(BLOB_NAME, "notdefault@0")
     }
 
     when(blobStore.blobStoreConfiguration).thenReturn(blobStoreConfiguration)

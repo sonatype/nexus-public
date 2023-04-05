@@ -17,6 +17,8 @@ import org.junit.Test;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.isEmptyOrNullString;
+import static org.junit.Assert.fail;
 
 /**
  * Tests for {@link BlobRef}.
@@ -25,12 +27,97 @@ import static org.hamcrest.Matchers.is;
  */
 public class BlobRefTest
 {
+  private static final String STORE_NAME = "test-store";
+
+  private static final String NODE_ID = "ab761d55-5d9c22b6-3f38315a-75b3db34-0922a4d5";
+
+  private static final String BLOB_ID = "a8f3f56f-e895-4b6e-984a-1cf1f5107d36";
+
+  private static final String[] STORES = {"store-@:@:@name", "@", ":", "abc/+xy&%$#", "store-:@:@:@name-for-testing"};
+
   @Test
   public void testToString() {
-    final BlobRef blobRef = new BlobRef("node", "store", "blobId");
+    final BlobRef blobRef = new BlobRef(NODE_ID, STORE_NAME, BLOB_ID);
     final String spec = blobRef.toString();
     final BlobRef reconstituted = BlobRef.parse(spec);
 
     assertThat(reconstituted, is(equalTo(blobRef)));
+  }
+
+  @Test
+  public void testParseCanonical() {
+    String blobRefString = String.format("%s@%s", STORE_NAME, BLOB_ID);
+    BlobRef parsed = BlobRef.parse(blobRefString);
+    assertParsed(parsed, STORE_NAME);
+  }
+
+  @Test
+  public void testParseLegacyOrient() {
+    String blobRefString = String.format("%s@%s:%s", STORE_NAME, NODE_ID, BLOB_ID);
+    BlobRef parsed = BlobRef.parse(blobRefString);
+    assertParsed(parsed, STORE_NAME);
+  }
+
+  @Test
+  public void testParseLegacySql() {
+    String blobRefString = String.format("%s:%s@%s", STORE_NAME, BLOB_ID, NODE_ID);
+    BlobRef parsed = BlobRef.parse(blobRefString);
+    assertParsed(parsed, STORE_NAME);
+  }
+
+  @Test
+  public void testParseCanonicalWithFuzzyChars() {
+    for (String storeName: STORES) {
+      String blobRefString = String.format("%s@%s", storeName, BLOB_ID);
+      BlobRef parsed = BlobRef.parse(blobRefString);
+      assertParsed(parsed, storeName);
+    }
+  }
+
+  @Test
+  public void testParseLegacyOrientWithFuzzyChars() {
+    for (String storeName: STORES) {
+      String blobRefString = String.format("%s@%s:%s", storeName, NODE_ID, BLOB_ID);
+      BlobRef parsed = BlobRef.parse(blobRefString);
+      assertParsed(parsed, storeName);
+    }
+  }
+
+  @Test
+  public void testParseLegacySqlWithFuzzyChars() {
+    for (String storeName: STORES) {
+      String blobRefString = String.format("%s:%s@%s", storeName, BLOB_ID, NODE_ID);
+      BlobRef parsed = BlobRef.parse(blobRefString);
+      assertParsed(parsed, storeName);
+    }
+  }
+
+  private void assertParsed(final BlobRef parsed, final String storeName) {
+    assertThat(parsed.getBlob(), is(equalTo(BLOB_ID)));
+    assertThat(parsed.getStore(), is(equalTo(storeName)));
+    assertThat(parsed.getNode(), isEmptyOrNullString());
+  }
+
+  @Test
+  public void testBlobRefIllegalFormat() {
+    assertParseFailure("wrong-blobref-format/string");
+    // empty blobstorename
+    assertParseFailure("@nodeid:blobid");
+    // empty nodeid
+    assertParseFailure("blobstore@:blobid");
+    // empty blobid
+    assertParseFailure("blobstore@nodeid:");
+    // no nodeid or blobid
+    assertParseFailure("blobstore@");
+  }
+
+  private static void assertParseFailure(final String blobref) {
+    try {
+      BlobRef.parse(blobref);
+      fail("Expected exception");
+    }
+    catch (IllegalArgumentException e) {
+      assertThat(e.getMessage(), is("Not a valid blob reference"));
+    }
   }
 }

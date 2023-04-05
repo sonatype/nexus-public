@@ -126,6 +126,11 @@ public interface SecuritySystem
   User getUser(String userId, String sourceId) throws UserNotFoundException, NoSuchUserManagerException;
 
   /**
+   * Optimized version of getUser when roleIds are known, so we don't fetch them again.
+   */
+  User getUser(String userId, String sourceId, Set<String> roleIds) throws UserNotFoundException, NoSuchUserManagerException;
+
+  /**
    * Get a User by id. This will search all sources (in order) looking for it. The first one found will be returned.
    * TODO: we should consider removing this in favor of its sibling that takes a source.
    *

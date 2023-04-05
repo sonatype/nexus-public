@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.system;
 
-import java.util.concurrent.TimeUnit;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -22,6 +20,9 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.search.index.ElasticSearchIndexService;
 import org.sonatype.nexus.repository.search.query.ElasticSearchQueryService;
 
+import org.awaitility.core.ConditionFactory;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
 
 /**
@@ -44,9 +45,14 @@ public class ElasticSearchTestSystem
 
   @Override
   public void waitForSearch() {
-    await().atMost(30, TimeUnit.SECONDS).until(eventManager::isCalmPeriod);
+    await().atMost(30, SECONDS).until(eventManager::isCalmPeriod);
     indexService.flush(false); // no need for full fsync here
-    await().atMost(30, TimeUnit.SECONDS).until(indexService::isCalmPeriod);
+    await().atMost(30, SECONDS).until(indexService::isCalmPeriod);
+  }
+
+  @Override
+  public ConditionFactory waitForSearchResults() {
+    return await().atMost(30, SECONDS).pollInterval(1, SECONDS);
   }
 
   public ElasticSearchQueryService queryService() {

@@ -84,7 +84,7 @@ public class TaskLogCleanup
   @VisibleForTesting
   String getTaskLogHome() {
     if (taskLogHome == null) {
-      taskLogHome = TaskLogHome.getTaskLogHome();
+      taskLogHome = TaskLogHome.getTaskLogsHome();
     }
     return taskLogHome;
   }

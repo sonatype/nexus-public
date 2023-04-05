@@ -42,6 +42,7 @@ import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.attributes.AttributesFacet;
+import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
@@ -589,5 +590,13 @@ public class OrientComponentAssetTestHelper
   public void deleteAllComponents(final Repository repository) {
     findComponents(repository).forEach(
         entity -> repository.facet(ComponentMaintenance.class).deleteComponent(entity.getEntityMetadata().getId()));
+  }
+
+  @Override
+  public CacheInfo getCacheInfo(final Repository repository, final String path) {
+    return findAssetByName(repository, path)
+        .map(Asset::attributes)
+        .map(CacheInfo::extractFromAsset)
+        .orElse(null);
   }
 }

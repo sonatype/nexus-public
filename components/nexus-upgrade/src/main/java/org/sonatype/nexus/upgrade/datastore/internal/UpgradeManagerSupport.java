@@ -30,6 +30,7 @@ import org.flywaydb.core.api.callback.Callback;
 import org.flywaydb.core.api.migration.JavaMigration;
 import org.flywaydb.core.api.output.MigrateResult;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -51,7 +52,7 @@ abstract class UpgradeManagerSupport<E extends DatabaseMigrationStep>
   {
     this.dataSource = dataStoreManager.get(dataStoreName)
         .orElseThrow(() -> new IllegalStateException("Missing DataStore named: " + dataStoreName)).getDataSource();
-    this.migrations = migrations;
+    this.migrations = checkVersionedMigrations(migrations);
   }
 
   void migrate() {
@@ -85,7 +86,7 @@ abstract class UpgradeManagerSupport<E extends DatabaseMigrationStep>
         .intValue();
 
     if (result.migrationsExecuted > repeatableMigrations) {
-      result.migrations.forEach(m -> log.info("{} migrated to v{} in {}s", m.description, m.version, m.executionTime));
+      result.migrations.forEach(m -> log.info("{} migrated to v{} in {}ms", m.description, m.version, m.executionTime));
       result.warnings.forEach(log::warn);
       log.info("Completed migration from v{} to v{}", result.initialSchemaVersion, result.targetSchemaVersion);
     }
@@ -110,5 +111,26 @@ abstract class UpgradeManagerSupport<E extends DatabaseMigrationStep>
       log.error("Missing migrations: {}", missingMigrations);
     }
     return missingMigrations.isEmpty();
+  }
+
+  /*
+   * Versioned migrations must be part of public source code and not feature flagged.
+   */
+  private List<E> checkVersionedMigrations(final List<E> migrations) {
+    checkNotNull(migrations);
+
+    List<String> failures = migrations.stream()
+      .filter(migration -> migration.version().isPresent())
+      .map(E::getClass)
+      .map(Class::getName)
+      .filter(className -> !className.startsWith("org.sonatype"))
+      .collect(Collectors.toList());
+
+    if (!failures.isEmpty()) {
+      throw new IllegalArgumentException(
+          "The following migration steps are invalid: " + failures.stream().collect(Collectors.joining(", ")));
+    }
+
+    return migrations;
   }
 }

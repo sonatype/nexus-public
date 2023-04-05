@@ -22,15 +22,18 @@ import {
   ExtJS,
   FormUtils,
   ValidationUtils,
+  ExtAPIUtils,
+  APIConstants,
 } from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
-import {EMPTY_DATA, URL, fullName} from './UsersHelper';
+import {EMPTY_DATA, URL, fullName, isExternalUser, STATUSES} from './UsersHelper';
 import confirmAdminPasswordMachine from './confirmAdminPasswordMachine';
 import confirmNewPasswordMachine from './confirmNewPasswordMachine';
 import resettingTokenMachine from './resettingTokenMachine';
 
 const {USERS: {MESSAGES: LABELS}} = UIStrings;
+const {EXT: {USER: {ACTION, METHODS}}} = APIConstants;
 
 const {singleUserUrl, createUserUrl, defaultRolesUrl, findUsersUrl} = URL;
 
@@ -126,16 +129,19 @@ export default FormUtils.buildFormMachine({
 }).withConfig({
   actions: {
     validate: assign({
-      validationErrors: ({pristineData, data}) => ({
-        userId: ValidationUtils.validateNotBlank(data.userId),
-        firstName: ValidationUtils.validateNotBlank(data.firstName),
-        lastName: ValidationUtils.validateNotBlank(data.lastName),
-        emailAddress: ValidationUtils.validateNotBlank(data.emailAddress) || ValidationUtils.validateEmail(data.emailAddress),
-        password: !isEdit(pristineData.userId) ? ValidationUtils.validateNotBlank(data.password): null,
-        passwordConfirm: !isEdit(pristineData.userId) ? validatePasswordConfirm(data.password, data.passwordConfirm) : null,
-        status: ValidationUtils.validateNotBlank(data.status),
-        roles: data.roles?.length ? null : UIStrings.ERROR.FIELD_REQUIRED,
-      })
+      validationErrors: ({pristineData, data}) => {
+        const isNexusUser = !isExternalUser(data.source);
+        const isCreate = !isEdit(pristineData.userId);
+        return {
+          userId: ValidationUtils.validateNotBlank(data.userId),
+          firstName: isNexusUser ? ValidationUtils.validateNotBlank(data.firstName) : null,
+          lastName: isNexusUser ? ValidationUtils.validateNotBlank(data.lastName) : null,
+          emailAddress: isNexusUser ? ValidationUtils.validateNotBlank(data.emailAddress) || ValidationUtils.validateEmail(data.emailAddress) : null,
+          password: isCreate ? ValidationUtils.validateNotBlank(data.password): null,
+          passwordConfirm: isCreate ? validatePasswordConfirm(data.password, data.passwordConfirm) : null,
+          roles: !isNexusUser || data.roles?.length ? null : UIStrings.ERROR.FIELD_REQUIRED,
+        }
+      }
     }),
     setData: assign(({pristineData: {userId, source}}, {data: [roles, users]}) => {
       let user = users?.data?.find(it => it.userId === userId && it.source === source);
@@ -144,6 +150,11 @@ export default FormUtils.buildFormMachine({
         ExtJS.showErrorMessage(UIStrings.ERROR.NOT_FOUND_ERROR(userId));
         user = EMPTY_DATA;
       }
+
+      user = {
+        ...user,
+        status: user.status === STATUSES.active.id,
+      };
 
       return {
         allRoles: roles?.data,
@@ -163,11 +174,27 @@ export default FormUtils.buildFormMachine({
             : Promise.resolve({data: [EMPTY_DATA]}),
       ]);
     },
-    saveData: ({data, pristineData: {userId}}) => {
+    saveData: async ({data, pristineData: {userId}, pristineData}) => {
+      const modifiedData = {
+        ...data,
+        status: data.status ? STATUSES.active.id : STATUSES.disabled.id,
+      };
+
       if (isEdit(userId)) {
-        return Axios.put(singleUserUrl(data.userId), data);
+        if (isExternalUser(pristineData.source)) {
+          const response = await ExtAPIUtils.extAPIRequest(ACTION, METHODS.UPDATE_ROLE_MAPPINGS, {
+            data: [{
+              realm: pristineData.source,
+              userId: pristineData.userId,
+              roles: data.roles,
+            }],
+          });
+          return ExtAPIUtils.checkForError(response) || response;
+        } else {
+          return Axios.put(singleUserUrl(userId), modifiedData);
+        }
       } else {
-        return Axios.post(createUserUrl, data);
+        return Axios.post(createUserUrl, modifiedData);
       }
     },
     confirmDelete: ({data}) => ExtJS.requestConfirmation({

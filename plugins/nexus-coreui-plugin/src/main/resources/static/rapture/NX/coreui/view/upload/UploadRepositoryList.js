@@ -41,5 +41,7 @@ Ext.define('NX.coreui.view.upload.UploadRepositoryList', {
     beforedestroy: function(element) {
       element.getStore().clearFilter();
     }
-  }
+  },
+
+  cls: 'nxrm-browse-upload-repository-list'
 });

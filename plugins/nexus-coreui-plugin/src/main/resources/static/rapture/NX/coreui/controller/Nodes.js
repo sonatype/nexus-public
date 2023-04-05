@@ -66,7 +66,8 @@ Ext.define('NX.coreui.controller.Nodes', {
       variants: ['x16', 'x32']
     },
     visible: function () {
-      return NX.Permissions.check('nexus:nodes:read');
+      return NX.Permissions.check('nexus:nodes:read') &&
+        !NX.State.getValue('nexus.datastore.clustered.enabled');
     }
   },
 

@@ -17,13 +17,13 @@
 import {assign} from 'xstate';
 import Axios from 'axios';
 
-import {ExtJS, Utils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 
 const url = (name) => `/service/rest/internal/ui/routing-rules/${name}`;
 
-export default Utils.buildFormMachine({
+export default FormUtils.buildFormMachine({
   id: 'RoutingRulesFormMachine',
 
   config: (config) => ({
@@ -73,26 +73,6 @@ export default Utils.buildFormMachine({
           },
           DELETE: {
             target: 'confirmDelete'
-          }
-        }
-      },
-      confirmDelete: {
-        invoke: {
-          src: 'confirmDelete',
-          onDone: 'delete',
-          onError: 'loaded'
-        }
-      },
-      delete: {
-        invoke: {
-          src: 'delete',
-          onDone: {
-            target: 'loaded',
-            actions: 'onDeleteSuccess'
-          },
-          onError: {
-            target: 'loaded',
-            actions: 'onDeleteError'
           }
         }
       },
@@ -157,8 +137,8 @@ export default Utils.buildFormMachine({
       }
 
       data.matchers.forEach((matcher, index) => {
-        if (Utils.isBlank(matcher)) {
-          validationErrors[`matcher[${index}]`] = UIStrings.ERROR.FIELD_REQUIRED
+        if (ValidationUtils.isBlank(matcher)) {
+          validationErrors[`matchers[${index}]`] = UIStrings.ERROR.FIELD_REQUIRED
         }
       });
       return {validationErrors};
@@ -176,7 +156,7 @@ export default Utils.buildFormMachine({
   },
   services: {
     fetchData: ({pristineData}) => {
-      if (Utils.notBlank(pristineData.name)) { // Edit
+      if (ValidationUtils.notBlank(pristineData.name)) { // Edit
         return Axios.get(url(pristineData.name));
       }
       else { // New
@@ -191,7 +171,7 @@ export default Utils.buildFormMachine({
       }
     },
     saveData: ({data, pristineData}) => {
-      if (Utils.notBlank(pristineData.name)) {
+      if (ValidationUtils.notBlank(pristineData.name)) {
         return Axios.put(url(pristineData.name), data);
       }
       return Axios.post(url(''), data);

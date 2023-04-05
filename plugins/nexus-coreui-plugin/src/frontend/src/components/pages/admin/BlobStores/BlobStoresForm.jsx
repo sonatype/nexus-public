@@ -17,36 +17,36 @@ import {faTrash} from "@fortawesome/free-solid-svg-icons";
 
 import {
   DynamicFormField,
-  FieldWrapper,
   Page,
   PageActions,
   PageHeader,
   PageTitle,
   Section,
-  SectionFooter,
-  Select,
   Textfield,
   FormUtils,
 } from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
   NxCheckbox,
-  NxErrorAlert,
+  NxFieldset,
   NxFontAwesomeIcon,
-  NxTooltip,
-  NxInfoAlert,
-  NxForm,
-  NxModal,
-  NxTextInput,
   NxFormGroup,
-  NxLoadWrapper
+  NxFormSelect,
+  NxInfoAlert,
+  NxP,
+  NxStatefulForm,
+  NxTextInput,
+  NxTooltip
 } from '@sonatype/react-shared-components';
-import BlobStoresFormMachine from './BlobStoresFormMachine';
+
+import BlobStoresFormMachine,
+  {SPACE_USED_QUOTA_ID, canUseSpaceUsedQuotaOnly} from './BlobStoresFormMachine';
 import UIStrings from '../../../../constants/UIStrings';
 import CustomBlobStoreSettings from './CustomBlobStoreSettings';
 import BlobStoreWarning from './BlobStoreWarning';
+import BlobStoresConvertModal from './BlobStoresConvertModal';
 
-const FORM = UIStrings.BLOB_STORES.FORM;
+const {BLOB_STORES: {FORM}} = UIStrings;
 
 export default function BlobStoresForm({itemId, onDone}) {
   const idParts = itemId.split('/');
@@ -68,25 +68,17 @@ export default function BlobStoresForm({itemId, onDone}) {
     devTools: true
   });
 
-  const isLoading = current.matches('loading');
-  const isSaving = current.matches('saving');
   const showConvertToGroupModal = current.matches('modalConvertToGroup');
-  const isConvertingToGroup = current.matches('convertToGroup');
   const isCreate = itemId === '';
   const isEdit = !isCreate;
   const {
     blobStoreUsage,
     data,
-    isPristine,
-    saveError,
-    loadError,
     quotaTypes,
     repositoryUsage,
     type,
-    types,
-    validationErrors
+    types
   } = current.context;
-  const isInvalid = FormUtils.isInvalid(validationErrors);
   const hasSoftQuota = path(['softQuota', 'enabled'], data);
   const cannotDelete = blobStoreUsage > 0 || repositoryUsage > 0;
   const deleteTooltip = cannotDelete ?
@@ -94,11 +86,9 @@ export default function BlobStoresForm({itemId, onDone}) {
       null;
   const isTypeSelected = Boolean(type)
 
-  function setType(event) {
-    send({type: 'SET_TYPE', value: event.currentTarget.value});
-  }
+  const setType = (event) => send({type: 'SET_TYPE', value: event.currentTarget.value});
 
-  function updateDynamicField(name, value) {
+  const updateDynamicField = (name, value) => {
     send({
       type: 'UPDATE',
       data: {
@@ -107,53 +97,23 @@ export default function BlobStoresForm({itemId, onDone}) {
     });
   }
 
-  function toggleSoftQuota(event) {
+  const toggleSoftQuota = (event) => {
     send({type: 'UPDATE_SOFT_QUOTA', name: 'enabled', value: event.currentTarget.checked, data});
   }
 
-  function updateQuotaField(event) {
+  const updateQuotaField = (event) => {
     const name = event.target.name.replace('softQuota.', '');
     const value = event.target.value;
     send({type: 'UPDATE_SOFT_QUOTA', name, value});
   }
 
-  function retry() {
-    send({type: 'RETRY'});
-  }
+  const confirmDelete = () => send({type: 'CONFIRM_DELETE'});
+  const modalConvertToGroupOpen = () => send({type: 'MODAL_CONVERT_TO_GROUP_OPEN'});
+  const modalConvertToGroupClose = () => send({type: 'MODAL_CONVERT_TO_GROUP_CLOSE'});
 
-  function save() {
-    send({type: 'SAVE'});
-  }
-
-  function cancel() {
-    onDone();
-  }
-
-  function confirmDelete() {
-    send({type: 'CONFIRM_DELETE'});
-  }
-
-  function modalConvertToGroupOpen() {
-    send({type: 'MODAL_CONVERT_TO_GROUP_OPEN'});
-  }
-
-  function modalConvertToGroupClose() {
-    send({type: 'MODAL_CONVERT_TO_GROUP_CLOSE'});
-  }
-
-  function modalConvertToGroupSave() {
-    send({type: 'MODAL_CONVERT_TO_GROUP_SAVE'});
-  }
-
-  function handleModalConvertToGroupValue(value) {
-    send({
-      type: 'MODAL_CONVERT_TO_GROUP_SET_NEW_BLOB_NAME',
-      value
-    });
-  }
+  const spaceUsedQuotaName = quotaTypes?.find((it) => it.id === SPACE_USED_QUOTA_ID).name;
 
   return <Page className="nxrm-blob-stores">
-    {saveError && <NxErrorAlert>{saveError}</NxErrorAlert>}
     <PageHeader>
       <PageTitle text={isEdit ? FORM.EDIT_TILE(pristineData.name) : FORM.CREATE_TITLE}
                  description={isEdit ? FORM.EDIT_DESCRIPTION(type?.name || pristineData.type) : null}/>
@@ -164,115 +124,90 @@ export default function BlobStoresForm({itemId, onDone}) {
       }
     </PageHeader>
     <Section>
-      <NxForm className="nxrm-blob-stores-form"
-              loading={isLoading}
-              loadError={loadError}
-              doLoad={retry}
-              onCancel={cancel}
-              onSubmit={save}
-              submitError={saveError}
-              submitMaskState={isSaving ? false : null}
-              submitMaskMessage={UIStrings.SAVING}
-              submitBtnText={UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
-              validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
-              additionalFooterBtns={itemId &&
-              <NxTooltip title={deleteTooltip}>
-                <NxButton variant="tertiary" className={cannotDelete && 'disabled'} onClick={confirmDelete}>
-                  <NxFontAwesomeIcon icon={faTrash}/>
-                  <span>{UIStrings.SETTINGS.DELETE_BUTTON_LABEL}</span>
-                </NxButton>
-              </NxTooltip>
-              }>
+      <NxStatefulForm className="nxrm-blob-stores-form"
+        {...FormUtils.formProps(current, send)}
+        onCancel={onDone}
+        additionalFooterBtns={itemId &&
+          <NxTooltip title={deleteTooltip}>
+            <NxButton variant="tertiary" className={cannotDelete && 'disabled'} onClick={confirmDelete} type="button">
+              <NxFontAwesomeIcon icon={faTrash}/>
+              <span>{UIStrings.SETTINGS.DELETE_BUTTON_LABEL}</span>
+            </NxButton>
+          </NxTooltip>
+        }
+      >
         {isEdit && <NxInfoAlert>{FORM.EDIT_WARNING}</NxInfoAlert>}
         {isCreate &&
-        <FieldWrapper labelText={FORM.TYPE.label} description={FORM.TYPE.sublabel}>
-          <Select id="type" name="type" value={type?.id} onChange={setType}>
+        <NxFormGroup label={FORM.TYPE.label} sublabel={FORM.TYPE.sublabel} isRequired>
+          <NxFormSelect id="type" name="type" value={type?.id} onChange={setType} validatable>
             <option disabled={isTypeSelected} value=""></option>
             {types.map(({id, name}) => <option key={id} value={id}>{name}</option>)}
-          </Select>
-        </FieldWrapper>
+          </NxFormSelect>
+        </NxFormGroup>
         }
         {isTypeSelected &&
         <>
           <BlobStoreWarning type={type}/>
           {isCreate &&
-          <FieldWrapper labelText={FORM.NAME.label}>
-            <Textfield {...FormUtils.fieldProps('name', current)} onChange={FormUtils.handleUpdate('name', send)}/>
-          </FieldWrapper>
+              <NxFormGroup
+                  className="blob-store-name"
+                  label={FORM.NAME.label}
+                  isRequired
+              >
+                <NxTextInput
+                    {...FormUtils.fieldProps('name', current)}
+                    onChange={FormUtils.handleUpdate('name', send)}
+                />
+              </NxFormGroup>
           }
           <CustomBlobStoreSettings type={type} service={service}/>
           {type?.fields?.map(field =>
-              <FieldWrapper key={field.id}
-                            labelText={field.label}
-                            descriptionText={field.helpText}
-                            isOptional={!field.required}>
+              <NxFormGroup key={field.id}
+                           label={field.label}
+                           sublabel={field.helpText}
+                           isRequired={field.required}>
                 <DynamicFormField
                     id={field.id}
                     current={current}
                     initialValue={field.initialValue}
                     onChange={updateDynamicField}
                     dynamicProps={field}/>
-              </FieldWrapper>
+              </NxFormGroup>
           )}
           <div className="nxrm-soft-quota">
-            <FieldWrapper labelText={FORM.SOFT_QUOTA.ENABLED.label} descriptionText={FORM.SOFT_QUOTA.ENABLED.sublabel}>
+            <NxFieldset label={FORM.SOFT_QUOTA.ENABLED.label} sublabel={FORM.SOFT_QUOTA.ENABLED.sublabel}>
               <NxCheckbox {...FormUtils.checkboxProps(['softQuota', 'enabled'], current)} onChange={toggleSoftQuota}>
                 {FORM.SOFT_QUOTA.ENABLED.text}
               </NxCheckbox>
-            </FieldWrapper>
+            </NxFieldset>
 
             {hasSoftQuota &&
             <>
-              <FieldWrapper labelText={FORM.SOFT_QUOTA.TYPE.label} descriptionText={FORM.SOFT_QUOTA.TYPE.sublabel}>
-                <Select {...FormUtils.fieldProps(['softQuota', 'type'], current)} onChange={updateQuotaField}>
-                  <option value="" disabled></option>
-                  {quotaTypes.map(({id, name}) => <option key={id} value={id}>{name}</option>)}
-                </Select>
-              </FieldWrapper>
-              <FieldWrapper labelText={FORM.SOFT_QUOTA.LIMIT.label}>
+              <NxFormGroup label={FORM.SOFT_QUOTA.TYPE.label} isRequired>
+                {canUseSpaceUsedQuotaOnly(type)
+                  ? <NxP>{spaceUsedQuotaName}</NxP>
+                  : <NxFormSelect {...FormUtils.fieldProps(['softQuota', 'type'], current)} validatable onChange={updateQuotaField}>
+                      <option value="" disabled></option>
+                      {quotaTypes.map(({ id, name }) => <option key={id} value={id}>{name}</option>)}
+                    </NxFormSelect>
+                }
+              </NxFormGroup>
+              <NxFormGroup label={FORM.SOFT_QUOTA.LIMIT.label} isRequired>
                 <Textfield {...FormUtils.fieldProps(['softQuota', 'limit'], current)} onChange={updateQuotaField}/>
-              </FieldWrapper>
+              </NxFormGroup>
             </>
             }
           </div>
         </>
         }
-      </NxForm>
+      </NxStatefulForm>
     </Section>
-    {(showConvertToGroupModal || isConvertingToGroup) &&
-    <NxModal onCancel={modalConvertToGroupClose}>
-      <header className="nx-modal-header">
-        <h2 className="nx-h2">Convert to Group Blob Store</h2>
-      </header>
-      <div className="nx-modal-content">
-        <p className="nx-p">
-          <strong>
-            Rename Original Blob Store
-          </strong>
-        </p>
-        <NxFormGroup
-            sublabel="Assign a new name to the original blob store"
-            isRequired
-        >
-          <NxTextInput
-              disabled={isConvertingToGroup}
-              value={data.modalConvertToGroupNewBlobName}
-              onChange={handleModalConvertToGroupValue}
-          />
-        </NxFormGroup>
-      </div>
-      <footer className="nx-footer">
-        <NxErrorAlert>
-          You are converting to a group blob store. This action cannot be undone.
-        </NxErrorAlert>
-        <div className="nx-btn-bar">
-          <NxLoadWrapper loading={isConvertingToGroup}>
-            <NxButton onClick={modalConvertToGroupClose}>Close</NxButton>
-            <NxButton onClick={modalConvertToGroupSave} variant="primary">Convert</NxButton>
-          </NxLoadWrapper>
-        </div>
-      </footer>
-    </NxModal>
+    {showConvertToGroupModal &&
+        <BlobStoresConvertModal
+            name={data.name}
+            onDone={onDone}
+            onCancel={modalConvertToGroupClose}
+        />
     }
   </Page>;
 }

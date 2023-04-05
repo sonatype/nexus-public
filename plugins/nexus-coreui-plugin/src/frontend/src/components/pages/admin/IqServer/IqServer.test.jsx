@@ -11,9 +11,10 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {render, screen, waitForElementToBeRemoved, waitFor} from '@testing-library/react';
+import {render, screen, waitForElementToBeRemoved} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {ExtJS, TestUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import {when} from 'jest-when';
 
 import Axios from 'axios';
@@ -45,6 +46,7 @@ jest.mock('axios', () => {  // Mock out parts of axios, has to be done in same s
 
 const selectors = {
   ...TestUtils.selectors,
+  ...TestUtils.formSelectors,
   getEnabledCheckbox: () => screen.getByLabelText(IQ_SERVER.ENABLED.sublabel),
   getUrlInput: () => screen.getByLabelText(IQ_SERVER.IQ_SERVER_URL.label),
   getAuthenticationMethodSelect: () => screen.getByLabelText(IQ_SERVER.AUTHENTICATION_TYPE.label),
@@ -57,7 +59,6 @@ const selectors = {
   getCertificateCheckbox: () => screen.getByLabelText(IQ_SERVER.TRUST_STORE.sublabel),
   getCertificateButton: () => screen.getByText(IQ_SERVER.CERTIFICATE),
   getDiscardButton: () => screen.getByText(SETTINGS.DISCARD_BUTTON_LABEL),
-  getSaveButton: () => screen.getByText(SETTINGS.SAVE_BUTTON_LABEL),
   getCloseButton: () => screen.queryByText('Close'),
   getReenterPasswordError: () => screen.queryByText(UIStrings.IQ_SERVER.PASSWORD_ERROR),
   getFieldRequiredError: () => screen.queryByText(UIStrings.ERROR.FIELD_REQUIRED)
@@ -147,21 +148,24 @@ describe('IqServer', () => {
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
+    userEvent.click(selectors.querySubmitButton());
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
+
     await TestUtils.changeField(selectors.getUrlInput, 'http://example.comxx');
     expect(selectors.getPasswordInput()).toHaveValue("");
     expect(selectors.getReenterPasswordError()).toBeInTheDocument();
     expect(selectors.getFieldRequiredError()).not.toBeInTheDocument();
-    expect(selectors.getSaveButton()).toHaveAttribute('aria-disabled', 'true');
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     await TestUtils.changeField(selectors.getUrlInput, 'http://example.com');
     expect(selectors.getReenterPasswordError()).not.toBeInTheDocument();
     expect(selectors.getFieldRequiredError()).toBeInTheDocument();
-    expect(selectors.getSaveButton()).toHaveAttribute('aria-disabled', 'true');
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     await TestUtils.changeField(selectors.getPasswordInput, 'some');
     expect(selectors.getReenterPasswordError()).not.toBeInTheDocument();
     expect(selectors.getFieldRequiredError()).not.toBeInTheDocument();
-    expect(selectors.getSaveButton()).not.toHaveAttribute('aria-disabled', 'true');
+    expect(selectors.queryFormError()).not.toBeInTheDocument();
   });
 
   it('enables the verify connection button when form is valid', async () => {
@@ -184,6 +188,16 @@ describe('IqServer', () => {
   });
 
   it('enables the certificate view button when iq server url is valid', async () => {
+    when(global.NX.Permissions.check)
+      .calledWith('nexus:ssl-truststore:read')
+      .mockReturnValue(true);
+    when(global.NX.Permissions.check)
+      .calledWith('nexus:ssl-truststore:create')
+      .mockReturnValue(true);
+    when(global.NX.Permissions.check)
+      .calledWith('nexus:ssl-truststore:update')
+      .mockReturnValue(true);
+
     render(<IqServer/>);
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
@@ -208,14 +222,13 @@ describe('IqServer', () => {
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
-    expect(selectors.getSaveButton()).toHaveAttribute('aria-disabled', 'true');
-    expect(selectors.getSaveButton()).toHaveAttribute('aria-label', 'Submit disabled: There are no changes');
+    userEvent.click(selectors.querySubmitButton());
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
 
     userEvent.click(selectors.getEnabledCheckbox());
 
     expect(selectors.getEnabledCheckbox()).toBeChecked();
-    expect(selectors.getSaveButton()).toHaveAttribute('aria-disabled', 'true');
-    expect(selectors.getSaveButton()).toHaveAttribute('aria-label', 'Submit disabled: Validation errors are present');
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
   });
 
   it('enables the save button when the form is valid', async () => {
@@ -223,10 +236,13 @@ describe('IqServer', () => {
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
+    userEvent.click(selectors.querySubmitButton());
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
+
     await TestUtils.changeField(selectors.getUrlInput, 'http://example.com');
     userEvent.selectOptions(selectors.getAuthenticationMethodSelect(), 'PKI');
 
-    expect(selectors.getSaveButton()).not.toHaveAttribute('aria-disabled', 'true');
+    expect(selectors.queryFormError()).not.toBeInTheDocument();
   });
 
   it('requires the username and password for the USER authentication method', async () => {
@@ -234,22 +250,27 @@ describe('IqServer', () => {
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
+    userEvent.click(selectors.querySubmitButton());
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
+
     await TestUtils.changeField(selectors.getUrlInput, 'http://example.com');
     userEvent.selectOptions(selectors.getAuthenticationMethodSelect(), 'USER');
 
-    expect(selectors.getSaveButton()).toHaveAttribute('aria-disabled', 'true');
-    expect(selectors.getSaveButton()).toHaveAttribute('aria-label', 'Submit disabled: Validation errors are present');
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     await TestUtils.changeField(selectors.getUsernameInput, 'user');
     await TestUtils.changeField(selectors.getPasswordInput, 'pass');
 
-    expect(selectors.getSaveButton()).not.toHaveAttribute('aria-disabled', 'true');
+    expect(selectors.queryFormError()).not.toBeInTheDocument();
   });
 
   it('requires a connection timeout greater than 0, less than or equal to 3600', async () => {
     render(<IqServer/>);
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+    userEvent.click(selectors.querySubmitButton());
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
 
     userEvent.click(selectors.getEnabledCheckbox());
     expect(selectors.getEnabledCheckbox()).toBeChecked();
@@ -259,23 +280,19 @@ describe('IqServer', () => {
     userEvent.selectOptions(selectors.getAuthenticationMethodSelect(), 'PKI');
 
     await TestUtils.changeField(selectors.getConnectionTimeoutInput, '0');
-    expect(selectors.getSaveButton()).toHaveAttribute('aria-disabled', 'true');
-    expect(selectors.getSaveButton()).toHaveAttribute('aria-label', 'Submit disabled: Validation errors are present');
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     userEvent.clear(selectors.getConnectionTimeoutInput());
     await TestUtils.changeField(selectors.getConnectionTimeoutInput, '3601');
-    expect(selectors.getSaveButton()).toHaveAttribute('aria-disabled', 'true');
-    expect(selectors.getSaveButton()).toHaveAttribute('aria-label', 'Submit disabled: Validation errors are present');
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     userEvent.clear(selectors.getConnectionTimeoutInput());
     await TestUtils.changeField(selectors.getConnectionTimeoutInput, '1');
-    expect(selectors.getSaveButton()).not.toHaveAttribute('aria-disabled', 'true');
-    expect(selectors.getSaveButton()).not.toHaveAttribute('aria-label', 'Submit disabled: Validation errors are present');
+    expect(selectors.queryFormError()).not.toBeInTheDocument();
 
     userEvent.clear(selectors.getConnectionTimeoutInput());
     await TestUtils.changeField(selectors.getConnectionTimeoutInput, '3600');
-    expect(selectors.getSaveButton()).not.toHaveAttribute('aria-disabled', 'true');
-    expect(selectors.getSaveButton()).not.toHaveAttribute('aria-label', 'Submit disabled: Validation errors are present');
+    expect(selectors.queryFormError()).not.toBeInTheDocument();
   });
 
   it('discards changes', async () => {
@@ -327,6 +344,11 @@ describe('IqServer', () => {
       username: 'user',
     };
 
+    when(Axios.post).calledWith('/service/rest/internal/ui/iq/verify-connection', simpleData).mockResolvedValue({
+      data: {reason: 'Test App', success: true}
+    });
+    when(Axios.put).calledWith('/service/rest/v1/iq', simpleData).mockResolvedValue({data: {}});
+
     render(<IqServer/>);
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
@@ -346,21 +368,15 @@ describe('IqServer', () => {
 
     expect(selectors.getVerifyConnectionButton()).not.toHaveAttribute('disabled');
     userEvent.click(selectors.getVerifyConnectionButton());
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+    expect(screen.queryByText(/Test App/i)).toBeInTheDocument();
+    expect(Axios.post).toHaveBeenCalledTimes(1);
+    expect(Axios.post).toHaveBeenCalledWith('/service/rest/internal/ui/iq/verify-connection', simpleData);
 
-    await waitFor(() => expect(Axios.post).toHaveBeenCalledTimes(1));
-
-    await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(
-      '/service/rest/internal/ui/iq/verify-connection', simpleData
-    ));
-
-    expect(selectors.getSaveButton()).not.toHaveAttribute('aria-disabled', 'true');
-    userEvent.click(selectors.getSaveButton());
-
-    await waitFor(() => expect(Axios.put).toHaveBeenCalledTimes(1));
-
-    await waitFor(() => expect(Axios.put).toHaveBeenCalledWith(
-      '/service/rest/v1/iq', simpleData
-    ));
+    userEvent.click(selectors.querySubmitButton());
+    await waitForElementToBeRemoved(selectors.querySavingMask());
+    expect(Axios.put).toHaveBeenCalledTimes(1);
+    expect(Axios.put).toHaveBeenCalledWith('/service/rest/v1/iq', simpleData);
   });
 
   describe('Read Only Mode', () => {

@@ -13,11 +13,10 @@
 package org.sonatype.nexus.internal.capability.storage;
 
 import java.util.Map;
+import java.util.Objects;
 
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.HasEntityId;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * {@link CapabilityStorageItem} data.
@@ -27,8 +26,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class CapabilityStorageItemData
     implements HasEntityId, CapabilityStorageItem
 {
-  // do not serialize EntityId, it can be generated on the fly
-  @JsonIgnore
   private EntityId id;
 
   private int version;
@@ -99,5 +96,24 @@ public class CapabilityStorageItemData
   @Override
   public void setProperties(final Map<String, String> properties) {
     this.properties = properties;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    CapabilityStorageItemData that = (CapabilityStorageItemData) o;
+
+    return Objects.equals(type, that.type) &&
+        Objects.equals(properties, that.properties);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(type, properties);
   }
 }

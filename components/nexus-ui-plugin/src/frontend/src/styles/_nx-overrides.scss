@@ -34,3 +34,12 @@
     padding-left: 0;
   }
 }
+
+.nxrm-react-main-container {
+  display: grid;
+  grid-template: 100% / 100%;
+
+  > .nx-page-main {
+    grid-area: unset;
+  }
+}

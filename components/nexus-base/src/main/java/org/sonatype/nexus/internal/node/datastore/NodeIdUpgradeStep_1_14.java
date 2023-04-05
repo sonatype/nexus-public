@@ -12,43 +12,27 @@
  */
 package org.sonatype.nexus.internal.node.datastore;
 
-import java.security.cert.Certificate;
 import java.sql.Connection;
 import java.util.Optional;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.inject.Provider;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.internal.node.KeyStoreManagerImpl;
-import org.sonatype.nexus.internal.node.NodeIdEncoding;
-import org.sonatype.nexus.node.datastore.NodeIdStore;
-import org.sonatype.nexus.ssl.KeyStoreManager;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
- * Migrates the legacy on disk node identifier to the database where it may be used to identify a single node, or a
- * cluster.
+ * Originally migrated the legacy on disk node identifier to the database where it may be used to identify a single
+ * node, or a cluster. Now a no-op {@see NodeIdInitializerimpl}
  */
 @Named
 public class NodeIdUpgradeStep_1_14
     extends ComponentSupport
     implements DatabaseMigrationStep
 {
-  private final NodeIdStore nodeIdStore;
-
-  private final Provider<KeyStoreManager> keyStoreProvider;
-
   @Inject
-  public NodeIdUpgradeStep_1_14(
-      @Named(KeyStoreManagerImpl.NAME) final Provider<KeyStoreManager> keyStoreProvider,
-      final NodeIdStore nodeIdStore)
+  public NodeIdUpgradeStep_1_14()
   {
-    this.nodeIdStore = checkNotNull(nodeIdStore);
-    this.keyStoreProvider = checkNotNull(keyStoreProvider);
   }
 
   @Override
@@ -58,30 +42,6 @@ public class NodeIdUpgradeStep_1_14
 
   @Override
   public void migrate(final Connection connection) throws Exception {
-    if (nodeIdStore.get().isPresent()) {
-      log.debug("Found existing nodeId.");
-      return;
-    }
-
-    migrateNodeId();
-  }
-
-  private void migrateNodeId() throws Exception {
-    KeyStoreManager keyStoreManager = keyStoreProvider.get();
-
-    if (!keyStoreManager.isKeyPairInitialized()) {
-      nodeIdStore.getOrCreate();
-      return;
-    }
-
-    // Migrating an existing key
-    log.info("Migrating node-id to database");
-
-    Certificate certificate = keyStoreManager.getCertificate();
-    log.trace("Certificate:\n{}", certificate);
-
-    String id = NodeIdEncoding.nodeIdForCertificate(certificate);
-
-    nodeIdStore.set(id);
+    // no-op
   }
 }

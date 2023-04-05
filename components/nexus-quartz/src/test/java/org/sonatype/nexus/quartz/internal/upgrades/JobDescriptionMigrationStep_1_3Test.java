@@ -18,8 +18,9 @@ import java.util.Locale;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.datastore.api.DataSession;
-import org.sonatype.nexus.quartz.internal.QuartzDAO;
-import org.sonatype.nexus.quartz.internal.QuartzTestDAO;
+import org.sonatype.nexus.quartz.internal.datastore.QuartzDAO;
+import org.sonatype.nexus.quartz.internal.datastore.QuartzJobDataTypeHandler;
+import org.sonatype.nexus.quartz.internal.datastore.QuartzTestDAO;
 import org.sonatype.nexus.testdb.DataSessionRule;
 
 import org.junit.After;
@@ -39,7 +40,10 @@ public class JobDescriptionMigrationStep_1_3Test
     extends TestSupport
 {
   @Rule
-  public DataSessionRule sessionRule = new DataSessionRule().access(QuartzDAO.class).access(QuartzTestDAO.class);
+  public DataSessionRule sessionRule = new DataSessionRule()
+      .handle(new QuartzJobDataTypeHandler())
+      .access(QuartzDAO.class)
+      .access(QuartzTestDAO.class);
 
   private DataSession<?> session;
 

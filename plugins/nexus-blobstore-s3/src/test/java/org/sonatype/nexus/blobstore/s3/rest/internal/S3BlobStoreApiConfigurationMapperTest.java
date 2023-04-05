@@ -36,7 +36,6 @@ import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.LIMIT_KEY
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.ROOT_KEY;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.TYPE_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.*;
-import static org.sonatype.nexus.blobstore.s3.rest.internal.S3BlobStoreApiModelMapper.ONE_MILLION;
 
 public class S3BlobStoreApiConfigurationMapperTest
     extends TestSupport
@@ -149,7 +148,7 @@ public class S3BlobStoreApiConfigurationMapperTest
   private static void createSoftQuota(final BlobStoreConfiguration configuration) {
     NestedAttributesMap softQuotaAttributes = configuration.attributes(ROOT_KEY);
     softQuotaAttributes.set(TYPE_KEY, QUOTA_TYPE);
-    softQuotaAttributes.set(LIMIT_KEY, QUOTA_LIMIT * ONE_MILLION);
+    softQuotaAttributes.set(LIMIT_KEY, QUOTA_LIMIT);
   }
 
   private static void fillRequiredBucketAttributes(final NestedAttributesMap bucketAttributes) {

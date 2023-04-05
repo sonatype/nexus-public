@@ -14,19 +14,20 @@ import React from 'react';
 import {render, screen, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
-import {act} from 'react-dom/test-utils';
 import Axios from 'axios';
 import {clone} from 'ramda';
-import {ExtJS, APIConstants, TestUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, APIConstants} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import UIStrings from '../../../../constants/UIStrings';
 import PrivilegesDetails from './PrivilegesDetails';
 import {TYPES as TYPE_IDS, FIELDS} from './PrivilegesHelper';
-import {TYPES, TYPES_MAP, SELECTORS, REPOSITORIES, XSS_STRING} from './Privileges.testdata';
+import {TYPES, TYPES_MAP, SELECTORS, REPOSITORIES} from './Privileges.testdata';
 import {URL} from './PrivilegesHelper';
 
 const {privilegesUrl, singlePrivilegeUrl, updatePrivilegeUrl, createPrivilegeUrl} = URL;
 
+const XSS_STRING = TestUtils.XSS_STRING;
 const {PRIVILEGES: {FORM: LABELS}, SETTINGS} = UIStrings;
 const {EXT: {PRIVILEGE: {METHODS: {READ_TYPES}}, URL: EXT_URL}} = APIConstants;
 
@@ -76,6 +77,7 @@ const REPO_SELECTOR_PRIVILEGE = {
 
 const selectors = {
   ...TestUtils.selectors,
+  ...TestUtils.formSelectors,
   type: () => screen.queryByLabelText(LABELS.TYPE.LABEL),
   name: () => screen.queryByLabelText(LABELS.NAME.LABEL),
   description: () => screen.queryByLabelText(LABELS.DESCRIPTION.LABEL),
@@ -83,8 +85,7 @@ const selectors = {
   actions: () => screen.queryByLabelText(FIELDS.ACTIONS.LABEL),
   contentSelector: () => screen.queryByLabelText(FIELDS.CONTENT_SELECTOR.LABEL),
   format: () => screen.queryByLabelText(FIELDS.FORMAT.LABEL),
-  repositories: () => screen.getByPlaceholderText('Search'),
-  requiredValidation: () => screen.queryByText(UIStrings.ERROR.FIELD_REQUIRED),
+  repository: () => screen.queryByLabelText(FIELDS.REPOSITORY.LABEL),
   readOnly: {
     type: () => screen.getByText(LABELS.TYPE.LABEL).nextSibling,
     name: () => screen.getByText(LABELS.NAME.LABEL).nextSibling,
@@ -93,10 +94,9 @@ const selectors = {
     actions: () => screen.getByText(FIELDS.ACTIONS.LABEL).nextSibling,
     contentSelector: () => screen.getByText(FIELDS.CONTENT_SELECTOR.LABEL).nextSibling,
     format: () => screen.getByText(FIELDS.FORMAT.LABEL).nextSibling,
-    repositories: () => screen.getByText(FIELDS.REPOSITORY.LABEL).nextSibling,
+    repository: () => screen.getByText(FIELDS.REPOSITORY.LABEL).nextSibling,
   },
   cancelButton: () => screen.getByText(SETTINGS.CANCEL_BUTTON_LABEL),
-  saveButton: () => screen.getByText(SETTINGS.SAVE_BUTTON_LABEL),
   deleteButton: () => screen.getByText(SETTINGS.DELETE_BUTTON_LABEL),
 };
 
@@ -119,7 +119,7 @@ describe('PrivilegesDetails', function() {
   });
 
   it('renders the resolved data', async function() {
-    const {type, name, description, scriptName, actions, saveButton} = selectors;
+    const {type, name, description, scriptName, actions, querySubmitButton, queryFormError} = selectors;
 
     await renderAndWaitForLoad(testName);
 
@@ -131,7 +131,8 @@ describe('PrivilegesDetails', function() {
     expect(scriptName()).toHaveValue(testScriptName);
     expect(actions()).toHaveValue(testActions);
 
-    expect(saveButton()).toHaveClass('disabled');
+    userEvent.click(querySubmitButton());
+    expect(queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
   });
 
   it('renders the resolved data with XSS', async function() {
@@ -185,10 +186,13 @@ describe('PrivilegesDetails', function() {
     });
   });
 
-  it('renders validation messages', async function() {
-    const {type, name, description, scriptName, actions, requiredValidation, saveButton} = selectors;
+  it('renders validation messages for the Script privilege', async function() {
+    const {type, name, description, scriptName, actions, querySubmitButton, queryFormError} = selectors;
 
     await renderAndWaitForLoad();
+
+    userEvent.click(querySubmitButton());
+    expect(queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
 
     expect(type()).toBeInTheDocument();
     expect(name()).toBeInTheDocument();
@@ -199,33 +203,33 @@ describe('PrivilegesDetails', function() {
     userEvent.selectOptions(type(), TYPE_IDS.SCRIPT);
     expect(scriptName()).toBeInTheDocument();
     expect(actions()).toBeInTheDocument();
-    expect(saveButton()).toHaveClass('disabled');
+    expect(queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     await TestUtils.changeField(name, testName);
     userEvent.clear(name());
-    expect(requiredValidation()).toBeInTheDocument();
+    expect(name()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
     await TestUtils.changeField(name, testName);
-    expect(requiredValidation()).not.toBeInTheDocument()
+    expect(name()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
 
     await TestUtils.changeField(description, testDescription);
 
     await TestUtils.changeField(scriptName, testScriptName);
     userEvent.clear(scriptName());
-    expect(requiredValidation()).toBeInTheDocument();
+    expect(scriptName()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
     await TestUtils.changeField(scriptName, testScriptName);
-    expect(requiredValidation()).not.toBeInTheDocument()
+    expect(scriptName()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
 
     await TestUtils.changeField(actions, testActions);
     userEvent.clear(actions());
-    expect(requiredValidation()).toBeInTheDocument();
+    expect(actions()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
     await TestUtils.changeField(actions, testActions);
-    expect(requiredValidation()).not.toBeInTheDocument();
+    expect(actions()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
 
-    expect(saveButton()).not.toHaveClass('disabled');
+    expect(queryFormError()).not.toBeInTheDocument();
   });
 
   it('creates Script privilege', async function() {
-    const {type, name, description, scriptName, actions, saveButton} = selectors;
+    const {type, name, description, scriptName, actions, querySubmitButton} = selectors;
 
     when(Axios.post).calledWith(createPrivilegeUrl(TYPE_IDS.SCRIPT), SCRIPT_PRIVILEGE).mockResolvedValue({data: {}});
 
@@ -237,15 +241,57 @@ describe('PrivilegesDetails', function() {
     await TestUtils.changeField(scriptName, testScriptName);
     await TestUtils.changeField(actions, testActions);
 
-    expect(saveButton()).not.toHaveClass('disabled');
-    userEvent.click(saveButton());
+    userEvent.click(querySubmitButton());
+    await waitForElementToBeRemoved(selectors.querySavingMask());
 
-    await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(createPrivilegeUrl(TYPE_IDS.SCRIPT), SCRIPT_PRIVILEGE));
+    expect(Axios.post).toHaveBeenCalledWith(createPrivilegeUrl(TYPE_IDS.SCRIPT), SCRIPT_PRIVILEGE);
     expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
   });
 
+  it('renders validation messages for the Repository Content Selector privilege', async function() {
+    const {type, name, description, contentSelector, actions, repository, querySubmitButton,
+      queryFormError, format} = selectors;
+
+    when(Axios.post).calledWith(EXT_URL, expect.objectContaining({action: 'coreui_Selector'}))
+        .mockResolvedValue({data: TestUtils.makeExtResult(clone(SELECTORS))});
+
+    await renderAndWaitForLoad();
+    expect(Axios.post).toHaveBeenCalledWith(EXT_URL, expect.objectContaining({method: READ_TYPES}));
+
+    userEvent.selectOptions(type(), TYPE_IDS.REPOSITORY_CONTENT_SELECTOR);
+    await waitFor(() => {
+      expect(Axios.post).toHaveBeenCalledWith(EXT_URL, expect.objectContaining({action: 'coreui_Selector'}));
+      expect(Axios.post).not.toHaveBeenCalledWith(EXT_URL, expect.objectContaining({method: 'readReferencesAddingEntryForAll'}));
+    });
+
+    expect(name()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
+    expect(description()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
+    expect(contentSelector()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
+    expect(actions()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
+    expect(format()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
+    expect(repository()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
+
+    userEvent.click(querySubmitButton());
+    expect(queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
+    expect(name()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
+    expect(contentSelector()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
+    expect(actions()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
+    expect(format()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
+    expect(repository()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
+  });
+
   it('creates Repository Content Selector privilege', async function() {
-    const {type, name, description, contentSelector, actions, repositories, saveButton, format} = selectors;
+    const {
+      type,
+      name,
+      description,
+      contentSelector,
+      actions,
+      repository,
+      querySubmitButton,
+      querySavingMask,
+      format
+    } = selectors;
 
     when(Axios.post).calledWith(EXT_URL, expect.objectContaining({method: 'readReferencesAddingEntryForAll'}))
         .mockResolvedValue({data: TestUtils.makeExtResult(clone(REPOSITORIES))});
@@ -263,21 +309,22 @@ describe('PrivilegesDetails', function() {
     await TestUtils.changeField(actions, testActions);
     await TestUtils.changeField(format, testFormat);
 
-    await TestUtils.changeField(repositories, 'm');
+    await TestUtils.changeField(repository, 'm');
+    await waitFor(() => expect(screen.getByText(testRepository)).toBeInTheDocument());
     userEvent.click(screen.getByText(testRepository));
 
-    expect(saveButton()).not.toHaveClass('disabled');
-    userEvent.click(saveButton());
+    userEvent.click(querySubmitButton());
+    await waitForElementToBeRemoved(querySavingMask());
 
-    await waitFor(() => expect(Axios.post).toHaveBeenLastCalledWith(
+    expect(Axios.post).toHaveBeenLastCalledWith(
         createPrivilegeUrl(TYPE_IDS.REPOSITORY_CONTENT_SELECTOR),
         REPO_SELECTOR_PRIVILEGE
-    ));
+    );
     expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
   });
 
   it('updates Script privilege', async function() {
-    const {description, scriptName, actions, saveButton} = selectors;
+    const {description, scriptName, actions, querySubmitButton, querySavingMask} = selectors;
 
     const data = {
       type: TYPE_IDS.SCRIPT,
@@ -296,17 +343,16 @@ describe('PrivilegesDetails', function() {
     await TestUtils.changeField(scriptName, data.scriptName);
     await TestUtils.changeField(actions, data.actions.join(','));
 
-    expect(saveButton()).not.toHaveClass('disabled');
+    userEvent.click(querySubmitButton());
+    await waitForElementToBeRemoved(querySavingMask());
 
-    userEvent.click(saveButton());
-
-    await waitFor(() => expect(Axios.put).toHaveBeenCalledWith(updatePrivilegeUrl(TYPE_IDS.SCRIPT, testName), data));
+    expect(Axios.put).toHaveBeenCalledWith(updatePrivilegeUrl(TYPE_IDS.SCRIPT, testName), data);
     expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
   });
 
   it('shows save API errors', async function() {
     const message = "Use a unique privilegeId";
-    const {type, name, description, scriptName, actions, saveButton} = selectors;
+    const {type, name, description, scriptName, actions, querySubmitButton, querySavingMask} = selectors;
 
     when(Axios.post).calledWith(createPrivilegeUrl(TYPE_IDS.SCRIPT), expect.objectContaining({name: testName}))
         .mockRejectedValue({response: {data: message}});
@@ -320,10 +366,9 @@ describe('PrivilegesDetails', function() {
     await TestUtils.changeField(scriptName, testScriptName);
     await TestUtils.changeField(actions, testActions);
 
-    expect(saveButton()).not.toHaveClass('disabled');
-    await act(async () => userEvent.click(saveButton()));
+    userEvent.click(querySubmitButton());
+    await waitForElementToBeRemoved(querySavingMask());
 
-    expect(NX.Messages.error).toHaveBeenCalledWith(UIStrings.ERROR.SAVE_ERROR);
     expect(screen.getByText(new RegExp(message))).toBeInTheDocument();
   });
 
@@ -379,7 +424,7 @@ describe('PrivilegesDetails', function() {
     });
 
     it('renders Repository Content Selector privilege in Read Only Mode', async () => {
-      const {cancelButton, readOnly: {contentSelector, format, repositories}} = selectors;
+      const {cancelButton, readOnly: {contentSelector, format, repository}} = selectors;
 
       const warning = () => screen.getByText(LABELS.DEFAULT_PRIVILEGE_WARNING);
 
@@ -394,7 +439,7 @@ describe('PrivilegesDetails', function() {
 
       expect(contentSelector()).toHaveTextContent(testContentSelector);
       expect(format()).toHaveTextContent(testFormat);
-      expect(repositories()).toHaveTextContent(testRepository);
+      expect(repository()).toHaveTextContent(testRepository);
 
       userEvent.click(cancelButton());
       await waitFor(() => expect(onDone).toBeCalled());

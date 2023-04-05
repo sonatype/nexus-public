@@ -20,14 +20,14 @@ import {
   Page,
   PageTitle,
   Section,
-  SectionToolbar,
-  Select
+  SectionToolbar
 } from '@sonatype/nexus-ui-plugin';
 
 import {
   NxButton,
   NxFilterInput,
   NxFontAwesomeIcon,
+  NxFormSelect,
   NxLoadWrapper,
   NxModal,
   NxTable,
@@ -93,11 +93,11 @@ export default function RoutingRulesList() {
       <Section>
         <FieldWrapper labelText={ROUTING_RULES.PREVIEW.REPOSITORIES_LABEL}
                       descriptionText={ROUTING_RULES.PREVIEW.REPOSITORIES_DESCRIPTION}>
-          <Select name="repositories" value={repositories} onChange={updateRepositories}>
+          <NxFormSelect name="repositories" value={repositories} onChange={updateRepositories}>
             <option value="all">{ROUTING_RULES.PREVIEW.REPOSITORIES.ALL}</option>
             <option value="groups">{ROUTING_RULES.PREVIEW.REPOSITORIES.GROUPS}</option>
             <option value="proxies">{ROUTING_RULES.PREVIEW.REPOSITORIES.PROXIES}</option>
-          </Select>
+          </NxFormSelect>
         </FieldWrapper>
         <RoutingRulesPreview value={path} onChange={updatePath} onTest={previewHandler} />
 

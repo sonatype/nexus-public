@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.rest.internal.resources.doc.sql;
 
 import java.util.Map;
 import java.util.Set;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -30,8 +31,8 @@ import org.sonatype.nexus.repository.rest.api.AssetXO;
 import org.sonatype.nexus.repository.rest.api.AssetXODescriptor;
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
-import org.sonatype.nexus.repository.rest.internal.resources.AssetMapUtils;
 import org.sonatype.nexus.repository.rest.internal.resources.SearchResource;
+import org.sonatype.nexus.repository.rest.internal.resources.SearchResultFilterUtils;
 import org.sonatype.nexus.repository.search.SearchService;
 import org.sonatype.nexus.repository.search.SearchUtils;
 import org.sonatype.nexus.rest.Page;
@@ -48,24 +49,26 @@ import static org.sonatype.nexus.repository.search.SearchUtils.SORT_FIELD;
  */
 @Named
 @Singleton
+@Path(SearchResource.RESOURCE_URI)
 public class SqlSearchResource
     extends SearchResource
 {
   private static final String SQL_SEARCH_RESTRICTIONS =
-      "All searches require at least three non-wildcard (*) characters and cannot start with a wildcard";
+      "All searches require at least one criterion of at least three characters before a trailing wildcard (\\*) and cannot start with a wildcard (\\*). " +
+      "Enclose your criteria in quotation marks to search an exact phrase; otherwise, search criteria will be split by any commas, spaces, dashes, or forward slashes.";
 
   @Inject
   public SqlSearchResource(
       final SearchUtils searchUtils,
-      final AssetMapUtils assetMapUtils,
+      final SearchResultFilterUtils searchResultFilterUtils,
       final SearchService searchService,
       final ComponentXOFactory componentXOFactory,
       final Set<SearchResourceExtension> searchResourceExtensions,
       final EventManager eventManager,
       @Nullable final Map<String, AssetXODescriptor> assetDescriptors)
   {
-    super(searchUtils, assetMapUtils, searchService, componentXOFactory, searchResourceExtensions, eventManager,
-        assetDescriptors);
+    super(searchUtils, searchResultFilterUtils, searchService, componentXOFactory, searchResourceExtensions,
+        eventManager, assetDescriptors);
   }
 
   @GET

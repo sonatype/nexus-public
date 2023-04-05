@@ -28,7 +28,8 @@ import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
 import {mergeDeepRight} from 'ramda';
 
-import {TestUtils, ExtAPIUtils, APIConstants, ExtJS} from '@sonatype/nexus-ui-plugin';
+import {ExtAPIUtils, APIConstants, ExtJS} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import UIStrings from '../../../../constants/UIStrings';
 
 import RepositoriesForm from './RepositoriesForm';
@@ -54,8 +55,8 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     requestConfirmation: jest.fn(),
     state: () => ({
       getValue: jest.fn(() => false),
-      getEdition: jest.fn(() => 'PRO')
-    })
+    }),
+    isProEdition: jest.fn().mockReturnValue(true),
   }
 }));
 
@@ -95,7 +96,11 @@ const {
 const {
   EXT: {URL: EXT_URL},
   REST: {
-    PUBLIC: {REPOSITORIES: REST_PUB_URL}
+    PUBLIC: {
+      REPOSITORIES: REST_PUB_URL,
+      SSL_CERTIFICATES,
+      CERTIFICATE_DETAILS
+    }
   }
 } = APIConstants;
 
@@ -128,8 +133,8 @@ describe('RepositoriesForm', () => {
 
   const selectors = {
     ...TestUtils.selectors,
+    ...TestUtils.formSelectors,
     getCreateButton: () => screen.getByText(EDITOR.CREATE_BUTTON, {selector: 'button'}),
-    getSaveButton: () => screen.getByText(EDITOR.SAVE_BUTTON, {selector: 'button'}),
     getDeleteButton: () => screen.queryByRole('button', {name: SETTINGS.DELETE_BUTTON_LABEL}),
 
     getCancelButton: () => screen.queryByText(SETTINGS.CANCEL_BUTTON_LABEL),
@@ -187,15 +192,15 @@ describe('RepositoriesForm', () => {
       screen.getAllByPlaceholderText(CONNECTORS.HTTP.PLACEHOLDER)[0],
     getDockerConnectorHttpsPortInput: () =>
       screen.getAllByPlaceholderText(CONNECTORS.HTTPS.PLACEHOLDER)[1],
+    getDockerConnectorSamePortsError: () =>
+      screen.getAllByText(CONNECTORS.SAME_PORTS_ERROR),
     getDockerApiVersionCheckbox: () =>
       screen.getByRole('checkbox', {name: EDITOR.REGISTRY_API_SUPPORT_DESCR}),
     getDockerAnonimousPullCheckbox: () =>
       screen.getByRole('checkbox', {name: CONNECTORS.ALLOW_ANON_DOCKER_PULL.DESCR}),
     getDockerWritableRepositorySelect: () => screen.getByLabelText(EDITOR.WRITABLE.LABEL),
-    getDockerRedeployLatestCheckboxEnabled: () =>
-      screen.getByRole('checkbox', {name: EDITOR.REDEPLOY_LATEST.DESCRIPTION}),
-    getDockerRedeployLatestCheckboxDisabled: () =>
-      screen.getByRole('checkbox', {name: EDITOR.REDEPLOY_LATEST.TOOLTIP}),
+    getDockerRedeployLatestCheckbox: () => screen.getByLabelText(EDITOR.REDEPLOY_LATEST.DESCRIPTION),
+    getDockerRedeployLatestLabel: () => screen.getByText(EDITOR.REDEPLOY_LATEST.DESCRIPTION),
     getUseNexusTruststoreCheckbox: () =>
       screen.getByRole('checkbox', {name: USE_TRUST_STORE.DESCRIPTION}),
     getUseNexusTruststoreButton: () =>
@@ -213,10 +218,10 @@ describe('RepositoriesForm', () => {
     },
     getForeignLayerCheckbox: () => screen.getByLabelText(EDITOR.FOREIGN_LAYER.CHECKBOX),
     getForeignLayerInput: () => screen.getByLabelText(EDITOR.FOREIGN_LAYER.URL),
-    getForeignLayerAddButton: () => screen.getByTitle(EDITOR.FOREIGN_LAYER.ADD),
+    getForeignLayerAddButton: (container) => container.querySelector('[data-icon="plus-circle"]'),
     getForeignLayerRemoveButton: (item) => {
       const listItem = screen.getByText(item).closest('.nx-list__item');
-      return item && within(listItem).getByTitle(EDITOR.FOREIGN_LAYER.REMOVE);
+      return item && within(listItem).getByRole('img', {hidden: true}).closest('button');
     },
     getAptDistributionInput: () => screen.getByLabelText(APT.DISTRIBUTION.LABEL),
     getAptFlatCheckbox: () => screen.getByRole('checkbox', {name: APT.FLAT.DESCR}),
@@ -450,7 +455,7 @@ describe('RepositoriesForm', () => {
 
       expect(selectors.getContentValidationCheckbox()).not.toBeChecked();
 
-      userEvent.click(selectors.getSaveButton());
+      userEvent.click(selectors.querySubmitButton());
 
       expect(Axios.put).toBeCalledWith(
         REST_PUB_URL + 'raw/hosted/raw-hosted',
@@ -495,18 +500,20 @@ describe('RepositoriesForm', () => {
 
       await renderViewAndSetRequiredFields(repo);
 
-      expect(selectors.getDockerRedeployLatestCheckboxDisabled()).toBeDisabled();
+      expect(selectors.getDockerRedeployLatestCheckbox()).toBeDisabled();
+      await TestUtils.expectToSeeTooltipOnHover(selectors.getDockerRedeployLatestLabel(), EDITOR.REDEPLOY_LATEST.TOOLTIP);
 
       await TestUtils.changeField(selectors.getDeploymentPolicySelect, repo.storage.writePolicy);
       await TestUtils.changeField(selectors.getBlobStoreSelect, repo.storage.blobStoreName);
 
-      expect(selectors.getDockerRedeployLatestCheckboxEnabled()).toBeEnabled();
+      expect(selectors.getDockerRedeployLatestCheckbox()).toBeEnabled();
 
-      userEvent.click(selectors.getDockerRedeployLatestCheckboxEnabled());
+      userEvent.click(selectors.getDockerRedeployLatestCheckbox());
 
       userEvent.click(selectors.getDockerSubdomainCheckbox());
       await TestUtils.changeField(selectors.getDockerSubdomainInput, 'docker-sub-domain');
       userEvent.click(selectors.getDockerSubdomainCheckbox());
+      expect(selectors.getDockerSubdomainInput()).toHaveValue('');
 
       userEvent.click(selectors.getCreateButton());
 
@@ -889,7 +896,7 @@ describe('RepositoriesForm', () => {
 
       await TestUtils.changeField(selectors.getRemoteUrlInput, 'http://other.com');
 
-      userEvent.click(selectors.getSaveButton());
+      userEvent.click(selectors.querySubmitButton());
 
       expect(Axios.put).toBeCalledWith(
         REST_PUB_URL + 'raw/proxy/raw-proxy',
@@ -960,7 +967,7 @@ describe('RepositoriesForm', () => {
         data: repo
       });
 
-      renderView(repo.name);
+      const {container} = renderView(repo.name);
 
       await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -974,16 +981,16 @@ describe('RepositoriesForm', () => {
 
       await TestUtils.changeField(selectors.getForeignLayerInput, patternUrl);
 
-      await userEvent.click(selectors.getForeignLayerAddButton());
+      await userEvent.click(selectors.getForeignLayerAddButton(container));
 
       expect(screen.getByText(patternUrl)).toBeInTheDocument();
 
       await userEvent.click(selectors.getForeignLayerRemoveButton(defaultPatternUrl));
 
       expect(screen.queryByText(defaultPatternUrl)).not.toBeInTheDocument();
-      expect(selectors.getForeignLayerRemoveButton(patternUrl)).toBeDisabled();
+      expect(selectors.getForeignLayerRemoveButton(patternUrl)).toHaveClass('disabled');
 
-      await userEvent.click(selectors.getSaveButton());
+      await userEvent.click(selectors.querySubmitButton());
 
       expect(Axios.put).toBeCalledWith(
         `${REST_PUB_URL}docker/proxy/${repo.name}`,
@@ -1012,6 +1019,15 @@ describe('RepositoriesForm', () => {
     });
 
     it('creates docker proxy repository', async () => {
+      when(global.NX.Permissions.check)
+        .calledWith('nexus:ssl-truststore:read')
+        .mockReturnValue(true);
+      when(global.NX.Permissions.check)
+        .calledWith('nexus:ssl-truststore:create')
+        .mockReturnValue(true);
+      when(global.NX.Permissions.check)
+        .calledWith('nexus:ssl-truststore:update')
+        .mockReturnValue(true);
       const repo = {
         format: 'docker',
         type: 'proxy',
@@ -1058,6 +1074,27 @@ describe('RepositoriesForm', () => {
           foreignLayerUrlWhitelist: []
         }
       };
+      const certificateDetails = {
+        'expiresOn': 1654300799000,
+        'fingerprint': 'C2:56:90:5E:91:65:A5:D1:6E:DC:98:65:CD:8D:34:32:B2:B1:45:40',
+        'id': 'C2:56:90:5E:91:65:A5:D1:6E:DC:98:65:CD:8D:34:32:B2:B1:45:40',
+        'issuedOn': 1622764800000,
+        'issuerCommonName': 'issuer common name',
+        'issuerOrganization': 'issuer organization',
+        'issuerOrganizationalUnit': 'issuer unit',
+        'pem': '-----BEGIN CERTIFICATE-----\ncertificate_text\n-----END CERTIFICATE-----\n',
+        'serialNumber': '8987777501424561459122707745365601310',
+        'subjectCommonName': 'subject common name',
+        'subjectOrganization': 'subject organization',
+        'subjectOrganizationalUnit': 'subject organizational unit'
+      };
+
+      when(Axios.get)
+        .calledWith(CERTIFICATE_DETAILS)
+        .mockResolvedValue({data: certificateDetails});
+      when(Axios.get)
+        .calledWith(SSL_CERTIFICATES)
+        .mockResolvedValue({data: [certificateDetails]});
 
       await renderViewAndSetRequiredFields(repo);
 
@@ -1069,7 +1106,8 @@ describe('RepositoriesForm', () => {
       );
 
       expect(selectors.getUseNexusTruststoreCheckbox()).toBeDisabled();
-      expect(selectors.getUseNexusTruststoreButton()).toBeDisabled();
+      expect(selectors.getUseNexusTruststoreButton()).toHaveClass('disabled');
+      expect(selectors.getUseNexusTruststoreButton()).toHaveAttribute('aria-disabled', 'true');
       await TestUtils.changeField(selectors.getRemoteUrlInput, repo.proxy.remoteUrl);
       userEvent.click(selectors.getUseNexusTruststoreCheckbox());
       userEvent.click(selectors.getUseNexusTruststoreButton());
@@ -1194,21 +1232,19 @@ describe('RepositoriesForm', () => {
 
       await renderViewAndSetRequiredFields(repo);
 
-      expect(selectors.getCreateButton()).toHaveClass('disabled');
-
       await TestUtils.changeField(selectors.getNameInput, repo.name);
 
       userEvent.click(selectors.getStatusCheckbox());
+      expect(selectors.getStatusCheckbox()).not.toBeChecked();
 
       await TestUtils.changeField(selectors.getBlobStoreSelect, repo.storage.blobStoreName);
 
       userEvent.click(selectors.getTransferListOption(repo.group.memberNames[0]));
       userEvent.click(selectors.getTransferListOption(repo.group.memberNames[1]));
 
-      expect(selectors.getCreateButton()).not.toHaveClass('disabled');
-
       userEvent.click(selectors.getCreateButton());
-      await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(getSaveUrl(repo), repo));
+      expect(selectors.querySavingMask()).toBeInTheDocument();
+      expect(Axios.post).toHaveBeenCalledWith(getSaveUrl(repo), repo);
     });
 
     it('edits raw group repositories', async function () {
@@ -1237,7 +1273,7 @@ describe('RepositoriesForm', () => {
 
       userEvent.click(screen.getByLabelText('raw-hosted'));
 
-      userEvent.click(selectors.getSaveButton());
+      userEvent.click(selectors.querySubmitButton());
 
       expect(Axios.put).toBeCalledWith(
         REST_PUB_URL + 'raw/group/raw-group',
@@ -1290,8 +1326,21 @@ describe('RepositoriesForm', () => {
       expect(selectors.getDockerSubdomainInput()).toBeEnabled();
       expect(selectors.getDockerSubdomainInput()).toHaveValue(repo.name);
 
+      await TestUtils.changeField(selectors.getDockerConnectorHttpPortInput, '1111');
+      await TestUtils.changeField(selectors.getDockerConnectorHttpsPortInput, '1111');
+      expect(selectors.getDockerConnectorSamePortsError()).toHaveLength(2);
+
       await TestUtils.changeField(selectors.getDockerConnectorHttpPortInput, repo.docker.httpPort);
       await TestUtils.changeField(selectors.getDockerConnectorHttpsPortInput, repo.docker.httpsPort);
+      userEvent.click(selectors.getDockerConnectorHttpPortCheckbox());
+      userEvent.click(selectors.getDockerConnectorHttpsPortCheckbox());
+      expect(selectors.getDockerConnectorHttpPortInput()).toHaveValue('');
+      expect(selectors.getDockerConnectorHttpsPortInput()).toHaveValue('');
+      userEvent.click(selectors.getDockerConnectorHttpPortCheckbox());
+      userEvent.click(selectors.getDockerConnectorHttpsPortCheckbox());
+      expect(selectors.getDockerConnectorHttpPortInput()).toHaveValue(repo.docker.httpPort);
+      expect(selectors.getDockerConnectorHttpsPortInput()).toHaveValue(repo.docker.httpsPort);
+
       await TestUtils.changeField(selectors.getDockerSubdomainInput, repo.docker.subdomain);
 
       userEvent.click(selectors.getDockerApiVersionCheckbox());
@@ -1309,8 +1358,6 @@ describe('RepositoriesForm', () => {
         selectors.getDockerWritableRepositorySelect,
         repo.group.writableMember
       );
-
-      expect(selectors.getCreateButton()).not.toHaveClass('disabled');
 
       userEvent.click(selectors.getCreateButton());
 
@@ -1356,14 +1403,15 @@ describe('RepositoriesForm', () => {
         EDITOR.WRITABLE.VALIDATION_ERROR(repo.group.writableMember)
       );
 
-      expect(selectors.getSaveButton()).toHaveClass('disabled');
+      userEvent.click(selectors.querySubmitButton());
+      expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
       await TestUtils.changeField(
         selectors.getDockerWritableRepositorySelect,
         repo.group.memberNames[1]
       );
 
-      expect(selectors.getSaveButton()).not.toHaveClass('disabled');
+      expect(selectors.queryFormError()).not.toBeInTheDocument();
     });
   });
 

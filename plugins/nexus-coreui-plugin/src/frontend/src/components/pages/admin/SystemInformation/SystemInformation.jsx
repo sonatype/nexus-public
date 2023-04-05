@@ -19,47 +19,74 @@ import {
   PageActions,
   PageHeader,
   PageTitle,
-  Utils
+  ExtJS
 } from '@sonatype/nexus-ui-plugin';
 
 import {NxButton, NxLoadWrapper} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
 import SystemInformationBody from './SystemInformationBody';
+import NodeSelector from './NodeSelector';
+import SystemInformationHaMachine from './SystemInformationHaMachine';
 import SystemInformationMachine from './SystemInformationMachine';
 
 import './SystemInformation.scss';
 
-/**
- * @since 3.24
- */
+const {MENU, ACTIONS, LOAD_ERROR} = UIStrings.SYSTEM_INFORMATION;
+
 export default function SystemInformation() {
-  const [current, send] = useMachine(SystemInformationMachine);
-  const isLoading = current.matches('loading');
-  const loadError = current.matches('error') ? UIStrings.SYSTEM_INFORMATION.LOAD_ERROR : null;
-  const systemInformation = current.context.systemInformation;
+  const isCluster = ExtJS.state().getValue('nexus.datastore.clustered.enabled');
+
+  const machine = isCluster ? SystemInformationHaMachine : SystemInformationMachine;
+
+  const [state, send, service] = useMachine(machine, {devTools: true});
+
+  const isLoading = state.matches('loading');
+  const loadError = state.matches('loadError') ? LOAD_ERROR : null;
+
+  const {selectedNodeId, systemInformation} = state.context;
 
   function retry() {
     send({type: 'RETRY'});
   }
 
   function downloadSystemInformation() {
-    window.open(Utils.urlFromPath('/service/rest/atlas/system-information'), '_blank');
+    const fileName = `sysinfo${selectedNodeId ? '_' + selectedNodeId : ''}.json`;
+    saveAsFile(systemInformation, fileName);
   }
 
-  return <Page>
-    <PageHeader>
-      <PageTitle icon={faGlobe} {...UIStrings.SYSTEM_INFORMATION.MENU}/>
-      <PageActions>
-        <NxButton variant="primary" onClick={downloadSystemInformation} disabled={isLoading}>
-          <span>{UIStrings.SYSTEM_INFORMATION.ACTIONS.download}</span>
-        </NxButton>
-      </PageActions>
-    </PageHeader>
-    <ContentBody className="nxrm-system-information">
-      <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
-        <SystemInformationBody systemInformation={systemInformation} />
-      </NxLoadWrapper>
-    </ContentBody>
-  </Page>;
+  return (
+    <Page>
+      <PageHeader>
+        <PageTitle icon={faGlobe} {...MENU} />
+        <PageActions>
+          <NxButton
+            variant="primary"
+            onClick={downloadSystemInformation}
+            disabled={isLoading || loadError}
+          >
+            <span>{ACTIONS.download}</span>
+          </NxButton>
+        </PageActions>
+      </PageHeader>
+
+      {isCluster && <NodeSelector service={service} />}
+
+      <ContentBody className="nxrm-system-information">
+        <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
+          <SystemInformationBody systemInformation={systemInformation} />
+        </NxLoadWrapper>
+      </ContentBody>
+    </Page>
+  );
 }
+
+const saveAsFile = (obj, filename) => {
+  const content = JSON.stringify(obj, null, 2);
+  const link = document.createElement('a');
+  const blob = new Blob([content], {type: 'application/json;charset=UTF-8'});
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(link.href);
+};

@@ -75,7 +75,7 @@ public class UploadResource extends ComponentSupport implements Resource
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
   @RequiresPermissions("nexus:component:create")
-  public Response postComponent(@PathParam("repositoryName") final String repositoryName,
+  public String postComponent(@PathParam("repositoryName") final String repositoryName,
                                 @Context final HttpServletRequest request)
       throws IOException
   {
@@ -84,15 +84,28 @@ public class UploadResource extends ComponentSupport implements Resource
         throw new WebApplicationException(Response.Status.NOT_FOUND);
       }
       Packet responseJson = new Packet(uploadService.upload(repositoryName, request));
-      return Response.ok().type(MediaType.TEXT_HTML_TYPE)
-          .entity(htmlWrap(objectMapper.writeValueAsString(responseJson))).build();
+      return objectMapper.writeValueAsString(responseJson);
     }
     catch (Exception e) {
       log.error("Unable to perform upload to repository {}", repositoryName, e);
       ErrorPacket responseJson = new ErrorPacket(e.getMessage());
-      return Response.ok().type(MediaType.TEXT_HTML_TYPE)
-          .entity(htmlWrap(objectMapper.writeValueAsString(Arrays.asList(responseJson)))).build();
+      return objectMapper.writeValueAsString(Arrays.asList(responseJson));
     }
+  }
+
+  @Timed
+  @ExceptionMetered
+  @Validate
+  @POST
+  @Path("{repositoryName}")
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.TEXT_HTML)
+  @RequiresPermissions("nexus:component:create")
+  public String postComponentWithHtmlResponse(@PathParam("repositoryName") final String repositoryName,
+                                                @Context final HttpServletRequest request)
+      throws IOException
+  {
+    return htmlWrap(postComponent(repositoryName, request));
   }
 
   public static class Packet

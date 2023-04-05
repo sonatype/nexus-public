@@ -18,7 +18,7 @@
 import axios from 'axios';
 import {assign, Machine} from 'xstate';
 
-const TEST_CONNECTION_URL = '/service/rest/v1/azureblobstore/test-connection'
+const TEST_CONNECTION_URL = '/service/rest/internal/ui/azureblobstore/test-connection'
 
 export default Machine({
   id: 'AzureBlobStoreSettingsMachine',
@@ -85,6 +85,12 @@ export default Machine({
     })
   },
   services: {
-    testConnection: (context) => axios.post(TEST_CONNECTION_URL, context)
+    testConnection: (context) => {
+      if (context.blobStoreName) {
+        return axios.post(TEST_CONNECTION_URL + "/" + context.blobStoreName, context)
+      } else {
+        return axios.post(TEST_CONNECTION_URL, context)
+      }
+    }
   }
 });

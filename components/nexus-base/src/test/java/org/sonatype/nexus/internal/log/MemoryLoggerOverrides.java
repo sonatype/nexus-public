@@ -76,4 +76,9 @@ public class MemoryLoggerOverrides
   public Iterator<Entry<String, LoggerLevel>> iterator() {
     return backing.entrySet().iterator();
   }
+
+  @Override
+  public Map<String, LoggerLevel> syncWithDBAndGet() {
+    return backing;
+  }
 }

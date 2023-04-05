@@ -46,6 +46,7 @@ public class InternalIds
 
   // use Knuth's (reversible) multiplicative hash to scatter internal ids
   private static final long TO_EXTERNAL = 1327217885L; // 2 ^ 31 / golden ratio
+
   private static final long TO_INTERNAL = 828308341L; // multiplicative inverse
 
   public static EntityId toExternalId(final int internalId) {

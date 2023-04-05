@@ -20,19 +20,16 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationDAO;
-import org.sonatype.nexus.repository.config.ConfigurationDeletedEvent;
 import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.collections.CollectionUtils;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyList;
 import static java.util.Optional.ofNullable;
 
@@ -47,12 +44,9 @@ public class ConfigurationStoreImpl
     extends ConfigStoreSupport<ConfigurationDAO>
     implements ConfigurationStore
 {
-  private final EventManager eventManager;
-
   @Inject
-  public ConfigurationStoreImpl(final DataSessionSupplier sessionSupplier, final EventManager eventManager) {
+  public ConfigurationStoreImpl(final DataSessionSupplier sessionSupplier) {
     super(sessionSupplier);
-    this.eventManager = checkNotNull(eventManager);
   }
 
   @Override
@@ -69,6 +63,7 @@ public class ConfigurationStoreImpl
   @Transactional
   @Override
   public void create(final Configuration configuration) {
+    postCommitEvent(() -> new ConfigurationCreatedEvent((ConfigurationData) configuration));
     dao().create((ConfigurationData) configuration);
 
     dao().read(configuration.getRepositoryId())
@@ -78,16 +73,18 @@ public class ConfigurationStoreImpl
   @Transactional
   @Override
   public void update(final Configuration configuration) {
+    postCommitEvent(() -> new ConfigurationUpdatedEvent((ConfigurationData) configuration));
     dao().update((ConfigurationData) configuration);
 
     dao().read(configuration.getRepositoryId())
         .ifPresent(persisted -> configuration.setAttributes(persisted.getAttributes()));
   }
 
+  @Transactional
   @Override
   public void delete(final Configuration configuration) {
-    doDelete(configuration);
-    postDeletedEvent(configuration);
+    postCommitEvent(() -> new ConfigurationDeletedEvent((ConfigurationData) configuration));
+    dao().deleteByName(configuration.getRepositoryName());
   }
 
   @Transactional
@@ -103,31 +100,5 @@ public class ConfigurationStoreImpl
   @Override
   public boolean exists(final String repositoryName) {
     return dao().readByName(repositoryName).isPresent();
-  }
-
-  @Transactional
-  protected void doDelete(final Configuration configuration) {
-    dao().deleteByName(configuration.getRepositoryName());
-  }
-
-  private void postDeletedEvent(final Configuration configuration) {
-    // trigger deletion of browse nodes
-    eventManager.post(new ConfigurationDeletedEvent()
-    {
-      @Override
-      public boolean isLocal() {
-        return true;
-      }
-
-      @Override
-      public String getRepositoryName() {
-        return configuration.getRepositoryName();
-      }
-
-      @Override
-      public Configuration getConfiguration() {
-        return configuration;
-      }
-    });
   }
 }

@@ -49,8 +49,16 @@ public interface FeatureFlags
   /* Session flag for marking content that is only for session, and should be disabled when jwt is enabled */
   String SESSION_ENABLED = "nexus.session.enabled";
 
-  /* HTTP Replication. Available values: true, false. Default value: false */
+  /* HTTP Replication. Available values: true, false. Default value: true */
   String REPLICATION_HTTP_ENABLED = "nexus.replication.http.enabled";
+
+  /* V1 Replication. Available values: true, false. Default value: false */
+  String REPLICATION_V1_ENABLED = "nexus.replication.v1.enabled";
+
+  /* flag for skipping blob store with soft-quota violation (for Round Robin group policy)
+  *  Available values: true, false. Default value: false
+  */
+  String BLOBSTORE_SKIP_ON_SOFTQUOTA_VIOLATION = "nexus.blobstore.skipOnSoftQuotaViolation";
 
   /*  */
   String DATASTORE_BLOBSTORE_METRICS = "nexus.datastore.blobstore.metrics.enabled";
@@ -64,4 +72,19 @@ public interface FeatureFlags
    */
   String DATASTORE_TABLE_SEARCH = "nexus.datastore.table.search.enabled";
   String DATASTORE_TABLE_SEARCH_NAMED = "${nexus.datastore.table.search.enabled:-false}";
+
+  /**
+   * The Key-Value DB storage which can be used as a distributed cache. Use it intelligently,
+   * for example it makes sense to cache IQ results in a DB rather than request IQ Server each time.
+   * At best should be replaced by Redis cache or Apache Ignite or other.
+   */
+  String SQL_DISTRIBUTED_CACHE = "nexus.datastore.sql.cache.enabled";
+
+  /**
+   * Validates attribute from the node_heartbeat.node_info to determine if the deployment is valid.
+   */
+  String DATASTORE_DEPLOYMENT_VALIDATOR = "nexus.datastore.deployment.validator.enabled";
+
+  String CHANGE_REPO_BLOBSTORE_TASK_ENABLED = "nexus.change.repo.blobstore.task.enabled";
+  String CHANGE_REPO_BLOBSTORE_TASK_ENABLED_NAMED = "${nexus.change.repo.blobstore.task.enabled:-false}";
 }

@@ -14,6 +14,9 @@ package org.sonatype.nexus.blobstore.restore.datastore;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -60,6 +63,7 @@ import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -76,6 +80,8 @@ public class DefaultIntegrityCheckStrategyTest
   private static final Optional<HashCode> TEST_HASH2 = of(HashCode.fromString("bb"));
 
   private static final BooleanSupplier NO_CANCEL = () -> false;
+
+  private static final int SINCE_NO_DAYS = 0;
 
   @Mock
   private Repository repository;
@@ -119,12 +125,13 @@ public class DefaultIntegrityCheckStrategyTest
     FluentAsset mockAsset = getMockAsset("name", of(assetBlob));
 
     Continuation<FluentAsset> continuation = buildContinuation(mockAsset);
-    when(assets.browse(anyInt(), nullable(String.class))).thenReturn(continuation).thenReturn(new ContinuationArrayList<>());
+    when(assets.browse(anyInt(), nullable(String.class))).thenReturn(continuation)
+        .thenReturn(new ContinuationArrayList<>());
 
     // stub attribute load to fail
     when(blobStore.getBlobAttributes(blobId)).thenReturn(null);
 
-    defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL, checkFailedHandler);
+    defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL, SINCE_NO_DAYS, checkFailedHandler);
 
     verify(logger).error(BLOB_PROPERTIES_MISSING_FOR_ASSET, mockAsset.path());
     verify(checkFailedHandler).accept(any());
@@ -137,12 +144,13 @@ public class DefaultIntegrityCheckStrategyTest
     FluentAsset mockAsset = getMockAsset("name", of(assetBlob));
 
     Continuation<FluentAsset> continuation = buildContinuation(mockAsset);
-    when(assets.browse(anyInt(), nullable(String.class))).thenReturn(continuation).thenReturn(new ContinuationArrayList<>());
+    when(assets.browse(anyInt(), nullable(String.class))).thenReturn(continuation)
+        .thenReturn(new ContinuationArrayList<>());
 
     BlobAttributes blobAttributes = getMockBlobAttributes(of("name"), TEST_HASH1, true);
     when(blobStore.getBlobAttributes(blobId)).thenReturn(blobAttributes);
 
-    defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL, checkFailedHandler);
+    defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL, SINCE_NO_DAYS, checkFailedHandler);
 
     verify(logger).warn(BLOB_PROPERTIES_MARKED_AS_DELETED, "name");
     verify(checkFailedHandler).accept(any());
@@ -155,11 +163,12 @@ public class DefaultIntegrityCheckStrategyTest
     FluentAsset mockAsset = getMockAsset("name", of(assetBlob));
 
     Continuation<FluentAsset> continuation = buildContinuation(mockAsset);
-    when(assets.browse(anyInt(), nullable(String.class))).thenReturn(continuation).thenReturn(new ContinuationArrayList<>());
+    when(assets.browse(anyInt(), nullable(String.class))).thenReturn(continuation)
+        .thenReturn(new ContinuationArrayList<>());
 
     when(mockAsset.blob()).thenReturn(empty());
 
-    defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL, checkFailedHandler);
+    defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL, SINCE_NO_DAYS, checkFailedHandler);
 
     verify(logger).error(ERROR_ACCESSING_BLOB, "name");
     verify(checkFailedHandler).accept(any());
@@ -172,12 +181,13 @@ public class DefaultIntegrityCheckStrategyTest
     FluentAsset mockAsset = getMockAsset("name", of(assetBlob));
 
     Continuation<FluentAsset> continuation = buildContinuation(mockAsset);
-    when(assets.browse(anyInt(), nullable(String.class))).thenReturn(continuation).thenReturn(new ContinuationArrayList<>());
+    when(assets.browse(anyInt(), nullable(String.class))).thenReturn(continuation)
+        .thenReturn(new ContinuationArrayList<>());
     // throw an unexpected error
     NullPointerException ex = new NullPointerException(format("Missing property: %s", P_BLOB_REF));
     when(mockAsset.blob()).thenThrow(ex);
 
-    defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL, checkFailedHandler);
+    defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL, SINCE_NO_DAYS, checkFailedHandler);
 
     verify(logger).error(ERROR_PROCESSING_ASSET, mockAsset.toString(), ex);
     verify(checkFailedHandler).accept(any());
@@ -241,7 +251,8 @@ public class DefaultIntegrityCheckStrategyTest
     runTest("aa", TEST_HASH1, "bb", TEST_HASH1, () -> false);
 
     verify(logger).error(eq(NAME_MISMATCH), nullable(String.class), nullable(String.class));
-    verify(logger, never()).error(eq(SHA1_MISMATCH), nullable(String.class), nullable(String.class), nullable(String.class));
+    verify(logger, never()).error(eq(SHA1_MISMATCH), nullable(String.class), nullable(String.class),
+        nullable(String.class));
     verify(checkFailedHandler).accept(any());
   }
 
@@ -272,6 +283,57 @@ public class DefaultIntegrityCheckStrategyTest
     verify(checkFailedHandler, never()).accept(any());
   }
 
+  @Test
+  public void shouldNotGetBlobsFromBeforeSinceDays() {
+    BlobId blobId = mock(BlobId.class);
+    AssetBlob assetBlob = mockBlob(blobId, TEST_HASH1);
+    FluentAsset mockAsset = getMockAsset("name", of(assetBlob));
+    when(mockAsset.blob()).thenReturn(Optional.of(assetBlob));
+
+    OffsetDateTime date = mock(OffsetDateTime.class);
+    when(assetBlob.blobCreated()).thenReturn(date);
+    when(date.toLocalDate()).thenReturn(LocalDate.now().minusDays(2));
+
+    Continuation<FluentAsset> continuation = buildContinuation(mockAsset);
+    when(assets.browse(anyInt(), nullable(String.class))).thenReturn(continuation)
+        .thenReturn(new ContinuationArrayList<>());
+
+    // stub attribute load to fail
+    when(blobStore.getBlobAttributes(blobId)).thenReturn(null);
+
+    defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL, 1, checkFailedHandler);
+
+    verify(logger, times(1)).info("Checking integrity of assets in repository '{}' with blob store '{}'", null,
+        "testBlobStore");
+    verify(logger, times(0)).debug(any());
+    verify(checkFailedHandler, never()).accept(any());
+  }
+
+  @Test
+  public void shouldOnlyGetBlobsFromSinceDays() {
+    BlobId blobId = mock(BlobId.class);
+    AssetBlob assetBlob = mockBlob(blobId, TEST_HASH1);
+    FluentAsset mockAsset = getMockAsset("name", of(assetBlob));
+    when(mockAsset.blob()).thenReturn(Optional.of(assetBlob));
+
+    OffsetDateTime date = mock(OffsetDateTime.class);
+    when(assetBlob.blobCreated()).thenReturn(date);
+    when(date.toLocalDate()).thenReturn(LocalDate.now().minusDays(1));
+
+    Continuation<FluentAsset> continuation = buildContinuation(mockAsset);
+    when(assets.browse(anyInt(), nullable(String.class))).thenReturn(continuation)
+        .thenReturn(new ContinuationArrayList<>());
+
+    // stub attribute load to fail
+    when(blobStore.getBlobAttributes(blobId)).thenReturn(null);
+
+    defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL, 2, checkFailedHandler);
+
+    verify(logger, times(1)).info("Checking integrity of assets in repository '{}' with blob store '{}'", null,
+        "testBlobStore");
+    verify(logger, times(1)).debug("Checking asset {}", "name");
+  }
+
   private void runTest(
       final String assetPath,
       final Optional<HashCode> assetHash,
@@ -285,10 +347,11 @@ public class DefaultIntegrityCheckStrategyTest
     FluentAsset mockAsset = getMockAsset(assetPath, of(assetBlob));
     Continuation<FluentAsset> assetContinuation = buildContinuation(mockAsset);
 
-    when(assets.browse(anyInt(), nullable(String.class))).thenReturn(assetContinuation).thenReturn(new ContinuationArrayList<>());
+    when(assets.browse(anyInt(), nullable(String.class))).thenReturn(assetContinuation)
+        .thenReturn(new ContinuationArrayList<>());
     when(blobStore.getBlobAttributes(blobId)).thenReturn(blobAttributes);
 
-    defaultIntegrityCheckStrategy.check(repository, blobStore, cancel, checkFailedHandler);
+    defaultIntegrityCheckStrategy.check(repository, blobStore, cancel, SINCE_NO_DAYS, checkFailedHandler);
 
     verify(logger).info(startsWith("Checking integrity of assets"), nullable(String.class), nullable(String.class));
 
@@ -310,7 +373,11 @@ public class DefaultIntegrityCheckStrategyTest
     }
   }
 
-  private BlobAttributes getMockBlobAttributes(final Optional<String> name, final Optional<HashCode> sha1, final boolean deleted) {
+  private BlobAttributes getMockBlobAttributes(
+      final Optional<String> name,
+      final Optional<HashCode> sha1,
+      final boolean deleted)
+  {
     BlobAttributes blobAttributes = mock(BlobAttributes.class);
 
     Properties properties = new Properties();
@@ -362,7 +429,6 @@ public class DefaultIntegrityCheckStrategyTest
   private class TestDefaultIntegrityCheckStrategy
       extends DefaultIntegrityCheckStrategy
   {
-
     TestDefaultIntegrityCheckStrategy(final int batchSize) {
       super(batchSize);
     }

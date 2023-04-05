@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.sonatype.nexus.assemblies</groupId>
     <artifactId>nexus-assemblies</artifactId>
-    <version>3.43.0-SNAPSHOT</version>
+    <version>3.52.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-base-template</artifactId>
@@ -68,6 +68,20 @@
       <artifactId>nexus-startup-feature</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
+    </dependency>
+
+    <!-- override to exclude sshd-osgi from dependency list -->
+    <dependency>
+      <groupId>org.apache.karaf</groupId>
+      <artifactId>org.apache.karaf.client</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- override to exclude sshd-osgi from dependency list -->
+    <dependency>
+      <groupId>org.apache.karaf.shell</groupId>
+      <artifactId>org.apache.karaf.shell.core</artifactId>
+      <scope>provided</scope>
     </dependency>
 
     <!--
@@ -119,22 +133,6 @@
       <classifier>features</classifier>
       <type>xml</type>
       <scope>runtime</scope>
-    </dependency>
-
-    <!--
-    HACK: expose orientdb distribution to extract studio.zip plugin
-    -->
-    <dependency>
-      <groupId>com.orientechnologies</groupId>
-      <artifactId>orientdb-community</artifactId>
-      <type>zip</type>
-      <scope>runtime</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>*</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <!--
@@ -348,21 +346,6 @@
                     <trim/>
                   </filterchain>
                 </concat>
-
-                <!--
-                HACK: Include orientdb-studio plugin.
-                -->
-                <property name="studio.dir" value="${project.build.directory}/sonatype-work/nexus3/orient/plugins"/>
-                <property name="studio.file" value="${studio.dir}/studio.zip"/>
-                <unzip src="${com.orientechnologies:orientdb-community:zip}" dest="${studio.dir}">
-                  <mergemapper to="studio.zip"/>
-                  <patternset>
-                    <include name="*/plugins/*studio-*.zip"/>
-                  </patternset>
-                </unzip>
-                <!-- ensure that plugin is actually copied -->
-                <available file="${studio.file}" property="studio.exists"/>
-                <fail message="File missing: ${studio.file}" unless="studio.exists"/>
 
                 <!-- move karaf config to etc/karaf -->
                 <move todir="${project.build.directory}/assembly/etc/karaf">

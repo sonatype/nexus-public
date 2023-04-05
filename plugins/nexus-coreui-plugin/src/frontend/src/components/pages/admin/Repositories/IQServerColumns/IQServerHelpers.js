@@ -25,9 +25,17 @@ export const canReadHealthCheck = () => {
 };
 
 export const canUpdateHealthCheck = () => {
-    return ExtJS.checkPermission('nexus:healthcheck:update');
-}
+  return ExtJS.checkPermission('nexus:healthcheck:update');
+};
 
 export const canReadFirewallStatus = () => {
   return ExtJS.checkPermission('nexus:iq-violation-summary:read');
+};
+
+export const canReadHealthCheckSummary = () => {
+  return ExtJS.checkPermission('nexus:healthchecksummary:read');
+};
+
+export const canReadHealthCheckDetail = () => {
+  return ExtJS.checkPermission('nexus:healthcheckdetail:read');
 };

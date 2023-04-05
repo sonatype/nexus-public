@@ -31,3 +31,12 @@
     word-wrap: break-word;
   }
 }
+
+.nxrm-sys-info-node-selector {
+  display: flex;
+  justify-content: end;
+
+  .nx-form-group {
+    margin-bottom: 0;
+  }
+}

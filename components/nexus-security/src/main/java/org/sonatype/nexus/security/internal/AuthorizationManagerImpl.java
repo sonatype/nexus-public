@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -23,12 +24,11 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventAware;
+import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.distributed.event.service.api.DistributedEvent;
 import org.sonatype.nexus.distributed.event.service.api.EventType;
 import org.sonatype.nexus.distributed.event.service.api.common.AuthorizationChangedDistributedEvent;
 import org.sonatype.nexus.distributed.event.service.api.common.PrivilegeConfigurationEvent;
-import org.sonatype.nexus.distributed.event.service.api.common.PublisherEvent;
 import org.sonatype.nexus.distributed.event.service.api.common.RoleConfigurationEvent;
 import org.sonatype.nexus.security.authz.AuthorizationConfigurationChanged;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
@@ -356,6 +356,9 @@ public class AuthorizationManagerImpl
 
   @Subscribe
   public void onRoleConfigurationEvent(final RoleConfigurationEvent event) {
+    if (!EventHelper.isReplicating()) {
+      return;
+    }
     checkNotNull(event);
 
     String roleId = event.getRoleId();
@@ -378,6 +381,9 @@ public class AuthorizationManagerImpl
 
   @Subscribe
   public void onPrivilegeConfigurationEvent(final PrivilegeConfigurationEvent event) {
+    if (!EventHelper.isReplicating()) {
+      return;
+    }
     checkNotNull(event);
 
     String privilegeId = event.getPrivilegeId();
@@ -462,7 +468,7 @@ public class AuthorizationManagerImpl
 
   private void fireAuthorizationChangedEvent() {
     eventManager.post(new AuthorizationConfigurationChanged());
-    eventManager.post(new PublisherEvent(new AuthorizationChangedDistributedEvent()));
+    eventManager.post(new AuthorizationChangedDistributedEvent());
   }
 
   private void fireRoleCreatedEvent(final Role role) {
@@ -492,14 +498,12 @@ public class AuthorizationManagerImpl
   private void fireRoleConfigurationDistributedEvent(final String roleId, final EventType eventType) {
     log.debug("Distribute event: roleId={}, type={}", roleId, eventType);
 
-    DistributedEvent event = new RoleConfigurationEvent(roleId, eventType);
-    eventManager.post(new PublisherEvent(event));
+    eventManager.post(new RoleConfigurationEvent(roleId, eventType));
   }
 
   private void firePrivilegeConfigurationDistributedEvent(final String privilegeId, final EventType eventType) {
     log.debug("Distribute event: privilegeId={}, type={}", privilegeId, eventType);
 
-    DistributedEvent event = new PrivilegeConfigurationEvent(privilegeId, eventType);
-    eventManager.post(new PublisherEvent(event));
+    eventManager.post(new PrivilegeConfigurationEvent(privilegeId, eventType));
   }
 }

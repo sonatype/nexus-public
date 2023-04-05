@@ -14,11 +14,11 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {useRef} from 'react';
+import {useRef, useState} from 'react';
 import {assign, Machine} from "xstate";
 import ExtJS from "./ExtJS";
 import UIStrings from "../constants/UIStrings";
-import {hasPath, join, map, path, pathOr, whereEq} from 'ramda';
+import {__, any, hasPath, is, join, map, path, pathOr, whereEq} from 'ramda';
 import fileSize from 'file-size';
 
 const FIELD_ID = 'FIELD ';
@@ -47,6 +47,23 @@ export default class Utils {
 
   static notUri(str) {
     return !Utils.isUri(str);
+  }
+
+  static timeoutPromise(time) {
+    return new Promise(resolve => {
+      setTimeout(resolve, time);
+    });
+  }
+
+  /**
+   * @param constructors a series of constructor functions
+   * @param value a value to test
+   * @return true if value is an instance of any of the types named
+   * by the constructors. NOTE: if value is a primitive, it will be boxed
+   * before checking. That is, isInstanceof([String], 'foo') returns true
+   */
+  static isInstanceOfAny(constructors, value) {
+    return any(is(__, value), constructors);
   }
 
   static isInRange({value, min = -Infinity, max = Infinity, allowDecimals = true}) {
@@ -474,5 +491,20 @@ export default class Utils {
 
       return idBox.current;
     }
+  }
+
+  /**
+   * Returns debounced function and cancel method, e.g, for using to implement 
+   * delayed mouse hover handler
+   * @param fun function to debounce
+   * @param arg debounced function's argument
+   * @param delay delay time in milliseconds
+   * @return {[debounced: function, cancel: function]}
+   */
+   static useDebounce(fun, args, delay) {
+    const [task, setTask] = useState(null);
+    const debounced = () => setTask(setTimeout(() => fun(args), delay));
+    const cancel = () => clearTimeout(task);
+    return [debounced, cancel];
   }
 }

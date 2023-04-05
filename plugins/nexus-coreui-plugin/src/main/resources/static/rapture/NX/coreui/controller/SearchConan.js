@@ -48,6 +48,33 @@ Ext.define('NX.coreui.controller.SearchConan', {
           fieldLabel: NX.I18n.get('SearchConan_Channel_FieldLabel'),
           width: 250
         }
+      },
+      {
+        id: 'attributes.conan.revision',
+        group: NX.I18n.get('SearchConan_Group'),
+        config: {
+          format: 'conan',
+          fieldLabel: NX.I18n.get('SearchConan_RecipeRevision_FieldLabel'),
+          width: 250
+        }
+      },
+      {
+        id: 'assets.attributes.conan.packageId',
+        group: NX.I18n.get('SearchConan_Group'),
+        config: {
+          format: 'conan',
+          fieldLabel: NX.I18n.get('SearchConan_PackageId_FieldLabel'),
+          width: 250
+        }
+      },
+      {
+        id: 'assets.attributes.conan.packageRevision',
+        group: NX.I18n.get('SearchConan_Group'),
+        config: {
+          format: 'conan',
+          fieldLabel: NX.I18n.get('SearchConan_PackageRevision_FieldLabel'),
+          width: 250
+        }
       }
     ], me);
 
@@ -61,7 +88,10 @@ Ext.define('NX.coreui.controller.SearchConan', {
         {id: 'format', value: 'conan', hidden: true},
         {id: 'name.raw'},
         {id: 'attributes.conan.baseVersion'},
-        {id: 'attributes.conan.channel'}
+        {id: 'attributes.conan.channel'},
+        {id: 'attributes.conan.revision'},
+        {id: 'assets.attributes.conan.packageId'},
+        {id: 'assets.attributes.conan.packageRevision'}
       ]
     }, me);
   }

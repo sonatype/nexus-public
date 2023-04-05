@@ -12,20 +12,14 @@
  */
 package org.sonatype.nexus.security.jwt;
 
+import org.sonatype.nexus.common.event.EventWithSource;
+
 /**
  * An event fired when the JWT secret has changed.
  *
  * @since 3.38
  */
 public class JwtSecretChanged
+    extends EventWithSource
 {
-  private final String secret;
-
-  public JwtSecretChanged(final String secret) {
-    this.secret = secret;
-  }
-
-  public String getSecret() {
-    return secret;
-  }
 }

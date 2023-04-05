@@ -94,8 +94,19 @@ export default class ExtAPIUtils {
       throw Error(data.message);
     }
     if (!data.result.success) {
-      throw Error(data.result.message);
+      if (data.result.message) {
+        throw Error(data.result.message);
+      } else if (data.result.errors) {
+        throw Error(JSON.stringify(data.result.errors));
+      } else {
+        throw Error('Unknown error');
+      }
     }
+  }
+
+  static checkForErrorAndExtract(response) {
+    ExtAPIUtils.checkForError(response);
+    return ExtAPIUtils.extractResult(response);
   }
 
   /**

@@ -15,6 +15,8 @@ package org.sonatype.nexus.repository.content.search.table;
 import org.sonatype.nexus.repository.content.Asset;
 
 /**
+ * Allows contribution of data from assets to {@link SearchTableData}
+ *
  * May be used by formats to contribute custom fields to search indexes.
  */
 public interface SearchCustomFieldContributor
@@ -23,4 +25,14 @@ public interface SearchCustomFieldContributor
    * From the given {@link Asset} the passed in {@link SearchTableData} will have its custom search fields populated.
    */
   void populateSearchCustomFields(SearchTableData searchTableData, Asset asset);
+
+  /**
+   * Should be an asset path searchable or not. By default, the path will be indexed.
+   *
+   * @param path the asset path.
+   * @return {@code true} the path will be indexed, {@code false} otherwise.
+   */
+  default boolean isEnableSearchByPath(String path) {
+    return true;
+  }
 }

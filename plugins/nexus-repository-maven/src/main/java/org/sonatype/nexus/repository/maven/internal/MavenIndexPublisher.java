@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.repository.maven.internal;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,8 +31,9 @@ import org.sonatype.nexus.repository.proxy.ProxyFacet;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.view.ContentTypes;
 import org.sonatype.nexus.repository.view.Context;
+import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.Request;
-import org.sonatype.nexus.repository.view.payloads.StreamPayload;
+import org.sonatype.nexus.repository.view.payloads.PathPayload;
 
 import com.google.common.base.Predicate;
 import com.google.common.io.Closer;
@@ -328,11 +327,8 @@ public abstract class MavenIndexPublisher extends ComponentSupport
     return contentType;
   }
 
-  protected static StreamPayload createStreamPayload(final Path path, final String contentType) throws IOException {
-    return new StreamPayload(() -> new BufferedInputStream(Files.newInputStream(path)),
-        Files.size(path),
-        contentType
-    );
+  protected static Payload createPayload(final Path path, final String contentType) throws IOException {
+    return new PathPayload(path, contentType);
   }
   /**
    * {@link Predicate} that filters {@link Record} based on allowed {@link Type}.

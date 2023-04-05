@@ -84,7 +84,8 @@ public class DefaultComponentMetadataProducerTest
     assertValue(json, DefaultComponentMetadataProducer.VERSION, VERSION);
     assertValue(json, DefaultComponentMetadataProducer.IS_PRERELEASE_KEY, "false");
     assertThat(json.get(DefaultComponentMetadataProducer.LAST_BLOB_UPDATED_KEY), equalTo(null));
-    assertThat(json.get(DefaultComponentMetadataProducer.LAST_DOWNLOADED_KEY), equalTo(null));
+
+    assertLastDownloaded(json);
     assertValue(json, "foo", "bar");
 
     JsonNode jsonAssets = json.get(DefaultComponentMetadataProducer.ASSETS);
@@ -94,6 +95,9 @@ public class DefaultComponentMetadataProducerTest
     assertValue(jsonAsset, DefaultComponentMetadataProducer.NAME, NAME);
     assertValue(jsonAsset, DefaultComponentMetadataProducer.UPLOADER, "anonymous");
     assertValue(jsonAsset, DefaultComponentMetadataProducer.UPLOADER_IP, "127.0.0.1");
+    assertLastDownloaded(jsonAsset);
+
+    assertThat(jsonAsset.get(DefaultComponentMetadataProducer.FILE_SIZE).asLong(), equalTo(Long.MAX_VALUE));
 
     verify(componentMetadataProducerExtension).getComponentMetadata(any(Component.class));
   }
@@ -205,7 +209,7 @@ public class DefaultComponentMetadataProducerTest
         createDetachedAsset(bucket, "asset2", component)
     );
 
-    assertThat(underTest.lastDownloaded(assets).isPresent(), is(false));
+    assertThat(underTest.lastDownloaded(assets).isPresent(), is(true));
   }
 
   @Test
@@ -228,4 +232,11 @@ public class DefaultComponentMetadataProducerTest
   private void assertValue(final JsonNode json, final String jsonAttribute, final String value) {
     assertThat(json.get(jsonAttribute).asText(), equalTo(value));
   }
+
+  private void assertLastDownloaded(final JsonNode json) {
+    String lastDownloaded = json.get(DefaultComponentMetadataProducer.LAST_DOWNLOADED_KEY).asText();
+    lastDownloaded = lastDownloaded.substring(0, 16);
+    assertThat(lastDownloaded, equalTo("2022-10-10T05:30"));
+  }
+
 }

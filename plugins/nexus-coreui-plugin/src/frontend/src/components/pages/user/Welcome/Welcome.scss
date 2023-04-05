@@ -1,0 +1,49 @@
+/**
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.nxrm-welcome {
+  background-color: var(--nx-swatch-white);
+  padding-bottom: 0;
+
+  &__logo {
+    margin-right: var(--nx-spacing-2x);
+    position: relative;
+    top: var(--nx-spacing-2x);
+    vertical-align: top;
+  }
+
+  &__outreach-frame {
+    $main-padding: var(--nx-spacing-6x);
+
+    // remove default user-agent iframe borders
+    border-style: none;
+    border-top: 1px solid var(--nx-swatch-grey-90);
+    margin: 0 calc(-1 * #{$main-padding});
+    width: calc(100% + 2 * #{$main-padding});
+  }
+
+  &__page-title {
+    // PageTitle.scss overrides the RSC default here for some reason.
+    // We don't want that at least on this page
+    flex: initial;
+  }
+
+  .nx-page-title__sub-title {
+    // The standard border color doesn't have enough contrast on the NXRM page background
+    border-color: var(--nx-swatch-indigo-60);
+  }
+}
+
+.nx-icon-feature-browse-welcome-x16 {
+ background-image: url(/static/rapture/resources/icons/x16/sonatype.png)
+}

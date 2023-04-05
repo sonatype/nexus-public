@@ -16,6 +16,7 @@ set here=%cd%
 
 @REM Backup nexus.properties
 copy private\assemblies\nexus-pro\target\sonatype-work\nexus3\etc\nexus.properties .
+copy private\assemblies\nexus-pro\target\sonatype-work\nexus3\etc\fabric\nexus-store.properties .
 
 @REM Detect docker
 if not defined DOCKER_HOST (set docker="-Dno-docker=true")
@@ -24,11 +25,11 @@ if not defined DOCKER_HOST (set docker="-Dno-docker=true")
 @REM The maven build defaults to using `npm ci`, force it to use `npm install` which is faster on dev machines
 if "%~1"=="-T" goto :customThreads
 
-call mvn clean install -Dclm.skip=true -DskipTests -Dnpm.build=build -T 1C %docker%
+call mvnw clean install -Dclm.skip=true -DskipTests -Dnpm.build=build -T 1C %docker%
 goto :continue
 
 :customThreads
-call mvn clean install -Dclm.skip=true -DskipTests -Dnpm.build=build -T %~2 %docker%
+call mvnw clean install -Dclm.skip=true -DskipTests -Dnpm.build=build -T %~2 %docker%
 
 :continue
 @REM Exit if maven did not build successfully
@@ -36,7 +37,7 @@ IF %ERRORLEVEL% NEQ 0 (
    EXIT /B %ERRORLEVEL%
 )
 
-call mvn dependency:properties process-test-resources -Dit -pl :functional-testsuite,:nexuspro-modern-testsuite,:nexuspro-fabric-testsuite,:nexuspro-sql-fabric-testsuite
+call mvnw dependency:properties process-test-resources -Dit -pl :functional-testsuite,:nexuspro-modern-testsuite,:nexuspro-fabric-testsuite,:nexuspro-sql-fabric-testsuite
 
 @REM Enable Debug mode
 set KARAF_DEBUG=true
@@ -47,6 +48,9 @@ for /f "usebackq tokens=*" %%a in (`powershell "(Get-ChildItem -Recurse |  Where
 @REM Restore nexus.properties
 mkdir private\assemblies\nexus-pro\target\sonatype-work\nexus3\etc\
 move nexus.properties private\assemblies\nexus-pro\target\sonatype-work\nexus3\etc\nexus.properties
+
+mkdir private\assemblies\nexus-pro\target\sonatype-work\nexus3\etc\fabric
+move nexus-store.properties private\assemblies\nexus-pro\target\sonatype-work\nexus3\etc\fabric\nexus-store.properties
 
 cd private\assemblies\nexus-pro\target
 
@@ -59,7 +63,7 @@ if exist "C:\Program Files\7-Zip\7z.exe" (
 )
 
 cd nexus*\bin
-
+set JAVA_DEBUG_PORT=5005
 nexus /run
 
 cd %here%

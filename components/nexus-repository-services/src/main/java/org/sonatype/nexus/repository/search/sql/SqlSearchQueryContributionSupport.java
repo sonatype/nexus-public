@@ -12,9 +12,9 @@
  */
 package org.sonatype.nexus.repository.search.sql;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -22,16 +22,15 @@ import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.rest.SearchFieldSupport;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
+import org.sonatype.nexus.repository.rest.sql.ComponentSearchField;
 import org.sonatype.nexus.repository.search.SqlSearchQueryContribution;
+import org.sonatype.nexus.repository.search.SqlSearchValidationSupport;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
-import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.tuple.Pair;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptySet;
@@ -50,7 +49,7 @@ import static org.apache.commons.lang3.StringUtils.removeStart;
  * @since 3.38
  */
 public abstract class SqlSearchQueryContributionSupport
-    extends ComponentSupport
+    extends SqlSearchValidationSupport
     implements SqlSearchQueryContribution
 {
   private static final String QUOTE = "\"";
@@ -59,19 +58,19 @@ public abstract class SqlSearchQueryContributionSupport
 
   private static final Pattern PATTERN = Pattern.compile(DEFAULT_REGEX);
 
-  private static final int MIN_ALLOWED_SYMBOLS_TO_SEARCH = 3;
-
   public static final String NAME_PREFIX = "datastore_search_";
 
-  protected final SqlSearchQueryConditionBuilder sqlSearchQueryConditionBuilder;
+  public static final String GAVEC = "gavec";
+
+  protected final SqlSearchQueryConditionBuilderMapping conditionBuilders;
 
   protected final Map<String, SearchFieldSupport> fieldMappings;
 
   protected SqlSearchQueryContributionSupport(
-      final SqlSearchQueryConditionBuilder sqlSearchQueryConditionBuilder,
+      final SqlSearchQueryConditionBuilderMapping conditionBuilders,
       final Map<String, SearchMappings> searchMappings)
   {
-    this.sqlSearchQueryConditionBuilder = checkNotNull(sqlSearchQueryConditionBuilder);
+    this.conditionBuilders = checkNotNull(conditionBuilders);
     this.fieldMappings = unmodifiableMap(fieldMappingsByAttribute(checkNotNull(searchMappings)));
   }
 
@@ -83,73 +82,17 @@ public abstract class SqlSearchQueryContributionSupport
   }
 
   protected Optional<SqlSearchQueryCondition> buildQueryCondition(final SearchFilter searchFilter) {
+    final SearchFieldSupport fieldMappingDef = fieldMappings.get(searchFilter.getProperty());
+    log.debug("Mapping for {} is {}", searchFilter, fieldMappingDef);
+    final SqlSearchQueryConditionBuilder builder = conditionBuilders.getConditionBuilder(fieldMappingDef);
+
     final SearchFilter mappedField = getFieldMapping(searchFilter);
     return ofNullable(mappedField)
         .map(SearchFilter::getValue)
         .map(this::split)
         .filter(CollectionUtils::isNotEmpty)
-        .filter(this::validate)
-        .map(values -> sqlSearchQueryConditionBuilder.condition(mappedField.getProperty(), values));
-  }
-
-  /*
-   * For SQL search we prohibit leading wildcards and less than 3 characters with wildcards for performance reasons.
-   */
-  protected boolean validate(final Set<String> tokens) {
-    ValidationErrorsException validation = new ValidationErrorsException();
-
-    tokens.stream()
-        .filter(Objects::nonNull)
-        .filter(SqlSearchQueryContributionSupport::hasLeadingWildcard)
-        .forEach(__ -> validation.withError("Leading wildcards are prohibited"));
-
-    tokens.stream()
-        .filter(Objects::nonNull)
-        .filter(SqlSearchQueryContributionSupport::notEnoughSymbols)
-        .forEach(__ -> validation.withError(
-            String.format("%d characters or more are required with the trailing asterisk (*) wildcard",
-                MIN_ALLOWED_SYMBOLS_TO_SEARCH)));
-
-    if (validation.hasValidationErrors()) {
-      log.debug("Found invalid search filters: {}", tokens);
-
-      throw validation;
-    }
-
-    return true;
-  }
-
-  private static boolean hasLeadingWildcard(final String token) {
-    String trimmedToken = token.trim();
-    return trimmedToken.startsWith("*") || trimmedToken.startsWith("?");
-  }
-
-  /**
-   * Check if a given token contains trailing asterisk wildcard and returns a length of string without wildcard.
-   *
-   * @param token a token to check
-   * @return the {@code true} or {@code false} if a {@code token} contains wildcard
-   *         and a length of string without wildcard.
-   */
-  private static Pair<Boolean, Integer> checkTrailingAsterisk(final String token) {
-    // The escaped asterisk (*) is not a wildcard token.
-    String result = token.replace("\\*", "");
-
-    boolean trailingAsteriskWildcard = result.endsWith("*");
-
-    result = token.replace("*", "");
-
-    return Pair.of(trailingAsteriskWildcard, result.length());
-  }
-
-  private static boolean notEnoughSymbols(final String token) {
-    String trimmedToken = token.trim();
-    Pair<Boolean, Integer> wildcard = checkTrailingAsterisk(trimmedToken);
-    if (wildcard.getKey()) {
-      return wildcard.getValue() < MIN_ALLOWED_SYMBOLS_TO_SEARCH;
-    }
-
-    return false;
+        .map(this::getValidTokens)
+        .map(values -> builder.condition(mappedField.getProperty(), values));
   }
 
   protected Set<String> split(final String value) {
@@ -176,9 +119,16 @@ public abstract class SqlSearchQueryContributionSupport
   }
 
   public static Map<String, SearchFieldSupport> fieldMappingsByAttribute(final Map<String, SearchMappings> searchMappings) {
-    return searchMappings.entrySet().stream()
+    final Map<String, SearchFieldSupport> byAttribute = searchMappings.entrySet().stream()
         .flatMap(e -> stream(e.getValue().get().spliterator(), false))
         .collect(toMap(SearchMapping::getAttribute, SearchMapping::getField));
+    return addCustomMappings(byAttribute);
+  }
+
+  private static Map<String, SearchFieldSupport> addCustomMappings(final Map<String, SearchFieldSupport> byAttribute) {
+    Map<String, SearchFieldSupport> mappings = new HashMap<>(byAttribute);
+    mappings.put(GAVEC, ComponentSearchField.FORMAT_FIELD_4);
+    return mappings;
   }
 
   @Nullable

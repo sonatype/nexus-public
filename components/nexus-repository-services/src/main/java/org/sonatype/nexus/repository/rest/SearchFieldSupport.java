@@ -14,6 +14,8 @@ package org.sonatype.nexus.repository.rest;
 
 import java.util.Objects;
 
+import org.sonatype.nexus.repository.rest.sql.TextualQueryType;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -27,9 +29,20 @@ public abstract class SearchFieldSupport
 
   private final String columnName;
 
-  protected SearchFieldSupport(final String table, final String columnName) {
+  private final String sortColumnName;
+
+  private final TextualQueryType textualQueryType;
+
+  protected SearchFieldSupport(
+      final String table,
+      final String columnName,
+      final String sortColumnName,
+      final TextualQueryType textualQueryType)
+  {
     this.table = checkNotNull(table);
     this.columnName = checkNotNull(columnName);
+    this.sortColumnName = checkNotNull(sortColumnName);
+    this.textualQueryType = checkNotNull(textualQueryType);
   }
 
   /**
@@ -46,27 +59,42 @@ public abstract class SearchFieldSupport
     return table;
   }
 
+  public String getSortColumnName() {
+    return sortColumnName;
+  }
+
+  /**
+   * Indicates whether this column in a full text search column or a basic column such as string, int etc
+   */
+  public TextualQueryType getTextualQueryType() {
+    return textualQueryType;
+  }
+
   @Override
   public int hashCode() {
-    return Objects.hash(columnName, table);
+    return Objects.hash(columnName, sortColumnName, table, textualQueryType);
   }
 
   @Override
   public boolean equals(final Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
 
     SearchFieldSupport other = (SearchFieldSupport) obj;
 
-    return Objects.equals(columnName, other.columnName) && Objects.equals(table, other.table);
+    return Objects.equals(columnName, other.columnName) && Objects.equals(sortColumnName, other.sortColumnName) &&
+        Objects.equals(table, other.table) && Objects.equals(textualQueryType, other.textualQueryType);
   }
 
   @Override
   public String toString() {
-    return table + '.' + columnName;
+    return table + '.' + textualQueryType + '.' + columnName + '.' + sortColumnName;
   }
 }

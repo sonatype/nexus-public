@@ -13,8 +13,9 @@
 package org.sonatype.nexus.repository.content.store;
 
 import java.time.OffsetDateTime;
+import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -26,6 +27,7 @@ import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.inject.assistedinject.Assisted;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * {@link AssetBlob} store.
@@ -105,6 +107,17 @@ public class AssetBlobStore<T extends AssetBlobDAO>
   }
 
   /**
+   * Deletes batch of asset blobs from the content data store.
+   *
+   * @param blobRefIds the array of String with blobRefs
+   * @return {@code true} if the asset blob was deleted
+   */
+  @Transactional
+  public boolean deleteAssetBlobBatch(final String[] blobRefIds) {
+    return dao().deleteAssetBlobBatch(blobRefIds);
+  }
+
+  /**
    * Generally it is recommended that this method not be called and let stores manage this value.
    *
    * @since 3.29
@@ -122,5 +135,55 @@ public class AssetBlobStore<T extends AssetBlobDAO>
   @Transactional
   public void setContentType(final AssetBlob blob, final String contentType) {
     dao().setContentType(blob.blobRef(), contentType);
+  }
+
+  @Transactional
+  public void setChecksums(final AssetBlob blob, final Map<String, String> checksums) {
+    dao().setChecksums(blob.blobRef(), checksums);
+  }
+
+  /**
+   * Browse asset blobs with legacy blobRef format {@code store-name:blob-id@node-id} in a paged fashion.
+   *
+   * @param limit maximum number of asset blobs to return
+   * @param continuationToken optional token to continue from a previous request
+   * @return collection of asset blobs and the next continuation token
+   */
+  @Transactional
+  public Continuation<AssetBlob> browseAssetsWithLegacyBlobRef(final int limit, @Nullable final String continuationToken) {
+    return dao().browseAssetsWithLegacyBlobRef(limit, continuationToken);
+  }
+
+  /**
+   * Update asset blobs in a batch fashion.
+   *
+   * @param assetBlobs asset blobs for update
+   * @return {code true} if asset blobs were updated
+   */
+  @Transactional
+  public boolean updateBlobRefs(@Param("assetBlobs") Collection<AssetBlob> assetBlobs) {
+    return dao().updateBlobRefs(assetBlobs);
+  }
+
+  /**
+   * Update asset blob.
+   *
+   * @param assetBlob asset blob for update
+   * @return {code true} if asset blob was updated
+   */
+  @Transactional
+  public boolean updateBlobRef(@Param("assetBlobData") AssetBlob assetBlob) {
+    return dao().updateBlobRef(assetBlob);
+  }
+
+  /**
+   * Check asset blobs with legacy blobRef format {@code store-name:blob-id@node-id} exists for
+   * given format.
+   *
+   * @return {@code true} if legacy blob refs exists
+   */
+  @Transactional
+  public boolean notMigratedAssetBlobRefsExists() {
+    return dao().countNotMigratedAssetBlobs() > 0;
   }
 }

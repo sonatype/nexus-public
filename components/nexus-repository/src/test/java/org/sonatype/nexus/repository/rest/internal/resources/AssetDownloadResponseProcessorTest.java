@@ -52,7 +52,7 @@ public class AssetDownloadResponseProcessorTest
     }
     catch (WebApplicationMessageException e) {
       assertThat(e.getMessage(), is("HTTP 400 Bad Request"));
-      assertThat(e.getResponse().getEntity().toString(), is(SEARCH_RETURNED_MULTIPLE_ASSETS));
+      assertThat(e.getResponse().getEntity().toString(), is("ValidationErrorXO{id='*', message='" + SEARCH_RETURNED_MULTIPLE_ASSETS + "'}"));
     }
   }
 

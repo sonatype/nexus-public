@@ -25,6 +25,8 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.event.EventHelper;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.datastore.DataStoreConfigurationManager;
@@ -38,7 +40,9 @@ import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
 import org.sonatype.nexus.datastore.api.DataStoreManager;
 import org.sonatype.nexus.datastore.api.DataStoreNotFoundException;
+import org.sonatype.nexus.distributed.event.service.api.common.DataStoreConfigurationEvent;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
+import org.sonatype.nexus.transaction.TransactionIsolation;
 
 import com.google.inject.Key;
 import org.eclipse.sisu.BeanEntry;
@@ -88,19 +92,24 @@ public class DataStoreManagerImpl
 
   private final DataStoreRestorer restorer;
 
+  private final EventManager eventManager;
+
   private volatile boolean frozen;
 
   @Inject
-  public DataStoreManagerImpl(@Named(DATASTORE_ENABLED_NAMED) final boolean enabled,
-                              final Map<String, DataStoreDescriptor> dataStoreDescriptors,
-                              final Map<String, Provider<DataStore<?>>> dataStorePrototypes,
-                              final DataStoreConfigurationManager configurationManager,
-                              final Provider<DataStoreUsageChecker> usageChecker,
-                              final DataStoreRestorer restorer,
-                              final BeanLocator beanLocator)
+  public DataStoreManagerImpl(
+      @Named(DATASTORE_ENABLED_NAMED) final boolean enabled,
+      final EventManager eventManager,
+      final Map<String, DataStoreDescriptor> dataStoreDescriptors,
+      final Map<String, Provider<DataStore<?>>> dataStorePrototypes,
+      final DataStoreConfigurationManager configurationManager,
+      final Provider<DataStoreUsageChecker> usageChecker,
+      final DataStoreRestorer restorer,
+      final BeanLocator beanLocator)
   {
     this.enabled = enabled;
 
+    this.eventManager = checkNotNull(eventManager);
     this.dataStoreDescriptors = checkNotNull(dataStoreDescriptors);
     this.dataStorePrototypes = checkNotNull(dataStorePrototypes);
     this.configurationManager = checkNotNull(configurationManager);
@@ -139,7 +148,7 @@ public class DataStoreManagerImpl
   @Override
   public DataSession<?> openSerializableTransactionSession(final String storeName) {
     return get(storeName).orElseThrow(() -> new DataStoreNotFoundException(storeName))
-        .openSerializableTransactionSession();
+        .openSession(TransactionIsolation.SERIALIZABLE);
   }
 
   @Override
@@ -253,6 +262,11 @@ public class DataStoreManagerImpl
 
     if (updateFailure != null) {
       throw new IllegalArgumentException("Configuration update failed for " + storeName, updateFailure);
+    }
+
+    if (!EventHelper.isReplicating()) {
+      eventManager.post(new DataStoreConfigurationEvent(newConfiguration.getName(), newConfiguration.getType(),
+          newConfiguration.getSource(), newConfiguration.getAttributes()));
     }
 
     return store;

@@ -12,69 +12,143 @@
  */
 
 import React from 'react';
-import {assign} from 'xstate';
+import {assign, actions, send, createMachine} from 'xstate';
+import {useMachine} from '@xstate/react';
 
 import {
-  NxStatefulSearchDropdown,
   NxFormSelect,
+  NxCombobox,
 } from '@sonatype/react-shared-components';
 
 import FormUtils from '../../../../interface/FormUtils';
 import ExtAPIUtils from '../../../../interface/ExtAPIUtils';
 
 import {SUPPORTED_FIELD_TYPES} from '../FormFieldsFactoryConstants';
+import UIStrings from '../../../../constants/UIStrings';
+import APIConstants from '../../../../constants/APIConstants';
 
-const Field = ({id, dynamicProps, current:parentCurrent, onChange}) => {
+const Field = ({id, dynamicProps, current:parentState, onChange}) => {
   const {storeApi, allowAutocomplete, initialValue, idMapping, nameMapping, readOnly} = dynamicProps;
   const [action, method] = storeApi?.split('.');
-  const value = parentCurrent.context.data[id] || '';
-  const loadOnInit = !allowAutocomplete && !readOnly;
+  const value = parentState.context.data[id] || '';
+  const loadOnInit = !allowAutocomplete || value;
 
-  const [current, send] = ExtAPIUtils.useExtMachine(action, method, {
-    initial: loadOnInit ? 'loading' : 'loaded',
-    actions: {
-      setData: assign({
-        data: (_, {data}) => {
-          return data?.map(item => ({
-            id: item[idMapping || 'id'],
-            displayName: item[nameMapping || 'name']
-          }));
+  const [state, sendEvent] = useMachine(() =>
+      createMachine({
+        id: 'ComboboxMachine',
+        initial: loadOnInit ? 'fetching' : 'loaded',
+        states: {
+          fetching: {
+            invoke: {
+              src: 'fetch',
+              onDone: {
+                target: 'loaded',
+                actions: ['setData'],
+              },
+              onError: {
+                target: 'error',
+                actions: ['setError'],
+              }
+            }
+          },
+          loading: {},
+          loaded: {},
+          error: {},
+        },
+        on: {
+          LOAD: {
+            target: 'loading',
+          },
+          FETCH: {
+            target: 'fetching',
+          },
+          LOAD_WITH_DEBOUNCE: {
+            target: 'loading',
+            actions: ['setQuery', 'resetError', 'debounceApiCall', 'doFetch'],
+          },
+          RESET_MATCHES: {
+            target: 'loaded',
+            actions: ['debounceApiCall', 'resetMatches'],
+          },
         }
-      })
-    }
-  });
+      }, {
+        actions: {
+          setData: assign({
+            data: (_, {data}) => {
+              return data?.map(item => ({
+                id: item[idMapping || 'id'],
+                displayName: item[nameMapping || 'name']
+              }));
+            }
+          }),
+          setQuery: assign({
+            query: (_, {query}) => query,
+          }),
+          setError: assign({
+            error: (_, event) => event?.data?.message || UIStrings.ERROR.UNKNOWN
+          }),
+          resetMatches: assign({
+            data: [],
+          }),
+          resetError: assign({
+            error: null,
+          }),
+          debounceApiCall: actions.cancel('debounced-api-call'),
+          doFetch: send('FETCH', {
+            id: 'debounced-api-call',
+            delay: APIConstants.DEBOUNCE_DELAY,
+          }),
+        },
+        services: {
+          fetch: async ({query}) => {
+            const options = allowAutocomplete ? {query} : null;
+            const response = await ExtAPIUtils.extAPIRequest(action, method, options);
+            ExtAPIUtils.checkForError(response);
+            return ExtAPIUtils.extractResult(response, []);
+          }
+        }
+      }), {
+        context: {
+          query: value,
+          data: [],
+        },
+        devTools: true,
+      },
+  );
 
-  const {data} = current.context;
-  const isLoading = current.matches('loading');
+  const {data, error} = state.context;
+  const selectedItem = data.find(item => item.id === value);
+  const isLoading = state.matches('loading') || state.matches('fetching');
 
-  const loadData = query => {
+  const loadData = (query) => {
     if (query) {
-      send({type: 'LOAD', options: {query}});
+      sendEvent({type: 'LOAD_WITH_DEBOUNCE', query});
+    } else {
+      sendEvent({type: 'RESET_MATCHES'});
     }
   };
 
-  const onSelect = (item, event) => {
-    event.preventDefault();
-    onChange(id, item.id);
-  };
+  const onChangeCombobox = (query, dataItem) => onChange(id, dataItem?.id || query)
 
   if (readOnly) {
-    return value;
+    return selectedItem?.displayName || value;
   }
 
   return <>
     {allowAutocomplete
-        ? <>
-            <NxStatefulSearchDropdown
-                loading={isLoading}
-                matches={data}
-                onSearch={loadData}
-                onSelect={onSelect}
-            />
-            <div>{value}</div>
-          </>
+        ? <NxCombobox
+            {...FormUtils.fieldProps(id, parentState)}
+            value={selectedItem?.displayName || value}
+            onChange={onChangeCombobox}
+            onSearch={loadData}
+            loading={isLoading}
+            autoComplete={true}
+            matches={data}
+            loadError={error}
+            aria-label="combobox"
+          />
         : <NxFormSelect
-            {...FormUtils.selectProps(id, parentCurrent, initialValue || '')}
+            {...FormUtils.fieldProps(id, parentState, initialValue || '')}
             value={value}
             onChange={event => onChange(id, event.currentTarget.value)}
         >

@@ -14,12 +14,12 @@ import React from 'react';
 import {useActor} from '@xstate/react';
 
 import {
-  NxForm,
   NxFormGroup,
-  NxTextInput,
-  NxModal,
   NxH2,
+  NxModal,
   NxP,
+  NxStatefulForm,
+  NxTextInput
 } from '@sonatype/react-shared-components';
 import {FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 
@@ -34,15 +34,8 @@ export default function ConfirmAdminPasswordForm({
   confirmLabel,
 }) {
   const [state, send] = useActor(actor);
-  const {isPristine, loadError, saveError, validationErrors} = state.context;
-  const isLoading = state.matches('loading');
-  const isSaving = state.matches('saving');
+  const {isPristine, validationErrors} = state.context;
   const isInvalid = ValidationUtils.isInvalid(validationErrors);
-
-  const next = () =>
-    send({
-      type: 'SAVE',
-    });
 
   const cancel = () =>
     send({
@@ -50,13 +43,9 @@ export default function ConfirmAdminPasswordForm({
     });
 
   return (
-    <NxForm
-      loading={isLoading}
-      loadError={loadError}
+    <NxStatefulForm
+      {...FormUtils.formProps(state, send)}
       submitBtnText={confirmLabel}
-      onSubmit={next}
-      submitError={saveError}
-      submitMaskState={isSaving ? false : null}
       submitMaskMessage={confirmLabel}
       onCancel={cancel}
       validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
@@ -75,6 +64,6 @@ export default function ConfirmAdminPasswordForm({
           />
         </NxFormGroup>
       </NxModal.Content>
-    </NxForm>
+    </NxStatefulForm>
   );
 }

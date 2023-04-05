@@ -96,8 +96,9 @@ Ext.define('NX.coreui.controller.Tasks', {
         variants: ['x16', 'x32']
       },
       visible: function() {
-        return NX.Permissions.check('nexus:tasks:read');
-      }
+        return NX.Permissions.check('nexus:tasks:read') &&
+            !NX.State.getValue('nexus.react.tasks', false);
+      },
     };
 
     me.callParent();

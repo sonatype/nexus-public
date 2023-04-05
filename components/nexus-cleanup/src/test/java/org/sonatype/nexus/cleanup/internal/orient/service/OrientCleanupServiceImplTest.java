@@ -267,6 +267,26 @@ public class OrientCleanupServiceImplTest
     verify(cleanupMethod).run(eq(repository2), argThat(streamContains(component3)), eq(cancelledCheck));
   }
 
+  @Test
+  public void cleanupFailed() {
+    when(cleanupMethod.run(any(), any(), any())).thenThrow(new RuntimeException());
+
+    underTest.cleanup(cancelledCheck);
+
+    verify(cleanupMethod, times(3)).run(eq(repository1), argThat(streamContains(component1,  component2)), eq(cancelledCheck));
+    verify(cleanupMethod, times(3)).run(eq(repository2), argThat(streamContains(component3)), eq(cancelledCheck));
+  }
+
+  @Test
+  public void cleanupFailedSearchContextMissingException() {
+    when(cleanupMethod.run(any(), any(), any()))
+        .thenThrow(new SearchContextMissingException(10L));
+    underTest.cleanup(cancelledCheck);
+
+    verify(cleanupMethod, times(3)).run(eq(repository1), argThat(streamContains(component1,  component2)), eq(cancelledCheck));
+    verify(cleanupMethod, times(3)).run(eq(repository2), argThat(streamContains(component3)), eq(cancelledCheck));
+  }
+
   private void setupRepository(final Repository repository, final String... policyName) {
     Configuration repositoryConfig = mock(Configuration.class);
     when(repository.getConfiguration()).thenReturn(repositoryConfig);

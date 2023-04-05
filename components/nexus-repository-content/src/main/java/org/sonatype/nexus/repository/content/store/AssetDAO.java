@@ -130,14 +130,14 @@ public interface AssetDAO
    *
    * @param repositoryId the repository to browse
    * @param addedToRepository date that asset content must have been updated after
-   * @param regexExpressions list of SQL regex expressions that match on the path column
+   * @param regexList list of SQL regex expressions that match on the path column
    * @param limit maximum number of assets to return
    * @return collection of assets
    */
   List<AssetInfo> findGreaterThanOrEqualToAddedToRepository(
       @Param("repositoryId") int repositoryId,
       @Nullable @Param("addedToRepository") OffsetDateTime addedToRepository,
-      @Param("regexExpressions") List<String> regexExpressions,
+      @Param("regexList") List<String> regexList,
       @Nullable @Param("filter") String filter,
       @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams,
       @Param("limit") int limit);
@@ -148,7 +148,7 @@ public interface AssetDAO
    * @param repositoryId the repository to browse
    * @param startAddedToRepository blobCreated on asset content is greater than or equal to this value
    * @param endAddedToRepository blobCreated on asset content is less than this value
-   * @param regexExpressions list of SQL regex expressions that match on path column
+   * @param regexList list of SQL regex expressions that match on path column
    * @param limit maximum number of assets to return
    * @return collection of assets
    */
@@ -156,7 +156,7 @@ public interface AssetDAO
       @Param("repositoryId") int repositoryId,
       @Param("startAddedToRepository") OffsetDateTime startAddedToRepository,
       @Param("endAddedToRepository") OffsetDateTime endAddedToRepository,
-      @Param("regexExpressions") List<String> regexExpressions,
+      @Param("regexList") List<String> regexList,
       @Nullable @Param("filter") String filter,
       @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams,
       @Param("limit") int limit);
@@ -164,9 +164,12 @@ public interface AssetDAO
   /**
    * Creates the given asset in the content data store.
    *
-   * @param asset the asset to create
+   * @param asset                        the asset to create
+   * @param updateComponentEntityVersion whether to update the component's entity version
    */
-  void createAsset(AssetData asset);
+  void createAsset(
+      @Param("asset") AssetData asset,
+      @Param("updateComponentEntityVersion") boolean updateComponentEntityVersion);
 
   /**
    * Retrieves an asset from the content data store.
@@ -217,9 +220,12 @@ public interface AssetDAO
    *
    * @param asset the asset to update
    *
+   * @param updateComponentEntityVersion whether to update the component entity version
    * @since 3.25
    */
-  void updateAssetKind(Asset asset);
+  void updateAssetKind(
+      @Param("asset") Asset asset,
+      @Param("updateComponentEntityVersion") boolean updateComponentEntityVersion);
 
   /**
    * Retrieves the latest attributes of the given asset in the content data store.
@@ -233,15 +239,21 @@ public interface AssetDAO
    * Updates the attributes of the given asset in the content data store.
    *
    * @param asset the asset to update
+   * @param updateComponentEntityVersion whether to update the component entity version
    */
-  void updateAssetAttributes(Asset asset);
+  void updateAssetAttributes(
+      @Param("asset") Asset asset,
+      @Param("updateComponentEntityVersion") boolean updateComponentEntityVersion);
 
   /**
    * Updates the link between the given asset and its {@link AssetBlob} in the content data store.
    *
    * @param asset the asset to update
+   * @param updateComponentEntityVersion whether to update the component entity version
    */
-  void updateAssetBlobLink(Asset asset);
+  void updateAssetBlobLink(
+      @Param("asset") Asset asset,
+      @Param("updateComponentEntityVersion") boolean updateComponentEntityVersion);
 
   /**
    * Updates the last downloaded time of the given asset in the content data store.
@@ -287,11 +299,14 @@ public interface AssetDAO
    * This version of the method is for databases that support primitive arrays.
    *
    * @param assetIds the assets to purge
+   * @param updateComponentEntityVersion whether to update the component entity version
    * @return the number of purged assets
    *
    * @since 3.26
    */
-  int purgeSelectedAssets(@Param("assetIds") int[] assetIds);
+  int purgeSelectedAssets(
+      @Param("assetIds") int[] assetIds,
+      @Param("updateComponentEntityVersion") boolean updateComponentEntityVersion);
 
   /**
    * Purges the selected assets.
@@ -331,4 +346,26 @@ public interface AssetDAO
    * @since 3.29
    */
   void lastUpdated(@Param("assetId") int assetId, @Param("lastUpdated") OffsetDateTime lastUpdated);
+
+  /**
+   * Updates the entity version for this asset's component
+   */
+  void updateEntityVersion(
+      @Param("componentId") int componentId,
+      @Param("updateComponentEntityVersion") boolean updateComponentEntityVersion);
+
+  /**
+   * Updates the entity version for the components identified for the specified component ids
+   */
+  void updateEntityVersions(
+      @Param("componentIds") int[] componentIds,
+      @Param("updateComponentEntityVersion") boolean updateComponentEntityVersion);
+
+  /**
+   * Selects the component ids for the assets identified by the asset ids
+   *
+   * @param assetIds The asset ids to fetch the component ids for
+   * @return The component ids for the assets identified by the asset ids.
+   */
+  int[] selectComponentIds(@Param("assetIds") int[] assetIds);
 }

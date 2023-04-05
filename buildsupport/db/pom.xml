@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>3.43.0-SNAPSHOT</version>
+    <version>3.52.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-db</artifactId>
@@ -29,7 +29,7 @@
 
   <properties>
     <orientdb.version>2.2.37</orientdb.version>
-    <hazelcast.version>3.12.11</hazelcast.version>
+    <hazelcast.version>3.12.13</hazelcast.version>
     <hazelcast-aws.version>2.4</hazelcast-aws.version>
   </properties>
 
@@ -135,19 +135,6 @@
       </dependency>
 
       <dependency>
-        <groupId>com.orientechnologies</groupId>
-        <artifactId>orientdb-community</artifactId>
-        <version>${orientdb.version}</version>
-        <type>zip</type>
-      </dependency>
-
-      <dependency>
-        <groupId>mysql</groupId>
-        <artifactId>mysql-connector-java</artifactId>
-        <version>5.1.36</version>
-      </dependency>
-
-      <dependency>
         <groupId>com.hazelcast</groupId>
         <artifactId>hazelcast</artifactId>
         <version>${hazelcast.version}</version>
@@ -187,7 +174,7 @@
       <dependency>
         <groupId>org.postgresql</groupId>
         <artifactId>postgresql</artifactId>
-        <version>42.4.1</version>
+        <version>42.6.0</version>
       </dependency>
 
       <dependency>

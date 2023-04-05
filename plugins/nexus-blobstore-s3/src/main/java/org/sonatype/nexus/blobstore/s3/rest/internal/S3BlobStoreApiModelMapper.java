@@ -31,8 +31,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public final class S3BlobStoreApiModelMapper
 {
-  public static final int ONE_MILLION = 1_000_000;
-
   public static BlobStoreConfiguration map(
       final BlobStoreConfiguration blobStoreConfiguration,
       final S3BlobStoreApiModel request)
@@ -73,7 +71,7 @@ public final class S3BlobStoreApiModelMapper
 
     BlobStoreApiSoftQuota softQuota = request.getSoftQuota();
     if (softQuota != null) {
-      builder.quotaConfig(softQuota.getType(), checkNotNull(softQuota.getLimit(), "Missing quota limit") * ONE_MILLION);
+      builder.quotaConfig(softQuota.getType(), checkNotNull(softQuota.getLimit(), "Missing quota limit"));
     }
 
     return builder.build();

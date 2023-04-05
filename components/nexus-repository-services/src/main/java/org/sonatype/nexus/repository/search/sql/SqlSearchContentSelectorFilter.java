@@ -22,7 +22,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 /**
  * Holds content selector sql condition formats and associated values
  *
- * @see SqlSearchContentSelectorSqlFilterGenerator
+ * @see org.sonatype.nexus.repository.search.table.TableSearchContentSelectorSqlFilterGenerator
  */
 public class SqlSearchContentSelectorFilter
 {

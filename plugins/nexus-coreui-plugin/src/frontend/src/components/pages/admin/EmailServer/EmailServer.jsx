@@ -12,15 +12,14 @@
  */
 import React from 'react';
 import {useMachine} from '@xstate/react';
-import {
-  NxTile,
-} from '@sonatype/react-shared-components';
+import {NxTile} from '@sonatype/react-shared-components';
 import {
   ContentBody,
   Page,
   PageHeader,
   PageTitle,
   ExtJS,
+  Permissions,
 } from '@sonatype/nexus-ui-plugin';
 
 import {faEnvelope} from '@fortawesome/free-solid-svg-icons';
@@ -34,25 +33,30 @@ import UIStrings from '../../../../constants/UIStrings';
 import Machine from './EmailServerMachine';
 
 export default function EmailServer() {
-  const canEdit = ExtJS.checkPermission('nexus:settings:update');
+  const canEdit = ExtJS.checkPermission(Permissions.SETTINGS.UPDATE);
   const stateMachine = useMachine(Machine, {devTools: true});
+  const [state] = stateMachine;
+  const actor = state.context.emailVerifyServer;
 
-  return <Page>
-    <PageHeader>
-      <PageTitle icon={faEnvelope} {...UIStrings.EMAIL_SERVER.MENU}/>
-    </PageHeader>
-    <ContentBody className="nxrm-email-server">
-      <NxTile>
-        {canEdit
-            ? <EmailServerForm parentMachine={stateMachine} />
-            : <EmailServerReadOnly />
-        }
-      </NxTile>
-      {canEdit &&
+  return (
+    <Page>
+      <PageHeader>
+        <PageTitle icon={faEnvelope} {...UIStrings.EMAIL_SERVER.MENU} />
+      </PageHeader>
+      <ContentBody className="nxrm-email-server">
         <NxTile>
-          <EmailVerifyServer parentMachine={stateMachine} />
+          {canEdit ? (
+            <EmailServerForm parentMachine={stateMachine} />
+          ) : (
+            <EmailServerReadOnly />
+          )}
         </NxTile>
-      }
-    </ContentBody>
-  </Page>;
+        {canEdit && actor && (
+          <NxTile>
+            <EmailVerifyServer actor={actor} />
+          </NxTile>
+        )}
+      </ContentBody>
+    </Page>
+  );
 }

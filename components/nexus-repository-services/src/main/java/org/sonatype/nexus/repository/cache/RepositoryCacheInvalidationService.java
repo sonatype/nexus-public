@@ -17,8 +17,8 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.event.EventAware;
+import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.distributed.event.service.api.common.PublisherEvent;
 import org.sonatype.nexus.distributed.event.service.api.common.RepositoryCacheInvalidationEvent;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.group.GroupFacet;
@@ -100,8 +100,9 @@ public class RepositoryCacheInvalidationService
   }
 
   private void postEvent(final Repository repository) {
-    RepositoryCacheInvalidationEvent cacheEvent = new RepositoryCacheInvalidationEvent(repository.getName());
-    eventManager.post(new PublisherEvent(cacheEvent));
+    if (!EventHelper.isReplicating()) {
+      eventManager.post(new RepositoryCacheInvalidationEvent(repository.getName()));
+    }
   }
 
   @Subscribe

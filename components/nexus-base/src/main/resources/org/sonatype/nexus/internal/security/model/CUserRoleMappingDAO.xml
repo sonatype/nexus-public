@@ -26,6 +26,8 @@
 
       CONSTRAINT pk_user_role_mapping_user_id_source PRIMARY KEY (user_id, source)
     );
+
+    CREATE INDEX IF NOT EXISTS idx_user_role_mapping_source ON user_role_mapping (user_lo, source);
   </insert>
 
   <sql id="userMatch">

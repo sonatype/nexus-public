@@ -41,6 +41,7 @@ import org.apache.shiro.realm.Realm;
 import org.apache.shiro.session.mgt.SessionFactory;
 import org.apache.shiro.session.mgt.SessionManager;
 import org.apache.shiro.session.mgt.eis.SessionDAO;
+import org.apache.shiro.web.config.ShiroFilterConfiguration;
 import org.apache.shiro.web.filter.mgt.FilterChainManager;
 import org.apache.shiro.web.filter.mgt.FilterChainResolver;
 import org.apache.shiro.web.filter.mgt.PathMatchingFilterChainResolver;
@@ -71,6 +72,7 @@ public class WebSecurityModule
     bindSingleton(Authenticator.class, FirstSuccessfulModularRealmAuthenticator.class);
     bindSingleton(Authorizer.class, ExceptionCatchingModularRealmAuthorizer.class);
     bindSingleton(FilterChainManager.class, DynamicFilterChainManager.class);
+    bind(ShiroFilterConfiguration.class).asEagerSingleton();
 
     // path matching resolver has several constructors so we need to point Guice to the appropriate one
     bind(FilterChainResolver.class).toConstructor(ctor(PathMatchingFilterChainResolver.class)).asEagerSingleton();

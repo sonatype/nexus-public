@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.distributed.event.service.api;
 
-import org.sonatype.nexus.distributed.event.service.api.DistributedEvent;
-
 /**
  * The event type associated with a {@link DistributedEvent}
  *

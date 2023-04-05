@@ -12,21 +12,25 @@
  */
 import React from 'react';
 import {useMachine} from '@xstate/react';
-
+import classNames from 'classnames';
+import ExtJS from '../../../interface/ExtJS';
 import {
   NxButton,
   NxLoadWrapper,
   NxModal,
   NxWarningAlert,
-  NxLoadError
+  NxLoadError,
+  NxTooltip
 } from '@sonatype/react-shared-components';
 
-import SslCertificateDetail from './SslCertificateDetail';
+import ReadOnlyField from '../ReadOnlyField/ReadOnlyField';
 import SslCertificateDetailsModalMachine from './SslCertificateDetailsModalMachine';
 import DateUtils from '../../../interface/DateUtils';
 import UIStrings from '../../../constants/UIStrings';
+import Permissions from '../../../constants/Permissions';
 
 /**
+ *
  * @since 3.36
  * @param {string} remoteUrl the host to retrieve the certificate from
  * @param {function} onCancel a function to fire when the window is closed
@@ -53,16 +57,29 @@ export default function SslCertificateDetailsModal({remoteUrl, onCancel}) {
   const issuedDate = DateUtils.timestampToString(certificateDetails?.issuedOn);
   const expiredDate = DateUtils.timestampToString(certificateDetails?.expiresOn);
 
+  const canCreate = ExtJS.checkPermission(Permissions.SSL_TRUSTSTORE.CREATE);
+  const canDelete = ExtJS.checkPermission(Permissions.SSL_TRUSTSTORE.DELETE);
+  const addCertificateClasses = classNames({
+    disabled: !canCreate,
+  });
+  const removeCertificateClasses = classNames({
+    disabled: !canDelete,
+  });
+
   function retryHandler() {
     send({type: 'RETRY'});
   }
 
   function addToTruststore() {
-    send({type: 'ADD_CERTIFICATE'});
+    if(canCreate){
+      send({type: 'ADD_CERTIFICATE'});
+    }
   }
 
   function removeFromTruststore() {
-    send({type: 'REMOVE_CERTIFICATE'});
+    if(canDelete){
+      send({type: 'REMOVE_CERTIFICATE'});
+    }
   }
 
   return (
@@ -88,23 +105,23 @@ export default function SslCertificateDetailsModal({remoteUrl, onCancel}) {
               {isViewing && <>
                 <NxWarningAlert>{SSL_CERTIFICATE_DETAILS.WARNING}</NxWarningAlert>
                 <dl className="nx-read-only">
-                  <SslCertificateDetail label={SSL_CERTIFICATE_DETAILS.NAME}
+                  <ReadOnlyField label={SSL_CERTIFICATE_DETAILS.NAME}
                                         value={certificateDetails.subjectCommonName}/>
-                  <SslCertificateDetail label={SSL_CERTIFICATE_DETAILS.ORG}
+                  <ReadOnlyField label={SSL_CERTIFICATE_DETAILS.ORG}
                                         value={certificateDetails.subjectOrganization}/>
-                  <SslCertificateDetail label={SSL_CERTIFICATE_DETAILS.UNIT}
+                  <ReadOnlyField label={SSL_CERTIFICATE_DETAILS.UNIT}
                                         value={certificateDetails.subjectOrganizationalUnit}/>
-                  <SslCertificateDetail label={SSL_CERTIFICATE_DETAILS.ISSUER_NAME}
+                  <ReadOnlyField label={SSL_CERTIFICATE_DETAILS.ISSUER_NAME}
                                         value={certificateDetails.issuerCommonName}/>
-                  <SslCertificateDetail label={SSL_CERTIFICATE_DETAILS.ISSUER_ORG}
+                  <ReadOnlyField label={SSL_CERTIFICATE_DETAILS.ISSUER_ORG}
                                         value={certificateDetails.issuerOrganization}/>
-                  <SslCertificateDetail label={SSL_CERTIFICATE_DETAILS.ISSUER_UNIT}
+                  <ReadOnlyField label={SSL_CERTIFICATE_DETAILS.ISSUER_UNIT}
                                         value={certificateDetails.issuerOrganizationalUnit}/>
-                  <SslCertificateDetail label={SSL_CERTIFICATE_DETAILS.ISSUE_DATE}
+                  <ReadOnlyField label={SSL_CERTIFICATE_DETAILS.ISSUE_DATE}
                                         value={issuedDate}/>
-                  <SslCertificateDetail label={SSL_CERTIFICATE_DETAILS.EXPIRE_DATE}
+                  <ReadOnlyField label={SSL_CERTIFICATE_DETAILS.EXPIRE_DATE}
                                         value={expiredDate}/>
-                  <SslCertificateDetail label={SSL_CERTIFICATE_DETAILS.FINGERPRINT}
+                  <ReadOnlyField label={SSL_CERTIFICATE_DETAILS.FINGERPRINT}
                                         value={certificateDetails.fingerprint}/>
                 </dl>
               </>}
@@ -114,22 +131,28 @@ export default function SslCertificateDetailsModal({remoteUrl, onCancel}) {
         <footer className="nx-footer">
           <div className="nx-btn-bar">
             {isInTruststore &&
-            <NxButton variant="primary"
-                      type="button"
-                      disabled={isLoading}
-                      onClick={removeFromTruststore}>
-              {SSL_CERTIFICATE_DETAILS.REMOVE_CERTIFICATE}
-            </NxButton>}
+            <NxTooltip title={!canDelete && UIStrings.PERMISSION_ERROR}>
+              <NxButton variant="primary"
+                        type="button"
+                        disabled={isLoading}
+                        className={removeCertificateClasses}
+                        onClick={removeFromTruststore}>
+                {SSL_CERTIFICATE_DETAILS.REMOVE_CERTIFICATE}
+              </NxButton>
+            </NxTooltip>}
 
             {isInTruststore === false && // isInTruststore will be null during loading, don't show this button then
-            <NxButton variant="primary"
-                      type="button"
-                      disabled={isLoading}
-                      onClick={addToTruststore}>
-              {SSL_CERTIFICATE_DETAILS.ADD_CERTIFICATE}
-            </NxButton>}
+            <NxTooltip title={!canCreate && UIStrings.PERMISSION_ERROR}>
+              <NxButton variant="primary"
+                        type="button"
+                        disabled={isLoading}
+                        className={addCertificateClasses}
+                        onClick={addToTruststore}>
+                {SSL_CERTIFICATE_DETAILS.ADD_CERTIFICATE}
+              </NxButton>
+            </NxTooltip>}
 
-            <NxButton type="button" onClick={onCancel}>Close</NxButton>
+            <NxButton type="button" onClick={onCancel}>{UIStrings.CLOSE}</NxButton>
           </div>
         </footer>
       </NxModal>

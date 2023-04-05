@@ -17,12 +17,13 @@ import {render, screen, waitFor, waitForElementToBeRemoved} from '@testing-libra
 import userEvent from '@testing-library/user-event';
 import {sort, prop, descend, ascend, clone} from 'ramda';
 
-import {ExtJS, TestUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, APIConstants} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import UIStrings from '../../../../constants/UIStrings';
 import PrivilegesList from './PrivilegesList';
-import {XSS_STRING} from './Privileges.testdata';
 
+const XSS_STRING = TestUtils.XSS_STRING;
 const {PRIVILEGES: {LIST: LABELS}} = UIStrings;
 const {EXT: {URL, PRIVILEGE: {ACTION, METHODS}}, SORT_DIRECTIONS: {DESC, ASC}} = APIConstants;
 
@@ -162,7 +163,7 @@ describe('PrivilegesList', function() {
   it('renders an error message', async function() {
     const message = 'Error Message!';
     const {tableAlert} = selectors;
-    when(Axios.post).calledWith(URL, REQUEST).mockReturnValue(Promise.reject({message}));
+    when(Axios.post).calledWith(URL, REQUEST).mockRejectedValue({message});
 
     await renderAndWaitForLoad();
 

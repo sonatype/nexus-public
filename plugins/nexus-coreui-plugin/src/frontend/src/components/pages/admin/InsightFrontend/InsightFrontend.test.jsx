@@ -15,7 +15,7 @@ import Axios from 'axios';
 import {render, screen, waitForElementToBeRemoved} from '@testing-library/react';
 import {when} from 'jest-when';
 
-import {TestUtils} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import InsightFrontend from './InsightFrontend';
 import UIStrings from '../../../../constants/UIStrings';

@@ -20,6 +20,9 @@
  *
  * Utilities for working with dates
  */
+
+const ERROR_MESSAGE = value => `Unable to convert timestamp (${value}) to date string, returning null`;
+
 export default class DateUtils {
   /**
    * @param {number} timestamp a numerical timestamp
@@ -30,7 +33,28 @@ export default class DateUtils {
       return new Date(timestamp).toString();
     }
     catch (e) {
-      console.debug(`Unable to convert timestamp (${timestamp}) to date string, returning null`);
+      console.debug(ERROR_MESSAGE(timestamp));
+      return null;
+    }
+  }
+
+  /**
+   * @param {number} timestamp a numerical timestamp
+   * @returns {string|null} a "ddd, MMM D, YYYY" date format string. For example "Mon, Oct 3, 2022".
+   */
+  static prettyDate(timestamp) {
+    try {
+      const options = {
+        weekday: 'short',
+        month: 'short',
+        year: 'numeric',
+        day: 'numeric',
+      };
+
+      return new Date(timestamp).toLocaleDateString("en-US", options);
+    }
+    catch (e) {
+      console.debug(ERROR_MESSAGE(timestamp));
       return null;
     }
   }

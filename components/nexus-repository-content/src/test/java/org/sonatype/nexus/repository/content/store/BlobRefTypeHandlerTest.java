@@ -52,16 +52,12 @@ public class BlobRefTypeHandlerTest
   public static Iterable<Object[]> data() {
     return Arrays.asList(new Object[][]{
         {"default:50bc2227-b63b-4faa-85e1-b3dd1eee9afe@042D35AD-6E5E3FF2-C2326B6D-18C20A57-CAB2540C",
-         "default", "50bc2227-b63b-4faa-85e1-b3dd1eee9afe", "042D35AD-6E5E3FF2-C2326B6D-18C20A57-CAB2540C", null},
-        {"default:path$foo/bar/baz@042D35AD-6E5E3FF2-C2326B6D-18C20A57-CAB2540C",
-         "default", "path$foo/bar/baz", "042D35AD-6E5E3FF2-C2326B6D-18C20A57-CAB2540C", null},
-        {"default:http://example.com/foo/bar/baz@042D35AD-6E5E3FF2-C2326B6D-18C20A57-CAB2540C",
-         "default", "http://example.com/foo/bar/baz", "042D35AD-6E5E3FF2-C2326B6D-18C20A57-CAB2540C", null},
-        {":blobid@node", "N/A", "N/A", "N/A", IllegalArgumentException.class},
-        {"default:@node", "N/A", "N/A", "N/A", IllegalArgumentException.class},
-        {"default:blobid@", "N/A", "N/A", "N/A", IllegalArgumentException.class},
-        {":@", "N/A", "N/A", "N/A", IllegalArgumentException.class},
-        {"", "N/A", "N/A", "N/A", IllegalArgumentException.class},
+         "default", "50bc2227-b63b-4faa-85e1-b3dd1eee9afe", null, null},
+        {":blobid@node", "N/A", "N/A", null, IllegalArgumentException.class},
+        {"default:@node", "N/A", "N/A", null, IllegalArgumentException.class},
+        {"default:blobid@", "N/A", "N/A", null, IllegalArgumentException.class},
+        {":@", "N/A", "N/A", null, IllegalArgumentException.class},
+        {"", "N/A", "N/A", null, IllegalArgumentException.class},
         });
   }
 

@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.manager;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
@@ -43,6 +44,8 @@ public interface RepositoryManager
 
   @Nullable
   Repository get(String name);
+
+  Optional<Configuration> retrieveConfigurationByName(String name);
 
   Repository create(Configuration configuration) throws Exception;
 

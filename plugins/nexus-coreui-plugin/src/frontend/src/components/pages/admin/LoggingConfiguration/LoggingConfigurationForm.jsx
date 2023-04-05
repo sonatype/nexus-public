@@ -19,16 +19,15 @@ import {
   Page,
   PageHeader,
   PageTitle,
-  Section,
-  Select,
-  ValidationUtils
+  Section
 } from '@sonatype/nexus-ui-plugin';
 
 import {
   NxButton,
-  NxForm,
   NxFormGroup,
-  NxTextInput,
+  NxFormSelect,
+  NxStatefulForm,
+  NxTextInput
 } from '@sonatype/react-shared-components';
 
 import LoggingConfigurationFormMachine from './LoggingConfigurationFormMachine';
@@ -53,11 +52,9 @@ export default function LoggingConfigurationForm({itemId, onDone}) {
     devTools: true
   });
 
-  const {isPristine, pristineData, data, loadError, saveError, resetError, validationErrors} = current.context;
-  const isLoading = current.matches('loading');
+  const {pristineData, data} = current.context;
   const isSaving = current.matches('saving');
   const isResetting = current.matches('resetting');
-  const isInvalid = ValidationUtils.isInvalid(validationErrors);
 
   function update(field, value) {
     send({
@@ -94,27 +91,17 @@ export default function LoggingConfigurationForm({itemId, onDone}) {
     send('RESET');
   }
 
-  function retry() {
-    send('RETRY');
-  }
-
   return <Page className="nxrm-logging-configuration">
     <PageHeader><PageTitle icon={faScroll} {...UIStrings.LOGGING.MENU}/></PageHeader>
     <ContentBody>
       <Section className="nxrm-logging-configuration-form" onKeyPress={handleEnter}>
-        <NxForm
-            loading={isLoading}
-            loadError={loadError || resetError}
-            doLoad={retry}
+        <NxStatefulForm
+            {...FormUtils.formProps(current, send)}
             onCancel={cancel}
-            onSubmit={save}
-            submitError={saveError}
             submitMaskState={(isSaving || isResetting) ? false : null}
             submitMaskMessage={isSaving ? UIStrings.SAVING : UIStrings.LOGGING.MESSAGES.RESETTING}
-            submitBtnText={UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
-            validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
             additionalFooterBtns={
-              itemId && <NxButton variant="error" onClick={reset}>{UIStrings.LOGGING.RESET_BUTTON}</NxButton>
+              itemId && <NxButton type="button" variant="error" onClick={reset}>{UIStrings.LOGGING.RESET_BUTTON}</NxButton>
             }
         >
           {() => <>
@@ -125,15 +112,15 @@ export default function LoggingConfigurationForm({itemId, onDone}) {
                   disabled={pristineData.name}
                   onChange={updateName}/>
             </NxFormGroup>
-            <NxFormGroup label={UIStrings.LOGGING.LEVEL_LABEL} isRequired>
-              <Select name="level" value={data.level} onChange={updateLevel}>
+            <NxFormGroup label={UIStrings.LOGGING.LEVEL_LABEL}>
+              <NxFormSelect name="level" value={data.level} onChange={updateLevel}>
                 {['OFF', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'].map(logLevel =>
                     <option key={logLevel} value={logLevel}>{logLevel}</option>
                 )}
-              </Select>
+              </NxFormSelect>
             </NxFormGroup>
           </>}
-        </NxForm>
+        </NxStatefulForm>
       </Section>
     </ContentBody>
   </Page>;

@@ -12,21 +12,18 @@
  */
 package org.sonatype.nexus.coreui.internal.wonderland
 
-import javax.annotation.Nullable
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
 import javax.ws.rs.GET
-import javax.ws.rs.HeaderParam
 import javax.ws.rs.Path
 import javax.ws.rs.PathParam
 import javax.ws.rs.Produces
-import javax.ws.rs.QueryParam
 import javax.ws.rs.WebApplicationException
 import javax.ws.rs.core.Response
 
 import org.sonatype.goodies.common.ComponentSupport
-import org.sonatype.nexus.common.text.Strings2
+import org.sonatype.nexus.common.wonderland.AuthTicketService
 import org.sonatype.nexus.common.wonderland.DownloadService
 import org.sonatype.nexus.rest.NotCacheable
 import org.sonatype.nexus.rest.Resource
@@ -39,7 +36,6 @@ import static com.google.common.net.HttpHeaders.CONTENT_LENGTH
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST
 import static javax.ws.rs.core.Response.Status.FORBIDDEN
 import static javax.ws.rs.core.Response.Status.NOT_FOUND
-import static org.sonatype.nexus.common.wonderland.AuthTicketService.AUTH_TICKET_HEADER
 
 /**
  * Downloads resource.
@@ -57,9 +53,12 @@ class DownloadResource
 
   private final DownloadService downloadService
 
+  private final AuthTicketService authTicketService
+
   @Inject
-  DownloadResource(final DownloadService downloadService) {
+  DownloadResource(final DownloadService downloadService, final AuthTicketService authTicketService) {
     this.downloadService = checkNotNull(downloadService)
+    this.authTicketService = checkNotNull(authTicketService)
   }
 
   /**
@@ -70,22 +69,12 @@ class DownloadResource
   @Produces('application/zip')
   @RequiresPermissions('nexus:wonderland:download')
   @NotCacheable
-  Response downloadZip(final @PathParam('fileName') String fileName,
-                       final @Nullable @QueryParam('t') String authTicketParam, // Base64
-                       final @Nullable @HeaderParam(AUTH_TICKET_HEADER) String authTicketHeader)
+  Response downloadZip(final @PathParam('fileName') String fileName)
   {
     checkNotNull(fileName)
     log.info 'Download: {}', fileName
 
-    // pick authTicket from either query-param or header
-    def authTicket
-    if (authTicketParam) {
-      // query-param needs to be base64 decoded
-      authTicket = Strings2.decodeBase64(authTicketParam)
-    }
-    else {
-      authTicket = authTicketHeader
-    }
+    def authTicket = authTicketService.createTicket()
 
     // handle one-time auth
     if (!authTicket) {

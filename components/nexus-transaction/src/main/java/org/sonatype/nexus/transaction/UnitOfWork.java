@@ -209,7 +209,10 @@ public final class UnitOfWork
   /**
    * Opens a new session; from the local store if it exists or from the surrounding unit-of-work.
    */
-  static TransactionalSession<?> openSession(@Nullable final TransactionalStore<?> localStore) {
+  static TransactionalSession<?> openSession(
+      @Nullable final TransactionalStore<?> localStore,
+      final TransactionIsolation isolation)
+  {
     UnitOfWork currentWork = CURRENT_WORK.get();
     // introduce a short-lived unit-of-work when we need to track a locally sourced session
     if (localStore != null && (currentWork == null || currentWork.scope == UNIT_OF_WORK)) {
@@ -219,7 +222,7 @@ public final class UnitOfWork
     else {
       checkState(currentWork != null, "Unit of work has not been set");
     }
-    return currentWork.doOpenSession(localStore);
+    return currentWork.doOpenSession(localStore, isolation);
   }
 
   // -------------------------------------------------------------------------
@@ -242,9 +245,12 @@ public final class UnitOfWork
    *
    * Returns this work as a wrapper session so {@link #doCloseSession()} is called when the client closes the session.
    */
-  private TransactionalSession<?> doOpenSession(@Nullable final TransactionalStore<?> localStore) {
+  private TransactionalSession<?> doOpenSession(
+      @Nullable final TransactionalStore<?> localStore,
+      final TransactionIsolation isolation)
+  {
     if (session == null) {
-      session = checkNotNull(localStore != null ? localStore.openSession() : store.openSession());
+      session = checkNotNull(localStore != null ? localStore.openSession(isolation) : store.openSession(isolation));
     }
     return this; // implicitly wraps the new session so we can intercept close
   }

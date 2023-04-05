@@ -13,8 +13,8 @@
 package com.sonatype.nexus.docker.testsupport.framework;
 
 import org.junit.After;
-import org.junit.Ignore;
 import org.junit.Test;
+import spock.lang.Ignore;
 
 import static java.util.UUID.randomUUID;
 import static org.junit.Assert.assertFalse;
@@ -35,12 +35,14 @@ public class DockerContainerClientTestIT
     underTest.close();
   }
 
+  @Ignore("Failing Internal Orient #729 - JIRA: NEXUS-37531")
   @Test
   public void when_Pull_HelloWorld_Expect_Container_Exists() {
     underTest = new DockerContainerClient(IMAGE_HELLO_WORLD);
     assertTrue(underTest.pull().isPresent());
   }
 
+  @Ignore("Failing on Internal Orient #859 - NEXUS-38444")
   @Test
   public void when_Run_HelloWorld_Expect_Container_Exists() {
     underTest = new DockerContainerClient(IMAGE_HELLO_WORLD);
@@ -55,6 +57,7 @@ public class DockerContainerClientTestIT
     assertTrue(underTest.exec("yum --version").isPresent());
   }
 
+  @Ignore("Failing on Internal Orient #801 - NEXUS-38179")
   @Test
   public void when_Exec_YumVersion_On_Centos_6_9_Expect_Execution_To_Succeed() {
     underTest = new DockerContainerClient(IMAGE_CENTOS + ":6.9");

@@ -62,7 +62,7 @@ public class RaptureWebResourceBundleTest
     underTest =
         new RaptureWebResourceBundle(applicationVersion, Providers.of(httpServletRequest), Providers.of(stateComponent),
             templateHelper, asList(new UiPluginDescriptorImpl()),
-            asList(new ExtJsUiPluginDescriptorImpl("test-1"), new ExtJsUiPluginDescriptorImpl("test-2")));
+            asList(new ExtJsUiPluginDescriptorImpl("test-1"), new ExtJsUiPluginDescriptorImpl("test-2")), null);
   }
 
   @Test
@@ -84,7 +84,7 @@ public class RaptureWebResourceBundleTest
     List<URI> uris = underTest.getStyles();
 
     assertThat(uris, is(asList(new URI("./static/rapture/resources/loading-prod.css"),
-        new URI("./static/rapture/resources/baseapp-prod.css"),
+        new URI("./static/rapture/resources/baseapp.css"),
         new URI("./static/rapture/resources/test-1-prod.css"),
         new URI("./static/rapture/resources/test-2-prod.css"),
         new URI("./react-style-1-test.css"),

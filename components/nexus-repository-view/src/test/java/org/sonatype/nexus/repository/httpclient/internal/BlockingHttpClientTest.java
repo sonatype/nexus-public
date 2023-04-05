@@ -195,13 +195,6 @@ public class BlockingHttpClientTest
   }
 
   @Test
-  public void updateStatusWhenUnavailableDueToUnauthorizedResponse() throws Exception {
-    when(statusLine.getStatusCode()).thenReturn(SC_UNAUTHORIZED);
-    filterAndHandleException();
-    verifyUpdateStatus(UNAVAILABLE, "Unauthorized");
-  }
-
-  @Test
   public void updateStatusWhenUnavailableDueToProxyAuthRequiredResponse() throws Exception {
     when(statusLine.getStatusCode()).thenReturn(SC_PROXY_AUTHENTICATION_REQUIRED);
     filterAndHandleException();
@@ -213,6 +206,14 @@ public class BlockingHttpClientTest
     when(statusLine.getStatusCode()).thenReturn(SC_BAD_GATEWAY);
     filterAndHandleException();
     verifyUpdateStatus(UNAVAILABLE, "Bad Gateway");
+  }
+
+  @Test
+  public void updateStatusWhenUnauthorizedResponseAndNotAutoBlock() throws Exception {
+    setInternalState(underTest, "autoBlock", false);
+    when(statusLine.getStatusCode()).thenReturn(SC_UNAUTHORIZED);
+    filterAndHandleException();
+    verifyUpdateStatus(AVAILABLE, "(Last Request Unauthorized)");
   }
 
   @Test

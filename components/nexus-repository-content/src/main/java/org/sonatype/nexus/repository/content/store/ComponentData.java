@@ -36,6 +36,8 @@ public class ComponentData
 
   private String version;
 
+  private Integer entityVersion;
+
   // Component API
 
   @Override
@@ -56,6 +58,11 @@ public class ComponentData
   @Override
   public String version() {
     return version;
+  }
+
+  @Override
+  public Integer entityVersion() {
+    return entityVersion;
   }
 
   // MyBatis setters + validation
@@ -97,6 +104,13 @@ public class ComponentData
     this.version = checkNotNull(version);
   }
 
+  /**
+   * Sets the entity version.
+   */
+  public void setEntityVersion(final Integer entityVersion) {
+    this.entityVersion = entityVersion;
+  }
+
   // ContinuationAware
 
   @Override
@@ -112,6 +126,7 @@ public class ComponentData
         ", name='" + name + '\'' +
         ", kind='" + kind + '\'' +
         ", version='" + version + '\'' +
+        ", entityVersion='" + entityVersion + '\'' +
         "} " + super.toString();
   }
 }

@@ -49,6 +49,9 @@
 
     CREATE INDEX IF NOT EXISTS idx_${format}_browse_node_tree
         ON ${format}_browse_node (repository_id, parent_id, display_name);
+
+    CREATE INDEX IF NOT EXISTS idx_${format}_browse_node_component_id
+      ON ${format}_browse_node (component_id);
     --
   </insert>
 
@@ -80,7 +83,7 @@
               B${i}.parent_id AND B${i}.repository_id = #{repositoryId} AND B${i}.display_name = #{name} AND B${i}.node_id =
               </foreach>
               B.parent_id AND B.repository_id = #{repositoryId}
-        <if test="filter != null"> AND (${filter})</if>
+        <if test="filter != null and filter != ''"> AND (${filter})</if>
         <if test="limit gt 0"> LIMIT #{limit}</if>;
   </select>
 

@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.api;
 
+import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -35,6 +36,11 @@ public interface BlobStoreManager
    * @return all BlobStores
    */
   Iterable<BlobStore> browse();
+
+  /**
+   * Retrieve a map of the loaded blobstores by name.
+   */
+  Map<String, BlobStore> getByName();
 
   /**
    * Create a new BlobStore

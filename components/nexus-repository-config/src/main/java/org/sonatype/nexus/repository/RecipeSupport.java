@@ -34,6 +34,8 @@ public abstract class RecipeSupport
 
   private BrowseUnsupportedHandler browseUnsupportedHandler;
 
+  private HighAvailabilitySupportChecker highAvailabilitySupportChecker;
+
   protected RecipeSupport(final Type type, final Format format) {
     this.type = checkNotNull(type);
     this.format = checkNotNull(format);
@@ -58,6 +60,11 @@ public abstract class RecipeSupport
   }
 
   @Inject
+  public void setHighAvailabilitySupportChecker(final HighAvailabilitySupportChecker highAvailabilitySupportChecker) {
+    this.highAvailabilitySupportChecker = highAvailabilitySupportChecker;
+  }
+
+  @Inject
   public void setBrowseUnsupportedHandler(final BrowseUnsupportedHandler browseUnsupportedHandler) {
     this.browseUnsupportedHandler = checkNotNull(browseUnsupportedHandler);
   }
@@ -72,6 +79,10 @@ public abstract class RecipeSupport
 
   @Override
   public boolean isFeatureEnabled() {
-    return true;
+    if (highAvailabilitySupportChecker != null) {
+      return highAvailabilitySupportChecker.isSupported(getFormat().getValue());
+    }
+    log.error("HighAvailabilitySupportChecker not found - Format {} will not be enabled", getFormat());
+    return false;
   }
 }

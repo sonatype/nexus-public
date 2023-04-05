@@ -18,11 +18,11 @@ import {
   FormUtils,
 } from '@sonatype/nexus-ui-plugin';
 import {
-  NxForm,
   NxButton,
-  NxTooltip,
-  NxTextInput,
   NxFormGroup,
+  NxStatefulForm,
+  NxTooltip,
+  NxTextInput
 } from '@sonatype/react-shared-components';
 
 import PasswordChangeMachine from './PasswordChangeMachine';
@@ -30,11 +30,7 @@ import UIStrings from '../../../../constants/UIStrings';
 
 export default function PasswordChangeForm({userId}) {
   const [current, send] = useMachine(PasswordChangeMachine, {devTools: true});
-  const {isPristine, loadError, saveError, validationErrors} = current.context;
-
-  const isLoading = current.matches('loading');
-  const isSaving = current.matches('saving');
-  const isInvalid = FormUtils.isInvalid(validationErrors);
+  const {isPristine} = current.context;
 
   function save() {
     send({type: 'SAVE', userId: userId});
@@ -44,21 +40,11 @@ export default function PasswordChangeForm({userId}) {
     send('RESET');
   }
 
-  function retry() {
-    send('RETRY');
-  }
-
   return <Section className="user-account-settings">
-    <NxForm
-        loading={isLoading}
-        loadError={loadError}
-        doLoad={retry}
+    <NxStatefulForm
+        {...FormUtils.formProps(current, send)}
         onSubmit={save}
-        submitError={saveError}
-        submitMaskState={isSaving ? false : null}
         submitBtnText={UIStrings.USER_ACCOUNT.ACTIONS.changePassword}
-        submitMaskMessage={UIStrings.SAVING}
-        validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
         additionalFooterBtns={
           <NxTooltip title={FormUtils.discardTooltip({isPristine})}>
             <NxButton type="button" className={isPristine && 'disabled'} onClick={discard}>
@@ -88,6 +74,6 @@ export default function PasswordChangeForm({userId}) {
             type="password"
         />
       </NxFormGroup>
-    </NxForm>
+    </NxStatefulForm>
   </Section>;
 }

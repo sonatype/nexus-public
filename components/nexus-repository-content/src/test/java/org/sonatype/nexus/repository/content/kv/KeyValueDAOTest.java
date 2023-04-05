@@ -36,6 +36,8 @@ import org.junit.Test;
 import static org.assertj.db.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.empty;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -47,6 +49,8 @@ public class KeyValueDAOTest
     extends TestSupport
 {
   private static final String CATEGORY = "test";
+
+  private static final String CATEGORY_2 = "category-2";
 
   @Rule
   public DataSessionRule sessionRule = new DataSessionRule()
@@ -126,6 +130,33 @@ public class KeyValueDAOTest
     assertEquals(0, values.size());
 
     assertThat(completeResults, contains("foo", "bar"));
+  }
+
+  @Test
+  public void testBrowseCategories() {
+    List<String> categories = callDAO(dao -> dao.browseCategories(contentRepositoryId));
+    assertThat(categories, empty());
+
+    insert(CATEGORY, "key1", "value1");
+    insert(CATEGORY, "key2", "value2");
+    insert(CATEGORY_2, "key3", "value3");
+    insert(otherRepositoryId, "other-repo-category", "key4", "value4");
+
+    categories = callDAO(dao -> dao.browseCategories(contentRepositoryId));
+    assertThat(categories, containsInAnyOrder(CATEGORY, CATEGORY_2));
+  }
+
+  @Test
+  public void testFindCategories() {
+    List<String> categories = callDAO(dao -> dao.findCategories(contentRepositoryId, "some-key"));
+    assertThat(categories, empty());
+
+    insert(CATEGORY, "key1", "value1");
+    insert(CATEGORY_2, "key1", "value3");
+    insert(otherRepositoryId, "other-repo-category", "key4", "value4");
+
+    categories = callDAO(dao -> dao.findCategories(contentRepositoryId, "key1"));
+    assertThat(categories, containsInAnyOrder(CATEGORY, CATEGORY_2));
   }
 
   @Test

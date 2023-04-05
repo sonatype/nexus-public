@@ -112,7 +112,7 @@ Ext.define('NX.coreui.controller.Privileges', {
       },
       visible: function() {
         return NX.Permissions.check('nexus:privileges:read') &&
-            !NX.State.getValue('nexus.react.privileges', true);
+            !NX.State.getValue('nexus.react.privileges', false);
       },
       weight: 10
     };

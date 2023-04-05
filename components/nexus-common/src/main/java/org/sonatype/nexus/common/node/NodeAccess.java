@@ -14,6 +14,8 @@ package org.sonatype.nexus.common.node;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Future;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
 
@@ -65,4 +67,10 @@ public interface NodeAccess
    * @since 3.6.1
    */
   Map<String, String> getMemberAliases();
+
+  /**
+   * Returns a {@link Future} which will eventually resolve to the hostname. While loading of this value is initiated
+   * during startup callers should use care when joining to avoid blocking.
+   */
+  CompletionStage<String> getHostName();
 }

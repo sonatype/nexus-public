@@ -59,7 +59,18 @@ Ext.define('NX.coreui.controller.Outreach', {
     });
   },
 
-  showOutreach: function (log4jDisclaimerAvailable) {
+  showOutreachWithProxyDownloads: function (log4jDisclaimerAvailable) {
+    var me = this,
+        proxyDownloadNumbers = "";
+    NX.direct.outreach_Outreach.getProxyDownloadNumbers(function(response) {
+      if (Ext.isObject(response) && response.success && response.data != null) {
+        proxyDownloadNumbers = response.data;
+      }
+      me.showOutreach(log4jDisclaimerAvailable, proxyDownloadNumbers);
+    });
+  },
+
+  showOutreach: function (log4jDisclaimerAvailable, proxyDownloadNumbers) {
     var me = this,
         welcomePage = me.getWelcomePage();
 
@@ -83,7 +94,9 @@ Ext.define('NX.coreui.controller.Outreach', {
             '&versionMm=' + NX.State.getVersionMajorMinor() +
             '&edition=' + NX.State.getEdition() +
             '&usertype=' + usertype +
-            '&daysToExpiry=' + daysToExpiry);
+            '&daysToExpiry=' + daysToExpiry +
+            proxyDownloadNumbers
+        );
 
         // add the outreach iframe to the welcome view
         welcomePage.add({
@@ -169,7 +182,7 @@ Ext.define('NX.coreui.controller.Outreach', {
               }
             });
           }
-          me.showOutreach(log4jDisclaimerAvailable);
+          me.showOutreachWithProxyDownloads(log4jDisclaimerAvailable);
         }
       });
     }

@@ -13,6 +13,7 @@
 package org.sonatype.nexus.blobstore;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -47,7 +48,15 @@ public class MockBlobStoreConfiguration
 
   private String type;
 
-  private Map<String, Map<String, Object>> attributes;
+  private Map<String, Map<String, Object>> attributes = new HashMap<>();
+
+  public MockBlobStoreConfiguration() {
+  }
+
+  public MockBlobStoreConfiguration(final String name, final String type) {
+    this.name = name;
+    this.type = type;
+  }
 
   @Override
   public String getName() {
@@ -71,10 +80,6 @@ public class MockBlobStoreConfiguration
 
   @Override
   public Map<String, Map<String, Object>> getAttributes() {
-    if (attributes == null) {
-      attributes = Maps.newHashMap();
-    }
-
     return attributes;
   }
 

@@ -26,7 +26,7 @@ import static org.apache.commons.lang.StringUtils.isAlphanumeric;
  */
 public class SelectorSqlBuilder
 {
-  private final StringBuilder queryBuilder = new StringBuilder();
+  protected final StringBuilder queryBuilder = new StringBuilder();
 
   private final Map<String, String> queryParameters = new HashMap<>();
 

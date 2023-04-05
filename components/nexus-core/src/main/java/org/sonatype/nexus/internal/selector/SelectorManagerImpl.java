@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -33,6 +34,7 @@ import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.datastore.api.DuplicateKeyException;
+import org.sonatype.nexus.distributed.event.service.api.common.RoleConfigurationEvent;
 import org.sonatype.nexus.distributed.event.service.api.common.SelectorConfigurationChangedEvent;
 import org.sonatype.nexus.repository.security.RepositoryContentSelectorPrivilegeDescriptor;
 import org.sonatype.nexus.repository.security.RepositorySelector;
@@ -42,12 +44,15 @@ import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
 import org.sonatype.nexus.security.privilege.Privilege;
 import org.sonatype.nexus.security.role.Role;
+import org.sonatype.nexus.security.role.RoleEvent;
 import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserManager;
 import org.sonatype.nexus.security.user.UserNotFoundException;
+import org.sonatype.nexus.selector.CselToSql;
 import org.sonatype.nexus.selector.Selector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
+import org.sonatype.nexus.selector.SelectorConfigurationStore;
 import org.sonatype.nexus.selector.SelectorEvaluationException;
 import org.sonatype.nexus.selector.SelectorFactory;
 import org.sonatype.nexus.selector.SelectorManager;
@@ -91,6 +96,8 @@ public class SelectorManagerImpl
   private final LoadingCache<SelectorConfiguration, Selector> selectorCache;
 
   private volatile SoftReference<List<SelectorConfiguration>> cachedBrowseResult = EMPTY_CACHE;
+
+  private Map<String, Role> rolesCache = Collections.emptyMap();
 
   @Inject
   public SelectorManagerImpl(final SelectorConfigurationStore store,
@@ -198,8 +205,15 @@ public class SelectorManagerImpl
   @AllowConcurrentEvents
   public void on(final SelectorConfigurationEvent event) {
     cachedBrowseResult = EMPTY_CACHE;
+    rolesCache = Collections.emptyMap();
 
     selectorCache.invalidateAll();
+  }
+
+  @Subscribe
+  @AllowConcurrentEvents
+  public void on(final RoleEvent event) {
+    rolesCache = Collections.emptyMap();
   }
 
   /**
@@ -211,7 +225,18 @@ public class SelectorManagerImpl
   public void on(final SelectorConfigurationChangedEvent event) {
     log.debug("Selector configuration has {} on a remote node. Invalidate the cache.", event.getEventType());
     cachedBrowseResult = EMPTY_CACHE;
+    rolesCache = Collections.emptyMap();
     selectorCache.invalidateAll();
+  }
+
+  /**
+   * Handles a role configuration change event from another nodes.
+   *
+   * @param event the {@link RoleConfigurationEvent} with event type.
+   */
+  @Subscribe
+  public void on(final RoleConfigurationEvent event) {
+    rolesCache = Collections.emptyMap();
   }
 
   @Override
@@ -234,6 +259,21 @@ public class SelectorManagerImpl
   {
     try {
       selectorCache.get(selectorConfiguration).toSql(sqlBuilder);
+    }
+    catch (Exception e) {
+      throw new SelectorEvaluationException(
+          "Selector '" + selectorConfiguration.getName() + "' cannot be represented as SQL", e);
+    }
+  }
+
+  @Override
+  public void toSql(
+      final SelectorConfiguration selectorConfiguration,
+      final SelectorSqlBuilder sqlBuilder,
+      final CselToSql cselToSql) throws SelectorEvaluationException
+  {
+    try {
+      selectorCache.get(selectorConfiguration).toSql(sqlBuilder, cselToSql);
     }
     catch (Exception e) {
       throw new SelectorEvaluationException(
@@ -330,9 +370,16 @@ public class SelectorManagerImpl
       final AuthorizationManager authorizationManager)
   {
     try {
-      // Remote roles can't contribute privileges, or have nested roles.
-      Map<String, Role> roleMap = securitySystem.listRoles(UserManager.DEFAULT_SOURCE).stream()
-          .collect(Collectors.toMap(Role::getRoleId, Function.identity()));
+      Map<String, Role> roleMap, cacheSnapshot;
+      cacheSnapshot = rolesCache;
+      if (cacheSnapshot.isEmpty()) {
+        // Remote roles can't contribute privileges, or have nested roles.
+        rolesCache = roleMap = securitySystem.listRoles(UserManager.DEFAULT_SOURCE).stream()
+            .collect(Collectors.toMap(Role::getRoleId, Function.identity()));
+      }
+      else {
+        roleMap = cacheSnapshot;
+      }
 
       Set<String> results = new HashSet<>();
       roleIds.forEach(roleId -> traverseRoleTree(roleId, roleMap, results));

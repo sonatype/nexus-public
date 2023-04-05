@@ -336,10 +336,10 @@ public class DefaultSecuritySystem
     eventManager.post(new AuthorizationConfigurationChanged());
   }
 
-  private User findUser(String userId, UserManager userManager) throws UserNotFoundException {
+  private User findUser(String userId, UserManager userManager, Set<String> roleIds) throws UserNotFoundException {
     log.trace("Finding user: {} in user-manager: {}", userId, userManager);
 
-    User user = userManager.getUser(userId);
+    User user = userManager.getUser(userId, roleIds);
     if (user == null) {
       throw new UserNotFoundException(userId);
     }
@@ -368,7 +368,7 @@ public class DefaultSecuritySystem
 
     for (UserManager userManager : orderUserManagers()) {
       try {
-        return findUser(userId, userManager);
+        return findUser(userId, userManager, null);
       }
       catch (UserNotFoundException e) {
         log.trace("User: '{}' was not found in: '{}'", userId, userManager, e);
@@ -381,10 +381,15 @@ public class DefaultSecuritySystem
 
   @Override
   public User getUser(String userId, String source) throws UserNotFoundException, NoSuchUserManagerException {
+    return getUser(userId, source, null);
+  }
+
+  @Override
+  public User getUser(String userId, String source, Set<String> roleIds) throws UserNotFoundException, NoSuchUserManagerException {
     log.trace("Finding user: {} in source: {}", userId, source);
 
     UserManager userManager = getUserManager(source);
-    return findUser(userId, userManager);
+    return findUser(userId, userManager, roleIds);
   }
 
   @Override

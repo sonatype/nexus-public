@@ -76,7 +76,7 @@ public class MergingGroupHandler
         .minorTimeout(minorTimeout)
         .threadsPerKey(threadsPerKey)
         .enabled(cooperationEnabled)
-        .build(getClass().getName());
+        .build(getClass());
   }
 
   protected Response doGetHash(@Nonnull final Context context) throws Exception

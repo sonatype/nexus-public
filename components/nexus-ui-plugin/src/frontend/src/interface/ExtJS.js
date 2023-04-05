@@ -46,6 +46,20 @@ export default class {
   }
 
   /**
+   * @returns an absolute path when given a relative path.
+   */
+  static absolutePath(path) {
+    return NX.util.Url.absolutePath(path); 
+  }
+
+  /**
+   *@returns a complete url for the PRO-LICENSE.html
+   */
+  static proLicenseUrl() {
+    return this.urlOf('/PRO-LICENSE.html');
+  }
+
+  /**
    * Set the global dirty status to prevent accidental navigation
    * @param key - a unique key for the view that is dirty
    * @param isDirty - whether the view is dirty or not
@@ -68,9 +82,24 @@ export default class {
     const [path, setPath] = useState(Ext.History.getToken());
 
     useEffect(() => {
-      Ext.History.on('change', setPath);
-      return () => Ext.History.un('change', setPath);
-    });
+      // When the unmount is occurring due to a route change, Ext seems to already commit
+      // to firing the change handler even though the useEffect cleanup function fires before it does.
+      // This causes React memory leak warnings if the state mutator gets called at that point. So we need this
+      // extra variable to check whether the unmount has in fact occurred
+      let unmounted = false;
+
+      function _setPath(p) {
+        if (!unmounted) {
+          setPath(p);
+        }
+      }
+
+      Ext.History.on('change', _setPath);
+      return () => {
+        unmounted = true;
+        Ext.History.un('change', _setPath);
+      };
+    }, []);
 
     return {
       location: {
@@ -140,11 +169,67 @@ export default class {
     return NX.State;
   }
 
+  static formatDate(date, format) {
+    return Ext.Date.format(date, format);
+  }
+
+  /**
+   * @returns {boolean} true if the edition is PRO
+   */
+  static isProEdition() {
+    return this.state().getEdition() === 'PRO';
+  }
+
   /**
    * @param permission {string}
    * @returns {boolean} true if the user has the requested permission
    */
   static checkPermission(permission) {
     return NX.Permissions.check(permission)
+  }
+
+  /**
+   * @returns {{id: string, authenticated: boolean, administrator: boolean, authenticatedRealms: string[]} | undefined}
+   */
+  static useUser() {
+    return this.useState(() => NX.State.getUser());
+  }
+
+  /**
+   * @returns {{version: string, edition: string}}
+   */
+  static useStatus() {
+    return this.useState(() => NX.State.getValue('status'));
+  }
+
+  /**
+   * @returns {{daysToExpiry: number}}
+   */
+  static useLicense() {
+    return this.useState(() => NX.State.getValue('license'));
+  }
+
+  /**
+   * A hook that automatically re-evaluates whenever any state is changed
+   * @param getValue - A function to get the value from the state subsystem
+   * @returns {unknown}
+   */
+  static useState(getValue) {
+    const [value, setValue] = useState(getValue());
+
+    useEffect(() => {
+      function handleChange() {
+        const newValue = getValue();
+        if (value !== newValue) {
+          setValue(newValue);
+        }
+      }
+
+      const state = Ext.getApplication().getStore('State');
+      state.on('datachanged', handleChange);
+      return () => state.un('datachanged', handleChange);
+    }, [value]);
+
+    return value;
   }
 }

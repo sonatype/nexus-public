@@ -29,13 +29,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
-import static java.util.Arrays.asList;
-import static java.util.Arrays.stream;
-import static java.util.stream.Collectors.toList;
-
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Arrays.asList;
+import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.toList;
 
 /**
  * Support for tasks that applies to repositories.
@@ -59,6 +58,14 @@ public abstract class RepositoryTaskSupport
   private Type groupType;
 
   private Set<Repository> processedRepositories;
+
+  protected RepositoryTaskSupport() {
+    super();
+  }
+
+  protected RepositoryTaskSupport(final boolean taskLoggingEnabled) {
+    super(taskLoggingEnabled);
+  }
 
   @Inject
   public void install(final RepositoryManager repositoryManager, @Named(GroupType.NAME) final Type groupType) {

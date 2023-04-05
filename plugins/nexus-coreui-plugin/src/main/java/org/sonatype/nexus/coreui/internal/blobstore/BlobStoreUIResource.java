@@ -14,6 +14,7 @@ package org.sonatype.nexus.coreui.internal.blobstore;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -24,8 +25,11 @@ import javax.ws.rs.PathParam;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
+import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuota;
+import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.rest.Resource;
 
@@ -33,7 +37,6 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Streams.stream;
 import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.coreui.internal.blobstore.BlobStoreUIResource.RESOURCE_PATH;
 
@@ -51,6 +54,8 @@ public class BlobStoreUIResource
 
   private final BlobStoreManager blobStoreManager;
 
+  private final BlobStoreConfigurationStore store;
+
   private final Map<String, BlobStoreDescriptor> blobStoreDescriptors;
 
   private final List<BlobStoreQuotaTypesUIResponse> blobStoreQuotaTypes;
@@ -58,12 +63,15 @@ public class BlobStoreUIResource
   private final RepositoryManager repositoryManager;
 
   @Inject
-  public BlobStoreUIResource(final BlobStoreManager blobStoreManager,
-                             final Map<String, BlobStoreDescriptor> blobStoreDescriptors,
-                             final Map<String, BlobStoreQuota> quotaFactories,
-                             final RepositoryManager repositoryManager)
+  public BlobStoreUIResource(
+      final BlobStoreManager blobStoreManager,
+      final BlobStoreConfigurationStore store,
+      final Map<String, BlobStoreDescriptor> blobStoreDescriptors,
+      final Map<String, BlobStoreQuota> quotaFactories,
+      final RepositoryManager repositoryManager)
   {
     this.blobStoreManager = checkNotNull(blobStoreManager);
+    this.store = checkNotNull(store);
     this.blobStoreDescriptors = checkNotNull(blobStoreDescriptors);
     this.blobStoreQuotaTypes = quotaFactories.entrySet().stream()
         .map(BlobStoreQuotaTypesUIResponse::new).collect(toList());
@@ -74,10 +82,21 @@ public class BlobStoreUIResource
   @RequiresPermissions("nexus:blobstores:read")
   @GET
   public List<BlobStoreUIResponse> listBlobStores() {
-    return stream(blobStoreManager.browse()).map(blobStore -> {
-      final String typeId = blobStoreDescriptors.get(blobStore.getBlobStoreConfiguration().getType()).getId();
-      return new BlobStoreUIResponse(typeId, blobStore);
-    }).collect(toList());
+
+    return store.list().stream()
+        .map(configuration -> {
+            final String typeId = blobStoreDescriptors.get(configuration.getType()).getId();
+            BlobStoreMetrics metrics = Optional.ofNullable(blobStoreManager.get(configuration.getName()))
+                .map(BlobStoreUIResource::getBlobStoreMetrics)
+                .orElse(null);
+            return new BlobStoreUIResponse(typeId, configuration, metrics);
+        }).collect(toList());
+  }
+
+  // If a blobstore hasn't started due to an error we still want to return it from the api.
+  // To achieve this, we use a null metrics object which will show the BlobStore as unavailable.
+  private static BlobStoreMetrics getBlobStoreMetrics(BlobStore bs) {
+    return bs.isStarted() ? bs.getMetrics() : null;
   }
 
   @RequiresAuthentication

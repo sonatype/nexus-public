@@ -77,4 +77,9 @@ public class MockUserManager
     }
     throw new UserNotFoundException(userId);
   }
+
+  @Override
+  public User getUser(final String userId, final Set<String> roleIds) throws UserNotFoundException {
+    return getUser(userId);
+  }
 }

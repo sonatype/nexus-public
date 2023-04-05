@@ -259,7 +259,8 @@ public class OrientMavenGroupFacet
           getRepository().getName(), mavenPath.getPath(), e);
     }
 
-    invalidatePath(mavenPath); // sanity: force re-merge on next request
+    // Handle exception by forcing re-merge on next request and retrieving content from TempBlob
+    invalidatePath(mavenPath);
 
     try (InputStream in = tempBlob.get()) {
       // load bytes in memory before tempBlob vanishes; metadata shouldn't be too large

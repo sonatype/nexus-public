@@ -12,7 +12,8 @@
  */
 package org.sonatype.nexus.coreui.internal.blobstore;
 
-import org.sonatype.nexus.blobstore.api.BlobStore;
+import javax.annotation.Nullable;
+
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 
@@ -36,11 +37,12 @@ public class BlobStoreUIResponse
 
   private final boolean unlimited;
 
-  public BlobStoreUIResponse(final String typeId, final BlobStore blobStore) {
-    BlobStoreConfiguration configuration = blobStore.getBlobStoreConfiguration();
-
-    if (blobStore.isStarted()) {
-      BlobStoreMetrics metrics = blobStore.getMetrics();
+  public BlobStoreUIResponse(
+      final String typeId,
+      final BlobStoreConfiguration configuration,
+      @Nullable final BlobStoreMetrics metrics)
+  {
+    if (metrics != null) {
       unavailable = metrics.isUnavailable();
       blobCount = metrics.getBlobCount();
       totalSizeInBytes = metrics.getTotalSize();

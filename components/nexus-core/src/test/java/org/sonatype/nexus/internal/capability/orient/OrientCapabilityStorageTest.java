@@ -16,14 +16,15 @@ import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.capability.CapabilityIdentity;
+import org.sonatype.nexus.common.entity.EntityEvent;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItem;
+import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemEvent;
+import org.sonatype.nexus.internal.capability.storage.orient.OrientCapabilityStorage;
 import org.sonatype.nexus.internal.capability.storage.orient.OrientCapabilityStorageItemCreatedEvent;
 import org.sonatype.nexus.internal.capability.storage.orient.OrientCapabilityStorageItemDeletedEvent;
 import org.sonatype.nexus.internal.capability.storage.orient.OrientCapabilityStorageItemEntityAdapter;
-import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemEvent;
 import org.sonatype.nexus.internal.capability.storage.orient.OrientCapabilityStorageItemUpdatedEvent;
-import org.sonatype.nexus.internal.capability.storage.orient.OrientCapabilityStorage;
 import org.sonatype.nexus.orient.HexRecordIdObfuscator;
 import org.sonatype.nexus.orient.entity.EntityHook;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
@@ -159,16 +160,18 @@ public class OrientCapabilityStorageTest
     checkEventDetails((CapabilityStorageItemEvent) events[2], id, item3);
   }
 
-  private static void checkEventDetails(CapabilityStorageItemEvent event,
-                                        CapabilityIdentity id,
-                                        CapabilityStorageItem item)
+  private static void checkEventDetails(
+      final CapabilityStorageItemEvent event,
+      final CapabilityIdentity expectedId,
+      final CapabilityStorageItem expectedItem)
   {
-    assertThat(event.getCapabilityId(), is(id));
-    CapabilityStorageItem eventItem = event.getCapabilityStorageItem();
-    assertThat(eventItem.getType(), is(item.getType()));
-    assertThat(eventItem.getVersion(), is(item.getVersion()));
-    assertThat(eventItem.getNotes(), is(item.getNotes()));
-    assertThat(eventItem.isEnabled(), is(item.isEnabled()));
-    assertThat(eventItem.getProperties(), is(item.getProperties()));
+    CapabilityIdentity actualId = event.getCapabilityId();
+    assertThat(actualId, is(expectedId));
+    CapabilityStorageItem actualItem = ((EntityEvent) event).getEntity();
+    assertThat(actualItem.getType(), is(expectedItem.getType()));
+    assertThat(actualItem.getVersion(), is(expectedItem.getVersion()));
+    assertThat(actualItem.getNotes(), is(expectedItem.getNotes()));
+    assertThat(actualItem.isEnabled(), is(expectedItem.isEnabled()));
+    assertThat(actualItem.getProperties(), is(expectedItem.getProperties()));
   }
 }

@@ -15,9 +15,35 @@ package org.sonatype.nexus.repository.filter.export;
 import org.sonatype.nexus.repository.storage.Asset;
 
 /**
- * @since 3.25
+ * Used to determine {@link Asset} specifics during export.
  */
 public interface OrientExportAssetFilter
 {
+  /**
+   * Determines whether the export of the asset should be skipped for the provided {@link Asset}
+   *
+   * @param asset the {@link Asset} to use in the decision
+   * @return true if the asset export should be skipped
+   */
   boolean shouldSkipAsset(Asset asset);
+
+  /**
+   * Determines whether the export of the attributes should be skipped for the provided {@link Asset}
+   *
+   * @param asset the {@link Asset} to use in the decision
+   * @return true if the attribute export should be skipped
+   */
+  default boolean shouldSkipAttributes(Asset asset) {
+    return false;
+  }
+
+  /**
+   * Provides a calculated export path for the provided {@link Asset}
+   *
+   * @param asset the {@link Asset} to calculate the export path for
+   * @return the calculated export path
+   */
+  default String getAssetExportName(Asset asset) {
+    return asset.name();
+  }
 }

@@ -100,21 +100,24 @@ public class OrientCleanupServiceImpl
   }
 
   private Long cleanup(final Repository repository, final BooleanSupplier cancelledCheck) {
-    AtomicLong deleted = new AtomicLong(0L);
+    AtomicLong deletedComponents = new AtomicLong(0L);
+    AtomicLong deletedAssets = new AtomicLong(0L);
     UnitOfWork.begin(repository.facet(StorageFacet.class).txSupplier());
     try {
       findPolicies(repository).forEach(p -> {
-        deleted.addAndGet(deleteByPolicy(repository, p, cancelledCheck));
-        log.info("{} components cleaned up for repository {} in total", deleted, repository.getName());
+        DeletionProgress deletionProgress = deleteByPolicy(repository, p, cancelledCheck);
+        deletedComponents.addAndGet(deletionProgress.getComponentCount());
+        deletedAssets.addAndGet(deletionProgress.getAssetCount());
+        log.info("{} components and {} assets cleaned up for repository {} in total", deletedComponents, deletedAssets, repository.getName());
       });
-      return deleted.get();
+      return deletedComponents.get();
     }
     finally {
       UnitOfWork.end();
     }
   }
 
-  protected Long deleteByPolicy(final Repository repository,
+  protected DeletionProgress deleteByPolicy(final Repository repository,
                                 final CleanupPolicy policy,
                                 final BooleanSupplier cancelledCheck)
   {
@@ -130,10 +133,10 @@ public class OrientCleanupServiceImpl
           deletionProgress.update(currentProgress);
         }
         catch (Exception e) {
+          deletionProgress.setAttempts(deletionProgress.getAttempts() + 1);
           deletionProgress.setFailed(true);
           if (ExceptionUtils.getRootCause(e) instanceof SearchContextMissingException) {
             log.warn("Search scroll timed out, continuing with new scrollId.", log.isDebugEnabled() ? e : null);
-            deletionProgress.setAttempts(0);
           }
           else {
             log.error("Failed to delete components.", e);
@@ -144,12 +147,12 @@ public class OrientCleanupServiceImpl
       if (deletionProgress.isFailed()) {
         log.warn("Deletion attempts exceeded for repository {}", repository.getName());
       }
-      return deletionProgress.getCount();
+      return deletionProgress;
     }
     else {
       log.info("Policy {} has no criteria and will therefore be ignored (i.e. no components will be deleted)",
           policy.getName());
-      return 0L;
+      return deletionProgress;
     }
   }
 

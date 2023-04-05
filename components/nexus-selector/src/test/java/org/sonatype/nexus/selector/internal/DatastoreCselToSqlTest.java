@@ -120,12 +120,41 @@ public class DatastoreCselToSqlTest
 
   @Test
   public void regexpTest() {
-    final ASTJexlScript script = jexlEngine.parseExpression("a =~ \"woof\"");
+    ASTJexlScript script = jexlEngine.parseExpression("a =~ \"woof\"");
 
     script.childrenAccept(underTest, builder);
 
     assertThat(builder.getQueryString(), is("a_alias ~ :param_0"));
     assertThat(builder.getQueryParameters().size(), is(1));
     assertThat(builder.getQueryParameters().get("param_0"), is("^(woof)$"));
+
+    reset();
+
+    script = jexlEngine.parseExpression("a =~ \"woof$\"");
+
+    script.childrenAccept(underTest, builder);
+
+    assertThat(builder.getQueryParameters().get("param_0"), is("^(woof$)$"));
+
+    reset();
+
+    script = jexlEngine.parseExpression("a =~ \"^woof\"");
+
+    script.childrenAccept(underTest, builder);
+
+    assertThat(builder.getQueryParameters().get("param_0"), is("^woof"));
+
+    reset();
+
+    script = jexlEngine.parseExpression("a =~ \"^/woof|/woof/foo\"");
+
+    script.childrenAccept(underTest, builder);
+
+    assertThat(builder.getQueryParameters().get("param_0"), is("^/woof|/woof/foo"));
+  }
+
+  private void reset() {
+    builder.clearQueryString();
+    builder.getQueryParameters().clear();
   }
 }

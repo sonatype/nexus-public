@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.logging.task;
 
+import javax.annotation.Nullable;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -98,6 +100,22 @@ public class SeparateTaskLogTaskLoggerTest
       @Override
       public String toString() {
         return "toString";
+      }
+
+      @Nullable
+      @Override
+      public String getString(final String key) {
+        return null;
+      }
+
+      @Override
+      public boolean getBoolean(final String key, final boolean defaultValue) {
+        return false;
+      }
+
+      @Override
+      public int getInteger(final String key, final int defaultValue) {
+        return 0;
       }
     };
   }

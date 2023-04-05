@@ -26,7 +26,6 @@ import org.sonatype.nexus.repository.storage.DefaultComponentMaintenanceImpl.Del
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.internal.stubbing.answers.Returns;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -108,7 +107,7 @@ public class DefaultComponentMaintenanceImplTest
 
     assertThat(deleteComponentsProgress.isFailed(), is(false));
 
-    verify(deleteProgress, times(2)).getCount();
+    verify(deleteProgress, times(2)).getComponentCount();
   }
 
   @Test
@@ -129,7 +128,7 @@ public class DefaultComponentMaintenanceImplTest
     DeletionProgress deleteComponentsProgress = underTest.deleteComponents(entityIds, () -> false, 1);
 
     assertThat(deleteComponentsProgress.isFailed(), is(false));
-    assertThat(deleteComponentsProgress.getCount(), is(1L));
+    assertThat(deleteComponentsProgress.getComponentCount(), is(1L));
   }
 
   @Test
@@ -139,7 +138,7 @@ public class DefaultComponentMaintenanceImplTest
 
     assertThat(deleteComponentsProgress.isFailed(), is(true));
 
-    verify(deleteProgress).getCount();
+    verify(deleteProgress).getComponentCount();
   }
 }
 

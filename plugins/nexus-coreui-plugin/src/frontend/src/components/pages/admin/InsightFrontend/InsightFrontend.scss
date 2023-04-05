@@ -51,6 +51,7 @@
 
 .insight-frontend-frame {
   background-color: #FFFFFF;
+  border-radius: 5px;
 }
 
 .insight-frontend-container {
@@ -59,4 +60,21 @@
 .insight-frontend-content-item {
   display: flex;
   justify-content: space-between;
+}
+
+.overview-content-section {
+  display: flex;
+}
+
+.overview-content-section-img {
+  margin-left: 50px;
+  margin-right: 50px;
+}
+
+.overview-content-section-item-btn {
+  margin: 0;
+}
+
+.total-downloads-affected-count {
+  margin-bottom: 5px;
 }

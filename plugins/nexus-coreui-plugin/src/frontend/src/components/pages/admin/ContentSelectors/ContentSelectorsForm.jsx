@@ -12,36 +12,31 @@
  */
 import React from 'react';
 import {useMachine} from '@xstate/react';
+import {faTrash} from '@fortawesome/free-solid-svg-icons';
 
 import {
   ContentBody,
-  FieldWrapper,
   Page,
   PageHeader,
   PageTitle,
   Section,
   Textarea,
   Textfield,
-  Utils,
   FormUtils,
 } from '@sonatype/nexus-ui-plugin';
 
 import {
-  NxForm,
-  NxErrorAlert,
   NxButton,
   NxFontAwesomeIcon,
-  NxLoadWrapper,
-  NxSubmitMask,
-  NxTooltip,
-  NxP
+  NxFormGroup,
+  NxP,
+  NxReadOnly,
+  NxStatefulForm
 } from '@sonatype/react-shared-components';
 
 import ContentSelectorsFormMachine from './ContentSelectorsFormMachine';
-
-import UIStrings from '../../../../constants/UIStrings';
-import {faScroll, faTrash} from '@fortawesome/free-solid-svg-icons';
 import ContentSelectorsPreview from './ContentSelectorsPreview';
+import UIStrings from '../../../../constants/UIStrings';
 
 export default function ContentSelectorsForm({itemId, onDone}) {
   const [current, send] = useMachine(ContentSelectorsFormMachine, {
@@ -59,18 +54,11 @@ export default function ContentSelectorsForm({itemId, onDone}) {
     devTools: true
   });
 
-  const {isPristine, pristineData, data, loadError, saveError, validationErrors} = current.context;
-  const isLoading = current.matches('loading');
-  const isSaving = current.matches('saving');
-  const isInvalid = Utils.isInvalid(validationErrors);
+  const {pristineData, data, loadError} = current.context;
   const hasData = data && data !== {};
 
   function update(event) {
     send('UPDATE', {data: {[event.target.name]: event.target.value}});
-  }
-
-  function save() {
-    send('SAVE');
   }
 
   function cancel() {
@@ -81,25 +69,17 @@ export default function ContentSelectorsForm({itemId, onDone}) {
     send('CONFIRM_DELETE');
   }
 
-  function retry() {
-    send('RETRY');
-  }
-
   return <Page className="nxrm-content-selectors">
-    <PageHeader><PageTitle icon={faScroll} {...UIStrings.CONTENT_SELECTORS.MENU}/></PageHeader>
+    <PageHeader>
+      <PageTitle text={Boolean(pristineData.name) ?
+          UIStrings.CONTENT_SELECTORS.EDIT_TITLE(pristineData.name) :
+          UIStrings.CONTENT_SELECTORS.MENU.text}/>
+    </PageHeader>
     <ContentBody>
       <Section className="nxrm-content-selectors-form">
-        <NxForm
-          loading={isLoading}
-          loadError={loadError}
+        <NxStatefulForm
+            {...FormUtils.formProps(current, send)}
           onCancel={cancel}
-          doLoad={retry}
-          onSubmit={save}
-          submitError={saveError}
-          submitMaskState={isSaving ? false : null}
-          submitBtnText={UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
-          submitMaskMessage={UIStrings.SAVING}
-          validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
           additionalFooterBtns={itemId &&
             <NxButton variant="tertiary" onClick={confirmDelete}>
               <NxFontAwesomeIcon icon={faTrash}/>
@@ -107,33 +87,34 @@ export default function ContentSelectorsForm({itemId, onDone}) {
             </NxButton>
           }
         >
+          {hasData && !Boolean(pristineData.name) &&
+              <NxFormGroup label={UIStrings.CONTENT_SELECTORS.NAME_LABEL} isRequired={!pristineData.name}>
+                <Textfield
+                    className="nx-text-input--long"
+                    {...FormUtils.fieldProps('name', current)}
+                    disabled={pristineData.name}
+                    onChange={update}/>
+              </NxFormGroup>}
           {hasData && <>
-            <FieldWrapper labelText={UIStrings.CONTENT_SELECTORS.NAME_LABEL}>
+            <NxReadOnly>
+              <NxReadOnly.Label>{UIStrings.CONTENT_SELECTORS.TYPE_LABEL}</NxReadOnly.Label>
+              <NxReadOnly.Data>{data.type?.toUpperCase()}</NxReadOnly.Data>
+            </NxReadOnly>
+            <NxFormGroup label={UIStrings.CONTENT_SELECTORS.DESCRIPTION_LABEL}>
               <Textfield
                   className="nx-text-input--long"
-                  {...Utils.fieldProps('name', current)}
-                  disabled={pristineData.name}
+                  {...FormUtils.fieldProps('description', current)}
                   onChange={update}/>
-            </FieldWrapper>
-            <div className="field-wrapper">
-              <label id="type" className="nx-label"><span className="nx-label__text">{UIStrings.CONTENT_SELECTORS.TYPE_LABEL}</span></label>
-              <p aria-labelledby="type">{data.type?.toUpperCase()}</p>
-              <div className="error-spacing"></div>
-            </div>
-            <FieldWrapper labelText={UIStrings.CONTENT_SELECTORS.DESCRIPTION_LABEL} isOptional>
-              <Textfield
-                  className="nx-text-input--long"
-                  {...Utils.fieldProps('description', current)}
-                  onChange={update}/>
-            </FieldWrapper>
-            <FieldWrapper labelText={UIStrings.CONTENT_SELECTORS.EXPRESSION_LABEL}
-                          descriptionText={UIStrings.CONTENT_SELECTORS.EXPRESSION_DESCRIPTION}>
+            </NxFormGroup>
+            <NxFormGroup label={UIStrings.CONTENT_SELECTORS.EXPRESSION_LABEL}
+                         sublable={UIStrings.CONTENT_SELECTORS.EXPRESSION_DESCRIPTION}
+                         isRequired>
               <Textarea
                   className="nx-text-input--long"
-                  {...Utils.fieldProps('expression', current)}
+                  {...FormUtils.fieldProps('expression', current)}
                   onChange={update}
               />
-            </FieldWrapper>
+            </NxFormGroup>
 
             <h4>{UIStrings.CONTENT_SELECTORS.EXPRESSION_EXAMPLES}</h4>
             <NxP>
@@ -145,7 +126,7 @@ export default function ContentSelectorsForm({itemId, onDone}) {
               {' '}<code className="nx-code">format == "maven2" and path =^ "/org"</code>
             </NxP>
           </>}
-        </NxForm>
+        </NxStatefulForm>
       </Section>
       {!loadError && <ContentSelectorsPreview type={data?.type} expression={data?.expression}/>}
     </ContentBody>

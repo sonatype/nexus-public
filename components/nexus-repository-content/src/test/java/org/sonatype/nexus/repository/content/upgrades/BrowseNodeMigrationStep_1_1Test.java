@@ -150,7 +150,7 @@ public class BrowseNodeMigrationStep_1_1Test
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO assetDao = session.access(TestAssetDAO.class);
 
-      assetDao.createAsset(asset);
+      assetDao.createAsset(asset, false);
 
       session.getTransaction().commit();
     }
@@ -161,7 +161,7 @@ public class BrowseNodeMigrationStep_1_1Test
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ComponentDAO componentDao = session.access(TestComponentDAO.class);
 
-      componentDao.createComponent(component);
+      componentDao.createComponent(component, false);
 
       session.getTransaction().commit();
     }

@@ -22,6 +22,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.sonatype.nexus.logging.task.TaskLogType.BOTH;
 import static org.sonatype.nexus.logging.task.TaskLogType.NEXUS_LOG_ONLY;
+import static org.sonatype.nexus.logging.task.TaskLogType.REPLICATION_LOGGING;
 import static org.sonatype.nexus.logging.task.TaskLogType.TASK_LOG_ONLY;
 import static org.sonatype.nexus.logging.task.TaskLogType.TASK_LOG_ONLY_WITH_PROGRESS;
 
@@ -38,6 +39,12 @@ public class TaskLoggerFactoryTest
   public void testTaskLogOnly() {
     TaskLogger taskLogger = TaskLoggerFactory.create(new TaskLogOnly(), mock(Logger.class), mock(TaskLogInfo.class));
     assertThat(taskLogger, instanceOf(TaskLogOnlyTaskLogger.class));
+  }
+
+  @Test
+  public void testReplicationLogging() {
+    TaskLogger taskLogger = TaskLoggerFactory.create(new ReplicationLogging(), mock(Logger.class), mock(TaskLogInfo.class));
+    assertThat(taskLogger, instanceOf(ReplicationTaskLogger.class));
   }
   @Test
   public void testTaskLogWithProgress() {
@@ -62,6 +69,9 @@ public class TaskLoggerFactoryTest
 
   @TaskLogging(TASK_LOG_ONLY)
   private static final class TaskLogOnly { }
+
+  @TaskLogging(REPLICATION_LOGGING)
+  private static final class ReplicationLogging { }
 
   @TaskLogging(TASK_LOG_ONLY_WITH_PROGRESS)
   private static final class TaskLogWithProgress { }

@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.kv;
 
+import java.util.List;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -61,6 +62,15 @@ public interface KeyValueDAO
       @Nullable @Param("continuationToken") String continuationToken);
 
   /**
+   * Browse the categories available for the repository.
+   *
+   * @param repositoryId the repositoryId
+   *
+   * @return a distinct list of categories.
+   */
+  List<String> browseCategories(@Param("repositoryId") int repositoryId);
+
+  /**
    * Count the number of key-value pairs in the specified repository in the category.
    *
    * @param repositoryId  the repository for the scope
@@ -68,6 +78,21 @@ public interface KeyValueDAO
    * @return
    */
   int count(@Param("repositoryId") int repositoryId, @Param("category") String category);
+
+  /**
+   * Find categories which contain the provided key.
+   *
+   * @param key the key to find
+   *
+   * @return a list of categories
+   */
+  List<String> findCategories(@Param("repositoryId") final int repositoryId, @Param("key") String key);
+
+  List<KeyValue> findByCategoryAndKeyLike(
+      @Param("repositoryId") int repositoryId,
+      @Nullable @Param("category") String category,
+      @Param("keyLike") String keyLike
+  );
 
   /**
    * Set the value for a specific key in the provided category for the repository.
@@ -101,7 +126,7 @@ public interface KeyValueDAO
    *
    * @return the number of records removed
    */
-  int removeAll(@Param("repositoryId") int repositoryId, @Param("category") String category, @Param("limit") int limit);
+  int removeAll(@Param("repositoryId") int repositoryId, @Nullable @Param("category") String category, @Param("limit") int limit);
 
   /**
    * Remove all data associated with a repository

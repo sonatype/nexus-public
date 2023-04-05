@@ -46,8 +46,8 @@ import UIStrings from '../../../../constants/UIStrings';
 
 import {
   isIqServerEnabled,
-  canReadHealthCheck,
-  canReadFirewallStatus
+  canReadFirewallStatus,
+  canUpdateHealthCheck
 } from './IQServerColumns/IQServerHelpers';
 
 import RepositoryStatus from './RepositoryStatus';
@@ -81,7 +81,7 @@ export default function RepositoriesList({onCreate, onEdit, copyUrl = doCopyUrl}
 
   const canCreate = ExtJS.checkPermission('nexus:repository-admin:*:*:add');
 
-  const showHealthCheckColumn = isIqServerEnabled() && canReadHealthCheck();
+  const showHealthCheckColumn = canUpdateHealthCheck();
   const showIqPolicyViolationsColumn = isIqServerEnabled() && canReadFirewallStatus();
 
   function create() {

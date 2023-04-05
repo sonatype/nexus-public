@@ -15,6 +15,7 @@ package org.sonatype.nexus.scheduling;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -302,6 +303,7 @@ public class TaskConfiguration
     setString(key, date, d -> new DateTime(d).toString());
   }
 
+  @Override
   public boolean getBoolean(final String key, final boolean defaultValue) {
     return Boolean.parseBoolean(getString(key, String.valueOf(defaultValue)));
   }
@@ -310,6 +312,14 @@ public class TaskConfiguration
     setString(key, value, String::valueOf);
   }
 
+  @Nullable
+  public Integer getInteger(final String key) {
+    return Optional.ofNullable(getString(key))
+        .map(Integer::parseInt)
+        .orElse(null);
+  }
+
+  @Override
   public int getInteger(final String key, final int defaultValue) {
     return Integer.parseInt(getString(key, String.valueOf(defaultValue)));
   }
@@ -326,6 +336,7 @@ public class TaskConfiguration
     setString(key, value, String::valueOf);
   }
 
+  @Override
   @Nullable
   public String getString(final String key) {
     return getString(key, null);
@@ -396,6 +407,27 @@ public class TaskConfiguration
     @Override
     public long getRunDuration() {
       return runDuration;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(endState, runDuration, runStarted);
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (obj == null) {
+        return false;
+      }
+      if (getClass() != obj.getClass()) {
+        return false;
+      }
+      LastRunStateImpl other = (LastRunStateImpl) obj;
+      return endState == other.endState && runDuration == other.runDuration
+          && Objects.equals(runStarted, other.runStarted);
     }
 
     @Override

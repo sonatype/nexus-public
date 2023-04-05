@@ -20,7 +20,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryBuilder;
-import org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilder;
+import org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilderMapping;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryContributionSupport;
 
 /**
@@ -39,9 +39,9 @@ public class DefaultSqlSearchQueryContribution
 
   @Inject
   public DefaultSqlSearchQueryContribution(
-      final SqlSearchQueryConditionBuilder sqlSearchQueryConditionBuilder,
+      SqlSearchQueryConditionBuilderMapping conditionBuilders,
       final Map<String, SearchMappings> searchMappings)
   {
-    super(sqlSearchQueryConditionBuilder, searchMappings);
+    super(conditionBuilders, searchMappings);
   }
 }

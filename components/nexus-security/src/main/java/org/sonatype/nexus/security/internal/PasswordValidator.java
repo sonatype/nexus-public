@@ -21,6 +21,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.apache.commons.lang.StringUtils;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
 /**
@@ -41,7 +42,7 @@ public class PasswordValidator
   {
     this.passwordValidator =
         Optional.ofNullable(passwordValidator).map(Pattern::compile).map(Pattern::asPredicate).orElse(pw -> true);
-    this.errorMessage = errorMessage == null ? "Password does not match corporate policy" : errorMessage;
+    this.errorMessage = StringUtils.defaultIfBlank(errorMessage, "Password does not match corporate policy");
   }
 
   public void validate(final String password) {

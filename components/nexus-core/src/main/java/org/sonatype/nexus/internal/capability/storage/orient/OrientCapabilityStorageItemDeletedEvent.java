@@ -36,7 +36,6 @@ public class OrientCapabilityStorageItemDeletedEvent
     return OrientCapabilityStorageItem.identity(getId());
   }
 
-  @Override
   public CapabilityStorageItem getCapabilityStorageItem() {
     return getEntity();
   }

@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.logging.task;
 
+import java.util.Optional;
+import javax.annotation.Nullable;
+
 /**
  * Expose task information for the per task logs. See the TaskConfiguration class.
  *
@@ -26,6 +29,13 @@ public interface TaskLogInfo
   String getName();
 
   String getMessage();
+
+  @Nullable
+  String getString(final String key);
+
+  boolean getBoolean(final String key, final boolean defaultValue);
+
+  int getInteger(final String key, final int defaultValue);
 
   String toString();
 }

@@ -23,12 +23,16 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
  */
 public class BlobStoreResourceUtil
 {
-  public static void throwBlobStoreNotFoundException() throws WebApplicationMessageException {
-    throw new WebApplicationMessageException(
+  public static WebApplicationMessageException createBlobStoreNotFoundException() {
+    return new WebApplicationMessageException(
         NOT_FOUND,
         "\"Unable to find blobstore\"",
         APPLICATION_JSON
     );
+  }
+
+  public static void throwBlobStoreNotFoundException() throws WebApplicationMessageException {
+    throw createBlobStoreNotFoundException();
   }
 
   /**

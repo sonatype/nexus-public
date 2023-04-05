@@ -25,7 +25,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -290,15 +289,14 @@ public class RepositoryUiService
 
     Configuration updatedConfiguration = repository.getConfiguration().copy();
     updatedConfiguration.setOnline(repositoryXO.getOnline());
-
-    Optional.ofNullable(repositoryXO)
-        .map(RepositoryXO::getRoutingRuleId)
-        .filter(StringUtils::isNotBlank)
-        .map(DetachedEntityId::new)
-        .ifPresent(updatedConfiguration::setRoutingRuleId);
+    updatedConfiguration.setRoutingRuleId(toDetachedEntityId(repositoryXO.getRoutingRuleId()));
     updatedConfiguration.setAttributes(repositoryXO.getAttributes());
 
     return asRepository(repositoryManager.update(updatedConfiguration));
+  }
+
+  private DetachedEntityId toDetachedEntityId(final String s) {
+    return StringUtils.isBlank(s) ? null : new DetachedEntityId(s);
   }
 
   @RequiresAuthentication
@@ -329,7 +327,8 @@ public class RepositoryUiService
     repositoryCacheInvalidationService.processCachesInvalidation(repository);
   }
 
-  private RepositoryXO asRepository(final Repository input) {
+  @VisibleForTesting
+  RepositoryXO asRepository(final Repository input) {
     RepositoryXO xo = new RepositoryXO();
     xo.setName(input.getName());
     xo.setType(input.getType().getValue());

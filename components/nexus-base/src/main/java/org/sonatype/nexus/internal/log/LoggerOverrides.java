@@ -37,6 +37,11 @@ public interface LoggerOverrides
   void save();
 
   /**
+   * Update local logger overrides using datastore and return 'logger name' to 'log level' map
+   */
+  Map<String, LoggerLevel> syncWithDBAndGet();
+
+  /**
    * Reset overrides configuration to default state.
    */
   void reset();

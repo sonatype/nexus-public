@@ -20,7 +20,6 @@ import {
   PageActions,
   PageHeader,
   PageTitle,
-  Select,
   Section,
   SectionToolbar
 } from '@sonatype/nexus-ui-plugin';
@@ -30,6 +29,7 @@ import {
   NxButtonBar,
   NxFontAwesomeIcon,
   NxFormGroup,
+  NxFormSelect,
   NxTextInput,
 } from '@sonatype/react-shared-components';
 
@@ -135,19 +135,19 @@ export default function LogViewer({itemId}) {
           <div className="nxrm-spacer" />
 
           <div className="nx-form-row">
-            <NxFormGroup label={VIEW.REFRESH.RATE_LABEL} isRequired>
-              <Select name="period" id="period" value={selectedPeriod} onChange={onChangePeriod}>
+            <NxFormGroup label={VIEW.REFRESH.RATE_LABEL}>
+              <NxFormSelect name="period" id="period" value={selectedPeriod} onChange={onChangePeriod}>
                 {refreshPeriods.map(([period, label]) =>
                     <option key={period} value={period}>{label}</option>
                 )}
-              </Select>
+              </NxFormSelect>
             </NxFormGroup>
-            <NxFormGroup className="log-viewer-size" label={VIEW.REFRESH.SIZE_LABEL} isRequired>
-              <Select name="size" value={selectedSize} onChange={onChangeSize}>
+            <NxFormGroup className="log-viewer-size" label={VIEW.REFRESH.SIZE_LABEL}>
+              <NxFormSelect name="size" value={selectedSize} onChange={onChangeSize}>
                 {refreshSizes.map(([size, label]) =>
                     <option key={size} value={size}>{label}</option>
                 )}
-              </Select>
+              </NxFormSelect>
             </NxFormGroup>
           </div>
         </SectionToolbar>

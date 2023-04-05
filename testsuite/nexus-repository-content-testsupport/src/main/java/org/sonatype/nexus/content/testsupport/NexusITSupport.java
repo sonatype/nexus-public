@@ -30,6 +30,8 @@ import javax.ws.rs.core.UriBuilder;
 
 import org.sonatype.nexus.content.testsupport.rest.TestSuiteObjectMapperResolver;
 import org.sonatype.nexus.pax.exam.NexusPaxExamSupport;
+import org.sonatype.nexus.pax.exam.distribution.NexusTestDistribution.Distribution;
+import org.sonatype.nexus.pax.exam.distribution.NexusTestDistributionService;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.rest.client.RestClientConfiguration;
 import org.sonatype.nexus.rest.client.RestClientConfiguration.Customizer;
@@ -76,12 +78,6 @@ import org.junit.rules.TestName;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 
-import static org.ops4j.pax.exam.CoreOptions.maven;
-import static org.ops4j.pax.exam.CoreOptions.wrappedBundle;
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFileExtend;
-import static org.ops4j.pax.exam.options.WrappedUrlProvisionOption.OverwriteMode.MERGE;
-import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_DEVELOPER;
-
 /**
  * Support for Nexus integration tests.
  */
@@ -97,10 +93,10 @@ public abstract class NexusITSupport
 
   @Inject
   private PoolingHttpClientConnectionManager connectionManager;
-  
+
   @Inject
   protected RepositoryManager repositoryManager;
-  
+
   @Inject
   protected RestClientFactory restClientFactory;
 
@@ -116,17 +112,7 @@ public abstract class NexusITSupport
    * Configure Nexus base with out-of-the box settings (no HTTPS).
    */
   public static Option[] configureNexusBase() {
-    return options(
-        nexusDistribution("org.sonatype.nexus.assemblies", "nexus-base-template"),
-
-        editConfigurationFileExtend(SYSTEM_PROPERTIES_FILE, "nexus.loadAsOSS", "true"),
-        editConfigurationFileExtend(SYSTEM_PROPERTIES_FILE, "nexus.security.randompassword", "false"),
-        editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.scripts.allowCreation", "true"),
-        editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, DATASTORE_DEVELOPER, "true"),
-        // install common test-support features
-        nexusFeature("org.sonatype.nexus.testsuite", "nexus-repository-content-testsupport"),
-        wrappedBundle(maven("org.awaitility", "awaitility").versionAsInProject()).overwriteManifest(MERGE).imports("*")
-    );
+    return NexusTestDistributionService.getInstance().getDistribution(Distribution.BASE);
   }
 
   /**
@@ -147,7 +133,7 @@ public abstract class NexusITSupport
     // streaming out the response to the client. An HTTP client considers a response done when the content length has
     // been reached at which point the client/test can continue while NX still has to release the upstream connection
     // (cf. ResponseEntityProxy which releases a connection after the last byte has been handed out to the client).
-    // So allow for some delay when checking the connection pool. 
+    // So allow for some delay when checking the connection pool.
     waitFor(() -> connectionManager.getTotalStats().getLeased() == 0, 3 * 1000);
   }
 
@@ -260,7 +246,7 @@ public abstract class NexusITSupport
    * @return our session cookie; {@code null} if it doesn't exist
    */
   @Nullable
-  protected Cookie getSessionCookie(CookieStore cookieStore) {
+  protected Cookie getSessionCookie(final CookieStore cookieStore) {
     for (Cookie cookie : cookieStore.getCookies()) {
       if (DEFAULT_SESSION_COOKIE_NAME.equals(cookie.getName())) {
         return cookie;
@@ -273,7 +259,7 @@ public abstract class NexusITSupport
    * @return the header containing our session cookie; {@code null} if it doesn't exist
    */
   @Nullable
-  protected Header getSessionCookieHeader(@Nonnull Header[] headers) {
+  protected Header getSessionCookieHeader(@Nonnull final Header[] headers) {
     for (Header header : headers) {
       if (header.getValue().startsWith(DEFAULT_SESSION_COOKIE_NAME + "=")) {
         return header;
@@ -286,7 +272,7 @@ public abstract class NexusITSupport
    * @return the header containing the anti-csrf token cookie; {@code null} if it doesn't exist
    */
   @Nullable
-  protected Header getAntiCsrfTokenHeader(@Nonnull Header[] headers) {
+  protected Header getAntiCsrfTokenHeader(@Nonnull final Header[] headers) {
     for (Header header : headers) {
       if (header.getValue().startsWith("NX-ANTI-CSRF-TOKEN=")) {
         return header;

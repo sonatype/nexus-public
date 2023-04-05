@@ -22,10 +22,10 @@ import javax.inject.Provider
 import javax.inject.Singleton
 import javax.validation.Valid
 import javax.validation.Validator
+import javax.validation.constraints.NotEmpty
 import javax.validation.constraints.NotNull
 import javax.validation.groups.Default
 
-import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.rapture.StateContributor
 import org.sonatype.nexus.scheduling.TaskConfiguration
@@ -54,7 +54,6 @@ import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import groovy.transform.PackageScope
 import org.apache.shiro.authz.annotation.RequiresAuthentication
 import org.apache.shiro.authz.annotation.RequiresPermissions
-import javax.validation.constraints.NotEmpty
 
 import static com.google.common.base.Preconditions.checkState
 import static org.sonatype.nexus.repository.date.TimeZoneUtils.shiftMonthDay
@@ -250,11 +249,6 @@ class TaskComponent
   }
 
   @PackageScope
-  Date getNextRun(final TaskInfo task) {
-    return task.currentState.nextRun
-  }
-
-  @PackageScope
   String getLastRunResult(final TaskState endState, final Long runDuration) {
     String lastRunResult = null
 
@@ -322,7 +316,7 @@ class TaskComponent
         schedule: getSchedule(task.schedule),
         lastRun: lastRun,
         lastRunResult: getLastRunResult(endState, runDuration),
-        nextRun: getNextRun(task),
+        nextRun: externalTaskState.nextFireTime,
         runnable: state.waiting,
         stoppable: state.running,
         alertEmail: task.configuration.alertEmail,

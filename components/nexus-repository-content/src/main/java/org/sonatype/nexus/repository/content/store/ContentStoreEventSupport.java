@@ -16,10 +16,13 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import javax.inject.Inject;
 
+import org.sonatype.nexus.common.event.Event;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.common.event.EventWithSource;
 import org.sonatype.nexus.datastore.api.ContentDataAccess;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.datastore.api.SchemaTemplate;
+import org.sonatype.nexus.distributed.event.service.api.common.DistributedEventSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacetFinder;
 
@@ -38,13 +41,14 @@ public abstract class ContentStoreEventSupport<T extends ContentDataAccess>
 {
   protected final String format;
 
+  protected EventManager eventManager;
+
   private ContentFacetFinder contentFacetFinder;
 
-  private EventManager eventManager;
-
-  protected ContentStoreEventSupport(final DataSessionSupplier sessionSupplier,
-                                     final String contentStoreName,
-                                     final Class<T> daoClass)
+  protected ContentStoreEventSupport(
+      final DataSessionSupplier sessionSupplier,
+      final String contentStoreName,
+      final Class<T> daoClass)
   {
     super(sessionSupplier, contentStoreName, daoClass);
     this.format = extractFormat(daoClass);
@@ -56,17 +60,20 @@ public abstract class ContentStoreEventSupport<T extends ContentDataAccess>
     this.eventManager = checkNotNull(eventManager);
   }
 
-  public void preCommitEvent(final Supplier<ContentStoreEvent> eventSupplier) {
+  public void preCommitEvent(final Supplier<Event> eventSupplier) {
     thisSession().preCommit(() -> postEvent(eventSupplier));
   }
 
-  public void postCommitEvent(final Supplier<ContentStoreEvent> eventSupplier) {
+  public void postCommitEvent(final Supplier<Event> eventSupplier) {
     thisSession().postCommit(() -> postEvent(eventSupplier));
   }
 
-  private void postEvent(final Supplier<ContentStoreEvent> eventSupplier) {
-    ContentStoreEvent event = eventSupplier.get();
-    event.setRepositorySupplier(repositorySupplierFor(event));
+  private void postEvent(final Supplier<Event> eventSupplier) {
+    Event event = eventSupplier.get();
+    if (event instanceof ContentStoreEvent) {
+      ContentStoreEvent cse = (ContentStoreEvent) event;
+      cse.setRepositorySupplier(repositorySupplierFor(cse));
+    }
     eventManager.post(event);
   }
 

@@ -12,9 +12,13 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.OffsetDateTime;
+import java.util.Collection;
 
 import org.sonatype.nexus.blobstore.api.BlobRef;
+import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DuplicateKeyException;
@@ -24,10 +28,14 @@ import org.sonatype.nexus.repository.content.store.example.TestAssetBlobDAO;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.emptyIterable;
-import static org.junit.Assert.assertFalse;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.emptyIterable;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
@@ -39,6 +47,10 @@ import static org.sonatype.nexus.testcommon.matchers.NexusMatchers.time;
 public class AssetBlobDAOTest
     extends ExampleContentTestSupport
 {
+  private static final String NODE_ID = "ab761d55-5d9c22b6-3f38315a-75b3db34-0922a4d5";
+
+  private static final String BLOB_ID = "a8f3f56f-e895-4b6e-984a-1cf1f5107d36";
+
   @Test
   public void testCrudOperations() {
 
@@ -95,7 +107,7 @@ public class AssetBlobDAOTest
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
 
-      assertFalse(dao.readAssetBlob(new BlobRef("test-node", "test-store", "test-blob")).isPresent());
+      assertFalse(dao.readAssetBlob(new BlobRef(NODE_ID, "test-store", BLOB_ID)).isPresent());
 
       tempResult = dao.readAssetBlob(blobRef1).get();
       assertThat(tempResult, sameBlob(assetBlob1));
@@ -119,7 +131,7 @@ public class AssetBlobDAOTest
 
       assertThat(dao.browseUnusedAssetBlobs(1, null), emptyIterable());
 
-      assertFalse(dao.deleteAssetBlob(new BlobRef("test-node", "test-store", "test-blob")));
+      assertFalse(dao.deleteAssetBlob(new BlobRef(NODE_ID, "test-store", BLOB_ID)));
     }
   }
 
@@ -160,6 +172,122 @@ public class AssetBlobDAOTest
       dao.setBlobCreated(blobRef1, blobCreated);
 
       assertThat(dao.readAssetBlob(blobRef1).get().blobCreated(), time(blobCreated));
+    }
+  }
+
+  @Test
+  public void testCountLegacyAssetBlobs() throws Exception {
+    final int TOTAL_ASSETS = 20;
+    final int LEGACY_ASSETS = 15;
+    prepareLegacyFormatAssetBlobs(TOTAL_ASSETS, LEGACY_ASSETS);
+
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
+      int legacyCount = dao.countNotMigratedAssetBlobs();
+
+      assertThat(legacyCount, is(equalTo(LEGACY_ASSETS)));
+    }
+  }
+
+  @Test
+  public void testBrowseLegacyAssetBlobs() throws Exception {
+    final int TOTAL_ASSETS = 20;
+    final int LEGACY_ASSETS = 15;
+    prepareLegacyFormatAssetBlobs(TOTAL_ASSETS, LEGACY_ASSETS);
+
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
+      Continuation<AssetBlob> assetBlobs = dao.browseAssetsWithLegacyBlobRef(100, null);
+
+      assertThat(assetBlobs, hasSize(LEGACY_ASSETS));
+    }
+  }
+
+  @Test
+  public void testBrowseLegacyAssetBlobsPaging() throws Exception {
+    final int TOTAL_ASSETS = 20;
+    final int PAGE_SIZE = 5;
+    prepareLegacyFormatAssetBlobs(TOTAL_ASSETS, TOTAL_ASSETS);
+
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
+
+      Continuation<AssetBlob> assetBlobs = dao.browseAssetsWithLegacyBlobRef(PAGE_SIZE, null);
+      assertThat(assetBlobs, hasSize(PAGE_SIZE));
+
+      assetBlobs = dao.browseAssetsWithLegacyBlobRef(PAGE_SIZE, assetBlobs.nextContinuationToken());
+      assertThat(assetBlobs, hasSize(PAGE_SIZE));
+
+      assetBlobs = dao.browseAssetsWithLegacyBlobRef(PAGE_SIZE, assetBlobs.nextContinuationToken());
+      assertThat(assetBlobs, hasSize(PAGE_SIZE));
+
+      assetBlobs = dao.browseAssetsWithLegacyBlobRef(PAGE_SIZE, assetBlobs.nextContinuationToken());
+      assertThat(assetBlobs, hasSize(PAGE_SIZE));
+
+      assetBlobs = dao.browseAssetsWithLegacyBlobRef(PAGE_SIZE, assetBlobs.nextContinuationToken());
+      assertThat(assetBlobs, empty());
+    }
+  }
+
+  @Test
+  public void testUpdateLegacyBlobRefs() throws Exception {
+    final int TOTAL_ASSETS = 20;
+    final int LEGACY_ASSETS = 15;
+    prepareLegacyFormatAssetBlobs(TOTAL_ASSETS, LEGACY_ASSETS);
+
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
+
+      Collection<AssetBlob> legacyAssetBlobs = dao.browseAssetsWithLegacyBlobRef(100, null);
+      assertThat(dao.browseAssetsWithLegacyBlobRef(100, null), hasSize(LEGACY_ASSETS));
+
+      dao.updateBlobRefs(legacyAssetBlobs);
+
+      assertThat(dao.browseAssetsWithLegacyBlobRef(100, null), empty());
+    }
+  }
+
+  @Test
+  public void testUpdateSingleLegacyBlob() throws Exception {
+    final int TOTAL_ASSETS = 2;
+    final int LEGACY_ASSETS = 1;
+    prepareLegacyFormatAssetBlobs(TOTAL_ASSETS, LEGACY_ASSETS);
+
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
+
+      assertThat(dao.browseAssetsWithLegacyBlobRef(100, null), hasSize(LEGACY_ASSETS));
+
+      dao.browseAssetsWithLegacyBlobRef(100, null).forEach(dao::updateBlobRef);
+
+      assertThat(dao.browseAssetsWithLegacyBlobRef(100, null), empty());
+    }
+  }
+
+  private void prepareLegacyFormatAssetBlobs(final int assetsCount, final int legacyAssetsCount) throws SQLException {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME);
+         Connection connection = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
+      AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
+      for (int i = 0; i < assetsCount; i++) {
+        dao.createAssetBlob(randomAssetBlob());
+      }
+
+      session.getTransaction().commit();
+
+      dao.browseAssetBlobs(legacyAssetsCount, null).forEach(assetBlob -> {
+        BlobRef blobRef = assetBlob.blobRef();
+        String id = ((AssetBlobData) assetBlob).assetBlobId.toString();
+        String legacyBlobRef = String.format("%s:%s@%s", blobRef.getStore(), blobRef.getBlob(), NODE_ID);
+        String sql = String.format("UPDATE test_asset_blob SET blob_ref='%s' WHERE asset_blob_id=%s", legacyBlobRef, id);
+
+        try {
+          connection.prepareStatement(sql).executeUpdate();
+          dao.browseAssetsWithLegacyBlobRef(100, null);
+        }
+        catch (SQLException e) {
+          logger.info("Error updating in-memory asset blobs, {}", e.getMessage());
+        }
+      });
     }
   }
 }

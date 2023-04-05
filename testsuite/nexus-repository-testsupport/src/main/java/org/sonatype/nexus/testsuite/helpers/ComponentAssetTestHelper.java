@@ -19,11 +19,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 
+import javax.annotation.Nullable;
+
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.cache.CacheInfo;
 
 import org.joda.time.DateTime;
 
@@ -58,6 +61,15 @@ public interface ComponentAssetTestHelper
    * Get the last downloaded time for a path in the given repository.
    */
   DateTime getLastDownloadedTime(Repository repository, String path);
+
+  /**
+   * Retrieves the CacheInfo for the asset if it exists.
+   *
+   * @param repository
+   * @param path
+   */
+  @Nullable
+  CacheInfo getCacheInfo(Repository repository, String path);
 
   /**
    * Delete a component in a repository from the database.

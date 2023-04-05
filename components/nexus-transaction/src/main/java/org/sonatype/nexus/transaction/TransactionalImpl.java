@@ -14,6 +14,7 @@ package org.sonatype.nexus.transaction;
 
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * Implementation of {@link Transactional} that follows the behaviour specified in {@link Annotation}.
@@ -32,12 +33,21 @@ final class TransactionalImpl
 
   private final Class[] swallow;
 
+  private final TransactionIsolation isolation;
+
   @SuppressWarnings("pmd:ArrayIsStoredDirectly") // we assume these are safe to store
-  TransactionalImpl(final String reason, final Class[] commitOn, final Class[] retryOn, final Class[] swallow) {
+  TransactionalImpl(
+      final String reason,
+      final Class[] commitOn,
+      final Class[] retryOn,
+      final Class[] swallow,
+      final TransactionIsolation isolation)
+  {
     this.reason = reason;
     this.commitOn = commitOn;
     this.retryOn = retryOn;
     this.swallow = swallow;
+    this.isolation = isolation;
   }
 
   @Override
@@ -66,11 +76,17 @@ final class TransactionalImpl
   }
 
   @Override
+  public TransactionIsolation isolation() {
+    return isolation;
+  }
+
+  @Override
   public int hashCode() {
     return (127 * "reason".hashCode() ^ reason.hashCode())
         + (127 * "commitOn".hashCode() ^ Arrays.hashCode(commitOn))
         + (127 * "retryOn".hashCode() ^ Arrays.hashCode(retryOn))
-        + (127 * "swallow".hashCode() ^ Arrays.hashCode(swallow));
+        + (127 * "swallow".hashCode() ^ Arrays.hashCode(swallow))
+        + (127 * "isolation".hashCode() ^ isolation.hashCode());
   }
 
   @Override
@@ -87,16 +103,19 @@ final class TransactionalImpl
     return reason.equals(spec.reason())
         && Arrays.equals(commitOn, spec.commitOn())
         && Arrays.equals(retryOn, spec.retryOn())
-        && Arrays.equals(swallow, spec.swallow());
+        && Arrays.equals(swallow, spec.swallow())
+        && isolation == spec.isolation();
+
   }
 
   @Override
   public String toString() {
-    return String.format("@%s(reason=%s, commitOn=%s, retryOn=%s, swallow=%s)",
+    return String.format("@%s(reason=%s, commitOn=%s, retryOn=%s, swallow=%s, isolation=%s)",
         annotationType().getName(),
         reason,
         Arrays.toString(commitOn),
         Arrays.toString(retryOn),
-        Arrays.toString(swallow));
+        Arrays.toString(swallow),
+        isolation);
   }
 }

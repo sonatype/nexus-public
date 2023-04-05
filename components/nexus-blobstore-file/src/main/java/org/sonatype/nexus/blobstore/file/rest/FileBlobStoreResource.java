@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.blobstore.file.rest;
 
+import java.util.Optional;
+
 import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
@@ -23,6 +25,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
@@ -103,11 +106,9 @@ public class FileBlobStoreResource
   }
 
   private BlobStoreConfiguration getBlobStoreConfiguration(final String name) {
-    if (!blobStoreManager.exists(name)) {
-      BlobStoreResourceUtil.throwBlobStoreNotFoundException();
-    }
-
-    BlobStoreConfiguration configuration = blobStoreManager.get(name).getBlobStoreConfiguration();
+    BlobStoreConfiguration configuration = Optional.ofNullable(blobStoreManager.get(name))
+        .map(BlobStore::getBlobStoreConfiguration)
+        .orElseThrow(BlobStoreResourceUtil::createBlobStoreNotFoundException);
 
     if (!configuration.getType().equals(FileBlobStore.TYPE)) {
       throw new WebApplicationMessageException(

@@ -16,7 +16,8 @@ import {screen, waitFor, waitForElementToBeRemoved} from '@testing-library/react
 import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
 
-import {ExtJS, Utils, TestUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, Utils} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import CleanupPoliciesForm from './CleanupPoliciesForm';
 
@@ -53,6 +54,7 @@ const PREVIEW_URL = '/service/rest/internal/cleanup-policies/preview/components'
 
 const selectors = {
   ...TestUtils.selectors,
+  ...TestUtils.formSelectors,
   getCriteriaLastBlobUpdatedCheckbox: () => screen.getByTitle(/(Enable|Disable) Component Age Criteria/),
   getCriteriaLastDownloadedCheckbox: () => screen.getByTitle(/(Enable|Disable) Component Usage Criteria/),
   getCriteriaReleaseTypeCheckbox: () => screen.getByTitle(/(Enable|Disable) Release Type Criteria/),
@@ -126,7 +128,6 @@ describe('CleanupPoliciesForm', function() {
 
   it('renders the resolved data', async function() {
     const {
-      loadingMask,
       name,
       format,
       notes,
@@ -134,10 +135,9 @@ describe('CleanupPoliciesForm', function() {
       criteriaLastDownloaded,
       criteriaReleaseType,
       criteriaAssetRegex,
-      saveButton
     } = renderEditView(EDITABLE_ITEM.name);
 
-    await waitForElementToBeRemoved(loadingMask);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     expect(name()).toHaveValue('test');
     expect(format()).toHaveValue('testformat');
@@ -150,37 +150,37 @@ describe('CleanupPoliciesForm', function() {
     expect(criteriaReleaseType()).toHaveValue('RELEASES');
     expect(selectors.getCriteriaAssetRegexCheckbox()).toHaveClass('tm-checked');
     expect(criteriaAssetRegex()).toHaveValue('.*');
-    expect(saveButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
   });
 
   it('renders an error message', async function() {
     axios.get.mockReturnValue(Promise.reject({message: 'Error'}));
 
-    const {container, loadingMask} = renderEditView('itemId');
+    const {container} = renderEditView('itemId');
 
-    await waitForElementToBeRemoved(loadingMask);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     expect(container.querySelector('.nx-alert--error')).toHaveTextContent('Error');
   });
 
   it('requires the name and format fields when creating a new cleanup policy', async function() {
-    const {loadingMask, name, format, saveButton} = renderCreateView();
+    const {name, format} = renderCreateView();
 
-    await waitForElementToBeRemoved(loadingMask);
-    expect(saveButton()).toHaveClass('disabled');
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
 
     await TestUtils.changeField(name, 'name');
-    expect(saveButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     await TestUtils.changeField(format, 'testformat')
-    expect(saveButton()).not.toHaveClass('disabled');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('does not allow decimal values in lastBlobUpdated fields' , async function() {
-    const {loadingMask, name, format, saveButton, criteriaLastBlobUpdated, container} = renderCreateView();
+    const {name, format, criteriaLastBlobUpdated, container} = renderCreateView();
 
-    await waitForElementToBeRemoved(loadingMask);
-    expect(saveButton()).toHaveClass('disabled');
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     await TestUtils.changeField(name, 'name');
     await TestUtils.changeField(format, 'testformat')
@@ -188,18 +188,16 @@ describe('CleanupPoliciesForm', function() {
 
     userEvent.click(lastBlobCheckbox);
     await TestUtils.changeField(criteriaLastBlobUpdated, '4');
-    expect(saveButton()).not.toHaveClass('disabled');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
     await TestUtils.changeField(criteriaLastBlobUpdated, '4.7');
-    expect(saveButton()).toHaveClass('disabled');
-
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
   });
 
   it('does not allow decimal values in lastDownloaded fields' , async function() {
-    const {loadingMask, name, format, saveButton, criteriaLastDownloaded, container} = renderCreateView();
+    const {name, format, criteriaLastDownloaded, container} = renderCreateView();
 
-    await waitForElementToBeRemoved(loadingMask);
-    expect(saveButton()).toHaveClass('disabled');
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     await TestUtils.changeField(name, 'name');
     await TestUtils.changeField(format, 'testformat')
@@ -207,16 +205,16 @@ describe('CleanupPoliciesForm', function() {
 
     userEvent.click(lastDownloadedCheckbox);
     await TestUtils.changeField(criteriaLastDownloaded, '5');
-    expect(saveButton()).not.toHaveClass('disabled');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
     await TestUtils.changeField(criteriaLastDownloaded, '5.3');
-    expect(saveButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
   });
 
   it('fires onDone when cancelled', async function() {
-    const {loadingMask, cancelButton} = renderCreateView();
+    const {cancelButton} = renderCreateView();
 
-    await waitForElementToBeRemoved(loadingMask);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     userEvent.click(cancelButton());
 
@@ -231,9 +229,9 @@ describe('CleanupPoliciesForm', function() {
 
     axios.delete.mockReturnValue(Promise.resolve());
 
-    const {loadingMask, deleteButton} = renderEditView(itemId);
+    const {deleteButton} = renderEditView(itemId);
 
-    await waitForElementToBeRemoved(loadingMask);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     axios.put.mockReturnValue(Promise.resolve());
 
@@ -247,9 +245,9 @@ describe('CleanupPoliciesForm', function() {
   it('saves', async function() {
     axios.post.mockReturnValue(Promise.resolve());
 
-    const {loadingMask, name, format, notes, saveButton} = renderCreateView();
+    const {name, format, notes, saveButton} = renderCreateView();
 
-    await waitForElementToBeRemoved(loadingMask);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     await waitFor(() => expect(window.dirty).toEqual([]));
 
@@ -279,14 +277,13 @@ describe('CleanupPoliciesForm', function() {
 
   it('resets data fields when disable checkboxes', async function() {
     const {container,
-      loadingMask,
       criteriaLastBlobUpdated,
       criteriaLastDownloaded,
       criteriaReleaseType,
       criteriaAssetRegex,
       saveButton} = renderEditView(EDITABLE_ITEM.name);
 
-    await waitForElementToBeRemoved(loadingMask);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     expect(criteriaLastBlobUpdated()).not.toBeDisabled();
     expect(criteriaLastDownloaded()).not.toBeDisabled();
@@ -332,8 +329,7 @@ describe('CleanupPoliciesForm', function() {
   describe('preview', function() {
     it('submits the filter text to the backend', async function() {
       const {
-        loadingMask, 
-        previewButton, 
+        previewButton,
         previewFilterText, 
         previewRepositories, 
         previewSampleWarning,
@@ -341,9 +337,10 @@ describe('CleanupPoliciesForm', function() {
         queryByText
       } = renderEditView(EDITABLE_ITEM.name);
 
-      await waitForElementToBeRemoved(loadingMask);
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
-      await TestUtils.changeField(previewRepositories, 'maven-central');
+      userEvent.selectOptions(previewRepositories(), 'maven-central');
+      expect(previewRepositories()).toHaveValue('maven-central');
 
       when(axios.post).calledWith(PREVIEW_URL, {
         criteriaLastBlobUpdated: EDITABLE_ITEM.criteriaLastBlobUpdated,
@@ -369,7 +366,7 @@ describe('CleanupPoliciesForm', function() {
 
       userEvent.click(previewButton());
 
-      await waitForElementToBeRemoved(loadingMask);
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
       expect(queryByText('maven-aether-provider')).toBeInTheDocument();
 
@@ -401,7 +398,6 @@ describe('CleanupPoliciesForm', function() {
 
     it('clears preview results when the cleanup policies form is changed', async function() {
       const {
-        loadingMask,
         format,
         previewButton,
         previewRepositories,
@@ -410,9 +406,10 @@ describe('CleanupPoliciesForm', function() {
         queryByText
       } = renderEditView(EDITABLE_ITEM.name);
 
-      await waitForElementToBeRemoved(loadingMask);
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
-      await TestUtils.changeField(previewRepositories, 'maven-central');
+      userEvent.selectOptions(previewRepositories(), 'maven-central');
+      expect(previewRepositories()).toHaveValue('maven-central');
 
       when(axios.post).calledWith(PREVIEW_URL, {
         criteriaLastBlobUpdated: EDITABLE_ITEM.criteriaLastBlobUpdated,
@@ -438,7 +435,7 @@ describe('CleanupPoliciesForm', function() {
 
       userEvent.click(previewButton());
 
-      await waitForElementToBeRemoved(loadingMask);
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
       expect(queryByText('maven-aether-provider')).toBeInTheDocument();
       expect(selectors.getCriteriaLastBlobUpdatedCheckbox()).toHaveClass('tm-checked');

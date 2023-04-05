@@ -18,6 +18,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.FileStore;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -28,9 +29,11 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDate;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -263,6 +266,31 @@ public class FileBlobStore
 
   public String getDeletionsFilename() {
     return nodeAccess.getId() + "-" + DELETIONS_FILENAME;
+  }
+
+  /*
+   * Returns a Stream of known deletion index files for the blobstore, this will include entries for other nodes and is
+   * only intended for use during database migration.
+   */
+  public Stream<File> getDeletionIndexFiles() throws IOException {
+    Path blobDir = getAbsoluteBlobDir();
+    Set<Path> deletionsIndexFiles = new HashSet<>();
+
+    // Collect legacy file
+    Path legacyPath = blobDir.resolve(DELETIONS_FILENAME);
+    if (Files.exists(legacyPath)) {
+      deletionsIndexFiles.add(legacyPath);
+    }
+
+    // Collect node specific deletion index files
+    try (DirectoryStream<Path> deletionsFileStream = Files.newDirectoryStream(blobDir, "*" + DELETIONS_FILENAME)) {
+      deletionsFileStream.forEach(deletionsIndexFiles::add);
+    }
+
+    log.debug("Found the following deletion index files: {}", deletionsIndexFiles);
+
+    return deletionsIndexFiles.stream()
+        .map(Path::toFile);
   }
 
   @Override

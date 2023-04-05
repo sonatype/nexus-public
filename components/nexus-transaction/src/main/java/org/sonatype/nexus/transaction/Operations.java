@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.transaction.TransactionIsolation.STANDARD;
 import static org.sonatype.nexus.transaction.Transactional.DEFAULT_REASON;
 import static org.sonatype.nexus.transaction.UnitOfWork.openSession;
 import static org.sonatype.nexus.transaction.UnitOfWork.peekTransaction;
@@ -77,7 +78,7 @@ public class Operations<E extends Exception, B extends Operations<E, B>>
   private static final Class<?>[] NOTHING = {};
 
   @VisibleForTesting
-  static final Transactional DEFAULT_SPEC = new TransactionalImpl(DEFAULT_REASON, NOTHING, NOTHING, NOTHING);
+  static final Transactional DEFAULT_SPEC = new TransactionalImpl(DEFAULT_REASON, NOTHING, NOTHING, NOTHING, STANDARD);
 
   @VisibleForTesting
   final Transactional spec;
@@ -93,7 +94,8 @@ public class Operations<E extends Exception, B extends Operations<E, B>>
    * @since 3.20
    */
   public final B reason(final String reason) {
-    return (B) copy(new TransactionalImpl(reason, spec.commitOn(), spec.retryOn(), spec.swallow()), throwing, store);
+    return (B) copy(new TransactionalImpl(reason, spec.commitOn(), spec.retryOn(), spec.swallow(), spec.isolation()),
+        throwing, store);
   }
 
   /**
@@ -102,7 +104,8 @@ public class Operations<E extends Exception, B extends Operations<E, B>>
   @SafeVarargs
   public final B commitOn(final Class<? extends Exception>... exceptionTypes) {
     Class<?>[] commitOn = deepCheckNotNull(exceptionTypes).clone();
-    return (B) copy(new TransactionalImpl(spec.reason(), commitOn, spec.retryOn(), spec.swallow()), throwing, store);
+    return (B) copy(new TransactionalImpl(spec.reason(), commitOn, spec.retryOn(), spec.swallow(), spec.isolation()),
+        throwing, store);
   }
 
   /**
@@ -111,7 +114,8 @@ public class Operations<E extends Exception, B extends Operations<E, B>>
   @SafeVarargs
   public final B retryOn(final Class<? extends Exception>... exceptionTypes) {
     Class<?>[] retryOn = deepCheckNotNull(exceptionTypes).clone();
-    return (B) copy(new TransactionalImpl(spec.reason(), spec.commitOn(), retryOn, spec.swallow()), throwing, store);
+    return (B) copy(new TransactionalImpl(spec.reason(), spec.commitOn(), retryOn, spec.swallow(), spec.isolation()),
+        throwing, store);
   }
 
   /**
@@ -120,7 +124,8 @@ public class Operations<E extends Exception, B extends Operations<E, B>>
   @SafeVarargs
   public final B swallow(final Class<? extends Exception>... exceptionTypes) {
     Class<?>[] swallow = deepCheckNotNull(exceptionTypes).clone();
-    return (B) copy(new TransactionalImpl(spec.reason(), spec.commitOn(), spec.retryOn(), swallow), throwing, store);
+    return (B) copy(new TransactionalImpl(spec.reason(), spec.commitOn(), spec.retryOn(), swallow, spec.isolation()),
+        throwing, store);
   }
 
   /**
@@ -219,7 +224,7 @@ public class Operations<E extends Exception, B extends Operations<E, B>>
       return proceedWithTransaction(point, tx);
     }
 
-    try (TransactionalSession<?> session = openSession(store)) {
+    try (TransactionalSession<?> session = openSession(store, spec.isolation())) {
       return proceedWithTransaction(point, session.getTransaction());
     }
   }

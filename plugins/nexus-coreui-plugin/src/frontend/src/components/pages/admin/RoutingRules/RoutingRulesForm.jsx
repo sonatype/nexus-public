@@ -15,24 +15,23 @@ import {useMachine} from '@xstate/react';
 
 import {
   ContentBody,
+  FormUtils,
   Page,
   PageHeader,
   PageTitle,
   Section,
-  Select,
-  Textfield,
-  Utils,
-  FormUtils,
+  Textfield
 } from '@sonatype/nexus-ui-plugin';
 
 import {
-  NxForm,
   NxButton,
   NxErrorAlert,
   NxFontAwesomeIcon,
   NxFormGroup,
+  NxFormSelect,
   NxInfoAlert,
   NxLoadWrapper,
+  NxStatefulForm,
   NxSuccessAlert,
   NxTooltip,
 } from '@sonatype/react-shared-components';
@@ -62,14 +61,13 @@ export default function RoutingRulesForm({itemId, onDone}) {
     devTools: true
   });
 
-  const {isPristine, data, loadError, path, saveError, testError, testResult, validationErrors} = current.context;
-  const isLoading = current.matches('loading');
-  const isSaving = current.matches('saving');
+  const {data, path, testError, testResult} = current.context;
   const isTesting = current.matches('testing');
-  const isInvalid = Utils.isInvalid(validationErrors);
   const hasData = data && data !== {};
+  const assignedRepositoryCount = data?.assignedRepositoryCount || 0;
+  const assignedRepositoryNames = data?.assignedRepositoryNames || [];
   const isEdit = Boolean(itemId);
-  const hasAssignedRepositories = data?.assignedRepositoryCount > 0;
+  const hasAssignedRepositories = assignedRepositoryCount > 0;
 
   function addMatcher() {
     send({type: 'ADD_MATCHER'});
@@ -87,10 +85,6 @@ export default function RoutingRulesForm({itemId, onDone}) {
     send({type: 'UPDATE', data: {[event.target.name]: event.target.value}});
   }
 
-  function save() {
-    send({type: 'SAVE'});
-  }
-
   function cancel() {
     send({type: 'CANCEL'});
   }
@@ -99,10 +93,6 @@ export default function RoutingRulesForm({itemId, onDone}) {
     if (!e.currentTarget.classList.contains('disabled')) {
       send({type: 'DELETE'});
     }
-  }
-
-  function retry() {
-    send({type: 'RETRY'});
   }
 
   function updatePath(event) {
@@ -117,27 +107,19 @@ export default function RoutingRulesForm({itemId, onDone}) {
     {isEdit &&
     <NxInfoAlert>
       {!hasAssignedRepositories && <span dangerouslySetInnerHTML={{__html: ROUTING_RULES.FORM.UNUSED}}/>}
-      {hasAssignedRepositories && <span dangerouslySetInnerHTML={{__html: ROUTING_RULES.FORM.USED_BY(data.assignedRepositoryNames)}}/>}
+      {hasAssignedRepositories && <span dangerouslySetInnerHTML={{__html: ROUTING_RULES.FORM.USED_BY(assignedRepositoryNames)}}/>}
     </NxInfoAlert>}
     <PageHeader>
       <PageTitle text={itemId ? ROUTING_RULES.FORM.EDIT_TITLE : ROUTING_RULES.FORM.CREATE_TITLE}/>
     </PageHeader>
     <ContentBody>
       <Section className="nxrm-routing-rules-form">
-        <NxForm
-            loading={isLoading}
-            loadError={loadError}
+        <NxStatefulForm
+            {...FormUtils.formProps(current, send)}
             onCancel={cancel}
-            doLoad={retry}
-            onSubmit={save}
-            submitError={saveError}
-            submitMaskState={isSaving ? false : null}
             submitBtnText={itemId ? SETTINGS.SAVE_BUTTON_LABEL : ROUTING_RULES.FORM.CREATE_BUTTON}
-            submitMaskMessage={UIStrings.SAVING}
-            validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
             additionalFooterBtns={itemId &&
-              <NxTooltip title={data.assignedRepositoryCount > 0 ? ROUTING_RULES.FORM.CANNOT_DELETE(
-                  data.assignedRepositoryNames) : undefined}>
+              <NxTooltip title={assignedRepositoryCount > 0 ? ROUTING_RULES.FORM.CANNOT_DELETE(assignedRepositoryNames) : undefined}>
                 <NxButton type="button" variant="tertiary" onClick={remove} className={hasAssignedRepositories && 'disabled'}>
                   <NxFontAwesomeIcon icon={faTrash}/>
                   <span>{SETTINGS.DELETE_BUTTON_LABEL}</span>
@@ -148,23 +130,23 @@ export default function RoutingRulesForm({itemId, onDone}) {
           {hasData && <>
             <NxFormGroup label={ROUTING_RULES.FORM.NAME_LABEL} isRequired>
               <Textfield
-                  {...Utils.fieldProps('name', current)}
+                  {...FormUtils.fieldProps('name', current)}
                   onChange={update}/>
             </NxFormGroup>
             <NxFormGroup label={ROUTING_RULES.FORM.DESCRIPTION_LABEL}>
               <Textfield
                   className="nx-text-input--long"
-                  {...Utils.fieldProps('description', current)}
+                  {...FormUtils.fieldProps('description', current)}
                   onChange={update}/>
             </NxFormGroup>
             <NxFormGroup
                 id="nxrm-routing-rules-mode"
                 label={ROUTING_RULES.FORM.MODE_LABEL}
-                sublabel={ROUTING_RULES.FORM.MODE_DESCRIPTION} isRequired>
-              <Select {...Utils.fieldProps('mode', current)} onChange={update}>
+                sublabel={ROUTING_RULES.FORM.MODE_DESCRIPTION}>
+              <NxFormSelect {...FormUtils.fieldProps('mode', current)} onChange={update}>
                 <option value="ALLOW">{ROUTING_RULES.FORM.MODE.ALLOW}</option>
                 <option value="BLOCK">{ROUTING_RULES.FORM.MODE.BLOCK}</option>
-              </Select>
+              </NxFormSelect>
             </NxFormGroup>
             <div className="nx-form-group">
               <div id="matchers-label" className="nx-label">
@@ -181,7 +163,7 @@ export default function RoutingRulesForm({itemId, onDone}) {
                             aria-label={ROUTING_RULES.FORM.MATCHER_LABEL(index)}
                             aria-describedby="matchers-description"
                             className="nx-text-input--long"
-                            {...Utils.fieldProps(`matchers[${index}]`, current)}
+                            {...FormUtils.fieldProps(`matchers[${index}]`, current)}
                             value={value}
                             onChange={(event) => updateMatcher(event, index)}/>
                       </label>
@@ -206,7 +188,7 @@ export default function RoutingRulesForm({itemId, onDone}) {
               </div>
             </div>
           </>}
-        </NxForm>
+        </NxStatefulForm>
       </Section>
 
       <Section className="nxrm-routing-rules-preview">

@@ -37,6 +37,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaResult;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
+import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.validation.Validate;
 
@@ -44,12 +45,11 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Streams.stream;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 /**
  * @since 3.14
@@ -61,6 +61,8 @@ public class BlobStoreResource
     implements Resource, BlobStoreResourceDoc
 {
   private final BlobStoreManager blobStoreManager;
+
+  private final BlobStoreConfigurationStore store;
 
   private final BlobStoreQuotaService quotaService;
 
@@ -77,10 +79,12 @@ public class BlobStoreResource
 
   public BlobStoreResource(
       final BlobStoreManager blobStoreManager,
+      final BlobStoreConfigurationStore store,
       final BlobStoreQuotaService quotaService,
       final Map<String, ConnectionChecker> connectionCheckers)
   {
     this.blobStoreManager = checkNotNull(blobStoreManager);
+    this.store = checkNotNull(store);
     this.quotaService = checkNotNull(quotaService);
     this.connectionCheckers = connectionCheckers;
   }
@@ -90,8 +94,10 @@ public class BlobStoreResource
   @RequiresPermissions("nexus:blobstores:read")
   @GET
   public List<GenericBlobStoreApiResponse> listBlobStores() {
-    return stream(blobStoreManager.browse())
-        .map(GenericBlobStoreApiResponse::new)
+    Map<String, BlobStore> blobstoresByName = blobStoreManager.getByName();
+    return store.list().stream()
+        .map(configuration -> new GenericBlobStoreApiResponse(configuration,
+            blobstoresByName.get(configuration.getName())))
         .collect(toList());
   }
 
@@ -112,6 +118,7 @@ public class BlobStoreResource
     }
   }
 
+  @Override
   @RequiresAuthentication
   @RequiresPermissions("nexus:blobstores:read")
   @GET

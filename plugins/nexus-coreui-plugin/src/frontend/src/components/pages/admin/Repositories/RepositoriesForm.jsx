@@ -19,13 +19,16 @@ import {
   PageHeader,
   PageTitle,
   Section,
-  Utils,
   FormUtils,
   ExtJS,
   UIStrings as UIStringsGlobal
 } from '@sonatype/nexus-ui-plugin';
 
-import {NxForm, NxButton, NxFontAwesomeIcon} from '@sonatype/react-shared-components';
+import {
+  NxButton,
+  NxFontAwesomeIcon,
+  NxStatefulForm
+} from '@sonatype/react-shared-components';
 
 import {faDatabase, faTrash} from '@fortawesome/free-solid-svg-icons';
 
@@ -57,23 +60,10 @@ export default function RepositoriesForm({itemId, onDone = () => {}}) {
   const [current, send] = stateMachine;
 
   const {
-    isPristine,
-    loadError,
-    saveError,
-    validationErrors,
     data: {format, type}
   } = current.context;
 
   const {EDITOR} = UIStrings.REPOSITORIES;
-  const {SAVING} = UIStrings;
-
-  const isLoading = current.matches('loading');
-  const isSaving = current.matches('saving');
-  const isInvalid = Utils.isInvalid(validationErrors);
-
-  const retry = () => send({type: 'RETRY'});
-
-  const save = () => send({type: 'SAVE'});
 
   const canDelete =
     format && ExtJS.checkPermission(`nexus:repository-admin:${format}:${itemId}:delete`);
@@ -89,17 +79,10 @@ export default function RepositoriesForm({itemId, onDone = () => {}}) {
       </PageHeader>
       <ContentBody>
         <Section className="nxrm-repository-editor-form">
-          <NxForm
-            loading={isLoading}
-            loadError={loadError}
+          <NxStatefulForm
+            {...FormUtils.formProps(current, send)}
             onCancel={onDone}
-            doLoad={retry}
-            onSubmit={save}
-            submitError={saveError}
-            submitMaskState={isSaving ? false : null}
             submitBtnText={isEdit ? EDITOR.SAVE_BUTTON : EDITOR.CREATE_BUTTON}
-            submitMaskMessage={SAVING}
-            validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
             additionalFooterBtns={
               isEdit && (
                 <NxButton
@@ -124,7 +107,7 @@ export default function RepositoriesForm({itemId, onDone = () => {}}) {
                 ))}
               </>
             )}
-          </NxForm>
+          </NxStatefulForm>
         </Section>
       </ContentBody>
     </Page>

@@ -20,14 +20,14 @@ import {
   FormFieldsFactory,
 } from '@sonatype/nexus-ui-plugin';
 import {
-  NxForm,
-  NxFormGroup,
   NxButton,
-  NxFontAwesomeIcon,
   NxH2,
-  NxTextInput,
+  NxFontAwesomeIcon,
+  NxFormGroup,
   NxFormSelect,
-  NxTile,
+  NxStatefulForm,
+  NxTextInput,
+  NxTile
 } from '@sonatype/react-shared-components';
 
 import {faTrash} from '@fortawesome/free-solid-svg-icons';
@@ -42,15 +42,8 @@ export default function PrivilegesForm({itemId, service, onDone}) {
   const {
     data: {type, readOnly},
     types = {},
-    loadError,
-    saveError,
-    isPristine,
-    validationErrors,
   } = current.context;
 
-  const isLoading = current.matches('loading');
-  const isSaving = current.matches('saving');
-  const isInvalid = ValidationUtils.isInvalid(validationErrors);
   const isCreate = ValidationUtils.isBlank(itemId);
   const isEdit = !isCreate;
   const hasDeletePermissions = ExtJS.checkPermission('nexus:privileges:delete');
@@ -58,31 +51,19 @@ export default function PrivilegesForm({itemId, service, onDone}) {
   const isTypeSelected = Boolean(type);
   const fields = types[type]?.formFields || [];
 
-  const save = () => send('SAVE');
-
   const cancel = () => onDone();
 
   const confirmDelete = () => send('CONFIRM_DELETE');
-
-  const retry = () => send('RETRY');
 
   const setType = event => send({type: 'SET_TYPE', privilegeType: event.target.value});
 
   const onChangeField = (name, value) => send({type: 'UPDATE', data: {[name]: value}});
 
-  return <NxForm
-      loading={isLoading}
-      loadError={loadError}
+  return <NxStatefulForm
+      {...FormUtils.formProps(current, send)}
       onCancel={cancel}
-      doLoad={retry}
-      onSubmit={save}
-      submitError={saveError}
-      submitMaskState={isSaving ? false : null}
-      submitBtnText={UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
-      submitMaskMessage={UIStrings.SAVING}
-      validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
       additionalFooterBtns={isEdit && canDelete &&
-          <NxButton variant="tertiary" onClick={confirmDelete}>
+          <NxButton variant="tertiary" onClick={confirmDelete} type="button">
             <NxFontAwesomeIcon icon={faTrash}/>
             <span>{UIStrings.SETTINGS.DELETE_BUTTON_LABEL}</span>
           </NxButton>
@@ -96,7 +77,7 @@ export default function PrivilegesForm({itemId, service, onDone}) {
             value={type}
             disabled={isEdit}
             onChange={setType}
-        >
+            validatable>
           <option disabled={isTypeSelected} value=""/>
           {Object.values(types)?.map(({id, name}) => <option key={id} value={id}>{name}</option>)}
         </NxFormSelect>
@@ -135,5 +116,5 @@ export default function PrivilegesForm({itemId, service, onDone}) {
         ))}
       </>}
     </NxTile.Content>
-  </NxForm>;
+  </NxStatefulForm>;
 }

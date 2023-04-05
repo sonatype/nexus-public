@@ -12,8 +12,9 @@
  */
 package org.sonatype.nexus.repository.content.kv;
 
+import java.util.List;
 import java.util.Optional;
-
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -24,6 +25,7 @@ import org.sonatype.nexus.repository.content.store.ContentStoreSupport;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.inject.assistedinject.Assisted;
+import org.apache.ibatis.annotations.Param;
 
 @Named
 public class KeyValueStore<T extends KeyValueDAO>
@@ -56,19 +58,25 @@ public class KeyValueStore<T extends KeyValueDAO>
     dao().remove(repositoryId, type, key);
   }
 
-  public void removeAll(final int repositoryId, final String type) {
+  /*
+   * Transactional is intentionally omitted
+   */
+  public void removeAll(final int repositoryId, @Nullable final String category) {
     int count;
     do {
-      count = removeCategoryPage(repositoryId, type);
+      count = removeCategoryPage(repositoryId, category);
     }
     while (count > 0);
   }
 
   @Transactional
-  protected int removeCategoryPage(final int repositoryId, final String type) {
-    return dao().removeAll(repositoryId, type, DELETE_BATCH_SIZE_DEFAULT);
+  protected int removeCategoryPage(final int repositoryId, @Nullable final String category) {
+    return dao().removeAll(repositoryId, category, DELETE_BATCH_SIZE_DEFAULT);
   }
 
+  /*
+   * Transactional is intentionally omitted
+   */
   public void removeRepository(final int repositoryId) {
     int count;
     do {
@@ -92,14 +100,29 @@ public class KeyValueStore<T extends KeyValueDAO>
     return dao().browse(repositoryId, type, limit, continuationToken);
   }
 
+  @Transactional
+  public List<String> browseCategories(@Param("repositoryId") final int repositoryId) {
+    return dao().browseCategories(repositoryId);
+  }
+
   /**
    * Browse all entries within the repository.
    */
   @Transactional
   public int count(
       final int repositoryId,
-      final String type)
+      @Nullable final String category)
   {
-    return dao().count(repositoryId, type);
+    return dao().count(repositoryId, category);
+  }
+
+  @Transactional
+  public List<String> findCategories(final int repositoryId, final String key) {
+    return dao().findCategories(repositoryId, key);
+  }
+
+  @Transactional
+  public List<KeyValue> findByCategoryAndKeyLike(final int repositoryId, @Nullable final String category, final String keyLike) {
+    return dao().findByCategoryAndKeyLike(repositoryId, category, keyLike);
   }
 }

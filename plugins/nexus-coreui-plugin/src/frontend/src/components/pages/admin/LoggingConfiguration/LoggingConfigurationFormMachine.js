@@ -16,7 +16,7 @@
  */
 import {assign} from 'xstate';
 import Axios from 'axios';
-
+import { mergeDeepRight } from 'ramda';
 import {ExtJS, FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
@@ -25,14 +25,10 @@ const loggerUrl = (name) => `/service/rest/internal/ui/loggingConfiguration/${na
 
 export default FormUtils.buildFormMachine({
   id: 'LoggingConfigurationFormMachine',
-  config: (config) => ({
-    ...config,
+  config: (config) => mergeDeepRight(config,{
     states: {
-      ...config.states,
       loaded: {
-        ...config.states.loaded,
         on: {
-          ...config.states.loaded.on,
           SAVE: [
             {
               target: 'saving',
@@ -43,7 +39,7 @@ export default FormUtils.buildFormMachine({
             }
           ],
           CANCEL: {
-            actions: ['onCancel']
+            actions: ['onCancel', 'clearDirtyFlag']
           },
 
           RESET: {

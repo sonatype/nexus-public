@@ -40,7 +40,8 @@ describe('SupportZipForm', function() {
       metrics: false,
       jmx: true,
       limitFileSizes: false,
-      limitZipSize: true
+      limitZipSize: true,
+      replication: false
     };
 
     const {container} = await renderView(params);
@@ -70,7 +71,8 @@ describe('SupportZipForm', function() {
       metrics: false,
       jmx: true,
       limitFileSizes: false,
-      limitZipSize: true
+      limitZipSize: true,
+      replication: false
     };
     const setParams = jest.fn((event) => event.persist());
     const {container} = await renderView(params, setParams);
@@ -94,7 +96,8 @@ describe('SupportZipForm', function() {
       metrics: false,
       jmx: true,
       limitFileSizes: false,
-      limitZipSize: true
+      limitZipSize: true,
+      replication: false
     };
 
     const nonHa = (await renderView(params, undefined, undefined, false, undefined)).container;

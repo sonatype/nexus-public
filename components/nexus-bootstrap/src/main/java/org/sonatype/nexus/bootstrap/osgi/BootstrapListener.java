@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 
@@ -40,14 +41,7 @@ import static java.lang.Boolean.parseBoolean;
 import static java.util.prefs.Preferences.userRoot;
 import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshBundles;
 import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshManagedBundles;
-import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED;
-import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_DEVELOPER;
-import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
-import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_TABLE_SEARCH;
-import static org.sonatype.nexus.common.app.FeatureFlags.ELASTIC_SEARCH_ENABLED;
-import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
-import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
-import static org.sonatype.nexus.common.app.FeatureFlags.SESSION_ENABLED;
+import static org.sonatype.nexus.common.app.FeatureFlags.*;
 
 /**
  * {@link ServletContextListener} that bootstraps an OSGi-based application.
@@ -83,6 +77,8 @@ public class BootstrapListener
 
   private FilterTracker filterTracker;
 
+  private Path workDirPath;
+
   @Override
   public void contextInitialized(final ServletContextEvent event) {
     log.info("Initializing");
@@ -100,7 +96,7 @@ public class BootstrapListener
       requireProperty(properties, "karaf.data");
 
       File workDir = new File(properties.getProperty("karaf.data")).getCanonicalFile();
-      Path workDirPath = workDir.toPath();
+      workDirPath = workDir.toPath();
       DirectoryHelper.mkdir(workDirPath);
 
       if (hasProFeature(properties)) {
@@ -114,6 +110,7 @@ public class BootstrapListener
 
       selectDatastoreFeature(properties);
       selectAuthenticationFeature(properties);
+      readEnvironmentVariables(properties);
 
       // pass bootstrap properties to embedded servlet listener
       servletContext.setAttribute("nexus.properties", properties);
@@ -222,7 +219,7 @@ public class BootstrapListener
   }
 
   boolean isNullNexusLicenseFile() {
-    return System.getProperty("nexus.licenseFile") == null;
+    return System.getProperty("nexus.licenseFile") == null && System.getenv("NEXUS_LICENSE_FILE") == null;
   }
 
   boolean isNullJavaPrefLicense() {
@@ -239,19 +236,36 @@ public class BootstrapListener
     }
   }
 
-  private static void selectDatastoreFeature(final Properties properties) {
+  private void readEnvironmentVariables(final Properties properties) {
+
+    properties.setProperty(CHANGE_REPO_BLOBSTORE_TASK_ENABLED,
+      Optional.ofNullable(System.getenv("CHANGE_REPO_BLOBSTORE_TASK_ENABLED")).orElse("false"));
+  }
+
+  private void selectDatastoreFeature(final Properties properties) {
     // datastore developer mode includes datastore user mode
     if (parseBoolean(properties.getProperty(DATASTORE_DEVELOPER, "false"))) {
       properties.setProperty(DATASTORE_ENABLED, "true");
     }
 
-    // datastore clustered mode includes datastore user mode
-    if (parseBoolean(properties.getProperty(DATASTORE_CLUSTERED_ENABLED, "false"))) {
+    // table search should only be turned on via clustered flag
+    if (parseBoolean(properties.getProperty(DATASTORE_CLUSTERED_ENABLED,
+        Optional.ofNullable(System.getenv("DATASTORE_CLUSTERED_ENABLED")).orElse("false")))) {
+      // As we read the ENV variable we need to enable feature flagged classes using in-memory properties hashtable
+      properties.setProperty(DATASTORE_CLUSTERED_ENABLED, "true");
       properties.setProperty(DATASTORE_ENABLED, "true");
+      properties.setProperty(DATASTORE_TABLE_SEARCH, "true");
+      properties.setProperty(ELASTIC_SEARCH_ENABLED, "false");
+      properties.setProperty(SQL_DISTRIBUTED_CACHE, "true");
+
+      // JWT and Blobstore Metrics should also be enabled for clustered
+      properties.setProperty(JWT_ENABLED, "true");
+      properties.setProperty(DATASTORE_BLOBSTORE_METRICS, "true");
     }
 
     // datastore search mode enables datastore user mode
     // disables elastic search mode
+    // table search should only be turned on via clustered flag
     if (parseBoolean(properties.getProperty(DATASTORE_TABLE_SEARCH, "false"))) {
       properties.setProperty(DATASTORE_ENABLED, "true");
       properties.setProperty(ELASTIC_SEARCH_ENABLED, "false");

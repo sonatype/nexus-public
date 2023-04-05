@@ -15,9 +15,9 @@ import Axios from 'axios';
 import {render, screen, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
-import {act} from 'react-dom/test-utils';
 
-import {ExtJS, TestUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import UIStrings from '../../../../constants/UIStrings';
 import RolesDetails from './RolesDetails';
@@ -126,6 +126,7 @@ const SOURCE_TYPES_RESP = {
 
 const selectors = {
   ...TestUtils.selectors,
+  ...TestUtils.formSelectors,
   type: () => screen.queryByLabelText(LABELS.TYPE.LABEL),
   id: () => screen.queryByLabelText(LABELS.ID.LABEL),
   externalRoleType: () => screen.queryByLabelText(LABELS.EXTERNAL_TYPE.LABEL),
@@ -184,7 +185,8 @@ describe('RolesDetails', function() {
       expect(roles()).toHaveTextContent(ROLES[it].name);
     });
 
-    expect(saveButton()).toHaveClass('disabled');
+    userEvent.click(saveButton());
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
   });
 
   it('renders load error message', async function() {
@@ -209,23 +211,19 @@ describe('RolesDetails', function() {
     expect(description()).not.toBeInTheDocument();
     expect(roles()).not.toBeInTheDocument();
     expect(privileges()).not.toBeInTheDocument();
-    expect(saveButton()).toHaveClass('disabled');
 
     userEvent.selectOptions(type(), TYPES.INTERNAL);
     expect(name()).toBeInTheDocument();
-    expect(saveButton()).toHaveClass('disabled');
 
-    await TestUtils.changeField(id, testRoleId);
+    userEvent.click(saveButton());
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
+
     userEvent.clear(id());
-    expect(screen.getByText(UIStrings.ERROR.FIELD_REQUIRED)).toBeInTheDocument();
     await TestUtils.changeField(id, testRoleId);
-    expect(saveButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     await TestUtils.changeField(name, testRoleName);
-    userEvent.clear(name());
-    expect(screen.getByText(UIStrings.ERROR.FIELD_REQUIRED)).toBeInTheDocument();
-    await TestUtils.changeField(name, testRoleName);
-    expect(saveButton()).not.toHaveClass('disabled');
+    expect(selectors.queryFormError()).not.toBeInTheDocument();
   });
 
   it('fires onDone when cancelled', async function() {
@@ -360,11 +358,9 @@ describe('RolesDetails', function() {
     await TestUtils.changeField(name, testRoleName);
     await TestUtils.changeField(description, testRoleDescription);
 
-    expect(saveButton()).not.toHaveClass('disabled');
+    userEvent.click(saveButton());
+    await waitForElementToBeRemoved(selectors.querySavingMask());
 
-    await act(async () => userEvent.click(saveButton()));
-
-    expect(NX.Messages.error).toHaveBeenCalledWith(UIStrings.ERROR.SAVE_ERROR);
     expect(screen.getByText(new RegExp(message))).toBeInTheDocument();
   });
 

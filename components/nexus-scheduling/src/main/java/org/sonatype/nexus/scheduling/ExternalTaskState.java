@@ -33,12 +33,17 @@ public class ExternalTaskState {
 
   private final Long lastRunDuration;
 
-  public ExternalTaskState(final TaskState state,
-                           @Nullable final TaskState lastEndState,
-                           @Nullable final Date lastRunStarted,
-                           @Nullable final Long lastRunDuration)
+  private final Date nextFireTime;
+
+  public ExternalTaskState(
+      final TaskState state,
+      final Date nextFireTime,
+      @Nullable final TaskState lastEndState,
+      @Nullable final Date lastRunStarted,
+      @Nullable final Long lastRunDuration)
   {
     this.state = checkNotNull(state);
+    this.nextFireTime = nextFireTime;
     this.lastEndState = lastEndState;
     this.lastRunStarted = lastRunStarted; // NOSONAR
     this.lastRunDuration = lastRunDuration;
@@ -47,10 +52,15 @@ public class ExternalTaskState {
   public ExternalTaskState(final TaskInfo taskInfo) {
     this(
         taskInfo.getCurrentState().getState(),
+        taskInfo.getCurrentState().getNextRun(),
         ofNullable(taskInfo.getLastRunState()).map(LastRunState::getEndState).orElse(null),
         ofNullable(taskInfo.getLastRunState()).map(LastRunState::getRunStarted).orElse(null),
         ofNullable(taskInfo.getLastRunState()).map(LastRunState::getRunDuration).orElse(null)
     );
+  }
+
+  public Date getNextFireTime() {
+    return nextFireTime;
   }
 
   public TaskState getState() {

@@ -53,6 +53,10 @@ Ext.define('NX.view.header.QuickSearch', {
     this.callParent();
   },
 
+  onValueChange: function() {
+    // NO-OP to Prevent Auto-Search
+  },
+
   triggerSearch: function() {
     this.fireEvent('search', this, this.getValue());
   }

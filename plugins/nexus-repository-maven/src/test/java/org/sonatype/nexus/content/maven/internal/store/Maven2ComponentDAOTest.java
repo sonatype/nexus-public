@@ -173,7 +173,7 @@ public class Maven2ComponentDAOTest
     component.setAttributes(newAttributes("component"));
     component.setKind("aKind");
     component.setRepositoryId(repositoryId);
-    dao.createComponent(component);
+    dao.createComponent(component, false);
     dao.updateBaseVersion(component);
   }
 }

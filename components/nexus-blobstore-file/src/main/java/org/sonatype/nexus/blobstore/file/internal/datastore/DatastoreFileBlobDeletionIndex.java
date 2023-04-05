@@ -14,8 +14,7 @@ package org.sonatype.nexus.blobstore.file.internal.datastore;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -25,6 +24,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -37,15 +37,16 @@ import org.sonatype.nexus.blobstore.file.store.SoftDeletedBlobsStore;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.property.PropertiesFile;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
+import org.sonatype.nexus.scheduling.PeriodicJobService;
 
 import com.squareup.tape.QueueFile;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.naturalOrder;
 import static java.util.Comparator.nullsLast;
-import static org.sonatype.nexus.blobstore.file.FileBlobStore.DELETIONS_FILENAME;
 import static org.sonatype.nexus.blobstore.file.FileBlobStore.REBUILD_DELETED_BLOB_INDEX_KEY;
 
 @Named
@@ -53,7 +54,13 @@ public class DatastoreFileBlobDeletionIndex
     extends ComponentSupport
     implements FileBlobDeletionIndex
 {
+  private static final int INTERVAL_IN_SECONDS = 60;
+
   private final SoftDeletedBlobsStore softDeletedBlobsStore;
+
+  private final PeriodicJobService periodicJobService;
+
+  private final Duration migrationDelay;
 
   private FileBlobStore blobStore;
 
@@ -61,19 +68,25 @@ public class DatastoreFileBlobDeletionIndex
 
   private Queue<String> deletedRecordsCache;
 
-  private static final int INTERVAL_IN_SECONDS = 60;
-
   @Inject
-  public DatastoreFileBlobDeletionIndex(final SoftDeletedBlobsStore softDeletedBlobsStore) {
+  public DatastoreFileBlobDeletionIndex(
+      final SoftDeletedBlobsStore softDeletedBlobsStore,
+      final PeriodicJobService periodicJobService,
+      @Named("${nexus.file.deletion.migrate.delay:-60s}") final Duration migrationDelay)
+  {
     this.softDeletedBlobsStore = checkNotNull(softDeletedBlobsStore);
+    this.periodicJobService = checkNotNull(periodicJobService);
+    this.migrationDelay = checkNotNull(migrationDelay);
+    checkArgument(!migrationDelay.isNegative(), "Non-negative nexus.file.deletion.migrate.delay required");
   }
 
   @Override
   public final void initIndex(final PropertiesFile metadata, final FileBlobStore blobStore) throws IOException {
     this.blobStore = blobStore;
     this.blobStoreName = blobStore.getBlobStoreConfiguration().getName();
-    migrateDeletionIndexFromFileIfExists(metadata);
+    scheduleMigrateIndex(metadata);
     deletedRecordsCache = new ArrayDeque<>();
+
   }
 
   @Override
@@ -127,14 +140,38 @@ public class DatastoreFileBlobDeletionIndex
     return softDeletedBlobsStore.count(blobStoreName);
   }
 
-  private void migrateDeletionIndexFromFileIfExists(final PropertiesFile metadata) throws IOException {
-    QueueFile oldDeletionIndex;
+  private void scheduleMigrateIndex(final PropertiesFile metadata) {
+    invoke(periodicJobService::startUsing);
+    periodicJobService.runOnce(() -> {
+      try {
+        migrateDeletionIndexFromFiles(metadata);
+      }
+      catch (IOException e) {
+        log.error("Failed to migrate soft deleted blobs to the database", e);
+      }
+      invoke(periodicJobService::stopUsing);
+    }, (int) migrationDelay.getSeconds());
+  }
 
-    File oldDeletionIndexFile = getOldDeletionIndexFile(blobStore);
-    if (!oldDeletionIndexFile.exists()) {
-      log.debug("Skipping deletion file does not exist");
-      return;
-    }
+  private void migrateDeletionIndexFromFiles(final PropertiesFile metadata) throws IOException {
+    blobStore.getDeletionIndexFiles()
+        .forEach(deletionIndexFile -> {
+          try {
+            migrateDeletionIndexFromFile(metadata, deletionIndexFile);
+          }
+          catch (IOException e) {
+            log.error("An error occurred while attempting to migrate the deletions index {} for {}", deletionIndexFile,
+                blobStoreName);
+          }
+        });
+  }
+
+  private void migrateDeletionIndexFromFile(
+      final PropertiesFile metadata,
+      final @Nullable File oldDeletionIndexFile) throws IOException
+  {
+    QueueFile oldDeletionIndex;
+    log.debug("Starting migration in {} for {}", blobStoreName, oldDeletionIndexFile);
 
     try {
       oldDeletionIndex = new QueueFile(oldDeletionIndexFile);
@@ -181,18 +218,7 @@ public class DatastoreFileBlobDeletionIndex
     }
   }
 
-  private File getOldDeletionIndexFile(final FileBlobStore blobStore) throws IOException {
-    Path blobDir = blobStore.getAbsoluteBlobDir();
-    File deletedIndexFile = blobDir.resolve(blobStore.getDeletionsFilename()).toFile();
-    Path deletedIndexPath = deletedIndexFile.toPath();
-    Path legacyDeletionsIndex = deletedIndexPath.getParent().resolve(DELETIONS_FILENAME);
-    if (!Files.exists(deletedIndexPath) && Files.exists(legacyDeletionsIndex)) {
-      Files.move(legacyDeletionsIndex, deletedIndexPath);
-    }
-    return deletedIndexFile;
-  }
-
-  private Set<String> getPersistedBlobIdsForBlobStore(String blobStoreName) {
+  private Set<String> getPersistedBlobIdsForBlobStore(final String blobStoreName) {
     Set<String> persistedRecords = new HashSet<>();
     Continuation<SoftDeletedBlobsData> page = softDeletedBlobsStore.readRecords(null, blobStoreName);
     while (!page.isEmpty()) {
@@ -202,6 +228,21 @@ public class DatastoreFileBlobDeletionIndex
       page = softDeletedBlobsStore.readRecords(page.nextContinuationToken(), blobStoreName);
     }
     return persistedRecords;
+  }
+
+  private void invoke(final ThrowingRunnable callable) {
+    try {
+      callable.run();
+    }
+    catch (Exception e) {
+      log.debug("Failed to start or stop using the PeriodicJobService", e);
+    }
+  }
+
+  @FunctionalInterface
+  private static interface ThrowingRunnable
+  {
+    void run() throws Exception;
   }
 }
 

@@ -18,14 +18,13 @@ import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
-import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.datastore.TransactionalStoreSupport;
 import org.sonatype.nexus.datastore.api.ContentDataAccess;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.datastore.api.DuplicateKeyException;
 import org.sonatype.nexus.transaction.Transaction;
 import org.sonatype.nexus.transaction.Transactional;
-import org.sonatype.nexus.transaction.TransactionalStore;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.inject.TypeLiteral;
@@ -40,22 +39,16 @@ import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
  * @since 3.21
  */
 public abstract class ContentStoreSupport<T extends ContentDataAccess>
-    extends StateGuardLifecycleSupport
-    implements TransactionalStore<DataSession<?>>
+    extends TransactionalStoreSupport
 {
   private static final int DELETE_BATCH_SIZE_DEFAULT =
       SystemPropertiesHelper.getInteger("nexus.content.deleteBatchSize", 1000);
-
-  private final DataSessionSupplier sessionSupplier;
-
-  private final String contentStoreName;
 
   private final Class<T> daoClass;
 
   @SuppressWarnings({ "rawtypes", "unchecked" })
   protected ContentStoreSupport(final DataSessionSupplier sessionSupplier, final String contentStoreName) {
-    this.sessionSupplier = checkNotNull(sessionSupplier);
-    this.contentStoreName = checkNotNull(contentStoreName);
+    super(sessionSupplier, contentStoreName);
 
     // use generic type information to discover the DAO class from the concrete implementation
     TypeLiteral<?> superType = TypeLiteral.get(getClass()).getSupertype(ContentStoreSupport.class);
@@ -67,8 +60,7 @@ public abstract class ContentStoreSupport<T extends ContentDataAccess>
                                 final String contentStoreName,
                                 final Class<T> daoClass)
   {
-    this.sessionSupplier = checkNotNull(sessionSupplier);
-    this.contentStoreName = checkNotNull(contentStoreName);
+    super(sessionSupplier, contentStoreName);
     this.daoClass = checkNotNull(daoClass);
   }
 
@@ -94,11 +86,6 @@ public abstract class ContentStoreSupport<T extends ContentDataAccess>
 
   protected int deleteBatchSize() {
     return DELETE_BATCH_SIZE_DEFAULT;
-  }
-
-  @Override
-  public DataSession<?> openSession() {
-    return sessionSupplier.openSession(contentStoreName);
   }
 
   /**

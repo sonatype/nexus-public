@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {useMachine} from '@xstate/react';
+import {useActor} from '@xstate/react';
 import {isEmpty} from 'ramda';
 import {
   NxFormGroup,
@@ -27,31 +27,14 @@ import {FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 import UIStrings from '../../../../constants/UIStrings';
 const {EMAIL_SERVER: LABELS} = UIStrings;
 
-import Machine from './EmailVerifyServerMachine';
-
-export default function EmailVerifyServer({parentMachine}) {
-  const [parentState] = parentMachine;
-  const {isPristine} = parentState.context;
-
-  const initialState = {
-    email: '',
-    testResult: null,
-  };
-
-  const [current, send] = useMachine(Machine, {
-    context: {
-      data: initialState,
-      pristineData: initialState,
-    },
-    devTools: true,
-  });
+export default function EmailVerifyServer({actor}) {
+  const [state, send] = useActor(actor);
 
   const {validationErrors, data, saveError, testResult, isTouched} =
-    current.context;
-  const isSaving = current.matches('saving');
+    state.context;
+  const isSaving = state.matches('saving');
   const isInvalid = FormUtils.isInvalid(validationErrors);
-  const disabled =
-    isInvalid || isSaving || ValidationUtils.isBlank(data.email) || !isPristine;
+  const disabled = isInvalid || isSaving || ValidationUtils.isBlank(data.email);
 
   const onTest = () => send('SAVE');
 
@@ -71,10 +54,9 @@ export default function EmailVerifyServer({parentMachine}) {
           <NxFormGroup
             label={LABELS.VERIFY.LABEL}
             sublabel={LABELS.VERIFY.SUB_LABEL}
-            isRequired
           >
             <NxTextInput
-              {...FormUtils.fieldProps('email', current)}
+              {...FormUtils.fieldProps('email', state)}
               onChange={FormUtils.handleUpdate('email', send)}
               onKeyDown={handleEnter}
             />

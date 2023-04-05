@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.content.store;
 
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -49,7 +50,9 @@ import com.google.inject.assistedinject.Assisted;
 import org.apache.shiro.util.CollectionUtils;
 
 import static java.util.Arrays.stream;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED_NAMED;
 import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttributeChange;
+import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
 
 /**
  * {@link Asset} store.
@@ -62,12 +65,17 @@ public class AssetStore<T extends AssetDAO>
 {
   private static final int LAST_UPDATED_LIMIT = 1000;
 
+  private final boolean clustered;
+
   @Inject
-  public AssetStore(final DataSessionSupplier sessionSupplier,
-                    @Assisted final String contentStoreName,
-                    @Assisted final Class<T> daoClass)
+  public AssetStore(
+      final DataSessionSupplier sessionSupplier,
+      @Named(DATASTORE_CLUSTERED_ENABLED_NAMED) final boolean clustered,
+      @Assisted final String contentStoreName,
+      @Assisted final Class<T> daoClass)
   {
     super(sessionSupplier, contentStoreName, daoClass);
+    this.clustered = clustered;
   }
 
   /**
@@ -175,7 +183,7 @@ public class AssetStore<T extends AssetDAO>
    *
    * @param repositoryId the repository to browse
    * @param addedToRepository addedToRepository of asset content from the last record of the previous call.
-   * @param regexExpressions  list of wildcard expressions to match on path.
+   * @param regexList  list of wildcard expressions to match on path.
    *                             Supported special characters are * and ?
    * @param batchSize how many assets to fetch in each call. May return more assets than this if there are
    *                  multiple assets with the same addedToRepository value as the last record.
@@ -185,7 +193,7 @@ public class AssetStore<T extends AssetDAO>
   public List<AssetInfo> findUpdatedAssets(
       final int repositoryId,
       @Nullable final OffsetDateTime addedToRepository,
-      final List<String> regexExpressions,
+      final List<String> regexList,
       @Nullable String filter,
       @Nullable Map<String, Object> filterParams,
       final int batchSize)
@@ -200,7 +208,7 @@ public class AssetStore<T extends AssetDAO>
     // Fetch one extra record to check if there are more results with the same addedToRepository value. Most of the time
     // this won't be the case, and we will not need a query to find them all.
     List<AssetInfo> assets =
-        dao().findGreaterThanOrEqualToAddedToRepository(repositoryId, addedToRepositoryNormalized, regexExpressions,
+        dao().findGreaterThanOrEqualToAddedToRepository(repositoryId, addedToRepositoryNormalized, regexList,
             filter, filterParams, batchSize + 1);
 
     if (assets.size() == batchSize + 1) {
@@ -215,7 +223,7 @@ public class AssetStore<T extends AssetDAO>
         // paging with a greater than query.
         List<AssetInfo> matchAddedToRepository =
             dao().findAddedToRepositoryWithinRange(repositoryId, startAddedToRepository, endAddedToRepository,
-                regexExpressions, filter, filterParams, LAST_UPDATED_LIMIT);
+                regexList, filter, filterParams, LAST_UPDATED_LIMIT);
 
         if (matchAddedToRepository.size() == LAST_UPDATED_LIMIT) {
           log.error(
@@ -248,7 +256,7 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public void createAsset(final AssetData asset) {
-    dao().createAsset(asset);
+    dao().createAsset(asset, clustered);
 
     postCommitEvent(() -> new AssetCreatedEvent(asset));
   }
@@ -313,7 +321,7 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public void updateAssetKind(final Asset asset) {
-    dao().updateAssetKind(asset);
+    dao().updateAssetKind(asset, clustered);
 
     postCommitEvent(() -> new AssetKindEvent(asset));
   }
@@ -336,7 +344,7 @@ public class AssetStore<T extends AssetDAO>
           .reduce((a, b) -> a || b)
           .orElse(false);
       if (changesApplied) {
-        dao().updateAssetAttributes(asset);
+        dao().updateAssetAttributes(asset, clustered);
 
         postCommitEvent(() -> new AssetAttributesEvent(asset, changeSet.getChanges()));
       }
@@ -350,7 +358,7 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public void updateAssetBlobLink(final Asset asset) {
-    dao().updateAssetBlobLink(asset);
+    dao().updateAssetBlobLink(asset, clustered);
 
     postCommitEvent(() -> new AssetUploadedEvent(asset));
   }
@@ -379,6 +387,8 @@ public class AssetStore<T extends AssetDAO>
     boolean deleted = dao().deleteAsset(asset);
 
     if (deleted) {
+      asset.component()
+          .ifPresent(component -> dao().updateEntityVersion(internalComponentId(component), clustered));
       postCommitEvent(() -> new AssetDeletedEvent(asset));
     }
     return deleted;
@@ -413,7 +423,7 @@ public class AssetStore<T extends AssetDAO>
 
     Collection<Asset> assets = dao().readPathsFromRepository(repositoryId, paths);
 
-    if(assets.isEmpty()){
+    if (assets.isEmpty()) {
       return 0;
     }
 
@@ -421,7 +431,16 @@ public class AssetStore<T extends AssetDAO>
     preCommitEvent(() -> new AssetPrePurgeEvent(repositoryId, assetIds));
     postCommitEvent(() -> new AssetPurgedEvent(repositoryId, assetIds));
 
-    return purgeAssets(assetIds);
+    int[] componentIds = new int[0];
+    if (clustered) {
+      componentIds = Arrays.stream(dao().selectComponentIds(assetIds)).distinct().toArray();
+    }
+
+    int count = purgeAssets(assetIds);
+    if (clustered && componentIds.length > 0) {
+      dao().updateEntityVersions(componentIds, clustered);
+    }
+    return count;
   }
 
   /**
@@ -513,7 +532,7 @@ public class AssetStore<T extends AssetDAO>
       return dao().purgeSelectedAssets(stream(assetIds).boxed().toArray(Integer[]::new));
     }
     else {
-      return dao().purgeSelectedAssets(assetIds);
+      return dao().purgeSelectedAssets(assetIds, clustered);
     }
   }
 }

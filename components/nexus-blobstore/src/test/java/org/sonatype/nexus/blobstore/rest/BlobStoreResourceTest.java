@@ -24,6 +24,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConnectionException;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaResult;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
+import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -33,7 +34,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -43,6 +43,9 @@ public class BlobStoreResourceTest
 {
   @Mock
   BlobStoreManager manager;
+
+  @Mock
+  BlobStoreConfigurationStore store;
 
   @Mock
   BlobStoreQuotaService quotaService;
@@ -74,7 +77,7 @@ public class BlobStoreResourceTest
     Map<String, ConnectionChecker> connectionCheckers = new HashMap<>();
     connectionCheckers.put("azure cloud storage", connectionChecker);
 
-    resource = new BlobStoreResource(manager, quotaService, connectionCheckers);
+    resource = new BlobStoreResource(manager, store, quotaService, connectionCheckers);
   }
 
   @Test

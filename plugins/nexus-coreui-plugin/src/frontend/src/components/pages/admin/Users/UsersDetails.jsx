@@ -31,13 +31,13 @@ import UsersReadOnly from './UsersReadOnly';
 import UsersToken from './UsersToken';
 
 import UIStrings from '../../../../constants/UIStrings';
-import {parseIdParameter, fullName} from "./UsersHelper";
+import {parseIdParameter, fullName, sourceLabel} from './UsersHelper';
 
 const {USERS: {FORM: LABELS}} = UIStrings;
 
 export default function UsersDetails({itemId, onDone}) {
   const hasDeletePermission = ExtJS.checkPermission('nexus:users:delete');
-  const hasEditPermission = ExtJS.checkPermission('nexus:users:update');
+  const canEdit = ExtJS.checkPermission('nexus:users:update');
 
   const {source, userId} = parseIdParameter(itemId);
 
@@ -56,19 +56,17 @@ export default function UsersDetails({itemId, onDone}) {
     devTools: true,
   });
 
-  const {data: {readOnly, firstName, lastName}, pristineData: {userId: id}} = current.context;
+  const {data: {firstName, lastName}, pristineData: {userId: id}} = current.context;
 
-  const canEdit = hasEditPermission && !readOnly;
   const isEdit = ValidationUtils.notBlank(id);
   const showReadOnly = isEdit && !canEdit;
-  const edition = ExtJS.state().getEdition();
-  const isPro = edition === 'PRO';
+  const isPro = ExtJS.isProEdition();
 
   return <Page className="nxrm-user">
     <PageHeader>
       <PageTitle
           text={isEdit ? LABELS.EDIT_TILE(fullName({firstName, lastName})) : LABELS.CREATE_TITLE}
-          description={isEdit ? LABELS.EDIT_DESCRIPTION : null}
+          description={LABELS.EDIT_DESCRIPTION(sourceLabel(source))}
       />
     </PageHeader>
     <ContentBody className="nxrm-user-form">

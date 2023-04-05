@@ -12,10 +12,10 @@
  */
 import React from 'react';
 import Axios from 'axios';
-import {fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
+import {fireEvent, waitFor, waitForElementToBeRemoved, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import {TestUtils} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import UIStrings from '../../../../constants/UIStrings';
 import UserAccount from './UserAccount';
@@ -59,6 +59,9 @@ jest.mock('axios', () => {
   };
 });
 
+const selectors = {
+  ...TestUtils.formSelectors
+};
 
 describe('UserAccount', () => {
   beforeEach(() => {
@@ -89,7 +92,6 @@ describe('UserAccount', () => {
       firstNameField,
       lastNameField,
       emailField,
-      saveButton,
       discardButton
     } = renderView(<UserAccount/>);
 
@@ -100,15 +102,12 @@ describe('UserAccount', () => {
     expect(lastNameField()).toBeDisabled();
     expect(emailField()).toBeDisabled();
 
-    expect(saveButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
     expect(discardButton()).toHaveClass('disabled');
   });
 
   it('fetches the values of fields from the API and updates them as expected', async () => {
-    let {
-      loadingMask, userIdField, firstNameField, lastNameField, emailField,
-        saveButton, discardButton
-    } = renderView(<UserAccount/>);
+    let {loadingMask, userIdField, firstNameField, lastNameField, emailField, discardButton} = renderView(<UserAccount/>);
 
     await waitForElementToBeRemoved(loadingMask);
 
@@ -117,7 +116,8 @@ describe('UserAccount', () => {
     expect(firstNameField()).toHaveValue('User');
     expect(lastNameField()).toHaveValue('Admin');
     expect(emailField()).toHaveValue('admin@example.com');
-    expect(saveButton()).toHaveClass('disabled');
+
+    expect(screen.queryAllByText(`${TestUtils.THERE_WERE_ERRORS} ${TestUtils.NO_CHANGES_MESSAGE}`)).toHaveLength(2);
     expect(discardButton()).toHaveClass('disabled');
   });
 
@@ -131,14 +131,15 @@ describe('UserAccount', () => {
     fireEvent.change(lastNameField(), {target: {value: 'FooBar'}});
     await waitFor(() => expect(lastNameField()).toHaveValue('FooBar'));
 
-    expect(saveButton()).not.toHaveClass('disabled');
+    expect(screen.queryAllByText(`${TestUtils.THERE_WERE_ERRORS} ${TestUtils.NO_CHANGES_MESSAGE}`)).toHaveLength(1);
     expect(discardButton()).not.toHaveClass('disabled');
 
     expect(Axios.put).toHaveBeenCalledTimes(0);
 
     userEvent.click(saveButton());
-
-    await waitFor(() => expect(saveButton()).toHaveClass('disabled'));
+    await waitFor(() =>
+        expect(screen.queryAllByText(`${TestUtils.THERE_WERE_ERRORS} ${TestUtils.NO_CHANGES_MESSAGE}`)).toHaveLength(1)
+    );
     expect(discardButton()).toHaveClass('disabled');
 
     expect(Axios.put).toHaveBeenCalledTimes(1);
@@ -171,7 +172,7 @@ describe('UserAccount', () => {
     await waitFor(() => expect(discardButton()).toHaveClass('disabled'));
 
     expect(lastNameField()).toHaveValue('Admin');
-    expect(saveButton()).toHaveClass('disabled');
+    expect(screen.queryAllByText(`${TestUtils.THERE_WERE_ERRORS} ${TestUtils.NO_CHANGES_MESSAGE}`)).toHaveLength(2)
     expect(discardButton()).toHaveClass('disabled');
   });
 

@@ -17,10 +17,12 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeoutException;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.net.ssl.HttpsURLConnection;
@@ -30,7 +32,6 @@ import org.sonatype.goodies.testsupport.TestIndex;
 import org.sonatype.goodies.testsupport.junit.TestDataRule;
 import org.sonatype.goodies.testsupport.junit.TestIndexRule;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
-import org.sonatype.nexus.common.app.FeatureFlags;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.net.PortAllocator;
 import org.sonatype.nexus.common.text.Strings2;
@@ -64,6 +65,7 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 import static org.ops4j.pax.exam.CoreOptions.composite;
 import static org.ops4j.pax.exam.CoreOptions.maven;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
@@ -373,7 +375,7 @@ public abstract class NexusPaxExamSupport
    * @return Pax-Exam option to install a Nexus distribution based on groupId and artifactId
    */
   public static Option nexusDistribution(final String groupId, final String artifactId) {
-    return nexusDistribution(maven(groupId, artifactId).versionAsInProject().type("zip"));
+    return nexusDistribution(maven(groupId, artifactId).version(nexusVersion()).type("zip"));
   }
 
   /**
@@ -383,7 +385,14 @@ public abstract class NexusPaxExamSupport
    * @return Pax-Exam option to install a Nexus distribution based on groupId, artifactId and classifier
    */
   public static Option nexusDistribution(final String groupId, final String artifactId, final String classifier) {
-    return nexusDistribution(maven(groupId, artifactId).classifier(classifier).versionAsInProject().type("zip"));
+    return nexusDistribution(maven(groupId, artifactId).classifier(classifier).version(nexusVersion()).type("zip"));
+  }
+
+  /**
+   * Uses a publicly available assembly to compute the version of Nexus
+   */
+  private static String nexusVersion() {
+    return MavenUtils.getArtifactVersion("org.sonatype.nexus.assemblies", "nexus-base-template");
   }
 
   /**
@@ -526,6 +535,7 @@ public abstract class NexusPaxExamSupport
             .withEnv("POSTGRES_USER", DB_USER)
             .withEnv("POSTGRES_PASSWORD", DB_PASSWORD)
             .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger(NexusPaxExamSupport.class)))
+            .withCommand("postgres", "-c", "max_connections=60")
             .withClasspathResourceMapping("initialize-postgres.sql", "/docker-entrypoint-initdb.d/initialize-postgres.sql", READ_ONLY)
             .waitingFor(Wait.forLogMessage(".*database system is ready to accept connections.*", 1));
         return combine(null,
@@ -573,6 +583,11 @@ public abstract class NexusPaxExamSupport
             getS3OptionalCompositeOption(accessSecret, System.getProperty(accessSecret)),
             getS3OptionalCompositeOption(endpoint, System.getProperty(endpoint)),
             getS3OptionalCompositeOption(forcePathStyle, System.getProperty(forcePathStyle))
+        );
+      case "azure":
+        return composite(
+            // enable azure default
+            editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.test.default.azure", Boolean.TRUE.toString())
         );
       default:
         return composite();
@@ -625,8 +640,8 @@ public abstract class NexusPaxExamSupport
    * @return Pax-Exam option to change the Nexus edition based on groupId and artifactId
    */
   public static Option nexusEdition(final String groupId, final String artifactId) {
-    return nexusEdition(maven(groupId, artifactId).versionAsInProject().classifier("features").type("xml"),
-        artifactId + '/' + MavenUtils.getArtifactVersion(groupId, artifactId));
+    return nexusEdition(maven(groupId, artifactId).version(nexusVersion()).classifier("features").type("xml"),
+        artifactId + '/' + nexusVersion());
   }
 
   /**
@@ -640,8 +655,8 @@ public abstract class NexusPaxExamSupport
    * @return Pax-Exam option to install a Nexus plugin based on groupId and artifactId
    */
   public static Option nexusFeature(final String groupId, final String artifactId) {
-    return nexusFeature(maven(groupId, artifactId).versionAsInProject().classifier("features").type("xml"),
-        artifactId + '/' + MavenUtils.getArtifactVersion(groupId, artifactId));
+    return nexusFeature(maven(groupId, artifactId).version(nexusVersion()).classifier("features").type("xml"),
+        artifactId + '/' + nexusVersion());
   }
 
   /**
@@ -750,7 +765,20 @@ public abstract class NexusPaxExamSupport
     // HA mode enable
     Option dsClusteredEnable = editConfigurationFilePut(NEXUS_PROPERTIES_FILE, DATASTORE_CLUSTERED_ENABLED, "true");
     Option jwtEnabled = editConfigurationFilePut(NEXUS_PROPERTIES_FILE, JWT_ENABLED, "true");
-    return when(ha).useOptions(dsClusteredEnable, jwtEnabled);
+    // For tests ensure the default blobstore & repositories are created
+    Option blobstoreProvisionDefaults =
+        editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.blobstore.provisionDefaults", "true");
+    Option repositoryProvisionDefaults =
+        editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.skipDefaultRepositories", "false");
+
+    List<String> formats = Arrays.asList("apt", "cocoapods", "conan", "conda", "gitlfs", "go", "helm", "nuget",
+        "p2", "pypi", "raw", "rubygems", "yum");
+    Option haFormats = composite(formats.stream()
+        .map(format -> editConfigurationFilePut(NEXUS_PROPERTIES_FILE, format("nexus.%s.ha.supported", format), "true"))
+        .toArray(Option[]::new));
+
+    return when(ha).useOptions(dsClusteredEnable, jwtEnabled, blobstoreProvisionDefaults, repositoryProvisionDefaults,
+        haFormats);
   }
 
   protected boolean isNewDb() {

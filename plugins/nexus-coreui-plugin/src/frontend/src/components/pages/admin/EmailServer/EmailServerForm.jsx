@@ -11,51 +11,41 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
+import {FormUtils, UseNexusTruststore} from '@sonatype/nexus-ui-plugin';
 import {
-  NxForm,
-  NxFormGroup,
   NxButton,
-  NxH2,
-  NxTextInput,
-  NxFormRow,
-  NxFieldset,
-  NxTooltip,
   NxCheckbox,
+  NxFieldset,
+  NxFormGroup,
+  NxFormRow,
+  NxH2,
+  NxStatefulForm,
+  NxTextInput,
   NxTile,
+  NxTooltip,
 } from '@sonatype/react-shared-components';
+import {isEmpty} from 'ramda';
 
 import UIStrings from '../../../../constants/UIStrings';
 
 const {EMAIL_SERVER: {FORM: LABELS}} = UIStrings;
 
 export default function EmailServerForm({ parentMachine }) {
-  const [current, send] = parentMachine;
+  const [state, send] = parentMachine;
   const {
-    isPristine,
-    loadError,
-    saveError,
-    validationErrors,
-  } = current.context;
+    data,
+    isPristine
+  } = state.context;
 
-  const isLoading = current.matches('loading');
-  const isSaving = current.matches('saving');
-  const isInvalid = ValidationUtils.isInvalid(validationErrors);
-
-  const save = () => send('SAVE');
-  const retry = () => send('RETRY');
   const discard = () => send('RESET');
 
-  return <NxForm
-      loading={isLoading}
-      loadError={loadError}
-      doLoad={retry}
-      onSubmit={save}
-      submitError={saveError}
-      submitMaskState={isSaving ? false : null}
-      submitBtnText={UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
-      submitMaskMessage={UIStrings.SAVING}
-      validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
+  const remoteUrl = !isEmpty(data.host) ? `https://${data.host}:${data.port}` : '';
+
+  const updateHost = (value) => FormUtils.handleUpdate('host', send, 'UPDATE_AND_CLEAR_PASSWORD')(value);
+  const updatePort = (value) => FormUtils.handleUpdate('port', send, 'UPDATE_AND_CLEAR_PASSWORD')(value);
+
+  return <NxStatefulForm
+      {...FormUtils.formProps(state, send)}
       additionalFooterBtns={<>
         <NxTooltip title={FormUtils.discardTooltip({isPristine})}>
           <NxButton type="button" className={isPristine && 'disabled'} onClick={discard}>
@@ -68,7 +58,7 @@ export default function EmailServerForm({ parentMachine }) {
       <NxH2>{LABELS.SECTIONS.SETUP}</NxH2>
       <NxFormGroup label={LABELS.ENABLED.LABEL}>
         <NxCheckbox
-            {...FormUtils.checkboxProps('enabled', current)}
+            {...FormUtils.checkboxProps('enabled', state)}
             onChange={FormUtils.handleUpdate('enabled', send)}
         >
           {LABELS.ENABLED.SUB_LABEL}
@@ -77,21 +67,26 @@ export default function EmailServerForm({ parentMachine }) {
       <NxFormGroup label={LABELS.HOST.LABEL} isRequired>
         <NxTextInput
             className="nx-text-input--long"
-            {...FormUtils.fieldProps('host', current)}
-            onChange={FormUtils.handleUpdate('host', send)}
+            {...FormUtils.fieldProps('host', state)}
+            onChange={updateHost}
         />
       </NxFormGroup>
       <NxFormGroup label={LABELS.PORT.LABEL} isRequired>
         <NxTextInput
             className="nx-text-input--short"
-            {...FormUtils.fieldProps('port', current)}
-            onChange={FormUtils.handleUpdate('port', send)}
+            {...FormUtils.fieldProps('port', state)}
+            onChange={updatePort}
         />
       </NxFormGroup>
+      <UseNexusTruststore
+        remoteUrl={remoteUrl}
+        {...FormUtils.checkboxProps('nexusTrustStoreEnabled', state)}
+        onChange={FormUtils.handleUpdate('nexusTrustStoreEnabled', send)}
+      />
       <NxFormRow>
         <NxFormGroup label={LABELS.USERNAME.LABEL}>
           <NxTextInput
-              {...FormUtils.fieldProps('username', current)}
+              {...FormUtils.fieldProps('username', state)}
               onChange={FormUtils.handleUpdate('username', send)}
           />
         </NxFormGroup>
@@ -99,7 +94,7 @@ export default function EmailServerForm({ parentMachine }) {
           <NxTextInput
               type="password"
               autoComplete="new-password"
-              {...FormUtils.fieldProps('password', current)}
+              {...FormUtils.fieldProps('password', state)}
               onChange={FormUtils.handleUpdate('password', send)}
           />
         </NxFormGroup>
@@ -107,43 +102,43 @@ export default function EmailServerForm({ parentMachine }) {
       <NxFormGroup label={LABELS.FROM_ADDRESS.LABEL} isRequired>
         <NxTextInput
             className="nx-text-input--long"
-            {...FormUtils.fieldProps('fromAddress', current)}
+            {...FormUtils.fieldProps('fromAddress', state)}
             onChange={FormUtils.handleUpdate('fromAddress', send)}
         />
       </NxFormGroup>
       <NxFormGroup label={LABELS.SUBJECT_PREFIX.LABEL}>
         <NxTextInput
             className="nx-text-input--long"
-            {...FormUtils.fieldProps('subjectPrefix', current)}
+            {...FormUtils.fieldProps('subjectPrefix', state)}
             onChange={FormUtils.handleUpdate('subjectPrefix', send)}
         />
       </NxFormGroup>
       <NxFieldset label={LABELS.SSL_TLS_OPTIONS.LABEL}>
         <NxCheckbox
-            {...FormUtils.checkboxProps('startTlsEnabled', current)}
+            {...FormUtils.checkboxProps('startTlsEnabled', state)}
             onChange={FormUtils.handleUpdate('startTlsEnabled', send)}
         >
           {LABELS.SSL_TLS_OPTIONS.OPTIONS.ENABLE_STARTTLS}
         </NxCheckbox>
         <NxCheckbox
-            {...FormUtils.checkboxProps('startTlsRequired', current)}
+            {...FormUtils.checkboxProps('startTlsRequired', state)}
             onChange={FormUtils.handleUpdate('startTlsRequired', send)}
         >
           {LABELS.SSL_TLS_OPTIONS.OPTIONS.REQUIRE_STARTTLS}
         </NxCheckbox>
         <NxCheckbox
-            {...FormUtils.checkboxProps('sslOnConnectEnabled', current)}
+            {...FormUtils.checkboxProps('sslOnConnectEnabled', state)}
             onChange={FormUtils.handleUpdate('sslOnConnectEnabled', send)}
         >
           {LABELS.SSL_TLS_OPTIONS.OPTIONS.ENABLE_SSL_TLS}
         </NxCheckbox>
         <NxCheckbox
-            {...FormUtils.checkboxProps('sslServerIdentityCheckEnabled', current)}
-            onChange={FormUtils.handleUpdate('sslServerIdentityCheckEnabled', send)}
+            {...FormUtils.checkboxProps('sslCheckServerIdentityEnabled', state)}
+            onChange={FormUtils.handleUpdate('sslCheckServerIdentityEnabled', send)}
         >
           {LABELS.SSL_TLS_OPTIONS.OPTIONS.IDENTITY_CHECK}
         </NxCheckbox>
       </NxFieldset>
     </NxTile.Content>
-  </NxForm>;
+  </NxStatefulForm>;
 }

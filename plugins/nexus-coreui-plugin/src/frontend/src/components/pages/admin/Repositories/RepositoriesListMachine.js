@@ -23,8 +23,8 @@ import {mergeDeepRight, indexBy, prop} from 'ramda';
 
 import {
   isIqServerEnabled,
-  canReadHealthCheck,
-  canReadFirewallStatus
+  canReadFirewallStatus,
+  canUpdateHealthCheck
 } from './IQServerColumns/IQServerHelpers';
 
 const {
@@ -234,7 +234,7 @@ export default ListMachineUtils.buildListMachine({
     }
   },
   guards: {
-    shouldRequestHealthCheck: () => isIqServerEnabled() && canReadHealthCheck(),
+    shouldRequestHealthCheck: () => canUpdateHealthCheck(),
     shouldRequestFirewallStatus: () => isIqServerEnabled() && canReadFirewallStatus()
   }
 });

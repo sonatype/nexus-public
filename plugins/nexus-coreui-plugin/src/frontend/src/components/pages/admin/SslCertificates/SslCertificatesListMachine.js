@@ -19,7 +19,7 @@ import {assign} from 'xstate';
 
 import {ListMachineUtils} from '@sonatype/nexus-ui-plugin';
 
-import {URL} from './SslCertificatesHelper';
+import {URLS} from './SslCertificatesHelper';
 
 export default ListMachineUtils.buildListMachine({
   id: 'SslCertificatesListMachine',
@@ -38,6 +38,6 @@ export default ListMachineUtils.buildListMachine({
       )})
   },
   services: {
-    fetchData: () => Axios.get(URL.sslCertificatesUrl)
+    fetchData: () => Axios.get(URLS.sslCertificatesUrl)
   }
 });

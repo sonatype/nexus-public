@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.content;
 
+import java.util.List;
+
 /**
  * Provides search results.
  *
@@ -21,6 +23,8 @@ public interface SearchResult
     extends RepositoryContent
 {
   Integer componentId();
+
+  Integer repositoryId();
 
   String format();
 
@@ -34,7 +38,5 @@ public interface SearchResult
 
   String normalisedVersion();
 
-  String uploader();
-
-  String uploaderIp();
+  List<String> tags();
 }

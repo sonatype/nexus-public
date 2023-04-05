@@ -36,6 +36,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.app.FeatureFlag;
+import org.sonatype.nexus.common.app.FeatureFlags;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.Repository;
@@ -78,6 +80,7 @@ import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 @Path(SearchResource.RESOURCE_URI)
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
+@FeatureFlag(name = FeatureFlags.ELASTIC_SEARCH_ENABLED, enabledByDefault = true)
 public class SearchResource
     extends ComponentSupport
     implements Resource, SearchResourceDoc
@@ -90,7 +93,7 @@ public class SearchResource
 
   private final SearchUtils searchUtils;
 
-  private final AssetMapUtils assetMapUtils;
+  private final SearchResultFilterUtils searchResultFilterUtils;
 
   private final SearchService searchService;
 
@@ -107,7 +110,7 @@ public class SearchResource
   @Inject
   public SearchResource(
       final SearchUtils searchUtils,
-      final AssetMapUtils assetMapUtils,
+      final SearchResultFilterUtils searchResultFilterUtils,
       final SearchService searchService,
       final ComponentXOFactory componentXOFactory,
       final Set<SearchResourceExtension> searchResourceExtensions,
@@ -115,7 +118,7 @@ public class SearchResource
       @Nullable final Map<String, AssetXODescriptor> assetDescriptors)
   {
     this.searchUtils = checkNotNull(searchUtils);
-    this.assetMapUtils = checkNotNull(assetMapUtils);
+    this.searchResultFilterUtils = checkNotNull(searchResultFilterUtils);
     this.searchService = checkNotNull(searchService);
     this.componentXOFactory = checkNotNull(componentXOFactory);
     this.searchResourceExtensions = checkNotNull(searchResourceExtensions);
@@ -188,10 +191,9 @@ public class SearchResource
 
     MultivaluedMap<String, String> assetParams = getAssetParams(uriInfo);
 
+    // Filter Assets by the criteria
     List<AssetXO> assets = response.getSearchResults().stream()
-        .map(ComponentSearchResult::getAssets)
-        .flatMap(List::stream)
-        .filter(asset -> assetMapUtils.filterAsset(asset, assetParams))
+        .flatMap(component -> searchResultFilterUtils.filterComponentAssets(component, assetParams))
         .map(asset -> AssetXO.from(asset, searchUtils.getRepository(asset.getRepository()), assetDescriptors))
         .collect(toList());
 

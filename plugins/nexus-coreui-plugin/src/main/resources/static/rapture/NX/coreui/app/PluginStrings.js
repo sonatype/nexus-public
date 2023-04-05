@@ -132,7 +132,9 @@ Ext.define('NX.coreui.app.PluginStrings', {
     // Browse -> Search
     Search_Text: 'Search',
     Search_Description: 'Search for components by attribute',
-    Search_SearchRestrictions: 'All searches require at least three non-wildcard (*) characters and cannot start with a wildcard',
+    Search_SearchRestrictions: 'Your search must contain at least one criterion, an additional criterion beyond format, at least three characters before a trailing wildcard (*), and it cannot begin with a wildcard (*).',
+    Search_KeywordSearchRestrictions: 'Enclose your criteria in quotation marks to search an exact phrase; otherwise, search criteria will be split by any commas, spaces, dashes, or forward slashes.<br>' +
+                                      'All keyword searches automatically append a wildcard (*) at the end of each criterion.',
     Search_SaveSearchFilter_Title: 'Save search filter',
     Search_SaveSearchFilter_Name_FieldLabel: 'Filter name',
     Search_SaveSearchFilter_Description_FieldLabel: 'Filter description',
@@ -290,6 +292,9 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchConan_Description: 'Search for components in Conan repositories',
     SearchConan_BaseVersion_FieldLabel: 'Base Version',
     SearchConan_Channel_FieldLabel: 'Channel',
+    SearchConan_RecipeRevision_FieldLabel: 'Recipe Revision',
+    SearchConan_PackageId_FieldLabel: 'Package Id',
+    SearchConan_PackageRevision_FieldLabel: 'Package Revision',
 
     // Browse -> Search -> Conda
     SearchConda_Text: 'Conda',

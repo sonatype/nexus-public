@@ -126,12 +126,20 @@ public class DatastoreBlobstoreRestoreTestHelper
 
   @Override
   public void simulateAssetMetadataLoss() {
-    manager.browse().forEach(repo -> getAssetStore(repo).deleteAssets(getContentRepositoryId(repo)));
+    manager.browse().forEach(repo -> {
+      repo.facet(ContentFacet.class).assets().browse(Integer.MAX_VALUE, null)
+        .forEach(asset -> asset.delete());
+    });
   }
 
   @Override
   public void simulateComponentMetadataLoss() {
-    manager.browse().forEach(repo -> getComponentStore(repo).deleteComponents(getContentRepositoryId(repo)));
+    simulateAssetMetadataLoss();
+
+    manager.browse().forEach(repo -> {
+      int repoId = getContentRepositoryId(repo);
+      getComponentStore(repo).deleteComponents(repoId);
+    });
   }
 
   private int getContentRepositoryId(final Repository repo) {

@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.sonatype.nexus.selector.SelectorConfiguration;
+import org.sonatype.nexus.selector.SelectorConfigurationStore;
 import org.sonatype.nexus.supportzip.datastore.JsonExporter;
 
 import com.google.common.collect.ImmutableMap;

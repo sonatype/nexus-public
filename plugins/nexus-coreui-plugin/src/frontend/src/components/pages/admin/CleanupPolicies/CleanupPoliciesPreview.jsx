@@ -15,14 +15,15 @@ import {useMachine} from '@xstate/react';
 
 import {
   ListMachineUtils,
-  Section, SectionToolbar,
-  Select,
+  Section,
+  SectionToolbar,
   ValidationUtils
 } from '@sonatype/nexus-ui-plugin';
 
 import {
   NxButton,
   NxFilterInput,
+  NxFormSelect,
   NxLoadWrapper,
   NxTable,
   NxTableBody,
@@ -89,23 +90,26 @@ export default function CleanupPoliciesPreview({policyData}) {
     <NxLoadWrapper loading={isLoadingRepositories} error={repositoryLoadError} retryHandler={retryForm}>
       {() => <>
         <div className="nx-form-group cleanup-preview-repository-group">
-          <label id="preview-repository-label" className="nx-label" htmlFor="repository">
+          <label id="preview-repository-label" className="nx-label nx-label--optional" htmlFor="repository">
             <span className="nx-label__text">{UIStrings.CLEANUP_POLICIES.PREVIEW.REPOSITORY_LABEL}</span>
           </label>
           <div id="preview-repository-sub-label" className="nx-sub-label">
             {UIStrings.CLEANUP_POLICIES.PREVIEW.REPOSITORY_DESCRIPTION}
           </div>
           <div className="nx-form-row">
-            <Select name="repository"
-                    onChange={repositoryChangeHandler}
-                    value={repository}
-                    aria-describedby="preview-repository-sub-label"
-                    disabled={!policyData.format}>
+            <NxFormSelect
+                id="repository"
+                name="repository"
+                onChange={repositoryChangeHandler}
+                value={repository}
+                aria-describedby="preview-repository-sub-label"
+                disabled={!policyData.format}
+            >
               <option value="">{UIStrings.CLEANUP_POLICIES.REPOSITORY_SELECT}</option>
               {repositories.map(({id, name}) =>
                   <option key={id} value={id}>{name}</option>
               )}
-            </Select>
+            </NxFormSelect>
             <NxTooltip title={previewUnavailable ? UIStrings.CLEANUP_POLICIES.PREVIEW.BUTTON_TOOLTIP : undefined}>
               <NxButton className={previewUnavailable ? 'disabled' : ''} onClick={previewHandler}>
                 {UIStrings.CLEANUP_POLICIES.PREVIEW.BUTTON}

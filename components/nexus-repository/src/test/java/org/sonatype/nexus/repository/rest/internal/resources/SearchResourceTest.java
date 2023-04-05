@@ -86,6 +86,8 @@ public class SearchResourceTest
 
   SearchResource underTest;
 
+  private SearchResultFilterUtils searchResultFilterUtils;
+
   SearchResponse searchResponse;
 
   ComponentSearchResult searchHitMaven;
@@ -105,7 +107,8 @@ public class SearchResourceTest
     Map<String, AssetXODescriptor> descriptors =
         Collections.singletonMap("maven2", () -> ImmutableSet.of("extension", "classifier", "version"));
 
-    underTest = new SearchResource(searchUtils, assetMapUtils, searchService,
+    searchResultFilterUtils = new SearchResultFilterUtils(searchUtils, Arrays.asList());
+    underTest = new SearchResource(searchUtils, searchResultFilterUtils, searchService,
         new ComponentXOFactory(emptySet()), ImmutableSet.of(searchResourceExtension), eventManager, descriptors);
   }
 

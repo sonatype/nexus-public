@@ -30,6 +30,7 @@ import DockerForeignLayerConfiguration from './DockerForeignLayerConfiguration';
 const {EDITOR} = UIStrings.REPOSITORIES;
 
 const REPLICATION_FEATURE = 'replicationFeatureEnabled';
+const REPLICATION_FORMATS = 'replicationSupportedFormats';
 
 export default function GenericProxyConfiguration({parentMachine}) {
   const [parentState, sendParent] = parentMachine;
@@ -45,6 +46,8 @@ export default function GenericProxyConfiguration({parentMachine}) {
 
   const isReplicationEnabled = ExtJS.state().getValue(REPLICATION_FEATURE) || false;
   const preemptivePullEnabled = replication?.preemptivePullEnabled || false;
+  const formatReplicationSupported = ((ExtJS.state().getValue(REPLICATION_FORMATS) instanceof Array) &&
+      ExtJS.state().getValue(REPLICATION_FORMATS).includes(format)) || false;
 
   function setPreemptivePullEnabled(event) {
     sendParent({
@@ -83,7 +86,7 @@ export default function GenericProxyConfiguration({parentMachine}) {
 
       {format === 'docker' && type === 'proxy' && <DockerForeignLayerConfiguration parentMachine={parentMachine} />}
 
-      {isReplicationEnabled && (
+      {isReplicationEnabled && formatReplicationSupported && (
         <>
           <NxFormGroup
             label={EDITOR.PREEMPTIVE_PULL_LABEL}

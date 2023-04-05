@@ -16,7 +16,8 @@ import {waitFor} from '@testing-library/react';
 import {act} from 'react-dom/test-utils';
 import userEvent from '@testing-library/user-event';
 
-import {ExtJS, TestUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import UIStrings from '../../../../constants/UIStrings';
 import PasswordChangeForm from './PasswordChangeForm';
@@ -38,6 +39,10 @@ jest.mock('axios', () => {
   };
 });
 
+const selectors = {
+  ...TestUtils.formSelectors,
+};
+
 describe('PasswordChangeForm', () => {
   const CHANGE_PASSWORD_URL = '/service/rest/internal/ui/user/admin/password';
 
@@ -50,17 +55,17 @@ describe('PasswordChangeForm', () => {
   }));
 
   it('renders correctly', async () => {
-    let {passwordCurrent, passwordNew, passwordNewConfirm, changePasswordButton, discardButton} = render();
+    let {passwordCurrent, passwordNew, passwordNewConfirm, discardButton} = render();
 
     expect(passwordCurrent()).toHaveValue('');
     expect(passwordNew()).toHaveValue('');
     expect(passwordNewConfirm()).toHaveValue('');
-    expect(changePasswordButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
     expect(discardButton()).toHaveClass('disabled');
   });
 
   it('prevents password change when new matches current', async () => {
-    let {passwordCurrent, passwordNew, passwordNewConfirm, changePasswordButton, discardButton} = render();
+    let {passwordCurrent, passwordNew, passwordNewConfirm, discardButton} = render();
 
     await TestUtils.changeField(passwordCurrent, 'foobar');
 
@@ -68,12 +73,12 @@ describe('PasswordChangeForm', () => {
 
     await TestUtils.changeField(passwordNewConfirm, 'foobar');
 
-    expect(changePasswordButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
     expect(discardButton()).not.toHaveClass('disabled');
   });
 
   it('prevents password change when new does not match confirm', async () => {
-    let {passwordCurrent, passwordNew, passwordNewConfirm, changePasswordButton, discardButton} = render();
+    let {passwordCurrent, passwordNew, passwordNewConfirm, discardButton} = render();
 
     await TestUtils.changeField(passwordCurrent, 'foobar');
 
@@ -81,7 +86,7 @@ describe('PasswordChangeForm', () => {
 
     await TestUtils.changeField(passwordNewConfirm, 'bazzl');
 
-    expect(changePasswordButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
     expect(discardButton()).not.toHaveClass('disabled');
   });
 
@@ -110,7 +115,7 @@ describe('PasswordChangeForm', () => {
     expect(passwordCurrent()).toHaveValue('');
     expect(passwordNew()).toHaveValue('');
     expect(passwordNewConfirm()).toHaveValue('');
-    expect(changePasswordButton()).toHaveClass('disabled');
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
     expect(discardButton()).toHaveClass('disabled');
   });
 
@@ -155,7 +160,8 @@ describe('PasswordChangeForm', () => {
     await waitFor(() => expect(passwordCurrent()).toHaveValue(''));
     expect(passwordNew()).toHaveValue('');
     expect(passwordNewConfirm()).toHaveValue('');
-    expect(changePasswordButton()).toHaveClass('disabled');
+
+    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
     expect(discardButton()).toHaveClass('disabled');
   });
 });

@@ -60,7 +60,8 @@ Ext.define('NX.coreui.controller.Licensing', {
         variants: ['x16', 'x32']
       },
       visible: function () {
-        return NX.Permissions.check('nexus:licensing:read');
+        return NX.Permissions.check('nexus:licensing:read') &&
+            !NX.State.getValue('nexus.react.licensing', true);
       }
     }, me);
 

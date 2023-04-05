@@ -316,7 +316,8 @@ const repositoryFormats = {
     validators: (data) => ({
       docker: {
         httpPort: validateDockerConnectorPort(data, 'httpPort'),
-        httpsPort: validateDockerConnectorPort(data, 'httpsPort')
+        httpsPort: validateDockerConnectorPort(data, 'httpsPort'),
+        subdomain: validateDockerSubdomain(data)
       }
     })
   },
@@ -345,7 +346,8 @@ const repositoryFormats = {
       }),
       docker: {
         httpPort: validateDockerConnectorPort(data, 'httpPort'),
-        httpsPort: validateDockerConnectorPort(data, 'httpsPort')
+        httpsPort: validateDockerConnectorPort(data, 'httpsPort'),
+        subdomain: validateDockerSubdomain(data)
       }
     })
   },

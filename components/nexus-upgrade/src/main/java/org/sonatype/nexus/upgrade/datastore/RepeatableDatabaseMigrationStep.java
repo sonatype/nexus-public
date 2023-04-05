@@ -24,12 +24,14 @@ public abstract class RepeatableDatabaseMigrationStep
     implements DatabaseMigrationStep
 {
   @Override
-  public Optional<String> version() {
+  public final Optional<String> version() {
     return Optional.empty();
   }
 
   /**
    * Migrations will run when the checksum changes.
+   *
+   * Flyway considers the checksum prior to the first run as {@code null}
    */
   @Override
   public abstract Integer getChecksum();

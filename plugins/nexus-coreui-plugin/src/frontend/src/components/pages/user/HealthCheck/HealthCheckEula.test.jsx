@@ -15,7 +15,7 @@ import Axios from 'axios';
 import {act} from 'react-dom/test-utils';
 import userEvent from '@testing-library/user-event';
 
-import {TestUtils} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import UIStrings from '../../../../constants/UIStrings';
 import HealthCheckEula from './HealthCheckEula';

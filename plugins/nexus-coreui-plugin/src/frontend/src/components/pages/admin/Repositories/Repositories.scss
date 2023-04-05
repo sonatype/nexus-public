@@ -26,6 +26,12 @@
     margin-bottom: var(--nx-spacing-2x);
   }
 
+  .nxrm-form-group-docker-connector-subdomain {
+    .nx-text-input__invalid-message {
+      white-space: nowrap;
+    }
+  }
+
   .nxrm-docker-connectors-help {
     color: #333;
     margin-bottom: var(--nx-spacing-8x);

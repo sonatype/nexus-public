@@ -14,17 +14,18 @@ import React from 'react';
 import {render, screen, waitForElementToBeRemoved} from '@testing-library/react';
 import {sort, prop, descend, ascend} from 'ramda';
 import userEvent from '@testing-library/user-event';
-import {ExtJS, TestUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, APIConstants} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import {when} from 'jest-when';
 import Axios from 'axios';
 
 import SslCertificatesList from './SslCertificatesList';
-import {URL} from './SslCertificatesHelper';
+import {URLS} from './SslCertificatesHelper';
 import UIStrings from '../../../../constants/UIStrings';
 import {SSL_CERTIFICATES} from './SslCertificates.testdata';
 
 const {SORT_DIRECTIONS: {DESC, ASC}} = APIConstants;
-const {sslCertificatesUrl} = URL;
+const {sslCertificatesUrl} = URLS;
 const {SSL_CERTIFICATES: {LIST: LABELS}} = UIStrings;
 const XSS_STRING = TestUtils.XSS_STRING;
 

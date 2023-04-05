@@ -38,10 +38,6 @@ Ext.define('NX.coreui.view.repository.facet.NugetProxyFacet', {
   initComponent: function() {
     var me = this;
 
-    // TODO NEXUS-34074 drop these lines
-    var nugetV2FeatureEnabled = !NX.State.getValue('nexus.datastore.enabled', false) ||
-        (NX.State.getValue('nexus.datastore.enabled', false) && NX.State.getValue('nugetV2FeatureEnabled', false));
-
     me.items = [
       {
         xtype: 'fieldset',
@@ -59,7 +55,6 @@ Ext.define('NX.coreui.view.repository.facet.NugetProxyFacet', {
               {
                 boxLabel: NX.I18n.get('Repository_Facet_NugetProxyFacet_V2'),
                 name: 'attributes.nugetProxy.nugetVersion',
-                disabled: !nugetV2FeatureEnabled,
                 inputValue: 'V2'
               },
               {

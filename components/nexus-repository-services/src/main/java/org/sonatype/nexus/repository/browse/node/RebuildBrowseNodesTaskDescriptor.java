@@ -16,6 +16,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.app.FeatureFlags;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.formfields.ItemselectFormField;
 import org.sonatype.nexus.repository.types.GroupType;
@@ -38,12 +39,17 @@ public class RebuildBrowseNodesTaskDescriptor
   public static final String TASK_NAME = "Repair - Rebuild repository browse";
 
   @Inject
-  public RebuildBrowseNodesTaskDescriptor(final NodeAccess nodeAccess, final GroupType groupType) {
+  public RebuildBrowseNodesTaskDescriptor(
+      final NodeAccess nodeAccess,
+      final GroupType groupType,
+      @Named(FeatureFlags.DATASTORE_CLUSTERED_ENABLED_NAMED) final boolean datastoreClustered)
+  {
     super(TYPE_ID, RebuildBrowseNodesTask.class, TASK_NAME, VISIBLE, EXPOSED,
-        new ItemselectFormField(REPOSITORY_NAME_FIELD_ID, "Repository", "Select the repository(ies) to rebuild browse tree",
+        new ItemselectFormField(REPOSITORY_NAME_FIELD_ID, "Repository",
+            "Select the repository(ies) to rebuild browse tree",
             true).withStoreApi("coreui_Repository.readReferencesAddingEntryForAll")
             .withButtons("up", "add", "remove", "down").withFromTitle("Available").withToTitle("Selected")
             .withStoreFilter("type", "!" + groupType.getValue()).withValueAsString(true),
-        nodeAccess.isClustered() ? newLimitNodeFormField() : null);
+        (nodeAccess.isClustered() && !datastoreClustered) ? newLimitNodeFormField() : null);
   }
 }

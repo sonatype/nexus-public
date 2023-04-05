@@ -20,13 +20,13 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
-import org.sonatype.nexus.repository.apt.orient.AptRestoreFacet;
 import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.apt.internal.AptRecipeSupport;
 import org.sonatype.nexus.repository.apt.internal.AptSecurityFacet;
 import org.sonatype.nexus.repository.apt.internal.gpg.AptSigningFacet;
 import org.sonatype.nexus.repository.apt.internal.gpg.AptSigningHandler;
 import org.sonatype.nexus.repository.apt.internal.snapshot.AptSnapshotHandler;
+import org.sonatype.nexus.repository.apt.orient.AptRestoreFacet;
 import org.sonatype.nexus.repository.apt.orient.internal.OrientAptFacetImpl;
 import org.sonatype.nexus.repository.attributes.AttributesFacet;
 import org.sonatype.nexus.repository.http.PartialFetchHandler;
@@ -44,7 +44,6 @@ import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler;
 import org.sonatype.nexus.repository.view.handlers.ExceptionHandler;
 import org.sonatype.nexus.repository.view.handlers.FormatHighAvailabilitySupportHandler;
 import org.sonatype.nexus.repository.view.handlers.HandlerContributor;
-import org.sonatype.nexus.repository.view.handlers.HighAvailabilitySupportChecker;
 import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler;
 import org.sonatype.nexus.repository.view.handlers.TimingHandler;
 import org.sonatype.nexus.repository.view.matchers.AlwaysMatcher;
@@ -135,11 +134,10 @@ public class OrientAptHostedRecipe
   HandlerContributor handlerContributor;
 
   @Inject
-  public OrientAptHostedRecipe(final HighAvailabilitySupportChecker highAvailabilitySupportChecker,
-                               @Named(HostedType.NAME) final Type type,
+  public OrientAptHostedRecipe(@Named(HostedType.NAME) final Type type,
                                @Named(AptFormat.NAME) final Format format)
   {
-    super(highAvailabilitySupportChecker, type, format);
+    super(type, format);
   }
 
   @Override

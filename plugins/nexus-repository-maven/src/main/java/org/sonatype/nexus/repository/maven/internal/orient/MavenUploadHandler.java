@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.maven.internal.orient;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -50,7 +49,7 @@ import org.sonatype.nexus.repository.upload.UploadResponse;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.Payload;
-import org.sonatype.nexus.repository.view.payloads.StreamPayload;
+import org.sonatype.nexus.repository.view.payloads.PathPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
@@ -138,8 +137,7 @@ public class MavenUploadHandler
           Files.size(contentPath));
     }
     else {
-      try (FileInputStream fis = new FileInputStream(content)) {
-        Payload payload = new StreamPayload(() -> fis, content.length(), Files.probeContentType(contentPath));
+      try (Payload payload = new PathPayload(contentPath, Files.probeContentType(contentPath))) {
         return doPut(configuration.getRepository(), mavenPath, payload);
       }
     }

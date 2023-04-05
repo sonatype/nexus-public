@@ -24,6 +24,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.testsuite.testsupport.RepositoryITSupport;
 import org.sonatype.nexus.testsuite.testsupport.fixtures.RepositoryRule;
 
+import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.bcpg.ArmoredInputStream;
 import org.bouncycastle.openpgp.PGPObjectFactory;
 import org.bouncycastle.openpgp.PGPPublicKey;
@@ -44,6 +45,8 @@ public class AptITSupport
 {
   protected static final String CONTENT_TYPE = "application/x-debian-package";
 
+  protected static final String CATEGORY = StringUtils.EMPTY;
+
   public static final String DEB = "nano_2.2.6-1_amd64.deb";
 
   public static final String DEB_SZT =
@@ -58,6 +61,8 @@ public class AptITSupport
   public static final String DEB_PATH = "pool/n/nano/" + DEB;
 
   public static final String DEB_V2_5 = "nano_2.5.3-2_amd64.deb";
+
+  public static final String DEB_V2_5_PATH = "pool/n/nano/" + DEB_V2_5;
 
   public static final String DEB_V2_5_VERSION = "2.5.3-2";
 
@@ -90,6 +95,10 @@ public class AptITSupport
   protected static final String METADATA_RELEASE_GPG_PATH = METEDATA_PATH + METADATA_RELEASE_GPG;
 
   public static final String PACKAGES_PATH = METEDATA_PATH + "main/binary-amd64/Packages";
+
+  public static final String PACKAGES_BZ2_PATH = METEDATA_PATH + "main/binary-amd64/Packages.bz2";
+
+  public static final String PACKAGES_GZ_PATH = METEDATA_PATH + "main/binary-amd64/Packages.gz";
 
   protected static final String PROXY_REPO_NAME = "apt-proxy";
 

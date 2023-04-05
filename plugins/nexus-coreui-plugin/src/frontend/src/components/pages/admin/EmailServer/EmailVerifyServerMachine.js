@@ -15,22 +15,35 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import {assign} from 'xstate';
-import Axios from 'axios';
+import {mergeDeepRight} from 'ramda';
 import {
   FormUtils,
   APIConstants,
   ValidationUtils,
+  ExtAPIUtils,
 } from '@sonatype/nexus-ui-plugin';
 
 const {
-  REST: {
-    PUBLIC: {VERIFY_EMAIL_SERVER},
+  EXT: {
+    EMAIL_SERVER: {ACTION, METHODS},
   },
 } = APIConstants;
 
 export default FormUtils.buildFormMachine({
   id: 'EmailVerifyServerMachine',
   initial: 'loaded',
+  config: (config) =>
+    mergeDeepRight(config, {
+      states: {
+        loaded: {
+          on: {
+            UPDATE_DATA: {
+              actions: 'updateData',
+            },
+          },
+        },
+      },
+    }),
 }).withConfig({
   actions: {
     validate: assign({
@@ -44,17 +57,25 @@ export default FormUtils.buildFormMachine({
     logLoadError: () => {},
     setSavedData: assign({
       isTouched: () => ({}),
-      testResult: (_, event) => {
-        const result = event.data.data;
-        return result.success;
-      },
+      testResult: (_, event) => event.data.data.result.success,
     }),
     setSaveError: assign({
       isTouched: () => ({}),
       testResult: () => false,
     }),
+    updateData: assign((context, {data}) => mergeDeepRight(context, {data})),
   },
   services: {
-    saveData: ({data: {email}}) => Axios.post(VERIFY_EMAIL_SERVER, email),
+    saveData: async ({data: {email, ...config}}) => {
+      const request = config;
+
+      const response = await ExtAPIUtils.extAPIRequest(ACTION, METHODS.VERIFY, {
+        data: [request, email],
+      });
+
+      ExtAPIUtils.checkForError(response);
+
+      return response;
+    },
   },
 });

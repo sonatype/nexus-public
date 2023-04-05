@@ -33,7 +33,7 @@ public abstract class RawTestHelper
    */
   public RawClient rawClient(final Repository repository, final String username, final String password) throws Exception {
     checkNotNull(repository);
-    return rawClient("/repository/" + repository + "/", username, password);
+    return rawClient("/repository/" + repository.getName() + "/", username, password);
   }
 
   public RawClient rawClient(final String path, final String username, final String password) throws Exception {

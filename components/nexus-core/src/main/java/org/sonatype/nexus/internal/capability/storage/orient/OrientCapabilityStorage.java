@@ -12,8 +12,9 @@
  */
 package org.sonatype.nexus.internal.capability.storage.orient;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
-
 import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -111,6 +112,17 @@ public class OrientCapabilityStorage
                                               final String notes, final Map<String, String> properties)
   {
     return new OrientCapabilityStorageItem(version, type, enabled, notes, properties);
+  }
+
+  @Override
+  public Map<CapabilityStorageItem, List<CapabilityIdentity>> browseCapabilityDuplicates() {
+    // ignored
+    return Collections.emptyMap();
+  }
+
+  @Override
+  public boolean isDuplicatesFound() {
+    return false;
   }
 
   private static void checkEntityType(final CapabilityStorageItem item) {

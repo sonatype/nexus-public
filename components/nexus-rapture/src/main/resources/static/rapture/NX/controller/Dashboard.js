@@ -46,7 +46,10 @@ Ext.define('NX.controller.Dashboard', {
         variants: ['x16', 'x32']
       },
       weight: 10,
-      authenticationRequired: false
+      authenticationRequired: false,
+      visible: function() {
+        return !NX.State.getValue('nexus.react.welcome', false);
+      }
     });
   }
 

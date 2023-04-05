@@ -22,6 +22,7 @@ import org.sonatype.nexus.webhooks.WebhookRequestSendEvent
 
 import org.junit.Test
 import org.mockito.ArgumentCaptor
+import org.mockito.Captor
 
 import static org.mockito.Mockito.mock
 import static org.mockito.Mockito.verify
@@ -29,6 +30,9 @@ import static org.mockito.Mockito.verify
 class GlobalAuditWebhookTest
     extends TestSupport
 {
+  @Captor
+  ArgumentCaptor<WebhookRequestSendEvent> argumentCaptor
+
   @Test
   public void 'has the correct event id'() {
     def eventManager = mock(EventManager.class)
@@ -64,7 +68,6 @@ class GlobalAuditWebhookTest
 
     globalAuditWebhook.on(auditRecordedEvent)
 
-    def argumentCaptor = new ArgumentCaptor<WebhookRequestSendEvent>()
     verify(eventManager).post(argumentCaptor.capture())
 
     def auditPayload = (AuditWebhookPayload) argumentCaptor.value.request.payload

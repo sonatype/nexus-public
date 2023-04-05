@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.rest.api.model;
 
 import javax.validation.constraints.NotNull;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
 
@@ -22,16 +23,15 @@ import io.swagger.annotations.ApiModelProperty;
  */
 public class ReplicationAttributes
 {
-  // TODO: See https://issues.sonatype.org/browse/NEXUS-32476
-  // @ApiModelProperty(value = "Whether pre-emptive pull is enabled", example = "false", hidden = true)
+  @ApiModelProperty(value = "Whether pre-emptive pull is enabled", example = "false")
   @NotNull
   protected final Boolean preemptivePullEnabled;
 
-  // TODO: See https://issues.sonatype.org/browse/NEXUS-32476
-  // @ApiModelProperty(value = "Regular Expression of Asset Paths to pull pre-emptively pull", hidden = true)
+  @ApiModelProperty(value = "Regular Expression of Asset Paths to pull pre-emptively pull")
   protected final String assetPathRegex;
 
 
+  @JsonCreator
   public ReplicationAttributes(
       @JsonProperty("preemptivePullEnabled") final Boolean preemptivePull,
       @JsonProperty("assetPathRegex") final String assetPathRegex)

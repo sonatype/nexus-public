@@ -19,10 +19,8 @@ import org.sonatype.nexus.repository.rest.sql.UnsupportedSearchField;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Describes the mapping of an Elasticsearch attribute to an alias and also provides a description of the
- * attribute.
- *
- * @since 3.7
+ * Describes an asset/component property which is exposed as a query term for search APIs and internally maps these
+ * properties to their storage in ElasticSearch and SQL.
  */
 public class SearchMapping
 {
@@ -34,36 +32,78 @@ public class SearchMapping
 
   private final SearchFieldSupport field;
 
+  private final boolean exactMatch;
+
+  /**
+   * Creates a SearchMapping where the exact match of the mapping is true
+   */
   public SearchMapping(
       final String alias,
       final String attribute,
       final String description,
       final SearchFieldSupport field)
   {
-    this.alias = checkNotNull(alias);
-    this.attribute = checkNotNull(attribute);
-    this.description = checkNotNull(description);
-    this.field = checkNotNull(field);
+    this(alias, attribute, description, field, true);
   }
 
+  /**
+   * @deprecated legacy constructor for pre-SQL search implementations, will lead to UnsupportedOperationExceptions when
+   *             submitted as part of SQL queries.
+   */
+  @Deprecated
   public SearchMapping(final String alias, final String attribute, final String description) {
     this(alias, attribute, description, UnsupportedSearchField.INSTANCE);
   }
 
+  public SearchMapping(
+      final String alias,
+      final String attribute,
+      final String description,
+      final SearchFieldSupport field,
+      final boolean exactMatch) {
+    this.alias = checkNotNull(alias);
+    this.attribute = checkNotNull(attribute);
+    this.description = checkNotNull(description);
+    this.field = checkNotNull(field);
+    this.exactMatch = exactMatch;
+  }
+
+  /**
+   * The property in which ElasticSearh stores the value for this term.
+   */
   public String getAttribute() {
     return attribute;
   }
 
+  /**
+   * An identifier that external resources should use as an alias when executing search queries.
+   *
+   *  i.e. maven.extension=jar
+   */
   public String getAlias() {
     return alias;
   }
 
+  /**
+   * A human readable string describing what this property is
+   */
   public String getDescription() {
     return description;
   }
 
+  /**
+   * The column in which SQL search stores the value for this term.
+   */
   public SearchFieldSupport getField() {
     return field;
+  }
+
+  /**
+   * Indicates for the REST API whether this field should be treated as an exact match, or whether we should use
+   * partial matches of the field.
+   */
+  public boolean isExactMatch() {
+    return exactMatch;
   }
 
   @Override
@@ -80,12 +120,13 @@ public class SearchMapping
     return Objects.equals(attribute, that.attribute) &&
         Objects.equals(alias, that.alias) &&
         Objects.equals(description, that.description) &&
-        Objects.equals(field, that.field);
+        Objects.equals(field, that.field) &&
+        Objects.equals(exactMatch, that.exactMatch);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(attribute, alias, description, field);
+    return Objects.hash(attribute, alias, description, field, exactMatch);
   }
 
   @Override
@@ -95,6 +136,7 @@ public class SearchMapping
         ", alias='" + alias + '\'' +
         ", description='" + description + '\'' +
         ", field='" + field + '\'' +
+        ", exactMatch='" + exactMatch + '\'' +
         '}';
   }
 }

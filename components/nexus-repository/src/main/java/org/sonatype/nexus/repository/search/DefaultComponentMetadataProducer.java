@@ -83,6 +83,8 @@ public class DefaultComponentMetadataProducer
 
   public static final String UPLOADER_IP = "uploaderIp";
 
+  public static final String FILE_SIZE = "fileSize";
+
   public static final String REGEX_KEY = "regex";
 
   private static final Logger log = LoggerFactory.getLogger(DefaultComponentMetadataProducer.class);
@@ -131,6 +133,8 @@ public class DefaultComponentMetadataProducer
       put(assetMetadata, ATTRIBUTES, asset.attributes().backing());
       put(assetMetadata, UPLOADER, asset.createdBy());
       put(assetMetadata, UPLOADER_IP, asset.createdByIp());
+      put(assetMetadata, LAST_DOWNLOADED_KEY, getLastDownloaded(asset));
+      put(assetMetadata, FILE_SIZE, asset.size());
 
       allAssetMetadata.add(assetMetadata);
     }
@@ -177,6 +181,12 @@ public class DefaultComponentMetadataProducer
                                  final Iterable<Asset> assets)
   {
     return false;
+  }
+
+  private String getLastDownloaded(final Asset asset) {
+    DateTime assetLastDownloaded = asset.lastDownloaded();
+    return null != assetLastDownloaded ?
+        assetLastDownloaded.toString(DATE_TIME_FORMATTER) : null;
   }
 
   private String documentId(final Asset asset) {

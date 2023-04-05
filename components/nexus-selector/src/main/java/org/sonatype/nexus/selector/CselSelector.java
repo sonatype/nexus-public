@@ -36,4 +36,9 @@ public class CselSelector
   public void toSql(final SelectorSqlBuilder sqlBuilder) {
     cselToSql.transformCselToSql(expression.getSyntaxTree(), sqlBuilder);
   }
+
+  @Override
+  public void toSql(final SelectorSqlBuilder sqlBuilder, final CselToSql cselToSql) {
+    cselToSql.transformCselToSql(expression.getSyntaxTree(), sqlBuilder);
+  }
 }

@@ -24,6 +24,7 @@ import org.sonatype.nexus.common.app.ApplicationDirectories
 import org.sonatype.nexus.common.app.ApplicationLicense
 import org.sonatype.nexus.common.app.ApplicationVersion
 import org.sonatype.nexus.common.atlas.SystemInformationGenerator
+import org.sonatype.nexus.common.node.DeploymentAccess
 import org.sonatype.nexus.common.node.NodeAccess
 import org.sonatype.nexus.common.text.Strings2
 
@@ -59,6 +60,8 @@ class SystemInformationGeneratorImpl
 
   private final NodeAccess nodeAccess
 
+  private final DeploymentAccess deploymentAccess;
+
   static final Map UNAVAILABLE = ['unavailable': true].asImmutable()
 
   static final List SENSITIVE_FIELD_NAMES = ['password', 'secret', 'token'].asImmutable()
@@ -70,7 +73,8 @@ class SystemInformationGeneratorImpl
                                  final @Parameters Map<String, String> parameters,
                                  final BundleContext bundleContext,
                                  final BundleService bundleService,
-                                 final NodeAccess nodeAccess)
+                                 final NodeAccess nodeAccess,
+                                 final DeploymentAccess deploymentAccess)
   {
     this.applicationDirectories = checkNotNull(applicationDirectories)
     this.applicationVersion = checkNotNull(applicationVersion)
@@ -79,6 +83,7 @@ class SystemInformationGeneratorImpl
     this.bundleContext = checkNotNull(bundleContext)
     this.bundleService = checkNotNull(bundleService)
     this.nodeAccess = checkNotNull(nodeAccess)
+    this.deploymentAccess = checkNotNull(deploymentAccess)
   }
 
   @Override
@@ -93,6 +98,7 @@ class SystemInformationGeneratorImpl
     def bundleContext = this.bundleContext
     def bundleService = this.bundleService
     def nodeAccess = this.nodeAccess
+    def deploymentAccess = this.deploymentAccess
 
     def fileref = {File file ->
       if (file) {
@@ -147,7 +153,8 @@ class SystemInformationGeneratorImpl
 
     def reportNexusNode = {
       def data = [
-          'node-id': nodeAccess.id
+          'node-id': nodeAccess.id,
+          'deployment-id': deploymentAccess.id
       ]
 
       return data

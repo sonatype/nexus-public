@@ -16,26 +16,25 @@ import {useService} from '@xstate/react';
 import {
   FormUtils,
   ValidationUtils,
-  ExtJS
+  ExtJS,
 } from '@sonatype/nexus-ui-plugin';
 import {
-  NxForm,
   NxFormGroup,
   NxButton,
+  NxCheckbox,
   NxFontAwesomeIcon,
   NxH2,
-  NxTextInput,
-  NxFormSelect,
-  NxTile,
-  NxStatefulTransferList,
-  NxReadOnly,
   NxModal,
+  NxStatefulForm,
+  NxStatefulTransferList,
+  NxTextInput,
+  NxTile,
   NxTooltip
 } from '@sonatype/react-shared-components';
 
 import {faTrash} from '@fortawesome/free-solid-svg-icons';
 
-import {STATUSES, isAnonymousUser, isExternalUser, isCurrentUser} from "./UsersHelper";
+import {isAnonymousUser, isExternalUser, isCurrentUser} from "./UsersHelper";
 
 import UIStrings from '../../../../constants/UIStrings';
 
@@ -50,60 +49,42 @@ export default function UsersForm({service, onDone}) {
   const [current, send] = useService(service);
 
   const {
-    data: {externalRoles = [], readOnly, source, roles = []},
+    data: {externalRoles = [], source, roles = []},
     pristineData: {userId},
-    loadError,
-    saveError,
     allRoles,
-    isPristine,
-    validationErrors,
     hasDeletePermission,
   } = current.context;
 
-  const isLoading = current.matches('loading');
-  const isSaving = current.matches('saving');
-  const isInvalid = ValidationUtils.isInvalid(validationErrors);
   const isCreate = ValidationUtils.isBlank(userId);
   const isExternal = isExternalUser(source);
-  const hasExternalRoles = Boolean(externalRoles.length);
   const isEdit = !isCreate;
   const isChangingPassword = current.matches('changingPassword');
   const confirmingAdminPassword = current.matches('changingPassword.confirmAdminPassword');
   const confirmingNewPassword = current.matches('changingPassword.confirmNewPassword');
-  const hasCreatePermission = ExtJS.checkPermission('nexus:*');
+  const canChangePassword = ExtJS.checkPermission('nexus:*');
 
   const allRolesList = allRoles?.map((it) => ({id: it.id, displayName: it.name})) || [];
 
-  const save = () => send('SAVE');
-
-  const cancel = () => onDone();
+  const cancel = onDone;
 
   const confirmDelete = () => send('CONFIRM_DELETE');
 
-  const retry = () => send('RETRY');
-
-  const changePassword = () => send('CHANGE_PASSWORD');
+  const changePassword = () => {
+    if (canChangePassword) {
+      send('CHANGE_PASSWORD');
+    }
+  }
   const cancelChangePassword = () => send('CANCEL_CHANGE_PASSWORD');
 
-  const showDeleteButton = isEdit && hasDeletePermission && !readOnly && !isExternal &&
-      !isAnonymousUser(userId) && !isCurrentUser(userId);
-
-  const showChangePassword = isEdit && !readOnly && !isExternal && !isAnonymousUser(userId);
+  const showDeleteButton = isEdit && hasDeletePermission && !isExternal && !isAnonymousUser(userId) && !isCurrentUser(userId);
+  const showChangePassword = isEdit && !isExternal && !isAnonymousUser(userId);
 
   return <>
-    <NxForm
-        loading={isLoading}
-        loadError={loadError}
+    <NxStatefulForm
+        {...FormUtils.formProps(current, send)}
         onCancel={cancel}
-        doLoad={retry}
-        onSubmit={save}
-        submitError={saveError}
-        submitMaskState={isSaving ? false : null}
-        submitBtnText={UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
-        submitMaskMessage={UIStrings.SAVING}
-        validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
         additionalFooterBtns={showDeleteButton &&
-        <NxButton variant="tertiary" onClick={confirmDelete}>
+        <NxButton variant="tertiary" onClick={confirmDelete} type="button">
           <NxFontAwesomeIcon icon={faTrash}/>
           <span>{UIStrings.SETTINGS.DELETE_BUTTON_LABEL}</span>
         </NxButton>
@@ -113,22 +94,20 @@ export default function UsersForm({service, onDone}) {
         <NxTile.HeaderTitle>
           <NxH2>{LABELS.SECTIONS.SETUP}</NxH2>
         </NxTile.HeaderTitle>
-        { showChangePassword &&
+        {showChangePassword &&
           <NxTile.HeaderActions className="nxrm-users__actions">
             <NxTooltip
-                title={!hasCreatePermission && UIStrings.PERMISSION_ERROR}
+                title={!canChangePassword && UIStrings.PERMISSION_ERROR}
                 placement="bottom"
             >
-              <span>
-                <NxButton
-                    onClick={changePassword}
-                    variant="tertiary"
-                    type="button"
-                    disabled={!hasCreatePermission}
-                >
-                  {MODAL.CHANGE_PASSWORD}
-                </NxButton>
-              </span>
+              <NxButton
+                  onClick={changePassword}
+                  variant="tertiary"
+                  type="button"
+                  className={!canChangePassword ? 'disabled' : ''}
+              >
+                {MODAL.CHANGE_PASSWORD}
+              </NxButton>
             </NxTooltip>
           </NxTile.HeaderActions>
         }
@@ -189,16 +168,13 @@ export default function UsersForm({service, onDone}) {
           </NxFormGroup>
         </>}
         <NxFormGroup label={LABELS.STATUS.LABEL} isRequired>
-          <NxFormSelect
-              {...FormUtils.selectProps('status', current)}
+          <NxCheckbox
+              {...FormUtils.checkboxProps('status', current)}
               onChange={FormUtils.handleUpdate('status', send)}
               disabled={isExternal}
           >
-            <option value=""/>
-            {Object.values(STATUSES).map(({id, label}) =>
-                <option key={id} value={id}>{label}</option>
-            )}
-          </NxFormSelect>
+            {LABELS.STATUS.OPTIONS.ACTIVE}
+          </NxCheckbox>
         </NxFormGroup>
 
         <div className="nx-form-group">
@@ -214,18 +190,24 @@ export default function UsersForm({service, onDone}) {
           />
         </div>
         {isExternal &&
-        <NxReadOnly>
-          <NxReadOnly.Label>{LABELS.EXTERNAL_ROLES.LABEL}</NxReadOnly.Label>
-          {hasExternalRoles && externalRoles.map(name => (
-              <NxReadOnly.Data key={name}>{name}</NxReadOnly.Data>
-          ))}
-          {!hasExternalRoles &&
-          <NxReadOnly.Data>{LABELS.EXTERNAL_ROLES.EMPTY_LIST}</NxReadOnly.Data>
-          }
-        </NxReadOnly>
+            <NxFormGroup
+                label={LABELS.EXTERNAL_ROLES.LABEL}
+                className="form-external-roles"
+                isRequired
+            >
+              <NxTextInput
+                  type="textarea"
+                  id="externalRoles"
+                  name="externalRoles"
+                  value={externalRoles.join('\n')}
+                  isPristine={true}
+                  readOnly
+                  disabled
+              />
+            </NxFormGroup>
         }
       </NxTile.Content>
-    </NxForm>
+    </NxStatefulForm>
     {isChangingPassword &&
       <NxModal
         onCancel={cancelChangePassword}

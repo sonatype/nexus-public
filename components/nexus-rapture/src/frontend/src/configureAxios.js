@@ -20,6 +20,7 @@ export default function configureAxios() {
   // Configure axios
   axios.defaults.xsrfCookieName = axios.defaults.xsrfHeaderName = 'NX-ANTI-CSRF-TOKEN';
   axios.defaults.baseURL = NX.app.relativePath;
+  axios.defaults.headers.common['X-Nexus-UI'] = true;
   const axiosAdapter = axios.defaults.adapter;
   axios.defaults.adapter = function(config) {
     // Generate a new cache buster for each request

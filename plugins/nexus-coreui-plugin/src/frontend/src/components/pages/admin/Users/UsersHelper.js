@@ -24,11 +24,6 @@ const {USERS: {FORM: LABELS}} = UIStrings;
 
 export const DEFAULT_SOURCE = 'default';
 
-export const EMPTY_DATA = {
-  userId: '',
-  source: DEFAULT_SOURCE,
-};
-
 export const STATUSES = {
   active: {
     id: 'active',
@@ -38,6 +33,12 @@ export const STATUSES = {
     id: 'disabled',
     label: LABELS.STATUS.OPTIONS.DISABLED,
   },
+};
+
+export const EMPTY_DATA = {
+  userId: '',
+  source: DEFAULT_SOURCE,
+  status: STATUSES.active.id,
 };
 
 const findUsersUrl = (userId, source = DEFAULT_SOURCE) => {
@@ -78,4 +79,5 @@ export const parseIdParameter = (idString) => {
   };
 };
 
-export const fullName = ({firstName = '', lastName = ''}) => `${firstName} ${lastName}`;
+export const fullName = ({firstName, lastName}) => `${firstName || ''} ${lastName || ''}`;
+export const sourceLabel = (source) => isExternalUser(source) ? source : LABELS.LOCAL_USER_SOURCE;

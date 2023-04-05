@@ -53,6 +53,6 @@ workflows:
       - deploy-snapshot:
           filters:
             branches:
-              only: master
+              only: main
           requires:
             - build

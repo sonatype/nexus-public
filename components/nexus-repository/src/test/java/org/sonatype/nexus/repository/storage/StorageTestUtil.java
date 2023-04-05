@@ -20,6 +20,8 @@ import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.entity.DetachedEntityMetadata;
 import org.sonatype.nexus.common.entity.DetachedEntityVersion;
 
+import org.joda.time.DateTime;
+
 import static org.sonatype.nexus.common.entity.EntityHelper.id;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 
@@ -75,6 +77,8 @@ public class StorageTestUtil
         .componentId(id(component))
         .createdBy("anonymous")
         .createdByIp("127.0.0.1")
+        .size(Long.MAX_VALUE)
+        .lastDownloaded(new DateTime(2022, 10, 10, 5, 30, 0))
         .attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
   }
 

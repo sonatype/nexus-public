@@ -17,9 +17,11 @@
 import axios from 'axios';
 import {assign, createMachine} from 'xstate';
 import {includes} from 'ramda';
+import APIConstants from '../../../constants/APIConstants';
+import FormUtils from '../../../interface/FormUtils';
 
-const CERTIFICATE_DETAILS_URL = '/service/rest/v1/security/ssl';
-const TRUSTSTORE_URL = '/service/rest/v1/security/ssl/truststore';
+const CERTIFICATE_DETAILS_URL = APIConstants.REST.PUBLIC.SSL_CERTIFICATE_DETAILS;
+const TRUSTSTORE_URL = APIConstants.REST.PUBLIC.SSL_CERTIFICATES;
 const REMOVE_CERTIFICATE_URL = (id) => `${TRUSTSTORE_URL}/${id}`;
 
 /**
@@ -125,7 +127,7 @@ export default createMachine(
         isInTruststore: (_, event) => includes(event.data[0].data, event.data[1].data)
       }),
       setError: assign({
-        error: (_, {data}) => (data.response?.data ? data.response.data : data.toString())
+        error: (_, event) => FormUtils.extractSaveErrorMessage(event),
       }),
       clearError: assign({
         certificateError: () => null

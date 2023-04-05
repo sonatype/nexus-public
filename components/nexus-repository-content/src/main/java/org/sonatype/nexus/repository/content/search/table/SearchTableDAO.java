@@ -15,6 +15,8 @@ package org.sonatype.nexus.repository.content.search.table;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.datastore.api.ContentDataAccess;
@@ -37,7 +39,7 @@ public interface SearchTableDAO
    * @param values optional values map for filter (required if filter is not null)
    * @return number of found components.
    */
-  int count(@Nullable @Param("filter") String filter, @Nullable @Param("filterParams") Map<String, String> values);
+  long count(@Nullable @Param("filter") String filter, @Nullable @Param("filterParams") Map<String, String> values);
 
   /**
    * Search components in the scope of one format.
@@ -48,64 +50,34 @@ public interface SearchTableDAO
   Collection<SearchResult> searchComponents(SqlSearchRequest request);
 
   /**
-   * Creates the given search entry in the content data store.
+   * Saves the given search entry in the content data store by performing an upsert.
    *
-   * @param data the search row to create
+   * @param searchTableData the search row to create
    */
-  void create(SearchTableData data);
-
-  /**
-   * Update a component kind for the search entry in the content data store.
-   *
-   * @param repositoryId  the content repository identification
-   * @param componentId   the component identification
-   * @param format        the repository format
-   * @param componentKind the new component kind
-   */
-  void updateKind(
-      @Param("repositoryId") Integer repositoryId,
-      @Param("componentId") Integer componentId,
-      @Param("format") String format,
-      @Param("componentKind") String componentKind);
-
-  /**
-   * Update custom format fields for a specific record
-   *
-   * @param repositoryId the content repository identification
-   * @param componentId  the component identification
-   * @param assetId      the asset identification
-   * @param format       the repository format
-   * @param preRelease   is a package pre-release or not
-   * @param formatField1 a format specific field 1
-   * @param formatField2 a format specific field 2
-   * @param formatField3 a format specific field 3
-   * @param formatField4 a format specific field 4
-   * @param formatField5 a format specific field 5
-   */
-  void updateFormatFields(
-      @Param("repositoryId") final Integer repositoryId,
-      @Param("componentId") final Integer componentId,
-      @Param("assetId") final Integer assetId,
-      @Param("format") final String format,
-      @Param("preRelease") final boolean preRelease,
-      @Nullable @Param("formatField1") final String formatField1,
-      @Nullable @Param("formatField2") final String formatField2,
-      @Nullable @Param("formatField3") final String formatField3,
-      @Nullable @Param("formatField4") final String formatField4,
-      @Nullable @Param("formatField5") final String formatField5);
+  void save(SearchTableData searchTableData);
 
   /**
    * Delete the given search entry in the content data store.
    *
    * @param repositoryId the content repository identification
    * @param componentId  the component identification
-   * @param assetId      the asset identification
    * @param format       the repository format
    */
   void delete(
       @Param("repositoryId") Integer repositoryId,
       @Param("componentId") Integer componentId,
-      @Param("assetId") Integer assetId,
+      @Param("format") String format);
+
+  /**
+   * Delete records for the specified repository, format and component ids.
+   *
+   * @param repositoryId the content repository id
+   * @param componentIds the component ids to delete
+   * @param format       the format
+   */
+  void deleteComponentIds(
+      @Param("repositoryId") Integer repositoryId,
+      @Param("componentIds") Set<Integer> componentIds,
       @Param("format") String format);
 
   /**
@@ -129,13 +101,10 @@ public interface SearchTableDAO
   void saveBatch(@Param("searchData") List<SearchTableData> searchData);
 
   /**
-   * Method designed for selecting a collection of component ids marked with some of specified formats.
+   * Check repository has search entries.
    *
-   * @param tagName tag name
-   * @param formats list of formats
-   * @return collection of format-componentId pairs marked with one of the formats
+   * @param repositoryName repository
+   * @return {@code true} if any records exists
    */
-  Collection<SearchResult> findComponentIdsByTag(
-      @Param("tagName") String tagName,
-      @Param("formats") List<String> formats);
+  boolean hasRepositoryEntries(@Param("repositoryName") final String repositoryName);
 }

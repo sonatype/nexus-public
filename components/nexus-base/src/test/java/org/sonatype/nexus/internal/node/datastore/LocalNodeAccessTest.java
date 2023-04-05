@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
@@ -32,6 +33,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -48,6 +50,9 @@ public class LocalNodeAccessTest
   @Rule
   public DataSessionRule sessionRule = new DataSessionRule().access(NodeIdDAO.class);
 
+  @Mock
+  private EventManager eventManager;
+
   private NodeAccess nodeAccess;
 
   private NodeIdStore store;
@@ -59,6 +64,11 @@ public class LocalNodeAccessTest
       @Provides
       DataSessionSupplier getDataSessionSupplier() {
         return sessionRule;
+      }
+
+      @Provides
+      EventManager getEventManager() {
+        return eventManager;
       }
     }).getInstance(NodeIdStoreImpl.class);
 

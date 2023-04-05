@@ -31,6 +31,10 @@ public interface AssetInfo
 
   String contentType();
 
+  String createdBy();
+
+  String createdByIp();
+
   OffsetDateTime lastUpdated();
 
   Map<String, String> checksums();

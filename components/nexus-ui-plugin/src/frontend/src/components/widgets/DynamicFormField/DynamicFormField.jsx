@@ -12,21 +12,21 @@
  */
 import React from 'react';
 import {mapObjIndexed, values} from 'ramda';
-import Textfield from "../Textfield/Textfield";
-import Select from '../Select/Select';
-import Utils from '../../../interface/Utils';
+import {NxFormSelect, NxTextInput} from "@sonatype/react-shared-components";
 import {NxStatefulTransferList} from '@sonatype/react-shared-components';
+
+import FormUtils from '../../../interface/FormUtils';
 
 export default function DynamicFormField({current, dynamicProps, id, initialValue, onChange}) {
   if (dynamicProps.type === 'string') {
-    const fieldProps = Utils.fieldProps(id, current, initialValue || '');
+    const fieldProps = FormUtils.fieldProps(id, current, initialValue || '');
     const className = dynamicProps.attributes.long ? 'nx-text-input--long' : '';
 
-    return <Textfield {...fieldProps}
+    return <NxTextInput {...fieldProps}
                       className={className}
                       disabled={dynamicProps.disabled}
                       readOnly={dynamicProps.readOnly}
-                      onChange={(event) => onChange(fieldProps.name, event.currentTarget.value)}
+                      onChange={(value) => onChange(fieldProps.name, value)}
     />
   }
   else if (dynamicProps.type === 'itemselect') {
@@ -36,16 +36,18 @@ export default function DynamicFormField({current, dynamicProps, id, initialValu
     return <NxStatefulTransferList
       allItems={allItems}
       selectedItems={selectedItems}
+      availableItemsLabel={dynamicProps.attributes.fromTitle}
+      selectedItemsLabel={dynamicProps.attributes.toTitle}
       onChange={(value) => onChange(id, value)}
       allowReordering
     />
   }
   else if (dynamicProps.type === 'combobox') {
-    const fieldProps = Utils.fieldProps(id, current, initialValue || '');
-    return <Select {...fieldProps} onChange={(event) => onChange(fieldProps.name, event.currentTarget.value)}>
+    const fieldProps = FormUtils.selectProps(id, current, initialValue || '');
+    return <NxFormSelect {...fieldProps} onChange={(event) => onChange(fieldProps.name, event.currentTarget.value)}>
       <option/>
       {values(mapObjIndexed((v, k) => <option key={k} value={k}>{v}</option>, dynamicProps.attributes.options))}
-    </Select>;
+    </NxFormSelect>;
   }
   else {
     console.warn(`form field type=${dynamicProps.type} is unknown`);

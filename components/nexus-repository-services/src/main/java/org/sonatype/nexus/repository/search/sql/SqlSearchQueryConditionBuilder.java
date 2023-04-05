@@ -22,9 +22,6 @@ import java.util.Set;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import javax.inject.Named;
-import javax.inject.Singleton;
-
 import org.sonatype.goodies.common.ComponentSupport;
 
 import com.google.common.collect.ImmutableMap;
@@ -38,7 +35,6 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
-import static org.apache.commons.lang3.StringUtils.containsAny;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.sonatype.nexus.repository.search.sql.SqlSearchConditionType.EXACT;
 import static org.sonatype.nexus.repository.search.sql.SqlSearchConditionType.WILDCARD;
@@ -49,9 +45,7 @@ import static org.sonatype.nexus.repository.search.sql.SqlSearchConditionType.WI
  * @see SqlSearchQueryCondition
  * @since 3.38
  */
-@Named
-@Singleton
-public class SqlSearchQueryConditionBuilder
+public abstract class SqlSearchQueryConditionBuilder
     extends ComponentSupport
 {
   public static final String ESCAPE = "\\";
@@ -62,9 +56,7 @@ public class SqlSearchQueryConditionBuilder
 
   private static final char SQL_ZERO_OR_MORE_CHARACTERS = '%';
 
-  private static final String LIKE = " LIKE ";
-
-  private static final char ANY_CHARACTER = '?';
+  protected static final char ANY_CHARACTER = '?';
 
   private static final String VALUES_MUST_NOT_BE_EMPTY = "Values must not be empty.";
 
@@ -78,37 +70,25 @@ public class SqlSearchQueryConditionBuilder
 
   private static final String PLACEHOLDER_PARAMETER_SUFFIX = "}";
 
-  private static final String COMMA = ",";
-
   private static final String LEFT_PARENTHESIS = "(";
 
   private static final String RIGHT_PARENTHESIS = ")";
-
-  private static final String IN = " IN ";
 
   private static final String OR = " OR ";
 
   private static final char[] REGEX_IDENTIFIERS = {'*', '?'};
 
-  private static final Map<Character, Character> wildcardMapping = ImmutableMap.of(
-      ANY_CHARACTER, SQL_ANY_CHARACTER,
-      ZERO_OR_MORE_CHARACTERS, SQL_ZERO_OR_MORE_CHARACTERS
-  );
-
   /**
-   * Creates a SqlSearchQueryCondition of the form <code>SqlSearchQueryCondition("field = #{field}",
-   * {field=value})</code> if the specified value is an exact value or a SqlSearchQueryCondition of the form
-   * <code>SqlSearchQueryCondition("field LIKE #{field}", {field=value})</code> if the specified value is a wildcard.
+   * Creates a SqlSearchQueryCondition of the form <code>SqlSearchQueryCondition("field &lt;operator&gt; #{field}",
+   * {field=value})</code>
    */
   public SqlSearchQueryCondition condition(final String field, final String value) {
     return createCondition(field, value, EMPTY);
   }
 
   /**
-   * Creates a SqlSearchQueryCondition of the form <code>SqlSearchQueryCondition("field = #{field}",
-   * {field=value})</code> if the specified value is an exact value or a SqlSearchQueryCondition of the form
-   * <code>SqlSearchQueryCondition("field LIKE #{field}", {field=value})</code> if the specified value is a wildcard.
-   *
+   * Creates a SqlSearchQueryCondition of the form <code>SqlSearchQueryCondition("field &lt;operator&gt; #{field}",
+   * {field=value})</code>
    * The keys of the parameters Map contained in the created <code>SqlQueryCondition</code> are prefixed with the
    * specified <code>parameterPrefix</code>.
    */
@@ -179,11 +159,11 @@ public class SqlSearchQueryConditionBuilder
     checkArgument(isNotBlank(value), "Value must not be empty.");
 
     if (exactOrWildcard(value) == EXACT) {
-      return new SqlSearchQueryCondition(equalTo(field, parameterPrefix),
-          ImmutableMap.of(parameterPrefix + field, replaceEscapedWildcardSymbol(value)));
+      return new SqlSearchQueryCondition(equalTo(field, placeholder(parameterPrefix + field)),
+          ImmutableMap.of(parameterPrefix + field, escapeSymbols(value)));
     }
     return new SqlSearchQueryCondition(wildcard(field, placeholder(parameterPrefix + field)),
-        ImmutableMap.of(parameterPrefix + field, replaceEscapedWildcardSymbol(replaceWildcards(value))));
+        ImmutableMap.of(parameterPrefix + field, sanitise(value)));
   }
 
   /**
@@ -226,21 +206,11 @@ public class SqlSearchQueryConditionBuilder
     return false;
   }
 
-  private static String equalTo(final String field, final String parameterPrefix) {
-    return String.format("%s = %s", field, placeholder(parameterPrefix + field));
-  }
-
-  private static String wildcard(final String fieldName, final String placeholder) {
-    return fieldName + LIKE + placeholder;
-  }
-
-  private static String placeholder(final String field) {
-    return PLACEHOLDER_PARAMETER_PREFIX + field + PLACEHOLDER_PARAMETER_SUFFIX;
-  }
-
-  private static String replaceWildcards(final String value) {
-    String escapedValue = escapeWildcardSymbolIfExists(value);
-    char[] result = escapedValue.toCharArray();
+  public String replaceWildcards(final String value) {
+    String escapedValue = escapeSqlWildcardSymbolsIfExists(value);
+    StringBuilder result = new StringBuilder();
+    result.append(escapedValue.toCharArray());
+    Map<Character, String> wildcardMapping = getWildcardMapping();
 
     for (char replaceChar : wildcardMapping.keySet()) {
       if (escapedValue.contains(String.valueOf(replaceChar))) {
@@ -248,7 +218,8 @@ public class SqlSearchQueryConditionBuilder
         while (index >= 0) {
           int escapeIndex = escapedValue.indexOf(ESCAPE + replaceChar);
           if (escapeIndex == -1 || escapeIndex != index - 1) {
-            result[index] = wildcardMapping.get(replaceChar);
+            String replacement = wildcardMapping.get(replaceChar);
+            result.replace(index, index + 1, replacement);
           }
           index = escapedValue.indexOf(replaceChar, index + 1);
         }
@@ -258,11 +229,34 @@ public class SqlSearchQueryConditionBuilder
     return String.valueOf(result);
   }
 
-  private static String escapeWildcardSymbolIfExists(final String value) {
+  protected abstract String equalTo(final String field, final String placeholder);
+
+  protected abstract String in(final String field, final List<String> placeholders);
+
+  protected abstract String wildcard(final String fieldName, final String placeholder);
+
+  protected abstract String wildcards(final String fieldName, final List<String> placeholders);
+
+  protected abstract Map<Character, String> getWildcardMapping();
+
+  public String sanitise(final String value) {
+    return replaceWildcards(escapeSymbols(value));
+  }
+
+  protected String escapeSymbols(String value) {
+    return replaceEscapedWildcardSymbol(value);
+  }
+
+  private String placeholder(final String field) {
+    return PLACEHOLDER_PARAMETER_PREFIX + field + PLACEHOLDER_PARAMETER_SUFFIX;
+  }
+
+  private static String escapeSqlWildcardSymbolsIfExists(final String value) {
     String result = value;
-    if (value.endsWith(ESCAPE) && !value.endsWith(ESCAPE + ESCAPE)){
+    if (value.endsWith(ESCAPE) && !value.endsWith(ESCAPE + ESCAPE)) {
       result += ESCAPE;
     }
+    
     return result.replace(String.valueOf(SQL_ZERO_OR_MORE_CHARACTERS), ESCAPE + SQL_ZERO_OR_MORE_CHARACTERS)
         .replace(String.valueOf(SQL_ANY_CHARACTER), ESCAPE + SQL_ANY_CHARACTER);
   }
@@ -282,20 +276,20 @@ public class SqlSearchQueryConditionBuilder
         .collect(toList());
   }
 
-  private static List<String> createPlaceholders(final List<String> values) {
+  private List<String> createPlaceholders(final List<String> values) {
     return values.stream()
-        .map(SqlSearchQueryConditionBuilder::placeholder)
+        .map(this::placeholder)
         .collect(toList());
   }
 
-  private static Map<String, String> nameValues(final List<String> valueNames, final Set<String> values) {
+  private Map<String, String> nameValues(final List<String> valueNames, final Set<String> values) {
     List<String> theValues = new ArrayList<>(values);
     return IntStream.range(0, Math.min(valueNames.size(), theValues.size()))
-        .mapToObj(index -> new SimpleImmutableEntry<>(valueNames.get(index), replaceEscapedWildcardSymbol(theValues.get(index))))
+        .mapToObj(index -> new SimpleImmutableEntry<>(valueNames.get(index), theValues.get(index)))
         .collect(toMap(Entry::getKey, Entry::getValue));
   }
 
-  private static SqlSearchQueryCondition createWildcardCondition(
+  private SqlSearchQueryCondition createWildcardCondition(
       final String fieldName,
       final Map<SqlSearchConditionType, Set<String>> valueGroups,
       final List<String> valueNames,
@@ -310,13 +304,7 @@ public class SqlSearchQueryConditionBuilder
         nameValues(wildcardValueNames, replaceWildcards(wildcardValues)));
   }
 
-  private static String wildcards(final String fieldName, final List<String> placeholders) {
-    return placeholders.stream()
-        .map(value -> wildcard(fieldName, value))
-        .collect(joining(OR, LEFT_PARENTHESIS, RIGHT_PARENTHESIS));
-  }
-
-  private static SqlSearchQueryCondition createExactCondition(
+  private SqlSearchQueryCondition createExactCondition(
       final String fieldName,
       final Set<String> values,
       final List<String> valueNames,
@@ -324,28 +312,21 @@ public class SqlSearchQueryConditionBuilder
   {
     final List<String> exactPlaceholders = placeholders.subList(0, values.size());
     final List<String> exactValueNames = valueNames.subList(0, values.size());
-    return new SqlSearchQueryCondition(in(fieldName, exactPlaceholders), nameValues(exactValueNames, values));
+    final Set<String> escapedValues = values.stream().map(this::escapeSymbols).collect(toSet());
+    return new SqlSearchQueryCondition(in(fieldName, exactPlaceholders), nameValues(exactValueNames, escapedValues));
   }
 
   private static Map<String, String> flattenValues(final Stream<Map<String, String>> stream) {
     return stream.flatMap(value -> value.entrySet().stream()).collect(toMap(Entry::getKey, Entry::getValue));
   }
 
-  private static String join(final Stream<String> stream, final String delimiter) {
+  protected static String join(final Stream<String> stream, final String delimiter) {
     return stream.collect(joining(delimiter, LEFT_PARENTHESIS, RIGHT_PARENTHESIS));
   }
 
-  private static String in(final String field, final List<String> placeholders) {
-    return field + IN + createInClausePlaceholders(placeholders);
-  }
-
-  private static String createInClausePlaceholders(final List<String> values) {
-    return join(values.stream(), COMMA);
-  }
-
-  public static Set<String> replaceWildcards(final Set<String> values) {
+  private Set<String> replaceWildcards(final Set<String> values) {
     return values.stream()
-        .map(SqlSearchQueryConditionBuilder::replaceWildcards)
+        .map(this::replaceWildcards)
         .map(SqlSearchQueryConditionBuilder::replaceEscapedWildcardSymbol)
         .collect(toSet());
   }

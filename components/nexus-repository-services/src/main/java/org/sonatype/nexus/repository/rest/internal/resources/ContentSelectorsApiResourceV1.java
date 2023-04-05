@@ -18,6 +18,7 @@ import javax.inject.Singleton;
 import javax.ws.rs.Path;
 
 import org.sonatype.nexus.security.internal.rest.SecurityApiResourceV1;
+import org.sonatype.nexus.selector.SelectorConfigurationStore;
 import org.sonatype.nexus.selector.SelectorFactory;
 import org.sonatype.nexus.selector.SelectorManager;
 
@@ -37,8 +38,9 @@ public class ContentSelectorsApiResourceV1
   @Inject
   public ContentSelectorsApiResourceV1(
       final SelectorFactory selectorFactory,
-      final SelectorManager selectorManager)
+      final SelectorManager selectorManager,
+      final SelectorConfigurationStore store)
   {
-    super(selectorFactory, selectorManager);
+    super(selectorFactory, selectorManager, store);
   }
 }

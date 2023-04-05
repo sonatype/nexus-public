@@ -17,20 +17,20 @@ import {
   CheckboxControlledWrapper,
   ContentBody,
   FieldWrapper,
+  FormUtils,
   Page,
   PageHeader,
   PageTitle,
   Section,
-  Select,
   Textfield,
-  Utils,
-  FormUtils,
 } from '@sonatype/nexus-ui-plugin';
 
 import {
-  NxForm,
   NxButton,
+  NxFieldset,
   NxFontAwesomeIcon,
+  NxFormSelect,
+  NxStatefulForm
 } from '@sonatype/react-shared-components';
 
 import CleanupPoliciesFormMachine from './CleanupPoliciesFormMachine';
@@ -58,12 +58,9 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
   });
 
   const {
-    isPristine,
     pristineData,
     data,
     loadError,
-    saveError,
-    validationErrors,
     criteriaByFormat,
     criteriaLastDownloadedEnabled,
     criteriaLastBlobUpdatedEnabled,
@@ -71,9 +68,7 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
     criteriaAssetRegexEnabled
   } = current.context;
   const isEdit = Boolean(itemId);
-  const isLoading = current.matches('loading') || current.matches('loadingFormatCriteria');
-  const isSaving = current.matches('saving');
-  const isInvalid = Utils.isInvalid(validationErrors);
+  const isLoading = current.matches('loading');
   const hasData = data && data !== {};
 
   function update(event) {
@@ -108,14 +103,6 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
     }
   }
 
-  function save() {
-    send({type: 'SAVE'});
-  }
-
-  function retry() {
-    send({type: 'RETRY'});
-  }
-
   function cancel() {
     onDone();
   }
@@ -140,17 +127,9 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
     </PageHeader>
     <ContentBody>
       <Section className="nxrm-cleanup-policies-form">
-        <NxForm
-            loading={isLoading}
-            loadError={loadError}
+        <NxStatefulForm
+            {...FormUtils.formProps(current, send)}
             onCancel={cancel}
-            doLoad={retry}
-            onSubmit={save}
-            submitError={saveError}
-            submitMaskState={isSaving ? false : null}
-            submitBtnText={UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
-            submitMaskMessage={UIStrings.SAVING}
-            validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
             additionalFooterBtns={itemId &&
               <NxButton type="button" variant="tertiary" onClick={confirmDelete}>
                 <NxFontAwesomeIcon icon={faTrash}/>
@@ -163,15 +142,15 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
                           descriptionText={UIStrings.CLEANUP_POLICIES.NAME_DESCRIPTION}
                           id="cleanup-name-group">
               <Textfield
-                  {...Utils.fieldProps('name', current)}
+                  {...FormUtils.fieldProps('name', current)}
                   disabled={pristineData.name}
                   onChange={update}/>
             </FieldWrapper>
             <FieldWrapper labelText={UIStrings.CLEANUP_POLICIES.FORMAT_LABEL}
                           descriptionText={UIStrings.CLEANUP_POLICIES.FORMAT_DESCRIPTION}
                           id="cleanup-format-group">
-              <Select
-                  {...Utils.fieldProps('format', current)}
+              <NxFormSelect
+                  {...FormUtils.fieldProps('format', current)}
                   name="format"
                   onChange={update}
                   value={data.format}>
@@ -179,19 +158,17 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
                 {criteriaByFormat?.map(formatCriteria =>
                     <option key={formatCriteria.id} value={formatCriteria.id}>{formatCriteria.name}</option>
                 )}
-              </Select>
+              </NxFormSelect>
             </FieldWrapper>
             <FieldWrapper labelText={UIStrings.CLEANUP_POLICIES.NOTES_LABEL}
                           id="cleanup-notes-group" isOptional>
               <Textfield
-                  {...Utils.fieldProps('notes', current)}
+                  {...FormUtils.fieldProps('notes', current)}
                   onChange={update}/>
             </FieldWrapper>
             {isAnyFieldApplicable() &&
-            <fieldset className="nx-fieldset">
-              <legend className="nx-label nx-legend__text">
-                {UIStrings.CLEANUP_POLICIES.CRITERIA_LABEL}
-              </legend>
+
+            <NxFieldset label={UIStrings.CLEANUP_POLICIES.CRITERIA_LABEL} isRequired>
               {isFieldApplicable('lastBlobUpdated') &&
               <CheckboxControlledWrapper isChecked={Boolean(criteriaLastBlobUpdatedEnabled)}
                                          onChange={setCriteriaLastBlobUpdatedEnabled}
@@ -200,9 +177,10 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
                                              criteriaLastBlobUpdatedEnabled
                                          )}>
                 <FieldWrapper labelText={UIStrings.CLEANUP_POLICIES.LAST_UPDATED_LABEL}
-                              descriptionText={UIStrings.CLEANUP_POLICIES.LAST_UPDATED_DESCRIPTION}>
+                              descriptionText={UIStrings.CLEANUP_POLICIES.LAST_UPDATED_DESCRIPTION}
+                              isOptional={!criteriaLastBlobUpdatedEnabled}>
                   <Textfield
-                      {...Utils.fieldProps('criteriaLastBlobUpdated', current)}
+                      {...FormUtils.fieldProps('criteriaLastBlobUpdated', current)}
                       onChange={update}
                       disabled={!criteriaLastBlobUpdatedEnabled}/>
                   <div className="suffix">
@@ -219,9 +197,10 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
                                              criteriaLastDownloadedEnabled
                                          )}>
                 <FieldWrapper labelText={UIStrings.CLEANUP_POLICIES.LAST_DOWNLOADED_LABEL}
-                              descriptionText={UIStrings.CLEANUP_POLICIES.LAST_DOWNLOADED_DESCRIPTION}>
+                              descriptionText={UIStrings.CLEANUP_POLICIES.LAST_DOWNLOADED_DESCRIPTION}
+                              isOptional={!criteriaLastDownloadedEnabled}>
                   <Textfield
-                      {...Utils.fieldProps('criteriaLastDownloaded', current)}
+                      {...FormUtils.fieldProps('criteriaLastDownloaded', current)}
                       onChange={update}
                       disabled={!criteriaLastDownloadedEnabled}/>
                   <div className="suffix">
@@ -238,16 +217,17 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
                                              criteriaReleaseTypeEnabled
                                          )}>
                 <FieldWrapper labelText={UIStrings.CLEANUP_POLICIES.RELEASE_TYPE_LABEL}
-                              descriptionText={UIStrings.CLEANUP_POLICIES.RELEASE_TYPE_DESCRIPTION}>
-                  <Select
-                      {...Utils.fieldProps('criteriaReleaseType', current)}
+                              descriptionText={UIStrings.CLEANUP_POLICIES.RELEASE_TYPE_DESCRIPTION}
+                              isOptional={!criteriaReleaseTypeEnabled}>
+                  <NxFormSelect
+                      {...FormUtils.fieldProps('criteriaReleaseType', current)}
                       onChange={update}
                       disabled={!criteriaReleaseTypeEnabled}>
                     <option value="">{UIStrings.CLEANUP_POLICIES.RELEASE_TYPE_SELECT}</option>
                     <option key="RELEASES" value="RELEASES">{UIStrings.CLEANUP_POLICIES.RELEASE_TYPE_RELEASE}</option>
                     <option key="PRERELEASES"
                             value="PRERELEASES">{UIStrings.CLEANUP_POLICIES.RELEASE_TYPE_PRERELEASE}</option>
-                  </Select>
+                  </NxFormSelect>
                 </FieldWrapper>
               </CheckboxControlledWrapper>
               }
@@ -259,18 +239,19 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
                                              criteriaAssetRegexEnabled
                                          )}>
                 <FieldWrapper labelText={UIStrings.CLEANUP_POLICIES.ASSET_NAME_LABEL}
-                              descriptionText={UIStrings.CLEANUP_POLICIES.ASSET_NAME_DESCRIPTION}>
+                              descriptionText={UIStrings.CLEANUP_POLICIES.ASSET_NAME_DESCRIPTION}
+                              isOptional={!criteriaAssetRegexEnabled}>
                   <Textfield
-                      {...Utils.fieldProps('criteriaAssetRegex', current)}
+                      {...FormUtils.fieldProps('criteriaAssetRegex', current)}
                       onChange={update}
                       disabled={!criteriaAssetRegexEnabled}/>
                 </FieldWrapper>
               </CheckboxControlledWrapper>
               }
-            </fieldset>
+            </NxFieldset>
             }
           </>}
-        </NxForm>
+        </NxStatefulForm>
       </Section>
 
       {!isLoading && !loadError && hasData && <CleanupPoliciesPreview policyData={data}/>}

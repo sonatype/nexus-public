@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
@@ -56,6 +57,7 @@ import static java.util.stream.Collectors.toList;
  * <ul>
  * <li>{@code /index.html}</li>
  * <li>{@code /static/rapture/bootstrap.js}</li>
+ * <li>{@code /static/rapture/resources/baseapp.css}</li>
  * <li>{@code /static/rapture/app.js}</li>
  * </ul>
  *
@@ -81,13 +83,18 @@ public class RaptureWebResourceBundle
 
   private final Gson gson;
 
+  private final String cacheBuster;
+
+  public final static String PROPERTY_WEBRESOURCES_CACHEBUSTER = "nexus.webresources.cachebuster";
+
   @Inject
   public RaptureWebResourceBundle(final ApplicationVersion applicationVersion,
                                   final Provider<HttpServletRequest> servletRequestProvider,
                                   final Provider<StateComponent> stateComponentProvider,
                                   final TemplateHelper templateHelper,
                                   final List<UiPluginDescriptor> pluginDescriptors,
-                                  final List<org.sonatype.nexus.rapture.UiPluginDescriptor> extJsPluginDescriptors)
+                                  final List<org.sonatype.nexus.rapture.UiPluginDescriptor> extJsPluginDescriptors,
+                                  @Nullable @Named("${" + PROPERTY_WEBRESOURCES_CACHEBUSTER + "}") final String cacheBuster)
   {
     this.applicationVersion = checkNotNull(applicationVersion);
     this.servletRequestProvider = checkNotNull(servletRequestProvider);
@@ -95,7 +102,12 @@ public class RaptureWebResourceBundle
     this.templateHelper = checkNotNull(templateHelper);
     this.pluginDescriptors = checkNotNull(pluginDescriptors);
     this.extJsPluginDescriptors = checkNotNull(extJsPluginDescriptors);
-
+    if (cacheBuster == null) {
+      this.cacheBuster = applicationVersion.getBuildTimestamp();
+    } else {
+      log.info("Setting web resources cache buster value to {} from property {}", cacheBuster, PROPERTY_WEBRESOURCES_CACHEBUSTER);
+      this.cacheBuster = cacheBuster;
+    }
     log.info("UI plugin descriptors:");
     for (UiPluginDescriptor descriptor : pluginDescriptors) {
       log.info("  {}", descriptor.getName());
@@ -119,6 +131,7 @@ public class RaptureWebResourceBundle
     return ImmutableList.of(
         index_html(),
         bootstrap_js(),
+        baseapp_css(),
         app_js()
     );
   }
@@ -207,6 +220,33 @@ public class RaptureWebResourceBundle
   }
 
   /**
+   * The baseapp css file.
+   */
+  private WebResource baseapp_css() {
+    return new TemplateWebResource()
+    {
+      @Override
+      public String getPath() {
+        return "/static/rapture/resources/baseapp.css";
+      }
+
+      @Override
+      public String getContentType() {
+        return CSS;
+      }
+
+      @Override
+      protected byte[] generate() throws IOException {
+        return render("baseapp_css.vm", new TemplateParameters()
+            .set("debug", isDebug())
+            .set("urlSuffix", generateUrlSuffix())
+        );
+      }
+    };
+  }
+
+
+  /**
    * The app.js resource.
    */
   private WebResource app_js() {
@@ -243,6 +283,7 @@ public class RaptureWebResourceBundle
     String edition = applicationVersion.getEdition();
     buff.append("_v=").append(version);
     buff.append("&_e=").append(edition);
+    buff.append("&_c=").append(this.cacheBuster);
 
     // if version is a SNAPSHOT, then append additional timestamp to disable cache
     if (version.endsWith("SNAPSHOT")) {
@@ -342,7 +383,7 @@ public class RaptureWebResourceBundle
   List<URI> getStyles() {
     List<URI> styles = Lists.newArrayList();
     styles.add(uri(mode("resources/loading-{mode}.css")));
-    styles.add(uri(mode("resources/baseapp-{mode}.css")));
+    styles.add(uri(mode("resources/baseapp.css")));
 
     // add extjs descriptor styles
     styles.addAll(getExtJsStyles());

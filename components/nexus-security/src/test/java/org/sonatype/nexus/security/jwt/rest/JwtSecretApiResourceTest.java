@@ -13,7 +13,6 @@
 package org.sonatype.nexus.security.jwt.rest;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.jwt.SecretStore;
 
 import org.junit.Before;
@@ -29,14 +28,11 @@ public class JwtSecretApiResourceTest
   @Mock
   private SecretStore secretStore;
 
-  @Mock
-  private EventManager eventManager;
-
   private JwtSecretApiResourceV1 underTest;
 
   @Before
   public void setup() throws Exception {
-    underTest = new JwtSecretApiResourceV1(secretStore, eventManager);
+    underTest = new JwtSecretApiResourceV1(secretStore);
   }
 
   @Test

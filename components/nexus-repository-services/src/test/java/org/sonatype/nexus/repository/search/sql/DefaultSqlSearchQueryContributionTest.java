@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.repository.rest.SearchFieldSupport;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings;
 import org.sonatype.nexus.repository.search.DefaultSqlSearchQueryContribution;
@@ -39,6 +40,9 @@ public class DefaultSqlSearchQueryContributionTest
   private static final String GROUP_RAW = "group.raw";
 
   @Mock
+  private SqlSearchQueryConditionBuilderMapping conditionBuilders;
+
+  @Mock
   private SqlSearchQueryConditionBuilder sqlSearchQueryConditionBuilder;
 
   @Mock
@@ -50,7 +54,9 @@ public class DefaultSqlSearchQueryContributionTest
   public void setup() {
     Map<String, SearchMappings> fieldMappings = new HashMap<>();
     fieldMappings.put("default", new DefaultSearchMappings());
-    underTest = new DefaultSqlSearchQueryContribution(sqlSearchQueryConditionBuilder, fieldMappings);
+    when(conditionBuilders.getConditionBuilder(any(SearchFieldSupport.class)))
+        .thenReturn(sqlSearchQueryConditionBuilder);
+    underTest = new DefaultSqlSearchQueryContribution(conditionBuilders, fieldMappings);
   }
 
   @Test
