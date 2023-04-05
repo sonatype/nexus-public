@@ -15,6 +15,7 @@ package org.sonatype.nexus.scheduling;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -398,6 +399,27 @@ public class TaskConfiguration
     @Override
     public long getRunDuration() {
       return runDuration;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(endState, runDuration, runStarted);
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (obj == null) {
+        return false;
+      }
+      if (getClass() != obj.getClass()) {
+        return false;
+      }
+      LastRunStateImpl other = (LastRunStateImpl) obj;
+      return endState == other.endState && runDuration == other.runDuration
+          && Objects.equals(runStarted, other.runStarted);
     }
 
     @Override

@@ -30,14 +30,22 @@ public class TaskResultState
 
   private final LastRunState lastRunState;
 
+  private final Date nextFireTime;
+
   public TaskResultState(
       final String taskId,
       final TaskState state,
+      @Nullable final Date nextFireTime,
       @Nullable final LastRunState lastRunState)
   {
     this.taskId = checkNotNull(taskId);
     this.state = checkNotNull(state);
+    this.nextFireTime = nextFireTime;
     this.lastRunState = lastRunState;
+  }
+
+  public Date getNextFireTime() {
+    return nextFireTime;
   }
 
   public Optional<LastRunState> getLastRunState() {

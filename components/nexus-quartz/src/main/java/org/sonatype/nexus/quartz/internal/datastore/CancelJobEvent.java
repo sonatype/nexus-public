@@ -10,19 +10,39 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.scheduling.spi;
+package org.sonatype.nexus.quartz.internal.datastore;
 
-import java.util.Optional;
+import org.sonatype.nexus.common.event.EventWithSource;
 
-import org.sonatype.nexus.scheduling.TaskInfo;
-
-/**
- * Store for persisted Task state
- */
-public interface TaskResultStateStore
+public class CancelJobEvent
+    extends EventWithSource
 {
-  /**
-   * Retrieve a state from the provided {@link TaskInfo}
-   */
-  Optional<TaskResultState> getState(TaskInfo taskInfo);
+  private String id;
+
+  private boolean mayInterruptIfRunning;
+
+  CancelJobEvent() {
+    // deserialization
+  }
+
+  public CancelJobEvent(final String id, final boolean mayInterruptIfRunning) {
+    this.id = id;
+    this.mayInterruptIfRunning = mayInterruptIfRunning;
+  }
+
+  public String getId() {
+    return id;
+  }
+
+  public boolean isMayInterruptIfRunning() {
+    return mayInterruptIfRunning;
+  }
+
+  public void setId(final String id) {
+    this.id = id;
+  }
+
+  public void setMayInterruptIfRunning(final boolean mayInterruptIfRunning) {
+    this.mayInterruptIfRunning = mayInterruptIfRunning;
+  }
 }

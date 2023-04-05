@@ -10,10 +10,10 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.scheduling.internal.resources;
+package org.sonatype.nexus.scheduling.internal.resources.datastore;
 
 import java.util.List;
-import java.util.concurrent.Future;
+import java.util.Optional;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -34,6 +34,7 @@ import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;
+import org.sonatype.nexus.scheduling.TaskState;
 import org.sonatype.nexus.scheduling.api.TaskXO;
 import org.sonatype.nexus.scheduling.internal.resources.doc.TasksResourceDoc;
 
@@ -68,7 +69,7 @@ public class TasksResource
   private final TaskScheduler taskScheduler;
 
   @Inject
-  public TasksResource(final TaskScheduler taskScheduler) {
+  public TasksResource(final TaskScheduler taskScheduler)  {
     this.taskScheduler = checkNotNull(taskScheduler);
   }
 
@@ -128,12 +129,15 @@ public class TasksResource
   public void stop(@PathParam("id") final String id) {
     try {
       TaskInfo taskInfo = getTaskInfo(id);
-      Future<?> taskFuture = taskInfo.getCurrentState().getFuture();
-      if (taskFuture == null) {
-        throw new WebApplicationException(format("Task %s is not running", id), CONFLICT);
+      TaskState currentState = taskScheduler.toExternalTaskState(taskInfo).getState();
+
+      boolean running = Optional.ofNullable(currentState).map(TaskState::isRunning).orElse(false);
+      if (running) {
+        boolean cancelled = taskScheduler.cancel(id, false);
+        log.debug("Cancel {} for task {}", cancelled, id);
       }
-      if (!taskFuture.cancel(false)) {
-        throw new WebApplicationException(format("Unable to stop task %s", id), CONFLICT);
+      else {
+        throw new WebApplicationException(format("Task %s is not running", id), CONFLICT);
       }
     }
     catch (WebApplicationException webApplicationException) {

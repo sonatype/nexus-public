@@ -13,10 +13,10 @@
 package org.sonatype.nexus.quartz.internal.datastore;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -34,6 +34,12 @@ import org.sonatype.nexus.scheduling.spi.TaskResultStateStore;
 import org.sonatype.nexus.transaction.Transactional;
 
 import org.quartz.JobKey;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
+import org.quartz.Trigger;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.quartz.TriggerKey.triggerKey;
 
 @Named
 @Singleton
@@ -41,21 +47,12 @@ public class TaskResultStateStoreImpl
     extends ConfigStoreSupport<QuartzDAO>
     implements TaskResultStateStore
 {
-  @Inject
-  public TaskResultStateStoreImpl(final DataSessionSupplier sessionSupplier) {
-    super(sessionSupplier);
-  }
+  protected Scheduler scheduler;
 
-  @Override
-  public List<TaskResultState> getStates() {
-    return getQuartzStates().stream()
-        // Group by a task (job name inside Quartz)
-        .collect(Collectors.groupingBy(QuartzTaskStateData::getJobName))
-        .values()
-        .stream()
-        .map(TaskResultStateStoreImpl::aggregate)
-        .filter(Objects::nonNull)
-        .collect(Collectors.toList());
+  @Inject
+  public TaskResultStateStoreImpl(final DataSessionSupplier sessionSupplier, final Scheduler scheduler) {
+    super(sessionSupplier);
+    this.scheduler = checkNotNull(scheduler);
   }
 
   @Override
@@ -66,7 +63,7 @@ public class TaskResultStateStoreImpl
         .map(JobKey::getName)
         .flatMap(this::getQuartzState)
         .map(Collections::singletonList)
-        .map(TaskResultStateStoreImpl::aggregate);
+        .map(jobStates -> aggregate(taskInfo, jobStates));
   }
 
   @Transactional
@@ -79,7 +76,7 @@ public class TaskResultStateStoreImpl
     return dao().getState(taskId);
   }
 
-  private static TaskResultState aggregate(final List<QuartzTaskStateData> jobStates) {
+  private TaskResultState aggregate(final TaskInfo taskInfo, final List<QuartzTaskStateData> jobStates) {
     TaskConfiguration taskConfiguration = jobStates.stream()
         .map(QuartzTaskStateData::getJobData)
         .filter(Objects::nonNull)
@@ -92,11 +89,23 @@ public class TaskResultStateStoreImpl
       return null;
     }
 
+    Date nextFireTime = null;
+    JobKey jobKey = ((QuartzTaskInfo) taskInfo).getJobKey();
+    try {
+      nextFireTime = Optional.ofNullable(scheduler.getTrigger(triggerKey(jobKey.getName(), jobKey.getGroup())))
+          .map(Trigger::getNextFireTime)
+          .orElseGet(taskInfo.getCurrentState()::getNextRun);
+    }
+    catch (SchedulerException e) {
+      log.debug("An error occurred finding the next fire time for {}", taskConfiguration.getId(), e);
+      nextFireTime = taskInfo.getCurrentState().getNextRun();
+    }
+
     boolean running = jobStates.stream()
         .map(QuartzTaskStateData::getState)
         .anyMatch("EXECUTING"::equals);
 
     return new TaskResultState(taskConfiguration.getId(), running ? TaskState.RUNNING : TaskState.WAITING,
-        taskConfiguration.getLastRunState());
+        nextFireTime, taskConfiguration.getLastRunState());
   }
 }

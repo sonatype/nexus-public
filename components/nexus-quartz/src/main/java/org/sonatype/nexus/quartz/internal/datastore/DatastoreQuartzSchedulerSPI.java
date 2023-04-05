@@ -67,6 +67,8 @@ public class DatastoreQuartzSchedulerSPI
     extends QuartzSchedulerSPI
     implements EventAware
 {
+  private final Object mutex = new Object();
+
   @Inject
   public DatastoreQuartzSchedulerSPI(
       final EventManager eventManager,
@@ -95,12 +97,27 @@ public class DatastoreQuartzSchedulerSPI
       }
 
       @Override
-      public void triggerFinalized(final Trigger trigger) {
+      public void jobUnscheduled(final TriggerKey triggerKey) {
         if (!EventHelper.isReplicating()) {
-          eventManager.post(new TriggerDeletedEvent(trigger.getKey()));
+          eventManager.post(new TriggerDeletedEvent(triggerKey));
         }
       }
     });
+  }
+
+  @Guarded(by = STARTED)
+  @Override
+  public boolean cancel(final String id, final boolean mayInterruptIfRunning) {
+    boolean locallyCancelled = super.cancel(id, mayInterruptIfRunning);
+     if (locallyCancelled) {
+       return true;
+     }
+
+     if (!EventHelper.isReplicating()) {
+       eventManager.post(new CancelJobEvent(id, mayInterruptIfRunning));
+     }
+
+     return false;
   }
 
   private Optional<QuartzTaskJobListener> attachJobListener(final JobKey jobKey) {
@@ -212,6 +229,14 @@ public class DatastoreQuartzSchedulerSPI
   }
 
   @Subscribe
+  public void on(final CancelJobEvent event) {
+    if (EventHelper.isReplicating()) {
+      log.debug("Received remote request to cancel {}", event.getId());
+      cancel(event.getId(), event.isMayInterruptIfRunning());
+    }
+  }
+
+  @Subscribe
   public void on(final JobCreatedEvent event) {
     handle(event, jobDetail -> {
       attachJobListener(jobDetail.getKey());
@@ -243,7 +268,7 @@ public class DatastoreQuartzSchedulerSPI
 
   private void handle(final JobEventSupport event, final Consumer<JobDetail> handler) {
     if (EventHelper.isReplicating()) {
-      log.debug("Recieved {} for {} from node {}", event.getClass(), event.getJobKey(), event.getRemoteNodeId());
+      log.debug("Received {} for {} from node {}", event.getClass(), event.getJobKey(), event.getRemoteNodeId());
 
       try (TcclBlock tccl = TcclBlock.begin(this)) {
         JobDetail jobDetail = scheduler.getJobDetail(event.getJobKey());
@@ -251,7 +276,9 @@ public class DatastoreQuartzSchedulerSPI
           log.debug("Missing job for {}", event.getJobKey());
           return;
         }
-        handler.accept(jobDetail);
+        synchronized(mutex) {
+          handler.accept(jobDetail);
+        }
       }
       catch (SchedulerException e) {
         log.warn("Error handling {} for {} cause {}", event.getClass(), event.getJobKey(), e.getMessage(),
@@ -311,7 +338,7 @@ public class DatastoreQuartzSchedulerSPI
 
   private void handle(final TriggerEventSupport event, final Consumer<Trigger> handler) {
     if (EventHelper.isReplicating()) {
-      log.debug("Recieved {} for {} from node {}", event.getClass(), event.getTriggerKey(), event.getRemoteNodeId());
+      log.debug("Received {} for {} from node {}", event.getClass(), event.getTriggerKey(), event.getRemoteNodeId());
 
       try (TcclBlock tccl = TcclBlock.begin(this)) {
         Trigger trigger = scheduler.getTrigger(event.getTriggerKey());
@@ -319,7 +346,10 @@ public class DatastoreQuartzSchedulerSPI
           log.debug("Missing trigger {}", event.getTriggerKey());
           return;
         }
-        handler.accept(trigger);
+
+        synchronized(mutex) {
+          handler.accept(trigger);
+        }
       }
       catch (SchedulerException e) {
         log.warn("Error handling {} for {} cause {}", event.getClass(), event.getTriggerKey(), e.getMessage(),
