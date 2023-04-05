@@ -18,6 +18,8 @@ import Axios from 'axios';
 import {assign} from 'xstate';
 import {APIConstants, ExtAPIUtils, ListMachineUtils} from '@sonatype/nexus-ui-plugin';
 
+import { filterReposByUiUpload } from '../BrowseUtils';
+
 const {EXT: {UPLOAD: {ACTION, METHODS}, REPOSITORY}} = APIConstants;
 
 export default ListMachineUtils.buildListMachine({
@@ -25,21 +27,9 @@ export default ListMachineUtils.buildListMachine({
   sortableFields: ['name', 'format']
 }).withConfig({
   actions: {
-    setData: assign( (_, {data: [repositories, definitions]}) => {
-      const formats = new Set();
-      definitions.data.forEach((def) => formats.add(def.format));
-
-      const filteredRepos = repositories.filter((repo) => (
-        formats.has(repo.format)
-        && repo.type === 'hosted'
-        && (repo.status == null || repo.status?.online !== false)
-        && repo.versionPolicy !== 'SNAPSHOT'
-      ));
-
-      return {
-        pristineData: filteredRepos
-      }
-    }),
+    setData: assign((_, {data: [repositories, definitions]}) => ({
+      pristineData: filterReposByUiUpload(definitions, repositories)
+    })),
     filterData: assign({
       data: ({filter, pristineData}, _) => pristineData.filter(
         ({name, format}) => ListMachineUtils.hasAnyMatches([name, format], filter)
@@ -51,7 +41,7 @@ export default ListMachineUtils.buildListMachine({
       return Axios.all([
         ExtAPIUtils.extAPIRequest(REPOSITORY.ACTION, REPOSITORY.METHODS.READ_REFERENCES, {})
             .then(ExtAPIUtils.checkForErrorAndExtract),
-        ExtAPIUtils.extAPIRequest(ACTION, METHODS.GET_UPLOAD_DEFINITIONS).then(v => v.data.result),
+        ExtAPIUtils.extAPIRequest(ACTION, METHODS.GET_UPLOAD_DEFINITIONS).then(ExtAPIUtils.checkForErrorAndExtract),
       ])
     },
   }

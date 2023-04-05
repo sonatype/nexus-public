@@ -71,6 +71,7 @@ import { SUBMIT_MASK_SUCCESS_VISIBLE_TIME_MS, combineValidationErrors, hasValida
 import { APIConstants, ExtJS, FormUtils, ValidationUtils, ExtAPIUtils, UIStrings, Utils }
   from '@sonatype/nexus-ui-plugin';
 
+import { repoSupportsUiUpload } from '../BrowseUtils';
 import {
   COMPOUND_FIELD_PARENT_NAME,
   ASSET_NUM_MATCHER,
@@ -438,29 +439,40 @@ export default FormUtils.buildFormMachine({
   },
   services: {
     async fetchData({ repoId }) {
-      const repoSettingsPromise = axios.get(APIConstants.REST.PUBLIC.UPLOAD)
-              .then(({ data }) => {
-                const repoSettings = find(propEq('name', repoId), data);
-                if (!repoSettings) {
-                  throw new Error(`Unable to find repository "${repoId}"`);
-                }
-                else {
-                  return repoSettings;
-                }
-              }),
-          uploadDefinitionsPromise = ExtAPIUtils.extAPIRequest(
-              APIConstants.EXT.UPLOAD.ACTION,
-              APIConstants.EXT.UPLOAD.METHODS.GET_UPLOAD_DEFINITIONS
-          ).then(response => {
-            ExtAPIUtils.checkForError(response);
-            return response;
-          }).then(ExtAPIUtils.extractResult);
+      const repoSettingsPromise = ExtAPIUtils.extAPIRequest(
+          APIConstants.EXT.REPOSITORY.ACTION,
+          APIConstants.EXT.REPOSITORY.METHODS.READ_REFERENCES,
+          {}
+      ).then(response => {
+        const data = ExtAPIUtils.checkForErrorAndExtract(response),
+            repoSettings = find(propEq('name', repoId), data);
+
+        if (!repoSettings) {
+          throw new Error(`Unable to find repository "${repoId}"`);
+        }
+        else {
+          return repoSettings;
+        }
+      });
+
+      const uploadDefinitionsPromise = ExtAPIUtils.extAPIRequest(
+          APIConstants.EXT.UPLOAD.ACTION,
+          APIConstants.EXT.UPLOAD.METHODS.GET_UPLOAD_DEFINITIONS
+      ).then(response => {
+        ExtAPIUtils.checkForError(response);
+        return response;
+      }).then(ExtAPIUtils.extractResult);
 
       const [uploadDefinitions, repoSettings] = await Promise.all([uploadDefinitionsPromise, repoSettingsPromise]),
           { format } = repoSettings,
           uploadDefinition = find(propEq('format', format), uploadDefinitions);
 
-      return { uploadDefinition, repoSettings };
+      if (repoSupportsUiUpload(uploadDefinitions, repoSettings)) {
+        return { uploadDefinition, repoSettings };
+      }
+      else {
+        throw new Error(`Repository "${repoId}" does not support upload through the web UI`);
+      }
     },
     async saveData({ repoSettings: { name }, data, disabledFields }) {
       const formData = new FormData(),

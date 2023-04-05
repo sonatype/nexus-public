@@ -16,15 +16,26 @@
  */
 
 export const sampleRepoSettings = {
-  data: [
-    { name: 'multi-repo', format: 'multi' },
-    { name: 'simple-repo', format: 'nuget' },
-    { name: 'regex-map-repo', format: 'foo-format' },
-    { name: 'maven-repo', format: 'maven2' }
-  ]
+  data: {
+    result: {
+      success: true,
+      data: [
+        { name: 'simple-repo', format: 'nuget', type: 'hosted' },
+        { name: 'multi-repo', format: 'multi', type: 'hosted', status: { online: true } },
+        { name: 'regex-map-repo', format: 'foo-format', type: 'hosted' },
+        { name: 'maven-repo', format: 'maven2', type: 'hosted' },
+        { name: 'proxy-repo', format: 'nuget', type: 'proxy' },
+        { name: 'group-repo', format: 'nuget', type: 'group' },
+        { name: 'offline-repo', format: 'nuget', type: 'hosted', status: { online: false } },
+        { name: 'ui-upload-disabled-repo', format: 'uiUploadDisabled', type: 'hosted' },
+        { name: 'snapshot-repo', format: 'maven2', type: 'hosted', versionPolicy: 'SNAPSHOT' }
+      ]
+    }
+  }
 };
 
 const simpleUploadDefinition = {
+  uiUpload: true,
   format: 'nuget',
   multipleUpload: false,
   componentFields: [{
@@ -82,6 +93,12 @@ const multiUploadDefinition = {
   ...simpleUploadDefinition,
   format: 'multi',
   multipleUpload: true
+};
+
+const uiUploadDisabledUploadDefinition = {
+  ...simpleUploadDefinition,
+  format: 'uiUploadDiabled',
+  uiUpload: false
 };
 
 const regexUploadDefinition = {
@@ -192,7 +209,13 @@ export const sampleUploadDefinitions = {
   data: {
     result: {
       success: true,
-      data: [simpleUploadDefinition, multiUploadDefinition, regexUploadDefinition, mavenUploadDefinition]
+      data: [
+        simpleUploadDefinition,
+        multiUploadDefinition,
+        regexUploadDefinition,
+        mavenUploadDefinition,
+        uiUploadDisabledUploadDefinition
+      ]
     }
   }
 };

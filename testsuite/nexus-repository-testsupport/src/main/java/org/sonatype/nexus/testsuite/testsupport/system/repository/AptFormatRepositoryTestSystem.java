@@ -49,7 +49,13 @@ public class AptFormatRepositoryTestSystem
     super(repositoryManager);
   }
 
-  public Repository createHosted(final AptHostedRepositoryConfig config) throws Exception {
+  public AptHostedRepositoryConfig hosted(final String name) {
+    return new AptHostedRepositoryConfig(this::createHosted)
+        .withName(name)
+        .withDistribution("ubuntu");
+  }
+
+  public Repository createHosted(final AptHostedRepositoryConfig config) {
     return doCreate(
         applyAptHostedAttributes(applyAptCommonAttributes(createHostedConfiguration(config), config.getDistribution()),
             config.getKeypair()));

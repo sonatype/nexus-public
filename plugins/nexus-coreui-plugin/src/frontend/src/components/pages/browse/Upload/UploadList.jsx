@@ -67,7 +67,7 @@ export default function UploadList({onEdit, copyUrl = doCopyUrl}) {
             </NxTile.HeaderActions>
         </NxTile.Header>
         <NxTile.Content>
-          <NxTable>
+          <NxTable id="nxrm-upload-list-repo-table">
             <NxTable.Head>
               <NxTable.Row>
                 <NxTable.Cell onClick={sortByName} isSortable sortDir={nameSortDir}>{COLUMNS.NAME}</NxTable.Cell>

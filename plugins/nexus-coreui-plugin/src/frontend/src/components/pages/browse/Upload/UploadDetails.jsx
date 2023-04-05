@@ -86,7 +86,7 @@ export default function UploadDetails({ itemId }) {
   }
 
   return (
-    <NxPageMain>
+    <NxPageMain id="nxrm-upload-details">
       <NxPageTitle>
         <NxH1 id="upload-details-title">
           <NxFontAwesomeIcon icon={faUpload} />

@@ -183,11 +183,12 @@ describe('UploadDetails', function() {
   mockWindowLocation();
 
   beforeEach(function() {
-    jest.spyOn(axios, 'get');
     jest.spyOn(axios, 'post');
 
-    when(axios.get).calledWith('/service/rest/v1/repositorySettings')
-        .mockResolvedValue(testData.sampleRepoSettings);
+    when(axios.post).calledWith(
+        '/service/extdirect',
+        expect.objectContaining({ action: 'coreui_Repository', method: 'readReferences' })
+    ).mockResolvedValue(testData.sampleRepoSettings);
 
     when(axios.post).calledWith(
         '/service/extdirect',
@@ -208,9 +209,11 @@ describe('UploadDetails', function() {
   });
 
   describe('initial loading', function() {
-    it('renders a loading spinner before the GET completes', function() {
-      when(axios.get).calledWith('/service/rest/v1/repositorySettings')
-          .mockReturnValue(new Promise(() => {}));
+    it('renders a loading spinner before the readReferences call completes', function() {
+      when(axios.post).calledWith(
+          '/service/extdirect',
+          expect.objectContaining({ action: 'coreui_Repository', method: 'readReferences' })
+      ).mockReturnValue(new Promise(() => {}));
 
       render();
 
@@ -219,7 +222,7 @@ describe('UploadDetails', function() {
       expect(loadingStatus).toHaveTextContent(/loading/i);
     });
 
-    it('renders a loading spinner before the extdirect POST completes', function() {
+    it('renders a loading spinner before the getUploadDefinitions call completes', function() {
       when(axios.post).calledWith(
           '/service/extdirect',
           expect.objectContaining({ action: 'coreui_Upload', method: 'getUploadDefinitions' })
@@ -241,58 +244,89 @@ describe('UploadDetails', function() {
       expect(selectors.form()).toBeInTheDocument();
     });
 
-    it('renders an error alert with a Retry button if the GET fails', async function() {
-      when(axios.get).calledWith('/service/rest/v1/repositorySettings')
-          .mockRejectedValue({ message: 'foobar' });
-
-      render();
-
-      const loadingStatus = selectors.loadingStatus();
-
-      await waitForElementToBeRemoved(loadingStatus);
-      expect(selectors.form('query')).not.toBeInTheDocument();
-      expect(selectors.errorAlert()).toBeInTheDocument();
-      expect(selectors.errorAlert()).toHaveTextContent('foobar');
-      expect(selectors.errorRetryBtn()).toBeInTheDocument();
-    });
-
-    it('renders an error alert with a Retry button if extdirect call fails at the HTTP level', async function() {
-      when(axios.post).calledWith(
-          '/service/extdirect',
-          expect.objectContaining({ action: 'coreui_Upload', method: 'getUploadDefinitions' })
-      ).mockRejectedValue({ message: 'foobar' });
-
-      render();
-
-      const loadingStatus = selectors.loadingStatus();
-
-      await waitForElementToBeRemoved(loadingStatus);
-      expect(selectors.form('query')).not.toBeInTheDocument();
-      expect(selectors.errorAlert()).toBeInTheDocument();
-      expect(selectors.errorAlert()).toHaveTextContent('foobar');
-      expect(selectors.errorRetryBtn()).toBeInTheDocument();
-    });
-
-    it('renders an error alert with a Retry button if extdirect call fails at the extdirect level', async function() {
-      when(axios.post).calledWith(
-          '/service/extdirect',
-          expect.objectContaining({ action: 'coreui_Upload', method: 'getUploadDefinitions' })
-      ).mockResolvedValue({ data: { result: { success: false, message: 'foobar' } } });
-
-      render();
-
-      const loadingStatus = selectors.loadingStatus();
-
-      await waitForElementToBeRemoved(loadingStatus);
-      expect(selectors.form('query')).not.toBeInTheDocument();
-      expect(selectors.errorAlert()).toBeInTheDocument();
-      expect(selectors.errorAlert()).toHaveTextContent('foobar');
-      expect(selectors.errorRetryBtn()).toBeInTheDocument();
-    });
-
-    it('re-runs the GET and the extdirect call when the Retry button is clicked, and renders the form if they succeed',
+    it('renders an error alert with a Retry button if the readReferences call fails at the HTTP level',
         async function() {
-          when(axios.get).calledWith('/service/rest/v1/repositorySettings')
+          when(axios.post).calledWith(
+              '/service/extdirect',
+              expect.objectContaining({ action: 'coreui_Repository', method: 'readReferences' })
+          ).mockRejectedValue({ message: 'foobar' });
+
+          render();
+
+          const loadingStatus = selectors.loadingStatus();
+
+          await waitForElementToBeRemoved(loadingStatus);
+          expect(selectors.form('query')).not.toBeInTheDocument();
+          expect(selectors.errorAlert()).toBeInTheDocument();
+          expect(selectors.errorAlert()).toHaveTextContent('foobar');
+          expect(selectors.errorRetryBtn()).toBeInTheDocument();
+        }
+    );
+
+    it('renders an error alert with a Retry button if the readReferences call fails at the extdirect level',
+        async function() {
+          when(axios.post).calledWith(
+              '/service/extdirect',
+              expect.objectContaining({ action: 'coreui_Repository', method: 'readReferences' })
+          ).mockResolvedValue({ data: { result: { success: false, message: 'foobar' } } });
+
+          render();
+
+          const loadingStatus = selectors.loadingStatus();
+
+          await waitForElementToBeRemoved(loadingStatus);
+          expect(selectors.form('query')).not.toBeInTheDocument();
+          expect(selectors.errorAlert()).toBeInTheDocument();
+          expect(selectors.errorAlert()).toHaveTextContent('foobar');
+          expect(selectors.errorRetryBtn()).toBeInTheDocument();
+        }
+    );
+
+    it('renders an error alert with a Retry button if the getUploadDefinitions call fails at the HTTP level',
+        async function() {
+          when(axios.post).calledWith(
+              '/service/extdirect',
+              expect.objectContaining({ action: 'coreui_Upload', method: 'getUploadDefinitions' })
+          ).mockRejectedValue({ message: 'foobar' });
+
+          render();
+
+          const loadingStatus = selectors.loadingStatus();
+
+          await waitForElementToBeRemoved(loadingStatus);
+          expect(selectors.form('query')).not.toBeInTheDocument();
+          expect(selectors.errorAlert()).toBeInTheDocument();
+          expect(selectors.errorAlert()).toHaveTextContent('foobar');
+          expect(selectors.errorRetryBtn()).toBeInTheDocument();
+        }
+    );
+
+    it('renders an error alert with a Retry button if the getUploadDefinitions call fails at the extdirect level',
+        async function() {
+          when(axios.post).calledWith(
+              '/service/extdirect',
+              expect.objectContaining({ action: 'coreui_Upload', method: 'getUploadDefinitions' })
+          ).mockResolvedValue({ data: { result: { success: false, message: 'foobar' } } });
+
+          render();
+
+          const loadingStatus = selectors.loadingStatus();
+
+          await waitForElementToBeRemoved(loadingStatus);
+          expect(selectors.form('query')).not.toBeInTheDocument();
+          expect(selectors.errorAlert()).toBeInTheDocument();
+          expect(selectors.errorAlert()).toHaveTextContent('foobar');
+          expect(selectors.errorRetryBtn()).toBeInTheDocument();
+        }
+    );
+
+    it('re-runs the REST calls when the Retry button is clicked, and renders the form if they succeed',
+        async function() {
+          when(axios.post)
+              .calledWith(
+                  '/service/extdirect',
+                  expect.objectContaining({ action: 'coreui_Repository', method: 'readReferences' })
+              )
               .mockRejectedValueOnce({ message: 'foobar' })
               .mockResolvedValueOnce(testData.sampleRepoSettings);
 
@@ -306,6 +340,93 @@ describe('UploadDetails', function() {
           expect(await selectors.form('find')).toBeInTheDocument();
         }
     );
+
+    it('renders an error alert with a Retry button if the repository in question does not exist in the repositorySettings', async function() {
+      render('no-such-repo');
+
+      const loadingStatus = selectors.loadingStatus();
+
+      await waitForElementToBeRemoved(loadingStatus);
+
+      expect(selectors.form('query')).not.toBeInTheDocument();
+      expect(selectors.errorAlert()).toBeInTheDocument();
+      expect(selectors.errorAlert()).toHaveTextContent('no-such-repo');
+      expect(selectors.errorAlert()).toHaveTextContent('Unable to find');
+      expect(selectors.errorRetryBtn()).toBeInTheDocument();
+    });
+
+    it('renders an error alert with a Retry button if the repository in question is a proxy repo', async function() {
+      render('proxy-repo');
+
+      const loadingStatus = selectors.loadingStatus();
+
+      await waitForElementToBeRemoved(loadingStatus);
+
+      expect(selectors.form('query')).not.toBeInTheDocument();
+      expect(selectors.errorAlert()).toBeInTheDocument();
+      expect(selectors.errorAlert()).toHaveTextContent('proxy-repo');
+      expect(selectors.errorAlert()).toHaveTextContent('does not support upload');
+      expect(selectors.errorRetryBtn()).toBeInTheDocument();
+    });
+
+    it('renders an error alert with a Retry button if the repository in question is a group repo', async function() {
+      render('group-repo');
+
+      const loadingStatus = selectors.loadingStatus();
+
+      await waitForElementToBeRemoved(loadingStatus);
+
+      expect(selectors.form('query')).not.toBeInTheDocument();
+      expect(selectors.errorAlert()).toBeInTheDocument();
+      expect(selectors.errorAlert()).toHaveTextContent('group-repo');
+      expect(selectors.errorAlert()).toHaveTextContent('does not support upload');
+      expect(selectors.errorRetryBtn()).toBeInTheDocument();
+    });
+
+    it('renders an error alert with a Retry button if the repository in question is offline', async function() {
+      render('offline-repo');
+
+      const loadingStatus = selectors.loadingStatus();
+
+      await waitForElementToBeRemoved(loadingStatus);
+
+      expect(selectors.form('query')).not.toBeInTheDocument();
+      expect(selectors.errorAlert()).toBeInTheDocument();
+      expect(selectors.errorAlert()).toHaveTextContent('offline-repo');
+      expect(selectors.errorAlert()).toHaveTextContent('does not support upload');
+      expect(selectors.errorRetryBtn()).toBeInTheDocument();
+    });
+
+    it('renders an error alert with a Retry button if the repository in question is a maven SNAPSHOT repo',
+        async function() {
+          render('snapshot-repo');
+
+          const loadingStatus = selectors.loadingStatus();
+
+          await waitForElementToBeRemoved(loadingStatus);
+
+          expect(selectors.form('query')).not.toBeInTheDocument();
+          expect(selectors.errorAlert()).toBeInTheDocument();
+          expect(selectors.errorAlert()).toHaveTextContent('snapshot-repo');
+          expect(selectors.errorAlert()).toHaveTextContent('does not support upload');
+          expect(selectors.errorRetryBtn()).toBeInTheDocument();
+        }
+    );
+
+    it('renders an error alert with a Retry button if the repository in question is for a format with uiUpload set ' +
+        'to false', async function() {
+      render('ui-upload-disabled-repo');
+
+      const loadingStatus = selectors.loadingStatus();
+
+      await waitForElementToBeRemoved(loadingStatus);
+
+      expect(selectors.form('query')).not.toBeInTheDocument();
+      expect(selectors.errorAlert()).toBeInTheDocument();
+      expect(selectors.errorAlert()).toHaveTextContent('ui-upload-disabled-repo');
+      expect(selectors.errorAlert()).toHaveTextContent('does not support upload');
+      expect(selectors.errorRetryBtn()).toBeInTheDocument();
+    });
   });
 
   it('renders a first-level heading of "Upload" and sets that as the accessible name of the form', async function() {

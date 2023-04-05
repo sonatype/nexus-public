@@ -70,16 +70,16 @@ export const REPOS = [
 ];
 
 export const FORMATS = [
-  {format: 'helm'},
-  {format: 'r'},
-  {format: 'pypi'},
-  {format: 'yum'},
-  {format: 'rubygems'},
-  {format: 'npm'},
-  {format: 'raw'},
-  {format: 'apt'},
-  {format: 'nuget'},
-  {format: 'maven2'},
+  {uiUpload: true, format: 'helm'},
+  {uiUpload: true, format: 'r'},
+  {uiUpload: true, format: 'pypi'},
+  {uiUpload: true, format: 'yum'},
+  {uiUpload: true, format: 'rubygems'},
+  {uiUpload: true, format: 'npm'},
+  {uiUpload: true, format: 'raw'},
+  {uiUpload: true, format: 'apt'},
+  {uiUpload: true, format: 'nuget'},
+  {uiUpload: true, format: 'maven2'},
 ];
 
 export const FIELDS = {
