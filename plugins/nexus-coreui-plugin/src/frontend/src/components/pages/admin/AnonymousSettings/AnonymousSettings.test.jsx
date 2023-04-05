@@ -13,14 +13,24 @@
 import React from 'react';
 import Axios from 'axios';
 import {act} from 'react-dom/test-utils';
-import {fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
+import {
+  fireEvent,
+  waitFor,
+  waitForElementToBeRemoved,
+  render,
+  screen
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, APIConstants} from '@sonatype/nexus-ui-plugin';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import AnonymousSettings from './AnonymousSettings';
 import UIStrings from '../../../../constants/UIStrings';
+
+const {
+  ANONYMOUS_SETTINGS: ANONYMOUS_API
+} = APIConstants.REST.INTERNAL;
 
 const mockRealmTypes = [
   {id: 'r1', name: 'Realm One'},
@@ -49,9 +59,9 @@ jest.mock('axios', () => {  // Mock out parts of axios, has to be done in same s
     ...jest.requireActual('axios'), // Use most functions from actual axios
     get: jest.fn((url) => {
       switch (url) {
-        case '/service/rest/internal/ui/realms/types':
+        case 'service/rest/internal/ui/realms/types':
           return Promise.resolve({data: mockRealmTypes});
-        case '/service/rest/internal/ui/anonymous-settings':
+        case 'service/rest/internal/ui/anonymous-settings':
           return Promise.resolve({data: mockAnonymousSettings});
       }
     }),
@@ -60,7 +70,13 @@ jest.mock('axios', () => {  // Mock out parts of axios, has to be done in same s
 });
 
 const selectors = {
-  ...TestUtils.formSelectors
+  ...TestUtils.formSelectors,
+  ...TestUtils.selectors,
+  enabledField: () => screen.getByLabelText(UIStrings.ANONYMOUS_SETTINGS.ENABLED_CHECKBOX_DESCRIPTION),
+  userIdField: () => screen.getByLabelText(UIStrings.ANONYMOUS_SETTINGS.USERNAME_TEXTFIELD_LABEL),
+  realmField: () => screen.getByLabelText(UIStrings.ANONYMOUS_SETTINGS.REALM_SELECT_LABEL),
+  saveButton: () => screen.getByText(UIStrings.SETTINGS.SAVE_BUTTON_LABEL),
+  discardButton: () => screen.getByText(UIStrings.SETTINGS.DISCARD_BUTTON_LABEL)
 };
 
 describe('AnonymousSettings', () => {
@@ -72,22 +88,18 @@ describe('AnonymousSettings', () => {
     window.dirty = [];
   });
 
-  function renderView(view) {
-    return TestUtils.render(view, ({getByLabelText, getByText}) => ({
-      enabledField: () => getByLabelText(UIStrings.ANONYMOUS_SETTINGS.ENABLED_CHECKBOX_DESCRIPTION),
-      userIdField: () => getByLabelText(UIStrings.ANONYMOUS_SETTINGS.USERNAME_TEXTFIELD_LABEL),
-      realmField: () => getByLabelText(UIStrings.ANONYMOUS_SETTINGS.REALM_SELECT_LABEL),
-      saveButton: () => getByText(UIStrings.SETTINGS.SAVE_BUTTON_LABEL),
-      discardButton: () => getByText(UIStrings.SETTINGS.DISCARD_BUTTON_LABEL)
-    }));
+  async function renderView() {
+    const view = render(<AnonymousSettings/>);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask())
+    return view;
   }
 
   it('fetches the values of fields from the API and updates them as expected', async () => {
     let {
-      loadingMask, enabledField, userIdField, realmField, discardButton
-    } = renderView(<AnonymousSettings/>);
+      enabledField, userIdField, realmField, discardButton
+    } = selectors;
 
-    await waitForElementToBeRemoved(loadingMask);
+    await renderView();
 
     expect(Axios.get).toHaveBeenCalledTimes(2);
     expect(enabledField()).toBeChecked();
@@ -99,10 +111,10 @@ describe('AnonymousSettings', () => {
 
   it('Sends changes to the API on save', async () => {
     let {
-      loadingMask, enabledField, userIdField, realmField, saveButton, discardButton
-    } = renderView(<AnonymousSettings/>);
+      enabledField, userIdField, realmField, saveButton, discardButton
+    } = selectors;
 
-    await waitForElementToBeRemoved(loadingMask)
+    await renderView();
 
     userEvent.click(enabledField());
     await waitFor(() => expect(enabledField()).not.toBeChecked());
@@ -123,7 +135,7 @@ describe('AnonymousSettings', () => {
 
     expect(Axios.put).toHaveBeenCalledTimes(1);
     expect(Axios.put).toHaveBeenCalledWith(
-        '/service/rest/internal/ui/anonymous-settings',
+        'service/rest/internal/ui/anonymous-settings',
         {
           enabled: false,
           userId: 'changed-username',
@@ -137,10 +149,10 @@ describe('AnonymousSettings', () => {
 
   it('Resets the form on discard', async () => {
     let {
-      loadingMask, userIdField, discardButton
-    } = renderView(<AnonymousSettings/>);
+      userIdField, discardButton
+    } = selectors;
 
-    await waitForElementToBeRemoved(loadingMask);
+    await renderView();
 
     fireEvent.change(userIdField(), {target: {value: ''}})
     await waitFor(() => expect(userIdField()).toHaveValue(''));
@@ -156,10 +168,10 @@ describe('AnonymousSettings', () => {
 
   it('Sets the dirty flag appropriately', async () => {
     let {
-      loadingMask, userIdField, discardButton
-    } = renderView(<AnonymousSettings/>);
+      userIdField, discardButton
+    } = selectors;
 
-    await waitForElementToBeRemoved(loadingMask);
+    await renderView();
 
     expect(window.dirty).toEqual([]);
 
@@ -178,17 +190,25 @@ describe('AnonymousSettings', () => {
     const dataClass = 'nx-read-only__data';
     const labelClass = 'nx-read-only__label';
 
-    let {loadingMask, getByText} = renderView(<AnonymousSettings/>);
+    await renderView();
 
-    await waitForElementToBeRemoved(loadingMask);
+    expect(screen.getByText(UIStrings.SETTINGS.READ_ONLY.WARNING)).toBeInTheDocument();
 
-    expect(getByText(UIStrings.SETTINGS.READ_ONLY.WARNING)).toBeInTheDocument();
+    expect(screen.getByText(UIStrings.ANONYMOUS_SETTINGS.ENABLED_CHECKBOX_LABEL)).toHaveClass(labelClass);
+    expect(screen.getByText('Enabled')).toHaveClass(dataClass);
+    expect(screen.getByText(UIStrings.ANONYMOUS_SETTINGS.USERNAME_TEXTFIELD_LABEL)).toHaveClass(labelClass);
+    expect(screen.getByText('testUser')).toHaveClass(dataClass);
+    expect(screen.getByText(UIStrings.ANONYMOUS_SETTINGS.REALM_SELECT_LABEL)).toHaveClass(labelClass);
+    expect(screen.getByText('Realm Two')).toHaveClass(dataClass);
+  });
 
-    expect(getByText(UIStrings.ANONYMOUS_SETTINGS.ENABLED_CHECKBOX_LABEL)).toHaveClass(labelClass);
-    expect(getByText('Enabled')).toHaveClass(dataClass);
-    expect(getByText(UIStrings.ANONYMOUS_SETTINGS.USERNAME_TEXTFIELD_LABEL)).toHaveClass(labelClass);
-    expect(getByText('testUser')).toHaveClass(dataClass);
-    expect(getByText(UIStrings.ANONYMOUS_SETTINGS.REALM_SELECT_LABEL)).toHaveClass(labelClass);
-    expect(getByText('Realm Two')).toHaveClass(dataClass);
+  it('Removes userId trailing spaces', async () => {
+    await renderView();
+
+    await TestUtils.changeField(selectors.userIdField, ' ' + mockAnonymousSettings.userId + ' ');
+
+    userEvent.click(selectors.querySubmitButton());
+
+    await waitFor(() => expect(Axios.put).toBeCalledWith(ANONYMOUS_API, mockAnonymousSettings));
   });
 });

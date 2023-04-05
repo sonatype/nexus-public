@@ -538,6 +538,19 @@ export default class FormUtils {
   }
 
   /**
+   * Removes trailing spaces for a given input value on blur event.
+   * @param send - a function that sends events to the machine.
+   * @returns {(function(event): void)|*}
+   */
+  static trimOnBlur(send) {
+    return (event) => {
+      const name = event.currentTarget.name;
+      const value = event.currentTarget.value.trim();
+      this.handleUpdate(name, send)(value);
+    }
+  }
+
+  /**
    * @param isPristine
    * @param isInvalid
    * @return {string|null} the tooltip explaining why the save button is disabled

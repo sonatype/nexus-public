@@ -14,14 +14,18 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
 import {assign} from 'xstate';
 import Axios from 'axios';
-import {ExtJS, FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, FormUtils, ValidationUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 
 const {ERROR, ANONYMOUS_SETTINGS} = UIStrings;
+
+const {
+  REALMS_TYPES,
+  ANONYMOUS_SETTINGS: ANONYMOUS_API
+} = APIConstants.REST.INTERNAL;
 
 export default FormUtils.buildFormMachine({
   id: 'AnonymousSettingsForm'
@@ -56,9 +60,9 @@ export default FormUtils.buildFormMachine({
   },
   services: {
     fetchData: () => Axios.all([
-      Axios.get('/service/rest/internal/ui/realms/types'),
-      Axios.get('/service/rest/internal/ui/anonymous-settings')
+      Axios.get(REALMS_TYPES),
+      Axios.get(ANONYMOUS_API)
     ]),
-    saveData: ({data}) => Axios.put('/service/rest/internal/ui/anonymous-settings', data)
+    saveData: ({data}) => Axios.put(ANONYMOUS_API, {...data, userId: data.userId.trim()})
   }
 });
