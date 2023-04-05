@@ -15,11 +15,13 @@ import axios from 'axios';
 import {fireEvent, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, APIConstants} from '@sonatype/nexus-ui-plugin';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import SamlConfiguration from './SamlConfiguration';
 import UIStrings from '../../../../constants/UIStrings';
+
+const SAML_API_URL = APIConstants.REST.INTERNAL.SAML;
 
 jest.mock('axios', () => ({
   get: jest.fn(),
@@ -300,7 +302,7 @@ describe('SamlConfiguration', () => {
     userEvent.click(selectors.querySubmitButton());
     await waitForElementToBeRemoved(selectors.querySavingMask());
 
-    expect(axios.put).toBeCalledWith('/service/rest/internal/ui/saml', updatedConfiguration);
+    expect(axios.put).toBeCalledWith(SAML_API_URL, updatedConfiguration);
     expect(ExtJS.showSuccessMessage).toHaveBeenCalledWith(UIStrings.SAML_CONFIGURATION.MESSAGES.SAVE_SUCCESS);
     expect(idpMetadataField()).toHaveValue(updatedConfiguration.idpMetadata);
     expect(entityIdUriField()).toHaveValue(updatedConfiguration.entityIdUri);
@@ -352,5 +354,51 @@ describe('SamlConfiguration', () => {
     await TestUtils.changeField(idpMetadataField, '<xml>');
 
     expect(window.dirty).toEqual(['SamlConfigurationForm']);
+  });
+
+  it('trims LdP fields values before saving', async () => {
+    axios.get.mockResolvedValueOnce(DEFAULT_RESPONSE)
+
+    const {
+      loadingMask,
+      idpMetadataField,
+      entityIdUriField,
+      validateResponseSignatureField,
+      validateAssertionSignatureField,
+      usernameField,
+      firstnameField,
+      lastnameField,
+      emailField,
+      rolesField,
+    } = render();
+
+    const conf = {
+      idpMetadata: '<xml></xml>',
+      entityIdUri: 'http://example.com',
+      validateResponseSignature: 'false',
+      validateAssertionSignature: 'true',
+      usernameAttr: 'userId',
+      firstNameAttr: 'firstName',
+      lastNameAttr: 'lastName',
+      emailAttr: 'email',
+      roleAttr: 'groups'
+    };
+
+    await waitForElementToBeRemoved(loadingMask);
+
+    await TestUtils.changeField(idpMetadataField, conf.idpMetadata);
+    await TestUtils.changeField(entityIdUriField, conf.entityIdUri);
+    await TestUtils.changeField(validateResponseSignatureField, conf.validateResponseSignature);
+    await TestUtils.changeField(validateAssertionSignatureField, conf.validateAssertionSignature);
+    await TestUtils.changeField(usernameField, '  ' + conf.usernameAttr + '  ');
+    await TestUtils.changeField(firstnameField, '  ' + conf.firstNameAttr + '  ');
+    await TestUtils.changeField(lastnameField, '  ' + conf.lastNameAttr + '  ');
+    await TestUtils.changeField(emailField, '  ' + conf.emailAttr + '  ');
+    await TestUtils.changeField(rolesField, '  ' + conf.roleAttr + '  ');
+
+    userEvent.click(selectors.querySubmitButton());
+    await waitForElementToBeRemoved(selectors.querySavingMask());
+
+    expect(axios.put).toBeCalledWith(SAML_API_URL, conf);
   });
 });

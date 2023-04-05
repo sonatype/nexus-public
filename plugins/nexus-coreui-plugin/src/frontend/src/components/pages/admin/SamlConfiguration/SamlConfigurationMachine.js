@@ -17,11 +17,13 @@
 import Axios from 'axios';
 import {assign} from 'xstate';
 
-import {ExtJS, FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, FormUtils, ValidationUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 
 const {ERROR, SAML_CONFIGURATION} = UIStrings;
+
+const SAML_API_URL = APIConstants.REST.INTERNAL.SAML; 
 
 export default FormUtils.buildFormMachine({
   id: 'SamlConfigurationForm'
@@ -44,12 +46,26 @@ export default FormUtils.buildFormMachine({
   },
   services:
       {
-        fetchData: () => Axios.get('/service/rest/internal/ui/saml'),
+        fetchData: () => Axios.get(SAML_API_URL),
         saveData: ({data}) => {
-          return Axios.put('/service/rest/internal/ui/saml', {
+          const {
+            validateResponseSignature,
+            validateAssertionSignature,
+            usernameAttr,
+            firstNameAttr,
+            lastNameAttr,
+            emailAttr,
+            roleAttr
+          } = data;
+          return Axios.put(SAML_API_URL, {
             ...data,
-            validateResponseSignature: data.validateResponseSignature === 'default' ? null : data.validateResponseSignature,
-            validateAssertionSignature: data.validateAssertionSignature === 'default' ? null : data.validateAssertionSignature
+            validateResponseSignature: validateResponseSignature === 'default' ? null : data.validateResponseSignature,
+            validateAssertionSignature: validateAssertionSignature === 'default' ? null : data.validateAssertionSignature,
+            usernameAttr: usernameAttr.trim(),
+            firstNameAttr: firstNameAttr.trim(),
+            lastNameAttr: lastNameAttr.trim(),
+            emailAttr: emailAttr.trim(),
+            roleAttr: roleAttr.trim()
           });
         }
       }

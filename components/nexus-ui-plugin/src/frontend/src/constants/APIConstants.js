@@ -215,6 +215,9 @@ export default {
       get BLOB_STORES_USAGE() {
         return `${this.BASE_URL}blobstores/usage`;
       },
+      get SAML() {
+        return `${this.BASE_URL}saml`;
+      },
     },
     PUBLIC: {
       BASE_URL: '/service/rest/v1/',
