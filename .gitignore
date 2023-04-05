@@ -25,3 +25,7 @@ out
 # Zion
 .zion/
 variables.properties
+
+# Yarn cache
+.yarn/cache/
+.yarn/install-state.gz
