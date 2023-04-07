@@ -19,6 +19,7 @@ import {APIConstants, ListMachineUtils, ExtAPIUtils, Detail, Master, MasterDetai
 import RepositoriesContextProvider from '../../admin/Repositories/RepositoriesContextProvider';
 import RepositoriesListMachine from '../../admin/Repositories/RepositoriesListMachine';
 import BrowseList from './BrowseList';
+import BrowseTree from './BrowseTree';
 
 const {EXT: {REPOSITORY: {ACTION, METHODS}}} = APIConstants;
 
@@ -75,6 +76,7 @@ export default function Browse() {
           <BrowseList/>
         </Master>
         <Detail>
+          <BrowseTree/>
         </Detail>
       </MasterDetail>
     </RepositoriesContextProvider>

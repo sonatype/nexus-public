@@ -166,6 +166,12 @@ export default {
         IS_LOG4J_CAPABILITY_ACTIVE: 'isAvailableLog4jDisclaimer'
       }
     },
+    BROWSE: {
+      ACTION: 'coreui_Browse',
+      METHODS: {
+        READ: 'read'
+      }
+    },
     TAGS_LIST: {
       ACTION: 'proui_TagList',
       METHODS: {

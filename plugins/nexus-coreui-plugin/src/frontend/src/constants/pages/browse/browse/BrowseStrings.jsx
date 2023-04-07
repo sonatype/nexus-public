@@ -16,6 +16,8 @@ export default {
       text: 'Browse',
       description: 'Browse assets and components',
     },
+    TREE_TITLE: 'View Assets/Components for',
+    TREE_EMPTY_MESSAGE: 'No component/assets found in repository',
     LIST: {
       COLUMNS: {
         NAME: 'Name',
