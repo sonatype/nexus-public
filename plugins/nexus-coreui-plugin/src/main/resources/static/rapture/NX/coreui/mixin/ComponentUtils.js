@@ -194,14 +194,7 @@ Ext.define('NX.coreui.mixin.ComponentUtils', {
    * @returns string showing either last download date or that no downloads have happened
    */
   getLastDownloadDateForDisplay: function(assetModel) {
-    var out, lastDownload = assetModel.get('lastDownloaded');
-    if (lastDownload != null) {
-      out = Ext.Date.format(lastDownload, 'D M d Y');
-    }
-    else {
-      out = NX.I18n.get('Assets_Info_No_Downloads');
-    }
-    return out;
+    return assetModel.get('lastDownloaded') || NX.I18n.get('Assets_Info_No_Downloads');
   },
 
   /**

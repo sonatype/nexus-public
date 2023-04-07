@@ -215,6 +215,12 @@ export default {
       get BLOB_STORES_USAGE() {
         return `${this.BASE_URL}blobstores/usage`;
       },
+      get REALMS_TYPES() {
+        return `${this.BASE_URL}realms/types`;
+      },
+      get ANONYMOUS_SETTINGS() {
+        return `${this.BASE_URL}anonymous-settings`;
+      },
       get SAML() {
         return `${this.BASE_URL}saml`;
       },

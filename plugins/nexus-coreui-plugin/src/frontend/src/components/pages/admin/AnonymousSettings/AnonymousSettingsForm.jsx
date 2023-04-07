@@ -56,7 +56,11 @@ export default function AnonymousSettingsForm() {
         </NxCheckbox>
       </NxFormGroup>
       <NxFormGroup label={UIStrings.ANONYMOUS_SETTINGS.USERNAME_TEXTFIELD_LABEL} isRequired>
-        <Textfield{...FormUtils.fieldProps('userId', current)} onChange={FormUtils.handleUpdate('userId', send)}/>
+        <Textfield
+          {...FormUtils.fieldProps('userId', current)}
+          onChange={FormUtils.handleUpdate('userId', send)}
+          onBlur={FormUtils.trimOnBlur(send)}
+        />
       </NxFormGroup>
       <NxFormGroup label={UIStrings.ANONYMOUS_SETTINGS.REALM_SELECT_LABEL} isRequired>
         <NxFormSelect name='realmName' value={data.realmName} onChange={FormUtils.handleUpdate('realmName', send)} validatable>
