@@ -568,7 +568,7 @@ window.plugins.push({
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         featureFlags: [{
           key: 'nexus.react.tags',
-          defaultValue: false
+          defaultValue: true
         }],
         permissions: [Permissions.TAGS.READ],
         editions: ['PRO']
