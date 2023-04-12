@@ -56,13 +56,11 @@ describe('Welcome', function() {
     expect(selectors.main()).toBeInTheDocument();
   });
 
-  it('renders headings saying "Welcome" and "Learn about Sonatype Nexus Repository Manager"', async function() {
+  it('renders headings saying "Welcome"', async function() {
     jest.spyOn(axios, 'post').mockReturnValue(new Promise(() => {}));
     render(<Welcome />);
 
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Welcome');
-    expect(screen.getByRole('heading', { level: 2 }))
-        .toHaveTextContent('Learn about Sonatype Nexus Repository Manager');
   });
 
   // Since the logo is next to the name of the product, it is supplementary from an a11y standpoint.

@@ -50,20 +50,14 @@ body {
 
 #loading-logo {
   position: absolute;
-  bottom: 100px;
-  left: 120px;
-}
-
-#loading-product {
-  position: absolute;
-  bottom: 150px;
-  left: 260px;
+  bottom: 20px;
+  left: 170px;
 }
 
 #loading .loading-indicator {
   position: absolute;
   bottom: 110px;
-  left: 260px;
+  left: 620px;
   display: table;
 }
 

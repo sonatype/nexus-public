@@ -16,8 +16,7 @@ import { NxTextLink } from '@sonatype/react-shared-components';
 export default {
   WELCOME: {
     MENU: {
-      text: 'Welcome',
-      description: 'Learn about Sonatype Nexus Repository Manager'
+      text: 'Welcome'
     },
     LOG4J_ALERT_CONTENT: (
       <>
