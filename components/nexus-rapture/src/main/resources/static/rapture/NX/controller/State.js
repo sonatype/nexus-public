@@ -242,7 +242,7 @@ Ext.define('NX.controller.State', {
    */
   onUiSettingsChanged: function (uiSettings, oldUiSettings) {
     var me = this,
-        newStatusInterval, oldStatusInterval;
+        newStatusInterval, newStatusIntervalMs, oldStatusIntervalMs;
 
     uiSettings = uiSettings || {};
     oldUiSettings = oldUiSettings || {};
@@ -256,7 +256,7 @@ Ext.define('NX.controller.State', {
     }
 
     if (me.statusProvider) {
-      oldStatusInterval = me.statusProvider.interval;
+      oldStatusIntervalMs = me.statusProvider.interval;
     }
 
     newStatusInterval = uiSettings.statusIntervalAnonymous;
@@ -264,8 +264,10 @@ Ext.define('NX.controller.State', {
       newStatusInterval = uiSettings.statusIntervalAuthenticated;
     }
 
+    newStatusIntervalMs = newStatusInterval * 1000;
+
     if (newStatusInterval > 0) {
-      if (newStatusInterval !== oldStatusInterval) {
+      if (newStatusIntervalMs !== oldStatusIntervalMs) {
         if (me.statusProvider) {
           me.statusProvider.disconnect();
           me.receiving = false;
@@ -273,7 +275,7 @@ Ext.define('NX.controller.State', {
         me.statusProvider = Ext.direct.Manager.addProvider({
           type: 'polling',
           url: NX.direct.api.POLLING_URLS.rapture_State_get,
-          interval: newStatusInterval * 1000,
+          interval: newStatusIntervalMs,
           baseParams: {
           },
           listeners: {
@@ -307,11 +309,18 @@ Ext.define('NX.controller.State', {
    * @private
    */
   onUserChanged: function (user, oldUser) {
+    var me = this;
     var uiSettings;
 
     if (Ext.isDefined(user) !== Ext.isDefined(oldUser)) {
       uiSettings = NX.State.getValue('uiSettings');
-      this.onUiSettingsChanged(uiSettings, uiSettings);
+
+      // fire one request for state manually on login if the statusInterval is 0
+      if (user && !oldUser && uiSettings) {
+        uiSettings.statusIntervalAuthenticated === 0 && me.refreshNow()
+      }
+
+      me.onUiSettingsChanged(uiSettings, uiSettings);
     }
   },
 
