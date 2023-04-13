@@ -62,6 +62,6 @@ public class LoggerOverridesEvent
 
   public enum Action
   {
-    CHANGE, RESET
+    CHANGE, RESET, RESET_ALL
   }
 }

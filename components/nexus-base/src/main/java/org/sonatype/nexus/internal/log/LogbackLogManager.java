@@ -65,14 +65,16 @@ import org.eclipse.sisu.BeanEntry;
 import org.eclipse.sisu.Mediator;
 import org.eclipse.sisu.inject.BeanLocator;
 import org.slf4j.ILoggerFactory;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.impl.StaticLoggerBinder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toSet;
+import static org.slf4j.Logger.ROOT_LOGGER_NAME;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.KERNEL;
+import static org.sonatype.nexus.common.log.LoggerLevel.DEFAULT;
+import static org.sonatype.nexus.common.log.LoggerLevel.INFO;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
 /**
@@ -272,7 +274,7 @@ public class LogbackLogManager
       // skip if there is already a logger with a set level in context
       if (!loggers.containsKey(name)) {
         // resolve effective level of logger
-        if (LoggerLevel.DEFAULT == level) {
+        if (DEFAULT == level) {
           level = getLoggerEffectiveLevel(entry.getKey());
         }
         loggers.put(name, level);
@@ -298,18 +300,13 @@ public class LogbackLogManager
   public void resetLoggers() {
     log.debug("Resetting loggers");
 
-    // reset all overridden logger levels to null (inherit from parent)
-    for (Map.Entry<String, LoggerLevel> entry : overrides) {
-      if (!Logger.ROOT_LOGGER_NAME.equals(entry.getKey())) {
-        setLogbackLoggerLevel(entry.getKey(), null);
-      }
-    }
+    resetAllLoggers();
 
     // clear overrides cache and update persistence
     overrides.reset();
 
     // reset root level to default
-    setLoggerLevel(Logger.ROOT_LOGGER_NAME, LoggerLevel.DEFAULT);
+    setLoggerLevel(ROOT_LOGGER_NAME, DEFAULT);
 
     // re-apply customizations
     applyCustomizations();
@@ -334,13 +331,13 @@ public class LogbackLogManager
     log.debug("Set logger level: {}={}", name, level);
     LoggerLevel calculated = null;
 
-    if (Logger.ROOT_LOGGER_NAME.equals(name)) {
-      calculated = (level == LoggerLevel.DEFAULT ? LoggerLevel.INFO : level);
+    if (ROOT_LOGGER_NAME.equals(name)) {
+      calculated = (level == DEFAULT ? INFO : level);
       overrides.set(name, calculated);
     }
     else {
       // else we customize the logger overrides configuration
-      if (level == LoggerLevel.DEFAULT) {
+      if (level == DEFAULT) {
         boolean customizedByUser = overrides.contains(name) && !customizations.containsKey(name);
         unsetLoggerLevel(name);
         if (customizedByUser) {
@@ -348,7 +345,7 @@ public class LogbackLogManager
         }
         else {
           LoggerLevel customizedLevel = customizations.get(name);
-          if (customizedLevel != null && customizedLevel != LoggerLevel.DEFAULT) {
+          if (customizedLevel != null && customizedLevel != DEFAULT) {
             calculated = customizedLevel;
           }
         }
@@ -377,12 +374,7 @@ public class LogbackLogManager
       overrides.save();
     }
 
-    if (Logger.ROOT_LOGGER_NAME.equals(name)) {
-      setLogbackLoggerLevel(name, Level.INFO);
-    }
-    else {
-      setLogbackLoggerLevel(name, null);
-    }
+    unsetLogger(name);
 
     eventManager.post(new LoggerLevelChangedEvent(name, null));
   }
@@ -413,6 +405,29 @@ public class LogbackLogManager
     loggerContext().getLogger(name).setLevel(level);
   }
 
+  /**
+   * Helper to unset a named logback logger level.
+   */
+  private void unsetLogger(final String name) {
+    if (ROOT_LOGGER_NAME.equals(name)) {
+      setLogbackLoggerLevel(name, Level.INFO);
+    }
+    else {
+      setLogbackLoggerLevel(name, null);
+    }
+  }
+
+  /**
+   * Reset all overridden logger levels to null (inherit from parent)
+   */
+  private void resetAllLoggers() {
+    for (Entry<String, LoggerLevel> entry : overrides) {
+      if (!ROOT_LOGGER_NAME.equals(entry.getKey())) {
+        setLogbackLoggerLevel(entry.getKey(), null);
+      }
+    }
+  }
+
   @Subscribe
   public void on(final LoggerOverridesReloadEvent event) {
     log.debug("Received event {}. Reload logger overrides", event);
@@ -425,23 +440,42 @@ public class LogbackLogManager
       return;
     }
     log.debug("Received event {}. Propagating logger overrides changes", loggerOverridesEvent);
-    LoggerContext context = loggerContext();
     String name = loggerOverridesEvent.getName();
     String strLevel = loggerOverridesEvent.getLevel();
     Level level = Objects.isNull(strLevel) ? null : Level.toLevel(strLevel);
-    overrides.syncWithDBAndGet();
+    Map<String, LoggerLevel> loggerLevels = overrides.syncWithDBAndGet();
 
     if (loggerOverridesEvent.getAction() == Action.CHANGE) {
       log.trace("Setting log level to {} for logger named '{}' in the scope of log overrides propagation", name, level);
-      context.getLogger(name).setLevel(level);
+      LoggerLevel loggerLevel = LoggerLevel.valueOf(strLevel);
+      loggerLevels.put(name, loggerLevel);
+      setLogbackLoggerLevel(name, level);
+      eventManager.post(new LoggerLevelChangedEvent(name, loggerLevel));
     }
     else if (loggerOverridesEvent.getAction() == Action.RESET) {
-      log.trace("Resetting all logger levels in the scope of log overrides propagation");
-      context.reset();
-      overrides.forEach(e -> overrides.remove(e.getKey()));
+      log.trace("Reset log level for logger named '{}' in the scope of log overrides propagation", name);
+      loggerLevels.remove(name);
+      unsetLogger(name);
+      eventManager.post(new LoggerLevelChangedEvent(name, null));
     }
-    eventManager.post(
-        new LoggerLevelChangedEvent(name, Objects.isNull(strLevel) ? null : LoggerLevel.valueOf(strLevel)));
+    else if (loggerOverridesEvent.getAction() == Action.RESET_ALL) {
+      log.trace("Resetting all logger levels in the scope of log overrides propagation");
+      resetAllLoggers();
+
+      // clear overrides cache
+      loggerLevels.clear();
+
+      // reset root level to default
+      setLoggerLevel(ROOT_LOGGER_NAME, DEFAULT);
+      loggerLevels.put(ROOT_LOGGER_NAME, INFO);
+      setLogbackLoggerLevel(ROOT_LOGGER_NAME, LogbackLevels.convert(INFO));
+      eventManager.post(new LoggerLevelChangedEvent(ROOT_LOGGER_NAME, DEFAULT));
+
+      // re-apply customizations
+      applyCustomizations();
+
+      eventManager.post(new LoggersResetEvent());
+    }
   }
 
   private void applyOverrides() {
@@ -466,7 +500,7 @@ public class LogbackLogManager
       customizations.put(name, level);
 
       // only apply customization if there is not an override, and the level is not DEFAULT
-      if (!overrides.contains(name) && level != LoggerLevel.DEFAULT) {
+      if (!overrides.contains(name) && level != DEFAULT) {
         setLogbackLoggerLevel(name, LogbackLevels.convert(level));
       }
     });
@@ -479,7 +513,7 @@ public class LogbackLogManager
     log.debug("Applying customizations");
 
     for (Entry<String, LoggerLevel> entry : customizations.entrySet()) {
-      if (entry.getValue() != LoggerLevel.DEFAULT) {
+      if (entry.getValue() != DEFAULT) {
         setLogbackLoggerLevel(entry.getKey(), LogbackLevels.convert(entry.getValue()));
       }
     }

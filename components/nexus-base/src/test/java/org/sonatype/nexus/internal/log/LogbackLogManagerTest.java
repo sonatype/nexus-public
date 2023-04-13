@@ -13,7 +13,6 @@
 package org.sonatype.nexus.internal.log;
 
 import java.io.File;
-import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 
@@ -51,7 +50,6 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -187,19 +185,78 @@ public class LogbackLogManagerTest
     String testLevel = "TRACE";
 
     eventManager.register(underTest);
-    LoggerOverridesEvent event = new LoggerOverridesEvent(testName, testLevel, Action.CHANGE);
-    event.setRemoteNodeId("nodeId");
-    eventManager.post(event);
+    LoggerOverridesEvent changeEvent = new LoggerOverridesEvent(testName, testLevel, Action.CHANGE);
+    changeEvent.setRemoteNodeId("nodeId");
+    eventManager.post(changeEvent);
     LoggerContext context = LogbackLogManager.loggerContext();
 
     await().atMost(10, SECONDS).untilAsserted(() ->
         assertThat(context.getLogger(testName).getLevel(), is(Level.toLevel(testLevel))));
 
-    event.setAction(Action.RESET);
-    eventManager.post(event);
+    LoggerOverridesEvent resetEvent = new LoggerOverridesEvent(testName, null, Action.RESET);
+    resetEvent.setRemoteNodeId("nodeId");
+    eventManager.post(resetEvent);
 
     await().atMost(10, SECONDS).untilAsserted(() ->
         assertThat(context.getLogger(testName).getLevel(), is(nullValue())));
+  }
+
+  @Test
+  public void testResetRootLoggerEventProcessed() {
+    EventManager eventManager = new SimpleEventManager();
+    LoggerContext context = LogbackLogManager.loggerContext();
+    LogbackLogManager underTest = new LogbackLogManager(eventManager, mock(BeanLocator.class),
+        mock(DatastoreLoggerOverrides.class));
+    eventManager.register(underTest);
+
+    // change ROOT log level
+    LoggerOverridesEvent changeEvent = new LoggerOverridesEvent("ROOT", "DEBUG", Action.CHANGE);
+    changeEvent.setRemoteNodeId("nodeId");
+    eventManager.post(changeEvent);
+
+    await().atMost(10, SECONDS).untilAsserted(() ->
+        assertThat(context.getLogger("ROOT").getLevel(), is(Level.DEBUG)));
+
+    // reset ROOT log level back to INFO
+    LoggerOverridesEvent resetEvent = new LoggerOverridesEvent("ROOT", null, Action.RESET);
+    resetEvent.setRemoteNodeId("nodeId");
+    eventManager.post(resetEvent);
+
+    await().atMost(10, SECONDS).untilAsserted(() ->
+        assertThat(context.getLogger("ROOT").getLevel(), is(Level.INFO)));
+  }
+
+  @Test
+  public void testResetAllLoggersEventProcessed() {
+    EventManager eventManager = new SimpleEventManager();
+    LoggerContext context = LogbackLogManager.loggerContext();
+    LoggerOverrides memoryLoggerOverrides = new MemoryLoggerOverrides();
+    LogbackLogManager underTest = new LogbackLogManager(eventManager, mock(BeanLocator.class), memoryLoggerOverrides);
+    eventManager.register(underTest);
+
+    // send event with updating 2 loggers
+    LoggerOverridesEvent changeEvent = new LoggerOverridesEvent("org.bar", "TRACE", Action.CHANGE);
+    changeEvent.setRemoteNodeId("nodeId");
+    eventManager.post(changeEvent);
+    LoggerOverridesEvent changeEvent2 = new LoggerOverridesEvent("org.foo", "DEBUG", Action.CHANGE);
+    changeEvent2.setRemoteNodeId("nodeId");
+    eventManager.post(changeEvent2);
+
+    // check that loggers were set.
+    await().atMost(10, SECONDS).untilAsserted(() ->
+        assertThat(context.getLogger("org.bar").getLevel(), is(Level.TRACE)));
+    await().atMost(10, SECONDS).untilAsserted(() ->
+        assertThat(context.getLogger("org.foo").getLevel(), is(Level.DEBUG)));
+
+    // reset all loggers
+    LoggerOverridesEvent resetEvent = new LoggerOverridesEvent(null, null, Action.RESET_ALL);
+    resetEvent.setRemoteNodeId("nodeId");
+    eventManager.post(resetEvent);
+
+    await().atMost(10, SECONDS).untilAsserted(() ->
+        assertThat(context.getLogger("org.bar").getLevel(), is(nullValue())));
+    await().atMost(10, SECONDS).untilAsserted(() ->
+        assertThat(context.getLogger("org.foo").getLevel(), is(nullValue())));
   }
 
   @Test
