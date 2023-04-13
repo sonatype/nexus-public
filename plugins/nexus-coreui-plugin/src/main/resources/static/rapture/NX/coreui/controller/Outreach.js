@@ -76,8 +76,8 @@ Ext.define('NX.coreui.controller.Outreach', {
 
     NX.direct.outreach_Outreach.readStatus(function (response) {
       if (Ext.isObject(response) && response.success && response.data != null && welcomePage.rendered) {
-        this.user = NX.State.getUser(),
-            daysToExpiry = NX.State.getValue("license").daysToExpiry,
+        this.user = NX.State.getUser();
+        var daysToExpiry = NX.State.getValue("license").daysToExpiry,
             usertype,
             url,
             height;

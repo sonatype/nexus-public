@@ -42,8 +42,8 @@ Ext.define('NX.coreui.mixin.ComponentUtils', {
   },
 
   updateAnalyzeButton: function(componentModel) {
-    this.user = NX.State.getUser(),
-        analyzeApplicationButton = this.getAnalyzeApplicationButton();
+    this.user = NX.State.getUser();
+    var analyzeApplicationButton = this.getAnalyzeApplicationButton();
 
     if (!componentModel || !NX.direct.ahc_Component) {
       analyzeApplicationButton.disable();
