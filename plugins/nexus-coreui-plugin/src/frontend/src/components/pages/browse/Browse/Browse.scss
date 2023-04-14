@@ -18,3 +18,10 @@
     justify-content: flex-start;
   }
 }
+
+.nxrm-browse-tree {
+  .nx-loading-spinner {
+    padding-top: var(--nx-spacing-base);
+    padding-left: var(--nx-spacing-base);
+  }
+}

@@ -42,13 +42,13 @@ Ext.define('NX.coreui.mixin.ComponentUtils', {
   },
 
   updateAnalyzeButton: function(componentModel) {
-    var user = NX.State.getUser(),
-        analyzeApplicationButton = this.getAnalyzeApplicationButton();
+    this.user = NX.State.getUser();
+    var analyzeApplicationButton = this.getAnalyzeApplicationButton();
 
     if (!componentModel || !NX.direct.ahc_Component) {
       analyzeApplicationButton.disable();
     }
-    else if (user && user.authenticated) {
+    else if (this.user && this.user.authenticated) {
       NX.direct.ahc_Component.containsApplication(JSON.stringify(componentModel.getData()), function(response) {
         if (Ext.isObject(response) && response.success) {
           if (response.data) {
@@ -151,12 +151,12 @@ Ext.define('NX.coreui.mixin.ComponentUtils', {
   },
 
   updateDeleteButton: function(deleteButton, currentRepository, isAuthenticatedCallback) {
-    var user = NX.State.getUser();
+    this.user = NX.State.getUser();
 
     if (currentRepository && currentRepository.get('type') !== 'group') {
       deleteButton.disable();
       deleteButton.show();
-      if (user && user.authenticated) {
+      if (this.user && this.user.authenticated) {
         isAuthenticatedCallback();
       }
       else {

@@ -76,8 +76,8 @@ Ext.define('NX.coreui.controller.Outreach', {
 
     NX.direct.outreach_Outreach.readStatus(function (response) {
       if (Ext.isObject(response) && response.success && response.data != null && welcomePage.rendered) {
-        var user = NX.State.getUser(),
-            daysToExpiry = NX.State.getValue("license").daysToExpiry,
+        this.user = NX.State.getUser();
+        var daysToExpiry = NX.State.getValue("license").daysToExpiry,
             usertype,
             url,
             height;
@@ -85,9 +85,9 @@ Ext.define('NX.coreui.controller.Outreach', {
         usertype = 'anonymous';
         height = '100%';
 
-        if (user) {
-          usertype = user.administrator ? 'admin' : 'normal';
-          height = log4jDisclaimerAvailable && user.administrator ? 'calc(100% - 250px)' : '100%';
+        if (this.user) {
+          usertype = this.user.administrator ? 'admin' : 'normal';
+          height = log4jDisclaimerAvailable && this.user.administrator ? 'calc(100% - 250px)' : '100%';
         }
 
         url = NX.util.Url.urlOf('service/outreach/?version=' + NX.State.getVersion() +
@@ -149,8 +149,8 @@ Ext.define('NX.coreui.controller.Outreach', {
         if (Ext.isObject(response) && response.success && response.data && welcomePage.rendered) {
           // log4j disclaimer window should be shown in case of Log4j Capability is disabled and vice versa
           log4jDisclaimerAvailable = response.data === 'false';
-          var user = NX.State.getUser();
-          if (user && user.administrator) {
+          this.user = NX.State.getUser();
+          if (this.user && this.user.administrator) {
             welcomePage.add({
               xtype: 'container',
               id: 'log4jDisclaimer',

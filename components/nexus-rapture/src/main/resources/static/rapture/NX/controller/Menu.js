@@ -337,7 +337,12 @@ Ext.define('NX.controller.Menu', {
         node = me.getStore('FeatureMenu').getRootNode().firstChild;
 
         //<if debug>
-        me.logDebug('Automatically selected:', node.get('bookmark'));
+        if (node) {
+          me.logDebug('Automatically selected:', node.get('bookmark'));
+        }
+        else {
+          me.logDebug('No menu nodes available, none automatically selected');
+        }
         //</if>
       }
       // select the bookmarked feature in menu, if available

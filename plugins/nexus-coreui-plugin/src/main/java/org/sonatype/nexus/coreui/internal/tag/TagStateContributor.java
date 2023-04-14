@@ -32,7 +32,7 @@ public class TagStateContributor
   private final Map<String, Object> state;
 
   @Inject
-  public TagStateContributor(@Named("${nexus.react.tags:-false}") final boolean featureFlag) {
+  public TagStateContributor(@Named("${nexus.react.tags:-true}") final boolean featureFlag) {
     state = ImmutableMap.of("nexus.react.tags", featureFlag);
   }
 

@@ -56,10 +56,10 @@ Ext.define('NX.coreui.controller.HealthCheckWarnings', {
     var me = this;
     var warningPanel = me.getHealthCheckWarnings();
     var healthChecksFailed = NX.State.getValue('health_checks_failed', false);
-    var user = NX.State.getUser();
+    this.user = NX.State.getUser();
 
     if (warningPanel) {
-      if (user && user.administrator) {
+      if (this.user && this.user.administrator) {
         warningPanel.show();
         if (healthChecksFailed) {
           warningPanel.setIconCls('x-fa fa-exclamation-circle');

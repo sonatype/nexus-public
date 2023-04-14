@@ -61,9 +61,9 @@ Ext.define('NX.view.footer.AnalyticsOptOut', {
 
   maybeSetVisible: function() {
     var me = this;
-    var user = NX.State.getUser();
+    this.user = NX.State.getUser();
 
-    if (user !== null && user !== undefined && NX.Permissions.check('nexus:capabilities:create')) {
+    if (this.user !== null && this.user !== undefined && NX.Permissions.check('nexus:capabilities:create')) {
       var acknowledgementRequired = NX.State.getValue('acknowledgeAnalytics.required');
       me.setVisible(acknowledgementRequired);
     }
