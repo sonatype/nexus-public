@@ -205,7 +205,6 @@
                 <feature>wrap</feature>
                 <feature>bundle</feature>
                 <feature>config</feature>
-                <feature>deployer</feature>
                 <feature>diagnostic</feature>
                 <feature>feature</feature>
                 <feature>jaas</feature>
@@ -219,6 +218,7 @@
                 <feature>nexus-startup-feature</feature>
               </startupFeatures>
               <bootFeatures>
+                <feature>deployer</feature>
                 <feature>nexus-boot-feature</feature>
               </bootFeatures>
               <installedFeatures>
