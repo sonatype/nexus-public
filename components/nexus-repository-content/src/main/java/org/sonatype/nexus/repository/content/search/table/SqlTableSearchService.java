@@ -54,6 +54,7 @@ import org.sonatype.nexus.repository.search.table.UnknownRepositoriesException;
 import com.google.common.collect.Lists;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Optional.ofNullable;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static java.util.stream.Collectors.groupingBy;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
@@ -296,7 +297,7 @@ public class SqlTableSearchService
 
   private static Optional<Integer> offsetFromToken(@Nullable final String continuationToken) {
     try {
-      return Optional.ofNullable(continuationToken)
+      return ofNullable(continuationToken)
            .map(Integer::parseInt);
     }
     catch (NumberFormatException e) {
@@ -373,6 +374,8 @@ public class SqlTableSearchService
     searchResult.setChecksum(asset.checksums());
     searchResult.setUploader(asset.createdBy());
     searchResult.setUploaderIp(asset.createdByIp());
+    searchResult.setFileSize(asset.blobSize());
+    ofNullable(asset.lastDownloaded()).ifPresent(when -> searchResult.setLastDownloaded(Date.from(when.toInstant())));
 
     return searchResult;
   }
