@@ -21,10 +21,8 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
-import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaResult;
-import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
+import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.common.base.Preconditions;
@@ -56,7 +54,8 @@ public class BlobStoreStateHealthCheck
           if (!blobStore.isStarted()) {
             return format("Blob store '%s' reports as not started", name);
           }
-          if (!blobStore.isWritable()) {
+          if (!blobStore.getBlobStoreConfiguration().getType().equals(BlobStoreGroup.TYPE) &&
+              !blobStore.isWritable()) {
             return format("Blob store '%s' reports as not writeable", name);
           }
           if (!blobStore.isStorageAvailable()) {
