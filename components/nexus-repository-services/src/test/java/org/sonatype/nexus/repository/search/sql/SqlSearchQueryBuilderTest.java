@@ -86,12 +86,17 @@ public class SqlSearchQueryBuilderTest
 
     assertThat(actual.isPresent(), is(true));
     assertThat(actual.get().getSqlConditionFormat(), is(
-        String.join(operator, conditionFormat1, conditionFormat2, conditionFormat3)));
+        String.join(operator, wrapInBrackets(conditionFormat1), wrapInBrackets(conditionFormat2),
+            wrapInBrackets(conditionFormat3))));
 
     final Map<String, String> expectedValues = joinAllValues(values1, values2, values3);
 
     assertThat(actual.get().getValues().keySet(), containsInAnyOrder(expectedValues.keySet().toArray()));
     assertThat(actual.get().getValues().values(), containsInAnyOrder(expectedValues.values().toArray()));
+  }
+
+  private static String wrapInBrackets(final String input) {
+    return "(" + input + ")";
   }
 
   private Map<String, String> joinAllValues(

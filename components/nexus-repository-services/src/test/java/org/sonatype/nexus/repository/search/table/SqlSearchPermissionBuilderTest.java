@@ -179,8 +179,8 @@ public class SqlSearchPermissionBuilderTest
 
     SqlSearchQueryBuilder result = underTest.build(queryBuilder, searchRequest(repositories));
 
-    assertQueryCondition(result, browsableReposCondition.getSqlConditionFormat() + " OR "
-        + contentSelectorsCondition.getSqlConditionFormat());
+    assertQueryCondition(result, wrapInBrackets( browsableReposCondition.getSqlConditionFormat()) + " OR "
+        + wrapInBrackets(contentSelectorsCondition.getSqlConditionFormat()));
 
     verify(contentSelectorFilterGenerator).createFilter(any(), eq(Collections.singleton(REPO1)), anyInt());
   }
@@ -200,8 +200,8 @@ public class SqlSearchPermissionBuilderTest
 
     SqlSearchQueryBuilder result = underTest.build(queryBuilder, searchRequest());
 
-    assertQueryCondition(result, contentSelectorsCondition.getSqlConditionFormat() +
-        " OR " + contentSelectorsCondition.getSqlConditionFormat());
+    assertQueryCondition(result, wrapInBrackets(contentSelectorsCondition.getSqlConditionFormat()) +
+        " OR " + wrapInBrackets(contentSelectorsCondition.getSqlConditionFormat()));
     verify(contentSelectorFilterGenerator).createFilter(any(), eq(Collections.singleton(REPO1)), anyInt());
     verify(contentSelectorFilterGenerator).createFilter(any(), eq(Collections.singleton(REPO2)), anyInt());
   }
@@ -326,5 +326,9 @@ public class SqlSearchPermissionBuilderTest
     return SearchRequest.builder()
         .repositories(repositories)
         .build();
+  }
+
+  private static String wrapInBrackets(final String input) {
+    return "(" + input + ")";
   }
 }
