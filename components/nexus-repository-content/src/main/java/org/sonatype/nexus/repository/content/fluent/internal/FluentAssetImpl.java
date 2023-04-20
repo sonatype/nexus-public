@@ -302,6 +302,16 @@ public class FluentAssetImpl
   }
 
   @Override
+  public void createdBy(final String createdBy) {
+    blob().ifPresent(assetBlob -> facet.stores().assetBlobStore.setCreatedBy(assetBlob, createdBy));
+  }
+
+  @Override
+  public void createdByIP(final String createdByIP) {
+    blob().ifPresent(assetBlob -> facet.stores().assetBlobStore.setCreatedByIP(assetBlob, createdByIP));
+  }
+
+  @Override
   public String toString() {
     return asset.toString();
   }

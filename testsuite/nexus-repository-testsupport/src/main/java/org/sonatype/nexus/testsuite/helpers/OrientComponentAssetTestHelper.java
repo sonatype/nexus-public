@@ -112,6 +112,16 @@ public class OrientComponentAssetTestHelper
   }
 
   @Override
+  public String getCreatedBy(final Repository repository, final String path) {
+    return findAssetByName(repository, path).map(Asset::createdBy).orElse(null);
+  }
+
+  @Override
+  public String getCreatedByIP(final Repository repository, final String path) {
+    return findAssetByName(repository, path).map(Asset::createdByIp).orElse(null);
+  }
+
+  @Override
   public void removeAsset(final Repository repository, final String path) {
     EntityId nanoAssetId = EntityHelper.id(findAssetByNameNotNull(repository, path));
     ComponentMaintenance maintenanceFacet = repository.facet(ComponentMaintenance.class);

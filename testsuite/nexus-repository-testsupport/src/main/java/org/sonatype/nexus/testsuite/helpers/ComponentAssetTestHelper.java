@@ -63,6 +63,16 @@ public interface ComponentAssetTestHelper
   DateTime getLastDownloadedTime(Repository repository, String path);
 
   /**
+   * Get the 'created by'(user who created the asset) for a path in the given repository.
+   */
+  String getCreatedBy(Repository repository, String path);
+
+  /**
+   * Get the 'created by ip'(IP address of a user who created the asset) for a path in the given repository.
+   */
+  String getCreatedByIP(Repository repository, String path);
+
+  /**
    * Retrieves the CacheInfo for the asset if it exists.
    *
    * @param repository

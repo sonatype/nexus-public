@@ -130,4 +130,18 @@ public interface FluentAsset
    * Applies the given change to the current attributes.
    */
   FluentAsset attributes(AttributeChangeSet changeset);
+
+   /**
+   * Generally it is recommended that this method not be called and let stores manage this value automatically.
+   *
+   * Sets the name of user who uploaded the asset.
+   */
+  void createdBy(String createdBy);
+
+   /**
+   * Generally it is recommended that this method not be called and let stores manage this value automatically.
+   *
+   * Sets the IP addres of user who uploaded the asset.
+   */
+  void createdByIP(String createdByIP);
 }

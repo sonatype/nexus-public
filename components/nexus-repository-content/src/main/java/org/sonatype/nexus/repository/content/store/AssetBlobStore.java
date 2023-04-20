@@ -143,6 +143,26 @@ public class AssetBlobStore<T extends AssetBlobDAO>
   }
 
   /**
+   * Generally it is recommended that this method not be called and let stores manage this value.
+   *
+   * Sets the name of user who uploaded the asset.
+   */
+  @Transactional
+  public void setCreatedBy(final AssetBlob blob, final String createdBy) {
+    dao().setCreatedBy(blob.blobRef(), createdBy);
+  }
+
+  /**
+   * Generally it is recommended that this method not be called and let stores manage this value.
+   *
+   * Sets the IP address of user who uploaded the asset.
+   */
+  @Transactional
+  public void setCreatedByIP(final AssetBlob blob, final String createdByIP) {
+    dao().setCreatedByIP(blob.blobRef(), createdByIP);
+  }
+
+  /**
    * Browse asset blobs with legacy blobRef format {@code store-name:blob-id@node-id} in a paged fashion.
    *
    * @param limit maximum number of asset blobs to return
