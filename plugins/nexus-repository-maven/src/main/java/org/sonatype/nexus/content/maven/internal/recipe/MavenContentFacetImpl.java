@@ -189,6 +189,12 @@ public class MavenContentFacetImpl
   }
 
   @Override
+  protected void doValidate(final Configuration configuration) throws Exception {
+    super.doValidate(configuration);
+    facet(ConfigurationFacet.class).validateSection(configuration, CONFIG_KEY, Config.class);
+  }
+
+  @Override
   protected WritePolicy writePolicy(final Asset asset) {
     WritePolicy configuredWritePolicy = super.writePolicy(asset);
     if (ALLOW_ONCE == configuredWritePolicy) {
