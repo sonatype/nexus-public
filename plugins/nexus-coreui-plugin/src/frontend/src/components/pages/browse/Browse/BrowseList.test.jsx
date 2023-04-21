@@ -25,11 +25,12 @@ import {canReadFirewallStatus, canUpdateHealthCheck} from '../../admin/Repositor
 import BrowseList from './BrowseList';
 import UIStrings from '../../../../constants/UIStrings';
 import {
-  FIELDS, 
+  FIELDS,
   READ_FIREWALL_STATUS_DATA,
   READ_FIREWALL_STATUS_DATA_WITH_MESSAGE,
   READ_HEALTH_CHECK_DATA,
-  REPOS, ROW_INDICES
+  REPOS,
+  ROW_INDICES
 } from './BrowseList.testdata';
 
 jest.mock('axios', () => ({
@@ -340,26 +341,26 @@ describe('BrowseList', function() {
     });
   });
 
-  describe('IQ Policy Violations Column', function() {
+  describe('Firewall Report Column', function() {
     beforeEach(() => {
       canReadFirewallStatus.mockReturnValue(true);
       when(axios.post).calledWith(
-        '/service/extdirect',
-        expect.objectContaining({action: 'firewall_RepositoryStatus', method: 'read'})
+          '/service/extdirect',
+          expect.objectContaining({action: 'firewall_RepositoryStatus', method: 'read'})
       ).mockResolvedValue({data: TestUtils.makeExtResult(READ_FIREWALL_STATUS_DATA)});
     });
 
-    it('does not display IQ policy violations column if user has no read permissions',
-      async function() {
-        canReadFirewallStatus.mockReturnValue(false);
-        await renderView({data:REPOS});
+    it('does not display Firewall Report column if user has no read permissions',
+        async function() {
+          canReadFirewallStatus.mockReturnValue(false);
+          await renderView({data: REPOS});
 
-        expect(axios.post).not.toHaveBeenCalledWith(
-          '/service/extdirect',
-          expect.objectContaining({action: 'firewall_RepositoryStatus', method: 'read'})
-        );
-        expect(selectors.iqPolicyViolations.columnHeader()).not.toBeInTheDocument();
-    });
+          expect(axios.post).not.toHaveBeenCalledWith(
+              '/service/extdirect',
+              expect.objectContaining({action: 'firewall_RepositoryStatus', method: 'read'})
+          );
+          expect(selectors.iqPolicyViolations.columnHeader()).not.toBeInTheDocument();
+        });
 
     it('renders an icon with tooltips on hover when firewall status is unavailable ',
       async function() {
