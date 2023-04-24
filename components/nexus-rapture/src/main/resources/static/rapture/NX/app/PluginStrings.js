@@ -68,7 +68,7 @@ Ext.define('NX.app.PluginStrings', {
     Help_Feature_Text: 'Help for: ',
     Header_Help_Feature_Tooltip: 'Help and documentation for the currently selected feature',
     Header_Help_About_Text: 'About',
-    Header_Help_About_Tooltip: 'About Nexus Repository Manager',
+    Header_Help_About_Tooltip: 'About Sonatype Nexus Repository',
     Header_Help_Documentation_Text: 'Documentation',
     Header_Help_Documentation_Tooltip: 'Product documentation',
     Header_Help_KB_Text: 'Knowledge base',
@@ -125,7 +125,7 @@ Ext.define('NX.app.PluginStrings', {
     State_License_Invalid_Message: 'Your license has been detected as missing or invalid. Upload a valid license to proceed.',
 
     // About modal
-    AboutWindow_Title: 'About Nexus Repository Manager',
+    AboutWindow_Title: 'About Sonatype Nexus Repository',
     AboutWindow_About_Title: 'Copyright',
     AboutWindow_License_Tab: 'License',
 
