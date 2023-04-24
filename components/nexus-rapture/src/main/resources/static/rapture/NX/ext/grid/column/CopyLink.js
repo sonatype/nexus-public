@@ -46,10 +46,10 @@ Ext.define('NX.ext.grid.column.CopyLink', {
   /**
    * Renders value as a link.
    */
-  defaultRenderer: function (value) {
+  defaultRenderer: function (value, _, record) {
     if (value) {
       value = value.replace(/\$baseUrl/, NX.util.Url.baseUrl);
-      return NX.util.Url.asCopyWidget(value);
+      return NX.util.Url.asCopyWidget(value, record.data.format);
     }
     return undefined;
   },
