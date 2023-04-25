@@ -91,7 +91,7 @@ Ext.define('NX.coreui.view.search.SearchResultList', {
           header: NX.I18n.get('Search_SearchResultList_Repository_Header'),
           dataIndex: 'repositoryName',
           stateId: 'repositoryName',
-          hidden: true,
+          flex: 2,
           renderer: Ext.htmlEncode
         }
       ],
