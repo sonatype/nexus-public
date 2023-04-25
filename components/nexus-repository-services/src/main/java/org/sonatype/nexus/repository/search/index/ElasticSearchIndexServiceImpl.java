@@ -19,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -36,11 +37,19 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import org.slf4j.Logger;
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.goodies.common.Loggers;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.search.normalize.VersionNumberExpander;
 import org.sonatype.nexus.thread.NexusThreadFactory;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -316,6 +325,7 @@ public class ElasticSearchIndexServiceImpl
       String identifier = identifierProducer.apply(component);
       String json = jsonDocumentProducer.apply(component);
       if (json != null) {
+        json = filterConanAssetAttributes(json);
         updateCount.getAndIncrement();
 
         log.debug("Bulk adding to index document {} from {}: {}", identifier, repository, json);
@@ -328,6 +338,59 @@ public class ElasticSearchIndexServiceImpl
       futures.add(executorService.submit(new BulkProcessorFlusher(bulkProcessor)));
     }
     return futures;
+  }
+
+  @VisibleForTesting
+  static String filterConanAssetAttributes(String json) {
+    Logger logger = Loggers.getLogger(ElasticSearchIndexServiceImpl.class);
+    try {
+      JsonNode root = JsonUtils.readTree(json);
+
+      JsonNode format = root.get("format");
+      if (format == null || !format.textValue().equals("conan")) {
+        logger.debug("Skip filter Conan Asset. Format {} is not Conan. json: {}", format, json);
+        return json;
+      }
+
+      ArrayNode assets = (ArrayNode) root.get("assets");
+      if (assets == null) {
+        logger.debug("Asset not found for json {}", json);
+        return json;
+      }
+
+      assets.forEach(asset -> {
+        ObjectNode attributes = (ObjectNode) asset.get("attributes");
+        if (attributes == null) {
+          logger.debug("Asset Attributes not found for json {}", json);
+          return;
+        }
+        Iterator<String> attributesFieldNames = attributes.fieldNames();
+        while (attributesFieldNames.hasNext()) {
+          String fieldName = attributesFieldNames.next();
+          if (!fieldName.equals("conan") && !fieldName.equals("checksum")) {
+            attributesFieldNames.remove();
+          }
+        }
+
+        ObjectNode conan = (ObjectNode) attributes.get("conan");
+        if (conan == null) {
+          logger.debug("Conan Attribute not found for json {}", json);
+          return;
+        }
+
+        Iterator<String> conanFieldNames = conan.fieldNames();
+        while (conanFieldNames.hasNext()) {
+          String fieldName = conanFieldNames.next();
+          if (!fieldName.equals("packageId") && !fieldName.equals("packageRevision")) {
+            conanFieldNames.remove();
+          }
+        }
+      });
+      return JsonUtils.from(root);
+    } catch (IOException e) {
+      logger.debug("Error during filter Conan Asset Attributes for json {}", json);
+      return json;
+    }
   }
 
   private IndexRequest createIndexRequest(final String indexName, final String identifier, final String json) {

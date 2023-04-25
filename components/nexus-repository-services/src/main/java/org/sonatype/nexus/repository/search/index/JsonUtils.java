@@ -36,6 +36,13 @@ class JsonUtils
   private static final ObjectWriter WRITER = MAPPER.writerWithDefaultPrettyPrinter();
 
   /**
+   * Read JSON string.
+   */
+  public static JsonNode readTree(String json) throws IOException {
+    return MAPPER.readTree(json);
+  }
+
+  /**
    * Converts any object to JSON.
    */
   public static String from(final Object value) throws IOException {
