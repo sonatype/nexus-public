@@ -12,9 +12,9 @@
  */
 package org.sonatype.nexus.datastore;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
@@ -33,7 +33,6 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.Streams.stream;
 import static java.lang.String.CASE_INSENSITIVE_ORDER;
 import static java.util.Comparator.comparingInt;
-import static java.util.stream.Collectors.toList;
 
 /**
  * Manages {@link DataStoreConfiguration}s supplied by one or more sources.
@@ -69,7 +68,7 @@ public class DataStoreConfigurationManager
         .collect(toImmutableList());
   }
 
-  private int getPriority(DataStoreConfigurationSource configSource){
+  private int getPriority(final DataStoreConfigurationSource configSource){
     if (configSource.getClass().isAnnotationPresent(Priority.class)) {
       Priority priority = configSource.getClass().getAnnotation(Priority.class);
       return priority.value();
@@ -83,14 +82,14 @@ public class DataStoreConfigurationManager
    * Saves the given configuration back to the source that originally loaded it.
    */
   public void save(final DataStoreConfiguration configuration) {
-    findModifiableSource(configuration).save(configuration);
+    findModifiableSource(configuration).ifPresent(source -> source.save(configuration));
   }
 
   /**
    * Deletes the given configuration from the source that originally loaded it.
    */
   public void delete(final DataStoreConfiguration configuration) {
-    findModifiableSource(configuration).delete(configuration);
+    findModifiableSource(configuration).ifPresent(source -> source.delete(configuration));
   }
 
   /**
@@ -111,12 +110,12 @@ public class DataStoreConfigurationManager
   /**
    * Attempts to find the modifiable source that originally loaded the given configuration.
    */
-  private DataStoreConfigurationSource findModifiableSource(final DataStoreConfiguration configuration) {
+  private Optional<DataStoreConfigurationSource> findModifiableSource(final DataStoreConfiguration configuration) {
     DataStoreConfigurationSource source = configurationSources.get(configuration.getSource());
 
     checkArgument(source != null, "%s refers to a missing source", configuration);
-    checkArgument(source.isModifiable(), "%s is from a read-only source", configuration);
 
-    return source;
+    return Optional.of(source)
+        .filter(DataStoreConfigurationSource::isModifiable);
   }
 }
