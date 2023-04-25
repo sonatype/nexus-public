@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.content.maintenance;
 
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
