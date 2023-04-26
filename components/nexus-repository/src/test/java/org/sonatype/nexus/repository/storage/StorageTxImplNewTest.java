@@ -13,10 +13,10 @@
 package org.sonatype.nexus.repository.storage;
 
 import java.io.IOException;
-
 import javax.inject.Provider;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.entity.EntityId;
@@ -34,14 +34,17 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
 
 /**
  * Tests for {@link StorageTxImpl}.
@@ -116,5 +119,51 @@ public class StorageTxImplNewTest
     StorageTxImpl underTestSpy = spy(underTest);
     underTestSpy.saveAsset(asset);
     verify(underTestSpy).attachAssetMetadata(asset, blobId);
+  }
+
+  @Test
+  public void getBlobWorksAsExpected() {
+    Blob mockBlob = mock(Blob.class);
+
+    when(blobTx.get(any(BlobRef.class))).thenReturn(mockBlob);
+
+    StorageTxImpl underTest = new StorageTxImpl("test", "127.0.0.1", blobTx, db, "testRepo", WritePolicy.ALLOW,
+        WritePolicySelector.DEFAULT, bucketEntityAdapter, componentEntityAdapter, assetEntityAdapter, false,
+        defaultContentValidator, MimeRulesSource.NOOP, componentFactory, repositoryMoveStoreProvider, nodeAccess);
+    StorageTxImpl underTestSpy = spy(underTest);
+
+    BlobRef testRef = new BlobRef("test", "uuid");
+
+    Blob result = underTestSpy.getBlob(testRef);
+
+    assertEquals(result, mockBlob);
+
+    verify(blobTx, times(1)).get(any(BlobRef.class));
+    verify(repositoryMoveStoreProvider, never()).get();
+  }
+
+  @Test
+  public void getBlobWorksIfMoveInProgress() {
+    Blob mockBlob = mock(Blob.class);
+    RepositoryMoveService mockRepositoryMoveService = mock(RepositoryMoveService.class);
+
+    when(blobTx.get(any(BlobRef.class))).thenReturn(null);
+    when(repositoryMoveStoreProvider.get()).thenReturn(mockRepositoryMoveService);
+    when(mockRepositoryMoveService.getIfBeingMoved(any(BlobRef.class), anyString())).thenReturn(mockBlob);
+
+    StorageTxImpl underTest = new StorageTxImpl("test", "127.0.0.1", blobTx, db, "testRepo", WritePolicy.ALLOW,
+        WritePolicySelector.DEFAULT, bucketEntityAdapter, componentEntityAdapter, assetEntityAdapter, false,
+        defaultContentValidator, MimeRulesSource.NOOP, componentFactory, repositoryMoveStoreProvider, nodeAccess);
+    StorageTxImpl underTestSpy = spy(underTest);
+
+    BlobRef testRef = new BlobRef("test", "uuid");
+
+    Blob result = underTestSpy.getBlob(testRef);
+
+    assertEquals(result, mockBlob);
+
+    verify(blobTx, times(1)).get(any(BlobRef.class));
+    verify(repositoryMoveStoreProvider, times(2)).get();
+    verify(mockRepositoryMoveService, times(1)).getIfBeingMoved(eq(testRef), eq("testRepo"));
   }
 }

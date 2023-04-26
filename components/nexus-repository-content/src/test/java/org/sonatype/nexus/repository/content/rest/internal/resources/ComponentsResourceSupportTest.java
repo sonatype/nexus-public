@@ -26,6 +26,7 @@ import org.sonatype.nexus.repository.content.fluent.internal.FluentComponentImpl
 import org.sonatype.nexus.repository.content.fluent.internal.FluentContinuation;
 import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.content.store.ComponentData;
+import org.sonatype.nexus.repository.move.RepositoryMoveService;
 import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
 import org.sonatype.nexus.repository.selector.ContentAuthHelper;
@@ -81,7 +82,6 @@ public class ComponentsResourceSupportTest
 
   @Mock
   private MaintenanceService maintenanceService;
-
   @Mock
   private UploadManager uploadManager;
 

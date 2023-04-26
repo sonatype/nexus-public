@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.store;
 
 import java.security.SecureRandom;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.function.IntSupplier;
 
@@ -23,10 +24,13 @@ import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.ContentRepository;
+import org.sonatype.nexus.repository.content.facet.ContentFacetDependencies;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentAssetImpl;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentComponentImpl;
+import org.sonatype.nexus.repository.move.RepositoryMoveService;
 
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -37,6 +41,8 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetBlobId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
@@ -50,6 +56,15 @@ public class InternalIdsTest
 {
   @Mock
   private ContentFacetSupport contentFacet;
+
+  @Mock
+  private ContentFacetDependencies dependencies;
+
+  @Before
+  public void setUp(){
+    when(contentFacet.dependencies()).thenReturn(dependencies);
+    when(dependencies.getMoveService()).thenReturn(Optional.of(mock(RepositoryMoveService.class)));
+  }
 
   @Test
   public void testMissingInternalIds() {

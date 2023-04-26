@@ -17,10 +17,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
-
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -238,8 +238,10 @@ public class BootstrapListener
 
   private void readEnvironmentVariables(final Properties properties) {
 
-    properties.setProperty(CHANGE_REPO_BLOBSTORE_TASK_ENABLED,
-      Optional.ofNullable(System.getenv("CHANGE_REPO_BLOBSTORE_TASK_ENABLED")).orElse("false"));
+    if (properties.getProperty(CHANGE_REPO_BLOBSTORE_TASK_ENABLED) == null) {
+      properties.setProperty(CHANGE_REPO_BLOBSTORE_TASK_ENABLED,
+         Boolean.toString(parseBoolean(System.getenv("CHANGE_REPO_BLOBSTORE_TASK_ENABLED"))));
+    }
   }
 
   private void selectDatastoreFeature(final Properties properties) {

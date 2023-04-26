@@ -13,12 +13,14 @@
 package org.sonatype.nexus.repository.content.rest.internal.resources;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
+import org.sonatype.nexus.repository.content.facet.ContentFacetDependencies;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
@@ -26,6 +28,7 @@ import org.sonatype.nexus.repository.content.fluent.internal.FluentAssetImpl;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentContinuation;
 import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.content.store.AssetData;
+import org.sonatype.nexus.repository.move.RepositoryMoveService;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
 import org.sonatype.nexus.repository.selector.ContentAuthHelper;
 
@@ -42,6 +45,7 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -75,6 +79,9 @@ public class AssetsResourceSupportTest
 
   @Mock
   private ContentFacet contentFacet;
+
+  @Mock
+  private ContentFacetDependencies dependencies;
 
   @Mock
   private ContentAuthHelper contentAuthHelper;
@@ -186,6 +193,8 @@ public class AssetsResourceSupportTest
 
   private void mockContentFacet() {
     when(contentFacet.assets()).thenReturn(fluentAssets);
+    when(contentFacetSupport.dependencies()).thenReturn(dependencies);
+    when(dependencies.getMoveService()).thenReturn(Optional.of(mock(RepositoryMoveService.class)));
     when(contentFacet.contentRepositoryId()).thenReturn(A_REPOSITORY_ID);
   }
 
@@ -198,7 +207,7 @@ public class AssetsResourceSupportTest
   }
 
   private FluentAsset aFluentAsset() {
-    return new FluentAssetImpl(contentFacetSupport, anAsset());
+    return new FluentAssetImpl(contentFacetSupport,anAsset());
   }
 
   private AssetData anAsset() {

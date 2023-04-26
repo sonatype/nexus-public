@@ -24,6 +24,7 @@ import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
+import org.sonatype.nexus.repository.content.facet.ContentFacetDependencies;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
@@ -31,6 +32,7 @@ import org.sonatype.nexus.repository.content.fluent.internal.FluentAssetImpl;
 import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.content.store.AssetBlobData;
 import org.sonatype.nexus.repository.content.store.AssetData;
+import org.sonatype.nexus.repository.move.RepositoryMoveService;
 import org.sonatype.nexus.repository.rest.api.AssetXO;
 import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
@@ -49,6 +51,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.content.rest.internal.resources.AssetsResourceSupport.LIMIT;
@@ -85,10 +89,17 @@ public class AssetsResourceTest
   private ContentFacetSupport contentFacetSupport;
 
   @Mock
+  private ContentFacetDependencies dependencies;
+
+  @Mock
+  private RepositoryMoveService moveService;
+
+  @Mock
   private RepositoryManagerRESTAdapter repositoryManagerRESTAdapter;
 
   @Mock
   private MaintenanceService maintenanceService;
+
 
   @Mock
   private Continuation<FluentAsset> assetContinuation;
@@ -117,8 +128,10 @@ public class AssetsResourceTest
 
   @Test
   public void getAssetByIdShouldReturnAnAssetWhenFound() {
-    when(fluentAssets.find(new DetachedEntityId(AN_ASSET_ID + "")))
-        .thenReturn(Optional.of(aFluentAsset()));
+    FluentAssetImpl fluentAsset = aFluentAsset();
+
+    when(fluentAssets.find(any(DetachedEntityId.class)))
+        .thenReturn(Optional.of(fluentAsset));
 
     AssetXO assetXO = underTest.getAssetById(anEncodedAssetId());
 
@@ -155,6 +168,8 @@ public class AssetsResourceTest
     when(repositoryManagerRESTAdapter.getRepository(REPOSITORY_NAME)).thenReturn(repository);
     when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);
     when(contentFacet.assets()).thenReturn(fluentAssets);
+    when(contentFacetSupport.dependencies()).thenReturn(dependencies);
+    when(dependencies.getMoveService()).thenReturn(Optional.of(moveService));
     when(fluentAssets.browse(LIMIT, null)).thenReturn(assetContinuation);
     when(assetContinuation.isEmpty()).thenReturn(true);
     when(repository.getName()).thenReturn(REPOSITORY_NAME);

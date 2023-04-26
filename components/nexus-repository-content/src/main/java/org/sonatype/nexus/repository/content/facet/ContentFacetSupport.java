@@ -143,8 +143,8 @@ public abstract class ContentFacetSupport
   }
 
   private ConstraintViolation<?> validateBlobStoreNotInGroup(final String blobStoreName) {
-    return dependencies.blobStoreManager.getParent(blobStoreName)
-        .map(groupName -> dependencies.constraintViolationFactory.
+    return dependencies.getBlobStoreManager().getParent(blobStoreName)
+        .map(groupName -> dependencies.getConstraintViolationFactory().
             createViolation(format("%s.blobStoreName", STORAGE),
             format("Blob Store '%s' is a member of Blob Store Group '%s' and cannot be set as storage",
                 blobStoreName, groupName)))
@@ -157,7 +157,7 @@ public abstract class ContentFacetSupport
     log.debug("Config: {}", config);
 
     stores = new ContentFacetStores(
-        dependencies.blobStoreManager, config.blobStoreName,
+        dependencies.getBlobStoreManager(), config.blobStoreName,
         formatStoreManager, config.dataStoreName);
 
     fluentBlobs = new FluentBlobsImpl(this, stores.blobStore);
@@ -178,7 +178,7 @@ public abstract class ContentFacetSupport
 
     checkState(contentRepositoryId != null, "Missing contentRepositoryId");
 
-    assetBlobValidator = dependencies.assetBlobValidators.selectValidator(getRepository());
+    assetBlobValidator = dependencies.getAssetBlobValidators().selectValidator(getRepository());
   }
 
   @Override
@@ -261,21 +261,25 @@ public abstract class ContentFacetSupport
     return fluentAssets;
   }
 
+  public ContentFacetDependencies dependencies() {
+    return dependencies;
+  }
+
   @Override
   public final DataSession<?> openSession() {
-    return dependencies.dataSessionSupplier.openSession(config.dataStoreName);
+    return dependencies.getDataSessionSupplier().openSession(config.dataStoreName);
   }
 
   public final Optional<ClientInfo> clientInfo() {
-    return ofNullable(dependencies.clientInfoProvider.getCurrentThreadClientInfo());
+    return ofNullable(dependencies.getClientInfoProvider().getCurrentThreadClientInfo());
   }
 
   public final String nodeName() {
-    return dependencies.nodeAccess.getId();
+    return dependencies.getNodeAccess().getId();
   }
 
   public final BlobMetadataStorage blobMetadataStorage() {
-    return dependencies.blobMetadataStorage;
+    return dependencies.getBlobMetadataStorage();
   }
 
   public final Repository repository() {
