@@ -37,6 +37,10 @@ public interface AssetInfo
 
   OffsetDateTime lastUpdated();
 
+  OffsetDateTime lastDownloaded();
+
+  Long blobSize();
+
   Map<String, String> checksums();
 
   OffsetDateTime blobCreated();

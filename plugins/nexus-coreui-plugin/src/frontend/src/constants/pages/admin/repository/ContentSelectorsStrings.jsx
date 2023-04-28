@@ -16,7 +16,8 @@ import {NxTextLink} from '@sonatype/react-shared-components';
 export default {
   CONTENT_SELECTORS: {
     MENU: {
-      text: 'Content Selectors'
+      text: 'Content Selectors',
+      description: 'Define the content that users can access using Content Selector Expression Language (CSEL)'
     },
 
     EDIT_TITLE: (name) => `Edit ${name}`,

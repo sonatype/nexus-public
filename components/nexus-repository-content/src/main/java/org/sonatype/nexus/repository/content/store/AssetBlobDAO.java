@@ -122,6 +122,16 @@ public interface AssetBlobDAO
   void setChecksums(@Param("blobRef") BlobRef blobRef, @Param("checksums") Map<String, String> checksums);
 
   /**
+   * Sets the 'created by' on the asset
+   */
+  void setCreatedBy(@Param("blobRef") BlobRef blobRef, @Param("createdBy") String createdBy);
+
+  /**
+   * Sets the 'created by IP' on the asset
+   */
+  void setCreatedByIP(@Param("blobRef") BlobRef blobRef, @Param("createdByIP") String createdByIP);
+
+  /**
    * Browse asset blobs with legacy blobRef format {@code store-name:blob-id@node-id} in a paged fashion.
    *
    * @param limit maximum number of asset blobs to return

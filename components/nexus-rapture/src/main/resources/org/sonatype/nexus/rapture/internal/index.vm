@@ -34,7 +34,7 @@
     <script>(new Image).src="$raptureUrl/resources/favicon.ico?$urlSuffix"</script>
   <![endif]-->
 ## Safari on MacOS and iOS
-  <link rel="icon" type="image/png" href="$raptureUrl/resources/favicon-32x32.png?$urlSuffix" sizes="32x32">
+  <link rel="icon" type="image/png" href="$raptureUrl/resources/new-favicon.svg?$urlSuffix" sizes="32x32">
   <link rel="mask-icon" href="$raptureUrl/resources/safari-pinned-tab.svg?$urlSuffix" color="#5bbad5">
 ## classic favicon, shown in browser tabs
   <link rel="icon" type="image/png" href="$raptureUrl/resources/favicon-16x16.png?$urlSuffix" sizes="16x16">

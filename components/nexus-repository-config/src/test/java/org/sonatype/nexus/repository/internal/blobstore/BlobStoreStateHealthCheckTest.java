@@ -21,6 +21,7 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
+import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 
 import com.codahale.metrics.health.HealthCheck.Result;
 import com.google.common.collect.Lists;
@@ -63,6 +64,7 @@ public class BlobStoreStateHealthCheckTest
     when(blobStore.isStarted()).thenReturn(true);
     when(blobStore.isWritable()).thenReturn(true);
     when(blobStore.isStorageAvailable()).thenReturn(true);
+    when(blobStoreConfiguration.getType()).thenReturn(FileBlobStore.TYPE);
 
     Result result = healthCheck.check();
     assertTrue(result.isHealthy());
@@ -73,6 +75,8 @@ public class BlobStoreStateHealthCheckTest
     when(blobStore.isStarted()).thenReturn(true);
     when(blobStore.isWritable()).thenReturn(true);
     when(blobStore.isStorageAvailable()).thenReturn(false);
+    when(blobStoreConfiguration.getType()).thenReturn(FileBlobStore.TYPE);
+
 
     Result result = healthCheck.check();
     assertFalse(result.isHealthy());
@@ -84,6 +88,7 @@ public class BlobStoreStateHealthCheckTest
     when(blobStore.isStarted()).thenReturn(true);
     when(blobStore.isWritable()).thenReturn(false);
     when(blobStore.isStorageAvailable()).thenReturn(true);
+    when(blobStoreConfiguration.getType()).thenReturn(FileBlobStore.TYPE);
 
     Result result = healthCheck.check();
     assertFalse(result.isHealthy());
@@ -95,6 +100,7 @@ public class BlobStoreStateHealthCheckTest
     when(blobStore.isStarted()).thenReturn(false);
     when(blobStore.isWritable()).thenReturn(true);
     when(blobStore.isStorageAvailable()).thenReturn(true);
+    when(blobStoreConfiguration.getType()).thenReturn(FileBlobStore.TYPE);
 
     Result result = healthCheck.check();
     assertFalse(result.isHealthy());
@@ -110,12 +116,48 @@ public class BlobStoreStateHealthCheckTest
   }
 
   @Test
+  public void shouldHandleGroupBlobStore() {
+    BlobStore blobStore1 = mock(BlobStore.class);
+    when(blobStore1.isStarted()).thenReturn(true);
+    when(blobStore1.isWritable()).thenReturn(true);
+    when(blobStore1.isStorageAvailable()).thenReturn(true);
+    when(blobStore1.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
+    when(blobStoreConfiguration.getName()).thenReturn("blob-store-1");
+    when(blobStoreConfiguration.getType()).thenReturn(FileBlobStore.TYPE);
+
+    BlobStore blobStore2 = mock(BlobStore.class);
+    when(blobStore2.isStarted()).thenReturn(true);
+    when(blobStore2.isWritable()).thenReturn(true);
+    when(blobStore2.isStorageAvailable()).thenReturn(true);
+    BlobStoreConfiguration blobStoreConfiguration2 = mock(BlobStoreConfiguration.class);
+    when(blobStore2.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration2);
+    when(blobStoreConfiguration2.getName()).thenReturn("blob-store-2");
+    when(blobStoreConfiguration2.getType()).thenReturn(FileBlobStore.TYPE);
+
+    BlobStoreGroup blobStore3 = mock(BlobStoreGroup.class);
+    when(blobStore3.getMembers()).thenReturn(Lists.newArrayList(blobStore1, blobStore2));
+    when(blobStore3.isStarted()).thenReturn(true);
+    when(blobStore3.isWritable()).thenReturn(false);
+    when(blobStore3.isStorageAvailable()).thenReturn(true);
+    BlobStoreConfiguration blobStoreConfiguration3 = mock(BlobStoreConfiguration.class);
+    when(blobStore3.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration3);
+    when(blobStoreConfiguration3.getName()).thenReturn("group-blob-store");
+    when(blobStoreConfiguration3.getType()).thenReturn(BlobStoreGroup.TYPE);
+
+    when(blobStoreManager.browse()).thenReturn(Lists.newArrayList(blobStore1, blobStore2, blobStore3));
+
+    Result result = healthCheck.check();
+    assertTrue(result.isHealthy());
+  }
+
+  @Test
   public void shouldHandleMultipleBlobStores() {
     when(blobStore.isStarted()).thenReturn(true);
     when(blobStore.isWritable()).thenReturn(true);
     when(blobStore.isStorageAvailable()).thenReturn(true);
     when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
     when(blobStoreConfiguration.getName()).thenReturn("blob-store-1");
+    when(blobStoreConfiguration.getType()).thenReturn(FileBlobStore.TYPE);
 
     BlobStore blobStore2 = mock(BlobStore.class);
     when(blobStore2.isStarted()).thenReturn(false);
@@ -124,6 +166,7 @@ public class BlobStoreStateHealthCheckTest
     BlobStoreConfiguration blobStoreConfiguration2 = mock(BlobStoreConfiguration.class);
     when(blobStore2.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration2);
     when(blobStoreConfiguration2.getName()).thenReturn("blob-store-2");
+    when(blobStoreConfiguration2.getType()).thenReturn(FileBlobStore.TYPE);
 
     BlobStore blobStore3 = mock(BlobStore.class);
     when(blobStore3.isStarted()).thenReturn(true);
@@ -132,6 +175,7 @@ public class BlobStoreStateHealthCheckTest
     BlobStoreConfiguration blobStoreConfiguration3 = mock(BlobStoreConfiguration.class);
     when(blobStore3.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration3);
     when(blobStoreConfiguration3.getName()).thenReturn("blob-store-3");
+    when(blobStoreConfiguration3.getType()).thenReturn(FileBlobStore.TYPE);
 
     when(blobStoreManager.browse()).thenReturn(Lists.newArrayList(blobStore, blobStore2, blobStore3));
 

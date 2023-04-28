@@ -61,7 +61,7 @@ Ext.define('NX.view.AboutWindow', {
           {
             xtype: 'component',
             cls: 'logo',
-            html: NX.Icons.img('nexus-black', 'x100')
+            html: NX.Icons.img('new-nexus-black', 'x100')
           },
           {
             xtype: 'nx-info',

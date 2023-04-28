@@ -16,7 +16,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.Continuation;

@@ -17,7 +17,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Function;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;

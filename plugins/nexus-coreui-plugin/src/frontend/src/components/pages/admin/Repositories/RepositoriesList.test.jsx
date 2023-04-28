@@ -12,15 +12,9 @@
  */
 import React from 'react';
 import axios from 'axios';
-import {
-  waitForElementToBeRemoved,
-  waitFor,
-  getByText,
-  screen,
-  within
-} from '@testing-library/react';
+import {getByText, screen, waitFor, waitForElementToBeRemoved, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {ExtJS, ExtAPIUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
+import {APIConstants, ExtAPIUtils, ExtJS} from '@sonatype/nexus-ui-plugin';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import {when} from 'jest-when';
 
@@ -655,7 +649,7 @@ describe('RepositoriesList', function () {
     });
   });
 
-  describe('IQ Policy Violations Column', () => {
+  describe('Firewall Report Column', () => {
     const rowIndices = {
       MAVEN_CENTRAL: 1, // fiewall status available
       MAVEN_PUBLIC: 2,

@@ -64,6 +64,7 @@ import static java.util.stream.Collectors.toList;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertFalse;
@@ -528,9 +529,9 @@ public class RepositoryManagerImplTest
 
     when(configurationStore.list()).thenReturn(Collections.singletonList(mavenCentralConfiguration));
 
-    Repository repository = repositoryManager.get("maven-central");
+    Repository repository = repositoryManager.get(MAVEN_CENTRAL_NAME);
 
-    assertThat(repository.getName(), is("maven-central"));
+    assertThat(repository.getName(), is(MAVEN_CENTRAL_NAME));
   }
 
   @Test
@@ -542,6 +543,25 @@ public class RepositoryManagerImplTest
     Repository repository = repositoryManager.get("maven-central");
 
     assertThat(repository, is(nullValue()));
+  }
+
+  @Test
+  public void repoNotInCacheReturnsNullForSoftGet() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(false, true);
+
+    Repository repository = repositoryManager.softGet("maven-central");
+
+    assertThat(repository, is(nullValue()));
+  }
+
+  @Test
+  public void repoInCacheReturnsObjectForSoftGet() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(true, false);
+
+    Repository repository = repositoryManager.softGet(MAVEN_CENTRAL_NAME);
+
+    assertThat(repository, is(notNullValue()));
+    assertThat(repository.getName(), is(MAVEN_CENTRAL_NAME));
   }
 
   @Test(expected = None.class)

@@ -351,8 +351,8 @@ public class RepositoryManagerImpl
 
     log.debug("Repository not found, attempting to load from database");
 
-    return repository = retrieveConfigurationByName(lcName)
-      .map(config -> EventHelper.asReplicating(() -> {
+    return retrieveConfigurationByName(lcName)
+        .map(config -> EventHelper.asReplicating(() -> {
           log.debug("Found repository in DB, attempting to load {}", config);
           try {
             // Don't return this, return the tracked one just in case
@@ -363,8 +363,18 @@ public class RepositoryManagerImpl
             log.debug("An error occurred loading repository from storage", e);
           }
           return repositories.get(lcName);
-      }))
-      .orElse(null);
+        }))
+        .orElse(null);
+  }
+
+  @Nullable
+  @Override
+  @Guarded(by = STARTED)
+  public Repository softGet(final String name) {
+    checkNotNull(name);
+
+    String lcName = name.toLowerCase();
+    return repositories.get(lcName);
   }
 
   @Override

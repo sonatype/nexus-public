@@ -113,8 +113,8 @@ Ext.define('NX.util.Url', {
    * @public
    * @param {String} value to copy
    */
-  asCopyWidget: function (value) {
-    return '<button onclick="Ext.widget(\'nx-copywindow\', { copyText: \'' + value + '\' });" title="' + value + '"><i class="fa fa-clipboard"></i> copy</button>';
+  asCopyWidget: function (value, repoFormat) {
+    return '<button onclick="Ext.widget(\'nx-copywindow\', { copyText: \'' + value + '\', repoFormat: \'' + repoFormat + '\' });" title="' + value + '"><i class="fa fa-clipboard"></i> copy</button>';
   },
 
   /**

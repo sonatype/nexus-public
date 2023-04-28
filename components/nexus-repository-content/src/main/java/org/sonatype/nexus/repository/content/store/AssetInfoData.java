@@ -43,6 +43,10 @@ public class AssetInfoData
 
   private OffsetDateTime blobCreated;
 
+  private OffsetDateTime lastDownloaded;
+
+  private Long blobSize;
+
   private OffsetDateTime addedToRepository;
 
   @Override
@@ -81,6 +85,16 @@ public class AssetInfoData
   }
 
   @Override
+  public OffsetDateTime lastDownloaded() {
+    return lastDownloaded;
+  }
+
+  @Override
+  public Long blobSize() {
+    return blobSize;
+  }
+
+  @Override
   public Map<String, String> checksums() {
     return checksums;
   }
@@ -106,6 +120,8 @@ public class AssetInfoData
         ", createdByIp='" + createdByIp + '\'' +
         ", checksums=" + checksums +
         ", blobCreated=" + blobCreated +
+        ", lastDownloaded=" + lastDownloaded +
+        ", blobSize=" + blobSize +
         ", addedToRepository=" + addedToRepository +
         '}';
   }

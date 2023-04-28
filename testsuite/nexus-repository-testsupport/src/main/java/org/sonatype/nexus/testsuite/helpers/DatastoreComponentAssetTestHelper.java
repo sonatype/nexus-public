@@ -141,6 +141,22 @@ public class DatastoreComponentAssetTestHelper
   }
 
   @Override
+  public String getCreatedBy(final Repository repository, final String path) {
+    return findAssetByPath(repository, path)
+        .flatMap(fluentAsset -> fluentAsset.blob()
+            .flatMap(AssetBlob::createdBy))
+        .orElse(null);
+  }
+
+  @Override
+  public String getCreatedByIP(final Repository repository, final String path) {
+    return findAssetByPath(repository, path)
+        .flatMap(fluentAsset -> fluentAsset.blob()
+            .flatMap(AssetBlob::createdByIp))
+        .orElse(null);
+  }
+
+  @Override
   public void deleteComponent(
       final Repository repository,
       final String namespace,

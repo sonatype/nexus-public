@@ -87,4 +87,8 @@ public interface FeatureFlags
 
   String CHANGE_REPO_BLOBSTORE_TASK_ENABLED = "nexus.change.repo.blobstore.task.enabled";
   String CHANGE_REPO_BLOBSTORE_TASK_ENABLED_NAMED = "${nexus.change.repo.blobstore.task.enabled:-false}";
+
+  String FIREWALL_ONBOARDING_ENABLED = "nexus.firewall.onboarding.enabled";
+
+  String FIREWALL_ONBOARDING_ENABLED_NAMED = "${nexus.firewall.onboarding.enabled:-false}";
 }

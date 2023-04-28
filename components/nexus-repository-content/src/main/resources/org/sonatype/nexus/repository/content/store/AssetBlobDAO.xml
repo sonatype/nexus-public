@@ -98,6 +98,16 @@
     WHERE blob_ref = #{blobRef};
   </update>
 
+  <update id="setCreatedBy" parameterType="AssetBlobData">
+    UPDATE ${format}_asset_blob SET created_by = #{createdBy}
+    WHERE blob_ref = #{blobRef};
+  </update>
+
+  <update id="setCreatedByIP" parameterType="AssetBlobData">
+    UPDATE ${format}_asset_blob SET created_by_ip = #{createdByIP}
+    WHERE blob_ref = #{blobRef};
+  </update>
+
   <update id="setChecksums" parameterType="AssetBlobData">
     UPDATE ${format}_asset_blob SET checksums = #{checksums}
     WHERE blob_ref = #{blobRef};

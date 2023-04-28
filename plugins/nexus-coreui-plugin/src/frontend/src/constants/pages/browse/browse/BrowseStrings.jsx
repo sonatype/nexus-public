@@ -26,7 +26,7 @@ export default {
         STATUS: 'Status',
         URL: 'URL',
         HEALTH_CHECK: 'Health Check',
-        IQ_POLICY_VIOLATIONS: 'IQ Policy Violations',
+        IQ_POLICY_VIOLATIONS: 'Firewall Report',
       },
       FILTER_PLACEHOLDER: 'Filter by name',
       EMPTY_MESSAGE: 'There are no repositories available',

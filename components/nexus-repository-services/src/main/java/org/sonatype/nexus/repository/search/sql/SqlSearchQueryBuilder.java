@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.sonatype.nexus.repository.search.SqlSearchQueryContribution;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
@@ -89,9 +90,18 @@ public class SqlSearchQueryBuilder
   }
 
   private String joinQueryFormats() {
-    return conditions.stream()
-        .map(SqlSearchQueryCondition::getSqlConditionFormat)
-        .collect(joining(operator));
+    Stream<String> conditionsStream = conditions.stream()
+        .map(SqlSearchQueryCondition::getSqlConditionFormat);
+
+    if (conditions.size() > 1) {
+      conditionsStream = conditionsStream.map(SqlSearchQueryBuilder::wrapInBrackets);
+    }
+
+    return conditionsStream.collect(joining(operator));
+  }
+
+  private static String wrapInBrackets(final String input) {
+    return "(" + input + ")";
   }
 
   private Map<String, String> getValues() {

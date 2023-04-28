@@ -29,7 +29,7 @@ export default {
         STATUS: 'Status',
         URL: 'URL',
         HEALTH_CHECK: 'Health Check',
-        IQ: 'IQ Policy Violations',
+        IQ: 'Firewall Report',
       },
       FILTER_PLACEHOLDER: 'Filter by name',
       EMPTY_LIST: 'There are no repositories available',

@@ -45,6 +45,9 @@ public interface RepositoryManager
   @Nullable
   Repository get(String name);
 
+  @Nullable
+  Repository softGet(String name);
+
   Optional<Configuration> retrieveConfigurationByName(String name);
 
   Repository create(Configuration configuration) throws Exception;

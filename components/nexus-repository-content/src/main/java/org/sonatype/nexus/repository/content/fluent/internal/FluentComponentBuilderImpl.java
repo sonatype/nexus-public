@@ -22,6 +22,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponentBuilder;
 import org.sonatype.nexus.repository.content.store.ComponentData;
 import org.sonatype.nexus.repository.content.store.ComponentStore;
+import org.sonatype.nexus.repository.move.RepositoryMoveService;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -47,9 +48,10 @@ public class FluentComponentBuilderImpl
 
   private Map<String, Object> attributes;
 
-  public FluentComponentBuilderImpl(final ContentFacetSupport facet,
-                                    final ComponentStore<?> componentStore,
-                                    final String name)
+  public FluentComponentBuilderImpl(
+      final ContentFacetSupport facet,
+      final ComponentStore<?> componentStore,
+      final String name)
   {
     this.facet = checkNotNull(facet);
     this.componentStore = checkNotNull(componentStore);

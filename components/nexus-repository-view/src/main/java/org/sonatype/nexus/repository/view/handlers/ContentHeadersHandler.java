@@ -50,11 +50,11 @@ public class ContentHeadersHandler
       final Content content = (Content) payload;
       final DateTime lastModified = content.getAttributes().get(Content.CONTENT_LAST_MODIFIED, DateTime.class);
       if (lastModified != null) {
-        response.getHeaders().set(HttpHeaders.LAST_MODIFIED, formatDateTime(lastModified));
+        response.getHeaders().replace(HttpHeaders.LAST_MODIFIED, formatDateTime(lastModified));
       }
       final String etag = content.getAttributes().get(Content.CONTENT_ETAG, String.class);
       if (etag != null) {
-        response.getHeaders().set(HttpHeaders.ETAG, ETagHeaderUtils.quote(etag));
+        response.getHeaders().replace(HttpHeaders.ETAG, ETagHeaderUtils.quote(etag));
       }
     }
     return response;

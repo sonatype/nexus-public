@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.content.facet;
 
+import java.util.Optional;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -19,6 +21,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
+import org.sonatype.nexus.repository.move.RepositoryMoveService;
 import org.sonatype.nexus.repository.storage.BlobMetadataStorage;
 import org.sonatype.nexus.security.ClientInfoProvider;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
@@ -32,21 +35,23 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Named
 @Singleton
-class ContentFacetDependencies
+public class ContentFacetDependencies
 {
-  final BlobStoreManager blobStoreManager;
+  private final BlobStoreManager blobStoreManager;
 
-  final DataSessionSupplier dataSessionSupplier;
+  private final DataSessionSupplier dataSessionSupplier;
 
-  final ConstraintViolationFactory constraintViolationFactory;
+  private final ConstraintViolationFactory constraintViolationFactory;
 
-  final ClientInfoProvider clientInfoProvider;
+  private final ClientInfoProvider clientInfoProvider;
 
-  final NodeAccess nodeAccess;
+  private final NodeAccess nodeAccess;
 
-  final AssetBlobValidators assetBlobValidators;
+  private final AssetBlobValidators assetBlobValidators;
 
-  final BlobMetadataStorage blobMetadataStorage;
+  private final BlobMetadataStorage blobMetadataStorage;
+
+  private final Optional<RepositoryMoveService> maybeMoveService;
 
   @Inject
   public ContentFacetDependencies(final BlobStoreManager blobStoreManager,
@@ -55,7 +60,8 @@ class ContentFacetDependencies
                                   final ClientInfoProvider clientInfoProvider,
                                   final NodeAccess nodeAccess,
                                   final AssetBlobValidators assetBlobValidators,
-                                  final BlobMetadataStorage blobMetadataStorage)
+                                  final BlobMetadataStorage blobMetadataStorage,
+                                  @Nullable final RepositoryMoveService moveService)
   {
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.dataSessionSupplier = checkNotNull(dataSessionSupplier);
@@ -64,5 +70,38 @@ class ContentFacetDependencies
     this.nodeAccess = checkNotNull(nodeAccess);
     this.assetBlobValidators = checkNotNull(assetBlobValidators);
     this.blobMetadataStorage = checkNotNull(blobMetadataStorage);
+    this.maybeMoveService = Optional.ofNullable(moveService);
+  }
+
+  public BlobStoreManager getBlobStoreManager() {
+    return blobStoreManager;
+  }
+
+  public DataSessionSupplier getDataSessionSupplier() {
+    return dataSessionSupplier;
+  }
+
+  public ConstraintViolationFactory getConstraintViolationFactory() {
+    return constraintViolationFactory;
+  }
+
+  public ClientInfoProvider getClientInfoProvider() {
+    return clientInfoProvider;
+  }
+
+  public NodeAccess getNodeAccess() {
+    return nodeAccess;
+  }
+
+  public AssetBlobValidators getAssetBlobValidators() {
+    return assetBlobValidators;
+  }
+
+  public BlobMetadataStorage getBlobMetadataStorage() {
+    return blobMetadataStorage;
+  }
+
+  public Optional<RepositoryMoveService> getMoveService() {
+    return maybeMoveService;
   }
 }
