@@ -19,6 +19,12 @@
 ## Downloadable Bundles
 
  See: https://www.sonatype.com/download-oss-sonatype
+
+## Support
+
+Using Sonatype Nexus Repository OSS and need to report an issue - [Open an issue here](https://github.com/sonatype/nexus-public/issues)
+
+Sonatype Nexus Repository Pro customers can use https://support.sonatype.com/. 
  
 ## Build Requirements
 
