@@ -3,7 +3,7 @@ name: Issue Template
 about: Please follow this form to facilitate assistance
 title: ''
 labels: ''
-assignees: ''
+assignees: nblair
 
 ---
 
