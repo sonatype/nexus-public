@@ -83,6 +83,14 @@
       <artifactId>nexus-testsupport</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <dependency>
+      <groupId>com.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-repository-move-plugin</artifactId>
+      <version>${parent.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
   </dependencies>
 
   <build>

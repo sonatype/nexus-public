@@ -22,10 +22,12 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.nexus.repository.move.ChangeRepositoryBlobStoreConfiguration;
+import org.sonatype.nexus.repository.move.ChangeRepositoryBlobStoreStore;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -44,8 +46,14 @@ import org.sonatype.nexus.repository.storage.BucketStore;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.TaskSupport;
+import org.sonatype.nexus.scheduling.TaskUtils;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
+import static java.util.Arrays.asList;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
@@ -57,6 +65,7 @@ import static org.sonatype.nexus.blobstore.restore.orient.OrientRestoreMetadataT
 import static org.sonatype.nexus.blobstore.restore.orient.OrientRestoreMetadataTaskDescriptor.INTEGRITY_CHECK;
 import static org.sonatype.nexus.blobstore.restore.orient.OrientRestoreMetadataTaskDescriptor.RESTORE_BLOBS;
 import static org.sonatype.nexus.blobstore.restore.orient.OrientRestoreMetadataTaskDescriptor.UNDELETE_BLOBS;
+import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
 
 /**
  * @since 3.4
@@ -67,6 +76,8 @@ public class OrientRestoreMetadataTask
     implements Cancelable
 {
   private final BlobStoreManager blobStoreManager;
+
+  private final Optional<ChangeRepositoryBlobStoreStore> changeBlobstoreStore;
 
   private final RepositoryManager repositoryManager;
 
@@ -84,18 +95,23 @@ public class OrientRestoreMetadataTask
 
   private final MaintenanceService maintenanceService;
 
+  private final TaskUtils taskUtils;
+
   @Inject
   public OrientRestoreMetadataTask(
       final BlobStoreManager blobStoreManager,
+      @Nullable final ChangeRepositoryBlobStoreStore changeBlobstoreStore,
       final RepositoryManager repositoryManager,
       final Map<String, RestoreBlobStrategy> restoreBlobStrategies,
       final BlobStoreUsageChecker blobStoreUsageChecker,
       final DryRunPrefix dryRunPrefix,
       final Map<String, OrientIntegrityCheckStrategy> integrityCheckStrategies,
       final BucketStore bucketStore,
-      final MaintenanceService maintenanceService)
+      final MaintenanceService maintenanceService,
+      final TaskUtils taskUtils)
   {
     this.blobStoreManager = checkNotNull(blobStoreManager);
+    this.changeBlobstoreStore = Optional.ofNullable(changeBlobstoreStore);
     this.repositoryManager = checkNotNull(repositoryManager);
     this.restoreBlobStrategies = checkNotNull(restoreBlobStrategies);
     this.blobStoreUsageChecker = checkNotNull(blobStoreUsageChecker);
@@ -104,6 +120,7 @@ public class OrientRestoreMetadataTask
     this.integrityCheckStrategies = checkNotNull(integrityCheckStrategies);
     this.bucketStore = checkNotNull(bucketStore);
     this.maintenanceService = checkNotNull(maintenanceService);
+    this.taskUtils = checkNotNull(taskUtils);
   }
 
   @Override
@@ -111,8 +128,34 @@ public class OrientRestoreMetadataTask
     return null;
   }
 
+  @VisibleForTesting
+  void checkForConflicts() {
+    String blobStoreName = checkNotNull(getConfiguration().getString(BLOB_STORE_NAME_FIELD_ID));
+
+    taskUtils.checkForConflictingTasks(getId(), getName(), asList("repository.move"), ImmutableMap
+        .of("moveInitialBlobstore", asList(blobStoreName), "moveTargetBlobstore", asList(blobStoreName)));
+
+    checkForUnfinishedMoveTask(blobStoreName);
+  }
+
+  private void checkForUnfinishedMoveTask(String blobStoreName) {
+    List<ChangeRepositoryBlobStoreConfiguration> existingMoves = changeBlobstoreStore
+        .map(store -> store.findByBlobStoreName(blobStoreName))
+        .orElseGet(Collections::emptyList);
+
+    if (!existingMoves.isEmpty()) {
+      log.info(TASK_LOG_ONLY, "found {} unfinished move tasks using blobstore '{}', unable to run task '{}'",
+          existingMoves.size(), blobStoreName, getName());
+
+      throw new IllegalStateException(
+          format("found unfinished move task using blobstore '%s', task can't be executed", blobStoreName));
+    }
+  }
+
   @Override
   protected Void execute() throws Exception {
+    checkForConflicts();
+
     String blobStoreId = checkNotNull(getConfiguration().getString(BLOB_STORE_NAME_FIELD_ID));
     boolean dryRun = getConfiguration().getBoolean(DRY_RUN, false);
     boolean restoreBlobs = getConfiguration().getBoolean(RESTORE_BLOBS, false);
