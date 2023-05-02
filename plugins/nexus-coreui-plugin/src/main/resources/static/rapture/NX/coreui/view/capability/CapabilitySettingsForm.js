@@ -49,12 +49,16 @@ Ext.define('NX.coreui.view.capability.CapabilitySettingsForm', {
       },
       {
         xtype: 'checkbox',
-        boxLabel: NX.I18n.get('Capability_CapabilitySettingsForm_Enabled_FieldLabel'),
         name: 'enabled',
         allowBlank: false,
         checked: true,
         inputValue: true,
-        editable: true
+        hidden: true
+      },
+      {
+        xtype: 'displayfield',
+        name: 'enabledLabel',
+        value: '',
       },
       {
         xtype: 'nx-coreui-formfield-settingsfieldset',
@@ -79,9 +83,28 @@ Ext.define('NX.coreui.view.capability.CapabilitySettingsForm', {
         capabilityTypeModel = NX.getApplication().getStore('CapabilityType').getById(model.get('typeId')),
         settingsFieldSet = me.down('nx-coreui-formfield-settingsfieldset');
 
+    me.setEnabledLabel(model);
+
     me.callParent(arguments);
     if (capabilityTypeModel) {
       settingsFieldSet.importProperties(model.get('properties'), capabilityTypeModel.get('formFields'));
+    }
+  },
+
+  setEnabledLabel: function(model) {
+    var me = this,
+        label = me.getForm().findField('enabledLabel'),
+        isEnabled = model.get('enabled'),
+        isCreate = model.crudState === 'C',
+        text
+
+    if (isCreate) {
+      label.setVisible(false);
+    } else {
+      text = isEnabled 
+        ? NX.I18n.get('Capability_Settings_Enabled_Label') 
+        : NX.I18n.get('Capability_Settings_Disabled_Label');
+      me.getForm().findField('enabledLabel').setValue(text);
     }
   },
 

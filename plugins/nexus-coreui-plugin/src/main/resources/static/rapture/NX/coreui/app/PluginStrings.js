@@ -1046,6 +1046,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Capabilities_State_Text: 'State',
     Capability_CapabilitySummary_Notes_HelpText: 'Optional notes about configured capability',
     Capability_CapabilityStatus_EmptyText: 'This capability does not provide any status',
+    Capability_Settings_Enabled_Label: 'Capability is enabled',
+    Capability_Settings_Disabled_Label: 'Capability is disabled',
 
     // Admin -> System -> Cleanup Policies
     CleanupPolicies_Text: 'Cleanup Policies',
