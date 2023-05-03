@@ -15,12 +15,12 @@ package org.sonatype.nexus.testsuite.testsupport.fixtures;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
 import javax.inject.Provider;
 
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;
+import org.sonatype.nexus.scheduling.schedule.Schedule;
 
 import org.junit.rules.ExternalResource;
 
@@ -36,6 +36,10 @@ public class ScheduledTaskRule
   }
 
   public TaskInfo create(final String name, final String typeId, final Map<String, String> attributes) {
+    return create(name, typeId, attributes, false);
+  }
+
+  public TaskInfo create(final String name, final String typeId, final Map<String, String> attributes, boolean runNow) {
     TaskScheduler taskScheduler = taskSchedulerProvider.get();
 
     TaskConfiguration taskConfiguration = taskScheduler.createTaskConfigurationInstance(typeId);
@@ -43,7 +47,8 @@ public class ScheduledTaskRule
     taskConfiguration.setName(name);
     taskConfiguration.setEnabled(true);
 
-    TaskInfo taskInfo = taskScheduler.scheduleTask(taskConfiguration, taskScheduler.getScheduleFactory().manual());
+    Schedule schedule = runNow ? taskScheduler.getScheduleFactory().now() : taskScheduler.getScheduleFactory().manual();
+    TaskInfo taskInfo = taskScheduler.scheduleTask(taskConfiguration, schedule);
     tasks.add(taskInfo);
     return taskInfo;
   }
