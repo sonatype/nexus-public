@@ -38,6 +38,7 @@ import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.time.DateHelper;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.repository.Repository;
@@ -50,6 +51,7 @@ import org.sonatype.nexus.repository.storage.ComponentMaintenance;
 import org.sonatype.nexus.repository.storage.Query;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
+import org.sonatype.nexus.repository.view.Content;
 
 import com.google.common.collect.ImmutableList;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -91,14 +93,9 @@ public class OrientComponentAssetTestHelper
   RepositoryManager repositoryManager;
 
   @Override
-  public DateTime getBlobCreatedTime(final Repository repository, final String path) {
-    return findAssetByName(repository, path).map(Asset::blobCreated).orElse(null);
-  }
-
-  @Override
   public DateTime getAssetCreatedTime(final Repository repository, final String path) {
     //not sure why it is the same
-    return getBlobCreatedTime(repository, path);
+    return findAssetByName(repository, path).map(Asset::blobCreated).orElse(null);
   }
 
   @Override
@@ -204,6 +201,18 @@ public class OrientComponentAssetTestHelper
     try (StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get()) {
       tx.begin();
       return newArrayList(tx.browseAssets(tx.findBucket(repository)));
+    }
+  }
+
+  private static void updateAsset(final Repository repository, final String path, final Consumer<Asset> mutator) {
+    Asset asset = findAssetByNameNotNull(repository, path);
+
+    mutator.accept(asset);
+
+    try (StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get()) {
+      tx.begin();
+      tx.saveAsset(asset);
+      tx.commit();
     }
   }
 
@@ -438,8 +447,22 @@ public class OrientComponentAssetTestHelper
   }
 
   @Override
-  public void setComponentLastUpdatedTime(Repository repository, final Date date) {
+  public void setLastDownloadedTime(final Repository repository, final String path, final Date date) {
+    updateAssets(repository, asset -> {
+      if (asset.name().equals(path)) {
+        asset.lastDownloaded(new DateTime(date));
+      }
+    });
+  }
+
+  @Override
+  public void setComponentLastUpdatedTime(final Repository repository, final Date date) {
     setEntityLastUpdatedTime(repository, date, "component");
+  }
+
+  @Override
+  public void setAssetCreatedTime(final Repository repository, final String path, final Date date) {
+    updateAsset(repository, path, asset -> asset.blobCreated(DateHelper.toDateTime(date)));
   }
 
   @Override
@@ -471,7 +494,7 @@ public class OrientComponentAssetTestHelper
   }
 
   @Override
-  public void setAssetBlobUpdatedTime(final Repository repository, final String pathRegex, final Date date)  {
+  public void setBlobUpdatedTime(final Repository repository, final String pathRegex, final Date date)  {
     String sql = "UPDATE asset SET blob_updated = :blobUpdated WHERE bucket.repository_name = :repositoryName" +
         " AND name MATCHES :pathRegex";
     HashMap<String, Object> sqlParams = new HashMap<>();
@@ -479,6 +502,12 @@ public class OrientComponentAssetTestHelper
     sqlParams.put("pathRegex", pathRegex);
     sqlParams.put("blobUpdated", date);
     execute(sql, sqlParams);
+  }
+
+  @Override
+  public void setAssetContentLastModified(final Repository repository, final String path, final Date date) {
+    updateAsset(repository, path,
+        asset -> asset.attributes().child(Content.CONTENT).set(Content.P_LAST_MODIFIED, date));
   }
 
   private void execute(final String sql, final HashMap<String, Object> parameters) {
@@ -591,7 +620,7 @@ public class OrientComponentAssetTestHelper
   }
 
   @Override
-  public void modifyAttributes(final Repository repository, String child1, final String child2, final int value) {
+  public void modifyAttributes(final Repository repository, final String child1, final String child2, final int value) {
     AttributesFacet facet = repository.facet(AttributesFacet.class);
     facet.modifyAttributes(attribute -> attribute.child(child1).child(child2).set(Integer.class, value));
   }

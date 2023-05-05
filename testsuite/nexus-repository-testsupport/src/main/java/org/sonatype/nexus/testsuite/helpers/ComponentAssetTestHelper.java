@@ -34,14 +34,6 @@ import org.joda.time.DateTime;
 public interface ComponentAssetTestHelper
 {
   /**
-   * Get the created time of the blob associated with the asset at the path in the given repository.
-   *
-   * @param repository the containing repository
-   * @param path the path of the asset
-   */
-  DateTime getBlobCreatedTime(Repository repository, String path);
-
-  /**
    * Get the created time of the the asset at the path in the given repository.
    *
    * @param repository the containing repository
@@ -187,6 +179,13 @@ public interface ComponentAssetTestHelper
   NestedAttributesMap attributes(Repository repository, String path);
 
   /**
+   * Retrieve the format specific attributes for the asset at the given path*
+   */
+  default NestedAttributesMap formatAttributes(final Repository repository, final String path) {
+    return attributes(repository, path).child(repository.getFormat().getValue());
+  }
+
+  /**
    * Retrieve the attributes for the component
    */
   NestedAttributesMap componentAttributes(Repository repository, String namespace, String name, String version);
@@ -214,9 +213,20 @@ public interface ComponentAssetTestHelper
   void setLastDownloadedTime(Repository repository, int minusSeconds, String regex);
 
   /**
+   * Set the last downloaded time for the asset
+   */
+  void setLastDownloadedTime(Repository repository, String path, Date date);
+
+  /**
    * Set the last updated time for all components in a repository.
    */
   void setComponentLastUpdatedTime(Repository repository, final Date date);
+
+  /**
+   * Semantically set the date the asset was originally created. For Orient this will be the BlobCreated time, for SQL
+   * this will be Asset.created
+   */
+  void setAssetCreatedTime(Repository repository, String path, Date date);
 
   /**
    * Set the last updated time for all assets in a repository.
@@ -228,7 +238,18 @@ public interface ComponentAssetTestHelper
    */
   void setAssetLastUpdatedTime(final Repository repository, final String path, final Date date);
 
-  void setAssetBlobUpdatedTime(final Repository repository, final String pathRegex, final Date date);
+  /**
+   * Semantically sets the date when the blob was changed. For Orient this is the blobLastUpdated, for SQL this is the
+   * AssetBlob.created time.
+   */
+  void setBlobUpdatedTime(final Repository repository, final String pathRegex, final Date date);
+
+  /**
+   * Set the last modified date associated with remote content.
+   *
+   * Note: For SQL this is only applicable to proxy repositories, while for Orient this is set for both
+   */
+  void setAssetContentLastModified(Repository repository, String path, Date date);
 
   /**
    * Set null to the last downloaded time column for all assets in a repository.
@@ -268,6 +289,7 @@ public interface ComponentAssetTestHelper
   /**
    * Gets the id of the component associated with the specified asset and repository.
    */
+  @Nullable
   EntityId getComponentId(Repository repository, String assetPath);
 
   NestedAttributesMap getAttributes(Repository repository);
@@ -280,6 +302,23 @@ public interface ComponentAssetTestHelper
    * @param repository the repository  from which all components are going to be deleted
    */
   void deleteAllComponents(final Repository repository);
+
+  /**
+   * Do not implement this method, it is not correct to do so. Orient & SQL have different semantics for the lifecycle
+   * of blobs:<br/>
+   *
+   * {@code orient.blobCreated == sql.assetCreated}<br/>
+   * {@code orient.blobUpdated == sql.blobCreated}
+   *
+   * @see #getAssetCreatedTime(Repository, String)
+   * @see #getBlobUpdatedTime(Repository, String)
+   *
+   * @deprecated Do not implement this method
+   */
+  @Deprecated
+  default DateTime getBlobCreatedTime(final Repository repository, final String path) {
+    throw new UnsupportedOperationException("Do not implement me");
+  }
 
   class AssetNotFoundException
       extends RuntimeException
