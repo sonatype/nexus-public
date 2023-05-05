@@ -59,18 +59,18 @@ Ext.define('NX.coreui.controller.Outreach', {
     });
   },
 
-  showOutreachWithProxyDownloads: function (log4jDisclaimerAvailable) {
+  showOutreachWithProxyDownloads: function () {
     var me = this,
         proxyDownloadNumbers = "";
     NX.direct.outreach_Outreach.getProxyDownloadNumbers(function(response) {
       if (Ext.isObject(response) && response.success && response.data != null) {
         proxyDownloadNumbers = response.data;
       }
-      me.showOutreach(log4jDisclaimerAvailable, proxyDownloadNumbers);
+      me.showOutreach(proxyDownloadNumbers);
     });
   },
 
-  showOutreach: function (log4jDisclaimerAvailable, proxyDownloadNumbers) {
+  showOutreach: function (proxyDownloadNumbers) {
     var me = this,
         welcomePage = me.getWelcomePage();
 
@@ -87,7 +87,6 @@ Ext.define('NX.coreui.controller.Outreach', {
 
         if (this.user) {
           usertype = this.user.administrator ? 'admin' : 'normal';
-          height = log4jDisclaimerAvailable && this.user.administrator ? 'calc(100% - 250px)' : '100%';
         }
 
         url = NX.util.Url.urlOf('service/outreach/?version=' + NX.State.getVersion() +
@@ -140,51 +139,11 @@ Ext.define('NX.coreui.controller.Outreach', {
    */
   refreshOutreachContent: function () {
     var me = this,
-        welcomePage = me.getWelcomePage(),
-        log4jDisclaimerAvailable = true;
+        welcomePage = me.getWelcomePage();
 
     if (welcomePage) {
       welcomePage.removeAll();
-      NX.direct.outreach_Outreach.isAvailableLog4jDisclaimer(function(response) {
-        if (Ext.isObject(response) && response.success && response.data && welcomePage.rendered) {
-          // log4j disclaimer window should be shown in case of Log4j Capability is disabled and vice versa
-          log4jDisclaimerAvailable = response.data === 'false';
-          this.user = NX.State.getUser();
-          if (this.user && this.user.administrator) {
-            welcomePage.add({
-              xtype: 'container',
-              id: 'log4jDisclaimer',
-              hidden: !log4jDisclaimerAvailable,
-              style: {
-                padding: '24px'
-              },
-              html:
-                  '<div id="log4j" class="nx-log4j-disclaimer">' +
-                  // TODO close btn is disabled due to some UI issues
-                  ' <div class="dismiss" style="display: none"><a href="javascript:;" onclick=""><i class="fa fa-times-circle nx-log4j-close"></i></a></div>' +
-                  ' <i class="fa fa-exclamation-triangle nx-log4j-warning-icon"></i>' +
-                  ' <div class="nx-log4j-disclaimer-text">In response to the log4j vulnerability identified in <a href="https://ossindex.sonatype.org/vulnerability/f0ac54b6-9b81-45bb-99a4-e6cb54749f9d" target="_blank">CVE-2021-44228</a> (also known as "log4shell") impacting organizations world-wide, we are providing an experimental Log4j Visualizer capability to help our users identify log4j downloads impacted by CVE-2021-44228 so that they can mitigate the impact. Note that enabling this capability may impact Nexus Repository performance. Also note that the visualizer does not currently identify or track other log4j vulnerabilities.<div>' +
-                  ' <div><a class="nx-log4j-button" href="#admin/repository/insightfrontend" style="color: white">Enable Capability</a></div> ' +
-                  '</div>',
-              listeners: {
-                render: function(doc) {
-                  doc.el.dom.getElementsByClassName('nx-log4j-button')[0].addEventListener('click', function(event) {
-                    NX.direct.outreach_Outreach.setLog4JVisualizerEnabled(true);
-                  });
-
-                  // TODO this is workaround to get close button and set event to hide the log4j
-                  doc.el.dom.getElementsByClassName('dismiss')[0].addEventListener('click', function(event) {
-                    log4jDisclaimerAvailable = false;
-                    document.getElementById('log4jDisclaimer').setAttribute('hidden', 'true');
-                    // TODO set outreach.setHeight('100%');
-                  });
-                }
-              }
-            });
-          }
-          me.showOutreachWithProxyDownloads(log4jDisclaimerAvailable);
-        }
-      });
+      me.showOutreachWithProxyDownloads();
     }
   }
 

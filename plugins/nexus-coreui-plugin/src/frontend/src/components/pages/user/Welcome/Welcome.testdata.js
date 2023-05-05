@@ -32,20 +32,8 @@ export const outreachGetProxyDownloadNumbers = data => ({
   result: { success: true, data }
 });
 
-export const outreachIsAvailableLog4jDisclaimerBasicSuccess = {
-  action: 'outreach_Outreach',
-  method: 'isAvailableLog4jDisclaimer',
-  result: { success: true }
-};
-
-export const outreachIsAvailableLog4jDisclaimer = enabled => ({
-  ...outreachIsAvailableLog4jDisclaimerBasicSuccess,
-  result: { success: true, data: enabled.toString() }
-});
-
 export const simpleSuccessResponse = {
   data: [
-    outreachIsAvailableLog4jDisclaimerBasicSuccess,
     outreachReadStatusBasicSuccess,
     outreachGetProxyDownloadNumbersBasicSuccess
   ]

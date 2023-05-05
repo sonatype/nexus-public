@@ -12,17 +12,12 @@
  */
 import React, { useEffect } from 'react';
 import { useMachine } from '@xstate/react';
-import { ExtAPIUtils , ExtJS, toURIParams, getVersionMajorMinor } from '@sonatype/nexus-ui-plugin';
+import { ExtJS, toURIParams, getVersionMajorMinor } from '@sonatype/nexus-ui-plugin';
 import {
-  NxButton,
-  NxButtonBar,
   NxLoadWrapper,
   NxPageMain,
   NxPageTitle,
-  NxH1,
-  NxWarningAlert,
-  NxLoadError,
-  NxSubmitMask
+  NxH1
 } from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
@@ -47,8 +42,6 @@ function getUserType(user) {
 export default function Welcome() {
   const [state, send] = useMachine(welcomeMachine, { devtools: true }),
       loading = state.value === 'loading',
-      showSubmitMask = ['enablingLog4j', 'redirectingToLog4j'].some(state.matches),
-      submitMaskSuccess = state.value === 'redirectingToLog4j',
       error = state.value === 'error' ? state.context.error : null,
       proxyDownloadNumberParams = state.context.data?.proxyDownloadNumberParams;
 
@@ -64,10 +57,6 @@ export default function Welcome() {
 
   function load() {
     send('LOAD');
-  }
-
-  async function enableLog4j() {
-    send('ENABLE_LOG4J');
   }
 
   useEffect(load, [user]);
@@ -91,27 +80,7 @@ export default function Welcome() {
           <NxPageTitle.Subtitle>{UIStrings.WELCOME.MENU.description}</NxPageTitle.Subtitle>
         </NxPageTitle.Headings>
       </NxPageTitle>
-      { showSubmitMask &&
-        <NxSubmitMask message={UIStrings.WELCOME.LOG4J_SUBMIT_MASK_MESSAGE} success={submitMaskSuccess} />
-      }
       <NxLoadWrapper loading={loading} error={error} retryHandler={load}>
-        { state.context.data?.showLog4jAlert &&
-          <section id="nxrm-welcome-log4j-notice" aria-label="Log4j Capability Notice">
-            <NxWarningAlert>
-              <p className="nxrm-log4j-alert-content">{UIStrings.WELCOME.LOG4J_ALERT_CONTENT}</p>
-              <NxButtonBar>
-                <NxButton id="nxrm-welcome-log4j-enable-btn" variant="primary" onClick={enableLog4j}>
-                  {UIStrings.WELCOME.LOG4J_ENABLE_BUTTON_CONTENT}
-                </NxButton>
-              </NxButtonBar>
-            </NxWarningAlert>
-          </section>
-        }
-        { state.context.log4jError &&
-          <NxLoadError titleMessage="An error occurred while enabling the Log4j capability."
-                       error={state.context.log4jError}
-                       retryHandler={enableLog4j} />
-        }
         { state.context.data?.showOutreachIframe &&
           <iframe id="nxrm-welcome-outreach-frame"
                   role="document"

@@ -24,8 +24,7 @@ import UIStrings from '../../../../constants/UIStrings';
 
 const action = APIConstants.EXT.OUTREACH.ACTION,
     outreachStatusMethod = APIConstants.EXT.OUTREACH.METHODS.READ_STATUS,
-    proxyDownloadNumbersMethod = APIConstants.EXT.OUTREACH.METHODS.GET_PROXY_DOWNLOAD_NUMBERS,
-    log4jMethod = APIConstants.EXT.OUTREACH.METHODS.IS_LOG4J_CAPABILITY_ACTIVE;
+    proxyDownloadNumbersMethod = APIConstants.EXT.OUTREACH.METHODS.GET_PROXY_DOWNLOAD_NUMBERS;
 
 const welcomeMachine = createMachine({
   id: 'WelcomeMachine',
@@ -38,7 +37,7 @@ const welcomeMachine = createMachine({
         src: 'fetch',
         onDone: {
           target: 'loaded',
-          actions: ['setData', 'clearLog4jError']
+          actions: ['setData']
         },
         onError: {
           target: 'error',
@@ -47,34 +46,12 @@ const welcomeMachine = createMachine({
       }
     },
     loaded: {},
-    error: {},
-    enablingLog4j: {
-      invoke: {
-        src: 'enableLog4j',
-        onDone: {
-          target: 'redirectingToLog4j'
-        },
-        onError: {
-          target: 'log4jError',
-          actions: ['setLog4jError', 'clearShowLog4jAlert']
-        }
-      }
-    },
-    redirectingToLog4j: {
-      type: 'final',
-      invoke: {
-        src: 'redirectToLog4j'
-      }
-    },
-    log4jError: {}
+    error: {}
   },
 
   on: {
     LOAD: {
       target: 'loading'
-    },
-    ENABLE_LOG4J: {
-      target: 'enablingLog4j'
     }
   }
 }, {
@@ -85,16 +62,6 @@ const welcomeMachine = createMachine({
 
     setError: assign({
       error: (_, event) => event?.data?.message || UIStrings.ERROR.UNKNOWN
-    }),
-
-    setLog4jError: assign({
-      log4jError: (_, event) => event?.data?.message || UIStrings.ERROR.UNKNOWN
-    }),
-
-    clearLog4jError: assign({ log4jError: null }),
-
-    clearShowLog4jAlert: assign({
-      data: ({data}) => ({ ...data, showLog4jAlert: false })
     })
   },
   services: {
@@ -102,83 +69,29 @@ const welcomeMachine = createMachine({
       const isAdmin = ExtJS.state().getUser()?.administrator,
           outreachStatusRequest = { action, method: outreachStatusMethod },
           proxyDownloadNumbersRequest = { action, method: proxyDownloadNumbersMethod },
-          log4jRequest = { action, method: log4jMethod },
-          requests = [outreachStatusRequest, proxyDownloadNumbersRequest].concat(isAdmin ? log4jRequest : []),
+          requests = [outreachStatusRequest, proxyDownloadNumbersRequest],
 
           bulkResponse = await ExtAPIUtils.extAPIBulkRequest(requests),
           outreachStatusResponse = bulkResponse.data.find(({ method }) => method === outreachStatusRequest.method),
-          log4jResponse = bulkResponse.data.find(({ method }) => method === log4jRequest.method),
           proxyDownloadNumbersResponse = bulkResponse.data
               .find(({ method }) => method === proxyDownloadNumbersRequest.method),
 
           // The ExtAPIUtils expect this extra layer of object
           wrappedOutreachStatusResponse = { data: outreachStatusResponse },
-          wrappedLog4jResponse = { data: log4jResponse },
           wrappedProxyDownloadNumbersResponse = { data: proxyDownloadNumbersResponse };
 
       ExtAPIUtils.checkForError(wrappedOutreachStatusResponse);
-      if (isAdmin) {
-        ExtAPIUtils.checkForError(wrappedLog4jResponse);
-      }
 
       // the outreach response includes a `data` property that is a long hexadecimal string (when the iframe should
       // be enabled) or null when the iframe should be disabled
       const showOutreachIframe =
               Boolean(outreachStatusResponse?.result?.success) && outreachStatusResponse?.result?.data !== null,
-          isAvailableLog4jDisclaimer = isAdmin ? ExtAPIUtils.extractResult(wrappedLog4jResponse) : null,
           proxyDownloadNumberParams = ExtAPIUtils.extractResult(wrappedProxyDownloadNumbersResponse);
 
       return {
-        // API response is "true"/"false". We want to parse it and then invert it because we show the
-        // alert whenever the capability is _not_ installed and enabled
-        showLog4jAlert: isNil(isAvailableLog4jDisclaimer) ? false : !JSON.parse(isAvailableLog4jDisclaimer),
         showOutreachIframe,
         proxyDownloadNumberParams
       };
-    },
-    enableLog4j: async () => {
-      const response = await ExtAPIUtils.extAPIRequest('outreach_Outreach', 'setLog4JVisualizerEnabled', {
-            data: [true]
-          }),
-          state = ExtJS.state(),
-          stateStore = Ext.getApplication().getStore('State'),
-          isCapabilityEnabled = () => state.getValue('vulnerabilityCapabilityState', {enabled: false}).enabled;
-
-      ExtAPIUtils.checkForError(response);
-
-      if (isCapabilityEnabled()) {
-        return true;
-      }
-      else {
-        return new Promise((resolve, reject) => {
-          function handleChange() {
-            if (isCapabilityEnabled()) {
-              listener.destroy();
-              resolve();
-            }
-          }
-
-          const uiSettings = state.getValue('uiSettings') ?? {},
-
-              // NOTE: measured in seconds
-              { requestTimeout = 60, statusIntervalAuthenticated = 5 } = uiSettings;
-
-          const listener = stateStore.on('datachanged', handleChange, undefined, {
-            destroyable: true
-          });
-
-          // A timeout on waiting for the capability to be enabled
-          setTimeout(() => {
-            listener.destroy();
-            reject({ message: 'Timeout while enabling capability' });
-          }, 1000 * (2 * statusIntervalAuthenticated + requestTimeout));
-        });
-      }
-    },
-    redirectToLog4j: () => {
-      setTimeout(() => {
-        window.location.hash = '#admin/repository/insightfrontend';
-      }, SUBMIT_MASK_SUCCESS_VISIBLE_TIME_MS);
     }
   }
 });

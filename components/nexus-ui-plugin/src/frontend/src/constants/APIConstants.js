@@ -162,8 +162,7 @@ export default {
       ACTION: 'outreach_Outreach',
       METHODS: {
         READ_STATUS: 'readStatus',
-        GET_PROXY_DOWNLOAD_NUMBERS: 'getProxyDownloadNumbers',
-        IS_LOG4J_CAPABILITY_ACTIVE: 'isAvailableLog4jDisclaimer'
+        GET_PROXY_DOWNLOAD_NUMBERS: 'getProxyDownloadNumbers'
       }
     },
     BROWSE: {

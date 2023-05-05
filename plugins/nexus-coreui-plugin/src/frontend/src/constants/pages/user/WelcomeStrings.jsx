@@ -17,21 +17,6 @@ export default {
   WELCOME: {
     MENU: {
       text: 'Welcome'
-    },
-    LOG4J_ALERT_CONTENT: (
-      <>
-        In response to the log4j vulnerability identified in{' '}
-        <NxTextLink external
-                    href="https://ossindex.sonatype.org/vulnerability/f0ac54b6-9b81-45bb-99a4-e6cb54749f9d">
-          CVE-2021-44228
-        </NxTextLink>{' '}
-        (also known as "log4shell") impacting organizations world-wide, we are providing an experimental Log4j
-        Visualizer capability to help our users identify log4j downloads impacted by CVE-2021-44228 so that they can
-        mitigate the impact. Note that enabling this capability may impact Nexus Repository performance. Also note
-        that the visualizer does not currently identify or track other log4j vulnerabilities.
-      </>
-    ),
-    LOG4J_ENABLE_BUTTON_CONTENT: 'Enable Capability',
-    LOG4J_SUBMIT_MASK_MESSAGE: 'Enabling…'
+    }
   }
 };
