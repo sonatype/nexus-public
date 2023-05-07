@@ -129,9 +129,20 @@ public class MavenVersionNormalizerTest
     assertEquals("asparagus.schoolbus", underTest.getNormalizedVersion("asparagus.schoolbus"));
     assertEquals("000000001.000000002.000000003.000000004.000000005", underTest.getNormalizedVersion("1.2.3.4.5"));
     assertEquals("develop-020211201.000171404-000000903", underTest.getNormalizedVersion("develop-20211201.171404-903"));
+    assertEquals("javaMaven-000000000.000000004.000000000-020230506.000135309-000000009", underTest.getNormalizedVersion("javaMaven-0.4.0-20230506.135309-9"));
+    assertEquals("000000001.000000001.000000049.b.develop-020230308.000153857-000000022",
+            underTest.getNormalizedVersion("1.1.49.develop-20230308.153857-22"));
+
+    assertEquals("000000001.000000008.000000000.b.build_and_publish_docker_image-020230308.000153857-000000022",
+            underTest.getNormalizedVersion("1.8.0-build_and_publish_docker_image-20230308.153857-22"));
 
     assertInOrder("develop-20211130.182421-895", "develop-20211130.203249-896", "develop-20211201.111154-898",
         "develop-20211202.180605-904");
+    assertInOrder("javaMaven-0.4.0-20230506.135309-8", "javaMaven-0.4.0-20230506.135309-9");
+
+    assertInOrder("1.1.49.develop-20230308.153857-22", "1.1.49.develop-20230308.153857-23");
+    assertInOrder("1.8.0-build_and_publish_docker_image-20230308.153857-1", "1.8.0-build_and_publish_docker_image-20230308.153857-2",
+            "1.8.0-build_and_publish_docker_image-20230308.153857-10", "1.8.0-build_and_publish_docker_image-20230308.153857-11");
   }
 
   private void assertInOrder(String... versions) {

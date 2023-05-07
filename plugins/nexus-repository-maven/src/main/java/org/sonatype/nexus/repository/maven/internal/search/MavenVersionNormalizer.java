@@ -63,7 +63,7 @@ public class MavenVersionNormalizer
   // major + minor + patch
   private static final int VERSION_LENGTH = 3;
 
-  private static final Pattern ALPHA_PLUS_NUMERIC_PATTERN = Pattern.compile("([^\\d-.]+)-?(\\d+)-?(\\w*)");
+  private static final Pattern ALPHA_PLUS_NUMERIC_PATTERN = Pattern.compile("([^\\d-.]+)-?([\\d.]+)-?(\\w*)");
 
   public static final String ALPHA = "alpha";
 
