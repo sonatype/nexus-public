@@ -19,8 +19,10 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.app.FeatureFlag;
@@ -115,7 +117,7 @@ public class FeatureFlaggedIndex
     try {
       Class<?> clazz = bundle.loadClass(clazzName);
       boolean flagResult = Arrays.stream(clazz.getAnnotationsByType(FeatureFlag.class))
-          .map(flag -> getBoolean(flag.name(), flag.enabledByDefault()))
+          .map(FeatureFlaggedIndex::evaluateFlag)
           .reduce(true, (result, flag) -> flag && result);
       return !flagResult;
     }
@@ -123,6 +125,29 @@ public class FeatureFlaggedIndex
       log.debug("Cannot determine feature-flag for {}; assuming false", clazzName, e);
       return false;
     }
+  }
+
+  /*
+   * +----------+-------------------+---------+--------+
+   * | Property | Enable By Default | Inverse | Result |
+   * +----------+-------------------+---------+--------+
+   * | <unset>  | true              | n/a     | true   |
+   * | <unset>  | false             | n/a     | false  |
+   * | true     | n/a               | false   | true   |
+   * | true     | n/a               | true    | false  |
+   * | false    | n/a               | false   | false  |
+   * | false    | n/a               | true    | true   |
+   * +----------+-------------------+---------+--------+
+   */
+  private static boolean evaluateFlag(final FeatureFlag flag) {
+    Optional<Boolean> propertyValue = getBoolean(flag.name());
+
+    if (flag.inverse()) {
+      // Inverse flags only apply when a property is set, otherwise defer to whether the flag is enabled by default
+      propertyValue = propertyValue.map(value -> !value);
+    }
+
+    return propertyValue.orElse(flag.enabledByDefault());
   }
 
   private FeatureFlaggedIndex(final Predicate<String> allowed) {

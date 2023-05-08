@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.common.property;
 
+import java.util.Optional;
+
 import org.sonatype.goodies.common.Time;
 
 import org.slf4j.Logger;
@@ -61,13 +63,15 @@ public class SystemPropertiesHelper
   }
 
   public static boolean getBoolean(final String key, final boolean defaultValue) {
-    final String value = System.getProperty(key);
+    return getBoolean(key)
+      .orElse(defaultValue);
+  }
 
-    if (value == null || value.trim().length() == 0) {
-      return defaultValue;
-    }
-
-    return Boolean.valueOf(value);
+  public static Optional<Boolean> getBoolean(final String key) {
+    return Optional.ofNullable(System.getProperty(key))
+        .map(String::trim)
+        .filter(value -> value.length() > 0)
+        .map(Boolean::valueOf);
   }
 
   public static String getString(final String key, final String defaultValue) {

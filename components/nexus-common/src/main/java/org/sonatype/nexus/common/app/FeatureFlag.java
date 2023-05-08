@@ -33,4 +33,9 @@ public @interface FeatureFlag
   String name();
 
   boolean enabledByDefault() default false;
+
+  /**
+   * The feature flag is enabled when the property evaluates to false instead of true
+   */
+  boolean inverse() default false;
 }
