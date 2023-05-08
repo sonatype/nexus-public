@@ -57,6 +57,16 @@ public class DefaultSqlSearchQueryConditionBuilder
 
   public static final String NAME = "default_text_query_builder";
 
+  @Override
+  protected SqlSearchQueryCondition wildcardCondition(
+      final String field,
+      final String value,
+      final String parameterPrefix)
+  {
+    return new SqlSearchQueryCondition(wildcard(field, placeholder(parameterPrefix + field)),
+        ImmutableMap.of(parameterPrefix + field, sanitise(value)));
+  }
+
   protected String equalTo(final String field, final String placeholder) {
     return String.format("%s = %s", field, placeholder);
   }

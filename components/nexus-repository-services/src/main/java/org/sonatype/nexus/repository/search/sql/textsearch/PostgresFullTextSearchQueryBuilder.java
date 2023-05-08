@@ -19,11 +19,13 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.rest.sql.TextualQueryType;
+import org.sonatype.nexus.repository.search.sql.SqlSearchQueryCondition;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilder;
 
 import com.google.common.collect.ImmutableMap;
 
 import static java.util.stream.Collectors.joining;
+import static org.apache.commons.lang3.StringUtils.removeEnd;
 
 /**
  * Query building utility for full text search columns
@@ -69,6 +71,16 @@ public class PostgresFullTextSearchQueryBuilder
       }
     }
     return wildcardReplacedValue;
+  }
+
+  @Override
+  protected SqlSearchQueryCondition wildcardCondition(
+      final String field,
+      final String value,
+      final String parameterPrefix)
+  {
+    return new SqlSearchQueryCondition(wildcard(field, placeholder(parameterPrefix + field)),
+        ImmutableMap.of(parameterPrefix + field, removeEnd(sanitise(value), ":*")));
   }
 
   @Override

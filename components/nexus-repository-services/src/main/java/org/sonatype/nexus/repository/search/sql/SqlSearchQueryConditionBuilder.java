@@ -162,8 +162,7 @@ public abstract class SqlSearchQueryConditionBuilder
       return new SqlSearchQueryCondition(equalTo(field, placeholder(parameterPrefix + field)),
           ImmutableMap.of(parameterPrefix + field, escapeSymbols(value)));
     }
-    return new SqlSearchQueryCondition(wildcard(field, placeholder(parameterPrefix + field)),
-        ImmutableMap.of(parameterPrefix + field, sanitise(value)));
+    return wildcardCondition(field, value, parameterPrefix);
   }
 
   /**
@@ -239,6 +238,11 @@ public abstract class SqlSearchQueryConditionBuilder
 
   protected abstract Map<Character, String> getWildcardMapping();
 
+  protected abstract SqlSearchQueryCondition wildcardCondition(
+      final String field,
+      final String value,
+      final String parameterPrefix);
+
   public String sanitise(final String value) {
     return replaceWildcards(escapeSymbols(value));
   }
@@ -247,7 +251,7 @@ public abstract class SqlSearchQueryConditionBuilder
     return replaceEscapedWildcardSymbol(value);
   }
 
-  private String placeholder(final String field) {
+  protected String placeholder(final String field) {
     return PLACEHOLDER_PARAMETER_PREFIX + field + PLACEHOLDER_PARAMETER_SUFFIX;
   }
 
