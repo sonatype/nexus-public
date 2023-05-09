@@ -23,6 +23,7 @@ import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeoutException;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.net.ssl.HttpsURLConnection;
@@ -196,6 +197,11 @@ public abstract class NexusPaxExamSupport
   @Inject
   @Named(DATASTORE_CLUSTERED_ENABLED_NAMED)
   private Boolean sqlHaEnabled;
+
+  @Inject
+  @Nullable
+  @Named("nexus.datastore.nexus.jdbcUrl")
+  private String jdbcUrl;
 
   //11.9 is the minimum support version
   private static final String POSTGRES_IMAGE = "docker-all.repo.sonatype.com/postgres:11.9";
@@ -792,6 +798,10 @@ public abstract class NexusPaxExamSupport
 
   protected boolean isSqlHa() {
     return sqlHaEnabled;
+  }
+
+  protected boolean isPostgreSQL() {
+    return jdbcUrl != null && jdbcUrl.contains("postgres");
   }
 
   // -------------------------------------------------------------------------
