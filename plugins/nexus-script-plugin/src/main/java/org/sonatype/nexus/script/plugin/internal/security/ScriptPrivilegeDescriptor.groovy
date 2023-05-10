@@ -73,7 +73,9 @@ class ScriptPrivilegeDescriptor
     @DefaultMessage("Actions")
     String actions()
 
-    @DefaultMessage("The comma-delimited list of actions")
+    @DefaultMessage("""A comma-delimited list of actions allowed with this privilege; 
+    options include browse, read, edit, add, delete, run, and a wildcard (*).
+    <a href="https://help.sonatype.com/repomanager3/nexus-repository-administration/access-control/privileges" target='_blank'>Help</a>""")
     String actionsHelp()
   }
 
@@ -97,7 +99,8 @@ class ScriptPrivilegeDescriptor
             P_ACTIONS,
             messages.actions(),
             messages.actionsHelp(),
-            FormField.MANDATORY
+            FormField.MANDATORY,
+            '(^(browse|read|edit|add|delete|run)(,(browse|read|edit|add|delete|run)){0,5}$)|(^\\*$)'
         )
     )
     this.scriptManager = checkNotNull(scriptManager)

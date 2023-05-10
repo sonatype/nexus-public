@@ -79,7 +79,9 @@ public class RepositoryViewPrivilegeDescriptor
     @DefaultMessage("Actions")
     String actions();
 
-    @DefaultMessage("The comma-delimited list of actions")
+    @DefaultMessage("A comma-delimited list of actions allowed with this privilege; " +
+        "options include browse, read, edit, add, delete, and a wildcard (*). " +
+        "<a href='https://help.sonatype.com/repomanager3/nexus-repository-administration/access-control/privileges' target='_blank'>Help</a>")
     String actionsHelp();
   }
 
@@ -107,7 +109,8 @@ public class RepositoryViewPrivilegeDescriptor
             P_ACTIONS,
             messages.actions(),
             messages.actionsHelp(),
-            FormField.MANDATORY
+            FormField.MANDATORY,
+            "(^(browse|read|edit|add|delete)(,(browse|read|edit|add|delete)){0,4}$)|(^\\*$)"
         )
     );
   }
