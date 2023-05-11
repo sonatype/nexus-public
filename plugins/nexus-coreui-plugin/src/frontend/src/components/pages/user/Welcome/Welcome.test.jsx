@@ -33,6 +33,8 @@ const selectors = {
   outreachFrame: selectorQuery('document', { name: 'Outreach Frame' })
 };
 
+const browseableFormats = [{id: 'test'}];
+
 describe('Welcome', function() {
   let user;
 
@@ -43,7 +45,7 @@ describe('Welcome', function() {
     jest.spyOn(ExtJS, 'useStatus').mockReturnValue({});
     jest.spyOn(ExtJS, 'useLicense').mockReturnValue({});
     jest.spyOn(ExtJS, 'useUser').mockImplementation(() => user);
-    jest.spyOn(ExtJS, 'state').mockReturnValue({ getUser: () => user });
+    jest.spyOn(ExtJS, 'state').mockReturnValue({ getUser: () => user, getValue: () => browseableFormats});
   });
 
   it('renders a main content area', function() {

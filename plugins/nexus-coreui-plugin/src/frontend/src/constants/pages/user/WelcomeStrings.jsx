@@ -17,6 +17,36 @@ export default {
   WELCOME: {
     MENU: {
       text: 'Welcome'
-    }
+    },
+    ACTIONS: {
+      SYSTEM_HEALTH: {
+        title: 'System Health',
+        subTitle: 'View system status checks',
+      },
+      CLEANUP_POLICIES: {
+        title: 'Cleanup Policies',
+        subTitle: 'Review component removal policies',
+      },
+      BROWSE: {
+        title: 'Browse',
+        subTitle: 'Browse my repositories',
+      },
+      SEARCH: {
+        title: 'Search',
+        subTitle: 'Search for new components',
+      },
+      RELEASE_NOTES: {
+        title: 'Release Notes',
+        subTitle: 'See what\'s new',
+      },
+      DOCUMENTATION: {
+        title: 'Documentation',
+        subTitle: 'Visit our help site',
+      },
+      COMMUNITY: {
+        title: 'Community',
+        subTitle: 'Ask and answer questions',
+      },
+    },
   }
 };

@@ -10,9 +10,9 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React, { useEffect } from 'react';
-import { useMachine } from '@xstate/react';
-import { ExtJS, toURIParams, getVersionMajorMinor } from '@sonatype/nexus-ui-plugin';
+import React, {useEffect, useRef, useState} from 'react';
+import {useMachine} from '@xstate/react';
+import {ExtJS, toURIParams, getVersionMajorMinor} from '@sonatype/nexus-ui-plugin';
 import {
   NxLoadWrapper,
   NxPageMain,
@@ -22,6 +22,7 @@ import {
 
 import UIStrings from '../../../../constants/UIStrings';
 import welcomeMachine from './WelcomeMachine';
+import OutreachActions from './OutreachActions';
 
 import './Welcome.scss';
 
@@ -41,8 +42,10 @@ function getUserType(user) {
 
 export default function Welcome() {
   const [state, send] = useMachine(welcomeMachine, { devtools: true }),
-      loading = state.value === 'loading',
-      error = state.value === 'error' ? state.context.error : null,
+      [iframeHeight, setIframeHeight] = useState(1000),
+      ref = useRef(),
+      loading = state.matches('loading'),
+      error = state.matches('error') ? state.context.error : null,
       proxyDownloadNumberParams = state.context.data?.proxyDownloadNumberParams;
 
   const user = ExtJS.useUser(),
@@ -58,6 +61,10 @@ export default function Welcome() {
   function load() {
     send('LOAD');
   }
+
+  const onLoad = () => {
+    setIframeHeight(ref.current.contentWindow.document.body.scrollHeight);
+  };
 
   useEffect(load, [user]);
 
@@ -81,13 +88,22 @@ export default function Welcome() {
         </NxPageTitle.Headings>
       </NxPageTitle>
       <NxLoadWrapper loading={loading} error={error} retryHandler={load}>
-        { state.context.data?.showOutreachIframe &&
-          <iframe id="nxrm-welcome-outreach-frame"
+        <div className="nxrm-welcome__outreach nx-viewport-sized__scrollable">
+          <OutreachActions />
+          { state.context.data?.showOutreachIframe &&
+              <iframe
+                  id="nxrm-welcome-outreach-frame"
                   role="document"
+                  height={iframeHeight}
+                  ref={ref}
+                  scrolling="no"
+                  onLoad={onLoad}
                   aria-label="Outreach Frame"
                   src={`${iframeUrlPath}?${toURIParams(iframeProps)}${proxyDownloadNumberParams ?? ''}`}
-                  className="nx-viewport-sized__scrollable nxrm-welcome__outreach-frame" />
-        }
+                  className="nxrm-welcome__outreach-frame"
+              />
+          }
+        </div>
       </NxLoadWrapper>
     </NxPageMain>
   );

@@ -22,14 +22,21 @@
     vertical-align: top;
   }
 
-  &__outreach-frame {
+  &__outreach {
     $main-padding: var(--nx-spacing-6x);
 
-    // remove default user-agent iframe borders
-    border-style: none;
     border-top: 1px solid var(--nx-swatch-grey-90);
     margin: 0 calc(-1 * #{$main-padding});
     width: calc(100% + 2 * #{$main-padding});
+    background-color: #f4f5f9;
+    height: 100%;
+    overflow-y: scroll;
+    overflow-x: hidden;
+  }
+
+  &__outreach-frame {
+    border-style: none;
+    width: 100%;
   }
 
   &__page-title {
