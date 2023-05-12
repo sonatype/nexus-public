@@ -1,1 +1,3 @@
 org.sonatype.nexus.pax.exam.distribution.BaseNexusTestDistribution
+com.sonatype.nexus.pax.exam.distribution.OssNexusTestDistribution
+com.sonatype.nexus.pax.exam.distribution.ProNexusTestDistribution
