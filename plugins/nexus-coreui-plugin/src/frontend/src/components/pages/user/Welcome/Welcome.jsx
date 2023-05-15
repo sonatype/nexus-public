@@ -40,9 +40,12 @@ function getUserType(user) {
   }
 }
 
+const iframeDefaultHeight = 1000;
+const iframePadding = 48;
+
 export default function Welcome() {
   const [state, send] = useMachine(welcomeMachine, { devtools: true }),
-      [iframeHeight, setIframeHeight] = useState(1000),
+      [iframeHeight, setIframeHeight] = useState(iframeDefaultHeight),
       ref = useRef(),
       loading = state.matches('loading'),
       error = state.matches('error') ? state.context.error : null,
@@ -63,7 +66,7 @@ export default function Welcome() {
   }
 
   const onLoad = () => {
-    setIframeHeight(ref.current.contentWindow.document.body.scrollHeight);
+    setIframeHeight(ref.current.contentWindow.document.body.scrollHeight + iframePadding);
   };
 
   useEffect(load, [user]);
