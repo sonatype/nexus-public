@@ -118,7 +118,8 @@ Ext.define('NX.coreui.controller.HealthCheckRepositoryColumn', {
     grid.mon(
         NX.Conditions.and(
             NX.Conditions.watchState('user'),
-            NX.Conditions.isPermitted("nexus:healthcheck:read")
+            NX.Conditions.isPermitted("nexus:healthcheck:read"),
+            NX.Conditions.hasNoFirewall()
         ),
         {
           satisfied: Ext.pass(me.addHealthCheckColumn, grid),

@@ -33,7 +33,8 @@ Ext.define('NX.Conditions', {
     'NX.util.condition.StoreHasRecords',
     'NX.util.condition.MultiListener',
     'NX.util.condition.WatchState',
-    'NX.util.condition.NeverSatisfied'
+    'NX.util.condition.NeverSatisfied',
+    'NX.util.condition.HasNoFirewall'
   ],
 
   /**
@@ -124,6 +125,15 @@ Ext.define('NX.Conditions', {
    */
   never: function() {
     return Ext.create('NX.util.condition.NeverSatisfied');
+  },
+
+  /**
+   * Checks if this NXRM instance does not have firewall
+   *
+   * @returns
+   */
+  hasNoFirewall: function() {
+    return Ext.create('NX.util.condition.HasNoFirewall');
   }
 
 });
