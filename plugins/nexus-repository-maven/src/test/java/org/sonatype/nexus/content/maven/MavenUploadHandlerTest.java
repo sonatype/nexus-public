@@ -272,9 +272,9 @@ public class MavenUploadHandlerTest
 
     List<VariableSource> sources = captor.getAllValues();
 
-    assertVariableSource(sources.get(0), "org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.jar", "org.apache.maven",
+    assertVariableSource(sources.get(0), "/org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.jar", "org.apache.maven",
         "tomcat", "5.0.28", null, "jar");
-    assertVariableSource(sources.get(1), "org/apache/maven/tomcat/5.0.28/tomcat-5.0.28-sources.jar",
+    assertVariableSource(sources.get(1), "/org/apache/maven/tomcat/5.0.28/tomcat-5.0.28-sources.jar",
         "org.apache.maven", "tomcat", "5.0.28", "sources", "jar");
 
     verify(mavenMetadataRebuildFacet).rebuildMetadata("org.apache.maven", "tomcat", "5.0.28", false, false);
@@ -340,7 +340,7 @@ public class MavenUploadHandlerTest
     catch (ValidationErrorsException e) {
       assertThat(e.getValidationErrors().size(), is(1));
       assertThat(e.getValidationErrors().get(0).getMessage(),
-          is("Not authorized for requested path 'org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.jar'"));
+          is("Not authorized for requested path '/org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.jar'"));
     }
   }
 
@@ -610,7 +610,7 @@ public class MavenUploadHandlerTest
     catch (ValidationErrorsException e) {
       assertThat(e.getValidationErrors().size(), is(1));
       assertThat(e.getValidationErrors().get(0).getMessage(),
-          is("Path is not allowed to have '.' or '..' segments: 'groupId//../g/a/v/a-v.jar/version//../g/a/v/a-v.jar-version.jar'"));
+          is("Path is not allowed to have '.' or '..' segments: '/groupId//../g/a/v/a-v.jar/version//../g/a/v/a-v.jar-version.jar'"));
     }
   }
 
@@ -634,7 +634,7 @@ public class MavenUploadHandlerTest
     catch (ValidationErrorsException e) {
       assertThat(e.getValidationErrors().size(), is(1));
       assertThat(e.getValidationErrors().get(0).getMessage(),
-          is("Path is not allowed to have '.' or '..' segments: 'groupId/artifactId//../g/a/v/a-v.jar/artifactId-/../g/a/v/a-v.jar.jar'"));
+          is("Path is not allowed to have '.' or '..' segments: '/groupId/artifactId//../g/a/v/a-v.jar/artifactId-/../g/a/v/a-v.jar.jar'"));
     }
   }
 
@@ -658,7 +658,7 @@ public class MavenUploadHandlerTest
     catch (ValidationErrorsException e) {
       assertThat(e.getValidationErrors().size(), is(1));
       assertThat(e.getValidationErrors().get(0).getMessage(),
-          is("Path is not allowed to have '.' or '..' segments: 'groupId/artifactId/version/artifactId-version./../g/a/v/a-v.jar'"));
+          is("Path is not allowed to have '.' or '..' segments: '/groupId/artifactId/version/artifactId-version./../g/a/v/a-v.jar'"));
     }
   }
 

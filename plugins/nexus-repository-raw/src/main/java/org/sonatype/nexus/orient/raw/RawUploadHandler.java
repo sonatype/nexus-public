@@ -64,7 +64,7 @@ public class RawUploadHandler
       final Set<UploadDefinitionExtension> uploadDefinitionExtensions,
       final MimeSupport mimeSupport)
   {
-    super(contentPermissionChecker, variableResolverAdapter, uploadDefinitionExtensions);
+    super(contentPermissionChecker, variableResolverAdapter, uploadDefinitionExtensions, false);
     this.mimeSupport = mimeSupport;
   }
 

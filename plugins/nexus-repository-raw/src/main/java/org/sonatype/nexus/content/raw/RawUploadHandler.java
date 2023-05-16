@@ -53,7 +53,7 @@ public class RawUploadHandler
                           @Named("simple") final VariableResolverAdapter variableResolverAdapter,
                           final Set<UploadDefinitionExtension> uploadDefinitionExtensions)
   {
-    super(contentPermissionChecker, variableResolverAdapter, uploadDefinitionExtensions);
+    super(contentPermissionChecker, variableResolverAdapter, uploadDefinitionExtensions, true);
   }
 
   @Override

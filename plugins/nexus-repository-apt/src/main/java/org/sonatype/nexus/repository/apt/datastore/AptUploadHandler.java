@@ -37,6 +37,8 @@ import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
+import static org.apache.commons.lang3.StringUtils.prependIfMissing;
+
 /**
  * Support for uploading an Apt components via UI
  *
@@ -65,6 +67,7 @@ public class AptUploadHandler
           .parsePackageInfo(tempBlob)
           .getControlFile();
       String assetPath = AptFacetHelper.buildAssetPath(controlFile);
+      doValidation(repository, prependIfMissing(assetPath, "/"));
       Content content = hostedFacet
           .put(assetPath, payload, new PackageInfo(controlFile))
           .markAsCached(payload)
