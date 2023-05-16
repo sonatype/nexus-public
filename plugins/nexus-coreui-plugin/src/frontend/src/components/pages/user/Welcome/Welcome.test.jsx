@@ -30,7 +30,8 @@ const selectors = {
   loadingStatus: () => screen.getByRole('status'),
   errorAlert: selectorQuery('alert'),
   errorRetryBtn: selectorQuery('button', { name: 'Retry' }),
-  outreachFrame: selectorQuery('document', { name: 'Outreach Frame' })
+  outreachFrame: selectorQuery('document', { name: 'Outreach Frame' }),
+  firewallCapabilityNotice: selectorQuery('region', { name: 'Firewall Capability Notice' })
 };
 
 const browseableFormats = [{id: 'test'}];
@@ -95,60 +96,6 @@ describe('Welcome', function() {
 
       await waitForElementToBeRemoved(status);
     });
-
-    describe('when the user is an admin', function() {
-      beforeEach(function() {
-        user = { administrator: true };
-      });
-
-      it('calls the isAvailableLog4jDisclaimer outreach call', async function() {
-        jest.spyOn(axios, 'post').mockReturnValue(new Promise(() => {}));
-        render(<Welcome />);
-
-        expect(axios.post).toHaveBeenCalledWith('/service/extdirect', [
-          expect.objectContaining({ action: 'outreach_Outreach', method: 'readStatus' }),
-          expect.objectContaining({ action: 'outreach_Outreach', method: 'getProxyDownloadNumbers' })
-        ]);
-      });
-
-      it('renders a loading spinner until the outreach backend calls complete incl the log4j call', async function() {
-        render(<Welcome />);
-
-        const status = selectors.loadingStatus();
-        expect(status).toBeInTheDocument();
-        expect(status).toHaveTextContent('Loading');
-
-        await waitForElementToBeRemoved(status);
-      });
-    });
-
-    describe('when the user is not an admin', function() {
-      beforeEach(function() {
-        user = { administrator: false };
-      });
-
-      it('does not call the isAvailableLog4jDisclaimer outreach call', async function() {
-        jest.spyOn(axios, 'post').mockReturnValue(new Promise(() => {}));
-        render(<Welcome />);
-
-        expect(axios.post).toHaveBeenCalledWith('/service/extdirect', [
-          expect.objectContaining({ action: 'outreach_Outreach', method: 'readStatus' }),
-          expect.objectContaining({ action: 'outreach_Outreach', method: 'getProxyDownloadNumbers' })
-        ]);
-      });
-    });
-
-    describe('when the user is not logged in', function() {
-      it('does not call the isAvailableLog4jDisclaimer outreach call', async function() {
-        jest.spyOn(axios, 'post').mockReturnValue(new Promise(() => {}));
-        render(<Welcome />);
-
-        expect(axios.post).toHaveBeenCalledWith('/service/extdirect', [
-          expect.objectContaining({ action: 'outreach_Outreach', method: 'readStatus' }),
-          expect.objectContaining({ action: 'outreach_Outreach', method: 'getProxyDownloadNumbers' })
-        ]);
-      });
-    });
   });
 
   describe('error handling', function() {
@@ -185,9 +132,66 @@ describe('Welcome', function() {
       await waitFor(() => expect(axios.post).toHaveBeenCalledTimes(2));
       expect(axios.post).toHaveBeenLastCalledWith('/service/extdirect', [
         expect.objectContaining({ action: 'outreach_Outreach', method: 'readStatus' }),
-        expect.objectContaining({ action: 'outreach_Outreach', method: 'getProxyDownloadNumbers' })
+        expect.objectContaining({ action: 'outreach_Outreach', method: 'getProxyDownloadNumbers' }),
+        expect.objectContaining({ action: 'outreach_Outreach', method: 'showFirewallAlert' })
       ]);
     });
+  });
+
+  describe('firewall alert', function() {
+    beforeEach(function() {
+      user = {administrator: true};
+    });
+
+    function mockFirewallResponse(returnValue) {
+      // NOTE: response array order does not necessarily match request array order
+      jest.spyOn(axios, 'post').mockReturnValue({
+        data: [
+          testData.showFirewallAlertDisclaimer(returnValue),
+          testData.outreachReadStatusBasicSuccess,
+          testData.outreachGetProxyDownloadNumbersBasicSuccess
+        ]
+      });
+    }
+
+    it('renders a region named "Firewall Capability Notice" if the showFirewallAlert call returns true',
+        async function() {
+          mockFirewallResponse(true);
+          render(<Welcome/>);
+          const loadingSpinner = selectors.loadingStatus();
+          await waitForElementToBeRemoved(loadingSpinner);
+          expect(selectors.firewallCapabilityNotice('query')).toBeInTheDocument();
+        }
+    );
+
+    it('does not render the firewall region if showFirewallAlert returns false',
+        async function() {
+          mockFirewallResponse(false);
+          render(<Welcome/>);
+          const loadingSpinner = selectors.loadingStatus();
+          await waitForElementToBeRemoved(loadingSpinner);
+          expect(selectors.firewallCapabilityNotice('query')).not.toBeInTheDocument();
+        });
+
+    it('does not render the firewall region if the user is not an admin',
+        async function() {
+          user = {administrator: false};
+          mockFirewallResponse(false);
+          render(<Welcome/>);
+          const loadingSpinner = selectors.loadingStatus();
+          await waitForElementToBeRemoved(loadingSpinner);
+          expect(selectors.firewallCapabilityNotice('query')).not.toBeInTheDocument();
+        });
+
+    it('does not render the firewall region if the user is not logged in',
+        async function() {
+          user = null;
+          mockFirewallResponse(false);
+          render(<Welcome/>);
+          const loadingSpinner = selectors.loadingStatus();
+          await waitForElementToBeRemoved(loadingSpinner);
+          expect(selectors.firewallCapabilityNotice('query')).not.toBeInTheDocument();
+        });
   });
 
   describe('outreach iframe', function() {

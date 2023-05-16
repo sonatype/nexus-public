@@ -48,5 +48,13 @@ export default {
         subTitle: 'Ask and answer questions',
       },
     },
+    FIREWALL_ALERT_CONTENT: (
+        <>
+          You haven't configured your repository protection. Sonatype Repository Firewall combines
+          over 60 different signals used to identify potentially malicious activity and block risks before
+          download. Automatically block malware from entering your code repositories.
+        </>
+    ),
+    FIREWALL_ENABLE_BUTTON_CONTENT : 'Enable Capability',
   }
 };

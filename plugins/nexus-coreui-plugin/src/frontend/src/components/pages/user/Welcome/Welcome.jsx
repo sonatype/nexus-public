@@ -14,10 +14,13 @@ import React, {useEffect, useRef, useState} from 'react';
 import {useMachine} from '@xstate/react';
 import {ExtJS, toURIParams, getVersionMajorMinor} from '@sonatype/nexus-ui-plugin';
 import {
+  NxButton,
+  NxButtonBar,
   NxLoadWrapper,
   NxPageMain,
   NxPageTitle,
-  NxH1
+  NxH1,
+  NxWarningAlert
 } from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
@@ -65,6 +68,10 @@ export default function Welcome() {
     send('LOAD');
   }
 
+  async function navigateToFirewall() {
+    window.location.href = '#admin/iq';
+  }
+
   const onLoad = () => {
     setIframeHeight(ref.current.contentWindow.document.body.scrollHeight + iframePadding);
   };
@@ -92,6 +99,18 @@ export default function Welcome() {
       </NxPageTitle>
       <NxLoadWrapper loading={loading} error={error} retryHandler={load}>
         <div className="nxrm-welcome__outreach nx-viewport-sized__scrollable">
+          { state.context.data?.showFirewallAlert &&
+              <section id="nxrm-firewall-onboarding-nudge" className="nxrm-firewall-onboarding" aria-label="Firewall Capability Notice">
+                <NxWarningAlert>
+                  <p className="nxrm-firewall-alert-content">{UIStrings.WELCOME.FIREWALL_ALERT_CONTENT}</p>
+                  <NxButtonBar>
+                    <NxButton id="nxrm-welcome-firewall-enable-btn" variant="primary" onClick={navigateToFirewall}>
+                      {UIStrings.WELCOME.FIREWALL_ENABLE_BUTTON_CONTENT}
+                    </NxButton>
+                  </NxButtonBar>
+                </NxWarningAlert>
+              </section>
+          }
           <OutreachActions />
           { state.context.data?.showOutreachIframe &&
               <iframe

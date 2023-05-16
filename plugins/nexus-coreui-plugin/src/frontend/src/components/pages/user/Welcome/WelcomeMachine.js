@@ -24,7 +24,8 @@ import UIStrings from '../../../../constants/UIStrings';
 
 const action = APIConstants.EXT.OUTREACH.ACTION,
     outreachStatusMethod = APIConstants.EXT.OUTREACH.METHODS.READ_STATUS,
-    proxyDownloadNumbersMethod = APIConstants.EXT.OUTREACH.METHODS.GET_PROXY_DOWNLOAD_NUMBERS;
+    proxyDownloadNumbersMethod = APIConstants.EXT.OUTREACH.METHODS.GET_PROXY_DOWNLOAD_NUMBERS,
+    firewallMethod = APIConstants.EXT.OUTREACH.METHODS.SHOW_FIREWALL_ALERT;
 
 const welcomeMachine = createMachine({
   id: 'WelcomeMachine',
@@ -69,16 +70,20 @@ const welcomeMachine = createMachine({
       const isAdmin = ExtJS.state().getUser()?.administrator,
           outreachStatusRequest = { action, method: outreachStatusMethod },
           proxyDownloadNumbersRequest = { action, method: proxyDownloadNumbersMethod },
-          requests = [outreachStatusRequest, proxyDownloadNumbersRequest],
+          firewallRequest = { action, method: firewallMethod },
+          requests = [outreachStatusRequest, proxyDownloadNumbersRequest]
+              .concat(isAdmin ? firewallRequest : []),
 
           bulkResponse = await ExtAPIUtils.extAPIBulkRequest(requests),
           outreachStatusResponse = bulkResponse.data.find(({ method }) => method === outreachStatusRequest.method),
           proxyDownloadNumbersResponse = bulkResponse.data
               .find(({ method }) => method === proxyDownloadNumbersRequest.method),
+          firewallResponse = bulkResponse.data.find(({ method }) => method === firewallRequest.method),
 
           // The ExtAPIUtils expect this extra layer of object
           wrappedOutreachStatusResponse = { data: outreachStatusResponse },
-          wrappedProxyDownloadNumbersResponse = { data: proxyDownloadNumbersResponse };
+          wrappedProxyDownloadNumbersResponse = { data: proxyDownloadNumbersResponse },
+          wrappedFirewallResponse = { data: firewallResponse };
 
       ExtAPIUtils.checkForError(wrappedOutreachStatusResponse);
 
@@ -86,11 +91,13 @@ const welcomeMachine = createMachine({
       // be enabled) or null when the iframe should be disabled
       const showOutreachIframe =
               Boolean(outreachStatusResponse?.result?.success) && outreachStatusResponse?.result?.data !== null,
-          proxyDownloadNumberParams = ExtAPIUtils.extractResult(wrappedProxyDownloadNumbersResponse);
+          proxyDownloadNumberParams = ExtAPIUtils.extractResult(wrappedProxyDownloadNumbersResponse),
+          firewallDisclaimer = isAdmin ? ExtAPIUtils.extractResult(wrappedFirewallResponse) : null;
 
       return {
         showOutreachIframe,
-        proxyDownloadNumberParams
+        proxyDownloadNumberParams,
+        showFirewallAlert: isNil(firewallDisclaimer) ? false : JSON.parse(firewallDisclaimer),
       };
     }
   }
