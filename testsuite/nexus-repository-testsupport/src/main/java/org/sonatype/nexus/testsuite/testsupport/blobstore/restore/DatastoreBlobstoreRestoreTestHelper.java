@@ -45,6 +45,7 @@ import org.sonatype.nexus.repository.content.store.AssetStore;
 import org.sonatype.nexus.repository.content.store.ComponentStore;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;
@@ -267,6 +268,9 @@ public class DatastoreBlobstoreRestoreTestHelper
   @Override
   public void rewriteBlobNames() {
     manager.browse().forEach(repo -> {
+      if (GroupType.NAME.equals(repo.getType().getValue())) {
+        return;
+      }
       ContentFacet content = repo.facet(ContentFacet.class);
       content.assets().browse(Integer.MAX_VALUE, null).stream()
           .map(Asset::blob)
