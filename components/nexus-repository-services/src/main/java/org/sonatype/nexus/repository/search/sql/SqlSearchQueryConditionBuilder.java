@@ -52,10 +52,6 @@ public abstract class SqlSearchQueryConditionBuilder
 
   public static final char ZERO_OR_MORE_CHARACTERS = '*';
 
-  private static final char SQL_ANY_CHARACTER = '_';
-
-  private static final char SQL_ZERO_OR_MORE_CHARACTERS = '%';
-
   protected static final char ANY_CHARACTER = '?';
 
   private static final String VALUES_MUST_NOT_BE_EMPTY = "Values must not be empty.";
@@ -160,7 +156,7 @@ public abstract class SqlSearchQueryConditionBuilder
 
     if (exactOrWildcard(value) == EXACT) {
       return new SqlSearchQueryCondition(equalTo(field, placeholder(parameterPrefix + field)),
-          ImmutableMap.of(parameterPrefix + field, escapeSymbols(value)));
+          ImmutableMap.of(parameterPrefix + field, replaceEscapedWildcardSymbol(value)));
     }
     return wildcardCondition(field, value, parameterPrefix);
   }
@@ -206,21 +202,20 @@ public abstract class SqlSearchQueryConditionBuilder
   }
 
   public String replaceWildcards(final String value) {
-    String escapedValue = escapeSqlWildcardSymbolsIfExists(value);
     StringBuilder result = new StringBuilder();
-    result.append(escapedValue.toCharArray());
+    result.append(value.toCharArray());
     Map<Character, String> wildcardMapping = getWildcardMapping();
 
     for (char replaceChar : wildcardMapping.keySet()) {
-      if (escapedValue.contains(String.valueOf(replaceChar))) {
-        int index = escapedValue.indexOf(replaceChar);
+      if (value.contains(String.valueOf(replaceChar))) {
+        int index = value.indexOf(replaceChar);
         while (index >= 0) {
-          int escapeIndex = escapedValue.indexOf(ESCAPE + replaceChar);
+          int escapeIndex = value.indexOf(ESCAPE + replaceChar);
           if (escapeIndex == -1 || escapeIndex != index - 1) {
             String replacement = wildcardMapping.get(replaceChar);
             result.replace(index, index + 1, replacement);
           }
-          index = escapedValue.indexOf(replaceChar, index + 1);
+          index = value.indexOf(replaceChar, index + 1);
         }
       }
     }
@@ -244,25 +239,11 @@ public abstract class SqlSearchQueryConditionBuilder
       final String parameterPrefix);
 
   public String sanitise(final String value) {
-    return replaceWildcards(escapeSymbols(value));
-  }
-
-  protected String escapeSymbols(String value) {
-    return replaceEscapedWildcardSymbol(value);
+    return replaceEscapedWildcardSymbol(replaceWildcards(value));
   }
 
   protected String placeholder(final String field) {
     return PLACEHOLDER_PARAMETER_PREFIX + field + PLACEHOLDER_PARAMETER_SUFFIX;
-  }
-
-  private static String escapeSqlWildcardSymbolsIfExists(final String value) {
-    String result = value;
-    if (value.endsWith(ESCAPE) && !value.endsWith(ESCAPE + ESCAPE)) {
-      result += ESCAPE;
-    }
-    
-    return result.replace(String.valueOf(SQL_ZERO_OR_MORE_CHARACTERS), ESCAPE + SQL_ZERO_OR_MORE_CHARACTERS)
-        .replace(String.valueOf(SQL_ANY_CHARACTER), ESCAPE + SQL_ANY_CHARACTER);
   }
 
   private static String replaceEscapedWildcardSymbol(final String value) {
@@ -316,7 +297,9 @@ public abstract class SqlSearchQueryConditionBuilder
   {
     final List<String> exactPlaceholders = placeholders.subList(0, values.size());
     final List<String> exactValueNames = valueNames.subList(0, values.size());
-    final Set<String> escapedValues = values.stream().map(this::escapeSymbols).collect(toSet());
+    final Set<String> escapedValues = values.stream()
+            .map(SqlSearchQueryConditionBuilder::replaceEscapedWildcardSymbol)
+            .collect(toSet());
     return new SqlSearchQueryCondition(in(fieldName, exactPlaceholders), nameValues(exactValueNames, escapedValues));
   }
 

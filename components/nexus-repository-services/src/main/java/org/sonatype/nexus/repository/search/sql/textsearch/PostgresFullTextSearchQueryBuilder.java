@@ -55,8 +55,6 @@ public class PostgresFullTextSearchQueryBuilder
 
   public static final String PREFIX_MATCHER = ":*";
 
-  public static final String TSQUERY_PREFIX_MATCH_INDICATOR = ":";
-
   @Override
   public String replaceWildcards(final String value) {
     String wildcardReplacedValue = super.replaceWildcards(value);
@@ -106,12 +104,6 @@ public class PostgresFullTextSearchQueryBuilder
   @Override
   protected Map<Character, String> getWildcardMapping() {
     return ImmutableMap.of(ZERO_OR_MORE_CHARACTERS, PREFIX_MATCHER, ANY_CHARACTER, PREFIX_MATCHER);
-  }
-
-  @Override
-  protected String escapeSymbols(final String value) {
-    String escaped = value.replace(TSQUERY_PREFIX_MATCH_INDICATOR, ESCAPE + TSQUERY_PREFIX_MATCH_INDICATOR);
-    return super.escapeSymbols(escaped);
   }
 
   /**

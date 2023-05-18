@@ -60,6 +60,6 @@ public class PostgresFullTextSearchQueryBuilderTest
   @Test
   public void shouldEscapeSymbolBeforeReplacingWildcards() {
     assertThat(underTest.sanitise("foo:*"),
-        Is.is("foo\\::*"));
+        Is.is("foo::*"));
   }
 }
