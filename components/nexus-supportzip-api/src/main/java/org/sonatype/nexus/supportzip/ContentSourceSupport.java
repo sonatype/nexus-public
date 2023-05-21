@@ -28,10 +28,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public abstract class ContentSourceSupport
     implements ContentSource
 {
-  public static final String PASSWORD_TOKEN = "****";
-
-  public static final String EMAIL_TOKEN = "user@domain";
-
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
   private final Type type;

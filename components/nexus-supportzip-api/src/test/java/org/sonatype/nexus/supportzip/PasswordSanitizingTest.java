@@ -13,6 +13,8 @@
 package org.sonatype.nexus.supportzip;
 
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
@@ -29,17 +31,31 @@ import static org.sonatype.nexus.supportzip.PasswordSanitizing.REPLACEMENT;
  */
 public class PasswordSanitizingTest
 {
+  private final String PASSWORD = "admin123";
+
+  private final Map<String, String> SENSITIVE_DATA = Stream.of(
+          "applicationPassword",
+          "password",
+          "systemPassword",
+          "keyStorePassword",
+          "secret",
+          "secretAccessKey",
+          "sessionToken",
+          "aptSigning",
+          "bearerToken",
+          "yumSigning",
+          "accountKey",
+          "destinationInstancePassword",
+          "NEXUS_DATASTORE_NEXUS_PASSWORD",
+          "NEXUS_SECURITY_INITIAL_PASSWORD")
+      .collect(Collectors.toMap(key -> key, key -> PASSWORD));
+
   @Test
   public void testSanitizingSensitiveData() {
     PasswordSanitizing<Map<String, String>> passwordSanitizing = new PasswordSanitizing<>();
-    Map<String, String> sensitiveData = ImmutableMap.of(
-        "password", "admin123",
-        "secret", "admin123",
-        "bearerToken", "admin123",
-        "destinationInstancePassword", "admin123");
-    Map<String, String> sanitized = passwordSanitizing.transform(sensitiveData);
+    Map<String, String> sanitized = passwordSanitizing.transform(SENSITIVE_DATA);
     assertNotNull(sanitized);
-    assertThat(sanitized.toString(), not(containsString("admin123")));
+    assertThat(sanitized.toString(), not(containsString(PASSWORD)));
   }
 
   @Test
@@ -48,7 +64,7 @@ public class PasswordSanitizingTest
     Map<String, String> sensitiveData = ImmutableMap.of(
         "name", "John",
         "lastName", "Doe",
-        "password", "admin123");
+        "password", PASSWORD);
     Map<String, String> sanitized = passwordSanitizing.transform(sensitiveData);
     assertNotNull(sanitized);
     Map<String, String> expected = ImmutableMap.of(
