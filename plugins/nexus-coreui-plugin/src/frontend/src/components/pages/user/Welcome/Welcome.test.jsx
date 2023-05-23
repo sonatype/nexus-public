@@ -12,14 +12,29 @@
  */
 import React from 'react';
 import axios from 'axios';
-import { act, render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
+import {render, screen, waitFor, within, waitForElementToBeRemoved} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { when } from 'jest-when';
+import {when} from 'jest-when';
 
-import { ExtJS, ExtAPIUtils } from '@sonatype/nexus-ui-plugin';
+import {ExtJS, Permissions} from '@sonatype/nexus-ui-plugin';
 
+import UIStrings from '../../../../constants/UIStrings';
 import Welcome from './Welcome.jsx';
 import * as testData from './Welcome.testdata.js';
+
+const {WELCOME: {
+  ACTIONS: {
+    SYSTEM_HEALTH,
+    CLEANUP_POLICIES,
+    BROWSE,
+    SEARCH,
+    RELEASE_NOTES,
+    DOCUMENTATION,
+    COMMUNITY,
+    CONNECT,
+  },
+  CONNECT_MODAL,
+}} = UIStrings;
 
 // Creates a selector function that uses getByRole by default but which can be customized per-use to use
 // queryByRole, findByRole, etc instead
@@ -31,7 +46,10 @@ const selectors = {
   errorAlert: selectorQuery('alert'),
   errorRetryBtn: selectorQuery('button', { name: 'Retry' }),
   outreachFrame: selectorQuery('document', { name: 'Outreach Frame' }),
-  firewallCapabilityNotice: selectorQuery('region', { name: 'Firewall Capability Notice' })
+  firewallCapabilityNotice: selectorQuery('region', { name: 'Firewall Capability Notice' }),
+  quickAction: (name) => screen.queryByRole('button', {name: new RegExp(`${name}`)}),
+  connectModal: () => screen.queryByRole('dialog', {name: CONNECT_MODAL.TITLE}),
+  connectModalCloseButton: () => within(selectors.connectModal()).getByRole('button', {name: UIStrings.CLOSE}),
 };
 
 const browseableFormats = [{id: 'test'}];
@@ -45,8 +63,13 @@ describe('Welcome', function() {
     jest.spyOn(axios, 'post').mockResolvedValue(testData.simpleSuccessResponse)
     jest.spyOn(ExtJS, 'useStatus').mockReturnValue({});
     jest.spyOn(ExtJS, 'useLicense').mockReturnValue({});
+    jest.spyOn(ExtJS, 'checkPermission').mockReturnValue({});
     jest.spyOn(ExtJS, 'useUser').mockImplementation(() => user);
-    jest.spyOn(ExtJS, 'state').mockReturnValue({ getUser: () => user, getValue: () => browseableFormats});
+    jest.spyOn(ExtJS, 'state').mockReturnValue({ getUser: () => user, getValue: jest.fn()});
+    jest.spyOn(Object.getPrototypeOf(localStorage), 'getItem').mockImplementation(() => null);
+    jest.spyOn(Object.getPrototypeOf(localStorage), 'setItem');
+
+    when(ExtJS.state().getValue).calledWith('browseableformats').mockReturnValue([]);
   });
 
   it('renders a main content area', function() {
@@ -264,6 +287,85 @@ describe('Welcome', function() {
       const frame = await selectors.outreachFrame('find');
       expect(frame).toHaveAttribute('src', expect.stringMatching(/\?(.*&)?abc=123/));
       expect(frame).toHaveAttribute('src', expect.stringMatching(/\?(.*&)?def=9000/));
+    });
+  });
+
+  describe('quick actions', function() {
+    beforeEach(function() {
+      when(ExtJS.checkPermission).calledWith(expect.anything()).mockReturnValue(false);
+      when(ExtJS.state().getValue).calledWith('browseableformats').mockReturnValue([]);
+    });
+
+    it('shows "Release Notes", "Documentation" and "Community" for unauthorized user', async function() {
+      const {quickAction, loadingStatus} = selectors;
+
+      render(<Welcome />);
+      await waitForElementToBeRemoved(loadingStatus());
+
+      expect(quickAction(RELEASE_NOTES.subTitle)).toBeVisible();
+      expect(quickAction(DOCUMENTATION.subTitle)).toBeVisible();
+      expect(quickAction(COMMUNITY.subTitle)).toBeVisible();
+    });
+
+    it('shows "Browse", "Search" and "Connect" for anonymous user', async function() {
+      const {quickAction, loadingStatus} = selectors;
+
+      when(ExtJS.checkPermission).calledWith(Permissions.SEARCH.READ).mockReturnValue(true);
+      when(ExtJS.state().getValue).calledWith('browseableformats').mockReturnValue(browseableFormats);
+
+      render(<Welcome />);
+      await waitForElementToBeRemoved(loadingStatus());
+
+      expect(quickAction(BROWSE.subTitle)).toBeVisible();
+      expect(quickAction(SEARCH.subTitle)).toBeVisible();
+      expect(quickAction(CONNECT.subTitle)).toBeVisible();
+    });
+
+    it('shows "System Health", "Cleanup Policies" and "Browse" for admin', async function() {
+      const {quickAction, loadingStatus} = selectors;
+
+      when(ExtJS.checkPermission).calledWith(Permissions.METRICS.READ).mockReturnValue(true);
+      when(ExtJS.checkPermission).calledWith(Permissions.ADMIN).mockReturnValue(true);
+      when(ExtJS.checkPermission).calledWith(Permissions.SEARCH.READ).mockReturnValue(true);
+      when(ExtJS.state().getValue).calledWith('browseableformats').mockReturnValue(browseableFormats);
+
+      render(<Welcome />);
+      await waitForElementToBeRemoved(loadingStatus());
+
+      expect(quickAction(SYSTEM_HEALTH.subTitle)).toBeVisible();
+      expect(quickAction(CLEANUP_POLICIES.subTitle)).toBeVisible();
+      expect(quickAction(BROWSE.subTitle)).toBeVisible();
+    });
+
+    it('shows the "Obtaining a Repository URL" modal', async function() {
+      const {quickAction, connectModal, connectModalCloseButton, loadingStatus} = selectors;
+
+      when(ExtJS.state().getValue).calledWith('browseableformats').mockReturnValue(browseableFormats);
+
+      render(<Welcome />);
+      await waitForElementToBeRemoved(loadingStatus());
+
+      expect(localStorage.getItem).toHaveBeenLastCalledWith('nx-welcome-show-connect-action')
+      expect(quickAction(CONNECT.subTitle)).toBeVisible();
+      expect(connectModal()).not.toBeInTheDocument();
+
+      userEvent.click(quickAction(CONNECT.subTitle));
+      expect(connectModal()).toBeVisible();
+
+      userEvent.click(connectModalCloseButton());
+      expect(localStorage.setItem).toHaveBeenLastCalledWith('nx-welcome-show-connect-action', 'false');
+    });
+
+    it('doesn\'t show the "Connect" quick action', async function() {
+      const {quickAction, loadingStatus} = selectors;
+
+      when(ExtJS.state().getValue).calledWith('browseableformats').mockReturnValue(browseableFormats);
+      when(localStorage.getItem).calledWith('nx-welcome-show-connect-action').mockReturnValue('false');
+
+      render(<Welcome />);
+      await waitForElementToBeRemoved(loadingStatus());
+
+      expect(quickAction(CONNECT.subTitle)).not.toBeInTheDocument();
     });
   });
 });

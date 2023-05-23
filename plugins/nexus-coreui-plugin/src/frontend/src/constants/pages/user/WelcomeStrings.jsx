@@ -11,7 +11,6 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import { NxTextLink } from '@sonatype/react-shared-components';
 
 export default {
   WELCOME: {
@@ -47,6 +46,15 @@ export default {
         title: 'Community',
         subTitle: 'Ask and answer questions',
       },
+      CONNECT: {
+        title: 'Connect',
+        subTitle: 'Connect to a repository',
+      },
+    },
+    CONNECT_MODAL: {
+      TITLE: 'Obtaining a Repository URL',
+      FIRST_STEP_TEXT: <>In the <em>Repositories</em> table, select the <em>Copy</em> button for the repository you wish to connect.</>,
+      SECOND_STEP_TEXT: 'A modal with the repository\'s direct URL will appear; copy this URL to use as needed. The modal also contains a link to our help documentation to get more information on how to connect to your repository.'
     },
     FIREWALL_ALERT_CONTENT: (
         <>

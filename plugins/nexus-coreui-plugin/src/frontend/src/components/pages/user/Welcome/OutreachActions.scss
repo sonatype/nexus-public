@@ -89,3 +89,28 @@
     }
   }
 }
+
+.nxrm-connect-modal {
+  &__steps {
+    dt {
+      display: list-item;
+      list-style: decimal outside;
+      margin-bottom: var(--nx-spacing-4x);
+      margin-left: var(--nx-spacing-4x);
+
+      &:not(:first-child) {
+        margin-top: var(--nx-spacing-4x);
+      }
+
+      &::marker {
+        font-weight: 700;
+      }
+    }
+    dd {
+      margin: 0;
+    }
+    .nxrm-connect-modal__repositories-table-img {
+      width: 100%;
+    }
+  }
+}
