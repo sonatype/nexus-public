@@ -86,9 +86,9 @@ public class RepositoryContentSelectorPrivilegeDescriptor
     @DefaultMessage("Actions")
     String actions();
 
-    @DefaultMessage("A comma-delimited list of actions allowed with this privilege; " +
-        "options include browse, read, edit, add, delete, and a wildcard (*). " +
-        "<a href='https://help.sonatype.com/repomanager3/nexus-repository-administration/access-control/privileges' target='_blank'>Help</a>")
+    @DefaultMessage("A comma-delimited list (without whitespace) of actions allowed with this privilege; " +
+        "options include browse, read, edit, add, delete, and a wildcard (*) " +
+        "<a href='https://links.sonatype.com/products/nxrm3/docs/privileges' target='_blank'>Help</a>")
     String actionsHelp();
   }
 
