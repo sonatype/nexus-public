@@ -15,7 +15,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Describe $path - Nexus Repository Manager</title>
+  <title>Describe $path - Sonatype Nexus Repository</title>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 
 #* START favicon links and meta
@@ -27,22 +27,12 @@
  *    browserconfig.xml - Win8+ desktop support
  *    apple-touch-icon.png  - OSX Safari desktop support
 *#
-## IE, early versions (comment required)
-  <!--[if lt IE 9]>
-  <script>(new Image).src="$relativePath/favicon.ico?$urlSuffix"</script>
-  <![endif]-->
 ## Safari on MacOS and iOS
-  <link rel="icon" type="image/png" href="$relativePath/favicon-32x32.png?$urlSuffix" sizes="32x32">
-  <link rel="mask-icon" href="$relativePath/safari-pinned-tab.svg?$urlSuffix" color="#5bbad5">
+  <link rel="icon" type="image/png" href="$raptureUrl/resources/safari-favicon-32x32.png?$urlSuffix" sizes="32x32">
+  <link rel="mask-icon" href="$raptureUrl/resources/favicon-white.svg?$urlSuffix" color="#00bb6c">
 ## classic favicon, shown in browser tabs
-  <link rel="icon" type="image/png" href="$relativePath/favicon-16x16.png?$urlSuffix" sizes="16x16">
-## IE, later versions
-  <link rel="shortcut icon" href="$relativePath/favicon.ico?$urlSuffix">
-## Win8+
-  <meta name="msapplication-TileImage" content="$relativePath/mstile-144x144.png?$urlSuffix">
-  <meta name="msapplication-TileColor" content="#00a300">
+  <link rel="icon" type="image/png" href="$raptureUrl/resources/favicon.svg?$urlSuffix" sizes="16x16">
 ## END favicon links
-
 
   <link rel="stylesheet" type="text/css" href="$relativePath/static/css/nexus-content.css?$urlSuffix"/>
 
@@ -73,11 +63,11 @@
 <div class="nexus-header">
   <a href="$relativePath">
     <div class="product-logo">
-      <img src="$relativePath/static/rapture/resources/icons/x32/nexus-white.png?$urlSuffix" alt="Product logo"/>
+      <img src="$relativePath/static/rapture/resources/nxrm-reverse-icon.png?$urlSuffix" alt="Product logo"/>
     </div>
     <div class="product-id">
       <div class="product-id__line-1">
-        <span class="product-name">Nexus Repository Manager</span>
+        <span class="product-name">Sonatype Nexus Repository</span>
       </div>
       <div class="product-id__line-2">
         <span class="product-spec">$nexusBrandedEditionAndVersion</span>

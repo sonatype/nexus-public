@@ -1006,7 +1006,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
 
     // Admin -> System -> API
     Api_Text: 'API',
-    Api_Description: 'Learn how to interact with Nexus Repository Manager programmatically',
+    Api_Description: 'Learn how to interact with Sonatype Nexus Repository programmatically',
 
     // Admin -> System -> Capabilities
     Capabilities_Text: 'Capabilities',

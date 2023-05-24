@@ -18,7 +18,7 @@ export default {
   USER_TOKEN: {
     MENU: {
       text: 'User Token',
-      description: 'Access Nexus Repository Manager without the use of passwords'
+      description: 'Access Sonatype Nexus Repository without the use of passwords'
     },
     LABELS: {
       ACCESS_NOTE: 'A new user token will be created the first time it is accessed.',
