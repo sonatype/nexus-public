@@ -16,14 +16,47 @@
  */
 import {assign} from 'xstate';
 import Axios from 'axios';
+import {mergeDeepRight} from 'ramda';
 import {FormUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 
 const {REALMS: {MESSAGES}} = UIStrings;
 
+const NX_AUTHENTICATING_REALM = 'NexusAuthenticatingRealm';
+const NX_AUTHORIZING_REALM = 'NexusAuthorizingRealm';
+
 export default FormUtils.buildFormMachine({
   id: 'RealmsMachine',
+  config: (config) => mergeDeepRight(config, {
+    states: {
+      loaded: {
+        on: {
+          CHECK_LOCAL_REALM_REMOVAL: [
+            {
+              target: 'showLocalRealmRemovalModal',
+              cond: 'isLocalRealmRemoval'
+            },
+            {
+              target: 'saving',
+              cond: 'canSave'
+            }
+          ]
+        }
+      },
+      showLocalRealmRemovalModal: {
+        on: {
+          SAVE: {
+            target: 'saving',
+            cond: 'canSave'
+          },
+          CLOSE: {
+            target: 'loaded'
+          }
+        }
+      }
+    }
+  })
 }).withConfig({
   actions: {
     validate: assign({
@@ -45,6 +78,13 @@ export default FormUtils.buildFormMachine({
         pristineData: data,
       };
     }),
+  },
+  guards: {
+    isLocalRealmRemoval: ({data, pristineData}) => 
+      (pristineData.active?.includes(NX_AUTHENTICATING_REALM) && 
+        !data.active?.includes(NX_AUTHENTICATING_REALM)) ||
+      (pristineData.active?.includes(NX_AUTHORIZING_REALM) && 
+        !data.active?.includes(NX_AUTHORIZING_REALM))
   },
   services: {
     fetchData: async () =>

@@ -15,6 +15,7 @@ import {
   render,
   screen,
   waitForElementToBeRemoved,
+  within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {ExtJS, APIConstants} from '@sonatype/nexus-ui-plugin';
@@ -51,6 +52,13 @@ const selectors = {
   title: () => screen.getByText(LABELS.CONFIGURATION.SELECTED_TITLE),
   emptyList: () => screen.getByText(LABELS.CONFIGURATION.EMPTY_LIST),
   allActiveItems: () => selectors.selectedList().querySelectorAll('.nx-transfer-list__item'),
+
+  localRealmRemovalModal: {
+    modal: () => screen.getByRole('dialog', {name: LABELS.LOCAL_REALM_REMOVAL_MODAL.HEADER}),
+    input: () => within(selectors.localRealmRemovalModal.modal()).getByRole('textbox'),
+    confirmBtn: () => within(selectors.localRealmRemovalModal.modal()).getByRole('button', {name: 'Confirm'}),
+    validationError: () => within(selectors.localRealmRemovalModal.modal()).queryByRole('alert')
+  }
 };
 
 describe('Realms', () => {
@@ -129,7 +137,24 @@ describe('Realms', () => {
   });
 
   it('edits the Realms Form', async () => {
-    const {availableList, selectedList, querySubmitButton} = selectors;
+    const {selectedList, querySubmitButton} = selectors;
+
+    const ldapRealm = {
+      id: 'Ldap',
+      name: 'LDAP Realm',
+    };
+
+    when(Axios.get)
+      .calledWith(APIConstants.REST.PUBLIC.AVAILABLE_REALMS)
+      .mockResolvedValueOnce({
+        data: [...data, ldapRealm]
+    });
+
+    when(Axios.get)
+      .calledWith(APIConstants.REST.PUBLIC.ACTIVE_REALMS)
+      .mockResolvedValueOnce({
+        data: [data[2].id, data[3].id, ldapRealm.id],
+    });
 
     when(Axios.put)
       .calledWith(
@@ -137,18 +162,15 @@ describe('Realms', () => {
         expect.objectContaining({ method: 'update' })
       )
       .mockResolvedValue({
-        data: [{ active: [data[0].id, data[3].id] }],
+        data: [{active: [data[0].id, data[3].id]}],
       });
 
     await renderAndWaitForLoad();
 
-    userEvent.click(selectors.querySubmitButton());
-
     userEvent.click(screen.getByText(data[0].name));
-    userEvent.click(screen.getByText(data[2].name));
+    userEvent.click(screen.getByText(ldapRealm.name));
 
     expect(selectedList()).toHaveTextContent(data[0].name);
-    expect(availableList()).toHaveTextContent(data[2].name);
 
     expect(querySubmitButton()).not.toHaveClass('disabled');
 
@@ -156,7 +178,7 @@ describe('Realms', () => {
 
     expect(Axios.put).toHaveBeenCalledWith(
       APIConstants.REST.PUBLIC.ACTIVE_REALMS,
-      [data[3].id, data[0].id]
+      [data[2].id, data[3].id, data[0].id]
     );
   });
 
@@ -265,6 +287,55 @@ describe('Realms', () => {
     const activesRealms = allActiveItems();
     expect(activesRealms).toHaveLength(0);
     expect(queryFormError(LABELS.MESSAGES.NO_REALMS_CONFIGURED)).toBeInTheDocument();
+  });
+
+  it('shows confirmation modal on attempt to remove active local realms', async () => {
+    const {
+      querySubmitButton,
+      localRealmRemovalModal: {
+        modal,
+        input,
+        confirmBtn,
+        validationError
+      }
+    } = selectors;
+
+    const {
+      LOCAL_REALM_REMOVAL_MODAL: {
+        ACKNOWLEDGEMENT: {
+          STRING,
+          VALIDATION_ERROR
+        }
+      }
+    } = LABELS
+
+    await renderAndWaitForLoad();
+
+    userEvent.click(screen.getByText(data[2].name));
+
+    userEvent.click(querySubmitButton());
+
+    expect(modal()).toBeVisible();
+    expect(confirmBtn()).toBeDisabled();
+
+    await TestUtils.changeField(input, 'wrongstring');
+    expect(validationError()).toHaveTextContent(VALIDATION_ERROR);
+    expect(confirmBtn()).toBeDisabled();
+
+    await TestUtils.changeField(input, '');
+    expect(validationError()).toHaveTextContent(VALIDATION_ERROR);
+    expect(confirmBtn()).toBeDisabled();
+
+    await TestUtils.changeField(input, STRING);
+    expect(validationError()).not.toBeInTheDocument();
+    expect(confirmBtn()).toBeEnabled();
+    
+    userEvent.click(confirmBtn());
+
+    expect(Axios.put).toHaveBeenCalledWith(
+      APIConstants.REST.PUBLIC.ACTIVE_REALMS,
+      [data[3].id]
+    );
   });
 
   describe('Read Only Mode', () => {
