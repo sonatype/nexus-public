@@ -21,10 +21,6 @@ public interface HostedRepositoryConfig<THIS>
 
   WritePolicy getWritePolicy();
 
-  THIS withLatestPolicy(final Boolean latestPolicy);
-
-  Boolean isLatestPolicy();
-
   THIS withReplicationEnabled(final Boolean replicationEnabled);
 
   Boolean isReplicationEnabled();

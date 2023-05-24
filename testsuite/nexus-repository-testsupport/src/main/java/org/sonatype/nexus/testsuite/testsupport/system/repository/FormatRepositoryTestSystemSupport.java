@@ -162,7 +162,6 @@ public abstract class FormatRepositoryTestSystemSupport
   private Configuration applyHostedAttributes(Configuration configuration, HOSTED config) {
     NestedAttributesMap storage = configuration.attributes(ATTRIBUTES_MAP_KEY_STORAGE);
     addConfigIfNotNull(storage, ATTRIBUTES_KEY_WRITE_POLICY, config.getWritePolicy());
-    addConfigIfNotNull(storage, ATTRIBUTES_KEY_LATEST_POLICY, config.isLatestPolicy());
     addConfigIfNotNull(configuration.attributes(ATTRIBUTES_MAP_KEY_REPLICATION), ATTRIBUTES_KEY_REPLICATION_ENABLED, config.isReplicationEnabled());
 
     return configuration;

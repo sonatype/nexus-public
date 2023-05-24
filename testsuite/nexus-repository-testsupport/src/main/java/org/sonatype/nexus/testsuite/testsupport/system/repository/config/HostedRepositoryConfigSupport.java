@@ -25,8 +25,6 @@ public abstract class HostedRepositoryConfigSupport<THIS>
 
   private WritePolicy writePolicy = WritePolicy.ALLOW;
 
-  private Boolean latestPolicy = false;
-
   private Boolean replicationEnabled = false;
 
   public HostedRepositoryConfigSupport(final Function<THIS, Repository> factory) {
@@ -47,17 +45,6 @@ public abstract class HostedRepositoryConfigSupport<THIS>
   @Override
   public WritePolicy getWritePolicy() {
     return writePolicy;
-  }
-
-  @Override
-  public THIS withLatestPolicy(final Boolean latestPolicy) {
-    this.latestPolicy = latestPolicy;
-    return toTHIS();
-  }
-
-  @Override
-  public Boolean isLatestPolicy() {
-    return latestPolicy;
   }
 
   @Override

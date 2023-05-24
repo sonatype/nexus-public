@@ -27,6 +27,10 @@ public interface ConfigurationConstants
 
   String WRITE_POLICY = "writePolicy";
 
+  /**
+   * Docker specific constant indicating whether the 'latest' tag should be allowed to be updated with the ALLOW_ONCE
+   * write policy.
+   */
   String LATEST_POLICY = "latestPolicy";
 
   String WRITE_POLICY_DEFAULT = "ALLOW";
