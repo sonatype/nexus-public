@@ -479,7 +479,7 @@ public class DefaultCapabilityRegistry
     eventManager.post(new AfterLoad(this));
   }
 
- @Override
+  @Override
   public void pullAndRefreshReferencesFromDB() {
    Map<CapabilityIdentity, CapabilityStorageItem> refreshedCapabilities = capabilityStorage.getAll();
    references.forEach((capabilityIdentity, capabilityReference) ->
