@@ -41,6 +41,10 @@ public class ClientInfoProviderImpl
 {
   private final Provider<HttpServletRequest> httpRequestProvider;
 
+  private final ThreadLocal<String> remoteIp = new ThreadLocal<>();
+
+  private final ThreadLocal<String> userId = new ThreadLocal<>();
+
   @Inject
   public ClientInfoProviderImpl(final Provider<HttpServletRequest> httpRequestProvider) {
     this.httpRequestProvider = checkNotNull(httpRequestProvider);
@@ -60,8 +64,25 @@ public class ClientInfoProviderImpl
           .build();
     }
     catch (ProvisionException | OutOfScopeException e) {
-      // ignore; this happens when called out of scope of http request
-      return null;
+      /* This happens when called out of scope of http request.
+       * Create fake ClientInfo with the custom User Id and Remote address. */
+      return userId.get() != null && remoteIp.get() != null ? ClientInfo
+          .builder()
+          .userId(userId.get())
+          .remoteIP(remoteIp.get())
+          .build() : null;
     }
+  }
+
+  @Override
+  public void setClientInfo(final String remoteIp, final String userId) {
+    this.remoteIp.set(checkNotNull(remoteIp));
+    this.userId.set(checkNotNull(userId));
+  }
+
+  @Override
+  public void unsetClientInfo() {
+    remoteIp.remove();
+    userId.remove();
   }
 }

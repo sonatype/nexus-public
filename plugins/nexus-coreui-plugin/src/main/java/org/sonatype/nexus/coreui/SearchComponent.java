@@ -13,7 +13,6 @@
 package org.sonatype.nexus.coreui;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -192,6 +191,10 @@ public class SearchComponent
     componentXO.setId(componentHit.getId());
     componentXO.setRepositoryName(componentHit.getRepositoryName());
     componentXO.setFormat(componentHit.getFormat());
+
+    if(componentHit.getLastModified() != null) {
+      componentXO.setLastBlobUpdated(componentHit.getLastModified().toString());
+    }
 
     return componentXO;
   }

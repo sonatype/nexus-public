@@ -479,7 +479,7 @@ public class DefaultCapabilityRegistry
     eventManager.post(new AfterLoad(this));
   }
 
- @Override
+  @Override
   public void pullAndRefreshReferencesFromDB() {
    Map<CapabilityIdentity, CapabilityStorageItem> refreshedCapabilities = capabilityStorage.getAll();
    references.forEach((capabilityIdentity, capabilityReference) ->
@@ -488,8 +488,14 @@ public class DefaultCapabilityRegistry
              DefaultCapabilityReference reference = get(capabilityIdentity);
              Map<String, String> decryptedProps = decryptValuesIfNeeded(reference.descriptor(), value.getProperties());
              capabilityReference.update(decryptedProps, capabilityReference.properties());
+
+             if (value.isEnabled()) {
+               enable(capabilityIdentity);
+             } else {
+               disable(capabilityIdentity);
+             }
            }));
- }
+  }
 
   private DefaultCapabilityReference create(final CapabilityIdentity id,
                                             final CapabilityType type,

@@ -86,7 +86,9 @@ public class RepositoryContentSelectorPrivilegeDescriptor
     @DefaultMessage("Actions")
     String actions();
 
-    @DefaultMessage("The comma-delimited list of actions")
+    @DefaultMessage("A comma-delimited list (without whitespace) of actions allowed with this privilege; " +
+        "options include browse, read, edit, add, delete, and a wildcard (*) " +
+        "<a href='https://links.sonatype.com/products/nxrm3/docs/privileges' target='_blank'>Help</a>")
     String actionsHelp();
   }
 
@@ -120,7 +122,8 @@ public class RepositoryContentSelectorPrivilegeDescriptor
             P_ACTIONS,
             messages.actions(),
             messages.actionsHelp(),
-            FormField.MANDATORY
+            FormField.MANDATORY,
+            "(^(browse|read|edit|add|delete)(,(browse|read|edit|add|delete)){0,4}$)|(^\\*$)"
         )
     );
   }

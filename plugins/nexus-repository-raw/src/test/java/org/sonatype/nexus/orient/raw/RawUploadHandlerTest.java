@@ -84,7 +84,8 @@ public class RawUploadHandlerTest
                                               final VariableResolverAdapter variableResolverAdapter,
                                               final Set<UploadDefinitionExtension> uploadDefinitionExtensions)
   {
-    return new RawUploadHandler(contentPermissionChecker, variableResolverAdapter, uploadDefinitionExtensions, mimeSupport);
+    return new RawUploadHandler(contentPermissionChecker, variableResolverAdapter, uploadDefinitionExtensions,
+        mimeSupport);
   }
 
   @Before

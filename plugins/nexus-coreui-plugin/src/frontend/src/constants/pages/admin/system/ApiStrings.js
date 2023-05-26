@@ -18,7 +18,7 @@ export default {
   API: {
     MENU: {
       text: 'API',
-      description: 'Learn how to interact with Nexus Repository Manager programmatically'
+      description: 'Learn how to interact with Sonatype Nexus Repository programmatically'
     },
   }
 };

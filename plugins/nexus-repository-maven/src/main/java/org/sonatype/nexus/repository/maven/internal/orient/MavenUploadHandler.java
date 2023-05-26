@@ -76,7 +76,7 @@ public class MavenUploadHandler
       final Set<UploadDefinitionExtension> uploadDefinitionExtensions)
   {
     super(parser, variableResolverAdapter, contentPermissionChecker, versionPolicyValidator, mavenPomGenerator,
-        uploadDefinitionExtensions);
+        uploadDefinitionExtensions, false);
   }
 
   @Override

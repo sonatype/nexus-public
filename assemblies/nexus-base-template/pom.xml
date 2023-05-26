@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.sonatype.nexus.assemblies</groupId>
     <artifactId>nexus-assemblies</artifactId>
-    <version>3.54.0-SNAPSHOT</version>
+    <version>3.56.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-base-template</artifactId>
@@ -205,6 +205,7 @@
                 <feature>wrap</feature>
                 <feature>bundle</feature>
                 <feature>config</feature>
+                <feature>deployer</feature>
                 <feature>diagnostic</feature>
                 <feature>feature</feature>
                 <feature>jaas</feature>
@@ -218,7 +219,6 @@
                 <feature>nexus-startup-feature</feature>
               </startupFeatures>
               <bootFeatures>
-                <feature>deployer</feature>
                 <feature>nexus-boot-feature</feature>
               </bootFeatures>
               <installedFeatures>

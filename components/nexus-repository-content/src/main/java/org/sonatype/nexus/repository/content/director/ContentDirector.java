@@ -16,11 +16,15 @@ import java.util.List;
 import java.util.Map;
 
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.config.WritePolicy;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponentBuilder;
+
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.WRITE_POLICY;
 
 /**
  * @since 3.24
@@ -114,4 +118,11 @@ public interface ContentDirector
     // no-op
   }
 
+  /**
+   * Check whether redeploy is allowed for the specified Component, implementers need only override this method
+   * for formats which allow re-writes in some scenarios.
+   */
+  default boolean redeployAllowed(final Repository destination, final Component component) {
+    return WritePolicy.ALLOW.name().equals(destination.getConfiguration().attributes(STORAGE).get(WRITE_POLICY));
+  }
 }

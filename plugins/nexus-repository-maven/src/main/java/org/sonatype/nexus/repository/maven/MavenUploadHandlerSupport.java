@@ -61,6 +61,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
 import static java.lang.String.join;
 import static java.util.Objects.requireNonNull;
+import static org.apache.commons.lang3.StringUtils.prependIfMissing;
 import static org.sonatype.nexus.common.text.Strings2.isBlank;
 import static org.sonatype.nexus.repository.maven.internal.Constants.ARCHETYPE_CATALOG_FILENAME;
 
@@ -110,6 +111,8 @@ public abstract class MavenUploadHandlerSupport
 
   protected final MavenPomGenerator mavenPomGenerator;
 
+  private final boolean datastoreEnabled;
+
   private UploadDefinition definition;
 
   public MavenUploadHandlerSupport (
@@ -118,7 +121,8 @@ public abstract class MavenUploadHandlerSupport
       final ContentPermissionChecker contentPermissionChecker,
       final VersionPolicyValidator versionPolicyValidator,
       final MavenPomGenerator mavenPomGenerator,
-      final Set<UploadDefinitionExtension> uploadDefinitionExtensions)
+      final Set<UploadDefinitionExtension> uploadDefinitionExtensions,
+      final boolean datastoreEnabled)
   {
     super(uploadDefinitionExtensions);
     this.parser = parser;
@@ -126,6 +130,7 @@ public abstract class MavenUploadHandlerSupport
     this.contentPermissionChecker = contentPermissionChecker;
     this.versionPolicyValidator = versionPolicyValidator;
     this.mavenPomGenerator = mavenPomGenerator;
+    this.datastoreEnabled = datastoreEnabled;
   }
 
   @Override
@@ -288,7 +293,8 @@ public abstract class MavenUploadHandlerSupport
       MavenPath mavenPath = getMavenPath(basePath, asset);
       doCoordinatesValidation(mavenPath);
       validateVersionPolicy(repository, mavenPath);
-      ensurePermitted(repository.getName(), Maven2Format.NAME, mavenPath.getPath(), toMap(mavenPath.getCoordinates()));
+      String path  = datastoreEnabled ? prependIfMissing(mavenPath.getPath(), "/") : mavenPath.getPath();
+      ensurePermitted(repository.getName(), Maven2Format.NAME, path, toMap(mavenPath.getCoordinates()));
     }
   }
 
@@ -300,8 +306,8 @@ public abstract class MavenUploadHandlerSupport
       }
       validateVersionPolicy(repository, mavenPath);
     }
-
-    ensurePermitted(repository.getName(), Maven2Format.NAME, mavenPath.getPath(), toMap(mavenPath.getCoordinates()));
+    String path  = datastoreEnabled ? prependIfMissing(mavenPath.getPath(), "/") : mavenPath.getPath();
+    ensurePermitted(repository.getName(), Maven2Format.NAME, path, toMap(mavenPath.getCoordinates()));
   }
 
   private void doCoordinatesValidation(final MavenPath mavenPath) {

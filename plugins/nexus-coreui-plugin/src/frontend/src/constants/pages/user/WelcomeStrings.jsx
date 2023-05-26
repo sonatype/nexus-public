@@ -11,27 +11,58 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import { NxTextLink } from '@sonatype/react-shared-components';
 
 export default {
   WELCOME: {
     MENU: {
       text: 'Welcome'
     },
-    LOG4J_ALERT_CONTENT: (
-      <>
-        In response to the log4j vulnerability identified in{' '}
-        <NxTextLink external
-                    href="https://ossindex.sonatype.org/vulnerability/f0ac54b6-9b81-45bb-99a4-e6cb54749f9d">
-          CVE-2021-44228
-        </NxTextLink>{' '}
-        (also known as "log4shell") impacting organizations world-wide, we are providing an experimental Log4j
-        Visualizer capability to help our users identify log4j downloads impacted by CVE-2021-44228 so that they can
-        mitigate the impact. Note that enabling this capability may impact Nexus Repository performance. Also note
-        that the visualizer does not currently identify or track other log4j vulnerabilities.
-      </>
+    ACTIONS: {
+      SYSTEM_HEALTH: {
+        title: 'System Health',
+        subTitle: 'View system status checks',
+      },
+      CLEANUP_POLICIES: {
+        title: 'Cleanup Policies',
+        subTitle: 'Review component removal policies',
+      },
+      BROWSE: {
+        title: 'Browse',
+        subTitle: 'Browse my repositories',
+      },
+      SEARCH: {
+        title: 'Search',
+        subTitle: 'Search for new components',
+      },
+      RELEASE_NOTES: {
+        title: 'Release Notes',
+        subTitle: 'See what\'s new',
+      },
+      DOCUMENTATION: {
+        title: 'Documentation',
+        subTitle: 'Visit our help site',
+      },
+      COMMUNITY: {
+        title: 'Community',
+        subTitle: 'Ask and answer questions',
+      },
+      CONNECT: {
+        title: 'Connect',
+        subTitle: 'Connect to a repository',
+      },
+    },
+    CONNECT_MODAL: {
+      TITLE: 'Obtaining a Repository URL',
+      FIRST_STEP_TEXT: <>In the <em>Repositories</em> table, select the <em>Copy</em> button for the repository you wish to connect.</>,
+      SECOND_STEP_TEXT: 'A modal with the repository\'s direct URL will appear; copy this URL to use as needed. The modal also contains a link to our help documentation to get more information on how to connect to your repository.'
+    },
+    FIREWALL_ALERT_CONTENT: (
+        <>
+          You haven't configured your repository protection. Sonatype Repository Firewall combines
+          over 60 different signals used to identify potentially malicious activity and block risks before
+          download. Automatically block malware from entering your code repositories.
+        </>
     ),
-    LOG4J_ENABLE_BUTTON_CONTENT: 'Enable Capability',
-    LOG4J_SUBMIT_MASK_MESSAGE: 'Enabling…'
+    FIREWALL_ENABLE_BUTTON_CONTENT : 'Enable Capability',
   }
 };

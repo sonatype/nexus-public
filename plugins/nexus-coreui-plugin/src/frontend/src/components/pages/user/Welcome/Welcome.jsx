@@ -10,9 +10,9 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React, { useEffect } from 'react';
-import { useMachine } from '@xstate/react';
-import { ExtAPIUtils , ExtJS, toURIParams, getVersionMajorMinor } from '@sonatype/nexus-ui-plugin';
+import React, {useEffect, useRef, useState} from 'react';
+import {useMachine} from '@xstate/react';
+import {ExtJS, toURIParams, getVersionMajorMinor} from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
   NxButtonBar,
@@ -20,13 +20,12 @@ import {
   NxPageMain,
   NxPageTitle,
   NxH1,
-  NxWarningAlert,
-  NxLoadError,
-  NxSubmitMask
+  NxWarningAlert
 } from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
 import welcomeMachine from './WelcomeMachine';
+import OutreachActions from './OutreachActions';
 
 import './Welcome.scss';
 
@@ -44,12 +43,15 @@ function getUserType(user) {
   }
 }
 
+const iframeDefaultHeight = 1000;
+const iframePadding = 48;
+
 export default function Welcome() {
   const [state, send] = useMachine(welcomeMachine, { devtools: true }),
-      loading = state.value === 'loading',
-      showSubmitMask = ['enablingLog4j', 'redirectingToLog4j'].some(state.matches),
-      submitMaskSuccess = state.value === 'redirectingToLog4j',
-      error = state.value === 'error' ? state.context.error : null,
+      [iframeHeight, setIframeHeight] = useState(iframeDefaultHeight),
+      ref = useRef(),
+      loading = state.matches('loading'),
+      error = state.matches('error') ? state.context.error : null,
       proxyDownloadNumberParams = state.context.data?.proxyDownloadNumberParams;
 
   const user = ExtJS.useUser(),
@@ -66,9 +68,13 @@ export default function Welcome() {
     send('LOAD');
   }
 
-  async function enableLog4j() {
-    send('ENABLE_LOG4J');
+  async function navigateToFirewall() {
+    window.location.href = '#admin/iq';
   }
+
+  const onLoad = () => {
+    setIframeHeight(ref.current.contentWindow.document.body.scrollHeight + iframePadding);
+  };
 
   useEffect(load, [user]);
 
@@ -91,34 +97,35 @@ export default function Welcome() {
           <NxPageTitle.Subtitle>{UIStrings.WELCOME.MENU.description}</NxPageTitle.Subtitle>
         </NxPageTitle.Headings>
       </NxPageTitle>
-      { showSubmitMask &&
-        <NxSubmitMask message={UIStrings.WELCOME.LOG4J_SUBMIT_MASK_MESSAGE} success={submitMaskSuccess} />
-      }
       <NxLoadWrapper loading={loading} error={error} retryHandler={load}>
-        { state.context.data?.showLog4jAlert &&
-          <section id="nxrm-welcome-log4j-notice" aria-label="Log4j Capability Notice">
-            <NxWarningAlert>
-              <p className="nxrm-log4j-alert-content">{UIStrings.WELCOME.LOG4J_ALERT_CONTENT}</p>
-              <NxButtonBar>
-                <NxButton id="nxrm-welcome-log4j-enable-btn" variant="primary" onClick={enableLog4j}>
-                  {UIStrings.WELCOME.LOG4J_ENABLE_BUTTON_CONTENT}
-                </NxButton>
-              </NxButtonBar>
-            </NxWarningAlert>
-          </section>
-        }
-        { state.context.log4jError &&
-          <NxLoadError titleMessage="An error occurred while enabling the Log4j capability."
-                       error={state.context.log4jError}
-                       retryHandler={enableLog4j} />
-        }
-        { state.context.data?.showOutreachIframe &&
-          <iframe id="nxrm-welcome-outreach-frame"
+        <div className="nxrm-welcome__outreach nx-viewport-sized__scrollable">
+          { state.context.data?.showFirewallAlert &&
+              <section id="nxrm-firewall-onboarding-nudge" className="nxrm-firewall-onboarding" aria-label="Firewall Capability Notice">
+                <NxWarningAlert>
+                  <p className="nxrm-firewall-alert-content">{UIStrings.WELCOME.FIREWALL_ALERT_CONTENT}</p>
+                  <NxButtonBar>
+                    <NxButton id="nxrm-welcome-firewall-enable-btn" variant="primary" onClick={navigateToFirewall}>
+                      {UIStrings.WELCOME.FIREWALL_ENABLE_BUTTON_CONTENT}
+                    </NxButton>
+                  </NxButtonBar>
+                </NxWarningAlert>
+              </section>
+          }
+          <OutreachActions />
+          { state.context.data?.showOutreachIframe &&
+              <iframe
+                  id="nxrm-welcome-outreach-frame"
                   role="document"
+                  height={iframeHeight}
+                  ref={ref}
+                  scrolling="no"
+                  onLoad={onLoad}
                   aria-label="Outreach Frame"
                   src={`${iframeUrlPath}?${toURIParams(iframeProps)}${proxyDownloadNumberParams ?? ''}`}
-                  className="nx-viewport-sized__scrollable nxrm-welcome__outreach-frame" />
-        }
+                  className="nxrm-welcome__outreach-frame"
+              />
+          }
+        </div>
       </NxLoadWrapper>
     </NxPageMain>
   );

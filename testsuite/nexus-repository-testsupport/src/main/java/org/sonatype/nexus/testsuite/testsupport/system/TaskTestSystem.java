@@ -15,6 +15,7 @@ package org.sonatype.nexus.testsuite.testsupport.system;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import javax.inject.Inject;
@@ -130,10 +131,20 @@ public class TaskTestSystem
   }
 
   public TaskInfo create(final String name, final String typeId, final Map<String, String> attributes) {
+    return create(name, typeId, attributes, __ -> {});
+  }
+
+  public TaskInfo create(
+      final String name,
+      final String typeId,
+      final Map<String, String> attributes,
+      final Consumer<TaskConfiguration> mutator)
+  {
     TaskConfiguration taskConfiguration = scheduler.createTaskConfigurationInstance(typeId);
     attributes.forEach(taskConfiguration::setString);
     taskConfiguration.setName(name);
     taskConfiguration.setEnabled(true);
+    mutator.accept(taskConfiguration);
 
     TaskInfo taskInfo = scheduler.scheduleTask(taskConfiguration, scheduler.getScheduleFactory().manual());
     tasks.add(taskInfo);

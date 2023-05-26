@@ -12,14 +12,29 @@
  */
 import React from 'react';
 import axios from 'axios';
-import { act, render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
+import {render, screen, waitFor, within, waitForElementToBeRemoved} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { when } from 'jest-when';
+import {when} from 'jest-when';
 
-import { ExtJS, ExtAPIUtils } from '@sonatype/nexus-ui-plugin';
+import {ExtJS, Permissions} from '@sonatype/nexus-ui-plugin';
 
+import UIStrings from '../../../../constants/UIStrings';
 import Welcome from './Welcome.jsx';
 import * as testData from './Welcome.testdata.js';
+
+const {WELCOME: {
+  ACTIONS: {
+    SYSTEM_HEALTH,
+    CLEANUP_POLICIES,
+    BROWSE,
+    SEARCH,
+    RELEASE_NOTES,
+    DOCUMENTATION,
+    COMMUNITY,
+    CONNECT,
+  },
+  CONNECT_MODAL,
+}} = UIStrings;
 
 // Creates a selector function that uses getByRole by default but which can be customized per-use to use
 // queryByRole, findByRole, etc instead
@@ -30,10 +45,14 @@ const selectors = {
   loadingStatus: () => screen.getByRole('status'),
   errorAlert: selectorQuery('alert'),
   errorRetryBtn: selectorQuery('button', { name: 'Retry' }),
-  log4jCapabiltyNotice: selectorQuery('region', { name: 'Log4j Capability Notice' }),
-  enableCapabilityBtn: selectorQuery('button', { name: 'Enable Capability' }),
-  outreachFrame: selectorQuery('document', { name: 'Outreach Frame' })
+  outreachFrame: selectorQuery('document', { name: 'Outreach Frame' }),
+  firewallCapabilityNotice: selectorQuery('region', { name: 'Firewall Capability Notice' }),
+  quickAction: (name) => screen.queryByRole('button', {name: new RegExp(`${name}`)}),
+  connectModal: () => screen.queryByRole('dialog', {name: CONNECT_MODAL.TITLE}),
+  connectModalCloseButton: () => within(selectors.connectModal()).getByRole('button', {name: UIStrings.CLOSE}),
 };
+
+const browseableFormats = [{id: 'test'}];
 
 describe('Welcome', function() {
   let user;
@@ -44,8 +63,13 @@ describe('Welcome', function() {
     jest.spyOn(axios, 'post').mockResolvedValue(testData.simpleSuccessResponse)
     jest.spyOn(ExtJS, 'useStatus').mockReturnValue({});
     jest.spyOn(ExtJS, 'useLicense').mockReturnValue({});
+    jest.spyOn(ExtJS, 'checkPermission').mockReturnValue({});
     jest.spyOn(ExtJS, 'useUser').mockImplementation(() => user);
-    jest.spyOn(ExtJS, 'state').mockReturnValue({ getUser: () => user });
+    jest.spyOn(ExtJS, 'state').mockReturnValue({ getUser: () => user, getValue: jest.fn()});
+    jest.spyOn(Object.getPrototypeOf(localStorage), 'getItem').mockImplementation(() => null);
+    jest.spyOn(Object.getPrototypeOf(localStorage), 'setItem');
+
+    when(ExtJS.state().getValue).calledWith('browseableformats').mockReturnValue([]);
   });
 
   it('renders a main content area', function() {
@@ -95,61 +119,6 @@ describe('Welcome', function() {
 
       await waitForElementToBeRemoved(status);
     });
-
-    describe('when the user is an admin', function() {
-      beforeEach(function() {
-        user = { administrator: true };
-      });
-
-      it('calls the isAvailableLog4jDisclaimer outreach call', async function() {
-        jest.spyOn(axios, 'post').mockReturnValue(new Promise(() => {}));
-        render(<Welcome />);
-
-        expect(axios.post).toHaveBeenCalledWith('/service/extdirect', [
-          expect.objectContaining({ action: 'outreach_Outreach', method: 'readStatus' }),
-          expect.objectContaining({ action: 'outreach_Outreach', method: 'getProxyDownloadNumbers' }),
-          expect.objectContaining({ action: 'outreach_Outreach', method: 'isAvailableLog4jDisclaimer' })
-        ]);
-      });
-
-      it('renders a loading spinner until the outreach backend calls complete incl the log4j call', async function() {
-        render(<Welcome />);
-
-        const status = selectors.loadingStatus();
-        expect(status).toBeInTheDocument();
-        expect(status).toHaveTextContent('Loading');
-
-        await waitForElementToBeRemoved(status);
-      });
-    });
-
-    describe('when the user is not an admin', function() {
-      beforeEach(function() {
-        user = { administrator: false };
-      });
-
-      it('does not call the isAvailableLog4jDisclaimer outreach call', async function() {
-        jest.spyOn(axios, 'post').mockReturnValue(new Promise(() => {}));
-        render(<Welcome />);
-
-        expect(axios.post).toHaveBeenCalledWith('/service/extdirect', [
-          expect.objectContaining({ action: 'outreach_Outreach', method: 'readStatus' }),
-          expect.objectContaining({ action: 'outreach_Outreach', method: 'getProxyDownloadNumbers' })
-        ]);
-      });
-    });
-
-    describe('when the user is not logged in', function() {
-      it('does not call the isAvailableLog4jDisclaimer outreach call', async function() {
-        jest.spyOn(axios, 'post').mockReturnValue(new Promise(() => {}));
-        render(<Welcome />);
-
-        expect(axios.post).toHaveBeenCalledWith('/service/extdirect', [
-          expect.objectContaining({ action: 'outreach_Outreach', method: 'readStatus' }),
-          expect.objectContaining({ action: 'outreach_Outreach', method: 'getProxyDownloadNumbers' })
-        ]);
-      });
-    });
   });
 
   describe('error handling', function() {
@@ -187,272 +156,65 @@ describe('Welcome', function() {
       expect(axios.post).toHaveBeenLastCalledWith('/service/extdirect', [
         expect.objectContaining({ action: 'outreach_Outreach', method: 'readStatus' }),
         expect.objectContaining({ action: 'outreach_Outreach', method: 'getProxyDownloadNumbers' }),
-        expect.objectContaining({ action: 'outreach_Outreach', method: 'isAvailableLog4jDisclaimer' })
+        expect.objectContaining({ action: 'outreach_Outreach', method: 'showFirewallAlert' })
       ]);
     });
   });
 
-  describe('log4j alert', function() {
+  describe('firewall alert', function() {
     beforeEach(function() {
-      user = { administrator: true };
+      user = {administrator: true};
     });
 
-    function mockLog4jResponse(returnValue) {
+    function mockFirewallResponse(returnValue) {
       // NOTE: response array order does not necessarily match request array order
       jest.spyOn(axios, 'post').mockReturnValue({
         data: [
-          testData.outreachIsAvailableLog4jDisclaimer(returnValue),
+          testData.showFirewallAlertDisclaimer(returnValue),
           testData.outreachReadStatusBasicSuccess,
           testData.outreachGetProxyDownloadNumbersBasicSuccess
         ]
       });
     }
 
-    it('renders a region named "Log4j Capability Notice" if the isAvailableLog4jDisclaimer call returns false',
+    it('renders a region named "Firewall Capability Notice" if the showFirewallAlert call returns true',
         async function() {
-          mockLog4jResponse(false);
-
-          render(<Welcome />);
-
-          expect(await selectors.log4jCapabiltyNotice('find')).toHaveTextContent(/log4j/i);
+          mockFirewallResponse(true);
+          render(<Welcome/>);
+          const loadingSpinner = selectors.loadingStatus();
+          await waitForElementToBeRemoved(loadingSpinner);
+          expect(selectors.firewallCapabilityNotice('query')).toBeInTheDocument();
         }
     );
 
-    it('does not render the log4j region if isAvailableLog4jDisclaimer returns true', async function() {
-      mockLog4jResponse(true);
-
-      render(<Welcome />);
-
-      const loadingSpinner = selectors.loadingStatus();
-      await waitForElementToBeRemoved(loadingSpinner);
-      expect(selectors.log4jCapabiltyNotice('query')).not.toBeInTheDocument();
-    });
-
-    it('does not render the log4j region if the user is not an admin', async function() {
-      user = { administrator: false };
-      mockLog4jResponse(false);
-
-      render(<Welcome />);
-
-      const loadingSpinner = selectors.loadingStatus();
-      await waitForElementToBeRemoved(loadingSpinner);
-      expect(selectors.log4jCapabiltyNotice('query')).not.toBeInTheDocument();
-    });
-
-    it('does not render the log4j region if the user is not logged in', async function() {
-      user = null;
-
-      mockLog4jResponse(false);
-      render(<Welcome />);
-
-      const loadingSpinner = selectors.loadingStatus();
-      await waitForElementToBeRemoved(loadingSpinner);
-      expect(selectors.log4jCapabiltyNotice('query')).not.toBeInTheDocument();
-    });
-
-    describe('enable capability button', function() {
-      let originalLocationDescriptor, mockLocation, mockState, mockStateStore, setVulnerabilityCapabilityState;
-
-      beforeEach(function() {
-        originalLocationDescriptor = Object.getOwnPropertyDescriptor(window, 'location');
-        mockLocation = Object.create(null, {
-          hash: {
-            configurable: true,
-            enumerable: true,
-            set: () => {}
-          }
+    it('does not render the firewall region if showFirewallAlert returns false',
+        async function() {
+          mockFirewallResponse(false);
+          render(<Welcome/>);
+          const loadingSpinner = selectors.loadingStatus();
+          await waitForElementToBeRemoved(loadingSpinner);
+          expect(selectors.firewallCapabilityNotice('query')).not.toBeInTheDocument();
         });
 
-        Object.defineProperty(window, 'location', {
-          get: () => mockLocation
+    it('does not render the firewall region if the user is not an admin',
+        async function() {
+          user = {administrator: false};
+          mockFirewallResponse(false);
+          render(<Welcome/>);
+          const loadingSpinner = selectors.loadingStatus();
+          await waitForElementToBeRemoved(loadingSpinner);
+          expect(selectors.firewallCapabilityNotice('query')).not.toBeInTheDocument();
         });
 
-        let vulnerabilityCapabilityState = {}, vulnerabilityCapabilityStateHandler;
-
-        mockState = { getValue: jest.fn(), getUser: () => user };
-        jest.spyOn(ExtJS, 'state').mockReturnValue(mockState);
-        when(mockState.getValue).calledWith('uiSettings').mockReturnValue({});
-        when(mockState.getValue).calledWith('vulnerabilityCapabilityState', expect.anything())
-            .mockImplementation(() => vulnerabilityCapabilityState);
-
-        mockStateStore = { on: jest.fn() };
-        when(mockStateStore.on).calledWith('datachanged', expect.anything(), undefined, expect.anything())
-            .mockImplementation((_, handler) => {
-              vulnerabilityCapabilityStateHandler = handler;
-              return { destroy: () => {} };
-            });
-
-        const getStore = jest.fn();
-        when(getStore).calledWith('State').mockReturnValue(mockStateStore);
-        window.Ext = { getApplication: () => ({ getStore }) };
-
-        setVulnerabilityCapabilityState = state => {
-          vulnerabilityCapabilityState = state;
-          vulnerabilityCapabilityStateHandler?.();
-        };
-      });
-
-      afterEach(function() {
-        Object.defineProperty(window, 'location', originalLocationDescriptor);
-      });
-
-      it('renders within the log4j notice', async function() {
-        mockLog4jResponse(false);
-        render(<Welcome />);
-
-        const notice = await selectors.log4jCapabiltyNotice('find'),
-            btn = selectors.enableCapabilityBtn();
-
-        expect(notice).toContainElement(btn);
-      });
-
-      it('calls the setLog4JVisualizerEnabled RPC call with an argument of true', async function() {
-        let log4jCallArgs;
-
-        jest.spyOn(axios, 'post');
-        when(axios.post).calledWith('/service/extdirect', expect.any(Array)).mockResolvedValue({
-          data: [
-            testData.outreachIsAvailableLog4jDisclaimer(false),
-            testData.outreachReadStatusBasicSuccess,
-            testData.outreachGetProxyDownloadNumbersBasicSuccess
-          ]
+    it('does not render the firewall region if the user is not logged in',
+        async function() {
+          user = null;
+          mockFirewallResponse(false);
+          render(<Welcome/>);
+          const loadingSpinner = selectors.loadingStatus();
+          await waitForElementToBeRemoved(loadingSpinner);
+          expect(selectors.firewallCapabilityNotice('query')).not.toBeInTheDocument();
         });
-        when(axios.post)
-            .calledWith('/service/extdirect', expect.objectContaining({ method: 'setLog4JVisualizerEnabled' }))
-            .mockImplementation((_, requestBody) => {
-              log4jCallArgs = requestBody.data;
-              return new Promise(() => {});
-            });
-
-        const hashSpy = jest.spyOn(mockLocation, 'hash', 'set');
-
-        render(<Welcome />);
-
-        const btn = await selectors.enableCapabilityBtn('find');
-        expect(log4jCallArgs).toBe(undefined);
-
-        await userEvent.click(btn);
-        expect(log4jCallArgs).toEqual([true]);
-        expect(hashSpy).not.toHaveBeenCalled();
-      });
-
-      it('waits until the setLog4JVisualizerEnabled RPC call returns and the vulnerabilityCapabilityState is ' +
-          'enabled, and then redirects to #admin/repository/insightfrontend', async function() {
-        let log4jCallResolve;
-
-        jest.spyOn(axios, 'post');
-        when(axios.post).calledWith('/service/extdirect', expect.any(Array)).mockResolvedValue({
-          data: [
-            testData.outreachIsAvailableLog4jDisclaimer(false),
-            testData.outreachReadStatusBasicSuccess,
-            testData.outreachGetProxyDownloadNumbersBasicSuccess
-          ]
-        });
-        when(axios.post)
-            .calledWith('/service/extdirect', expect.objectContaining({ method: 'setLog4JVisualizerEnabled' }))
-            .mockImplementation(() =>
-              new Promise(resolve => {
-                log4jCallResolve = resolve;
-              })
-            );
-
-        const hashSpy = jest.spyOn(mockLocation, 'hash', 'set');
-
-        render(<Welcome />);
-
-        await userEvent.click(await selectors.enableCapabilityBtn('find'));
-        expect(hashSpy).not.toHaveBeenCalled();
-
-        expect(selectors.loadingStatus()).toHaveTextContent('Enabling');
-
-        log4jCallResolve({ data: { result: { success: true } } });
-        expect(hashSpy).not.toHaveBeenCalled();
-
-        setVulnerabilityCapabilityState({ enabled: false });
-        expect(hashSpy).not.toHaveBeenCalled();
-
-        setVulnerabilityCapabilityState({ enabled: true });
-        await waitFor(() => expect(selectors.loadingStatus()).toHaveTextContent('Success'));
-        await waitFor(() => expect(hashSpy).toHaveBeenCalledWith('#admin/repository/insightfrontend'));
-      });
-
-      it('removes the log4j region and renders an error alert if the setLog4JVisualizerEnabled RPC calls fails',
-          async function() {
-            let log4jCallReject;
-
-            jest.spyOn(axios, 'post');
-            when(axios.post).calledWith('/service/extdirect', expect.any(Array)).mockResolvedValue({
-              data: [
-                testData.outreachIsAvailableLog4jDisclaimer(false),
-                testData.outreachReadStatusBasicSuccess,
-                testData.outreachGetProxyDownloadNumbersBasicSuccess
-              ]
-            });
-            when(axios.post)
-                .calledWith('/service/extdirect', expect.objectContaining({ method: 'setLog4JVisualizerEnabled' }))
-                .mockImplementation(() =>
-                  new Promise((_, reject) => {
-                    log4jCallReject = reject;
-                  })
-                );
-
-            render(<Welcome />);
-
-            await userEvent.click(await selectors.enableCapabilityBtn('find'));
-
-            expect(selectors.errorAlert('query')).not.toBeInTheDocument();
-
-            log4jCallReject({ message: 'foobar' });
-
-            await waitForElementToBeRemoved(selectors.log4jCapabiltyNotice());
-            expect(selectors.errorAlert()).toBeInTheDocument();
-            expect(selectors.errorAlert()).toHaveTextContent('foobar');
-          }
-      );
-
-      it('removes the log4j region and renders an error alert if vulnerabilityCapabilityState is not ' +
-          'eventually enabled', async function() {
-        let log4jCallResolve;
-
-        // The real timeout here is over a minute; definitely worth faking
-        jest.useFakeTimers();
-        jest.spyOn(axios, 'post');
-        when(axios.post).calledWith('/service/extdirect', expect.any(Array)).mockResolvedValue({
-          data: [
-            testData.outreachIsAvailableLog4jDisclaimer(false),
-            testData.outreachReadStatusBasicSuccess,
-            testData.outreachGetProxyDownloadNumbersBasicSuccess
-          ]
-        });
-        when(axios.post)
-            .calledWith('/service/extdirect', expect.objectContaining({ method: 'setLog4JVisualizerEnabled' }))
-            .mockImplementation(() =>
-              new Promise(resolve => {
-                log4jCallResolve = resolve;
-              })
-            );
-
-        render(<Welcome />);
-
-        await userEvent.click(await selectors.enableCapabilityBtn('find'));
-        expect(selectors.errorAlert('query')).not.toBeInTheDocument();
-
-        log4jCallResolve({ data: { result: { success: true } } });
-        expect(selectors.errorAlert('query')).not.toBeInTheDocument();
-
-        const log4jNotice = selectors.log4jCapabiltyNotice();
-        await act(async() => {
-          // For some reason this has to be called twice, presumably because the setTimeout isn't registered
-          // until prior promises have resolved
-          await jest.runAllTimers();
-          await jest.runAllTimers();
-        });
-
-        expect(log4jNotice).not.toBeInTheDocument();
-        expect(selectors.errorAlert()).toBeInTheDocument();
-        expect(selectors.errorAlert()).toHaveTextContent(/timeout/i);
-      });
-    });
   });
 
   describe('outreach iframe', function() {
@@ -515,7 +277,6 @@ describe('Welcome', function() {
     it('sets iframe query parameters based on the getProxyDownloadNumbers API response', async function() {
       jest.spyOn(axios, 'post').mockResolvedValue({
         data: [
-          testData.outreachIsAvailableLog4jDisclaimerBasicSuccess,
           testData.outreachReadStatusBasicSuccess,
           testData.outreachGetProxyDownloadNumbers('&abc=123&def=9000')
         ]
@@ -526,6 +287,85 @@ describe('Welcome', function() {
       const frame = await selectors.outreachFrame('find');
       expect(frame).toHaveAttribute('src', expect.stringMatching(/\?(.*&)?abc=123/));
       expect(frame).toHaveAttribute('src', expect.stringMatching(/\?(.*&)?def=9000/));
+    });
+  });
+
+  describe('quick actions', function() {
+    beforeEach(function() {
+      when(ExtJS.checkPermission).calledWith(expect.anything()).mockReturnValue(false);
+      when(ExtJS.state().getValue).calledWith('browseableformats').mockReturnValue([]);
+    });
+
+    it('shows "Release Notes", "Documentation" and "Community" for unauthorized user', async function() {
+      const {quickAction, loadingStatus} = selectors;
+
+      render(<Welcome />);
+      await waitForElementToBeRemoved(loadingStatus());
+
+      expect(quickAction(RELEASE_NOTES.subTitle)).toBeVisible();
+      expect(quickAction(DOCUMENTATION.subTitle)).toBeVisible();
+      expect(quickAction(COMMUNITY.subTitle)).toBeVisible();
+    });
+
+    it('shows "Browse", "Search" and "Connect" for anonymous user', async function() {
+      const {quickAction, loadingStatus} = selectors;
+
+      when(ExtJS.checkPermission).calledWith(Permissions.SEARCH.READ).mockReturnValue(true);
+      when(ExtJS.state().getValue).calledWith('browseableformats').mockReturnValue(browseableFormats);
+
+      render(<Welcome />);
+      await waitForElementToBeRemoved(loadingStatus());
+
+      expect(quickAction(BROWSE.subTitle)).toBeVisible();
+      expect(quickAction(SEARCH.subTitle)).toBeVisible();
+      expect(quickAction(CONNECT.subTitle)).toBeVisible();
+    });
+
+    it('shows "System Health", "Cleanup Policies" and "Browse" for admin', async function() {
+      const {quickAction, loadingStatus} = selectors;
+
+      when(ExtJS.checkPermission).calledWith(Permissions.METRICS.READ).mockReturnValue(true);
+      when(ExtJS.checkPermission).calledWith(Permissions.ADMIN).mockReturnValue(true);
+      when(ExtJS.checkPermission).calledWith(Permissions.SEARCH.READ).mockReturnValue(true);
+      when(ExtJS.state().getValue).calledWith('browseableformats').mockReturnValue(browseableFormats);
+
+      render(<Welcome />);
+      await waitForElementToBeRemoved(loadingStatus());
+
+      expect(quickAction(SYSTEM_HEALTH.subTitle)).toBeVisible();
+      expect(quickAction(CLEANUP_POLICIES.subTitle)).toBeVisible();
+      expect(quickAction(BROWSE.subTitle)).toBeVisible();
+    });
+
+    it('shows the "Obtaining a Repository URL" modal', async function() {
+      const {quickAction, connectModal, connectModalCloseButton, loadingStatus} = selectors;
+
+      when(ExtJS.state().getValue).calledWith('browseableformats').mockReturnValue(browseableFormats);
+
+      render(<Welcome />);
+      await waitForElementToBeRemoved(loadingStatus());
+
+      expect(localStorage.getItem).toHaveBeenLastCalledWith('nx-welcome-show-connect-action')
+      expect(quickAction(CONNECT.subTitle)).toBeVisible();
+      expect(connectModal()).not.toBeInTheDocument();
+
+      userEvent.click(quickAction(CONNECT.subTitle));
+      expect(connectModal()).toBeVisible();
+
+      userEvent.click(connectModalCloseButton());
+      expect(localStorage.setItem).toHaveBeenLastCalledWith('nx-welcome-show-connect-action', 'false');
+    });
+
+    it('doesn\'t show the "Connect" quick action', async function() {
+      const {quickAction, loadingStatus} = selectors;
+
+      when(ExtJS.state().getValue).calledWith('browseableformats').mockReturnValue(browseableFormats);
+      when(localStorage.getItem).calledWith('nx-welcome-show-connect-action').mockReturnValue('false');
+
+      render(<Welcome />);
+      await waitForElementToBeRemoved(loadingStatus());
+
+      expect(quickAction(CONNECT.subTitle)).not.toBeInTheDocument();
     });
   });
 });

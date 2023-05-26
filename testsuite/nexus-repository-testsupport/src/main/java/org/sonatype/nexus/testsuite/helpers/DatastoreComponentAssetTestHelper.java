@@ -26,6 +26,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -41,6 +42,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
@@ -66,6 +68,8 @@ import org.sonatype.nexus.repository.content.maintenance.ContentMaintenanceFacet
 import org.sonatype.nexus.repository.content.store.ContentStoreEvent;
 import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.types.ProxyType;
+import org.sonatype.nexus.repository.view.Content;
 
 import com.google.common.collect.ImmutableMap;
 import org.joda.time.DateTime;
@@ -74,7 +78,6 @@ import static com.google.common.base.Strings.nullToEmpty;
 import static java.lang.Boolean.TRUE;
 import static java.time.LocalDate.now;
 import static org.apache.commons.lang.StringUtils.stripStart;
-import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.endsWith;
 import static org.apache.commons.lang3.StringUtils.indexOf;
 import static org.apache.commons.lang3.StringUtils.startsWith;
@@ -92,6 +95,7 @@ import static org.sonatype.nexus.repository.content.AttributeOperation.OVERLAY;
 @Named
 @Singleton
 public class DatastoreComponentAssetTestHelper
+    extends ComponentSupport
     implements ComponentAssetTestHelper
 {
   private static final String SNAPSHOT_VERSION_SUFFIX = "-SNAPSHOT";
@@ -113,15 +117,6 @@ public class DatastoreComponentAssetTestHelper
   private BlobStoreManager blobStoreManager;
 
   @Override
-  public DateTime getBlobCreatedTime(final Repository repository, final String path) {
-    return findAssetByPathNotNull(repository, path)
-        .blob()
-        .map(AssetBlob::blobCreated)
-        .map(DateHelper::toDateTime)
-        .orElse(null);
-  }
-
-  @Override
   public DateTime getAssetCreatedTime(final Repository repository, final String path) {
     return DateHelper.toDateTime(findAssetByPathNotNull(repository, path).created());
   }
@@ -129,7 +124,11 @@ public class DatastoreComponentAssetTestHelper
   @Override
   public DateTime getBlobUpdatedTime(final Repository repository, final String path) {
     // AssetBlobs are immutable so the created time is the equivalent of the old updated time.
-    return getBlobCreatedTime(repository, path);
+    return findAssetByPathNotNull(repository, path)
+        .blob()
+        .map(AssetBlob::blobCreated)
+        .map(DateHelper::toDateTime)
+        .orElse(null);
   }
 
   @Override
@@ -252,7 +251,7 @@ public class DatastoreComponentAssetTestHelper
 
   @Override
   public NestedAttributesMap attributes(final Repository repository, final String path) {
-    return findAssetByPathNotNull(repository, path).attributes();
+    return findAssetByPathNotNull(repository, adjustedPath(path)).attributes();
   }
 
   @Override
@@ -426,19 +425,13 @@ public class DatastoreComponentAssetTestHelper
 
     Timestamp time = Timestamp.from(Instant.now().minusSeconds(minusSeconds));
 
-    try (Connection connection = sessionSupplier.openConnection(DEFAULT_DATASTORE_NAME);
-         PreparedStatement stmt = connection.prepareStatement("UPDATE " + repository.getFormat().getValue() + "_asset "
-             + "SET last_downloaded = ? WHERE repository_id = ?")) {
+    String sql = "UPDATE " + repository.getFormat().getValue() + "_asset "
+        + "SET last_downloaded = ? WHERE repository_id = ?";
+
+    update(sql, stmt -> {
       stmt.setTimestamp(1, time);
       stmt.setInt(2, repositoryId);
-      stmt.execute();
-      if (stmt.getWarnings() != null) {
-        throw new RuntimeException(UPDATE_TIME_ERROR_MESSAGE + stmt.getWarnings());
-      }
-    }
-    catch (SQLException e) {
-      throw new RuntimeException(e);
-    }
+    });
 
     streamOf(repository.facet(ContentFacet.class).assets()::browse)
         .forEach(asset -> sendEvent(repository, asset));
@@ -450,28 +443,48 @@ public class DatastoreComponentAssetTestHelper
 
     Timestamp time = Timestamp.from(Instant.now().minusSeconds(minusSeconds));
 
-    try (Connection connection = sessionSupplier.openConnection(DEFAULT_DATASTORE_NAME);
-         PreparedStatement stmt = connection.prepareStatement("UPDATE " + repository.getFormat().getValue() + "_asset "
-             + "SET last_downloaded = ? WHERE repository_id = ? AND path ~ ?")) {
+    String sql = "UPDATE " + repository.getFormat().getValue() + "_asset "
+        + "SET last_downloaded = ? WHERE repository_id = ? AND path ~ ?";
+
+    update(sql, stmt -> {
       stmt.setTimestamp(1, time);
       stmt.setInt(2, repositoryId);
       stmt.setString(3, regex);
-      stmt.execute();
-      if (stmt.getWarnings() != null) {
-        throw new RuntimeException(UPDATE_TIME_ERROR_MESSAGE + stmt.getWarnings());
-      }
-    }
-    catch (SQLException e) {
-      throw new RuntimeException(e);
-    }
+    });
 
     streamOf(repository.facet(ContentFacet.class).assets()::browse)
         .forEach(asset -> sendEvent(repository, asset));
   }
 
   @Override
-  public void setComponentLastUpdatedTime(Repository repository, final Date date) {
+  public void setLastDownloadedTime(final Repository repository, final String path, final Date date) {
+    int repositoryId = repository.facet(ContentFacet.class).contentRepositoryId();
+
+    String sql = "UPDATE " + repository.getFormat().getValue() + "_asset "
+        + "SET last_downloaded = ? WHERE repository_id = ? AND path = ?";
+
+    update(sql, stmt -> {
+      setDate(date, (timestamp, calendar) -> stmt.setTimestamp(1, timestamp, calendar));
+      stmt.setInt(2, repositoryId);
+      stmt.setString(3, adjustedPath(path));
+    });
+  }
+
+  @Override
+  public void setComponentLastUpdatedTime(final Repository repository, final Date date) {
     setLastUpdatedTime(repository, date, "component");
+  }
+
+  @Override
+  public void setAssetCreatedTime(final Repository repository, final String path, final Date date) {
+    int repositoryId = repository.facet(ContentFacet.class).contentRepositoryId();
+    String format = repository.getFormat().getValue();
+
+    update("UPDATE " + format + "_asset SET created = ? WHERE repository_id = ?  AND path = ?", stmt -> {
+      setDate(date, (timestamp, calendar) -> stmt.setTimestamp(1, timestamp, calendar));
+      stmt.setInt(2, repositoryId);
+      stmt.setString(3, adjustedPath(path));
+    });
   }
 
   @Override
@@ -482,20 +495,13 @@ public class DatastoreComponentAssetTestHelper
   private void setLastUpdatedTime(final Repository repository, final Date date, final String table) {
     int repositoryId = ((ContentFacetSupport) repository.facet(ContentFacet.class)).contentRepositoryId();
 
-    try (Connection connection = sessionSupplier
-        .openConnection(DEFAULT_DATASTORE_NAME); PreparedStatement stmt = connection.prepareStatement(
-        "UPDATE " + repository.getFormat().getValue() + "_" + table +
-            " SET last_updated = ? WHERE repository_id = ?")) {
-      stmt.setTimestamp(1, Timestamp.from(date.toInstant()));
+    String sql = "UPDATE " + repository.getFormat().getValue() + "_" + table +
+        " SET last_updated = ? WHERE repository_id = ?";
+
+    update(sql, stmt -> {
+      setDate(date, (timestamp, calendar) -> stmt.setTimestamp(1, timestamp, calendar));
       stmt.setInt(2, repositoryId);
-      stmt.execute();
-      if (stmt.getWarnings() != null) {
-        throw new RuntimeException("Failed to set updated time: " + stmt.getWarnings());
-      }
-    }
-    catch (SQLException e) {
-      throw new RuntimeException(e);
-    }
+    });
   }
 
   @Override
@@ -503,66 +509,65 @@ public class DatastoreComponentAssetTestHelper
     setLastUpdatedTime(repository, path, date, "asset");
   }
 
+  /**
+   * @deprecated last_updated indicates when the DB record was last touched, calling this is almost certainly wrong.
+   */
+  @Deprecated
   private void setLastUpdatedTime(final Repository repository, final String path, final Date date, final String table) {
     int repositoryId = repository.facet(ContentFacet.class).contentRepositoryId();
 
-    try (Connection connection = sessionSupplier
-        .openConnection(DEFAULT_DATASTORE_NAME); PreparedStatement stmt = connection.prepareStatement(
-        "UPDATE " + repository.getFormat().getValue() + "_" + table +
-            " SET last_updated = ? WHERE repository_id = ? AND path = ?")) {
-      stmt.setTimestamp(1, Timestamp.from(date.toInstant()));
+    String sql = "UPDATE " + repository.getFormat().getValue() + "_" + table +
+        " SET last_updated = ? WHERE repository_id = ? AND path = ?";
+
+    update(sql, stmt -> {
+      setDate(date, (timestamp, calendar) -> stmt.setTimestamp(1, timestamp, calendar));
       stmt.setInt(2, repositoryId);
       stmt.setString(3, path);
-      stmt.execute();
-      if (stmt.getWarnings() != null) {
-        throw new RuntimeException("Failed to set updated time: " + stmt.getWarnings());
-      }
-    }
-    catch (SQLException e) {
-      throw new RuntimeException(e);
-    }
+    });
   }
 
   @Override
-  public void setAssetBlobUpdatedTime(final Repository repository, final String pathRegex, final Date date) {
+  public void setBlobUpdatedTime(final Repository repository, final String pathRegex, final Date date) {
     int repositoryId = repository.facet(ContentFacet.class).contentRepositoryId();
 
-    try (Connection connection = sessionSupplier
-        .openConnection(DEFAULT_DATASTORE_NAME); PreparedStatement stmt = connection.prepareStatement(
-        "UPDATE " + repository.getFormat().getValue() + "_asset_blob ab" +
+    String sql = "UPDATE " + repository.getFormat().getValue() + "_asset_blob ab" +
             " SET blob_created = ?" +
             " WHERE EXISTS (SELECT * FROM " + repository.getFormat().getValue() + "_asset a" +
-            " WHERE a.asset_blob_id = ab.asset_blob_id AND a.repository_id = ? AND a.path ~ ?)")) {
-      stmt.setTimestamp(1, Timestamp.from(date.toInstant()));
+            " WHERE a.asset_blob_id = ab.asset_blob_id AND a.repository_id = ? AND a.path ~ ?)";
+
+    update(sql, stmt -> {
+      setDate(date, (timestamp, calendar) -> stmt.setTimestamp(1, timestamp, calendar));
       stmt.setInt(2, repositoryId);
       stmt.setString(3, pathRegex);
-      stmt.execute();
-      if (stmt.getWarnings() != null) {
-        throw new RuntimeException("Failed to set blob created time: " + stmt.getWarnings());
-      }
+    });
+  }
+
+  @Override
+  public void setAssetContentLastModified(final Repository repository, final String path, final Date date) {
+    if (repository.getType() instanceof ProxyType) {
+      Asset asset = findAssetByPathNotNull(repository, path);
+
+      repository.facet(ContentFacet.class).assets().with(asset).attributes(OVERLAY, "content",
+          Collections.singletonMap(Content.CONTENT_LAST_MODIFIED, new DateTime(date)));
     }
-    catch (SQLException e) {
-      throw new RuntimeException(e);
+    else {
+      // Note behaviour difference with Orient
+      log.info("SQL does not support setting last_modified for non-proxy repositories: {} path:", repository.getName(),
+          path);
     }
   }
 
   @Override
   public void setLastDownloadedTimeNull(final Repository repository) {
-    int repositoryId = ((ContentFacetSupport) repository.facet(ContentFacet.class)).contentRepositoryId();
+    int repositoryId = repository.facet(ContentFacet.class).contentRepositoryId();
 
-    try (Connection connection = sessionSupplier.openConnection(DEFAULT_DATASTORE_NAME);
-         PreparedStatement stmt = connection.prepareStatement("UPDATE " + repository.getFormat().getValue() + "_asset "
-             + "SET last_downloaded = ? WHERE repository_id = ?")) {
+    String sql = "UPDATE " + repository.getFormat().getValue() + "_asset "
+        + "SET last_downloaded = ? WHERE repository_id = ?";
+
+    update(sql, stmt -> {
       stmt.setNull(1, Types.TIMESTAMP);
       stmt.setInt(2, repositoryId);
-      stmt.execute();
-      if(stmt.getWarnings() != null) {
-        throw new RuntimeException(UPDATE_TIME_ERROR_MESSAGE + stmt.getWarnings());
-      }
-    }
-    catch (SQLException e) {
-      throw new RuntimeException(e);
-    }
+    });
     streamOf(repository.facet(ContentFacet.class).assets()::browse)
         .forEach(asset -> sendEvent(repository, asset));
   }
@@ -661,13 +666,11 @@ public class DatastoreComponentAssetTestHelper
 
   @Override
   public EntityId getComponentId(final Repository repository, final String assetPath) {
-    Optional<Component> component = findAssetByPath(repository, assetPath)
-        .flatMap(FluentAsset::component);
-    return component
+    return findAssetByPathNotNull(repository, assetPath)
+        .component()
         .map(InternalIds::internalComponentId)
         .map(InternalIds::toExternalId)
-        .orElseThrow(() -> new ComponentNotFoundException(repository, component.map(Component::namespace).orElse(EMPTY),
-            component.map(Component::name).orElse(EMPTY), component.map(Component::version).orElse(EMPTY)));
+        .orElse(null);
   }
 
   @Override
@@ -677,7 +680,7 @@ public class DatastoreComponentAssetTestHelper
   }
 
   @Override
-  public void modifyAttributes(final Repository repository, String child1, final String child2, final int value) {
+  public void modifyAttributes(final Repository repository, final String child1, final String child2, final int value) {
     repository.facet(ContentFacet.class)
         .attributes(OVERLAY, child1, ImmutableMap.of(child2, ImmutableMap.of(Integer.class, value)));
   }
@@ -695,5 +698,40 @@ public class DatastoreComponentAssetTestHelper
         .map(attr -> attr.child(CacheInfo.CACHE))
         .map(map -> new CacheInfo(new DateTime(map.get(LAST_VERIFIED)), map.get(CACHE_TOKEN, String.class)))
         .orElse(null);
+  }
+
+  private void update(final String sql, final ThrowingConsumer<PreparedStatement> consumer) {
+    try (Connection connection = sessionSupplier.openConnection(DEFAULT_DATASTORE_NAME);
+        PreparedStatement stmt = connection.prepareStatement(sql)) {
+
+     consumer.accept(stmt);
+
+     stmt.execute();
+
+     if(stmt.getWarnings() != null) {
+       throw new RuntimeException(UPDATE_TIME_ERROR_MESSAGE + stmt.getWarnings());
+     }
+   }
+   catch (SQLException e) {
+     throw new RuntimeException(e);
+   }
+  }
+
+  public void setDate(final Date date, final ThrowingBiConsumer<java.sql.Timestamp, Calendar> consumer) throws SQLException {
+    Calendar cal = Calendar.getInstance();
+    cal.setTime(date);
+    consumer.accept(Timestamp.from(date.toInstant()), cal);
+  }
+
+  @FunctionalInterface
+  public interface ThrowingConsumer<T>
+  {
+    void accept(T t) throws SQLException;
+  }
+
+  @FunctionalInterface
+  public interface ThrowingBiConsumer<T, R>
+  {
+    void accept(T t, R r) throws SQLException;
   }
 }

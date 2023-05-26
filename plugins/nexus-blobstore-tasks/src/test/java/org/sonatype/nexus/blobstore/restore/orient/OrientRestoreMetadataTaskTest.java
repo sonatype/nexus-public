@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Stream;
 
+import org.sonatype.nexus.repository.move.ChangeRepositoryBlobStoreStore;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
@@ -39,6 +40,7 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.storage.BucketStore;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
+import org.sonatype.nexus.scheduling.TaskUtils;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
@@ -54,15 +56,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
@@ -82,6 +76,9 @@ public class OrientRestoreMetadataTaskTest
 
   @Mock
   BlobStoreManager blobStoreManager;
+
+  @Mock
+  ChangeRepositoryBlobStoreStore changeBlobstoreStore;
 
   @Mock
   RepositoryManager repositoryManager;
@@ -119,6 +116,9 @@ public class OrientRestoreMetadataTaskTest
   @Mock
   MaintenanceService maintenanceService;
 
+  @Mock
+  TaskUtils taskUtils;
+
   OrientRestoreMetadataTask underTest;
 
   Map<String, OrientIntegrityCheckStrategy> integrityCheckStrategies;
@@ -136,13 +136,14 @@ public class OrientRestoreMetadataTaskTest
     integrityCheckStrategies.put(DEFAULT_NAME, orientDefaultIntegrityCheckStrategy);
 
     underTest =
-        new OrientRestoreMetadataTask(blobStoreManager, repositoryManager, ImmutableMap.of("maven2", restoreBlobStrategy),
-            blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies, bucketStore, maintenanceService);
+        new OrientRestoreMetadataTask(blobStoreManager,changeBlobstoreStore, repositoryManager, ImmutableMap.of("maven2", restoreBlobStrategy),
+            blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies, bucketStore, maintenanceService,taskUtils);
 
     reset(integrityCheckStrategies); // reset this mock so we more easily verify calls
 
     configuration = new TaskConfiguration();
     configuration.setString(BLOB_STORE_NAME_FIELD_ID, BLOBSTORE_NAME);
+    configuration.setString(".name", "test");
     configuration.setId(BLOBSTORE_NAME);
     configuration.setTypeId(TYPE_ID);
 
@@ -164,6 +165,19 @@ public class OrientRestoreMetadataTaskTest
     when(blobStore.getBlobAttributes(blobId)).thenReturn(blobAttributes);
 
     when(dryRunPrefix.get()).thenReturn("");
+  }
+
+  @Test
+  public void checkForConflictsRunsIfNoChangeStoreProvider() {
+    OrientRestoreMetadataTask underTest = new OrientRestoreMetadataTask(blobStoreManager,null, repositoryManager, ImmutableMap.of("maven2", restoreBlobStrategy),
+        blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies, bucketStore, maintenanceService,taskUtils);
+
+    underTest.configure(configuration);
+
+    doNothing().when(taskUtils).checkForConflictingTasks(anyString(), anyString(), any(List.class), any(Map.class));
+    underTest.checkForConflicts();
+
+    verify(taskUtils, times(1)).checkForConflictingTasks(anyString(), anyString(), any(List.class), any(Map.class));
   }
 
   @Test
@@ -376,8 +390,9 @@ public class OrientRestoreMetadataTaskTest
     configuration.setBoolean(INTEGRITY_CHECK, false);
 
     OrientRestoreMetadataTask underTest =
-        new OrientRestoreMetadataTask(blobStoreManager, repositoryManager, ImmutableMap.of("maven2", restoreBlobStrategy),
-            blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies, bucketStore, maintenanceService)
+        new OrientRestoreMetadataTask(blobStoreManager, changeBlobstoreStore, repositoryManager,
+            ImmutableMap.of("maven2", restoreBlobStrategy),
+            blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies, bucketStore, maintenanceService, taskUtils)
         {
       @Override
       public boolean isCanceled() {

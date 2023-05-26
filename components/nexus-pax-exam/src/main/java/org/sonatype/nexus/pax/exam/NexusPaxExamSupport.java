@@ -23,6 +23,7 @@ import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeoutException;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.net.ssl.HttpsURLConnection;
@@ -78,6 +79,7 @@ import static org.ops4j.pax.exam.CoreOptions.wrappedBundle;
 import static org.ops4j.pax.exam.OptionUtils.combine;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.*;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED_NAMED;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_TABLE_SEARCH;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_TABLE_SEARCH_NAMED;
@@ -191,6 +193,15 @@ public abstract class NexusPaxExamSupport
   @Inject
   @Named(ORIENT_ENABLED)
   private Boolean orientEnabled;
+
+  @Inject
+  @Named(DATASTORE_CLUSTERED_ENABLED_NAMED)
+  private Boolean sqlHaEnabled;
+
+  @Inject
+  @Nullable
+  @Named("nexus.datastore.nexus.jdbcUrl")
+  private String jdbcUrl;
 
   //11.9 is the minimum support version
   private static final String POSTGRES_IMAGE = "docker-all.repo.sonatype.com/postgres:11.9";
@@ -783,6 +794,14 @@ public abstract class NexusPaxExamSupport
 
   protected boolean isNewDb() {
     return !orientEnabled;
+  }
+
+  protected boolean isSqlHa() {
+    return sqlHaEnabled;
+  }
+
+  protected boolean isPostgreSQL() {
+    return jdbcUrl != null && jdbcUrl.contains("postgres");
   }
 
   // -------------------------------------------------------------------------

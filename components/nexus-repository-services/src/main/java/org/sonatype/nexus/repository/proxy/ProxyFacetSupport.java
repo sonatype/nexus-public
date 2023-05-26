@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.proxy;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.time.Duration;
 import java.util.Map;
@@ -458,7 +459,7 @@ public abstract class ProxyFacetSupport
         getRepository().getName());
     URI uri;
     try {
-      uri = config.remoteUrl.resolve(url);
+      uri = config.remoteUrl.resolve(encodeUrl(url));
     }
     catch (IllegalArgumentException e) { // NOSONAR
       log.warn("Unable to resolve url. Reason: {}", e.getMessage());
@@ -522,6 +523,12 @@ public abstract class ProxyFacetSupport
     }
 
     return null;
+  }
+
+  protected String encodeUrl(final String url) throws UnsupportedEncodingException { //NOSONAR
+    // some formats can use special characters in url
+    // override this method if necessary
+    return url;
   }
 
   /**

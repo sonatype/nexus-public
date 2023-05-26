@@ -45,8 +45,7 @@ public abstract class AptUploadHandlerSupport
     this.contentPermissionChecker = contentPermissionChecker;
   }
 
-  protected void doValidation(final Repository repository,
-                              final String assetPath)
+  protected void doValidation(final Repository repository, final String assetPath)
   {
     ensurePermitted(repository.getName(), AptFormat.NAME, assetPath, Collections.emptyMap());
   }

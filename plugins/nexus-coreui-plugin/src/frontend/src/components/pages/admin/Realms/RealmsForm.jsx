@@ -17,21 +17,28 @@ import {
   NxH2,
   NxStatefulForm,
   NxTooltip,
-  NxStatefulTransferList, NxErrorAlert,
+  NxStatefulTransferList
 } from '@sonatype/react-shared-components';
 import {FormUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 
 import RealmsMachine from './RealmsMachine';
+import RealmsRemovalModal from './RealmsRemovalModal';
 
 const {REALMS: {CONFIGURATION: LABELS}, SETTINGS} = UIStrings;
 
 export default function RealmsForm() {
-  const [current, send] = useMachine(RealmsMachine, {devTools: true});
-  const { data, isInvalid, isPristine, validationErrors } = current.context;
+  const [state, send] = useMachine(RealmsMachine, {devTools: true});
+  const {data, isInvalid, isPristine, validationErrors} = state.context;
+
+  const showLocalRealmRemovalModal = 
+    state.matches('showLocalRealmRemovalModal');
 
   const discard = () => send('RESET');
+  const checkLocalRealmRemoval = () => send('CHECK_LOCAL_REALM_REMOVAL');
+  const save = () => send('SAVE');
+  const closeModal = () => send('CLOSE');
 
   const available =
     data?.available?.map(({ id, name: displayName }) => ({
@@ -41,7 +48,7 @@ export default function RealmsForm() {
 
   return (
     <NxStatefulForm
-        {...FormUtils.formProps(current, send)}
+        {...FormUtils.formProps(state, send)}
         validationErrors={validationErrors?.active || FormUtils.saveTooltip({isPristine, isInvalid})}
         additionalFooterBtns={
           <NxTooltip title={FormUtils.discardTooltip({isPristine})}>
@@ -54,6 +61,7 @@ export default function RealmsForm() {
             </NxButton>
           </NxTooltip>
         }
+        onSubmit={checkLocalRealmRemoval}
     >
       <>
         <NxH2>{LABELS.SUB_LABEL}</NxH2>
@@ -68,6 +76,9 @@ export default function RealmsForm() {
             allowReordering
         />
       </>
+      {showLocalRealmRemovalModal &&
+        <RealmsRemovalModal onClose={closeModal} onConfirm={save} />
+      }
     </NxStatefulForm>
   );
 }

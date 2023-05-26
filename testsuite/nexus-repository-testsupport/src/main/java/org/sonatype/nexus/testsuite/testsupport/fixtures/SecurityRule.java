@@ -34,6 +34,7 @@ import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
 import org.sonatype.nexus.security.anonymous.AnonymousManager;
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
 import org.sonatype.nexus.security.privilege.Privilege;
+import org.sonatype.nexus.security.realm.RealmManager;
 import org.sonatype.nexus.security.role.Role;
 import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.NoSuchUserManagerException;
@@ -66,6 +67,8 @@ public class SecurityRule
 
   private final Provider<AnonymousManager> anonymousConfigurationProvider;
 
+  private Provider<RealmManager> realmManagerProvider;
+
   private final Set<Privilege> privileges = new HashSet<>();
 
   private final Set<String> roles = new HashSet<>();
@@ -97,11 +100,13 @@ public class SecurityRule
   public SecurityRule(
       final SecuritySystem securitySystem,
       final SelectorManager selectorManager,
-      final AnonymousManager anonymousConfiguration)
+      final AnonymousManager anonymousConfiguration,
+      final RealmManager realmManager)
   {
     this.securitySystemProvider = () -> securitySystem;
     this.selectorManagerProvider = () -> selectorManager;
     this.anonymousConfigurationProvider = () -> anonymousConfiguration;
+    this.realmManagerProvider = () -> realmManager;
   }
 
   @Override
@@ -392,5 +397,9 @@ public class SecurityRule
 
   public void unmanageRole(final String roleId) {
     roles.remove(roleId);
+  }
+
+  public void enableRoleRealm(final String roleRealmName) {
+    realmManagerProvider.get().enableRealm(roleRealmName);
   }
 }

@@ -14,6 +14,7 @@ package org.sonatype.nexus.blobstore.restore.datastore;
 
 import java.net.URL;
 import java.nio.file.Paths;
+import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -21,6 +22,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Stream;
 
+import org.sonatype.nexus.repository.move.ChangeRepositoryBlobStoreConfiguration;
+import org.sonatype.nexus.repository.move.ChangeRepositoryBlobStoreStore;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
@@ -38,6 +41,7 @@ import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
+import org.sonatype.nexus.scheduling.TaskUtils;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
@@ -49,19 +53,13 @@ import org.mockito.Mock;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
@@ -82,6 +80,9 @@ public class RestoreMetadataTaskTest
 
   @Mock
   BlobStoreManager blobStoreManager;
+
+  @Mock
+  ChangeRepositoryBlobStoreStore changeBlobstoreStore;
 
   @Mock
   RepositoryManager repositoryManager;
@@ -119,6 +120,9 @@ public class RestoreMetadataTaskTest
   @Mock
   private AssetBlobRefFormatCheck assetBlobRefFormatCheck;
 
+  @Mock
+  TaskUtils taskUtils;
+
   RestoreMetadataTask underTest;
 
   Map<String, IntegrityCheckStrategy> integrityCheckStrategies;
@@ -136,13 +140,16 @@ public class RestoreMetadataTaskTest
     integrityCheckStrategies.put(DEFAULT_NAME, defaultIntegrityCheckStrategy);
 
     underTest =
-        new RestoreMetadataTask(blobStoreManager, repositoryManager, ImmutableMap.of(MAVEN_2, restoreBlobStrategy),
-            blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies, maintenanceService, assetBlobRefFormatCheck);
+        new RestoreMetadataTask(blobStoreManager, changeBlobstoreStore, repositoryManager,
+            ImmutableMap.of(MAVEN_2, restoreBlobStrategy),
+            blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies, maintenanceService, assetBlobRefFormatCheck,
+            taskUtils);
 
     reset(integrityCheckStrategies); // reset this mock so we more easily verify calls
 
     configuration = new TaskConfiguration();
     configuration.setString(BLOB_STORE_NAME_FIELD_ID, BLOBSTORE_NAME);
+    configuration.setString(".name", "test");
     configuration.setId(BLOBSTORE_NAME);
     configuration.setTypeId(TYPE_ID);
 
@@ -164,6 +171,94 @@ public class RestoreMetadataTaskTest
     when(blobStore.getBlobAttributes(blobId)).thenReturn(blobAttributes);
 
     when(dryRunPrefix.get()).thenReturn("");
+  }
+
+  @Test
+  public void checkForConflictsThrowsExceptionIfConflictingTaskIsRunning() {
+    underTest.configure(configuration);
+
+    doThrow(new IllegalStateException("conflicting task"))
+        .when(taskUtils).checkForConflictingTasks(anyString(), anyString(), any(List.class), any(Map.class));
+    when(changeBlobstoreStore.findByBlobStoreName(anyString())).thenReturn(Collections.emptyList());
+
+    IllegalStateException exception = assertThrows(IllegalStateException.class, underTest::checkForConflicts);
+
+    assertEquals("conflicting task", exception.getMessage());
+    verify(taskUtils, times(1)).checkForConflictingTasks(anyString(), anyString(), any(List.class), any(Map.class));
+  }
+
+  @Test
+  public void checkForConflictsThrowsExceptionIfMoveTaskIsUnfinished() {
+    ChangeRepositoryBlobStoreConfiguration record = getRecord("test" , BLOBSTORE_NAME, "target-blobstore");
+
+    underTest.configure(configuration);
+
+    doNothing()
+        .when(taskUtils).checkForConflictingTasks(anyString(), anyString(), any(List.class), any(Map.class));
+    when(changeBlobstoreStore.findByBlobStoreName(anyString())).thenReturn(Collections.singletonList(record));
+
+    IllegalStateException exception = assertThrows(IllegalStateException.class, underTest::checkForConflicts);
+
+    assertEquals(String.format("found unfinished move task using blobstore '%s', task can't be executed", BLOBSTORE_NAME), exception.getMessage());
+    verify(taskUtils, times(1)).checkForConflictingTasks(anyString(), anyString(), any(List.class), any(Map.class));
+    verify(changeBlobstoreStore, times(1)).findByBlobStoreName(eq(BLOBSTORE_NAME));
+  }
+
+  @Test
+  public void checkForConflictsRunsIfNoConflictingTasks() {
+    underTest.configure(configuration);
+
+    doNothing().when(taskUtils).checkForConflictingTasks(anyString(), anyString(), any(List.class), any(Map.class));
+    when(changeBlobstoreStore.findByBlobStoreName(anyString())).thenReturn(Collections.emptyList());
+
+    underTest.checkForConflicts();
+
+    verify(taskUtils, times(1)).checkForConflictingTasks(anyString(), anyString(), any(List.class), any(Map.class));
+  }
+
+  private ChangeRepositoryBlobStoreConfiguration getRecord(final String name , final String sourceBlobStoreName , final String targetBlobStoreName) {
+    return new ChangeRepositoryBlobStoreConfiguration()
+    {
+      @Override
+      public String getName() {
+        return name;
+      }
+
+      @Override
+      public void setName(final String name) {
+
+      }
+
+      @Override
+      public String getTargetBlobStoreName() {
+        return targetBlobStoreName;
+      }
+
+      @Override
+      public void setTargetBlobStoreName(final String targetBlobStoreName) {
+
+      }
+
+      @Override
+      public String getSourceBlobStoreName() {
+        return sourceBlobStoreName;
+      }
+
+      @Override
+      public void setSourceBlobStoreName(final String sourceBlobStoreName) {
+
+      }
+
+      @Override
+      public OffsetDateTime getStarted() {
+        return null;
+      }
+
+      @Override
+      public void setStarted(final OffsetDateTime processStartDate) {
+
+      }
+    };
   }
 
   @Test
@@ -408,8 +503,10 @@ public class RestoreMetadataTaskTest
     configuration.setBoolean(INTEGRITY_CHECK, false);
 
     RestoreMetadataTask underTest =
-        new RestoreMetadataTask(blobStoreManager, repositoryManager, ImmutableMap.of(MAVEN_2, restoreBlobStrategy),
-            blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies, maintenanceService, assetBlobRefFormatCheck)
+        new RestoreMetadataTask(blobStoreManager, changeBlobstoreStore, repositoryManager,
+            ImmutableMap.of(MAVEN_2, restoreBlobStrategy),
+            blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies, maintenanceService, assetBlobRefFormatCheck,
+            taskUtils)
         {
           @Override
           public boolean isCanceled() {

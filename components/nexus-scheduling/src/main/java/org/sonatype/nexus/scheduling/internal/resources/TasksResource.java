@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.scheduling.internal.resources.orient;
+package org.sonatype.nexus.scheduling.internal.resources;
 
 import java.util.List;
 import java.util.concurrent.Future;
@@ -30,6 +30,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.scheduling.TaskInfo;
@@ -47,11 +48,13 @@ import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 
 /**
  * @since 3.6
  */
+@FeatureFlag(name = DATASTORE_CLUSTERED_ENABLED, inverse = true, enabledByDefault = true)
 @Named
 @Singleton
 @Path(TasksResource.RESOURCE_URI)

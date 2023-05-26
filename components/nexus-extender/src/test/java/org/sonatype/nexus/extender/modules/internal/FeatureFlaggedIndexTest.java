@@ -80,4 +80,48 @@ public class FeatureFlaggedIndexTest
     System.setProperty(FLAG_2, Boolean.toString(true));
     assertThat(FeatureFlaggedIndex.isFeatureFlagDisabled(mockBundle, ""), is(false));
   }
+
+  @FeatureFlag(name = FLAG_1, inverse = true)
+  @SuppressWarnings("InnerClassMayBeStatic")
+  private final class TestInvertedClass {
+
+  }
+
+  @Test
+  public void testInvertedFlag() throws ClassNotFoundException {
+    doReturn(TestInvertedClass.class).when(mockBundle).loadClass(nullable(String.class));
+
+    // no value set
+    assertThat(FeatureFlaggedIndex.isFeatureFlagDisabled(mockBundle, ""), is(true));
+
+    // flag set to false, then the feature should be disabled
+    System.setProperty(FLAG_1, Boolean.toString(false));
+    assertThat(FeatureFlaggedIndex.isFeatureFlagDisabled(mockBundle, ""), is(false));
+
+    // flag set to true, then the feature should be enabled
+    System.setProperty(FLAG_1, Boolean.toString(true));
+    assertThat(FeatureFlaggedIndex.isFeatureFlagDisabled(mockBundle, ""), is(true));
+  }
+
+  @FeatureFlag(name = FLAG_1, inverse = true, enabledByDefault = true)
+  @SuppressWarnings("InnerClassMayBeStatic")
+  private final class TestInvertedEnabledByDefaultClass {
+
+  }
+
+  @Test
+  public void testInvertedFlagEnabledByDefault() throws ClassNotFoundException {
+    doReturn(TestInvertedEnabledByDefaultClass.class).when(mockBundle).loadClass(nullable(String.class));
+
+    // no value set
+    assertThat(FeatureFlaggedIndex.isFeatureFlagDisabled(mockBundle, ""), is(false));
+
+    // flag set to false, then the feature should be disabled
+    System.setProperty(FLAG_1, Boolean.toString(false));
+    assertThat(FeatureFlaggedIndex.isFeatureFlagDisabled(mockBundle, ""), is(false));
+
+    // flag set to true, when then the feature should be enabled
+    System.setProperty(FLAG_1, Boolean.toString(true));
+    assertThat(FeatureFlaggedIndex.isFeatureFlagDisabled(mockBundle, ""), is(true));
+  }
 }

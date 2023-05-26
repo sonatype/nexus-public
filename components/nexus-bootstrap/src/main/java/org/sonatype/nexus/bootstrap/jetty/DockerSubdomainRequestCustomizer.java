@@ -18,9 +18,18 @@ import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConfiguration.Customizer;
 import org.eclipse.jetty.server.Request;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class DockerSubdomainRequestCustomizer
     implements Customizer
 {
+  private final String nexusContextPath;
+
+  public DockerSubdomainRequestCustomizer(final String contextPath)
+  {
+    this.nexusContextPath = checkNotNull(contextPath) + (contextPath.endsWith("/") ? "" : "/");
+  }
+
   @Override
   public void customize(final Connector connector, final HttpConfiguration channelConfig, final Request request) {
     HttpURI uri = request.getHttpURI();
@@ -36,7 +45,7 @@ public class DockerSubdomainRequestCustomizer
       if (repositoryName != null) {
         request.setHttpURI(
             new HttpURI(
-                uri.toString().replaceFirst(version, "/repository/" + repositoryName + version)
+                uri.toString().replaceFirst(version, nexusContextPath + "repository/" + repositoryName + version)
             )
         );
         // this will reset request internals (such as pathInfo) to the new url

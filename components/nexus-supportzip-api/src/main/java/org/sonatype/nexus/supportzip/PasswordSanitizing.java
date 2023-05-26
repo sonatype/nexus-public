@@ -52,7 +52,9 @@ public class PasswordSanitizing<T extends Map<String, ?>>
       "bearerToken",
       "yumSigning",
       "accountKey",
-      "destinationInstancePassword");
+      "destinationInstancePassword",
+      "NEXUS_DATASTORE_NEXUS_PASSWORD",
+      "NEXUS_SECURITY_INITIAL_PASSWORD");
 
   public static final String REPLACEMENT = "**REDACTED**";
 

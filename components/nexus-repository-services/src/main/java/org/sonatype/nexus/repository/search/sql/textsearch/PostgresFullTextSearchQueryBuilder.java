@@ -19,11 +19,13 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.rest.sql.TextualQueryType;
+import org.sonatype.nexus.repository.search.sql.SqlSearchQueryCondition;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilder;
 
 import com.google.common.collect.ImmutableMap;
 
 import static java.util.stream.Collectors.joining;
+import static org.apache.commons.lang3.StringUtils.removeEnd;
 
 /**
  * Query building utility for full text search columns
@@ -53,8 +55,6 @@ public class PostgresFullTextSearchQueryBuilder
 
   public static final String PREFIX_MATCHER = ":*";
 
-  public static final String TSQUERY_PREFIX_MATCH_INDICATOR = ":";
-
   @Override
   public String replaceWildcards(final String value) {
     String wildcardReplacedValue = super.replaceWildcards(value);
@@ -69,6 +69,16 @@ public class PostgresFullTextSearchQueryBuilder
       }
     }
     return wildcardReplacedValue;
+  }
+
+  @Override
+  protected SqlSearchQueryCondition wildcardCondition(
+      final String field,
+      final String value,
+      final String parameterPrefix)
+  {
+    return new SqlSearchQueryCondition(wildcard(field, placeholder(parameterPrefix + field)),
+        ImmutableMap.of(parameterPrefix + field, removeEnd(sanitise(value), ":*")));
   }
 
   @Override
@@ -94,12 +104,6 @@ public class PostgresFullTextSearchQueryBuilder
   @Override
   protected Map<Character, String> getWildcardMapping() {
     return ImmutableMap.of(ZERO_OR_MORE_CHARACTERS, PREFIX_MATCHER, ANY_CHARACTER, PREFIX_MATCHER);
-  }
-
-  @Override
-  protected String escapeSymbols(final String value) {
-    String escaped = value.replace(TSQUERY_PREFIX_MATCH_INDICATOR, ESCAPE + TSQUERY_PREFIX_MATCH_INDICATOR);
-    return super.escapeSymbols(escaped);
   }
 
   /**

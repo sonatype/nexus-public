@@ -32,20 +32,20 @@ export const outreachGetProxyDownloadNumbers = data => ({
   result: { success: true, data }
 });
 
-export const outreachIsAvailableLog4jDisclaimerBasicSuccess = {
+export const showFirewallAlertBasicSuccess = {
   action: 'outreach_Outreach',
-  method: 'isAvailableLog4jDisclaimer',
+  method: 'showFirewallAlert',
   result: { success: true }
 };
 
-export const outreachIsAvailableLog4jDisclaimer = enabled => ({
-  ...outreachIsAvailableLog4jDisclaimerBasicSuccess,
-  result: { success: true, data: enabled.toString() }
+export const showFirewallAlertDisclaimer = data => ({
+  ...showFirewallAlertBasicSuccess,
+  result: { success: true, data }
 });
 
 export const simpleSuccessResponse = {
   data: [
-    outreachIsAvailableLog4jDisclaimerBasicSuccess,
+    showFirewallAlertBasicSuccess,
     outreachReadStatusBasicSuccess,
     outreachGetProxyDownloadNumbersBasicSuccess
   ]

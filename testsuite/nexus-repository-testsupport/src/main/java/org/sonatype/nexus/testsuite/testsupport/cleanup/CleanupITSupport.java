@@ -213,7 +213,7 @@ public class CleanupITSupport
   }
 
   protected void setAssetBlobUpdatedTime(final Repository repository, final Date date, final String pathRegex) {
-    componentAssetTestHelper.setAssetBlobUpdatedTime(repository, pathRegex, date);
+    componentAssetTestHelper.setBlobUpdatedTime(repository, pathRegex, date);
   }
 
 

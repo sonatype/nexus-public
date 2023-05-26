@@ -1,0 +1,116 @@
+/**
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.nxrm-outreach-actions {
+  display: grid;
+  width: 1016px;
+  grid-template-columns: repeat(3, 1fr);
+  grid-column-gap: var(--nx-spacing-6x);
+  padding: var(--nx-spacing-6x) 0 0 var(--nx-spacing-6x);
+  box-sizing: content-box;
+
+  .nxrm-quick-action {
+    cursor: pointer;
+    height: 80px;
+    border-radius: var(--nx-border-radius);
+    border: 1px solid var(--nx-swatch-indigo-90);
+    padding: 3px;
+    background-color: var(--nx-swatch-white);
+
+    &:hover {
+      background-color: var(--nx-swatch-indigo-90);
+      border: 1px solid var(--nx-swatch-indigo-80);
+    }
+
+    &:focus-within {
+      border: 1px solid var(--nx-swatch-indigo-80);
+    }
+
+    .nxrm-quick-action-outline {
+      height: 100%;
+      border-radius: 4px;
+
+      &:focus {
+        outline: 2px solid var(--nx-swatch-indigo-80);
+      }
+    }
+
+    .nxrm-quick-action-body {
+      display: grid;
+      grid-template-columns: 84px 1fr 36px;
+      align-items: center;
+      height: 100%;
+
+      .nxrm-quick-action-logo {
+        margin: auto;
+
+        .nxrm-quick-action-icon-container {
+          background-image: linear-gradient(270deg, rgba(0, 184, 145, 1) 0%, rgba(0, 189, 111, 1) 100%);
+          color: var(--nx-swatch-white);
+          border-radius: 50%;
+          height: var(--nx-spacing-12x);
+          width: var(--nx-spacing-12x);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+      }
+
+      .nxrm-quick-action-name {
+        font-family: var(--nx-font-family);
+
+        .nxrm-quick-action-title {
+          color: var(--nx-swatch-grey-05);
+          margin: unset;
+        }
+        .nxrm-quick-action-subtitle {
+          color: var(--nx-swatch-grey-30);
+          font-size: var(--nx-font-size-xs);
+        }
+      }
+
+      .nxrm-quick-action-chevron {
+        font-size: var(--nx-font-size-s);
+
+        .nxrm-quick-action-chevron-icon {
+          color: var(--nx-swatch-indigo-70);
+        }
+      }
+    }
+  }
+}
+
+.nxrm-connect-modal {
+  &__steps {
+    dt {
+      display: list-item;
+      list-style: decimal outside;
+      margin-bottom: var(--nx-spacing-4x);
+      margin-left: var(--nx-spacing-4x);
+
+      &:not(:first-child) {
+        margin-top: var(--nx-spacing-4x);
+      }
+
+      &::marker {
+        font-weight: 700;
+      }
+    }
+    dd {
+      margin: 0;
+    }
+    .nxrm-connect-modal__repositories-table-img {
+      width: 100%;
+    }
+  }
+}

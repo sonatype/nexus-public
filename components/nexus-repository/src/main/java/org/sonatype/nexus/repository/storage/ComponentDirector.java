@@ -16,6 +16,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.config.WritePolicy;
+
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.WRITE_POLICY;
 
 /**
  * Component management director.
@@ -89,5 +93,13 @@ public interface ComponentDirector
    */
   default void afterMove(final List<Map<String, String>> components, final Repository destination) {
     // no-op
+  }
+
+  /**
+   * Check whether redeploy is allowed for the specified Component, implementers need only override this method
+   * for formats which allow re-writes in some scenarios.
+   */
+  default boolean redeployAllowed(final Repository destination, final Component component) {
+    return WritePolicy.ALLOW.name().equals(destination.getConfiguration().attributes(STORAGE).get(WRITE_POLICY));
   }
 }

@@ -163,7 +163,7 @@ export default {
       METHODS: {
         READ_STATUS: 'readStatus',
         GET_PROXY_DOWNLOAD_NUMBERS: 'getProxyDownloadNumbers',
-        IS_LOG4J_CAPABILITY_ACTIVE: 'isAvailableLog4jDisclaimer'
+        SHOW_FIREWALL_ALERT: 'showFirewallAlert'
       }
     },
     BROWSE: {

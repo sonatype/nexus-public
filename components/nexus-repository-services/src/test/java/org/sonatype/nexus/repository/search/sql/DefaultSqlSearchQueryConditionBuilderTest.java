@@ -158,7 +158,7 @@ public class DefaultSqlSearchQueryConditionBuilderTest
         is(ImmutableSet.of("component0", "component1", "component2", "component3", "component4")));
 
     assertThat(actual.getValues().values(),
-        containsInAnyOrder("abc\\%%", "\\%def_", "ghi%jk", "jkl%", "m_n\\_op%"));
+        containsInAnyOrder("abc%%", "%def_", "ghi%jk", "jkl%", "m_n_op%"));
   }
   @Test
   public void shouldEscapeUnderscoreIfWildcard() {
@@ -173,7 +173,7 @@ public class DefaultSqlSearchQueryConditionBuilderTest
         is(ImmutableSet.of("component0", "component1", "component2", "component3")));
 
     assertThat(actual.getValues().values(),
-        containsInAnyOrder("abc\\_%", "\\_def_", "ghi_jk", "jkl_"));
+        containsInAnyOrder("abc_%", "_def_", "ghi_jk", "jkl_"));
   }
 
   @Test
@@ -189,7 +189,7 @@ public class DefaultSqlSearchQueryConditionBuilderTest
         is(ImmutableSet.of("component0", "component1", "component2", "component3")));
 
     assertThat(actual.getValues().values(),
-        containsInAnyOrder("abc%\\\\", "_def\\\\", "ghi%\\jk", "\\jkl_"));
+        containsInAnyOrder("abc%\\", "_def\\", "ghi%\\jk", "\\jkl_"));
   }
 
   @Test

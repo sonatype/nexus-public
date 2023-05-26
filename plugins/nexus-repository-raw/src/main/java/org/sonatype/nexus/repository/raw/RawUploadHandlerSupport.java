@@ -39,6 +39,7 @@ import org.sonatype.nexus.repository.view.PartPayload;
 
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
+import static org.apache.commons.lang3.StringUtils.prependIfMissing;
 
 /**
  * Common base for raw upload handlers
@@ -60,16 +61,20 @@ public abstract class RawUploadHandlerSupport
 
   protected final VariableResolverAdapter variableResolverAdapter;
 
+  protected final boolean datastoreEnabled;
+
   protected UploadDefinition definition;
 
   public RawUploadHandlerSupport(
       final ContentPermissionChecker contentPermissionChecker,
       final VariableResolverAdapter variableResolverAdapter,
-      final Set<UploadDefinitionExtension> uploadDefinitionExtensions)
+      final Set<UploadDefinitionExtension> uploadDefinitionExtensions,
+      final boolean datastoreEnabled)
   {
     super(uploadDefinitionExtensions);
     this.contentPermissionChecker = contentPermissionChecker;
     this.variableResolverAdapter = variableResolverAdapter;
+    this.datastoreEnabled = datastoreEnabled;
   }
 
   @Override
@@ -82,7 +87,8 @@ public abstract class RawUploadHandlerSupport
     for (AssetUpload asset : upload.getAssetUploads()) {
       String path = normalizePath(basePath + '/' + asset.getFields().get(FILENAME).trim());
 
-      ensurePermitted(repository.getName(), RawFormat.NAME, path, emptyMap());
+      String pathWithPrefix = datastoreEnabled ? prependIfMissing(path, "/") : path;
+      ensurePermitted(repository.getName(), RawFormat.NAME, pathWithPrefix, emptyMap());
 
       pathToPayload.put(path, asset.getPayload());
     }
@@ -109,6 +115,7 @@ public abstract class RawUploadHandlerSupport
 
   @Override
   public Content handle(final ImportFileConfiguration configuration) throws IOException {
+
     ensurePermitted(configuration.getRepository().getName(), RawFormat.NAME, configuration.getAssetName(), emptyMap());
 
     return doPut(configuration);
