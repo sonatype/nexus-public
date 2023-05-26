@@ -14,11 +14,15 @@
 -->
 # Sonatype Nexus Repository Open Source Codebase 
 
-[![CircleCI Build Status](https://circleci.com/gh/sonatype/nexus-public.svg?style=shield "CircleCI Build Status")](https://circleci.com/gh/sonatype/nexus-public) [![Join the chat at https://gitter.im/sonatype/nexus-developers](https://badges.gitter.im/sonatype/nexus-developers.svg)](https://gitter.im/sonatype/nexus-developers?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
 ## Downloadable Bundles
 
  See: https://www.sonatype.com/download-oss-sonatype
+
+## Support
+
+Using Sonatype Nexus Repository OSS and need to report an issue? [Open an issue here](https://github.com/sonatype/nexus-public/issues)
+
+Sonatype Nexus Repository Pro customers can use https://support.sonatype.com/.
  
 ## Build Requirements
 
@@ -77,7 +81,6 @@ This project is licensed under the Eclipse Public License - v 1.0, you can read 
 
 Looking to contribute to our code but need some help? There's a few ways to get information or our attention:
 
-* File an issue in [our public JIRA](https://issues.sonatype.org/browse/NEXUS)
 * Check out the [Nexus3](http://stackoverflow.com/questions/tagged/nexus3) tag on Stack Overflow
 * Check out the [Nexus Repository User List](https://groups.google.com/a/glists.sonatype.com/forum/?hl=en#!forum/nexus-users)
 * Connect with [@sonatypeDev](https://twitter.com/sonatypeDev) on Twitter
