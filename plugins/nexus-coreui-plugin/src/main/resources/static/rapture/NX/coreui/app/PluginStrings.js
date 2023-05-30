@@ -198,6 +198,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchGolang_License_FieldLabel: 'License',
     Search_More_Text: 'More criteria',
     Search_SearchResultList_Format_Header: 'Format',
+    Search_SearchResultList_Last_Updated_Header: 'Last Updated',
     Search_SearchResultList_Group_Header: 'Group',
     Search_SearchResultList_Name_Header: 'Name',
     Search_SearchResultList_Repository_Header: 'Repository',
@@ -548,8 +549,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Formats_All: '(All Formats)',
     Repository_Facet_GolangFacet_Title: 'Go Settings',
     Repository_Replication_InformationMessage: 'This repository is using the replication {0} to connect to source repository {1}.',
-    Repository_Copy_URL: 'Use your repository\'s direct URL (shown below) to connect other tools to your repository. ' + 
-      'For more information, see our ' + 
+    Repository_Copy_URL: 'Use your repository\'s direct URL (shown below) to connect other tools to your repository. ' +
+      'For more information, see our ' +
       '<a href="http://links.sonatype.com/products/nxrm3/docs/{0}" target="_blank">{1}-specific help documentation.</a>',
     HealthCheckRepositoryColumn_Header: 'Health check',
     HealthCheckRepositoryColumn_Analyzing: 'Analyzing&hellip;',
