@@ -34,7 +34,6 @@ export default function HttpReadOnly() {
   const [current, send] = useMachine(Machine, {devTools: true});
   const {data, loadError} = current.context;
   const {httpEnabled, httpAuthEnabled, httpsEnabled, httpsAuthEnabled} = data;
-  const isHttpsEnabled = httpsEnabled && httpEnabled;
   const isLoading = current.matches('loading');
   const nonProxyHosts = data.nonProxyHosts || [];
 
@@ -86,7 +85,7 @@ export default function HttpReadOnly() {
             </NxAccordion>
           </NxTile.Content>
         )}
-        {isHttpsEnabled && (
+        {httpsEnabled && (
           <>
             <ReadOnlyField
               label={LABELS.PROXY.HTTPS_HOST}
@@ -98,9 +97,9 @@ export default function HttpReadOnly() {
             />
           </>
         )}
-        {isHttpsEnabled && httpsAuthEnabled && (
+        {httpsEnabled && httpsAuthEnabled && (
           <NxTile.Content className="nx-tile-content--accordion-container">
-            <NxAccordion open={data.httpAuthEnabled}>
+            <NxAccordion open={data.httpsAuthEnabled}>
               <NxAccordion.Header>
                 <NxAccordion.Title>
                   {LABELS.PROXY.HTTPS_AUTHENTICATION}
