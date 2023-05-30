@@ -37,13 +37,6 @@ Ext.define('NX.ext.grid.column.Renderers', {
   },
 
   /**
-   * Converts and renders a given date to locale string.
-   */
-  formattedDate: function(value) {
-    return new Date(value).toLocaleString();
-  },
-
-  /**
    * Renderer which will display either 'Allowed' or 'Blocked' with a corresponding glyph depending on the value
    * and will dim the text if the rule is not defined in the record.
    */

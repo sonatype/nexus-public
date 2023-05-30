@@ -74,13 +74,6 @@ Ext.define('NX.coreui.view.search.SearchResultList', {
           renderer: NX.ext.grid.column.Renderers.optionalData
         },
         {
-          header: NX.I18n.get('Search_SearchResultList_Last_Updated_Header'),
-          dataIndex: 'lastBlobUpdated',
-          stateId: 'lastBlobUpdated',
-          flex: 2,
-          renderer: NX.ext.grid.column.Renderers.formattedDate
-        },
-        {
           header: NX.I18n.get('Search_SearchResultList_Version_Header'),
           dataIndex: 'version',
           stateId: 'version',

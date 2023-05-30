@@ -42,7 +42,4 @@ class ComponentXO
 
   @NotBlank
   String format
-
-  @NotBlank
-  String lastBlobUpdated
 }

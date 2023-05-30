@@ -78,7 +78,6 @@ public class Maven2SearchResultComponentGenerator
       component.setName(hit.getName());
       component.setFormat(hit.getFormat());
       component.setAssets(hit.getAssets());
-      component.setLastModified(hit.getLastModified());
 
       component.setVersion(baseVersion);
     }
