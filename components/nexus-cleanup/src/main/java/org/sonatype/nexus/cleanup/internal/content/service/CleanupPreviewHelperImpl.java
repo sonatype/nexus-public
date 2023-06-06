@@ -12,12 +12,18 @@
  */
 package org.sonatype.nexus.cleanup.internal.content.service;
 
+import java.time.Duration;
 import java.util.List;
-import java.util.function.BiFunction;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.cleanup.internal.content.search.CleanupComponentBrowse;
@@ -32,6 +38,7 @@ import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.query.QueryOptions;
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.repository.rest.api.DefaultComponentXO;
+import org.sonatype.nexus.scheduling.CancelableHelper;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
@@ -47,33 +54,29 @@ public class CleanupPreviewHelperImpl
     extends ComponentSupport
     implements CleanupPreviewHelper
 {
-  private static final BiFunction<Component, Repository, ComponentXO> COMPONENT_CONVERTER = (component, repository) ->
-  {
-    DefaultComponentXO defaultComponentXO = new DefaultComponentXO();
-    defaultComponentXO.setRepository(repository.getName());
-    defaultComponentXO.setGroup(component.namespace());
-    defaultComponentXO.setName(component.name());
-    defaultComponentXO.setVersion(component.version());
-    defaultComponentXO.setFormat(repository.getFormat().getValue());
-    return defaultComponentXO;
-  };
 
   private final CleanupPolicyStorage cleanupPolicyStorage;
 
   private final CleanupComponentBrowse cleanupComponentBrowse;
 
+  private final Duration previewTimeout;
+
   @Inject
-  public CleanupPreviewHelperImpl(final CleanupPolicyStorage cleanupPolicyStorage,
-                                  final CleanupComponentBrowse cleanupComponentBrowse)
+  public CleanupPreviewHelperImpl(
+      final CleanupPolicyStorage cleanupPolicyStorage,
+      final CleanupComponentBrowse cleanupComponentBrowse,
+      @Named("${nexus.cleanup.preview.timeout:-60s}") final Duration previewTimeout)
   {
     this.cleanupPolicyStorage = checkNotNull(cleanupPolicyStorage);
     this.cleanupComponentBrowse = checkNotNull(cleanupComponentBrowse);
+    this.previewTimeout = checkNotNull(previewTimeout);
   }
 
   @Override
-  public PagedResponse<ComponentXO> getSearchResults(final CleanupPolicyPreviewXO previewXO,
-                                                     final Repository repository,
-                                                     final QueryOptions queryOptions)
+  public PagedResponse<ComponentXO> getSearchResults(
+      final CleanupPolicyPreviewXO previewXO,
+      final Repository repository,
+      final QueryOptions queryOptions)
   {
     CleanupPolicy cleanupPolicy = toCleanupPolicy(previewXO);
 
@@ -84,13 +87,43 @@ public class CleanupPreviewHelperImpl
                                                            final CleanupPolicy cleanupPolicy,
                                                            final QueryOptions queryOptions)
   {
-    PagedResponse<Component> components = cleanupComponentBrowse.browseByPage(cleanupPolicy, repository, queryOptions);
+    PagedResponse<Component> components = browse(cleanupPolicy, repository, queryOptions);
 
     List<ComponentXO> componentXOS = components.getData().stream()
-        .map(item -> COMPONENT_CONVERTER.apply(item, repository))
+        .map(item -> convert(item, repository))
         .collect(toList());
 
     return new PagedResponse<>(components.getTotal(), componentXOS);
+  }
+
+  private PagedResponse<Component> browse(
+      final CleanupPolicy policy,
+      final Repository repository,
+      final QueryOptions queryOptions)
+  {
+    AtomicBoolean cancelled = new AtomicBoolean(false);
+
+    Future<PagedResponse<Component>> future = CompletableFuture.supplyAsync(() -> {
+      CancelableHelper.set(cancelled);
+      try {
+        // compute preview and return it
+        return cleanupComponentBrowse.browseByPage(policy, repository, queryOptions);
+      }
+      finally {
+        CancelableHelper.remove();
+      }
+    });
+
+    try {
+      return future.get(previewTimeout.toMillis(), TimeUnit.MILLISECONDS);
+    }
+    catch (Exception e) {
+      cancelled.set(true);
+      log.debug("Timeout computing preview for cleanup for policy {} in repository", policy, repository.getName(), e);
+      // indicate failure to UI
+      throw new WebApplicationException(
+          Response.serverError().entity("A timeout occurred while computing the preview results.").build());
+    }
   }
 
   private CleanupPolicy toCleanupPolicy(final CleanupPolicyPreviewXO cleanupPolicyPreviewXO) {
@@ -101,4 +134,14 @@ public class CleanupPreviewHelperImpl
 
     return policy;
   }
+
+  private static ComponentXO convert(final Component component, final Repository repository) {
+    DefaultComponentXO defaultComponentXO = new DefaultComponentXO();
+    defaultComponentXO.setRepository(repository.getName());
+    defaultComponentXO.setGroup(component.namespace());
+    defaultComponentXO.setName(component.name());
+    defaultComponentXO.setVersion(component.version());
+    defaultComponentXO.setFormat(repository.getFormat().getValue());
+    return defaultComponentXO;
+  };
 }

@@ -39,6 +39,7 @@ import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.query.QueryOptions;
+import org.sonatype.nexus.scheduling.CancelableHelper;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -94,6 +95,7 @@ public class DataStoreCleanupComponentBrowse
 
     List<Component> result =
     Continuations.streamOf(browseComponentsFn(repository), Continuations.BROWSE_LIMIT, options.getLastId())
+        .peek(__ -> CancelableHelper.checkCancellation())
         .filter(componentFilter)
         .limit(options.getLimit())
         .map(Component.class::cast)

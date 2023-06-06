@@ -83,6 +83,14 @@ export default ListMachineUtils.buildListMachine({
       pristineData: (_, {data}) => data.data.results,
       total: (_, {data}) => data.data.total
     }),
+    setError: assign({
+      error: (_, event) => {
+        if (event.data?.response?.data && event.data?.response?.status) {
+            return `${event.data.response.data} (${event.data.response.status})`;
+        }
+        return event.data?.message;
+      },
+    }),
 
     clear: assign({
       repository: '',
