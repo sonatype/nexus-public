@@ -14,6 +14,7 @@ package org.sonatype.nexus.testsuite.testsupport.fixtures
 
 import javax.annotation.Nonnull
 
+import org.sonatype.nexus.blobstore.api.BlobStoreManager
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.config.Configuration
 
@@ -30,9 +31,10 @@ trait RawRepoRecipes
   @Nonnull
   Repository createRawHosted(final String name,
                              final String writePolicy = "ALLOW",
-                             final boolean strictContentTypeValidation = true)
+                             final boolean strictContentTypeValidation = true,
+                             final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME)
   {
-    createRepository(createHosted(name, 'raw-hosted', writePolicy, strictContentTypeValidation))
+    createRepository(createHosted(name, 'raw-hosted', writePolicy, strictContentTypeValidation, blobStoreName))
   }
 
   @Nonnull

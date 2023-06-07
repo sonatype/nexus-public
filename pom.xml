@@ -1401,6 +1401,76 @@
       </build>
     </profile>
 
+
+    <!--
+    This profile is used when running in-code performance tests , since we have orient-only performance tests and orient/postgres
+    performance tests , this profile will ignore the orient-only ones ,allowing us to run valid tests when using newdb
+     -->
+    <profile>
+      <id>newdb-synthetic-performance-tests</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration combine.children="override">
+              <groups>
+                org.sonatype.goodies.testsupport.group.Perf,
+              </groups>
+              <excludedGroups>
+                org.sonatype.goodies.testsupport.group.External,
+                org.sonatype.goodies.testsupport.group.Unstable,
+                org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,
+                org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
+                org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup
+              </excludedGroups>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>io.fabric8</groupId>
+            <artifactId>docker-maven-plugin</artifactId>
+            <configuration>
+              <showLogs>false</showLogs>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <!--
+    This profile is used when running in-code performance tests , since the above one runs new-db supported performance tests,
+    this one runs all the orient supported performance tests.
+     -->
+    <profile>
+      <id>orient-synthetic-performance-tests</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration combine.children="override">
+              <groups>
+                org.sonatype.goodies.testsupport.group.Perf,
+              </groups>
+              <excludedGroups>
+                org.sonatype.goodies.testsupport.group.External,
+                org.sonatype.goodies.testsupport.group.Unstable,
+                org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
+                org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup
+              </excludedGroups>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>io.fabric8</groupId>
+            <artifactId>docker-maven-plugin</artifactId>
+            <configuration>
+              <showLogs>false</showLogs>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
     <!--
     When this profile is used it is intended to run tests that are flaky / unstable
     Any ITs that fail often should be annotated with
